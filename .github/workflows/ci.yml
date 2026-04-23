@@ -1,0 +1,26 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      # Reproducible install from the lockfile; fails if package.json
+      # and package-lock.json drift out of sync.
+      - run: npm ci
+
+      # Fast checks first so builds fail early on style/lint issues.
+      - run: npm run lint
+
+      - run: npm test
+
+      # Slowest step last.
+      - run: npm run build
