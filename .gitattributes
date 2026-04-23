@@ -1,0 +1,42 @@
+# Normalize line endings to LF for everything checked in.
+# Working trees can still use CRLF on Windows (see core.autocrlf),
+# but the repo stays consistent for CI, Docker, and cross-platform collaborators.
+
+* text=auto eol=lf
+
+# Explicit rules for text files that must always be LF
+*.ts        text eol=lf
+*.tsx       text eol=lf
+*.js        text eol=lf
+*.jsx       text eol=lf
+*.mjs       text eol=lf
+*.cjs       text eol=lf
+*.mts       text eol=lf
+*.cts       text eol=lf
+*.json      text eol=lf
+*.md        text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+*.css       text eol=lf
+*.html      text eol=lf
+*.sql       text eol=lf
+*.sh        text eol=lf
+*.env       text eol=lf
+.env.*      text eol=lf
+Dockerfile  text eol=lf
+*.dockerfile text eol=lf
+
+# Binary files — never touch
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.gif       binary
+*.ico       binary
+*.svg       text eol=lf
+*.pdf       binary
+*.docx      binary
+*.xlsx      binary
+*.woff      binary
+*.woff2     binary
+*.ttf       binary
+*.eot       binary
