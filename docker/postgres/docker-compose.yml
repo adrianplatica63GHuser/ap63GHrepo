@@ -1,0 +1,51 @@
+# Postgres 16 + PostGIS 3.4 + pgAdmin for local development.
+#
+# Run from project root:
+#   cp .env.example .env        # first time only; fill in real passwords
+#   docker compose -f docker/postgres/docker-compose.yml --env-file .env up -d
+#   docker compose -f docker/postgres/docker-compose.yml --env-file .env down
+#   docker compose -f docker/postgres/docker-compose.yml --env-file .env down -v   # also drop data
+#
+# Secrets come from the project-root .env (gitignored).
+# The init/ folder runs once on first boot to create PostGIS extensions.
+
+services:
+  postgres:
+    image: postgis/postgis:16-3.4
+    container_name: ga40prj-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-ga40db}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: ga40prj-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@example.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:?PGADMIN_DEFAULT_PASSWORD must be set in .env}
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  pgadmin_data:
