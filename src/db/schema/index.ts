@@ -97,7 +97,10 @@ export const naturalPerson = pgTable(
     idDocumentNumber: text("id_document_number"),
 
     gender: genderEnum("gender"),
-    dateOfBirth: date("date_of_birth"),
+    // `mode: "string"` keeps DOB as ISO date strings ("1985-02-03") on both
+    // read and write — avoids the Date-object timezone gotcha for a calendar
+    // date with no time component.
+    dateOfBirth: date("date_of_birth", { mode: "string" }),
 
     personalPhone1: text("personal_phone_1"),
     personalPhone2: text("personal_phone_2"),
