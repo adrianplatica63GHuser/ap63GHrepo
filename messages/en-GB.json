@@ -9,6 +9,71 @@
     "empty": "No properties found",
     "counts": "Showing {shown} of {total}",
     "mapTitle": "Property Map",
+    "createTitle": "New Property",
+    "saveError": "Could not save",
+    "deleteError": "Could not delete",
+    "sections": {
+      "cadastral": "Cadastral Data",
+      "address": "Address",
+      "corners": "Corners",
+      "notes": "Notes"
+    },
+    "fields": {
+      "code": "Code",
+      "nickname": "Nickname",
+      "tarlaSola": "Tarla / Sola",
+      "parcela": "Parcela",
+      "cadastralNumber": "Cadastral No.",
+      "carteFunciara": "Carte Funciara",
+      "useCategory": "Use Category",
+      "surfaceAreaMp": "Surface Area (m²)",
+      "notes": "Notes"
+    },
+    "useCategories": {
+      "empty": "—",
+      "CATEG1": "Category 1",
+      "CATEG2": "Category 2",
+      "CATEG3": "Category 3"
+    },
+    "address": {
+      "streetLine": "Street, No., Block, Floor, Apt",
+      "postalCode": "Postal Code",
+      "locality": "City / Locality",
+      "county": "County / Sector",
+      "country": "Country",
+      "notes": "Notes"
+    },
+    "corners": {
+      "seq": "#",
+      "lat": "Latitude",
+      "lon": "Longitude",
+      "stereoN": "North (m)",
+      "stereoE": "East (m)",
+      "add": "Add Corner",
+      "edit": "Edit",
+      "delete": "Delete",
+      "save": "Save",
+      "cancel": "Cancel",
+      "formatDD": "DD",
+      "formatDMS": "DMS",
+      "formatStereo70": "Stereo 70",
+      "inputDD": "Decimal Degrees",
+      "inputStereo70": "Stereo 70 (m)",
+      "converting": "Converting…",
+      "convertError": "Conversion failed — check coordinates",
+      "empty": "No corners yet"
+    },
+    "buttons": {
+      "save": "Save",
+      "delete": "Delete",
+      "cancel": "Cancel",
+      "yes": "Yes",
+      "no": "No"
+    },
+    "confirmDelete": {
+      "title": "Delete property?",
+      "body": "Are you sure you want to delete this property? This cannot be undone."
+    },
     "table": {
       "code": "Code",
       "nickname": "Nickname",

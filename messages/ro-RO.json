@@ -9,6 +9,71 @@
     "empty": "Nu există proprietăți",
     "counts": "Se afișează {shown} din {total}",
     "mapTitle": "Hartă proprietăți",
+    "createTitle": "Proprietate nouă",
+    "saveError": "Salvarea a eșuat",
+    "deleteError": "Ștergerea a eșuat",
+    "sections": {
+      "cadastral": "Date cadastrale",
+      "address": "Adresă",
+      "corners": "Puncte de contur",
+      "notes": "Note"
+    },
+    "fields": {
+      "code": "Cod",
+      "nickname": "Poreclă",
+      "tarlaSola": "Nr. tarla / sola",
+      "parcela": "Nr. parcelă",
+      "cadastralNumber": "Nr. cadastru",
+      "carteFunciara": "Nr. CF",
+      "useCategory": "Categorie de folosință",
+      "surfaceAreaMp": "Suprafață (m²)",
+      "notes": "Note"
+    },
+    "useCategories": {
+      "empty": "—",
+      "CATEG1": "Categorie 1",
+      "CATEG2": "Categorie 2",
+      "CATEG3": "Categorie 3"
+    },
+    "address": {
+      "streetLine": "Stradă, Nr., Bloc, Etaj, Ap.",
+      "postalCode": "Cod poștal",
+      "locality": "Oraș / Localitate",
+      "county": "Județ / Sector",
+      "country": "Țară",
+      "notes": "Note"
+    },
+    "corners": {
+      "seq": "Nr.",
+      "lat": "Latitudine",
+      "lon": "Longitudine",
+      "stereoN": "Nord (m)",
+      "stereoE": "Est (m)",
+      "add": "Adaugă punct",
+      "edit": "Editează",
+      "delete": "Șterge",
+      "save": "Salvează",
+      "cancel": "Anulează",
+      "formatDD": "DD",
+      "formatDMS": "DMS",
+      "formatStereo70": "Stereo 70",
+      "inputDD": "Grade zecimale",
+      "inputStereo70": "Stereo 70 (m)",
+      "converting": "Se convertește…",
+      "convertError": "Conversia a eșuat — verificați coordonatele",
+      "empty": "Niciun punct de contur"
+    },
+    "buttons": {
+      "save": "Salvează",
+      "delete": "Șterge",
+      "cancel": "Anulează",
+      "yes": "Da",
+      "no": "Nu"
+    },
+    "confirmDelete": {
+      "title": "Ștergeți proprietatea?",
+      "body": "Sigur doriți să ștergeți această proprietate? Acțiunea nu poate fi anulată."
+    },
     "table": {
       "code": "Cod",
       "nickname": "Poreclă",
