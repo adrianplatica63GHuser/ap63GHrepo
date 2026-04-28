@@ -1,1 +1,17 @@
-{}
+{
+  "naturalPerson": {
+    "listTitle": "Natural Person",
+    "searchPlaceholder": "search by name, email, or phone",
+    "addNew": "Add new Person",
+    "open": "Open",
+    "loading": "Loading…",
+    "error": "Failed to load",
+    "empty": "No persons found",
+    "counts": "Showing {shown} of {total}",
+    "table": {
+      "name": "Name",
+      "email": "Email",
+      "phone": "Phone"
+    }
+  }
+}

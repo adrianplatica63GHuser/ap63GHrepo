@@ -1,1 +1,17 @@
-{}
+{
+  "naturalPerson": {
+    "listTitle": "Persoană fizică",
+    "searchPlaceholder": "caută după nume, email sau telefon",
+    "addNew": "Adaugă persoană",
+    "open": "Deschide",
+    "loading": "Se încarcă…",
+    "error": "Eroare la încărcare",
+    "empty": "Nu există persoane",
+    "counts": "Se afișează {shown} din {total}",
+    "table": {
+      "name": "Nume",
+      "email": "Email",
+      "phone": "Telefon"
+    }
+  }
+}
