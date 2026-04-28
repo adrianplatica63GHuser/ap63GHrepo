@@ -2,6 +2,9 @@ import { sql } from "drizzle-orm";
 import {
   check,
   date,
+  doublePrecision,
+  integer,
+  numeric,
   pgEnum,
   pgTable,
   text,
@@ -90,7 +93,7 @@ export const naturalPerson = pgTable(
     // CNP — Romanian Personal Numeric Code. Optional (foreign nationals
     // may not have one). UNIQUE when present (partial unique index below).
     // Once set, cannot be changed — enforced by a trigger added in the
-    // migration (NULL → value is allowed; value → anything-different is not).
+    // migration (NULL -> value is allowed; value -> anything-different is not).
     cnp: text("cnp"),
 
     idDocumentType: idDocumentTypeEnum("id_document_type"),
@@ -171,5 +174,139 @@ export const address = pgTable(
   (t) => [
     // A person can have at most one address of each kind.
     uniqueIndex("address_person_kind_unique").on(t.personId, t.kind),
+  ],
+);
+
+// ---------------------------------------------------------------------------
+// Enums — Property domain
+// ---------------------------------------------------------------------------
+
+export const propertyTypeEnum = pgEnum("property_type", ["LAND"]);
+
+// Placeholder values; will be replaced with real ANCPI categories later.
+export const useCategoryEnum = pgEnum("use_category", [
+  "CATEG1",
+  "CATEG2",
+  "CATEG3",
+]);
+
+// ---------------------------------------------------------------------------
+// property — root entity
+// ---------------------------------------------------------------------------
+//
+// Soft-delete via deleted_at (same pattern as person).
+// Code is auto-generated from a Postgres sequence: PROP00001, PROP00002, ...
+// The sequence is created in the migration (not expressible in Drizzle).
+
+export const property = pgTable("property", {
+  id: uuid("id").primaryKey().defaultRandom(),
+
+  code: text("code")
+    .notNull()
+    .unique()
+    .default(
+      sql`'PROP' || lpad(nextval('property_code_seq')::text, 5, '0')`,
+    ),
+
+  type: propertyTypeEnum("type").notNull().default("LAND"),
+
+  // "Porecla / elemente definitorii" — short identifying label.
+  nickname: text("nickname"),
+
+  // Romanian cadastral identifiers.
+  tarlaSola:       text("tarla_sola"),       // Nr. tarla / sola
+  parcela:         text("parcela"),           // Nr. parcela
+  cadastralNumber: text("cadastral_number"),  // Nr. cadastru
+  carteFunciara:   text("carte_funciara"),    // Nr. carte funciara
+
+  useCategory: useCategoryEnum("use_category"),
+
+  // "Suprafata in mp" — area in square metres.
+  surfaceAreaMp: numeric("surface_area_mp", { precision: 12, scale: 2 }),
+
+  notes: text("notes"),
+
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
+});
+
+// ---------------------------------------------------------------------------
+// property_address — single address block per property
+// ---------------------------------------------------------------------------
+//
+// FK cascades on hard-delete of property. No `kind` column — a property has
+// exactly one address. No deleted_at — clearing the address hard-deletes the
+// row (same pattern as Person address).
+
+export const propertyAddress = pgTable(
+  "property_address",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+
+    propertyId: uuid("property_id")
+      .notNull()
+      .references(() => property.id, { onDelete: "cascade" }),
+
+    streetLine: text("street_line"),
+    postalCode: text("postal_code"),
+    locality:   text("locality"),
+    county:     text("county"),
+    country:    text("country").notNull(),
+    notes:      text("notes"),
+
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    // Each property has at most one address row.
+    uniqueIndex("property_address_property_unique").on(t.propertyId),
+  ],
+);
+
+// ---------------------------------------------------------------------------
+// property_corner — ordered polygon vertices, stored as WGS84 decimal degrees
+// ---------------------------------------------------------------------------
+//
+// Corners are the authoritative geometry. The polygon for map display is
+// derived from the ordered corner set at query time. Heights are omitted —
+// we store 2-D planimetric coordinates only.
+
+export const propertyCorner = pgTable(
+  "property_corner",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+
+    propertyId: uuid("property_id")
+      .notNull()
+      .references(() => property.id, { onDelete: "cascade" }),
+
+    // 1-based display order; unique per property.
+    sequenceNo: integer("sequence_no").notNull(),
+
+    // WGS84 / ETRS89 decimal degrees.
+    lat: doublePrecision("lat").notNull(),
+    lon: doublePrecision("lon").notNull(),
+
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("property_corner_property_seq_unique").on(
+      t.propertyId,
+      t.sequenceNo,
+    ),
   ],
 );
