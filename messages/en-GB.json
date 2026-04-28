@@ -1,6 +1,7 @@
 {
   "naturalPerson": {
     "listTitle": "Natural Person",
+    "createTitle": "New Natural Person",
     "searchPlaceholder": "search by name, email, or phone",
     "addNew": "Add new Person",
     "open": "Open",
@@ -8,10 +9,71 @@
     "error": "Failed to load",
     "empty": "No persons found",
     "counts": "Showing {shown} of {total}",
+    "saveError": "Could not save",
+    "deleteError": "Could not delete",
     "table": {
       "name": "Name",
       "email": "Email",
       "phone": "Phone"
+    },
+    "sections": {
+      "identity": "Identity",
+      "idDocument": "ID Document",
+      "demographics": "Demographics",
+      "contact": "Contact",
+      "homeAddress": "Home Address",
+      "correspondenceAddress": "Correspondence Address"
+    },
+    "fields": {
+      "lastName": "Last Name",
+      "firstName": "First Name",
+      "code": "ID",
+      "nickname": "Nickname",
+      "cnp": "CNP",
+      "idDocumentType": "ID Type",
+      "idDocumentNumber": "ID Number",
+      "gender": "Gender",
+      "dateOfBirth": "Date of Birth",
+      "personalPhone1": "Personal Phone 1",
+      "personalPhone2": "Personal Phone 2",
+      "workPhone": "Work Phone",
+      "personalEmail1": "Personal Email 1",
+      "personalEmail2": "Personal Email 2",
+      "workEmail": "Work Email",
+      "notes": "Notes"
+    },
+    "address": {
+      "streetLine": "Street, No., Block, Floor, Apt",
+      "postalCode": "Postal Code",
+      "locality": "City, Locality, UAT, Commune, Village",
+      "county": "County / Sector",
+      "country": "Country",
+      "notes": "Notes"
+    },
+    "options": {
+      "idDoc": {
+        "ID_CARD": "ID Card",
+        "PASSPORT": "Passport"
+      },
+      "gender": {
+        "MALE": "Male",
+        "FEMALE": "Female"
+      }
+    },
+    "buttons": {
+      "save": "Save",
+      "delete": "Delete",
+      "cancel": "Cancel",
+      "yes": "Yes",
+      "no": "No"
+    },
+    "confirmDelete": {
+      "title": "Delete person?",
+      "body": "Are you sure you want to delete this person?"
+    },
+    "hints": {
+      "cnpLocked": "CNP cannot be changed once set — delete and recreate to change",
+      "countryRequiredIfAddressFilled": "Required if any other address field is filled"
     }
   }
 }

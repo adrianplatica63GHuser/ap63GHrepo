@@ -1,6 +1,7 @@
 {
   "naturalPerson": {
     "listTitle": "Persoană fizică",
+    "createTitle": "Persoană fizică nouă",
     "searchPlaceholder": "caută după nume, email sau telefon",
     "addNew": "Adaugă persoană",
     "open": "Deschide",
@@ -8,10 +9,71 @@
     "error": "Eroare la încărcare",
     "empty": "Nu există persoane",
     "counts": "Se afișează {shown} din {total}",
+    "saveError": "Salvarea a eșuat",
+    "deleteError": "Ștergerea a eșuat",
     "table": {
       "name": "Nume",
       "email": "Email",
       "phone": "Telefon"
+    },
+    "sections": {
+      "identity": "Identitate",
+      "idDocument": "Document de identitate",
+      "demographics": "Date personale",
+      "contact": "Contact",
+      "homeAddress": "Adresă domiciliu",
+      "correspondenceAddress": "Adresă corespondență"
+    },
+    "fields": {
+      "lastName": "Nume",
+      "firstName": "Prenume",
+      "code": "ID",
+      "nickname": "Poreclă",
+      "cnp": "CNP",
+      "idDocumentType": "Tip document",
+      "idDocumentNumber": "Nr. document",
+      "gender": "Gen",
+      "dateOfBirth": "Data nașterii",
+      "personalPhone1": "Telefon personal 1",
+      "personalPhone2": "Telefon personal 2",
+      "workPhone": "Telefon serviciu",
+      "personalEmail1": "Email personal 1",
+      "personalEmail2": "Email personal 2",
+      "workEmail": "Email serviciu",
+      "notes": "Note"
+    },
+    "address": {
+      "streetLine": "Stradă, Nr., Bloc, Etaj, Ap.",
+      "postalCode": "Cod poștal",
+      "locality": "Oraș, Localitate, UAT, Comună, Sat",
+      "county": "Județ / Sector",
+      "country": "Țară",
+      "notes": "Note"
+    },
+    "options": {
+      "idDoc": {
+        "ID_CARD": "Carte de identitate",
+        "PASSPORT": "Pașaport"
+      },
+      "gender": {
+        "MALE": "Masculin",
+        "FEMALE": "Feminin"
+      }
+    },
+    "buttons": {
+      "save": "Salvează",
+      "delete": "Șterge",
+      "cancel": "Anulează",
+      "yes": "Da",
+      "no": "Nu"
+    },
+    "confirmDelete": {
+      "title": "Ștergeți persoana?",
+      "body": "Sunteți sigur că doriți să ștergeți această persoană?"
+    },
+    "hints": {
+      "cnpLocked": "CNP-ul nu poate fi modificat odată setat — ștergeți și creați din nou pentru a-l schimba",
+      "countryRequiredIfAddressFilled": "Necesar dacă orice alt câmp al adresei este completat"
     }
   }
 }
