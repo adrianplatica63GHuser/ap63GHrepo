@@ -1,4 +1,22 @@
 {
+  "property": {
+    "listTitle": "Properties",
+    "searchPlaceholder": "search by code, nickname, cadastral no., or carte funciara",
+    "addNew": "Add new Property",
+    "open": "Open",
+    "loading": "Loading…",
+    "error": "Failed to load",
+    "empty": "No properties found",
+    "counts": "Showing {shown} of {total}",
+    "table": {
+      "code": "Code",
+      "nickname": "Nickname",
+      "cadastralNumber": "Cadastral No.",
+      "carteFunciara": "Carte Funciara",
+      "surfaceAreaMp": "Area (m²)",
+      "locality": "Locality"
+    }
+  },
   "naturalPerson": {
     "listTitle": "Natural Person",
     "createTitle": "New Natural Person",

@@ -1,4 +1,22 @@
 {
+  "property": {
+    "listTitle": "Proprietăți",
+    "searchPlaceholder": "caută după cod, poreclă, nr. cadastru sau carte funciară",
+    "addNew": "Adaugă proprietate",
+    "open": "Deschide",
+    "loading": "Se încarcă…",
+    "error": "Eroare la încărcare",
+    "empty": "Nu există proprietăți",
+    "counts": "Se afișează {shown} din {total}",
+    "table": {
+      "code": "Cod",
+      "nickname": "Poreclă",
+      "cadastralNumber": "Nr. cadastru",
+      "carteFunciara": "Nr. CF",
+      "surfaceAreaMp": "Suprafață (m²)",
+      "locality": "Localitate"
+    }
+  },
   "naturalPerson": {
     "listTitle": "Persoană fizică",
     "createTitle": "Persoană fizică nouă",
