@@ -8,6 +8,7 @@
     "error": "Eroare la încărcare",
     "empty": "Nu există proprietăți",
     "counts": "Se afișează {shown} din {total}",
+    "mapTitle": "Hartă proprietăți",
     "table": {
       "code": "Cod",
       "nickname": "Poreclă",

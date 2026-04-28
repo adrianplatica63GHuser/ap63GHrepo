@@ -8,6 +8,7 @@
     "error": "Failed to load",
     "empty": "No properties found",
     "counts": "Showing {shown} of {total}",
+    "mapTitle": "Property Map",
     "table": {
       "code": "Code",
       "nickname": "Nickname",
