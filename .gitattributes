@@ -36,6 +36,8 @@ Dockerfile  text eol=lf
 *.pdf       binary
 *.docx      binary
 *.xlsx      binary
+*.GRD       binary
+*.GRT       binary
 *.woff      binary
 *.woff2     binary
 *.ttf       binary
