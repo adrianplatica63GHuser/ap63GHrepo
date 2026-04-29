@@ -122,8 +122,8 @@ export function PropertyForm({
       className="flex flex-col gap-8"
       noValidate
     >
-      {/* Cadastral data */}
-      <Section title={t("sections.cadastral")}>
+      {/* Cadastral data — 4-col compact layout */}
+      <Section title={t("sections.cadastral")} columns={4}>
         {mode === "edit" && propertyCode && (
           <ReadOnlyField label={t("fields.code")} value={propertyCode} />
         )}
@@ -229,15 +229,15 @@ export function PropertyForm({
         />
       </Section>
 
-      {/* Corners + mini-map */}
+      {/* Corners + mini-map — stacked vertically; minimap always full-width */}
       <section className="rounded-md border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
           {t("sections.corners")}
         </h2>
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="flex flex-col gap-4">
           <CornersManager corners={corners} onChange={setCorners} />
-          <div className="rounded-md border border-zinc-200 overflow-hidden dark:border-zinc-800" style={{ minHeight: "280px" }}>
-            <PropertyMiniMap corners={corners} />
+          <div className="rounded-md border border-zinc-200 overflow-hidden dark:border-zinc-800" style={{ height: "360px" }}>
+            <PropertyMiniMap corners={corners} onChange={setCorners} />
           </div>
         </div>
       </section>
@@ -296,13 +296,20 @@ export function PropertyForm({
 // Shared presentational helpers (mirrors natural-person-form pattern)
 // ---------------------------------------------------------------------------
 
+const COLUMNS_CLASS: Record<1 | 2 | 3 | 4, string> = {
+  1: "grid grid-cols-1 gap-4",
+  2: "grid grid-cols-1 gap-4 sm:grid-cols-2",
+  3: "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3",
+  4: "grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4",
+};
+
 function Section({
   title,
   columns = 2,
   children,
 }: {
   title:    string;
-  columns?: 1 | 2;
+  columns?: 1 | 2 | 3 | 4;
   children: React.ReactNode;
 }) {
   return (
@@ -310,13 +317,7 @@ function Section({
       <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
         {title}
       </h2>
-      <div
-        className={
-          columns === 2
-            ? "grid grid-cols-1 gap-4 sm:grid-cols-2"
-            : "grid grid-cols-1 gap-4"
-        }
-      >
+      <div className={COLUMNS_CLASS[columns]}>
         {children}
       </div>
     </section>

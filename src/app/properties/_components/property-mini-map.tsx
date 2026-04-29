@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import type { Corner } from "./form-schema";
 
+// Dynamically imported to keep the Maps bundle out of the server render.
 const Inner = dynamic(() => import("./property-mini-map-inner"), {
   ssr: false,
   loading: () => (
@@ -12,6 +13,11 @@ const Inner = dynamic(() => import("./property-mini-map-inner"), {
   ),
 });
 
-export function PropertyMiniMap({ corners }: { corners: Corner[] }) {
-  return <Inner corners={corners} />;
+type Props = {
+  corners:  Corner[];
+  onChange: (next: Corner[]) => void;
+};
+
+export function PropertyMiniMap({ corners, onChange }: Props) {
+  return <Inner corners={corners} onChange={onChange} />;
 }
