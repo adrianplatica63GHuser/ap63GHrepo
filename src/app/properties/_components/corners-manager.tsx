@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { formatDMS } from "@/lib/geo/dms";
 import type { Corner } from "./form-schema";
 
@@ -9,8 +9,16 @@ import type { Corner } from "./form-schema";
 // Types
 // ---------------------------------------------------------------------------
 
-type DisplayFormat = "DD" | "DMS";
+type DisplayFormat = "DD" | "DMS" | "S70";
 type InputMode    = "DD" | "STEREO70";
+
+type Stereo70Point = { north: number; east: number };
+
+type S70State = {
+  loading: boolean;
+  error:   boolean;
+  values:  Stereo70Point[];
+};
 
 type Props = {
   corners:  Corner[];
@@ -23,6 +31,10 @@ type Props = {
 
 function fmtDD(v: number, decimals = 7): string {
   return v.toFixed(decimals);
+}
+
+function fmtS70(v: number): string {
+  return v.toFixed(2);
 }
 
 async function stereo70ToWgs84(
@@ -42,6 +54,25 @@ async function stereo70ToWgs84(
   const pt = data.points?.[0];
   if (!pt) throw new Error("No point returned");
   return { lat: pt.lat, lon: pt.lon };
+}
+
+/** Stable string key derived from corner coordinates. */
+function cornersToKey(corners: Corner[]): string {
+  return corners.map((c) => c.lat + "," + c.lon).join("|");
+}
+
+async function wgs84ToStereo70Batch(corners: Corner[]): Promise<Stereo70Point[]> {
+  const res = await fetch("/api/geo/convert", {
+    method:  "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      direction: "wgs84ToStereo70",
+      points:    corners.map((c) => ({ lat: c.lat, lon: c.lon })),
+    }),
+  });
+  if (!res.ok) throw new Error("Conversion failed");
+  const data = await res.json();
+  return data.points as Stereo70Point[];
 }
 
 // ---------------------------------------------------------------------------
@@ -84,7 +115,6 @@ function CornerInputRow({
       return;
     }
 
-    // Stereo70 → WGS84 via API
     const northN = parseFloat(north);
     const eastN  = parseFloat(east);
     if (isNaN(northN) || isNaN(eastN)) {
@@ -106,10 +136,8 @@ function CornerInputRow({
     <tr className="bg-blue-50 dark:bg-blue-950/30">
       <td className="px-3 py-2 text-zinc-400 text-xs">—</td>
 
-      {/* Mode tabs + inputs */}
       <td colSpan={2} className="px-3 py-2">
         <div className="flex flex-col gap-2">
-          {/* Tab bar */}
           <div className="flex gap-1 text-xs">
             {(["DD", "STEREO70"] as InputMode[]).map((m) => (
               <button
@@ -186,7 +214,6 @@ function CornerInputRow({
         </div>
       </td>
 
-      {/* Actions */}
       <td className="px-3 py-2 whitespace-nowrap">
         <div className="flex gap-2">
           <button
@@ -221,6 +248,31 @@ export function CornersManager({ corners, onChange }: Props) {
   const [displayFmt,  setDisplayFmt]  = useState<DisplayFormat>("DD");
   const [adding,      setAdding]      = useState(false);
   const [editingIdx,  setEditingIdx]  = useState<number | null>(null);
+  const [s70State,    setS70State]    = useState<S70State>({ loading: false, error: false, values: [] });
+
+  const cornersKey = cornersToKey(corners);
+
+  useEffect(() => {
+    if (displayFmt !== "S70") return;
+    if (corners.length === 0) {
+      setS70State({ loading: false, error: false, values: [] });
+      return;
+    }
+
+    let cancelled = false;
+    setS70State({ loading: true, error: false, values: [] });
+
+    wgs84ToStereo70Batch(corners)
+      .then((values) => {
+        if (!cancelled) setS70State({ loading: false, error: false, values });
+      })
+      .catch(() => {
+        if (!cancelled) setS70State({ loading: false, error: true, values: [] });
+      });
+
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [displayFmt, cornersKey]);
 
   const handleAdd = (c: Corner) => {
     onChange([...corners, c]);
@@ -252,15 +304,41 @@ export function CornersManager({ corners, onChange }: Props) {
     onChange(next);
   };
 
-  const cellCls = "px-3 py-2 text-sm";
+  const cellCls   = "px-3 py-2 text-sm";
   const monoLight = "font-mono text-xs text-zinc-600 dark:text-zinc-400";
+
+  const col1Label = displayFmt === "S70" ? t("stereoN") : t("lat");
+  const col2Label = displayFmt === "S70" ? t("stereoE") : t("lon");
+
+  const fmtLabel: Record<DisplayFormat, string> = {
+    DD:  t("formatDD"),
+    DMS: t("formatDMS"),
+    S70: t("formatStereo70"),
+  };
+
+  const showS70Loading = displayFmt === "S70" && s70State.loading;
+  const showS70Error   = displayFmt === "S70" && s70State.error;
+
+  const col1Values = corners.map((c, idx) => {
+    if (displayFmt === "DD")  return fmtDD(c.lat);
+    if (displayFmt === "DMS") return formatDMS(c.lat, true);
+    if (s70State.loading)     return "…";
+    if (s70State.error)       return "—";
+    return fmtS70(s70State.values[idx]?.north ?? 0);
+  });
+  const col2Values = corners.map((c, idx) => {
+    if (displayFmt === "DD")  return fmtDD(c.lon);
+    if (displayFmt === "DMS") return formatDMS(c.lon, false);
+    if (s70State.loading)     return "…";
+    if (s70State.error)       return "—";
+    return fmtS70(s70State.values[idx]?.east ?? 0);
+  });
 
   return (
     <div className="flex flex-col gap-2">
-      {/* Display format toggle */}
       <div className="flex items-center gap-2">
         <span className="text-xs text-zinc-500 dark:text-zinc-400">Display:</span>
-        {(["DD", "DMS"] as DisplayFormat[]).map((f) => (
+        {(["DD", "DMS", "S70"] as DisplayFormat[]).map((f) => (
           <button
             key={f}
             type="button"
@@ -272,19 +350,20 @@ export function CornersManager({ corners, onChange }: Props) {
                 : "border border-zinc-300 hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800",
             ].join(" ")}
           >
-            {f === "DD" ? t("formatDD") : t("formatDMS")}
+            {fmtLabel[f]}
           </button>
         ))}
+        {showS70Loading && <span className="text-xs text-zinc-400 animate-pulse">Converting...</span>}
+        {showS70Error   && <span className="text-xs text-red-500">{t("convertError")}</span>}
       </div>
 
-      {/* Table */}
       <div className="overflow-x-auto rounded-md border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <table className="w-full text-sm">
           <thead className="bg-zinc-100 text-left text-xs font-medium uppercase tracking-wide text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
             <tr>
               <th className="px-3 py-2 w-10">{t("seq")}</th>
-              <th className="px-3 py-2">{t("lat")}</th>
-              <th className="px-3 py-2">{t("lon")}</th>
+              <th className="px-3 py-2">{col1Label}</th>
+              <th className="px-3 py-2">{col2Label}</th>
               <th className="px-3 py-2 w-40" />
             </tr>
           </thead>
@@ -300,25 +379,17 @@ export function CornersManager({ corners, onChange }: Props) {
             {corners.map((c, idx) =>
               editingIdx === idx ? (
                 <CornerInputRow
-                  key={`edit-${idx}`}
+                  key={"edit-" + idx}
                   initial={c}
                   onSave={(updated) => handleEdit(idx, updated)}
                   onCancel={() => setEditingIdx(null)}
                 />
               ) : (
                 <tr key={idx} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
-                  <td className={`${cellCls} text-zinc-400 tabular-nums`}>{idx + 1}</td>
-                  <td className={`${cellCls} ${monoLight}`}>
-                    {displayFmt === "DMS"
-                      ? formatDMS(c.lat, true)
-                      : fmtDD(c.lat)}
-                  </td>
-                  <td className={`${cellCls} ${monoLight}`}>
-                    {displayFmt === "DMS"
-                      ? formatDMS(c.lon, false)
-                      : fmtDD(c.lon)}
-                  </td>
-                  <td className={`${cellCls} whitespace-nowrap`}>
+                  <td className={cellCls + " text-zinc-400 tabular-nums"}>{idx + 1}</td>
+                  <td className={cellCls + " " + monoLight}>{col1Values[idx]}</td>
+                  <td className={cellCls + " " + monoLight}>{col2Values[idx]}</td>
+                  <td className={cellCls + " whitespace-nowrap"}>
                     <div className="flex gap-1 items-center">
                       <button
                         type="button"
@@ -368,7 +439,6 @@ export function CornersManager({ corners, onChange }: Props) {
         </table>
       </div>
 
-      {/* Add button */}
       {!adding && editingIdx === null && (
         <button
           type="button"
