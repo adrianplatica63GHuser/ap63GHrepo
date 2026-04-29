@@ -8,14 +8,9 @@ The summary below is a quick orientation. The full source of truth for project i
 
 ## Read at the start of every session
 
-The folder `C:\dev.docs\ga40prj\01.Every.Time\` is the source of truth for project intent and our working agreement. Claude should read these four documents at the start of every session, in this order:
+The folder `C:\dev.docs\ga40prj\01.Every.Time\` is the source of truth for project intent and our working agreement. Claude should read `Instructions.docx` — Claude's role, the domain model, the locked-in tech stack, accounts, and development constraints.
 
-1. `01.01.EVERY.TIME.Claude.Project.Instructions.docx` — Claude's role, the domain model, the locked-in tech stack, and development constraints.
-2. `01.02.EVERY.TIME.Project.Info.docx` — real estate context, architectural considerations, bilingual and M:M relationship notes.
-3. `01.High.Level.Collaboration.docx` — how Adrian and Claude divide work; what Adrian owns (BA, requirements, UAT) versus what Claude owns (implementation).
-4. `Accounts.Starters.Notes.docx` — credentials and "starter" install notes. Read for reference; never echo secret values into chat.
-
-If anything in these documents conflicts with the summary in this file or with `AGENTS.md`, the docs in `01.Every.Time/` win.
+If anything in this document conflicts with the summary in this file or with `AGENTS.md`, the doc in `01.Every.Time/` win.
 
 ## Who you're working with
 
@@ -63,7 +58,7 @@ Each slice typically lands as multiple small commits, each individually green.
 - **Always check `git status` before making changes**, and never modify files outside `C:\dev\ga40prj`.
 - **Adrian runs git in PowerShell on Windows.** Claude prepares file content; Adrian commits and pushes. This avoids Windows-mount permission issues with `.git/index.lock` from the Linux sandbox.
 - **Trust HEAD as the source of truth.** The Linux sandbox can show stale or phantom file states (deleted files appearing as untracked, modified files showing clean, etc.). When in doubt, ask Adrian to `git status` on his side.
-- **Secrets stay out of chat.** `.env` is gitignored; values come from `C:\dev.docs\ga40prj\01.Every.Time\Accounts.Starters.Notes.docx`. Never echo passwords or API keys back into the conversation.
+- **Secrets stay out of chat.** `.env` is gitignored; values come from `C:\dev.docs\ga40prj\01.Every.Time\Instructions.docx`. Never echo passwords or API keys back into the conversation.
 
 ## Repo conventions
 
@@ -89,7 +84,7 @@ Each slice typically lands as multiple small commits, each individually green.
 ## Reading order for a fresh session
 
 1. This file (`CLAUDE.md`) — top-down.
-2. The four docs in `C:\dev.docs\ga40prj\01.Every.Time\` (see "Read at the start of every session" above).
+2. The doc in `C:\dev.docs\ga40prj\01.Every.Time\` (see "Read at the start of every session" above).
 3. `README.md` — local dev setup and common commands.
 4. `package.json` — confirm exact versions before assuming any API.
 5. Most recent `git log --oneline -20` — see what just shipped.
