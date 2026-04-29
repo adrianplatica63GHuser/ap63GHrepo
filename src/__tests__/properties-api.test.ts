@@ -1,4 +1,8 @@
 /**
+ * @jest-environment node
+ */
+
+/**
  * Tests for the /api/properties and /api/properties/[id] route handlers.
  *
  * The DB layer is mocked — no live Postgres needed.

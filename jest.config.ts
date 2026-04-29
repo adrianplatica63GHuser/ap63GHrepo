@@ -11,6 +11,12 @@ const config: Config = {
   coverageProvider: "v8",
   testEnvironment: "jsdom",
   setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
+  // Explicitly mirror tsconfig paths so jest.mock("@/...") resolves correctly.
+  // nextJest reads tsconfig at runtime, but the explicit entry here ensures it
+  // is available before jest.mock() hoisting occurs.
+  moduleNameMapper: {
+    "^@/(.*)$": "<rootDir>/src/$1",
+  },
 };
 
 export default createJestConfig(config);
