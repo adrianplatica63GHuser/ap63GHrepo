@@ -24,15 +24,15 @@ Three core objects with multiple many-to-many relationships, including self-refe
 - **Paperwork** — documents, contracts, certificates, etc.
 - **Property** — parcels with spatial geometry (points, polygons) stored in PostGIS
 
-Relationships: People ↔ Paperwork, People ↔ Properties, Paperwork ↔ Properties, plus self-references (e.g. a Person related to another Person, a Property containing another Property). Field names and type vocabularies live in `ro-RO.json` (which will move under `next-intl` in Slice 0.5).
+Relationships: People ↔ Paperwork, People ↔ Properties, Paperwork ↔ Properties, plus self-references (e.g. a Person related to another Person, a Property containing another Property). Field names and type vocabularies live in `messages/en-GB.json` and `messages/ro-RO.json`, served via next-intl.
 
 ## Tech stack (locked in)
 
 - **Frontend** — Next.js 16.2.4 (App Router), React 19.2.4, Tailwind CSS v4
 - **Data fetching** — TanStack Query 5
-- **Forms + validation** — React Hook Form 7 + Zod (planned, Slice 0.5) via `@hookform/resolvers`
+- **Forms + validation** — React Hook Form 7 + Zod v4 (`import { z } from "zod/v4"`) via `@hookform/resolvers`
 - **Maps** — Leaflet 1.9.4 + react-leaflet 5
-- **i18n** — next-intl (planned, Slice 0.5); two locales: `en-GB` and `ro-RO`
+- **i18n** — next-intl; two locales: `en-GB` and `ro-RO`; cookie-based (no URL segment); messages in `messages/*.json`
 - **Database** — PostgreSQL 16 + PostGIS 3.4 (Docker image `postgis/postgis:16-3.4`), pgAdmin 4
 - **Testing** — Jest 30 with `next/jest` (SWC transformer), jsdom, `@testing-library/react` + `jest-dom`
 - **CI** — GitHub Actions: `npm ci` → lint → test → build
@@ -45,9 +45,11 @@ Relationships: People ↔ Paperwork, People ↔ Properties, Paperwork ↔ Proper
 **Slice progress**
 
 - Slice #0 — foundation cleanup: `.gitattributes`, externalized Docker secrets, Jest scaffold, CI workflow, README. ✅ Complete.
-- Slice 0.5 — install Zod + next-intl (no feature code yet). 🔜 Next.
-- Slice #1 — Person CRUD (full DB → API → UI → tests). After Slice 0.5.
-- Slice #2+ — Paperwork, Property, relationships, map view, bilingual toggle, etc.
+- Slice 0.5 — Zod v4 + next-intl installed and wired (cookie-based locale, `src/i18n/request.ts`, `src/lib/i18n/locale.ts`, `NextIntlClientProvider` in root layout, bilingual toggle on list pages). ✅ Complete (landed inside Slices #1–2).
+- Slice #1 — Person CRUD (full DB → API → UI → tests). ✅ Complete.
+- Slice #2 — Property CRUD with map view, Stereo70 input, PostGIS corners, bilingual UI. ✅ Complete.
+- Slice #3 — Paperwork CRUD. 🔜 Next.
+- Slice #4+ — Relationships (People ↔ Properties ↔ Paperwork, self-refs), relationship map view, etc.
 
 Each slice typically lands as multiple small commits, each individually green.
 
@@ -74,12 +76,14 @@ Each slice typically lands as multiple small commits, each individually green.
 - **Tailwind v4 has new syntax.** `@import "tailwindcss";` plus `@theme inline { ... }` instead of `tailwind.config.js`-driven theme keys. Don't reach for v3 patterns.
 - **Write tool truncation on `$`.** When writing files containing shell-style `${VAR}` references (e.g. docker-compose), use bash heredoc with a single-quoted delimiter (`<< 'EOF'`) instead of the Write tool.
 - **Sandbox file drift from Windows.** Occasionally the Linux sandbox shows files as deleted/added when Adrian's Windows side is clean. Don't react to it — verify on his side.
+- **Zod v4 import.** The package is `zod ^4.x`. Always use `import { z } from "zod/v4"` — the default `"zod"` entry point re-exports v3 shims for compatibility and behaves differently.
 
 ## Key paths
 
 - `C:\dev\ga40prj` — this repo (read-write)
 - `C:\dev.docs\ga40prj` — Adrian's reference docs (read-only): stack decisions, install logs, credentials, future mockups
-- `C:\dev\ga40prj\Slice.1.inputs\` — Adrian's mockups/data/info for Slice #1 (he prepares; Claude reviews before development starts)
+- `C:\dev\ga40prj\Slice.1.inputs\` — Adrian's inputs for Slice #1 (reference only, complete)
+- `C:\dev\ga40prj\Slice.3.inputs\` — Adrian's mockups/data/info for Slice #3 when ready (he prepares; Claude reviews before development starts)
 
 ## Reading order for a fresh session
 
