@@ -300,7 +300,7 @@ const COLUMNS_CLASS: Record<1 | 2 | 3 | 4, string> = {
   1: "grid grid-cols-1 gap-4",
   2: "grid grid-cols-1 gap-4 sm:grid-cols-2",
   3: "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3",
-  4: "grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4",
+  4: "grid grid-cols-2 gap-4 md:grid-cols-4",
 };
 
 function Section({

@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { useState, useEffect } from "react";
-import { formatDMS } from "@/lib/geo/dms";
+import { decimalToDMS, dmsToDecimal, formatDMS } from "@/lib/geo/dms";
 import type { Corner } from "./form-schema";
 
 // ---------------------------------------------------------------------------
@@ -10,7 +10,7 @@ import type { Corner } from "./form-schema";
 // ---------------------------------------------------------------------------
 
 type DisplayFormat = "DD" | "DMS" | "S70";
-type InputMode    = "DD" | "STEREO70";
+type InputMode    = "DD" | "DMS" | "STEREO70";
 
 type Stereo70Point = { north: number; east: number };
 
@@ -81,25 +81,58 @@ async function wgs84ToStereo70Batch(corners: Corner[]): Promise<Stereo70Point[]>
 
 function CornerInputRow({
   initial,
+  initialMode = "DD",
   onSave,
   onCancel,
 }: {
-  initial?: Corner;
-  onSave:   (c: Corner) => void;
-  onCancel: () => void;
+  initial?:     Corner;
+  initialMode?: InputMode;
+  onSave:       (c: Corner) => void;
+  onCancel:     () => void;
 }) {
   const t = useTranslations("property.corners");
 
-  const [mode,        setMode]        = useState<InputMode>("DD");
-  const [lat,         setLat]         = useState(initial ? String(initial.lat) : "");
-  const [lon,         setLon]         = useState(initial ? String(initial.lon) : "");
-  const [north,       setNorth]       = useState("");
-  const [east,        setEast]        = useState("");
-  const [converting,  setConverting]  = useState(false);
-  const [convertErr,  setConvertErr]  = useState<string | null>(null);
+  const [mode,       setMode]       = useState<InputMode>(initialMode);
+  const [converting, setConverting] = useState(false);
+  const [convertErr, setConvertErr] = useState<string | null>(null);
+
+  // ── DD state ──────────────────────────────────────────────────────────────
+  const [lat, setLat] = useState(initial ? String(initial.lat) : "");
+  const [lon, setLon] = useState(initial ? String(initial.lon) : "");
+
+  // ── DMS state — initialised from `initial` when opening in DMS mode ──────
+  const initLatDms = initial ? decimalToDMS(initial.lat, true)  : null;
+  const initLonDms = initial ? decimalToDMS(initial.lon, false) : null;
+  const [latDeg, setLatDeg] = useState(initLatDms ? String(initLatDms.deg)              : "");
+  const [latMin, setLatMin] = useState(initLatDms ? String(initLatDms.min)              : "");
+  const [latSec, setLatSec] = useState(initLatDms ? initLatDms.sec.toFixed(2)           : "");
+  const [latDir, setLatDir] = useState<"N" | "S">(initLatDms ? initLatDms.dir as "N" | "S" : "N");
+  const [lonDeg, setLonDeg] = useState(initLonDms ? String(initLonDms.deg)              : "");
+  const [lonMin, setLonMin] = useState(initLonDms ? String(initLonDms.min)              : "");
+  const [lonSec, setLonSec] = useState(initLonDms ? initLonDms.sec.toFixed(2)           : "");
+  const [lonDir, setLonDir] = useState<"E" | "W">(initLonDms ? initLonDms.dir as "E" | "W" : "E");
+
+  // ── Stereo 70 state ───────────────────────────────────────────────────────
+  const [north, setNorth] = useState("");
+  const [east,  setEast]  = useState("");
 
   const inputCls =
     "rounded border border-zinc-300 bg-white px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-950 focus:outline-none focus:border-zinc-500 w-full";
+
+  const dirBtn = (active: boolean, onClick: () => void, label: string) => (
+    <button
+      type="button"
+      onClick={onClick}
+      className={[
+        "rounded px-1.5 py-0.5 text-xs font-semibold border transition-colors",
+        active
+          ? "bg-zinc-900 text-white border-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 dark:border-zinc-100"
+          : "bg-white text-zinc-600 border-zinc-300 hover:bg-zinc-100 dark:bg-zinc-950 dark:border-zinc-700 dark:hover:bg-zinc-800",
+      ].join(" ")}
+    >
+      {label}
+    </button>
+  );
 
   const handleSave = async () => {
     setConvertErr(null);
@@ -115,6 +148,23 @@ function CornerInputRow({
       return;
     }
 
+    if (mode === "DMS") {
+      const dN = parseInt(latDeg), mN = parseInt(latMin), sN = parseFloat(latSec);
+      const dE = parseInt(lonDeg), mE = parseInt(lonMin), sE = parseFloat(lonSec);
+      if ([dN, mN, sN, dE, mE, sE].some(isNaN)) {
+        setConvertErr("Enter valid degrees, minutes, and seconds");
+        return;
+      }
+      const latDD = dmsToDecimal({ deg: dN, min: mN, sec: sN });
+      const lonDD = dmsToDecimal({ deg: dE, min: mE, sec: sE });
+      onSave({
+        lat: latDir === "N" ? latDD : -latDD,
+        lon: lonDir === "E" ? lonDD : -lonDD,
+      });
+      return;
+    }
+
+    // STEREO70
     const northN = parseFloat(north);
     const eastN  = parseFloat(east);
     if (isNaN(northN) || isNaN(eastN)) {
@@ -138,24 +188,6 @@ function CornerInputRow({
 
       <td colSpan={2} className="px-3 py-2">
         <div className="flex flex-col gap-2">
-          <div className="flex gap-1 text-xs">
-            {(["DD", "STEREO70"] as InputMode[]).map((m) => (
-              <button
-                key={m}
-                type="button"
-                onClick={() => { setMode(m); setConvertErr(null); }}
-                className={[
-                  "rounded px-2 py-0.5 font-medium transition-colors",
-                  mode === m
-                    ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
-                    : "border border-zinc-300 hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800",
-                ].join(" ")}
-              >
-                {m === "DD" ? t("inputDD") : t("inputStereo70")}
-              </button>
-            ))}
-          </div>
-
           {mode === "DD" ? (
             <div className="grid grid-cols-2 gap-2">
               <label className="flex flex-col gap-0.5 text-xs">
@@ -180,6 +212,37 @@ function CornerInputRow({
                   className={inputCls}
                 />
               </label>
+            </div>
+          ) : mode === "DMS" ? (
+            <div className="flex flex-col gap-1.5">
+              {/* Latitude row */}
+              <div className="flex items-center gap-1 text-xs">
+                <span className="w-16 shrink-0 text-zinc-500">{t("lat")}</span>
+                <input type="number" min={0} max={90}     step={1}   value={latDeg} onChange={(e) => setLatDeg(e.target.value)} placeholder="44"    className={inputCls + " w-10"} />
+                <span className="text-zinc-400">°</span>
+                <input type="number" min={0} max={59}     step={1}   value={latMin} onChange={(e) => setLatMin(e.target.value)} placeholder="24"    className={inputCls + " w-10"} />
+                <span className="text-zinc-400">′</span>
+                <input type="number" min={0} max={59.999} step="any" value={latSec} onChange={(e) => setLatSec(e.target.value)} placeholder="59.40" className={inputCls + " w-16"} />
+                <span className="text-zinc-400">″</span>
+                <div className="flex gap-0.5 ml-1">
+                  {dirBtn(latDir === "N", () => setLatDir("N"), "N")}
+                  {dirBtn(latDir === "S", () => setLatDir("S"), "S")}
+                </div>
+              </div>
+              {/* Longitude row */}
+              <div className="flex items-center gap-1 text-xs">
+                <span className="w-16 shrink-0 text-zinc-500">{t("lon")}</span>
+                <input type="number" min={0} max={180}    step={1}   value={lonDeg} onChange={(e) => setLonDeg(e.target.value)} placeholder="25"    className={inputCls + " w-10"} />
+                <span className="text-zinc-400">°</span>
+                <input type="number" min={0} max={59}     step={1}   value={lonMin} onChange={(e) => setLonMin(e.target.value)} placeholder="57"    className={inputCls + " w-10"} />
+                <span className="text-zinc-400">′</span>
+                <input type="number" min={0} max={59.999} step="any" value={lonSec} onChange={(e) => setLonSec(e.target.value)} placeholder="52.20" className={inputCls + " w-16"} />
+                <span className="text-zinc-400">″</span>
+                <div className="flex gap-0.5 ml-1">
+                  {dirBtn(lonDir === "E", () => setLonDir("E"), "E")}
+                  {dirBtn(lonDir === "W", () => setLonDir("W"), "W")}
+                </div>
+              </div>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-2">
@@ -236,6 +299,17 @@ function CornerInputRow({
       </td>
     </tr>
   );
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/** Map the list's current display format to the matching input mode. */
+function displayFmtToInputMode(fmt: DisplayFormat): InputMode {
+  if (fmt === "S70")  return "STEREO70";
+  if (fmt === "DMS")  return "DMS";
+  return "DD";
 }
 
 // ---------------------------------------------------------------------------
@@ -381,6 +455,7 @@ export function CornersManager({ corners, onChange }: Props) {
                 <CornerInputRow
                   key={"edit-" + idx}
                   initial={c}
+                  initialMode={displayFmtToInputMode(displayFmt)}
                   onSave={(updated) => handleEdit(idx, updated)}
                   onCancel={() => setEditingIdx(null)}
                 />
@@ -431,6 +506,7 @@ export function CornersManager({ corners, onChange }: Props) {
 
             {adding && (
               <CornerInputRow
+                initialMode={displayFmtToInputMode(displayFmt)}
                 onSave={handleAdd}
                 onCancel={() => setAdding(false)}
               />
