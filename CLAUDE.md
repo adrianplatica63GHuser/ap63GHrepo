@@ -48,6 +48,7 @@ Relationships: People ↔ Paperwork, People ↔ Properties, Paperwork ↔ Proper
 - Slice 0.5 — Zod v4 + next-intl installed and wired (cookie-based locale, `src/i18n/request.ts`, `src/lib/i18n/locale.ts`, `NextIntlClientProvider` in root layout, bilingual toggle on list pages). ✅ Complete (landed inside Slices #1–2).
 - Slice #1 — Person CRUD (full DB → API → UI → tests). ✅ Complete.
 - Slice #2 — Property CRUD with map view, Stereo70 input, PostGIS corners, bilingual UI. ✅ Complete.
+- Slice #2.5 — Property UI polish: Google Maps (satellite/street toggle), full-page map fix, compact 4-col cadastral layout, full-width stacked minimap, draggable corner markers, click-to-draw polygon, DD/DMS/S70 input inheritance in Add/Edit corner row. ✅ Complete.
 - Slice #3 — Paperwork CRUD. 🔜 Next.
 - Slice #4+ — Relationships (People ↔ Properties ↔ Paperwork, self-refs), relationship map view, etc.
 
