@@ -1,4 +1,34 @@
 {
+  "home": {
+    "title": "GA40",
+    "subtitle": "People · Paperwork · Properties",
+    "soon": "coming soon",
+    "sections": {
+      "people": "People",
+      "property": "Property",
+      "paperwork": "Paperwork",
+      "administration": "Administration"
+    },
+    "buttons": {
+      "naturalPerson": "Natural Person",
+      "judicialPerson": "Judicial Person",
+      "landList": "Land — List",
+      "landMap": "Land — Map",
+      "building": "Building",
+      "propertyType3": "Type 3",
+      "propertyType4": "Type 4",
+      "paperwork1": "Contract",
+      "paperwork2": "Certificate",
+      "paperwork3": "Authorization",
+      "paperwork4": "Deed",
+      "paperwork5": "Extract",
+      "paperwork6": "Report",
+      "users": "Users & Access",
+      "referenceData": "Reference Data",
+      "importExport": "Import / Export",
+      "settings": "Settings"
+    }
+  },
   "property": {
     "listTitle": "Properties",
     "searchPlaceholder": "search by code, nickname, cadastral no., or carte funciara",

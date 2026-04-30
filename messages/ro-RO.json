@@ -1,4 +1,34 @@
 {
+  "home": {
+    "title": "GA40",
+    "subtitle": "Persoane · Acte · Proprietăți",
+    "soon": "în curând",
+    "sections": {
+      "people": "Persoane",
+      "property": "Proprietăți",
+      "paperwork": "Acte",
+      "administration": "Administrare"
+    },
+    "buttons": {
+      "naturalPerson": "Persoană Fizică",
+      "judicialPerson": "Persoană Juridică",
+      "landList": "Teren — Listă",
+      "landMap": "Teren — Hartă",
+      "building": "Construcție",
+      "propertyType3": "Tip 3",
+      "propertyType4": "Tip 4",
+      "paperwork1": "Contract",
+      "paperwork2": "Certificat",
+      "paperwork3": "Autorizație",
+      "paperwork4": "Act",
+      "paperwork5": "Extras CF",
+      "paperwork6": "Raport",
+      "users": "Utilizatori & Acces",
+      "referenceData": "Date de referință",
+      "importExport": "Import / Export",
+      "settings": "Setări"
+    }
+  },
   "property": {
     "listTitle": "Proprietăți",
     "searchPlaceholder": "caută după cod, poreclă, nr. cadastru sau carte funciară",
