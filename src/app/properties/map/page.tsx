@@ -19,8 +19,11 @@ export default async function PropertyMapPage() {
       </header>
 
       {/* Full-height map — rendered client-side only */}
-      <div className="flex-1 min-h-0">
-        <MapView />
+      {/* relative + absolute inset-0 gives Google Maps a concrete bounding box */}
+      <div className="flex-1 min-h-0 relative">
+        <div className="absolute inset-0">
+          <MapView />
+        </div>
       </div>
     </div>
   );
