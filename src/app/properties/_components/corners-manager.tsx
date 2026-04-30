@@ -113,8 +113,32 @@ function CornerInputRow({
   const [lonDir, setLonDir] = useState<"E" | "W">(initLonDms ? initLonDms.dir as "E" | "W" : "E");
 
   // ── Stereo 70 state ───────────────────────────────────────────────────────
-  const [north, setNorth] = useState("");
-  const [east,  setEast]  = useState("");
+  const [north,          setNorth]          = useState("");
+  const [east,           setEast]           = useState("");
+  const [s70InitLoading, setS70InitLoading] = useState(
+    // true only when editing an existing corner in S70 mode (values must be fetched)
+    initialMode === "STEREO70" && !!initial,
+  );
+
+  // When editing an existing corner in S70 mode, convert the stored WGS84
+  // values to Stereo 70 once on mount so the fields are pre-populated.
+  useEffect(() => {
+    if (initialMode !== "STEREO70" || !initial) return;
+    let cancelled = false;
+    wgs84ToStereo70Batch([initial])
+      .then((pts) => {
+        if (cancelled) return;
+        const pt = pts[0];
+        if (pt) {
+          setNorth(pt.north.toFixed(2));
+          setEast(pt.east.toFixed(2));
+        }
+      })
+      .catch(() => { /* leave empty; user will see blank fields and can type */ })
+      .finally(() => { if (!cancelled) setS70InitLoading(false); });
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // intentionally runs once on mount only
 
   const inputCls =
     "rounded border border-zinc-300 bg-white px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-950 focus:outline-none focus:border-zinc-500 w-full";
@@ -253,7 +277,8 @@ function CornerInputRow({
                   step="any"
                   value={north}
                   onChange={(e) => setNorth(e.target.value)}
-                  placeholder="332500"
+                  placeholder={s70InitLoading ? t("converting") : "332500"}
+                  disabled={s70InitLoading}
                   className={inputCls}
                 />
               </label>
@@ -264,7 +289,8 @@ function CornerInputRow({
                   step="any"
                   value={east}
                   onChange={(e) => setEast(e.target.value)}
-                  placeholder="426200"
+                  placeholder={s70InitLoading ? t("converting") : "426200"}
+                  disabled={s70InitLoading}
                   className={inputCls}
                 />
               </label>
