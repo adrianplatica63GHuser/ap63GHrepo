@@ -9,7 +9,12 @@ const globalForDb = globalThis as unknown as { pool?: Pool };
 
 export const pool =
   globalForDb.pool ??
-  new Pool({ connectionString: process.env.DATABASE_URL });
+  new Pool({
+    connectionString: process.env.DATABASE_URL,
+    // Supabase (and any remote Postgres) requires TLS in production.
+    // Locally (Docker) we leave SSL off so no cert setup is needed.
+    ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : undefined,
+  });
 
 if (process.env.NODE_ENV !== "production") {
   globalForDb.pool = pool;
