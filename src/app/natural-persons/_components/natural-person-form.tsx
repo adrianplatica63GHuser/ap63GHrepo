@@ -122,126 +122,133 @@ export function NaturalPersonForm({
       className="flex flex-col gap-8"
       noValidate
     >
-      <Section title={t("sections.identity")}>
-        <Field
-          label={t("fields.lastName")}
-          name="lastName"
-          register={register}
-          error={errors.lastName?.message}
-        />
-        <Field
-          label={t("fields.firstName")}
-          name="firstName"
-          register={register}
-          error={errors.firstName?.message}
-        />
-        {mode === "edit" && personCode && (
-          <ReadOnlyField label={t("fields.code")} value={personCode} />
-        )}
-        <Field
-          label={t("fields.nickname")}
-          name="nickname"
-          register={register}
-          error={errors.nickname?.message}
-        />
-        <Field
-          label={t("fields.cnp")}
-          name="cnp"
-          register={register}
-          error={errors.cnp?.message}
-          hint={t("hints.cnpLocked")}
-        />
-      </Section>
-
-      <Section title={t("sections.idDocument")}>
-        <SelectField
-          label={t("fields.idDocumentType")}
-          name="idDocumentType"
-          register={register}
-          error={errors.idDocumentType?.message}
-          options={[
-            { value: "", label: "—" },
-            { value: "ID_CARD", label: t("options.idDoc.ID_CARD") },
-            { value: "PASSPORT", label: t("options.idDoc.PASSPORT") },
-          ]}
-        />
-        <Field
-          label={t("fields.idDocumentNumber")}
-          name="idDocumentNumber"
-          register={register}
-          error={errors.idDocumentNumber?.message}
-        />
-      </Section>
-
-      <Section title={t("sections.demographics")}>
-        <SelectField
-          label={t("fields.gender")}
-          name="gender"
-          register={register}
-          error={errors.gender?.message}
-          options={[
-            { value: "", label: "—" },
-            { value: "MALE", label: t("options.gender.MALE") },
-            { value: "FEMALE", label: t("options.gender.FEMALE") },
-          ]}
-        />
-        <Field
-          label={t("fields.dateOfBirth")}
-          name="dateOfBirth"
-          type="date"
-          register={register}
-          error={errors.dateOfBirth?.message}
-        />
-      </Section>
-
-      <Section title={t("sections.contact")}>
-        <Field
-          label={t("fields.personalPhone1")}
-          name="personalPhone1"
-          register={register}
-          error={errors.personalPhone1?.message}
-        />
-        <Field
-          label={t("fields.personalEmail1")}
-          name="personalEmail1"
-          register={register}
-          error={errors.personalEmail1?.message}
-        />
-        <Field
-          label={t("fields.personalPhone2")}
-          name="personalPhone2"
-          register={register}
-          error={errors.personalPhone2?.message}
-        />
-        <Field
-          label={t("fields.personalEmail2")}
-          name="personalEmail2"
-          register={register}
-          error={errors.personalEmail2?.message}
-        />
-        <Field
-          label={t("fields.workPhone")}
-          name="workPhone"
-          register={register}
-          error={errors.workPhone?.message}
-        />
-        <Field
-          label={t("fields.workEmail")}
-          name="workEmail"
-          register={register}
-          error={errors.workEmail?.message}
-        />
-      </Section>
-
-      <Section title={t("fields.notes")} columns={1}>
-        <TextAreaField
-          label={t("fields.notes")}
-          name="notes"
-          register={register}
-          error={errors.notes?.message}
-          maxLength={300}
-        />
-      </Section>
+      {/* Identity — all personal data merged into one section */}
+      <section className="rounded-md border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+          {t("sections.identity")}
+        </h2>
+        <div className="flex flex-col gap-4">
+          {/* Row 1: Last Name, First Name, Code, CNP — 4 cols */}
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            <Field
+              label={t("fields.lastName")}
+              name="lastName"
+              register={register}
+              error={errors.lastName?.message}
+            />
+            <Field
+              label={t("fields.firstName")}
+              name="firstName"
+              register={register}
+              error={errors.firstName?.message}
+            />
+            {mode === "edit" && personCode && (
+              <ReadOnlyField label={t("fields.code")} value={personCode} />
+            )}
+            <Field
+              label={t("fields.cnp")}
+              name="cnp"
+              register={register}
+              error={errors.cnp?.message}
+            />
+          </div>
+          {/* Row 2: ID Type, ID Number, Gender, Date of Birth — 4 cols */}
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            <SelectField
+              label={t("fields.idDocumentType")}
+              name="idDocumentType"
+              register={register}
+              error={errors.idDocumentType?.message}
+              options={[
+                { value: "", label: "—" },
+                { value: "ID_CARD", label: t("options.idDoc.ID_CARD") },
+                { value: "PASSPORT", label: t("options.idDoc.PASSPORT") },
+              ]}
+            />
+            <Field
+              label={t("fields.idDocumentNumber")}
+              name="idDocumentNumber"
+              register={register}
+              error={errors.idDocumentNumber?.message}
+            />
+            <SelectField
+              label={t("fields.gender")}
+              name="gender"
+              register={register}
+              error={errors.gender?.message}
+              options={[
+                { value: "", label: "—" },
+                { value: "MALE", label: t("options.gender.MALE") },
+                { value: "FEMALE", label: t("options.gender.FEMALE") },
+              ]}
+            />
+            <Field
+              label={t("fields.dateOfBirth")}
+              name="dateOfBirth"
+              type="date"
+              register={register}
+              error={errors.dateOfBirth?.message}
+            />
+          </div>
+          {/* Row 3: Nickname, Notes — 2 cols */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Field
+              label={t("fields.nickname")}
+              name="nickname"
+              register={register}
+              error={errors.nickname?.message}
+            />
+            <Field
+              label={t("fields.notes")}
+              name="notes"
+              register={register}
+              error={errors.notes?.message}
+            />
+          </div>
+          {/* Row 4: Personal Phone 1, Personal Email 1, Personal Phone 2, Personal Email 2 — 4 cols */}
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            <Field
+              label={t("fields.personalPhone1")}
+              name="personalPhone1"
+              register={register}
+              error={errors.personalPhone1?.message}
+            />
+            <Field
+              label={t("fields.personalEmail1")}
+              name="personalEmail1"
+              register={register}
+              error={errors.personalEmail1?.message}
+            />
+            <Field
+              label={t("fields.personalPhone2")}
+              name="personalPhone2"
+              register={register}
+              error={errors.personalPhone2?.message}
+            />
+            <Field
+              label={t("fields.personalEmail2")}
+              name="personalEmail2"
+              register={register}
+              error={errors.personalEmail2?.message}
+            />
+          </div>
+          {/* Row 5: Work Phone, Work Email — 4-col grid, 2 slots empty on right */}
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            <Field
+              label={t("fields.workPhone")}
+              name="workPhone"
+              register={register}
+              error={errors.workPhone?.message}
+            />
+            <Field
+              label={t("fields.workEmail")}
+              name="workEmail"
+              register={register}
+              error={errors.workEmail?.message}
+            />
+          </div>
+        </div>
+      </section>
 
       <AddressBlockFields
         title={t("sections.homeAddress")}
@@ -470,45 +477,55 @@ function AddressBlockFields({
 }) {
   const f = (sub: string) => `${prefix}.${sub}` as FieldPath<FormValues>;
   return (
-    <Section title={title}>
-      <Field
-        label={t("address.streetLine")}
-        name={f("streetLine")}
-        register={register}
-        error={errors?.streetLine?.message}
-      />
-      <Field
-        label={t("address.country")}
-        name={f("country")}
-        register={register}
-        error={errors?.country?.message}
-        hint={t("hints.countryRequiredIfAddressFilled")}
-      />
-      <Field
-        label={t("address.postalCode")}
-        name={f("postalCode")}
-        register={register}
-        error={errors?.postalCode?.message}
-      />
-      <Field
-        label={t("address.locality")}
-        name={f("locality")}
-        register={register}
-        error={errors?.locality?.message}
-      />
-      <Field
-        label={t("address.county")}
-        name={f("county")}
-        register={register}
-        error={errors?.county?.message}
-      />
-      <Field
-        label={t("address.notes")}
-        name={f("notes")}
-        register={register}
-        error={errors?.notes?.message}
-      />
-    </Section>
+    <section className="rounded-md border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+        {title}
+      </h2>
+      <div className="flex flex-col gap-4">
+        {/* Row 1: Street line, Notes — 2 cols */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Field
+            label={t("address.streetLine")}
+            name={f("streetLine")}
+            register={register}
+            error={errors?.streetLine?.message}
+          />
+          <Field
+            label={t("address.notes")}
+            name={f("notes")}
+            register={register}
+            error={errors?.notes?.message}
+          />
+        </div>
+        {/* Row 2: Postal Code, City, County, Country — 4 cols */}
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          <Field
+            label={t("address.postalCode")}
+            name={f("postalCode")}
+            register={register}
+            error={errors?.postalCode?.message}
+          />
+          <Field
+            label={t("address.locality")}
+            name={f("locality")}
+            register={register}
+            error={errors?.locality?.message}
+          />
+          <Field
+            label={t("address.county")}
+            name={f("county")}
+            register={register}
+            error={errors?.county?.message}
+          />
+          <Field
+            label={t("address.country")}
+            name={f("country")}
+            register={register}
+            error={errors?.country?.message}
+          />
+        </div>
+      </div>
+    </section>
   );
 }
 

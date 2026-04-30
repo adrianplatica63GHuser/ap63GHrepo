@@ -176,58 +176,67 @@ export function PropertyForm({
           register={register}
           error={errors.surfaceAreaMp?.message}
         />
-      </Section>
-
-      {/* Notes */}
-      <Section title={t("sections.notes")} columns={1}>
-        <TextAreaField
-          label={t("fields.notes")}
-          name="notes"
-          register={register}
-          error={errors.notes?.message}
-          maxLength={300}
-        />
+        <div className="col-span-2 md:col-span-4">
+          <TextAreaField
+            label={t("fields.notes")}
+            name="notes"
+            register={register}
+            error={errors.notes?.message}
+            maxLength={300}
+          />
+        </div>
       </Section>
 
       {/* Address */}
-      <Section title={t("sections.address")}>
-        <Field
-          label={t("address.streetLine")}
-          name="address.streetLine"
-          register={register}
-          error={errors.address?.streetLine?.message}
-        />
-        <Field
-          label={t("address.country")}
-          name="address.country"
-          register={register}
-          error={errors.address?.country?.message}
-        />
-        <Field
-          label={t("address.postalCode")}
-          name="address.postalCode"
-          register={register}
-          error={errors.address?.postalCode?.message}
-        />
-        <Field
-          label={t("address.locality")}
-          name="address.locality"
-          register={register}
-          error={errors.address?.locality?.message}
-        />
-        <Field
-          label={t("address.county")}
-          name="address.county"
-          register={register}
-          error={errors.address?.county?.message}
-        />
-        <Field
-          label={t("address.notes")}
-          name="address.notes"
-          register={register}
-          error={errors.address?.notes?.message}
-        />
-      </Section>
+      <section className="rounded-md border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+          {t("sections.address")}
+        </h2>
+        <div className="flex flex-col gap-4">
+          {/* Row 1: Street line, Notes — 2 cols */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Field
+              label={t("address.streetLine")}
+              name="address.streetLine"
+              register={register}
+              error={errors.address?.streetLine?.message}
+            />
+            <Field
+              label={t("address.notes")}
+              name="address.notes"
+              register={register}
+              error={errors.address?.notes?.message}
+            />
+          </div>
+          {/* Row 2: Postal Code, City, County, Country — 4 cols */}
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            <Field
+              label={t("address.postalCode")}
+              name="address.postalCode"
+              register={register}
+              error={errors.address?.postalCode?.message}
+            />
+            <Field
+              label={t("address.locality")}
+              name="address.locality"
+              register={register}
+              error={errors.address?.locality?.message}
+            />
+            <Field
+              label={t("address.county")}
+              name="address.county"
+              register={register}
+              error={errors.address?.county?.message}
+            />
+            <Field
+              label={t("address.country")}
+              name="address.country"
+              register={register}
+              error={errors.address?.country?.message}
+            />
+          </div>
+        </div>
+      </section>
 
       {/* Corners + mini-map — stacked vertically; minimap always full-width */}
       <section className="rounded-md border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">

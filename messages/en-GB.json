@@ -129,7 +129,7 @@
     "address": {
       "streetLine": "Street, No., Block, Floor, Apt",
       "postalCode": "Postal Code",
-      "locality": "City, Locality, UAT, Commune, Village",
+      "locality": "City / Locality / Village",
       "county": "County / Sector",
       "country": "Country",
       "notes": "Notes"

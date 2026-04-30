@@ -129,7 +129,7 @@
     "address": {
       "streetLine": "Stradă, Nr., Bloc, Etaj, Ap.",
       "postalCode": "Cod poștal",
-      "locality": "Oraș, Localitate, UAT, Comună, Sat",
+      "locality": "Oraș / Localitate / Sat",
       "county": "Județ / Sector",
       "country": "Țară",
       "notes": "Note"
