@@ -37,6 +37,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# one-time setup scripts (not part of the codebase)
+supabase_migrations.sql
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
