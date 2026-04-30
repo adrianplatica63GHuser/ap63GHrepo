@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 
-// Leaflet requires browser APIs — must not render on the server.
+// Dynamically imported to keep the Maps bundle out of the server render.
 const PropertyMap = dynamic(() => import("./property-map"), {
   ssr: false,
   loading: () => (

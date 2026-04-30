@@ -1,10 +1,14 @@
 "use client";
 
-import "leaflet/dist/leaflet.css";
-
-import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { MapContainer, Polygon, Popup, TileLayer, CircleMarker } from "react-leaflet";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import {
+  Circle,
+  InfoWindow,
+  Map,
+  Polygon,
+} from "@vis.gl/react-google-maps";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -35,30 +39,79 @@ async function fetchMapData(): Promise<MapResponse> {
 // Helpers
 // ---------------------------------------------------------------------------
 
-/** Centroid of a polygon's vertices (simple average). */
-function centroid(corners: Corner[]): [number, number] {
-  const lat = corners.reduce((s, c) => s + c.lat, 0) / corners.length;
-  const lon = corners.reduce((s, c) => s + c.lon, 0) / corners.length;
-  return [lat, lon];
+type LatLng = { lat: number; lng: number };
+
+/** Simple centroid: average of all corner coordinates. */
+function centroid(corners: Corner[]): LatLng {
+  return {
+    lat: corners.reduce((s, c) => s + c.lat, 0) / corners.length,
+    lng: corners.reduce((s, c) => s + c.lon, 0) / corners.length,
+  };
 }
 
-/** react-leaflet expects [lat, lon] tuples. */
-function toLatLng(corners: Corner[]): [number, number][] {
-  return corners.map((c) => [c.lat, c.lon]);
+function toLatLng(corners: Corner[]): LatLng[] {
+  return corners.map((c) => ({ lat: c.lat, lng: c.lon }));
 }
 
 // ---------------------------------------------------------------------------
-// Default map view — centred on Bragadiru, Ilfov
+// Map-type toggle
 // ---------------------------------------------------------------------------
 
-const DEFAULT_CENTER: [number, number] = [44.37, 25.98];
+type MapTypeId = "roadmap" | "hybrid";
+
+function MapTypeToggle({
+  value,
+  onChange,
+}: {
+  value:    MapTypeId;
+  onChange: (v: MapTypeId) => void;
+}) {
+  return (
+    <div className="flex overflow-hidden rounded shadow border border-zinc-300 bg-white">
+      {(["roadmap", "hybrid"] as MapTypeId[]).map((t) => (
+        <button
+          key={t}
+          type="button"
+          onClick={() => onChange(t)}
+          className={[
+            "px-3 py-1.5 text-xs font-semibold tracking-wide transition-colors",
+            value === t
+              ? "bg-zinc-900 text-white"
+              : "text-zinc-700 hover:bg-zinc-100",
+          ].join(" ")}
+        >
+          {t === "roadmap" ? "STR" : "SAT"}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
+const DEFAULT_CENTER: LatLng = { lat: 44.37, lng: 25.98 };
 const DEFAULT_ZOOM = 13;
+
+// ---------------------------------------------------------------------------
+// Selected-property state
+// ---------------------------------------------------------------------------
+
+type Selected = {
+  id:       string;
+  position: LatLng;
+  label:    string;
+};
 
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
 export default function PropertyMap() {
+  const [mapType,  setMapType]  = useState<MapTypeId>("roadmap");
+  const [selected, setSelected] = useState<Selected | null>(null);
+
   const { data, isLoading, isError } = useQuery<MapResponse>({
     queryKey: ["properties", "map"],
     queryFn:  fetchMapData,
@@ -80,78 +133,82 @@ export default function PropertyMap() {
     );
   }
 
-  const items = data?.items ?? [];
-  // Properties that have enough corners to render something
+  const items        = data?.items ?? [];
   const withGeometry = items.filter((p) => p.corners.length >= 1);
 
   return (
-    <MapContainer
-      center={DEFAULT_CENTER}
-      zoom={DEFAULT_ZOOM}
-      style={{ width: "100%", height: "100%" }}
-    >
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
+    <div className="relative w-full h-full">
+      <Map
+        defaultCenter={DEFAULT_CENTER}
+        defaultZoom={DEFAULT_ZOOM}
+        mapTypeId={mapType}
+        disableDefaultUI
+        gestureHandling="greedy"
+        style={{ width: "100%", height: "100%" }}
+        onClick={() => setSelected(null)}
+      >
+        {withGeometry.map((prop) => {
+          const label = prop.nickname ?? prop.code;
+          const pos   = centroid(prop.corners);
 
-      {withGeometry.map((prop) => {
-        const label = prop.nickname ?? prop.code;
-        const center = centroid(prop.corners);
+          return prop.corners.length >= 3 ? (
+            // Polygon for parcels with ≥3 corners
+            <Polygon
+              key={prop.id}
+              paths={toLatLng(prop.corners)}
+              strokeColor="#3b82f6"
+              strokeOpacity={1}
+              strokeWeight={2}
+              fillColor="#3b82f6"
+              fillOpacity={0.15}
+              onClick={(e) => {
+                e.stop();
+                setSelected({ id: prop.id, position: pos, label });
+              }}
+            />
+          ) : (
+            // Circle marker for parcels with 1–2 corners
+            <Circle
+              key={prop.id}
+              center={{ lat: prop.corners[0].lat, lng: prop.corners[0].lon }}
+              radius={25}
+              strokeColor="#3b82f6"
+              strokeOpacity={1}
+              strokeWeight={2}
+              fillColor="#3b82f6"
+              fillOpacity={0.5}
+              onClick={(e) => {
+                e.stop();
+                setSelected({ id: prop.id, position: pos, label });
+              }}
+            />
+          );
+        })}
 
-        return prop.corners.length >= 3 ? (
-          // Polygon for parcels with ≥3 corners
-          <Polygon
-            key={prop.id}
-            positions={toLatLng(prop.corners)}
-            pathOptions={{
-              color:       "#3b82f6",   // blue-500
-              fillColor:   "#3b82f6",
-              fillOpacity: 0.15,
-              weight:      2,
-            }}
+        {selected && (
+          <InfoWindow
+            position={selected.position}
+            onCloseClick={() => setSelected(null)}
           >
-            <Popup>
-              <div className="flex flex-col gap-1">
-                <span className="font-semibold text-sm">{label}</span>
-                <span className="text-xs text-zinc-500 font-mono">{prop.code}</span>
-                <Link
-                  href={`/properties/${prop.id}`}
-                  className="mt-1 text-xs text-blue-600 hover:underline"
-                >
-                  Open →
-                </Link>
-              </div>
-            </Popup>
-          </Polygon>
-        ) : (
-          // Circle marker for parcels with 1–2 corners
-          <CircleMarker
-            key={prop.id}
-            center={center}
-            radius={8}
-            pathOptions={{
-              color:       "#3b82f6",
-              fillColor:   "#3b82f6",
-              fillOpacity: 0.5,
-              weight:      2,
-            }}
-          >
-            <Popup>
-              <div className="flex flex-col gap-1">
-                <span className="font-semibold text-sm">{label}</span>
-                <span className="text-xs text-zinc-500 font-mono">{prop.code}</span>
-                <Link
-                  href={`/properties/${prop.id}`}
-                  className="mt-1 text-xs text-blue-600 hover:underline"
-                >
-                  Open →
-                </Link>
-              </div>
-            </Popup>
-          </CircleMarker>
-        );
-      })}
-    </MapContainer>
+            <div className="flex flex-col gap-1 px-1 py-0.5">
+              <span className="font-semibold text-sm text-zinc-900">
+                {selected.label}
+              </span>
+              <Link
+                href={`/properties/${selected.id}`}
+                className="text-xs text-blue-600 hover:underline"
+              >
+                Open →
+              </Link>
+            </div>
+          </InfoWindow>
+        )}
+      </Map>
+
+      {/* Map-type toggle — STR / SAT */}
+      <div className="absolute top-3 right-3 z-10">
+        <MapTypeToggle value={mapType} onChange={setMapType} />
+      </div>
+    </div>
   );
 }
