@@ -352,12 +352,15 @@ export function CornersManager({ corners, onChange }: Props) {
 
   const cornersKey = cornersToKey(corners);
 
+  // Derive the effective S70 state during render — no synchronous setState needed
+  // for the empty-corners case. The effect only runs when there is data to fetch.
+  const effectiveS70: S70State =
+    displayFmt !== "S70" || corners.length === 0
+      ? { loading: false, error: false, values: [] }
+      : s70State;
+
   useEffect(() => {
-    if (displayFmt !== "S70") return;
-    if (corners.length === 0) {
-      setS70State({ loading: false, error: false, values: [] });
-      return;
-    }
+    if (displayFmt !== "S70" || corners.length === 0) return;
 
     let cancelled = false;
     setS70State({ loading: true, error: false, values: [] });
@@ -416,22 +419,22 @@ export function CornersManager({ corners, onChange }: Props) {
     S70: t("formatStereo70"),
   };
 
-  const showS70Loading = displayFmt === "S70" && s70State.loading;
-  const showS70Error   = displayFmt === "S70" && s70State.error;
+  const showS70Loading = displayFmt === "S70" && effectiveS70.loading;
+  const showS70Error   = displayFmt === "S70" && effectiveS70.error;
 
   const col1Values = corners.map((c, idx) => {
     if (displayFmt === "DD")  return fmtDD(c.lat);
     if (displayFmt === "DMS") return formatDMS(c.lat, true);
-    if (s70State.loading)     return "…";
-    if (s70State.error)       return "—";
-    return fmtS70(s70State.values[idx]?.north ?? 0);
+    if (effectiveS70.loading)     return "…";
+    if (effectiveS70.error)       return "—";
+    return fmtS70(effectiveS70.values[idx]?.north ?? 0);
   });
   const col2Values = corners.map((c, idx) => {
     if (displayFmt === "DD")  return fmtDD(c.lon);
     if (displayFmt === "DMS") return formatDMS(c.lon, false);
-    if (s70State.loading)     return "…";
-    if (s70State.error)       return "—";
-    return fmtS70(s70State.values[idx]?.east ?? 0);
+    if (effectiveS70.loading)     return "…";
+    if (effectiveS70.error)       return "—";
+    return fmtS70(effectiveS70.values[idx]?.east ?? 0);
   });
 
   return (
