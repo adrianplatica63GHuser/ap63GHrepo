@@ -15,6 +15,13 @@
       "when": 1777415275768,
       "tag": "0001_slim_black_bolt",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1746403200000,
+      "tag": "0002_value_lists",
+      "breakpoints": true
     }
   ]
 }

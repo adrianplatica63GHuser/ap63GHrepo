@@ -49,10 +49,37 @@ Relationships: People ↔ Paperwork, People ↔ Properties, Paperwork ↔ Proper
 - Slice #1 — Person CRUD (full DB → API → UI → tests). ✅ Complete.
 - Slice #2 — Property CRUD with map view, Stereo70 input, PostGIS corners, bilingual UI. ✅ Complete.
 - Slice #2.5 — Property UI polish. ✅ Complete. Full detail below.
+- Slice #2.6 — Vercel + Supabase deployment + home page launching pad. ✅ Complete. Full detail below.
 - Slice #3 — Paperwork CRUD. 🔜 Next.
 - Slice #4+ — Relationships (People ↔ Properties ↔ Paperwork, self-refs), relationship map view, etc.
 
 Each slice typically lands as multiple small commits, each individually green.
+
+### Slice #2.6 — Vercel + Supabase deployment + home page (detail)
+
+**Cloud setup**
+- Supabase project: `ga40prj` (EU West / Ireland), signed in via Google (`adrianplatica63@gmail.com`). PostGIS enabled manually via `CREATE EXTENSION IF NOT EXISTS postgis;` in SQL editor.
+- Schema applied via Supabase SQL editor (drizzle-kit `migrate` could not connect cleanly due to SSL/driver issues with the sandbox; the combined migration SQL is in `supabase_migrations.sql`, gitignored).
+- Vercel project: `ga40prj` at `https://ga40prj.vercel.app`, connected to `adrianplatica63GHuser/ap63GHrepo`. Every push to `main` auto-deploys.
+- Env vars set in Vercel: `DATABASE_URL` (Supabase pooled, port 6543), `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`, `NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID=DEMO_MAP_ID`.
+
+**Two connection strings (important)**
+- `DIRECT_URL` (port 5432, direct) — local `.env` only; used by `drizzle-kit` for migrations. Never goes to Vercel.
+- `DATABASE_URL` (port 6543, Supabase pooler) — used by the running app. Set in both local `.env` and Vercel env vars.
+- `drizzle.config.ts` prefers `DIRECT_URL` when present, falls back to `DATABASE_URL`.
+- For local dev: `DATABASE_URL` still points at Docker Postgres; only set `DIRECT_URL` when intentionally migrating schema to Supabase.
+
+**SSL**
+- `src/db/index.ts` — `Pool` passes `ssl: { rejectUnauthorized: false }` when `NODE_ENV === "production"`. No effect on local Docker.
+
+**Future schema migrations to Supabase**
+- Run `npm run db:migrate` locally with `DIRECT_URL` pointing at Supabase (port 5432, `?sslmode=require` appended). If drizzle-kit fails silently again, paste the new migration SQL file directly into the Supabase SQL editor.
+
+**Home page launching pad**
+- `src/app/page.tsx` replaced with a four-section grid: People, Property, Paperwork, Administration.
+- Active buttons: Natural Person → `/natural-persons`; Land — List → `/properties`; Land — Map → `/properties/map`.
+- All other buttons are visually disabled with a "coming soon" / "în curând" label — they become active as slices land.
+- Bilingual strings live in `messages/en-GB.json` and `messages/ro-RO.json` under the `"home"` key.
 
 ### Slice #2.5 — Property UI Polish (detail)
 

@@ -13,6 +13,8 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
+// NOTE: `integer` is used below for sort_order on the lookup tables.
+
 // ---------------------------------------------------------------------------
 // Enums
 // ---------------------------------------------------------------------------
@@ -310,3 +312,90 @@ export const propertyCorner = pgTable(
     ),
   ],
 );
+
+// ---------------------------------------------------------------------------
+// Lookup / Reference-Data tables  (Slice #3 — Liste de Valori)
+// ---------------------------------------------------------------------------
+//
+// These tables back the admin "Value Lists" screen. They are intentionally
+// decoupled from the pg enums already in the schema (propertyTypeEnum,
+// useCategoryEnum) — the enum→FK migration will happen in a later slice
+// once the full domain model is settled.
+//
+// All tables share the same shape: uuid PK, payload fields, sort_order,
+// created_at / updated_at (touched by the touch_updated_at trigger).
+
+// ── Proprietate group ───────────────────────────────────────────────────────
+
+export const lookupPropertyType = pgTable("lookup_property_type", {
+  id:        uuid("id").primaryKey().defaultRandom(),
+  name:      text("name").notNull(),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const lookupTarla = pgTable("lookup_tarla", {
+  id:        uuid("id").primaryKey().defaultRandom(),
+  indicativ: text("indicativ").notNull(),
+  descriere: text("descriere"),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const lookupUseCategory = pgTable("lookup_use_category", {
+  id:        uuid("id").primaryKey().defaultRandom(),
+  name:      text("name").notNull(),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ── Persoană group ──────────────────────────────────────────────────────────
+
+export const lookupPersonType = pgTable("lookup_person_type", {
+  id:        uuid("id").primaryKey().defaultRandom(),
+  name:      text("name").notNull(),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const lookupCitizenship = pgTable("lookup_citizenship", {
+  id:        uuid("id").primaryKey().defaultRandom(),
+  name:      text("name").notNull(),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ── Document group ──────────────────────────────────────────────────────────
+
+export const lookupDocumentType = pgTable("lookup_document_type", {
+  id:        uuid("id").primaryKey().defaultRandom(),
+  name:      text("name").notNull(),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const lookupInstitution = pgTable("lookup_institution", {
+  id:              uuid("id").primaryKey().defaultRandom(),
+  name:            text("name").notNull(),
+  institutionType: text("institution_type"),
+  sortOrder:       integer("sort_order").notNull().default(0),
+  createdAt:       timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt:       timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ── Standalone ──────────────────────────────────────────────────────────────
+
+export const lookupServiceInterest = pgTable("lookup_service_interest", {
+  id:        uuid("id").primaryKey().defaultRandom(),
+  name:      text("name").notNull(),
+  category:  text("category"),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
