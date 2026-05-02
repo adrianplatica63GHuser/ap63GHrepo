@@ -186,7 +186,7 @@ export const address = pgTable(
 export const propertyTypeEnum = pgEnum("property_type", ["LAND"]);
 
 // Placeholder values; will be replaced with real ANCPI categories later.
-export const useCategoryEnum = pgEnum("use_category", [
+export const propertyCategoryEnum = pgEnum("use_category", [
   "CATEG1",
   "CATEG2",
   "CATEG3",
@@ -221,7 +221,7 @@ export const property = pgTable("property", {
   cadastralNumber: text("cadastral_number"),  // Nr. cadastru
   carteFunciara:   text("carte_funciara"),    // Nr. carte funciara
 
-  useCategory: useCategoryEnum("use_category"),
+  useCategory: propertyCategoryEnum("use_category"),
 
   // "Suprafata in mp" — area in square metres.
   surfaceAreaMp: numeric("surface_area_mp", { precision: 12, scale: 2 }),
