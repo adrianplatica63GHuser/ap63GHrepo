@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { decimalToDMS, dmsToDecimal, formatDMS } from "@/lib/geo/dms";
 import type { Corner } from "./form-schema";
