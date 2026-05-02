@@ -1,7 +1,8 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { decimalToDMS, dmsToDecimal, formatDMS } from "@/lib/geo/dms";
 import type { Corner } from "./form-schema";
 
@@ -348,34 +349,21 @@ export function CornersManager({ corners, onChange }: Props) {
   const [displayFmt,  setDisplayFmt]  = useState<DisplayFormat>("DD");
   const [adding,      setAdding]      = useState(false);
   const [editingIdx,  setEditingIdx]  = useState<number | null>(null);
-  const [s70State,    setS70State]    = useState<S70State>({ loading: false, error: false, values: [] });
-
   const cornersKey = cornersToKey(corners);
 
-  // Derive the effective S70 state during render — no synchronous setState needed
-  // for the empty-corners case. The effect only runs when there is data to fetch.
+  // TanStack Query handles loading / error / caching — no manual useEffect needed.
+  // The query is enabled only when S70 display is active and there are corners to convert.
+  const s70Query = useQuery({
+    queryKey: ["s70Conversion", cornersKey],
+    queryFn:  () => wgs84ToStereo70Batch(corners),
+    enabled:  displayFmt === "S70" && corners.length > 0,
+    staleTime: Infinity, // coordinate conversion is deterministic
+  });
+
   const effectiveS70: S70State =
     displayFmt !== "S70" || corners.length === 0
       ? { loading: false, error: false, values: [] }
-      : s70State;
-
-  useEffect(() => {
-    if (displayFmt !== "S70" || corners.length === 0) return;
-
-    let cancelled = false;
-    setS70State({ loading: true, error: false, values: [] });
-
-    wgs84ToStereo70Batch(corners)
-      .then((values) => {
-        if (!cancelled) setS70State({ loading: false, error: false, values });
-      })
-      .catch(() => {
-        if (!cancelled) setS70State({ loading: false, error: true, values: [] });
-      });
-
-    return () => { cancelled = true; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [displayFmt, cornersKey]);
+      : { loading: s70Query.isLoading, error: s70Query.isError, values: s70Query.data ?? [] };
 
   const handleAdd = (c: Corner) => {
     onChange([...corners, c]);
