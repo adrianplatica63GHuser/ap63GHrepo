@@ -51,7 +51,7 @@ export async function listValues(key: ListKey): Promise<LookupRow[]> {
 export async function createValue(
   key: ListKey,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  data: Record<string, any>,
+  data: any,
 ): Promise<LookupRow> {
   switch (key) {
     case "property-types": {
@@ -95,7 +95,7 @@ export async function updateValue(
   key: ListKey,
   id: string,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  data: Record<string, any>,
+  data: any,
 ): Promise<LookupRow | null> {
   switch (key) {
     case "property-types": {
