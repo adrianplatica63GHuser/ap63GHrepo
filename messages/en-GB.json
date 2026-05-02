@@ -189,5 +189,57 @@
       "cnpLocked": "CNP cannot be changed once set — delete and recreate to change",
       "countryRequiredIfAddressFilled": "Required if any other address field is filled"
     }
+  },
+  "valueList": {
+    "pageTitle": "Value Lists",
+    "sections": {
+      "property": "Property",
+      "person": "Person",
+      "document": "Document"
+    },
+    "lists": {
+      "propertyTypes":    "Property Types",
+      "tarla":            "Tarla Codes",
+      "useCategories":    "Use Categories",
+      "personTypes":      "Person Types",
+      "citizenships":     "Citizenship",
+      "documentTypes":    "Document Types",
+      "institutions":     "Institutions",
+      "serviceInterests": "Services & Interests"
+    },
+    "fields": {
+      "name":            "Name",
+      "indicativ":       "Code",
+      "descriere":       "Description",
+      "institutionType": "Institution Type",
+      "category":        "Category"
+    },
+    "modal": {
+      "close": "Close"
+    },
+    "form": {
+      "addTitle":  "Add new entry",
+      "editTitle": "Edit entry",
+      "save":      "Save",
+      "saving":    "Saving…",
+      "cancel":    "Cancel"
+    },
+    "toolbar": {
+      "add":   "Add",
+      "count": "{count} entries"
+    },
+    "table": {
+      "loading": "Loading…",
+      "error":   "Failed to load",
+      "empty":   "No entries yet",
+      "edit":    "Edit",
+      "delete":  "Delete"
+    },
+    "confirm": {
+      "deleteBody": "Delete this entry? This cannot be undone.",
+      "delete":     "Delete",
+      "deleting":   "Deleting…",
+      "cancel":     "Cancel"
+    }
   }
 }

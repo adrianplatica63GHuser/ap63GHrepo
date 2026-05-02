@@ -203,7 +203,7 @@ export default function PropertyMiniMapInner({ corners, onChange }: Props) {
       {/* ------------------------------------------------------------------ */}
       {/* STR / SAT toggle — top-right                                        */}
       {/* ------------------------------------------------------------------ */}
-      <div className="absolute top-2 right-2 z-10 flex overflow-hidden rounded shadow border border-zinc-300">
+      <div className="absolute top-2 right-2 z-10 flex overflow-hidden rounded shadow border border-wire">
         {(["roadmap", "hybrid"] as MapTypeId[]).map((t) => (
           <button
             key={t}
@@ -212,8 +212,8 @@ export default function PropertyMiniMapInner({ corners, onChange }: Props) {
             className={[
               "px-2 py-1 text-xs font-semibold tracking-wide transition-colors",
               mapType === t
-                ? "bg-zinc-900 text-white"
-                : "bg-white text-zinc-700 hover:bg-zinc-100",
+                ? "bg-cta text-white"
+                : "bg-white text-ink hover:bg-canvas",
             ].join(" ")}
           >
             {t === "roadmap" ? "STR" : "SAT"}
@@ -229,7 +229,7 @@ export default function PropertyMiniMapInner({ corners, onChange }: Props) {
           <button
             type="button"
             onClick={() => setDrawing(true)}
-            className="rounded shadow border border-zinc-300 bg-white px-2.5 py-1 text-xs font-semibold text-zinc-700 hover:bg-zinc-100 transition-colors"
+            className="rounded shadow border border-wire bg-white px-2.5 py-1 text-xs font-semibold text-ink hover:bg-canvas transition-colors"
           >
             ✏ Draw
           </button>

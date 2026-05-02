@@ -57,20 +57,20 @@ export function NaturalPersonListView() {
           onChange={(e) => setSearchInput(e.target.value)}
           placeholder={t("searchPlaceholder")}
           aria-label={t("searchPlaceholder")}
-          className="flex-1 max-w-md rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm placeholder:text-zinc-400 focus:border-zinc-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:placeholder:text-zinc-500"
+          className="flex-1 max-w-md rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm placeholder:text-fade focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:placeholder:text-zinc-500"
         />
 
         <Link
           href="/natural-persons/new"
-          className="inline-flex items-center rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+          className="inline-flex items-center rounded-md bg-cta px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d"
         >
           {t("addNew")}
         </Link>
       </div>
 
-      <div className="overflow-x-auto rounded-md border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="overflow-x-auto rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <table className="w-full text-sm">
-          <thead className="bg-zinc-100 text-left text-xs font-medium uppercase tracking-wide text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+          <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-ink dark:bg-zinc-800 dark:text-zinc-300">
             <tr>
               <th className="px-4 py-2">{t("table.name")}</th>
               <th className="px-4 py-2">{t("table.email")}</th>
@@ -78,10 +78,10 @@ export function NaturalPersonListView() {
               <th className="px-4 py-2 w-24" />
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+          <tbody className="divide-y divide-crease dark:divide-zinc-800">
             {query.isLoading && (
               <tr>
-                <td colSpan={4} className="px-4 py-6 text-center text-zinc-500">
+                <td colSpan={4} className="px-4 py-6 text-center text-fade">
                   {t("loading")}
                 </td>
               </tr>
@@ -95,24 +95,24 @@ export function NaturalPersonListView() {
             )}
             {query.data && query.data.items.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-4 py-6 text-center text-zinc-500">
+                <td colSpan={4} className="px-4 py-6 text-center text-fade">
                   {t("empty")}
                 </td>
               </tr>
             )}
             {query.data?.items.map((item) => (
-              <tr key={item.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
+              <tr key={item.id} className="hover:bg-cta-pale dark:hover:bg-zinc-800/50">
                 <td className="px-4 py-2 font-medium">{item.displayName}</td>
-                <td className="px-4 py-2 text-zinc-600 dark:text-zinc-400">
+                <td className="px-4 py-2 text-fade dark:text-zinc-400">
                   {item.email ?? ""}
                 </td>
-                <td className="px-4 py-2 text-zinc-600 dark:text-zinc-400">
+                <td className="px-4 py-2 text-fade dark:text-zinc-400">
                   {item.phone ?? ""}
                 </td>
                 <td className="px-4 py-2">
                   <Link
                     href={`/natural-persons/${item.id}`}
-                    className="inline-flex items-center rounded-md border border-zinc-300 bg-white px-3 py-1 text-xs font-medium shadow-sm hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+                    className="inline-flex items-center rounded-md border border-wire bg-white px-3 py-1 text-xs font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
                   >
                     {t("open")}
                   </Link>
@@ -124,7 +124,7 @@ export function NaturalPersonListView() {
       </div>
 
       {query.data && (
-        <div className="text-xs text-zinc-500 dark:text-zinc-400">
+        <div className="text-xs text-fade dark:text-zinc-400">
           {t("counts", {
             shown: query.data.items.length,
             total: query.data.total,

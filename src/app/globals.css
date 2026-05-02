@@ -1,8 +1,14 @@
 @import "tailwindcss";
 
+/* ── Base palette ─────────────────────────────────────────────────────────────
+   Avoid pure black / white: use soft off-white (#F3F1ED) and deep charcoal.
+   6 core palette colours: strong/light orange, blue, grey.
+   Contrast targets: all text-on-background combos ≥ 4.5 : 1 (WCAG AA).
+   ─────────────────────────────────────────────────────────────────────────── */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #F3F1ED;   /* light grey / soft off-white — page canvas       */
+  --foreground: #2C2F33;   /* deep charcoal — body text (≈ 12 : 1 on canvas)  */
 }
 
 @theme inline {
@@ -10,6 +16,32 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* ── 6-colour palette ──────────────────────────────────────────────────── */
+  --color-or-strong: #B85C00;   /* strong orange  — primary CTA / accent       */
+  --color-or-light:  #FEF0E6;   /* light  orange  — row hovers, warm tints     */
+  --color-bl-strong: #1A5296;   /* strong blue    — focus rings, links         */
+  --color-bl-light:  #EEF4FA;   /* light  blue    — panel / card backgrounds   */
+  --color-gy-strong: #3C4149;   /* strong grey    — headings, labels           */
+  --color-gy-light:  #F3F1ED;   /* light  grey    — page canvas (= background) */
+
+  /* ── Semantic tokens (used in component classes) ───────────────────────── */
+  --color-canvas:    #F3F1ED;   /* bg-canvas   — page background               */
+  --color-card:      #EEF4FA;   /* bg-card     — panel / section background    */
+  --color-card-rim:  #C6D4E8;   /* border-card-rim — panel border              */
+
+  --color-cta:       #B85C00;   /* bg-cta / text-cta — primary buttons         */
+  --color-cta-d:     #965100;   /* bg-cta-d  — primary button :hover           */
+  --color-cta-pale:  #FEF0E6;   /* bg-cta-pale — light orange wash / row hover */
+
+  --color-focus:     #1A5296;   /* border-focus — input focus border           */
+
+  --color-ink:       #3C4149;   /* text-ink  — section headings, field labels  */
+  --color-fade:      #595F6A;   /* text-fade — muted / secondary text          */
+
+  --color-wire:      #C0C4CC;   /* border-wire  — input borders, outline btns  */
+  --color-crease:    #D4DAE2;   /* divide-crease — table row dividers          */
+  --color-cap:       #DEE6EF;   /* bg-cap — table header background            */
 }
 
 @media (prefers-color-scheme: dark) {

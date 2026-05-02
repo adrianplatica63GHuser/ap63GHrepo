@@ -188,8 +188,8 @@ export function PropertyForm({
       </Section>
 
       {/* Address */}
-      <section className="rounded-md border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+      <section className="rounded-md border border-card-rim bg-card p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
           {t("sections.address")}
         </h2>
         <div className="flex flex-col gap-4">
@@ -239,13 +239,13 @@ export function PropertyForm({
       </section>
 
       {/* Corners + mini-map — stacked vertically; minimap always full-width */}
-      <section className="rounded-md border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+      <section className="rounded-md border border-card-rim bg-card p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
           {t("sections.corners")}
         </h2>
         <div className="flex flex-col gap-4">
           <CornersManager corners={corners} onChange={setCorners} />
-          <div className="rounded-md border border-zinc-200 overflow-hidden dark:border-zinc-800" style={{ height: "360px" }}>
+          <div className="rounded-md border border-card-rim overflow-hidden dark:border-zinc-800" style={{ height: "360px" }}>
             <PropertyMiniMap corners={corners} onChange={setCorners} />
           </div>
         </div>
@@ -258,11 +258,11 @@ export function PropertyForm({
       )}
 
       {/* Action buttons */}
-      <div className="flex items-center justify-center gap-3 border-t border-zinc-200 pt-6 dark:border-zinc-800">
+      <div className="flex items-center justify-center gap-3 border-t border-crease pt-6 dark:border-zinc-800">
         <button
           type="submit"
           disabled={saveDisabled}
-          className="inline-flex items-center rounded-md bg-zinc-900 px-5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+          className="inline-flex items-center rounded-md bg-cta px-5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d disabled:cursor-not-allowed disabled:opacity-50"
         >
           {t("buttons.save")}
         </button>
@@ -271,7 +271,7 @@ export function PropertyForm({
             type="button"
             onClick={() => setConfirmDelete(true)}
             disabled={submitting}
-            className="inline-flex items-center rounded-md border border-zinc-300 bg-white px-5 py-2 text-sm font-medium text-red-600 shadow-sm hover:bg-red-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-red-950/30"
+            className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-red-600 shadow-sm hover:bg-red-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-red-950/30"
           >
             {t("buttons.delete")}
           </button>
@@ -280,7 +280,7 @@ export function PropertyForm({
           type="button"
           onClick={() => router.push("/properties")}
           disabled={submitting}
-          className="inline-flex items-center rounded-md border border-zinc-300 bg-white px-5 py-2 text-sm font-medium shadow-sm hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+          className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
         >
           {t("buttons.cancel")}
         </button>
@@ -322,8 +322,8 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-md border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-      <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+    <section className="rounded-md border border-card-rim bg-card p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
         {title}
       </h2>
       <div className={COLUMNS_CLASS[columns]}>
@@ -345,20 +345,20 @@ type FieldProps = {
 function Field({ label, name, type = "text", register, error, hint }: FieldProps) {
   return (
     <label className="flex flex-col gap-1 text-sm">
-      <span className="font-medium text-zinc-700 dark:text-zinc-300">{label}</span>
+      <span className="font-medium text-ink dark:text-zinc-300">{label}</span>
       <input
         type={type}
         {...register(name)}
         aria-invalid={error ? true : undefined}
         className={[
-          "rounded-md border bg-white px-3 py-2 shadow-sm focus:outline-none dark:bg-zinc-950",
+          "rounded-md border bg-white px-3 py-1.5 shadow-sm focus:outline-none dark:bg-zinc-950",
           error
             ? "border-red-500 focus:border-red-600"
-            : "border-zinc-300 focus:border-zinc-500 dark:border-zinc-700",
+            : "border-wire focus:border-focus dark:border-zinc-700",
         ].join(" ")}
       />
       {hint && !error && (
-        <span className="text-xs text-zinc-500 dark:text-zinc-400">{hint}</span>
+        <span className="text-xs text-fade dark:text-zinc-400">{hint}</span>
       )}
       {error && (
         <span className="text-xs text-red-600 dark:text-red-400">{error}</span>
@@ -376,17 +376,17 @@ function TextAreaField({
 }: FieldProps & { maxLength?: number }) {
   return (
     <label className="flex flex-col gap-1 text-sm">
-      <span className="font-medium text-zinc-700 dark:text-zinc-300">{label}</span>
+      <span className="font-medium text-ink dark:text-zinc-300">{label}</span>
       <textarea
         {...register(name)}
         maxLength={maxLength}
         rows={3}
         aria-invalid={error ? true : undefined}
         className={[
-          "rounded-md border bg-white px-3 py-2 shadow-sm focus:outline-none dark:bg-zinc-950",
+          "rounded-md border bg-white px-3 py-1.5 shadow-sm focus:outline-none dark:bg-zinc-950",
           error
             ? "border-red-500 focus:border-red-600"
-            : "border-zinc-300 focus:border-zinc-500 dark:border-zinc-700",
+            : "border-wire focus:border-focus dark:border-zinc-700",
         ].join(" ")}
       />
       {error && (
@@ -405,15 +405,15 @@ function SelectField({
 }: FieldProps & { options: { value: string; label: string }[] }) {
   return (
     <label className="flex flex-col gap-1 text-sm">
-      <span className="font-medium text-zinc-700 dark:text-zinc-300">{label}</span>
+      <span className="font-medium text-ink dark:text-zinc-300">{label}</span>
       <select
         {...register(name)}
         aria-invalid={error ? true : undefined}
         className={[
-          "rounded-md border bg-white px-3 py-2 shadow-sm focus:outline-none dark:bg-zinc-950",
+          "rounded-md border bg-white px-3 py-1.5 shadow-sm focus:outline-none dark:bg-zinc-950",
           error
             ? "border-red-500 focus:border-red-600"
-            : "border-zinc-300 focus:border-zinc-500 dark:border-zinc-700",
+            : "border-wire focus:border-focus dark:border-zinc-700",
         ].join(" ")}
       >
         {options.map((o) => (
@@ -430,8 +430,8 @@ function SelectField({
 function ReadOnlyField({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col gap-1 text-sm">
-      <span className="font-medium text-zinc-700 dark:text-zinc-300">{label}</span>
-      <div className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 font-mono text-sm text-zinc-700 dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-300">
+      <span className="font-medium text-ink dark:text-zinc-300">{label}</span>
+      <div className="rounded-md border border-wire bg-canvas px-3 py-1.5 font-mono text-sm text-ink dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-300">
         {value}
       </div>
     </div>
@@ -456,17 +456,17 @@ function ConfirmDialog({
       aria-labelledby="confirm-title"
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
     >
-      <div className="w-full max-w-sm rounded-lg bg-white p-6 shadow-xl dark:bg-zinc-900">
-        <h3 id="confirm-title" className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+      <div className="w-full max-w-sm rounded-lg bg-card p-6 shadow-xl dark:bg-zinc-900">
+        <h3 id="confirm-title" className="text-base font-semibold text-ink dark:text-zinc-100">
           {title}
         </h3>
-        <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">{body}</p>
+        <p className="mt-2 text-sm text-fade dark:text-zinc-400">{body}</p>
         <div className="mt-5 flex justify-end gap-2">
           <button
             type="button"
             onClick={onNo}
             disabled={busy}
-            className="inline-flex items-center rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm font-medium shadow-sm hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+            className="inline-flex items-center rounded-md border border-wire bg-white px-4 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
           >
             {noLabel}
           </button>

@@ -141,7 +141,7 @@ function CornerInputRow({
   }, []); // intentionally runs once on mount only
 
   const inputCls =
-    "rounded border border-zinc-300 bg-white px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-950 focus:outline-none focus:border-zinc-500 w-full";
+    "rounded border border-wire bg-white px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-950 focus:outline-none focus:border-focus w-full";
 
   const dirBtn = (active: boolean, onClick: () => void, label: string) => (
     <button
@@ -150,8 +150,8 @@ function CornerInputRow({
       className={[
         "rounded px-1.5 py-0.5 text-xs font-semibold border transition-colors",
         active
-          ? "bg-zinc-900 text-white border-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 dark:border-zinc-100"
-          : "bg-white text-zinc-600 border-zinc-300 hover:bg-zinc-100 dark:bg-zinc-950 dark:border-zinc-700 dark:hover:bg-zinc-800",
+          ? "bg-cta text-white border-cta"
+          : "bg-white text-ink border-wire hover:bg-canvas dark:bg-zinc-950 dark:border-zinc-700 dark:hover:bg-zinc-800",
       ].join(" ")}
     >
       {label}
@@ -207,15 +207,15 @@ function CornerInputRow({
   };
 
   return (
-    <tr className="bg-blue-50 dark:bg-blue-950/30">
-      <td className="px-3 py-2 text-zinc-400 text-xs">—</td>
+    <tr className="bg-card dark:bg-blue-950/30">
+      <td className="px-3 py-2 text-fade text-xs">—</td>
 
       <td colSpan={2} className="px-3 py-2">
         <div className="flex flex-col gap-2">
           {mode === "DD" ? (
             <div className="grid grid-cols-2 gap-2">
               <label className="flex flex-col gap-0.5 text-xs">
-                <span className="text-zinc-500">{t("lat")}</span>
+                <span className="text-fade">{t("lat")}</span>
                 <input
                   type="number"
                   step="any"
@@ -226,7 +226,7 @@ function CornerInputRow({
                 />
               </label>
               <label className="flex flex-col gap-0.5 text-xs">
-                <span className="text-zinc-500">{t("lon")}</span>
+                <span className="text-fade">{t("lon")}</span>
                 <input
                   type="number"
                   step="any"
@@ -241,13 +241,13 @@ function CornerInputRow({
             <div className="flex flex-col gap-1.5">
               {/* Latitude row */}
               <div className="flex items-center gap-1 text-xs">
-                <span className="w-16 shrink-0 text-zinc-500">{t("lat")}</span>
+                <span className="w-16 shrink-0 text-fade">{t("lat")}</span>
                 <input type="number" min={0} max={90}     step={1}   value={latDeg} onChange={(e) => setLatDeg(e.target.value)} placeholder="44"    className={inputCls + " w-10"} />
-                <span className="text-zinc-400">°</span>
+                <span className="text-fade">°</span>
                 <input type="number" min={0} max={59}     step={1}   value={latMin} onChange={(e) => setLatMin(e.target.value)} placeholder="24"    className={inputCls + " w-10"} />
-                <span className="text-zinc-400">′</span>
+                <span className="text-fade">′</span>
                 <input type="number" min={0} max={59.999} step="any" value={latSec} onChange={(e) => setLatSec(e.target.value)} placeholder="59.40" className={inputCls + " w-16"} />
-                <span className="text-zinc-400">″</span>
+                <span className="text-fade">″</span>
                 <div className="flex gap-0.5 ml-1">
                   {dirBtn(latDir === "N", () => setLatDir("N"), "N")}
                   {dirBtn(latDir === "S", () => setLatDir("S"), "S")}
@@ -255,13 +255,13 @@ function CornerInputRow({
               </div>
               {/* Longitude row */}
               <div className="flex items-center gap-1 text-xs">
-                <span className="w-16 shrink-0 text-zinc-500">{t("lon")}</span>
+                <span className="w-16 shrink-0 text-fade">{t("lon")}</span>
                 <input type="number" min={0} max={180}    step={1}   value={lonDeg} onChange={(e) => setLonDeg(e.target.value)} placeholder="25"    className={inputCls + " w-10"} />
-                <span className="text-zinc-400">°</span>
+                <span className="text-fade">°</span>
                 <input type="number" min={0} max={59}     step={1}   value={lonMin} onChange={(e) => setLonMin(e.target.value)} placeholder="57"    className={inputCls + " w-10"} />
-                <span className="text-zinc-400">′</span>
+                <span className="text-fade">′</span>
                 <input type="number" min={0} max={59.999} step="any" value={lonSec} onChange={(e) => setLonSec(e.target.value)} placeholder="52.20" className={inputCls + " w-16"} />
-                <span className="text-zinc-400">″</span>
+                <span className="text-fade">″</span>
                 <div className="flex gap-0.5 ml-1">
                   {dirBtn(lonDir === "E", () => setLonDir("E"), "E")}
                   {dirBtn(lonDir === "W", () => setLonDir("W"), "W")}
@@ -271,7 +271,7 @@ function CornerInputRow({
           ) : (
             <div className="grid grid-cols-2 gap-2">
               <label className="flex flex-col gap-0.5 text-xs">
-                <span className="text-zinc-500">{t("stereoN")}</span>
+                <span className="text-fade">{t("stereoN")}</span>
                 <input
                   type="number"
                   step="any"
@@ -283,7 +283,7 @@ function CornerInputRow({
                 />
               </label>
               <label className="flex flex-col gap-0.5 text-xs">
-                <span className="text-zinc-500">{t("stereoE")}</span>
+                <span className="text-fade">{t("stereoE")}</span>
                 <input
                   type="number"
                   step="any"
@@ -309,7 +309,7 @@ function CornerInputRow({
             type="button"
             onClick={handleSave}
             disabled={converting}
-            className="rounded bg-zinc-900 px-3 py-1 text-xs font-medium text-white hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+            className="rounded bg-cta px-3 py-1 text-xs font-medium text-white hover:bg-cta-d disabled:opacity-50"
           >
             {converting ? t("converting") : t("save")}
           </button>
@@ -317,7 +317,7 @@ function CornerInputRow({
             type="button"
             onClick={onCancel}
             disabled={converting}
-            className="rounded border border-zinc-300 bg-white px-3 py-1 text-xs font-medium hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+            className="rounded border border-wire bg-white px-3 py-1 text-xs font-medium text-ink hover:bg-canvas disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
           >
             {t("cancel")}
           </button>
@@ -405,7 +405,7 @@ export function CornersManager({ corners, onChange }: Props) {
   };
 
   const cellCls   = "px-3 py-2 text-sm";
-  const monoLight = "font-mono text-xs text-zinc-600 dark:text-zinc-400";
+  const monoLight = "font-mono text-xs text-fade dark:text-zinc-400";
 
   const col1Label = displayFmt === "S70" ? t("stereoN") : t("lat");
   const col2Label = displayFmt === "S70" ? t("stereoE") : t("lon");
@@ -437,7 +437,7 @@ export function CornersManager({ corners, onChange }: Props) {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-2">
-        <span className="text-xs text-zinc-500 dark:text-zinc-400">Display:</span>
+        <span className="text-xs text-fade dark:text-zinc-400">Display:</span>
         {(["DD", "DMS", "S70"] as DisplayFormat[]).map((f) => (
           <button
             key={f}
@@ -446,20 +446,20 @@ export function CornersManager({ corners, onChange }: Props) {
             className={[
               "rounded px-2 py-0.5 text-xs font-medium transition-colors",
               displayFmt === f
-                ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
-                : "border border-zinc-300 hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800",
+                ? "bg-cta text-white"
+                : "border border-wire text-ink hover:bg-canvas dark:border-zinc-700 dark:hover:bg-zinc-800",
             ].join(" ")}
           >
             {fmtLabel[f]}
           </button>
         ))}
-        {showS70Loading && <span className="text-xs text-zinc-400 animate-pulse">Converting...</span>}
+        {showS70Loading && <span className="text-xs text-fade animate-pulse">Converting...</span>}
         {showS70Error   && <span className="text-xs text-red-500">{t("convertError")}</span>}
       </div>
 
-      <div className="overflow-x-auto rounded-md border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="overflow-x-auto rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <table className="w-full text-sm">
-          <thead className="bg-zinc-100 text-left text-xs font-medium uppercase tracking-wide text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+          <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-ink dark:bg-zinc-800 dark:text-zinc-300">
             <tr>
               <th className="px-3 py-2 w-10">{t("seq")}</th>
               <th className="px-3 py-2">{col1Label}</th>
@@ -467,10 +467,10 @@ export function CornersManager({ corners, onChange }: Props) {
               <th className="px-3 py-2 w-40" />
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+          <tbody className="divide-y divide-crease dark:divide-zinc-800">
             {corners.length === 0 && !adding && (
               <tr>
-                <td colSpan={4} className="px-3 py-4 text-center text-xs text-zinc-400">
+                <td colSpan={4} className="px-3 py-4 text-center text-xs text-fade">
                   {t("empty")}
                 </td>
               </tr>
@@ -486,8 +486,8 @@ export function CornersManager({ corners, onChange }: Props) {
                   onCancel={() => setEditingIdx(null)}
                 />
               ) : (
-                <tr key={idx} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
-                  <td className={cellCls + " text-zinc-400 tabular-nums"}>{idx + 1}</td>
+                <tr key={idx} className="hover:bg-cta-pale dark:hover:bg-zinc-800/50">
+                  <td className={cellCls + " text-fade tabular-nums"}>{idx + 1}</td>
                   <td className={cellCls + " " + monoLight}>{col1Values[idx]}</td>
                   <td className={cellCls + " " + monoLight}>{col2Values[idx]}</td>
                   <td className={cellCls + " whitespace-nowrap"}>
@@ -497,7 +497,7 @@ export function CornersManager({ corners, onChange }: Props) {
                         onClick={() => moveUp(idx)}
                         disabled={idx === 0}
                         title="Move up"
-                        className="px-1.5 py-0.5 text-xs rounded border border-zinc-200 hover:bg-zinc-100 disabled:opacity-30 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                        className="px-1.5 py-0.5 text-xs rounded border border-wire text-ink hover:bg-canvas disabled:opacity-30 dark:border-zinc-700 dark:hover:bg-zinc-800"
                       >
                         ↑
                       </button>
@@ -506,14 +506,14 @@ export function CornersManager({ corners, onChange }: Props) {
                         onClick={() => moveDown(idx)}
                         disabled={idx === corners.length - 1}
                         title="Move down"
-                        className="px-1.5 py-0.5 text-xs rounded border border-zinc-200 hover:bg-zinc-100 disabled:opacity-30 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                        className="px-1.5 py-0.5 text-xs rounded border border-wire text-ink hover:bg-canvas disabled:opacity-30 dark:border-zinc-700 dark:hover:bg-zinc-800"
                       >
                         ↓
                       </button>
                       <button
                         type="button"
                         onClick={() => { setEditingIdx(idx); setAdding(false); }}
-                        className="px-2 py-0.5 text-xs rounded border border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                        className="px-2 py-0.5 text-xs rounded border border-wire text-ink hover:bg-canvas dark:border-zinc-700 dark:hover:bg-zinc-800"
                       >
                         {t("edit")}
                       </button>
@@ -545,7 +545,7 @@ export function CornersManager({ corners, onChange }: Props) {
         <button
           type="button"
           onClick={() => setAdding(true)}
-          className="self-start rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium shadow-sm hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+          className="self-start rounded-md border border-wire bg-white px-3 py-1.5 text-xs font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
         >
           + {t("add")}
         </button>

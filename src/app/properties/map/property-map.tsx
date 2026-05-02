@@ -67,7 +67,7 @@ function MapTypeToggle({
   onChange: (v: MapTypeId) => void;
 }) {
   return (
-    <div className="flex overflow-hidden rounded shadow border border-zinc-300 bg-white">
+    <div className="flex overflow-hidden rounded shadow border border-wire bg-white">
       {(["roadmap", "hybrid"] as MapTypeId[]).map((t) => (
         <button
           key={t}
@@ -76,8 +76,8 @@ function MapTypeToggle({
           className={[
             "px-3 py-1.5 text-xs font-semibold tracking-wide transition-colors",
             value === t
-              ? "bg-zinc-900 text-white"
-              : "text-zinc-700 hover:bg-zinc-100",
+              ? "bg-cta text-white"
+              : "text-ink hover:bg-canvas",
           ].join(" ")}
         >
           {t === "roadmap" ? "STR" : "SAT"}

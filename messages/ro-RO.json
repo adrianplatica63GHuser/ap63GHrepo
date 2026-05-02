@@ -189,5 +189,57 @@
       "cnpLocked": "CNP-ul nu poate fi modificat odată setat — ștergeți și creați din nou pentru a-l schimba",
       "countryRequiredIfAddressFilled": "Necesar dacă orice alt câmp al adresei este completat"
     }
+  },
+  "valueList": {
+    "pageTitle": "Liste de Valori",
+    "sections": {
+      "property": "Proprietate",
+      "person": "Persoană",
+      "document": "Document"
+    },
+    "lists": {
+      "propertyTypes":    "Tipuri de Proprietate",
+      "tarla":            "Indicative Tarla",
+      "useCategories":    "Categorii Folosință",
+      "personTypes":      "Tipuri de Persoană",
+      "citizenships":     "Cetățenie",
+      "documentTypes":    "Tipuri de Document",
+      "institutions":     "Instituții",
+      "serviceInterests": "Servicii & Interese"
+    },
+    "fields": {
+      "name":            "Denumire",
+      "indicativ":       "Indicativ",
+      "descriere":       "Descriere",
+      "institutionType": "Tip instituție",
+      "category":        "Categorie"
+    },
+    "modal": {
+      "close": "Închide"
+    },
+    "form": {
+      "addTitle":  "Adaugă înregistrare nouă",
+      "editTitle": "Editează înregistrarea",
+      "save":      "Salvează",
+      "saving":    "Se salvează…",
+      "cancel":    "Anulează"
+    },
+    "toolbar": {
+      "add":   "Adaugă",
+      "count": "{count} înregistrări"
+    },
+    "table": {
+      "loading": "Se încarcă…",
+      "error":   "Eroare la încărcare",
+      "empty":   "Nu există înregistrări",
+      "edit":    "Editează",
+      "delete":  "Șterge"
+    },
+    "confirm": {
+      "deleteBody": "Ștergeți această înregistrare? Acțiunea nu poate fi anulată.",
+      "delete":     "Șterge",
+      "deleting":   "Se șterge…",
+      "cancel":     "Anulează"
+    }
   }
 }

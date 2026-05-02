@@ -6,14 +6,13 @@ import { LocaleToggle } from "@/components/locale-toggle";
 
 const activeLinkClass = [
   "flex items-center justify-center rounded-lg px-3 py-3 min-h-[52px]",
-  "bg-zinc-900 text-white text-sm font-medium text-center",
-  "transition-colors hover:bg-zinc-700",
-  "dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300",
+  "bg-cta text-white text-sm font-medium text-center",
+  "transition-colors hover:bg-cta-d",
 ].join(" ");
 
 const disabledBtnClass = [
   "flex flex-col items-center justify-center gap-0.5 rounded-lg px-3 py-3 min-h-[52px]",
-  "bg-zinc-100 text-zinc-400 text-sm font-medium text-center cursor-not-allowed",
+  "bg-canvas text-fade text-sm font-medium text-center cursor-not-allowed",
   "dark:bg-zinc-800 dark:text-zinc-600",
 ].join(" ");
 
@@ -30,7 +29,7 @@ function Section({
 }) {
   return (
     <div className={`rounded-xl border p-5 ${accent}`}>
-      <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-zinc-500 dark:text-zinc-400">
+      <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-ink dark:text-zinc-400">
         {title}
       </h2>
       {children}
@@ -40,7 +39,7 @@ function Section({
 
 function Soon({ label }: { label: string }) {
   return (
-    <span className="text-[10px] font-normal leading-none text-zinc-400 dark:text-zinc-600">
+    <span className="text-[10px] font-normal leading-none text-fade dark:text-zinc-600">
       {label}
     </span>
   );
@@ -62,17 +61,17 @@ export default async function Home() {
   const soon = t("soon");
 
   return (
-    <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-zinc-950">
+    <div className="flex flex-1 flex-col bg-canvas dark:bg-zinc-950">
       <main className="mx-auto w-full max-w-4xl px-6 py-8 flex flex-col gap-6">
 
         {/* Header */}
         <header className="flex items-center justify-between">
           <LocaleToggle />
           <div className="text-center">
-            <h1 className="text-2xl font-semibold tracking-tight">
+            <h1 className="text-2xl font-semibold tracking-tight text-ink dark:text-zinc-100">
               {t("title")}
             </h1>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            <p className="text-sm text-fade dark:text-zinc-400">
               {t("subtitle")}
             </p>
           </div>
@@ -85,10 +84,10 @@ export default async function Home() {
         {/* Sections */}
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
 
-          {/* ── People ── */}
+          {/* ── People — light blue panel, strong blue border ── */}
           <Section
             title={t("sections.people")}
-            accent="border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950"
+            accent="border-bl-strong bg-bl-light dark:border-blue-900 dark:bg-blue-950"
           >
             <div className="grid grid-cols-2 gap-3">
               <Link href="/natural-persons" className={activeLinkClass}>
@@ -98,10 +97,10 @@ export default async function Home() {
             </div>
           </Section>
 
-          {/* ── Property ── */}
+          {/* ── Property — light orange panel, strong orange border ── */}
           <Section
             title={t("sections.property")}
-            accent="border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950"
+            accent="border-or-strong bg-or-light dark:border-green-900 dark:bg-green-950"
           >
             <div className="grid grid-cols-2 gap-3">
               <Link href="/properties" className={activeLinkClass}>
@@ -115,10 +114,10 @@ export default async function Home() {
             </div>
           </Section>
 
-          {/* ── Paperwork ── */}
+          {/* ── Paperwork — light grey panel, strong grey border ── */}
           <Section
             title={t("sections.paperwork")}
-            accent="border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950"
+            accent="border-gy-strong bg-gy-light dark:border-amber-900 dark:bg-amber-950"
           >
             <div className="grid grid-cols-3 gap-3">
               <DisabledBtn label={t("buttons.paperwork1")} soon={soon} />
@@ -130,14 +129,16 @@ export default async function Home() {
             </div>
           </Section>
 
-          {/* ── Administration ── */}
+          {/* ── Administration — light blue panel, subtle blue border ── */}
           <Section
             title={t("sections.administration")}
-            accent="border-purple-200 bg-purple-50 dark:border-purple-900 dark:bg-purple-950"
+            accent="border-card-rim bg-card dark:border-purple-900 dark:bg-purple-950"
           >
             <div className="grid grid-cols-2 gap-3">
               <DisabledBtn label={t("buttons.users")} soon={soon} />
-              <DisabledBtn label={t("buttons.referenceData")} soon={soon} />
+              <Link href="/admin/value-lists" className={activeLinkClass}>
+                {t("buttons.referenceData")}
+              </Link>
               <DisabledBtn label={t("buttons.importExport")} soon={soon} />
               <DisabledBtn label={t("buttons.settings")} soon={soon} />
             </div>
