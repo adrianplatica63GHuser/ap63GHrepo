@@ -4,12 +4,20 @@ import { useLocale } from "next-intl";
 import { useRouter } from "next/navigation";
 import { SUPPORTED_LOCALES, setLocaleCookie } from "@/lib/i18n/locale";
 
+/** Flag emoji and accessible label per locale. */
+const LOCALE_META: Record<string, { flag: string; label: string }> = {
+  "en-GB": { flag: "🇬🇧", label: "English" },
+  "ro-RO": { flag: "🇷🇴", label: "Română" },
+};
+
 /**
- * EN / RO toggle. The active locale's button is disabled (per the mockup);
- * clicking the inactive one writes the cookie and triggers `router.refresh()`
- * so server components re-render with the new locale.
+ * Flag-based locale switcher.
  *
- * The button label is derived from the locale code: "en-GB" → "EN", "ro-RO" → "RO".
+ * - Active (current) locale: flag shown in greyscale, button disabled.
+ * - Inactive locale: flag in full colour, clickable.
+ *
+ * Clicking writes the locale cookie and calls router.refresh() so server
+ * components re-render with the new locale.
  */
 export function LocaleToggle() {
   const currentLocale = useLocale();
@@ -22,9 +30,12 @@ export function LocaleToggle() {
   };
 
   return (
-    <div className="inline-flex rounded-md border border-zinc-300 dark:border-zinc-700 overflow-hidden">
+    <div className="inline-flex items-center gap-0.5">
       {SUPPORTED_LOCALES.map((locale) => {
-        const label = locale.split("-")[0].toUpperCase();
+        const { flag, label } = LOCALE_META[locale] ?? {
+          flag: locale,
+          label: locale,
+        };
         const isActive = currentLocale === locale;
         return (
           <button
@@ -33,14 +44,16 @@ export function LocaleToggle() {
             onClick={() => switchTo(locale)}
             disabled={isActive}
             aria-pressed={isActive}
+            title={label}
+            aria-label={label}
             className={[
-              "px-3 py-1 text-sm font-medium transition-colors",
+              "text-xl leading-none rounded p-0.5 transition-all select-none",
               isActive
-                ? "bg-zinc-200 text-zinc-500 cursor-default dark:bg-zinc-800 dark:text-zinc-400"
-                : "bg-white text-zinc-900 hover:bg-zinc-50 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-900",
+                ? "grayscale opacity-50 cursor-default"
+                : "cursor-pointer hover:scale-110 hover:opacity-90",
             ].join(" ")}
           >
-            {label}
+            {flag}
           </button>
         );
       })}

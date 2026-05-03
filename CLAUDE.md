@@ -53,9 +53,25 @@ Relationships: People ↔ Paperwork, People ↔ Properties, Paperwork ↔ Proper
 - Slice #3 — Sidebar navigation refactor. ✅ Complete. Full detail below.
 - Slice #4 — Paperwork CRUD. ✅ Complete (schema + API + UI landed in earlier sessions).
 - Slice #4.1 — Sidebar & nav polish. ✅ Complete. Full detail below.
+- Slice #4.2 — Paperwork filter re-sync + flag locale switcher. ✅ Complete. Full detail below.
 - Slice #5+ — Relationships (People ↔ Properties ↔ Paperwork, self-refs), relationship map view, etc.
 
 Each slice typically lands as multiple small commits, each individually green.
+
+### Slice #4.2 — Paperwork filter re-sync + flag locale switcher (detail)
+
+Pure frontend — no DB schema or API changes.
+
+**1. Paperwork type filter re-syncs on every sidebar click**
+- Root cause: `PaperworkListView` seeded `typeFilter` via `useState(initialType)`. React's state initialiser only runs on mount, so navigating between `/paperwork?type=A` and `/paperwork?type=B` while already on `/paperwork` left the filter stale.
+- Fix: added `useEffect(() => { setTypeFilter(initialType); }, [initialType])` in `src/app/paperwork/list-view.tsx`. Now every time `page.tsx` re-renders with a new `initialType` from `searchParams`, the effect fires and the filter updates immediately.
+
+**2. Locale toggle replaced with flag emoji buttons**
+- `src/components/locale-toggle.tsx` rewritten: `🇬🇧` and `🇷🇴` emoji buttons replace the old `EN` / `RO` text pill.
+- Active (current) locale: `grayscale opacity-50 cursor-default` — appears black-and-white and depressed.
+- Inactive locale: full colour, `cursor-pointer hover:scale-110` — inviting to click.
+- `LOCALE_META` record maps each locale code to its flag and accessible `aria-label` / `title`.
+- Behaviour (cookie write + `router.refresh()`) is unchanged.
 
 ### Slice #4.1 — Sidebar & nav polish (detail)
 

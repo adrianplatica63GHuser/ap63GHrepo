@@ -39,6 +39,12 @@ export function PaperworkListView({ initialType = "" }: { initialType?: string }
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [typeFilter,      setTypeFilter]      = useState(initialType);
 
+  // Sync typeFilter whenever the URL ?type= param changes (e.g. sidebar link
+  // clicked while already on /paperwork — useState initialiser only runs once).
+  useEffect(() => {
+    setTypeFilter(initialType);
+  }, [initialType]);
+
   useEffect(() => {
     const handle = setTimeout(() => {
       setDebouncedSearch(searchInput.trim());
