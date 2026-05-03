@@ -60,8 +60,7 @@ export function LocaleToggle() {
             <img
               src={meta.flagSrc}
               alt={meta.label}
-              width={20}
-              height={15}
+              style={{ width: 30, height: 20, objectFit: "fill" }}
               className="block rounded-sm"
             />
           </button>
