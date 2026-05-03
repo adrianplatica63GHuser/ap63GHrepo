@@ -4,17 +4,23 @@ import { useLocale } from "next-intl";
 import { useRouter } from "next/navigation";
 import { SUPPORTED_LOCALES, setLocaleCookie } from "@/lib/i18n/locale";
 
-/** Flag emoji and accessible label per locale. */
-const LOCALE_META: Record<string, { flag: string; label: string }> = {
-  "en-GB": { flag: "🇬🇧", label: "English" },
-  "ro-RO": { flag: "🇷🇴", label: "Română" },
+/** Flag image URL and accessible label per locale. */
+const LOCALE_META: Record<string, { flagSrc: string; label: string }> = {
+  "en-GB": {
+    flagSrc: "https://flagcdn.com/w40/gb.png",
+    label: "English",
+  },
+  "ro-RO": {
+    flagSrc: "https://flagcdn.com/w40/ro.png",
+    label: "Română",
+  },
 };
 
 /**
  * Flag-based locale switcher.
  *
- * - Active (current) locale: flag shown in greyscale, button disabled.
- * - Inactive locale: flag in full colour, clickable.
+ * - Active (current) locale: flag shown in greyscale + faded, button disabled.
+ * - Inactive locale: flag in full colour, clickable with a subtle scale-up.
  *
  * Clicking writes the locale cookie and calls router.refresh() so server
  * components re-render with the new locale.
@@ -30,12 +36,9 @@ export function LocaleToggle() {
   };
 
   return (
-    <div className="inline-flex items-center gap-0.5">
+    <div className="inline-flex items-center gap-1">
       {SUPPORTED_LOCALES.map((locale) => {
-        const { flag, label } = LOCALE_META[locale] ?? {
-          flag: locale,
-          label: locale,
-        };
+        const meta = LOCALE_META[locale] ?? { flagSrc: "", label: locale };
         const isActive = currentLocale === locale;
         return (
           <button
@@ -44,16 +47,23 @@ export function LocaleToggle() {
             onClick={() => switchTo(locale)}
             disabled={isActive}
             aria-pressed={isActive}
-            title={label}
-            aria-label={label}
+            title={meta.label}
+            aria-label={meta.label}
             className={[
-              "text-xl leading-none rounded p-0.5 transition-all select-none",
+              "rounded p-0.5 transition-all",
               isActive
                 ? "grayscale opacity-50 cursor-default"
-                : "cursor-pointer hover:scale-110 hover:opacity-90",
+                : "cursor-pointer hover:scale-110",
             ].join(" ")}
           >
-            {flag}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={meta.flagSrc}
+              alt={meta.label}
+              width={20}
+              height={15}
+              className="block rounded-sm"
+            />
           </button>
         );
       })}
