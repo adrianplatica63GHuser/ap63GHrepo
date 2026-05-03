@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import { LocaleToggle } from "@/components/locale-toggle";
 import { getPropertyById } from "@/lib/properties/queries";
 import { PropertyForm } from "../_components/property-form";
 import { fromApiPayload } from "../_components/form-schema";
@@ -26,10 +25,8 @@ export default async function EditPropertyPage({ params }: PageParams) {
   return (
     <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-zinc-950">
       <main className="mx-auto w-full max-w-4xl px-6 py-8 flex flex-col gap-6">
-        <header className="flex items-center justify-between">
-          <LocaleToggle />
+        <header>
           <h1 className="text-2xl font-semibold tracking-tight">{label}</h1>
-          <div className="invisible"><LocaleToggle /></div>
         </header>
 
         <PropertyForm

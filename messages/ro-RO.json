@@ -190,6 +190,38 @@
       "countryRequiredIfAddressFilled": "Necesar dacă orice alt câmp al adresei este completat"
     }
   },
+  "nav": {
+    "sections": {
+      "people": "Persoane",
+      "property": "Proprietăți",
+      "paperwork": "Acte",
+      "administration": "Administrare"
+    },
+    "items": {
+      "naturalPerson": "Persoană Fizică",
+      "judicialPerson": "Persoană Juridică",
+      "landList": "Teren — Listă",
+      "landMap": "Teren — Hartă",
+      "building": "Construcție",
+      "propertyType3": "Tip 3",
+      "contract": "Contract",
+      "certificate": "Certificat",
+      "authorization": "Autorizație",
+      "deed": "Act",
+      "extract": "Extras CF",
+      "report": "Raport",
+      "users": "Utilizatori & Acces",
+      "referenceData": "Date de referință",
+      "importExport": "Import / Export",
+      "settings": "Setări"
+    },
+    "collapse": "Restrânge bara laterală",
+    "expand": "Extinde bara laterală"
+  },
+  "welcome": {
+    "title": "GA40",
+    "subtitle": "Persoane · Acte · Proprietăți"
+  },
   "valueList": {
     "pageTitle": "Liste de Valori",
     "sections": {

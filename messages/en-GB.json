@@ -190,6 +190,38 @@
       "countryRequiredIfAddressFilled": "Required if any other address field is filled"
     }
   },
+  "nav": {
+    "sections": {
+      "people": "People",
+      "property": "Property",
+      "paperwork": "Paperwork",
+      "administration": "Administration"
+    },
+    "items": {
+      "naturalPerson": "Natural Person",
+      "judicialPerson": "Judicial Person",
+      "landList": "Land — List",
+      "landMap": "Land — Map",
+      "building": "Building",
+      "propertyType3": "Type 3",
+      "contract": "Contract",
+      "certificate": "Certificate",
+      "authorization": "Authorization",
+      "deed": "Deed",
+      "extract": "Extract",
+      "report": "Report",
+      "users": "Users & Access",
+      "referenceData": "Reference Data",
+      "importExport": "Import / Export",
+      "settings": "Settings"
+    },
+    "collapse": "Collapse sidebar",
+    "expand": "Expand sidebar"
+  },
+  "welcome": {
+    "title": "GA40",
+    "subtitle": "People · Paperwork · Properties"
+  },
   "valueList": {
     "pageTitle": "Value Lists",
     "sections": {

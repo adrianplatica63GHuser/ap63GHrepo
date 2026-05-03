@@ -50,10 +50,43 @@ Relationships: People ↔ Paperwork, People ↔ Properties, Paperwork ↔ Proper
 - Slice #2 — Property CRUD with map view, Stereo70 input, PostGIS corners, bilingual UI. ✅ Complete.
 - Slice #2.5 — Property UI polish. ✅ Complete. Full detail below.
 - Slice #2.6 — Vercel + Supabase deployment + home page launching pad. ✅ Complete. Full detail below.
-- Slice #3 — Paperwork CRUD. 🔜 Next.
-- Slice #4+ — Relationships (People ↔ Properties ↔ Paperwork, self-refs), relationship map view, etc.
+- Slice #3 — Sidebar navigation refactor. ✅ Complete. Full detail below.
+- Slice #4 — Paperwork CRUD. 🔜 Next.
+- Slice #5+ — Relationships (People ↔ Properties ↔ Paperwork, self-refs), relationship map view, etc.
 
 Each slice typically lands as multiple small commits, each individually green.
+
+### Slice #3 — Sidebar navigation refactor (detail)
+
+Pure frontend — no DB schema or API changes.
+
+**New components**
+- `src/components/sidebar/sidebar-helpers.ts` — pure route-matching helpers (`isItemActive`, `getActiveHref`, `getActiveSectionKey`); no external deps; unit-tested.
+- `src/components/sidebar/nav-config.ts` — declarative nav structure: 4 `NavSection` objects (people / property / paperwork / administration), each with a `LucideIcon` and a list of `NavItem`s. An item without `href` is rendered disabled (coming soon).
+- `src/components/sidebar/sidebar-nav.tsx` — client component. Accordion sections, collapse-to-icons toggle, `localStorage`-persisted collapse state, `usePathname` auto-highlights the active item and auto-expands its parent section on navigation.
+- `src/components/app-shell.tsx` — server component wrapper: `<SidebarNav>` + `<div class="flex-1 overflow-auto">` for page content. Inserted inside `QueryProvider` in the root layout.
+
+**Layout change**
+- `src/app/layout.tsx` — `AppShell` wraps `{children}` inside `QueryProvider`.
+- `src/app/page.tsx` — the 4-panel launching pad replaced by a slim centred welcome screen; navigation is now entirely the sidebar.
+
+**Sidebar behaviour**
+- Expanded width: 224 px (`w-56`). Collapsed (icons only): 56 px (`w-14`). CSS `transition-[width]` for smooth animation.
+- Section header click: toggles the accordion (expanded mode) or expands the sidebar (collapsed mode).
+- Active item: `bg-cta-pale text-cta font-medium`. Disabled/coming-soon items: `text-fade opacity-60 cursor-not-allowed`.
+- Bottom slot: `LocaleToggle` (hidden in collapsed mode).
+- `localStorage` key: `"sidebar-collapsed"` (`"true"` / `"false"`). Read in `useEffect` after mount to avoid SSR hydration mismatch.
+
+**i18n**
+- Added `nav` namespace to both message files: `sections.*`, `items.*`, `collapse`, `expand`.
+- Added `welcome` namespace for the new home page.
+
+**Page header cleanup**
+- Removed `LocaleToggle` + invisible centering-spacer from all 8 page headers (`natural-persons/page`, `natural-persons/new`, `natural-persons/[id]`, `properties/page`, `properties/new`, `properties/[id]`, `properties/map`, `admin/value-lists`).
+- Map page: `h-screen` → `h-full` (fills the AppShell content area via the flex chain; semantically correct now that the shell provides viewport height).
+
+**Active-route matching gotcha**
+- `getActiveHref` returns the *longest* matching href for a given pathname. This ensures `/properties/map` is highlighted (not `/properties`) when the user is on the map page, because both share a prefix.
 
 ### Slice #2.6 — Vercel + Supabase deployment + home page (detail)
 
