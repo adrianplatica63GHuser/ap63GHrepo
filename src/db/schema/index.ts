@@ -399,3 +399,107 @@ export const lookupServiceInterest = pgTable("lookup_service_interest", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+// ---------------------------------------------------------------------------
+// Enums — Paperwork domain
+// ---------------------------------------------------------------------------
+
+export const paperworkTypeEnum = pgEnum("paperwork_type", [
+  "ACT_ADJUDECARE",
+  "ACT_CADASTRU",
+  "ACT_DONATIE",
+  "AUTORIZATIE",
+  "AVIZ_INSTITUTIE",
+  "CERTIFICAT_FISCAL",
+  "CERTIFICAT_MOSTENITOR",
+  "CERTIFICAT_SARCINI",
+  "CERTIFICAT_URBANISM",
+  "CONTRACT_ARENDA",
+  "CONTRACT_INCHIRIERE",
+  "CONTRACT_PARTAJ",
+  "CONTRACT_PRESTARI_SERVICII",
+  "CONTRACT_VANZARE",
+  "EXTRAS_CARTE_FUNCIARA",
+  "EXTRAS_PUG",
+  "HOTARARE_JUDECATOREASCA",
+  "TESTAMENT",
+  "TITLU_PROPRIETATE",
+]);
+
+// ---------------------------------------------------------------------------
+// paperwork — root entity
+// ---------------------------------------------------------------------------
+//
+// Single-table design: all 19 document types share this table.
+// Type-specific columns are nullable; the UI shows/hides them based on `type`.
+//
+// Columns marked "→ Slice 5" are temporary free-text placeholders that will
+// be replaced by junction table relationships to Person in Slice 5.
+//
+// Code is auto-generated: PAPR00001, PAPR00002, …
+// Soft-delete via deleted_at (same pattern as person / property).
+
+export const paperwork = pgTable("paperwork", {
+  id:   uuid("id").primaryKey().defaultRandom(),
+
+  code: text("code")
+    .notNull()
+    .unique()
+    .default(
+      sql`'PAPR' || lpad(nextval('paperwork_code_seq')::text, 5, '0')`,
+    ),
+
+  type: paperworkTypeEnum("type").notNull(),
+
+  // Short identifying label — the "Porecla" equivalent for paperwork.
+  // e.g. "Vânzare Popescu 2021", "Titlu Teren Nord"
+  title: text("title"),
+
+  // ── Common fields (UI label varies by type) ────────────────────────────
+  // "Nr. titlu / nr. certificat / nr. contract / nr. hotărâre / …"
+  nrDocument:   text("nr_document"),
+  // "Data autentificarii" / "Data eliberarii" / "Data emiterii"
+  dateDocument: date("date_document", { mode: "string" }),
+  // "Notariat" / "Institutie unde este inregistrat" / "Emitent" (generic)
+  institution:  text("institution"),
+
+  // ── Titlu de Proprietate specific ──────────────────────────────────────
+  emitent:       text("emitent"),
+  bazaLegala:    text("baza_legala"),
+  uatProprietate: text("uat_proprietate"),
+  uatProprietar:  text("uat_proprietar"),
+  // Suprafata — numeric, same precision as property.surface_area_mp
+  suprafata:     numeric("suprafata", { precision: 12, scale: 2 }),
+
+  // ── Certificat de Moștenitor specific ─────────────────────────────────
+  nrDosarSuccesoral: text("nr_dosar_succesoral"),
+  dataDecesului:     date("data_decesului", { mode: "string" }),
+  ultimulDomiciliu:  text("ultimul_domiciliu"),
+  nrCertificatDeces: text("nr_certificat_deces"),
+
+  // ── Contract de Închiriere specific ───────────────────────────────────
+  dateStart: date("date_start", { mode: "string" }), // Data incepere contract
+  dateEnd:   date("date_end",   { mode: "string" }), // Data incheierii valabilitate
+
+  // ── Party placeholders (→ Slice 5 Person relationships) ───────────────
+  // titularText : Titlu proprietate — Titular
+  titularText:   text("titular_text"),
+  // defunctText : Titlu proprietate / Certificat mostenitor — Defunct
+  //               Testament — Testator
+  defunctText:   text("defunct_text"),
+  // partiesAText: Vanzatori / Proprietari / Donatori
+  partiesAText:  text("parties_a_text"),
+  // partiesBText: Cumparatori / Chiriasi / Donatari / Mostenitori
+  partiesBText:  text("parties_b_text"),
+
+  // ── Always present ─────────────────────────────────────────────────────
+  notes: text("notes"), // Observatii
+
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
+});

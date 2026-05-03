@@ -55,12 +55,12 @@ export const NAV_SECTIONS: NavSection[] = [
     key: "paperwork",
     icon: FileText,
     items: [
-      { key: "contract", icon: FileSignature },
-      { key: "certificate", icon: Award },
+      { key: "contract",      href: "/paperwork", icon: FileSignature },
+      { key: "certificate",   icon: Award },
       { key: "authorization", icon: ShieldCheck },
-      { key: "deed", icon: ScrollText },
-      { key: "extract", icon: Search },
-      { key: "report", icon: BarChart2 },
+      { key: "deed",          icon: ScrollText },
+      { key: "extract",       icon: Search },
+      { key: "report",        icon: BarChart2 },
     ],
   },
   {
