@@ -126,7 +126,7 @@ export function PaperworkListView({ initialType = "" }: { initialType?: string }
             {query.data?.items.map((item) => (
               <tr
                 key={item.id}
-                className="hover:bg-cta-pale dark:hover:bg-zinc-800/50"
+                className="whitespace-nowrap hover:bg-cta-pale dark:hover:bg-zinc-800/50"
               >
                 <td className="px-4 py-2 font-mono text-xs text-fade">
                   {item.code}
