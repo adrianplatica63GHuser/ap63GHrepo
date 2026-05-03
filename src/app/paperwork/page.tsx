@@ -1,8 +1,14 @@
 import { getTranslations } from "next-intl/server";
 import { PaperworkListView } from "./list-view";
 
-export default async function PaperworkPage() {
+type PageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export default async function PaperworkPage({ searchParams }: PageProps) {
   const t = await getTranslations("paperwork");
+  const params = await searchParams;
+  const initialType = typeof params.type === "string" ? params.type : "";
 
   return (
     <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-zinc-950">
@@ -13,7 +19,7 @@ export default async function PaperworkPage() {
           </h1>
         </header>
 
-        <PaperworkListView />
+        <PaperworkListView initialType={initialType} />
       </main>
     </div>
   );

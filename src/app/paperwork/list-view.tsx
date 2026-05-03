@@ -32,12 +32,12 @@ async function fetchPaperwork(q: string, type: string): Promise<ListResponse> {
   return res.json();
 }
 
-export function PaperworkListView() {
+export function PaperworkListView({ initialType = "" }: { initialType?: string }) {
   const t = useTranslations("paperwork");
 
   const [searchInput,     setSearchInput]     = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [typeFilter,      setTypeFilter]      = useState("");
+  const [typeFilter,      setTypeFilter]      = useState(initialType);
 
   useEffect(() => {
     const handle = setTimeout(() => {

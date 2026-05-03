@@ -51,10 +51,35 @@ Relationships: People ↔ Paperwork, People ↔ Properties, Paperwork ↔ Proper
 - Slice #2.5 — Property UI polish. ✅ Complete. Full detail below.
 - Slice #2.6 — Vercel + Supabase deployment + home page launching pad. ✅ Complete. Full detail below.
 - Slice #3 — Sidebar navigation refactor. ✅ Complete. Full detail below.
-- Slice #4 — Paperwork CRUD. 🔜 Next.
+- Slice #4 — Paperwork CRUD. ✅ Complete (schema + API + UI landed in earlier sessions).
+- Slice #4.1 — Sidebar & nav polish. ✅ Complete. Full detail below.
 - Slice #5+ — Relationships (People ↔ Properties ↔ Paperwork, self-refs), relationship map view, etc.
 
 Each slice typically lands as multiple small commits, each individually green.
+
+### Slice #4.1 — Sidebar & nav polish (detail)
+
+Pure frontend — no DB schema or API changes.
+
+**1. Locale toggle moved into the header bar**
+- `LocaleToggle` removed from the bottom slot (the `border-t` div is gone entirely).
+- Now rendered in the `h-14` header bar between the "GA40" wordmark and the collapse button.
+- Still hidden in collapsed mode (`!isCollapsed` guard unchanged).
+
+**2. Single-open accordion**
+- `openSections: Set<string>` replaced by `openSection: string | null`.
+- `toggleSection` sets `openSection` to the clicked key, or `null` if it was already open.
+- Navigation `useEffect` sets `openSection = activeSectionKey` (replacing whatever was open before, rather than adding to a set).
+
+**3. Paperwork section — 19 real document types**
+- `nav-config.ts`: removed the 5 placeholder items (`certificate`, `authorization`, `deed`, `extract`, `report`); renamed `contract` → `allDocuments`; added 20 items total (1 "All Documents" + 19 type-specific links, each `href="/paperwork?type=TYPE_KEY"`). All 19 type items use the `File` icon from lucide-react. Unused icon imports (`FileSignature`, `Award`, `ShieldCheck`, `ScrollText`, `Search`, `BarChart2`) removed.
+- `sidebar-nav.tsx`: `itemLabels` map updated to match — old 6 paperwork keys replaced with the new 20.
+- `messages/en-GB.json` + `messages/ro-RO.json`: `nav.items` updated (old 6 keys removed, 20 new keys added with bilingual labels; English uses translated equivalents, e.g. `TESTAMENT` → "Will").
+- `src/app/paperwork/page.tsx`: accepts `searchParams: Promise<...>`, awaits it, extracts `type`, passes as `initialType` prop to `PaperworkListView`.
+- `src/app/paperwork/list-view.tsx`: `PaperworkListView` accepts `initialType?: string` and seeds `typeFilter` state from it — so clicking a sidebar type link lands the user on the list pre-filtered.
+
+**Active-state note**
+- `usePathname()` strips query strings, so all 19 type links and "All Documents" share pathname `/paperwork`. Only "All Documents" highlights as active. Individual type highlighting is a future enhancement if needed.
 
 ### Slice #3 — Sidebar navigation refactor (detail)
 

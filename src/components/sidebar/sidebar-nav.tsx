@@ -164,26 +164,21 @@ export function SidebarNav() {
     [pathname],
   );
 
-  const [openSections, setOpenSections] = useState<Set<string>>(
-    () => new Set(activeSectionKey ? [activeSectionKey] : []),
+  // Single-open accordion — at most one section is open at a time.
+  const [openSection, setOpenSection] = useState<string | null>(
+    activeSectionKey ?? null,
   );
 
-  // Ensure the active section stays open when the user navigates
+  // When the user navigates, open the section that owns the active item
+  // (closing whatever was open before).
   useEffect(() => {
     if (activeSectionKey) {
-      setOpenSections((prev) => {
-        if (prev.has(activeSectionKey)) return prev;
-        return new Set([...prev, activeSectionKey]);
-      });
+      setOpenSection(activeSectionKey);
     }
   }, [activeSectionKey]);
 
   const toggleSection = useCallback((key: string) => {
-    setOpenSections((prev) => {
-      const next = new Set(prev);
-      next.has(key) ? next.delete(key) : next.add(key);
-      return next;
-    });
+    setOpenSection((prev) => (prev === key ? null : key));
   }, []);
 
   const activeHref = useMemo(
@@ -200,22 +195,36 @@ export function SidebarNav() {
   };
 
   const itemLabels: Record<string, string> = {
-    naturalPerson: t("items.naturalPerson"),
-    judicialPerson: t("items.judicialPerson"),
-    landList: t("items.landList"),
-    landMap: t("items.landMap"),
-    building: t("items.building"),
-    propertyType3: t("items.propertyType3"),
-    contract: t("items.contract"),
-    certificate: t("items.certificate"),
-    authorization: t("items.authorization"),
-    deed: t("items.deed"),
-    extract: t("items.extract"),
-    report: t("items.report"),
-    users: t("items.users"),
-    referenceData: t("items.referenceData"),
-    importExport: t("items.importExport"),
-    settings: t("items.settings"),
+    naturalPerson:             t("items.naturalPerson"),
+    judicialPerson:            t("items.judicialPerson"),
+    landList:                  t("items.landList"),
+    landMap:                   t("items.landMap"),
+    building:                  t("items.building"),
+    propertyType3:             t("items.propertyType3"),
+    allDocuments:              t("items.allDocuments"),
+    actAdjudecare:             t("items.actAdjudecare"),
+    actCadastru:               t("items.actCadastru"),
+    actDonatie:                t("items.actDonatie"),
+    autorizatie:               t("items.autorizatie"),
+    avizInstitutie:            t("items.avizInstitutie"),
+    certificatFiscal:          t("items.certificatFiscal"),
+    certificatMostenitor:      t("items.certificatMostenitor"),
+    certificatSarcini:         t("items.certificatSarcini"),
+    certificatUrbanism:        t("items.certificatUrbanism"),
+    contractArenda:            t("items.contractArenda"),
+    contractInchiriere:        t("items.contractInchiriere"),
+    contractPartaj:            t("items.contractPartaj"),
+    contractPrestariServicii:  t("items.contractPrestariServicii"),
+    contractVanzare:           t("items.contractVanzare"),
+    extrasCarteFunciara:       t("items.extrasCarteFunciara"),
+    extrasPug:                 t("items.extrasPug"),
+    hotarareJudecatoreasca:    t("items.hotarareJudecatoreasca"),
+    testament:                 t("items.testament"),
+    titluProprietate:          t("items.titluProprietate"),
+    users:                     t("items.users"),
+    referenceData:             t("items.referenceData"),
+    importExport:              t("items.importExport"),
+    settings:                  t("items.settings"),
   };
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -227,7 +236,7 @@ export function SidebarNav() {
         isCollapsed ? "w-14" : "w-56",
       ].join(" ")}
     >
-      {/* ── App name + collapse toggle ─────────────────────────────────── */}
+      {/* ── App name + locale toggle + collapse button ────────────────── */}
       <div
         className={[
           "flex items-center h-14 px-3 border-b border-wire shrink-0",
@@ -239,6 +248,7 @@ export function SidebarNav() {
             GA40
           </span>
         )}
+        {!isCollapsed && <LocaleToggle />}
         <button
           type="button"
           onClick={toggleCollapsed}
@@ -263,7 +273,7 @@ export function SidebarNav() {
           <NavSectionRow
             key={section.key}
             section={section}
-            isOpen={openSections.has(section.key)}
+            isOpen={openSection === section.key}
             isCollapsed={isCollapsed}
             activeHref={activeHref}
             sectionLabel={sectionLabels[section.key] ?? section.key}
@@ -274,15 +284,6 @@ export function SidebarNav() {
         ))}
       </nav>
 
-      {/* ── Bottom: locale toggle ──────────────────────────────────────── */}
-      <div
-        className={[
-          "border-t border-wire p-3 shrink-0",
-          isCollapsed ? "flex justify-center" : "",
-        ].join(" ")}
-      >
-        {!isCollapsed && <LocaleToggle />}
-      </div>
     </aside>
   );
 }
