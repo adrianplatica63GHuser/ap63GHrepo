@@ -119,7 +119,7 @@ export function PropertyForm({
   return (
     <form
       onSubmit={form.handleSubmit(onSubmit)}
-      className="flex flex-col gap-8"
+      className="flex flex-col gap-4"
       noValidate
     >
       {/* Cadastral data — 4-col compact layout */}
@@ -188,13 +188,13 @@ export function PropertyForm({
       </Section>
 
       {/* Address */}
-      <section className="rounded-md border border-card-rim bg-card p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
+      <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
           {t("sections.address")}
         </h2>
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
           {/* Row 1: Street line, Notes — 2 cols */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <Field
               label={t("address.streetLine")}
               name="address.streetLine"
@@ -209,7 +209,7 @@ export function PropertyForm({
             />
           </div>
           {/* Row 2: Postal Code, City, County, Country — 4 cols */}
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
             <Field
               label={t("address.postalCode")}
               name="address.postalCode"
@@ -239,11 +239,11 @@ export function PropertyForm({
       </section>
 
       {/* Corners + mini-map — stacked vertically; minimap always full-width */}
-      <section className="rounded-md border border-card-rim bg-card p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
+      <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
           {t("sections.corners")}
         </h2>
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
           <CornersManager corners={corners} onChange={setCorners} />
           <div className="rounded-md border border-card-rim overflow-hidden dark:border-zinc-800" style={{ height: "360px" }}>
             <PropertyMiniMap corners={corners} onChange={setCorners} />
@@ -306,10 +306,10 @@ export function PropertyForm({
 // ---------------------------------------------------------------------------
 
 const COLUMNS_CLASS: Record<1 | 2 | 3 | 4, string> = {
-  1: "grid grid-cols-1 gap-4",
-  2: "grid grid-cols-1 gap-4 sm:grid-cols-2",
-  3: "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3",
-  4: "grid grid-cols-2 gap-4 md:grid-cols-4",
+  1: "grid grid-cols-1 gap-2",
+  2: "grid grid-cols-1 gap-2 sm:grid-cols-2",
+  3: "grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3",
+  4: "grid grid-cols-2 gap-2 md:grid-cols-4",
 };
 
 function Section({
@@ -322,8 +322,8 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-md border border-card-rim bg-card p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-      <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
+    <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
         {title}
       </h2>
       <div className={COLUMNS_CLASS[columns]}>
@@ -344,14 +344,14 @@ type FieldProps = {
 
 function Field({ label, name, type = "text", register, error, hint }: FieldProps) {
   return (
-    <label className="flex flex-col gap-1 text-sm">
+    <label className="flex flex-col gap-0.5 text-sm">
       <span className="font-medium text-ink dark:text-zinc-300">{label}</span>
       <input
         type={type}
         {...register(name)}
         aria-invalid={error ? true : undefined}
         className={[
-          "rounded-md border bg-white px-3 py-1.5 shadow-sm focus:outline-none dark:bg-zinc-950",
+          "rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none dark:bg-zinc-950",
           error
             ? "border-red-500 focus:border-red-600"
             : "border-wire focus:border-focus dark:border-zinc-700",
@@ -375,7 +375,7 @@ function TextAreaField({
   maxLength,
 }: FieldProps & { maxLength?: number }) {
   return (
-    <label className="flex flex-col gap-1 text-sm">
+    <label className="flex flex-col gap-0.5 text-sm">
       <span className="font-medium text-ink dark:text-zinc-300">{label}</span>
       <textarea
         {...register(name)}
@@ -383,7 +383,7 @@ function TextAreaField({
         rows={3}
         aria-invalid={error ? true : undefined}
         className={[
-          "rounded-md border bg-white px-3 py-1.5 shadow-sm focus:outline-none dark:bg-zinc-950",
+          "rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none dark:bg-zinc-950",
           error
             ? "border-red-500 focus:border-red-600"
             : "border-wire focus:border-focus dark:border-zinc-700",
@@ -404,13 +404,13 @@ function SelectField({
   options,
 }: FieldProps & { options: { value: string; label: string }[] }) {
   return (
-    <label className="flex flex-col gap-1 text-sm">
+    <label className="flex flex-col gap-0.5 text-sm">
       <span className="font-medium text-ink dark:text-zinc-300">{label}</span>
       <select
         {...register(name)}
         aria-invalid={error ? true : undefined}
         className={[
-          "rounded-md border bg-white px-3 py-1.5 shadow-sm focus:outline-none dark:bg-zinc-950",
+          "rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none dark:bg-zinc-950",
           error
             ? "border-red-500 focus:border-red-600"
             : "border-wire focus:border-focus dark:border-zinc-700",
@@ -429,9 +429,9 @@ function SelectField({
 
 function ReadOnlyField({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex flex-col gap-1 text-sm">
+    <div className="flex flex-col gap-0.5 text-sm">
       <span className="font-medium text-ink dark:text-zinc-300">{label}</span>
-      <div className="rounded-md border border-wire bg-canvas px-3 py-1.5 font-mono text-sm text-ink dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-300">
+      <div className="rounded-md border border-wire bg-canvas px-2 py-1 font-mono text-sm text-ink dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-300">
         {value}
       </div>
     </div>
@@ -483,3 +483,4 @@ function ConfirmDialog({
     </div>
   );
 }
+                                                                                                                                            

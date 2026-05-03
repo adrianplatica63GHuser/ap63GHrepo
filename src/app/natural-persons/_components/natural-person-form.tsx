@@ -119,17 +119,17 @@ export function NaturalPersonForm({
   return (
     <form
       onSubmit={form.handleSubmit(onSubmit)}
-      className="flex flex-col gap-8"
+      className="flex flex-col gap-4"
       noValidate
     >
       {/* Identity — all personal data merged into one section */}
-      <section className="rounded-md border border-card-rim bg-card p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
+      <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
           {t("sections.identity")}
         </h2>
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
           {/* Row 1: Last Name, First Name, Code, CNP — 4 cols */}
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
             <Field
               label={t("fields.lastName")}
               name="lastName"
@@ -153,7 +153,7 @@ export function NaturalPersonForm({
             />
           </div>
           {/* Row 2: ID Type, ID Number, Gender, Date of Birth — 4 cols */}
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
             <SelectField
               label={t("fields.idDocumentType")}
               name="idDocumentType"
@@ -191,7 +191,7 @@ export function NaturalPersonForm({
             />
           </div>
           {/* Row 3: Nickname, Notes — 2 cols */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <Field
               label={t("fields.nickname")}
               name="nickname"
@@ -206,7 +206,7 @@ export function NaturalPersonForm({
             />
           </div>
           {/* Row 4: Personal Phone 1, Personal Email 1, Personal Phone 2, Personal Email 2 — 4 cols */}
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
             <Field
               label={t("fields.personalPhone1")}
               name="personalPhone1"
@@ -233,7 +233,7 @@ export function NaturalPersonForm({
             />
           </div>
           {/* Row 5: Work Phone, Work Email — 4-col grid, 2 slots empty on right */}
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
             <Field
               label={t("fields.workPhone")}
               name="workPhone"
@@ -329,15 +329,15 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-md border border-card-rim bg-card p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-      <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
+    <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
         {title}
       </h2>
       <div
         className={
           columns === 2
-            ? "grid grid-cols-1 gap-4 sm:grid-cols-2"
-            : "grid grid-cols-1 gap-4"
+            ? "grid grid-cols-1 gap-2 sm:grid-cols-2"
+            : "grid grid-cols-1 gap-2"
         }
       >
         {children}
@@ -357,14 +357,14 @@ type FieldProps = {
 
 function Field({ label, name, type = "text", register, error, hint }: FieldProps) {
   return (
-    <label className="flex flex-col gap-1 text-sm">
+    <label className="flex flex-col gap-0.5 text-sm">
       <span className="font-medium text-ink dark:text-zinc-300">{label}</span>
       <input
         type={type}
         {...register(name)}
         aria-invalid={error ? true : undefined}
         className={[
-          "rounded-md border bg-white px-3 py-1.5 shadow-sm focus:outline-none dark:bg-zinc-950",
+          "rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none dark:bg-zinc-950",
           error
             ? "border-red-500 focus:border-red-600"
             : "border-wire focus:border-focus dark:border-zinc-700",
@@ -388,7 +388,7 @@ function TextAreaField({
   maxLength,
 }: FieldProps & { maxLength?: number }) {
   return (
-    <label className="flex flex-col gap-1 text-sm">
+    <label className="flex flex-col gap-0.5 text-sm">
       <span className="font-medium text-ink dark:text-zinc-300">{label}</span>
       <textarea
         {...register(name)}
@@ -396,7 +396,7 @@ function TextAreaField({
         rows={3}
         aria-invalid={error ? true : undefined}
         className={[
-          "rounded-md border bg-white px-3 py-1.5 shadow-sm focus:outline-none dark:bg-zinc-950",
+          "rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none dark:bg-zinc-950",
           error
             ? "border-red-500 focus:border-red-600"
             : "border-wire focus:border-focus dark:border-zinc-700",
@@ -417,13 +417,13 @@ function SelectField({
   options,
 }: FieldProps & { options: { value: string; label: string }[] }) {
   return (
-    <label className="flex flex-col gap-1 text-sm">
+    <label className="flex flex-col gap-0.5 text-sm">
       <span className="font-medium text-ink dark:text-zinc-300">{label}</span>
       <select
         {...register(name)}
         aria-invalid={error ? true : undefined}
         className={[
-          "rounded-md border bg-white px-3 py-1.5 shadow-sm focus:outline-none dark:bg-zinc-950",
+          "rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none dark:bg-zinc-950",
           error
             ? "border-red-500 focus:border-red-600"
             : "border-wire focus:border-focus dark:border-zinc-700",
@@ -444,9 +444,9 @@ function SelectField({
 
 function ReadOnlyField({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex flex-col gap-1 text-sm">
+    <div className="flex flex-col gap-0.5 text-sm">
       <span className="font-medium text-ink dark:text-zinc-300">{label}</span>
-      <div className="rounded-md border border-wire bg-canvas px-3 py-1.5 font-mono text-sm text-ink dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-300">
+      <div className="rounded-md border border-wire bg-canvas px-2 py-1 font-mono text-sm text-ink dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-300">
         {value}
       </div>
     </div>
@@ -477,13 +477,13 @@ function AddressBlockFields({
 }) {
   const f = (sub: string) => `${prefix}.${sub}` as FieldPath<FormValues>;
   return (
-    <section className="rounded-md border border-card-rim bg-card p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-      <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
+    <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
         {title}
       </h2>
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-2">
         {/* Row 1: Street line, Notes — 2 cols */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <Field
             label={t("address.streetLine")}
             name={f("streetLine")}
@@ -498,7 +498,7 @@ function AddressBlockFields({
           />
         </div>
         {/* Row 2: Postal Code, City, County, Country — 4 cols */}
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
           <Field
             label={t("address.postalCode")}
             name={f("postalCode")}
@@ -583,3 +583,4 @@ function ConfirmDialog({
     </div>
   );
 }
+                                                                                                                                                              
