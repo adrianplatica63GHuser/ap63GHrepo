@@ -497,8 +497,8 @@ function AddressBlockFields({
         {title}
       </h2>
       <div className="flex flex-col gap-2">
-        {/* Row 1: Street line, Notes — 2 cols */}
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        {/* Row 1: Street Line | Notes */}
+        <div className="grid grid-cols-2 gap-2">
           <Field
             label={t("address.streetLine")}
             name={f("streetLine")}
@@ -512,8 +512,8 @@ function AddressBlockFields({
             error={errors?.notes?.message}
           />
         </div>
-        {/* Row 2: Postal Code, City, County, Country — 4 cols */}
-        <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+        {/* Row 2: Postal Code | Locality */}
+        <div className="grid grid-cols-2 gap-2">
           <Field
             label={t("address.postalCode")}
             name={f("postalCode")}
@@ -526,6 +526,9 @@ function AddressBlockFields({
             register={register}
             error={errors?.locality?.message}
           />
+        </div>
+        {/* Row 3: County | Country */}
+        <div className="grid grid-cols-2 gap-2">
           <Field
             label={t("address.county")}
             name={f("county")}
