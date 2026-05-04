@@ -1,12 +1,12 @@
 {
   "home": {
     "title": "GA40",
-    "subtitle": "People · Paperwork · Properties",
+    "subtitle": "People · Documents · Properties",
     "soon": "coming soon",
     "sections": {
       "people": "People",
       "property": "Property",
-      "paperwork": "Paperwork",
+      "paperwork": "Documents",
       "administration": "Administration"
     },
     "buttons": {
@@ -111,6 +111,13 @@
       "carteFunciara": "Carte Funciara",
       "surfaceAreaMp": "Area (m²)",
       "locality": "Locality"
+    },
+    "tabs": {
+      "details":    "Details",
+      "references": "References",
+      "persons":    "Persons",
+      "paperwork":  "Documents",
+      "comingSoon": "Coming soon — this section will be available in a future update."
     }
   },
   "naturalPerson": {
@@ -193,7 +200,7 @@
       "details": "Details",
       "references": "References",
       "properties": "Properties",
-      "paperwork": "Paperwork",
+      "paperwork": "Documents",
       "comingSoon": "Coming soon — this section will be available in a future update."
     }
   },
@@ -201,7 +208,7 @@
     "sections": {
       "people": "People",
       "property": "Property",
-      "paperwork": "Paperwork",
+      "paperwork": "Documents",
       "administration": "Administration"
     },
     "items": {
@@ -211,7 +218,6 @@
       "landMap": "Land — Map",
       "building": "Building",
       "propertyType3": "Type 3",
-      "allDocuments":             "All Documents",
       "actAdjudecare":            "Adjudication Act",
       "actCadastru":              "Cadastral Act",
       "actDonatie":               "Deed of Gift",
@@ -241,10 +247,10 @@
   },
   "welcome": {
     "title": "GA40",
-    "subtitle": "People · Paperwork · Properties"
+    "subtitle": "People · Documents · Properties"
   },
   "paperwork": {
-    "listTitle": "Paperwork",
+    "listTitle": "Documents",
     "createTitle": "New Document",
     "searchPlaceholder": "search by code, title, or document no.",
     "addNew": "Add new Document",
@@ -255,7 +261,8 @@
     "counts": "Showing {shown} of {total}",
     "saveError": "Could not save",
     "deleteError": "Could not delete",
-    "filterAll": "All types",
+    "selectAll": "(Select All)",
+    "noTypeSelected": "Please select at least one document type",
     "types": {
       "ACT_ADJUDECARE":          "Act de Adjudecare",
       "ACT_CADASTRU":            "Act Cadastru",
@@ -328,6 +335,13 @@
     "confirmDelete": {
       "title": "Delete document?",
       "body":  "Are you sure you want to delete this document? This cannot be undone."
+    },
+    "tabs": {
+      "details":    "Details",
+      "references": "References",
+      "persons":    "Persons",
+      "properties": "Properties",
+      "comingSoon": "Coming soon — this section will be available in a future update."
     }
   },
   "valueList": {

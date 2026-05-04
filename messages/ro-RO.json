@@ -111,6 +111,13 @@
       "carteFunciara": "Nr. CF",
       "surfaceAreaMp": "Suprafață (m²)",
       "locality": "Localitate"
+    },
+    "tabs": {
+      "details":    "Detalii",
+      "references": "Referințe",
+      "persons":    "Persoane",
+      "paperwork":  "Acte",
+      "comingSoon": "În curând — această secțiune va fi disponibilă într-o actualizare viitoare."
     }
   },
   "naturalPerson": {
@@ -211,7 +218,6 @@
       "landMap": "Teren — Hartă",
       "building": "Construcție",
       "propertyType3": "Tip 3",
-      "allDocuments":             "Toate actele",
       "actAdjudecare":            "Act de Adjudecare",
       "actCadastru":              "Act Cadastru",
       "actDonatie":               "Act de Donație",
@@ -255,7 +261,8 @@
     "counts": "Se afișează {shown} din {total}",
     "saveError": "Salvarea a eșuat",
     "deleteError": "Ștergerea a eșuat",
-    "filterAll": "Toate tipurile",
+    "selectAll": "(Selectați toate)",
+    "noTypeSelected": "Selectați cel puțin un tip de document",
     "types": {
       "ACT_ADJUDECARE":          "Act de Adjudecare",
       "ACT_CADASTRU":            "Act Cadastru",
@@ -328,6 +335,13 @@
     "confirmDelete": {
       "title": "Ștergeți actul?",
       "body":  "Sigur doriți să ștergeți acest act? Acțiunea nu poate fi anulată."
+    },
+    "tabs": {
+      "details":    "Detalii",
+      "references": "Referințe",
+      "persons":    "Persoane",
+      "properties": "Proprietăți",
+      "comingSoon": "În curând — această secțiune va fi disponibilă într-o actualizare viitoare."
     }
   },
   "valueList": {

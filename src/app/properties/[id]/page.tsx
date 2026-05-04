@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getPropertyById } from "@/lib/properties/queries";
-import { PropertyForm } from "../_components/property-form";
+import { PropertyDetailTabs } from "../_components/property-detail-tabs";
 import { fromApiPayload } from "../_components/form-schema";
 
 type PageParams = { params: Promise<{ id: string }> };
@@ -24,15 +24,11 @@ export default async function EditPropertyPage({ params }: PageParams) {
 
   return (
     <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-zinc-950">
-      <main className="mx-auto w-full max-w-4xl px-6 py-4 flex flex-col gap-6">
-        <header>
-          <h1 className="text-2xl font-semibold tracking-tight">{label}</h1>
-        </header>
-
-        <PropertyForm
-          mode="edit"
+      <main className="mx-auto w-full max-w-4xl px-6 py-4 flex flex-col gap-4">
+        <PropertyDetailTabs
           propertyId={data.property.id}
           propertyCode={data.property.code}
+          propertyName={label}
           initialValues={initialValues}
           initialCorners={initialCorners}
         />

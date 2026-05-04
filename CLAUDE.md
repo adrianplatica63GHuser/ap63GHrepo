@@ -55,9 +55,58 @@ Relationships: People ↔ Paperwork, People ↔ Properties, Paperwork ↔ Proper
 - Slice #4.1 — Sidebar & nav polish. ✅ Complete. Full detail below.
 - Slice #4.2 — Paperwork filter re-sync + flag locale switcher. ✅ Complete. Full detail below.
 - Slice #4.3 — Inline field labels across all three detail forms. ✅ Complete. Full detail below.
+- Slice #4.4 — Document list filtering via sidebar checkboxes + "Paperwork" → "Documents" GUI rename. ✅ Complete. Full detail below.
 - Slice #5+ — Relationships (People ↔ Properties ↔ Paperwork, self-refs), relationship map view, etc.
 
 Each slice typically lands as multiple small commits, each individually green.
+
+### Slice #4.4 — Document list filtering via sidebar checkboxes (detail)
+
+Pure frontend + small API extension — no DB schema changes.
+
+**What changed**
+
+**Sidebar (`src/components/sidebar/sidebar-nav.tsx` + `nav-config.ts`)**
+- `nav-config.ts`: paperwork section items replaced with an empty array. The `File` icon import removed. The sidebar handles the paperwork section entirely via `PaperworkNavSection`.
+- `PaperworkNavSection` — new client component rendered for `section.key === "paperwork"`:
+  - First row: `(Select All)` checkbox with native browser indeterminate state (via `ref.indeterminate`).
+  - 19 rows: one checkbox per `PAPERWORK_TYPES` entry, labelled via `t("types.*")` from the `paperwork` namespace.
+  - State: `checkedTypes: Set<string>` initialised to all 19 types (all checked).
+  - Resets to all-checked whenever the accordion transitions from closed → open (tracked with `wasOpen` ref).
+  - Indeterminate rule: 1–18 checked → (Select All) indeterminate; 0 → unchecked; 19 → checked.
+  - On any checkbox change → `router.push(...)`: all 19 → `/paperwork`; 0 → `/paperwork?types=`; 1–18 → `/paperwork?types=A,B,C,...`.
+- `activeSectionKey` computation updated: if `getActiveSectionKey` returns null but `pathname.startsWith("/paperwork")`, returns `"paperwork"` (since paperwork items are no longer in nav-config, the helpers can't auto-detect the active section).
+
+**API layer**
+- `src/lib/paperwork/validation.ts`: `paperworkListQuerySchema` field `type` (single enum) replaced by `types` (optional `PaperworkType[]`). Empty array guard documented.
+- `src/lib/paperwork/queries.ts`: imports `inArray` from drizzle-orm. Early return `{ items: [], total: 0 }` when `opts.types` is an empty array (avoids `IN ()` bad SQL). Otherwise uses `inArray(paperwork.type, opts.types)` when types are specified.
+- `src/app/api/paperwork/route.ts`: parses `?types=A,B` comma-separated string → `PaperworkType[]`. Key absent → `undefined` (show all); key present but empty (`?types=`) → `[]` (show nothing); otherwise splits and validates each token against `PAPERWORK_TYPES`.
+
+**List view (`src/app/paperwork/list-view.tsx` + `page.tsx`)**
+- Prop changed: `initialType?: string` → `initialTypes?: string[]` (`undefined` = all, `[]` = nothing, `[...]` = filter).
+- `<select>` type dropdown removed.
+- When `typeFilters` is `[]`: skips the API call (`enabled: false`) and renders a "please select at least one document type" message instead of the table.
+- `page.tsx` parses `?types=` from `searchParams` into `string[] | undefined` and passes as `initialTypes`.
+- `fetchPaperwork` sends `?types=A,B` param when types are specified.
+
+**"Paperwork" → "Documents" GUI rename (English only)**
+- `messages/en-GB.json`: updated `home.subtitle`, `home.sections.paperwork`, `nav.sections.paperwork`, `paperwork.listTitle`, `property.tabs.paperwork`, `naturalPerson.tabs.paperwork`.
+- Both JSON files: removed `paperwork.filterAll` (dropdown gone) and `nav.items.allDocuments` (no longer a nav item); added `paperwork.selectAll` and `paperwork.noTypeSelected`.
+- Romanian strings were already "Acte" / "Document" everywhere — no display changes needed.
+
+**Non-GUI "Paperwork" occurrences (intentionally NOT renamed)**
+- File/folder paths, API routes, DB table, TypeScript type names, i18n namespace keys — all remain `paperwork`. Renaming them is a wide cross-cutting change deferred to a future slice.
+
+**Files touched**
+- `src/lib/paperwork/validation.ts`
+- `src/lib/paperwork/queries.ts`
+- `src/app/api/paperwork/route.ts`
+- `src/app/paperwork/list-view.tsx`
+- `src/app/paperwork/page.tsx`
+- `src/components/sidebar/nav-config.ts`
+- `src/components/sidebar/sidebar-nav.tsx`
+- `messages/en-GB.json`
+- `messages/ro-RO.json`
 
 ### Slice #4.3 — Inline field labels across all three detail forms (detail)
 

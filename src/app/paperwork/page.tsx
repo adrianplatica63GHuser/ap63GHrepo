@@ -1,4 +1,5 @@
 import { getTranslations } from "next-intl/server";
+import { PAPERWORK_TYPES, type PaperworkType } from "@/lib/paperwork/validation";
 import { PaperworkListView } from "./list-view";
 
 type PageProps = {
@@ -8,7 +9,24 @@ type PageProps = {
 export default async function PaperworkPage({ searchParams }: PageProps) {
   const t = await getTranslations("paperwork");
   const params = await searchParams;
-  const initialType = typeof params.type === "string" ? params.type : "";
+
+  // ?types= param drives the sidebar checkbox filter.
+  //   absent  → undefined → show all
+  //   ""      → []        → 0 types selected → show "please select" message
+  //   "A,B"   → ["A","B"] → show those types
+  const typesParam =
+    typeof params.types === "string" ? params.types : undefined;
+
+  const initialTypes: string[] | undefined =
+    typesParam === undefined
+      ? undefined
+      : typesParam === ""
+      ? []
+      : typesParam
+          .split(",")
+          .filter((t): t is PaperworkType =>
+            (PAPERWORK_TYPES as readonly string[]).includes(t),
+          );
 
   return (
     <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-zinc-950">
@@ -19,7 +37,7 @@ export default async function PaperworkPage({ searchParams }: PageProps) {
           </h1>
         </header>
 
-        <PaperworkListView initialType={initialType} />
+        <PaperworkListView initialTypes={initialTypes} />
       </main>
     </div>
   );

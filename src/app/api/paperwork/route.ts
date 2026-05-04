@@ -13,15 +13,32 @@ import {
 } from "@/lib/api/errors";
 import { createPaperwork, listPaperwork } from "@/lib/paperwork/queries";
 import {
+  PAPERWORK_TYPES,
   paperworkCreateSchema,
   paperworkListQuerySchema,
+  type PaperworkType,
 } from "@/lib/paperwork/validation";
 
 export async function GET(request: NextRequest): Promise<Response> {
   const url = new URL(request.url);
+
+  // Parse ?types=ACT_ADJUDECARE,CONTRACT_VANZARE (comma-separated).
+  // Key absent → undefined (show all).  Key present but empty → [] (show nothing).
+  const typesRaw = url.searchParams.get("types");
+  const typesArr: PaperworkType[] | undefined =
+    typesRaw === null
+      ? undefined
+      : typesRaw === ""
+      ? []
+      : (typesRaw
+          .split(",")
+          .filter((t): t is PaperworkType =>
+            (PAPERWORK_TYPES as readonly string[]).includes(t),
+          ));
+
   const parsed = paperworkListQuerySchema.safeParse({
     q:      url.searchParams.get("q")      ?? undefined,
-    type:   url.searchParams.get("type")   ?? undefined,
+    types:  typesArr,
     limit:  url.searchParams.get("limit")  ?? undefined,
     offset: url.searchParams.get("offset") ?? undefined,
   });

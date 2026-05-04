@@ -4,7 +4,7 @@
  * Soft delete: list + getById filter out deleted rows.
  */
 
-import { and, count, eq, ilike, isNull, or } from "drizzle-orm";
+import { and, count, eq, ilike, inArray, isNull, or } from "drizzle-orm";
 import { db } from "@/db";
 import { paperwork } from "@/db/schema";
 import type {
@@ -41,9 +41,16 @@ export async function listPaperwork(opts: PaperworkListQuery): Promise<{
   const q   = opts.q?.trim();
   const pat = q ? `%${q}%` : null;
 
+  // Short-circuit: if types array is explicitly empty, return nothing.
+  if (opts.types !== undefined && opts.types.length === 0) {
+    return { items: [], total: 0 };
+  }
+
   const where = and(
     isNull(paperwork.deletedAt),
-    opts.type ? eq(paperwork.type, opts.type) : undefined,
+    opts.types && opts.types.length > 0
+      ? inArray(paperwork.type, opts.types)
+      : undefined,
     pat
       ? or(
           ilike(paperwork.code,       pat),

@@ -153,7 +153,11 @@ export type PaperworkUpdate = z.infer<typeof paperworkUpdateSchema>;
 
 export const paperworkListQuerySchema = z.object({
   q:      z.string().optional(),
-  type:   z.enum(PAPERWORK_TYPES).optional(),
+  // Multi-type filter — array of valid type keys.
+  // undefined  → no filter (show all)
+  // []         → nothing selected (caller should avoid this; API returns empty)
+  // [...]      → filter to those types
+  types:  z.array(z.enum(PAPERWORK_TYPES)).optional(),
   limit:  z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
 });

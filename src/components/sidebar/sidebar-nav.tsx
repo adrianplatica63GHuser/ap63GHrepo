@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { usePathname } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
 import { LocaleToggle } from "@/components/locale-toggle";
+import { PAPERWORK_TYPES, type PaperworkType } from "@/lib/paperwork/validation";
 import { NAV_SECTIONS, type NavItem, type NavSection } from "./nav-config";
 import {
   getActiveHref,
@@ -129,6 +130,164 @@ function NavSectionRow({
 }
 
 // ---------------------------------------------------------------------------
+// PaperworkNavSection — checkbox-based document-type filter
+// ---------------------------------------------------------------------------
+//
+// Replaces the link-based paperwork items with a (Select All) + 19 individual
+// checkboxes. Clicking any checkbox navigates to /paperwork?types=... so the
+// list page filters in real time.
+//
+// State resets to all-checked whenever the accordion transitions closed → open.
+
+function PaperworkNavSection({
+  section,
+  isOpen,
+  isCollapsed,
+  sectionLabel,
+  pathname,
+  onToggle,
+  onExpandSidebar,
+}: {
+  section: NavSection;
+  isOpen: boolean;
+  isCollapsed: boolean;
+  sectionLabel: string;
+  pathname: string;
+  onToggle: () => void;
+  onExpandSidebar: () => void;
+}) {
+  const tPaperwork = useTranslations("paperwork");
+  const router = useRouter();
+  const SectionIcon = section.icon;
+
+  const isSectionActive = pathname.startsWith("/paperwork");
+
+  // ── Checkbox state ─────────────────────────────────────────────────────────
+  const [checkedTypes, setCheckedTypes] = useState<Set<string>>(
+    () => new Set(PAPERWORK_TYPES),
+  );
+  const selectAllRef = useRef<HTMLInputElement>(null);
+
+  // Reset to all-checked when accordion opens (closed → open transition).
+  const wasOpen = useRef(false);
+  useEffect(() => {
+    if (isOpen && !wasOpen.current) {
+      setCheckedTypes(new Set(PAPERWORK_TYPES));
+    }
+    wasOpen.current = isOpen;
+  }, [isOpen]);
+
+  // Keep the (Select All) native indeterminate state in sync with checkedTypes.
+  useEffect(() => {
+    if (!selectAllRef.current) return;
+    const n = checkedTypes.size;
+    selectAllRef.current.indeterminate = n > 0 && n < PAPERWORK_TYPES.length;
+  }, [checkedTypes]);
+
+  // ── Navigation helper ───────────────────────────────────────────────────────
+  const pushUrl = useCallback(
+    (types: Set<string>) => {
+      if (types.size === PAPERWORK_TYPES.length) {
+        router.push("/paperwork");
+      } else if (types.size === 0) {
+        router.push("/paperwork?types=");
+      } else {
+        router.push(`/paperwork?types=${[...types].join(",")}`);
+      }
+    },
+    [router],
+  );
+
+  // ── Handlers ───────────────────────────────────────────────────────────────
+  const handleSelectAll = useCallback(() => {
+    const next: Set<string> =
+      checkedTypes.size === PAPERWORK_TYPES.length
+        ? new Set()
+        : new Set(PAPERWORK_TYPES);
+    setCheckedTypes(next);
+    pushUrl(next);
+  }, [checkedTypes, pushUrl]);
+
+  const handleToggleType = useCallback(
+    (typeKey: string) => {
+      const next = new Set(checkedTypes);
+      if (next.has(typeKey)) next.delete(typeKey);
+      else next.add(typeKey);
+      setCheckedTypes(next);
+      pushUrl(next);
+    },
+    [checkedTypes, pushUrl],
+  );
+
+  // ── Render ─────────────────────────────────────────────────────────────────
+  return (
+    <div>
+      {/* Section header — same structure as NavSectionRow */}
+      <button
+        type="button"
+        onClick={isCollapsed ? onExpandSidebar : onToggle}
+        title={isCollapsed ? sectionLabel : undefined}
+        aria-expanded={isCollapsed ? undefined : isOpen}
+        className={[
+          "w-full flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+          isCollapsed ? "justify-center" : "justify-between",
+          isSectionActive ? "text-cta" : "text-ink hover:bg-crease",
+        ].join(" ")}
+      >
+        <span className={`flex items-center ${isCollapsed ? "" : "gap-2.5"}`}>
+          <SectionIcon size={18} className="shrink-0" aria-hidden="true" />
+          {!isCollapsed && <span>{sectionLabel}</span>}
+        </span>
+        {!isCollapsed && (
+          <ChevronDown
+            size={14}
+            className={`shrink-0 transition-transform duration-150 ${
+              isOpen ? "rotate-180" : ""
+            }`}
+            aria-hidden="true"
+          />
+        )}
+      </button>
+
+      {/* Checkbox list — only visible when expanded */}
+      {!isCollapsed && isOpen && (
+        <div className="mt-0.5 mb-1 ml-3 pl-3 border-l border-wire flex flex-col gap-0.5">
+          {/* (Select All) row */}
+          <label className="flex items-center gap-2.5 rounded-md px-3 py-1.5 text-sm text-ink cursor-pointer hover:bg-or-light select-none">
+            <input
+              ref={selectAllRef}
+              type="checkbox"
+              checked={checkedTypes.size === PAPERWORK_TYPES.length}
+              onChange={handleSelectAll}
+              className="h-3.5 w-3.5 shrink-0 cursor-pointer"
+            />
+            <span className="truncate">{tPaperwork("selectAll")}</span>
+          </label>
+
+          {/* Individual type checkboxes */}
+          {(PAPERWORK_TYPES as readonly PaperworkType[]).map((typeKey) => (
+            <label
+              key={typeKey}
+              className="flex items-center gap-2.5 rounded-md px-3 py-1.5 text-sm text-ink cursor-pointer hover:bg-or-light select-none"
+            >
+              <input
+                type="checkbox"
+                checked={checkedTypes.has(typeKey)}
+                onChange={() => handleToggleType(typeKey)}
+                className="h-3.5 w-3.5 shrink-0 cursor-pointer"
+              />
+              <span className="truncate">
+                {tPaperwork(`types.${typeKey}`)}
+              </span>
+            </label>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // SidebarNav — main export
 // ---------------------------------------------------------------------------
 
@@ -159,10 +318,14 @@ export function SidebarNav() {
   }, []);
 
   // ── Accordion state ───────────────────────────────────────────────────────
-  const activeSectionKey = useMemo(
-    () => getActiveSectionKey(pathname, NAV_SECTIONS),
-    [pathname],
-  );
+  const activeSectionKey = useMemo(() => {
+    const computed = getActiveSectionKey(pathname, NAV_SECTIONS);
+    if (computed) return computed;
+    // Paperwork section has no items in nav-config (checkbox-based), so we
+    // detect it by pathname prefix instead.
+    if (pathname.startsWith("/paperwork")) return "paperwork";
+    return null;
+  }, [pathname]);
 
   // Single-open accordion — at most one section is open at a time.
   const [openSection, setOpenSection] = useState<string | null>(
@@ -201,26 +364,6 @@ export function SidebarNav() {
     landMap:                   t("items.landMap"),
     building:                  t("items.building"),
     propertyType3:             t("items.propertyType3"),
-    allDocuments:              t("items.allDocuments"),
-    actAdjudecare:             t("items.actAdjudecare"),
-    actCadastru:               t("items.actCadastru"),
-    actDonatie:                t("items.actDonatie"),
-    autorizatie:               t("items.autorizatie"),
-    avizInstitutie:            t("items.avizInstitutie"),
-    certificatFiscal:          t("items.certificatFiscal"),
-    certificatMostenitor:      t("items.certificatMostenitor"),
-    certificatSarcini:         t("items.certificatSarcini"),
-    certificatUrbanism:        t("items.certificatUrbanism"),
-    contractArenda:            t("items.contractArenda"),
-    contractInchiriere:        t("items.contractInchiriere"),
-    contractPartaj:            t("items.contractPartaj"),
-    contractPrestariServicii:  t("items.contractPrestariServicii"),
-    contractVanzare:           t("items.contractVanzare"),
-    extrasCarteFunciara:       t("items.extrasCarteFunciara"),
-    extrasPug:                 t("items.extrasPug"),
-    hotarareJudecatoreasca:    t("items.hotarareJudecatoreasca"),
-    testament:                 t("items.testament"),
-    titluProprietate:          t("items.titluProprietate"),
     users:                     t("items.users"),
     referenceData:             t("items.referenceData"),
     importExport:              t("items.importExport"),
@@ -269,21 +412,33 @@ export function SidebarNav() {
         className="flex-1 overflow-y-auto py-2 px-2 flex flex-col gap-0.5"
         aria-label="Main navigation"
       >
-        {NAV_SECTIONS.map((section) => (
-          <NavSectionRow
-            key={section.key}
-            section={section}
-            isOpen={openSection === section.key}
-            isCollapsed={isCollapsed}
-            activeHref={activeHref}
-            sectionLabel={sectionLabels[section.key] ?? section.key}
-            itemLabels={itemLabels}
-            onToggle={() => toggleSection(section.key)}
-            onExpandSidebar={expandSidebar}
-          />
-        ))}
+        {NAV_SECTIONS.map((section) =>
+          section.key === "paperwork" ? (
+            <PaperworkNavSection
+              key={section.key}
+              section={section}
+              isOpen={openSection === section.key}
+              isCollapsed={isCollapsed}
+              sectionLabel={sectionLabels[section.key] ?? section.key}
+              pathname={pathname}
+              onToggle={() => toggleSection(section.key)}
+              onExpandSidebar={expandSidebar}
+            />
+          ) : (
+            <NavSectionRow
+              key={section.key}
+              section={section}
+              isOpen={openSection === section.key}
+              isCollapsed={isCollapsed}
+              activeHref={activeHref}
+              sectionLabel={sectionLabels[section.key] ?? section.key}
+              itemLabels={itemLabels}
+              onToggle={() => toggleSection(section.key)}
+              onExpandSidebar={expandSidebar}
+            />
+          ),
+        )}
       </nav>
-
     </aside>
   );
 }
