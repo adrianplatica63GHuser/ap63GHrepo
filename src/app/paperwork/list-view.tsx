@@ -46,19 +46,12 @@ export function PaperworkListView({
 
   const [searchInput,     setSearchInput]     = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [typeFilters,     setTypeFilters]     = useState<string[] | undefined>(
-    initialTypes,
-  );
 
-  // Sync typeFilters whenever the URL ?types= param changes (sidebar checkbox
-  // click triggers router.push → page.tsx re-renders with new initialTypes).
-  // Use a stable string key to avoid re-running on every referential change.
-  const initialTypesKey =
-    initialTypes === undefined ? "__all__" : initialTypes.join(",");
-  useEffect(() => {
-    setTypeFilters(initialTypes);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialTypesKey]);
+  // typeFilters is derived directly from initialTypes (the URL ?types= param).
+  // The sidebar checkboxes change the URL → page.tsx re-renders with new
+  // initialTypes → this component re-renders with the correct value.
+  // No local state copy is needed — using initialTypes directly avoids the
+  // synchronous setState-in-effect pattern flagged by react-hooks/set-state-in-effect.
 
   useEffect(() => {
     const handle = setTimeout(() => {
@@ -67,15 +60,15 @@ export function PaperworkListView({
     return () => clearTimeout(handle);
   }, [searchInput]);
 
-  // When typeFilters is an empty array, skip the API call and show a message.
-  const noTypesSelected = typeFilters !== undefined && typeFilters.length === 0;
+  // When initialTypes is an empty array, skip the API call and show a message.
+  const noTypesSelected = initialTypes !== undefined && initialTypes.length === 0;
 
   const typeFiltersKey =
-    typeFilters === undefined ? "__all__" : typeFilters.join(",");
+    initialTypes === undefined ? "__all__" : initialTypes.join(",");
 
   const query = useQuery<ListResponse>({
     queryKey: ["paperwork", "list", debouncedSearch, typeFiltersKey],
-    queryFn:  () => fetchPaperwork(debouncedSearch, typeFilters ?? []),
+    queryFn:  () => fetchPaperwork(debouncedSearch, initialTypes ?? []),
     enabled:  !noTypesSelected,
   });
 

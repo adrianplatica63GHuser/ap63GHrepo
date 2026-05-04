@@ -296,13 +296,14 @@ export function SidebarNav() {
   const pathname = usePathname();
 
   // ── Collapsed state — persisted in localStorage ───────────────────────────
-  const [isCollapsed, setIsCollapsed] = useState(false);
-
-  // Read from localStorage after mount to avoid SSR/hydration mismatch
-  useEffect(() => {
+  // Lazy initializer reads localStorage on the client; returns false on the
+  // server (SSR). suppressHydrationWarning on <aside> handles the potential
+  // mismatch when the stored value differs from the SSR default.
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
     const stored = localStorage.getItem("sidebar-collapsed");
-    if (stored !== null) setIsCollapsed(stored === "true");
-  }, []);
+    return stored !== null ? stored === "true" : false;
+  });
 
   const toggleCollapsed = useCallback(() => {
     setIsCollapsed((prev) => {
@@ -332,13 +333,14 @@ export function SidebarNav() {
     activeSectionKey ?? null,
   );
 
-  // When the user navigates, open the section that owns the active item
-  // (closing whatever was open before).
-  useEffect(() => {
-    if (activeSectionKey) {
-      setOpenSection(activeSectionKey);
-    }
-  }, [activeSectionKey]);
+  // When the user navigates, open the section that owns the active item.
+  // React's recommended "derived state during render" pattern — avoids the
+  // synchronous setState-in-effect antipattern (react-hooks/set-state-in-effect).
+  const [prevActiveSectionKey, setPrevActiveSectionKey] = useState(activeSectionKey);
+  if (prevActiveSectionKey !== activeSectionKey && activeSectionKey) {
+    setPrevActiveSectionKey(activeSectionKey);
+    setOpenSection(activeSectionKey);
+  }
 
   const toggleSection = useCallback((key: string) => {
     setOpenSection((prev) => (prev === key ? null : key));
@@ -373,6 +375,7 @@ export function SidebarNav() {
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <aside
+      suppressHydrationWarning
       className={[
         "flex flex-col bg-card border-r border-wire shrink-0",
         "transition-[width] duration-200 ease-in-out overflow-hidden",

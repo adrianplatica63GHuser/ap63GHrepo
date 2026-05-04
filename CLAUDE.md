@@ -56,6 +56,7 @@ Relationships: People ↔ Paperwork, People ↔ Properties, Paperwork ↔ Proper
 - Slice #4.2 — Paperwork filter re-sync + flag locale switcher. ✅ Complete. Full detail below.
 - Slice #4.3 — Inline field labels across all three detail forms. ✅ Complete. Full detail below.
 - Slice #4.4 — Document list filtering via sidebar checkboxes + "Paperwork" → "Documents" GUI rename. ✅ Complete. Full detail below.
+- Slice #4.5 — CI lint fixes: three `react-hooks/set-state-in-effect` errors. ✅ Complete. Full detail below.
 - Slice #5+ — Relationships (People ↔ Properties ↔ Paperwork, self-refs), relationship map view, etc.
 
 Each slice typically lands as multiple small commits, each individually green.
@@ -107,6 +108,35 @@ Pure frontend + small API extension — no DB schema changes.
 - `src/components/sidebar/sidebar-nav.tsx`
 - `messages/en-GB.json`
 - `messages/ro-RO.json`
+
+### Slice #4.5 — CI lint fixes (detail)
+
+Pure frontend — no DB schema, API, or i18n changes.
+
+**Problem**: Three `react-hooks/set-state-in-effect` errors blocked the GitHub Actions CI run (`npm run lint` exits with code 1). All three were cases of calling `setState` synchronously inside a `useEffect` body.
+
+**Fix 1 — `src/app/paperwork/list-view.tsx`**
+- Removed the `typeFilters` local state and the `useEffect(() => setTypeFilters(initialTypes), [initialTypesKey])` that synced it from props.
+- Root cause: `typeFilters` was always just a copy of `initialTypes` — the URL drives everything (sidebar checkbox → `router.push` → `page.tsx` re-renders with new `initialTypes` → component re-renders). No local state copy was ever needed.
+- Fix: use `initialTypes` directly in `noTypesSelected`, `typeFiltersKey`, and `queryFn`. The component re-renders naturally when `initialTypes` changes.
+
+**Fix 2 — `src/components/sidebar/sidebar-nav.tsx` (line 304)**
+- Replaced `useState(false)` + `useEffect(() => setIsCollapsed(...), [])` pattern for the localStorage-backed `isCollapsed` state.
+- Fix: lazy `useState` initializer with a `typeof window === "undefined"` guard — returns `false` on the server (SSR-safe), reads `localStorage` on the client. Added `suppressHydrationWarning` to the `<aside>` element to handle the potential SSR/client mismatch when the stored value is `true`. Visual behaviour is identical to before (sidebar briefly shows expanded then collapses on first load, same as the old `useEffect` approach).
+
+**Fix 3 — `src/components/sidebar/sidebar-nav.tsx` (line 339)**
+- Replaced `useEffect(() => setOpenSection(activeSectionKey), [activeSectionKey])` with React's recommended "derived state during render" pattern.
+- Added `prevActiveSectionKey` state; during render, if `prevActiveSectionKey !== activeSectionKey && activeSectionKey`, both are updated immediately. This avoids the extra render cycle from `useEffect` and satisfies the lint rule.
+
+**Remaining warnings (4, non-blocking)**
+- `Section` and `TextAreaField` defined but never used in `natural-person-form.tsx`.
+- `setMode` assigned but never used in `corners-manager.tsx`.
+- `ROUND_TRIP_TOL` assigned but never used in `transdatRO.test.ts`.
+These are warnings (not errors) and do not fail CI. Deferred to a future cleanup slice.
+
+**Files touched**
+- `src/app/paperwork/list-view.tsx`
+- `src/components/sidebar/sidebar-nav.tsx`
 
 ### Slice #4.3 — Inline field labels across all three detail forms (detail)
 
