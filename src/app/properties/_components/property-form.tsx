@@ -344,25 +344,27 @@ type FieldProps = {
 
 function Field({ label, name, type = "text", register, error, hint }: FieldProps) {
   return (
-    <label className="flex flex-col gap-0.5 text-sm">
-      <span className="font-medium text-ink dark:text-zinc-300">{label}</span>
-      <input
-        type={type}
-        {...register(name)}
-        aria-invalid={error ? true : undefined}
-        className={[
-          "rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none dark:bg-zinc-950",
-          error
-            ? "border-red-500 focus:border-red-600"
-            : "border-wire focus:border-focus dark:border-zinc-700",
-        ].join(" ")}
-      />
-      {hint && !error && (
-        <span className="text-xs text-fade dark:text-zinc-400">{hint}</span>
-      )}
-      {error && (
-        <span className="text-xs text-red-600 dark:text-red-400">{error}</span>
-      )}
+    <label className="flex items-center gap-2 text-sm">
+      <span className="w-36 shrink-0 font-medium text-ink dark:text-zinc-300">{label}</span>
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <input
+          type={type}
+          {...register(name)}
+          aria-invalid={error ? true : undefined}
+          className={[
+            "w-full rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none dark:bg-zinc-950",
+            error
+              ? "border-red-500 focus:border-red-600"
+              : "border-wire focus:border-focus dark:border-zinc-700",
+          ].join(" ")}
+        />
+        {hint && !error && (
+          <span className="text-xs text-fade dark:text-zinc-400">{hint}</span>
+        )}
+        {error && (
+          <span className="text-xs text-red-600 dark:text-red-400">{error}</span>
+        )}
+      </div>
     </label>
   );
 }
@@ -375,23 +377,25 @@ function TextAreaField({
   maxLength,
 }: FieldProps & { maxLength?: number }) {
   return (
-    <label className="flex flex-col gap-0.5 text-sm">
-      <span className="font-medium text-ink dark:text-zinc-300">{label}</span>
-      <textarea
-        {...register(name)}
-        maxLength={maxLength}
-        rows={3}
-        aria-invalid={error ? true : undefined}
-        className={[
-          "rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none dark:bg-zinc-950",
-          error
-            ? "border-red-500 focus:border-red-600"
-            : "border-wire focus:border-focus dark:border-zinc-700",
-        ].join(" ")}
-      />
-      {error && (
-        <span className="text-xs text-red-600 dark:text-red-400">{error}</span>
-      )}
+    <label className="flex items-start gap-2 text-sm">
+      <span className="w-36 shrink-0 pt-1 font-medium text-ink dark:text-zinc-300">{label}</span>
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <textarea
+          {...register(name)}
+          maxLength={maxLength}
+          rows={3}
+          aria-invalid={error ? true : undefined}
+          className={[
+            "w-full rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none dark:bg-zinc-950",
+            error
+              ? "border-red-500 focus:border-red-600"
+              : "border-wire focus:border-focus dark:border-zinc-700",
+          ].join(" ")}
+        />
+        {error && (
+          <span className="text-xs text-red-600 dark:text-red-400">{error}</span>
+        )}
+      </div>
     </label>
   );
 }
@@ -404,34 +408,36 @@ function SelectField({
   options,
 }: FieldProps & { options: { value: string; label: string }[] }) {
   return (
-    <label className="flex flex-col gap-0.5 text-sm">
-      <span className="font-medium text-ink dark:text-zinc-300">{label}</span>
-      <select
-        {...register(name)}
-        aria-invalid={error ? true : undefined}
-        className={[
-          "rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none dark:bg-zinc-950",
-          error
-            ? "border-red-500 focus:border-red-600"
-            : "border-wire focus:border-focus dark:border-zinc-700",
-        ].join(" ")}
-      >
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>{o.label}</option>
-        ))}
-      </select>
-      {error && (
-        <span className="text-xs text-red-600 dark:text-red-400">{error}</span>
-      )}
+    <label className="flex items-center gap-2 text-sm">
+      <span className="w-36 shrink-0 font-medium text-ink dark:text-zinc-300">{label}</span>
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <select
+          {...register(name)}
+          aria-invalid={error ? true : undefined}
+          className={[
+            "w-full rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none dark:bg-zinc-950",
+            error
+              ? "border-red-500 focus:border-red-600"
+              : "border-wire focus:border-focus dark:border-zinc-700",
+          ].join(" ")}
+        >
+          {options.map((o) => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </select>
+        {error && (
+          <span className="text-xs text-red-600 dark:text-red-400">{error}</span>
+        )}
+      </div>
     </label>
   );
 }
 
 function ReadOnlyField({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex flex-col gap-0.5 text-sm">
-      <span className="font-medium text-ink dark:text-zinc-300">{label}</span>
-      <div className="rounded-md border border-wire bg-canvas px-2 py-1 font-mono text-sm text-ink dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-300">
+    <div className="flex items-center gap-2 text-sm">
+      <span className="w-36 shrink-0 font-medium text-ink dark:text-zinc-300">{label}</span>
+      <div className="flex-1 rounded-md border border-wire bg-canvas px-2 py-1 font-mono text-sm text-ink dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-300">
         {value}
       </div>
     </div>

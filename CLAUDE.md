@@ -54,9 +54,26 @@ Relationships: People ↔ Paperwork, People ↔ Properties, Paperwork ↔ Proper
 - Slice #4 — Paperwork CRUD. ✅ Complete (schema + API + UI landed in earlier sessions).
 - Slice #4.1 — Sidebar & nav polish. ✅ Complete. Full detail below.
 - Slice #4.2 — Paperwork filter re-sync + flag locale switcher. ✅ Complete. Full detail below.
+- Slice #4.3 — Inline field labels across all three detail forms. ✅ Complete. Full detail below.
 - Slice #5+ — Relationships (People ↔ Properties ↔ Paperwork, self-refs), relationship map view, etc.
 
 Each slice typically lands as multiple small commits, each individually green.
+
+### Slice #4.3 — Inline field labels across all three detail forms (detail)
+
+Pure frontend — no DB schema, API, or i18n changes.
+
+**What changed**
+- In all three form files (`natural-person-form.tsx`, `property-form.tsx`, `paperwork-form.tsx`), the local `Field`, `TextAreaField`, `SelectField`, and `ReadOnlyField` helper components were refactored from a stacked (`flex flex-col`) layout to an inline (`flex items-center`) layout.
+- Label column: `w-36 shrink-0` (144 px fixed width, never wraps).
+- Control column: `flex-1 min-w-0` — takes all remaining width, with errors/hints stacked below inside a `flex flex-col gap-0.5` wrapper div.
+- `TextAreaField` uses `items-start` (not `items-center`) with `pt-1` on the label span so the label aligns with the top of the textarea rather than its vertical centre.
+- Person Identity section re-laid out as a uniform 8-row `grid grid-cols-2 gap-2` per the spec: Last Name | First Name; Code | CNP; ID Type | ID Number; Gender | Date of Birth; Nickname | Notes; Personal Phone 1 | Personal Email 1; Personal Phone 2 | Personal Email 2; Work Phone | Work Email. Code is conditional (edit mode only); in create mode CNP shifts to the left column.
+
+**Files touched**
+- `src/app/natural-persons/_components/natural-person-form.tsx`
+- `src/app/properties/_components/property-form.tsx`
+- `src/app/paperwork/_components/paperwork-form.tsx`
 
 ### Slice #4.2 — Paperwork filter re-sync + flag locale switcher (detail)
 

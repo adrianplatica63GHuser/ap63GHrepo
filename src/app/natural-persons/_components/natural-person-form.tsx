@@ -128,8 +128,8 @@ export function NaturalPersonForm({
           {t("sections.identity")}
         </h2>
         <div className="flex flex-col gap-2">
-          {/* Row 1: Last Name, First Name, Code, CNP — 4 cols */}
-          <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+          {/* Row 1: Last Name | First Name */}
+          <div className="grid grid-cols-2 gap-2">
             <Field
               label={t("fields.lastName")}
               name="lastName"
@@ -142,6 +142,9 @@ export function NaturalPersonForm({
               register={register}
               error={errors.firstName?.message}
             />
+          </div>
+          {/* Row 2: Code (edit only) | CNP */}
+          <div className="grid grid-cols-2 gap-2">
             {mode === "edit" && personCode && (
               <ReadOnlyField label={t("fields.code")} value={personCode} />
             )}
@@ -152,8 +155,8 @@ export function NaturalPersonForm({
               error={errors.cnp?.message}
             />
           </div>
-          {/* Row 2: ID Type, ID Number, Gender, Date of Birth — 4 cols */}
-          <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+          {/* Row 3: ID Type | ID Number */}
+          <div className="grid grid-cols-2 gap-2">
             <SelectField
               label={t("fields.idDocumentType")}
               name="idDocumentType"
@@ -171,6 +174,9 @@ export function NaturalPersonForm({
               register={register}
               error={errors.idDocumentNumber?.message}
             />
+          </div>
+          {/* Row 4: Gender | Date of Birth */}
+          <div className="grid grid-cols-2 gap-2">
             <SelectField
               label={t("fields.gender")}
               name="gender"
@@ -190,8 +196,8 @@ export function NaturalPersonForm({
               error={errors.dateOfBirth?.message}
             />
           </div>
-          {/* Row 3: Nickname, Notes — 2 cols */}
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {/* Row 5: Nickname | Notes */}
+          <div className="grid grid-cols-2 gap-2">
             <Field
               label={t("fields.nickname")}
               name="nickname"
@@ -205,8 +211,8 @@ export function NaturalPersonForm({
               error={errors.notes?.message}
             />
           </div>
-          {/* Row 4: Personal Phone 1, Personal Email 1, Personal Phone 2, Personal Email 2 — 4 cols */}
-          <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+          {/* Row 6: Personal Phone 1 | Personal Email 1 */}
+          <div className="grid grid-cols-2 gap-2">
             <Field
               label={t("fields.personalPhone1")}
               name="personalPhone1"
@@ -219,6 +225,9 @@ export function NaturalPersonForm({
               register={register}
               error={errors.personalEmail1?.message}
             />
+          </div>
+          {/* Row 7: Personal Phone 2 | Personal Email 2 */}
+          <div className="grid grid-cols-2 gap-2">
             <Field
               label={t("fields.personalPhone2")}
               name="personalPhone2"
@@ -232,8 +241,8 @@ export function NaturalPersonForm({
               error={errors.personalEmail2?.message}
             />
           </div>
-          {/* Row 5: Work Phone, Work Email — 4-col grid, 2 slots empty on right */}
-          <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+          {/* Row 8: Work Phone | Work Email */}
+          <div className="grid grid-cols-2 gap-2">
             <Field
               label={t("fields.workPhone")}
               name="workPhone"
@@ -357,25 +366,27 @@ type FieldProps = {
 
 function Field({ label, name, type = "text", register, error, hint }: FieldProps) {
   return (
-    <label className="flex flex-col gap-0.5 text-sm">
-      <span className="font-medium text-ink dark:text-zinc-300">{label}</span>
-      <input
-        type={type}
-        {...register(name)}
-        aria-invalid={error ? true : undefined}
-        className={[
-          "rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none dark:bg-zinc-950",
-          error
-            ? "border-red-500 focus:border-red-600"
-            : "border-wire focus:border-focus dark:border-zinc-700",
-        ].join(" ")}
-      />
-      {hint && !error && (
-        <span className="text-xs text-fade dark:text-zinc-400">{hint}</span>
-      )}
-      {error && (
-        <span className="text-xs text-red-600 dark:text-red-400">{error}</span>
-      )}
+    <label className="flex items-center gap-2 text-sm">
+      <span className="w-36 shrink-0 font-medium text-ink dark:text-zinc-300">{label}</span>
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <input
+          type={type}
+          {...register(name)}
+          aria-invalid={error ? true : undefined}
+          className={[
+            "w-full rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none dark:bg-zinc-950",
+            error
+              ? "border-red-500 focus:border-red-600"
+              : "border-wire focus:border-focus dark:border-zinc-700",
+          ].join(" ")}
+        />
+        {hint && !error && (
+          <span className="text-xs text-fade dark:text-zinc-400">{hint}</span>
+        )}
+        {error && (
+          <span className="text-xs text-red-600 dark:text-red-400">{error}</span>
+        )}
+      </div>
     </label>
   );
 }
@@ -388,23 +399,25 @@ function TextAreaField({
   maxLength,
 }: FieldProps & { maxLength?: number }) {
   return (
-    <label className="flex flex-col gap-0.5 text-sm">
-      <span className="font-medium text-ink dark:text-zinc-300">{label}</span>
-      <textarea
-        {...register(name)}
-        maxLength={maxLength}
-        rows={3}
-        aria-invalid={error ? true : undefined}
-        className={[
-          "rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none dark:bg-zinc-950",
-          error
-            ? "border-red-500 focus:border-red-600"
-            : "border-wire focus:border-focus dark:border-zinc-700",
-        ].join(" ")}
-      />
-      {error && (
-        <span className="text-xs text-red-600 dark:text-red-400">{error}</span>
-      )}
+    <label className="flex items-start gap-2 text-sm">
+      <span className="w-36 shrink-0 pt-1 font-medium text-ink dark:text-zinc-300">{label}</span>
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <textarea
+          {...register(name)}
+          maxLength={maxLength}
+          rows={3}
+          aria-invalid={error ? true : undefined}
+          className={[
+            "w-full rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none dark:bg-zinc-950",
+            error
+              ? "border-red-500 focus:border-red-600"
+              : "border-wire focus:border-focus dark:border-zinc-700",
+          ].join(" ")}
+        />
+        {error && (
+          <span className="text-xs text-red-600 dark:text-red-400">{error}</span>
+        )}
+      </div>
     </label>
   );
 }
@@ -417,36 +430,38 @@ function SelectField({
   options,
 }: FieldProps & { options: { value: string; label: string }[] }) {
   return (
-    <label className="flex flex-col gap-0.5 text-sm">
-      <span className="font-medium text-ink dark:text-zinc-300">{label}</span>
-      <select
-        {...register(name)}
-        aria-invalid={error ? true : undefined}
-        className={[
-          "rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none dark:bg-zinc-950",
-          error
-            ? "border-red-500 focus:border-red-600"
-            : "border-wire focus:border-focus dark:border-zinc-700",
-        ].join(" ")}
-      >
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
-      {error && (
-        <span className="text-xs text-red-600 dark:text-red-400">{error}</span>
-      )}
+    <label className="flex items-center gap-2 text-sm">
+      <span className="w-36 shrink-0 font-medium text-ink dark:text-zinc-300">{label}</span>
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <select
+          {...register(name)}
+          aria-invalid={error ? true : undefined}
+          className={[
+            "w-full rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none dark:bg-zinc-950",
+            error
+              ? "border-red-500 focus:border-red-600"
+              : "border-wire focus:border-focus dark:border-zinc-700",
+          ].join(" ")}
+        >
+          {options.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+        {error && (
+          <span className="text-xs text-red-600 dark:text-red-400">{error}</span>
+        )}
+      </div>
     </label>
   );
 }
 
 function ReadOnlyField({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex flex-col gap-0.5 text-sm">
-      <span className="font-medium text-ink dark:text-zinc-300">{label}</span>
-      <div className="rounded-md border border-wire bg-canvas px-2 py-1 font-mono text-sm text-ink dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-300">
+    <div className="flex items-center gap-2 text-sm">
+      <span className="w-36 shrink-0 font-medium text-ink dark:text-zinc-300">{label}</span>
+      <div className="flex-1 rounded-md border border-wire bg-canvas px-2 py-1 font-mono text-sm text-ink dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-300">
         {value}
       </div>
     </div>
