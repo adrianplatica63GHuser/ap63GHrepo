@@ -229,9 +229,14 @@ function PaperworkNavSection({
   return (
     <div>
       {/* Section header — same structure as NavSectionRow */}
+      {/* Opening the accordion also navigates to /paperwork so the list is */}
+      {/* immediately visible; closing it is toggle-only (no navigation).   */}
       <button
         type="button"
-        onClick={isCollapsed ? onExpandSidebar : onToggle}
+        onClick={isCollapsed ? onExpandSidebar : () => {
+          if (!isOpen) router.push("/paperwork");
+          onToggle();
+        }}
         title={isCollapsed ? sectionLabel : undefined}
         aria-expanded={isCollapsed ? undefined : isOpen}
         className={[
