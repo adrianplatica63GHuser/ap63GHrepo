@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getPersonById } from "@/lib/persons/queries";
-import { NaturalPersonForm } from "../_components/natural-person-form";
+import { PersonDetailTabs } from "../_components/person-detail-tabs";
 import { fromApiPayload } from "../_components/form-schema";
 
 type PageParams = { params: Promise<{ id: string }> };
@@ -20,17 +20,11 @@ export default async function EditNaturalPersonPage({ params }: PageParams) {
 
   return (
     <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-zinc-950">
-      <main className="mx-auto w-full max-w-3xl px-6 py-4 flex flex-col gap-6">
-        <header>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {data.person.displayName}
-          </h1>
-        </header>
-
-        <NaturalPersonForm
-          mode="edit"
+      <main className="mx-auto w-full max-w-3xl px-6 py-4 flex flex-col gap-4">
+        <PersonDetailTabs
           personId={data.person.id}
           personCode={data.person.code}
+          personName={data.person.displayName}
           initialValues={initialValues}
         />
       </main>

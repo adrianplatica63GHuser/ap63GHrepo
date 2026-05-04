@@ -188,6 +188,13 @@
     "hints": {
       "cnpLocked": "CNP-ul nu poate fi modificat odată setat — ștergeți și creați din nou pentru a-l schimba",
       "countryRequiredIfAddressFilled": "Necesar dacă orice alt câmp al adresei este completat"
+    },
+    "tabs": {
+      "details": "Detalii",
+      "references": "Referințe",
+      "properties": "Proprietăți",
+      "paperwork": "Acte",
+      "comingSoon": "În curând — această secțiune va fi disponibilă într-o actualizare viitoare."
     }
   },
   "nav": {

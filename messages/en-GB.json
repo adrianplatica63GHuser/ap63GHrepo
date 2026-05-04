@@ -188,6 +188,13 @@
     "hints": {
       "cnpLocked": "CNP cannot be changed once set — delete and recreate to change",
       "countryRequiredIfAddressFilled": "Required if any other address field is filled"
+    },
+    "tabs": {
+      "details": "Details",
+      "references": "References",
+      "properties": "Properties",
+      "paperwork": "Paperwork",
+      "comingSoon": "Coming soon — this section will be available in a future update."
     }
   },
   "nav": {
