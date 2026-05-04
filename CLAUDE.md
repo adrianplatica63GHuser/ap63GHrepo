@@ -128,6 +128,12 @@ Pure frontend — no DB schema, API, or i18n changes.
 - Replaced `useEffect(() => setOpenSection(activeSectionKey), [activeSectionKey])` with React's recommended "derived state during render" pattern.
 - Added `prevActiveSectionKey` state; during render, if `prevActiveSectionKey !== activeSectionKey && activeSectionKey`, both are updated immediately. This avoids the extra render cycle from `useEffect` and satisfies the lint rule.
 
+**Fix 4 — `src/components/sidebar/sidebar-nav.tsx` (`PaperworkNavSection`)**
+- Bug: the `wasOpen` effect reset `checkedTypes` to all-checked on every accordion open, but never reset the URL. Result: checkboxes showed all-checked while the list still displayed the old filter (e.g. `?types=` → "please select" message, even though all boxes appeared ticked).
+- Root cause: checkbox state was local (`useState`) while the list relied on the URL (`initialTypes` prop). These two sources of truth could get out of sync.
+- Fix: removed `checkedTypes` state, `wasOpen` ref, and the reset `useEffect`. Replaced with a `useMemo` that derives `checkedTypes` directly from the URL via `useSearchParams()`. Checkboxes now always mirror what the list is actually showing — no sync required.
+- Side effect: the "reset to all on accordion open" behaviour is replaced by "reflect current URL on open". This is more correct: if the user filtered to one type and reopens the accordion, they see one type checked (consistent with the visible list).
+
 **Remaining warnings (4, non-blocking)**
 - `Section` and `TextAreaField` defined but never used in `natural-person-form.tsx`.
 - `setMode` assigned but never used in `corners-manager.tsx`.

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
@@ -137,7 +137,8 @@ function NavSectionRow({
 // checkboxes. Clicking any checkbox navigates to /paperwork?types=... so the
 // list page filters in real time.
 //
-// State resets to all-checked whenever the accordion transitions closed → open.
+// Checkbox state is derived from the URL search params (single source of truth)
+// so checkboxes always reflect what the list is actually showing.
 
 function PaperworkNavSection({
   section,
@@ -158,26 +159,33 @@ function PaperworkNavSection({
 }) {
   const tPaperwork = useTranslations("paperwork");
   const router = useRouter();
+  const searchParams = useSearchParams();
   const SectionIcon = section.icon;
 
   const isSectionActive = pathname.startsWith("/paperwork");
 
-  // ── Checkbox state ─────────────────────────────────────────────────────────
-  const [checkedTypes, setCheckedTypes] = useState<Set<string>>(
-    () => new Set(PAPERWORK_TYPES),
-  );
+  // ── Checkbox state — derived from URL (single source of truth) ────────────
+  //
+  // Deriving from the URL means checkboxes always mirror what the list is
+  // actually displaying. No local state copy needed, no wasOpen reset effect.
+  //   ?types absent → all checked (show all)
+  //   ?types=       → none checked (show "please select" message)
+  //   ?types=A,B    → only A and B checked
+  const checkedTypes = useMemo<Set<string>>(() => {
+    const param = searchParams.get("types");
+    if (param === null) return new Set(PAPERWORK_TYPES);
+    if (param === "")   return new Set();
+    return new Set(
+      param
+        .split(",")
+        .filter((t) => (PAPERWORK_TYPES as readonly string[]).includes(t)),
+    );
+  }, [searchParams]);
+
   const selectAllRef = useRef<HTMLInputElement>(null);
 
-  // Reset to all-checked when accordion opens (closed → open transition).
-  const wasOpen = useRef(false);
-  useEffect(() => {
-    if (isOpen && !wasOpen.current) {
-      setCheckedTypes(new Set(PAPERWORK_TYPES));
-    }
-    wasOpen.current = isOpen;
-  }, [isOpen]);
-
   // Keep the (Select All) native indeterminate state in sync with checkedTypes.
+  // This is a DOM-only side effect (no setState) — fine in useEffect.
   useEffect(() => {
     if (!selectAllRef.current) return;
     const n = checkedTypes.size;
@@ -204,7 +212,6 @@ function PaperworkNavSection({
       checkedTypes.size === PAPERWORK_TYPES.length
         ? new Set()
         : new Set(PAPERWORK_TYPES);
-    setCheckedTypes(next);
     pushUrl(next);
   }, [checkedTypes, pushUrl]);
 
@@ -213,7 +220,6 @@ function PaperworkNavSection({
       const next = new Set(checkedTypes);
       if (next.has(typeKey)) next.delete(typeKey);
       else next.add(typeKey);
-      setCheckedTypes(next);
       pushUrl(next);
     },
     [checkedTypes, pushUrl],
