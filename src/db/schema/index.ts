@@ -35,6 +35,19 @@ export const idDocumentTypeEnum = pgEnum("id_document_type", [
 
 export const genderEnum = pgEnum("gender", ["MALE", "FEMALE"]);
 
+// Judicial-person legal/organisational form. Fixed list for now; new values
+// require a migration. SRL/SA/PFA/etc. are Romanian company-form codes.
+export const judicialTypeEnum = pgEnum("judicial_type", [
+  "SRL",
+  "SA",
+  "SRL_D",
+  "PFA",
+  "II",
+  "IF",
+  "ONG",
+  "OTHER",
+]);
+
 // ---------------------------------------------------------------------------
 // person — base / supertype
 // ---------------------------------------------------------------------------
@@ -134,6 +147,53 @@ export const naturalPerson = pgTable(
     uniqueIndex("natural_person_cnp_unique")
       .on(t.cnp)
       .where(sql`${t.cnp} IS NOT NULL`),
+  ],
+);
+
+// ---------------------------------------------------------------------------
+// judicial_person — subtype for organisations / legal entities
+// ---------------------------------------------------------------------------
+//
+// 1:1 with `person`. PK is also FK to person.id with ON DELETE CASCADE so
+// hard-deleting a person also removes the satellite row. Soft delete (the
+// API path) just sets person.deleted_at and leaves this row untouched.
+//
+// `notes` lives on the parent `person` row (same as natural_person).
+// HEADQUARTERS + CORRESPONDENCE addresses are stored in the existing
+// `address` table; both kinds already exist in addressKindEnum.
+
+export const judicialPerson = pgTable(
+  "judicial_person",
+  {
+    personId: uuid("person_id")
+      .primaryKey()
+      .references(() => person.id, { onDelete: "cascade" }),
+
+    // Display / legal name. Required.
+    name: text("name").notNull(),
+    nickname: text("nickname"),
+
+    judicialType: judicialTypeEnum("judicial_type"),
+
+    // CUI — Cod Unic de Inregistrare (Romanian fiscal registration code).
+    // Optional. UNIQUE when present (partial unique index below).
+    // Once set, cannot be changed — enforced by a trigger added in the
+    // migration (NULL -> value is allowed; value -> anything-different is not).
+    cuiNumber: text("cui_number"),
+
+    // Trade Register number — "Nr. ORC" (e.g. "J22/123/2020").
+    tradeRegisterNumber: text("trade_register_number"),
+
+    // Contact persons — temporary free-text placeholders.
+    // → Future slice will replace with M:M to Person.
+    contactPerson1: text("contact_person_1"),
+    contactPerson2: text("contact_person_2"),
+  },
+  (t) => [
+    // CUI is unique when present (partial unique index).
+    uniqueIndex("judicial_person_cui_unique")
+      .on(t.cuiNumber)
+      .where(sql`${t.cuiNumber} IS NOT NULL`),
   ],
 );
 
