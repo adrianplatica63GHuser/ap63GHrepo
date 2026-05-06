@@ -27,11 +27,22 @@ export function dbErrorToResponse(err: unknown): Response | null {
     return Response.json({ error: message }, { status: 400 });
   }
 
+  // RAISE EXCEPTION from our `judicial_person_lock_cui` trigger (SQLSTATE P0001).
+  if (message.includes("CUI cannot be changed")) {
+    return Response.json({ error: message }, { status: 400 });
+  }
+
   // Unique violation
   if (e.code === "23505") {
     if (e.constraint?.includes("cnp")) {
       return Response.json(
         { error: "A person with this CNP already exists" },
+        { status: 409 },
+      );
+    }
+    if (e.constraint?.includes("cui")) {
+      return Response.json(
+        { error: "A judicial person with this CUI already exists" },
         { status: 409 },
       );
     }

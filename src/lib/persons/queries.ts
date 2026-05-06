@@ -54,6 +54,10 @@ export async function listPersons(opts: ListQuery): Promise<{
   const searchPattern = q ? `%${q}%` : null;
 
   const where = and(
+    // The /natural-persons list page must not surface judicial rows. Without
+    // this filter, judicial persons (added in Slice #4.6) would appear at the
+    // top of the natural list with empty email/phone columns.
+    eq(person.type, "NATURAL"),
     isNull(person.deletedAt),
     searchPattern
       ? or(
