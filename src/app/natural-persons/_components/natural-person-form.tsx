@@ -10,6 +10,7 @@ import {
   type UseFormRegister,
   useForm,
 } from "react-hook-form";
+import { AddressBlock } from "@/components/address/address-block";
 import {
   emptyFormValues,
   formSchema,
@@ -259,20 +260,18 @@ export function NaturalPersonForm({
         </div>
       </section>
 
-      <AddressBlockFields
+      <AddressBlock<FormValues>
         title={t("sections.homeAddress")}
         prefix="addresses.HOME"
         register={register}
         errors={errors.addresses?.HOME}
-        t={t}
       />
 
-      <AddressBlockFields
+      <AddressBlock<FormValues>
         title={t("sections.correspondenceAddress")}
         prefix="addresses.CORRESPONDENCE"
         register={register}
         errors={errors.addresses?.CORRESPONDENCE}
-        t={t}
       />
 
       {submitError && (
@@ -465,85 +464,6 @@ function ReadOnlyField({ label, value }: { label: string; value: string }) {
         {value}
       </div>
     </div>
-  );
-}
-
-function AddressBlockFields({
-  title,
-  prefix,
-  register,
-  errors,
-  t,
-}: {
-  title: string;
-  prefix: "addresses.HOME" | "addresses.CORRESPONDENCE";
-  register: UseFormRegister<FormValues>;
-  errors:
-    | {
-        streetLine?: { message?: string };
-        postalCode?: { message?: string };
-        locality?: { message?: string };
-        county?: { message?: string };
-        country?: { message?: string };
-        notes?: { message?: string };
-      }
-    | undefined;
-  t: ReturnType<typeof useTranslations>;
-}) {
-  const f = (sub: string) => `${prefix}.${sub}` as FieldPath<FormValues>;
-  return (
-    <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-      <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
-        {title}
-      </h2>
-      <div className="flex flex-col gap-2">
-        {/* Row 1: Street Line | Notes */}
-        <div className="grid grid-cols-2 gap-2">
-          <Field
-            label={t("address.streetLine")}
-            name={f("streetLine")}
-            register={register}
-            error={errors?.streetLine?.message}
-          />
-          <Field
-            label={t("address.notes")}
-            name={f("notes")}
-            register={register}
-            error={errors?.notes?.message}
-          />
-        </div>
-        {/* Row 2: Postal Code | Locality */}
-        <div className="grid grid-cols-2 gap-2">
-          <Field
-            label={t("address.postalCode")}
-            name={f("postalCode")}
-            register={register}
-            error={errors?.postalCode?.message}
-          />
-          <Field
-            label={t("address.locality")}
-            name={f("locality")}
-            register={register}
-            error={errors?.locality?.message}
-          />
-        </div>
-        {/* Row 3: County | Country */}
-        <div className="grid grid-cols-2 gap-2">
-          <Field
-            label={t("address.county")}
-            name={f("county")}
-            register={register}
-            error={errors?.county?.message}
-          />
-          <Field
-            label={t("address.country")}
-            name={f("country")}
-            register={register}
-            error={errors?.country?.message}
-          />
-        </div>
-      </div>
-    </section>
   );
 }
 
