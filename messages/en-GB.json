@@ -128,6 +128,7 @@
       "typeJudicial": "Judicial",
       "associate": "Associate",
       "dissociate": "Dissociate",
+      "dissociating": "Removing…",
       "view": "View",
       "loading": "Loading…",
       "error": "Failed to load persons"

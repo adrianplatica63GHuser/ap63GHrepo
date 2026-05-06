@@ -8,10 +8,11 @@ import { type FormValues } from "./form-schema";
 type Tab = "details" | "references" | "properties" | "paperwork";
 
 type Props = {
-  personId: string;
-  personCode: string;
-  personName: string;
+  personId:      string;
+  personCode:    string;
+  personName:    string;
   initialValues: FormValues;
+  readonly?:     boolean;
 };
 
 export function JudicialPersonDetailTabs({
@@ -19,6 +20,7 @@ export function JudicialPersonDetailTabs({
   personCode,
   personName,
   initialValues,
+  readonly,
 }: Props) {
   const t = useTranslations("judicialPerson");
   const [activeTab, setActiveTab] = useState<Tab>("details");
@@ -62,7 +64,7 @@ export function JudicialPersonDetailTabs({
       <div role="tabpanel">
         {activeTab === "details" && (
           <JudicialPersonForm
-            mode="edit"
+            mode={readonly ? "view" : "edit"}
             personId={personId}
             personCode={personCode}
             initialValues={initialValues}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 
@@ -37,17 +37,51 @@ async function fetchPropertyPersons(propertyId: string): Promise<AssociatedPerso
 // ---------------------------------------------------------------------------
 
 export function PropertyPersonsTab({ propertyId }: Props) {
-  const t      = useTranslations("property.persons");
-  const router = useRouter();
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const t           = useTranslations("property.persons");
+  const router      = useRouter();
+  const queryClient = useQueryClient();
+
+  const [selectedId,    setSelectedId]    = useState<string | null>(null);
+  const [dissociating,  setDissociating]  = useState(false);
+  const [dissociateErr, setDissociateErr] = useState<string | null>(null);
 
   const { data: persons, isLoading, isError } = useQuery({
     queryKey: ["property-persons", propertyId],
     queryFn:  () => fetchPropertyPersons(propertyId),
   });
 
+  const selectedPerson = persons?.find((p) => p.id === selectedId) ?? null;
+
   const handleAssociate = () => {
     router.push(`/properties/${encodeURIComponent(propertyId)}/associate-person`);
+  };
+
+  const handleDissociate = async () => {
+    if (!selectedId) return;
+    setDissociating(true);
+    setDissociateErr(null);
+    try {
+      const res = await fetch(
+        `/api/properties/${encodeURIComponent(propertyId)}/persons/${encodeURIComponent(selectedId)}`,
+        { method: "DELETE" },
+      );
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error ?? `HTTP ${res.status}`);
+      }
+      setSelectedId(null);
+      await queryClient.invalidateQueries({ queryKey: ["property-persons", propertyId] });
+    } catch (err) {
+      setDissociateErr(err instanceof Error ? err.message : String(err));
+    } finally {
+      setDissociating(false);
+    }
+  };
+
+  const handleView = () => {
+    if (!selectedPerson) return;
+    const base = selectedPerson.type === "NATURAL" ? "/natural-persons" : "/judicial-persons";
+    router.push(`${base}/${encodeURIComponent(selectedPerson.id)}?readonly=true`);
   };
 
   if (isLoading) {
@@ -125,28 +159,38 @@ export function PropertyPersonsTab({ propertyId }: Props) {
       </div>
 
       {/* Action buttons */}
-      <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={handleAssociate}
-          className="inline-flex items-center rounded-md bg-cta px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d"
-        >
-          {t("associate")}
-        </button>
-        <button
-          type="button"
-          disabled
-          className="inline-flex items-center rounded-md border border-wire bg-white px-4 py-2 text-sm font-medium text-ink shadow-sm disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-900"
-        >
-          {t("dissociate")}
-        </button>
-        <button
-          type="button"
-          disabled
-          className="inline-flex items-center rounded-md border border-wire bg-white px-4 py-2 text-sm font-medium text-ink shadow-sm disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-900"
-        >
-          {t("view")}
-        </button>
+      <div className="flex flex-col gap-2">
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={handleAssociate}
+            disabled={selectedId !== null}
+            className="inline-flex items-center rounded-md bg-cta px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {t("associate")}
+          </button>
+          <button
+            type="button"
+            onClick={handleDissociate}
+            disabled={selectedId === null || dissociating}
+            className="inline-flex items-center rounded-md border border-wire bg-white px-4 py-2 text-sm font-medium text-ink shadow-sm transition-colors hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+          >
+            {dissociating ? t("dissociating") : t("dissociate")}
+          </button>
+          <button
+            type="button"
+            onClick={handleView}
+            disabled={selectedId === null}
+            className="inline-flex items-center rounded-md border border-wire bg-white px-4 py-2 text-sm font-medium text-ink shadow-sm transition-colors hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+          >
+            {t("view")}
+          </button>
+        </div>
+        {dissociateErr && (
+          <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+            {dissociateErr}
+          </p>
+        )}
       </div>
     </div>
   );

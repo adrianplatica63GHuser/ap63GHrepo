@@ -128,6 +128,7 @@
       "typeJudicial": "Juridică",
       "associate": "Asociază",
       "dissociate": "Dezasociază",
+      "dissociating": "Se elimină…",
       "view": "Vizualizare",
       "loading": "Se încarcă…",
       "error": "Eroare la încărcarea persoanelor"

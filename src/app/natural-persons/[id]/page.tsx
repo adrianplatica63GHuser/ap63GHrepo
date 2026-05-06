@@ -3,10 +3,14 @@ import { getPersonById } from "@/lib/persons/queries";
 import { PersonDetailTabs } from "../_components/person-detail-tabs";
 import { fromApiPayload } from "../_components/form-schema";
 
-type PageParams = { params: Promise<{ id: string }> };
+type PageParams = {
+  params:       Promise<{ id: string }>;
+  searchParams: Promise<{ readonly?: string }>;
+};
 
-export default async function EditNaturalPersonPage({ params }: PageParams) {
-  const { id } = await params;
+export default async function EditNaturalPersonPage({ params, searchParams }: PageParams) {
+  const { id }       = await params;
+  const { readonly } = await searchParams;
   const data = await getPersonById(id);
   if (!data || data.person.type !== "NATURAL") {
     notFound();
@@ -26,6 +30,7 @@ export default async function EditNaturalPersonPage({ params }: PageParams) {
           personCode={data.person.code}
           personName={data.person.displayName}
           initialValues={initialValues}
+          readonly={readonly === "true"}
         />
       </main>
     </div>

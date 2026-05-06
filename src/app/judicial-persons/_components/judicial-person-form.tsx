@@ -19,7 +19,7 @@ import {
 } from "./form-schema";
 
 type Props = {
-  mode: "create" | "edit";
+  mode: "create" | "edit" | "view";
   personId?: string;
   personCode?: string;
   initialValues?: FormValues;
@@ -121,6 +121,8 @@ export function JudicialPersonForm({
       className="flex flex-col gap-4"
       noValidate
     >
+      <fieldset disabled={mode === "view"} className="flex flex-col gap-4 border-0 m-0 p-0 min-w-0">
+
       {/* Judicial Person identity section */}
       <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
@@ -142,9 +144,9 @@ export function JudicialPersonForm({
               error={errors.nickname?.message}
             />
           </div>
-          {/* Row 2: ID (edit only) | Type */}
+          {/* Row 2: ID (edit/view) | Type */}
           <div className="grid grid-cols-2 gap-2">
-            {mode === "edit" && personCode && (
+            {mode !== "create" && personCode && (
               <ReadOnlyField label={t("fields.code")} value={personCode} />
             )}
             <SelectField
@@ -235,6 +237,8 @@ export function JudicialPersonForm({
         errors={errors.addresses?.CORRESPONDENCE}
       />
 
+      </fieldset>{/* end disabled fieldset */}
+
       {submitError && (
         <p className="text-sm text-red-600 dark:text-red-400" role="alert">
           {submitError}
@@ -242,31 +246,43 @@ export function JudicialPersonForm({
       )}
 
       <div className="flex items-center justify-center gap-3 border-t border-crease pt-6 dark:border-zinc-800">
-        <button
-          type="submit"
-          disabled={saveDisabled}
-          className="inline-flex items-center rounded-md bg-cta px-5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {t("buttons.save")}
-        </button>
-        {mode === "edit" && (
+        {mode === "view" ? (
           <button
             type="button"
-            onClick={() => setConfirmDelete(true)}
-            disabled={submitting}
-            className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-red-600 shadow-sm hover:bg-red-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-red-950/30"
+            onClick={() => router.back()}
+            className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
           >
-            {t("buttons.delete")}
+            ← {t("buttons.cancel")}
           </button>
+        ) : (
+          <>
+            <button
+              type="submit"
+              disabled={saveDisabled}
+              className="inline-flex items-center rounded-md bg-cta px-5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {t("buttons.save")}
+            </button>
+            {mode === "edit" && (
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(true)}
+                disabled={submitting}
+                className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-red-600 shadow-sm hover:bg-red-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-red-950/30"
+              >
+                {t("buttons.delete")}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onCancel}
+              disabled={submitting}
+              className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+            >
+              {t("buttons.cancel")}
+            </button>
+          </>
         )}
-        <button
-          type="button"
-          onClick={onCancel}
-          disabled={submitting}
-          className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-        >
-          {t("buttons.cancel")}
-        </button>
       </div>
 
       {confirmDelete && (

@@ -3,10 +3,14 @@ import { getJudicialPersonById } from "@/lib/judicial-persons/queries";
 import { JudicialPersonDetailTabs } from "../_components/person-detail-tabs";
 import { fromApiPayload } from "../_components/form-schema";
 
-type PageParams = { params: Promise<{ id: string }> };
+type PageParams = {
+  params:       Promise<{ id: string }>;
+  searchParams: Promise<{ readonly?: string }>;
+};
 
-export default async function EditJudicialPersonPage({ params }: PageParams) {
-  const { id } = await params;
+export default async function EditJudicialPersonPage({ params, searchParams }: PageParams) {
+  const { id }       = await params;
+  const { readonly } = await searchParams;
   const data = await getJudicialPersonById(id);
   if (!data) {
     notFound();
@@ -26,6 +30,7 @@ export default async function EditJudicialPersonPage({ params }: PageParams) {
           personCode={data.person.code}
           personName={data.person.displayName}
           initialValues={initialValues}
+          readonly={readonly === "true"}
         />
       </main>
     </div>
