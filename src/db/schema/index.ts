@@ -598,18 +598,6 @@ export const propertyPerson = pgTable(
 // M:M junction tables  (Slice #5.1 + #5.2)
 // ---------------------------------------------------------------------------
 
-// property <-> person  (Slice 5.1 — table exists in DB via migration 0005)
-export const propertyPerson = pgTable(
-  "property_person",
-  {
-    id:         uuid("id").primaryKey().defaultRandom(),
-    propertyId: uuid("property_id").notNull().references(() => property.id, { onDelete: "cascade" }),
-    personId:   uuid("person_id").notNull().references(() => person.id,     { onDelete: "cascade" }),
-    createdAt:  timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  },
-  (t) => [uniqueIndex("property_person_unique").on(t.propertyId, t.personId)],
-);
-
 // property <-> paperwork  (Slice 5.2)
 export const propertyPaperwork = pgTable(
   "property_paperwork",
