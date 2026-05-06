@@ -4,8 +4,9 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { PropertyForm } from "./property-form";
 import { PropertyPersonsTab } from "./property-persons-tab";
-import { type FormValues } from "./form-schema";
-import { type Corner } from "./form-schema";
+import { PropertyPaperworkTab } from "./property-paperwork-tab";
+import { PropertyReferencesTab } from "./property-references-tab";
+import { type FormValues, type Corner } from "./form-schema";
 
 type Tab = "details" | "references" | "persons" | "paperwork";
 
@@ -78,10 +79,11 @@ export function PropertyDetailTabs({
         {activeTab === "persons" && (
           <PropertyPersonsTab propertyId={propertyId} />
         )}
-        {(activeTab === "references" || activeTab === "paperwork") && (
-          <div className="rounded-md border border-card-rim bg-card p-6 text-sm text-fade dark:border-zinc-800 dark:bg-zinc-900">
-            {t("tabs.comingSoon")}
-          </div>
+        {activeTab === "paperwork" && (
+          <PropertyPaperworkTab propertyId={propertyId} />
+        )}
+        {activeTab === "references" && (
+          <PropertyReferencesTab propertyId={propertyId} />
         )}
       </div>
     </>

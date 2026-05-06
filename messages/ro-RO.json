@@ -151,6 +151,58 @@
       "associating": "Se asociază…",
       "cancel": "Anulează",
       "noSelection": "Selectați cel puțin o persoană"
+    },
+    "paperwork": {
+      "empty": "Niciun act asociat acestei proprietăți",
+      "colCode": "Cod",
+      "colType": "Tip",
+      "colTitle": "Titlu",
+      "associate": "Asociază",
+      "dissociate": "Dezasociază",
+      "dissociating": "Se elimină…",
+      "view": "Vizualizare",
+      "loading": "Se încarcă…",
+      "error": "Eroare la încărcarea actelor"
+    },
+    "associatePaperwork": {
+      "title": "Asociere act",
+      "labelSearch": "Căutare",
+      "searchPlaceholder": "Cod sau titlu…",
+      "colCode": "Cod",
+      "colType": "Tip",
+      "colTitle": "Titlu",
+      "resultsEmpty": "Niciun act găsit",
+      "loading": "Se caută…",
+      "error": "Eroare la căutare",
+      "associate": "Asociază selecția",
+      "associating": "Se asociază…",
+      "cancel": "Anulează",
+      "noSelection": "Selectați cel puțin un act"
+    },
+    "references": {
+      "empty": "Nicio proprietate corelată",
+      "colCode": "Cod",
+      "colLabel": "Denumire",
+      "associate": "Asociază",
+      "dissociate": "Dezasociază",
+      "dissociating": "Se elimină…",
+      "view": "Vizualizare",
+      "loading": "Se încarcă…",
+      "error": "Eroare la încărcarea referințelor"
+    },
+    "associateReference": {
+      "title": "Asociere proprietate corelată",
+      "labelSearch": "Căutare",
+      "searchPlaceholder": "Cod sau denumire…",
+      "colCode": "Cod",
+      "colLabel": "Denumire",
+      "resultsEmpty": "Nicio proprietate găsită",
+      "loading": "Se caută…",
+      "error": "Eroare la căutare",
+      "associate": "Asociază selecția",
+      "associating": "Se asociază…",
+      "cancel": "Anulează",
+      "noSelection": "Selectați cel puțin o proprietate"
     }
   },
   "address": {
@@ -160,6 +212,33 @@
     "county": "Județ / Sector",
     "country": "Țară",
     "notes": "Note"
+  },
+  "shared": {
+    "properties": {
+      "empty": "Nicio proprietate asociată",
+      "colCode": "Cod",
+      "colLabel": "Denumire",
+      "associate": "Asociază",
+      "dissociate": "Dezasociază",
+      "dissociating": "Se elimină…",
+      "view": "Vizualizare",
+      "loading": "Se încarcă…",
+      "error": "Eroare la încărcarea proprietăților"
+    },
+    "associateProperty": {
+      "title": "Asociere proprietate",
+      "labelSearch": "Căutare",
+      "searchPlaceholder": "Cod sau denumire…",
+      "colCode": "Cod",
+      "colLabel": "Denumire",
+      "resultsEmpty": "Nicio proprietate găsită",
+      "loading": "Se caută…",
+      "error": "Eroare la căutare",
+      "associate": "Asociază selecția",
+      "associating": "Se asociază…",
+      "cancel": "Anulează",
+      "noSelection": "Selectați cel puțin o proprietate"
+    }
   },
   "naturalPerson": {
     "listTitle": "Persoană fizică",

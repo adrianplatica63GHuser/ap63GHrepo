@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { NaturalPersonForm } from "./natural-person-form";
+import { PersonPropertiesTab } from "../../properties/_components/person-properties-tab";
 import { type FormValues } from "./form-schema";
 
 type Tab = "details" | "references" | "properties" | "paperwork";
@@ -13,6 +14,7 @@ type Props = {
   personName:    string;
   initialValues: FormValues;
   readonly?:     boolean;
+  initialTab?:   Tab;
 };
 
 export function PersonDetailTabs({
@@ -21,9 +23,10 @@ export function PersonDetailTabs({
   personName,
   initialValues,
   readonly,
+  initialTab,
 }: Props) {
   const t = useTranslations("naturalPerson");
-  const [activeTab, setActiveTab] = useState<Tab>("details");
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab ?? "details");
 
   const tabs: { key: Tab; label: string }[] = [
     { key: "details",    label: t("tabs.details")    },
@@ -70,7 +73,10 @@ export function PersonDetailTabs({
             initialValues={initialValues}
           />
         )}
-        {activeTab !== "details" && (
+        {activeTab === "properties" && (
+          <PersonPropertiesTab personId={personId} backBase="/natural-persons" />
+        )}
+        {(activeTab === "references" || activeTab === "paperwork") && (
           <div className="rounded-md border border-card-rim bg-card p-6 text-sm text-fade dark:border-zinc-800 dark:bg-zinc-900">
             {t("tabs.comingSoon")}
           </div>

@@ -151,6 +151,58 @@
       "associating": "Associating…",
       "cancel": "Cancel",
       "noSelection": "Select at least one person"
+    },
+    "paperwork": {
+      "empty": "No documents associated with this property",
+      "colCode": "Code",
+      "colType": "Type",
+      "colTitle": "Title",
+      "associate": "Associate",
+      "dissociate": "Dissociate",
+      "dissociating": "Removing…",
+      "view": "View",
+      "loading": "Loading…",
+      "error": "Failed to load documents"
+    },
+    "associatePaperwork": {
+      "title": "Associate Document",
+      "labelSearch": "Search",
+      "searchPlaceholder": "Code or title…",
+      "colCode": "Code",
+      "colType": "Type",
+      "colTitle": "Title",
+      "resultsEmpty": "No documents found",
+      "loading": "Searching…",
+      "error": "Search failed",
+      "associate": "Associate Selected",
+      "associating": "Associating…",
+      "cancel": "Cancel",
+      "noSelection": "Select at least one document"
+    },
+    "references": {
+      "empty": "No related properties",
+      "colCode": "Code",
+      "colLabel": "Name",
+      "associate": "Associate",
+      "dissociate": "Dissociate",
+      "dissociating": "Removing…",
+      "view": "View",
+      "loading": "Loading…",
+      "error": "Failed to load references"
+    },
+    "associateReference": {
+      "title": "Associate Related Property",
+      "labelSearch": "Search",
+      "searchPlaceholder": "Code or name…",
+      "colCode": "Code",
+      "colLabel": "Name",
+      "resultsEmpty": "No properties found",
+      "loading": "Searching…",
+      "error": "Search failed",
+      "associate": "Associate Selected",
+      "associating": "Associating…",
+      "cancel": "Cancel",
+      "noSelection": "Select at least one property"
     }
   },
   "address": {
@@ -160,6 +212,33 @@
     "county": "County / Sector",
     "country": "Country",
     "notes": "Notes"
+  },
+  "shared": {
+    "properties": {
+      "empty": "No properties associated",
+      "colCode": "Code",
+      "colLabel": "Name",
+      "associate": "Associate",
+      "dissociate": "Dissociate",
+      "dissociating": "Removing…",
+      "view": "View",
+      "loading": "Loading…",
+      "error": "Failed to load properties"
+    },
+    "associateProperty": {
+      "title": "Associate Property",
+      "labelSearch": "Search",
+      "searchPlaceholder": "Code or name…",
+      "colCode": "Code",
+      "colLabel": "Name",
+      "resultsEmpty": "No properties found",
+      "loading": "Searching…",
+      "error": "Search failed",
+      "associate": "Associate Selected",
+      "associating": "Associating…",
+      "cancel": "Cancel",
+      "noSelection": "Select at least one property"
+    }
   },
   "naturalPerson": {
     "listTitle": "Natural Person",
