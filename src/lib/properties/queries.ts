@@ -432,7 +432,8 @@ export async function dissociatePaperworkFromProperty(propertyId: string, paperw
 export type PropertyRefItem = {
   id:           string;
   code:         string;
-  label:        string;  // nickname ?? code
+  nickname:     string | null;
+  label:        string;   // nickname ?? code
   associatedAt: Date;
 };
 
@@ -461,7 +462,11 @@ export async function listPropertyReferences(propertyId: string): Promise<Proper
     .orderBy(property.code);
 
   return rows.map((r) => ({
-    id: r.id, code: r.code, label: r.nickname ?? r.code, associatedAt: r.associatedAt,
+    id: r.id,
+    code: r.code,
+    nickname: r.nickname,
+    label: r.nickname ?? r.code,
+    associatedAt: r.associatedAt,
   }));
 }
 

@@ -479,4 +479,52 @@ export async function listPersonReferences(personId: string): Promise<PersonRefI
   // Query both sides of the symmetric pair.
   const rows = await db
     .select({
-      personIdA:    personPerson.personI
+      personIdA:    personPerson.personIdA,
+      personIdB:    personPerson.personIdB,
+      associatedAt: personPerson.createdAt,
+      id:           person.id,
+      code:         person.code,
+      type:         person.type,
+      displayName:  person.displayName,
+    })
+    .from(personPerson)
+    .innerJoin(
+      person,
+      and(
+        or(
+          and(eq(personPerson.personIdA, personId), eq(person.id, personPerson.personIdB)),
+          and(eq(personPerson.personIdB, personId), eq(person.id, personPerson.personIdA)),
+        ),
+        isNull(person.deletedAt),
+      ),
+    )
+    .where(or(eq(personPerson.personIdA, personId), eq(personPerson.personIdB, personId)))
+    .orderBy(person.displayName);
+
+  return rows.map((r) => ({
+    id: r.id,
+    code: r.code,
+    type: r.type as "NATURAL" | "JUDICIAL",
+    displayName: r.displayName,
+    associatedAt: r.associatedAt,
+  }));
+}
+
+export async function associatePersonsToPerson(personId: string, otherIds: string[]): Promise<void> {
+  const values = otherIds
+    .filter((id) => id !== personId)
+    .map((otherId) => {
+      const [a, b] = [personId, otherId].sort();
+      return { personIdA: a, personIdB: b };
+    });
+  if (values.length === 0) return;
+  await db.insert(personPerson).values(values).onConflictDoNothing();
+}
+
+export async function dissociatePersonFromPerson(personId: string, otherId: string): Promise<boolean> {
+  const [a, b] = [personId, otherId].sort();
+  const result = await db.delete(personPerson)
+    .where(and(eq(personPerson.personIdA, a), eq(personPerson.personIdB, b)))
+    .returning({ id: personPerson.id });
+  return result.length > 0;
+}
