@@ -118,6 +118,38 @@
       "persons": "Persoane",
       "paperwork": "Acte",
       "comingSoon": "În curând — această secțiune va fi disponibilă într-o actualizare viitoare."
+    },
+    "persons": {
+      "empty": "Nicio persoană asociată acestei proprietăți",
+      "colCode": "Cod",
+      "colName": "Nume",
+      "colType": "Tip",
+      "typeNatural": "Fizică",
+      "typeJudicial": "Juridică",
+      "associate": "Asociază",
+      "dissociate": "Dezasociază",
+      "view": "Vizualizare",
+      "loading": "Se încarcă…",
+      "error": "Eroare la încărcarea persoanelor"
+    },
+    "associatePerson": {
+      "title": "Asociere persoană",
+      "labelName": "Nume",
+      "labelCode": "Cod",
+      "namePlaceholder": "Nume…",
+      "codePlaceholder": "Cod…",
+      "colCode": "Cod",
+      "colName": "Nume",
+      "colType": "Tip",
+      "typeNatural": "Fizică",
+      "typeJudicial": "Juridică",
+      "resultsEmpty": "Nicio persoană găsită",
+      "loading": "Se caută…",
+      "error": "Eroare la căutare",
+      "associate": "Asociază selecția",
+      "associating": "Se asociază…",
+      "cancel": "Anulează",
+      "noSelection": "Selectați cel puțin o persoană"
     }
   },
   "address": {

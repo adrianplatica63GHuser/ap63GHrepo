@@ -563,3 +563,33 @@ export const paperwork = pgTable("paperwork", {
     .defaultNow(),
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });
+
+// ---------------------------------------------------------------------------
+// property_person — M:M junction between Property and Person  (Slice #5.1)
+// ---------------------------------------------------------------------------
+//
+// No deleted_at — associations are hard-deleted (same pattern as address rows).
+// ON DELETE CASCADE on both sides keeps this table clean automatically.
+// Duplicate associations are blocked by the unique index.
+
+export const propertyPerson = pgTable(
+  "property_person",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+
+    propertyId: uuid("property_id")
+      .notNull()
+      .references(() => property.id, { onDelete: "cascade" }),
+
+    personId: uuid("person_id")
+      .notNull()
+      .references(() => person.id, { onDelete: "cascade" }),
+
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("property_person_unique").on(t.propertyId, t.personId),
+  ],
+);

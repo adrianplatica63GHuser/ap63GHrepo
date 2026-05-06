@@ -118,6 +118,38 @@
       "persons": "Persons",
       "paperwork": "Documents",
       "comingSoon": "Coming soon — this section will be available in a future update."
+    },
+    "persons": {
+      "empty": "No persons associated with this property",
+      "colCode": "Code",
+      "colName": "Name",
+      "colType": "Type",
+      "typeNatural": "Natural",
+      "typeJudicial": "Judicial",
+      "associate": "Associate",
+      "dissociate": "Dissociate",
+      "view": "View",
+      "loading": "Loading…",
+      "error": "Failed to load persons"
+    },
+    "associatePerson": {
+      "title": "Associate Person",
+      "labelName": "Name",
+      "labelCode": "Code",
+      "namePlaceholder": "Name…",
+      "codePlaceholder": "Code…",
+      "colCode": "Code",
+      "colName": "Name",
+      "colType": "Type",
+      "typeNatural": "Natural",
+      "typeJudicial": "Judicial",
+      "resultsEmpty": "No persons found",
+      "loading": "Searching…",
+      "error": "Search failed",
+      "associate": "Associate Selected",
+      "associating": "Associating…",
+      "cancel": "Cancel",
+      "noSelection": "Select at least one person"
     }
   },
   "address": {

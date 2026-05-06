@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { PropertyForm } from "./property-form";
+import { PropertyPersonsTab } from "./property-persons-tab";
 import { type FormValues } from "./form-schema";
 import { type Corner } from "./form-schema";
 
@@ -14,6 +15,7 @@ type Props = {
   propertyName:   string;
   initialValues:  FormValues;
   initialCorners: Corner[];
+  initialTab?:    Tab;
 };
 
 export function PropertyDetailTabs({
@@ -22,9 +24,10 @@ export function PropertyDetailTabs({
   propertyName,
   initialValues,
   initialCorners,
+  initialTab,
 }: Props) {
   const t = useTranslations("property");
-  const [activeTab, setActiveTab] = useState<Tab>("details");
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab ?? "details");
 
   const tabs: { key: Tab; label: string }[] = [
     { key: "details",    label: t("tabs.details")    },
@@ -72,7 +75,10 @@ export function PropertyDetailTabs({
             initialCorners={initialCorners}
           />
         )}
-        {activeTab !== "details" && (
+        {activeTab === "persons" && (
+          <PropertyPersonsTab propertyId={propertyId} />
+        )}
+        {(activeTab === "references" || activeTab === "paperwork") && (
           <div className="rounded-md border border-card-rim bg-card p-6 text-sm text-fade dark:border-zinc-800 dark:bg-zinc-900">
             {t("tabs.comingSoon")}
           </div>

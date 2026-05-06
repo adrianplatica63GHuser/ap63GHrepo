@@ -320,3 +320,55 @@ export async function softDeletePerson(id: string): Promise<boolean> {
     .returning({ id: person.id });
   return result.length > 0;
 }
+
+// ---------------------------------------------------------------------------
+// Search ALL persons (Natural + Judicial) — used by the associate-person flow
+// ---------------------------------------------------------------------------
+//
+// Unlike `listPersons` (which hard-filters to NATURAL for the persons list
+// page), this function returns both person types so the user can associate
+// any kind of person with a property.
+
+export type PersonSearchItem = {
+  id:          string;
+  code:        string;
+  type:        "NATURAL" | "JUDICIAL";
+  displayName: string;
+};
+
+export async function searchPersonsAll(opts: {
+  name?:   string;
+  code?:   string;
+  limit:   number;
+  offset:  number;
+}): Promise<{ items: PersonSearchItem[]; total: number }> {
+  const namePat = opts.name?.trim() ? `%${opts.name.trim()}%` : null;
+  const codePat = opts.code?.trim() ? `%${opts.code.trim()}%` : null;
+
+  const where = and(
+    isNull(person.deletedAt),
+    namePat ? ilike(person.displayName, namePat) : undefined,
+    codePat ? ilike(person.code,        codePat) : undefined,
+  );
+
+  const [items, totals] = await Promise.all([
+    db
+      .select({
+        id:          person.id,
+        code:        person.code,
+        type:        person.type,
+        displayName: person.displayName,
+      })
+      .from(person)
+      .where(where)
+      .orderBy(person.code)
+      .limit(opts.limit)
+      .offset(opts.offset),
+    db
+      .select({ total: count() })
+      .from(person)
+      .where(where),
+  ]);
+
+  return { items: items as PersonSearchItem[], total: totals[0]?.total ?? 0 };
+}

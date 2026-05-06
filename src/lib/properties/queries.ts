@@ -11,7 +11,7 @@
 
 import { and, count, eq, ilike, isNull, or } from "drizzle-orm";
 import { db } from "@/db";
-import { property, propertyAddress, propertyCorner } from "@/db/schema";
+import { person, property, propertyAddress, propertyCorner, propertyPerson } from "@/db/schema";
 import type {
   PropertyCreate,
   PropertyListQuery,
@@ -297,6 +297,75 @@ export async function updateProperty(
       corners:  refreshedCorners,
     };
   });
+}
+
+// ---------------------------------------------------------------------------
+// Property <-> Person associations  (Slice #5.1)
+// ---------------------------------------------------------------------------
+
+export type PropertyPersonItem = {
+  id:          string;  // person.id
+  code:        string;
+  type:        "NATURAL" | "JUDICIAL";
+  displayName: string;
+  associatedAt: Date;
+};
+
+/** List all non-deleted persons currently associated with a property. */
+export async function listPropertyPersons(
+  propertyId: string,
+): Promise<PropertyPersonItem[]> {
+  const rows = await db
+    .select({
+      id:           person.id,
+      code:         person.code,
+      type:         person.type,
+      displayName:  person.displayName,
+      associatedAt: propertyPerson.createdAt,
+    })
+    .from(propertyPerson)
+    .innerJoin(person, eq(person.id, propertyPerson.personId))
+    .where(
+      and(
+        eq(propertyPerson.propertyId, propertyId),
+        isNull(person.deletedAt),
+      ),
+    )
+    .orderBy(person.code);
+
+  return rows as PropertyPersonItem[];
+}
+
+/**
+ * Associate one or more persons with a property.
+ * Duplicate associations are silently ignored (ON CONFLICT DO NOTHING).
+ */
+export async function associatePersonsToProperty(
+  propertyId: string,
+  personIds:  string[],
+): Promise<void> {
+  if (personIds.length === 0) return;
+  await db
+    .insert(propertyPerson)
+    .values(personIds.map((pid) => ({ propertyId, personId: pid })))
+    .onConflictDoNothing();
+}
+
+/** Remove a single person association. Returns false if it didn't exist. */
+export async function dissociatePersonFromProperty(
+  propertyId: string,
+  personId:   string,
+): Promise<boolean> {
+  const result = await db
+    .delete(propertyPerson)
+    .where(
+      and(
+        eq(propertyPerson.propertyId, propertyId),
+        eq(propertyPerson.personId,   personId),
+      ),
+    )
+    .returning({ id: propertyPerson.id });
+  return result.length > 0;
 }
 
 // ---------------------------------------------------------------------------
