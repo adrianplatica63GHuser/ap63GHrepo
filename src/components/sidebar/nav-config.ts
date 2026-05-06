@@ -33,7 +33,7 @@ export const NAV_SECTIONS: NavSection[] = [
     icon: Users,
     items: [
       { key: "naturalPerson", href: "/natural-persons", icon: User },
-      { key: "judicialPerson", icon: Building2 },
+      { key: "judicialPerson", href: "/judicial-persons", icon: Building2 },
     ],
   },
   {

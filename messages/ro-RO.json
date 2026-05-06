@@ -113,12 +113,20 @@
       "locality": "Localitate"
     },
     "tabs": {
-      "details":    "Detalii",
+      "details": "Detalii",
       "references": "Referințe",
-      "persons":    "Persoane",
-      "paperwork":  "Acte",
+      "persons": "Persoane",
+      "paperwork": "Acte",
       "comingSoon": "În curând — această secțiune va fi disponibilă într-o actualizare viitoare."
     }
+  },
+  "address": {
+    "streetLine": "Stradă, Nr., Bloc, Etaj, Ap.",
+    "postalCode": "Cod poștal",
+    "locality": "Oraș / Localitate / Sat",
+    "county": "Județ / Sector",
+    "country": "Țară",
+    "notes": "Note"
   },
   "naturalPerson": {
     "listTitle": "Persoană fizică",
@@ -163,14 +171,6 @@
       "workEmail": "Email serviciu",
       "notes": "Note"
     },
-    "address": {
-      "streetLine": "Stradă, Nr., Bloc, Etaj, Ap.",
-      "postalCode": "Cod poștal",
-      "locality": "Oraș / Localitate / Sat",
-      "county": "Județ / Sector",
-      "country": "Țară",
-      "notes": "Note"
-    },
     "options": {
       "idDoc": {
         "ID_CARD": "Carte de identitate",
@@ -204,6 +204,77 @@
       "comingSoon": "În curând — această secțiune va fi disponibilă într-o actualizare viitoare."
     }
   },
+  "judicialPerson": {
+    "listTitle": "Persoană juridică",
+    "createTitle": "Persoană juridică nouă",
+    "searchPlaceholder": "caută după nume, poreclă sau ID",
+    "addNew": "Adaugă persoană juridică",
+    "open": "Deschide",
+    "loading": "Se încarcă…",
+    "error": "Eroare la încărcare",
+    "empty": "Nu există persoane juridice",
+    "counts": "Se afișează {shown} din {total}",
+    "saveError": "Salvarea a eșuat",
+    "deleteError": "Ștergerea a eșuat",
+    "table": {
+      "name": "Denumire",
+      "nickname": "Poreclă",
+      "cui": "CUI",
+      "id": "ID"
+    },
+    "sections": {
+      "identity": "Persoană juridică",
+      "contactPerson1": "Persoană de contact 1",
+      "contactPerson2": "Persoană de contact 2",
+      "headquartersAddress": "Adresă sediu social",
+      "correspondenceAddress": "Adresă corespondență"
+    },
+    "fields": {
+      "name": "Denumire",
+      "nickname": "Poreclă",
+      "code": "ID",
+      "judicialType": "Tip",
+      "cuiNumber": "Nr. înregistrare (CUI)",
+      "tradeRegisterNumber": "Nr. registru comerțului",
+      "contactPerson1": "Persoană de contact 1",
+      "contactPerson2": "Persoană de contact 2",
+      "notes": "Note"
+    },
+    "options": {
+      "judicialType": {
+        "SRL": "SRL",
+        "SA": "SA",
+        "SRL_D": "SRL-D",
+        "PFA": "PFA",
+        "II": "II",
+        "IF": "IF",
+        "ONG": "ONG",
+        "OTHER": "Altele"
+      }
+    },
+    "buttons": {
+      "save": "Salvează",
+      "delete": "Șterge",
+      "cancel": "Anulează",
+      "yes": "Da",
+      "no": "Nu"
+    },
+    "confirmDelete": {
+      "title": "Ștergeți persoana juridică?",
+      "body": "Sunteți sigur că doriți să ștergeți această persoană juridică?"
+    },
+    "hints": {
+      "cuiLocked": "CUI-ul nu poate fi modificat odată setat — ștergeți și creați din nou pentru a-l schimba",
+      "countryRequiredIfAddressFilled": "Necesar dacă orice alt câmp al adresei este completat"
+    },
+    "tabs": {
+      "details": "Detalii",
+      "references": "Referințe",
+      "properties": "Proprietăți",
+      "paperwork": "Acte",
+      "comingSoon": "În curând — această secțiune va fi disponibilă într-o actualizare viitoare."
+    }
+  },
   "nav": {
     "sections": {
       "people": "Persoane",
@@ -218,25 +289,25 @@
       "landMap": "Teren — Hartă",
       "building": "Construcție",
       "propertyType3": "Tip 3",
-      "actAdjudecare":            "Act de Adjudecare",
-      "actCadastru":              "Act Cadastru",
-      "actDonatie":               "Act de Donație",
-      "autorizatie":              "Autorizație",
-      "avizInstitutie":           "Aviz de Instituție",
-      "certificatFiscal":         "Certificat Fiscal",
-      "certificatMostenitor":     "Certificat de Moștenitor",
-      "certificatSarcini":        "Certificat de Sarcini",
-      "certificatUrbanism":       "Certificat de Urbanism",
-      "contractArenda":           "Contract de Arendă",
-      "contractInchiriere":       "Contract de Închiriere",
-      "contractPartaj":           "Contract de Partaj",
+      "actAdjudecare": "Act de Adjudecare",
+      "actCadastru": "Act Cadastru",
+      "actDonatie": "Act de Donație",
+      "autorizatie": "Autorizație",
+      "avizInstitutie": "Aviz de Instituție",
+      "certificatFiscal": "Certificat Fiscal",
+      "certificatMostenitor": "Certificat de Moștenitor",
+      "certificatSarcini": "Certificat de Sarcini",
+      "certificatUrbanism": "Certificat de Urbanism",
+      "contractArenda": "Contract de Arendă",
+      "contractInchiriere": "Contract de Închiriere",
+      "contractPartaj": "Contract de Partaj",
       "contractPrestariServicii": "Contract de Prestări Servicii",
-      "contractVanzare":          "Contract de Vânzare",
-      "extrasCarteFunciara":      "Extras de Carte Funciară",
-      "extrasPug":                "Extras din PUG",
-      "hotarareJudecatoreasca":   "Hotărâre Judecătorească",
-      "testament":                "Testament",
-      "titluProprietate":         "Titlu de Proprietate",
+      "contractVanzare": "Contract de Vânzare",
+      "extrasCarteFunciara": "Extras de Carte Funciară",
+      "extrasPug": "Extras din PUG",
+      "hotarareJudecatoreasca": "Hotărâre Judecătorească",
+      "testament": "Testament",
+      "titluProprietate": "Titlu de Proprietate",
       "users": "Utilizatori & Acces",
       "referenceData": "Date de referință",
       "importExport": "Import / Export",
@@ -264,82 +335,82 @@
     "selectAll": "(Selectați toate)",
     "noTypeSelected": "Selectați cel puțin un tip de document",
     "types": {
-      "ACT_ADJUDECARE":          "Act de Adjudecare",
-      "ACT_CADASTRU":            "Act Cadastru",
-      "ACT_DONATIE":             "Act de Donație",
-      "AUTORIZATIE":             "Autorizație",
-      "AVIZ_INSTITUTIE":         "Aviz de Instituție",
-      "CERTIFICAT_FISCAL":       "Certificat Fiscal",
-      "CERTIFICAT_MOSTENITOR":   "Certificat de Moștenitor",
-      "CERTIFICAT_SARCINI":      "Certificat de Sarcini",
-      "CERTIFICAT_URBANISM":     "Certificat de Urbanism",
-      "CONTRACT_ARENDA":         "Contract de Arendă",
-      "CONTRACT_INCHIRIERE":     "Contract de Închiriere",
-      "CONTRACT_PARTAJ":         "Contract de Partaj",
+      "ACT_ADJUDECARE": "Act de Adjudecare",
+      "ACT_CADASTRU": "Act Cadastru",
+      "ACT_DONATIE": "Act de Donație",
+      "AUTORIZATIE": "Autorizație",
+      "AVIZ_INSTITUTIE": "Aviz de Instituție",
+      "CERTIFICAT_FISCAL": "Certificat Fiscal",
+      "CERTIFICAT_MOSTENITOR": "Certificat de Moștenitor",
+      "CERTIFICAT_SARCINI": "Certificat de Sarcini",
+      "CERTIFICAT_URBANISM": "Certificat de Urbanism",
+      "CONTRACT_ARENDA": "Contract de Arendă",
+      "CONTRACT_INCHIRIERE": "Contract de Închiriere",
+      "CONTRACT_PARTAJ": "Contract de Partaj",
       "CONTRACT_PRESTARI_SERVICII": "Contract de Prestări Servicii",
-      "CONTRACT_VANZARE":        "Contract de Vânzare",
-      "EXTRAS_CARTE_FUNCIARA":   "Extras de Carte Funciară",
-      "EXTRAS_PUG":              "Extras din PUG",
+      "CONTRACT_VANZARE": "Contract de Vânzare",
+      "EXTRAS_CARTE_FUNCIARA": "Extras de Carte Funciară",
+      "EXTRAS_PUG": "Extras din PUG",
       "HOTARARE_JUDECATOREASCA": "Hotărâre Judecătorească",
-      "TESTAMENT":               "Testament",
-      "TITLU_PROPRIETATE":       "Titlu de Proprietate"
+      "TESTAMENT": "Testament",
+      "TITLU_PROPRIETATE": "Titlu de Proprietate"
     },
     "table": {
-      "code":         "Cod",
-      "type":         "Tip",
-      "title":        "Titlu",
-      "nrDocument":   "Nr. document",
+      "code": "Cod",
+      "type": "Tip",
+      "title": "Titlu",
+      "nrDocument": "Nr. document",
       "dateDocument": "Data",
-      "institution":  "Instituție / Notariat"
+      "institution": "Instituție / Notariat"
     },
     "sections": {
-      "typeSelect":    "Tip document",
-      "general":       "Date generale",
-      "titlu":         "Date titlu de proprietate",
-      "mostenitor":    "Date succesorale",
-      "parties":       "Părți",
-      "dateRange":     "Perioadă contract",
-      "notes":         "Observații"
+      "typeSelect": "Tip document",
+      "general": "Date generale",
+      "titlu": "Date titlu de proprietate",
+      "mostenitor": "Date succesorale",
+      "parties": "Părți",
+      "dateRange": "Perioadă contract",
+      "notes": "Observații"
     },
     "fields": {
-      "code":               "Cod",
-      "type":               "Tip document",
-      "title":              "Etichetă scurtă",
-      "nrDocument":         "Nr. document",
-      "dateDocument":       "Data",
-      "institution":        "Instituție / Notariat",
-      "emitent":            "Emitent",
-      "bazaLegala":         "Baza legală",
-      "uatProprietate":     "UAT proprietate",
-      "uatProprietar":      "UAT proprietar",
-      "suprafata":          "Suprafață (ha)",
-      "nrDosarSuccesoral":  "Nr. dosar succesoral",
-      "dataDecesului":      "Data decesului",
-      "ultimulDomiciliu":   "Ultimul domiciliu",
-      "nrCertificatDeces":  "Nr. certificat de deces",
-      "dateStart":          "Data începerii",
-      "dateEnd":            "Data încetării",
-      "titularText":        "Titular",
-      "defunctText":        "Defunct / Testator",
-      "partiesAText":       "Părți A",
-      "partiesBText":       "Părți B",
-      "notes":              "Observații"
+      "code": "Cod",
+      "type": "Tip document",
+      "title": "Etichetă scurtă",
+      "nrDocument": "Nr. document",
+      "dateDocument": "Data",
+      "institution": "Instituție / Notariat",
+      "emitent": "Emitent",
+      "bazaLegala": "Baza legală",
+      "uatProprietate": "UAT proprietate",
+      "uatProprietar": "UAT proprietar",
+      "suprafata": "Suprafață (ha)",
+      "nrDosarSuccesoral": "Nr. dosar succesoral",
+      "dataDecesului": "Data decesului",
+      "ultimulDomiciliu": "Ultimul domiciliu",
+      "nrCertificatDeces": "Nr. certificat de deces",
+      "dateStart": "Data începerii",
+      "dateEnd": "Data încetării",
+      "titularText": "Titular",
+      "defunctText": "Defunct / Testator",
+      "partiesAText": "Părți A",
+      "partiesBText": "Părți B",
+      "notes": "Observații"
     },
     "buttons": {
-      "save":   "Salvează",
+      "save": "Salvează",
       "delete": "Șterge",
       "cancel": "Anulează",
-      "yes":    "Da",
-      "no":     "Nu"
+      "yes": "Da",
+      "no": "Nu"
     },
     "confirmDelete": {
       "title": "Ștergeți actul?",
-      "body":  "Sigur doriți să ștergeți acest act? Acțiunea nu poate fi anulată."
+      "body": "Sigur doriți să ștergeți acest act? Acțiunea nu poate fi anulată."
     },
     "tabs": {
-      "details":    "Detalii",
+      "details": "Detalii",
       "references": "Referințe",
-      "persons":    "Persoane",
+      "persons": "Persoane",
       "properties": "Proprietăți",
       "comingSoon": "În curând — această secțiune va fi disponibilă într-o actualizare viitoare."
     }
@@ -352,48 +423,48 @@
       "document": "Document"
     },
     "lists": {
-      "propertyTypes":    "Tipuri de Proprietate",
-      "tarla":            "Indicative Tarla",
-      "useCategories":    "Categorii Folosință",
-      "personTypes":      "Tipuri de Persoană",
-      "citizenships":     "Cetățenie",
-      "documentTypes":    "Tipuri de Document",
-      "institutions":     "Instituții",
+      "propertyTypes": "Tipuri de Proprietate",
+      "tarla": "Indicative Tarla",
+      "useCategories": "Categorii Folosință",
+      "personTypes": "Tipuri de Persoană",
+      "citizenships": "Cetățenie",
+      "documentTypes": "Tipuri de Document",
+      "institutions": "Instituții",
       "serviceInterests": "Servicii & Interese"
     },
     "fields": {
-      "name":            "Denumire",
-      "indicativ":       "Indicativ",
-      "descriere":       "Descriere",
+      "name": "Denumire",
+      "indicativ": "Indicativ",
+      "descriere": "Descriere",
       "institutionType": "Tip instituție",
-      "category":        "Categorie"
+      "category": "Categorie"
     },
     "modal": {
       "close": "Închide"
     },
     "form": {
-      "addTitle":  "Adaugă înregistrare nouă",
+      "addTitle": "Adaugă înregistrare nouă",
       "editTitle": "Editează înregistrarea",
-      "save":      "Salvează",
-      "saving":    "Se salvează…",
-      "cancel":    "Anulează"
+      "save": "Salvează",
+      "saving": "Se salvează…",
+      "cancel": "Anulează"
     },
     "toolbar": {
-      "add":   "Adaugă",
+      "add": "Adaugă",
       "count": "{count} înregistrări"
     },
     "table": {
       "loading": "Se încarcă…",
-      "error":   "Eroare la încărcare",
-      "empty":   "Nu există înregistrări",
-      "edit":    "Editează",
-      "delete":  "Șterge"
+      "error": "Eroare la încărcare",
+      "empty": "Nu există înregistrări",
+      "edit": "Editează",
+      "delete": "Șterge"
     },
     "confirm": {
       "deleteBody": "Ștergeți această înregistrare? Acțiunea nu poate fi anulată.",
-      "delete":     "Șterge",
-      "deleting":   "Se șterge…",
-      "cancel":     "Anulează"
+      "delete": "Șterge",
+      "deleting": "Se șterge…",
+      "cancel": "Anulează"
     }
   }
 }

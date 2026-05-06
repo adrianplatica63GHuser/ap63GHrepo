@@ -113,12 +113,20 @@
       "locality": "Locality"
     },
     "tabs": {
-      "details":    "Details",
+      "details": "Details",
       "references": "References",
-      "persons":    "Persons",
-      "paperwork":  "Documents",
+      "persons": "Persons",
+      "paperwork": "Documents",
       "comingSoon": "Coming soon — this section will be available in a future update."
     }
+  },
+  "address": {
+    "streetLine": "Street, No., Block, Floor, Apt",
+    "postalCode": "Postal Code",
+    "locality": "City / Locality / Village",
+    "county": "County / Sector",
+    "country": "Country",
+    "notes": "Notes"
   },
   "naturalPerson": {
     "listTitle": "Natural Person",
@@ -163,14 +171,6 @@
       "workEmail": "Work Email",
       "notes": "Notes"
     },
-    "address": {
-      "streetLine": "Street, No., Block, Floor, Apt",
-      "postalCode": "Postal Code",
-      "locality": "City / Locality / Village",
-      "county": "County / Sector",
-      "country": "Country",
-      "notes": "Notes"
-    },
     "options": {
       "idDoc": {
         "ID_CARD": "ID Card",
@@ -204,6 +204,77 @@
       "comingSoon": "Coming soon — this section will be available in a future update."
     }
   },
+  "judicialPerson": {
+    "listTitle": "Judicial Person",
+    "createTitle": "New Judicial Person",
+    "searchPlaceholder": "search by name, nickname, or ID",
+    "addNew": "Add new Judicial Person",
+    "open": "Open",
+    "loading": "Loading…",
+    "error": "Failed to load",
+    "empty": "No judicial persons found",
+    "counts": "Showing {shown} of {total}",
+    "saveError": "Could not save",
+    "deleteError": "Could not delete",
+    "table": {
+      "name": "Name",
+      "nickname": "Nickname",
+      "cui": "CUI",
+      "id": "ID"
+    },
+    "sections": {
+      "identity": "Judicial Person",
+      "contactPerson1": "Contact Person 1",
+      "contactPerson2": "Contact Person 2",
+      "headquartersAddress": "Registered Office Address",
+      "correspondenceAddress": "Correspondence Address"
+    },
+    "fields": {
+      "name": "Name",
+      "nickname": "Nickname",
+      "code": "ID",
+      "judicialType": "Type",
+      "cuiNumber": "Registration No. (CUI)",
+      "tradeRegisterNumber": "Trade Register No.",
+      "contactPerson1": "Contact Person 1",
+      "contactPerson2": "Contact Person 2",
+      "notes": "Notes"
+    },
+    "options": {
+      "judicialType": {
+        "SRL": "SRL",
+        "SA": "SA",
+        "SRL_D": "SRL-D",
+        "PFA": "PFA",
+        "II": "II",
+        "IF": "IF",
+        "ONG": "ONG",
+        "OTHER": "Other"
+      }
+    },
+    "buttons": {
+      "save": "Save",
+      "delete": "Delete",
+      "cancel": "Cancel",
+      "yes": "Yes",
+      "no": "No"
+    },
+    "confirmDelete": {
+      "title": "Delete judicial person?",
+      "body": "Are you sure you want to delete this judicial person?"
+    },
+    "hints": {
+      "cuiLocked": "CUI cannot be changed once set — delete and recreate to change",
+      "countryRequiredIfAddressFilled": "Required if any other address field is filled"
+    },
+    "tabs": {
+      "details": "Details",
+      "references": "References",
+      "properties": "Properties",
+      "paperwork": "Documents",
+      "comingSoon": "Coming soon — this section will be available in a future update."
+    }
+  },
   "nav": {
     "sections": {
       "people": "People",
@@ -218,25 +289,25 @@
       "landMap": "Land — Map",
       "building": "Building",
       "propertyType3": "Type 3",
-      "actAdjudecare":            "Adjudication Act",
-      "actCadastru":              "Cadastral Act",
-      "actDonatie":               "Deed of Gift",
-      "autorizatie":              "Authorization",
-      "avizInstitutie":           "Official Approval",
-      "certificatFiscal":         "Tax Certificate",
-      "certificatMostenitor":     "Certificate of Inheritance",
-      "certificatSarcini":        "Encumbrance Certificate",
-      "certificatUrbanism":       "Urban Planning Certificate",
-      "contractArenda":           "Lease Agreement",
-      "contractInchiriere":       "Rental Agreement",
-      "contractPartaj":           "Partition Agreement",
+      "actAdjudecare": "Adjudication Act",
+      "actCadastru": "Cadastral Act",
+      "actDonatie": "Deed of Gift",
+      "autorizatie": "Authorization",
+      "avizInstitutie": "Official Approval",
+      "certificatFiscal": "Tax Certificate",
+      "certificatMostenitor": "Certificate of Inheritance",
+      "certificatSarcini": "Encumbrance Certificate",
+      "certificatUrbanism": "Urban Planning Certificate",
+      "contractArenda": "Lease Agreement",
+      "contractInchiriere": "Rental Agreement",
+      "contractPartaj": "Partition Agreement",
       "contractPrestariServicii": "Service Agreement",
-      "contractVanzare":          "Sale Agreement",
-      "extrasCarteFunciara":      "Land Registry Extract",
-      "extrasPug":                "General Urban Plan Extract",
-      "hotarareJudecatoreasca":   "Court Ruling",
-      "testament":                "Will",
-      "titluProprietate":         "Property Title",
+      "contractVanzare": "Sale Agreement",
+      "extrasCarteFunciara": "Land Registry Extract",
+      "extrasPug": "General Urban Plan Extract",
+      "hotarareJudecatoreasca": "Court Ruling",
+      "testament": "Will",
+      "titluProprietate": "Property Title",
       "users": "Users & Access",
       "referenceData": "Reference Data",
       "importExport": "Import / Export",
@@ -264,82 +335,82 @@
     "selectAll": "(Select All)",
     "noTypeSelected": "Please select at least one document type",
     "types": {
-      "ACT_ADJUDECARE":          "Act de Adjudecare",
-      "ACT_CADASTRU":            "Act Cadastru",
-      "ACT_DONATIE":             "Act de Donație",
-      "AUTORIZATIE":             "Autorizație",
-      "AVIZ_INSTITUTIE":         "Aviz de Instituție",
-      "CERTIFICAT_FISCAL":       "Certificat Fiscal",
-      "CERTIFICAT_MOSTENITOR":   "Certificat de Moștenitor",
-      "CERTIFICAT_SARCINI":      "Certificat de Sarcini",
-      "CERTIFICAT_URBANISM":     "Certificat de Urbanism",
-      "CONTRACT_ARENDA":         "Contract de Arendă",
-      "CONTRACT_INCHIRIERE":     "Contract de Închiriere",
-      "CONTRACT_PARTAJ":         "Contract de Partaj",
+      "ACT_ADJUDECARE": "Act de Adjudecare",
+      "ACT_CADASTRU": "Act Cadastru",
+      "ACT_DONATIE": "Act de Donație",
+      "AUTORIZATIE": "Autorizație",
+      "AVIZ_INSTITUTIE": "Aviz de Instituție",
+      "CERTIFICAT_FISCAL": "Certificat Fiscal",
+      "CERTIFICAT_MOSTENITOR": "Certificat de Moștenitor",
+      "CERTIFICAT_SARCINI": "Certificat de Sarcini",
+      "CERTIFICAT_URBANISM": "Certificat de Urbanism",
+      "CONTRACT_ARENDA": "Contract de Arendă",
+      "CONTRACT_INCHIRIERE": "Contract de Închiriere",
+      "CONTRACT_PARTAJ": "Contract de Partaj",
       "CONTRACT_PRESTARI_SERVICII": "Contract de Prestări Servicii",
-      "CONTRACT_VANZARE":        "Contract de Vânzare",
-      "EXTRAS_CARTE_FUNCIARA":   "Extras de Carte Funciară",
-      "EXTRAS_PUG":              "Extras din PUG",
+      "CONTRACT_VANZARE": "Contract de Vânzare",
+      "EXTRAS_CARTE_FUNCIARA": "Extras de Carte Funciară",
+      "EXTRAS_PUG": "Extras din PUG",
       "HOTARARE_JUDECATOREASCA": "Hotărâre Judecătorească",
-      "TESTAMENT":               "Testament",
-      "TITLU_PROPRIETATE":       "Titlu de Proprietate"
+      "TESTAMENT": "Testament",
+      "TITLU_PROPRIETATE": "Titlu de Proprietate"
     },
     "table": {
-      "code":         "Code",
-      "type":         "Type",
-      "title":        "Title",
-      "nrDocument":   "Document No.",
+      "code": "Code",
+      "type": "Type",
+      "title": "Title",
+      "nrDocument": "Document No.",
       "dateDocument": "Date",
-      "institution":  "Institution / Notariat"
+      "institution": "Institution / Notariat"
     },
     "sections": {
-      "typeSelect":    "Document Type",
-      "general":       "General",
-      "titlu":         "Land Title Details",
-      "mostenitor":    "Succession Details",
-      "parties":       "Parties",
-      "dateRange":     "Contract Period",
-      "notes":         "Notes"
+      "typeSelect": "Document Type",
+      "general": "General",
+      "titlu": "Land Title Details",
+      "mostenitor": "Succession Details",
+      "parties": "Parties",
+      "dateRange": "Contract Period",
+      "notes": "Notes"
     },
     "fields": {
-      "code":               "Code",
-      "type":               "Document Type",
-      "title":              "Short Label",
-      "nrDocument":         "Document No.",
-      "dateDocument":       "Date",
-      "institution":        "Institution / Notariat",
-      "emitent":            "Issuing Authority",
-      "bazaLegala":         "Legal Basis",
-      "uatProprietate":     "UAT (Property)",
-      "uatProprietar":      "UAT (Owner)",
-      "suprafata":          "Surface Area (ha)",
-      "nrDosarSuccesoral":  "Succession File No.",
-      "dataDecesului":      "Date of Death",
-      "ultimulDomiciliu":   "Last Domicile",
-      "nrCertificatDeces":  "Death Certificate No.",
-      "dateStart":          "Start Date",
-      "dateEnd":            "End Date",
-      "titularText":        "Title Holder",
-      "defunctText":        "Deceased / Testator",
-      "partiesAText":       "Parties A",
-      "partiesBText":       "Parties B",
-      "notes":              "Notes"
+      "code": "Code",
+      "type": "Document Type",
+      "title": "Short Label",
+      "nrDocument": "Document No.",
+      "dateDocument": "Date",
+      "institution": "Institution / Notariat",
+      "emitent": "Issuing Authority",
+      "bazaLegala": "Legal Basis",
+      "uatProprietate": "UAT (Property)",
+      "uatProprietar": "UAT (Owner)",
+      "suprafata": "Surface Area (ha)",
+      "nrDosarSuccesoral": "Succession File No.",
+      "dataDecesului": "Date of Death",
+      "ultimulDomiciliu": "Last Domicile",
+      "nrCertificatDeces": "Death Certificate No.",
+      "dateStart": "Start Date",
+      "dateEnd": "End Date",
+      "titularText": "Title Holder",
+      "defunctText": "Deceased / Testator",
+      "partiesAText": "Parties A",
+      "partiesBText": "Parties B",
+      "notes": "Notes"
     },
     "buttons": {
-      "save":   "Save",
+      "save": "Save",
       "delete": "Delete",
       "cancel": "Cancel",
-      "yes":    "Yes",
-      "no":     "No"
+      "yes": "Yes",
+      "no": "No"
     },
     "confirmDelete": {
       "title": "Delete document?",
-      "body":  "Are you sure you want to delete this document? This cannot be undone."
+      "body": "Are you sure you want to delete this document? This cannot be undone."
     },
     "tabs": {
-      "details":    "Details",
+      "details": "Details",
       "references": "References",
-      "persons":    "Persons",
+      "persons": "Persons",
       "properties": "Properties",
       "comingSoon": "Coming soon — this section will be available in a future update."
     }
@@ -352,48 +423,48 @@
       "document": "Document"
     },
     "lists": {
-      "propertyTypes":    "Property Types",
-      "tarla":            "Tarla Codes",
-      "useCategories":    "Use Categories",
-      "personTypes":      "Person Types",
-      "citizenships":     "Citizenship",
-      "documentTypes":    "Document Types",
-      "institutions":     "Institutions",
+      "propertyTypes": "Property Types",
+      "tarla": "Tarla Codes",
+      "useCategories": "Use Categories",
+      "personTypes": "Person Types",
+      "citizenships": "Citizenship",
+      "documentTypes": "Document Types",
+      "institutions": "Institutions",
       "serviceInterests": "Services & Interests"
     },
     "fields": {
-      "name":            "Name",
-      "indicativ":       "Code",
-      "descriere":       "Description",
+      "name": "Name",
+      "indicativ": "Code",
+      "descriere": "Description",
       "institutionType": "Institution Type",
-      "category":        "Category"
+      "category": "Category"
     },
     "modal": {
       "close": "Close"
     },
     "form": {
-      "addTitle":  "Add new entry",
+      "addTitle": "Add new entry",
       "editTitle": "Edit entry",
-      "save":      "Save",
-      "saving":    "Saving…",
-      "cancel":    "Cancel"
+      "save": "Save",
+      "saving": "Saving…",
+      "cancel": "Cancel"
     },
     "toolbar": {
-      "add":   "Add",
+      "add": "Add",
       "count": "{count} entries"
     },
     "table": {
       "loading": "Loading…",
-      "error":   "Failed to load",
-      "empty":   "No entries yet",
-      "edit":    "Edit",
-      "delete":  "Delete"
+      "error": "Failed to load",
+      "empty": "No entries yet",
+      "edit": "Edit",
+      "delete": "Delete"
     },
     "confirm": {
       "deleteBody": "Delete this entry? This cannot be undone.",
-      "delete":     "Delete",
-      "deleting":   "Deleting…",
-      "cancel":     "Cancel"
+      "delete": "Delete",
+      "deleting": "Deleting…",
+      "cancel": "Cancel"
     }
   }
 }
