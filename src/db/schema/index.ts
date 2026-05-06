@@ -593,3 +593,89 @@ export const propertyPerson = pgTable(
     uniqueIndex("property_person_unique").on(t.propertyId, t.personId),
   ],
 );
+
+// ---------------------------------------------------------------------------
+// M:M junction tables  (Slice #5.1 + #5.2)
+// ---------------------------------------------------------------------------
+
+// property <-> person  (Slice 5.1 — table exists in DB via migration 0005)
+export const propertyPerson = pgTable(
+  "property_person",
+  {
+    id:         uuid("id").primaryKey().defaultRandom(),
+    propertyId: uuid("property_id").notNull().references(() => property.id, { onDelete: "cascade" }),
+    personId:   uuid("person_id").notNull().references(() => person.id,     { onDelete: "cascade" }),
+    createdAt:  timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("property_person_unique").on(t.propertyId, t.personId)],
+);
+
+// property <-> paperwork  (Slice 5.2)
+export const propertyPaperwork = pgTable(
+  "property_paperwork",
+  {
+    id:          uuid("id").primaryKey().defaultRandom(),
+    propertyId:  uuid("property_id").notNull().references(() => property.id,  { onDelete: "cascade" }),
+    paperworkId: uuid("paperwork_id").notNull().references(() => paperwork.id, { onDelete: "cascade" }),
+    createdAt:   timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("property_paperwork_unique").on(t.propertyId, t.paperworkId)],
+);
+
+// property <-> property  (self-ref, symmetric; id_a < id_b enforced by CHECK)
+export const propertyProperty = pgTable(
+  "property_property",
+  {
+    id:           uuid("id").primaryKey().defaultRandom(),
+    propertyIdA:  uuid("property_id_a").notNull().references(() => property.id, { onDelete: "cascade" }),
+    propertyIdB:  uuid("property_id_b").notNull().references(() => property.id, { onDelete: "cascade" }),
+    createdAt:    timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("property_property_unique").on(t.propertyIdA, t.propertyIdB),
+    check("property_property_order", sql`${t.propertyIdA} < ${t.propertyIdB}`),
+  ],
+);
+
+// person <-> paperwork  (Slice 5.2)
+export const personPaperwork = pgTable(
+  "person_paperwork",
+  {
+    id:          uuid("id").primaryKey().defaultRandom(),
+    personId:    uuid("person_id").notNull().references(() => person.id,      { onDelete: "cascade" }),
+    paperworkId: uuid("paperwork_id").notNull().references(() => paperwork.id, { onDelete: "cascade" }),
+    createdAt:   timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("person_paperwork_unique").on(t.personId, t.paperworkId)],
+);
+
+
+// person <-> person  (self-ref, symmetric; id_a < id_b enforced by CHECK)
+export const personPerson = pgTable(
+  "person_person",
+  {
+    id:          uuid("id").primaryKey().defaultRandom(),
+    personIdA:   uuid("person_id_a").notNull().references(() => person.id, { onDelete: "cascade" }),
+    personIdB:   uuid("person_id_b").notNull().references(() => person.id, { onDelete: "cascade" }),
+    createdAt:   timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("person_person_unique").on(t.personIdA, t.personIdB),
+    check("person_person_order", sql`${t.personIdA} < ${t.personIdB}`),
+  ],
+);
+
+// paperwork <-> paperwork  (self-ref, symmetric; id_a < id_b enforced by CHECK)
+export const paperworkPaperwork = pgTable(
+  "paperwork_paperwork",
+  {
+    id:            uuid("id").primaryKey().defaultRandom(),
+    paperworkIdA:  uuid("paperwork_id_a").notNull().references(() => paperwork.id, { onDelete: "cascade" }),
+    paperworkIdB:  uuid("paperwork_id_b").notNull().references(() => paperwork.id, { onDelete: "cascade" }),
+    createdAt:     timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("paperwork_paperwork_unique").on(t.paperworkIdA, t.paperworkIdB),
+    check("paperwork_paperwork_order", sql`${t.paperworkIdA} < ${t.paperworkIdB}`),
+  ],
+);

@@ -380,3 +380,106 @@ export async function softDeleteProperty(id: string): Promise<boolean> {
     .returning({ id: property.id });
   return result.length > 0;
 }
+
+// ---------------------------------------------------------------------------
+// Property <-> Paperwork  (Slice #5.2)
+// ---------------------------------------------------------------------------
+
+import { paperwork, propertyPaperwork, propertyProperty } from "@/db/schema";
+
+export type PropertyPaperworkItem = {
+  id:           string;
+  code:         string;
+  type:         string;
+  title:        string | null;
+  associatedAt: Date;
+};
+
+export async function listPropertyPaperwork(propertyId: string): Promise<PropertyPaperworkItem[]> {
+  const rows = await db
+    .select({
+      id:           paperwork.id,
+      code:         paperwork.code,
+      type:         paperwork.type,
+      title:        paperwork.title,
+      associatedAt: propertyPaperwork.createdAt,
+    })
+    .from(propertyPaperwork)
+    .innerJoin(paperwork, and(eq(propertyPaperwork.paperworkId, paperwork.id), isNull(paperwork.deletedAt)))
+    .where(eq(propertyPaperwork.propertyId, propertyId))
+    .orderBy(paperwork.code);
+
+  return rows as PropertyPaperworkItem[];
+}
+
+export async function associatePaperworkToProperty(propertyId: string, paperworkIds: string[]): Promise<void> {
+  await db.insert(propertyPaperwork)
+    .values(paperworkIds.map((pid) => ({ propertyId, paperworkId: pid })))
+    .onConflictDoNothing();
+}
+
+export async function dissociatePaperworkFromProperty(propertyId: string, paperworkId: string): Promise<boolean> {
+  const result = await db.delete(propertyPaperwork)
+    .where(and(eq(propertyPaperwork.propertyId, propertyId), eq(propertyPaperwork.paperworkId, paperworkId)))
+    .returning({ id: propertyPaperwork.id });
+  return result.length > 0;
+}
+
+// ---------------------------------------------------------------------------
+// Property <-> Property  (self-ref, symmetric)
+// ---------------------------------------------------------------------------
+
+export type PropertyRefItem = {
+  id:           string;
+  code:         string;
+  label:        string;  // nickname ?? code
+  associatedAt: Date;
+};
+
+export async function listPropertyReferences(propertyId: string): Promise<PropertyRefItem[]> {
+  const rows = await db
+    .select({
+      propertyIdA:  propertyProperty.propertyIdA,
+      propertyIdB:  propertyProperty.propertyIdB,
+      associatedAt: propertyProperty.createdAt,
+      id:           property.id,
+      code:         property.code,
+      nickname:     property.nickname,
+    })
+    .from(propertyProperty)
+    .innerJoin(
+      property,
+      and(
+        or(
+          and(eq(propertyProperty.propertyIdA, propertyId), eq(property.id, propertyProperty.propertyIdB)),
+          and(eq(propertyProperty.propertyIdB, propertyId), eq(property.id, propertyProperty.propertyIdA)),
+        ),
+        isNull(property.deletedAt),
+      ),
+    )
+    .where(or(eq(propertyProperty.propertyIdA, propertyId), eq(propertyProperty.propertyIdB, propertyId)))
+    .orderBy(property.code);
+
+  return rows.map((r) => ({
+    id: r.id, code: r.code, label: r.nickname ?? r.code, associatedAt: r.associatedAt,
+  }));
+}
+
+export async function associatePropertiesToProperty(propertyId: string, otherIds: string[]): Promise<void> {
+  const values = otherIds
+    .filter((id) => id !== propertyId)
+    .map((otherId) => {
+      const [a, b] = [propertyId, otherId].sort();
+      return { propertyIdA: a, propertyIdB: b };
+    });
+  if (values.length === 0) return;
+  await db.insert(propertyProperty).values(values).onConflictDoNothing();
+}
+
+export async function dissociatePropertyFromProperty(propertyId: string, otherId: string): Promise<boolean> {
+  const [a, b] = [propertyId, otherId].sort();
+  const result = await db.delete(propertyProperty)
+    .where(and(eq(propertyProperty.propertyIdA, a), eq(propertyProperty.propertyIdB, b)))
+    .returning({ id: propertyProperty.id });
+  return result.length > 0;
+}

@@ -227,3 +227,186 @@ function inputToValues(
     notes: input.notes ?? null,
   };
 }
+
+// ---------------------------------------------------------------------------
+// Paperwork search  (used by associate-paperwork flows)
+// ---------------------------------------------------------------------------
+
+import { property, propertyPaperwork, person, personPaperwork, paperworkPaperwork } from "@/db/schema";
+
+export type PaperworkSearchItem = {
+  id:    string;
+  code:  string;
+  type:  PaperworkType;
+  title: string | null;
+};
+
+export async function searchPaperworkAll(opts: {
+  q?:     string;
+  limit:  number;
+  offset: number;
+}): Promise<{ items: PaperworkSearchItem[]; total: number }> {
+  const pat = opts.q?.trim() ? `%${opts.q.trim()}%` : null;
+
+  const where = and(
+    isNull(paperwork.deletedAt),
+    pat
+      ? or(ilike(paperwork.code, pat), ilike(paperwork.title, pat))
+      : undefined,
+  );
+
+  const [{ value: total }] = await db.select({ value: count() }).from(paperwork).where(where);
+
+  const rows = await db
+    .select({ id: paperwork.id, code: paperwork.code, type: paperwork.type, title: paperwork.title })
+    .from(paperwork)
+    .where(where)
+    .orderBy(paperwork.code)
+    .limit(opts.limit)
+    .offset(opts.offset);
+
+  return { items: rows as PaperworkSearchItem[], total };
+}
+
+// ---------------------------------------------------------------------------
+// Paperwork <-> Property
+// ---------------------------------------------------------------------------
+
+export type PaperworkPropertyItem = {
+  id:           string;
+  code:         string;
+  label:        string;   // nickname ?? code
+  associatedAt: Date;
+};
+
+export async function listPaperworkProperties(paperworkId: string): Promise<PaperworkPropertyItem[]> {
+  const rows = await db
+    .select({
+      id:           property.id,
+      code:         property.code,
+      nickname:     property.nickname,
+      associatedAt: propertyPaperwork.createdAt,
+    })
+    .from(propertyPaperwork)
+    .innerJoin(property, and(eq(propertyPaperwork.propertyId, property.id), isNull(property.deletedAt)))
+    .where(eq(propertyPaperwork.paperworkId, paperworkId))
+    .orderBy(property.code);
+
+  return rows.map((r) => ({ id: r.id, code: r.code, label: r.nickname ?? r.code, associatedAt: r.associatedAt }));
+}
+
+export async function associatePropertiesToPaperwork(paperworkId: string, propertyIds: string[]): Promise<void> {
+  await db.insert(propertyPaperwork)
+    .values(propertyIds.map((pid) => ({ propertyId: pid, paperworkId })))
+    .onConflictDoNothing();
+}
+
+export async function dissociatePropertyFromPaperwork(paperworkId: string, propertyId: string): Promise<boolean> {
+  const result = await db.delete(propertyPaperwork)
+    .where(and(eq(propertyPaperwork.paperworkId, paperworkId), eq(propertyPaperwork.propertyId, propertyId)))
+    .returning({ id: propertyPaperwork.id });
+  return result.length > 0;
+}
+
+// ---------------------------------------------------------------------------
+// Paperwork <-> Person
+// ---------------------------------------------------------------------------
+
+export type PaperworkPersonItem = {
+  id:           string;
+  code:         string;
+  type:         "NATURAL" | "JUDICIAL";
+  displayName:  string;
+  associatedAt: Date;
+};
+
+export async function listPaperworkPersons(paperworkId: string): Promise<PaperworkPersonItem[]> {
+  const rows = await db
+    .select({
+      id:           person.id,
+      code:         person.code,
+      type:         person.type,
+      displayName:  person.displayName,
+      associatedAt: personPaperwork.createdAt,
+    })
+    .from(personPaperwork)
+    .innerJoin(person, and(eq(personPaperwork.personId, person.id), isNull(person.deletedAt)))
+    .where(eq(personPaperwork.paperworkId, paperworkId))
+    .orderBy(person.displayName);
+
+  return rows as PaperworkPersonItem[];
+}
+
+export async function associatePersonsToPaperwork(paperworkId: string, personIds: string[]): Promise<void> {
+  await db.insert(personPaperwork)
+    .values(personIds.map((pid) => ({ personId: pid, paperworkId })))
+    .onConflictDoNothing();
+}
+
+export async function dissociatePersonFromPaperwork(paperworkId: string, personId: string): Promise<boolean> {
+  const result = await db.delete(personPaperwork)
+    .where(and(eq(personPaperwork.paperworkId, paperworkId), eq(personPaperwork.personId, personId)))
+    .returning({ id: personPaperwork.id });
+  return result.length > 0;
+}
+
+// ---------------------------------------------------------------------------
+// Paperwork <-> Paperwork  (self-ref, symmetric)
+// ---------------------------------------------------------------------------
+
+export type PaperworkRefItem = {
+  id:           string;
+  code:         string;
+  type:         PaperworkType;
+  title:        string | null;
+  associatedAt: Date;
+};
+
+export async function listPaperworkReferences(paperworkId: string): Promise<PaperworkRefItem[]> {
+  const rows = await db
+    .select({
+      paperworkIdA: paperworkPaperwork.paperworkIdA,
+      paperworkIdB: paperworkPaperwork.paperworkIdB,
+      associatedAt: paperworkPaperwork.createdAt,
+      id:           paperwork.id,
+      code:         paperwork.code,
+      type:         paperwork.type,
+      title:        paperwork.title,
+    })
+    .from(paperworkPaperwork)
+    .innerJoin(
+      paperwork,
+      and(
+        or(
+          and(eq(paperworkPaperwork.paperworkIdA, paperworkId), eq(paperwork.id, paperworkPaperwork.paperworkIdB)),
+          and(eq(paperworkPaperwork.paperworkIdB, paperworkId), eq(paperwork.id, paperworkPaperwork.paperworkIdA)),
+        ),
+        isNull(paperwork.deletedAt),
+      ),
+    )
+    .where(or(eq(paperworkPaperwork.paperworkIdA, paperworkId), eq(paperworkPaperwork.paperworkIdB, paperworkId)))
+    .orderBy(paperwork.code);
+
+  return rows.map((r) => ({
+    id: r.id, code: r.code, type: r.type as PaperworkType, title: r.title, associatedAt: r.associatedAt,
+  }));
+}
+
+export async function associatePaperworkToPaperwork(paperworkId: string, otherIds: string[]): Promise<void> {
+  const values = otherIds
+    .filter((id) => id !== paperworkId)
+    .map((otherId) => {
+      const [a, b] = [paperworkId, otherId].sort();
+      return { paperworkIdA: a, paperworkIdB: b };
+    });
+  if (values.length === 0) return;
+  await db.insert(paperworkPaperwork).values(values).onConflictDoNothing();
+}
+
+export async function dissociatePaperworkFromPaperwork(paperworkId: string, otherId: string): Promise<boolean> {
+  const [a, b] = [paperworkId, otherId].sort();
+  const result = await db.delete(paperworkPaperwork)
+    .where(and(eq(paperworkPaperwork.paperworkIdA, a), eq(paperworkPaperwork.paperworkIdB, b)))
+    .returning({ id: paperworkPaperwork.id });
+  return result.length > 0;
+}
