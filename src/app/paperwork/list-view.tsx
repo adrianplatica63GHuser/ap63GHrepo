@@ -3,8 +3,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { type PaperworkType } from "@/lib/paperwork/validation";
+
+const PAGE_SIZE = 15;
 
 type PaperworkListItem = {
   id:           string;
@@ -23,10 +26,12 @@ type ListResponse = {
   offset: number;
 };
 
-async function fetchPaperwork(q: string, types: string[]): Promise<ListResponse> {
+async function fetchPaperwork(q: string, types: string[], page: number): Promise<ListResponse> {
   const url = new URL("/api/paperwork", window.location.origin);
   if (q)            url.searchParams.set("q",     q);
   if (types.length) url.searchParams.set("types", types.join(","));
+  url.searchParams.set("limit",  String(PAGE_SIZE));
+  url.searchParams.set("offset", String(page * PAGE_SIZE));
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Request failed (${res.status})`);
   return res.json();
@@ -42,10 +47,13 @@ export function PaperworkListView({
 }: {
   initialTypes?: string[];
 }) {
-  const t = useTranslations("paperwork");
+  const t    = useTranslations("paperwork");
+  const tPag = useTranslations("shared.pagination");
+  const router = useRouter();
 
   const [searchInput,     setSearchInput]     = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [currentPage,     setCurrentPage]     = useState(0);
 
   // typeFilters is derived directly from initialTypes (the URL ?types= param).
   // The sidebar checkboxes change the URL → page.tsx re-renders with new
@@ -56,21 +64,33 @@ export function PaperworkListView({
   useEffect(() => {
     const handle = setTimeout(() => {
       setDebouncedSearch(searchInput.trim());
+      setCurrentPage(0);
     }, 250);
     return () => clearTimeout(handle);
   }, [searchInput]);
 
-  // When initialTypes is an empty array, skip the API call and show a message.
-  const noTypesSelected = initialTypes !== undefined && initialTypes.length === 0;
-
+  // When initialTypes changes (sidebar navigation), reset to page 0.
   const typeFiltersKey =
     initialTypes === undefined ? "__all__" : initialTypes.join(",");
 
+  const [prevTypeFiltersKey, setPrevTypeFiltersKey] = useState(typeFiltersKey);
+  if (prevTypeFiltersKey !== typeFiltersKey) {
+    setPrevTypeFiltersKey(typeFiltersKey);
+    setCurrentPage(0);
+  }
+
+  // When initialTypes is an empty array, skip the API call and show a message.
+  const noTypesSelected = initialTypes !== undefined && initialTypes.length === 0;
+
   const query = useQuery<ListResponse>({
-    queryKey: ["paperwork", "list", debouncedSearch, typeFiltersKey],
-    queryFn:  () => fetchPaperwork(debouncedSearch, initialTypes ?? []),
+    queryKey: ["paperwork", "list", debouncedSearch, typeFiltersKey, currentPage],
+    queryFn:  () => fetchPaperwork(debouncedSearch, initialTypes ?? [], currentPage),
     enabled:  !noTypesSelected,
   });
+
+  const total      = query.data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const paginate   = total > PAGE_SIZE;
 
   return (
     <div className="flex flex-col gap-4">
@@ -139,7 +159,8 @@ export function PaperworkListView({
                 {query.data?.items.map((item) => (
                   <tr
                     key={item.id}
-                    className="whitespace-nowrap hover:bg-cta-pale dark:hover:bg-zinc-800/50"
+                    onDoubleClick={() => router.push(`/paperwork/${item.id}`)}
+                    className="whitespace-nowrap hover:bg-cta-pale dark:hover:bg-zinc-800/50 cursor-pointer"
                   >
                     <td className="px-4 py-2 font-mono text-xs text-fade">
                       {item.code}
@@ -172,14 +193,35 @@ export function PaperworkListView({
             </table>
           </div>
 
-          {query.data && (
+          {/* Pagination */}
+          <div className="flex items-center justify-between gap-4">
             <div className="text-xs text-fade dark:text-zinc-400">
-              {t("counts", {
-                shown: query.data.items.length,
-                total: query.data.total,
-              })}
+              {query.data
+                ? t("counts", { shown: query.data.items.length, total })
+                : null}
             </div>
-          )}
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => p - 1)}
+                disabled={!paginate || currentPage === 0}
+                className="inline-flex items-center rounded-md border border-wire bg-white px-3 py-1.5 text-xs font-medium text-ink shadow-sm transition-colors hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+              >
+                {tPag("previous")}
+              </button>
+              <span className="text-xs text-fade dark:text-zinc-400">
+                {tPag("pageOf", { page: currentPage + 1, total: totalPages })}
+              </span>
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => p + 1)}
+                disabled={!paginate || currentPage >= totalPages - 1}
+                className="inline-flex items-center rounded-md border border-wire bg-white px-3 py-1.5 text-xs font-medium text-ink shadow-sm transition-colors hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+              >
+                {tPag("next")}
+              </button>
+            </div>
+          </div>
         </>
       )}
     </div>

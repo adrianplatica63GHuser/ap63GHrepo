@@ -67,7 +67,7 @@ export function PaperworkPersonsTab({ paperworkId }: Props) {
   const handleView = () => {
     if (!selectedId || !selectedType) return;
     const base = selectedType === "NATURAL" ? "/natural-persons" : "/judicial-persons";
-    router.push(`${base}/${encodeURIComponent(selectedId)}`);
+    router.push(`${base}/${encodeURIComponent(selectedId)}?readonly=true`);
   };
 
   if (isLoading) return <p className="py-6 text-sm text-fade dark:text-zinc-400">{t("loading")}</p>;
@@ -96,6 +96,10 @@ export function PaperworkPersonsTab({ paperworkId }: Props) {
                     } else {
                       setSelectedId(item.id); setSelectedType(item.type);
                     }
+                  }}
+                  onDoubleClick={() => {
+                    const base = item.type === "NATURAL" ? "/natural-persons" : "/judicial-persons";
+                    router.push(`${base}/${encodeURIComponent(item.id)}?readonly=true`);
                   }}
                   className={[
                     "cursor-pointer border-b border-card-rim last:border-0 dark:border-zinc-800",

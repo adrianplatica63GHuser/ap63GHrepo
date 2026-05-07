@@ -8,12 +8,12 @@ const VALID_TABS: Tab[] = ["details", "references", "persons", "paperwork"];
 
 type PageParams = {
   params:       Promise<{ id: string }>;
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ readonly?: string; tab?: string }>;
 };
 
 export default async function EditPropertyPage({ params, searchParams }: PageParams) {
-  const { id }  = await params;
-  const { tab } = await searchParams;
+  const { id }              = await params;
+  const { readonly, tab }   = await searchParams;
 
   const data = await getPropertyById(id);
   if (!data) notFound();
@@ -43,6 +43,7 @@ export default async function EditPropertyPage({ params, searchParams }: PagePar
           propertyName={label}
           initialValues={initialValues}
           initialCorners={initialCorners}
+          readonly={readonly === "true"}
           initialTab={initialTab}
         />
       </main>

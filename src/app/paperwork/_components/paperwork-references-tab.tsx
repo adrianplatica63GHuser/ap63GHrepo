@@ -13,21 +13,17 @@ type AssociatedPaperwork = {
   associatedAt: string;
 };
 
-type Props = {
-  personId: string;
-  /** "/natural-persons" or "/judicial-persons" — used for the Associate button route */
-  backBase: string;
-};
+type Props = { paperworkId: string };
 
-async function fetchPersonPaperwork(personId: string): Promise<AssociatedPaperwork[]> {
-  const res = await fetch(`/api/people/${encodeURIComponent(personId)}/paperwork`);
+async function fetchPaperworkReferences(paperworkId: string): Promise<AssociatedPaperwork[]> {
+  const res = await fetch(`/api/paperwork/${encodeURIComponent(paperworkId)}/references`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const data = await res.json();
   return data.items as AssociatedPaperwork[];
 }
 
-export function PersonPaperworkTab({ personId, backBase }: Props) {
-  const t           = useTranslations("shared.paperwork");
+export function PaperworkReferencesTab({ paperworkId }: Props) {
+  const t           = useTranslations("paperwork.references");
   const router      = useRouter();
   const queryClient = useQueryClient();
 
@@ -36,12 +32,12 @@ export function PersonPaperworkTab({ personId, backBase }: Props) {
   const [dissociateErr, setDissociateErr] = useState<string | null>(null);
 
   const { data: items, isLoading, isError } = useQuery({
-    queryKey: ["person-paperwork", personId],
-    queryFn:  () => fetchPersonPaperwork(personId),
+    queryKey: ["paperwork-references", paperworkId],
+    queryFn:  () => fetchPaperworkReferences(paperworkId),
   });
 
   const handleAssociate = () => {
-    router.push(`${backBase}/${encodeURIComponent(personId)}/associate-paperwork`);
+    router.push(`/paperwork/${encodeURIComponent(paperworkId)}/associate-reference`);
   };
 
   const handleDissociate = async () => {
@@ -50,7 +46,7 @@ export function PersonPaperworkTab({ personId, backBase }: Props) {
     setDissociateErr(null);
     try {
       const res = await fetch(
-        `/api/people/${encodeURIComponent(personId)}/paperwork/${encodeURIComponent(selectedId)}`,
+        `/api/paperwork/${encodeURIComponent(paperworkId)}/references/${encodeURIComponent(selectedId)}`,
         { method: "DELETE" },
       );
       if (!res.ok) {
@@ -58,7 +54,7 @@ export function PersonPaperworkTab({ personId, backBase }: Props) {
         throw new Error(body?.error ?? `HTTP ${res.status}`);
       }
       setSelectedId(null);
-      await queryClient.invalidateQueries({ queryKey: ["person-paperwork", personId] });
+      await queryClient.invalidateQueries({ queryKey: ["paperwork-references", paperworkId] });
     } catch (err) {
       setDissociateErr(err instanceof Error ? err.message : String(err));
     } finally {
@@ -112,7 +108,7 @@ export function PersonPaperworkTab({ personId, backBase }: Props) {
                   </td>
                   <td className="px-3 py-2 font-mono text-xs text-fade dark:text-zinc-400">{item.code}</td>
                   <td className="px-3 py-2 text-fade dark:text-zinc-400">{item.type}</td>
-                  <td className="px-3 py-2 text-ink dark:text-zinc-100">{item.title ?? "—"}</td>
+                  <td className="px-3 py-2 font-medium text-ink dark:text-zinc-100">{item.title ?? "—"}</td>
                 </tr>
               ))}
             </tbody>

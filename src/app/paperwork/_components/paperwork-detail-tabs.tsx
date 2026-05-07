@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { PaperworkForm } from "./paperwork-form";
 import { PaperworkPersonsTab } from "./paperwork-persons-tab";
+import { PaperworkPropertiesTab } from "./paperwork-properties-tab";
+import { PaperworkReferencesTab } from "./paperwork-references-tab";
 import { type FormValues } from "./form-schema";
 
 type Tab = "details" | "references" | "persons" | "properties";
@@ -13,6 +15,7 @@ type Props = {
   paperworkCode: string;
   paperworkName: string;
   initialValues: FormValues;
+  readonly?:     boolean;
   initialTab?:   Tab;
 };
 
@@ -21,6 +24,7 @@ export function PaperworkDetailTabs({
   paperworkCode,
   paperworkName,
   initialValues,
+  readonly,
   initialTab,
 }: Props) {
   const t = useTranslations("paperwork");
@@ -65,7 +69,7 @@ export function PaperworkDetailTabs({
       <div role="tabpanel">
         {activeTab === "details" && (
           <PaperworkForm
-            mode="edit"
+            mode={readonly ? "view" : "edit"}
             paperworkId={paperworkId}
             paperworkCode={paperworkCode}
             initialValues={initialValues}
@@ -74,10 +78,11 @@ export function PaperworkDetailTabs({
         {activeTab === "persons" && (
           <PaperworkPersonsTab paperworkId={paperworkId} />
         )}
-        {(activeTab === "references" || activeTab === "properties") && (
-          <div className="rounded-md border border-card-rim bg-card p-6 text-sm text-fade dark:border-zinc-800 dark:bg-zinc-900">
-            {t("tabs.comingSoon")}
-          </div>
+        {activeTab === "properties" && (
+          <PaperworkPropertiesTab paperworkId={paperworkId} />
+        )}
+        {activeTab === "references" && (
+          <PaperworkReferencesTab paperworkId={paperworkId} />
         )}
       </div>
     </>

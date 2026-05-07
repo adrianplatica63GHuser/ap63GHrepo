@@ -3,7 +3,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+
+const PAGE_SIZE = 15;
 
 type PropertyListItem = {
   id:              string;
@@ -26,9 +29,11 @@ type ListResponse = {
   offset: number;
 };
 
-async function fetchProperties(q: string): Promise<ListResponse> {
+async function fetchProperties(q: string, page: number): Promise<ListResponse> {
   const url = new URL("/api/properties", window.location.origin);
   if (q) url.searchParams.set("q", q);
+  url.searchParams.set("limit",  String(PAGE_SIZE));
+  url.searchParams.set("offset", String(page * PAGE_SIZE));
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Request failed (${res.status})`);
   return res.json();
@@ -45,22 +50,30 @@ function formatArea(raw: string | null): string {
 }
 
 export function PropertyListView() {
-  const t = useTranslations("property");
+  const t    = useTranslations("property");
+  const tPag = useTranslations("shared.pagination");
+  const router = useRouter();
 
-  const [searchInput,    setSearchInput]    = useState("");
+  const [searchInput,     setSearchInput]     = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [currentPage,     setCurrentPage]     = useState(0);
 
   useEffect(() => {
     const handle = setTimeout(() => {
       setDebouncedSearch(searchInput.trim());
+      setCurrentPage(0);
     }, 250);
     return () => clearTimeout(handle);
   }, [searchInput]);
 
   const query = useQuery<ListResponse>({
-    queryKey: ["properties", "list", debouncedSearch],
-    queryFn:  () => fetchProperties(debouncedSearch),
+    queryKey: ["properties", "list", debouncedSearch, currentPage],
+    queryFn:  () => fetchProperties(debouncedSearch, currentPage),
   });
+
+  const total      = query.data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const paginate   = total > PAGE_SIZE;
 
   return (
     <div className="flex flex-col gap-4">
@@ -121,7 +134,8 @@ export function PropertyListView() {
             {query.data?.items.map((item) => (
               <tr
                 key={item.id}
-                className="whitespace-nowrap hover:bg-cta-pale dark:hover:bg-zinc-800/50"
+                onDoubleClick={() => router.push(`/properties/${item.id}`)}
+                className="whitespace-nowrap hover:bg-cta-pale dark:hover:bg-zinc-800/50 cursor-pointer"
               >
                 <td className="px-4 py-2 font-mono text-xs text-fade">
                   {item.code}
@@ -157,14 +171,35 @@ export function PropertyListView() {
         </table>
       </div>
 
-      {query.data && (
+      {/* Pagination */}
+      <div className="flex items-center justify-between gap-4">
         <div className="text-xs text-fade dark:text-zinc-400">
-          {t("counts", {
-            shown: query.data.items.length,
-            total: query.data.total,
-          })}
+          {query.data
+            ? t("counts", { shown: query.data.items.length, total })
+            : null}
         </div>
-      )}
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setCurrentPage((p) => p - 1)}
+            disabled={!paginate || currentPage === 0}
+            className="inline-flex items-center rounded-md border border-wire bg-white px-3 py-1.5 text-xs font-medium text-ink shadow-sm transition-colors hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+          >
+            {tPag("previous")}
+          </button>
+          <span className="text-xs text-fade dark:text-zinc-400">
+            {tPag("pageOf", { page: currentPage + 1, total: totalPages })}
+          </span>
+          <button
+            type="button"
+            onClick={() => setCurrentPage((p) => p + 1)}
+            disabled={!paginate || currentPage >= totalPages - 1}
+            className="inline-flex items-center rounded-md border border-wire bg-white px-3 py-1.5 text-xs font-medium text-ink shadow-sm transition-colors hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+          >
+            {tPag("next")}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

@@ -16,6 +16,7 @@ type Props = {
   propertyName:   string;
   initialValues:  FormValues;
   initialCorners: Corner[];
+  readonly?:      boolean;
   initialTab?:    Tab;
 };
 
@@ -25,6 +26,7 @@ export function PropertyDetailTabs({
   propertyName,
   initialValues,
   initialCorners,
+  readonly,
   initialTab,
 }: Props) {
   const t = useTranslations("property");
@@ -69,7 +71,7 @@ export function PropertyDetailTabs({
       <div role="tabpanel">
         {activeTab === "details" && (
           <PropertyForm
-            mode="edit"
+            mode={readonly ? "view" : "edit"}
             propertyId={propertyId}
             propertyCode={propertyCode}
             initialValues={initialValues}

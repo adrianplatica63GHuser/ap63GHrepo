@@ -298,6 +298,11 @@
       "associating": "Associating…",
       "cancel": "Cancel",
       "noSelection": "Select at least one person"
+    },
+    "pagination": {
+      "previous": "Previous",
+      "next": "Next",
+      "pageOf": "Page {page} of {total}"
     }
   },
   "naturalPerson": {
@@ -618,6 +623,33 @@
       "associating": "Associating…",
       "cancel": "Cancel",
       "noSelection": "Select at least one person"
+    },
+    "references": {
+      "empty": "No related documents",
+      "colCode": "Code",
+      "colType": "Type",
+      "colTitle": "Title",
+      "associate": "Associate",
+      "dissociate": "Dissociate",
+      "dissociating": "Removing…",
+      "view": "View",
+      "loading": "Loading…",
+      "error": "Failed to load references"
+    },
+    "associateReference": {
+      "title": "Associate Document Reference",
+      "labelSearch": "Search",
+      "searchPlaceholder": "Code or title…",
+      "colCode": "Code",
+      "colType": "Type",
+      "colTitle": "Title",
+      "resultsEmpty": "No documents found",
+      "loading": "Searching…",
+      "error": "Search failed",
+      "associate": "Associate Selected",
+      "associating": "Associating…",
+      "cancel": "Cancel",
+      "noSelection": "Select at least one document"
     }
   },
   "valueList": {

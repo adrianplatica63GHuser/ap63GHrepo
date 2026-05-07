@@ -63,7 +63,7 @@ export function PropertyReferencesTab({ propertyId }: Props) {
 
   const handleView = () => {
     if (!selectedId) return;
-    router.push(`/properties/${encodeURIComponent(selectedId)}`);
+    router.push(`/properties/${encodeURIComponent(selectedId)}?readonly=true`);
   };
 
   if (isLoading) return <p className="py-6 text-sm text-fade dark:text-zinc-400">{t("loading")}</p>;
@@ -86,6 +86,7 @@ export function PropertyReferencesTab({ propertyId }: Props) {
                 <tr
                   key={item.id}
                   onClick={() => setSelectedId(item.id === selectedId ? null : item.id)}
+                  onDoubleClick={() => router.push(`/properties/${encodeURIComponent(item.id)}?readonly=true`)}
                   className={[
                     "cursor-pointer border-b border-card-rim last:border-0 dark:border-zinc-800",
                     item.id === selectedId

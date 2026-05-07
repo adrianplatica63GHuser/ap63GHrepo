@@ -8,12 +8,12 @@ const VALID_TABS: Tab[] = ["details", "references", "persons", "properties"];
 
 type PageParams = {
   params:       Promise<{ id: string }>;
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ readonly?: string; tab?: string }>;
 };
 
 export default async function EditPaperworkPage({ params, searchParams }: PageParams) {
-  const { id }  = await params;
-  const { tab } = await searchParams;
+  const { id }             = await params;
+  const { readonly, tab }  = await searchParams;
   const record  = await getPaperworkById(id);
   if (!record) notFound();
 
@@ -30,6 +30,7 @@ export default async function EditPaperworkPage({ params, searchParams }: PagePa
           paperworkCode={record.code}
           paperworkName={label}
           initialValues={initialValues}
+          readonly={readonly === "true"}
           initialTab={initialTab}
         />
       </main>

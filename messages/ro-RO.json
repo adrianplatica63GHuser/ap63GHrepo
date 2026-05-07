@@ -298,6 +298,11 @@
       "associating": "Se asociază…",
       "cancel": "Anulează",
       "noSelection": "Selectați cel puțin o persoană"
+    },
+    "pagination": {
+      "previous": "Anterior",
+      "next": "Următor",
+      "pageOf": "Pagina {page} din {total}"
     }
   },
   "naturalPerson": {
@@ -618,6 +623,33 @@
       "associating": "Se asociază…",
       "cancel": "Anulează",
       "noSelection": "Selectați cel puțin o persoană"
+    },
+    "references": {
+      "empty": "Niciun document asociat",
+      "colCode": "Cod",
+      "colType": "Tip",
+      "colTitle": "Titlu",
+      "associate": "Asociază",
+      "dissociate": "Dezasociază",
+      "dissociating": "Se elimină…",
+      "view": "Vizualizează",
+      "loading": "Se încarcă…",
+      "error": "Eroare la încărcarea referințelor"
+    },
+    "associateReference": {
+      "title": "Asociază Document",
+      "labelSearch": "Căutare",
+      "searchPlaceholder": "Cod sau titlu…",
+      "colCode": "Cod",
+      "colType": "Tip",
+      "colTitle": "Titlu",
+      "resultsEmpty": "Niciun document găsit",
+      "loading": "Se caută…",
+      "error": "Căutare eșuată",
+      "associate": "Asociază Selecția",
+      "associating": "Se asociază…",
+      "cancel": "Anulează",
+      "noSelection": "Selectați cel puțin un document"
     }
   },
   "valueList": {

@@ -5,29 +5,24 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 
-type AssociatedPaperwork = {
+type AssociatedProperty = {
   id:           string;
   code:         string;
-  type:         string;
-  title:        string | null;
+  label:        string;
   associatedAt: string;
 };
 
-type Props = {
-  personId: string;
-  /** "/natural-persons" or "/judicial-persons" — used for the Associate button route */
-  backBase: string;
-};
+type Props = { paperworkId: string };
 
-async function fetchPersonPaperwork(personId: string): Promise<AssociatedPaperwork[]> {
-  const res = await fetch(`/api/people/${encodeURIComponent(personId)}/paperwork`);
+async function fetchPaperworkProperties(paperworkId: string): Promise<AssociatedProperty[]> {
+  const res = await fetch(`/api/paperwork/${encodeURIComponent(paperworkId)}/properties`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const data = await res.json();
-  return data.items as AssociatedPaperwork[];
+  return data.items as AssociatedProperty[];
 }
 
-export function PersonPaperworkTab({ personId, backBase }: Props) {
-  const t           = useTranslations("shared.paperwork");
+export function PaperworkPropertiesTab({ paperworkId }: Props) {
+  const t           = useTranslations("shared.properties");
   const router      = useRouter();
   const queryClient = useQueryClient();
 
@@ -36,12 +31,12 @@ export function PersonPaperworkTab({ personId, backBase }: Props) {
   const [dissociateErr, setDissociateErr] = useState<string | null>(null);
 
   const { data: items, isLoading, isError } = useQuery({
-    queryKey: ["person-paperwork", personId],
-    queryFn:  () => fetchPersonPaperwork(personId),
+    queryKey: ["paperwork-properties", paperworkId],
+    queryFn:  () => fetchPaperworkProperties(paperworkId),
   });
 
   const handleAssociate = () => {
-    router.push(`${backBase}/${encodeURIComponent(personId)}/associate-paperwork`);
+    router.push(`/paperwork/${encodeURIComponent(paperworkId)}/associate-property`);
   };
 
   const handleDissociate = async () => {
@@ -50,7 +45,7 @@ export function PersonPaperworkTab({ personId, backBase }: Props) {
     setDissociateErr(null);
     try {
       const res = await fetch(
-        `/api/people/${encodeURIComponent(personId)}/paperwork/${encodeURIComponent(selectedId)}`,
+        `/api/paperwork/${encodeURIComponent(paperworkId)}/properties/${encodeURIComponent(selectedId)}`,
         { method: "DELETE" },
       );
       if (!res.ok) {
@@ -58,7 +53,7 @@ export function PersonPaperworkTab({ personId, backBase }: Props) {
         throw new Error(body?.error ?? `HTTP ${res.status}`);
       }
       setSelectedId(null);
-      await queryClient.invalidateQueries({ queryKey: ["person-paperwork", personId] });
+      await queryClient.invalidateQueries({ queryKey: ["paperwork-properties", paperworkId] });
     } catch (err) {
       setDissociateErr(err instanceof Error ? err.message : String(err));
     } finally {
@@ -68,7 +63,7 @@ export function PersonPaperworkTab({ personId, backBase }: Props) {
 
   const handleView = () => {
     if (!selectedId) return;
-    router.push(`/paperwork/${encodeURIComponent(selectedId)}?readonly=true`);
+    router.push(`/properties/${encodeURIComponent(selectedId)}?readonly=true`);
   };
 
   if (isLoading) return <p className="py-6 text-sm text-fade dark:text-zinc-400">{t("loading")}</p>;
@@ -83,8 +78,7 @@ export function PersonPaperworkTab({ personId, backBase }: Props) {
               <tr className="border-b border-card-rim dark:border-zinc-800">
                 <th className="w-8 px-3 py-2" aria-label="select" />
                 <th className="px-3 py-2 text-left font-medium text-fade dark:text-zinc-400">{t("colCode")}</th>
-                <th className="px-3 py-2 text-left font-medium text-fade dark:text-zinc-400">{t("colType")}</th>
-                <th className="px-3 py-2 text-left font-medium text-fade dark:text-zinc-400">{t("colTitle")}</th>
+                <th className="px-3 py-2 text-left font-medium text-fade dark:text-zinc-400">{t("colLabel")}</th>
               </tr>
             </thead>
             <tbody>
@@ -92,7 +86,7 @@ export function PersonPaperworkTab({ personId, backBase }: Props) {
                 <tr
                   key={item.id}
                   onClick={() => setSelectedId(item.id === selectedId ? null : item.id)}
-                  onDoubleClick={() => router.push(`/paperwork/${encodeURIComponent(item.id)}?readonly=true`)}
+                  onDoubleClick={() => router.push(`/properties/${encodeURIComponent(item.id)}?readonly=true`)}
                   className={[
                     "cursor-pointer border-b border-card-rim last:border-0 dark:border-zinc-800",
                     item.id === selectedId
@@ -107,12 +101,11 @@ export function PersonPaperworkTab({ personId, backBase }: Props) {
                       onChange={() => setSelectedId(item.id)}
                       onClick={(e) => e.stopPropagation()}
                       className="accent-cta"
-                      aria-label={item.title ?? item.code}
+                      aria-label={item.label}
                     />
                   </td>
                   <td className="px-3 py-2 font-mono text-xs text-fade dark:text-zinc-400">{item.code}</td>
-                  <td className="px-3 py-2 text-fade dark:text-zinc-400">{item.type}</td>
-                  <td className="px-3 py-2 text-ink dark:text-zinc-100">{item.title ?? "—"}</td>
+                  <td className="px-3 py-2 font-medium text-ink dark:text-zinc-100">{item.label}</td>
                 </tr>
               ))}
             </tbody>

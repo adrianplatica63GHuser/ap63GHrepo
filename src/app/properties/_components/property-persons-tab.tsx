@@ -121,6 +121,10 @@ export function PropertyPersonsTab({ propertyId }: Props) {
                 <tr
                   key={p.id}
                   onClick={() => setSelectedId(p.id === selectedId ? null : p.id)}
+                  onDoubleClick={() => {
+                    const base = p.type === "NATURAL" ? "/natural-persons" : "/judicial-persons";
+                    router.push(`${base}/${encodeURIComponent(p.id)}?readonly=true`);
+                  }}
                   className={[
                     "cursor-pointer border-b border-card-rim last:border-0 dark:border-zinc-800",
                     p.id === selectedId
