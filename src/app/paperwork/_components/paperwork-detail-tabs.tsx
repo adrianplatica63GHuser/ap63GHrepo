@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { PaperworkForm } from "./paperwork-form";
+import { PaperworkPersonsTab } from "./paperwork-persons-tab";
 import { type FormValues } from "./form-schema";
 
 type Tab = "details" | "references" | "persons" | "properties";
@@ -12,6 +13,7 @@ type Props = {
   paperworkCode: string;
   paperworkName: string;
   initialValues: FormValues;
+  initialTab?:   Tab;
 };
 
 export function PaperworkDetailTabs({
@@ -19,9 +21,10 @@ export function PaperworkDetailTabs({
   paperworkCode,
   paperworkName,
   initialValues,
+  initialTab,
 }: Props) {
   const t = useTranslations("paperwork");
-  const [activeTab, setActiveTab] = useState<Tab>("details");
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab ?? "details");
 
   const tabs: { key: Tab; label: string }[] = [
     { key: "details",    label: t("tabs.details")    },
@@ -68,7 +71,10 @@ export function PaperworkDetailTabs({
             initialValues={initialValues}
           />
         )}
-        {activeTab !== "details" && (
+        {activeTab === "persons" && (
+          <PaperworkPersonsTab paperworkId={paperworkId} />
+        )}
+        {(activeTab === "references" || activeTab === "properties") && (
           <div className="rounded-md border border-card-rim bg-card p-6 text-sm text-fade dark:border-zinc-800 dark:bg-zinc-900">
             {t("tabs.comingSoon")}
           </div>

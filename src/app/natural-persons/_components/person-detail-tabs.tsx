@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { NaturalPersonForm } from "./natural-person-form";
 import { PersonPropertiesTab } from "../../properties/_components/person-properties-tab";
+import { PersonPaperworkTab } from "../../paperwork/_components/person-paperwork-tab";
+import { PersonReferencesTab } from "./person-references-tab";
 import { type FormValues } from "./form-schema";
 
 type Tab = "details" | "references" | "properties" | "paperwork";
@@ -76,10 +78,11 @@ export function PersonDetailTabs({
         {activeTab === "properties" && (
           <PersonPropertiesTab personId={personId} backBase="/natural-persons" />
         )}
-        {(activeTab === "references" || activeTab === "paperwork") && (
-          <div className="rounded-md border border-card-rim bg-card p-6 text-sm text-fade dark:border-zinc-800 dark:bg-zinc-900">
-            {t("tabs.comingSoon")}
-          </div>
+        {activeTab === "paperwork" && (
+          <PersonPaperworkTab personId={personId} backBase="/natural-persons" />
+        )}
+        {activeTab === "references" && (
+          <PersonReferencesTab personId={personId} backBase="/natural-persons" />
         )}
       </div>
     </>
