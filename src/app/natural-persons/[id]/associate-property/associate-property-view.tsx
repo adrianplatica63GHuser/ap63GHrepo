@@ -1,22 +1,27 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
+import { PaginationControls } from "@/components/pagination-controls";
+
+const PAGE_SIZE = 15;
 
 type PropertySearchItem = { id: string; code: string; label: string };
+type SearchResponse = { items: PropertySearchItem[]; total: number };
 
 type Props = { personId: string; personName: string; backBase: string };
 
-async function searchProperties(q: string): Promise<PropertySearchItem[]> {
+async function searchProperties(q: string, page: number): Promise<SearchResponse> {
   const params = new URLSearchParams();
   if (q.trim()) params.set("q", q.trim());
-  params.set("limit", "100");
+  params.set("limit",  String(PAGE_SIZE));
+  params.set("offset", String(page * PAGE_SIZE));
   const res = await fetch(`/api/properties/search?${params.toString()}`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const data = await res.json();
-  return data.items as PropertySearchItem[];
+  return { items: data.items as PropertySearchItem[], total: data.total as number };
 }
 
 export function AssociatePropertyView({ personId, personName, backBase }: Props) {
@@ -25,14 +30,18 @@ export function AssociatePropertyView({ personId, personName, backBase }: Props)
   const queryClient = useQueryClient();
 
   const [qInput,      setQInput]      = useState("");
+  const [page,        setPage]        = useState(0);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [submitting,  setSubmitting]  = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const { data: results, isLoading, isError } = useQuery({
-    queryKey: ["property-search", qInput],
-    queryFn:  () => searchProperties(qInput),
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["property-search", qInput, page],
+    queryFn:  () => searchProperties(qInput, page),
   });
+
+  const items = data?.items ?? [];
+  const total = data?.total ?? 0;
 
   const toggle = (id: string) => {
     setSelectedIds((prev) => {
@@ -67,8 +76,6 @@ export function AssociatePropertyView({ personId, personName, backBase }: Props)
   const handleCancel = () =>
     router.push(`${backBase}/${encodeURIComponent(personId)}?tab=properties`);
 
-  const displayList = useMemo(() => results ?? [], [results]);
-
   return (
     <div className="flex flex-col gap-6">
       <header>
@@ -80,7 +87,7 @@ export function AssociatePropertyView({ personId, personName, backBase }: Props)
         <label className="flex items-center gap-2 text-sm">
           <span className="w-16 shrink-0 font-medium text-ink dark:text-zinc-300">{t("labelSearch")}</span>
           <input type="text" value={qInput}
-            onChange={(e) => { setQInput(e.target.value); setSelectedIds(new Set()); }}
+            onChange={(e) => { setQInput(e.target.value); setPage(0); setSelectedIds(new Set()); }}
             placeholder={t("searchPlaceholder")}
             className="w-64 rounded-md border border-wire bg-white px-2 py-1 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950" />
         </label>
@@ -91,7 +98,7 @@ export function AssociatePropertyView({ personId, personName, backBase }: Props)
           <p className="px-4 py-6 text-sm text-fade dark:text-zinc-400">{t("loading")}</p>
         ) : isError ? (
           <p className="px-4 py-6 text-sm text-red-600 dark:text-red-400">{t("error")}</p>
-        ) : displayList.length === 0 ? (
+        ) : items.length === 0 ? (
           <p className="px-4 py-6 text-sm text-fade dark:text-zinc-400">{t("resultsEmpty")}</p>
         ) : (
           <table className="w-full text-sm">
@@ -103,7 +110,7 @@ export function AssociatePropertyView({ personId, personName, backBase }: Props)
               </tr>
             </thead>
             <tbody>
-              {displayList.map((item) => (
+              {items.map((item) => (
                 <tr key={item.id} onClick={() => toggle(item.id)}
                   className={[
                     "cursor-pointer border-b border-card-rim last:border-0 dark:border-zinc-800",
@@ -122,6 +129,12 @@ export function AssociatePropertyView({ personId, personName, backBase }: Props)
         )}
       </div>
 
+      <PaginationControls
+        page={page} total={total} pageSize={PAGE_SIZE}
+        onPrev={() => setPage((p) => p - 1)}
+        onNext={() => setPage((p) => p + 1)}
+      />
+
       {submitError && <p className="text-sm text-red-600 dark:text-red-400" role="alert">{submitError}</p>}
 
       <div className="flex items-center gap-3 border-t border-crease pt-4 dark:border-zinc-800">
@@ -133,7 +146,7 @@ export function AssociatePropertyView({ personId, personName, backBase }: Props)
           className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800">
           {t("cancel")}
         </button>
-        {selectedIds.size === 0 && !isLoading && displayList.length > 0 && (
+        {selectedIds.size === 0 && !isLoading && items.length > 0 && (
           <span className="text-xs text-fade dark:text-zinc-500">{t("noSelection")}</span>
         )}
       </div>

@@ -1,28 +1,28 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
+import { PaginationControls } from "@/components/pagination-controls";
 
-type PersonSearchItem = {
-  id:          string;
-  code:        string;
-  type:        "NATURAL" | "JUDICIAL";
-  displayName: string;
-};
+const PAGE_SIZE = 15;
+
+type PersonSearchItem = { id: string; code: string; type: "NATURAL" | "JUDICIAL"; displayName: string };
+type SearchResponse = { items: PersonSearchItem[]; total: number };
 
 type Props = { personId: string; personName: string; backBase: string };
 
-async function searchPersons(name: string, code: string): Promise<PersonSearchItem[]> {
+async function searchPersons(name: string, code: string, page: number): Promise<SearchResponse> {
   const params = new URLSearchParams();
   if (name.trim()) params.set("name", name.trim());
   if (code.trim()) params.set("code", code.trim());
-  params.set("limit", "100");
+  params.set("limit",  String(PAGE_SIZE));
+  params.set("offset", String(page * PAGE_SIZE));
   const res = await fetch(`/api/people/search?${params.toString()}`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const data = await res.json();
-  return data.items as PersonSearchItem[];
+  return { items: data.items as PersonSearchItem[], total: data.total as number };
 }
 
 export function AssociatePersonView({ personId, personName, backBase }: Props) {
@@ -32,16 +32,24 @@ export function AssociatePersonView({ personId, personName, backBase }: Props) {
 
   const [nameInput,   setNameInput]   = useState("");
   const [codeInput,   setCodeInput]   = useState("");
+  const [page,        setPage]        = useState(0);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [submitting,  setSubmitting]  = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const queryKey = ["person-search-ref", nameInput, codeInput];
-
-  const { data: results, isLoading, isError } = useQuery({
-    queryKey,
-    queryFn: () => searchPersons(nameInput, codeInput),
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["person-search-ref", nameInput, codeInput, page],
+    queryFn:  () => searchPersons(nameInput, codeInput, page),
   });
+
+  const items = data?.items ?? [];
+  const total = data?.total ?? 0;
+
+  // Exclude the person itself from the current page's results
+  const displayList = useMemo(
+    () => items.filter((p) => p.id !== personId),
+    [items, personId],
+  );
 
   const toggle = (id: string) => {
     if (id === personId) return; // can't link to itself
@@ -77,12 +85,6 @@ export function AssociatePersonView({ personId, personName, backBase }: Props) {
   const handleCancel = () =>
     router.push(`${backBase}/${encodeURIComponent(personId)}?tab=references`);
 
-  // Exclude the person itself from results
-  const displayList = useMemo(
-    () => (results ?? []).filter((p) => p.id !== personId),
-    [results, personId],
-  );
-
   return (
     <div className="flex flex-col gap-6">
       <header>
@@ -96,7 +98,7 @@ export function AssociatePersonView({ personId, personName, backBase }: Props) {
           <input
             type="text"
             value={nameInput}
-            onChange={(e) => { setNameInput(e.target.value); setSelectedIds(new Set()); }}
+            onChange={(e) => { setNameInput(e.target.value); setPage(0); setSelectedIds(new Set()); }}
             placeholder={t("namePlaceholder")}
             className="w-48 rounded-md border border-wire bg-white px-2 py-1 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950"
           />
@@ -106,7 +108,7 @@ export function AssociatePersonView({ personId, personName, backBase }: Props) {
           <input
             type="text"
             value={codeInput}
-            onChange={(e) => { setCodeInput(e.target.value); setSelectedIds(new Set()); }}
+            onChange={(e) => { setCodeInput(e.target.value); setPage(0); setSelectedIds(new Set()); }}
             placeholder={t("codePlaceholder")}
             className="w-32 rounded-md border border-wire bg-white px-2 py-1 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950"
           />
@@ -155,6 +157,12 @@ export function AssociatePersonView({ personId, personName, backBase }: Props) {
           </table>
         )}
       </div>
+
+      <PaginationControls
+        page={page} total={total} pageSize={PAGE_SIZE}
+        onPrev={() => setPage((p) => p - 1)}
+        onNext={() => setPage((p) => p + 1)}
+      />
 
       {submitError && <p className="text-sm text-red-600 dark:text-red-400" role="alert">{submitError}</p>}
 

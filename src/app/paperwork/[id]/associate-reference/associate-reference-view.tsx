@@ -1,27 +1,27 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
+import { PaginationControls } from "@/components/pagination-controls";
 
-type PaperworkSearchItem = {
-  id:    string;
-  code:  string;
-  type:  string;
-  title: string | null;
-};
+const PAGE_SIZE = 15;
+
+type PaperworkSearchItem = { id: string; code: string; type: string; title: string | null };
+type SearchResponse = { items: PaperworkSearchItem[]; total: number };
 
 type Props = { paperworkId: string; paperworkName: string };
 
-async function searchPaperwork(q: string): Promise<PaperworkSearchItem[]> {
+async function searchPaperwork(q: string, page: number): Promise<SearchResponse> {
   const params = new URLSearchParams();
   if (q.trim()) params.set("q", q.trim());
-  params.set("limit", "100");
+  params.set("limit",  String(PAGE_SIZE));
+  params.set("offset", String(page * PAGE_SIZE));
   const res = await fetch(`/api/paperwork/search?${params.toString()}`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const data = await res.json();
-  return data.items as PaperworkSearchItem[];
+  return { items: data.items as PaperworkSearchItem[], total: data.total as number };
 }
 
 export function AssociateReferenceView({ paperworkId, paperworkName }: Props) {
@@ -30,22 +30,27 @@ export function AssociateReferenceView({ paperworkId, paperworkName }: Props) {
   const queryClient = useQueryClient();
 
   const [searchInput, setSearchInput] = useState("");
+  const [page,        setPage]        = useState(0);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [submitting,  setSubmitting]  = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const { data: results, isLoading, isError } = useQuery({
-    queryKey: ["paperwork-search-ref", searchInput],
-    queryFn:  () => searchPaperwork(searchInput),
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["paperwork-search-ref", searchInput, page],
+    queryFn:  () => searchPaperwork(searchInput, page),
   });
 
-  // Exclude the current document from results
+  const items = data?.items ?? [];
+  const total = data?.total ?? 0;
+
+  // Exclude the current document from the current page's results
   const displayList = useMemo(
-    () => (results ?? []).filter((item) => item.id !== paperworkId),
-    [results, paperworkId],
+    () => items.filter((item) => item.id !== paperworkId),
+    [items, paperworkId],
   );
 
   const toggle = (id: string) => {
+    if (id === paperworkId) return; // can't link to itself
     setSelectedIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id); else next.add(id);
@@ -91,7 +96,7 @@ export function AssociateReferenceView({ paperworkId, paperworkName }: Props) {
           <input
             type="text"
             value={searchInput}
-            onChange={(e) => { setSearchInput(e.target.value); setSelectedIds(new Set()); }}
+            onChange={(e) => { setSearchInput(e.target.value); setPage(0); setSelectedIds(new Set()); }}
             placeholder={t("searchPlaceholder")}
             className="w-64 rounded-md border border-wire bg-white px-2 py-1 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950"
           />
@@ -126,14 +131,8 @@ export function AssociateReferenceView({ paperworkId, paperworkName }: Props) {
                   ].join(" ")}
                 >
                   <td className="px-3 py-2">
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.has(item.id)}
-                      onChange={() => toggle(item.id)}
-                      onClick={(e) => e.stopPropagation()}
-                      className="accent-cta"
-                      aria-label={item.title ?? item.code}
-                    />
+                    <input type="checkbox" checked={selectedIds.has(item.id)} onChange={() => toggle(item.id)}
+                      onClick={(e) => e.stopPropagation()} className="accent-cta" aria-label={item.title ?? item.code} />
                   </td>
                   <td className="px-3 py-2 font-mono text-xs text-fade dark:text-zinc-400">{item.code}</td>
                   <td className="px-3 py-2 text-fade dark:text-zinc-400">{item.type}</td>
@@ -145,23 +144,21 @@ export function AssociateReferenceView({ paperworkId, paperworkName }: Props) {
         )}
       </div>
 
+      <PaginationControls
+        page={page} total={total} pageSize={PAGE_SIZE}
+        onPrev={() => setPage((p) => p - 1)}
+        onNext={() => setPage((p) => p + 1)}
+      />
+
       {submitError && <p className="text-sm text-red-600 dark:text-red-400" role="alert">{submitError}</p>}
 
       <div className="flex items-center gap-3 border-t border-crease pt-4 dark:border-zinc-800">
-        <button
-          type="button"
-          onClick={handleAssociate}
-          disabled={submitting || selectedIds.size === 0}
-          className="inline-flex items-center rounded-md bg-cta px-5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d disabled:cursor-not-allowed disabled:opacity-50"
-        >
+        <button type="button" onClick={handleAssociate} disabled={submitting || selectedIds.size === 0}
+          className="inline-flex items-center rounded-md bg-cta px-5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d disabled:cursor-not-allowed disabled:opacity-50">
           {submitting ? t("associating") : t("associate")}
         </button>
-        <button
-          type="button"
-          onClick={handleCancel}
-          disabled={submitting}
-          className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-        >
+        <button type="button" onClick={handleCancel} disabled={submitting}
+          className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800">
           {t("cancel")}
         </button>
         {selectedIds.size === 0 && !isLoading && displayList.length > 0 && (
