@@ -25,7 +25,7 @@ import { getTypeConfig } from "@/lib/paperwork/type-config";
 // ---------------------------------------------------------------------------
 
 type Props = {
-  mode:           "create" | "edit";
+  mode:           "create" | "edit" | "view";
   paperworkId?:   string;
   paperworkCode?: string;
   initialValues?: FormValues;
@@ -122,6 +122,7 @@ export function PaperworkForm({
       className="flex flex-col gap-4"
       noValidate
     >
+      <fieldset disabled={mode === "view"} className="contents">
       {/* ── Type selector ─────────────────────────────────────────────── */}
       <Section title={t("sections.typeSelect")} columns={2}>
         {mode === "edit" && paperworkCode && (
@@ -312,34 +313,36 @@ export function PaperworkForm({
         </p>
       )}
 
-      {/* ── Action buttons ─────────────────────────────────────────────── */}
-      <div className="flex items-center justify-center gap-3 border-t border-crease pt-6 dark:border-zinc-800">
-        <button
-          type="submit"
-          disabled={saveDisabled}
-          className="inline-flex items-center rounded-md bg-cta px-5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {t("buttons.save")}
-        </button>
-        {mode === "edit" && (
+      {/* ── Action buttons — hidden in view mode ───────────────────────── */}
+      {mode !== "view" && (
+        <div className="flex items-center justify-center gap-3 border-t border-crease pt-6 dark:border-zinc-800">
+          <button
+            type="submit"
+            disabled={saveDisabled}
+            className="inline-flex items-center rounded-md bg-cta px-5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {t("buttons.save")}
+          </button>
+          {mode === "edit" && (
+            <button
+              type="button"
+              onClick={() => setConfirmDelete(true)}
+              disabled={submitting}
+              className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-red-600 shadow-sm hover:bg-red-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-red-950/30"
+            >
+              {t("buttons.delete")}
+            </button>
+          )}
           <button
             type="button"
-            onClick={() => setConfirmDelete(true)}
+            onClick={() => router.push("/paperwork")}
             disabled={submitting}
-            className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-red-600 shadow-sm hover:bg-red-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-red-950/30"
+            className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
           >
-            {t("buttons.delete")}
+            {t("buttons.cancel")}
           </button>
-        )}
-        <button
-          type="button"
-          onClick={() => router.push("/paperwork")}
-          disabled={submitting}
-          className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-        >
-          {t("buttons.cancel")}
-        </button>
-      </div>
+        </div>
+      )}
 
       {confirmDelete && (
         <ConfirmDialog
@@ -352,6 +355,7 @@ export function PaperworkForm({
           busy={submitting}
         />
       )}
+      </fieldset>
     </form>
   );
 }
