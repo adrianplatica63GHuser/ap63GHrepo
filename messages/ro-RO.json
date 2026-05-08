@@ -491,7 +491,10 @@
       "settings": "Setări"
     },
     "collapse": "Restrânge bara laterală",
-    "expand": "Extinde bara laterală"
+    "expand": "Extinde bara laterală",
+    "signedInAs": "Autentificat ca",
+    "changePassword": "Schimbă parola",
+    "signOut": "Ieșire"
   },
   "welcome": {
     "title": "GA40",
@@ -702,6 +705,72 @@
       "delete": "Șterge",
       "deleting": "Se șterge…",
       "cancel": "Anulează"
+    }
+  },
+  "usersAccess": {
+    "title": "Utilizatori & Acces",
+    "description": "Revizuiți și gestionați cererile de cont. Aprobarea creează un cont și trimite solicitantului parola temporară pe email.",
+    "tabs": {
+      "pending": "Cereri în așteptare",
+      "history": "Istoric"
+    },
+    "status": {
+      "pending": "În așteptare",
+      "approved": "Aprobat",
+      "rejected": "Respins"
+    },
+    "table": {
+      "username": "Utilizator",
+      "email": "Email",
+      "submitted": "Trimis la",
+      "status": "Stare",
+      "processed": "Procesat la",
+      "by": "De",
+      "actions": "Acțiuni",
+      "loading": "Se încarcă…",
+      "error": "Eroare la încărcarea cererilor.",
+      "emptyPending": "Nu există cereri în așteptare.",
+      "emptyHistory": "Nu există istoric."
+    },
+    "actions": {
+      "approve": "Aprobă",
+      "reject": "Respinge"
+    },
+    "feedback": {
+      "approvedWithEmail": "Cont creat și email trimis.",
+      "approvedNoEmail": "Cont creat (trimiterea emailului a eșuat — verificați RESEND_API_KEY).",
+      "rejectedWithEmail": "Cerere respinsă și solicitantul notificat.",
+      "rejectedNoEmail": "Cerere respinsă (trimiterea emailului a eșuat — verificați RESEND_API_KEY)."
+    }
+  },
+  "auth": {
+    "appSubtitle": "Persoane · Documente · Proprietăți",
+    "login": {
+      "heading": "Conectare",
+      "labelIdentity": "Utilizator sau Email",
+      "placeholderIdentity": "admin",
+      "labelPassword": "Parolă",
+      "buttonSignIn": "Conectare",
+      "buttonSigningIn": "Se conectează…",
+      "noAccount": "Nu ai cont?",
+      "requestAccess": "Solicită acces",
+      "errorInvalidCredentials": "Utilizator sau parolă incorectă",
+      "errorGeneric": "A apărut o eroare. Te rugăm să încerci din nou."
+    },
+    "signup": {
+      "heading": "Solicitare acces",
+      "subheading": "Completează datele tale și un administrator va analiza cererea ta.",
+      "labelEmail": "Adresă de email",
+      "labelUsername": "Utilizator",
+      "hintUsername": "Doar litere, cifre, liniuță jos și cratimă.",
+      "buttonSubmit": "Trimite cererea",
+      "buttonSubmitting": "Se trimite…",
+      "alreadyHaveAccount": "Ai deja cont?",
+      "signIn": "Conectare",
+      "errorGeneric": "Nu s-a putut trimite cererea. Te rugăm să încerci din nou.",
+      "errorUnexpected": "A apărut o eroare. Te rugăm să încerci din nou.",
+      "successTitle": "Cerere trimisă!",
+      "successMessage": "Un administrator va analiza cererea ta. Vei primi un email când contul tău este aprobat."
     }
   }
 }

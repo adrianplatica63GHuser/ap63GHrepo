@@ -12,10 +12,13 @@
     "db:generate": "node --env-file=.env node_modules/drizzle-kit/bin.cjs generate",
     "db:migrate": "node --env-file=.env node_modules/drizzle-kit/bin.cjs migrate",
     "db:studio": "node --env-file=.env node_modules/drizzle-kit/bin.cjs studio",
-    "db:seed": "node --env-file=.env node_modules/tsx/dist/cli.mjs src/db/seed.ts"
+    "db:seed": "node --env-file=.env node_modules/tsx/dist/cli.mjs src/db/seed.ts",
+    "seed:admin": "node --env-file=.env node_modules/tsx/dist/cli.mjs scripts/seed-admin.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
+    "@supabase/ssr": "^0.6.1",
+    "@supabase/supabase-js": "^2.49.4",
     "@tanstack/react-query": "^5.99.0",
     "@vis.gl/react-google-maps": "^1.8.3",
     "drizzle-orm": "^0.45.2",

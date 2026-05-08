@@ -245,9 +245,9 @@ export function PropertyForm({
           {t("sections.corners")}
         </h2>
         <div className="flex flex-col gap-2">
-          <CornersManager corners={corners} onChange={setCorners} />
+          <CornersManager corners={corners} onChange={setCorners} readOnly={mode === "view"} />
           <div className="rounded-md border border-card-rim overflow-hidden dark:border-zinc-800" style={{ height: "360px" }}>
-            <PropertyMiniMap corners={corners} onChange={setCorners} />
+            <PropertyMiniMap corners={corners} onChange={setCorners} readOnly={mode === "view"} />
           </div>
         </div>
       </section>

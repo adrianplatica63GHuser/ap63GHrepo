@@ -491,7 +491,10 @@
       "settings": "Settings"
     },
     "collapse": "Collapse sidebar",
-    "expand": "Expand sidebar"
+    "expand": "Expand sidebar",
+    "signedInAs": "Signed in as",
+    "changePassword": "Change password",
+    "signOut": "Sign out"
   },
   "welcome": {
     "title": "GA40",
@@ -702,6 +705,72 @@
       "delete": "Delete",
       "deleting": "Deleting…",
       "cancel": "Cancel"
+    }
+  },
+  "usersAccess": {
+    "title": "Users & Access",
+    "description": "Review and act on account requests. Approving creates an account and emails the applicant their temporary password.",
+    "tabs": {
+      "pending": "Pending Requests",
+      "history": "History"
+    },
+    "status": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    },
+    "table": {
+      "username": "Username",
+      "email": "Email",
+      "submitted": "Submitted",
+      "status": "Status",
+      "processed": "Processed",
+      "by": "By",
+      "actions": "Actions",
+      "loading": "Loading…",
+      "error": "Failed to load requests.",
+      "emptyPending": "No pending requests.",
+      "emptyHistory": "No history yet."
+    },
+    "actions": {
+      "approve": "Approve",
+      "reject": "Reject"
+    },
+    "feedback": {
+      "approvedWithEmail": "Account created and email sent.",
+      "approvedNoEmail": "Account created (email sending failed — check RESEND_API_KEY).",
+      "rejectedWithEmail": "Request rejected and applicant notified.",
+      "rejectedNoEmail": "Request rejected (email sending failed — check RESEND_API_KEY)."
+    }
+  },
+  "auth": {
+    "appSubtitle": "People · Documents · Properties",
+    "login": {
+      "heading": "Sign in",
+      "labelIdentity": "Username or Email",
+      "placeholderIdentity": "admin",
+      "labelPassword": "Password",
+      "buttonSignIn": "Sign in",
+      "buttonSigningIn": "Signing in…",
+      "noAccount": "Don't have an account?",
+      "requestAccess": "Request access",
+      "errorInvalidCredentials": "Invalid username or password",
+      "errorGeneric": "Something went wrong. Please try again."
+    },
+    "signup": {
+      "heading": "Request Access",
+      "subheading": "Submit your details and an administrator will review your request.",
+      "labelEmail": "Email address",
+      "labelUsername": "Username",
+      "hintUsername": "Letters, numbers, underscores, hyphens only.",
+      "buttonSubmit": "Submit Request",
+      "buttonSubmitting": "Submitting…",
+      "alreadyHaveAccount": "Already have an account?",
+      "signIn": "Sign in",
+      "errorGeneric": "Could not submit request. Please try again.",
+      "errorUnexpected": "Something went wrong. Please try again.",
+      "successTitle": "Request submitted!",
+      "successMessage": "An administrator will review your request. You will receive an email once your account is approved."
     }
   }
 }

@@ -4,14 +4,26 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { ChevronLeft, ChevronRight, ChevronDown, LogOut, KeyRound } from "lucide-react";
 import { LocaleToggle } from "@/components/locale-toggle";
+import { createClient } from "@/lib/supabase/client";
 import { PAPERWORK_TYPES, type PaperworkType } from "@/lib/paperwork/validation";
 import { NAV_SECTIONS, type NavItem, type NavSection } from "./nav-config";
 import {
   getActiveHref,
   getActiveSectionKey,
 } from "./sidebar-helpers";
+
+// ---------------------------------------------------------------------------
+// Auth helpers
+// ---------------------------------------------------------------------------
+
+async function fetchMe(): Promise<{ username: string; role: string }> {
+  const res = await fetch("/api/auth/me");
+  if (!res.ok) return { username: "", role: "user" };
+  return res.json();
+}
 
 // ---------------------------------------------------------------------------
 // NavSubItem — a single leaf link (or disabled placeholder)
@@ -305,6 +317,22 @@ function PaperworkNavSection({
 export function SidebarNav() {
   const t = useTranslations("nav");
   const pathname = usePathname();
+  const router   = useRouter();
+
+  // ── Auth — username + role for sidebar display ────────────────────────────
+  const { data: me } = useQuery({
+    queryKey: ["auth-me"],
+    queryFn: fetchMe,
+    staleTime: 5 * 60 * 1000, // 5 min — re-fetch in background
+  });
+  const isSuperuser = me?.role === "superuser";
+
+  async function handleLogout() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/login");
+    router.refresh();
+  }
 
   // ── Collapsed state — persisted in localStorage ───────────────────────────
   // Lazy initializer reads localStorage on the client; returns false on the
@@ -421,38 +449,89 @@ export function SidebarNav() {
         </button>
       </div>
 
+
+      {/* ── Logged-in username (expanded mode) ────────────────────────── */}
+      {!isCollapsed && me?.username && (
+        <div className="px-4 py-1.5 text-xs text-fade truncate border-b border-wire">
+          {t("signedInAs")} <span className="font-medium text-ink">{me.username}</span>
+        </div>
+      )}
+
       {/* ── Nav sections ───────────────────────────────────────────────── */}
       <nav
         className="flex-1 overflow-y-auto py-2 px-2 flex flex-col gap-0.5"
         aria-label="Main navigation"
       >
-        {NAV_SECTIONS.map((section) =>
-          section.key === "paperwork" ? (
+        {NAV_SECTIONS.map((section) => {
+          // Filter administration items based on role
+          const filteredSection =
+            section.key === "administration"
+              ? {
+                  ...section,
+                  items: section.items.filter(
+                    (item) => item.key !== "users" || isSuperuser,
+                  ),
+                }
+              : section;
+
+          return filteredSection.key === "paperwork" ? (
             <PaperworkNavSection
-              key={section.key}
-              section={section}
-              isOpen={openSection === section.key}
+              key={filteredSection.key}
+              section={filteredSection}
+              isOpen={openSection === filteredSection.key}
               isCollapsed={isCollapsed}
-              sectionLabel={sectionLabels[section.key] ?? section.key}
+              sectionLabel={sectionLabels[filteredSection.key] ?? filteredSection.key}
               pathname={pathname}
-              onToggle={() => toggleSection(section.key)}
+              onToggle={() => toggleSection(filteredSection.key)}
               onExpandSidebar={expandSidebar}
             />
           ) : (
             <NavSectionRow
-              key={section.key}
-              section={section}
-              isOpen={openSection === section.key}
+              key={filteredSection.key}
+              section={filteredSection}
+              isOpen={openSection === filteredSection.key}
               isCollapsed={isCollapsed}
               activeHref={activeHref}
-              sectionLabel={sectionLabels[section.key] ?? section.key}
+              sectionLabel={sectionLabels[filteredSection.key] ?? filteredSection.key}
               itemLabels={itemLabels}
-              onToggle={() => toggleSection(section.key)}
+              onToggle={() => toggleSection(filteredSection.key)}
               onExpandSidebar={expandSidebar}
             />
-          ),
-        )}
+          );
+        })}
       </nav>
+
+      {/* ── Bottom strip — change password + logout ─────────────────────── */}
+      <div
+        className={[
+          "border-t border-wire shrink-0 px-2 py-2 flex flex-col gap-0.5",
+        ].join(" ")}
+      >
+        <Link
+          href="/account/change-password"
+          title={t("changePassword")}
+          className={[
+            "flex items-center gap-2.5 rounded-md px-3 py-1.5 text-sm text-fade hover:bg-crease hover:text-ink transition-colors",
+            isCollapsed ? "justify-center" : "",
+          ].join(" ")}
+        >
+          <KeyRound size={14} className="shrink-0" aria-hidden="true" />
+          {!isCollapsed && <span className="truncate">{t("changePassword")}</span>}
+        </Link>
+
+        <button
+          type="button"
+          onClick={handleLogout}
+          title={t("signOut")}
+          className={[
+            "flex items-center gap-2.5 rounded-md px-3 py-1.5 text-sm text-fade hover:bg-crease hover:text-ink transition-colors w-full",
+            isCollapsed ? "justify-center" : "",
+          ].join(" ")}
+        >
+          <LogOut size={14} className="shrink-0" aria-hidden="true" />
+          {!isCollapsed && <span className="truncate">{t("signOut")}</span>}
+        </button>
+      </div>
     </aside>
   );
 }

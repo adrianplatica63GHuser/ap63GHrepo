@@ -22,8 +22,9 @@ type S70State = {
 };
 
 type Props = {
-  corners:  Corner[];
-  onChange: (next: Corner[]) => void;
+  corners:   Corner[];
+  onChange:  (next: Corner[]) => void;
+  readOnly?: boolean;
 };
 
 // ---------------------------------------------------------------------------
@@ -343,7 +344,7 @@ function displayFmtToInputMode(fmt: DisplayFormat): InputMode {
 // Main manager
 // ---------------------------------------------------------------------------
 
-export function CornersManager({ corners, onChange }: Props) {
+export function CornersManager({ corners, onChange, readOnly = false }: Props) {
   const t = useTranslations("property.corners");
 
   const [displayFmt,  setDisplayFmt]  = useState<DisplayFormat>("DD");
@@ -455,20 +456,20 @@ export function CornersManager({ corners, onChange }: Props) {
               <th className="px-3 py-2 w-10">{t("seq")}</th>
               <th className="px-3 py-2">{col1Label}</th>
               <th className="px-3 py-2">{col2Label}</th>
-              <th className="px-3 py-2 w-40" />
+              {!readOnly && <th className="px-3 py-2 w-40" />}
             </tr>
           </thead>
           <tbody className="divide-y divide-crease dark:divide-zinc-800">
             {corners.length === 0 && !adding && (
               <tr>
-                <td colSpan={4} className="px-3 py-4 text-center text-xs text-fade">
+                <td colSpan={readOnly ? 3 : 4} className="px-3 py-4 text-center text-xs text-fade">
                   {t("empty")}
                 </td>
               </tr>
             )}
 
             {corners.map((c, idx) =>
-              editingIdx === idx ? (
+              !readOnly && editingIdx === idx ? (
                 <CornerInputRow
                   key={"edit-" + idx}
                   initial={c}
@@ -481,6 +482,7 @@ export function CornersManager({ corners, onChange }: Props) {
                   <td className={cellCls + " text-fade tabular-nums"}>{idx + 1}</td>
                   <td className={cellCls + " " + monoLight}>{col1Values[idx]}</td>
                   <td className={cellCls + " " + monoLight}>{col2Values[idx]}</td>
+                  {!readOnly && (
                   <td className={cellCls + " whitespace-nowrap"}>
                     <div className="flex gap-1 items-center">
                       <button
@@ -517,6 +519,7 @@ export function CornersManager({ corners, onChange }: Props) {
                       </button>
                     </div>
                   </td>
+                  )}
                 </tr>
               )
             )}
@@ -532,7 +535,7 @@ export function CornersManager({ corners, onChange }: Props) {
         </table>
       </div>
 
-      {!adding && editingIdx === null && (
+      {!readOnly && !adding && editingIdx === null && (
         <button
           type="button"
           onClick={() => setAdding(true)}

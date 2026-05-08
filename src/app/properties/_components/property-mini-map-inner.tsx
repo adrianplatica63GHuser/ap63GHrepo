@@ -50,15 +50,16 @@ function FitBounds({ corners }: { corners: Corner[] }) {
 // ---------------------------------------------------------------------------
 
 type Props = {
-  corners:  Corner[];
-  onChange: (next: Corner[]) => void;
+  corners:   Corner[];
+  onChange:  (next: Corner[]) => void;
+  readOnly?: boolean;
 };
 
 // ---------------------------------------------------------------------------
 // Mini-map inner
 // ---------------------------------------------------------------------------
 
-export default function PropertyMiniMapInner({ corners, onChange }: Props) {
+export default function PropertyMiniMapInner({ corners, onChange, readOnly = false }: Props) {
   const [mapType,     setMapType]     = useState<MapTypeId>("roadmap");
   const [drawing,     setDrawing]     = useState(false);
   const [hoverLatLng, setHoverLatLng] = useState<google.maps.LatLngLiteral | null>(null);
@@ -148,10 +149,10 @@ export default function PropertyMiniMapInner({ corners, onChange }: Props) {
         disableDefaultUI
         gestureHandling="greedy"
         // crosshair cursor signals draw mode to the user
-        draggableCursor={drawing ? "crosshair" : undefined}
+        draggableCursor={!readOnly && drawing ? "crosshair" : undefined}
         style={{ width: "100%", height: "100%" }}
-        onClick={handleMapClick}
-        onMousemove={handleMouseMove}
+        onClick={readOnly ? undefined : handleMapClick}
+        onMousemove={readOnly ? undefined : handleMouseMove}
       >
         <FitBounds corners={corners} />
 
@@ -173,8 +174,8 @@ export default function PropertyMiniMapInner({ corners, onChange }: Props) {
             key={idx}
             position={{ lat: c.lat, lng: c.lon }}
             title={`Corner ${idx + 1}`}
-            // Disable dragging in draw mode to avoid click/drag ambiguity
-            draggable={!drawing}
+            // Disable dragging in draw mode or read-only view
+            draggable={!readOnly && !drawing}
             onDragEnd={(e) => handleDragEnd(idx, e)}
             onClick={(e) => {
               if (!drawing) return;
@@ -222,8 +223,9 @@ export default function PropertyMiniMapInner({ corners, onChange }: Props) {
       </div>
 
       {/* ------------------------------------------------------------------ */}
-      {/* Draw mode controls — bottom-left                                    */}
+      {/* Draw mode controls — bottom-left (hidden in read-only view)         */}
       {/* ------------------------------------------------------------------ */}
+      {!readOnly && (
       <div className="absolute bottom-2 left-2 z-10 flex items-center gap-2">
         {!drawing ? (
           <button
@@ -252,6 +254,7 @@ export default function PropertyMiniMapInner({ corners, onChange }: Props) {
           </>
         )}
       </div>
+      )}
     </div>
   );
 }

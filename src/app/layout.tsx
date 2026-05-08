@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import { Geist, Geist_Mono } from "next/font/google";
-import { AppShell } from "@/components/app-shell";
+import { ConditionalAppShell } from "@/components/conditional-app-shell";
 import { MapsProvider } from "@/components/providers/maps-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
 import "./globals.css";
@@ -39,7 +39,7 @@ export default async function RootLayout({
         <NextIntlClientProvider locale={locale} messages={messages}>
           <MapsProvider>
             <QueryProvider>
-              <AppShell>{children}</AppShell>
+              <ConditionalAppShell>{children}</ConditionalAppShell>
             </QueryProvider>
           </MapsProvider>
         </NextIntlClientProvider>

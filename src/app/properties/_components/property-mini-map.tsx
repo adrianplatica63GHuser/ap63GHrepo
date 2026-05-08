@@ -14,10 +14,11 @@ const Inner = dynamic(() => import("./property-mini-map-inner"), {
 });
 
 type Props = {
-  corners:  Corner[];
-  onChange: (next: Corner[]) => void;
+  corners:   Corner[];
+  onChange:  (next: Corner[]) => void;
+  readOnly?: boolean;
 };
 
-export function PropertyMiniMap({ corners, onChange }: Props) {
-  return <Inner corners={corners} onChange={onChange} />;
+export function PropertyMiniMap({ corners, onChange, readOnly }: Props) {
+  return <Inner corners={corners} onChange={onChange} readOnly={readOnly} />;
 }

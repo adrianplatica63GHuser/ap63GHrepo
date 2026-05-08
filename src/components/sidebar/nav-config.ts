@@ -56,7 +56,7 @@ export const NAV_SECTIONS: NavSection[] = [
     key: "administration",
     icon: LayoutDashboard,
     items: [
-      { key: "users", icon: UserCog },
+      { key: "users", href: "/admin/users", icon: UserCog },
       { key: "referenceData", href: "/admin/value-lists", icon: Database },
       { key: "importExport", icon: ArrowUpDown },
       { key: "settings", icon: Settings },
