@@ -9,7 +9,7 @@
  * Public routes (no login required): /login, /signup, plus Next.js internals.
  */
 import { type NextRequest, NextResponse } from "next/server";
-import { createServerClient } from "@supabase/ssr";
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
 
 // Routes that do not require authentication.
 // Covers both pages and API routes that must be reachable when logged out.
@@ -35,7 +35,7 @@ export async function proxy(request: NextRequest) {
         getAll() {
           return request.cookies.getAll();
         },
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
           // Write updated cookies back to both the request and the response
           // so the refreshed token propagates correctly.
           cookiesToSet.forEach(({ name, value }) =>
