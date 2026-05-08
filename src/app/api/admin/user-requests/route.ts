@@ -23,7 +23,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const statusFilter = searchParams.get("status");
 
-  let query = db.select().from(userRequests).orderBy(desc(userRequests.requestedAt));
+  const query = db.select().from(userRequests).orderBy(desc(userRequests.requestedAt));
 
   // Drizzle doesn't support conditional where easily in a chain, so we split:
   if (statusFilter === "pending" || statusFilter === "approved" || statusFilter === "rejected") {
