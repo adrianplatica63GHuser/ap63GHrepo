@@ -10,7 +10,7 @@
  *   creating users, listing auth.users, etc.
  *   NEVER import in Client Components or expose to the browser.
  */
-import { createServerClient as _createServerClient } from "@supabase/ssr";
+import { createServerClient as _createServerClient, type CookieOptions } from "@supabase/ssr";
 import { createClient as _createAdminClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 
@@ -25,7 +25,7 @@ export async function createServerClient() {
         getAll() {
           return cookieStore.getAll();
         },
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
           try {
             cookiesToSet.forEach(({ name, value, options }) =>
               cookieStore.set(name, value, options),
