@@ -2,15 +2,19 @@
 
 # Project brief — ga40prj
 
-A local-first web application for managing **People**, **Paperwork**, and **Properties**, with PostGIS-backed spatial data and bilingual English/Romanian UI. Built one vertical slice at a time. Cloud target is Vercel + Supabase but nothing is wired up yet — everything runs locally for now.
+A web application for managing **People**, **Paperwork**, and **Properties**, with PostGIS-backed spatial data and bilingual English/Romanian UI. Built one vertical slice at a time. Deployed on Vercel + Supabase; local Docker Postgres remains the primary dev environment.
 
-The summary below is a quick orientation. The full source of truth for project intent and our working agreement lives in `C:\dev.docs\ga40prj\01.Every.Time\` — see the section directly below.
+## How Claude works with Adrian (generic rules)
 
-## Read at the start of every session
+These apply regardless of which slice is in progress:
 
-The folder `C:\dev.docs\ga40prj\01.Every.Time\` is the source of truth for project intent and our working agreement. Claude should read `Instructions.docx` — Claude's role, the domain model, the locked-in tech stack, accounts, and development constraints.
-
-If anything in this document conflicts with the summary in this file or with `AGENTS.md`, the doc in `01.Every.Time/` win.
+- **One vertical slice at a time** — confirm the current slice before writing any code.
+- **Wait for approval before writing code** at the start of every session.
+- **Provide complete, ready-to-copy code** — components, hooks, schema migrations, API routes. No stubs or placeholders unless explicitly asked.
+- **Include TypeScript types, error handling, loading states, and accessibility** on every component.
+- **Bilingual by default** — use the established next-intl patterns already in the repo; never hard-code UI strings.
+- **Never commit or push without explicit confirmation.** Same for any irreversible action.
+- **Conventional commits** — `feat:`, `fix:`, `chore:`, `ci:`, `docs(scope):`, `test:`.
 
 ## Who you're working with
 
@@ -36,7 +40,7 @@ Relationships: People ↔ Paperwork, People ↔ Properties, Paperwork ↔ Proper
 - **Database** — PostgreSQL 16 + PostGIS 3.4 (Docker image `postgis/postgis:16-3.4`), pgAdmin 4
 - **Testing** — Jest 30 with `next/jest` (SWC transformer), jsdom, `@testing-library/react` + `jest-dom`
 - **CI** — GitHub Actions: `npm ci` → lint → test → build
-- **Cloud target** — Vercel (frontend) + Supabase (Postgres, auth, storage). Not wired up yet.
+- **Cloud target** — Vercel (frontend) + Supabase (Postgres, auth, storage). Live at `https://ga40prj.vercel.app`. Every push to `main` auto-deploys.
 
 ## Development methodology
 
@@ -57,7 +61,14 @@ Relationships: People ↔ Paperwork, People ↔ Properties, Paperwork ↔ Proper
 - Slice #4.3 — Inline field labels across all three detail forms. ✅ Complete. Full detail below.
 - Slice #4.4 — Document list filtering via sidebar checkboxes + "Paperwork" → "Documents" GUI rename. ✅ Complete. Full detail below.
 - Slice #4.5 — CI lint fixes: three `react-hooks/set-state-in-effect` errors. ✅ Complete. Full detail below.
-- Slice #5+ — Relationships (People ↔ Properties ↔ Paperwork, self-refs), relationship map view, etc.
+- Slice #5.n — Relationships (People ↔ Properties ↔ Paperwork, self-refs), relationship map view. ✅ Complete.
+- Slice #6.0 — Pagination on all lists. ✅ Complete. Full detail below.
+- Slice #6.1 — Pagination for association lists. ✅ Complete. Full detail below.
+- Slice #7.0 — Authentication. ✅ Complete. Full detail below.
+- Slice #7.1 — Bilingual (Romanian) sign-in page. ✅ Complete. Full detail below.
+- Slice #7.2 — Push auth to GitHub / Vercel. ✅ Complete.
+- Slice #7.3 — Fix TypeScript build error in `proxy.ts`. ✅ Complete. Full detail below.
+- Slice #8.0 — Principal Object base class + shared code counter. ✅ Complete. Full detail below.
 
 Each slice typically lands as multiple small commits, each individually green.
 
@@ -312,6 +323,116 @@ Everything below is live in `main`. No DB schema or API changes — pure fronten
 - Both the Add row and Edit row receive `initialMode={displayFmtToInputMode(displayFmt)}` — no mode-selector toggle inside the row itself. The row opens directly in the right mode.
 - DMS input UI: two rows (lat / lon), each with separate `°` / `′` / `″` number fields and N/S or E/W toggle buttons. Conversion uses `decimalToDMS` / `dmsToDecimal` from `src/lib/geo/dms.ts`. Label span is `w-16` (64 px) to fit "Latitude"/"Longitude"; degree/minute inputs are `w-10`, seconds `w-16`.
 
+### Slice #8.0 — Principal Object base class + shared code counter (detail)
+
+Pure DB schema + query layer — no UI changes.
+
+**What changed**
+
+**New `principal_object` table**
+- Columns: `id` (uuid PK), `code` (text, UNIQUE), `object_type` (`principal_object_type` enum: `PERSON | PROPERTY | PAPERWORK`), `created_at`.
+- One shared Postgres sequence: `principal_object_code_seq`. The app layer inserts this row first using `sql\`'PREFIX' || lpad(nextval('principal_object_code_seq')::text, 5, '0')\`` and receives the generated code back via `.returning()`.
+- Codes are still prefixed (PERS/PROP/PAPR) but the number is unique across all three types (e.g. PERS00001, PROP00002, PERS00003).
+
+**Domain table changes (`person`, `property`, `paperwork`)**
+- Each gains `principal_object_id` (uuid, NOT NULL, UNIQUE, FK → `principal_object.id`).
+- The `code` column is kept on each table (no DEFAULT — supplied by app layer from the `principal_object` insert). All read queries continue to use `person.code` / `property.code` / `paperwork.code` unchanged.
+- The three old per-table sequences (`person_code_seq`, `property_code_seq`, `paperwork_code_seq`) are dropped.
+
+**Migration files**
+- `src/db/migration_008_principal_object.sql` — full migration (applied to Supabase).
+- `src/db/migration_008_repair.sql` — repair script used on local Docker after a partial-failure on first run; kept for audit trail.
+- **Root cause of partial failure**: new codes drawn from the shared sequence (starting after all persons) collided with existing codes on unprocessed property/paperwork rows. Fix: blank all property/paperwork codes to `'PROP_TMP_' || id::text` before the reassignment loop.
+
+**Query layer**
+- `src/lib/persons/queries.ts` → `createNaturalPerson`
+- `src/lib/judicial-persons/queries.ts` → `createJudicialPerson`
+- `src/lib/properties/queries.ts` → `createProperty`
+- `src/lib/paperwork/queries.ts` → `createPaperwork`
+- Each CREATE now inserts into `principal_object` first, then inserts the domain row with `principalObjectId` and `code` copied from the returned row.
+
+**Validation**
+- `src/lib/properties/validation.ts`: added `principalObjectId: true` to the `createInsertSchema(property).omit({...})` call so it stays out of the user-facing Zod schema (drizzle-zod would otherwise surface it as a required input field).
+
+**Seed**
+- `src/db/seed.ts`: updated persons and properties seed loops to follow the same two-step insert pattern.
+
+**Files touched**
+- `src/db/schema/index.ts`
+- `src/db/migration_008_principal_object.sql` (new)
+- `src/db/migration_008_repair.sql` (new)
+- `src/lib/persons/queries.ts`
+- `src/lib/judicial-persons/queries.ts`
+- `src/lib/properties/queries.ts`
+- `src/lib/properties/validation.ts`
+- `src/lib/paperwork/queries.ts`
+- `src/db/seed.ts`
+
+### Slice #7.3 — Fix TypeScript build error in `proxy.ts` (detail)
+
+Build was failing on Vercel with:
+
+```
+./src/proxy.ts:38:16
+Type error: Parameter 'cookiesToSet' implicitly has an 'any' type.
+```
+
+The `setAll` method inside the Supabase SSR cookie handler lacked an explicit type annotation. Fix: add an inline type to the `cookiesToSet` parameter — `{ name: string; value: string; options: CookieOptions }[]` (or the equivalent Supabase SSR type). No logic changes.
+
+**Files touched**
+- `src/proxy.ts`
+
+### Slice #7.1 — Bilingual (Romanian) sign-in page (detail)
+
+Added a Romanian-language sign-in experience using the same flag-emoji locale toggle already present throughout the app. The sign-in page reads the current locale cookie and renders all labels, placeholders, and error messages via next-intl. Switching flags on the sign-in page sets the locale cookie and refreshes the page — identical behaviour to the rest of the app.
+
+**Files touched**
+- `src/app/[...auth]/` (or equivalent sign-in page)
+- `messages/en-GB.json` — auth namespace
+- `messages/ro-RO.json` — auth namespace
+
+### Slice #7.0 — Authentication (detail)
+
+Standard authentication boilerplate using Supabase Auth (email/password). Because authentication patterns are well-established, Supabase Auth conventions take precedence over project-specific instructions where they conflict.
+
+Key decisions:
+- Supabase Auth with SSR cookie session (`@supabase/ssr`).
+- Middleware (`src/proxy.ts`) refreshes the session token on every request and redirects unauthenticated users to `/sign-in`.
+- Protected routes: all app routes except `/sign-in`.
+- Session exposed via a server-side helper; no client-side token storage.
+
+**Files touched**
+- `src/proxy.ts` (Supabase SSR middleware)
+- `src/lib/supabase/` (server + client helpers)
+- `src/app/sign-in/` (sign-in page and form)
+- `src/db/index.ts` (unchanged; auth is handled at Supabase layer)
+
+### Slice #6.1 — Pagination for association lists (detail)
+
+Extension of Slice 6.0. When clicking the **Associate** button to link one object to another (e.g. attach a Person to a Property), the picker modal/list was fetching and rendering the full dataset instead of paginating. Fixed to apply the same 15-item page size and Next/Previous controls as the main lists.
+
+- API endpoints for association lookups now accept `page` and `pageSize` query params.
+- Association picker components use the same pagination UI component introduced in Slice 6.0.
+
+**Files touched**
+- API routes for association lookups (people, properties, paperwork)
+- Association picker UI components
+
+### Slice #6.0 — Pagination on all lists (detail)
+
+Added **Next** / **Previous** pagination controls to every list view.
+
+Rules:
+- Page size: **15 items**.
+- Both buttons **disabled** when total items ≤ 15 (fits on one page).
+- **Previous** disabled on page 1; **Next** disabled on the last page.
+- Page state lives in URL query params (`?page=N`) so it survives a refresh.
+
+**Files touched**
+- All list view components (`natural-persons`, `properties`, `paperwork`)
+- Shared `Pagination` UI component (new)
+- API route handlers updated to accept `page` / `pageSize` and return `total` alongside `items`
+
 ## Collaboration rules
 
 - **Never commit or push without explicit confirmation.** Same for any irreversible action.
@@ -319,7 +440,7 @@ Everything below is live in `main`. No DB schema or API changes — pure fronten
 - **Always check `git status` before making changes**, and never modify files outside `C:\dev\ga40prj`.
 - **Adrian runs git in PowerShell on Windows.** Claude prepares file content; Adrian commits and pushes. This avoids Windows-mount permission issues with `.git/index.lock` from the Linux sandbox.
 - **Trust HEAD as the source of truth.** The Linux sandbox can show stale or phantom file states (deleted files appearing as untracked, modified files showing clean, etc.). When in doubt, ask Adrian to `git status` on his side.
-- **Secrets stay out of chat.** `.env` is gitignored; values come from `C:\dev.docs\ga40prj\01.Every.Time\Instructions.docx`. Never echo passwords or API keys back into the conversation.
+- **Secrets stay out of chat.** `.env` is gitignored; values live in `C:\dev.docs\ga40prj\` (Adrian's reference docs, not in the repo). Never echo passwords or API keys back into the conversation.
 
 ## Repo conventions
 
@@ -345,14 +466,12 @@ Everything below is live in `main`. No DB schema or API changes — pure fronten
 
 - `C:\dev\ga40prj` — this repo (read-write)
 - `C:\dev.docs\ga40prj` — Adrian's reference docs (read-only): stack decisions, install logs, credentials, future mockups
-- `C:\dev\ga40prj\Slice.1.inputs\` — Adrian's inputs for Slice #1 (reference only, complete)
-- `C:\dev\ga40prj\Slice.3.inputs\` — Adrian's mockups/data/info for Slice #3 when ready (he prepares; Claude reviews before development starts)
+- `C:\dev.docs\ga40prj\01.Slice.Inputs\` — Adrian's slice input docs (reference only; read only the folder relevant to the current slice)
 
 ## Reading order for a fresh session
 
 1. This file (`CLAUDE.md`) — top-down.
-2. The doc in `C:\dev.docs\ga40prj\01.Every.Time\` (see "Read at the start of every session" above).
-3. `README.md` — local dev setup and common commands.
-4. `package.json` — confirm exact versions before assuming any API.
-5. Most recent `git log --oneline -20` — see what just shipped.
-6. If a slice is in progress, the slice's input folder (e.g. `Slice.1.inputs/`) and any open work-in-progress branches.
+2. `README.md` — local dev setup and common commands.
+3. `package.json` — confirm exact versions before assuming any API.
+4. Most recent `git log --oneline -20` — see what just shipped.
+5. If a slice is in progress, the relevant folder under `C:\dev.docs\ga40prj\01.Slice.Inputs\` and any open work-in-progress branches.
