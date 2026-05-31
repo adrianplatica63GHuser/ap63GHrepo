@@ -4,9 +4,9 @@
  * Soft delete: list + getById filter out deleted rows.
  */
 
-import { and, count, eq, ilike, inArray, isNull, or } from "drizzle-orm";
+import { and, count, eq, ilike, inArray, isNull, or, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { paperwork } from "@/db/schema";
+import { paperwork, principalObject } from "@/db/schema";
 import type {
   PaperworkCreate,
   PaperworkListQuery,
@@ -110,11 +110,26 @@ export async function getPaperworkById(
 export async function createPaperwork(
   input: PaperworkCreate,
 ): Promise<PaperworkFull> {
-  const [row] = await db
-    .insert(paperwork)
-    .values(inputToValues(input))
-    .returning();
-  return row;
+  return await db.transaction(async (tx) => {
+    // Allocate a code from the shared sequence via the principal_object row.
+    const [poRow] = await tx
+      .insert(principalObject)
+      .values({
+        objectType: "PAPERWORK",
+        code: sql`'PAPR' || lpad(nextval('principal_object_code_seq')::text, 5, '0')`,
+      })
+      .returning();
+
+    const [row] = await tx
+      .insert(paperwork)
+      .values({
+        ...inputToValues(input),
+        principalObjectId: poRow.id,
+        code: poRow.code,
+      })
+      .returning();
+    return row;
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -197,7 +212,7 @@ export async function softDeletePaperwork(id: string): Promise<boolean> {
 
 function inputToValues(
   input: PaperworkCreate,
-): typeof paperwork.$inferInsert {
+): Omit<typeof paperwork.$inferInsert, "id" | "code" | "principalObjectId" | "createdAt" | "updatedAt" | "deletedAt"> {
   return {
     type:         input.type,
     title:        input.title        ?? null,

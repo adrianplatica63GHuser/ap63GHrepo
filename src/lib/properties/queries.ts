@@ -9,9 +9,9 @@
  *   those rows untouched. Passing address: null deletes the address row.
  */
 
-import { and, count, eq, ilike, isNull, or } from "drizzle-orm";
+import { and, count, eq, ilike, isNull, or, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { person, property, propertyAddress, propertyCorner, propertyPerson } from "@/db/schema";
+import { person, principalObject, property, propertyAddress, propertyCorner, propertyPerson } from "@/db/schema";
 import type {
   PropertyCreate,
   PropertyListQuery,
@@ -146,9 +146,20 @@ export async function createProperty(
   const { address: addrInput, corners: cornerList, ...propFields } = input;
 
   return await db.transaction(async (tx) => {
+    // Allocate a code from the shared sequence via the principal_object row.
+    const [poRow] = await tx
+      .insert(principalObject)
+      .values({
+        objectType: "PROPERTY",
+        code: sql`'PROP' || lpad(nextval('principal_object_code_seq')::text, 5, '0')`,
+      })
+      .returning();
+
     const [propRow] = await tx
       .insert(property)
       .values({
+        principalObjectId: poRow.id,
+        code:            poRow.code,
         type:            "LAND",
         nickname:        propFields.nickname        ?? null,
         tarlaSola:       propFields.tarlaSola       ?? null,

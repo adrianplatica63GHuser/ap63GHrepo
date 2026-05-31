@@ -40,11 +40,12 @@ export type PropertyAddressInput = z.infer<typeof propertyAddressInputSchema>;
 
 const propertyBase = createInsertSchema(property)
   .omit({
-    id:        true,
-    code:      true,
-    createdAt: true,
-    updatedAt: true,
-    deletedAt: true,
+    id:                true,
+    code:              true,
+    principalObjectId: true,   // server-managed; set by createProperty
+    createdAt:         true,
+    updatedAt:         true,
+    deletedAt:         true,
     // type is always LAND for now; not user-settable via the API
     type: true,
   })

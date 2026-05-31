@@ -12,6 +12,7 @@ import {
   address,
   naturalPerson,
   person,
+  principalObject,
   property,
   propertyAddress,
   propertyCorner,
@@ -749,9 +750,23 @@ async function seed() {
           [row.firstName, row.lastName].filter(Boolean).join(" ").trim() ||
           "(unnamed)";
 
+        const [poRow] = await tx
+          .insert(principalObject)
+          .values({
+            objectType: "PERSON",
+            code: sql`'PERS' || lpad(nextval('principal_object_code_seq')::text, 5, '0')`,
+          })
+          .returning();
+
         const [{ id }] = await tx
           .insert(person)
-          .values({ type: "NATURAL", displayName, notes: row.notes ?? null })
+          .values({
+            principalObjectId: poRow.id,
+            code: poRow.code,
+            type: "NATURAL",
+            displayName,
+            notes: row.notes ?? null,
+          })
           .returning({ id: person.id });
 
         await tx.insert(naturalPerson).values({
@@ -804,9 +819,19 @@ async function seed() {
     console.log(`Seeding ${PROPERTIES.length} properties...`);
     await db.transaction(async (tx) => {
       for (const row of PROPERTIES) {
+        const [poPropRow] = await tx
+          .insert(principalObject)
+          .values({
+            objectType: "PROPERTY",
+            code: sql`'PROP' || lpad(nextval('principal_object_code_seq')::text, 5, '0')`,
+          })
+          .returning();
+
         const [{ id }] = await tx
           .insert(property)
           .values({
+            principalObjectId: poPropRow.id,
+            code: poPropRow.code,
             type: "LAND",
             nickname: row.nickname ?? null,
             tarlaSola: row.tarlaSola ?? null,

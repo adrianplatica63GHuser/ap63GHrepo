@@ -14,9 +14,9 @@
  * untouched.
  */
 
-import { and, count, eq, ilike, isNull, or } from "drizzle-orm";
+import { and, count, eq, ilike, isNull, or, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { address, judicialPerson, person } from "@/db/schema";
+import { address, judicialPerson, person, principalObject } from "@/db/schema";
 import type {
   JudicialListQuery,
   JudicialPersonCreate,
@@ -142,9 +142,20 @@ export async function createJudicialPerson(
   const displayName = judFields.name.trim() || "(unnamed)";
 
   return await db.transaction(async (tx) => {
+    // Allocate a code from the shared sequence via the principal_object row.
+    const [poRow] = await tx
+      .insert(principalObject)
+      .values({
+        objectType: "PERSON",
+        code: sql`'PERS' || lpad(nextval('principal_object_code_seq')::text, 5, '0')`,
+      })
+      .returning();
+
     const [pRow] = await tx
       .insert(person)
       .values({
+        principalObjectId: poRow.id,
+        code: poRow.code,
         type: "JUDICIAL",
         displayName,
         notes: notes ?? null,

@@ -15,7 +15,7 @@
 
 import { and, count, eq, ilike, isNull, or, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { address, naturalPerson, person } from "@/db/schema";
+import { address, naturalPerson, person, principalObject } from "@/db/schema";
 import type {
   ListQuery,
   NaturalPersonCreate,
@@ -155,9 +155,20 @@ export async function createNaturalPerson(
     "(unnamed)";
 
   return await db.transaction(async (tx) => {
+    // Allocate a code from the shared sequence via the principal_object row.
+    const [poRow] = await tx
+      .insert(principalObject)
+      .values({
+        objectType: "PERSON",
+        code: sql`'PERS' || lpad(nextval('principal_object_code_seq')::text, 5, '0')`,
+      })
+      .returning();
+
     const [pRow] = await tx
       .insert(person)
       .values({
+        principalObjectId: poRow.id,
+        code: poRow.code,
         type: "NATURAL",
         displayName,
         notes: notes ?? null,
