@@ -1,0 +1,23 @@
+# Exclude large/irrelevant directories from the Docker build context.
+# Without this, node_modules (~500 MB) would be sent to the daemon on every build.
+
+node_modules
+.next
+.git
+.gitignore
+
+# Local env files — secrets must never be baked into the image.
+# NEXT_PUBLIC_* values are passed in via --build-arg instead.
+.env
+.env.*
+*.local
+
+# Dev-only files
+docker
+*.sql
+*.ps1
+*.md
+README*
+
+# Test output
+coverage

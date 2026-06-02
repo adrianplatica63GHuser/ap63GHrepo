@@ -6,9 +6,11 @@
  *   2. Redirects unauthenticated users to /login for any protected route.
  *   3. Redirects authenticated users away from /login and /signup to /.
  *
- * Public routes (no login required): /login, /signup, plus Next.js internals.
+ * If the Supabase auth check throws for any reason (network error, bad env
+ * var, post-incident recovery) the middleware fails closed: protected routes
+ * redirect to /login, public paths pass through untouched.
  *
- * Note: src/proxy.ts is kept as an archive of the original implementation.
+ * Public routes (no login required): /login, /signup, plus Next.js internals.
  */
 import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
@@ -26,35 +28,14 @@ const PUBLIC_PATHS = [
 const AUTH_PAGE_PATHS = ["/login", "/signup"];
 
 export async function middleware(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request });
-
-  // Build a Supabase client that can read + refresh the session from cookies.
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
-          // Write updated cookies back to both the request and the response
-          // so the refreshed token propagates correctly.
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value),
-          );
-          supabaseResponse = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options),
-          );
-        },
-      },
-    },
-  );
-
-  // IMPORTANT: do NOT run any logic between createServerClient and getUser()
-  // that could invalidate the session-refresh flow above.
-  const { data: { user } } = await supabase.auth.getUser();
+  // ── UAT mode ──────────────────────────────────────────────────────────────
+  // When UAT_NO_AUTH=true the app runs without any Supabase connection.
+  // Used exclusively for Ciprian's local UAT machine (Slice 9.0).
+  // Remove or unset this env var to re-enable normal auth.
+  if (process.env.UAT_NO_AUTH === "true") {
+    return NextResponse.next({ request });
+  }
+  // ─────────────────────────────────────────────────────────────────────────
 
   const { pathname } = request.nextUrl;
 
@@ -65,23 +46,65 @@ export async function middleware(request: NextRequest) {
     (p) => pathname === p || pathname.startsWith(p + "/"),
   );
 
-  // Unauthenticated → redirect to /login (except for public paths)
-  if (!user && !isPublicPath) {
-    const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = "/login";
-    return NextResponse.redirect(loginUrl);
-  }
+  try {
+    let supabaseResponse = NextResponse.next({ request });
 
-  // Authenticated + on a login/signup PAGE → redirect to home.
-  // API routes under /api/auth are deliberately excluded: the sidebar's
-  // /api/auth/me fetch must reach the route handler, not get redirected.
-  if (user && isAuthPagePath) {
-    const homeUrl = request.nextUrl.clone();
-    homeUrl.pathname = "/";
-    return NextResponse.redirect(homeUrl);
-  }
+    // Build a Supabase client that can read + refresh the session from cookies.
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return request.cookies.getAll();
+          },
+          setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
+            // Write updated cookies back to both the request and the response
+            // so the refreshed token propagates correctly.
+            cookiesToSet.forEach(({ name, value }) =>
+              request.cookies.set(name, value),
+            );
+            supabaseResponse = NextResponse.next({ request });
+            cookiesToSet.forEach(({ name, value, options }) =>
+              supabaseResponse.cookies.set(name, value, options),
+            );
+          },
+        },
+      },
+    );
 
-  return supabaseResponse;
+    // IMPORTANT: do NOT run any logic between createServerClient and getUser()
+    // that could invalidate the session-refresh flow above.
+    const { data: { user } } = await supabase.auth.getUser();
+
+    // Unauthenticated → redirect to /login (except for public paths)
+    if (!user && !isPublicPath) {
+      const loginUrl = request.nextUrl.clone();
+      loginUrl.pathname = "/login";
+      return NextResponse.redirect(loginUrl);
+    }
+
+    // Authenticated + on a login/signup PAGE → redirect to home.
+    // API routes under /api/auth are deliberately excluded: the sidebar's
+    // /api/auth/me fetch must reach the route handler, not get redirected.
+    if (user && isAuthPagePath) {
+      const homeUrl = request.nextUrl.clone();
+      homeUrl.pathname = "/";
+      return NextResponse.redirect(homeUrl);
+    }
+
+    return supabaseResponse;
+  } catch (err) {
+    // Auth check failed (network error, bad env var, Supabase unavailable).
+    // Fail closed: redirect protected routes to /login rather than crashing.
+    console.error("[middleware] Supabase auth check failed:", err);
+    if (!isPublicPath) {
+      const loginUrl = request.nextUrl.clone();
+      loginUrl.pathname = "/login";
+      return NextResponse.redirect(loginUrl);
+    }
+    return NextResponse.next({ request });
+  }
 }
 
 export const config = {
