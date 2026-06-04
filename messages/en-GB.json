@@ -701,7 +701,8 @@
     "sections": {
       "property": "Property",
       "person": "Person",
-      "document": "Document"
+      "document": "Document",
+      "others": "Others"
     },
     "lists": {
       "propertyTypes": "Property Types",
@@ -711,7 +712,8 @@
       "citizenships": "Citizenship",
       "documentTypes": "Document Types",
       "institutions": "Institutions",
-      "serviceInterests": "Services & Interests"
+      "services": "Services",
+      "interests": "Interests"
     },
     "fields": {
       "name": "Name",

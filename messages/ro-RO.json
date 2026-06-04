@@ -701,7 +701,8 @@
     "sections": {
       "property": "Proprietate",
       "person": "Persoană",
-      "document": "Document"
+      "document": "Document",
+      "others": "Altele"
     },
     "lists": {
       "propertyTypes": "Tipuri de Proprietate",
@@ -711,7 +712,8 @@
       "citizenships": "Cetățenie",
       "documentTypes": "Tipuri de Document",
       "institutions": "Instituții",
-      "serviceInterests": "Servicii & Interese"
+      "services": "Servicii",
+      "interests": "Interese"
     },
     "fields": {
       "name": "Denumire",
