@@ -653,6 +653,47 @@
       "associating": "Associating…",
       "cancel": "Cancel",
       "noSelection": "Select at least one document"
+    },
+    "pages": {
+      "sectionTitle": "Pages",
+      "addPage": "Add Page",
+      "empty": "No pages yet",
+      "colNum": "#",
+      "colName": "Page Name",
+      "colNotes": "Notes",
+      "colActions": "Actions",
+      "view": "View",
+      "print": "Print",
+      "delete": "Delete",
+      "loadError": "Failed to load pages",
+      "deleteError": "Could not delete page",
+      "dialog": {
+        "title": "Add Page",
+        "pageNumber": "Page Number",
+        "pageName": "Page Name",
+        "pageNotes": "Page Notes",
+        "upload": "Upload",
+        "fileRequired": "A file must be uploaded",
+        "pageNumberRequired": "Page number is required",
+        "fileTooLarge": "File exceeds the 20 MB limit",
+        "uploadError": "Upload failed",
+        "save": "Save",
+        "saving": "Saving…",
+        "cancel": "Cancel"
+      },
+      "viewer": {
+        "placeholder": "Select a page to preview",
+        "downloadPrompt": "This file type cannot be previewed in the browser.",
+        "download": "Download",
+        "loading": "Loading…",
+        "error": "Failed to load file"
+      },
+      "deleteConfirm": {
+        "title": "Delete page?",
+        "body": "Are you sure you want to delete this page? This cannot be undone.",
+        "yes": "Delete",
+        "no": "Cancel"
+      }
     }
   },
   "valueList": {

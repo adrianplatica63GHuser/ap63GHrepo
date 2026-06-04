@@ -653,6 +653,47 @@
       "associating": "Se asociază…",
       "cancel": "Anulează",
       "noSelection": "Selectați cel puțin un document"
+    },
+    "pages": {
+      "sectionTitle": "Pagini",
+      "addPage": "Adaugă pagină",
+      "empty": "Nicio pagină adăugată",
+      "colNum": "Nr.",
+      "colName": "Denumire pagină",
+      "colNotes": "Note",
+      "colActions": "Acțiuni",
+      "view": "Vizualizare",
+      "print": "Tipărire",
+      "delete": "Șterge",
+      "loadError": "Eroare la încărcarea paginilor",
+      "deleteError": "Pagina nu a putut fi ștearsă",
+      "dialog": {
+        "title": "Adaugă pagină",
+        "pageNumber": "Număr pagină",
+        "pageName": "Denumire pagină",
+        "pageNotes": "Note pagină",
+        "upload": "Încarcă",
+        "fileRequired": "Este obligatorie încărcarea unui fișier",
+        "pageNumberRequired": "Numărul paginii este obligatoriu",
+        "fileTooLarge": "Fișierul depășește limita de 20 MB",
+        "uploadError": "Încărcarea a eșuat",
+        "save": "Salvează",
+        "saving": "Se salvează…",
+        "cancel": "Anulează"
+      },
+      "viewer": {
+        "placeholder": "Selectați o pagină pentru previzualizare",
+        "downloadPrompt": "Acest tip de fișier nu poate fi previzualizat în browser.",
+        "download": "Descarcă",
+        "loading": "Se încarcă…",
+        "error": "Eroare la încărcarea fișierului"
+      },
+      "deleteConfirm": {
+        "title": "Ștergeți pagina?",
+        "body": "Sigur doriți să ștergeți această pagină? Acțiunea nu poate fi anulată.",
+        "yes": "Șterge",
+        "no": "Anulează"
+      }
     }
   },
   "valueList": {
