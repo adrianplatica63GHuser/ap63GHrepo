@@ -71,6 +71,7 @@ Relationships: People ↔ Paperwork, People ↔ Properties, Paperwork ↔ Proper
 - Slice #8.0 — Principal Object base class + shared code counter. ✅ Complete. Full detail below.
 - Slice #9.1 — Fix Romanian diacritics in lookup tables. ✅ Complete. Full detail below.
 - Slice #9.6 — Document Pages: file upload per paperwork record. ✅ Complete. Full detail below.
+- Slice #9.7 — Reference Data: split "Services & Interests" into two separate lists under an "Others" section. ✅ Complete. Full detail below.
 
 Each slice typically lands as multiple small commits, each individually green.
 
@@ -324,6 +325,28 @@ Everything below is live in `main`. No DB schema or API changes — pure fronten
 - `displayFmtToInputMode(fmt)` maps display format → input mode: `"DD"→"DD"`, `"DMS"→"DMS"`, `"S70"→"STEREO70"`.
 - Both the Add row and Edit row receive `initialMode={displayFmtToInputMode(displayFmt)}` — no mode-selector toggle inside the row itself. The row opens directly in the right mode.
 - DMS input UI: two rows (lat / lon), each with separate `°` / `′` / `″` number fields and N/S or E/W toggle buttons. Conversion uses `decimalToDMS` / `dmsToDecimal` from `src/lib/geo/dms.ts`. Label span is `w-16` (64 px) to fit "Latitude"/"Longitude"; degree/minute inputs are `w-10`, seconds `w-16`.
+
+### Slice #9.7 — Reference Data: Services & Interests split (detail)
+
+Pure frontend + query layer — no DB schema change, no migration.
+
+**Problem**: The Reference Data page had a standalone "Services & Interests" button opening a single combined list. The user wanted two separate lists — one for Services, one for Interests — grouped under an "Others" section matching the style of Property / Person / Document.
+
+**How it works**: The `lookup_service_interest` table already has a `category` column seeded with Romanian values `'Serviciu'` (services) and `'Interes'` (interests). The new list keys filter on this column; when creating a new entry the category is injected automatically by the query layer and never exposed in the form.
+
+**What changed**
+- `src/lib/admin/value-lists/config.ts` — removed `"service-interests"`; added `"services"` and `"interests"` (both with `name`-only form field; category is implicit).
+- `src/lib/admin/value-lists/queries.ts` — replaced `"service-interests"` switch cases with `"services"` (filter/inject `category = 'Serviciu'`) and `"interests"` (filter/inject `category = 'Interes'`). Update strips `category` from the payload to prevent accidental overwrites.
+- `src/app/admin/value-lists/_components/value-list-hub.tsx` — removed standalone button; added `<Section label="Others">` with two buttons.
+- `messages/en-GB.json` + `messages/ro-RO.json` — added `valueList.sections.others`, `valueList.lists.services`, `valueList.lists.interests`; removed `valueList.lists.serviceInterests`.
+
+**Files touched**
+- `src/lib/admin/value-lists/config.ts`
+- `src/lib/admin/value-lists/queries.ts`
+- `src/app/admin/value-lists/_components/value-list-hub.tsx`
+- `messages/en-GB.json`
+- `messages/ro-RO.json`
+- `CLAUDE.md`
 
 ### Slice #9.6 — Document Pages (detail)
 
