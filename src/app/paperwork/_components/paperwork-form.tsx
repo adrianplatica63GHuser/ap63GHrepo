@@ -19,6 +19,7 @@ import {
 } from "./form-schema";
 import { PAPERWORK_TYPES, type PaperworkType } from "@/lib/paperwork/validation";
 import { getTypeConfig } from "@/lib/paperwork/type-config";
+import { PagesPanel } from "./pages-panel";
 
 // ---------------------------------------------------------------------------
 // Props
@@ -306,6 +307,17 @@ export function PaperworkForm({
           maxLength={1000}
         />
       </Section>
+      </fieldset>
+
+      {/* ── Pages panel — outside fieldset so its buttons are never ────────
+           disabled by the fieldset in view mode.
+           Only shown once the document has been saved (paperworkId present). */}
+      {mode !== "create" && paperworkId && (
+        <PagesPanel
+          paperworkId={paperworkId}
+          mode={mode === "view" ? "view" : "edit"}
+        />
+      )}
 
       {submitError && (
         <p className="text-sm text-red-600 dark:text-red-400" role="alert">
@@ -355,7 +367,6 @@ export function PaperworkForm({
           busy={submitting}
         />
       )}
-      </fieldset>
     </form>
   );
 }
