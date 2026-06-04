@@ -484,9 +484,14 @@ export const lookupInstitution = pgTable("lookup_institution", {
   updatedAt:       timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
-// ── Standalone ──────────────────────────────────────────────────────────────
+// ── Others (was lookup_service_interest, renamed in migration 011) ──────────
+//
+// General-purpose bucket for categorised lookup values that don't belong to
+// Property / Person / Document. Current categories: Serviciu, Interes, Grup,
+// Stampila. The `category` column is injected by the query layer; the UI only
+// exposes the `name` field.
 
-export const lookupServiceInterest = pgTable("lookup_service_interest", {
+export const lookupOthers = pgTable("lookup_others", {
   id:        uuid("id").primaryKey().defaultRandom(),
   name:      text("name").notNull(),
   category:  text("category"),
