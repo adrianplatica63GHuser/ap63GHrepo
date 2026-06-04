@@ -5,9 +5,10 @@
  * Each function dispatches on the ListKey string via a switch statement —
  * verbose but fully type-safe within each case.
  *
- * "services" and "interests" both operate on lookup_service_interest,
- * filtered by the category column ('Serviciu' / 'Interes'). The category
- * value is injected automatically on create and never exposed in the UI form.
+ * "services", "interests", "groups", and "stamps" all operate on
+ * lookup_others (renamed from lookup_service_interest in Slice 9.8),
+ * filtered by the category column. The category value is injected
+ * automatically on create and never exposed in the UI form.
  */
 
 import { asc, eq } from "drizzle-orm";
@@ -20,13 +21,15 @@ import {
   lookupCitizenship,
   lookupDocumentType,
   lookupInstitution,
-  lookupServiceInterest,
+  lookupOthers,
 } from "@/db/schema";
 import type { ListKey } from "./config";
 
-// Category constants — match the seeded Romanian values in lookup_service_interest.
+// Category constants — match the values stored in lookup_others.category.
 const CATEGORY_SERVICE  = "Serviciu";
 const CATEGORY_INTEREST = "Interes";
+const CATEGORY_GROUP    = "Grup";
+const CATEGORY_STAMP    = "Stampila";
 
 // Row types — inferred from the Drizzle table definitions.
 export type LookupRow = Record<string, unknown> & { id: string };
@@ -52,15 +55,27 @@ export async function listValues(key: ListKey): Promise<LookupRow[]> {
     case "services":
       return db
         .select()
-        .from(lookupServiceInterest)
-        .where(eq(lookupServiceInterest.category, CATEGORY_SERVICE))
-        .orderBy(asc(lookupServiceInterest.sortOrder)) as Promise<LookupRow[]>;
+        .from(lookupOthers)
+        .where(eq(lookupOthers.category, CATEGORY_SERVICE))
+        .orderBy(asc(lookupOthers.sortOrder)) as Promise<LookupRow[]>;
     case "interests":
       return db
         .select()
-        .from(lookupServiceInterest)
-        .where(eq(lookupServiceInterest.category, CATEGORY_INTEREST))
-        .orderBy(asc(lookupServiceInterest.sortOrder)) as Promise<LookupRow[]>;
+        .from(lookupOthers)
+        .where(eq(lookupOthers.category, CATEGORY_INTEREST))
+        .orderBy(asc(lookupOthers.sortOrder)) as Promise<LookupRow[]>;
+    case "groups":
+      return db
+        .select()
+        .from(lookupOthers)
+        .where(eq(lookupOthers.category, CATEGORY_GROUP))
+        .orderBy(asc(lookupOthers.sortOrder)) as Promise<LookupRow[]>;
+    case "stamps":
+      return db
+        .select()
+        .from(lookupOthers)
+        .where(eq(lookupOthers.category, CATEGORY_STAMP))
+        .orderBy(asc(lookupOthers.sortOrder)) as Promise<LookupRow[]>;
   }
 }
 
@@ -103,15 +118,29 @@ export async function createValue(
     case "services": {
       // Inject the fixed category so the form never has to supply it.
       const [row] = await db
-        .insert(lookupServiceInterest)
+        .insert(lookupOthers)
         .values({ ...data, category: CATEGORY_SERVICE })
         .returning();
       return row as LookupRow;
     }
     case "interests": {
       const [row] = await db
-        .insert(lookupServiceInterest)
+        .insert(lookupOthers)
         .values({ ...data, category: CATEGORY_INTEREST })
+        .returning();
+      return row as LookupRow;
+    }
+    case "groups": {
+      const [row] = await db
+        .insert(lookupOthers)
+        .values({ ...data, category: CATEGORY_GROUP })
+        .returning();
+      return row as LookupRow;
+    }
+    case "stamps": {
+      const [row] = await db
+        .insert(lookupOthers)
+        .values({ ...data, category: CATEGORY_STAMP })
         .returning();
       return row as LookupRow;
     }
@@ -156,14 +185,16 @@ export async function updateValue(
       return (row as LookupRow) ?? null;
     }
     case "services":
-    case "interests": {
+    case "interests":
+    case "groups":
+    case "stamps": {
       // Update name (and sort_order if supplied) but never touch category.
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { category: _drop, ...safeData } = data;
       const [row] = await db
-        .update(lookupServiceInterest)
+        .update(lookupOthers)
         .set(safeData)
-        .where(eq(lookupServiceInterest.id, id))
+        .where(eq(lookupOthers.id, id))
         .returning();
       return (row as LookupRow) ?? null;
     }
@@ -203,11 +234,13 @@ export async function deleteValue(key: ListKey, id: string): Promise<boolean> {
       return r.length > 0;
     }
     case "services":
-    case "interests": {
+    case "interests":
+    case "groups":
+    case "stamps": {
       const r = await db
-        .delete(lookupServiceInterest)
-        .where(eq(lookupServiceInterest.id, id))
-        .returning({ id: lookupServiceInterest.id });
+        .delete(lookupOthers)
+        .where(eq(lookupOthers.id, id))
+        .returning({ id: lookupOthers.id });
       return r.length > 0;
     }
   }

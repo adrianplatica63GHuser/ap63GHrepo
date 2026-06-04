@@ -8,8 +8,10 @@
  * and the UI's add/edit form — it is the single place to add a new column.
  *
  * NOTE: "service-interests" was replaced in Slice 9.7 by "services" and
- * "interests". Both filter the same underlying lookup_service_interest table
- * by category ('Serviciu' vs 'Interes'). The category field is injected
+ * "interests". Both filter the same underlying lookup_others table (renamed
+ * from lookup_service_interest in Slice 9.8) by category ('Serviciu' vs
+ * 'Interes'). "groups" ('Grup') and "stamps" ('Stampila') were added in
+ * Slice 9.8 and use the same table + pattern. The category field is injected
  * automatically by the query layer and is never exposed in the UI form.
  */
 
@@ -23,6 +25,8 @@ export const VALID_LIST_KEYS = [
   "institutions",
   "services",
   "interests",
+  "groups",
+  "stamps",
 ] as const;
 
 export type ListKey = (typeof VALID_LIST_KEYS)[number];
@@ -81,15 +85,23 @@ export const LIST_META: Record<ListKey, ListMeta> = {
       { key: "institutionType", labelKey: "institutionType", required: false },
     ],
   },
-  // "services" and "interests" both read from lookup_service_interest,
-  // filtered by category. The category value is injected by the query layer;
-  // the form only exposes the name field.
+  // "services", "interests", "groups", and "stamps" all read from
+  // lookup_others, filtered by category. The category value is injected by
+  // the query layer; the form only exposes the name field.
   services: {
     titleKey: "services",
     fields: [{ key: "name", labelKey: "name", required: true }],
   },
   interests: {
     titleKey: "interests",
+    fields: [{ key: "name", labelKey: "name", required: true }],
+  },
+  groups: {
+    titleKey: "groups",
+    fields: [{ key: "name", labelKey: "name", required: true }],
+  },
+  stamps: {
+    titleKey: "stamps",
     fields: [{ key: "name", labelKey: "name", required: true }],
   },
 };
