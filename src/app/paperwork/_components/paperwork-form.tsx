@@ -60,9 +60,11 @@ export function PaperworkForm({
   const selectedType = useWatch({ control: form.control, name: "type" }) as PaperworkType;
   const cfg = getTypeConfig(selectedType);
 
-  const saveDisabled =
-    submitting ||
-    (mode === "edit" && !form.formState.isDirty);
+  // Save is always available in edit/create mode. isDirty is deliberately not
+  // checked here because page uploads/deletes (which are saved immediately via
+  // their own API calls) don't touch React Hook Form state, so a strict
+  // isDirty guard would leave the button permanently disabled after page changes.
+  const saveDisabled = submitting;
 
   const onSubmit = async (values: FormValues) => {
     setSubmitting(true);
@@ -119,7 +121,11 @@ export function PaperworkForm({
 
   return (
     <div className="flex flex-col gap-4">
+    {/* id is used by the submit button's form="paperwork-form" attribute below,
+        which lets the button live outside the <form> element (after PagesPanel)
+        while still submitting this form. */}
     <form
+      id="paperwork-form"
       onSubmit={form.handleSubmit(onSubmit)}
       className="flex flex-col gap-4"
       noValidate
@@ -315,59 +321,61 @@ export function PaperworkForm({
           {submitError}
         </p>
       )}
-
-      {/* ── Action buttons — hidden in view mode ───────────────────────── */}
-      {mode !== "view" && (
-        <div className="flex items-center justify-center gap-3 border-t border-crease pt-6 dark:border-zinc-800">
-          <button
-            type="submit"
-            disabled={saveDisabled}
-            className="inline-flex items-center rounded-md bg-cta px-5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {t("buttons.save")}
-          </button>
-          {mode === "edit" && (
-            <button
-              type="button"
-              onClick={() => setConfirmDelete(true)}
-              disabled={submitting}
-              className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-red-600 shadow-sm hover:bg-red-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-red-950/30"
-            >
-              {t("buttons.delete")}
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={() => router.push("/paperwork")}
-            disabled={submitting}
-            className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-          >
-            {t("buttons.cancel")}
-          </button>
-        </div>
-      )}
-
-      {confirmDelete && (
-        <ConfirmDialog
-          title={t("confirmDelete.title")}
-          body={t("confirmDelete.body")}
-          yesLabel={t("buttons.yes")}
-          noLabel={t("buttons.no")}
-          onYes={onDelete}
-          onNo={() => setConfirmDelete(false)}
-          busy={submitting}
-        />
-      )}
     </form>
 
-    {/* ── Pages panel — rendered OUTSIDE the <form> element so that        ──
-         PagesPanel's own TanStack Query re-renders never interfere with
-         React Hook Form's isDirty / change-detection state.
-         Only visible once the document has been saved (paperworkId present). */}
+    {/* ── Pages panel — outside <form> so its TanStack Query re-renders
+         never interfere with React Hook Form state. Only shown once the
+         document has been saved (paperworkId present). ─────────────────── */}
     {mode !== "create" && paperworkId && (
       <PagesPanel
         paperworkId={paperworkId}
         mode={mode === "view" ? "view" : "edit"}
+      />
+    )}
+
+    {/* ── Action buttons — at the very bottom, after PagesPanel ────────────
+         The submit button uses form="paperwork-form" so it targets the <form>
+         above even though it lives outside it (standard HTML5). ─────────── */}
+    {mode !== "view" && (
+      <div className="flex items-center justify-center gap-3 border-t border-crease pt-6 dark:border-zinc-800">
+        <button
+          type="submit"
+          form="paperwork-form"
+          disabled={saveDisabled}
+          className="inline-flex items-center rounded-md bg-cta px-5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {t("buttons.save")}
+        </button>
+        {mode === "edit" && (
+          <button
+            type="button"
+            onClick={() => setConfirmDelete(true)}
+            disabled={submitting}
+            className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-red-600 shadow-sm hover:bg-red-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-red-950/30"
+          >
+            {t("buttons.delete")}
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={() => router.push("/paperwork")}
+          disabled={submitting}
+          className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+        >
+          {t("buttons.cancel")}
+        </button>
+      </div>
+    )}
+
+    {confirmDelete && (
+      <ConfirmDialog
+        title={t("confirmDelete.title")}
+        body={t("confirmDelete.body")}
+        yesLabel={t("buttons.yes")}
+        noLabel={t("buttons.no")}
+        onYes={onDelete}
+        onNo={() => setConfirmDelete(false)}
+        busy={submitting}
       />
     )}
     </div>
