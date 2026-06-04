@@ -1,9 +1,13 @@
 /**
- * DB query helpers for the eight value-list tables.
+ * DB query helpers for the admin value-list tables.
  *
  * All operations are hard-deletes (no soft-delete on lookup tables).
  * Each function dispatches on the ListKey string via a switch statement —
  * verbose but fully type-safe within each case.
+ *
+ * "services" and "interests" both operate on lookup_service_interest,
+ * filtered by the category column ('Serviciu' / 'Interes'). The category
+ * value is injected automatically on create and never exposed in the UI form.
  */
 
 import { asc, eq } from "drizzle-orm";
@@ -19,6 +23,10 @@ import {
   lookupServiceInterest,
 } from "@/db/schema";
 import type { ListKey } from "./config";
+
+// Category constants — match the seeded Romanian values in lookup_service_interest.
+const CATEGORY_SERVICE  = "Serviciu";
+const CATEGORY_INTEREST = "Interes";
 
 // Row types — inferred from the Drizzle table definitions.
 export type LookupRow = Record<string, unknown> & { id: string };
@@ -41,8 +49,18 @@ export async function listValues(key: ListKey): Promise<LookupRow[]> {
       return db.select().from(lookupDocumentType).orderBy(asc(lookupDocumentType.sortOrder)) as Promise<LookupRow[]>;
     case "institutions":
       return db.select().from(lookupInstitution).orderBy(asc(lookupInstitution.sortOrder)) as Promise<LookupRow[]>;
-    case "service-interests":
-      return db.select().from(lookupServiceInterest).orderBy(asc(lookupServiceInterest.sortOrder)) as Promise<LookupRow[]>;
+    case "services":
+      return db
+        .select()
+        .from(lookupServiceInterest)
+        .where(eq(lookupServiceInterest.category, CATEGORY_SERVICE))
+        .orderBy(asc(lookupServiceInterest.sortOrder)) as Promise<LookupRow[]>;
+    case "interests":
+      return db
+        .select()
+        .from(lookupServiceInterest)
+        .where(eq(lookupServiceInterest.category, CATEGORY_INTEREST))
+        .orderBy(asc(lookupServiceInterest.sortOrder)) as Promise<LookupRow[]>;
   }
 }
 
@@ -82,8 +100,19 @@ export async function createValue(
       const [row] = await db.insert(lookupInstitution).values(data).returning();
       return row as LookupRow;
     }
-    case "service-interests": {
-      const [row] = await db.insert(lookupServiceInterest).values(data).returning();
+    case "services": {
+      // Inject the fixed category so the form never has to supply it.
+      const [row] = await db
+        .insert(lookupServiceInterest)
+        .values({ ...data, category: CATEGORY_SERVICE })
+        .returning();
+      return row as LookupRow;
+    }
+    case "interests": {
+      const [row] = await db
+        .insert(lookupServiceInterest)
+        .values({ ...data, category: CATEGORY_INTEREST })
+        .returning();
       return row as LookupRow;
     }
   }
@@ -126,8 +155,16 @@ export async function updateValue(
       const [row] = await db.update(lookupInstitution).set(data).where(eq(lookupInstitution.id, id)).returning();
       return (row as LookupRow) ?? null;
     }
-    case "service-interests": {
-      const [row] = await db.update(lookupServiceInterest).set(data).where(eq(lookupServiceInterest.id, id)).returning();
+    case "services":
+    case "interests": {
+      // Update name (and sort_order if supplied) but never touch category.
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { category: _drop, ...safeData } = data;
+      const [row] = await db
+        .update(lookupServiceInterest)
+        .set(safeData)
+        .where(eq(lookupServiceInterest.id, id))
+        .returning();
       return (row as LookupRow) ?? null;
     }
   }
@@ -165,8 +202,12 @@ export async function deleteValue(key: ListKey, id: string): Promise<boolean> {
       const r = await db.delete(lookupInstitution).where(eq(lookupInstitution.id, id)).returning({ id: lookupInstitution.id });
       return r.length > 0;
     }
-    case "service-interests": {
-      const r = await db.delete(lookupServiceInterest).where(eq(lookupServiceInterest.id, id)).returning({ id: lookupServiceInterest.id });
+    case "services":
+    case "interests": {
+      const r = await db
+        .delete(lookupServiceInterest)
+        .where(eq(lookupServiceInterest.id, id))
+        .returning({ id: lookupServiceInterest.id });
       return r.length > 0;
     }
   }

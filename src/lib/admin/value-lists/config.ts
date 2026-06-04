@@ -1,11 +1,16 @@
 /**
- * Configuration for the eight admin value lists.
+ * Configuration for the admin value lists.
  *
  * `VALID_LIST_KEYS` is the canonical set of URL-safe slugs used in
  * /api/admin/value-lists/[list] and the UI.
  *
  * `LIST_META` provides field metadata consumed by the API validation layer
  * and the UI's add/edit form — it is the single place to add a new column.
+ *
+ * NOTE: "service-interests" was replaced in Slice 9.7 by "services" and
+ * "interests". Both filter the same underlying lookup_service_interest table
+ * by category ('Serviciu' vs 'Interes'). The category field is injected
+ * automatically by the query layer and is never exposed in the UI form.
  */
 
 export const VALID_LIST_KEYS = [
@@ -16,7 +21,8 @@ export const VALID_LIST_KEYS = [
   "citizenships",
   "document-types",
   "institutions",
-  "service-interests",
+  "services",
+  "interests",
 ] as const;
 
 export type ListKey = (typeof VALID_LIST_KEYS)[number];
@@ -75,11 +81,15 @@ export const LIST_META: Record<ListKey, ListMeta> = {
       { key: "institutionType", labelKey: "institutionType", required: false },
     ],
   },
-  "service-interests": {
-    titleKey: "serviceInterests",
-    fields: [
-      { key: "name",     labelKey: "name",     required: true  },
-      { key: "category", labelKey: "category", required: false },
-    ],
+  // "services" and "interests" both read from lookup_service_interest,
+  // filtered by category. The category value is injected by the query layer;
+  // the form only exposes the name field.
+  services: {
+    titleKey: "services",
+    fields: [{ key: "name", labelKey: "name", required: true }],
+  },
+  interests: {
+    titleKey: "interests",
+    fields: [{ key: "name", labelKey: "name", required: true }],
   },
 };
