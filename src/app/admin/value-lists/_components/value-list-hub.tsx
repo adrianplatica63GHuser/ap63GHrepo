@@ -81,13 +81,11 @@ export function ValueListHub() {
           <ListBtn label={t("lists.institutions")}  onClick={() => open("institutions")} />
         </Section>
 
-        {/* ── Servicii & Interese (standalone) ── */}
-        <div className="flex">
-          <ListBtn
-            label={t("lists.serviceInterests")}
-            onClick={() => open("service-interests")}
-          />
-        </div>
+        {/* ── Others ── */}
+        <Section label={t("sections.others")}>
+          <ListBtn label={t("lists.services")}  onClick={() => open("services")} />
+          <ListBtn label={t("lists.interests")} onClick={() => open("interests")} />
+        </Section>
       </div>
 
       {openList && (
