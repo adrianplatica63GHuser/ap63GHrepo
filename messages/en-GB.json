@@ -713,7 +713,9 @@
       "documentTypes": "Document Types",
       "institutions": "Institutions",
       "services": "Services",
-      "interests": "Interests"
+      "interests": "Interests",
+      "groups": "Groups",
+      "stamps": "Stamps"
     },
     "fields": {
       "name": "Name",

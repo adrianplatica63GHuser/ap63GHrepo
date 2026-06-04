@@ -713,7 +713,9 @@
       "documentTypes": "Tipuri de Document",
       "institutions": "Instituții",
       "services": "Servicii",
-      "interests": "Interese"
+      "interests": "Interese",
+      "groups": "Grupuri",
+      "stamps": "Ștampile"
     },
     "fields": {
       "name": "Denumire",
