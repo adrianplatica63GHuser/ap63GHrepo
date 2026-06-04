@@ -85,6 +85,8 @@ export function ValueListHub() {
         <Section label={t("sections.others")}>
           <ListBtn label={t("lists.services")}  onClick={() => open("services")} />
           <ListBtn label={t("lists.interests")} onClick={() => open("interests")} />
+          <ListBtn label={t("lists.groups")}    onClick={() => open("groups")} />
+          <ListBtn label={t("lists.stamps")}    onClick={() => open("stamps")} />
         </Section>
       </div>
 
