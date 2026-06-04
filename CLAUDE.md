@@ -72,6 +72,7 @@ Relationships: People ↔ Paperwork, People ↔ Properties, Paperwork ↔ Proper
 - Slice #9.1 — Fix Romanian diacritics in lookup tables. ✅ Complete. Full detail below.
 - Slice #9.6 — Document Pages: file upload per paperwork record. ✅ Complete. Full detail below.
 - Slice #9.7 — Reference Data: split "Services & Interests" into two separate lists under an "Others" section. ✅ Complete. Full detail below.
+- Slice #9.8 — Reference Data: rename lookup table + add Groups and Stamps lists. ✅ Complete. Full detail below.
 
 Each slice typically lands as multiple small commits, each individually green.
 
@@ -325,6 +326,44 @@ Everything below is live in `main`. No DB schema or API changes — pure fronten
 - `displayFmtToInputMode(fmt)` maps display format → input mode: `"DD"→"DD"`, `"DMS"→"DMS"`, `"S70"→"STEREO70"`.
 - Both the Add row and Edit row receive `initialMode={displayFmtToInputMode(displayFmt)}` — no mode-selector toggle inside the row itself. The row opens directly in the right mode.
 - DMS input UI: two rows (lat / lon), each with separate `°` / `′` / `″` number fields and N/S or E/W toggle buttons. Conversion uses `decimalToDMS` / `dmsToDecimal` from `src/lib/geo/dms.ts`. Label span is `w-16` (64 px) to fit "Latitude"/"Longitude"; degree/minute inputs are `w-10`, seconds `w-16`.
+
+### Slice #9.8 — Reference Data: lookup rename + Groups & Stamps (detail)
+
+Pure frontend + query layer + DB rename — no new columns, no data changes.
+
+**Problem**: The `lookup_service_interest` table name no longer reflected its scope (it already held four categories after Slice 9.7). The user wanted two more lists — Groups and Stamps — under the existing "Others" section.
+
+**DB migration (`src/db/migration_011_lookup_others.sql`)**
+- `ALTER TABLE lookup_service_interest RENAME TO lookup_others;`
+- PostgreSQL preserves triggers on table rename; no trigger changes needed.
+
+**Schema (`src/db/schema/index.ts`)**
+- Export `lookupServiceInterest` renamed to `lookupOthers`; table name string changed to `"lookup_others"`.
+
+**Config (`src/lib/admin/value-lists/config.ts`)**
+- Added `"groups"` and `"stamps"` to `VALID_LIST_KEYS` and `LIST_META` (`name`-only field, same pattern as services/interests).
+
+**Queries (`src/lib/admin/value-lists/queries.ts`)**
+- Import updated to `lookupOthers`.
+- Added `CATEGORY_GROUP = "Grup"` and `CATEGORY_STAMP = "Stampila"` constants.
+- Added `"groups"` and `"stamps"` cases to all four switch statements (list, create, update, delete). Update and delete fall through the existing `services`/`interests` case group.
+
+**Hub UI (`src/app/admin/value-lists/_components/value-list-hub.tsx`)**
+- Added two `<ListBtn>` for Groups and Stamps in the Others section.
+
+**i18n**
+- `messages/en-GB.json`: added `valueList.lists.groups = "Groups"`, `valueList.lists.stamps = "Stamps"`.
+- `messages/ro-RO.json`: added `valueList.lists.groups = "Grupuri"`, `valueList.lists.stamps = "Ștampile"`.
+
+**Files touched**
+- `src/db/migration_011_lookup_others.sql` (new)
+- `src/db/schema/index.ts`
+- `src/lib/admin/value-lists/config.ts`
+- `src/lib/admin/value-lists/queries.ts`
+- `src/app/admin/value-lists/_components/value-list-hub.tsx`
+- `messages/en-GB.json`
+- `messages/ro-RO.json`
+- `CLAUDE.md`
 
 ### Slice #9.7 — Reference Data: Services & Interests split (detail)
 
