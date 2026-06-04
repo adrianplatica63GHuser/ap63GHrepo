@@ -691,6 +691,41 @@ export const personPerson = pgTable(
   ],
 );
 
+// ---------------------------------------------------------------------------
+// paperwork_page — uploaded file pages attached to a paperwork record
+// ---------------------------------------------------------------------------
+//
+// One row per uploaded file. File is stored either on the local filesystem
+// (development) or in Supabase Storage bucket "paperwork-pages" (production).
+// `file_path` is the storage key in both cases.
+
+export const paperworkPage = pgTable(
+  "paperwork_page",
+  {
+    id:          uuid("id").primaryKey().defaultRandom(),
+    paperworkId: uuid("paperwork_id")
+      .notNull()
+      .references(() => paperwork.id, { onDelete: "cascade" }),
+    pageNumber:  integer("page_number").notNull(),
+    pageName:    text("page_name"),
+    pageNotes:   text("page_notes"),
+    // Original filename as uploaded by the user, e.g. "scan001.pdf"
+    fileName:    text("file_name").notNull(),
+    // Storage path/key, e.g. "paperwork-pages/{paperworkId}/{pageId}.pdf"
+    filePath:    text("file_path").notNull(),
+    fileSize:    integer("file_size"),     // bytes
+    mimeType:    text("mime_type"),
+    createdAt:   timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt:   timestamp("updated_at",  { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("paperwork_page_paperwork_number_unique").on(
+      t.paperworkId,
+      t.pageNumber,
+    ),
+  ],
+);
+
 // paperwork <-> paperwork  (self-ref, symmetric; id_a < id_b enforced by CHECK)
 export const paperworkPaperwork = pgTable(
   "paperwork_paperwork",
