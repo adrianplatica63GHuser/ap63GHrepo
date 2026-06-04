@@ -118,6 +118,7 @@ export function PaperworkForm({
   const errors = formState.errors;
 
   return (
+    <div className="flex flex-col gap-4">
     <form
       onSubmit={form.handleSubmit(onSubmit)}
       className="flex flex-col gap-4"
@@ -309,16 +310,6 @@ export function PaperworkForm({
       </Section>
       </fieldset>
 
-      {/* ── Pages panel — outside fieldset so its buttons are never ────────
-           disabled by the fieldset in view mode.
-           Only shown once the document has been saved (paperworkId present). */}
-      {mode !== "create" && paperworkId && (
-        <PagesPanel
-          paperworkId={paperworkId}
-          mode={mode === "view" ? "view" : "edit"}
-        />
-      )}
-
       {submitError && (
         <p className="text-sm text-red-600 dark:text-red-400" role="alert">
           {submitError}
@@ -368,6 +359,18 @@ export function PaperworkForm({
         />
       )}
     </form>
+
+    {/* ── Pages panel — rendered OUTSIDE the <form> element so that        ──
+         PagesPanel's own TanStack Query re-renders never interfere with
+         React Hook Form's isDirty / change-detection state.
+         Only visible once the document has been saved (paperworkId present). */}
+    {mode !== "create" && paperworkId && (
+      <PagesPanel
+        paperworkId={paperworkId}
+        mode={mode === "view" ? "view" : "edit"}
+      />
+    )}
+    </div>
   );
 }
 
