@@ -6,6 +6,8 @@
  */
 
 import type { NextRequest } from "next/server";
+
+export const dynamic = "force-dynamic";
 import {
   unexpectedError,
   zodErrorToResponse,
@@ -25,6 +27,7 @@ export async function GET(_req: NextRequest, ctx: Ctx): Promise<Response> {
 
   try {
     const rows = await listValues(list);
+    if (rows[0]) console.log("DEBUG name hex:", Buffer.from(rows[0].name as string).toString("hex"));
     return Response.json({ items: rows, total: rows.length });
   } catch (err) {
     return unexpectedError(err, `GET /api/admin/value-lists/${list}`);

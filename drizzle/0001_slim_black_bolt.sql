@@ -1,3 +1,5 @@
+-- Sequence must exist before the property table references it in its DEFAULT expression.
+CREATE SEQUENCE "property_code_seq" START 1;--> statement-breakpoint
 CREATE TYPE "public"."property_type" AS ENUM('LAND');--> statement-breakpoint
 CREATE TYPE "public"."use_category" AS ENUM('CATEG1', 'CATEG2', 'CATEG3');--> statement-breakpoint
 CREATE TABLE "property" (
@@ -45,8 +47,6 @@ ALTER TABLE "property_address" ADD CONSTRAINT "property_address_property_id_prop
 ALTER TABLE "property_corner" ADD CONSTRAINT "property_corner_property_id_property_id_fk" FOREIGN KEY ("property_id") REFERENCES "public"."property"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE UNIQUE INDEX "property_address_property_unique" ON "property_address" USING btree ("property_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "property_corner_property_seq_unique" ON "property_corner" USING btree ("property_id","sequence_no");--> statement-breakpoint
--- Sequence used by property.code default expression.
-CREATE SEQUENCE "property_code_seq" START 1;--> statement-breakpoint
 -- Partial unique index: cadastral_number is unique when present.
 CREATE UNIQUE INDEX "property_cadastral_number_unique"
   ON "property" ("cadastral_number")

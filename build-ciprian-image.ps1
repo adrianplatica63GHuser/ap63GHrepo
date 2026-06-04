@@ -12,7 +12,7 @@
 #
 # What this script does:
 #   1. Reads NEXT_PUBLIC_* values from your .env file
-#   2. Builds the Docker image (takes 3-10 minutes on first run; faster after)
+#   2. Builds the Docker image (takes 5-10 min on first run; faster after)
 #   3. Exports the image to C:\dev\ga40prj.Ciprian\docker\app\ga40prj-app.tar
 #   4. Copies the latest schema migration SQL into the Ciprian init folder
 #
@@ -23,7 +23,7 @@
 
 $ErrorActionPreference = "Stop"
 
-# ── Step 0: sanity checks ─────────────────────────────────────────────────────
+# ---- Step 0: sanity checks ---------------------------------------------------
 
 if (-not (Test-Path ".env")) {
     Write-Host "ERROR: .env not found. Run this script from C:\dev\ga40prj\" -ForegroundColor Red
@@ -36,7 +36,7 @@ if (-not (Test-Path $ciprianRoot)) {
     exit 1
 }
 
-# ── Step 1: read NEXT_PUBLIC_* from .env ──────────────────────────────────────
+# ---- Step 1: read NEXT_PUBLIC_* from .env ------------------------------------
 
 $envVars = @{}
 Get-Content ".env" | ForEach-Object {
@@ -45,16 +45,22 @@ Get-Content ".env" | ForEach-Object {
     }
 }
 
-$mapsKey   = $envVars['NEXT_PUBLIC_GOOGLE_MAPS_API_KEY']
-$mapsMapId = if ($envVars.ContainsKey('NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID')) { $envVars['NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID'] } else { 'DEMO_MAP_ID' }
-$sbUrl     = $envVars['NEXT_PUBLIC_SUPABASE_URL']
-$sbAnon    = $envVars['NEXT_PUBLIC_SUPABASE_ANON_KEY']
+$mapsKey = $envVars['NEXT_PUBLIC_GOOGLE_MAPS_API_KEY']
 
-if (-not $mapsKey) {
-    Write-Host "WARNING: NEXT_PUBLIC_GOOGLE_MAPS_API_KEY not found in .env — maps will not work." -ForegroundColor Yellow
+if ($envVars.ContainsKey('NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID')) {
+    $mapsMapId = $envVars['NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID']
+} else {
+    $mapsMapId = 'DEMO_MAP_ID'
 }
 
-# ── Step 2: build the Docker image ────────────────────────────────────────────
+$sbUrl  = $envVars['NEXT_PUBLIC_SUPABASE_URL']
+$sbAnon = $envVars['NEXT_PUBLIC_SUPABASE_ANON_KEY']
+
+if (-not $mapsKey) {
+    Write-Host "WARNING: NEXT_PUBLIC_GOOGLE_MAPS_API_KEY not found in .env -- maps will not work." -ForegroundColor Yellow
+}
+
+# ---- Step 2: build the Docker image ------------------------------------------
 
 Write-Host ""
 Write-Host "Building GA40 UAT Docker image..." -ForegroundColor Cyan
@@ -79,7 +85,7 @@ if ($LASTEXITCODE -ne 0) {
 Write-Host ""
 Write-Host "Build successful." -ForegroundColor Green
 
-# ── Step 3: export the image ──────────────────────────────────────────────────
+# ---- Step 3: export the image ------------------------------------------------
 
 $outputDir = "$ciprianRoot\docker\app"
 $outputTar = "$outputDir\ga40prj-app.tar"
@@ -88,7 +94,7 @@ New-Item -ItemType Directory -Force -Path $outputDir | Out-Null
 
 Write-Host ""
 Write-Host "Exporting image to $outputTar ..." -ForegroundColor Cyan
-Write-Host "(This can take 1-2 minutes — the file will be ~600-800 MB uncompressed.)"
+Write-Host "(This can take 1-2 minutes -- the file will be ~600-800 MB uncompressed.)"
 Write-Host ""
 
 docker save ga40prj-app:latest -o $outputTar
@@ -100,11 +106,10 @@ if ($LASTEXITCODE -ne 0) {
 
 Write-Host "Export complete." -ForegroundColor Green
 
-# ── Step 4: copy latest schema SQL into Ciprian's init folder ─────────────────
+# ---- Step 4: copy latest schema SQL into Ciprian's init folder ---------------
 # This file is the combined SQL migration applied to a fresh Postgres instance.
-# It is gitignored in the dev repo; generate it with:
+# Generate it with:
 #   pg_dump --schema-only --no-owner --no-privileges -d ga40db > supabase_migrations.sql
-# OR just paste the content of your drizzle migrations folder.
 
 $schemaSrc  = "supabase_migrations.sql"
 $schemaDest = "$ciprianRoot\docker\postgres\init\02-schema.sql"
@@ -115,12 +120,12 @@ if (Test-Path $schemaSrc) {
     Write-Host "Schema SQL copied to Ciprian's init folder." -ForegroundColor Green
 } else {
     Write-Host ""
-    Write-Host "WARNING: supabase_migrations.sql not found — skipping schema copy." -ForegroundColor Yellow
+    Write-Host "WARNING: supabase_migrations.sql not found -- skipping schema copy." -ForegroundColor Yellow
     Write-Host "         Ciprian will need to apply the schema manually via pgAdmin on first run."
     Write-Host "         Generate it with: pg_dump --schema-only --no-owner -d ga40db > supabase_migrations.sql"
 }
 
-# ── Done ──────────────────────────────────────────────────────────────────────
+# ---- Done --------------------------------------------------------------------
 
 Write-Host ""
 Write-Host "=====================================================" -ForegroundColor Green

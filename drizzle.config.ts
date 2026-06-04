@@ -18,7 +18,10 @@ export default defineConfig({
   dbCredentials: {
     // Prefer DIRECT_URL for migrations (Supabase); fall back to DATABASE_URL
     // for local Docker where there is no pooler to bypass.
-    url: (process.env.DIRECT_URL ?? process.env.DATABASE_URL)!,
+    // || (not ??) so that an empty string DIRECT_URL falls through to DATABASE_URL.
+    // Set DIRECT_URL="" in the shell to force local-Docker migrations even when
+    // DIRECT_URL is populated in .env (e.g. pointing at Supabase).
+    url: (process.env.DIRECT_URL || process.env.DATABASE_URL)!,
   },
   // Tell drizzle-kit our DB has the postgis extension installed so it
   // doesn't try to manage anything in postgis-owned schemas.

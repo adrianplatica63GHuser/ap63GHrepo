@@ -69,6 +69,7 @@ Relationships: People ↔ Paperwork, People ↔ Properties, Paperwork ↔ Proper
 - Slice #7.2 — Push auth to GitHub / Vercel. ✅ Complete.
 - Slice #7.3 — Fix TypeScript build error in `proxy.ts`. ✅ Complete. Full detail below.
 - Slice #8.0 — Principal Object base class + shared code counter. ✅ Complete. Full detail below.
+- Slice #9.1 — Fix Romanian diacritics in lookup tables. ✅ Complete. Full detail below.
 
 Each slice typically lands as multiple small commits, each individually green.
 
@@ -322,6 +323,26 @@ Everything below is live in `main`. No DB schema or API changes — pure fronten
 - `displayFmtToInputMode(fmt)` maps display format → input mode: `"DD"→"DD"`, `"DMS"→"DMS"`, `"S70"→"STEREO70"`.
 - Both the Add row and Edit row receive `initialMode={displayFmtToInputMode(displayFmt)}` — no mode-selector toggle inside the row itself. The row opens directly in the right mode.
 - DMS input UI: two rows (lat / lon), each with separate `°` / `′` / `″` number fields and N/S or E/W toggle buttons. Conversion uses `decimalToDMS` / `dmsToDecimal` from `src/lib/geo/dms.ts`. Label span is `w-16` (64 px) to fit "Latitude"/"Longitude"; degree/minute inputs are `w-10`, seconds `w-16`.
+
+### Slice #9.1 — Fix Romanian diacritics in lookup tables (detail)
+
+Pure data fix — no schema, API, or UI changes.
+
+**Root cause**: The eight lookup tables (`lookup_person_type`, `lookup_citizenship`, `lookup_property_type`, `lookup_use_category`, `lookup_document_type`, `lookup_institution`, `lookup_service_interest`, `lookup_tarla`) were seeded via a DB connection that was not in UTF-8 mode. Each 2-byte UTF-8 diacritic sequence was stored as two latin1 `?` characters (e.g. "Persoană" → "Persoan??").
+
+**Fix**: `src/db/migration_009_fix_diacritics.sql` — 61 UPDATE statements keyed on `sort_order` (since names were corrupted and could not be matched). Idempotent; safe to re-run.
+
+**Delivery note**: PowerShell's `Get-Content | docker exec -i` pipe corrupts UTF-8. Always use `docker cp` + `psql -f` to apply SQL files containing diacritics:
+```powershell
+docker cp <file.sql> <container>:/tmp/fix.sql
+docker exec <container> psql -U postgres -d ga40db -f /tmp/fix.sql
+```
+
+**Applied to**: local Docker (`ga40prj-postgres`). Must also be applied to Ciprian UAT (`ciprian-ga40prj-postgres`) and Supabase (SQL Editor).
+
+**Files touched**
+- `src/db/migration_009_fix_diacritics.sql` (new)
+- `CLAUDE.md`
 
 ### Slice #8.0 — Principal Object base class + shared code counter (detail)
 
