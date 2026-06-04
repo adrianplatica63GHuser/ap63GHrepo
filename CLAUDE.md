@@ -70,6 +70,7 @@ Relationships: People ↔ Paperwork, People ↔ Properties, Paperwork ↔ Proper
 - Slice #7.3 — Fix TypeScript build error in `proxy.ts`. ✅ Complete. Full detail below.
 - Slice #8.0 — Principal Object base class + shared code counter. ✅ Complete. Full detail below.
 - Slice #9.1 — Fix Romanian diacritics in lookup tables. ✅ Complete. Full detail below.
+- Slice #9.6 — Document Pages: file upload per paperwork record. ✅ Complete. Full detail below.
 
 Each slice typically lands as multiple small commits, each individually green.
 
@@ -324,6 +325,72 @@ Everything below is live in `main`. No DB schema or API changes — pure fronten
 - Both the Add row and Edit row receive `initialMode={displayFmtToInputMode(displayFmt)}` — no mode-selector toggle inside the row itself. The row opens directly in the right mode.
 - DMS input UI: two rows (lat / lon), each with separate `°` / `′` / `″` number fields and N/S or E/W toggle buttons. Conversion uses `decimalToDMS` / `dmsToDecimal` from `src/lib/geo/dms.ts`. Label span is `w-16` (64 px) to fit "Latitude"/"Longitude"; degree/minute inputs are `w-10`, seconds `w-16`.
 
+### Slice #9.6 — Document Pages (detail)
+
+Adds a **Pages panel** to every Paperwork form (edit and view modes). Each page is a user-uploaded file (image, PDF, Word, Excel, plain text, etc.) with an optional name and notes.
+
+**What changed**
+
+**DB schema + migration**
+- New table `paperwork_page`: `id`, `paperwork_id` (FK → paperwork ON DELETE CASCADE), `page_number` (integer, UNIQUE per paperwork), `page_name`, `page_notes`, `file_name` (original filename), `file_path` (storage key), `file_size`, `mime_type`, `created_at`, `updated_at`.
+- `src/db/migration_010_paperwork_pages.sql` — creates the table and the `touch_updated_at` trigger.
+
+**File storage (`src/lib/storage/index.ts`)**
+- Dev (`NODE_ENV !== "production"`): files written to `<project-root>/uploads/<filePath>`; served by the new `/api/files/[...path]` route.
+- Prod (`NODE_ENV === "production"`): files stored in Supabase Storage bucket `paperwork-pages`; served via 60-second signed URLs.
+- API: `uploadFile(buffer, filePath, mimeType)`, `deleteFile(filePath)`, `getFileUrl(filePath) → string`.
+
+**`/uploads/` directory**: gitignored (added to `.gitignore`).
+
+**Local dev file server (`src/app/api/files/[...path]/route.ts`)**
+- `GET /api/files/[...path]` — streams a file from `<project-root>/uploads/`, path-traversal guarded.
+- Returns 404 in production.
+
+**Query layer (`src/lib/paperwork/pages-queries.ts`)**
+- `listPaperworkPages(paperworkId)`, `getPaperworkPage(pageId)`, `createPaperworkPage(data)`, `deletePaperworkPage(pageId)`.
+
+**API routes**
+- `GET  /api/paperwork/[id]/pages` — list pages.
+- `POST /api/paperwork/[id]/pages` — upload file + create page (multipart/form-data; max 20 MB; blocks `.js/.sh/.exe` MIME types).
+- `DELETE /api/paperwork/[id]/pages/[pageId]` — delete storage object + DB row.
+- `GET /api/paperwork/[id]/pages/[pageId]/view` — returns `{ url, mimeType, fileName }` (signed URL or `/api/files/…` in dev).
+
+**UI (`src/app/paperwork/_components/pages-panel.tsx`)**
+- Responsive dual-pane: viewer (left, `flex-1`) + table (right, `w-[380px]`) on `lg:` screens; stacked (table above, viewer below) on smaller screens.
+- Viewer renders: images (`<img>`), PDFs (`<iframe h-[600px]>`), all other types → download prompt + file icon.
+- Table columns: `#`, Page Name, Notes (hidden on mobile), Actions (`View` / `Print` / `Delete`).
+  - Clicking a row = clicking View (loads the viewer).
+  - **Print**: fetches view URL and opens it in a new tab (`window.open`).
+  - **Delete**: shows a confirm dialog; deletes storage object + DB row.
+- **Add Page dialog**: Page Number (auto-defaults to next), Page Name (optional), Page Notes (optional), Upload button. File is staged in React state until Save — no orphan uploads. 20 MB guard on file select.
+- Only shown when `paperworkId` exists (edit/view mode). Not rendered in create mode.
+
+**PaperworkForm changes (`src/app/paperwork/_components/paperwork-form.tsx`)**
+- `PagesPanel` imported and rendered after the Notes section, **outside the `<fieldset disabled={...}>` wrapper** so its buttons remain interactive in view mode.
+- Action buttons (Save / Delete / Cancel) and the ConfirmDelete dialog also moved outside the fieldset (behaviour unchanged — they were already gated by `mode !== "view"`).
+
+**i18n**
+- Added `paperwork.pages.*` namespace to both `messages/en-GB.json` and `messages/ro-RO.json`.
+
+**Supabase setup (production)**
+- Create a private Storage bucket named `paperwork-pages` in the Supabase dashboard before deploying to production. No public URL needed.
+
+**Files touched**
+- `src/db/schema/index.ts`
+- `src/db/migration_010_paperwork_pages.sql` (new)
+- `src/lib/storage/index.ts` (new)
+- `src/app/api/files/[...path]/route.ts` (new)
+- `src/lib/paperwork/pages-queries.ts` (new)
+- `src/app/api/paperwork/[id]/pages/route.ts` (new)
+- `src/app/api/paperwork/[id]/pages/[pageId]/route.ts` (new)
+- `src/app/api/paperwork/[id]/pages/[pageId]/view/route.ts` (new)
+- `src/app/paperwork/_components/pages-panel.tsx` (new)
+- `src/app/paperwork/_components/paperwork-form.tsx`
+- `messages/en-GB.json`
+- `messages/ro-RO.json`
+- `.gitignore`
+- `CLAUDE.md`
+
 ### Slice #9.1 — Fix Romanian diacritics in lookup tables (detail)
 
 Pure data fix — no schema, API, or UI changes.
@@ -482,6 +549,9 @@ Rules:
 - **Google Maps height chain.** `<Map style={{ height: "100%" }}>` only resolves when every ancestor has a concrete pixel height. `flex-1` alone (flex-algorithm height) does not satisfy this — wrap the map container in `<div className="relative flex-1 min-h-0"><div className="absolute inset-0">...</div></div>` to give it a concrete bounding box.
 - **`@vis.gl/react-google-maps` event types differ by component.** `Map` component events give `MapMouseEvent` (library type) where `latLng` is a plain literal accessed as `event.detail.latLng?.lat` (property). `AdvancedMarker` drag events give `google.maps.MapMouseEvent` where `latLng` is a `LatLng` object accessed as `e.latLng?.lat()` (method call). Mixing these up is a silent runtime bug.
 - **4-column grid: skip the 3-column step.** For `columns={4}` in the `Section` helper, use `"grid grid-cols-2 gap-4 md:grid-cols-4"` — do not add a `md:grid-cols-3` intermediate. At common "half-width browser" sizes (768–1023 px) the 3-column class strands the layout on 3 columns instead of 4.
+- **DB migration reminders — display these at the start of any migration step:**
+  - *Local Docker:* `db:migrate` uses `DIRECT_URL` if set (Supabase), otherwise `DATABASE_URL` (local Docker). Make sure `DIRECT_URL` is **not** set in `.env` when migrating locally.
+  - *Supabase:* Before running `db:migrate` against Supabase, set `DIRECT_URL` to the direct connection string (port 5432, `?sslmode=require`): `DIRECT_URL=postgresql://postgres.[ref]:[password]@db.[ref].supabase.co:5432/postgres?sslmode=require`. Remove it again afterwards to avoid accidentally targeting Supabase during local dev.
 
 ## Key paths
 
