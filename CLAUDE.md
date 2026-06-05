@@ -73,6 +73,7 @@ Relationships: People ↔ Paperwork, People ↔ Properties, Paperwork ↔ Proper
 - Slice #9.6 — Document Pages: file upload per paperwork record. ✅ Complete. Full detail below.
 - Slice #9.7 — Reference Data: split "Services & Interests" into two separate lists under an "Others" section. ✅ Complete. Full detail below.
 - Slice #9.8 — Reference Data: rename lookup table + add Groups and Stamps lists. ✅ Complete. Full detail below.
+- Slice #9.9 — Reference Data: Description field on Services, Interests, Groups, Stamps. ✅ Complete. Full detail below.
 
 Each slice typically lands as multiple small commits, each individually green.
 
@@ -326,6 +327,47 @@ Everything below is live in `main`. No DB schema or API changes — pure fronten
 - `displayFmtToInputMode(fmt)` maps display format → input mode: `"DD"→"DD"`, `"DMS"→"DMS"`, `"S70"→"STEREO70"`.
 - Both the Add row and Edit row receive `initialMode={displayFmtToInputMode(displayFmt)}` — no mode-selector toggle inside the row itself. The row opens directly in the right mode.
 - DMS input UI: two rows (lat / lon), each with separate `°` / `′` / `″` number fields and N/S or E/W toggle buttons. Conversion uses `decimalToDMS` / `dmsToDecimal` from `src/lib/geo/dms.ts`. Label span is `w-16` (64 px) to fit "Latitude"/"Longitude"; degree/minute inputs are `w-10`, seconds `w-16`.
+
+### Slice #9.9 — Reference Data: Description field on Services, Interests, Groups, Stamps (detail)
+
+DB + schema + config + validation + UI + i18n — no changes to queries or API routes.
+
+**Problem**: The four "Others" lists (Services, Interests, Groups, Stamps) had only a Name field. The user wanted a Description field beside it.
+
+**DB migration (`src/db/migration_012_lookup_others_description.sql`)**
+- `ALTER TABLE lookup_others ADD COLUMN IF NOT EXISTS description text;`
+- Idempotent; safe to re-run.
+
+**Schema (`src/db/schema/index.ts`)**
+- Added `description: text("description")` to `lookupOthers`.
+
+**Config (`src/lib/admin/value-lists/config.ts`)**
+- Added `multiline?: boolean` to `FieldMeta` type — when true, the edit form renders a `<textarea>` instead of `<input>`.
+- Added `{ key: "description", labelKey: "description", required: false, multiline: true }` as the second field in services, interests, groups, and stamps.
+
+**Validation (`src/lib/admin/value-lists/validation.ts`)**
+- Added `description: z.string().nullish()` to `serviceInterestSchema`.
+- Fixed a pre-existing bug: `LIST_SCHEMAS` still referenced the old `"service-interests"` key (removed in Slice 9.7). Replaced with the four valid keys: `"services"`, `"interests"`, `"groups"`, `"stamps"`.
+
+**UI (`src/app/admin/value-lists/_components/value-list-modal.tsx`)**
+- `EditForm`: multiline fields render as `<textarea rows={3}>` (full width, resizable); plain fields keep `<input>`. Enter inside textarea is not intercepted (allows newlines); Escape still closes the form.
+- Table rows: multiline cells get `max-w-[240px] truncate` with a `title` tooltip showing the full text.
+
+**Queries** — no changes needed. The `description` field flows through the existing generic `data` spread in create/update.
+
+**i18n**
+- `messages/en-GB.json`: added `valueList.fields.description = "Description"`.
+- `messages/ro-RO.json`: added `valueList.fields.description = "Descriere"`.
+
+**Files touched**
+- `src/db/migration_012_lookup_others_description.sql` (new)
+- `src/db/schema/index.ts`
+- `src/lib/admin/value-lists/config.ts`
+- `src/lib/admin/value-lists/validation.ts`
+- `src/app/admin/value-lists/_components/value-list-modal.tsx`
+- `messages/en-GB.json`
+- `messages/ro-RO.json`
+- `CLAUDE.md`
 
 ### Slice #9.8 — Reference Data: lookup rename + Groups & Stamps (detail)
 
@@ -587,6 +629,7 @@ Rules:
 
 - **Never commit or push without explicit confirmation.** Same for any irreversible action.
 - **Conventional commits** — `feat:`, `fix:`, `chore:`, `ci:`, `docs(scope):`, `test:`, etc.
+- **Always provide commit statements as ready-to-run PowerShell `git` commands**, not just the commit message text. Each commit should be a full `git add <files> && git commit -m "message"` command (or equivalent multi-line PowerShell form) that Adrian can paste directly into his terminal.
 - **Always check `git status` before making changes**, and never modify files outside `C:\dev\ga40prj`.
 - **Adrian runs git in PowerShell on Windows.** Claude prepares file content; Adrian commits and pushes. This avoids Windows-mount permission issues with `.git/index.lock` from the Linux sandbox.
 - **Trust HEAD as the source of truth.** The Linux sandbox can show stale or phantom file states (deleted files appearing as untracked, modified files showing clean, etc.). When in doubt, ask Adrian to `git status` on his side.
