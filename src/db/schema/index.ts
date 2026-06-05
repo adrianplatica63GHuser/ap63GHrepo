@@ -493,6 +493,24 @@ export const lookupInstitution = pgTable("lookup_institution", {
   updatedAt:       timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+// ── Property ↔ Person Role whitelist ────────────────────────────────────────
+//
+// Managed via the "Property Persons" admin panel.  Each row marks a role from
+// lookup_person_role as a valid role tag for Property ↔ Person associations.
+// ON DELETE CASCADE keeps this table clean when a role is removed.
+
+export const lookupPropertyPersonRole = pgTable(
+  "lookup_property_person_role",
+  {
+    id:           uuid("id").primaryKey().defaultRandom(),
+    personRoleId: uuid("person_role_id")
+      .notNull()
+      .unique()
+      .references(() => lookupPersonRole.id, { onDelete: "cascade" }),
+    createdAt:    timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+);
+
 // ── Document Type ↔ Person Role junction ────────────────────────────────────
 //
 // Managed via the "Document Persons" admin panel. Both FKs cascade on delete
@@ -659,6 +677,11 @@ export const propertyPerson = pgTable(
     personId: uuid("person_id")
       .notNull()
       .references(() => person.id, { onDelete: "cascade" }),
+
+    // Optional role tag from the Property Persons whitelist.
+    // ON DELETE SET NULL — cleared automatically if the role is removed.
+    personRoleId: uuid("person_role_id")
+      .references(() => lookupPersonRole.id, { onDelete: "set null" }),
 
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
