@@ -131,49 +131,62 @@ export function PaperworkForm({
       noValidate
     >
       <fieldset disabled={mode === "view"} className="contents">
-      {/* ── Type selector ─────────────────────────────────────────────── */}
-      <Section title={t("sections.typeSelect")} columns={2}>
-        {mode === "edit" && paperworkCode && (
-          <ReadOnlyField label={t("fields.code")} value={paperworkCode} />
-        )}
-        <SelectField
-          label={t("fields.type")}
-          name="type"
+      {/* ── General (merged: type selector + common fields + notes) ───── */}
+      <Section title={t("sections.general")} columns={1}>
+        {/* Row 1: Code (half) | Type (half) */}
+        <div className="grid grid-cols-2 gap-2">
+          {mode === "edit" && paperworkCode && (
+            <ReadOnlyField label={t("fields.code")} value={paperworkCode} />
+          )}
+          <SelectField
+            label={t("fields.type")}
+            name="type"
+            register={register}
+            error={errors.type?.message}
+            options={PAPERWORK_TYPES.map((v) => ({
+              value: v,
+              label: t(`types.${v}`),
+            }))}
+          />
+        </div>
+        {/* Row 2: Nr. doc (half) | Date (half) */}
+        <div className="grid grid-cols-2 gap-2">
+          <Field
+            label={cfg.labels.nrDocument}
+            name="nrDocument"
+            register={register}
+            error={errors.nrDocument?.message}
+          />
+          <Field
+            label={cfg.labels.dateDocument}
+            name="dateDocument"
+            type="date"
+            register={register}
+            error={errors.dateDocument?.message}
+          />
+        </div>
+        {/* Row 3: Institution (full width) */}
+        <Field
+          label={cfg.labels.institution}
+          name="institution"
           register={register}
-          error={errors.type?.message}
-          options={PAPERWORK_TYPES.map((v) => ({
-            value: v,
-            label: t(`types.${v}`),
-          }))}
+          error={errors.institution?.message}
         />
+        {/* Row 4: Short Label (right before Notes) */}
         <Field
           label={t("fields.title")}
           name="title"
           register={register}
           error={errors.title?.message}
         />
-      </Section>
-
-      {/* ── General fields (common to all types, labels change per type) ── */}
-      <Section title={t("sections.general")} columns={2}>
-        <Field
-          label={cfg.labels.nrDocument}
-          name="nrDocument"
+        {/* Row 5: Notes (compact) */}
+        <TextAreaField
+          label={t("fields.notes")}
+          name="notes"
           register={register}
-          error={errors.nrDocument?.message}
-        />
-        <Field
-          label={cfg.labels.dateDocument}
-          name="dateDocument"
-          type="date"
-          register={register}
-          error={errors.dateDocument?.message}
-        />
-        <Field
-          label={cfg.labels.institution}
-          name="institution"
-          register={register}
-          error={errors.institution?.message}
+          error={errors.notes?.message}
+          maxLength={1000}
+          rows={2}
         />
       </Section>
 
@@ -274,6 +287,7 @@ export function PaperworkForm({
               name="defunctText"
               register={register}
               error={errors.defunctText?.message}
+              rows={2}
             />
           )}
           {/* Titular only shows for TITLU_PROPRIETATE */}
@@ -283,6 +297,7 @@ export function PaperworkForm({
               name="titularText"
               register={register}
               error={errors.titularText?.message}
+              rows={2}
             />
           )}
           {cfg.showParties && cfg.labels.partiesAText && (
@@ -291,6 +306,7 @@ export function PaperworkForm({
               name="partiesAText"
               register={register}
               error={errors.partiesAText?.message}
+              rows={2}
             />
           )}
           {cfg.showParties && cfg.labels.partiesBText && (
@@ -299,21 +315,11 @@ export function PaperworkForm({
               name="partiesBText"
               register={register}
               error={errors.partiesBText?.message}
+              rows={2}
             />
           )}
         </Section>
       )}
-
-      {/* ── Notes ─────────────────────────────────────────────────────── */}
-      <Section title={t("sections.notes")} columns={1}>
-        <TextAreaField
-          label={t("fields.notes")}
-          name="notes"
-          register={register}
-          error={errors.notes?.message}
-          maxLength={1000}
-        />
-      </Section>
       </fieldset>
 
       {submitError && (
@@ -452,7 +458,8 @@ function TextAreaField({
   register,
   error,
   maxLength,
-}: FieldProps & { maxLength?: number }) {
+  rows = 3,
+}: FieldProps & { maxLength?: number; rows?: number }) {
   return (
     <label className="flex items-start gap-2 text-sm">
       <span className="w-36 shrink-0 pt-1 font-medium text-ink dark:text-zinc-300">{label}</span>
@@ -460,7 +467,7 @@ function TextAreaField({
         <textarea
           {...register(name)}
           maxLength={maxLength}
-          rows={3}
+          rows={rows}
           aria-invalid={error ? true : undefined}
           className={[
             "w-full rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none dark:bg-zinc-950",
