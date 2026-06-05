@@ -32,6 +32,12 @@ export const personTypeSchema = z.object({
   sortOrder,
 });
 
+export const personRoleSchema = z.object({
+  name:        z.string().min(1, "required"),
+  description: z.string().nullish(),
+  sortOrder,
+});
+
 export const citizenshipSchema = z.object({
   name:      z.string().min(1, "required"),
   sortOrder,
@@ -63,6 +69,7 @@ export const LIST_SCHEMAS: Record<ListKey, z.ZodType<any>> = {
   "tarla":           tarlaSchema,
   "use-categories":  useCategorySchema,
   "person-types":    personTypeSchema,
+  "person-roles":    personRoleSchema,
   "citizenships":    citizenshipSchema,
   "document-types":  documentTypeSchema,
   "institutions":    institutionSchema,

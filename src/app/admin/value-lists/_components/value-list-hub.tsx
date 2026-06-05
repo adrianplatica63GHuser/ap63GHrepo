@@ -72,6 +72,7 @@ export function ValueListHub() {
         {/* ── Persoană ── */}
         <Section label={t("sections.person")}>
           <ListBtn label={t("lists.personTypes")}  onClick={() => open("person-types")} />
+          <ListBtn label={t("lists.personRoles")}  onClick={() => open("person-roles")} />
           <ListBtn label={t("lists.citizenships")} onClick={() => open("citizenships")} />
         </Section>
 

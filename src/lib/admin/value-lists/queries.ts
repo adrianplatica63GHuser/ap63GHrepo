@@ -18,6 +18,7 @@ import {
   lookupTarla,
   lookupUseCategory,
   lookupPersonType,
+  lookupPersonRole,
   lookupCitizenship,
   lookupDocumentType,
   lookupInstitution,
@@ -46,6 +47,8 @@ export async function listValues(key: ListKey): Promise<LookupRow[]> {
       return db.select().from(lookupUseCategory).orderBy(asc(lookupUseCategory.sortOrder)) as Promise<LookupRow[]>;
     case "person-types":
       return db.select().from(lookupPersonType).orderBy(asc(lookupPersonType.sortOrder)) as Promise<LookupRow[]>;
+    case "person-roles":
+      return db.select().from(lookupPersonRole).orderBy(asc(lookupPersonRole.name)) as Promise<LookupRow[]>;
     case "citizenships":
       return db.select().from(lookupCitizenship).orderBy(asc(lookupCitizenship.sortOrder)) as Promise<LookupRow[]>;
     case "document-types":
@@ -101,6 +104,10 @@ export async function createValue(
     }
     case "person-types": {
       const [row] = await db.insert(lookupPersonType).values(data).returning();
+      return row as LookupRow;
+    }
+    case "person-roles": {
+      const [row] = await db.insert(lookupPersonRole).values(data).returning();
       return row as LookupRow;
     }
     case "citizenships": {
@@ -172,6 +179,10 @@ export async function updateValue(
       const [row] = await db.update(lookupPersonType).set(data).where(eq(lookupPersonType.id, id)).returning();
       return (row as LookupRow) ?? null;
     }
+    case "person-roles": {
+      const [row] = await db.update(lookupPersonRole).set(data).where(eq(lookupPersonRole.id, id)).returning();
+      return (row as LookupRow) ?? null;
+    }
     case "citizenships": {
       const [row] = await db.update(lookupCitizenship).set(data).where(eq(lookupCitizenship.id, id)).returning();
       return (row as LookupRow) ?? null;
@@ -219,6 +230,10 @@ export async function deleteValue(key: ListKey, id: string): Promise<boolean> {
     }
     case "person-types": {
       const r = await db.delete(lookupPersonType).where(eq(lookupPersonType.id, id)).returning({ id: lookupPersonType.id });
+      return r.length > 0;
+    }
+    case "person-roles": {
+      const r = await db.delete(lookupPersonRole).where(eq(lookupPersonRole.id, id)).returning({ id: lookupPersonRole.id });
       return r.length > 0;
     }
     case "citizenships": {

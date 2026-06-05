@@ -74,6 +74,7 @@ Relationships: People ↔ Paperwork, People ↔ Properties, Paperwork ↔ Proper
 - Slice #9.7 — Reference Data: split "Services & Interests" into two separate lists under an "Others" section. ✅ Complete. Full detail below.
 - Slice #9.8 — Reference Data: rename lookup table + add Groups and Stamps lists. ✅ Complete. Full detail below.
 - Slice #9.9 — Reference Data: Description field on Services, Interests, Groups, Stamps. ✅ Complete. Full detail below.
+- Slice #10.03 — Reference Data: Person Roles list. ✅ Complete. Full detail below.
 
 Each slice typically lands as multiple small commits, each individually green.
 
@@ -327,6 +328,54 @@ Everything below is live in `main`. No DB schema or API changes — pure fronten
 - `displayFmtToInputMode(fmt)` maps display format → input mode: `"DD"→"DD"`, `"DMS"→"DMS"`, `"S70"→"STEREO70"`.
 - Both the Add row and Edit row receive `initialMode={displayFmtToInputMode(displayFmt)}` — no mode-selector toggle inside the row itself. The row opens directly in the right mode.
 - DMS input UI: two rows (lat / lon), each with separate `°` / `′` / `″` number fields and N/S or E/W toggle buttons. Conversion uses `decimalToDMS` / `dmsToDecimal` from `src/lib/geo/dms.ts`. Label span is `w-16` (64 px) to fit "Latitude"/"Longitude"; degree/minute inputs are `w-10`, seconds `w-16`.
+
+### Slice #10.03 — Reference Data: Person Roles (detail)
+
+DB + schema + config + validation + queries + UI + i18n.
+
+**What changed**
+
+**DB table name: `lookup_person_role`** — own dedicated table (not `lookup_others`) because it is large, domain-specific, and warrants its own backing table.
+
+**DB migration (`src/db/migration_013_person_roles.sql`)**
+- `CREATE TABLE IF NOT EXISTS lookup_person_role` with `id` (uuid PK), `name` (text NOT NULL), `description` (text), `sort_order` (int default 0), `created_at`, `updated_at`.
+- `touch_updated_at` trigger attached.
+- Pre-populated with 56 distinct roles (deduplicated from the supplied list, sorted alphabetically by name, `sort_order` 1–56).
+- `INSERT … ON CONFLICT DO NOTHING` — idempotent, safe to re-run.
+
+**Schema (`src/db/schema/index.ts`)**
+- Added `export const lookupPersonRole = pgTable("lookup_person_role", { ... })` in the Persoană group, between `lookupPersonType` and `lookupCitizenship`.
+
+**Config (`src/lib/admin/value-lists/config.ts`)**
+- Added `"person-roles"` to `VALID_LIST_KEYS`.
+- Added `LIST_META["person-roles"]`: `name` (required) + `description` (optional, multiline).
+
+**Validation (`src/lib/admin/value-lists/validation.ts`)**
+- Added `personRoleSchema` (name required, description nullish, sortOrder).
+- Added `"person-roles": personRoleSchema` to `LIST_SCHEMAS`.
+
+**Queries (`src/lib/admin/value-lists/queries.ts`)**
+- Imported `lookupPersonRole`.
+- Added `"person-roles"` case to all four switch statements (list, create, update, delete).
+- List is ordered by `name ASC` (alphabetical) — not `sort_order` — as requested.
+
+**Hub UI (`src/app/admin/value-lists/_components/value-list-hub.tsx`)**
+- Added `<ListBtn label={t("lists.personRoles")} onClick={() => open("person-roles")} />` in the Persoană section, between Person Types and Citizenship.
+
+**i18n**
+- `messages/en-GB.json`: added `valueList.lists.personRoles = "Person Roles"`.
+- `messages/ro-RO.json`: added `valueList.lists.personRoles = "Roluri Persoană"`.
+
+**Files touched**
+- `src/db/migration_013_person_roles.sql` (new)
+- `src/db/schema/index.ts`
+- `src/lib/admin/value-lists/config.ts`
+- `src/lib/admin/value-lists/validation.ts`
+- `src/lib/admin/value-lists/queries.ts`
+- `src/app/admin/value-lists/_components/value-list-hub.tsx`
+- `messages/en-GB.json`
+- `messages/ro-RO.json`
+- `CLAUDE.md`
 
 ### Slice #9.9 — Reference Data: Description field on Services, Interests, Groups, Stamps (detail)
 

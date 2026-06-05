@@ -20,6 +20,7 @@ export const VALID_LIST_KEYS = [
   "tarla",
   "use-categories",
   "person-types",
+  "person-roles",
   "citizenships",
   "document-types",
   "institutions",
@@ -71,6 +72,13 @@ export const LIST_META: Record<ListKey, ListMeta> = {
   "person-types": {
     titleKey: "personTypes",
     fields: [{ key: "name", labelKey: "name", required: true }],
+  },
+  "person-roles": {
+    titleKey: "personRoles",
+    fields: [
+      { key: "name",        labelKey: "name",        required: true  },
+      { key: "description", labelKey: "description", required: false, multiline: true },
+    ],
   },
   citizenships: {
     titleKey: "citizenships",
