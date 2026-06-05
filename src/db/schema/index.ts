@@ -676,6 +676,10 @@ export const personPaperwork = pgTable(
     id:          uuid("id").primaryKey().defaultRandom(),
     personId:    uuid("person_id").notNull().references(() => person.id,      { onDelete: "cascade" }),
     paperworkId: uuid("paperwork_id").notNull().references(() => paperwork.id, { onDelete: "cascade" }),
+    // Optional role tag — used by Certificat de Moștenitor.
+    // 'DEFUNCT' = the deceased person; 'MOSTENITOR' = an inheritor.
+    // NULL for persons linked via the general Persons tab on any doc type.
+    quality:     text("quality"),
     createdAt:   timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [uniqueIndex("person_paperwork_unique").on(t.personId, t.paperworkId)],
@@ -757,6 +761,58 @@ export const paperworkPaperwork = pgTable(
 //
 // app_users: links a Supabase Auth UID to an app-level username + role.
 //   supabase_uid is unique (one app record per auth identity).
+//   username is unique.
+//   role: "superuser" | "user"
+//   approved_by: username of the admin who approved this account (null for
+//   the seeded superuser).
+
+export const userRequestStatusEnum = pgEnum("user_request_status", [
+  "pending",
+  "approved",
+  "rejected",
+]);
+
+export const appUserRoleEnum = pgEnum("app_user_role", [
+  "superuser",
+  "user",
+]);
+
+export const userRequests = pgTable(
+  "user_requests",
+  {
+    id:          uuid("id").primaryKey().defaultRandom(),
+    email:       text("email").notNull(),
+    username:    text("username").notNull(),
+    status:      userRequestStatusEnum("status").notNull().default("pending"),
+    requestedAt: timestamp("requested_at", { withTimezone: true }).notNull().defaultNow(),
+    processedAt: timestamp("processed_at", { withTimezone: true }),
+    processedBy: text("processed_by"),   // username of the admin who acted
+    // Store whether a welcome email was sent successfully
+    emailSent:   boolean("email_sent").notNull().default(false),
+  },
+  (t) => [
+    uniqueIndex("user_requests_email_pending_unique")
+      .on(t.email)
+      .where(sql`${t.status} = 'pending'`),
+  ],
+);
+
+export const appUsers = pgTable(
+  "app_users",
+  {
+    id:          uuid("id").primaryKey().defaultRandom(),
+    // Supabase Auth user UUID — set when account is created via Admin API.
+    // Null only for a brief window between request approval and account creation
+    // (handled atomically, so in practice always set).
+    supabaseUid: text("supabase_uid").unique(),
+    email:       text("email").notNull().unique(),
+    username:    text("username").notNull().unique(),
+    role:        appUserRoleEnum("role").notNull().default("user"),
+    approvedBy:  text("approved_by"),   // null for the seeded superuser
+    createdAt:   timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+);
+ntity).
 //   username is unique.
 //   role: "superuser" | "user"
 //   approved_by: username of the admin who approved this account (null for

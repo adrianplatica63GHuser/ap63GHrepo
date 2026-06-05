@@ -14,7 +14,12 @@ export async function GET(_req: NextRequest, ctx: Ctx): Promise<Response> {
   catch (err) { return unexpectedError(err, "GET /api/paperwork/[id]/persons"); }
 }
 
-const bodySchema = z.object({ personIds: z.array(z.string().uuid()).min(1) });
+const bodySchema = z.object({
+  personIds: z.array(z.string().uuid()).min(1),
+  // Optional role for Certificat de Moștenitor party links.
+  // 'DEFUNCT' | 'MOSTENITOR' — null / absent for general associations.
+  quality: z.string().optional(),
+});
 
 export async function POST(request: NextRequest, ctx: Ctx): Promise<Response> {
   const { id } = await ctx.params;
@@ -23,7 +28,11 @@ export async function POST(request: NextRequest, ctx: Ctx): Promise<Response> {
   const parsed = bodySchema.safeParse(body);
   if (!parsed.success) return zodErrorToResponse(parsed.error);
   try {
-    await associatePersonsToPaperwork(id, parsed.data.personIds);
+    await associatePersonsToPaperwork(id, parsed.data.personIds, parsed.data.quality ?? null);
+    return new Response(null, { status: 204 });
+  } catch (err) { return unexpectedError(err, "POST /api/paperwork/[id]/persons"); }
+}
+Paperwork(id, parsed.data.personIds, parsed.data.quality ?? null);
     return new Response(null, { status: 204 });
   } catch (err) { return unexpectedError(err, "POST /api/paperwork/[id]/persons"); }
 }

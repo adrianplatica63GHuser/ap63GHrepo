@@ -332,6 +332,7 @@ export type PaperworkPersonItem = {
   code:         string;
   type:         "NATURAL" | "JUDICIAL";
   displayName:  string;
+  quality:      string | null;
   associatedAt: Date;
 };
 
@@ -342,6 +343,7 @@ export async function listPaperworkPersons(paperworkId: string): Promise<Paperwo
       code:         person.code,
       type:         person.type,
       displayName:  person.displayName,
+      quality:      personPaperwork.quality,
       associatedAt: personPaperwork.createdAt,
     })
     .from(personPaperwork)
@@ -352,9 +354,13 @@ export async function listPaperworkPersons(paperworkId: string): Promise<Paperwo
   return rows as PaperworkPersonItem[];
 }
 
-export async function associatePersonsToPaperwork(paperworkId: string, personIds: string[]): Promise<void> {
+export async function associatePersonsToPaperwork(
+  paperworkId: string,
+  personIds:   string[],
+  quality?:    string | null,
+): Promise<void> {
   await db.insert(personPaperwork)
-    .values(personIds.map((pid) => ({ personId: pid, paperworkId })))
+    .values(personIds.map((pid) => ({ personId: pid, paperworkId, quality: quality ?? null })))
     .onConflictDoNothing();
 }
 
@@ -422,6 +428,10 @@ export async function dissociatePaperworkFromPaperwork(paperworkId: string, othe
   const [a, b] = [paperworkId, otherId].sort();
   const result = await db.delete(paperworkPaperwork)
     .where(and(eq(paperworkPaperwork.paperworkIdA, a), eq(paperworkPaperwork.paperworkIdB, b)))
+    .returning({ id: paperworkPaperwork.id });
+  return result.length > 0;
+}
+work.paperworkIdA, a), eq(paperworkPaperwork.paperworkIdB, b)))
     .returning({ id: paperworkPaperwork.id });
   return result.length > 0;
 }
