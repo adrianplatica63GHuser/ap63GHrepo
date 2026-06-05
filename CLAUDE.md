@@ -76,6 +76,7 @@ Relationships: People ↔ Paperwork, People ↔ Properties, Paperwork ↔ Proper
 - Slice #9.9 — Reference Data: Description field on Services, Interests, Groups, Stamps. ✅ Complete. Full detail below.
 - Slice #10.03 — Reference Data: Person Roles list. ✅ Complete. Full detail below.
 - Slice #10.04 — Reference Data: Document Persons (Document Type ↔ Person Role associations). ✅ Complete. Full detail below.
+- Slice #10.05 — Reference Data: Property Persons (Person Role whitelist for Property ↔ Person associations). ✅ Complete. Full detail below.
 
 Each slice typically lands as multiple small commits, each individually green.
 
@@ -329,6 +330,60 @@ Everything below is live in `main`. No DB schema or API changes — pure fronten
 - `displayFmtToInputMode(fmt)` maps display format → input mode: `"DD"→"DD"`, `"DMS"→"DMS"`, `"S70"→"STEREO70"`.
 - Both the Add row and Edit row receive `initialMode={displayFmtToInputMode(displayFmt)}` — no mode-selector toggle inside the row itself. The row opens directly in the right mode.
 - DMS input UI: two rows (lat / lon), each with separate `°` / `′` / `″` number fields and N/S or E/W toggle buttons. Conversion uses `decimalToDMS` / `dmsToDecimal` from `src/lib/geo/dms.ts`. Label span is `w-16` (64 px) to fit "Latitude"/"Longitude"; degree/minute inputs are `w-10`, seconds `w-16`.
+
+### Slice #10.05 — Reference Data: Property Persons (detail)
+
+DB + schema + query helpers + API routes + UI + i18n.
+
+**What changed**
+
+**DB table name: `lookup_property_person_role`** — whitelist of Person Roles that are valid for the Property ↔ Person association. When a user later associates a specific Person to a specific Property, the Role dropdown on that association is populated from this table. No second FK (unlike `lookup_doc_type_person_role`) — each row simply marks a role as applicable to property-person links.
+
+**DB migration (`src/db/migration_015_property_person_role.sql`)**
+- `CREATE TABLE IF NOT EXISTS lookup_property_person_role` with `id` (uuid PK), `person_role_id` (FK → `lookup_person_role.id`, ON DELETE CASCADE), `created_at`. Unique constraint on `person_role_id`.
+- No seed data — starts empty by design.
+
+**Schema (`src/db/schema/index.ts`)**
+- Added `lookupPropertyPersonRole` in the Proprietate group (before the Document Type ↔ Person Role junction).
+
+**Query helpers (`src/lib/admin/property-person-roles/queries.ts`)**
+- `listPropertyPersonRoles()` — inner-join select with `lookup_person_role`, ordered by role name.
+- `createPropertyPersonRole(personRoleId)` — insert + re-fetch with joined name/description.
+- `deletePropertyPersonRole(id)` — hard delete by PK.
+
+**API routes**
+- `GET/POST /api/admin/property-person-roles` — list all / add a role.
+- `DELETE /api/admin/property-person-roles/[id]` — remove one role.
+- POST validates `{ personRoleId: uuid }` with Zod; returns 409 on duplicate.
+
+**UI (`src/app/admin/value-lists/_components/property-persons-modal.tsx`)**
+- Standalone modal (same pattern as `document-persons-modal.tsx`).
+- Table: Person Role | Description | Delete button. Ordered alphabetically by role name.
+- Add form: single `<select>` dropdown showing all Person Roles not already in the list.
+- Hint: "If a person role is not listed, add it using the Person Roles button in the Person section."
+- Delete confirm dialog (same pattern as other modals).
+- Escape closes the add form, then the modal.
+
+**Hub UI (`src/app/admin/value-lists/_components/value-list-hub.tsx`)**
+- Added `showPropertyPersons: boolean` state.
+- Added "Property Persons" button right after "Property Types" in the Proprietate section.
+- Renders `PropertyPersonsModal` when `showPropertyPersons` is true.
+
+**i18n**
+- Added `valueList.lists.propertyPersons` in both files.
+- Added `valueList.propertyPersons.*` namespace (title, column headers, form labels, hint, status strings) in both files.
+
+**Files touched**
+- `src/db/migration_015_property_person_role.sql` (new)
+- `src/db/schema/index.ts`
+- `src/lib/admin/property-person-roles/queries.ts` (new)
+- `src/app/api/admin/property-person-roles/route.ts` (new)
+- `src/app/api/admin/property-person-roles/[id]/route.ts` (new)
+- `src/app/admin/value-lists/_components/property-persons-modal.tsx` (new)
+- `src/app/admin/value-lists/_components/value-list-hub.tsx`
+- `messages/en-GB.json`
+- `messages/ro-RO.json`
+- `CLAUDE.md`
 
 ### Slice #10.04 — Reference Data: Document Persons (detail)
 
@@ -761,8 +816,13 @@ Rules:
 - **`@vis.gl/react-google-maps` event types differ by component.** `Map` component events give `MapMouseEvent` (library type) where `latLng` is a plain literal accessed as `event.detail.latLng?.lat` (property). `AdvancedMarker` drag events give `google.maps.MapMouseEvent` where `latLng` is a `LatLng` object accessed as `e.latLng?.lat()` (method call). Mixing these up is a silent runtime bug.
 - **4-column grid: skip the 3-column step.** For `columns={4}` in the `Section` helper, use `"grid grid-cols-2 gap-4 md:grid-cols-4"` — do not add a `md:grid-cols-3` intermediate. At common "half-width browser" sizes (768–1023 px) the 3-column class strands the layout on 3 columns instead of 4.
 - **DB migration reminders — display these at the start of any migration step:**
-  - *Local Docker:* `db:migrate` uses `DIRECT_URL` if set (Supabase), otherwise `DATABASE_URL` (local Docker). Make sure `DIRECT_URL` is **not** set in `.env` when migrating locally.
-  - *Supabase:* Before running `db:migrate` against Supabase, set `DIRECT_URL` to the direct connection string (port 5432, `?sslmode=require`): `DIRECT_URL=postgresql://postgres.[ref]:[password]@db.[ref].supabase.co:5432/postgres?sslmode=require`. Remove it again afterwards to avoid accidentally targeting Supabase during local dev.
+  - *Local Docker:* **Do NOT use `npm run db:migrate`** — it exits silently without applying the file (confirmed repeatedly). Always apply migrations directly via `docker cp` + `psql -f`:
+    ```powershell
+    docker cp src/db/migration_NNN_name.sql ga40prj-postgres:/tmp/mNNN.sql
+    docker exec ga40prj-postgres psql -U postgres -d ga40db -f /tmp/mNNN.sql
+    ```
+    Expected output: `CREATE TABLE` (or `ALTER TABLE`, etc.). No output = not applied.
+  - *Supabase:* Paste the migration SQL directly into the Supabase SQL Editor. If using `db:migrate`, first set `DIRECT_URL` to the direct connection string (port 5432, `?sslmode=require`): `DIRECT_URL=postgresql://postgres.[ref]:[password]@db.[ref].supabase.co:5432/postgres?sslmode=require`. Remove it again afterwards.
 
 ## Key paths
 
