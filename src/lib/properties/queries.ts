@@ -11,7 +11,7 @@
 
 import { and, count, eq, ilike, isNull, or, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { person, principalObject, property, propertyAddress, propertyCorner, propertyPerson } from "@/db/schema";
+import { lookupPersonRole, person, principalObject, property, propertyAddress, propertyCorner, propertyPerson } from "@/db/schema";
 import type {
   PropertyCreate,
   PropertyListQuery,
@@ -315,10 +315,11 @@ export async function updateProperty(
 // ---------------------------------------------------------------------------
 
 export type PropertyPersonItem = {
-  id:          string;  // person.id
-  code:        string;
-  type:        "NATURAL" | "JUDICIAL";
-  displayName: string;
+  id:           string;  // person.id
+  code:         string;
+  type:         "NATURAL" | "JUDICIAL";
+  displayName:  string;
+  roleName:     string | null;
   associatedAt: Date;
 };
 
@@ -332,10 +333,12 @@ export async function listPropertyPersons(
       code:         person.code,
       type:         person.type,
       displayName:  person.displayName,
+      roleName:     lookupPersonRole.name,
       associatedAt: propertyPerson.createdAt,
     })
     .from(propertyPerson)
     .innerJoin(person, eq(person.id, propertyPerson.personId))
+    .leftJoin(lookupPersonRole, eq(lookupPersonRole.id, propertyPerson.personRoleId))
     .where(
       and(
         eq(propertyPerson.propertyId, propertyId),
@@ -348,17 +351,24 @@ export async function listPropertyPersons(
 }
 
 /**
- * Associate one or more persons with a property.
+ * Associate one or more persons with a property, with an optional shared role.
  * Duplicate associations are silently ignored (ON CONFLICT DO NOTHING).
  */
 export async function associatePersonsToProperty(
-  propertyId: string,
-  personIds:  string[],
+  propertyId:   string,
+  personIds:    string[],
+  personRoleId: string | null = null,
 ): Promise<void> {
   if (personIds.length === 0) return;
   await db
     .insert(propertyPerson)
-    .values(personIds.map((pid) => ({ propertyId, personId: pid })))
+    .values(
+      personIds.map((pid) => ({
+        propertyId,
+        personId:     pid,
+        personRoleId: personRoleId ?? undefined,
+      })),
+    )
     .onConflictDoNothing();
 }
 

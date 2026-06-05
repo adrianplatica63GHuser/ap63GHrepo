@@ -2,7 +2,7 @@
  * /api/properties/[id]/persons
  *
  * GET  — list persons currently associated with this property
- * POST — associate one or more persons { personIds: string[] }
+ * POST — associate one or more persons { personIds: string[], personRoleId?: string | null }
  */
 
 import { z } from "zod/v4";
@@ -29,7 +29,8 @@ export async function GET(_req: NextRequest, ctx: Ctx): Promise<Response> {
 }
 
 const associateBodySchema = z.object({
-  personIds: z.array(z.string().uuid()).min(1),
+  personIds:    z.array(z.string().uuid()).min(1),
+  personRoleId: z.string().uuid().nullable().optional(),
 });
 
 export async function POST(request: NextRequest, ctx: Ctx): Promise<Response> {
@@ -48,7 +49,11 @@ export async function POST(request: NextRequest, ctx: Ctx): Promise<Response> {
   }
 
   try {
-    await associatePersonsToProperty(id, parsed.data.personIds);
+    await associatePersonsToProperty(
+      id,
+      parsed.data.personIds,
+      parsed.data.personRoleId ?? null,
+    );
     return new Response(null, { status: 204 });
   } catch (err) {
     return unexpectedError(err, "POST /api/properties/[id]/persons");
