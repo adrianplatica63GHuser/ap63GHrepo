@@ -721,6 +721,7 @@
       "name": "Name",
       "indicativ": "Code",
       "descriere": "Description",
+      "description": "Description",
       "institutionType": "Institution Type",
       "category": "Category"
     },
