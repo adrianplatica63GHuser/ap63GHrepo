@@ -42,6 +42,8 @@ export type FieldMeta = {
   /** i18n key inside the `valueList.fields` namespace */
   labelKey: string;
   required: boolean;
+  /** When true, renders a <textarea> instead of <input> in the edit form */
+  multiline?: boolean;
 };
 
 export type ListMeta = {
@@ -87,21 +89,33 @@ export const LIST_META: Record<ListKey, ListMeta> = {
   },
   // "services", "interests", "groups", and "stamps" all read from
   // lookup_others, filtered by category. The category value is injected by
-  // the query layer; the form only exposes the name field.
+  // the query layer; the form exposes name + description.
   services: {
     titleKey: "services",
-    fields: [{ key: "name", labelKey: "name", required: true }],
+    fields: [
+      { key: "name",        labelKey: "name",        required: true  },
+      { key: "description", labelKey: "description", required: false, multiline: true },
+    ],
   },
   interests: {
     titleKey: "interests",
-    fields: [{ key: "name", labelKey: "name", required: true }],
+    fields: [
+      { key: "name",        labelKey: "name",        required: true  },
+      { key: "description", labelKey: "description", required: false, multiline: true },
+    ],
   },
   groups: {
     titleKey: "groups",
-    fields: [{ key: "name", labelKey: "name", required: true }],
+    fields: [
+      { key: "name",        labelKey: "name",        required: true  },
+      { key: "description", labelKey: "description", required: false, multiline: true },
+    ],
   },
   stamps: {
     titleKey: "stamps",
-    fields: [{ key: "name", labelKey: "name", required: true }],
+    fields: [
+      { key: "name",        labelKey: "name",        required: true  },
+      { key: "description", labelKey: "description", required: false, multiline: true },
+    ],
   },
 };

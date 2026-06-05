@@ -49,8 +49,9 @@ export const institutionSchema = z.object({
 });
 
 export const serviceInterestSchema = z.object({
-  name:      z.string().min(1, "required"),
-  category:  z.string().nullish(),
+  name:        z.string().min(1, "required"),
+  description: z.string().nullish(),
+  category:    z.string().nullish(),
   sortOrder,
 });
 
@@ -58,12 +59,15 @@ export const serviceInterestSchema = z.object({
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const LIST_SCHEMAS: Record<ListKey, z.ZodType<any>> = {
-  "property-types":   propertyTypeSchema,
-  "tarla":            tarlaSchema,
-  "use-categories":   useCategorySchema,
-  "person-types":     personTypeSchema,
-  "citizenships":     citizenshipSchema,
-  "document-types":   documentTypeSchema,
-  "institutions":     institutionSchema,
-  "service-interests": serviceInterestSchema,
+  "property-types":  propertyTypeSchema,
+  "tarla":           tarlaSchema,
+  "use-categories":  useCategorySchema,
+  "person-types":    personTypeSchema,
+  "citizenships":    citizenshipSchema,
+  "document-types":  documentTypeSchema,
+  "institutions":    institutionSchema,
+  "services":        serviceInterestSchema,
+  "interests":       serviceInterestSchema,
+  "groups":          serviceInterestSchema,
+  "stamps":          serviceInterestSchema,
 };

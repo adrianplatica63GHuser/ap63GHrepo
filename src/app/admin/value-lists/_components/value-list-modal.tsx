@@ -102,21 +102,39 @@ function EditForm({
 
       <div className="flex flex-wrap gap-3">
         {meta.fields.map((f, i) => (
-          <div key={f.key} className="flex flex-col gap-1 min-w-48">
+          <div
+            key={f.key}
+            className={`flex flex-col gap-1 ${f.multiline ? "w-full" : "min-w-48"}`}
+          >
             <label className="text-xs font-medium text-ink dark:text-zinc-400">
               {t(`fields.${f.labelKey}`)}
               {f.required && <span className="ml-0.5 text-red-500">*</span>}
             </label>
-            <input
-              ref={i === 0 ? firstInputRef : undefined}
-              type="text"
-              value={values[f.key] ?? ""}
-              onChange={(e) =>
-                setValues((prev) => ({ ...prev, [f.key]: e.target.value }))
-              }
-              onKeyDown={handleKey}
-              className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
-            />
+            {f.multiline ? (
+              <textarea
+                rows={3}
+                value={values[f.key] ?? ""}
+                onChange={(e) =>
+                  setValues((prev) => ({ ...prev, [f.key]: e.target.value }))
+                }
+                onKeyDown={(e) => {
+                  // Allow Enter inside textarea; only Escape closes
+                  if (e.key === "Escape") onClose();
+                }}
+                className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 resize-y"
+              />
+            ) : (
+              <input
+                ref={i === 0 ? firstInputRef : undefined}
+                type="text"
+                value={values[f.key] ?? ""}
+                onChange={(e) =>
+                  setValues((prev) => ({ ...prev, [f.key]: e.target.value }))
+                }
+                onKeyDown={handleKey}
+                className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
+              />
+            )}
           </div>
         ))}
       </div>
@@ -309,7 +327,11 @@ export function ValueListModal({
                       className="hover:bg-cta-pale dark:hover:bg-zinc-800/50"
                     >
                       {displayFields.map((f) => (
-                        <td key={f.key} className="px-4 py-2 text-ink dark:text-zinc-300">
+                        <td
+                          key={f.key}
+                          className={`px-4 py-2 text-ink dark:text-zinc-300 ${f.multiline ? "max-w-[240px] truncate" : ""}`}
+                          title={f.multiline ? String(row[f.key] ?? "") : undefined}
+                        >
                           {String(row[f.key] ?? "")}
                         </td>
                       ))}
