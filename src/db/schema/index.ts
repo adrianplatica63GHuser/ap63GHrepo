@@ -493,6 +493,28 @@ export const lookupInstitution = pgTable("lookup_institution", {
   updatedAt:       timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+// ── Document Type ↔ Person Role junction ────────────────────────────────────
+//
+// Managed via the "Document Persons" admin panel. Both FKs cascade on delete
+// so removing a document type or person role automatically cleans up associations.
+
+export const lookupDocTypePersonRole = pgTable(
+  "lookup_doc_type_person_role",
+  {
+    id:             uuid("id").primaryKey().defaultRandom(),
+    documentTypeId: uuid("document_type_id")
+      .notNull()
+      .references(() => lookupDocumentType.id, { onDelete: "cascade" }),
+    personRoleId:   uuid("person_role_id")
+      .notNull()
+      .references(() => lookupPersonRole.id, { onDelete: "cascade" }),
+    createdAt:      timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("lookup_doc_type_person_role_unique").on(t.documentTypeId, t.personRoleId),
+  ],
+);
+
 // ── Others (was lookup_service_interest, renamed in migration 011) ──────────
 //
 // General-purpose bucket for categorised lookup values that don't belong to

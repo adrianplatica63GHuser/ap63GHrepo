@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import type { ListKey } from "@/lib/admin/value-lists/config";
 import { ValueListModal } from "./value-list-modal";
+import { DocumentPersonsModal } from "./document-persons-modal";
 
 // ── Section wrapper ───────────────────────────────────────────────────────────
 
@@ -50,6 +51,7 @@ function ListBtn({
 export function ValueListHub() {
   const t = useTranslations("valueList");
   const [openList, setOpenList] = useState<ListKey | null>(null);
+  const [showDocPersons, setShowDocPersons] = useState(false);
 
   function open(key: ListKey) {
     setOpenList(key);
@@ -78,8 +80,9 @@ export function ValueListHub() {
 
         {/* ── Document ── */}
         <Section label={t("sections.document")}>
-          <ListBtn label={t("lists.documentTypes")} onClick={() => open("document-types")} />
-          <ListBtn label={t("lists.institutions")}  onClick={() => open("institutions")} />
+          <ListBtn label={t("lists.documentTypes")}   onClick={() => open("document-types")} />
+          <ListBtn label={t("lists.documentPersons")} onClick={() => setShowDocPersons(true)} />
+          <ListBtn label={t("lists.institutions")}    onClick={() => open("institutions")} />
         </Section>
 
         {/* ── Others ── */}
@@ -93,6 +96,9 @@ export function ValueListHub() {
 
       {openList && (
         <ValueListModal listKey={openList} onClose={close} />
+      )}
+      {showDocPersons && (
+        <DocumentPersonsModal onClose={() => setShowDocPersons(false)} />
       )}
     </>
   );

@@ -749,6 +749,7 @@
       "personRoles": "Person Roles",
       "citizenships": "Citizenship",
       "documentTypes": "Document Types",
+      "documentPersons": "Document Persons",
       "institutions": "Institutions",
       "services": "Services",
       "interests": "Interests",
@@ -789,6 +790,28 @@
       "delete": "Delete",
       "deleting": "Deleting…",
       "cancel": "Cancel"
+    },
+    "documentPersons": {
+      "title": "Document Persons",
+      "colDocType": "Document Type",
+      "colPersonRole": "Person Role",
+      "addTitle": "Add Association",
+      "selectDocType": "Select document type…",
+      "selectPersonRole": "Select person role…",
+      "hintDocType": "If a document type is not listed, add it using the Document Types button.",
+      "hintPersonRole": "If a person role is not listed, add it using the Person Roles button.",
+      "add": "Add",
+      "save": "Save",
+      "saving": "Saving…",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "deleting": "Deleting…",
+      "confirmDelete": "Remove this association? This cannot be undone.",
+      "count": "{count} associations",
+      "loading": "Loading…",
+      "error": "Failed to load",
+      "empty": "No associations yet",
+      "errorBothRequired": "Please select both a document type and a person role."
     }
   },
   "usersAccess": {

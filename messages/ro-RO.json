@@ -749,6 +749,7 @@
       "personRoles": "Roluri Persoană",
       "citizenships": "Cetățenie",
       "documentTypes": "Tipuri de Document",
+      "documentPersons": "Roluri pe Document",
       "institutions": "Instituții",
       "services": "Servicii",
       "interests": "Interese",
@@ -789,6 +790,28 @@
       "delete": "Șterge",
       "deleting": "Se șterge…",
       "cancel": "Anulează"
+    },
+    "documentPersons": {
+      "title": "Roluri pe Document",
+      "colDocType": "Tip Document",
+      "colPersonRole": "Rol Persoană",
+      "addTitle": "Adaugă Asociere",
+      "selectDocType": "Selectați tipul de document…",
+      "selectPersonRole": "Selectați rolul persoanei…",
+      "hintDocType": "Dacă tipul de document nu este listat, adăugați-l folosind butonul Tipuri de Document.",
+      "hintPersonRole": "Dacă rolul persoanei nu este listat, adăugați-l folosind butonul Roluri Persoană.",
+      "add": "Adaugă",
+      "save": "Salvează",
+      "saving": "Se salvează…",
+      "cancel": "Anulează",
+      "delete": "Șterge",
+      "deleting": "Se șterge…",
+      "confirmDelete": "Eliminați această asociere? Acțiunea nu poate fi anulată.",
+      "count": "{count} asocieri",
+      "loading": "Se încarcă…",
+      "error": "Eroare la încărcare",
+      "empty": "Nicio asociere",
+      "errorBothRequired": "Selectați atât tipul de document cât și rolul persoanei."
     }
   },
   "usersAccess": {

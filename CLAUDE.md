@@ -75,6 +75,7 @@ Relationships: People ↔ Paperwork, People ↔ Properties, Paperwork ↔ Proper
 - Slice #9.8 — Reference Data: rename lookup table + add Groups and Stamps lists. ✅ Complete. Full detail below.
 - Slice #9.9 — Reference Data: Description field on Services, Interests, Groups, Stamps. ✅ Complete. Full detail below.
 - Slice #10.03 — Reference Data: Person Roles list. ✅ Complete. Full detail below.
+- Slice #10.04 — Reference Data: Document Persons (Document Type ↔ Person Role associations). ✅ Complete. Full detail below.
 
 Each slice typically lands as multiple small commits, each individually green.
 
@@ -328,6 +329,62 @@ Everything below is live in `main`. No DB schema or API changes — pure fronten
 - `displayFmtToInputMode(fmt)` maps display format → input mode: `"DD"→"DD"`, `"DMS"→"DMS"`, `"S70"→"STEREO70"`.
 - Both the Add row and Edit row receive `initialMode={displayFmtToInputMode(displayFmt)}` — no mode-selector toggle inside the row itself. The row opens directly in the right mode.
 - DMS input UI: two rows (lat / lon), each with separate `°` / `′` / `″` number fields and N/S or E/W toggle buttons. Conversion uses `decimalToDMS` / `dmsToDecimal` from `src/lib/geo/dms.ts`. Label span is `w-16` (64 px) to fit "Latitude"/"Longitude"; degree/minute inputs are `w-10`, seconds `w-16`.
+
+### Slice #10.04 — Reference Data: Document Persons (detail)
+
+DB + schema + query helpers + API routes + UI + i18n.
+
+**What changed**
+
+**DB table name: `lookup_doc_type_person_role`** — M:M junction between `lookup_document_type` and `lookup_person_role`. Both FKs use ON DELETE CASCADE so removing a document type or person role automatically cleans up its associations.
+
+**DB migration (`src/db/migration_014_doc_type_person_role.sql`)**
+- `CREATE TABLE IF NOT EXISTS lookup_doc_type_person_role` with `id` (uuid PK), `document_type_id` (FK → `lookup_document_type.id`), `person_role_id` (FK → `lookup_person_role.id`), `created_at`. Unique constraint on `(document_type_id, person_role_id)`.
+- Seed: CTE resolves document type and person role names to IDs, inserts 74 associations.
+- `ON CONFLICT DO NOTHING` — idempotent, safe to re-run.
+- Note: required fixing `lookup_document_type` row 6 from "Certificat de Macanentur" → "Certificat de Moștenitor" (diacritics corruption from original seeding) before applying the seed.
+
+**Schema (`src/db/schema/index.ts`)**
+- Added `lookupDocTypePersonRole` in the Document group (after `lookupInstitution`, before `lookupOthers`).
+
+**Query helpers (`src/lib/admin/doc-type-person-roles/queries.ts`)**
+- `listDocTypePersonRoles()` — inner-join select, ordered by document type name then role name.
+- `createDocTypePersonRole({ documentTypeId, personRoleId })` — insert + re-fetch with joined names.
+- `deleteDocTypePersonRole(id)` — hard delete by PK.
+
+**API routes**
+- `GET/POST /api/admin/doc-type-person-roles` — list all / create new association.
+- `DELETE /api/admin/doc-type-person-roles/[id]` — delete one association.
+- POST validates `{ documentTypeId: uuid, personRoleId: uuid }` with Zod; returns 409 on duplicate.
+
+**UI (`src/app/admin/value-lists/_components/document-persons-modal.tsx`)**
+- Standalone modal (does not go through `ValueListModal` / `config.ts` — M:M junction editing has a different shape).
+- Table: Document Type | Person Role | Delete button. Ordered alphabetically.
+- Add form: two `<select>` dropdowns (all document types / all person roles fetched from existing value-list API) + Save/Cancel.
+- Two hint lines: "If a document type is not listed, add it using the Document Types button." and "If a person role is not listed, add it using the Person Roles button."
+- Delete confirm dialog (same pattern as `ValueListModal`).
+- Escape closes the add form, then the modal.
+
+**Hub UI (`src/app/admin/value-lists/_components/value-list-hub.tsx`)**
+- Added `showDocPersons: boolean` state (separate from `openList`).
+- Added "Document Persons" button after "Document Types" in the Document section.
+- Renders `DocumentPersonsModal` when `showDocPersons` is true.
+
+**i18n**
+- Added `valueList.lists.documentPersons` in both files.
+- Added `valueList.documentPersons.*` namespace (title, column headers, form labels, hints, status strings) in both files.
+
+**Files touched**
+- `src/db/migration_014_doc_type_person_role.sql` (new)
+- `src/db/schema/index.ts`
+- `src/lib/admin/doc-type-person-roles/queries.ts` (new)
+- `src/app/api/admin/doc-type-person-roles/route.ts` (new)
+- `src/app/api/admin/doc-type-person-roles/[id]/route.ts` (new)
+- `src/app/admin/value-lists/_components/document-persons-modal.tsx` (new)
+- `src/app/admin/value-lists/_components/value-list-hub.tsx`
+- `messages/en-GB.json`
+- `messages/ro-RO.json`
+- `CLAUDE.md`
 
 ### Slice #10.03 — Reference Data: Person Roles (detail)
 
