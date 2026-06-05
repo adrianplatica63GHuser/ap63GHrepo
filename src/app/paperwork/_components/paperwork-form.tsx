@@ -20,6 +20,7 @@ import {
 import { PAPERWORK_TYPES, type PaperworkType } from "@/lib/paperwork/validation";
 import { getTypeConfig } from "@/lib/paperwork/type-config";
 import { PagesPanel } from "./pages-panel";
+import { SuccessionPartiesPanel } from "./succession-parties-panel";
 
 // ---------------------------------------------------------------------------
 // Props
@@ -59,6 +60,8 @@ export function PaperworkForm({
   // Watch `type` so the form re-renders when the user changes the type
   const selectedType = useWatch({ control: form.control, name: "type" }) as PaperworkType;
   const cfg = getTypeConfig(selectedType);
+  // True only for CERTIFICAT_MOSTENITOR — drives the merged Succession Details section.
+  const isMostenitor = selectedType === "CERTIFICAT_MOSTENITOR";
 
   // Save is always available in edit/create mode. isDirty is deliberately not
   // checked here because page uploads/deletes (which are saved immediately via
@@ -227,8 +230,60 @@ export function PaperworkForm({
         </Section>
       )}
 
-      {/* ── Certificat de Moștenitor specific ───────────────────────── */}
-      {cfg.showMostenitor && (
+      {/* ── Certificat de Moștenitor — merged Succession Details ──────
+           Combines the succession-specific fields, the free-text party
+           fields, and (outside the fieldset below) the linked-person list.
+      ────────────────────────────────────────────────────────────────── */}
+      {isMostenitor && (
+        <Section title={t("sections.mostenitor")} columns={1}>
+          {/* Succession-specific fields in a 2-col row */}
+          <div className="grid grid-cols-2 gap-2">
+            <Field
+              label={t("fields.nrDosarSuccesoral")}
+              name="nrDosarSuccesoral"
+              register={register}
+              error={errors.nrDosarSuccesoral?.message}
+            />
+            <Field
+              label={t("fields.nrCertificatDeces")}
+              name="nrCertificatDeces"
+              register={register}
+              error={errors.nrCertificatDeces?.message}
+            />
+            <Field
+              label={t("fields.dataDecesului")}
+              name="dataDecesului"
+              type="date"
+              register={register}
+              error={errors.dataDecesului?.message}
+            />
+            <Field
+              label={t("fields.ultimulDomiciliu")}
+              name="ultimulDomiciliu"
+              register={register}
+              error={errors.ultimulDomiciliu?.message}
+            />
+          </div>
+          {/* Free-text party fields — kept alongside linked persons */}
+          <TextAreaField
+            label={t("fields.defunctText")}
+            name="defunctText"
+            register={register}
+            error={errors.defunctText?.message}
+            rows={2}
+          />
+          <TextAreaField
+            label={t("fields.partiesBText")}
+            name="partiesBText"
+            register={register}
+            error={errors.partiesBText?.message}
+            rows={2}
+          />
+        </Section>
+      )}
+
+      {/* ── Standard Succession Details (all other types) ────────────── */}
+      {cfg.showMostenitor && !isMostenitor && (
         <Section title={t("sections.mostenitor")} columns={2}>
           <Field
             label={t("fields.nrDosarSuccesoral")}
@@ -279,7 +334,8 @@ export function PaperworkForm({
       )}
 
       {/* ── Parties (Titular / Defunct / Vânzători–Cumpărători / etc.) ── */}
-      {(cfg.showParties || cfg.showDefunct) && (
+      {/* ── Parties — CERTIFICAT_MOSTENITOR handled above in merged section ── */}
+      {(cfg.showParties || cfg.showDefunct) && !isMostenitor && (
         <Section title={t("sections.parties")} columns={1}>
           {cfg.showDefunct && (
             <TextAreaField
@@ -328,6 +384,16 @@ export function PaperworkForm({
         </p>
       )}
     </form>
+
+    {/* ── Succession Parties panel (CERTIFICAT_MOSTENITOR only) ──────────
+         Outside <form> + fieldset so TanStack Query state stays separate
+         from React Hook Form. Only rendered once the document is saved. ── */}
+    {mode !== "create" && paperworkId && isMostenitor && (
+      <SuccessionPartiesPanel
+        paperworkId={paperworkId}
+        mode={mode === "view" ? "view" : "edit"}
+      />
+    )}
 
     {/* ── Pages panel — outside <form> so its TanStack Query re-renders
          never interfere with React Hook Form state. Only shown once the
