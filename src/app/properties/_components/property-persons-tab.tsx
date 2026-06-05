@@ -14,6 +14,7 @@ type AssociatedPerson = {
   code:        string;
   type:        "NATURAL" | "JUDICIAL";
   displayName: string;
+  roleName:    string | null;
   associatedAt: string;
 };
 
@@ -112,7 +113,7 @@ export function PropertyPersonsTab({ propertyId }: Props) {
                   {t("colName")}
                 </th>
                 <th className="px-3 py-2 text-left font-medium text-fade dark:text-zinc-400">
-                  {t("colType")}
+                  {t("colRole")}
                 </th>
               </tr>
             </thead>
@@ -149,7 +150,7 @@ export function PropertyPersonsTab({ propertyId }: Props) {
                     {p.displayName}
                   </td>
                   <td className="px-3 py-2 text-fade dark:text-zinc-400">
-                    {p.type === "NATURAL" ? t("typeNatural") : t("typeJudicial")}
+                    {p.roleName ?? "—"}
                   </td>
                 </tr>
               ))}

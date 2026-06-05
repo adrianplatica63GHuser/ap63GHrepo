@@ -11,6 +11,9 @@ const PAGE_SIZE = 15;
 type PersonSearchItem = { id: string; code: string; type: "NATURAL" | "JUDICIAL"; displayName: string };
 type SearchResponse = { items: PersonSearchItem[]; total: number };
 
+type RoleItem = { id: string; personRoleId: string; personRoleName: string };
+type RolesResponse = { items: RoleItem[] };
+
 type Props = { propertyId: string; propertyName: string };
 
 async function searchPersons(name: string, code: string, page: number): Promise<SearchResponse> {
@@ -25,21 +28,34 @@ async function searchPersons(name: string, code: string, page: number): Promise<
   return { items: data.items as PersonSearchItem[], total: data.total as number };
 }
 
+async function fetchRoles(): Promise<RoleItem[]> {
+  const res = await fetch("/api/admin/property-person-roles");
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data: RolesResponse = await res.json();
+  return data.items;
+}
+
 export function AssociatePersonView({ propertyId, propertyName }: Props) {
   const t           = useTranslations("property.associatePerson");
   const router      = useRouter();
   const queryClient = useQueryClient();
 
-  const [nameInput,   setNameInput]   = useState("");
-  const [codeInput,   setCodeInput]   = useState("");
-  const [page,        setPage]        = useState(0);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [submitting,  setSubmitting]  = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [nameInput,      setNameInput]      = useState("");
+  const [codeInput,      setCodeInput]      = useState("");
+  const [page,           setPage]           = useState(0);
+  const [selectedIds,    setSelectedIds]    = useState<Set<string>>(new Set());
+  const [selectedRoleId, setSelectedRoleId] = useState<string>("");
+  const [submitting,     setSubmitting]     = useState(false);
+  const [submitError,    setSubmitError]    = useState<string | null>(null);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["person-search", nameInput, codeInput, page],
     queryFn:  () => searchPersons(nameInput, codeInput, page),
+  });
+
+  const { data: roles } = useQuery({
+    queryKey: ["property-person-roles-whitelist"],
+    queryFn:  fetchRoles,
   });
 
   const items = data?.items ?? [];
@@ -61,7 +77,10 @@ export function AssociatePersonView({ propertyId, propertyName }: Props) {
       const res = await fetch(`/api/properties/${encodeURIComponent(propertyId)}/persons`, {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ personIds: Array.from(selectedIds) }),
+        body:    JSON.stringify({
+          personIds:    Array.from(selectedIds),
+          personRoleId: selectedRoleId || null,
+        }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -85,6 +104,7 @@ export function AssociatePersonView({ propertyId, propertyName }: Props) {
         <p className="mt-1 text-sm text-fade dark:text-zinc-400">{propertyName}</p>
       </header>
 
+      {/* Search filters */}
       <div className="flex flex-wrap gap-3">
         <label className="flex items-center gap-2 text-sm">
           <span className="w-12 shrink-0 font-medium text-ink dark:text-zinc-300">{t("labelName")}</span>
@@ -108,6 +128,7 @@ export function AssociatePersonView({ propertyId, propertyName }: Props) {
         </label>
       </div>
 
+      {/* Person picker */}
       <div className="rounded-md border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         {isLoading ? (
           <p className="px-4 py-6 text-sm text-fade dark:text-zinc-400">{t("loading")}</p>
@@ -156,6 +177,26 @@ export function AssociatePersonView({ propertyId, propertyName }: Props) {
         onPrev={() => setPage((p) => p - 1)}
         onNext={() => setPage((p) => p + 1)}
       />
+
+      {/* Role selection */}
+      <div className="flex items-center gap-3">
+        <label htmlFor="role-select" className="shrink-0 text-sm font-medium text-ink dark:text-zinc-300">
+          {t("labelRole")}
+        </label>
+        <select
+          id="role-select"
+          value={selectedRoleId}
+          onChange={(e) => setSelectedRoleId(e.target.value)}
+          className="w-64 rounded-md border border-wire bg-white px-2 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
+        >
+          <option value="">{t("rolePlaceholder")}</option>
+          {(roles ?? []).map((r) => (
+            <option key={r.personRoleId} value={r.personRoleId}>
+              {r.personRoleName}
+            </option>
+          ))}
+        </select>
+      </div>
 
       {submitError && <p className="text-sm text-red-600 dark:text-red-400" role="alert">{submitError}</p>}
 
