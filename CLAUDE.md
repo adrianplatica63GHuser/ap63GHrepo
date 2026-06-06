@@ -77,8 +77,59 @@ Relationships: People ↔ Paperwork, People ↔ Properties, Paperwork ↔ Proper
 - Slice #10.03 — Reference Data: Person Roles list. ✅ Complete. Full detail below.
 - Slice #10.04 — Reference Data: Document Persons (Document Type ↔ Person Role associations). ✅ Complete. Full detail below.
 - Slice #10.05 — Reference Data: Property Persons (Person Role whitelist for Property ↔ Person associations). ✅ Complete. Full detail below.
+- Slice #10.06 — Role on Property ↔ Person association. ✅ Complete. Full detail below.
 
 Each slice typically lands as multiple small commits, each individually green.
+
+### Slice #10.06 — Role on Property ↔ Person association (detail)
+
+DB + schema + query layer + API + UI + i18n.
+
+**What changed**
+
+**DB migration (`src/db/migration_016_property_person_role.sql`)**
+- `ALTER TABLE property_person ADD COLUMN IF NOT EXISTS person_role_id uuid REFERENCES lookup_person_role(id) ON DELETE SET NULL;`
+- Nullable — role is optional on every association.
+- `ON DELETE SET NULL` — if the role is removed from `lookup_person_role`, the association keeps the person but loses the role tag.
+
+**Schema (`src/db/schema/index.ts`)**
+- Added `personRoleId` (nullable FK → `lookupPersonRole.id`, `onDelete: "set null"`) to `propertyPerson`.
+
+**Query layer (`src/lib/properties/queries.ts`)**
+- `PropertyPersonItem` type: added `roleName: string | null`.
+- `listPropertyPersons`: added `leftJoin(lookupPersonRole, ...)` to pull the role name. Returns `null` when no role is set.
+- `associatePersonsToProperty`: added optional `personRoleId: string | null = null` third argument. Included in the insert values when provided.
+
+**API (`src/app/api/properties/[id]/persons/route.ts`)**
+- POST body schema extended: `personRoleId: z.string().uuid().nullable().optional()`.
+- Passes `personRoleId` through to `associatePersonsToProperty`.
+
+**Property Persons tab (`src/app/properties/_components/property-persons-tab.tsx`)**
+- `AssociatedPerson` type: added `roleName: string | null`.
+- Table 3rd column: replaced `colType` (Natural/Judicial) → `colRole` (role name or `—`).
+- Removed `typeNatural` / `typeJudicial` translation usage from this component.
+
+**Associate Person page (`src/app/properties/[id]/associate-person/associate-person-view.tsx`)**
+- Added `RoleItem` type and `fetchRoles()` helper fetching `GET /api/admin/property-person-roles`.
+- Added `selectedRoleId: string` state (empty string = no role).
+- Role `<select>` dropdown rendered between the pagination controls and the action buttons. Options: blank "— no role —" + whitelist items from `lookup_property_person_role`. The selected role applies to all persons being associated in that batch.
+- POST body now includes `personRoleId: selectedRoleId || null`.
+- The person picker table retains its `colType` column (Natural/Judicial) — only the Persons tab list column was replaced.
+
+**i18n**
+- `property.persons`: removed `colType`, `typeNatural`, `typeJudicial`; added `colRole`.
+- `property.associatePerson`: added `labelRole`, `rolePlaceholder` (EN: "— no role —" / RO: "— fără rol —").
+
+**Files touched**
+- `src/db/migration_016_property_person_role.sql` (new)
+- `src/db/schema/index.ts`
+- `src/lib/properties/queries.ts`
+- `src/app/api/properties/[id]/persons/route.ts`
+- `src/app/properties/_components/property-persons-tab.tsx`
+- `src/app/properties/[id]/associate-person/associate-person-view.tsx`
+- `messages/en-GB.json`
+- `messages/ro-RO.json`
+- `CLAUDE.md`
 
 ### Slice #4.4 — Document list filtering via sidebar checkboxes (detail)
 
