@@ -32,7 +32,3 @@ export async function POST(request: NextRequest, ctx: Ctx): Promise<Response> {
     return new Response(null, { status: 204 });
   } catch (err) { return unexpectedError(err, "POST /api/paperwork/[id]/persons"); }
 }
-Paperwork(id, parsed.data.personIds, parsed.data.quality ?? null);
-    return new Response(null, { status: 204 });
-  } catch (err) { return unexpectedError(err, "POST /api/paperwork/[id]/persons"); }
-}

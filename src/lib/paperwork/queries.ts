@@ -431,7 +431,3 @@ export async function dissociatePaperworkFromPaperwork(paperworkId: string, othe
     .returning({ id: paperworkPaperwork.id });
   return result.length > 0;
 }
-work.paperworkIdA, a), eq(paperworkPaperwork.paperworkIdB, b)))
-    .returning({ id: paperworkPaperwork.id });
-  return result.length > 0;
-}
