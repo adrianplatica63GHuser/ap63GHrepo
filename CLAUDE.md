@@ -79,8 +79,80 @@ Relationships: People ↔ Paperwork, People ↔ Properties, Paperwork ↔ Proper
 - Slice #10.05 — Reference Data: Property Persons (Person Role whitelist for Property ↔ Person associations). ✅ Complete. Full detail below.
 - Slice #10.06 — Role on Property ↔ Person association. ✅ Complete. Full detail below.
 - Slice #10.07 — Role on Document ↔ Person association. ✅ Complete. Full detail below.
+- Slice #12.01 — Judicial Person form refactor: Contact Persons panel (FK-linked natural persons) + Office Address panel (consolidated with "same as" checkbox). ✅ Complete. Full detail below.
 
 Each slice typically lands as multiple small commits, each individually green.
+
+### Slice #12.01 — Judicial Person form refactor (detail)
+
+Pure frontend + DB schema + query layer. No new pages or routes beyond a small extension to the existing people search API.
+
+**What changed**
+
+**DB migration (`src/db/migration_018_judicial_contact_persons.sql`)**
+- `DROP COLUMN contact_person_1` and `DROP COLUMN contact_person_2` — these were explicitly marked as "temporary free-text placeholders" in the schema comment.
+- `ADD COLUMN contact_person_1_id uuid REFERENCES person(id) ON DELETE SET NULL` — nullable FK to a natural person row. ON DELETE SET NULL means deleting the linked person clears the reference without cascading.
+- `ADD COLUMN contact_person_2_id uuid REFERENCES person(id) ON DELETE SET NULL` — same, for the second contact.
+- `ADD COLUMN correspondence_same_as_hq boolean NOT NULL DEFAULT false` — when true, no CORRESPONDENCE address row is stored; the UI hides the correspondence fields.
+
+**Schema (`src/db/schema/index.ts`)**
+- Replaced `contactPerson1: text` + `contactPerson2: text` with FK uuid columns and the boolean flag in `judicialPerson`.
+
+**Query layer (`src/lib/judicial-persons/queries.ts`)**
+- `JudicialPersonFull` type extended: added `contactPerson1Name: string | null` and `contactPerson2Name: string | null`.
+- `getJudicialPersonById`: resolves display names for the two contact person FKs via two separate single-row selects (using aliased `person` table). Returns names alongside the main record so the UI can render them without a second fetch.
+- `createJudicialPerson` / `updateJudicialPerson`: thread `contactPerson1Id`, `contactPerson2Id`, `correspondenceSameAsHq` through.
+
+**Person search (`src/lib/persons/queries.ts` + `src/app/api/people/search/route.ts`)**
+- `searchPersonsAll` gains an optional `type?: "NATURAL" | "JUDICIAL"` parameter that filters results to a single type.
+- The `GET /api/people/search` route exposes this as an optional `?type=` query param.
+- The contact-person picker passes `?type=NATURAL` to ensure only natural persons are shown.
+
+**Validation (`src/lib/judicial-persons/validation.ts`)**
+- Removed `contactPerson1` / `contactPerson2` string fields.
+- Added `contactPerson1Id: z.string().uuid().nullish()`, `contactPerson2Id: z.string().uuid().nullish()`, `correspondenceSameAsHq: z.boolean().default(false)`.
+
+**Form schema (`src/app/judicial-persons/_components/form-schema.ts`)**
+- `FormValues`: replaced `contactPerson1/2` strings with `contactPerson1Id/2Id` (string, empty = not linked) and `contactPerson1Name/2Name` (display-only, never sent to API). Added `correspondenceSameAsHq: boolean`.
+- `fromApiPayload`: populates the new fields from the enriched `JudicialPersonFull` response (including `contactPerson1Name` / `contactPerson2Name`).
+- `toApiPayload`: maps `contactPerson1Id` empty string → null; when `correspondenceSameAsHq` is true, omits the CORRESPONDENCE address from the payload.
+- Correspondence address validation refinement only fires when `correspondenceSameAsHq` is false.
+
+**Page (`src/app/judicial-persons/[id]/page.tsx`)**
+- `fromApiPayload` call extended to pass `contactPerson1Name` and `contactPerson2Name` from the enriched query result.
+
+**Form component (`src/app/judicial-persons/_components/judicial-person-form.tsx`)**
+
+*Contact Persons panel* — single `<section>` titled "Contact Persons" replacing the two old single-field sections:
+- `ContactPersonRow`: for each slot, shows either a hyperlink to `/natural-persons/{id}` (when linked) + a Remove button, or an "+ Add contact person" button (when empty). View mode suppresses buttons.
+- `ContactPersonPickerDialog`: inline modal with name+code search, paginated table (15/page), radio-select, filtered to `type=NATURAL`. Confirms with a "Select" button. Has a note: "If the person is not in the system, they must be entered first using the Natural Person functionality." ESC closes the modal.
+- Translation hooks (`useAddressTranslations`, `useContactPickerTranslations`) called at the top of the component and passed as props — not called inside JSX (Rules of Hooks).
+
+*Office Address panel* — single `<section>` titled "Office Address" replacing the two `<AddressBlock>` cards:
+- "Registered Address" subsection label + inline fields (6 fields, same layout as AddressBlock).
+- "Correspondence Address" subsection label with "Same as registered address" checkbox inline on the right. When checked: the correspondence fields are hidden entirely (not just disabled); `correspondenceSameAsHq = true` is written to form state. When unchecked: fields render and validate normally.
+- `AddressFields` helper renders the 3-row field grid; replaces use of the shared `AddressBlock` component (which renders its own `<section>` card — unsuitable here since both blocks share one card).
+
+**i18n** (both `messages/en-GB.json` and `messages/ro-RO.json`)
+- `judicialPerson.sections`: removed `contactPerson1`, `contactPerson2`, `headquartersAddress`; added `contactPersons`, `officeAddress`, `registeredAddress`.
+- `judicialPerson.fields`: added `sameAsRegistered`.
+- `judicialPerson.actions`: added `addContactPerson`, `removeContactPerson`.
+- `judicialPerson.contactPersonPicker`: full namespace for the picker modal.
+- `judicialPerson.hints`: added `contactPersonNotInSystem`.
+
+**Files touched**
+- `src/db/migration_018_judicial_contact_persons.sql` (new)
+- `src/db/schema/index.ts`
+- `src/lib/judicial-persons/queries.ts`
+- `src/lib/judicial-persons/validation.ts`
+- `src/lib/persons/queries.ts`
+- `src/app/api/people/search/route.ts`
+- `src/app/judicial-persons/_components/form-schema.ts`
+- `src/app/judicial-persons/_components/judicial-person-form.tsx`
+- `src/app/judicial-persons/[id]/page.tsx`
+- `messages/en-GB.json`
+- `messages/ro-RO.json`
+- `CLAUDE.md`
 
 ### Slice #10.07 — Role on Document ↔ Person association (detail)
 

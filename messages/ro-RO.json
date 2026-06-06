@@ -407,9 +407,9 @@
     },
     "sections": {
       "identity": "Persoană juridică",
-      "contactPerson1": "Persoană de contact 1",
-      "contactPerson2": "Persoană de contact 2",
-      "headquartersAddress": "Adresă sediu social",
+      "contactPersons": "Persoane de contact",
+      "officeAddress": "Adresă sediu",
+      "registeredAddress": "Adresă sediu social",
       "correspondenceAddress": "Adresă corespondență"
     },
     "fields": {
@@ -421,7 +421,27 @@
       "tradeRegisterNumber": "Nr. registru comerțului",
       "contactPerson1": "Persoană de contact 1",
       "contactPerson2": "Persoană de contact 2",
+      "sameAsRegistered": "Aceeași cu adresa sediului social",
       "notes": "Note"
+    },
+    "actions": {
+      "addContactPerson": "Adaugă persoană de contact",
+      "removeContactPerson": "Elimină"
+    },
+    "contactPersonPicker": {
+      "title": "Selectați persoana de contact",
+      "labelName": "Nume",
+      "namePlaceholder": "caută după nume",
+      "labelCode": "Cod",
+      "codePlaceholder": "PERS…",
+      "colCode": "Cod",
+      "colName": "Nume",
+      "loading": "Se încarcă…",
+      "error": "Eroare la încărcare",
+      "resultsEmpty": "Nu s-au găsit persoane",
+      "select": "Selectează",
+      "cancel": "Anulează",
+      "note": "Dacă persoana nu este în sistem, trebuie introdusă mai întâi prin funcționalitatea Persoană Fizică."
     },
     "options": {
       "judicialType": {
@@ -448,7 +468,8 @@
     },
     "hints": {
       "cuiLocked": "CUI-ul nu poate fi modificat odată setat — ștergeți și creați din nou pentru a-l schimba",
-      "countryRequiredIfAddressFilled": "Necesar dacă orice alt câmp al adresei este completat"
+      "countryRequiredIfAddressFilled": "Necesar dacă orice alt câmp al adresei este completat",
+      "contactPersonNotInSystem": "Dacă persoana nu este în sistem, trebuie introdusă mai întâi prin funcționalitatea Persoană Fizică."
     },
     "tabs": {
       "details": "Detalii",

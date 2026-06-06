@@ -352,12 +352,15 @@ export async function searchPersonsAll(opts: {
   code?:   string;
   limit:   number;
   offset:  number;
+  /** When provided, restrict results to a single person type. */
+  type?:   "NATURAL" | "JUDICIAL";
 }): Promise<{ items: PersonSearchItem[]; total: number }> {
   const namePat = opts.name?.trim() ? `%${opts.name.trim()}%` : null;
   const codePat = opts.code?.trim() ? `%${opts.code.trim()}%` : null;
 
   const where = and(
     isNull(person.deletedAt),
+    opts.type ? eq(person.type, opts.type) : undefined,
     namePat ? ilike(person.displayName, namePat) : undefined,
     codePat ? ilike(person.code,        codePat) : undefined,
   );

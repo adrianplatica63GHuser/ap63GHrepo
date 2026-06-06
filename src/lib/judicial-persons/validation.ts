@@ -7,6 +7,12 @@
  *
  * The `notes` field on the create/update payload lives on the `person`
  * (base) table, NOT on `judicial_person`. The handlers split it accordingly.
+ *
+ * contactPerson1Id / contactPerson2Id are nullable UUIDs referencing
+ * person.id (natural persons only — enforced at the UI layer).
+ *
+ * correspondenceSameAsHq — when true the UI hides the CORRESPONDENCE address
+ * block and no CORRESPONDENCE address row is stored.
  */
 
 import { createInsertSchema } from "drizzle-zod";
@@ -54,6 +60,11 @@ export const judicialPersonCreateSchema = judicialPersonBase.extend({
   // the judicial_person satellite. The handler routes it accordingly.
   notes: z.string().nullish(),
   addresses: addressArraySchema.default([]),
+  // Contact person FK IDs (natural persons only; validated at UI layer).
+  contactPerson1Id: z.string().uuid().nullish(),
+  contactPerson2Id: z.string().uuid().nullish(),
+  // When true, no CORRESPONDENCE address row is stored.
+  correspondenceSameAsHq: z.boolean().default(false),
 });
 
 export type JudicialPersonCreate = z.infer<typeof judicialPersonCreateSchema>;
@@ -71,6 +82,9 @@ export const judicialPersonUpdateSchema = judicialPersonBase
     // [] = clear all addresses.
     // Non-empty = merge by kind (delete existing, insert new).
     addresses: addressArraySchema.optional(),
+    contactPerson1Id: z.string().uuid().nullish(),
+    contactPerson2Id: z.string().uuid().nullish(),
+    correspondenceSameAsHq: z.boolean().optional(),
   });
 
 export type JudicialPersonUpdate = z.infer<typeof judicialPersonUpdateSchema>;

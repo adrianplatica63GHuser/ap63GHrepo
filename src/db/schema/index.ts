@@ -216,10 +216,19 @@ export const judicialPerson = pgTable(
     // Trade Register number — "Nr. ORC" (e.g. "J22/123/2020").
     tradeRegisterNumber: text("trade_register_number"),
 
-    // Contact persons — temporary free-text placeholders.
-    // → Future slice will replace with M:M to Person.
-    contactPerson1: text("contact_person_1"),
-    contactPerson2: text("contact_person_2"),
+    // Contact persons — FK references to natural_person rows.
+    // Nullable; ON DELETE SET NULL so removing the linked person just clears
+    // the reference without touching this judicial_person row.
+    contactPerson1Id: uuid("contact_person_1_id")
+      .references(() => person.id, { onDelete: "set null" }),
+    contactPerson2Id: uuid("contact_person_2_id")
+      .references(() => person.id, { onDelete: "set null" }),
+
+    // When true, the correspondence address mirrors the registered-office
+    // address and no CORRESPONDENCE address row is stored in `address`.
+    correspondenceSameAsHq: boolean("correspondence_same_as_hq")
+      .notNull()
+      .default(false),
   },
   (t) => [
     // CUI is unique when present (partial unique index).

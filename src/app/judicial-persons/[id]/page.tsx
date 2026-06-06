@@ -18,9 +18,11 @@ export default async function EditJudicialPersonPage({ params, searchParams }: P
   if (!data) notFound();
 
   const initialValues = fromApiPayload({
-    judicial:  data.judicial,
-    addresses: data.addresses,
-    notes:     data.person.notes,
+    judicial:           data.judicial,
+    addresses:          data.addresses,
+    notes:              data.person.notes,
+    contactPerson1Name: data.contactPerson1Name,
+    contactPerson2Name: data.contactPerson2Name,
   });
 
   const initialTab: Tab =

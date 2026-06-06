@@ -12,8 +12,13 @@
  * the update payload, we delete all existing addresses for the person and
  * insert the new set. Omitting `addresses` from the payload leaves them
  * untouched.
+ *
+ * contactPerson1Id / contactPerson2Id: nullable FK → person.id (NATURAL).
+ * getJudicialPersonById enriches the result with the linked persons'
+ * displayNames so the UI can render them without a second fetch.
  */
 
+import { alias } from "drizzle-orm/pg-core";
 import { and, count, eq, ilike, isNull, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { address, judicialPerson, person, principalObject } from "@/db/schema";
@@ -82,13 +87,17 @@ export async function listJudicialPersons(opts: JudicialListQuery): Promise<{
 }
 
 // ---------------------------------------------------------------------------
-// Get by id (full record: person + judicial_person + addresses)
+// Get by id (full record: person + judicial_person + addresses + contact names)
 // ---------------------------------------------------------------------------
 
 export type JudicialPersonFull = {
   person: typeof person.$inferSelect;
   judicial: typeof judicialPerson.$inferSelect | null;
   addresses: (typeof address.$inferSelect)[];
+  /** Display name of the linked contact person 1, or null if not set. */
+  contactPerson1Name: string | null;
+  /** Display name of the linked contact person 2, or null if not set. */
+  contactPerson2Name: string | null;
 };
 
 export async function getJudicialPersonById(
@@ -109,6 +118,10 @@ export async function getJudicialPersonById(
   if (personRows.length === 0) return null;
   const personRow = personRows[0];
 
+  // Aliases for the two contact-person joins.
+  const cp1 = alias(person, "cp1");
+  const cp2 = alias(person, "cp2");
+
   const [judicialRows, addressRows] = await Promise.all([
     db
       .select()
@@ -122,10 +135,37 @@ export async function getJudicialPersonById(
       .orderBy(address.kind),
   ]);
 
+  const judicialRow = judicialRows[0] ?? null;
+
+  // Resolve contact person names if IDs are set.
+  let contactPerson1Name: string | null = null;
+  let contactPerson2Name: string | null = null;
+
+  if (judicialRow) {
+    if (judicialRow.contactPerson1Id) {
+      const rows = await db
+        .select({ displayName: cp1.displayName })
+        .from(cp1)
+        .where(eq(cp1.id, judicialRow.contactPerson1Id))
+        .limit(1);
+      contactPerson1Name = rows[0]?.displayName ?? null;
+    }
+    if (judicialRow.contactPerson2Id) {
+      const rows = await db
+        .select({ displayName: cp2.displayName })
+        .from(cp2)
+        .where(eq(cp2.id, judicialRow.contactPerson2Id))
+        .limit(1);
+      contactPerson2Name = rows[0]?.displayName ?? null;
+    }
+  }
+
   return {
     person: personRow,
-    judicial: judicialRows[0] ?? null,
+    judicial: judicialRow,
     addresses: addressRows,
+    contactPerson1Name,
+    contactPerson2Name,
   };
 }
 
@@ -136,7 +176,14 @@ export async function getJudicialPersonById(
 export async function createJudicialPerson(
   input: JudicialPersonCreate,
 ): Promise<JudicialPersonFull> {
-  const { addresses: addressList, notes, ...judFields } = input;
+  const {
+    addresses: addressList,
+    notes,
+    contactPerson1Id,
+    contactPerson2Id,
+    correspondenceSameAsHq,
+    ...judFields
+  } = input;
   // displayName is cached on the person row; for judicial persons it
   // mirrors the `name` field 1:1.
   const displayName = judFields.name.trim() || "(unnamed)";
@@ -171,8 +218,9 @@ export async function createJudicialPerson(
         judicialType: judFields.judicialType ?? null,
         cuiNumber: judFields.cuiNumber ?? null,
         tradeRegisterNumber: judFields.tradeRegisterNumber ?? null,
-        contactPerson1: judFields.contactPerson1 ?? null,
-        contactPerson2: judFields.contactPerson2 ?? null,
+        contactPerson1Id: contactPerson1Id ?? null,
+        contactPerson2Id: contactPerson2Id ?? null,
+        correspondenceSameAsHq: correspondenceSameAsHq ?? false,
       })
       .returning();
 
@@ -195,7 +243,13 @@ export async function createJudicialPerson(
         .returning();
     }
 
-    return { person: pRow, judicial: jRow, addresses: addressRows };
+    return {
+      person: pRow,
+      judicial: jRow,
+      addresses: addressRows,
+      contactPerson1Name: null, // freshly created, won't resolve names here
+      contactPerson2Name: null,
+    };
   });
 }
 
@@ -207,7 +261,14 @@ export async function updateJudicialPerson(
   id: string,
   input: JudicialPersonUpdate,
 ): Promise<JudicialPersonFull | null> {
-  const { addresses: addressList, notes, ...judUpdate } = input;
+  const {
+    addresses: addressList,
+    notes,
+    contactPerson1Id,
+    contactPerson2Id,
+    correspondenceSameAsHq,
+    ...judUpdate
+  } = input;
 
   return await db.transaction(async (tx) => {
     // Verify person exists, is judicial, and is not deleted.
@@ -224,12 +285,17 @@ export async function updateJudicialPerson(
       .limit(1);
     if (personRows.length === 0) return null;
 
-    // Update judicial_person fields if any were provided.
-    const hasJudUpdate = Object.values(judUpdate).some((v) => v !== undefined);
+    // Build the judicial_person patch, including new FK + flag fields.
+    const judicialPatch: Record<string, unknown> = { ...judUpdate };
+    if (contactPerson1Id !== undefined) judicialPatch.contactPerson1Id = contactPerson1Id ?? null;
+    if (contactPerson2Id !== undefined) judicialPatch.contactPerson2Id = contactPerson2Id ?? null;
+    if (correspondenceSameAsHq !== undefined) judicialPatch.correspondenceSameAsHq = correspondenceSameAsHq;
+
+    const hasJudUpdate = Object.values(judicialPatch).some((v) => v !== undefined);
     if (hasJudUpdate) {
       await tx
         .update(judicialPerson)
-        .set(judUpdate)
+        .set(judicialPatch)
         .where(eq(judicialPerson.personId, id));
     }
 
@@ -273,27 +339,7 @@ export async function updateJudicialPerson(
       }
     }
 
-    // Re-fetch full record for the response.
-    const [refreshedPerson] = await tx
-      .select()
-      .from(person)
-      .where(eq(person.id, id))
-      .limit(1);
-    const [refreshedJudicial] = await tx
-      .select()
-      .from(judicialPerson)
-      .where(eq(judicialPerson.personId, id))
-      .limit(1);
-    const refreshedAddresses = await tx
-      .select()
-      .from(address)
-      .where(eq(address.personId, id))
-      .orderBy(address.kind);
-
-    return {
-      person: refreshedPerson,
-      judicial: refreshedJudicial ?? null,
-      addresses: refreshedAddresses,
-    };
+    // Re-fetch full record (includes contact person name resolution).
+    return getJudicialPersonById(id);
   });
 }

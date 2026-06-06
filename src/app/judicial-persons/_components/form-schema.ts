@@ -5,8 +5,13 @@
  * strings (no null/undefined); `toApiPayload` blanks empty strings to null
  * and drops address blocks where Country is empty.
  *
- * The `fromApiPayload` helper converts a DB record (person + judicial_person
- * + addresses) back into the flat string-based form shape for edit mode.
+ * Contact persons are stored as:
+ *   contactPerson1Id   — person.id (empty string = not set)
+ *   contactPerson1Name — display name for rendering only (never sent to API)
+ *   (same for contact person 2)
+ *
+ * correspondenceSameAsHq — when true, the CORRESPONDENCE address block is
+ * hidden in the UI and omitted from the API payload entirely.
  */
 
 import { z } from "zod/v4";
@@ -36,9 +41,14 @@ export const formSchema = z
     judicialType: z.string(), // "" | "SRL" | "SA" | ...
     cuiNumber: z.string(),
     tradeRegisterNumber: z.string(),
-    contactPerson1: z.string(),
-    contactPerson2: z.string(),
+    // Contact person 1: ID stored as string; empty = not linked.
+    contactPerson1Id: z.string(),
+    contactPerson1Name: z.string(), // read-only display; never sent to API
+    // Contact person 2
+    contactPerson2Id: z.string(),
+    contactPerson2Name: z.string(), // read-only display; never sent to API
     notes: z.string().max(300, "Notes is limited to 300 characters"),
+    correspondenceSameAsHq: z.boolean(),
     addresses: z.object({
       HEADQUARTERS: addressBlockSchema,
       CORRESPONDENCE: addressBlockSchema,
@@ -49,13 +59,16 @@ export const formSchema = z
     message: "Name is required",
     path: ["name"],
   })
-  // Each address: if any non-Country field is filled, Country must be too
+  // Registered-office address: if any non-Country field is filled, Country must be too
   .refine((d) => addressBlockHasCountryWhenNeeded(d.addresses.HEADQUARTERS), {
     message: "Country is required for the Registered Office address",
     path: ["addresses", "HEADQUARTERS", "country"],
   })
+  // Correspondence address only needs validation when not hidden by the checkbox
   .refine(
-    (d) => addressBlockHasCountryWhenNeeded(d.addresses.CORRESPONDENCE),
+    (d) =>
+      d.correspondenceSameAsHq ||
+      addressBlockHasCountryWhenNeeded(d.addresses.CORRESPONDENCE),
     {
       message: "Country is required for the Correspondence address",
       path: ["addresses", "CORRESPONDENCE", "country"],
@@ -94,9 +107,12 @@ export const emptyFormValues: FormValues = {
   judicialType: "",
   cuiNumber: "",
   tradeRegisterNumber: "",
-  contactPerson1: "",
-  contactPerson2: "",
+  contactPerson1Id: "",
+  contactPerson1Name: "",
+  contactPerson2Id: "",
+  contactPerson2Name: "",
   notes: "",
+  correspondenceSameAsHq: false,
   addresses: {
     HEADQUARTERS: { ...emptyAddressBlock },
     CORRESPONDENCE: { ...emptyAddressBlock },
@@ -122,8 +138,9 @@ type JudicialRow = {
     | null;
   cuiNumber: string | null;
   tradeRegisterNumber: string | null;
-  contactPerson1: string | null;
-  contactPerson2: string | null;
+  contactPerson1Id: string | null;
+  contactPerson2Id: string | null;
+  correspondenceSameAsHq: boolean;
 };
 
 type AddressRow = {
@@ -140,6 +157,8 @@ export function fromApiPayload(input: {
   judicial: JudicialRow | null;
   addresses: AddressRow[];
   notes: string | null;
+  contactPerson1Name: string | null;
+  contactPerson2Name: string | null;
 }): FormValues {
   const j = input.judicial;
 
@@ -164,9 +183,12 @@ export function fromApiPayload(input: {
     judicialType: j?.judicialType ?? "",
     cuiNumber: j?.cuiNumber ?? "",
     tradeRegisterNumber: j?.tradeRegisterNumber ?? "",
-    contactPerson1: j?.contactPerson1 ?? "",
-    contactPerson2: j?.contactPerson2 ?? "",
+    contactPerson1Id: j?.contactPerson1Id ?? "",
+    contactPerson1Name: input.contactPerson1Name ?? "",
+    contactPerson2Id: j?.contactPerson2Id ?? "",
+    contactPerson2Name: input.contactPerson2Name ?? "",
     notes: input.notes ?? "",
+    correspondenceSameAsHq: j?.correspondenceSameAsHq ?? false,
     addresses: {
       HEADQUARTERS: toBlock(hq),
       CORRESPONDENCE: toBlock(corr),
@@ -214,9 +236,18 @@ export function toApiPayload(
   values: FormValues,
 ): JudicialPersonCreate & JudicialPersonUpdate {
   const addresses: JudicialPersonCreate["addresses"] = [];
-  for (const kind of ADDRESS_KINDS) {
-    const a = blockToAddress(kind, values.addresses[kind]);
-    if (a) addresses.push(a);
+
+  // Always try to persist the HEADQUARTERS address.
+  const hq = blockToAddress("HEADQUARTERS", values.addresses.HEADQUARTERS);
+  if (hq) addresses.push(hq);
+
+  // Only persist CORRESPONDENCE when the "same as" checkbox is NOT checked.
+  if (!values.correspondenceSameAsHq) {
+    const corr = blockToAddress(
+      "CORRESPONDENCE",
+      values.addresses.CORRESPONDENCE,
+    );
+    if (corr) addresses.push(corr);
   }
 
   return {
@@ -225,8 +256,9 @@ export function toApiPayload(
     judicialType: blank(values.judicialType) as JudicialTypeEnum | null,
     cuiNumber: blank(values.cuiNumber),
     tradeRegisterNumber: blank(values.tradeRegisterNumber),
-    contactPerson1: blank(values.contactPerson1),
-    contactPerson2: blank(values.contactPerson2),
+    contactPerson1Id: blank(values.contactPerson1Id),
+    contactPerson2Id: blank(values.contactPerson2Id),
+    correspondenceSameAsHq: values.correspondenceSameAsHq,
     notes: blank(values.notes),
     addresses,
   };

@@ -407,9 +407,9 @@
     },
     "sections": {
       "identity": "Judicial Person",
-      "contactPerson1": "Contact Person 1",
-      "contactPerson2": "Contact Person 2",
-      "headquartersAddress": "Registered Office Address",
+      "contactPersons": "Contact Persons",
+      "officeAddress": "Office Address",
+      "registeredAddress": "Registered Address",
       "correspondenceAddress": "Correspondence Address"
     },
     "fields": {
@@ -421,7 +421,27 @@
       "tradeRegisterNumber": "Trade Register No.",
       "contactPerson1": "Contact Person 1",
       "contactPerson2": "Contact Person 2",
+      "sameAsRegistered": "Same as registered address",
       "notes": "Notes"
+    },
+    "actions": {
+      "addContactPerson": "Add contact person",
+      "removeContactPerson": "Remove"
+    },
+    "contactPersonPicker": {
+      "title": "Select Contact Person",
+      "labelName": "Name",
+      "namePlaceholder": "search by name",
+      "labelCode": "Code",
+      "codePlaceholder": "PERS…",
+      "colCode": "Code",
+      "colName": "Name",
+      "loading": "Loading…",
+      "error": "Failed to load",
+      "resultsEmpty": "No persons found",
+      "select": "Select",
+      "cancel": "Cancel",
+      "note": "If the person is not in the system, they must be entered first using the Natural Person functionality."
     },
     "options": {
       "judicialType": {
@@ -448,7 +468,8 @@
     },
     "hints": {
       "cuiLocked": "CUI cannot be changed once set — delete and recreate to change",
-      "countryRequiredIfAddressFilled": "Required if any other address field is filled"
+      "countryRequiredIfAddressFilled": "Required if any other address field is filled",
+      "contactPersonNotInSystem": "If the person is not in the system, they must be entered first using the Natural Person functionality."
     },
     "tabs": {
       "details": "Details",

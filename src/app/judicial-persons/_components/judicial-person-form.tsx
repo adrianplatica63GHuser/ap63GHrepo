@@ -3,14 +3,18 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
   type FieldPath,
   type UseFormRegister,
   useForm,
+  useWatch,
+  Controller,
 } from "react-hook-form";
-import { AddressBlock } from "@/components/address/address-block";
+import { useQuery } from "@tanstack/react-query";
+import { PaginationControls } from "@/components/pagination-controls";
 import {
   emptyFormValues,
   formSchema,
@@ -34,6 +38,9 @@ export function JudicialPersonForm({
   const t = useTranslations("judicialPerson");
   const router = useRouter();
   const queryClient = useQueryClient();
+  // Hoist here so they aren't called inside JSX (Rules of Hooks).
+  const addressT = useAddressTranslations();
+  const pickerT  = useContactPickerTranslations();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -44,6 +51,9 @@ export function JudicialPersonForm({
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+
+  // Which contact-person picker is open: 1, 2, or null.
+  const [pickerSlot, setPickerSlot] = useState<1 | 2 | null>(null);
 
   const saveDisabled =
     submitting ||
@@ -108,12 +118,38 @@ export function JudicialPersonForm({
     router.push("/judicial-persons");
   };
 
-  const { register, formState } = form;
+  const { register, formState, control, setValue, getValues } = form;
   const errors = formState.errors;
 
   // Is CUI already set? Show lock hint in edit mode.
   const cuiIsLocked =
     mode === "edit" && Boolean(initialValues?.cuiNumber?.trim());
+
+  // Watch the "same as" flag so the correspondence block reacts live.
+  const correspondenceSameAsHq = useWatch({ control, name: "correspondenceSameAsHq" });
+
+  // Handler when the picker selects a person.
+  const handleContactPersonSelected = (slot: 1 | 2, id: string, name: string) => {
+    if (slot === 1) {
+      setValue("contactPerson1Id", id, { shouldDirty: true, shouldValidate: true });
+      setValue("contactPerson1Name", name, { shouldDirty: true });
+    } else {
+      setValue("contactPerson2Id", id, { shouldDirty: true, shouldValidate: true });
+      setValue("contactPerson2Name", name, { shouldDirty: true });
+    }
+    setPickerSlot(null);
+  };
+
+  // Handler to clear a contact person link.
+  const handleClearContactPerson = (slot: 1 | 2) => {
+    if (slot === 1) {
+      setValue("contactPerson1Id", "", { shouldDirty: true, shouldValidate: true });
+      setValue("contactPerson1Name", "", { shouldDirty: true });
+    } else {
+      setValue("contactPerson2Id", "", { shouldDirty: true, shouldValidate: true });
+      setValue("contactPerson2Name", "", { shouldDirty: true });
+    }
+  };
 
   return (
     <form
@@ -195,47 +231,98 @@ export function JudicialPersonForm({
         </div>
       </section>
 
-      {/* Contact Person 1 */}
+      {/* ── Contact Persons ──────────────────────────────────────────────── */}
       <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
-          {t("sections.contactPerson1")}
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
+          {t("sections.contactPersons")}
         </h2>
-        <Field
-          label={t("fields.contactPerson1")}
-          name="contactPerson1"
-          register={register}
-          error={errors.contactPerson1?.message}
-        />
+        <div className="flex flex-col gap-3">
+          <ContactPersonRow
+            label={t("fields.contactPerson1")}
+            slot={1}
+            control={control}
+            mode={mode}
+            onAdd={() => setPickerSlot(1)}
+            onClear={() => handleClearContactPerson(1)}
+            addLabel={t("actions.addContactPerson")}
+            removeLabel={t("actions.removeContactPerson")}
+          />
+          <ContactPersonRow
+            label={t("fields.contactPerson2")}
+            slot={2}
+            control={control}
+            mode={mode}
+            onAdd={() => setPickerSlot(2)}
+            onClear={() => handleClearContactPerson(2)}
+            addLabel={t("actions.addContactPerson")}
+            removeLabel={t("actions.removeContactPerson")}
+          />
+          {/* Note: person must exist in system first */}
+          <p className="text-xs text-fade dark:text-zinc-500 italic">
+            {t("hints.contactPersonNotInSystem")}
+          </p>
+        </div>
       </section>
 
-      {/* Contact Person 2 */}
+      {/* ── Office Address ───────────────────────────────────────────────── */}
       <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
-          {t("sections.contactPerson2")}
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
+          {t("sections.officeAddress")}
         </h2>
-        <Field
-          label={t("fields.contactPerson2")}
-          name="contactPerson2"
+
+        {/* Registered Address subsection */}
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-fade dark:text-zinc-500">
+          {t("sections.registeredAddress")}
+        </p>
+        <AddressFields
+          prefix="addresses.HEADQUARTERS"
           register={register}
-          error={errors.contactPerson2?.message}
+          errors={errors.addresses?.HEADQUARTERS}
+          t={addressT}
         />
+
+        {/* Correspondence Address subsection */}
+        <div className="mt-4 flex items-center justify-between mb-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-fade dark:text-zinc-500">
+            {t("sections.correspondenceAddress")}
+          </p>
+          {/* "Same as registered address" checkbox */}
+          <Controller
+            control={control}
+            name="correspondenceSameAsHq"
+            render={({ field }) => (
+              <label className="flex cursor-pointer items-center gap-2 text-xs text-fade dark:text-zinc-400 select-none">
+                <input
+                  type="checkbox"
+                  checked={field.value}
+                  onChange={(e) => {
+                    field.onChange(e.target.checked);
+                    // When toggling to "same", clear the correspondence fields
+                    // so there's no stale data sitting in hidden inputs.
+                    if (e.target.checked) {
+                      const hq = getValues("addresses.HEADQUARTERS");
+                      setValue("addresses.CORRESPONDENCE", { ...hq }, { shouldDirty: true });
+                    }
+                  }}
+                  className="accent-cta"
+                  aria-label={t("fields.sameAsRegistered")}
+                />
+                {t("fields.sameAsRegistered")}
+              </label>
+            )}
+          />
+        </div>
+
+        {/* Only render correspondence fields when NOT same-as */}
+        {!correspondenceSameAsHq && (
+          <AddressFields
+            prefix="addresses.CORRESPONDENCE"
+            register={register}
+            errors={errors.addresses?.CORRESPONDENCE}
+            t={addressT}
+          />
+        )}
       </section>
-
-      {/* Registered Office Address (HEADQUARTERS) */}
-      <AddressBlock<FormValues>
-        title={t("sections.headquartersAddress")}
-        prefix="addresses.HEADQUARTERS"
-        register={register}
-        errors={errors.addresses?.HEADQUARTERS}
-      />
-
-      {/* Correspondence Address */}
-      <AddressBlock<FormValues>
-        title={t("sections.correspondenceAddress")}
-        prefix="addresses.CORRESPONDENCE"
-        register={register}
-        errors={errors.addresses?.CORRESPONDENCE}
-      />
 
       </fieldset>{/* end disabled fieldset */}
 
@@ -296,8 +383,372 @@ export function JudicialPersonForm({
           busy={submitting}
         />
       )}
+
+      {/* Contact Person Picker modal */}
+      {pickerSlot !== null && (
+        <ContactPersonPickerDialog
+          slot={pickerSlot}
+          onSelect={handleContactPersonSelected}
+          onClose={() => setPickerSlot(null)}
+          t={pickerT}
+        />
+      )}
     </form>
   );
+}
+
+// ---------------------------------------------------------------------------
+// ContactPersonRow — single row in the Contact Persons panel
+// ---------------------------------------------------------------------------
+
+function ContactPersonRow({
+  label,
+  slot,
+  control,
+  mode,
+  onAdd,
+  onClear,
+  addLabel,
+  removeLabel,
+}: {
+  label: string;
+  slot: 1 | 2;
+  control: ReturnType<typeof useForm<FormValues>>["control"];
+  mode: "create" | "edit" | "view";
+  onAdd: () => void;
+  onClear: () => void;
+  addLabel: string;
+  removeLabel: string;
+}) {
+  const idField   = slot === 1 ? "contactPerson1Id"   : "contactPerson2Id";
+  const nameField = slot === 1 ? "contactPerson1Name" : "contactPerson2Name";
+
+  const personId   = useWatch({ control, name: idField });
+  const personName = useWatch({ control, name: nameField });
+
+  const hasLink = Boolean(personId);
+
+  return (
+    <div className="flex items-center gap-2 text-sm">
+      <span className="w-36 shrink-0 font-medium text-ink dark:text-zinc-300">
+        {label}
+      </span>
+      <div className="flex flex-1 items-center gap-2 min-w-0">
+        {hasLink ? (
+          <>
+            <Link
+              href={`/natural-persons/${encodeURIComponent(personId as string)}`}
+              className="text-cta underline hover:text-cta-d truncate"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {(personName as string) || personId}
+            </Link>
+            {mode !== "view" && (
+              <button
+                type="button"
+                onClick={onClear}
+                className="shrink-0 rounded border border-wire px-2 py-0.5 text-xs text-fade hover:bg-canvas hover:text-red-600 dark:border-zinc-700 dark:hover:bg-zinc-800"
+              >
+                {removeLabel}
+              </button>
+            )}
+          </>
+        ) : (
+          mode !== "view" && (
+            <button
+              type="button"
+              onClick={onAdd}
+              className="inline-flex items-center rounded-md border border-wire bg-white px-3 py-1 text-xs font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+            >
+              + {addLabel}
+            </button>
+          )
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// ContactPersonPickerDialog
+// ---------------------------------------------------------------------------
+
+const PICKER_PAGE_SIZE = 15;
+
+type PersonItem = { id: string; code: string; displayName: string };
+type PickerT = {
+  title: string;
+  labelName: string;
+  namePlaceholder: string;
+  labelCode: string;
+  codePlaceholder: string;
+  colCode: string;
+  colName: string;
+  loading: string;
+  error: string;
+  resultsEmpty: string;
+  select: string;
+  cancel: string;
+  note: string;
+};
+
+function ContactPersonPickerDialog({
+  slot,
+  onSelect,
+  onClose,
+  t,
+}: {
+  slot: 1 | 2;
+  onSelect: (slot: 1 | 2, id: string, name: string) => void;
+  onClose: () => void;
+  t: PickerT;
+}) {
+  const [nameInput, setNameInput] = useState("");
+  const [codeInput, setCodeInput] = useState("");
+  const [page, setPage] = useState(0);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedName, setSelectedName] = useState<string>("");
+
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["contact-person-search", nameInput, codeInput, page],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        type: "NATURAL",
+        limit: String(PICKER_PAGE_SIZE),
+        offset: String(page * PICKER_PAGE_SIZE),
+      });
+      if (nameInput.trim()) params.set("name", nameInput.trim());
+      if (codeInput.trim()) params.set("code", codeInput.trim());
+      const res = await fetch(`/api/people/search?${params.toString()}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      return { items: data.items as PersonItem[], total: data.total as number };
+    },
+  });
+
+  const items = data?.items ?? [];
+  const total = data?.total ?? 0;
+
+  const handleConfirm = () => {
+    if (selectedId) {
+      onSelect(slot, selectedId, selectedName);
+    }
+  };
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={t.title}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      onKeyDown={(e) => { if (e.key === "Escape") onClose(); }}
+    >
+      <div className="flex w-full max-w-lg flex-col gap-4 rounded-lg bg-card p-5 shadow-xl dark:bg-zinc-900">
+        <h3 className="text-base font-semibold text-ink dark:text-zinc-100">
+          {t.title}
+        </h3>
+
+        {/* Search filters */}
+        <div className="flex flex-wrap gap-3">
+          <label className="flex items-center gap-2 text-sm">
+            <span className="w-12 shrink-0 font-medium text-ink dark:text-zinc-300">
+              {t.labelName}
+            </span>
+            <input
+              type="text"
+              value={nameInput}
+              onChange={(e) => { setNameInput(e.target.value); setPage(0); setSelectedId(null); }}
+              placeholder={t.namePlaceholder}
+              className="w-40 rounded-md border border-wire bg-white px-2 py-1 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950"
+              autoFocus
+            />
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <span className="w-12 shrink-0 font-medium text-ink dark:text-zinc-300">
+              {t.labelCode}
+            </span>
+            <input
+              type="text"
+              value={codeInput}
+              onChange={(e) => { setCodeInput(e.target.value); setPage(0); setSelectedId(null); }}
+              placeholder={t.codePlaceholder}
+              className="w-32 rounded-md border border-wire bg-white px-2 py-1 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950"
+            />
+          </label>
+        </div>
+
+        {/* Results table */}
+        <div className="rounded-md border border-card-rim bg-white dark:border-zinc-800 dark:bg-zinc-950 overflow-hidden">
+          {isLoading ? (
+            <p className="px-4 py-5 text-sm text-fade dark:text-zinc-400">{t.loading}</p>
+          ) : isError ? (
+            <p className="px-4 py-5 text-sm text-red-600 dark:text-red-400">{t.error}</p>
+          ) : items.length === 0 ? (
+            <p className="px-4 py-5 text-sm text-fade dark:text-zinc-400">{t.resultsEmpty}</p>
+          ) : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-card-rim dark:border-zinc-800">
+                  <th className="w-8 px-3 py-2" aria-label="select" />
+                  <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400">{t.colCode}</th>
+                  <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400">{t.colName}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((p) => (
+                  <tr
+                    key={p.id}
+                    onClick={() => { setSelectedId(p.id); setSelectedName(p.displayName); }}
+                    className={[
+                      "cursor-pointer border-b border-card-rim last:border-0 dark:border-zinc-800",
+                      selectedId === p.id
+                        ? "bg-cta-pale dark:bg-cta/10"
+                        : "hover:bg-canvas dark:hover:bg-zinc-800/50",
+                    ].join(" ")}
+                  >
+                    <td className="px-3 py-2">
+                      <input
+                        type="radio"
+                        checked={selectedId === p.id}
+                        onChange={() => { setSelectedId(p.id); setSelectedName(p.displayName); }}
+                        onClick={(e) => e.stopPropagation()}
+                        className="accent-cta"
+                        aria-label={p.displayName}
+                      />
+                    </td>
+                    <td className="px-3 py-2 font-mono text-xs text-fade dark:text-zinc-400">{p.code}</td>
+                    <td className="px-3 py-2 font-medium text-ink dark:text-zinc-100">{p.displayName}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+
+        <PaginationControls
+          page={page}
+          total={total}
+          pageSize={PICKER_PAGE_SIZE}
+          onPrev={() => setPage((p) => p - 1)}
+          onNext={() => setPage((p) => p + 1)}
+        />
+
+        {/* Note */}
+        <p className="text-xs text-fade dark:text-zinc-500 italic">{t.note}</p>
+
+        {/* Actions */}
+        <div className="flex items-center justify-end gap-2 border-t border-crease pt-3 dark:border-zinc-800">
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex items-center rounded-md border border-wire bg-white px-4 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+          >
+            {t.cancel}
+          </button>
+          <button
+            type="button"
+            onClick={handleConfirm}
+            disabled={!selectedId}
+            className="inline-flex items-center rounded-md bg-cta px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {t.select}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// AddressFields — inline address fields (replaces AddressBlock for this form)
+// ---------------------------------------------------------------------------
+//
+// We can't use the shared AddressBlock component here because this form needs
+// the two address blocks to live inside a single section card (Office Address)
+// rather than being separate cards. So we inline the fields directly.
+
+type AddressT = {
+  streetLine: string;
+  postalCode: string;
+  locality: string;
+  county: string;
+  country: string;
+  notes: string;
+};
+
+function AddressFields({
+  prefix,
+  register,
+  errors,
+  t,
+}: {
+  prefix: string;
+  register: UseFormRegister<FormValues>;
+  errors?: {
+    streetLine?: { message?: string };
+    postalCode?: { message?: string };
+    locality?: { message?: string };
+    county?: { message?: string };
+    country?: { message?: string };
+    notes?: { message?: string };
+  };
+  t: AddressT;
+}) {
+  const f = (sub: string) =>
+    `${prefix}.${sub}` as FieldPath<FormValues>;
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="grid grid-cols-2 gap-2">
+        <Field label={t.streetLine} name={f("streetLine")} register={register} error={errors?.streetLine?.message} />
+        <Field label={t.notes}      name={f("notes")}      register={register} error={errors?.notes?.message} />
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <Field label={t.postalCode} name={f("postalCode")} register={register} error={errors?.postalCode?.message} />
+        <Field label={t.locality}   name={f("locality")}   register={register} error={errors?.locality?.message} />
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <Field label={t.county}  name={f("county")}  register={register} error={errors?.county?.message} />
+        <Field label={t.country} name={f("country")} register={register} error={errors?.country?.message} />
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Hooks to get translation objects in a stable shape for sub-components
+// ---------------------------------------------------------------------------
+
+function useAddressTranslations(): AddressT {
+  const ta = useTranslations("address");
+  return {
+    streetLine: ta("streetLine"),
+    postalCode: ta("postalCode"),
+    locality:   ta("locality"),
+    county:     ta("county"),
+    country:    ta("country"),
+    notes:      ta("notes"),
+  };
+}
+
+function useContactPickerTranslations(): PickerT {
+  const t = useTranslations("judicialPerson.contactPersonPicker");
+  return {
+    title:           t("title"),
+    labelName:       t("labelName"),
+    namePlaceholder: t("namePlaceholder"),
+    labelCode:       t("labelCode"),
+    codePlaceholder: t("codePlaceholder"),
+    colCode:         t("colCode"),
+    colName:         t("colName"),
+    loading:         t("loading"),
+    error:           t("error"),
+    resultsEmpty:    t("resultsEmpty"),
+    select:          t("select"),
+    cancel:          t("cancel"),
+    note:            t("note"),
+  };
 }
 
 // ---------------------------------------------------------------------------
