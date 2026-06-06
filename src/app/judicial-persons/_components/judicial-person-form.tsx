@@ -437,10 +437,8 @@ function ContactPersonRow({
         {hasLink ? (
           <>
             <Link
-              href={`/natural-persons/${encodeURIComponent(personId as string)}`}
+              href={`/natural-persons/${encodeURIComponent(personId as string)}?readonly=true`}
               className="text-cta underline hover:text-cta-d truncate"
-              target="_blank"
-              rel="noopener noreferrer"
             >
               {(personName as string) || personId}
             </Link>
