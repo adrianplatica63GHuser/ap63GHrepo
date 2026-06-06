@@ -10,8 +10,13 @@ const PAGE_SIZE = 15;
 
 type PersonSearchItem = { id: string; code: string; type: "NATURAL" | "JUDICIAL"; displayName: string };
 type SearchResponse = { items: PersonSearchItem[]; total: number };
+type RoleItem = { id: string; name: string };
 
-type Props = { paperworkId: string; paperworkName: string };
+type Props = {
+  paperworkId:   string;
+  paperworkName: string;
+  paperworkType: string;
+};
 
 async function searchPersons(name: string, code: string, page: number): Promise<SearchResponse> {
   const params = new URLSearchParams();
@@ -25,21 +30,34 @@ async function searchPersons(name: string, code: string, page: number): Promise<
   return { items: data.items as PersonSearchItem[], total: data.total as number };
 }
 
-export function AssociatePersonView({ paperworkId, paperworkName }: Props) {
+async function fetchValidRoles(paperworkId: string): Promise<RoleItem[]> {
+  const res = await fetch(`/api/paperwork/${encodeURIComponent(paperworkId)}/valid-person-roles`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  return data.items as RoleItem[];
+}
+
+export function AssociatePersonView({ paperworkId, paperworkName, paperworkType }: Props) {
   const t           = useTranslations("paperwork.associatePerson");
   const router      = useRouter();
   const queryClient = useQueryClient();
 
-  const [nameInput,   setNameInput]   = useState("");
-  const [codeInput,   setCodeInput]   = useState("");
-  const [page,        setPage]        = useState(0);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [submitting,  setSubmitting]  = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [nameInput,     setNameInput]     = useState("");
+  const [codeInput,     setCodeInput]     = useState("");
+  const [page,          setPage]          = useState(0);
+  const [selectedIds,   setSelectedIds]   = useState<Set<string>>(new Set());
+  const [selectedRoleId, setSelectedRoleId] = useState<string>("");
+  const [submitting,    setSubmitting]    = useState(false);
+  const [submitError,   setSubmitError]   = useState<string | null>(null);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["person-search-pw", nameInput, codeInput, page],
     queryFn:  () => searchPersons(nameInput, codeInput, page),
+  });
+
+  const { data: roles } = useQuery({
+    queryKey: ["paperwork-valid-roles", paperworkId],
+    queryFn:  () => fetchValidRoles(paperworkId),
   });
 
   const items = data?.items ?? [];
@@ -61,7 +79,10 @@ export function AssociatePersonView({ paperworkId, paperworkName }: Props) {
       const res = await fetch(`/api/paperwork/${encodeURIComponent(paperworkId)}/persons`, {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ personIds: Array.from(selectedIds) }),
+        body:    JSON.stringify({
+          personIds:    Array.from(selectedIds),
+          personRoleId: selectedRoleId || null,
+        }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -77,6 +98,9 @@ export function AssociatePersonView({ paperworkId, paperworkName }: Props) {
 
   const handleCancel = () =>
     router.push(`/paperwork/${encodeURIComponent(paperworkId)}?tab=persons`);
+
+  // Suppress unused-variable warning for paperworkType — kept for future use
+  void paperworkType;
 
   return (
     <div className="flex flex-col gap-6">
@@ -156,6 +180,23 @@ export function AssociatePersonView({ paperworkId, paperworkName }: Props) {
         onPrev={() => setPage((p) => p - 1)}
         onNext={() => setPage((p) => p + 1)}
       />
+
+      {/* Role dropdown — only shown when the document type has valid roles defined */}
+      {roles && roles.length > 0 && (
+        <label className="flex items-center gap-2 text-sm">
+          <span className="w-16 shrink-0 font-medium text-ink dark:text-zinc-300">{t("labelRole")}</span>
+          <select
+            value={selectedRoleId}
+            onChange={(e) => setSelectedRoleId(e.target.value)}
+            className="rounded-md border border-wire bg-white px-2 py-1 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
+          >
+            <option value="">{t("rolePlaceholder")}</option>
+            {roles.map((r) => (
+              <option key={r.id} value={r.id}>{r.name}</option>
+            ))}
+          </select>
+        </label>
+      )}
 
       {submitError && <p className="text-sm text-red-600 dark:text-red-400" role="alert">{submitError}</p>}
 

@@ -15,6 +15,7 @@ export default async function AssociatePersonPage({ params }: PageParams) {
         <AssociatePersonView
           paperworkId={record.id}
           paperworkName={label}
+          paperworkType={record.type}
         />
       </main>
     </div>

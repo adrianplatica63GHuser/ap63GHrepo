@@ -78,8 +78,69 @@ Relationships: People ↔ Paperwork, People ↔ Properties, Paperwork ↔ Proper
 - Slice #10.04 — Reference Data: Document Persons (Document Type ↔ Person Role associations). ✅ Complete. Full detail below.
 - Slice #10.05 — Reference Data: Property Persons (Person Role whitelist for Property ↔ Person associations). ✅ Complete. Full detail below.
 - Slice #10.06 — Role on Property ↔ Person association. ✅ Complete. Full detail below.
+- Slice #10.07 — Role on Document ↔ Person association. ✅ Complete. Full detail below.
 
 Each slice typically lands as multiple small commits, each individually green.
+
+### Slice #10.07 — Role on Document ↔ Person association (detail)
+
+DB + schema + query layer + API + UI + i18n.
+
+**What changed**
+
+**DB migration (`src/db/migration_017_person_paperwork_role.sql`)**
+- `ALTER TABLE person_paperwork ADD COLUMN IF NOT EXISTS person_role_id uuid REFERENCES lookup_person_role(id) ON DELETE SET NULL;`
+- Nullable — role is optional on every association.
+- `ON DELETE SET NULL` — if the role is removed from `lookup_person_role`, the association keeps the person but loses the role tag.
+
+**Schema (`src/db/schema/index.ts`)**
+- Added `personRoleId` (nullable FK → `lookupPersonRole.id`, `onDelete: "set null"`) to `personPaperwork`.
+
+**Query layer (`src/lib/paperwork/queries.ts`)**
+- `PaperworkPersonItem` type: added `roleName: string | null`.
+- `listPaperworkPersons`: added `leftJoin(lookupPersonRole, ...)` to pull the role name. Returns `null` when no role is set.
+- `associatePersonsToPaperwork`: added optional `personRoleId: string | null = null` fourth argument. Included in the insert values.
+- `PAPERWORK_TYPE_TO_DOC_TYPE_NAME`: static map from paperwork type enum values to `lookup_document_type.name` strings (used to filter the role dropdown by document type). `CERTIFICAT_SARCINI` is intentionally omitted until the DB name is confirmed — returns an empty list for that type.
+- `listPersonRolesForPaperwork(paperworkId)`: resolves the document's type, finds its `lookup_document_type` entry by name, then returns person roles from `lookup_doc_type_person_role` for that document type. Returns `[]` when the type has no associations or the mapping is unconfirmed.
+
+**New API (`src/app/api/paperwork/[id]/valid-person-roles/route.ts`)**
+- `GET /api/paperwork/[id]/valid-person-roles` → `{ items: [{ id, name }] }`.
+- Returns roles valid for this document's type; empty array for types with no associations.
+
+**API (`src/app/api/paperwork/[id]/persons/route.ts`)**
+- POST body schema extended: `personRoleId: z.string().uuid().nullable().optional()`.
+- Passes `personRoleId` through to `associatePersonsToPaperwork`.
+
+**Document Persons tab (`src/app/paperwork/_components/paperwork-persons-tab.tsx`)**
+- `AssociatedPerson` type: added `roleName: string | null`.
+- Table 3rd column: replaced `colType` (Natural/Judicial) → `colRole` (role name or `—`).
+- Removed `typeNatural` / `typeJudicial` translation usage from this component.
+
+**Associate Person page (`src/app/paperwork/[id]/associate-person/`)**
+- `page.tsx`: passes `paperworkType={record.type}` to `AssociatePersonView`.
+- `associate-person-view.tsx`: added `paperworkType` prop, `RoleItem` type, `fetchValidRoles()` calling `GET /api/paperwork/[id]/valid-person-roles`, `selectedRoleId` state. Role `<select>` dropdown rendered between the pagination controls and action buttons — only shown when the document type has at least one valid role defined. POST body includes `personRoleId: selectedRoleId || null`. The person picker table retains its `colType` column (Natural/Judicial) — only the Persons tab list column was replaced.
+
+**i18n**
+- `paperwork.persons`: removed `colType`, `typeNatural`, `typeJudicial`; added `colRole`.
+- `paperwork.associatePerson`: added `labelRole`, `rolePlaceholder` (EN: "— no role —" / RO: "— fără rol —").
+
+**Note on CERTIFICAT_SARCINI**: The `lookup_document_type` entry for this enum value was unconfirmed at implementation time. To enable the role dropdown for it, run `SELECT name FROM lookup_document_type WHERE sort_order = 7;` against the DB to confirm the name, then add the mapping to `PAPERWORK_TYPE_TO_DOC_TYPE_NAME` in `src/lib/paperwork/queries.ts`.
+
+**Git commits already tagged 10.07 (pre-existing)**
+- `96ac0ba` / `d162969`: Role column + dropdown on the *Person* detail page's Properties tab (person-properties-tab.tsx + associate-property-view.tsx from the person side) — reverse direction, done separately.
+
+**Files touched**
+- `src/db/migration_017_person_paperwork_role.sql` (new)
+- `src/db/schema/index.ts`
+- `src/lib/paperwork/queries.ts`
+- `src/app/api/paperwork/[id]/valid-person-roles/route.ts` (new)
+- `src/app/api/paperwork/[id]/persons/route.ts`
+- `src/app/paperwork/_components/paperwork-persons-tab.tsx`
+- `src/app/paperwork/[id]/associate-person/associate-person-view.tsx`
+- `src/app/paperwork/[id]/associate-person/page.tsx`
+- `messages/en-GB.json`
+- `messages/ro-RO.json`
+- `CLAUDE.md`
 
 ### Slice #10.06 — Role on Property ↔ Person association (detail)
 
