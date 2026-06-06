@@ -82,6 +82,30 @@ export async function createDocTypePersonRole(data: {
   return row;
 }
 
+// ── Distinct person roles across all document types ───────────────────────────
+//
+// Used by the "associate paperwork to person" page: the document type is not
+// known at association time, so we offer the full curated set of roles that
+// appear in any document-type association rather than filtering by one type.
+
+export type DistinctDocPersonRole = { id: string; name: string };
+
+export async function listDistinctDocPersonRoles(): Promise<DistinctDocPersonRole[]> {
+  const rows = await db
+    .selectDistinct({
+      id:   lookupPersonRole.id,
+      name: lookupPersonRole.name,
+    })
+    .from(lookupDocTypePersonRole)
+    .innerJoin(
+      lookupPersonRole,
+      eq(lookupDocTypePersonRole.personRoleId, lookupPersonRole.id),
+    )
+    .orderBy(asc(lookupPersonRole.name));
+
+  return rows;
+}
+
 // ── Delete ────────────────────────────────────────────────────────────────────
 
 export async function deleteDocTypePersonRole(id: string): Promise<boolean> {

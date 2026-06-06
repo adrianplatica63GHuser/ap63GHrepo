@@ -482,9 +482,13 @@ export async function listPersonPaperwork(personId: string): Promise<PersonPaper
   return rows as PersonPaperworkItem[];
 }
 
-export async function associatePaperworkToPerson(personId: string, paperworkIds: string[]): Promise<void> {
+export async function associatePaperworkToPerson(
+  personId:     string,
+  paperworkIds: string[],
+  personRoleId: string | null = null,
+): Promise<void> {
   await db.insert(personPaperwork)
-    .values(paperworkIds.map((pid) => ({ personId, paperworkId: pid })))
+    .values(paperworkIds.map((pid) => ({ personId, paperworkId: pid, personRoleId })))
     .onConflictDoNothing();
 }
 

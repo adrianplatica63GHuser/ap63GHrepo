@@ -10,6 +10,7 @@ const PAGE_SIZE = 15;
 
 type PaperworkSearchItem = { id: string; code: string; type: string; title: string | null };
 type SearchResponse = { items: PaperworkSearchItem[]; total: number };
+type RoleItem = { id: string; name: string };
 
 type Props = { personId: string; personName: string; backBase: string };
 
@@ -24,20 +25,33 @@ async function searchPaperwork(q: string, page: number): Promise<SearchResponse>
   return { items: data.items as PaperworkSearchItem[], total: data.total as number };
 }
 
+async function fetchDistinctRoles(): Promise<RoleItem[]> {
+  const res = await fetch("/api/admin/doc-type-person-roles/distinct-roles");
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  return data.items as RoleItem[];
+}
+
 export function AssociatePaperworkView({ personId, personName, backBase }: Props) {
   const t           = useTranslations("shared.associatePaperwork");
   const router      = useRouter();
   const queryClient = useQueryClient();
 
-  const [qInput,      setQInput]      = useState("");
-  const [page,        setPage]        = useState(0);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [submitting,  setSubmitting]  = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [qInput,         setQInput]         = useState("");
+  const [page,           setPage]           = useState(0);
+  const [selectedIds,    setSelectedIds]    = useState<Set<string>>(new Set());
+  const [selectedRoleId, setSelectedRoleId] = useState<string>("");
+  const [submitting,     setSubmitting]     = useState(false);
+  const [submitError,    setSubmitError]    = useState<string | null>(null);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["paperwork-search", qInput, page],
     queryFn:  () => searchPaperwork(qInput, page),
+  });
+
+  const { data: roles } = useQuery({
+    queryKey: ["doc-distinct-roles"],
+    queryFn:  fetchDistinctRoles,
   });
 
   const items = data?.items ?? [];
@@ -59,7 +73,10 @@ export function AssociatePaperworkView({ personId, personName, backBase }: Props
       const res = await fetch(`/api/people/${encodeURIComponent(personId)}/paperwork`, {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ paperworkIds: Array.from(selectedIds) }),
+        body:    JSON.stringify({
+          paperworkIds: Array.from(selectedIds),
+          personRoleId: selectedRoleId || null,
+        }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -143,21 +160,11 @@ export function AssociatePaperworkView({ personId, personName, backBase }: Props
         onNext={() => setPage((p) => p + 1)}
       />
 
-      {submitError && <p className="text-sm text-red-600 dark:text-red-400" role="alert">{submitError}</p>}
-
-      <div className="flex items-center gap-3 border-t border-crease pt-4 dark:border-zinc-800">
-        <button type="button" onClick={handleAssociate} disabled={submitting || selectedIds.size === 0}
-          className="inline-flex items-center rounded-md bg-cta px-5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d disabled:cursor-not-allowed disabled:opacity-50">
-          {submitting ? t("associating") : t("associate")}
-        </button>
-        <button type="button" onClick={handleCancel} disabled={submitting}
-          className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800">
-          {t("cancel")}
-        </button>
-        {selectedIds.size === 0 && !isLoading && items.length > 0 && (
-          <span className="text-xs text-fade dark:text-zinc-500">{t("noSelection")}</span>
-        )}
-      </div>
-    </div>
-  );
-}
+      {/* Role dropdown — all person roles that appear in any document-type association */}
+      {roles && roles.length > 0 && (
+        <label className="flex items-center gap-2 text-sm">
+          <span className="w-16 shrink-0 font-medium text-ink dark:text-zinc-300">{t("labelRole")}</span>
+          <select
+            value={selectedRoleId}
+            onChange={(e) => setSelectedRoleId(e.target.value)}
+            className="rounded-md border border-wire bg-white px-2 py-1 text-sm shadow-sm focus:border-focus focus:outline-none dark:bo

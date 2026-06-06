@@ -258,7 +258,9 @@
     "associatePaperwork": {
       "title": "Associate Document",
       "labelSearch": "Search",
+      "labelRole": "Role",
       "searchPlaceholder": "Code or title…",
+      "rolePlaceholder": "— no role —",
       "colCode": "Code",
       "colType": "Type",
       "colTitle": "Title",

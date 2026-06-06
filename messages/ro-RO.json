@@ -258,7 +258,9 @@
     "associatePaperwork": {
       "title": "Asociere act",
       "labelSearch": "Căutare",
+      "labelRole": "Rol",
       "searchPlaceholder": "Cod sau titlu…",
+      "rolePlaceholder": "— fără rol —",
       "colCode": "Cod",
       "colType": "Tip",
       "colTitle": "Titlu",
