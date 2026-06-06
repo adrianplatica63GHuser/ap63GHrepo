@@ -117,8 +117,8 @@ export function SuccessionPartiesPanel({ paperworkId, mode }: Props) {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-card-rim dark:border-zinc-800">
-              <th className="px-2 py-1.5 text-left font-medium text-fade dark:text-zinc-400">{t("colName")}</th>
-              <th className="px-2 py-1.5 text-left font-medium text-fade dark:text-zinc-400">{t("colQuality")}</th>
+              <th className="px-2 py-1.5 text-left font-semibold text-fade dark:text-zinc-400">{t("colName")}</th>
+              <th className="px-2 py-1.5 text-left font-semibold text-fade dark:text-zinc-400">{t("colQuality")}</th>
               {mode === "edit" && <th className="w-20 px-2 py-1.5" />}
             </tr>
           </thead>

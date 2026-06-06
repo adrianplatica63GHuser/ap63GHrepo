@@ -141,9 +141,9 @@ export function AssociatePersonView({ propertyId, propertyName }: Props) {
             <thead>
               <tr className="border-b border-card-rim dark:border-zinc-800">
                 <th className="w-8 px-3 py-2" aria-label="select" />
-                <th className="px-3 py-2 text-left font-medium text-fade dark:text-zinc-400">{t("colCode")}</th>
-                <th className="px-3 py-2 text-left font-medium text-fade dark:text-zinc-400">{t("colName")}</th>
-                <th className="px-3 py-2 text-left font-medium text-fade dark:text-zinc-400">{t("colType")}</th>
+                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400">{t("colCode")}</th>
+                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400">{t("colName")}</th>
+                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400">{t("colType")}</th>
               </tr>
             </thead>
             <tbody>

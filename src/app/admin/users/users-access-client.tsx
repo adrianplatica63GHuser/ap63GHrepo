@@ -280,18 +280,18 @@ function RequestTable({
       <table className="w-full text-sm">
         <thead className="bg-surface border-b border-wire">
           <tr>
-            <th className="text-left px-4 py-2 font-medium text-fade">{t("table.username")}</th>
-            <th className="text-left px-4 py-2 font-medium text-fade">{t("table.email")}</th>
-            <th className="text-left px-4 py-2 font-medium text-fade">{t("table.submitted")}</th>
+            <th className="text-left px-4 py-2 font-semibold text-fade">{t("table.username")}</th>
+            <th className="text-left px-4 py-2 font-semibold text-fade">{t("table.email")}</th>
+            <th className="text-left px-4 py-2 font-semibold text-fade">{t("table.submitted")}</th>
             {!showActions && (
               <>
-                <th className="text-left px-4 py-2 font-medium text-fade">{t("table.status")}</th>
-                <th className="text-left px-4 py-2 font-medium text-fade">{t("table.processed")}</th>
-                <th className="text-left px-4 py-2 font-medium text-fade">{t("table.by")}</th>
+                <th className="text-left px-4 py-2 font-semibold text-fade">{t("table.status")}</th>
+                <th className="text-left px-4 py-2 font-semibold text-fade">{t("table.processed")}</th>
+                <th className="text-left px-4 py-2 font-semibold text-fade">{t("table.by")}</th>
               </>
             )}
             {showActions && (
-              <th className="text-left px-4 py-2 font-medium text-fade">{t("table.actions")}</th>
+              <th className="text-left px-4 py-2 font-semibold text-fade">{t("table.actions")}</th>
             )}
           </tr>
         </thead>
