@@ -389,6 +389,7 @@ export async function searchPersonsAll(opts: {
 // ---------------------------------------------------------------------------
 
 import {
+  lookupPersonRole,
   property,
   propertyPerson,
   personPaperwork,
@@ -397,9 +398,10 @@ import {
 } from "@/db/schema";
 
 export type PersonPropertyItem = {
-  id:        string;
-  code:      string;
-  label:     string;   // nickname ?? code
+  id:           string;
+  code:         string;
+  label:        string;   // nickname ?? code
+  roleName:     string | null;
   associatedAt: Date;
 };
 
@@ -409,19 +411,35 @@ export async function listPersonProperties(personId: string): Promise<PersonProp
       id:           property.id,
       code:         property.code,
       nickname:     property.nickname,
+      roleName:     lookupPersonRole.name,
       associatedAt: propertyPerson.createdAt,
     })
     .from(propertyPerson)
     .innerJoin(property, and(eq(propertyPerson.propertyId, property.id), isNull(property.deletedAt)))
+    .leftJoin(lookupPersonRole, eq(lookupPersonRole.id, propertyPerson.personRoleId))
     .where(eq(propertyPerson.personId, personId))
     .orderBy(property.code);
 
-  return rows.map((r) => ({ id: r.id, code: r.code, label: r.nickname ?? r.code, associatedAt: r.associatedAt }));
+  return rows.map((r) => ({
+    id:           r.id,
+    code:         r.code,
+    label:        r.nickname ?? r.code,
+    roleName:     r.roleName ?? null,
+    associatedAt: r.associatedAt,
+  }));
 }
 
-export async function associatePropertiesToPerson(personId: string, propertyIds: string[]): Promise<void> {
+export async function associatePropertiesToPerson(
+  personId:     string,
+  propertyIds:  string[],
+  personRoleId: string | null = null,
+): Promise<void> {
   await db.insert(propertyPerson)
-    .values(propertyIds.map((pid) => ({ propertyId: pid, personId })))
+    .values(propertyIds.map((pid) => ({
+      propertyId:   pid,
+      personId,
+      personRoleId: personRoleId ?? undefined,
+    })))
     .onConflictDoNothing();
 }
 

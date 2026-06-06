@@ -14,7 +14,10 @@ export async function GET(_req: NextRequest, ctx: Ctx): Promise<Response> {
   catch (err) { return unexpectedError(err, "GET /api/people/[id]/properties"); }
 }
 
-const bodySchema = z.object({ propertyIds: z.array(z.string().uuid()).min(1) });
+const bodySchema = z.object({
+  propertyIds:  z.array(z.string().uuid()).min(1),
+  personRoleId: z.string().uuid().nullable().optional(),
+});
 
 export async function POST(request: NextRequest, ctx: Ctx): Promise<Response> {
   const { id } = await ctx.params;
@@ -23,7 +26,7 @@ export async function POST(request: NextRequest, ctx: Ctx): Promise<Response> {
   const parsed = bodySchema.safeParse(body);
   if (!parsed.success) return zodErrorToResponse(parsed.error);
   try {
-    await associatePropertiesToPerson(id, parsed.data.propertyIds);
+    await associatePropertiesToPerson(id, parsed.data.propertyIds, parsed.data.personRoleId ?? null);
     return new Response(null, { status: 204 });
   } catch (err) { return unexpectedError(err, "POST /api/people/[id]/properties"); }
 }
