@@ -19,6 +19,8 @@ const bodySchema = z.object({
   // Optional role for Certificat de Moștenitor party links.
   // 'DEFUNCT' | 'MOSTENITOR' — null / absent for general associations.
   quality: z.string().optional(),
+  // Optional person role from the Document Persons whitelist.
+  personRoleId: z.string().uuid().nullable().optional(),
 });
 
 export async function POST(request: NextRequest, ctx: Ctx): Promise<Response> {
@@ -28,7 +30,12 @@ export async function POST(request: NextRequest, ctx: Ctx): Promise<Response> {
   const parsed = bodySchema.safeParse(body);
   if (!parsed.success) return zodErrorToResponse(parsed.error);
   try {
-    await associatePersonsToPaperwork(id, parsed.data.personIds, parsed.data.quality ?? null);
+    await associatePersonsToPaperwork(
+      id,
+      parsed.data.personIds,
+      parsed.data.quality ?? null,
+      parsed.data.personRoleId ?? null,
+    );
     return new Response(null, { status: 204 });
   } catch (err) { return unexpectedError(err, "POST /api/paperwork/[id]/persons"); }
 }

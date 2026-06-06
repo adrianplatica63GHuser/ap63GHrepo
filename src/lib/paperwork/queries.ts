@@ -4,7 +4,7 @@
  * Soft delete: list + getById filter out deleted rows.
  */
 
-import { and, count, eq, ilike, inArray, isNull, or, sql } from "drizzle-orm";
+import { asc, and, count, eq, ilike, inArray, isNull, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { paperwork, principalObject } from "@/db/schema";
 import type {
@@ -247,7 +247,16 @@ function inputToValues(
 // Paperwork search  (used by associate-paperwork flows)
 // ---------------------------------------------------------------------------
 
-import { property, propertyPaperwork, person, personPaperwork, paperworkPaperwork } from "@/db/schema";
+import {
+  property,
+  propertyPaperwork,
+  person,
+  personPaperwork,
+  paperworkPaperwork,
+  lookupPersonRole,
+  lookupDocTypePersonRole,
+  lookupDocumentType,
+} from "@/db/schema";
 
 export type PaperworkSearchItem = {
   id:    string;
@@ -333,6 +342,7 @@ export type PaperworkPersonItem = {
   type:         "NATURAL" | "JUDICIAL";
   displayName:  string;
   quality:      string | null;
+  roleName:     string | null;
   associatedAt: Date;
 };
 
@@ -344,10 +354,12 @@ export async function listPaperworkPersons(paperworkId: string): Promise<Paperwo
       type:         person.type,
       displayName:  person.displayName,
       quality:      personPaperwork.quality,
+      roleName:     lookupPersonRole.name,
       associatedAt: personPaperwork.createdAt,
     })
     .from(personPaperwork)
     .innerJoin(person, and(eq(personPaperwork.personId, person.id), isNull(person.deletedAt)))
+    .leftJoin(lookupPersonRole, eq(personPaperwork.personRoleId, lookupPersonRole.id))
     .where(eq(personPaperwork.paperworkId, paperworkId))
     .orderBy(person.displayName);
 
@@ -355,13 +367,78 @@ export async function listPaperworkPersons(paperworkId: string): Promise<Paperwo
 }
 
 export async function associatePersonsToPaperwork(
-  paperworkId: string,
-  personIds:   string[],
-  quality?:    string | null,
+  paperworkId:  string,
+  personIds:    string[],
+  quality?:     string | null,
+  personRoleId: string | null = null,
 ): Promise<void> {
   await db.insert(personPaperwork)
-    .values(personIds.map((pid) => ({ personId: pid, paperworkId, quality: quality ?? null })))
+    .values(personIds.map((pid) => ({
+      personId: pid,
+      paperworkId,
+      quality: quality ?? null,
+      personRoleId,
+    })))
     .onConflictDoNothing();
+}
+
+// ---------------------------------------------------------------------------
+// Valid person roles for a specific document (filtered by document type)
+// ---------------------------------------------------------------------------
+//
+// Maps paperwork.type enum values to the corresponding lookup_document_type.name
+// in the database. Types with no seed associations return an empty list.
+// CERTIFICAT_SARCINI is intentionally omitted until the DB name is confirmed.
+
+const PAPERWORK_TYPE_TO_DOC_TYPE_NAME: Partial<Record<string, string>> = {
+  ACT_ADJUDECARE:           "Act de Adjudecare",
+  ACT_CADASTRU:             "Act Cadastru",
+  AUTORIZATIE:              "Autorizare",
+  AVIZ_INSTITUTIE:          "Aviz de Instituție",
+  CERTIFICAT_FISCAL:        "Certificat Fiscal",
+  CERTIFICAT_MOSTENITOR:    "Certificat de Moștenitor",
+  // CERTIFICAT_SARCINI: omitted — DB name unconfirmed; returns empty list
+  CERTIFICAT_URBANISM:      "Certificat de Urbanism",
+  CONTRACT_ARENDA:          "Contract de Arendă",
+  CONTRACT_INCHIRIERE:      "Contract de Închiriere",
+  CONTRACT_PARTAJ:          "Contract de Partaj",
+  CONTRACT_PRESTARI_SERVICII: "Contract de Prestări Servicii",
+  CONTRACT_VANZARE:         "Contract de Vânzare",
+  EXTRAS_CARTE_FUNCIARA:    "Extras din Carte Funciară",
+  EXTRAS_PUG:               "Extras din PUG",
+  HOTARARE_JUDECATOREASCA:  "Hotărâre Judecătorească",
+  TITLU_PROPRIETATE:        "Titlu de Proprietate",
+  // ACT_DONATIE and TESTAMENT have no seed associations — returns empty list
+};
+
+export type RoleItem = { id: string; name: string };
+
+export async function listPersonRolesForPaperwork(paperworkId: string): Promise<RoleItem[]> {
+  // 1. Get the document's type.
+  const [pw] = await db
+    .select({ type: paperwork.type })
+    .from(paperwork)
+    .where(eq(paperwork.id, paperworkId))
+    .limit(1);
+
+  if (!pw) return [];
+
+  const docTypeName = PAPERWORK_TYPE_TO_DOC_TYPE_NAME[pw.type];
+  if (!docTypeName) return []; // type has no seed associations or name is unconfirmed
+
+  // 2. Fetch roles valid for this document type via the junction table.
+  const rows = await db
+    .select({
+      id:   lookupPersonRole.id,
+      name: lookupPersonRole.name,
+    })
+    .from(lookupDocTypePersonRole)
+    .innerJoin(lookupDocumentType, eq(lookupDocTypePersonRole.documentTypeId, lookupDocumentType.id))
+    .innerJoin(lookupPersonRole, eq(lookupDocTypePersonRole.personRoleId, lookupPersonRole.id))
+    .where(eq(lookupDocumentType.name, docTypeName))
+    .orderBy(asc(lookupPersonRole.name));
+
+  return rows;
 }
 
 export async function dissociatePersonFromPaperwork(paperworkId: string, personId: string): Promise<boolean> {
