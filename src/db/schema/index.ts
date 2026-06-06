@@ -734,6 +734,10 @@ export const personPaperwork = pgTable(
     // 'DEFUNCT' = the deceased person; 'MOSTENITOR' = an inheritor.
     // NULL for persons linked via the general Persons tab on any doc type.
     quality:     text("quality"),
+    // Optional person role from the Document Persons whitelist (lookup_doc_type_person_role).
+    // ON DELETE SET NULL — cleared automatically if the role is removed from lookup_person_role.
+    personRoleId: uuid("person_role_id")
+      .references(() => lookupPersonRole.id, { onDelete: "set null" }),
     createdAt:   timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [uniqueIndex("person_paperwork_unique").on(t.personId, t.paperworkId)],
