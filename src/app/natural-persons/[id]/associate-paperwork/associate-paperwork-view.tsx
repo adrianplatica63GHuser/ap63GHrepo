@@ -25,6 +25,13 @@ async function searchPaperwork(q: string, page: number): Promise<SearchResponse>
   return { items: data.items as PaperworkSearchItem[], total: data.total as number };
 }
 
+async function fetchValidRoles(paperworkId: string): Promise<RoleItem[]> {
+  const res = await fetch(`/api/paperwork/${encodeURIComponent(paperworkId)}/valid-person-roles`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  return data.items as RoleItem[];
+}
+
 async function fetchDistinctRoles(): Promise<RoleItem[]> {
   const res = await fetch("/api/admin/doc-type-person-roles/distinct-roles");
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -44,15 +51,40 @@ export function AssociatePaperworkView({ personId, personName, backBase }: Props
   const [submitting,     setSubmitting]     = useState(false);
   const [submitError,    setSubmitError]    = useState<string | null>(null);
 
+  // Derived: the single selected document ID, or null when 0 or 2+ are selected.
+  const singleSelectedId = selectedIds.size === 1 ? Array.from(selectedIds)[0] : null;
+
+  // Reset the role picker whenever the single-selection changes (new doc chosen,
+  // or user moves from single → multi selection).
+  // Uses "derived state during render" to avoid react-hooks/set-state-in-effect.
+  const [prevSingleSelectedId, setPrevSingleSelectedId] = useState<string | null>(null);
+  if (prevSingleSelectedId !== singleSelectedId) {
+    setPrevSingleSelectedId(singleSelectedId);
+    setSelectedRoleId("");
+  }
+
   const { data, isLoading, isError } = useQuery({
     queryKey: ["paperwork-search", qInput, page],
     queryFn:  () => searchPaperwork(qInput, page),
   });
 
-  const { data: roles } = useQuery({
+  // When exactly one document is selected, fetch roles specific to its type.
+  const { data: singleDocRoles } = useQuery({
+    queryKey: ["paperwork-valid-roles", singleSelectedId],
+    queryFn:  () => fetchValidRoles(singleSelectedId!),
+    enabled:  singleSelectedId !== null,
+  });
+
+  // Always keep the full curated list ready for the 0-or-many case.
+  const { data: allDocRoles } = useQuery({
     queryKey: ["doc-distinct-roles"],
     queryFn:  fetchDistinctRoles,
   });
+
+  // Active role list: filtered by document type (single) or full list (multi).
+  const roles: RoleItem[] = singleSelectedId !== null
+    ? (singleDocRoles ?? [])
+    : (allDocRoles ?? []);
 
   const items = data?.items ?? [];
   const total = data?.total ?? 0;
@@ -160,8 +192,9 @@ export function AssociatePaperworkView({ personId, personName, backBase }: Props
         onNext={() => setPage((p) => p + 1)}
       />
 
-      {/* Role dropdown — all person roles that appear in any document-type association */}
-      {roles && roles.length > 0 && (
+      {/* Role dropdown — filtered by document type when one doc is selected;
+          full curated list when multiple are selected */}
+      {roles.length > 0 && (
         <label className="flex items-center gap-2 text-sm">
           <span className="w-16 shrink-0 font-medium text-ink dark:text-zinc-300">{t("labelRole")}</span>
           <select
