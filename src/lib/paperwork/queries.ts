@@ -424,21 +424,33 @@ export async function listPersonRolesForPaperwork(paperworkId: string): Promise<
   if (!pw) return [];
 
   const docTypeName = PAPERWORK_TYPE_TO_DOC_TYPE_NAME[pw.type];
-  if (!docTypeName) return []; // type has no seed associations or name is unconfirmed
 
-  // 2. Fetch roles valid for this document type via the junction table.
-  const rows = await db
-    .select({
+  if (docTypeName) {
+    // 2a. Fetch roles specific to this document type.
+    const rows = await db
+      .select({
+        id:   lookupPersonRole.id,
+        name: lookupPersonRole.name,
+      })
+      .from(lookupDocTypePersonRole)
+      .innerJoin(lookupDocumentType, eq(lookupDocTypePersonRole.documentTypeId, lookupDocumentType.id))
+      .innerJoin(lookupPersonRole, eq(lookupDocTypePersonRole.personRoleId, lookupPersonRole.id))
+      .where(eq(lookupDocumentType.name, docTypeName))
+      .orderBy(asc(lookupPersonRole.name));
+
+    if (rows.length > 0) return rows;
+  }
+
+  // 2b. Fallback — type has no specific mapping (e.g. ACT_DONATIE, TESTAMENT)
+  // or its mapped list is empty: return all distinct roles across any document type.
+  return db
+    .selectDistinct({
       id:   lookupPersonRole.id,
       name: lookupPersonRole.name,
     })
     .from(lookupDocTypePersonRole)
-    .innerJoin(lookupDocumentType, eq(lookupDocTypePersonRole.documentTypeId, lookupDocumentType.id))
     .innerJoin(lookupPersonRole, eq(lookupDocTypePersonRole.personRoleId, lookupPersonRole.id))
-    .where(eq(lookupDocumentType.name, docTypeName))
     .orderBy(asc(lookupPersonRole.name));
-
-  return rows;
 }
 
 export async function dissociatePersonFromPaperwork(paperworkId: string, personId: string): Promise<boolean> {
