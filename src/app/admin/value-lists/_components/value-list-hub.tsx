@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import type { ListKey } from "@/lib/admin/value-lists/config";
 import { ValueListModal } from "./value-list-modal";
 import { DocumentPersonsModal } from "./document-persons-modal";
+import { PropertyPersonsModal } from "./property-persons-modal";
 
 // ── Section wrapper ───────────────────────────────────────────────────────────
 
@@ -52,6 +53,7 @@ export function ValueListHub() {
   const t = useTranslations("valueList");
   const [openList, setOpenList] = useState<ListKey | null>(null);
   const [showDocPersons, setShowDocPersons] = useState(false);
+  const [showPropertyPersons, setShowPropertyPersons] = useState(false);
 
   function open(key: ListKey) {
     setOpenList(key);
@@ -66,9 +68,10 @@ export function ValueListHub() {
       <div className="flex flex-col gap-4">
         {/* ── Proprietate ── */}
         <Section label={t("sections.property")}>
-          <ListBtn label={t("lists.propertyTypes")}  onClick={() => open("property-types")} />
-          <ListBtn label={t("lists.tarla")}           onClick={() => open("tarla")} />
-          <ListBtn label={t("lists.useCategories")}   onClick={() => open("use-categories")} />
+          <ListBtn label={t("lists.propertyTypes")}    onClick={() => open("property-types")} />
+          <ListBtn label={t("lists.propertyPersons")}  onClick={() => setShowPropertyPersons(true)} />
+          <ListBtn label={t("lists.tarla")}             onClick={() => open("tarla")} />
+          <ListBtn label={t("lists.useCategories")}     onClick={() => open("use-categories")} />
         </Section>
 
         {/* ── Persoană ── */}
@@ -99,6 +102,9 @@ export function ValueListHub() {
       )}
       {showDocPersons && (
         <DocumentPersonsModal onClose={() => setShowDocPersons(false)} />
+      )}
+      {showPropertyPersons && (
+        <PropertyPersonsModal onClose={() => setShowPropertyPersons(false)} />
       )}
     </>
   );
