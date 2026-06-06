@@ -504,7 +504,7 @@ function Field({ label, name, type = "text", register, error }: FieldProps) {
           {...register(name)}
           aria-invalid={error ? true : undefined}
           className={[
-            "w-full rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none dark:bg-zinc-950",
+            "w-full rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none disabled:bg-canvas disabled:text-fade disabled:cursor-default dark:bg-zinc-950 dark:disabled:bg-zinc-800",
             error
               ? "border-red-500 focus:border-red-600"
               : "border-wire focus:border-focus dark:border-zinc-700",
@@ -536,7 +536,7 @@ function TextAreaField({
           rows={rows}
           aria-invalid={error ? true : undefined}
           className={[
-            "w-full rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none dark:bg-zinc-950",
+            "w-full rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none disabled:bg-canvas disabled:text-fade disabled:cursor-default dark:bg-zinc-950 dark:disabled:bg-zinc-800",
             error
               ? "border-red-500 focus:border-red-600"
               : "border-wire focus:border-focus dark:border-zinc-700",
@@ -565,7 +565,7 @@ function SelectField({
           {...register(name)}
           aria-invalid={error ? true : undefined}
           className={[
-            "w-full rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none dark:bg-zinc-950",
+            "w-full rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none disabled:bg-canvas disabled:text-fade disabled:cursor-default dark:bg-zinc-950 dark:disabled:bg-zinc-800",
             error
               ? "border-red-500 focus:border-red-600"
               : "border-wire focus:border-focus dark:border-zinc-700",
