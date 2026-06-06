@@ -6,10 +6,11 @@
  * To re-seed from scratch, run: TRUNCATE person, property CASCADE;
  */
 
-import { sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { db, pool } from "./index";
 import {
   address,
+  judicialPerson,
   naturalPerson,
   paperwork,
   person,
@@ -885,6 +886,347 @@ const PAPERWORKS: SeedPaperworkRow[] = [
   { type: "TITLU_PROPRIETATE", title: "Titlu Teren Arabil Brănești",   nrDocument: "62001/2012", dateDocument: "2012-03-19", institution: "Comisia Locală Brănești",   emitent: "Comisia Județeană Ilfov", bazaLegala: "Legea 18/1991",  uatProprietate: "Brănești",   uatProprietar: "Brănești",   suprafata: "4.4000", titularText: "Tudor Mocanu",    notes: "10 parcele comasate" },
 ];
 
+
+// ---------------------------------------------------------------------------
+// Judicial person seed data — 40 companies using all judicial types
+//
+// Contact-person distribution (indices into naturalPersons sorted by code):
+//   Group A (entries  0–11, 30%) — both contactPerson1Idx + contactPerson2Idx set
+//   Group B (entries 12–23, 30%) — contactPerson1Idx only; cp2 left for UI demo
+//   Group C (entries 24–39, 40%) — no contacts
+//
+// Requires migration_018 (drops old text columns, adds FK + flag columns).
+// ---------------------------------------------------------------------------
+
+type JudicialAddressInput = {
+  streetLine?: string;
+  postalCode?: string;
+  locality?: string;
+  county?: string;
+  country: string;
+  notes?: string;
+};
+
+type JudicialType = "SRL" | "SA" | "SRL_D" | "PFA" | "II" | "IF" | "ONG" | "OTHER";
+
+type SeedJudicialRow = {
+  name: string;
+  nickname?: string;
+  judicialType: JudicialType;
+  cuiNumber?: string;
+  tradeRegisterNumber?: string;
+  notes?: string;
+  /** 0-based index into natural persons sorted by code. */
+  contactPerson1Idx?: number;
+  contactPerson2Idx?: number;
+  hqAddress?: JudicialAddressInput;
+  correspondenceAddress?: JudicialAddressInput;
+  correspondenceSameAsHq?: boolean;
+};
+
+const JUDICIAL_PERSONS: SeedJudicialRow[] = [
+  // ── GROUP A: both contacts linked (entries 0–11, 30%) ────────────────────
+
+  // 0 – SRL
+  {
+    name: "Imobil Invest SRL", judicialType: "SRL",
+    cuiNumber: "14523678", tradeRegisterNumber: "J40/1234/2003",
+    contactPerson1Idx: 0, contactPerson2Idx: 1,
+    hqAddress: { streetLine: "Calea Dorobanților 190, et. 3", postalCode: "010572", locality: "București", county: "Sector 1", country: "Romania" },
+    correspondenceAddress: { streetLine: "P.O. Box 100, OP 7", postalCode: "010700", locality: "București", county: "Sector 1", country: "Romania" },
+  },
+  // 1 – SRL
+  {
+    name: "AgroTerra SRL", judicialType: "SRL",
+    cuiNumber: "22345901", tradeRegisterNumber: "J23/445/2008",
+    contactPerson1Idx: 2, contactPerson2Idx: 3,
+    hqAddress: { streetLine: "Strada Principală 5", postalCode: "077060", locality: "Cornetu", county: "Ilfov", country: "Romania" },
+  },
+  // 2 – SRL
+  {
+    name: "TechnoSoft SRL", judicialType: "SRL",
+    cuiNumber: "31456789", tradeRegisterNumber: "J12/678/2015",
+    contactPerson1Idx: 4, contactPerson2Idx: 5,
+    hqAddress: { streetLine: "Strada Republicii 45, et. 2", postalCode: "400015", locality: "Cluj-Napoca", county: "Cluj", country: "Romania" },
+  },
+  // 3 – SRL
+  {
+    name: "MedCare SRL", judicialType: "SRL",
+    cuiNumber: "18234567", tradeRegisterNumber: "J35/901/2010",
+    contactPerson1Idx: 6, contactPerson2Idx: 7,
+    hqAddress: { streetLine: "Bulevardul Revoluției 1989 nr. 78", postalCode: "300006", locality: "Timișoara", county: "Timiș", country: "Romania" },
+    correspondenceSameAsHq: true,
+  },
+  // 4 – SRL
+  {
+    name: "LogiPark SRL", judicialType: "SRL",
+    cuiNumber: "25678901", tradeRegisterNumber: "J29/234/2012",
+    contactPerson1Idx: 8, contactPerson2Idx: 9,
+    hqAddress: { streetLine: "Strada Industriilor 22, Parc Industrial Ploiești", postalCode: "100022", locality: "Ploiești", county: "Prahova", country: "Romania" },
+  },
+  // 5 – SRL
+  {
+    name: "ConstPro SRL", nickname: "ConstPro", judicialType: "SRL",
+    cuiNumber: "16789012", tradeRegisterNumber: "J08/567/2005",
+    contactPerson1Idx: 10, contactPerson2Idx: 11,
+    hqAddress: { streetLine: "Strada Lungă 123", postalCode: "500092", locality: "Brașov", county: "Brașov", country: "Romania" },
+    correspondenceAddress: { streetLine: "CP 88, OP 5", postalCode: "500500", locality: "Brașov", county: "Brașov", country: "Romania" },
+  },
+  // 6 – SA
+  {
+    name: "Banca Comercială SA", judicialType: "SA",
+    cuiNumber: "1234567", tradeRegisterNumber: "J40/89/1994",
+    contactPerson1Idx: 12, contactPerson2Idx: 13,
+    hqAddress: { streetLine: "Bulevardul Unirii 35", postalCode: "030830", locality: "București", county: "Sector 3", country: "Romania" },
+  },
+  // 7 – SA
+  {
+    name: "AeroRom SA", judicialType: "SA",
+    cuiNumber: "2345678", tradeRegisterNumber: "J40/1023/1991",
+    contactPerson1Idx: 14, contactPerson2Idx: 15,
+    hqAddress: { streetLine: "Calea Floreasca 246A", postalCode: "014476", locality: "București", county: "Sector 1", country: "Romania" },
+    correspondenceSameAsHq: true,
+  },
+  // 8 – SA
+  {
+    name: "CerealeRom SA", judicialType: "SA",
+    cuiNumber: "3456789", tradeRegisterNumber: "J23/115/1996",
+    contactPerson1Idx: 16, contactPerson2Idx: 17,
+    hqAddress: { streetLine: "Șoseaua Afumați km 8", postalCode: "077025", locality: "Afumați", county: "Ilfov", country: "Romania" },
+  },
+  // 9 – SA
+  {
+    name: "PetroVest SA", judicialType: "SA",
+    cuiNumber: "4567890", tradeRegisterNumber: "J29/456/1999",
+    contactPerson1Idx: 18, contactPerson2Idx: 19,
+    hqAddress: { streetLine: "Strada Independenței 5", postalCode: "100018", locality: "Ploiești", county: "Prahova", country: "Romania" },
+    correspondenceAddress: { streetLine: "CP 2, OP 1", postalCode: "100001", locality: "Ploiești", county: "Prahova", country: "Romania" },
+  },
+  // 10 – SRL
+  {
+    name: "EcoGreen SRL", judicialType: "SRL",
+    cuiNumber: "32567890", tradeRegisterNumber: "J22/789/2016",
+    contactPerson1Idx: 20, contactPerson2Idx: 21,
+    hqAddress: { streetLine: "Strada Sărărie 56, et. 1", postalCode: "700451", locality: "Iași", county: "Iași", country: "Romania" },
+  },
+  // 11 – SRL
+  {
+    name: "Alpha Trading SRL", nickname: "AlphaTrading", judicialType: "SRL",
+    cuiNumber: "28901234", tradeRegisterNumber: "J13/345/2011",
+    contactPerson1Idx: 22, contactPerson2Idx: 23,
+    hqAddress: { streetLine: "Bulevardul Tomis 101", postalCode: "900663", locality: "Constanța", county: "Constanța", country: "Romania" },
+  },
+
+  // ── GROUP B: one contact linked, second to be added via UI (entries 12–23, 30%) ─
+
+  // 12 – SRL
+  {
+    name: "ProServ SRL", judicialType: "SRL",
+    cuiNumber: "19012345", tradeRegisterNumber: "J17/890/2007",
+    notes: "Contact person 2 to be added via the Add contact person button.",
+    contactPerson1Idx: 0,
+    hqAddress: { streetLine: "Strada Domnească 78", postalCode: "800211", locality: "Galați", county: "Galați", country: "Romania" },
+  },
+  // 13 – SRL
+  {
+    name: "RomBuild SRL", judicialType: "SRL",
+    cuiNumber: "21234567", tradeRegisterNumber: "J03/123/2009",
+    notes: "Contact person 2 to be added via the Add contact person button.",
+    contactPerson1Idx: 1,
+    hqAddress: { streetLine: "Strada Victoriei 22", postalCode: "110006", locality: "Pitești", county: "Argeș", country: "Romania" },
+    correspondenceSameAsHq: true,
+  },
+  // 14 – SRL
+  {
+    name: "DataSystems SRL", judicialType: "SRL",
+    cuiNumber: "29876543", tradeRegisterNumber: "J05/234/2017",
+    notes: "Contact person 2 to be added via the Add contact person button.",
+    contactPerson1Idx: 2,
+    hqAddress: { streetLine: "Strada Republicii 15, et. 4", postalCode: "410152", locality: "Oradea", county: "Bihor", country: "Romania" },
+  },
+  // 15 – SRL
+  {
+    name: "NordCom SRL", judicialType: "SRL",
+    cuiNumber: "27654321", tradeRegisterNumber: "J32/567/2013",
+    notes: "Contact person 2 to be added via the Add contact person button.",
+    contactPerson1Idx: 3,
+    hqAddress: { streetLine: "Piața Mare 10, et. 2", postalCode: "550025", locality: "Sibiu", county: "Sibiu", country: "Romania" },
+    correspondenceAddress: { streetLine: "CP 45, OP 3", postalCode: "550300", locality: "Sibiu", county: "Sibiu", country: "Romania" },
+  },
+  // 16 – SA
+  {
+    name: "ElectroRom SA", judicialType: "SA",
+    cuiNumber: "5678901", tradeRegisterNumber: "J16/78/1998",
+    notes: "Contact person 2 to be added via the Add contact person button.",
+    contactPerson1Idx: 4,
+    hqAddress: { streetLine: "Calea Unirii 12", postalCode: "200580", locality: "Craiova", county: "Dolj", country: "Romania" },
+  },
+  // 17 – SA
+  {
+    name: "TeleNet SA", judicialType: "SA",
+    cuiNumber: "6789012", tradeRegisterNumber: "J12/234/2002",
+    notes: "Contact person 2 to be added via the Add contact person button.",
+    contactPerson1Idx: 5,
+    hqAddress: { streetLine: "Strada Memorandumului 28, et. 3", postalCode: "400114", locality: "Cluj-Napoca", county: "Cluj", country: "Romania" },
+  },
+  // 18 – SRL_D
+  {
+    name: "StartupHub SRL-D", judicialType: "SRL_D",
+    cuiNumber: "38765432", tradeRegisterNumber: "J40/3456/2020",
+    notes: "Contact person 2 to be added via the Add contact person button.",
+    contactPerson1Idx: 6,
+    hqAddress: { streetLine: "Strada Covaci 14", postalCode: "030021", locality: "București", county: "Sector 3", country: "Romania" },
+  },
+  // 19 – SRL_D
+  {
+    name: "InnoTech SRL-D", judicialType: "SRL_D",
+    cuiNumber: "39876543", tradeRegisterNumber: "J12/4567/2021",
+    notes: "Contact person 2 to be added via the Add contact person button.",
+    contactPerson1Idx: 7,
+    hqAddress: { streetLine: "Calea Turzii 178, sp. 12", postalCode: "400490", locality: "Cluj-Napoca", county: "Cluj", country: "Romania" },
+  },
+  // 20 – SRL_D
+  {
+    name: "DigitalMark SRL-D", judicialType: "SRL_D",
+    cuiNumber: "40987654", tradeRegisterNumber: "J35/5678/2021",
+    notes: "Contact person 2 to be added via the Add contact person button.",
+    contactPerson1Idx: 8,
+    hqAddress: { streetLine: "Bulevardul Eroilor de la Tisa 1A", postalCode: "300024", locality: "Timișoara", county: "Timiș", country: "Romania" },
+    correspondenceSameAsHq: true,
+  },
+  // 21 – SRL_D
+  {
+    name: "EduPlatform SRL-D", judicialType: "SRL_D",
+    cuiNumber: "42098765", tradeRegisterNumber: "J22/6789/2022",
+    notes: "Contact person 2 to be added via the Add contact person button.",
+    contactPerson1Idx: 9,
+    hqAddress: { streetLine: "Strada Coposu 10", postalCode: "700468", locality: "Iași", county: "Iași", country: "Romania" },
+  },
+  // 22 – PFA
+  {
+    name: "PFA Ionescu Dan", judicialType: "PFA",
+    cuiNumber: "43209876",
+    notes: "Contact person 2 to be added via the Add contact person button.",
+    contactPerson1Idx: 10,
+    hqAddress: { streetLine: "Strada Polonă 40, ap. 5", postalCode: "010494", locality: "București", county: "Sector 1", country: "Romania" },
+  },
+  // 23 – PFA
+  {
+    name: "PFA Stoica Radu", judicialType: "PFA",
+    cuiNumber: "44320987",
+    notes: "Contact person 2 to be added via the Add contact person button.",
+    contactPerson1Idx: 11,
+    hqAddress: { streetLine: "Strada Iuliu Maniu 23", postalCode: "400100", locality: "Cluj-Napoca", county: "Cluj", country: "Romania" },
+  },
+
+  // ── GROUP C: no contacts (entries 24–39, 40%) ────────────────────────────
+
+  // 24 – PFA
+  {
+    name: "PFA Marin Dumitru", judicialType: "PFA",
+    cuiNumber: "45431098",
+    hqAddress: { streetLine: "Strada Moților 7", postalCode: "077030", locality: "Bragadiru", county: "Ilfov", country: "Romania" },
+  },
+  // 25 – PFA
+  {
+    name: "PFA Popescu Vasile", judicialType: "PFA",
+    cuiNumber: "46542109",
+    hqAddress: { streetLine: "Calea Plevnei 34, ap. 2", postalCode: "010233", locality: "București", county: "Sector 1", country: "Romania" },
+  },
+  // 26 – PFA
+  {
+    name: "PFA Nistor Sorin", judicialType: "PFA",
+    cuiNumber: "47653210",
+    hqAddress: { streetLine: "Bulevardul Mamaia 200", postalCode: "900527", locality: "Constanța", county: "Constanța", country: "Romania" },
+  },
+  // 27 – PFA
+  {
+    name: "PFA Gheorghe Mihai", judicialType: "PFA",
+    cuiNumber: "48764321",
+    hqAddress: { streetLine: "Strada Republicii 50", postalCode: "500015", locality: "Brașov", county: "Brașov", country: "Romania" },
+  },
+  // 28 – II
+  {
+    name: "II Fermă Agricolă Barbu", judicialType: "II",
+    cuiNumber: "49875432", tradeRegisterNumber: "J23/890/2006",
+    hqAddress: { streetLine: "Strada Principală 12", postalCode: "077025", locality: "Afumați", county: "Ilfov", country: "Romania" },
+  },
+  // 29 – II
+  {
+    name: "II Servicii Auto Lungu", judicialType: "II",
+    cuiNumber: "50986543", tradeRegisterNumber: "J29/1234/2010",
+    hqAddress: { streetLine: "Strada Mimozei 3", postalCode: "100092", locality: "Ploiești", county: "Prahova", country: "Romania" },
+    correspondenceSameAsHq: true,
+  },
+  // 30 – II
+  {
+    name: "II Atelier Costea", judicialType: "II",
+    cuiNumber: "52097654", tradeRegisterNumber: "J17/567/2004",
+    hqAddress: { streetLine: "Strada Brăilei 45", postalCode: "800201", locality: "Galați", county: "Galați", country: "Romania" },
+  },
+  // 31 – II
+  {
+    name: "II Comerț General Tudor", judicialType: "II",
+    cuiNumber: "53108765", tradeRegisterNumber: "J04/890/2008",
+    notes: "Activitate temporar suspendată.",
+    hqAddress: { streetLine: "Strada Vasile Alecsandri 20", postalCode: "600011", locality: "Bacău", county: "Bacău", country: "Romania" },
+  },
+  // 32 – IF
+  {
+    name: "IF Familia Ionescu", judicialType: "IF",
+    cuiNumber: "54219876", tradeRegisterNumber: "J40/2345/2015",
+    hqAddress: { streetLine: "Strada Gabroveni 12", postalCode: "030013", locality: "București", county: "Sector 3", country: "Romania" },
+  },
+  // 33 – IF
+  {
+    name: "IF Agricultură Moldovan", judicialType: "IF",
+    cuiNumber: "55320987", tradeRegisterNumber: "J23/3456/2018",
+    hqAddress: { streetLine: "Calea Cernica 8", postalCode: "077040", locality: "Cernica", county: "Ilfov", country: "Romania" },
+    correspondenceAddress: { streetLine: "CP 5, OP Cernica", postalCode: "077040", locality: "Cernica", county: "Ilfov", country: "Romania" },
+  },
+  // 34 – IF
+  {
+    name: "IF Servicii Casnice Popa", judicialType: "IF",
+    cuiNumber: "56431098", tradeRegisterNumber: "J12/4567/2019",
+    hqAddress: { streetLine: "Aleea Băișoara 3", postalCode: "400510", locality: "Cluj-Napoca", county: "Cluj", country: "Romania" },
+  },
+  // 35 – ONG
+  {
+    name: "Asociația Proprietarilor de Terenuri Ilfov", nickname: "APTI", judicialType: "ONG",
+    cuiNumber: "57542109",
+    notes: "Asociație înregistrată la Judecătoria Buftea.",
+    hqAddress: { streetLine: "Strada Dunării 1", postalCode: "077030", locality: "Bragadiru", county: "Ilfov", country: "Romania" },
+  },
+  // 36 – ONG
+  {
+    name: "Fundația EcoRomânia", nickname: "EcoRo", judicialType: "ONG",
+    cuiNumber: "58653210",
+    hqAddress: { streetLine: "Intrarea Odoarei 5", postalCode: "020271", locality: "București", county: "Sector 2", country: "Romania" },
+    correspondenceSameAsHq: true,
+  },
+  // 37 – ONG
+  {
+    name: "Asociația Culturală «Miorița»", judicialType: "ONG",
+    cuiNumber: "59764321",
+    notes: "Asociație de promovare a culturii tradiționale românești.",
+    hqAddress: { streetLine: "Strada Costache Negri 3", postalCode: "700470", locality: "Iași", county: "Iași", country: "Romania" },
+  },
+  // 38 – OTHER
+  {
+    name: "Cooperativa Agricolă Bragadiru", nickname: "CAB", judicialType: "OTHER",
+    cuiNumber: "60875432",
+    notes: "Cooperativă agricolă fondată în 1994.",
+    hqAddress: { streetLine: "Strada Izvorului 7", postalCode: "077030", locality: "Bragadiru", county: "Ilfov", country: "Romania" },
+  },
+  // 39 – OTHER
+  {
+    name: "Grupul de Interes Economic «Ilfov Nord»", nickname: "GIE Ilfov Nord", judicialType: "OTHER",
+    cuiNumber: "61986543", tradeRegisterNumber: "J23/7890/2014",
+    hqAddress: { streetLine: "Strada Câmpului 3", postalCode: "077025", locality: "Afumați", county: "Ilfov", country: "Romania" },
+    correspondenceAddress: { streetLine: "CP 1, OP Voluntari", postalCode: "077190", locality: "Voluntari", county: "Ilfov", country: "Romania" },
+  },
+];
+
 // ---------------------------------------------------------------------------
 // Seed runner
 // ---------------------------------------------------------------------------
@@ -1075,6 +1417,96 @@ async function seed() {
       }
     });
     console.log(`Seeded ${PAPERWORKS.length} paperwork records.`);
+  }
+
+  // ---- Judicial persons ----
+  const judicialCount = (
+    await db.execute(sql`select count(*)::int as count from judicial_person`)
+  ).rows[0] as { count: number };
+
+  if (judicialCount.count > 0) {
+    console.log(
+      `judicial_person already has ${judicialCount.count} row(s); skipping judicial persons seed.`,
+    );
+  } else {
+    console.log(`Seeding ${JUDICIAL_PERSONS.length} judicial persons...`);
+
+    // Fetch natural persons sorted by code so contactPerson1/2Idx resolve
+    // deterministically (PERS00001 = index 0, PERS00002 = index 1, etc.).
+    const naturalPersons = await db
+      .select({ id: person.id })
+      .from(person)
+      .where(eq(person.type, "NATURAL"))
+      .orderBy(person.code);
+
+    await db.transaction(async (tx) => {
+      for (const row of JUDICIAL_PERSONS) {
+        const [poRow] = await tx
+          .insert(principalObject)
+          .values({
+            objectType: "PERSON",
+            code: sql`'PERS' || lpad(nextval('principal_object_code_seq')::text, 5, '0')`,
+          })
+          .returning();
+
+        const [pRow] = await tx
+          .insert(person)
+          .values({
+            principalObjectId: poRow.id,
+            code: poRow.code,
+            type: "JUDICIAL",
+            displayName: row.name,
+            notes: row.notes ?? null,
+          })
+          .returning();
+
+        await tx.insert(judicialPerson).values({
+          personId: pRow.id,
+          name: row.name,
+          nickname: row.nickname ?? null,
+          judicialType: row.judicialType,
+          cuiNumber: row.cuiNumber ?? null,
+          tradeRegisterNumber: row.tradeRegisterNumber ?? null,
+          contactPerson1Id:
+            row.contactPerson1Idx !== undefined
+              ? (naturalPersons[row.contactPerson1Idx]?.id ?? null)
+              : null,
+          contactPerson2Id:
+            row.contactPerson2Idx !== undefined
+              ? (naturalPersons[row.contactPerson2Idx]?.id ?? null)
+              : null,
+          correspondenceSameAsHq: row.correspondenceSameAsHq ?? false,
+        });
+
+        if (row.hqAddress) {
+          await tx.insert(address).values({
+            personId: pRow.id,
+            kind: "HEADQUARTERS",
+            streetLine: row.hqAddress.streetLine ?? null,
+            postalCode: row.hqAddress.postalCode ?? null,
+            locality: row.hqAddress.locality ?? null,
+            county: row.hqAddress.county ?? null,
+            country: row.hqAddress.country,
+            notes: row.hqAddress.notes ?? null,
+          });
+        }
+
+        // Only insert correspondence address when the "same as HQ" flag is off.
+        if (row.correspondenceAddress && !(row.correspondenceSameAsHq ?? false)) {
+          await tx.insert(address).values({
+            personId: pRow.id,
+            kind: "CORRESPONDENCE",
+            streetLine: row.correspondenceAddress.streetLine ?? null,
+            postalCode: row.correspondenceAddress.postalCode ?? null,
+            locality: row.correspondenceAddress.locality ?? null,
+            county: row.correspondenceAddress.county ?? null,
+            country: row.correspondenceAddress.country,
+            notes: row.correspondenceAddress.notes ?? null,
+          });
+        }
+      }
+    });
+    console.log(`Seeded ${JUDICIAL_PERSONS.length} judicial persons.`);
   }
 }
 
