@@ -9,6 +9,7 @@ type AssociatedProperty = {
   id:           string;
   code:         string;
   label:        string;
+  roleName:     string | null;
   associatedAt: string;
 };
 
@@ -82,6 +83,7 @@ export function PersonPropertiesTab({ personId, backBase }: Props) {
                 <th className="w-8 px-3 py-2" aria-label="select" />
                 <th className="px-3 py-2 text-left font-medium text-fade dark:text-zinc-400">{t("colCode")}</th>
                 <th className="px-3 py-2 text-left font-medium text-fade dark:text-zinc-400">{t("colLabel")}</th>
+                <th className="px-3 py-2 text-left font-medium text-fade dark:text-zinc-400">{t("colRole")}</th>
               </tr>
             </thead>
             <tbody>
@@ -109,6 +111,7 @@ export function PersonPropertiesTab({ personId, backBase }: Props) {
                   </td>
                   <td className="px-3 py-2 font-mono text-xs text-fade dark:text-zinc-400">{item.code}</td>
                   <td className="px-3 py-2 font-medium text-ink dark:text-zinc-100">{item.label}</td>
+                  <td className="px-3 py-2 text-fade dark:text-zinc-400">{item.roleName ?? "—"}</td>
                 </tr>
               ))}
             </tbody>

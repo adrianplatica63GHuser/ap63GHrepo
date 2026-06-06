@@ -11,6 +11,9 @@ const PAGE_SIZE = 15;
 type PropertySearchItem = { id: string; code: string; label: string };
 type SearchResponse = { items: PropertySearchItem[]; total: number };
 
+type RoleItem = { id: string; personRoleId: string; personRoleName: string };
+type RolesResponse = { items: RoleItem[] };
+
 type Props = { personId: string; personName: string; backBase: string };
 
 async function searchProperties(q: string, page: number): Promise<SearchResponse> {
@@ -24,20 +27,33 @@ async function searchProperties(q: string, page: number): Promise<SearchResponse
   return { items: data.items as PropertySearchItem[], total: data.total as number };
 }
 
+async function fetchRoles(): Promise<RoleItem[]> {
+  const res = await fetch("/api/admin/property-person-roles");
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data: RolesResponse = await res.json();
+  return data.items;
+}
+
 export function AssociatePropertyView({ personId, personName, backBase }: Props) {
   const t           = useTranslations("shared.associateProperty");
   const router      = useRouter();
   const queryClient = useQueryClient();
 
-  const [qInput,      setQInput]      = useState("");
-  const [page,        setPage]        = useState(0);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [submitting,  setSubmitting]  = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [qInput,         setQInput]         = useState("");
+  const [page,           setPage]           = useState(0);
+  const [selectedIds,    setSelectedIds]    = useState<Set<string>>(new Set());
+  const [selectedRoleId, setSelectedRoleId] = useState<string>("");
+  const [submitting,     setSubmitting]     = useState(false);
+  const [submitError,    setSubmitError]    = useState<string | null>(null);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["property-search", qInput, page],
     queryFn:  () => searchProperties(qInput, page),
+  });
+
+  const { data: roles } = useQuery({
+    queryKey: ["property-person-roles-whitelist"],
+    queryFn:  fetchRoles,
   });
 
   const items = data?.items ?? [];
@@ -59,7 +75,10 @@ export function AssociatePropertyView({ personId, personName, backBase }: Props)
       const res = await fetch(`/api/people/${encodeURIComponent(personId)}/properties`, {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ propertyIds: Array.from(selectedIds) }),
+        body:    JSON.stringify({
+          propertyIds:  Array.from(selectedIds),
+          personRoleId: selectedRoleId || null,
+        }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -134,6 +153,26 @@ export function AssociatePropertyView({ personId, personName, backBase }: Props)
         onPrev={() => setPage((p) => p - 1)}
         onNext={() => setPage((p) => p + 1)}
       />
+
+      {/* Role selection */}
+      <div className="flex items-center gap-3">
+        <label htmlFor="role-select" className="shrink-0 text-sm font-medium text-ink dark:text-zinc-300">
+          {t("labelRole")}
+        </label>
+        <select
+          id="role-select"
+          value={selectedRoleId}
+          onChange={(e) => setSelectedRoleId(e.target.value)}
+          className="w-64 rounded-md border border-wire bg-white px-2 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
+        >
+          <option value="">{t("rolePlaceholder")}</option>
+          {(roles ?? []).map((r) => (
+            <option key={r.personRoleId} value={r.personRoleId}>
+              {r.personRoleName}
+            </option>
+          ))}
+        </select>
+      </div>
 
       {submitError && <p className="text-sm text-red-600 dark:text-red-400" role="alert">{submitError}</p>}
 

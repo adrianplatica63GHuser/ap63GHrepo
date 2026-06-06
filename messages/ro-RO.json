@@ -218,6 +218,7 @@
       "empty": "Nicio proprietate asociată",
       "colCode": "Cod",
       "colLabel": "Denumire",
+      "colRole": "Rol",
       "associate": "Asociază",
       "dissociate": "Dezasociază",
       "dissociating": "Se elimină…",
@@ -228,7 +229,9 @@
     "associateProperty": {
       "title": "Asociere proprietate",
       "labelSearch": "Căutare",
+      "labelRole": "Rol",
       "searchPlaceholder": "Cod sau denumire…",
+      "rolePlaceholder": "— fără rol —",
       "colCode": "Cod",
       "colLabel": "Denumire",
       "resultsEmpty": "Nicio proprietate găsită",

@@ -218,6 +218,7 @@
       "empty": "No properties associated",
       "colCode": "Code",
       "colLabel": "Name",
+      "colRole": "Role",
       "associate": "Associate",
       "dissociate": "Dissociate",
       "dissociating": "Removing…",
@@ -228,7 +229,9 @@
     "associateProperty": {
       "title": "Associate Property",
       "labelSearch": "Search",
+      "labelRole": "Role",
       "searchPlaceholder": "Code or name…",
+      "rolePlaceholder": "— no role —",
       "colCode": "Code",
       "colLabel": "Name",
       "resultsEmpty": "No properties found",
