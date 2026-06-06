@@ -459,6 +459,7 @@ export type PersonPaperworkItem = {
   code:         string;
   type:         string;
   title:        string | null;
+  roleName:     string | null;
   associatedAt: Date;
 };
 
@@ -469,10 +470,12 @@ export async function listPersonPaperwork(personId: string): Promise<PersonPaper
       code:         paperwork.code,
       type:         paperwork.type,
       title:        paperwork.title,
+      roleName:     lookupPersonRole.name,
       associatedAt: personPaperwork.createdAt,
     })
     .from(personPaperwork)
     .innerJoin(paperwork, and(eq(personPaperwork.paperworkId, paperwork.id), isNull(paperwork.deletedAt)))
+    .leftJoin(lookupPersonRole, eq(personPaperwork.personRoleId, lookupPersonRole.id))
     .where(eq(personPaperwork.personId, personId))
     .orderBy(paperwork.code);
 

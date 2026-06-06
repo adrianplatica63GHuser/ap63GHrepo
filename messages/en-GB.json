@@ -247,6 +247,7 @@
       "colCode": "Code",
       "colType": "Type",
       "colTitle": "Title",
+      "colRole": "Role",
       "associate": "Associate",
       "dissociate": "Dissociate",
       "dissociating": "Removing…",

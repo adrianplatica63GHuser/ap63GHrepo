@@ -247,6 +247,7 @@
       "colCode": "Cod",
       "colType": "Tip",
       "colTitle": "Titlu",
+      "colRole": "Rol",
       "associate": "Asociază",
       "dissociate": "Dezasociază",
       "dissociating": "Se elimină…",
