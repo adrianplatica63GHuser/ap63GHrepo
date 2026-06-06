@@ -100,8 +100,8 @@ DB + schema + query layer + API + UI + i18n.
 - `PaperworkPersonItem` type: added `roleName: string | null`.
 - `listPaperworkPersons`: added `leftJoin(lookupPersonRole, ...)` to pull the role name. Returns `null` when no role is set.
 - `associatePersonsToPaperwork`: added optional `personRoleId: string | null = null` fourth argument. Included in the insert values.
-- `PAPERWORK_TYPE_TO_DOC_TYPE_NAME`: static map from paperwork type enum values to `lookup_document_type.name` strings (used to filter the role dropdown by document type). `CERTIFICAT_SARCINI` is intentionally omitted until the DB name is confirmed — returns an empty list for that type.
-- `listPersonRolesForPaperwork(paperworkId)`: resolves the document's type, finds its `lookup_document_type` entry by name, then returns person roles from `lookup_doc_type_person_role` for that document type. Returns `[]` when the type has no associations or the mapping is unconfirmed.
+- `PAPERWORK_TYPE_TO_DOC_TYPE_NAME`: static map from paperwork type enum values to `lookup_document_type.name` strings (used to filter the role dropdown by document type). All 19 types are mapped; `CERTIFICAT_SARCINI` maps to `"Certificat de Bunuri"` (confirmed via `SELECT name FROM lookup_document_type WHERE sort_order = 7`). `ACT_DONATIE` and `TESTAMENT` have no seed associations and return empty lists.
+- `listPersonRolesForPaperwork(paperworkId)`: resolves the document's type, finds its `lookup_document_type` entry by name, then returns person roles from `lookup_doc_type_person_role` for that document type. Returns `[]` when the type has no associations.
 
 **New API (`src/app/api/paperwork/[id]/valid-person-roles/route.ts`)**
 - `GET /api/paperwork/[id]/valid-person-roles` → `{ items: [{ id, name }] }`.
@@ -124,7 +124,7 @@ DB + schema + query layer + API + UI + i18n.
 - `paperwork.persons`: removed `colType`, `typeNatural`, `typeJudicial`; added `colRole`.
 - `paperwork.associatePerson`: added `labelRole`, `rolePlaceholder` (EN: "— no role —" / RO: "— fără rol —").
 
-**Note on CERTIFICAT_SARCINI**: The `lookup_document_type` entry for this enum value was unconfirmed at implementation time. To enable the role dropdown for it, run `SELECT name FROM lookup_document_type WHERE sort_order = 7;` against the DB to confirm the name, then add the mapping to `PAPERWORK_TYPE_TO_DOC_TYPE_NAME` in `src/lib/paperwork/queries.ts`.
+**Note on CERTIFICAT_SARCINI**: Confirmed as `"Certificat de Bunuri"` in `lookup_document_type` (sort_order = 7). The mapping is included in `PAPERWORK_TYPE_TO_DOC_TYPE_NAME`.
 
 **Git commits already tagged 10.07 (pre-existing)**
 - `96ac0ba` / `d162969`: Role column + dropdown on the *Person* detail page's Properties tab (person-properties-tab.tsx + associate-property-view.tsx from the person side) — reverse direction, done separately.

@@ -397,7 +397,7 @@ const PAPERWORK_TYPE_TO_DOC_TYPE_NAME: Partial<Record<string, string>> = {
   AVIZ_INSTITUTIE:          "Aviz de Instituție",
   CERTIFICAT_FISCAL:        "Certificat Fiscal",
   CERTIFICAT_MOSTENITOR:    "Certificat de Moștenitor",
-  // CERTIFICAT_SARCINI: omitted — DB name unconfirmed; returns empty list
+  CERTIFICAT_SARCINI:       "Certificat de Bunuri",
   CERTIFICAT_URBANISM:      "Certificat de Urbanism",
   CONTRACT_ARENDA:          "Contract de Arendă",
   CONTRACT_INCHIRIERE:      "Contract de Închiriere",
