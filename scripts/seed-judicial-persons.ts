@@ -46,8 +46,9 @@ async function main() {
         judicialType: row.judicialType,
         cuiNumber: row.cuiNumber,
         tradeRegisterNumber: row.tradeRegisterNumber ?? null,
-        contactPerson1: null,
-        contactPerson2: null,
+        contactPerson1Id: null,
+        contactPerson2Id: null,
+        correspondenceSameAsHq: false,
         notes: null,
         addresses: [],
       });
