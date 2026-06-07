@@ -128,8 +128,8 @@ describe("toApiPayload", () => {
     expect(payload.judicialType).toBeNull();
     expect(payload.cuiNumber).toBeNull();
     expect(payload.tradeRegisterNumber).toBeNull();
-    expect(payload.contactPerson1).toBeNull();
-    expect(payload.contactPerson2).toBeNull();
+    expect(payload.contactPerson1Id).toBeNull();
+    expect(payload.contactPerson2Id).toBeNull();
     expect(payload.notes).toBeNull();
   });
 
@@ -208,11 +208,14 @@ describe("fromApiPayload", () => {
         judicialType: null,
         cuiNumber: null,
         tradeRegisterNumber: null,
-        contactPerson1: null,
-        contactPerson2: null,
+        contactPerson1Id: null,
+        contactPerson2Id: null,
+        correspondenceSameAsHq: false,
       },
       addresses: [],
       notes: null,
+      contactPerson1Name: null,
+      contactPerson2Name: null,
     });
     expect(result.nickname).toBe("");
     expect(result.judicialType).toBe("");
@@ -230,19 +233,22 @@ describe("fromApiPayload", () => {
         judicialType: "SA",
         cuiNumber: "RO12345678",
         tradeRegisterNumber: "J40/123/2020",
-        contactPerson1: "Ion Popescu",
-        contactPerson2: null,
+        contactPerson1Id: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+        contactPerson2Id: null,
+        correspondenceSameAsHq: false,
       },
       addresses: [],
       notes: "Some notes",
+      contactPerson1Name: "Ion Popescu",
+      contactPerson2Name: null,
     });
     expect(result.name).toBe("SC Test SA");
     expect(result.nickname).toBe("Test");
     expect(result.judicialType).toBe("SA");
     expect(result.cuiNumber).toBe("RO12345678");
     expect(result.tradeRegisterNumber).toBe("J40/123/2020");
-    expect(result.contactPerson1).toBe("Ion Popescu");
-    expect(result.contactPerson2).toBe("");
+    expect(result.contactPerson1Name).toBe("Ion Popescu");
+    expect(result.contactPerson2Name).toBe("");
     expect(result.notes).toBe("Some notes");
   });
 
