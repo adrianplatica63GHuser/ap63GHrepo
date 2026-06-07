@@ -975,6 +975,7 @@ Rules:
 - **Never commit or push without explicit confirmation.** Same for any irreversible action.
 - **Conventional commits** — `feat:`, `fix:`, `chore:`, `ci:`, `docs(scope):`, `test:`, etc.
 - **Always provide commit statements as ready-to-run PowerShell `git` commands**, not just the commit message text. Each commit should be a full `git add <files> && git commit -m "message"` command (or equivalent multi-line PowerShell form) that Adrian can paste directly into his terminal.
+- **Always provide complete, ready-to-run PowerShell commands** for every step — including env var assignments, seed runs, migrations, etc. Never give a connection string or value in isolation; always show the full assignment (`$env:VAR = "value"`) as a separate line before the command that uses it. PowerShell cannot run a bare URL or string as a command.
 - **Always check `git status` before making changes**, and never modify files outside `C:\dev\ga40prj`.
 - **Adrian runs git in PowerShell on Windows.** Claude prepares file content; Adrian commits and pushes. This avoids Windows-mount permission issues with `.git/index.lock` from the Linux sandbox.
 - **Trust HEAD as the source of truth.** The Linux sandbox can show stale or phantom file states (deleted files appearing as untracked, modified files showing clean, etc.). When in doubt, ask Adrian to `git status` on his side.
