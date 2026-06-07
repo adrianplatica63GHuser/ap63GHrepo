@@ -186,4 +186,39 @@ export function AssociatePersonView({ paperworkId, paperworkName, paperworkType 
         <label className="flex items-center gap-2 text-sm">
           <span className="w-16 shrink-0 font-medium text-ink dark:text-zinc-300">{t("labelRole")}</span>
           <select
-            value={sel
+            value={selectedRoleId}
+            onChange={(e) => setSelectedRoleId(e.target.value)}
+            className="rounded-md border border-wire bg-white px-2 py-1 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950"
+          >
+            <option value="">{t("rolePlaceholder")}</option>
+            {roles.map((r) => (
+              <option key={r.id} value={r.id}>{r.name}</option>
+            ))}
+          </select>
+        </label>
+      )}
+
+      {submitError && (
+        <p className="text-sm text-red-600 dark:text-red-400" role="alert">{submitError}</p>
+      )}
+
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={handleAssociate}
+          disabled={selectedIds.size === 0 || submitting}
+          className="inline-flex items-center rounded-md bg-cta px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {submitting ? t("associating") : t("associate")}
+        </button>
+        <button
+          type="button"
+          onClick={handleCancel}
+          className="inline-flex items-center rounded-md border border-wire bg-white px-4 py-2 text-sm font-medium text-ink shadow-sm transition-colors hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+        >
+          {t("cancel")}
+        </button>
+      </div>
+    </div>
+  );
+}
