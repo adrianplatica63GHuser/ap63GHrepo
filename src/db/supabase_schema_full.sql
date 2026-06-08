@@ -586,6 +586,16 @@ CREATE TABLE lookup_property_person_role (
   created_at     timestamptz NOT NULL DEFAULT now()
 );
 
+-- Seed: roles valid for Property ↔ Person associations (matches dev)
+INSERT INTO lookup_property_person_role (id, person_role_id, created_at)
+  SELECT gen_random_uuid(), id, now() FROM lookup_person_role WHERE name = 'Coproprietari / Coindivizari' ON CONFLICT (person_role_id) DO NOTHING;
+INSERT INTO lookup_property_person_role (id, person_role_id, created_at)
+  SELECT gen_random_uuid(), id, now() FROM lookup_person_role WHERE name = 'Cumpărător' ON CONFLICT (person_role_id) DO NOTHING;
+INSERT INTO lookup_property_person_role (id, person_role_id, created_at)
+  SELECT gen_random_uuid(), id, now() FROM lookup_person_role WHERE name = 'Proprietar / Titular de drept real' ON CONFLICT (person_role_id) DO NOTHING;
+INSERT INTO lookup_property_person_role (id, person_role_id, created_at)
+  SELECT gen_random_uuid(), id, now() FROM lookup_person_role WHERE name = 'Titular de drept' ON CONFLICT (person_role_id) DO NOTHING;
+
 -- ============================================================
 -- PAPERWORK domain  (drizzle 0003)
 -- ============================================================
