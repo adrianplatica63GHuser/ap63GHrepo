@@ -15,6 +15,8 @@ These apply regardless of which slice is in progress:
 - **Bilingual by default** — use the established next-intl patterns already in the repo; never hard-code UI strings.
 - **Never commit or push without explicit confirmation.** Same for any irreversible action.
 - **Conventional commits** — `feat:`, `fix:`, `chore:`, `ci:`, `docs(scope):`, `test:`.
+- **Minimise human effort — always.** Processing and storage are cheap; human time and attention are not. Always prefer the most automated solution, even if it does more work. Never ask Adrian to run manual export queries, copy-paste SQL, or track deltas by hand. Build scripts that do the full job. When in doubt, do a full reset rather than a targeted delta — correctness and simplicity matter more than efficiency.
+- **Full reset over delta.** For Supabase/cloud sync, always do a complete reset (drop everything, recreate from scratch, re-seed all data) rather than trying to calculate and apply only what changed. A full reset is reliable; delta logic is fragile.
 
 ## Who you're working with
 
@@ -80,8 +82,47 @@ Relationships: People ↔ Paperwork, People ↔ Properties, Paperwork ↔ Proper
 - Slice #10.06 — Role on Property ↔ Person association. ✅ Complete. Full detail below.
 - Slice #10.07 — Role on Document ↔ Person association. ✅ Complete. Full detail below.
 - Slice #12.01 — Judicial Person form refactor: Contact Persons panel (FK-linked natural persons) + Office Address panel (consolidated with "same as" checkbox). ✅ Complete. Full detail below.
+- Slice #11.vercel.02 — Vercel/Supabase full reset + re-seed + fix 26 truncated/null-byte-corrupted source files + fix 3 stale TypeScript references to old judicial_person text columns. ✅ Complete. Full detail below.
 
 Each slice typically lands as multiple small commits, each individually green.
+
+### Slice #11.vercel.02 — Vercel/Supabase full reset + re-seed (detail)
+
+Full sync of the cloud environment to match local dev after 16+ unpushed commits had accumulated.
+
+**What changed**
+
+**Git / deployment**
+- Pushed 16 unpushed commits (Slices 10.07 → 12.01) to `origin/main`; Vercel auto-deployed.
+- Fixed and committed 26 source files that had been corrupted on disk (trailing null bytes or mid-line truncation). Root cause: the Linux sandbox mount reads stale file sizes; the actual Windows disk content was correct for most, but `property-persons-tab.tsx` and `associate-person-view.tsx` genuinely had corruption that had to be reconstructed. A full scan (`git ls-files | wc -c vs git show HEAD | wc -c`) is the reliable detection method.
+- Fixed 3 stale TypeScript references to the old `judicial_person` text columns (`contactPerson1` / `contactPerson2`) that were not updated when Slice 12.01 replaced them with FK columns. Files: `src/__tests__/judicial-person.test.ts`, `scripts/seed-judicial-persons.ts`. These caused `next build` to fail TypeScript checking.
+
+**Supabase**
+- Added `src/db/supabase_reset.sql` — drops all application objects cleanly (use before re-applying schema).
+- Added `src/db/supabase_schema_full.sql` — complete schema from scratch in one file; combines all drizzle migrations (0000–0007) and src/db migrations (008–018). Fixes `lookup_document_type` row 6 name (`'Certificat de Moștenitor'`, not the typo from migration 0002). PostGIS index uses `CAST(... AS geography)` not `::geography` (Supabase rejects `::` in functional index expressions).
+- Applied both SQL files in Supabase SQL Editor to reset and recreate the schema.
+- Ran `npm run seed:admin` via the session pooler URL (port 5432) — the pooler supports prepared statements, unlike transaction mode (port 6543).
+
+**Supabase connection strings (important)**
+- The project ref is the alphanumeric ID in the dashboard URL: `supabase.com/dashboard/project/[PROJECT_REF]`. It is NOT the project name.
+- Connection strings are found via the **Connect** button at the top of the Supabase project dashboard (UI changed — no longer under Project Settings → Database).
+- Session pooler (port 5432): `postgres://postgres.[REF]:[password]@aws-0-eu-west-1.pooler.supabase.com:5432/postgres` — supports both IPv4/IPv6 and prepared statements; use for seeding.
+- Transaction pooler (port 6543): used by the live Vercel app (`DATABASE_URL`).
+- Direct connection (port 5432 at `db.[REF].supabase.co`): IPv6 only by default; not usable on most Windows machines without the IPv4 add-on.
+
+**Seed**
+- Re-seeded via `$env:DATABASE_URL = "..."` + `$env:NODE_ENV = "production"` + `npx tsx src/db/seed.ts`.
+- Re-created admin user via `npm run seed:admin` (loads `.env` for Supabase credentials automatically).
+
+**Files touched**
+- `src/db/supabase_reset.sql` (new)
+- `src/db/supabase_schema_full.sql` (new)
+- `src/__tests__/judicial-person.test.ts`
+- `scripts/seed-judicial-persons.ts`
+- `src/app/properties/_components/property-persons-tab.tsx` (null bytes removed)
+- `src/app/paperwork/[id]/associate-person/associate-person-view.tsx` (truncation reconstructed)
+- `src/app/paperwork/_components/paperwork-persons-tab.tsx` (null bytes removed)
+- `CLAUDE.md`
 
 ### Slice #12.01 — Judicial Person form refactor (detail)
 
