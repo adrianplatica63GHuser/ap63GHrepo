@@ -1049,6 +1049,25 @@ Rules:
     ```
     Expected output: `CREATE TABLE` (or `ALTER TABLE`, etc.). No output = not applied.
   - *Supabase:* Paste the migration SQL directly into the Supabase SQL Editor. If using `db:migrate`, first set `DIRECT_URL` to the direct connection string (port 5432, `?sslmode=require`): `DIRECT_URL=postgresql://postgres.[ref]:[password]@db.[ref].supabase.co:5432/postgres?sslmode=require`. Remove it again afterwards.
+- **`pg_dump` schema dump includes PostGIS `topology` schema — causes init conflict.** A schema-only `pg_dump` captures `CREATE SCHEMA topology;`. When this is used as a `docker-entrypoint-initdb.d` init script alongside `01-extensions.sql` (which creates `postgis_topology` and thus the `topology` schema first), psql hits `ERROR: schema "topology" already exists` at that line and aborts the entire script with `ON_ERROR_STOP=on` — no tables are created. Fix: change `CREATE SCHEMA topology;` → `CREATE SCHEMA IF NOT EXISTS topology;` in the dump file before shipping it in the Ciprian package.
+- **`pg_dump` on Windows → UTF-16LE corruption.** PowerShell's `>` redirection saves files as UTF-16LE with BOM (`FF FE`). PostgreSQL's `psql` expects UTF-8; when it processes a UTF-16LE init file, the null bytes between each character corrupt SQL parsing and diacritics. **Never use `docker exec ... pg_dump > file.sql`.** Always let pg_dump write to the container filesystem, then copy out:
+    ```powershell
+    docker exec ga40prj-postgres pg_dump -U postgres ga40db -f /tmp/dump.sql
+    docker cp ga40prj-postgres:/tmp/dump.sql ./dump.sql
+    ```
+    If you already have a suspect file, detect and fix encoding with:
+    ```bash
+    file 02-schema.sql   # "Unicode text, UTF-16" → bad; "ASCII text" or "UTF-8" → good
+    iconv -f UTF-16LE -t UTF-8 02-schema.sql -o 02-schema-fixed.sql
+    sed -i 's/\r//' 02-schema-fixed.sql          # strip CRLF
+    sed -i '1s/^\xEF\xBB\xBF//' 02-schema-fixed.sql  # strip UTF-8 BOM if present
+    ```
+- **Ciprian UAT reference-data sync.** `src/db/sync-reference-data.sql` is the canonical script to seed all 11 lookup tables (correct diacritics, `lookup_property_person_role` seed included). **When to regenerate it:** after any slice that adds rows to a lookup table, run `npm run export:reference-data` (reads from local Docker, writes the file). **Commit the updated file** alongside the migration so Ciprian always has a current copy. **When to apply it to Ciprian's container:** after a fresh `docker volume rm` wipe, or whenever reference data looks wrong:
+    ```powershell
+    docker cp src\db\sync-reference-data.sql ciprian-ga40prj-postgres:/tmp/ref.sql
+    docker exec ciprian-ga40prj-postgres psql -U postgres -d ga40db -f /tmp/ref.sql
+    ```
+    The file is idempotent (TRUNCATE + re-INSERT) — safe to re-apply at any time without data loss on non-lookup tables.
 
 ## Key paths
 
