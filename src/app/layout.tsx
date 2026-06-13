@@ -35,7 +35,7 @@ export default async function RootLayout({
       lang={locale}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="h-full flex flex-col">
         <NextIntlClientProvider locale={locale} messages={messages}>
           <MapsProvider>
             <QueryProvider>
