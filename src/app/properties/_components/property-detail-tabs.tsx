@@ -31,6 +31,7 @@ export function PropertyDetailTabs({
 }: Props) {
   const t = useTranslations("property");
   const [activeTab, setActiveTab] = useState<Tab>(initialTab ?? "details");
+  const [bigMap,    setBigMap]    = useState(false);
 
   const tabs: { key: Tab; label: string }[] = [
     { key: "details",    label: t("tabs.details")    },
@@ -40,7 +41,8 @@ export function PropertyDetailTabs({
   ];
 
   return (
-    <>
+    // When bigMap is active, remove the max-width cap so the layout fills the content area.
+    <div className={bigMap ? "w-full flex flex-col gap-4" : "max-w-4xl mx-auto w-full flex flex-col gap-4"}>
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">{propertyName}</h1>
       </header>
@@ -76,6 +78,7 @@ export function PropertyDetailTabs({
             propertyCode={propertyCode}
             initialValues={initialValues}
             initialCorners={initialCorners}
+            onBigMapChange={setBigMap}
           />
         )}
         {activeTab === "persons" && (
@@ -88,6 +91,6 @@ export function PropertyDetailTabs({
           <PropertyReferencesTab propertyId={propertyId} />
         )}
       </div>
-    </>
+    </div>
   );
 }

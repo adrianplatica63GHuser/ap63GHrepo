@@ -25,11 +25,12 @@ import { PropertyMiniMap } from "./property-mini-map";
 // ---------------------------------------------------------------------------
 
 type Props = {
-  mode:           "create" | "edit" | "view";
-  propertyId?:    string;
-  propertyCode?:  string;
-  initialValues?: FormValues;
-  initialCorners?: Corner[];
+  mode:              "create" | "edit" | "view";
+  propertyId?:       string;
+  propertyCode?:     string;
+  initialValues?:    FormValues;
+  initialCorners?:   Corner[];
+  onBigMapChange?:   (val: boolean) => void;
 };
 
 // ---------------------------------------------------------------------------
@@ -42,6 +43,7 @@ export function PropertyForm({
   propertyCode,
   initialValues,
   initialCorners = [],
+  onBigMapChange,
 }: Props) {
   const t  = useTranslations("property");
   const router = useRouter();
@@ -59,6 +61,12 @@ export function PropertyForm({
   const [submitError,      setSubmitError]      = useState<string | null>(null);
   const [confirmDelete,    setConfirmDelete]    = useState(false);
   const [bigMap,           setBigMap]           = useState(false);
+
+  const handleToggleBigMap = () => {
+    const next = !bigMap;
+    setBigMap(next);
+    onBigMapChange?.(next);
+  };
 
   const saveDisabled =
     submitting ||
@@ -308,7 +316,7 @@ export function PropertyForm({
                 hoveredCornerIdx={hoveredCornerIdx}
                 onCornerHover={setHoveredCornerIdx}
                 bigMap={bigMap}
-                onToggleBigMap={() => setBigMap((b) => !b)}
+                onToggleBigMap={handleToggleBigMap}
               />
               {!bigMap && (
                 <div className="rounded-md border border-card-rim overflow-hidden dark:border-zinc-800" style={{ height: "360px" }}>
