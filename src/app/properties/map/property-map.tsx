@@ -407,8 +407,17 @@ export default function PropertyMap() {
         }
       }
 
+      // Anchor the InfoWindow at the centroid of the primary (largest) property,
+      // NOT at the cursor position. If we used the cursor position, the InfoWindow
+      // would render directly under the cursor, causing the polygon's onMouseout
+      // to fire immediately (cursor is now "on the InfoWindow", not on the polygon),
+      // which would schedule a close before React could mount the InfoWindow's
+      // onMouseEnter handler to cancel it.
+      const primary = overlapping[0] ?? withGeometry.find((p) => p.id === ownId);
+      const anchor  = primary && primary.corners.length > 0 ? centroid(primary.corners) : pos;
+
       setSelected({
-        position: pos,
+        position: anchor,
         items:    overlapping.map((p) => ({ id: p.id, label: p.nickname ?? p.code })),
       });
     },
@@ -595,7 +604,7 @@ export default function PropertyMap() {
               strokeWeight={2}
               fillColor={fillColor}
               fillOpacity={fillOpacity}
-              onMouseover={(e) => {
+              onMousemove={(e) => {
                 if (selectMode) return;
                 // Polygon fires native google.maps.PolyMouseEvent — latLng is a
                 // LatLng object accessed via method calls, not e.detail.latLng.
@@ -616,7 +625,7 @@ export default function PropertyMap() {
               strokeWeight={2}
               fillColor={fillColor}
               fillOpacity={isSelected ? 0.55 : 0.35}
-              onMouseover={(e) => {
+              onMousemove={(e) => {
                 if (selectMode) return;
                 const pos = e.latLng
                   ? { lat: e.latLng.lat(), lng: e.latLng.lng() }
