@@ -137,7 +137,7 @@ export function PropertyForm({
       <div className={bigMap ? "flex flex-row gap-4 items-stretch" : "contents"}>
 
         {/* Left panels: transparent in normal mode, 45% fixed column in big-map mode */}
-        <div className={bigMap ? "w-[45%] flex-none flex flex-col gap-4" : "contents"}>
+        <div className={bigMap ? "w-[360px] flex-none flex flex-col gap-4" : "contents"}>
 
           {/* Cadastral data — 4-col normally, 2-col in big-map */}
           <Section title={t("sections.cadastral")} columns={bigMap ? 2 : 4}>
