@@ -30,11 +30,12 @@ type MapResponse = { items: MapProperty[] };
 
 type LatLng = { lat: number; lng: number };
 
-type Selected = {
-  id:       string;
-  position: LatLng;
-  label:    string;
-};
+// A single entry in the InfoWindow list.
+type SelectedItem = { id: string; label: string };
+
+// The current InfoWindow state: a click position + every property that
+// overlaps it, sorted largest area first.
+type Selected = { position: LatLng; items: SelectedItem[] };
 
 type PixelPoint = { x: number; y: number };
 
@@ -62,7 +63,7 @@ async function batchDeleteProperties(ids: string[]): Promise<{ deleted: number }
 }
 
 // ---------------------------------------------------------------------------
-// Helpers
+// Geometry helpers
 // ---------------------------------------------------------------------------
 
 function centroid(corners: Corner[]): LatLng {
@@ -75,6 +76,71 @@ function centroid(corners: Corner[]): LatLng {
 function toLatLng(corners: Corner[]): LatLng[] {
   return corners.map((c) => ({ lat: c.lat, lng: c.lon }));
 }
+
+/**
+ * Shoelace formula — returns area in (degrees)² units.
+ * Used only for relative sorting (larger value = larger polygon).
+ */
+function polygonAreaDeg(corners: Corner[]): number {
+  if (corners.length < 3) return 0;
+  let area = 0;
+  const n = corners.length;
+  for (let i = 0, j = n - 1; i < n; j = i++) {
+    area += (corners[j].lon + corners[i].lon) * (corners[j].lat - corners[i].lat);
+  }
+  return Math.abs(area) / 2;
+}
+
+/**
+ * Ray-casting point-in-polygon test.
+ * Works in lat/lon space — accurate enough for the ~1° × 1° area we cover.
+ */
+function pointInPolygon(pt: LatLng, corners: Corner[]): boolean {
+  let inside = false;
+  const n = corners.length;
+  for (let i = 0, j = n - 1; i < n; j = i++) {
+    const xi = corners[i].lon, yi = corners[i].lat;
+    const xj = corners[j].lon, yj = corners[j].lat;
+    const intersect =
+      yi > pt.lat !== yj > pt.lat &&
+      pt.lng < ((xj - xi) * (pt.lat - yi)) / (yj - yi) + xi;
+    if (intersect) inside = !inside;
+  }
+  return inside;
+}
+
+/**
+ * Returns true if `pt` is considered "inside" property `prop`.
+ *
+ * - ≥ 3 corners → standard point-in-polygon test.
+ * - < 3 corners  → proximity check: within 0.001° of any corner
+ *   (≈ 100 m, comfortably larger than the 25 m circle we draw on screen).
+ */
+function propertyContainsPoint(prop: MapProperty, pt: LatLng): boolean {
+  if (prop.corners.length >= 3) {
+    return pointInPolygon(pt, prop.corners);
+  }
+  const THRESHOLD = 0.001; // degrees
+  return prop.corners.some(
+    (c) =>
+      Math.abs(c.lat - pt.lat) < THRESHOLD &&
+      Math.abs(c.lon - pt.lng) < THRESHOLD,
+  );
+}
+
+/**
+ * Collect every property in `props` that contains `pt`, then sort the result
+ * largest-area-first so the outermost (containing) polygon is listed first.
+ */
+function findOverlapping(props: MapProperty[], pt: LatLng): MapProperty[] {
+  const hits = props.filter((p) => propertyContainsPoint(p, pt));
+  hits.sort((a, b) => polygonAreaDeg(b.corners) - polygonAreaDeg(a.corners));
+  return hits;
+}
+
+// ---------------------------------------------------------------------------
+// Map pixel → LatLng conversion (for drag-to-select)
+// ---------------------------------------------------------------------------
 
 /**
  * Convert a pixel position within the map container to a LatLng coordinate.
@@ -209,7 +275,8 @@ function MapRefCapture({
 //
 // AdvancedMarker renders as a DOM element overlaid on the map, so its size
 // is always 10 × 10 px regardless of zoom level — even tiny properties remain
-// clearly visible. Clicking the marker opens the InfoWindow for the property.
+// clearly visible. Clicking the marker triggers onSelect with the corner's
+// exact geographic coordinates as the click position.
 
 function CornerMarker({
   corner,
@@ -283,6 +350,48 @@ export default function PropertyMap() {
 
   const items        = data?.items ?? [];
   const withGeometry = items.filter((p) => p.corners.length >= 1);
+
+  // -------------------------------------------------------------------------
+  // Overlap-aware click handler
+  // -------------------------------------------------------------------------
+  //
+  // Called by Polygon, Circle, and CornerMarker clicks with:
+  //   ownId — the ID of the directly-clicked property (always shown first if
+  //           the ray-cast misses it due to a boundary edge case)
+  //   pos   — the geographic click position used for hit-testing all others
+  //
+  // The resulting InfoWindow shows every property that contains `pos`, ordered
+  // largest-area-first (so surrounding parcels appear above inner ones).
+
+  const handlePropClick = useCallback(
+    (ownId: string, pos: LatLng) => {
+      if (selectMode) return;
+
+      // Find all properties that geometrically contain the click point
+      const overlapping = findOverlapping(withGeometry, pos);
+
+      // Guarantee the directly-clicked property is always in the list
+      // (the ray-cast can miss a point exactly on a polygon boundary)
+      if (!overlapping.some((p) => p.id === ownId)) {
+        const own = withGeometry.find((p) => p.id === ownId);
+        if (own) {
+          // Insert it sorted by area — larger than every property it's bigger than
+          const ownArea = polygonAreaDeg(own.corners);
+          const idx = overlapping.findIndex(
+            (p) => polygonAreaDeg(p.corners) < ownArea,
+          );
+          if (idx === -1) overlapping.push(own);
+          else overlapping.splice(idx, 0, own);
+        }
+      }
+
+      setSelected({
+        position: pos,
+        items:    overlapping.map((p) => ({ id: p.id, label: p.nickname ?? p.code })),
+      });
+    },
+    [selectMode, withGeometry],
+  );
 
   // -------------------------------------------------------------------------
   // Selection mode toggle
@@ -454,14 +563,6 @@ export default function PropertyMap() {
           const strokeColor = isSelected ? "#ef4444" : "#3b82f6";
           const fillColor   = isSelected ? "#ef4444" : "#3b82f6";
           const fillOpacity = isSelected ? 0.30 : 0.15;
-          const label       = prop.nickname ?? prop.code;
-          const pos         = centroid(prop.corners);
-
-          const handleClick = (e: { stop: () => void }) => {
-            if (selectMode) return;
-            e.stop();
-            setSelected({ id: prop.id, position: pos, label });
-          };
 
           return prop.corners.length >= 3 ? (
             <Polygon
@@ -472,7 +573,13 @@ export default function PropertyMap() {
               strokeWeight={2}
               fillColor={fillColor}
               fillOpacity={fillOpacity}
-              onClick={handleClick}
+              onClick={(e) => {
+                if (selectMode) return;
+                e.stop();
+                // e.detail.latLng is a plain {lat, lng} literal from MapMouseEvent
+                const pos = e.detail.latLng ?? centroid(prop.corners);
+                handlePropClick(prop.id, pos);
+              }}
             />
           ) : (
             <Circle
@@ -484,43 +591,61 @@ export default function PropertyMap() {
               strokeWeight={2}
               fillColor={fillColor}
               fillOpacity={isSelected ? 0.55 : 0.35}
-              onClick={handleClick}
+              onClick={(e) => {
+                if (selectMode) return;
+                e.stop();
+                const pos = e.detail.latLng ?? {
+                  lat: prop.corners[0].lat,
+                  lng: prop.corners[0].lon,
+                };
+                handlePropClick(prop.id, pos);
+              }}
             />
           );
         })}
 
         {/* Corner markers — constant-size red dots (second pass) */}
-        {withGeometry.flatMap((prop) => {
-          const label = prop.nickname ?? prop.code;
-          const pos   = centroid(prop.corners);
-          return prop.corners.map((corner, idx) => (
+        {withGeometry.flatMap((prop) =>
+          prop.corners.map((corner, idx) => (
             <CornerMarker
               key={`${prop.id}-c${idx}`}
               corner={corner}
-              onSelect={() => {
-                if (selectMode) return;
-                setSelected({ id: prop.id, position: pos, label });
-              }}
+              onSelect={() =>
+                // Use the corner's exact coordinates as the click position —
+                // reliable and avoids the need to extract from AdvancedMarkerClickEvent
+                handlePropClick(prop.id, { lat: corner.lat, lng: corner.lon })
+              }
             />
-          ));
-        })}
+          )),
+        )}
 
-        {/* InfoWindow for clicked property */}
+        {/* InfoWindow — lists ALL properties at the click position, */}
+        {/* ordered largest area first (outermost parcel at the top).  */}
         {selected && !selectMode && (
           <InfoWindow
             position={selected.position}
             onCloseClick={() => setSelected(null)}
           >
-            <div className="flex flex-col gap-1 px-1 py-0.5">
-              <span className="font-semibold text-sm text-zinc-900">
-                {selected.label}
-              </span>
-              <Link
-                href={`/properties/${selected.id}`}
-                className="text-xs text-blue-600 hover:underline"
-              >
-                Open →
-              </Link>
+            <div className="flex flex-col min-w-[160px] px-1 py-0.5 gap-0">
+              {selected.items.map((item, idx) => (
+                <div
+                  key={item.id}
+                  className={[
+                    "flex flex-col gap-0.5 py-1.5",
+                    idx > 0 ? "border-t border-zinc-200" : "",
+                  ].join(" ")}
+                >
+                  <span className="font-semibold text-sm text-zinc-900 leading-tight">
+                    {item.label}
+                  </span>
+                  <Link
+                    href={`/properties/${item.id}`}
+                    className="text-xs text-blue-600 hover:underline"
+                  >
+                    Open →
+                  </Link>
+                </div>
+              ))}
             </div>
           </InfoWindow>
         )}

@@ -86,8 +86,60 @@ Relationships: People ↔ Paperwork, People ↔ Properties, Paperwork ↔ Proper
 - Slice #GIS.13.02 — Add Property from scanned image: OCR pipeline (tesseract.js) + multi-step dialog at "Add new property" entry point. ✅ Complete. Full detail below.
 - Slice #GIS.13.03 — Add Property from text file / text folder: parse-text API route + 4-choice dialog + batch import. ✅ Complete. Full detail below.
 - Slice #GIS.13.05 — Land map: auto-fit to all properties + red corner markers + drag-to-select batch delete. ✅ Complete. Full detail below.
+- Slice #GIS.13.06 — Land map: overlap-aware InfoWindow (all properties under cursor, largest area first). ✅ Complete. Full detail below.
 
 Each slice typically lands as multiple small commits, each individually green.
+
+### Slice #GIS.13.06 — Land map: overlap-aware InfoWindow (detail)
+
+Pure frontend — no DB schema, API, or i18n changes.
+
+**Problem**: When two or more property polygons overlap (e.g. a small inner parcel inside a larger surrounding parcel), clicking the shared area only showed the topmost polygon's InfoWindow — the other overlapping properties were silently ignored.
+
+**Fix**: Client-side hit-testing against every loaded property, so the InfoWindow always lists all geometrically-matching properties at the click position.
+
+**New helpers (added after `propertyInRect` in `property-map.tsx`)**
+
+- `polygonAreaDeg(corners)` — Shoelace formula in lat/lon deg² units. Used only for relative sorting (largest area first = outermost / surrounding parcel at top of the list). No conversion to real-world metres needed.
+
+- `pointInPolygon(pt, corners)` — standard ray-casting algorithm in lat/lon space. Accurate enough for the ~1° × 1° area the project covers.
+
+- `propertyContainsPoint(prop, pt)` — combines the above two:
+  - ≥ 3 corners → `pointInPolygon` test.
+  - < 3 corners (point / 2-corner edge) → proximity check: any corner within 0.001° (~100 m) of `pt`, wider than the 25 m `<Circle>` drawn on screen.
+
+- `findOverlapping(props, pt)` — filters `withGeometry` to only those passing `propertyContainsPoint`, then sorts descending by `polygonAreaDeg`.
+
+**`Selected` type replaced**
+
+Old (single property):
+```tsx
+type Selected = { id: string; position: LatLng; label: string };
+```
+New (multiple properties):
+```tsx
+type SelectedItem = { id: string; label: string };
+type Selected     = { position: LatLng; items: SelectedItem[] };
+```
+
+**`handlePropClick` callback** (replaces inline `setSelected` calls in Polygon/Circle onClick and CornerMarker onSelect):
+- Calls `findOverlapping(withGeometry, pos)` to build the hit list.
+- Guarantees the directly-clicked property (`ownId`) is in the list even if the ray-cast misses a boundary edge — inserts it at the correct sorted position by area.
+- Sets `selected` with `{ position: pos, items: overlapping.map(…) }`.
+
+**Updated click triggers**
+- `<Polygon onClick>` and `<Circle onClick>`: call `handlePropClick(prop.id, e.detail.latLng ?? centroid(…))`.
+- `<CornerMarker onSelect>`: calls `handlePropClick(prop.id, { lat: corner.lat, lng: corner.lon })` — uses the corner's exact coordinates as the click position.
+
+**Updated InfoWindow**
+- Iterates `selected.items` (all overlapping properties, largest first).
+- Each entry shows the property's nickname (or code fallback) as a bold label + an "Open →" link to `/properties/{id}`.
+- Entries after the first are separated by a `border-t border-zinc-200` hairline divider.
+- Minimum width `min-w-[160px]` to keep single-property InfoWindows tidy.
+
+**Files touched**
+- `src/app/properties/map/property-map.tsx` (rewritten)
+- `CLAUDE.md`
 
 ### Slice #GIS.13.05 — Land map enhancements + batch delete (detail)
 
