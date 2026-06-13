@@ -58,6 +58,7 @@ export function PropertyForm({
   const [submitting,       setSubmitting]       = useState(false);
   const [submitError,      setSubmitError]      = useState<string | null>(null);
   const [confirmDelete,    setConfirmDelete]    = useState(false);
+  const [bigMap,           setBigMap]           = useState(false);
 
   const saveDisabled =
     submitting ||
@@ -124,146 +125,223 @@ export function PropertyForm({
       noValidate
     >
       <fieldset disabled={mode === "view"} className="contents">
-      {/* Cadastral data — 4-col compact layout */}
-      <Section title={t("sections.cadastral")} columns={4}>
-        {mode === "edit" && propertyCode && (
-          <ReadOnlyField label={t("fields.code")} value={propertyCode} />
+      {/* Layout wrapper: flex-row in big-map mode, transparent (contents) in normal mode */}
+      <div className={bigMap ? "flex flex-row gap-4 items-stretch" : "contents"}>
+
+        {/* Left panels: transparent in normal mode, 45% fixed column in big-map mode */}
+        <div className={bigMap ? "w-[45%] flex-none flex flex-col gap-4" : "contents"}>
+
+          {/* Cadastral data — 4-col normally, 2-col in big-map */}
+          <Section title={t("sections.cadastral")} columns={bigMap ? 2 : 4}>
+            {mode === "edit" && propertyCode && (
+              <ReadOnlyField label={t("fields.code")} value={propertyCode} />
+            )}
+            <Field
+              label={t("fields.nickname")}
+              name="nickname"
+              register={register}
+              error={errors.nickname?.message}
+            />
+            <Field
+              label={t("fields.tarlaSola")}
+              name="tarlaSola"
+              register={register}
+              error={errors.tarlaSola?.message}
+            />
+            <Field
+              label={t("fields.parcela")}
+              name="parcela"
+              register={register}
+              error={errors.parcela?.message}
+            />
+            <Field
+              label={t("fields.cadastralNumber")}
+              name="cadastralNumber"
+              register={register}
+              error={errors.cadastralNumber?.message}
+            />
+            <Field
+              label={t("fields.carteFunciara")}
+              name="carteFunciara"
+              register={register}
+              error={errors.carteFunciara?.message}
+            />
+            <SelectField
+              label={t("fields.useCategory")}
+              name="useCategory"
+              register={register}
+              error={errors.useCategory?.message}
+              options={[
+                { value: "",       label: t("useCategories.empty")  },
+                { value: "CATEG1", label: t("useCategories.CATEG1") },
+                { value: "CATEG2", label: t("useCategories.CATEG2") },
+                { value: "CATEG3", label: t("useCategories.CATEG3") },
+              ]}
+            />
+            <Field
+              label={t("fields.surfaceAreaMp")}
+              name="surfaceAreaMp"
+              type="number"
+              register={register}
+              error={errors.surfaceAreaMp?.message}
+            />
+            <div className={bigMap ? "col-span-2" : "col-span-2 md:col-span-4"}>
+              <TextAreaField
+                label={t("fields.notes")}
+                name="notes"
+                register={register}
+                error={errors.notes?.message}
+                maxLength={300}
+              />
+            </div>
+          </Section>
+
+          {/* Address */}
+          <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+            <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
+              {t("sections.address")}
+            </h2>
+            <div className="flex flex-col gap-2">
+              {bigMap ? (
+                <>
+                  {/* Big-map: each item stacked, bottom pairs split 2+2 */}
+                  <Field
+                    label={t("address.streetLine")}
+                    name="address.streetLine"
+                    register={register}
+                    error={errors.address?.streetLine?.message}
+                  />
+                  <Field
+                    label={t("address.notes")}
+                    name="address.notes"
+                    register={register}
+                    error={errors.address?.notes?.message}
+                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    <Field
+                      label={t("address.postalCode")}
+                      name="address.postalCode"
+                      register={register}
+                      error={errors.address?.postalCode?.message}
+                    />
+                    <Field
+                      label={t("address.locality")}
+                      name="address.locality"
+                      register={register}
+                      error={errors.address?.locality?.message}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Field
+                      label={t("address.county")}
+                      name="address.county"
+                      register={register}
+                      error={errors.address?.county?.message}
+                    />
+                    <Field
+                      label={t("address.country")}
+                      name="address.country"
+                      register={register}
+                      error={errors.address?.country?.message}
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Normal: Row 1 — Street line + Notes (2 cols) */}
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <Field
+                      label={t("address.streetLine")}
+                      name="address.streetLine"
+                      register={register}
+                      error={errors.address?.streetLine?.message}
+                    />
+                    <Field
+                      label={t("address.notes")}
+                      name="address.notes"
+                      register={register}
+                      error={errors.address?.notes?.message}
+                    />
+                  </div>
+                  {/* Normal: Row 2 — Postal Code, City, County, Country (4 cols) */}
+                  <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+                    <Field
+                      label={t("address.postalCode")}
+                      name="address.postalCode"
+                      register={register}
+                      error={errors.address?.postalCode?.message}
+                    />
+                    <Field
+                      label={t("address.locality")}
+                      name="address.locality"
+                      register={register}
+                      error={errors.address?.locality?.message}
+                    />
+                    <Field
+                      label={t("address.county")}
+                      name="address.county"
+                      register={register}
+                      error={errors.address?.county?.message}
+                    />
+                    <Field
+                      label={t("address.country")}
+                      name="address.country"
+                      register={register}
+                      error={errors.address?.country?.message}
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+          </section>
+
+          {/* Corners + mini-map inside only in normal mode */}
+          <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+            <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
+              {t("sections.corners")}
+            </h2>
+            <div className="flex flex-col gap-2">
+              <CornersManager
+                corners={corners}
+                onChange={setCorners}
+                readOnly={mode === "view"}
+                hoveredCornerIdx={hoveredCornerIdx}
+                onCornerHover={setHoveredCornerIdx}
+                bigMap={bigMap}
+                onToggleBigMap={() => setBigMap((b) => !b)}
+              />
+              {!bigMap && (
+                <div className="rounded-md border border-card-rim overflow-hidden dark:border-zinc-800" style={{ height: "360px" }}>
+                  <PropertyMiniMap
+                    corners={corners}
+                    onChange={setCorners}
+                    readOnly={mode === "view"}
+                    hoveredCornerIdx={hoveredCornerIdx}
+                    onCornerHover={setHoveredCornerIdx}
+                  />
+                </div>
+              )}
+            </div>
+          </section>
+
+        </div>{/* end left panels */}
+
+        {/* Right map column — only in big-map mode */}
+        {bigMap && (
+          <div className="flex-1 min-w-0 relative rounded-md border border-card-rim overflow-hidden dark:border-zinc-800">
+            <div className="absolute inset-0">
+              <PropertyMiniMap
+                corners={corners}
+                onChange={setCorners}
+                readOnly={mode === "view"}
+                hoveredCornerIdx={hoveredCornerIdx}
+                onCornerHover={setHoveredCornerIdx}
+              />
+            </div>
+          </div>
         )}
-        <Field
-          label={t("fields.nickname")}
-          name="nickname"
-          register={register}
-          error={errors.nickname?.message}
-        />
-        <Field
-          label={t("fields.tarlaSola")}
-          name="tarlaSola"
-          register={register}
-          error={errors.tarlaSola?.message}
-        />
-        <Field
-          label={t("fields.parcela")}
-          name="parcela"
-          register={register}
-          error={errors.parcela?.message}
-        />
-        <Field
-          label={t("fields.cadastralNumber")}
-          name="cadastralNumber"
-          register={register}
-          error={errors.cadastralNumber?.message}
-        />
-        <Field
-          label={t("fields.carteFunciara")}
-          name="carteFunciara"
-          register={register}
-          error={errors.carteFunciara?.message}
-        />
-        <SelectField
-          label={t("fields.useCategory")}
-          name="useCategory"
-          register={register}
-          error={errors.useCategory?.message}
-          options={[
-            { value: "",       label: t("useCategories.empty")  },
-            { value: "CATEG1", label: t("useCategories.CATEG1") },
-            { value: "CATEG2", label: t("useCategories.CATEG2") },
-            { value: "CATEG3", label: t("useCategories.CATEG3") },
-          ]}
-        />
-        <Field
-          label={t("fields.surfaceAreaMp")}
-          name="surfaceAreaMp"
-          type="number"
-          register={register}
-          error={errors.surfaceAreaMp?.message}
-        />
-        <div className="col-span-2 md:col-span-4">
-          <TextAreaField
-            label={t("fields.notes")}
-            name="notes"
-            register={register}
-            error={errors.notes?.message}
-            maxLength={300}
-          />
-        </div>
-      </Section>
 
-      {/* Address */}
-      <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
-          {t("sections.address")}
-        </h2>
-        <div className="flex flex-col gap-2">
-          {/* Row 1: Street line, Notes — 2 cols */}
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            <Field
-              label={t("address.streetLine")}
-              name="address.streetLine"
-              register={register}
-              error={errors.address?.streetLine?.message}
-            />
-            <Field
-              label={t("address.notes")}
-              name="address.notes"
-              register={register}
-              error={errors.address?.notes?.message}
-            />
-          </div>
-          {/* Row 2: Postal Code, City, County, Country — 4 cols */}
-          <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-            <Field
-              label={t("address.postalCode")}
-              name="address.postalCode"
-              register={register}
-              error={errors.address?.postalCode?.message}
-            />
-            <Field
-              label={t("address.locality")}
-              name="address.locality"
-              register={register}
-              error={errors.address?.locality?.message}
-            />
-            <Field
-              label={t("address.county")}
-              name="address.county"
-              register={register}
-              error={errors.address?.county?.message}
-            />
-            <Field
-              label={t("address.country")}
-              name="address.country"
-              register={register}
-              error={errors.address?.country?.message}
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* Corners + mini-map — stacked vertically; minimap always full-width */}
-      <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
-          {t("sections.corners")}
-        </h2>
-        <div className="flex flex-col gap-2">
-          <CornersManager
-            corners={corners}
-            onChange={setCorners}
-            readOnly={mode === "view"}
-            hoveredCornerIdx={hoveredCornerIdx}
-            onCornerHover={setHoveredCornerIdx}
-          />
-          <div className="rounded-md border border-card-rim overflow-hidden dark:border-zinc-800" style={{ height: "360px" }}>
-            <PropertyMiniMap
-              corners={corners}
-              onChange={setCorners}
-              readOnly={mode === "view"}
-              hoveredCornerIdx={hoveredCornerIdx}
-              onCornerHover={setHoveredCornerIdx}
-            />
-          </div>
-        </div>
-      </section>
+      </div>{/* end layout wrapper */}
 
       {submitError && (
         <p className="text-sm text-red-600 dark:text-red-400" role="alert">

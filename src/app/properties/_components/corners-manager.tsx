@@ -27,6 +27,8 @@ type Props = {
   readOnly?:         boolean;
   hoveredCornerIdx?: number | null;
   onCornerHover?:    (idx: number | null) => void;
+  bigMap?:           boolean;
+  onToggleBigMap?:   () => void;
 };
 
 // ---------------------------------------------------------------------------
@@ -346,7 +348,7 @@ function displayFmtToInputMode(fmt: DisplayFormat): InputMode {
 // Main manager
 // ---------------------------------------------------------------------------
 
-export function CornersManager({ corners, onChange, readOnly = false, hoveredCornerIdx, onCornerHover }: Props) {
+export function CornersManager({ corners, onChange, readOnly = false, hoveredCornerIdx, onCornerHover, bigMap = false, onToggleBigMap }: Props) {
   const t = useTranslations("property.corners");
 
   const [displayFmt,  setDisplayFmt]  = useState<DisplayFormat>("DD");
@@ -545,14 +547,27 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
         </table>
       </div>
 
-      {!readOnly && !adding && editingIdx === null && (
-        <button
-          type="button"
-          onClick={() => setAdding(true)}
-          className="self-start rounded-md border border-wire bg-white px-3 py-1.5 text-xs font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-        >
-          + {t("add")}
-        </button>
+      {((!readOnly && !adding && editingIdx === null) || onToggleBigMap) && (
+        <div className="flex items-center gap-2">
+          {!readOnly && !adding && editingIdx === null && (
+            <button
+              type="button"
+              onClick={() => setAdding(true)}
+              className="self-start rounded-md border border-wire bg-white px-3 py-1.5 text-xs font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+            >
+              + {t("add")}
+            </button>
+          )}
+          {onToggleBigMap && (
+            <button
+              type="button"
+              onClick={onToggleBigMap}
+              className="self-start rounded-md border border-wire bg-white px-3 py-1.5 text-xs font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+            >
+              {bigMap ? t("showSmallMap") : t("showBigMap")}
+            </button>
+          )}
+        </div>
       )}
     </div>
   );

@@ -87,8 +87,42 @@ Relationships: People ↔ Paperwork, People ↔ Properties, Paperwork ↔ Proper
 - Slice #GIS.13.03 — Add Property from text file / text folder: parse-text API route + 4-choice dialog + batch import. ✅ Complete. Full detail below.
 - Slice #GIS.13.05 — Land map: auto-fit to all properties + red corner markers + drag-to-select batch delete. ✅ Complete. Full detail below.
 - Slice #GIS.13.06 — Land map: overlap-aware InfoWindow (all properties under cursor, largest area first). ✅ Complete. Full detail below.
+- Slice #GIS.13.08 — Property form: Show Big Map toggle (two-column layout with full-height map beside panels). ✅ Complete. Full detail below.
 
 Each slice typically lands as multiple small commits, each individually green.
+
+### Slice #GIS.13.08 — Property form: Show Big Map toggle (detail)
+
+Pure frontend — no DB schema, API, or migration changes.
+
+**What it does**
+
+Adds a **"Show Big Map"** / **"Show Small Map"** toggle button in the corners section footer (to the right of "Add Corner"). When toggled:
+
+- The form switches from a stacked single-column layout to a **two-column side-by-side layout**: left panels (45% width) + right map (remaining width, stretching to the full height of the left column via `items-stretch`).
+- The mini-map that was previously below the corners table moves to the right column and fills the full available height (via `relative` + `absolute inset-0` bounding box pattern).
+- The Cadastral section switches from 4-col to 2-col grid (`Code/Nickname`, `Tarla-Sola/Parcela`, `Cadastral No./Carte Funciara`, `Use Category/Surface Area`, `Notes` full-width).
+- The Address section switches from the normal 2+4 row layout to a stacked 1-1-2-2 layout (Street line full-width, Notes full-width, Postal Code/Locality pair, County/Country pair).
+- The toggle button works in all modes (view, create, edit) since seeing a bigger map is useful in all three.
+
+**Layout implementation**
+
+- `className="contents"` CSS trick: wrapper divs with `display: contents` are invisible in the flex layout — their children become direct flex items of the parent. This means no field/section JSX is duplicated; the same fields render in both modes via a single conditional wrapper.
+- In normal mode: outer `<div className="contents">` + inner `<div className="contents">` → all three sections appear as direct `flex-col` items of the `<form>`.
+- In big-map mode: outer `<div className="flex flex-row gap-4 items-stretch">` + inner `<div className="w-[45%] flex-none flex flex-col gap-4">` → classic two-column layout.
+- Right map column: `flex-1 min-w-0 relative` with `<div className="absolute inset-0">` to give the `<Map>` component a concrete pixel bounding box (required by `@vis.gl/react-google-maps`).
+
+**`bigMap` state location**: `PropertyForm` (controls layout); `CornersManager` receives `bigMap` and `onToggleBigMap` as optional props only to render the toggle button.
+
+**i18n**
+- Added `property.corners.showBigMap` and `property.corners.showSmallMap` to both `messages/en-GB.json` and `messages/ro-RO.json`.
+
+**Files touched**
+- `src/app/properties/_components/property-form.tsx`
+- `src/app/properties/_components/corners-manager.tsx`
+- `messages/en-GB.json`
+- `messages/ro-RO.json`
+- `CLAUDE.md`
 
 ### Slice #GIS.13.06 — Land map: overlap-aware InfoWindow (detail)
 
