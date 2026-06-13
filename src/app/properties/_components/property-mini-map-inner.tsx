@@ -50,16 +50,18 @@ function FitBounds({ corners }: { corners: Corner[] }) {
 // ---------------------------------------------------------------------------
 
 type Props = {
-  corners:   Corner[];
-  onChange:  (next: Corner[]) => void;
-  readOnly?: boolean;
+  corners:           Corner[];
+  onChange:          (next: Corner[]) => void;
+  readOnly?:         boolean;
+  hoveredCornerIdx?: number | null;
+  onCornerHover?:    (idx: number | null) => void;
 };
 
 // ---------------------------------------------------------------------------
 // Mini-map inner
 // ---------------------------------------------------------------------------
 
-export default function PropertyMiniMapInner({ corners, onChange, readOnly = false }: Props) {
+export default function PropertyMiniMapInner({ corners, onChange, readOnly = false, hoveredCornerIdx, onCornerHover }: Props) {
   const [mapType,     setMapType]     = useState<MapTypeId>("roadmap");
   const [drawing,     setDrawing]     = useState(false);
   const [hoverLatLng, setHoverLatLng] = useState<google.maps.LatLngLiteral | null>(null);
@@ -169,26 +171,44 @@ export default function PropertyMiniMapInner({ corners, onChange, readOnly = fal
         )}
 
         {/* Corner markers — draggable when not drawing, clickable to close polygon when drawing */}
-        {corners.map((c, idx) => (
-          <AdvancedMarker
-            key={idx}
-            position={{ lat: c.lat, lng: c.lon }}
-            title={`Corner ${idx + 1}`}
-            // Disable dragging in draw mode or read-only view
-            draggable={!readOnly && !drawing}
-            onDragEnd={(e) => handleDragEnd(idx, e)}
-            onClick={(e) => {
-              if (!drawing) return;
-              // Clicking the first corner (≥3 corners already placed) closes and exits draw mode
-              if (idx === 0 && corners.length >= 3) {
-                e.stop(); // prevent map onClick from also firing
-                exitDraw();
-              } else {
-                e.stop(); // absorb click — don't add a corner on top of an existing one
-              }
-            }}
-          />
-        ))}
+        {corners.map((c, idx) => {
+          const isHighlighted = hoveredCornerIdx === idx;
+          return (
+            <AdvancedMarker
+              key={idx}
+              position={{ lat: c.lat, lng: c.lon }}
+              // Disable dragging in draw mode or read-only view
+              draggable={!readOnly && !drawing}
+              onDragEnd={(e) => handleDragEnd(idx, e)}
+              onClick={(e) => {
+                if (!drawing) return;
+                // Clicking the first corner (≥3 corners already placed) closes and exits draw mode
+                if (idx === 0 && corners.length >= 3) {
+                  e.stop(); // prevent map onClick from also firing
+                  exitDraw();
+                } else {
+                  e.stop(); // absorb click — don't add a corner on top of an existing one
+                }
+              }}
+            >
+              {/* Custom dot marker: red normally, blue when highlighted from table hover or self-hover */}
+              <div
+                onMouseEnter={() => onCornerHover?.(idx)}
+                onMouseLeave={() => onCornerHover?.(null)}
+                style={{
+                  width:           14,
+                  height:          14,
+                  borderRadius:    "50%",
+                  backgroundColor: isHighlighted ? "#3b82f6" : "#ef4444",
+                  border:          "2px solid white",
+                  boxShadow:       "0 1px 4px rgba(0,0,0,0.5)",
+                  cursor:          "pointer",
+                  transition:      "background-color 0.15s",
+                }}
+              />
+            </AdvancedMarker>
+          );
+        })}
 
         {/* Draw-mode preview line: last corner → mouse cursor */}
         {previewPath && (

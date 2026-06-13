@@ -53,10 +53,11 @@ export function PropertyForm({
     mode:          "onChange",
   });
 
-  const [corners,       setCorners]       = useState<Corner[]>(initialCorners);
-  const [submitting,    setSubmitting]    = useState(false);
-  const [submitError,   setSubmitError]   = useState<string | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [corners,          setCorners]          = useState<Corner[]>(initialCorners);
+  const [hoveredCornerIdx, setHoveredCornerIdx] = useState<number | null>(null);
+  const [submitting,       setSubmitting]       = useState(false);
+  const [submitError,      setSubmitError]      = useState<string | null>(null);
+  const [confirmDelete,    setConfirmDelete]    = useState(false);
 
   const saveDisabled =
     submitting ||
@@ -245,9 +246,21 @@ export function PropertyForm({
           {t("sections.corners")}
         </h2>
         <div className="flex flex-col gap-2">
-          <CornersManager corners={corners} onChange={setCorners} readOnly={mode === "view"} />
+          <CornersManager
+            corners={corners}
+            onChange={setCorners}
+            readOnly={mode === "view"}
+            hoveredCornerIdx={hoveredCornerIdx}
+            onCornerHover={setHoveredCornerIdx}
+          />
           <div className="rounded-md border border-card-rim overflow-hidden dark:border-zinc-800" style={{ height: "360px" }}>
-            <PropertyMiniMap corners={corners} onChange={setCorners} readOnly={mode === "view"} />
+            <PropertyMiniMap
+              corners={corners}
+              onChange={setCorners}
+              readOnly={mode === "view"}
+              hoveredCornerIdx={hoveredCornerIdx}
+              onCornerHover={setHoveredCornerIdx}
+            />
           </div>
         </div>
       </section>

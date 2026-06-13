@@ -22,9 +22,11 @@ type S70State = {
 };
 
 type Props = {
-  corners:   Corner[];
-  onChange:  (next: Corner[]) => void;
-  readOnly?: boolean;
+  corners:           Corner[];
+  onChange:          (next: Corner[]) => void;
+  readOnly?:         boolean;
+  hoveredCornerIdx?: number | null;
+  onCornerHover?:    (idx: number | null) => void;
 };
 
 // ---------------------------------------------------------------------------
@@ -344,7 +346,7 @@ function displayFmtToInputMode(fmt: DisplayFormat): InputMode {
 // Main manager
 // ---------------------------------------------------------------------------
 
-export function CornersManager({ corners, onChange, readOnly = false }: Props) {
+export function CornersManager({ corners, onChange, readOnly = false, hoveredCornerIdx, onCornerHover }: Props) {
   const t = useTranslations("property.corners");
 
   const [displayFmt,  setDisplayFmt]  = useState<DisplayFormat>("DD");
@@ -478,7 +480,15 @@ export function CornersManager({ corners, onChange, readOnly = false }: Props) {
                   onCancel={() => setEditingIdx(null)}
                 />
               ) : (
-                <tr key={idx} className="hover:bg-cta-pale dark:hover:bg-zinc-800/50">
+                <tr
+                  key={idx}
+                  className={[
+                    "hover:bg-cta-pale dark:hover:bg-zinc-800/50",
+                    hoveredCornerIdx === idx ? "bg-cta-pale dark:bg-zinc-800/50" : "",
+                  ].join(" ")}
+                  onMouseEnter={() => onCornerHover?.(idx)}
+                  onMouseLeave={() => onCornerHover?.(null)}
+                >
                   <td className={cellCls + " text-fade tabular-nums"}>{idx + 1}</td>
                   <td className={cellCls + " " + monoLight}>{col1Values[idx]}</td>
                   <td className={cellCls + " " + monoLight}>{col2Values[idx]}</td>

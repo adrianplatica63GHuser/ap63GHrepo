@@ -14,11 +14,21 @@ const Inner = dynamic(() => import("./property-mini-map-inner"), {
 });
 
 type Props = {
-  corners:   Corner[];
-  onChange:  (next: Corner[]) => void;
-  readOnly?: boolean;
+  corners:           Corner[];
+  onChange:          (next: Corner[]) => void;
+  readOnly?:         boolean;
+  hoveredCornerIdx?: number | null;
+  onCornerHover?:    (idx: number | null) => void;
 };
 
-export function PropertyMiniMap({ corners, onChange, readOnly }: Props) {
-  return <Inner corners={corners} onChange={onChange} readOnly={readOnly} />;
+export function PropertyMiniMap({ corners, onChange, readOnly, hoveredCornerIdx, onCornerHover }: Props) {
+  return (
+    <Inner
+      corners={corners}
+      onChange={onChange}
+      readOnly={readOnly}
+      hoveredCornerIdx={hoveredCornerIdx}
+      onCornerHover={onCornerHover}
+    />
+  );
 }
