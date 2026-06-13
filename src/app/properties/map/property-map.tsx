@@ -280,17 +280,18 @@ function MapRefCapture({
 
 function CornerMarker({
   corner,
-  onSelect,
+  onHoverEnter,
+  onHoverLeave,
 }: {
-  corner:   Corner;
-  onSelect: () => void;
+  corner:       Corner;
+  onHoverEnter: () => void;
+  onHoverLeave: () => void;
 }) {
   return (
-    <AdvancedMarker
-      position={{ lat: corner.lat, lng: corner.lon }}
-      onClick={(e) => { e.stop(); onSelect(); }}
-    >
+    <AdvancedMarker position={{ lat: corner.lat, lng: corner.lon }}>
       <div
+        onMouseEnter={onHoverEnter}
+        onMouseLeave={onHoverLeave}
         style={{
           width:           10,
           height:          10,
@@ -298,7 +299,7 @@ function CornerMarker({
           backgroundColor: "#ef4444",
           border:          "2px solid white",
           boxShadow:       "0 1px 4px rgba(0,0,0,0.45)",
-          cursor:          "pointer",
+          cursor:          "default",
         }}
       />
     </AdvancedMarker>
@@ -336,8 +337,9 @@ export default function PropertyMap() {
   const [deleteError,       setDeleteError]       = useState<string | null>(null);
 
   // Refs shared between outer handlers and inner MapRefCapture
-  const containerRef = useRef<HTMLDivElement>(null);
-  const mapRef       = useRef<google.maps.Map | null>(null);
+  const containerRef  = useRef<HTMLDivElement>(null);
+  const mapRef        = useRef<google.maps.Map | null>(null);
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // -------------------------------------------------------------------------
   // Data
@@ -352,22 +354,42 @@ export default function PropertyMap() {
   const withGeometry = items.filter((p) => p.corners.length >= 1);
 
   // -------------------------------------------------------------------------
-  // Overlap-aware click handler
+  // InfoWindow close-delay helpers
   // -------------------------------------------------------------------------
   //
-  // Called by Polygon, Circle, and CornerMarker clicks with:
-  //   ownId — the ID of the directly-clicked property (always shown first if
+  // A 150 ms timer is used so the InfoWindow doesn't close the instant the
+  // cursor moves from a polygon edge into the InfoWindow content area.
+  // Entering the InfoWindow div (or entering another polygon) cancels the timer.
+
+  const scheduleClose = useCallback(() => {
+    closeTimerRef.current = setTimeout(() => setSelected(null), 150);
+  }, []);
+
+  const cancelClose = useCallback(() => {
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+  }, []);
+
+  // -------------------------------------------------------------------------
+  // Overlap-aware hover handler
+  // -------------------------------------------------------------------------
+  //
+  // Called by Polygon, Circle, and CornerMarker mouse-enter events with:
+  //   ownId — the ID of the hovered property (guaranteed in the list even if
   //           the ray-cast misses it due to a boundary edge case)
-  //   pos   — the geographic click position used for hit-testing all others
+  //   pos   — the geographic position used for hit-testing all overlapping props
   //
   // The resulting InfoWindow shows every property that contains `pos`, ordered
   // largest-area-first (so surrounding parcels appear above inner ones).
 
-  const handlePropClick = useCallback(
+  const handlePropHover = useCallback(
     (ownId: string, pos: LatLng) => {
       if (selectMode) return;
+      cancelClose();
 
-      // Find all properties that geometrically contain the click point
+      // Find all properties that geometrically contain the hover position
       const overlapping = findOverlapping(withGeometry, pos);
 
       // Guarantee the directly-clicked property is always in the list
@@ -390,7 +412,7 @@ export default function PropertyMap() {
         items:    overlapping.map((p) => ({ id: p.id, label: p.nickname ?? p.code })),
       });
     },
-    [selectMode, withGeometry],
+    [selectMode, withGeometry, cancelClose],
   );
 
   // -------------------------------------------------------------------------
@@ -573,16 +595,16 @@ export default function PropertyMap() {
               strokeWeight={2}
               fillColor={fillColor}
               fillOpacity={fillOpacity}
-              onClick={(e) => {
+              onMouseover={(e) => {
                 if (selectMode) return;
-                e.stop();
                 // Polygon fires native google.maps.PolyMouseEvent — latLng is a
                 // LatLng object accessed via method calls, not e.detail.latLng.
                 const pos = e.latLng
                   ? { lat: e.latLng.lat(), lng: e.latLng.lng() }
                   : centroid(prop.corners);
-                handlePropClick(prop.id, pos);
+                handlePropHover(prop.id, pos);
               }}
+              onMouseout={() => { if (!selectMode) scheduleClose(); }}
             />
           ) : (
             <Circle
@@ -594,14 +616,14 @@ export default function PropertyMap() {
               strokeWeight={2}
               fillColor={fillColor}
               fillOpacity={isSelected ? 0.55 : 0.35}
-              onClick={(e) => {
+              onMouseover={(e) => {
                 if (selectMode) return;
-                e.stop();
                 const pos = e.latLng
                   ? { lat: e.latLng.lat(), lng: e.latLng.lng() }
                   : { lat: prop.corners[0].lat, lng: prop.corners[0].lon };
-                handlePropClick(prop.id, pos);
+                handlePropHover(prop.id, pos);
               }}
+              onMouseout={() => { if (!selectMode) scheduleClose(); }}
             />
           );
         })}
@@ -612,23 +634,27 @@ export default function PropertyMap() {
             <CornerMarker
               key={`${prop.id}-c${idx}`}
               corner={corner}
-              onSelect={() =>
-                // Use the corner's exact coordinates as the click position —
-                // reliable and avoids the need to extract from AdvancedMarkerClickEvent
-                handlePropClick(prop.id, { lat: corner.lat, lng: corner.lon })
+              onHoverEnter={() =>
+                handlePropHover(prop.id, { lat: corner.lat, lng: corner.lon })
               }
+              onHoverLeave={scheduleClose}
             />
           )),
         )}
 
-        {/* InfoWindow — lists ALL properties at the click position, */}
-        {/* ordered largest area first (outermost parcel at the top).  */}
+        {/* InfoWindow — lists ALL properties at the hover position,  */}
+        {/* ordered largest area first (outermost parcel at the top). */}
         {selected && !selectMode && (
           <InfoWindow
             position={selected.position}
             onCloseClick={() => setSelected(null)}
           >
-            <div className="flex flex-col min-w-[160px] px-1 py-0.5 gap-0">
+            {/* Keep the InfoWindow open while the cursor is inside it */}
+            <div
+              className="flex flex-col min-w-[160px] px-1 py-0.5 gap-0"
+              onMouseEnter={cancelClose}
+              onMouseLeave={scheduleClose}
+            >
               {selected.items.map((item, idx) => (
                 <div
                   key={item.id}
