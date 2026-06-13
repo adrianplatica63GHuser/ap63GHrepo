@@ -576,8 +576,11 @@ export default function PropertyMap() {
               onClick={(e) => {
                 if (selectMode) return;
                 e.stop();
-                // e.detail.latLng is a plain {lat, lng} literal from MapMouseEvent
-                const pos = e.detail.latLng ?? centroid(prop.corners);
+                // Polygon fires native google.maps.PolyMouseEvent — latLng is a
+                // LatLng object accessed via method calls, not e.detail.latLng.
+                const pos = e.latLng
+                  ? { lat: e.latLng.lat(), lng: e.latLng.lng() }
+                  : centroid(prop.corners);
                 handlePropClick(prop.id, pos);
               }}
             />
@@ -594,10 +597,9 @@ export default function PropertyMap() {
               onClick={(e) => {
                 if (selectMode) return;
                 e.stop();
-                const pos = e.detail.latLng ?? {
-                  lat: prop.corners[0].lat,
-                  lng: prop.corners[0].lon,
-                };
+                const pos = e.latLng
+                  ? { lat: e.latLng.lat(), lng: e.latLng.lng() }
+                  : { lat: prop.corners[0].lat, lng: prop.corners[0].lon };
                 handlePropClick(prop.id, pos);
               }}
             />
