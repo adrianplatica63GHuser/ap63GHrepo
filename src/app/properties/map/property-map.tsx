@@ -362,7 +362,7 @@ export default function PropertyMap() {
   // Entering the InfoWindow div (or entering another polygon) cancels the timer.
 
   const scheduleClose = useCallback(() => {
-    closeTimerRef.current = setTimeout(() => setSelected(null), 150);
+    closeTimerRef.current = setTimeout(() => setSelected(null), 2000);
   }, []);
 
   const cancelClose = useCallback(() => {
@@ -401,7 +401,7 @@ export default function PropertyMap() {
       if (x < 0 || x > rect.width || y < 0 || y > rect.height) {
         if (hoveredKeyRef.current !== "") {
           hoveredKeyRef.current = "";
-          closeTimerRef.current = setTimeout(() => setSelected(null), 150);
+          closeTimerRef.current = setTimeout(() => setSelected(null), 2000);
         }
         return;
       }
@@ -435,7 +435,7 @@ export default function PropertyMap() {
         if (hoveredKeyRef.current !== "") {
           hoveredKeyRef.current = "";
           if (!closeTimerRef.current) {
-            closeTimerRef.current = setTimeout(() => setSelected(null), 150);
+            closeTimerRef.current = setTimeout(() => setSelected(null), 2000);
           }
         }
       }
