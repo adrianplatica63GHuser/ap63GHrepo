@@ -483,8 +483,8 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
                 <tr
                   key={idx}
                   className={[
-                    "hover:bg-cta-pale dark:hover:bg-zinc-800/50",
-                    hoveredCornerIdx === idx ? "bg-cta-pale dark:bg-zinc-800/50" : "",
+                    "hover:bg-cta-pale dark:hover:bg-zinc-800/50 hover:font-semibold",
+                    hoveredCornerIdx === idx ? "bg-cta-pale dark:bg-zinc-800/50 font-semibold" : "",
                   ].join(" ")}
                   onMouseEnter={() => onCornerHover?.(idx)}
                   onMouseLeave={() => onCornerHover?.(null)}

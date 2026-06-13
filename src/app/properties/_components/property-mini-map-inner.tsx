@@ -191,21 +191,41 @@ export default function PropertyMiniMapInner({ corners, onChange, readOnly = fal
                 }
               }}
             >
-              {/* Custom dot marker: red normally, blue when highlighted from table hover or self-hover */}
+              {/* Custom dot marker: red normally, blue + ring when highlighted */}
               <div
                 onMouseEnter={() => onCornerHover?.(idx)}
                 onMouseLeave={() => onCornerHover?.(null)}
-                style={{
-                  width:           14,
-                  height:          14,
-                  borderRadius:    "50%",
-                  backgroundColor: isHighlighted ? "#3b82f6" : "#ef4444",
-                  border:          "2px solid white",
-                  boxShadow:       "0 1px 4px rgba(0,0,0,0.5)",
-                  cursor:          "pointer",
-                  transition:      "background-color 0.15s",
-                }}
-              />
+                style={{ position: "relative", width: 14, height: 14, cursor: "pointer" }}
+              >
+                {/* Emphasis ring — same blue, fades in on highlight */}
+                <div
+                  style={{
+                    position:     "absolute",
+                    top:          "50%",
+                    left:         "50%",
+                    transform:    "translate(-50%, -50%)",
+                    width:        28,
+                    height:       28,
+                    borderRadius: "50%",
+                    border:       "2.5px solid #3b82f6",
+                    opacity:      isHighlighted ? 1 : 0,
+                    transition:   "opacity 0.15s",
+                    pointerEvents: "none",
+                  }}
+                />
+                {/* Dot */}
+                <div
+                  style={{
+                    width:           14,
+                    height:          14,
+                    borderRadius:    "50%",
+                    backgroundColor: isHighlighted ? "#3b82f6" : "#ef4444",
+                    border:          "2px solid white",
+                    boxShadow:       "0 1px 4px rgba(0,0,0,0.5)",
+                    transition:      "background-color 0.15s",
+                  }}
+                />
+              </div>
             </AdvancedMarker>
           );
         })}
