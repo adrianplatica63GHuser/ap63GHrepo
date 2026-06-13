@@ -351,9 +351,11 @@ export default function PropertyMap() {
   const items        = data?.items ?? [];
   const withGeometry = items.filter((p) => p.corners.length >= 1);
 
-  // Keep refs in sync on every render so the document listener sees current values.
-  withGeometryRef.current = withGeometry;
-  selectModeRef.current   = selectMode;
+  // Keep refs in sync after every render so the document listener sees current values.
+  useEffect(() => {
+    withGeometryRef.current = withGeometry;
+    selectModeRef.current   = selectMode;
+  });
 
   // -------------------------------------------------------------------------
   // InfoWindow close-delay helpers
@@ -450,7 +452,6 @@ export default function PropertyMap() {
 
     document.addEventListener("mousemove", onMove);
     return () => document.removeEventListener("mousemove", onMove);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // intentionally empty — all mutable values accessed via refs
 
   // -------------------------------------------------------------------------
