@@ -335,7 +335,9 @@ export default function PropertyMap() {
   // sees the latest values without needing them in the dependency array.
   const withGeometryRef = useRef<MapProperty[]>([]);
   const selectModeRef   = useRef(false);
-  const hoveredKeyRef   = useRef<string>("");
+  // IDs of properties currently displayed in the InfoWindow.
+  // Used to implement "never shrink while still over a property" logic.
+  const shownIdsRef     = useRef<Set<string>>(new Set());
 
   // -------------------------------------------------------------------------
   // Data
@@ -397,46 +399,51 @@ export default function PropertyMap() {
       const x    = e.clientX - rect.left;
       const y    = e.clientY - rect.top;
 
-      // If the cursor is outside the map container, schedule close and bail.
+      // Cursor left the map container — start the close timer.
       if (x < 0 || x > rect.width || y < 0 || y > rect.height) {
-        if (hoveredKeyRef.current !== "") {
-          hoveredKeyRef.current = "";
-          closeTimerRef.current = setTimeout(() => setSelected(null), 2000);
+        if (shownIdsRef.current.size > 0 && !closeTimerRef.current) {
+          closeTimerRef.current = setTimeout(() => {
+            setSelected(null);
+            shownIdsRef.current = new Set();
+          }, 2000);
         }
         return;
       }
 
-      const pos        = pixelToLatLng(map, container, x, y);
+      const pos         = pixelToLatLng(map, container, x, y);
       const overlapping = findOverlapping(withGeometryRef.current, pos);
-      const key        = overlapping.map((p) => p.id).join("|");
 
       if (overlapping.length > 0) {
-        // Cancel any pending close whenever we're over at least one property.
+        // Cancel any pending close — cursor is over at least one property.
         if (closeTimerRef.current) {
           clearTimeout(closeTimerRef.current);
           closeTimerRef.current = null;
         }
-        // Only call setSelected when the hovered set changes — avoids a
-        // React re-render on every pixel of mouse movement.
-        if (key !== hoveredKeyRef.current) {
-          hoveredKeyRef.current = key;
-          // Anchor the InfoWindow at the centroid of the largest property so
-          // it doesn't appear directly under the cursor (which would block the
-          // underlying map and cause immediate flicker).
-          const primary = overlapping[0];
-          const anchor  = centroid(primary.corners);
+
+        // Key rule: only update the InfoWindow when the new set contains at
+        // least one property NOT already displayed. This prevents the InfoWindow
+        // from shrinking (losing inner-property entries) while the cursor moves
+        // from an inner+outer overlap region toward the InfoWindow bubble, which
+        // is anchored at the centroid of the outer property and may lie outside
+        // the inner property's bounds.
+        const hasNewProperty = overlapping.some((p) => !shownIdsRef.current.has(p.id));
+
+        if (hasNewProperty) {
+          shownIdsRef.current = new Set(overlapping.map((p) => p.id));
+          const primary = overlapping[0]; // largest area (sorted by findOverlapping)
           setSelected({
-            position: anchor,
+            position: centroid(primary.corners),
             items:    overlapping.map((p) => ({ id: p.id, label: p.nickname ?? p.code })),
           });
         }
+        // If every property in the new set is already shown: leave the InfoWindow
+        // exactly as-is (superset stays visible).
+
       } else {
-        // Cursor is over empty map — schedule close if we were showing something.
-        if (hoveredKeyRef.current !== "") {
-          hoveredKeyRef.current = "";
-          if (!closeTimerRef.current) {
-            closeTimerRef.current = setTimeout(() => setSelected(null), 2000);
-          }
+        // Cursor is over empty map — start the close timer if not already running.
+        if (shownIdsRef.current.size > 0 && !closeTimerRef.current) {
+          shownIdsRef.current = new Set(); // mark as "closing"
+          closeTimerRef.current = setTimeout(() => setSelected(null), 2000);
         }
       }
     };
@@ -656,14 +663,9 @@ export default function PropertyMap() {
         {selected && !selectMode && (
           <InfoWindow
             position={selected.position}
-            onCloseClick={() => setSelected(null)}
+            onCloseClick={() => { setSelected(null); shownIdsRef.current = new Set(); }}
           >
-            {/* Keep the InfoWindow open while the cursor is inside it */}
-            <div
-              className="flex flex-col min-w-[160px] px-1 py-0.5 gap-0"
-              onMouseEnter={cancelClose}
-              onMouseLeave={scheduleClose}
-            >
+            <div className="flex flex-col min-w-[160px] px-1 py-0.5 gap-0">
               {selected.items.map((item, idx) => (
                 <div
                   key={item.id}
