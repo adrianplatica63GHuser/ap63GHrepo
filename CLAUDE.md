@@ -83,8 +83,161 @@ Relationships: People ↔ Paperwork, People ↔ Properties, Paperwork ↔ Proper
 - Slice #10.07 — Role on Document ↔ Person association. ✅ Complete. Full detail below.
 - Slice #12.01 — Judicial Person form refactor: Contact Persons panel (FK-linked natural persons) + Office Address panel (consolidated with "same as" checkbox). ✅ Complete. Full detail below.
 - Slice #11.vercel.02 — Vercel/Supabase full reset + re-seed + fix 26 truncated/null-byte-corrupted source files + fix 3 stale TypeScript references to old judicial_person text columns. ✅ Complete. Full detail below.
+- Slice #GIS.13.02 — Add Property from scanned image: OCR pipeline (tesseract.js) + multi-step dialog at "Add new property" entry point. ✅ Complete. Full detail below.
+- Slice #GIS.13.03 — Add Property from text file / text folder: parse-text API route + 4-choice dialog + batch import. ✅ Complete. Full detail below.
+- Slice #GIS.13.05 — Land map: auto-fit to all properties + red corner markers + drag-to-select batch delete. ✅ Complete. Full detail below.
 
 Each slice typically lands as multiple small commits, each individually green.
+
+### Slice #GIS.13.05 — Land map enhancements + batch delete (detail)
+
+Pure frontend + new API route — no DB schema changes.
+
+**Auto-fit to all properties (`FitAllProperties` inner component)**
+- On first load the map viewport fits the smallest bounding box that contains ALL property corners, padded 5 % outward on every edge.
+- Implemented as an inner `FitAllProperties` component (must live inside `<Map>` to use `useMap()` + `useMapsLibrary("core")`).
+- Uses `new core.LatLngBounds()`, extends it with every corner, computes `latPad = span * 0.05` and `lngPad = span * 0.05`, constructs a `paddedBounds`, then calls `map.fitBounds(paddedBounds, 0)`.
+- A `useRef(false)` guard ensures fitBounds runs only once per map mount.
+- Falls back to the hardcoded `DEFAULT_CENTER / DEFAULT_ZOOM` (Bragadiru) when there are no properties.
+
+**`mapId` added to `<Map>`**
+- Required for `AdvancedMarker` (see CLAUDE.md gotcha). Uses `process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID ?? "DEMO_MAP_ID"`.
+
+**Red corner markers on every property**
+- A `CornerMarker` component renders an `AdvancedMarker` with a 10 × 10 px red circle (white 2 px border, drop shadow) at each corner of every property.
+- `AdvancedMarker` is a DOM element overlay — its pixel size is **constant at all zoom levels** so even a tiny parcel is always visible as a cluster of red dots.
+- Clicking a corner marker opens the same `InfoWindow` as clicking the polygon.
+- Rendered in a separate `flatMap` pass so each marker gets its own `key` without needing `Fragment`.
+
+**Selection mode**
+- Toolbar button "⬚ Select" (top-right, alongside STR/SAT toggle). Clicking toggles selection mode on/off.
+- Active state: button turns red and reads "✕ Cancel select". `gestureHandling="none"` is passed to `<Map>` to disable map panning/zooming during selection.
+- Toggling always clears `selectedIds`.
+
+**Drag-to-select rectangle**
+- A transparent `div` (class `absolute inset-0 z-10`) sits over the map.
+- `pointer-events: none` in pan mode → map works normally. `pointer-events: all` in select mode → captures `onMouseDown/Move/Up`.
+- `onMouseDown`: records start pixel relative to the container.
+- `onMouseMove`: updates current pixel, draws a live dashed red rectangle.
+- `onMouseUp`: converts the four pixel corners to LatLng (via `pixelToLatLng()` — linear interpolation against `map.getBounds()`), finds all properties with at least one corner inside the rect, stores their IDs in `selectedIds`.
+- `MapRefCapture` (inner component) writes the `google.maps.Map` instance into an outer ref so `handleMouseUp` can call `mapRef.current.getBounds()`.
+
+**Selection highlighting**
+- Properties in `selectedIds` render with `strokeColor / fillColor = "#ef4444"` (red).
+- `fillOpacity` rises from 0.15 → 0.30 for polygons, 0.35 → 0.55 for circles.
+
+**"Delete all selected" button**
+- Floats bottom-center (`z-20`), visible only when `selectedIds.size > 0`.
+- Label: `"Delete all selected (N)"`.
+
+**Confirmation dialog**
+- Full-screen semi-transparent overlay (`z-30`), white card, message: `"This [N] of properties will be erased from the system."`.
+- Buttons: **Cancel** (dismisses dialog, preserves selection) and **Approve** (calls `POST /api/properties/batch-delete`, then invalidates all `["properties"]` queries, clears selection, exits select mode).
+- Error message shown in the dialog on failure. "Deleting…" spinner on Approve while in-flight.
+
+**New API route (`src/app/api/properties/batch-delete/route.ts`)**
+- `POST /api/properties/batch-delete`
+- Body validated with Zod v4: `{ ids: string[] }` — array of UUIDs, 1–1000 items.
+- Single drizzle UPDATE: `SET deleted_at = now() WHERE id IN (...) AND deleted_at IS NULL`.
+- Returns `{ deleted: number }` — count of rows actually updated.
+
+**Files touched**
+- `src/app/properties/map/property-map.tsx` (rewritten)
+- `src/app/api/properties/batch-delete/route.ts` (new)
+- `CLAUDE.md`
+
+### Slice #GIS.13.03 — Add Property from text file / text folder (detail)
+
+Pure frontend + new API route — no DB schema changes.
+
+**Entry point change (`src/app/properties/_components/add-property-dialog.tsx`)**
+- "choice" step expanded from 2 cards to 4: Manual data entry | From a scanned image | From a text file | From a text folder.
+- New steps added to the step machine: `"upload-text"`, `"upload-folder"`.
+- `"saving"` step now driven by a `savingLabel` string state — shared across all save paths (scan, text, folder).
+- `createProperty` helper updated: accepts optional `nickname` parameter, included in the POST body when provided.
+
+**Text file flow (`"upload-text"` step)**
+- File input `accept=".txt,text/plain"`. "Import" button enabled once a file is selected.
+- On "Import": calls `POST /api/properties/parse-text` → gets WGS84 corners → calls `POST /api/properties` with corners + nickname from filename (extension stripped). Navigates to the created property on success.
+- Errors surface in-step with a Back button to return to choice.
+
+**Folder flow (`"upload-folder"` step)**
+- File input with `webkitdirectory` attribute — opens a native folder picker.
+- After folder is selected, `.txt` files are filtered from `e.target.files` and listed in a scrollable preview box.
+- "Import all" button processes each `.txt` file sequentially: parse → save. Files that yield zero corners or encounter errors are skipped (counted silently). Progress shown as "Importing… (N / Total)".
+- After all imports complete, shows `folderImportDone` message briefly, then navigates to each saved property in sequence (1 500 ms apart).
+
+**New API route (`src/app/api/properties/parse-text/route.ts`)**
+- `export const runtime = 'nodejs'` (stereo70ToWgs84 needs fs).
+- Accepts `multipart/form-data` with a `file` field (text file).
+- Reads file as UTF-8 text. Skips first 3 lines unconditionally (header / title lines).
+- Remaining lines: split on whitespace/comma/tab/semicolon/pipe. Accepts lines where token 0 is an index (1–9 999), token 1 (X column) is a Stereo70 Northing (100 000–999 999), token 2 (Y column) is a Stereo70 Easting (100 000–999 999).
+- Column mapping: X [m] → Northing → `north`; Y [m] → Easting → `east` (Romanian geodetic convention — see Gotchas).
+- Returns `{ corners: { lat, lon }[] }`. Empty array = no valid rows.
+
+**i18n**
+- Added `property.addDialog.choiceTextFile`, `choiceTextFileDesc`, `choiceTextFolder`, `choiceTextFolderDesc`, `uploadTextTitle`, `uploadTextLabel`, `uploadTextHint`, `uploadFolderTitle`, `uploadFolderLabel`, `uploadFolderHint`, `uploadFolderFilesFound`, `uploadFolderNoFiles`, `importButton`, `importAllButton`, `processingText`, `processingFolder`, `noCoordinatesFound`, `folderImportDone` to both `messages/en-GB.json` and `messages/ro-RO.json`.
+
+**CLAUDE.md**
+- Added "Coordinate axis order in Romanian cadastral text files" gotcha (X = Northing, Y = Easting).
+- Added "Slice #GIS.13.03" to slice progress list.
+
+**Files touched**
+- `src/app/properties/_components/add-property-dialog.tsx`
+- `src/app/api/properties/parse-text/route.ts` (new)
+- `messages/en-GB.json`
+- `messages/ro-RO.json`
+- `CLAUDE.md`
+
+### Slice #GIS.13.02 — Add Property from scanned image (detail)
+
+Pure frontend + new API route — no DB schema changes.
+
+**Entry point change (`src/app/properties/list-view.tsx`)**
+- The `<Link href="/properties/new">` "Add new Property" button replaced with a `<button>` that opens `<AddPropertyDialog />`.
+- Dialog state (`showAddDialog`) lives in `PropertyListView`.
+
+**New component (`src/app/properties/_components/add-property-dialog.tsx`)**
+
+Multi-step modal with these states:
+
+- **"choice"**: Two large clickable cards — "Manual data entry" (navigates to `/properties/new`, closes the dialog) and "From a scanned image".
+- **"upload"**: Drag-target file input accepting all image formats (`image/*`). "Process image" button calls the OCR API.
+- **"processing"**: Spinner while the API works.
+- **"select"**: Shown only when ≥2 property corner-groups are detected. Radio buttons let the user choose how many to save (1 … N). Each option shows the detected corner count.
+- **"saving"**: Spinner + progress counter while `POST /api/properties` runs for each selected group.
+
+After all saves complete, the dialog closes and `router.push` navigates to each saved property's detail page in sequence (1 500 ms apart for subsequent ones).
+
+All labels found in the image are joined with three spaces (`   `) and written into every saved property's `notes` field.
+
+**New API route (`src/app/api/properties/scan-image/route.ts`)**
+- `export const runtime = 'nodejs'` and `maxDuration = 60`.
+- Accepts `multipart/form-data` with an `image` field (any image file).
+- Runs `tesseract.js` (`createWorker(["ron", "eng"])`) on the uploaded buffer.
+- Parses OCR output line by line: lines with ≥2 tokens in the Stereo70 integer range (100 000–999 999) are treated as corner rows (first = North, second = East). All other tokens are labels.
+- Consecutive coordinate rows form one corner group; a blank/non-coordinate line closes it (minimum 3 corners required to form a valid group).
+- Converts each group's corners Stereo70 → WGS84 using `stereo70ToWgs84` from `src/lib/geo/transdatRO.ts` (server-side — has grid-file access). Groups that fall outside grid coverage are silently dropped.
+- Returns `{ properties: { corners: {lat, lon}[] }[], labels: string[] }`.
+
+**Form schema change (`src/app/properties/_components/form-schema.ts`)**
+- `notes` max raised from 300 → 2 000 characters to accommodate OCR label strings.
+
+**New npm dependency**
+- `tesseract.js ^5.1.1` added to `package.json`. Run `npm install` after pulling.
+
+**i18n**
+- Added `property.addDialog.*` namespace to both `messages/en-GB.json` and `messages/ro-RO.json`.
+
+**Files touched**
+- `src/app/properties/list-view.tsx`
+- `src/app/properties/_components/add-property-dialog.tsx` (new)
+- `src/app/api/properties/scan-image/route.ts` (new)
+- `src/app/properties/_components/form-schema.ts`
+- `messages/en-GB.json`
+- `messages/ro-RO.json`
+- `package.json`
+- `CLAUDE.md`
 
 ### Slice #11.vercel.02 — Vercel/Supabase full reset + re-seed (detail)
 
@@ -1049,6 +1202,7 @@ Rules:
     ```
     Expected output: `CREATE TABLE` (or `ALTER TABLE`, etc.). No output = not applied.
   - *Supabase:* Paste the migration SQL directly into the Supabase SQL Editor. If using `db:migrate`, first set `DIRECT_URL` to the direct connection string (port 5432, `?sslmode=require`): `DIRECT_URL=postgresql://postgres.[ref]:[password]@db.[ref].supabase.co:5432/postgres?sslmode=require`. Remove it again afterwards.
+- **Coordinate axis order in Romanian cadastral text files**: The file columns are labeled `X [m]` (= Northing, ~300 000–850 000) and `Y [m]` (= Easting, ~200 000–800 000). This is the local Romanian geodetic convention where X points North — **opposite** to GDAL/PostGIS standard (X = Easting, Y = Northing). When calling `stereo70ToWgs84(north, east)`: pass the X column as `north` and the Y column as `east`. Valid Stereo70 range for the project area (Bragadiru, Ilfov): Northing ~320 000–325 000, Easting ~575 000–585 000.
 - **`pg_dump` schema dump includes PostGIS `topology` schema — causes init conflict.** A schema-only `pg_dump` captures `CREATE SCHEMA topology;`. When this is used as a `docker-entrypoint-initdb.d` init script alongside `01-extensions.sql` (which creates `postgis_topology` and thus the `topology` schema first), psql hits `ERROR: schema "topology" already exists` at that line and aborts the entire script with `ON_ERROR_STOP=on` — no tables are created. Fix: change `CREATE SCHEMA topology;` → `CREATE SCHEMA IF NOT EXISTS topology;` in the dump file before shipping it in the Ciprian package.
 - **`pg_dump` on Windows → UTF-16LE corruption.** PowerShell's `>` redirection saves files as UTF-16LE with BOM (`FF FE`). PostgreSQL's `psql` expects UTF-8; when it processes a UTF-16LE init file, the null bytes between each character corrupt SQL parsing and diacritics. **Never use `docker exec ... pg_dump > file.sql`.** Always let pg_dump write to the container filesystem, then copy out:
     ```powershell
