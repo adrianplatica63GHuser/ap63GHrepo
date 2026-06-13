@@ -278,20 +278,10 @@ function MapRefCapture({
 // clearly visible. Clicking the marker triggers onSelect with the corner's
 // exact geographic coordinates as the click position.
 
-function CornerMarker({
-  corner,
-  onHoverEnter,
-  onHoverLeave,
-}: {
-  corner:       Corner;
-  onHoverEnter: () => void;
-  onHoverLeave: () => void;
-}) {
+function CornerMarker({ corner }: { corner: Corner }) {
   return (
     <AdvancedMarker position={{ lat: corner.lat, lng: corner.lon }}>
       <div
-        onMouseEnter={onHoverEnter}
-        onMouseLeave={onHoverLeave}
         style={{
           width:           10,
           height:          10,
@@ -299,7 +289,7 @@ function CornerMarker({
           backgroundColor: "#ef4444",
           border:          "2px solid white",
           boxShadow:       "0 1px 4px rgba(0,0,0,0.45)",
-          cursor:          "default",
+          pointerEvents:   "none", // let mouse events pass through to document listener
         }}
       />
     </AdvancedMarker>
@@ -341,6 +331,12 @@ export default function PropertyMap() {
   const mapRef        = useRef<google.maps.Map | null>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Refs used inside the document mousemove listener so the closure always
+  // sees the latest values without needing them in the dependency array.
+  const withGeometryRef = useRef<MapProperty[]>([]);
+  const selectModeRef   = useRef(false);
+  const hoveredKeyRef   = useRef<string>("");
+
   // -------------------------------------------------------------------------
   // Data
   // -------------------------------------------------------------------------
@@ -352,6 +348,10 @@ export default function PropertyMap() {
 
   const items        = data?.items ?? [];
   const withGeometry = items.filter((p) => p.corners.length >= 1);
+
+  // Keep refs in sync on every render so the document listener sees current values.
+  withGeometryRef.current = withGeometry;
+  selectModeRef.current   = selectMode;
 
   // -------------------------------------------------------------------------
   // InfoWindow close-delay helpers
@@ -373,56 +373,78 @@ export default function PropertyMap() {
   }, []);
 
   // -------------------------------------------------------------------------
-  // Overlap-aware hover handler
+  // Document-level mousemove → hit-test → InfoWindow
   // -------------------------------------------------------------------------
   //
-  // Called by Polygon, Circle, and CornerMarker mouse-enter events with:
-  //   ownId — the ID of the hovered property (guaranteed in the list even if
-  //           the ray-cast misses it due to a boundary edge case)
-  //   pos   — the geographic position used for hit-testing all overlapping props
+  // We avoid relying on Polygon/Circle Google Maps events (onMouseover,
+  // onMousemove) because they do not fire reliably with this library version.
+  // Instead, a single document-level mousemove listener converts the cursor's
+  // pixel position to a LatLng (using the same linear-interpolation helper
+  // that powers drag-to-select), runs findOverlapping, and updates the
+  // InfoWindow only when the hovered property set actually changes.
   //
-  // The resulting InfoWindow shows every property that contains `pos`, ordered
-  // largest-area-first (so surrounding parcels appear above inner ones).
+  // Refs (withGeometryRef, selectModeRef) are updated on every render so the
+  // closure always reads current values without needing them in deps.
 
-  const handlePropHover = useCallback(
-    (ownId: string, pos: LatLng) => {
-      if (selectMode) return;
-      cancelClose();
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      if (selectModeRef.current) return;
+      const container = containerRef.current;
+      const map       = mapRef.current;
+      if (!container || !map) return;
 
-      // Find all properties that geometrically contain the hover position
-      const overlapping = findOverlapping(withGeometry, pos);
+      const rect = container.getBoundingClientRect();
+      const x    = e.clientX - rect.left;
+      const y    = e.clientY - rect.top;
 
-      // Guarantee the directly-clicked property is always in the list
-      // (the ray-cast can miss a point exactly on a polygon boundary)
-      if (!overlapping.some((p) => p.id === ownId)) {
-        const own = withGeometry.find((p) => p.id === ownId);
-        if (own) {
-          // Insert it sorted by area — larger than every property it's bigger than
-          const ownArea = polygonAreaDeg(own.corners);
-          const idx = overlapping.findIndex(
-            (p) => polygonAreaDeg(p.corners) < ownArea,
-          );
-          if (idx === -1) overlapping.push(own);
-          else overlapping.splice(idx, 0, own);
+      // If the cursor is outside the map container, schedule close and bail.
+      if (x < 0 || x > rect.width || y < 0 || y > rect.height) {
+        if (hoveredKeyRef.current !== "") {
+          hoveredKeyRef.current = "";
+          closeTimerRef.current = setTimeout(() => setSelected(null), 150);
         }
+        return;
       }
 
-      // Anchor the InfoWindow at the centroid of the primary (largest) property,
-      // NOT at the cursor position. If we used the cursor position, the InfoWindow
-      // would render directly under the cursor, causing the polygon's onMouseout
-      // to fire immediately (cursor is now "on the InfoWindow", not on the polygon),
-      // which would schedule a close before React could mount the InfoWindow's
-      // onMouseEnter handler to cancel it.
-      const primary = overlapping[0] ?? withGeometry.find((p) => p.id === ownId);
-      const anchor  = primary && primary.corners.length > 0 ? centroid(primary.corners) : pos;
+      const pos        = pixelToLatLng(map, container, x, y);
+      const overlapping = findOverlapping(withGeometryRef.current, pos);
+      const key        = overlapping.map((p) => p.id).join("|");
 
-      setSelected({
-        position: anchor,
-        items:    overlapping.map((p) => ({ id: p.id, label: p.nickname ?? p.code })),
-      });
-    },
-    [selectMode, withGeometry, cancelClose],
-  );
+      if (overlapping.length > 0) {
+        // Cancel any pending close whenever we're over at least one property.
+        if (closeTimerRef.current) {
+          clearTimeout(closeTimerRef.current);
+          closeTimerRef.current = null;
+        }
+        // Only call setSelected when the hovered set changes — avoids a
+        // React re-render on every pixel of mouse movement.
+        if (key !== hoveredKeyRef.current) {
+          hoveredKeyRef.current = key;
+          // Anchor the InfoWindow at the centroid of the largest property so
+          // it doesn't appear directly under the cursor (which would block the
+          // underlying map and cause immediate flicker).
+          const primary = overlapping[0];
+          const anchor  = centroid(primary.corners);
+          setSelected({
+            position: anchor,
+            items:    overlapping.map((p) => ({ id: p.id, label: p.nickname ?? p.code })),
+          });
+        }
+      } else {
+        // Cursor is over empty map — schedule close if we were showing something.
+        if (hoveredKeyRef.current !== "") {
+          hoveredKeyRef.current = "";
+          if (!closeTimerRef.current) {
+            closeTimerRef.current = setTimeout(() => setSelected(null), 150);
+          }
+        }
+      }
+    };
+
+    document.addEventListener("mousemove", onMove);
+    return () => document.removeEventListener("mousemove", onMove);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // intentionally empty — all mutable values accessed via refs
 
   // -------------------------------------------------------------------------
   // Selection mode toggle
@@ -604,16 +626,6 @@ export default function PropertyMap() {
               strokeWeight={2}
               fillColor={fillColor}
               fillOpacity={fillOpacity}
-              onMousemove={(e) => {
-                if (selectMode) return;
-                // Polygon fires native google.maps.PolyMouseEvent — latLng is a
-                // LatLng object accessed via method calls, not e.detail.latLng.
-                const pos = e.latLng
-                  ? { lat: e.latLng.lat(), lng: e.latLng.lng() }
-                  : centroid(prop.corners);
-                handlePropHover(prop.id, pos);
-              }}
-              onMouseout={() => { if (!selectMode) scheduleClose(); }}
             />
           ) : (
             <Circle
@@ -625,14 +637,6 @@ export default function PropertyMap() {
               strokeWeight={2}
               fillColor={fillColor}
               fillOpacity={isSelected ? 0.55 : 0.35}
-              onMousemove={(e) => {
-                if (selectMode) return;
-                const pos = e.latLng
-                  ? { lat: e.latLng.lat(), lng: e.latLng.lng() }
-                  : { lat: prop.corners[0].lat, lng: prop.corners[0].lon };
-                handlePropHover(prop.id, pos);
-              }}
-              onMouseout={() => { if (!selectMode) scheduleClose(); }}
             />
           );
         })}
@@ -643,10 +647,6 @@ export default function PropertyMap() {
             <CornerMarker
               key={`${prop.id}-c${idx}`}
               corner={corner}
-              onHoverEnter={() =>
-                handlePropHover(prop.id, { lat: corner.lat, lng: corner.lon })
-              }
-              onHoverLeave={scheduleClose}
             />
           )),
         )}
