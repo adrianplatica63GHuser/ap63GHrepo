@@ -102,9 +102,9 @@ async function createProperty(
     const body = await res.json().catch(() => ({}));
     throw new Error((body as { error?: string }).error ?? `HTTP ${res.status}`);
   }
-  const data = await res.json() as { id?: string };
-  if (!data.id) throw new Error("No id returned from API");
-  return data.id;
+  const data = await res.json() as { property?: { id?: string } };
+  if (!data.property?.id) throw new Error("No id returned from API");
+  return data.property.id;
 }
 
 /** Strip the file extension from a filename to use as a nickname. */
