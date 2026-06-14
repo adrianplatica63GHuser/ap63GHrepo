@@ -88,8 +88,42 @@ Relationships: People ↔ Paperwork, People ↔ Properties, Paperwork ↔ Proper
 - Slice #GIS.13.05 — Land map: auto-fit to all properties + red corner markers + drag-to-select batch delete. ✅ Complete. Full detail below.
 - Slice #GIS.13.06 — Land map: overlap-aware InfoWindow (all properties under cursor, largest area first). ✅ Complete. Full detail below.
 - Slice #GIS.13.08 — Property form: Show Big Map toggle (two-column layout with full-height map beside panels). ✅ Complete. Full detail below.
+- Slice #GIS.13.10 — OCR parser: fix first-corner-skipped bug for Romanian-format merged tokens. ✅ Complete. Full detail below.
 
 Each slice typically lands as multiple small commits, each individually green.
+
+### Slice #GIS.13.10 — OCR parser: fix first-corner-skipped bug (detail)
+
+Pure backend — single file change, no DB schema, API contract, UI, or i18n changes.
+
+**Root cause**
+
+In the Pass 0 table-aware parser added in GIS.13.10 (initial commit), the merged-token rescue relied on `trySplitMergedToken`, which does a naive `token.replace(",", ".")` before calling `parseFloat`. When OCR fuses the corner index digit with a Northing value that is itself written in Romanian decimal format (e.g. `"1321.762,117"` = index `"1"` + X `321762.117`), the simple replace produces `"1321.762.117"` — a string with two dots. `parseFloat` stops at the second dot and returns `1321.762`; its integer part `1321` is outside the `[1_000_000, 9_999_999]` range so `trySplitMergedToken` returns `null`. The rescue fails, and that corner is silently skipped. Because only corner 1 typically triggers this (OCR is most likely to merge the first data row with a column separator), all subsequent corners are found and saved as corners 1–5 instead of 2–6 — a one-off shift.
+
+**Fix**
+
+Added a second rescue path (2b) inside the token loop in `parseTableFormat`. After `trySplitMergedToken` (rescue 2a) fails, if `normalizeCoordToken` already gave us a correctly-normalized 7-digit float (e.g. `1321762.117`), we strip the leading digit from the integer part directly on that normalized value and re-attach the fractional part:
+
+```typescript
+if (rescued === null && n !== null) {
+  const ip = Math.floor(Math.abs(n));
+  if (ip >= 1_000_000 && ip <= 9_999_999) {
+    const stripped = parseInt(String(ip).slice(1), 10);
+    if (stripped >= 100_000 && stripped <= 999_999) {
+      rescued = stripped + (n - ip); // re-attach fractional part
+    }
+  }
+}
+```
+
+For `"1321.762,117"`:
+- `normalizeCoordToken` correctly gives `1321762.117` (Romanian format handled).
+- `ip = 1321762`, `stripped = 321762`, `n - ip = 0.117` → `rescued = 321762.117` ✓
+- `isProjectNorthing(321762.117)` → true → corner 1 is now found.
+
+**Files touched**
+- `src/app/api/properties/scan-image/route.ts`
+- `CLAUDE.md`
 
 ### Slice #GIS.13.08 — Property form: Show Big Map toggle (detail)
 

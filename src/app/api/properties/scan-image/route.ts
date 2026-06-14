@@ -188,14 +188,37 @@ function parseTableFormat(rawText: string): { north: number; east: number }[] {
       // 1. Try Romanian-normalised parse of the token as-is
       let n = normalizeCoordToken(tok);
 
-      // 2. If the parsed value is outside project ranges, try the
-      //    merged-token rescue: "1321762.117" → strip leading "1" → "321762.117"
+      // 2. If the parsed value is outside project ranges, try merged-token rescues.
+      //    OCR sometimes fuses the corner index with the coordinate, e.g.:
+      //      "1321762.117" (plain)        → trySplitMergedToken handles this
+      //      "1321.762,117" (Romanian)    → trySplitMergedToken fails (simple
+      //                                      replace(",",".") → two dots →
+      //                                      parseFloat gives 1321.762 → intPart
+      //                                      1321 outside [1M,10M] → null).
+      //                                    Rescue 2b handles this instead.
       if (n === null || (!isProjectNorthing(n) && !isProjectEasting(n))) {
-        const rescued = trySplitMergedToken(tok);
-        if (rescued !== null) {
-          const rn = normalizeCoordToken(rescued);
-          if (rn !== null) n = rn;
+        let rescued: number | null = null;
+
+        // 2a. Plain-format merge: "1321762.117" → strip leading digit via raw token.
+        const splitStr = trySplitMergedToken(tok);
+        if (splitStr !== null) {
+          rescued = normalizeCoordToken(splitStr);
         }
+
+        // 2b. Romanian-format merge: normalizeCoordToken already gave us the right
+        //     numeric value (e.g. 1321762.117); strip the leading digit there.
+        if (rescued === null && n !== null) {
+          const ip = Math.floor(Math.abs(n));
+          if (ip >= 1_000_000 && ip <= 9_999_999) {
+            const stripped = parseInt(String(ip).slice(1), 10);
+            if (stripped >= 100_000 && stripped <= 999_999) {
+              // Re-attach the fractional part (n - ip gives the decimal portion).
+              rescued = stripped + (n - ip);
+            }
+          }
+        }
+
+        if (rescued !== null) n = rescued;
       }
 
       if (n === null) continue;
