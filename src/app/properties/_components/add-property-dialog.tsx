@@ -18,6 +18,7 @@
  */
 
 import { useRef, useState } from "react";
+import { useQueryClient }   from "@tanstack/react-query";
 import { useTranslations }  from "next-intl";
 import { useRouter }        from "next/navigation";
 import Link                 from "next/link";
@@ -47,7 +48,8 @@ type Step =
   | "select"
   | "upload-text"
   | "upload-folder"
-  | "saving";
+  | "saving"
+  | "done-folder";
 
 // ---------------------------------------------------------------------------
 // API helpers
@@ -125,8 +127,9 @@ interface Props {
 }
 
 export function AddPropertyDialog({ onClose }: Props) {
-  const t      = useTranslations("property.addDialog");
-  const router = useRouter();
+  const t           = useTranslations("property.addDialog");
+  const router      = useRouter();
+  const queryClient = useQueryClient();
 
   // ── State ──────────────────────────────────────────────────────────────────
 
@@ -357,13 +360,14 @@ export function AddPropertyDialog({ onClose }: Props) {
       return;
     }
 
-    // Show done note briefly before navigating
+    // Invalidate the property list so it refreshes when the dialog closes.
+    await queryClient.invalidateQueries({ queryKey: ["properties"] });
+
+    // Show acknowledgement screen — user closes manually to return to list.
     setSavingLabel(
       t("folderImportDone", { success: savedIds.length, total })
     );
-    await new Promise<void>((resolve) => setTimeout(resolve, 800));
-
-    await navigateToSaved(savedIds);
+    setStep("done-folder");
   };
 
   // ── Shared reset ──────────────────────────────────────────────────────────
@@ -684,6 +688,23 @@ export function AddPropertyDialog({ onClose }: Props) {
             </div>
           )}
 
+          {/* ── FOLDER IMPORT DONE ── */}
+          {step === "done-folder" && (
+            <div className="flex flex-col items-center gap-4 py-8">
+              <CheckCircleIcon />
+              <p className="text-sm text-center text-ink dark:text-zinc-200">
+                {savingLabel}
+              </p>
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-md bg-cta px-6 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d"
+              >
+                {t("close")}
+              </button>
+            </div>
+          )}
+
         </div>
       </div>
     </div>
@@ -729,6 +750,14 @@ function FolderIcon() {
   return (
     <svg className="mb-2 h-8 w-8 text-fade" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden="true">
       <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
+    </svg>
+  );
+}
+
+function CheckCircleIcon() {
+  return (
+    <svg className="h-12 w-12 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
     </svg>
   );
 }

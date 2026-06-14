@@ -246,7 +246,8 @@
       "savedSuccessPlural": "Salvate {count} proprietăți. Redirecționare spre fiecare…",
       "labelsNote": "Etichetele găsite în imagine vor fi copiate în câmpul Observații.",
       "cancel": "Anulează",
-      "back": "Înapoi"
+      "back": "Înapoi",
+      "close": "Închide"
     }
   },
   "address": {

@@ -246,7 +246,8 @@
       "savedSuccessPlural": "Saved {count} properties. Redirecting to each…",
       "labelsNote": "Labels found in image will be copied to the Notes field.",
       "cancel": "Cancel",
-      "back": "Back"
+      "back": "Back",
+      "close": "Close"
     }
   },
   "address": {
