@@ -95,6 +95,35 @@ function parseLine(line: string): { northing: number; easting: number } | null {
 }
 
 // ---------------------------------------------------------------------------
+// Geometry helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Reorder corners so the resulting polygon has no self-intersecting sides.
+ *
+ * Strategy: sort by polar angle around the centroid (star-shaped polygon
+ * approach). For any convex or near-convex parcel — which covers all typical
+ * Romanian cadastral land parcels — this produces a simple (non-self-
+ * intersecting) polygon regardless of the order the corners arrived in.
+ *
+ * Returns the input unchanged if fewer than 3 corners are supplied.
+ */
+function sortToSimplePolygon(
+  corners: { lat: number; lon: number }[],
+): { lat: number; lon: number }[] {
+  if (corners.length < 3) return corners;
+
+  const centLat = corners.reduce((s, c) => s + c.lat, 0) / corners.length;
+  const centLon = corners.reduce((s, c) => s + c.lon, 0) / corners.length;
+
+  return [...corners].sort(
+    (a, b) =>
+      Math.atan2(a.lat - centLat, a.lon - centLon) -
+      Math.atan2(b.lat - centLat, b.lon - centLon),
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Route handler
 // ---------------------------------------------------------------------------
 
@@ -129,5 +158,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     }
   }
 
-  return Response.json({ corners });
+  // Reorder corners into a simple (non-self-intersecting) polygon before
+  // returning — the original file order is irrelevant per spec.
+  return Response.json({ corners: sortToSimplePolygon(corners) });
 }

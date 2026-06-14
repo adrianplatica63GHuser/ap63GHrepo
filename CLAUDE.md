@@ -93,11 +93,11 @@ Relationships: People ↔ Paperwork, People ↔ Properties, Paperwork ↔ Proper
 
 Each slice typically lands as multiple small commits, each individually green.
 
-### Slice #GIS.13.11 — Text-file parser: first-token range fix (detail)
+### Slice #GIS.13.11 — Text-file parser: first-token range fix + polygon sort (detail)
 
 Pure backend — single file change, no DB schema, API contract, UI, or i18n changes.
 
-**Root cause**
+**Change 1 — first-token range fix**
 
 Some cadastral text exports use `0` as the first column value on the first line (or any value that happens to be 0). The existing `parseLine` 3-column guard required `idx >= 1`, so lines with `idx = 0` fell through to the 2-column fallback. There `parseFloat("0")` is not a Stereo70 value, so the fallback also rejected the line — silently dropping a corner.
 
@@ -109,8 +109,6 @@ Each line has exactly three tokens:
 - Token 2: Stereo70 Easting (Y column, Romanian convention).
 
 Corner order is determined solely by **line order** (first line → corner 1, second → corner 2, etc.).
-
-**Fix**
 
 In `parseLine`, the 3-column entry condition was changed from:
 ```typescript
@@ -139,6 +137,23 @@ Key differences:
 | `1000 321762.117 579601.957` | null (≥ 1 000, correctly rejected) |
 | `321762.117 579601.957` | ✓ 2-column fallback |
 | `Corner X Y` | null (header, correctly rejected) |
+
+**Change 2 — automatic simple-polygon sort**
+
+When corners arrive in an arbitrary file order, connecting them sequentially can produce a self-intersecting (bow-tie) polygon. Added `sortToSimplePolygon()` which sorts corners by polar angle around their centroid before the response is returned. This produces a simple (non-self-intersecting) polygon for any convex or near-convex parcel. The original file order is not preserved — per spec this is acceptable.
+
+```typescript
+function sortToSimplePolygon(corners) {
+  const centLat = average(corners.lat);
+  const centLon = average(corners.lon);
+  return [...corners].sort((a, b) =>
+    Math.atan2(a.lat - centLat, a.lon - centLon) -
+    Math.atan2(b.lat - centLat, b.lon - centLon)
+  );
+}
+```
+
+Called at the end of the POST handler: `return Response.json({ corners: sortToSimplePolygon(corners) })`.
 
 **Files touched**
 - `src/app/api/properties/parse-text/route.ts`
