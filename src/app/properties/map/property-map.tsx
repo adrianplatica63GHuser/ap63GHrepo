@@ -336,8 +336,14 @@ export default function PropertyMap() {
   const withGeometryRef = useRef<MapProperty[]>([]);
   const selectModeRef   = useRef(false);
   // IDs of properties currently displayed in the InfoWindow.
-  // Used to implement "never shrink while still over a property" logic.
-  const shownIdsRef     = useRef<Set<string>>(new Set());
+  // This set only grows while the cursor is over any property — entries are
+  // never removed until the 2 s close timer fires after the cursor leaves
+  // all properties.  This lets the user move across neighbouring properties
+  // and still reach every "Open →" link without entries disappearing.
+  const shownIdsRef = useRef<Set<string>>(new Set());
+  // Fixed anchor for the InfoWindow — set when the first property is shown,
+  // kept stable as more properties accumulate, reset on close.
+  const anchorRef   = useRef<LatLng | null>(null);
 
   // -------------------------------------------------------------------------
   // Data
@@ -407,6 +413,7 @@ export default function PropertyMap() {
           closeTimerRef.current = setTimeout(() => {
             setSelected(null);
             shownIdsRef.current = new Set();
+            anchorRef.current   = null;
           }, 2000);
         }
         return;
@@ -422,30 +429,44 @@ export default function PropertyMap() {
           closeTimerRef.current = null;
         }
 
-        // Key rule: only update the InfoWindow when the new set contains at
-        // least one property NOT already displayed. This prevents the InfoWindow
-        // from shrinking (losing inner-property entries) while the cursor moves
-        // from an inner+outer overlap region toward the InfoWindow bubble, which
-        // is anchored at the centroid of the outer property and may lie outside
-        // the inner property's bounds.
-        const hasNewProperty = overlapping.some((p) => !shownIdsRef.current.has(p.id));
+        // Find properties in the current hit-test that are not yet displayed.
+        const newProps = overlapping.filter((p) => !shownIdsRef.current.has(p.id));
 
-        if (hasNewProperty) {
-          shownIdsRef.current = new Set(overlapping.map((p) => p.id));
-          const primary = overlapping[0]; // largest area (sorted by findOverlapping)
+        if (newProps.length > 0) {
+          // Accumulate: add new properties to the shown set without removing
+          // any that are already displayed.  This means hovering A then B
+          // results in the InfoWindow showing both A and B — the user can
+          // still click A's link even after the cursor has drifted onto B.
+          newProps.forEach((p) => shownIdsRef.current.add(p.id));
+
+          // Rebuild the full display list sorted largest-area first.
+          const allShown = ([...shownIdsRef.current] as string[])
+            .map((id) => withGeometryRef.current.find((p) => p.id === id))
+            .filter((p): p is MapProperty => !!p);
+          allShown.sort((a, b) => polygonAreaDeg(b.corners) - polygonAreaDeg(a.corners));
+
+          // Fix the anchor at the centroid of the first property shown and
+          // never move it — keeps the InfoWindow from jumping around as more
+          // properties are accumulated.
+          if (!anchorRef.current) {
+            anchorRef.current = centroid(allShown[0].corners);
+          }
+
           setSelected({
-            position: centroid(primary.corners),
-            items:    overlapping.map((p) => ({ id: p.id, label: p.nickname ?? p.code })),
+            position: anchorRef.current,
+            items:    allShown.map((p) => ({ id: p.id, label: p.nickname ?? p.code })),
           });
         }
-        // If every property in the new set is already shown: leave the InfoWindow
-        // exactly as-is (superset stays visible).
+        // No new properties → leave InfoWindow exactly as-is.
 
       } else {
         // Cursor is over empty map — start the close timer if not already running.
         if (shownIdsRef.current.size > 0 && !closeTimerRef.current) {
-          shownIdsRef.current = new Set(); // mark as "closing"
-          closeTimerRef.current = setTimeout(() => setSelected(null), 2000);
+          closeTimerRef.current = setTimeout(() => {
+            setSelected(null);
+            shownIdsRef.current = new Set();
+            anchorRef.current   = null;
+          }, 2000);
         }
       }
     };
@@ -664,7 +685,7 @@ export default function PropertyMap() {
         {selected && !selectMode && (
           <InfoWindow
             position={selected.position}
-            onCloseClick={() => { setSelected(null); shownIdsRef.current = new Set(); }}
+            onCloseClick={() => { setSelected(null); shownIdsRef.current = new Set(); anchorRef.current = null; }}
           >
             <div className="flex flex-col min-w-[160px] px-1 py-0.5 gap-0">
               {selected.items.map((item, idx) => (
