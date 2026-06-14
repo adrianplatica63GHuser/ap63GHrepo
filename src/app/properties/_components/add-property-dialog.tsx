@@ -49,6 +49,7 @@ type Step =
   | "upload-text"
   | "upload-folder"
   | "saving"
+  | "done-text"
   | "done-folder";
 
 // ---------------------------------------------------------------------------
@@ -151,9 +152,11 @@ export function AddPropertyDialog({ onClose }: Props) {
   // Saving progress (shared across all save paths)
   const [savingLabel,   setSavingLabel]   = useState("");
 
-  const imageInputRef  = useRef<HTMLInputElement>(null);
-  const textInputRef   = useRef<HTMLInputElement>(null);
-  const folderInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef   = useRef<HTMLInputElement>(null);
+  const textInputRef    = useRef<HTMLInputElement>(null);
+  const folderInputRef  = useRef<HTMLInputElement>(null);
+  // Prevents double-click / concurrent invocations of import handlers.
+  const isImportingRef  = useRef(false);
 
   // ── Navigation helpers ────────────────────────────────────────────────────
 
@@ -240,7 +243,8 @@ export function AddPropertyDialog({ onClose }: Props) {
   };
 
   const handleImportText = async () => {
-    if (!textFile) return;
+    if (!textFile || isImportingRef.current) return;
+    isImportingRef.current = true;
     setError(null);
 
     // Read content BEFORE setStep("saving") unmounts the <input> element.
@@ -252,6 +256,7 @@ export function AddPropertyDialog({ onClose }: Props) {
       fileText = await textFile.text();
     } catch {
       setError(t("noCoordinatesFound"));
+      isImportingRef.current = false;
       return;
     }
 
@@ -267,28 +272,36 @@ export function AddPropertyDialog({ onClose }: Props) {
     } catch (err) {
       setError(err instanceof Error ? err.message : t("noCoordinatesFound"));
       setStep("upload-text");
+      isImportingRef.current = false;
       return;
     }
 
     if (corners.length === 0) {
       setError(t("noCoordinatesFound"));
       setStep("upload-text");
+      isImportingRef.current = false;
       return;
     }
 
     const nickname = nicknameFromFilename(fileName);
     setSavingLabel(t("savingProperties", { count: 1 }));
 
-    let id: string;
     try {
-      id = await createProperty(corners, null, nickname);
+      await createProperty(corners, null, nickname);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Save failed");
       setStep("upload-text");
+      isImportingRef.current = false;
       return;
     }
 
-    await navigateToSaved([id]);
+    // Invalidate the property list so it refreshes when the dialog closes.
+    await queryClient.invalidateQueries({ queryKey: ["properties"] });
+
+    // Show acknowledgement screen — user closes manually to return to list.
+    setSavingLabel(t("textImportDone"));
+    setStep("done-text");
+    isImportingRef.current = false;
   };
 
   // ── Folder handlers ───────────────────────────────────────────────────────
@@ -301,7 +314,8 @@ export function AddPropertyDialog({ onClose }: Props) {
   };
 
   const handleImportFolder = async () => {
-    if (folderFiles.length === 0) return;
+    if (folderFiles.length === 0 || isImportingRef.current) return;
+    isImportingRef.current = true;
     setError(null);
 
     // Read ALL file contents BEFORE setStep("saving") unmounts the <input>.
@@ -357,6 +371,7 @@ export function AddPropertyDialog({ onClose }: Props) {
     if (savedIds.length === 0) {
       setError(t("noCoordinatesFound"));
       setStep("upload-folder");
+      isImportingRef.current = false;
       return;
     }
 
@@ -368,6 +383,7 @@ export function AddPropertyDialog({ onClose }: Props) {
       t("folderImportDone", { success: savedIds.length, total })
     );
     setStep("done-folder");
+    isImportingRef.current = false;
   };
 
   // ── Shared reset ──────────────────────────────────────────────────────────
@@ -685,6 +701,23 @@ export function AddPropertyDialog({ onClose }: Props) {
             <div className="flex flex-col items-center gap-3 py-8">
               <Spinner />
               <p className="text-sm text-fade">{savingLabel}</p>
+            </div>
+          )}
+
+          {/* ── TEXT FILE IMPORT DONE ── */}
+          {step === "done-text" && (
+            <div className="flex flex-col items-center gap-4 py-8">
+              <CheckCircleIcon />
+              <p className="text-sm text-center text-ink dark:text-zinc-200">
+                {savingLabel}
+              </p>
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-md bg-cta px-6 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d"
+              >
+                {t("close")}
+              </button>
             </div>
           )}
 

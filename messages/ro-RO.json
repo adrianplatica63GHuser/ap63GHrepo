@@ -247,7 +247,8 @@
       "labelsNote": "Etichetele găsite în imagine vor fi copiate în câmpul Observații.",
       "cancel": "Anulează",
       "back": "Înapoi",
-      "close": "Închide"
+      "close": "Închide",
+      "textImportDone": "Proprietatea a fost importată cu succes."
     }
   },
   "address": {

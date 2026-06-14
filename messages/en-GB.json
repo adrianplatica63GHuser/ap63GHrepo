@@ -247,7 +247,8 @@
       "labelsNote": "Labels found in image will be copied to the Notes field.",
       "cancel": "Cancel",
       "back": "Back",
-      "close": "Close"
+      "close": "Close",
+      "textImportDone": "Property imported successfully."
     }
   },
   "address": {
