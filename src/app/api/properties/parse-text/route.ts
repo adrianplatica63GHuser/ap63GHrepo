@@ -5,9 +5,15 @@
  * file exported from a Romanian cadastral system).
  *
  * File format (auto-detected, any delimiter):
- *   3-column: <index> <X [m]> <Y [m]>  — index is a small integer 1–9 999
- *   2-column: <X [m]> <Y [m]>           — no index column
+ *   3-column: <token0> <X [m]> <Y [m]>  — token0 is any number < 1 000 (ignored;
+ *                                          corner order is determined by line order)
+ *   2-column: <X [m]> <Y [m]>            — no leading token
  *   Lines that don't match either pattern are ignored automatically.
+ *
+ * GIS.13.11 clarification: in some cadastral exports the first column is an
+ * arbitrary numeric label (< 1 000) that does NOT represent the corner's
+ * sequential position.  The parser ignores it; corner 1 = first matching line,
+ * corner 2 = second, etc.
  *
  * Column mapping (Romanian geodetic convention — X = Northing, Y = Easting):
  *   X [m] = Northing  → `north` arg of stereo70ToWgs84
@@ -45,9 +51,10 @@ function isStereo(n: number): boolean {
  * Accepts whitespace, comma, semicolon, pipe, or tab as separators.
  *
  * Supported formats:
- *  3-column: <index> <X [m]> <Y [m]>  — index must be a small integer 1–9 999
- *  2-column: <X [m]> <Y [m]>           — no index column (auto-detected when
- *                                         token 0 is itself a Stereo70 value)
+ *  3-column: <token0> <X [m]> <Y [m]>  — token0 is any finite number < 1 000
+ *                                         (ignored; corner order = line order)
+ *  2-column: <X [m]> <Y [m]>            — no leading token (auto-detected when
+ *                                          token 0 is itself a Stereo70 value)
  *
  * Token mapping (Romanian geodetic convention — X = Northing, Y = Easting):
  *   X column → `northing`; Y column → `easting`
@@ -61,10 +68,12 @@ function parseLine(line: string): { northing: number; easting: number } | null {
 
   if (tokens.length < 2) return null;
 
-  // --- 3-column format: index + X + Y ---
+  // --- 3-column format: leading token (< 1 000) + X + Y ---
+  // token[0] is an arbitrary numeric label; it is ignored for sequencing.
+  // Corner order is always determined by line order, not by this value.
   if (tokens.length >= 3) {
-    const idx = parseInt(tokens[0], 10);
-    if (!isNaN(idx) && idx >= 1 && idx <= 9_999) {
+    const idx = parseFloat(tokens[0].replace(",", "."));
+    if (Number.isFinite(idx) && idx < 1_000) {
       const northing = parseFloat(tokens[1].replace(",", "."));
       const easting  = parseFloat(tokens[2].replace(",", "."));
       if (!isNaN(northing) && isStereo(northing) && !isNaN(easting) && isStereo(easting)) {

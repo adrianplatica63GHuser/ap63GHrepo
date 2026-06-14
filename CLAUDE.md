@@ -89,8 +89,60 @@ Relationships: People ↔ Paperwork, People ↔ Properties, Paperwork ↔ Proper
 - Slice #GIS.13.06 — Land map: overlap-aware InfoWindow (all properties under cursor, largest area first). ✅ Complete. Full detail below.
 - Slice #GIS.13.08 — Property form: Show Big Map toggle (two-column layout with full-height map beside panels). ✅ Complete. Full detail below.
 - Slice #GIS.13.10 — OCR parser: fix first-corner-skipped bug for Romanian-format merged tokens. ✅ Complete. Full detail below.
+- Slice #GIS.13.11 — Text-file parser: accept first token as any number < 1 000 (was 1–9 999). ✅ Complete. Full detail below.
 
 Each slice typically lands as multiple small commits, each individually green.
+
+### Slice #GIS.13.11 — Text-file parser: first-token range fix (detail)
+
+Pure backend — single file change, no DB schema, API contract, UI, or i18n changes.
+
+**Root cause**
+
+Some cadastral text exports use `0` as the first column value on the first line (or any value that happens to be 0). The existing `parseLine` 3-column guard required `idx >= 1`, so lines with `idx = 0` fell through to the 2-column fallback. There `parseFloat("0")` is not a Stereo70 value, so the fallback also rejected the line — silently dropping a corner.
+
+**New format spec (GIS.13.11)**
+
+Each line has exactly three tokens:
+- Token 0: an arbitrary numeric label, always **< 1 000** — must be **ignored** (it is NOT the corner's sequential position).
+- Token 1: Stereo70 Northing (X column, Romanian convention).
+- Token 2: Stereo70 Easting (Y column, Romanian convention).
+
+Corner order is determined solely by **line order** (first line → corner 1, second → corner 2, etc.).
+
+**Fix**
+
+In `parseLine`, the 3-column entry condition was changed from:
+```typescript
+const idx = parseInt(tokens[0], 10);
+if (!isNaN(idx) && idx >= 1 && idx <= 9_999) {
+```
+to:
+```typescript
+const idx = parseFloat(tokens[0].replace(",", "."));
+if (Number.isFinite(idx) && idx < 1_000) {
+```
+
+Key differences:
+- Uses `parseFloat` instead of `parseInt` to handle decimal labels if they appear.
+- Removes the `>= 1` lower bound — now accepts 0 (and any negative value, which won't appear in practice but is harmless).
+- Tightens the upper bound from 9 999 → 999 (exclusive `< 1_000`) to match the spec.
+- The existing 2-column fallback is unchanged — still handles files with no leading token.
+
+**Verification (node -e)**
+
+| Input line | Result |
+|---|---|
+| `0 321762.117 579601.957` | ✓ northing/easting parsed |
+| `42 321762.117 579601.957` | ✓ northing/easting parsed |
+| `999 321762.117 579601.957` | ✓ northing/easting parsed |
+| `1000 321762.117 579601.957` | null (≥ 1 000, correctly rejected) |
+| `321762.117 579601.957` | ✓ 2-column fallback |
+| `Corner X Y` | null (header, correctly rejected) |
+
+**Files touched**
+- `src/app/api/properties/parse-text/route.ts`
+- `CLAUDE.md`
 
 ### Slice #GIS.13.10 — OCR parser: fix first-corner-skipped bug (detail)
 
