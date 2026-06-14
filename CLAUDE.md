@@ -96,9 +96,15 @@ Each slice typically lands as multiple small commits, each individually green.
 
 Pure backend — single file change, no DB schema, API contract, UI, or i18n changes.
 
-**Root cause**
+**Root cause (confirmed by adding `console.log(rawText)` to the route)**
 
-In the Pass 0 table-aware parser added in GIS.13.10 (initial commit), the merged-token rescue relied on `trySplitMergedToken`, which does a naive `token.replace(",", ".")` before calling `parseFloat`. When OCR fuses the corner index digit with a Northing value that is itself written in Romanian decimal format (e.g. `"1321.762,117"` = index `"1"` + X `321762.117`), the simple replace produces `"1321.762.117"` — a string with two dots. `parseFloat` stops at the second dot and returns `1321.762`; its integer part `1321` is outside the `[1_000_000, 9_999_999]` range so `trySplitMergedToken` returns `null`. The rescue fails, and that corner is silently skipped. Because only corner 1 typically triggers this (OCR is most likely to merge the first data row with a column separator), all subsequent corners are found and saved as corners 1–5 instead of 2–6 — a one-off shift.
+Tesseract read the first data row as:
+
+```
+SE A 11321762.117 | 579601.957 8.950
+```
+
+The label text `SE A` in the left margin of the scanned table merged with the corner-index digit `1`, producing the token `11321762.117` — **two** extra leading digits prepended to the real Northing `321762.117`. The integer part `11321762` is an 8-digit number, outside the `[1_000_000, 9_999_999]` range that both `trySplitMergedToken` and rescue-2b checked. Both rescues returned null; the corner was silently dropped. Corners 2–6 had no fused label characters so they parsed correctly, producing the one-off shift symptom (corners 2–6 saved as corners 1–5).
 
 **Fix — three independent changes, all in `parseTableFormat`**
 
@@ -108,25 +114,25 @@ The original code skipped entire lines matching `/suprafat|perimetr|\barea\b|\bp
 **2. Added `fixOcrDigits` pre-processing.**  
 OCR frequently confuses `l` (lowercase L) with `1` and `O` (uppercase letter O) with `0`. If the Northing for corner 1 is read as `"32l762.117"`, `parseFloat` stops at `'l'` and returns `32` — outside all coordinate ranges. `fixOcrDigits` applies `.replace(/[lI]/g, "1").replace(/O/g, "0")` to each raw token before any numeric parsing.
 
-**3. Added rescue path 2b (Romanian-format merged token).**  
-After `trySplitMergedToken` (rescue 2a) fails, if `normalizeCoordToken` already gave us a correctly-normalized 7-digit float (e.g. `1321762.117`), we strip the leading digit from the integer part directly on that normalized value and re-attach the fractional part:
+**3. Multi-digit strip in `trySplitMergedToken` and rescue-2b.**  
+Both were changed from "strip exactly one leading digit" to "try stripping 1, 2, or 3 leading digits until the remainder is a valid 6-digit Stereo70 value." For `"11321762.117"`:
+- strip 1 → `"1321762"` → 1321762, not a 6-digit number in `[100k, 999k]` → continue
+- strip 2 → `"321762"` → 321762 ∈ `[100k, 999k]` → candidate `321762.117` → `isProjectNorthing` → ✓
+
+The loop in rescue-2b also checks `isProjectNorthing(candidate) || isProjectEasting(candidate)` before committing, so a stripped value that passes the 6-digit range check but falls outside the project area is still rejected.
+
+**How to diagnose future OCR parsing failures**
+
+Add these two lines at the top of `parseOcrText` temporarily:
 
 ```typescript
-if (rescued === null && n !== null) {
-  const ip = Math.floor(Math.abs(n));
-  if (ip >= 1_000_000 && ip <= 9_999_999) {
-    const stripped = parseInt(String(ip).slice(1), 10);
-    if (stripped >= 100_000 && stripped <= 999_999) {
-      rescued = stripped + (n - ip); // re-attach fractional part
-    }
-  }
-}
+console.log("=== OCR RAW TEXT START ===");
+console.log(rawText);
+console.log("=== OCR RAW TEXT END ===");
+console.log("=== Pass 0 corners ===", JSON.stringify(tableCorners));
 ```
 
-For `"1321.762,117"`:
-- `normalizeCoordToken` correctly gives `1321762.117` (Romanian format handled).
-- `ip = 1321762`, `stripped = 321762`, `n - ip = 0.117` → `rescued = 321762.117` ✓
-- `isProjectNorthing(321762.117)` → true → corner 1 is now found.
+Run `npm run dev`, scan the image, and inspect the terminal output. The raw text shows exactly what Tesseract produced; comparing it to the Pass 0 corners immediately reveals which lines were skipped and why. Remove the logs once the issue is understood.
 
 **Files touched**
 - `src/app/api/properties/scan-image/route.ts`
@@ -1349,6 +1355,9 @@ Rules:
     docker exec ciprian-ga40prj-postgres psql -U postgres -d ga40db -f /tmp/ref.sql
     ```
     The file is idempotent (TRUNCATE + re-INSERT) — safe to re-apply at any time without data loss on non-lookup tables.
+- **OCR (Tesseract) — label text fuses with coordinate tokens.** When a scanned cadastral table has row-label text in the left margin (e.g. `"SE A"`, parcel names, or decorative characters), Tesseract reads the label and the first numeric token on that row as one fused string — e.g. `"SE A 1 321762.117"` becomes `"11321762.117"`. This is always the **first data row** (corner 1) because subsequent rows have only a small corner-index digit in the margin, not a word. The extra characters add multiple leading digits to the coordinate, not just one. The parser handles this via `trySplitMergedToken` (tries stripping 1–3 leading digits) + rescue-2b in `parseTableFormat`. If a future scan skips corner 1 again: add `console.log(rawText)` at the top of `parseOcrText` and `console.log("Pass 0:", JSON.stringify(parseTableFormat(rawText)))` below it, run `npm run dev`, scan the image, and inspect the terminal. The raw text immediately shows what Tesseract produced.
+- **OCR (Tesseract) — common digit confusions.** Tesseract confuses `l` (lowercase L) with `1`, `I` (uppercase i) with `1`, and `O` (uppercase letter O) with `0`. The `fixOcrDigits` helper in `scan-image/route.ts` corrects these before any numeric parsing. If a coordinate still doesn't parse, check the raw OCR text for these substitutions.
+- **OCR (Tesseract) — do not pre-filter lines by keyword.** Removing lines that contain "Suprafata", "Perimetru", etc. before parsing is tempting (those are area/perimeter rows, not corners). Don't do it: OCR sometimes merges the column-header row (which may contain those words) with the first data row, and the keyword filter discards the entire merged line including the real corner coordinates. Let the coordinate-range checks reject out-of-range values naturally.
 
 ## Key paths
 
