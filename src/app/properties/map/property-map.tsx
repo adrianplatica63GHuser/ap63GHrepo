@@ -139,6 +139,49 @@ function findOverlapping(props: MapProperty[], pt: LatLng): MapProperty[] {
 }
 
 // ---------------------------------------------------------------------------
+// Duplicate-polygon detection
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns a canonical string key for a set of corners that is invariant to
+ * rotation, starting-corner choice, and winding direction.
+ *
+ * Algorithm:
+ *   1. Round each coordinate to 6 decimal places (~11 cm precision) to absorb
+ *      any floating-point noise introduced by the Stereo70 → WGS84 conversion.
+ *   2. Sort the resulting "lat,lon" tokens alphabetically — this makes the key
+ *      independent of the order corners appear in the file.
+ *   3. Join with "|" to produce a single comparable string.
+ */
+function cornerSetKey(corners: Corner[]): string {
+  return corners
+    .map((c) => `${c.lat.toFixed(6)},${c.lon.toFixed(6)}`)
+    .sort()
+    .join("|");
+}
+
+/**
+ * Returns the set of property IDs whose corner geometry exactly matches at
+ * least one other property (i.e. two or more properties occupy the same spot).
+ * Both the "original" and its duplicate(s) are included in the returned set.
+ */
+function findDuplicateIds(props: MapProperty[]): Set<string> {
+  const keyToIds = new Map<string, string[]>();
+  for (const p of props) {
+    if (p.corners.length === 0) continue;
+    const key = cornerSetKey(p.corners);
+    const bucket = keyToIds.get(key);
+    if (bucket) bucket.push(p.id);
+    else keyToIds.set(key, [p.id]);
+  }
+  const result = new Set<string>();
+  for (const ids of keyToIds.values()) {
+    if (ids.length > 1) ids.forEach((id) => result.add(id));
+  }
+  return result;
+}
+
+// ---------------------------------------------------------------------------
 // Map pixel → LatLng conversion (for drag-to-select)
 // ---------------------------------------------------------------------------
 
@@ -326,6 +369,13 @@ export default function PropertyMap() {
   const [deleting,          setDeleting]          = useState(false);
   const [deleteError,       setDeleteError]       = useState<string | null>(null);
 
+  // Blink state for duplicate-polygon highlighting — toggled every 1 s.
+  const [blinkOn, setBlinkOn] = useState(true);
+  useEffect(() => {
+    const timer = setInterval(() => setBlinkOn((b) => !b), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   // Refs shared between outer handlers and inner MapRefCapture
   const containerRef  = useRef<HTMLDivElement>(null);
   const mapRef        = useRef<google.maps.Map | null>(null);
@@ -356,6 +406,10 @@ export default function PropertyMap() {
 
   const items        = data?.items ?? [];
   const withGeometry = items.filter((p) => p.corners.length >= 1);
+
+  // Properties whose corner set is identical to at least one other property.
+  // Recomputed whenever the data changes; cheap (O(n) hash pass).
+  const duplicateIds = findDuplicateIds(withGeometry);
 
   // Keep refs in sync after every render so the document listener sees current values.
   useEffect(() => {
@@ -640,11 +694,27 @@ export default function PropertyMap() {
         <FitAllProperties items={withGeometry} />
 
         {/* Polygons / circles (one pass) */}
+        {/* Colour priority: selected (red) > duplicate (blinking pink) > normal (blue) */}
         {withGeometry.map((prop) => {
           const isSelected  = selectedIds.has(prop.id);
-          const strokeColor = isSelected ? "#ef4444" : "#3b82f6";
-          const fillColor   = isSelected ? "#ef4444" : "#3b82f6";
-          const fillOpacity = isSelected ? 0.30 : 0.15;
+          const isDuplicate = duplicateIds.has(prop.id);
+
+          const strokeColor =
+            isSelected  ? "#ef4444" :   // red
+            isDuplicate ? "#ec4899" :   // pink-500
+                          "#3b82f6";    // blue-500
+
+          const fillColor =
+            isSelected  ? "#ef4444" :
+            isDuplicate ? "#ec4899" :
+                          "#3b82f6";
+
+          // Duplicate fill blinks between 0.45 (visible) and 0 (transparent)
+          // every second; stroke stays solid so the outline is always visible.
+          const fillOpacity =
+            isSelected  ? 0.30 :
+            isDuplicate ? (blinkOn ? 0.45 : 0) :
+                          0.15;
 
           return prop.corners.length >= 3 ? (
             <Polygon
@@ -665,7 +735,11 @@ export default function PropertyMap() {
               strokeOpacity={1}
               strokeWeight={2}
               fillColor={fillColor}
-              fillOpacity={isSelected ? 0.55 : 0.35}
+              fillOpacity={
+                isSelected  ? 0.55 :
+                isDuplicate ? (blinkOn ? 0.55 : 0) :
+                              0.35
+              }
             />
           );
         })}
