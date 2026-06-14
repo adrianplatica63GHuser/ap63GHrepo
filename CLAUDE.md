@@ -100,9 +100,16 @@ Pure backend — single file change, no DB schema, API contract, UI, or i18n cha
 
 In the Pass 0 table-aware parser added in GIS.13.10 (initial commit), the merged-token rescue relied on `trySplitMergedToken`, which does a naive `token.replace(",", ".")` before calling `parseFloat`. When OCR fuses the corner index digit with a Northing value that is itself written in Romanian decimal format (e.g. `"1321.762,117"` = index `"1"` + X `321762.117`), the simple replace produces `"1321.762.117"` — a string with two dots. `parseFloat` stops at the second dot and returns `1321.762`; its integer part `1321` is outside the `[1_000_000, 9_999_999]` range so `trySplitMergedToken` returns `null`. The rescue fails, and that corner is silently skipped. Because only corner 1 typically triggers this (OCR is most likely to merge the first data row with a column separator), all subsequent corners are found and saved as corners 1–5 instead of 2–6 — a one-off shift.
 
-**Fix**
+**Fix — three independent changes, all in `parseTableFormat`**
 
-Added a second rescue path (2b) inside the token loop in `parseTableFormat`. After `trySplitMergedToken` (rescue 2a) fails, if `normalizeCoordToken` already gave us a correctly-normalized 7-digit float (e.g. `1321762.117`), we strip the leading digit from the integer part directly on that normalized value and re-attach the fractional part:
+**1. Removed `SKIP_LINE_RE` line-skip guard.**  
+The original code skipped entire lines matching `/suprafat|perimetr|\barea\b|\bperim\b/i` to avoid picking up area/perimeter summary rows. This is safe in theory (those rows don't contain coordinate-range numbers), but dangerous in practice: OCR sometimes merges the column-header row (which may contain "Suprafata" in a combined header) with the first data row, making the whole merged line match `SKIP_LINE_RE` and causing corner 1 to be discarded. The guard was removed; coordinate-range checks are sufficient to reject area/perimeter values on their own.
+
+**2. Added `fixOcrDigits` pre-processing.**  
+OCR frequently confuses `l` (lowercase L) with `1` and `O` (uppercase letter O) with `0`. If the Northing for corner 1 is read as `"32l762.117"`, `parseFloat` stops at `'l'` and returns `32` — outside all coordinate ranges. `fixOcrDigits` applies `.replace(/[lI]/g, "1").replace(/O/g, "0")` to each raw token before any numeric parsing.
+
+**3. Added rescue path 2b (Romanian-format merged token).**  
+After `trySplitMergedToken` (rescue 2a) fails, if `normalizeCoordToken` already gave us a correctly-normalized 7-digit float (e.g. `1321762.117`), we strip the leading digit from the integer part directly on that normalized value and re-attach the fractional part:
 
 ```typescript
 if (rescued === null && n !== null) {

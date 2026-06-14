@@ -145,8 +145,22 @@ function isProjectEasting(n: number): boolean {
 // Table-aware primary parser  (Slice GIS.13.10)
 // ---------------------------------------------------------------------------
 
-/** Keywords on area/perimeter rows that should be skipped. */
-const SKIP_LINE_RE = /suprafat|perimetr|\barea\b|\bperim\b/i;
+/**
+ * Correct common single-character OCR misreads inside an otherwise-numeric
+ * token.  Applied before any numeric parsing so that e.g. "32l762.117"
+ * (lowercase-L misread as digit 1) becomes "321762.117".
+ *
+ * Only the substitutions that are clearly digit-like are applied:
+ *   l / I  → 1   (most common confusion in scanned tables)
+ *   O      → 0   (uppercase O vs zero)
+ *
+ * The replacement runs on the raw token string before any float parsing,
+ * so it does not affect label tokens (which are rejected by the range
+ * checks downstream even if they happen to survive normalisation).
+ */
+function fixOcrDigits(token: string): string {
+  return token.replace(/[lI]/g, "1").replace(/O/g, "0");
+}
 
 /**
  * Primary parser tuned to the specific Romanian cadastral table format:
@@ -155,13 +169,18 @@ const SKIP_LINE_RE = /suprafat|perimetr|\barea\b|\bperim\b/i;
  *
  * Rules:
  * - 1–2 title rows are skipped automatically (no valid coord tokens).
- * - Lines matching SKIP_LINE_RE (area/perimeter rows) are skipped.
+ * - Area/perimeter rows are NOT pre-filtered by keyword — the coordinate
+ *   range checks reject their values naturally. Pre-filtering was removed
+ *   because OCR sometimes merges a header row (which may contain Romanian
+ *   words like "Suprafata") with the first data row, causing that corner
+ *   to be silently discarded.
  * - Corner index (small integer) may be present but is not required.
  * - X (Northing) is the first token in the range 310 000–339 999.
  * - Y (Easting)  is the first token in the range 560 000–589 999.
  * - OCR-merged tokens like "1321762.117" (index fused with X) are rescued
- *   by stripping the leading digit via trySplitMergedToken.
+ *   by stripping the leading digit.
  * - Romanian number formats (e.g. "321.234,56") are normalised first.
+ * - Common OCR digit confusions (l→1, I→1, O→0) are corrected first.
  *
  * Returns [] if fewer than 3 valid corners are found.
  */
@@ -171,7 +190,7 @@ function parseTableFormat(rawText: string): { north: number; east: number }[] {
   for (const rawLine of rawText.split("\n")) {
     const line = rawLine.trim();
     if (!line) continue;
-    if (SKIP_LINE_RE.test(line)) continue;
+    // NOTE: no keyword-based skip here — see comment in docstring above.
 
     // Split on whitespace and pipe/semicolon.
     // Do NOT split on dots or commas — they may be decimal separators.
@@ -185,8 +204,12 @@ function parseTableFormat(rawText: string): { north: number; east: number }[] {
       // Short tokens cannot be 6-digit coordinates
       if (tok.length < 4) continue;
 
-      // 1. Try Romanian-normalised parse of the token as-is
-      let n = normalizeCoordToken(tok);
+      // Apply OCR digit fixes before any numeric parsing.
+      // e.g. "32l762.117" (l misread as 1) → "321762.117"
+      const fixed = fixOcrDigits(tok);
+
+      // 1. Try Romanian-normalised parse of the (fixed) token as-is
+      let n = normalizeCoordToken(fixed);
 
       // 2. If the parsed value is outside project ranges, try merged-token rescues.
       //    OCR sometimes fuses the corner index with the coordinate, e.g.:
@@ -199,21 +222,28 @@ function parseTableFormat(rawText: string): { north: number; east: number }[] {
       if (n === null || (!isProjectNorthing(n) && !isProjectEasting(n))) {
         let rescued: number | null = null;
 
-        // 2a. Plain-format merge: "1321762.117" → strip leading digit via raw token.
-        const splitStr = trySplitMergedToken(tok);
+        // 2a. Plain-format merge: "1321762.117" → strip leading digit via fixed token.
+        const splitStr = trySplitMergedToken(fixed);
         if (splitStr !== null) {
           rescued = normalizeCoordToken(splitStr);
         }
 
-        // 2b. Romanian-format merge: normalizeCoordToken already gave us the right
-        //     numeric value (e.g. 1321762.117); strip the leading digit there.
+        // 2b. Romanian-format merge (or multi-digit prefix fused by OCR):
+        //     normalizeCoordToken already gave us the correct numeric value;
+        //     try stripping 1, 2, or 3 leading digits from the integer part.
+        //     e.g. "11321762.117" → ip=11321762 → strip 2 → 321762 → +.117 ✓
         if (rescued === null && n !== null) {
-          const ip = Math.floor(Math.abs(n));
-          if (ip >= 1_000_000 && ip <= 9_999_999) {
-            const stripped = parseInt(String(ip).slice(1), 10);
+          const ip    = Math.floor(Math.abs(n));
+          const ipStr = String(ip);
+          for (let strip = 1; strip <= 3; strip++) {
+            if (strip >= ipStr.length) break;
+            const stripped = parseInt(ipStr.slice(strip), 10);
             if (stripped >= 100_000 && stripped <= 999_999) {
-              // Re-attach the fractional part (n - ip gives the decimal portion).
-              rescued = stripped + (n - ip);
+              const candidate = stripped + (n - ip); // re-attach fractional part
+              if (isProjectNorthing(candidate) || isProjectEasting(candidate)) {
+                rescued = candidate;
+                break;
+              }
             }
           }
         }
@@ -279,17 +309,22 @@ function trySplitMergedToken(token: string): string | null {
   const n = parseFloat(clean);
   if (isNaN(n)) return null;
   const intPart = Math.floor(Math.abs(n));
-  if (intPart < 1_000_000 || intPart > 9_999_999) return null;
 
-  // Strip exactly one leading digit
-  const intStr   = String(intPart);
-  const stripped = intStr.slice(1);           // e.g. "1321762" → "321762"
-  const remNum   = parseInt(stripped, 10);
-  if (remNum < 100_000 || remNum > 999_999) return null;
-
-  // Re-attach decimal part if the original token had one
-  const dec = clean.match(/\.(\d+)$/);
-  return dec ? `${stripped}.${dec[1]}` : stripped;
+  // Try stripping 1, 2, or 3 leading digits to recover a 6-digit Stereo70 value.
+  // e.g. "1321762"  (7-digit) → strip 1 → "321762" ✓
+  //      "11321762" (8-digit) → strip 1 → "1321762" (not in range)
+  //                           → strip 2 → "321762"  ✓
+  const intStr = String(intPart);
+  const dec    = clean.match(/\.(\d+)$/);
+  for (let strip = 1; strip <= 3; strip++) {
+    if (strip >= intStr.length) break;          // would leave 0 digits
+    const stripped = intStr.slice(strip);
+    const remNum   = parseInt(stripped, 10);
+    if (remNum >= 100_000 && remNum <= 999_999) {
+      return dec ? `${stripped}.${dec[1]}` : stripped;
+    }
+  }
+  return null;
 }
 
 /**
@@ -338,10 +373,16 @@ function extractStereoValues(tokens: string[]): string[] {
  *    the 100 000–999 999 range.
  */
 function parseOcrText(rawText: string): ScanResult {
+  // ── Diagnostic logging (temporary — remove after root cause confirmed) ────
+  console.log("=== OCR RAW TEXT START ===");
+  console.log(rawText);
+  console.log("=== OCR RAW TEXT END ===");
+
   // ── Pass 0: table-aware parser (Slice GIS.13.10) ─────────────────────────
   // Try the specific Romanian cadastral table format first.
   // If it yields ≥3 corners, convert and return without running Pass 1/2.
   const tableCorners = parseTableFormat(rawText);
+  console.log("=== Pass 0 corners ===", JSON.stringify(tableCorners));
   if (tableCorners.length >= 3) {
     const corners: ParsedCorner[] = [];
     let conversionFailed = false;
