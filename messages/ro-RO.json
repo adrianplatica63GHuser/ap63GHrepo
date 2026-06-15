@@ -38,7 +38,13 @@
     "error": "Eroare la încărcare",
     "empty": "Nu există proprietăți",
     "counts": "Se afișează {shown} din {total}",
-    "mapTitle": "Hartă proprietăți",
+    "mapTitle": "Toate Proprietățile",
+    "map": {
+      "selectedPropertiesTab": "Proprietăți Selectate",
+      "selectLink": "Selectează",
+      "unselectLink": "Deselectează",
+      "displayAllSelected": "Afișează selectate"
+    },
     "createTitle": "Proprietate nouă",
     "saveError": "Salvarea a eșuat",
     "deleteError": "Ștergerea a eșuat",

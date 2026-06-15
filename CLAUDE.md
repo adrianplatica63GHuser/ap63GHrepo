@@ -90,8 +90,49 @@ Relationships: People ↔ Paperwork, People ↔ Properties, Paperwork ↔ Proper
 - Slice #GIS.13.08 — Property form: Show Big Map toggle (two-column layout with full-height map beside panels). ✅ Complete. Full detail below.
 - Slice #GIS.13.10 — OCR parser: fix first-corner-skipped bug for Romanian-format merged tokens. ✅ Complete. Full detail below.
 - Slice #GIS.13.11 — Text-file parser: accept first token as any number < 1 000 (was 1–9 999). ✅ Complete. Full detail below.
+- Slice #GIS.13.12 — Land map: select/unselect via InfoWindow + "Display all selected" tab view. ✅ Complete. Full detail below.
 
 Each slice typically lands as multiple small commits, each individually green.
+
+### Slice #GIS.13.12 — Land map: select/unselect via InfoWindow + tab view (detail)
+
+Pure frontend — no DB schema, API, migration, or i18n namespace changes beyond two message files.
+
+**What it does**
+
+Three related features on the `/properties/map` page:
+
+1. **InfoWindow fork in select mode** — when select mode is active and the user hovers over a property, the "Open →" link is replaced by a coloured action button: red **"Select"** when the property is not selected, green **"Unselect"** when it is. Clicking the button toggles that property's membership in `selectedIds`. The InfoWindow itself (hover detection, delay timer) is unchanged — only the link inside it is swapped.
+
+2. **"Display all selected" button** — rendered beside the existing red "Delete all selected" button in the bottom toolbar (bottom-center of the map), visible whenever `selectedIds.size > 0` and `activeTab === "all"`. Clicking it sets `showTabs = true` and `activeTab = "selected"`.
+
+3. **Tab bar and "Selected Properties" tab** — when `showTabs` is true the page header switches from a plain `<h1>` title to a two-button toggle bar. Left tab = "All Properties" (maps to the i18n key `property.mapTitle`); right tab = "Selected Properties" (`property.map.selectedPropertiesTab`), with a red badge showing the count of selected IDs. The "Selected" tab renders the map filtered to only those properties in `selectedIds`. Properties in the Selected tab render in normal blue (not red) so they don't look like they're flagged for deletion. The drag-to-select overlay and bottom toolbar buttons are hidden on the Selected tab (it is view-only). Switching back to "All Properties" preserves the selection. Exiting select mode (`✕ Cancel select`) resets both `showTabs` and `activeTab`.
+
+**Header ownership moved to `PropertyMap`**
+
+`map/page.tsx` previously rendered the `<header>` (with the page title) as a server component via `getTranslations`. Because the tab bar is driven by client state (`showTabs`, `activeTab`), the header was moved inside `PropertyMap` (client component). `page.tsx` now renders only the flex container + `<MapView>`.
+
+**`FitAllProperties` tab-aware reset**
+
+`FitAllProperties` accepts a `tabKey: string` prop. A `useEffect` resets the `fitted` ref whenever `tabKey` changes, so each tab switch triggers a fresh auto-fit to the visible properties.
+
+**Color logic**
+
+Properties in `selectedIds` render red only when `activeTab === "all"` (same red as before). On the "Selected" tab, `effectiveSelected` is always false, so all polygons render with the standard blue fill.
+
+**Files touched**
+- `src/app/properties/map/page.tsx` (server header removed, simplified to container only)
+- `src/app/properties/map/property-map.tsx` (rewritten)
+- `messages/en-GB.json` (`property.mapTitle` changed; `property.map.*` namespace added)
+- `messages/ro-RO.json` (same)
+- `CLAUDE.md`
+
+**i18n keys added**
+- `property.mapTitle`: "All Properties" / "Toate Proprietățile"
+- `property.map.selectedPropertiesTab`: "Selected Properties" / "Proprietăți Selectate"
+- `property.map.selectLink`: "Select" / "Selectează"
+- `property.map.unselectLink`: "Unselect" / "Deselectează"
+- `property.map.displayAllSelected`: "Display all selected" / "Afișează selectate"
 
 ### Slice #GIS.13.11 — Text-file parser: first-token range fix + polygon sort (detail)
 

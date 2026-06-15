@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import {
   AdvancedMarker,
   Circle,
@@ -38,6 +39,9 @@ type SelectedItem = { id: string; label: string };
 type Selected = { position: LatLng; items: SelectedItem[] };
 
 type PixelPoint = { x: number; y: number };
+
+// Which tab is currently shown in the map view.
+type ActiveTab = "all" | "selected";
 
 // ---------------------------------------------------------------------------
 // Data fetch
@@ -145,13 +149,6 @@ function findOverlapping(props: MapProperty[], pt: LatLng): MapProperty[] {
 /**
  * Returns a canonical string key for a set of corners that is invariant to
  * rotation, starting-corner choice, and winding direction.
- *
- * Algorithm:
- *   1. Round each coordinate to 6 decimal places (~11 cm precision) to absorb
- *      any floating-point noise introduced by the Stereo70 → WGS84 conversion.
- *   2. Sort the resulting "lat,lon" tokens alphabetically — this makes the key
- *      independent of the order corners appear in the file.
- *   3. Join with "|" to produce a single comparable string.
  */
 function cornerSetKey(corners: Corner[]): string {
   return corners
@@ -162,20 +159,18 @@ function cornerSetKey(corners: Corner[]): string {
 
 /**
  * Returns the set of property IDs whose corner geometry exactly matches at
- * least one other property (i.e. two or more properties occupy the same spot).
- * Both the "original" and its duplicate(s) are included in the returned set.
+ * least one other property.
  */
 function findDuplicateIds(props: MapProperty[]): Set<string> {
-  const keyToIds = new Map<string, string[]>();
+  const keyToIds: Record<string, string[]> = {};
   for (const p of props) {
     if (p.corners.length === 0) continue;
     const key = cornerSetKey(p.corners);
-    const bucket = keyToIds.get(key);
-    if (bucket) bucket.push(p.id);
-    else keyToIds.set(key, [p.id]);
+    if (keyToIds[key]) keyToIds[key].push(p.id);
+    else keyToIds[key] = [p.id];
   }
   const result = new Set<string>();
-  for (const ids of keyToIds.values()) {
+  for (const ids of Object.values(keyToIds)) {
     if (ids.length > 1) ids.forEach((id) => result.add(id));
   }
   return result;
@@ -185,11 +180,6 @@ function findDuplicateIds(props: MapProperty[]): Set<string> {
 // Map pixel → LatLng conversion (for drag-to-select)
 // ---------------------------------------------------------------------------
 
-/**
- * Convert a pixel position within the map container to a LatLng coordinate.
- * Uses linear interpolation against the map's current viewport bounds.
- * Accurate enough for the small geographic area this app covers (~1° × 1°).
- */
 function pixelToLatLng(
   map:       google.maps.Map,
   container: HTMLDivElement,
@@ -257,14 +247,24 @@ function MapTypeToggle({
 // FitAllProperties — inner component (must live inside <Map>)
 // ---------------------------------------------------------------------------
 //
-// On first render, once the map instance and core library are ready, expands
-// the viewport to show ALL property corners with a 5 % margin on each edge.
-// The `fitted` ref ensures this only runs once per map mount.
+// `tabKey` prop resets the `fitted` guard whenever the active tab changes so
+// the viewport refits to the (possibly filtered) item set on each tab switch.
 
-function FitAllProperties({ items }: { items: MapProperty[] }) {
+function FitAllProperties({
+  items,
+  tabKey,
+}: {
+  items:   MapProperty[];
+  tabKey:  string;
+}) {
   const map    = useMap();
   const core   = useMapsLibrary("core");
   const fitted = useRef(false);
+
+  // Reset the guard when the tab changes so we refit on every tab switch.
+  useEffect(() => {
+    fitted.current = false;
+  }, [tabKey]);
 
   useEffect(() => {
     if (!map || !core || fitted.current) return;
@@ -274,7 +274,6 @@ function FitAllProperties({ items }: { items: MapProperty[] }) {
     const bounds = new core.LatLngBounds();
     allCorners.forEach((c) => bounds.extend({ lat: c.lat, lng: c.lon }));
 
-    // Pad each edge by 5 % of the total span
     const ne     = bounds.getNorthEast();
     const sw     = bounds.getSouthWest();
     const latPad = (ne.lat() - sw.lat()) * 0.05;
@@ -287,7 +286,7 @@ function FitAllProperties({ items }: { items: MapProperty[] }) {
 
     map.fitBounds(padded, 0);
     fitted.current = true;
-  }, [map, core, items]);
+  }, [map, core, items, tabKey]);
 
   return null;
 }
@@ -295,10 +294,6 @@ function FitAllProperties({ items }: { items: MapProperty[] }) {
 // ---------------------------------------------------------------------------
 // MapRefCapture — inner component (must live inside <Map>)
 // ---------------------------------------------------------------------------
-//
-// Writes the underlying google.maps.Map instance into a ref owned by the
-// outer component, so the mouse-event handlers (which run on a sibling div)
-// can call map.getBounds() for pixel → LatLng conversion.
 
 function MapRefCapture({
   mapRef,
@@ -315,11 +310,6 @@ function MapRefCapture({
 // ---------------------------------------------------------------------------
 // CornerMarker — constant-size red dot at a property corner
 // ---------------------------------------------------------------------------
-//
-// AdvancedMarker renders as a DOM element overlaid on the map, so its size
-// is always 10 × 10 px regardless of zoom level — even tiny properties remain
-// clearly visible. Clicking the marker triggers onSelect with the corner's
-// exact geographic coordinates as the click position.
 
 function CornerMarker({ corner }: { corner: Corner }) {
   return (
@@ -332,7 +322,7 @@ function CornerMarker({ corner }: { corner: Corner }) {
           backgroundColor: "#ef4444",
           border:          "2px solid white",
           boxShadow:       "0 1px 4px rgba(0,0,0,0.45)",
-          pointerEvents:   "none", // let mouse events pass through to document listener
+          pointerEvents:   "none",
         }}
       />
     </AdvancedMarker>
@@ -343,7 +333,6 @@ function CornerMarker({ corner }: { corner: Corner }) {
 // Constants
 // ---------------------------------------------------------------------------
 
-// Fallback center (Bragadiru, Ilfov) used before FitAllProperties fires.
 const DEFAULT_CENTER: LatLng = { lat: 44.37, lng: 25.98 };
 const DEFAULT_ZOOM            = 13;
 
@@ -352,6 +341,7 @@ const DEFAULT_ZOOM            = 13;
 // ---------------------------------------------------------------------------
 
 export default function PropertyMap() {
+  const t           = useTranslations("property");
   const queryClient = useQueryClient();
 
   // Map display
@@ -363,6 +353,10 @@ export default function PropertyMap() {
   const [dragStart,   setDragStart]   = useState<PixelPoint | null>(null);
   const [dragCurrent, setDragCurrent] = useState<PixelPoint | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  // Tab state — showTabs becomes true when "Display all selected" is clicked
+  const [showTabs,  setShowTabs]  = useState(false);
+  const [activeTab, setActiveTab] = useState<ActiveTab>("all");
 
   // Delete flow
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -385,14 +379,11 @@ export default function PropertyMap() {
   // sees the latest values without needing them in the dependency array.
   const withGeometryRef = useRef<MapProperty[]>([]);
   const selectModeRef   = useRef(false);
+  const activeTabRef    = useRef<ActiveTab>("all");
+
   // IDs of properties currently displayed in the InfoWindow.
-  // This set only grows while the cursor is over any property — entries are
-  // never removed until the 2 s close timer fires after the cursor leaves
-  // all properties.  This lets the user move across neighbouring properties
-  // and still reach every "Open →" link without entries disappearing.
   const shownIdsRef = useRef<Set<string>>(new Set());
-  // Fixed anchor for the InfoWindow — set when the first property is shown,
-  // kept stable as more properties accumulate, reset on close.
+  // Fixed anchor for the InfoWindow.
   const anchorRef   = useRef<LatLng | null>(null);
 
   // -------------------------------------------------------------------------
@@ -407,52 +398,36 @@ export default function PropertyMap() {
   const items        = data?.items ?? [];
   const withGeometry = items.filter((p) => p.corners.length >= 1);
 
+  // Items shown on the current tab — filtered to selected IDs on the "selected" tab.
+  const displayItems =
+    activeTab === "selected"
+      ? withGeometry.filter((p) => selectedIds.has(p.id))
+      : withGeometry;
+
   // Properties whose corner set is identical to at least one other property.
-  // Recomputed whenever the data changes; cheap (O(n) hash pass).
   const duplicateIds = findDuplicateIds(withGeometry);
 
-  // Keep refs in sync after every render so the document listener sees current values.
+  // Keep refs in sync after every render.
   useEffect(() => {
-    withGeometryRef.current = withGeometry;
+    withGeometryRef.current = displayItems;
     selectModeRef.current   = selectMode;
+    activeTabRef.current    = activeTab;
   });
-
-  // -------------------------------------------------------------------------
-  // InfoWindow close-delay helpers
-  // -------------------------------------------------------------------------
-  //
-  // A 150 ms timer is used so the InfoWindow doesn't close the instant the
-  // cursor moves from a polygon edge into the InfoWindow content area.
-  // Entering the InfoWindow div (or entering another polygon) cancels the timer.
-
-  const scheduleClose = useCallback(() => {
-    closeTimerRef.current = setTimeout(() => setSelected(null), 2000);
-  }, []);
-
-  const cancelClose = useCallback(() => {
-    if (closeTimerRef.current) {
-      clearTimeout(closeTimerRef.current);
-      closeTimerRef.current = null;
-    }
-  }, []);
 
   // -------------------------------------------------------------------------
   // Document-level mousemove → hit-test → InfoWindow
   // -------------------------------------------------------------------------
   //
-  // We avoid relying on Polygon/Circle Google Maps events (onMouseover,
-  // onMousemove) because they do not fire reliably with this library version.
-  // Instead, a single document-level mousemove listener converts the cursor's
-  // pixel position to a LatLng (using the same linear-interpolation helper
-  // that powers drag-to-select), runs findOverlapping, and updates the
-  // InfoWindow only when the hovered property set actually changes.
+  // Runs in both normal and select modes so the InfoWindow can appear while
+  // the cursor hovers over a property during selection.
   //
-  // Refs (withGeometryRef, selectModeRef) are updated on every render so the
-  // closure always reads current values without needing them in deps.
+  // In select mode the InfoWindow shows Select / Unselect links instead of
+  // "Open →".  In the "selected" tab the InfoWindow shows "Open →" as usual.
 
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
-      if (selectModeRef.current) return;
+      // In select mode on the "all" tab, show hover InfoWindow with Select/Unselect.
+      // In the "selected" tab (no drag overlay), show normal hover InfoWindow.
       const container = containerRef.current;
       const map       = mapRef.current;
       if (!container || !map) return;
@@ -477,31 +452,21 @@ export default function PropertyMap() {
       const overlapping = findOverlapping(withGeometryRef.current, pos);
 
       if (overlapping.length > 0) {
-        // Cancel any pending close — cursor is over at least one property.
         if (closeTimerRef.current) {
           clearTimeout(closeTimerRef.current);
           closeTimerRef.current = null;
         }
 
-        // Find properties in the current hit-test that are not yet displayed.
         const newProps = overlapping.filter((p) => !shownIdsRef.current.has(p.id));
 
         if (newProps.length > 0) {
-          // Accumulate: add new properties to the shown set without removing
-          // any that are already displayed.  This means hovering A then B
-          // results in the InfoWindow showing both A and B — the user can
-          // still click A's link even after the cursor has drifted onto B.
           newProps.forEach((p) => shownIdsRef.current.add(p.id));
 
-          // Rebuild the full display list sorted largest-area first.
           const allShown = ([...shownIdsRef.current] as string[])
             .map((id) => withGeometryRef.current.find((p) => p.id === id))
             .filter((p): p is MapProperty => !!p);
           allShown.sort((a, b) => polygonAreaDeg(b.corners) - polygonAreaDeg(a.corners));
 
-          // Fix the anchor at the centroid of the first property shown and
-          // never move it — keeps the InfoWindow from jumping around as more
-          // properties are accumulated.
           if (!anchorRef.current) {
             anchorRef.current = centroid(allShown[0].corners);
           }
@@ -511,10 +476,7 @@ export default function PropertyMap() {
             items:    allShown.map((p) => ({ id: p.id, label: p.nickname ?? p.code })),
           });
         }
-        // No new properties → leave InfoWindow exactly as-is.
-
       } else {
-        // Cursor is over empty map — start the close timer if not already running.
         if (shownIdsRef.current.size > 0 && !closeTimerRef.current) {
           closeTimerRef.current = setTimeout(() => {
             setSelected(null);
@@ -535,12 +497,32 @@ export default function PropertyMap() {
 
   const toggleSelectMode = useCallback(() => {
     setSelectMode((prev) => {
-      if (!prev) setSelected(null); // entering select mode: close any open InfoWindow
+      if (!prev) {
+        // Entering select mode: close any open InfoWindow.
+        setSelected(null);
+      } else {
+        // Exiting select mode: clear selection + hide tabs.
+        setShowTabs(false);
+        setActiveTab("all");
+      }
       return !prev;
     });
     setSelectedIds(new Set());
     setDragStart(null);
     setDragCurrent(null);
+  }, []);
+
+  // -------------------------------------------------------------------------
+  // Individual property select / unselect (via InfoWindow in select mode)
+  // -------------------------------------------------------------------------
+
+  const togglePropertySelected = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   }, []);
 
   // -------------------------------------------------------------------------
@@ -584,17 +566,14 @@ export default function PropertyMap() {
     const map       = mapRef.current;
     const container = containerRef.current;
 
-    // Normalise the rectangle (drag can go in any direction)
     const minX = Math.min(dragStart.x, dragCurrent.x);
     const maxX = Math.max(dragStart.x, dragCurrent.x);
     const minY = Math.min(dragStart.y, dragCurrent.y);
     const maxY = Math.max(dragStart.y, dragCurrent.y);
 
-    // Convert pixel corners to geographic coordinates
-    const sw = pixelToLatLng(map, container, minX, maxY); // bottom-left of rect
-    const ne = pixelToLatLng(map, container, maxX, minY); // top-right of rect
+    const sw = pixelToLatLng(map, container, minX, maxY);
+    const ne = pixelToLatLng(map, container, maxX, minY);
 
-    // Collect properties that have at least one corner inside the rectangle
     const newSelected = new Set<string>();
     for (const prop of withGeometry) {
       if (propertyInRect(prop, sw.lat, sw.lng, ne.lat, ne.lng)) {
@@ -627,6 +606,8 @@ export default function PropertyMap() {
       setSelectedIds(new Set());
       setShowDeleteConfirm(false);
       setSelectMode(false);
+      setShowTabs(false);
+      setActiveTab("all");
       await queryClient.invalidateQueries({ queryKey: ["properties"] });
     } catch (err) {
       setDeleteError(
@@ -676,226 +657,331 @@ export default function PropertyMap() {
   // -------------------------------------------------------------------------
 
   return (
-    <div ref={containerRef} className="relative w-full h-full">
+    // Outer flex column: header row + map row.
+    <div className="flex flex-col h-full">
 
-      {/* Google Map */}
-      <Map
-        mapId={process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID ?? "DEMO_MAP_ID"}
-        defaultCenter={DEFAULT_CENTER}
-        defaultZoom={DEFAULT_ZOOM}
-        mapTypeId={mapType}
-        disableDefaultUI
-        gestureHandling={selectMode ? "none" : "greedy"}
-        style={{ width: "100%", height: "100%" }}
-        onClick={() => { if (!selectMode) setSelected(null); }}
-      >
-        {/* Inner helpers that require useMap() / useMapsLibrary() */}
-        <MapRefCapture mapRef={mapRef} />
-        <FitAllProperties items={withGeometry} />
-
-        {/* Polygons / circles (one pass) */}
-        {/* Colour priority: selected (red) > duplicate (blinking pink) > normal (blue) */}
-        {withGeometry.map((prop) => {
-          const isSelected  = selectedIds.has(prop.id);
-          const isDuplicate = duplicateIds.has(prop.id);
-
-          const strokeColor =
-            isSelected  ? "#ef4444" :   // red
-            isDuplicate ? "#ec4899" :   // pink-500
-                          "#3b82f6";    // blue-500
-
-          const fillColor =
-            isSelected  ? "#ef4444" :
-            isDuplicate ? "#ec4899" :
-                          "#3b82f6";
-
-          // Duplicate fill blinks between 0.45 (visible) and 0 (transparent)
-          // every second; stroke stays solid so the outline is always visible.
-          const fillOpacity =
-            isSelected  ? 0.30 :
-            isDuplicate ? (blinkOn ? 0.45 : 0) :
-                          0.15;
-
-          return prop.corners.length >= 3 ? (
-            <Polygon
-              key={prop.id}
-              paths={toLatLng(prop.corners)}
-              strokeColor={strokeColor}
-              strokeOpacity={1}
-              strokeWeight={2}
-              fillColor={fillColor}
-              fillOpacity={fillOpacity}
-            />
-          ) : (
-            <Circle
-              key={prop.id}
-              center={{ lat: prop.corners[0].lat, lng: prop.corners[0].lon }}
-              radius={25}
-              strokeColor={strokeColor}
-              strokeOpacity={1}
-              strokeWeight={2}
-              fillColor={fillColor}
-              fillOpacity={
-                isSelected  ? 0.55 :
-                isDuplicate ? (blinkOn ? 0.55 : 0) :
-                              0.35
-              }
-            />
-          );
-        })}
-
-        {/* Corner markers — constant-size red dots (second pass) */}
-        {withGeometry.flatMap((prop) =>
-          prop.corners.map((corner, idx) => (
-            <CornerMarker
-              key={`${prop.id}-c${idx}`}
-              corner={corner}
-            />
-          )),
+      {/* ------------------------------------------------------------------ */}
+      {/* Header — title when no tabs, tab bar when showTabs is true          */}
+      {/* ------------------------------------------------------------------ */}
+      <header className="flex items-center justify-center px-4 py-2 bg-zinc-900 border-b border-zinc-800 shrink-0 min-h-[40px]">
+        {!showTabs ? (
+          <h1 className="text-sm font-semibold text-zinc-100 tracking-tight">
+            {t("mapTitle")}
+          </h1>
+        ) : (
+          <div className="flex gap-0 rounded overflow-hidden border border-zinc-700">
+            <button
+              type="button"
+              onClick={() => setActiveTab("all")}
+              className={[
+                "px-4 py-1.5 text-xs font-semibold tracking-wide transition-colors",
+                activeTab === "all"
+                  ? "bg-zinc-100 text-zinc-900"
+                  : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-100",
+              ].join(" ")}
+            >
+              {t("mapTitle")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("selected")}
+              className={[
+                "px-4 py-1.5 text-xs font-semibold tracking-wide transition-colors border-l border-zinc-700",
+                activeTab === "selected"
+                  ? "bg-zinc-100 text-zinc-900"
+                  : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-100",
+              ].join(" ")}
+            >
+              {t("map.selectedPropertiesTab")}
+              <span className="ml-1.5 text-[10px] font-bold bg-red-600 text-white rounded-full px-1.5 py-0.5">
+                {selectedIds.size}
+              </span>
+            </button>
+          </div>
         )}
-
-        {/* InfoWindow — lists ALL properties at the hover position,  */}
-        {/* ordered largest area first (outermost parcel at the top). */}
-        {selected && !selectMode && (
-          <InfoWindow
-            position={selected.position}
-            onCloseClick={() => { setSelected(null); shownIdsRef.current = new Set(); anchorRef.current = null; }}
-          >
-            <div className="flex flex-col min-w-[160px] px-1 py-0.5 gap-0">
-              {selected.items.map((item, idx) => (
-                <div
-                  key={item.id}
-                  className={[
-                    "flex flex-col gap-0.5 py-1.5",
-                    idx > 0 ? "border-t border-zinc-200" : "",
-                  ].join(" ")}
-                >
-                  <span className="font-semibold text-sm text-zinc-900 leading-tight">
-                    {item.label}
-                  </span>
-                  <Link
-                    href={`/properties/${item.id}`}
-                    className="text-xs text-blue-600 hover:underline"
-                  >
-                    Open →
-                  </Link>
-                </div>
-              ))}
-            </div>
-          </InfoWindow>
-        )}
-      </Map>
+      </header>
 
       {/* ------------------------------------------------------------------ */}
-      {/* Drag-to-select overlay                                               */}
-      {/* pointer-events: none in pan mode → map works normally               */}
-      {/* pointer-events: all in select mode → captures the drag gesture      */}
+      {/* Map container — containerRef anchors all absolute children          */}
       {/* ------------------------------------------------------------------ */}
-      <div
-        className="absolute inset-0 z-10"
-        style={{
-          pointerEvents: selectMode ? "all" : "none",
-          cursor:        selectMode ? "crosshair" : "default",
-        }}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleOverlayMouseLeave}
-      >
-        {/* Dashed red rectangle drawn live during the drag gesture */}
-        {selectionRect && (
-          <div
-            style={{
-              position:        "absolute",
-              left:            selectionRect.left,
-              top:             selectionRect.top,
-              width:           selectionRect.width,
-              height:          selectionRect.height,
-              border:          "2px dashed #ef4444",
-              backgroundColor: "rgba(239,68,68,0.07)",
-              pointerEvents:   "none",
-            }}
-          />
-        )}
-      </div>
+      <div ref={containerRef} className="flex-1 min-h-0 relative">
 
-      {/* ------------------------------------------------------------------ */}
-      {/* Toolbar — top-right: Select toggle + STR / SAT                      */}
-      {/* ------------------------------------------------------------------ */}
-      <div className="absolute top-3 right-3 z-20 flex items-center gap-2">
-        <button
-          type="button"
-          onClick={toggleSelectMode}
-          title={
-            selectMode
-              ? "Exit selection mode"
-              : "Enter selection mode — drag to select properties for deletion"
-          }
-          className={[
-            "flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded shadow border transition-colors",
-            selectMode
-              ? "bg-red-600 text-white border-red-600 hover:bg-red-700"
-              : "bg-white text-ink border-wire hover:bg-canvas",
-          ].join(" ")}
+        {/* Google Map */}
+        <Map
+          mapId={process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID ?? "DEMO_MAP_ID"}
+          defaultCenter={DEFAULT_CENTER}
+          defaultZoom={DEFAULT_ZOOM}
+          mapTypeId={mapType}
+          disableDefaultUI
+          gestureHandling={selectMode && activeTab === "all" ? "none" : "greedy"}
+          style={{ width: "100%", height: "100%" }}
+          onClick={() => { if (!selectMode) setSelected(null); }}
         >
-          {selectMode ? "✕ Cancel select" : "⬚ Select"}
-        </button>
+          {/* Inner helpers that require useMap() / useMapsLibrary() */}
+          <MapRefCapture mapRef={mapRef} />
+          <FitAllProperties items={displayItems} tabKey={activeTab} />
 
-        <MapTypeToggle value={mapType} onChange={setMapType} />
-      </div>
+          {/* Polygons / circles */}
+          {/* Colour: selected (red) > duplicate (blinking pink) > normal (blue) */}
+          {displayItems.map((prop) => {
+            const isSelected  = selectedIds.has(prop.id);
+            // In "selected" tab, show all items in normal blue (they're all "selected"
+            // and red would be confusing when everything is red).
+            const effectiveSelected = isSelected && activeTab === "all";
+            const isDuplicate = duplicateIds.has(prop.id);
 
-      {/* ------------------------------------------------------------------ */}
-      {/* "Delete all selected" button — bottom-centre                        */}
-      {/* ------------------------------------------------------------------ */}
-      {selectedIds.size > 0 && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
-          <button
-            type="button"
-            onClick={() => { setDeleteError(null); setShowDeleteConfirm(true); }}
-            className="px-5 py-2.5 bg-red-600 text-white text-sm font-semibold rounded-lg shadow-lg hover:bg-red-700 active:bg-red-800 transition-colors border border-red-700"
-          >
-            Delete all selected ({selectedIds.size})
-          </button>
+            const strokeColor =
+              effectiveSelected ? "#ef4444" :
+              isDuplicate       ? "#ec4899" :
+                                  "#3b82f6";
+
+            const fillColor =
+              effectiveSelected ? "#ef4444" :
+              isDuplicate       ? "#ec4899" :
+                                  "#3b82f6";
+
+            const fillOpacity =
+              effectiveSelected ? 0.30 :
+              isDuplicate       ? (blinkOn ? 0.45 : 0) :
+                                  0.15;
+
+            return prop.corners.length >= 3 ? (
+              <Polygon
+                key={prop.id}
+                paths={toLatLng(prop.corners)}
+                strokeColor={strokeColor}
+                strokeOpacity={1}
+                strokeWeight={2}
+                fillColor={fillColor}
+                fillOpacity={fillOpacity}
+              />
+            ) : (
+              <Circle
+                key={prop.id}
+                center={{ lat: prop.corners[0].lat, lng: prop.corners[0].lon }}
+                radius={25}
+                strokeColor={strokeColor}
+                strokeOpacity={1}
+                strokeWeight={2}
+                fillColor={fillColor}
+                fillOpacity={
+                  effectiveSelected ? 0.55 :
+                  isDuplicate       ? (blinkOn ? 0.55 : 0) :
+                                      0.35
+                }
+              />
+            );
+          })}
+
+          {/* Corner markers — constant-size red dots */}
+          {displayItems.flatMap((prop) =>
+            prop.corners.map((corner, idx) => (
+              <CornerMarker
+                key={`${prop.id}-c${idx}`}
+                corner={corner}
+              />
+            )),
+          )}
+
+          {/* InfoWindow — shown on hover in both normal and select modes.    */}
+          {/* Normal mode: label + "Open →" link.                             */}
+          {/* Select mode (all tab): label + red Select / green Unselect btn. */}
+          {/* Selected tab: label + "Open →" link (no select actions).        */}
+          {selected && (
+            <InfoWindow
+              position={selected.position}
+              onCloseClick={() => {
+                setSelected(null);
+                shownIdsRef.current = new Set();
+                anchorRef.current   = null;
+              }}
+            >
+              <div className="flex flex-col min-w-[160px] px-1 py-0.5 gap-0">
+                {selected.items.map((item, idx) => (
+                  <div
+                    key={item.id}
+                    className={[
+                      "flex flex-col gap-0.5 py-1.5",
+                      idx > 0 ? "border-t border-zinc-200" : "",
+                    ].join(" ")}
+                  >
+                    <span className="font-semibold text-sm text-zinc-900 leading-tight">
+                      {item.label}
+                    </span>
+
+                    {selectMode && activeTab === "all" ? (
+                      // Select mode: show Select / Unselect toggle button
+                      <button
+                        type="button"
+                        onClick={() => togglePropertySelected(item.id)}
+                        className={[
+                          "text-xs font-semibold text-left",
+                          selectedIds.has(item.id)
+                            ? "text-green-600 hover:text-green-700"
+                            : "text-red-600 hover:text-red-700",
+                        ].join(" ")}
+                      >
+                        {selectedIds.has(item.id)
+                          ? t("map.unselectLink")
+                          : t("map.selectLink")}
+                      </button>
+                    ) : (
+                      // Normal / selected-tab: show "Open →" link
+                      <Link
+                        href={`/properties/${item.id}`}
+                        className="text-xs text-blue-600 hover:underline"
+                      >
+                        Open →
+                      </Link>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </InfoWindow>
+          )}
+        </Map>
+
+        {/* ---------------------------------------------------------------- */}
+        {/* Drag-to-select overlay — only active in "all" tab + select mode  */}
+        {/* ---------------------------------------------------------------- */}
+        <div
+          className="absolute inset-0 z-10"
+          style={{
+            pointerEvents: (selectMode && activeTab === "all") ? "all" : "none",
+            cursor:        (selectMode && activeTab === "all") ? "crosshair" : "default",
+          }}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleOverlayMouseLeave}
+        >
+          {selectionRect && activeTab === "all" && (
+            <div
+              style={{
+                position:        "absolute",
+                left:            selectionRect.left,
+                top:             selectionRect.top,
+                width:           selectionRect.width,
+                height:          selectionRect.height,
+                border:          "2px dashed #ef4444",
+                backgroundColor: "rgba(239,68,68,0.07)",
+                pointerEvents:   "none",
+              }}
+            />
+          )}
         </div>
-      )}
 
-      {/* ------------------------------------------------------------------ */}
-      {/* Delete confirmation dialog                                           */}
-      {/* ------------------------------------------------------------------ */}
-      {showDeleteConfirm && (
-        <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/45">
-          <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full mx-4">
-            <p className="text-zinc-900 font-medium text-base leading-snug mb-4">
-              This {selectedIds.size} of properties will be erased from the system.
-            </p>
+        {/* ---------------------------------------------------------------- */}
+        {/* Toolbar — top-right: Select toggle + STR / SAT                   */}
+        {/* Only shown on the "all properties" tab                           */}
+        {/* ---------------------------------------------------------------- */}
+        {activeTab === "all" && (
+          <div className="absolute top-3 right-3 z-20 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={toggleSelectMode}
+              title={
+                selectMode
+                  ? "Exit selection mode"
+                  : "Enter selection mode — drag to select properties for deletion"
+              }
+              className={[
+                "flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded shadow border transition-colors",
+                selectMode
+                  ? "bg-red-600 text-white border-red-600 hover:bg-red-700"
+                  : "bg-white text-ink border-wire hover:bg-canvas",
+              ].join(" ")}
+            >
+              {selectMode ? "✕ Cancel select" : "⬚ Select"}
+            </button>
 
-            {deleteError && (
-              <p className="text-red-600 text-sm mb-3 rounded bg-red-50 px-3 py-2 border border-red-200">
-                {deleteError}
+            <MapTypeToggle value={mapType} onChange={setMapType} />
+          </div>
+        )}
+
+        {/* STR/SAT toggle alone on the "selected" tab (no select-mode button) */}
+        {activeTab === "selected" && (
+          <div className="absolute top-3 right-3 z-20">
+            <MapTypeToggle value={mapType} onChange={setMapType} />
+          </div>
+        )}
+
+        {/* ---------------------------------------------------------------- */}
+        {/* Bottom action buttons — visible when properties are selected      */}
+        {/* ---------------------------------------------------------------- */}
+        {selectedIds.size > 0 && activeTab === "all" && (
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3">
+            {/* Delete all selected */}
+            <button
+              type="button"
+              onClick={() => { setDeleteError(null); setShowDeleteConfirm(true); }}
+              className="px-5 py-2.5 bg-red-600 text-white text-sm font-semibold rounded-lg shadow-lg hover:bg-red-700 active:bg-red-800 transition-colors border border-red-700"
+            >
+              Delete all selected ({selectedIds.size})
+            </button>
+
+            {/* Display all selected — shows / switches to the "selected" tab */}
+            <button
+              type="button"
+              onClick={() => { setShowTabs(true); setActiveTab("selected"); }}
+              className="px-5 py-2.5 bg-white text-zinc-900 text-sm font-semibold rounded-lg shadow-lg hover:bg-zinc-100 active:bg-zinc-200 transition-colors border border-zinc-300"
+            >
+              {t("map.displayAllSelected")} ({selectedIds.size})
+            </button>
+          </div>
+        )}
+
+        {/* Delete button also shown on the "selected" tab */}
+        {selectedIds.size > 0 && activeTab === "selected" && (
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
+            <button
+              type="button"
+              onClick={() => { setDeleteError(null); setShowDeleteConfirm(true); }}
+              className="px-5 py-2.5 bg-red-600 text-white text-sm font-semibold rounded-lg shadow-lg hover:bg-red-700 active:bg-red-800 transition-colors border border-red-700"
+            >
+              Delete all selected ({selectedIds.size})
+            </button>
+          </div>
+        )}
+
+        {/* ---------------------------------------------------------------- */}
+        {/* Delete confirmation dialog                                        */}
+        {/* ---------------------------------------------------------------- */}
+        {showDeleteConfirm && (
+          <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/45">
+            <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full mx-4">
+              <p className="text-zinc-900 font-medium text-base leading-snug mb-4">
+                This {selectedIds.size} of properties will be erased from the system.
               </p>
-            )}
 
-            <div className="flex gap-3 justify-end">
-              <button
-                type="button"
-                disabled={deleting}
-                onClick={() => { setShowDeleteConfirm(false); setDeleteError(null); }}
-                className="px-4 py-2 text-sm font-medium text-zinc-700 bg-zinc-100 rounded-lg hover:bg-zinc-200 disabled:opacity-50 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={deleting}
-                onClick={handleDeleteConfirm}
-                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors min-w-[80px]"
-              >
-                {deleting ? "Deleting…" : "Approve"}
-              </button>
+              {deleteError && (
+                <p className="text-red-600 text-sm mb-3 rounded bg-red-50 px-3 py-2 border border-red-200">
+                  {deleteError}
+                </p>
+              )}
+
+              <div className="flex gap-3 justify-end">
+                <button
+                  type="button"
+                  disabled={deleting}
+                  onClick={() => { setShowDeleteConfirm(false); setDeleteError(null); }}
+                  className="px-4 py-2 text-sm font-medium text-zinc-700 bg-zinc-100 rounded-lg hover:bg-zinc-200 disabled:opacity-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={deleting}
+                  onClick={handleDeleteConfirm}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors min-w-[80px]"
+                >
+                  {deleting ? "Deleting…" : "Approve"}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

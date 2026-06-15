@@ -38,7 +38,13 @@
     "error": "Failed to load",
     "empty": "No properties found",
     "counts": "Showing {shown} of {total}",
-    "mapTitle": "Property Map",
+    "mapTitle": "All Properties",
+    "map": {
+      "selectedPropertiesTab": "Selected Properties",
+      "selectLink": "Select",
+      "unselectLink": "Unselect",
+      "displayAllSelected": "Display all selected"
+    },
     "createTitle": "New Property",
     "saveError": "Could not save",
     "deleteError": "Could not delete",
