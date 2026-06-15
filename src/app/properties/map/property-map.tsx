@@ -526,72 +526,80 @@ export default function PropertyMap() {
   }, []);
 
   // -------------------------------------------------------------------------
-  // Drag-to-select mouse handlers (on the transparent overlay div)
+  // Drag-to-select — container-level DOM listeners
   // -------------------------------------------------------------------------
+  //
+  // The overlay div is purely visual (pointer-events: none).  We listen on the
+  // container element directly so that clicks inside the Google Maps InfoWindow
+  // (which render at a high z-index inside the Maps DOM) are never intercepted.
+  // We skip drag initiation when the mousedown target is inside .gm-style-iw
+  // (InfoWindow wrapper) or any other Google Maps UI control.
 
-  const handleMouseDown = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      if (!selectMode || !containerRef.current) return;
-      e.preventDefault();
-      const rect = containerRef.current.getBoundingClientRect();
-      const pos  = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-      setDragStart(pos);
-      setDragCurrent(pos);
-    },
-    [selectMode],
-  );
-
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      if (!selectMode || !dragStart || !containerRef.current) return;
-      const rect = containerRef.current.getBoundingClientRect();
-      setDragCurrent({ x: e.clientX - rect.left, y: e.clientY - rect.top });
-    },
-    [selectMode, dragStart],
-  );
-
-  const handleMouseUp = useCallback(() => {
-    if (
-      !selectMode ||
-      !dragStart ||
-      !dragCurrent ||
-      !mapRef.current ||
-      !containerRef.current
-    ) {
+  useEffect(() => {
+    if (!selectMode) {
       setDragStart(null);
       setDragCurrent(null);
       return;
     }
 
-    const map       = mapRef.current;
     const container = containerRef.current;
+    if (!container) return;
 
-    const minX = Math.min(dragStart.x, dragCurrent.x);
-    const maxX = Math.max(dragStart.x, dragCurrent.x);
-    const minY = Math.min(dragStart.y, dragCurrent.y);
-    const maxY = Math.max(dragStart.y, dragCurrent.y);
+    let startPx:  PixelPoint | null = null;
+    let isDrag = false;
 
-    const sw = pixelToLatLng(map, container, minX, maxY);
-    const ne = pixelToLatLng(map, container, maxX, minY);
+    const onMouseDown = (e: MouseEvent) => {
+      if (activeTabRef.current !== "all") return;
+      // Let InfoWindow button clicks pass through — never start a drag here.
+      if ((e.target as Element).closest?.(".gm-style-iw")) return;
+      const rect = container.getBoundingClientRect();
+      startPx   = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+      isDrag    = false;
+      setDragStart(startPx);
+      setDragCurrent(startPx);
+    };
 
-    const newSelected = new Set<string>();
-    for (const prop of withGeometry) {
-      if (propertyInRect(prop, sw.lat, sw.lng, ne.lat, ne.lng)) {
-        newSelected.add(prop.id);
+    const onMouseMove = (e: MouseEvent) => {
+      if (!startPx) return;
+      const rect = container.getBoundingClientRect();
+      const cur  = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+      if (Math.hypot(cur.x - startPx.x, cur.y - startPx.y) > 5) isDrag = true;
+      if (isDrag) setDragCurrent(cur);
+    };
+
+    const onMouseUp = (e: MouseEvent) => {
+      if (!startPx) return;
+      if (isDrag && mapRef.current) {
+        const rect = container.getBoundingClientRect();
+        const end  = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+        const map  = mapRef.current;
+        const minX = Math.min(startPx.x, end.x);
+        const maxX = Math.max(startPx.x, end.x);
+        const minY = Math.min(startPx.y, end.y);
+        const maxY = Math.max(startPx.y, end.y);
+        const sw   = pixelToLatLng(map, container as HTMLDivElement, minX, maxY);
+        const ne   = pixelToLatLng(map, container as HTMLDivElement, maxX, minY);
+        const next = new Set<string>();
+        for (const prop of withGeometryRef.current) {
+          if (propertyInRect(prop, sw.lat, sw.lng, ne.lat, ne.lng)) next.add(prop.id);
+        }
+        setSelectedIds(next);
       }
-    }
-
-    setSelectedIds(newSelected);
-    setDragStart(null);
-    setDragCurrent(null);
-  }, [selectMode, dragStart, dragCurrent, withGeometry]);
-
-  const handleOverlayMouseLeave = useCallback(() => {
-    if (dragStart) {
+      startPx = null;
+      isDrag  = false;
       setDragStart(null);
       setDragCurrent(null);
-    }
-  }, [dragStart]);
+    };
+
+    container.addEventListener("mousedown", onMouseDown);
+    document.addEventListener("mousemove",  onMouseMove);
+    document.addEventListener("mouseup",    onMouseUp);
+    return () => {
+      container.removeEventListener("mousedown", onMouseDown);
+      document.removeEventListener("mousemove",  onMouseMove);
+      document.removeEventListener("mouseup",    onMouseUp);
+    };
+  }, [selectMode]); // withGeometry always accessed via withGeometryRef
 
   // -------------------------------------------------------------------------
   // Batch delete
@@ -704,7 +712,11 @@ export default function PropertyMap() {
       {/* ------------------------------------------------------------------ */}
       {/* Map container — containerRef anchors all absolute children          */}
       {/* ------------------------------------------------------------------ */}
-      <div ref={containerRef} className="flex-1 min-h-0 relative">
+      <div
+        ref={containerRef}
+        className="flex-1 min-h-0 relative"
+        style={{ cursor: (selectMode && activeTab === "all") ? "crosshair" : undefined }}
+      >
 
         {/* Google Map */}
         <Map
@@ -815,7 +827,7 @@ export default function PropertyMap() {
                         type="button"
                         onClick={() => togglePropertySelected(item.id)}
                         className={[
-                          "text-xs font-semibold text-left",
+                          "text-xs font-semibold text-left underline cursor-pointer",
                           selectedIds.has(item.id)
                             ? "text-green-600 hover:text-green-700"
                             : "text-red-600 hover:text-red-700",
@@ -842,20 +854,15 @@ export default function PropertyMap() {
         </Map>
 
         {/* ---------------------------------------------------------------- */}
-        {/* Drag-to-select overlay — only active in "all" tab + select mode  */}
+        {/* Drag-to-select overlay — visual only (pointer-events: none)     */}
+        {/* Drag logic lives in a container-level useEffect so InfoWindow   */}
+        {/* button clicks are never intercepted by the overlay.             */}
         {/* ---------------------------------------------------------------- */}
-        <div
-          className="absolute inset-0 z-10"
-          style={{
-            pointerEvents: (selectMode && activeTab === "all") ? "all" : "none",
-            cursor:        (selectMode && activeTab === "all") ? "crosshair" : "default",
-          }}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleOverlayMouseLeave}
-        >
-          {selectionRect && activeTab === "all" && (
+        {selectionRect && activeTab === "all" && (
+          <div
+            className="absolute inset-0 z-10"
+            style={{ pointerEvents: "none" }}
+          >
             <div
               style={{
                 position:        "absolute",
@@ -868,8 +875,8 @@ export default function PropertyMap() {
                 pointerEvents:   "none",
               }}
             />
-          )}
-        </div>
+          </div>
+        )}
 
         {/* ---------------------------------------------------------------- */}
         {/* Toolbar — top-right: Select toggle + STR / SAT                   */}
