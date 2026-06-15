@@ -276,6 +276,8 @@ describe("fromApiPayload", () => {
         },
       ],
       notes: null,
+      contactPerson1Name: null,
+      contactPerson2Name: null,
     });
     expect(result.addresses.HEADQUARTERS.streetLine).toBe("HQ St 1");
     expect(result.addresses.HEADQUARTERS.country).toBe("Romania");
@@ -297,6 +299,8 @@ describe("fromApiPayload", () => {
         },
       ],
       notes: null,
+      contactPerson1Name: null,
+      contactPerson2Name: null,
     });
     expect(result.addresses.HEADQUARTERS.streetLine).toBe("");
     expect(result.addresses.CORRESPONDENCE.streetLine).toBe("");
