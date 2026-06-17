@@ -536,11 +536,7 @@ export default function PropertyMap() {
   // (InfoWindow wrapper) or any other Google Maps UI control.
 
   useEffect(() => {
-    if (!selectMode) {
-      setDragStart(null);
-      setDragCurrent(null);
-      return;
-    }
+    if (!selectMode) return;
 
     const container = containerRef.current;
     if (!container) return;
@@ -614,6 +610,8 @@ export default function PropertyMap() {
       setSelectedIds(new Set());
       setShowDeleteConfirm(false);
       setSelectMode(false);
+      setDragStart(null);
+      setDragCurrent(null);
       setShowTabs(false);
       setActiveTab("all");
       await queryClient.invalidateQueries({ queryKey: ["properties"] });
