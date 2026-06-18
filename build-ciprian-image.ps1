@@ -9,12 +9,14 @@
 #   - Docker Desktop running
 #   - .env file present in C:\dev\ga40prj\ with real values filled in
 #   - C:\dev\ga40prj.Ciprian\ folder exists (created once manually)
+#   - ga40prj-postgres container running with your current local schema applied
 #
 # What this script does:
 #   1. Reads NEXT_PUBLIC_* values from your .env file
 #   2. Builds the Docker image (takes 5-10 min on first run; faster after)
 #   3. Exports the image to C:\dev\ga40prj.Ciprian\docker\app\ga40prj-app.tar
-#   4. Copies the latest schema migration SQL into the Ciprian init folder
+#   4. Dumps the current schema straight from ga40prj-postgres (safe, UTF-8 --
+#      no manual pg_dump step) into the Ciprian init folder as 02-schema.sql
 #
 # To update Ciprian after a new slice:
 #   1. Run this script again
@@ -106,24 +108,55 @@ if ($LASTEXITCODE -ne 0) {
 
 Write-Host "Export complete." -ForegroundColor Green
 
-# ---- Step 4: copy latest schema SQL into Ciprian's init folder ---------------
+# ---- Step 4: regenerate schema SQL directly from the running Postgres container ----
 # This file is the combined SQL migration applied to a fresh Postgres instance.
-# Generate it with:
-#   pg_dump --schema-only --no-owner --no-privileges -d ga40db > supabase_migrations.sql
+#
+# IMPORTANT -- do NOT generate this file with `pg_dump ... > file.sql` in PowerShell.
+# PowerShell's `>` redirect writes UTF-16LE with a BOM, which Postgres's
+# docker-entrypoint-initdb.d cannot parse -- it silently corrupts the init script,
+# the schema never gets created, and the app fails with "Failed to load" against an
+# empty database the next time someone starts from a fresh volume. (This is exactly
+# what happened to Ciprian's UAT package after the Slice.14.03 laptop migration.)
+# Always dump *inside* the container with `-f`, then `docker cp` the result out --
+# that path is always UTF-8, no redirect involved.
 
-$schemaSrc  = "supabase_migrations.sql"
 $schemaDest = "$ciprianRoot\docker\postgres\init\02-schema.sql"
 
-if (Test-Path $schemaSrc) {
-    Copy-Item $schemaSrc $schemaDest -Force
+Write-Host ""
+Write-Host "Dumping current schema from ga40prj-postgres..." -ForegroundColor Cyan
+
+docker exec ga40prj-postgres pg_dump --schema-only --no-owner --no-privileges -U postgres -d ga40db -f /tmp/ga40prj-schema-dump.sql
+
+if ($LASTEXITCODE -ne 0) {
     Write-Host ""
-    Write-Host "Schema SQL copied to Ciprian's init folder." -ForegroundColor Green
-} else {
-    Write-Host ""
-    Write-Host "WARNING: supabase_migrations.sql not found -- skipping schema copy." -ForegroundColor Yellow
-    Write-Host "         Ciprian will need to apply the schema manually via pgAdmin on first run."
-    Write-Host "         Generate it with: pg_dump --schema-only --no-owner -d ga40db > supabase_migrations.sql"
+    Write-Host "ERROR: pg_dump failed inside ga40prj-postgres. Is the container running?" -ForegroundColor Red
+    Write-Host "       Start it with: docker compose -f docker\postgres\docker-compose.yml --env-file .env up -d"
+    exit 1
 }
+
+docker cp ga40prj-postgres:/tmp/ga40prj-schema-dump.sql $schemaDest
+
+if ($LASTEXITCODE -ne 0) {
+    Write-Host ""
+    Write-Host "ERROR: docker cp failed -- could not retrieve the schema dump." -ForegroundColor Red
+    exit 1
+}
+
+# Safety net: pg_dump always emits a bare "CREATE SCHEMA topology;" when PostGIS
+# topology is installed. Ciprian's 01-extensions.sql already creates that schema
+# (via CREATE EXTENSION IF NOT EXISTS postgis_topology), so the bare statement would
+# fail with "schema topology already exists" on first boot and abort the rest of this
+# init script (Postgres's docker-entrypoint runs each file with ON_ERROR_STOP=1) --
+# meaning none of the ~30 application tables after it would get created either.
+# Make it idempotent. Written via .NET so it's plain UTF-8 with no BOM, regardless of
+# PowerShell version.
+$utf8NoBom = New-Object System.Text.UTF8Encoding $false
+$schemaText = [System.IO.File]::ReadAllText($schemaDest)
+$schemaText = $schemaText -replace 'CREATE SCHEMA topology;', 'CREATE SCHEMA IF NOT EXISTS topology;'
+[System.IO.File]::WriteAllText($schemaDest, $schemaText, $utf8NoBom)
+
+Write-Host ""
+Write-Host "Schema SQL regenerated and copied to Ciprian's init folder." -ForegroundColor Green
 
 # ---- Done --------------------------------------------------------------------
 
