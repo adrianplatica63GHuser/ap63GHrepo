@@ -13,7 +13,7 @@
  * untouched.
  */
 
-import { and, count, eq, ilike, isNull, or, sql } from "drizzle-orm";
+import { and, count, desc, eq, ilike, isNull, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { address, naturalPerson, person, principalObject } from "@/db/schema";
 import type {
@@ -193,6 +193,13 @@ export async function createNaturalPerson(
         personalEmail1: natFields.personalEmail1 ?? null,
         personalEmail2: natFields.personalEmail2 ?? null,
         workEmail: natFields.workEmail ?? null,
+        placeOfBirth: natFields.placeOfBirth ?? null,
+        idIssuingAuthority: natFields.idIssuingAuthority ?? null,
+        idValidFrom: natFields.idValidFrom ?? null,
+        idValidUntil: natFields.idValidUntil ?? null,
+        idCardNumber: natFields.idCardNumber ?? null,
+        idMrzRaw: natFields.idMrzRaw ?? null,
+        citizenshipId: natFields.citizenshipId ?? null,
       })
       .returning();
 
@@ -483,6 +490,26 @@ export async function listPersonPaperwork(personId: string): Promise<PersonPaper
     .orderBy(paperwork.code);
 
   return rows as PersonPaperworkItem[];
+}
+
+/**
+ * The person's linked ID card Document (paperwork.type = CARTE_IDENTITATE),
+ * if one exists. Used to render the read-only "ID link" row on the Details
+ * tab. A person can in principle have more than one such Document linked;
+ * this returns the most recently associated one.
+ */
+export async function getPersonIdCardLink(
+  personId: string,
+): Promise<{ id: string; code: string } | null> {
+  const rows = await db
+    .select({ id: paperwork.id, code: paperwork.code })
+    .from(personPaperwork)
+    .innerJoin(paperwork, and(eq(personPaperwork.paperworkId, paperwork.id), isNull(paperwork.deletedAt)))
+    .where(and(eq(personPaperwork.personId, personId), eq(paperwork.type, "CARTE_IDENTITATE")))
+    .orderBy(desc(personPaperwork.createdAt))
+    .limit(1);
+
+  return rows[0] ?? null;
 }
 
 export async function associatePaperworkToPerson(

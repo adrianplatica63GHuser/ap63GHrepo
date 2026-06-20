@@ -158,6 +158,17 @@ export const naturalPerson = pgTable(
     personalEmail1: text("personal_email_1"),
     personalEmail2: text("personal_email_2"),
     workEmail: text("work_email"),
+
+    // Added in Slice 14.15.01 — fields read off a Romanian ID card that have
+    // no existing home, plus a citizenship FK. All nullable; populated either
+    // manually or via the Import/Classify "Person" flow's vision extraction.
+    placeOfBirth: text("place_of_birth"),
+    idIssuingAuthority: text("id_issuing_authority"),
+    idValidFrom: date("id_valid_from", { mode: "string" }),
+    idValidUntil: date("id_valid_until", { mode: "string" }),
+    idCardNumber: text("id_card_number"),
+    idMrzRaw: text("id_mrz_raw"),
+    citizenshipId: uuid("citizenship_id").references(() => lookupCitizenship.id, { onDelete: "set null" }),
   },
   (t) => [
     // At least one of first_name / last_name must be set.
@@ -569,6 +580,9 @@ export const paperworkTypeEnum = pgEnum("paperwork_type", [
   "ACT_DONATIE",
   "AUTORIZATIE",
   "AVIZ_INSTITUTIE",
+  // Added in Slice 14.15.01 — a scanned ID card, stored as a Document
+  // (reuses paperwork + paperwork_page + person_paperwork; no new table).
+  "CARTE_IDENTITATE",
   "CERTIFICAT_FISCAL",
   "CERTIFICAT_MOSTENITOR",
   "CERTIFICAT_SARCINI",
@@ -583,6 +597,10 @@ export const paperworkTypeEnum = pgEnum("paperwork_type", [
   "HOTARARE_JUDECATOREASCA",
   "TESTAMENT",
   "TITLU_PROPRIETATE",
+  // Added in Slice 14.15.01 — fallback type for a Document of unknown kind
+  // (the Import/Classify "Document" flow's default when the user doesn't
+  // pick a known type).
+  "UNCLASSIFIED",
 ]);
 
 // ---------------------------------------------------------------------------
