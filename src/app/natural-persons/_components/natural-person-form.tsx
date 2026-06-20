@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   type FieldPath,
   type UseFormRegister,
@@ -18,6 +18,8 @@ import {
   toApiPayload,
 } from "./form-schema";
 
+type IdCardLink = { id: string; code: string } | null;
+
 type Props = {
   /** "create" — POST /api/people; "edit" — PATCH /api/people/[personId]; "view" — read-only display */
   mode: "create" | "edit" | "view";
@@ -27,17 +29,41 @@ type Props = {
   personCode?: string;
   /** Pre-filled form values; defaults to emptyFormValues for create. */
   initialValues?: FormValues;
+  /** The person's CARTE_IDENTITATE Document, if one is linked (edit/view only). */
+  linkedIdCard?: IdCardLink;
 };
+
+function useCitizenshipOptions(): { value: string; label: string }[] {
+  const [options, setOptions] = useState<{ value: string; label: string }[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/admin/value-lists/citizenships")
+      .then((r) => (r.ok ? r.json() : { items: [] }))
+      .then((data: { items?: { id: string; name: string }[] }) => {
+        if (cancelled) return;
+        setOptions((data.items ?? []).map((r) => ({ value: r.id, label: r.name })));
+      })
+      .catch(() => {
+        // Leave options empty — the select still renders with just "—".
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  return options;
+}
 
 export function NaturalPersonForm({
   mode,
   personId,
   personCode,
   initialValues,
+  linkedIdCard,
 }: Props) {
   const t = useTranslations("naturalPerson");
   const router = useRouter();
   const queryClient = useQueryClient();
+  const citizenshipOptions = useCitizenshipOptions();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -260,6 +286,84 @@ export function NaturalPersonForm({
               error={errors.workEmail?.message}
             />
           </div>
+        </div>
+      </section>
+
+      {/* ID Card — fields with no home elsewhere; populated manually or via
+          the Import/Classify "Person" flow's vision extraction. */}
+      <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
+          {t("sections.idCard")}
+        </h2>
+        <div className="flex flex-col gap-2">
+          <div className="grid grid-cols-2 gap-2">
+            <SelectField
+              label={t("fields.citizenship")}
+              name="citizenshipId"
+              register={register}
+              error={errors.citizenshipId?.message}
+              options={[{ value: "", label: "—" }, ...citizenshipOptions]}
+            />
+            <Field
+              label={t("fields.placeOfBirth")}
+              name="placeOfBirth"
+              register={register}
+              error={errors.placeOfBirth?.message}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <Field
+              label={t("fields.idIssuingAuthority")}
+              name="idIssuingAuthority"
+              register={register}
+              error={errors.idIssuingAuthority?.message}
+            />
+            <Field
+              label={t("fields.idCardNumber")}
+              name="idCardNumber"
+              register={register}
+              error={errors.idCardNumber?.message}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <Field
+              label={t("fields.idValidFrom")}
+              name="idValidFrom"
+              type="date"
+              register={register}
+              error={errors.idValidFrom?.message}
+            />
+            <Field
+              label={t("fields.idValidUntil")}
+              name="idValidUntil"
+              type="date"
+              register={register}
+              error={errors.idValidUntil?.message}
+            />
+          </div>
+          <TextAreaField
+            label={t("fields.idMrzRaw")}
+            name="idMrzRaw"
+            register={register}
+            error={errors.idMrzRaw?.message}
+          />
+          {mode !== "create" && (
+            <div className="flex items-center gap-2 text-sm">
+              <span className="w-36 shrink-0 font-medium text-ink dark:text-zinc-300">
+                {t("fields.idLink")}
+              </span>
+              {linkedIdCard ? (
+                <a
+                  href={`/paperwork/${linkedIdCard.id}`}
+                  className="text-cta hover:underline"
+                >
+                  {linkedIdCard.code} →
+                </a>
+              ) : (
+                <span className="text-fade dark:text-zinc-500">{t("hints.idLinkNone")}</span>
+              )}
+            </div>
+          )}
         </div>
       </section>
 

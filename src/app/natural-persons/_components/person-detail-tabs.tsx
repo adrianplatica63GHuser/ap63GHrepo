@@ -10,6 +10,8 @@ import { type FormValues } from "./form-schema";
 
 type Tab = "details" | "references" | "properties" | "paperwork";
 
+type IdCardLink = { id: string; code: string } | null;
+
 type Props = {
   personId:      string;
   personCode:    string;
@@ -17,6 +19,7 @@ type Props = {
   initialValues: FormValues;
   readonly?:     boolean;
   initialTab?:   Tab;
+  linkedIdCard?: IdCardLink;
 };
 
 export function PersonDetailTabs({
@@ -26,6 +29,7 @@ export function PersonDetailTabs({
   initialValues,
   readonly,
   initialTab,
+  linkedIdCard,
 }: Props) {
   const t = useTranslations("naturalPerson");
   const [activeTab, setActiveTab] = useState<Tab>(initialTab ?? "details");
@@ -73,6 +77,7 @@ export function PersonDetailTabs({
             personId={personId}
             personCode={personCode}
             initialValues={initialValues}
+            linkedIdCard={linkedIdCard}
           />
         )}
         {activeTab === "properties" && (

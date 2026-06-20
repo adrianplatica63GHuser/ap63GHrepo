@@ -49,6 +49,13 @@ export const formSchema = z
     personalEmail1: z.string(),
     personalEmail2: z.string(),
     workEmail: z.string(),
+    placeOfBirth: z.string(),
+    idIssuingAuthority: z.string(),
+    idValidFrom: z.string(), // "" | "YYYY-MM-DD"
+    idValidUntil: z.string(), // "" | "YYYY-MM-DD"
+    idCardNumber: z.string(),
+    idMrzRaw: z.string(),
+    citizenshipId: z.string(), // "" | uuid
     notes: z.string().max(300, "Notes is limited to 300 characters"),
     addresses: z.object({
       HOME: addressBlockSchema,
@@ -145,6 +152,13 @@ export const emptyFormValues: FormValues = {
   personalEmail1: "",
   personalEmail2: "",
   workEmail: "",
+  placeOfBirth: "",
+  idIssuingAuthority: "",
+  idValidFrom: "",
+  idValidUntil: "",
+  idCardNumber: "",
+  idMrzRaw: "",
+  citizenshipId: "",
   notes: "",
   addresses: {
     HOME: { ...emptyAddressBlock },
@@ -171,6 +185,13 @@ type NaturalRow = {
   personalEmail1: string | null;
   personalEmail2: string | null;
   workEmail: string | null;
+  placeOfBirth: string | null;
+  idIssuingAuthority: string | null;
+  idValidFrom: string | null;
+  idValidUntil: string | null;
+  idCardNumber: string | null;
+  idMrzRaw: string | null;
+  citizenshipId: string | null;
 };
 
 type AddressRow = {
@@ -208,6 +229,13 @@ export function fromApiPayload(input: {
     personalEmail1: n?.personalEmail1 ?? "",
     personalEmail2: n?.personalEmail2 ?? "",
     workEmail: n?.workEmail ?? "",
+    placeOfBirth: n?.placeOfBirth ?? "",
+    idIssuingAuthority: n?.idIssuingAuthority ?? "",
+    idValidFrom: n?.idValidFrom ?? "",
+    idValidUntil: n?.idValidUntil ?? "",
+    idCardNumber: n?.idCardNumber ?? "",
+    idMrzRaw: n?.idMrzRaw ?? "",
+    citizenshipId: n?.citizenshipId ?? "",
     notes: input.notes ?? "",
     addresses: {
       HOME: home
@@ -285,6 +313,13 @@ export function toApiPayload(
     personalEmail1: blank(values.personalEmail1),
     personalEmail2: blank(values.personalEmail2),
     workEmail: blank(values.workEmail),
+    placeOfBirth: blank(values.placeOfBirth),
+    idIssuingAuthority: blank(values.idIssuingAuthority),
+    idValidFrom: blank(values.idValidFrom),
+    idValidUntil: blank(values.idValidUntil),
+    idCardNumber: blank(values.idCardNumber),
+    idMrzRaw: blank(values.idMrzRaw),
+    citizenshipId: blank(values.citizenshipId),
     notes: blank(values.notes),
     addresses,
   };

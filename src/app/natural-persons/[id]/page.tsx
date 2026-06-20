@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getPersonById } from "@/lib/persons/queries";
+import { getPersonById, getPersonIdCardLink } from "@/lib/persons/queries";
 import { PersonDetailTabs } from "../_components/person-detail-tabs";
 import { fromApiPayload } from "../_components/form-schema";
 
@@ -26,6 +26,8 @@ export default async function EditNaturalPersonPage({ params, searchParams }: Pa
   const initialTab: Tab =
     tab && VALID_TABS.includes(tab as Tab) ? (tab as Tab) : "details";
 
+  const linkedIdCard = await getPersonIdCardLink(data.person.id);
+
   return (
     <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-zinc-950">
       <main className="mx-auto w-full max-w-3xl px-6 py-4 flex flex-col gap-4">
@@ -36,6 +38,7 @@ export default async function EditNaturalPersonPage({ params, searchParams }: Pa
           initialValues={initialValues}
           readonly={readonly === "true"}
           initialTab={initialTab}
+          linkedIdCard={linkedIdCard}
         />
       </main>
     </div>
