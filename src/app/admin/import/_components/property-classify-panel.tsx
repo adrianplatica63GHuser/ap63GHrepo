@@ -18,6 +18,7 @@ type Corner = { lat: number; lon: number };
 type Props = {
   file: File;
   onBack: () => void;
+  onClassified: () => void;
   onClose: () => void;
 };
 
@@ -52,7 +53,7 @@ async function callCreateProperty(corners: Corner[], nickname: string): Promise<
   return data.property.id;
 }
 
-export function PropertyClassifyPanel({ file, onBack, onClose }: Props) {
+export function PropertyClassifyPanel({ file, onBack, onClassified, onClose }: Props) {
   const t = useTranslations("adminImport.classify");
   const tp = useTranslations("adminImport.classify.property");
   const router = useRouter();
@@ -74,6 +75,7 @@ export function PropertyClassifyPanel({ file, onBack, onClose }: Props) {
       }
       const id = await callCreateProperty(corners, nickname.trim() || nicknameFromFilename(file.name));
       await queryClient.invalidateQueries({ queryKey: ["properties"] });
+      onClassified();
       onClose();
       router.push(`/properties/${id}`);
     } catch (err) {

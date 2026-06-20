@@ -12,7 +12,9 @@
  *              new Document, ordered exactly as selected.
  *
  * Each branch is its own panel component that performs the actual API
- * orchestration and navigates away on success (calling onClose() first).
+ * orchestration and, on success, calls onClassified() (so ImportBrowser can
+ * mark the involved file name(s) green in the list) followed by onClose()
+ * and then navigates away.
  */
 
 import { useEffect, useState } from "react";
@@ -26,10 +28,11 @@ type Branch = "choice" | "property" | "person" | "document";
 
 type Props = {
   files: File[];
+  onClassified: (names: string[]) => void;
   onClose: () => void;
 };
 
-export function ClassifyDialog({ files, onClose }: Props) {
+export function ClassifyDialog({ files, onClassified, onClose }: Props) {
   const t = useTranslations("adminImport.classify");
   const [branch, setBranch] = useState<Branch>("choice");
 
@@ -105,6 +108,7 @@ export function ClassifyDialog({ files, onClose }: Props) {
             <PropertyClassifyPanel
               file={files[0]}
               onBack={() => setBranch("choice")}
+              onClassified={() => onClassified([files[0].name])}
               onClose={onClose}
             />
           )}
@@ -113,6 +117,7 @@ export function ClassifyDialog({ files, onClose }: Props) {
             <PersonClassifyPanel
               file={files[0]}
               onBack={() => setBranch("choice")}
+              onClassified={() => onClassified([files[0].name])}
               onClose={onClose}
             />
           )}
@@ -121,6 +126,7 @@ export function ClassifyDialog({ files, onClose }: Props) {
             <DocumentClassifyPanel
               files={files}
               onBack={() => setBranch("choice")}
+              onClassified={() => onClassified(files.map((f) => f.name))}
               onClose={onClose}
             />
           )}

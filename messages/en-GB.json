@@ -937,10 +937,16 @@
       "emptyFolder": "This folder has no files.",
       "fileListLabel": "Files",
       "classifyButton": "Classify ({count})",
+      "unclassifyButton": "Unclassify",
       "previewTitle": "Preview",
       "noPreview": "Select a file to preview it.",
       "noPreviewType": "Preview not available for this file type.",
-      "selectionHint": "Click to select a file. Ctrl/Cmd-click to select several, in the order you click them. Use ↑/↓ to browse."
+      "selectionHint": "Click to select a file. Ctrl/Cmd-click to select several, in the order you click them. Use ↑/↓ to browse.",
+      "rotateLeft": "Rotate 90° left",
+      "rotateRight": "Rotate 90° right",
+      "rotate180": "Rotate 180°",
+      "openInWord": "Open in Word",
+      "openInWordHint": "Downloads the file — open it from your Downloads folder and it will launch in Word."
     },
     "classify": {
       "title": "Classify \"{name}\"",

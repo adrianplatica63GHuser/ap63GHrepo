@@ -937,10 +937,16 @@
       "emptyFolder": "Acest folder nu are fișiere.",
       "fileListLabel": "Fișiere",
       "classifyButton": "Clasifică ({count})",
+      "unclassifyButton": "Declasifică",
       "previewTitle": "Previzualizare",
       "noPreview": "Selectați un fișier pentru a-l previzualiza.",
       "noPreviewType": "Previzualizarea nu este disponibilă pentru acest tip de fișier.",
-      "selectionHint": "Clic pentru a selecta un fișier. Ctrl/Cmd+clic pentru a selecta mai multe, în ordinea în care le alegeți. Folosiți ↑/↓ pentru navigare."
+      "selectionHint": "Clic pentru a selecta un fișier. Ctrl/Cmd+clic pentru a selecta mai multe, în ordinea în care le alegeți. Folosiți ↑/↓ pentru navigare.",
+      "rotateLeft": "Rotește 90° la stânga",
+      "rotateRight": "Rotește 90° la dreapta",
+      "rotate180": "Rotește 180°",
+      "openInWord": "Deschide în Word",
+      "openInWordHint": "Descarcă fișierul — deschideți-l din folderul Descărcări și se va lansa în Word."
     },
     "classify": {
       "title": "Clasifică „{name}”",

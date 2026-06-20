@@ -37,6 +37,7 @@ import {
 type Props = {
   file: File;
   onBack: () => void;
+  onClassified: () => void;
   onClose: () => void;
 };
 
@@ -154,7 +155,7 @@ async function callLinkPersonToDocument(paperworkId: string, personId: string): 
   }
 }
 
-export function PersonClassifyPanel({ file, onBack, onClose }: Props) {
+export function PersonClassifyPanel({ file, onBack, onClassified, onClose }: Props) {
   const t = useTranslations("adminImport.classify");
   const tp = useTranslations("adminImport.classify.person");
   const tf = useTranslations("naturalPerson");
@@ -246,6 +247,7 @@ export function PersonClassifyPanel({ file, onBack, onClose }: Props) {
       await callLinkPersonToDocument(paperworkId, personId);
       await queryClient.invalidateQueries({ queryKey: ["people"] });
       await queryClient.invalidateQueries({ queryKey: ["paperwork"] });
+      onClassified();
       onClose();
       router.push(`/natural-persons/${personId}`);
     } catch (err) {

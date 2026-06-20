@@ -91,11 +91,65 @@ Relationships: People ↔ Paperwork, People ↔ Properties, Paperwork ↔ Proper
 - Slice #GIS.13.10 — OCR parser: fix first-corner-skipped bug for Romanian-format merged tokens. ✅ Complete. Full detail below.
 - Slice #GIS.13.11 — Text-file parser: accept first token as any number < 1 000 (was 1–9 999). ✅ Complete. Full detail below.
 - Slice #GIS.13.12 — Land map: select/unselect via InfoWindow + "Display all selected" tab view. ✅ Complete. Full detail below.
-- Slice #14.15.01 — Admin → Import: local-folder browser + Classify (Property / Person / Document). ✅ Complete. Full detail below.
+- Slice #15.01 — Admin → Import: local-folder browser + Classify (Property / Person / Document). ✅ Complete. Full detail below.
+- Slice #15.02 — Admin → Import: classified-state tracking, context preservation, fit-to-panel preview, rotation, Word link, text preview. ✅ Complete. Full detail below.
 
 Each slice typically lands as multiple small commits, each individually green.
 
-### Slice #14.15.01 — Admin → Import: local-folder browser + Classify (detail)
+### Slice #15.02 — Admin → Import: file-panel + preview-panel polish (detail)
+
+Pure frontend — no DB schema, API contract, or migration changes. Six UI fixes to the Slice #15.01 Import feature, all confined to `ImportBrowser` and its dialog/panel children plus two i18n files.
+
+**1. Classified-state tracking (green filename + Classify/Unclassify toggle)**
+- `ImportBrowser` now tracks a `classifiedNames: Set<string>` of files that have completed a Classify flow (Property/Person/Document branch all succeeded and saved).
+- File-list rows render the filename in emerald green (`text-emerald-600 dark:text-emerald-400`) when classified — this replaces the active-row blue color for that row, so a classified file stays visibly green even when re-selected.
+- When exactly one file is selected and it is already classified, the bottom action button swaps from "Classify (N)" to "Unclassify" (outline style instead of filled) and clicking it removes the name from `classifiedNames`, reverting the filename to black/default and the button back to "Classify".
+- `ClassifyDialog` and all three branch panels (`PropertyClassifyPanel`, `PersonClassifyPanel`, `DocumentClassifyPanel`) gained an `onClassified: () => void` prop, called immediately after each branch's save flow succeeds (Property: after `POST /api/properties`; Person: after creating the person + CARTE_IDENTITATE document + link; Document: after the per-page upload loop), before `onClose()`/`router.push(...)`. `ClassifyDialog` forwards this up to `ImportBrowser.markClassified(names)`, passing the one or many filenames involved in that branch.
+
+**2. Context preservation across navigation away and back**
+- `FileSystemDirectoryHandle`/`FileSystemFileHandle` objects cannot be serialized into `sessionStorage`/`localStorage`, so a module-level singleton object (`snapshot`, declared outside the component) mirrors `dirHandle`, `folderName`, `entries`, `activeName`, `selectedOrder`, `classifiedNames`, and `rotations` on every change via a `useEffect` that only mutates the plain object — no `setState` calls, so it doesn't trip `react-hooks/set-state-in-effect`.
+- All the corresponding `useState` calls switched to lazy initializers reading from `snapshot` (e.g. `useState<Entry[]>(() => snapshot.entries)`).
+- Because the JS module is not re-evaluated on a client-side route change (only the component tree unmounts/remounts), navigating away from `/admin/import` and back within the same tab restores the exact prior state — folder, file list, selection, classified marks, and rotations all intact. This does not survive a full page reload (by design — `FileSystemHandle` permissions wouldn't survive that either).
+
+**3. Fit-to-panel preview preserving aspect ratio (images + PDFs)**
+- The preview box now uses `style={{ containerType: "size" }}` (CSS Container Queries) and Tailwind's `cqw`/`cqh` arbitrary values instead of a fixed pixel height.
+- Images: `max-h-[100cqh] max-w-[100cqw] object-contain` normally; when rotated to a quarter-turn (90°/270°) the constraints swap to `max-h-[100cqw] max-w-[100cqh]` so the rotated image still fills the panel correctly on whichever axis is now the limiting one.
+- PDFs: the `<iframe>` switched from a fixed `h-[600px]` to `h-full w-full`, filling the same panel box.
+- Required completing the flex height-chain down to the preview box: added `min-h-0` alongside `flex-1`/`flex flex-col` at every level — `page.tsx`'s wrapper `<div>` and `<main>`, `ImportBrowser`'s root, the two-pane row, both pane wrapper `<div>`s, and the file-list `<ul>` (which also dropped its old `max-h-[480px]` cap in favor of `flex-1 min-h-0 overflow-y-auto`). Same root cause as the existing "Google Maps height chain" gotcha, generalized to plain HTML/CSS (no `absolute inset-0` trick needed here since `<img>`/`<iframe>`/`<pre>` resolve percentage/flex heights directly once every ancestor has `min-h-0`).
+
+**4. Word document "open" link**
+- `guessMimeFromExt` extended with `.doc` → `application/msword` and `.docx` → `application/vnd.openxmlformats-officedocument.wordprocessingml.document`; new exported `isWordFile(file)` helper checks both extension and MIME type.
+- The preview-loading effect now also creates an object URL for Word files (previously only images/PDFs).
+- Preview pane renders a Word branch: file glyph + filename + a download link (`<a href={previewUrl} download={file.name}>`) labelled "Open in Word" + a hint string underneath.
+- **Known limitation, communicated to Adrian**: the File System Access API never exposes a real OS filesystem path to JS (security sandboxing), so there is no way to launch Word directly from the browser. The link downloads the file via its object URL; opening the downloaded copy from the Downloads folder will launch Word via the OS's normal file association. This is the closest feasible approximation, not a true in-place "open."
+
+**5. Text-file preview**
+- New `previewText: string | null` state. The preview-loading effect calls `file.text()` directly on the local `File` object (no upload) for files matching `isTextFile()`, and renders the result in a scrollable `<pre className="h-full w-full overflow-auto whitespace-pre-wrap break-words ...">`.
+- The derived-state-during-render reset block (the `resolvedFor`/`activeName` comparison that already existed to avoid `react-hooks/set-state-in-effect`) was extended to also clear `previewText` whenever the active file changes.
+
+**6. Image rotation (90° either way, 180°)**
+- New `rotations: Record<string, number>` state, keyed by filename, persisted in the same module-singleton as everything else (rotation is remembered per file, including across navigation away/back).
+- Three buttons in the preview-pane header (↺ −90°, ↻ +90°, "180°"), shown only when the active file is an image. `rotateBy(delta)` normalizes the new angle via `((current + delta) % 360 + 360) % 360`.
+- The `<img>` gets `style={{ transform: \`rotate(${activeRotation}deg)\` }}`; combined with fix #3's `cqw`/`cqh` swap at quarter-turns, the rotated image always fills the available panel space without distortion.
+
+**i18n** — added to `adminImport.browser` in both `messages/en-GB.json` and `messages/ro-RO.json`: `unclassifyButton`, `rotateLeft`, `rotateRight`, `rotate180`, `openInWord`, `openInWordHint` (plus the pre-existing `classifyButton`, `noPreview`, `noPreviewType` keys were reused, not added).
+
+**Verification note**: the Linux sandbox's `tsc --noEmit` returned a batch of phantom "unterminated string literal" / "no corresponding closing tag" errors across all touched files immediately after these edits. Investigation (`wc -l` on the sandbox-mounted copies vs. the actual just-written content) confirmed this is the documented "sandbox file drift from Windows" gotcha — the sandbox's bash-mounted view of `ga40prj` was stale/truncated relative to what had just been written (e.g. `page.tsx` showed 17 lines missing its closing tags; `import-browser.tsx` showed 366 of its actual 581 lines). `containerType` was confirmed present in the installed `@types/react`'s `csstype`-derived `CSSProperties` (`@types/react: ^19`), so no TypeScript error was expected there, and none materialized.
+
+Adrian then ran `npm run lint` on his own machine and caught one real `react-hooks/set-state-in-effect` error that the sandbox check had missed: the preview-loading effect called `setPreviewLoading(true)` synchronously at the top of its body, before the first `await`/promise callback — the same category of violation documented in Slice #4.5. Fix: moved `setPreviewLoading(activeName !== null)` into the existing derived-state-during-render block (the `resolvedFor`/`activeName` comparison, which already resets `previewFile`/`previewText`/`previewUrl` on every active-file change), leaving only `setPreviewLoading(false)` inside the effect's `.finally()` callback — safely deferred, since it runs after the promise settles. This is the standing lesson for this codebase: **the sandbox's `tsc --noEmit` cannot be trusted for live-edited files, but it also doesn't run ESLint** — `npm run lint` on Adrian's machine remains the only reliable check for `react-hooks/set-state-in-effect` violations, and should be run before every commit touching effects.
+
+**Files touched**
+- `src/app/admin/import/_components/import-browser.tsx` (rewritten)
+- `src/app/admin/import/_components/classify-dialog.tsx`
+- `src/app/admin/import/_components/property-classify-panel.tsx`
+- `src/app/admin/import/_components/document-classify-panel.tsx`
+- `src/app/admin/import/_components/person-classify-panel.tsx`
+- `src/app/admin/import/page.tsx`
+- `messages/en-GB.json`
+- `messages/ro-RO.json`
+- `CLAUDE.md`
+
+### Slice #15.01 — Admin → Import: local-folder browser + Classify (detail)
 
 DB migration + schema + validation + a new vision-API route + a new `/admin/import` page — no changes to any existing list/detail page's core CRUD logic beyond the small ID-link addition on the Person Details tab.
 

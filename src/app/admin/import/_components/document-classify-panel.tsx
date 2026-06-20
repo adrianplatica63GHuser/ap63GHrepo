@@ -19,6 +19,7 @@ import { PAPERWORK_TYPES, type PaperworkType } from "@/lib/paperwork/validation"
 type Props = {
   files: File[];
   onBack: () => void;
+  onClassified: () => void;
   onClose: () => void;
 };
 
@@ -56,7 +57,7 @@ async function callUploadPage(
   }
 }
 
-export function DocumentClassifyPanel({ files, onBack, onClose }: Props) {
+export function DocumentClassifyPanel({ files, onBack, onClassified, onClose }: Props) {
   const t = useTranslations("adminImport.classify");
   const td = useTranslations("adminImport.classify.document");
   const tTypes = useTranslations("paperwork");
@@ -80,6 +81,7 @@ export function DocumentClassifyPanel({ files, onBack, onClose }: Props) {
         setProgress(i + 1);
       }
       await queryClient.invalidateQueries({ queryKey: ["paperwork"] });
+      onClassified();
       onClose();
       router.push(`/paperwork/${id}`);
     } catch (err) {
