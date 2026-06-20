@@ -1,5 +1,5 @@
 import { getTranslations } from "next-intl/server";
-import { ImportBrowser } from "./_components/import-browser";
+import { ImportBrowserDynamic as ImportBrowser } from "./_components/import-browser-dynamic";
 
 export default async function AdminImportPage() {
   const t = await getTranslations("adminImport");
