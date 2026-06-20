@@ -15,6 +15,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { PAPERWORK_TYPES, type PaperworkType } from "@/lib/paperwork/validation";
+import { useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-provider";
 
 type Props = {
   files: File[];
@@ -70,7 +71,10 @@ export function DocumentClassifyPanel({ files, onBack, onClassified, onClose }: 
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
-  const handleCreate = async () => {
+  // Creates the Document + uploads every page — no navigation or
+  // dialog-close side effects. Shared by the explicit Create button and by
+  // the unsaved-changes guard's Save action.
+  const createDocument = async (): Promise<string | null> => {
     setImporting(true);
     setError(null);
     setProgress(0);
@@ -82,13 +86,34 @@ export function DocumentClassifyPanel({ files, onBack, onClassified, onClose }: 
       }
       await queryClient.invalidateQueries({ queryKey: ["paperwork"] });
       onClassified();
-      onClose();
-      router.push(`/paperwork/${id}`);
+      return id;
     } catch (err) {
       setError(err instanceof Error ? err.message : td("error"));
+      return null;
+    } finally {
       setImporting(false);
     }
   };
+
+  const handleCreate = async () => {
+    const id = await createDocument();
+    if (id) {
+      onClose();
+      router.push(`/paperwork/${id}`);
+    }
+  };
+
+  // Files are staged for classification the whole time this panel is
+  // mounted — navigating away without saving would lose them.
+  useUnsavedChangesGuard({
+    isDirty: true,
+    onSave: async () => {
+      const id = await createDocument();
+      if (!id) return false;
+      onClose();
+      return true;
+    },
+  });
 
   return (
     <div className="flex flex-col gap-4">

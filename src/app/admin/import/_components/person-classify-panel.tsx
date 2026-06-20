@@ -33,6 +33,7 @@ import {
   toApiPayload,
   type FormValues,
 } from "@/app/natural-persons/_components/form-schema";
+import { useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-provider";
 
 type Props = {
   file: File;
@@ -237,7 +238,10 @@ export function PersonClassifyPanel({ file, onBack, onClassified, onClose }: Pro
     }
   };
 
-  const onSave = async (values: FormValues) => {
+  // Creates the Person + ID-card Document + link — no navigation or
+  // dialog-close side effects. Shared by the form's own submit handler and
+  // by the unsaved-changes guard's Save action.
+  const savePerson = async (values: FormValues): Promise<string | null> => {
     setSaving(true);
     setSaveError(null);
     try {
@@ -248,13 +252,36 @@ export function PersonClassifyPanel({ file, onBack, onClassified, onClose }: Pro
       await queryClient.invalidateQueries({ queryKey: ["people"] });
       await queryClient.invalidateQueries({ queryKey: ["paperwork"] });
       onClassified();
-      onClose();
-      router.push(`/natural-persons/${personId}`);
+      return personId;
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : tp("error"));
+      return null;
+    } finally {
       setSaving(false);
     }
   };
+
+  const onSave = async (values: FormValues) => {
+    const personId = await savePerson(values);
+    if (personId) {
+      onClose();
+      router.push(`/natural-persons/${personId}`);
+    }
+  };
+
+  // A file is staged for classification the whole time this panel is
+  // mounted — navigating away without saving would lose it.
+  useUnsavedChangesGuard({
+    isDirty: true,
+    onSave: async () => {
+      const valid = await form.trigger();
+      if (!valid) return false;
+      const personId = await savePerson(form.getValues());
+      if (!personId) return false;
+      onClose();
+      return true;
+    },
+  });
 
   const unmappedEntries = Object.entries(unmappedRaw);
   const busy = extracting || saving;

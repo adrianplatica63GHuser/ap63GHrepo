@@ -11,6 +11,7 @@ import {
   useForm,
 } from "react-hook-form";
 import { AddressBlock } from "@/components/address/address-block";
+import { useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-provider";
 import {
   emptyFormValues,
   formSchema,
@@ -82,7 +83,11 @@ export function NaturalPersonForm({
     !form.formState.isValid ||
     (mode === "edit" && !form.formState.isDirty);
 
-  const onSubmit = async (values: FormValues) => {
+  // doSave performs the API call only (no navigation) so it can be reused
+  // both by the form's own Save button (onSubmit, which navigates after a
+  // successful save) and by the unsaved-changes guard's onSave (which must
+  // NOT navigate — the guard's pending action handles that separately).
+  const doSave = async (values: FormValues): Promise<boolean> => {
     setSubmitting(true);
     setSubmitError(null);
     try {
@@ -104,13 +109,31 @@ export function NaturalPersonForm({
         );
       }
       await queryClient.invalidateQueries({ queryKey: ["people"] });
-      router.push("/natural-persons");
-      router.refresh();
+      return true;
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : String(err));
+      return false;
+    } finally {
       setSubmitting(false);
     }
   };
+
+  const onSubmit = async (values: FormValues) => {
+    const ok = await doSave(values);
+    if (ok) {
+      router.push("/natural-persons");
+      router.refresh();
+    }
+  };
+
+  useUnsavedChangesGuard({
+    isDirty: mode !== "view" && form.formState.isDirty,
+    onSave: async () => {
+      const valid = await form.trigger();
+      if (!valid) return false;
+      return doSave(form.getValues());
+    },
+  });
 
   const onDelete = async () => {
     setSubmitting(true);

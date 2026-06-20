@@ -361,6 +361,25 @@
       "previous": "Previous",
       "next": "Next",
       "pageOf": "Page {page} of {total}"
+    },
+    "unsavedChanges": {
+      "title": "Unsaved changes",
+      "body": "You have unsaved changes. Do you want to save them before leaving?",
+      "cancel": "Cancel",
+      "discard": "Discard",
+      "save": "Save",
+      "saving": "Saving…",
+      "saveFailed": "Could not save changes"
+    },
+    "bulkDelete": {
+      "selectAll": "Select all on this page",
+      "deleteSelected": "Delete Selected ({count})",
+      "confirmTitle": "Delete selected items",
+      "confirmBody": "This will delete {count} selected item(s). This action cannot be undone.",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "deleting": "Deleting…",
+      "error": "Could not delete the selected items"
     }
   },
   "naturalPerson": {

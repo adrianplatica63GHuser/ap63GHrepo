@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
@@ -9,11 +9,32 @@ import { ChevronLeft, ChevronRight, ChevronDown, LogOut, KeyRound } from "lucide
 import { LocaleToggle } from "@/components/locale-toggle";
 import { createClient } from "@/lib/supabase/client";
 import { PAPERWORK_TYPES, type PaperworkType } from "@/lib/paperwork/validation";
+import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
 import { NAV_SECTIONS, type NavItem, type NavSection } from "./nav-config";
 import {
   getActiveHref,
   getActiveSectionKey,
 } from "./sidebar-helpers";
+
+// ---------------------------------------------------------------------------
+// Click-guard helper — shared by every sidebar link (NavSubItem, change-
+// password link). Lets modified clicks (ctrl/cmd/shift/alt, or a non-primary
+// mouse button) fall through to the browser's default <Link> behaviour
+// (e.g. opening in a new tab), and only intercepts plain left-clicks to
+// route them through the unsaved-changes guard instead of navigating
+// immediately.
+// ---------------------------------------------------------------------------
+
+function isPlainLeftClick(e: MouseEvent<HTMLAnchorElement>): boolean {
+  return (
+    !e.defaultPrevented &&
+    e.button === 0 &&
+    !e.metaKey &&
+    !e.ctrlKey &&
+    !e.shiftKey &&
+    !e.altKey
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Auth helpers
@@ -41,6 +62,7 @@ function NavSubItem({
   const Icon = item.icon;
   const base =
     "flex items-center gap-2.5 rounded-md px-3 py-1.5 text-sm transition-colors";
+  const { guardedNavigate } = useUnsavedChanges();
 
   if (!item.href) {
     return (
@@ -54,9 +76,16 @@ function NavSubItem({
     );
   }
 
+  const href = item.href;
+
   return (
     <Link
-      href={item.href}
+      href={href}
+      onClick={(e) => {
+        if (!isPlainLeftClick(e)) return;
+        e.preventDefault();
+        guardedNavigate(href);
+      }}
       className={`${base} ${
         isActive
           ? "bg-cta-pale text-cta font-medium"
@@ -170,7 +199,7 @@ function PaperworkNavSection({
   onExpandSidebar: () => void;
 }) {
   const tPaperwork = useTranslations("paperwork");
-  const router = useRouter();
+  const { guardedNavigate } = useUnsavedChanges();
   const searchParams = useSearchParams();
   const SectionIcon = section.icon;
 
@@ -207,15 +236,15 @@ function PaperworkNavSection({
   // ── Navigation helper ───────────────────────────────────────────────────────
   const pushUrl = useCallback(
     (types: Set<string>) => {
-      if (types.size === PAPERWORK_TYPES.length) {
-        router.push("/paperwork");
-      } else if (types.size === 0) {
-        router.push("/paperwork?types=");
-      } else {
-        router.push(`/paperwork?types=${[...types].join(",")}`);
-      }
+      guardedNavigate(
+        types.size === PAPERWORK_TYPES.length
+          ? "/paperwork"
+          : types.size === 0
+            ? "/paperwork?types="
+            : `/paperwork?types=${[...types].join(",")}`,
+      );
     },
-    [router],
+    [guardedNavigate],
   );
 
   // ── Handlers ───────────────────────────────────────────────────────────────
@@ -246,7 +275,7 @@ function PaperworkNavSection({
       <button
         type="button"
         onClick={isCollapsed ? onExpandSidebar : () => {
-          if (!isOpen) router.push("/paperwork");
+          if (!isOpen) guardedNavigate("/paperwork");
           onToggle();
         }}
         title={isCollapsed ? sectionLabel : undefined}
@@ -318,6 +347,7 @@ export function SidebarNav() {
   const t = useTranslations("nav");
   const pathname = usePathname();
   const router   = useRouter();
+  const { guardedAction, guardedNavigate } = useUnsavedChanges();
 
   // ── Auth — username + role for sidebar display ────────────────────────────
   const { data: me } = useQuery({
@@ -327,11 +357,13 @@ export function SidebarNav() {
   });
   const isSuperuser = me?.role === "superuser";
 
-  async function handleLogout() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push("/login");
-    router.refresh();
+  function handleLogout() {
+    guardedAction(async () => {
+      const supabase = createClient();
+      await supabase.auth.signOut();
+      router.push("/login");
+      router.refresh();
+    });
   }
 
   // ── Collapsed state — persisted in localStorage ───────────────────────────
@@ -514,6 +546,11 @@ export function SidebarNav() {
       >
         <Link
           href="/account/change-password"
+          onClick={(e) => {
+            if (!isPlainLeftClick(e)) return;
+            e.preventDefault();
+            guardedNavigate("/account/change-password");
+          }}
           title={t("changePassword")}
           className={[
             "flex items-center gap-2.5 rounded-md px-3 py-1.5 text-sm text-fade hover:bg-crease hover:text-ink transition-colors",

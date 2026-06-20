@@ -1,10 +1,10 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { type PaperworkType } from "@/lib/paperwork/validation";
 
 const PAGE_SIZE = 15;
@@ -37,6 +37,64 @@ async function fetchPaperwork(q: string, types: string[], page: number): Promise
   return res.json();
 }
 
+async function callBatchDelete(ids: string[]): Promise<void> {
+  const res = await fetch("/api/paperwork/batch-delete", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ids }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error((body as { error?: string }).error ?? `HTTP ${res.status}`);
+  }
+}
+
+function ConfirmDialog({
+  title, body, yesLabel, noLabel, onYes, onNo, busy,
+}: {
+  title:    string;
+  body:     string;
+  yesLabel: string;
+  noLabel:  string;
+  onYes:    () => void;
+  onNo:     () => void;
+  busy:     boolean;
+}) {
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="confirm-title"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+    >
+      <div className="w-full max-w-sm rounded-lg bg-card p-6 shadow-xl dark:bg-zinc-900">
+        <h3 id="confirm-title" className="text-base font-semibold text-ink dark:text-zinc-100">
+          {title}
+        </h3>
+        <p className="mt-2 text-sm text-fade dark:text-zinc-400">{body}</p>
+        <div className="mt-5 flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={onNo}
+            disabled={busy}
+            className="inline-flex items-center rounded-md border border-wire bg-white px-4 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+          >
+            {noLabel}
+          </button>
+          <button
+            type="button"
+            onClick={onYes}
+            disabled={busy}
+            className="inline-flex items-center rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 disabled:opacity-50"
+          >
+            {yesLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // initialTypes:
 //   undefined → no ?types param in URL → show all documents
 //   []        → ?types= (empty) in URL  → no types selected → show message
@@ -49,11 +107,18 @@ export function PaperworkListView({
 }) {
   const t    = useTranslations("paperwork");
   const tPag = useTranslations("shared.pagination");
+  const tBulk = useTranslations("shared.bulkDelete");
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const [searchInput,     setSearchInput]     = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [currentPage,     setCurrentPage]     = useState(0);
+
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
+  const [confirmOpen,  setConfirmOpen]  = useState(false);
+  const [deleting,     setDeleting]     = useState(false);
+  const [deleteError,  setDeleteError]  = useState<string | null>(null);
 
   // typeFilters is derived directly from initialTypes (the URL ?types= param).
   // The sidebar checkboxes change the URL → page.tsx re-renders with new
@@ -91,6 +156,64 @@ export function PaperworkListView({
   const total      = query.data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const paginate   = total > PAGE_SIZE;
+  const items      = query.data?.items ?? [];
+
+  // Derived-state-during-render reset: clear the selection whenever the
+  // visible page changes (search, type filters, or page number) instead of
+  // carrying stale ids over to a different set of rows. Avoids
+  // react-hooks/set-state-in-effect.
+  const pageKey = `${debouncedSearch}|${typeFiltersKey}|${currentPage}`;
+  const [prevPageKey, setPrevPageKey] = useState(pageKey);
+  if (prevPageKey !== pageKey) {
+    setPrevPageKey(pageKey);
+    if (selectedIds.size > 0) setSelectedIds(new Set());
+  }
+
+  const allOnPageSelected = items.length > 0 && items.every((it) => selectedIds.has(it.id));
+  const someOnPageSelected = items.some((it) => selectedIds.has(it.id));
+
+  const headerCheckboxRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (headerCheckboxRef.current) {
+      headerCheckboxRef.current.indeterminate = someOnPageSelected && !allOnPageSelected;
+    }
+  }, [someOnPageSelected, allOnPageSelected]);
+
+  function toggleAllOnPage() {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (allOnPageSelected) {
+        for (const it of items) next.delete(it.id);
+      } else {
+        for (const it of items) next.add(it.id);
+      }
+      return next;
+    });
+  }
+
+  function toggleOne(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  async function handleConfirmDelete() {
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await callBatchDelete(Array.from(selectedIds));
+      await queryClient.invalidateQueries({ queryKey: ["paperwork"] });
+      setSelectedIds(new Set());
+      setConfirmOpen(false);
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : tBulk("error"));
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -104,13 +227,30 @@ export function PaperworkListView({
           aria-label={t("searchPlaceholder")}
           className="flex-1 min-w-48 max-w-md rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm placeholder:text-fade focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:placeholder:text-zinc-500"
         />
-        <Link
-          href="/paperwork/new"
-          className="ml-auto inline-flex items-center rounded-md bg-cta px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d"
-        >
-          {t("addNew")}
-        </Link>
+        <div className="ml-auto flex items-center gap-2">
+          {selectedIds.size > 0 && (
+            <button
+              type="button"
+              onClick={() => setConfirmOpen(true)}
+              className="inline-flex items-center rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-red-700"
+            >
+              {tBulk("deleteSelected", { count: selectedIds.size })}
+            </button>
+          )}
+          <Link
+            href="/paperwork/new"
+            className="inline-flex items-center rounded-md bg-cta px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d"
+          >
+            {t("addNew")}
+          </Link>
+        </div>
       </div>
+
+      {deleteError && (
+        <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+          {deleteError}
+        </p>
+      )}
 
       {/* No types selected — prompt the user to pick at least one */}
       {noTypesSelected ? (
@@ -126,6 +266,17 @@ export function PaperworkListView({
             <table className="w-full text-sm">
               <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-ink dark:bg-zinc-800 dark:text-zinc-300">
                 <tr>
+                  <th className="w-10 px-4 py-2">
+                    <input
+                      ref={headerCheckboxRef}
+                      type="checkbox"
+                      checked={allOnPageSelected}
+                      onChange={toggleAllOnPage}
+                      disabled={items.length === 0}
+                      aria-label={tBulk("selectAll")}
+                      className="h-4 w-4 rounded border-wire accent-cta"
+                    />
+                  </th>
                   <th className="px-4 py-2">{t("table.code")}</th>
                   <th className="px-4 py-2">{t("table.type")}</th>
                   <th className="px-4 py-2">{t("table.title")}</th>
@@ -137,31 +288,40 @@ export function PaperworkListView({
               <tbody className="divide-y divide-crease dark:divide-zinc-800">
                 {query.isLoading && (
                   <tr>
-                    <td colSpan={6} className="px-4 py-6 text-center text-fade">
+                    <td colSpan={7} className="px-4 py-6 text-center text-fade">
                       {t("loading")}
                     </td>
                   </tr>
                 )}
                 {query.isError && (
                   <tr>
-                    <td colSpan={6} className="px-4 py-6 text-center text-red-600">
+                    <td colSpan={7} className="px-4 py-6 text-center text-red-600">
                       {t("error")}
                     </td>
                   </tr>
                 )}
                 {query.data && query.data.items.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-4 py-6 text-center text-fade">
+                    <td colSpan={7} className="px-4 py-6 text-center text-fade">
                       {t("empty")}
                     </td>
                   </tr>
                 )}
-                {query.data?.items.map((item) => (
+                {items.map((item) => (
                   <tr
                     key={item.id}
                     onDoubleClick={() => router.push(`/paperwork/${item.id}`)}
                     className="whitespace-nowrap hover:bg-cta-pale dark:hover:bg-zinc-800/50 cursor-pointer"
                   >
+                    <td className="px-4 py-2" onClick={(e) => e.stopPropagation()} onDoubleClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(item.id)}
+                        onChange={() => toggleOne(item.id)}
+                        aria-label={item.title ?? item.code}
+                        className="h-4 w-4 rounded border-wire accent-cta"
+                      />
+                    </td>
                     <td className="px-4 py-2 font-mono text-xs text-fade">
                       {item.code}
                     </td>
@@ -223,6 +383,18 @@ export function PaperworkListView({
             </div>
           </div>
         </>
+      )}
+
+      {confirmOpen && (
+        <ConfirmDialog
+          title={tBulk("confirmTitle")}
+          body={tBulk("confirmBody", { count: selectedIds.size })}
+          yesLabel={deleting ? tBulk("deleting") : tBulk("delete")}
+          noLabel={tBulk("cancel")}
+          busy={deleting}
+          onYes={handleConfirmDelete}
+          onNo={() => setConfirmOpen(false)}
+        />
       )}
     </div>
   );

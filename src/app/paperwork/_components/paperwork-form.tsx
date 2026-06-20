@@ -11,6 +11,7 @@ import {
   useForm,
   useWatch,
 } from "react-hook-form";
+import { useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-provider";
 import {
   emptyFormValues,
   formSchema,
@@ -69,7 +70,11 @@ export function PaperworkForm({
   // isDirty guard would leave the button permanently disabled after page changes.
   const saveDisabled = submitting;
 
-  const onSubmit = async (values: FormValues) => {
+  // doSave performs the API call only (no navigation) so it can be reused
+  // both by the form's own Save button (onSubmit, which navigates after a
+  // successful save) and by the unsaved-changes guard's onSave (which must
+  // NOT navigate — the guard's pending action handles that separately).
+  const doSave = async (values: FormValues): Promise<boolean> => {
     setSubmitting(true);
     setSubmitError(null);
     try {
@@ -89,13 +94,34 @@ export function PaperworkForm({
         throw new Error(body?.error ?? `${t("saveError")} (HTTP ${res.status})`);
       }
       await queryClient.invalidateQueries({ queryKey: ["paperwork"] });
-      router.push("/paperwork");
-      router.refresh();
+      return true;
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : String(err));
+      return false;
+    } finally {
       setSubmitting(false);
     }
   };
+
+  const onSubmit = async (values: FormValues) => {
+    const ok = await doSave(values);
+    if (ok) {
+      router.push("/paperwork");
+      router.refresh();
+    }
+  };
+
+  // Page uploads/deletes save immediately via their own API calls (see
+  // PagesPanel), so they don't need this guard — only unsaved React Hook
+  // Form field edits do.
+  useUnsavedChangesGuard({
+    isDirty: mode !== "view" && form.formState.isDirty,
+    onSave: async () => {
+      const valid = await form.trigger();
+      if (!valid) return false;
+      return doSave(form.getValues());
+    },
+  });
 
   const onDelete = async () => {
     setSubmitting(true);

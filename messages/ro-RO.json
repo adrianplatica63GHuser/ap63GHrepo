@@ -361,6 +361,25 @@
       "previous": "Anterior",
       "next": "Următor",
       "pageOf": "Pagina {page} din {total}"
+    },
+    "unsavedChanges": {
+      "title": "Modificări nesalvate",
+      "body": "Aveți modificări nesalvate. Doriți să le salvați înainte de a continua?",
+      "cancel": "Anulează",
+      "discard": "Renunță",
+      "save": "Salvează",
+      "saving": "Se salvează…",
+      "saveFailed": "Salvarea modificărilor a eșuat"
+    },
+    "bulkDelete": {
+      "selectAll": "Selectează tot pe această pagină",
+      "deleteSelected": "Șterge selecția ({count})",
+      "confirmTitle": "Ștergere elemente selectate",
+      "confirmBody": "Această acțiune va șterge {count} element(e) selectat(e). Acțiunea nu poate fi anulată.",
+      "cancel": "Anulează",
+      "delete": "Șterge",
+      "deleting": "Se șterge…",
+      "error": "Ștergerea elementelor selectate a eșuat"
     }
   },
   "naturalPerson": {

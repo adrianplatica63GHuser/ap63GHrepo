@@ -12,6 +12,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
+import { useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-provider";
 
 type Corner = { lat: number; lon: number };
 
@@ -63,26 +64,51 @@ export function PropertyClassifyPanel({ file, onBack, onClassified, onClose }: P
   const [error, setError] = useState<string | null>(null);
   const [nickname, setNickname] = useState(() => nicknameFromFilename(file.name));
 
-  const handleImport = async () => {
+  // Performs the parse + create-property API calls only — no navigation or
+  // dialog-close side effects. Shared by the explicit Import button and by
+  // the unsaved-changes guard's Save action (which has its own pending
+  // navigation to run afterwards).
+  const importProperty = async (): Promise<string | null> => {
     setImporting(true);
     setError(null);
     try {
       const corners = await callParseTextApi(file);
       if (corners.length === 0) {
         setError(tp("noCoordinatesFound"));
-        setImporting(false);
-        return;
+        return null;
       }
       const id = await callCreateProperty(corners, nickname.trim() || nicknameFromFilename(file.name));
       await queryClient.invalidateQueries({ queryKey: ["properties"] });
       onClassified();
-      onClose();
-      router.push(`/properties/${id}`);
+      return id;
     } catch (err) {
       setError(err instanceof Error ? err.message : tp("error"));
+      return null;
+    } finally {
       setImporting(false);
     }
   };
+
+  const handleImport = async () => {
+    const id = await importProperty();
+    if (id) {
+      onClose();
+      router.push(`/properties/${id}`);
+    }
+  };
+
+  // A file is staged for classification the whole time this panel is
+  // mounted — navigating away without saving would lose it, so the guard
+  // treats the panel as dirty unconditionally while it's on screen.
+  useUnsavedChangesGuard({
+    isDirty: true,
+    onSave: async () => {
+      const id = await importProperty();
+      if (!id) return false;
+      onClose();
+      return true;
+    },
+  });
 
   return (
     <div className="flex flex-col gap-4">

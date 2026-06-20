@@ -5,6 +5,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { ConditionalAppShell } from "@/components/conditional-app-shell";
 import { MapsProvider } from "@/components/providers/maps-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
+import { UnsavedChangesProvider } from "@/components/providers/unsaved-changes-provider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -39,7 +40,9 @@ export default async function RootLayout({
         <NextIntlClientProvider locale={locale} messages={messages}>
           <MapsProvider>
             <QueryProvider>
-              <ConditionalAppShell>{children}</ConditionalAppShell>
+              <UnsavedChangesProvider>
+                <ConditionalAppShell>{children}</ConditionalAppShell>
+              </UnsavedChangesProvider>
             </QueryProvider>
           </MapsProvider>
         </NextIntlClientProvider>
