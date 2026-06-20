@@ -383,6 +383,7 @@
     "sections": {
       "identity": "Identitate",
       "idDocument": "Document de identitate",
+      "idCard": "Carte de identitate",
       "demographics": "Date personale",
       "contact": "Contact",
       "homeAddress": "Adresă domiciliu",
@@ -404,6 +405,14 @@
       "personalEmail1": "Email personal 1",
       "personalEmail2": "Email personal 2",
       "workEmail": "Email serviciu",
+      "citizenship": "Cetățenie",
+      "placeOfBirth": "Locul nașterii",
+      "idIssuingAuthority": "Emisă de",
+      "idCardNumber": "Nr. card",
+      "idValidFrom": "Valabil de la",
+      "idValidUntil": "Valabil până la",
+      "idMrzRaw": "MRZ (text brut)",
+      "idLink": "Carte de identitate asociată",
       "notes": "Note"
     },
     "options": {
@@ -429,7 +438,8 @@
     },
     "hints": {
       "cnpLocked": "CNP-ul nu poate fi modificat odată setat — ștergeți și creați din nou pentru a-l schimba",
-      "countryRequiredIfAddressFilled": "Necesar dacă orice alt câmp al adresei este completat"
+      "countryRequiredIfAddressFilled": "Necesar dacă orice alt câmp al adresei este completat",
+      "idLinkNone": "Niciun document de carte de identitate asociat"
     },
     "tabs": {
       "details": "Detalii",
@@ -566,7 +576,8 @@
       "titluProprietate": "Titlu de Proprietate",
       "users": "Utilizatori & Acces",
       "referenceData": "Date de referință",
-      "importExport": "Import / Export",
+      "import": "Import",
+      "export": "Export",
       "settings": "Setări"
     },
     "collapse": "Restrânge bara laterală",
@@ -599,6 +610,7 @@
       "ACT_DONATIE": "Act de Donație",
       "AUTORIZATIE": "Autorizație",
       "AVIZ_INSTITUTIE": "Aviz de Instituție",
+      "CARTE_IDENTITATE": "Carte de Identitate",
       "CERTIFICAT_FISCAL": "Certificat Fiscal",
       "CERTIFICAT_MOSTENITOR": "Certificat de Moștenitor",
       "CERTIFICAT_SARCINI": "Certificat de Sarcini",
@@ -612,7 +624,8 @@
       "EXTRAS_PUG": "Extras din PUG",
       "HOTARARE_JUDECATOREASCA": "Hotărâre Judecătorească",
       "TESTAMENT": "Testament",
-      "TITLU_PROPRIETATE": "Titlu de Proprietate"
+      "TITLU_PROPRIETATE": "Titlu de Proprietate",
+      "UNCLASSIFIED": "Neclasificat"
     },
     "table": {
       "code": "Cod",
@@ -912,6 +925,74 @@
       "error": "Eroare la încărcare",
       "empty": "Niciun rol adăugat",
       "errorRequired": "Selectați un rol al persoanei."
+    }
+  },
+  "adminImport": {
+    "pageTitle": "Import",
+    "browser": {
+      "chooseFolderButton": "Alege folder…",
+      "changeFolderButton": "Schimbă folder…",
+      "unsupported": "Browserul dvs. nu suportă accesul la foldere locale. Utilizați Chrome, Edge sau alt browser bazat pe Chromium.",
+      "noFolderChosen": "Alegeți un folder pentru a-i vedea fișierele.",
+      "emptyFolder": "Acest folder nu are fișiere.",
+      "fileListLabel": "Fișiere",
+      "classifyButton": "Clasifică ({count})",
+      "previewTitle": "Previzualizare",
+      "noPreview": "Selectați un fișier pentru a-l previzualiza.",
+      "noPreviewType": "Previzualizarea nu este disponibilă pentru acest tip de fișier.",
+      "selectionHint": "Clic pentru a selecta un fișier. Ctrl/Cmd+clic pentru a selecta mai multe, în ordinea în care le alegeți. Folosiți ↑/↓ pentru navigare."
+    },
+    "classify": {
+      "title": "Clasifică „{name}”",
+      "titleMultiple": "Clasifică {count} fișiere",
+      "chooseTypeHint": "Alegeți ce reprezintă acest/aceste fișier(e).",
+      "optionProperty": "Proprietate",
+      "optionPropertyHint": "Un fișier text cu coordonate de colț Stereo70.",
+      "optionPropertyDisabledHint": "Selectați exact un fișier text pentru a folosi această opțiune.",
+      "optionPerson": "Persoană",
+      "optionPersonHint": "O imagine scanată a unei cărți de identitate românești.",
+      "optionPersonDisabledHint": "Selectați exact o imagine pentru a folosi această opțiune.",
+      "optionDocument": "Document",
+      "optionDocumentHint": "Fișierul(ele) devin pagini ale unui Document nou.",
+      "cancel": "Anulează",
+      "back": "← Înapoi",
+      "property": {
+        "nicknameLabel": "Poreclă",
+        "importButton": "Importă",
+        "importing": "Se importă…",
+        "noCoordinatesFound": "Nu s-au găsit coordonate în acest fișier.",
+        "error": "Importul a eșuat",
+        "success": "Proprietate creată."
+      },
+      "document": {
+        "typeLabel": "Tip document",
+        "titleLabel": "Titlu",
+        "filesLabel": "Pagini (în ordinea selecției)",
+        "importButton": "Creează Document",
+        "importing": "Se creează…",
+        "error": "Importul a eșuat"
+      },
+      "person": {
+        "extractButton": "Extrage datele din imagine",
+        "extracting": "Se citește cartea de identitate…",
+        "extractError": "Nu s-a putut citi cartea de identitate. Puteți completa câmpurile manual.",
+        "extractErrorTitle": "Cartea de identitate nu a putut fi citită",
+        "extractErrorDismiss": "OK",
+        "error": {
+          "insufficient_credits": "Soldul de credit al API-ului Anthropic este prea mic pentru a citi acest document. Adăugați credit sau verificați planul pe console.anthropic.com, apoi încercați din nou — puteți completa câmpurile manual între timp.",
+          "invalid_api_key": "Cheia API Anthropic configurată pe server a fost respinsă. Verificați ANTHROPIC_API_KEY în .env, apoi încercați din nou — puteți completa câmpurile manual între timp.",
+          "rate_limited": "Serviciul de recunoaștere este limitat momentan. Așteptați puțin și încercați din nou, sau completați câmpurile manual.",
+          "overloaded": "Serviciul de recunoaștere este temporar supraîncărcat. Încercați din nou în scurt timp, sau completați câmpurile manual."
+        },
+        "reviewTitle": "Verificați datele extrase",
+        "lowConfidenceNote": "Câmpurile marcate ⚠ au fost incerte — verificați-le.",
+        "unmappedTitle": "Găsit pe document dar necompletat automat",
+        "unmappedHint": "Acestea nu s-au asociat clar unui câmp existent. Adăugați-le manual la Note sau alt câmp, dacă este relevant.",
+        "saveButton": "Creează Persoană",
+        "saving": "Se creează…",
+        "error": "Importul a eșuat",
+        "success": "Persoană creată."
+      }
     }
   },
   "usersAccess": {

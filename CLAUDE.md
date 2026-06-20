@@ -91,8 +91,99 @@ Relationships: People ↔ Paperwork, People ↔ Properties, Paperwork ↔ Proper
 - Slice #GIS.13.10 — OCR parser: fix first-corner-skipped bug for Romanian-format merged tokens. ✅ Complete. Full detail below.
 - Slice #GIS.13.11 — Text-file parser: accept first token as any number < 1 000 (was 1–9 999). ✅ Complete. Full detail below.
 - Slice #GIS.13.12 — Land map: select/unselect via InfoWindow + "Display all selected" tab view. ✅ Complete. Full detail below.
+- Slice #14.15.01 — Admin → Import: local-folder browser + Classify (Property / Person / Document). ✅ Complete. Full detail below.
 
 Each slice typically lands as multiple small commits, each individually green.
+
+### Slice #14.15.01 — Admin → Import: local-folder browser + Classify (detail)
+
+DB migration + schema + validation + a new vision-API route + a new `/admin/import` page — no changes to any existing list/detail page's core CRUD logic beyond the small ID-link addition on the Person Details tab.
+
+**What it does**
+
+A new "Import" item in the Administration sidebar section (split out of the old single "Import/Export" placeholder — "Export" stays a disabled coming-soon item) opens `/admin/import`: a two-pane local-folder browser. Adrian picks a folder on his own machine (via the browser's File System Access API — Chrome/Edge only, nothing is uploaded until he acts on a file), browses it, multi-selects files (Ctrl/Cmd-click, order remembered), and clicks **Classify (N)**. A dialog then offers up to three paths depending on what's selected:
+
+- **Property** — enabled only when exactly one `.txt` file is selected. Reuses the existing `POST /api/properties/parse-text` (Stereo70 corner parser) + `POST /api/properties` endpoints, exactly like `AddPropertyDialog`'s text-file flow. Filename (minus extension) becomes the nickname (editable before import). Navigates to the new property on success.
+- **Person** — enabled only when exactly one image file is selected (a scanned Romanian ID card). Sends the image to a new vision-API route, pre-fills a review form (the same Zod schema/mapping as the main Natural Person form), then on Save: creates the Person (`POST /api/people`), creates a `CARTE_IDENTITATE` Document (`POST /api/paperwork`) with the image as its only page (`POST /api/paperwork/[id]/pages`), and links the two (`POST /api/paperwork/[id]/persons`). No new linking column was needed — the Person Details tab's "ID link" row resolves automatically via `getPersonIdCardLink()`, a derived query over the existing `person_paperwork` ↔ `paperwork.type = 'CARTE_IDENTITATE'` relationship.
+- **Document** — always enabled for ≥ 1 file. Creates one new Document of a chosen type (default `UNCLASSIFIED`) via `POST /api/paperwork`, then uploads every selected file as a page via `POST /api/paperwork/[id]/pages`, **in click/selection order** (not alphabetical).
+
+No new "classify" backend orchestration routes were built beyond the vision extraction route — every branch is a client component that calls pre-existing CRUD endpoints in sequence.
+
+**DB migration (`src/db/migration_019_import_classify.sql`)**
+- `ALTER TYPE paperwork_type ADD VALUE IF NOT EXISTS 'CARTE_IDENTITATE' AFTER 'AVIZ_INSTITUTIE'` and `'UNCLASSIFIED'`. Each `ALTER TYPE ... ADD VALUE` must run outside an explicit transaction (apply with plain `psql -f`, not wrapped in `BEGIN`/`COMMIT`).
+- Adds an `'Unclassified'` row to `lookup_document_type` (guarded with a `NOT EXISTS` check — that table has no unique constraint on `name`).
+- Adds seven nullable columns to `natural_person` for fields read off an ID card that had no existing home: `place_of_birth`, `id_issuing_authority`, `id_valid_from` (date), `id_valid_until` (date), `id_card_number`, `id_mrz_raw`, `citizenship_id` (FK → `lookup_citizenship.id`, `ON DELETE SET NULL`).
+- Idempotent — safe to re-run.
+
+**Schema / validation / form-schema**
+- `src/db/schema/index.ts` — the seven new columns added to `naturalPerson`.
+- `src/lib/paperwork/validation.ts` — `CARTE_IDENTITATE` and `UNCLASSIFIED` added to the `PAPERWORK_TYPES` const array.
+- `src/lib/persons/queries.ts` — `createNaturalPerson` threads the seven new fields through; new `getPersonIdCardLink(personId)` (see above).
+- `src/app/natural-persons/_components/form-schema.ts` — `FormValues` gains `placeOfBirth`, `idIssuingAuthority`, `idValidFrom`, `idValidUntil`, `idCardNumber`, `idMrzRaw`, `citizenshipId` (all plain strings in form state, `""` = unset); `fromApiPayload`/`toApiPayload` map them through (null ↔ `""`).
+- `src/app/natural-persons/_components/natural-person-form.tsx` + `person-detail-tabs.tsx` + `[id]/page.tsx` — render the new fields and a read-only "ID link" row (hyperlink to the linked CARTE_IDENTITATE Document) when `getPersonIdCardLink` returns a match.
+
+**Vision extraction route (`src/app/api/admin/import/extract-id-card/route.ts`)**
+- `export const runtime = "nodejs"`, `maxDuration = 60`.
+- Accepts `multipart/form-data` with an `image` field. Calls the Anthropic Messages API directly via `fetch` (no new npm dependency — raw HTTPS call) with the image as a base64 vision block, asking for the Romanian ID card's printed + MRZ fields as structured JSON.
+- Requires `ANTHROPIC_API_KEY` in the environment (added to `.env.example`, not committed with a real value). Optional `ANTHROPIC_VISION_MODEL` override; defaults to `claude-sonnet-4-6` in code.
+- Resolves the citizenship free-text the model reads (e.g. "ROU", "Română") against `lookup_citizenship` server-side, returning a matched `citizenshipId` when confident.
+- Response shape: `{ fields: { lastName, firstName, gender, dateOfBirth, cnp, idDocumentNumber, idCardNumber, placeOfBirth, idIssuingAuthority, idValidFrom, idValidUntil, idMrzRaw, citizenshipId }, lowConfidenceFields: string[], unmappedRaw: Record<string,string> }`.
+- Per Adrian's standing instruction, anything the model read off the card that didn't map cleanly to a known field is returned in `unmappedRaw` (label → raw text) rather than dropped or guessed — the Person-classify review panel renders these read-only under "Found on the card but not auto-filled" so Adrian can decide what to do with them by hand.
+
+**`/admin/import` page + `ImportBrowser` (`src/app/admin/import/_components/import-browser.tsx`)**
+- File System Access API (`window.showDirectoryPicker`) — Chrome/Edge only; a plain message is shown on unsupported browsers (Firefox/Safari). Hand-rolled minimal TypeScript types for the API live in `file-system-types.ts` (not in `lib.dom.d.ts`, no `@types` package covers it yet).
+- Left pane: flat, alphabetical file list. Click selects (single); Ctrl/Cmd-click adds to a multi-selection and remembers click order (numbered badges) — this order becomes Document page order downstream. Arrow keys move the single-selection focus.
+- Right pane: live preview of the focused file — images and PDFs render inline (object URL from the local `File`, nothing uploaded at this stage), other types show a generic file glyph + filename.
+- **Preview reset uses "derived state during render," not an effect.** The original draft reset `previewUrl`/`previewFile` synchronously inside the same `useEffect` that kicks off the async `getFile()` fetch, which trips `react-hooks/set-state-in-effect` (the rule flags any setState call that executes synchronously within an effect body, before any promise/microtask boundary — same root cause CLAUDE.md's Slice #4.5 fixes hit). Fixed by tracking `resolvedFor` state and resetting the preview synchronously *during render* (the React-documented "adjust state when a prop changes" exception — gated so it only fires once per `activeName` change) and leaving the effect to only ever call setState inside `.then()`/`.catch()`/`.finally()` callbacks.
+- "Classify (N)" button (shown once ≥ 1 file is selected) resolves the selected `FileSystemFileHandle`s to real `File` objects (in click order) and opens `ClassifyDialog`.
+
+**`ClassifyDialog` (`src/app/admin/import/_components/classify-dialog.tsx`)**
+- Modal shell + "choice card" pattern copied from `add-property-dialog.tsx` (`fixed inset-0 z-50 bg-black/40` overlay, `rounded-xl border border-card-rim bg-white shadow-xl` panel).
+- Eligibility gates: Property needs exactly one `.txt` file (`isTextFile`); Person needs exactly one image file (`isImage`); Document is always enabled for ≥ 1 file. Ineligible cards render disabled with an explanatory hint instead of being hidden, so Adrian always sees all three options and why a given one isn't available for his current selection.
+- Escape backs out one level (branch → choice → close).
+
+**`PropertyClassifyPanel`** — nickname input (defaulted from filename) + Import button; calls `parse-text` then `POST /api/properties`; navigates to the new property.
+
+**`DocumentClassifyPanel`** — type `<select>` (maps over the static `PAPERWORK_TYPES` array, default `UNCLASSIFIED`, labelled via the existing `paperwork.types.*` i18n keys — this is not a DB-backed lookup, so no extra API call was needed for the dropdown) + optional title input + numbered read-only file list (selection order); creates the Document then uploads each file as a page sequentially, showing `(done/total)` progress; navigates to the new Document.
+
+**`PersonClassifyPanel`** — the most involved branch:
+- "Extract fields from image" is a manual button (not auto-run on mount): sending a personal ID scan to an external vision API is treated as an explicit, opt-in action rather than something that fires the instant a file is focused — this also sidesteps a `react-hooks/set-state-in-effect` violation that a mount-effect calling the same async function would otherwise trip (the function's `setExtracting(true)` runs synchronously before its first `await`, which the lint rule treats identically to the preview-reset case above).
+- The image preview URL is derived once via a `useState(() => URL.createObjectURL(file))` lazy initializer (no effect needed to set it) with a separate cleanup-only `useEffect` (returns a revoke function, calls no setState) for the unmount case.
+- Review form reuses `formSchema`/`emptyFormValues`/`toApiPayload` from the main Natural Person form-schema module; local re-implementations of `Field`/`SelectField`/`TextAreaField` (those are module-private in `natural-person-form.tsx`) add a `warn` prop that renders a ⚠ badge next to the label for any field listed in the extraction response's `lowConfidenceFields`.
+- `unmappedRaw` entries render read-only in an amber callout box under the form — never silently dropped, never auto-mapped to a guessed field.
+- Save button disabled until the form passes the same validation as the main Natural Person form (e.g. needs at least one contact field) — ID cards alone rarely satisfy this, so Adrian fills in a phone/email manually before saving, same as creating any other Person.
+- On Save: create Person → create `CARTE_IDENTITATE` Document → upload the image as page 1 → link Person to Document → navigate to the new Person.
+
+**i18n** — new `adminImport` namespace in both `messages/en-GB.json` and `messages/ro-RO.json`: `pageTitle`, `browser.*` (folder picker, file list, preview, classify button, hints), `classify.*` (dialog title/choice cards/cancel/back) and three sub-namespaces `classify.property.*`, `classify.document.*`, `classify.person.*` for each branch's labels/buttons/status/error strings. `nav.items.import` / `nav.items.export` replace the old single `nav.items.importExport` key.
+
+**Manual setup required (not yet run — see chat for ready-to-paste PowerShell)**
+1. Apply `src/db/migration_019_import_classify.sql` to local Docker via `docker cp` + `psql -f` (per the standard migration gotcha — plain `npm run db:migrate` does not reliably apply it locally).
+2. Set `ANTHROPIC_API_KEY` in local `.env` (and in Vercel's project env vars before this reaches production) — get a key at console.anthropic.com. No new npm dependency: the vision call uses raw `fetch` against the Anthropic Messages API.
+3. Apply the same migration to Supabase via the SQL Editor, and to Ciprian's UAT container, when those environments are next synced.
+
+**Files touched**
+- `src/db/migration_019_import_classify.sql` (new)
+- `src/db/schema/index.ts`
+- `src/lib/paperwork/validation.ts`
+- `src/lib/persons/queries.ts`
+- `src/app/natural-persons/_components/form-schema.ts`
+- `src/app/natural-persons/_components/natural-person-form.tsx`
+- `src/app/natural-persons/_components/person-detail-tabs.tsx`
+- `src/app/natural-persons/[id]/page.tsx`
+- `src/app/api/admin/import/extract-id-card/route.ts` (new)
+- `src/app/admin/import/page.tsx` (new)
+- `src/app/admin/import/_components/file-system-types.ts` (new)
+- `src/app/admin/import/_components/import-browser.tsx` (new)
+- `src/app/admin/import/_components/classify-dialog.tsx` (new)
+- `src/app/admin/import/_components/property-classify-panel.tsx` (new)
+- `src/app/admin/import/_components/document-classify-panel.tsx` (new)
+- `src/app/admin/import/_components/person-classify-panel.tsx` (new)
+- `src/components/sidebar/nav-config.ts`
+- `src/components/sidebar/sidebar-nav.tsx`
+- `.env.example`
+- `messages/en-GB.json`
+- `messages/ro-RO.json`
+- `CLAUDE.md`
 
 ### Slice #GIS.13.12 — Land map: select/unselect via InfoWindow + tab view (detail)
 

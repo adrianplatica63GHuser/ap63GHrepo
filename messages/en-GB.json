@@ -383,6 +383,7 @@
     "sections": {
       "identity": "Identity",
       "idDocument": "ID Document",
+      "idCard": "ID Card",
       "demographics": "Demographics",
       "contact": "Contact",
       "homeAddress": "Home Address",
@@ -404,6 +405,14 @@
       "personalEmail1": "Personal Email 1",
       "personalEmail2": "Personal Email 2",
       "workEmail": "Work Email",
+      "citizenship": "Citizenship",
+      "placeOfBirth": "Place of Birth",
+      "idIssuingAuthority": "ID Issuing Authority",
+      "idCardNumber": "ID Card Number",
+      "idValidFrom": "ID Valid From",
+      "idValidUntil": "ID Valid Until",
+      "idMrzRaw": "MRZ (raw)",
+      "idLink": "Linked ID Card",
       "notes": "Notes"
     },
     "options": {
@@ -429,7 +438,8 @@
     },
     "hints": {
       "cnpLocked": "CNP cannot be changed once set — delete and recreate to change",
-      "countryRequiredIfAddressFilled": "Required if any other address field is filled"
+      "countryRequiredIfAddressFilled": "Required if any other address field is filled",
+      "idLinkNone": "No ID card document linked"
     },
     "tabs": {
       "details": "Details",
@@ -566,7 +576,8 @@
       "titluProprietate": "Property Title",
       "users": "Users & Access",
       "referenceData": "Reference Data",
-      "importExport": "Import / Export",
+      "import": "Import",
+      "export": "Export",
       "settings": "Settings"
     },
     "collapse": "Collapse sidebar",
@@ -599,6 +610,7 @@
       "ACT_DONATIE": "Act de Donație",
       "AUTORIZATIE": "Autorizație",
       "AVIZ_INSTITUTIE": "Aviz de Instituție",
+      "CARTE_IDENTITATE": "Carte de Identitate",
       "CERTIFICAT_FISCAL": "Certificat Fiscal",
       "CERTIFICAT_MOSTENITOR": "Certificat de Moștenitor",
       "CERTIFICAT_SARCINI": "Certificat de Sarcini",
@@ -612,7 +624,8 @@
       "EXTRAS_PUG": "Extras din PUG",
       "HOTARARE_JUDECATOREASCA": "Hotărâre Judecătorească",
       "TESTAMENT": "Testament",
-      "TITLU_PROPRIETATE": "Titlu de Proprietate"
+      "TITLU_PROPRIETATE": "Titlu de Proprietate",
+      "UNCLASSIFIED": "Unclassified"
     },
     "table": {
       "code": "Code",
@@ -912,6 +925,74 @@
       "error": "Failed to load",
       "empty": "No roles yet",
       "errorRequired": "Please select a person role."
+    }
+  },
+  "adminImport": {
+    "pageTitle": "Import",
+    "browser": {
+      "chooseFolderButton": "Choose folder…",
+      "changeFolderButton": "Change folder…",
+      "unsupported": "Your browser doesn't support local folder access. Please use Chrome, Edge, or another Chromium-based browser.",
+      "noFolderChosen": "Choose a folder to browse its files.",
+      "emptyFolder": "This folder has no files.",
+      "fileListLabel": "Files",
+      "classifyButton": "Classify ({count})",
+      "previewTitle": "Preview",
+      "noPreview": "Select a file to preview it.",
+      "noPreviewType": "Preview not available for this file type.",
+      "selectionHint": "Click to select a file. Ctrl/Cmd-click to select several, in the order you click them. Use ↑/↓ to browse."
+    },
+    "classify": {
+      "title": "Classify \"{name}\"",
+      "titleMultiple": "Classify {count} files",
+      "chooseTypeHint": "Choose what these file(s) represent.",
+      "optionProperty": "Property",
+      "optionPropertyHint": "A text file with Stereo70 corner coordinates.",
+      "optionPropertyDisabledHint": "Select exactly one text file to use this option.",
+      "optionPerson": "Person",
+      "optionPersonHint": "A scanned Romanian ID card image.",
+      "optionPersonDisabledHint": "Select exactly one image file to use this option.",
+      "optionDocument": "Document",
+      "optionDocumentHint": "The file(s) become pages of a new Document.",
+      "cancel": "Cancel",
+      "back": "← Back",
+      "property": {
+        "nicknameLabel": "Nickname",
+        "importButton": "Import",
+        "importing": "Importing…",
+        "noCoordinatesFound": "No coordinates were found in this file.",
+        "error": "Import failed",
+        "success": "Property created."
+      },
+      "document": {
+        "typeLabel": "Document type",
+        "titleLabel": "Title",
+        "filesLabel": "Pages (in selection order)",
+        "importButton": "Create Document",
+        "importing": "Creating…",
+        "error": "Import failed"
+      },
+      "person": {
+        "extractButton": "Extract fields from image",
+        "extracting": "Reading ID card…",
+        "extractError": "Could not read the ID card. You can still fill the fields manually.",
+        "extractErrorTitle": "Couldn't read the ID card",
+        "extractErrorDismiss": "OK",
+        "error": {
+          "insufficient_credits": "The Anthropic API credit balance is too low to read this card. Add credits or check your plan at console.anthropic.com, then try again — you can still fill the fields in manually for now.",
+          "invalid_api_key": "The Anthropic API key on the server was rejected. Check ANTHROPIC_API_KEY in .env, then try again — you can still fill the fields in manually for now.",
+          "rate_limited": "The vision service is rate-limited right now. Wait a moment and try again, or fill the fields in manually.",
+          "overloaded": "The vision service is temporarily overloaded. Try again shortly, or fill the fields in manually."
+        },
+        "reviewTitle": "Review extracted fields",
+        "lowConfidenceNote": "Fields marked ⚠ were uncertain — please double-check them.",
+        "unmappedTitle": "Found on the card but not auto-filled",
+        "unmappedHint": "These didn't map cleanly to an existing field. Add them to Notes or another field manually if relevant.",
+        "saveButton": "Create Person",
+        "saving": "Creating…",
+        "error": "Import failed",
+        "success": "Person created."
+      }
     }
   },
   "usersAccess": {
