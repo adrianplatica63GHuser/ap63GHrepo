@@ -407,7 +407,8 @@ export function SidebarNav() {
     propertyType3:             t("items.propertyType3"),
     users:                     t("items.users"),
     referenceData:             t("items.referenceData"),
-    importExport:              t("items.importExport"),
+    import:                    t("items.import"),
+    export:                    t("items.export"),
     settings:                  t("items.settings"),
   };
 

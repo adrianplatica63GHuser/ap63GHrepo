@@ -11,7 +11,8 @@ import {
   LayoutDashboard,
   UserCog,
   Database,
-  ArrowUpDown,
+  Upload,
+  Download,
   Settings,
 } from "lucide-react";
 
@@ -58,7 +59,8 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [
       { key: "users", href: "/admin/users", icon: UserCog },
       { key: "referenceData", href: "/admin/value-lists", icon: Database },
-      { key: "importExport", icon: ArrowUpDown },
+      { key: "import", href: "/admin/import", icon: Upload },
+      { key: "export", icon: Download },
       { key: "settings", icon: Settings },
     ],
   },
