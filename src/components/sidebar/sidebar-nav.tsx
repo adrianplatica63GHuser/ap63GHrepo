@@ -362,8 +362,12 @@ export function SidebarNav() {
     const computed = getActiveSectionKey(pathname, NAV_SECTIONS);
     if (computed) return computed;
     // Paperwork section has no items in nav-config (checkbox-based), so we
-    // detect it by pathname prefix instead.
-    if (pathname.startsWith("/paperwork")) return "paperwork";
+    // detect it by pathname instead. Only the list page itself ("/paperwork")
+    // counts as "active" for auto-expand purposes — detail/sub-pages like
+    // "/paperwork/[id]" or "/paperwork/[id]/associate-person" (e.g. landing
+    // on a document right after classifying it from Admin → Import) should
+    // not pop the 19-checkbox filter list open every time they're visited.
+    if (pathname === "/paperwork") return "paperwork";
     return null;
   }, [pathname]);
 

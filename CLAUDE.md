@@ -138,6 +138,11 @@ Pure frontend — no DB schema, API contract, or migration changes. Six UI fixes
 - Rejected fixes: `suppressHydrationWarning` only silences same-element text/attribute diffs, not a structurally different subtree; a plain `useEffect(() => setSupported(...), [])` would re-trip the same `react-hooks/set-state-in-effect` rule just fixed in item 1 above (the setState would run synchronously at the top of the effect body).
 - Actual fix: `ImportBrowser` is fundamentally a browser-only component (File System Access API has no server equivalent), so it should never be server-rendered at all. New file `import-browser-dynamic.tsx` (`"use client"`) wraps it via `next/dynamic(() => import("./import-browser").then(m => m.ImportBrowser), { ssr: false })`. `page.tsx` (an `async` Server Component using `getTranslations`, so it cannot call `dynamic(..., { ssr: false })` directly — that combination is Server-Component-illegal in the App Router) now imports `ImportBrowserDynamic` from the wrapper instead of `ImportBrowser` directly. With `ssr: false`, the slot renders nothing on both the server pass and the client's first paint (identical — no mismatch), then `ImportBrowser` mounts client-only right after hydration, at which point reading `window` is safe with nothing to compare against.
 
+**8. Sidebar: Documents section no longer auto-expands on document detail pages**
+- After classifying a file as a Document, the import flow navigates to the new document's detail page (`/paperwork/[id]`). Adrian noticed the sidebar's "Documents" accordion popped open every time, showing all 19 document-type checkboxes — unwanted on a single-document detail view.
+- Root cause: `SidebarNav`'s `activeSectionKey` memo detected the paperwork section by `pathname.startsWith("/paperwork")`, which matches the list page, detail pages, and sub-pages (e.g. `/paperwork/[id]/associate-person`) alike. The derived-state-during-render block then auto-opens whatever section `activeSectionKey` resolves to, so any navigation into a document's detail page reopened the checkbox list.
+- Fix: changed the check to an exact match (`pathname === "/paperwork"`) — only the list page itself triggers auto-expand. Detail/sub-pages still show the section header in its active color (that styling uses a separate `isSectionActive` check in `PaperworkNavSection`, untouched), but no longer force the checkbox list open.
+
 **i18n** — added to `adminImport.browser` in both `messages/en-GB.json` and `messages/ro-RO.json`: `unclassifyButton`, `rotateLeft`, `rotateRight`, `rotate180`, `openInWord`, `openInWordHint` (plus the pre-existing `classifyButton`, `noPreview`, `noPreviewType` keys were reused, not added).
 
 **Verification note**: the Linux sandbox's `tsc --noEmit` returned a batch of phantom "unterminated string literal" / "no corresponding closing tag" errors across all touched files immediately after these edits. Investigation (`wc -l` on the sandbox-mounted copies vs. the actual just-written content) confirmed this is the documented "sandbox file drift from Windows" gotcha — the sandbox's bash-mounted view of `ga40prj` was stale/truncated relative to what had just been written (e.g. `page.tsx` showed 17 lines missing its closing tags; `import-browser.tsx` showed 366 of its actual 581 lines). `containerType` was confirmed present in the installed `@types/react`'s `csstype`-derived `CSSProperties` (`@types/react: ^19`), so no TypeScript error was expected there, and none materialized.
@@ -152,6 +157,7 @@ Adrian then ran `npm run lint` on his own machine and caught one real `react-hoo
 - `src/app/admin/import/_components/document-classify-panel.tsx`
 - `src/app/admin/import/_components/person-classify-panel.tsx`
 - `src/app/admin/import/page.tsx`
+- `src/components/sidebar/sidebar-nav.tsx`
 - `messages/en-GB.json`
 - `messages/ro-RO.json`
 - `CLAUDE.md`
