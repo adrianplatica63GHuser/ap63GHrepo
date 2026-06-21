@@ -9,7 +9,7 @@
  *   3. Truncate all reference tables (remove defaults seeded by schema SQL)
  *   4. Copy every reference table row-for-row from local Docker
  *
- * Domain data (persons, properties, paperwork) is NOT touched —
+ * Domain data (persons, properties, documents) is NOT touched —
  * re-seed separately with `npm run db:seed` against Supabase if needed.
  *
  * Usage:
@@ -220,7 +220,7 @@ async function main() {
   await syncSimple("lookup_use_category",  ["name", "sort_order"], "sort_order");
   await syncSimple("lookup_person_type",   ["name", "sort_order"], "sort_order");
   await syncSimple("lookup_citizenship",   ["name", "sort_order"], "sort_order");
-  await syncSimple("lookup_document_type", ["name", "sort_order"], "sort_order");
+  await syncSimple("lookup_document_type", ["key", "name", "sort_order"], "sort_order");
   await syncSimple("lookup_institution",   ["name", "institution_type", "sort_order"], "sort_order");
   await syncSimple("lookup_person_role",   ["name", "description", "sort_order"], "sort_order");
   await syncLookupOthers();
@@ -229,10 +229,10 @@ async function main() {
   await syncDocTypePersonRoles();
   await syncPropertyPersonRoles();
 
-  // Step 4: Seed domain data (persons, properties, paperwork, judicial persons)
+  // Step 4: Seed domain data (persons, properties, documents, judicial persons)
   // Run seed.ts as a child process with DATABASE_URL temporarily pointed at Supabase.
   // The seed is idempotent — it skips any table that already has rows.
-  step(4, TOTAL, "Seeding domain data (persons, properties, paperwork)...");
+  step(4, TOTAL, "Seeding domain data (persons, properties, documents)...");
   execSync(
     "node node_modules/tsx/dist/cli.mjs src/db/seed.ts",
     {
