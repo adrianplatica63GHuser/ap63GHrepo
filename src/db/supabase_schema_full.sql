@@ -3,7 +3,8 @@
 --
 -- Applies the complete schema from scratch after running
 -- supabase_reset.sql. Combines all drizzle migrations
--- (0000–0007) and src/db migrations (008–018).
+-- (0000–0007), src/db migrations (008–019), and migration 020
+-- (Slice #15.05 — paperwork -> document rename).
 --
 -- Run in the Supabase SQL Editor.
 -- PostGIS must already be enabled in the project
@@ -55,15 +56,10 @@ CREATE TYPE person_type AS ENUM ('NATURAL', 'JUDICIAL');
 CREATE TYPE judicial_type AS ENUM ('SRL', 'SA', 'SRL_D', 'PFA', 'II', 'IF', 'ONG', 'OTHER');
 CREATE TYPE property_type AS ENUM ('LAND');
 CREATE TYPE use_category AS ENUM ('CATEG1', 'CATEG2', 'CATEG3');
-CREATE TYPE paperwork_type AS ENUM (
-  'ACT_ADJUDECARE', 'ACT_CADASTRU', 'ACT_DONATIE', 'AUTORIZATIE',
-  'AVIZ_INSTITUTIE', 'CERTIFICAT_FISCAL', 'CERTIFICAT_MOSTENITOR',
-  'CERTIFICAT_SARCINI', 'CERTIFICAT_URBANISM', 'CONTRACT_ARENDA',
-  'CONTRACT_INCHIRIERE', 'CONTRACT_PARTAJ', 'CONTRACT_PRESTARI_SERVICII',
-  'CONTRACT_VANZARE', 'EXTRAS_CARTE_FUNCIARA', 'EXTRAS_PUG',
-  'HOTARARE_JUDECATOREASCA', 'TESTAMENT', 'TITLU_PROPRIETATE'
-);
-CREATE TYPE principal_object_type AS ENUM ('PERSON', 'PROPERTY', 'PAPERWORK');
+-- NOTE (Slice #15.05): the old hardcoded paperwork_type enum is gone.
+-- Document "type" is now a FK to lookup_document_type (admin-managed via
+-- Reference Data), keyed off an immutable `key` slug column — see below.
+CREATE TYPE principal_object_type AS ENUM ('PERSON', 'PROPERTY', 'DOCUMENT');
 CREATE TYPE user_request_status AS ENUM ('pending', 'approved', 'rejected');
 CREATE TYPE app_user_role AS ENUM ('superuser', 'user');
 
@@ -117,6 +113,13 @@ CREATE TABLE natural_person (
   personal_email_1   text,
   personal_email_2   text,
   work_email         text,
+  place_of_birth         text,
+  id_issuing_authority    text,
+  id_valid_from           date,
+  id_valid_until          date,
+  id_card_number          text,
+  id_mrz_raw              text,
+  citizenship_id          uuid,
   CONSTRAINT natural_person_has_name
     CHECK (first_name IS NOT NULL OR last_name IS NOT NULL),
   CONSTRAINT natural_person_id_doc_paired
@@ -250,7 +253,7 @@ CREATE TRIGGER property_corner_touch_updated_at
   FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
 
 -- ============================================================
--- LOOKUP / REFERENCE DATA  (drizzle 0002 + migrations 009–015)
+-- LOOKUP / REFERENCE DATA  (drizzle 0002 + migrations 009–015, 020)
 -- ============================================================
 
 -- ── lookup_property_type ─────────────────────────────────────
@@ -336,12 +339,25 @@ INSERT INTO lookup_citizenship (name, sort_order) VALUES
   ('Română', 1), ('Moldoveană', 2), ('Americană', 3), ('Germană',  4),
   ('Franceză', 5), ('Italiană', 6), ('Spaniolă',  7), ('Engleză',  8);
 
+-- natural_person.citizenship_id FK — added here, not inline above, because
+-- lookup_citizenship didn't exist yet when natural_person was created.
+ALTER TABLE natural_person
+  ADD CONSTRAINT natural_person_citizenship_id_fkey
+  FOREIGN KEY (citizenship_id) REFERENCES lookup_citizenship(id) ON DELETE SET NULL;
+
 -- ── lookup_document_type ─────────────────────────────────────
 -- NOTE: Row 6 is 'Certificat de Moștenitor' (the correct value).
 -- The original migration 0002 had a typo ('Certificat de Macanentur')
 -- which was fixed manually before Slice 10.04. Correct here from the start.
+--
+-- `key` (added by migration 020) is the immutable slug business logic
+-- switches on — never `name` (translatable/editable) and never the uuid
+-- `id` (would break across environments). New type rows must only ever be
+-- added by Adrian by hand via Administration -> Reference Data, or by
+-- Claude when explicitly directed — never auto-seeded by app code.
 CREATE TABLE lookup_document_type (
   id         uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  key        text        NOT NULL UNIQUE,
   name       text        NOT NULL,
   sort_order integer     NOT NULL DEFAULT 0,
   created_at timestamptz NOT NULL DEFAULT now(),
@@ -350,24 +366,28 @@ CREATE TABLE lookup_document_type (
 CREATE TRIGGER lookup_document_type_touch_updated_at
   BEFORE UPDATE ON lookup_document_type
   FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
-INSERT INTO lookup_document_type (name, sort_order) VALUES
-  ('Act de Adjudecare',             1),
-  ('Act Cadastru',                  2),
-  ('Autorizare',                    3),
-  ('Aviz de Instituție',            4),
-  ('Certificat Fiscal',             5),
-  ('Certificat de Moștenitor',      6),
-  ('Certificat de Bunuri',          7),
-  ('Certificat de Urbanism',        8),
-  ('Contract de Arendă',            9),
-  ('Contract de Închiriere',       10),
-  ('Contract de Partaj',           11),
-  ('Contract de Prestări Servicii',12),
-  ('Contract de Vânzare',          13),
-  ('Extras din Carte Funciară',    14),
-  ('Extras din PUG',               15),
-  ('Hotărâre Judecătorească',      16),
-  ('Titlu de Proprietate',         17);
+INSERT INTO lookup_document_type (key, name, sort_order) VALUES
+  ('ACT_ADJUDECARE',             'Act de Adjudecare',              1),
+  ('ACT_CADASTRU',               'Act Cadastru',                   2),
+  ('ACT_DONATIE',                'Act de Donație',                 3),
+  ('AUTORIZATIE',                'Autorizare',                     4),
+  ('AVIZ_INSTITUTIE',            'Aviz de Instituție',             5),
+  ('CARTE_IDENTITATE',           'Carte de Identitate',            6),
+  ('CERTIFICAT_FISCAL',          'Certificat Fiscal',              7),
+  ('CERTIFICAT_MOSTENITOR',      'Certificat de Moștenitor',       8),
+  ('CERTIFICAT_SARCINI',         'Certificat de Bunuri',           9),
+  ('CERTIFICAT_URBANISM',        'Certificat de Urbanism',        10),
+  ('CONTRACT_ARENDA',            'Contract de Arendă',            11),
+  ('CONTRACT_INCHIRIERE',        'Contract de Închiriere',        12),
+  ('CONTRACT_PARTAJ',            'Contract de Partaj',            13),
+  ('CONTRACT_PRESTARI_SERVICII', 'Contract de Prestări Servicii', 14),
+  ('CONTRACT_VANZARE',           'Contract de Vânzare',           15),
+  ('EXTRAS_CARTE_FUNCIARA',      'Extras din Carte Funciară',     16),
+  ('EXTRAS_PUG',                 'Extras din PUG',                17),
+  ('HOTARARE_JUDECATOREASCA',    'Hotărâre Judecătorească',       18),
+  ('TESTAMENT',                  'Testament',                     19),
+  ('TITLU_PROPRIETATE',          'Titlu de Proprietate',          20),
+  ('UNCLASSIFIED',               'Unclassified',                  21);
 
 -- ── lookup_institution ───────────────────────────────────────
 CREATE TABLE lookup_institution (
@@ -597,14 +617,15 @@ INSERT INTO lookup_property_person_role (id, person_role_id, created_at)
   SELECT gen_random_uuid(), id, now() FROM lookup_person_role WHERE name = 'Titular de drept' ON CONFLICT (person_role_id) DO NOTHING;
 
 -- ============================================================
--- PAPERWORK domain  (drizzle 0003)
+-- DOCUMENT domain  (drizzle 0003, renamed from "paperwork" in
+-- migration 020 — Slice #15.05)
 -- ============================================================
 
-CREATE TABLE paperwork (
+CREATE TABLE document (
   id                  uuid           PRIMARY KEY DEFAULT gen_random_uuid(),
   principal_object_id uuid           NOT NULL UNIQUE REFERENCES principal_object(id),
   code                text           NOT NULL UNIQUE,
-  type                paperwork_type NOT NULL,
+  document_type_id    uuid           NOT NULL REFERENCES lookup_document_type(id),
   title               text,
   nr_document         text,
   date_document       date,
@@ -630,12 +651,12 @@ CREATE TABLE paperwork (
   deleted_at          timestamptz
 );
 
-CREATE TRIGGER paperwork_touch_updated_at
-  BEFORE UPDATE ON paperwork
+CREATE TRIGGER document_touch_updated_at
+  BEFORE UPDATE ON document
   FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
 
 -- ============================================================
--- JUNCTION TABLES  (drizzle 0005–0006 + migrations 016–017)
+-- JUNCTION TABLES  (drizzle 0005–0006 + migrations 016–017, 020)
 -- ============================================================
 
 -- property_person  (final: includes person_role_id from migration 016)
@@ -648,14 +669,14 @@ CREATE TABLE property_person (
 );
 CREATE UNIQUE INDEX property_person_unique ON property_person (property_id, person_id);
 
--- property_paperwork
-CREATE TABLE property_paperwork (
-  id           uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  property_id  uuid        NOT NULL REFERENCES property(id)  ON DELETE CASCADE,
-  paperwork_id uuid        NOT NULL REFERENCES paperwork(id) ON DELETE CASCADE,
-  created_at   timestamptz NOT NULL DEFAULT now()
+-- property_document  (renamed from property_paperwork)
+CREATE TABLE property_document (
+  id          uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  property_id uuid        NOT NULL REFERENCES property(id) ON DELETE CASCADE,
+  document_id uuid        NOT NULL REFERENCES document(id) ON DELETE CASCADE,
+  created_at  timestamptz NOT NULL DEFAULT now()
 );
-CREATE UNIQUE INDEX property_paperwork_unique ON property_paperwork (property_id, paperwork_id);
+CREATE UNIQUE INDEX property_document_unique ON property_document (property_id, document_id);
 
 -- property_property  (self-ref, symmetric)
 CREATE TABLE property_property (
@@ -667,16 +688,17 @@ CREATE TABLE property_property (
 );
 CREATE UNIQUE INDEX property_property_unique ON property_property (property_id_a, property_id_b);
 
--- person_paperwork  (final: includes quality from migration 013 + person_role_id from migration 017)
-CREATE TABLE person_paperwork (
+-- person_document  (final: includes quality from migration 013 + person_role_id
+-- from migration 017; renamed from person_paperwork)
+CREATE TABLE person_document (
   id             uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
   person_id      uuid        NOT NULL REFERENCES person(id)    ON DELETE CASCADE,
-  paperwork_id   uuid        NOT NULL REFERENCES paperwork(id) ON DELETE CASCADE,
+  document_id    uuid        NOT NULL REFERENCES document(id)  ON DELETE CASCADE,
   quality        text,
   person_role_id uuid        REFERENCES lookup_person_role(id) ON DELETE SET NULL,
   created_at     timestamptz NOT NULL DEFAULT now()
 );
-CREATE UNIQUE INDEX person_paperwork_unique ON person_paperwork (person_id, paperwork_id);
+CREATE UNIQUE INDEX person_document_unique ON person_document (person_id, document_id);
 
 -- person_person  (self-ref, symmetric)
 CREATE TABLE person_person (
@@ -688,23 +710,24 @@ CREATE TABLE person_person (
 );
 CREATE UNIQUE INDEX person_person_unique ON person_person (person_id_a, person_id_b);
 
--- paperwork_paperwork  (self-ref, symmetric)
-CREATE TABLE paperwork_paperwork (
+-- document_document  (self-ref, symmetric; renamed from paperwork_paperwork)
+CREATE TABLE document_document (
   id              uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  paperwork_id_a  uuid        NOT NULL REFERENCES paperwork(id) ON DELETE CASCADE,
-  paperwork_id_b  uuid        NOT NULL REFERENCES paperwork(id) ON DELETE CASCADE,
+  document_id_a   uuid        NOT NULL REFERENCES document(id) ON DELETE CASCADE,
+  document_id_b   uuid        NOT NULL REFERENCES document(id) ON DELETE CASCADE,
   created_at      timestamptz NOT NULL DEFAULT now(),
-  CONSTRAINT paperwork_paperwork_order CHECK (paperwork_id_a < paperwork_id_b)
+  CONSTRAINT document_document_order CHECK (document_id_a < document_id_b)
 );
-CREATE UNIQUE INDEX paperwork_paperwork_unique ON paperwork_paperwork (paperwork_id_a, paperwork_id_b);
+CREATE UNIQUE INDEX document_document_unique ON document_document (document_id_a, document_id_b);
 
 -- ============================================================
--- PAPERWORK_PAGE  (migration 010)
+-- DOCUMENT_PAGE  (migration 010, renamed from paperwork_page in
+-- migration 020)
 -- ============================================================
 
-CREATE TABLE paperwork_page (
+CREATE TABLE document_page (
   id           uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  paperwork_id uuid        NOT NULL REFERENCES paperwork(id) ON DELETE CASCADE,
+  document_id  uuid        NOT NULL REFERENCES document(id) ON DELETE CASCADE,
   page_number  integer     NOT NULL,
   page_name    text,
   page_notes   text,
@@ -714,10 +737,10 @@ CREATE TABLE paperwork_page (
   mime_type    text,
   created_at   timestamptz NOT NULL DEFAULT now(),
   updated_at   timestamptz NOT NULL DEFAULT now(),
-  CONSTRAINT paperwork_page_paperwork_number_unique UNIQUE (paperwork_id, page_number)
+  CONSTRAINT document_page_document_number_unique UNIQUE (document_id, page_number)
 );
-CREATE TRIGGER touch_updated_at_paperwork_page
-  BEFORE UPDATE ON paperwork_page
+CREATE TRIGGER touch_updated_at_document_page
+  BEFORE UPDATE ON document_page
   FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
 
 -- ============================================================
