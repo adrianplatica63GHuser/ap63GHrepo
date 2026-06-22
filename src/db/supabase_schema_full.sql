@@ -387,7 +387,12 @@ INSERT INTO lookup_document_type (key, name, sort_order) VALUES
   ('HOTARARE_JUDECATOREASCA',    'Hotărâre Judecătorească',       18),
   ('TESTAMENT',                  'Testament',                     19),
   ('TITLU_PROPRIETATE',          'Titlu de Proprietate',          20),
-  ('UNCLASSIFIED',               'Unclassified',                  21);
+  ('UNCLASSIFIED',               'Unclassified',                  21),
+  -- Alternate wordings kept as distinct types (Slice #15.06) — see
+  -- migration_021_keep_alternate_wordings.sql for the rationale.
+  ('AUTORIZATIE_ALT',            'Autorizație',                   22),
+  ('CERTIFICAT_SARCINI_ALT',     'Certificat de Sarcini',         23),
+  ('EXTRAS_CARTE_FUNCIARA_ALT',  'Extras de Carte Funciară',      24);
 
 -- ── lookup_institution ───────────────────────────────────────
 CREATE TABLE lookup_institution (

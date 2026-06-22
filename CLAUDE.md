@@ -95,8 +95,39 @@ Relationships: People ↔ Documents, People ↔ Properties, Documents ↔ Proper
 - Slice #15.02 — Admin → Import: classified-state tracking, context preservation, fit-to-panel preview, rotation, Word link, text preview. ✅ Complete. Full detail below.
 - Slice #15.05 — Project-wide rename: eliminate "Paperwork"/`PAPERWORK_TYPES` enum in favour of "Document" + admin-managed `lookup_document_type`. ✅ Complete. Full detail below.
 - Slice #16.UX.01 — Person/Property/Document lists: sort most-recent-first + "New!"/"Nou!" recency badge next to the row checkbox. ✅ Complete. Full detail below.
+- Slice #15.06 — Reference Data: keep alternate Romanian wordings as distinct document types + fix stale Ciprian sync script. ✅ Complete. Full detail below.
 
 Each slice typically lands as multiple small commits, each individually green.
+
+### Slice #15.06 — Keep alternate wordings as distinct document types (detail)
+
+Pure data migration — no schema, API, or UI changes. Follow-up to Slice #15.05.
+
+**Why**: Adrian noticed Slice #15.05's enum-to-lookup-table migration had picked one wording per former `paperwork_type` enum value where two wordings existed (the old code-side i18n label vs. the DB name corrected by an earlier diacritics fix), silently dropping the other. He wants both kept as separate, independently selectable document types — they read as different enough documents to not collapse into one.
+
+**Three pairs identified** (by diffing the now-dead `document.types.*` i18n labels in `messages/*.json` — confirmed unused anywhere in code via grep, a leftover from the pre-15.05 enum-driven UI — against the canonical `(key, name)` list `migration_020` actually committed to `lookup_document_type`):
+
+| existing key | existing name | new `_ALT` row added |
+|---|---|---|
+| `AUTORIZATIE` | Autorizare | `AUTORIZATIE_ALT` → Autorizație |
+| `CERTIFICAT_SARCINI` | Certificat de Bunuri | `CERTIFICAT_SARCINI_ALT` → Certificat de Sarcini |
+| `EXTRAS_CARTE_FUNCIARA` | Extras din Carte Funciară | `EXTRAS_CARTE_FUNCIARA_ALT` → Extras de Carte Funciară |
+
+Nothing existing is renamed, reordered, or removed — only three new rows added, so no live Document row is affected.
+
+**Migration (`src/db/migration_021_keep_alternate_wordings.sql`)** — three idempotent guarded `INSERT`s, sort order auto-appended via `MAX(sort_order) + 1`.
+
+**`supabase_schema_full.sql`** — the three new rows appended to the `lookup_document_type` seed (sort_order 22–24), right after `UNCLASSIFIED`.
+
+**`sync-reference-data.sql` — also fixed a pre-existing staleness bug found during this work**: this file (the canonical Ciprian-UAT seed script) had never been updated for Slice #15.05 — it was still seeding the old 17-row, no-`key`-column version of `lookup_document_type`. Applying it to Ciprian's container today would have silently reintroduced the dropped enum-era schema mismatch. Rewrote its `lookup_document_type` block to match `supabase_schema_full.sql` exactly: `key` column added, all 21 canonical Slice #15.05 rows present (including `ACT_DONATIE`, `CARTE_IDENTITATE`, `TESTAMENT`, `UNCLASSIFIED`, which this file had also been missing), plus the 3 new `_ALT` rows from this slice. The `lookup_doc_type_person_role` association block further down needed no changes — it resolves by `name`, and no existing name changed.
+
+**Standing-rule reminder this surfaces**: per the comment already in `supabase_schema_full.sql` (added in Slice #15.05) and CLAUDE.md's "Ciprian UAT reference-data sync" gotcha, `sync-reference-data.sql` must be regenerated/updated *alongside* every migration that touches a lookup table — not as an afterthought. This slice is the second time that step was missed and had to be caught later; worth double-checking this file specifically at the end of any future `lookup_document_type` change.
+
+**Files touched**
+- `src/db/migration_021_keep_alternate_wordings.sql` (new)
+- `src/db/supabase_schema_full.sql`
+- `src/db/sync-reference-data.sql`
+- `CLAUDE.md`
 
 ### Slice #16.UX.01 — Most-recent-first sort + "New!" recency badge (detail)
 

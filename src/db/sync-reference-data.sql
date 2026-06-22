@@ -48,26 +48,38 @@ INSERT INTO lookup_citizenship (name, sort_order) VALUES
   ('Franceză', 5), ('Italiană', 6), ('Spaniolă',  7), ('Engleză',  8);
 
 -- ── lookup_document_type ──────────────────────────────────────────────────────
--- NOTE: Row 6 is 'Certificat de Moștenitor' (the correct value).
+-- NOTE: Row 8 is 'Certificat de Moștenitor' (the correct value).
 -- The original migration 0002 had a typo ('Certificat de Macanentur') fixed here.
-INSERT INTO lookup_document_type (name, sort_order) VALUES
-  ('Act de Adjudecare',             1),
-  ('Act Cadastru',                  2),
-  ('Autorizare',                    3),
-  ('Aviz de Instituție',            4),
-  ('Certificat Fiscal',             5),
-  ('Certificat de Moștenitor',      6),
-  ('Certificat de Bunuri',          7),
-  ('Certificat de Urbanism',        8),
-  ('Contract de Arendă',            9),
-  ('Contract de Închiriere',       10),
-  ('Contract de Partaj',           11),
-  ('Contract de Prestări Servicii',12),
-  ('Contract de Vânzare',          13),
-  ('Extras din Carte Funciară',    14),
-  ('Extras din PUG',               15),
-  ('Hotărâre Judecătorească',      16),
-  ('Titlu de Proprietate',         17);
+-- `key` (added by migration 020, Slice #15.05) is the immutable slug app code
+-- switches on — never `name` (translatable/editable). This list was out of
+-- sync with the live schema until Slice #15.06 (missing the key column and
+-- 4 rows added by migrations 019/020); now matches supabase_schema_full.sql
+-- exactly, including the 3 alternate-wording rows from migration 021.
+INSERT INTO lookup_document_type (key, name, sort_order) VALUES
+  ('ACT_ADJUDECARE',             'Act de Adjudecare',              1),
+  ('ACT_CADASTRU',               'Act Cadastru',                   2),
+  ('ACT_DONATIE',                'Act de Donație',                 3),
+  ('AUTORIZATIE',                'Autorizare',                     4),
+  ('AVIZ_INSTITUTIE',            'Aviz de Instituție',             5),
+  ('CARTE_IDENTITATE',           'Carte de Identitate',            6),
+  ('CERTIFICAT_FISCAL',          'Certificat Fiscal',              7),
+  ('CERTIFICAT_MOSTENITOR',      'Certificat de Moștenitor',       8),
+  ('CERTIFICAT_SARCINI',         'Certificat de Bunuri',           9),
+  ('CERTIFICAT_URBANISM',        'Certificat de Urbanism',        10),
+  ('CONTRACT_ARENDA',            'Contract de Arendă',            11),
+  ('CONTRACT_INCHIRIERE',        'Contract de Închiriere',        12),
+  ('CONTRACT_PARTAJ',            'Contract de Partaj',            13),
+  ('CONTRACT_PRESTARI_SERVICII', 'Contract de Prestări Servicii', 14),
+  ('CONTRACT_VANZARE',           'Contract de Vânzare',           15),
+  ('EXTRAS_CARTE_FUNCIARA',      'Extras din Carte Funciară',     16),
+  ('EXTRAS_PUG',                 'Extras din PUG',                17),
+  ('HOTARARE_JUDECATOREASCA',    'Hotărâre Judecătorească',       18),
+  ('TESTAMENT',                  'Testament',                     19),
+  ('TITLU_PROPRIETATE',          'Titlu de Proprietate',          20),
+  ('UNCLASSIFIED',               'Unclassified',                  21),
+  ('AUTORIZATIE_ALT',            'Autorizație',                   22),
+  ('CERTIFICAT_SARCINI_ALT',     'Certificat de Sarcini',         23),
+  ('EXTRAS_CARTE_FUNCIARA_ALT',  'Extras de Carte Funciară',      24);
 
 -- ── lookup_institution ────────────────────────────────────────────────────────
 INSERT INTO lookup_institution (name, institution_type, sort_order) VALUES
