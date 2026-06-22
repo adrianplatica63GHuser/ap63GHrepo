@@ -1,17 +1,17 @@
 /**
- * /api/paperwork/[id]/persons
+ * /api/documents/[id]/persons
  */
 import { z } from "zod/v4";
 import type { NextRequest } from "next/server";
 import { unexpectedError, zodErrorToResponse } from "@/lib/api/errors";
-import { listPaperworkPersons, associatePersonsToPaperwork } from "@/lib/paperwork/queries";
+import { listDocumentPersons, associatePersonsToDocument } from "@/lib/documents/queries";
 
 type Ctx = { params: Promise<{ id: string }> };
 
 export async function GET(_req: NextRequest, ctx: Ctx): Promise<Response> {
   const { id } = await ctx.params;
-  try { return Response.json({ items: await listPaperworkPersons(id) }); }
-  catch (err) { return unexpectedError(err, "GET /api/paperwork/[id]/persons"); }
+  try { return Response.json({ items: await listDocumentPersons(id) }); }
+  catch (err) { return unexpectedError(err, "GET /api/documents/[id]/persons"); }
 }
 
 const bodySchema = z.object({
@@ -30,12 +30,12 @@ export async function POST(request: NextRequest, ctx: Ctx): Promise<Response> {
   const parsed = bodySchema.safeParse(body);
   if (!parsed.success) return zodErrorToResponse(parsed.error);
   try {
-    await associatePersonsToPaperwork(
+    await associatePersonsToDocument(
       id,
       parsed.data.personIds,
       parsed.data.quality ?? null,
       parsed.data.personRoleId ?? null,
     );
     return new Response(null, { status: 204 });
-  } catch (err) { return unexpectedError(err, "POST /api/paperwork/[id]/persons"); }
+  } catch (err) { return unexpectedError(err, "POST /api/documents/[id]/persons"); }
 }

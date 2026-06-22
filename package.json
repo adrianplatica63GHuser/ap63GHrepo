@@ -16,6 +16,7 @@
     "db:seed": "node --env-file=.env node_modules/tsx/dist/cli.mjs src/db/seed.ts",
     "seed:admin": "node --env-file=.env node_modules/tsx/dist/cli.mjs scripts/seed-admin.ts",
     "supabase:sync": "node --env-file=.env node_modules/tsx/dist/cli.mjs scripts/supabase-sync.ts",
+    "storage:migrate-bucket": "node --env-file=.env node_modules/tsx/dist/cli.mjs scripts/storage-migrate-bucket.ts",
     "export:reference-data": "node --env-file=.env node_modules/tsx/dist/cli.mjs scripts/export-reference-data.ts"
   },
   "dependencies": {

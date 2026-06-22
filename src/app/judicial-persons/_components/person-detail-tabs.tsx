@@ -4,11 +4,11 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { JudicialPersonForm } from "./judicial-person-form";
 import { PersonPropertiesTab } from "../../properties/_components/person-properties-tab";
-import { PersonPaperworkTab } from "../../paperwork/_components/person-paperwork-tab";
+import { PersonDocumentTab } from "../../documents/_components/person-document-tab";
 import { PersonReferencesTab } from "../../natural-persons/_components/person-references-tab";
 import { type FormValues } from "./form-schema";
 
-type Tab = "details" | "references" | "properties" | "paperwork";
+type Tab = "details" | "references" | "properties" | "document";
 
 type Props = {
   personId:      string;
@@ -34,7 +34,7 @@ export function JudicialPersonDetailTabs({
     { key: "details",    label: t("tabs.details")    },
     { key: "references", label: t("tabs.references") },
     { key: "properties", label: t("tabs.properties") },
-    { key: "paperwork",  label: t("tabs.paperwork")  },
+    { key: "document",   label: t("tabs.document")   },
   ];
 
   return (
@@ -78,8 +78,8 @@ export function JudicialPersonDetailTabs({
         {activeTab === "properties" && (
           <PersonPropertiesTab personId={personId} backBase="/judicial-persons" />
         )}
-        {activeTab === "paperwork" && (
-          <PersonPaperworkTab personId={personId} backBase="/judicial-persons" />
+        {activeTab === "document" && (
+          <PersonDocumentTab personId={personId} backBase="/judicial-persons" />
         )}
         {activeTab === "references" && (
           <PersonReferencesTab personId={personId} backBase="/judicial-persons" />

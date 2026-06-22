@@ -4,17 +4,16 @@
  * DocumentClassifyPanel — Classify dialog, Document branch.
  *
  * Always enabled when >=1 file is selected. Creates one new Document
- * (POST /api/paperwork) of the chosen type, then uploads every selected
- * file as a page (POST /api/paperwork/[id]/pages) in selection order
+ * (POST /api/documents) of the chosen type, then uploads every selected
+ * file as a page (POST /api/documents/[id]/pages) in selection order
  * (the order the files were clicked in ImportBrowser — preserved in the
  * `files` array passed down from ClassifyDialog).
  */
 
 import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { useQueryClient } from "@tanstack/react-query";
-import { PAPERWORK_TYPES, type PaperworkType } from "@/lib/paperwork/validation";
 import { useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-provider";
 
 type Props = {
@@ -24,11 +23,25 @@ type Props = {
   onClose: () => void;
 };
 
-async function callCreatePaperwork(type: PaperworkType, title: string | null): Promise<string> {
-  const res = await fetch("/api/paperwork", {
+// ---------------------------------------------------------------------------
+// Document type list — fetched dynamically from the admin-managed
+// lookup_document_type table (Slice #15.05: no more hardcoded type enum).
+// ---------------------------------------------------------------------------
+
+type DocumentTypeOption = { id: string; key: string; name: string };
+
+async function fetchDocumentTypes(): Promise<DocumentTypeOption[]> {
+  const res = await fetch("/api/admin/value-lists/document-types");
+  if (!res.ok) return [];
+  const body = await res.json();
+  return (body.items ?? []) as DocumentTypeOption[];
+}
+
+async function callCreateDocument(documentTypeId: string, title: string | null): Promise<string> {
+  const res = await fetch("/api/documents", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ type, title }),
+    body: JSON.stringify({ documentTypeId, title }),
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
@@ -40,7 +53,7 @@ async function callCreatePaperwork(type: PaperworkType, title: string | null): P
 }
 
 async function callUploadPage(
-  paperworkId: string,
+  documentId: string,
   pageNumber: number,
   file: File,
 ): Promise<void> {
@@ -48,7 +61,7 @@ async function callUploadPage(
   fd.append("pageNumber", String(pageNumber));
   fd.append("pageName", file.name);
   fd.append("file", file);
-  const res = await fetch(`/api/paperwork/${encodeURIComponent(paperworkId)}/pages`, {
+  const res = await fetch(`/api/documents/${encodeURIComponent(documentId)}/pages`, {
     method: "POST",
     body: fd,
   });
@@ -61,30 +74,46 @@ async function callUploadPage(
 export function DocumentClassifyPanel({ files, onBack, onClassified, onClose }: Props) {
   const t = useTranslations("adminImport.classify");
   const td = useTranslations("adminImport.classify.document");
-  const tTypes = useTranslations("paperwork");
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  const [type, setType] = useState<PaperworkType>("UNCLASSIFIED");
+  const { data: documentTypes } = useQuery({
+    queryKey: ["document-types"],
+    queryFn: fetchDocumentTypes,
+    staleTime: 5 * 60 * 1000,
+  });
+  const typeOptions = documentTypes ?? [];
+  // Default to the "Unclassified" type when present (matches the old
+  // hardcoded default); otherwise falls back to the first type in the list
+  // once it loads.
+  const defaultTypeId = typeOptions.find((o) => o.key === "UNCLASSIFIED")?.id ?? typeOptions[0]?.id ?? "";
+
+  const [typeId, setTypeId] = useState("");
   const [title, setTitle] = useState("");
   const [importing, setImporting] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
+  const effectiveTypeId = typeId || defaultTypeId;
+
   // Creates the Document + uploads every page — no navigation or
   // dialog-close side effects. Shared by the explicit Create button and by
   // the unsaved-changes guard's Save action.
   const createDocument = async (): Promise<string | null> => {
+    if (!effectiveTypeId) {
+      setError(td("error"));
+      return null;
+    }
     setImporting(true);
     setError(null);
     setProgress(0);
     try {
-      const id = await callCreatePaperwork(type, title.trim() || null);
+      const id = await callCreateDocument(effectiveTypeId, title.trim() || null);
       for (let i = 0; i < files.length; i++) {
         await callUploadPage(id, i + 1, files[i]);
         setProgress(i + 1);
       }
-      await queryClient.invalidateQueries({ queryKey: ["paperwork"] });
+      await queryClient.invalidateQueries({ queryKey: ["documents"] });
       onClassified();
       return id;
     } catch (err) {
@@ -99,7 +128,7 @@ export function DocumentClassifyPanel({ files, onBack, onClassified, onClose }: 
     const id = await createDocument();
     if (id) {
       onClose();
-      router.push(`/paperwork/${id}`);
+      router.push(`/documents/${id}`);
     }
   };
 
@@ -122,14 +151,14 @@ export function DocumentClassifyPanel({ files, onBack, onClassified, onClose }: 
           {td("typeLabel")}
         </span>
         <select
-          value={type}
-          onChange={(e) => setType(e.target.value as PaperworkType)}
+          value={effectiveTypeId}
+          onChange={(e) => setTypeId(e.target.value)}
           disabled={importing}
           className="w-full min-w-0 flex-1 rounded-md border border-wire bg-white px-2 py-1 text-sm shadow-sm focus:border-focus focus:outline-none disabled:bg-canvas dark:border-zinc-700 dark:bg-zinc-950"
         >
-          {PAPERWORK_TYPES.map((v) => (
-            <option key={v} value={v}>
-              {tTypes(`types.${v}`)}
+          {typeOptions.map((opt) => (
+            <option key={opt.id} value={opt.id}>
+              {opt.name}
             </option>
           ))}
         </select>

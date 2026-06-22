@@ -11,13 +11,13 @@
 -- ── Junction / association tables ──────────────────────────
 DROP TABLE IF EXISTS lookup_doc_type_person_role CASCADE;
 DROP TABLE IF EXISTS lookup_property_person_role CASCADE;
-DROP TABLE IF EXISTS paperwork_paperwork CASCADE;
+DROP TABLE IF EXISTS document_document CASCADE;
 DROP TABLE IF EXISTS person_person CASCADE;
 DROP TABLE IF EXISTS property_property CASCADE;
-DROP TABLE IF EXISTS property_paperwork CASCADE;
-DROP TABLE IF EXISTS person_paperwork CASCADE;
+DROP TABLE IF EXISTS property_document CASCADE;
+DROP TABLE IF EXISTS person_document CASCADE;
 DROP TABLE IF EXISTS property_person CASCADE;
-DROP TABLE IF EXISTS paperwork_page CASCADE;
+DROP TABLE IF EXISTS document_page CASCADE;
 
 -- ── Auth tables ────────────────────────────────────────────
 DROP TABLE IF EXISTS app_users CASCADE;
@@ -33,7 +33,7 @@ DROP TABLE IF EXISTS property_corner CASCADE;
 DROP TABLE IF EXISTS property_address CASCADE;
 
 -- ── Core domain tables ─────────────────────────────────────
-DROP TABLE IF EXISTS paperwork CASCADE;
+DROP TABLE IF EXISTS document CASCADE;
 DROP TABLE IF EXISTS property CASCADE;
 DROP TABLE IF EXISTS person CASCADE;
 DROP TABLE IF EXISTS principal_object CASCADE;

@@ -44,6 +44,14 @@ type Props<TFormValues extends FieldValues> = {
   prefix: string;
   register: UseFormRegister<TFormValues>;
   errors: AddressErrors;
+  /**
+   * Optional set of sub-field names ("streetLine", "postalCode", "locality",
+   * "county", "country") to flag with a ⚠ badge — used by the Import →
+   * Classify → Person review panel to surface low-confidence vision-API
+   * extractions. Omitted (or empty) by every other caller, so this is a
+   * no-op everywhere except that one screen.
+   */
+  warnFields?: Set<string>;
 };
 
 export function AddressBlock<TFormValues extends FieldValues>({
@@ -51,9 +59,11 @@ export function AddressBlock<TFormValues extends FieldValues>({
   prefix,
   register,
   errors,
+  warnFields,
 }: Props<TFormValues>) {
   const t = useTranslations("address");
   const f = (sub: string) => `${prefix}.${sub}` as FieldPath<TFormValues>;
+  const warn = (sub: string) => warnFields?.has(sub) ?? false;
 
   return (
     <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
@@ -68,6 +78,7 @@ export function AddressBlock<TFormValues extends FieldValues>({
             name={f("streetLine")}
             register={register}
             error={errors?.streetLine?.message}
+            warn={warn("streetLine")}
           />
           <Field
             label={t("notes")}
@@ -83,12 +94,14 @@ export function AddressBlock<TFormValues extends FieldValues>({
             name={f("postalCode")}
             register={register}
             error={errors?.postalCode?.message}
+            warn={warn("postalCode")}
           />
           <Field
             label={t("locality")}
             name={f("locality")}
             register={register}
             error={errors?.locality?.message}
+            warn={warn("locality")}
           />
         </div>
         {/* Row 3: County | Country */}
@@ -98,12 +111,14 @@ export function AddressBlock<TFormValues extends FieldValues>({
             name={f("county")}
             register={register}
             error={errors?.county?.message}
+            warn={warn("county")}
           />
           <Field
             label={t("country")}
             name={f("country")}
             register={register}
             error={errors?.country?.message}
+            warn={warn("country")}
           />
         </div>
       </div>
@@ -120,16 +135,19 @@ function Field<TFormValues extends FieldValues>({
   name,
   register,
   error,
+  warn,
 }: {
   label: string;
   name: FieldPath<TFormValues>;
   register: UseFormRegister<TFormValues>;
   error?: string;
+  warn?: boolean;
 }) {
   return (
     <label className="flex items-center gap-2 text-sm">
       <span className="w-36 shrink-0 font-medium text-ink dark:text-zinc-300">
         {label}
+        {warn && <span className="ml-1 text-amber-600 dark:text-amber-400">⚠</span>}
       </span>
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <input

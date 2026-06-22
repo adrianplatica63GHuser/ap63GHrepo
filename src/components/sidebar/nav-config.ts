@@ -48,8 +48,8 @@ export const NAV_SECTIONS: NavSection[] = [
   },
   {
     // Items intentionally empty — the sidebar renders this section with
-    // checkbox-based filtering (PaperworkNavSection in sidebar-nav.tsx).
-    key: "paperwork",
+    // checkbox-based filtering (DocumentNavSection in sidebar-nav.tsx).
+    key: "document",
     icon: FileText,
     items: [],
   },

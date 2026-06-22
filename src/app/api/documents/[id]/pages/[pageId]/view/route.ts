@@ -1,5 +1,5 @@
 /**
- * /api/paperwork/[id]/pages/[pageId]/view
+ * /api/documents/[id]/pages/[pageId]/view
  *
  * GET — return a JSON object containing the URL (and metadata) needed to
  *       display or print the page file.
@@ -12,7 +12,7 @@
 
 import type { NextRequest } from "next/server";
 import { unexpectedError } from "@/lib/api/errors";
-import { getPaperworkPage } from "@/lib/paperwork/pages-queries";
+import { getDocumentPage } from "@/lib/documents/pages-queries";
 import { getFileUrl } from "@/lib/storage";
 
 type Ctx = { params: Promise<{ id: string; pageId: string }> };
@@ -21,7 +21,7 @@ export async function GET(_req: NextRequest, ctx: Ctx): Promise<Response> {
   const { pageId } = await ctx.params;
 
   try {
-    const page = await getPaperworkPage(pageId);
+    const page = await getDocumentPage(pageId);
     if (!page) {
       return Response.json({ error: "Page not found" }, { status: 404 });
     }
@@ -33,6 +33,6 @@ export async function GET(_req: NextRequest, ctx: Ctx): Promise<Response> {
       fileName: page.fileName,
     });
   } catch (err) {
-    return unexpectedError(err, "GET /api/paperwork/[id]/pages/[pageId]/view");
+    return unexpectedError(err, "GET /api/documents/[id]/pages/[pageId]/view");
   }
 }

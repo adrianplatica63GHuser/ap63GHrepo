@@ -8,7 +8,6 @@ import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, ChevronDown, LogOut, KeyRound } from "lucide-react";
 import { LocaleToggle } from "@/components/locale-toggle";
 import { createClient } from "@/lib/supabase/client";
-import { PAPERWORK_TYPES, type PaperworkType } from "@/lib/paperwork/validation";
 import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
 import { NAV_SECTIONS, type NavItem, type NavSection } from "./nav-config";
 import {
@@ -44,6 +43,20 @@ async function fetchMe(): Promise<{ username: string; role: string }> {
   const res = await fetch("/api/auth/me");
   if (!res.ok) return { username: "", role: "user" };
   return res.json();
+}
+
+// ---------------------------------------------------------------------------
+// Document types — fetched dynamically from the admin-managed
+// lookup_document_type table (Slice #15.05: no more hardcoded type enum).
+// ---------------------------------------------------------------------------
+
+type DocumentTypeOption = { id: string; key: string; name: string };
+
+async function fetchDocumentTypes(): Promise<DocumentTypeOption[]> {
+  const res = await fetch("/api/admin/value-lists/document-types");
+  if (!res.ok) return [];
+  const body = await res.json();
+  return (body.items ?? []) as DocumentTypeOption[];
 }
 
 // ---------------------------------------------------------------------------
@@ -171,17 +184,19 @@ function NavSectionRow({
 }
 
 // ---------------------------------------------------------------------------
-// PaperworkNavSection — checkbox-based document-type filter
+// DocumentNavSection — checkbox-based document-type filter
 // ---------------------------------------------------------------------------
 //
-// Replaces the link-based paperwork items with a (Select All) + 19 individual
-// checkboxes. Clicking any checkbox navigates to /paperwork?types=... so the
-// list page filters in real time.
+// Replaces the link-based document items with a (Select All) + one checkbox
+// per row currently in lookup_document_type (fetched dynamically — Slice
+// #15.05 eliminated the hardcoded PAPERWORK_TYPES enum). Clicking any
+// checkbox navigates to /documents?documentTypeIds=... so the list page
+// filters in real time.
 //
-// Checkbox state is derived from the URL search params (single source of truth)
-// so checkboxes always reflect what the list is actually showing.
+// Checkbox state is derived from the URL search params (single source of
+// truth) so checkboxes always reflect what the list is actually showing.
 
-function PaperworkNavSection({
+function DocumentNavSection({
   section,
   isOpen,
   isCollapsed,
@@ -198,84 +213,87 @@ function PaperworkNavSection({
   onToggle: () => void;
   onExpandSidebar: () => void;
 }) {
-  const tPaperwork = useTranslations("paperwork");
+  const tDocument = useTranslations("document");
   const { guardedNavigate } = useUnsavedChanges();
   const searchParams = useSearchParams();
   const SectionIcon = section.icon;
 
-  const isSectionActive = pathname.startsWith("/paperwork");
+  const isSectionActive = pathname.startsWith("/documents");
+
+  const { data: documentTypes } = useQuery({
+    queryKey: ["document-types"],
+    queryFn:  fetchDocumentTypes,
+    staleTime: 5 * 60 * 1000,
+  });
+  const types = documentTypes ?? [];
+  const typeIds = useMemo(() => types.map((t) => t.id), [types]);
 
   // ── Checkbox state — derived from URL (single source of truth) ────────────
   //
   // Deriving from the URL means checkboxes always mirror what the list is
   // actually displaying. No local state copy needed, no wasOpen reset effect.
-  //   ?types absent → all checked (show all)
-  //   ?types=       → none checked (show "please select" message)
-  //   ?types=A,B    → only A and B checked
-  const checkedTypes = useMemo<Set<string>>(() => {
-    const param = searchParams.get("types");
-    if (param === null) return new Set(PAPERWORK_TYPES);
+  //   ?documentTypeIds absent → all checked (show all)
+  //   ?documentTypeIds=       → none checked (show "please select" message)
+  //   ?documentTypeIds=A,B    → only A and B checked
+  const checkedIds = useMemo<Set<string>>(() => {
+    const param = searchParams.get("documentTypeIds");
+    if (param === null) return new Set(typeIds);
     if (param === "")   return new Set();
-    return new Set(
-      param
-        .split(",")
-        .filter((t) => (PAPERWORK_TYPES as readonly string[]).includes(t)),
-    );
-  }, [searchParams]);
+    const idSet = new Set(typeIds);
+    return new Set(param.split(",").filter((id) => idSet.has(id)));
+  }, [searchParams, typeIds]);
 
   const selectAllRef = useRef<HTMLInputElement>(null);
 
-  // Keep the (Select All) native indeterminate state in sync with checkedTypes.
+  // Keep the (Select All) native indeterminate state in sync with checkedIds.
   // This is a DOM-only side effect (no setState) — fine in useEffect.
   useEffect(() => {
     if (!selectAllRef.current) return;
-    const n = checkedTypes.size;
-    selectAllRef.current.indeterminate = n > 0 && n < PAPERWORK_TYPES.length;
-  }, [checkedTypes]);
+    const n = checkedIds.size;
+    selectAllRef.current.indeterminate = n > 0 && n < typeIds.length;
+  }, [checkedIds, typeIds.length]);
 
   // ── Navigation helper ───────────────────────────────────────────────────────
   const pushUrl = useCallback(
-    (types: Set<string>) => {
+    (ids: Set<string>) => {
       guardedNavigate(
-        types.size === PAPERWORK_TYPES.length
-          ? "/paperwork"
-          : types.size === 0
-            ? "/paperwork?types="
-            : `/paperwork?types=${[...types].join(",")}`,
+        ids.size === typeIds.length
+          ? "/documents"
+          : ids.size === 0
+            ? "/documents?documentTypeIds="
+            : `/documents?documentTypeIds=${[...ids].join(",")}`,
       );
     },
-    [guardedNavigate],
+    [guardedNavigate, typeIds.length],
   );
 
   // ── Handlers ───────────────────────────────────────────────────────────────
   const handleSelectAll = useCallback(() => {
     const next: Set<string> =
-      checkedTypes.size === PAPERWORK_TYPES.length
-        ? new Set()
-        : new Set(PAPERWORK_TYPES);
+      checkedIds.size === typeIds.length ? new Set() : new Set(typeIds);
     pushUrl(next);
-  }, [checkedTypes, pushUrl]);
+  }, [checkedIds, typeIds, pushUrl]);
 
   const handleToggleType = useCallback(
-    (typeKey: string) => {
-      const next = new Set(checkedTypes);
-      if (next.has(typeKey)) next.delete(typeKey);
-      else next.add(typeKey);
+    (id: string) => {
+      const next = new Set(checkedIds);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       pushUrl(next);
     },
-    [checkedTypes, pushUrl],
+    [checkedIds, pushUrl],
   );
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div>
       {/* Section header — same structure as NavSectionRow */}
-      {/* Opening the accordion also navigates to /paperwork so the list is */}
+      {/* Opening the accordion also navigates to /documents so the list is */}
       {/* immediately visible; closing it is toggle-only (no navigation).   */}
       <button
         type="button"
         onClick={isCollapsed ? onExpandSidebar : () => {
-          if (!isOpen) guardedNavigate("/paperwork");
+          if (!isOpen) guardedNavigate("/documents");
           onToggle();
         }}
         title={isCollapsed ? sectionLabel : undefined}
@@ -309,28 +327,26 @@ function PaperworkNavSection({
             <input
               ref={selectAllRef}
               type="checkbox"
-              checked={checkedTypes.size === PAPERWORK_TYPES.length}
+              checked={typeIds.length > 0 && checkedIds.size === typeIds.length}
               onChange={handleSelectAll}
               className="h-3.5 w-3.5 shrink-0 cursor-pointer"
             />
-            <span className="truncate">{tPaperwork("selectAll")}</span>
+            <span className="truncate">{tDocument("selectAll")}</span>
           </label>
 
-          {/* Individual type checkboxes */}
-          {(PAPERWORK_TYPES as readonly PaperworkType[]).map((typeKey) => (
+          {/* Individual type checkboxes — one per lookup_document_type row */}
+          {types.map((type) => (
             <label
-              key={typeKey}
+              key={type.id}
               className="flex items-center gap-2.5 rounded-md px-3 py-1.5 text-sm text-ink cursor-pointer hover:bg-or-light select-none"
             >
               <input
                 type="checkbox"
-                checked={checkedTypes.has(typeKey)}
-                onChange={() => handleToggleType(typeKey)}
+                checked={checkedIds.has(type.id)}
+                onChange={() => handleToggleType(type.id)}
                 className="h-3.5 w-3.5 shrink-0 cursor-pointer"
               />
-              <span className="truncate">
-                {tPaperwork(`types.${typeKey}`)}
-              </span>
+              <span className="truncate">{type.name}</span>
             </label>
           ))}
         </div>
@@ -393,13 +409,13 @@ export function SidebarNav() {
   const activeSectionKey = useMemo(() => {
     const computed = getActiveSectionKey(pathname, NAV_SECTIONS);
     if (computed) return computed;
-    // Paperwork section has no items in nav-config (checkbox-based), so we
-    // detect it by pathname instead. Only the list page itself ("/paperwork")
+    // Document section has no items in nav-config (checkbox-based), so we
+    // detect it by pathname instead. Only the list page itself ("/documents")
     // counts as "active" for auto-expand purposes — detail/sub-pages like
-    // "/paperwork/[id]" or "/paperwork/[id]/associate-person" (e.g. landing
+    // "/documents/[id]" or "/documents/[id]/associate-person" (e.g. landing
     // on a document right after classifying it from Admin → Import) should
-    // not pop the 19-checkbox filter list open every time they're visited.
-    if (pathname === "/paperwork") return "paperwork";
+    // not pop the checkbox filter list open every time they're visited.
+    if (pathname === "/documents") return "document";
     return null;
   }, [pathname]);
 
@@ -430,7 +446,7 @@ export function SidebarNav() {
   const sectionLabels: Record<string, string> = {
     people: t("sections.people"),
     property: t("sections.property"),
-    paperwork: t("sections.paperwork"),
+    document: t("sections.document"),
     administration: t("sections.administration"),
   };
 
@@ -511,8 +527,8 @@ export function SidebarNav() {
                 }
               : section;
 
-          return filteredSection.key === "paperwork" ? (
-            <PaperworkNavSection
+          return filteredSection.key === "document" ? (
+            <DocumentNavSection
               key={filteredSection.key}
               section={filteredSection}
               isOpen={openSection === filteredSection.key}

@@ -4,11 +4,11 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { PropertyForm } from "./property-form";
 import { PropertyPersonsTab } from "./property-persons-tab";
-import { PropertyPaperworkTab } from "./property-paperwork-tab";
+import { PropertyDocumentTab } from "./property-document-tab";
 import { PropertyReferencesTab } from "./property-references-tab";
 import { type FormValues, type Corner } from "./form-schema";
 
-type Tab = "details" | "references" | "persons" | "paperwork";
+type Tab = "details" | "references" | "persons" | "document";
 
 type Props = {
   propertyId:     string;
@@ -37,7 +37,7 @@ export function PropertyDetailTabs({
     { key: "details",    label: t("tabs.details")    },
     { key: "references", label: t("tabs.references") },
     { key: "persons",    label: t("tabs.persons")    },
-    { key: "paperwork",  label: t("tabs.paperwork")  },
+    { key: "document",   label: t("tabs.document")   },
   ];
 
   return (
@@ -84,8 +84,8 @@ export function PropertyDetailTabs({
         {activeTab === "persons" && (
           <PropertyPersonsTab propertyId={propertyId} />
         )}
-        {activeTab === "paperwork" && (
-          <PropertyPaperworkTab propertyId={propertyId} />
+        {activeTab === "document" && (
+          <PropertyDocumentTab propertyId={propertyId} />
         )}
         {activeTab === "references" && (
           <PropertyReferencesTab propertyId={propertyId} />

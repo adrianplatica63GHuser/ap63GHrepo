@@ -20,7 +20,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "ga40prj",
-  description: "People, paperwork, and properties",
+  description: "People, documents, and properties",
 };
 
 export default async function RootLayout({

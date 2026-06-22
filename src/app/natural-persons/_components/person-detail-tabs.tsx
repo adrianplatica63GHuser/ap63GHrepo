@@ -4,11 +4,11 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { NaturalPersonForm } from "./natural-person-form";
 import { PersonPropertiesTab } from "../../properties/_components/person-properties-tab";
-import { PersonPaperworkTab } from "../../paperwork/_components/person-paperwork-tab";
+import { PersonDocumentTab } from "../../documents/_components/person-document-tab";
 import { PersonReferencesTab } from "./person-references-tab";
 import { type FormValues } from "./form-schema";
 
-type Tab = "details" | "references" | "properties" | "paperwork";
+type Tab = "details" | "references" | "properties" | "document";
 
 type IdCardLink = { id: string; code: string } | null;
 
@@ -38,7 +38,7 @@ export function PersonDetailTabs({
     { key: "details",    label: t("tabs.details")    },
     { key: "references", label: t("tabs.references") },
     { key: "properties", label: t("tabs.properties") },
-    { key: "paperwork",  label: t("tabs.paperwork")  },
+    { key: "document",   label: t("tabs.document")   },
   ];
 
   return (
@@ -83,8 +83,8 @@ export function PersonDetailTabs({
         {activeTab === "properties" && (
           <PersonPropertiesTab personId={personId} backBase="/natural-persons" />
         )}
-        {activeTab === "paperwork" && (
-          <PersonPaperworkTab personId={personId} backBase="/natural-persons" />
+        {activeTab === "document" && (
+          <PersonDocumentTab personId={personId} backBase="/natural-persons" />
         )}
         {activeTab === "references" && (
           <PersonReferencesTab personId={personId} backBase="/natural-persons" />

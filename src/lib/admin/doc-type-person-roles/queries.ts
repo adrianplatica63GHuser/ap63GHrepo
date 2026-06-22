@@ -84,7 +84,7 @@ export async function createDocTypePersonRole(data: {
 
 // ── Distinct person roles across all document types ───────────────────────────
 //
-// Used by the "associate paperwork to person" page: the document type is not
+// Used by the "associate document to person" page: the document type is not
 // known at association time, so we offer the full curated set of roles that
 // appear in any document-type association rather than filtering by one type.
 

@@ -1,7 +1,7 @@
 /**
- * /api/paperwork/[id]
+ * /api/documents/[id]
  *
- * GET    — fetch full paperwork record
+ * GET    — fetch full document record
  * PATCH  — partial update
  * DELETE — soft delete (sets deleted_at)
  */
@@ -13,24 +13,24 @@ import {
   zodErrorToResponse,
 } from "@/lib/api/errors";
 import {
-  getPaperworkById,
-  softDeletePaperwork,
-  updatePaperwork,
-} from "@/lib/paperwork/queries";
-import { paperworkUpdateSchema } from "@/lib/paperwork/validation";
+  getDocumentById,
+  softDeleteDocument,
+  updateDocument,
+} from "@/lib/documents/queries";
+import { documentUpdateSchema } from "@/lib/documents/validation";
 
 type Ctx = { params: Promise<{ id: string }> };
 
 export async function GET(_req: NextRequest, ctx: Ctx): Promise<Response> {
   const { id } = await ctx.params;
   try {
-    const result = await getPaperworkById(id);
+    const result = await getDocumentById(id);
     if (!result) {
       return Response.json({ error: "Not found" }, { status: 404 });
     }
     return Response.json(result);
   } catch (err) {
-    return unexpectedError(err, "GET /api/paperwork/[id]");
+    return unexpectedError(err, "GET /api/documents/[id]");
   }
 }
 
@@ -47,13 +47,13 @@ export async function PATCH(
     return Response.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const parsed = paperworkUpdateSchema.safeParse(body);
+  const parsed = documentUpdateSchema.safeParse(body);
   if (!parsed.success) {
     return zodErrorToResponse(parsed.error);
   }
 
   try {
-    const result = await updatePaperwork(id, parsed.data);
+    const result = await updateDocument(id, parsed.data);
     if (!result) {
       return Response.json({ error: "Not found" }, { status: 404 });
     }
@@ -61,19 +61,19 @@ export async function PATCH(
   } catch (err) {
     const dbResponse = dbErrorToResponse(err);
     if (dbResponse) return dbResponse;
-    return unexpectedError(err, "PATCH /api/paperwork/[id]");
+    return unexpectedError(err, "PATCH /api/documents/[id]");
   }
 }
 
 export async function DELETE(_req: NextRequest, ctx: Ctx): Promise<Response> {
   const { id } = await ctx.params;
   try {
-    const ok = await softDeletePaperwork(id);
+    const ok = await softDeleteDocument(id);
     if (!ok) {
       return Response.json({ error: "Not found" }, { status: 404 });
     }
     return new Response(null, { status: 204 });
   } catch (err) {
-    return unexpectedError(err, "DELETE /api/paperwork/[id]");
+    return unexpectedError(err, "DELETE /api/documents/[id]");
   }
 }

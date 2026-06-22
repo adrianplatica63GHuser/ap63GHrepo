@@ -14,9 +14,9 @@
  *     Adrian's standing instruction, these are surfaced for him to map
  *     manually rather than guessed into the wrong column.
  *  3. On Save: POST /api/people (create the Natural Person), POST
- *     /api/paperwork (create a CARTE_IDENTITATE Document), POST
- *     /api/paperwork/[id]/pages (upload the scanned image as page 1), then
- *     POST /api/paperwork/[id]/persons (link the two) — the existing
+ *     /api/documents (create a CARTE_IDENTITATE Document), POST
+ *     /api/documents/[id]/pages (upload the scanned image as page 1), then
+ *     POST /api/documents/[id]/persons (link the two) — the existing
  *     person-detail page already resolves this link into the "ID card" tag
  *     via getPersonIdCardLink().
  */
@@ -26,7 +26,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type FieldPath, type UseFormRegister } from "react-hook-form";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   emptyFormValues,
   formSchema,
@@ -34,6 +34,23 @@ import {
   type FormValues,
 } from "@/app/natural-persons/_components/form-schema";
 import { useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-provider";
+import { AddressBlock } from "@/components/address/address-block";
+
+// ---------------------------------------------------------------------------
+// Document type list — fetched dynamically from the admin-managed
+// lookup_document_type table (Slice #15.05: no more hardcoded type enum).
+// We need the uuid for the "CARTE_IDENTITATE" key to create the linked
+// ID-card Document.
+// ---------------------------------------------------------------------------
+
+type DocumentTypeOption = { id: string; key: string; name: string };
+
+async function fetchDocumentTypes(): Promise<DocumentTypeOption[]> {
+  const res = await fetch("/api/admin/value-lists/document-types");
+  if (!res.ok) return [];
+  const body = await res.json();
+  return (body.items ?? []) as DocumentTypeOption[];
+}
 
 type Props = {
   file: File;
@@ -82,6 +99,18 @@ const MAPPED_FIELDS: (keyof FormValues)[] = [
   "citizenshipId",
 ];
 
+// Extraction-route address keys -> AddressBlock sub-field names. The
+// extracted "Domiciliu" address is written into the Home address block
+// (addresses.HOME.*) — see src/app/api/admin/import/extract-id-card/route.ts
+// for the matching field descriptions on the model-extraction side.
+const ADDRESS_FIELD_MAP: Record<string, string> = {
+  addressStreetLine: "streetLine",
+  addressPostalCode: "postalCode",
+  addressLocality: "locality",
+  addressCounty: "county",
+  addressCountry: "country",
+};
+
 function useCitizenshipOptions(): { value: string; label: string }[] {
   const [options, setOptions] = useState<{ value: string; label: string }[]>([]);
   useEffect(() => {
@@ -115,11 +144,15 @@ async function callCreatePerson(payload: ReturnType<typeof toApiPayload>): Promi
   return data.person.id;
 }
 
-async function callCreateIdCardDocument(file: File, title: string): Promise<string> {
-  const createRes = await fetch("/api/paperwork", {
+async function callCreateIdCardDocument(
+  file: File,
+  title: string,
+  documentTypeId: string,
+): Promise<string> {
+  const createRes = await fetch("/api/documents", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ type: "CARTE_IDENTITATE", title }),
+    body: JSON.stringify({ documentTypeId, title }),
   });
   if (!createRes.ok) {
     const body = await createRes.json().catch(() => ({}));
@@ -132,7 +165,7 @@ async function callCreateIdCardDocument(file: File, title: string): Promise<stri
   fd.append("pageNumber", "1");
   fd.append("pageName", file.name);
   fd.append("file", file);
-  const pageRes = await fetch(`/api/paperwork/${encodeURIComponent(row.id)}/pages`, {
+  const pageRes = await fetch(`/api/documents/${encodeURIComponent(row.id)}/pages`, {
     method: "POST",
     body: fd,
   });
@@ -144,11 +177,11 @@ async function callCreateIdCardDocument(file: File, title: string): Promise<stri
   return row.id;
 }
 
-async function callLinkPersonToDocument(paperworkId: string, personId: string): Promise<void> {
-  const res = await fetch(`/api/paperwork/${encodeURIComponent(paperworkId)}/persons`, {
+async function callLinkPersonToDocument(documentId: string, personId: string): Promise<void> {
+  const res = await fetch(`/api/documents/${encodeURIComponent(documentId)}/persons`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ personIds: [personId] }),
+    body: JSON.stringify({ personIds: [personId], personRoleId: null }),
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
@@ -163,6 +196,13 @@ export function PersonClassifyPanel({ file, onBack, onClassified, onClose }: Pro
   const router = useRouter();
   const queryClient = useQueryClient();
   const citizenshipOptions = useCitizenshipOptions();
+
+  const { data: documentTypes } = useQuery({
+    queryKey: ["document-types"],
+    queryFn: fetchDocumentTypes,
+    staleTime: 5 * 60 * 1000,
+  });
+  const idCardDocumentTypeId = (documentTypes ?? []).find((t) => t.key === "CARTE_IDENTITATE")?.id;
 
   // Lazy initializer derives the preview URL from the file prop without a
   // synchronous setState-in-effect call; the only effect needed is the
@@ -225,6 +265,15 @@ export function PersonClassifyPanel({ file, onBack, onClassified, onClose }: Pro
       if (fields.idDocumentNumber) {
         setValue("idDocumentType", "ID_CARD", { shouldDirty: true, shouldValidate: true });
       }
+      for (const [extractKey, sub] of Object.entries(ADDRESS_FIELD_MAP)) {
+        const v = fields[extractKey];
+        if (v) {
+          setValue(`addresses.HOME.${sub}` as FieldPath<FormValues>, v, {
+            shouldDirty: true,
+            shouldValidate: true,
+          });
+        }
+      }
       setLowConfidence(new Set(data.lowConfidenceFields ?? []));
       setUnmappedRaw(data.unmappedRaw ?? {});
     } catch (err) {
@@ -242,15 +291,19 @@ export function PersonClassifyPanel({ file, onBack, onClassified, onClose }: Pro
   // dialog-close side effects. Shared by the form's own submit handler and
   // by the unsaved-changes guard's Save action.
   const savePerson = async (values: FormValues): Promise<string | null> => {
+    if (!idCardDocumentTypeId) {
+      setSaveError(tp("error"));
+      return null;
+    }
     setSaving(true);
     setSaveError(null);
     try {
       const personId = await callCreatePerson(toApiPayload(values));
       const docTitle = [values.lastName, values.firstName].filter(Boolean).join(" ") || file.name;
-      const paperworkId = await callCreateIdCardDocument(file, docTitle);
-      await callLinkPersonToDocument(paperworkId, personId);
+      const documentId = await callCreateIdCardDocument(file, docTitle, idCardDocumentTypeId);
+      await callLinkPersonToDocument(documentId, personId);
       await queryClient.invalidateQueries({ queryKey: ["people"] });
-      await queryClient.invalidateQueries({ queryKey: ["paperwork"] });
+      await queryClient.invalidateQueries({ queryKey: ["documents"] });
       onClassified();
       return personId;
     } catch (err) {
@@ -285,6 +338,14 @@ export function PersonClassifyPanel({ file, onBack, onClassified, onClose }: Pro
 
   const unmappedEntries = Object.entries(unmappedRaw);
   const busy = extracting || saving;
+  // Maps lowConfidence's full extraction keys (e.g. "addressStreetLine") to
+  // the AddressBlock sub-field names (e.g. "streetLine") it expects, so the
+  // same ⚠ badge convention used on every other field also applies here.
+  const addressWarnFields = new Set(
+    Object.entries(ADDRESS_FIELD_MAP)
+      .filter(([extractKey]) => lowConfidence.has(extractKey))
+      .map(([, sub]) => sub),
+  );
 
   return (
     <>
@@ -370,10 +431,24 @@ export function PersonClassifyPanel({ file, onBack, onClassified, onClose }: Pro
         </div>
         <div className="grid grid-cols-2 gap-2">
           <Field label={tf("fields.cnp")} name="cnp" register={register} error={errors.cnp?.message} warn={lowConfidence.has("cnp")} />
-          <Field label={tf("fields.idDocumentNumber")} name="idDocumentNumber" register={register} error={errors.idDocumentNumber?.message} warn={lowConfidence.has("idDocumentNumber")} />
+          <SelectField
+            label={tf("fields.idDocumentType")}
+            name="idDocumentType"
+            register={register}
+            error={errors.idDocumentType?.message}
+            warn={lowConfidence.has("idDocumentNumber")}
+            options={[
+              { value: "", label: "—" },
+              { value: "ID_CARD", label: tf("options.idDoc.ID_CARD") },
+              { value: "PASSPORT", label: tf("options.idDoc.PASSPORT") },
+            ]}
+          />
         </div>
         <div className="grid grid-cols-2 gap-2">
+          <Field label={tf("fields.idDocumentNumber")} name="idDocumentNumber" register={register} error={errors.idDocumentNumber?.message} warn={lowConfidence.has("idDocumentNumber")} />
           <Field label={tf("fields.idCardNumber")} name="idCardNumber" register={register} error={errors.idCardNumber?.message} warn={lowConfidence.has("idCardNumber")} />
+        </div>
+        <div className="grid grid-cols-2 gap-2">
           <SelectField
             label={tf("fields.citizenship")}
             name="citizenshipId"
@@ -408,6 +483,14 @@ export function PersonClassifyPanel({ file, onBack, onClassified, onClose }: Pro
         </div>
         <TextAreaField label={tf("fields.notes")} name="notes" register={register} error={errors.notes?.message} maxLength={300} />
       </div>
+
+      <AddressBlock<FormValues>
+        title={tf("sections.homeAddress")}
+        prefix="addresses.HOME"
+        register={register}
+        errors={errors.addresses?.HOME}
+        warnFields={addressWarnFields}
+      />
 
       {unmappedEntries.length > 0 && (
         <div className="rounded-md border border-amber-300 bg-amber-50 p-3 dark:border-amber-700 dark:bg-amber-950/30">

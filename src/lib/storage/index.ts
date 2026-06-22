@@ -1,12 +1,12 @@
 /**
- * Storage abstraction for uploaded paperwork pages.
+ * Storage abstraction for uploaded document pages.
  *
  * Development  (NODE_ENV !== "production"):
  *   Files are written to  <project-root>/uploads/<filePath>
  *   and served by         /api/files/<filePath>
  *
  * Production   (NODE_ENV === "production"):
- *   Files are stored in the Supabase Storage bucket "paperwork-pages"
+ *   Files are stored in the Supabase Storage bucket "document-pages"
  *   and served via short-lived signed URLs (60-second TTL).
  */
 
@@ -18,7 +18,7 @@ import { createAdminClient } from "@/lib/supabase/server";
 // Config
 // ---------------------------------------------------------------------------
 
-const SUPABASE_BUCKET = "paperwork-pages";
+const SUPABASE_BUCKET = "document-pages";
 const LOCAL_UPLOADS_DIR = path.join(process.cwd(), "uploads");
 const isProduction = process.env.NODE_ENV === "production";
 
@@ -29,7 +29,7 @@ const isProduction = process.env.NODE_ENV === "production";
 /**
  * Upload a file buffer to the appropriate storage backend.
  * @param buffer   Raw file content.
- * @param filePath Storage key, e.g. "paperwork-pages/{paperworkId}/{pageId}.pdf".
+ * @param filePath Storage key, e.g. "document-pages/{documentId}/{pageId}.pdf".
  * @param mimeType MIME type of the file.
  */
 export async function uploadFile(
@@ -85,7 +85,7 @@ export async function getFileUrl(filePath: string): Promise<string> {
     }
     return data.signedUrl;
   } else {
-    // filePath example: "paperwork-pages/abc123/pageId.pdf"
+    // filePath example: "document-pages/abc123/pageId.pdf"
     // Served by src/app/api/files/[...path]/route.ts
     return `/api/files/${filePath}`;
   }

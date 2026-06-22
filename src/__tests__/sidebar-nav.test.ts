@@ -23,11 +23,8 @@ const MOCK_SECTIONS = [
     ],
   },
   {
-    key: "paperwork",
-    items: [
-      { key: "contract" },
-      { key: "certificate" },
-    ],
+    key: "document",
+    items: [],
   },
   {
     key: "administration",

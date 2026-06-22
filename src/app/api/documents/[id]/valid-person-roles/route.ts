@@ -1,5 +1,5 @@
 /**
- * GET /api/paperwork/[id]/valid-person-roles
+ * GET /api/documents/[id]/valid-person-roles
  *
  * Returns the person roles that are valid for this document's type,
  * drawn from the Document Persons whitelist (lookup_doc_type_person_role).
@@ -7,15 +7,15 @@
  */
 import type { NextRequest } from "next/server";
 import { unexpectedError } from "@/lib/api/errors";
-import { listPersonRolesForPaperwork } from "@/lib/paperwork/queries";
+import { listPersonRolesForDocument } from "@/lib/documents/queries";
 
 type Ctx = { params: Promise<{ id: string }> };
 
 export async function GET(_req: NextRequest, ctx: Ctx): Promise<Response> {
   const { id } = await ctx.params;
   try {
-    return Response.json({ items: await listPersonRolesForPaperwork(id) });
+    return Response.json({ items: await listPersonRolesForDocument(id) });
   } catch (err) {
-    return unexpectedError(err, "GET /api/paperwork/[id]/valid-person-roles");
+    return unexpectedError(err, "GET /api/documents/[id]/valid-person-roles");
   }
 }

@@ -3,7 +3,7 @@
 /**
  * UnsavedChangesProvider — Slice #15.03, Change 1.
  *
- * Any detail form (Natural Person / Judicial Person / Property / Paperwork)
+ * Any detail form (Natural Person / Judicial Person / Property / Document)
  * or Admin → Import classify panel can register itself as "dirty" via the
  * `useUnsavedChangesGuard` hook below. Sidebar navigation (and anything else
  * that wants to be guarded) then calls `guardedNavigate(href)` /

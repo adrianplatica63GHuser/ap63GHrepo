@@ -1,10 +1,10 @@
 /**
- * POST /api/paperwork/batch-delete
+ * POST /api/documents/batch-delete
  *
- * Soft-deletes a list of paperwork/documents (sets deleted_at = now()).
+ * Soft-deletes a list of documents (sets deleted_at = now()).
  * Only affects rows that are not already deleted.
  *
- * Body:   { ids: string[] }   — array of paperwork UUIDs, 1–1 000 items
+ * Body:   { ids: string[] }   — array of document UUIDs, 1–1 000 items
  * 200:    { deleted: number } — count of rows actually updated
  * 400:    validation error
  * 500:    unexpected server error
@@ -14,7 +14,7 @@ import type { NextRequest } from "next/server";
 import { z } from "zod/v4";
 import { and, inArray, isNull } from "drizzle-orm";
 import { db } from "@/db";
-import { paperwork } from "@/db/schema";
+import { document } from "@/db/schema";
 import { unexpectedError, zodErrorToResponse } from "@/lib/api/errors";
 
 const batchDeleteSchema = z.object({
@@ -41,13 +41,13 @@ export async function POST(request: NextRequest): Promise<Response> {
 
   try {
     const result = await db
-      .update(paperwork)
+      .update(document)
       .set({ deletedAt: new Date() })
-      .where(and(inArray(paperwork.id, ids), isNull(paperwork.deletedAt)))
-      .returning({ id: paperwork.id });
+      .where(and(inArray(document.id, ids), isNull(document.deletedAt)))
+      .returning({ id: document.id });
 
     return Response.json({ deleted: result.length });
   } catch (err) {
-    return unexpectedError(err, "POST /api/paperwork/batch-delete");
+    return unexpectedError(err, "POST /api/documents/batch-delete");
   }
 }

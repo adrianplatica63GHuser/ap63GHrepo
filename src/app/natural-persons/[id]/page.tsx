@@ -3,8 +3,8 @@ import { getPersonById, getPersonIdCardLink } from "@/lib/persons/queries";
 import { PersonDetailTabs } from "../_components/person-detail-tabs";
 import { fromApiPayload } from "../_components/form-schema";
 
-type Tab = "details" | "references" | "properties" | "paperwork";
-const VALID_TABS: Tab[] = ["details", "references", "properties", "paperwork"];
+type Tab = "details" | "references" | "properties" | "document";
+const VALID_TABS: Tab[] = ["details", "references", "properties", "document"];
 
 type PageParams = {
   params:       Promise<{ id: string }>;

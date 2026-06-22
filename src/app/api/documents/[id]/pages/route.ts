@@ -1,7 +1,7 @@
 /**
- * /api/paperwork/[id]/pages
+ * /api/documents/[id]/pages
  *
- * GET  — list all pages for a paperwork record (ordered by page_number).
+ * GET  — list all pages for a document record (ordered by page_number).
  * POST — upload a file and create a page record (multipart/form-data).
  *
  * POST fields:
@@ -15,9 +15,9 @@ import type { NextRequest } from "next/server";
 import { z } from "zod/v4";
 import { unexpectedError } from "@/lib/api/errors";
 import {
-  createPaperworkPage,
-  listPaperworkPages,
-} from "@/lib/paperwork/pages-queries";
+  createDocumentPage,
+  listDocumentPages,
+} from "@/lib/documents/pages-queries";
 import { uploadFile } from "@/lib/storage";
 
 // 20 MB limit
@@ -39,12 +39,12 @@ type Ctx = { params: Promise<{ id: string }> };
 // ---------------------------------------------------------------------------
 
 export async function GET(_req: NextRequest, ctx: Ctx): Promise<Response> {
-  const { id: paperworkId } = await ctx.params;
+  const { id: documentId } = await ctx.params;
   try {
-    const pages = await listPaperworkPages(paperworkId);
+    const pages = await listDocumentPages(documentId);
     return Response.json(pages);
   } catch (err) {
-    return unexpectedError(err, "GET /api/paperwork/[id]/pages");
+    return unexpectedError(err, "GET /api/documents/[id]/pages");
   }
 }
 
@@ -53,7 +53,7 @@ export async function GET(_req: NextRequest, ctx: Ctx): Promise<Response> {
 // ---------------------------------------------------------------------------
 
 export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
-  const { id: paperworkId } = await ctx.params;
+  const { id: documentId } = await ctx.params;
 
   let formData: FormData;
   try {
@@ -102,13 +102,13 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
     const originalName = file.name;
     const dotIndex = originalName.lastIndexOf(".");
     const ext = dotIndex !== -1 ? originalName.slice(dotIndex) : "";
-    const filePath = `paperwork-pages/${paperworkId}/${pageId}${ext}`;
+    const filePath = `document-pages/${documentId}/${pageId}${ext}`;
 
     const buffer = Buffer.from(await file.arrayBuffer());
     await uploadFile(buffer, filePath, mimeType);
 
-    const page = await createPaperworkPage({
-      paperworkId,
+    const page = await createDocumentPage({
+      documentId,
       pageNumber: pageNumberResult.data,
       pageName,
       pageNotes,
@@ -120,6 +120,6 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
 
     return Response.json(page, { status: 201 });
   } catch (err) {
-    return unexpectedError(err, "POST /api/paperwork/[id]/pages");
+    return unexpectedError(err, "POST /api/documents/[id]/pages");
   }
 }

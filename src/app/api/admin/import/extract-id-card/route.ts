@@ -17,6 +17,8 @@
  *       idDocumentNumber, idCardNumber, placeOfBirth,
  *       idIssuingAuthority, idValidFrom, idValidUntil, idMrzRaw,
  *       citizenshipId, citizenshipRaw,
+ *       addressStreetLine, addressPostalCode, addressLocality,
+ *       addressCounty, addressCountry,
  *     },
  *     lowConfidenceFields: string[],   // keys the model wasn't sure about —
  *                                      // the review UI should highlight these
@@ -56,7 +58,18 @@ const EXTRACTION_FIELDS = [
   "idValidUntil",
   "idMrzRaw",
   "citizenshipRaw",
+  "addressStreetLine",
+  "addressPostalCode",
+  "addressLocality",
+  "addressCounty",
+  "addressCountry",
 ] as const;
+
+// Default country for any address read off a Romanian ID card — these are
+// always domestic addresses, so defaulting it server-side (rather than
+// leaving it for the user to type "România" by hand every time) follows
+// CLAUDE.md's standing "minimise human effort" rule.
+const DEFAULT_ADDRESS_COUNTRY = "România";
 
 type ExtractedFields = Partial<Record<(typeof EXTRACTION_FIELDS)[number], string>>;
 
@@ -153,14 +166,19 @@ Shape:
     "idValidFrom": string | null,     // ISO yyyy-mm-dd, "Valabilitate" start
     "idValidUntil": string | null,    // ISO yyyy-mm-dd, "Valabilitate" end
     "idMrzRaw": string | null,        // the raw machine-readable zone text (back of card), verbatim, lines joined with \\n
-    "citizenshipRaw": string | null   // citizenship/nationality as printed, e.g. "ROU" or "Romana"
+    "citizenshipRaw": string | null,  // citizenship/nationality as printed, e.g. "ROU" or "Romana"
+    "addressStreetLine": string | null,  // "Domiciliu" — the street/number/block/floor/apartment part only, e.g. "Str. Valea Calugareasca nr.9 bl.Z4 et.7 ap.44" (do not include the city/sector/county part here)
+    "addressPostalCode": string | null,  // postal code, if printed (rare on Romanian ID cards) — else null, do not guess
+    "addressLocality": string | null,    // city/town/commune/sector, e.g. "Sector 6" or "Mun. Bucuresti Sector 6" or "Ploiesti"
+    "addressCounty": string | null,      // judet (county), e.g. "Ilfov" — for Bucharest sectors, this is usually not printed separately, leave null
+    "addressCountry": string | null      // almost always "Romania" for a domestic ID card; null only if you genuinely cannot tell it's Romanian
   },
-  "lowConfidenceFields": string[],    // keys above where you are not confident in the OCR read (blurry, ambiguous, or guessed)
-  "unmappedRaw": { [label: string]: string }  // any other text visibly printed on the card that does not fit one of the fields above (e.g. an address printed on the front, a parent's name, etc.) — key is your best label for it, value is the raw text
+  "lowConfidenceFields": string[],    // keys above where you are not confident in the OCR read (blurry, ambiguous, or guessed) — this includes any addressX field where you had to guess how to split the printed address into parts
+  "unmappedRaw": { [label: string]: string }  // any other text visibly printed on the card that does not fit one of the fields above (e.g. a parent's name, a barcode value, etc.) — key is your best label for it, value is the raw text
 }
 
 Rules:
-- Only include a field in "unmappedRaw" if it genuinely does not fit one of the named fields above. Do not duplicate a named field into unmappedRaw.
+- Only include a field in "unmappedRaw" if it genuinely does not fit one of the named fields above. Do not duplicate a named field into unmappedRaw. In particular, the printed domiciliu/address line should always be split across addressStreetLine/addressLocality/addressCounty/addressPostalCode/addressCountry, never placed in unmappedRaw, even if you are unsure exactly how to split it (in that case, do your best and list the relevant addressX keys in lowConfidenceFields instead).
 - If you cannot read a field at all, set it to null and do NOT list it in lowConfidenceFields (null means "not found", not "uncertain"). Only list a field in lowConfidenceFields if you extracted a value but are unsure it is correct.
 - Dates must be ISO yyyy-mm-dd or null. Never invent a date.
 - Output strictly valid JSON — no comments, no trailing commas, no markdown code fences.`;
@@ -335,6 +353,18 @@ export async function POST(request: NextRequest): Promise<Response> {
     // Couldn't confidently resolve to a known lookup row — flag it instead
     // of guessing, per Adrian's standing instruction.
     parsed.lowConfidenceFields = [...new Set([...parsed.lowConfidenceFields, "citizenshipRaw"])];
+  }
+
+  // A domestic ID card's address is always Romanian — if the model found
+  // any other part of the address but left the country blank, fill it in
+  // rather than making the user type "România" by hand every time.
+  const hasOtherAddressField =
+    Boolean(parsed.fields.addressStreetLine) ||
+    Boolean(parsed.fields.addressPostalCode) ||
+    Boolean(parsed.fields.addressLocality) ||
+    Boolean(parsed.fields.addressCounty);
+  if (!parsed.fields.addressCountry && hasOtherAddressField) {
+    parsed.fields.addressCountry = DEFAULT_ADDRESS_COUNTRY;
   }
 
   return Response.json({

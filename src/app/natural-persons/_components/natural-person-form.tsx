@@ -377,7 +377,7 @@ export function NaturalPersonForm({
               </span>
               {linkedIdCard ? (
                 <a
-                  href={`/paperwork/${linkedIdCard.id}`}
+                  href={`/documents/${linkedIdCard.id}`}
                   className="text-cta hover:underline"
                 >
                   {linkedIdCard.code} →

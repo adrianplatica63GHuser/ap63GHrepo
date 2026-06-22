@@ -1,7 +1,7 @@
 /**
  * /api/files/[...path]
  *
- * Local-dev-only file-serving route for paperwork page uploads.
+ * Local-dev-only file-serving route for document page uploads.
  * Files are stored under <project-root>/uploads/ and served from here.
  *
  * In production, files are served via Supabase Storage signed URLs and

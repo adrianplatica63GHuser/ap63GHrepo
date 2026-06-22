@@ -3,8 +3,8 @@ import { getPropertyById } from "@/lib/properties/queries";
 import { PropertyDetailTabs } from "../_components/property-detail-tabs";
 import { fromApiPayload } from "../_components/form-schema";
 
-type Tab = "details" | "references" | "persons" | "paperwork";
-const VALID_TABS: Tab[] = ["details", "references", "persons", "paperwork"];
+type Tab = "details" | "references" | "persons" | "document";
+const VALID_TABS: Tab[] = ["details", "references", "persons", "document"];
 
 type PageParams = {
   params:       Promise<{ id: string }>;

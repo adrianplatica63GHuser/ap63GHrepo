@@ -1,5 +1,5 @@
 /**
- * /api/paperwork/[id]/pages/[pageId]
+ * /api/documents/[id]/pages/[pageId]
  *
  * DELETE — remove the page record and its associated stored file.
  */
@@ -7,9 +7,9 @@
 import type { NextRequest } from "next/server";
 import { unexpectedError } from "@/lib/api/errors";
 import {
-  deletePaperworkPage,
-  getPaperworkPage,
-} from "@/lib/paperwork/pages-queries";
+  deleteDocumentPage,
+  getDocumentPage,
+} from "@/lib/documents/pages-queries";
 import { deleteFile } from "@/lib/storage";
 
 type Ctx = { params: Promise<{ id: string; pageId: string }> };
@@ -18,7 +18,7 @@ export async function DELETE(_req: NextRequest, ctx: Ctx): Promise<Response> {
   const { pageId } = await ctx.params;
 
   try {
-    const page = await getPaperworkPage(pageId);
+    const page = await getDocumentPage(pageId);
     if (!page) {
       return Response.json({ error: "Page not found" }, { status: 404 });
     }
@@ -26,10 +26,10 @@ export async function DELETE(_req: NextRequest, ctx: Ctx): Promise<Response> {
     // Delete the stored file first; if storage deletion fails we still want
     // to surface the error rather than leave an orphan DB row.
     await deleteFile(page.filePath);
-    await deletePaperworkPage(pageId);
+    await deleteDocumentPage(pageId);
 
     return new Response(null, { status: 204 });
   } catch (err) {
-    return unexpectedError(err, "DELETE /api/paperwork/[id]/pages/[pageId]");
+    return unexpectedError(err, "DELETE /api/documents/[id]/pages/[pageId]");
   }
 }

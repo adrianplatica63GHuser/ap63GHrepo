@@ -10,9 +10,10 @@ import { eq, sql } from "drizzle-orm";
 import { db, pool } from "./index";
 import {
   address,
+  document,
   judicialPerson,
+  lookupDocumentType,
   naturalPerson,
-  paperwork,
   person,
   principalObject,
   property,
@@ -731,10 +732,14 @@ const PROPERTIES: SeedPropertyRow[] = [
 ];
 
 // ---------------------------------------------------------------------------
-// Paperwork seed data — 5–6 records per type (98 rows total), Ilfov area
+// Document seed data — 5–6 records per type (98 rows total), Ilfov area
+//
+// `typeKey` below is a `lookup_document_type.key` slug, resolved to the
+// actual uuid FK at insert time (see the seed loop). These keys must already
+// exist in lookup_document_type (seeded by migration_020_rename_to_document.sql).
 // ---------------------------------------------------------------------------
 
-type PaperworkType =
+type DocumentTypeKey =
   | "ACT_ADJUDECARE" | "ACT_CADASTRU" | "ACT_DONATIE" | "AUTORIZATIE"
   | "AVIZ_INSTITUTIE" | "CERTIFICAT_FISCAL" | "CERTIFICAT_MOSTENITOR"
   | "CERTIFICAT_SARCINI" | "CERTIFICAT_URBANISM" | "CONTRACT_ARENDA"
@@ -742,8 +747,8 @@ type PaperworkType =
   | "CONTRACT_VANZARE" | "EXTRAS_CARTE_FUNCIARA" | "EXTRAS_PUG"
   | "HOTARARE_JUDECATOREASCA" | "TESTAMENT" | "TITLU_PROPRIETATE";
 
-type SeedPaperworkRow = {
-  type: PaperworkType;
+type SeedDocumentRow = {
+  typeKey: DocumentTypeKey;
   title?: string;
   nrDocument?: string;
   dateDocument?: string;
@@ -766,124 +771,124 @@ type SeedPaperworkRow = {
   notes?: string;
 };
 
-const PAPERWORKS: SeedPaperworkRow[] = [
+const DOCUMENTS: SeedDocumentRow[] = [
   // ── ACT_ADJUDECARE ──────────────────────────────────────────────────────
-  { type: "ACT_ADJUDECARE", title: "Adjudecare Teren Snagov",    nrDocument: "1234/2019", dateDocument: "2019-04-12", institution: "Judecătoria Buftea",  notes: "Executare silită dosar 445/2018" },
-  { type: "ACT_ADJUDECARE", title: "Adjudecare Lot 3 Balotești", nrDocument: "887/2020",  dateDocument: "2020-09-03", institution: "Tribunalul Ilfov",     notes: "Vânzare la licitație publică" },
-  { type: "ACT_ADJUDECARE", title: "Adjudecare Casă Cornetu",    nrDocument: "2201/2021", dateDocument: "2021-02-17", institution: "Judecătoria Buftea" },
-  { type: "ACT_ADJUDECARE", title: "Adjudecare Teren Cernica",   nrDocument: "556/2022",  dateDocument: "2022-06-29", institution: "Tribunalul Ilfov",     notes: "Imobil adjudecat în urma executării" },
-  { type: "ACT_ADJUDECARE", title: "Adjudecare Parcelă Gruiu",   nrDocument: "310/2023",  dateDocument: "2023-11-08", institution: "Judecătoria Buftea" },
+  { typeKey: "ACT_ADJUDECARE", title: "Adjudecare Teren Snagov",    nrDocument: "1234/2019", dateDocument: "2019-04-12", institution: "Judecătoria Buftea",  notes: "Executare silită dosar 445/2018" },
+  { typeKey: "ACT_ADJUDECARE", title: "Adjudecare Lot 3 Balotești", nrDocument: "887/2020",  dateDocument: "2020-09-03", institution: "Tribunalul Ilfov",     notes: "Vânzare la licitație publică" },
+  { typeKey: "ACT_ADJUDECARE", title: "Adjudecare Casă Cornetu",    nrDocument: "2201/2021", dateDocument: "2021-02-17", institution: "Judecătoria Buftea" },
+  { typeKey: "ACT_ADJUDECARE", title: "Adjudecare Teren Cernica",   nrDocument: "556/2022",  dateDocument: "2022-06-29", institution: "Tribunalul Ilfov",     notes: "Imobil adjudecat în urma executării" },
+  { typeKey: "ACT_ADJUDECARE", title: "Adjudecare Parcelă Gruiu",   nrDocument: "310/2023",  dateDocument: "2023-11-08", institution: "Judecătoria Buftea" },
   // ── ACT_CADASTRU ────────────────────────────────────────────────────────
-  { type: "ACT_CADASTRU", title: "Cadastru Teren Voluntari",   nrDocument: "CAD-1002/2018", dateDocument: "2018-07-15", institution: "OCPI Ilfov", notes: "Prima intabulare" },
-  { type: "ACT_CADASTRU", title: "Cadastru Lot Nord Snagov",   nrDocument: "CAD-2314/2019", dateDocument: "2019-03-22", institution: "OCPI Ilfov" },
-  { type: "ACT_CADASTRU", title: "Cadastru Parcelă Brănești",  nrDocument: "CAD-0887/2020", dateDocument: "2020-10-05", institution: "OCPI Ilfov", notes: "Actualizare după dezmembrare" },
-  { type: "ACT_CADASTRU", title: "Cadastru Teren Afumați",     nrDocument: "CAD-3001/2021", dateDocument: "2021-05-18", institution: "OCPI Ilfov" },
-  { type: "ACT_CADASTRU", title: "Cadastru Lot Tunari",        nrDocument: "CAD-1455/2022", dateDocument: "2022-08-30", institution: "OCPI Ilfov", notes: "Intabulare după retrocedare" },
+  { typeKey: "ACT_CADASTRU", title: "Cadastru Teren Voluntari",   nrDocument: "CAD-1002/2018", dateDocument: "2018-07-15", institution: "OCPI Ilfov", notes: "Prima intabulare" },
+  { typeKey: "ACT_CADASTRU", title: "Cadastru Lot Nord Snagov",   nrDocument: "CAD-2314/2019", dateDocument: "2019-03-22", institution: "OCPI Ilfov" },
+  { typeKey: "ACT_CADASTRU", title: "Cadastru Parcelă Brănești",  nrDocument: "CAD-0887/2020", dateDocument: "2020-10-05", institution: "OCPI Ilfov", notes: "Actualizare după dezmembrare" },
+  { typeKey: "ACT_CADASTRU", title: "Cadastru Teren Afumați",     nrDocument: "CAD-3001/2021", dateDocument: "2021-05-18", institution: "OCPI Ilfov" },
+  { typeKey: "ACT_CADASTRU", title: "Cadastru Lot Tunari",        nrDocument: "CAD-1455/2022", dateDocument: "2022-08-30", institution: "OCPI Ilfov", notes: "Intabulare după retrocedare" },
   // ── ACT_DONATIE ─────────────────────────────────────────────────────────
-  { type: "ACT_DONATIE", title: "Donație Teren Voluntari", nrDocument: "101/2017", dateDocument: "2017-06-10", institution: "Notariat Alexandru Dănilă", partiesAText: "Ion Popescu",        partiesBText: "Maria Popescu" },
-  { type: "ACT_DONATIE", title: "Donație Casă Snagov",     nrDocument: "215/2019", dateDocument: "2019-01-25", institution: "Notariat Ion Grigorescu",   partiesAText: "Elena Constantin",   partiesBText: "Andrei Constantin",       notes: "Imobil cu construcție" },
-  { type: "ACT_DONATIE", title: "Donație Lot Cernica",     nrDocument: "448/2020", dateDocument: "2020-07-14", institution: "Notariat Maria Florescu",   partiesAText: "Gheorghe Popa",      partiesBText: "Laura Popa, Sorin Popa" },
-  { type: "ACT_DONATIE", title: "Donație Teren Brănești",  nrDocument: "732/2021", dateDocument: "2021-09-08", institution: "Notariat Alexandru Dănilă", partiesAText: "Vasile Radu",        partiesBText: "Daniela Radu" },
-  { type: "ACT_DONATIE", title: "Donație Parcelă Tunari",  nrDocument: "919/2022", dateDocument: "2022-03-30", institution: "Notariat Ion Grigorescu",   partiesAText: "Ana Stanescu",       partiesBText: "Mihai Stanescu",          notes: "Donație intre soți" },
+  { typeKey: "ACT_DONATIE", title: "Donație Teren Voluntari", nrDocument: "101/2017", dateDocument: "2017-06-10", institution: "Notariat Alexandru Dănilă", partiesAText: "Ion Popescu",        partiesBText: "Maria Popescu" },
+  { typeKey: "ACT_DONATIE", title: "Donație Casă Snagov",     nrDocument: "215/2019", dateDocument: "2019-01-25", institution: "Notariat Ion Grigorescu",   partiesAText: "Elena Constantin",   partiesBText: "Andrei Constantin",       notes: "Imobil cu construcție" },
+  { typeKey: "ACT_DONATIE", title: "Donație Lot Cernica",     nrDocument: "448/2020", dateDocument: "2020-07-14", institution: "Notariat Maria Florescu",   partiesAText: "Gheorghe Popa",      partiesBText: "Laura Popa, Sorin Popa" },
+  { typeKey: "ACT_DONATIE", title: "Donație Teren Brănești",  nrDocument: "732/2021", dateDocument: "2021-09-08", institution: "Notariat Alexandru Dănilă", partiesAText: "Vasile Radu",        partiesBText: "Daniela Radu" },
+  { typeKey: "ACT_DONATIE", title: "Donație Parcelă Tunari",  nrDocument: "919/2022", dateDocument: "2022-03-30", institution: "Notariat Ion Grigorescu",   partiesAText: "Ana Stanescu",       partiesBText: "Mihai Stanescu",          notes: "Donație intre soți" },
   // ── AUTORIZATIE ─────────────────────────────────────────────────────────
-  { type: "AUTORIZATIE", title: "Autorizație Construire Vila Voluntari",  nrDocument: "AC-045/2018", dateDocument: "2018-04-20", institution: "Primăria Voluntari",  notes: "Construcție P+1E, 220 mp" },
-  { type: "AUTORIZATIE", title: "Autorizație Demolare Anexă Snagov",     nrDocument: "AD-012/2019", dateDocument: "2019-08-11", institution: "Primăria Snagov",     notes: "Anexă gospodărească 45 mp" },
-  { type: "AUTORIZATIE", title: "Autorizație Construire Gard Afumați",   nrDocument: "AC-103/2020", dateDocument: "2020-02-27", institution: "Primăria Afumați",    notes: "Gard pe latura nordică" },
-  { type: "AUTORIZATIE", title: "Autorizație Extindere Locuință Gruiu",  nrDocument: "AC-067/2021", dateDocument: "2021-06-15", institution: "Primăria Gruiu",      notes: "Extindere 35 mp la parter" },
-  { type: "AUTORIZATIE", title: "Autorizație Construire Magazie Tunari", nrDocument: "AC-089/2023", dateDocument: "2023-03-04", institution: "Primăria Tunari",     notes: "Construcție auxiliară 60 mp" },
+  { typeKey: "AUTORIZATIE", title: "Autorizație Construire Vila Voluntari",  nrDocument: "AC-045/2018", dateDocument: "2018-04-20", institution: "Primăria Voluntari",  notes: "Construcție P+1E, 220 mp" },
+  { typeKey: "AUTORIZATIE", title: "Autorizație Demolare Anexă Snagov",     nrDocument: "AD-012/2019", dateDocument: "2019-08-11", institution: "Primăria Snagov",     notes: "Anexă gospodărească 45 mp" },
+  { typeKey: "AUTORIZATIE", title: "Autorizație Construire Gard Afumați",   nrDocument: "AC-103/2020", dateDocument: "2020-02-27", institution: "Primăria Afumați",    notes: "Gard pe latura nordică" },
+  { typeKey: "AUTORIZATIE", title: "Autorizație Extindere Locuință Gruiu",  nrDocument: "AC-067/2021", dateDocument: "2021-06-15", institution: "Primăria Gruiu",      notes: "Extindere 35 mp la parter" },
+  { typeKey: "AUTORIZATIE", title: "Autorizație Construire Magazie Tunari", nrDocument: "AC-089/2023", dateDocument: "2023-03-04", institution: "Primăria Tunari",     notes: "Construcție auxiliară 60 mp" },
   // ── AVIZ_INSTITUTIE ─────────────────────────────────────────────────────
-  { type: "AVIZ_INSTITUTIE", title: "Aviz OCPI Ilfov — Dezmembrare",       nrDocument: "AV-234/2019", dateDocument: "2019-05-06", institution: "OCPI Ilfov",                   notes: "Dezmembrare în 3 loturi" },
-  { type: "AVIZ_INSTITUTIE", title: "Aviz Primărie — PUZ Voluntari",       nrDocument: "AV-011/2020", dateDocument: "2020-09-14", institution: "Primăria Voluntari",           notes: "Zonă rezidențială extinsă" },
-  { type: "AVIZ_INSTITUTIE", title: "Aviz Apele Române — Construcție Mal", nrDocument: "AV-778/2021", dateDocument: "2021-04-22", institution: "Administrația Apele Române",   notes: "Construcție la 50 m de lac" },
-  { type: "AVIZ_INSTITUTIE", title: "Aviz Drumuri Naționale — Acces",      nrDocument: "AV-342/2022", dateDocument: "2022-07-18", institution: "CNAIR — Direcția Ilfov",       notes: "Acces rutier de pe DN1" },
-  { type: "AVIZ_INSTITUTIE", title: "Aviz Mediu — Extindere Fermă",        nrDocument: "AV-156/2023", dateDocument: "2023-01-30", institution: "ANPM Ilfov",                   notes: "Extindere activitate agricolă" },
+  { typeKey: "AVIZ_INSTITUTIE", title: "Aviz OCPI Ilfov — Dezmembrare",       nrDocument: "AV-234/2019", dateDocument: "2019-05-06", institution: "OCPI Ilfov",                   notes: "Dezmembrare în 3 loturi" },
+  { typeKey: "AVIZ_INSTITUTIE", title: "Aviz Primărie — PUZ Voluntari",       nrDocument: "AV-011/2020", dateDocument: "2020-09-14", institution: "Primăria Voluntari",           notes: "Zonă rezidențială extinsă" },
+  { typeKey: "AVIZ_INSTITUTIE", title: "Aviz Apele Române — Construcție Mal", nrDocument: "AV-778/2021", dateDocument: "2021-04-22", institution: "Administrația Apele Române",   notes: "Construcție la 50 m de lac" },
+  { typeKey: "AVIZ_INSTITUTIE", title: "Aviz Drumuri Naționale — Acces",      nrDocument: "AV-342/2022", dateDocument: "2022-07-18", institution: "CNAIR — Direcția Ilfov",       notes: "Acces rutier de pe DN1" },
+  { typeKey: "AVIZ_INSTITUTIE", title: "Aviz Mediu — Extindere Fermă",        nrDocument: "AV-156/2023", dateDocument: "2023-01-30", institution: "ANPM Ilfov",                   notes: "Extindere activitate agricolă" },
   // ── CERTIFICAT_FISCAL ───────────────────────────────────────────────────
-  { type: "CERTIFICAT_FISCAL", title: "Certificat Fiscal Ion Popescu",         nrDocument: "CF-1001/2020", dateDocument: "2020-03-10", institution: "ANAF — Administrația Ilfov" },
-  { type: "CERTIFICAT_FISCAL", title: "Certificat Fiscal SC Imobil SRL",       nrDocument: "CF-2234/2021", dateDocument: "2021-07-25", institution: "ANAF — Administrația Ilfov", notes: "Lipsa datorii la data emiterii" },
-  { type: "CERTIFICAT_FISCAL", title: "Certificat Fiscal Gheorghe Constantin", nrDocument: "CF-0889/2021", dateDocument: "2021-11-04", institution: "ANAF — Administrația Ilfov" },
-  { type: "CERTIFICAT_FISCAL", title: "Certificat Fiscal Elena Dinu",          nrDocument: "CF-3301/2022", dateDocument: "2022-05-19", institution: "ANAF — Administrația Ilfov" },
-  { type: "CERTIFICAT_FISCAL", title: "Certificat Fiscal PFA Radu Sorin",      nrDocument: "CF-4412/2023", dateDocument: "2023-08-08", institution: "ANAF — Administrația Ilfov", notes: "Valabil 30 zile de la emitere" },
+  { typeKey: "CERTIFICAT_FISCAL", title: "Certificat Fiscal Ion Popescu",         nrDocument: "CF-1001/2020", dateDocument: "2020-03-10", institution: "ANAF — Administrația Ilfov" },
+  { typeKey: "CERTIFICAT_FISCAL", title: "Certificat Fiscal SC Imobil SRL",       nrDocument: "CF-2234/2021", dateDocument: "2021-07-25", institution: "ANAF — Administrația Ilfov", notes: "Lipsa datorii la data emiterii" },
+  { typeKey: "CERTIFICAT_FISCAL", title: "Certificat Fiscal Gheorghe Constantin", nrDocument: "CF-0889/2021", dateDocument: "2021-11-04", institution: "ANAF — Administrația Ilfov" },
+  { typeKey: "CERTIFICAT_FISCAL", title: "Certificat Fiscal Elena Dinu",          nrDocument: "CF-3301/2022", dateDocument: "2022-05-19", institution: "ANAF — Administrația Ilfov" },
+  { typeKey: "CERTIFICAT_FISCAL", title: "Certificat Fiscal PFA Radu Sorin",      nrDocument: "CF-4412/2023", dateDocument: "2023-08-08", institution: "ANAF — Administrația Ilfov", notes: "Valabil 30 zile de la emitere" },
   // ── CERTIFICAT_MOSTENITOR ───────────────────────────────────────────────
-  { type: "CERTIFICAT_MOSTENITOR", title: "Succesiune Popescu Vasile",   nrDocument: "55/2018",  dateDocument: "2018-09-12", institution: "Notariat Alexandru Dănilă", nrDosarSuccesoral: "DOS-120/2018", dataDecesului: "2018-01-15", ultimulDomiciliu: "Str. Florilor 4, Voluntari",          nrCertificatDeces: "CD-334/2018", defunctText: "Popescu Vasile",     partiesBText: "Popescu Ion, Popescu Maria" },
-  { type: "CERTIFICAT_MOSTENITOR", title: "Succesiune Ionescu Ana",     nrDocument: "88/2019",  dateDocument: "2019-04-30", institution: "Notariat Ion Grigorescu",   nrDosarSuccesoral: "DOS-067/2019", dataDecesului: "2018-11-22", ultimulDomiciliu: "Str. Trandafirilor 12, Snagov",       nrCertificatDeces: "CD-891/2018", defunctText: "Ionescu Ana",        partiesBText: "Ionescu Cristian, Ionescu Laura" },
-  { type: "CERTIFICAT_MOSTENITOR", title: "Succesiune Dumitrescu Gh.",  nrDocument: "112/2020", dateDocument: "2020-06-15", institution: "Notariat Maria Florescu",   nrDosarSuccesoral: "DOS-203/2020", dataDecesului: "2020-02-08", ultimulDomiciliu: "Bld. Unirii 5, Buftea",               nrCertificatDeces: "CD-102/2020", defunctText: "Dumitrescu Gheorghe", partiesBText: "Dumitrescu Elena",              notes: "Masa succesorală include teren 2.500 mp" },
-  { type: "CERTIFICAT_MOSTENITOR", title: "Succesiune Popa Florina",    nrDocument: "74/2021",  dateDocument: "2021-10-22", institution: "Notariat Alexandru Dănilă", nrDosarSuccesoral: "DOS-311/2021", dataDecesului: "2021-03-17", ultimulDomiciliu: "Str. Luncii 8, Cernica",              nrCertificatDeces: "CD-445/2021", defunctText: "Popa Florina",       partiesBText: "Popa Andrei, Popa Silvia, Popa Mihai" },
-  { type: "CERTIFICAT_MOSTENITOR", title: "Succesiune Radu Constantin", nrDocument: "201/2022", dateDocument: "2022-03-08", institution: "Notariat Ion Grigorescu",   nrDosarSuccesoral: "DOS-089/2022", dataDecesului: "2021-12-01", ultimulDomiciliu: "Str. Câmpului 23, Balotești",         nrCertificatDeces: "CD-778/2021", defunctText: "Radu Constantin",   partiesBText: "Radu Vasile, Radu Carmen" },
-  { type: "CERTIFICAT_MOSTENITOR", title: "Succesiune Stanescu Tudor",  nrDocument: "330/2023", dateDocument: "2023-07-14", institution: "Notariat Maria Florescu",   nrDosarSuccesoral: "DOS-415/2023", dataDecesului: "2023-01-09", ultimulDomiciliu: "Str. Primăverii 1, Afumați",          nrCertificatDeces: "CD-023/2023", defunctText: "Stanescu Tudor",    partiesBText: "Stanescu Adriana",              notes: "Unicul moștenitor legal" },
+  { typeKey: "CERTIFICAT_MOSTENITOR", title: "Succesiune Popescu Vasile",   nrDocument: "55/2018",  dateDocument: "2018-09-12", institution: "Notariat Alexandru Dănilă", nrDosarSuccesoral: "DOS-120/2018", dataDecesului: "2018-01-15", ultimulDomiciliu: "Str. Florilor 4, Voluntari",          nrCertificatDeces: "CD-334/2018", defunctText: "Popescu Vasile",     partiesBText: "Popescu Ion, Popescu Maria" },
+  { typeKey: "CERTIFICAT_MOSTENITOR", title: "Succesiune Ionescu Ana",     nrDocument: "88/2019",  dateDocument: "2019-04-30", institution: "Notariat Ion Grigorescu",   nrDosarSuccesoral: "DOS-067/2019", dataDecesului: "2018-11-22", ultimulDomiciliu: "Str. Trandafirilor 12, Snagov",       nrCertificatDeces: "CD-891/2018", defunctText: "Ionescu Ana",        partiesBText: "Ionescu Cristian, Ionescu Laura" },
+  { typeKey: "CERTIFICAT_MOSTENITOR", title: "Succesiune Dumitrescu Gh.",  nrDocument: "112/2020", dateDocument: "2020-06-15", institution: "Notariat Maria Florescu",   nrDosarSuccesoral: "DOS-203/2020", dataDecesului: "2020-02-08", ultimulDomiciliu: "Bld. Unirii 5, Buftea",               nrCertificatDeces: "CD-102/2020", defunctText: "Dumitrescu Gheorghe", partiesBText: "Dumitrescu Elena",              notes: "Masa succesorală include teren 2.500 mp" },
+  { typeKey: "CERTIFICAT_MOSTENITOR", title: "Succesiune Popa Florina",    nrDocument: "74/2021",  dateDocument: "2021-10-22", institution: "Notariat Alexandru Dănilă", nrDosarSuccesoral: "DOS-311/2021", dataDecesului: "2021-03-17", ultimulDomiciliu: "Str. Luncii 8, Cernica",              nrCertificatDeces: "CD-445/2021", defunctText: "Popa Florina",       partiesBText: "Popa Andrei, Popa Silvia, Popa Mihai" },
+  { typeKey: "CERTIFICAT_MOSTENITOR", title: "Succesiune Radu Constantin", nrDocument: "201/2022", dateDocument: "2022-03-08", institution: "Notariat Ion Grigorescu",   nrDosarSuccesoral: "DOS-089/2022", dataDecesului: "2021-12-01", ultimulDomiciliu: "Str. Câmpului 23, Balotești",         nrCertificatDeces: "CD-778/2021", defunctText: "Radu Constantin",   partiesBText: "Radu Vasile, Radu Carmen" },
+  { typeKey: "CERTIFICAT_MOSTENITOR", title: "Succesiune Stanescu Tudor",  nrDocument: "330/2023", dateDocument: "2023-07-14", institution: "Notariat Maria Florescu",   nrDosarSuccesoral: "DOS-415/2023", dataDecesului: "2023-01-09", ultimulDomiciliu: "Str. Primăverii 1, Afumați",          nrCertificatDeces: "CD-023/2023", defunctText: "Stanescu Tudor",    partiesBText: "Stanescu Adriana",              notes: "Unicul moștenitor legal" },
   // ── CERTIFICAT_SARCINI ──────────────────────────────────────────────────
-  { type: "CERTIFICAT_SARCINI", title: "Certificat Sarcini CF 12345", nrDocument: "CS-445/2019", dateDocument: "2019-06-20", institution: "OCPI Ilfov", notes: "Liber de sarcini la data emiterii" },
-  { type: "CERTIFICAT_SARCINI", title: "Certificat Sarcini CF 23890", nrDocument: "CS-778/2020", dateDocument: "2020-11-03", institution: "OCPI Ilfov", notes: "Ipotecă înscrisă în favoarea BCR" },
-  { type: "CERTIFICAT_SARCINI", title: "Certificat Sarcini CF 34012", nrDocument: "CS-102/2021", dateDocument: "2021-04-17", institution: "OCPI Ilfov" },
-  { type: "CERTIFICAT_SARCINI", title: "Certificat Sarcini CF 41233", nrDocument: "CS-556/2022", dateDocument: "2022-08-29", institution: "OCPI Ilfov", notes: "Liber de sarcini" },
-  { type: "CERTIFICAT_SARCINI", title: "Certificat Sarcini CF 50087", nrDocument: "CS-890/2023", dateDocument: "2023-02-14", institution: "OCPI Ilfov", notes: "Sechestru asigurator înscris" },
+  { typeKey: "CERTIFICAT_SARCINI", title: "Certificat Sarcini CF 12345", nrDocument: "CS-445/2019", dateDocument: "2019-06-20", institution: "OCPI Ilfov", notes: "Liber de sarcini la data emiterii" },
+  { typeKey: "CERTIFICAT_SARCINI", title: "Certificat Sarcini CF 23890", nrDocument: "CS-778/2020", dateDocument: "2020-11-03", institution: "OCPI Ilfov", notes: "Ipotecă înscrisă în favoarea BCR" },
+  { typeKey: "CERTIFICAT_SARCINI", title: "Certificat Sarcini CF 34012", nrDocument: "CS-102/2021", dateDocument: "2021-04-17", institution: "OCPI Ilfov" },
+  { typeKey: "CERTIFICAT_SARCINI", title: "Certificat Sarcini CF 41233", nrDocument: "CS-556/2022", dateDocument: "2022-08-29", institution: "OCPI Ilfov", notes: "Liber de sarcini" },
+  { typeKey: "CERTIFICAT_SARCINI", title: "Certificat Sarcini CF 50087", nrDocument: "CS-890/2023", dateDocument: "2023-02-14", institution: "OCPI Ilfov", notes: "Sechestru asigurator înscris" },
   // ── CERTIFICAT_URBANISM ─────────────────────────────────────────────────
-  { type: "CERTIFICAT_URBANISM", title: "CU Construire Locuință Voluntari",  nrDocument: "CU-112/2018", dateDocument: "2018-05-14", institution: "Primăria Voluntari",  notes: "Zonă rezidențială, POT 40%, CUT 1.2" },
-  { type: "CERTIFICAT_URBANISM", title: "CU Dezmembrare Lot Snagov",        nrDocument: "CU-034/2019", dateDocument: "2019-10-22", institution: "Primăria Snagov",     notes: "Dezmembrare în 2 parcele" },
-  { type: "CERTIFICAT_URBANISM", title: "CU Extindere Imobil Gruiu",        nrDocument: "CU-209/2020", dateDocument: "2020-03-30", institution: "Primăria Gruiu" },
-  { type: "CERTIFICAT_URBANISM", title: "CU Amplasare Panouri Fotovoltaice",nrDocument: "CU-067/2021", dateDocument: "2021-07-08", institution: "Primăria Afumați",    notes: "Instalare 48 panouri pe acoperiș" },
-  { type: "CERTIFICAT_URBANISM", title: "CU Schimbare Destinație Spațiu",   nrDocument: "CU-445/2022", dateDocument: "2022-12-19", institution: "Primăria Tunari",     notes: "Din depozit în spațiu comercial" },
+  { typeKey: "CERTIFICAT_URBANISM", title: "CU Construire Locuință Voluntari",  nrDocument: "CU-112/2018", dateDocument: "2018-05-14", institution: "Primăria Voluntari",  notes: "Zonă rezidențială, POT 40%, CUT 1.2" },
+  { typeKey: "CERTIFICAT_URBANISM", title: "CU Dezmembrare Lot Snagov",        nrDocument: "CU-034/2019", dateDocument: "2019-10-22", institution: "Primăria Snagov",     notes: "Dezmembrare în 2 parcele" },
+  { typeKey: "CERTIFICAT_URBANISM", title: "CU Extindere Imobil Gruiu",        nrDocument: "CU-209/2020", dateDocument: "2020-03-30", institution: "Primăria Gruiu" },
+  { typeKey: "CERTIFICAT_URBANISM", title: "CU Amplasare Panouri Fotovoltaice",nrDocument: "CU-067/2021", dateDocument: "2021-07-08", institution: "Primăria Afumați",    notes: "Instalare 48 panouri pe acoperiș" },
+  { typeKey: "CERTIFICAT_URBANISM", title: "CU Schimbare Destinație Spațiu",   nrDocument: "CU-445/2022", dateDocument: "2022-12-19", institution: "Primăria Tunari",     notes: "Din depozit în spațiu comercial" },
   // ── CONTRACT_ARENDA ─────────────────────────────────────────────────────
-  { type: "CONTRACT_ARENDA", title: "Arendă Teren Agricol Balotești", nrDocument: "CA-001/2019", dateDocument: "2019-03-01", institution: "Primăria Balotești", dateStart: "2019-03-01", dateEnd: "2024-02-28", partiesAText: "Ion Popescu",                    partiesBText: "SC AgroMax SRL",        notes: "12 ha teren arabil" },
-  { type: "CONTRACT_ARENDA", title: "Arendă Câmp Snagov",            nrDocument: "CA-045/2020", dateDocument: "2020-01-15", institution: "Primăria Snagov",    dateStart: "2020-02-01", dateEnd: "2025-01-31", partiesAText: "Maria Ionescu, Vasile Ionescu",  partiesBText: "SC CerealeRom SA",      notes: "8 ha pășune și arabil" },
-  { type: "CONTRACT_ARENDA", title: "Arendă Teren Gruiu",            nrDocument: "CA-112/2020", dateDocument: "2020-06-10", institution: "Primăria Gruiu",     dateStart: "2020-07-01", dateEnd: "2023-06-30", partiesAText: "Gheorghe Constantin",            partiesBText: "PFA Marin Dumitru",     notes: "5 ha arabil" },
-  { type: "CONTRACT_ARENDA", title: "Arendă Lot Agricol Cernica",    nrDocument: "CA-233/2021", dateDocument: "2021-04-05", institution: "Primăria Cernica",   dateStart: "2021-04-15", dateEnd: "2026-04-14", partiesAText: "Elena Popa",                     partiesBText: "SC FermaVerde SRL",     notes: "15 ha, inclusiv pășune" },
-  { type: "CONTRACT_ARENDA", title: "Arendă Teren Brănești",         nrDocument: "CA-089/2022", dateDocument: "2022-09-20", institution: "Primăria Brănești",  dateStart: "2022-10-01", dateEnd: "2027-09-30", partiesAText: "Tudor Mocanu, Ana Mocanu",        partiesBText: "SC AgriLand SRL",       notes: "20 ha teren arabil" },
+  { typeKey: "CONTRACT_ARENDA", title: "Arendă Teren Agricol Balotești", nrDocument: "CA-001/2019", dateDocument: "2019-03-01", institution: "Primăria Balotești", dateStart: "2019-03-01", dateEnd: "2024-02-28", partiesAText: "Ion Popescu",                    partiesBText: "SC AgroMax SRL",        notes: "12 ha teren arabil" },
+  { typeKey: "CONTRACT_ARENDA", title: "Arendă Câmp Snagov",            nrDocument: "CA-045/2020", dateDocument: "2020-01-15", institution: "Primăria Snagov",    dateStart: "2020-02-01", dateEnd: "2025-01-31", partiesAText: "Maria Ionescu, Vasile Ionescu",  partiesBText: "SC CerealeRom SA",      notes: "8 ha pășune și arabil" },
+  { typeKey: "CONTRACT_ARENDA", title: "Arendă Teren Gruiu",            nrDocument: "CA-112/2020", dateDocument: "2020-06-10", institution: "Primăria Gruiu",     dateStart: "2020-07-01", dateEnd: "2023-06-30", partiesAText: "Gheorghe Constantin",            partiesBText: "PFA Marin Dumitru",     notes: "5 ha arabil" },
+  { typeKey: "CONTRACT_ARENDA", title: "Arendă Lot Agricol Cernica",    nrDocument: "CA-233/2021", dateDocument: "2021-04-05", institution: "Primăria Cernica",   dateStart: "2021-04-15", dateEnd: "2026-04-14", partiesAText: "Elena Popa",                     partiesBText: "SC FermaVerde SRL",     notes: "15 ha, inclusiv pășune" },
+  { typeKey: "CONTRACT_ARENDA", title: "Arendă Teren Brănești",         nrDocument: "CA-089/2022", dateDocument: "2022-09-20", institution: "Primăria Brănești",  dateStart: "2022-10-01", dateEnd: "2027-09-30", partiesAText: "Tudor Mocanu, Ana Mocanu",        partiesBText: "SC AgriLand SRL",       notes: "20 ha teren arabil" },
   // ── CONTRACT_INCHIRIERE ─────────────────────────────────────────────────
-  { type: "CONTRACT_INCHIRIERE", title: "Închiriere Apartament Voluntari", nrDocument: "CI-301/2020", dateDocument: "2020-02-10", institution: "Primăria Voluntari", dateStart: "2020-03-01", dateEnd: "2021-02-28", partiesAText: "Ion Popescu",          partiesBText: "Andrei Marinescu",           notes: "3 camere, et. 2, 75 mp" },
-  { type: "CONTRACT_INCHIRIERE", title: "Închiriere Spațiu Comercial",    nrDocument: "CI-445/2021", dateDocument: "2021-05-20", institution: "Primăria Buftea",    dateStart: "2021-06-01", dateEnd: "2024-05-31", partiesAText: "SC Imobil Invest SRL", partiesBText: "SC Magazin Profi SRL",       notes: "120 mp parter" },
-  { type: "CONTRACT_INCHIRIERE", title: "Închiriere Casă Snagov",         nrDocument: "CI-112/2021", dateDocument: "2021-09-15", institution: "Primăria Snagov",    dateStart: "2021-10-01", dateEnd: "2022-09-30", partiesAText: "Elena Constantin",     partiesBText: "Florina Niculescu",          notes: "Casă P+1, 150 mp" },
-  { type: "CONTRACT_INCHIRIERE", title: "Închiriere Depozit Afumați",     nrDocument: "CI-778/2022", dateDocument: "2022-03-01", institution: "Primăria Afumați",   dateStart: "2022-04-01", dateEnd: "2025-03-31", partiesAText: "SC LogiPark SRL",      partiesBText: "SC Distribuție Nord SRL",    notes: "Depozit 500 mp" },
-  { type: "CONTRACT_INCHIRIERE", title: "Închiriere Birou Voluntari",     nrDocument: "CI-990/2023", dateDocument: "2023-07-12", institution: "Primăria Voluntari", dateStart: "2023-08-01", dateEnd: "2024-07-31", partiesAText: "Vasile Radu",          partiesBText: "PFA Stoica Cristian",        notes: "Birou 45 mp, et. 1" },
+  { typeKey: "CONTRACT_INCHIRIERE", title: "Închiriere Apartament Voluntari", nrDocument: "CI-301/2020", dateDocument: "2020-02-10", institution: "Primăria Voluntari", dateStart: "2020-03-01", dateEnd: "2021-02-28", partiesAText: "Ion Popescu",          partiesBText: "Andrei Marinescu",           notes: "3 camere, et. 2, 75 mp" },
+  { typeKey: "CONTRACT_INCHIRIERE", title: "Închiriere Spațiu Comercial",    nrDocument: "CI-445/2021", dateDocument: "2021-05-20", institution: "Primăria Buftea",    dateStart: "2021-06-01", dateEnd: "2024-05-31", partiesAText: "SC Imobil Invest SRL", partiesBText: "SC Magazin Profi SRL",       notes: "120 mp parter" },
+  { typeKey: "CONTRACT_INCHIRIERE", title: "Închiriere Casă Snagov",         nrDocument: "CI-112/2021", dateDocument: "2021-09-15", institution: "Primăria Snagov",    dateStart: "2021-10-01", dateEnd: "2022-09-30", partiesAText: "Elena Constantin",     partiesBText: "Florina Niculescu",          notes: "Casă P+1, 150 mp" },
+  { typeKey: "CONTRACT_INCHIRIERE", title: "Închiriere Depozit Afumați",     nrDocument: "CI-778/2022", dateDocument: "2022-03-01", institution: "Primăria Afumați",   dateStart: "2022-04-01", dateEnd: "2025-03-31", partiesAText: "SC LogiPark SRL",      partiesBText: "SC Distribuție Nord SRL",    notes: "Depozit 500 mp" },
+  { typeKey: "CONTRACT_INCHIRIERE", title: "Închiriere Birou Voluntari",     nrDocument: "CI-990/2023", dateDocument: "2023-07-12", institution: "Primăria Voluntari", dateStart: "2023-08-01", dateEnd: "2024-07-31", partiesAText: "Vasile Radu",          partiesBText: "PFA Stoica Cristian",        notes: "Birou 45 mp, et. 1" },
   // ── CONTRACT_PARTAJ ─────────────────────────────────────────────────────
-  { type: "CONTRACT_PARTAJ", title: "Partaj Voluntar Succesiune Popescu", nrDocument: "211/2019", dateDocument: "2019-08-20", institution: "Notariat Ion Grigorescu",   notes: "Impartire lot 5.000 mp in 3 parti egale" },
-  { type: "CONTRACT_PARTAJ", title: "Partaj Bunuri Comune Ionescu",       nrDocument: "334/2020", dateDocument: "2020-04-14", institution: "Notariat Alexandru Dănilă", notes: "Partaj in urma divortului" },
-  { type: "CONTRACT_PARTAJ", title: "Partaj Succesoral Constantin",       nrDocument: "102/2021", dateDocument: "2021-11-09", institution: "Notariat Maria Florescu",   notes: "2 moștenitori, câte 50%" },
-  { type: "CONTRACT_PARTAJ", title: "Partaj Teren Agricol Gruiu",         nrDocument: "567/2022", dateDocument: "2022-06-17", institution: "Notariat Ion Grigorescu",   notes: "Lot de 8 ha împărțit în 4 parcele" },
-  { type: "CONTRACT_PARTAJ", title: "Partaj Imobil Snagov",               nrDocument: "801/2023", dateDocument: "2023-09-03", institution: "Notariat Alexandru Dănilă" },
+  { typeKey: "CONTRACT_PARTAJ", title: "Partaj Voluntar Succesiune Popescu", nrDocument: "211/2019", dateDocument: "2019-08-20", institution: "Notariat Ion Grigorescu",   notes: "Impartire lot 5.000 mp in 3 parti egale" },
+  { typeKey: "CONTRACT_PARTAJ", title: "Partaj Bunuri Comune Ionescu",       nrDocument: "334/2020", dateDocument: "2020-04-14", institution: "Notariat Alexandru Dănilă", notes: "Partaj in urma divortului" },
+  { typeKey: "CONTRACT_PARTAJ", title: "Partaj Succesoral Constantin",       nrDocument: "102/2021", dateDocument: "2021-11-09", institution: "Notariat Maria Florescu",   notes: "2 moștenitori, câte 50%" },
+  { typeKey: "CONTRACT_PARTAJ", title: "Partaj Teren Agricol Gruiu",         nrDocument: "567/2022", dateDocument: "2022-06-17", institution: "Notariat Ion Grigorescu",   notes: "Lot de 8 ha împărțit în 4 parcele" },
+  { typeKey: "CONTRACT_PARTAJ", title: "Partaj Imobil Snagov",               nrDocument: "801/2023", dateDocument: "2023-09-03", institution: "Notariat Alexandru Dănilă" },
   // ── CONTRACT_PRESTARI_SERVICII ──────────────────────────────────────────
-  { type: "CONTRACT_PRESTARI_SERVICII", title: "Contract Topografie Teren Voluntari", nrDocument: "CPS-010/2020", dateDocument: "2020-03-25", institution: "SC TopoGeo SRL",       notes: "Ridicare topografică 3 ha" },
-  { type: "CONTRACT_PRESTARI_SERVICII", title: "Contract Evaluare Imobil Snagov",    nrDocument: "CPS-078/2021", dateDocument: "2021-07-14", institution: "Evaluator Mihai Dinu",  notes: "Evaluare imobil 450 mp" },
-  { type: "CONTRACT_PRESTARI_SERVICII", title: "Contract Consultanță Juridică",      nrDocument: "CPS-145/2021", dateDocument: "2021-12-01", institution: "Avocat Sorin Nistor",   notes: "Asistență juridică tranzacție imobiliară" },
-  { type: "CONTRACT_PRESTARI_SERVICII", title: "Contract Mediere Litigiu Funciar",   nrDocument: "CPS-223/2022", dateDocument: "2022-05-19", institution: "Cabinet Mediere Iancu", notes: "Mediere dispută de hotar" },
-  { type: "CONTRACT_PRESTARI_SERVICII", title: "Contract Proiect Arhitectură",       nrDocument: "CPS-399/2023", dateDocument: "2023-02-28", institution: "SC ArchDesign SRL",     notes: "Proiect construire P+1, 200 mp" },
+  { typeKey: "CONTRACT_PRESTARI_SERVICII", title: "Contract Topografie Teren Voluntari", nrDocument: "CPS-010/2020", dateDocument: "2020-03-25", institution: "SC TopoGeo SRL",       notes: "Ridicare topografică 3 ha" },
+  { typeKey: "CONTRACT_PRESTARI_SERVICII", title: "Contract Evaluare Imobil Snagov",    nrDocument: "CPS-078/2021", dateDocument: "2021-07-14", institution: "Evaluator Mihai Dinu",  notes: "Evaluare imobil 450 mp" },
+  { typeKey: "CONTRACT_PRESTARI_SERVICII", title: "Contract Consultanță Juridică",      nrDocument: "CPS-145/2021", dateDocument: "2021-12-01", institution: "Avocat Sorin Nistor",   notes: "Asistență juridică tranzacție imobiliară" },
+  { typeKey: "CONTRACT_PRESTARI_SERVICII", title: "Contract Mediere Litigiu Funciar",   nrDocument: "CPS-223/2022", dateDocument: "2022-05-19", institution: "Cabinet Mediere Iancu", notes: "Mediere dispută de hotar" },
+  { typeKey: "CONTRACT_PRESTARI_SERVICII", title: "Contract Proiect Arhitectură",       nrDocument: "CPS-399/2023", dateDocument: "2023-02-28", institution: "SC ArchDesign SRL",     notes: "Proiect construire P+1, 200 mp" },
   // ── CONTRACT_VANZARE ────────────────────────────────────────────────────
-  { type: "CONTRACT_VANZARE", title: "Vânzare Teren Voluntari 2.500 mp",  nrDocument: "1001/2018", dateDocument: "2018-06-14", institution: "Notariat Ion Grigorescu",   partiesAText: "Ion Popescu",                   partiesBText: "Alexandru Dumitrescu",          notes: "Teren intravilan, CF 12345" },
-  { type: "CONTRACT_VANZARE", title: "Vânzare Casă Snagov",               nrDocument: "1234/2019", dateDocument: "2019-11-20", institution: "Notariat Maria Florescu",   partiesAText: "Elena Constantin",              partiesBText: "Gheorghe și Ana Popa",          notes: "P+1, 180 mp utili" },
-  { type: "CONTRACT_VANZARE", title: "Vânzare Lot Agricol Balotești",     nrDocument: "0778/2020", dateDocument: "2020-04-08", institution: "Notariat Alexandru Dănilă", partiesAText: "Maria Ionescu, Vasile Ionescu", partiesBText: "SC AgroInvest SRL",             notes: "12 ha teren arabil, CF 23890" },
-  { type: "CONTRACT_VANZARE", title: "Vânzare Apartament Buftea",         nrDocument: "2201/2021", dateDocument: "2021-09-30", institution: "Notariat Ion Grigorescu",   partiesAText: "Florina Niculescu",             partiesBText: "Andrei Marinescu",              notes: "2 camere, 54 mp, CF 34012" },
-  { type: "CONTRACT_VANZARE", title: "Vânzare Teren Intravilan Cernica",  nrDocument: "3301/2022", dateDocument: "2022-03-15", institution: "Notariat Maria Florescu",   partiesAText: "Tudor Mocanu",                  partiesBText: "Carmen Iliescu",                notes: "Lot 1.200 mp" },
-  { type: "CONTRACT_VANZARE", title: "Vânzare Imobil Afumați",            nrDocument: "4455/2023", dateDocument: "2023-08-22", institution: "Notariat Alexandru Dănilă", partiesAText: "Sorin Nistor",                  partiesBText: "Cristian Stoica, Laura Stoica", notes: "Casă + teren 850 mp, CF 50087" },
+  { typeKey: "CONTRACT_VANZARE", title: "Vânzare Teren Voluntari 2.500 mp",  nrDocument: "1001/2018", dateDocument: "2018-06-14", institution: "Notariat Ion Grigorescu",   partiesAText: "Ion Popescu",                   partiesBText: "Alexandru Dumitrescu",          notes: "Teren intravilan, CF 12345" },
+  { typeKey: "CONTRACT_VANZARE", title: "Vânzare Casă Snagov",               nrDocument: "1234/2019", dateDocument: "2019-11-20", institution: "Notariat Maria Florescu",   partiesAText: "Elena Constantin",              partiesBText: "Gheorghe și Ana Popa",          notes: "P+1, 180 mp utili" },
+  { typeKey: "CONTRACT_VANZARE", title: "Vânzare Lot Agricol Balotești",     nrDocument: "0778/2020", dateDocument: "2020-04-08", institution: "Notariat Alexandru Dănilă", partiesAText: "Maria Ionescu, Vasile Ionescu", partiesBText: "SC AgroInvest SRL",             notes: "12 ha teren arabil, CF 23890" },
+  { typeKey: "CONTRACT_VANZARE", title: "Vânzare Apartament Buftea",         nrDocument: "2201/2021", dateDocument: "2021-09-30", institution: "Notariat Ion Grigorescu",   partiesAText: "Florina Niculescu",             partiesBText: "Andrei Marinescu",              notes: "2 camere, 54 mp, CF 34012" },
+  { typeKey: "CONTRACT_VANZARE", title: "Vânzare Teren Intravilan Cernica",  nrDocument: "3301/2022", dateDocument: "2022-03-15", institution: "Notariat Maria Florescu",   partiesAText: "Tudor Mocanu",                  partiesBText: "Carmen Iliescu",                notes: "Lot 1.200 mp" },
+  { typeKey: "CONTRACT_VANZARE", title: "Vânzare Imobil Afumați",            nrDocument: "4455/2023", dateDocument: "2023-08-22", institution: "Notariat Alexandru Dănilă", partiesAText: "Sorin Nistor",                  partiesBText: "Cristian Stoica, Laura Stoica", notes: "Casă + teren 850 mp, CF 50087" },
   // ── EXTRAS_CARTE_FUNCIARA ───────────────────────────────────────────────
-  { type: "EXTRAS_CARTE_FUNCIARA", title: "Extras CF 12345 — Informare",     nrDocument: "ECF-001/2019", dateDocument: "2019-04-10", institution: "OCPI Ilfov", notes: "Extras pentru informare, valabil 30 zile" },
-  { type: "EXTRAS_CARTE_FUNCIARA", title: "Extras CF 23890 — Autentificare", nrDocument: "ECF-112/2020", dateDocument: "2020-07-22", institution: "OCPI Ilfov", notes: "Extras pentru autentificarea contractului" },
-  { type: "EXTRAS_CARTE_FUNCIARA", title: "Extras CF 34012 — Informare",     nrDocument: "ECF-334/2021", dateDocument: "2021-02-18", institution: "OCPI Ilfov" },
-  { type: "EXTRAS_CARTE_FUNCIARA", title: "Extras CF 41233 — Autentificare", nrDocument: "ECF-556/2022", dateDocument: "2022-10-05", institution: "OCPI Ilfov", notes: "Extras pentru vânzare-cumpărare" },
-  { type: "EXTRAS_CARTE_FUNCIARA", title: "Extras CF 50087 — Informare",     nrDocument: "ECF-780/2023", dateDocument: "2023-05-30", institution: "OCPI Ilfov" },
+  { typeKey: "EXTRAS_CARTE_FUNCIARA", title: "Extras CF 12345 — Informare",     nrDocument: "ECF-001/2019", dateDocument: "2019-04-10", institution: "OCPI Ilfov", notes: "Extras pentru informare, valabil 30 zile" },
+  { typeKey: "EXTRAS_CARTE_FUNCIARA", title: "Extras CF 23890 — Autentificare", nrDocument: "ECF-112/2020", dateDocument: "2020-07-22", institution: "OCPI Ilfov", notes: "Extras pentru autentificarea contractului" },
+  { typeKey: "EXTRAS_CARTE_FUNCIARA", title: "Extras CF 34012 — Informare",     nrDocument: "ECF-334/2021", dateDocument: "2021-02-18", institution: "OCPI Ilfov" },
+  { typeKey: "EXTRAS_CARTE_FUNCIARA", title: "Extras CF 41233 — Autentificare", nrDocument: "ECF-556/2022", dateDocument: "2022-10-05", institution: "OCPI Ilfov", notes: "Extras pentru vânzare-cumpărare" },
+  { typeKey: "EXTRAS_CARTE_FUNCIARA", title: "Extras CF 50087 — Informare",     nrDocument: "ECF-780/2023", dateDocument: "2023-05-30", institution: "OCPI Ilfov" },
   // ── EXTRAS_PUG ──────────────────────────────────────────────────────────
-  { type: "EXTRAS_PUG", title: "Extras PUG Voluntari — Lot Nord",  nrDocument: "PUG-023/2019", dateDocument: "2019-08-07", institution: "Primăria Voluntari",  notes: "Zonă rezidențială cu densitate mică" },
-  { type: "EXTRAS_PUG", title: "Extras PUG Snagov — Zonă Turism",  nrDocument: "PUG-011/2020", dateDocument: "2020-03-14", institution: "Primăria Snagov",     notes: "Zonă de agrement și turism" },
-  { type: "EXTRAS_PUG", title: "Extras PUG Balotești — Agricol",   nrDocument: "PUG-067/2021", dateDocument: "2021-06-28", institution: "Primăria Balotești",  notes: "Teren extravilan categorie arabil" },
-  { type: "EXTRAS_PUG", title: "Extras PUG Gruiu — Rezidențial",   nrDocument: "PUG-134/2022", dateDocument: "2022-09-12", institution: "Primăria Gruiu",      notes: "Zonă rezidențială aprobată HCL 45/2022" },
-  { type: "EXTRAS_PUG", title: "Extras PUG Cernica — Industrial",  nrDocument: "PUG-290/2023", dateDocument: "2023-04-19", institution: "Primăria Cernica",    notes: "Zonă industrială și servicii" },
+  { typeKey: "EXTRAS_PUG", title: "Extras PUG Voluntari — Lot Nord",  nrDocument: "PUG-023/2019", dateDocument: "2019-08-07", institution: "Primăria Voluntari",  notes: "Zonă rezidențială cu densitate mică" },
+  { typeKey: "EXTRAS_PUG", title: "Extras PUG Snagov — Zonă Turism",  nrDocument: "PUG-011/2020", dateDocument: "2020-03-14", institution: "Primăria Snagov",     notes: "Zonă de agrement și turism" },
+  { typeKey: "EXTRAS_PUG", title: "Extras PUG Balotești — Agricol",   nrDocument: "PUG-067/2021", dateDocument: "2021-06-28", institution: "Primăria Balotești",  notes: "Teren extravilan categorie arabil" },
+  { typeKey: "EXTRAS_PUG", title: "Extras PUG Gruiu — Rezidențial",   nrDocument: "PUG-134/2022", dateDocument: "2022-09-12", institution: "Primăria Gruiu",      notes: "Zonă rezidențială aprobată HCL 45/2022" },
+  { typeKey: "EXTRAS_PUG", title: "Extras PUG Cernica — Industrial",  nrDocument: "PUG-290/2023", dateDocument: "2023-04-19", institution: "Primăria Cernica",    notes: "Zonă industrială și servicii" },
   // ── HOTARARE_JUDECATOREASCA ─────────────────────────────────────────────
-  { type: "HOTARARE_JUDECATOREASCA", title: "Hotărâre Retrocedare Teren Voluntari", nrDocument: "1123/2017", dateDocument: "2017-11-08", institution: "Judecătoria Buftea",  notes: "Dosar 334/2017 — retrocedare teren 3.000 mp, rămasă definitivă" },
-  { type: "HOTARARE_JUDECATOREASCA", title: "Hotărâre Ieșire Indiviziune Snagov",   nrDocument: "445/2019",  dateDocument: "2019-06-25", institution: "Tribunalul Ilfov",    notes: "Partaj judiciar, 4 coproprietari" },
-  { type: "HOTARARE_JUDECATOREASCA", title: "Hotărâre Uzucapiune Cernica",          nrDocument: "2201/2020", dateDocument: "2020-09-17", institution: "Judecătoria Buftea",  notes: "Uzucapiune tabulară, cf. art. 930 NCC" },
-  { type: "HOTARARE_JUDECATOREASCA", title: "Hotărâre Grănițuire Balotești",        nrDocument: "889/2021",  dateDocument: "2021-04-12", institution: "Judecătoria Buftea",  notes: "Stabilire linie de hotar, irevocabilă" },
-  { type: "HOTARARE_JUDECATOREASCA", title: "Hotărâre Revendicare Imobiliară",      nrDocument: "3340/2022", dateDocument: "2022-12-06", institution: "Tribunalul Ilfov",    notes: "Admisă cererea de revendicare, apel respins" },
+  { typeKey: "HOTARARE_JUDECATOREASCA", title: "Hotărâre Retrocedare Teren Voluntari", nrDocument: "1123/2017", dateDocument: "2017-11-08", institution: "Judecătoria Buftea",  notes: "Dosar 334/2017 — retrocedare teren 3.000 mp, rămasă definitivă" },
+  { typeKey: "HOTARARE_JUDECATOREASCA", title: "Hotărâre Ieșire Indiviziune Snagov",   nrDocument: "445/2019",  dateDocument: "2019-06-25", institution: "Tribunalul Ilfov",    notes: "Partaj judiciar, 4 coproprietari" },
+  { typeKey: "HOTARARE_JUDECATOREASCA", title: "Hotărâre Uzucapiune Cernica",          nrDocument: "2201/2020", dateDocument: "2020-09-17", institution: "Judecătoria Buftea",  notes: "Uzucapiune tabulară, cf. art. 930 NCC" },
+  { typeKey: "HOTARARE_JUDECATOREASCA", title: "Hotărâre Grănițuire Balotești",        nrDocument: "889/2021",  dateDocument: "2021-04-12", institution: "Judecătoria Buftea",  notes: "Stabilire linie de hotar, irevocabilă" },
+  { typeKey: "HOTARARE_JUDECATOREASCA", title: "Hotărâre Revendicare Imobiliară",      nrDocument: "3340/2022", dateDocument: "2022-12-06", institution: "Tribunalul Ilfov",    notes: "Admisă cererea de revendicare, apel respins" },
   // ── TESTAMENT ───────────────────────────────────────────────────────────
-  { type: "TESTAMENT", title: "Testament Popescu Ion",      nrDocument: "55/2016",  dateDocument: "2016-03-14", institution: "Notariat Ion Grigorescu",   defunctText: "Popescu Ion",      notes: "Testament autentic, lăsat un singur moștenitor" },
-  { type: "TESTAMENT", title: "Testament Constantin Elena", nrDocument: "112/2018", dateDocument: "2018-09-22", institution: "Notariat Maria Florescu",   defunctText: "Constantin Elena", notes: "Testatorul a desemnat doi legatari particulari" },
-  { type: "TESTAMENT", title: "Testament Radu Vasile",      nrDocument: "234/2020", dateDocument: "2020-01-10", institution: "Notariat Alexandru Dănilă", defunctText: "Radu Vasile" },
-  { type: "TESTAMENT", title: "Testament Popa Gheorghe",    nrDocument: "501/2021", dateDocument: "2021-07-05", institution: "Notariat Ion Grigorescu",   defunctText: "Popa Gheorghe",    notes: "Include clauză substituție vulgară" },
-  { type: "TESTAMENT", title: "Testament Stanescu Maria",   nrDocument: "789/2023", dateDocument: "2023-11-18", institution: "Notariat Maria Florescu",   defunctText: "Stanescu Maria" },
+  { typeKey: "TESTAMENT", title: "Testament Popescu Ion",      nrDocument: "55/2016",  dateDocument: "2016-03-14", institution: "Notariat Ion Grigorescu",   defunctText: "Popescu Ion",      notes: "Testament autentic, lăsat un singur moștenitor" },
+  { typeKey: "TESTAMENT", title: "Testament Constantin Elena", nrDocument: "112/2018", dateDocument: "2018-09-22", institution: "Notariat Maria Florescu",   defunctText: "Constantin Elena", notes: "Testatorul a desemnat doi legatari particulari" },
+  { typeKey: "TESTAMENT", title: "Testament Radu Vasile",      nrDocument: "234/2020", dateDocument: "2020-01-10", institution: "Notariat Alexandru Dănilă", defunctText: "Radu Vasile" },
+  { typeKey: "TESTAMENT", title: "Testament Popa Gheorghe",    nrDocument: "501/2021", dateDocument: "2021-07-05", institution: "Notariat Ion Grigorescu",   defunctText: "Popa Gheorghe",    notes: "Include clauză substituție vulgară" },
+  { typeKey: "TESTAMENT", title: "Testament Stanescu Maria",   nrDocument: "789/2023", dateDocument: "2023-11-18", institution: "Notariat Maria Florescu",   defunctText: "Stanescu Maria" },
   // ── TITLU_PROPRIETATE ───────────────────────────────────────────────────
-  { type: "TITLU_PROPRIETATE", title: "Titlu Teren Arabil Voluntari",  nrDocument: "12345/2001", dateDocument: "2001-06-15", institution: "Comisia Locală Voluntari",   emitent: "Comisia Județeană Ilfov", bazaLegala: "Legea 18/1991",  uatProprietate: "Voluntari",  uatProprietar: "Voluntari",  suprafata: "3.2000", titularText: "Ion Popescu" },
-  { type: "TITLU_PROPRIETATE", title: "Titlu Pășune Snagov",           nrDocument: "23890/2003", dateDocument: "2003-09-22", institution: "Comisia Locală Snagov",     emitent: "Comisia Județeană Ilfov", bazaLegala: "Legea 169/1997", uatProprietate: "Snagov",     uatProprietar: "Snagov",     suprafata: "7.5000", titularText: "Maria Ionescu",    defunctText: "Ionescu Vasile",  notes: "Reconstituire după defunct" },
-  { type: "TITLU_PROPRIETATE", title: "Titlu Teren Extravilan Gruiu",  nrDocument: "34012/2005", dateDocument: "2005-04-08", institution: "Comisia Locală Gruiu",      emitent: "Comisia Județeană Ilfov", bazaLegala: "HG 834/1991",    uatProprietate: "Gruiu",      uatProprietar: "Gruiu",      suprafata: "1.8500", titularText: "Gheorghe Popa" },
-  { type: "TITLU_PROPRIETATE", title: "Titlu Teren Agricol Cernica",   nrDocument: "41233/2007", dateDocument: "2007-11-30", institution: "Comisia Locală Cernica",    emitent: "Comisia Județeană Ilfov", bazaLegala: "Legea 18/1991",  uatProprietate: "Cernica",    uatProprietar: "Cernica",    suprafata: "5.0000", titularText: "Elena Constantin", defunctText: "Dumitrescu Ion",  notes: "Reconstituire pe numele moștenitorului" },
-  { type: "TITLU_PROPRIETATE", title: "Titlu Fânețe Balotești",        nrDocument: "50087/2009", dateDocument: "2009-07-14", institution: "Comisia Locală Balotești",  emitent: "Comisia Județeană Ilfov", bazaLegala: "Legea 169/1997", uatProprietate: "Balotești",  uatProprietar: "Balotești",  suprafata: "2.1200", titularText: "Ana Stanescu" },
-  { type: "TITLU_PROPRIETATE", title: "Titlu Teren Arabil Brănești",   nrDocument: "62001/2012", dateDocument: "2012-03-19", institution: "Comisia Locală Brănești",   emitent: "Comisia Județeană Ilfov", bazaLegala: "Legea 18/1991",  uatProprietate: "Brănești",   uatProprietar: "Brănești",   suprafata: "4.4000", titularText: "Tudor Mocanu",    notes: "10 parcele comasate" },
+  { typeKey: "TITLU_PROPRIETATE", title: "Titlu Teren Arabil Voluntari",  nrDocument: "12345/2001", dateDocument: "2001-06-15", institution: "Comisia Locală Voluntari",   emitent: "Comisia Județeană Ilfov", bazaLegala: "Legea 18/1991",  uatProprietate: "Voluntari",  uatProprietar: "Voluntari",  suprafata: "3.2000", titularText: "Ion Popescu" },
+  { typeKey: "TITLU_PROPRIETATE", title: "Titlu Pășune Snagov",           nrDocument: "23890/2003", dateDocument: "2003-09-22", institution: "Comisia Locală Snagov",     emitent: "Comisia Județeană Ilfov", bazaLegala: "Legea 169/1997", uatProprietate: "Snagov",     uatProprietar: "Snagov",     suprafata: "7.5000", titularText: "Maria Ionescu",    defunctText: "Ionescu Vasile",  notes: "Reconstituire după defunct" },
+  { typeKey: "TITLU_PROPRIETATE", title: "Titlu Teren Extravilan Gruiu",  nrDocument: "34012/2005", dateDocument: "2005-04-08", institution: "Comisia Locală Gruiu",      emitent: "Comisia Județeană Ilfov", bazaLegala: "HG 834/1991",    uatProprietate: "Gruiu",      uatProprietar: "Gruiu",      suprafata: "1.8500", titularText: "Gheorghe Popa" },
+  { typeKey: "TITLU_PROPRIETATE", title: "Titlu Teren Agricol Cernica",   nrDocument: "41233/2007", dateDocument: "2007-11-30", institution: "Comisia Locală Cernica",    emitent: "Comisia Județeană Ilfov", bazaLegala: "Legea 18/1991",  uatProprietate: "Cernica",    uatProprietar: "Cernica",    suprafata: "5.0000", titularText: "Elena Constantin", defunctText: "Dumitrescu Ion",  notes: "Reconstituire pe numele moștenitorului" },
+  { typeKey: "TITLU_PROPRIETATE", title: "Titlu Fânețe Balotești",        nrDocument: "50087/2009", dateDocument: "2009-07-14", institution: "Comisia Locală Balotești",  emitent: "Comisia Județeană Ilfov", bazaLegala: "Legea 169/1997", uatProprietate: "Balotești",  uatProprietar: "Balotești",  suprafata: "2.1200", titularText: "Ana Stanescu" },
+  { typeKey: "TITLU_PROPRIETATE", title: "Titlu Teren Arabil Brănești",   nrDocument: "62001/2012", dateDocument: "2012-03-19", institution: "Comisia Locală Brănești",   emitent: "Comisia Județeană Ilfov", bazaLegala: "Legea 18/1991",  uatProprietate: "Brănești",   uatProprietar: "Brănești",   suprafata: "4.4000", titularText: "Tudor Mocanu",    notes: "10 parcele comasate" },
 ];
 
 
@@ -1368,31 +1373,50 @@ async function seed() {
     console.log(`Seeded ${PROPERTIES.length} properties.`);
   }
 
-  // ---- Paperwork ----
-  const paperworkCount = (
-    await db.execute(sql`select count(*)::int as count from paperwork`)
+  // ---- Documents ----
+  const documentCount = (
+    await db.execute(sql`select count(*)::int as count from document`)
   ).rows[0] as { count: number };
 
-  if (paperworkCount.count > 0) {
+  if (documentCount.count > 0) {
     console.log(
-      `paperwork already has ${paperworkCount.count} row(s); skipping paperwork seed.`,
+      `document already has ${documentCount.count} row(s); skipping document seed.`,
     );
   } else {
-    console.log(`Seeding ${PAPERWORKS.length} paperwork records...`);
+    // Resolve every lookup_document_type.key -> id once, up front. These
+    // rows are expected to already exist (seeded by
+    // migration_020_rename_to_document.sql) — per standing instruction, the
+    // seed script must never auto-create new document-type rows itself.
+    const typeRows = await db
+      .select({ id: lookupDocumentType.id, key: lookupDocumentType.key })
+      .from(lookupDocumentType);
+    const typeIdByKey = new Map(typeRows.map((r) => [r.key, r.id]));
+
+    const missingKeys = [...new Set(DOCUMENTS.map((r) => r.typeKey))].filter(
+      (k) => !typeIdByKey.has(k),
+    );
+    if (missingKeys.length > 0) {
+      throw new Error(
+        `Cannot seed documents — lookup_document_type is missing key(s): ${missingKeys.join(", ")}. ` +
+          `Apply migration_020_rename_to_document.sql first.`,
+      );
+    }
+
+    console.log(`Seeding ${DOCUMENTS.length} document records...`);
     await db.transaction(async (tx) => {
-      for (const row of PAPERWORKS) {
-        const [poPaprRow] = await tx
+      for (const row of DOCUMENTS) {
+        const [poDocRow] = await tx
           .insert(principalObject)
           .values({
-            objectType: "PAPERWORK",
-            code: sql`'PAPR' || lpad(nextval('principal_object_code_seq')::text, 5, '0')`,
+            objectType: "DOCUMENT",
+            code: sql`'DOC' || lpad(nextval('principal_object_code_seq')::text, 5, '0')`,
           })
           .returning();
 
-        await tx.insert(paperwork).values({
-          principalObjectId: poPaprRow.id,
-          code: poPaprRow.code,
-          type: row.type,
+        await tx.insert(document).values({
+          principalObjectId: poDocRow.id,
+          code: poDocRow.code,
+          documentTypeId: typeIdByKey.get(row.typeKey)!,
           title: row.title ?? null,
           nrDocument: row.nrDocument ?? null,
           dateDocument: row.dateDocument ?? null,
@@ -1416,7 +1440,7 @@ async function seed() {
         });
       }
     });
-    console.log(`Seeded ${PAPERWORKS.length} paperwork records.`);
+    console.log(`Seeded ${DOCUMENTS.length} document records.`);
   }
 
   // ---- Judicial persons ----

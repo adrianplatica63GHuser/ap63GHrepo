@@ -1,11 +1,11 @@
 /**
- * GET /api/paperwork/search
+ * GET /api/documents/search
  * Query params: q (code/title), limit, offset
  */
 import { z } from "zod/v4";
 import type { NextRequest } from "next/server";
 import { unexpectedError, zodErrorToResponse } from "@/lib/api/errors";
-import { searchPaperworkAll } from "@/lib/paperwork/queries";
+import { searchDocumentAll } from "@/lib/documents/queries";
 
 const qs = z.object({
   q:      z.string().optional(),
@@ -22,9 +22,9 @@ export async function GET(request: NextRequest): Promise<Response> {
   });
   if (!parsed.success) return zodErrorToResponse(parsed.error);
   try {
-    const { items, total } = await searchPaperworkAll(parsed.data);
+    const { items, total } = await searchDocumentAll(parsed.data);
     return Response.json({ items, total, limit: parsed.data.limit, offset: parsed.data.offset });
   } catch (err) {
-    return unexpectedError(err, "GET /api/paperwork/search");
+    return unexpectedError(err, "GET /api/documents/search");
   }
 }

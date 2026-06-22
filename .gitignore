@@ -43,6 +43,10 @@ supabase_migrations.sql
 # local dev file uploads (paperwork pages)
 /uploads/
 
+# Adrian's machine-local Docker-stack switch scripts (Adrian <-> Ciprian UAT)
+# -- not part of the codebase, never meant to be shared/committed
+/local-ops/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
