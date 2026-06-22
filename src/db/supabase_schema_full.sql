@@ -53,7 +53,9 @@ CREATE TYPE address_kind AS ENUM ('HOME', 'POSTAL', 'HEADQUARTERS', 'CORRESPONDE
 CREATE TYPE gender AS ENUM ('MALE', 'FEMALE');
 CREATE TYPE id_document_type AS ENUM ('ID_CARD', 'PASSPORT');
 CREATE TYPE person_type AS ENUM ('NATURAL', 'JUDICIAL');
-CREATE TYPE judicial_type AS ENUM ('SRL', 'SA', 'SRL_D', 'PFA', 'II', 'IF', 'ONG', 'OTHER');
+-- NOTE (Slice #15.07): the old hardcoded judicial_type enum is gone.
+-- judicial_person.judicial_person_type_id is now a FK to
+-- lookup_judicial_person_type (admin-managed via Reference Data) — see below.
 CREATE TYPE property_type AS ENUM ('LAND');
 CREATE TYPE use_category AS ENUM ('CATEG1', 'CATEG2', 'CATEG3');
 -- NOTE (Slice #15.05): the old hardcoded paperwork_type enum is gone.
@@ -139,11 +141,14 @@ CREATE TRIGGER natural_person_lock_cnp
 
 -- judicial_person ────────────────────────────────────────────
 -- Final state: includes contact_person FK columns from migration 018.
+-- judicial_person_type_id FK added below, once lookup_judicial_person_type
+-- exists (Slice #15.07; same deferred-FK pattern used for
+-- natural_person.citizenship_id further down this file).
 CREATE TABLE judicial_person (
   person_id                 uuid PRIMARY KEY REFERENCES person(id) ON DELETE CASCADE,
   name                      text NOT NULL,
   nickname                  text,
-  judicial_type             judicial_type,
+  judicial_person_type_id   uuid,
   cui_number                text,
   trade_register_number     text,
   -- Contact persons: FK to natural persons. ON DELETE SET NULL.
@@ -323,6 +328,32 @@ INSERT INTO lookup_person_type (name, sort_order) VALUES
   ('Persoană Fizică',   1), ('Persoană Juridică', 2), ('Expert',       3),
   ('PFA',               4), ('Instituție',         5), ('ONG',          6),
   ('Consiliu Local',    7);
+
+-- ── lookup_judicial_person_type  (migration 022, Slice #15.07) ─
+-- Replaces the old hardcoded judicial_type Postgres enum. New rows are
+-- added only by Adrian via Administration -> Reference Data (Person panel,
+-- "Judicial Person Types" button), or by Claude when explicitly directed —
+-- never auto-seeded by app code.
+CREATE TABLE lookup_judicial_person_type (
+  id         uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  name       text        NOT NULL,
+  sort_order integer     NOT NULL DEFAULT 0,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE TRIGGER lookup_judicial_person_type_touch_updated_at
+  BEFORE UPDATE ON lookup_judicial_person_type
+  FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
+INSERT INTO lookup_judicial_person_type (name, sort_order) VALUES
+  ('SRL', 1), ('SA', 2), ('SRL-D', 3), ('PFA', 4),
+  ('II',  5), ('IF', 6), ('ONG',   7), ('Altele', 8);
+
+-- judicial_person.judicial_person_type_id FK — added here, not inline
+-- above, because lookup_judicial_person_type didn't exist yet when
+-- judicial_person was created.
+ALTER TABLE judicial_person
+  ADD CONSTRAINT judicial_person_judicial_person_type_id_fkey
+  FOREIGN KEY (judicial_person_type_id) REFERENCES lookup_judicial_person_type(id) ON DELETE SET NULL;
 
 -- ── lookup_citizenship ───────────────────────────────────────
 CREATE TABLE lookup_citizenship (

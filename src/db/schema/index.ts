@@ -69,19 +69,6 @@ export const idDocumentTypeEnum = pgEnum("id_document_type", [
 
 export const genderEnum = pgEnum("gender", ["MALE", "FEMALE"]);
 
-// Judicial-person legal/organisational form. Fixed list for now; new values
-// require a migration. SRL/SA/PFA/etc. are Romanian company-form codes.
-export const judicialTypeEnum = pgEnum("judicial_type", [
-  "SRL",
-  "SA",
-  "SRL_D",
-  "PFA",
-  "II",
-  "IF",
-  "ONG",
-  "OTHER",
-]);
-
 // ---------------------------------------------------------------------------
 // person — base / supertype
 // ---------------------------------------------------------------------------
@@ -219,7 +206,14 @@ export const judicialPerson = pgTable(
     name: text("name").notNull(),
     nickname: text("nickname"),
 
-    judicialType: judicialTypeEnum("judicial_type"),
+    // Judicial-person legal/organisational form (SRL/SA/PFA/etc.). Was a
+    // fixed Postgres enum until Slice #15.07 — now an FK to the admin-managed
+    // lookup_judicial_person_type table (Administration -> Reference Data ->
+    // "Judicial Person Types"). Nullable; ON DELETE SET NULL so removing a
+    // type from Reference Data just clears the tag rather than blocking the
+    // delete or cascading.
+    judicialPersonTypeId: uuid("judicial_person_type_id")
+      .references(() => lookupJudicialPersonType.id, { onDelete: "set null" }),
 
     // CUI — Cod Unic de Inregistrare (Romanian fiscal registration code).
     // Optional. UNIQUE when present (partial unique index below).
@@ -487,6 +481,17 @@ export const lookupPersonRole = pgTable("lookup_person_role", {
   sortOrder:   integer("sort_order").notNull().default(0),
   createdAt:   timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt:   timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// Judicial-person legal/organisational form (SRL/SA/PFA/etc.). Replaces the
+// fixed judicial_type Postgres enum as of Slice #15.07 — managed via
+// Administration -> Reference Data -> "Judicial Person Types".
+export const lookupJudicialPersonType = pgTable("lookup_judicial_person_type", {
+  id:        uuid("id").primaryKey().defaultRandom(),
+  name:      text("name").notNull(),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 export const lookupCitizenship = pgTable("lookup_citizenship", {

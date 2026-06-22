@@ -96,8 +96,78 @@ Relationships: People ↔ Documents, People ↔ Properties, Documents ↔ Proper
 - Slice #15.05 — Project-wide rename: eliminate "Paperwork"/`PAPERWORK_TYPES` enum in favour of "Document" + admin-managed `lookup_document_type`. ✅ Complete. Full detail below.
 - Slice #16.UX.01 — Person/Property/Document lists: sort most-recent-first + "New!"/"Nou!" recency badge next to the row checkbox. ✅ Complete. Full detail below.
 - Slice #15.06 — Reference Data: keep alternate Romanian wordings as distinct document types + fix stale Ciprian sync script. ✅ Complete. Full detail below.
+- Slice #15.07 — Reference Data: replace hardcoded `judicial_type` enum with admin-managed `lookup_judicial_person_type` table. ✅ Complete. Full detail below.
 
 Each slice typically lands as multiple small commits, each individually green.
+
+### Slice #15.07 — Replace `judicial_type` enum with `lookup_judicial_person_type` (detail)
+
+DB schema + query layer + form/UI + admin Reference Data wiring + i18n + seed scripts + tests. Follows the exact precedent set by Slice #15.05 (Document Type enum → lookup table).
+
+**Why**: `judicial_type` was a hardcoded Postgres enum (`SRL`, `SA`, `SRL_D`, `PFA`, `II`, `IF`, `ONG`, `OTHER`) on `judicial_person`. Adrian wants the list operator-managed from Administration → Reference Data — under the Person panel, via a new **"Judicial Person Types"** button — rather than requiring a code change + migration for every new type. The FK uses `ON DELETE SET NULL` (Adrian's choice, matching the optional-tag pattern already used for `property_person.person_role_id` and `person_paperwork.person_role_id`), not `RESTRICT`.
+
+**DB migration (`src/db/migration_022_judicial_person_types.sql`)**
+- Creates `lookup_judicial_person_type` (`id` uuid PK, `name` text NOT NULL, `sort_order` int default 0, `created_at`, `updated_at`) + `touch_updated_at` trigger, seeded with 8 rows: `SRL`(1), `SA`(2), `SRL-D`(3), `PFA`(4), `II`(5), `IF`(6), `ONG`(7), `Altele`(8). `ON CONFLICT DO NOTHING` — idempotent.
+- Adds `judicial_person.judicial_person_type_id` (uuid, nullable, FK → `lookup_judicial_person_type.id` `ON DELETE SET NULL`).
+- Backfills every existing `judicial_person` row by mapping the old enum value to the new table's `name` via a `CASE` expression: `SRL→SRL, SA→SA, SRL_D→SRL-D, PFA→PFA, II→II, IF→IF, ONG→ONG, OTHER→Altele`.
+- Drops `judicial_person.judicial_type` and then `DROP TYPE judicial_type` — the enum is fully removed.
+- **Not yet applied to any database** — see PowerShell commands below.
+
+**Schema (`src/db/schema/index.ts`)**
+- `judicialType` Postgres enum definition removed entirely.
+- `judicialPerson.judicialPersonTypeId` (nullable FK → `lookupJudicialPersonType.id`, `onDelete: "set null"`) replaces the old `judicialType` enum column.
+- New `lookupJudicialPersonType` table export added to the Persoană lookup-table group, alongside `lookupPersonType` / `lookupPersonRole` / `lookupCitizenship`.
+
+**Validation + queries (`src/lib/judicial-persons/validation.ts`, `queries.ts`)**
+- `judicialPersonCreateSchema` / `judicialPersonUpdateSchema`: `judicialPersonTypeId: z.string().uuid().nullish()` replaces the old `judicialType` enum field.
+- `createJudicialPerson` / `updateJudicialPerson` thread `judicialPersonTypeId` through unchanged in shape (still a single nullable id field, just pointing at a different kind of value).
+
+**Form (`src/app/judicial-persons/_components/form-schema.ts`, `judicial-person-form.tsx`)**
+- `FormValues.judicialType` renamed to `judicialPersonTypeId` (string, `""` = unset). `fromApiPayload` / `toApiPayload` updated accordingly.
+- The "Type" dropdown now fetches options from `lookup_judicial_person_type` (same `GET /api/admin/value-lists/judicial-person-types` pattern as every other admin-managed list) instead of a hardcoded enum-derived option array. The field's i18n label key (`fields.judicialType`) was deliberately left unchanged — it still just labels the same dropdown, even though the underlying form field is now `judicialPersonTypeId`.
+
+**Admin Reference Data wiring** — `"judicial-person-types"` added to `src/lib/admin/value-lists/config.ts` (`VALID_LIST_KEYS`, `LIST_META` — `name`-only field), `validation.ts` (`judicialPersonTypeSchema`, name required), `queries.ts` (all four switch-statement cases, list ordered by `sort_order`). `src/app/admin/value-lists/_components/value-list-hub.tsx`: added a "Judicial Person Types" button in the Persoană section, next to Person Types / Person Roles / Citizenship — no new modal component needed, it rides the generic `ValueListModal`.
+
+**i18n** — added `valueList.lists.judicialPersonTypes` to both `messages/en-GB.json` (`"Judicial Person Types"`) and `messages/ro-RO.json` (`"Tipuri Persoană Juridică"`). Removed the now-dead `judicialPerson.options.judicialType.*` enum-label blocks from both files (the dropdown now reads names straight from the DB).
+
+**Seed scripts** — both `scripts/seed-judicial-persons.ts` and `src/db/seed.ts` resolve `lookup_judicial_person_type.name → id` once up front (a `Map`, fetched via a plain `db.select(...)`) and throw a clear error if an expected name is missing, rather than ever auto-creating a lookup row themselves — same standing pattern already used for `lookup_document_type` in `seed.ts`. `seed-judicial-persons.ts`'s `SEED_DATA` entries were updated to use the DB's actual name `"SRL-D"` (not the old enum literal `"SRL_D"`). `seed.ts`'s 40-entry `JUDICIAL_PERSONS` array keeps its existing `judicialType: "SRL_D"`-style labels unchanged (only the type alias, now `JudicialTypeLabel`, was renamed) — a new `JUDICIAL_TYPE_LABEL_TO_NAME` lookup object maps each old-style label to the lookup table's real `name` at insert time, mirroring the migration's own backfill `CASE` mapping exactly.
+
+**Tests (`src/__tests__/judicial-person.test.ts`)** — every `judicialType` reference replaced with `judicialPersonTypeId`; the "valid type" test cases now assert against a sample UUID (`judicialPersonTypeId: z.string().uuid().nullish()` rejects plain enum-style strings), and the "rejects invalid" test keeps the same non-uuid string but now fails for "not a valid uuid" rather than "not a valid enum member".
+
+**`supabase_schema_full.sql`** — `CREATE TYPE judicial_type AS ENUM (...)` removed from the ENUMS section; `judicial_person.judicial_type` column replaced with a plain `judicial_person_type_id uuid` column (no inline FK — the lookup table doesn't exist yet at that point in the script); new `lookup_judicial_person_type` table + trigger + 8-row seed added right after `lookup_person_type`, followed immediately by `ALTER TABLE judicial_person ADD CONSTRAINT ... FOREIGN KEY (judicial_person_type_id) REFERENCES lookup_judicial_person_type(id) ON DELETE SET NULL` — the same deferred-FK pattern already used for `natural_person.citizenship_id` further down the same file (lookup table didn't exist yet when the referencing table was first created).
+
+**`sync-reference-data.sql`** — `lookup_judicial_person_type` added to the junction-tables-first `TRUNCATE` list, and a new seed block (the same 8 rows) added right after `lookup_citizenship`.
+
+**Manual setup — local Docker (done, confirmed by Adrian)**
+
+```powershell
+docker cp src/db/migration_022_judicial_person_types.sql ga40prj-postgres:/tmp/m022.sql
+docker exec ga40prj-postgres psql -U postgres -d ga40db -f /tmp/m022.sql
+```
+
+**Supabase**: paste `migration_022_judicial_person_types.sql` directly into the SQL Editor. `supabase_schema_full.sql` is only consulted on a full from-scratch reset; no action needed there unless/until the next full reset.
+
+**Ciprian UAT**: per the standing rule above, this is **not** something Adrian runs directly — `ciprian-ga40prj-postgres` lives on Ciprian's PC. When this slice is ready to ship to UAT, follow **UC-C6** in the Ops Guide: build the app image, then send Ciprian the `ga40prj-app.tar` plus `migration_022_judicial_person_types.sql` (renamed e.g. `schema-update-vN.sql`) with a short note. Ciprian applies both on his own machine (`update.bat`, then the `docker cp` + `psql -f -v ON_ERROR_STOP=1` command already documented in UC-C6). `sync-reference-data.sql` re-exported in this slice is kept current in the repo but is not sent — it's only used under UC-C8 (full reset), not a normal schema-update delivery.
+
+**Files touched**
+- `src/db/migration_022_judicial_person_types.sql` (new)
+- `src/db/schema/index.ts`
+- `src/lib/judicial-persons/validation.ts`
+- `src/lib/judicial-persons/queries.ts`
+- `src/app/judicial-persons/_components/form-schema.ts`
+- `src/app/judicial-persons/_components/judicial-person-form.tsx`
+- `src/lib/admin/value-lists/config.ts`
+- `src/lib/admin/value-lists/validation.ts`
+- `src/lib/admin/value-lists/queries.ts`
+- `src/app/admin/value-lists/_components/value-list-hub.tsx`
+- `scripts/seed-judicial-persons.ts`
+- `src/db/seed.ts`
+- `src/__tests__/judicial-person.test.ts`
+- `src/db/supabase_schema_full.sql`
+- `src/db/sync-reference-data.sql`
+- `messages/en-GB.json`
+- `messages/ro-RO.json`
+- `CLAUDE.md`
 
 ### Slice #15.06 — Keep alternate wordings as distinct document types (detail)
 
@@ -1743,12 +1813,11 @@ Rules:
     sed -i 's/\r//' 02-schema-fixed.sql          # strip CRLF
     sed -i '1s/^\xEF\xBB\xBF//' 02-schema-fixed.sql  # strip UTF-8 BOM if present
     ```
-- **Ciprian UAT reference-data sync.** `src/db/sync-reference-data.sql` is the canonical script to seed all 11 lookup tables (correct diacritics, `lookup_property_person_role` seed included). **When to regenerate it:** after any slice that adds rows to a lookup table, run `npm run export:reference-data` (reads from local Docker, writes the file). **Commit the updated file** alongside the migration so Ciprian always has a current copy. **When to apply it to Ciprian's container:** after a fresh `docker volume rm` wipe, or whenever reference data looks wrong:
-    ```powershell
-    docker cp src\db\sync-reference-data.sql ciprian-ga40prj-postgres:/tmp/ref.sql
-    docker exec ciprian-ga40prj-postgres psql -U postgres -d ga40db -f /tmp/ref.sql
-    ```
-    The file is idempotent (TRUNCATE + re-INSERT) — safe to re-apply at any time without data loss on non-lookup tables.
+- **Ciprian UAT reference-data sync.** `src/db/sync-reference-data.sql` is the canonical script to seed all 11 lookup tables (correct diacritics, `lookup_property_person_role` seed included). **When to regenerate it:** after any slice that adds rows to a lookup table, run `npm run export:reference-data` (reads from local Docker, writes the file). **Commit the updated file** alongside the migration so a current copy is always in the repo, ready to package whenever it's needed.
+    **Adrian never runs commands against `ciprian-ga40prj-postgres` himself** — that container lives on Ciprian's PC, not Adrian's. Delivery to Ciprian's UAT environment always goes through `C:\dev.docs\ga40prj\02.Operations.Guides\GA40.Operations.Guide.03.fixed.docx`:
+    - **Normal slice with a schema migration** (the common case, e.g. adding a lookup table): follow **UC-C6** — Adrian builds the app image and packages the new migration SQL file (e.g. `src/db/migration_022_..._.sql`) for Ciprian; Ciprian applies it on his own machine. The migration file's own seed `INSERT`s (idempotent, `ON CONFLICT DO NOTHING`) are sufficient — `sync-reference-data.sql` is **not** part of this flow and does not need to be sent.
+    - **Full database reset** (UAT data corrupt / clean slate): follow **UC-C8** — Ciprian wipes the volume and `start.bat` reinitialises from the `init/` scripts. `sync-reference-data.sql` (or `supabase_schema_full.sql`'s equivalent for Supabase) is the right tool here, run by Ciprian on his own machine, only in this scenario.
+    - There is no standing step to "re-sync Ciprian's container" after every slice — keeping `sync-reference-data.sql` current in the repo (the regenerate step above) is enough; it only gets *used* under UC-C8.
 - **OCR (Tesseract) — label text fuses with coordinate tokens.** When a scanned cadastral table has row-label text in the left margin (e.g. `"SE A"`, parcel names, or decorative characters), Tesseract reads the label and the first numeric token on that row as one fused string — e.g. `"SE A 1 321762.117"` becomes `"11321762.117"`. This is always the **first data row** (corner 1) because subsequent rows have only a small corner-index digit in the margin, not a word. The extra characters add multiple leading digits to the coordinate, not just one. The parser handles this via `trySplitMergedToken` (tries stripping 1–3 leading digits) + rescue-2b in `parseTableFormat`. If a future scan skips corner 1 again: add `console.log(rawText)` at the top of `parseOcrText` and `console.log("Pass 0:", JSON.stringify(parseTableFormat(rawText)))` below it, run `npm run dev`, scan the image, and inspect the terminal. The raw text immediately shows what Tesseract produced.
 - **OCR (Tesseract) — common digit confusions.** Tesseract confuses `l` (lowercase L) with `1`, `I` (uppercase i) with `1`, and `O` (uppercase letter O) with `0`. The `fixOcrDigits` helper in `scan-image/route.ts` corrects these before any numeric parsing. If a coordinate still doesn't parse, check the raw OCR text for these substitutions.
 - **OCR (Tesseract) — do not pre-filter lines by keyword.** Removing lines that contain "Suprafata", "Perimetru", etc. before parsing is tempting (those are area/perimeter rows, not corners). Don't do it: OCR sometimes merges the column-header row (which may contain those words) with the first data row, and the keyword filter discards the entire merged line including the real corner coordinates. Let the coordinate-range checks reject out-of-range values naturally.

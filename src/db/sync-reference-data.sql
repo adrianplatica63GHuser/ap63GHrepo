@@ -13,7 +13,8 @@ SET client_encoding = 'UTF8';
 TRUNCATE lookup_property_person_role, lookup_doc_type_person_role CASCADE;
 TRUNCATE lookup_person_role, lookup_property_type, lookup_tarla,
          lookup_use_category, lookup_person_type, lookup_citizenship,
-         lookup_document_type, lookup_institution, lookup_others CASCADE;
+         lookup_document_type, lookup_institution, lookup_others,
+         lookup_judicial_person_type CASCADE;
 
 -- ── lookup_property_type ──────────────────────────────────────────────────────
 INSERT INTO lookup_property_type (name, sort_order) VALUES
@@ -46,6 +47,11 @@ INSERT INTO lookup_person_type (name, sort_order) VALUES
 INSERT INTO lookup_citizenship (name, sort_order) VALUES
   ('Română', 1), ('Moldoveană', 2), ('Americană', 3), ('Germană',  4),
   ('Franceză', 5), ('Italiană', 6), ('Spaniolă',  7), ('Engleză',  8);
+
+-- ── lookup_judicial_person_type (Slice #15.07) ───────────────────────────────
+INSERT INTO lookup_judicial_person_type (name, sort_order) VALUES
+  ('SRL', 1), ('SA', 2), ('SRL-D', 3), ('PFA', 4),
+  ('II',  5), ('IF', 6), ('ONG',   7), ('Altele', 8);
 
 -- ── lookup_document_type ──────────────────────────────────────────────────────
 -- NOTE: Row 8 is 'Certificat de Moștenitor' (the correct value).

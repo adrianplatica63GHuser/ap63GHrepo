@@ -48,6 +48,11 @@ export const documentTypeSchema = z.object({
   sortOrder,
 });
 
+export const judicialPersonTypeSchema = z.object({
+  name:      z.string().min(1, "required"),
+  sortOrder,
+});
+
 export const institutionSchema = z.object({
   name:            z.string().min(1, "required"),
   institutionType: z.string().nullish(),
@@ -71,6 +76,7 @@ export const LIST_SCHEMAS: Record<ListKey, z.ZodType<any>> = {
   "person-types":    personTypeSchema,
   "person-roles":    personRoleSchema,
   "citizenships":    citizenshipSchema,
+  "judicial-person-types": judicialPersonTypeSchema,
   "document-types":  documentTypeSchema,
   "institutions":    institutionSchema,
   "services":        serviceInterestSchema,

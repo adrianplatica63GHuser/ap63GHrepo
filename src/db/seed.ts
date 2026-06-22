@@ -13,6 +13,7 @@ import {
   document,
   judicialPerson,
   lookupDocumentType,
+  lookupJudicialPersonType,
   naturalPerson,
   person,
   principalObject,
@@ -912,12 +913,16 @@ type JudicialAddressInput = {
   notes?: string;
 };
 
-type JudicialType = "SRL" | "SA" | "SRL_D" | "PFA" | "II" | "IF" | "ONG" | "OTHER";
+// Plain label matching lookup_judicial_person_type.name — resolved to an id
+// at seed time (Slice #15.07; the old judicial_type enum is gone). "SRL_D"
+// is kept as the literal here purely as a recognizable seed-data label; it
+// is mapped to the DB name "SRL-D" via JUDICIAL_TYPE_LABEL_TO_NAME below.
+type JudicialTypeLabel = "SRL" | "SA" | "SRL_D" | "PFA" | "II" | "IF" | "ONG" | "OTHER";
 
 type SeedJudicialRow = {
   name: string;
   nickname?: string;
-  judicialType: JudicialType;
+  judicialType: JudicialTypeLabel;
   cuiNumber?: string;
   tradeRegisterNumber?: string;
   notes?: string;
@@ -1455,6 +1460,37 @@ async function seed() {
   } else {
     console.log(`Seeding ${JUDICIAL_PERSONS.length} judicial persons...`);
 
+    // Resolve every lookup_judicial_person_type.name -> id once, up front.
+    // These rows are expected to already exist (seeded by
+    // migration_022_judicial_person_types.sql) — per standing instruction,
+    // the seed script must never auto-create new judicial-person-type rows
+    // itself.
+    const judicialTypeRows = await db
+      .select({ id: lookupJudicialPersonType.id, name: lookupJudicialPersonType.name })
+      .from(lookupJudicialPersonType);
+    const judicialTypeIdByName = new Map(judicialTypeRows.map((r) => [r.name, r.id]));
+
+    const JUDICIAL_TYPE_LABEL_TO_NAME: Record<JudicialTypeLabel, string> = {
+      SRL: "SRL",
+      SA: "SA",
+      SRL_D: "SRL-D",
+      PFA: "PFA",
+      II: "II",
+      IF: "IF",
+      ONG: "ONG",
+      OTHER: "Altele",
+    };
+
+    const missingTypeNames = [
+      ...new Set(JUDICIAL_PERSONS.map((r) => JUDICIAL_TYPE_LABEL_TO_NAME[r.judicialType])),
+    ].filter((n) => !judicialTypeIdByName.has(n));
+    if (missingTypeNames.length > 0) {
+      throw new Error(
+        `Cannot seed judicial persons — lookup_judicial_person_type is missing name(s): ${missingTypeNames.join(", ")}. ` +
+          `Apply migration_022_judicial_person_types.sql first.`,
+      );
+    }
+
     // Fetch natural persons sorted by code so contactPerson1/2Idx resolve
     // deterministically (PERS00001 = index 0, PERS00002 = index 1, etc.).
     const naturalPersons = await db
@@ -1488,7 +1524,8 @@ async function seed() {
           personId: pRow.id,
           name: row.name,
           nickname: row.nickname ?? null,
-          judicialType: row.judicialType,
+          judicialPersonTypeId:
+            judicialTypeIdByName.get(JUDICIAL_TYPE_LABEL_TO_NAME[row.judicialType]) ?? null,
           cuiNumber: row.cuiNumber ?? null,
           tradeRegisterNumber: row.tradeRegisterNumber ?? null,
           contactPerson1Id:

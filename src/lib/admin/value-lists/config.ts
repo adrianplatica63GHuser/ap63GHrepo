@@ -22,6 +22,7 @@ export const VALID_LIST_KEYS = [
   "person-types",
   "person-roles",
   "citizenships",
+  "judicial-person-types",
   "document-types",
   "institutions",
   "services",
@@ -82,6 +83,10 @@ export const LIST_META: Record<ListKey, ListMeta> = {
   },
   citizenships: {
     titleKey: "citizenships",
+    fields: [{ key: "name", labelKey: "name", required: true }],
+  },
+  "judicial-person-types": {
+    titleKey: "judicialPersonTypes",
     fields: [{ key: "name", labelKey: "name", required: true }],
   },
   "document-types": {

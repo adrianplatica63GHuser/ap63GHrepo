@@ -63,6 +63,9 @@ export const judicialPersonCreateSchema = judicialPersonBase.extend({
   // Contact person FK IDs (natural persons only; validated at UI layer).
   contactPerson1Id: z.string().uuid().nullish(),
   contactPerson2Id: z.string().uuid().nullish(),
+  // Judicial person type FK (Slice #15.07) -> lookup_judicial_person_type.id.
+  // Optional; admin-managed via Administration -> Reference Data.
+  judicialPersonTypeId: z.string().uuid().nullish(),
   // When true, no CORRESPONDENCE address row is stored.
   correspondenceSameAsHq: z.boolean().default(false),
 });
@@ -84,6 +87,7 @@ export const judicialPersonUpdateSchema = judicialPersonBase
     addresses: addressArraySchema.optional(),
     contactPerson1Id: z.string().uuid().nullish(),
     contactPerson2Id: z.string().uuid().nullish(),
+    judicialPersonTypeId: z.string().uuid().nullish(),
     correspondenceSameAsHq: z.boolean().optional(),
   });
 

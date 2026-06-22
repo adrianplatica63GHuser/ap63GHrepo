@@ -125,7 +125,7 @@ describe("toApiPayload", () => {
   it("converts empty optional string fields to null", () => {
     const payload = toApiPayload(minValid());
     expect(payload.nickname).toBeNull();
-    expect(payload.judicialType).toBeNull();
+    expect(payload.judicialPersonTypeId).toBeNull();
     expect(payload.cuiNumber).toBeNull();
     expect(payload.tradeRegisterNumber).toBeNull();
     expect(payload.contactPerson1Id).toBeNull();
@@ -138,9 +138,11 @@ describe("toApiPayload", () => {
     expect(payload.name).toBe("SC Test SRL");
   });
 
-  it("passes through a valid judicialType value", () => {
-    const payload = toApiPayload(minValid({ judicialType: "SRL" }));
-    expect(payload.judicialType).toBe("SRL");
+  it("passes through a valid judicialPersonTypeId value", () => {
+    const payload = toApiPayload(
+      minValid({ judicialPersonTypeId: "3fa85f64-5717-4562-b3fc-2c963f66afa6" }),
+    );
+    expect(payload.judicialPersonTypeId).toBe("3fa85f64-5717-4562-b3fc-2c963f66afa6");
   });
 
   it("drops an address block that has no country", () => {
@@ -205,7 +207,7 @@ describe("fromApiPayload", () => {
       judicial: {
         name: "SC Exemplu SRL",
         nickname: null,
-        judicialType: null,
+        judicialPersonTypeId: null,
         cuiNumber: null,
         tradeRegisterNumber: null,
         contactPerson1Id: null,
@@ -218,7 +220,7 @@ describe("fromApiPayload", () => {
       contactPerson2Name: null,
     });
     expect(result.nickname).toBe("");
-    expect(result.judicialType).toBe("");
+    expect(result.judicialPersonTypeId).toBe("");
     expect(result.cuiNumber).toBe("");
     expect(result.notes).toBe("");
     expect(result.addresses.HEADQUARTERS.country).toBe("");
@@ -230,7 +232,7 @@ describe("fromApiPayload", () => {
       judicial: {
         name: "SC Test SA",
         nickname: "Test",
-        judicialType: "SA",
+        judicialPersonTypeId: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
         cuiNumber: "RO12345678",
         tradeRegisterNumber: "J40/123/2020",
         contactPerson1Id: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
@@ -244,7 +246,7 @@ describe("fromApiPayload", () => {
     });
     expect(result.name).toBe("SC Test SA");
     expect(result.nickname).toBe("Test");
-    expect(result.judicialType).toBe("SA");
+    expect(result.judicialPersonTypeId).toBe("3fa85f64-5717-4562-b3fc-2c963f66afa6");
     expect(result.cuiNumber).toBe("RO12345678");
     expect(result.tradeRegisterNumber).toBe("J40/123/2020");
     expect(result.contactPerson1Name).toBe("Ion Popescu");
@@ -322,18 +324,18 @@ describe("judicialPersonCreateSchema (API)", () => {
     expect(result.success).toBe(false);
   });
 
-  it("accepts a valid judicialType enum value", () => {
+  it("accepts a valid judicialPersonTypeId (uuid)", () => {
     const result = judicialPersonCreateSchema.safeParse({
       name: "SC Test SRL",
-      judicialType: "SRL",
+      judicialPersonTypeId: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
     });
     expect(result.success).toBe(true);
   });
 
-  it("rejects an invalid judicialType value", () => {
+  it("rejects a non-uuid judicialPersonTypeId value", () => {
     const result = judicialPersonCreateSchema.safeParse({
       name: "SC Test SRL",
-      judicialType: "INVENTED_TYPE",
+      judicialPersonTypeId: "INVENTED_TYPE",
     });
     expect(result.success).toBe(false);
   });

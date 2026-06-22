@@ -527,18 +527,6 @@
       "cancel": "Cancel",
       "note": "If the person is not in the system, they must be entered first using the Natural Person functionality."
     },
-    "options": {
-      "judicialType": {
-        "SRL": "SRL",
-        "SA": "SA",
-        "SRL_D": "SRL-D",
-        "PFA": "PFA",
-        "II": "II",
-        "IF": "IF",
-        "ONG": "ONG",
-        "OTHER": "Other"
-      }
-    },
     "buttons": {
       "save": "Save",
       "delete": "Delete",
@@ -863,6 +851,7 @@
       "personTypes": "Person Types",
       "personRoles": "Person Roles",
       "citizenships": "Citizenship",
+      "judicialPersonTypes": "Judicial Person Types",
       "documentTypes": "Document Types",
       "documentPersons": "Document Persons",
       "institutions": "Institutions",

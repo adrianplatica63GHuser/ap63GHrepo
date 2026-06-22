@@ -30,6 +30,28 @@ type Props = {
   initialValues?: FormValues;
 };
 
+// ---------------------------------------------------------------------------
+// Judicial Person Types dropdown — backed by Reference Data
+// (lookup_judicial_person_type, Slice #15.07). Uses the SAME TanStack Query
+// key (["value-list", "judicial-person-types"]) that the generic
+// ValueListModal already invalidates on save/delete — avoids the Slice
+// #15.06 stale-dropdown bug (document-types needed a special-cased
+// cross-invalidation because its dropdown used a different key; this one
+// is designed to never need that).
+// ---------------------------------------------------------------------------
+
+type JudicialPersonTypeOption = {
+  id:   string;
+  name: string;
+};
+
+async function fetchJudicialPersonTypes(): Promise<JudicialPersonTypeOption[]> {
+  const res = await fetch("/api/admin/value-lists/judicial-person-types");
+  if (!res.ok) throw new Error(`Failed to load judicial person types (HTTP ${res.status})`);
+  const body = await res.json();
+  return (body.items ?? []) as JudicialPersonTypeOption[];
+}
+
 export function JudicialPersonForm({
   mode,
   personId,
@@ -55,6 +77,18 @@ export function JudicialPersonForm({
 
   // Which contact-person picker is open: 1, 2, or null.
   const [pickerSlot, setPickerSlot] = useState<1 | 2 | null>(null);
+
+  // Judicial Person Types — admin-managed (Slice #15.07). Query key is the
+  // SAME one the generic ValueListModal already invalidates by default
+  // (["value-list", listKey]) on save/delete — so this dropdown stays in
+  // sync with no extra cross-invalidation code needed (unlike the
+  // document-types special case from Slice #15.06).
+  const { data: judicialPersonTypes } = useQuery({
+    queryKey: ["value-list", "judicial-person-types"],
+    queryFn: fetchJudicialPersonTypes,
+    staleTime: 5 * 60 * 1000,
+  });
+  const judicialPersonTypeOptions = judicialPersonTypes ?? [];
 
   const saveDisabled =
     submitting ||
@@ -210,19 +244,15 @@ export function JudicialPersonForm({
             )}
             <SelectField
               label={t("fields.judicialType")}
-              name="judicialType"
+              name="judicialPersonTypeId"
               register={register}
-              error={errors.judicialType?.message}
+              error={errors.judicialPersonTypeId?.message}
               options={[
                 { value: "", label: "—" },
-                { value: "SRL", label: t("options.judicialType.SRL") },
-                { value: "SA", label: t("options.judicialType.SA") },
-                { value: "SRL_D", label: t("options.judicialType.SRL_D") },
-                { value: "PFA", label: t("options.judicialType.PFA") },
-                { value: "II", label: t("options.judicialType.II") },
-                { value: "IF", label: t("options.judicialType.IF") },
-                { value: "ONG", label: t("options.judicialType.ONG") },
-                { value: "OTHER", label: t("options.judicialType.OTHER") },
+                ...judicialPersonTypeOptions.map((opt) => ({
+                  value: opt.id,
+                  label: opt.name,
+                })),
               ]}
             />
           </div>

@@ -10,6 +10,11 @@
  *   contactPerson1Name — display name for rendering only (never sent to API)
  *   (same for contact person 2)
  *
+ * judicialPersonTypeId — lookup_judicial_person_type.id (empty string = not
+ * set). Replaces the old hardcoded judicial_type enum as of Slice #15.07;
+ * the dropdown is now populated from Administration -> Reference Data ->
+ * "Judicial Person Types".
+ *
  * correspondenceSameAsHq — when true, the CORRESPONDENCE address block is
  * hidden in the UI and omitted from the API payload entirely.
  */
@@ -38,7 +43,8 @@ export const formSchema = z
   .object({
     name: z.string(),
     nickname: z.string(),
-    judicialType: z.string(), // "" | "SRL" | "SA" | ...
+    // lookup_judicial_person_type.id; "" = not set.
+    judicialPersonTypeId: z.string(),
     cuiNumber: z.string(),
     tradeRegisterNumber: z.string(),
     // Contact person 1: ID stored as string; empty = not linked.
@@ -104,7 +110,7 @@ const emptyAddressBlock: AddressBlock = {
 export const emptyFormValues: FormValues = {
   name: "",
   nickname: "",
-  judicialType: "",
+  judicialPersonTypeId: "",
   cuiNumber: "",
   tradeRegisterNumber: "",
   contactPerson1Id: "",
@@ -126,16 +132,7 @@ export const emptyFormValues: FormValues = {
 type JudicialRow = {
   name: string;
   nickname: string | null;
-  judicialType:
-    | "SRL"
-    | "SA"
-    | "SRL_D"
-    | "PFA"
-    | "II"
-    | "IF"
-    | "ONG"
-    | "OTHER"
-    | null;
+  judicialPersonTypeId: string | null;
   cuiNumber: string | null;
   tradeRegisterNumber: string | null;
   contactPerson1Id: string | null;
@@ -180,7 +177,7 @@ export function fromApiPayload(input: {
   return {
     name: j?.name ?? "",
     nickname: j?.nickname ?? "",
-    judicialType: j?.judicialType ?? "",
+    judicialPersonTypeId: j?.judicialPersonTypeId ?? "",
     cuiNumber: j?.cuiNumber ?? "",
     tradeRegisterNumber: j?.tradeRegisterNumber ?? "",
     contactPerson1Id: j?.contactPerson1Id ?? "",
@@ -204,16 +201,6 @@ function blank(s: string): string | null {
   const t = s.trim();
   return t.length > 0 ? t : null;
 }
-
-type JudicialTypeEnum =
-  | "SRL"
-  | "SA"
-  | "SRL_D"
-  | "PFA"
-  | "II"
-  | "IF"
-  | "ONG"
-  | "OTHER";
 
 function blockToAddress(
   kind: AddressKind,
@@ -253,7 +240,7 @@ export function toApiPayload(
   return {
     name: values.name.trim(),
     nickname: blank(values.nickname),
-    judicialType: blank(values.judicialType) as JudicialTypeEnum | null,
+    judicialPersonTypeId: blank(values.judicialPersonTypeId),
     cuiNumber: blank(values.cuiNumber),
     tradeRegisterNumber: blank(values.tradeRegisterNumber),
     contactPerson1Id: blank(values.contactPerson1Id),

@@ -21,7 +21,13 @@
 import { alias } from "drizzle-orm/pg-core";
 import { and, count, eq, ilike, isNull, or, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { address, judicialPerson, person, principalObject } from "@/db/schema";
+import {
+  address,
+  judicialPerson,
+  lookupJudicialPersonType,
+  person,
+  principalObject,
+} from "@/db/schema";
 import type {
   JudicialListQuery,
   JudicialPersonCreate,
@@ -98,6 +104,8 @@ export type JudicialPersonFull = {
   contactPerson1Name: string | null;
   /** Display name of the linked contact person 2, or null if not set. */
   contactPerson2Name: string | null;
+  /** Name of the linked judicial person type, or null if not set. */
+  judicialPersonTypeName: string | null;
 };
 
 export async function getJudicialPersonById(
@@ -137,9 +145,10 @@ export async function getJudicialPersonById(
 
   const judicialRow = judicialRows[0] ?? null;
 
-  // Resolve contact person names if IDs are set.
+  // Resolve contact person names + judicial person type name if set.
   let contactPerson1Name: string | null = null;
   let contactPerson2Name: string | null = null;
+  let judicialPersonTypeName: string | null = null;
 
   if (judicialRow) {
     if (judicialRow.contactPerson1Id) {
@@ -158,6 +167,14 @@ export async function getJudicialPersonById(
         .limit(1);
       contactPerson2Name = rows[0]?.displayName ?? null;
     }
+    if (judicialRow.judicialPersonTypeId) {
+      const rows = await db
+        .select({ name: lookupJudicialPersonType.name })
+        .from(lookupJudicialPersonType)
+        .where(eq(lookupJudicialPersonType.id, judicialRow.judicialPersonTypeId))
+        .limit(1);
+      judicialPersonTypeName = rows[0]?.name ?? null;
+    }
   }
 
   return {
@@ -166,6 +183,7 @@ export async function getJudicialPersonById(
     addresses: addressRows,
     contactPerson1Name,
     contactPerson2Name,
+    judicialPersonTypeName,
   };
 }
 
@@ -215,7 +233,7 @@ export async function createJudicialPerson(
         personId: pRow.id,
         name: judFields.name,
         nickname: judFields.nickname ?? null,
-        judicialType: judFields.judicialType ?? null,
+        judicialPersonTypeId: judFields.judicialPersonTypeId ?? null,
         cuiNumber: judFields.cuiNumber ?? null,
         tradeRegisterNumber: judFields.tradeRegisterNumber ?? null,
         contactPerson1Id: contactPerson1Id ?? null,
@@ -249,6 +267,7 @@ export async function createJudicialPerson(
       addresses: addressRows,
       contactPerson1Name: null, // freshly created, won't resolve names here
       contactPerson2Name: null,
+      judicialPersonTypeName: null,
     };
   });
 }

@@ -527,18 +527,6 @@
       "cancel": "Anulează",
       "note": "Dacă persoana nu este în sistem, trebuie introdusă mai întâi prin funcționalitatea Persoană Fizică."
     },
-    "options": {
-      "judicialType": {
-        "SRL": "SRL",
-        "SA": "SA",
-        "SRL_D": "SRL-D",
-        "PFA": "PFA",
-        "II": "II",
-        "IF": "IF",
-        "ONG": "ONG",
-        "OTHER": "Altele"
-      }
-    },
     "buttons": {
       "save": "Salvează",
       "delete": "Șterge",
@@ -863,6 +851,7 @@
       "personTypes": "Tipuri de Persoană",
       "personRoles": "Roluri Persoană",
       "citizenships": "Cetățenie",
+      "judicialPersonTypes": "Tipuri de Persoană Juridică",
       "documentTypes": "Tipuri de Document",
       "documentPersons": "Roluri pe Document",
       "institutions": "Instituții",

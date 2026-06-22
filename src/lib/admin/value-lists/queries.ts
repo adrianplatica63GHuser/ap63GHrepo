@@ -20,6 +20,7 @@ import {
   lookupPersonType,
   lookupPersonRole,
   lookupCitizenship,
+  lookupJudicialPersonType,
   lookupDocumentType,
   lookupInstitution,
   lookupOthers,
@@ -96,6 +97,8 @@ export async function listValues(key: ListKey): Promise<LookupRow[]> {
       return db.select().from(lookupPersonRole).orderBy(asc(lookupPersonRole.name)) as Promise<LookupRow[]>;
     case "citizenships":
       return db.select().from(lookupCitizenship).orderBy(asc(lookupCitizenship.sortOrder)) as Promise<LookupRow[]>;
+    case "judicial-person-types":
+      return db.select().from(lookupJudicialPersonType).orderBy(asc(lookupJudicialPersonType.sortOrder)) as Promise<LookupRow[]>;
     case "document-types":
       return db.select().from(lookupDocumentType).orderBy(asc(lookupDocumentType.sortOrder)) as Promise<LookupRow[]>;
     case "institutions":
@@ -157,6 +160,10 @@ export async function createValue(
     }
     case "citizenships": {
       const [row] = await db.insert(lookupCitizenship).values(data).returning();
+      return row as LookupRow;
+    }
+    case "judicial-person-types": {
+      const [row] = await db.insert(lookupJudicialPersonType).values(data).returning();
       return row as LookupRow;
     }
     case "document-types": {
@@ -233,6 +240,10 @@ export async function updateValue(
       const [row] = await db.update(lookupCitizenship).set(data).where(eq(lookupCitizenship.id, id)).returning();
       return (row as LookupRow) ?? null;
     }
+    case "judicial-person-types": {
+      const [row] = await db.update(lookupJudicialPersonType).set(data).where(eq(lookupJudicialPersonType.id, id)).returning();
+      return (row as LookupRow) ?? null;
+    }
     case "document-types": {
       const [row] = await db.update(lookupDocumentType).set(data).where(eq(lookupDocumentType.id, id)).returning();
       return (row as LookupRow) ?? null;
@@ -284,6 +295,10 @@ export async function deleteValue(key: ListKey, id: string): Promise<boolean> {
     }
     case "citizenships": {
       const r = await db.delete(lookupCitizenship).where(eq(lookupCitizenship.id, id)).returning({ id: lookupCitizenship.id });
+      return r.length > 0;
+    }
+    case "judicial-person-types": {
+      const r = await db.delete(lookupJudicialPersonType).where(eq(lookupJudicialPersonType.id, id)).returning({ id: lookupJudicialPersonType.id });
       return r.length > 0;
     }
     case "document-types": {
