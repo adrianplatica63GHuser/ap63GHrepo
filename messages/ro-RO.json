@@ -603,7 +603,7 @@
   "document": {
     "listTitle": "Acte",
     "createTitle": "Act nou",
-    "searchPlaceholder": "caută după cod, titlu sau nr. document",
+    "searchPlaceholder": "SAU caută după cod, titlu sau nr. document",
     "addNew": "Adaugă act",
     "open": "Deschide",
     "loading": "Se încarcă…",
@@ -612,7 +612,8 @@
     "counts": "Se afișează {shown} din {total}",
     "saveError": "Salvarea a eșuat",
     "deleteError": "Ștergerea a eșuat",
-    "selectAll": "(Selectați toate)",
+    "typeFilterLabel": "Tip document:",
+    "allTypes": "Toate tipurile",
     "noTypeSelected": "Selectați cel puțin un tip de document",
     "types": {
       "ACT_ADJUDECARE": "Act de Adjudecare",

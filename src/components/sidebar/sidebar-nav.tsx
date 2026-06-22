@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useMemo, useState, type MouseEvent } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
@@ -43,20 +43,6 @@ async function fetchMe(): Promise<{ username: string; role: string }> {
   const res = await fetch("/api/auth/me");
   if (!res.ok) return { username: "", role: "user" };
   return res.json();
-}
-
-// ---------------------------------------------------------------------------
-// Document types — fetched dynamically from the admin-managed
-// lookup_document_type table (Slice #15.05: no more hardcoded type enum).
-// ---------------------------------------------------------------------------
-
-type DocumentTypeOption = { id: string; key: string; name: string };
-
-async function fetchDocumentTypes(): Promise<DocumentTypeOption[]> {
-  const res = await fetch("/api/admin/value-lists/document-types");
-  if (!res.ok) return [];
-  const body = await res.json();
-  return (body.items ?? []) as DocumentTypeOption[];
 }
 
 // ---------------------------------------------------------------------------
@@ -184,174 +170,50 @@ function NavSectionRow({
 }
 
 // ---------------------------------------------------------------------------
-// DocumentNavSection — checkbox-based document-type filter
+// NavFlatSectionRow — a section header that is itself a direct link
 // ---------------------------------------------------------------------------
 //
-// Replaces the link-based document items with a (Select All) + one checkbox
-// per row currently in lookup_document_type (fetched dynamically — Slice
-// #15.05 eliminated the hardcoded PAPERWORK_TYPES enum). Clicking any
-// checkbox navigates to /documents?documentTypeIds=... so the list page
-// filters in real time.
-//
-// Checkbox state is derived from the URL search params (single source of
-// truth) so checkboxes always reflect what the list is actually showing.
+// Used for sections with no expandable children (currently just "document",
+// Slice #15.08): no chevron, no accordion toggle — clicking it navigates
+// straight to its href, same single-click behaviour as any other page link,
+// just rendered with the larger section-header styling/icon size.
 
-function DocumentNavSection({
+function NavFlatSectionRow({
   section,
-  isOpen,
+  isActive,
   isCollapsed,
   sectionLabel,
-  pathname,
-  onToggle,
-  onExpandSidebar,
+  onNavigate,
 }: {
   section: NavSection;
-  isOpen: boolean;
+  isActive: boolean;
   isCollapsed: boolean;
   sectionLabel: string;
-  pathname: string;
-  onToggle: () => void;
-  onExpandSidebar: () => void;
+  onNavigate: (href: string) => void;
 }) {
-  const tDocument = useTranslations("document");
-  const { guardedNavigate } = useUnsavedChanges();
-  const searchParams = useSearchParams();
   const SectionIcon = section.icon;
+  const href = section.href!;
 
-  const isSectionActive = pathname.startsWith("/documents");
-
-  const { data: documentTypes } = useQuery({
-    queryKey: ["document-types"],
-    queryFn:  fetchDocumentTypes,
-    staleTime: 5 * 60 * 1000,
-  });
-  const types = documentTypes ?? [];
-  const typeIds = useMemo(() => types.map((t) => t.id), [types]);
-
-  // ── Checkbox state — derived from URL (single source of truth) ────────────
-  //
-  // Deriving from the URL means checkboxes always mirror what the list is
-  // actually displaying. No local state copy needed, no wasOpen reset effect.
-  //   ?documentTypeIds absent → all checked (show all)
-  //   ?documentTypeIds=       → none checked (show "please select" message)
-  //   ?documentTypeIds=A,B    → only A and B checked
-  const checkedIds = useMemo<Set<string>>(() => {
-    const param = searchParams.get("documentTypeIds");
-    if (param === null) return new Set(typeIds);
-    if (param === "")   return new Set();
-    const idSet = new Set(typeIds);
-    return new Set(param.split(",").filter((id) => idSet.has(id)));
-  }, [searchParams, typeIds]);
-
-  const selectAllRef = useRef<HTMLInputElement>(null);
-
-  // Keep the (Select All) native indeterminate state in sync with checkedIds.
-  // This is a DOM-only side effect (no setState) — fine in useEffect.
-  useEffect(() => {
-    if (!selectAllRef.current) return;
-    const n = checkedIds.size;
-    selectAllRef.current.indeterminate = n > 0 && n < typeIds.length;
-  }, [checkedIds, typeIds.length]);
-
-  // ── Navigation helper ───────────────────────────────────────────────────────
-  const pushUrl = useCallback(
-    (ids: Set<string>) => {
-      guardedNavigate(
-        ids.size === typeIds.length
-          ? "/documents"
-          : ids.size === 0
-            ? "/documents?documentTypeIds="
-            : `/documents?documentTypeIds=${[...ids].join(",")}`,
-      );
-    },
-    [guardedNavigate, typeIds.length],
-  );
-
-  // ── Handlers ───────────────────────────────────────────────────────────────
-  const handleSelectAll = useCallback(() => {
-    const next: Set<string> =
-      checkedIds.size === typeIds.length ? new Set() : new Set(typeIds);
-    pushUrl(next);
-  }, [checkedIds, typeIds, pushUrl]);
-
-  const handleToggleType = useCallback(
-    (id: string) => {
-      const next = new Set(checkedIds);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      pushUrl(next);
-    },
-    [checkedIds, pushUrl],
-  );
-
-  // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div>
-      {/* Section header — same structure as NavSectionRow */}
-      {/* Opening the accordion also navigates to /documents so the list is */}
-      {/* immediately visible; closing it is toggle-only (no navigation).   */}
-      <button
-        type="button"
-        onClick={isCollapsed ? onExpandSidebar : () => {
-          if (!isOpen) guardedNavigate("/documents");
-          onToggle();
-        }}
-        title={isCollapsed ? sectionLabel : undefined}
-        aria-expanded={isCollapsed ? undefined : isOpen}
-        className={[
-          "w-full flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-          isCollapsed ? "justify-center" : "justify-between",
-          isSectionActive ? "text-cta" : "text-ink hover:bg-crease",
-        ].join(" ")}
-      >
-        <span className={`flex items-center ${isCollapsed ? "" : "gap-2.5"}`}>
-          <SectionIcon size={18} className="shrink-0" aria-hidden="true" />
-          {!isCollapsed && <span>{sectionLabel}</span>}
-        </span>
-        {!isCollapsed && (
-          <ChevronDown
-            size={14}
-            className={`shrink-0 transition-transform duration-150 ${
-              isOpen ? "rotate-180" : ""
-            }`}
-            aria-hidden="true"
-          />
-        )}
-      </button>
-
-      {/* Checkbox list — only visible when expanded */}
-      {!isCollapsed && isOpen && (
-        <div className="mt-0.5 mb-1 ml-3 pl-3 border-l border-wire flex flex-col gap-0.5">
-          {/* (Select All) row */}
-          <label className="flex items-center gap-2.5 rounded-md px-3 py-1.5 text-sm text-ink cursor-pointer hover:bg-or-light select-none">
-            <input
-              ref={selectAllRef}
-              type="checkbox"
-              checked={typeIds.length > 0 && checkedIds.size === typeIds.length}
-              onChange={handleSelectAll}
-              className="h-3.5 w-3.5 shrink-0 cursor-pointer"
-            />
-            <span className="truncate">{tDocument("selectAll")}</span>
-          </label>
-
-          {/* Individual type checkboxes — one per lookup_document_type row */}
-          {types.map((type) => (
-            <label
-              key={type.id}
-              className="flex items-center gap-2.5 rounded-md px-3 py-1.5 text-sm text-ink cursor-pointer hover:bg-or-light select-none"
-            >
-              <input
-                type="checkbox"
-                checked={checkedIds.has(type.id)}
-                onChange={() => handleToggleType(type.id)}
-                className="h-3.5 w-3.5 shrink-0 cursor-pointer"
-              />
-              <span className="truncate">{type.name}</span>
-            </label>
-          ))}
-        </div>
-      )}
-    </div>
+    <Link
+      href={href}
+      onClick={(e) => {
+        if (!isPlainLeftClick(e)) return;
+        e.preventDefault();
+        onNavigate(href);
+      }}
+      title={isCollapsed ? sectionLabel : undefined}
+      className={[
+        "w-full flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+        isCollapsed ? "justify-center" : "justify-between",
+        isActive ? "text-cta" : "text-ink hover:bg-crease",
+      ].join(" ")}
+    >
+      <span className={`flex items-center ${isCollapsed ? "" : "gap-2.5"}`}>
+        <SectionIcon size={18} className="shrink-0" aria-hidden="true" />
+        {!isCollapsed && <span>{sectionLabel}</span>}
+      </span>
+    </Link>
   );
 }
 
@@ -406,18 +268,18 @@ export function SidebarNav() {
   }, []);
 
   // ── Accordion state ───────────────────────────────────────────────────────
-  const activeSectionKey = useMemo(() => {
-    const computed = getActiveSectionKey(pathname, NAV_SECTIONS);
-    if (computed) return computed;
-    // Document section has no items in nav-config (checkbox-based), so we
-    // detect it by pathname instead. Only the list page itself ("/documents")
-    // counts as "active" for auto-expand purposes — detail/sub-pages like
-    // "/documents/[id]" or "/documents/[id]/associate-person" (e.g. landing
-    // on a document right after classifying it from Admin → Import) should
-    // not pop the checkbox filter list open every time they're visited.
-    if (pathname === "/documents") return "document";
-    return null;
-  }, [pathname]);
+  // "document" is a flat link (no children, see NavFlatSectionRow) so it has
+  // no accordion-open state to track — getActiveSectionKey only needs to
+  // resolve sections that actually have expandable items.
+  const activeSectionKey = useMemo(
+    () => getActiveSectionKey(pathname, NAV_SECTIONS),
+    [pathname],
+  );
+
+  // "document" highlights as active for the list page and any of its
+  // detail/sub-pages (e.g. "/documents/[id]"), independent of the
+  // accordion-driven activeSectionKey above.
+  const isDocumentActive = pathname === "/documents" || pathname.startsWith("/documents/");
 
   // Single-open accordion — at most one section is open at a time.
   const [openSection, setOpenSection] = useState<string | null>(
@@ -528,15 +390,13 @@ export function SidebarNav() {
               : section;
 
           return filteredSection.key === "document" ? (
-            <DocumentNavSection
+            <NavFlatSectionRow
               key={filteredSection.key}
               section={filteredSection}
-              isOpen={openSection === filteredSection.key}
+              isActive={isDocumentActive}
               isCollapsed={isCollapsed}
               sectionLabel={sectionLabels[filteredSection.key] ?? filteredSection.key}
-              pathname={pathname}
-              onToggle={() => toggleSection(filteredSection.key)}
-              onExpandSidebar={expandSidebar}
+              onNavigate={guardedNavigate}
             />
           ) : (
             <NavSectionRow

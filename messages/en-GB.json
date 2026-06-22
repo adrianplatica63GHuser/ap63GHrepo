@@ -603,7 +603,7 @@
   "document": {
     "listTitle": "Documents",
     "createTitle": "New Document",
-    "searchPlaceholder": "search by code, title, or document no.",
+    "searchPlaceholder": "OR search by code, title, or document no.",
     "addNew": "Add new Document",
     "open": "Open",
     "loading": "Loading…",
@@ -612,7 +612,8 @@
     "counts": "Showing {shown} of {total}",
     "saveError": "Could not save",
     "deleteError": "Could not delete",
-    "selectAll": "(Select All)",
+    "typeFilterLabel": "Document type:",
+    "allTypes": "All types",
     "noTypeSelected": "Please select at least one document type",
     "types": {
       "ACT_ADJUDECARE": "Act de Adjudecare",

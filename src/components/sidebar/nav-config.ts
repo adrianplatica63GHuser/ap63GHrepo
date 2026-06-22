@@ -26,6 +26,12 @@ export type NavSection = {
   key: string;
   icon: LucideIcon;
   items: NavItem[];
+  // When set (and items is empty), the section header itself is a direct
+  // link — no accordion/chevron, no expandable children. Used by "document"
+  // (Slice #15.08): the type-filter checkboxes moved from a sidebar
+  // accordion into a dropdown on the Documents list page itself, so the
+  // sidebar entry is now a single plain link like any other page link.
+  href?: string;
 };
 
 export const NAV_SECTIONS: NavSection[] = [
@@ -47,10 +53,11 @@ export const NAV_SECTIONS: NavSection[] = [
     ],
   },
   {
-    // Items intentionally empty — the sidebar renders this section with
-    // checkbox-based filtering (DocumentNavSection in sidebar-nav.tsx).
+    // Plain direct link (Slice #15.08) — the per-type checkbox filter now
+    // lives on the Documents list page itself, not in the sidebar.
     key: "document",
     icon: FileText,
+    href: "/documents",
     items: [],
   },
   {

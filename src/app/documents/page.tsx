@@ -9,7 +9,8 @@ export default async function DocumentsPage({ searchParams }: PageProps) {
   const t = await getTranslations("document");
   const params = await searchParams;
 
-  // ?documentTypeIds= param drives the sidebar checkbox filter.
+  // ?documentTypeIds= param drives the "Document type:" dropdown filter
+  // on the list page itself (Slice #15.08 — moved out of the sidebar).
   //   absent  → undefined → show all
   //   ""      → []        → 0 types selected → show "please select" message
   //   "uuid,uuid" → [...] → show only those types

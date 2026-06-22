@@ -9,6 +9,129 @@ import { RecencyBadge } from "@/components/recency-badge";
 
 const PAGE_SIZE = 15;
 
+type DocumentTypeOption = {
+  id:   string;
+  key:  string;
+  name: string;
+};
+
+async function fetchDocumentTypes(): Promise<DocumentTypeOption[]> {
+  const res = await fetch("/api/admin/value-lists/document-types");
+  if (!res.ok) throw new Error(`Request failed (${res.status})`);
+  const body = await res.json();
+  return body.items ?? [];
+}
+
+// Builds the "?documentTypeIds=" query string for a new set of checked type
+// ids, mirroring the semantics DocumentListView already expects:
+//   every type checked  → omit the param entirely (show all)
+//   zero types checked  → "?documentTypeIds=" (empty — show "select a type" message)
+//   some types checked  → "?documentTypeIds=uuid,uuid,..."
+function buildDocumentsUrl(checkedIds: Set<string>, allTypeIds: string[]): string {
+  if (checkedIds.size === allTypeIds.length) return "/documents";
+  return `/documents?documentTypeIds=${Array.from(checkedIds).join(",")}`;
+}
+
+function DocumentTypeFilterDropdown({
+  types,
+  initialDocumentTypeIds,
+  label,
+  allTypesLabel,
+}: {
+  types: DocumentTypeOption[];
+  initialDocumentTypeIds?: string[];
+  label: string;
+  allTypesLabel: string;
+}) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const allTypeIds = types.map((ty) => ty.id);
+  const checkedIds = new Set(
+    initialDocumentTypeIds === undefined ? allTypeIds : initialDocumentTypeIds,
+  );
+  const allChecked = types.length > 0 && checkedIds.size === allTypeIds.length;
+  const someChecked = checkedIds.size > 0 && !allChecked;
+
+  const selectAllRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (selectAllRef.current) {
+      selectAllRef.current.indeterminate = someChecked;
+    }
+  }, [someChecked]);
+
+  useEffect(() => {
+    if (!open) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [open]);
+
+  function handleSelectAllToggle() {
+    const next = allChecked ? new Set<string>() : new Set(allTypeIds);
+    router.push(buildDocumentsUrl(next, allTypeIds));
+  }
+
+  function handleToggleType(id: string) {
+    const next = new Set(checkedIds);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    router.push(buildDocumentsUrl(next, allTypeIds));
+  }
+
+  const triggerText = allChecked ? allTypesLabel : `${checkedIds.size}/${allTypeIds.length}`;
+
+  return (
+    <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        className="inline-flex items-center gap-1.5 rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+      >
+        <span className="text-fade">{label}</span>
+        <span className="font-medium text-ink dark:text-zinc-100">{triggerText}</span>
+        <span aria-hidden="true" className="text-fade text-xs">▾</span>
+      </button>
+
+      {open && (
+        <div className="absolute z-20 mt-1 w-64 max-h-80 overflow-y-auto rounded-md border border-wire bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
+          <label className="flex items-center gap-2 px-3 py-2 text-sm font-medium border-b border-crease cursor-pointer hover:bg-cta-pale dark:border-zinc-800 dark:hover:bg-zinc-800/50">
+            <input
+              ref={selectAllRef}
+              type="checkbox"
+              checked={allChecked}
+              onChange={handleSelectAllToggle}
+              className="h-4 w-4 rounded border-wire accent-cta"
+            />
+            {allTypesLabel}
+          </label>
+          {types.map((ty) => (
+            <label
+              key={ty.id}
+              className="flex items-center gap-2 px-3 py-2 text-sm cursor-pointer hover:bg-cta-pale dark:hover:bg-zinc-800/50"
+            >
+              <input
+                type="checkbox"
+                checked={checkedIds.has(ty.id)}
+                onChange={() => handleToggleType(ty.id)}
+                className="h-4 w-4 rounded border-wire accent-cta"
+              />
+              {ty.name}
+            </label>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 type DocumentListItem = {
   id:               string;
   code:             string;
@@ -123,8 +246,15 @@ export function DocumentListView({
   const [deleting,     setDeleting]     = useState(false);
   const [deleteError,  setDeleteError]  = useState<string | null>(null);
 
+  const { data: documentTypes } = useQuery({
+    queryKey: ["document-types"],
+    queryFn:  fetchDocumentTypes,
+    staleTime: 5 * 60 * 1000,
+  });
+  const typeOptions = documentTypes ?? [];
+
   // typeFilters is derived directly from initialDocumentTypeIds (the URL
-  // ?documentTypeIds= param). The sidebar checkboxes change the URL →
+  // ?documentTypeIds= param). The dropdown's checkboxes change the URL →
   // page.tsx re-renders with new initialDocumentTypeIds → this component
   // re-renders with the correct value. No local state copy is needed —
   // using initialDocumentTypeIds directly avoids the synchronous
@@ -223,6 +353,12 @@ export function DocumentListView({
     <div className="flex flex-col gap-4">
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-3">
+        <DocumentTypeFilterDropdown
+          types={typeOptions}
+          initialDocumentTypeIds={initialDocumentTypeIds}
+          label={t("typeFilterLabel")}
+          allTypesLabel={t("allTypes")}
+        />
         <input
           type="search"
           value={searchInput}
