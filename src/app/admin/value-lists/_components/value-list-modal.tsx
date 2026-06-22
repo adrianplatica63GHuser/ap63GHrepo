@@ -80,6 +80,15 @@ function EditForm({
     mutationFn: () => saveRow(listKey, state.id, values),
     onSuccess: (row) => {
       qc.invalidateQueries({ queryKey: ["value-list", listKey] });
+      // "document-types" is also fetched directly (bare key, no "value-list"
+      // prefix) by several consumers elsewhere — the Document form's type
+      // dropdown, the sidebar's dynamic Documents nav section, and the
+      // Admin Import classify panels. Their cached results would otherwise
+      // miss a just-added/edited/removed type until staleTime lapses or a
+      // hard reload happens. Invalidate that key too so they refresh in step.
+      if (listKey === "document-types") {
+        qc.invalidateQueries({ queryKey: ["document-types"] });
+      }
       onSaved(row);
     },
     onError: (err: Error) => setError(err.message),
@@ -187,6 +196,10 @@ export function ValueListModal({
     mutationFn: (id: string) => removeRow(listKey, id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["value-list", listKey] });
+      // See matching comment in EditForm's mutation above.
+      if (listKey === "document-types") {
+        qc.invalidateQueries({ queryKey: ["document-types"] });
+      }
       setConfirmDeleteId(null);
     },
   });
