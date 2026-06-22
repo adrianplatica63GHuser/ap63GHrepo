@@ -123,10 +123,13 @@ Nothing existing is renamed, reordered, or removed — only three new rows added
 
 **Standing-rule reminder this surfaces**: per the comment already in `supabase_schema_full.sql` (added in Slice #15.05) and CLAUDE.md's "Ciprian UAT reference-data sync" gotcha, `sync-reference-data.sql` must be regenerated/updated *alongside* every migration that touches a lookup table — not as an afterthought. This slice is the second time that step was missed and had to be caught later; worth double-checking this file specifically at the end of any future `lookup_document_type` change.
 
+**Follow-up bug fix (same slice, found by Adrian testing right after)**: adding a new Document Type via Administration → Reference Data threw a 500 — `null value in column "key" ... violates not-null constraint`. Root cause: migration_020 (Slice #15.05) added `lookup_document_type.key` as `NOT NULL UNIQUE`, but the generic Value Lists admin CRUD (`src/lib/admin/value-lists/config.ts` / `validation.ts`) was never updated — its form only ever exposed `name`, so `key` was left unset on insert. Fixed in `src/lib/admin/value-lists/queries.ts` only (no form/UI/validation change): `createValue`'s `"document-types"` case now calls a new `generateUniqueDocumentTypeKey(name)` helper before inserting, which folds Romanian diacritics, uppercases, collapses non-alphanumerics to `_`, and appends a numeric suffix on collision — the same approach migration_020 used for its own fallback-slug step. Adrian never types a key by hand; admin-added types simply get an auto-derived one and fall back to `type-config.ts`'s GENERIC styling (already designed for unmapped keys). Confirmed via schema grep that `lookup_document_type.key` is the only `NOT NULL UNIQUE` column among all Value-List-managed lookup tables, so no other list (`property-types`, `tarla`, etc.) has this gap.
+
 **Files touched**
 - `src/db/migration_021_keep_alternate_wordings.sql` (new)
 - `src/db/supabase_schema_full.sql`
 - `src/db/sync-reference-data.sql`
+- `src/lib/admin/value-lists/queries.ts`
 - `CLAUDE.md`
 
 ### Slice #16.UX.01 — Most-recent-first sort + "New!" recency badge (detail)

@@ -35,6 +35,51 @@ const CATEGORY_STAMP    = "Stampila";
 // Row types — inferred from the Drizzle table definitions.
 export type LookupRow = Record<string, unknown> & { id: string };
 
+// ── document-types: server-generated `key` slug ────────────────────────────
+//
+// Migration 020 (Slice #15.05) added `lookup_document_type.key` as an
+// immutable, NOT NULL, UNIQUE slug that application code (getTypeConfig)
+// switches on. The Value Lists admin form only ever exposed `name` — adding
+// a new Document Type via Reference Data left `key` unset, violating the
+// NOT NULL constraint. Per the standing rule ("new document types are added
+// only by Adrian via Administration -> Reference Data ... never auto-seeded
+// or hardcoded again"), `key` for an admin-added type doesn't need to match
+// anything `type-config.ts` recognizes — unmapped keys already fall back to
+// the GENERIC config. So the key is derived from `name` automatically here,
+// using the same diacritics-folding approach as migration_020's fallback-slug
+// step, with a numeric suffix on collision. The form itself never changes.
+const ROMANIAN_DIACRITICS_MAP: Record<string, string> = {
+  ă: "a", â: "a", î: "i", ș: "s", ş: "s", ț: "t", ţ: "t",
+  Ă: "A", Â: "A", Î: "I", Ț: "T", Ţ: "T", Ș: "S", Ş: "S",
+};
+
+function foldRomanianDiacritics(input: string): string {
+  return input.replace(/[ăâîșşțţĂÂÎȚŢȘŞ]/g, (ch) => ROMANIAN_DIACRITICS_MAP[ch] ?? ch);
+}
+
+function slugifyDocumentTypeKey(name: string): string {
+  const slug = foldRomanianDiacritics(name)
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+  return slug || "DOCTYPE";
+}
+
+async function generateUniqueDocumentTypeKey(name: string): Promise<string> {
+  const base = slugifyDocumentTypeKey(name);
+  let candidate = base;
+  let suffix = 2;
+  for (;;) {
+    const existing = await db
+      .select({ id: lookupDocumentType.id })
+      .from(lookupDocumentType)
+      .where(eq(lookupDocumentType.key, candidate));
+    if (existing.length === 0) return candidate;
+    candidate = `${base}_${suffix}`;
+    suffix += 1;
+  }
+}
+
 // ── List ─────────────────────────────────────────────────────────────────────
 
 export async function listValues(key: ListKey): Promise<LookupRow[]> {
@@ -115,7 +160,8 @@ export async function createValue(
       return row as LookupRow;
     }
     case "document-types": {
-      const [row] = await db.insert(lookupDocumentType).values(data).returning();
+      const key = await generateUniqueDocumentTypeKey(data.name);
+      const [row] = await db.insert(lookupDocumentType).values({ ...data, key }).returning();
       return row as LookupRow;
     }
     case "institutions": {
