@@ -2,7 +2,7 @@
 
 # Project brief — ga40prj
 
-A web application for managing **People**, **Paperwork**, and **Properties**, with PostGIS-backed spatial data and bilingual English/Romanian UI. Built one vertical slice at a time. Deployed on Vercel + Supabase; local Docker Postgres remains the primary dev environment.
+A web application for managing **People**, **Documents**, and **Properties**, with PostGIS-backed spatial data and bilingual English/Romanian UI. Built one vertical slice at a time. Deployed on Vercel + Supabase; local Docker Postgres remains the primary dev environment.
 
 ## How Claude works with Adrian (generic rules)
 
@@ -27,10 +27,10 @@ Adrian is the sole user of this repo. He's a business analyst, not a full-time d
 Three core objects with multiple many-to-many relationships, including self-referential ones:
 
 - **Person** — individuals or organizations connected to the project
-- **Paperwork** — documents, contracts, certificates, etc.
+- **Document** — documents, contracts, certificates, etc.
 - **Property** — parcels with spatial geometry (points, polygons) stored in PostGIS
 
-Relationships: People ↔ Paperwork, People ↔ Properties, Paperwork ↔ Properties, plus self-references (e.g. a Person related to another Person, a Property containing another Property). Field names and type vocabularies live in `messages/en-GB.json` and `messages/ro-RO.json`, served via next-intl.
+Relationships: People ↔ Documents, People ↔ Properties, Documents ↔ Properties, plus self-references (e.g. a Person related to another Person, a Property containing another Property). Field names and type vocabularies live in `messages/en-GB.json` and `messages/ro-RO.json`, served via next-intl.
 
 ## Tech stack (locked in)
 
@@ -93,8 +93,98 @@ Relationships: People ↔ Paperwork, People ↔ Properties, Paperwork ↔ Proper
 - Slice #GIS.13.12 — Land map: select/unselect via InfoWindow + "Display all selected" tab view. ✅ Complete. Full detail below.
 - Slice #15.01 — Admin → Import: local-folder browser + Classify (Property / Person / Document). ✅ Complete. Full detail below.
 - Slice #15.02 — Admin → Import: classified-state tracking, context preservation, fit-to-panel preview, rotation, Word link, text preview. ✅ Complete. Full detail below.
+- Slice #15.05 — Project-wide rename: eliminate "Paperwork"/`PAPERWORK_TYPES` enum in favour of "Document" + admin-managed `lookup_document_type`. ✅ Complete. Full detail below.
+- Slice #16.UX.01 — Person/Property/Document lists: sort most-recent-first + "New!"/"Nou!" recency badge next to the row checkbox. ✅ Complete. Full detail below.
 
 Each slice typically lands as multiple small commits, each individually green.
+
+### Slice #16.UX.01 — Most-recent-first sort + "New!" recency badge (detail)
+
+Pure backend (sort) + new shared frontend component — no DB migration, no schema change. Applies identically to the Person, Property, and Document lists.
+
+**What it does**
+
+- The three list queries (`listPersons`, `listProperties`, `listDocument`) now order results by `GREATEST(updated_at, created_at) DESC` instead of by `code`. This becomes the list's default and only sort for now — none of the three lists had a user-facing sort-by-column control to preserve.
+- Every row whose record was created or modified within the last 30 minutes shows a small "New!" (RO: "Nou!") badge immediately to the right of the row's selection checkbox (the per-row checkbox added in the bulk-delete slice). Badge color ages with recency:
+  - `#FF0000` — modified ≤ 5 minutes ago
+  - `#FF7C80` — modified 5–15 minutes ago
+  - `#FFCCCC` — modified 15–30 minutes ago
+  - hidden — older than 30 minutes
+- Font size is `0.75em` (≈75% of the row's text size), matching the "about 75%" spec.
+
+**Why `GREATEST(updated_at, created_at)`, not a `principal_object` column**
+
+`principal_object` (the shared base table giving Person/Property/Document their `code`) only has `id`, `code`, `objectType`, and `createdAt` — it has no `updatedAt`. The real `createdAt`/`updatedAt` pair lives directly on `person`, `property`, and `document` themselves (each defaults both to `now()` on insert, and `updatedAt` is bumped by application code on every update). `GREATEST(updated_at, created_at)` is used as the single "effective recency" timestamp for both sorting and the badge, even though in this schema `updatedAt` alone would currently be equivalent (it is always ≥ `createdAt`) — `GREATEST` makes that invariant explicit rather than assumed.
+
+**New shared component (`src/components/recency-badge.tsx`)**
+
+`<RecencyBadge createdAt={...} updatedAt={...} />` — a small client component:
+- Computes `ageMs = now - max(createdAt, updatedAt)`.
+- Re-renders on a 30-second `setInterval` tick so the badge's color/visibility ages live on screen without any refetch.
+- Returns `null` once `ageMs` exceeds 30 minutes (or if either timestamp is invalid/in the future).
+- Renders the `shared.recency.label` i18n string at `font-size: 0.75em`, colored per the thresholds above.
+
+**Query layer changes**
+
+- `src/lib/persons/queries.ts` — `PersonListItem` gained `createdAt`/`updatedAt`; `listPersons` selects both columns from `person` and orders by `greatest(person.updated_at, person.created_at) desc`.
+- `src/lib/properties/queries.ts` — same pattern, `property.updatedAt`/`property.createdAt`.
+- `src/lib/documents/queries.ts` — same pattern, `document.updatedAt`/`document.createdAt`.
+- No API route changes needed — `GET /api/people`, `GET /api/properties`, `GET /api/documents` already pass the query-layer `items` straight through, so the new fields flow to the client automatically.
+
+**UI changes**
+
+- `src/app/natural-persons/list-view.tsx`, `src/app/properties/list-view.tsx`, `src/app/documents/list-view.tsx`: each row's checkbox `<td>` now wraps the `<input type="checkbox">` and a `<RecencyBadge>` in a `<span className="inline-flex items-center">`; each list's local item type gained `createdAt: string` / `updatedAt: string` (dates arrive as ISO strings over JSON).
+
+**i18n**
+
+- Added `shared.recency.label` to both `messages/en-GB.json` ("New!") and `messages/ro-RO.json` ("Nou!"), alongside the existing `shared.pagination` / `shared.bulkDelete` namespaces.
+
+**Files touched**
+- `src/lib/persons/queries.ts`
+- `src/lib/properties/queries.ts`
+- `src/lib/documents/queries.ts`
+- `src/components/recency-badge.tsx` (new)
+- `src/app/natural-persons/list-view.tsx`
+- `src/app/properties/list-view.tsx`
+- `src/app/documents/list-view.tsx`
+- `messages/en-GB.json`
+- `messages/ro-RO.json`
+- `CLAUDE.md`
+
+### Slice #15.05 — Project-wide rename: Paperwork → Document (detail)
+
+Full-stack rename touching DB schema, every query/validation/UI layer that referenced "paperwork," the Supabase storage bucket, and both message files. Also eliminates the hardcoded `PAPERWORK_TYPES` Postgres enum, replacing it with the existing admin-managed `lookup_document_type` table (Reference Data) as the single source of truth for document types.
+
+**Why**: "Paperwork" was the working name for the third core domain object; Adrian decided "Document" is the correct long-term name, and the type list should be operator-managed (Administration → Reference Data) rather than a hardcoded enum requiring a code change + migration for every new type.
+
+**DB (`src/db/migration_020_rename_to_document.sql`)**
+- Renamed tables: `paperwork`→`document`, `paperwork_page`→`document_page`, `property_paperwork`→`property_document`, `person_paperwork`→`person_document`, `paperwork_paperwork`→`document_document` (self-ref; CHECK constraint renamed too).
+- Dropped the `paperwork_type` Postgres enum entirely. `document.documentTypeId` (uuid, NOT NULL) replaces the old `type` enum column — FK → `lookup_document_type.id`, **no `onDelete` clause** (defaults to RESTRICT), so a document type still in use cannot be deleted from Reference Data.
+- `lookup_document_type` gained a `key text NOT NULL UNIQUE` column — an immutable slug (e.g. `TITLU_PROPRIETATE`) used by application logic (`getTypeConfig`) instead of a Postgres enum literal. All 21 canonical (key, name) pairs seeded.
+- `principal_object_type` enum value `'PAPERWORK'` renamed to `'DOCUMENT'`.
+- **Standing rule going forward**: new document types are added only by Adrian via Administration → Reference Data, or by Claude when explicitly directed — never auto-seeded or hardcoded again.
+
+**Application layers renamed in lockstep**
+- `src/lib/documents/` (was `src/lib/paperwork/`): `validation.ts` (`documentCreateSchema`/`documentUpdateSchema`/`documentListQuerySchema`, `documentTypeId: uuid` replaces the old `type` enum field), `type-config.ts` (`getTypeConfig(key: string | null | undefined)` now keyed by the `lookup_document_type.key` string slug, with a GENERIC fallback for unmapped/null/unknown keys), `queries.ts`, `pages-queries.ts`.
+- `src/app/documents/` (was `src/app/paperwork/`): list/detail pages, `paperwork-form.tsx`→document form, `pages-panel.tsx`, associate-person/associate-party flows.
+- Sidebar: `nav-config.ts` + `sidebar-nav.tsx` — the old static 19-item paperwork section replaced by a `DocumentNavSection` that fetches live types from `lookup_document_type` and renders dynamic checkboxes (no more hardcoded type list in nav).
+- Person/Property detail tabs, associate-document pickers (natural/judicial/property pairs), admin/import classify panels (document + person branches) — all updated to the new schema shape (`documentTypeId` instead of `type`).
+- `src/db/seed.ts`, `src/db/supabase_reset.sql`, `src/db/supabase_schema_full.sql` — rewritten for the new table names, dropped enum, and `lookup_document_type.key` seed data.
+- Tests: `src/__tests__/document.test.ts` (was `paperwork.test.ts`) rewritten against the new uuid-FK schema and string-keyed `getTypeConfig`; `src/__tests__/sidebar-nav.test.ts` mock sections updated (`document` section now has an empty static `items` array, matching the dynamic `DocumentNavSection`).
+- `messages/en-GB.json` / `messages/ro-RO.json`: `paperwork.*` namespace → `document.*`; dead `home.buttons.paperwork1-6` keys renamed to `document1-6` for consistency (component itself is unused — superseded by the Slice #3 welcome screen).
+- `scripts/supabase-sync.ts`: comment/log-string references to "paperwork" updated to "documents" (domain-data step description).
+
+**Storage**
+- Supabase Storage bucket `paperwork-pages` → `document-pages`. Supabase does not support renaming a bucket in place, so this was done via a new one-off script, `scripts/storage-migrate-bucket.ts` (`npm run storage:migrate-bucket`): reads the source bucket's settings (public/private, size limit, MIME allowlist), creates the destination bucket with matching settings, then recursively walks and copies every file (download + re-upload — Storage's `copy()`/`move()` only operate within a single bucket). The script never deletes anything; Adrian deleted the old `paperwork-pages` bucket manually from the dashboard after spot-checking the new one. `src/lib/storage/index.ts` already pointed at `"document-pages"` as part of the layer rename above.
+
+**Cleanup**
+- Quarantined dead files from the rename (`src/lib/_DELETE_ME_paperwork/` and two top-level `_DELETE_ME_seed*.sql` files) were confirmed to have zero importers, then deleted by Adrian via PowerShell — the Linux sandbox could not delete them itself (`rm`/`unlink`/`mv`/Python all failed with "Operation not permitted" despite the sandbox process owning the files; a mount-level restriction, not a real Unix permission issue — same class as the documented "sandbox file drift from Windows" gotchas).
+
+**Verification note**: the sandbox's `npx tsc --noEmit` and `npx jest` could not be trusted for this slice — `jest` failed outright (tried to download the Next.js SWC binary from the npm registry, which the sandbox cannot reach), and `tsc --noEmit` threw a wide spread of phantom "Invalid character" / "no corresponding closing tag" errors across many already-correct, already-committed files (consistent with the pre-existing documented sandbox file-drift gotcha). Verification was instead done by reading the actual file contents via the Windows-mounted path and cross-checking imports against real exports.
+
+**Files touched**: too numerous to list individually (full-stack rename across ~40+ files) — see the per-area task breakdown above. Key new files: `src/db/migration_020_rename_to_document.sql`, `scripts/storage-migrate-bucket.ts`.
+
+**Still outstanding**: none — migration applied to local Docker, storage bucket migrated and old one deleted, dead files removed. Supabase (cloud) full reset/re-seed via `npm run supabase:sync` is the next natural step whenever Adrian is ready to push this slice to production, since `supabase_schema_full.sql` now reflects the new schema.
 
 ### Slice #15.02 — Admin → Import: file-panel + preview-panel polish (detail)
 

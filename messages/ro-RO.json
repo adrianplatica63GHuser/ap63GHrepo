@@ -6,7 +6,7 @@
     "sections": {
       "people": "Persoane",
       "property": "Proprietăți",
-      "paperwork": "Acte",
+      "document": "Acte",
       "administration": "Administrare"
     },
     "buttons": {
@@ -17,12 +17,12 @@
       "building": "Construcție",
       "propertyType3": "Tip 3",
       "propertyType4": "Tip 4",
-      "paperwork1": "Contract",
-      "paperwork2": "Certificat",
-      "paperwork3": "Autorizație",
-      "paperwork4": "Act",
-      "paperwork5": "Extras CF",
-      "paperwork6": "Raport",
+      "document1": "Contract",
+      "document2": "Certificat",
+      "document3": "Autorizație",
+      "document4": "Act",
+      "document5": "Extras CF",
+      "document6": "Raport",
       "users": "Utilizatori & Acces",
       "referenceData": "Date de referință",
       "importExport": "Import / Export",
@@ -124,7 +124,7 @@
       "details": "Detalii",
       "references": "Referințe",
       "persons": "Persoane",
-      "paperwork": "Acte",
+      "document": "Acte",
       "comingSoon": "În curând — această secțiune va fi disponibilă într-o actualizare viitoare."
     },
     "persons": {
@@ -160,7 +160,7 @@
       "cancel": "Anulează",
       "noSelection": "Selectați cel puțin o persoană"
     },
-    "paperwork": {
+    "document": {
       "empty": "Niciun act asociat acestei proprietăți",
       "colCode": "Cod",
       "colType": "Tip",
@@ -172,7 +172,7 @@
       "loading": "Se încarcă…",
       "error": "Eroare la încărcarea actelor"
     },
-    "associatePaperwork": {
+    "associateDocument": {
       "title": "Asociere act",
       "labelSearch": "Căutare",
       "searchPlaceholder": "Cod sau titlu…",
@@ -294,7 +294,7 @@
       "cancel": "Anulează",
       "noSelection": "Selectați cel puțin o proprietate"
     },
-    "paperwork": {
+    "document": {
       "empty": "Niciun act asociat",
       "colCode": "Cod",
       "colType": "Tip",
@@ -307,7 +307,7 @@
       "loading": "Se încarcă…",
       "error": "Eroare la încărcarea actelor"
     },
-    "associatePaperwork": {
+    "associateDocument": {
       "title": "Asociere act",
       "labelSearch": "Căutare",
       "labelRole": "Rol",
@@ -361,6 +361,9 @@
       "previous": "Anterior",
       "next": "Următor",
       "pageOf": "Pagina {page} din {total}"
+    },
+    "recency": {
+      "label": "Nou!"
     },
     "unsavedChanges": {
       "title": "Modificări nesalvate",
@@ -464,7 +467,7 @@
       "details": "Detalii",
       "references": "Referințe",
       "properties": "Proprietăți",
-      "paperwork": "Acte",
+      "document": "Acte",
       "comingSoon": "În curând — această secțiune va fi disponibilă într-o actualizare viitoare."
     }
   },
@@ -556,7 +559,7 @@
       "details": "Detalii",
       "references": "Referințe",
       "properties": "Proprietăți",
-      "paperwork": "Acte",
+      "document": "Acte",
       "comingSoon": "În curând — această secțiune va fi disponibilă într-o actualizare viitoare."
     }
   },
@@ -564,7 +567,7 @@
     "sections": {
       "people": "Persoane",
       "property": "Proprietăți",
-      "paperwork": "Acte",
+      "document": "Acte",
       "administration": "Administrare"
     },
     "items": {
@@ -609,7 +612,7 @@
     "title": "GA40",
     "subtitle": "Persoane · Acte · Proprietăți"
   },
-  "paperwork": {
+  "document": {
     "listTitle": "Acte",
     "createTitle": "Act nou",
     "searchPlaceholder": "caută după cod, titlu sau nr. document",
@@ -1003,19 +1006,13 @@
         "extractError": "Nu s-a putut citi cartea de identitate. Puteți completa câmpurile manual.",
         "extractErrorTitle": "Cartea de identitate nu a putut fi citită",
         "extractErrorDismiss": "OK",
-        "error": {
-          "insufficient_credits": "Soldul de credit al API-ului Anthropic este prea mic pentru a citi acest document. Adăugați credit sau verificați planul pe console.anthropic.com, apoi încercați din nou — puteți completa câmpurile manual între timp.",
-          "invalid_api_key": "Cheia API Anthropic configurată pe server a fost respinsă. Verificați ANTHROPIC_API_KEY în .env, apoi încercați din nou — puteți completa câmpurile manual între timp.",
-          "rate_limited": "Serviciul de recunoaștere este limitat momentan. Așteptați puțin și încercați din nou, sau completați câmpurile manual.",
-          "overloaded": "Serviciul de recunoaștere este temporar supraîncărcat. Încercați din nou în scurt timp, sau completați câmpurile manual."
-        },
+        "error": "Importul a eșuat",
         "reviewTitle": "Verificați datele extrase",
         "lowConfidenceNote": "Câmpurile marcate ⚠ au fost incerte — verificați-le.",
         "unmappedTitle": "Găsit pe document dar necompletat automat",
         "unmappedHint": "Acestea nu s-au asociat clar unui câmp existent. Adăugați-le manual la Note sau alt câmp, dacă este relevant.",
         "saveButton": "Creează Persoană",
         "saving": "Se creează…",
-        "error": "Importul a eșuat",
         "success": "Persoană creată."
       }
     }

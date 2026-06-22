@@ -44,6 +44,8 @@ export type PersonListItem = {
   displayName: string;
   email: string | null;
   phone: string | null;
+  createdAt: Date;
+  updatedAt: Date;
 };
 
 export async function listPersons(opts: ListQuery): Promise<{
@@ -81,11 +83,16 @@ export async function listPersons(opts: ListQuery): Promise<{
         displayName: person.displayName,
         email: sql<string | null>`coalesce(${naturalPerson.personalEmail1}, ${naturalPerson.personalEmail2}, ${naturalPerson.workEmail})`,
         phone: sql<string | null>`coalesce(${naturalPerson.personalPhone1}, ${naturalPerson.personalPhone2}, ${naturalPerson.workPhone})`,
+        createdAt: person.createdAt,
+        updatedAt: person.updatedAt,
       })
       .from(person)
       .leftJoin(naturalPerson, eq(naturalPerson.personId, person.id))
       .where(where)
-      .orderBy(person.code)
+      // Slice #16.UX.01: most-recently modified/created first. updatedAt is
+      // always >= createdAt in this schema (it defaults to now() on insert
+      // too), but GREATEST() is used to be explicit and future-proof.
+      .orderBy(sql`greatest(${person.updatedAt}, ${person.createdAt}) desc`)
       .limit(opts.limit)
       .offset(opts.offset),
     db
@@ -400,11 +407,12 @@ export async function searchPersonsAll(opts: {
 
 import {
   lookupPersonRole,
+  lookupDocumentType,
   property,
   propertyPerson,
-  personPaperwork,
+  personDocument,
   personPerson,
-  paperwork,
+  document,
 } from "@/db/schema";
 
 export type PersonPropertyItem = {
@@ -461,71 +469,75 @@ export async function dissociatePropertyFromPerson(personId: string, propertyId:
 }
 
 // ---------------------------------------------------------------------------
-// Person <-> Paperwork
+// Person <-> Document
 // ---------------------------------------------------------------------------
 
-export type PersonPaperworkItem = {
-  id:           string;
-  code:         string;
-  type:         string;
-  title:        string | null;
-  roleName:     string | null;
-  associatedAt: Date;
+export type PersonDocumentItem = {
+  id:             string;
+  code:           string;
+  documentTypeId: string;
+  typeName:       string | null;
+  title:          string | null;
+  roleName:       string | null;
+  associatedAt:   Date;
 };
 
-export async function listPersonPaperwork(personId: string): Promise<PersonPaperworkItem[]> {
+export async function listPersonDocuments(personId: string): Promise<PersonDocumentItem[]> {
   const rows = await db
     .select({
-      id:           paperwork.id,
-      code:         paperwork.code,
-      type:         paperwork.type,
-      title:        paperwork.title,
-      roleName:     lookupPersonRole.name,
-      associatedAt: personPaperwork.createdAt,
+      id:             document.id,
+      code:           document.code,
+      documentTypeId: document.documentTypeId,
+      typeName:       lookupDocumentType.name,
+      title:          document.title,
+      roleName:       lookupPersonRole.name,
+      associatedAt:   personDocument.createdAt,
     })
-    .from(personPaperwork)
-    .innerJoin(paperwork, and(eq(personPaperwork.paperworkId, paperwork.id), isNull(paperwork.deletedAt)))
-    .leftJoin(lookupPersonRole, eq(personPaperwork.personRoleId, lookupPersonRole.id))
-    .where(eq(personPaperwork.personId, personId))
-    .orderBy(paperwork.code);
+    .from(personDocument)
+    .innerJoin(document, and(eq(personDocument.documentId, document.id), isNull(document.deletedAt)))
+    .leftJoin(lookupDocumentType, eq(document.documentTypeId, lookupDocumentType.id))
+    .leftJoin(lookupPersonRole, eq(personDocument.personRoleId, lookupPersonRole.id))
+    .where(eq(personDocument.personId, personId))
+    .orderBy(document.code);
 
-  return rows as PersonPaperworkItem[];
+  return rows as PersonDocumentItem[];
 }
 
 /**
- * The person's linked ID card Document (paperwork.type = CARTE_IDENTITATE),
- * if one exists. Used to render the read-only "ID link" row on the Details
- * tab. A person can in principle have more than one such Document linked;
- * this returns the most recently associated one.
+ * The person's linked ID card Document (lookup_document_type.key =
+ * CARTE_IDENTITATE), if one exists. Used to render the read-only "ID link"
+ * row on the Details tab. A person can in principle have more than one such
+ * Document linked; this returns the most recently associated one.
  */
 export async function getPersonIdCardLink(
   personId: string,
 ): Promise<{ id: string; code: string } | null> {
   const rows = await db
-    .select({ id: paperwork.id, code: paperwork.code })
-    .from(personPaperwork)
-    .innerJoin(paperwork, and(eq(personPaperwork.paperworkId, paperwork.id), isNull(paperwork.deletedAt)))
-    .where(and(eq(personPaperwork.personId, personId), eq(paperwork.type, "CARTE_IDENTITATE")))
-    .orderBy(desc(personPaperwork.createdAt))
+    .select({ id: document.id, code: document.code })
+    .from(personDocument)
+    .innerJoin(document, and(eq(personDocument.documentId, document.id), isNull(document.deletedAt)))
+    .innerJoin(lookupDocumentType, eq(document.documentTypeId, lookupDocumentType.id))
+    .where(and(eq(personDocument.personId, personId), eq(lookupDocumentType.key, "CARTE_IDENTITATE")))
+    .orderBy(desc(personDocument.createdAt))
     .limit(1);
 
   return rows[0] ?? null;
 }
 
-export async function associatePaperworkToPerson(
-  personId:     string,
-  paperworkIds: string[],
+export async function associateDocumentsToPerson(
+  personId:    string,
+  documentIds: string[],
   personRoleId: string | null = null,
 ): Promise<void> {
-  await db.insert(personPaperwork)
-    .values(paperworkIds.map((pid) => ({ personId, paperworkId: pid, personRoleId })))
+  await db.insert(personDocument)
+    .values(documentIds.map((did) => ({ personId, documentId: did, personRoleId })))
     .onConflictDoNothing();
 }
 
-export async function dissociatePaperworkFromPerson(personId: string, paperworkId: string): Promise<boolean> {
-  const result = await db.delete(personPaperwork)
-    .where(and(eq(personPaperwork.personId, personId), eq(personPaperwork.paperworkId, paperworkId)))
-    .returning({ id: personPaperwork.id });
+export async function dissociateDocumentFromPerson(personId: string, documentId: string): Promise<boolean> {
+  const result = await db.delete(personDocument)
+    .where(and(eq(personDocument.personId, personId), eq(personDocument.documentId, documentId)))
+    .returning({ id: personDocument.id });
   return result.length > 0;
 }
 

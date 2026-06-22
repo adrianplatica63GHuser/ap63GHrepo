@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { RecencyBadge } from "@/components/recency-badge";
 
 const PAGE_SIZE = 15;
 
@@ -20,6 +21,8 @@ type PropertyListItem = {
   surfaceAreaMp:   string | null;
   locality:        string | null;
   county:          string | null;
+  createdAt:       string;
+  updatedAt:       string;
 };
 
 type ListResponse = {
@@ -288,13 +291,16 @@ export function PropertyListView() {
                 className="whitespace-nowrap hover:bg-cta-pale dark:hover:bg-zinc-800/50 cursor-pointer"
               >
                 <td className="px-4 py-2" onClick={(e) => e.stopPropagation()} onDoubleClick={(e) => e.stopPropagation()}>
-                  <input
-                    type="checkbox"
-                    checked={selectedIds.has(item.id)}
-                    onChange={() => toggleOne(item.id)}
-                    aria-label={item.nickname ?? item.code}
-                    className="h-4 w-4 rounded border-wire accent-cta"
-                  />
+                  <span className="inline-flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(item.id)}
+                      onChange={() => toggleOne(item.id)}
+                      aria-label={item.nickname ?? item.code}
+                      className="h-4 w-4 rounded border-wire accent-cta"
+                    />
+                    <RecencyBadge createdAt={item.createdAt} updatedAt={item.updatedAt} />
+                  </span>
                 </td>
                 <td className="px-4 py-2 font-mono text-xs text-fade">
                   {item.code}

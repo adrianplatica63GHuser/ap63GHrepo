@@ -34,6 +34,8 @@ export type PropertyListItem = {
   surfaceAreaMp:    string | null;
   locality:         string | null;
   county:           string | null;
+  createdAt:        Date;
+  updatedAt:        Date;
 };
 
 export type PropertyFull = {
@@ -81,6 +83,8 @@ export async function listProperties(opts: PropertyListQuery): Promise<{
         surfaceAreaMp:   property.surfaceAreaMp,
         locality:        propertyAddress.locality,
         county:          propertyAddress.county,
+        createdAt:       property.createdAt,
+        updatedAt:       property.updatedAt,
       })
       .from(property)
       .leftJoin(
@@ -88,7 +92,8 @@ export async function listProperties(opts: PropertyListQuery): Promise<{
         eq(propertyAddress.propertyId, property.id),
       )
       .where(where)
-      .orderBy(property.code)
+      // Slice #16.UX.01: most-recently modified/created first.
+      .orderBy(sql`greatest(${property.updatedAt}, ${property.createdAt}) desc`)
       .limit(opts.limit)
       .offset(opts.offset),
 
@@ -403,46 +408,49 @@ export async function softDeleteProperty(id: string): Promise<boolean> {
 }
 
 // ---------------------------------------------------------------------------
-// Property <-> Paperwork  (Slice #5.2)
+// Property <-> Document  (Slice #5.2)
 // ---------------------------------------------------------------------------
 
-import { paperwork, propertyPaperwork, propertyProperty } from "@/db/schema";
+import { document, lookupDocumentType, propertyDocument, propertyProperty } from "@/db/schema";
 
-export type PropertyPaperworkItem = {
-  id:           string;
-  code:         string;
-  type:         string;
-  title:        string | null;
-  associatedAt: Date;
+export type PropertyDocumentItem = {
+  id:             string;
+  code:           string;
+  documentTypeId: string;
+  typeName:       string | null;
+  title:          string | null;
+  associatedAt:   Date;
 };
 
-export async function listPropertyPaperwork(propertyId: string): Promise<PropertyPaperworkItem[]> {
+export async function listPropertyDocuments(propertyId: string): Promise<PropertyDocumentItem[]> {
   const rows = await db
     .select({
-      id:           paperwork.id,
-      code:         paperwork.code,
-      type:         paperwork.type,
-      title:        paperwork.title,
-      associatedAt: propertyPaperwork.createdAt,
+      id:             document.id,
+      code:           document.code,
+      documentTypeId: document.documentTypeId,
+      typeName:       lookupDocumentType.name,
+      title:          document.title,
+      associatedAt:   propertyDocument.createdAt,
     })
-    .from(propertyPaperwork)
-    .innerJoin(paperwork, and(eq(propertyPaperwork.paperworkId, paperwork.id), isNull(paperwork.deletedAt)))
-    .where(eq(propertyPaperwork.propertyId, propertyId))
-    .orderBy(paperwork.code);
+    .from(propertyDocument)
+    .innerJoin(document, and(eq(propertyDocument.documentId, document.id), isNull(document.deletedAt)))
+    .leftJoin(lookupDocumentType, eq(document.documentTypeId, lookupDocumentType.id))
+    .where(eq(propertyDocument.propertyId, propertyId))
+    .orderBy(document.code);
 
-  return rows as PropertyPaperworkItem[];
+  return rows as PropertyDocumentItem[];
 }
 
-export async function associatePaperworkToProperty(propertyId: string, paperworkIds: string[]): Promise<void> {
-  await db.insert(propertyPaperwork)
-    .values(paperworkIds.map((pid) => ({ propertyId, paperworkId: pid })))
+export async function associateDocumentsToProperty(propertyId: string, documentIds: string[]): Promise<void> {
+  await db.insert(propertyDocument)
+    .values(documentIds.map((did) => ({ propertyId, documentId: did })))
     .onConflictDoNothing();
 }
 
-export async function dissociatePaperworkFromProperty(propertyId: string, paperworkId: string): Promise<boolean> {
-  const result = await db.delete(propertyPaperwork)
-    .where(and(eq(propertyPaperwork.propertyId, propertyId), eq(propertyPaperwork.paperworkId, paperworkId)))
-    .returning({ id: propertyPaperwork.id });
+export async function dissociateDocumentFromProperty(propertyId: string, documentId: string): Promise<boolean> {
+  const result = await db.delete(propertyDocument)
+    .where(and(eq(propertyDocument.propertyId, propertyId), eq(propertyDocument.documentId, documentId)))
+    .returning({ id: propertyDocument.id });
   return result.length > 0;
 }
 

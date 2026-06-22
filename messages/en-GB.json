@@ -6,7 +6,7 @@
     "sections": {
       "people": "People",
       "property": "Property",
-      "paperwork": "Documents",
+      "document": "Documents",
       "administration": "Administration"
     },
     "buttons": {
@@ -17,12 +17,12 @@
       "building": "Building",
       "propertyType3": "Type 3",
       "propertyType4": "Type 4",
-      "paperwork1": "Contract",
-      "paperwork2": "Certificate",
-      "paperwork3": "Authorization",
-      "paperwork4": "Deed",
-      "paperwork5": "Extract",
-      "paperwork6": "Report",
+      "document1": "Contract",
+      "document2": "Certificate",
+      "document3": "Authorization",
+      "document4": "Deed",
+      "document5": "Extract",
+      "document6": "Report",
       "users": "Users & Access",
       "referenceData": "Reference Data",
       "importExport": "Import / Export",
@@ -124,7 +124,7 @@
       "details": "Details",
       "references": "References",
       "persons": "Persons",
-      "paperwork": "Documents",
+      "document": "Documents",
       "comingSoon": "Coming soon — this section will be available in a future update."
     },
     "persons": {
@@ -160,7 +160,7 @@
       "cancel": "Cancel",
       "noSelection": "Select at least one person"
     },
-    "paperwork": {
+    "document": {
       "empty": "No documents associated with this property",
       "colCode": "Code",
       "colType": "Type",
@@ -172,7 +172,7 @@
       "loading": "Loading…",
       "error": "Failed to load documents"
     },
-    "associatePaperwork": {
+    "associateDocument": {
       "title": "Associate Document",
       "labelSearch": "Search",
       "searchPlaceholder": "Code or title…",
@@ -294,7 +294,7 @@
       "cancel": "Cancel",
       "noSelection": "Select at least one property"
     },
-    "paperwork": {
+    "document": {
       "empty": "No documents associated",
       "colCode": "Code",
       "colType": "Type",
@@ -307,7 +307,7 @@
       "loading": "Loading…",
       "error": "Failed to load documents"
     },
-    "associatePaperwork": {
+    "associateDocument": {
       "title": "Associate Document",
       "labelSearch": "Search",
       "labelRole": "Role",
@@ -361,6 +361,9 @@
       "previous": "Previous",
       "next": "Next",
       "pageOf": "Page {page} of {total}"
+    },
+    "recency": {
+      "label": "New!"
     },
     "unsavedChanges": {
       "title": "Unsaved changes",
@@ -464,7 +467,7 @@
       "details": "Details",
       "references": "References",
       "properties": "Properties",
-      "paperwork": "Documents",
+      "document": "Documents",
       "comingSoon": "Coming soon — this section will be available in a future update."
     }
   },
@@ -556,7 +559,7 @@
       "details": "Details",
       "references": "References",
       "properties": "Properties",
-      "paperwork": "Documents",
+      "document": "Documents",
       "comingSoon": "Coming soon — this section will be available in a future update."
     }
   },
@@ -564,7 +567,7 @@
     "sections": {
       "people": "People",
       "property": "Property",
-      "paperwork": "Documents",
+      "document": "Documents",
       "administration": "Administration"
     },
     "items": {
@@ -609,7 +612,7 @@
     "title": "GA40",
     "subtitle": "People · Documents · Properties"
   },
-  "paperwork": {
+  "document": {
     "listTitle": "Documents",
     "createTitle": "New Document",
     "searchPlaceholder": "search by code, title, or document no.",
@@ -1003,19 +1006,13 @@
         "extractError": "Could not read the ID card. You can still fill the fields manually.",
         "extractErrorTitle": "Couldn't read the ID card",
         "extractErrorDismiss": "OK",
-        "error": {
-          "insufficient_credits": "The Anthropic API credit balance is too low to read this card. Add credits or check your plan at console.anthropic.com, then try again — you can still fill the fields in manually for now.",
-          "invalid_api_key": "The Anthropic API key on the server was rejected. Check ANTHROPIC_API_KEY in .env, then try again — you can still fill the fields in manually for now.",
-          "rate_limited": "The vision service is rate-limited right now. Wait a moment and try again, or fill the fields in manually.",
-          "overloaded": "The vision service is temporarily overloaded. Try again shortly, or fill the fields in manually."
-        },
+        "error": "Import failed",
         "reviewTitle": "Review extracted fields",
         "lowConfidenceNote": "Fields marked ⚠ were uncertain — please double-check them.",
         "unmappedTitle": "Found on the card but not auto-filled",
         "unmappedHint": "These didn't map cleanly to an existing field. Add them to Notes or another field manually if relevant.",
         "saveButton": "Create Person",
         "saving": "Creating…",
-        "error": "Import failed",
         "success": "Person created."
       }
     }
