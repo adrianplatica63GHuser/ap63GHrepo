@@ -118,3 +118,20 @@ export const listQuerySchema = z.object({
 });
 
 export type ListQuery = z.infer<typeof listQuerySchema>;
+
+// ---------------------------------------------------------------------------
+// Combined list query — Natural + Judicial (Slice #15.09: unified /persons
+// page). `types` mirrors the Documents `documentTypeIds` semantics:
+//   undefined → no filter param in the URL → show both types
+//   []        → filter param present but empty → show nothing
+//   [...]     → filter to just the given types
+// ---------------------------------------------------------------------------
+
+export const allPersonsListQuerySchema = z.object({
+  q: z.string().optional(),
+  types: z.array(z.enum(["NATURAL", "JUDICIAL"])).optional(),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
+});
+
+export type AllPersonsListQuery = z.infer<typeof allPersonsListQuerySchema>;

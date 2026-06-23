@@ -563,7 +563,6 @@
       "judicialPerson": "Persoană Juridică",
       "landList": "Teren — Listă",
       "landMap": "Teren — Hartă",
-      "building": "Construcție",
       "propertyType3": "Tip 3",
       "actAdjudecare": "Act de Adjudecare",
       "actCadastru": "Act Cadastru",
@@ -599,6 +598,27 @@
   "welcome": {
     "title": "GA40",
     "subtitle": "Persoane · Acte · Proprietăți"
+  },
+  "person": {
+    "listTitle": "Persoane",
+    "searchPlaceholder": "SAU caută după nume, cod, email, telefon, poreclă sau CI",
+    "open": "Deschide",
+    "loading": "Se încarcă…",
+    "error": "Eroare la încărcare",
+    "empty": "Nu există persoane",
+    "counts": "Se afișează {shown} din {total}",
+    "typeFilterLabel": "Tip persoană:",
+    "allTypes": "Toate tipurile",
+    "noTypeSelected": "Selectați cel puțin un tip de persoană",
+    "typeNatural": "Persoană Fizică",
+    "typeJudicial": "Persoană Juridică",
+    "addNewNatural": "Adaugă persoană fizică",
+    "addNewJudicial": "Adaugă persoană juridică",
+    "table": {
+      "code": "Cod",
+      "name": "Nume",
+      "type": "Tip"
+    }
   },
   "document": {
     "listTitle": "Acte",

@@ -223,4 +223,6 @@ export function AssociateDocumentView({ personId, personName, backBase }: Props)
           <span className="text-xs text-fade dark:text-zinc-500">{t("noSelection")}</span>
         )}
       </div>
-    <
+    </div>
+  );
+}

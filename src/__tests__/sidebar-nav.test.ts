@@ -6,20 +6,21 @@ import {
 
 // Minimal nav structure that mirrors the real NAV_SECTIONS shape — no
 // lucide-react icons required here, keeping the test dependency-free.
+//
+// "people" and "document" are flat-link sections (Slices #15.08 / #15.09):
+// they have no expandable items, so getActiveHref/getActiveSectionKey never
+// resolve them — that active-state is computed separately in sidebar-nav.tsx
+// via isFlatSectionActive, which isn't covered by these pure helpers.
 const MOCK_SECTIONS = [
   {
     key: "people",
-    items: [
-      { key: "naturalPerson", href: "/natural-persons" },
-      { key: "judicialPerson" },
-    ],
+    items: [],
   },
   {
     key: "property",
     items: [
       { key: "landList", href: "/properties" },
       { key: "landMap", href: "/properties/map" },
-      { key: "building" },
     ],
   },
   {
@@ -85,10 +86,8 @@ describe("getActiveHref", () => {
     );
   });
 
-  it("returns /natural-persons for a detail page under /natural-persons/", () => {
-    expect(getActiveHref("/natural-persons/abc", MOCK_SECTIONS)).toBe(
-      "/natural-persons",
-    );
+  it("returns null for /natural-persons (flat-link 'people' section has no items)", () => {
+    expect(getActiveHref("/natural-persons/abc", MOCK_SECTIONS)).toBeNull();
   });
 
   it("returns /admin/value-lists for the reference-data page", () => {
@@ -107,10 +106,8 @@ describe("getActiveHref", () => {
 // ---------------------------------------------------------------------------
 
 describe("getActiveSectionKey", () => {
-  it("identifies the people section for /natural-persons", () => {
-    expect(getActiveSectionKey("/natural-persons", MOCK_SECTIONS)).toBe(
-      "people",
-    );
+  it("returns null for /natural-persons (flat-link 'people' section has no items)", () => {
+    expect(getActiveSectionKey("/natural-persons", MOCK_SECTIONS)).toBeNull();
   });
 
   it("identifies the property section for /properties/map", () => {

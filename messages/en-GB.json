@@ -553,8 +553,8 @@
   },
   "nav": {
     "sections": {
-      "people": "People",
-      "property": "Property",
+      "people": "Persons",
+      "property": "Properties",
       "document": "Documents",
       "administration": "Administration"
     },
@@ -563,7 +563,6 @@
       "judicialPerson": "Judicial Person",
       "landList": "Land — List",
       "landMap": "Land — Map",
-      "building": "Building",
       "propertyType3": "Type 3",
       "actAdjudecare": "Adjudication Act",
       "actCadastru": "Cadastral Act",
@@ -599,6 +598,27 @@
   "welcome": {
     "title": "GA40",
     "subtitle": "People · Documents · Properties"
+  },
+  "person": {
+    "listTitle": "Persons",
+    "searchPlaceholder": "OR search by name, code, email, phone, nickname, or ID",
+    "open": "Open",
+    "loading": "Loading…",
+    "error": "Failed to load",
+    "empty": "No persons found",
+    "counts": "Showing {shown} of {total}",
+    "typeFilterLabel": "Person type:",
+    "allTypes": "All types",
+    "noTypeSelected": "Please select at least one person type",
+    "typeNatural": "Natural Person",
+    "typeJudicial": "Judicial Person",
+    "addNewNatural": "Add new Natural Person",
+    "addNewJudicial": "Add new Judicial Person",
+    "table": {
+      "code": "Code",
+      "name": "Name",
+      "type": "Type"
+    }
   },
   "document": {
     "listTitle": "Documents",

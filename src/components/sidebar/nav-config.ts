@@ -1,12 +1,9 @@
 import type { LucideIcon } from "lucide-react";
 import {
   Users,
-  User,
-  Building2,
   Landmark,
   List,
   Map,
-  Building,
   FileText,
   LayoutDashboard,
   UserCog,
@@ -32,24 +29,30 @@ export type NavSection = {
   // accordion into a dropdown on the Documents list page itself, so the
   // sidebar entry is now a single plain link like any other page link.
   href?: string;
+  // When true, the section's sub-items are always shown (no accordion
+  // toggle, no chevron) — used by "property" (Slice #15.09): with only two
+  // real sub-items (List / Map) left after removing the disabled "Building"
+  // placeholder, there's no value in hiding them behind a click.
+  alwaysOpen?: boolean;
 };
 
 export const NAV_SECTIONS: NavSection[] = [
   {
+    // Plain direct link (Slice #15.09) — mirrors "document" (Slice #15.08):
+    // the Natural/Judicial split now lives in the "Person type:" dropdown
+    // on the unified /persons list page itself, not in the sidebar.
     key: "people",
     icon: Users,
-    items: [
-      { key: "naturalPerson", href: "/natural-persons", icon: User },
-      { key: "judicialPerson", href: "/judicial-persons", icon: Building2 },
-    ],
+    href: "/persons",
+    items: [],
   },
   {
     key: "property",
     icon: Landmark,
+    alwaysOpen: true,
     items: [
       { key: "landList", href: "/properties", icon: List },
       { key: "landMap", href: "/properties/map", icon: Map },
-      { key: "building", icon: Building },
     ],
   },
   {

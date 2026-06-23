@@ -13,10 +13,17 @@
  * untouched.
  */
 
-import { and, count, desc, eq, ilike, isNull, or, sql } from "drizzle-orm";
+import { and, count, desc, eq, ilike, inArray, isNull, or, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { address, naturalPerson, person, principalObject } from "@/db/schema";
+import {
+  address,
+  judicialPerson,
+  naturalPerson,
+  person,
+  principalObject,
+} from "@/db/schema";
 import type {
+  AllPersonsListQuery,
   ListQuery,
   NaturalPersonCreate,
   NaturalPersonUpdate,
@@ -99,6 +106,87 @@ export async function listPersons(opts: ListQuery): Promise<{
       .select({ total: count() })
       .from(person)
       .leftJoin(naturalPerson, eq(naturalPerson.personId, person.id))
+      .where(where),
+  ]);
+
+  return { items, total: totals[0]?.total ?? 0 };
+}
+
+// ---------------------------------------------------------------------------
+// List — combined Natural + Judicial (Slice #15.09: unified /persons page).
+//
+// `person` is already the shared base table across both kinds (type, code,
+// displayName, createdAt/updatedAt all live there), so this is a single
+// query against `person` with both satellite tables left-joined — not a
+// from-scratch UNION. Each row matches at most one of naturalPerson /
+// judicialPerson depending on its type, so the joins never duplicate rows.
+// ---------------------------------------------------------------------------
+
+export type AllPersonListItem = {
+  id: string;
+  code: string;
+  type: "NATURAL" | "JUDICIAL";
+  displayName: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export async function listAllPersons(opts: AllPersonsListQuery): Promise<{
+  items: AllPersonListItem[];
+  total: number;
+}> {
+  // Mirrors listDocument's empty-array guard: a present-but-empty `types`
+  // filter means "nothing selected" — short-circuit rather than emit an
+  // `IN ()` clause.
+  if (opts.types && opts.types.length === 0) {
+    return { items: [], total: 0 };
+  }
+
+  const q = opts.q?.trim();
+  const searchPattern = q ? `%${q}%` : null;
+
+  const where = and(
+    isNull(person.deletedAt),
+    opts.types ? inArray(person.type, opts.types) : undefined,
+    searchPattern
+      ? or(
+          ilike(person.displayName, searchPattern),
+          ilike(person.code, searchPattern),
+          ilike(naturalPerson.personalEmail1, searchPattern),
+          ilike(naturalPerson.personalEmail2, searchPattern),
+          ilike(naturalPerson.workEmail, searchPattern),
+          ilike(naturalPerson.personalPhone1, searchPattern),
+          ilike(naturalPerson.personalPhone2, searchPattern),
+          ilike(naturalPerson.workPhone, searchPattern),
+          ilike(judicialPerson.nickname, searchPattern),
+          ilike(judicialPerson.cuiNumber, searchPattern),
+        )
+      : undefined,
+  );
+
+  const [items, totals] = await Promise.all([
+    db
+      .select({
+        id: person.id,
+        code: person.code,
+        type: person.type,
+        displayName: person.displayName,
+        createdAt: person.createdAt,
+        updatedAt: person.updatedAt,
+      })
+      .from(person)
+      .leftJoin(naturalPerson, eq(naturalPerson.personId, person.id))
+      .leftJoin(judicialPerson, eq(judicialPerson.personId, person.id))
+      .where(where)
+      // Slice #16.UX.01 recency pattern, applied here too.
+      .orderBy(sql`greatest(${person.updatedAt}, ${person.createdAt}) desc`)
+      .limit(opts.limit)
+      .offset(opts.offset),
+    db
+      .select({ total: count() })
+      .from(person)
+      .leftJoin(naturalPerson, eq(naturalPerson.personId, person.id))
+      .leftJoin(judicialPerson, eq(judicialPerson.personId, person.id))
       .where(where),
   ]);
 

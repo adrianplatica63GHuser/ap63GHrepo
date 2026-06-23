@@ -97,8 +97,71 @@ Relationships: People ↔ Documents, People ↔ Properties, Documents ↔ Proper
 - Slice #16.UX.01 — Person/Property/Document lists: sort most-recent-first + "New!"/"Nou!" recency badge next to the row checkbox. ✅ Complete. Full detail below.
 - Slice #15.06 — Reference Data: keep alternate Romanian wordings as distinct document types + fix stale Ciprian sync script. ✅ Complete. Full detail below.
 - Slice #15.07 — Reference Data: replace hardcoded `judicial_type` enum with admin-managed `lookup_judicial_person_type` table. ✅ Complete. Full detail below.
+- Slice #15.09 — Sidebar nav cleanup: People/Property accordions → flat link / always-open sub-items; unified `/persons` list page combining Natural + Judicial. ✅ Complete. Full detail below.
 
 Each slice typically lands as multiple small commits, each individually green.
+
+### Slice #15.09 — Sidebar nav cleanup + unified Persons list page (detail)
+
+Pure frontend + one new read-only API route + query-layer addition — no DB schema or migration changes.
+
+**Why**: Adrian wanted the sidebar trimmed down on two fronts — "People" no longer needs its Natural/Judicial accordion now that the same split can live as a filter on a single combined list page (mirroring how "Documents" already dropped its 19-item accordion in Slice #15.08 in favour of an in-page type-filter dropdown), and "Property" no longer needs an accordion at all since removing the disabled "Building" placeholder left only two real sub-items (List / Map) — not worth hiding behind a click. Also folded in two small standalone renames: "People" → "Persons" and "Property" → "Properties" in the sidebar labels.
+
+**Sidebar config (`src/components/sidebar/nav-config.ts`)**
+- `property`: dropped its accordion behaviour via a new `alwaysOpen?: boolean` flag on `NavSection` — sub-items (`landList`, `landMap`) always render, no chevron, no toggle. The disabled "Building" `NavItem` was deleted outright (it had no `href` and was permanently "coming soon").
+- `people`: converted to a flat-link section — `items: []`, `href: "/persons"` — exactly the same shape `document` adopted in Slice #15.08. The old `naturalPerson`/`judicialPerson` `NavItem`s (and their now-unused `User`/`Building2` icon imports) were removed entirely; that split now lives in the "Person type:" dropdown on the `/persons` page itself.
+
+**Sidebar component (`src/components/sidebar/sidebar-nav.tsx`)** — generalized rather than special-cased a second time
+- The Slice #15.08 logic that hardcoded "document is the only flat-link section" (`isDocumentActive` boolean, a `section.key === "document"` ternary in the render loop) was refactored into a reusable, data-driven pattern so a second flat-link section didn't require parallel hardcoding:
+  - `FLAT_SECTION_ACTIVE_PREFIXES: Record<string, string[]>` — `{ document: ["/documents"], people: ["/persons", "/natural-persons", "/judicial-persons"] }`. The `people` entry covers the legacy per-type detail routes too, since rows in the new unified list still link out to `/natural-persons/[id]` / `/judicial-persons/[id]`.
+  - `isFlatSectionActive(key)` — checks the current pathname against that section's prefixes (exact match or `startsWith(prefix + "/")`).
+  - In the render loop, `isFlatLinkSection` is now computed structurally per section (`filteredSection.items.length === 0 && !!filteredSection.href`) rather than checked by key name, so any future flat-link section needs only a `nav-config.ts` entry + a `FLAT_SECTION_ACTIVE_PREFIXES` row — no further `sidebar-nav.tsx` changes.
+  - `NavSectionRow` (the accordion renderer) gained `alwaysOpen` handling: when set, the chevron is omitted, the header button is non-interactive (`cursor-default`, `disabled` in expanded mode — collapsed mode still expands the sidebar on click, same as any other section), and sub-items always render regardless of `openSection` state.
+  - `itemLabels` map: removed the now-dead `naturalPerson` / `judicialPerson` entries.
+
+**Unified Persons query (`src/lib/persons/queries.ts`, `validation.ts`)**
+- `person` is the shared base table (`id`, `code`, `type: "NATURAL"|"JUDICIAL"`, `displayName`, `createdAt`, `updatedAt`, …); `naturalPerson`/`judicialPerson` are satellite tables (`personId` FK, cascade delete). The new `listAllPersons(opts)` is a single query against `person` with both satellite tables **left-joined** (not a UNION) — each row matches at most one satellite table depending on its `type`, so the joins never duplicate rows.
+- Search (`q`) matches `person.displayName`/`code` plus every satellite contact field via `ilike` (`naturalPerson.personalEmail1/2`, `workEmail`, `personalPhone1/2`, `workPhone`; `judicialPerson.nickname`, `cuiNumber`).
+- `types` filter mirrors the Documents `documentTypeIds` semantics exactly: `undefined` → no `IN` clause (show both); `[]` → short-circuits to `{ items: [], total: 0 }` before hitting the DB (avoids an `IN ()` SQL error); `[...]` → `inArray(person.type, opts.types)`.
+- Ordering follows the Slice #16.UX.01 recency convention: `ORDER BY greatest(person.updated_at, person.created_at) DESC`.
+- New `allPersonsListQuerySchema`/`AllPersonsListQuery` in `validation.ts` (`q`, `types: z.enum(["NATURAL","JUDICIAL"]).array().optional()`, `limit`, `offset`) — kept separate from the existing Natural-only `listQuerySchema`/`listPersons()`, which are both untouched and still back the legacy `/natural-persons` list page.
+
+**New API route (`src/app/api/persons/route.ts`)**
+- `GET /api/persons` — read-only; parses `?q=`, `?personTypes=NATURAL,JUDICIAL` (comma-separated, same absent/empty/populated semantics as the query layer), `?limit=`, `?offset=`. Returns `{ items, total, limit, offset }`. Creation still goes through the existing per-type endpoints (`/api/people`, `/api/judicial-persons`) — there is no unified create flow.
+
+**New page + list-view (`src/app/persons/page.tsx`, `src/app/persons/list-view.tsx`)**
+- `page.tsx` (Server Component) parses `?personTypes=` from `searchParams` into `initialPersonTypes: string[] | undefined` using the same three-way semantics as Documents, and renders `<PersonListView>` inside the standard list-page shell (title + `PersonListView`).
+- `PersonListView` mirrors `src/app/documents/list-view.tsx`'s structure closely:
+  - `PersonTypeFilterDropdown` — a select-all + two-checkbox dropdown (All / Natural Person / Judicial Person, in that order, per Adrian's explicit spec), click-outside-to-close, pushes `?personTypes=` via `router.push` on every toggle (`buildPersonsUrl` encodes the same undefined/empty/populated URL semantics used server-side).
+  - Debounced search input (250 ms) with the i18n placeholder already prefixed "OR "/"SAU " per the earlier strings-only change in this same slice.
+  - `noTypesSelected` gate: when `?personTypes=` is present-but-empty, the query is disabled (`enabled: false`) and a "select at least one person type" message renders instead of the table — matching the Documents precedent.
+  - Header + per-row checkboxes for bulk selection, with `RecencyBadge` rendered next to each row's checkbox (Slice #16.UX.01 component, reused as-is — its `createdAt`/`updatedAt` prop shape already matched the new list's data with no changes needed).
+  - Bulk delete reuses the existing **`POST /api/people/batch-delete`** endpoint unchanged — confirmed (by reading the route in full) that it already operates generically on `person.id`/`person.deletedAt`, with an explicit code comment stating it covers both Natural and Judicial, so no new delete endpoint was needed. On success, invalidates the `persons`, `people`, and `judicial-persons` query-cache keys together, so the legacy per-type lists don't show stale rows if visited next.
+  - `detailHref(item)` routes each row's "Open" link (and row double-click) to `/judicial-persons/{id}` or `/natural-persons/{id}` depending on `item.type` — the core requirement that lets one table serve both record kinds without a unified detail page.
+  - **Toolbar "Add new" treatment**: two separate buttons — "Add new Natural Person" → `/natural-persons/new` and "Add new Judicial Person" → `/judicial-persons/new` — rather than a single dropdown/split-button. This was a judgment call made without a separate confirmation round; revisit with Adrian if a single combined "Add new" control is preferred instead.
+
+**i18n** — new `person.*` namespace in both `messages/en-GB.json` and `messages/ro-RO.json` (`listTitle`, `searchPlaceholder` — already carrying the "OR "/"SAU " prefix, `open`, `loading`, `error`, `empty`, `counts`, `typeFilterLabel`, `allTypes`, `noTypeSelected`, `typeNatural`, `typeJudicial`, `addNewNatural`, `addNewJudicial`, `table.{code,name,type}`); `nav.sections.people` relabelled "People" → "Persons", `nav.sections.property` relabelled "Property" → "Properties" (both message files).
+
+**Tests (`src/__tests__/sidebar-nav.test.ts`)** — the existing `MOCK_SECTIONS` fixture still modeled `people` as an accordion with Natural/Judicial items and still had `property.items` including the already-removed "Building" entry; both were stale relative to the real `nav-config.ts`. Fixed: `people` → `{ key: "people", items: [] }`; `property.items` → just `landList`/`landMap`. The two tests that previously asserted `getActiveHref`/`getActiveSectionKey` resolved `/natural-persons` to the `people` section now assert `toBeNull()` instead — correct, since those pure helpers only ever resolve sections with actual `items`, and a flat-link section's active state is computed separately in `sidebar-nav.tsx` via `isFlatSectionActive` (not covered by, and not meant to be covered by, these helpers).
+
+**Verification note**: per the standing project gotcha, the sandbox's `tsc --noEmit`/`jest` are not reliable for this codebase (phantom errors / no SWC binary access). Verification here was done by manually cross-referencing every schema column, FK name, and enum value used in the new query/UI code against `src/db/schema/index.ts`, by reading `/api/documents/route.ts` and `/api/people/batch-delete/route.ts` in full as side-by-side precedent/reuse checks, and by a repo-wide grep sweep confirming zero stray references remain to the removed `User`/`Building2` sidebar icons or the deleted "Building" nav item. **Adrian should still run `npm run lint` and `npx jest` on his own machine before committing** — that remains the only reliable check for `react-hooks/set-state-in-effect`-class issues and real test regressions in this codebase.
+
+**Open follow-ups, not yet decided**
+- Whether the now sidebar-orphaned `/natural-persons` and `/judicial-persons` **list** pages (their detail/`new` sub-pages remain in active use, linked from `/persons`) should be removed, redirected to `/persons`, or simply left reachable by direct URL only.
+- Whether the two-button "Add new" toolbar treatment above is acceptable as-is, or should become a single combined control.
+
+**Files touched**
+- `src/components/sidebar/nav-config.ts`
+- `src/components/sidebar/sidebar-nav.tsx`
+- `src/lib/persons/queries.ts`
+- `src/lib/persons/validation.ts`
+- `src/app/api/persons/route.ts` (new)
+- `src/app/persons/page.tsx` (new)
+- `src/app/persons/list-view.tsx` (new)
+- `src/__tests__/sidebar-nav.test.ts`
+- `messages/en-GB.json`
+- `messages/ro-RO.json`
+- `CLAUDE.md`
 
 ### Slice #15.07 — Replace `judicial_type` enum with `lookup_judicial_person_type` (detail)
 

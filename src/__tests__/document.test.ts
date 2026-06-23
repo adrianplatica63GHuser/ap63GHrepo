@@ -13,9 +13,13 @@ import {
 } from "@/lib/documents/validation";
 import { getTypeConfig } from "@/lib/documents/type-config";
 
-// A syntactically valid uuid to stand in for a real lookup_document_type.id
-// in tests that don't care which type it resolves to.
-const SOME_TYPE_ID = "11111111-1111-1111-1111-111111111111";
+// A syntactically valid (RFC 4122 v4-shaped) uuid to stand in for a real
+// lookup_document_type.id in tests that don't care which type it resolves to.
+// Zod v4's z.string().uuid() enforces the version/variant nibbles strictly
+// (version char in [1-8], variant char in [89abAB]) — unlike Zod v3, which
+// accepted any UUID-shaped string. Real Postgres gen_random_uuid() values
+// always satisfy this, so the fixture must too.
+const SOME_TYPE_ID = "11111111-1111-4111-8111-111111111111";
 
 // ---------------------------------------------------------------------------
 // documentCreateSchema
