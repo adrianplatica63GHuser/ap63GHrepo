@@ -128,9 +128,12 @@ export const naturalPerson = pgTable(
     nickname: text("nickname"),
 
     // CNP — Romanian Personal Numeric Code. Optional (foreign nationals
-    // may not have one). UNIQUE when present (partial unique index below).
-    // Once set, cannot be changed — enforced by a trigger added in the
-    // migration (NULL -> value is allowed; value -> anything-different is not).
+    // may not have one). UNIQUE when present, but only among non-soft-deleted
+    // persons — enforced by a trigger (migration_025), not a plain unique
+    // index, since the partial index has no way to see person.deleted_at
+    // (soft-delete lives on the parent `person` row). Once set, cannot be
+    // changed — enforced by a separate trigger (NULL -> value is allowed;
+    // value -> anything-different is not).
     cnp: text("cnp"),
 
     idDocumentType: idDocumentTypeEnum("id_document_type"),
@@ -166,10 +169,13 @@ export const naturalPerson = pgTable(
       "natural_person_has_name",
       sql`${t.firstName} IS NOT NULL OR ${t.lastName} IS NOT NULL`,
     ),
-    // CNP is unique when present (partial unique index).
-    uniqueIndex("natural_person_cnp_unique")
-      .on(t.cnp)
-      .where(sql`${t.cnp} IS NOT NULL`),
+    // NOTE: CNP uniqueness is NOT enforced here as a plain unique index.
+    // A plain partial unique index can't see person.deleted_at (soft-delete
+    // lives on the parent `person` row, not this table), so it would
+    // permanently block reusing a CNP after its person was soft-deleted.
+    // Enforced instead by a BEFORE INSERT OR UPDATE trigger
+    // (natural_person_check_cnp_unique, migration_025) that only counts
+    // collisions against non-soft-deleted persons.
   ],
 );
 
@@ -206,9 +212,11 @@ export const judicialPerson = pgTable(
       .references(() => lookupJudicialPersonType.id, { onDelete: "set null" }),
 
     // CUI — Cod Unic de Inregistrare (Romanian fiscal registration code).
-    // Optional. UNIQUE when present (partial unique index below).
-    // Once set, cannot be changed — enforced by a trigger added in the
-    // migration (NULL -> value is allowed; value -> anything-different is not).
+    // Optional. UNIQUE when present, but only among non-soft-deleted persons
+    // — enforced by a trigger (migration_025), not a plain unique index (see
+    // the matching note on natural_person.cnp above for why). Once set,
+    // cannot be changed — enforced by a separate trigger (NULL -> value is
+    // allowed; value -> anything-different is not).
     cuiNumber: text("cui_number"),
 
     // Trade Register number — "Nr. ORC" (e.g. "J22/123/2020").
@@ -229,10 +237,9 @@ export const judicialPerson = pgTable(
       .default(false),
   },
   (t) => [
-    // CUI is unique when present (partial unique index).
-    uniqueIndex("judicial_person_cui_unique")
-      .on(t.cuiNumber)
-      .where(sql`${t.cuiNumber} IS NOT NULL`),
+    // NOTE: CUI uniqueness is enforced by a trigger
+    // (judicial_person_check_cui_unique, migration_025), not a plain unique
+    // index — see the matching note on natural_person.cnp for why.
   ],
 );
 

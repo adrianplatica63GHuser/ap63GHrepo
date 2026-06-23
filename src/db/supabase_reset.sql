@@ -73,3 +73,5 @@ DROP SEQUENCE IF EXISTS paperwork_code_seq CASCADE;
 DROP FUNCTION IF EXISTS touch_updated_at() CASCADE;
 DROP FUNCTION IF EXISTS natural_person_lock_cnp() CASCADE;
 DROP FUNCTION IF EXISTS judicial_person_lock_cui() CASCADE;
+DROP FUNCTION IF EXISTS natural_person_check_cnp_unique() CASCADE;
+DROP FUNCTION IF EXISTS judicial_person_check_cui_unique() CASCADE;

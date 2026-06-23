@@ -40,15 +40,19 @@ export function dbErrorToResponse(err: unknown): Response | null {
     return Response.json({ error: message }, { status: 400 });
   }
 
-  // Unique violation
+  // Unique violation. CNP/CUI collisions can come either from a plain
+  // index-backed constraint (carries `e.constraint`) or from the
+  // natural_person_check_cnp_unique / judicial_person_check_cui_unique
+  // triggers (migration_025), which RAISE EXCEPTION with ERRCODE 23505 but
+  // no `constraint` property — so also match on the raised message text.
   if (e.code === "23505") {
-    if (e.constraint?.includes("cnp")) {
+    if (e.constraint?.includes("cnp") || message.includes("CNP")) {
       return Response.json(
         { error: "A person with this CNP already exists" },
         { status: 409 },
       );
     }
-    if (e.constraint?.includes("cui")) {
+    if (e.constraint?.includes("cui") || message.includes("CUI")) {
       return Response.json(
         { error: "A judicial person with this CUI already exists" },
         { status: 409 },

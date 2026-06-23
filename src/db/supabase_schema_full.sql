@@ -45,6 +45,47 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- CNP uniqueness, but only among non-soft-deleted persons (migration_025).
+-- A plain partial unique index can't see person.deleted_at (it lives on the
+-- parent `person` row, not natural_person), so it would permanently block
+-- reusing a CNP after its person was soft-deleted. This trigger joins to
+-- `person` and only counts a collision when the existing row's person is
+-- not soft-deleted.
+CREATE OR REPLACE FUNCTION natural_person_check_cnp_unique() RETURNS trigger AS $$
+BEGIN
+  IF NEW.cnp IS NOT NULL AND EXISTS (
+    SELECT 1
+    FROM natural_person np
+    JOIN person p ON p.id = np.person_id
+    WHERE np.cnp = NEW.cnp
+      AND np.person_id IS DISTINCT FROM NEW.person_id
+      AND p.deleted_at IS NULL
+  ) THEN
+    RAISE EXCEPTION 'A person with this CNP already exists'
+      USING ERRCODE = '23505';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- CUI uniqueness, same pattern as CNP above.
+CREATE OR REPLACE FUNCTION judicial_person_check_cui_unique() RETURNS trigger AS $$
+BEGIN
+  IF NEW.cui_number IS NOT NULL AND EXISTS (
+    SELECT 1
+    FROM judicial_person jp
+    JOIN person p ON p.id = jp.person_id
+    WHERE jp.cui_number = NEW.cui_number
+      AND jp.person_id IS DISTINCT FROM NEW.person_id
+      AND p.deleted_at IS NULL
+  ) THEN
+    RAISE EXCEPTION 'A judicial person with this CUI already exists'
+      USING ERRCODE = '23505';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 -- ============================================================
 -- ENUMS
 -- ============================================================
@@ -125,19 +166,23 @@ CREATE TABLE natural_person (
   CONSTRAINT natural_person_has_name
     CHECK (first_name IS NOT NULL OR last_name IS NOT NULL),
   CONSTRAINT natural_person_id_doc_paired
-    CHECK ((id_document_type IS NULL) = (id_document_number IS NULL)),
-  CONSTRAINT natural_person_has_contact
-    CHECK (coalesce(personal_phone_1, personal_phone_2, work_phone,
-                    personal_email_1, personal_email_2, work_email) IS NOT NULL)
+    CHECK ((id_document_type IS NULL) = (id_document_number IS NULL))
 );
+-- NOTE (Slice.17.API.03 / migration_024): natural_person_has_contact
+-- ("at least one phone or email required") was dropped — a Person can be
+-- saved with no contact fields at all.
 
-CREATE UNIQUE INDEX natural_person_cnp_unique
-  ON natural_person (cnp)
-  WHERE cnp IS NOT NULL;
+-- NOTE: CNP uniqueness is enforced by a trigger below
+-- (natural_person_check_cnp_unique, migration_025), not a plain unique
+-- index — see that function's comment for why.
 
 CREATE TRIGGER natural_person_lock_cnp
   BEFORE UPDATE ON natural_person
   FOR EACH ROW EXECUTE FUNCTION natural_person_lock_cnp();
+
+CREATE TRIGGER natural_person_check_cnp_unique
+  BEFORE INSERT OR UPDATE ON natural_person
+  FOR EACH ROW EXECUTE FUNCTION natural_person_check_cnp_unique();
 
 -- judicial_person ────────────────────────────────────────────
 -- Final state: includes contact_person FK columns from migration 018.
@@ -158,13 +203,17 @@ CREATE TABLE judicial_person (
   correspondence_same_as_hq boolean NOT NULL DEFAULT false
 );
 
-CREATE UNIQUE INDEX judicial_person_cui_unique
-  ON judicial_person (cui_number)
-  WHERE cui_number IS NOT NULL;
+-- NOTE: CUI uniqueness is enforced by a trigger below
+-- (judicial_person_check_cui_unique, migration_025), not a plain unique
+-- index — see that function's comment for why.
 
 CREATE TRIGGER judicial_person_lock_cui
   BEFORE UPDATE ON judicial_person
   FOR EACH ROW EXECUTE FUNCTION judicial_person_lock_cui();
+
+CREATE TRIGGER judicial_person_check_cui_unique
+  BEFORE INSERT OR UPDATE ON judicial_person
+  FOR EACH ROW EXECUTE FUNCTION judicial_person_check_cui_unique();
 
 -- address ────────────────────────────────────────────────────
 CREATE TABLE address (
