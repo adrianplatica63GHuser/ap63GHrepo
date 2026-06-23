@@ -166,11 +166,6 @@ export const naturalPerson = pgTable(
       "natural_person_has_name",
       sql`${t.firstName} IS NOT NULL OR ${t.lastName} IS NOT NULL`,
     ),
-    // At least one contact method (any phone or email) must be set.
-    check(
-      "natural_person_has_contact",
-      sql`coalesce(${t.personalPhone1}, ${t.personalPhone2}, ${t.workPhone}, ${t.personalEmail1}, ${t.personalEmail2}, ${t.workEmail}) IS NOT NULL`,
-    ),
     // CNP is unique when present (partial unique index).
     uniqueIndex("natural_person_cnp_unique")
       .on(t.cnp)

@@ -292,7 +292,7 @@ export function PersonClassifyPanel({ file, onBack, onClassified, onClose }: Pro
   // by the unsaved-changes guard's Save action.
   const savePerson = async (values: FormValues): Promise<string | null> => {
     if (!idCardDocumentTypeId) {
-      setSaveError(tp("error"));
+      setSaveError(tp("error.generic"));
       return null;
     }
     setSaving(true);
@@ -307,7 +307,7 @@ export function PersonClassifyPanel({ file, onBack, onClassified, onClose }: Pro
       onClassified();
       return personId;
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : tp("error"));
+      setSaveError(err instanceof Error ? err.message : tp("error.generic"));
       return null;
     } finally {
       setSaving(false);

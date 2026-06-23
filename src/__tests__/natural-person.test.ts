@@ -2,8 +2,9 @@
  * Unit tests for the Natural Person slice's validation and mapping logic.
  *
  * Covers:
- *  - The form-side Zod schema (UI rules: name, contact, ID-doc pairing,
- *    address-country pairing, notes length)
+ *  - The form-side Zod schema (UI rules: name requirement,
+ *    address-country pairing, notes length — contact info and ID-doc
+ *    fields are optional/independent, no pairing enforced)
  *  - Form ↔ API payload mapping (toApiPayload, fromApiPayload)
  *  - The API-side Zod schemas (create / update / list-query)
  *
@@ -33,8 +34,8 @@ import {
 /**
  * A minimally valid FormValues object — passes all refinements:
  *  - has a first name (satisfies name requirement)
- *  - has an email (satisfies contact requirement)
- *  - both ID doc fields empty (paired)
+ *  - has an email (contact info is optional, but harmless to include)
+ *  - both ID doc fields empty
  *  - both address blocks empty (no country needed)
  */
 function minValid(over: Partial<FormValues> = {}): FormValues {
@@ -74,7 +75,7 @@ describe("formSchema — name requirement", () => {
   });
 });
 
-describe("formSchema — ID document pairing", () => {
+describe("formSchema — ID document fields (no pairing required)", () => {
   it("accepts both fields empty", () => {
     expect(formSchema.safeParse(minValid()).success).toBe(true);
   });
@@ -87,23 +88,23 @@ describe("formSchema — ID document pairing", () => {
     expect(formSchema.safeParse(v).success).toBe(true);
   });
 
-  it("rejects type without number", () => {
+  it("accepts type without number", () => {
     expect(
       formSchema.safeParse(minValid({ idDocumentType: "ID_CARD" })).success,
-    ).toBe(false);
+    ).toBe(true);
   });
 
-  it("rejects number without type", () => {
+  it("accepts number without type", () => {
     expect(
       formSchema.safeParse(minValid({ idDocumentNumber: "RX123" })).success,
-    ).toBe(false);
+    ).toBe(true);
   });
 });
 
-describe("formSchema — contact requirement", () => {
-  it("rejects when no phone or email is filled", () => {
+describe("formSchema — contact fields (no longer required)", () => {
+  it("accepts a person with no phone or email at all", () => {
     const v: FormValues = { ...emptyFormValues, firstName: "Adrian" };
-    expect(formSchema.safeParse(v).success).toBe(false);
+    expect(formSchema.safeParse(v).success).toBe(true);
   });
 
   it("accepts with personalPhone1 only", () => {
@@ -374,20 +375,20 @@ describe("naturalPersonCreateSchema (API)", () => {
     expect(result.success).toBe(false);
   });
 
-  it("rejects when no contact is provided", () => {
+  it("accepts when no contact is provided", () => {
     const result = naturalPersonCreateSchema.safeParse({
       firstName: "Adrian",
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 
-  it("rejects unpaired ID document fields", () => {
+  it("accepts unpaired ID document fields", () => {
     const result = naturalPersonCreateSchema.safeParse({
       firstName: "Adrian",
       personalEmail1: "x@y.z",
       idDocumentType: "ID_CARD",
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 });
 

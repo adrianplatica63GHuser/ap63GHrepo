@@ -60,23 +60,7 @@ export const naturalPersonCreateSchema = naturalPersonBase
   .refine((d) => Boolean(d.firstName) || Boolean(d.lastName), {
     message: "At least one of firstName or lastName must be provided",
     path: ["firstName"],
-  })
-  // At least one phone or email must be provided.
-  .refine(
-    (d) =>
-      Boolean(
-        d.personalPhone1 ??
-          d.personalPhone2 ??
-          d.workPhone ??
-          d.personalEmail1 ??
-          d.personalEmail2 ??
-          d.workEmail,
-      ),
-    {
-      message: "At least one phone or email must be provided",
-      path: ["personalPhone1"],
-    },
-  );
+  });
 
 export type NaturalPersonCreate = z.infer<typeof naturalPersonCreateSchema>;
 

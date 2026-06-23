@@ -70,22 +70,6 @@ export const formSchema = z
       path: ["lastName"],
     },
   )
-  // At least one contact
-  .refine(
-    (d) =>
-      [
-        d.personalPhone1,
-        d.personalPhone2,
-        d.workPhone,
-        d.personalEmail1,
-        d.personalEmail2,
-        d.workEmail,
-      ].some((v) => v.trim().length > 0),
-    {
-      message: "At least one phone or email is required",
-      path: ["personalPhone1"],
-    },
-  )
   // Each address block: if any non-Country field is filled, Country must be too
   .refine(
     (d) => addressBlockHasCountryWhenNeeded(d.addresses.HOME),
