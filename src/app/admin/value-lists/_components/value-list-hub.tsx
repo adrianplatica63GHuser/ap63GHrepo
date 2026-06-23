@@ -69,7 +69,6 @@ export function ValueListHub() {
         {/* ── Proprietate ── */}
         <Section label={t("sections.property")}>
           <ListBtn label={t("lists.propertyTypes")}    onClick={() => open("property-types")} />
-          <ListBtn label={t("lists.propertyPersons")}  onClick={() => setShowPropertyPersons(true)} />
           <ListBtn label={t("lists.tarla")}             onClick={() => open("tarla")} />
           <ListBtn label={t("lists.useCategories")}     onClick={() => open("use-categories")} />
         </Section>
@@ -78,15 +77,20 @@ export function ValueListHub() {
         <Section label={t("sections.person")}>
           <ListBtn label={t("lists.personTypes")}  onClick={() => open("person-types")} />
           <ListBtn label={t("lists.judicialPersonTypes")} onClick={() => open("judicial-person-types")} />
-          <ListBtn label={t("lists.personRoles")}  onClick={() => open("person-roles")} />
           <ListBtn label={t("lists.citizenships")} onClick={() => open("citizenships")} />
         </Section>
 
         {/* ── Document ── */}
         <Section label={t("sections.document")}>
           <ListBtn label={t("lists.documentTypes")}   onClick={() => open("document-types")} />
-          <ListBtn label={t("lists.documentPersons")} onClick={() => setShowDocPersons(true)} />
           <ListBtn label={t("lists.institutions")}    onClick={() => open("institutions")} />
+        </Section>
+
+        {/* ── Roles ── */}
+        <Section label={t("sections.roles")}>
+          <ListBtn label={t("lists.personRoles")}     onClick={() => open("person-roles")} />
+          <ListBtn label={t("lists.propertyPersons")} onClick={() => setShowPropertyPersons(true)} />
+          <ListBtn label={t("lists.documentPersons")} onClick={() => setShowDocPersons(true)} />
         </Section>
 
         {/* ── Others ── */}

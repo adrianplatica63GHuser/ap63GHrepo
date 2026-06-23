@@ -861,6 +861,7 @@
       "property": "Property",
       "person": "Person",
       "document": "Document",
+      "roles": "Roles",
       "others": "Others"
     },
     "lists": {

@@ -102,6 +102,7 @@ Relationships: People ↔ Documents, People ↔ Properties, Documents ↔ Proper
 - Slice #15.09.2 — Property sidebar section: accordion → two flat-link buttons (Properties List / Properties Map). ✅ Complete. Full detail below.
 - Slice #15.10 — Property "Add new" form: don't create/guard-trip on an untouched, all-blank create form. ✅ Complete. Full detail below.
 - Slice #15.11 — Reference Data Person panel: rename "Person Types" caption → "Physical Person Types" + move Judicial Person Types button to second position. ✅ Complete. Full detail below.
+- Slice #15.12 — Reference Data: new "Roles" panel (Person Roles, Property Persons, Document Persons) between Document and Others. ✅ Complete. Full detail below.
 
 Each slice typically lands as multiple small commits, each individually green.
 
@@ -257,6 +258,29 @@ Pure i18n string + JSX-order change — no DB, API, schema, or query-layer chang
 No other `valueList.lists.*` keys touched — `judicialPersonTypes` keeps its existing caption ("Judicial Person Types" / "Tipuri de Persoană Juridică") in both files.
 
 **UI (`src/app/admin/value-lists/_components/value-list-hub.tsx`)** — the four `<ListBtn>`s in the Persoană `<Section>` reordered. Old order: Person Types, Person Roles, Citizenships, Judicial Person Types. New order: Person Types, Judicial Person Types, Person Roles, Citizenships. No `ListKey` values, click handlers, or component structure changed — purely a render-order swap of existing JSX lines.
+
+**Files touched**
+- `messages/en-GB.json`
+- `messages/ro-RO.json`
+- `src/app/admin/value-lists/_components/value-list-hub.tsx`
+- `CLAUDE.md`
+
+### Slice #15.12 — Reference Data: new "Roles" panel (detail)
+
+Pure i18n string + JSX-structure change — no DB, API, schema, or query-layer changes.
+
+**Why**: with three separate "person ↔ X" role-management buttons scattered across the Property, Person, and Document sections (Property Persons, Person Roles, Document Persons), Adrian wanted them consolidated into their own dedicated panel — positioned between Document and Others — so all role-related lists live in one place.
+
+**i18n** — `valueList.sections.roles` added to both message files, inserted between `document` and `others`: `"Roles"` (en-GB) / `"Roluri"` (ro-RO). No `lists.*` keys changed — `personRoles`, `propertyPersons`, `documentPersons` keep their existing captions, only their section placement moved.
+
+**UI (`src/app/admin/value-lists/_components/value-list-hub.tsx`)**
+- New `<Section label={t("sections.roles")}>` inserted between the Document section and the Others section.
+- `<ListBtn>` for `lists.personRoles` (opens `"person-roles"` via the generic `ValueListModal`) removed from the Persoană section and re-rendered first in the new Roles section.
+- `<ListBtn>` for `lists.propertyPersons` (opens `PropertyPersonsModal` via `setShowPropertyPersons(true)`) removed from the Proprietate section and re-rendered second in the new Roles section.
+- `<ListBtn>` for `lists.documentPersons` (opens `DocumentPersonsModal` via `setShowDocPersons(true)`) removed from the Document section and re-rendered third in the new Roles section.
+- No `ListKey` values, state hooks, or modal components changed — purely a relocation of three existing `<ListBtn>` lines into a new `<Section>` wrapper, in the order Adrian specified (Person Roles first).
+
+**Resulting section order**: Proprietate (Property Types, Tarla, Use Categories) → Persoană (Person Types, Judicial Person Types, Citizenships) → Document (Document Types, Institutions) → **Roles** (Person Roles, Property Persons, Document Persons) → Others.
 
 **Files touched**
 - `messages/en-GB.json`
