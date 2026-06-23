@@ -121,7 +121,7 @@ export function NaturalPersonForm({
   const onSubmit = async (values: FormValues) => {
     const ok = await doSave(values);
     if (ok) {
-      router.push("/natural-persons");
+      router.push("/persons");
       router.refresh();
     }
   };
@@ -150,7 +150,7 @@ export function NaturalPersonForm({
         );
       }
       await queryClient.invalidateQueries({ queryKey: ["people"] });
-      router.push("/natural-persons");
+      router.push("/persons");
       router.refresh();
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : String(err));
@@ -160,7 +160,7 @@ export function NaturalPersonForm({
   };
 
   const onCancel = () => {
-    router.push("/natural-persons");
+    router.push("/persons");
   };
 
   const { register, formState } = form;

@@ -151,8 +151,7 @@ async function fetchPersons(q: string, personTypes: string[], page: number): Pro
 }
 
 // Shared across Natural + Judicial — `person` is the common base table, so
-// one soft-delete endpoint already handles both kinds (see
-// natural-persons/list-view.tsx and judicial-persons/list-view.tsx).
+// one soft-delete endpoint already handles both kinds.
 async function callBatchDelete(ids: string[]): Promise<void> {
   const res = await fetch("/api/people/batch-delete", {
     method: "POST",
@@ -374,7 +373,7 @@ export function PersonListView({
           </Link>
           <Link
             href="/judicial-persons/new"
-            className="inline-flex items-center rounded-md border border-wire bg-white px-4 py-2 text-sm font-medium text-ink shadow-sm transition-colors hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+            className="inline-flex items-center rounded-md bg-cta px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d"
           >
             {t("addNewJudicial")}
           </Link>

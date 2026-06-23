@@ -138,7 +138,7 @@ Pure frontend + one new read-only API route + query-layer addition — no DB sch
   - Header + per-row checkboxes for bulk selection, with `RecencyBadge` rendered next to each row's checkbox (Slice #16.UX.01 component, reused as-is — its `createdAt`/`updatedAt` prop shape already matched the new list's data with no changes needed).
   - Bulk delete reuses the existing **`POST /api/people/batch-delete`** endpoint unchanged — confirmed (by reading the route in full) that it already operates generically on `person.id`/`person.deletedAt`, with an explicit code comment stating it covers both Natural and Judicial, so no new delete endpoint was needed. On success, invalidates the `persons`, `people`, and `judicial-persons` query-cache keys together, so the legacy per-type lists don't show stale rows if visited next.
   - `detailHref(item)` routes each row's "Open" link (and row double-click) to `/judicial-persons/{id}` or `/natural-persons/{id}` depending on `item.type` — the core requirement that lets one table serve both record kinds without a unified detail page.
-  - **Toolbar "Add new" treatment**: two separate buttons — "Add new Natural Person" → `/natural-persons/new` and "Add new Judicial Person" → `/judicial-persons/new` — rather than a single dropdown/split-button. This was a judgment call made without a separate confirmation round; revisit with Adrian if a single combined "Add new" control is preferred instead.
+  - **Toolbar "Add new" treatment**: two separate buttons — "Add new Natural Person" → `/natural-persons/new` and "Add new Judicial Person" → `/judicial-persons/new` — rather than a single dropdown/split-button. **Confirmed by Adrian**: keep both buttons, both styled identically with the brown `bg-cta`/`hover:bg-cta-d` treatment (the app's standard primary-button color). The Judicial button originally rendered with a secondary/outline style; fixed to match the Natural button's classes exactly.
 
 **i18n** — new `person.*` namespace in both `messages/en-GB.json` and `messages/ro-RO.json` (`listTitle`, `searchPlaceholder` — already carrying the "OR "/"SAU " prefix, `open`, `loading`, `error`, `empty`, `counts`, `typeFilterLabel`, `allTypes`, `noTypeSelected`, `typeNatural`, `typeJudicial`, `addNewNatural`, `addNewJudicial`, `table.{code,name,type}`); `nav.sections.people` relabelled "People" → "Persons", `nav.sections.property` relabelled "Property" → "Properties" (both message files).
 
@@ -146,9 +146,9 @@ Pure frontend + one new read-only API route + query-layer addition — no DB sch
 
 **Verification note**: per the standing project gotcha, the sandbox's `tsc --noEmit`/`jest` are not reliable for this codebase (phantom errors / no SWC binary access). Verification here was done by manually cross-referencing every schema column, FK name, and enum value used in the new query/UI code against `src/db/schema/index.ts`, by reading `/api/documents/route.ts` and `/api/people/batch-delete/route.ts` in full as side-by-side precedent/reuse checks, and by a repo-wide grep sweep confirming zero stray references remain to the removed `User`/`Building2` sidebar icons or the deleted "Building" nav item. **Adrian should still run `npm run lint` and `npx jest` on his own machine before committing** — that remains the only reliable check for `react-hooks/set-state-in-effect`-class issues and real test regressions in this codebase.
 
-**Open follow-ups, not yet decided**
-- Whether the now sidebar-orphaned `/natural-persons` and `/judicial-persons` **list** pages (their detail/`new` sub-pages remain in active use, linked from `/persons`) should be removed, redirected to `/persons`, or simply left reachable by direct URL only.
-- Whether the two-button "Add new" toolbar treatment above is acceptable as-is, or should become a single combined control.
+**Resolved follow-ups**
+- The now sidebar-orphaned `/natural-persons` and `/judicial-persons` **list** pages — **Adrian's decision: delete them outright** (their detail/`new` sub-pages remain in active use, linked from `/persons`, and were untouched). See "Slice #15.09.1 — Delete orphaned list pages" below for the full change.
+- The two-button "Add new" toolbar treatment — **Adrian's decision: keep both buttons**, both styled with the brown `bg-cta` treatment (see fix above).
 
 **Files touched**
 - `src/components/sidebar/nav-config.ts`
@@ -161,6 +161,37 @@ Pure frontend + one new read-only API route + query-layer addition — no DB sch
 - `src/__tests__/sidebar-nav.test.ts`
 - `messages/en-GB.json`
 - `messages/ro-RO.json`
+- `CLAUDE.md`
+
+### Slice #15.09.1 — Delete orphaned `/natural-persons` and `/judicial-persons` list pages (detail)
+
+Pure frontend cleanup, follow-up to #15.09. No DB, API, or i18n changes.
+
+**Why**: with `/persons` now the single entry point for browsing both person types, the old standalone list pages at the bare `/natural-persons` and `/judicial-persons` routes had no remaining sidebar link and were never opened from anywhere in the app except by the two route's own `page.tsx`. Adrian confirmed (after a clarifying round-trip — this is unrelated to the `/persons` type-filter checkboxes, which behave exactly as he expected) that these should be deleted rather than redirected or left reachable by direct URL.
+
+**What was deleted** (zero remaining importers, confirmed via repo-wide grep before deletion):
+- `src/app/natural-persons/page.tsx`
+- `src/app/natural-persons/list-view.tsx`
+- `src/app/judicial-persons/page.tsx`
+- `src/app/judicial-persons/list-view.tsx`
+
+The sibling detail/create routes — `src/app/natural-persons/[id]/`, `src/app/natural-persons/new/`, `src/app/judicial-persons/[id]/`, `src/app/judicial-persons/new/` — are untouched and remain the live destinations linked from `/persons`.
+
+**Required follow-on fix (would otherwise have 404'd)**: `natural-person-form.tsx` and `judicial-person-form.tsx` each called `router.push("/natural-persons")` / `router.push("/judicial-persons")` after a successful Save, Delete, or Cancel — three call sites per file. With the bare list route gone, all six were changed to `router.push("/persons")` instead, so Save/Delete/Cancel now land on the live unified list. (`backBase` props used elsewhere, e.g. in the associate-person/-property/-document flows and the detail tabs, were checked too — every other use always appends `/${personId}` or `/${personId}/associate-...`, resolving to the still-live detail routes, so none of those needed changing.)
+
+**Cleanup**: a stale code comment in `src/app/persons/list-view.tsx` that referenced the now-deleted `natural-persons/list-view.tsx` / `judicial-persons/list-view.tsx` file paths by name was reworded to drop the dead reference.
+
+**Not changed**: `messages/en-GB.json` / `messages/ro-RO.json` — the `naturalPerson.*` / `judicialPerson.*` i18n namespaces are shared with the still-live forms, so no keys were removed (a few list-only keys, e.g. table column labels, are now technically unused but harmless to leave in place rather than risk pulling a key the forms still use).
+
+**Files touched**
+- `src/app/natural-persons/page.tsx` (deleted)
+- `src/app/natural-persons/list-view.tsx` (deleted)
+- `src/app/judicial-persons/page.tsx` (deleted)
+- `src/app/judicial-persons/list-view.tsx` (deleted)
+- `src/app/natural-persons/_components/natural-person-form.tsx`
+- `src/app/judicial-persons/_components/judicial-person-form.tsx`
+- `src/app/persons/list-view.tsx`
+- `src/app/persons/list-view.tsx` (Judicial "Add new" button color fix — `bg-cta` to match Natural)
 - `CLAUDE.md`
 
 ### Slice #15.07 — Replace `judicial_type` enum with `lookup_judicial_person_type` (detail)

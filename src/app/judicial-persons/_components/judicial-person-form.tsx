@@ -133,7 +133,7 @@ export function JudicialPersonForm({
   const onSubmit = async (values: FormValues) => {
     const ok = await doSave(values);
     if (ok) {
-      router.push("/judicial-persons");
+      router.push("/persons");
       router.refresh();
     }
   };
@@ -162,7 +162,7 @@ export function JudicialPersonForm({
         );
       }
       await queryClient.invalidateQueries({ queryKey: ["judicial-persons"] });
-      router.push("/judicial-persons");
+      router.push("/persons");
       router.refresh();
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : String(err));
@@ -172,7 +172,7 @@ export function JudicialPersonForm({
   };
 
   const onCancel = () => {
-    router.push("/judicial-persons");
+    router.push("/persons");
   };
 
   const { register, formState, control, setValue, getValues } = form;
