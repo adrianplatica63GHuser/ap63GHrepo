@@ -101,6 +101,7 @@ Relationships: People ↔ Documents, People ↔ Properties, Documents ↔ Proper
 - Slice #15.09.1 — Delete orphaned `/natural-persons` and `/judicial-persons` list pages. ✅ Complete. Full detail below.
 - Slice #15.09.2 — Property sidebar section: accordion → two flat-link buttons (Properties List / Properties Map). ✅ Complete. Full detail below.
 - Slice #15.10 — Property "Add new" form: don't create/guard-trip on an untouched, all-blank create form. ✅ Complete. Full detail below.
+- Slice #15.11 — Reference Data Person panel: rename "Person Types" caption → "Physical Person Types" + move Judicial Person Types button to second position. ✅ Complete. Full detail below.
 
 Each slice typically lands as multiple small commits, each individually green.
 
@@ -241,6 +242,26 @@ Reuses the existing `blank()` helper (trims and treats `""` as unset) — true i
 **Files touched**
 - `src/app/properties/_components/form-schema.ts`
 - `src/app/properties/_components/property-form.tsx`
+- `CLAUDE.md`
+
+### Slice #15.11 — Reference Data Person panel: caption rename + button reorder (detail)
+
+Pure i18n string + JSX-order change — no DB, API, schema, or query-layer changes.
+
+**Why**: with "Judicial Person Types" now living alongside "Person Types" in the Reference Data → Person panel (added in Slice #15.07), Adrian wanted the existing "Person Types" caption disambiguated to make clear it covers physical/natural persons only, and wanted the Judicial Person Types button moved up to sit immediately next to it rather than after Person Roles/Citizenship.
+
+**i18n** — `valueList.lists.personTypes` changed in both message files:
+- `messages/en-GB.json`: `"Person Types"` → `"Physical Person Types"`.
+- `messages/ro-RO.json`: `"Tipuri de Persoană"` → `"Tipuri de Persoană Fizică"`.
+
+No other `valueList.lists.*` keys touched — `judicialPersonTypes` keeps its existing caption ("Judicial Person Types" / "Tipuri de Persoană Juridică") in both files.
+
+**UI (`src/app/admin/value-lists/_components/value-list-hub.tsx`)** — the four `<ListBtn>`s in the Persoană `<Section>` reordered. Old order: Person Types, Person Roles, Citizenships, Judicial Person Types. New order: Person Types, Judicial Person Types, Person Roles, Citizenships. No `ListKey` values, click handlers, or component structure changed — purely a render-order swap of existing JSX lines.
+
+**Files touched**
+- `messages/en-GB.json`
+- `messages/ro-RO.json`
+- `src/app/admin/value-lists/_components/value-list-hub.tsx`
 - `CLAUDE.md`
 
 ### Slice #15.09.2 — Property sidebar: accordion → two flat buttons (detail)
