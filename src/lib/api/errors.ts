@@ -19,8 +19,16 @@ type PgError = {
  * then fall through to a generic 500).
  */
 export function dbErrorToResponse(err: unknown): Response | null {
-  const e = err as PgError;
-  const message = e?.message ?? String(err);
+  // Drizzle wraps the real Postgres error in an outer "Failed query: ..."
+  // Error, with the actual error (code/constraint/message) attached as
+  // `.cause`. Without unwrapping this, `e.code`/`e.constraint` below are
+  // always undefined and every DB constraint violation (CNP/CUI dupes,
+  // any unique/check/FK violation) silently falls through to the generic
+  // 500 instead of its specific message.
+  const top = err as PgError & { cause?: unknown };
+  const cause = top?.cause as PgError | undefined;
+  const e: PgError = cause ?? top;
+  const message = e?.message ?? top?.message ?? String(err);
 
   // RAISE EXCEPTION from our `natural_person_lock_cnp` trigger (SQLSTATE P0001).
   if (message.includes("CNP cannot be changed")) {
