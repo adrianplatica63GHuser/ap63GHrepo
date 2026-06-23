@@ -229,12 +229,13 @@ export function PersonClassifyPanel({ file, onBack, onClassified, onClose }: Pro
   const { register, formState, setValue, handleSubmit } = form;
   const errors = formState.errors;
 
-  useEffect(() => {
-    return () => URL.revokeObjectURL(previewUrl);
-    // previewUrl is derived once from `file` via the lazy initializer above
-    // and never changes for the lifetime of this component instance.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // No revoke-on-unmount effect here: in dev, React Strict Mode double-
+  // invokes effect cleanup immediately after mount, which was revoking this
+  // blob URL milliseconds after creation and made the preview <img> render
+  // as a broken-image icon (the bug Adrian reported). The object URL is
+  // scoped to this short-lived classify dialog and the file is at most a
+  // few MB, so leaving it un-revoked until the page itself unloads is an
+  // acceptable trade-off for a reliably-rendering preview.
 
   const runExtraction = async () => {
     setExtracting(true);
@@ -378,26 +379,26 @@ export function PersonClassifyPanel({ file, onBack, onClassified, onClose }: Pro
         </div>
       )}
       <form onSubmit={handleSubmit(onSave)} className="flex flex-col gap-4" noValidate>
-      <div className="flex gap-3">
+      <div className="flex items-start justify-between gap-6">
         {previewUrl && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={previewUrl}
             alt={file.name}
-            className="h-24 w-36 shrink-0 rounded-md border border-wire object-cover dark:border-zinc-700"
+            className="h-48 w-72 shrink-0 rounded-md border border-wire bg-canvas object-contain dark:border-zinc-700 dark:bg-zinc-950"
           />
         )}
-        <div className="flex flex-1 flex-col gap-1">
+        <div className="flex flex-col items-end gap-1 pt-1">
           <button
             type="button"
             onClick={runExtraction}
             disabled={busy}
-            className="inline-flex w-fit items-center rounded-md border border-wire bg-white px-3 py-1.5 text-sm font-medium text-ink shadow-sm hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900"
+            className="inline-flex w-fit items-center rounded-md bg-cta px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-cta-d disabled:cursor-not-allowed disabled:opacity-50"
           >
             {extracting ? tp("extracting") : tp("extractButton")}
           </button>
           {extractError && (
-            <p className="text-xs text-red-600 dark:text-red-400" role="alert">
+            <p className="max-w-[14rem] text-right text-xs text-red-600 dark:text-red-400" role="alert">
               {extractError}
             </p>
           )}
