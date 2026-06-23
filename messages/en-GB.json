@@ -816,6 +816,9 @@
     "pages": {
       "sectionTitle": "Pages",
       "addPage": "Add Page",
+      "prevPage": "Previous",
+      "nextPage": "Next",
+      "pageIndicator": "{current} / {total}",
       "empty": "No pages yet",
       "colNum": "#",
       "colName": "Page Name",

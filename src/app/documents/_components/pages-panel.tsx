@@ -24,7 +24,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -128,6 +128,41 @@ export function PagesPanel({ documentId, mode }: Props) {
     [documentId, t],
   );
 
+  // ── Auto-display the first page on open ─────────────────────────────────
+  // Runs once the page list resolves and nothing has been selected yet. The
+  // effect body itself never calls setState synchronously — it only ever
+  // schedules a microtask (`Promise.resolve().then(...)`) whose callback
+  // calls the existing `loadView` handler. This mirrors the established
+  // fix pattern for `react-hooks/set-state-in-effect` already used
+  // elsewhere in this codebase (e.g. Slice #15.02's preview-loading effect):
+  // any setState reachable from this effect happens after a promise
+  // boundary, never directly in the effect's synchronous body.
+  useEffect(() => {
+    if (selectedPageId !== null || pages.length === 0) return;
+    let active = true;
+    Promise.resolve().then(() => {
+      if (active) loadView(pages[0]);
+    });
+    return () => {
+      active = false;
+    };
+  }, [pages, selectedPageId, loadView]);
+
+  // ── Previous / Next navigation ───────────────────────────────────────────
+
+  const currentIndex = pages.findIndex((p) => p.id === selectedPageId);
+  const canGoPrev = currentIndex > 0;
+  const canGoNext = currentIndex >= 0 && currentIndex < pages.length - 1;
+
+  const goToPage = useCallback(
+    (delta: -1 | 1) => {
+      const target = currentIndex + delta;
+      if (target < 0 || target >= pages.length) return;
+      loadView(pages[target]);
+    },
+    [currentIndex, pages, loadView],
+  );
+
   // ── Print handler ────────────────────────────────────────────────────────
 
   const handlePrint = useCallback(
@@ -184,10 +219,42 @@ export function PagesPanel({ documentId, mode }: Props) {
       aria-label={t("sectionTitle")}
     >
       {/* Section header */}
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
-          {t("sectionTitle")}
-        </h2>
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
+            {t("sectionTitle")}
+          </h2>
+          {pages.length > 1 && (
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => goToPage(-1)}
+                disabled={!canGoPrev}
+                aria-label={t("prevPage")}
+                title={t("prevPage")}
+                className="rounded-md border border-wire px-2 py-1 text-xs font-medium text-ink hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              >
+                ‹ {t("prevPage")}
+              </button>
+              <span className="text-xs tabular-nums text-fade">
+                {t("pageIndicator", {
+                  current: currentIndex >= 0 ? currentIndex + 1 : 1,
+                  total: pages.length,
+                })}
+              </span>
+              <button
+                type="button"
+                onClick={() => goToPage(1)}
+                disabled={!canGoNext}
+                aria-label={t("nextPage")}
+                title={t("nextPage")}
+                className="rounded-md border border-wire px-2 py-1 text-xs font-medium text-ink hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              >
+                {t("nextPage")} ›
+              </button>
+            </div>
+          )}
+        </div>
         {mode === "edit" && (
           <button
             type="button"

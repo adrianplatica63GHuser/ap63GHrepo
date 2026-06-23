@@ -816,6 +816,9 @@
     "pages": {
       "sectionTitle": "Pagini",
       "addPage": "Adaugă pagină",
+      "prevPage": "Anterioară",
+      "nextPage": "Următoare",
+      "pageIndicator": "{current} / {total}",
       "empty": "Nicio pagină adăugată",
       "colNum": "Nr.",
       "colName": "Denumire pagină",
