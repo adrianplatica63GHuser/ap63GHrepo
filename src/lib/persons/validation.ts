@@ -61,15 +61,6 @@ export const naturalPersonCreateSchema = naturalPersonBase
     message: "At least one of firstName or lastName must be provided",
     path: ["firstName"],
   })
-  // ID document type and number are paired — both set or both empty.
-  .refine(
-    (d) => (d.idDocumentType == null) === (d.idDocumentNumber == null),
-    {
-      message:
-        "ID document type and number must be both set or both empty",
-      path: ["idDocumentType"],
-    },
-  )
   // At least one phone or email must be provided.
   .refine(
     (d) =>

@@ -1016,7 +1016,13 @@
         "extractError": "Could not read the ID card. You can still fill the fields manually.",
         "extractErrorTitle": "Couldn't read the ID card",
         "extractErrorDismiss": "OK",
-        "error": "Import failed",
+        "error": {
+          "generic": "Import failed",
+          "insufficient_credits": "The AI reading service is out of credits. Contact the administrator before scanning more ID cards.",
+          "invalid_api_key": "The AI reading service is not configured correctly (invalid API key). Contact the administrator.",
+          "rate_limited": "Too many ID cards scanned in a short time. Please wait a moment and try again.",
+          "overloaded": "The AI reading service is temporarily overloaded. Please wait a moment and try again."
+        },
         "reviewTitle": "Review extracted fields",
         "lowConfidenceNote": "Fields marked ⚠ were uncertain — please double-check them.",
         "unmappedTitle": "Found on the card but not auto-filled",

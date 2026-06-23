@@ -166,11 +166,6 @@ export const naturalPerson = pgTable(
       "natural_person_has_name",
       sql`${t.firstName} IS NOT NULL OR ${t.lastName} IS NOT NULL`,
     ),
-    // ID document type and number are paired — both set or both null.
-    check(
-      "natural_person_id_doc_paired",
-      sql`(${t.idDocumentType} IS NULL) = (${t.idDocumentNumber} IS NULL)`,
-    ),
     // At least one contact method (any phone or email) must be set.
     check(
       "natural_person_has_contact",

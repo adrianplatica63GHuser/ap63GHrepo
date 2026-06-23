@@ -1016,7 +1016,13 @@
         "extractError": "Nu s-a putut citi cartea de identitate. Puteți completa câmpurile manual.",
         "extractErrorTitle": "Cartea de identitate nu a putut fi citită",
         "extractErrorDismiss": "OK",
-        "error": "Importul a eșuat",
+        "error": {
+          "generic": "Importul a eșuat",
+          "insufficient_credits": "Serviciul de citire AI nu mai are credite. Contactați administratorul înainte de a scana alte cărți de identitate.",
+          "invalid_api_key": "Serviciul de citire AI nu este configurat corect (cheie API invalidă). Contactați administratorul.",
+          "rate_limited": "Au fost scanate prea multe cărți de identitate într-un timp scurt. Așteptați un moment și încercați din nou.",
+          "overloaded": "Serviciul de citire AI este temporar suprasolicitat. Așteptați un moment și încercați din nou."
+        },
         "reviewTitle": "Verificați datele extrase",
         "lowConfidenceNote": "Câmpurile marcate ⚠ au fost incerte — verificați-le.",
         "unmappedTitle": "Găsit pe document dar necompletat automat",

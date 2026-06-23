@@ -70,15 +70,6 @@ export const formSchema = z
       path: ["lastName"],
     },
   )
-  // ID doc type and number paired
-  .refine(
-    (d) =>
-      Boolean(d.idDocumentType.trim()) === Boolean(d.idDocumentNumber.trim()),
-    {
-      message: "ID Type and ID Number must be both set or both empty",
-      path: ["idDocumentNumber"],
-    },
-  )
   // At least one contact
   .refine(
     (d) =>
