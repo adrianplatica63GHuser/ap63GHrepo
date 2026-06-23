@@ -554,15 +554,14 @@
   "nav": {
     "sections": {
       "people": "Persons",
-      "property": "Properties",
+      "propertyList": "Properties List",
+      "propertyMap": "Properties Map",
       "document": "Documents",
       "administration": "Administration"
     },
     "items": {
       "naturalPerson": "Natural Person",
       "judicialPerson": "Judicial Person",
-      "landList": "Land — List",
-      "landMap": "Land — Map",
       "propertyType3": "Type 3",
       "actAdjudecare": "Adjudication Act",
       "actCadastru": "Cadastral Act",

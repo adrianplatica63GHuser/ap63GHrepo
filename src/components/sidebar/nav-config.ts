@@ -1,7 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import {
   Users,
-  Landmark,
   List,
   Map,
   FileText,
@@ -25,15 +24,10 @@ export type NavSection = {
   items: NavItem[];
   // When set (and items is empty), the section header itself is a direct
   // link — no accordion/chevron, no expandable children. Used by "document"
-  // (Slice #15.08): the type-filter checkboxes moved from a sidebar
-  // accordion into a dropdown on the Documents list page itself, so the
-  // sidebar entry is now a single plain link like any other page link.
+  // (Slice #15.08), "people" (Slice #15.09), and "propertyList"/"propertyMap"
+  // (Slice #15.09.2): each of these is a single plain link, styled exactly
+  // like any other top-level page link.
   href?: string;
-  // When true, the section's sub-items are always shown (no accordion
-  // toggle, no chevron) — used by "property" (Slice #15.09): with only two
-  // real sub-items (List / Map) left after removing the disabled "Building"
-  // placeholder, there's no value in hiding them behind a click.
-  alwaysOpen?: boolean;
 };
 
 export const NAV_SECTIONS: NavSection[] = [
@@ -47,13 +41,21 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [],
   },
   {
-    key: "property",
-    icon: Landmark,
-    alwaysOpen: true,
-    items: [
-      { key: "landList", href: "/properties", icon: List },
-      { key: "landMap", href: "/properties/map", icon: Map },
-    ],
+    // Plain direct link (Slice #15.09.2). Property used to be a single
+    // accordion-shaped section (header + 2 always-visible sub-items); this
+    // is now two independent flat-link buttons — "Properties List" and
+    // "Properties Map" — with no enclosing "Property" header at all,
+    // mirroring the "people"/"document" flat-link pattern exactly.
+    key: "propertyList",
+    icon: List,
+    href: "/properties",
+    items: [],
+  },
+  {
+    key: "propertyMap",
+    icon: Map,
+    href: "/properties/map",
+    items: [],
   },
   {
     // Plain direct link (Slice #15.08) — the per-type checkbox filter now

@@ -98,6 +98,8 @@ Relationships: People ↔ Documents, People ↔ Properties, Documents ↔ Proper
 - Slice #15.06 — Reference Data: keep alternate Romanian wordings as distinct document types + fix stale Ciprian sync script. ✅ Complete. Full detail below.
 - Slice #15.07 — Reference Data: replace hardcoded `judicial_type` enum with admin-managed `lookup_judicial_person_type` table. ✅ Complete. Full detail below.
 - Slice #15.09 — Sidebar nav cleanup: People/Property accordions → flat link / always-open sub-items; unified `/persons` list page combining Natural + Judicial. ✅ Complete. Full detail below.
+- Slice #15.09.1 — Delete orphaned `/natural-persons` and `/judicial-persons` list pages. ✅ Complete. Full detail below.
+- Slice #15.09.2 — Property sidebar section: accordion → two flat-link buttons (Properties List / Properties Map). ✅ Complete. Full detail below.
 
 Each slice typically lands as multiple small commits, each individually green.
 
@@ -192,6 +194,32 @@ The sibling detail/create routes — `src/app/natural-persons/[id]/`, `src/app/n
 - `src/app/judicial-persons/_components/judicial-person-form.tsx`
 - `src/app/persons/list-view.tsx`
 - `src/app/persons/list-view.tsx` (Judicial "Add new" button color fix — `bg-cta` to match Natural)
+- `CLAUDE.md`
+
+### Slice #15.09.2 — Property sidebar: accordion → two flat buttons (detail)
+
+Pure frontend, follow-up to #15.09. No DB, API, or i18n-namespace changes beyond the `nav.sections.*` keys.
+
+**Why**: Slice #15.09 had converted "Property" from a real accordion into an `alwaysOpen` accordion-shaped section — header label + chevron-less always-visible List/Map sub-items, indented under a hairline border. Adrian wanted it to go further, exactly mirroring how "People" became a flat link: remove the "Property" header/shell entirely and replace it with two independent, equally-weighted top-level buttons — "Properties List" and "Properties Map" — with no enclosing accordion at all.
+
+**`nav-config.ts`** — the single `property` section (icon `Landmark`, `alwaysOpen: true`, two items) was replaced with two separate flat-link `NavSection` entries: `propertyList` (icon `List`, `href: "/properties"`) and `propertyMap` (icon `Map`, `href: "/properties/map"`), each with `items: []` — the same shape already used by `people`/`document`. The now-fully-dead `alwaysOpen?: boolean` field was removed from the `NavSection` type entirely (no section uses it any more). The unused `Landmark` icon import was removed.
+
+**`sidebar-nav.tsx`**
+- `NavSectionRow` reverted to a plain accordion (the `alwaysOpen`/`effectiveOpen` branching added in #15.09 was deleted) — now only `administration` ever renders through this component, since every other section is flat.
+- `FLAT_SECTION_ACTIVE_PREFIXES` gained a `propertyMap: ["/properties/map"]` entry. `isFlatSectionActive` got a special case for `"propertyList"`: since `/properties/map` is nested under the `/properties` prefix, `propertyList`'s match explicitly excludes any path that already matches `propertyMap`, so visiting the map page lights up only the Map button, not both.
+- `sectionLabels` map: `property` key replaced with `propertyList`/`propertyMap`.
+- `itemLabels` map: removed the now-unused `landList`/`landMap` entries (they were only ever sub-item labels under the old accordion; nothing reads them any more).
+
+**i18n** — `messages/en-GB.json` / `messages/ro-RO.json`: `nav.sections.property` replaced with `nav.sections.propertyList` ("Properties List" / "Proprietăți — Listă") and `nav.sections.propertyMap` ("Properties Map" / "Proprietăți — Hartă"). `nav.items.landList` / `nav.items.landMap` removed (confirmed via grep — no longer referenced anywhere; the identically-named `home.buttons.landList`/`landMap` keys are a separate, untouched namespace used only by the dead pre-Slice-#3 home page).
+
+**Tests (`src/__tests__/sidebar-nav.test.ts`)** — `MOCK_SECTIONS`'s `property` entry (with two items) replaced with two item-less `propertyList`/`propertyMap` entries, matching the real `nav-config.ts` shape. The `getActiveHref`/`getActiveSectionKey` tests that previously asserted `/properties` and `/properties/map` resolved to the `property` section now assert `toBeNull()` instead — same reasoning already established for `people`/`document` in Slice #15.09: these pure helpers only resolve sections with actual `items`, and a flat-link section's active state is computed separately via `isFlatSectionActive`, not covered by these helpers.
+
+**Files touched**
+- `src/components/sidebar/nav-config.ts`
+- `src/components/sidebar/sidebar-nav.tsx`
+- `src/__tests__/sidebar-nav.test.ts`
+- `messages/en-GB.json`
+- `messages/ro-RO.json`
 - `CLAUDE.md`
 
 ### Slice #15.07 — Replace `judicial_type` enum with `lookup_judicial_person_type` (detail)

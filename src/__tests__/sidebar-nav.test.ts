@@ -7,21 +7,23 @@ import {
 // Minimal nav structure that mirrors the real NAV_SECTIONS shape — no
 // lucide-react icons required here, keeping the test dependency-free.
 //
-// "people" and "document" are flat-link sections (Slices #15.08 / #15.09):
-// they have no expandable items, so getActiveHref/getActiveSectionKey never
-// resolve them — that active-state is computed separately in sidebar-nav.tsx
-// via isFlatSectionActive, which isn't covered by these pure helpers.
+// "people", "document", "propertyList", and "propertyMap" are flat-link
+// sections (Slices #15.08 / #15.09 / #15.09.2): they have no expandable
+// items, so getActiveHref/getActiveSectionKey never resolve them — that
+// active-state is computed separately in sidebar-nav.tsx via
+// isFlatSectionActive, which isn't covered by these pure helpers.
 const MOCK_SECTIONS = [
   {
     key: "people",
     items: [],
   },
   {
-    key: "property",
-    items: [
-      { key: "landList", href: "/properties" },
-      { key: "landMap", href: "/properties/map" },
-    ],
+    key: "propertyList",
+    items: [],
+  },
+  {
+    key: "propertyMap",
+    items: [],
   },
   {
     key: "document",
@@ -70,20 +72,16 @@ describe("isItemActive", () => {
 // ---------------------------------------------------------------------------
 
 describe("getActiveHref", () => {
-  it("returns /properties/map (not /properties) on the map page", () => {
-    expect(getActiveHref("/properties/map", MOCK_SECTIONS)).toBe(
-      "/properties/map",
-    );
+  it("returns null for /properties/map ('propertyMap' is a flat-link section with no items)", () => {
+    expect(getActiveHref("/properties/map", MOCK_SECTIONS)).toBeNull();
   });
 
-  it("returns /properties for the list page", () => {
-    expect(getActiveHref("/properties", MOCK_SECTIONS)).toBe("/properties");
+  it("returns null for /properties ('propertyList' is a flat-link section with no items)", () => {
+    expect(getActiveHref("/properties", MOCK_SECTIONS)).toBeNull();
   });
 
-  it("returns /properties for a detail page under /properties/", () => {
-    expect(getActiveHref("/properties/some-uuid", MOCK_SECTIONS)).toBe(
-      "/properties",
-    );
+  it("returns null for a detail page under /properties/", () => {
+    expect(getActiveHref("/properties/some-uuid", MOCK_SECTIONS)).toBeNull();
   });
 
   it("returns null for /natural-persons (flat-link 'people' section has no items)", () => {
@@ -110,14 +108,12 @@ describe("getActiveSectionKey", () => {
     expect(getActiveSectionKey("/natural-persons", MOCK_SECTIONS)).toBeNull();
   });
 
-  it("identifies the property section for /properties/map", () => {
-    expect(getActiveSectionKey("/properties/map", MOCK_SECTIONS)).toBe(
-      "property",
-    );
+  it("returns null for /properties/map ('propertyMap' is a flat-link section with no items)", () => {
+    expect(getActiveSectionKey("/properties/map", MOCK_SECTIONS)).toBeNull();
   });
 
-  it("identifies the property section for /properties (list)", () => {
-    expect(getActiveSectionKey("/properties", MOCK_SECTIONS)).toBe("property");
+  it("returns null for /properties ('propertyList' is a flat-link section with no items)", () => {
+    expect(getActiveSectionKey("/properties", MOCK_SECTIONS)).toBeNull();
   });
 
   it("identifies the administration section for /admin/value-lists", () => {

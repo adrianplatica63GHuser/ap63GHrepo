@@ -554,15 +554,14 @@
   "nav": {
     "sections": {
       "people": "Persoane",
-      "property": "Proprietăți",
+      "propertyList": "Proprietăți — Listă",
+      "propertyMap": "Proprietăți — Hartă",
       "document": "Acte",
       "administration": "Administrare"
     },
     "items": {
       "naturalPerson": "Persoană Fizică",
       "judicialPerson": "Persoană Juridică",
-      "landList": "Teren — Listă",
-      "landMap": "Teren — Hartă",
       "propertyType3": "Tip 3",
       "actAdjudecare": "Act de Adjudecare",
       "actCadastru": "Act Cadastru",

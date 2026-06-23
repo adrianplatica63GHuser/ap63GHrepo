@@ -124,23 +124,17 @@ function NavSectionRow({
   const isSectionActive = section.items.some(
     (i) => i.href && i.href === activeHref,
   );
-  // alwaysOpen sections (e.g. "property", Slice #15.09) have no accordion
-  // behaviour: the header never toggles and the sub-items always render.
-  const alwaysOpen = !!section.alwaysOpen;
-  const effectiveOpen = alwaysOpen || isOpen;
 
   return (
     <div>
       <button
         type="button"
-        onClick={isCollapsed ? onExpandSidebar : alwaysOpen ? undefined : onToggle}
+        onClick={isCollapsed ? onExpandSidebar : onToggle}
         title={isCollapsed ? sectionLabel : undefined}
-        aria-expanded={isCollapsed || alwaysOpen ? undefined : isOpen}
-        disabled={!isCollapsed && alwaysOpen}
+        aria-expanded={isCollapsed ? undefined : isOpen}
         className={[
           "w-full flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
           isCollapsed ? "justify-center" : "justify-between",
-          !isCollapsed && alwaysOpen ? "cursor-default" : "",
           isSectionActive ? "text-cta" : "text-ink hover:bg-crease",
         ].join(" ")}
       >
@@ -148,7 +142,7 @@ function NavSectionRow({
           <SectionIcon size={18} className="shrink-0" aria-hidden="true" />
           {!isCollapsed && <span>{sectionLabel}</span>}
         </span>
-        {!isCollapsed && !alwaysOpen && (
+        {!isCollapsed && (
           <ChevronDown
             size={14}
             className={`shrink-0 transition-transform duration-150 ${
@@ -159,7 +153,7 @@ function NavSectionRow({
         )}
       </button>
 
-      {!isCollapsed && effectiveOpen && (
+      {!isCollapsed && isOpen && (
         <div className="mt-0.5 mb-1 ml-3 pl-3 border-l border-wire flex flex-col gap-0.5">
           {section.items.map((item) => (
             <NavSubItem
@@ -179,10 +173,11 @@ function NavSectionRow({
 // NavFlatSectionRow — a section header that is itself a direct link
 // ---------------------------------------------------------------------------
 //
-// Used for sections with no expandable children (currently just "document",
-// Slice #15.08): no chevron, no accordion toggle — clicking it navigates
-// straight to its href, same single-click behaviour as any other page link,
-// just rendered with the larger section-header styling/icon size.
+// Used for sections with no expandable children — "document" (Slice #15.08),
+// "people" (Slice #15.09), and "propertyList"/"propertyMap" (Slice #15.09.2):
+// no chevron, no accordion toggle — clicking it navigates straight to its
+// href, same single-click behaviour as any other page link, just rendered
+// with the larger section-header styling/icon size.
 
 function NavFlatSectionRow({
   section,
@@ -291,8 +286,19 @@ export function SidebarNav() {
   const FLAT_SECTION_ACTIVE_PREFIXES: Record<string, string[]> = {
     document: ["/documents"],
     people: ["/persons", "/natural-persons", "/judicial-persons"],
+    propertyMap: ["/properties/map"],
   };
   function isFlatSectionActive(key: string): boolean {
+    // "propertyList" and "propertyMap" share the /properties prefix (the map
+    // route is nested under it: /properties/map). Check propertyMap's own
+    // prefix first and exclude it from propertyList's match so a visit to
+    // the map page doesn't light up both buttons at once.
+    if (key === "propertyList") {
+      return (
+        (pathname === "/properties" || pathname.startsWith("/properties/")) &&
+        !isFlatSectionActive("propertyMap")
+      );
+    }
     const prefixes = FLAT_SECTION_ACTIVE_PREFIXES[key] ?? [];
     return prefixes.some((p) => pathname === p || pathname.startsWith(`${p}/`));
   }
@@ -323,14 +329,13 @@ export function SidebarNav() {
   // ── i18n label maps (explicit keys — required for next-intl type safety) ──
   const sectionLabels: Record<string, string> = {
     people: t("sections.people"),
-    property: t("sections.property"),
+    propertyList: t("sections.propertyList"),
+    propertyMap: t("sections.propertyMap"),
     document: t("sections.document"),
     administration: t("sections.administration"),
   };
 
   const itemLabels: Record<string, string> = {
-    landList:                  t("items.landList"),
-    landMap:                   t("items.landMap"),
     users:                     t("items.users"),
     referenceData:             t("items.referenceData"),
     import:                    t("items.import"),
@@ -403,7 +408,8 @@ export function SidebarNav() {
 
           // Flat-link sections are identified structurally (no items, has a
           // direct href) rather than by a hardcoded key list — "document"
-          // (Slice #15.08) and "people" (Slice #15.09) both qualify.
+          // (Slice #15.08), "people" (Slice #15.09), and "propertyList" /
+          // "propertyMap" (Slice #15.09.2) all qualify.
           const isFlatLinkSection =
             filteredSection.items.length === 0 && !!filteredSection.href;
 
