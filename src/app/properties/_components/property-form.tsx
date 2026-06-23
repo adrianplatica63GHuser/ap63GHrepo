@@ -14,6 +14,7 @@ import { useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-p
 import {
   emptyFormValues,
   formSchema,
+  hasFormData,
   type FormValues,
   type Corner,
   toApiPayload,
@@ -69,9 +70,19 @@ export function PropertyForm({
     onBigMapChange?.(next);
   };
 
+  // Slice #15.10: in create mode, an untouched/all-blank form must never be
+  // saveable or treated as dirty — `hasFormData` is the single source of
+  // truth for "has the user actually entered anything yet?". Read via
+  // form.getValues() rather than form.watch() — the component already
+  // re-renders on every keystroke (RHF's mode: "onChange" subscribes
+  // formState, which is read below), so a fresh value is available on
+  // every render without a second subscription.
+  const createHasData = mode === "create" && hasFormData(form.getValues(), corners);
+
   const saveDisabled =
     submitting ||
     !form.formState.isValid ||
+    (mode === "create" && !createHasData) ||
     (mode === "edit" && !form.formState.isDirty && corners === initialCorners);
 
   // doSave performs the API call only (no navigation) so it can be reused
@@ -115,8 +126,24 @@ export function PropertyForm({
     }
   };
 
+  // Slice #15.10: create mode now derives isDirty from hasFormData(...)
+  // instead of `form.formState.isDirty || corners !== initialCorners`.
+  // The old check used `initialCorners = []` as a default parameter, which
+  // is a new array reference on every render — once RHF's initial async
+  // validation pass triggered one extra re-render right after mount (with
+  // zero user input), `corners !== initialCorners` spuriously flipped to
+  // `true`, making a completely untouched "Add new property" form look
+  // dirty and trip the unsaved-changes guard. Edit mode's existing
+  // reference-based check is unchanged — corners there really do start as
+  // a stable array (the loaded record's corners), and is out of scope for
+  // this fix per Adrian's report.
   useUnsavedChangesGuard({
-    isDirty: mode !== "view" && (form.formState.isDirty || corners !== initialCorners),
+    isDirty:
+      mode === "view"
+        ? false
+        : mode === "create"
+          ? createHasData
+          : (form.formState.isDirty || corners !== initialCorners),
     onSave: async () => {
       const valid = await form.trigger();
       if (!valid) return false;

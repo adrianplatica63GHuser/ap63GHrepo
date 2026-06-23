@@ -100,6 +100,7 @@ Relationships: People ↔ Documents, People ↔ Properties, Documents ↔ Proper
 - Slice #15.09 — Sidebar nav cleanup: People/Property accordions → flat link / always-open sub-items; unified `/persons` list page combining Natural + Judicial. ✅ Complete. Full detail below.
 - Slice #15.09.1 — Delete orphaned `/natural-persons` and `/judicial-persons` list pages. ✅ Complete. Full detail below.
 - Slice #15.09.2 — Property sidebar section: accordion → two flat-link buttons (Properties List / Properties Map). ✅ Complete. Full detail below.
+- Slice #15.10 — Property "Add new" form: don't create/guard-trip on an untouched, all-blank create form. ✅ Complete. Full detail below.
 
 Each slice typically lands as multiple small commits, each individually green.
 
@@ -194,6 +195,52 @@ The sibling detail/create routes — `src/app/natural-persons/[id]/`, `src/app/n
 - `src/app/judicial-persons/_components/judicial-person-form.tsx`
 - `src/app/persons/list-view.tsx`
 - `src/app/persons/list-view.tsx` (Judicial "Add new" button color fix — `bg-cta` to match Natural)
+- `CLAUDE.md`
+
+### Slice #15.10 — Property "Add new" form: no row until there's data (detail)
+
+Pure frontend, single component pair — no DB, API, or i18n changes.
+
+**Bug report (Adrian)**: clicking "Add new property" opens an empty form correctly, but trying to navigate away immediately afterward (e.g. clicking "Persons" in the sidebar) pops the unsaved-changes Save/Discard/Cancel dialog without the user having touched anything. Clicking that dialog's "Save" button persists a fully-empty `property` row. Adrian's stated requirement: **a property should be created only if it has at least one field of data or one corner.**
+
+**Root cause — two compounding bugs, both in the create flow only**
+
+1. `PropertyForm`'s `initialCorners = []` default parameter is a new array reference on every render (the create page, `new-property-shell.tsx`, never passes an `initialCorners` prop). React Hook Form's initial async validation pass (computing `formState.isValid` via the Zod resolver) causes one extra re-render right after mount even with zero user input. On that re-render, `corners !== initialCorners` — comparing the `useState` snapshot against a *freshly allocated* empty array — spuriously evaluates to `true`. The unsaved-changes guard's `isDirty: form.formState.isDirty || corners !== initialCorners` therefore reports a completely untouched create form as dirty.
+2. `formSchema` (Zod, in `form-schema.ts`) has no required fields — every field is a plain optional string — so a fully blank form is `isValid: true`. `saveDisabled` for create mode was only `submitting || !isValid`, so nothing blocked an empty-form Save. Combined with bug 1's spurious dirty flag triggering the guard dialog, clicking that dialog's "Save" (a natural reaction to seeing an unsaved-changes prompt) silently created an all-null `property` row.
+
+**Fix — scoped to the frontend only.** Adrian confirmed no server-side backstop is needed at this point (no DB/API/validation-layer changes).
+
+**`form-schema.ts`** — new exported helper:
+```ts
+const TOP_LEVEL_TEXT_FIELDS = [
+  "nickname", "tarlaSola", "parcela", "cadastralNumber",
+  "carteFunciara", "useCategory", "surfaceAreaMp", "notes",
+] as const satisfies readonly (keyof Omit<FormValues, "address">)[];
+
+const ADDRESS_TEXT_FIELDS = [
+  "streetLine", "postalCode", "locality", "county", "country", "notes",
+] as const satisfies readonly (keyof AddressBlock)[];
+
+export function hasFormData(values: FormValues, corners: Corner[]): boolean {
+  if (corners.length > 0) return true;
+  if (TOP_LEVEL_TEXT_FIELDS.some((key) => blank(values[key]) !== null)) return true;
+  return ADDRESS_TEXT_FIELDS.some((key) => blank(values.address[key]) !== null);
+}
+```
+Reuses the existing `blank()` helper (trims and treats `""` as unset) — true if any top-level field, any address field, or at least one corner is present.
+
+**`property-form.tsx`**
+- `createHasData = mode === "create" && hasFormData(form.getValues(), corners)` computed once per render (the component already re-renders on every keystroke via the `formState` subscription, so `getValues()` is fresh at read time — no extra subscription needed).
+- `saveDisabled` gained `(mode === "create" && !createHasData)` — the Save button itself cannot submit a fully-blank create form, independent of the guard dialog.
+- `useUnsavedChangesGuard({ isDirty: ... })` now branches three ways instead of the old single `mode !== "view" && (...)` expression: `view` → always `false`; `create` → `createHasData`; `edit` → the original, unchanged `form.formState.isDirty || corners !== initialCorners` reference check (edit mode's corners genuinely start as a stable loaded-record array, so the reference comparison there was never the bug — out of scope for this fix per Adrian's report, which was specific to the create flow).
+
+**Net effect**: opening "Add new property" and immediately navigating away (sidebar, Cancel, browser back) no longer shows the unsaved-changes dialog and creates no DB row. Typing into any field, picking a use-category, or placing one corner correctly flips the form dirty and enables Save, exactly as before for non-empty input.
+
+**Verification note**: per the standing project gotcha, the sandbox's `tsc --noEmit`/`jest` are not reliable for this codebase. Verification here was manual: re-read both edited files in full after editing to confirm `hasFormData`'s field list matches `FormValues`/`AddressBlock` exactly (cross-checked against the Zod schema and `toApiPayload`'s own field list), and confirmed `createHasData`/`saveDisabled`/the guard's `isDirty` branch all reference the same single `createHasData` value so there's no drift between what blocks the Save button and what trips the nav guard. **Adrian should still run `npm run lint` and manually re-test the repro (open Add new property → click a sidebar link with zero input) before committing.**
+
+**Files touched**
+- `src/app/properties/_components/form-schema.ts`
+- `src/app/properties/_components/property-form.tsx`
 - `CLAUDE.md`
 
 ### Slice #15.09.2 — Property sidebar: accordion → two flat buttons (detail)
@@ -1886,7 +1933,7 @@ Rules:
 
 - **Never commit or push without explicit confirmation.** Same for any irreversible action.
 - **Conventional commits** — `feat:`, `fix:`, `chore:`, `ci:`, `docs(scope):`, `test:`, etc.
-- **Always provide commit statements as ready-to-run PowerShell `git` commands**, not just the commit message text. Each commit should be a full `git add <files> && git commit -m "message"` command (or equivalent multi-line PowerShell form) that Adrian can paste directly into his terminal.
+- **Always provide commit statements as ready-to-run PowerShell `git` commands**, not just the commit message text. Each commit should be a full `git add <files>` followed by `git commit -m "message"` that Adrian can paste directly into his terminal. **Never join them with `&&`** — Adrian's PowerShell is Windows PowerShell 5.1, which does not support `&&`/`||` as statement separators (`The token '&&' is not a valid statement separator in this version.`). Put each command on its own line instead (newline-separated is enough; PowerShell runs them sequentially regardless of exit code, which is fine for `git add` + `git commit`). If a single-line chain is genuinely needed, use `;` instead of `&&` — but separate lines are preferred for readability.
 - **Always provide complete, ready-to-run PowerShell commands** for every step — including env var assignments, seed runs, migrations, etc. Never give a connection string or value in isolation; always show the full assignment (`$env:VAR = "value"`) as a separate line before the command that uses it. PowerShell cannot run a bare URL or string as a command.
 - **Always check `git status` before making changes**, and never modify files outside `C:\dev\ga40prj`.
 - **Adrian runs git in PowerShell on Windows.** Claude prepares file content; Adrian commits and pushes. This avoids Windows-mount permission issues with `.git/index.lock` from the Linux sandbox.

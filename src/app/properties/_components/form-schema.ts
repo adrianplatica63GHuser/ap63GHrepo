@@ -126,6 +126,41 @@ function blank(s: string): string | null {
   return t.length > 0 ? t : null;
 }
 
+// ---------------------------------------------------------------------------
+// hasFormData — true if the user has entered at least one field of data or
+// placed at least one corner. Used by the create flow (Slice #15.10) to
+// decide whether an untouched "Add new property" form should be treated as
+// dirty by the unsaved-changes guard, and whether the Save button should be
+// enabled. A freshly-opened, untouched create form must report `false` here
+// so navigating away creates no DB row.
+// ---------------------------------------------------------------------------
+
+const TOP_LEVEL_TEXT_FIELDS = [
+  "nickname",
+  "tarlaSola",
+  "parcela",
+  "cadastralNumber",
+  "carteFunciara",
+  "useCategory",
+  "surfaceAreaMp",
+  "notes",
+] as const satisfies readonly (keyof Omit<FormValues, "address">)[];
+
+const ADDRESS_TEXT_FIELDS = [
+  "streetLine",
+  "postalCode",
+  "locality",
+  "county",
+  "country",
+  "notes",
+] as const satisfies readonly (keyof AddressBlock)[];
+
+export function hasFormData(values: FormValues, corners: Corner[]): boolean {
+  if (corners.length > 0) return true;
+  if (TOP_LEVEL_TEXT_FIELDS.some((key) => blank(values[key]) !== null)) return true;
+  return ADDRESS_TEXT_FIELDS.some((key) => blank(values.address[key]) !== null);
+}
+
 export function toApiPayload(
   values: FormValues,
   corners: Corner[],
