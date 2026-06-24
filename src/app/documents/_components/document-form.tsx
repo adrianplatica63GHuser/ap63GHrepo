@@ -19,7 +19,7 @@ import {
   toApiPayload,
 } from "./form-schema";
 import { getTypeConfig } from "@/lib/documents/type-config";
-import { PagesPanel } from "./pages-panel";
+import { PagesPanel, PagesViewerBox, usePagesPanelState } from "./pages-panel";
 import { SuccessionPartiesPanel } from "./succession-parties-panel";
 
 // ---------------------------------------------------------------------------
@@ -45,10 +45,14 @@ async function fetchDocumentTypes(): Promise<DocumentTypeOption[]> {
 // ---------------------------------------------------------------------------
 
 type Props = {
-  mode:          "create" | "edit" | "view";
-  documentId?:   string;
-  documentCode?: string;
-  initialValues?: FormValues;
+  mode:             "create" | "edit" | "view";
+  documentId?:      string;
+  documentCode?:    string;
+  initialValues?:   FormValues;
+  /** Notified whenever the "Show Big Page" toggle changes, so the parent
+   *  (DocumentDetailTabs) can widen the page's outer container — mirrors
+   *  PropertyForm's onBigMapChange. */
+  onBigPageChange?: (bigPage: boolean) => void;
 };
 
 // ---------------------------------------------------------------------------
@@ -60,10 +64,22 @@ export function DocumentForm({
   documentId,
   documentCode,
   initialValues,
+  onBigPageChange,
 }: Props) {
   const t = useTranslations("document");
   const router = useRouter();
   const queryClient = useQueryClient();
+
+  // Shared Pages-panel state (Slice #15.13) — lifted up here, exactly like
+  // PropertyForm lifts `corners` state, so the table (left column) and the
+  // detached big viewer (right column) both read/write the same data.
+  const pagesState = usePagesPanelState(documentId);
+  const [bigPage, setBigPage] = useState(false);
+  const handleToggleBigPage = () => {
+    const next = !bigPage;
+    setBigPage(next);
+    onBigPageChange?.(next);
+  };
 
   const { data: documentTypes } = useQuery({
     queryKey: ["document-types"],
@@ -177,6 +193,13 @@ export function DocumentForm({
 
   return (
     <div className="flex flex-col gap-4">
+    {/* Two-column layout when "Show Big Page" is active (Slice #15.13) —
+        mirrors PropertyForm's "Show Big Map" mechanism exactly: the left
+        column (form + panels) keeps a fixed width, and a tall right column
+        hosts the detached page viewer. In normal mode this wrapper is a
+        no-op ("contents") so the original single-column flow is unchanged. */}
+    <div className={bigPage ? "flex flex-row gap-4 items-stretch" : "contents"}>
+    <div className={bigPage ? "w-[540px] flex-none flex flex-col gap-4" : "contents"}>
     {/* id is used by the submit button's form="document-form" attribute below,
         which lets the button live outside the <form> element (after PagesPanel)
         while still submitting this form. */}
@@ -450,17 +473,38 @@ export function DocumentForm({
 
     {/* ── Pages panel — outside <form> so its TanStack Query re-renders
          never interfere with React Hook Form state. Only shown once the
-         document has been saved (documentId present). ─────────────────── */}
+         document has been saved (documentId present). In big-page mode this
+         renders the table/controls only — the viewer moves to the right
+         column below. ──────────────────────────────────────────────────── */}
     {mode !== "create" && documentId && (
       <PagesPanel
         documentId={documentId}
         mode={mode === "view" ? "view" : "edit"}
+        state={pagesState}
+        bigPage={bigPage}
+        onToggleBigPage={handleToggleBigPage}
       />
     )}
+    </div>
 
-    {/* ── Action buttons — at the very bottom, after PagesPanel ────────────
-         The submit button uses form="document-form" so it targets the <form>
-         above even though it lives outside it (standard HTML5). ─────────── */}
+    {/* ── Big-page viewer column — only rendered while "Show Big Page" is
+         active. Reads from the same `pagesState` the table above writes to,
+         so selecting a row on the left immediately updates the viewer on
+         the right. Mirrors PropertyMiniMap's "absolute inset-0" bounding
+         box trick for giving its content a concrete pixel height. ──────── */}
+    {bigPage && mode !== "create" && documentId && (
+      <div className="relative flex-1 min-w-0 overflow-hidden rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="absolute inset-3">
+          <PagesViewerBox state={pagesState} fill />
+        </div>
+      </div>
+    )}
+    </div>
+
+    {/* ── Action buttons — at the very bottom, full width regardless of
+         big-page mode. The submit button uses form="document-form" so it
+         targets the <form> above even though it lives outside it (standard
+         HTML5). ─────────────────────────────────────────────────────────── */}
     {mode !== "view" && (
       <div className="flex items-center justify-center gap-3 border-t border-crease pt-6 dark:border-zinc-800">
         <button

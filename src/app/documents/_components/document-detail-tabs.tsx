@@ -29,6 +29,10 @@ export function DocumentDetailTabs({
 }: Props) {
   const t = useTranslations("document");
   const [activeTab, setActiveTab] = useState<Tab>(initialTab ?? "details");
+  // "Show Big Page" (Slice #15.13) — mirrors PropertyDetailTabs' `bigMap`:
+  // when active, the page's outer container widens to full width so the
+  // detached page viewer has room to sit beside the form/panels.
+  const [bigPage, setBigPage] = useState(false);
 
   const tabs: { key: Tab; label: string }[] = [
     { key: "details",    label: t("tabs.details")    },
@@ -38,7 +42,7 @@ export function DocumentDetailTabs({
   ];
 
   return (
-    <>
+    <div className={bigPage ? "w-full flex flex-col gap-4" : "max-w-4xl mx-auto w-full flex flex-col gap-4"}>
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">{documentName}</h1>
       </header>
@@ -73,6 +77,7 @@ export function DocumentDetailTabs({
             documentId={documentId}
             documentCode={documentCode}
             initialValues={initialValues}
+            onBigPageChange={setBigPage}
           />
         )}
         {activeTab === "persons" && (
@@ -85,6 +90,6 @@ export function DocumentDetailTabs({
           <DocumentReferencesTab documentId={documentId} />
         )}
       </div>
-    </>
+    </div>
   );
 }

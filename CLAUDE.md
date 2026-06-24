@@ -103,6 +103,7 @@ Relationships: People ↔ Documents, People ↔ Properties, Documents ↔ Proper
 - Slice #15.10 — Property "Add new" form: don't create/guard-trip on an untouched, all-blank create form. ✅ Complete. Full detail below.
 - Slice #15.11 — Reference Data Person panel: rename "Person Types" caption → "Physical Person Types" + move Judicial Person Types button to second position. ✅ Complete. Full detail below.
 - Slice #15.12 — Reference Data: new "Roles" panel (Person Roles, Property Persons, Document Persons) between Document and Others. ✅ Complete. Full detail below.
+- Slice #15.13 — Document form: "Show Big Page" toggle, mirroring Property's "Show Big Map". ✅ Complete. Full detail below.
 
 Each slice typically lands as multiple small commits, each individually green.
 
@@ -263,6 +264,45 @@ No other `valueList.lists.*` keys touched — `judicialPersonTypes` keeps its ex
 - `messages/en-GB.json`
 - `messages/ro-RO.json`
 - `src/app/admin/value-lists/_components/value-list-hub.tsx`
+- `CLAUDE.md`
+
+### Slice #15.13 — Document form: "Show Big Page" toggle (detail)
+
+Pure frontend — no DB schema, API, or migration changes. Two new i18n keys.
+
+**Why**: Adrian wanted the Document form's Pages panel to support a "Show Big Page" toggle, mirroring Property's existing "Show Big Map" (Slice #GIS.13.08) exactly: a button that switches the page into a two-column layout, with the document/page viewer detached into a tall right-hand column beside the form and other panels. Two clarifying questions were resolved before implementation: big-page height matches the left column's height exactly (not pinned to full viewport height — an explicit, deliberate simplification Adrian approved), and there is no new resizable drag handle — the left column keeps a fixed width and Adrian resizes the browser window if more space is needed, exactly as "Show Big Map" already works.
+
+**Root architectural difference from Property, and how it was resolved**: Property's `CornersManager` (table) and `PropertyMiniMap` (map) were already two separate sibling components, with `corners` state owned by the parent `PropertyForm` — switching to a two-column layout was just a matter of relocating where each sibling rendered. The Document Pages panel was not built this way: `PagesPanel` was a single monolithic component owning all of its own state (selected page, viewer data, loading/error, dialogs) with the viewer and table rendered inline as one unit. To mirror Property's mechanism, `pages-panel.tsx` was refactored first: every piece of state and logic was extracted into a new exported hook, `usePagesPanelState(documentId)`, returning a single state object. A new exported component, `PagesViewerBox({ state, fill })`, renders just the viewer (loading/error/placeholder/file preview), reading from that shared state object. `PagesPanel` itself was kept as the table + controls + dialogs, now accepting the shared `state` as a prop instead of owning it. `DocumentForm` (the parent, equivalent to `PropertyForm`) now calls `usePagesPanelState` once and passes the same object to both `PagesPanel` (left column, always rendered) and a standalone `PagesViewerBox` (right column, only rendered in big-page mode) — exactly the same lifted-state pattern `PropertyForm` already uses for `corners`. Confirmed via repo-wide grep that `PagesPanel` was the only export from `pages-panel.tsx` referenced anywhere, and only from `document-form.tsx`, so this refactor required updating exactly one call site.
+
+**`src/app/documents/_components/pages-panel.tsx`** (rewritten)
+- `usePagesPanelState(documentId: string | undefined)` — new exported hook holding `pages` (TanStack Query), `selectedPageId`, `viewData`/`viewLoading`/`viewError`, `loadView`, prev/next navigation (`currentIndex`/`canGoPrev`/`canGoNext`/`goToPage`), `handlePrint`, the delete `useMutation`, dialog state, and `nextPageNumber`. The pre-existing auto-display-first-page effect (which schedules its `setState` inside a `Promise.resolve().then(...)` microtask rather than synchronously in the effect body, to satisfy `react-hooks/set-state-in-effect` — see Slice #15.02's identical fix) was carried over unchanged into the hook body.
+- `PagesViewerBox({ state, fill })` — new exported component; the viewer-only box (loading/error/placeholder/`PageViewer`). `fill` (default `false`) switches its sizing classes between `h-full w-full` (big-page mode, fills its parent's concrete-pixel bounding box) and `min-h-[320px] flex-1` (normal mode).
+- `PagesPanel({ documentId, mode, state, bigPage, onToggleBigPage })` — `state` is now a required prop (the object returned by `usePagesPanelState`) instead of being computed internally. New optional `bigPage`/`onToggleBigPage` props: when `onToggleBigPage` is provided, a header button renders showing `t("showBigPage")` / `t("showSmallPage")` depending on `bigPage`. Body layout branches: `!bigPage` renders the original combined layout (`PagesViewerBox` + table, `lg:flex-row`); `bigPage` renders the table/controls only, full width — the caller is responsible for rendering `PagesViewerBox` separately.
+- `PageViewer`, `DownloadPrompt`, `Centred` — all gained a `fill` prop threaded through from `PagesViewerBox`, switching between fixed (`max-h-[600px]`, `h-[600px]`, `min-h-[320px]`) and fill (`max-h-full`, `h-full`, `h-full`) sizing classes for images, PDFs, and the generic download-prompt fallback respectively.
+
+**`src/app/documents/_components/document-form.tsx`**
+- New prop `onBigPageChange?: (bigPage: boolean) => void`, called whenever the toggle fires — lets the parent (`DocumentDetailTabs`) widen the page's outer container, mirroring `PropertyForm`'s `onBigMapChange`.
+- `pagesState = usePagesPanelState(documentId)` and `bigPage` state are now owned here (lifted up, exactly like `PropertyForm` owns `corners`). `handleToggleBigPage` flips `bigPage` and calls `onBigPageChange`.
+- JSX restructured with two new wrapper `<div>`s using the same `"contents"` CSS trick already established for Property's big-map mode: an outer wrapper (`bigPage ? "flex flex-row gap-4 items-stretch" : "contents"`) and an inner left-column wrapper (`bigPage ? "w-[540px] flex-none flex flex-col gap-4" : "contents"`) — both no-ops in normal mode, so the original single-column flow is byte-for-byte unchanged when `bigPage` is `false`. The left column contains the existing `<form>`, the conditional `SuccessionPartiesPanel`, and `PagesPanel` (now passed `state={pagesState}`, `bigPage`, `onToggleBigPage={handleToggleBigPage}`). A new right-column `<div>` — `relative flex-1 min-w-0 overflow-hidden` wrapping an `absolute inset-3` box (Property's mini-map "concrete pixel bounding box" trick, generalized to plain CSS) — renders `<PagesViewerBox state={pagesState} fill />`, only when `bigPage` is true. Action buttons (Save/Delete/Cancel) and the delete-confirm dialog remain outside both wrappers, at the very bottom, full width regardless of mode.
+
+**`src/app/documents/_components/document-detail-tabs.tsx`**
+- New `bigPage` state (`useState(false)`), passed to `DocumentForm` as `onBigPageChange={setBigPage}`.
+- Root element's className now switches between `"max-w-4xl mx-auto w-full flex flex-col gap-4"` (normal) and `"w-full flex flex-col gap-4"` (big-page) — the same pattern `PropertyDetailTabs` already uses for its own `bigMap` state.
+
+**`src/app/documents/[id]/page.tsx`**
+- `<main>` className changed from `"mx-auto w-full max-w-4xl px-6 py-4 flex flex-col gap-4"` to `"w-full px-6 py-4 flex flex-col gap-4"` — removes the page-level width cap so `DocumentDetailTabs`' own internal width-switching takes full effect, exactly matching how `properties/[id]/page.tsx` already delegates width control to `PropertyDetailTabs`.
+
+**i18n** — added `document.pages.showBigPage` / `document.pages.showSmallPage` to both `messages/en-GB.json` ("Show Big Page" / "Show Small Page") and `messages/ro-RO.json` ("Arată Pagina Mare" / "Arată Pagina Mică"). No other keys changed — every other string `pages-panel.tsx` reads (`sectionTitle`, `addPage`, `colNum`/`colName`/`colNotes`/`colActions`, `view`/`print`/`delete`, `viewer.*`, `dialog.*`, `deleteConfirm.*`, `prevPage`/`nextPage`/`pageIndicator`, `empty`, `loadError`, `deleteError`) already existed and were preserved as-is.
+
+**Verification note**: per the standing project gotcha, the sandbox's `tsc --noEmit`/`jest` are not reliable for this codebase. Verification here was manual: re-read all four touched files in full after editing to confirm JSX div nesting balances (outer flex-col → two-col wrapper → left-column wrapper → form/panels closing exactly before the two-col wrapper closes → right-column big-viewer div self-contained between them), confirmed `PagesPanel`/`PagesViewerBox`/`usePagesPanelState`'s prop and return types line up across `pages-panel.tsx` and `document-form.tsx`, confirmed via repo-wide grep that no other file imports from `pages-panel.tsx` (so the prop-signature change needed no other call-site updates), confirmed both message files are still valid JSON, and confirmed the two new i18n keys exist under `document.pages` in both files. **Adrian should still run `npm run lint` and manually re-test the toggle (open a saved document → Show Big Page → resize browser → Show Small Page) before committing.**
+
+**Files touched**
+- `src/app/documents/_components/pages-panel.tsx`
+- `src/app/documents/_components/document-form.tsx`
+- `src/app/documents/_components/document-detail-tabs.tsx`
+- `src/app/documents/[id]/page.tsx`
+- `messages/en-GB.json`
+- `messages/ro-RO.json`
 - `CLAUDE.md`
 
 ### Slice #15.12 — Reference Data: new "Roles" panel (detail)

@@ -816,6 +816,8 @@
     "pages": {
       "sectionTitle": "Pages",
       "addPage": "Add Page",
+      "showBigPage": "Show Big Page",
+      "showSmallPage": "Show Small Page",
       "prevPage": "Previous",
       "nextPage": "Next",
       "pageIndicator": "{current} / {total}",

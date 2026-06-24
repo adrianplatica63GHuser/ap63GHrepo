@@ -24,7 +24,7 @@ export default async function EditDocumentPage({ params, searchParams }: PagePar
 
   return (
     <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-zinc-950">
-      <main className="mx-auto w-full max-w-4xl px-6 py-4 flex flex-col gap-4">
+      <main className="w-full px-6 py-4 flex flex-col gap-4">
         <DocumentDetailTabs
           documentId={record.id}
           documentCode={record.code}

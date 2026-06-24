@@ -3,9 +3,9 @@
 /**
  * PagesPanel — displays uploaded file pages for a Document record.
  *
- * Layout:
+ * Layout (normal mode):
  *   ┌──────────────────────────────────────────────────────────┐
- *   │ PAGES                                   [+ Add Page]     │
+ *   │ PAGES                    [Show Big Page] [+ Add Page]    │
  *   ├───────────────────────┬──────────────────────────────────┤
  *   │  Viewer  (lg: 60%)    │  Table  (lg: 40%)                │
  *   │  img / iframe /       │  #  Name  Notes  [View][Print]   │
@@ -13,6 +13,15 @@
  *   └───────────────────────┴──────────────────────────────────┘
  *
  * On screens narrower than lg the table sits above the viewer.
+ *
+ * "Show Big Page" mode (Slice #15.13) mirrors the Property "Show Big Map"
+ * mechanism: the viewer is detached from this panel and rendered by the
+ * parent (DocumentForm) in a tall column to the right of every other panel,
+ * while this component renders the table/controls only, full width, in the
+ * left column. Both views read/write the SAME state object returned by
+ * `usePagesPanelState`, which the parent owns and passes down — exactly how
+ * PropertyForm lifts `corners` state so its small and big map instances stay
+ * in sync.
  *
  * Rules:
  *  - In "create" mode (no documentId) the panel is never rendered.
@@ -65,15 +74,21 @@ const ACCEPTED_FILE_TYPES =
   "image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.xml,.html";
 
 // ---------------------------------------------------------------------------
-// PagesPanel
+// usePagesPanelState — shared state/logic for the Pages panel.
+//
+// Lifted out of the component so the table/controls and the viewer can be
+// rendered in different parts of the page tree (side-by-side in normal
+// mode, or split across two columns in "Show Big Page" mode) while staying
+// perfectly in sync — the same reason PropertyForm holds `corners` state
+// itself rather than letting CornersManager own it internally.
+//
+// `documentId` may be undefined (create mode, before a document exists);
+// the underlying query is simply disabled in that case. Callers in create
+// mode never render any of the pieces below, so the disabled-fetch state is
+// never user-visible.
 // ---------------------------------------------------------------------------
 
-type Props = {
-  documentId: string;
-  mode:       "edit" | "view";
-};
-
-export function PagesPanel({ documentId, mode }: Props) {
+export function usePagesPanelState(documentId: string | undefined) {
   const t = useTranslations("document.pages");
   const queryClient = useQueryClient();
 
@@ -85,6 +100,8 @@ export function PagesPanel({ documentId, mode }: Props) {
   const [dialogOpen,   setDialogOpen]   = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Page | null>(null);
 
+  const pagesQueryKey = ["document-pages", documentId ?? "none"];
+
   // ── Fetch page list ──────────────────────────────────────────────────────
 
   const {
@@ -92,20 +109,22 @@ export function PagesPanel({ documentId, mode }: Props) {
     isLoading,
     isError,
   } = useQuery<Page[]>({
-    queryKey: ["document-pages", documentId],
+    queryKey: pagesQueryKey,
     queryFn: async () => {
       const res = await fetch(
-        `/api/documents/${encodeURIComponent(documentId)}/pages`,
+        `/api/documents/${encodeURIComponent(documentId as string)}/pages`,
       );
       if (!res.ok) throw new Error("Failed to load pages");
       return res.json() as Promise<Page[]>;
     },
+    enabled: !!documentId,
   });
 
   // ── Load view URL ────────────────────────────────────────────────────────
 
   const loadView = useCallback(
     async (page: Page) => {
+      if (!documentId) return;
       setSelectedPageId(page.id);
       setViewData(null);
       setViewError(null);
@@ -167,6 +186,7 @@ export function PagesPanel({ documentId, mode }: Props) {
 
   const handlePrint = useCallback(
     async (page: Page) => {
+      if (!documentId) return;
       try {
         const res = await fetch(
           `/api/documents/${encodeURIComponent(documentId)}/pages/${encodeURIComponent(page.id)}/view`,
@@ -185,6 +205,7 @@ export function PagesPanel({ documentId, mode }: Props) {
 
   const deleteMutation = useMutation({
     mutationFn: async (pageId: string) => {
+      if (!documentId) throw new Error("No document");
       const res = await fetch(
         `/api/documents/${encodeURIComponent(documentId)}/pages/${encodeURIComponent(pageId)}`,
         { method: "DELETE" },
@@ -192,9 +213,7 @@ export function PagesPanel({ documentId, mode }: Props) {
       if (!res.ok) throw new Error("Delete failed");
     },
     onSuccess: (_data, deletedId) => {
-      queryClient.invalidateQueries({
-        queryKey: ["document-pages", documentId],
-      });
+      queryClient.invalidateQueries({ queryKey: pagesQueryKey });
       setDeleteTarget(null);
       // Clear viewer if the deleted page was being viewed.
       if (selectedPageId === deletedId) {
@@ -211,7 +230,127 @@ export function PagesPanel({ documentId, mode }: Props) {
       ? Math.max(...pages.map((p) => p.pageNumber)) + 1
       : 1;
 
-  // ── Render ───────────────────────────────────────────────────────────────
+  return {
+    t,
+    queryClient,
+    pagesQueryKey,
+    pages,
+    isLoading,
+    isError,
+    selectedPageId,
+    viewData,
+    viewLoading,
+    viewError,
+    loadView,
+    currentIndex,
+    canGoPrev,
+    canGoNext,
+    goToPage,
+    handlePrint,
+    deleteMutation,
+    dialogOpen,
+    setDialogOpen,
+    deleteTarget,
+    setDeleteTarget,
+    nextPageNumber,
+  };
+}
+
+export type PagesPanelState = ReturnType<typeof usePagesPanelState>;
+
+// ---------------------------------------------------------------------------
+// PagesViewerBox — the viewer-only box, usable standalone so it can be
+// rendered in a separate column from the table (Show Big Page mode).
+// ---------------------------------------------------------------------------
+
+export function PagesViewerBox({
+  state,
+  fill = false,
+}: {
+  state: PagesPanelState;
+  /** When true, fills 100% of its parent's height instead of using a fixed min-height. Used in "Show Big Page" mode. */
+  fill?: boolean;
+}) {
+  const { t, viewLoading, viewError, viewData } = state;
+
+  return (
+    <div
+      className={
+        fill
+          ? "h-full w-full overflow-hidden rounded-md border border-wire bg-white dark:border-zinc-700 dark:bg-zinc-950"
+          : "min-h-[320px] flex-1 overflow-hidden rounded-md border border-wire bg-white dark:border-zinc-700 dark:bg-zinc-950"
+      }
+    >
+      {viewLoading && (
+        <Centred fill={fill}>
+          <span className="text-sm text-fade">{t("viewer.loading")}</span>
+        </Centred>
+      )}
+      {!viewLoading && viewError && (
+        <Centred fill={fill}>
+          <span className="text-sm text-red-600 dark:text-red-400">
+            {t("viewer.error")}
+          </span>
+        </Centred>
+      )}
+      {!viewLoading && !viewError && !viewData && (
+        <Centred fill={fill}>
+          <span className="text-sm text-fade">{t("viewer.placeholder")}</span>
+        </Centred>
+      )}
+      {!viewLoading && !viewError && viewData && (
+        <PageViewer viewData={viewData} fill={fill} />
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// PagesPanel — header + table/controls + dialogs.
+//
+// In normal mode (`bigPage` false) it also renders the viewer inline,
+// side-by-side with the table, reproducing the original combined layout
+// exactly. In big-page mode it renders the table/controls only, full width
+// — the caller (DocumentForm) renders a `PagesViewerBox` separately in its
+// own right-hand column, fed by the same `state` object.
+// ---------------------------------------------------------------------------
+
+type Props = {
+  documentId:       string;
+  mode:             "edit" | "view";
+  state:            PagesPanelState;
+  bigPage?:         boolean;
+  onToggleBigPage?: () => void;
+};
+
+export function PagesPanel({
+  documentId,
+  mode,
+  state,
+  bigPage = false,
+  onToggleBigPage,
+}: Props) {
+  const {
+    t,
+    queryClient,
+    pagesQueryKey,
+    pages,
+    isLoading,
+    isError,
+    selectedPageId,
+    loadView,
+    currentIndex,
+    canGoPrev,
+    canGoNext,
+    goToPage,
+    handlePrint,
+    deleteMutation,
+    dialogOpen,
+    setDialogOpen,
+    deleteTarget,
+    setDeleteTarget,
+    nextPageNumber,
+  } = state;
 
   return (
     <section
@@ -255,15 +394,26 @@ export function PagesPanel({ documentId, mode }: Props) {
             </div>
           )}
         </div>
-        {mode === "edit" && (
-          <button
-            type="button"
-            onClick={() => setDialogOpen(true)}
-            className="inline-flex items-center gap-1 rounded-md bg-cta px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-cta-d"
-          >
-            + {t("addPage")}
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {onToggleBigPage && (
+            <button
+              type="button"
+              onClick={onToggleBigPage}
+              className="rounded-md border border-wire bg-white px-3 py-1.5 text-xs font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+            >
+              {bigPage ? t("showSmallPage") : t("showBigPage")}
+            </button>
+          )}
+          {mode === "edit" && (
+            <button
+              type="button"
+              onClick={() => setDialogOpen(true)}
+              className="inline-flex items-center gap-1 rounded-md bg-cta px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-cta-d"
+            >
+              + {t("addPage")}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Loading / error states */}
@@ -276,34 +426,28 @@ export function PagesPanel({ documentId, mode }: Props) {
 
       {/* Main body */}
       {!isLoading && !isError && (
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-start">
+        <div
+          className={
+            bigPage
+              ? "flex flex-col gap-3"
+              : "flex flex-col gap-3 lg:flex-row lg:items-start"
+          }
+        >
+          {/* ── Viewer (left on lg, below on sm) — only when not big-page ── */}
+          {!bigPage && (
+            <div className="order-2 lg:order-1 lg:flex-1">
+              <PagesViewerBox state={state} />
+            </div>
+          )}
 
-          {/* ── Viewer (left on lg, below on sm) ────────────────────────── */}
-          <div className="order-2 min-h-[320px] flex-1 overflow-hidden rounded-md border border-wire bg-white dark:border-zinc-700 dark:bg-zinc-950 lg:order-1">
-            {viewLoading && (
-              <Centred>
-                <span className="text-sm text-fade">{t("viewer.loading")}</span>
-              </Centred>
-            )}
-            {!viewLoading && viewError && (
-              <Centred>
-                <span className="text-sm text-red-600 dark:text-red-400">
-                  {t("viewer.error")}
-                </span>
-              </Centred>
-            )}
-            {!viewLoading && !viewError && !viewData && (
-              <Centred>
-                <span className="text-sm text-fade">{t("viewer.placeholder")}</span>
-              </Centred>
-            )}
-            {!viewLoading && !viewError && viewData && (
-              <PageViewer viewData={viewData} />
-            )}
-          </div>
-
-          {/* ── Table (right on lg, above on sm) ────────────────────────── */}
-          <div className="order-1 w-full lg:order-2 lg:w-[380px] lg:shrink-0">
+          {/* ── Table (right on lg, above on sm; full width in big-page) ── */}
+          <div
+            className={
+              bigPage
+                ? "w-full"
+                : "order-1 w-full lg:order-2 lg:w-[380px] lg:shrink-0"
+            }
+          >
             {pages.length === 0 ? (
               <p className="text-sm text-fade">{t("empty")}</p>
             ) : (
@@ -416,9 +560,7 @@ export function PagesPanel({ documentId, mode }: Props) {
           onClose={() => setDialogOpen(false)}
           onSuccess={() => {
             setDialogOpen(false);
-            queryClient.invalidateQueries({
-              queryKey: ["document-pages", documentId],
-            });
+            queryClient.invalidateQueries({ queryKey: pagesQueryKey });
           }}
         />
       )}
@@ -443,15 +585,25 @@ export function PagesPanel({ documentId, mode }: Props) {
 // PageViewer — renders the file inline when possible, download link otherwise
 // ---------------------------------------------------------------------------
 
-function PageViewer({ viewData }: { viewData: ViewData }) {
+function PageViewer({ viewData, fill = false }: { viewData: ViewData; fill?: boolean }) {
   if (isImage(viewData.mimeType)) {
     return (
-      <div className="flex min-h-[320px] items-center justify-center p-3">
+      <div
+        className={
+          fill
+            ? "flex h-full items-center justify-center p-3"
+            : "flex min-h-[320px] items-center justify-center p-3"
+        }
+      >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={viewData.url}
           alt={viewData.fileName}
-          className="max-h-[600px] max-w-full object-contain"
+          className={
+            fill
+              ? "max-h-full max-w-full object-contain"
+              : "max-h-[600px] max-w-full object-contain"
+          }
         />
       </div>
     );
@@ -462,7 +614,7 @@ function PageViewer({ viewData }: { viewData: ViewData }) {
       <iframe
         src={viewData.url}
         title={viewData.fileName}
-        className="h-[600px] w-full"
+        className={fill ? "h-full w-full" : "h-[600px] w-full"}
         style={{ border: "none" }}
       />
     );
@@ -471,13 +623,19 @@ function PageViewer({ viewData }: { viewData: ViewData }) {
   // Word, Excel, plain-text, and other types:
   // Browsers cannot render these natively inside an iframe or img.
   // Show a download prompt with the filename.
-  return <DownloadPrompt viewData={viewData} />;
+  return <DownloadPrompt viewData={viewData} fill={fill} />;
 }
 
-function DownloadPrompt({ viewData }: { viewData: ViewData }) {
+function DownloadPrompt({ viewData, fill = false }: { viewData: ViewData; fill?: boolean }) {
   const t = useTranslations("document.pages");
   return (
-    <div className="flex min-h-[320px] flex-col items-center justify-center gap-4 p-6 text-center">
+    <div
+      className={
+        fill
+          ? "flex h-full flex-col items-center justify-center gap-4 p-6 text-center"
+          : "flex min-h-[320px] flex-col items-center justify-center gap-4 p-6 text-center"
+      }
+    >
       <FileIcon mimeType={viewData.mimeType} />
       <div>
         <p className="text-sm font-medium text-ink dark:text-zinc-200">
@@ -792,9 +950,15 @@ function DeleteConfirmDialog({
 // ---------------------------------------------------------------------------
 
 /** Centred placeholder slot in the viewer area. */
-function Centred({ children }: { children: React.ReactNode }) {
+function Centred({ children, fill = false }: { children: React.ReactNode; fill?: boolean }) {
   return (
-    <div className="flex min-h-[320px] items-center justify-center p-4 text-center">
+    <div
+      className={
+        fill
+          ? "flex h-full items-center justify-center p-4 text-center"
+          : "flex min-h-[320px] items-center justify-center p-4 text-center"
+      }
+    >
       {children}
     </div>
   );

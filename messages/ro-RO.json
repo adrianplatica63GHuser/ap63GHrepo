@@ -816,6 +816,8 @@
     "pages": {
       "sectionTitle": "Pagini",
       "addPage": "Adaugă pagină",
+      "showBigPage": "Arată Pagina Mare",
+      "showSmallPage": "Arată Pagina Mică",
       "prevPage": "Anterioară",
       "nextPage": "Următoare",
       "pageIndicator": "{current} / {total}",
