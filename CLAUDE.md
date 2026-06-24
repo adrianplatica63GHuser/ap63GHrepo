@@ -104,6 +104,7 @@ Relationships: People ↔ Documents, People ↔ Properties, Documents ↔ Proper
 - Slice #15.11 — Reference Data Person panel: rename "Person Types" caption → "Physical Person Types" + move Judicial Person Types button to second position. ✅ Complete. Full detail below.
 - Slice #15.12 — Reference Data: new "Roles" panel (Person Roles, Property Persons, Document Persons) between Document and Others. ✅ Complete. Full detail below.
 - Slice #15.13 — Document form: "Show Big Page" toggle, mirroring Property's "Show Big Map". ✅ Complete. Full detail below.
+- Slice #15.14 — Document Pages viewer: mouse-wheel zoom + click-drag pan in "Show Big Page" mode. ✅ Complete. Full detail below.
 
 Each slice typically lands as multiple small commits, each individually green.
 
@@ -264,6 +265,31 @@ No other `valueList.lists.*` keys touched — `judicialPersonTypes` keeps its ex
 - `messages/en-GB.json`
 - `messages/ro-RO.json`
 - `src/app/admin/value-lists/_components/value-list-hub.tsx`
+- `CLAUDE.md`
+
+### Slice #15.14 — Document Pages viewer: wheel-zoom + drag-pan (detail)
+
+Pure frontend, scoped entirely to one component — no DB, API, migration, or i18n changes.
+
+**Why**: Follow-up to Slice #15.13. Once the page viewer could be shown large (the "Show Big Page" right-hand column), Adrian wanted to be able to zoom in/out on the displayed page with the mouse wheel and, once zoomed past the box's bounds, click-and-drag to pan around — the standard image-viewer interaction model (Figma/Google-Photos-style), not standard page scrolling.
+
+**Scope decision**: zoom/pan only applies in `fill === true` ("Show Big Page") mode — the small inline viewer keeps its original fixed-size, non-interactive behaviour, since Adrian's request was specific to the big-page case. Within big-page mode, zoom/pan is further restricted to the two content kinds where it's actually meaningful: images and PDFs. The loading/error/placeholder states and the generic Word/Excel/text "download prompt" fallback are left exactly as before — nothing useful to zoom there.
+
+**`src/app/documents/_components/pages-panel.tsx`** — all changes confined to `PagesViewerBox`:
+- New module constants `MIN_SCALE = 1`, `MAX_SCALE = 4`, and `IDENTITY_TRANSFORM = { scale: 1, tx: 0, ty: 0 }`.
+- `transform: { scale, tx, ty }` state holds the current zoom level and pan offset. Reset to `IDENTITY_TRANSFORM` whenever a different page is displayed, via the same "adjust state during render when a prop changes" pattern already established in this codebase (Admin Import's `resolvedFor`/`activeName` preview-reset precedent, Slice #15.01/15.02) — a `pageKey` derived from `selectedPageId` + the loaded `viewData.url` is compared against a `resolvedFor` state value; on mismatch, both are updated synchronously during render. This is deliberate: a `useEffect` doing the same reset would call `setState` synchronously at the top of its body, tripping `react-hooks/set-state-in-effect`.
+- `handleWheel` — cursor-anchored zoom: converts the mouse position to a point in the content's local (unscaled) coordinate space using the *current* transform, computes the new scale (`Math.exp(-deltaY * 0.0015)` per wheel tick, clamped to `[MIN_SCALE, MAX_SCALE]`), then solves for the `tx`/`ty` that keep that same local point under the cursor at the new scale — the standard "zoom toward cursor" formula. Snaps back to `IDENTITY_TRANSFORM` exactly at `MIN_SCALE` so zooming back out fully re-centers the page rather than leaving a residual pan offset.
+- `handleMouseDown` / a `window`-level `mousemove`/`mouseup` pair (registered only while `isDragging` is true, via `useEffect`) — click-and-drag panning, active only once `transform.scale > MIN_SCALE`. Listening on `window` rather than the local element means the drag continues smoothly even if the cursor briefly leaves the viewer's bounds mid-drag. Both `setTransform` calls inside this effect run inside the `mousemove`/`mouseup` event-listener callbacks, never synchronously in the effect body, so this doesn't trip the same lint rule either.
+- **Transparent capture overlay** (`<div className="absolute inset-0" onWheel=... onMouseDown=... onDoubleClick=...>`), rendered only when `zoomable` (computed from `fill` + content kind) is true. This was necessary because of a PDF-specific gotcha: the page's PDF preview renders via an `<iframe>`, which hosts a completely separate browsing context with its own document — mouse and wheel events that occur over the iframe's rendered content never bubble out to the parent page's event handlers at all. Without this overlay, zoom/pan would work perfectly over an image but silently stop responding the moment the cursor crossed onto a PDF. The overlay sits on top of both content kinds uniformly, so the same zoom/pan model now applies consistently regardless of file type — the trade-off (communicated to Adrian as the one real limitation of this approach) is that the PDF's own native in-frame scrolling/selection is no longer reachable while in big-page mode, superseded by the custom zoom/pan. Double-clicking the overlay resets to fit-to-box (`IDENTITY_TRANSFORM`) — a small bonus affordance, not explicitly requested, added because there was otherwise no way back to 100% short of scrolling the wheel back out by feel.
+- The viewer's outer box gained `relative` (anchor for the overlay's `absolute inset-0`) and a cursor affordance class — `cursor-zoom-in` at `scale === MIN_SCALE`, `cursor-grab`/`cursor-grabbing` (while actively dragging) once zoomed in.
+- The actual `<PageViewer>` output (image or iframe) is wrapped in a plain `<div style={{ transform: "translate(...) scale(...)", transformOrigin: "0 0" }}>` — CSS transforms only, no new layout system. `transformOrigin: "0 0"` was required to make the cursor-anchoring math line up: the formula assumes the content's local coordinate space starts at the same top-left corner as the viewer box, which only holds with a top-left transform origin (the CSS default of `50% 50%` would have anchored zoom on the box's center regardless of cursor position).
+
+**No other files touched.** `PagesViewerBox`'s exported signature (`{ state, fill }`) is unchanged, so `document-form.tsx`'s one call site (`<PagesViewerBox state={pagesState} fill />`) needed no edits — confirmed via grep that it's still the only consumer.
+
+**Verification note**: per the standing project gotcha, the sandbox's `tsc --noEmit`/`jest` are not reliable for this codebase. Verification here was manual: re-read the full rewritten `PagesViewerBox` function top to bottom to confirm JSX/brace balance, confirmed `useCallback`/`useEffect`/`useRef`/`useState` were already imported at the top of the file (no new imports needed), confirmed the cursor-anchored zoom formula algebraically (treating the CSS `translate(tx,ty) scale(s)` order, which composes as `screenPoint = (tx + s·lx, ty + s·ly)` for a local point `(lx,ly)` — matches the implementation), and confirmed `document-form.tsx`'s call site still matches the unchanged prop signature. **Adrian should still run `npm run lint` and manually re-test (open a saved document with an image and one with a PDF page → Show Big Page → scroll wheel to zoom in/out over each → drag to pan once zoomed → double-click to reset) before committing.**
+
+**Files touched**
+- `src/app/documents/_components/pages-panel.tsx`
 - `CLAUDE.md`
 
 ### Slice #15.13 — Document form: "Show Big Page" toggle (detail)

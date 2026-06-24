@@ -73,6 +73,12 @@ function isPdf(mimeType: string | null | undefined): boolean {
 const ACCEPTED_FILE_TYPES =
   "image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.xml,.html";
 
+// Zoom bounds for the "Show Big Page" viewer (mouse-wheel zoom + drag-to-pan,
+// Slice #15.14). Scale is unitless: 1 = fit-to-box (the original behaviour),
+// up to 4 = 400%.
+const MIN_SCALE = 1;
+const MAX_SCALE = 4;
+
 // ---------------------------------------------------------------------------
 // usePagesPanelState — shared state/logic for the Pages panel.
 //
@@ -263,6 +269,10 @@ export type PagesPanelState = ReturnType<typeof usePagesPanelState>;
 // rendered in a separate column from the table (Show Big Page mode).
 // ---------------------------------------------------------------------------
 
+// Identity transform — no zoom, no pan. Re-used as a stable constant so
+// resets don't allocate a new object shape each time.
+const IDENTITY_TRANSFORM = { scale: MIN_SCALE, tx: 0, ty: 0 };
+
 export function PagesViewerBox({
   state,
   fill = false,
@@ -271,14 +281,135 @@ export function PagesViewerBox({
   /** When true, fills 100% of its parent's height instead of using a fixed min-height. Used in "Show Big Page" mode. */
   fill?: boolean;
 }) {
-  const { t, viewLoading, viewError, viewData } = state;
+  const { t, viewLoading, viewError, viewData, selectedPageId } = state;
+
+  // --- Zoom (mouse wheel) + pan (click-and-drag) — "Show Big Page" only ---
+  //
+  // Only meaningful once the viewer is detached into its own tall column
+  // (fill === true); the small inline viewer keeps its original fixed-size,
+  // non-interactive behaviour. Zoomable content is restricted to images and
+  // PDFs — there's nothing useful to zoom on the loading/error/placeholder
+  // states or the generic download-prompt fallback (Word/Excel/text files).
+  const contentKind = viewData
+    ? isImage(viewData.mimeType)
+      ? "image"
+      : isPdf(viewData.mimeType)
+        ? "pdf"
+        : "other"
+    : null;
+  const zoomable =
+    fill &&
+    !viewLoading &&
+    !viewError &&
+    (contentKind === "image" || contentKind === "pdf");
+
+  const [transform, setTransform] = useState(IDENTITY_TRANSFORM);
+
+  // Reset zoom/pan whenever a different page is displayed. This uses React's
+  // documented "adjust state during render when a prop changes" pattern
+  // (same precedent as the Admin Import preview-reset logic) rather than a
+  // useEffect, so it never trips the `react-hooks/set-state-in-effect` rule.
+  const pageKey = `${selectedPageId ?? ""}:${viewData?.url ?? ""}`;
+  const [resolvedFor, setResolvedFor] = useState(pageKey);
+  if (pageKey !== resolvedFor) {
+    setResolvedFor(pageKey);
+    setTransform(IDENTITY_TRANSFORM);
+  }
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const dragRef = useRef<{
+    startX: number;
+    startY: number;
+    tx: number;
+    ty: number;
+  } | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  // Cursor-anchored zoom: the point under the mouse stays under the mouse
+  // after the scale changes. `deltaY < 0` (wheel up / pinch out) zooms in.
+  const handleWheel = useCallback(
+    (e: React.WheelEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      const rect = containerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      const zoomFactor = Math.exp(-e.deltaY * 0.0015);
+      setTransform((prev) => {
+        const nextScale = Math.min(
+          MAX_SCALE,
+          Math.max(MIN_SCALE, prev.scale * zoomFactor)
+        );
+        if (nextScale === prev.scale) return prev;
+        if (nextScale === MIN_SCALE) return IDENTITY_TRANSFORM;
+        const lx = (mx - prev.tx) / prev.scale;
+        const ly = (my - prev.ty) / prev.scale;
+        return { scale: nextScale, tx: mx - nextScale * lx, ty: my - nextScale * ly };
+      });
+    },
+    []
+  );
+
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (transform.scale <= MIN_SCALE) return;
+      e.preventDefault();
+      dragRef.current = {
+        startX: e.clientX,
+        startY: e.clientY,
+        tx: transform.tx,
+        ty: transform.ty,
+      };
+      setIsDragging(true);
+    },
+    [transform]
+  );
+
+  // Drag listeners live on `window` (not the overlay) while dragging, so the
+  // pan continues smoothly even if the cursor briefly leaves the viewer
+  // bounds mid-drag. Both setState calls below run inside event-listener
+  // callbacks, never synchronously in the effect body, so this does not
+  // trip `react-hooks/set-state-in-effect`.
+  useEffect(() => {
+    if (!isDragging) return;
+    const onMove = (e: MouseEvent) => {
+      if (!dragRef.current) return;
+      const dx = e.clientX - dragRef.current.startX;
+      const dy = e.clientY - dragRef.current.startY;
+      setTransform((prev) => ({
+        ...prev,
+        tx: dragRef.current!.tx + dx,
+        ty: dragRef.current!.ty + dy,
+      }));
+    };
+    const onUp = () => {
+      dragRef.current = null;
+      setIsDragging(false);
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+  }, [isDragging]);
+
+  const cursorClass = !zoomable
+    ? ""
+    : transform.scale > MIN_SCALE
+      ? isDragging
+        ? "cursor-grabbing"
+        : "cursor-grab"
+      : "cursor-zoom-in";
 
   return (
     <div
+      ref={containerRef}
       className={
-        fill
-          ? "h-full w-full overflow-hidden rounded-md border border-wire bg-white dark:border-zinc-700 dark:bg-zinc-950"
-          : "min-h-[320px] flex-1 overflow-hidden rounded-md border border-wire bg-white dark:border-zinc-700 dark:bg-zinc-950"
+        (fill
+          ? "relative h-full w-full overflow-hidden rounded-md border border-wire bg-white dark:border-zinc-700 dark:bg-zinc-950"
+          : "relative min-h-[320px] flex-1 overflow-hidden rounded-md border border-wire bg-white dark:border-zinc-700 dark:bg-zinc-950") +
+        (cursorClass ? ` ${cursorClass}` : "")
       }
     >
       {viewLoading && (
@@ -299,7 +430,35 @@ export function PagesViewerBox({
         </Centred>
       )}
       {!viewLoading && !viewError && viewData && (
-        <PageViewer viewData={viewData} fill={fill} />
+        <div
+          style={{
+            height: "100%",
+            width: "100%",
+            transform: `translate(${transform.tx}px, ${transform.ty}px) scale(${transform.scale})`,
+            transformOrigin: "0 0",
+          }}
+        >
+          <PageViewer viewData={viewData} fill={fill} />
+        </div>
+      )}
+      {/*
+        Transparent capture overlay — only mounted in zoomable "Show Big
+        Page" mode. PDFs render via an <iframe>, which has its own isolated
+        document; mouse/wheel events over its content never bubble out to
+        the parent page, so without this overlay zoom/pan would silently
+        stop working the moment the cursor crossed onto the PDF itself.
+        Sitting on top and capturing every event uniformly (for both images
+        and PDFs) trades away the PDF's native in-frame scrolling for
+        consistent custom zoom/pan — the behaviour Adrian asked for.
+        Double-click resets to fit-to-box.
+      */}
+      {zoomable && (
+        <div
+          className="absolute inset-0"
+          onWheel={handleWheel}
+          onMouseDown={handleMouseDown}
+          onDoubleClick={() => setTransform(IDENTITY_TRANSFORM)}
+        />
       )}
     </div>
   );
