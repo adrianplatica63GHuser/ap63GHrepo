@@ -373,13 +373,20 @@ export function PagesViewerBox({
   useEffect(() => {
     if (!isDragging) return;
     const onMove = (e: MouseEvent) => {
-      if (!dragRef.current) return;
-      const dx = e.clientX - dragRef.current.startX;
-      const dy = e.clientY - dragRef.current.startY;
+      // Capture the ref's current object into a local const right away. The
+      // setTransform updater below runs asynchronously (React may defer it),
+      // and by the time it executes, onUp may have already nulled
+      // dragRef.current — re-reading dragRef.current inside the updater is a
+      // stale-ref race that throws "Cannot read properties of null". `drag`
+      // holds a stable reference to the same object, immune to that race.
+      const drag = dragRef.current;
+      if (!drag) return;
+      const dx = e.clientX - drag.startX;
+      const dy = e.clientY - drag.startY;
       setTransform((prev) => ({
         ...prev,
-        tx: dragRef.current!.tx + dx,
-        ty: dragRef.current!.ty + dy,
+        tx: drag.tx + dx,
+        ty: drag.ty + dy,
       }));
     };
     const onUp = () => {
