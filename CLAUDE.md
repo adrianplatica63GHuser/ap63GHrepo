@@ -108,8 +108,95 @@ Relationships: People ↔ Documents, People ↔ Properties, Documents ↔ Proper
 - Slice #15.15 — Ops: replace Ciprian UAT's incremental migration-file delivery (UC-C6) with a single, fixed-name, fully-regenerated `ciprian-schema-update.sql` (full wipe + rebuild of schema and reference data every time, no hand-maintained seed file). `GA40.Operations.Guide.05.docx` delivered. ✅ Complete. Full detail below.
 - Slice #15.16 — Ciprian UAT bug fixes: vision API key never reached the app container + Admin Import "Internal server error" on Document upload + missing `update.bat`. ✅ Complete. Full detail below.
 - Slice #15.17 — Property corners: track original cadastral-file index per corner (survives reordering) + default corners display to Stereo 70. ✅ Complete. Full detail below.
+- Slice #16.UX.02 — Help Content: Administration screen-help (Background + How-To) + inline micro-hints. ✅ Complete. Full detail below.
+- Slice #16.UX.03 — Properties Map: click/double-click InfoWindow model (replaces hover-based InfoWindow). ✅ Complete. Full detail below.
 
 Each slice typically lands as multiple small commits, each individually green.
+
+### Slice #16.UX.03 — Properties Map: click/double-click InfoWindow model (detail)
+
+Pure frontend, single file — no DB, API, or i18n changes.
+
+**Why**: Adrian found the previous hover-triggered InfoWindow (a `mousemove` listener + a 2-second auto-close timer + per-id "already shown" tracking) imprecise on a dense map — moving the mouse near a cluster of overlapping parcels flashed InfoWindows on and off unpredictably as the cursor drifted. He wanted a click model instead: a single click opens an InfoWindow listing every property under the cursor (the existing overlap-aware hit-test from Slice #GIS.13.06, unchanged), and double-clicking a single unambiguous property navigates straight to its detail page, without first flashing an intermediate InfoWindow.
+
+**`src/app/properties/map/property-map.tsx`**
+- Removed the entire hover-tracking mechanism: the `document`-level `mousemove` listener, `closeTimerRef`, `shownIdsRef: Set<string>`, and `anchorRef`, plus the effect that wired them together.
+- Removed the now-dead `centroid(corners: Corner[]): LatLng` helper — it only existed to anchor the hover InfoWindow at a polygon's centroid; click position is used directly now.
+- New `handleMapClick(pos: LatLng | null)`: if `pos` is null, or `findOverlapping` (the unchanged Slice #GIS.13.06 hit-test) finds no match, clears `selected`; otherwise opens the InfoWindow listing every overlapping property, largest area first — same rendering as before.
+- New `handleMapDblClick(pos: LatLng | null)`: re-runs the same hit-test. If exactly one property matches **and** the map is not in select mode on the "all" tab (`!(selectMode && activeTabRef.current === "all")`), navigates straight to `/properties/{id}` via `useRouter()` — no InfoWindow shown for the common single-property case. Any ambiguous result (zero or ≥ 2 matches), or a double-click while in select mode, falls back to `handleMapClick(pos)` — i.e. behaves exactly like a single click.
+- `<Map>` now wires `onClick={(e) => handleMapClick(e.detail.latLng)}` and `onDblclick={(e) => handleMapDblClick(e.detail.latLng)}` directly — both use the library's plain-literal `MapMouseEvent` shape, per the project's established `event.detail.latLng` convention for `<Map>`-level events (not the `AdvancedMarker` method-call convention).
+- `<InfoWindow onCloseClick={() => setSelected(null)}>` is otherwise unchanged — same overlap list and Select/Unselect link logic from Slices #GIS.13.06 and #GIS.13.12.
+- New import: `import { useRouter } from "next/navigation";` + `const router = useRouter();`.
+
+**Note on slice numbering**: the code's own header comment self-labels this change "(Slice #15.12)" — that number was already used (and documented above) for the unrelated "Reference Data: new 'Roles' panel" slice, so it is renumbered here as **#16.UX.03** to avoid a collision in this log. No functional significance, just a documentation bookkeeping fix — the in-code comment was left as-is.
+
+**Verification note**: per the standing project gotcha, the sandbox's `tsc --noEmit`/`jest` are not reliable for this codebase. Verification here was manual: re-read the full rewritten file to confirm the removed hover-tracking effect had no other consumers (`shownIdsRef`/`anchorRef`/`closeTimerRef` were all local to the deleted effect), confirmed `findOverlapping`/`withGeometryRef`/`activeTabRef` (all pre-existing) are referenced with their established names and shapes, and confirmed `<Map>`'s `onClick`/`onDblclick` both receive the plain-literal `MapMouseEvent` per the project's documented event-type distinction. **Adrian should manually re-test** (single-click an isolated property → InfoWindow opens; double-click it → navigates directly with no InfoWindow flash; click and double-click an overlap area with 2+ properties → InfoWindow opens both times, no navigation) before committing.
+
+**Files touched**
+- `src/app/properties/map/property-map.tsx`
+- `CLAUDE.md`
+
+### Slice #16.UX.02 — Help Content: Administration screen-help + micro-hints (detail)
+
+DB migration + schema + query/validation layer + 6 new API routes + a new Administration page + two new app-facing components — no changes to any existing CRUD logic beyond two small sidebar-nav additions.
+
+**Why**: Adrian wanted a self-served, admin-editable on-screen help system — a per-screen "Background + How-To" popover (bilingual) plus lighter inline micro-hints for hidden mouse/keyboard behaviour that's easy to miss (e.g. drag-to-select on the Properties Map, wheel-zoom on the Document big-page viewer) — editable entirely from Administration, with no code change needed just to update the wording.
+
+**Code-side registry, not free text**: `screenKey` / `hintKey` values are not arbitrary strings typed into the admin UI — they must match an entry in `src/lib/help/registry.ts`, the single source of truth for which screens/hints exist in the app. A registry entry with no matching DB row simply renders nothing (no Help button, no hint shown) — so adding the *editable content* for a screen/hint is an admin-only step, but adding the *screen/hint itself* is still a code change, by design (the only way to guarantee the right `<HelpButton>`/`<HelpHint>` is actually wired into the right page first).
+
+**DB migration (`src/db/migration_026_help_content.sql`)**
+- `help_content` — one row per "screen": `id` (uuid PK), `screen_key` (text, NOT NULL UNIQUE), `background_en`/`background_ro`/`how_to_en`/`how_to_ro` (all nullable text), `created_at`, `updated_at`.
+- `help_hint` — one row per micro-hint, scoped to a screen: `id` (uuid PK), `screen_key`/`hint_key` (text, both NOT NULL), `text_en`/`text_ro` (nullable text), `created_at`, `updated_at`, with a unique index on `(screen_key, hint_key)` (`help_hint_screen_hint_unique`) — the same hint key can be reused across different screens, but not duplicated within one.
+
+**Schema (`src/db/schema/index.ts`)** — `helpContent` and `helpHint` tables added exactly per the migration, with the registry relationship spelled out in a header comment.
+
+**Registry (`src/lib/help/registry.ts`)** — the static list of every screen/hint the app actually surfaces help for; `validation.ts` and the query layer cross-check incoming `screenKey`/`hintKey` values against this list rather than trusting the DB or the admin form blindly.
+
+**Query + validation layers (`src/lib/help/queries.ts`, `validation.ts`)** — standard list/get/upsert helpers for both tables, keyed by `screenKey` (and `screenKey`+`hintKey` for hints).
+
+**API routes**
+- `GET/POST /api/admin/help-content` — list all screens' content / upsert one.
+- `GET /api/admin/help-content/[screenKey]` — fetch one screen's content (admin editor).
+- `GET/POST /api/admin/help-hints` — list all hints / upsert one.
+- `GET /api/admin/help-hints/[screenKey]/[hintKey]` — fetch one hint.
+- `GET /api/help/[screenKey]` — the public, app-facing read used by `<HelpButton>`/`<HelpHint>` to fetch a screen's content/hints at render time.
+
+**Admin UI (`src/app/admin/help-content/page.tsx`, `_components/help-content-hub.tsx`)** — two-tab hub: "Screens" and "Micro-hints". Each tab lists every registry entry with a Complete/Missing status badge, a left-hand picker list, and a right-hand editor form (Background EN/RO + How-To EN/RO for screens; hint text EN/RO for hints) with Save/Saving/Saved/error states and a live preview pane.
+
+**App-facing components (`src/components/help/help-button.tsx`, `help-hint.tsx`, `use-help-data.ts`)** — `<HelpButton screenKey="...">` renders a small help affordance that opens a popover with the screen's Background/How-To content (bilingual, follows the active locale); `<HelpHint screenKey="..." hintKey="...">` renders a lighter inline tip. `use-help-data.ts` is the shared data-fetching hook backing both, reading from `GET /api/help/[screenKey]`.
+
+**Sidebar (`src/components/sidebar/nav-config.ts`, `sidebar-nav.tsx`)** — new "Help Content" item under Administration (`HelpCircle` icon, `href: "/admin/help-content"`); `itemLabels` gained `helpContent: t("items.helpContent")`.
+
+**i18n** — `nav.items.helpContent` ("Help Content" / "Conținut Ajutor") plus a full new `help.*` namespace in both `messages/en-GB.json` and `messages/ro-RO.json`: `buttonLabel`, `title`, `background`, `howTo`, `close`, `hintLabel`, and an `admin.*` sub-namespace (`pageTitle`, `screensTab`, `hintsTab`, `statusComplete`, `statusMissing`, the four `label*` field labels, `save`/`saving`/`saveError`/`saved`, `previewTitle`, `noScreenSelected`, `noHintSelected`).
+
+**Manual setup required (not yet run)**
+1. Apply `src/db/migration_026_help_content.sql` to local Docker via `docker cp` + `psql -f` (per the standing migration gotcha).
+2. Apply the same migration to Supabase via the SQL Editor.
+3. Populate at least one screen's Background/How-To via Administration → Help Content before relying on `<HelpButton>` anywhere — an unpopulated registry entry renders nothing, by design, so an empty Help button is expected until content is added.
+
+**Verification note**: per the standing project gotcha, the sandbox's `tsc --noEmit`/`jest` are not reliable for this codebase. Verification here was manual: re-read every new file in full to confirm the registry/DB-row relationship is consistent (a `screenKey`/`hintKey` not in `registry.ts` is never reachable from the admin hub's picker lists), confirmed the unique index covers the right two columns for `help_hint`, and confirmed both message files remain valid JSON after the new `help.*` namespace was added. **Adrian should still run `npm run lint`** and spot-check one `<HelpButton>` and one `<HelpHint>` end-to-end (admin edit → save → reopen the same screen in the app → confirm the new text appears in the active locale) before committing.
+
+**Files touched**
+- `src/db/migration_026_help_content.sql` (new)
+- `src/db/schema/index.ts`
+- `src/lib/help/registry.ts` (new)
+- `src/lib/help/queries.ts` (new)
+- `src/lib/help/validation.ts` (new)
+- `src/app/api/admin/help-content/route.ts` (new)
+- `src/app/api/admin/help-content/[screenKey]/route.ts` (new)
+- `src/app/api/admin/help-hints/route.ts` (new)
+- `src/app/api/admin/help-hints/[screenKey]/[hintKey]/route.ts` (new)
+- `src/app/api/help/[screenKey]/route.ts` (new)
+- `src/app/admin/help-content/page.tsx` (new)
+- `src/app/admin/help-content/_components/help-content-hub.tsx` (new)
+- `src/components/help/help-button.tsx` (new)
+- `src/components/help/help-hint.tsx` (new)
+- `src/components/help/use-help-data.ts` (new)
+- `src/components/sidebar/nav-config.ts`
+- `src/components/sidebar/sidebar-nav.tsx`
+- `messages/en-GB.json`
+- `messages/ro-RO.json`
+- `CLAUDE.md`
 
 ### Slice #15.17 — Corner original index + Stereo70 default display (detail)
 
