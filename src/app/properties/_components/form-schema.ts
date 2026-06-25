@@ -31,12 +31,14 @@ const addressBlockSchema = z.object({
 export type AddressBlock = z.infer<typeof addressBlockSchema>;
 
 export const formSchema = z.object({
+  // Slice #15.16: FK ids to admin-managed lookup tables. "" = unset.
+  propertyTypeId:  z.string(),
   nickname:        z.string(),
   tarlaSola:       z.string(),
   parcela:         z.string(),
   cadastralNumber: z.string(),
   carteFunciara:   z.string(),
-  useCategory:     z.string(), // "" | "CATEG1" | "CATEG2" | "CATEG3"
+  useCategoryId:   z.string(), // "" | <lookup_use_category.id uuid>
   surfaceAreaMp:   z
     .string()
     .refine(
@@ -59,9 +61,10 @@ const emptyAddress: AddressBlock = {
 };
 
 export const emptyFormValues: FormValues = {
+  propertyTypeId: "",
   nickname: "", tarlaSola: "", parcela: "",
   cadastralNumber: "", carteFunciara: "",
-  useCategory: "", surfaceAreaMp: "", notes: "",
+  useCategoryId: "", surfaceAreaMp: "", notes: "",
   address: { ...emptyAddress },
 };
 
@@ -70,12 +73,13 @@ export const emptyFormValues: FormValues = {
 // ---------------------------------------------------------------------------
 
 type PropertyRow = {
+  propertyTypeId:  string | null;
   nickname:        string | null;
   tarlaSola:       string | null;
   parcela:         string | null;
   cadastralNumber: string | null;
   carteFunciara:   string | null;
-  useCategory:     string | null;
+  useCategoryId:   string | null;
   surfaceAreaMp:   string | null;
   notes:           string | null;
 };
@@ -96,12 +100,13 @@ export function fromApiPayload(input: {
   const p = input.property;
   const a = input.address;
   return {
+    propertyTypeId:  p.propertyTypeId  ?? "",
     nickname:        p.nickname        ?? "",
     tarlaSola:       p.tarlaSola       ?? "",
     parcela:         p.parcela         ?? "",
     cadastralNumber: p.cadastralNumber ?? "",
     carteFunciara:   p.carteFunciara   ?? "",
-    useCategory:     p.useCategory     ?? "",
+    useCategoryId:   p.useCategoryId   ?? "",
     surfaceAreaMp:   p.surfaceAreaMp   ?? "",
     notes:           p.notes           ?? "",
     address: a
@@ -136,12 +141,13 @@ function blank(s: string): string | null {
 // ---------------------------------------------------------------------------
 
 const TOP_LEVEL_TEXT_FIELDS = [
+  "propertyTypeId",
   "nickname",
   "tarlaSola",
   "parcela",
   "cadastralNumber",
   "carteFunciara",
-  "useCategory",
+  "useCategoryId",
   "surfaceAreaMp",
   "notes",
 ] as const satisfies readonly (keyof Omit<FormValues, "address">)[];
@@ -168,12 +174,13 @@ export function toApiPayload(
   const addrCountry = blank(values.address.country);
 
   return {
+    propertyTypeId:  blank(values.propertyTypeId),
     nickname:        blank(values.nickname),
     tarlaSola:       blank(values.tarlaSola),
     parcela:         blank(values.parcela),
     cadastralNumber: blank(values.cadastralNumber),
     carteFunciara:   blank(values.carteFunciara),
-    useCategory:     blank(values.useCategory) as "CATEG1" | "CATEG2" | "CATEG3" | null,
+    useCategoryId:   blank(values.useCategoryId),
     surfaceAreaMp:   blank(values.surfaceAreaMp) != null
                        ? parseFloat(values.surfaceAreaMp)
                        : null,

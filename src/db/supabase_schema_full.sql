@@ -97,8 +97,10 @@ CREATE TYPE person_type AS ENUM ('NATURAL', 'JUDICIAL');
 -- NOTE (Slice #15.07): the old hardcoded judicial_type enum is gone.
 -- judicial_person.judicial_person_type_id is now a FK to
 -- lookup_judicial_person_type (admin-managed via Reference Data) — see below.
-CREATE TYPE property_type AS ENUM ('LAND');
-CREATE TYPE use_category AS ENUM ('CATEG1', 'CATEG2', 'CATEG3');
+-- NOTE (Slice #15.16): the old hardcoded property_type ('LAND') and
+-- use_category ('CATEG1'/'CATEG2'/'CATEG3') enums are gone. property.type and
+-- property.use_category are now nullable FK columns (property_type_id /
+-- use_category_id) to lookup_property_type / lookup_use_category — see below.
 -- NOTE (Slice #15.05): the old hardcoded paperwork_type enum is gone.
 -- Document "type" is now a FK to lookup_document_type (admin-managed via
 -- Reference Data), keyed off an immutable `key` slug column — see below.
@@ -244,13 +246,17 @@ CREATE TABLE property (
   id                  uuid          PRIMARY KEY DEFAULT gen_random_uuid(),
   principal_object_id uuid          NOT NULL UNIQUE REFERENCES principal_object(id),
   code                text          NOT NULL UNIQUE,
-  type                property_type NOT NULL DEFAULT 'LAND',
+  -- property_type_id / use_category_id: nullable FKs to lookup_property_type /
+  -- lookup_use_category. Those tables are created further down, so the FK
+  -- constraints are added via ALTER TABLE after them (deferred-FK pattern,
+  -- same as natural_person.citizenship_id). Slice #15.16.
+  property_type_id    uuid,
   nickname            text,
   tarla_sola          text,
   parcela             text,
   cadastral_number    text,
   carte_funciara      text,
-  use_category        use_category,
+  use_category_id     uuid,
   surface_area_mp     numeric(12,2),
   notes               text,
   created_at          timestamptz   NOT NULL DEFAULT now(),
@@ -361,6 +367,15 @@ CREATE TRIGGER lookup_use_category_touch_updated_at
 INSERT INTO lookup_use_category (name, sort_order) VALUES
   ('Arabil', 1), ('Pășune', 2), ('Fânețe', 3), ('Vie', 4),
   ('Livadă', 5), ('Pădure', 6), ('Ape',    7), ('Neproductiv', 8);
+
+-- Deferred FKs for property (Slice #15.16): lookup_property_type and
+-- lookup_use_category did not yet exist when `property` was created above.
+ALTER TABLE property
+  ADD CONSTRAINT property_property_type_id_fkey
+  FOREIGN KEY (property_type_id) REFERENCES lookup_property_type(id) ON DELETE SET NULL;
+ALTER TABLE property
+  ADD CONSTRAINT property_use_category_id_fkey
+  FOREIGN KEY (use_category_id) REFERENCES lookup_use_category(id) ON DELETE SET NULL;
 
 -- ── lookup_person_type ───────────────────────────────────────
 CREATE TABLE lookup_person_type (

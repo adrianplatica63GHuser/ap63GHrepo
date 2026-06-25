@@ -110,8 +110,121 @@ Relationships: People ↔ Documents, People ↔ Properties, Documents ↔ Proper
 - Slice #15.17 — Property corners: track original cadastral-file index per corner (survives reordering) + default corners display to Stereo 70. ✅ Complete. Full detail below.
 - Slice #16.UX.02 — Help Content: Administration screen-help (Background + How-To) + inline micro-hints. ✅ Complete. Full detail below.
 - Slice #16.UX.03 — Properties Map: click/double-click InfoWindow model (replaces hover-based InfoWindow). ✅ Complete. Full detail below.
+- Slice #15.18 — Ciprian UAT bug fixes: Property-from-text-file import "Internal server error" — two independent causes: (1) Stereo70 grid file missing from the Docker runtime image; (2) `property_corner.original_index` column missing from Ciprian's database (Slice #15.17 migration never delivered). ✅ Complete. Full detail below.
+- Slice #15.19 — Property Type & Use Category: drop the `property_type` ("LAND") and `use_category` (CATEG1/2/3) Postgres enums; replace with nullable FK columns to admin-managed `lookup_property_type` / `lookup_use_category`; add a Property Type dropdown + re-point the Use Category dropdown on the property form. ✅ Complete. Full detail below. (The slice-input doc labelled this "Slice.15.16"; renumbered to #15.19 to avoid colliding with the existing #15.16 Ciprian-UAT slice.)
 
 Each slice typically lands as multiple small commits, each individually green.
+
+### Slice #15.19 — Property Type & Use Category: enum → Reference-Data FK (detail)
+
+DB migration + schema + validation + query layer + property form UI + i18n + seed + tests. The two reference-data tables (`lookup_property_type`, `lookup_use_category`) already existed and are admin-managed via Administration → Reference Data; this slice just makes `property` reference them by FK instead of using the old hardcoded Postgres enums.
+
+**Why**: Adrian wants property type and use category operator-managed (add/rename/remove rows in Reference Data) rather than baked into a code-side enum. The `property_type` enum had a single placeholder value (`LAND`) and `use_category` had three placeholders (`CATEG1/2/3`) that never mapped to anything real. Both fields are nullable.
+
+**Backfill decision (Adrian)**: no backfill. The old enum values have no canonical lookup-row equivalent, so every existing property starts with `property_type_id` / `use_category_id` = NULL and is re-picked from the new dropdowns.
+
+**DB migration (`src/db/migration_028_property_type_usecat_fk.sql`)**
+- `ADD COLUMN IF NOT EXISTS property_type_id uuid REFERENCES lookup_property_type(id) ON DELETE SET NULL` (nullable).
+- `ADD COLUMN IF NOT EXISTS use_category_id uuid REFERENCES lookup_use_category(id) ON DELETE SET NULL` (nullable).
+- `DROP COLUMN IF EXISTS type` / `DROP COLUMN IF EXISTS use_category`, then `DROP TYPE IF EXISTS property_type` / `DROP TYPE IF EXISTS use_category`. Idempotent throughout. No backfill.
+
+**Schema (`src/db/schema/index.ts`)** — removed both `pgEnum` declarations; `property` gained `propertyTypeId` / `useCategoryId` (nullable FK, `onDelete: "set null"`) in place of the old `type` (was `notNull().default("LAND")`) and `useCategory` columns. Both FKs use forward thunks to `lookupPropertyType` / `lookupUseCategory` (defined later in the file) — same pattern as `naturalPerson.citizenshipId`.
+
+**`supabase_schema_full.sql`** — dropped the two `CREATE TYPE` lines; `property` now declares `property_type_id uuid` / `use_category_id uuid` as plain columns, with the two FK constraints added via `ALTER TABLE` right after the `lookup_use_category` seed (deferred-FK pattern, since the lookup tables are created after `property`). `supabase_reset.sql`'s `DROP TYPE IF EXISTS property_type/use_category CASCADE` lines were left as-is — harmless idempotent guards that also clean up pre-existing cloud DBs on a full reset.
+
+**Validation (`src/lib/properties/validation.ts`)** — removed the now-invalid `.omit({ type: true })` (the column no longer exists); `propertyBase` `.extend(...)` gained `propertyTypeId: z.string().uuid().nullish()` and `useCategoryId: z.string().uuid().nullish()`. Empty selection → null; a non-uuid is rejected with 400.
+
+**Query layer (`src/lib/properties/queries.ts`)** — `createProperty` drops the hardcoded `type: "LAND"` and writes `propertyTypeId` / `useCategoryId`; `updateProperty`'s `propPatch` swaps the `useCategory` line for `propertyTypeId` + `useCategoryId`. `listProperties` dropped the `useCategory` select column and `PropertyListItem` field (the list view never displayed it). `getPropertyById` / `PropertyFull` use a bare `.select()` so the new columns surface automatically.
+
+**Property form (`src/app/properties/_components/`)**
+- `form-schema.ts`: `FormValues` gained `propertyTypeId` (string, "" = unset) and renamed `useCategory` → `useCategoryId`; `emptyFormValues`, `PropertyRow`, `fromApiPayload`, `TOP_LEVEL_TEXT_FIELDS`, and `toApiPayload` all updated (the old `as "CATEG1"|...` cast removed; both now pass through `blank(...)`).
+- `property-form.tsx`: two `useQuery`s fetch options from `/api/admin/value-lists/property-types` and `/api/admin/value-lists/use-categories`, both keyed `["value-list", <listKey>]` — the SAME key the admin `ValueListModal` invalidates on save/delete, so the dropdowns stay in sync with Reference-Data edits with no extra cross-invalidation (mirrors the Slice #15.07 judicial-person-type dropdown; deliberately avoids the Slice #15.06 document-types stale-dropdown special case). A new **Property Type** `SelectField` was added as the first cadastral field; the existing **Use Category** `SelectField` was re-pointed to `useCategoryId` with options from the lookup. Both prepend a `noneOption` ("— none —") empty choice.
+- `list-view.tsx`: dropped the unused `useCategory` field from its local item type.
+
+**i18n** — added `property.fields.propertyType` ("Property Type" / "Tip proprietate") and `property.fields.noneOption` ("— none —" / "— niciunul —") to both message files; trimmed the now-dead `property.useCategories.CATEG1/2/3` keys (kept the unused `empty` dash, harmless). The `property.fields.useCategory` label key was kept — it still labels the same dropdown.
+
+**Seed (`src/db/seed.ts`)** — removed the `UseCategory` type, the `useCategory` field from `SeedPropertyRow`, the `useCategory: "CATEGn"` value on all 30 seed rows, and the `type: "LAND"` / `useCategory` lines from the property insert. Seeded properties now have NULL type and use category (consistent with the no-backfill decision). The seed does not resolve type/category lookup ids — not required.
+
+**Tests** — `property.test.ts`: removed `useCategory` from the populated-form / create-payload cases, updated `fromApiPayload` / `toApiPayload` stubs to `propertyTypeId` / `useCategoryId`, and replaced the "rejects an invalid useCategory" enum test with "rejects a non-uuid useCategoryId" + "rejects a non-uuid propertyTypeId". `properties-api.test.ts`: updated `stubFull.property` (dropped `type: "LAND"`, added `propertyTypeId/useCategoryId: null`) and changed the 400 test to send `{ useCategoryId: "WRONG" }`.
+
+**Manual setup required (not yet run)**
+1. Apply `src/db/migration_028_property_type_usecat_fk.sql` to local Docker via `docker cp` + `psql -f` (per the standing migration gotcha — `npm run db:migrate` does not apply it locally):
+   ```powershell
+   docker cp src/db/migration_028_property_type_usecat_fk.sql ga40prj-postgres:/tmp/m028.sql
+   docker exec ga40prj-postgres psql -U postgres -d ga40db -f /tmp/m028.sql
+   ```
+2. Apply the same migration to Supabase via the SQL Editor.
+3. Ciprian UAT: picked up automatically by the next `build-ciprian-image.ps1` run (Slice #15.15's auto-regenerated `ciprian-schema-update.sql` does a full schema rebuild from the live dev DB).
+
+**Verification note**: per the standing project gotcha, the sandbox's `tsc --noEmit` / `jest` are not reliable here. Verification was a repo-wide grep sweep confirming zero remaining references to `propertyTypeEnum` / `propertyCategoryEnum` / the old `property.useCategory` / `.type "LAND"` / `CATEG[0-9]` in code (only intentional comments and the kept `fields.useCategory` label remain), plus a manual read-through of the end-to-end shape (schema → migration → validation → queries → form-schema → property-form → tests) and a JSON-validity check on both message files. **Adrian should run `npm run lint` + `npx jest` and manually re-test** (open Add new property → both dropdowns populate from Reference Data and default to "— none —"; save with each set/unset; open an existing property → dropdowns reflect the stored ids; add a row in Reference Data → Property Types and confirm it appears in the form dropdown without a reload) before committing.
+
+**Files touched**
+- `src/db/migration_028_property_type_usecat_fk.sql` (new)
+- `src/db/schema/index.ts`
+- `src/db/supabase_schema_full.sql`
+- `src/lib/properties/validation.ts`
+- `src/lib/properties/queries.ts`
+- `src/app/properties/_components/form-schema.ts`
+- `src/app/properties/_components/property-form.tsx`
+- `src/app/properties/list-view.tsx`
+- `src/db/seed.ts`
+- `src/__tests__/property.test.ts`
+- `src/__tests__/properties-api.test.ts`
+- `messages/en-GB.json`
+- `messages/ro-RO.json`
+- `CLAUDE.md`
+
+### Slice #15.18 — Ciprian UAT bug fixes: Property text-file import 500 (detail)
+
+Two independent bugs, both producing the identical generic "Internal server error" in the browser. Found by Adrian testing the Ciprian package built after Slice #15.16/#15.17, then persisting after the first fix was applied.
+
+**Bug report (Adrian)**: in the Ciprian UAT package, importing a JPG as a Document via Admin Import works fine, but importing a `.txt` file with Stereo70 coordinates as a Property fails with a generic "Internal server error." Error persisted after Bug 1's Dockerfile fix was applied and the image was redelivered.
+
+**Bug 1 root cause**: `src/lib/geo/transdatRO.ts` (the Stereo70 ↔ WGS84 coordinate-transform module, used by `POST /api/properties/parse-text` whenever a `.txt` cadastral file is imported) reads a binary correction-grid file from disk on first use:
+```ts
+const GRID_PATH = path.join(process.cwd(), 'src', 'lib', 'geo', 'grids', 'ETRS89_KRASOVSCHI42_2DJ.GRD');
+...
+_gridBuf = fs.readFileSync(GRID_PATH);
+```
+`Dockerfile`'s runtime stage (`runner`) builds on Next.js's `standalone` output and only ever copies four things into the image: `messages/`, `.next/standalone`, `.next/static`, and `public/` — `src/` itself is never copied. Next's standalone-output file tracer only follows real module imports (`import`/`require`); a raw `fs.readFileSync` call on a path built at runtime from `process.cwd()` isn't statically traceable, so it was never swept in automatically the way `node_modules` dependencies are. The grid file (`src/lib/geo/grids/ETRS89_KRASOVSCHI42_2DJ.GRD`, 61 KB, the only file in that directory) was therefore completely absent from the Ciprian image; `fs.readFileSync` threw `ENOENT` the moment any code path called `stereo70ToWgs84`/`wgs84ToStereo70`, surfacing to the browser as a generic 500.
+
+This is why the JPG-as-Document import worked but the text-file Property import didn't: the Document/file-upload path (already fixed for Ciprian in Slice #15.16) never touches `transdatRO.ts` at all, while the text-file Property import calls `parse-text`, which converts every parsed corner from Stereo70 to WGS84 before returning — guaranteed to hit the missing-file code path on the very first corner. Local dev (`npm run dev`) and Vercel are both unaffected: neither runs from this Dockerfile's `runner` stage, so `process.cwd()` there always resolves to a checkout that still has `src/lib/geo/grids/` on disk.
+
+**Bug 1 fix (`Dockerfile`)** — one new `COPY` line in the `runner` stage, right after the existing `public/` copy:
+```dockerfile
+# transdatRO.ts reads this binary grid file from disk at runtime via
+# fs.readFileSync(path.join(process.cwd(), "src", "lib", "geo", "grids", ...)).
+# It is NOT picked up by Next's standalone output tracing (a raw fs.readFileSync
+# on a process.cwd()-built path isn't statically traceable), so without this
+# explicit copy the file is missing in the runtime image and any Stereo70 <->
+# WGS84 conversion (e.g. importing a property from a text file) throws ENOENT,
+# surfacing as a generic 500 "Internal server error".
+COPY --from=builder /app/src/lib/geo/grids ./src/lib/geo/grids
+```
+Copies the whole `grids/` directory (not just the one current file) so any future additional grid file needs no further Dockerfile change. The destination path (`./src/lib/geo/grids`, relative to the `runner` stage's `WORKDIR /app`) exactly matches what `GRID_PATH`'s `path.join(process.cwd(), 'src', 'lib', 'geo', 'grids', ...)` resolves to at runtime (`process.cwd()` is `/app` when `node server.js` runs from that `WORKDIR`), so no code change to `transdatRO.ts` was needed — only the missing copy step.
+
+**Bug 2 root cause**: Slice #15.17 added `migration_027_property_corner_original_index.sql`, which adds `property_corner.original_index` (nullable integer) to the DB. The current app code in `src/lib/properties/queries.ts` unconditionally writes `originalIndex: c.originalIndex ?? null` into every `propertyCorner` insert in both `createProperty` (line ~209) and `updateProperty` (line ~287). If Ciprian's database was never updated with this migration — i.e., `migration_027` was never included in a `ciprian-schema-update.sql` that Ciprian applied — every property-corner insert throws a Postgres `column "original_index" of relation "property_corner" does not exist` error. This is an unhandled DB error caught by `dbErrorToResponse`/`unexpectedError` in `POST /api/properties`, returning the same generic 500 as Bug 1. Because both bugs produce identical browser-facing symptoms, Bug 2 was invisible until Bug 1's Dockerfile fix was redelivered and the error still persisted.
+
+The text-file import path calls `POST /api/properties/parse-text` (succeeds — no corner write here) then `POST /api/properties` with the parsed corners. It is the second call that fails at the `INSERT INTO property_corner` step due to the missing column.
+
+**Bug 2 fix**: no code change. `build-ciprian-image.ps1`'s Step 5 assembles `ciprian-schema-update.sql` by doing a fresh `pg_dump --schema-only` from the live `ga40prj-postgres` container, which always reflects the current schema including the `original_index` column (as long as `migration_027` has been applied to Adrian's local Docker — which it must have been, since the app has been running locally with that code since Slice #15.17). When Ciprian applies this file (full wipe + rebuild), his `property_corner` table gains the column automatically.
+
+**Delivery**: this is **UC-C6** (schema change), not UC-C5. Both files must be sent to Ciprian. Confirmed: the earlier guidance in this session to treat this as UC-C5 was incorrect.
+
+1. Ensure `migration_027_property_corner_original_index.sql` has been applied to your local `ga40prj-postgres` (it should have been per Slice #15.17 instructions).
+2. Run `.\build-ciprian-image.ps1` — produces both `ga40prj-app.tar` (with the Bug 1 grid-file fix baked in) and `ciprian-schema-update.sql` (with the `original_index` column in the schema, and Bug 2 resolved).
+3. Send Ciprian **both files** (replace his existing copies).
+4. Ciprian: run `update.bat`, then apply the schema update:
+```powershell
+docker cp ciprian-schema-update.sql ciprian-ga40prj-postgres:/tmp/ciprian-schema-update.sql
+docker exec ciprian-ga40prj-postgres psql -U postgres -d ga40db -v ON_ERROR_STOP=1 -f /tmp/ciprian-schema-update.sql 2>&1 | Tee-Object -FilePath schema-update.log
+```
+
+**Verification note**: per the standing project gotcha, the sandbox cannot run Docker, so neither fix was tested end-to-end. Bug 1 was verified by reading `transdatRO.ts` and `Dockerfile` in full. Bug 2 was verified by reading `src/lib/properties/queries.ts` lines 199–213 and 276–291 in full — the `originalIndex` column is present in both insert value maps with no conditional guard — and by confirming via grep that `property_corner.original_index` is defined in `src/db/schema/index.ts` and first appears in `migration_027`. **Adrian should rebuild and redeliver both files, then re-test the exact repro (Admin Import → `.txt` coordinate file → Classify as Property) on Ciprian's machine.**
+
+**Files touched**
+- `Dockerfile` (Bug 1)
+- `CLAUDE.md`
 
 ### Slice #16.UX.03 — Properties Map: click/double-click InfoWindow model (detail)
 

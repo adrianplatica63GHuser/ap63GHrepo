@@ -55,6 +55,7 @@
       "notes": "Note"
     },
     "fields": {
+      "propertyType": "Tip proprietate",
       "code": "Cod",
       "nickname": "Poreclă",
       "tarlaSola": "Nr. tarla / sola",
@@ -63,13 +64,11 @@
       "carteFunciara": "Nr. CF",
       "useCategory": "Categorie de folosință",
       "surfaceAreaMp": "Suprafață (m²)",
-      "notes": "Note"
+      "notes": "Note",
+      "noneOption": "— niciunul —"
     },
     "useCategories": {
-      "empty": "—",
-      "CATEG1": "Categorie 1",
-      "CATEG2": "Categorie 2",
-      "CATEG3": "Categorie 3"
+      "empty": "—"
     },
     "address": {
       "streetLine": "Stradă, Nr., Bloc, Etaj, Ap.",

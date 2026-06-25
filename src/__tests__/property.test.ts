@@ -54,7 +54,6 @@ describe("formSchema", () => {
       parcela:         "P145",
       cadastralNumber: "12345",
       carteFunciara:   "CF001",
-      useCategory:     "CATEG1",
       surfaceAreaMp:   "450.50",
       notes:           "Some notes",
       address: {
@@ -107,7 +106,8 @@ describe("toApiPayload", () => {
     expect(p.parcela).toBeNull();
     expect(p.cadastralNumber).toBeNull();
     expect(p.carteFunciara).toBeNull();
-    expect(p.useCategory).toBeNull();
+    expect(p.propertyTypeId).toBeNull();
+    expect(p.useCategoryId).toBeNull();
     expect(p.surfaceAreaMp).toBeNull();
     expect(p.notes).toBeNull();
     expect(p.address).toBeNull();
@@ -169,7 +169,7 @@ describe("fromApiPayload", () => {
       property: {
         nickname: null, tarlaSola: null, parcela: null,
         cadastralNumber: null, carteFunciara: null,
-        useCategory: null, surfaceAreaMp: null, notes: null,
+        propertyTypeId: null, useCategoryId: null, surfaceAreaMp: null, notes: null,
       },
       address: null,
     });
@@ -184,7 +184,7 @@ describe("fromApiPayload", () => {
       property: {
         nickname: null, tarlaSola: null, parcela: null,
         cadastralNumber: null, carteFunciara: null,
-        useCategory: null, surfaceAreaMp: "450.50", notes: null,
+        propertyTypeId: null, useCategoryId: null, surfaceAreaMp: "450.50", notes: null,
       },
       address: null,
     });
@@ -196,7 +196,7 @@ describe("fromApiPayload", () => {
       property: {
         nickname: null, tarlaSola: null, parcela: null,
         cadastralNumber: null, carteFunciara: null,
-        useCategory: null, surfaceAreaMp: null, notes: null,
+        propertyTypeId: null, useCategoryId: null, surfaceAreaMp: null, notes: null,
       },
       address: {
         streetLine: "Strada X 5",
@@ -218,7 +218,7 @@ describe("fromApiPayload", () => {
       property: {
         nickname: null, tarlaSola: null, parcela: null,
         cadastralNumber: null, carteFunciara: null,
-        useCategory: null, surfaceAreaMp: null, notes: null,
+        propertyTypeId: null, useCategoryId: null, surfaceAreaMp: null, notes: null,
       },
       address: null,
     });
@@ -244,7 +244,8 @@ describe("propertyCreateSchema", () => {
         parcela:         "P145",
         cadastralNumber: "12345",
         carteFunciara:   "CF001",
-        useCategory:     "CATEG1",
+        useCategoryId:   "11111111-1111-1111-1111-111111111111",
+        propertyTypeId:  "22222222-2222-2222-2222-222222222222",
         surfaceAreaMp:   450.5,
         notes:           "test",
         address: {
@@ -279,10 +280,18 @@ describe("propertyCreateSchema", () => {
     ).toBe(false);
   });
 
-  it("rejects an invalid useCategory", () => {
+  it("rejects a non-uuid useCategoryId", () => {
     expect(
       propertyCreateSchema.safeParse({
-        useCategory: "INVALID",
+        useCategoryId: "INVALID",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects a non-uuid propertyTypeId", () => {
+    expect(
+      propertyCreateSchema.safeParse({
+        propertyTypeId: "INVALID",
       }).success,
     ).toBe(false);
   });

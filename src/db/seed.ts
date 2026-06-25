@@ -29,7 +29,6 @@ import {
 type AddressKind = "HOME" | "POSTAL" | "HEADQUARTERS" | "CORRESPONDENCE";
 type Gender = "MALE" | "FEMALE";
 type IdDocType = "ID_CARD" | "PASSPORT";
-type UseCategory = "CATEG1" | "CATEG2" | "CATEG3";
 
 type SeedAddress = {
   kind: AddressKind;
@@ -68,7 +67,6 @@ type SeedPropertyRow = {
   parcela?: string;
   cadastralNumber?: string;
   carteFunciara?: string;
-  useCategory?: UseCategory;
   surfaceAreaMp?: string;
   notes?: string;
   address?: {
@@ -342,7 +340,7 @@ const PROPERTIES: SeedPropertyRow[] = [
     nickname: "Lot 1 - Str. Principala",
     tarlaSola: "T12", parcela: "P234/1",
     cadastralNumber: "23-12-234/1", carteFunciara: "CF10234",
-    useCategory: "CATEG1", surfaceAreaMp: "512.00",
+    surfaceAreaMp: "512.00",
     notes: "Rectangular residential plot, access from Strada Principala.",
     address: { streetLine: "Strada Principala 14", postalCode: "077030", locality: "Bragadiru", county: "Ilfov", country: "Romania" },
     corners: [
@@ -356,7 +354,7 @@ const PROPERTIES: SeedPropertyRow[] = [
     nickname: "Lot 2 - Str. Livezilor",
     tarlaSola: "T12", parcela: "P235",
     cadastralNumber: "23-12-235", carteFunciara: "CF10235",
-    useCategory: "CATEG1", surfaceAreaMp: "621.00",
+    surfaceAreaMp: "621.00",
     address: { streetLine: "Strada Livezilor 3", postalCode: "077030", locality: "Bragadiru", county: "Ilfov", country: "Romania" },
     corners: [
       { lat: 44.41380, lon: 25.97120 },
@@ -369,7 +367,7 @@ const PROPERTIES: SeedPropertyRow[] = [
     nickname: "Lot 3 - Str. Florilor",
     tarlaSola: "T11", parcela: "P198",
     cadastralNumber: "23-11-198", carteFunciara: "CF10198",
-    useCategory: "CATEG1", surfaceAreaMp: "480.00",
+    surfaceAreaMp: "480.00",
     address: { streetLine: "Strada Florilor 7", postalCode: "077030", locality: "Bragadiru", county: "Ilfov", country: "Romania" },
     corners: [
       { lat: 44.41600, lon: 25.96680 },
@@ -382,7 +380,7 @@ const PROPERTIES: SeedPropertyRow[] = [
     nickname: "Teren agricol T14",
     tarlaSola: "T14", parcela: "P301",
     cadastralNumber: "23-14-301",
-    useCategory: "CATEG2", surfaceAreaMp: "8450.00",
+    surfaceAreaMp: "8450.00",
     notes: "Agricultural parcel, no access road registered.",
     corners: [
       { lat: 44.41250, lon: 25.96850 },
@@ -395,7 +393,7 @@ const PROPERTIES: SeedPropertyRow[] = [
     nickname: "Lot 5 - Str. Mihai Eminescu",
     tarlaSola: "T12", parcela: "P236",
     cadastralNumber: "23-12-236", carteFunciara: "CF10236",
-    useCategory: "CATEG1", surfaceAreaMp: "550.00",
+    surfaceAreaMp: "550.00",
     address: { streetLine: "Strada Mihai Eminescu 8", postalCode: "077030", locality: "Bragadiru", county: "Ilfov", country: "Romania" },
     corners: [
       { lat: 44.41485, lon: 25.97020 },
@@ -408,7 +406,7 @@ const PROPERTIES: SeedPropertyRow[] = [
     nickname: "Lot 6 - Str. Tineretului",
     tarlaSola: "T13", parcela: "P267",
     cadastralNumber: "23-13-267", carteFunciara: "CF10267",
-    useCategory: "CATEG1", surfaceAreaMp: "710.00",
+    surfaceAreaMp: "710.00",
     address: { streetLine: "Strada Tineretului 2", postalCode: "077030", locality: "Bragadiru", county: "Ilfov", country: "Romania" },
     corners: [
       { lat: 44.41620, lon: 25.97200 },
@@ -421,7 +419,7 @@ const PROPERTIES: SeedPropertyRow[] = [
     nickname: "Teren agricol T10",
     tarlaSola: "T10", parcela: "P182",
     cadastralNumber: "23-10-182",
-    useCategory: "CATEG2", surfaceAreaMp: "12300.00",
+    surfaceAreaMp: "12300.00",
     notes: "Large agricultural parcel with irregular boundary.",
     corners: [
       { lat: 44.41330, lon: 25.96500 },
@@ -435,7 +433,7 @@ const PROPERTIES: SeedPropertyRow[] = [
     nickname: "Lot 8 - Str. Violetelor",
     tarlaSola: "T13", parcela: "P268",
     cadastralNumber: "23-13-268", carteFunciara: "CF10268",
-    useCategory: "CATEG1", surfaceAreaMp: "495.00",
+    surfaceAreaMp: "495.00",
     address: { streetLine: "Strada Violetelor 6", postalCode: "077030", locality: "Bragadiru", county: "Ilfov", country: "Romania" },
     corners: [
       { lat: 44.41600, lon: 25.97350 },
@@ -448,7 +446,7 @@ const PROPERTIES: SeedPropertyRow[] = [
     nickname: "Lot 9 - Str. Merilor",
     tarlaSola: "T13", parcela: "P270",
     cadastralNumber: "23-13-270", carteFunciara: "CF10270",
-    useCategory: "CATEG1", surfaceAreaMp: "580.00",
+    surfaceAreaMp: "580.00",
     address: { streetLine: "Strada Merilor 22", postalCode: "077030", locality: "Bragadiru", county: "Ilfov", country: "Romania" },
     corners: [
       { lat: 44.41420, lon: 25.97520 },
@@ -461,7 +459,7 @@ const PROPERTIES: SeedPropertyRow[] = [
     nickname: "Teren agricol T9",
     tarlaSola: "T9", parcela: "P155",
     cadastralNumber: "23-09-155",
-    useCategory: "CATEG3", surfaceAreaMp: "6200.00",
+    surfaceAreaMp: "6200.00",
     notes: "Pasture land, partially fenced.",
     corners: [
       { lat: 44.41180, lon: 25.96700 },
@@ -474,7 +472,7 @@ const PROPERTIES: SeedPropertyRow[] = [
     nickname: "Lot 11 - Str. Campului",
     tarlaSola: "T15", parcela: "P318",
     cadastralNumber: "23-15-318", carteFunciara: "CF10318",
-    useCategory: "CATEG1", surfaceAreaMp: "430.00",
+    surfaceAreaMp: "430.00",
     address: { streetLine: "Strada Campului 4", postalCode: "077030", locality: "Bragadiru", county: "Ilfov", country: "Romania" },
     corners: [
       { lat: 44.41750, lon: 25.96800 },
@@ -487,7 +485,7 @@ const PROPERTIES: SeedPropertyRow[] = [
     nickname: "Lot 12 - Str. Gradinilor",
     tarlaSola: "T13", parcela: "P271",
     cadastralNumber: "23-13-271", carteFunciara: "CF10271",
-    useCategory: "CATEG1", surfaceAreaMp: "660.00",
+    surfaceAreaMp: "660.00",
     address: { streetLine: "Strada Gradinilor 15", postalCode: "077030", locality: "Bragadiru", county: "Ilfov", country: "Romania" },
     corners: [
       { lat: 44.41480, lon: 25.97680 },
@@ -500,7 +498,7 @@ const PROPERTIES: SeedPropertyRow[] = [
     nickname: "Teren agricol T16",
     tarlaSola: "T16", parcela: "P340",
     cadastralNumber: "23-16-340",
-    useCategory: "CATEG2", surfaceAreaMp: "9800.00",
+    surfaceAreaMp: "9800.00",
     notes: "Arable land, registered crop history.",
     corners: [
       { lat: 44.41650, lon: 25.96450 },
@@ -513,7 +511,7 @@ const PROPERTIES: SeedPropertyRow[] = [
     nickname: "Lot 14 - Str. Lalelelor",
     tarlaSola: "T12", parcela: "P240",
     cadastralNumber: "23-12-240", carteFunciara: "CF10240",
-    useCategory: "CATEG1", surfaceAreaMp: "520.00",
+    surfaceAreaMp: "520.00",
     address: { streetLine: "Strada Lalelelor 9", postalCode: "077030", locality: "Bragadiru", county: "Ilfov", country: "Romania" },
     corners: [
       { lat: 44.41500, lon: 25.96920 },
@@ -526,7 +524,7 @@ const PROPERTIES: SeedPropertyRow[] = [
     nickname: "Lot 15 - Str. Stejarului",
     tarlaSola: "T11", parcela: "P200",
     cadastralNumber: "23-11-200", carteFunciara: "CF10200",
-    useCategory: "CATEG1", surfaceAreaMp: "475.00",
+    surfaceAreaMp: "475.00",
     address: { streetLine: "Strada Stejarului 11", postalCode: "077030", locality: "Bragadiru", county: "Ilfov", country: "Romania" },
     corners: [
       { lat: 44.41300, lon: 25.97300 },
@@ -539,7 +537,7 @@ const PROPERTIES: SeedPropertyRow[] = [
     nickname: "Lot 16 - Bl. Nord",
     tarlaSola: "T15", parcela: "P320",
     cadastralNumber: "23-15-320", carteFunciara: "CF10320",
-    useCategory: "CATEG1", surfaceAreaMp: "390.00",
+    surfaceAreaMp: "390.00",
     address: { streetLine: "Strada Nordului 5", postalCode: "077030", locality: "Bragadiru", county: "Ilfov", country: "Romania" },
     corners: [
       { lat: 44.41800, lon: 25.97200 },
@@ -552,7 +550,7 @@ const PROPERTIES: SeedPropertyRow[] = [
     nickname: "Teren agricol T8",
     tarlaSola: "T8", parcela: "P130",
     cadastralNumber: "23-08-130",
-    useCategory: "CATEG3", surfaceAreaMp: "15400.00",
+    surfaceAreaMp: "15400.00",
     notes: "Large pasture bordering the Sabar river.",
     corners: [
       { lat: 44.41120, lon: 25.97050 },
@@ -565,7 +563,7 @@ const PROPERTIES: SeedPropertyRow[] = [
     nickname: "Lot 18 - Str. Rozelor",
     tarlaSola: "T13", parcela: "P275",
     cadastralNumber: "23-13-275", carteFunciara: "CF10275",
-    useCategory: "CATEG1", surfaceAreaMp: "540.00",
+    surfaceAreaMp: "540.00",
     address: { streetLine: "Strada Rozelor 18", postalCode: "077030", locality: "Bragadiru", county: "Ilfov", country: "Romania" },
     corners: [
       { lat: 44.41580, lon: 25.97780 },
@@ -578,7 +576,7 @@ const PROPERTIES: SeedPropertyRow[] = [
     nickname: "Teren agricol T7 - vest",
     tarlaSola: "T7", parcela: "P112",
     cadastralNumber: "23-07-112",
-    useCategory: "CATEG2", surfaceAreaMp: "7600.00",
+    surfaceAreaMp: "7600.00",
     notes: "Partially drained agricultural parcel.",
     corners: [
       { lat: 44.41400, lon: 25.96300 },
@@ -591,7 +589,7 @@ const PROPERTIES: SeedPropertyRow[] = [
     nickname: "Lot 20 - Str. Independentei",
     tarlaSola: "T15", parcela: "P322",
     cadastralNumber: "23-15-322", carteFunciara: "CF10322",
-    useCategory: "CATEG1", surfaceAreaMp: "605.00",
+    surfaceAreaMp: "605.00",
     address: { streetLine: "Strada Independentei 3", postalCode: "077030", locality: "Bragadiru", county: "Ilfov", country: "Romania" },
     corners: [
       { lat: 44.41850, lon: 25.97380 },
@@ -604,7 +602,7 @@ const PROPERTIES: SeedPropertyRow[] = [
     nickname: "Lot 21 - Str. Teilor",
     tarlaSola: "T12", parcela: "P242",
     cadastralNumber: "23-12-242", carteFunciara: "CF10242",
-    useCategory: "CATEG1", surfaceAreaMp: "530.00",
+    surfaceAreaMp: "530.00",
     address: { streetLine: "Strada Teilor 1", postalCode: "077030", locality: "Bragadiru", county: "Ilfov", country: "Romania" },
     corners: [
       { lat: 44.41540, lon: 25.97080 },
@@ -617,7 +615,7 @@ const PROPERTIES: SeedPropertyRow[] = [
     nickname: "Lot 22 - Str. Panselelor",
     tarlaSola: "T13", parcela: "P278",
     cadastralNumber: "23-13-278", carteFunciara: "CF10278",
-    useCategory: "CATEG1", surfaceAreaMp: "490.00",
+    surfaceAreaMp: "490.00",
     address: { streetLine: "Strada Panselelor 9", postalCode: "077030", locality: "Bragadiru", county: "Ilfov", country: "Romania" },
     corners: [
       { lat: 44.41560, lon: 25.97900 },
@@ -630,7 +628,7 @@ const PROPERTIES: SeedPropertyRow[] = [
     nickname: "Teren agricol T6 - est",
     tarlaSola: "T6", parcela: "P98",
     cadastralNumber: "23-06-098",
-    useCategory: "CATEG2", surfaceAreaMp: "11200.00",
+    surfaceAreaMp: "11200.00",
     notes: "Former orchard parcel, partially cleared.",
     corners: [
       { lat: 44.41050, lon: 25.96600 },
@@ -643,7 +641,7 @@ const PROPERTIES: SeedPropertyRow[] = [
     nickname: "Lot 24 - Str. Caisilor",
     tarlaSola: "T14", parcela: "P305",
     cadastralNumber: "23-14-305", carteFunciara: "CF10305",
-    useCategory: "CATEG1", surfaceAreaMp: "560.00",
+    surfaceAreaMp: "560.00",
     address: { streetLine: "Strada Caisilor 5", postalCode: "077030", locality: "Bragadiru", county: "Ilfov", country: "Romania" },
     corners: [
       { lat: 44.41200, lon: 25.97060 },
@@ -656,7 +654,7 @@ const PROPERTIES: SeedPropertyRow[] = [
     nickname: "Lot 25 - Str. Prunilor",
     tarlaSola: "T11", parcela: "P203",
     cadastralNumber: "23-11-203", carteFunciara: "CF10203",
-    useCategory: "CATEG1", surfaceAreaMp: "445.00",
+    surfaceAreaMp: "445.00",
     address: { streetLine: "Strada Prunilor 3", postalCode: "077030", locality: "Bragadiru", county: "Ilfov", country: "Romania" },
     corners: [
       { lat: 44.41340, lon: 25.97410 },
@@ -669,7 +667,7 @@ const PROPERTIES: SeedPropertyRow[] = [
     nickname: "Teren agricol T5 - nord",
     tarlaSola: "T5", parcela: "P77",
     cadastralNumber: "23-05-077",
-    useCategory: "CATEG3", surfaceAreaMp: "18500.00",
+    surfaceAreaMp: "18500.00",
     notes: "Wetland-adjacent parcel, seasonal flooding risk.",
     corners: [
       { lat: 44.40900, lon: 25.97100 },
@@ -682,7 +680,7 @@ const PROPERTIES: SeedPropertyRow[] = [
     nickname: "Lot 27 - Str. Salcamilor",
     tarlaSola: "T15", parcela: "P325",
     cadastralNumber: "23-15-325", carteFunciara: "CF10325",
-    useCategory: "CATEG1", surfaceAreaMp: "415.00",
+    surfaceAreaMp: "415.00",
     address: { streetLine: "Strada Salcamilor 11", postalCode: "077030", locality: "Bragadiru", county: "Ilfov", country: "Romania" },
     corners: [
       { lat: 44.41870, lon: 25.97520 },
@@ -695,7 +693,7 @@ const PROPERTIES: SeedPropertyRow[] = [
     nickname: "Lot 28 - Str. Brazilor",
     tarlaSola: "T16", parcela: "P343",
     cadastralNumber: "23-16-343", carteFunciara: "CF10343",
-    useCategory: "CATEG1", surfaceAreaMp: "575.00",
+    surfaceAreaMp: "575.00",
     address: { streetLine: "Strada Brazilor 7", postalCode: "077030", locality: "Bragadiru", county: "Ilfov", country: "Romania" },
     corners: [
       { lat: 44.41700, lon: 25.96380 },
@@ -708,7 +706,7 @@ const PROPERTIES: SeedPropertyRow[] = [
     nickname: "Teren agricol T4 - vest",
     tarlaSola: "T4", parcela: "P58",
     cadastralNumber: "23-04-058",
-    useCategory: "CATEG2", surfaceAreaMp: "8900.00",
+    surfaceAreaMp: "8900.00",
     notes: "Arable land, last cultivated 2022.",
     corners: [
       { lat: 44.41600, lon: 25.96200 },
@@ -721,7 +719,7 @@ const PROPERTIES: SeedPropertyRow[] = [
     nickname: "Lot 30 - Str. Chiparosilor",
     tarlaSola: "T13", parcela: "P280",
     cadastralNumber: "23-13-280", carteFunciara: "CF10280",
-    useCategory: "CATEG1", surfaceAreaMp: "510.00",
+    surfaceAreaMp: "510.00",
     address: { streetLine: "Strada Chiparosilor 4", postalCode: "077030", locality: "Bragadiru", county: "Ilfov", country: "Romania" },
     corners: [
       { lat: 44.41460, lon: 25.97960 },
@@ -1341,13 +1339,11 @@ async function seed() {
           .values({
             principalObjectId: poPropRow.id,
             code: poPropRow.code,
-            type: "LAND",
             nickname: row.nickname ?? null,
             tarlaSola: row.tarlaSola ?? null,
             parcela: row.parcela ?? null,
             cadastralNumber: row.cadastralNumber ?? null,
             carteFunciara: row.carteFunciara ?? null,
-            useCategory: row.useCategory ?? null,
             surfaceAreaMp: row.surfaceAreaMp ?? null,
             notes: row.notes ?? null,
           })
@@ -1579,3 +1575,4 @@ seed()
   .finally(async () => {
     await pool.end();
   });
+                                                                                                                                                            

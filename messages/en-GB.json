@@ -55,6 +55,7 @@
       "notes": "Notes"
     },
     "fields": {
+      "propertyType": "Property Type",
       "code": "Code",
       "nickname": "Nickname",
       "tarlaSola": "Tarla / Sola",
@@ -63,13 +64,11 @@
       "carteFunciara": "Carte Funciara",
       "useCategory": "Use Category",
       "surfaceAreaMp": "Surface Area (m²)",
-      "notes": "Notes"
+      "notes": "Notes",
+      "noneOption": "— none —"
     },
     "useCategories": {
-      "empty": "—",
-      "CATEG1": "Category 1",
-      "CATEG2": "Category 2",
-      "CATEG3": "Category 3"
+      "empty": "—"
     },
     "address": {
       "streetLine": "Street, No., Block, Floor, Apt",

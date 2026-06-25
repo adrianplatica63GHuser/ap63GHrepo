@@ -55,10 +55,11 @@ function ctx(id: string) {
 
 const stubFull = {
   property: {
-    id: "prop-1", code: "PROP00001", type: "LAND",
+    id: "prop-1", code: "PROP00001",
+    propertyTypeId: null, useCategoryId: null,
     nickname: "Lot 1", tarlaSola: "T7", parcela: "P145",
     cadastralNumber: "12345", carteFunciara: "CF001",
-    useCategory: "CATEG1", surfaceAreaMp: "450.00",
+    surfaceAreaMp: "450.00",
     notes: null, createdAt: new Date(), updatedAt: new Date(), deletedAt: null,
   },
   address: null,
@@ -153,12 +154,12 @@ describe("POST /api/properties", () => {
     expect(mocks.createProperty).not.toHaveBeenCalled();
   });
 
-  it("rejects an invalid useCategory with 400", async () => {
+  it("rejects a non-uuid useCategoryId with 400", async () => {
     const res = await listPost(
       req("http://localhost/api/properties", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ useCategory: "WRONG" }),
+        body: JSON.stringify({ useCategoryId: "WRONG" }),
       }),
     );
     expect(res.status).toBe(400);

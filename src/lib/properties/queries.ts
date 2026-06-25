@@ -30,7 +30,6 @@ export type PropertyListItem = {
   parcela:          string | null;
   cadastralNumber:  string | null;
   carteFunciara:    string | null;
-  useCategory:      string | null;
   surfaceAreaMp:    string | null;
   locality:         string | null;
   county:           string | null;
@@ -79,7 +78,6 @@ export async function listProperties(opts: PropertyListQuery): Promise<{
         parcela:         property.parcela,
         cadastralNumber: property.cadastralNumber,
         carteFunciara:   property.carteFunciara,
-        useCategory:     property.useCategory,
         surfaceAreaMp:   property.surfaceAreaMp,
         locality:        propertyAddress.locality,
         county:          propertyAddress.county,
@@ -165,13 +163,13 @@ export async function createProperty(
       .values({
         principalObjectId: poRow.id,
         code:            poRow.code,
-        type:            "LAND",
+        propertyTypeId:  propFields.propertyTypeId  ?? null,
         nickname:        propFields.nickname        ?? null,
         tarlaSola:       propFields.tarlaSola       ?? null,
         parcela:         propFields.parcela         ?? null,
         cadastralNumber: propFields.cadastralNumber ?? null,
         carteFunciara:   propFields.carteFunciara   ?? null,
-        useCategory:     propFields.useCategory     ?? null,
+        useCategoryId:   propFields.useCategoryId   ?? null,
         surfaceAreaMp:   propFields.surfaceAreaMp != null
                            ? String(propFields.surfaceAreaMp)
                            : null,
@@ -237,12 +235,13 @@ export async function updateProperty(
 
     // Build property patch from only explicitly-provided fields.
     const propPatch: Partial<typeof property.$inferInsert> = {};
+    if (propFields.propertyTypeId  !== undefined) propPatch.propertyTypeId  = propFields.propertyTypeId  ?? null;
     if (propFields.nickname        !== undefined) propPatch.nickname        = propFields.nickname        ?? null;
     if (propFields.tarlaSola       !== undefined) propPatch.tarlaSola       = propFields.tarlaSola       ?? null;
     if (propFields.parcela         !== undefined) propPatch.parcela         = propFields.parcela         ?? null;
     if (propFields.cadastralNumber !== undefined) propPatch.cadastralNumber = propFields.cadastralNumber ?? null;
     if (propFields.carteFunciara   !== undefined) propPatch.carteFunciara   = propFields.carteFunciara   ?? null;
-    if (propFields.useCategory     !== undefined) propPatch.useCategory     = propFields.useCategory     ?? null;
+    if (propFields.useCategoryId   !== undefined) propPatch.useCategoryId   = propFields.useCategoryId   ?? null;
     if (propFields.surfaceAreaMp   !== undefined) {
       propPatch.surfaceAreaMp = propFields.surfaceAreaMp != null
         ? String(propFields.surfaceAreaMp)

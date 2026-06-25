@@ -47,12 +47,14 @@ const propertyBase = createInsertSchema(property)
     createdAt:         true,
     updatedAt:         true,
     deletedAt:         true,
-    // type is always LAND for now; not user-settable via the API
-    type: true,
   })
   .extend({
     // Override: drizzle-zod emits z.string() for numeric; we accept number from JSON.
     surfaceAreaMp: z.coerce.number().positive().nullish(),
+    // Slice #15.16: FK ids to lookup_property_type / lookup_use_category.
+    // Empty selection -> null. Must be a uuid when present.
+    propertyTypeId: z.string().uuid().nullish(),
+    useCategoryId:  z.string().uuid().nullish(),
   });
 
 // ---------------------------------------------------------------------------

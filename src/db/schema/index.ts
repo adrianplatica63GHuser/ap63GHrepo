@@ -289,14 +289,11 @@ export const address = pgTable(
 // Enums — Property domain
 // ---------------------------------------------------------------------------
 
-export const propertyTypeEnum = pgEnum("property_type", ["LAND"]);
-
-// Placeholder values; will be replaced with real ANCPI categories later.
-export const propertyCategoryEnum = pgEnum("use_category", [
-  "CATEG1",
-  "CATEG2",
-  "CATEG3",
-]);
+// NOTE (Slice #15.16): the `property_type` and `use_category` Postgres enums
+// were removed. Property type and use category are now admin-managed rows in
+// Reference Data (lookup_property_type / lookup_use_category), referenced by
+// nullable FK columns on `property` (propertyTypeId / useCategoryId).
+// See migration_028_property_type_usecat_fk.sql.
 
 // ---------------------------------------------------------------------------
 // property — root entity
@@ -319,7 +316,12 @@ export const property = pgTable("property", {
   // at creation time. No DEFAULT — supplied by the app layer.
   code: text("code").notNull().unique(),
 
-  type: propertyTypeEnum("type").notNull().default("LAND"),
+  // Property type — admin-managed (lookup_property_type, Reference Data ->
+  // Property Types). Was a fixed `property_type` Postgres enum ("LAND") until
+  // Slice #15.16. Nullable; ON DELETE SET NULL so removing a type from
+  // Reference Data just clears the tag rather than blocking the delete.
+  propertyTypeId: uuid("property_type_id")
+    .references(() => lookupPropertyType.id, { onDelete: "set null" }),
 
   // "Porecla / elemente definitorii" — short identifying label.
   nickname: text("nickname"),
@@ -330,7 +332,11 @@ export const property = pgTable("property", {
   cadastralNumber: text("cadastral_number"),  // Nr. cadastru
   carteFunciara:   text("carte_funciara"),    // Nr. carte funciara
 
-  useCategory: propertyCategoryEnum("use_category"),
+  // Use category — admin-managed (lookup_use_category, Reference Data -> Use
+  // Categories). Was a fixed `use_category` Postgres enum (CATEG1/2/3) until
+  // Slice #15.16. Nullable; ON DELETE SET NULL.
+  useCategoryId: uuid("use_category_id")
+    .references(() => lookupUseCategory.id, { onDelete: "set null" }),
 
   // "Suprafata in mp" — area in square metres.
   surfaceAreaMp: numeric("surface_area_mp", { precision: 12, scale: 2 }),
@@ -433,10 +439,11 @@ export const propertyCorner = pgTable(
 // Lookup / Reference-Data tables  (Slice #3 — Liste de Valori)
 // ---------------------------------------------------------------------------
 //
-// These tables back the admin "Value Lists" screen. They are intentionally
-// decoupled from the pg enums already in the schema (propertyTypeEnum,
-// useCategoryEnum) — the enum→FK migration will happen in a later slice
-// once the full domain model is settled.
+// These tables back the admin "Value Lists" screen. As of Slice #15.16 the
+// property domain references lookup_property_type / lookup_use_category
+// directly via FK columns on `property` (the old property_type / use_category
+// pg enums were removed). Other enum→FK migrations may follow as the domain
+// model settles.
 //
 // All tables share the same shape: uuid PK, payload fields, sort_order,
 // created_at / updated_at (touched by the touch_updated_at trigger).

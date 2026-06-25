@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -21,6 +21,27 @@ import {
 } from "./form-schema";
 import { CornersManager } from "./corners-manager";
 import { PropertyMiniMap } from "./property-mini-map";
+
+// ---------------------------------------------------------------------------
+// Reference-Data dropdowns (Slice #15.16)
+//
+// Property Type and Use Category are admin-managed lookup tables
+// (lookup_property_type / lookup_use_category). Both dropdowns fetch their
+// options from the generic Value Lists API and use the SAME TanStack Query
+// key (["value-list", listKey]) that the admin ValueListModal invalidates on
+// save/delete — so they stay in sync with Reference Data edits without any
+// extra cross-invalidation (same pattern as the judicial-person-type dropdown
+// in Slice #15.07).
+// ---------------------------------------------------------------------------
+
+type LookupOption = { id: string; name: string };
+
+async function fetchValueList(listKey: string): Promise<LookupOption[]> {
+  const res = await fetch(`/api/admin/value-lists/${listKey}`);
+  if (!res.ok) throw new Error(`Failed to load ${listKey} (HTTP ${res.status})`);
+  const body = await res.json();
+  return (body.items ?? []) as LookupOption[];
+}
 
 // ---------------------------------------------------------------------------
 // Props
@@ -56,6 +77,29 @@ export function PropertyForm({
     defaultValues: initialValues ?? emptyFormValues,
     mode:          "onChange",
   });
+
+  // Reference-Data dropdown options (Slice #15.16). Shared query keys keep
+  // these in sync with admin Reference-Data edits automatically.
+  const { data: propertyTypes } = useQuery({
+    queryKey: ["value-list", "property-types"],
+    queryFn:  () => fetchValueList("property-types"),
+    staleTime: 5 * 60 * 1000,
+  });
+  const { data: useCategories } = useQuery({
+    queryKey: ["value-list", "use-categories"],
+    queryFn:  () => fetchValueList("use-categories"),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const noneOption = { value: "", label: t("fields.noneOption") };
+  const propertyTypeOptions = [
+    noneOption,
+    ...(propertyTypes ?? []).map((o) => ({ value: o.id, label: o.name })),
+  ];
+  const useCategoryOptions = [
+    noneOption,
+    ...(useCategories ?? []).map((o) => ({ value: o.id, label: o.name })),
+  ];
 
   const [corners,          setCorners]          = useState<Corner[]>(initialCorners);
   const [hoveredCornerIdx, setHoveredCornerIdx] = useState<number | null>(null);
@@ -194,6 +238,13 @@ export function PropertyForm({
             {mode === "edit" && propertyCode && (
               <ReadOnlyField label={t("fields.code")} value={propertyCode} />
             )}
+            <SelectField
+              label={t("fields.propertyType")}
+              name="propertyTypeId"
+              register={register}
+              error={errors.propertyTypeId?.message}
+              options={propertyTypeOptions}
+            />
             <Field
               label={t("fields.nickname")}
               name="nickname"
@@ -226,15 +277,10 @@ export function PropertyForm({
             />
             <SelectField
               label={t("fields.useCategory")}
-              name="useCategory"
+              name="useCategoryId"
               register={register}
-              error={errors.useCategory?.message}
-              options={[
-                { value: "",       label: t("useCategories.empty")  },
-                { value: "CATEG1", label: t("useCategories.CATEG1") },
-                { value: "CATEG2", label: t("useCategories.CATEG2") },
-                { value: "CATEG3", label: t("useCategories.CATEG3") },
-              ]}
+              error={errors.useCategoryId?.message}
+              options={useCategoryOptions}
             />
             <Field
               label={t("fields.surfaceAreaMp")}

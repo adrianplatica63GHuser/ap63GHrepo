@@ -17,7 +17,6 @@ type PropertyListItem = {
   parcela:         string | null;
   cadastralNumber: string | null;
   carteFunciara:   string | null;
-  useCategory:     string | null;
   surfaceAreaMp:   string | null;
   locality:        string | null;
   county:          string | null;
