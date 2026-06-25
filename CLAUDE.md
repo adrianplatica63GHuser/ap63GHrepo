@@ -112,6 +112,43 @@ Relationships: People ↔ Documents, People ↔ Properties, Documents ↔ Proper
 - Slice #16.UX.03 — Properties Map: click/double-click InfoWindow model (replaces hover-based InfoWindow). ✅ Complete. Full detail below.
 - Slice #15.18 — Ciprian UAT bug fixes: Property-from-text-file import "Internal server error" — two independent causes: (1) Stereo70 grid file missing from the Docker runtime image; (2) `property_corner.original_index` column missing from Ciprian's database (Slice #15.17 migration never delivered). ✅ Complete. Full detail below.
 - Slice #15.19 — Property Type & Use Category: drop the `property_type` ("LAND") and `use_category` (CATEG1/2/3) Postgres enums; replace with nullable FK columns to admin-managed `lookup_property_type` / `lookup_use_category`; add a Property Type dropdown + re-point the Use Category dropdown on the property form. ✅ Complete. Full detail below. (The slice-input doc labelled this "Slice.15.16"; renumbered to #15.19 to avoid colliding with the existing #15.16 Ciprian-UAT slice.)
+- Slice #18.01 — Property "Add new" form: enable Save as soon as any single field is entered (was wrongly gated on entering corners). ✅ Complete. Full detail below.
+
+Each slice typically lands as multiple small commits, each individually green.
+
+### Slice #18.01 — Property "Add new" form: Save enables on any single field (detail)
+
+Pure frontend, single-file change — no DB, API, schema, validation, i18n, or test changes.
+
+**Bug report (Adrian)**: on the "Add new property" form, Save stayed disabled even after filling in seven or eight fields. The only way to enable Save was to also enter at least one corner. Desired behaviour: Save should enable if **at least one field** (any text field, dropdown, area, address, or corner) has been entered.
+
+**Root cause**: in `src/app/properties/_components/property-form.tsx`, the create-mode Save gate is:
+```ts
+const createHasData = mode === "create" && hasFormData(form.getValues(), corners);
+const saveDisabled =
+  submitting ||
+  !form.formState.isValid ||
+  (mode === "create" && !createHasData) ||
+  (mode === "edit" && !form.formState.isDirty && corners === initialCorners);
+```
+`hasFormData` (in `form-schema.ts`) was already correct — it returns `true` if any single top-level field, any address field, or any corner is present. The bug was that `createHasData` **never recomputed** as the user typed, so it stayed stale at `false`:
+- It was read via `form.getValues()`, which does **not** subscribe to value changes — its result is only fresh if the component re-renders.
+- The Slice #15.10 comment assumed the component "re-renders on every keystroke" because `formState` is read in `saveDisabled`. But in **create mode** the only `formState` field actually evaluated is `form.formState.isValid` — the `form.formState.isDirty` read sits inside `(mode === "edit" && …)` and is short-circuited away before evaluation, so `isDirty` is never subscribed in create mode.
+- Every property field is an optional `z.string()` (nothing required), so an empty create form is **already valid**; `isValid` stays `true` the whole time you type and therefore never *changes*. With no `formState` change, the component never re-rendered on field edits → `getValues()` was never re-read → `createHasData` stayed `false` → Save stayed disabled.
+- Entering a **corner** "fixed" it only because `setCorners(...)` is a real `useState` update that forces a re-render, finally recomputing `createHasData`. Plain field edits triggered no such re-render.
+
+**Fix** — one change (plus its explanatory comment) in `property-form.tsx`: compute `createHasData` from `form.watch()` instead of `form.getValues()`. `watch()` subscribes to value changes and re-renders on every keystroke, so the gate recomputes live:
+```ts
+const watchedValues = form.watch();
+const createHasData = mode === "create" && hasFormData(watchedValues, corners);
+```
+`hasFormData`, `form-schema.ts`, and the Zod schema are untouched. The existing `useUnsavedChangesGuard` already consumes `createHasData`, so it is fixed by the same change — a field-only-filled create form is now correctly recognised as dirty too. Slice #15.10's behaviour is preserved: an untouched all-blank create form still reports `createHasData = false`, so Save stays disabled and navigating away creates no DB row. Edit mode's gate (`form.formState.isDirty || corners !== initialCorners`) is unchanged and out of scope.
+
+**Verification note**: per the standing project gotcha, the sandbox's `tsc --noEmit`/`jest` are not reliable for this codebase. Verification here was manual reasoning about the RHF subscription model (getValues vs watch, the create-mode short-circuit on `isDirty`, and the always-valid empty form). **Adrian should run `npm run lint` and manually re-test** (Add new property → type one field → Save enables with no corners; pick only a dropdown → Save enables; open Add new property and navigate away untouched → no unsaved-changes dialog, no blank row; edit an existing property → Save still gated on a real change) before committing.
+
+**Files touched**
+- `src/app/properties/_components/property-form.tsx`
+- `CLAUDE.md`
 
 Each slice typically lands as multiple small commits, each individually green.
 
