@@ -105,8 +105,119 @@ Relationships: People ↔ Documents, People ↔ Properties, Documents ↔ Proper
 - Slice #15.12 — Reference Data: new "Roles" panel (Person Roles, Property Persons, Document Persons) between Document and Others. ✅ Complete. Full detail below.
 - Slice #15.13 — Document form: "Show Big Page" toggle, mirroring Property's "Show Big Map". ✅ Complete. Full detail below.
 - Slice #15.14 — Document Pages viewer: mouse-wheel zoom + click-drag pan in "Show Big Page" mode. ✅ Complete. Full detail below.
+- Slice #15.15 — Ops: replace Ciprian UAT's incremental migration-file delivery (UC-C6) with a single, fixed-name, fully-regenerated `ciprian-schema-update.sql` (full wipe + rebuild of schema and reference data every time, no hand-maintained seed file). `GA40.Operations.Guide.05.docx` delivered. ✅ Complete. Full detail below.
+- Slice #15.16 — Ciprian UAT bug fixes: vision API key never reached the app container + Admin Import "Internal server error" on Document upload + missing `update.bat`. ✅ Complete. Full detail below.
+- Slice #15.17 — Property corners: track original cadastral-file index per corner (survives reordering) + default corners display to Stereo 70. ✅ Complete. Full detail below.
 
 Each slice typically lands as multiple small commits, each individually green.
+
+### Slice #15.17 — Corner original index + Stereo70 default display (detail)
+
+DB migration + schema + validation + query layer + parse-text route + every client `Corner` type/payload site + `CornersManager` UI. No changes to the OCR scan-image route (it never produced a leading index token).
+
+**Why**: Romanian cadastral text-file exports have a 3-column format — `<index> <X/Northing> <Y/Easting>` — and the importer (`parse-text`/`route.ts`, used by both "Add new property → from a text file/folder" and Administration → Import) previously discarded token 0 entirely. Adrian wants that original index captured and permanently bound to its corner's lat/lon, so that if the file's line order produces a self-intersecting ("bow-tie") polygon and he fixes it by reordering rows with the corners table's ↑/↓ arrows, the original index travels with its corner rather than staying pinned to a table position. The "#" column keeps showing the live sequence position (1, 2, 3, …); a new "Orig. #" column shows the bound original value, or "—" when there isn't one (manual entry, OCR-derived corners, or the legacy 2-column text format). Separately, Adrian wants the corners table's default display format to be Stereo 70 rather than decimal degrees, since that's the format he reads off the source documents.
+
+**DB migration (`src/db/migration_027_property_corner_original_index.sql`)**
+- `ALTER TABLE property_corner ADD COLUMN IF NOT EXISTS original_index integer;` — nullable, idempotent. No backfill; existing corners simply have `NULL` (renders as "—").
+
+**Schema (`src/db/schema/index.ts`)**
+- `propertyCorner` gained `originalIndex: integer("original_index")` (nullable), between `lon` and `createdAt`.
+
+**Validation (`src/lib/properties/validation.ts`)**
+- `cornerInputSchema` gained `originalIndex: z.number().int().nullish()`.
+
+**Query layer (`src/lib/properties/queries.ts`)**
+- `createProperty`'s and `updateProperty`'s corner-insert blocks now pass `originalIndex: c.originalIndex ?? null` through to the `propertyCorner` insert values, alongside the existing `lat`/`lon`/`sequenceNo`. Both `getPropertyById`'s and the post-update re-fetch's corner `SELECT`s already use a bare `.select()` against `propertyCorner` (no explicit column projection), so the new column surfaces automatically with zero further query changes.
+
+**Parse-text route (`src/app/api/properties/parse-text/route.ts`)**
+- `parseLine`'s 3-column branch now returns `{ northing, easting, originalIndex: idx }` (`idx` is `tokens[0]` parsed as a float, same `< 1_000` guard as before — only the discard-it behaviour changed). The 2-column fallback returns `originalIndex: null`. Corner order is unchanged — still strictly line order, never resorted by this value (per the existing GIS.13.11/15.12 documented behaviour, restated in the route's doc comment).
+- Response shape: `{ corners: { lat: number; lon: number; originalIndex: number | null }[] }`.
+
+**Client `Corner` type + every payload builder** — `originalIndex?: number | null` added to the shared type and threaded through unchanged shape everywhere a corners array crosses a client/server boundary:
+- `src/app/properties/_components/form-schema.ts` — `Corner` type; `toApiPayload`'s `corners` mapping.
+- `src/app/properties/_components/add-property-dialog.tsx` — local `Corner` interface; the text-file/folder import flow's `createProperty` payload mapping.
+- `src/app/admin/import/_components/property-classify-panel.tsx` — local `Corner` type (the panel already forwarded the whole corners array as-is from `parse-text`'s response, so no further change needed there).
+- `src/app/properties/[id]/page.tsx` — `initialCorners` mapping (server → client hydration on the edit/view page).
+
+**`CornersManager` (`src/app/properties/_components/corners-manager.tsx`)**
+- Default display format changed: `useState<DisplayFormat>("DD")` → `useState<DisplayFormat>("S70")`.
+- New "Orig. #" column (`t("originalIndex")`) inserted between the "#" (sequence) column and the Latitude/North column, in both the header and every body row. Renders `c.originalIndex ?? "—"`.
+- `CornerInputRow`'s add/edit `<tr>` gained a second placeholder `<td>—</td>` (it already rendered one for the "#" column with no live value while adding/editing) so its column count keeps matching the header's now-5-column (4 in read-only mode) layout.
+- Empty-state row's `colSpan` updated from `readOnly ? 3 : 4` to `readOnly ? 4 : 5` to match the new column count.
+- `handleEdit` fixed to preserve `originalIndex` across an edit: `CornerInputRow.onSave` only ever returns `{ lat, lon }` (the coordinate-input UI has no field for it), so a naive `corners.map((old, i) => i === idx ? c : old)` would silently drop the bound index on every edit. Now reads `{ ...c, originalIndex: old.originalIndex }` — the pre-edit corner's index survives a coordinate edit. `moveUp`/`moveDown` already swap whole `Corner` objects, so reordering was already correct with no changes needed there.
+
+**i18n** — added `property.corners.originalIndex` to both `messages/en-GB.json` ("Orig. #") and `messages/ro-RO.json` ("Nr. orig.").
+
+**Manual setup required (not yet run)**
+1. Apply `src/db/migration_027_property_corner_original_index.sql` to local Docker via `docker cp` + `psql -f` (per the standing migration gotcha).
+2. Apply the same migration to Supabase via the SQL Editor.
+3. When next shipping a schema-update package to Ciprian, this migration becomes part of the auto-regenerated `ciprian-schema-update.sql` (Slice #15.15's process) the next time `build-ciprian-image.ps1` runs — no separate action needed there.
+
+**Verification note**: per the standing project gotcha, the sandbox's `tsc --noEmit`/`jest` are not reliable for this codebase. Verification here was manual: re-read every edited file in full after editing to confirm the `Corner`/payload shape change is additive and consistent end-to-end (schema → migration → validation → queries → parse-text route → every client call site → `CornersManager`), confirmed via Grep that `getPropertyById`'s and the update re-fetch's corner selects in `queries.ts` are bare `.select()` calls (no explicit column list) so the new column needs no further query change, and confirmed both message files remain valid JSON after the new key was added in the same position in each file. **Adrian should still run `npm run lint` and manually re-test** (import a text file with a deliberately bow-tie corner order, confirm the "Orig. #" values are correct in file order, reorder corners with ↑/↓, confirm the Orig. # values move with their rows; open an existing property and confirm the corners table now opens in Stereo 70 by default) before committing.
+
+**Files touched**
+- `src/db/migration_027_property_corner_original_index.sql` (new)
+- `src/db/schema/index.ts`
+- `src/lib/properties/validation.ts`
+- `src/lib/properties/queries.ts`
+- `src/app/api/properties/parse-text/route.ts`
+- `src/app/properties/_components/form-schema.ts`
+- `src/app/properties/_components/add-property-dialog.tsx`
+- `src/app/admin/import/_components/property-classify-panel.tsx`
+- `src/app/properties/[id]/page.tsx`
+- `src/app/properties/_components/corners-manager.tsx`
+- `messages/en-GB.json`
+- `messages/ro-RO.json`
+- `CLAUDE.md`
+
+### Slice #15.16 — Ciprian UAT bug fixes (detail)
+
+Three issues found by Adrian on his first real test of the Slice #15.15 package, all in the Ciprian UAT deployment path only — no changes to local dev, Vercel, or Supabase.
+
+**Bug 1 — Admin Import → Document (JPEG) → "Internal server error"**
+
+Root cause: `src/lib/storage/index.ts` branches purely on `NODE_ENV === "production"` to decide between local-filesystem storage and Supabase Storage. Ciprian's container runs with `NODE_ENV=production` (it's the same app image shipped to him) but has **no real Supabase project at all** — it runs with `UAT_NO_AUTH=true` and no Supabase credentials, by design (see Slice #7.0/#15.15 context). Uploading a page therefore hit the Supabase code path, which calls `createAdminClient()` (`src/lib/supabase/server.ts`), which throws synchronously when `NEXT_PUBLIC_SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY` are unset — surfacing as a generic 500 "Internal server error" with no further detail in the UI.
+
+Fix — a new `LOCAL_FILE_STORAGE` env var override, forcing the local-filesystem code path even when `NODE_ENV=production`:
+- `src/lib/storage/index.ts`: `const useLocalStorage = process.env.LOCAL_FILE_STORAGE === "true"; const isProduction = process.env.NODE_ENV === "production" && !useLocalStorage;` — all three exported functions (`uploadFile`, `deleteFile`, `getFileUrl`) already branch on `isProduction`, so this one change reroutes all of them.
+- `src/app/api/files/[...path]/route.ts` — this route independently hardcoded its own `NODE_ENV === "production"` guard (returns 404 in prod, since in real production files are served via signed Supabase URLs, not this route). Updated in lockstep with the same `useLocalStorage` flag, otherwise `getFileUrl`'s `/api/files/...` URLs would resolve but 404 when viewed.
+- `C:\dev\ga40prj.Ciprian\docker\postgres\docker-compose.yml` — added `LOCAL_FILE_STORAGE: "true"` to the `app` service's `environment:` block, and a new named volume `app_uploads:/app/uploads` (plus the corresponding top-level `volumes:` entry) so uploaded files survive `update.bat`/container recreation — the Dockerfile has no `VOLUME` directive of its own, so without this the next image update would silently wipe every previously uploaded document page.
+- `.env.example` — documented the new var (commented out, defaulting to unset — no behavior change for Vercel/Supabase deployments).
+
+This fix is **baked into the application code**, so it requires Adrian to rebuild the Ciprian app image (`.\build-ciprian-image.ps1`) and re-send the resulting `ga40prj-app.tar` — a `docker-compose.yml`-only change is not sufficient on its own for this bug.
+
+**Bug 2 — Vision-extraction "ANTHROPIC_API_KEY is not configured on the server", despite the key being present in `.env`**
+
+Root cause: Docker Compose's `--env-file .env` flag (used by every `start.bat`/`stop.bat`/`update.bat` invocation) only makes `.env` variables available for `${VAR}` substitution *inside the compose YAML itself* — it does **not** automatically inject every `.env` variable into a service's container process environment. Only variables explicitly listed in that service's own `environment:` block become readable as `process.env.X` inside the container. `ANTHROPIC_API_KEY` was present in Ciprian's `.env` file the whole time (confirmed) but had never been added to the `app` service's `environment:` block in `docker-compose.yml`, so `extract-id-card/route.ts`'s `if (!apiKey)` guard correctly (if confusingly) reported it as missing — from the container's point of view, it was.
+
+Fix: added `ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}` to the `app` service's `environment:` block in `C:\dev\ga40prj.Ciprian\docker\postgres\docker-compose.yml`, right alongside the new `LOCAL_FILE_STORAGE` line above.
+
+This fix is a **compose-file-only change** — no app-image rebuild needed. Recreating the `app` container (`docker compose ... up -d --force-recreate app`, or just running `update.bat`/`start.bat` again) is enough once the edited `docker-compose.yml` is in place on Ciprian's machine.
+
+**Gap found while investigating (not part of Adrian's original report): missing `update.bat`**
+
+`README-UAT.txt`'s "RECEIVING UPDATES FROM ADRIAN" section and `build-ciprian-image.ps1`'s own console output both reference double-clicking `update.bat` to apply a new app image — but the file did not exist anywhere in the Ciprian package. Created `C:\dev\ga40prj.Ciprian\update.bat`, mirroring `start.bat`/`stop.bat`'s exact invocation pattern (`-f docker\postgres\docker-compose.yml --env-file .env -p ga40prj-ciprian`): `docker load -i docker\app\ga40prj-app.tar` followed by `docker compose ... up -d --force-recreate app` (only the `app` service is recreated — Postgres/pgAdmin and their data are untouched). `README-UAT.txt`'s update section was also extended with the literal two `docker cp` / `docker exec psql` commands for applying an accompanying `ciprian-schema-update.sql`, when Adrian sends one (mirrors UC-C6 in `GA40.Operations.Guide.05.docx`), plus a one-line warning that doing so resets Ciprian's data to match dev's.
+
+**What Adrian needs to do to ship both fixes**
+
+```powershell
+# Rebuild and re-export the Ciprian app image (needed for Bug 1's fix —
+# storage/index.ts and the files route are baked into the image):
+.\build-ciprian-image.ps1
+```
+
+Then send Ciprian the refreshed `ga40prj-app.tar` plus the **updated** `docker-compose.yml` and the new `update.bat` (both one-time file replacements in his `C:\...\ga40prj.Ciprian\` folder — not auto-regenerated by the build script, since it never touches the compose file). Ciprian then runs, in order: replace `docker\app\ga40prj-app.tar`, replace `docker\postgres\docker-compose.yml`, add `update.bat` to the folder root if missing, then double-click `update.bat`.
+
+**Verification note**: per the standing project gotcha, the sandbox cannot run Docker or exercise Ciprian's actual container, so none of this was tested end-to-end. Verification here was a careful manual re-read of every edited file after editing: confirmed `storage/index.ts`'s three exported functions all reference the same `isProduction` const (no second hardcoded `NODE_ENV` check hiding elsewhere — grepped the file), confirmed `/api/files/[...path]/route.ts`'s guard now matches the same flag, confirmed the `docker-compose.yml` `environment:` block syntax (`KEY: ${VAR}` and `KEY: "true"` — YAML, not shell, so `${VAR}` is a Compose substitution from `--env-file`/the shell environment, while `"true"` is a literal string), and confirmed the new `app_uploads` volume is both declared top-level and mounted on the `app` service. **Adrian should test locally first** — point his own `.env`/compose setup at the same two new variables, run a Document JPEG import and an ID Card extraction against a local rebuild, before shipping the new image to Ciprian.
+
+**Files touched**
+- `src/lib/storage/index.ts`
+- `src/app/api/files/[...path]/route.ts`
+- `.env.example`
+- `C:\dev\ga40prj.Ciprian\docker\postgres\docker-compose.yml`
+- `C:\dev\ga40prj.Ciprian\update.bat` (new)
+- `C:\dev\ga40prj.Ciprian\README-UAT.txt`
+- `CLAUDE.md`
 
 ### Slice #15.09 — Sidebar nav cleanup + unified Persons list page (detail)
 
@@ -291,6 +402,41 @@ Pure frontend, scoped entirely to one component — no DB, API, migration, or i1
 **Files touched**
 - `src/app/documents/_components/pages-panel.tsx`
 - `CLAUDE.md`
+
+### Slice #15.15 — Ops: fixed-name, fully-regenerated Ciprian schema-update file (detail)
+
+Process/tooling change, not an app feature. No DB, API, UI, or i18n changes to the GA40 app itself.
+
+**Why**: UC-C6 in the Operations Guide told Adrian to "identify the new migration file(s) in `C:\dev\ga40prj\drizzle\`" — a folder that doesn't exist in this project (migrations are hand-numbered `src/db/migration_NNN_*.sql` files, found by manually scanning for the highest number). Adrian found this error-prone and asked for: one fixed-name file, sent to Ciprian every time, that always brings his DB fully up to dev's current level — with no preservation of Ciprian's existing data required at this stage (operational or reference), and updated automatically whenever dev's schema changes, not manually.
+
+**Design**: `build-ciprian-image.ps1` gained a new Step 5 that assembles `C:\dev\ga40prj.Ciprian\ciprian-schema-update.sql` on every run, from four pieces, all pulled live from `ga40prj-postgres` at build time — no hand-maintained file involved anywhere in this path:
+1. `DROP SCHEMA public CASCADE; CREATE SCHEMA public;` — full wipe.
+2. Ciprian's own `01-extensions.sql` content (PostGIS/topology), read from his init folder.
+3. A fresh `pg_dump --schema-only` (the same dump already produced for `02-schema.sql`, including the existing `CREATE SCHEMA topology` → `IF NOT EXISTS` safety net).
+4. A fresh `pg_dump --data-only -t 'lookup_*'` of every lookup table — deliberately *not* `src/db/sync-reference-data.sql`, because that file (and the `npm run export:reference-data` script meant to regenerate it) had already been found stale/broken once (missing `lookup_judicial_person_type` in Ciprian's copy; the export script doesn't exist in `scripts/`). Reading live from Postgres instead removes that entire failure mode — there's no file to forget to update.
+
+**Trade-off, confirmed acceptable by Adrian**: applying `ciprian-schema-update.sql` wipes Ciprian's *entire* database — operational records and reference-data edits alike — every single time, even for changes that don't touch the schema. This replaces UC-C8 (full reset) in the common case; UC-C8 remains useful standalone only when no new app version is being delivered.
+
+**Ciprian's procedure becomes invariant** — same two PowerShell commands, same filenames, every time, no placeholders:
+```powershell
+docker cp ciprian-schema-update.sql ciprian-ga40prj-postgres:/tmp/ciprian-schema-update.sql
+docker exec ciprian-ga40prj-postgres psql -U postgres -d ga40db -v ON_ERROR_STOP=1 -f /tmp/ciprian-schema-update.sql 2>&1 | Tee-Object -FilePath schema-update.log
+```
+
+**Bug found on first real run, fixed same slice**: Adrian ran the script and hit `ParserError: UnexpectedToken` at line 240 — Windows PowerShell 5.1 garbled the Unicode box-drawing characters (`─`, U+2500) used as decorative section-separator dashes inside the Step 5 SQL-header strings (`$header` here-string + the `$combined` concatenation), because the `.ps1` file is plain UTF-8 without a BOM and PowerShell 5.1 (unlike PowerShell 7+) parses script source using the system codepage when no BOM is present — multi-byte UTF-8 sequences land as mojibake and break tokenization. Fixed by replacing all four `── N. ─────` separator lines with plain ASCII (`---- N. ... ----`), matching the rest of the file's existing pure-ASCII comment-banner style. Confirmed via grep that no non-ASCII byte remains anywhere in `build-ciprian-image.ps1`.
+
+**Standing gotcha this adds** (see Gotchas section below): never embed non-ASCII decorative characters (box-drawing, smart quotes, em-dashes, etc.) in `.ps1` files — Adrian's Windows PowerShell 5.1 only parses them reliably with a UTF-8 BOM, which this script's write path does not add. Stick to plain ASCII in all PowerShell source going forward.
+
+**Second bug found on the next real run, fixed same slice**: after the ASCII fix above, Adrian re-ran the script and it progressed much further (full Docker build, image export, schema `pg_dump` + `docker cp` all succeeded) before crashing with `DirectoryNotFoundException` from `[System.IO.File]::ReadAllText($schemaDest)`: `Could not find a part of the path 'C:\Windows\ga40prj.Ciprian\docker\postgres\init\02-schema.sql'`. Root cause: `$ciprianRoot` was set via a relative path (`"..\ga40prj.Ciprian"`). PowerShell-native cmdlets and external-process calls (e.g. the `docker cp` that had just succeeded, writing to the correct `C:\dev\ga40prj.Ciprian\...`) resolve relative paths against PowerShell's own session location (`$PWD`, correctly `C:\dev\ga40prj\`). Raw `[System.IO.File]::ReadAllText`/`WriteAllText` static calls instead resolve relative paths against the separate, process-wide `[Environment]::CurrentDirectory` — which on Adrian's machine had drifted to `C:\Windows\` (a known PowerShell/.NET divergence that `Set-Location`/`cd` does not always keep in sync, more common on Windows PowerShell 5.1). The same risk existed for the temp reference-data dump file, referenced via a bare relative literal (`.\ga40prj-refdata-dump.sql`) in three places. Fixed by resolving `$ciprianRoot` to an absolute path immediately after its existence check (`$ciprianRoot = [System.IO.Path]::GetFullPath((Join-Path $repoRoot "..\ga40prj.Ciprian"))`, with `$repoRoot = $PSScriptRoot`), and by anchoring the refdata temp file to the same absolute `$repoRoot` (`$refDataDumpLocal = Join-Path $repoRoot "ga40prj-refdata-dump.sql"`) instead of a bare relative literal. Every path derived from `$ciprianRoot` (`$outputDir`, `$outputTar`, `$schemaDest`, `$extensionsSrc`, `$updateFileDest`) is now absolute, so every downstream `[System.IO.File]` call is immune to `Environment.CurrentDirectory` drift regardless of how the script is launched.
+
+**Standing gotcha this adds** (see Gotchas section below): in any `.ps1` script that mixes native/external commands (`docker cp`, etc.) with raw `[System.IO.File]::ReadAllText`/`WriteAllText` calls, never pass those .NET calls a relative path — resolve every path to absolute (via `$PSScriptRoot` + `[System.IO.Path]::GetFullPath`/`Resolve-Path`) first. PowerShell cmdlets and external processes resolve relative paths against `$PWD`; raw .NET file APIs resolve them against `[Environment]::CurrentDirectory`, which can silently diverge from `$PWD` (confirmed on Adrian's machine — it had drifted to `C:\Windows\`).
+
+**Verification note**: no access to Adrian's machine/Docker from this environment, so the corrected version still could not be run end-to-end here. Re-verified by careful read-through after both fixes: PowerShell here-string/quoting balance, that `pg_dump -t 'lookup_*'` is passed as a single literal argument (not shell-expanded, since `docker exec` here invokes `pg_dump` directly rather than through a shell), that the wipe-then-recreate ordering (extensions → schema → data) matches existing dependency requirements (PostGIS before app tables before lookup-table data), a full non-ASCII-byte grep returning zero matches, and a grep confirming every remaining `[System.IO.File]::` call now reads from a variable ultimately derived from the absolute `$ciprianRoot`/`$repoRoot`, with no bare relative-path literals left anywhere in the file. **Adrian should run `.\build-ciprian-image.ps1` again and confirm it completes end-to-end and the generated `ciprian-schema-update.sql` looks right before sending it to Ciprian** — Step 5's assembly logic has still never been exercised live, since this is the first run to get past Step 4.
+
+**Files touched**
+- `build-ciprian-image.ps1`
+- `CLAUDE.md`
+- `C:\dev.docs\ga40prj\02.Operations.Guides\GA40.Operations.Guide.05.docx` (new; supersedes `...04.docx`)
 
 ### Slice #15.13 — Document form: "Show Big Page" toggle (detail)
 
@@ -2093,11 +2239,18 @@ Rules:
     sed -i 's/\r//' 02-schema-fixed.sql          # strip CRLF
     sed -i '1s/^\xEF\xBB\xBF//' 02-schema-fixed.sql  # strip UTF-8 BOM if present
     ```
-- **Ciprian UAT reference-data sync.** `src/db/sync-reference-data.sql` is the canonical script to seed all 11 lookup tables (correct diacritics, `lookup_property_person_role` seed included). **When to regenerate it:** after any slice that adds rows to a lookup table, run `npm run export:reference-data` (reads from local Docker, writes the file). **Commit the updated file** alongside the migration so a current copy is always in the repo, ready to package whenever it's needed.
-    **Adrian never runs commands against `ciprian-ga40prj-postgres` himself** — that container lives on Ciprian's PC, not Adrian's. Delivery to Ciprian's UAT environment always goes through `C:\dev.docs\ga40prj\02.Operations.Guides\GA40.Operations.Guide.03.fixed.docx`:
-    - **Normal slice with a schema migration** (the common case, e.g. adding a lookup table): follow **UC-C6** — Adrian builds the app image and packages the new migration SQL file (e.g. `src/db/migration_022_..._.sql`) for Ciprian; Ciprian applies it on his own machine. The migration file's own seed `INSERT`s (idempotent, `ON CONFLICT DO NOTHING`) are sufficient — `sync-reference-data.sql` is **not** part of this flow and does not need to be sent.
-    - **Full database reset** (UAT data corrupt / clean slate): follow **UC-C8** — Ciprian wipes the volume and `start.bat` reinitialises from the `init/` scripts. `sync-reference-data.sql` (or `supabase_schema_full.sql`'s equivalent for Supabase) is the right tool here, run by Ciprian on his own machine, only in this scenario.
-    - There is no standing step to "re-sync Ciprian's container" after every slice — keeping `sync-reference-data.sql` current in the repo (the regenerate step above) is enough; it only gets *used* under UC-C8.
+- **Non-ASCII characters in `.ps1` files break under Windows PowerShell 5.1.** Adrian's environment is Windows PowerShell 5.1 (not PowerShell 7+), which parses a `.ps1` file using the system codepage whenever the file has no UTF-8 BOM — and the file-writing tools used in this project save plain UTF-8 without a BOM. Any decorative non-ASCII character (box-drawing `─`/`│`, smart quotes, em-dashes, etc.) embedded in a script string or comment comes out as mojibake and can break tokenization entirely (`ParserError: UnexpectedToken`) — this hit `build-ciprian-image.ps1` in Slice #15.15 (see detail below). **Stick to plain ASCII in every `.ps1` file** — use `----`/`====` for decorative dividers (already the established style elsewhere in this script), not Unicode line-drawing characters.
+- **Relative paths break raw `[System.IO.File]` calls in `.ps1` scripts, even when native commands in the same script work fine.** PowerShell cmdlets and external processes (`docker cp`, `docker exec`, etc.) resolve relative paths against PowerShell's own session location (`$PWD`). Raw .NET static calls — `[System.IO.File]::ReadAllText`/`WriteAllText`, etc. — instead resolve relative paths against the separate, process-wide `[Environment]::CurrentDirectory`, which can silently diverge from `$PWD` (confirmed on Adrian's machine, where it had drifted to `C:\Windows\`, even though `$PWD` and every `docker` call were correctly anchored at `C:\dev\ga40prj\`). This hit `build-ciprian-image.ps1` in Slice #15.15 (see detail below) — a `docker cp` succeeded against the right path moments before a `[System.IO.File]::ReadAllText` call on a path derived the same way threw `DirectoryNotFoundException`. **Always resolve to an absolute path first** (`$repoRoot = $PSScriptRoot`; `[System.IO.Path]::GetFullPath((Join-Path $repoRoot "..\relative\path"))`) before handing any path to a raw `[System.IO.File]` call.
+- **Ciprian UAT schema + reference-data delivery (rewritten — see UC-C6, `GA40.Operations.Guide.05.docx`).** Every DB schema change of any kind, no matter how small, is delivered to Ciprian as a single fixed-name file: `ciprian-schema-update.sql`, placed at the root of `C:\dev\ga40prj.Ciprian\`. It is **fully regenerated, never hand-edited**, every time `build-ciprian-image.ps1` runs (its Step 5). There is nothing for Adrian to "identify" before sending it — same filename every time, contents always complete and current.
+    **What the file contains, assembled automatically from the live `ga40prj-postgres` container at build time:** (1) `DROP SCHEMA public CASCADE; CREATE SCHEMA public;` — a full wipe; (2) Ciprian's own `01-extensions.sql` content (PostGIS/topology); (3) a fresh `pg_dump --schema-only` of the current dev schema (same dump used for `02-schema.sql`); (4) a fresh `pg_dump --data-only -t 'lookup_*'` of every lookup table, pulled live from dev — **not** from `src/db/sync-reference-data.sql` or any other file in the repo. There is no hand-maintained seed file in this path at all, so it cannot drift out of sync the way `sync-reference-data.sql` / the (still-missing) `npm run export:reference-data` script previously did.
+    **This means every schema update wipes Ciprian's entire UAT database** — operational data and reference data alike — and rebuilds it to exactly match dev. Confirmed acceptable by Adrian: at this stage Ciprian's UAT data does not need to survive between rounds.
+    **Adrian never runs commands against `ciprian-ga40prj-postgres` himself** — that container lives on Ciprian's PC, not Adrian's. Delivery to Ciprian's UAT environment always goes through `C:\dev.docs\ga40prj\02.Operations.Guides\GA40.Operations.Guide.05.docx`:
+    - **Any slice with a schema or reference-data change** (the common case): follow **UC-C6** — Adrian runs `.\build-ciprian-image.ps1`, which produces both `ga40prj-app.tar` and `ciprian-schema-update.sql`; sends both to Ciprian. Ciprian replaces both files, runs `update.bat`, then applies `ciprian-schema-update.sql` with the two literal `docker cp` / `docker exec psql` commands in UC-C6 — no placeholders, same commands every time.
+    - **Code-only slice, no DB change**: follow **UC-C5** — only `ga40prj-app.tar` is sent; the database is untouched.
+    - **Full database reset with no new app version to deliver** (UAT data corrupt / clean slate, but nothing else changed): follow **UC-C8**.
+    - `src/db/sync-reference-data.sql` and `npm run export:reference-data` are **not** part of the Ciprian flow anymore. `sync-reference-data.sql` is still in the repo as a general-purpose seed script (e.g. for Supabase or a fresh teammate's Docker volume) but is no longer Ciprian's source of truth and does not need to be kept current for Ciprian's sake.
+- **Docker Compose `--env-file` does NOT inject every `.env` variable into a container.** `--env-file .env` (used by every `start.bat`/`stop.bat`/`update.bat` in Ciprian's package) only makes `.env` values available for `${VAR}` substitution *inside the compose YAML itself* — e.g. to fill in `ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}` in a service's `environment:` block. It does **not** automatically forward every `.env` key into `process.env` inside the running container. A variable that's only present in `.env` but never referenced in the service's own `environment:` block (by name, as `KEY: ${KEY}` or a literal) is invisible to the app, even though it's "right there in the .env file" — confirmed as the root cause of Ciprian seeing "ANTHROPIC_API_KEY is not configured" in Slice #15.16 despite the key being present in his `.env` the whole time. **Whenever a new env var is added to `.env.example` that the running app needs to read, also add a matching line to the relevant `environment:` block in every `docker-compose.yml` that runs that app** — local dev's `docker/postgres/docker-compose.yml` and Ciprian's `C:\dev\ga40prj.Ciprian\docker\postgres\docker-compose.yml` are two separate files and both need the addition independently.
+- **Ciprian's UAT container runs with `NODE_ENV=production` but no real Supabase project.** Code that branches purely on `NODE_ENV === "production"` to decide "use the real cloud backend" (e.g. the original `src/lib/storage/index.ts`) will try to call Supabase in Ciprian's environment and fail, since he intentionally has no Supabase credentials configured (`UAT_NO_AUTH=true` is the existing precedent for this same gap on the auth side). As of Slice #15.16, document-page file storage has its own override: `LOCAL_FILE_STORAGE=true` in a service's `environment:` block forces the local-filesystem code path in `src/lib/storage/index.ts` and `src/app/api/files/[...path]/route.ts` even with `NODE_ENV=production`. If a future feature adds another "real backend required" code path, check whether it needs the same kind of override for Ciprian's stack rather than assuming `NODE_ENV` alone is a safe signal.
 - **OCR (Tesseract) — label text fuses with coordinate tokens.** When a scanned cadastral table has row-label text in the left margin (e.g. `"SE A"`, parcel names, or decorative characters), Tesseract reads the label and the first numeric token on that row as one fused string — e.g. `"SE A 1 321762.117"` becomes `"11321762.117"`. This is always the **first data row** (corner 1) because subsequent rows have only a small corner-index digit in the margin, not a word. The extra characters add multiple leading digits to the coordinate, not just one. The parser handles this via `trySplitMergedToken` (tries stripping 1–3 leading digits) + rescue-2b in `parseTableFormat`. If a future scan skips corner 1 again: add `console.log(rawText)` at the top of `parseOcrText` and `console.log("Pass 0:", JSON.stringify(parseTableFormat(rawText)))` below it, run `npm run dev`, scan the image, and inspect the terminal. The raw text immediately shows what Tesseract produced.
 - **OCR (Tesseract) — common digit confusions.** Tesseract confuses `l` (lowercase L) with `1`, `I` (uppercase i) with `1`, and `O` (uppercase letter O) with `0`. The `fixOcrDigits` helper in `scan-image/route.ts` corrects these before any numeric parsing. If a coordinate still doesn't parse, check the raw OCR text for these substitutions.
 - **OCR (Tesseract) — do not pre-filter lines by keyword.** Removing lines that contain "Suprafata", "Perimetru", etc. before parsing is tempting (those are area/perimeter rows, not corners). Don't do it: OCR sometimes merges the column-header row (which may contain those words) with the first data row, and the keyword filter discards the entire merged line including the real corner coordinates. Let the coordinate-range checks reject out-of-range values naturally.
