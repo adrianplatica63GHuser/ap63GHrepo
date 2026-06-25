@@ -116,12 +116,22 @@ export function PropertyForm({
 
   // Slice #15.10: in create mode, an untouched/all-blank form must never be
   // saveable or treated as dirty — `hasFormData` is the single source of
-  // truth for "has the user actually entered anything yet?". Read via
-  // form.getValues() rather than form.watch() — the component already
-  // re-renders on every keystroke (RHF's mode: "onChange" subscribes
-  // formState, which is read below), so a fresh value is available on
-  // every render without a second subscription.
-  const createHasData = mode === "create" && hasFormData(form.getValues(), corners);
+  // truth for "has the user actually entered anything yet?".
+  //
+  // Slice #18.01: this MUST be read via form.watch() (subscribes to value
+  // changes), not form.getValues() (does not subscribe). The earlier
+  // getValues() approach assumed the component "already re-renders on every
+  // keystroke" because formState is read below — but in create mode the only
+  // formState field actually evaluated is `isValid` (the `isDirty` read sits
+  // behind a `mode === "edit"` short-circuit). Every property field is an
+  // optional string, so an empty create form is already valid and `isValid`
+  // never changes as you type — so the component never re-rendered on field
+  // edits, leaving `createHasData` stale at false and Save wrongly disabled
+  // until a corner (a real useState update) forced a re-render. watch() makes
+  // it recompute on every keystroke, so Save (and the unsaved-changes guard
+  // below) unlock as soon as any single field has content.
+  const watchedValues = form.watch();
+  const createHasData = mode === "create" && hasFormData(watchedValues, corners);
 
   const saveDisabled =
     submitting ||
