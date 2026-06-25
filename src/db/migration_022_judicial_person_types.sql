@@ -50,23 +50,33 @@ ALTER TABLE judicial_person
 
 -- ---------------------------------------------------------------------------
 -- 3. Backfill from the old enum column by name match
+--    (only if judicial_type still exists — guards re-running this file
+--    after a previous run already dropped it in step 4)
 -- ---------------------------------------------------------------------------
 
-UPDATE judicial_person jp
-SET judicial_person_type_id = lt.id
-FROM lookup_judicial_person_type lt
-WHERE jp.judicial_person_type_id IS NULL
-  AND jp.judicial_type IS NOT NULL
-  AND lt.name = CASE jp.judicial_type::text
-    WHEN 'SRL'   THEN 'SRL'
-    WHEN 'SA'    THEN 'SA'
-    WHEN 'SRL_D' THEN 'SRL-D'
-    WHEN 'PFA'   THEN 'PFA'
-    WHEN 'II'    THEN 'II'
-    WHEN 'IF'    THEN 'IF'
-    WHEN 'ONG'   THEN 'ONG'
-    WHEN 'OTHER' THEN 'Altele'
-  END;
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'judicial_person' AND column_name = 'judicial_type'
+  ) THEN
+    UPDATE judicial_person jp
+    SET judicial_person_type_id = lt.id
+    FROM lookup_judicial_person_type lt
+    WHERE jp.judicial_person_type_id IS NULL
+      AND jp.judicial_type IS NOT NULL
+      AND lt.name = CASE jp.judicial_type::text
+        WHEN 'SRL'   THEN 'SRL'
+        WHEN 'SA'    THEN 'SA'
+        WHEN 'SRL_D' THEN 'SRL-D'
+        WHEN 'PFA'   THEN 'PFA'
+        WHEN 'II'    THEN 'II'
+        WHEN 'IF'    THEN 'IF'
+        WHEN 'ONG'   THEN 'ONG'
+        WHEN 'OTHER' THEN 'Altele'
+      END;
+  END IF;
+END $$;
 
 -- ---------------------------------------------------------------------------
 -- 4. Drop the old enum column and the enum type itself
