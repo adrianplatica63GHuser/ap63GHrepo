@@ -8,6 +8,15 @@
  * Production   (NODE_ENV === "production"):
  *   Files are stored in the Supabase Storage bucket "document-pages"
  *   and served via short-lived signed URLs (60-second TTL).
+ *
+ * Local-storage override (LOCAL_FILE_STORAGE=true):
+ *   Some "production" deployments have no real Supabase project at all —
+ *   e.g. Ciprian's offline UAT stack, which intentionally runs with
+ *   UAT_NO_AUTH and no Supabase credentials configured. Setting
+ *   LOCAL_FILE_STORAGE=true forces the dev (local filesystem) code path
+ *   even when NODE_ENV=production, so document-page uploads work there
+ *   too. Leave unset for Vercel/Supabase deployments — default behaviour
+ *   is unchanged. See CLAUDE.md Slice #15.16.
  */
 
 import * as fs from "fs/promises";
@@ -20,7 +29,8 @@ import { createAdminClient } from "@/lib/supabase/server";
 
 const SUPABASE_BUCKET = "document-pages";
 const LOCAL_UPLOADS_DIR = path.join(process.cwd(), "uploads");
-const isProduction = process.env.NODE_ENV === "production";
+const useLocalStorage = process.env.LOCAL_FILE_STORAGE === "true";
+const isProduction = process.env.NODE_ENV === "production" && !useLocalStorage;
 
 // ---------------------------------------------------------------------------
 // Public API

@@ -5,12 +5,18 @@
  * Files are stored under <project-root>/uploads/ and served from here.
  *
  * In production, files are served via Supabase Storage signed URLs and
- * this route returns 404.
+ * this route returns 404 — UNLESS LOCAL_FILE_STORAGE=true, which keeps
+ * this route live even with NODE_ENV=production. Used by deployments with
+ * no real Supabase project (e.g. Ciprian's offline UAT stack). Must stay
+ * in lockstep with the same flag in src/lib/storage/index.ts. See
+ * CLAUDE.md Slice #15.16.
  */
 
 import type { NextRequest } from "next/server";
 import * as path from "path";
 import * as fs from "fs/promises";
+
+const useLocalStorage = process.env.LOCAL_FILE_STORAGE === "true";
 
 // Shared MIME-type map (also used by the storage layer in dev).
 const MIME_MAP: Record<string, string> = {
@@ -35,8 +41,9 @@ const MIME_MAP: Record<string, string> = {
 type Ctx = { params: Promise<{ path: string[] }> };
 
 export async function GET(_req: NextRequest, ctx: Ctx): Promise<Response> {
-  // This route is intentionally unavailable in production.
-  if (process.env.NODE_ENV === "production") {
+  // This route is intentionally unavailable in production — unless the
+  // local-storage override is on (see file header comment).
+  if (process.env.NODE_ENV === "production" && !useLocalStorage) {
     return Response.json({ error: "Not available" }, { status: 404 });
   }
 
