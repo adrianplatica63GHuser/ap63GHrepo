@@ -206,6 +206,7 @@ export async function createProperty(
             sequenceNo: i + 1,
             lat:        c.lat,
             lon:        c.lon,
+            originalIndex: c.originalIndex ?? null,
           })),
         )
         .returning();
@@ -283,6 +284,7 @@ export async function updateProperty(
             sequenceNo: i + 1,
             lat:        c.lat,
             lon:        c.lon,
+            originalIndex: c.originalIndex ?? null,
           })),
         );
       }

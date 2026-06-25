@@ -407,6 +407,13 @@ export const propertyCorner = pgTable(
     lat: doublePrecision("lat").notNull(),
     lon: doublePrecision("lon").notNull(),
 
+    // Original index token (column 1) from the imported cadastral text/OCR
+    // source, kept permanently bound to this corner's lat/lon so it travels
+    // with the corner when the table is reordered (e.g. fixing a bow-tie
+    // polygon via the up/down arrows). Null when there was no source index
+    // (manual entry, OCR groups, or the legacy 2-column text format).
+    originalIndex: integer("original_index"),
+
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

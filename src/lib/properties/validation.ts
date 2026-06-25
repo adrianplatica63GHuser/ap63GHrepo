@@ -17,6 +17,7 @@ import { property } from "@/db/schema";
 export const cornerInputSchema = z.object({
   lat: z.number().min(-90).max(90),
   lon: z.number().min(-180).max(180),
+  originalIndex: z.number().int().nullish(),
 });
 export type CornerInput = z.infer<typeof cornerInputSchema>;
 

@@ -81,6 +81,7 @@
     },
     "corners": {
       "seq": "Nr.",
+      "originalIndex": "Nr. orig.",
       "lat": "Latitudine",
       "lon": "Longitudine",
       "stereoN": "Nord (m)",

@@ -215,6 +215,7 @@ function CornerInputRow({
   return (
     <tr className="bg-card dark:bg-blue-950/30">
       <td className="px-3 py-2 text-fade text-xs">—</td>
+      <td className="px-3 py-2 text-fade text-xs">—</td>
 
       <td colSpan={2} className="px-3 py-2">
         <div className="flex flex-col gap-2">
@@ -351,7 +352,7 @@ function displayFmtToInputMode(fmt: DisplayFormat): InputMode {
 export function CornersManager({ corners, onChange, readOnly = false, hoveredCornerIdx, onCornerHover, bigMap = false, onToggleBigMap }: Props) {
   const t = useTranslations("property.corners");
 
-  const [displayFmt,  setDisplayFmt]  = useState<DisplayFormat>("DD");
+  const [displayFmt,  setDisplayFmt]  = useState<DisplayFormat>("S70");
   const [adding,      setAdding]      = useState(false);
   const [editingIdx,  setEditingIdx]  = useState<number | null>(null);
   const cornersKey = cornersToKey(corners);
@@ -376,7 +377,11 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
   };
 
   const handleEdit = (idx: number, c: Corner) => {
-    const next = corners.map((old, i) => (i === idx ? c : old));
+    // CornerInputRow's onSave only ever returns { lat, lon } — preserve the
+    // pre-edit corner's originalIndex so it keeps travelling with this corner.
+    const next = corners.map((old, i) =>
+      i === idx ? { ...c, originalIndex: old.originalIndex } : old,
+    );
     onChange(next);
     setEditingIdx(null);
   };
@@ -458,6 +463,7 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
           <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-ink dark:bg-zinc-800 dark:text-zinc-300">
             <tr>
               <th className="px-3 py-2 w-10">{t("seq")}</th>
+              <th className="px-3 py-2 w-14">{t("originalIndex")}</th>
               <th className="px-3 py-2">{col1Label}</th>
               <th className="px-3 py-2">{col2Label}</th>
               {!readOnly && <th className="px-3 py-2 w-40" />}
@@ -466,7 +472,7 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
           <tbody className="divide-y divide-crease dark:divide-zinc-800">
             {corners.length === 0 && !adding && (
               <tr>
-                <td colSpan={readOnly ? 3 : 4} className="px-3 py-4 text-center text-xs text-fade">
+                <td colSpan={readOnly ? 4 : 5} className="px-3 py-4 text-center text-xs text-fade">
                   {t("empty")}
                 </td>
               </tr>
@@ -492,6 +498,9 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
                   onMouseLeave={() => onCornerHover?.(null)}
                 >
                   <td className={cellCls + " text-fade tabular-nums"}>{idx + 1}</td>
+                  <td className={cellCls + " text-fade tabular-nums"}>
+                    {c.originalIndex ?? "—"}
+                  </td>
                   <td className={cellCls + " " + monoLight}>{col1Values[idx]}</td>
                   <td className={cellCls + " " + monoLight}>{col2Values[idx]}</td>
                   {!readOnly && (

@@ -81,6 +81,7 @@
     },
     "corners": {
       "seq": "#",
+      "originalIndex": "Orig. #",
       "lat": "Latitude",
       "lon": "Longitude",
       "stereoN": "North (m)",

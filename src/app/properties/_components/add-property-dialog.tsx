@@ -30,6 +30,7 @@ import Link                 from "next/link";
 interface Corner {
   lat: number;
   lon: number;
+  originalIndex?: number | null;
 }
 
 interface ScannedProperty {
@@ -88,7 +89,7 @@ async function createProperty(
   nickname: string | null,
 ): Promise<string> {
   const payload: Record<string, unknown> = {
-    corners: corners.map((c) => ({ lat: c.lat, lon: c.lon })),
+    corners: corners.map((c) => ({ lat: c.lat, lon: c.lon, originalIndex: c.originalIndex ?? null })),
   };
   if (notes)    payload.notes    = notes;
   if (nickname) payload.nickname = nickname;

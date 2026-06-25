@@ -5,15 +5,29 @@
  * file exported from a Romanian cadastral system).
  *
  * File format (auto-detected, any delimiter):
- *   3-column: <token0> <X [m]> <Y [m]>  — token0 is any number < 1 000 (ignored;
- *                                          corner order is determined by line order)
- *   2-column: <X [m]> <Y [m]>            — no leading token
+ *   3-column: <token0> <X [m]> <Y [m]>  — token0 is any number < 1 000, the
+ *                                          file's "original index" for this
+ *                                          corner. It does NOT determine corner
+ *                                          order (that's still line order) —
+ *                                          it is captured and carried along
+ *                                          permanently with this corner's
+ *                                          lat/lon, so it survives reordering
+ *                                          later (e.g. fixing a bow-tie
+ *                                          polygon via the up/down arrows).
+ *   2-column: <X [m]> <Y [m]>            — no leading token; originalIndex is
+ *                                          null for these corners.
  *   Lines that don't match either pattern are ignored automatically.
  *
  * GIS.13.11 clarification: in some cadastral exports the first column is an
  * arbitrary numeric label (< 1 000) that does NOT represent the corner's
- * sequential position.  The parser ignores it; corner 1 = first matching line,
- * corner 2 = second, etc.
+ * sequential position. Corner 1 = first matching line, corner 2 = second,
+ * etc., regardless of what this label says (Slice #15.15 — the label itself
+ * is now kept as `originalIndex` rather than discarded).
+ *
+ * Corner order (Slice #15.12): the order of valid lines in the file IS the
+ * corner order — the very first matching line becomes corner 1, the second
+ * matching line becomes corner 2, and so on. The corners array is returned
+ * exactly in that order; it is never reordered/resorted.
  *
  * Column mapping (Romanian geodetic convention — X = Northing, Y = Easting):
  *   X [m] = Northing  → `north` arg of stereo70ToWgs84
@@ -23,7 +37,7 @@
  * See the "Coordinate axis order" gotcha in CLAUDE.md.
  *
  * Response shape:
- *   { corners: { lat: number; lon: number }[] }
+ *   { corners: { lat: number; lon: number; originalIndex: number | null }[] }
  *
  * An empty corners array means no valid coordinate rows were found.
  *
@@ -46,20 +60,25 @@ function isStereo(n: number): boolean {
 }
 
 /**
- * Parse one data line and return { northing, easting } or null.
+ * Parse one data line and return { northing, easting, originalIndex } or null.
  *
  * Accepts whitespace, comma, semicolon, pipe, or tab as separators.
  *
  * Supported formats:
- *  3-column: <token0> <X [m]> <Y [m]>  — token0 is any finite number < 1 000
- *                                         (ignored; corner order = line order)
+ *  3-column: <token0> <X [m]> <Y [m]>  — token0 is any finite number < 1 000,
+ *                                         captured as `originalIndex`. Corner
+ *                                         order is still determined by line
+ *                                         order, not by this value.
  *  2-column: <X [m]> <Y [m]>            — no leading token (auto-detected when
- *                                          token 0 is itself a Stereo70 value)
+ *                                          token 0 is itself a Stereo70 value);
+ *                                          `originalIndex` is null.
  *
  * Token mapping (Romanian geodetic convention — X = Northing, Y = Easting):
  *   X column → `northing`; Y column → `easting`
  */
-function parseLine(line: string): { northing: number; easting: number } | null {
+function parseLine(
+  line: string,
+): { northing: number; easting: number; originalIndex: number | null } | null {
   const tokens = line
     .trim()
     .split(/[\s,;|\t]+/)
@@ -69,7 +88,7 @@ function parseLine(line: string): { northing: number; easting: number } | null {
   if (tokens.length < 2) return null;
 
   // --- 3-column format: leading token (< 1 000) + X + Y ---
-  // token[0] is an arbitrary numeric label; it is ignored for sequencing.
+  // token[0] is an arbitrary numeric label, captured as originalIndex.
   // Corner order is always determined by line order, not by this value.
   if (tokens.length >= 3) {
     const idx = parseFloat(tokens[0].replace(",", "."));
@@ -77,7 +96,7 @@ function parseLine(line: string): { northing: number; easting: number } | null {
       const northing = parseFloat(tokens[1].replace(",", "."));
       const easting  = parseFloat(tokens[2].replace(",", "."));
       if (!isNaN(northing) && isStereo(northing) && !isNaN(easting) && isStereo(easting)) {
-        return { northing, easting };
+        return { northing, easting, originalIndex: idx };
       }
     }
   }
@@ -87,40 +106,11 @@ function parseLine(line: string): { northing: number; easting: number } | null {
   if (!isNaN(firstNum) && isStereo(firstNum)) {
     const secondNum = parseFloat(tokens[1].replace(",", "."));
     if (!isNaN(secondNum) && isStereo(secondNum)) {
-      return { northing: firstNum, easting: secondNum };
+      return { northing: firstNum, easting: secondNum, originalIndex: null };
     }
   }
 
   return null;
-}
-
-// ---------------------------------------------------------------------------
-// Geometry helpers
-// ---------------------------------------------------------------------------
-
-/**
- * Reorder corners so the resulting polygon has no self-intersecting sides.
- *
- * Strategy: sort by polar angle around the centroid (star-shaped polygon
- * approach). For any convex or near-convex parcel — which covers all typical
- * Romanian cadastral land parcels — this produces a simple (non-self-
- * intersecting) polygon regardless of the order the corners arrived in.
- *
- * Returns the input unchanged if fewer than 3 corners are supplied.
- */
-function sortToSimplePolygon(
-  corners: { lat: number; lon: number }[],
-): { lat: number; lon: number }[] {
-  if (corners.length < 3) return corners;
-
-  const centLat = corners.reduce((s, c) => s + c.lat, 0) / corners.length;
-  const centLon = corners.reduce((s, c) => s + c.lon, 0) / corners.length;
-
-  return [...corners].sort(
-    (a, b) =>
-      Math.atan2(a.lat - centLat, a.lon - centLon) -
-      Math.atan2(b.lat - centLat, b.lon - centLon),
-  );
 }
 
 // ---------------------------------------------------------------------------
@@ -144,7 +134,7 @@ export async function POST(request: NextRequest): Promise<Response> {
   const raw   = await fileField.text();
   const lines = raw.split(/\r?\n/);
 
-  const corners: { lat: number; lon: number }[] = [];
+  const corners: { lat: number; lon: number; originalIndex: number | null }[] = [];
 
   for (const line of lines) {
     const parsed = parseLine(line);
@@ -152,13 +142,13 @@ export async function POST(request: NextRequest): Promise<Response> {
 
     try {
       const wgs = stereo70ToWgs84(parsed.northing, parsed.easting);
-      corners.push({ lat: wgs.lat, lon: wgs.lon });
+      corners.push({ lat: wgs.lat, lon: wgs.lon, originalIndex: parsed.originalIndex });
     } catch {
       // Point outside grid coverage — skip this corner silently
     }
   }
 
-  // Reorder corners into a simple (non-self-intersecting) polygon before
-  // returning — the original file order is irrelevant per spec.
-  return Response.json({ corners: sortToSimplePolygon(corners) });
+  // Corner order is exactly the order valid lines appeared in the file —
+  // never reordered/resorted (Slice #15.12).
+  return Response.json({ corners });
 }

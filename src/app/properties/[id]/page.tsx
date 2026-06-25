@@ -26,6 +26,7 @@ export default async function EditPropertyPage({ params, searchParams }: PagePar
   const initialCorners = data.corners.map((c) => ({
     lat: c.lat,
     lon: c.lon,
+    originalIndex: c.originalIndex,
   }));
 
   const label = data.property.nickname ?? data.property.code;

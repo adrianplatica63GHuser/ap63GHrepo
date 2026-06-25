@@ -14,7 +14,7 @@ import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-provider";
 
-type Corner = { lat: number; lon: number };
+type Corner = { lat: number; lon: number; originalIndex?: number | null };
 
 type Props = {
   file: File;

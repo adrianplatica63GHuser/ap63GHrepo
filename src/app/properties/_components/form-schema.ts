@@ -13,7 +13,7 @@ import type { PropertyCreate, PropertyUpdate } from "@/lib/properties/validation
 // Corner (client-side, WGS84 decimal degrees)
 // ---------------------------------------------------------------------------
 
-export type Corner = { lat: number; lon: number };
+export type Corner = { lat: number; lon: number; originalIndex?: number | null };
 
 // ---------------------------------------------------------------------------
 // Form schema — all strings; validated on the client before submission
@@ -188,6 +188,6 @@ export function toApiPayload(
           notes:      blank(values.address.notes),
         }
       : null,
-    corners: corners.map((c) => ({ lat: c.lat, lon: c.lon })),
+    corners: corners.map((c) => ({ lat: c.lat, lon: c.lon, originalIndex: c.originalIndex ?? null })),
   };
 }
