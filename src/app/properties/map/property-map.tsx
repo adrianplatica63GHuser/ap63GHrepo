@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
@@ -69,13 +70,6 @@ async function batchDeleteProperties(ids: string[]): Promise<{ deleted: number }
 // ---------------------------------------------------------------------------
 // Geometry helpers
 // ---------------------------------------------------------------------------
-
-function centroid(corners: Corner[]): LatLng {
-  return {
-    lat: corners.reduce((s, c) => s + c.lat, 0) / corners.length,
-    lng: corners.reduce((s, c) => s + c.lon, 0) / corners.length,
-  };
-}
 
 function toLatLng(corners: Corner[]): LatLng[] {
   return corners.map((c) => ({ lat: c.lat, lng: c.lon }));
@@ -343,6 +337,7 @@ const DEFAULT_ZOOM            = 13;
 export default function PropertyMap() {
   const t           = useTranslations("property");
   const queryClient = useQueryClient();
+  const router      = useRouter();
 
   // Map display
   const [mapType,  setMapType]  = useState<MapTypeId>("roadmap");
@@ -371,20 +366,14 @@ export default function PropertyMap() {
   }, []);
 
   // Refs shared between outer handlers and inner MapRefCapture
-  const containerRef  = useRef<HTMLDivElement>(null);
-  const mapRef        = useRef<google.maps.Map | null>(null);
-  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const mapRef       = useRef<google.maps.Map | null>(null);
 
-  // Refs used inside the document mousemove listener so the closure always
-  // sees the latest values without needing them in the dependency array.
+  // Refs used inside the document-level drag-to-select listeners so the
+  // closure always sees the latest values without needing them in the
+  // dependency array.
   const withGeometryRef = useRef<MapProperty[]>([]);
-  const selectModeRef   = useRef(false);
   const activeTabRef    = useRef<ActiveTab>("all");
-
-  // IDs of properties currently displayed in the InfoWindow.
-  const shownIdsRef = useRef<Set<string>>(new Set());
-  // Fixed anchor for the InfoWindow.
-  const anchorRef   = useRef<LatLng | null>(null);
 
   // -------------------------------------------------------------------------
   // Data
@@ -410,86 +399,55 @@ export default function PropertyMap() {
   // Keep refs in sync after every render.
   useEffect(() => {
     withGeometryRef.current = displayItems;
-    selectModeRef.current   = selectMode;
     activeTabRef.current    = activeTab;
   });
 
   // -------------------------------------------------------------------------
-  // Document-level mousemove → hit-test → InfoWindow
+  // Click / double-click → hit-test → InfoWindow (Slice #15.12)
   // -------------------------------------------------------------------------
   //
-  // Runs in both normal and select modes so the InfoWindow can appear while
-  // the cursor hovers over a property during selection.
+  // Single click: hit-test the click position against every loaded property
+  // and show the InfoWindow listing all overlapping matches (largest area
+  // first), exactly as the old hover-based InfoWindow did. Clicking on empty
+  // map space (no match) closes any open InfoWindow.
   //
-  // In select mode the InfoWindow shows Select / Unselect links instead of
-  // "Open →".  In the "selected" tab the InfoWindow shows "Open →" as usual.
+  // Double click: same hit-test. If it resolves to EXACTLY one property —
+  // and we're not in select mode on the "all" tab (where double-click should
+  // not bypass the Select/Unselect affordance) — navigate straight to that
+  // property's detail page, the same action as the "Open →" link. If the
+  // click is ambiguous (0 or ≥2 matches), double-click does nothing beyond
+  // what single click already did (show/refresh the InfoWindow) — it must
+  // never auto-navigate when more than one property overlaps the click.
 
-  useEffect(() => {
-    const onMove = (e: MouseEvent) => {
-      // In select mode on the "all" tab, show hover InfoWindow with Select/Unselect.
-      // In the "selected" tab (no drag overlay), show normal hover InfoWindow.
-      const container = containerRef.current;
-      const map       = mapRef.current;
-      if (!container || !map) return;
+  const handleMapClick = useCallback((pos: LatLng | null) => {
+    if (!pos) {
+      setSelected(null);
+      return;
+    }
+    const overlapping = findOverlapping(withGeometryRef.current, pos);
+    if (overlapping.length === 0) {
+      setSelected(null);
+      return;
+    }
+    setSelected({
+      position: pos,
+      items:    overlapping.map((p) => ({ id: p.id, label: p.nickname ?? p.code })),
+    });
+  }, []);
 
-      const rect = container.getBoundingClientRect();
-      const x    = e.clientX - rect.left;
-      const y    = e.clientY - rect.top;
+  const handleMapDblClick = useCallback((pos: LatLng | null) => {
+    if (!pos) return;
+    const overlapping = findOverlapping(withGeometryRef.current, pos);
 
-      // Cursor left the map container — start the close timer.
-      if (x < 0 || x > rect.width || y < 0 || y > rect.height) {
-        if (shownIdsRef.current.size > 0 && !closeTimerRef.current) {
-          closeTimerRef.current = setTimeout(() => {
-            setSelected(null);
-            shownIdsRef.current = new Set();
-            anchorRef.current   = null;
-          }, 2000);
-        }
-        return;
-      }
+    if (overlapping.length === 1 && !(selectMode && activeTabRef.current === "all")) {
+      router.push(`/properties/${overlapping[0].id}`);
+      return;
+    }
 
-      const pos         = pixelToLatLng(map, container, x, y);
-      const overlapping = findOverlapping(withGeometryRef.current, pos);
-
-      if (overlapping.length > 0) {
-        if (closeTimerRef.current) {
-          clearTimeout(closeTimerRef.current);
-          closeTimerRef.current = null;
-        }
-
-        const newProps = overlapping.filter((p) => !shownIdsRef.current.has(p.id));
-
-        if (newProps.length > 0) {
-          newProps.forEach((p) => shownIdsRef.current.add(p.id));
-
-          const allShown = ([...shownIdsRef.current] as string[])
-            .map((id) => withGeometryRef.current.find((p) => p.id === id))
-            .filter((p): p is MapProperty => !!p);
-          allShown.sort((a, b) => polygonAreaDeg(b.corners) - polygonAreaDeg(a.corners));
-
-          if (!anchorRef.current) {
-            anchorRef.current = centroid(allShown[0].corners);
-          }
-
-          setSelected({
-            position: anchorRef.current,
-            items:    allShown.map((p) => ({ id: p.id, label: p.nickname ?? p.code })),
-          });
-        }
-      } else {
-        if (shownIdsRef.current.size > 0 && !closeTimerRef.current) {
-          closeTimerRef.current = setTimeout(() => {
-            setSelected(null);
-            shownIdsRef.current = new Set();
-            anchorRef.current   = null;
-          }, 2000);
-        }
-      }
-    };
-
-    document.addEventListener("mousemove", onMove);
-    return () => document.removeEventListener("mousemove", onMove);
-  }, []); // intentionally empty — all mutable values accessed via refs
+    // Ambiguous (0 or ≥2 matches), or navigation is suppressed in select
+    // mode — fall back to the same behaviour as a single click.
+    handleMapClick(pos);
+  }, [router, selectMode, handleMapClick]);
 
   // -------------------------------------------------------------------------
   // Selection mode toggle
@@ -725,7 +683,8 @@ export default function PropertyMap() {
           disableDefaultUI
           gestureHandling={selectMode && activeTab === "all" ? "none" : "greedy"}
           style={{ width: "100%", height: "100%" }}
-          onClick={() => { if (!selectMode) setSelected(null); }}
+          onClick={(e) => handleMapClick(e.detail.latLng)}
+          onDblclick={(e) => handleMapDblClick(e.detail.latLng)}
         >
           {/* Inner helpers that require useMap() / useMapsLibrary() */}
           <MapRefCapture mapRef={mapRef} />
@@ -793,18 +752,16 @@ export default function PropertyMap() {
             )),
           )}
 
-          {/* InfoWindow — shown on hover in both normal and select modes.    */}
+          {/* InfoWindow — shown on click in both normal and select modes.     */}
+          {/* Double-click navigates straight to "Open →" when the click      */}
+          {/* resolves to exactly one property (see handleMapDblClick).       */}
           {/* Normal mode: label + "Open →" link.                             */}
           {/* Select mode (all tab): label + red Select / green Unselect btn. */}
           {/* Selected tab: label + "Open →" link (no select actions).        */}
           {selected && (
             <InfoWindow
               position={selected.position}
-              onCloseClick={() => {
-                setSelected(null);
-                shownIdsRef.current = new Set();
-                anchorRef.current   = null;
-              }}
+              onCloseClick={() => setSelected(null)}
             >
               <div className="flex flex-col min-w-[160px] px-1 py-0.5 gap-0">
                 {selected.items.map((item, idx) => (
