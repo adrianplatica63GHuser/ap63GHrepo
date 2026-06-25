@@ -901,3 +901,48 @@ export const appUsers = pgTable(
     createdAt:   timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
 );
+
+// ---------------------------------------------------------------------------
+// Help — help_content + help_hint  (Slice #16.UX.02)
+// ---------------------------------------------------------------------------
+//
+// On-screen help, self-served by Adrian via Administration -> Help Content.
+// Two content types:
+//   1. help_content — one row per "screen" (Background + How-To, bilingual),
+//      surfaced via the <HelpButton> popover.
+//   2. help_hint — micro-hints for hidden mouse/keyboard behaviour (e.g. drag
+//      to select on the Properties Map, wheel-zoom on the Document big-page
+//      viewer), surfaced via the lighter <HelpHint> inline component.
+//
+// `screenKey` / `hintKey` values are NOT free text — they must match an entry
+// in the code-side registry (src/lib/help/registry.ts), which is the single
+// source of truth for which screens/hints exist. The DB rows only ever
+// *supply content* for a registry entry; a registry entry with no DB row
+// simply renders nothing (no Help button / no hint shown).
+
+export const helpContent = pgTable("help_content", {
+  id:           uuid("id").primaryKey().defaultRandom(),
+  screenKey:    text("screen_key").notNull().unique(),
+  backgroundEn: text("background_en"),
+  backgroundRo: text("background_ro"),
+  howToEn:      text("how_to_en"),
+  howToRo:      text("how_to_ro"),
+  createdAt:    timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt:    timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const helpHint = pgTable(
+  "help_hint",
+  {
+    id:        uuid("id").primaryKey().defaultRandom(),
+    screenKey: text("screen_key").notNull(),
+    hintKey:   text("hint_key").notNull(),
+    textEn:    text("text_en"),
+    textRo:    text("text_ro"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("help_hint_screen_hint_unique").on(t.screenKey, t.hintKey),
+  ],
+);

@@ -340,6 +340,7 @@ export function SidebarNav() {
     referenceData:             t("items.referenceData"),
     import:                    t("items.import"),
     export:                    t("items.export"),
+    helpContent:               t("items.helpContent"),
     settings:                  t("items.settings"),
   };
 

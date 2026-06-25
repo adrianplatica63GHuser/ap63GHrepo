@@ -10,6 +10,7 @@ import {
   Upload,
   Download,
   Settings,
+  HelpCircle,
 } from "lucide-react";
 
 export type NavItem = {
@@ -73,6 +74,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { key: "referenceData", href: "/admin/value-lists", icon: Database },
       { key: "import", href: "/admin/import", icon: Upload },
       { key: "export", icon: Download },
+      { key: "helpContent", href: "/admin/help-content", icon: HelpCircle },
       { key: "settings", icon: Settings },
     ],
   },

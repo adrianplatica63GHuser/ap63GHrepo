@@ -587,6 +587,7 @@
       "referenceData": "Reference Data",
       "import": "Import",
       "export": "Export",
+      "helpContent": "Help Content",
       "settings": "Settings"
     },
     "collapse": "Collapse sidebar",
@@ -598,6 +599,34 @@
   "welcome": {
     "title": "GA40",
     "subtitle": "People · Documents · Properties"
+  },
+  "help": {
+    "buttonLabel": "Help",
+    "title": "Help",
+    "background": "Background",
+    "howTo": "How To",
+    "close": "Close",
+    "hintLabel": "Tip",
+    "admin": {
+      "pageTitle": "Help Content",
+      "screensTab": "Screens",
+      "hintsTab": "Micro-hints",
+      "statusComplete": "Complete",
+      "statusMissing": "Missing",
+      "labelBackgroundEn": "Background (English)",
+      "labelBackgroundRo": "Background (Romanian)",
+      "labelHowToEn": "How To (English)",
+      "labelHowToRo": "How To (Romanian)",
+      "labelTextEn": "Hint text (English)",
+      "labelTextRo": "Hint text (Romanian)",
+      "save": "Save",
+      "saving": "Saving…",
+      "saveError": "Could not save",
+      "saved": "Saved",
+      "previewTitle": "Preview",
+      "noScreenSelected": "Select a screen from the list to edit its help content.",
+      "noHintSelected": "Select a hint from the list to edit its text."
+    }
   },
   "person": {
     "listTitle": "Persons",

@@ -587,6 +587,7 @@
       "referenceData": "Date de referință",
       "import": "Import",
       "export": "Export",
+      "helpContent": "Conținut Ajutor",
       "settings": "Setări"
     },
     "collapse": "Restrânge bara laterală",
@@ -598,6 +599,34 @@
   "welcome": {
     "title": "GA40",
     "subtitle": "Persoane · Acte · Proprietăți"
+  },
+  "help": {
+    "buttonLabel": "Ajutor",
+    "title": "Ajutor",
+    "background": "Context",
+    "howTo": "Cum se folosește",
+    "close": "Închide",
+    "hintLabel": "Sfat",
+    "admin": {
+      "pageTitle": "Conținut Ajutor",
+      "screensTab": "Ecrane",
+      "hintsTab": "Sfaturi rapide",
+      "statusComplete": "Complet",
+      "statusMissing": "Lipsă",
+      "labelBackgroundEn": "Context (Engleză)",
+      "labelBackgroundRo": "Context (Română)",
+      "labelHowToEn": "Cum se folosește (Engleză)",
+      "labelHowToRo": "Cum se folosește (Română)",
+      "labelTextEn": "Text sfat (Engleză)",
+      "labelTextRo": "Text sfat (Română)",
+      "save": "Salvează",
+      "saving": "Se salvează…",
+      "saveError": "Salvarea a eșuat",
+      "saved": "Salvat",
+      "previewTitle": "Previzualizare",
+      "noScreenSelected": "Selectați un ecran din listă pentru a edita conținutul de ajutor.",
+      "noHintSelected": "Selectați un sfat din listă pentru a edita textul."
+    }
   },
   "person": {
     "listTitle": "Persoane",
