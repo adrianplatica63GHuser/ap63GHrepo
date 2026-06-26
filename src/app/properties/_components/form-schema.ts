@@ -22,6 +22,29 @@ import type {
 export type Corner = { lat: number; lon: number; originalIndex?: number | null };
 
 // ---------------------------------------------------------------------------
+// Centroid of a corner set (Slice #18.03b)
+// ---------------------------------------------------------------------------
+//
+// Plain arithmetic mean of the corners' lat/lon — used to position the Street
+// View panel. Street View snaps to the nearest captured road imagery anyway,
+// so a true polygon centroid is unnecessary; the average point is close enough
+// to find the relevant panorama. Returns null when there are no corners (the
+// panel then shows its "add a corner first" empty state).
+
+export function cornersCentroid(
+  corners: Corner[],
+): { lat: number; lon: number } | null {
+  if (corners.length === 0) return null;
+  let lat = 0;
+  let lon = 0;
+  for (const c of corners) {
+    lat += c.lat;
+    lon += c.lon;
+  }
+  return { lat: lat / corners.length, lon: lon / corners.length };
+}
+
+// ---------------------------------------------------------------------------
 // Form schema — all strings; validated on the client before submission
 // ---------------------------------------------------------------------------
 

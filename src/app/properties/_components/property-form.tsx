@@ -25,6 +25,7 @@ import {
   type FormValues,
   type HighlightColor,
   type VersionNav,
+  cornersCentroid,
   cornersChanged,
   snapshotToCorners,
   snapshotToFormValues,
@@ -33,6 +34,7 @@ import {
 } from "./form-schema";
 import { CornersManager } from "./corners-manager";
 import { PropertyMiniMap } from "./property-mini-map";
+import { StreetViewPanel } from "./street-view-panel";
 
 // ---------------------------------------------------------------------------
 // Version history fetch (Slice #18.02)
@@ -137,12 +139,19 @@ export function PropertyForm({
   const [confirmDelete,    setConfirmDelete]    = useState(false);
   const [confirmMakeCurrent, setConfirmMakeCurrent] = useState(false);
   const [bigMap,           setBigMap]           = useState(false);
+  const [showStreetView,   setShowStreetView]   = useState(false);
 
   const handleToggleBigMap = () => {
     const next = !bigMap;
     setBigMap(next);
     onBigMapChange?.(next);
   };
+
+  const handleToggleStreetView = () => setShowStreetView((v) => !v);
+
+  // Slice #18.03b: arithmetic-mean centroid of the displayed corners, used to
+  // position the Street View panel. Recomputed only when corners change.
+  const streetViewCentroid = useMemo(() => cornersCentroid(corners), [corners]);
 
   // Slice #18.01: read via form.watch() (subscribes to value changes) so the
   // create gate and the edit-dirty check below recompute on every keystroke.
@@ -613,6 +622,8 @@ export function PropertyForm({
                 onCornerHover={setHoveredCornerIdx}
                 bigMap={bigMap}
                 onToggleBigMap={handleToggleBigMap}
+                streetView={showStreetView}
+                onToggleStreetView={handleToggleStreetView}
                 cornerDiff={cornerDiff ?? undefined}
                 versionNav={versionNav ?? undefined}
               />
@@ -625,6 +636,15 @@ export function PropertyForm({
                     hoveredCornerIdx={hoveredCornerIdx}
                     onCornerHover={setHoveredCornerIdx}
                   />
+                </div>
+              )}
+              {/* Slice #18.03b: Street View panel — independent of Big Map,
+                  shown when toggled. Mounted only while open so the (billed)
+                  panorama and the Street View library never load on property
+                  open. Works in both normal and big-map layouts. */}
+              {showStreetView && (
+                <div className="rounded-md border border-card-rim overflow-hidden dark:border-zinc-800" style={{ height: "360px" }}>
+                  <StreetViewPanel centroid={streetViewCentroid} />
                 </div>
               )}
             </div>

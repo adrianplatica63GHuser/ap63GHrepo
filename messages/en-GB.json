@@ -106,7 +106,15 @@
       "nextVersion": "Next version",
       "removedCorner": "Corner removed in this version",
       "makeCurrent": "Make Current",
-      "makeCurrentHint": "Make this version the current one"
+      "makeCurrentHint": "Make this version the current one",
+      "showStreetView": "Show Street View",
+      "hideStreetView": "Hide Street View"
+    },
+    "streetView": {
+      "loading": "Loading Street View…",
+      "noCoverage": "No Street View imagery near this property.",
+      "noLocation": "Add at least one corner to view Street View.",
+      "error": "Street View could not be loaded."
     },
     "makeCurrent": {
       "title": "Make this version current?",

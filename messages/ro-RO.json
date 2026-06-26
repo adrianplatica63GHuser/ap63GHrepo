@@ -106,7 +106,15 @@
       "nextVersion": "Versiunea următoare",
       "removedCorner": "Punct eliminat în această versiune",
       "makeCurrent": "Setează ca actuală",
-      "makeCurrentHint": "Setează această versiune ca versiune actuală"
+      "makeCurrentHint": "Setează această versiune ca versiune actuală",
+      "showStreetView": "Arată Street View",
+      "hideStreetView": "Ascunde Street View"
+    },
+    "streetView": {
+      "loading": "Se încarcă Street View…",
+      "noCoverage": "Nu există imagini Street View lângă această proprietate.",
+      "noLocation": "Adăugați cel puțin un punct pentru a vedea Street View.",
+      "error": "Street View nu a putut fi încărcat."
     },
     "makeCurrent": {
       "title": "Setați această versiune ca actuală?",

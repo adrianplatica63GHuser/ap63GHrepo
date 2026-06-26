@@ -29,6 +29,9 @@ type Props = {
   onCornerHover?:    (idx: number | null) => void;
   bigMap?:           boolean;
   onToggleBigMap?:   () => void;
+  // Slice #18.03b — Street View panel toggle, rendered beside Show Big Map.
+  streetView?:       boolean;
+  onToggleStreetView?: () => void;
   // Slice #18.02 — when set (read-only historical version view), the table
   // renders from this diff: added/changed corners framed red, removed corners
   // shown as a thick red line at their former position.
@@ -355,7 +358,7 @@ function displayFmtToInputMode(fmt: DisplayFormat): InputMode {
 // Main manager
 // ---------------------------------------------------------------------------
 
-export function CornersManager({ corners, onChange, readOnly = false, hoveredCornerIdx, onCornerHover, bigMap = false, onToggleBigMap, cornerDiff, versionNav }: Props) {
+export function CornersManager({ corners, onChange, readOnly = false, hoveredCornerIdx, onCornerHover, bigMap = false, onToggleBigMap, streetView = false, onToggleStreetView, cornerDiff, versionNav }: Props) {
   const t = useTranslations("property.corners");
 
   const [displayFmt,  setDisplayFmt]  = useState<DisplayFormat>("S70");
@@ -619,7 +622,7 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
         </table>
       </div>
 
-      {((!adding && editingIdx === null) || onToggleBigMap || versionNav) && (
+      {((!adding && editingIdx === null) || onToggleBigMap || onToggleStreetView || versionNav) && (
         // Spacing (Slice #18.02): base gap g = Add↔ShowBigMap. ShowBigMap↔◀
         // = 2g; ◀↔label = label↔▶ = g. The Add button stays in place on
         // read-only past versions (just disabled) so nothing shifts left.
@@ -641,6 +644,15 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
               className="ml-4 first:ml-0 rounded-md border border-wire bg-white px-3 py-1.5 text-xs font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
             >
               {bigMap ? t("showSmallMap") : t("showBigMap")}
+            </button>
+          )}
+          {onToggleStreetView && (
+            <button
+              type="button"
+              onClick={onToggleStreetView}
+              className="ml-4 first:ml-0 rounded-md border border-wire bg-white px-3 py-1.5 text-xs font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+            >
+              {streetView ? t("hideStreetView") : t("showStreetView")}
             </button>
           )}
           {versionNav && (
