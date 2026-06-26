@@ -116,6 +116,8 @@ Relationships: People ↔ Documents, People ↔ Properties, Documents ↔ Proper
 - Slice #15.19 — Property Type & Use Category: drop `property_type`/`use_category` enums → nullable FK to `lookup_property_type`/`lookup_use_category` + form dropdowns. ✅
 - Slice #18.01 — Property "Add new": enable Save as soon as any single field is entered (compute via `form.watch()`, not `getValues()`). ✅
 - Slice #18.02 — Property versioning: full-snapshot history (`property_version`), version nav (◀ / label / ▶) on the corners-line, green/red label + per-field highlight frames + per-row corner red frames / removed-corner red line, derived by diffing adjacent snapshots; only the latest version is editable, edit-save stays on the property. ✅ (See "Versioning pattern & pitfalls" below.)
+- Slice #18.03a — Properties Map: enable Street View Pegman (re-enable `streetViewControl` over `disableDefaultUI`; uses the map's built-in, non-billed default panorama). ✅
+- Slice #18.03b — Property detail: Street View panorama panel keyed to a property's location (coverage check via `StreetViewService`, imperative `StreetViewPanorama`, "Show Street View" toggle, bilingual). 🔜 planned follow-up to #18.03a.
 
 Each slice typically lands as multiple small commits, each individually green.
 
