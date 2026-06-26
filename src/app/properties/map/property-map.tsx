@@ -675,12 +675,21 @@ export default function PropertyMap() {
       >
 
         {/* Google Map */}
+        {/* Street View Pegman (Slice #18.03a): `disableDefaultUI` is a master  */}
+        {/* switch that hides every default control, including the Pegman.       */}
+        {/* Individual controls can be turned back on over it — here we re-enable */}
+        {/* only `streetViewControl` so the rest (fullscreen / zoom / map-type)  */}
+        {/* stay suppressed. Its default position is the bottom-right corner,    */}
+        {/* clear of the top-right toolbar and bottom-centre action buttons. The */}
+        {/* dragged Pegman uses the map's built-in default panorama overlay,     */}
+        {/* which (like the Pegman itself) is not billed.                        */}
         <Map
           mapId={process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID ?? "DEMO_MAP_ID"}
           defaultCenter={DEFAULT_CENTER}
           defaultZoom={DEFAULT_ZOOM}
           mapTypeId={mapType}
           disableDefaultUI
+          streetViewControl
           gestureHandling={selectMode && activeTab === "all" ? "none" : "greedy"}
           style={{ width: "100%", height: "100%" }}
           onClick={(e) => handleMapClick(e.detail.latLng)}
