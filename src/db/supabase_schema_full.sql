@@ -238,6 +238,20 @@ CREATE TRIGGER address_touch_updated_at
   BEFORE UPDATE ON address
   FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
 
+-- person_version — full-snapshot version history (Slice #18.05). One shared
+-- table for both subtypes (both FK person.id); snapshot JSON shape differs by
+-- person.type. See migration_030_person_versions.sql.
+CREATE TABLE person_version (
+  id             uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  person_id      uuid        NOT NULL REFERENCES person(id) ON DELETE CASCADE,
+  version_number integer     NOT NULL,
+  snapshot       jsonb       NOT NULL,
+  created_at     timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE UNIQUE INDEX person_version_person_number_unique
+  ON person_version (person_id, version_number);
+
 -- ============================================================
 -- PROPERTY domain  (drizzle 0001)
 -- ============================================================

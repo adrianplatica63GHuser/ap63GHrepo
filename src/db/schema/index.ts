@@ -287,6 +287,52 @@ export const address = pgTable(
 );
 
 // ---------------------------------------------------------------------------
+// person_version — full-snapshot version history  (Slice #18.05)
+// ---------------------------------------------------------------------------
+//
+// One row per saved version of a person (natural OR judicial — a single shared
+// table, since both FK person.id). version_number is 0-based: version 0 is the
+// state at creation, every saved edit appends the next number. Each row stores
+// a COMPLETE snapshot (the person's own editable fields + its address blocks)
+// as JSONB — reconstructing "version N" is a direct lookup, no delta replay.
+//
+// The label colour and per-field highlights shown in the UI are derived at
+// display time by diffing snapshot N against snapshot N-1; nothing derived is
+// persisted here. The snapshot JSON shape differs by person.type and lives next
+// to the write paths in src/lib/persons/queries.ts (NaturalPersonSnapshot) and
+// src/lib/judicial-persons/queries.ts (JudicialPersonSnapshot); both match the
+// backfill in migration_030_person_versions.sql exactly.
+
+export const personVersion = pgTable(
+  "person_version",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+
+    personId: uuid("person_id")
+      .notNull()
+      .references(() => person.id, { onDelete: "cascade" }),
+
+    // 0-based; unique per person.
+    versionNumber: integer("version_number").notNull(),
+
+    // Full snapshot of the person at this version (own fields + addresses).
+    // Untyped here to avoid a circular import; the query layer casts it to the
+    // subtype's snapshot type.
+    snapshot: jsonb("snapshot").notNull(),
+
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("person_version_person_number_unique").on(
+      t.personId,
+      t.versionNumber,
+    ),
+  ],
+);
+
+// ---------------------------------------------------------------------------
 // Enums — Property domain
 // ---------------------------------------------------------------------------
 
