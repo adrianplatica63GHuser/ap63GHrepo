@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   type FieldPath,
   type UseFormRegister,
@@ -85,6 +86,9 @@ type Props = {
   initialValues?:    FormValues;
   initialCorners?:   Corner[];
   onBigMapChange?:   (val: boolean) => void;
+  // Slice #18.UX.04 — DOM node in the page header to portal the version-nav
+  // controls into, so they render centered on the property-title line.
+  versionNavSlot?:   HTMLElement | null;
 };
 
 // ---------------------------------------------------------------------------
@@ -98,6 +102,7 @@ export function PropertyForm({
   initialValues,
   initialCorners = [],
   onBigMapChange,
+  versionNavSlot,
 }: Props) {
   const t  = useTranslations("property");
   const router = useRouter();
@@ -145,6 +150,9 @@ export function PropertyForm({
     const next = !bigMap;
     setBigMap(next);
     onBigMapChange?.(next);
+    // Slice #18.UX.04: turning Big Map on auto-hides Street View (the big map
+    // takes over the right column), mirroring a manual "Hide Street View".
+    if (next) setShowStreetView(false);
   };
 
   const handleToggleStreetView = () => setShowStreetView((v) => !v);
@@ -404,11 +412,21 @@ export function PropertyForm({
       className="flex flex-col gap-4"
       noValidate
     >
-      {/* Layout wrapper: flex-row in big-map mode, transparent (contents) in normal mode */}
-      <div className={bigMap ? "flex flex-row gap-4 items-stretch" : "contents"}>
+      {/* Version controls (Slice #18.UX.04) — portalled into the page header so
+          they sit centered on the property-title line. Only rendered for an
+          existing property once its versions have loaded (versionNav != null)
+          and only when the header has provided a slot element. */}
+      {versionNavSlot && versionNav &&
+        createPortal(<VersionNavControls nav={versionNav} />, versionNavSlot)}
 
-        {/* Left panels: transparent in normal mode, 45% fixed column in big-map mode */}
-        <div className={bigMap ? "w-[540px] flex-none flex flex-col gap-4" : "contents"}>
+      {/* Two-column layout (Slice #18.UX.04): a frozen 540px left column
+          (cadastral + address + corners table) and a right column holding the
+          map + Street View. The Big/Small Map toggle only changes the page
+          shell's width cap (full vs ~1040px) — never this structure. */}
+      <div className="flex flex-row flex-wrap gap-4 items-start">
+
+        {/* Left column — frozen 540px */}
+        <div className="w-[540px] max-w-full flex-none flex flex-col gap-4">
 
           {/* Slice #18.02: the disabled fieldset wraps ONLY the editable input
               sections (cadastral + address). The corners section below is
@@ -418,8 +436,8 @@ export function PropertyForm({
               own read-only state via the readOnly prop. */}
           <fieldset disabled={effectiveMode === "view"} className="contents">
 
-          {/* Cadastral data — 4-col normally, 2-col in big-map */}
-          <Section title={t("sections.cadastral")} columns={bigMap ? 2 : 4}>
+          {/* Cadastral data — always 2-col in the narrow (540px) left column */}
+          <Section title={t("sections.cadastral")} columns={2}>
             {propertyCode && (
               <ReadOnlyField label={t("fields.code")} value={propertyCode} />
             )}
@@ -482,7 +500,7 @@ export function PropertyForm({
               error={errors.surfaceAreaMp?.message}
               highlight={fieldHighlights?.property.surfaceAreaMp}
             />
-            <div className={bigMap ? "col-span-2" : "col-span-2 md:col-span-4"}>
+            <div className="col-span-2">
               <TextAreaField
                 label={t("fields.notes")}
                 name="notes"
@@ -499,162 +517,90 @@ export function PropertyForm({
             <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
               {t("sections.address")}
             </h2>
+            {/* Always stacked for the narrow (540px) left column: street + notes
+                full-width, then postal/city and county/country in 2-col pairs. */}
             <div className="flex flex-col gap-2">
-              {bigMap ? (
-                <>
-                  {/* Big-map: each item stacked, bottom pairs split 2+2 */}
-                  <Field
-                    label={t("address.streetLine")}
-                    name="address.streetLine"
-                    register={register}
-                    error={errors.address?.streetLine?.message}
-                    highlight={fieldHighlights?.address.streetLine}
-                  />
-                  <Field
-                    label={t("address.notes")}
-                    name="address.notes"
-                    register={register}
-                    error={errors.address?.notes?.message}
-                    highlight={fieldHighlights?.address.notes}
-                  />
-                  <div className="grid grid-cols-2 gap-2">
-                    <Field
-                      label={t("address.postalCode")}
-                      name="address.postalCode"
-                      register={register}
-                      error={errors.address?.postalCode?.message}
-                      highlight={fieldHighlights?.address.postalCode}
-                    />
-                    <Field
-                      label={t("address.locality")}
-                      name="address.locality"
-                      register={register}
-                      error={errors.address?.locality?.message}
-                      highlight={fieldHighlights?.address.locality}
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Field
-                      label={t("address.county")}
-                      name="address.county"
-                      register={register}
-                      error={errors.address?.county?.message}
-                      highlight={fieldHighlights?.address.county}
-                    />
-                    <Field
-                      label={t("address.country")}
-                      name="address.country"
-                      register={register}
-                      error={errors.address?.country?.message}
-                      highlight={fieldHighlights?.address.country}
-                    />
-                  </div>
-                </>
-              ) : (
-                <>
-                  {/* Normal: Row 1 — Street line + Notes (2 cols) */}
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    <Field
-                      label={t("address.streetLine")}
-                      name="address.streetLine"
-                      register={register}
-                      error={errors.address?.streetLine?.message}
-                      highlight={fieldHighlights?.address.streetLine}
-                    />
-                    <Field
-                      label={t("address.notes")}
-                      name="address.notes"
-                      register={register}
-                      error={errors.address?.notes?.message}
-                      highlight={fieldHighlights?.address.notes}
-                    />
-                  </div>
-                  {/* Normal: Row 2 — Postal Code, City, County, Country (4 cols) */}
-                  <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-                    <Field
-                      label={t("address.postalCode")}
-                      name="address.postalCode"
-                      register={register}
-                      error={errors.address?.postalCode?.message}
-                      highlight={fieldHighlights?.address.postalCode}
-                    />
-                    <Field
-                      label={t("address.locality")}
-                      name="address.locality"
-                      register={register}
-                      error={errors.address?.locality?.message}
-                      highlight={fieldHighlights?.address.locality}
-                    />
-                    <Field
-                      label={t("address.county")}
-                      name="address.county"
-                      register={register}
-                      error={errors.address?.county?.message}
-                      highlight={fieldHighlights?.address.county}
-                    />
-                    <Field
-                      label={t("address.country")}
-                      name="address.country"
-                      register={register}
-                      error={errors.address?.country?.message}
-                      highlight={fieldHighlights?.address.country}
-                    />
-                  </div>
-                </>
-              )}
+              <Field
+                label={t("address.streetLine")}
+                name="address.streetLine"
+                register={register}
+                error={errors.address?.streetLine?.message}
+                highlight={fieldHighlights?.address.streetLine}
+              />
+              <Field
+                label={t("address.notes")}
+                name="address.notes"
+                register={register}
+                error={errors.address?.notes?.message}
+                highlight={fieldHighlights?.address.notes}
+              />
+              <div className="grid grid-cols-2 gap-2">
+                <Field
+                  label={t("address.postalCode")}
+                  name="address.postalCode"
+                  register={register}
+                  error={errors.address?.postalCode?.message}
+                  highlight={fieldHighlights?.address.postalCode}
+                />
+                <Field
+                  label={t("address.locality")}
+                  name="address.locality"
+                  register={register}
+                  error={errors.address?.locality?.message}
+                  highlight={fieldHighlights?.address.locality}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Field
+                  label={t("address.county")}
+                  name="address.county"
+                  register={register}
+                  error={errors.address?.county?.message}
+                  highlight={fieldHighlights?.address.county}
+                />
+                <Field
+                  label={t("address.country")}
+                  name="address.country"
+                  register={register}
+                  error={errors.address?.country?.message}
+                  highlight={fieldHighlights?.address.country}
+                />
+              </div>
             </div>
           </section>
           </fieldset>{/* end editable-inputs fieldset (cadastral + address) */}
 
-          {/* Corners + mini-map — OUTSIDE the disabled fieldset so the version
-              ◀/▶ nav buttons stay clickable on read-only historical versions;
-              CornersManager enforces its own read-only state via readOnly. */}
+          {/* Corners table — OUTSIDE the disabled fieldset. The map and Street
+              View now live in the right column; only the table stays here. */}
           <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
             <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
               {t("sections.corners")}
             </h2>
-            <div className="flex flex-col gap-2">
-              <CornersManager
-                corners={corners}
-                onChange={setCorners}
-                readOnly={effectiveMode === "view"}
-                hoveredCornerIdx={hoveredCornerIdx}
-                onCornerHover={setHoveredCornerIdx}
-                bigMap={bigMap}
-                onToggleBigMap={handleToggleBigMap}
-                streetView={showStreetView}
-                onToggleStreetView={handleToggleStreetView}
-                cornerDiff={cornerDiff ?? undefined}
-                versionNav={versionNav ?? undefined}
-              />
-              {!bigMap && (
-                <div className="rounded-md border border-card-rim overflow-hidden dark:border-zinc-800" style={{ height: "360px" }}>
-                  <PropertyMiniMap
-                    corners={corners}
-                    onChange={setCorners}
-                    readOnly={effectiveMode === "view"}
-                    hoveredCornerIdx={hoveredCornerIdx}
-                    onCornerHover={setHoveredCornerIdx}
-                  />
-                </div>
-              )}
-              {/* Slice #18.03b: Street View panel — independent of Big Map,
-                  shown when toggled. Mounted only while open so the (billed)
-                  panorama and the Street View library never load on property
-                  open. Works in both normal and big-map layouts. */}
-              {showStreetView && (
-                <div className="rounded-md border border-card-rim overflow-hidden dark:border-zinc-800" style={{ height: "360px" }}>
-                  <StreetViewPanel centroid={streetViewCentroid} />
-                </div>
-              )}
-            </div>
+            <CornersManager
+              corners={corners}
+              onChange={setCorners}
+              readOnly={effectiveMode === "view"}
+              hoveredCornerIdx={hoveredCornerIdx}
+              onCornerHover={setHoveredCornerIdx}
+              bigMap={bigMap}
+              onToggleBigMap={handleToggleBigMap}
+              streetView={showStreetView}
+              onToggleStreetView={handleToggleStreetView}
+              cornerDiff={cornerDiff ?? undefined}
+            />
           </section>
 
-        </div>{/* end left panels */}
+        </div>{/* end left column */}
 
-        {/* Right map column — only in big-map mode */}
-        {bigMap && (
-          <div className="flex-1 min-w-0 relative rounded-md border border-card-rim overflow-hidden dark:border-zinc-800">
+        {/* Right column — map + Street View. The Big/Small Map toggle only
+            changes the map height (and the shell's container width cap); the
+            column is flex-1 in both modes, so its on-screen width follows the
+            shell's max-width (≈480px capped vs full-width). */}
+        <div className="flex-1 min-w-[320px] flex flex-col gap-4">
+          <div
+            className="relative rounded-md border border-card-rim overflow-hidden dark:border-zinc-800"
+            style={{ height: bigMap ? "calc(100vh - 220px)" : "440px" }}
+          >
             <div className="absolute inset-0">
               <PropertyMiniMap
                 corners={corners}
@@ -665,9 +611,17 @@ export function PropertyForm({
               />
             </div>
           </div>
-        )}
+          {/* Slice #18.03b: Street View panel — mounted only while open so the
+              (billed) panorama and Street View library never load on property
+              open. */}
+          {showStreetView && (
+            <div className="rounded-md border border-card-rim overflow-hidden dark:border-zinc-800" style={{ height: "360px" }}>
+              <StreetViewPanel centroid={streetViewCentroid} />
+            </div>
+          )}
+        </div>
 
-      </div>{/* end layout wrapper */}
+      </div>{/* end two-column layout */}
 
       {submitError && (
         <p className="text-sm text-red-600 dark:text-red-400" role="alert">
@@ -891,6 +845,57 @@ function ReadOnlyField({ label, value }: { label: string; value: string }) {
       <div className="flex-1 rounded-md border border-wire bg-canvas px-2 py-1 font-mono text-sm text-ink dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-300">
         {value}
       </div>
+    </div>
+  );
+}
+
+// Slice #18.UX.04: the version-nav controls (◀ / version N / ▶ / Make Current),
+// moved off the corners toolbar and portalled onto the property-title header
+// line. `pointer-events-auto` re-enables clicks (the header slot is
+// pointer-events-none so its empty width never blocks the title).
+function VersionNavControls({ nav }: { nav: VersionNav }) {
+  const t = useTranslations("property.corners");
+  return (
+    <div className="pointer-events-auto flex items-center">
+      <button
+        type="button"
+        onClick={nav.onPrev}
+        disabled={!nav.canPrev}
+        aria-label={t("prevVersion")}
+        title={t("prevVersion")}
+        className="rounded-md border border-wire bg-white px-2 py-1 text-xs font-medium text-ink shadow-sm hover:bg-canvas disabled:opacity-30 disabled:cursor-not-allowed dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+      >
+        ←
+      </button>
+      <span
+        className={[
+          "ml-4 text-xs font-semibold whitespace-nowrap",
+          nav.color === "red"
+            ? "text-red-600 dark:text-red-400"
+            : "text-green-600 dark:text-green-400",
+        ].join(" ")}
+      >
+        {t("versionLabel", { n: nav.current })}
+      </span>
+      <button
+        type="button"
+        onClick={nav.onNext}
+        disabled={!nav.canNext}
+        aria-label={t("nextVersion")}
+        title={t("nextVersion")}
+        className="ml-4 rounded-md border border-wire bg-white px-2 py-1 text-xs font-medium text-ink shadow-sm hover:bg-canvas disabled:opacity-30 disabled:cursor-not-allowed dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+      >
+        →
+      </button>
+      <button
+        type="button"
+        onClick={nav.onMakeCurrent}
+        disabled={!nav.canMakeCurrent}
+        title={t("makeCurrentHint")}
+        className="ml-4 rounded-md border border-cta bg-white px-3 py-1 text-xs font-medium text-cta shadow-sm hover:bg-cta-pale disabled:opacity-30 disabled:cursor-not-allowed dark:border-zinc-600 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+      >
+        {t("makeCurrent")}
+      </button>
     </div>
   );
 }

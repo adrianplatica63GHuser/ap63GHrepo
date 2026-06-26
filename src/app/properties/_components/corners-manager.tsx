@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { decimalToDMS, dmsToDecimal, formatDMS } from "@/lib/geo/dms";
-import type { Corner, CornerDiffEntry, VersionNav } from "./form-schema";
+import type { Corner, CornerDiffEntry } from "./form-schema";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -36,8 +36,6 @@ type Props = {
   // renders from this diff: added/changed corners framed red, removed corners
   // shown as a thick red line at their former position.
   cornerDiff?:       CornerDiffEntry[];
-  // Slice #18.02 — version navigation controls rendered on the corners-line.
-  versionNav?:       VersionNav;
 };
 
 // ---------------------------------------------------------------------------
@@ -358,7 +356,7 @@ function displayFmtToInputMode(fmt: DisplayFormat): InputMode {
 // Main manager
 // ---------------------------------------------------------------------------
 
-export function CornersManager({ corners, onChange, readOnly = false, hoveredCornerIdx, onCornerHover, bigMap = false, onToggleBigMap, streetView = false, onToggleStreetView, cornerDiff, versionNav }: Props) {
+export function CornersManager({ corners, onChange, readOnly = false, hoveredCornerIdx, onCornerHover, bigMap = false, onToggleBigMap, streetView = false, onToggleStreetView, cornerDiff }: Props) {
   const t = useTranslations("property.corners");
 
   const [displayFmt,  setDisplayFmt]  = useState<DisplayFormat>("S70");
@@ -622,10 +620,9 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
         </table>
       </div>
 
-      {((!adding && editingIdx === null) || onToggleBigMap || onToggleStreetView || versionNav) && (
-        // Spacing (Slice #18.02): base gap g = Add↔ShowBigMap. ShowBigMap↔◀
-        // = 2g; ◀↔label = label↔▶ = g. The Add button stays in place on
-        // read-only past versions (just disabled) so nothing shifts left.
+      {((!adding && editingIdx === null) || onToggleBigMap || onToggleStreetView) && (
+        // Toolbar: Add ↔ Show Big/Small Map ↔ Show/Hide Street View. The
+        // version-nav controls moved to the page header in Slice #18.UX.04.
         <div className="flex flex-wrap items-center gap-y-2">
           {!adding && editingIdx === null && (
             <button
@@ -654,49 +651,6 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
             >
               {streetView ? t("hideStreetView") : t("showStreetView")}
             </button>
-          )}
-          {versionNav && (
-            <div className="ml-8 first:ml-0 flex items-center">
-              <button
-                type="button"
-                onClick={versionNav.onPrev}
-                disabled={!versionNav.canPrev}
-                aria-label={t("prevVersion")}
-                title={t("prevVersion")}
-                className="rounded-md border border-wire bg-white px-2 py-1 text-xs font-medium text-ink shadow-sm hover:bg-canvas disabled:opacity-30 disabled:cursor-not-allowed dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-              >
-                ←
-              </button>
-              <span
-                className={[
-                  "ml-4 text-xs font-semibold whitespace-nowrap",
-                  versionNav.color === "red"
-                    ? "text-red-600 dark:text-red-400"
-                    : "text-green-600 dark:text-green-400",
-                ].join(" ")}
-              >
-                {t("versionLabel", { n: versionNav.current })}
-              </span>
-              <button
-                type="button"
-                onClick={versionNav.onNext}
-                disabled={!versionNav.canNext}
-                aria-label={t("nextVersion")}
-                title={t("nextVersion")}
-                className="ml-4 rounded-md border border-wire bg-white px-2 py-1 text-xs font-medium text-ink shadow-sm hover:bg-canvas disabled:opacity-30 disabled:cursor-not-allowed dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-              >
-                →
-              </button>
-              <button
-                type="button"
-                onClick={versionNav.onMakeCurrent}
-                disabled={!versionNav.canMakeCurrent}
-                title={t("makeCurrentHint")}
-                className="ml-4 rounded-md border border-cta bg-white px-3 py-1 text-xs font-medium text-cta shadow-sm hover:bg-cta-pale disabled:opacity-30 disabled:cursor-not-allowed dark:border-zinc-600 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-              >
-                {t("makeCurrent")}
-              </button>
-            </div>
           )}
         </div>
       )}

@@ -16,7 +16,7 @@ export function NewPropertyShell({ title }: Props) {
   const [bigMap, setBigMap] = useState(false);
 
   return (
-    <div className={bigMap ? "w-full flex flex-col gap-6" : "max-w-4xl mx-auto w-full flex flex-col gap-6"}>
+    <div className={bigMap ? "w-full flex flex-col gap-6" : "max-w-[1040px] mx-auto w-full flex flex-col gap-6"}>
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
       </header>

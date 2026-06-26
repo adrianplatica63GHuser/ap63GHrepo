@@ -32,6 +32,10 @@ export function PropertyDetailTabs({
   const t = useTranslations("property");
   const [activeTab, setActiveTab] = useState<Tab>(initialTab ?? "details");
   const [bigMap,    setBigMap]    = useState(false);
+  // Slice #18.UX.04: the details form portals its version-nav controls into
+  // this header slot. A ref-callback into state so the portal target is
+  // available once mounted (and re-renders the form when it lands).
+  const [navSlot,   setNavSlot]   = useState<HTMLDivElement | null>(null);
 
   const tabs: { key: Tab; label: string }[] = [
     { key: "details",    label: t("tabs.details")    },
@@ -41,10 +45,17 @@ export function PropertyDetailTabs({
   ];
 
   return (
-    // When bigMap is active, remove the max-width cap so the layout fills the content area.
-    <div className={bigMap ? "w-full flex flex-col gap-4" : "max-w-4xl mx-auto w-full flex flex-col gap-4"}>
-      <header>
+    // Small map: cap at ~1040px (540px left column + ~480px map) and center.
+    // Big map: drop the cap so the right column fills the content area.
+    <div className={bigMap ? "w-full flex flex-col gap-4" : "max-w-[1040px] mx-auto w-full flex flex-col gap-4"}>
+      {/* Slice #18.UX.04: name on the left, version controls centered on the
+          same line (portalled in by the details form via navSlot). */}
+      <header className="relative flex min-h-[2.5rem] items-center">
         <h1 className="text-2xl font-semibold tracking-tight">{propertyName}</h1>
+        <div
+          ref={setNavSlot}
+          className="pointer-events-none absolute inset-y-0 left-1/2 flex -translate-x-1/2 items-center"
+        />
       </header>
 
       {/* Tab bar */}
@@ -79,6 +90,7 @@ export function PropertyDetailTabs({
             initialValues={initialValues}
             initialCorners={initialCorners}
             onBigMapChange={setBigMap}
+            versionNavSlot={navSlot}
           />
         )}
         {activeTab === "persons" && (
