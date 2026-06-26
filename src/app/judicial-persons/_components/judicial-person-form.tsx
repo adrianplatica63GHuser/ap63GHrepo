@@ -114,6 +114,13 @@ export function JudicialPersonForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
+      // An expired session is redirected to /sign-in by the auth middleware;
+      // fetch follows that as a 200, which would otherwise look like a
+      // successful save and silently lose the change. Treat any redirect as
+      // an auth failure.
+      if (res.redirected) {
+        throw new Error(t("saveErrorSession"));
+      }
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error(

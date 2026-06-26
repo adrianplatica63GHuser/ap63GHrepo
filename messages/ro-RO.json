@@ -47,6 +47,7 @@
     },
     "createTitle": "Proprietate nouă",
     "saveError": "Salvarea a eșuat",
+    "saveErrorSession": "Sesiunea a expirat — autentificați-vă din nou și reîncercați.",
     "deleteError": "Ștergerea a eșuat",
     "sections": {
       "cadastral": "Date cadastrale",
@@ -99,7 +100,19 @@
       "convertError": "Conversia a eșuat — verificați coordonatele",
       "empty": "Niciun punct de contur",
       "showBigMap": "Arată Harta Mare",
-      "showSmallMap": "Arată Harta Mică"
+      "showSmallMap": "Arată Harta Mică",
+      "versionLabel": "versiunea {n}",
+      "prevVersion": "Versiunea anterioară",
+      "nextVersion": "Versiunea următoare",
+      "removedCorner": "Punct eliminat în această versiune",
+      "makeCurrent": "Setează ca actuală",
+      "makeCurrentHint": "Setează această versiune ca versiune actuală"
+    },
+    "makeCurrent": {
+      "title": "Setați această versiune ca actuală?",
+      "body": "Versiunea {viewed} va fi copiată într-o versiune nouă {next}, care devine versiunea actuală. Continuați?",
+      "ok": "OK",
+      "cancel": "Anulează"
     },
     "buttons": {
       "save": "Salvează",
@@ -396,6 +409,7 @@
     "empty": "Nu există persoane",
     "counts": "Se afișează {shown} din {total}",
     "saveError": "Salvarea a eșuat",
+    "saveErrorSession": "Sesiunea a expirat — autentificați-vă din nou și reîncercați.",
     "deleteError": "Ștergerea a eșuat",
     "table": {
       "name": "Nume",
@@ -482,6 +496,7 @@
     "empty": "Nu există persoane juridice",
     "counts": "Se afișează {shown} din {total}",
     "saveError": "Salvarea a eșuat",
+    "saveErrorSession": "Sesiunea a expirat — autentificați-vă din nou și reîncercați.",
     "deleteError": "Ștergerea a eșuat",
     "table": {
       "name": "Denumire",
@@ -659,6 +674,7 @@
     "empty": "Nu există acte",
     "counts": "Se afișează {shown} din {total}",
     "saveError": "Salvarea a eșuat",
+    "saveErrorSession": "Sesiunea a expirat — autentificați-vă din nou și reîncercați.",
     "deleteError": "Ștergerea a eșuat",
     "typeFilterLabel": "Tip document:",
     "allTypes": "Toate tipurile",

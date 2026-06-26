@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { decimalToDMS, dmsToDecimal, formatDMS } from "@/lib/geo/dms";
-import type { Corner } from "./form-schema";
+import type { Corner, CornerDiffEntry, VersionNav } from "./form-schema";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -29,6 +29,12 @@ type Props = {
   onCornerHover?:    (idx: number | null) => void;
   bigMap?:           boolean;
   onToggleBigMap?:   () => void;
+  // Slice #18.02 — when set (read-only historical version view), the table
+  // renders from this diff: added/changed corners framed red, removed corners
+  // shown as a thick red line at their former position.
+  cornerDiff?:       CornerDiffEntry[];
+  // Slice #18.02 — version navigation controls rendered on the corners-line.
+  versionNav?:       VersionNav;
 };
 
 // ---------------------------------------------------------------------------
@@ -349,7 +355,7 @@ function displayFmtToInputMode(fmt: DisplayFormat): InputMode {
 // Main manager
 // ---------------------------------------------------------------------------
 
-export function CornersManager({ corners, onChange, readOnly = false, hoveredCornerIdx, onCornerHover, bigMap = false, onToggleBigMap }: Props) {
+export function CornersManager({ corners, onChange, readOnly = false, hoveredCornerIdx, onCornerHover, bigMap = false, onToggleBigMap, cornerDiff, versionNav }: Props) {
   const t = useTranslations("property.corners");
 
   const [displayFmt,  setDisplayFmt]  = useState<DisplayFormat>("S70");
@@ -435,6 +441,49 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
     return fmtS70(effectiveS70.values[idx]?.east ?? 0);
   });
 
+  // Slice #18.02: render the table body from a version diff when one is given.
+  // same/added entries map 1:1, in order, onto `corners` (= the viewed
+  // version's corners); `removed` entries have no corner — they draw a thick
+  // red line at the deleted corner's former position.
+  const diffRows = cornerDiff
+    ? (() => {
+        let ci = -1;
+        return cornerDiff.map((entry, di) => {
+          if (entry.type === "removed") {
+            // Keep a full-height (empty) row so the table doesn't shrink when a
+            // corner is removed; a thick red line marks the former position.
+            return (
+              <tr key={"rm-" + di} title={t("removedCorner")}>
+                <td className={cellCls + " text-fade tabular-nums"}>{" "}</td>
+                <td className={cellCls + " text-fade tabular-nums"}>{" "}</td>
+                <td className={cellCls} colSpan={2}>
+                  <div className="h-1.5 w-full rounded bg-red-600" />
+                </td>
+              </tr>
+            );
+          }
+          ci += 1;
+          const idx = ci;
+          const framed = entry.type === "added" || entry.type === "changed";
+          const fc = framed ? " border-y-2 border-red-500" : "";
+          return (
+            <tr key={"d-" + di}>
+              <td className={cellCls + " text-fade tabular-nums" + fc + (framed ? " border-l-2" : "")}>
+                {idx + 1}
+              </td>
+              <td className={cellCls + " text-fade tabular-nums" + fc}>
+                {corners[idx]?.originalIndex ?? "—"}
+              </td>
+              <td className={cellCls + " " + monoLight + fc}>{col1Values[idx]}</td>
+              <td className={cellCls + " " + monoLight + fc + (framed ? " border-r-2" : "")}>
+                {col2Values[idx]}
+              </td>
+            </tr>
+          );
+        });
+      })()
+    : null;
+
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-2">
@@ -470,6 +519,18 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
             </tr>
           </thead>
           <tbody className="divide-y divide-crease dark:divide-zinc-800">
+            {cornerDiff ? (
+              cornerDiff.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="px-3 py-4 text-center text-xs text-fade">
+                    {t("empty")}
+                  </td>
+                </tr>
+              ) : (
+                diffRows
+              )
+            ) : (
+            <>
             {corners.length === 0 && !adding && (
               <tr>
                 <td colSpan={readOnly ? 4 : 5} className="px-3 py-4 text-center text-xs text-fade">
@@ -552,17 +613,23 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
                 onCancel={() => setAdding(false)}
               />
             )}
+            </>
+            )}
           </tbody>
         </table>
       </div>
 
-      {((!readOnly && !adding && editingIdx === null) || onToggleBigMap) && (
-        <div className="flex items-center gap-2">
-          {!readOnly && !adding && editingIdx === null && (
+      {((!adding && editingIdx === null) || onToggleBigMap || versionNav) && (
+        // Spacing (Slice #18.02): base gap g = Add↔ShowBigMap. ShowBigMap↔◀
+        // = 2g; ◀↔label = label↔▶ = g. The Add button stays in place on
+        // read-only past versions (just disabled) so nothing shifts left.
+        <div className="flex flex-wrap items-center gap-y-2">
+          {!adding && editingIdx === null && (
             <button
               type="button"
               onClick={() => setAdding(true)}
-              className="self-start rounded-md border border-wire bg-white px-3 py-1.5 text-xs font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+              disabled={readOnly}
+              className="rounded-md border border-wire bg-white px-3 py-1.5 text-xs font-medium text-ink shadow-sm hover:bg-canvas disabled:opacity-30 disabled:cursor-not-allowed dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
             >
               + {t("add")}
             </button>
@@ -571,10 +638,53 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
             <button
               type="button"
               onClick={onToggleBigMap}
-              className="self-start rounded-md border border-wire bg-white px-3 py-1.5 text-xs font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+              className="ml-4 first:ml-0 rounded-md border border-wire bg-white px-3 py-1.5 text-xs font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
             >
               {bigMap ? t("showSmallMap") : t("showBigMap")}
             </button>
+          )}
+          {versionNav && (
+            <div className="ml-8 first:ml-0 flex items-center">
+              <button
+                type="button"
+                onClick={versionNav.onPrev}
+                disabled={!versionNav.canPrev}
+                aria-label={t("prevVersion")}
+                title={t("prevVersion")}
+                className="rounded-md border border-wire bg-white px-2 py-1 text-xs font-medium text-ink shadow-sm hover:bg-canvas disabled:opacity-30 disabled:cursor-not-allowed dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+              >
+                ←
+              </button>
+              <span
+                className={[
+                  "ml-4 text-xs font-semibold whitespace-nowrap",
+                  versionNav.color === "red"
+                    ? "text-red-600 dark:text-red-400"
+                    : "text-green-600 dark:text-green-400",
+                ].join(" ")}
+              >
+                {t("versionLabel", { n: versionNav.current })}
+              </span>
+              <button
+                type="button"
+                onClick={versionNav.onNext}
+                disabled={!versionNav.canNext}
+                aria-label={t("nextVersion")}
+                title={t("nextVersion")}
+                className="ml-4 rounded-md border border-wire bg-white px-2 py-1 text-xs font-medium text-ink shadow-sm hover:bg-canvas disabled:opacity-30 disabled:cursor-not-allowed dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+              >
+                →
+              </button>
+              <button
+                type="button"
+                onClick={versionNav.onMakeCurrent}
+                disabled={!versionNav.canMakeCurrent}
+                title={t("makeCurrentHint")}
+                className="ml-4 rounded-md border border-cta bg-white px-3 py-1 text-xs font-medium text-cta shadow-sm hover:bg-cta-pale disabled:opacity-30 disabled:cursor-not-allowed dark:border-zinc-600 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+              >
+                {t("makeCurrent")}
+              </button>
+            </div>
           )}
         </div>
       )}

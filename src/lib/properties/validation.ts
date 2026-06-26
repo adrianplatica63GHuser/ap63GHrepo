@@ -85,6 +85,48 @@ export const propertyUpdateSchema = propertyBase.partial().extend({
 export type PropertyUpdate = z.infer<typeof propertyUpdateSchema>;
 
 // ---------------------------------------------------------------------------
+// Property version snapshot (Slice #18.02)
+//
+// A complete snapshot of a property at one saved version. Shared between the
+// server write/read path (src/lib/properties/queries.ts) and the client diff
+// helpers (src/app/properties/_components/form-schema.ts). The JSON shape here
+// matches migration_029's backfill exactly — keep all three in lockstep.
+// ---------------------------------------------------------------------------
+
+export type PropertySnapshotProperty = {
+  propertyTypeId:  string | null;
+  nickname:        string | null;
+  tarlaSola:       string | null;
+  parcela:         string | null;
+  cadastralNumber: string | null;
+  carteFunciara:   string | null;
+  useCategoryId:   string | null;
+  surfaceAreaMp:   string | null;
+  notes:           string | null;
+};
+
+export type PropertySnapshotAddress = {
+  streetLine: string | null;
+  postalCode: string | null;
+  locality:   string | null;
+  county:     string | null;
+  country:    string;
+  notes:      string | null;
+};
+
+export type PropertySnapshotCorner = {
+  lat:           number;
+  lon:           number;
+  originalIndex: number | null;
+};
+
+export type PropertySnapshot = {
+  property: PropertySnapshotProperty;
+  address:  PropertySnapshotAddress | null;
+  corners:  PropertySnapshotCorner[];
+};
+
+// ---------------------------------------------------------------------------
 // List query
 // ---------------------------------------------------------------------------
 

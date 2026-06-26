@@ -312,6 +312,18 @@ CREATE TRIGGER property_corner_touch_updated_at
   BEFORE UPDATE ON property_corner
   FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
 
+-- Slice #18.02 — full-snapshot version history (one row per saved version).
+CREATE TABLE property_version (
+  id             uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  property_id    uuid        NOT NULL REFERENCES property(id) ON DELETE CASCADE,
+  version_number integer     NOT NULL,
+  snapshot       jsonb       NOT NULL,
+  created_at     timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE UNIQUE INDEX property_version_property_number_unique
+  ON property_version (property_id, version_number);
+
 -- ============================================================
 -- LOOKUP / REFERENCE DATA  (drizzle 0002 + migrations 009–015, 020)
 -- ============================================================

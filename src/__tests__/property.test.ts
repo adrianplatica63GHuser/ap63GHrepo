@@ -116,7 +116,10 @@ describe("toApiPayload", () => {
 
   it("passes corners through unchanged", () => {
     const p = toApiPayload(emptyFormValues, sampleCorners);
-    expect(p.corners).toEqual(sampleCorners);
+    // toApiPayload normalises each corner with originalIndex ?? null (Slice #15.17).
+    expect(p.corners).toEqual(
+      sampleCorners.map((c) => ({ ...c, originalIndex: null })),
+    );
   });
 
   it("parses surfaceAreaMp string to a number", () => {
@@ -244,8 +247,8 @@ describe("propertyCreateSchema", () => {
         parcela:         "P145",
         cadastralNumber: "12345",
         carteFunciara:   "CF001",
-        useCategoryId:   "11111111-1111-1111-1111-111111111111",
-        propertyTypeId:  "22222222-2222-2222-2222-222222222222",
+        useCategoryId:   "11111111-1111-4111-8111-111111111111",
+        propertyTypeId:  "22222222-2222-4222-9222-222222222222",
         surfaceAreaMp:   450.5,
         notes:           "test",
         address: {

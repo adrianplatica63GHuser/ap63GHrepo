@@ -9,12 +9,13 @@
  *   those rows untouched. Passing address: null deletes the address row.
  */
 
-import { and, count, eq, ilike, isNull, or, sql } from "drizzle-orm";
+import { and, count, desc, eq, ilike, isNull, or, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { lookupPersonRole, person, principalObject, property, propertyAddress, propertyCorner, propertyPerson } from "@/db/schema";
+import { lookupPersonRole, person, principalObject, property, propertyAddress, propertyCorner, propertyPerson, propertyVersion } from "@/db/schema";
 import type {
   PropertyCreate,
   PropertyListQuery,
+  PropertySnapshot,
   PropertyUpdate,
 } from "./validation";
 
@@ -42,6 +43,106 @@ export type PropertyFull = {
   address:  typeof propertyAddress.$inferSelect | null;
   corners:  (typeof propertyCorner.$inferSelect)[];
 };
+
+// ---------------------------------------------------------------------------
+// Version snapshots  (Slice #18.02)
+// ---------------------------------------------------------------------------
+
+export type PropertyVersionItem = {
+  versionNumber: number;
+  snapshot:      PropertySnapshot;
+  createdAt:     Date;
+};
+
+/** Build the canonical full snapshot from a freshly-fetched PropertyFull. */
+export function snapshotFromFull(full: PropertyFull): PropertySnapshot {
+  const p = full.property;
+  return {
+    property: {
+      propertyTypeId:  p.propertyTypeId  ?? null,
+      nickname:        p.nickname        ?? null,
+      tarlaSola:       p.tarlaSola       ?? null,
+      parcela:         p.parcela         ?? null,
+      cadastralNumber: p.cadastralNumber ?? null,
+      carteFunciara:   p.carteFunciara   ?? null,
+      useCategoryId:   p.useCategoryId   ?? null,
+      // numeric column → drizzle returns string | null; keep as-is.
+      surfaceAreaMp:   p.surfaceAreaMp   ?? null,
+      notes:           p.notes           ?? null,
+    },
+    address: full.address
+      ? {
+          streetLine: full.address.streetLine ?? null,
+          postalCode: full.address.postalCode ?? null,
+          locality:   full.address.locality   ?? null,
+          county:     full.address.county     ?? null,
+          country:    full.address.country,
+          notes:      full.address.notes      ?? null,
+        }
+      : null,
+    corners: full.corners.map((c) => ({
+      lat:           c.lat,
+      lon:           c.lon,
+      originalIndex: c.originalIndex ?? null,
+    })),
+  };
+}
+
+const SNAPSHOT_PROPERTY_KEYS: (keyof PropertySnapshot["property"])[] = [
+  "propertyTypeId", "nickname", "tarlaSola", "parcela", "cadastralNumber",
+  "carteFunciara", "useCategoryId", "surfaceAreaMp", "notes",
+];
+const SNAPSHOT_ADDRESS_KEYS: (keyof NonNullable<PropertySnapshot["address"]>)[] = [
+  "streetLine", "postalCode", "locality", "county", "country", "notes",
+];
+
+/**
+ * Field-by-field equality of two snapshots. Used to skip writing a new version
+ * when a save produced no actual change (the form's dirty-gate already mostly
+ * prevents this; this is the backstop). Compared explicitly rather than via
+ * JSON.stringify because Postgres jsonb does not preserve object key order.
+ */
+function snapshotsEqual(a: PropertySnapshot, b: PropertySnapshot): boolean {
+  for (const k of SNAPSHOT_PROPERTY_KEYS) {
+    if (a.property[k] !== b.property[k]) return false;
+  }
+  if ((a.address === null) !== (b.address === null)) return false;
+  if (a.address && b.address) {
+    for (const k of SNAPSHOT_ADDRESS_KEYS) {
+      if (a.address[k] !== b.address[k]) return false;
+    }
+  }
+  if (a.corners.length !== b.corners.length) return false;
+  for (let i = 0; i < a.corners.length; i++) {
+    if (a.corners[i].lat !== b.corners[i].lat) return false;
+    if (a.corners[i].lon !== b.corners[i].lon) return false;
+    if ((a.corners[i].originalIndex ?? null) !== (b.corners[i].originalIndex ?? null)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/** All versions of a property, oldest (version 0) first. */
+export async function listPropertyVersions(
+  propertyId: string,
+): Promise<PropertyVersionItem[]> {
+  const rows = await db
+    .select({
+      versionNumber: propertyVersion.versionNumber,
+      snapshot:      propertyVersion.snapshot,
+      createdAt:     propertyVersion.createdAt,
+    })
+    .from(propertyVersion)
+    .where(eq(propertyVersion.propertyId, propertyId))
+    .orderBy(propertyVersion.versionNumber);
+
+  return rows.map((r) => ({
+    versionNumber: r.versionNumber,
+    snapshot:      r.snapshot as PropertySnapshot,
+    createdAt:     r.createdAt,
+  }));
+}
 
 // ---------------------------------------------------------------------------
 // List
@@ -210,7 +311,16 @@ export async function createProperty(
         .returning();
     }
 
-    return { property: propRow, address: addrRow, corners: cornerRows };
+    const full: PropertyFull = { property: propRow, address: addrRow, corners: cornerRows };
+
+    // Slice #18.02: record version 0 — the state at creation.
+    await tx.insert(propertyVersion).values({
+      propertyId:    propRow.id,
+      versionNumber: 0,
+      snapshot:      snapshotFromFull(full),
+    });
+
+    return full;
   });
 }
 
@@ -308,11 +418,38 @@ export async function updateProperty(
       .where(eq(propertyCorner.propertyId, id))
       .orderBy(propertyCorner.sequenceNo);
 
-    return {
+    const full: PropertyFull = {
       property: refreshedProp,
       address:  refreshedAddr ?? null,
       corners:  refreshedCorners,
     };
+
+    // Slice #18.02: append a new version snapshot — but skip if this save
+    // produced no actual change vs the latest stored version (no-op backstop).
+    const newSnapshot = snapshotFromFull(full);
+    const [latestVer] = await tx
+      .select({
+        versionNumber: propertyVersion.versionNumber,
+        snapshot:      propertyVersion.snapshot,
+      })
+      .from(propertyVersion)
+      .where(eq(propertyVersion.propertyId, id))
+      .orderBy(desc(propertyVersion.versionNumber))
+      .limit(1);
+
+    const latestSnapshot = latestVer
+      ? (latestVer.snapshot as PropertySnapshot)
+      : null;
+
+    if (!latestSnapshot || !snapshotsEqual(latestSnapshot, newSnapshot)) {
+      await tx.insert(propertyVersion).values({
+        propertyId:    id,
+        versionNumber: (latestVer?.versionNumber ?? -1) + 1,
+        snapshot:      newSnapshot,
+      });
+    }
+
+    return full;
   });
 }
 

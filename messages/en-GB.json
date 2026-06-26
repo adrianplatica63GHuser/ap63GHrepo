@@ -47,6 +47,7 @@
     },
     "createTitle": "New Property",
     "saveError": "Could not save",
+    "saveErrorSession": "Your session expired — please sign in again and retry.",
     "deleteError": "Could not delete",
     "sections": {
       "cadastral": "Cadastral Data",
@@ -99,7 +100,19 @@
       "convertError": "Conversion failed — check coordinates",
       "empty": "No corners yet",
       "showBigMap": "Show Big Map",
-      "showSmallMap": "Show Small Map"
+      "showSmallMap": "Show Small Map",
+      "versionLabel": "version {n}",
+      "prevVersion": "Previous version",
+      "nextVersion": "Next version",
+      "removedCorner": "Corner removed in this version",
+      "makeCurrent": "Make Current",
+      "makeCurrentHint": "Make this version the current one"
+    },
+    "makeCurrent": {
+      "title": "Make this version current?",
+      "body": "Version {viewed} will be copied to a new version {next}, which becomes the current version. Continue?",
+      "ok": "OK",
+      "cancel": "Cancel"
     },
     "buttons": {
       "save": "Save",
@@ -396,6 +409,7 @@
     "empty": "No persons found",
     "counts": "Showing {shown} of {total}",
     "saveError": "Could not save",
+    "saveErrorSession": "Your session expired — please sign in again and retry.",
     "deleteError": "Could not delete",
     "table": {
       "name": "Name",
@@ -482,6 +496,7 @@
     "empty": "No judicial persons found",
     "counts": "Showing {shown} of {total}",
     "saveError": "Could not save",
+    "saveErrorSession": "Your session expired — please sign in again and retry.",
     "deleteError": "Could not delete",
     "table": {
       "name": "Name",
@@ -659,6 +674,7 @@
     "empty": "No documents found",
     "counts": "Showing {shown} of {total}",
     "saveError": "Could not save",
+    "saveErrorSession": "Your session expired — please sign in again and retry.",
     "deleteError": "Could not delete",
     "typeFilterLabel": "Document type:",
     "allTypes": "All types",

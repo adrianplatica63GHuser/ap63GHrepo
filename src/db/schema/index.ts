@@ -5,6 +5,7 @@ import {
   date,
   doublePrecision,
   integer,
+  jsonb,
   numeric,
   pgEnum,
   pgTable,
@@ -431,6 +432,50 @@ export const propertyCorner = pgTable(
     uniqueIndex("property_corner_property_seq_unique").on(
       t.propertyId,
       t.sequenceNo,
+    ),
+  ],
+);
+
+// ---------------------------------------------------------------------------
+// property_version — full-snapshot version history  (Slice #18.02)
+// ---------------------------------------------------------------------------
+//
+// One row per saved version of a property. version_number is 0-based: version
+// 0 is the state at creation, every saved edit appends the next number. Each
+// row stores a COMPLETE snapshot (property fields + address + ordered corners)
+// as JSONB — reconstructing "version N" is a direct lookup, no delta replay.
+//
+// The label colour and per-field highlights shown in the UI are derived at
+// display time by diffing snapshot N against snapshot N-1; nothing derived is
+// persisted here. Snapshot JSON shape lives next to the write path in
+// src/lib/properties/queries.ts (PropertySnapshot) and matches the backfill in
+// migration_029_property_versions.sql exactly.
+
+export const propertyVersion = pgTable(
+  "property_version",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+
+    propertyId: uuid("property_id")
+      .notNull()
+      .references(() => property.id, { onDelete: "cascade" }),
+
+    // 0-based; unique per property.
+    versionNumber: integer("version_number").notNull(),
+
+    // Full snapshot of the property at this version (property + address +
+    // corners). Untyped here to avoid a circular import; the query layer casts
+    // it to PropertySnapshot.
+    snapshot: jsonb("snapshot").notNull(),
+
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("property_version_property_number_unique").on(
+      t.propertyId,
+      t.versionNumber,
     ),
   ],
 );

@@ -4,23 +4,52 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   type FieldPath,
   type UseFormRegister,
   useForm,
 } from "react-hook-form";
+import type { PropertySnapshot } from "@/lib/properties/validation";
 import { useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-provider";
 import {
+  computeCornerDiff,
+  computeFieldHighlights,
   emptyFormValues,
   formSchema,
+  formValuesEqual,
   hasFormData,
-  type FormValues,
   type Corner,
+  type CornerDiffEntry,
+  type FieldHighlights,
+  type FormValues,
+  type HighlightColor,
+  type VersionNav,
+  cornersChanged,
+  snapshotToCorners,
+  snapshotToFormValues,
   toApiPayload,
+  versionLabelColor,
 } from "./form-schema";
 import { CornersManager } from "./corners-manager";
 import { PropertyMiniMap } from "./property-mini-map";
+
+// ---------------------------------------------------------------------------
+// Version history fetch (Slice #18.02)
+// ---------------------------------------------------------------------------
+
+type VersionItem = {
+  versionNumber: number;
+  snapshot:      PropertySnapshot;
+  createdAt:     string;
+};
+
+async function fetchVersions(propertyId: string): Promise<VersionItem[]> {
+  const res = await fetch(`/api/properties/${encodeURIComponent(propertyId)}/versions`);
+  if (!res.ok) throw new Error(`Failed to load versions (HTTP ${res.status})`);
+  const body = await res.json();
+  return (body.items ?? []) as VersionItem[];
+}
 
 // ---------------------------------------------------------------------------
 // Reference-Data dropdowns (Slice #15.16)
@@ -106,6 +135,7 @@ export function PropertyForm({
   const [submitting,       setSubmitting]       = useState(false);
   const [submitError,      setSubmitError]      = useState<string | null>(null);
   const [confirmDelete,    setConfirmDelete]    = useState(false);
+  const [confirmMakeCurrent, setConfirmMakeCurrent] = useState(false);
   const [bigMap,           setBigMap]           = useState(false);
 
   const handleToggleBigMap = () => {
@@ -114,30 +144,140 @@ export function PropertyForm({
     onBigMapChange?.(next);
   };
 
-  // Slice #15.10: in create mode, an untouched/all-blank form must never be
-  // saveable or treated as dirty — `hasFormData` is the single source of
-  // truth for "has the user actually entered anything yet?".
-  //
-  // Slice #18.01: this MUST be read via form.watch() (subscribes to value
-  // changes), not form.getValues() (does not subscribe). The earlier
-  // getValues() approach assumed the component "already re-renders on every
-  // keystroke" because formState is read below — but in create mode the only
-  // formState field actually evaluated is `isValid` (the `isDirty` read sits
-  // behind a `mode === "edit"` short-circuit). Every property field is an
-  // optional string, so an empty create form is already valid and `isValid`
-  // never changes as you type — so the component never re-rendered on field
-  // edits, leaving `createHasData` stale at false and Save wrongly disabled
-  // until a corner (a real useState update) forced a re-render. watch() makes
-  // it recompute on every keystroke, so Save (and the unsaved-changes guard
-  // below) unlock as soon as any single field has content.
+  // Slice #18.01: read via form.watch() (subscribes to value changes) so the
+  // create gate and the edit-dirty check below recompute on every keystroke.
   const watchedValues = form.watch();
-  const createHasData = mode === "create" && hasFormData(watchedValues, corners);
+  const isCreate = mode === "create";
+
+  // --- Version history (Slice #18.02) ------------------------------------
+  const versionsQuery = useQuery({
+    queryKey: ["property-versions", propertyId],
+    queryFn:  () => fetchVersions(propertyId!),
+    enabled:  !isCreate && !!propertyId,
+    // staleTime 0 so reopening a property after a save refetches and shows the
+    // newly-appended version (the save also invalidates this key in doSave).
+    // refetchOnWindowFocus is off to avoid redundant focus-triggered refetches.
+    staleTime:            0,
+    refetchOnWindowFocus: false,
+  });
+  const versions = useMemo(() => versionsQuery.data ?? [], [versionsQuery.data]);
+  const versionByNumber = useMemo(
+    () => new Map(versions.map((v) => [v.versionNumber, v])),
+    [versions],
+  );
+  const latestVersion: number | null =
+    versions.length > 0 ? versions[versions.length - 1].versionNumber : null;
+
+  // Which version is currently displayed. null = follow the latest.
+  const [viewingVersion, setViewingVersion] = useState<number | null>(null);
+  const effectiveVersion: number | null = viewingVersion ?? latestVersion;
+  const isOnLatest = latestVersion === null || effectiveVersion === latestVersion;
+
+  // Baseline = the latest saved state. Initialised from the server-provided
+  // props at page load, then updated in place after an edit-mode save (so the
+  // form can stay on the property and be recognised as clean again). Comparing
+  // to this baseline — rather than RHF's reset-sensitive isDirty — drives
+  // editDirty and survives the form.reset() that version navigation performs.
+  const [baseline, setBaseline] = useState<{ values: FormValues; corners: Corner[] }>(
+    () => ({ values: initialValues ?? emptyFormValues, corners: initialCorners }),
+  );
+
+  // Any non-latest version is strictly read-only; only the latest is editable
+  // (or stays "view" if opened read-only). Create mode is unaffected.
+  const effectiveMode: "create" | "edit" | "view" =
+    isCreate ? "create" : isOnLatest ? mode : "view";
+
+  const createHasData = isCreate && hasFormData(watchedValues, corners);
+
+  // Has the editable latest copy diverged from the loaded baseline?
+  const editDirty =
+    !isCreate &&
+    isOnLatest &&
+    (!formValuesEqual(watchedValues, baseline.values) ||
+      cornersChanged(corners, baseline.corners));
+
+  // Navigate to a version. Disabled while the latest has unsaved edits (the
+  // ◀/▶ buttons are locked in that state), so we never strand a dirty draft —
+  // returning to the latest always restores the clean baseline.
+  const goToVersion = (target: number) => {
+    if (target === latestVersion) {
+      form.reset(baseline.values);
+      setCorners(baseline.corners);
+    } else {
+      const snap = versionByNumber.get(target)?.snapshot;
+      if (!snap) return;
+      form.reset(snapshotToFormValues(snap));
+      setCorners(snapshotToCorners(snap));
+    }
+    setViewingVersion(target);
+  };
+
+  // Highlights (field frames + corner diff) show only on a read-only
+  // *historical* version (>= 1). The editable latest is the working copy and
+  // shows no frames; version 0 has no predecessor to diff against.
+  const showHighlights =
+    !isCreate && !isOnLatest && effectiveVersion !== null && effectiveVersion >= 1;
+
+  const currSnap =
+    effectiveVersion !== null ? versionByNumber.get(effectiveVersion)?.snapshot : undefined;
+  const prevSnap =
+    effectiveVersion !== null && effectiveVersion >= 1
+      ? versionByNumber.get(effectiveVersion - 1)?.snapshot
+      : undefined;
+
+  const fieldHighlights: FieldHighlights | null =
+    showHighlights && currSnap ? computeFieldHighlights(prevSnap ?? null, currSnap) : null;
+
+  const cornerDiff: CornerDiffEntry[] | null =
+    showHighlights && currSnap && prevSnap
+      ? computeCornerDiff(snapshotToCorners(prevSnap), snapshotToCorners(currSnap))
+      : null;
+
+  // Version-nav controls (rendered on the corners-line) — only once versions
+  // have loaded for an existing property.
+  const navLocked = isOnLatest && editDirty;
+  const versionNav: VersionNav | null =
+    !isCreate && versions.length > 0 && effectiveVersion !== null
+      ? {
+          current: effectiveVersion,
+          color: currSnap
+            ? versionLabelColor(prevSnap ?? null, currSnap)
+            : ("green" as HighlightColor),
+          canPrev: effectiveVersion > 0 && !navLocked,
+          canNext:
+            latestVersion !== null && effectiveVersion < latestVersion && !navLocked,
+          onPrev: () => goToVersion(effectiveVersion - 1),
+          onNext: () => goToVersion(effectiveVersion + 1),
+          // Enabled only while viewing a past version (disabled on the latest).
+          canMakeCurrent: !isOnLatest,
+          onMakeCurrent: () => setConfirmMakeCurrent(true),
+        }
+      : null;
+
+  // "Make this version current": save the currently-viewed historical snapshot
+  // (the form was reset to it on navigation) as a brand-new version. This reuses
+  // the exact stay-on-page edit-save path — updateProperty appends it as the new
+  // latest (it differs from the current latest), and we follow that new version.
+  const makeCurrentNextNumber = (latestVersion ?? 0) + 1;
+  const handleMakeCurrent = async () => {
+    const values = form.getValues();
+    const restoredCorners = corners;
+    const ok = await doSave(values);
+    if (!ok) {
+      setConfirmMakeCurrent(false);
+      return;
+    }
+    setBaseline({ values, corners: restoredCorners });
+    setViewingVersion(null);
+    setConfirmMakeCurrent(false);
+    router.refresh();
+  };
 
   const saveDisabled =
     submitting ||
     !form.formState.isValid ||
-    (mode === "create" && !createHasData) ||
-    (mode === "edit" && !form.formState.isDirty && corners === initialCorners);
+    (isCreate && !createHasData) ||
+    (!isCreate && isOnLatest && !editDirty);
 
   // doSave performs the API call only (no navigation) so it can be reused
   // both by the form's own Save button (onSubmit, which navigates after a
@@ -158,11 +298,22 @@ export function PropertyForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
+      // An expired session is redirected to /sign-in by the auth middleware;
+      // fetch silently follows that redirect and yields a 200 (the sign-in
+      // HTML), which would otherwise look like a successful save and lose the
+      // change. Treat any redirected response as an auth failure so the user
+      // gets a clear "sign in again" message instead of a silent no-op.
+      if (res.redirected) {
+        throw new Error(t("saveErrorSession"));
+      }
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error(body?.error ?? `${t("saveError")} (HTTP ${res.status})`);
       }
       await queryClient.invalidateQueries({ queryKey: ["properties"] });
+      // Slice #18.02: a save appended a new version — drop the cached list so
+      // reopening the property shows it (and the ◀/▶ nav enables).
+      await queryClient.invalidateQueries({ queryKey: ["property-versions"] });
       return true;
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : String(err));
@@ -174,30 +325,38 @@ export function PropertyForm({
 
   const onSubmit = async (values: FormValues) => {
     const ok = await doSave(values);
-    if (ok) {
+    if (!ok) return;
+
+    if (mode === "create") {
       router.push("/properties");
       router.refresh();
+      return;
     }
+
+    // Slice #18.02: edit mode stays on the property so the freshly-appended
+    // version is visible. Reset the clean baseline to the just-saved state (so
+    // Save disables and version nav unlocks), follow the new latest version,
+    // and refresh server-rendered bits (e.g. the page title if the nickname
+    // changed). doSave already invalidated ["property-versions"], so the nav
+    // refetches and shows the new version.
+    setBaseline({ values, corners });
+    setViewingVersion(null);
+    router.refresh();
   };
 
-  // Slice #15.10: create mode now derives isDirty from hasFormData(...)
-  // instead of `form.formState.isDirty || corners !== initialCorners`.
-  // The old check used `initialCorners = []` as a default parameter, which
-  // is a new array reference on every render — once RHF's initial async
-  // validation pass triggered one extra re-render right after mount (with
-  // zero user input), `corners !== initialCorners` spuriously flipped to
-  // `true`, making a completely untouched "Add new property" form look
-  // dirty and trip the unsaved-changes guard. Edit mode's existing
-  // reference-based check is unchanged — corners there really do start as
-  // a stable array (the loaded record's corners), and is out of scope for
-  // this fix per Adrian's report.
+  // Create mode derives isDirty from hasFormData (Slice #15.10/#18.01); edit
+  // mode uses the baseline comparison (Slice #18.02) — which is also robust
+  // to the form.reset() calls version navigation performs. A read-only
+  // historical version is never dirty. Because nav is locked while the latest
+  // is dirty, an unsaved edit always lives on the latest (effectiveMode edit),
+  // so the page-leave guard still fires for it.
   useUnsavedChangesGuard({
     isDirty:
-      mode === "view"
+      effectiveMode === "view"
         ? false
-        : mode === "create"
+        : isCreate
           ? createHasData
-          : (form.formState.isDirty || corners !== initialCorners),
+          : editDirty,
     onSave: async () => {
       const valid = await form.trigger();
       if (!valid) return false;
@@ -236,16 +395,23 @@ export function PropertyForm({
       className="flex flex-col gap-4"
       noValidate
     >
-      <fieldset disabled={mode === "view"} className="contents">
       {/* Layout wrapper: flex-row in big-map mode, transparent (contents) in normal mode */}
       <div className={bigMap ? "flex flex-row gap-4 items-stretch" : "contents"}>
 
         {/* Left panels: transparent in normal mode, 45% fixed column in big-map mode */}
         <div className={bigMap ? "w-[540px] flex-none flex flex-col gap-4" : "contents"}>
 
+          {/* Slice #18.02: the disabled fieldset wraps ONLY the editable input
+              sections (cadastral + address). The corners section below is
+              intentionally OUTSIDE it — a disabled <fieldset> disables EVERY
+              descendant control (including the version ◀/▶ nav buttons, which
+              cannot be re-enabled per-button), and CornersManager enforces its
+              own read-only state via the readOnly prop. */}
+          <fieldset disabled={effectiveMode === "view"} className="contents">
+
           {/* Cadastral data — 4-col normally, 2-col in big-map */}
           <Section title={t("sections.cadastral")} columns={bigMap ? 2 : 4}>
-            {mode === "edit" && propertyCode && (
+            {propertyCode && (
               <ReadOnlyField label={t("fields.code")} value={propertyCode} />
             )}
             <SelectField
@@ -254,36 +420,42 @@ export function PropertyForm({
               register={register}
               error={errors.propertyTypeId?.message}
               options={propertyTypeOptions}
+              highlight={fieldHighlights?.property.propertyTypeId}
             />
             <Field
               label={t("fields.nickname")}
               name="nickname"
               register={register}
               error={errors.nickname?.message}
+              highlight={fieldHighlights?.property.nickname}
             />
             <Field
               label={t("fields.tarlaSola")}
               name="tarlaSola"
               register={register}
               error={errors.tarlaSola?.message}
+              highlight={fieldHighlights?.property.tarlaSola}
             />
             <Field
               label={t("fields.parcela")}
               name="parcela"
               register={register}
               error={errors.parcela?.message}
+              highlight={fieldHighlights?.property.parcela}
             />
             <Field
               label={t("fields.cadastralNumber")}
               name="cadastralNumber"
               register={register}
               error={errors.cadastralNumber?.message}
+              highlight={fieldHighlights?.property.cadastralNumber}
             />
             <Field
               label={t("fields.carteFunciara")}
               name="carteFunciara"
               register={register}
               error={errors.carteFunciara?.message}
+              highlight={fieldHighlights?.property.carteFunciara}
             />
             <SelectField
               label={t("fields.useCategory")}
@@ -291,6 +463,7 @@ export function PropertyForm({
               register={register}
               error={errors.useCategoryId?.message}
               options={useCategoryOptions}
+              highlight={fieldHighlights?.property.useCategoryId}
             />
             <Field
               label={t("fields.surfaceAreaMp")}
@@ -298,6 +471,7 @@ export function PropertyForm({
               type="number"
               register={register}
               error={errors.surfaceAreaMp?.message}
+              highlight={fieldHighlights?.property.surfaceAreaMp}
             />
             <div className={bigMap ? "col-span-2" : "col-span-2 md:col-span-4"}>
               <TextAreaField
@@ -306,6 +480,7 @@ export function PropertyForm({
                 register={register}
                 error={errors.notes?.message}
                 maxLength={300}
+                highlight={fieldHighlights?.property.notes}
               />
             </div>
           </Section>
@@ -324,12 +499,14 @@ export function PropertyForm({
                     name="address.streetLine"
                     register={register}
                     error={errors.address?.streetLine?.message}
+                    highlight={fieldHighlights?.address.streetLine}
                   />
                   <Field
                     label={t("address.notes")}
                     name="address.notes"
                     register={register}
                     error={errors.address?.notes?.message}
+                    highlight={fieldHighlights?.address.notes}
                   />
                   <div className="grid grid-cols-2 gap-2">
                     <Field
@@ -337,12 +514,14 @@ export function PropertyForm({
                       name="address.postalCode"
                       register={register}
                       error={errors.address?.postalCode?.message}
+                      highlight={fieldHighlights?.address.postalCode}
                     />
                     <Field
                       label={t("address.locality")}
                       name="address.locality"
                       register={register}
                       error={errors.address?.locality?.message}
+                      highlight={fieldHighlights?.address.locality}
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-2">
@@ -351,12 +530,14 @@ export function PropertyForm({
                       name="address.county"
                       register={register}
                       error={errors.address?.county?.message}
+                      highlight={fieldHighlights?.address.county}
                     />
                     <Field
                       label={t("address.country")}
                       name="address.country"
                       register={register}
                       error={errors.address?.country?.message}
+                      highlight={fieldHighlights?.address.country}
                     />
                   </div>
                 </>
@@ -369,12 +550,14 @@ export function PropertyForm({
                       name="address.streetLine"
                       register={register}
                       error={errors.address?.streetLine?.message}
+                      highlight={fieldHighlights?.address.streetLine}
                     />
                     <Field
                       label={t("address.notes")}
                       name="address.notes"
                       register={register}
                       error={errors.address?.notes?.message}
+                      highlight={fieldHighlights?.address.notes}
                     />
                   </div>
                   {/* Normal: Row 2 — Postal Code, City, County, Country (4 cols) */}
@@ -384,32 +567,39 @@ export function PropertyForm({
                       name="address.postalCode"
                       register={register}
                       error={errors.address?.postalCode?.message}
+                      highlight={fieldHighlights?.address.postalCode}
                     />
                     <Field
                       label={t("address.locality")}
                       name="address.locality"
                       register={register}
                       error={errors.address?.locality?.message}
+                      highlight={fieldHighlights?.address.locality}
                     />
                     <Field
                       label={t("address.county")}
                       name="address.county"
                       register={register}
                       error={errors.address?.county?.message}
+                      highlight={fieldHighlights?.address.county}
                     />
                     <Field
                       label={t("address.country")}
                       name="address.country"
                       register={register}
                       error={errors.address?.country?.message}
+                      highlight={fieldHighlights?.address.country}
                     />
                   </div>
                 </>
               )}
             </div>
           </section>
+          </fieldset>{/* end editable-inputs fieldset (cadastral + address) */}
 
-          {/* Corners + mini-map inside only in normal mode */}
+          {/* Corners + mini-map — OUTSIDE the disabled fieldset so the version
+              ◀/▶ nav buttons stay clickable on read-only historical versions;
+              CornersManager enforces its own read-only state via readOnly. */}
           <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
             <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
               {t("sections.corners")}
@@ -418,18 +608,20 @@ export function PropertyForm({
               <CornersManager
                 corners={corners}
                 onChange={setCorners}
-                readOnly={mode === "view"}
+                readOnly={effectiveMode === "view"}
                 hoveredCornerIdx={hoveredCornerIdx}
                 onCornerHover={setHoveredCornerIdx}
                 bigMap={bigMap}
                 onToggleBigMap={handleToggleBigMap}
+                cornerDiff={cornerDiff ?? undefined}
+                versionNav={versionNav ?? undefined}
               />
               {!bigMap && (
                 <div className="rounded-md border border-card-rim overflow-hidden dark:border-zinc-800" style={{ height: "360px" }}>
                   <PropertyMiniMap
                     corners={corners}
                     onChange={setCorners}
-                    readOnly={mode === "view"}
+                    readOnly={effectiveMode === "view"}
                     hoveredCornerIdx={hoveredCornerIdx}
                     onCornerHover={setHoveredCornerIdx}
                   />
@@ -447,7 +639,7 @@ export function PropertyForm({
               <PropertyMiniMap
                 corners={corners}
                 onChange={setCorners}
-                readOnly={mode === "view"}
+                readOnly={effectiveMode === "view"}
                 hoveredCornerIdx={hoveredCornerIdx}
                 onCornerHover={setHoveredCornerIdx}
               />
@@ -463,8 +655,8 @@ export function PropertyForm({
         </p>
       )}
 
-      {/* Action buttons — hidden in view mode */}
-      {mode !== "view" && (
+      {/* Action buttons — hidden in view mode (incl. any read-only historical version) */}
+      {effectiveMode !== "view" && (
         <div className="flex items-center justify-center gap-3 border-t border-crease pt-6 dark:border-zinc-800">
           <button
             type="submit"
@@ -473,7 +665,7 @@ export function PropertyForm({
           >
             {t("buttons.save")}
           </button>
-          {mode === "edit" && (
+          {effectiveMode === "edit" && (
             <button
               type="button"
               onClick={() => setConfirmDelete(true)}
@@ -505,7 +697,21 @@ export function PropertyForm({
           busy={submitting}
         />
       )}
-      </fieldset>
+
+      {confirmMakeCurrent && (
+        <ConfirmDialog
+          title={t("makeCurrent.title")}
+          body={t("makeCurrent.body", {
+            viewed: effectiveVersion ?? 0,
+            next: makeCurrentNextNumber,
+          })}
+          yesLabel={t("makeCurrent.ok")}
+          noLabel={t("makeCurrent.cancel")}
+          onYes={handleMakeCurrent}
+          onNo={() => setConfirmMakeCurrent(false)}
+          busy={submitting}
+        />
+      )}
     </form>
   );
 }
@@ -520,6 +726,16 @@ const COLUMNS_CLASS: Record<1 | 2 | 3 | 4, string> = {
   3: "grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3",
   4: "grid grid-cols-2 gap-2 md:grid-cols-4",
 };
+
+// Slice #18.02: green/red highlight frame for a field that changed in the
+// version currently being viewed (green = added, red = modified/deleted).
+function highlightRing(h?: HighlightColor): string {
+  return h === "green"
+    ? "ring-2 ring-green-500"
+    : h === "red"
+      ? "ring-2 ring-red-500"
+      : "";
+}
 
 function Section({
   title,
@@ -543,15 +759,16 @@ function Section({
 }
 
 type FieldProps = {
-  label:    string;
-  name:     FieldPath<FormValues>;
-  type?:    string;
-  register: UseFormRegister<FormValues>;
-  error?:   string;
-  hint?:    string;
+  label:      string;
+  name:       FieldPath<FormValues>;
+  type?:      string;
+  register:   UseFormRegister<FormValues>;
+  error?:     string;
+  hint?:      string;
+  highlight?: HighlightColor;
 };
 
-function Field({ label, name, type = "text", register, error, hint }: FieldProps) {
+function Field({ label, name, type = "text", register, error, hint, highlight }: FieldProps) {
   return (
     <label className="flex items-center gap-2 text-sm">
       <span className="w-24 shrink-0 font-medium text-ink dark:text-zinc-300">{label}</span>
@@ -565,6 +782,7 @@ function Field({ label, name, type = "text", register, error, hint }: FieldProps
             error
               ? "border-red-500 focus:border-red-600"
               : "border-wire focus:border-focus dark:border-zinc-700",
+            highlightRing(highlight),
           ].join(" ")}
         />
         {hint && !error && (
@@ -584,6 +802,7 @@ function TextAreaField({
   register,
   error,
   maxLength,
+  highlight,
 }: FieldProps & { maxLength?: number }) {
   return (
     <label className="flex items-start gap-2 text-sm">
@@ -599,6 +818,7 @@ function TextAreaField({
             error
               ? "border-red-500 focus:border-red-600"
               : "border-wire focus:border-focus dark:border-zinc-700",
+            highlightRing(highlight),
           ].join(" ")}
         />
         {error && (
@@ -615,6 +835,7 @@ function SelectField({
   register,
   error,
   options,
+  highlight,
 }: FieldProps & { options: { value: string; label: string }[] }) {
   return (
     <label className="flex items-center gap-2 text-sm">
@@ -628,6 +849,7 @@ function SelectField({
             error
               ? "border-red-500 focus:border-red-600"
               : "border-wire focus:border-focus dark:border-zinc-700",
+            highlightRing(highlight),
           ].join(" ")}
         >
           {options.map((o) => (
