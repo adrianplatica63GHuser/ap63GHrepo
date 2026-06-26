@@ -110,3 +110,60 @@ export const allPersonsListQuerySchema = z.object({
 });
 
 export type AllPersonsListQuery = z.infer<typeof allPersonsListQuerySchema>;
+
+// ---------------------------------------------------------------------------
+// Person version snapshot (Slice #18.05)
+//
+// A complete snapshot of a (natural) person at one saved version. Shared
+// between the server write/read path (src/lib/persons/queries.ts) and the
+// client diff helpers (src/app/natural-persons/_components/form-schema.ts).
+// The JSON shape here matches migration_030's NATURAL backfill exactly — keep
+// all three in lockstep. All values are string|null (the form's blanked-empty
+// convention) so two snapshots can be diffed field-by-field uniformly.
+//
+// `PersonAddressSnapshot` is reused by the judicial snapshot too (see
+// src/lib/judicial-persons/validation.ts).
+// ---------------------------------------------------------------------------
+
+export type PersonAddressSnapshot = {
+  streetLine: string | null;
+  postalCode: string | null;
+  locality:   string | null;
+  county:     string | null;
+  country:    string | null;
+  notes:      string | null;
+};
+
+export type NaturalPersonSnapshotFields = {
+  firstName:          string | null;
+  lastName:           string | null;
+  nickname:           string | null;
+  cnp:                string | null;
+  idDocumentType:     string | null;
+  idDocumentNumber:   string | null;
+  gender:             string | null;
+  dateOfBirth:        string | null;
+  personalPhone1:     string | null;
+  personalPhone2:     string | null;
+  workPhone:          string | null;
+  personalEmail1:     string | null;
+  personalEmail2:     string | null;
+  workEmail:          string | null;
+  placeOfBirth:       string | null;
+  idIssuingAuthority: string | null;
+  idValidFrom:        string | null;
+  idValidUntil:       string | null;
+  idCardNumber:       string | null;
+  idMrzRaw:           string | null;
+  citizenshipId:      string | null;
+};
+
+export type NaturalPersonSnapshot = {
+  // person.notes (lives on the base `person` row, not natural_person).
+  notes:   string | null;
+  natural: NaturalPersonSnapshotFields;
+  addresses: {
+    HOME:           PersonAddressSnapshot | null;
+    CORRESPONDENCE: PersonAddressSnapshot | null;
+  };
+};

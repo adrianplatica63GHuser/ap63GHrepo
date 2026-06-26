@@ -19,20 +19,23 @@
  */
 
 import { alias } from "drizzle-orm/pg-core";
-import { and, count, eq, ilike, isNull, or, sql } from "drizzle-orm";
+import { and, count, desc, eq, ilike, isNull, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
   address,
   judicialPerson,
   lookupJudicialPersonType,
   person,
+  personVersion,
   principalObject,
 } from "@/db/schema";
 import type {
   JudicialListQuery,
   JudicialPersonCreate,
+  JudicialPersonSnapshot,
   JudicialPersonUpdate,
 } from "./validation";
+import type { PersonAddressSnapshot } from "@/lib/persons/validation";
 
 // ---------------------------------------------------------------------------
 // List
@@ -188,6 +191,98 @@ export async function getJudicialPersonById(
 }
 
 // ---------------------------------------------------------------------------
+// Version snapshots  (Slice #18.05)
+//
+// Writes into the shared person_version table. The natural snapshot build and
+// the read path (listPersonVersions) live in src/lib/persons/queries.ts; only
+// the judicial-specific snapshot build + equality live here.
+// ---------------------------------------------------------------------------
+
+type JudicialFull = {
+  person:    typeof person.$inferSelect;
+  judicial:  typeof judicialPerson.$inferSelect | null;
+  addresses: (typeof address.$inferSelect)[];
+};
+
+function jAddressSnapshot(
+  a: typeof address.$inferSelect | undefined,
+): PersonAddressSnapshot | null {
+  if (!a) return null;
+  return {
+    streetLine: a.streetLine ?? null,
+    postalCode: a.postalCode ?? null,
+    locality:   a.locality   ?? null,
+    county:     a.county     ?? null,
+    country:    a.country    ?? null,
+    notes:      a.notes      ?? null,
+  };
+}
+
+/** Build the canonical judicial-person snapshot from a freshly-fetched record. */
+export function judicialSnapshotFromFull(full: JudicialFull): JudicialPersonSnapshot {
+  const j = full.judicial;
+  const hq   = full.addresses.find((a) => a.kind === "HEADQUARTERS");
+  const corr = full.addresses.find((a) => a.kind === "CORRESPONDENCE");
+  return {
+    notes: full.person.notes ?? null,
+    judicial: {
+      name:                   j?.name                   ?? null,
+      nickname:               j?.nickname               ?? null,
+      judicialPersonTypeId:   j?.judicialPersonTypeId   ?? null,
+      cuiNumber:              j?.cuiNumber              ?? null,
+      tradeRegisterNumber:    j?.tradeRegisterNumber    ?? null,
+      contactPerson1Id:       j?.contactPerson1Id       ?? null,
+      contactPerson2Id:       j?.contactPerson2Id       ?? null,
+      correspondenceSameAsHq: j?.correspondenceSameAsHq ?? false,
+    },
+    addresses: {
+      HEADQUARTERS:   jAddressSnapshot(hq),
+      CORRESPONDENCE: jAddressSnapshot(corr),
+    },
+  };
+}
+
+const JUD_STRING_KEYS: (keyof JudicialPersonSnapshot["judicial"])[] = [
+  "name", "nickname", "judicialPersonTypeId", "cuiNumber",
+  "tradeRegisterNumber", "contactPerson1Id", "contactPerson2Id",
+];
+const JUD_ADDR_KEYS: (keyof PersonAddressSnapshot)[] = [
+  "streetLine", "postalCode", "locality", "county", "country", "notes",
+];
+
+function jAddrEqual(
+  a: PersonAddressSnapshot | null,
+  b: PersonAddressSnapshot | null,
+): boolean {
+  if ((a === null) !== (b === null)) return false;
+  if (a && b) {
+    for (const k of JUD_ADDR_KEYS) {
+      if (a[k] !== b[k]) return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * Field-by-field equality of two judicial-person snapshots — the no-op
+ * backstop that skips writing a duplicate version. Compared explicitly (not
+ * JSON.stringify) because Postgres jsonb does not preserve object key order.
+ */
+function judicialSnapshotsEqual(
+  a: JudicialPersonSnapshot,
+  b: JudicialPersonSnapshot,
+): boolean {
+  if (a.notes !== b.notes) return false;
+  for (const k of JUD_STRING_KEYS) {
+    if (a.judicial[k] !== b.judicial[k]) return false;
+  }
+  if (a.judicial.correspondenceSameAsHq !== b.judicial.correspondenceSameAsHq) return false;
+  if (!jAddrEqual(a.addresses.HEADQUARTERS, b.addresses.HEADQUARTERS)) return false;
+  if (!jAddrEqual(a.addresses.CORRESPONDENCE, b.addresses.CORRESPONDENCE)) return false;
+  return true;
+}
+
+// ---------------------------------------------------------------------------
 // Create
 // ---------------------------------------------------------------------------
 
@@ -260,6 +355,13 @@ export async function createJudicialPerson(
         )
         .returning();
     }
+
+    // Slice #18.05: record version 0 — the state at creation.
+    await tx.insert(personVersion).values({
+      personId:      pRow.id,
+      versionNumber: 0,
+      snapshot:      judicialSnapshotFromFull({ person: pRow, judicial: jRow, addresses: addressRows }),
+    });
 
     return {
       person: pRow,
@@ -356,6 +458,54 @@ export async function updateJudicialPerson(
           })),
         );
       }
+    }
+
+    // Slice #18.05: append a new version snapshot — but skip if this save
+    // produced no actual change vs the latest stored version. Build the
+    // snapshot from a tx-consistent refetch (getJudicialPersonById below reads
+    // via the global db connection, which would not see this tx's uncommitted
+    // writes).
+    const [snapPerson] = await tx
+      .select()
+      .from(person)
+      .where(eq(person.id, id))
+      .limit(1);
+    const [snapJudicial] = await tx
+      .select()
+      .from(judicialPerson)
+      .where(eq(judicialPerson.personId, id))
+      .limit(1);
+    const snapAddresses = await tx
+      .select()
+      .from(address)
+      .where(eq(address.personId, id))
+      .orderBy(address.kind);
+
+    const newSnapshot = judicialSnapshotFromFull({
+      person:    snapPerson,
+      judicial:  snapJudicial ?? null,
+      addresses: snapAddresses,
+    });
+    const [latestVer] = await tx
+      .select({
+        versionNumber: personVersion.versionNumber,
+        snapshot:      personVersion.snapshot,
+      })
+      .from(personVersion)
+      .where(eq(personVersion.personId, id))
+      .orderBy(desc(personVersion.versionNumber))
+      .limit(1);
+
+    const latestSnapshot = latestVer
+      ? (latestVer.snapshot as JudicialPersonSnapshot)
+      : null;
+
+    if (!latestSnapshot || !judicialSnapshotsEqual(latestSnapshot, newSnapshot)) {
+      await tx.insert(personVersion).values({
+        personId:      id,
+        versionNumber: (latestVer?.versionNumber ?? -1) + 1,
+        snapshot:      newSnapshot,
+      });
     }
 
     // Re-fetch full record (includes contact person name resolution).

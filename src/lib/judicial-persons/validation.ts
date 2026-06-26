@@ -104,3 +104,39 @@ export const judicialListQuerySchema = z.object({
 });
 
 export type JudicialListQuery = z.infer<typeof judicialListQuerySchema>;
+
+// ---------------------------------------------------------------------------
+// Judicial person version snapshot (Slice #18.05)
+//
+// A complete snapshot of a judicial person at one saved version. Shared between
+// the server write/read path (src/lib/judicial-persons/queries.ts) and the
+// client diff helpers (src/app/judicial-persons/_components/form-schema.ts).
+// The JSON shape here matches migration_030's JUDICIAL backfill exactly — keep
+// all three in lockstep. Values are string|null (blanked-empty convention)
+// except correspondenceSameAsHq, which is a boolean.
+//
+// `PersonAddressSnapshot` is shared with the natural snapshot.
+// ---------------------------------------------------------------------------
+
+import type { PersonAddressSnapshot } from "@/lib/persons/validation";
+
+export type JudicialPersonSnapshotFields = {
+  name:                   string | null;
+  nickname:               string | null;
+  judicialPersonTypeId:   string | null;
+  cuiNumber:              string | null;
+  tradeRegisterNumber:    string | null;
+  contactPerson1Id:       string | null;
+  contactPerson2Id:       string | null;
+  correspondenceSameAsHq: boolean;
+};
+
+export type JudicialPersonSnapshot = {
+  // person.notes (lives on the base `person` row, not judicial_person).
+  notes:    string | null;
+  judicial: JudicialPersonSnapshotFields;
+  addresses: {
+    HEADQUARTERS:   PersonAddressSnapshot | null;
+    CORRESPONDENCE: PersonAddressSnapshot | null;
+  };
+};

@@ -20,14 +20,18 @@ import {
   judicialPerson,
   naturalPerson,
   person,
+  personVersion,
   principalObject,
 } from "@/db/schema";
 import type {
   AllPersonsListQuery,
   ListQuery,
   NaturalPersonCreate,
+  NaturalPersonSnapshot,
   NaturalPersonUpdate,
+  PersonAddressSnapshot,
 } from "./validation";
+import type { JudicialPersonSnapshot } from "@/lib/judicial-persons/validation";
 
 // ---------------------------------------------------------------------------
 // Display name — single source of truth for the cached `person.display_name`.
@@ -236,6 +240,140 @@ export async function getPersonById(id: string): Promise<PersonFull | null> {
 }
 
 // ---------------------------------------------------------------------------
+// Version snapshots  (Slice #18.05)
+//
+// One shared person_version table serves both subtypes. listPersonVersions is
+// type-agnostic (it just returns the stored JSONB); each consumer casts to the
+// subtype's snapshot type. The natural snapshot build + equality live here; the
+// judicial equivalents live in src/lib/judicial-persons/queries.ts.
+// ---------------------------------------------------------------------------
+
+export type PersonVersionItem = {
+  versionNumber: number;
+  snapshot:      NaturalPersonSnapshot | JudicialPersonSnapshot;
+  createdAt:     Date;
+};
+
+/** Address row → snapshot block (null when the row is absent). */
+function addressSnapshot(
+  a:
+    | { streetLine: string | null; postalCode: string | null; locality: string | null; county: string | null; country: string; notes: string | null }
+    | null
+    | undefined,
+): PersonAddressSnapshot | null {
+  if (!a) return null;
+  return {
+    streetLine: a.streetLine ?? null,
+    postalCode: a.postalCode ?? null,
+    locality:   a.locality   ?? null,
+    county:     a.county     ?? null,
+    country:    a.country    ?? null,
+    notes:      a.notes      ?? null,
+  };
+}
+
+/** Build the canonical natural-person snapshot from a freshly-fetched record. */
+export function naturalSnapshotFromFull(full: PersonFull): NaturalPersonSnapshot {
+  const n = full.natural;
+  const home = full.addresses.find((a) => a.kind === "HOME");
+  const corr = full.addresses.find((a) => a.kind === "CORRESPONDENCE");
+  return {
+    notes: full.person.notes ?? null,
+    natural: {
+      firstName:          n?.firstName          ?? null,
+      lastName:           n?.lastName           ?? null,
+      nickname:           n?.nickname           ?? null,
+      cnp:                n?.cnp                ?? null,
+      idDocumentType:     n?.idDocumentType     ?? null,
+      idDocumentNumber:   n?.idDocumentNumber   ?? null,
+      gender:             n?.gender             ?? null,
+      dateOfBirth:        n?.dateOfBirth        ?? null,
+      personalPhone1:     n?.personalPhone1     ?? null,
+      personalPhone2:     n?.personalPhone2     ?? null,
+      workPhone:          n?.workPhone          ?? null,
+      personalEmail1:     n?.personalEmail1     ?? null,
+      personalEmail2:     n?.personalEmail2     ?? null,
+      workEmail:          n?.workEmail          ?? null,
+      placeOfBirth:       n?.placeOfBirth       ?? null,
+      idIssuingAuthority: n?.idIssuingAuthority ?? null,
+      idValidFrom:        n?.idValidFrom        ?? null,
+      idValidUntil:       n?.idValidUntil       ?? null,
+      idCardNumber:       n?.idCardNumber       ?? null,
+      idMrzRaw:           n?.idMrzRaw           ?? null,
+      citizenshipId:      n?.citizenshipId      ?? null,
+    },
+    addresses: {
+      HOME:           addressSnapshot(home),
+      CORRESPONDENCE: addressSnapshot(corr),
+    },
+  };
+}
+
+const NAT_FIELD_KEYS: (keyof NaturalPersonSnapshot["natural"])[] = [
+  "firstName", "lastName", "nickname", "cnp", "idDocumentType",
+  "idDocumentNumber", "gender", "dateOfBirth", "personalPhone1",
+  "personalPhone2", "workPhone", "personalEmail1", "personalEmail2",
+  "workEmail", "placeOfBirth", "idIssuingAuthority", "idValidFrom",
+  "idValidUntil", "idCardNumber", "idMrzRaw", "citizenshipId",
+];
+const ADDR_SNAP_KEYS: (keyof PersonAddressSnapshot)[] = [
+  "streetLine", "postalCode", "locality", "county", "country", "notes",
+];
+
+function addressSnapshotsEqual(
+  a: PersonAddressSnapshot | null,
+  b: PersonAddressSnapshot | null,
+): boolean {
+  if ((a === null) !== (b === null)) return false;
+  if (a && b) {
+    for (const k of ADDR_SNAP_KEYS) {
+      if (a[k] !== b[k]) return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * Field-by-field equality of two natural-person snapshots — used to skip
+ * writing a new version when a save produced no actual change (no-op
+ * backstop). Compared explicitly rather than via JSON.stringify because
+ * Postgres jsonb does not preserve object key order.
+ */
+function naturalSnapshotsEqual(
+  a: NaturalPersonSnapshot,
+  b: NaturalPersonSnapshot,
+): boolean {
+  if (a.notes !== b.notes) return false;
+  for (const k of NAT_FIELD_KEYS) {
+    if (a.natural[k] !== b.natural[k]) return false;
+  }
+  if (!addressSnapshotsEqual(a.addresses.HOME, b.addresses.HOME)) return false;
+  if (!addressSnapshotsEqual(a.addresses.CORRESPONDENCE, b.addresses.CORRESPONDENCE)) return false;
+  return true;
+}
+
+/** All versions of a person, oldest (version 0) first. */
+export async function listPersonVersions(
+  personId: string,
+): Promise<PersonVersionItem[]> {
+  const rows = await db
+    .select({
+      versionNumber: personVersion.versionNumber,
+      snapshot:      personVersion.snapshot,
+      createdAt:     personVersion.createdAt,
+    })
+    .from(personVersion)
+    .where(eq(personVersion.personId, personId))
+    .orderBy(personVersion.versionNumber);
+
+  return rows.map((r) => ({
+    versionNumber: r.versionNumber,
+    snapshot:      r.snapshot as NaturalPersonSnapshot | JudicialPersonSnapshot,
+    createdAt:     r.createdAt,
+  }));
+}
+
+// ---------------------------------------------------------------------------
 // Create
 // ---------------------------------------------------------------------------
 
@@ -317,7 +455,16 @@ export async function createNaturalPerson(
         .returning();
     }
 
-    return { person: pRow, natural: nRow, addresses: addressRows };
+    const full: PersonFull = { person: pRow, natural: nRow, addresses: addressRows };
+
+    // Slice #18.05: record version 0 — the state at creation.
+    await tx.insert(personVersion).values({
+      personId:      pRow.id,
+      versionNumber: 0,
+      snapshot:      naturalSnapshotFromFull(full),
+    });
+
+    return full;
   });
 }
 
@@ -413,11 +560,38 @@ export async function updateNaturalPerson(
       .where(eq(address.personId, id))
       .orderBy(address.kind);
 
-    return {
+    const full: PersonFull = {
       person: refreshedPerson,
       natural: refreshedNatural ?? null,
       addresses: refreshedAddresses,
     };
+
+    // Slice #18.05: append a new version snapshot — but skip if this save
+    // produced no actual change vs the latest stored version (no-op backstop).
+    const newSnapshot = naturalSnapshotFromFull(full);
+    const [latestVer] = await tx
+      .select({
+        versionNumber: personVersion.versionNumber,
+        snapshot:      personVersion.snapshot,
+      })
+      .from(personVersion)
+      .where(eq(personVersion.personId, id))
+      .orderBy(desc(personVersion.versionNumber))
+      .limit(1);
+
+    const latestSnapshot = latestVer
+      ? (latestVer.snapshot as NaturalPersonSnapshot)
+      : null;
+
+    if (!latestSnapshot || !naturalSnapshotsEqual(latestSnapshot, newSnapshot)) {
+      await tx.insert(personVersion).values({
+        personId:      id,
+        versionNumber: (latestVer?.versionNumber ?? -1) + 1,
+        snapshot:      newSnapshot,
+      });
+    }
+
+    return full;
   });
 }
 
