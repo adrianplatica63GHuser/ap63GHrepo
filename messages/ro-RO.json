@@ -419,6 +419,19 @@
     "saveError": "Salvarea a eșuat",
     "saveErrorSession": "Sesiunea a expirat — autentificați-vă din nou și reîncercați.",
     "deleteError": "Ștergerea a eșuat",
+    "version": {
+      "label": "versiunea {n}",
+      "prev": "Versiunea anterioară",
+      "next": "Versiunea următoare",
+      "makeCurrent": "Fă curentă",
+      "makeCurrentHint": "Fă această versiune cea curentă"
+    },
+    "makeCurrent": {
+      "title": "Faceți această versiune curentă?",
+      "body": "Versiunea {viewed} va fi copiată într-o nouă versiune {next}, care devine versiunea curentă. Continuați?",
+      "ok": "OK",
+      "cancel": "Anulează"
+    },
     "table": {
       "name": "Nume",
       "email": "Email",
@@ -506,6 +519,19 @@
     "saveError": "Salvarea a eșuat",
     "saveErrorSession": "Sesiunea a expirat — autentificați-vă din nou și reîncercați.",
     "deleteError": "Ștergerea a eșuat",
+    "version": {
+      "label": "versiunea {n}",
+      "prev": "Versiunea anterioară",
+      "next": "Versiunea următoare",
+      "makeCurrent": "Fă curentă",
+      "makeCurrentHint": "Fă această versiune cea curentă"
+    },
+    "makeCurrent": {
+      "title": "Faceți această versiune curentă?",
+      "body": "Versiunea {viewed} va fi copiată într-o nouă versiune {next}, care devine versiunea curentă. Continuați?",
+      "ok": "OK",
+      "cancel": "Anulează"
+    },
     "table": {
       "name": "Denumire",
       "nickname": "Poreclă",
