@@ -118,12 +118,23 @@ Relationships: People ↔ Documents, People ↔ Properties, Documents ↔ Proper
 - Slice #18.02 — Property versioning: full-snapshot history (`property_version`), version nav (◀ / label / ▶) on the corners-line, green/red label + per-field highlight frames + per-row corner red frames / removed-corner red line, derived by diffing adjacent snapshots; only the latest version is editable, edit-save stays on the property. ✅ (See "Versioning pattern & pitfalls" below.)
 - Slice #18.03a — Properties Map: enable Street View Pegman (re-enable `streetViewControl` over `disableDefaultUI`; uses the map's built-in, non-billed default panorama). ✅
 - Slice #18.03b — Property detail: Street View panorama panel keyed to a property's location (centroid of corners, free coverage check via `StreetViewService`, imperative `StreetViewPanorama`, lazy-loaded "Show Street View" toggle, bilingual). ✅
+- Slice #18.05 — Person versioning (natural + judicial, one shared `person_version` table): full-snapshot history, version nav (◀ / label / ▶ + "Make current") centered on the person-name line, green/red label + per-field highlight frames (incl. address blocks via a new `AddressBlock` `highlights` prop). No corners. Only the latest version is editable; edit-save stays on the person. Shared pure diff core in `src/lib/persons/version-diff.ts`; per-subtype helpers in each `_components/form-schema.ts`. ✅ (See "Versioning pattern & pitfalls" below.)
 
 Each slice typically lands as multiple small commits, each individually green.
 
-## Versioning pattern & pitfalls (Property done — reuse for Person & Document)
+## Versioning pattern & pitfalls (Property + Person done — reuse for Document)
 
-Property versioning shipped in Slice #18.02. **Person and Document versioning will follow this exact recipe** — read this section before implementing either. Confirmed design decisions with Adrian are baked in here.
+Property versioning shipped in Slice #18.02; Person versioning (both subtypes) shipped in Slice #18.05. **Document versioning will follow this exact recipe** — read this section before implementing it. Confirmed design decisions with Adrian are baked in here.
+
+**Person-specific notes (Slice #18.05), as a template for Document:**
+- **Two subtypes, one shared table.** Natural and judicial persons both FK `person.id`, so a single `person_version` table serves both; the snapshot JSON shape simply differs by `person.type`. `listPersonVersions` (in `src/lib/persons/queries.ts`) is type-agnostic; each route/form casts to its subtype snapshot. The natural snapshot build + equality live in `persons/queries.ts`; the judicial ones in `judicial-persons/queries.ts`.
+- **No corners** — drop the entire corner-diff clause. The diff is purely field-level (own fields + `person.notes` + the owned address blocks). The shared pure primitives (`fieldFrame`, `diffFieldMap`, `fieldMapsEqual`, `labelColorFromHighlights`) live in `src/lib/persons/version-diff.ts`; each subtype's `form-schema.ts` supplies its field-key list and builds `computeFieldHighlights` / `versionLabelColor` / `snapshotToFormValues` / `formValuesEqual` on top.
+- **Address-block highlights** reuse the shared `AddressBlock` component, which gained an optional `highlights` prop (per-subfield green/red ring). The judicial form inlines its own `AddressFields` (single Office Address card) and got the same `highlights` wiring.
+- **Booleans in the snapshot** (judicial `correspondenceSameAsHq`) are diffed by stringifying to `"true"`/`"false"` in the field map (so a toggle reads as a red modification) while `formValuesEqual` compares them as booleans.
+- **The version nav sits on the person-name header line.** Each detail-tabs component (`natural-persons` / `judicial-persons` `_components/person-detail-tabs.tsx`) renders a centered `pointer-events-none` slot in its `<header>`; the form portals the shared `VersionNavControls` (`src/components/version-nav-controls.tsx`) into it. i18n keys live under each person namespace as `version.*` (label/prev/next/makeCurrent/makeCurrentHint) + a `makeCurrent.*` confirm block — NOT under a `corners` namespace.
+- **Judicial update writes the version inside the tx** from a tx-consistent refetch — `getJudicialPersonById` (the function it returns) reads via the global `db` connection and would not see the tx's uncommitted writes.
+
+Property versioning shipped in Slice #18.02. The Property recipe below is the canonical reference; the Person notes above record where Person diverged.
 
 ### Design — full snapshots, not deltas
 
