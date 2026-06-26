@@ -29,6 +29,9 @@ export function JudicialPersonDetailTabs({
 }: Props) {
   const t = useTranslations("judicialPerson");
   const [activeTab, setActiveTab] = useState<Tab>(initialTab ?? "details");
+  // Slice #18.05: the details form portals its version-nav controls into this
+  // header slot.
+  const [navSlot, setNavSlot] = useState<HTMLDivElement | null>(null);
 
   const tabs: { key: Tab; label: string }[] = [
     { key: "details",    label: t("tabs.details")    },
@@ -39,8 +42,14 @@ export function JudicialPersonDetailTabs({
 
   return (
     <>
-      <header>
+      {/* Slice #18.05: name on the left, version controls centered on the same
+          line (portalled in by the details form via navSlot). */}
+      <header className="relative flex min-h-[2.5rem] items-center">
         <h1 className="text-2xl font-semibold tracking-tight">{personName}</h1>
+        <div
+          ref={setNavSlot}
+          className="pointer-events-none absolute inset-y-0 left-1/2 flex -translate-x-1/2 items-center"
+        />
       </header>
 
       {/* Tab bar */}
@@ -73,6 +82,7 @@ export function JudicialPersonDetailTabs({
             personId={personId}
             personCode={personCode}
             initialValues={initialValues}
+            versionNavSlot={navSlot}
           />
         )}
         {activeTab === "properties" && (

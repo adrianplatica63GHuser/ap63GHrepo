@@ -1,10 +1,11 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   type FieldPath,
   type UseFormRegister,
@@ -13,10 +14,21 @@ import {
 import { AddressBlock } from "@/components/address/address-block";
 import { useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-provider";
 import {
+  VersionNavControls,
+  type VersionNavView,
+} from "@/components/version-nav-controls";
+import type { HighlightColor } from "@/lib/persons/version-diff";
+import type { NaturalPersonSnapshot } from "@/lib/persons/validation";
+import {
+  computeFieldHighlights,
   emptyFormValues,
   formSchema,
+  formValuesEqual,
   type FormValues,
+  type NaturalFieldHighlights,
+  snapshotToFormValues,
   toApiPayload,
+  versionLabelColor,
 } from "./form-schema";
 
 type IdCardLink = { id: string; code: string } | null;
@@ -32,7 +44,27 @@ type Props = {
   initialValues?: FormValues;
   /** The person's CARTE_IDENTITATE Document, if one is linked (edit/view only). */
   linkedIdCard?: IdCardLink;
+  /** Slice #18.05 — header DOM node to portal the version-nav controls into,
+   *  so they render on the person-name line. */
+  versionNavSlot?: HTMLElement | null;
 };
+
+// ---------------------------------------------------------------------------
+// Version history fetch (Slice #18.05)
+// ---------------------------------------------------------------------------
+
+type VersionItem = {
+  versionNumber: number;
+  snapshot:      NaturalPersonSnapshot;
+  createdAt:     string;
+};
+
+async function fetchVersions(personId: string): Promise<VersionItem[]> {
+  const res = await fetch(`/api/people/${encodeURIComponent(personId)}/versions`);
+  if (!res.ok) throw new Error(`Failed to load versions (HTTP ${res.status})`);
+  const body = await res.json();
+  return (body.items ?? []) as VersionItem[];
+}
 
 function useCitizenshipOptions(): { value: string; label: string }[] {
   const [options, setOptions] = useState<{ value: string; label: string }[]>([]);
@@ -60,6 +92,7 @@ export function NaturalPersonForm({
   personCode,
   initialValues,
   linkedIdCard,
+  versionNavSlot,
 }: Props) {
   const t = useTranslations("naturalPerson");
   const router = useRouter();
@@ -75,18 +108,106 @@ export function NaturalPersonForm({
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmMakeCurrent, setConfirmMakeCurrent] = useState(false);
 
-  // Save button disabled if: form invalid, currently submitting, or
-  // (edit mode) form not yet dirty.
+  const isCreate = mode === "create";
+  // Subscribe to value changes so the edit-dirty check recomputes live.
+  const watchedValues = form.watch();
+
+  // --- Version history (Slice #18.05) ------------------------------------
+  const versionsQuery = useQuery({
+    queryKey: ["person-versions", personId],
+    queryFn: () => fetchVersions(personId!),
+    enabled: !isCreate && !!personId,
+    // staleTime 0 so reopening after a save refetches and shows the newly
+    // appended version (doSave also invalidates this key).
+    staleTime: 0,
+    refetchOnWindowFocus: false,
+  });
+  const versions = useMemo(() => versionsQuery.data ?? [], [versionsQuery.data]);
+  const versionByNumber = useMemo(
+    () => new Map(versions.map((v) => [v.versionNumber, v])),
+    [versions],
+  );
+  const latestVersion: number | null =
+    versions.length > 0 ? versions[versions.length - 1].versionNumber : null;
+
+  // Which version is currently displayed. null = follow the latest.
+  const [viewingVersion, setViewingVersion] = useState<number | null>(null);
+  const effectiveVersion: number | null = viewingVersion ?? latestVersion;
+  const isOnLatest = latestVersion === null || effectiveVersion === latestVersion;
+
+  // Baseline = the latest saved state. Initialised from the server props at page
+  // load, updated in place after an edit-save. editDirty compares to this — not
+  // RHF's isDirty, which version navigation's form.reset() would clear.
+  const [baseline, setBaseline] = useState<{ values: FormValues }>(
+    () => ({ values: initialValues ?? emptyFormValues }),
+  );
+
+  // Any non-latest version is strictly read-only; only the latest is editable
+  // (or stays "view" if opened read-only). Create mode is unaffected.
+  const effectiveMode: "create" | "edit" | "view" =
+    isCreate ? "create" : isOnLatest ? mode : "view";
+
+  // Has the editable latest copy diverged from the loaded baseline?
+  const editDirty =
+    !isCreate && isOnLatest && !formValuesEqual(watchedValues, baseline.values);
+
+  // Navigate to a version. Locked while the latest has unsaved edits, so a
+  // dirty draft is never stranded on a read-only historical view.
+  const goToVersion = (target: number) => {
+    if (target === latestVersion) {
+      form.reset(baseline.values);
+    } else {
+      const snap = versionByNumber.get(target)?.snapshot;
+      if (!snap) return;
+      form.reset(snapshotToFormValues(snap));
+    }
+    setViewingVersion(target);
+  };
+
+  // Highlights show only on a read-only historical version (>= 1). The editable
+  // latest is the working copy (no frames); version 0 has no predecessor.
+  const showHighlights =
+    !isCreate && !isOnLatest && effectiveVersion !== null && effectiveVersion >= 1;
+  const currSnap =
+    effectiveVersion !== null ? versionByNumber.get(effectiveVersion)?.snapshot : undefined;
+  const prevSnap =
+    effectiveVersion !== null && effectiveVersion >= 1
+      ? versionByNumber.get(effectiveVersion - 1)?.snapshot
+      : undefined;
+  const fieldHighlights: NaturalFieldHighlights | null =
+    showHighlights && currSnap ? computeFieldHighlights(prevSnap ?? null, currSnap) : null;
+
+  const navLocked = isOnLatest && editDirty;
+  const versionNav: VersionNavView | null =
+    !isCreate && versions.length > 0 && effectiveVersion !== null
+      ? {
+          current: effectiveVersion,
+          color: currSnap
+            ? versionLabelColor(prevSnap ?? null, currSnap)
+            : ("green" as HighlightColor),
+          canPrev: effectiveVersion > 0 && !navLocked,
+          canNext:
+            latestVersion !== null && effectiveVersion < latestVersion && !navLocked,
+          onPrev: () => goToVersion(effectiveVersion - 1),
+          onNext: () => goToVersion(effectiveVersion + 1),
+          canMakeCurrent: !isOnLatest,
+          onMakeCurrent: () => setConfirmMakeCurrent(true),
+        }
+      : null;
+
+  const makeCurrentNextNumber = (latestVersion ?? 0) + 1;
+
+  // Save button disabled if: form invalid, currently submitting, or (edit mode,
+  // on the latest) the form hasn't diverged from the baseline.
   const saveDisabled =
     submitting ||
     !form.formState.isValid ||
-    (mode === "edit" && !form.formState.isDirty);
+    (mode === "edit" && isOnLatest && !editDirty);
 
-  // doSave performs the API call only (no navigation) so it can be reused
-  // both by the form's own Save button (onSubmit, which navigates after a
-  // successful save) and by the unsaved-changes guard's onSave (which must
-  // NOT navigate — the guard's pending action handles that separately).
+  // doSave performs the API call only (no navigation) so it can be reused by
+  // the Save button (onSubmit), the unsaved-changes guard, and "Make Current".
   const doSave = async (values: FormValues): Promise<boolean> => {
     setSubmitting(true);
     setSubmitError(null);
@@ -116,6 +237,9 @@ export function NaturalPersonForm({
         );
       }
       await queryClient.invalidateQueries({ queryKey: ["people"] });
+      // Slice #18.05: a save appended a new version — drop the cached list so
+      // reopening shows it (and the ◀/▶ nav enables / advances).
+      await queryClient.invalidateQueries({ queryKey: ["person-versions"] });
       return true;
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : String(err));
@@ -127,14 +251,47 @@ export function NaturalPersonForm({
 
   const onSubmit = async (values: FormValues) => {
     const ok = await doSave(values);
-    if (ok) {
+    if (!ok) return;
+
+    if (mode === "create") {
       router.push("/persons");
       router.refresh();
+      return;
     }
+
+    // Slice #18.05: edit mode stays on the person so the freshly-appended
+    // version is visible. Reset the clean baseline to the just-saved state (so
+    // Save disables and version nav unlocks), follow the new latest, and
+    // refresh server-rendered bits (e.g. the page title if the name changed).
+    setBaseline({ values });
+    setViewingVersion(null);
+    router.refresh();
+  };
+
+  // "Make this version current": re-save the currently-viewed historical
+  // snapshot (the form was reset to it on navigation) as a brand-new version,
+  // via the normal edit-save path. updateNaturalPerson appends it as the new
+  // latest (it differs from the current latest); we then follow it.
+  const handleMakeCurrent = async () => {
+    const values = form.getValues();
+    const ok = await doSave(values);
+    if (!ok) {
+      setConfirmMakeCurrent(false);
+      return;
+    }
+    setBaseline({ values });
+    setViewingVersion(null);
+    setConfirmMakeCurrent(false);
+    router.refresh();
   };
 
   useUnsavedChangesGuard({
-    isDirty: mode !== "view" && form.formState.isDirty,
+    isDirty:
+      effectiveMode === "view"
+        ? false
+        : isCreate
+          ? form.formState.isDirty
+          : editDirty,
     onSave: async () => {
       const valid = await form.trigger();
       if (!valid) return false;
@@ -179,8 +336,28 @@ export function NaturalPersonForm({
       className="flex flex-col gap-4"
       noValidate
     >
-      {/* Wrap all fields in a disabled fieldset when in view mode */}
-      <fieldset disabled={mode === "view"} className="flex flex-col gap-4 border-0 m-0 p-0 min-w-0">
+      {/* Slice #18.05: version controls portalled into the detail-tabs header
+          so they sit on the person-name line. Only for an existing person once
+          its versions have loaded, and only when the header provided a slot. */}
+      {versionNavSlot && versionNav &&
+        createPortal(
+          <VersionNavControls
+            nav={versionNav}
+            labels={{
+              versionLabel:    t("version.label", { n: versionNav.current }),
+              prevVersion:     t("version.prev"),
+              nextVersion:     t("version.next"),
+              makeCurrent:     t("version.makeCurrent"),
+              makeCurrentHint: t("version.makeCurrentHint"),
+            }}
+          />,
+          versionNavSlot,
+        )}
+
+      {/* Wrap all fields in a disabled fieldset when read-only (view mode or a
+          historical version). The version nav lives in the header (portalled),
+          outside this fieldset, so its buttons stay clickable. */}
+      <fieldset disabled={effectiveMode === "view"} className="flex flex-col gap-4 border-0 m-0 p-0 min-w-0">
 
       {/* Identity — all personal data merged into one section */}
       <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
@@ -195,12 +372,14 @@ export function NaturalPersonForm({
               name="lastName"
               register={register}
               error={errors.lastName?.message}
+              highlight={fieldHighlights?.fields.lastName}
             />
             <Field
               label={t("fields.firstName")}
               name="firstName"
               register={register}
               error={errors.firstName?.message}
+              highlight={fieldHighlights?.fields.firstName}
             />
           </div>
           {/* Row 2: Code (edit/view) | CNP */}
@@ -213,6 +392,7 @@ export function NaturalPersonForm({
               name="cnp"
               register={register}
               error={errors.cnp?.message}
+              highlight={fieldHighlights?.fields.cnp}
             />
           </div>
           {/* Row 3: ID Type | ID Number */}
@@ -227,12 +407,14 @@ export function NaturalPersonForm({
                 { value: "ID_CARD", label: t("options.idDoc.ID_CARD") },
                 { value: "PASSPORT", label: t("options.idDoc.PASSPORT") },
               ]}
+              highlight={fieldHighlights?.fields.idDocumentType}
             />
             <Field
               label={t("fields.idDocumentNumber")}
               name="idDocumentNumber"
               register={register}
               error={errors.idDocumentNumber?.message}
+              highlight={fieldHighlights?.fields.idDocumentNumber}
             />
           </div>
           {/* Row 4: Gender | Date of Birth */}
@@ -247,6 +429,7 @@ export function NaturalPersonForm({
                 { value: "MALE", label: t("options.gender.MALE") },
                 { value: "FEMALE", label: t("options.gender.FEMALE") },
               ]}
+              highlight={fieldHighlights?.fields.gender}
             />
             <Field
               label={t("fields.dateOfBirth")}
@@ -254,6 +437,7 @@ export function NaturalPersonForm({
               type="date"
               register={register}
               error={errors.dateOfBirth?.message}
+              highlight={fieldHighlights?.fields.dateOfBirth}
             />
           </div>
           {/* Row 5: Nickname | Notes */}
@@ -263,12 +447,14 @@ export function NaturalPersonForm({
               name="nickname"
               register={register}
               error={errors.nickname?.message}
+              highlight={fieldHighlights?.fields.nickname}
             />
             <Field
               label={t("fields.notes")}
               name="notes"
               register={register}
               error={errors.notes?.message}
+              highlight={fieldHighlights?.fields.notes}
             />
           </div>
           {/* Row 6: Personal Phone 1 | Personal Email 1 */}
@@ -278,12 +464,14 @@ export function NaturalPersonForm({
               name="personalPhone1"
               register={register}
               error={errors.personalPhone1?.message}
+              highlight={fieldHighlights?.fields.personalPhone1}
             />
             <Field
               label={t("fields.personalEmail1")}
               name="personalEmail1"
               register={register}
               error={errors.personalEmail1?.message}
+              highlight={fieldHighlights?.fields.personalEmail1}
             />
           </div>
           {/* Row 7: Personal Phone 2 | Personal Email 2 */}
@@ -293,12 +481,14 @@ export function NaturalPersonForm({
               name="personalPhone2"
               register={register}
               error={errors.personalPhone2?.message}
+              highlight={fieldHighlights?.fields.personalPhone2}
             />
             <Field
               label={t("fields.personalEmail2")}
               name="personalEmail2"
               register={register}
               error={errors.personalEmail2?.message}
+              highlight={fieldHighlights?.fields.personalEmail2}
             />
           </div>
           {/* Row 8: Work Phone | Work Email */}
@@ -308,12 +498,14 @@ export function NaturalPersonForm({
               name="workPhone"
               register={register}
               error={errors.workPhone?.message}
+              highlight={fieldHighlights?.fields.workPhone}
             />
             <Field
               label={t("fields.workEmail")}
               name="workEmail"
               register={register}
               error={errors.workEmail?.message}
+              highlight={fieldHighlights?.fields.workEmail}
             />
           </div>
         </div>
@@ -333,12 +525,14 @@ export function NaturalPersonForm({
               register={register}
               error={errors.citizenshipId?.message}
               options={[{ value: "", label: "—" }, ...citizenshipOptions]}
+              highlight={fieldHighlights?.fields.citizenshipId}
             />
             <Field
               label={t("fields.placeOfBirth")}
               name="placeOfBirth"
               register={register}
               error={errors.placeOfBirth?.message}
+              highlight={fieldHighlights?.fields.placeOfBirth}
             />
           </div>
           <div className="grid grid-cols-2 gap-2">
@@ -347,12 +541,14 @@ export function NaturalPersonForm({
               name="idIssuingAuthority"
               register={register}
               error={errors.idIssuingAuthority?.message}
+              highlight={fieldHighlights?.fields.idIssuingAuthority}
             />
             <Field
               label={t("fields.idCardNumber")}
               name="idCardNumber"
               register={register}
               error={errors.idCardNumber?.message}
+              highlight={fieldHighlights?.fields.idCardNumber}
             />
           </div>
           <div className="grid grid-cols-2 gap-2">
@@ -362,6 +558,7 @@ export function NaturalPersonForm({
               type="date"
               register={register}
               error={errors.idValidFrom?.message}
+              highlight={fieldHighlights?.fields.idValidFrom}
             />
             <Field
               label={t("fields.idValidUntil")}
@@ -369,6 +566,7 @@ export function NaturalPersonForm({
               type="date"
               register={register}
               error={errors.idValidUntil?.message}
+              highlight={fieldHighlights?.fields.idValidUntil}
             />
           </div>
           <TextAreaField
@@ -376,6 +574,7 @@ export function NaturalPersonForm({
             name="idMrzRaw"
             register={register}
             error={errors.idMrzRaw?.message}
+            highlight={fieldHighlights?.fields.idMrzRaw}
           />
           {mode !== "create" && (
             <div className="flex items-center gap-2 text-sm">
@@ -402,6 +601,7 @@ export function NaturalPersonForm({
         prefix="addresses.HOME"
         register={register}
         errors={errors.addresses?.HOME}
+        highlights={fieldHighlights?.addresses.HOME}
       />
 
       <AddressBlock<FormValues>
@@ -409,6 +609,7 @@ export function NaturalPersonForm({
         prefix="addresses.CORRESPONDENCE"
         register={register}
         errors={errors.addresses?.CORRESPONDENCE}
+        highlights={fieldHighlights?.addresses.CORRESPONDENCE}
       />
 
       </fieldset>{/* end disabled fieldset */}
@@ -428,7 +629,7 @@ export function NaturalPersonForm({
           >
             ← {t("buttons.cancel")}
           </button>
-        ) : (
+        ) : effectiveMode === "view" ? null : (
           <>
             <button
               type="submit"
@@ -470,6 +671,21 @@ export function NaturalPersonForm({
           busy={submitting}
         />
       )}
+
+      {confirmMakeCurrent && (
+        <ConfirmDialog
+          title={t("makeCurrent.title")}
+          body={t("makeCurrent.body", {
+            viewed: effectiveVersion ?? 0,
+            next: makeCurrentNextNumber,
+          })}
+          yesLabel={t("makeCurrent.ok")}
+          noLabel={t("makeCurrent.cancel")}
+          onYes={handleMakeCurrent}
+          onNo={() => setConfirmMakeCurrent(false)}
+          busy={submitting}
+        />
+      )}
     </form>
   );
 }
@@ -478,31 +694,14 @@ export function NaturalPersonForm({
 // Local presentational helpers
 // ---------------------------------------------------------------------------
 
-function Section({
-  title,
-  columns = 2,
-  children,
-}: {
-  title: string;
-  columns?: 1 | 2;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-      <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
-        {title}
-      </h2>
-      <div
-        className={
-          columns === 2
-            ? "grid grid-cols-1 gap-2 sm:grid-cols-2"
-            : "grid grid-cols-1 gap-2"
-        }
-      >
-        {children}
-      </div>
-    </section>
-  );
+// Slice #18.05: green/red highlight frame for a field that changed in the
+// version currently being viewed (green = added, red = modified/deleted).
+function highlightRing(h?: HighlightColor): string {
+  return h === "green"
+    ? "ring-2 ring-green-500"
+    : h === "red"
+      ? "ring-2 ring-red-500"
+      : "";
 }
 
 type FieldProps = {
@@ -512,9 +711,10 @@ type FieldProps = {
   register: UseFormRegister<FormValues>;
   error?: string;
   hint?: string;
+  highlight?: HighlightColor;
 };
 
-function Field({ label, name, type = "text", register, error, hint }: FieldProps) {
+function Field({ label, name, type = "text", register, error, hint, highlight }: FieldProps) {
   return (
     <label className="flex items-center gap-2 text-sm">
       <span className="w-36 shrink-0 font-medium text-ink dark:text-zinc-300">{label}</span>
@@ -528,6 +728,7 @@ function Field({ label, name, type = "text", register, error, hint }: FieldProps
             error
               ? "border-red-500 focus:border-red-600"
               : "border-wire focus:border-focus dark:border-zinc-700",
+            highlightRing(highlight),
           ].join(" ")}
         />
         {hint && !error && (
@@ -547,6 +748,7 @@ function TextAreaField({
   register,
   error,
   maxLength,
+  highlight,
 }: FieldProps & { maxLength?: number }) {
   return (
     <label className="flex items-start gap-2 text-sm">
@@ -562,6 +764,7 @@ function TextAreaField({
             error
               ? "border-red-500 focus:border-red-600"
               : "border-wire focus:border-focus dark:border-zinc-700",
+            highlightRing(highlight),
           ].join(" ")}
         />
         {error && (
@@ -578,6 +781,7 @@ function SelectField({
   register,
   error,
   options,
+  highlight,
 }: FieldProps & { options: { value: string; label: string }[] }) {
   return (
     <label className="flex items-center gap-2 text-sm">
@@ -591,6 +795,7 @@ function SelectField({
             error
               ? "border-red-500 focus:border-red-600"
               : "border-wire focus:border-focus dark:border-zinc-700",
+            highlightRing(highlight),
           ].join(" ")}
         >
           {options.map((o) => (

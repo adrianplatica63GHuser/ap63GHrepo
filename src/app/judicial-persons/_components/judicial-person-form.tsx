@@ -1,11 +1,12 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   type FieldPath,
   type UseFormRegister,
@@ -13,14 +14,24 @@ import {
   useWatch,
   Controller,
 } from "react-hook-form";
-import { useQuery } from "@tanstack/react-query";
 import { PaginationControls } from "@/components/pagination-controls";
 import { useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-provider";
 import {
+  VersionNavControls,
+  type VersionNavView,
+} from "@/components/version-nav-controls";
+import type { HighlightColor } from "@/lib/persons/version-diff";
+import type { JudicialPersonSnapshot } from "@/lib/judicial-persons/validation";
+import {
+  computeFieldHighlights,
   emptyFormValues,
   formSchema,
+  formValuesEqual,
   type FormValues,
+  type JudicialFieldHighlights,
+  snapshotToFormValues,
   toApiPayload,
+  versionLabelColor,
 } from "./form-schema";
 
 type Props = {
@@ -28,16 +39,32 @@ type Props = {
   personId?: string;
   personCode?: string;
   initialValues?: FormValues;
+  /** Slice #18.05 — header DOM node to portal the version-nav controls into. */
+  versionNavSlot?: HTMLElement | null;
 };
+
+// ---------------------------------------------------------------------------
+// Version history fetch (Slice #18.05)
+// ---------------------------------------------------------------------------
+
+type VersionItem = {
+  versionNumber: number;
+  snapshot:      JudicialPersonSnapshot;
+  createdAt:     string;
+};
+
+async function fetchVersions(personId: string): Promise<VersionItem[]> {
+  const res = await fetch(`/api/judicial-persons/${encodeURIComponent(personId)}/versions`);
+  if (!res.ok) throw new Error(`Failed to load versions (HTTP ${res.status})`);
+  const body = await res.json();
+  return (body.items ?? []) as VersionItem[];
+}
 
 // ---------------------------------------------------------------------------
 // Judicial Person Types dropdown — backed by Reference Data
 // (lookup_judicial_person_type, Slice #15.07). Uses the SAME TanStack Query
-// key (["value-list", "judicial-person-types"]) that the generic
-// ValueListModal already invalidates on save/delete — avoids the Slice
-// #15.06 stale-dropdown bug (document-types needed a special-cased
-// cross-invalidation because its dropdown used a different key; this one
-// is designed to never need that).
+// key (["value-list", "judicial-person-types"]) that the generic ValueListModal
+// already invalidates on save/delete.
 // ---------------------------------------------------------------------------
 
 type JudicialPersonTypeOption = {
@@ -57,6 +84,7 @@ export function JudicialPersonForm({
   personId,
   personCode,
   initialValues,
+  versionNavSlot,
 }: Props) {
   const t = useTranslations("judicialPerson");
   const router = useRouter();
@@ -74,15 +102,16 @@ export function JudicialPersonForm({
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmMakeCurrent, setConfirmMakeCurrent] = useState(false);
 
   // Which contact-person picker is open: 1, 2, or null.
   const [pickerSlot, setPickerSlot] = useState<1 | 2 | null>(null);
 
-  // Judicial Person Types — admin-managed (Slice #15.07). Query key is the
-  // SAME one the generic ValueListModal already invalidates by default
-  // (["value-list", listKey]) on save/delete — so this dropdown stays in
-  // sync with no extra cross-invalidation code needed (unlike the
-  // document-types special case from Slice #15.06).
+  const isCreate = mode === "create";
+  // Subscribe to all values so the edit-dirty check recomputes live.
+  const watchedValues = form.watch();
+
+  // Judicial Person Types — admin-managed (Slice #15.07).
   const { data: judicialPersonTypes } = useQuery({
     queryKey: ["value-list", "judicial-person-types"],
     queryFn: fetchJudicialPersonTypes,
@@ -90,15 +119,83 @@ export function JudicialPersonForm({
   });
   const judicialPersonTypeOptions = judicialPersonTypes ?? [];
 
+  // --- Version history (Slice #18.05) ------------------------------------
+  const versionsQuery = useQuery({
+    queryKey: ["person-versions", personId],
+    queryFn: () => fetchVersions(personId!),
+    enabled: !isCreate && !!personId,
+    staleTime: 0,
+    refetchOnWindowFocus: false,
+  });
+  const versions = useMemo(() => versionsQuery.data ?? [], [versionsQuery.data]);
+  const versionByNumber = useMemo(
+    () => new Map(versions.map((v) => [v.versionNumber, v])),
+    [versions],
+  );
+  const latestVersion: number | null =
+    versions.length > 0 ? versions[versions.length - 1].versionNumber : null;
+
+  const [viewingVersion, setViewingVersion] = useState<number | null>(null);
+  const effectiveVersion: number | null = viewingVersion ?? latestVersion;
+  const isOnLatest = latestVersion === null || effectiveVersion === latestVersion;
+
+  const [baseline, setBaseline] = useState<{ values: FormValues }>(
+    () => ({ values: initialValues ?? emptyFormValues }),
+  );
+
+  const effectiveMode: "create" | "edit" | "view" =
+    isCreate ? "create" : isOnLatest ? mode : "view";
+
+  const editDirty =
+    !isCreate && isOnLatest && !formValuesEqual(watchedValues, baseline.values);
+
+  const goToVersion = (target: number) => {
+    if (target === latestVersion) {
+      form.reset(baseline.values);
+    } else {
+      const snap = versionByNumber.get(target)?.snapshot;
+      if (!snap) return;
+      form.reset(snapshotToFormValues(snap));
+    }
+    setViewingVersion(target);
+  };
+
+  const showHighlights =
+    !isCreate && !isOnLatest && effectiveVersion !== null && effectiveVersion >= 1;
+  const currSnap =
+    effectiveVersion !== null ? versionByNumber.get(effectiveVersion)?.snapshot : undefined;
+  const prevSnap =
+    effectiveVersion !== null && effectiveVersion >= 1
+      ? versionByNumber.get(effectiveVersion - 1)?.snapshot
+      : undefined;
+  const fieldHighlights: JudicialFieldHighlights | null =
+    showHighlights && currSnap ? computeFieldHighlights(prevSnap ?? null, currSnap) : null;
+
+  const navLocked = isOnLatest && editDirty;
+  const versionNav: VersionNavView | null =
+    !isCreate && versions.length > 0 && effectiveVersion !== null
+      ? {
+          current: effectiveVersion,
+          color: currSnap
+            ? versionLabelColor(prevSnap ?? null, currSnap)
+            : ("green" as HighlightColor),
+          canPrev: effectiveVersion > 0 && !navLocked,
+          canNext:
+            latestVersion !== null && effectiveVersion < latestVersion && !navLocked,
+          onPrev: () => goToVersion(effectiveVersion - 1),
+          onNext: () => goToVersion(effectiveVersion + 1),
+          canMakeCurrent: !isOnLatest,
+          onMakeCurrent: () => setConfirmMakeCurrent(true),
+        }
+      : null;
+
+  const makeCurrentNextNumber = (latestVersion ?? 0) + 1;
+
   const saveDisabled =
     submitting ||
     !form.formState.isValid ||
-    (mode === "edit" && !form.formState.isDirty);
+    (mode === "edit" && isOnLatest && !editDirty);
 
-  // doSave performs the API call only (no navigation) so it can be reused
-  // both by the form's own Save button (onSubmit, which navigates after a
-  // successful save) and by the unsaved-changes guard's onSave (which must
-  // NOT navigate — the guard's pending action handles that separately).
   const doSave = async (values: FormValues): Promise<boolean> => {
     setSubmitting(true);
     setSubmitError(null);
@@ -128,6 +225,8 @@ export function JudicialPersonForm({
         );
       }
       await queryClient.invalidateQueries({ queryKey: ["judicial-persons"] });
+      // Slice #18.05: a save appended a new version — refresh the nav.
+      await queryClient.invalidateQueries({ queryKey: ["person-versions"] });
       return true;
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : String(err));
@@ -139,14 +238,41 @@ export function JudicialPersonForm({
 
   const onSubmit = async (values: FormValues) => {
     const ok = await doSave(values);
-    if (ok) {
+    if (!ok) return;
+
+    if (mode === "create") {
       router.push("/persons");
       router.refresh();
+      return;
     }
+
+    // Slice #18.05: edit mode stays on the person so the freshly-appended
+    // version is visible.
+    setBaseline({ values });
+    setViewingVersion(null);
+    router.refresh();
+  };
+
+  const handleMakeCurrent = async () => {
+    const values = form.getValues();
+    const ok = await doSave(values);
+    if (!ok) {
+      setConfirmMakeCurrent(false);
+      return;
+    }
+    setBaseline({ values });
+    setViewingVersion(null);
+    setConfirmMakeCurrent(false);
+    router.refresh();
   };
 
   useUnsavedChangesGuard({
-    isDirty: mode !== "view" && form.formState.isDirty,
+    isDirty:
+      effectiveMode === "view"
+        ? false
+        : isCreate
+          ? form.formState.isDirty
+          : editDirty,
     onSave: async () => {
       const valid = await form.trigger();
       if (!valid) return false;
@@ -192,7 +318,6 @@ export function JudicialPersonForm({
   // Watch the "same as" flag so the correspondence block reacts live.
   const correspondenceSameAsHq = useWatch({ control, name: "correspondenceSameAsHq" });
 
-  // Handler when the picker selects a person.
   const handleContactPersonSelected = (slot: 1 | 2, id: string, name: string) => {
     if (slot === 1) {
       setValue("contactPerson1Id", id, { shouldDirty: true, shouldValidate: true });
@@ -204,7 +329,6 @@ export function JudicialPersonForm({
     setPickerSlot(null);
   };
 
-  // Handler to clear a contact person link.
   const handleClearContactPerson = (slot: 1 | 2) => {
     if (slot === 1) {
       setValue("contactPerson1Id", "", { shouldDirty: true, shouldValidate: true });
@@ -221,7 +345,23 @@ export function JudicialPersonForm({
       className="flex flex-col gap-4"
       noValidate
     >
-      <fieldset disabled={mode === "view"} className="flex flex-col gap-4 border-0 m-0 p-0 min-w-0">
+      {/* Slice #18.05: version controls portalled onto the person-name line. */}
+      {versionNavSlot && versionNav &&
+        createPortal(
+          <VersionNavControls
+            nav={versionNav}
+            labels={{
+              versionLabel:    t("version.label", { n: versionNav.current }),
+              prevVersion:     t("version.prev"),
+              nextVersion:     t("version.next"),
+              makeCurrent:     t("version.makeCurrent"),
+              makeCurrentHint: t("version.makeCurrentHint"),
+            }}
+          />,
+          versionNavSlot,
+        )}
+
+      <fieldset disabled={effectiveMode === "view"} className="flex flex-col gap-4 border-0 m-0 p-0 min-w-0">
 
       {/* Judicial Person identity section */}
       <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
@@ -236,12 +376,14 @@ export function JudicialPersonForm({
               name="name"
               register={register}
               error={errors.name?.message}
+              highlight={fieldHighlights?.fields.name}
             />
             <Field
               label={t("fields.nickname")}
               name="nickname"
               register={register}
               error={errors.nickname?.message}
+              highlight={fieldHighlights?.fields.nickname}
             />
           </div>
           {/* Row 2: ID (edit/view) | Type */}
@@ -261,6 +403,7 @@ export function JudicialPersonForm({
                   label: opt.name,
                 })),
               ]}
+              highlight={fieldHighlights?.fields.judicialPersonTypeId}
             />
           </div>
           {/* Row 3: CUI | Trade Register No. */}
@@ -271,12 +414,14 @@ export function JudicialPersonForm({
               register={register}
               error={errors.cuiNumber?.message}
               hint={cuiIsLocked ? t("hints.cuiLocked") : undefined}
+              highlight={fieldHighlights?.fields.cuiNumber}
             />
             <Field
               label={t("fields.tradeRegisterNumber")}
               name="tradeRegisterNumber"
               register={register}
               error={errors.tradeRegisterNumber?.message}
+              highlight={fieldHighlights?.fields.tradeRegisterNumber}
             />
           </div>
           {/* Row 4: Notes */}
@@ -286,6 +431,7 @@ export function JudicialPersonForm({
               name="notes"
               register={register}
               error={errors.notes?.message}
+              highlight={fieldHighlights?.fields.notes}
             />
           </div>
         </div>
@@ -301,21 +447,23 @@ export function JudicialPersonForm({
             label={t("fields.contactPerson1")}
             slot={1}
             control={control}
-            mode={mode}
+            mode={effectiveMode}
             onAdd={() => setPickerSlot(1)}
             onClear={() => handleClearContactPerson(1)}
             addLabel={t("actions.addContactPerson")}
             removeLabel={t("actions.removeContactPerson")}
+            highlight={fieldHighlights?.fields.contactPerson1Id}
           />
           <ContactPersonRow
             label={t("fields.contactPerson2")}
             slot={2}
             control={control}
-            mode={mode}
+            mode={effectiveMode}
             onAdd={() => setPickerSlot(2)}
             onClear={() => handleClearContactPerson(2)}
             addLabel={t("actions.addContactPerson")}
             removeLabel={t("actions.removeContactPerson")}
+            highlight={fieldHighlights?.fields.contactPerson2Id}
           />
           {/* Note: person must exist in system first */}
           <p className="text-xs text-fade dark:text-zinc-500 italic">
@@ -339,6 +487,7 @@ export function JudicialPersonForm({
           register={register}
           errors={errors.addresses?.HEADQUARTERS}
           t={addressT}
+          highlights={fieldHighlights?.addresses.HEADQUARTERS}
         />
 
         {/* Correspondence Address subsection */}
@@ -351,7 +500,16 @@ export function JudicialPersonForm({
             control={control}
             name="correspondenceSameAsHq"
             render={({ field }) => (
-              <label className="flex cursor-pointer items-center gap-2 text-xs text-fade dark:text-zinc-400 select-none">
+              <label
+                className={[
+                  "flex cursor-pointer items-center gap-2 rounded-md text-xs text-fade dark:text-zinc-400 select-none",
+                  fieldHighlights?.fields.correspondenceSameAsHq === "green"
+                    ? "ring-2 ring-green-500 px-1"
+                    : fieldHighlights?.fields.correspondenceSameAsHq === "red"
+                      ? "ring-2 ring-red-500 px-1"
+                      : "",
+                ].join(" ")}
+              >
                 <input
                   type="checkbox"
                   checked={field.value}
@@ -380,6 +538,7 @@ export function JudicialPersonForm({
             register={register}
             errors={errors.addresses?.CORRESPONDENCE}
             t={addressT}
+            highlights={fieldHighlights?.addresses.CORRESPONDENCE}
           />
         )}
       </section>
@@ -401,7 +560,7 @@ export function JudicialPersonForm({
           >
             ← {t("buttons.cancel")}
           </button>
-        ) : (
+        ) : effectiveMode === "view" ? null : (
           <>
             <button
               type="submit"
@@ -444,6 +603,21 @@ export function JudicialPersonForm({
         />
       )}
 
+      {confirmMakeCurrent && (
+        <ConfirmDialog
+          title={t("makeCurrent.title")}
+          body={t("makeCurrent.body", {
+            viewed: effectiveVersion ?? 0,
+            next: makeCurrentNextNumber,
+          })}
+          yesLabel={t("makeCurrent.ok")}
+          noLabel={t("makeCurrent.cancel")}
+          onYes={handleMakeCurrent}
+          onNo={() => setConfirmMakeCurrent(false)}
+          busy={submitting}
+        />
+      )}
+
       {/* Contact Person Picker modal */}
       {pickerSlot !== null && (
         <ContactPersonPickerDialog
@@ -470,6 +644,7 @@ function ContactPersonRow({
   onClear,
   addLabel,
   removeLabel,
+  highlight,
 }: {
   label: string;
   slot: 1 | 2;
@@ -479,6 +654,7 @@ function ContactPersonRow({
   onClear: () => void;
   addLabel: string;
   removeLabel: string;
+  highlight?: HighlightColor;
 }) {
   const idField   = slot === 1 ? "contactPerson1Id"   : "contactPerson2Id";
   const nameField = slot === 1 ? "contactPerson1Name" : "contactPerson2Name";
@@ -493,7 +669,16 @@ function ContactPersonRow({
       <span className="w-36 shrink-0 font-medium text-ink dark:text-zinc-300">
         {label}
       </span>
-      <div className="flex flex-1 items-center gap-2 min-w-0">
+      <div
+        className={[
+          "flex flex-1 items-center gap-2 min-w-0 rounded-md",
+          highlight === "green"
+            ? "ring-2 ring-green-500 px-1 py-0.5"
+            : highlight === "red"
+              ? "ring-2 ring-red-500 px-1 py-0.5"
+              : "",
+        ].join(" ")}
+      >
         {hasLink ? (
           <>
             <Link
@@ -735,11 +920,16 @@ type AddressT = {
   notes: string;
 };
 
+type AddressHighlights =
+  | Partial<Record<"streetLine" | "postalCode" | "locality" | "county" | "country" | "notes", HighlightColor>>
+  | undefined;
+
 function AddressFields({
   prefix,
   register,
   errors,
   t,
+  highlights,
 }: {
   prefix: string;
   register: UseFormRegister<FormValues>;
@@ -752,6 +942,7 @@ function AddressFields({
     notes?: { message?: string };
   };
   t: AddressT;
+  highlights?: AddressHighlights;
 }) {
   const f = (sub: string) =>
     `${prefix}.${sub}` as FieldPath<FormValues>;
@@ -759,16 +950,16 @@ function AddressFields({
   return (
     <div className="flex flex-col gap-2">
       <div className="grid grid-cols-2 gap-2">
-        <Field label={t.streetLine} name={f("streetLine")} register={register} error={errors?.streetLine?.message} />
-        <Field label={t.notes}      name={f("notes")}      register={register} error={errors?.notes?.message} />
+        <Field label={t.streetLine} name={f("streetLine")} register={register} error={errors?.streetLine?.message} highlight={highlights?.streetLine} />
+        <Field label={t.notes}      name={f("notes")}      register={register} error={errors?.notes?.message}      highlight={highlights?.notes} />
       </div>
       <div className="grid grid-cols-2 gap-2">
-        <Field label={t.postalCode} name={f("postalCode")} register={register} error={errors?.postalCode?.message} />
-        <Field label={t.locality}   name={f("locality")}   register={register} error={errors?.locality?.message} />
+        <Field label={t.postalCode} name={f("postalCode")} register={register} error={errors?.postalCode?.message} highlight={highlights?.postalCode} />
+        <Field label={t.locality}   name={f("locality")}   register={register} error={errors?.locality?.message}   highlight={highlights?.locality} />
       </div>
       <div className="grid grid-cols-2 gap-2">
-        <Field label={t.county}  name={f("county")}  register={register} error={errors?.county?.message} />
-        <Field label={t.country} name={f("country")} register={register} error={errors?.country?.message} />
+        <Field label={t.county}  name={f("county")}  register={register} error={errors?.county?.message}  highlight={highlights?.county} />
+        <Field label={t.country} name={f("country")} register={register} error={errors?.country?.message} highlight={highlights?.country} />
       </div>
     </div>
   );
@@ -813,6 +1004,16 @@ function useContactPickerTranslations(): PickerT {
 // Local presentational helpers (mirrors natural-person-form pattern)
 // ---------------------------------------------------------------------------
 
+// Slice #18.05: green/red highlight frame for a field that changed in the
+// version currently being viewed (green = added, red = modified/deleted).
+function highlightRing(h?: HighlightColor): string {
+  return h === "green"
+    ? "ring-2 ring-green-500"
+    : h === "red"
+      ? "ring-2 ring-red-500"
+      : "";
+}
+
 type FieldProps = {
   label: string;
   name: FieldPath<FormValues>;
@@ -820,6 +1021,7 @@ type FieldProps = {
   register: UseFormRegister<FormValues>;
   error?: string;
   hint?: string;
+  highlight?: HighlightColor;
 };
 
 function Field({
@@ -829,6 +1031,7 @@ function Field({
   register,
   error,
   hint,
+  highlight,
 }: FieldProps) {
   return (
     <label className="flex items-center gap-2 text-sm">
@@ -845,6 +1048,7 @@ function Field({
             error
               ? "border-red-500 focus:border-red-600"
               : "border-wire focus:border-focus dark:border-zinc-700",
+            highlightRing(highlight),
           ].join(" ")}
         />
         {hint && !error && (
@@ -866,6 +1070,7 @@ function SelectField({
   register,
   error,
   options,
+  highlight,
 }: FieldProps & { options: { value: string; label: string }[] }) {
   return (
     <label className="flex items-center gap-2 text-sm">
@@ -881,6 +1086,7 @@ function SelectField({
             error
               ? "border-red-500 focus:border-red-600"
               : "border-wire focus:border-focus dark:border-zinc-700",
+            highlightRing(highlight),
           ].join(" ")}
         >
           {options.map((o) => (

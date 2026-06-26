@@ -25,6 +25,18 @@ import {
   type FieldValues,
   type UseFormRegister,
 } from "react-hook-form";
+import type { HighlightColor } from "@/lib/persons/version-diff";
+
+/** Per-subfield version-diff highlight frames (Slice #18.05). Keys match the
+ *  address subfield names; omitted = no frame. */
+export type AddressHighlights =
+  | Partial<
+      Record<
+        "streetLine" | "postalCode" | "locality" | "county" | "country" | "notes",
+        HighlightColor
+      >
+    >
+  | undefined;
 
 export type AddressErrors =
   | {
@@ -52,6 +64,13 @@ type Props<TFormValues extends FieldValues> = {
    * no-op everywhere except that one screen.
    */
   warnFields?: Set<string>;
+  /**
+   * Optional per-subfield version-diff highlight frames (Slice #18.05). Green =
+   * a field was added in the viewed version, red = modified/deleted. Supplied
+   * only by the versioned person forms when viewing a past version; omitted
+   * (a no-op) everywhere else.
+   */
+  highlights?: AddressHighlights;
 };
 
 export function AddressBlock<TFormValues extends FieldValues>({
@@ -60,10 +79,12 @@ export function AddressBlock<TFormValues extends FieldValues>({
   register,
   errors,
   warnFields,
+  highlights,
 }: Props<TFormValues>) {
   const t = useTranslations("address");
   const f = (sub: string) => `${prefix}.${sub}` as FieldPath<TFormValues>;
   const warn = (sub: string) => warnFields?.has(sub) ?? false;
+  const hl = (sub: keyof NonNullable<AddressHighlights>) => highlights?.[sub];
 
   return (
     <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
@@ -79,12 +100,14 @@ export function AddressBlock<TFormValues extends FieldValues>({
             register={register}
             error={errors?.streetLine?.message}
             warn={warn("streetLine")}
+            highlight={hl("streetLine")}
           />
           <Field
             label={t("notes")}
             name={f("notes")}
             register={register}
             error={errors?.notes?.message}
+            highlight={hl("notes")}
           />
         </div>
         {/* Row 2: Postal Code | Locality */}
@@ -95,6 +118,7 @@ export function AddressBlock<TFormValues extends FieldValues>({
             register={register}
             error={errors?.postalCode?.message}
             warn={warn("postalCode")}
+            highlight={hl("postalCode")}
           />
           <Field
             label={t("locality")}
@@ -102,6 +126,7 @@ export function AddressBlock<TFormValues extends FieldValues>({
             register={register}
             error={errors?.locality?.message}
             warn={warn("locality")}
+            highlight={hl("locality")}
           />
         </div>
         {/* Row 3: County | Country */}
@@ -112,6 +137,7 @@ export function AddressBlock<TFormValues extends FieldValues>({
             register={register}
             error={errors?.county?.message}
             warn={warn("county")}
+            highlight={hl("county")}
           />
           <Field
             label={t("country")}
@@ -119,6 +145,7 @@ export function AddressBlock<TFormValues extends FieldValues>({
             register={register}
             error={errors?.country?.message}
             warn={warn("country")}
+            highlight={hl("country")}
           />
         </div>
       </div>
@@ -136,12 +163,14 @@ function Field<TFormValues extends FieldValues>({
   register,
   error,
   warn,
+  highlight,
 }: {
   label: string;
   name: FieldPath<TFormValues>;
   register: UseFormRegister<TFormValues>;
   error?: string;
   warn?: boolean;
+  highlight?: HighlightColor;
 }) {
   return (
     <label className="flex items-center gap-2 text-sm">
@@ -159,6 +188,11 @@ function Field<TFormValues extends FieldValues>({
             error
               ? "border-red-500 focus:border-red-600"
               : "border-wire focus:border-focus dark:border-zinc-700",
+            highlight === "green"
+              ? "ring-2 ring-green-500"
+              : highlight === "red"
+                ? "ring-2 ring-red-500"
+                : "",
           ].join(" ")}
         />
         {error && (
