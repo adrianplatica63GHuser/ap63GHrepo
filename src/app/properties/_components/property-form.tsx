@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   type FieldPath,
@@ -146,13 +146,24 @@ export function PropertyForm({
   const [bigMap,           setBigMap]           = useState(false);
   const [showStreetView,   setShowStreetView]   = useState(false);
 
+  // Slice #18.UX.04: remembers whether Street View was open before Big Map
+  // hid it, so switching back to the small map can auto-restore it.
+  const streetViewBeforeBigRef = useRef(false);
+
   const handleToggleBigMap = () => {
     const next = !bigMap;
     setBigMap(next);
     onBigMapChange?.(next);
-    // Slice #18.UX.04: turning Big Map on auto-hides Street View (the big map
-    // takes over the right column), mirroring a manual "Hide Street View".
-    if (next) setShowStreetView(false);
+    if (next) {
+      // Entering Big Map: remember Street View's state, then hide it (the big
+      // map takes over the right column) — mirrors a manual "Hide Street View".
+      streetViewBeforeBigRef.current = showStreetView;
+      setShowStreetView(false);
+    } else {
+      // Returning to the small map: auto-restore Street View if it was open
+      // before (or if it was manually turned on while in Big Map).
+      setShowStreetView((cur) => cur || streetViewBeforeBigRef.current);
+    }
   };
 
   const handleToggleStreetView = () => setShowStreetView((v) => !v);
