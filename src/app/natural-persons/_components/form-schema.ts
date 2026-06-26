@@ -14,8 +14,16 @@
 import { z } from "zod/v4";
 import type {
   NaturalPersonCreate,
+  NaturalPersonSnapshot,
   NaturalPersonUpdate,
+  PersonAddressSnapshot,
 } from "@/lib/persons/validation";
+import {
+  diffFieldMap,
+  labelColorFromHighlights,
+  normVal,
+  type HighlightColor,
+} from "@/lib/persons/version-diff";
 
 const ADDRESS_KINDS = ["HOME", "CORRESPONDENCE"] as const;
 type AddressKind = (typeof ADDRESS_KINDS)[number];
@@ -298,4 +306,126 @@ export function toApiPayload(
     notes: blank(values.notes),
     addresses,
   };
+}
+
+// ===========================================================================
+// Versioning (Slice #18.05) — snapshot conversion + pure diff helpers
+//
+// A "version" is a full snapshot of the natural person (own fields + notes +
+// HOME/CORRESPONDENCE address blocks). These helpers hydrate a snapshot into
+// the form's value shape and derive — purely, by diffing snapshot N against
+// N-1 — the version label colour and per-field highlight frames (green = added,
+// red = modified/deleted). No corners (persons have none). All pure, so they
+// unit-test directly.
+// ===========================================================================
+
+// Top-level form field names that participate in the diff (all of FormValues
+// except the nested `addresses`). Used both for highlights and edit-dirty.
+const FORM_TOP_KEYS = [
+  "firstName", "lastName", "nickname", "cnp", "idDocumentType",
+  "idDocumentNumber", "gender", "dateOfBirth", "personalPhone1",
+  "personalPhone2", "workPhone", "personalEmail1", "personalEmail2",
+  "workEmail", "placeOfBirth", "idIssuingAuthority", "idValidFrom",
+  "idValidUntil", "idCardNumber", "idMrzRaw", "citizenshipId", "notes",
+] as const satisfies readonly (keyof Omit<FormValues, "addresses">)[];
+
+const ADDR_KEYS = [
+  "streetLine", "postalCode", "locality", "county", "country", "notes",
+] as const satisfies readonly (keyof PersonAddressSnapshot)[];
+
+export type NaturalFieldHighlights = {
+  /** Keyed by top-level form field name (incl. notes). */
+  fields: Partial<Record<(typeof FORM_TOP_KEYS)[number], HighlightColor>>;
+  addresses: {
+    HOME:           Partial<Record<keyof PersonAddressSnapshot, HighlightColor>>;
+    CORRESPONDENCE: Partial<Record<keyof PersonAddressSnapshot, HighlightColor>>;
+  };
+};
+
+/** Flatten a snapshot's own fields (+ notes) into a flat string map. */
+function snapshotFieldMap(
+  snap: NaturalPersonSnapshot,
+): Record<(typeof FORM_TOP_KEYS)[number], string | null> {
+  return { ...snap.natural, notes: snap.notes };
+}
+
+/** An address block snapshot → flat string map (all-null when the block is absent). */
+function addrMap(
+  a: PersonAddressSnapshot | null,
+): Record<keyof PersonAddressSnapshot, string | null> {
+  return {
+    streetLine: a?.streetLine ?? null,
+    postalCode: a?.postalCode ?? null,
+    locality:   a?.locality   ?? null,
+    county:     a?.county     ?? null,
+    country:    a?.country    ?? null,
+    notes:      a?.notes      ?? null,
+  };
+}
+
+/** Snapshot → RHF form values (edit/view hydration). */
+export function snapshotToFormValues(snap: NaturalPersonSnapshot): FormValues {
+  const addresses: AddressRow[] = [];
+  if (snap.addresses.HOME) {
+    addresses.push({ kind: "HOME", ...snap.addresses.HOME, country: snap.addresses.HOME.country ?? "" });
+  }
+  if (snap.addresses.CORRESPONDENCE) {
+    addresses.push({ kind: "CORRESPONDENCE", ...snap.addresses.CORRESPONDENCE, country: snap.addresses.CORRESPONDENCE.country ?? "" });
+  }
+  return fromApiPayload({
+    natural: snap.natural as unknown as NaturalRow,
+    addresses,
+    notes: snap.notes,
+  });
+}
+
+/** Per-field highlight frames for `curr` vs `prev` (empty for version 0). */
+export function computeFieldHighlights(
+  prev: NaturalPersonSnapshot | null,
+  curr: NaturalPersonSnapshot,
+): NaturalFieldHighlights {
+  return {
+    fields: diffFieldMap(
+      prev ? snapshotFieldMap(prev) : null,
+      snapshotFieldMap(curr),
+      FORM_TOP_KEYS,
+    ),
+    addresses: {
+      HOME: diffFieldMap(
+        prev ? addrMap(prev.addresses.HOME) : null,
+        addrMap(curr.addresses.HOME),
+        ADDR_KEYS,
+      ),
+      CORRESPONDENCE: diffFieldMap(
+        prev ? addrMap(prev.addresses.CORRESPONDENCE) : null,
+        addrMap(curr.addresses.CORRESPONDENCE),
+        ADDR_KEYS,
+      ),
+    },
+  };
+}
+
+/** Version label colour. v0 green; red if any field modified/deleted; else green. */
+export function versionLabelColor(
+  prev: NaturalPersonSnapshot | null,
+  curr: NaturalPersonSnapshot,
+): HighlightColor {
+  if (!prev) return "green";
+  const h = computeFieldHighlights(prev, curr);
+  return labelColorFromHighlights(true, h.fields, h.addresses.HOME, h.addresses.CORRESPONDENCE);
+}
+
+/** True when two form-value sets are equal field-by-field (empty == ""). Used
+ *  by edit mode to detect divergence from the loaded baseline, independent of
+ *  RHF's reset-sensitive `isDirty`. */
+export function formValuesEqual(a: FormValues, b: FormValues): boolean {
+  for (const k of FORM_TOP_KEYS) {
+    if (normVal(a[k]) !== normVal(b[k])) return false;
+  }
+  for (const kind of ["HOME", "CORRESPONDENCE"] as const) {
+    for (const k of ADDR_KEYS) {
+      if (normVal(a.addresses[kind][k]) !== normVal(b.addresses[kind][k])) return false;
+    }
+  }
+  return true;
 }

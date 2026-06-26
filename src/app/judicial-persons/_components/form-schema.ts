@@ -22,8 +22,16 @@
 import { z } from "zod/v4";
 import type {
   JudicialPersonCreate,
+  JudicialPersonSnapshot,
   JudicialPersonUpdate,
 } from "@/lib/judicial-persons/validation";
+import type { PersonAddressSnapshot } from "@/lib/persons/validation";
+import {
+  diffFieldMap,
+  labelColorFromHighlights,
+  normVal,
+  type HighlightColor,
+} from "@/lib/persons/version-diff";
 
 const ADDRESS_KINDS = ["HEADQUARTERS", "CORRESPONDENCE"] as const;
 type AddressKind = (typeof ADDRESS_KINDS)[number];
@@ -249,4 +257,145 @@ export function toApiPayload(
     notes: blank(values.notes),
     addresses,
   };
+}
+
+// ===========================================================================
+// Versioning (Slice #18.05) — snapshot conversion + pure diff helpers
+//
+// A "version" is a full snapshot of the judicial person (own fields + notes +
+// the same-as-HQ flag + HEADQUARTERS/CORRESPONDENCE address blocks). These
+// helpers hydrate a snapshot into the form's value shape and derive — purely,
+// by diffing snapshot N against N-1 — the version label colour and per-field
+// highlight frames (green = added, red = modified/deleted). All pure, so they
+// unit-test directly.
+// ===========================================================================
+
+// String form-field names that participate in the diff. The contact-person
+// *Name fields are display-only (they follow the ids) and excluded.
+const JUD_STRING_KEYS = [
+  "name", "nickname", "judicialPersonTypeId", "cuiNumber",
+  "tradeRegisterNumber", "contactPerson1Id", "contactPerson2Id", "notes",
+] as const;
+
+// Full diff key set — the string fields plus the same-as-HQ flag (stringified
+// to "true"/"false" so it diffs uniformly).
+const JUD_DIFF_KEYS = [...JUD_STRING_KEYS, "correspondenceSameAsHq"] as const;
+
+const ADDR_KEYS = [
+  "streetLine", "postalCode", "locality", "county", "country", "notes",
+] as const satisfies readonly (keyof PersonAddressSnapshot)[];
+
+export type JudicialFieldHighlights = {
+  /** Keyed by form field name (incl. notes and correspondenceSameAsHq). */
+  fields: Partial<Record<(typeof JUD_DIFF_KEYS)[number], HighlightColor>>;
+  addresses: {
+    HEADQUARTERS:   Partial<Record<keyof PersonAddressSnapshot, HighlightColor>>;
+    CORRESPONDENCE: Partial<Record<keyof PersonAddressSnapshot, HighlightColor>>;
+  };
+};
+
+/** Flatten a snapshot's own fields (+ notes + same-as-HQ flag) into a string map. */
+function snapshotFieldMap(
+  snap: JudicialPersonSnapshot,
+): Record<(typeof JUD_DIFF_KEYS)[number], string | null> {
+  return {
+    name:                 snap.judicial.name,
+    nickname:             snap.judicial.nickname,
+    judicialPersonTypeId: snap.judicial.judicialPersonTypeId,
+    cuiNumber:            snap.judicial.cuiNumber,
+    tradeRegisterNumber:  snap.judicial.tradeRegisterNumber,
+    contactPerson1Id:     snap.judicial.contactPerson1Id,
+    contactPerson2Id:     snap.judicial.contactPerson2Id,
+    notes:                snap.notes,
+    correspondenceSameAsHq: snap.judicial.correspondenceSameAsHq ? "true" : "false",
+  };
+}
+
+function addrMap(
+  a: PersonAddressSnapshot | null,
+): Record<keyof PersonAddressSnapshot, string | null> {
+  return {
+    streetLine: a?.streetLine ?? null,
+    postalCode: a?.postalCode ?? null,
+    locality:   a?.locality   ?? null,
+    county:     a?.county     ?? null,
+    country:    a?.country    ?? null,
+    notes:      a?.notes      ?? null,
+  };
+}
+
+/** Snapshot → RHF form values (edit/view hydration). Contact-person display
+ *  names aren't stored in the snapshot, so historical views render the linked
+ *  id; the highlight still flags the change. */
+export function snapshotToFormValues(snap: JudicialPersonSnapshot): FormValues {
+  const addresses: AddressRow[] = [];
+  if (snap.addresses.HEADQUARTERS) {
+    addresses.push({ kind: "HEADQUARTERS", ...snap.addresses.HEADQUARTERS, country: snap.addresses.HEADQUARTERS.country ?? "" });
+  }
+  if (snap.addresses.CORRESPONDENCE) {
+    addresses.push({ kind: "CORRESPONDENCE", ...snap.addresses.CORRESPONDENCE, country: snap.addresses.CORRESPONDENCE.country ?? "" });
+  }
+  return fromApiPayload({
+    judicial: snap.judicial as unknown as JudicialRow,
+    addresses,
+    notes: snap.notes,
+    contactPerson1Name: null,
+    contactPerson2Name: null,
+  });
+}
+
+/** Per-field highlight frames for `curr` vs `prev` (empty for version 0). */
+export function computeFieldHighlights(
+  prev: JudicialPersonSnapshot | null,
+  curr: JudicialPersonSnapshot,
+): JudicialFieldHighlights {
+  return {
+    fields: diffFieldMap(
+      prev ? snapshotFieldMap(prev) : null,
+      snapshotFieldMap(curr),
+      JUD_DIFF_KEYS,
+    ),
+    addresses: {
+      HEADQUARTERS: diffFieldMap(
+        prev ? addrMap(prev.addresses.HEADQUARTERS) : null,
+        addrMap(curr.addresses.HEADQUARTERS),
+        ADDR_KEYS,
+      ),
+      CORRESPONDENCE: diffFieldMap(
+        prev ? addrMap(prev.addresses.CORRESPONDENCE) : null,
+        addrMap(curr.addresses.CORRESPONDENCE),
+        ADDR_KEYS,
+      ),
+    },
+  };
+}
+
+/** Version label colour. v0 green; red if any field modified/deleted; else green. */
+export function versionLabelColor(
+  prev: JudicialPersonSnapshot | null,
+  curr: JudicialPersonSnapshot,
+): HighlightColor {
+  if (!prev) return "green";
+  const h = computeFieldHighlights(prev, curr);
+  return labelColorFromHighlights(
+    true,
+    h.fields,
+    h.addresses.HEADQUARTERS,
+    h.addresses.CORRESPONDENCE,
+  );
+}
+
+/** True when two form-value sets are equal field-by-field (empty == ""). The
+ *  contact-person display names follow their ids and are excluded. */
+export function formValuesEqual(a: FormValues, b: FormValues): boolean {
+  for (const k of JUD_STRING_KEYS) {
+    if (normVal(a[k]) !== normVal(b[k])) return false;
+  }
+  if (a.correspondenceSameAsHq !== b.correspondenceSameAsHq) return false;
+  for (const kind of ["HEADQUARTERS", "CORRESPONDENCE"] as const) {
+    for (const k of ADDR_KEYS) {
+      if (normVal(a.addresses[kind][k]) !== normVal(b.addresses[kind][k])) return false;
+    }
+  }
+  return true;
 }
