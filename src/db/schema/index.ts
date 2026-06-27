@@ -786,6 +786,51 @@ export const document = pgTable("document", {
 });
 
 // ---------------------------------------------------------------------------
+// document_version — full-snapshot version history  (Slice #18.06)
+// ---------------------------------------------------------------------------
+//
+// One row per saved version of a document. version_number is 0-based: version
+// 0 is the state at creation, every saved edit appends the next number. Each
+// row stores a COMPLETE snapshot (the document's own editable fields) as JSONB
+// — reconstructing "version N" is a direct lookup, no delta replay. The
+// versioned scope is the document's form fields only (NOT the M:M associations
+// nor the uploaded document_page files).
+//
+// The label colour and per-field highlights shown in the UI are derived at
+// display time by diffing snapshot N against snapshot N-1; nothing derived is
+// persisted here. The snapshot JSON shape lives next to the write path in
+// src/lib/documents/queries.ts (DocumentSnapshot) and matches the backfill in
+// migration_031_document_versions.sql exactly.
+
+export const documentVersion = pgTable(
+  "document_version",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+
+    documentId: uuid("document_id")
+      .notNull()
+      .references(() => document.id, { onDelete: "cascade" }),
+
+    // 0-based; unique per document.
+    versionNumber: integer("version_number").notNull(),
+
+    // Full snapshot of the document at this version. Untyped here to avoid a
+    // circular import; the query layer casts it to DocumentSnapshot.
+    snapshot: jsonb("snapshot").notNull(),
+
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("document_version_document_number_unique").on(
+      t.documentId,
+      t.versionNumber,
+    ),
+  ],
+);
+
+// ---------------------------------------------------------------------------
 // property_person — M:M junction between Property and Person  (Slice #5.1)
 // ---------------------------------------------------------------------------
 //

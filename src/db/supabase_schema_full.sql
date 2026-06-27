@@ -781,6 +781,20 @@ CREATE TRIGGER document_touch_updated_at
   BEFORE UPDATE ON document
   FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
 
+-- document_version — full-snapshot version history (Slice #18.06). Snapshot is
+-- a flat object of the document's editable fields. See
+-- migration_031_document_versions.sql.
+CREATE TABLE document_version (
+  id             uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  document_id    uuid        NOT NULL REFERENCES document(id) ON DELETE CASCADE,
+  version_number integer     NOT NULL,
+  snapshot       jsonb       NOT NULL,
+  created_at     timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE UNIQUE INDEX document_version_document_number_unique
+  ON document_version (document_id, version_number);
+
 -- ============================================================
 -- JUNCTION TABLES  (drizzle 0005–0006 + migrations 016–017, 020)
 -- ============================================================
