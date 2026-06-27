@@ -10,12 +10,13 @@
  * explicitly directed) — never auto-seeded by application code.
  */
 
-import { asc, and, count, eq, ilike, inArray, isNull, or, sql } from "drizzle-orm";
+import { asc, and, count, desc, eq, ilike, inArray, isNull, or, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { document, lookupDocumentType, principalObject } from "@/db/schema";
+import { document, documentVersion, lookupDocumentType, principalObject } from "@/db/schema";
 import type {
   DocumentCreate,
   DocumentListQuery,
+  DocumentSnapshot,
   DocumentUpdate,
 } from "./validation";
 
@@ -117,6 +118,86 @@ export async function getDocumentById(
 }
 
 // ---------------------------------------------------------------------------
+// Version snapshots  (Slice #18.06)
+// ---------------------------------------------------------------------------
+
+export type DocumentVersionItem = {
+  versionNumber: number;
+  snapshot:      DocumentSnapshot;
+  createdAt:     Date;
+};
+
+const SNAPSHOT_KEYS: (keyof DocumentSnapshot)[] = [
+  "documentTypeId", "title", "nrDocument", "dateDocument", "institution",
+  "emitent", "bazaLegala", "uatProprietate", "uatProprietar", "suprafata",
+  "nrDosarSuccesoral", "dataDecesului", "ultimulDomiciliu", "nrCertificatDeces",
+  "dateStart", "dateEnd", "titularText", "defunctText", "partiesAText",
+  "partiesBText", "notes",
+];
+
+/** Build the canonical document snapshot from a freshly-fetched record. */
+export function snapshotFromFull(full: DocumentFull): DocumentSnapshot {
+  return {
+    documentTypeId:    full.documentTypeId    ?? null,
+    title:             full.title             ?? null,
+    nrDocument:        full.nrDocument        ?? null,
+    dateDocument:      full.dateDocument      ?? null,
+    institution:       full.institution       ?? null,
+    emitent:           full.emitent           ?? null,
+    bazaLegala:        full.bazaLegala        ?? null,
+    uatProprietate:    full.uatProprietate    ?? null,
+    uatProprietar:     full.uatProprietar     ?? null,
+    // numeric column → drizzle returns string | null; keep as-is.
+    suprafata:         full.suprafata         ?? null,
+    nrDosarSuccesoral: full.nrDosarSuccesoral ?? null,
+    dataDecesului:     full.dataDecesului     ?? null,
+    ultimulDomiciliu:  full.ultimulDomiciliu  ?? null,
+    nrCertificatDeces: full.nrCertificatDeces ?? null,
+    dateStart:         full.dateStart         ?? null,
+    dateEnd:           full.dateEnd           ?? null,
+    titularText:       full.titularText       ?? null,
+    defunctText:       full.defunctText       ?? null,
+    partiesAText:      full.partiesAText      ?? null,
+    partiesBText:      full.partiesBText      ?? null,
+    notes:             full.notes             ?? null,
+  };
+}
+
+/**
+ * Field-by-field equality of two snapshots — used to skip writing a new version
+ * when a save produced no actual change (no-op backstop). Compared explicitly
+ * rather than via JSON.stringify because Postgres jsonb does not preserve
+ * object key order.
+ */
+function snapshotsEqual(a: DocumentSnapshot, b: DocumentSnapshot): boolean {
+  for (const k of SNAPSHOT_KEYS) {
+    if (a[k] !== b[k]) return false;
+  }
+  return true;
+}
+
+/** All versions of a document, oldest (version 0) first. */
+export async function listDocumentVersions(
+  documentId: string,
+): Promise<DocumentVersionItem[]> {
+  const rows = await db
+    .select({
+      versionNumber: documentVersion.versionNumber,
+      snapshot:      documentVersion.snapshot,
+      createdAt:     documentVersion.createdAt,
+    })
+    .from(documentVersion)
+    .where(eq(documentVersion.documentId, documentId))
+    .orderBy(documentVersion.versionNumber);
+
+  return rows.map((r) => ({
+    versionNumber: r.versionNumber,
+    snapshot:      r.snapshot as DocumentSnapshot,
+    createdAt:     r.createdAt,
+  }));
+}
+
+// ---------------------------------------------------------------------------
 // Create
 // ---------------------------------------------------------------------------
 
@@ -141,6 +222,14 @@ export async function createDocument(
         code: poRow.code,
       })
       .returning();
+
+    // Slice #18.06: record version 0 — the state at creation.
+    await tx.insert(documentVersion).values({
+      documentId:    row.id,
+      versionNumber: 0,
+      snapshot:      snapshotFromFull(row),
+    });
+
     return row;
   });
 }
@@ -153,57 +242,86 @@ export async function updateDocument(
   id:    string,
   input: DocumentUpdate,
 ): Promise<DocumentFull | null> {
-  // Verify exists and not deleted.
-  const existing = await db
-    .select({ id: document.id })
-    .from(document)
-    .where(and(eq(document.id, id), isNull(document.deletedAt)))
-    .limit(1);
+  return await db.transaction(async (tx) => {
+    // Verify exists and not deleted.
+    const existing = await tx
+      .select({ id: document.id })
+      .from(document)
+      .where(and(eq(document.id, id), isNull(document.deletedAt)))
+      .limit(1);
 
-  if (existing.length === 0) return null;
+    if (existing.length === 0) return null;
 
-  const patch: Partial<typeof document.$inferInsert> = {};
+    const patch: Partial<typeof document.$inferInsert> = {};
 
-  if (input.documentTypeId !== undefined) patch.documentTypeId = input.documentTypeId;
-  if (input.title          !== undefined) patch.title          = input.title          ?? null;
-  if (input.nrDocument     !== undefined) patch.nrDocument     = input.nrDocument     ?? null;
-  if (input.dateDocument   !== undefined) patch.dateDocument   = input.dateDocument   ?? null;
-  if (input.institution    !== undefined) patch.institution    = input.institution    ?? null;
+    if (input.documentTypeId !== undefined) patch.documentTypeId = input.documentTypeId;
+    if (input.title          !== undefined) patch.title          = input.title          ?? null;
+    if (input.nrDocument     !== undefined) patch.nrDocument     = input.nrDocument     ?? null;
+    if (input.dateDocument   !== undefined) patch.dateDocument   = input.dateDocument   ?? null;
+    if (input.institution    !== undefined) patch.institution    = input.institution    ?? null;
 
-  if (input.emitent        !== undefined) patch.emitent        = input.emitent        ?? null;
-  if (input.bazaLegala     !== undefined) patch.bazaLegala     = input.bazaLegala     ?? null;
-  if (input.uatProprietate !== undefined) patch.uatProprietate = input.uatProprietate ?? null;
-  if (input.uatProprietar  !== undefined) patch.uatProprietar  = input.uatProprietar  ?? null;
-  if (input.suprafata      !== undefined) {
-    patch.suprafata = input.suprafata != null ? String(input.suprafata) : null;
-  }
+    if (input.emitent        !== undefined) patch.emitent        = input.emitent        ?? null;
+    if (input.bazaLegala     !== undefined) patch.bazaLegala     = input.bazaLegala     ?? null;
+    if (input.uatProprietate !== undefined) patch.uatProprietate = input.uatProprietate ?? null;
+    if (input.uatProprietar  !== undefined) patch.uatProprietar  = input.uatProprietar  ?? null;
+    if (input.suprafata      !== undefined) {
+      patch.suprafata = input.suprafata != null ? String(input.suprafata) : null;
+    }
 
-  if (input.nrDosarSuccesoral !== undefined) patch.nrDosarSuccesoral = input.nrDosarSuccesoral ?? null;
-  if (input.dataDecesului     !== undefined) patch.dataDecesului     = input.dataDecesului     ?? null;
-  if (input.ultimulDomiciliu  !== undefined) patch.ultimulDomiciliu  = input.ultimulDomiciliu  ?? null;
-  if (input.nrCertificatDeces !== undefined) patch.nrCertificatDeces = input.nrCertificatDeces ?? null;
+    if (input.nrDosarSuccesoral !== undefined) patch.nrDosarSuccesoral = input.nrDosarSuccesoral ?? null;
+    if (input.dataDecesului     !== undefined) patch.dataDecesului     = input.dataDecesului     ?? null;
+    if (input.ultimulDomiciliu  !== undefined) patch.ultimulDomiciliu  = input.ultimulDomiciliu  ?? null;
+    if (input.nrCertificatDeces !== undefined) patch.nrCertificatDeces = input.nrCertificatDeces ?? null;
 
-  if (input.dateStart !== undefined) patch.dateStart = input.dateStart ?? null;
-  if (input.dateEnd   !== undefined) patch.dateEnd   = input.dateEnd   ?? null;
+    if (input.dateStart !== undefined) patch.dateStart = input.dateStart ?? null;
+    if (input.dateEnd   !== undefined) patch.dateEnd   = input.dateEnd   ?? null;
 
-  if (input.titularText  !== undefined) patch.titularText  = input.titularText  ?? null;
-  if (input.defunctText  !== undefined) patch.defunctText  = input.defunctText  ?? null;
-  if (input.partiesAText !== undefined) patch.partiesAText = input.partiesAText ?? null;
-  if (input.partiesBText !== undefined) patch.partiesBText = input.partiesBText ?? null;
+    if (input.titularText  !== undefined) patch.titularText  = input.titularText  ?? null;
+    if (input.defunctText  !== undefined) patch.defunctText  = input.defunctText  ?? null;
+    if (input.partiesAText !== undefined) patch.partiesAText = input.partiesAText ?? null;
+    if (input.partiesBText !== undefined) patch.partiesBText = input.partiesBText ?? null;
 
-  if (input.notes !== undefined) patch.notes = input.notes ?? null;
+    if (input.notes !== undefined) patch.notes = input.notes ?? null;
 
-  if (Object.keys(patch).length > 0) {
-    await db.update(document).set(patch).where(eq(document.id, id));
-  }
+    if (Object.keys(patch).length > 0) {
+      await tx.update(document).set(patch).where(eq(document.id, id));
+    }
 
-  const [updated] = await db
-    .select()
-    .from(document)
-    .where(eq(document.id, id))
-    .limit(1);
+    const [updated] = await tx
+      .select()
+      .from(document)
+      .where(eq(document.id, id))
+      .limit(1);
 
-  return updated ?? null;
+    if (!updated) return null;
+
+    // Slice #18.06: append a new version snapshot — but skip if this save
+    // produced no actual change vs the latest stored version (no-op backstop).
+    const newSnapshot = snapshotFromFull(updated);
+    const [latestVer] = await tx
+      .select({
+        versionNumber: documentVersion.versionNumber,
+        snapshot:      documentVersion.snapshot,
+      })
+      .from(documentVersion)
+      .where(eq(documentVersion.documentId, id))
+      .orderBy(desc(documentVersion.versionNumber))
+      .limit(1);
+
+    const latestSnapshot = latestVer
+      ? (latestVer.snapshot as DocumentSnapshot)
+      : null;
+
+    if (!latestSnapshot || !snapshotsEqual(latestSnapshot, newSnapshot)) {
+      await tx.insert(documentVersion).values({
+        documentId:    id,
+        versionNumber: (latestVer?.versionNumber ?? -1) + 1,
+        snapshot:      newSnapshot,
+      });
+    }
+
+    return updated;
+  });
 }
 
 // ---------------------------------------------------------------------------

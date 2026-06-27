@@ -79,3 +79,42 @@ export const documentListQuerySchema = z.object({
   offset: z.coerce.number().int().min(0).default(0),
 });
 export type DocumentListQuery = z.infer<typeof documentListQuerySchema>;
+
+// ---------------------------------------------------------------------------
+// Document version snapshot (Slice #18.06)
+//
+// A complete snapshot of a document at one saved version. Shared between the
+// server write/read path (src/lib/documents/queries.ts) and the client diff
+// helpers (src/app/documents/_components/form-schema.ts). The JSON shape here
+// matches migration_031's backfill exactly — keep all three in lockstep.
+//
+// A flat object of the document's 21 editable fields; all values string|null
+// (the form's blanked-empty convention) so two snapshots diff field-by-field
+// uniformly. `suprafata` is the numeric column read as a string (drizzle).
+// NOT included: the M:M associations and the uploaded document_page files —
+// those are separate lifecycles, out of the versioned scope.
+// ---------------------------------------------------------------------------
+
+export type DocumentSnapshot = {
+  documentTypeId:    string | null;
+  title:             string | null;
+  nrDocument:        string | null;
+  dateDocument:      string | null;
+  institution:       string | null;
+  emitent:           string | null;
+  bazaLegala:        string | null;
+  uatProprietate:    string | null;
+  uatProprietar:     string | null;
+  suprafata:         string | null;
+  nrDosarSuccesoral: string | null;
+  dataDecesului:     string | null;
+  ultimulDomiciliu:  string | null;
+  nrCertificatDeces: string | null;
+  dateStart:         string | null;
+  dateEnd:           string | null;
+  titularText:       string | null;
+  defunctText:       string | null;
+  partiesAText:      string | null;
+  partiesBText:      string | null;
+  notes:             string | null;
+};
