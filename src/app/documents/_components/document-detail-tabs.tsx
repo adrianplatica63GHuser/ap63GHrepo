@@ -33,6 +33,10 @@ export function DocumentDetailTabs({
   // when active, the page's outer container widens to full width so the
   // detached page viewer has room to sit beside the form/panels.
   const [bigPage, setBigPage] = useState(false);
+  // Slice #18.06: the details form portals its version-nav controls into this
+  // header slot. A ref-callback into state so the portal target is available
+  // once mounted (and re-renders the form when it lands).
+  const [navSlot, setNavSlot] = useState<HTMLDivElement | null>(null);
 
   const tabs: { key: Tab; label: string }[] = [
     { key: "details",    label: t("tabs.details")    },
@@ -43,8 +47,14 @@ export function DocumentDetailTabs({
 
   return (
     <div className={bigPage ? "w-full flex flex-col gap-4" : "max-w-4xl mx-auto w-full flex flex-col gap-4"}>
-      <header>
+      {/* Slice #18.06: name on the left, version controls centered on the same
+          line (portalled in by the details form via navSlot). */}
+      <header className="relative flex min-h-[2.5rem] items-center">
         <h1 className="text-2xl font-semibold tracking-tight">{documentName}</h1>
+        <div
+          ref={setNavSlot}
+          className="pointer-events-none absolute inset-y-0 left-1/2 flex -translate-x-1/2 items-center"
+        />
       </header>
 
       {/* Tab bar */}
@@ -78,6 +88,7 @@ export function DocumentDetailTabs({
             documentCode={documentCode}
             initialValues={initialValues}
             onBigPageChange={setBigPage}
+            versionNavSlot={navSlot}
           />
         )}
         {activeTab === "persons" && (

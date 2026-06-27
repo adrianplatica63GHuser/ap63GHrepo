@@ -4,7 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   type FieldPath,
   type UseFormRegister,
@@ -13,10 +14,21 @@ import {
 } from "react-hook-form";
 import { useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-provider";
 import {
+  VersionNavControls,
+  type VersionNavView,
+} from "@/components/version-nav-controls";
+import type { HighlightColor } from "@/lib/persons/version-diff";
+import type { DocumentSnapshot } from "@/lib/documents/validation";
+import {
+  computeFieldHighlights,
+  type DocumentFieldHighlights,
   emptyFormValues,
   formSchema,
+  formValuesEqual,
   type FormValues,
+  snapshotToFormValues,
   toApiPayload,
+  versionLabelColor,
 } from "./form-schema";
 import { getTypeConfig } from "@/lib/documents/type-config";
 import { PagesPanel, PagesViewerBox, usePagesPanelState } from "./pages-panel";
@@ -41,6 +53,23 @@ async function fetchDocumentTypes(): Promise<DocumentTypeOption[]> {
 }
 
 // ---------------------------------------------------------------------------
+// Version history fetch (Slice #18.06)
+// ---------------------------------------------------------------------------
+
+type VersionItem = {
+  versionNumber: number;
+  snapshot:      DocumentSnapshot;
+  createdAt:     string;
+};
+
+async function fetchVersions(documentId: string): Promise<VersionItem[]> {
+  const res = await fetch(`/api/documents/${encodeURIComponent(documentId)}/versions`);
+  if (!res.ok) throw new Error(`Failed to load versions (HTTP ${res.status})`);
+  const body = await res.json();
+  return (body.items ?? []) as VersionItem[];
+}
+
+// ---------------------------------------------------------------------------
 // Props
 // ---------------------------------------------------------------------------
 
@@ -53,6 +82,9 @@ type Props = {
    *  (DocumentDetailTabs) can widen the page's outer container — mirrors
    *  PropertyForm's onBigMapChange. */
   onBigPageChange?: (bigPage: boolean) => void;
+  /** Slice #18.06 — header DOM node to portal the version-nav controls into,
+   *  so they render on the document-name line. */
+  versionNavSlot?:  HTMLElement | null;
 };
 
 // ---------------------------------------------------------------------------
@@ -65,6 +97,7 @@ export function DocumentForm({
   documentCode,
   initialValues,
   onBigPageChange,
+  versionNavSlot,
 }: Props) {
   const t = useTranslations("document");
   const router = useRouter();
@@ -94,9 +127,14 @@ export function DocumentForm({
     mode:          "onChange",
   });
 
-  const [submitting,    setSubmitting]    = useState(false);
-  const [submitError,   setSubmitError]   = useState<string | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [submitting,        setSubmitting]        = useState(false);
+  const [submitError,       setSubmitError]       = useState<string | null>(null);
+  const [confirmDelete,     setConfirmDelete]     = useState(false);
+  const [confirmMakeCurrent, setConfirmMakeCurrent] = useState(false);
+
+  const isCreate = mode === "create";
+  // Subscribe to all values so the edit-dirty check recomputes live.
+  const watchedValues = form.watch();
 
   // Watch `documentTypeId` so the form re-renders when the user changes the type.
   // Conditional sections key off the *key* string (e.g. "TITLU_PROPRIETATE"),
@@ -107,16 +145,100 @@ export function DocumentForm({
   // True only for CERTIFICAT_MOSTENITOR — drives the merged Succession Details section.
   const isMostenitor = selectedTypeKey === "CERTIFICAT_MOSTENITOR";
 
-  // Save is always available in edit/create mode. isDirty is deliberately not
-  // checked here because page uploads/deletes (which are saved immediately via
-  // their own API calls) don't touch React Hook Form state, so a strict
-  // isDirty guard would leave the button permanently disabled after page changes.
+  // --- Version history (Slice #18.06) ------------------------------------
+  const versionsQuery = useQuery({
+    queryKey: ["document-versions", documentId],
+    queryFn: () => fetchVersions(documentId!),
+    enabled: !isCreate && !!documentId,
+    // staleTime 0 so reopening after a save refetches and shows the newly
+    // appended version (doSave also invalidates this key).
+    staleTime: 0,
+    refetchOnWindowFocus: false,
+  });
+  const versions = useMemo(() => versionsQuery.data ?? [], [versionsQuery.data]);
+  const versionByNumber = useMemo(
+    () => new Map(versions.map((v) => [v.versionNumber, v])),
+    [versions],
+  );
+  const latestVersion: number | null =
+    versions.length > 0 ? versions[versions.length - 1].versionNumber : null;
+
+  // Which version is currently displayed. null = follow the latest.
+  const [viewingVersion, setViewingVersion] = useState<number | null>(null);
+  const effectiveVersion: number | null = viewingVersion ?? latestVersion;
+  const isOnLatest = latestVersion === null || effectiveVersion === latestVersion;
+
+  // Baseline = the latest saved state. Initialised from the server props at page
+  // load, updated in place after an edit-save. editDirty compares to this — not
+  // RHF's isDirty, which version navigation's form.reset() would clear.
+  const [baseline, setBaseline] = useState<{ values: FormValues }>(
+    () => ({ values: initialValues ?? emptyFormValues }),
+  );
+
+  // Any non-latest version is strictly read-only; only the latest is editable
+  // (or stays "view" if opened read-only). Create mode is unaffected.
+  const effectiveMode: "create" | "edit" | "view" =
+    isCreate ? "create" : isOnLatest ? mode : "view";
+
+  // Has the editable latest copy diverged from the loaded baseline?
+  const editDirty =
+    !isCreate && isOnLatest && !formValuesEqual(watchedValues, baseline.values);
+
+  // Navigate to a version. Locked while the latest has unsaved edits, so a
+  // dirty draft is never stranded on a read-only historical view.
+  const goToVersion = (target: number) => {
+    if (target === latestVersion) {
+      form.reset(baseline.values);
+    } else {
+      const snap = versionByNumber.get(target)?.snapshot;
+      if (!snap) return;
+      form.reset(snapshotToFormValues(snap));
+    }
+    setViewingVersion(target);
+  };
+
+  // Highlights show only on a read-only historical version (>= 1). The editable
+  // latest is the working copy (no frames); version 0 has no predecessor.
+  const showHighlights =
+    !isCreate && !isOnLatest && effectiveVersion !== null && effectiveVersion >= 1;
+  const currSnap =
+    effectiveVersion !== null ? versionByNumber.get(effectiveVersion)?.snapshot : undefined;
+  const prevSnap =
+    effectiveVersion !== null && effectiveVersion >= 1
+      ? versionByNumber.get(effectiveVersion - 1)?.snapshot
+      : undefined;
+  const fieldHighlights: DocumentFieldHighlights | null =
+    showHighlights && currSnap ? computeFieldHighlights(prevSnap ?? null, currSnap) : null;
+
+  const navLocked = isOnLatest && editDirty;
+  const versionNav: VersionNavView | null =
+    !isCreate && versions.length > 0 && effectiveVersion !== null
+      ? {
+          current: effectiveVersion,
+          color: currSnap
+            ? versionLabelColor(prevSnap ?? null, currSnap)
+            : ("green" as HighlightColor),
+          canPrev: effectiveVersion > 0 && !navLocked,
+          canNext:
+            latestVersion !== null && effectiveVersion < latestVersion && !navLocked,
+          onPrev: () => goToVersion(effectiveVersion - 1),
+          onNext: () => goToVersion(effectiveVersion + 1),
+          canMakeCurrent: !isOnLatest,
+          onMakeCurrent: () => setConfirmMakeCurrent(true),
+        }
+      : null;
+
+  const makeCurrentNextNumber = (latestVersion ?? 0) + 1;
+
+  // Save is always available in edit/create mode (submitting aside). isDirty is
+  // deliberately not gated here because page uploads/deletes (saved immediately
+  // via their own API calls) don't touch RHF state, so a strict isDirty guard
+  // would leave the button permanently disabled after page changes. A no-op
+  // field save is harmless: the backend dedups and appends no new version.
   const saveDisabled = submitting;
 
-  // doSave performs the API call only (no navigation) so it can be reused
-  // both by the form's own Save button (onSubmit, which navigates after a
-  // successful save) and by the unsaved-changes guard's onSave (which must
-  // NOT navigate — the guard's pending action handles that separately).
+  // doSave performs the API call only (no navigation) so it can be reused by
+  // the Save button (onSubmit), the unsaved-changes guard, and "Make Current".
   const doSave = async (values: FormValues): Promise<boolean> => {
     setSubmitting(true);
     setSubmitError(null);
@@ -144,6 +266,9 @@ export function DocumentForm({
         throw new Error(body?.error ?? `${t("saveError")} (HTTP ${res.status})`);
       }
       await queryClient.invalidateQueries({ queryKey: ["documents"] });
+      // Slice #18.06: a save appended a new version — drop the cached list so
+      // reopening shows it (and the ◀/▶ nav enables / advances).
+      await queryClient.invalidateQueries({ queryKey: ["document-versions"] });
       return true;
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : String(err));
@@ -155,17 +280,50 @@ export function DocumentForm({
 
   const onSubmit = async (values: FormValues) => {
     const ok = await doSave(values);
-    if (ok) {
+    if (!ok) return;
+
+    if (mode === "create") {
       router.push("/documents");
       router.refresh();
+      return;
     }
+
+    // Slice #18.06: edit mode stays on the document so the freshly-appended
+    // version is visible. Reset the clean baseline to the just-saved state (so
+    // version nav unlocks), follow the new latest, and refresh server-rendered
+    // bits (e.g. the page title if the document's label changed).
+    setBaseline({ values });
+    setViewingVersion(null);
+    router.refresh();
+  };
+
+  // "Make this version current": re-save the currently-viewed historical
+  // snapshot (the form was reset to it on navigation) as a brand-new version,
+  // via the normal edit-save path. updateDocument appends it as the new latest
+  // (it differs from the current latest); we then follow it.
+  const handleMakeCurrent = async () => {
+    const values = form.getValues();
+    const ok = await doSave(values);
+    if (!ok) {
+      setConfirmMakeCurrent(false);
+      return;
+    }
+    setBaseline({ values });
+    setViewingVersion(null);
+    setConfirmMakeCurrent(false);
+    router.refresh();
   };
 
   // Page uploads/deletes save immediately via their own API calls (see
   // PagesPanel), so they don't need this guard — only unsaved React Hook
-  // Form field edits do.
+  // Form field edits do. A read-only historical version is never dirty.
   useUnsavedChangesGuard({
-    isDirty: mode !== "view" && form.formState.isDirty,
+    isDirty:
+      effectiveMode === "view"
+        ? false
+        : isCreate
+          ? form.formState.isDirty
+          : editDirty,
     onSave: async () => {
       const valid = await form.trigger();
       if (!valid) return false;
@@ -200,6 +358,24 @@ export function DocumentForm({
 
   return (
     <div className="flex flex-col gap-4">
+    {/* Slice #18.06: version controls portalled into the detail-tabs header so
+        they sit on the document-name line. Only for an existing document once
+        its versions have loaded, and only when the header provided a slot. */}
+    {versionNavSlot && versionNav &&
+      createPortal(
+        <VersionNavControls
+          nav={versionNav}
+          labels={{
+            versionLabel:    t("version.label", { n: versionNav.current }),
+            prevVersion:     t("version.prev"),
+            nextVersion:     t("version.next"),
+            makeCurrent:     t("version.makeCurrent"),
+            makeCurrentHint: t("version.makeCurrentHint"),
+          }}
+        />,
+        versionNavSlot,
+      )}
+
     {/* Two-column layout when "Show Big Page" is active (Slice #15.13) —
         mirrors PropertyForm's "Show Big Map" mechanism exactly: the left
         column (form + panels) keeps a fixed width, and a tall right column
@@ -216,7 +392,11 @@ export function DocumentForm({
       className="flex flex-col gap-4"
       noValidate
     >
-      <fieldset disabled={mode === "view"} className="contents">
+      {/* Slice #18.06: the disabled fieldset wraps ONLY the editable input
+          sections; the version nav lives in the header (portalled), outside
+          this fieldset, so its ◀/▶ buttons stay clickable on read-only
+          historical versions. */}
+      <fieldset disabled={effectiveMode === "view"} className="contents">
       {/* ── General (merged: type selector + common fields + notes) ───── */}
       <Section title={t("sections.general")} columns={1}>
         {/* Row 1: Code (half) | Type (half) */}
@@ -233,6 +413,7 @@ export function DocumentForm({
               value: opt.id,
               label: opt.name,
             }))}
+            highlight={fieldHighlights?.documentTypeId}
           />
         </div>
         {/* Row 2: Nr. doc (half) | Date (half) */}
@@ -242,6 +423,7 @@ export function DocumentForm({
             name="nrDocument"
             register={register}
             error={errors.nrDocument?.message}
+            highlight={fieldHighlights?.nrDocument}
           />
           <Field
             label={cfg.labels.dateDocument}
@@ -249,6 +431,7 @@ export function DocumentForm({
             type="date"
             register={register}
             error={errors.dateDocument?.message}
+            highlight={fieldHighlights?.dateDocument}
           />
         </div>
         {/* Row 3: Institution (full width) */}
@@ -257,6 +440,7 @@ export function DocumentForm({
           name="institution"
           register={register}
           error={errors.institution?.message}
+          highlight={fieldHighlights?.institution}
         />
         {/* Row 4: Short Label (right before Notes) */}
         <Field
@@ -264,6 +448,7 @@ export function DocumentForm({
           name="title"
           register={register}
           error={errors.title?.message}
+          highlight={fieldHighlights?.title}
         />
         {/* Row 5: Notes (compact) */}
         <TextAreaField
@@ -273,6 +458,7 @@ export function DocumentForm({
           error={errors.notes?.message}
           maxLength={1000}
           rows={2}
+          highlight={fieldHighlights?.notes}
         />
       </Section>
 
@@ -284,24 +470,28 @@ export function DocumentForm({
             name="emitent"
             register={register}
             error={errors.emitent?.message}
+            highlight={fieldHighlights?.emitent}
           />
           <Field
             label={t("fields.bazaLegala")}
             name="bazaLegala"
             register={register}
             error={errors.bazaLegala?.message}
+            highlight={fieldHighlights?.bazaLegala}
           />
           <Field
             label={t("fields.uatProprietate")}
             name="uatProprietate"
             register={register}
             error={errors.uatProprietate?.message}
+            highlight={fieldHighlights?.uatProprietate}
           />
           <Field
             label={t("fields.uatProprietar")}
             name="uatProprietar"
             register={register}
             error={errors.uatProprietar?.message}
+            highlight={fieldHighlights?.uatProprietar}
           />
           <Field
             label={t("fields.suprafata")}
@@ -309,6 +499,7 @@ export function DocumentForm({
             type="number"
             register={register}
             error={errors.suprafata?.message}
+            highlight={fieldHighlights?.suprafata}
           />
         </Section>
       )}
@@ -326,12 +517,14 @@ export function DocumentForm({
               name="nrDosarSuccesoral"
               register={register}
               error={errors.nrDosarSuccesoral?.message}
+              highlight={fieldHighlights?.nrDosarSuccesoral}
             />
             <Field
               label={t("fields.nrCertificatDeces")}
               name="nrCertificatDeces"
               register={register}
               error={errors.nrCertificatDeces?.message}
+              highlight={fieldHighlights?.nrCertificatDeces}
             />
             <Field
               label={t("fields.dataDecesului")}
@@ -339,12 +532,14 @@ export function DocumentForm({
               type="date"
               register={register}
               error={errors.dataDecesului?.message}
+              highlight={fieldHighlights?.dataDecesului}
             />
             <Field
               label={t("fields.ultimulDomiciliu")}
               name="ultimulDomiciliu"
               register={register}
               error={errors.ultimulDomiciliu?.message}
+              highlight={fieldHighlights?.ultimulDomiciliu}
             />
           </div>
           {/* Free-text party fields — kept alongside linked persons */}
@@ -354,6 +549,7 @@ export function DocumentForm({
             register={register}
             error={errors.defunctText?.message}
             rows={2}
+            highlight={fieldHighlights?.defunctText}
           />
           <TextAreaField
             label={t("fields.partiesBText")}
@@ -361,6 +557,7 @@ export function DocumentForm({
             register={register}
             error={errors.partiesBText?.message}
             rows={2}
+            highlight={fieldHighlights?.partiesBText}
           />
         </Section>
       )}
@@ -373,12 +570,14 @@ export function DocumentForm({
             name="nrDosarSuccesoral"
             register={register}
             error={errors.nrDosarSuccesoral?.message}
+            highlight={fieldHighlights?.nrDosarSuccesoral}
           />
           <Field
             label={t("fields.nrCertificatDeces")}
             name="nrCertificatDeces"
             register={register}
             error={errors.nrCertificatDeces?.message}
+            highlight={fieldHighlights?.nrCertificatDeces}
           />
           <Field
             label={t("fields.dataDecesului")}
@@ -386,12 +585,14 @@ export function DocumentForm({
             type="date"
             register={register}
             error={errors.dataDecesului?.message}
+            highlight={fieldHighlights?.dataDecesului}
           />
           <Field
             label={t("fields.ultimulDomiciliu")}
             name="ultimulDomiciliu"
             register={register}
             error={errors.ultimulDomiciliu?.message}
+            highlight={fieldHighlights?.ultimulDomiciliu}
           />
         </Section>
       )}
@@ -405,6 +606,7 @@ export function DocumentForm({
             type="date"
             register={register}
             error={errors.dateStart?.message}
+            highlight={fieldHighlights?.dateStart}
           />
           <Field
             label={t("fields.dateEnd")}
@@ -412,6 +614,7 @@ export function DocumentForm({
             type="date"
             register={register}
             error={errors.dateEnd?.message}
+            highlight={fieldHighlights?.dateEnd}
           />
         </Section>
       )}
@@ -427,6 +630,7 @@ export function DocumentForm({
               register={register}
               error={errors.defunctText?.message}
               rows={2}
+              highlight={fieldHighlights?.defunctText}
             />
           )}
           {/* Titular only shows for TITLU_PROPRIETATE */}
@@ -437,6 +641,7 @@ export function DocumentForm({
               register={register}
               error={errors.titularText?.message}
               rows={2}
+              highlight={fieldHighlights?.titularText}
             />
           )}
           {cfg.showParties && cfg.labels.partiesAText && (
@@ -446,6 +651,7 @@ export function DocumentForm({
               register={register}
               error={errors.partiesAText?.message}
               rows={2}
+              highlight={fieldHighlights?.partiesAText}
             />
           )}
           {cfg.showParties && cfg.labels.partiesBText && (
@@ -455,6 +661,7 @@ export function DocumentForm({
               register={register}
               error={errors.partiesBText?.message}
               rows={2}
+              highlight={fieldHighlights?.partiesBText}
             />
           )}
         </Section>
@@ -509,10 +716,10 @@ export function DocumentForm({
     </div>
 
     {/* ── Action buttons — at the very bottom, full width regardless of
-         big-page mode. The submit button uses form="document-form" so it
-         targets the <form> above even though it lives outside it (standard
-         HTML5). ─────────────────────────────────────────────────────────── */}
-    {mode !== "view" && (
+         big-page mode. Hidden in view mode (incl. any read-only historical
+         version). The submit button uses form="document-form" so it targets
+         the <form> above even though it lives outside it (standard HTML5). ── */}
+    {effectiveMode !== "view" && (
       <div className="flex items-center justify-center gap-3 border-t border-crease pt-6 dark:border-zinc-800">
         <button
           type="submit"
@@ -554,6 +761,21 @@ export function DocumentForm({
         busy={submitting}
       />
     )}
+
+    {confirmMakeCurrent && (
+      <ConfirmDialog
+        title={t("makeCurrent.title")}
+        body={t("makeCurrent.body", {
+          viewed: effectiveVersion ?? 0,
+          next: makeCurrentNextNumber,
+        })}
+        yesLabel={t("makeCurrent.ok")}
+        noLabel={t("makeCurrent.cancel")}
+        onYes={handleMakeCurrent}
+        onNo={() => setConfirmMakeCurrent(false)}
+        busy={submitting}
+      />
+    )}
     </div>
   );
 }
@@ -568,6 +790,16 @@ const COLUMNS_CLASS: Record<1 | 2 | 3 | 4, string> = {
   3: "grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3",
   4: "grid grid-cols-2 gap-2 md:grid-cols-4",
 };
+
+// Slice #18.06: green/red highlight frame for a field that changed in the
+// version currently being viewed (green = added, red = modified/deleted).
+function highlightRing(h?: HighlightColor): string {
+  return h === "green"
+    ? "ring-2 ring-green-500"
+    : h === "red"
+      ? "ring-2 ring-red-500"
+      : "";
+}
 
 function Section({
   title,
@@ -591,14 +823,15 @@ function Section({
 }
 
 type FieldProps = {
-  label:    string;
-  name:     FieldPath<FormValues>;
-  type?:    string;
-  register: UseFormRegister<FormValues>;
-  error?:   string;
+  label:      string;
+  name:       FieldPath<FormValues>;
+  type?:      string;
+  register:   UseFormRegister<FormValues>;
+  error?:     string;
+  highlight?: HighlightColor;
 };
 
-function Field({ label, name, type = "text", register, error }: FieldProps) {
+function Field({ label, name, type = "text", register, error, highlight }: FieldProps) {
   return (
     <label className="flex items-center gap-2 text-sm">
       <span className="w-36 shrink-0 font-medium text-ink dark:text-zinc-300">{label}</span>
@@ -612,6 +845,7 @@ function Field({ label, name, type = "text", register, error }: FieldProps) {
             error
               ? "border-red-500 focus:border-red-600"
               : "border-wire focus:border-focus dark:border-zinc-700",
+            highlightRing(highlight),
           ].join(" ")}
         />
         {error && (
@@ -629,6 +863,7 @@ function TextAreaField({
   error,
   maxLength,
   rows = 3,
+  highlight,
 }: FieldProps & { maxLength?: number; rows?: number }) {
   return (
     <label className="flex items-start gap-2 text-sm">
@@ -644,6 +879,7 @@ function TextAreaField({
             error
               ? "border-red-500 focus:border-red-600"
               : "border-wire focus:border-focus dark:border-zinc-700",
+            highlightRing(highlight),
           ].join(" ")}
         />
         {error && (
@@ -660,6 +896,7 @@ function SelectField({
   register,
   error,
   options,
+  highlight,
 }: FieldProps & { options: { value: string; label: string }[] }) {
   return (
     <label className="flex items-center gap-2 text-sm">
@@ -673,6 +910,7 @@ function SelectField({
             error
               ? "border-red-500 focus:border-red-600"
               : "border-wire focus:border-focus dark:border-zinc-700",
+            highlightRing(highlight),
           ].join(" ")}
         >
           <option value="" disabled hidden />
