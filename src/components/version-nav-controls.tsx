@@ -15,7 +15,7 @@
 // agnostic. `pointer-events-auto` re-enables clicks because the header slot is
 // pointer-events-none (so its empty width never blocks the title).
 
-import type { HighlightColor } from "@/lib/persons/version-diff";
+import type { HighlightColor } from "@/lib/versioning/field-diff";
 
 export type VersionNavView = {
   current:        number;

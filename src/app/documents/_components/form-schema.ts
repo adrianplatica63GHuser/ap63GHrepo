@@ -17,7 +17,7 @@ import {
   labelColorFromHighlights,
   normVal,
   type HighlightColor,
-} from "@/lib/persons/version-diff";
+} from "@/lib/versioning/field-diff";
 
 // ---------------------------------------------------------------------------
 // Form schema — mirrors validation.ts but uses empty string for nullable text
@@ -187,7 +187,7 @@ export function toApiPayload(values: FormValues): Record<string, unknown> {
 // by diffing snapshot N against N-1 — the version label colour and per-field
 // highlight frames (green = added, red = modified/deleted). No corners, no
 // subtypes, no satellites. Built on the shared primitives in
-// @/lib/persons/version-diff. All pure, so they unit-test directly.
+// @/lib/versioning/field-diff. All pure, so they unit-test directly.
 // ===========================================================================
 
 // The 21 document field names — identical between FormValues, DocumentSnapshot,

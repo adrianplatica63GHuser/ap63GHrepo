@@ -25,7 +25,7 @@ import {
   type FieldValues,
   type UseFormRegister,
 } from "react-hook-form";
-import type { HighlightColor } from "@/lib/persons/version-diff";
+import type { HighlightColor } from "@/lib/versioning/field-diff";
 
 /** Per-subfield version-diff highlight frames (Slice #18.05). Keys match the
  *  address subfield names; omitted = no frame. */

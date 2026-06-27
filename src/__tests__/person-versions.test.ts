@@ -21,7 +21,7 @@ import {
   snapshotToFormValues as judToForm,
   emptyFormValues as judEmpty,
 } from "@/app/judicial-persons/_components/form-schema";
-import { fieldFrame, normVal } from "@/lib/persons/version-diff";
+import { fieldFrame, normVal } from "@/lib/versioning/field-diff";
 import type {
   NaturalPersonSnapshot,
   PersonAddressSnapshot,

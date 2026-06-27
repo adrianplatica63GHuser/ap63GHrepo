@@ -1,11 +1,15 @@
 /**
- * Person versioning — shared pure diff primitives  (Slice #18.05)
+ * Versioning — shared pure field-diff primitives  (Slice #18.05 / #18.06)
  *
- * These field-key-driven helpers are reused by BOTH the natural-person and
- * judicial-person form-schema modules so the diff logic lives in one tested
- * place. They operate on flat string maps (Record<key, string|null>) — each
- * subtype flattens its own snapshot into such a map and supplies its field-key
- * list. Pure (no React, no I/O) so they unit-test directly.
+ * Entity-agnostic helpers reused by every versioned entity's form-schema
+ * module (Property, Person — natural + judicial — and Document) so the diff
+ * logic lives in one tested place. They operate on flat string maps
+ * (Record<key, string|null>) — each entity flattens its own snapshot into such
+ * a map and supplies its field-key list. Pure (no React, no I/O) so they
+ * unit-test directly.
+ *
+ * (Originally lived at src/lib/persons/version-diff.ts; relocated to this
+ * neutral home once Document became the third consumer.)
  *
  * Highlight semantics (mirrors Property / Slice #18.02, minus corners):
  *   green = a value was ADDED   (null -> value)

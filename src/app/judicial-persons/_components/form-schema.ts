@@ -31,7 +31,7 @@ import {
   labelColorFromHighlights,
   normVal,
   type HighlightColor,
-} from "@/lib/persons/version-diff";
+} from "@/lib/versioning/field-diff";
 
 const ADDRESS_KINDS = ["HEADQUARTERS", "CORRESPONDENCE"] as const;
 type AddressKind = (typeof ADDRESS_KINDS)[number];

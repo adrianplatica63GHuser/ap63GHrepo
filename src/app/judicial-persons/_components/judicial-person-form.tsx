@@ -20,7 +20,7 @@ import {
   VersionNavControls,
   type VersionNavView,
 } from "@/components/version-nav-controls";
-import type { HighlightColor } from "@/lib/persons/version-diff";
+import type { HighlightColor } from "@/lib/versioning/field-diff";
 import type { JudicialPersonSnapshot } from "@/lib/judicial-persons/validation";
 import {
   computeFieldHighlights,
