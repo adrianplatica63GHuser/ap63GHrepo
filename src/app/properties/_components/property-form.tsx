@@ -36,6 +36,7 @@ import {
 import { CornersManager } from "./corners-manager";
 import { PropertyMiniMap } from "./property-mini-map";
 import { StreetViewPanel } from "./street-view-panel";
+import { VersionNavControls } from "@/components/version-nav-controls";
 
 // ---------------------------------------------------------------------------
 // Version history fetch (Slice #18.02)
@@ -428,7 +429,19 @@ export function PropertyForm({
           existing property once its versions have loaded (versionNav != null)
           and only when the header has provided a slot element. */}
       {versionNavSlot && versionNav &&
-        createPortal(<VersionNavControls nav={versionNav} />, versionNavSlot)}
+        createPortal(
+          <VersionNavControls
+            nav={versionNav}
+            labels={{
+              versionLabel:    t("corners.versionLabel", { n: versionNav.current }),
+              prevVersion:     t("corners.prevVersion"),
+              nextVersion:     t("corners.nextVersion"),
+              makeCurrent:     t("corners.makeCurrent"),
+              makeCurrentHint: t("corners.makeCurrentHint"),
+            }}
+          />,
+          versionNavSlot,
+        )}
 
       {/* Two-column layout (Slice #18.UX.04): a frozen 540px left column
           (cadastral + address + corners table) and a right column holding the
@@ -856,57 +869,6 @@ function ReadOnlyField({ label, value }: { label: string; value: string }) {
       <div className="flex-1 rounded-md border border-wire bg-canvas px-2 py-1 font-mono text-sm text-ink dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-300">
         {value}
       </div>
-    </div>
-  );
-}
-
-// Slice #18.UX.04: the version-nav controls (◀ / version N / ▶ / Make Current),
-// moved off the corners toolbar and portalled onto the property-title header
-// line. `pointer-events-auto` re-enables clicks (the header slot is
-// pointer-events-none so its empty width never blocks the title).
-function VersionNavControls({ nav }: { nav: VersionNav }) {
-  const t = useTranslations("property.corners");
-  return (
-    <div className="pointer-events-auto flex items-center">
-      <button
-        type="button"
-        onClick={nav.onPrev}
-        disabled={!nav.canPrev}
-        aria-label={t("prevVersion")}
-        title={t("prevVersion")}
-        className="rounded-md border border-wire bg-white px-2 py-1 text-xs font-medium text-ink shadow-sm hover:bg-canvas disabled:opacity-30 disabled:cursor-not-allowed dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-      >
-        ←
-      </button>
-      <span
-        className={[
-          "ml-4 text-xs font-semibold whitespace-nowrap",
-          nav.color === "red"
-            ? "text-red-600 dark:text-red-400"
-            : "text-green-600 dark:text-green-400",
-        ].join(" ")}
-      >
-        {t("versionLabel", { n: nav.current })}
-      </span>
-      <button
-        type="button"
-        onClick={nav.onNext}
-        disabled={!nav.canNext}
-        aria-label={t("nextVersion")}
-        title={t("nextVersion")}
-        className="ml-4 rounded-md border border-wire bg-white px-2 py-1 text-xs font-medium text-ink shadow-sm hover:bg-canvas disabled:opacity-30 disabled:cursor-not-allowed dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-      >
-        →
-      </button>
-      <button
-        type="button"
-        onClick={nav.onMakeCurrent}
-        disabled={!nav.canMakeCurrent}
-        title={t("makeCurrentHint")}
-        className="ml-4 rounded-md border border-cta bg-white px-3 py-1 text-xs font-medium text-cta shadow-sm hover:bg-cta-pale disabled:opacity-30 disabled:cursor-not-allowed dark:border-zinc-600 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-      >
-        {t("makeCurrent")}
-      </button>
     </div>
   );
 }
