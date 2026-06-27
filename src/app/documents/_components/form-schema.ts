@@ -11,6 +11,13 @@
  */
 
 import { z } from "zod/v4";
+import type { DocumentSnapshot } from "@/lib/documents/validation";
+import {
+  diffFieldMap,
+  labelColorFromHighlights,
+  normVal,
+  type HighlightColor,
+} from "@/lib/persons/version-diff";
 
 // ---------------------------------------------------------------------------
 // Form schema — mirrors validation.ts but uses empty string for nullable text
@@ -170,4 +177,64 @@ export function toApiPayload(values: FormValues): Record<string, unknown> {
     partiesBText: str(values.partiesBText),
     notes: str(values.notes),
   };
+}
+
+// ===========================================================================
+// Versioning (Slice #18.06) — snapshot conversion + pure diff helpers
+//
+// A "version" is a full snapshot of the document's own fields (flat). These
+// helpers hydrate a snapshot into the form's value shape and derive — purely,
+// by diffing snapshot N against N-1 — the version label colour and per-field
+// highlight frames (green = added, red = modified/deleted). No corners, no
+// subtypes, no satellites. Built on the shared primitives in
+// @/lib/persons/version-diff. All pure, so they unit-test directly.
+// ===========================================================================
+
+// The 21 document field names — identical between FormValues, DocumentSnapshot,
+// and the migration backfill. Used for highlights and edit-dirty.
+const DOC_FIELD_KEYS = [
+  "documentTypeId", "title", "nrDocument", "dateDocument", "institution",
+  "emitent", "bazaLegala", "uatProprietate", "uatProprietar", "suprafata",
+  "nrDosarSuccesoral", "dataDecesului", "ultimulDomiciliu", "nrCertificatDeces",
+  "dateStart", "dateEnd", "titularText", "defunctText", "partiesAText",
+  "partiesBText", "notes",
+] as const satisfies readonly (keyof FormValues)[];
+
+/** Per-field highlight frames, keyed by document field name. */
+export type DocumentFieldHighlights = Partial<
+  Record<(typeof DOC_FIELD_KEYS)[number], HighlightColor>
+>;
+
+/** Snapshot → RHF form values (edit/view hydration). The snapshot is already a
+ *  flat string|null map; documentTypeId is coerced to "" when absent. */
+export function snapshotToFormValues(snap: DocumentSnapshot): FormValues {
+  return fromApiRecord({ ...snap, documentTypeId: snap.documentTypeId ?? "" });
+}
+
+/** Per-field highlight frames for `curr` vs `prev` (empty for version 0). The
+ *  DocumentSnapshot IS the flat field map, so it diffs directly. */
+export function computeFieldHighlights(
+  prev: DocumentSnapshot | null,
+  curr: DocumentSnapshot,
+): DocumentFieldHighlights {
+  return diffFieldMap(prev, curr, DOC_FIELD_KEYS);
+}
+
+/** Version label colour. v0 green; red if any field modified/deleted; else green. */
+export function versionLabelColor(
+  prev: DocumentSnapshot | null,
+  curr: DocumentSnapshot,
+): HighlightColor {
+  if (!prev) return "green";
+  return labelColorFromHighlights(true, computeFieldHighlights(prev, curr));
+}
+
+/** True when two form-value sets are equal field-by-field (empty == ""). Used
+ *  by edit mode to detect divergence from the loaded baseline, independent of
+ *  RHF's reset-sensitive `isDirty`. */
+export function formValuesEqual(a: FormValues, b: FormValues): boolean {
+  for (const k of DOC_FIELD_KEYS) {
+    if (normVal(a[k]) !== normVal(b[k])) return false;
+  }
+  return true;
 }
