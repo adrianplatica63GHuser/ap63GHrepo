@@ -710,6 +710,19 @@
     "saveError": "Could not save",
     "saveErrorSession": "Your session expired — please sign in again and retry.",
     "deleteError": "Could not delete",
+    "version": {
+      "label": "version {n}",
+      "prev": "Previous version",
+      "next": "Next version",
+      "makeCurrent": "Make Current",
+      "makeCurrentHint": "Make this version the current one"
+    },
+    "makeCurrent": {
+      "title": "Make this version current?",
+      "body": "Version {viewed} will be copied to a new version {next}, which becomes the current version. Continue?",
+      "ok": "OK",
+      "cancel": "Cancel"
+    },
     "typeFilterLabel": "Document type:",
     "allTypes": "All types",
     "noTypeSelected": "Please select at least one document type",
