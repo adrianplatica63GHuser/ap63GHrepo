@@ -81,6 +81,5 @@ export const LIST_SCHEMAS: Record<ListKey, z.ZodType<any>> = {
   "institutions":    institutionSchema,
   "services":        serviceInterestSchema,
   "interests":       serviceInterestSchema,
-  "groups":          serviceInterestSchema,
   "stamps":          serviceInterestSchema,
 };

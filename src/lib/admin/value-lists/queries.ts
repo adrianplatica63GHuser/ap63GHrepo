@@ -5,10 +5,11 @@
  * Each function dispatches on the ListKey string via a switch statement —
  * verbose but fully type-safe within each case.
  *
- * "services", "interests", "groups", and "stamps" all operate on
- * lookup_others (renamed from lookup_service_interest in Slice 9.8),
- * filtered by the category column. The category value is injected
- * automatically on create and never exposed in the UI form.
+ * "services", "interests", and "stamps" all operate on lookup_others
+ * (renamed from lookup_service_interest in Slice 9.8), filtered by the
+ * category column. The category value is injected automatically on create and
+ * never exposed in the UI form. ("groups" moved to its own feature in
+ * Slice #18.07 — see src/lib/groups/.)
  */
 
 import { asc, eq } from "drizzle-orm";
@@ -30,7 +31,6 @@ import type { ListKey } from "./config";
 // Category constants — match the values stored in lookup_others.category.
 const CATEGORY_SERVICE  = "Serviciu";
 const CATEGORY_INTEREST = "Interes";
-const CATEGORY_GROUP    = "Grup";
 const CATEGORY_STAMP    = "Stampila";
 
 // Row types — inferred from the Drizzle table definitions.
@@ -115,12 +115,6 @@ export async function listValues(key: ListKey): Promise<LookupRow[]> {
         .from(lookupOthers)
         .where(eq(lookupOthers.category, CATEGORY_INTEREST))
         .orderBy(asc(lookupOthers.sortOrder)) as Promise<LookupRow[]>;
-    case "groups":
-      return db
-        .select()
-        .from(lookupOthers)
-        .where(eq(lookupOthers.category, CATEGORY_GROUP))
-        .orderBy(asc(lookupOthers.sortOrder)) as Promise<LookupRow[]>;
     case "stamps":
       return db
         .select()
@@ -190,13 +184,6 @@ export async function createValue(
         .returning();
       return row as LookupRow;
     }
-    case "groups": {
-      const [row] = await db
-        .insert(lookupOthers)
-        .values({ ...data, category: CATEGORY_GROUP })
-        .returning();
-      return row as LookupRow;
-    }
     case "stamps": {
       const [row] = await db
         .insert(lookupOthers)
@@ -254,7 +241,6 @@ export async function updateValue(
     }
     case "services":
     case "interests":
-    case "groups":
     case "stamps": {
       // Update name (and sort_order if supplied) but never touch category.
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -311,7 +297,6 @@ export async function deleteValue(key: ListKey, id: string): Promise<boolean> {
     }
     case "services":
     case "interests":
-    case "groups":
     case "stamps": {
       const r = await db
         .delete(lookupOthers)

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import Link from "next/link";
 import type { ListKey } from "@/lib/admin/value-lists/config";
 import { ValueListModal } from "./value-list-modal";
 import { DocumentPersonsModal } from "./document-persons-modal";
@@ -97,7 +98,14 @@ export function ValueListHub() {
         <Section label={t("sections.others")}>
           <ListBtn label={t("lists.services")}  onClick={() => open("services")} />
           <ListBtn label={t("lists.interests")} onClick={() => open("interests")} />
-          <ListBtn label={t("lists.groups")}    onClick={() => open("groups")} />
+          {/* Slice #18.07: Groups is now a dedicated screen (target type +
+              system code + member items), not a simple lookup modal. */}
+          <Link
+            href="/admin/groups"
+            className="rounded-md bg-cta px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-cta-d"
+          >
+            {t("lists.groups")}
+          </Link>
           <ListBtn label={t("lists.stamps")}    onClick={() => open("stamps")} />
         </Section>
       </div>

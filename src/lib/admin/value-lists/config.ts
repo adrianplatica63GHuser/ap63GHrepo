@@ -10,9 +10,13 @@
  * NOTE: "service-interests" was replaced in Slice 9.7 by "services" and
  * "interests". Both filter the same underlying lookup_others table (renamed
  * from lookup_service_interest in Slice 9.8) by category ('Serviciu' vs
- * 'Interes'). "groups" ('Grup') and "stamps" ('Stampila') were added in
- * Slice 9.8 and use the same table + pattern. The category field is injected
- * automatically by the query layer and is never exposed in the UI form.
+ * 'Interes'). "stamps" ('Stampila') was added in Slice 9.8 and uses the same
+ * table + pattern. The category field is injected automatically by the query
+ * layer and is never exposed in the UI form.
+ *
+ * NOTE (Slice #18.07): "groups" was removed from this generic list flow —
+ * Groups is now a first-class feature with its own tables (groups /
+ * group_member) and a dedicated screen at /admin/groups.
  */
 
 export const VALID_LIST_KEYS = [
@@ -27,7 +31,6 @@ export const VALID_LIST_KEYS = [
   "institutions",
   "services",
   "interests",
-  "groups",
   "stamps",
 ] as const;
 
@@ -100,9 +103,10 @@ export const LIST_META: Record<ListKey, ListMeta> = {
       { key: "institutionType", labelKey: "institutionType", required: false },
     ],
   },
-  // "services", "interests", "groups", and "stamps" all read from
-  // lookup_others, filtered by category. The category value is injected by
-  // the query layer; the form exposes name + description.
+  // "services", "interests", and "stamps" all read from lookup_others,
+  // filtered by category. The category value is injected by the query layer;
+  // the form exposes name + description. (Groups moved to its own feature in
+  // Slice #18.07 — see /admin/groups.)
   services: {
     titleKey: "services",
     fields: [
@@ -112,13 +116,6 @@ export const LIST_META: Record<ListKey, ListMeta> = {
   },
   interests: {
     titleKey: "interests",
-    fields: [
-      { key: "name",        labelKey: "name",        required: true  },
-      { key: "description", labelKey: "description", required: false, multiline: true },
-    ],
-  },
-  groups: {
-    titleKey: "groups",
     fields: [
       { key: "name",        labelKey: "name",        required: true  },
       { key: "description", labelKey: "description", required: false, multiline: true },
