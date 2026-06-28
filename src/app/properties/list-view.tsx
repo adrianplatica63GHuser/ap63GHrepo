@@ -18,6 +18,7 @@ type PropertyListItem = {
   cadastralNumber: string | null;
   carteFunciara:   string | null;
   surfaceAreaMp:   string | null;
+  calculatedAreaMp: string | null;
   locality:        string | null;
   county:          string | null;
   createdAt:       string;
@@ -257,6 +258,7 @@ export function PropertyListView() {
               <th className="px-4 py-2">{t("table.cadastralNumber")}</th>
               <th className="px-4 py-2">{t("table.carteFunciara")}</th>
               <th className="px-4 py-2 text-right">{t("table.surfaceAreaMp")}</th>
+              <th className="px-4 py-2 text-right">{t("table.calculatedAreaMp")}</th>
               <th className="px-4 py-2">{t("table.locality")}</th>
               <th className="px-4 py-2 w-24" />
             </tr>
@@ -264,21 +266,21 @@ export function PropertyListView() {
           <tbody className="divide-y divide-crease dark:divide-zinc-800">
             {query.isLoading && (
               <tr>
-                <td colSpan={8} className="px-4 py-6 text-center text-fade">
+                <td colSpan={9} className="px-4 py-6 text-center text-fade">
                   {t("loading")}
                 </td>
               </tr>
             )}
             {query.isError && (
               <tr>
-                <td colSpan={8} className="px-4 py-6 text-center text-red-600">
+                <td colSpan={9} className="px-4 py-6 text-center text-red-600">
                   {t("error")}
                 </td>
               </tr>
             )}
             {query.data && query.data.items.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-4 py-6 text-center text-fade">
+                <td colSpan={9} className="px-4 py-6 text-center text-fade">
                   {t("empty")}
                 </td>
               </tr>
@@ -317,6 +319,9 @@ export function PropertyListView() {
                 </td>
                 <td className="px-4 py-2 text-right tabular-nums text-fade dark:text-zinc-400">
                   {formatArea(item.surfaceAreaMp)}
+                </td>
+                <td className="px-4 py-2 text-right tabular-nums text-fade dark:text-zinc-400">
+                  {formatArea(item.calculatedAreaMp)}
                 </td>
                 <td className="px-4 py-2 text-fade dark:text-zinc-400">
                   {[item.locality, item.county].filter(Boolean).join(", ")}
