@@ -4,6 +4,11 @@ import { useTranslations } from "next-intl";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { decimalToDMS, dmsToDecimal, formatDMS } from "@/lib/geo/dms";
+import {
+  cornersToS70Key,
+  wgs84ToStereo70Batch,
+  type Stereo70Point,
+} from "@/lib/geo/convert-client";
 import type { Corner, CornerDiffEntry } from "./form-schema";
 
 // ---------------------------------------------------------------------------
@@ -12,8 +17,6 @@ import type { Corner, CornerDiffEntry } from "./form-schema";
 
 type DisplayFormat = "DD" | "DMS" | "S70";
 type InputMode    = "DD" | "DMS" | "STEREO70";
-
-type Stereo70Point = { north: number; east: number };
 
 type S70State = {
   loading: boolean;
@@ -67,25 +70,6 @@ async function stereo70ToWgs84(
   const pt = data.points?.[0];
   if (!pt) throw new Error("No point returned");
   return { lat: pt.lat, lon: pt.lon };
-}
-
-/** Stable string key derived from corner coordinates. */
-function cornersToKey(corners: Corner[]): string {
-  return corners.map((c) => c.lat + "," + c.lon).join("|");
-}
-
-async function wgs84ToStereo70Batch(corners: Corner[]): Promise<Stereo70Point[]> {
-  const res = await fetch("/api/geo/convert", {
-    method:  "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      direction: "wgs84ToStereo70",
-      points:    corners.map((c) => ({ lat: c.lat, lon: c.lon })),
-    }),
-  });
-  if (!res.ok) throw new Error("Conversion failed");
-  const data = await res.json();
-  return data.points as Stereo70Point[];
 }
 
 // ---------------------------------------------------------------------------
@@ -362,7 +346,7 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
   const [displayFmt,  setDisplayFmt]  = useState<DisplayFormat>("S70");
   const [adding,      setAdding]      = useState(false);
   const [editingIdx,  setEditingIdx]  = useState<number | null>(null);
-  const cornersKey = cornersToKey(corners);
+  const cornersKey = cornersToS70Key(corners);
 
   // TanStack Query handles loading / error / caching — no manual useEffect needed.
   // The query is enabled only when S70 display is active and there are corners to convert.

@@ -12,6 +12,8 @@ import {
   useForm,
 } from "react-hook-form";
 import type { PropertySnapshot } from "@/lib/properties/validation";
+import { shoelaceAreaM2 } from "@/lib/properties/area";
+import { cornersToS70Key, wgs84ToStereo70Batch } from "@/lib/geo/convert-client";
 import { useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-provider";
 import {
   computeCornerDiff,
@@ -176,6 +178,31 @@ export function PropertyForm({
   // Slice #18.03b: arithmetic-mean centroid of the displayed corners, used to
   // position the Street View panel. Recomputed only when corners change.
   const streetViewCentroid = useMemo(() => cornersCentroid(corners), [corners]);
+
+  // Slice #18.09: live Calculated Area (m²) from the displayed corners. Reuses
+  // the SAME query cache key as the corners table's Stereo 70 conversion, so
+  // there's no extra network when that table is in Stereo 70 display mode. It
+  // recomputes as corners are added / moved, and reflects whichever version's
+  // corners are currently shown (live, not the stored snapshot value).
+  const areaS70Query = useQuery({
+    queryKey:             ["s70Conversion", cornersToS70Key(corners)],
+    queryFn:              () => wgs84ToStereo70Batch(corners),
+    enabled:              corners.length >= 3,
+    staleTime:            Infinity,
+    refetchOnWindowFocus: false,
+  });
+  const calculatedArea: number | null =
+    corners.length >= 3 && areaS70Query.data
+      ? shoelaceAreaM2(areaS70Query.data)
+      : null;
+  const calculatedAreaDisplay =
+    corners.length < 3
+      ? "—"
+      : areaS70Query.isLoading
+        ? "…"
+        : areaS70Query.isError || calculatedArea == null
+          ? "—"
+          : calculatedArea.toFixed(2);
 
   // Slice #18.01: read via form.watch() (subscribes to value changes) so the
   // create gate and the edit-dirty check below recompute on every keystroke.
@@ -527,6 +554,12 @@ export function PropertyForm({
               register={register}
               error={errors.surfaceAreaMp?.message}
               highlight={fieldHighlights?.property.surfaceAreaMp}
+            />
+            {/* Slice #18.09: system-computed area from the corners — read-only,
+                live (not registered with RHF). Blank until 3+ corners exist. */}
+            <ReadOnlyField
+              label={t("fields.calculatedAreaMp")}
+              value={calculatedAreaDisplay}
             />
             <div className="col-span-2">
               <TextAreaField
