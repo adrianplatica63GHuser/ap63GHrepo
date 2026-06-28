@@ -12,12 +12,37 @@
 import { and, count, desc, eq, ilike, isNull, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { lookupPersonRole, person, principalObject, property, propertyAddress, propertyCorner, propertyPerson, propertyVersion } from "@/db/schema";
+import { wgs84ToStereo70 } from "@/lib/geo/transdatRO";
+import { shoelaceAreaM2 } from "./area";
 import type {
   PropertyCreate,
   PropertyListQuery,
   PropertySnapshot,
   PropertyUpdate,
 } from "./validation";
+
+// ---------------------------------------------------------------------------
+// Calculated area (Slice #18.09)
+// ---------------------------------------------------------------------------
+//
+// Project the WGS84 corners back to Stereo 70 (metres) and apply the shoelace
+// formula to get the polygon's interior area in m². Returns a drizzle-numeric
+// string (2 dp) or null when there are fewer than 3 corners. Never throws —
+// any projection failure (e.g. a corner outside the Stereo 70 grid coverage)
+// yields null so a save is never blocked by the area calc.
+
+function computeCalculatedAreaMp(
+  corners: { lat: number; lon: number }[],
+): string | null {
+  if (corners.length < 3) return null;
+  try {
+    const planar = corners.map((c) => wgs84ToStereo70(c.lat, c.lon));
+    const area = shoelaceAreaM2(planar);
+    return area == null ? null : area.toFixed(2);
+  } catch {
+    return null;
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Return types
@@ -68,6 +93,8 @@ export function snapshotFromFull(full: PropertyFull): PropertySnapshot {
       useCategoryId:   p.useCategoryId   ?? null,
       // numeric column → drizzle returns string | null; keep as-is.
       surfaceAreaMp:   p.surfaceAreaMp   ?? null,
+      // Slice #18.09: derived-but-persisted; included in the snapshot.
+      calculatedAreaMp: p.calculatedAreaMp ?? null,
       notes:           p.notes           ?? null,
     },
     address: full.address
@@ -274,6 +301,8 @@ export async function createProperty(
         surfaceAreaMp:   propFields.surfaceAreaMp != null
                            ? String(propFields.surfaceAreaMp)
                            : null,
+        // Slice #18.09: computed from the corners supplied at creation.
+        calculatedAreaMp: computeCalculatedAreaMp(cornerList),
         notes:           propFields.notes           ?? null,
       })
       .returning();
@@ -417,6 +446,18 @@ export async function updateProperty(
       .from(propertyCorner)
       .where(eq(propertyCorner.propertyId, id))
       .orderBy(propertyCorner.sequenceNo);
+
+    // Slice #18.09: always recompute the calculated area from the now-settled
+    // corner set (covers added/removed/moved corners; a no-op when corners were
+    // untouched). Persist it and reflect it on the in-memory row used below.
+    const newCalculatedArea = computeCalculatedAreaMp(refreshedCorners);
+    if ((refreshedProp.calculatedAreaMp ?? null) !== newCalculatedArea) {
+      await tx
+        .update(property)
+        .set({ calculatedAreaMp: newCalculatedArea })
+        .where(eq(property.id, id));
+      refreshedProp.calculatedAreaMp = newCalculatedArea;
+    }
 
     const full: PropertyFull = {
       property: refreshedProp,

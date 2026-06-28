@@ -102,6 +102,10 @@ export type PropertySnapshotProperty = {
   carteFunciara:   string | null;
   useCategoryId:   string | null;
   surfaceAreaMp:   string | null;
+  // Slice #18.09: system-computed area (m²) from the corners. Stored in the
+  // snapshot for completeness; it is NOT a separately-highlighted field (it
+  // only changes when corners change, which are already diffed).
+  calculatedAreaMp: string | null;
   notes:           string | null;
 };
 
