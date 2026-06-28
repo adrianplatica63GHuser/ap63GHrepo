@@ -86,11 +86,15 @@ export type GroupTag = { code: string; position: number };
 // ---------------------------------------------------------------------------
 
 export async function listGroups(): Promise<GroupListItem[]> {
+  // NOTE: reference the outer column as a literal `groups.id` rather than
+  // interpolating ${groups.id} — drizzle renders the column object unqualified
+  // (bare "id") inside this correlated subquery, which Postgres rejects as
+  // ambiguous (both group_member and property expose an "id").
   const memberCount = sql<number>`(
     SELECT count(*)::int
     FROM ${groupMember} gm
     JOIN ${property} p ON p.id = gm.property_id AND p.deleted_at IS NULL
-    WHERE gm.group_id = ${groups.id}
+    WHERE gm.group_id = groups.id
   )`;
 
   const rows = await db
@@ -163,10 +167,13 @@ export async function getGroupDetail(id: string): Promise<GroupDetail | null> {
 
   let candidates: GroupCandidate[] | null = null;
   if (g.targetType === "PROPERTY") {
+    // Qualify the outer column as a literal `property.id` (see the NOTE in
+    // listGroups: drizzle renders ${property.id} unqualified inside these
+    // correlated subqueries, which would silently bind to group_member.id).
     const otherGroupCount = sql<number>`(
       SELECT count(DISTINCT gm.group_id)::int
       FROM ${groupMember} gm
-      WHERE gm.property_id = ${property.id} AND gm.group_id <> ${id}
+      WHERE gm.property_id = property.id AND gm.group_id <> ${id}
     )`;
 
     const rows = await db
@@ -182,7 +189,7 @@ export async function getGroupDetail(id: string): Promise<GroupDetail | null> {
           isNull(property.deletedAt),
           sql`NOT EXISTS (
             SELECT 1 FROM ${groupMember} gm2
-            WHERE gm2.group_id = ${id} AND gm2.property_id = ${property.id}
+            WHERE gm2.group_id = ${id} AND gm2.property_id = property.id
           )`,
         ),
       )
@@ -307,6 +314,48 @@ export async function listPropertyGroupTags(propertyId: string): Promise<GroupTa
     .where(eq(groupMember.propertyId, propertyId))
     .orderBy(asc(groups.code));
   return rows as GroupTag[];
+}
+
+// ---------------------------------------------------------------------------
+// Properties-Map "Groups" filter data  (Slice #18.08)
+// ---------------------------------------------------------------------------
+//
+// Two reads that feed the map's group filter:
+//   - listPropertyGroupCodes()       → every PROPERTY-target group code (the
+//     panel checkboxes; includes groups that currently have no members).
+//   - listPropertyGroupMemberships() → (propertyId, code) pairs for each
+//     non-deleted property that belongs to a PROPERTY-target group (the data
+//     the client diffs against the unchecked set to decide visibility).
+// Only PROPERTY-target groups are relevant on the Properties Map — a group of
+// any other target type can never have a property member, so it is excluded.
+
+/** All PROPERTY-target group codes, ascending. Includes empty groups. */
+export async function listPropertyGroupCodes(): Promise<string[]> {
+  const rows = await db
+    .select({ code: groups.code })
+    .from(groups)
+    .where(eq(groups.targetType, "PROPERTY"))
+    .orderBy(asc(groups.code));
+  return rows.map((r) => r.code);
+}
+
+/** (propertyId, group code) pairs for every non-deleted property that is a
+ *  member of a PROPERTY-target group. */
+export async function listPropertyGroupMemberships(): Promise<
+  { propertyId: string; code: string }[]
+> {
+  const rows = await db
+    .select({ propertyId: groupMember.propertyId, code: groups.code })
+    .from(groupMember)
+    .innerJoin(groups, eq(groups.id, groupMember.groupId))
+    .innerJoin(
+      property,
+      and(eq(property.id, groupMember.propertyId), isNull(property.deletedAt)),
+    )
+    .where(eq(groups.targetType, "PROPERTY"));
+  return rows.filter(
+    (r): r is { propertyId: string; code: string } => r.propertyId !== null,
+  );
 }
 
 // Re-export so consumers don't reach across files for the cap.
