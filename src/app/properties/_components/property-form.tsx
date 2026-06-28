@@ -80,12 +80,15 @@ async function fetchValueList(listKey: string): Promise<LookupOption[]> {
 // Props
 // ---------------------------------------------------------------------------
 
+type GroupTag = { code: string; position: number };
+
 type Props = {
   mode:              "create" | "edit" | "view";
   propertyId?:       string;
   propertyCode?:     string;
   initialValues?:    FormValues;
   initialCorners?:   Corner[];
+  groupTags?:        GroupTag[];
   onBigMapChange?:   (val: boolean) => void;
   // Slice #18.UX.04 — DOM node in the page header to portal the version-nav
   // controls into, so they render centered on the property-title line.
@@ -102,6 +105,7 @@ export function PropertyForm({
   propertyCode,
   initialValues,
   initialCorners = [],
+  groupTags = [],
   onBigMapChange,
   versionNavSlot,
 }: Props) {
@@ -597,9 +601,25 @@ export function PropertyForm({
           {/* Corners table — OUTSIDE the disabled fieldset. The map and Street
               View now live in the right column; only the table stays here. */}
           <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-            <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
-              {t("sections.corners")}
-            </h2>
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
+                {t("sections.corners")}
+              </h2>
+              {/* Slice #18.07: group membership badges — [code position], up to 3. */}
+              {groupTags.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1">
+                  {groupTags.map((g) => (
+                    <span
+                      key={g.code}
+                      title={t("groupBadgeTitle", { code: g.code, position: g.position })}
+                      className="rounded border border-cta/40 bg-cta-pale px-1.5 py-0.5 font-mono text-xs font-medium text-cta dark:border-cta/30 dark:bg-cta/10"
+                    >
+                      [{g.code} {String(g.position).padStart(2, "0")}]
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
             <CornersManager
               corners={corners}
               onChange={setCorners}
