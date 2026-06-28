@@ -307,61 +307,109 @@ export function computeDivision(input: DivisionInput): DivisionResult {
 
   const N = owners.length;
 
+  // Width-side direction in the (u,v) frame. Owner N-1's east border (and the
+  // road's east end) run PARALLEL to the parcel's end/width sides, passing
+  // through the road's NE corner — not strictly perpendicular to the road. For a
+  // true rectangle this is exactly vertical (= perpendicular); for the usual
+  // near-rectangle it is the slight tilt of the existing side boundaries. The
+  // slope is fixed (parallel to the width sides) and only the line's POSITION is
+  // solved for owner N-1's area, so owner N-1 still gets its exact final area
+  // and owner N takes the remainder.
+  const widthDirUV = (() => {
+    let du = 0;
+    let dv = 0;
+    for (const e of widthEdges) {
+      const a = toUV(e.a);
+      const b = toUV(e.b);
+      let eu = b.x - a.x;
+      let ev = b.y - a.y;
+      if (ev < 0) {
+        eu = -eu;
+        ev = -ev;
+      } // orient toward +v (north)
+      const len = Math.hypot(eu, ev) || 1;
+      du += eu / len;
+      dv += ev / len;
+    }
+    const len = Math.hypot(du, dv) || 1;
+    return { wu: du / len, wv: dv / len };
+  })();
+  const { wu, wv } = widthDirUV;
+
+  // Road-top line T: the horizontal line at perpendicular distance w from the
+  // road edge (v = vT). The slanted boundary pivots about R_NE = (cutN, vT).
+  const vT = vRoad + interiorSign * roadWidth;
+
   const roadBand = clipHalfPlane(Q, inRoadBand); // full-length road band (all u)
   const northBand = clipHalfPlane(Q, beyondRoad); // owner strip (all u)
   const uWest = Math.min(...northBand.map((p) => p.x));
 
-  const areaEastOf = (cut: number) => polyArea(clipHalfPlane(Q, (p) => p.x - cut));
-  const roadAreaWestOf = (cut: number) =>
-    polyArea(clipHalfPlane(roadBand, (p) => cut - p.x));
+  // Owner N's west boundary = the line through R_NE = (cutN, vT) parallel to the
+  // width direction. "east of the line" = owner N; "west" = road + owners 1..N-1.
+  const eastOfLine = (cutN: number) => (p: P) =>
+    (p.x - cutN) * wv - (p.y - vT) * wu;
+  const westOfLine = (cutN: number) => (p: P) =>
+    -((p.x - cutN) * wv - (p.y - vT) * wu);
+
+  const roadAreaFor = (cutN: number) =>
+    polyArea(clipHalfPlane(roadBand, westOfLine(cutN)));
   const northStrip = (lo: number, hi: number) =>
     polyArea(clipHalfPlane(clipHalfPlane(northBand, (p) => p.x - lo), (p) => hi - p.x));
+  // Owner N-1: north-of-road, east of c_{N-2}, west of the slanted line.
+  const ownerN1AreaFor = (cLast: number, cutN: number) =>
+    polyArea(
+      clipHalfPlane(clipHalfPlane(northBand, (p) => p.x - cLast), westOfLine(cutN)),
+    );
 
-  // Fixed-point on the road area: place owners 1…N-1 by their final areas, read
-  // the last cut as the road end, recompute the road area, repeat to convergence.
+  // Fixed-point on the road area: owners 1..N-2 are perpendicular strips; owner
+  // N-1's slanted boundary position (cutN) is solved for its final area; the road
+  // is the band west of that line. Iterate until the road area settles.
   let A_road = 0;
   let cutN = uMax;
-  let cuts: number[] = [];
+  let cuts: number[] = [uWest];
   let finals: number[] = [];
   for (let iter = 0; iter < 100; iter++) {
     finals = owners.map((o) => o.fraction * (A_total - A_road));
     cuts = [uWest];
     let lo = uWest;
-    for (let i = 0; i < N - 1; i++) {
+    for (let i = 0; i < N - 2; i++) {
       const target = finals[i];
-      const c = bisect(
-        (c2) => northStrip(lo, c2) - target,
-        lo,
-        uMax,
-      );
+      const c = bisect((c2) => northStrip(lo, c2) - target, lo, uMax);
       cuts.push(c);
       lo = c;
     }
-    cutN = cuts[N - 1];
-    const newRoad = roadAreaWestOf(cutN);
+    const cLast = cuts[cuts.length - 1]; // west border of owner N-1
+    cutN = bisect((c) => ownerN1AreaFor(cLast, c) - finals[N - 2], cLast, uMax);
+    const newRoad = roadAreaFor(cutN);
     if (Math.abs(newRoad - A_road) < 1e-7) {
       A_road = newRoad;
       break;
     }
     A_road = newRoad;
   }
+  const cLast = cuts[cuts.length - 1];
 
   // Build the owner polygons (in the road-aligned frame, then back to Stereo 70).
-  const region = clipHalfPlane(clipHalfPlane(Q, beyondRoad), (p) => cutN - p.x);
-  const toResultPoly = (uv: P[]): S70Point[] =>
-    uv.map((p) => toS70(fromUVtoP(p)));
+  const toResultPoly = (uv: P[]): S70Point[] => uv.map((p) => toS70(fromUVtoP(p)));
 
   const ownerResults: OwnerResult[] = [];
   for (let i = 0; i < N; i++) {
     let uvPoly: P[];
-    if (i < N - 1) {
+    if (i < N - 2) {
+      // Owners 1..N-2: perpendicular strips north of the road.
       uvPoly = clipHalfPlane(
-        clipHalfPlane(region, (p) => p.x - cuts[i]),
+        clipHalfPlane(northBand, (p) => p.x - cuts[i]),
         (p) => cuts[i + 1] - p.x,
       );
+    } else if (i === N - 2) {
+      // Owner N-1: east of its perpendicular west border, west of the slanted line.
+      uvPoly = clipHalfPlane(
+        clipHalfPlane(northBand, (p) => p.x - cLast),
+        westOfLine(cutN),
+      );
     } else {
-      // Owner N: the full-height remainder east of the road end.
-      uvPoly = clipHalfPlane(Q, (p) => p.x - cutN);
+      // Owner N: the full-height remainder east of the slanted line.
+      uvPoly = clipHalfPlane(Q, eastOfLine(cutN));
     }
     ownerResults.push({
       name: owners[i].name,
@@ -374,7 +422,7 @@ export function computeDivision(input: DivisionInput): DivisionResult {
     });
   }
 
-  const roadUV = clipHalfPlane(roadBand, (p) => cutN - p.x);
+  const roadUV = clipHalfPlane(roadBand, westOfLine(cutN));
 
   return {
     orientation,

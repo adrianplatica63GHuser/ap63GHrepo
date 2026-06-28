@@ -54,8 +54,8 @@ describe("computeDivision — sample file", () => {
   it("computes a road that fits within the polygon length", () => {
     expect(result.roadLength).toBeGreaterThan(0);
     expect(result.roadLength).toBeLessThan(result.lengthSide);
-    expect(result.roadLength).toBeCloseTo(189.38, 0);
-    expect(result.roadArea).toBeCloseTo(1327.87, 0);
+    expect(result.roadLength).toBeCloseTo(190.44, 0);
+    expect(result.roadArea).toBeCloseTo(1338.5, 0);
   });
 
   it("gives owners 1..N-1 exactly their final area", () => {
