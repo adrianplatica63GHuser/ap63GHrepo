@@ -15,6 +15,8 @@ import {
   useMapsLibrary,
 } from "@vis.gl/react-google-maps";
 
+import { isPropertyVisibleForGroups } from "@/lib/groups/map-filter";
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -22,13 +24,20 @@ import {
 type Corner = { lat: number; lon: number };
 
 type MapProperty = {
-  id:       string;
-  code:     string;
-  nickname: string | null;
-  corners:  Corner[];
+  id:         string;
+  code:       string;
+  nickname:   string | null;
+  corners:    Corner[];
+  // PROPERTY-group codes this property belongs to (Slice #18.08). Empty when
+  // it belongs to no group.
+  groupCodes: string[];
 };
 
-type MapResponse = { items: MapProperty[] };
+type MapResponse = {
+  items: MapProperty[];
+  // Every PROPERTY-target group code — the Groups panel's checkbox list.
+  allGroupCodes: string[];
+};
 
 type LatLng = { lat: number; lng: number };
 
@@ -353,6 +362,12 @@ export default function PropertyMap() {
   const [showTabs,  setShowTabs]  = useState(false);
   const [activeTab, setActiveTab] = useState<ActiveTab>("all");
 
+  // Groups filter (Slice #18.08) — panel open state + the set of UNCHECKED
+  // group codes. Tracking unchecked (rather than checked) means "all checked"
+  // is the empty-set default, so no async init from the loaded code list.
+  const [groupsPanelOpen, setGroupsPanelOpen] = useState(false);
+  const [uncheckedGroups, setUncheckedGroups] = useState<Set<string>>(new Set());
+
   // Delete flow
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting,          setDeleting]          = useState(false);
@@ -384,14 +399,26 @@ export default function PropertyMap() {
     queryFn:  fetchMapData,
   });
 
-  const items        = data?.items ?? [];
-  const withGeometry = items.filter((p) => p.corners.length >= 1);
+  const items         = data?.items ?? [];
+  const allGroupCodes = data?.allGroupCodes ?? [];
+  const withGeometry  = items.filter((p) => p.corners.length >= 1);
 
-  // Items shown on the current tab — filtered to selected IDs on the "selected" tab.
+  // Group filter — applied only on the "all" tab. A property is hidden only
+  // when every group it belongs to is unchecked (see isPropertyVisibleForGroups).
+  const groupFiltered = withGeometry.filter((p) =>
+    isPropertyVisibleForGroups(p.groupCodes, uncheckedGroups),
+  );
+
+  // Items shown on the current tab — filtered to selected IDs on the "selected"
+  // tab; group-filtered on the "all" tab.
   const displayItems =
     activeTab === "selected"
       ? withGeometry.filter((p) => selectedIds.has(p.id))
-      : withGeometry;
+      : groupFiltered;
+
+  // Whether every group is currently checked (drives the master checkbox).
+  const allGroupsChecked =
+    allGroupCodes.length > 0 && allGroupCodes.every((c) => !uncheckedGroups.has(c));
 
   // Properties whose corner set is identical to at least one other property.
   const duplicateIds = findDuplicateIds(withGeometry);
@@ -482,6 +509,27 @@ export default function PropertyMap() {
       return next;
     });
   }, []);
+
+  // -------------------------------------------------------------------------
+  // Groups filter — toggle a single code / select-all-deselect-all (Slice #18.08)
+  // -------------------------------------------------------------------------
+
+  const toggleGroupChecked = useCallback((code: string) => {
+    setUncheckedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(code)) next.delete(code);
+      else next.add(code);
+      return next;
+    });
+  }, []);
+
+  const toggleAllGroups = useCallback(() => {
+    // If every code is currently checked, uncheck all; otherwise check all.
+    setUncheckedGroups((prev) => {
+      const everyChecked = allGroupCodes.every((c) => !prev.has(c));
+      return everyChecked ? new Set(allGroupCodes) : new Set();
+    });
+  }, [allGroupCodes]);
 
   // -------------------------------------------------------------------------
   // Drag-to-select — container-level DOM listeners
@@ -847,7 +895,74 @@ export default function PropertyMap() {
         {/* Only shown on the "all properties" tab                           */}
         {/* ---------------------------------------------------------------- */}
         {activeTab === "all" && (
-          <div className="absolute top-3 right-3 z-20 flex items-center gap-2">
+          <div className="absolute top-3 right-3 z-20 flex items-start gap-2">
+            {/* Groups filter — button + dropdown panel (Slice #18.08).        */}
+            {/* Panel is anchored under the button (left-0 right-0 → exactly    */}
+            {/* the button's width) and lists each group code with a checkbox;  */}
+            {/* all checked by default. Unchecking a group hides properties     */}
+            {/* whose every group is unchecked.                                 */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setGroupsPanelOpen((o) => !o)}
+                aria-expanded={groupsPanelOpen}
+                title={t("map.groupsButton")}
+                className={[
+                  "flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded shadow border transition-colors",
+                  groupsPanelOpen
+                    ? "bg-cta text-white border-cta"
+                    : "bg-white text-ink border-wire hover:bg-canvas",
+                ].join(" ")}
+              >
+                {t("map.groupsButton")}
+              </button>
+
+              {groupsPanelOpen && (
+                <div className="absolute left-0 right-0 top-full mt-1 rounded shadow-lg border border-wire bg-white overflow-hidden">
+                  {allGroupCodes.length === 0 ? (
+                    <div className="px-2 py-1.5 text-[11px] text-fade whitespace-nowrap">
+                      {t("map.groupsEmpty")}
+                    </div>
+                  ) : (
+                    <>
+                      {/* Select all / deselect all */}
+                      <label className="flex items-center gap-1.5 px-2 py-1.5 border-b border-crease cursor-pointer hover:bg-cta-pale">
+                        <input
+                          type="checkbox"
+                          checked={allGroupsChecked}
+                          onChange={toggleAllGroups}
+                          className="h-3.5 w-3.5 shrink-0 rounded border-wire accent-cta"
+                        />
+                        <span className="text-[11px] font-semibold text-ink truncate">
+                          {allGroupsChecked
+                            ? t("map.groupsDeselectAll")
+                            : t("map.groupsSelectAll")}
+                        </span>
+                      </label>
+
+                      {/* Group list — 5 rows tall, then scrolls */}
+                      <div className="max-h-[150px] overflow-y-auto">
+                        {allGroupCodes.map((code) => (
+                          <label
+                            key={code}
+                            className="flex items-center gap-1.5 px-2 py-1.5 cursor-pointer hover:bg-cta-pale"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={!uncheckedGroups.has(code)}
+                              onChange={() => toggleGroupChecked(code)}
+                              className="h-3.5 w-3.5 shrink-0 rounded border-wire accent-cta"
+                            />
+                            <span className="font-mono text-xs text-ink">{code}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+
             <button
               type="button"
               onClick={toggleSelectMode}

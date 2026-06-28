@@ -43,7 +43,11 @@
       "selectedPropertiesTab": "Selected Properties",
       "selectLink": "Select",
       "unselectLink": "Unselect",
-      "displayAllSelected": "Display all selected"
+      "displayAllSelected": "Display all selected",
+      "groupsButton": "Groups",
+      "groupsSelectAll": "Select all",
+      "groupsDeselectAll": "Deselect all",
+      "groupsEmpty": "No groups"
     },
     "createTitle": "New Property",
     "saveError": "Could not save",
