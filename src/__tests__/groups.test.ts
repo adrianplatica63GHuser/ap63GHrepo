@@ -8,6 +8,7 @@
 
 import { encodeGroupCode, GROUP_CODE_ALPHABET } from "@/lib/groups/code";
 import { computeMemberDelta } from "@/lib/groups/members";
+import { isPropertyVisibleForGroups } from "@/lib/groups/map-filter";
 
 describe("encodeGroupCode", () => {
   it("starts at AA and steps through the alphabet", () => {
@@ -67,5 +68,36 @@ describe("computeMemberDelta", () => {
     const { toAdd, toRemove } = computeMemberDelta([], ["x", "y"]);
     expect(toAdd).toEqual(["x", "y"]);
     expect(toRemove).toEqual([]);
+  });
+});
+
+describe("isPropertyVisibleForGroups", () => {
+  it("is always visible when the property belongs to no group", () => {
+    expect(isPropertyVisibleForGroups([], new Set())).toBe(true);
+    // Even when other groups are unchecked, a no-group property still shows.
+    expect(isPropertyVisibleForGroups([], new Set(["AA", "AB"]))).toBe(true);
+  });
+
+  it("is visible when none of its groups are unchecked", () => {
+    expect(isPropertyVisibleForGroups(["AA"], new Set())).toBe(true);
+    expect(isPropertyVisibleForGroups(["AA", "AB"], new Set())).toBe(true);
+  });
+
+  it("hides a single-group property when its only group is unchecked", () => {
+    expect(isPropertyVisibleForGroups(["AA"], new Set(["AA"]))).toBe(false);
+  });
+
+  it("keeps a multi-group property visible while at least one group is checked", () => {
+    // AA unchecked but AB still checked → visible.
+    expect(isPropertyVisibleForGroups(["AA", "AB"], new Set(["AA"]))).toBe(true);
+  });
+
+  it("hides a multi-group property only when every one of its groups is unchecked", () => {
+    expect(isPropertyVisibleForGroups(["AA", "AB"], new Set(["AA", "AB"]))).toBe(false);
+  });
+
+  it("ignores unchecked codes the property does not belong to", () => {
+    // Property is in AB (checked); AA + AC unchecked but irrelevant → visible.
+    expect(isPropertyVisibleForGroups(["AB"], new Set(["AA", "AC"]))).toBe(true);
   });
 });
