@@ -339,6 +339,7 @@ export function SidebarNav() {
     users:                     t("items.users"),
     referenceData:             t("items.referenceData"),
     import:                    t("items.import"),
+    calculation:               t("items.calculation"),
     export:                    t("items.export"),
     helpContent:               t("items.helpContent"),
     settings:                  t("items.settings"),

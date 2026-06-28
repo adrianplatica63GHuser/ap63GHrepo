@@ -1,4 +1,65 @@
 {
+  "calculation": {
+    "pageTitle": "Calculation",
+    "intro": "Upload a 4-section division data file. The tool computes where the border between each owner must be — carving out a shared road strip along one long side, then dividing the remaining land by each owner's ownership fraction — and lets you review the result on the map before creating the properties and a group.",
+    "buttons": {
+      "chooseFile": "Choose data file…",
+      "reset": "Reset",
+      "confirm": "Create properties + group",
+      "creating": "Creating…",
+      "startOver": "Start over"
+    },
+    "status": {
+      "computing": "Computing the division…"
+    },
+    "orientation": {
+      "HORIZONTAL": "Horizontal",
+      "VERTICAL": "Vertical"
+    },
+    "roadSides": {
+      "North": "North",
+      "South": "South",
+      "East": "East",
+      "West": "West"
+    },
+    "summary": {
+      "orientation": "Orientation",
+      "totalArea": "Total area",
+      "roadSide": "Road side",
+      "roadWidth": "Road width",
+      "lengthSide": "Length (long side)",
+      "widthSide": "Width (short side)",
+      "roadLength": "Road length",
+      "roadArea": "Road area",
+      "percentWarning": "Ownership percentages total {total}% (not 100%). The last owner absorbs the remainder."
+    },
+    "table": {
+      "owner": "Owner",
+      "percent": "Share",
+      "originalArea": "Original area (m²)",
+      "roadParticipation": "Road participation (m²)",
+      "finalArea": "Final area (m²)",
+      "computedArea": "Computed area (m²)"
+    },
+    "commit": {
+      "title": "Create {count} owner properties and a group",
+      "groupDescription": "Group description",
+      "includeRoad": "Also create the common road as a property and add it to the group",
+      "roadNickname": "Road nickname"
+    },
+    "group": {
+      "defaultDescription": "Diviz — {file}"
+    },
+    "road": {
+      "defaultNickname": "Common road"
+    },
+    "success": {
+      "title": "Created group {code} with the following properties:"
+    },
+    "errors": {
+      "session": "Your session expired — please sign in again and retry."
+    }
+  },
   "home": {
     "title": "GA40",
     "subtitle": "People · Documents · Properties",
@@ -143,7 +204,8 @@
       "nickname": "Nickname",
       "cadastralNumber": "Cadastral No.",
       "carteFunciara": "Carte Funciara",
-      "surfaceAreaMp": "Area (m²)",
+      "surfaceAreaMp": "Official (m²)",
+      "calculatedAreaMp": "Calculated (m²)",
       "locality": "Locality"
     },
     "tabs": {
@@ -640,6 +702,7 @@
       "users": "Users & Access",
       "referenceData": "Reference Data",
       "import": "Import",
+      "calculation": "Calculation",
       "export": "Export",
       "helpContent": "Help Content",
       "settings": "Settings"

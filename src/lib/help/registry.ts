@@ -27,6 +27,7 @@ export const HELP_SCREENS = [
   { key: "judicial-person-detail", label: "Persons — Judicial Person Detail" },
   { key: "admin-value-lists", label: "Administration — Reference Data" },
   { key: "admin-import", label: "Administration — Import" },
+  { key: "admin-calculation", label: "Administration — Calculation" },
 ] as const;
 
 export type HelpScreenKey = (typeof HELP_SCREENS)[number]["key"];

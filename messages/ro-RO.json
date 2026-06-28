@@ -1,4 +1,65 @@
 {
+  "calculation": {
+    "pageTitle": "Calcul",
+    "intro": "Încărcați un fișier de date în 4 secțiuni. Instrumentul calculează unde trebuie să fie granița dintre fiecare proprietar — decupând o fâșie de drum comun de-a lungul unei laturi lungi, apoi împărțind terenul rămas după cota de proprietate a fiecăruia — și vă permite să verificați rezultatul pe hartă înainte de a crea proprietățile și un grup.",
+    "buttons": {
+      "chooseFile": "Alegeți fișierul de date…",
+      "reset": "Resetează",
+      "confirm": "Creează proprietăți + grup",
+      "creating": "Se creează…",
+      "startOver": "Reia"
+    },
+    "status": {
+      "computing": "Se calculează împărțirea…"
+    },
+    "orientation": {
+      "HORIZONTAL": "Orizontal",
+      "VERTICAL": "Vertical"
+    },
+    "roadSides": {
+      "North": "Nord",
+      "South": "Sud",
+      "East": "Est",
+      "West": "Vest"
+    },
+    "summary": {
+      "orientation": "Orientare",
+      "totalArea": "Suprafață totală",
+      "roadSide": "Latura drumului",
+      "roadWidth": "Lățime drum",
+      "lengthSide": "Lungime (latura lungă)",
+      "widthSide": "Lățime (latura scurtă)",
+      "roadLength": "Lungime drum",
+      "roadArea": "Suprafață drum",
+      "percentWarning": "Cotele de proprietate însumează {total}% (nu 100%). Ultimul proprietar preia diferența."
+    },
+    "table": {
+      "owner": "Proprietar",
+      "percent": "Cotă",
+      "originalArea": "Suprafață inițială (m²)",
+      "roadParticipation": "Participare la drum (m²)",
+      "finalArea": "Suprafață finală (m²)",
+      "computedArea": "Suprafață calculată (m²)"
+    },
+    "commit": {
+      "title": "Creează {count} proprietăți și un grup",
+      "groupDescription": "Descrierea grupului",
+      "includeRoad": "Creează și drumul comun ca proprietate și adaugă-l în grup",
+      "roadNickname": "Poreclă drum"
+    },
+    "group": {
+      "defaultDescription": "Diviz — {file}"
+    },
+    "road": {
+      "defaultNickname": "Drum comun"
+    },
+    "success": {
+      "title": "S-a creat grupul {code} cu următoarele proprietăți:"
+    },
+    "errors": {
+      "session": "Sesiunea a expirat — autentificați-vă din nou și reîncercați."
+    }
+  },
   "home": {
     "title": "GA40",
     "subtitle": "Persoane · Acte · Proprietăți",
@@ -143,7 +204,8 @@
       "nickname": "Poreclă",
       "cadastralNumber": "Nr. cadastru",
       "carteFunciara": "Nr. CF",
-      "surfaceAreaMp": "Suprafață (m²)",
+      "surfaceAreaMp": "Oficială (m²)",
+      "calculatedAreaMp": "Calculată (m²)",
       "locality": "Localitate"
     },
     "tabs": {
@@ -640,6 +702,7 @@
       "users": "Utilizatori & Acces",
       "referenceData": "Date de referință",
       "import": "Import",
+      "calculation": "Calcul",
       "export": "Export",
       "helpContent": "Conținut Ajutor",
       "settings": "Setări"
