@@ -272,6 +272,7 @@ CREATE TABLE property (
   carte_funciara      text,
   use_category_id     uuid,
   surface_area_mp     numeric(12,2),
+  calculated_area_mp  numeric(12,2),
   notes               text,
   created_at          timestamptz   NOT NULL DEFAULT now(),
   updated_at          timestamptz   NOT NULL DEFAULT now(),

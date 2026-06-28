@@ -385,8 +385,13 @@ export const property = pgTable("property", {
   useCategoryId: uuid("use_category_id")
     .references(() => lookupUseCategory.id, { onDelete: "set null" }),
 
-  // "Suprafata in mp" — area in square metres.
+  // "Suprafata in mp" — official/declared area in square metres (user-entered).
   surfaceAreaMp: numeric("surface_area_mp", { precision: 12, scale: 2 }),
+
+  // Slice #18.09: system-computed area (m²) of the polygon formed by the
+  // ordered corners. NOT user-editable — recomputed on every save from the
+  // corners (WGS84 → Stereo 70 → shoelace). NULL when fewer than 3 corners.
+  calculatedAreaMp: numeric("calculated_area_mp", { precision: 12, scale: 2 }),
 
   notes: text("notes"),
 
