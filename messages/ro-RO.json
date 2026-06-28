@@ -276,7 +276,8 @@
       "back": "Înapoi",
       "close": "Închide",
       "textImportDone": "Proprietatea a fost importată cu succes."
-    }
+    },
+    "groupBadgeTitle": "Grup {code}, poziția {position}"
   },
   "address": {
     "streetLine": "Stradă, Nr., Bloc, Etaj, Ap.",
@@ -1194,6 +1195,62 @@
       "errorUnexpected": "A apărut o eroare. Te rugăm să încerci din nou.",
       "successTitle": "Cerere trimisă!",
       "successMessage": "Un administrator va analiza cererea ta. Vei primi un email când contul tău este aprobat."
+    }
+  },
+  "group": {
+    "pageTitle": "Grupuri",
+    "backToValueLists": "Înapoi la Liste de valori",
+    "backToGroups": "Înapoi la Grupuri",
+    "editorTitle": "Grup {code}",
+    "add": "Adaugă",
+    "addTitle": "Adaugă grup nou",
+    "count": "{count} grupuri",
+    "save": "Salvează",
+    "saving": "Se salvează…",
+    "cancel": "Anulează",
+    "saveGroup": "Salvează grupul",
+    "unsavedChanges": "Modificări nesalvate",
+    "saveErrorSession": "Sesiunea a expirat. Autentifică-te din nou și reîncearcă.",
+    "codeAssignedOnSave": "Atribuit automat la salvare",
+    "descriptionCount": "{count}/{max} caractere",
+    "notImplemented": "Apartenența pentru acest tip de țintă nu este implementată încă — momentan sunt acceptate doar Proprietățile.",
+    "addItems": "Adaugă elemente",
+    "hideItems": "Ascunde elementele",
+    "searchPlaceholder": "caută după poreclă sau cod",
+    "addToGroup": "Adaugă în grup ({count})",
+    "removeFromGroup": "Elimină din grup ({count})",
+    "pendingPosition": "[nou]",
+    "fields": {
+      "target": "Țintă",
+      "description": "Descriere",
+      "code": "Cod"
+    },
+    "targets": {
+      "PHYSICAL_PERSON": "Persoană fizică",
+      "JUDICIAL_PERSON": "Persoană juridică",
+      "PROPERTY": "Proprietate",
+      "DOCUMENT": "Document"
+    },
+    "table": {
+      "code": "Cod",
+      "description": "Descriere",
+      "edit": "Editează",
+      "delete": "Șterge",
+      "loading": "Se încarcă…",
+      "error": "Eroare la încărcare",
+      "empty": "Niciun grup încă"
+    },
+    "panels": {
+      "available": "Disponibile",
+      "inGroup": "În grup",
+      "availableEmpty": "Niciun element disponibil",
+      "inGroupEmpty": "Niciun element în acest grup încă"
+    },
+    "confirm": {
+      "deleteBody": "Ștergeți acest grup? Această acțiune nu poate fi anulată.",
+      "delete": "Șterge",
+      "deleting": "Se șterge…",
+      "cancel": "Anulează"
     }
   }
 }

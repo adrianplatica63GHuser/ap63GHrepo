@@ -276,7 +276,8 @@
       "back": "Back",
       "close": "Close",
       "textImportDone": "Property imported successfully."
-    }
+    },
+    "groupBadgeTitle": "Group {code}, position {position}"
   },
   "address": {
     "streetLine": "Street, No., Block, Floor, Apt",
@@ -1194,6 +1195,62 @@
       "errorUnexpected": "Something went wrong. Please try again.",
       "successTitle": "Request submitted!",
       "successMessage": "An administrator will review your request. You will receive an email once your account is approved."
+    }
+  },
+  "group": {
+    "pageTitle": "Groups",
+    "backToValueLists": "Back to Value Lists",
+    "backToGroups": "Back to Groups",
+    "editorTitle": "Group {code}",
+    "add": "Add",
+    "addTitle": "Add new group",
+    "count": "{count} groups",
+    "save": "Save",
+    "saving": "Saving…",
+    "cancel": "Cancel",
+    "saveGroup": "Save group",
+    "unsavedChanges": "Unsaved changes",
+    "saveErrorSession": "Your session expired. Please sign in again and retry.",
+    "codeAssignedOnSave": "Assigned automatically on save",
+    "descriptionCount": "{count}/{max} characters",
+    "notImplemented": "Membership for this target type is not implemented yet — only Properties are supported for now.",
+    "addItems": "Add items",
+    "hideItems": "Hide items",
+    "searchPlaceholder": "search by nickname or code",
+    "addToGroup": "Add to Group ({count})",
+    "removeFromGroup": "Remove from Group ({count})",
+    "pendingPosition": "[new]",
+    "fields": {
+      "target": "Target",
+      "description": "Description",
+      "code": "Code"
+    },
+    "targets": {
+      "PHYSICAL_PERSON": "Physical person",
+      "JUDICIAL_PERSON": "Judicial person",
+      "PROPERTY": "Property",
+      "DOCUMENT": "Document"
+    },
+    "table": {
+      "code": "Code",
+      "description": "Description",
+      "edit": "Edit",
+      "delete": "Delete",
+      "loading": "Loading…",
+      "error": "Failed to load",
+      "empty": "No groups yet"
+    },
+    "panels": {
+      "available": "Available",
+      "inGroup": "In group",
+      "availableEmpty": "No items available",
+      "inGroupEmpty": "No items in this group yet"
+    },
+    "confirm": {
+      "deleteBody": "Delete this group? This cannot be undone.",
+      "delete": "Delete",
+      "deleting": "Deleting…",
+      "cancel": "Cancel"
     }
   }
 }
