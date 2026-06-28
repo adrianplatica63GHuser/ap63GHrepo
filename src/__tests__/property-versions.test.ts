@@ -32,6 +32,7 @@ const EMPTY_PROP: PropertySnapshot["property"] = {
   carteFunciara:   null,
   useCategoryId:   null,
   surfaceAreaMp:   null,
+  calculatedAreaMp: null,
   notes:           null,
 };
 
