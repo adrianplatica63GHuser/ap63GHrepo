@@ -68,7 +68,8 @@
       "cadastralNumber": "Nr. cadastru",
       "carteFunciara": "Nr. CF",
       "useCategory": "Categorie de folosință",
-      "surfaceAreaMp": "Suprafață (m²)",
+      "surfaceAreaMp": "Suprafață oficială (m²)",
+      "calculatedAreaMp": "Suprafață calculată (m²)",
       "notes": "Note",
       "noneOption": "— niciunul —"
     },

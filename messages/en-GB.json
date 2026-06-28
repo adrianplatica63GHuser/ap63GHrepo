@@ -68,7 +68,8 @@
       "cadastralNumber": "Cadastral No.",
       "carteFunciara": "Carte Funciara",
       "useCategory": "Use Category",
-      "surfaceAreaMp": "Surface Area (m²)",
+      "surfaceAreaMp": "Official Surface Area (m²)",
+      "calculatedAreaMp": "Calculated Area (m²)",
       "notes": "Notes",
       "noneOption": "— none —"
     },
