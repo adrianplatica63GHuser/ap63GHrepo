@@ -984,6 +984,57 @@ export const documentDocument = pgTable(
 );
 
 // ---------------------------------------------------------------------------
+// groups + group_member — Groups feature  (Slice #18.07)
+// ---------------------------------------------------------------------------
+//
+// A Group gathers items of a single target type. The two-letter `code`
+// (AA, AB, ... skipping I/O) is allocated from `group_code_seq` (created in
+// migration_032) and encoded in the query layer (src/lib/groups/code.ts);
+// codes are never reused. `description` is required. `lastPosition` is a
+// high-water counter: member positions are allocated from it and never reused
+// (removing a member leaves a gap). Only PROPERTY membership is wired for now.
+
+export const groupTargetTypeEnum = pgEnum("group_target_type", [
+  "PHYSICAL_PERSON",
+  "JUDICIAL_PERSON",
+  "PROPERTY",
+  "DOCUMENT",
+]);
+
+export const groups = pgTable("groups", {
+  id:          uuid("id").primaryKey().defaultRandom(),
+  // Two-letter system code (AA, AB, …). Allocated + encoded by the app layer.
+  code:        text("code").notNull().unique(),
+  targetType:  groupTargetTypeEnum("target_type").notNull(),
+  description: text("description").notNull(),
+  // High-water counter for member positions; never decreases (no reuse).
+  lastPosition: integer("last_position").notNull().default(0),
+  createdAt:   timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt:   timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const groupMember = pgTable(
+  "group_member",
+  {
+    id:      uuid("id").primaryKey().defaultRandom(),
+    groupId: uuid("group_id")
+      .notNull()
+      .references(() => groups.id, { onDelete: "cascade" }),
+    // Only PROPERTY target is wired for now; nullable so the table can grow
+    // other typed member FKs later without a destructive migration.
+    propertyId: uuid("property_id")
+      .references(() => property.id, { onDelete: "cascade" }),
+    // 1-based position within the group; unique per group; never reused.
+    position: integer("position").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("group_member_group_position_unique").on(t.groupId, t.position),
+    uniqueIndex("group_member_group_property_unique").on(t.groupId, t.propertyId),
+  ],
+);
+
+// ---------------------------------------------------------------------------
 // Auth — user_requests + app_users  (Slice #7.0)
 // ---------------------------------------------------------------------------
 //

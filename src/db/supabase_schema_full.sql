@@ -910,3 +910,43 @@ CREATE TABLE app_users (
   approved_by  text,
   created_at   timestamptz    NOT NULL DEFAULT now()
 );
+
+-- ============================================================
+-- GROUPS  (Slice #18.07)
+-- ============================================================
+--
+-- A Group gathers items of a single target type. The two-letter `code`
+-- (AA, AB, … skipping I/O) is allocated from group_code_seq and encoded by the
+-- app layer (src/lib/groups/code.ts); codes are never reused. Member positions
+-- are allocated from groups.last_position (a high-water counter) and never
+-- reused. Only PROPERTY membership is wired in the app for now.
+
+CREATE TYPE group_target_type AS ENUM ('PHYSICAL_PERSON', 'JUDICIAL_PERSON', 'PROPERTY', 'DOCUMENT');
+
+CREATE SEQUENCE group_code_seq START 1;
+
+CREATE TABLE groups (
+  id            uuid               PRIMARY KEY DEFAULT gen_random_uuid(),
+  code          text               NOT NULL UNIQUE,
+  target_type   group_target_type  NOT NULL,
+  description   text               NOT NULL,
+  last_position integer            NOT NULL DEFAULT 0,
+  created_at    timestamptz        NOT NULL DEFAULT now(),
+  updated_at    timestamptz        NOT NULL DEFAULT now()
+);
+
+CREATE TABLE group_member (
+  id          uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  group_id    uuid        NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
+  property_id uuid        REFERENCES property(id) ON DELETE CASCADE,
+  position    integer     NOT NULL,
+  created_at  timestamptz NOT NULL DEFAULT now()
+);
+CREATE UNIQUE INDEX group_member_group_position_unique
+  ON group_member (group_id, position);
+CREATE UNIQUE INDEX group_member_group_property_unique
+  ON group_member (group_id, property_id);
+
+CREATE TRIGGER groups_touch_updated_at
+  BEFORE UPDATE ON groups
+  FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
