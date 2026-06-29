@@ -182,6 +182,15 @@
       "noLocation": "Adăugați cel puțin un punct pentru a vedea Street View.",
       "error": "Street View nu a putut fi încărcat."
     },
+    "streetViewAddress": {
+      "label": "Adresă Street View",
+      "fetch": "Preia din Street View",
+      "fetching": "Se preia…",
+      "hint": "Completată automat din punctele proprietății; editați dacă e nevoie.",
+      "needsCorners": "Adăugați mai întâi cel puțin un punct.",
+      "fetchNoResult": "Nu s-a găsit nicio adresă pentru această locație.",
+      "fetchError": "Nu s-a putut prelua o adresă pentru această locație."
+    },
     "makeCurrent": {
       "title": "Setați această versiune ca actuală?",
       "body": "Versiunea {viewed} va fi copiată într-o versiune nouă {next}, care devine versiunea actuală. Continuați?",

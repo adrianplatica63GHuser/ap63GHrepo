@@ -182,6 +182,15 @@
       "noLocation": "Add at least one corner to view Street View.",
       "error": "Street View could not be loaded."
     },
+    "streetViewAddress": {
+      "label": "Street View address",
+      "fetch": "Fetch from Street View",
+      "fetching": "Fetching…",
+      "hint": "Auto-filled from the property's corners; edit if needed.",
+      "needsCorners": "Add at least one corner first.",
+      "fetchNoResult": "No address found for this location.",
+      "fetchError": "Could not fetch an address for this location."
+    },
     "makeCurrent": {
       "title": "Make this version current?",
       "body": "Version {viewed} will be copied to a new version {next}, which becomes the current version. Continue?",
