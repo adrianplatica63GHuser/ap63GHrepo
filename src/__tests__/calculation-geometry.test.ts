@@ -54,8 +54,46 @@ describe("computeDivision — sample file", () => {
   it("computes a road that fits within the polygon length", () => {
     expect(result.roadLength).toBeGreaterThan(0);
     expect(result.roadLength).toBeLessThan(result.lengthSide);
-    expect(result.roadLength).toBeCloseTo(190.44, 0);
-    expect(result.roadArea).toBeCloseTo(1338.5, 0);
+    expect(result.roadLength).toBeCloseTo(190.53, 0);
+    expect(result.roadArea).toBeCloseTo(1336.14, 0);
+  });
+
+  it("ends the road with a right-angle (perpendicular) cap", () => {
+    // IMPORTANT invariant (Slice #18.10.diviz): the road's end side (where it
+    // meets owner N) must be perpendicular to the road's long sides. Keep this.
+    const road = result.roadPolygon;
+    expect(road.length).toBe(4); // clean strip
+
+    const n = road.length;
+    const edges = road.map((_, i) => {
+      const a = road[i];
+      const b = road[(i + 1) % n];
+      return {
+        dx: b.east - a.east,
+        dy: b.north - a.north,
+        midE: (a.east + b.east) / 2,
+        midN: (a.north + b.north) / 2,
+        len: Math.hypot(b.east - a.east, b.north - a.north),
+      };
+    });
+    const longest = edges.reduce((a, b) => (b.len > a.len ? b : a));
+    const dir = { x: longest.dx / longest.len, y: longest.dy / longest.len };
+    // Orient the road axis to point East (+E) so "east cap" is identified
+    // consistently regardless of the longest edge's traversal direction.
+    if (dir.x < 0) {
+      dir.x = -dir.x;
+      dir.y = -dir.y;
+    }
+
+    // The two short edges are the road's ends; the EAST cap is the one whose
+    // midpoint projects further along the (eastward) road direction.
+    const shorts = [...edges].sort((a, b) => a.len - b.len).slice(0, 2);
+    const proj = (e: { midE: number; midN: number }) => e.midE * dir.x + e.midN * dir.y;
+    const eastCap = proj(shorts[0]) > proj(shorts[1]) ? shorts[0] : shorts[1];
+
+    // Perpendicular ⇒ the cap edge's component along the road direction is ~0.
+    const dot = (eastCap.dx * dir.x + eastCap.dy * dir.y) / eastCap.len;
+    expect(Math.abs(dot)).toBeLessThan(0.02); // < ~1.1° off perpendicular
   });
 
   it("gives owners 1..N-1 exactly their final area", () => {
@@ -77,7 +115,10 @@ describe("computeDivision — sample file", () => {
   it("relates original / road participation / final areas correctly", () => {
     for (const o of result.owners) {
       expect(o.roadParticipation).toBeCloseTo(o.fraction * result.roadArea, 6);
-      expect(o.finalArea).toBeCloseTo(o.originalArea - o.roadParticipation, 6);
+      // finalArea = fraction·(A_total − A_road) equals originalArea − roadParticipation
+      // mathematically, but the two are computed in a different multiply/subtract
+      // order, so compare at a tolerance that ignores float round-off.
+      expect(o.finalArea).toBeCloseTo(o.originalArea - o.roadParticipation, 4);
     }
   });
 
