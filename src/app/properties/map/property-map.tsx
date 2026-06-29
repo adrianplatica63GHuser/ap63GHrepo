@@ -1002,7 +1002,10 @@ export default function PropertyMap() {
   // Batch delete
   // -------------------------------------------------------------------------
 
-  const handleDeleteConfirm = useCallback(async () => {
+  // Plain function (not useCallback): with the React Compiler enabled, manual
+  // memoization here can't be preserved (react-hooks/preserve-manual-memoization)
+  // and the compiler memoizes it for us. Nothing depends on its identity.
+  const handleDeleteConfirm = async () => {
     if (selectedIds.size === 0) return;
     setDeleting(true);
     setDeleteError(null);
@@ -1023,7 +1026,7 @@ export default function PropertyMap() {
     } finally {
       setDeleting(false);
     }
-  }, [selectedIds, queryClient]);
+  };
 
   // -------------------------------------------------------------------------
   // Loading / error states
