@@ -296,6 +296,9 @@ CREATE TABLE property_address (
   county      text,
   country     text NOT NULL,
   notes       text,
+  -- Slice #18.12: Street View-derived street line (number/block/floor/apt);
+  -- shares the row's postal/locality/county/country.
+  street_view_street_line text,
   created_at  timestamptz NOT NULL DEFAULT now(),
   updated_at  timestamptz NOT NULL DEFAULT now()
 );

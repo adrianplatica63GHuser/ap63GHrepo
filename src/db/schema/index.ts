@@ -237,7 +237,7 @@ export const judicialPerson = pgTable(
       .notNull()
       .default(false),
   },
-  (t) => [
+  () => [
     // NOTE: CUI uniqueness is enforced by a trigger
     // (judicial_person_check_cui_unique, migration_025), not a plain unique
     // index — see the matching note on natural_person.cnp for why.
@@ -427,6 +427,11 @@ export const propertyAddress = pgTable(
     county:     text("county"),
     country:    text("country").notNull(),
     notes:      text("notes"),
+
+    // Slice #18.12: Street View-derived street line (street/number/block/floor/
+    // apt). Shares this row's postal_code / locality / county / country — only
+    // the street line differs from the official (document-derived) streetLine.
+    streetViewStreetLine: text("street_view_street_line"),
 
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
