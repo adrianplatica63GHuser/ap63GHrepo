@@ -12,6 +12,7 @@ import {
   useForm,
 } from "react-hook-form";
 import { AddressBlock } from "@/components/address/address-block";
+import { NavArrowIcon } from "@/components/back-arrow";
 import { useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-provider";
 import {
   VersionNavControls,
@@ -625,9 +626,10 @@ export function NaturalPersonForm({
           <button
             type="button"
             onClick={() => router.back()}
-            className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+            className="inline-flex items-center gap-1.5 rounded-md border border-wire bg-white px-5 py-2 text-[0.9375rem] font-semibold text-navy shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:text-blue-300 dark:hover:bg-zinc-800"
           >
-            ← {t("buttons.cancel")}
+            <NavArrowIcon dir="left" />
+            <span>{t("buttons.cancel")}</span>
           </button>
         ) : effectiveMode === "view" ? null : (
           <>

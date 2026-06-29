@@ -22,6 +22,7 @@ import { useQueryClient }   from "@tanstack/react-query";
 import { useTranslations }  from "next-intl";
 import { useRouter }        from "next/navigation";
 import Link                 from "next/link";
+import { NavArrowIcon }      from "@/components/back-arrow";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -809,9 +810,10 @@ function BackButton({ onClick, label }: { onClick: () => void; label: string }) 
     <button
       type="button"
       onClick={onClick}
-      className="rounded-md border border-wire bg-white px-4 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+      className="inline-flex items-center gap-1.5 rounded-md border border-wire bg-white px-4 py-2 text-[0.9375rem] font-semibold text-navy shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:text-blue-300 dark:hover:bg-zinc-800"
     >
-      {label}
+      <NavArrowIcon dir="left" />
+      <span>{label}</span>
     </button>
   );
 }

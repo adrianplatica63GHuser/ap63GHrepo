@@ -1,6 +1,6 @@
 import { getTranslations } from "next-intl/server";
-import Link from "next/link";
 import { notFound } from "next/navigation";
+import { BackLink } from "@/components/back-arrow";
 import { getGroupDetail } from "@/lib/groups/queries";
 import { GroupEditor } from "../_components/group-editor";
 
@@ -17,12 +17,9 @@ export default async function GroupEditorPage({ params }: PageParams) {
     <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-zinc-950">
       <main className="mx-auto w-full max-w-5xl px-6 py-8 flex flex-col gap-6">
         <header className="flex flex-col gap-1">
-          <Link
-            href="/admin/groups"
-            className="text-xs text-fade hover:text-ink dark:hover:text-zinc-200"
-          >
-            ← {t("backToGroups")}
-          </Link>
+          <BackLink href="/admin/groups">
+            {t("backToGroups")}
+          </BackLink>
           <h1 className="text-2xl font-semibold tracking-tight">
             {t("editorTitle", { code: detail.code })}
           </h1>

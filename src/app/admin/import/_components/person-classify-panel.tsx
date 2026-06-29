@@ -33,6 +33,7 @@ import {
   toApiPayload,
   type FormValues,
 } from "@/app/natural-persons/_components/form-schema";
+import { NavArrowIcon } from "@/components/back-arrow";
 import { useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-provider";
 import { AddressBlock } from "@/components/address/address-block";
 
@@ -519,9 +520,10 @@ export function PersonClassifyPanel({ file, onBack, onClassified, onClose }: Pro
           type="button"
           onClick={onBack}
           disabled={busy}
-          className="inline-flex items-center rounded-md border border-wire bg-white px-4 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900"
+          className="inline-flex items-center gap-1.5 rounded-md border border-wire bg-white px-4 py-2 text-[0.9375rem] font-semibold text-navy shadow-sm hover:bg-canvas disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-blue-300"
         >
-          {t("back")}
+          <NavArrowIcon dir="left" />
+          <span>{t("back")}</span>
         </button>
         <button
           type="submit"

@@ -34,6 +34,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { NavArrowIcon } from "@/components/back-arrow";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -537,9 +538,10 @@ export function PagesPanel({
                 disabled={!canGoPrev}
                 aria-label={t("prevPage")}
                 title={t("prevPage")}
-                className="rounded-md border border-wire px-2 py-1 text-xs font-medium text-ink hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                className="inline-flex items-center gap-1 rounded-md border border-wire px-2 py-1 text-[0.9375rem] font-semibold text-navy hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:text-blue-300 dark:hover:bg-zinc-800"
               >
-                ‹ {t("prevPage")}
+                <NavArrowIcon dir="left" />
+                <span>{t("prevPage")}</span>
               </button>
               <span className="text-xs tabular-nums text-fade">
                 {t("pageIndicator", {
@@ -553,9 +555,10 @@ export function PagesPanel({
                 disabled={!canGoNext}
                 aria-label={t("nextPage")}
                 title={t("nextPage")}
-                className="rounded-md border border-wire px-2 py-1 text-xs font-medium text-ink hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                className="inline-flex items-center gap-1 rounded-md border border-wire px-2 py-1 text-[0.9375rem] font-semibold text-ink hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
               >
-                {t("nextPage")} ›
+                <span>{t("nextPage")}</span>
+                <NavArrowIcon dir="right" />
               </button>
             </div>
           )}
