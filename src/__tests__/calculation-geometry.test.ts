@@ -265,24 +265,60 @@ describe("computeDivision — guards", () => {
     ).toThrow(DivisionError);
   });
 
-  it("rejects a vertical polygon", () => {
-    // 30 m (E-W) x 300 m (N-S) → long side runs N-S → vertical.
-    expect(() =>
-      computeDivision({
-        corners: [
-          { north: 320000, east: 575000 },
-          { north: 320000, east: 575030 },
-          { north: 320300, east: 575030 },
-          { north: 320300, east: 575000 },
-        ],
-        owners: [
-          { name: "A", fraction: 0.5 },
-          { name: "B", fraction: 0.5 },
-        ],
+});
+
+describe("computeDivision — vertical polygon", () => {
+  // A near-rectangular VERTICAL parcel: long sides ≈ N-S (~265 m), short sides
+  // ≈ E-W (~28 m), slightly tilted. Long edges are the West/East sides.
+  const VERTICAL_CORNERS = [
+    { north: 320000, east: 575000 }, // SW
+    { north: 320265, east: 575010 }, // NW
+    { north: 320263, east: 575038 }, // NE
+    { north: 319998, east: 575028 }, // SE
+  ];
+  const owners = [
+    { name: "O1", fraction: 0.3333 },
+    { name: "O2", fraction: 0.3333 },
+    { name: "O3", fraction: 0.3333 },
+  ];
+
+  it("is detected as vertical", () => {
+    const r = computeDivision({
+      corners: VERTICAL_CORNERS,
+      owners,
+      declaredOrientation: "VERTICAL",
+      roadCorner: "SW",
+      roadWidth: 6,
+    });
+    expect(r.orientation).toBe("VERTICAL");
+  });
+
+  it("tiles, keeps a perpendicular cap and exact owner areas for every corner", () => {
+    for (const corner of ["SW", "NW", "SE", "NE"] as const) {
+      const r = computeDivision({
+        corners: VERTICAL_CORNERS,
+        owners,
         declaredOrientation: "VERTICAL",
-        roadCorner: "SW",
-        roadWidth: 7,
-      }),
-    ).toThrow(DivisionError);
+        roadCorner: corner,
+        roadWidth: 6,
+      });
+      expect(sumAreas(r.owners, r.roadArea)).toBeCloseTo(r.totalArea, 3);
+      for (let i = 0; i < r.owners.length - 1; i++) {
+        expect(r.owners[i].computedArea).toBeCloseTo(r.owners[i].finalArea, 1);
+      }
+      const road = r.roadPolygon;
+      const edges = road.map((_, i) => {
+        const a = road[i];
+        const b = road[(i + 1) % road.length];
+        return { dx: b.east - a.east, dy: b.north - a.north, len: Math.hypot(b.east - a.east, b.north - a.north) };
+      });
+      const longest = edges.reduce((a, b) => (b.len > a.len ? b : a));
+      const dir = { x: longest.dx / longest.len, y: longest.dy / longest.len };
+      const shorts = [...edges].sort((a, b) => a.len - b.len).slice(0, 2);
+      const capDot = Math.min(
+        ...shorts.map((e) => Math.abs((e.dx * dir.x + e.dy * dir.y) / e.len)),
+      );
+      expect(capDot).toBeLessThan(0.02);
+    }
   });
 });

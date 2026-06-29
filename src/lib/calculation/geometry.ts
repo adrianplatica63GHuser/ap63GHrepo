@@ -19,10 +19,14 @@
  *
  * 2.  Orientation: if the Length direction is closer to the East-West axis than
  *     to the North-South axis the polygon is HORIZONTAL, otherwise VERTICAL.
- *     This slice implements the HORIZONTAL case for ALL four start corners
- *     (Section #4 = SW/NW/SE/NE): the road runs on the South or North long side
- *     (S/N) and starts from the West or East end (W/E). Owner 1 sits at that
- *     start corner; owners are laid out in file order away from it.
+ *     BOTH are supported, for all four start corners (Section #4 = SW/NW/SE/NE).
+ *     The road always runs along the LONG edge that contains the start corner:
+ *     for a HORIZONTAL polygon the long edges are South/North (the S/N letter
+ *     picks the side, W/E the start end); for a VERTICAL polygon the long edges
+ *     are West/East (the W/E letter picks the side, S/N the start end). Owner 1
+ *     sits at the start corner; owners are laid out in file order away from it.
+ *     Everything below works in a frame rotated so u runs along the road edge,
+ *     so it is orientation-agnostic once the road edge + start corner are chosen.
  *
  * 3.  Total area A_total is the shoelace area of the polygon (in Stereo 70 m²).
  *     Each owner's "Original Area" = fraction × A_total.
@@ -300,7 +304,8 @@ export function computeDivision(input: DivisionInput): DivisionResult {
       b,
       len: Math.hypot(b.x - a.x, b.y - a.y),
       dir: Math.atan2(b.y - a.y, b.x - a.x),
-      midN: (a.y + b.y) / 2,
+      midN: (a.y + b.y) / 2, // mid north
+      midE: (a.x + b.x) / 2, // mid east
     };
   });
   const pair02 = (edges[0].len + edges[2].len) / 2;
@@ -324,26 +329,49 @@ export function computeDivision(input: DivisionInput): DivisionResult {
       `Section #2 declares the polygon as ${declaredOrientation === "HORIZONTAL" ? "Horizontal (H)" : "Vertical (V)"}, but the coordinates describe a ${orientation === "HORIZONTAL" ? "Horizontal" : "Vertical"} polygon. Please check.`,
     );
   }
-  if (orientation !== "HORIZONTAL") {
-    throw new DivisionError(
-      "Only horizontal polygons are supported in this version (the long side must run roughly East-West).",
-    );
+  // Section #4 corner code (SW / NW / SE / NE). The road runs along the LONG
+  // edge that contains this corner and starts AT it:
+  //   - HORIZONTAL: the long edges run East-West, so the S/N letter picks the
+  //     side (south/north long edge) and the W/E letter picks the start end.
+  //   - VERTICAL: the long edges run North-South, so the W/E letter picks the
+  //     side (west/east long edge) and the S/N letter picks the start end.
+  const hasSouth = roadCorner.includes("S");
+  const hasWest = roadCorner.includes("W");
+
+  // Pick the road's long edge (the side the road runs along) and the start
+  // corner (one endpoint of that edge).
+  let roadEdgeReal: (typeof lengthEdges)[number];
+  let startPt: P;
+  let farPt: P;
+  if (orientation === "HORIZONTAL") {
+    // Side = S/N by real-north midpoint.
+    roadEdgeReal = hasSouth
+      ? lengthEdges[0].midN < lengthEdges[1].midN
+        ? lengthEdges[0]
+        : lengthEdges[1]
+      : lengthEdges[0].midN > lengthEdges[1].midN
+        ? lengthEdges[0]
+        : lengthEdges[1];
+    // Start end = W/E by east coordinate.
+    const westEnd = roadEdgeReal.a.x <= roadEdgeReal.b.x ? roadEdgeReal.a : roadEdgeReal.b;
+    const eastEnd = roadEdgeReal.a.x <= roadEdgeReal.b.x ? roadEdgeReal.b : roadEdgeReal.a;
+    startPt = hasWest ? westEnd : eastEnd;
+    farPt = hasWest ? eastEnd : westEnd;
+  } else {
+    // VERTICAL — side = W/E by real-east midpoint.
+    roadEdgeReal = hasWest
+      ? lengthEdges[0].midE < lengthEdges[1].midE
+        ? lengthEdges[0]
+        : lengthEdges[1]
+      : lengthEdges[0].midE > lengthEdges[1].midE
+        ? lengthEdges[0]
+        : lengthEdges[1];
+    // Start end = S/N by north coordinate.
+    const southEnd = roadEdgeReal.a.y <= roadEdgeReal.b.y ? roadEdgeReal.a : roadEdgeReal.b;
+    const northEnd = roadEdgeReal.a.y <= roadEdgeReal.b.y ? roadEdgeReal.b : roadEdgeReal.a;
+    startPt = hasSouth ? southEnd : northEnd;
+    farPt = hasSouth ? northEnd : southEnd;
   }
-
-  // Section #4 corner code: the first letter (S/N) picks the long side the road
-  // runs along; the second (W/E) picks the end it starts from.
-  const roadOnSouth = roadCorner[0] === "S";
-  const startIsWest = roadCorner[1] === "W";
-
-  // The road-side long edge: lower real-north midpoint for a South corner,
-  // higher for a North corner. The road runs along this edge.
-  const roadEdgeReal = roadOnSouth
-    ? lengthEdges[0].midN < lengthEdges[1].midN
-      ? lengthEdges[0]
-      : lengthEdges[1]
-    : lengthEdges[0].midN > lengthEdges[1].midN
-      ? lengthEdges[0]
-      : lengthEdges[1];
 
   // Align the working frame to the ROAD edge itself (u along the road edge),
   // oriented so u increases AWAY from the road's start corner (so owner 1, the
@@ -352,12 +380,6 @@ export function computeDivision(input: DivisionInput): DivisionResult {
   // (constant u) is a true right angle to them; the opposite long edge may be
   // slightly non-parallel (owners' far boundary follows it), and the road's
   // START end follows the polygon's existing (slanted) side, not a right angle.
-  const ra = roadEdgeReal.a;
-  const rb = roadEdgeReal.b;
-  const westEnd = ra.x <= rb.x ? ra : rb; // smaller east
-  const eastEnd = ra.x <= rb.x ? rb : ra;
-  const startPt = startIsWest ? westEnd : eastEnd;
-  const farPt = startIsWest ? eastEnd : westEnd;
   const ang = Math.atan2(farPt.y - startPt.y, farPt.x - startPt.x);
   const ca = Math.cos(-ang);
   const sa = Math.sin(-ang);
