@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import {
@@ -11,11 +11,21 @@ import {
   InfoWindow,
   Map,
   Polygon,
+  Polyline,
   useMap,
   useMapsLibrary,
 } from "@vis.gl/react-google-maps";
 
 import { isPropertyVisibleForGroups } from "@/lib/groups/map-filter";
+import { wgs84ToStereo70Batch } from "@/lib/geo/convert-client";
+import {
+  fitAffine,
+  rulerDistanceM,
+  formatMeters,
+  nearestCornerWithinPx,
+  SNAP_PX,
+  type AffineWgs84ToStereo70,
+} from "@/lib/geo/ruler";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -314,7 +324,13 @@ function MapRefCapture({
 // CornerMarker — constant-size red dot at a property corner
 // ---------------------------------------------------------------------------
 
-function CornerMarker({ corner }: { corner: Corner }) {
+function CornerMarker({
+  corner,
+  color = "#ef4444",
+}: {
+  corner: Corner;
+  color?: string;
+}) {
   return (
     <AdvancedMarker position={{ lat: corner.lat, lng: corner.lon }}>
       <div
@@ -322,7 +338,7 @@ function CornerMarker({ corner }: { corner: Corner }) {
           width:           10,
           height:          10,
           borderRadius:    "50%",
-          backgroundColor: "#ef4444",
+          backgroundColor: color,
           border:          "2px solid white",
           boxShadow:       "0 1px 4px rgba(0,0,0,0.45)",
           pointerEvents:   "none",
@@ -330,6 +346,183 @@ function CornerMarker({ corner }: { corner: Corner }) {
       />
     </AdvancedMarker>
   );
+}
+
+// ---------------------------------------------------------------------------
+// Ruler tool — inner components + helpers  (Slice #18.14.ruler)
+// ---------------------------------------------------------------------------
+
+// Ruler glyph: a horizontal bar crossed by short tick marks (shown on the
+// toolbar button). The cursor uses the same shape as a data-URI (below).
+function RulerIcon() {
+  return (
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="2" y="8" width="20" height="8" rx="1" />
+      <line x1="7" y1="8" x2="7" y2="12" />
+      <line x1="12" y1="8" x2="12" y2="12" />
+      <line x1="17" y1="8" x2="17" y2="12" />
+    </svg>
+  );
+}
+
+// Custom cursor — a small white ruler so the pointer "turns into" the tool.
+const RULER_CURSOR_SVG =
+  "<svg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 26 26'>" +
+  "<rect x='2' y='9' width='22' height='8' rx='1' fill='#ffffff' stroke='#111111' stroke-width='1.5'/>" +
+  "<line x1='7' y1='9' x2='7' y2='13' stroke='#111111' stroke-width='1.2'/>" +
+  "<line x1='12' y1='9' x2='12' y2='13' stroke='#111111' stroke-width='1.2'/>" +
+  "<line x1='17' y1='9' x2='17' y2='13' stroke='#111111' stroke-width='1.2'/>" +
+  "</svg>";
+const RULER_CURSOR = `url("data:image/svg+xml;utf8,${encodeURIComponent(
+  RULER_CURSOR_SVG,
+)}") 4 13, crosshair`;
+
+const RULER_GREEN = "#22c55e";
+const RULER_LINE  = "#15803d";
+
+/**
+ * 2-point polyline for the ruler segment. The library's <Polyline> keeps the
+ * line latLng-anchored so it tracks pan/zoom automatically — no pixel-space
+ * recompute needed.
+ */
+function RulerSegment({ start, end }: { start: LatLng; end: LatLng }) {
+  return (
+    <Polyline
+      path={[start, end]}
+      strokeColor={RULER_LINE}
+      strokeOpacity={1}
+      strokeWeight={2}
+      clickable={false}
+    />
+  );
+}
+
+/**
+ * Re-fits the local affine WGS84 -> Stereo 70 transform whenever the ruler is
+ * active: once on activation and again each time the map settles ("idle") after
+ * a pan/zoom, so the readout stays grid-accurate across the current viewport.
+ */
+function RulerCalibrator({
+  active,
+  onCalibrate,
+}: {
+  active:      boolean;
+  onCalibrate: () => void;
+}) {
+  const map = useMap();
+  useEffect(() => {
+    if (!active || !map) return;
+    onCalibrate(); // initial fit
+    const listener = map.addListener("idle", onCalibrate);
+    return () => listener.remove();
+  }, [active, map, onCalibrate]);
+  return null;
+}
+
+/**
+ * Snap affordance shown when the cursor is within SNAP_PX of a corner: the
+ * corner dot turns green and a green ring is drawn concentrically around it.
+ * The outer box matches CornerMarker's bottom-centre anchoring so the green dot
+ * sits exactly over the red corner dot; the ring is centred on that dot.
+ */
+function RulerSnapRing({ corner }: { corner: LatLng }) {
+  return (
+    <AdvancedMarker position={corner}>
+      <div style={{ position: "relative", width: 10, height: 10, pointerEvents: "none" }}>
+        <div
+          style={{
+            position:        "absolute",
+            inset:           0,
+            borderRadius:    "50%",
+            backgroundColor: RULER_GREEN,
+            border:          "2px solid white",
+            boxShadow:       "0 1px 4px rgba(0,0,0,0.45)",
+          }}
+        />
+        <div
+          style={{
+            position:     "absolute",
+            left:         "50%",
+            top:          "50%",
+            width:        28,
+            height:       28,
+            marginLeft:   -14,
+            marginTop:    -14,
+            borderRadius: "50%",
+            border:       `2px solid ${RULER_GREEN}`,
+            boxShadow:    "0 0 0 3px rgba(34,197,94,0.18)",
+          }}
+        />
+      </div>
+    </AdvancedMarker>
+  );
+}
+
+/**
+ * Distance read-out bubble. Anchored at a 0x0 point so it can be offset cleanly:
+ * live → up-and-right of the cursor; frozen → centred above the segment midpoint.
+ */
+function RulerDistanceLabel({
+  position,
+  text,
+  frozen,
+}: {
+  position: LatLng;
+  text:     string;
+  frozen:   boolean;
+}) {
+  return (
+    <AdvancedMarker position={position}>
+      <div style={{ position: "relative", width: 0, height: 0, pointerEvents: "none" }}>
+        <div
+          style={{
+            position:        "absolute",
+            left:            frozen ? 0 : 14,
+            top:             frozen ? 0 : -10,
+            transform:       frozen ? "translate(-50%, -160%)" : "none",
+            whiteSpace:      "nowrap",
+            backgroundColor: RULER_LINE,
+            color:           "white",
+            fontSize:        11,
+            fontWeight:      600,
+            lineHeight:      1.2,
+            padding:         "2px 6px",
+            borderRadius:    4,
+            boxShadow:       "0 1px 4px rgba(0,0,0,0.45)",
+          }}
+        >
+          {text}
+        </div>
+      </div>
+    </AdvancedMarker>
+  );
+}
+
+/** Container-pixel position of a lat/lng — inverse of pixelToLatLng. */
+function latLngToPixel(
+  map:       google.maps.Map,
+  container: HTMLDivElement,
+  lat:       number,
+  lng:       number,
+): PixelPoint | null {
+  const bounds = map.getBounds();
+  if (!bounds) return null;
+  const ne = bounds.getNorthEast();
+  const sw = bounds.getSouthWest();
+  return {
+    x: ((lng - sw.lng()) / (ne.lng() - sw.lng())) * container.clientWidth,
+    y: ((ne.lat() - lat) / (ne.lat() - sw.lat())) * container.clientHeight,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -368,6 +561,24 @@ export default function PropertyMap() {
   const [groupsPanelOpen, setGroupsPanelOpen] = useState(false);
   const [uncheckedGroups, setUncheckedGroups] = useState<Set<string>>(new Set());
 
+  // Ruler tool (Slice #18.14.ruler) — mutually exclusive with select mode.
+  // rulerStart/rulerEnd are committed endpoints; rulerCursor is the live
+  // (uncommitted) endpoint that follows the mouse; rulerSnap is the corner the
+  // cursor is currently snapping to (drives the green ring). rulerAffine is the
+  // local WGS84 -> Stereo 70 transform used to measure the distance.
+  const [rulerMode,   setRulerMode]   = useState(false);
+  const [rulerStart,  setRulerStart]  = useState<LatLng | null>(null);
+  const [rulerEnd,    setRulerEnd]    = useState<LatLng | null>(null);
+  const [rulerCursor, setRulerCursor] = useState<LatLng | null>(null);
+  const [rulerSnap,   setRulerSnap]   = useState<LatLng | null>(null);
+  const [rulerAffine, setRulerAffine] = useState<AffineWgs84ToStereo70 | null>(null);
+
+  // Refs read inside the container-level ruler listeners so their closures
+  // always see the latest values without re-binding on every change.
+  const rulerStartRef   = useRef<LatLng | null>(null);
+  const rulerEndRef     = useRef<LatLng | null>(null);
+  const rulerCornersRef = useRef<LatLng[]>([]);
+
   // Delete flow
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting,          setDeleting]          = useState(false);
@@ -400,7 +611,7 @@ export default function PropertyMap() {
   });
 
   const items         = data?.items ?? [];
-  const allGroupCodes = data?.allGroupCodes ?? [];
+  const allGroupCodes = useMemo(() => data?.allGroupCodes ?? [], [data?.allGroupCodes]);
   const withGeometry  = items.filter((p) => p.corners.length >= 1);
 
   // Group filter — applied only on the "all" tab. A property is hidden only
@@ -427,6 +638,11 @@ export default function PropertyMap() {
   useEffect(() => {
     withGeometryRef.current = displayItems;
     activeTabRef.current    = activeTab;
+    rulerStartRef.current   = rulerStart;
+    rulerEndRef.current     = rulerEnd;
+    rulerCornersRef.current = displayItems.flatMap((p) =>
+      p.corners.map((c) => ({ lat: c.lat, lng: c.lon })),
+    );
   });
 
   // -------------------------------------------------------------------------
@@ -483,8 +699,13 @@ export default function PropertyMap() {
   const toggleSelectMode = useCallback(() => {
     setSelectMode((prev) => {
       if (!prev) {
-        // Entering select mode: close any open InfoWindow.
+        // Entering select mode: close any open InfoWindow + exit ruler mode.
         setSelected(null);
+        setRulerMode(false);
+        setRulerStart(null);
+        setRulerEnd(null);
+        setRulerCursor(null);
+        setRulerSnap(null);
       } else {
         // Exiting select mode: clear selection + hide tabs.
         setShowTabs(false);
@@ -496,6 +717,180 @@ export default function PropertyMap() {
     setDragStart(null);
     setDragCurrent(null);
   }, []);
+
+  // -------------------------------------------------------------------------
+  // Ruler tool (Slice #18.14.ruler)
+  // -------------------------------------------------------------------------
+
+  // Re-fit the local affine WGS84 -> Stereo 70 transform across the current
+  // viewport. Samples three spanning, non-collinear corners of the visible
+  // bounds and converts them via the existing batch endpoint, then fits.
+  const recalibrateRuler = useCallback(async () => {
+    const map = mapRef.current;
+    if (!map) return;
+    const bounds = map.getBounds();
+    if (!bounds) return;
+    const ne = bounds.getNorthEast();
+    const sw = bounds.getSouthWest();
+    const samples = [
+      { lat: sw.lat(), lon: sw.lng() },
+      { lat: ne.lat(), lon: sw.lng() },
+      { lat: sw.lat(), lon: ne.lng() },
+    ];
+    try {
+      const s70 = await wgs84ToStereo70Batch(samples);
+      const aff = fitAffine(
+        samples.map((s, i) => ({
+          lat:   s.lat,
+          lon:   s.lon,
+          north: s70[i].north,
+          east:  s70[i].east,
+        })),
+      );
+      if (aff) setRulerAffine(aff);
+    } catch {
+      // Leave the previous transform in place; the read-out shows "…" until the
+      // next successful fit.
+    }
+  }, []);
+
+  // Nearest visible corner within SNAP_PX of a container-pixel point, or null.
+  const computeRulerSnap = useCallback((px: PixelPoint): LatLng | null => {
+    const map       = mapRef.current;
+    const container = containerRef.current;
+    if (!map || !container) return null;
+    const corners = rulerCornersRef.current;
+    if (corners.length === 0) return null;
+    const pixels = corners.map(
+      (c) => latLngToPixel(map, container, c.lat, c.lng) ?? { x: -1e9, y: -1e9 },
+    );
+    const idx = nearestCornerWithinPx(px, pixels, SNAP_PX);
+    return idx === null ? null : corners[idx];
+  }, []);
+
+  const resetRuler = useCallback(() => {
+    setRulerMode(false);
+    setRulerStart(null);
+    setRulerEnd(null);
+    setRulerCursor(null);
+    setRulerSnap(null);
+  }, []);
+
+  // A genuine click on the map while the ruler is active. Placement order:
+  // none -> start; start -> end (freeze); frozen -> reset (and exit ruler mode).
+  const handleRulerClick = useCallback((px: PixelPoint) => {
+    // Frozen: any further click clears the segment and leaves ruler mode.
+    if (rulerEndRef.current) {
+      resetRuler();
+      return;
+    }
+    const map       = mapRef.current;
+    const container = containerRef.current;
+    if (!map || !container) return;
+
+    const snap = computeRulerSnap(px);
+    const point: LatLng =
+      snap ??
+      (() => {
+        const ll = pixelToLatLng(map, container, px.x, px.y);
+        return { lat: ll.lat, lng: ll.lng };
+      })();
+
+    if (!rulerStartRef.current) {
+      setRulerStart(point);
+      setRulerCursor(point);
+    } else {
+      setRulerEnd(point);
+      setRulerSnap(null);
+    }
+  }, [computeRulerSnap, resetRuler]);
+
+  const toggleRulerMode = useCallback(() => {
+    setRulerMode((prev) => {
+      const next = !prev;
+      if (next) {
+        // Entering ruler mode: close InfoWindow + exit select mode.
+        setSelected(null);
+        setSelectMode(false);
+        setSelectedIds(new Set());
+        setDragStart(null);
+        setDragCurrent(null);
+        setShowTabs(false);
+        setActiveTab("all");
+      }
+      return next;
+    });
+    // Clear any previous measurement on either toggle direction.
+    setRulerStart(null);
+    setRulerEnd(null);
+    setRulerCursor(null);
+    setRulerSnap(null);
+  }, []);
+
+  // Container-level listeners for the ruler. Mirrors the drag-select effect: a
+  // genuine click (no >5px movement) places/clears points; a drag pans the map
+  // and never affects the ruler. Right-click cancels. UI controls and the
+  // Maps InfoWindow are excluded so their clicks are never captured.
+  useEffect(() => {
+    if (!rulerMode) return;
+    const container = containerRef.current;
+    if (!container) return;
+
+    let downPx: PixelPoint | null = null;
+    let moved = false;
+
+    const isUi = (e: Event) =>
+      !!(e.target as Element).closest?.("[data-map-ui],.gm-style-iw,.gmnoprint");
+
+    const onMouseDown = (e: MouseEvent) => {
+      if (isUi(e)) return;
+      const rect = container.getBoundingClientRect();
+      downPx = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+      moved = false;
+    };
+
+    const onMouseMove = (e: MouseEvent) => {
+      const map = mapRef.current;
+      if (!map) return;
+      const rect = container.getBoundingClientRect();
+      const px = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+      if (downPx && Math.hypot(px.x - downPx.x, px.y - downPx.y) > 5) moved = true;
+      // Frozen: the segment stays put — ignore movement entirely.
+      if (rulerEndRef.current) return;
+      if (isUi(e)) return;
+      const snap = computeRulerSnap(px);
+      const ll   = pixelToLatLng(map, container, px.x, px.y);
+      setRulerSnap(snap);
+      setRulerCursor(snap ?? { lat: ll.lat, lng: ll.lng });
+    };
+
+    const onMouseUp = (e: MouseEvent) => {
+      if (!downPx) return;
+      const rect = container.getBoundingClientRect();
+      const px = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+      const isClick = !moved && Math.hypot(px.x - downPx.x, px.y - downPx.y) <= 5;
+      downPx = null;
+      moved = false;
+      if (isClick) handleRulerClick(px);
+    };
+
+    const onContextMenu = (e: MouseEvent) => {
+      if (isUi(e)) return;
+      e.preventDefault();
+      resetRuler();
+    };
+
+    container.addEventListener("mousedown",   onMouseDown);
+    container.addEventListener("mousemove",    onMouseMove);
+    document.addEventListener("mouseup",       onMouseUp);
+    container.addEventListener("contextmenu",  onContextMenu);
+    return () => {
+      container.removeEventListener("mousedown",  onMouseDown);
+      container.removeEventListener("mousemove",   onMouseMove);
+      document.removeEventListener("mouseup",      onMouseUp);
+      container.removeEventListener("contextmenu", onContextMenu);
+    };
+  }, [rulerMode, computeRulerSnap, handleRulerClick, resetRuler]);
 
   // -------------------------------------------------------------------------
   // Individual property select / unselect (via InfoWindow in select mode)
@@ -665,6 +1060,40 @@ export default function PropertyMap() {
       : null;
 
   // -------------------------------------------------------------------------
+  // Ruler derived render values
+  // -------------------------------------------------------------------------
+  //
+  // liveEnd is the second endpoint: the frozen end once set, otherwise the live
+  // cursor. The distance read-out uses the affine transform (shown as "…" while
+  // calibration is pending). The label sits at the segment midpoint when frozen,
+  // else near the cursor.
+  const rulerLiveEnd = rulerEnd ?? rulerCursor;
+  const rulerHasSegment = rulerMode && !!rulerStart && !!rulerLiveEnd;
+
+  const rulerDistanceText =
+    rulerHasSegment && rulerStart && rulerLiveEnd
+      ? rulerAffine
+        ? formatMeters(
+            rulerDistanceM(
+              rulerAffine,
+              { lat: rulerStart.lat, lon: rulerStart.lng },
+              { lat: rulerLiveEnd.lat, lon: rulerLiveEnd.lng },
+            ),
+          )
+        : "…"
+      : null;
+
+  const rulerLabelPos: LatLng | null =
+    rulerHasSegment && rulerStart && rulerLiveEnd
+      ? rulerEnd
+        ? {
+            lat: (rulerStart.lat + rulerEnd.lat) / 2,
+            lng: (rulerStart.lng + rulerEnd.lng) / 2,
+          }
+        : rulerLiveEnd
+      : null;
+
+  // -------------------------------------------------------------------------
   // Render
   // -------------------------------------------------------------------------
 
@@ -719,7 +1148,13 @@ export default function PropertyMap() {
       <div
         ref={containerRef}
         className="flex-1 min-h-0 relative"
-        style={{ cursor: (selectMode && activeTab === "all") ? "crosshair" : undefined }}
+        style={{
+          cursor: rulerMode
+            ? RULER_CURSOR
+            : (selectMode && activeTab === "all")
+              ? "crosshair"
+              : undefined,
+        }}
       >
 
         {/* Google Map */}
@@ -739,9 +1174,11 @@ export default function PropertyMap() {
           disableDefaultUI
           streetViewControl
           gestureHandling={selectMode && activeTab === "all" ? "none" : "greedy"}
+          draggableCursor={rulerMode ? RULER_CURSOR : undefined}
+          draggingCursor={rulerMode ? RULER_CURSOR : undefined}
           style={{ width: "100%", height: "100%" }}
-          onClick={(e) => handleMapClick(e.detail.latLng)}
-          onDblclick={(e) => handleMapDblClick(e.detail.latLng)}
+          onClick={(e) => { if (!rulerMode) handleMapClick(e.detail.latLng); }}
+          onDblclick={(e) => { if (!rulerMode) handleMapDblClick(e.detail.latLng); }}
         >
           {/* Inner helpers that require useMap() / useMapsLibrary() */}
           <MapRefCapture mapRef={mapRef} />
@@ -807,6 +1244,36 @@ export default function PropertyMap() {
                 corner={corner}
               />
             )),
+          )}
+
+          {/* Ruler tool overlays (Slice #18.14.ruler) */}
+          {rulerMode && (
+            <RulerCalibrator active={rulerMode} onCalibrate={recalibrateRuler} />
+          )}
+          {rulerHasSegment && rulerStart && rulerLiveEnd && (
+            <RulerSegment start={rulerStart} end={rulerLiveEnd} />
+          )}
+          {rulerMode && !rulerEnd && rulerSnap && (
+            <RulerSnapRing corner={rulerSnap} />
+          )}
+          {rulerMode && rulerStart && (
+            <CornerMarker
+              corner={{ lat: rulerStart.lat, lon: rulerStart.lng }}
+              color={RULER_GREEN}
+            />
+          )}
+          {rulerMode && rulerEnd && (
+            <CornerMarker
+              corner={{ lat: rulerEnd.lat, lon: rulerEnd.lng }}
+              color={RULER_GREEN}
+            />
+          )}
+          {rulerDistanceText && rulerLabelPos && (
+            <RulerDistanceLabel
+              position={rulerLabelPos}
+              text={rulerDistanceText}
+              frozen={!!rulerEnd}
+            />
           )}
 
           {/* InfoWindow — shown on click in both normal and select modes.     */}
@@ -895,7 +1362,25 @@ export default function PropertyMap() {
         {/* Only shown on the "all properties" tab                           */}
         {/* ---------------------------------------------------------------- */}
         {activeTab === "all" && (
-          <div className="absolute top-3 right-3 z-20 flex items-start gap-2">
+          <div data-map-ui className="absolute top-3 right-3 z-20 flex items-start gap-2">
+            {/* Ruler — measure real ground distance (Slice #18.14.ruler).      */}
+            {/* Sits to the left of Groups; depressed while active.             */}
+            <button
+              type="button"
+              onClick={toggleRulerMode}
+              aria-pressed={rulerMode}
+              title={t("map.rulerHint")}
+              className={[
+                "flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded shadow border transition-colors",
+                rulerMode
+                  ? "bg-cta text-white border-cta"
+                  : "bg-white text-ink border-wire hover:bg-canvas",
+              ].join(" ")}
+            >
+              <RulerIcon />
+              {t("map.rulerButton")}
+            </button>
+
             {/* Groups filter — button + dropdown panel (Slice #18.08).        */}
             {/* Panel is anchored under the button (left-0 right-0 → exactly    */}
             {/* the button's width) and lists each group code with a checkbox;  */}
