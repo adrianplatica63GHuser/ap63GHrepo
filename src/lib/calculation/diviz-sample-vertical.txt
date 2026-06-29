@@ -1,0 +1,15 @@
+Section #1
+1	320000.000	575000.000
+2	320265.000	575010.000
+3	320263.000	575038.000
+4	319998.000	575028.000
+Section #2
+V
+Section #3
+Owner1 Ionescu - 33.33%
+Owner2 Georgescu - 33.33%
+Owner3 Vasilescu - 33.33%
+Section #4
+SW
+Section #5
+6 m
