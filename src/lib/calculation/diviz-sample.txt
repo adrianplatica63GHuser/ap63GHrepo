@@ -1,0 +1,15 @@
+Section #1
+101	321839.500	578826.010
+102	321863.241	578810.340
+103	321986.114	579044.036
+104	321963.180	579061.260
+Section #2
+H
+Section #3
+Owner1 Platica - 33.33%
+Owner2 Prisecaru - 33.33%
+Owner3 Radoi - 33.33%
+Section #4
+SW
+Section #5
+7 m
