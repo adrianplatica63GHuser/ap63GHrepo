@@ -108,7 +108,9 @@
       "groupsButton": "Groups",
       "groupsSelectAll": "Select all",
       "groupsDeselectAll": "Deselect all",
-      "groupsEmpty": "No groups"
+      "groupsEmpty": "No groups",
+      "rulerButton": "Ruler",
+      "rulerHint": "Ruler — click two points to measure the distance between them"
     },
     "createTitle": "New Property",
     "saveError": "Could not save",

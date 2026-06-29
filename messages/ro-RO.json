@@ -108,7 +108,9 @@
       "groupsButton": "Grupuri",
       "groupsSelectAll": "Selectează tot",
       "groupsDeselectAll": "Deselectează tot",
-      "groupsEmpty": "Niciun grup"
+      "groupsEmpty": "Niciun grup",
+      "rulerButton": "Riglă",
+      "rulerHint": "Riglă — apasă două puncte pentru a măsura distanța dintre ele"
     },
     "createTitle": "Proprietate nouă",
     "saveError": "Salvarea a eșuat",
