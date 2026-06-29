@@ -11,9 +11,11 @@ import {
   type UseFormRegister,
   useForm,
 } from "react-hook-form";
+import { useMapsLibrary } from "@vis.gl/react-google-maps";
 import type { PropertySnapshot } from "@/lib/properties/validation";
 import { shoelaceAreaM2 } from "@/lib/properties/area";
 import { cornersToS70Key, wgs84ToStereo70Batch } from "@/lib/geo/convert-client";
+import { streetLineFromGeocodeResult } from "@/lib/geo/reverse-geocode";
 import { useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-provider";
 import {
   computeCornerDiff,
@@ -179,6 +181,43 @@ export function PropertyForm({
   // position the Street View panel. Recomputed only when corners change.
   const streetViewCentroid = useMemo(() => cornersCentroid(corners), [corners]);
 
+  // Slice #18.12: "Fetch from Street View" reverse-geocodes the corners'
+  // centroid and fills the Street View street-line field. The geocoding library
+  // loads lazily (it is part of the Maps JS API already loaded for the mini-map);
+  // a geocode request only fires on an explicit button click. The shared
+  // postal/locality/county/country fields are intentionally left untouched —
+  // only the street line is taken from Street View.
+  const geocodingLib = useMapsLibrary("geocoding");
+  const geocoderRef = useRef<google.maps.Geocoder | null>(null);
+  const [fetchingStreetView, setFetchingStreetView] = useState(false);
+  const [streetViewFetchError, setStreetViewFetchError] = useState<string | null>(null);
+
+  const handleFetchStreetViewAddress = async () => {
+    if (!streetViewCentroid || !geocodingLib) return;
+    setFetchingStreetView(true);
+    setStreetViewFetchError(null);
+    try {
+      const geocoder =
+        geocoderRef.current ?? (geocoderRef.current = new geocodingLib.Geocoder());
+      const { results } = await geocoder.geocode({
+        location: { lat: streetViewCentroid.lat, lng: streetViewCentroid.lon },
+      });
+      const line = streetLineFromGeocodeResult(results?.[0]);
+      if (line) {
+        form.setValue("address.streetViewStreetLine", line, {
+          shouldValidate: true,
+          shouldDirty:    true,
+        });
+      } else {
+        setStreetViewFetchError(t("streetViewAddress.fetchNoResult"));
+      }
+    } catch {
+      setStreetViewFetchError(t("streetViewAddress.fetchError"));
+    } finally {
+      setFetchingStreetView(false);
+    }
+  };
+
   // Slice #18.09: live Calculated Area (m²) from the displayed corners. Reuses
   // the SAME query cache key as the corners table's Stereo 70 conversion, so
   // there's no extra network when that table is in Stereo 70 display mode. It
@@ -206,6 +245,8 @@ export function PropertyForm({
 
   // Slice #18.01: read via form.watch() (subscribes to value changes) so the
   // create gate and the edit-dirty check below recompute on every keystroke.
+  // form.watch() is intentionally not memoizable; this is the documented usage.
+  // eslint-disable-next-line react-hooks/incompatible-library
   const watchedValues = form.watch();
   const isCreate = mode === "create";
 
@@ -588,6 +629,54 @@ export function PropertyForm({
                 error={errors.address?.streetLine?.message}
                 highlight={fieldHighlights?.address.streetLine}
               />
+              {/* Slice #18.12: Street View address — only the street line may
+                  differ from the document-derived one above; the shared
+                  postal/locality/county/country fields below apply to both.
+                  The Fetch button reverse-geocodes the corners' centroid. In a
+                  read-only historical version the whole address fieldset is
+                  disabled, which also disables this button. */}
+              <label className="flex items-start gap-2 text-sm">
+                <span className="w-24 shrink-0 pt-1 font-medium text-ink dark:text-zinc-300">
+                  {t("streetViewAddress.label")}
+                </span>
+                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      {...register("address.streetViewStreetLine")}
+                      className={[
+                        "min-w-0 flex-1 rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none disabled:bg-canvas disabled:text-fade disabled:cursor-default dark:bg-zinc-950 dark:disabled:bg-zinc-800",
+                        "border-wire focus:border-focus dark:border-zinc-700",
+                        highlightRing(fieldHighlights?.address.streetViewStreetLine),
+                      ].join(" ")}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleFetchStreetViewAddress}
+                      disabled={
+                        fetchingStreetView || !streetViewCentroid || !geocodingLib
+                      }
+                      title={
+                        !streetViewCentroid ? t("streetViewAddress.needsCorners") : undefined
+                      }
+                      className="inline-flex shrink-0 items-center rounded-md border border-wire bg-white px-2 py-1 text-xs font-medium text-ink shadow-sm hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+                    >
+                      {fetchingStreetView
+                        ? t("streetViewAddress.fetching")
+                        : t("streetViewAddress.fetch")}
+                    </button>
+                  </div>
+                  {streetViewFetchError ? (
+                    <span className="text-xs text-red-600 dark:text-red-400" role="alert">
+                      {streetViewFetchError}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-fade dark:text-zinc-400">
+                      {t("streetViewAddress.hint")}
+                    </span>
+                  )}
+                </div>
+              </label>
               <Field
                 label={t("address.notes")}
                 name="address.notes"

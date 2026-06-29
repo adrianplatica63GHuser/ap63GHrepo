@@ -55,6 +55,8 @@ const addressBlockSchema = z.object({
   county:     z.string(),
   country:    z.string(),
   notes:      z.string(),
+  // Slice #18.12: Street View-derived street line; shares the fields above.
+  streetViewStreetLine: z.string(),
 });
 
 export type AddressBlock = z.infer<typeof addressBlockSchema>;
@@ -87,6 +89,7 @@ export type FormValues = z.infer<typeof formSchema>;
 const emptyAddress: AddressBlock = {
   streetLine: "", postalCode: "", locality: "",
   county: "",    country: "",    notes: "",
+  streetViewStreetLine: "",
 };
 
 export const emptyFormValues: FormValues = {
@@ -120,6 +123,7 @@ type AddressRow = {
   county:     string | null;
   country:    string;
   notes:      string | null;
+  streetViewStreetLine: string | null;
 };
 
 export function fromApiPayload(input: {
@@ -146,6 +150,7 @@ export function fromApiPayload(input: {
           county:     a.county     ?? "",
           country:    a.country,
           notes:      a.notes      ?? "",
+          streetViewStreetLine: a.streetViewStreetLine ?? "",
         }
       : { ...emptyAddress },
   };
@@ -188,6 +193,7 @@ const ADDRESS_TEXT_FIELDS = [
   "county",
   "country",
   "notes",
+  "streetViewStreetLine",
 ] as const satisfies readonly (keyof AddressBlock)[];
 
 export function hasFormData(values: FormValues, corners: Corner[]): boolean {
@@ -222,6 +228,7 @@ export function toApiPayload(
           county:     blank(values.address.county),
           country:    addrCountry,
           notes:      blank(values.address.notes),
+          streetViewStreetLine: blank(values.address.streetViewStreetLine),
         }
       : null,
     corners: corners.map((c) => ({ lat: c.lat, lon: c.lon, originalIndex: c.originalIndex ?? null })),
@@ -264,6 +271,7 @@ const PROPERTY_SNAP_KEYS: (keyof PropertySnapshotProperty)[] = [
 
 const ADDRESS_SNAP_KEYS: (keyof PropertySnapshotAddress)[] = [
   "streetLine", "postalCode", "locality", "county", "country", "notes",
+  "streetViewStreetLine",
 ];
 
 /** Trim, treat "" as unset — same semantics as `blank`. */

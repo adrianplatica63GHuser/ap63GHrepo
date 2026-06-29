@@ -57,6 +57,7 @@ export type PropertyListItem = {
   cadastralNumber:  string | null;
   carteFunciara:    string | null;
   surfaceAreaMp:    string | null;
+  calculatedAreaMp: string | null;
   locality:         string | null;
   county:           string | null;
   createdAt:        Date;
@@ -105,6 +106,8 @@ export function snapshotFromFull(full: PropertyFull): PropertySnapshot {
           county:     full.address.county     ?? null,
           country:    full.address.country,
           notes:      full.address.notes      ?? null,
+          // Slice #18.12
+          streetViewStreetLine: full.address.streetViewStreetLine ?? null,
         }
       : null,
     corners: full.corners.map((c) => ({
@@ -121,6 +124,7 @@ const SNAPSHOT_PROPERTY_KEYS: (keyof PropertySnapshot["property"])[] = [
 ];
 const SNAPSHOT_ADDRESS_KEYS: (keyof NonNullable<PropertySnapshot["address"]>)[] = [
   "streetLine", "postalCode", "locality", "county", "country", "notes",
+  "streetViewStreetLine",
 ];
 
 /**
@@ -207,6 +211,7 @@ export async function listProperties(opts: PropertyListQuery): Promise<{
         cadastralNumber: property.cadastralNumber,
         carteFunciara:   property.carteFunciara,
         surfaceAreaMp:   property.surfaceAreaMp,
+        calculatedAreaMp: property.calculatedAreaMp,
         locality:        propertyAddress.locality,
         county:          propertyAddress.county,
         createdAt:       property.createdAt,
@@ -319,6 +324,7 @@ export async function createProperty(
           county:      addrInput.county      ?? null,
           country:     addrInput.country,
           notes:       addrInput.notes       ?? null,
+          streetViewStreetLine: addrInput.streetViewStreetLine ?? null,
         })
         .returning();
       addrRow = a;
@@ -406,6 +412,7 @@ export async function updateProperty(
           county:     addrInput.county     ?? null,
           country:    addrInput.country,
           notes:      addrInput.notes      ?? null,
+          streetViewStreetLine: addrInput.streetViewStreetLine ?? null,
         });
       }
     }

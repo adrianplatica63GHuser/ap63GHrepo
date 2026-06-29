@@ -32,6 +32,8 @@ export const propertyAddressInputSchema = z.object({
   county:     z.string().nullish(),
   country:    z.string().min(1, "country is required"),
   notes:      z.string().nullish(),
+  // Slice #18.12: Street View-derived street line; shares the other fields.
+  streetViewStreetLine: z.string().nullish(),
 });
 export type PropertyAddressInput = z.infer<typeof propertyAddressInputSchema>;
 
@@ -116,6 +118,8 @@ export type PropertySnapshotAddress = {
   county:     string | null;
   country:    string;
   notes:      string | null;
+  // Slice #18.12: Street View-derived street line (see migration_034).
+  streetViewStreetLine: string | null;
 };
 
 export type PropertySnapshotCorner = {
