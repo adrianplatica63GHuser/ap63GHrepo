@@ -26,7 +26,8 @@ type ComputedOwner = {
 
 type Computation = {
   orientation: "HORIZONTAL" | "VERTICAL";
-  roadSide: string;
+  declaredOrientation: "HORIZONTAL" | "VERTICAL";
+  roadCorner: string;
   roadWidth: number;
   totalArea: number;
   lengthSide: number;
@@ -239,7 +240,7 @@ export function CalculationView() {
           <div className="grid grid-cols-2 gap-3 text-sm md:grid-cols-4">
             <Stat label={t("summary.orientation")} value={t(`orientation.${computation.orientation}`)} />
             <Stat label={t("summary.totalArea")} value={`${fmtArea(computation.totalArea)} m²`} />
-            <Stat label={t("summary.roadSide")} value={t(`roadSides.${computation.roadSide}`)} />
+            <Stat label={t("summary.roadCorner")} value={computation.roadCorner} />
             <Stat label={t("summary.roadWidth")} value={`${fmtLen(computation.roadWidth)} m`} />
             <Stat label={t("summary.lengthSide")} value={`${fmtLen(computation.lengthSide)} m`} />
             <Stat label={t("summary.widthSide")} value={`${fmtLen(computation.widthSide)} m`} />

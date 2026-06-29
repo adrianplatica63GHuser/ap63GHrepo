@@ -41,7 +41,11 @@ export type ComputedRoad = {
 
 export type DivisionComputation = {
   orientation: "HORIZONTAL" | "VERTICAL";
-  roadSide: string;
+  /** Declared orientation from Section #2 (always equals `orientation` here —
+   *  a mismatch throws before we get this far). */
+  declaredOrientation: "HORIZONTAL" | "VERTICAL";
+  /** Road / owner-1 corner from Section #4 (SW / NW / SE / NE). */
+  roadCorner: string;
   roadWidth: number;
   totalArea: number;
   lengthSide: number;
@@ -64,7 +68,8 @@ export function computeDivisionFromFile(text: string): DivisionComputation {
   const result = computeDivision({
     corners: parsed.corners.map((c) => ({ north: c.north, east: c.east })),
     owners: parsed.owners.map((o) => ({ name: o.name, fraction: o.fraction })),
-    roadSide: parsed.roadSide,
+    declaredOrientation: parsed.declaredOrientation,
+    roadCorner: parsed.roadCorner,
     roadWidth: parsed.roadWidth,
   });
 
@@ -82,7 +87,8 @@ export function computeDivisionFromFile(text: string): DivisionComputation {
 
   return {
     orientation: result.orientation,
-    roadSide: parsed.roadSide,
+    declaredOrientation: parsed.declaredOrientation,
+    roadCorner: parsed.roadCorner,
     roadWidth: parsed.roadWidth,
     totalArea: result.totalArea,
     lengthSide: result.lengthSide,

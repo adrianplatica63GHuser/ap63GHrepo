@@ -1,7 +1,7 @@
 {
   "calculation": {
     "pageTitle": "Calcul",
-    "intro": "Încărcați un fișier de date în 4 secțiuni. Instrumentul calculează unde trebuie să fie granița dintre fiecare proprietar — decupând o fâșie de drum comun de-a lungul unei laturi lungi, apoi împărțind terenul rămas după cota de proprietate a fiecăruia — și vă permite să verificați rezultatul pe hartă înainte de a crea proprietățile și un grup.",
+    "intro": "Încărcați un fișier de date în 5 secțiuni (colțuri; orientare H/V; proprietari + procente; colțul drumului SW/NW/SE/NE; lățime drum). Instrumentul calculează unde trebuie să fie granița dintre fiecare proprietar — decupând o fâșie de drum comun de-a lungul unei laturi lungi, apoi împărțind terenul rămas după cota de proprietate a fiecăruia — și vă permite să verificați rezultatul pe hartă înainte de a crea proprietățile și un grup.",
     "buttons": {
       "chooseFile": "Alegeți fișierul de date…",
       "reset": "Resetează",
@@ -25,7 +25,7 @@
     "summary": {
       "orientation": "Orientare",
       "totalArea": "Suprafață totală",
-      "roadSide": "Latura drumului",
+      "roadCorner": "Colțul drumului / proprietar 1",
       "roadWidth": "Lățime drum",
       "lengthSide": "Lungime (latura lungă)",
       "widthSide": "Lățime (latura scurtă)",

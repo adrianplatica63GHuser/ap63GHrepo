@@ -31,7 +31,8 @@ describe("computeDivision — sample file", () => {
       { name: "Prisecaru", fraction: 0.33 },
       { name: "Radoi", fraction: 0.33 },
     ],
-    roadSide: "South",
+    declaredOrientation: "HORIZONTAL",
+    roadCorner: "SW",
     roadWidth: 7,
   };
 
@@ -59,8 +60,10 @@ describe("computeDivision — sample file", () => {
   });
 
   it("ends the road with a right-angle (perpendicular) cap", () => {
-    // IMPORTANT invariant (Slice #18.10.diviz): the road's end side (where it
-    // meets owner N) must be perpendicular to the road's long sides. Keep this.
+    // IMPORTANT invariant (Slice #18.10.diviz): the road's end side where it
+    // meets owner N is perpendicular to the road's long sides. The OTHER end (the
+    // start corner) just follows the polygon's slanted side. So exactly one of
+    // the two short edges is perpendicular — assert the minimum is ~0. Keep this.
     const road = result.roadPolygon;
     expect(road.length).toBe(4); // clean strip
 
@@ -71,29 +74,17 @@ describe("computeDivision — sample file", () => {
       return {
         dx: b.east - a.east,
         dy: b.north - a.north,
-        midE: (a.east + b.east) / 2,
-        midN: (a.north + b.north) / 2,
         len: Math.hypot(b.east - a.east, b.north - a.north),
       };
     });
     const longest = edges.reduce((a, b) => (b.len > a.len ? b : a));
     const dir = { x: longest.dx / longest.len, y: longest.dy / longest.len };
-    // Orient the road axis to point East (+E) so "east cap" is identified
-    // consistently regardless of the longest edge's traversal direction.
-    if (dir.x < 0) {
-      dir.x = -dir.x;
-      dir.y = -dir.y;
-    }
-
-    // The two short edges are the road's ends; the EAST cap is the one whose
-    // midpoint projects further along the (eastward) road direction.
     const shorts = [...edges].sort((a, b) => a.len - b.len).slice(0, 2);
-    const proj = (e: { midE: number; midN: number }) => e.midE * dir.x + e.midN * dir.y;
-    const eastCap = proj(shorts[0]) > proj(shorts[1]) ? shorts[0] : shorts[1];
-
     // Perpendicular ⇒ the cap edge's component along the road direction is ~0.
-    const dot = (eastCap.dx * dir.x + eastCap.dy * dir.y) / eastCap.len;
-    expect(Math.abs(dot)).toBeLessThan(0.02); // < ~1.1° off perpendicular
+    const capDot = Math.min(
+      ...shorts.map((e) => Math.abs((e.dx * dir.x + e.dy * dir.y) / e.len)),
+    );
+    expect(capDot).toBeLessThan(0.02); // < ~1.1° off perpendicular
   });
 
   it("gives owners 1..N-1 exactly their final area", () => {
@@ -142,7 +133,8 @@ describe("computeDivision — perfect rectangle", () => {
       { name: "B", fraction: 1 / 3 },
       { name: "C", fraction: 1 / 3 },
     ],
-    roadSide: "South",
+    declaredOrientation: "HORIZONTAL",
+    roadCorner: "SW",
     roadWidth: 6,
   };
   const result = computeDivision(input);
@@ -162,13 +154,112 @@ describe("computeDivision — perfect rectangle", () => {
   });
 });
 
+describe("computeDivision — road corner (Section #4)", () => {
+  const owners = [
+    { name: "O1", fraction: 0.3333 },
+    { name: "O2", fraction: 0.3333 },
+    { name: "O3", fraction: 0.3333 },
+  ];
+
+  it("places owner 1 at the named start corner (SW)", () => {
+    // The road shares the start corner (so the corner itself is on the common
+    // road), and owner 1 — the first listed owner — sits right at it: owner 1 is
+    // the owner nearest the Section-#4 corner.
+    const SW = { north: 321839.5, east: 578826.01 }; // corner 101 of the sample
+    const centroid = (poly: { north: number; east: number }[]) => {
+      const n = poly.length;
+      return {
+        north: poly.reduce((s, p) => s + p.north, 0) / n,
+        east: poly.reduce((s, p) => s + p.east, 0) / n,
+      };
+    };
+    const distToSW = (poly: { north: number; east: number }[]) => {
+      const c = centroid(poly);
+      return Math.hypot(c.north - SW.north, c.east - SW.east);
+    };
+
+    const r = computeDivision({
+      corners: SAMPLE_CORNERS,
+      owners,
+      declaredOrientation: "HORIZONTAL",
+      roadCorner: "SW",
+      roadWidth: 7,
+    });
+    const dists = r.owners.map((o) => distToSW(o.polygon));
+    // Owner 1 (index 0) is the closest owner to the SW start corner.
+    expect(Math.min(...dists)).toBe(dists[0]);
+
+    // And with an EAST start corner (SE) owner 1 flips to the east end.
+    const SE = { north: 321963.18, east: 579061.26 }; // corner 104
+    const rSE = computeDivision({
+      corners: SAMPLE_CORNERS,
+      owners,
+      declaredOrientation: "HORIZONTAL",
+      roadCorner: "SE",
+      roadWidth: 7,
+    });
+    const distsSE = rSE.owners.map((o) => {
+      const c = centroid(o.polygon);
+      return Math.hypot(c.north - SE.north, c.east - SE.east);
+    });
+    expect(Math.min(...distsSE)).toBe(distsSE[0]);
+  });
+
+  it("tiles and keeps a perpendicular cap for every start corner", () => {
+    for (const corner of ["SW", "SE", "NW", "NE"] as const) {
+      const r = computeDivision({
+        corners: SAMPLE_CORNERS,
+        owners,
+        declaredOrientation: "HORIZONTAL",
+        roadCorner: corner,
+        roadWidth: 7,
+      });
+      expect(sumAreas(r.owners, r.roadArea)).toBeCloseTo(r.totalArea, 3);
+      // Owners 1..N-1 get their exact final area regardless of which end starts.
+      for (let i = 0; i < r.owners.length - 1; i++) {
+        expect(r.owners[i].computedArea).toBeCloseTo(r.owners[i].finalArea, 1);
+      }
+      // The cap (one of the two short road edges) is perpendicular.
+      const road = r.roadPolygon;
+      const edges = road.map((_, i) => {
+        const a = road[i];
+        const b = road[(i + 1) % road.length];
+        return { dx: b.east - a.east, dy: b.north - a.north, len: Math.hypot(b.east - a.east, b.north - a.north) };
+      });
+      const longest = edges.reduce((a, b) => (b.len > a.len ? b : a));
+      const dir = { x: longest.dx / longest.len, y: longest.dy / longest.len };
+      const shorts = [...edges].sort((a, b) => a.len - b.len).slice(0, 2);
+      const capDot = Math.min(
+        ...shorts.map((e) => Math.abs((e.dx * dir.x + e.dy * dir.y) / e.len)),
+      );
+      expect(capDot).toBeLessThan(0.02);
+    }
+  });
+});
+
 describe("computeDivision — guards", () => {
   it("rejects fewer than two owners", () => {
     expect(() =>
       computeDivision({
         corners: SAMPLE_CORNERS,
         owners: [{ name: "Solo", fraction: 1 }],
-        roadSide: "South",
+        declaredOrientation: "HORIZONTAL",
+        roadCorner: "SW",
+        roadWidth: 7,
+      }),
+    ).toThrow(DivisionError);
+  });
+
+  it("rejects an orientation mismatch (Section #2 disagrees with the coordinates)", () => {
+    expect(() =>
+      computeDivision({
+        corners: SAMPLE_CORNERS, // actually horizontal
+        owners: [
+          { name: "A", fraction: 0.5 },
+          { name: "B", fraction: 0.5 },
+        ],
+        declaredOrientation: "VERTICAL",
+        roadCorner: "SW",
         roadWidth: 7,
       }),
     ).toThrow(DivisionError);
@@ -188,7 +279,8 @@ describe("computeDivision — guards", () => {
           { name: "A", fraction: 0.5 },
           { name: "B", fraction: 0.5 },
         ],
-        roadSide: "South",
+        declaredOrientation: "VERTICAL",
+        roadCorner: "SW",
         roadWidth: 7,
       }),
     ).toThrow(DivisionError);

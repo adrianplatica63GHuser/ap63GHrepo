@@ -1,7 +1,7 @@
 {
   "calculation": {
     "pageTitle": "Calculation",
-    "intro": "Upload a 4-section division data file. The tool computes where the border between each owner must be — carving out a shared road strip along one long side, then dividing the remaining land by each owner's ownership fraction — and lets you review the result on the map before creating the properties and a group.",
+    "intro": "Upload a 5-section division data file (corners; H/V orientation; owners + percentages; road corner SW/NW/SE/NE; road width). The tool computes where the border between each owner must be — carving out a shared road strip along one long side, then dividing the remaining land by each owner's ownership fraction — and lets you review the result on the map before creating the properties and a group.",
     "buttons": {
       "chooseFile": "Choose data file…",
       "reset": "Reset",
@@ -25,7 +25,7 @@
     "summary": {
       "orientation": "Orientation",
       "totalArea": "Total area",
-      "roadSide": "Road side",
+      "roadCorner": "Road / owner-1 corner",
       "roadWidth": "Road width",
       "lengthSide": "Length (long side)",
       "widthSide": "Width (short side)",

@@ -19,9 +19,10 @@
  *
  * 2.  Orientation: if the Length direction is closer to the East-West axis than
  *     to the North-South axis the polygon is HORIZONTAL, otherwise VERTICAL.
- *     This slice implements the HORIZONTAL case with the road on the North or
- *     South long side, running from the WEST end (owners are laid out in file
- *     order from West to East).
+ *     This slice implements the HORIZONTAL case for ALL four start corners
+ *     (Section #4 = SW/NW/SE/NE): the road runs on the South or North long side
+ *     (S/N) and starts from the West or East end (W/E). Owner 1 sits at that
+ *     start corner; owners are laid out in file order away from it.
  *
  * 3.  Total area A_total is the shoelace area of the polygon (in Stereo 70 m²).
  *     Each owner's "Original Area" = fraction × A_total.
@@ -37,12 +38,15 @@
  *     last cut. Because the road area depends on L and the final areas depend
  *     on the road area, L is found by a short fixed-point iteration.
  *
- * 6.  Borders between owners 1…N-1 are perpendicular to the road. Walking from
- *     the West end, each owner's east border is placed so the area of its slice
- *     (north of the road strip) equals its Final Area. Owner N takes the whole
- *     full-height remainder east of the road end — so any tiny rounding in the
- *     fractions (e.g. 33.33 % × 3 = 99.99 %) is absorbed by owner N, exactly as
- *     specified.
+ * 6.  Borders between owners 1…N-2 are perpendicular to the road. Walking from
+ *     the start corner, each owner's far border is placed so the area of its
+ *     slice (beyond the road strip) equals its Final Area. Owner N-1's far
+ *     border instead runs parallel to the polygon's end/width sides through the
+ *     road's far corner (slope fixed, position solved for owner N-1's exact Final
+ *     Area). Owner N takes the whole full-height remainder beyond the road end —
+ *     so any tiny rounding in the fractions (e.g. 33.33 % × 3 = 99.99 %) is
+ *     absorbed by owner N. The road's far end (where it meets owner N) is a true
+ *     right-angle cap; its start end follows the polygon's existing slanted side.
  */
 
 // ---------------------------------------------------------------------------
@@ -53,15 +57,23 @@ export type S70Point = { north: number; east: number };
 
 export type OwnerInput = { name: string; fraction: number };
 
-export type RoadSide = "North" | "South" | "East" | "West";
+/**
+ * Which corner of the big polygon the road shares and starts from (Section #4).
+ * The first letter (S/N) selects the long side the road runs along; the second
+ * (W/E) selects the end the road starts from (owner 1 is nearest that corner).
+ */
+export type CornerCode = "SW" | "NW" | "SE" | "NE";
 
 export type DivisionInput = {
   /** Big-polygon corners in file order (Stereo 70 metres). */
   corners: S70Point[];
-  /** Owners in file order; for a horizontal polygon this is West → East. */
+  /** Owners in file order; owner 1 is the one nearest the road's start corner. */
   owners: OwnerInput[];
-  roadSide: RoadSide;
-  /** Road width in metres (section 4). */
+  /** Declared orientation (Section #2) — confirmed against the coordinates. */
+  declaredOrientation: "HORIZONTAL" | "VERTICAL";
+  /** Corner the road shares / starts from (Section #4): SW / NW / SE / NE. */
+  roadCorner: CornerCode;
+  /** Road width in metres (Section #5). */
   roadWidth: number;
 };
 
@@ -252,7 +264,7 @@ const toS70 = (p: P): S70Point => ({ north: p.y, east: p.x });
 // ---------------------------------------------------------------------------
 
 export function computeDivision(input: DivisionInput): DivisionResult {
-  const { owners, roadSide, roadWidth } = input;
+  const { owners, roadCorner, roadWidth, declaredOrientation } = input;
 
   if (owners.length < 2) {
     throw new DivisionError("At least two owners are required.");
@@ -305,36 +317,48 @@ export function computeDivision(input: DivisionInput): DivisionResult {
     Math.PI;
   const orientation: "HORIZONTAL" | "VERTICAL" = angToEW < 45 ? "HORIZONTAL" : "VERTICAL";
 
+  // Section #2 is a confirmation: the declared orientation must agree with what
+  // the coordinates actually describe.
+  if (declaredOrientation !== orientation) {
+    throw new DivisionError(
+      `Section #2 declares the polygon as ${declaredOrientation === "HORIZONTAL" ? "Horizontal (H)" : "Vertical (V)"}, but the coordinates describe a ${orientation === "HORIZONTAL" ? "Horizontal" : "Vertical"} polygon. Please check.`,
+    );
+  }
   if (orientation !== "HORIZONTAL") {
     throw new DivisionError(
       "Only horizontal polygons are supported in this version (the long side must run roughly East-West).",
     );
   }
-  if (roadSide !== "North" && roadSide !== "South") {
-    throw new DivisionError(
-      `Road side "${roadSide}" is not supported for a horizontal polygon — use North or South.`,
-    );
-  }
 
-  // The road-side long edge: lower real-north midpoint for "South", higher for
-  // "North". The road runs along this edge.
-  const roadEdgeReal =
-    roadSide === "South"
-      ? lengthEdges[0].midN < lengthEdges[1].midN
-        ? lengthEdges[0]
-        : lengthEdges[1]
-      : lengthEdges[0].midN > lengthEdges[1].midN
-        ? lengthEdges[0]
-        : lengthEdges[1];
+  // Section #4 corner code: the first letter (S/N) picks the long side the road
+  // runs along; the second (W/E) picks the end it starts from.
+  const roadOnSouth = roadCorner[0] === "S";
+  const startIsWest = roadCorner[1] === "W";
+
+  // The road-side long edge: lower real-north midpoint for a South corner,
+  // higher for a North corner. The road runs along this edge.
+  const roadEdgeReal = roadOnSouth
+    ? lengthEdges[0].midN < lengthEdges[1].midN
+      ? lengthEdges[0]
+      : lengthEdges[1]
+    : lengthEdges[0].midN > lengthEdges[1].midN
+      ? lengthEdges[0]
+      : lengthEdges[1];
 
   // Align the working frame to the ROAD edge itself (u along the road edge),
-  // oriented +x (East). This makes the road's two long sides exactly parallel
-  // (both constant v) so the perpendicular road-end cap (constant u) is a true
-  // right angle to them. The opposite (north) long edge may be slightly
-  // non-parallel — owners' north boundary simply follows it; and the road's
-  // WEST end follows the polygon's existing (slanted) side, not a right angle.
-  let ang = roadEdgeReal.dir;
-  if (Math.cos(ang) < 0) ang = Math.atan2(-Math.sin(ang), -Math.cos(ang));
+  // oriented so u increases AWAY from the road's start corner (so owner 1, the
+  // first listed owner, sits at the start). This makes the road's two long sides
+  // exactly parallel (both constant v) so the perpendicular road-end cap
+  // (constant u) is a true right angle to them; the opposite long edge may be
+  // slightly non-parallel (owners' far boundary follows it), and the road's
+  // START end follows the polygon's existing (slanted) side, not a right angle.
+  const ra = roadEdgeReal.a;
+  const rb = roadEdgeReal.b;
+  const westEnd = ra.x <= rb.x ? ra : rb; // smaller east
+  const eastEnd = ra.x <= rb.x ? rb : ra;
+  const startPt = startIsWest ? westEnd : eastEnd;
+  const farPt = startIsWest ? eastEnd : westEnd;
+  const ang = Math.atan2(farPt.y - startPt.y, farPt.x - startPt.x);
   const ca = Math.cos(-ang);
   const sa = Math.sin(-ang);
   const toUV = (p: P): P => ({ x: p.x * ca - p.y * sa, y: p.x * sa + p.y * ca });
@@ -356,7 +380,8 @@ export function computeDivision(input: DivisionInput): DivisionResult {
   const inRoadBand = (p: P) => roadWidth - sdist(p); // >=0 : within road width of the road edge
   const beyondRoad = (p: P) => sdist(p) - roadWidth; // >=0 : owner strip (past the road)
 
-  // West start of the road = the road-edge endpoint with the smaller u.
+  // Start of the road = the road-edge endpoint at the smaller u (the start corner
+  // maps to min u because u is oriented away from it).
   const uRoadStart = Math.min(toUV(roadEdgeReal.a).x, toUV(roadEdgeReal.b).x);
   const uMax = Math.max(...Q.map((p) => p.x));
 
