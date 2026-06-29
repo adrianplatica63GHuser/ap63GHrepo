@@ -126,11 +126,27 @@ describe("computeFieldHighlights", () => {
   it("diffs address fields, treating a missing block as all-empty", () => {
     const prev = snap({ address: null });
     const curr = snap({
-      address: { streetLine: "Main 1", postalCode: null, locality: null, county: null, country: "RO", notes: null },
+      address: { streetLine: "Main 1", postalCode: null, locality: null, county: null, country: "RO", notes: null, streetViewStreetLine: null },
     });
     const h = computeFieldHighlights(prev, curr);
     expect(h.address.streetLine).toBe("green");
     expect(h.address.country).toBe("green");
+  });
+
+  it("diffs the Street View street line like any other address field", () => {
+    const base = { streetLine: "Main 1", postalCode: null, locality: null, county: null, country: "RO", notes: null };
+    // null -> value = green (added)
+    const added = computeFieldHighlights(
+      snap({ address: { ...base, streetViewStreetLine: null } }),
+      snap({ address: { ...base, streetViewStreetLine: "Strada Florilor nr. 12" } }),
+    );
+    expect(added.address.streetViewStreetLine).toBe("green");
+    // value -> different value = red (modified)
+    const modified = computeFieldHighlights(
+      snap({ address: { ...base, streetViewStreetLine: "Strada Florilor nr. 12" } }),
+      snap({ address: { ...base, streetViewStreetLine: "Strada Florilor nr. 14" } }),
+    );
+    expect(modified.address.streetViewStreetLine).toBe("red");
   });
 });
 
@@ -264,13 +280,14 @@ describe("snapshot conversion", () => {
   it("round-trips property + address into form values", () => {
     const s = snap({
       property: { nickname: "Lot 9", surfaceAreaMp: "450.50" },
-      address: { streetLine: "Main 1", postalCode: null, locality: "Br", county: null, country: "RO", notes: null },
+      address: { streetLine: "Main 1", postalCode: null, locality: "Br", county: null, country: "RO", notes: null, streetViewStreetLine: "Main 1 (SV)" },
     });
     const fv = snapshotToFormValues(s);
     expect(fv.nickname).toBe("Lot 9");
     expect(fv.surfaceAreaMp).toBe("450.50");
     expect(fv.address.streetLine).toBe("Main 1");
     expect(fv.address.country).toBe("RO");
+    expect(fv.address.streetViewStreetLine).toBe("Main 1 (SV)");
   });
 
   it("converts corners preserving originalIndex", () => {

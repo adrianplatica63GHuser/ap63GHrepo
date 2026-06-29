@@ -63,6 +63,7 @@ describe("formSchema", () => {
         county:     "Ilfov",
         country:    "Romania",
         notes:      "",
+        streetViewStreetLine: "Strada Principală 10",
       },
     });
     expect(formSchema.safeParse(v).success).toBe(true);
@@ -142,6 +143,7 @@ describe("toApiPayload", () => {
           county:     "Ilfov",
           country:    "Romania",
           notes:      "",
+          streetViewStreetLine: "Strada Principală 2",
         },
       }),
       [],
@@ -153,6 +155,7 @@ describe("toApiPayload", () => {
       country:    "Romania",
       postalCode: null,
       notes:      null,
+      streetViewStreetLine: "Strada Principală 2",
     });
   });
 
@@ -208,12 +211,14 @@ describe("fromApiPayload", () => {
         county:     "Ilfov",
         country:    "Romania",
         notes:      null,
+        streetViewStreetLine: "Strada X 7",
       },
     });
     expect(result.address.streetLine).toBe("Strada X 5");
     expect(result.address.locality).toBe("Bragadiru");
     expect(result.address.country).toBe("Romania");
     expect(result.address.notes).toBe("");
+    expect(result.address.streetViewStreetLine).toBe("Strada X 7");
   });
 
   it("returns an empty address block when address is null", () => {
