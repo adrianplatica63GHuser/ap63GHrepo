@@ -48,5 +48,7 @@ export const groupUpdateSchema = z
   });
 export type GroupUpdate = z.infer<typeof groupUpdateSchema>;
 
-// Max number of groups a single property may belong to (Slice #18.07).
+// Max number of groups a single item (property, person, or document) may
+// belong to within its target-type group namespace (Slice #18.07 / #18.17).
 export const MAX_GROUPS_PER_PROPERTY = 3;
+export const MAX_GROUPS_PER_ITEM     = 3; // applies to persons + documents too
