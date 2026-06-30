@@ -195,7 +195,7 @@ export function DocumentForm({
     const prev = versionByNumber.get(latestVersion - 1)?.snapshot;
     setPulse(computeFieldHighlights(prev ?? null, curr));
     if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current);
-    pulseTimerRef.current = setTimeout(() => setPulse(null), 2600);
+    pulseTimerRef.current = setTimeout(() => setPulse(null), 3300);
   };
 
   // Clear the pulse timer on unmount.

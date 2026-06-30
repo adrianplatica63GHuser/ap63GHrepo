@@ -60,28 +60,41 @@ body {
 
 /* ── Version-diff "pulse" frames  (Slice #18.15.bugs / Bug 1) ──────────────────
    When the user navigates onto the latest version from a different one, the
-   fields that changed between version N-1 and N briefly PULSE a green (added)
-   or red (modified/deleted) box-shadow ring (~3 blinks over ~2.5s) and then
-   clear. green-500 = rgb(34,197,94); red-500 = rgb(239,68,68). The box-shadow
-   follows the element's own border-radius, matching the static `ring-2`.
+   fields that changed between version N-1 and N briefly PULSE green (added) or
+   red (modified/deleted) and then clear. We animate BOTH `outline` and
+   `box-shadow`: outline is drawn on top of the element and can't be overridden
+   by the inputs' own `shadow-sm`/`ring-*` box-shadow utilities, so the blink is
+   always visible; the box-shadow adds a soft glow. `!important` guards the
+   outline against the inputs' `focus:outline-none`. ~4 blinks over ~3.2s.
+   green-500 = rgb(34,197,94); red-500 = rgb(239,68,68).
    ─────────────────────────────────────────────────────────────────────────── */
 
 @keyframes ga-version-pulse-green {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
-  50%      { box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.9); }
+  0%, 100% { outline-color: rgba(34, 197, 94, 0);    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+  50%      { outline-color: rgba(34, 197, 94, 0.95); box-shadow: 0 0 0 5px rgba(34, 197, 94, 0.45); }
 }
 
 @keyframes ga-version-pulse-red {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-  50%      { box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.9); }
+  0%, 100% { outline-color: rgba(239, 68, 68, 0);    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+  50%      { outline-color: rgba(239, 68, 68, 0.95); box-shadow: 0 0 0 5px rgba(239, 68, 68, 0.45); }
 }
 
-.ga-vpulse-green { animation: ga-version-pulse-green 0.85s ease-in-out 3; }
-.ga-vpulse-red   { animation: ga-version-pulse-red 0.85s ease-in-out 3; }
+.ga-vpulse-green {
+  outline: 3px solid rgba(34, 197, 94, 0) !important;
+  outline-offset: 2px;
+  border-radius: 0.375rem;
+  animation: ga-version-pulse-green 0.8s ease-in-out 4;
+}
+.ga-vpulse-red {
+  outline: 3px solid rgba(239, 68, 68, 0) !important;
+  outline-offset: 2px;
+  border-radius: 0.375rem;
+  animation: ga-version-pulse-red 0.8s ease-in-out 4;
+}
 
-/* Respect reduced-motion: show a steady ring for the same brief window instead
-   of animating. The form clears the pulse state after ~2.6s either way. */
+/* Respect reduced-motion: show a steady coloured outline for the same brief
+   window instead of animating. The form clears the pulse state after ~3.3s. */
 @media (prefers-reduced-motion: reduce) {
-  .ga-vpulse-green { animation: none; box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.9); }
-  .ga-vpulse-red   { animation: none; box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.9); }
+  .ga-vpulse-green { animation: none; outline-color: rgba(34, 197, 94, 0.95) !important; }
+  .ga-vpulse-red   { animation: none; outline-color: rgba(239, 68, 68, 0.95) !important; }
 }

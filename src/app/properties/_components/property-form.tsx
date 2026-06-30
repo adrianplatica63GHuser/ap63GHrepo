@@ -310,7 +310,7 @@ export function PropertyForm({
     pulseTimerRef.current = setTimeout(() => {
       setPulse(null);
       setCornersPulse(false);
-    }, 2600);
+    }, 3300);
   };
 
   useEffect(
