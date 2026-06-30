@@ -1,24 +1,23 @@
 /**
- * Properties-Map "Groups" filter predicate  (Slice #18.08)
+ * Properties-Map "Groups" filter predicate  (Slice #18.08 + #18.17)
  *
  * Pure (no DB / React) so it can be unit-tested in isolation.
  *
- * The map's Groups panel lets the user uncheck group codes. A property is
- * VISIBLE when AT LEAST ONE of its groups is still checked; it is HIDDEN only
- * when EVERY group it belongs to has been unchecked. This covers both the
- * single-group case (uncheck its one group → hidden) and the multi-group case
- * (hidden only once all of its groups are unchecked).
- *
- * Properties that belong to NO group are always visible — the filter never
- * removes them (per the Slice #18.08 spec decision).
+ * The map's Groups panel lets the user uncheck items. A property is
+ * VISIBLE when it matches at least one checked item:
+ *   - Items with NO group are visible unless the "_ungrouped" sentinel is
+ *     present in uncheckedCodes (Slice #18.17: "Not in a group" checkbox).
+ *   - Items WITH groups are hidden only when EVERY one of their groups has
+ *     been unchecked.
  *
  * @param groupCodes      the property's PROPERTY-group codes (may be empty)
- * @param uncheckedCodes  the set of group codes the user has unchecked
+ * @param uncheckedCodes  the set of items the user has unchecked; may include
+ *                        the sentinel "_ungrouped" to hide ungrouped properties
  */
 export function isPropertyVisibleForGroups(
   groupCodes: readonly string[],
   uncheckedCodes: ReadonlySet<string>,
 ): boolean {
-  if (groupCodes.length === 0) return true;
+  if (groupCodes.length === 0) return !uncheckedCodes.has("_ungrouped");
   return groupCodes.some((code) => !uncheckedCodes.has(code));
 }
