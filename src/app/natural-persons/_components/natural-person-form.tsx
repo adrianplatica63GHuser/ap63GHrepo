@@ -88,6 +88,23 @@ function useCitizenshipOptions(): { value: string; label: string }[] {
   return options;
 }
 
+// Slice #18.16.VL: Professional Type dropdown (lookup_person_type).
+function usePersonTypeOptions(): { value: string; label: string }[] {
+  const [options, setOptions] = useState<{ value: string; label: string }[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/admin/value-lists/person-types")
+      .then((r) => (r.ok ? r.json() : { items: [] }))
+      .then((data: { items?: { id: string; name: string }[] }) => {
+        if (cancelled) return;
+        setOptions((data.items ?? []).map((r) => ({ value: r.id, label: r.name })));
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+  return options;
+}
+
 export function NaturalPersonForm({
   mode,
   personId,
@@ -100,6 +117,8 @@ export function NaturalPersonForm({
   const router = useRouter();
   const queryClient = useQueryClient();
   const citizenshipOptions = useCitizenshipOptions();
+  // Slice #18.16.VL:
+  const personTypeOptions = usePersonTypeOptions();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -594,6 +613,17 @@ export function NaturalPersonForm({
               register={register}
               error={errors.placeOfBirth?.message}
               highlight={displayHighlights?.fields.placeOfBirth}
+            />
+          </div>
+          {/* Slice #18.16.VL: Professional Type */}
+          <div className="grid grid-cols-2 gap-2">
+            <SelectField
+              label={t("fields.physicalPersonTypeId")}
+              name="physicalPersonTypeId"
+              register={register}
+              error={errors.physicalPersonTypeId?.message}
+              options={[{ value: "", label: "—" }, ...personTypeOptions]}
+              highlight={displayHighlights?.fields.physicalPersonTypeId}
             />
           </div>
           <div className="grid grid-cols-2 gap-2">

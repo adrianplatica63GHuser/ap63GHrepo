@@ -542,6 +542,7 @@
       "personalEmail2": "Personal Email 2",
       "workEmail": "Work Email",
       "citizenship": "Citizenship",
+      "physicalPersonTypeId": "Professional Type",
       "placeOfBirth": "Place of Birth",
       "idIssuingAuthority": "ID Issuing Authority",
       "idCardNumber": "ID Card Number",

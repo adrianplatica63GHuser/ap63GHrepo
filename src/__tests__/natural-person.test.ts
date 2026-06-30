@@ -291,6 +291,8 @@ describe("fromApiPayload", () => {
         idCardNumber: null,
         idMrzRaw: null,
         citizenshipId: null,
+        // Slice #18.16.VL:
+        physicalPersonTypeId: null,
       },
       addresses: [],
       notes: null,

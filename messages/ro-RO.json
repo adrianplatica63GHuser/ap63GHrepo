@@ -542,6 +542,7 @@
       "personalEmail2": "Email personal 2",
       "workEmail": "Email serviciu",
       "citizenship": "Cetățenie",
+      "physicalPersonTypeId": "Tip Profesional",
       "placeOfBirth": "Locul nașterii",
       "idIssuingAuthority": "Emisă de",
       "idCardNumber": "Nr. card",

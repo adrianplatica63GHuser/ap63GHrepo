@@ -300,7 +300,9 @@ export function naturalSnapshotFromFull(full: PersonFull): NaturalPersonSnapshot
       idValidUntil:       n?.idValidUntil       ?? null,
       idCardNumber:       n?.idCardNumber       ?? null,
       idMrzRaw:           n?.idMrzRaw           ?? null,
-      citizenshipId:      n?.citizenshipId      ?? null,
+      citizenshipId:          n?.citizenshipId          ?? null,
+      // Slice #18.16.VL: Professional Type FK.
+      physicalPersonTypeId:   n?.physicalPersonTypeId   ?? null,
     },
     addresses: {
       HOME:           addressSnapshot(home),
@@ -315,6 +317,8 @@ const NAT_FIELD_KEYS: (keyof NaturalPersonSnapshot["natural"])[] = [
   "personalPhone2", "workPhone", "personalEmail1", "personalEmail2",
   "workEmail", "placeOfBirth", "idIssuingAuthority", "idValidFrom",
   "idValidUntil", "idCardNumber", "idMrzRaw", "citizenshipId",
+  // Slice #18.16.VL:
+  "physicalPersonTypeId",
 ];
 const ADDR_SNAP_KEYS: (keyof PersonAddressSnapshot)[] = [
   "streetLine", "postalCode", "locality", "county", "country", "notes",
@@ -433,6 +437,8 @@ export async function createNaturalPerson(
         idCardNumber: natFields.idCardNumber ?? null,
         idMrzRaw: natFields.idMrzRaw ?? null,
         citizenshipId: natFields.citizenshipId ?? null,
+        // Slice #18.16.VL:
+        physicalPersonTypeId: natFields.physicalPersonTypeId ?? null,
       })
       .returning();
 

@@ -48,6 +48,8 @@ const EMPTY_NAT: NaturalPersonSnapshot["natural"] = {
   workEmail: null, placeOfBirth: null, idIssuingAuthority: null,
   idValidFrom: null, idValidUntil: null, idCardNumber: null,
   idMrzRaw: null, citizenshipId: null,
+  // Slice #18.16.VL:
+  physicalPersonTypeId: null,
 };
 
 function natSnap(over: {

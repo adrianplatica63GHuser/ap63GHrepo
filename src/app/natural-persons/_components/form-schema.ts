@@ -64,6 +64,8 @@ export const formSchema = z
     idCardNumber: z.string(),
     idMrzRaw: z.string(),
     citizenshipId: z.string(), // "" | uuid
+    // Slice #18.16.VL: Professional Type FK (lookup_person_type); "" = unset.
+    physicalPersonTypeId: z.string(),
     notes: z.string().max(300, "Notes is limited to 300 characters"),
     addresses: z.object({
       HOME: addressBlockSchema,
@@ -142,6 +144,7 @@ export const emptyFormValues: FormValues = {
   idCardNumber: "",
   idMrzRaw: "",
   citizenshipId: "",
+  physicalPersonTypeId: "",
   notes: "",
   addresses: {
     HOME: { ...emptyAddressBlock },
@@ -175,6 +178,8 @@ type NaturalRow = {
   idCardNumber: string | null;
   idMrzRaw: string | null;
   citizenshipId: string | null;
+  // Slice #18.16.VL:
+  physicalPersonTypeId: string | null;
 };
 
 type AddressRow = {
@@ -219,6 +224,7 @@ export function fromApiPayload(input: {
     idCardNumber: n?.idCardNumber ?? "",
     idMrzRaw: n?.idMrzRaw ?? "",
     citizenshipId: n?.citizenshipId ?? "",
+    physicalPersonTypeId: n?.physicalPersonTypeId ?? "",
     notes: input.notes ?? "",
     addresses: {
       HOME: home
@@ -303,6 +309,8 @@ export function toApiPayload(
     idCardNumber: blank(values.idCardNumber),
     idMrzRaw: blank(values.idMrzRaw),
     citizenshipId: blank(values.citizenshipId),
+    // Slice #18.16.VL:
+    physicalPersonTypeId: blank(values.physicalPersonTypeId),
     notes: blank(values.notes),
     addresses,
   };
@@ -326,7 +334,10 @@ const FORM_TOP_KEYS = [
   "idDocumentNumber", "gender", "dateOfBirth", "personalPhone1",
   "personalPhone2", "workPhone", "personalEmail1", "personalEmail2",
   "workEmail", "placeOfBirth", "idIssuingAuthority", "idValidFrom",
-  "idValidUntil", "idCardNumber", "idMrzRaw", "citizenshipId", "notes",
+  "idValidUntil", "idCardNumber", "idMrzRaw", "citizenshipId",
+  // Slice #18.16.VL:
+  "physicalPersonTypeId",
+  "notes",
 ] as const satisfies readonly (keyof Omit<FormValues, "addresses">)[];
 
 const ADDR_KEYS = [

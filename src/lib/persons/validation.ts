@@ -153,9 +153,11 @@ export type NaturalPersonSnapshotFields = {
   idIssuingAuthority: string | null;
   idValidFrom:        string | null;
   idValidUntil:       string | null;
-  idCardNumber:       string | null;
-  idMrzRaw:           string | null;
-  citizenshipId:      string | null;
+  idCardNumber:           string | null;
+  idMrzRaw:               string | null;
+  citizenshipId:          string | null;
+  // Slice #18.16.VL: Professional Type FK (lookup_person_type).
+  physicalPersonTypeId:   string | null;
 };
 
 export type NaturalPersonSnapshot = {
