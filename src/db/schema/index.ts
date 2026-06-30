@@ -163,6 +163,13 @@ export const naturalPerson = pgTable(
     idCardNumber: text("id_card_number"),
     idMrzRaw: text("id_mrz_raw"),
     citizenshipId: uuid("citizenship_id").references(() => lookupCitizenship.id, { onDelete: "set null" }),
+
+    // "Tip Profesional" — Physical Person Type, admin-managed via
+    // Administration → Reference Data → "Physical Person Types".
+    // Nullable; ON DELETE SET NULL so removing a type just clears the tag.
+    // Added in Slice #18.16.VL.
+    physicalPersonTypeId: uuid("physical_person_type_id")
+      .references(() => lookupPersonType.id, { onDelete: "set null" }),
   },
   (t) => [
     // At least one of first_name / last_name must be set.
@@ -751,8 +758,16 @@ export const document = pgTable("document", {
   nrDocument:   text("nr_document"),
   // "Data autentificarii" / "Data eliberarii" / "Data emiterii"
   dateDocument: date("date_document", { mode: "string" }),
-  // "Notariat" / "Institutie unde este inregistrat" / "Emitent" (generic)
+  // "Notariat" / "Institutie unde este inregistrat" / "Emitent" (generic).
+  // Kept as nullable text for backward compat (historical free-text values).
+  // New writes use institutionId (FK) instead — see Slice #18.16.VL.
   institution:  text("institution"),
+
+  // FK to lookup_institution (Slice #18.16.VL). Replaces the free-text
+  // `institution` field; ON DELETE SET NULL so removing an institution from
+  // Reference Data just clears the tag rather than blocking the delete.
+  institutionId: uuid("institution_id")
+    .references(() => lookupInstitution.id, { onDelete: "set null" }),
 
   // ── Titlu de Proprietate specific ──────────────────────────────────────
   emitent:       text("emitent"),
