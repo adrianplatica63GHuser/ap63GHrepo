@@ -534,16 +534,11 @@ export function JudicialPersonForm({
         </div>
       </section>
 
-      {/* ── Office Address ───────────────────────────────────────────────── */}
+      {/* ── Registered Address ──────────────────────────────────────────────── */}
       <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
-          {t("sections.officeAddress")}
-        </h2>
-
-        {/* Registered Address subsection */}
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-fade dark:text-zinc-500">
           {t("sections.registeredAddress")}
-        </p>
+        </h2>
         <AddressFields
           prefix="addresses.HEADQUARTERS"
           register={register}
@@ -551,52 +546,53 @@ export function JudicialPersonForm({
           t={addressT}
           highlights={displayHighlights?.addresses.HEADQUARTERS}
         />
+      </section>
 
-        {/* Correspondence Address subsection */}
-        <div className="mt-4 flex items-center justify-between mb-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-fade dark:text-zinc-500">
+      {/* "Same as registered address" checkbox — between the two address cards */}
+      <div className="flex items-center gap-2 px-1">
+        <Controller
+          control={control}
+          name="correspondenceSameAsHq"
+          render={({ field }) => (
+            <label
+              className={[
+                "flex cursor-pointer items-center gap-2 rounded-md text-sm text-fade dark:text-zinc-400 select-none",
+                displayHighlights?.fields.correspondenceSameAsHq
+                  ? "px-1 " +
+                    highlightRingClass(
+                      displayHighlights.fields.correspondenceSameAsHq,
+                      pulsing,
+                    )
+                  : "",
+              ].join(" ")}
+            >
+              <input
+                type="checkbox"
+                checked={field.value}
+                onChange={(e) => {
+                  field.onChange(e.target.checked);
+                  // When toggling to "same", copy HQ into correspondence so
+                  // there's no stale data sitting in the hidden inputs.
+                  if (e.target.checked) {
+                    const hq = getValues("addresses.HEADQUARTERS");
+                    setValue("addresses.CORRESPONDENCE", { ...hq }, { shouldDirty: true });
+                  }
+                }}
+                className="accent-cta"
+                aria-label={t("fields.sameAsRegistered")}
+              />
+              {t("fields.sameAsRegistered")}
+            </label>
+          )}
+        />
+      </div>
+
+      {/* ── Correspondence Address — only when not same as registered ──────── */}
+      {!correspondenceSameAsHq && (
+        <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
             {t("sections.correspondenceAddress")}
-          </p>
-          {/* "Same as registered address" checkbox */}
-          <Controller
-            control={control}
-            name="correspondenceSameAsHq"
-            render={({ field }) => (
-              <label
-                className={[
-                  "flex cursor-pointer items-center gap-2 rounded-md text-xs text-fade dark:text-zinc-400 select-none",
-                  displayHighlights?.fields.correspondenceSameAsHq
-                    ? "px-1 " +
-                      highlightRingClass(
-                        displayHighlights.fields.correspondenceSameAsHq,
-                        pulsing,
-                      )
-                    : "",
-                ].join(" ")}
-              >
-                <input
-                  type="checkbox"
-                  checked={field.value}
-                  onChange={(e) => {
-                    field.onChange(e.target.checked);
-                    // When toggling to "same", clear the correspondence fields
-                    // so there's no stale data sitting in hidden inputs.
-                    if (e.target.checked) {
-                      const hq = getValues("addresses.HEADQUARTERS");
-                      setValue("addresses.CORRESPONDENCE", { ...hq }, { shouldDirty: true });
-                    }
-                  }}
-                  className="accent-cta"
-                  aria-label={t("fields.sameAsRegistered")}
-                />
-                {t("fields.sameAsRegistered")}
-              </label>
-            )}
-          />
-        </div>
-
-        {/* Only render correspondence fields when NOT same-as */}
-        {!correspondenceSameAsHq && (
+          </h2>
           <AddressFields
             prefix="addresses.CORRESPONDENCE"
             register={register}
@@ -604,8 +600,8 @@ export function JudicialPersonForm({
             t={addressT}
             highlights={displayHighlights?.addresses.CORRESPONDENCE}
           />
-        )}
-      </section>
+        </section>
+      )}
 
       </fieldset>{/* end disabled fieldset */}
 

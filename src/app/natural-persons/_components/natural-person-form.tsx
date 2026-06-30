@@ -439,7 +439,7 @@ export function NaturalPersonForm({
           outside this fieldset, so its buttons stay clickable. */}
       <fieldset disabled={effectiveMode === "view"} className="flex flex-col gap-4 border-0 m-0 p-0 min-w-0">
 
-      {/* Identity — all personal data merged into one section */}
+      {/* Identity — core biographical data */}
       <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
           {t("sections.identity")}
@@ -475,29 +475,7 @@ export function NaturalPersonForm({
               highlight={displayHighlights?.fields.cnp}
             />
           </div>
-          {/* Row 3: ID Type | ID Number */}
-          <div className="grid grid-cols-2 gap-2">
-            <SelectField
-              label={t("fields.idDocumentType")}
-              name="idDocumentType"
-              register={register}
-              error={errors.idDocumentType?.message}
-              options={[
-                { value: "", label: "—" },
-                { value: "ID_CARD", label: t("options.idDoc.ID_CARD") },
-                { value: "PASSPORT", label: t("options.idDoc.PASSPORT") },
-              ]}
-              highlight={displayHighlights?.fields.idDocumentType}
-            />
-            <Field
-              label={t("fields.idDocumentNumber")}
-              name="idDocumentNumber"
-              register={register}
-              error={errors.idDocumentNumber?.message}
-              highlight={displayHighlights?.fields.idDocumentNumber}
-            />
-          </div>
-          {/* Row 4: Gender | Date of Birth */}
+          {/* Row 3: Gender | Date of Birth */}
           <div className="grid grid-cols-2 gap-2">
             <SelectField
               label={t("fields.gender")}
@@ -520,6 +498,24 @@ export function NaturalPersonForm({
               highlight={displayHighlights?.fields.dateOfBirth}
             />
           </div>
+          {/* Row 4: Place of Birth | Professional Type */}
+          <div className="grid grid-cols-2 gap-2">
+            <Field
+              label={t("fields.placeOfBirth")}
+              name="placeOfBirth"
+              register={register}
+              error={errors.placeOfBirth?.message}
+              highlight={displayHighlights?.fields.placeOfBirth}
+            />
+            <SelectField
+              label={t("fields.physicalPersonTypeId")}
+              name="physicalPersonTypeId"
+              register={register}
+              error={errors.physicalPersonTypeId?.message}
+              options={[{ value: "", label: "—" }, ...personTypeOptions]}
+              highlight={displayHighlights?.fields.physicalPersonTypeId}
+            />
+          </div>
           {/* Row 5: Nickname | Notes */}
           <div className="grid grid-cols-2 gap-2">
             <Field
@@ -537,7 +533,16 @@ export function NaturalPersonForm({
               highlight={displayHighlights?.fields.notes}
             />
           </div>
-          {/* Row 6: Personal Phone 1 | Personal Email 1 */}
+        </div>
+      </section>
+
+      {/* Contact — phones and emails */}
+      <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
+          {t("sections.contact")}
+        </h2>
+        <div className="flex flex-col gap-2">
+          {/* Row 1: Personal Phone 1 | Personal Email 1 */}
           <div className="grid grid-cols-2 gap-2">
             <Field
               label={t("fields.personalPhone1")}
@@ -554,7 +559,7 @@ export function NaturalPersonForm({
               highlight={displayHighlights?.fields.personalEmail1}
             />
           </div>
-          {/* Row 7: Personal Phone 2 | Personal Email 2 */}
+          {/* Row 2: Personal Phone 2 | Personal Email 2 */}
           <div className="grid grid-cols-2 gap-2">
             <Field
               label={t("fields.personalPhone2")}
@@ -571,7 +576,7 @@ export function NaturalPersonForm({
               highlight={displayHighlights?.fields.personalEmail2}
             />
           </div>
-          {/* Row 8: Work Phone | Work Email */}
+          {/* Row 3: Work Phone | Work Email */}
           <div className="grid grid-cols-2 gap-2">
             <Field
               label={t("fields.workPhone")}
@@ -591,13 +596,35 @@ export function NaturalPersonForm({
         </div>
       </section>
 
-      {/* ID Card — fields with no home elsewhere; populated manually or via
-          the Import/Classify "Person" flow's vision extraction. */}
+      {/* ID Card — official document data; populated manually or via scanner */}
       <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
           {t("sections.idCard")}
         </h2>
         <div className="flex flex-col gap-2">
+          {/* Row 1: ID Doc Type | ID Doc Number */}
+          <div className="grid grid-cols-2 gap-2">
+            <SelectField
+              label={t("fields.idDocumentType")}
+              name="idDocumentType"
+              register={register}
+              error={errors.idDocumentType?.message}
+              options={[
+                { value: "", label: "—" },
+                { value: "ID_CARD", label: t("options.idDoc.ID_CARD") },
+                { value: "PASSPORT", label: t("options.idDoc.PASSPORT") },
+              ]}
+              highlight={displayHighlights?.fields.idDocumentType}
+            />
+            <Field
+              label={t("fields.idDocumentNumber")}
+              name="idDocumentNumber"
+              register={register}
+              error={errors.idDocumentNumber?.message}
+              highlight={displayHighlights?.fields.idDocumentNumber}
+            />
+          </div>
+          {/* Row 2: Citizenship | Issuing Authority */}
           <div className="grid grid-cols-2 gap-2">
             <SelectField
               label={t("fields.citizenship")}
@@ -608,32 +635,15 @@ export function NaturalPersonForm({
               highlight={displayHighlights?.fields.citizenshipId}
             />
             <Field
-              label={t("fields.placeOfBirth")}
-              name="placeOfBirth"
-              register={register}
-              error={errors.placeOfBirth?.message}
-              highlight={displayHighlights?.fields.placeOfBirth}
-            />
-          </div>
-          {/* Slice #18.16.VL: Professional Type */}
-          <div className="grid grid-cols-2 gap-2">
-            <SelectField
-              label={t("fields.physicalPersonTypeId")}
-              name="physicalPersonTypeId"
-              register={register}
-              error={errors.physicalPersonTypeId?.message}
-              options={[{ value: "", label: "—" }, ...personTypeOptions]}
-              highlight={displayHighlights?.fields.physicalPersonTypeId}
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <Field
               label={t("fields.idIssuingAuthority")}
               name="idIssuingAuthority"
               register={register}
               error={errors.idIssuingAuthority?.message}
               highlight={displayHighlights?.fields.idIssuingAuthority}
             />
+          </div>
+          {/* Row 3: ID Card Number (half-width) */}
+          <div className="grid grid-cols-2 gap-2">
             <Field
               label={t("fields.idCardNumber")}
               name="idCardNumber"
@@ -642,6 +652,7 @@ export function NaturalPersonForm({
               highlight={displayHighlights?.fields.idCardNumber}
             />
           </div>
+          {/* Row 4: Valid From | Valid Until */}
           <div className="grid grid-cols-2 gap-2">
             <Field
               label={t("fields.idValidFrom")}
