@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { GroupsFilterDropdown } from "@/components/groups-filter-dropdown";
 import { RecencyBadge } from "@/components/recency-badge";
 
 const PAGE_SIZE = 15;
@@ -32,14 +33,26 @@ type ListResponse = {
   offset: number;
 };
 
-async function fetchProperties(q: string, page: number): Promise<ListResponse> {
+async function fetchProperties(
+  q: string,
+  page: number,
+  groupCodes?: string[],
+): Promise<ListResponse> {
   const url = new URL("/api/properties", window.location.origin);
   if (q) url.searchParams.set("q", q);
+  if (groupCodes !== undefined) url.searchParams.set("groupCodes", groupCodes.join(","));
   url.searchParams.set("limit",  String(PAGE_SIZE));
   url.searchParams.set("offset", String(page * PAGE_SIZE));
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Request failed (${res.status})`);
   return res.json();
+}
+
+async function fetchPropertyGroupCodes(): Promise<string[]> {
+  const res = await fetch("/api/groups?targetType=PROPERTY");
+  if (!res.ok) return [];
+  const body = await res.json();
+  return ((body.items ?? []) as { code: string }[]).map((g) => g.code).sort();
 }
 
 async function callBatchDelete(ids: string[]): Promise<void> {
@@ -121,10 +134,21 @@ export function PropertyListView() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [currentPage,     setCurrentPage]     = useState(0);
 
+  // Slice #18.17: Groups filter (component state, server-side).
+  const [groupCodesFilter, setGroupCodesFilter] = useState<string[] | undefined>(undefined);
+  const [groupDropdownOpen, setGroupDropdownOpen] = useState(false);
+
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const [confirmOpen,  setConfirmOpen]  = useState(false);
   const [deleting,     setDeleting]     = useState(false);
   const [deleteError,  setDeleteError]  = useState<string | null>(null);
+
+  // Fetch available PROPERTY group codes for the dropdown.
+  const { data: availableGroupCodes = [] } = useQuery<string[]>({
+    queryKey: ["groups", "codes", "PROPERTY"],
+    queryFn:  fetchPropertyGroupCodes,
+    staleTime: 5 * 60 * 1000,
+  });
 
   useEffect(() => {
     const handle = setTimeout(() => {
@@ -134,9 +158,18 @@ export function PropertyListView() {
     return () => clearTimeout(handle);
   }, [searchInput]);
 
+  // Reset page when group filter changes.
+  const groupCodesKey =
+    groupCodesFilter === undefined ? "__all__" : groupCodesFilter.join(",");
+  const [prevGroupKey, setPrevGroupKey] = useState(groupCodesKey);
+  if (prevGroupKey !== groupCodesKey) {
+    setPrevGroupKey(groupCodesKey);
+    setCurrentPage(0);
+  }
+
   const query = useQuery<ListResponse>({
-    queryKey: ["properties", "list", debouncedSearch, currentPage],
-    queryFn:  () => fetchProperties(debouncedSearch, currentPage),
+    queryKey: ["properties", "list", debouncedSearch, currentPage, groupCodesKey],
+    queryFn:  () => fetchProperties(debouncedSearch, currentPage, groupCodesFilter),
   });
 
   const total      = query.data?.total ?? 0;
@@ -203,16 +236,27 @@ export function PropertyListView() {
   return (
     <div className="flex flex-col gap-4">
       {/* Toolbar */}
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center gap-3">
+        {availableGroupCodes.length > 0 && (
+          <GroupsFilterDropdown
+            availableCodes={availableGroupCodes}
+            selectedCodes={groupCodesFilter}
+            label={t("groupsFilterLabel")}
+            allLabel={t("groupsFilterAll")}
+            open={groupDropdownOpen}
+            onOpenChange={setGroupDropdownOpen}
+            onChange={(codes) => { setGroupCodesFilter(codes); setGroupDropdownOpen(false); }}
+          />
+        )}
         <input
           type="search"
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           placeholder={t("searchPlaceholder")}
           aria-label={t("searchPlaceholder")}
-          className="flex-1 max-w-md rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm placeholder:text-fade focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:placeholder:text-zinc-500"
+          className="flex-1 min-w-48 max-w-md rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm placeholder:text-fade focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:placeholder:text-zinc-500"
         />
-        <div className="flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-2">
           {selectedIds.size > 0 && (
             <button
               type="button"

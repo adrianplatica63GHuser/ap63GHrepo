@@ -6,17 +6,16 @@ import { useMemo, useState } from "react";
 import type { GroupTargetType } from "@/lib/groups/validation";
 
 // ── Types (mirror GroupDetail from src/lib/groups/queries.ts) ────────────────
+// Normalised shapes: memberId is the FK id for the group's target type.
 
 type MemberItem = {
-  propertyId: string;
-  position:   number;
-  code:       string;
-  nickname:   string | null;
+  memberId:     string;
+  position:     number;
+  displayLabel: string;
 };
 type Candidate = {
   id:              string;
-  code:            string;
-  nickname:        string | null;
+  displayLabel:    string;
   otherGroupCount: number;
 };
 type GroupDetail = {
@@ -25,7 +24,7 @@ type GroupDetail = {
   targetType:  GroupTargetType;
   description: string;
   members:     MemberItem[];
-  candidates:  Candidate[] | null;
+  candidates:  Candidate[];
 };
 
 const DESCRIPTION_MAX = 500;
@@ -82,18 +81,16 @@ export function GroupEditor({
     refetchOnWindowFocus: false,
   });
 
-  const isProperty = detail.targetType === "PROPERTY";
-
   // Baselines — the last saved state. Reset after a successful save.
   const [baseDescription, setBaseDescription] = useState(detail.description);
   const [baseMemberIds, setBaseMemberIds] = useState<string[]>(
-    () => detail.members.map((m) => m.propertyId),
+    () => detail.members.map((m) => m.memberId),
   );
 
   // Working copy.
   const [description, setDescription] = useState(detail.description);
   const [memberIds, setMemberIds] = useState<Set<string>>(
-    () => new Set(detail.members.map((m) => m.propertyId)),
+    () => new Set(detail.members.map((m) => m.memberId)),
   );
 
   const [showItems, setShowItems] = useState(true);
@@ -102,33 +99,30 @@ export function GroupEditor({
   const [selMembers, setSelMembers] = useState<Set<string>>(() => new Set());
   const [error, setError] = useState<string | null>(null);
 
-  // Lookups built from the server detail.
-  const infoById = useMemo(() => {
-    const map = new Map<string, { code: string; nickname: string | null }>();
-    for (const m of detail.members) map.set(m.propertyId, { code: m.code, nickname: m.nickname });
-    for (const c of detail.candidates ?? []) map.set(c.id, { code: c.code, nickname: c.nickname });
+  // Lookups: memberId → displayLabel (from both members and candidates).
+  const labelById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const m of detail.members)   map.set(m.memberId, m.displayLabel);
+    for (const c of detail.candidates) map.set(c.id,       c.displayLabel);
     return map;
   }, [detail]);
 
   const originalPositionById = useMemo(() => {
     const map = new Map<string, number>();
-    for (const m of detail.members) map.set(m.propertyId, m.position);
+    for (const m of detail.members) map.set(m.memberId, m.position);
     return map;
   }, [detail]);
 
-  // Pool of properties that can appear on the left (available) panel:
+  // Pool of items that can appear on the left (available) panel:
   // server candidates + the original members (so a removed member reappears).
   const poolIds = useMemo(() => {
     const ids = new Set<string>();
-    for (const c of detail.candidates ?? []) ids.add(c.id);
-    for (const m of detail.members) ids.add(m.propertyId);
+    for (const c of detail.candidates) ids.add(c.id);
+    for (const m of detail.members)    ids.add(m.memberId);
     return ids;
   }, [detail]);
 
-  const label = (id: string): string => {
-    const info = infoById.get(id);
-    return info?.nickname?.trim() || info?.code || id;
-  };
+  const label = (id: string): string => labelById.get(id) ?? id;
 
   // Left panel = pool minus current members, filtered by search, sorted by label.
   const availableRows = useMemo(() => {
@@ -137,15 +131,11 @@ export function GroupEditor({
       .filter((id) => !memberIds.has(id))
       .filter((id) => {
         if (!q) return true;
-        const info = infoById.get(id);
-        return (
-          (info?.nickname?.toLowerCase().includes(q) ?? false) ||
-          (info?.code?.toLowerCase().includes(q) ?? false)
-        );
+        return label(id).toLowerCase().includes(q);
       })
       .sort((a, b) => label(a).localeCompare(label(b)));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [poolIds, memberIds, search, infoById]);
+  }, [poolIds, memberIds, search, labelById]);
 
   // Right panel = current members: saved ones (with position) first by
   // position, then staged additions (no position yet) by label.
@@ -159,7 +149,7 @@ export function GroupEditor({
       .sort((a, b) => label(a).localeCompare(label(b)));
     return [...withPos, ...staged];
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [memberIds, originalPositionById, infoById]);
+  }, [memberIds, originalPositionById, labelById]);
 
   // Dirty check vs baseline.
   const memberSetChanged = useMemo(() => {
@@ -201,20 +191,18 @@ export function GroupEditor({
   // ── Save ───────────────────────────────────────────────────────────────────
 
   const mutation = useMutation({
-    mutationFn: () => {
-      const body: { description?: string; memberIds?: string[] } = {
+    mutationFn: () =>
+      saveGroup(groupId, {
         description: description.trim(),
-      };
-      if (isProperty) body.memberIds = [...memberIds];
-      return saveGroup(groupId, body);
-    },
+        memberIds: [...memberIds],
+      }),
     onSuccess: (updated) => {
       qc.setQueryData(["group", groupId], updated);
       qc.invalidateQueries({ queryKey: ["groups"] });
       setBaseDescription(updated.description);
-      setBaseMemberIds(updated.members.map((m) => m.propertyId));
+      setBaseMemberIds(updated.members.map((m) => m.memberId));
       setDescription(updated.description);
-      setMemberIds(new Set(updated.members.map((m) => m.propertyId)));
+      setMemberIds(new Set(updated.members.map((m) => m.memberId)));
       setSelAvailable(new Set());
       setSelMembers(new Set());
       setError(null);
@@ -272,24 +260,22 @@ export function GroupEditor({
             </span>
           </div>
 
-          {/* Add items toggle (PROPERTY only) */}
-          {isProperty && (
-            <div className="flex flex-col gap-1">
-              <span className="text-xs font-medium text-transparent select-none">.</span>
-              <button
-                type="button"
-                onClick={() => setShowItems((v) => !v)}
-                className="inline-flex items-center rounded-md border border-wire bg-white px-3 py-1.5 text-sm font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-              >
-                {showItems ? t("hideItems") : t("addItems")}
-              </button>
-            </div>
-          )}
+          {/* Add items toggle */}
+          <div className="flex flex-col gap-1">
+            <span className="text-xs font-medium text-transparent select-none">.</span>
+            <button
+              type="button"
+              onClick={() => setShowItems((v) => !v)}
+              className="inline-flex items-center rounded-md border border-wire bg-white px-3 py-1.5 text-sm font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+            >
+              {showItems ? t("hideItems") : t("addItems")}
+            </button>
+          </div>
         </div>
       </section>
 
-      {/* Areas B + C — member editor (PROPERTY only) */}
-      {isProperty && showItems && (
+      {/* Areas B + C — member editor */}
+      {showItems && (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {/* Panel B — available */}
           <Panel
@@ -354,13 +340,6 @@ export function GroupEditor({
               </button>
             }
           />
-        </div>
-      )}
-
-      {/* Not-implemented notice for non-PROPERTY targets */}
-      {!isProperty && (
-        <div className="rounded-md border border-amber-300 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
-          {t("notImplemented")}
         </div>
       )}
 

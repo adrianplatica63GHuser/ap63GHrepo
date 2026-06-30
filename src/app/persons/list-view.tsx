@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { GroupsFilterDropdown } from "@/components/groups-filter-dropdown";
 import { RecencyBadge } from "@/components/recency-badge";
 
 const PAGE_SIZE = 15;
@@ -139,15 +140,32 @@ type ListResponse = {
   offset: number;
 };
 
-async function fetchPersons(q: string, personTypes: string[], page: number): Promise<ListResponse> {
+async function fetchPersons(
+  q: string,
+  personTypes: string[],
+  page: number,
+  groupCodes?: string[],
+): Promise<ListResponse> {
   const url = new URL("/api/persons", window.location.origin);
-  if (q)                 url.searchParams.set("q",           q);
+  if (q)                  url.searchParams.set("q",           q);
   if (personTypes.length) url.searchParams.set("personTypes", personTypes.join(","));
+  if (groupCodes !== undefined) url.searchParams.set("groupCodes", groupCodes.join(","));
   url.searchParams.set("limit",  String(PAGE_SIZE));
   url.searchParams.set("offset", String(page * PAGE_SIZE));
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Request failed (${res.status})`);
   return res.json();
+}
+
+async function fetchPersonGroupCodes(): Promise<string[]> {
+  // Fetch PHYSICAL_PERSON + JUDICIAL_PERSON groups combined (one call, no targetType filter).
+  const res = await fetch("/api/groups");
+  if (!res.ok) return [];
+  const body = await res.json();
+  return ((body.items ?? []) as { code: string; targetType: string }[])
+    .filter((g) => g.targetType === "PHYSICAL_PERSON" || g.targetType === "JUDICIAL_PERSON")
+    .map((g) => g.code)
+    .sort();
 }
 
 // Shared across Natural + Judicial — `person` is the common base table, so
@@ -230,10 +248,21 @@ export function PersonListView({
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [currentPage,     setCurrentPage]     = useState(0);
 
+  // Slice #18.17: Groups filter (component state, server-side).
+  const [groupCodesFilter, setGroupCodesFilter] = useState<string[] | undefined>(undefined);
+  const [groupDropdownOpen, setGroupDropdownOpen] = useState(false);
+
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const [confirmOpen,  setConfirmOpen]  = useState(false);
   const [deleting,     setDeleting]     = useState(false);
   const [deleteError,  setDeleteError]  = useState<string | null>(null);
+
+  // Fetch available person group codes for the dropdown (PHYSICAL_PERSON + JUDICIAL_PERSON).
+  const { data: availableGroupCodes = [] } = useQuery<string[]>({
+    queryKey: ["groups", "codes", "PERSON"],
+    queryFn:  fetchPersonGroupCodes,
+    staleTime: 5 * 60 * 1000,
+  });
 
   const typeLabels: Record<PersonType, string> = {
     NATURAL:  t("typeNatural"),
@@ -261,9 +290,18 @@ export function PersonListView({
   // When initialPersonTypes is an empty array, skip the API call and show a message.
   const noTypesSelected = initialPersonTypes !== undefined && initialPersonTypes.length === 0;
 
+  // Reset page when group filter changes.
+  const groupCodesKey =
+    groupCodesFilter === undefined ? "__all__" : groupCodesFilter.join(",");
+  const [prevGroupKey, setPrevGroupKey] = useState(groupCodesKey);
+  if (prevGroupKey !== groupCodesKey) {
+    setPrevGroupKey(groupCodesKey);
+    setCurrentPage(0);
+  }
+
   const query = useQuery<ListResponse>({
-    queryKey: ["persons", "list", debouncedSearch, typeFiltersKey, currentPage],
-    queryFn:  () => fetchPersons(debouncedSearch, initialPersonTypes ?? [], currentPage),
+    queryKey: ["persons", "list", debouncedSearch, typeFiltersKey, currentPage, groupCodesKey],
+    queryFn:  () => fetchPersons(debouncedSearch, initialPersonTypes ?? [], currentPage, groupCodesFilter),
     enabled:  !noTypesSelected,
   });
 
@@ -347,6 +385,17 @@ export function PersonListView({
           allTypesLabel={t("allTypes")}
           typeLabels={typeLabels}
         />
+        {availableGroupCodes.length > 0 && (
+          <GroupsFilterDropdown
+            availableCodes={availableGroupCodes}
+            selectedCodes={groupCodesFilter}
+            label={t("groupsFilterLabel")}
+            allLabel={t("groupsFilterAll")}
+            open={groupDropdownOpen}
+            onOpenChange={setGroupDropdownOpen}
+            onChange={(codes) => { setGroupCodesFilter(codes); setGroupDropdownOpen(false); }}
+          />
+        )}
         <input
           type="search"
           value={searchInput}

@@ -1,12 +1,13 @@
 /**
- * Unit tests for the Groups (Slice #18.07) pure helpers:
- *   - encodeGroupCode: 1-based sequence value -> two-letter code (I/O excluded)
+ * Unit tests for the Groups (Slice #18.07 + Slice #18.17) pure helpers:
+ *   - encodeGroupCode:  1-based sequence value -> two-letter code (I/O excluded)
+ *   - groupCodePrefix:  target type -> display prefix (PROP-, PERS-, DOC-)
  *   - computeMemberDelta: desired vs current member sets -> add/remove lists
  *
  * No DB / React — pure functions only.
  */
 
-import { encodeGroupCode, GROUP_CODE_ALPHABET } from "@/lib/groups/code";
+import { encodeGroupCode, GROUP_CODE_ALPHABET, groupCodePrefix } from "@/lib/groups/code";
 import { computeMemberDelta } from "@/lib/groups/members";
 import { isPropertyVisibleForGroups } from "@/lib/groups/map-filter";
 
@@ -42,6 +43,28 @@ describe("encodeGroupCode", () => {
     expect(() => encodeGroupCode(-1)).toThrow();
     expect(() => encodeGroupCode(1.5)).toThrow();
     expect(() => encodeGroupCode(577)).toThrow();
+  });
+});
+
+describe("groupCodePrefix (Slice #18.17)", () => {
+  it("returns PROP- for PROPERTY", () => {
+    expect(groupCodePrefix("PROPERTY")).toBe("PROP-");
+  });
+
+  it("returns PERS- for both PHYSICAL_PERSON and JUDICIAL_PERSON", () => {
+    expect(groupCodePrefix("PHYSICAL_PERSON")).toBe("PERS-");
+    expect(groupCodePrefix("JUDICIAL_PERSON")).toBe("PERS-");
+  });
+
+  it("returns DOC- for DOCUMENT", () => {
+    expect(groupCodePrefix("DOCUMENT")).toBe("DOC-");
+  });
+
+  it("combines with encodeGroupCode to form the full stored code", () => {
+    expect(groupCodePrefix("PROPERTY")        + encodeGroupCode(1)).toBe("PROP-AA");
+    expect(groupCodePrefix("PHYSICAL_PERSON") + encodeGroupCode(2)).toBe("PERS-AB");
+    expect(groupCodePrefix("JUDICIAL_PERSON") + encodeGroupCode(25)).toBe("PERS-BA");
+    expect(groupCodePrefix("DOCUMENT")        + encodeGroupCode(576)).toBe("DOC-ZZ");
   });
 });
 

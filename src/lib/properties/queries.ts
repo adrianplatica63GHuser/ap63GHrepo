@@ -9,9 +9,9 @@
  *   those rows untouched. Passing address: null deletes the address row.
  */
 
-import { and, count, desc, eq, ilike, isNull, or, sql } from "drizzle-orm";
+import { and, count, desc, eq, ilike, inArray, isNull, or, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { lookupPersonRole, person, principalObject, property, propertyAddress, propertyCorner, propertyPerson, propertyVersion } from "@/db/schema";
+import { groupMember, groups, lookupPersonRole, person, principalObject, property, propertyAddress, propertyCorner, propertyPerson, propertyVersion } from "@/db/schema";
 import { wgs84ToStereo70 } from "@/lib/geo/transdatRO";
 import { shoelaceAreaM2 } from "./area";
 import type {
@@ -186,6 +186,40 @@ export async function listProperties(opts: PropertyListQuery): Promise<{
   const q   = opts.q?.trim();
   const pat = q ? `%${q}%` : null;
 
+  // Slice #18.17: Groups filter.
+  // groupCodes undefined → no filter.
+  // groupCodes []       → show properties with no PROPERTY group.
+  // groupCodes [...]    → show properties with no PROPERTY group OR in ≥1 checked code.
+  let groupFilter: ReturnType<typeof sql> | undefined = undefined;
+  if (opts.groupCodes !== undefined) {
+    // NOTE: ${property.id} inside a correlated sql`` subquery renders UNQUALIFIED
+    // ("id"), which Postgres resolves to g_f.id (groups alias) instead of the
+    // outer property.id. Use the literal qualified name instead (CLAUDE.md gotcha).
+    const hasNoGroup = sql`NOT EXISTS (
+      SELECT 1 FROM ${groupMember} gm_f
+      JOIN ${groups} g_f ON g_f.id = gm_f.group_id
+      WHERE gm_f.property_id = property.id
+        AND g_f.target_type = 'PROPERTY'
+    )`;
+    if (opts.groupCodes.length === 0) {
+      groupFilter = hasNoGroup;
+    } else {
+      groupFilter = sql`(
+        ${hasNoGroup}
+        OR EXISTS (
+          SELECT 1 FROM ${groupMember} gm_f2
+          JOIN ${groups} g_f2 ON g_f2.id = gm_f2.group_id
+          WHERE gm_f2.property_id = property.id
+            AND g_f2.target_type = 'PROPERTY'
+            AND g_f2.code = ANY(ARRAY[${sql.join(
+              opts.groupCodes.map((c) => sql`${c}`),
+              sql`, `,
+            )}]::text[])
+        )
+      )`;
+    }
+  }
+
   const where = and(
     isNull(property.deletedAt),
     pat
@@ -198,6 +232,7 @@ export async function listProperties(opts: PropertyListQuery): Promise<{
           ilike(property.parcela,         pat),
         )
       : undefined,
+    groupFilter,
   );
 
   const [items, totals] = await Promise.all([

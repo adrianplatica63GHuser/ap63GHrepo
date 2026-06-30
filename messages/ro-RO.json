@@ -355,7 +355,9 @@
       "close": "Închide",
       "textImportDone": "Proprietatea a fost importată cu succes."
     },
-    "groupBadgeTitle": "Grup {code}, poziția {position}"
+    "groupBadgeTitle": "Grup {code}, poziția {position}",
+    "groupsFilterLabel": "Grupuri:",
+    "groupsFilterAll": "Toate grupurile"
   },
   "address": {
     "streetLine": "Stradă, Nr., Bloc, Etaj, Ap.",
@@ -776,7 +778,9 @@
       "code": "Cod",
       "name": "Nume",
       "type": "Tip"
-    }
+    },
+    "groupsFilterLabel": "Grupuri:",
+    "groupsFilterAll": "Toate grupurile"
   },
   "document": {
     "listTitle": "Acte",
@@ -1031,7 +1035,9 @@
         "yes": "Șterge",
         "no": "Anulează"
       }
-    }
+    },
+    "groupsFilterLabel": "Grupuri:",
+    "groupsFilterAll": "Toate grupurile"
   },
   "valueList": {
     "pageTitle": "Liste de Valori",
@@ -1293,10 +1299,9 @@
     "saveErrorSession": "Sesiunea a expirat. Autentifică-te din nou și reîncearcă.",
     "codeAssignedOnSave": "Atribuit automat la salvare",
     "descriptionCount": "{count}/{max} caractere",
-    "notImplemented": "Apartenența pentru acest tip de țintă nu este implementată încă — momentan sunt acceptate doar Proprietățile.",
     "addItems": "Adaugă elemente",
     "hideItems": "Ascunde elementele",
-    "searchPlaceholder": "caută după poreclă sau cod",
+    "searchPlaceholder": "Caută…",
     "addToGroup": "Adaugă în grup ({count})",
     "removeFromGroup": "Elimină din grup ({count})",
     "pendingPosition": "[nou]",

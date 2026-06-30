@@ -17,6 +17,8 @@ import { and, count, desc, eq, ilike, inArray, isNull, or, sql } from "drizzle-o
 import { db } from "@/db";
 import {
   address,
+  groupMember,
+  groups,
   judicialPerson,
   naturalPerson,
   person,
@@ -149,8 +151,45 @@ export async function listAllPersons(opts: AllPersonsListQuery): Promise<{
   const q = opts.q?.trim();
   const searchPattern = q ? `%${q}%` : null;
 
+  // Slice #18.17: Groups filter.
+  // groupCodes undefined → no filter.
+  // groupCodes []       → show persons with no matching-type group.
+  // groupCodes [...]    → show persons with no matching-type group OR in ≥1 checked code.
+  // NOTE: use literal "person.id" / "person.type" in sql`` templates — Drizzle
+  // renders ${person.id} as bare "id" which Postgres would resolve to g_f.id
+  // (the groups alias in scope). Literal qualified names avoid this (CLAUDE.md gotcha).
+  let groupFilter: ReturnType<typeof sql> | undefined = undefined;
+  if (opts.groupCodes !== undefined) {
+    const hasNoMatchingGroup = sql`NOT EXISTS (
+      SELECT 1 FROM ${groupMember} gm_f
+      JOIN ${groups} g_f ON g_f.id = gm_f.group_id
+      WHERE gm_f.person_id = person.id
+        AND (
+          (person.type = 'NATURAL'   AND g_f.target_type = 'PHYSICAL_PERSON')
+          OR (person.type = 'JUDICIAL' AND g_f.target_type = 'JUDICIAL_PERSON')
+        )
+    )`;
+    if (opts.groupCodes.length === 0) {
+      groupFilter = hasNoMatchingGroup;
+    } else {
+      groupFilter = sql`(
+        ${hasNoMatchingGroup}
+        OR EXISTS (
+          SELECT 1 FROM ${groupMember} gm_f2
+          JOIN ${groups} g_f2 ON g_f2.id = gm_f2.group_id
+          WHERE gm_f2.person_id = person.id
+            AND g_f2.code = ANY(ARRAY[${sql.join(
+              opts.groupCodes.map((c) => sql`${c}`),
+              sql`, `,
+            )}]::text[])
+        )
+      )`;
+    }
+  }
+
   const where = and(
     isNull(person.deletedAt),
+    groupFilter,
     opts.types ? inArray(person.type, opts.types) : undefined,
     searchPattern
       ? or(

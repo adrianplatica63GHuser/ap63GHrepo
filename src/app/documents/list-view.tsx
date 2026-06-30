@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { GroupsFilterDropdown } from "@/components/groups-filter-dropdown";
 import { RecencyBadge } from "@/components/recency-badge";
 
 const PAGE_SIZE = 15;
@@ -152,15 +153,28 @@ type ListResponse = {
   offset: number;
 };
 
-async function fetchDocuments(q: string, documentTypeIds: string[], page: number): Promise<ListResponse> {
+async function fetchDocuments(
+  q: string,
+  documentTypeIds: string[],
+  page: number,
+  groupCodes?: string[],
+): Promise<ListResponse> {
   const url = new URL("/api/documents", window.location.origin);
-  if (q)                    url.searchParams.set("q",               q);
+  if (q)                      url.searchParams.set("q",               q);
   if (documentTypeIds.length) url.searchParams.set("documentTypeIds", documentTypeIds.join(","));
+  if (groupCodes !== undefined) url.searchParams.set("groupCodes",    groupCodes.join(","));
   url.searchParams.set("limit",  String(PAGE_SIZE));
   url.searchParams.set("offset", String(page * PAGE_SIZE));
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Request failed (${res.status})`);
   return res.json();
+}
+
+async function fetchDocumentGroupCodes(): Promise<string[]> {
+  const res = await fetch("/api/groups?targetType=DOCUMENT");
+  if (!res.ok) return [];
+  const body = await res.json();
+  return ((body.items ?? []) as { code: string }[]).map((g) => g.code).sort();
 }
 
 async function callBatchDelete(ids: string[]): Promise<void> {
@@ -246,12 +260,23 @@ export function DocumentListView({
   const [deleting,     setDeleting]     = useState(false);
   const [deleteError,  setDeleteError]  = useState<string | null>(null);
 
+  // Slice #18.17: Groups filter (component state, server-side).
+  const [groupCodesFilter, setGroupCodesFilter] = useState<string[] | undefined>(undefined);
+  const [groupDropdownOpen, setGroupDropdownOpen] = useState(false);
+
   const { data: documentTypes } = useQuery({
     queryKey: ["document-types"],
     queryFn:  fetchDocumentTypes,
     staleTime: 5 * 60 * 1000,
   });
   const typeOptions = documentTypes ?? [];
+
+  // Fetch available DOCUMENT group codes for the dropdown.
+  const { data: availableGroupCodes = [] } = useQuery<string[]>({
+    queryKey: ["groups", "codes", "DOCUMENT"],
+    queryFn:  fetchDocumentGroupCodes,
+    staleTime: 5 * 60 * 1000,
+  });
 
   // typeFilters is derived directly from initialDocumentTypeIds (the URL
   // ?documentTypeIds= param). The dropdown's checkboxes change the URL →
@@ -281,9 +306,18 @@ export function DocumentListView({
   // When initialDocumentTypeIds is an empty array, skip the API call and show a message.
   const noTypesSelected = initialDocumentTypeIds !== undefined && initialDocumentTypeIds.length === 0;
 
+  // Reset page when group filter changes.
+  const groupCodesKey =
+    groupCodesFilter === undefined ? "__all__" : groupCodesFilter.join(",");
+  const [prevGroupKey, setPrevGroupKey] = useState(groupCodesKey);
+  if (prevGroupKey !== groupCodesKey) {
+    setPrevGroupKey(groupCodesKey);
+    setCurrentPage(0);
+  }
+
   const query = useQuery<ListResponse>({
-    queryKey: ["documents", "list", debouncedSearch, typeFiltersKey, currentPage],
-    queryFn:  () => fetchDocuments(debouncedSearch, initialDocumentTypeIds ?? [], currentPage),
+    queryKey: ["documents", "list", debouncedSearch, typeFiltersKey, currentPage, groupCodesKey],
+    queryFn:  () => fetchDocuments(debouncedSearch, initialDocumentTypeIds ?? [], currentPage, groupCodesFilter),
     enabled:  !noTypesSelected,
   });
 
@@ -359,6 +393,17 @@ export function DocumentListView({
           label={t("typeFilterLabel")}
           allTypesLabel={t("allTypes")}
         />
+        {availableGroupCodes.length > 0 && (
+          <GroupsFilterDropdown
+            availableCodes={availableGroupCodes}
+            selectedCodes={groupCodesFilter}
+            label={t("groupsFilterLabel")}
+            allLabel={t("groupsFilterAll")}
+            open={groupDropdownOpen}
+            onOpenChange={setGroupDropdownOpen}
+            onChange={(codes) => { setGroupCodesFilter(codes); setGroupDropdownOpen(false); }}
+          />
+        )}
         <input
           type="search"
           value={searchInput}

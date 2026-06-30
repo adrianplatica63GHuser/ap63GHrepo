@@ -78,6 +78,11 @@ export const documentListQuerySchema = z.object({
   documentTypeIds: z.array(z.string().uuid()).optional(),
   limit:  z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
+  // Slice #18.17: Groups filter. Mirrors the map-view "Groups" panel semantics.
+  //   undefined  → no group filter (show all — default)
+  //   []         → show only documents with NO DOCUMENT group
+  //   [...]      → show documents with no DOCUMENT group OR in ≥1 of these codes
+  groupCodes: z.array(z.string()).optional(),
 });
 export type DocumentListQuery = z.infer<typeof documentListQuerySchema>;
 

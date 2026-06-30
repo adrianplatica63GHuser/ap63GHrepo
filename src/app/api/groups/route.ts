@@ -12,11 +12,25 @@ import {
   zodErrorToResponse,
 } from "@/lib/api/errors";
 import { createGroup, listGroups } from "@/lib/groups/queries";
-import { groupCreateSchema } from "@/lib/groups/validation";
+import { groupCreateSchema, type GroupTargetType } from "@/lib/groups/validation";
 
-export async function GET(): Promise<Response> {
+const VALID_TARGET_TYPES = new Set<string>([
+  "PROPERTY",
+  "PHYSICAL_PERSON",
+  "JUDICIAL_PERSON",
+  "DOCUMENT",
+]);
+
+export async function GET(request: NextRequest): Promise<Response> {
+  const url = new URL(request.url);
+  // Optional ?targetType=PROPERTY filter for the list-page Groups dropdowns.
+  const rawType = url.searchParams.get("targetType") ?? undefined;
+  const targetType: GroupTargetType | undefined =
+    rawType && VALID_TARGET_TYPES.has(rawType)
+      ? (rawType as GroupTargetType)
+      : undefined;
   try {
-    const items = await listGroups();
+    const items = await listGroups(targetType);
     return Response.json({ items });
   } catch (err) {
     return unexpectedError(err, "GET /api/groups");

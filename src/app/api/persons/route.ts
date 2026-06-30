@@ -26,11 +26,18 @@ export async function GET(request: NextRequest): Promise<Response> {
       ? []
       : typesRaw.split(",").filter(Boolean);
 
+  // Parse ?groupCodes=PERS-AA,PERS-AB (comma-separated).
+  // Key absent → undefined (no group filter). Key present but empty → [] (no-group only).
+  const gcRaw = url.searchParams.get("groupCodes");
+  const groupCodes: string[] | undefined =
+    gcRaw === null ? undefined : gcRaw === "" ? [] : gcRaw.split(",").filter(Boolean);
+
   const parsed = allPersonsListQuerySchema.safeParse({
-    q:      url.searchParams.get("q")      ?? undefined,
-    types:  typesArr,
-    limit:  url.searchParams.get("limit")  ?? undefined,
-    offset: url.searchParams.get("offset") ?? undefined,
+    q:          url.searchParams.get("q")      ?? undefined,
+    types:      typesArr,
+    limit:      url.searchParams.get("limit")  ?? undefined,
+    offset:     url.searchParams.get("offset") ?? undefined,
+    groupCodes,
   });
 
   if (!parsed.success) {

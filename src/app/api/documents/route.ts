@@ -30,11 +30,18 @@ export async function GET(request: NextRequest): Promise<Response> {
       ? []
       : idsRaw.split(",").filter(Boolean);
 
+  // Parse ?groupCodes=DOC-AA,DOC-AB (comma-separated).
+  // Key absent → undefined (no group filter). Key present but empty → [] (no-group only).
+  const gcRaw = url.searchParams.get("groupCodes");
+  const groupCodes: string[] | undefined =
+    gcRaw === null ? undefined : gcRaw === "" ? [] : gcRaw.split(",").filter(Boolean);
+
   const parsed = documentListQuerySchema.safeParse({
     q:               url.searchParams.get("q")      ?? undefined,
     documentTypeIds: idsArr,
     limit:           url.searchParams.get("limit")  ?? undefined,
     offset:          url.searchParams.get("offset") ?? undefined,
+    groupCodes,
   });
 
   if (!parsed.success) {

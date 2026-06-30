@@ -12,7 +12,7 @@
 
 import { asc, and, count, desc, eq, ilike, inArray, isNull, or, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { document, documentVersion, lookupDocumentType, principalObject } from "@/db/schema";
+import { document, documentVersion, groupMember, groups, lookupDocumentType, principalObject } from "@/db/schema";
 import type {
   DocumentCreate,
   DocumentListQuery,
@@ -54,11 +54,44 @@ export async function listDocument(opts: DocumentListQuery): Promise<{
     return { items: [], total: 0 };
   }
 
+  // Slice #18.17: Groups filter.
+  // groupCodes undefined → no filter.
+  // groupCodes []       → show documents with no DOCUMENT group.
+  // groupCodes [...]    → show documents with no DOCUMENT group OR in ≥1 checked code.
+  // NOTE: literal "document.id" in sql`` templates avoids the Drizzle unqualified-
+  // column gotcha (groups alias g_f has id in scope; bare "id" would resolve there).
+  let groupFilter: ReturnType<typeof sql> | undefined = undefined;
+  if (opts.groupCodes !== undefined) {
+    const hasNoGroup = sql`NOT EXISTS (
+      SELECT 1 FROM ${groupMember} gm_f
+      JOIN ${groups} g_f ON g_f.id = gm_f.group_id
+      WHERE gm_f.document_id = document.id
+        AND g_f.target_type = 'DOCUMENT'
+    )`;
+    if (opts.groupCodes.length === 0) {
+      groupFilter = hasNoGroup;
+    } else {
+      groupFilter = sql`(
+        ${hasNoGroup}
+        OR EXISTS (
+          SELECT 1 FROM ${groupMember} gm_f2
+          JOIN ${groups} g_f2 ON g_f2.id = gm_f2.group_id
+          WHERE gm_f2.document_id = document.id
+            AND g_f2.code = ANY(ARRAY[${sql.join(
+              opts.groupCodes.map((c) => sql`${c}`),
+              sql`, `,
+            )}]::text[])
+        )
+      )`;
+    }
+  }
+
   const where = and(
     isNull(document.deletedAt),
     opts.documentTypeIds && opts.documentTypeIds.length > 0
       ? inArray(document.documentTypeId, opts.documentTypeIds)
       : undefined,
+    groupFilter,
     pat
       ? or(
           ilike(document.code,       pat),
