@@ -140,7 +140,7 @@ type DocumentListItem = {
   title:            string | null;
   nrDocument:       string | null;
   dateDocument:     string | null;
-  institution:      string | null;
+  // Slice #18.16.VL: institution (free text) removed; institutionId FK not shown in list.
   createdAt:        string;
   updatedAt:        string;
 };

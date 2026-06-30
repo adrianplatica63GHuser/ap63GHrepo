@@ -54,6 +54,25 @@ async function fetchDocumentTypes(): Promise<DocumentTypeOption[]> {
 }
 
 // ---------------------------------------------------------------------------
+// Institution list — fetched from admin-managed lookup_institution table
+// (Slice #18.16.VL: replaces free-text institution field)
+// ---------------------------------------------------------------------------
+
+type InstitutionOption = { id: string; value: string; label: string };
+
+async function fetchInstitutions(): Promise<InstitutionOption[]> {
+  const res = await fetch("/api/admin/value-lists/institutions");
+  if (!res.ok) throw new Error(`Failed to load institutions (HTTP ${res.status})`);
+  const body = await res.json();
+  // value-list items: { id, value, label (= indicativ / name), description? }
+  return (body.items ?? []).map((item: { id: string; value: string; label?: string }) => ({
+    id:    item.id,
+    value: item.id,    // SelectField value = the UUID (FK)
+    label: item.label ?? item.value,
+  }));
+}
+
+// ---------------------------------------------------------------------------
 // Version history fetch (Slice #18.06)
 // ---------------------------------------------------------------------------
 
@@ -121,6 +140,17 @@ export function DocumentForm({
     staleTime: 5 * 60 * 1000,
   });
   const typeOptions = documentTypes ?? [];
+
+  // Slice #18.16.VL — institution dropdown
+  const { data: institutions } = useQuery({
+    queryKey: ["institutions"],
+    queryFn:  fetchInstitutions,
+    staleTime: 5 * 60 * 1000,
+  });
+  const institutionOptions: { value: string; label: string }[] = [
+    { value: "", label: "—" },
+    ...(institutions ?? []).map((i) => ({ value: i.value, label: i.label })),
+  ];
 
   const form = useForm<FormValues>({
     resolver:      zodResolver(formSchema),
@@ -495,13 +525,14 @@ export function DocumentForm({
             highlight={displayHighlights?.dateDocument}
           />
         </div>
-        {/* Row 3: Institution (full width) */}
-        <Field
+        {/* Row 3: Institution dropdown (Slice #18.16.VL: was free-text) */}
+        <SelectField
           label={cfg.labels.institution}
-          name="institution"
+          name="institutionId"
           register={register}
-          error={errors.institution?.message}
-          highlight={displayHighlights?.institution}
+          error={errors.institutionId?.message}
+          options={institutionOptions}
+          highlight={displayHighlights?.institutionId}
         />
         {/* Row 4: Short Label (right before Notes) */}
         <Field

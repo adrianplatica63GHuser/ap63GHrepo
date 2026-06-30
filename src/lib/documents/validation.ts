@@ -19,9 +19,10 @@ const documentBase = z.object({
   title:          z.string().nullish(),
 
   // Common (label varies by type)
-  nrDocument:   z.string().nullish(),
-  dateDocument: z.string().nullish(), // ISO date string "YYYY-MM-DD"
-  institution:  z.string().nullish(),
+  nrDocument:    z.string().nullish(),
+  dateDocument:  z.string().nullish(), // ISO date string "YYYY-MM-DD"
+  // Slice #18.16.VL: was free-text `institution`; now FK to lookup_institution.
+  institutionId: z.string().uuid().nullish(),
 
   // Titlu de Proprietate specific
   emitent:        z.string().nullish(),
@@ -100,7 +101,9 @@ export type DocumentSnapshot = {
   title:             string | null;
   nrDocument:        string | null;
   dateDocument:      string | null;
-  institution:       string | null;
+  // Slice #18.16.VL: was `institution: string | null` (free text);
+  // now stores the lookup_institution UUID (or null when unset).
+  institutionId:     string | null;
   emitent:           string | null;
   bazaLegala:        string | null;
   uatProprietate:    string | null;

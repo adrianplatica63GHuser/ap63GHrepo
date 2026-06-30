@@ -25,7 +25,7 @@ const EMPTY_SNAP: DocumentSnapshot = {
   title:             null,
   nrDocument:        null,
   dateDocument:      null,
-  institution:       null,
+  institutionId:     null,
   emitent:           null,
   bazaLegala:        null,
   uatProprietate:    null,
@@ -69,7 +69,8 @@ describe("versionLabelColor", () => {
 
   it("multiple additions with no modify/delete stays green", () => {
     const prev = snap({ title: "Deed" });
-    const curr = snap({ title: "Deed", nrDocument: "123", institution: "Notary X" });
+    // institution was free text (now institutionId uuid); use nrDosarSuccesoral as a second addition
+    const curr = snap({ title: "Deed", nrDocument: "123", nrDosarSuccesoral: "DOS-1" });
     expect(versionLabelColor(prev, curr)).toBe("green");
   });
 
@@ -110,7 +111,7 @@ describe("computeFieldHighlights", () => {
     const h = computeFieldHighlights(prev, curr);
     expect(h.title).toBe("green");
     expect(h.nrDocument).toBe("red");
-    expect(h.institution).toBeUndefined();
+    expect(h.institutionId).toBeUndefined();
   });
 
   it("flags a deleted field red", () => {

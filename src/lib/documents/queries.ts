@@ -32,7 +32,6 @@ export type DocumentListItem = {
   title:            string | null;
   nrDocument:       string | null;
   dateDocument:     string | null;
-  institution:      string | null;
   createdAt:        Date;
   updatedAt:        Date;
 };
@@ -62,10 +61,9 @@ export async function listDocument(opts: DocumentListQuery): Promise<{
       : undefined,
     pat
       ? or(
-          ilike(document.code,        pat),
-          ilike(document.title,       pat),
-          ilike(document.nrDocument,  pat),
-          ilike(document.institution, pat),
+          ilike(document.code,       pat),
+          ilike(document.title,      pat),
+          ilike(document.nrDocument, pat),
         )
       : undefined,
   );
@@ -80,7 +78,6 @@ export async function listDocument(opts: DocumentListQuery): Promise<{
         title:            document.title,
         nrDocument:       document.nrDocument,
         dateDocument:     document.dateDocument,
-        institution:      document.institution,
         createdAt:        document.createdAt,
         updatedAt:        document.updatedAt,
       })
@@ -128,7 +125,7 @@ export type DocumentVersionItem = {
 };
 
 const SNAPSHOT_KEYS: (keyof DocumentSnapshot)[] = [
-  "documentTypeId", "title", "nrDocument", "dateDocument", "institution",
+  "documentTypeId", "title", "nrDocument", "dateDocument", "institutionId",
   "emitent", "bazaLegala", "uatProprietate", "uatProprietar", "suprafata",
   "nrDosarSuccesoral", "dataDecesului", "ultimulDomiciliu", "nrCertificatDeces",
   "dateStart", "dateEnd", "titularText", "defunctText", "partiesAText",
@@ -142,7 +139,8 @@ export function snapshotFromFull(full: DocumentFull): DocumentSnapshot {
     title:             full.title             ?? null,
     nrDocument:        full.nrDocument        ?? null,
     dateDocument:      full.dateDocument      ?? null,
-    institution:       full.institution       ?? null,
+    // Slice #18.16.VL: was `institution` (free text); now FK uuid.
+    institutionId:     full.institutionId     ?? null,
     emitent:           full.emitent           ?? null,
     bazaLegala:        full.bazaLegala        ?? null,
     uatProprietate:    full.uatProprietate    ?? null,
@@ -258,7 +256,8 @@ export async function updateDocument(
     if (input.title          !== undefined) patch.title          = input.title          ?? null;
     if (input.nrDocument     !== undefined) patch.nrDocument     = input.nrDocument     ?? null;
     if (input.dateDocument   !== undefined) patch.dateDocument   = input.dateDocument   ?? null;
-    if (input.institution    !== undefined) patch.institution    = input.institution    ?? null;
+    // Slice #18.16.VL: institution is now a FK uuid column.
+    if (input.institutionId  !== undefined) patch.institutionId  = input.institutionId  ?? null;
 
     if (input.emitent        !== undefined) patch.emitent        = input.emitent        ?? null;
     if (input.bazaLegala     !== undefined) patch.bazaLegala     = input.bazaLegala     ?? null;
@@ -349,7 +348,8 @@ function inputToValues(
     title:          input.title        ?? null,
     nrDocument:     input.nrDocument   ?? null,
     dateDocument:   input.dateDocument ?? null,
-    institution:    input.institution  ?? null,
+    // Slice #18.16.VL: institution is now a FK uuid column.
+    institutionId:  input.institutionId ?? null,
 
     emitent:        input.emitent        ?? null,
     bazaLegala:     input.bazaLegala     ?? null,

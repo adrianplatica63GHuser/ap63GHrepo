@@ -8,6 +8,10 @@
  * `documentTypeId` — a uuid FK into the admin-managed `lookup_document_type`
  * table. The form no longer imports a static type list; the dropdown is
  * populated dynamically by the component from `GET /api/admin/value-lists/document-types`.
+ *
+ * NOTE (Slice #18.16.VL): `institution` (free text) replaced by `institutionId`
+ * (uuid FK → lookup_institution). Dropdown populated from
+ * `GET /api/admin/value-lists/institutions`.
  */
 
 import { z } from "zod/v4";
@@ -29,7 +33,8 @@ export const formSchema = z.object({
   title:        z.string(),
   nrDocument:   z.string(),
   dateDocument: z.string(), // "YYYY-MM-DD" or ""
-  institution:  z.string(),
+  // Slice #18.16.VL: was free-text `institution`; now uuid FK (empty string = unset).
+  institutionId: z.string(),
 
   // Titlu de Proprietate specific
   emitent:        z.string(),
@@ -69,7 +74,7 @@ export const emptyFormValues: FormValues = {
   title:        "",
   nrDocument:   "",
   dateDocument: "",
-  institution:  "",
+  institutionId: "",
   emitent:        "",
   bazaLegala:     "",
   uatProprietate: "",
@@ -97,7 +102,8 @@ type ApiRecord = {
   title:        string | null;
   nrDocument:   string | null;
   dateDocument: string | null;
-  institution:  string | null;
+  // Slice #18.16.VL: was `institution: string | null`
+  institutionId: string | null;
   emitent:        string | null;
   bazaLegala:     string | null;
   uatProprietate: string | null;
@@ -122,7 +128,7 @@ export function fromApiRecord(r: ApiRecord): FormValues {
     title:        r.title        ?? "",
     nrDocument:   r.nrDocument   ?? "",
     dateDocument: r.dateDocument ?? "",
-    institution:  r.institution  ?? "",
+    institutionId: r.institutionId ?? "",
     emitent:        r.emitent        ?? "",
     bazaLegala:     r.bazaLegala     ?? "",
     uatProprietate: r.uatProprietate ?? "",
@@ -149,6 +155,7 @@ export function fromApiRecord(r: ApiRecord): FormValues {
 export function toApiPayload(values: FormValues): Record<string, unknown> {
   const str = (v: string) => v.trim() || null;
   const dateStr = (v: string) => v || null;
+  const uuid = (v: string) => v.trim() || null;
   const num = (v: string) => {
     const n = parseFloat(v);
     return isNaN(n) ? null : n;
@@ -159,7 +166,8 @@ export function toApiPayload(values: FormValues): Record<string, unknown> {
     title:        str(values.title),
     nrDocument:   str(values.nrDocument),
     dateDocument: dateStr(values.dateDocument),
-    institution:  str(values.institution),
+    // Slice #18.16.VL: send as uuid or null
+    institutionId: uuid(values.institutionId),
     emitent:        str(values.emitent),
     bazaLegala:     str(values.bazaLegala),
     uatProprietate: str(values.uatProprietate),
@@ -192,8 +200,9 @@ export function toApiPayload(values: FormValues): Record<string, unknown> {
 
 // The 21 document field names — identical between FormValues, DocumentSnapshot,
 // and the migration backfill. Used for highlights and edit-dirty.
+// Slice #18.16.VL: "institution" → "institutionId"
 const DOC_FIELD_KEYS = [
-  "documentTypeId", "title", "nrDocument", "dateDocument", "institution",
+  "documentTypeId", "title", "nrDocument", "dateDocument", "institutionId",
   "emitent", "bazaLegala", "uatProprietate", "uatProprietar", "suprafata",
   "nrDosarSuccesoral", "dataDecesului", "ultimulDomiciliu", "nrCertificatDeces",
   "dateStart", "dateEnd", "titularText", "defunctText", "partiesAText",
