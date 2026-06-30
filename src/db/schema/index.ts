@@ -1045,10 +1045,16 @@ export const groupMember = pgTable(
     groupId: uuid("group_id")
       .notNull()
       .references(() => groups.id, { onDelete: "cascade" }),
-    // Only PROPERTY target is wired for now; nullable so the table can grow
-    // other typed member FKs later without a destructive migration.
+    // PROPERTY membership (the original implementation — Slice #18.07).
     propertyId: uuid("property_id")
       .references(() => property.id, { onDelete: "cascade" }),
+    // PHYSICAL_PERSON + JUDICIAL_PERSON membership (Slice #18.17).
+    // Both natural and judicial persons FK to the `person` table.
+    personId: uuid("person_id")
+      .references(() => person.id, { onDelete: "cascade" }),
+    // DOCUMENT membership (Slice #18.17).
+    documentId: uuid("document_id")
+      .references(() => document.id, { onDelete: "cascade" }),
     // 1-based position within the group; unique per group; never reused.
     position: integer("position").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -1056,6 +1062,8 @@ export const groupMember = pgTable(
   (t) => [
     uniqueIndex("group_member_group_position_unique").on(t.groupId, t.position),
     uniqueIndex("group_member_group_property_unique").on(t.groupId, t.propertyId),
+    // Partial unique indices for person_id and document_id are in the migration
+    // (Drizzle cannot express WHERE-clause partial indices inline here).
   ],
 );
 
