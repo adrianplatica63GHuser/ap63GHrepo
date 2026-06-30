@@ -188,35 +188,42 @@ export async function listProperties(opts: PropertyListQuery): Promise<{
 
   // Slice #18.17: Groups filter.
   // groupCodes undefined → no filter.
-  // groupCodes []       → show properties with no PROPERTY group.
-  // groupCodes [...]    → show properties with no PROPERTY group OR in ≥1 checked code.
+  // groupCodes []       → show properties with no PROPERTY group only.
+  // groupCodes [...]    → filter to those codes; also include ungrouped unless
+  //                       opts.includeUngrouped is explicitly false.
+  // NOTE: ${property.id} inside a correlated sql`` subquery renders UNQUALIFIED
+  // ("id"), which Postgres resolves to g_f.id (groups alias) instead of the
+  // outer property.id. Use the literal qualified name instead (CLAUDE.md gotcha).
   let groupFilter: ReturnType<typeof sql> | undefined = undefined;
   if (opts.groupCodes !== undefined) {
-    // NOTE: ${property.id} inside a correlated sql`` subquery renders UNQUALIFIED
-    // ("id"), which Postgres resolves to g_f.id (groups alias) instead of the
-    // outer property.id. Use the literal qualified name instead (CLAUDE.md gotcha).
     const hasNoGroup = sql`NOT EXISTS (
       SELECT 1 FROM ${groupMember} gm_f
       JOIN ${groups} g_f ON g_f.id = gm_f.group_id
       WHERE gm_f.property_id = property.id
         AND g_f.target_type = 'PROPERTY'
     )`;
-    if (opts.groupCodes.length === 0) {
+    const hasMatchingCode = sql`EXISTS (
+      SELECT 1 FROM ${groupMember} gm_f2
+      JOIN ${groups} g_f2 ON g_f2.id = gm_f2.group_id
+      WHERE gm_f2.property_id = property.id
+        AND g_f2.target_type = 'PROPERTY'
+        AND g_f2.code = ANY(ARRAY[${sql.join(
+          opts.groupCodes.map((c) => sql`${c}`),
+          sql`, `,
+        )}]::text[])
+    )`;
+    if (opts.groupCodes.length === 0 && opts.includeUngrouped === false) {
+      // Nothing selected → show nothing.
+      groupFilter = sql`1 = 0`;
+    } else if (opts.groupCodes.length === 0) {
+      // "Not in a group" only.
       groupFilter = hasNoGroup;
+    } else if (opts.includeUngrouped === false) {
+      // Codes only — exclude ungrouped items.
+      groupFilter = hasMatchingCode;
     } else {
-      groupFilter = sql`(
-        ${hasNoGroup}
-        OR EXISTS (
-          SELECT 1 FROM ${groupMember} gm_f2
-          JOIN ${groups} g_f2 ON g_f2.id = gm_f2.group_id
-          WHERE gm_f2.property_id = property.id
-            AND g_f2.target_type = 'PROPERTY'
-            AND g_f2.code = ANY(ARRAY[${sql.join(
-              opts.groupCodes.map((c) => sql`${c}`),
-              sql`, `,
-            )}]::text[])
-        )
-      )`;
+      // Codes + ungrouped (default: includeUngrouped is true/undefined).
+      groupFilter = sql`(${hasNoGroup} OR ${hasMatchingCode})`;
     }
   }
 

@@ -40,7 +40,7 @@ export function AssociateReferenceView({ documentId, documentName }: Props) {
     queryFn:  () => searchDocuments(searchInput, page),
   });
 
-  const items = data?.items ?? [];
+  const items = useMemo(() => data?.items ?? [], [data?.items]);
   const total = data?.total ?? 0;
 
   // Exclude the current document from the current page's results

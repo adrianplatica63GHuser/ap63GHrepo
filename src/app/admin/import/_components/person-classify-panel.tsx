@@ -305,6 +305,10 @@ export function PersonClassifyPanel({ file, onBack, onClassified, onClose }: Pro
       const documentId = await callCreateIdCardDocument(file, docTitle, idCardDocumentTypeId);
       await callLinkPersonToDocument(documentId, personId);
       await queryClient.invalidateQueries({ queryKey: ["people"] });
+      // The unified /persons list (Slice #15.09) caches under ["persons"];
+      // invalidate it too so an imported person shows on /persons without a
+      // manual browser refresh (Slice #18.13).
+      await queryClient.invalidateQueries({ queryKey: ["persons"] });
       await queryClient.invalidateQueries({ queryKey: ["documents"] });
       onClassified();
       return personId;

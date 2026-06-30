@@ -42,7 +42,7 @@ export function AssociatePersonView({ personId, personName, backBase }: Props) {
     queryFn:  () => searchPersons(nameInput, codeInput, page),
   });
 
-  const items = data?.items ?? [];
+  const items = useMemo(() => data?.items ?? [], [data?.items]);
   const total = data?.total ?? 0;
 
   // Exclude the person itself from the current page's results

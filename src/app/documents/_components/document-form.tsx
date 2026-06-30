@@ -64,11 +64,11 @@ async function fetchInstitutions(): Promise<InstitutionOption[]> {
   const res = await fetch("/api/admin/value-lists/institutions");
   if (!res.ok) throw new Error(`Failed to load institutions (HTTP ${res.status})`);
   const body = await res.json();
-  // value-list items: { id, value, label (= indicativ / name), description? }
-  return (body.items ?? []).map((item: { id: string; value: string; label?: string }) => ({
+  // lookup_institution rows: { id, name, institutionType, sortOrder, ... }
+  return (body.items ?? []).map((item: { id: string; name: string; institutionType?: string | null }) => ({
     id:    item.id,
-    value: item.id,    // SelectField value = the UUID (FK)
-    label: item.label ?? item.value,
+    value: item.id,   // SelectField value = the UUID (FK stored in institution_id)
+    label: item.institutionType ? `${item.name} (${item.institutionType})` : item.name,
   }));
 }
 

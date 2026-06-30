@@ -44,26 +44,25 @@ export const maxDuration = 60;
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 const DEFAULT_MODEL = "claude-sonnet-4-6";
 
-const EXTRACTION_FIELDS = [
-  "lastName",
-  "firstName",
-  "gender",
-  "dateOfBirth",
-  "cnp",
-  "idDocumentNumber",
-  "idCardNumber",
-  "placeOfBirth",
-  "idIssuingAuthority",
-  "idValidFrom",
-  "idValidUntil",
-  "idMrzRaw",
-  "citizenshipRaw",
-  "addressStreetLine",
-  "addressPostalCode",
-  "addressLocality",
-  "addressCounty",
-  "addressCountry",
-] as const;
+type ExtractionField =
+  | "lastName"
+  | "firstName"
+  | "gender"
+  | "dateOfBirth"
+  | "cnp"
+  | "idDocumentNumber"
+  | "idCardNumber"
+  | "placeOfBirth"
+  | "idIssuingAuthority"
+  | "idValidFrom"
+  | "idValidUntil"
+  | "idMrzRaw"
+  | "citizenshipRaw"
+  | "addressStreetLine"
+  | "addressPostalCode"
+  | "addressLocality"
+  | "addressCounty"
+  | "addressCountry";
 
 // Default country for any address read off a Romanian ID card — these are
 // always domestic addresses, so defaulting it server-side (rather than
@@ -71,7 +70,7 @@ const EXTRACTION_FIELDS = [
 // CLAUDE.md's standing "minimise human effort" rule.
 const DEFAULT_ADDRESS_COUNTRY = "România";
 
-type ExtractedFields = Partial<Record<(typeof EXTRACTION_FIELDS)[number], string>>;
+type ExtractedFields = Partial<Record<ExtractionField, string>>;
 
 type ExtractionResult = {
   fields: ExtractedFields;

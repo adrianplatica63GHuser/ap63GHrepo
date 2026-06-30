@@ -56,8 +56,9 @@ export async function listDocument(opts: DocumentListQuery): Promise<{
 
   // Slice #18.17: Groups filter.
   // groupCodes undefined → no filter.
-  // groupCodes []       → show documents with no DOCUMENT group.
-  // groupCodes [...]    → show documents with no DOCUMENT group OR in ≥1 checked code.
+  // groupCodes []       → show documents with no DOCUMENT group only.
+  // groupCodes [...]    → filter to those codes; also include ungrouped unless
+  //                       opts.includeUngrouped is explicitly false.
   // NOTE: literal "document.id" in sql`` templates avoids the Drizzle unqualified-
   // column gotcha (groups alias g_f has id in scope; bare "id" would resolve there).
   let groupFilter: ReturnType<typeof sql> | undefined = undefined;
@@ -68,21 +69,23 @@ export async function listDocument(opts: DocumentListQuery): Promise<{
       WHERE gm_f.document_id = document.id
         AND g_f.target_type = 'DOCUMENT'
     )`;
-    if (opts.groupCodes.length === 0) {
+    const hasMatchingCode = sql`EXISTS (
+      SELECT 1 FROM ${groupMember} gm_f2
+      JOIN ${groups} g_f2 ON g_f2.id = gm_f2.group_id
+      WHERE gm_f2.document_id = document.id
+        AND g_f2.code = ANY(ARRAY[${sql.join(
+          opts.groupCodes.map((c) => sql`${c}`),
+          sql`, `,
+        )}]::text[])
+    )`;
+    if (opts.groupCodes.length === 0 && opts.includeUngrouped === false) {
+      groupFilter = sql`1 = 0`;
+    } else if (opts.groupCodes.length === 0) {
       groupFilter = hasNoGroup;
+    } else if (opts.includeUngrouped === false) {
+      groupFilter = hasMatchingCode;
     } else {
-      groupFilter = sql`(
-        ${hasNoGroup}
-        OR EXISTS (
-          SELECT 1 FROM ${groupMember} gm_f2
-          JOIN ${groups} g_f2 ON g_f2.id = gm_f2.group_id
-          WHERE gm_f2.document_id = document.id
-            AND g_f2.code = ANY(ARRAY[${sql.join(
-              opts.groupCodes.map((c) => sql`${c}`),
-              sql`, `,
-            )}]::text[])
-        )
-      )`;
+      groupFilter = sql`(${hasNoGroup} OR ${hasMatchingCode})`;
     }
   }
 

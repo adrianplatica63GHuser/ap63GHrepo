@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
-  Users,
+  User,
+  Building2,
   List,
   Map,
   FileText,
@@ -34,12 +35,17 @@ export type NavSection = {
 
 export const NAV_SECTIONS: NavSection[] = [
   {
-    // Plain direct link (Slice #15.09) — mirrors "document" (Slice #15.08):
-    // the Natural/Judicial split now lives in the "Person type:" dropdown
-    // on the unified /persons list page itself, not in the sidebar.
-    key: "people",
-    icon: Users,
-    href: "/persons",
+    // Plain direct link (Slice #18.18): dedicated Natural Persons list.
+    key: "naturalPeople",
+    icon: User,
+    href: "/natural-persons",
+    items: [],
+  },
+  {
+    // Plain direct link (Slice #18.18): dedicated Judicial Persons list.
+    key: "judicialPeople",
+    icon: Building2,
+    href: "/judicial-persons",
     items: [],
   },
   {

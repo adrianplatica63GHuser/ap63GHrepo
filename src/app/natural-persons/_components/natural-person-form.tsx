@@ -327,7 +327,7 @@ export function NaturalPersonForm({
     if (!ok) return;
 
     if (mode === "create") {
-      router.push("/persons");
+      router.push("/natural-persons");
       router.refresh();
       return;
     }
@@ -393,7 +393,7 @@ export function NaturalPersonForm({
       // invalidate it too so a created/edited/deleted person shows without a
       // manual browser refresh (Slice #18.13).
       await queryClient.invalidateQueries({ queryKey: ["persons"] });
-      router.push("/persons");
+      router.push("/natural-persons");
       router.refresh();
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : String(err));
@@ -403,7 +403,7 @@ export function NaturalPersonForm({
   };
 
   const onCancel = () => {
-    router.push("/persons");
+    router.push("/natural-persons");
   };
 
   const { register, formState } = form;

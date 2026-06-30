@@ -90,6 +90,13 @@ export const listQuerySchema = z.object({
   q: z.string().optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
+  // Slice #18.18: Groups filter for the /natural-persons list page.
+  //   groupCodes undefined   → no group filter (show all — default)
+  //   groupCodes []          → show only persons with NO matching group
+  //   groupCodes [...]       → filter to those codes (+ ungrouped unless includeUngrouped=false)
+  //   includeUngrouped false → exclude persons with no matching group
+  groupCodes:       z.array(z.string()).optional(),
+  includeUngrouped: z.boolean().optional(),
 });
 
 export type ListQuery = z.infer<typeof listQuerySchema>;
@@ -107,6 +114,14 @@ export const allPersonsListQuerySchema = z.object({
   types: z.array(z.enum(["NATURAL", "JUDICIAL"])).optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
+  // Slice #18.17: Groups filter. See GroupsFilter in groups-filter-dropdown.tsx.
+  //   groupCodes undefined   → no group filter (show all — default)
+  //   groupCodes []          → show only persons with NO matching group
+  //   groupCodes [...]       → filter to those codes (+ ungrouped unless includeUngrouped=false)
+  //   includeUngrouped false → exclude persons with no matching group
+  //   includeUngrouped true  → include persons with no matching group (default)
+  groupCodes:       z.array(z.string()).optional(),
+  includeUngrouped: z.boolean().optional(),
 });
 
 export type AllPersonsListQuery = z.infer<typeof allPersonsListQuerySchema>;

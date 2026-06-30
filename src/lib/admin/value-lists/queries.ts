@@ -243,7 +243,6 @@ export async function updateValue(
     case "interests":
     case "stamps": {
       // Update name (and sort_order if supplied) but never touch category.
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { category: _drop, ...safeData } = data;
       const [row] = await db
         .update(lookupOthers)

@@ -338,7 +338,6 @@ export function AddPropertyDialog({ onClose }: Props) {
 
     const total     = fileData.length;
     const savedIds: string[] = [];
-    let   skipped   = 0;
 
     for (let i = 0; i < total; i++) {
       const { name, text } = fileData[i];
@@ -352,13 +351,11 @@ export function AddPropertyDialog({ onClose }: Props) {
       try {
         corners = await callParseTextApi(fileBlob);
       } catch {
-        skipped++;
-        continue;
+        continue; // skip files we can't parse
       }
 
       if (corners.length === 0) {
-        skipped++;
-        continue;
+        continue; // skip files with no coordinates
       }
 
       const nickname = nicknameFromFilename(name);
@@ -366,7 +363,7 @@ export function AddPropertyDialog({ onClose }: Props) {
         const id = await createProperty(corners, null, nickname);
         savedIds.push(id);
       } catch {
-        skipped++;
+        // skip files that fail to save
       }
     }
 

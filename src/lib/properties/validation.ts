@@ -142,5 +142,13 @@ export const propertyListQuerySchema = z.object({
   q:      z.string().optional(),
   limit:  z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
+  // Slice #18.17: Groups filter. See GroupsFilter in groups-filter-dropdown.tsx.
+  //   groupCodes undefined   → no group filter (show all — default)
+  //   groupCodes []          → show only properties with NO PROPERTY group
+  //   groupCodes [...]       → filter to those codes (+ ungrouped unless includeUngrouped=false)
+  //   includeUngrouped false → exclude properties with no group (only when groupCodes present)
+  //   includeUngrouped true  → include properties with no group (default)
+  groupCodes:       z.array(z.string()).optional(),
+  includeUngrouped: z.boolean().optional(),
 });
 export type PropertyListQuery = z.infer<typeof propertyListQuerySchema>;

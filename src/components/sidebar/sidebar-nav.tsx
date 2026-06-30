@@ -280,12 +280,11 @@ export function SidebarNav() {
 
   // A flat-link section highlights as active for its list page and any of
   // its detail/sub-pages, independent of the accordion-driven
-  // activeSectionKey above. "people" also covers the legacy
-  // /natural-persons and /judicial-persons detail routes, since rows in the
-  // unified /persons list still link out to those per-type detail pages.
+  // activeSectionKey above.
   const FLAT_SECTION_ACTIVE_PREFIXES: Record<string, string[]> = {
     document: ["/documents"],
-    people: ["/persons", "/natural-persons", "/judicial-persons"],
+    naturalPeople: ["/natural-persons"],
+    judicialPeople: ["/judicial-persons"],
     propertyMap: ["/properties/map"],
   };
   function isFlatSectionActive(key: string): boolean {
@@ -328,7 +327,8 @@ export function SidebarNav() {
 
   // ── i18n label maps (explicit keys — required for next-intl type safety) ──
   const sectionLabels: Record<string, string> = {
-    people: t("sections.people"),
+    naturalPeople: t("sections.naturalPeople"),
+    judicialPeople: t("sections.judicialPeople"),
     propertyList: t("sections.propertyList"),
     propertyMap: t("sections.propertyMap"),
     document: t("sections.document"),

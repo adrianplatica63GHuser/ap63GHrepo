@@ -89,7 +89,7 @@ function CornerInputRow({
 }) {
   const t = useTranslations("property.corners");
 
-  const [mode,       setMode]       = useState<InputMode>(initialMode);
+  const [mode]                      = useState<InputMode>(initialMode);
   const [converting, setConverting] = useState(false);
   const [convertErr, setConvertErr] = useState<string | null>(null);
 

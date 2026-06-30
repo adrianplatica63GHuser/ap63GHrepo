@@ -36,12 +36,18 @@ export async function GET(request: NextRequest): Promise<Response> {
   const groupCodes: string[] | undefined =
     gcRaw === null ? undefined : gcRaw === "" ? [] : gcRaw.split(",").filter(Boolean);
 
+  // Parse ?includeUngrouped=false (only relevant when groupCodes is non-empty).
+  const iuRaw = url.searchParams.get("includeUngrouped");
+  const includeUngrouped: boolean | undefined =
+    iuRaw === null ? undefined : iuRaw !== "false";
+
   const parsed = documentListQuerySchema.safeParse({
     q:               url.searchParams.get("q")      ?? undefined,
     documentTypeIds: idsArr,
     limit:           url.searchParams.get("limit")  ?? undefined,
     offset:          url.searchParams.get("offset") ?? undefined,
     groupCodes,
+    includeUngrouped,
   });
 
   if (!parsed.success) {

@@ -106,9 +106,9 @@
       "unselectLink": "Deselectează",
       "displayAllSelected": "Afișează selectate",
       "groupsButton": "Grupuri",
-      "groupsSelectAll": "Selectează tot",
-      "groupsDeselectAll": "Deselectează tot",
-      "groupsEmpty": "Niciun grup",
+      "groupsAll": "Toate (in grup sau nu)",
+      "groupsNotInGroup": "Fara grup",
+      "groupsEmpty": "Niciun grup denumit",
       "rulerButton": "Riglă",
       "rulerHint": "Riglă — apasă două puncte pentru a măsura distanța dintre ele"
     },
@@ -357,7 +357,8 @@
     },
     "groupBadgeTitle": "Grup {code}, poziția {position}",
     "groupsFilterLabel": "Grupuri:",
-    "groupsFilterAll": "Toate grupurile"
+    "groupsFilterAll": "Toate (in grup sau nu)",
+    "groupsFilterUngrouped": "Fara grup"
   },
   "address": {
     "streetLine": "Stradă, Nr., Bloc, Etaj, Ap.",
@@ -514,10 +515,15 @@
       "cancel": "Anulează"
     },
     "table": {
+      "code": "Cod",
       "name": "Nume",
+      "nickname": "Poreclă",
       "email": "Email",
       "phone": "Telefon"
     },
+    "groupsFilterLabel": "Grupuri",
+    "groupsFilterAll": "Toate grupurile",
+    "groupsFilterUngrouped": "Fără grup",
     "sections": {
       "identity": "Identitate",
       "idDocument": "Document de identitate",
@@ -615,11 +621,15 @@
       "cancel": "Anulează"
     },
     "table": {
+      "code": "Cod",
       "name": "Denumire",
       "nickname": "Poreclă",
       "cui": "CUI",
       "id": "ID"
     },
+    "groupsFilterLabel": "Grupuri",
+    "groupsFilterAll": "Toate grupurile",
+    "groupsFilterUngrouped": "Fără grup",
     "sections": {
       "identity": "Persoană juridică",
       "contactPersons": "Persoane de contact",
@@ -684,7 +694,8 @@
   },
   "nav": {
     "sections": {
-      "people": "Persoane",
+      "naturalPeople": "Persoane Fizice",
+      "judicialPeople": "Persoane Juridice",
       "propertyList": "Proprietăți — Listă",
       "propertyMap": "Proprietăți — Hartă",
       "document": "Acte",
@@ -780,7 +791,8 @@
       "type": "Tip"
     },
     "groupsFilterLabel": "Grupuri:",
-    "groupsFilterAll": "Toate grupurile"
+    "groupsFilterAll": "Toate (in grup sau nu)",
+    "groupsFilterUngrouped": "Fara grup"
   },
   "document": {
     "listTitle": "Acte",
@@ -1037,7 +1049,8 @@
       }
     },
     "groupsFilterLabel": "Grupuri:",
-    "groupsFilterAll": "Toate grupurile"
+    "groupsFilterAll": "Toate (in grup sau nu)",
+    "groupsFilterUngrouped": "Fara grup"
   },
   "valueList": {
     "pageTitle": "Liste de Valori",

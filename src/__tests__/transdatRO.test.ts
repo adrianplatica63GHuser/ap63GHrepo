@@ -103,9 +103,6 @@ describe("formatDMS", () => {
 // Stereo70 ↔ WGS84 conversion (grid-corrected)
 // ---------------------------------------------------------------------------
 
-// Tolerance for round-trip: 0.000001° ≈ 10 cm on the ground
-const ROUND_TRIP_TOL = 1e-6;
-
 describe("wgs84ToStereo70 / stereo70ToWgs84 round-trip", () => {
   // Points spread across Romania to exercise different grid cells.
   const wgs84Points = [

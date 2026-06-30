@@ -10,35 +10,28 @@ import { RecencyBadge } from "@/components/recency-badge";
 
 const PAGE_SIZE = 15;
 
-type PropertyListItem = {
-  id:              string;
-  code:            string;
-  nickname:        string | null;
-  tarlaSola:       string | null;
-  parcela:         string | null;
-  cadastralNumber: string | null;
-  carteFunciara:   string | null;
-  surfaceAreaMp:   string | null;
-  calculatedAreaMp: string | null;
-  locality:        string | null;
-  county:          string | null;
-  createdAt:       string;
-  updatedAt:       string;
+type NaturalPersonListItem = {
+  id:          string;
+  code:        string;
+  displayName: string;
+  nickname:    string | null;
+  createdAt:   string;
+  updatedAt:   string;
 };
 
 type ListResponse = {
-  items:  PropertyListItem[];
+  items:  NaturalPersonListItem[];
   total:  number;
   limit:  number;
   offset: number;
 };
 
-async function fetchProperties(
+async function fetchNaturalPersons(
   q: string,
   page: number,
   filter?: GroupsFilter,
 ): Promise<ListResponse> {
-  const url = new URL("/api/properties", window.location.origin);
+  const url = new URL("/api/people", window.location.origin);
   if (q) url.searchParams.set("q", q);
   if (filter !== undefined) {
     url.searchParams.set("groupCodes", filter.codes.join(","));
@@ -51,15 +44,15 @@ async function fetchProperties(
   return res.json();
 }
 
-async function fetchPropertyGroupCodes(): Promise<string[]> {
-  const res = await fetch("/api/groups?targetType=PROPERTY");
+async function fetchNaturalPersonGroupCodes(): Promise<string[]> {
+  const res = await fetch("/api/groups?targetType=PHYSICAL_PERSON");
   if (!res.ok) return [];
   const body = await res.json();
   return ((body.items ?? []) as { code: string }[]).map((g) => g.code).sort();
 }
 
 async function callBatchDelete(ids: string[]): Promise<void> {
-  const res = await fetch("/api/properties/batch-delete", {
+  const res = await fetch("/api/people/batch-delete", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ ids }),
@@ -68,16 +61,6 @@ async function callBatchDelete(ids: string[]): Promise<void> {
     const body = await res.json().catch(() => ({}));
     throw new Error((body as { error?: string }).error ?? `HTTP ${res.status}`);
   }
-}
-
-function formatArea(raw: string | null): string {
-  if (raw == null) return "";
-  const n = parseFloat(raw);
-  if (isNaN(n)) return raw;
-  return new Intl.NumberFormat("en-GB", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  }).format(n);
 }
 
 function ConfirmDialog({
@@ -126,9 +109,9 @@ function ConfirmDialog({
   );
 }
 
-export function PropertyListView() {
-  const t    = useTranslations("property");
-  const tPag = useTranslations("shared.pagination");
+export function NaturalPersonListView() {
+  const t     = useTranslations("naturalPerson");
+  const tPag  = useTranslations("shared.pagination");
   const tBulk = useTranslations("shared.bulkDelete");
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -137,19 +120,17 @@ export function PropertyListView() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [currentPage,     setCurrentPage]     = useState(0);
 
-  // Slice #18.17: Groups filter (component state, server-side).
-  const [groupFilter, setGroupFilter] = useState<GroupsFilter>(undefined);
+  const [groupFilter,      setGroupFilter]      = useState<GroupsFilter>(undefined);
   const [groupDropdownOpen, setGroupDropdownOpen] = useState(false);
 
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
+  const [selectedIds,  setSelectedIds]  = useState<Set<string>>(() => new Set());
   const [confirmOpen,  setConfirmOpen]  = useState(false);
   const [deleting,     setDeleting]     = useState(false);
   const [deleteError,  setDeleteError]  = useState<string | null>(null);
 
-  // Fetch available PROPERTY group codes for the dropdown.
   const { data: availableGroupCodes = [] } = useQuery<string[]>({
-    queryKey: ["groups", "codes", "PROPERTY"],
-    queryFn:  fetchPropertyGroupCodes,
+    queryKey: ["groups", "codes", "PHYSICAL_PERSON"],
+    queryFn:  fetchNaturalPersonGroupCodes,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -161,7 +142,6 @@ export function PropertyListView() {
     return () => clearTimeout(handle);
   }, [searchInput]);
 
-  // Reset page when group filter changes.
   const groupFilterKey = groupFilter === undefined
     ? "__all__"
     : `${groupFilter.includeUngrouped ? "1" : "0"}:${groupFilter.codes.join(",")}`;
@@ -172,8 +152,8 @@ export function PropertyListView() {
   }
 
   const query = useQuery<ListResponse>({
-    queryKey: ["properties", "list", debouncedSearch, currentPage, groupFilterKey],
-    queryFn:  () => fetchProperties(debouncedSearch, currentPage, groupFilter),
+    queryKey: ["people", "list", debouncedSearch, currentPage, groupFilterKey],
+    queryFn:  () => fetchNaturalPersons(debouncedSearch, currentPage, groupFilter),
   });
 
   const total      = query.data?.total ?? 0;
@@ -181,17 +161,14 @@ export function PropertyListView() {
   const paginate   = total > PAGE_SIZE;
   const items      = query.data?.items ?? [];
 
-  // Derived-state-during-render reset: clear the selection whenever the
-  // visible page changes (search or page number) instead of carrying stale
-  // ids over to a different set of rows. Avoids react-hooks/set-state-in-effect.
-  const pageKey = `${debouncedSearch}|${currentPage}`;
+  const pageKey = `${debouncedSearch}|${currentPage}|${groupFilterKey}`;
   const [prevPageKey, setPrevPageKey] = useState(pageKey);
   if (prevPageKey !== pageKey) {
     setPrevPageKey(pageKey);
     if (selectedIds.size > 0) setSelectedIds(new Set());
   }
 
-  const allOnPageSelected = items.length > 0 && items.every((it) => selectedIds.has(it.id));
+  const allOnPageSelected  = items.length > 0 && items.every((it) => selectedIds.has(it.id));
   const someOnPageSelected = items.some((it) => selectedIds.has(it.id));
 
   const headerCheckboxRef = useRef<HTMLInputElement>(null);
@@ -227,7 +204,8 @@ export function PropertyListView() {
     setDeleteError(null);
     try {
       await callBatchDelete(Array.from(selectedIds));
-      await queryClient.invalidateQueries({ queryKey: ["properties"] });
+      await queryClient.invalidateQueries({ queryKey: ["people"] });
+      await queryClient.invalidateQueries({ queryKey: ["persons"] });
       setSelectedIds(new Set());
       setConfirmOpen(false);
     } catch (err) {
@@ -272,7 +250,7 @@ export function PropertyListView() {
             </button>
           )}
           <Link
-            href="/properties/new"
+            href="/natural-persons/new"
             className="inline-flex items-center rounded-md bg-cta px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d"
           >
             {t("addNew")}
@@ -286,7 +264,7 @@ export function PropertyListView() {
         </p>
       )}
 
-      {/* Table */}
+      {/* Results table */}
       <div className="overflow-x-auto rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <table className="w-full text-sm">
           <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-ink dark:bg-zinc-800 dark:text-zinc-300">
@@ -303,33 +281,29 @@ export function PropertyListView() {
                 />
               </th>
               <th className="px-4 py-2">{t("table.code")}</th>
+              <th className="px-4 py-2">{t("table.name")}</th>
               <th className="px-4 py-2">{t("table.nickname")}</th>
-              <th className="px-4 py-2">{t("table.cadastralNumber")}</th>
-              <th className="px-4 py-2">{t("table.carteFunciara")}</th>
-              <th className="px-4 py-2 text-right">{t("table.surfaceAreaMp")}</th>
-              <th className="px-4 py-2 text-right">{t("table.calculatedAreaMp")}</th>
-              <th className="px-4 py-2">{t("table.locality")}</th>
               <th className="px-4 py-2 w-24" />
             </tr>
           </thead>
           <tbody className="divide-y divide-crease dark:divide-zinc-800">
             {query.isLoading && (
               <tr>
-                <td colSpan={9} className="px-4 py-6 text-center text-fade">
+                <td colSpan={5} className="px-4 py-6 text-center text-fade">
                   {t("loading")}
                 </td>
               </tr>
             )}
             {query.isError && (
               <tr>
-                <td colSpan={9} className="px-4 py-6 text-center text-red-600">
+                <td colSpan={5} className="px-4 py-6 text-center text-red-600">
                   {t("error")}
                 </td>
               </tr>
             )}
             {query.data && query.data.items.length === 0 && (
               <tr>
-                <td colSpan={9} className="px-4 py-6 text-center text-fade">
+                <td colSpan={5} className="px-4 py-6 text-center text-fade">
                   {t("empty")}
                 </td>
               </tr>
@@ -337,7 +311,7 @@ export function PropertyListView() {
             {items.map((item) => (
               <tr
                 key={item.id}
-                onDoubleClick={() => router.push(`/properties/${item.id}`)}
+                onDoubleClick={() => router.push(`/natural-persons/${item.id}`)}
                 className="whitespace-nowrap hover:bg-cta-pale dark:hover:bg-zinc-800/50 cursor-pointer"
               >
                 <td className="px-4 py-2" onClick={(e) => e.stopPropagation()} onDoubleClick={(e) => e.stopPropagation()}>
@@ -346,7 +320,7 @@ export function PropertyListView() {
                       type="checkbox"
                       checked={selectedIds.has(item.id)}
                       onChange={() => toggleOne(item.id)}
-                      aria-label={item.nickname ?? item.code}
+                      aria-label={item.displayName || item.code}
                       className="h-4 w-4 rounded border-wire accent-cta"
                     />
                     <RecencyBadge createdAt={item.createdAt} updatedAt={item.updatedAt} />
@@ -356,28 +330,16 @@ export function PropertyListView() {
                   {item.code}
                 </td>
                 <td className="px-4 py-2 font-medium">
-                  {item.nickname ?? (
+                  {item.displayName || (
                     <span className="text-fade italic">—</span>
                   )}
                 </td>
                 <td className="px-4 py-2 text-fade dark:text-zinc-400">
-                  {item.cadastralNumber ?? ""}
-                </td>
-                <td className="px-4 py-2 text-fade dark:text-zinc-400">
-                  {item.carteFunciara ?? ""}
-                </td>
-                <td className="px-4 py-2 text-right tabular-nums text-fade dark:text-zinc-400">
-                  {formatArea(item.surfaceAreaMp)}
-                </td>
-                <td className="px-4 py-2 text-right tabular-nums text-fade dark:text-zinc-400">
-                  {formatArea(item.calculatedAreaMp)}
-                </td>
-                <td className="px-4 py-2 text-fade dark:text-zinc-400">
-                  {[item.locality, item.county].filter(Boolean).join(", ")}
+                  {item.nickname || <span className="italic">—</span>}
                 </td>
                 <td className="px-4 py-2">
                   <Link
-                    href={`/properties/${item.id}`}
+                    href={`/natural-persons/${item.id}`}
                     className="inline-flex items-center rounded-md border border-wire bg-white px-3 py-1 text-xs font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
                   >
                     {t("open")}
@@ -389,45 +351,50 @@ export function PropertyListView() {
         </table>
       </div>
 
-      {/* Pagination */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="text-xs text-fade dark:text-zinc-400">
-          {query.data
-            ? t("counts", { shown: query.data.items.length, total })
-            : null}
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => setCurrentPage((p) => p - 1)}
-            disabled={!paginate || currentPage === 0}
-            className="inline-flex items-center rounded-md border border-wire bg-white px-3 py-1.5 text-xs font-medium text-ink shadow-sm transition-colors hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-          >
-            {tPag("previous")}
-          </button>
-          <span className="text-xs text-fade dark:text-zinc-400">
-            {tPag("pageOf", { page: currentPage + 1, total: totalPages })}
+      {/* Counts + pagination */}
+      {query.data && (
+        <div className="flex items-center justify-between text-sm text-fade">
+          <span>
+            {t("counts", {
+              shown: Math.min(items.length + currentPage * PAGE_SIZE, total),
+              total,
+            })}
           </span>
-          <button
-            type="button"
-            onClick={() => setCurrentPage((p) => p + 1)}
-            disabled={!paginate || currentPage >= totalPages - 1}
-            className="inline-flex items-center rounded-md border border-wire bg-white px-3 py-1.5 text-xs font-medium text-ink shadow-sm transition-colors hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-          >
-            {tPag("next")}
-          </button>
+          {paginate && (
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
+                disabled={currentPage === 0}
+                className="rounded px-2 py-1 text-xs hover:bg-crease disabled:opacity-40"
+              >
+                {tPag("prev")}
+              </button>
+              <span className="px-2">
+                {tPag("page", { current: currentPage + 1, total: totalPages })}
+              </span>
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages - 1, p + 1))}
+                disabled={currentPage >= totalPages - 1}
+                className="rounded px-2 py-1 text-xs hover:bg-crease disabled:opacity-40"
+              >
+                {tPag("next")}
+              </button>
+            </div>
+          )}
         </div>
-      </div>
+      )}
 
       {confirmOpen && (
         <ConfirmDialog
-          title={tBulk("confirmTitle")}
-          body={tBulk("confirmBody", { count: selectedIds.size })}
-          yesLabel={deleting ? tBulk("deleting") : tBulk("delete")}
-          noLabel={tBulk("cancel")}
-          busy={deleting}
+          title={tBulk("title", { count: selectedIds.size })}
+          body={tBulk("body", { count: selectedIds.size })}
+          yesLabel={tBulk("yes")}
+          noLabel={tBulk("no")}
           onYes={handleConfirmDelete}
-          onNo={() => setConfirmOpen(false)}
+          onNo={() => { setConfirmOpen(false); setDeleteError(null); }}
+          busy={deleting}
         />
       )}
     </div>

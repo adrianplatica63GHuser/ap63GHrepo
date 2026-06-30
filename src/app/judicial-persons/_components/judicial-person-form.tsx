@@ -296,7 +296,7 @@ export function JudicialPersonForm({
     if (!ok) return;
 
     if (mode === "create") {
-      router.push("/persons");
+      router.push("/judicial-persons");
       router.refresh();
       return;
     }
@@ -356,7 +356,7 @@ export function JudicialPersonForm({
       // invalidate it too so a created/edited/deleted person shows without a
       // manual browser refresh (Slice #18.13).
       await queryClient.invalidateQueries({ queryKey: ["persons"] });
-      router.push("/persons");
+      router.push("/judicial-persons");
       router.refresh();
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : String(err));
@@ -366,7 +366,7 @@ export function JudicialPersonForm({
   };
 
   const onCancel = () => {
-    router.push("/persons");
+    router.push("/judicial-persons");
   };
 
   const { register, formState, control, setValue, getValues } = form;

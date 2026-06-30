@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { GroupsFilterDropdown } from "@/components/groups-filter-dropdown";
+import { GroupsFilter, GroupsFilterDropdown } from "@/components/groups-filter-dropdown";
 import { RecencyBadge } from "@/components/recency-badge";
 
 const PAGE_SIZE = 15;
@@ -157,12 +157,15 @@ async function fetchDocuments(
   q: string,
   documentTypeIds: string[],
   page: number,
-  groupCodes?: string[],
+  filter?: GroupsFilter,
 ): Promise<ListResponse> {
   const url = new URL("/api/documents", window.location.origin);
   if (q)                      url.searchParams.set("q",               q);
   if (documentTypeIds.length) url.searchParams.set("documentTypeIds", documentTypeIds.join(","));
-  if (groupCodes !== undefined) url.searchParams.set("groupCodes",    groupCodes.join(","));
+  if (filter !== undefined) {
+    url.searchParams.set("groupCodes", filter.codes.join(","));
+    if (!filter.includeUngrouped) url.searchParams.set("includeUngrouped", "false");
+  }
   url.searchParams.set("limit",  String(PAGE_SIZE));
   url.searchParams.set("offset", String(page * PAGE_SIZE));
   const res = await fetch(url);
@@ -261,7 +264,7 @@ export function DocumentListView({
   const [deleteError,  setDeleteError]  = useState<string | null>(null);
 
   // Slice #18.17: Groups filter (component state, server-side).
-  const [groupCodesFilter, setGroupCodesFilter] = useState<string[] | undefined>(undefined);
+  const [groupFilter, setGroupFilter] = useState<GroupsFilter>(undefined);
   const [groupDropdownOpen, setGroupDropdownOpen] = useState(false);
 
   const { data: documentTypes } = useQuery({
@@ -307,17 +310,18 @@ export function DocumentListView({
   const noTypesSelected = initialDocumentTypeIds !== undefined && initialDocumentTypeIds.length === 0;
 
   // Reset page when group filter changes.
-  const groupCodesKey =
-    groupCodesFilter === undefined ? "__all__" : groupCodesFilter.join(",");
-  const [prevGroupKey, setPrevGroupKey] = useState(groupCodesKey);
-  if (prevGroupKey !== groupCodesKey) {
-    setPrevGroupKey(groupCodesKey);
+  const groupFilterKey = groupFilter === undefined
+    ? "__all__"
+    : `${groupFilter.includeUngrouped ? "1" : "0"}:${groupFilter.codes.join(",")}`;
+  const [prevGroupKey, setPrevGroupKey] = useState(groupFilterKey);
+  if (prevGroupKey !== groupFilterKey) {
+    setPrevGroupKey(groupFilterKey);
     setCurrentPage(0);
   }
 
   const query = useQuery<ListResponse>({
-    queryKey: ["documents", "list", debouncedSearch, typeFiltersKey, currentPage, groupCodesKey],
-    queryFn:  () => fetchDocuments(debouncedSearch, initialDocumentTypeIds ?? [], currentPage, groupCodesFilter),
+    queryKey: ["documents", "list", debouncedSearch, typeFiltersKey, currentPage, groupFilterKey],
+    queryFn:  () => fetchDocuments(debouncedSearch, initialDocumentTypeIds ?? [], currentPage, groupFilter),
     enabled:  !noTypesSelected,
   });
 
@@ -396,12 +400,13 @@ export function DocumentListView({
         {availableGroupCodes.length > 0 && (
           <GroupsFilterDropdown
             availableCodes={availableGroupCodes}
-            selectedCodes={groupCodesFilter}
+            selectedFilter={groupFilter}
             label={t("groupsFilterLabel")}
             allLabel={t("groupsFilterAll")}
+            ungroupedLabel={t("groupsFilterUngrouped")}
             open={groupDropdownOpen}
             onOpenChange={setGroupDropdownOpen}
-            onChange={(codes) => { setGroupCodesFilter(codes); setGroupDropdownOpen(false); }}
+            onChange={(f) => setGroupFilter(f)}
           />
         )}
         <input

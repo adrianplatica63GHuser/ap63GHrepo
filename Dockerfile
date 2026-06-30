@@ -48,6 +48,15 @@ COPY --from=builder /app/.next/static ./.next/static
 # Public folder (fonts, images, favicons, etc.)
 COPY --from=builder /app/public ./public
 
+# transdatRO.ts reads this binary grid file from disk at runtime via
+# fs.readFileSync(path.join(process.cwd(), "src", "lib", "geo", "grids", ...)).
+# It is NOT picked up by Next's standalone output tracing (a raw fs.readFileSync
+# on a process.cwd()-built path isn't statically traceable), so without this
+# explicit copy the file is missing in the runtime image and any Stereo70 <->
+# WGS84 conversion (e.g. importing a property from a text file) throws ENOENT,
+# surfacing as a generic 500 "Internal server error".
+COPY --from=builder /app/src/lib/geo/grids ./src/lib/geo/grids
+
 EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"

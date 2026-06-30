@@ -560,6 +560,7 @@ export default function PropertyMap() {
   // is the empty-set default, so no async init from the loaded code list.
   const [groupsPanelOpen, setGroupsPanelOpen] = useState(false);
   const [uncheckedGroups, setUncheckedGroups] = useState<Set<string>>(new Set());
+  const mapGroupsMasterRef = useRef<HTMLInputElement>(null);
 
   // Ruler tool (Slice #18.14.ruler) — mutually exclusive with select mode.
   // rulerStart/rulerEnd are committed endpoints; rulerCursor is the live
@@ -628,8 +629,13 @@ export default function PropertyMap() {
       : groupFiltered;
 
   // Whether every group is currently checked (drives the master checkbox).
+  // All = "Not in a group" checked AND every code checked.
   const allGroupsChecked =
-    allGroupCodes.length > 0 && allGroupCodes.every((c) => !uncheckedGroups.has(c));
+    !uncheckedGroups.has("_ungrouped") &&
+    (allGroupCodes.length === 0 || allGroupCodes.every((c) => !uncheckedGroups.has(c)));
+  const someGroupsChecked =
+    !allGroupsChecked &&
+    (!uncheckedGroups.has("_ungrouped") || allGroupCodes.some((c) => !uncheckedGroups.has(c)));
 
   // Properties whose corner set is identical to at least one other property.
   const duplicateIds = findDuplicateIds(withGeometry);
@@ -919,12 +925,20 @@ export default function PropertyMap() {
   }, []);
 
   const toggleAllGroups = useCallback(() => {
-    // If every code is currently checked, uncheck all; otherwise check all.
+    // If everything is currently checked, uncheck all; otherwise check all.
     setUncheckedGroups((prev) => {
-      const everyChecked = allGroupCodes.every((c) => !prev.has(c));
-      return everyChecked ? new Set(allGroupCodes) : new Set();
+      const everyChecked =
+        !prev.has("_ungrouped") && allGroupCodes.every((c) => !prev.has(c));
+      return everyChecked ? new Set(["_ungrouped", ...allGroupCodes]) : new Set();
     });
   }, [allGroupCodes]);
+
+  // Indeterminate state on the map groups master checkbox.
+  useEffect(() => {
+    if (mapGroupsMasterRef.current) {
+      mapGroupsMasterRef.current.indeterminate = someGroupsChecked;
+    }
+  }, [someGroupsChecked]);
 
   // -------------------------------------------------------------------------
   // Drag-to-select — container-level DOM listeners
@@ -1406,46 +1420,56 @@ export default function PropertyMap() {
               </button>
 
               {groupsPanelOpen && (
-                <div className="absolute left-0 right-0 top-full mt-1 rounded shadow-lg border border-wire bg-white overflow-hidden">
+                <div className="absolute left-0 top-full mt-1 w-52 rounded shadow-lg border border-wire bg-white overflow-hidden">
+                  {/* Master: All (in groups or not) */}
+                  <label className="flex items-center gap-1.5 px-2 py-1.5 border-b border-crease cursor-pointer hover:bg-cta-pale">
+                    <input
+                      ref={mapGroupsMasterRef}
+                      type="checkbox"
+                      checked={allGroupsChecked}
+                      onChange={toggleAllGroups}
+                      className="h-3.5 w-3.5 shrink-0 rounded border-wire accent-cta"
+                    />
+                    <span className="text-[11px] font-semibold text-ink truncate">
+                      {t("map.groupsAll")}
+                    </span>
+                  </label>
+
+                  {/* Not in a group */}
+                  <label className="flex items-center gap-1.5 px-2 py-1.5 border-b border-crease cursor-pointer hover:bg-cta-pale">
+                    <input
+                      type="checkbox"
+                      checked={!uncheckedGroups.has("_ungrouped")}
+                      onChange={() => toggleGroupChecked("_ungrouped")}
+                      className="h-3.5 w-3.5 shrink-0 rounded border-wire accent-cta"
+                    />
+                    <span className="text-[11px] italic text-fade truncate">
+                      {t("map.groupsNotInGroup")}
+                    </span>
+                  </label>
+
+                  {/* Group code list — scrollable */}
                   {allGroupCodes.length === 0 ? (
-                    <div className="px-2 py-1.5 text-[11px] text-fade whitespace-nowrap">
+                    <div className="px-2 py-1.5 text-[11px] text-fade">
                       {t("map.groupsEmpty")}
                     </div>
                   ) : (
-                    <>
-                      {/* Select all / deselect all */}
-                      <label className="flex items-center gap-1.5 px-2 py-1.5 border-b border-crease cursor-pointer hover:bg-cta-pale">
-                        <input
-                          type="checkbox"
-                          checked={allGroupsChecked}
-                          onChange={toggleAllGroups}
-                          className="h-3.5 w-3.5 shrink-0 rounded border-wire accent-cta"
-                        />
-                        <span className="text-[11px] font-semibold text-ink truncate">
-                          {allGroupsChecked
-                            ? t("map.groupsDeselectAll")
-                            : t("map.groupsSelectAll")}
-                        </span>
-                      </label>
-
-                      {/* Group list — 5 rows tall, then scrolls */}
-                      <div className="max-h-[150px] overflow-y-auto">
-                        {allGroupCodes.map((code) => (
-                          <label
-                            key={code}
-                            className="flex items-center gap-1.5 px-2 py-1.5 cursor-pointer hover:bg-cta-pale"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={!uncheckedGroups.has(code)}
-                              onChange={() => toggleGroupChecked(code)}
-                              className="h-3.5 w-3.5 shrink-0 rounded border-wire accent-cta"
-                            />
-                            <span className="font-mono text-xs text-ink">{code}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </>
+                    <div className="max-h-[150px] overflow-y-auto">
+                      {allGroupCodes.map((code) => (
+                        <label
+                          key={code}
+                          className="flex items-center gap-1.5 px-2 py-1.5 cursor-pointer hover:bg-cta-pale"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={!uncheckedGroups.has(code)}
+                            onChange={() => toggleGroupChecked(code)}
+                            className="h-3.5 w-3.5 shrink-0 rounded border-wire accent-cta"
+                          />
+                          <span className="font-mono text-xs text-ink">{code}</span>
+                        </label>
+                      ))}
+                    </div>
                   )}
                 </div>
               )}

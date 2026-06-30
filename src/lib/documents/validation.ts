@@ -78,11 +78,14 @@ export const documentListQuerySchema = z.object({
   documentTypeIds: z.array(z.string().uuid()).optional(),
   limit:  z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
-  // Slice #18.17: Groups filter. Mirrors the map-view "Groups" panel semantics.
-  //   undefined  → no group filter (show all — default)
-  //   []         → show only documents with NO DOCUMENT group
-  //   [...]      → show documents with no DOCUMENT group OR in ≥1 of these codes
-  groupCodes: z.array(z.string()).optional(),
+  // Slice #18.17: Groups filter. See GroupsFilter in groups-filter-dropdown.tsx.
+  //   groupCodes undefined   → no group filter (show all — default)
+  //   groupCodes []          → show only documents with NO DOCUMENT group
+  //   groupCodes [...]       → filter to those codes (+ ungrouped unless includeUngrouped=false)
+  //   includeUngrouped false → exclude documents with no group
+  //   includeUngrouped true  → include documents with no group (default)
+  groupCodes:       z.array(z.string()).optional(),
+  includeUngrouped: z.boolean().optional(),
 });
 export type DocumentListQuery = z.infer<typeof documentListQuerySchema>;
 

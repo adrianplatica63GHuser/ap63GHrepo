@@ -106,11 +106,6 @@ function AddForm({ onClose }: { onClose: () => void }) {
               </option>
             ))}
           </select>
-          {targetType !== "PROPERTY" && (
-            <span className="text-xs text-amber-600 dark:text-amber-500">
-              {t("notImplemented")}
-            </span>
-          )}
         </div>
 
         {/* Description */}

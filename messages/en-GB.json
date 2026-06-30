@@ -106,9 +106,9 @@
       "unselectLink": "Unselect",
       "displayAllSelected": "Display all selected",
       "groupsButton": "Groups",
-      "groupsSelectAll": "Select all",
-      "groupsDeselectAll": "Deselect all",
-      "groupsEmpty": "No groups",
+      "groupsAll": "All (in groups or not)",
+      "groupsNotInGroup": "Not in a group",
+      "groupsEmpty": "No named groups",
       "rulerButton": "Ruler",
       "rulerHint": "Ruler — click two points to measure the distance between them"
     },
@@ -357,7 +357,8 @@
     },
     "groupBadgeTitle": "Group {code}, position {position}",
     "groupsFilterLabel": "Groups:",
-    "groupsFilterAll": "All groups"
+    "groupsFilterAll": "All (in groups or not)",
+    "groupsFilterUngrouped": "Not in a group"
   },
   "address": {
     "streetLine": "Street, No., Block, Floor, Apt",
@@ -514,10 +515,15 @@
       "cancel": "Cancel"
     },
     "table": {
+      "code": "Code",
       "name": "Name",
+      "nickname": "Nickname",
       "email": "Email",
       "phone": "Phone"
     },
+    "groupsFilterLabel": "Groups",
+    "groupsFilterAll": "All groups",
+    "groupsFilterUngrouped": "Ungrouped",
     "sections": {
       "identity": "Identity",
       "idDocument": "ID Document",
@@ -615,11 +621,15 @@
       "cancel": "Cancel"
     },
     "table": {
+      "code": "Code",
       "name": "Name",
       "nickname": "Nickname",
       "cui": "CUI",
       "id": "ID"
     },
+    "groupsFilterLabel": "Groups",
+    "groupsFilterAll": "All groups",
+    "groupsFilterUngrouped": "Ungrouped",
     "sections": {
       "identity": "Judicial Person",
       "contactPersons": "Contact Persons",
@@ -684,7 +694,8 @@
   },
   "nav": {
     "sections": {
-      "people": "Persons",
+      "naturalPeople": "Natural Persons",
+      "judicialPeople": "Judicial Persons",
       "propertyList": "Properties List",
       "propertyMap": "Properties Map",
       "document": "Documents",
@@ -780,7 +791,8 @@
       "type": "Type"
     },
     "groupsFilterLabel": "Groups:",
-    "groupsFilterAll": "All groups"
+    "groupsFilterAll": "All (in groups or not)",
+    "groupsFilterUngrouped": "Not in a group"
   },
   "document": {
     "listTitle": "Documents",
@@ -1037,7 +1049,8 @@
       }
     },
     "groupsFilterLabel": "Groups:",
-    "groupsFilterAll": "All groups"
+    "groupsFilterAll": "All (in groups or not)",
+    "groupsFilterUngrouped": "Not in a group"
   },
   "valueList": {
     "pageTitle": "Value Lists",

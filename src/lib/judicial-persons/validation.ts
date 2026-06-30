@@ -101,6 +101,9 @@ export const judicialListQuerySchema = z.object({
   q: z.string().optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
+  // Slice #18.18: Groups filter for the /judicial-persons list page.
+  groupCodes:       z.array(z.string()).optional(),
+  includeUngrouped: z.boolean().optional(),
 });
 
 export type JudicialListQuery = z.infer<typeof judicialListQuerySchema>;

@@ -19,10 +19,28 @@ import {
 
 export async function GET(request: NextRequest): Promise<Response> {
   const url = new URL(request.url);
+  // Parse ?groupCodes=PROP-AA,PROP-AB (comma-separated).
+  // Key absent → undefined (no group filter). Key present but empty → [] (no-group only).
+  const gcRaw = url.searchParams.get("groupCodes");
+  const groupCodes: string[] | undefined =
+    gcRaw === null
+      ? undefined
+      : gcRaw === ""
+      ? []
+      : gcRaw.split(",").filter(Boolean);
+
+  // Parse ?includeUngrouped=false (only relevant when groupCodes is non-empty).
+  // Absent or "true" → true (default: include ungrouped). "false" → false.
+  const iuRaw = url.searchParams.get("includeUngrouped");
+  const includeUngrouped: boolean | undefined =
+    iuRaw === null ? undefined : iuRaw !== "false";
+
   const parsed = propertyListQuerySchema.safeParse({
-    q:      url.searchParams.get("q")      ?? undefined,
-    limit:  url.searchParams.get("limit")  ?? undefined,
-    offset: url.searchParams.get("offset") ?? undefined,
+    q:               url.searchParams.get("q")      ?? undefined,
+    limit:           url.searchParams.get("limit")  ?? undefined,
+    offset:          url.searchParams.get("offset") ?? undefined,
+    groupCodes,
+    includeUngrouped,
   });
 
   if (!parsed.success) {
