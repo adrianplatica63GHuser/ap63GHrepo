@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   type FieldPath,
@@ -18,6 +18,7 @@ import {
   VersionNavControls,
   type VersionNavView,
 } from "@/components/version-nav-controls";
+import { FieldPulseContext, usePulseRing } from "@/components/versioning/field-pulse";
 import type { HighlightColor } from "@/lib/versioning/field-diff";
 import type { NaturalPersonSnapshot } from "@/lib/persons/validation";
 import {
@@ -113,6 +114,8 @@ export function NaturalPersonForm({
 
   const isCreate = mode === "create";
   // Subscribe to value changes so the edit-dirty check recomputes live.
+  // form.watch() is intentionally not memoizable; this is the documented usage.
+  // eslint-disable-next-line react-hooks/incompatible-library
   const watchedValues = form.watch();
 
   // --- Version history (Slice #18.05) ------------------------------------
@@ -145,6 +148,42 @@ export function NaturalPersonForm({
     () => ({ values: initialValues ?? emptyFormValues }),
   );
 
+  // Bug 1 (Slice #18.15.bugs): transient pulse of the latest version's
+  // N-1 -> N change. Set when the user navigates onto the latest from a
+  // different version (or restores via "Make current"); cleared after ~2.6s.
+  const [pulse, setPulse] = useState<NaturalFieldHighlights | null>(null);
+  const pulseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingPulseRef = useRef<number | null>(null);
+
+  const triggerLatestPulse = () => {
+    if (latestVersion === null || latestVersion < 1) return;
+    const curr = versionByNumber.get(latestVersion)?.snapshot;
+    if (!curr) return;
+    const prev = versionByNumber.get(latestVersion - 1)?.snapshot;
+    setPulse(computeFieldHighlights(prev ?? null, curr));
+    if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current);
+    pulseTimerRef.current = setTimeout(() => setPulse(null), 2600);
+  };
+
+  useEffect(
+    () => () => {
+      if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current);
+    },
+    [],
+  );
+
+  // After a "Make current" restore, pulse the new version once it refetches in.
+  useEffect(() => {
+    const target = pendingPulseRef.current;
+    if (target === null) return;
+    if (latestVersion !== target) return;
+    if (!versionByNumber.get(target)) return;
+    pendingPulseRef.current = null;
+    triggerLatestPulse();
+    // triggerLatestPulse reads latestVersion/versionByNumber (current here).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [latestVersion, versionByNumber]);
+
   // Any non-latest version is strictly read-only; only the latest is editable
   // (or stays "view" if opened read-only). Create mode is unaffected.
   const effectiveMode: "create" | "edit" | "view" =
@@ -157,12 +196,16 @@ export function NaturalPersonForm({
   // Navigate to a version. Locked while the latest has unsaved edits, so a
   // dirty draft is never stranded on a read-only historical view.
   const goToVersion = (target: number) => {
+    const leaving = effectiveVersion;
     if (target === latestVersion) {
       form.reset(baseline.values);
+      // Bug 1: arriving on the latest from a different version pulses N-1 -> N.
+      if (leaving !== null && leaving !== latestVersion) triggerLatestPulse();
     } else {
       const snap = versionByNumber.get(target)?.snapshot;
       if (!snap) return;
       form.reset(snapshotToFormValues(snap));
+      setPulse(null);
     }
     setViewingVersion(target);
   };
@@ -179,6 +222,12 @@ export function NaturalPersonForm({
       : undefined;
   const fieldHighlights: NaturalFieldHighlights | null =
     showHighlights && currSnap ? computeFieldHighlights(prevSnap ?? null, currSnap) : null;
+
+  // What the fields actually frame: the historical diff on a past version, or
+  // the transient pulse on the latest. `pulsing` swaps the static ring for the
+  // animated pulse class (Bug 1).
+  const displayHighlights: NaturalFieldHighlights | null = fieldHighlights ?? pulse;
+  const pulsing = fieldHighlights === null && pulse !== null;
 
   const navLocked = isOnLatest && editDirty;
   const versionNav: VersionNavView | null =
@@ -238,6 +287,10 @@ export function NaturalPersonForm({
         );
       }
       await queryClient.invalidateQueries({ queryKey: ["people"] });
+      // The unified /persons list (Slice #15.09) caches under ["persons"];
+      // invalidate it too so a created/edited/deleted person shows without a
+      // manual browser refresh (Slice #18.13).
+      await queryClient.invalidateQueries({ queryKey: ["persons"] });
       // Slice #18.05: a save appended a new version — drop the cached list so
       // reopening shows it (and the ◀/▶ nav enables / advances).
       await queryClient.invalidateQueries({ queryKey: ["person-versions"] });
@@ -280,6 +333,8 @@ export function NaturalPersonForm({
       setConfirmMakeCurrent(false);
       return;
     }
+    // Bug 1: pulse the restored change once the new version refetches in.
+    pendingPulseRef.current = makeCurrentNextNumber;
     setBaseline({ values });
     setViewingVersion(null);
     setConfirmMakeCurrent(false);
@@ -315,6 +370,10 @@ export function NaturalPersonForm({
         );
       }
       await queryClient.invalidateQueries({ queryKey: ["people"] });
+      // The unified /persons list (Slice #15.09) caches under ["persons"];
+      // invalidate it too so a created/edited/deleted person shows without a
+      // manual browser refresh (Slice #18.13).
+      await queryClient.invalidateQueries({ queryKey: ["persons"] });
       router.push("/persons");
       router.refresh();
     } catch (err) {
@@ -332,6 +391,7 @@ export function NaturalPersonForm({
   const errors = formState.errors;
 
   return (
+    <FieldPulseContext.Provider value={pulsing}>
     <form
       onSubmit={form.handleSubmit(onSubmit)}
       className="flex flex-col gap-4"
@@ -373,14 +433,14 @@ export function NaturalPersonForm({
               name="lastName"
               register={register}
               error={errors.lastName?.message}
-              highlight={fieldHighlights?.fields.lastName}
+              highlight={displayHighlights?.fields.lastName}
             />
             <Field
               label={t("fields.firstName")}
               name="firstName"
               register={register}
               error={errors.firstName?.message}
-              highlight={fieldHighlights?.fields.firstName}
+              highlight={displayHighlights?.fields.firstName}
             />
           </div>
           {/* Row 2: Code (edit/view) | CNP */}
@@ -393,7 +453,7 @@ export function NaturalPersonForm({
               name="cnp"
               register={register}
               error={errors.cnp?.message}
-              highlight={fieldHighlights?.fields.cnp}
+              highlight={displayHighlights?.fields.cnp}
             />
           </div>
           {/* Row 3: ID Type | ID Number */}
@@ -408,14 +468,14 @@ export function NaturalPersonForm({
                 { value: "ID_CARD", label: t("options.idDoc.ID_CARD") },
                 { value: "PASSPORT", label: t("options.idDoc.PASSPORT") },
               ]}
-              highlight={fieldHighlights?.fields.idDocumentType}
+              highlight={displayHighlights?.fields.idDocumentType}
             />
             <Field
               label={t("fields.idDocumentNumber")}
               name="idDocumentNumber"
               register={register}
               error={errors.idDocumentNumber?.message}
-              highlight={fieldHighlights?.fields.idDocumentNumber}
+              highlight={displayHighlights?.fields.idDocumentNumber}
             />
           </div>
           {/* Row 4: Gender | Date of Birth */}
@@ -430,7 +490,7 @@ export function NaturalPersonForm({
                 { value: "MALE", label: t("options.gender.MALE") },
                 { value: "FEMALE", label: t("options.gender.FEMALE") },
               ]}
-              highlight={fieldHighlights?.fields.gender}
+              highlight={displayHighlights?.fields.gender}
             />
             <Field
               label={t("fields.dateOfBirth")}
@@ -438,7 +498,7 @@ export function NaturalPersonForm({
               type="date"
               register={register}
               error={errors.dateOfBirth?.message}
-              highlight={fieldHighlights?.fields.dateOfBirth}
+              highlight={displayHighlights?.fields.dateOfBirth}
             />
           </div>
           {/* Row 5: Nickname | Notes */}
@@ -448,14 +508,14 @@ export function NaturalPersonForm({
               name="nickname"
               register={register}
               error={errors.nickname?.message}
-              highlight={fieldHighlights?.fields.nickname}
+              highlight={displayHighlights?.fields.nickname}
             />
             <Field
               label={t("fields.notes")}
               name="notes"
               register={register}
               error={errors.notes?.message}
-              highlight={fieldHighlights?.fields.notes}
+              highlight={displayHighlights?.fields.notes}
             />
           </div>
           {/* Row 6: Personal Phone 1 | Personal Email 1 */}
@@ -465,14 +525,14 @@ export function NaturalPersonForm({
               name="personalPhone1"
               register={register}
               error={errors.personalPhone1?.message}
-              highlight={fieldHighlights?.fields.personalPhone1}
+              highlight={displayHighlights?.fields.personalPhone1}
             />
             <Field
               label={t("fields.personalEmail1")}
               name="personalEmail1"
               register={register}
               error={errors.personalEmail1?.message}
-              highlight={fieldHighlights?.fields.personalEmail1}
+              highlight={displayHighlights?.fields.personalEmail1}
             />
           </div>
           {/* Row 7: Personal Phone 2 | Personal Email 2 */}
@@ -482,14 +542,14 @@ export function NaturalPersonForm({
               name="personalPhone2"
               register={register}
               error={errors.personalPhone2?.message}
-              highlight={fieldHighlights?.fields.personalPhone2}
+              highlight={displayHighlights?.fields.personalPhone2}
             />
             <Field
               label={t("fields.personalEmail2")}
               name="personalEmail2"
               register={register}
               error={errors.personalEmail2?.message}
-              highlight={fieldHighlights?.fields.personalEmail2}
+              highlight={displayHighlights?.fields.personalEmail2}
             />
           </div>
           {/* Row 8: Work Phone | Work Email */}
@@ -499,14 +559,14 @@ export function NaturalPersonForm({
               name="workPhone"
               register={register}
               error={errors.workPhone?.message}
-              highlight={fieldHighlights?.fields.workPhone}
+              highlight={displayHighlights?.fields.workPhone}
             />
             <Field
               label={t("fields.workEmail")}
               name="workEmail"
               register={register}
               error={errors.workEmail?.message}
-              highlight={fieldHighlights?.fields.workEmail}
+              highlight={displayHighlights?.fields.workEmail}
             />
           </div>
         </div>
@@ -526,14 +586,14 @@ export function NaturalPersonForm({
               register={register}
               error={errors.citizenshipId?.message}
               options={[{ value: "", label: "—" }, ...citizenshipOptions]}
-              highlight={fieldHighlights?.fields.citizenshipId}
+              highlight={displayHighlights?.fields.citizenshipId}
             />
             <Field
               label={t("fields.placeOfBirth")}
               name="placeOfBirth"
               register={register}
               error={errors.placeOfBirth?.message}
-              highlight={fieldHighlights?.fields.placeOfBirth}
+              highlight={displayHighlights?.fields.placeOfBirth}
             />
           </div>
           <div className="grid grid-cols-2 gap-2">
@@ -542,14 +602,14 @@ export function NaturalPersonForm({
               name="idIssuingAuthority"
               register={register}
               error={errors.idIssuingAuthority?.message}
-              highlight={fieldHighlights?.fields.idIssuingAuthority}
+              highlight={displayHighlights?.fields.idIssuingAuthority}
             />
             <Field
               label={t("fields.idCardNumber")}
               name="idCardNumber"
               register={register}
               error={errors.idCardNumber?.message}
-              highlight={fieldHighlights?.fields.idCardNumber}
+              highlight={displayHighlights?.fields.idCardNumber}
             />
           </div>
           <div className="grid grid-cols-2 gap-2">
@@ -559,7 +619,7 @@ export function NaturalPersonForm({
               type="date"
               register={register}
               error={errors.idValidFrom?.message}
-              highlight={fieldHighlights?.fields.idValidFrom}
+              highlight={displayHighlights?.fields.idValidFrom}
             />
             <Field
               label={t("fields.idValidUntil")}
@@ -567,7 +627,7 @@ export function NaturalPersonForm({
               type="date"
               register={register}
               error={errors.idValidUntil?.message}
-              highlight={fieldHighlights?.fields.idValidUntil}
+              highlight={displayHighlights?.fields.idValidUntil}
             />
           </div>
           <TextAreaField
@@ -575,7 +635,7 @@ export function NaturalPersonForm({
             name="idMrzRaw"
             register={register}
             error={errors.idMrzRaw?.message}
-            highlight={fieldHighlights?.fields.idMrzRaw}
+            highlight={displayHighlights?.fields.idMrzRaw}
           />
           {mode !== "create" && (
             <div className="flex items-center gap-2 text-sm">
@@ -602,7 +662,7 @@ export function NaturalPersonForm({
         prefix="addresses.HOME"
         register={register}
         errors={errors.addresses?.HOME}
-        highlights={fieldHighlights?.addresses.HOME}
+        highlights={displayHighlights?.addresses.HOME}
       />
 
       <AddressBlock<FormValues>
@@ -610,7 +670,7 @@ export function NaturalPersonForm({
         prefix="addresses.CORRESPONDENCE"
         register={register}
         errors={errors.addresses?.CORRESPONDENCE}
-        highlights={fieldHighlights?.addresses.CORRESPONDENCE}
+        highlights={displayHighlights?.addresses.CORRESPONDENCE}
       />
 
       </fieldset>{/* end disabled fieldset */}
@@ -689,22 +749,13 @@ export function NaturalPersonForm({
         />
       )}
     </form>
+    </FieldPulseContext.Provider>
   );
 }
 
 // ---------------------------------------------------------------------------
 // Local presentational helpers
 // ---------------------------------------------------------------------------
-
-// Slice #18.05: green/red highlight frame for a field that changed in the
-// version currently being viewed (green = added, red = modified/deleted).
-function highlightRing(h?: HighlightColor): string {
-  return h === "green"
-    ? "ring-2 ring-green-500"
-    : h === "red"
-      ? "ring-2 ring-red-500"
-      : "";
-}
 
 type FieldProps = {
   label: string;
@@ -717,6 +768,7 @@ type FieldProps = {
 };
 
 function Field({ label, name, type = "text", register, error, hint, highlight }: FieldProps) {
+  const ring = usePulseRing(highlight);
   return (
     <label className="flex items-center gap-2 text-sm">
       <span className="w-36 shrink-0 font-medium text-ink dark:text-zinc-300">{label}</span>
@@ -730,7 +782,7 @@ function Field({ label, name, type = "text", register, error, hint, highlight }:
             error
               ? "border-red-500 focus:border-red-600"
               : "border-wire focus:border-focus dark:border-zinc-700",
-            highlightRing(highlight),
+            ring,
           ].join(" ")}
         />
         {hint && !error && (
@@ -752,6 +804,7 @@ function TextAreaField({
   maxLength,
   highlight,
 }: FieldProps & { maxLength?: number }) {
+  const ring = usePulseRing(highlight);
   return (
     <label className="flex items-start gap-2 text-sm">
       <span className="w-36 shrink-0 pt-1 font-medium text-ink dark:text-zinc-300">{label}</span>
@@ -766,7 +819,7 @@ function TextAreaField({
             error
               ? "border-red-500 focus:border-red-600"
               : "border-wire focus:border-focus dark:border-zinc-700",
-            highlightRing(highlight),
+            ring,
           ].join(" ")}
         />
         {error && (
@@ -785,6 +838,7 @@ function SelectField({
   options,
   highlight,
 }: FieldProps & { options: { value: string; label: string }[] }) {
+  const ring = usePulseRing(highlight);
   return (
     <label className="flex items-center gap-2 text-sm">
       <span className="w-36 shrink-0 font-medium text-ink dark:text-zinc-300">{label}</span>
@@ -797,7 +851,7 @@ function SelectField({
             error
               ? "border-red-500 focus:border-red-600"
               : "border-wire focus:border-focus dark:border-zinc-700",
-            highlightRing(highlight),
+            ring,
           ].join(" ")}
         >
           {options.map((o) => (

@@ -26,6 +26,7 @@ import {
   type UseFormRegister,
 } from "react-hook-form";
 import type { HighlightColor } from "@/lib/versioning/field-diff";
+import { usePulseRing } from "@/components/versioning/field-pulse";
 
 /** Per-subfield version-diff highlight frames (Slice #18.05). Keys match the
  *  address subfield names; omitted = no frame. */
@@ -172,6 +173,11 @@ function Field<TFormValues extends FieldValues>({
   warn?: boolean;
   highlight?: HighlightColor;
 }) {
+  // Static ring on a historical version; animated pulse on the freshly-
+  // navigated-to latest (Bug 1). The pulsing flag comes from FieldPulseContext,
+  // which the versioned person form provides; defaults to a static ring
+  // elsewhere (e.g. the Import → Classify person panel).
+  const ring = usePulseRing(highlight);
   return (
     <label className="flex items-center gap-2 text-sm">
       <span className="w-36 shrink-0 font-medium text-ink dark:text-zinc-300">
@@ -188,11 +194,7 @@ function Field<TFormValues extends FieldValues>({
             error
               ? "border-red-500 focus:border-red-600"
               : "border-wire focus:border-focus dark:border-zinc-700",
-            highlight === "green"
-              ? "ring-2 ring-green-500"
-              : highlight === "red"
-                ? "ring-2 ring-red-500"
-                : "",
+            ring,
           ].join(" ")}
         />
         {error && (

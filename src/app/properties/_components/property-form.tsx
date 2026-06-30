@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   type FieldPath,
@@ -41,6 +41,8 @@ import { CornersManager } from "./corners-manager";
 import { PropertyMiniMap } from "./property-mini-map";
 import { StreetViewPanel } from "./street-view-panel";
 import { VersionNavControls } from "@/components/version-nav-controls";
+import { FieldPulseContext, usePulseRing } from "@/components/versioning/field-pulse";
+import { highlightRingClass } from "@/lib/versioning/highlight-ring";
 
 // ---------------------------------------------------------------------------
 // Version history fetch (Slice #18.02)
@@ -283,6 +285,53 @@ export function PropertyForm({
     () => ({ values: initialValues ?? emptyFormValues, corners: initialCorners }),
   );
 
+  // Bug 1 (Slice #18.15.bugs): transient pulse of the latest version's
+  // N-1 -> N change. `pulse` carries the field frames; `cornersPulse` flags a
+  // corner change (pulsed as a red ring on the corners section, since the
+  // corners table on the latest stays interactive and can't render the
+  // historical per-row diff). Both set when the user navigates onto the latest
+  // from a different version (or restores via "Make current"); cleared ~2.6s.
+  const [pulse, setPulse] = useState<FieldHighlights | null>(null);
+  const [cornersPulse, setCornersPulse] = useState(false);
+  const pulseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingPulseRef = useRef<number | null>(null);
+
+  const triggerLatestPulse = () => {
+    if (latestVersion === null || latestVersion < 1) return;
+    const curr = versionByNumber.get(latestVersion)?.snapshot;
+    if (!curr) return;
+    const prev = versionByNumber.get(latestVersion - 1)?.snapshot ?? null;
+    setPulse(computeFieldHighlights(prev, curr));
+    setCornersPulse(
+      prev !== null &&
+        cornersChanged(snapshotToCorners(prev), snapshotToCorners(curr)),
+    );
+    if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current);
+    pulseTimerRef.current = setTimeout(() => {
+      setPulse(null);
+      setCornersPulse(false);
+    }, 2600);
+  };
+
+  useEffect(
+    () => () => {
+      if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current);
+    },
+    [],
+  );
+
+  // After a "Make current" restore, pulse the new version once it refetches in.
+  useEffect(() => {
+    const target = pendingPulseRef.current;
+    if (target === null) return;
+    if (latestVersion !== target) return;
+    if (!versionByNumber.get(target)) return;
+    pendingPulseRef.current = null;
+    triggerLatestPulse();
+    // triggerLatestPulse reads latestVersion/versionByNumber (current here).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [latestVersion, versionByNumber]);
+
   // Any non-latest version is strictly read-only; only the latest is editable
   // (or stays "view" if opened read-only). Create mode is unaffected.
   const effectiveMode: "create" | "edit" | "view" =
@@ -301,14 +350,19 @@ export function PropertyForm({
   // ◀/▶ buttons are locked in that state), so we never strand a dirty draft —
   // returning to the latest always restores the clean baseline.
   const goToVersion = (target: number) => {
+    const leaving = effectiveVersion;
     if (target === latestVersion) {
       form.reset(baseline.values);
       setCorners(baseline.corners);
+      // Bug 1: arriving on the latest from a different version pulses N-1 -> N.
+      if (leaving !== null && leaving !== latestVersion) triggerLatestPulse();
     } else {
       const snap = versionByNumber.get(target)?.snapshot;
       if (!snap) return;
       form.reset(snapshotToFormValues(snap));
       setCorners(snapshotToCorners(snap));
+      setPulse(null);
+      setCornersPulse(false);
     }
     setViewingVersion(target);
   };
@@ -328,6 +382,12 @@ export function PropertyForm({
 
   const fieldHighlights: FieldHighlights | null =
     showHighlights && currSnap ? computeFieldHighlights(prevSnap ?? null, currSnap) : null;
+
+  // What the fields actually frame: the historical diff on a past version, or
+  // the transient pulse on the latest. `pulsing` swaps the static ring for the
+  // animated pulse class (Bug 1).
+  const displayHighlights: FieldHighlights | null = fieldHighlights ?? pulse;
+  const pulsing = fieldHighlights === null && pulse !== null;
 
   const cornerDiff: CornerDiffEntry[] | null =
     showHighlights && currSnap && prevSnap
@@ -368,6 +428,8 @@ export function PropertyForm({
       setConfirmMakeCurrent(false);
       return;
     }
+    // Bug 1: pulse the restored change once the new version refetches in.
+    pendingPulseRef.current = makeCurrentNextNumber;
     setBaseline({ values, corners: restoredCorners });
     setViewingVersion(null);
     setConfirmMakeCurrent(false);
@@ -491,6 +553,7 @@ export function PropertyForm({
   const errors = formState.errors;
 
   return (
+    <FieldPulseContext.Provider value={pulsing}>
     <form
       onSubmit={form.handleSubmit(onSubmit)}
       className="flex flex-col gap-4"
@@ -543,42 +606,42 @@ export function PropertyForm({
               register={register}
               error={errors.propertyTypeId?.message}
               options={propertyTypeOptions}
-              highlight={fieldHighlights?.property.propertyTypeId}
+              highlight={displayHighlights?.property.propertyTypeId}
             />
             <Field
               label={t("fields.nickname")}
               name="nickname"
               register={register}
               error={errors.nickname?.message}
-              highlight={fieldHighlights?.property.nickname}
+              highlight={displayHighlights?.property.nickname}
             />
             <Field
               label={t("fields.tarlaSola")}
               name="tarlaSola"
               register={register}
               error={errors.tarlaSola?.message}
-              highlight={fieldHighlights?.property.tarlaSola}
+              highlight={displayHighlights?.property.tarlaSola}
             />
             <Field
               label={t("fields.parcela")}
               name="parcela"
               register={register}
               error={errors.parcela?.message}
-              highlight={fieldHighlights?.property.parcela}
+              highlight={displayHighlights?.property.parcela}
             />
             <Field
               label={t("fields.cadastralNumber")}
               name="cadastralNumber"
               register={register}
               error={errors.cadastralNumber?.message}
-              highlight={fieldHighlights?.property.cadastralNumber}
+              highlight={displayHighlights?.property.cadastralNumber}
             />
             <Field
               label={t("fields.carteFunciara")}
               name="carteFunciara"
               register={register}
               error={errors.carteFunciara?.message}
-              highlight={fieldHighlights?.property.carteFunciara}
+              highlight={displayHighlights?.property.carteFunciara}
             />
             <SelectField
               label={t("fields.useCategory")}
@@ -586,7 +649,7 @@ export function PropertyForm({
               register={register}
               error={errors.useCategoryId?.message}
               options={useCategoryOptions}
-              highlight={fieldHighlights?.property.useCategoryId}
+              highlight={displayHighlights?.property.useCategoryId}
             />
             <Field
               label={t("fields.surfaceAreaMp")}
@@ -594,7 +657,7 @@ export function PropertyForm({
               type="number"
               register={register}
               error={errors.surfaceAreaMp?.message}
-              highlight={fieldHighlights?.property.surfaceAreaMp}
+              highlight={displayHighlights?.property.surfaceAreaMp}
             />
             {/* Slice #18.09: system-computed area from the corners — read-only,
                 live (not registered with RHF). Blank until 3+ corners exist. */}
@@ -609,7 +672,7 @@ export function PropertyForm({
                 register={register}
                 error={errors.notes?.message}
                 maxLength={300}
-                highlight={fieldHighlights?.property.notes}
+                highlight={displayHighlights?.property.notes}
               />
             </div>
           </Section>
@@ -627,7 +690,7 @@ export function PropertyForm({
                 name="address.streetLine"
                 register={register}
                 error={errors.address?.streetLine?.message}
-                highlight={fieldHighlights?.address.streetLine}
+                highlight={displayHighlights?.address.streetLine}
               />
               {/* Slice #18.12: Street View address — only the street line may
                   differ from the document-derived one above; the shared
@@ -647,7 +710,7 @@ export function PropertyForm({
                       className={[
                         "min-w-0 flex-1 rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none disabled:bg-canvas disabled:text-fade disabled:cursor-default dark:bg-zinc-950 dark:disabled:bg-zinc-800",
                         "border-wire focus:border-focus dark:border-zinc-700",
-                        highlightRing(fieldHighlights?.address.streetViewStreetLine),
+                        highlightRingClass(displayHighlights?.address.streetViewStreetLine, pulsing),
                       ].join(" ")}
                     />
                     <button
@@ -682,7 +745,7 @@ export function PropertyForm({
                 name="address.notes"
                 register={register}
                 error={errors.address?.notes?.message}
-                highlight={fieldHighlights?.address.notes}
+                highlight={displayHighlights?.address.notes}
               />
               <div className="grid grid-cols-2 gap-2">
                 <Field
@@ -690,14 +753,14 @@ export function PropertyForm({
                   name="address.postalCode"
                   register={register}
                   error={errors.address?.postalCode?.message}
-                  highlight={fieldHighlights?.address.postalCode}
+                  highlight={displayHighlights?.address.postalCode}
                 />
                 <Field
                   label={t("address.locality")}
                   name="address.locality"
                   register={register}
                   error={errors.address?.locality?.message}
-                  highlight={fieldHighlights?.address.locality}
+                  highlight={displayHighlights?.address.locality}
                 />
               </div>
               <div className="grid grid-cols-2 gap-2">
@@ -706,14 +769,14 @@ export function PropertyForm({
                   name="address.county"
                   register={register}
                   error={errors.address?.county?.message}
-                  highlight={fieldHighlights?.address.county}
+                  highlight={displayHighlights?.address.county}
                 />
                 <Field
                   label={t("address.country")}
                   name="address.country"
                   register={register}
                   error={errors.address?.country?.message}
-                  highlight={fieldHighlights?.address.country}
+                  highlight={displayHighlights?.address.country}
                 />
               </div>
             </div>
@@ -721,8 +784,16 @@ export function PropertyForm({
           </fieldset>{/* end editable-inputs fieldset (cadastral + address) */}
 
           {/* Corners table — OUTSIDE the disabled fieldset. The map and Street
-              View now live in the right column; only the table stays here. */}
-          <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+              View now live in the right column; only the table stays here.
+              Bug 1: a red pulse ring on the whole card flags a corner change in
+              the just-navigated-to latest version (the interactive table can't
+              show the historical per-row diff). */}
+          <section
+            className={[
+              "rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900",
+              cornersPulse ? "ga-vpulse-red" : "",
+            ].join(" ")}
+          >
             <div className="mb-2 flex items-center justify-between gap-2">
               <h2 className="text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
                 {t("sections.corners")}
@@ -853,6 +924,7 @@ export function PropertyForm({
         />
       )}
     </form>
+    </FieldPulseContext.Provider>
   );
 }
 
@@ -866,16 +938,6 @@ const COLUMNS_CLASS: Record<1 | 2 | 3 | 4, string> = {
   3: "grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3",
   4: "grid grid-cols-2 gap-2 md:grid-cols-4",
 };
-
-// Slice #18.02: green/red highlight frame for a field that changed in the
-// version currently being viewed (green = added, red = modified/deleted).
-function highlightRing(h?: HighlightColor): string {
-  return h === "green"
-    ? "ring-2 ring-green-500"
-    : h === "red"
-      ? "ring-2 ring-red-500"
-      : "";
-}
 
 function Section({
   title,
@@ -909,6 +971,7 @@ type FieldProps = {
 };
 
 function Field({ label, name, type = "text", register, error, hint, highlight }: FieldProps) {
+  const ring = usePulseRing(highlight);
   return (
     <label className="flex items-center gap-2 text-sm">
       <span className="w-24 shrink-0 font-medium text-ink dark:text-zinc-300">{label}</span>
@@ -922,7 +985,7 @@ function Field({ label, name, type = "text", register, error, hint, highlight }:
             error
               ? "border-red-500 focus:border-red-600"
               : "border-wire focus:border-focus dark:border-zinc-700",
-            highlightRing(highlight),
+            ring,
           ].join(" ")}
         />
         {hint && !error && (
@@ -944,6 +1007,7 @@ function TextAreaField({
   maxLength,
   highlight,
 }: FieldProps & { maxLength?: number }) {
+  const ring = usePulseRing(highlight);
   return (
     <label className="flex items-start gap-2 text-sm">
       <span className="w-24 shrink-0 pt-1 font-medium text-ink dark:text-zinc-300">{label}</span>
@@ -958,7 +1022,7 @@ function TextAreaField({
             error
               ? "border-red-500 focus:border-red-600"
               : "border-wire focus:border-focus dark:border-zinc-700",
-            highlightRing(highlight),
+            ring,
           ].join(" ")}
         />
         {error && (
@@ -977,6 +1041,7 @@ function SelectField({
   options,
   highlight,
 }: FieldProps & { options: { value: string; label: string }[] }) {
+  const ring = usePulseRing(highlight);
   return (
     <label className="flex items-center gap-2 text-sm">
       <span className="w-24 shrink-0 font-medium text-ink dark:text-zinc-300">{label}</span>
@@ -989,7 +1054,7 @@ function SelectField({
             error
               ? "border-red-500 focus:border-red-600"
               : "border-wire focus:border-focus dark:border-zinc-700",
-            highlightRing(highlight),
+            ring,
           ].join(" ")}
         >
           {options.map((o) => (

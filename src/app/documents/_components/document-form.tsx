@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   type FieldPath,
@@ -17,6 +17,7 @@ import {
   VersionNavControls,
   type VersionNavView,
 } from "@/components/version-nav-controls";
+import { FieldPulseContext, usePulseRing } from "@/components/versioning/field-pulse";
 import type { HighlightColor } from "@/lib/versioning/field-diff";
 import type { DocumentSnapshot } from "@/lib/documents/validation";
 import {
@@ -134,6 +135,8 @@ export function DocumentForm({
 
   const isCreate = mode === "create";
   // Subscribe to all values so the edit-dirty check recomputes live.
+  // form.watch() is intentionally not memoizable; this is the documented usage.
+  // eslint-disable-next-line react-hooks/incompatible-library
   const watchedValues = form.watch();
 
   // Watch `documentTypeId` so the form re-renders when the user changes the type.
@@ -175,6 +178,47 @@ export function DocumentForm({
     () => ({ values: initialValues ?? emptyFormValues }),
   );
 
+  // Bug 1 (Slice #18.15.bugs): transient pulse of the latest version's
+  // N-1 -> N change. Set when the user navigates onto the latest from a
+  // different version (or restores via "Make current"); cleared after ~2.6s.
+  const [pulse, setPulse] = useState<DocumentFieldHighlights | null>(null);
+  const pulseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Version number to pulse once the post-restore refetch has delivered it.
+  const pendingPulseRef = useRef<number | null>(null);
+
+  // Pulse the latest version's change (latest vs latest-1). No-op for a single
+  // version (nothing to diff). Replaces any in-flight pulse + its timer.
+  const triggerLatestPulse = () => {
+    if (latestVersion === null || latestVersion < 1) return;
+    const curr = versionByNumber.get(latestVersion)?.snapshot;
+    if (!curr) return;
+    const prev = versionByNumber.get(latestVersion - 1)?.snapshot;
+    setPulse(computeFieldHighlights(prev ?? null, curr));
+    if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current);
+    pulseTimerRef.current = setTimeout(() => setPulse(null), 2600);
+  };
+
+  // Clear the pulse timer on unmount.
+  useEffect(
+    () => () => {
+      if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current);
+    },
+    [],
+  );
+
+  // After a "Make current" restore, the new version arrives via refetch; pulse
+  // it once it's present (and is the expected new latest), then disarm.
+  useEffect(() => {
+    const target = pendingPulseRef.current;
+    if (target === null) return;
+    if (latestVersion !== target) return;
+    if (!versionByNumber.get(target)) return;
+    pendingPulseRef.current = null;
+    triggerLatestPulse();
+    // triggerLatestPulse reads latestVersion/versionByNumber (current here).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [latestVersion, versionByNumber]);
+
   // Any non-latest version is strictly read-only; only the latest is editable
   // (or stays "view" if opened read-only). Create mode is unaffected.
   const effectiveMode: "create" | "edit" | "view" =
@@ -187,12 +231,17 @@ export function DocumentForm({
   // Navigate to a version. Locked while the latest has unsaved edits, so a
   // dirty draft is never stranded on a read-only historical view.
   const goToVersion = (target: number) => {
+    const leaving = effectiveVersion;
     if (target === latestVersion) {
       form.reset(baseline.values);
+      // Bug 1: arriving on the latest from a different version pulses the
+      // N-1 -> N change. (Stepping within history clears any stale pulse.)
+      if (leaving !== null && leaving !== latestVersion) triggerLatestPulse();
     } else {
       const snap = versionByNumber.get(target)?.snapshot;
       if (!snap) return;
       form.reset(snapshotToFormValues(snap));
+      setPulse(null);
     }
     setViewingVersion(target);
   };
@@ -209,6 +258,12 @@ export function DocumentForm({
       : undefined;
   const fieldHighlights: DocumentFieldHighlights | null =
     showHighlights && currSnap ? computeFieldHighlights(prevSnap ?? null, currSnap) : null;
+
+  // What the fields actually frame: the historical diff on a past version, or
+  // the transient pulse on the latest. `pulsing` swaps the static ring for the
+  // animated pulse class (Bug 1).
+  const displayHighlights: DocumentFieldHighlights | null = fieldHighlights ?? pulse;
+  const pulsing = fieldHighlights === null && pulse !== null;
 
   const navLocked = isOnLatest && editDirty;
   const versionNav: VersionNavView | null =
@@ -230,12 +285,15 @@ export function DocumentForm({
 
   const makeCurrentNextNumber = (latestVersion ?? 0) + 1;
 
-  // Save is always available in edit/create mode (submitting aside). isDirty is
-  // deliberately not gated here because page uploads/deletes (saved immediately
-  // via their own API calls) don't touch RHF state, so a strict isDirty guard
-  // would leave the button permanently disabled after page changes. A no-op
-  // field save is harmless: the backend dedups and appends no new version.
-  const saveDisabled = submitting;
+  // Bug 3 (Slice #18.15.bugs): in edit mode, Save disables once the form
+  // matches the saved baseline — so after a save (which resets the baseline)
+  // the button greys out until the next edit. Page uploads/deletes save
+  // immediately via their own API calls (they don't touch RHF state and have
+  // nothing pending here), so gating the field-Save on `editDirty` is exactly
+  // right. Create mode keeps Save available (zodResolver blocks an invalid
+  // submit); view / historical versions hide the button entirely.
+  const saveDisabled =
+    submitting || (mode === "edit" && isOnLatest && !editDirty);
 
   // doSave performs the API call only (no navigation) so it can be reused by
   // the Save button (onSubmit), the unsaved-changes guard, and "Make Current".
@@ -308,6 +366,8 @@ export function DocumentForm({
       setConfirmMakeCurrent(false);
       return;
     }
+    // Bug 1: pulse the restored change once the new version refetches in.
+    pendingPulseRef.current = makeCurrentNextNumber;
     setBaseline({ values });
     setViewingVersion(null);
     setConfirmMakeCurrent(false);
@@ -357,6 +417,7 @@ export function DocumentForm({
   const errors = formState.errors;
 
   return (
+    <FieldPulseContext.Provider value={pulsing}>
     <div className="flex flex-col gap-4">
     {/* Slice #18.06: version controls portalled into the detail-tabs header so
         they sit on the document-name line. Only for an existing document once
@@ -413,7 +474,7 @@ export function DocumentForm({
               value: opt.id,
               label: opt.name,
             }))}
-            highlight={fieldHighlights?.documentTypeId}
+            highlight={displayHighlights?.documentTypeId}
           />
         </div>
         {/* Row 2: Nr. doc (half) | Date (half) */}
@@ -423,7 +484,7 @@ export function DocumentForm({
             name="nrDocument"
             register={register}
             error={errors.nrDocument?.message}
-            highlight={fieldHighlights?.nrDocument}
+            highlight={displayHighlights?.nrDocument}
           />
           <Field
             label={cfg.labels.dateDocument}
@@ -431,7 +492,7 @@ export function DocumentForm({
             type="date"
             register={register}
             error={errors.dateDocument?.message}
-            highlight={fieldHighlights?.dateDocument}
+            highlight={displayHighlights?.dateDocument}
           />
         </div>
         {/* Row 3: Institution (full width) */}
@@ -440,7 +501,7 @@ export function DocumentForm({
           name="institution"
           register={register}
           error={errors.institution?.message}
-          highlight={fieldHighlights?.institution}
+          highlight={displayHighlights?.institution}
         />
         {/* Row 4: Short Label (right before Notes) */}
         <Field
@@ -448,7 +509,7 @@ export function DocumentForm({
           name="title"
           register={register}
           error={errors.title?.message}
-          highlight={fieldHighlights?.title}
+          highlight={displayHighlights?.title}
         />
         {/* Row 5: Notes (compact) */}
         <TextAreaField
@@ -458,7 +519,7 @@ export function DocumentForm({
           error={errors.notes?.message}
           maxLength={1000}
           rows={2}
-          highlight={fieldHighlights?.notes}
+          highlight={displayHighlights?.notes}
         />
       </Section>
 
@@ -470,28 +531,28 @@ export function DocumentForm({
             name="emitent"
             register={register}
             error={errors.emitent?.message}
-            highlight={fieldHighlights?.emitent}
+            highlight={displayHighlights?.emitent}
           />
           <Field
             label={t("fields.bazaLegala")}
             name="bazaLegala"
             register={register}
             error={errors.bazaLegala?.message}
-            highlight={fieldHighlights?.bazaLegala}
+            highlight={displayHighlights?.bazaLegala}
           />
           <Field
             label={t("fields.uatProprietate")}
             name="uatProprietate"
             register={register}
             error={errors.uatProprietate?.message}
-            highlight={fieldHighlights?.uatProprietate}
+            highlight={displayHighlights?.uatProprietate}
           />
           <Field
             label={t("fields.uatProprietar")}
             name="uatProprietar"
             register={register}
             error={errors.uatProprietar?.message}
-            highlight={fieldHighlights?.uatProprietar}
+            highlight={displayHighlights?.uatProprietar}
           />
           <Field
             label={t("fields.suprafata")}
@@ -499,7 +560,7 @@ export function DocumentForm({
             type="number"
             register={register}
             error={errors.suprafata?.message}
-            highlight={fieldHighlights?.suprafata}
+            highlight={displayHighlights?.suprafata}
           />
         </Section>
       )}
@@ -517,14 +578,14 @@ export function DocumentForm({
               name="nrDosarSuccesoral"
               register={register}
               error={errors.nrDosarSuccesoral?.message}
-              highlight={fieldHighlights?.nrDosarSuccesoral}
+              highlight={displayHighlights?.nrDosarSuccesoral}
             />
             <Field
               label={t("fields.nrCertificatDeces")}
               name="nrCertificatDeces"
               register={register}
               error={errors.nrCertificatDeces?.message}
-              highlight={fieldHighlights?.nrCertificatDeces}
+              highlight={displayHighlights?.nrCertificatDeces}
             />
             <Field
               label={t("fields.dataDecesului")}
@@ -532,14 +593,14 @@ export function DocumentForm({
               type="date"
               register={register}
               error={errors.dataDecesului?.message}
-              highlight={fieldHighlights?.dataDecesului}
+              highlight={displayHighlights?.dataDecesului}
             />
             <Field
               label={t("fields.ultimulDomiciliu")}
               name="ultimulDomiciliu"
               register={register}
               error={errors.ultimulDomiciliu?.message}
-              highlight={fieldHighlights?.ultimulDomiciliu}
+              highlight={displayHighlights?.ultimulDomiciliu}
             />
           </div>
           {/* Free-text party fields — kept alongside linked persons */}
@@ -549,7 +610,7 @@ export function DocumentForm({
             register={register}
             error={errors.defunctText?.message}
             rows={2}
-            highlight={fieldHighlights?.defunctText}
+            highlight={displayHighlights?.defunctText}
           />
           <TextAreaField
             label={t("fields.partiesBText")}
@@ -557,7 +618,7 @@ export function DocumentForm({
             register={register}
             error={errors.partiesBText?.message}
             rows={2}
-            highlight={fieldHighlights?.partiesBText}
+            highlight={displayHighlights?.partiesBText}
           />
         </Section>
       )}
@@ -570,14 +631,14 @@ export function DocumentForm({
             name="nrDosarSuccesoral"
             register={register}
             error={errors.nrDosarSuccesoral?.message}
-            highlight={fieldHighlights?.nrDosarSuccesoral}
+            highlight={displayHighlights?.nrDosarSuccesoral}
           />
           <Field
             label={t("fields.nrCertificatDeces")}
             name="nrCertificatDeces"
             register={register}
             error={errors.nrCertificatDeces?.message}
-            highlight={fieldHighlights?.nrCertificatDeces}
+            highlight={displayHighlights?.nrCertificatDeces}
           />
           <Field
             label={t("fields.dataDecesului")}
@@ -585,14 +646,14 @@ export function DocumentForm({
             type="date"
             register={register}
             error={errors.dataDecesului?.message}
-            highlight={fieldHighlights?.dataDecesului}
+            highlight={displayHighlights?.dataDecesului}
           />
           <Field
             label={t("fields.ultimulDomiciliu")}
             name="ultimulDomiciliu"
             register={register}
             error={errors.ultimulDomiciliu?.message}
-            highlight={fieldHighlights?.ultimulDomiciliu}
+            highlight={displayHighlights?.ultimulDomiciliu}
           />
         </Section>
       )}
@@ -606,7 +667,7 @@ export function DocumentForm({
             type="date"
             register={register}
             error={errors.dateStart?.message}
-            highlight={fieldHighlights?.dateStart}
+            highlight={displayHighlights?.dateStart}
           />
           <Field
             label={t("fields.dateEnd")}
@@ -614,7 +675,7 @@ export function DocumentForm({
             type="date"
             register={register}
             error={errors.dateEnd?.message}
-            highlight={fieldHighlights?.dateEnd}
+            highlight={displayHighlights?.dateEnd}
           />
         </Section>
       )}
@@ -630,7 +691,7 @@ export function DocumentForm({
               register={register}
               error={errors.defunctText?.message}
               rows={2}
-              highlight={fieldHighlights?.defunctText}
+              highlight={displayHighlights?.defunctText}
             />
           )}
           {/* Titular only shows for TITLU_PROPRIETATE */}
@@ -641,7 +702,7 @@ export function DocumentForm({
               register={register}
               error={errors.titularText?.message}
               rows={2}
-              highlight={fieldHighlights?.titularText}
+              highlight={displayHighlights?.titularText}
             />
           )}
           {cfg.showParties && cfg.labels.partiesAText && (
@@ -651,7 +712,7 @@ export function DocumentForm({
               register={register}
               error={errors.partiesAText?.message}
               rows={2}
-              highlight={fieldHighlights?.partiesAText}
+              highlight={displayHighlights?.partiesAText}
             />
           )}
           {cfg.showParties && cfg.labels.partiesBText && (
@@ -661,7 +722,7 @@ export function DocumentForm({
               register={register}
               error={errors.partiesBText?.message}
               rows={2}
-              highlight={fieldHighlights?.partiesBText}
+              highlight={displayHighlights?.partiesBText}
             />
           )}
         </Section>
@@ -777,6 +838,7 @@ export function DocumentForm({
       />
     )}
     </div>
+    </FieldPulseContext.Provider>
   );
 }
 
@@ -790,16 +852,6 @@ const COLUMNS_CLASS: Record<1 | 2 | 3 | 4, string> = {
   3: "grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3",
   4: "grid grid-cols-2 gap-2 md:grid-cols-4",
 };
-
-// Slice #18.06: green/red highlight frame for a field that changed in the
-// version currently being viewed (green = added, red = modified/deleted).
-function highlightRing(h?: HighlightColor): string {
-  return h === "green"
-    ? "ring-2 ring-green-500"
-    : h === "red"
-      ? "ring-2 ring-red-500"
-      : "";
-}
 
 function Section({
   title,
@@ -832,6 +884,7 @@ type FieldProps = {
 };
 
 function Field({ label, name, type = "text", register, error, highlight }: FieldProps) {
+  const ring = usePulseRing(highlight);
   return (
     <label className="flex items-center gap-2 text-sm">
       <span className="w-36 shrink-0 font-medium text-ink dark:text-zinc-300">{label}</span>
@@ -845,7 +898,7 @@ function Field({ label, name, type = "text", register, error, highlight }: Field
             error
               ? "border-red-500 focus:border-red-600"
               : "border-wire focus:border-focus dark:border-zinc-700",
-            highlightRing(highlight),
+            ring,
           ].join(" ")}
         />
         {error && (
@@ -865,6 +918,7 @@ function TextAreaField({
   rows = 3,
   highlight,
 }: FieldProps & { maxLength?: number; rows?: number }) {
+  const ring = usePulseRing(highlight);
   return (
     <label className="flex items-start gap-2 text-sm">
       <span className="w-36 shrink-0 pt-1 font-medium text-ink dark:text-zinc-300">{label}</span>
@@ -879,7 +933,7 @@ function TextAreaField({
             error
               ? "border-red-500 focus:border-red-600"
               : "border-wire focus:border-focus dark:border-zinc-700",
-            highlightRing(highlight),
+            ring,
           ].join(" ")}
         />
         {error && (
@@ -898,6 +952,7 @@ function SelectField({
   options,
   highlight,
 }: FieldProps & { options: { value: string; label: string }[] }) {
+  const ring = usePulseRing(highlight);
   return (
     <label className="flex items-center gap-2 text-sm">
       <span className="w-36 shrink-0 font-medium text-ink dark:text-zinc-300">{label}</span>
@@ -910,7 +965,7 @@ function SelectField({
             error
               ? "border-red-500 focus:border-red-600"
               : "border-wire focus:border-focus dark:border-zinc-700",
-            highlightRing(highlight),
+            ring,
           ].join(" ")}
         >
           <option value="" disabled hidden />

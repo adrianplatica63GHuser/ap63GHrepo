@@ -5,7 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   type FieldPath,
@@ -21,6 +21,8 @@ import {
   VersionNavControls,
   type VersionNavView,
 } from "@/components/version-nav-controls";
+import { FieldPulseContext, usePulseRing } from "@/components/versioning/field-pulse";
+import { highlightRingClass } from "@/lib/versioning/highlight-ring";
 import type { HighlightColor } from "@/lib/versioning/field-diff";
 import type { JudicialPersonSnapshot } from "@/lib/judicial-persons/validation";
 import {
@@ -110,6 +112,8 @@ export function JudicialPersonForm({
 
   const isCreate = mode === "create";
   // Subscribe to all values so the edit-dirty check recomputes live.
+  // form.watch() is intentionally not memoizable; this is the documented usage.
+  // eslint-disable-next-line react-hooks/incompatible-library
   const watchedValues = form.watch();
 
   // Judicial Person Types — admin-managed (Slice #15.07).
@@ -144,6 +148,42 @@ export function JudicialPersonForm({
     () => ({ values: initialValues ?? emptyFormValues }),
   );
 
+  // Bug 1 (Slice #18.15.bugs): transient pulse of the latest version's
+  // N-1 -> N change. Set when the user navigates onto the latest from a
+  // different version (or restores via "Make current"); cleared after ~2.6s.
+  const [pulse, setPulse] = useState<JudicialFieldHighlights | null>(null);
+  const pulseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingPulseRef = useRef<number | null>(null);
+
+  const triggerLatestPulse = () => {
+    if (latestVersion === null || latestVersion < 1) return;
+    const curr = versionByNumber.get(latestVersion)?.snapshot;
+    if (!curr) return;
+    const prev = versionByNumber.get(latestVersion - 1)?.snapshot;
+    setPulse(computeFieldHighlights(prev ?? null, curr));
+    if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current);
+    pulseTimerRef.current = setTimeout(() => setPulse(null), 2600);
+  };
+
+  useEffect(
+    () => () => {
+      if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current);
+    },
+    [],
+  );
+
+  // After a "Make current" restore, pulse the new version once it refetches in.
+  useEffect(() => {
+    const target = pendingPulseRef.current;
+    if (target === null) return;
+    if (latestVersion !== target) return;
+    if (!versionByNumber.get(target)) return;
+    pendingPulseRef.current = null;
+    triggerLatestPulse();
+    // triggerLatestPulse reads latestVersion/versionByNumber (current here).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [latestVersion, versionByNumber]);
+
   const effectiveMode: "create" | "edit" | "view" =
     isCreate ? "create" : isOnLatest ? mode : "view";
 
@@ -151,12 +191,16 @@ export function JudicialPersonForm({
     !isCreate && isOnLatest && !formValuesEqual(watchedValues, baseline.values);
 
   const goToVersion = (target: number) => {
+    const leaving = effectiveVersion;
     if (target === latestVersion) {
       form.reset(baseline.values);
+      // Bug 1: arriving on the latest from a different version pulses N-1 -> N.
+      if (leaving !== null && leaving !== latestVersion) triggerLatestPulse();
     } else {
       const snap = versionByNumber.get(target)?.snapshot;
       if (!snap) return;
       form.reset(snapshotToFormValues(snap));
+      setPulse(null);
     }
     setViewingVersion(target);
   };
@@ -171,6 +215,12 @@ export function JudicialPersonForm({
       : undefined;
   const fieldHighlights: JudicialFieldHighlights | null =
     showHighlights && currSnap ? computeFieldHighlights(prevSnap ?? null, currSnap) : null;
+
+  // What the fields actually frame: the historical diff on a past version, or
+  // the transient pulse on the latest. `pulsing` swaps the static ring for the
+  // animated pulse class (Bug 1).
+  const displayHighlights: JudicialFieldHighlights | null = fieldHighlights ?? pulse;
+  const pulsing = fieldHighlights === null && pulse !== null;
 
   const navLocked = isOnLatest && editDirty;
   const versionNav: VersionNavView | null =
@@ -226,6 +276,10 @@ export function JudicialPersonForm({
         );
       }
       await queryClient.invalidateQueries({ queryKey: ["judicial-persons"] });
+      // The unified /persons list (Slice #15.09) caches under ["persons"];
+      // invalidate it too so a created/edited/deleted person shows without a
+      // manual browser refresh (Slice #18.13).
+      await queryClient.invalidateQueries({ queryKey: ["persons"] });
       // Slice #18.05: a save appended a new version — refresh the nav.
       await queryClient.invalidateQueries({ queryKey: ["person-versions"] });
       return true;
@@ -261,6 +315,8 @@ export function JudicialPersonForm({
       setConfirmMakeCurrent(false);
       return;
     }
+    // Bug 1: pulse the restored change once the new version refetches in.
+    pendingPulseRef.current = makeCurrentNextNumber;
     setBaseline({ values });
     setViewingVersion(null);
     setConfirmMakeCurrent(false);
@@ -296,6 +352,10 @@ export function JudicialPersonForm({
         );
       }
       await queryClient.invalidateQueries({ queryKey: ["judicial-persons"] });
+      // The unified /persons list (Slice #15.09) caches under ["persons"];
+      // invalidate it too so a created/edited/deleted person shows without a
+      // manual browser refresh (Slice #18.13).
+      await queryClient.invalidateQueries({ queryKey: ["persons"] });
       router.push("/persons");
       router.refresh();
     } catch (err) {
@@ -341,6 +401,7 @@ export function JudicialPersonForm({
   };
 
   return (
+    <FieldPulseContext.Provider value={pulsing}>
     <form
       onSubmit={form.handleSubmit(onSubmit)}
       className="flex flex-col gap-4"
@@ -377,14 +438,14 @@ export function JudicialPersonForm({
               name="name"
               register={register}
               error={errors.name?.message}
-              highlight={fieldHighlights?.fields.name}
+              highlight={displayHighlights?.fields.name}
             />
             <Field
               label={t("fields.nickname")}
               name="nickname"
               register={register}
               error={errors.nickname?.message}
-              highlight={fieldHighlights?.fields.nickname}
+              highlight={displayHighlights?.fields.nickname}
             />
           </div>
           {/* Row 2: ID (edit/view) | Type */}
@@ -404,7 +465,7 @@ export function JudicialPersonForm({
                   label: opt.name,
                 })),
               ]}
-              highlight={fieldHighlights?.fields.judicialPersonTypeId}
+              highlight={displayHighlights?.fields.judicialPersonTypeId}
             />
           </div>
           {/* Row 3: CUI | Trade Register No. */}
@@ -415,14 +476,14 @@ export function JudicialPersonForm({
               register={register}
               error={errors.cuiNumber?.message}
               hint={cuiIsLocked ? t("hints.cuiLocked") : undefined}
-              highlight={fieldHighlights?.fields.cuiNumber}
+              highlight={displayHighlights?.fields.cuiNumber}
             />
             <Field
               label={t("fields.tradeRegisterNumber")}
               name="tradeRegisterNumber"
               register={register}
               error={errors.tradeRegisterNumber?.message}
-              highlight={fieldHighlights?.fields.tradeRegisterNumber}
+              highlight={displayHighlights?.fields.tradeRegisterNumber}
             />
           </div>
           {/* Row 4: Notes */}
@@ -432,7 +493,7 @@ export function JudicialPersonForm({
               name="notes"
               register={register}
               error={errors.notes?.message}
-              highlight={fieldHighlights?.fields.notes}
+              highlight={displayHighlights?.fields.notes}
             />
           </div>
         </div>
@@ -453,7 +514,7 @@ export function JudicialPersonForm({
             onClear={() => handleClearContactPerson(1)}
             addLabel={t("actions.addContactPerson")}
             removeLabel={t("actions.removeContactPerson")}
-            highlight={fieldHighlights?.fields.contactPerson1Id}
+            highlight={displayHighlights?.fields.contactPerson1Id}
           />
           <ContactPersonRow
             label={t("fields.contactPerson2")}
@@ -464,7 +525,7 @@ export function JudicialPersonForm({
             onClear={() => handleClearContactPerson(2)}
             addLabel={t("actions.addContactPerson")}
             removeLabel={t("actions.removeContactPerson")}
-            highlight={fieldHighlights?.fields.contactPerson2Id}
+            highlight={displayHighlights?.fields.contactPerson2Id}
           />
           {/* Note: person must exist in system first */}
           <p className="text-xs text-fade dark:text-zinc-500 italic">
@@ -488,7 +549,7 @@ export function JudicialPersonForm({
           register={register}
           errors={errors.addresses?.HEADQUARTERS}
           t={addressT}
-          highlights={fieldHighlights?.addresses.HEADQUARTERS}
+          highlights={displayHighlights?.addresses.HEADQUARTERS}
         />
 
         {/* Correspondence Address subsection */}
@@ -504,11 +565,13 @@ export function JudicialPersonForm({
               <label
                 className={[
                   "flex cursor-pointer items-center gap-2 rounded-md text-xs text-fade dark:text-zinc-400 select-none",
-                  fieldHighlights?.fields.correspondenceSameAsHq === "green"
-                    ? "ring-2 ring-green-500 px-1"
-                    : fieldHighlights?.fields.correspondenceSameAsHq === "red"
-                      ? "ring-2 ring-red-500 px-1"
-                      : "",
+                  displayHighlights?.fields.correspondenceSameAsHq
+                    ? "px-1 " +
+                      highlightRingClass(
+                        displayHighlights.fields.correspondenceSameAsHq,
+                        pulsing,
+                      )
+                    : "",
                 ].join(" ")}
               >
                 <input
@@ -539,7 +602,7 @@ export function JudicialPersonForm({
             register={register}
             errors={errors.addresses?.CORRESPONDENCE}
             t={addressT}
-            highlights={fieldHighlights?.addresses.CORRESPONDENCE}
+            highlights={displayHighlights?.addresses.CORRESPONDENCE}
           />
         )}
       </section>
@@ -630,6 +693,7 @@ export function JudicialPersonForm({
         />
       )}
     </form>
+    </FieldPulseContext.Provider>
   );
 }
 
@@ -665,6 +729,8 @@ function ContactPersonRow({
   const personName = useWatch({ control, name: nameField });
 
   const hasLink = Boolean(personId);
+  // Static ring on a historical version; animated pulse on the latest (Bug 1).
+  const ring = usePulseRing(highlight);
 
   return (
     <div className="flex items-center gap-2 text-sm">
@@ -674,11 +740,7 @@ function ContactPersonRow({
       <div
         className={[
           "flex flex-1 items-center gap-2 min-w-0 rounded-md",
-          highlight === "green"
-            ? "ring-2 ring-green-500 px-1 py-0.5"
-            : highlight === "red"
-              ? "ring-2 ring-red-500 px-1 py-0.5"
-              : "",
+          highlight ? "px-1 py-0.5 " + ring : "",
         ].join(" ")}
       >
         {hasLink ? (
@@ -1006,16 +1068,6 @@ function useContactPickerTranslations(): PickerT {
 // Local presentational helpers (mirrors natural-person-form pattern)
 // ---------------------------------------------------------------------------
 
-// Slice #18.05: green/red highlight frame for a field that changed in the
-// version currently being viewed (green = added, red = modified/deleted).
-function highlightRing(h?: HighlightColor): string {
-  return h === "green"
-    ? "ring-2 ring-green-500"
-    : h === "red"
-      ? "ring-2 ring-red-500"
-      : "";
-}
-
 type FieldProps = {
   label: string;
   name: FieldPath<FormValues>;
@@ -1035,6 +1087,7 @@ function Field({
   hint,
   highlight,
 }: FieldProps) {
+  const ring = usePulseRing(highlight);
   return (
     <label className="flex items-center gap-2 text-sm">
       <span className="w-36 shrink-0 font-medium text-ink dark:text-zinc-300">
@@ -1050,7 +1103,7 @@ function Field({
             error
               ? "border-red-500 focus:border-red-600"
               : "border-wire focus:border-focus dark:border-zinc-700",
-            highlightRing(highlight),
+            ring,
           ].join(" ")}
         />
         {hint && !error && (
@@ -1074,6 +1127,7 @@ function SelectField({
   options,
   highlight,
 }: FieldProps & { options: { value: string; label: string }[] }) {
+  const ring = usePulseRing(highlight);
   return (
     <label className="flex items-center gap-2 text-sm">
       <span className="w-36 shrink-0 font-medium text-ink dark:text-zinc-300">
@@ -1088,7 +1142,7 @@ function SelectField({
             error
               ? "border-red-500 focus:border-red-600"
               : "border-wire focus:border-focus dark:border-zinc-700",
-            highlightRing(highlight),
+            ring,
           ].join(" ")}
         >
           {options.map((o) => (
