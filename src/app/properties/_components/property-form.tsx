@@ -138,6 +138,18 @@ export function PropertyForm({
     staleTime: 5 * 60 * 1000,
   });
 
+  // Slice #18.16.VL — tarla dropdown (value = indicativ text, no FK migration)
+  const { data: tarlaItems } = useQuery({
+    queryKey: ["value-list", "tarla"],
+    queryFn:  async () => {
+      const res = await fetch("/api/admin/value-lists/tarla");
+      if (!res.ok) throw new Error(`Failed to load tarla (HTTP ${res.status})`);
+      const body = await res.json();
+      return (body.items ?? []) as { id: string; indicativ: string; descriere?: string | null }[];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
   const noneOption = { value: "", label: t("fields.noneOption") };
   const propertyTypeOptions = [
     noneOption,
@@ -146,6 +158,13 @@ export function PropertyForm({
   const useCategoryOptions = [
     noneOption,
     ...(useCategories ?? []).map((o) => ({ value: o.id, label: o.name })),
+  ];
+  const tarlaSolaOptions = [
+    noneOption,
+    ...(tarlaItems ?? []).map((o) => ({
+      value: o.indicativ,
+      label: o.descriere ? `${o.indicativ} — ${o.descriere}` : o.indicativ,
+    })),
   ];
 
   const [corners,          setCorners]          = useState<Corner[]>(initialCorners);
@@ -615,11 +634,13 @@ export function PropertyForm({
               error={errors.nickname?.message}
               highlight={displayHighlights?.property.nickname}
             />
-            <Field
+            {/* Slice #18.16.VL: was free-text Field; now a lookup dropdown */}
+            <SelectField
               label={t("fields.tarlaSola")}
               name="tarlaSola"
               register={register}
               error={errors.tarlaSola?.message}
+              options={tarlaSolaOptions}
               highlight={displayHighlights?.property.tarlaSola}
             />
             <Field
