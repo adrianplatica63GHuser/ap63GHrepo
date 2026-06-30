@@ -1,5 +1,5 @@
 /**
- * Group code encoding  (Slice #18.07)
+ * Group code encoding  (Slice #18.07, extended Slice #18.17)
  *
  * Group codes are two letters drawn from a 24-letter alphabet that EXCLUDES the
  * visually-ambiguous letters I and O:
@@ -12,8 +12,16 @@
  *
  *   1  -> AA      24 -> AZ      25 -> BA      576 -> ZZ
  *
+ * The full stored code prepends a target-type prefix (Slice #18.17, updated #18.18):
+ *   PROPERTY        -> PROP-AA,  PROP-AB,  …
+ *   PHYSICAL_PERSON -> PPERS-AA, PPERS-AB, …
+ *   JUDICIAL_PERSON -> JPERS-AA, JPERS-AB, …
+ *   DOCUMENT        -> DOC-AA,   DOC-AB,   …
+ *
  * Pure + dependency-free so it can be unit-tested without a DB.
  */
+
+import type { GroupTargetType } from "./validation";
 
 /** 24-letter alphabet, I and O removed. */
 export const GROUP_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ";
@@ -38,4 +46,18 @@ export function encodeGroupCode(seq: number): string {
   const first = Math.floor(value / BASE);
   const second = value % BASE;
   return GROUP_CODE_ALPHABET[first] + GROUP_CODE_ALPHABET[second];
+}
+
+/**
+ * Returns the display prefix for a given target type (Slice #18.17).
+ * The prefix is stored as part of the code in the DB; codes are globally
+ * unique because the `group_code_seq` sequence never reuses values.
+ */
+export function groupCodePrefix(targetType: GroupTargetType): string {
+  switch (targetType) {
+    case "PROPERTY":        return "PROP-";
+    case "PHYSICAL_PERSON": return "PPERS-";
+    case "JUDICIAL_PERSON": return "JPERS-";
+    case "DOCUMENT":        return "DOC-";
+  }
 }
