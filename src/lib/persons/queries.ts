@@ -55,6 +55,7 @@ export type PersonListItem = {
   code: string;
   type: "NATURAL" | "JUDICIAL";
   displayName: string;
+  nickname: string | null;
   email: string | null;
   phone: string | null;
   createdAt: Date;
@@ -68,15 +69,48 @@ export async function listPersons(opts: ListQuery): Promise<{
   const q = opts.q?.trim();
   const searchPattern = q ? `%${q}%` : null;
 
+  // Slice #18.18: Groups filter for the /natural-persons list page.
+  // Mirrors listAllPersons — but target_type is always PHYSICAL_PERSON here.
+  // NOTE: use literal "person.id" inside sql`` templates — Drizzle renders
+  // ${person.id} as bare "id" which Postgres could bind to the wrong table
+  // (CLAUDE.md gotcha). Literal qualified names are safe.
+  let groupFilter: ReturnType<typeof sql> | undefined = undefined;
+  if (opts.groupCodes !== undefined) {
+    const hasNoMatchingGroup = sql`NOT EXISTS (
+      SELECT 1 FROM ${groupMember} gm_f
+      JOIN ${groups} g_f ON g_f.id = gm_f.group_id
+      WHERE gm_f.person_id = person.id
+        AND g_f.target_type = 'PHYSICAL_PERSON'
+    )`;
+    const hasMatchingCode = sql`EXISTS (
+      SELECT 1 FROM ${groupMember} gm_f2
+      JOIN ${groups} g_f2 ON g_f2.id = gm_f2.group_id
+      WHERE gm_f2.person_id = person.id
+        AND g_f2.code = ANY(ARRAY[${sql.join(
+          opts.groupCodes.map((c) => sql`${c}`),
+          sql`, `,
+        )}]::text[])
+    )`;
+    if (opts.groupCodes.length === 0 && opts.includeUngrouped === false) {
+      groupFilter = sql`1 = 0`;
+    } else if (opts.groupCodes.length === 0) {
+      groupFilter = hasNoMatchingGroup;
+    } else if (opts.includeUngrouped === false) {
+      groupFilter = hasMatchingCode;
+    } else {
+      groupFilter = sql`(${hasNoMatchingGroup} OR ${hasMatchingCode})`;
+    }
+  }
+
   const where = and(
-    // The /natural-persons list page must not surface judicial rows. Without
-    // this filter, judicial persons (added in Slice #4.6) would appear at the
-    // top of the natural list with empty email/phone columns.
+    // Only natural persons on this list page.
     eq(person.type, "NATURAL"),
     isNull(person.deletedAt),
+    groupFilter,
     searchPattern
       ? or(
           ilike(person.displayName, searchPattern),
+          ilike(naturalPerson.nickname, searchPattern),
           ilike(naturalPerson.personalEmail1, searchPattern),
           ilike(naturalPerson.personalEmail2, searchPattern),
           ilike(naturalPerson.workEmail, searchPattern),
@@ -94,6 +128,7 @@ export async function listPersons(opts: ListQuery): Promise<{
         code: person.code,
         type: person.type,
         displayName: person.displayName,
+        nickname: naturalPerson.nickname,
         email: sql<string | null>`coalesce(${naturalPerson.personalEmail1}, ${naturalPerson.personalEmail2}, ${naturalPerson.workEmail})`,
         phone: sql<string | null>`coalesce(${naturalPerson.personalPhone1}, ${naturalPerson.personalPhone2}, ${naturalPerson.workPhone})`,
         createdAt: person.createdAt,
@@ -102,9 +137,7 @@ export async function listPersons(opts: ListQuery): Promise<{
       .from(person)
       .leftJoin(naturalPerson, eq(naturalPerson.personId, person.id))
       .where(where)
-      // Slice #16.UX.01: most-recently modified/created first. updatedAt is
-      // always >= createdAt in this schema (it defaults to now() on insert
-      // too), but GREATEST() is used to be explicit and future-proof.
+      // Slice #16.UX.01: most-recently modified/created first.
       .orderBy(sql`greatest(${person.updatedAt}, ${person.createdAt}) desc`)
       .limit(opts.limit)
       .offset(opts.offset),
@@ -153,8 +186,9 @@ export async function listAllPersons(opts: AllPersonsListQuery): Promise<{
 
   // Slice #18.17: Groups filter.
   // groupCodes undefined → no filter.
-  // groupCodes []       → show persons with no matching-type group.
-  // groupCodes [...]    → show persons with no matching-type group OR in ≥1 checked code.
+  // groupCodes []       → show persons with no matching-type group only.
+  // groupCodes [...]    → filter to those codes; also include ungrouped unless
+  //                       opts.includeUngrouped is explicitly false.
   // NOTE: use literal "person.id" / "person.type" in sql`` templates — Drizzle
   // renders ${person.id} as bare "id" which Postgres would resolve to g_f.id
   // (the groups alias in scope). Literal qualified names avoid this (CLAUDE.md gotcha).
@@ -169,21 +203,23 @@ export async function listAllPersons(opts: AllPersonsListQuery): Promise<{
           OR (person.type = 'JUDICIAL' AND g_f.target_type = 'JUDICIAL_PERSON')
         )
     )`;
-    if (opts.groupCodes.length === 0) {
+    const hasMatchingCode = sql`EXISTS (
+      SELECT 1 FROM ${groupMember} gm_f2
+      JOIN ${groups} g_f2 ON g_f2.id = gm_f2.group_id
+      WHERE gm_f2.person_id = person.id
+        AND g_f2.code = ANY(ARRAY[${sql.join(
+          opts.groupCodes.map((c) => sql`${c}`),
+          sql`, `,
+        )}]::text[])
+    )`;
+    if (opts.groupCodes.length === 0 && opts.includeUngrouped === false) {
+      groupFilter = sql`1 = 0`;
+    } else if (opts.groupCodes.length === 0) {
       groupFilter = hasNoMatchingGroup;
+    } else if (opts.includeUngrouped === false) {
+      groupFilter = hasMatchingCode;
     } else {
-      groupFilter = sql`(
-        ${hasNoMatchingGroup}
-        OR EXISTS (
-          SELECT 1 FROM ${groupMember} gm_f2
-          JOIN ${groups} g_f2 ON g_f2.id = gm_f2.group_id
-          WHERE gm_f2.person_id = person.id
-            AND g_f2.code = ANY(ARRAY[${sql.join(
-              opts.groupCodes.map((c) => sql`${c}`),
-              sql`, `,
-            )}]::text[])
-        )
-      )`;
+      groupFilter = sql`(${hasNoMatchingGroup} OR ${hasMatchingCode})`;
     }
   }
 
@@ -436,7 +472,7 @@ export async function createNaturalPerson(
       .insert(principalObject)
       .values({
         objectType: "PERSON",
-        code: sql`'PERS' || lpad(nextval('principal_object_code_seq')::text, 5, '0')`,
+        code: sql`'PPERS' || lpad(nextval('principal_object_code_seq')::text, 5, '0')`,
       })
       .returning();
 

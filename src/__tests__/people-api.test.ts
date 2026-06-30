@@ -74,7 +74,7 @@ describe("GET /api/people", () => {
       items: [
         {
           id: "p1",
-          code: "PERS00001",
+          code: "PPERS00001",
           type: "NATURAL",
           displayName: "Adrian P.",
           email: null,
@@ -160,7 +160,7 @@ describe("POST /api/people", () => {
     mocks.createNaturalPerson.mockResolvedValueOnce({
       person: {
         id: "p1",
-        code: "PERS00001",
+        code: "PPERS00001",
         type: "NATURAL",
         displayName: "Adrian",
       },
@@ -225,7 +225,7 @@ describe("GET /api/people/[id]", () => {
 
   it("returns the full record when found", async () => {
     mocks.getPersonById.mockResolvedValueOnce({
-      person: { id: "abc", code: "PERS00001", displayName: "X" },
+      person: { id: "abc", code: "PPERS00001", displayName: "X" },
       natural: null,
       addresses: [],
     });
@@ -272,7 +272,7 @@ describe("PATCH /api/people/[id]", () => {
 
   it("returns 200 with the updated record on success", async () => {
     mocks.updateNaturalPerson.mockResolvedValueOnce({
-      person: { id: "abc", code: "PERS00001", displayName: "X" },
+      person: { id: "abc", code: "PPERS00001", displayName: "X" },
       natural: { personId: "abc", firstName: "X" },
       addresses: [],
     });

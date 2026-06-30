@@ -1250,7 +1250,7 @@ async function seed() {
       `person already has ${personCount.count} row(s); skipping persons seed.`,
     );
   } else {
-    console.log(`Seeding ${PERSONS.length} natural persons...`);
+    console.log(`Seeding ${PERSONS.length} natural persons (PPERS codes)...`);
     await db.transaction(async (tx) => {
       for (const row of PERSONS) {
         const displayName =
@@ -1261,7 +1261,7 @@ async function seed() {
           .insert(principalObject)
           .values({
             objectType: "PERSON",
-            code: sql`'PERS' || lpad(nextval('principal_object_code_seq')::text, 5, '0')`,
+            code: sql`'PPERS' || lpad(nextval('principal_object_code_seq')::text, 5, '0')`,
           })
           .returning();
 
@@ -1488,7 +1488,7 @@ async function seed() {
     }
 
     // Fetch natural persons sorted by code so contactPerson1/2Idx resolve
-    // deterministically (PERS00001 = index 0, PERS00002 = index 1, etc.).
+    // deterministically (PPERS00001 = index 0, PPERS00002 = index 1, etc.).
     const naturalPersons = await db
       .select({ id: person.id })
       .from(person)
@@ -1501,7 +1501,7 @@ async function seed() {
           .insert(principalObject)
           .values({
             objectType: "PERSON",
-            code: sql`'PERS' || lpad(nextval('principal_object_code_seq')::text, 5, '0')`,
+            code: sql`'JPERS' || lpad(nextval('principal_object_code_seq')::text, 5, '0')`,
           })
           .returning();
 

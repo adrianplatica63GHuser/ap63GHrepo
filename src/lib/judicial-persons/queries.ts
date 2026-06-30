@@ -23,6 +23,8 @@ import { and, count, desc, eq, ilike, isNull, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
   address,
+  groupMember,
+  groups,
   judicialPerson,
   lookupJudicialPersonType,
   person,
@@ -47,6 +49,8 @@ export type JudicialPersonListItem = {
   displayName: string;
   nickname: string | null;
   cuiNumber: string | null;
+  createdAt: Date;
+  updatedAt: Date;
 };
 
 export async function listJudicialPersons(opts: JudicialListQuery): Promise<{
@@ -56,11 +60,42 @@ export async function listJudicialPersons(opts: JudicialListQuery): Promise<{
   const q = opts.q?.trim();
   const searchPattern = q ? `%${q}%` : null;
 
-  // Search clauses match the spec for the judicial detail page:
-  // name, nickname, ID (= person.code).
+  // Slice #18.18: Groups filter for the /judicial-persons list page.
+  // Mirrors listPersons — but target_type is always JUDICIAL_PERSON here.
+  // NOTE: use literal "person.id" inside sql`` templates — Drizzle renders
+  // ${person.id} as bare "id" (CLAUDE.md gotcha).
+  let groupFilter: ReturnType<typeof sql> | undefined = undefined;
+  if (opts.groupCodes !== undefined) {
+    const hasNoMatchingGroup = sql`NOT EXISTS (
+      SELECT 1 FROM ${groupMember} gm_f
+      JOIN ${groups} g_f ON g_f.id = gm_f.group_id
+      WHERE gm_f.person_id = person.id
+        AND g_f.target_type = 'JUDICIAL_PERSON'
+    )`;
+    const hasMatchingCode = sql`EXISTS (
+      SELECT 1 FROM ${groupMember} gm_f2
+      JOIN ${groups} g_f2 ON g_f2.id = gm_f2.group_id
+      WHERE gm_f2.person_id = person.id
+        AND g_f2.code = ANY(ARRAY[${sql.join(
+          opts.groupCodes.map((c) => sql`${c}`),
+          sql`, `,
+        )}]::text[])
+    )`;
+    if (opts.groupCodes.length === 0 && opts.includeUngrouped === false) {
+      groupFilter = sql`1 = 0`;
+    } else if (opts.groupCodes.length === 0) {
+      groupFilter = hasNoMatchingGroup;
+    } else if (opts.includeUngrouped === false) {
+      groupFilter = hasMatchingCode;
+    } else {
+      groupFilter = sql`(${hasNoMatchingGroup} OR ${hasMatchingCode})`;
+    }
+  }
+
   const where = and(
     eq(person.type, "JUDICIAL"),
     isNull(person.deletedAt),
+    groupFilter,
     searchPattern
       ? or(
           ilike(person.displayName, searchPattern),
@@ -78,11 +113,15 @@ export async function listJudicialPersons(opts: JudicialListQuery): Promise<{
         displayName: person.displayName,
         nickname: judicialPerson.nickname,
         cuiNumber: judicialPerson.cuiNumber,
+        createdAt: person.createdAt,
+        updatedAt: person.updatedAt,
       })
       .from(person)
       .leftJoin(judicialPerson, eq(judicialPerson.personId, person.id))
       .where(where)
-      .orderBy(person.code)
+      // Slice #18.18: most-recently modified/created first (consistent with
+      // natural persons — previously ordered by code).
+      .orderBy(sql`greatest(${person.updatedAt}, ${person.createdAt}) desc`)
       .limit(opts.limit)
       .offset(opts.offset),
     db
@@ -307,7 +346,7 @@ export async function createJudicialPerson(
       .insert(principalObject)
       .values({
         objectType: "PERSON",
-        code: sql`'PERS' || lpad(nextval('principal_object_code_seq')::text, 5, '0')`,
+        code: sql`'JPERS' || lpad(nextval('principal_object_code_seq')::text, 5, '0')`,
       })
       .returning();
 

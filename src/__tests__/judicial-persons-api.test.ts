@@ -75,7 +75,7 @@ describe("GET /api/judicial-persons", () => {
       items: [
         {
           id: "j1",
-          code: "PERS00002",
+          code: "JPERS00002",
           displayName: "SC Exemplu SRL",
           nickname: null,
           cuiNumber: "RO12345678",
@@ -156,7 +156,7 @@ describe("POST /api/judicial-persons", () => {
 
   it("returns 201 with the created record on success", async () => {
     jMocks.createJudicialPerson.mockResolvedValueOnce({
-      person: { id: "j1", code: "PERS00002", type: "JUDICIAL", displayName: "SC Test SRL" },
+      person: { id: "j1", code: "JPERS00002", type: "JUDICIAL", displayName: "SC Test SRL" },
       judicial: { personId: "j1", name: "SC Test SRL" },
       addresses: [],
     });
@@ -211,7 +211,7 @@ describe("GET /api/judicial-persons/[id]", () => {
 
   it("returns the full record when found", async () => {
     jMocks.getJudicialPersonById.mockResolvedValueOnce({
-      person: { id: "abc", code: "PERS00002", displayName: "SC Test SRL" },
+      person: { id: "abc", code: "JPERS00002", displayName: "SC Test SRL" },
       judicial: { personId: "abc", name: "SC Test SRL" },
       addresses: [],
     });
@@ -258,7 +258,7 @@ describe("PATCH /api/judicial-persons/[id]", () => {
 
   it("returns 200 with the updated record on success", async () => {
     jMocks.updateJudicialPerson.mockResolvedValueOnce({
-      person: { id: "abc", code: "PERS00002", displayName: "SC Test SRL" },
+      person: { id: "abc", code: "JPERS00002", displayName: "SC Test SRL" },
       judicial: { personId: "abc", name: "SC Test SRL", nickname: "Updated" },
       addresses: [],
     });
