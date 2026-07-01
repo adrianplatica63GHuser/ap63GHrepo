@@ -43,6 +43,7 @@ import { StreetViewPanel } from "./street-view-panel";
 import { VersionNavControls } from "@/components/version-nav-controls";
 import { FieldPulseContext, usePulseRing } from "@/components/versioning/field-pulse";
 import { highlightRingClass } from "@/lib/versioning/highlight-ring";
+import { getPropertyTypeConfig } from "@/lib/properties/type-config";
 
 // ---------------------------------------------------------------------------
 // Version history fetch (Slice #18.02)
@@ -74,12 +75,21 @@ async function fetchVersions(propertyId: string): Promise<VersionItem[]> {
 // ---------------------------------------------------------------------------
 
 type LookupOption = { id: string; name: string };
+// Slice #19.02: property types also carry a `key` slug for type-config lookup.
+type PropertyTypeLookupOption = LookupOption & { key: string | null };
 
 async function fetchValueList(listKey: string): Promise<LookupOption[]> {
   const res = await fetch(`/api/admin/value-lists/${listKey}`);
   if (!res.ok) throw new Error(`Failed to load ${listKey} (HTTP ${res.status})`);
   const body = await res.json();
   return (body.items ?? []) as LookupOption[];
+}
+
+async function fetchPropertyTypes(): Promise<PropertyTypeLookupOption[]> {
+  const res = await fetch("/api/admin/value-lists/property-types");
+  if (!res.ok) throw new Error(`Failed to load property-types (HTTP ${res.status})`);
+  const body = await res.json();
+  return (body.items ?? []) as PropertyTypeLookupOption[];
 }
 
 // ---------------------------------------------------------------------------
@@ -127,9 +137,11 @@ export function PropertyForm({
 
   // Reference-Data dropdown options (Slice #15.16). Shared query keys keep
   // these in sync with admin Reference-Data edits automatically.
-  const { data: propertyTypes } = useQuery({
+  // Slice #19.02: typed as PropertyTypeLookupOption[] so the `key` slug is
+  // available for getPropertyTypeConfig() below.
+  const { data: propertyTypes } = useQuery<PropertyTypeLookupOption[]>({
     queryKey: ["value-list", "property-types"],
-    queryFn:  () => fetchValueList("property-types"),
+    queryFn:  fetchPropertyTypes,
     staleTime: 5 * 60 * 1000,
   });
   const { data: useCategories } = useQuery({
@@ -270,6 +282,16 @@ export function PropertyForm({
   // eslint-disable-next-line react-hooks/incompatible-library
   const watchedValues = form.watch();
   const isCreate = mode === "create";
+
+  // Slice #19.02: derive per-type field visibility from the selected property type.
+  const selectedTypeKey =
+    (propertyTypes ?? []).find((o) => o.id === (watchedValues.propertyTypeId ?? ""))?.key ?? null;
+  const typeConfig = getPropertyTypeConfig(selectedTypeKey);
+
+  // Slice #19.02: close the Street View panel when the selected type hides it.
+  useEffect(() => {
+    if (typeConfig.hideStreetView) setShowStreetView(false);
+  }, [typeConfig.hideStreetView]);
 
   // --- Version history (Slice #18.02) ------------------------------------
   const versionsQuery = useQuery({
@@ -469,7 +491,15 @@ export function PropertyForm({
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const payload = toApiPayload(values, corners);
+      const rawPayload = toApiPayload(values, corners);
+      // Slice #19.02: when the selected type hides the address section, force
+      // address: null regardless of any stale form-state from a prior type
+      // selection (toApiPayload already does this when country is blank; this
+      // catches the edge case where country WAS filled in before the type changed).
+      const typeKeyForSave =
+        (propertyTypes ?? []).find((o) => o.id === (values.propertyTypeId ?? ""))?.key ?? null;
+      const configForSave = getPropertyTypeConfig(typeKeyForSave);
+      const payload = configForSave.hideAddress ? { ...rawPayload, address: null } : rawPayload;
       const url =
         mode === "create"
           ? "/api/properties"
@@ -634,22 +664,27 @@ export function PropertyForm({
               error={errors.nickname?.message}
               highlight={displayHighlights?.property.nickname}
             />
-            {/* Slice #18.16.VL: was free-text Field; now a lookup dropdown */}
-            <SelectField
-              label={t("fields.tarlaSola")}
-              name="tarlaSola"
-              register={register}
-              error={errors.tarlaSola?.message}
-              options={tarlaSolaOptions}
-              highlight={displayHighlights?.property.tarlaSola}
-            />
-            <Field
-              label={t("fields.parcela")}
-              name="parcela"
-              register={register}
-              error={errors.parcela?.message}
-              highlight={displayHighlights?.property.parcela}
-            />
+            {/* Slice #19.02: Tarla/Parcela hidden for urban property types. */}
+            {!typeConfig.hideTarlaParcela && (
+              <>
+                {/* Slice #18.16.VL: was free-text Field; now a lookup dropdown */}
+                <SelectField
+                  label={t("fields.tarlaSola")}
+                  name="tarlaSola"
+                  register={register}
+                  error={errors.tarlaSola?.message}
+                  options={tarlaSolaOptions}
+                  highlight={displayHighlights?.property.tarlaSola}
+                />
+                <Field
+                  label={t("fields.parcela")}
+                  name="parcela"
+                  register={register}
+                  error={errors.parcela?.message}
+                  highlight={displayHighlights?.property.parcela}
+                />
+              </>
+            )}
             <Field
               label={t("fields.cadastralNumber")}
               name="cadastralNumber"
@@ -698,8 +733,8 @@ export function PropertyForm({
             </div>
           </Section>
 
-          {/* Address */}
-          <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          {/* Address — Slice #19.02: hidden for agricultural / forest types. */}
+          {!typeConfig.hideAddress && <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
             <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
               {t("sections.address")}
             </h2>
@@ -801,7 +836,7 @@ export function PropertyForm({
                 />
               </div>
             </div>
-          </section>
+          </section>}
           </fieldset>{/* end editable-inputs fieldset (cadastral + address) */}
 
           {/* Corners table — OUTSIDE the disabled fieldset. The map and Street
@@ -842,8 +877,8 @@ export function PropertyForm({
               onCornerHover={setHoveredCornerIdx}
               bigMap={bigMap}
               onToggleBigMap={handleToggleBigMap}
-              streetView={showStreetView}
-              onToggleStreetView={handleToggleStreetView}
+              streetView={showStreetView && !typeConfig.hideStreetView}
+              onToggleStreetView={typeConfig.hideStreetView ? undefined : handleToggleStreetView}
               cornerDiff={cornerDiff ?? undefined}
             />
           </section>
@@ -872,7 +907,7 @@ export function PropertyForm({
           {/* Slice #18.03b: Street View panel — mounted only while open so the
               (billed) panorama and Street View library never load on property
               open. */}
-          {showStreetView && (
+          {showStreetView && !typeConfig.hideStreetView && (
             <div className="rounded-md border border-card-rim overflow-hidden dark:border-zinc-800" style={{ height: "360px" }}>
               <StreetViewPanel centroid={streetViewCentroid} />
             </div>

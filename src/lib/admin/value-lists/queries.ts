@@ -36,7 +36,7 @@ const CATEGORY_STAMP    = "Stampila";
 // Row types — inferred from the Drizzle table definitions.
 export type LookupRow = Record<string, unknown> & { id: string };
 
-// ── document-types: server-generated `key` slug ────────────────────────────
+// ── property-types / document-types: server-generated `key` slug ──────────
 //
 // Migration 020 (Slice #15.05) added `lookup_document_type.key` as an
 // immutable, NOT NULL, UNIQUE slug that application code (getTypeConfig)
@@ -75,6 +75,22 @@ async function generateUniqueDocumentTypeKey(name: string): Promise<string> {
       .select({ id: lookupDocumentType.id })
       .from(lookupDocumentType)
       .where(eq(lookupDocumentType.key, candidate));
+    if (existing.length === 0) return candidate;
+    candidate = `${base}_${suffix}`;
+    suffix += 1;
+  }
+}
+
+// Same slug logic for property types (Slice #19.02).
+async function generateUniquePropertyTypeKey(name: string): Promise<string> {
+  const base = slugifyDocumentTypeKey(name); // reuse the same diacritics-fold + slug helper
+  let candidate = base;
+  let suffix = 2;
+  for (;;) {
+    const existing = await db
+      .select({ id: lookupPropertyType.id })
+      .from(lookupPropertyType)
+      .where(eq(lookupPropertyType.key, candidate));
     if (existing.length === 0) return candidate;
     candidate = `${base}_${suffix}`;
     suffix += 1;
@@ -133,7 +149,8 @@ export async function createValue(
 ): Promise<LookupRow> {
   switch (key) {
     case "property-types": {
-      const [row] = await db.insert(lookupPropertyType).values(data).returning();
+      const key = await generateUniquePropertyTypeKey(data.name);
+      const [row] = await db.insert(lookupPropertyType).values({ ...data, key }).returning();
       return row as LookupRow;
     }
     case "tarla": {

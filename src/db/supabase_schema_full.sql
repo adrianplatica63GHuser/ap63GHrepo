@@ -350,6 +350,7 @@ CREATE UNIQUE INDEX property_version_property_number_unique
 CREATE TABLE lookup_property_type (
   id         uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
   name       text        NOT NULL,
+  key        text        UNIQUE,
   sort_order integer     NOT NULL DEFAULT 0,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
@@ -357,13 +358,13 @@ CREATE TABLE lookup_property_type (
 CREATE TRIGGER lookup_property_type_touch_updated_at
   BEFORE UPDATE ON lookup_property_type
   FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
-INSERT INTO lookup_property_type (name, sort_order) VALUES
-  ('Teren Arabil',    1),
-  ('Teren Construit', 2),
-  ('Liniară',         3),
-  ('Pășune',          4),
-  ('Apartament',      5),
-  ('Casă',            6);
+INSERT INTO lookup_property_type (name, key, sort_order) VALUES
+  ('Teren Arabil',    'TEREN_ARABIL',    1),
+  ('Teren Construit', 'TEREN_CONSTRUIT', 2),
+  ('Liniară',         'LINIARA',         3),
+  ('Pășune',          'PASUNE',          4),
+  ('Apartament',      'APARTAMENT',      5),
+  ('Casă',            'CASA',            6);
 
 -- ── lookup_tarla ─────────────────────────────────────────────
 CREATE TABLE lookup_tarla (
