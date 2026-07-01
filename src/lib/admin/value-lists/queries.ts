@@ -12,7 +12,7 @@
  * Slice #18.07 — see src/lib/groups/.)
  */
 
-import { asc, eq } from "drizzle-orm";
+import { asc, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
   lookupPropertyType,
@@ -102,7 +102,22 @@ async function generateUniquePropertyTypeKey(name: string): Promise<string> {
 export async function listValues(key: ListKey): Promise<LookupRow[]> {
   switch (key) {
     case "property-types":
-      return db.select().from(lookupPropertyType).orderBy(asc(lookupPropertyType.sortOrder)) as Promise<LookupRow[]>;
+      // Slice #19.02: include a live usage count (# of properties that
+      // reference this type) so the admin UI can show a richer delete warning.
+      // The correlated subquery uses a literal qualified name to avoid Drizzle's
+      // unqualified-column bug inside correlated subqueries (see CLAUDE.md Gotcha).
+      return db.select({
+        id:               lookupPropertyType.id,
+        name:             lookupPropertyType.name,
+        key:              lookupPropertyType.key,
+        showTarlaParcela: lookupPropertyType.showTarlaParcela,
+        showAddress:      lookupPropertyType.showAddress,
+        showStreetView:   lookupPropertyType.showStreetView,
+        sortOrder:        lookupPropertyType.sortOrder,
+        createdAt:        lookupPropertyType.createdAt,
+        updatedAt:        lookupPropertyType.updatedAt,
+        usageCount: sql<number>`(SELECT COUNT(*) FROM property WHERE property_type_id = lookup_property_type.id)`,
+      }).from(lookupPropertyType).orderBy(asc(lookupPropertyType.sortOrder)) as Promise<LookupRow[]>;
     case "tarla":
       return db.select().from(lookupTarla).orderBy(asc(lookupTarla.sortOrder)) as Promise<LookupRow[]>;
     case "use-categories":

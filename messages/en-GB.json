@@ -1114,6 +1114,7 @@
     },
     "confirm": {
       "deleteBody": "Delete this entry? This cannot be undone.",
+      "deletePropertyTypeUsed": "Tipul este utilizat de {count} {count, plural, one {proprietate} other {proprietăți}}. La ștergere, tipul acestora va fi eliminat. Continuați?",
       "delete": "Delete",
       "deleting": "Deleting…",
       "cancel": "Cancel"

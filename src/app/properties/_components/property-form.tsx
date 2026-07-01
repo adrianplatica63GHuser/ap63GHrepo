@@ -43,7 +43,6 @@ import { StreetViewPanel } from "./street-view-panel";
 import { VersionNavControls } from "@/components/version-nav-controls";
 import { FieldPulseContext, usePulseRing } from "@/components/versioning/field-pulse";
 import { highlightRingClass } from "@/lib/versioning/highlight-ring";
-import { getPropertyTypeConfig } from "@/lib/properties/type-config";
 
 // ---------------------------------------------------------------------------
 // Version history fetch (Slice #18.02)
@@ -75,8 +74,13 @@ async function fetchVersions(propertyId: string): Promise<VersionItem[]> {
 // ---------------------------------------------------------------------------
 
 type LookupOption = { id: string; name: string };
-// Slice #19.02: property types also carry a `key` slug for type-config lookup.
-type PropertyTypeLookupOption = LookupOption & { key: string | null };
+// Slice #19.02: property types carry per-type panel-visibility flags from DB.
+type PropertyTypeLookupOption = LookupOption & {
+  key:              string | null;
+  showTarlaParcela: boolean;
+  showAddress:      boolean;
+  showStreetView:   boolean;
+};
 
 async function fetchValueList(listKey: string): Promise<LookupOption[]> {
   const res = await fetch(`/api/admin/value-lists/${listKey}`);
@@ -283,14 +287,21 @@ export function PropertyForm({
   const watchedValues = form.watch();
   const isCreate = mode === "create";
 
-  // Slice #19.02: derive per-type field visibility from the selected property type.
-  const selectedTypeKey =
-    (propertyTypes ?? []).find((o) => o.id === (watchedValues.propertyTypeId ?? ""))?.key ?? null;
-  const typeConfig = getPropertyTypeConfig(selectedTypeKey);
+  // Slice #19.02: panel visibility comes directly from the selected type's DB
+  // flags (showTarlaParcela / showAddress / showStreetView). When no type is
+  // selected, or while the list is loading, default to showing everything.
+  const selectedType =
+    (propertyTypes ?? []).find((o) => o.id === (watchedValues.propertyTypeId ?? "")) ?? null;
+  const typeConfig = {
+    hideTarlaParcela: selectedType ? !selectedType.showTarlaParcela : false,
+    hideAddress:      selectedType ? !selectedType.showAddress      : false,
+    hideStreetView:   selectedType ? !selectedType.showStreetView   : false,
+  };
 
   // Slice #19.02: close the Street View panel when the selected type hides it.
   useEffect(() => {
     if (typeConfig.hideStreetView) setShowStreetView(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [typeConfig.hideStreetView]);
 
   // --- Version history (Slice #18.02) ------------------------------------
@@ -496,10 +507,10 @@ export function PropertyForm({
       // address: null regardless of any stale form-state from a prior type
       // selection (toApiPayload already does this when country is blank; this
       // catches the edge case where country WAS filled in before the type changed).
-      const typeKeyForSave =
-        (propertyTypes ?? []).find((o) => o.id === (values.propertyTypeId ?? ""))?.key ?? null;
-      const configForSave = getPropertyTypeConfig(typeKeyForSave);
-      const payload = configForSave.hideAddress ? { ...rawPayload, address: null } : rawPayload;
+      const selectedTypeForSave =
+        (propertyTypes ?? []).find((o) => o.id === (values.propertyTypeId ?? "")) ?? null;
+      const hideAddressForSave = selectedTypeForSave ? !selectedTypeForSave.showAddress : false;
+      const payload = hideAddressForSave ? { ...rawPayload, address: null } : rawPayload;
       const url =
         mode === "create"
           ? "/api/properties"

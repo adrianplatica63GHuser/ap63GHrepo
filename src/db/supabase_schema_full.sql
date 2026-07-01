@@ -348,31 +348,35 @@ CREATE UNIQUE INDEX property_version_property_number_unique
 
 -- ── lookup_property_type ─────────────────────────────────────
 CREATE TABLE lookup_property_type (
-  id         uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  name       text        NOT NULL,
-  key        text        UNIQUE,
-  sort_order integer     NOT NULL DEFAULT 0,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
+  id                  uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  name                text        NOT NULL,
+  key                 text        UNIQUE,
+  show_tarla_parcela  boolean     NOT NULL DEFAULT FALSE,
+  show_address        boolean     NOT NULL DEFAULT FALSE,
+  show_street_view    boolean     NOT NULL DEFAULT FALSE,
+  sort_order          integer     NOT NULL DEFAULT 0,
+  created_at          timestamptz NOT NULL DEFAULT now(),
+  updated_at          timestamptz NOT NULL DEFAULT now()
 );
 CREATE TRIGGER lookup_property_type_touch_updated_at
   BEFORE UPDATE ON lookup_property_type
   FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
-INSERT INTO lookup_property_type (name, key, sort_order) VALUES
-  ('Teren Arabil',         'TEREN_ARABIL',         1),
-  ('Teren Construit',      'TEREN_CONSTRUIT',       2),
-  ('Liniară',              'LINIARA',               3),
-  ('Pășune',               'PASUNE',                4),
-  ('Apartament',           'APARTAMENT',            5),
-  ('Casă',                 'CASA',                  6),
-  ('Garaj',                'GARAJ',                 7),
-  ('Spațiu Comercial',     'SPATIU_COMERCIAL',      8),
-  ('Birou',                'BIROU',                 9),
-  ('Vie',                  'VIE',                  10),
-  ('Livadă',               'LIVADA',               11),
-  ('Fâneață',              'FANATA',               12),
-  ('Pădure',               'PADURE',               13),
-  ('Vegetație Forestieră', 'VEGETATIE_FORESTIERA',  14);
+-- name, key, show_tarla_parcela, show_address, show_street_view, sort_order
+INSERT INTO lookup_property_type (name, key, show_tarla_parcela, show_address, show_street_view, sort_order) VALUES
+  ('Teren Arabil',         'TEREN_ARABIL',         TRUE,  FALSE, FALSE,  1),
+  ('Teren Construit',      'TEREN_CONSTRUIT',       FALSE, TRUE,  TRUE,   2),
+  ('Liniară',              'LINIARA',               TRUE,  TRUE,  TRUE,   3),
+  ('Pășune',               'PASUNE',                TRUE,  FALSE, FALSE,  4),
+  ('Apartament',           'APARTAMENT',            FALSE, TRUE,  TRUE,   5),
+  ('Casă',                 'CASA',                  FALSE, TRUE,  TRUE,   6),
+  ('Garaj',                'GARAJ',                 FALSE, TRUE,  TRUE,   7),
+  ('Spațiu Comercial',     'SPATIU_COMERCIAL',      FALSE, TRUE,  TRUE,   8),
+  ('Birou',                'BIROU',                 FALSE, TRUE,  TRUE,   9),
+  ('Vie',                  'VIE',                   TRUE,  FALSE, FALSE, 10),
+  ('Livadă',               'LIVADA',                TRUE,  FALSE, FALSE, 11),
+  ('Fâneață',              'FANATA',                TRUE,  FALSE, FALSE, 12),
+  ('Pădure',               'PADURE',                TRUE,  FALSE, FALSE, 13),
+  ('Vegetație Forestieră', 'VEGETATIE_FORESTIERA',  TRUE,  FALSE, FALSE, 14);
 
 -- ── lookup_tarla ─────────────────────────────────────────────
 CREATE TABLE lookup_tarla (

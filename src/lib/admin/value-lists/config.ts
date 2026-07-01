@@ -49,6 +49,14 @@ export type FieldMeta = {
   required: boolean;
   /** When true, renders a <textarea> instead of <input> in the edit form */
   multiline?: boolean;
+  /** When "checkbox", renders a checkbox instead of a text input */
+  type?: "text" | "checkbox";
+  /**
+   * Optional literal label string that overrides the i18n `labelKey` lookup.
+   * Used for domain-specific Romanian-only labels (e.g. panel names on the
+   * Property Type form) without adding extra i18n keys.
+   */
+  labelText?: string;
 };
 
 export type ListMeta = {
@@ -60,7 +68,32 @@ export type ListMeta = {
 export const LIST_META: Record<ListKey, ListMeta> = {
   "property-types": {
     titleKey: "propertyTypes",
-    fields: [{ key: "name", labelKey: "name", required: true }],
+    fields: [
+      { key: "name", labelKey: "name", required: true },
+      // Slice #19.02: panel-visibility checkboxes — Romanian-only labels per
+      // domain convention (same as "Tarla/Sola", "Carte Funciară" etc.).
+      {
+        key: "showTarlaParcela",
+        labelKey: "showTarlaParcela",
+        labelText: "Tarla / Parcelă",
+        required: false,
+        type: "checkbox",
+      },
+      {
+        key: "showAddress",
+        labelKey: "showAddress",
+        labelText: "Adresă",
+        required: false,
+        type: "checkbox",
+      },
+      {
+        key: "showStreetView",
+        labelKey: "showStreetView",
+        labelText: "Street View",
+        required: false,
+        type: "checkbox",
+      },
+    ],
   },
   tarla: {
     titleKey: "tarla",

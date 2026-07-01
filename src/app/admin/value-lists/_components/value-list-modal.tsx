@@ -23,7 +23,7 @@ async function fetchRows(listKey: ListKey): Promise<Row[]> {
 async function saveRow(
   listKey: ListKey,
   id: string | null,
-  body: Record<string, string>,
+  body: Record<string, unknown>,
 ): Promise<Row> {
   const url = id
     ? `/api/admin/value-lists/${listKey}/${id}`
@@ -52,9 +52,11 @@ async function removeRow(listKey: ListKey, id: string): Promise<void> {
 
 // ── Inline edit/add form ──────────────────────────────────────────────────────
 
+// Slice #19.02: values are unknown (string for text fields, boolean for
+// checkboxes) so we can serialize booleans correctly in JSON.
 type FormState = {
   id: string | null; // null = adding
-  values: Record<string, string>;
+  values: Record<string, unknown>;
 };
 
 function EditForm({
@@ -70,7 +72,7 @@ function EditForm({
 }) {
   const t = useTranslations("valueList");
   const meta = LIST_META[listKey];
-  const [values, setValues] = useState<Record<string, string>>(state.values);
+  const [values, setValues] = useState<Record<string, unknown>>(state.values);
   const [error, setError] = useState<string | null>(null);
   const firstInputRef = useRef<HTMLInputElement>(null);
 
@@ -88,6 +90,10 @@ function EditForm({
       // hard reload happens. Invalidate that key too so they refresh in step.
       if (listKey === "document-types") {
         qc.invalidateQueries({ queryKey: ["document-types"] });
+      }
+      // "property-types" is also fetched by the Property form's type dropdown.
+      if (listKey === "property-types") {
+        qc.invalidateQueries({ queryKey: ["property-types"] });
       }
       onSaved(row);
     },
@@ -110,42 +116,65 @@ function EditForm({
       </h3>
 
       <div className="flex flex-wrap gap-3">
-        {meta.fields.map((f, i) => (
-          <div
-            key={f.key}
-            className={`flex flex-col gap-1 ${f.multiline ? "w-full" : "min-w-48"}`}
-          >
-            <label className="text-xs font-medium text-ink dark:text-zinc-400">
-              {t(`fields.${f.labelKey}`)}
-              {f.required && <span className="ml-0.5 text-red-500">*</span>}
-            </label>
-            {f.multiline ? (
-              <textarea
-                rows={3}
-                value={values[f.key] ?? ""}
-                onChange={(e) =>
-                  setValues((prev) => ({ ...prev, [f.key]: e.target.value }))
-                }
-                onKeyDown={(e) => {
-                  // Allow Enter inside textarea; only Escape closes
-                  if (e.key === "Escape") onClose();
-                }}
-                className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 resize-y"
-              />
-            ) : (
-              <input
-                ref={i === 0 ? firstInputRef : undefined}
-                type="text"
-                value={values[f.key] ?? ""}
-                onChange={(e) =>
-                  setValues((prev) => ({ ...prev, [f.key]: e.target.value }))
-                }
-                onKeyDown={handleKey}
-                className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
-              />
-            )}
-          </div>
-        ))}
+        {meta.fields.map((f, i) => {
+          // Slice #19.02: checkbox field
+          if (f.type === "checkbox") {
+            return (
+              <label
+                key={f.key}
+                className="flex items-center gap-2 text-sm text-ink dark:text-zinc-300 cursor-pointer select-none"
+              >
+                <input
+                  type="checkbox"
+                  checked={Boolean(values[f.key])}
+                  onChange={(e) =>
+                    setValues((prev) => ({ ...prev, [f.key]: e.target.checked }))
+                  }
+                  className="h-4 w-4 rounded border-wire accent-cta"
+                />
+                <span className="font-medium">{f.labelText ?? t(`fields.${f.labelKey}`)}</span>
+              </label>
+            );
+          }
+
+          // Text / textarea field
+          return (
+            <div
+              key={f.key}
+              className={`flex flex-col gap-1 ${f.multiline ? "w-full" : "min-w-48"}`}
+            >
+              <label className="text-xs font-medium text-ink dark:text-zinc-400">
+                {f.labelText ?? t(`fields.${f.labelKey}`)}
+                {f.required && <span className="ml-0.5 text-red-500">*</span>}
+              </label>
+              {f.multiline ? (
+                <textarea
+                  rows={3}
+                  value={String(values[f.key] ?? "")}
+                  onChange={(e) =>
+                    setValues((prev) => ({ ...prev, [f.key]: e.target.value }))
+                  }
+                  onKeyDown={(e) => {
+                    // Allow Enter inside textarea; only Escape closes
+                    if (e.key === "Escape") onClose();
+                  }}
+                  className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 resize-y"
+                />
+              ) : (
+                <input
+                  ref={i === 0 ? firstInputRef : undefined}
+                  type="text"
+                  value={String(values[f.key] ?? "")}
+                  onChange={(e) =>
+                    setValues((prev) => ({ ...prev, [f.key]: e.target.value }))
+                  }
+                  onKeyDown={handleKey}
+                  className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
+                />
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {error && (
@@ -200,6 +229,9 @@ export function ValueListModal({
       if (listKey === "document-types") {
         qc.invalidateQueries({ queryKey: ["document-types"] });
       }
+      if (listKey === "property-types") {
+        qc.invalidateQueries({ queryKey: ["property-types"] });
+      }
       setConfirmDeleteId(null);
     },
   });
@@ -218,18 +250,39 @@ export function ValueListModal({
   }, [confirmDeleteId, form, onClose]);
 
   function startAdd() {
-    const blank = Object.fromEntries(meta.fields.map((f) => [f.key, ""]));
+    const blank: Record<string, unknown> = {};
+    for (const f of meta.fields) {
+      // Slice #19.02: checkbox fields start unchecked (false); text fields blank.
+      blank[f.key] = f.type === "checkbox" ? false : "";
+    }
     setForm({ id: null, values: blank });
   }
 
   function startEdit(row: Row) {
-    const vals = Object.fromEntries(
-      meta.fields.map((f) => [f.key, String(row[f.key] ?? "")]),
-    );
+    const vals: Record<string, unknown> = {};
+    for (const f of meta.fields) {
+      if (f.type === "checkbox") {
+        vals[f.key] = Boolean(row[f.key]);
+      } else {
+        vals[f.key] = String(row[f.key] ?? "");
+      }
+    }
     setForm({ id: row.id, values: vals });
   }
 
-  // Column headers = ID + all payload fields (without sortOrder/timestamps)
+  // Slice #19.02: for property-types, surface a richer delete warning when
+  // the type is referenced by existing properties. The list query already
+  // includes a `usageCount` for property-types rows via a correlated subquery.
+  const confirmDeleteRow = confirmDeleteId
+    ? query.data?.find((r) => r.id === confirmDeleteId)
+    : null;
+  const deleteUsageCount =
+    listKey === "property-types" && typeof confirmDeleteRow?.usageCount === "number"
+      ? (confirmDeleteRow.usageCount as number)
+      : 0;
+
+  // Column headers — text fields only; checkbox fields appear inline in the
+  // edit form but are shown as a ✓/– symbol in the row display.
   const displayFields = meta.fields;
 
   return (
@@ -297,7 +350,7 @@ export function ValueListModal({
                   <tr>
                     {displayFields.map((f) => (
                       <th key={f.key} className="px-4 py-2">
-                        {t(`fields.${f.labelKey}`)}
+                        {f.labelText ?? t(`fields.${f.labelKey}`)}
                       </th>
                     ))}
                     <th className="w-28 px-4 py-2" />
@@ -345,7 +398,10 @@ export function ValueListModal({
                           className={`px-4 py-2 text-ink dark:text-zinc-300 ${f.multiline ? "max-w-[240px] truncate" : ""}`}
                           title={f.multiline ? String(row[f.key] ?? "") : undefined}
                         >
-                          {String(row[f.key] ?? "")}
+                          {/* Slice #19.02: render checkboxes as ✓ / – symbols */}
+                          {f.type === "checkbox"
+                            ? (row[f.key] ? "✓" : "–")
+                            : String(row[f.key] ?? "")}
                         </td>
                       ))}
                       <td className="px-4 py-2">
@@ -383,7 +439,10 @@ export function ValueListModal({
             className="fixed inset-x-4 top-1/3 z-60 mx-auto max-w-sm rounded-xl border border-card-rim bg-card p-6 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900"
           >
             <p className="mb-4 text-sm text-ink dark:text-zinc-300">
-              {t("confirm.deleteBody")}
+              {/* Slice #19.02: richer warning when the property type is in use */}
+              {deleteUsageCount > 0
+                ? t("confirm.deletePropertyTypeUsed", { count: deleteUsageCount })
+                : t("confirm.deleteBody")}
             </p>
             <div className="flex justify-end gap-2">
               <button

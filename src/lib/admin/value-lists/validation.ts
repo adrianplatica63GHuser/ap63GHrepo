@@ -11,8 +11,17 @@ import type { ListKey } from "./config";
 
 const sortOrder = z.coerce.number().int().min(0).default(0);
 
+// Slice #19.02: boolean flags sent as actual JSON booleans from the admin UI.
+const boolField = z.preprocess(
+  (v) => v === true || v === "true",
+  z.boolean(),
+);
+
 export const propertyTypeSchema = z.object({
-  name:      z.string().min(1, "required"),
+  name:             z.string().min(1, "required"),
+  showTarlaParcela: boolField.default(false),
+  showAddress:      boolField.default(false),
+  showStreetView:   boolField.default(false),
   sortOrder,
 });
 

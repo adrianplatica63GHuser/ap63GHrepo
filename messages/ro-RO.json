@@ -1114,6 +1114,7 @@
     },
     "confirm": {
       "deleteBody": "Ștergeți această înregistrare? Acțiunea nu poate fi anulată.",
+      "deletePropertyTypeUsed": "Tipul este utilizat de {count} {count, plural, one {proprietate} other {proprietăți}}. La ștergere, tipul acestora va fi eliminat. Continuați?",
       "delete": "Șterge",
       "deleting": "Se șterge…",
       "cancel": "Anulează"
