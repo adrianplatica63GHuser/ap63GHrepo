@@ -359,12 +359,20 @@ CREATE TRIGGER lookup_property_type_touch_updated_at
   BEFORE UPDATE ON lookup_property_type
   FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
 INSERT INTO lookup_property_type (name, key, sort_order) VALUES
-  ('Teren Arabil',    'TEREN_ARABIL',    1),
-  ('Teren Construit', 'TEREN_CONSTRUIT', 2),
-  ('Liniară',         'LINIARA',         3),
-  ('Pășune',          'PASUNE',          4),
-  ('Apartament',      'APARTAMENT',      5),
-  ('Casă',            'CASA',            6);
+  ('Teren Arabil',         'TEREN_ARABIL',         1),
+  ('Teren Construit',      'TEREN_CONSTRUIT',       2),
+  ('Liniară',              'LINIARA',               3),
+  ('Pășune',               'PASUNE',                4),
+  ('Apartament',           'APARTAMENT',            5),
+  ('Casă',                 'CASA',                  6),
+  ('Garaj',                'GARAJ',                 7),
+  ('Spațiu Comercial',     'SPATIU_COMERCIAL',      8),
+  ('Birou',                'BIROU',                 9),
+  ('Vie',                  'VIE',                  10),
+  ('Livadă',               'LIVADA',               11),
+  ('Fâneață',              'FANATA',               12),
+  ('Pădure',               'PADURE',               13),
+  ('Vegetație Forestieră', 'VEGETATIE_FORESTIERA',  14);
 
 -- ── lookup_tarla ─────────────────────────────────────────────
 CREATE TABLE lookup_tarla (
