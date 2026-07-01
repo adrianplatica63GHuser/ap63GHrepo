@@ -378,6 +378,8 @@ export function naturalSnapshotFromFull(full: PersonFull): NaturalPersonSnapshot
       citizenshipId:          n?.citizenshipId          ?? null,
       // Slice #18.16.VL: Professional Type FK.
       physicalPersonTypeId:   n?.physicalPersonTypeId   ?? null,
+      // Slice #19.01: correspondence-same-as-home flag.
+      correspondenceSameAsHome: n?.correspondenceSameAsHome ?? false,
     },
     addresses: {
       HOME:           addressSnapshot(home),
@@ -394,6 +396,8 @@ const NAT_FIELD_KEYS: (keyof NaturalPersonSnapshot["natural"])[] = [
   "idValidUntil", "idCardNumber", "idMrzRaw", "citizenshipId",
   // Slice #18.16.VL:
   "physicalPersonTypeId",
+  // Slice #19.01:
+  "correspondenceSameAsHome",
 ];
 const ADDR_SNAP_KEYS: (keyof PersonAddressSnapshot)[] = [
   "streetLine", "postalCode", "locality", "county", "country", "notes",
@@ -514,6 +518,8 @@ export async function createNaturalPerson(
         citizenshipId: natFields.citizenshipId ?? null,
         // Slice #18.16.VL:
         physicalPersonTypeId: natFields.physicalPersonTypeId ?? null,
+        // Slice #19.01:
+        correspondenceSameAsHome: natFields.correspondenceSameAsHome ?? false,
       })
       .returning();
 

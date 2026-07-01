@@ -170,6 +170,13 @@ export const naturalPerson = pgTable(
     // Added in Slice #18.16.VL.
     physicalPersonTypeId: uuid("physical_person_type_id")
       .references(() => lookupPersonType.id, { onDelete: "set null" }),
+
+    // When true the UI hides the CORRESPONDENCE address block and no
+    // CORRESPONDENCE address row is stored — mirrors correspondenceSameAsHq
+    // on judicial_person. Added in Slice #19.01.
+    correspondenceSameAsHome: boolean("correspondence_same_as_home")
+      .notNull()
+      .default(false),
   },
   (t) => [
     // At least one of first_name / last_name must be set.

@@ -67,6 +67,8 @@ export const formSchema = z
     // Slice #18.16.VL: Professional Type FK (lookup_person_type); "" = unset.
     physicalPersonTypeId: z.string(),
     notes: z.string().max(300, "Notes is limited to 300 characters"),
+    // Slice #19.01: when true, CORRESPONDENCE block is hidden and not stored.
+    correspondenceSameAsHome: z.boolean(),
     addresses: z.object({
       HOME: addressBlockSchema,
       CORRESPONDENCE: addressBlockSchema,
@@ -88,8 +90,11 @@ export const formSchema = z
       path: ["addresses", "HOME", "country"],
     },
   )
+  // Correspondence address only needs validation when not hidden by the checkbox
   .refine(
-    (d) => addressBlockHasCountryWhenNeeded(d.addresses.CORRESPONDENCE),
+    (d) =>
+      d.correspondenceSameAsHome ||
+      addressBlockHasCountryWhenNeeded(d.addresses.CORRESPONDENCE),
     {
       message: "Country is required for the Correspondence address",
       path: ["addresses", "CORRESPONDENCE", "country"],
@@ -146,6 +151,7 @@ export const emptyFormValues: FormValues = {
   citizenshipId: "",
   physicalPersonTypeId: "",
   notes: "",
+  correspondenceSameAsHome: true,
   addresses: {
     HOME: { ...emptyAddressBlock },
     CORRESPONDENCE: { ...emptyAddressBlock },
@@ -180,6 +186,8 @@ type NaturalRow = {
   citizenshipId: string | null;
   // Slice #18.16.VL:
   physicalPersonTypeId: string | null;
+  // Slice #19.01:
+  correspondenceSameAsHome: boolean;
 };
 
 type AddressRow = {
@@ -196,6 +204,7 @@ export function fromApiPayload(input: {
   natural: NaturalRow | null;
   addresses: AddressRow[];
   notes: string | null;
+  correspondenceSameAsHome?: boolean;
 }): FormValues {
   const n = input.natural;
 
@@ -226,6 +235,7 @@ export function fromApiPayload(input: {
     citizenshipId: n?.citizenshipId ?? "",
     physicalPersonTypeId: n?.physicalPersonTypeId ?? "",
     notes: input.notes ?? "",
+    correspondenceSameAsHome: input.correspondenceSameAsHome ?? n?.correspondenceSameAsHome ?? false,
     addresses: {
       HOME: home
         ? {
@@ -281,9 +291,15 @@ export function toApiPayload(
   values: FormValues,
 ): NaturalPersonCreate & NaturalPersonUpdate {
   const addresses: NaturalPersonCreate["addresses"] = [];
-  for (const kind of ADDRESS_KINDS) {
-    const a = blockToAddress(kind, values.addresses[kind]);
-    if (a) addresses.push(a);
+
+  // Always try to persist the HOME address.
+  const homeAddr = blockToAddress("HOME", values.addresses.HOME);
+  if (homeAddr) addresses.push(homeAddr);
+
+  // Only persist CORRESPONDENCE when the "same as home" checkbox is NOT checked.
+  if (!values.correspondenceSameAsHome) {
+    const corrAddr = blockToAddress("CORRESPONDENCE", values.addresses.CORRESPONDENCE);
+    if (corrAddr) addresses.push(corrAddr);
   }
 
   return {
@@ -312,6 +328,8 @@ export function toApiPayload(
     // Slice #18.16.VL:
     physicalPersonTypeId: blank(values.physicalPersonTypeId),
     notes: blank(values.notes),
+    // Slice #19.01:
+    correspondenceSameAsHome: values.correspondenceSameAsHome,
     addresses,
   };
 }
@@ -327,9 +345,9 @@ export function toApiPayload(
 // unit-test directly.
 // ===========================================================================
 
-// Top-level form field names that participate in the diff (all of FormValues
-// except the nested `addresses`). Used both for highlights and edit-dirty.
-const FORM_TOP_KEYS = [
+// String-valued form field names (all top-level fields except the boolean
+// correspondenceSameAsHome and the nested addresses).
+const NAT_STRING_KEYS = [
   "firstName", "lastName", "nickname", "cnp", "idDocumentType",
   "idDocumentNumber", "gender", "dateOfBirth", "personalPhone1",
   "personalPhone2", "workPhone", "personalEmail1", "personalEmail2",
@@ -338,26 +356,56 @@ const FORM_TOP_KEYS = [
   // Slice #18.16.VL:
   "physicalPersonTypeId",
   "notes",
-] as const satisfies readonly (keyof Omit<FormValues, "addresses">)[];
+] as const satisfies readonly (keyof Omit<FormValues, "addresses" | "correspondenceSameAsHome">)[];
+
+// Full diff key set — string fields plus the same-as-home flag (stringified
+// to "true"/"false" so it diffs uniformly). Mirrors JUD_DIFF_KEYS.
+const NAT_DIFF_KEYS = [...NAT_STRING_KEYS, "correspondenceSameAsHome"] as const satisfies readonly (keyof Omit<FormValues, "addresses">)[];
 
 const ADDR_KEYS = [
   "streetLine", "postalCode", "locality", "county", "country", "notes",
 ] as const satisfies readonly (keyof PersonAddressSnapshot)[];
 
 export type NaturalFieldHighlights = {
-  /** Keyed by top-level form field name (incl. notes). */
-  fields: Partial<Record<(typeof FORM_TOP_KEYS)[number], HighlightColor>>;
+  /** Keyed by form field name (incl. notes and correspondenceSameAsHome). */
+  fields: Partial<Record<(typeof NAT_DIFF_KEYS)[number], HighlightColor>>;
   addresses: {
     HOME:           Partial<Record<keyof PersonAddressSnapshot, HighlightColor>>;
     CORRESPONDENCE: Partial<Record<keyof PersonAddressSnapshot, HighlightColor>>;
   };
 };
 
-/** Flatten a snapshot's own fields (+ notes) into a flat string map. */
+/** Flatten a snapshot's own fields (+ notes + same-as-home flag) into a string map. */
 function snapshotFieldMap(
   snap: NaturalPersonSnapshot,
-): Record<(typeof FORM_TOP_KEYS)[number], string | null> {
-  return { ...snap.natural, notes: snap.notes };
+): Record<(typeof NAT_DIFF_KEYS)[number], string | null> {
+  return {
+    firstName:          snap.natural.firstName,
+    lastName:           snap.natural.lastName,
+    nickname:           snap.natural.nickname,
+    cnp:                snap.natural.cnp,
+    idDocumentType:     snap.natural.idDocumentType,
+    idDocumentNumber:   snap.natural.idDocumentNumber,
+    gender:             snap.natural.gender,
+    dateOfBirth:        snap.natural.dateOfBirth,
+    personalPhone1:     snap.natural.personalPhone1,
+    personalPhone2:     snap.natural.personalPhone2,
+    workPhone:          snap.natural.workPhone,
+    personalEmail1:     snap.natural.personalEmail1,
+    personalEmail2:     snap.natural.personalEmail2,
+    workEmail:          snap.natural.workEmail,
+    placeOfBirth:       snap.natural.placeOfBirth,
+    idIssuingAuthority: snap.natural.idIssuingAuthority,
+    idValidFrom:        snap.natural.idValidFrom,
+    idValidUntil:       snap.natural.idValidUntil,
+    idCardNumber:       snap.natural.idCardNumber,
+    idMrzRaw:           snap.natural.idMrzRaw,
+    citizenshipId:      snap.natural.citizenshipId,
+    physicalPersonTypeId: snap.natural.physicalPersonTypeId,
+    notes:              snap.notes,
+    // Boolean → stringified so diffFieldMap can compare uniformly.
+    correspondenceSameAsHome: snap.natural.correspondenceSameAsHome ? "true" : "false",
+  };
 }
 
 /** An address block snapshot → flat string map (all-null when the block is absent). */
@@ -387,6 +435,7 @@ export function snapshotToFormValues(snap: NaturalPersonSnapshot): FormValues {
     natural: snap.natural as unknown as NaturalRow,
     addresses,
     notes: snap.notes,
+    correspondenceSameAsHome: snap.natural.correspondenceSameAsHome,
   });
 }
 
@@ -399,7 +448,7 @@ export function computeFieldHighlights(
     fields: diffFieldMap(
       prev ? snapshotFieldMap(prev) : null,
       snapshotFieldMap(curr),
-      FORM_TOP_KEYS,
+      NAT_DIFF_KEYS,
     ),
     addresses: {
       HOME: diffFieldMap(
@@ -430,9 +479,10 @@ export function versionLabelColor(
  *  by edit mode to detect divergence from the loaded baseline, independent of
  *  RHF's reset-sensitive `isDirty`. */
 export function formValuesEqual(a: FormValues, b: FormValues): boolean {
-  for (const k of FORM_TOP_KEYS) {
+  for (const k of NAT_STRING_KEYS) {
     if (normVal(a[k]) !== normVal(b[k])) return false;
   }
+  if (a.correspondenceSameAsHome !== b.correspondenceSameAsHome) return false;
   for (const kind of ["HOME", "CORRESPONDENCE"] as const) {
     for (const k of ADDR_KEYS) {
       if (normVal(a.addresses[kind][k]) !== normVal(b.addresses[kind][k])) return false;

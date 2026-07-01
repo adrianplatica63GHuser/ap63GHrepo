@@ -140,9 +140,9 @@
       "empty": "—"
     },
     "address": {
-      "streetLine": "Street, No., Block, Floor, Apt",
+      "streetLine": "Street Address",
       "postalCode": "Postal Code",
-      "locality": "City / Locality",
+      "locality": "Locality",
       "county": "County / Sector",
       "country": "Country",
       "notes": "Notes"
@@ -361,9 +361,9 @@
     "groupsFilterUngrouped": "Not in a group"
   },
   "address": {
-    "streetLine": "Street, No., Block, Floor, Apt",
+    "streetLine": "Street Address",
     "postalCode": "Postal Code",
-    "locality": "City / Locality / Village",
+    "locality": "Locality",
     "county": "County / Sector",
     "country": "Country",
     "notes": "Notes"
@@ -543,22 +543,24 @@
       "idDocumentNumber": "ID Number",
       "gender": "Gender",
       "dateOfBirth": "Date of Birth",
-      "personalPhone1": "Personal Phone 1",
-      "personalPhone2": "Personal Phone 2",
+      "personalPhone1": "Pers Phone 1",
+      "personalPhone2": "Pers Phone 2",
       "workPhone": "Work Phone",
-      "personalEmail1": "Personal Email 1",
-      "personalEmail2": "Personal Email 2",
+      "personalEmail1": "Pers Email 1",
+      "personalEmail2": "Pers Email 2",
       "workEmail": "Work Email",
       "citizenship": "Citizenship",
       "physicalPersonTypeId": "Professional Type",
       "placeOfBirth": "Place of Birth",
-      "idIssuingAuthority": "ID Issuing Authority",
+      "idIssuingAuthority": "ID Issuer",
+      "age": "Age",
       "idCardNumber": "ID Card Number",
       "idValidFrom": "ID Valid From",
       "idValidUntil": "ID Valid Until",
       "idMrzRaw": "MRZ (raw)",
       "idLink": "Linked ID Card",
-      "notes": "Notes"
+      "notes": "Notes",
+      "correspondenceSameAsHome": "Correspondence address same as home address"
     },
     "options": {
       "idDoc": {

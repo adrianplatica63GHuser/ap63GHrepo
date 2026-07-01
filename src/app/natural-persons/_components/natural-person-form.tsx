@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
+  Controller,
   type FieldPath,
   type UseFormRegister,
   useForm,
@@ -19,6 +20,7 @@ import {
   type VersionNavView,
 } from "@/components/version-nav-controls";
 import { FieldPulseContext, usePulseRing } from "@/components/versioning/field-pulse";
+import { highlightRingClass } from "@/lib/versioning/highlight-ring";
 import type { HighlightColor } from "@/lib/versioning/field-diff";
 import type { NaturalPersonSnapshot } from "@/lib/persons/validation";
 import {
@@ -34,6 +36,18 @@ import {
 } from "./form-schema";
 
 type IdCardLink = { id: string; code: string } | null;
+
+/** Compute age in whole years from an ISO date string (YYYY-MM-DD). */
+function calculateAge(dob: string): number | null {
+  if (!dob) return null;
+  const birth = new Date(dob);
+  if (isNaN(birth.getTime())) return null;
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+  return age >= 0 ? age : null;
+}
 
 type Props = {
   /** "create" — POST /api/people; "edit" — PATCH /api/people/[personId]; "view" — read-only display */
@@ -136,6 +150,13 @@ export function NaturalPersonForm({
   // form.watch() is intentionally not memoizable; this is the documented usage.
   // eslint-disable-next-line react-hooks/incompatible-library
   const watchedValues = form.watch();
+
+  // Derived display values (recalculate on every render since watchedValues is live).
+  const calculatedAge = calculateAge(watchedValues.dateOfBirth);
+  const idValidUntilExpired =
+    watchedValues.idValidUntil
+      ? new Date(watchedValues.idValidUntil) < new Date()
+      : false;
 
   // --- Version history (Slice #18.05) ------------------------------------
   const versionsQuery = useQuery({
@@ -441,12 +462,17 @@ export function NaturalPersonForm({
 
       {/* Identity — core biographical data */}
       <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
+        <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
           {t("sections.identity")}
+          {mode !== "create" && personCode && (
+            <span className="font-mono text-xs font-normal normal-case text-fade dark:text-zinc-500">
+              {personCode}
+            </span>
+          )}
         </h2>
         <div className="flex flex-col gap-2">
-          {/* Row 1: Last Name | First Name */}
-          <div className="grid grid-cols-2 gap-2">
+          {/* Row 1 (3-col): Last Name | First Name | Nickname */}
+          <div className="grid grid-cols-3 gap-2">
             <Field
               label={t("fields.lastName")}
               name="lastName"
@@ -461,12 +487,20 @@ export function NaturalPersonForm({
               error={errors.firstName?.message}
               highlight={displayHighlights?.fields.firstName}
             />
+            <Field
+              label={t("fields.nickname")}
+              name="nickname"
+              register={register}
+              error={errors.nickname?.message}
+              highlight={displayHighlights?.fields.nickname}
+            />
           </div>
-          {/* Row 2: Code (edit/view) | CNP */}
-          <div className="grid grid-cols-2 gap-2">
-            {mode !== "create" && personCode && (
-              <ReadOnlyField label={t("fields.code")} value={personCode} />
-            )}
+          {/* Row 2 (3-col): Age (calc) | CNP | Professional Type */}
+          <div className="grid grid-cols-3 gap-2">
+            <ReadOnlyField
+              label={t("fields.age")}
+              value={calculatedAge !== null ? String(calculatedAge) : "—"}
+            />
             <Field
               label={t("fields.cnp")}
               name="cnp"
@@ -474,9 +508,17 @@ export function NaturalPersonForm({
               error={errors.cnp?.message}
               highlight={displayHighlights?.fields.cnp}
             />
+            <SelectField
+              label={t("fields.physicalPersonTypeId")}
+              name="physicalPersonTypeId"
+              register={register}
+              error={errors.physicalPersonTypeId?.message}
+              options={[{ value: "", label: "—" }, ...personTypeOptions]}
+              highlight={displayHighlights?.fields.physicalPersonTypeId}
+            />
           </div>
-          {/* Row 3: Gender | Date of Birth */}
-          <div className="grid grid-cols-2 gap-2">
+          {/* Row 3 (3-col): Gender | Place of Birth | Date of Birth */}
+          <div className="grid grid-cols-3 gap-2">
             <SelectField
               label={t("fields.gender")}
               name="gender"
@@ -490,6 +532,13 @@ export function NaturalPersonForm({
               highlight={displayHighlights?.fields.gender}
             />
             <Field
+              label={t("fields.placeOfBirth")}
+              name="placeOfBirth"
+              register={register}
+              error={errors.placeOfBirth?.message}
+              highlight={displayHighlights?.fields.placeOfBirth}
+            />
+            <Field
               label={t("fields.dateOfBirth")}
               name="dateOfBirth"
               type="date"
@@ -498,41 +547,14 @@ export function NaturalPersonForm({
               highlight={displayHighlights?.fields.dateOfBirth}
             />
           </div>
-          {/* Row 4: Place of Birth | Professional Type */}
-          <div className="grid grid-cols-2 gap-2">
-            <Field
-              label={t("fields.placeOfBirth")}
-              name="placeOfBirth"
-              register={register}
-              error={errors.placeOfBirth?.message}
-              highlight={displayHighlights?.fields.placeOfBirth}
-            />
-            <SelectField
-              label={t("fields.physicalPersonTypeId")}
-              name="physicalPersonTypeId"
-              register={register}
-              error={errors.physicalPersonTypeId?.message}
-              options={[{ value: "", label: "—" }, ...personTypeOptions]}
-              highlight={displayHighlights?.fields.physicalPersonTypeId}
-            />
-          </div>
-          {/* Row 5: Nickname | Notes */}
-          <div className="grid grid-cols-2 gap-2">
-            <Field
-              label={t("fields.nickname")}
-              name="nickname"
-              register={register}
-              error={errors.nickname?.message}
-              highlight={displayHighlights?.fields.nickname}
-            />
-            <Field
-              label={t("fields.notes")}
-              name="notes"
-              register={register}
-              error={errors.notes?.message}
-              highlight={displayHighlights?.fields.notes}
-            />
-          </div>
+          {/* Row 4: Notes — full width */}
+          <Field
+            label={t("fields.notes")}
+            name="notes"
+            register={register}
+            error={errors.notes?.message}
+            highlight={displayHighlights?.fields.notes}
+          />
         </div>
       </section>
 
@@ -542,8 +564,8 @@ export function NaturalPersonForm({
           {t("sections.contact")}
         </h2>
         <div className="flex flex-col gap-2">
-          {/* Row 1: Personal Phone 1 | Personal Email 1 */}
-          <div className="grid grid-cols-2 gap-2">
+          {/* Row 1 (3-col): Pers Phone 1 | Pers Email 1 | Pers Phone 2 */}
+          <div className="grid grid-cols-3 gap-2">
             <Field
               label={t("fields.personalPhone1")}
               name="personalPhone1"
@@ -558,9 +580,6 @@ export function NaturalPersonForm({
               error={errors.personalEmail1?.message}
               highlight={displayHighlights?.fields.personalEmail1}
             />
-          </div>
-          {/* Row 2: Personal Phone 2 | Personal Email 2 */}
-          <div className="grid grid-cols-2 gap-2">
             <Field
               label={t("fields.personalPhone2")}
               name="personalPhone2"
@@ -568,6 +587,9 @@ export function NaturalPersonForm({
               error={errors.personalPhone2?.message}
               highlight={displayHighlights?.fields.personalPhone2}
             />
+          </div>
+          {/* Row 2 (3-col): Pers Email 2 | Work Phone | Work Email */}
+          <div className="grid grid-cols-3 gap-2">
             <Field
               label={t("fields.personalEmail2")}
               name="personalEmail2"
@@ -575,9 +597,6 @@ export function NaturalPersonForm({
               error={errors.personalEmail2?.message}
               highlight={displayHighlights?.fields.personalEmail2}
             />
-          </div>
-          {/* Row 3: Work Phone | Work Email */}
-          <div className="grid grid-cols-2 gap-2">
             <Field
               label={t("fields.workPhone")}
               name="workPhone"
@@ -602,8 +621,8 @@ export function NaturalPersonForm({
           {t("sections.idCard")}
         </h2>
         <div className="flex flex-col gap-2">
-          {/* Row 1: ID Doc Type | ID Doc Number */}
-          <div className="grid grid-cols-2 gap-2">
+          {/* Row 1 (3-col): ID Doc Type | ID Doc Number | Citizenship */}
+          <div className="grid grid-cols-3 gap-2">
             <SelectField
               label={t("fields.idDocumentType")}
               name="idDocumentType"
@@ -623,9 +642,6 @@ export function NaturalPersonForm({
               error={errors.idDocumentNumber?.message}
               highlight={displayHighlights?.fields.idDocumentNumber}
             />
-          </div>
-          {/* Row 2: Citizenship | Issuing Authority */}
-          <div className="grid grid-cols-2 gap-2">
             <SelectField
               label={t("fields.citizenship")}
               name="citizenshipId"
@@ -634,6 +650,9 @@ export function NaturalPersonForm({
               options={[{ value: "", label: "—" }, ...citizenshipOptions]}
               highlight={displayHighlights?.fields.citizenshipId}
             />
+          </div>
+          {/* Row 2 (3-col): ID Issuer | ID Card Number | (empty) */}
+          <div className="grid grid-cols-3 gap-2">
             <Field
               label={t("fields.idIssuingAuthority")}
               name="idIssuingAuthority"
@@ -641,9 +660,6 @@ export function NaturalPersonForm({
               error={errors.idIssuingAuthority?.message}
               highlight={displayHighlights?.fields.idIssuingAuthority}
             />
-          </div>
-          {/* Row 3: ID Card Number (half-width) */}
-          <div className="grid grid-cols-2 gap-2">
             <Field
               label={t("fields.idCardNumber")}
               name="idCardNumber"
@@ -652,8 +668,8 @@ export function NaturalPersonForm({
               highlight={displayHighlights?.fields.idCardNumber}
             />
           </div>
-          {/* Row 4: Valid From | Valid Until */}
-          <div className="grid grid-cols-2 gap-2">
+          {/* Row 3 (3-col): Valid From | Valid Until (red when expired) | (empty) */}
+          <div className="grid grid-cols-3 gap-2">
             <Field
               label={t("fields.idValidFrom")}
               name="idValidFrom"
@@ -669,8 +685,10 @@ export function NaturalPersonForm({
               register={register}
               error={errors.idValidUntil?.message}
               highlight={displayHighlights?.fields.idValidUntil}
+              expired={idValidUntilExpired}
             />
           </div>
+          {/* MRZ Raw — full width */}
           <TextAreaField
             label={t("fields.idMrzRaw")}
             name="idMrzRaw"
@@ -680,7 +698,7 @@ export function NaturalPersonForm({
           />
           {mode !== "create" && (
             <div className="flex items-center gap-2 text-sm">
-              <span className="w-36 shrink-0 font-medium text-ink dark:text-zinc-300">
+              <span className="w-[5.5rem] shrink-0 font-medium text-ink dark:text-zinc-300">
                 {t("fields.idLink")}
               </span>
               {linkedIdCard ? (
@@ -706,13 +724,52 @@ export function NaturalPersonForm({
         highlights={displayHighlights?.addresses.HOME}
       />
 
-      <AddressBlock<FormValues>
-        title={t("sections.correspondenceAddress")}
-        prefix="addresses.CORRESPONDENCE"
-        register={register}
-        errors={errors.addresses?.CORRESPONDENCE}
-        highlights={displayHighlights?.addresses.CORRESPONDENCE}
-      />
+      {/* ── Same-as-home checkbox — between the two address blocks ── */}
+      <div className="flex items-center gap-2 px-1">
+        <Controller
+          control={form.control}
+          name="correspondenceSameAsHome"
+          render={({ field }) => (
+            <label
+              className={[
+                "flex cursor-pointer items-center gap-2 rounded-md text-sm select-none",
+                watchedValues.correspondenceSameAsHome
+                  ? "font-bold text-ink dark:text-zinc-200"
+                  : "font-normal text-fade dark:text-zinc-400",
+                displayHighlights?.fields.correspondenceSameAsHome
+                  ? "px-1 " + highlightRingClass(displayHighlights.fields.correspondenceSameAsHome, pulsing)
+                  : "",
+              ].join(" ")}
+            >
+              <input
+                type="checkbox"
+                checked={field.value}
+                onChange={(e) => {
+                  field.onChange(e.target.checked);
+                  if (e.target.checked) {
+                    const home = form.getValues("addresses.HOME");
+                    form.setValue("addresses.CORRESPONDENCE", { ...home }, { shouldDirty: true });
+                  }
+                }}
+                className="accent-cta"
+                aria-label={t("fields.correspondenceSameAsHome")}
+              />
+              {t("fields.correspondenceSameAsHome")}
+            </label>
+          )}
+        />
+      </div>
+
+      {/* CORRESPONDENCE address — only when not same as home */}
+      {!watchedValues.correspondenceSameAsHome && (
+        <AddressBlock<FormValues>
+          title={t("sections.correspondenceAddress")}
+          prefix="addresses.CORRESPONDENCE"
+          register={register}
+          errors={errors.addresses?.CORRESPONDENCE}
+          highlights={displayHighlights?.addresses.CORRESPONDENCE}
+        />
+      )}
 
       </fieldset>{/* end disabled fieldset */}
 
@@ -806,13 +863,15 @@ type FieldProps = {
   error?: string;
   hint?: string;
   highlight?: HighlightColor;
+  /** Adds a red border independently of validation — used for expired dates. */
+  expired?: boolean;
 };
 
-function Field({ label, name, type = "text", register, error, hint, highlight }: FieldProps) {
+function Field({ label, name, type = "text", register, error, hint, highlight, expired }: FieldProps) {
   const ring = usePulseRing(highlight);
   return (
     <label className="flex items-center gap-2 text-sm">
-      <span className="w-36 shrink-0 font-medium text-ink dark:text-zinc-300">{label}</span>
+      <span className="w-[5.5rem] shrink-0 font-medium text-ink dark:text-zinc-300">{label}</span>
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <input
           type={type}
@@ -820,7 +879,7 @@ function Field({ label, name, type = "text", register, error, hint, highlight }:
           aria-invalid={error ? true : undefined}
           className={[
             "w-full rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none disabled:bg-canvas disabled:text-fade disabled:cursor-default dark:bg-zinc-950 dark:disabled:bg-zinc-800",
-            error
+            error || expired
               ? "border-red-500 focus:border-red-600"
               : "border-wire focus:border-focus dark:border-zinc-700",
             ring,
@@ -848,7 +907,7 @@ function TextAreaField({
   const ring = usePulseRing(highlight);
   return (
     <label className="flex items-start gap-2 text-sm">
-      <span className="w-36 shrink-0 pt-1 font-medium text-ink dark:text-zinc-300">{label}</span>
+      <span className="w-[5.5rem] shrink-0 pt-1 font-medium text-ink dark:text-zinc-300">{label}</span>
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <textarea
           {...register(name)}
@@ -882,7 +941,7 @@ function SelectField({
   const ring = usePulseRing(highlight);
   return (
     <label className="flex items-center gap-2 text-sm">
-      <span className="w-36 shrink-0 font-medium text-ink dark:text-zinc-300">{label}</span>
+      <span className="w-[5.5rem] shrink-0 font-medium text-ink dark:text-zinc-300">{label}</span>
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <select
           {...register(name)}
@@ -912,7 +971,7 @@ function SelectField({
 function ReadOnlyField({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center gap-2 text-sm">
-      <span className="w-36 shrink-0 font-medium text-ink dark:text-zinc-300">{label}</span>
+      <span className="w-[5.5rem] shrink-0 font-medium text-ink dark:text-zinc-300">{label}</span>
       <div className="flex-1 rounded-md border border-wire bg-canvas px-2 py-1 font-mono text-sm text-ink dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-300">
         {value}
       </div>

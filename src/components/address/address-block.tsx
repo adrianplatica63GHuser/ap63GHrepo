@@ -180,7 +180,7 @@ function Field<TFormValues extends FieldValues>({
   const ring = usePulseRing(highlight);
   return (
     <label className="flex items-center gap-2 text-sm">
-      <span className="w-36 shrink-0 font-medium text-ink dark:text-zinc-300">
+      <span className="w-[5.5rem] shrink-0 font-medium text-ink dark:text-zinc-300">
         {label}
         {warn && <span className="ml-1 text-amber-600 dark:text-amber-400">⚠</span>}
       </span>

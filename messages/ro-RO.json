@@ -140,7 +140,7 @@
       "empty": "—"
     },
     "address": {
-      "streetLine": "Stradă, Nr., Bloc, Etaj, Ap.",
+      "streetLine": "Stradă, Nr., Ap",
       "postalCode": "Cod poștal",
       "locality": "Oraș / Localitate",
       "county": "Județ / Sector",
@@ -361,9 +361,9 @@
     "groupsFilterUngrouped": "Fara grup"
   },
   "address": {
-    "streetLine": "Stradă, Nr., Bloc, Etaj, Ap.",
+    "streetLine": "Stradă, Nr., Ap",
     "postalCode": "Cod poștal",
-    "locality": "Oraș / Localitate / Sat",
+    "locality": "Localitate",
     "county": "Județ / Sector",
     "country": "Țară",
     "notes": "Note"
@@ -543,22 +543,24 @@
       "idDocumentNumber": "Nr. document",
       "gender": "Gen",
       "dateOfBirth": "Data nașterii",
-      "personalPhone1": "Telefon personal 1",
-      "personalPhone2": "Telefon personal 2",
+      "personalPhone1": "Telefon Pers 1",
+      "personalPhone2": "Telefon Pers 2",
       "workPhone": "Telefon serviciu",
-      "personalEmail1": "Email personal 1",
-      "personalEmail2": "Email personal 2",
+      "personalEmail1": "Email Pers 1",
+      "personalEmail2": "Email Pers 2",
       "workEmail": "Email serviciu",
       "citizenship": "Cetățenie",
       "physicalPersonTypeId": "Tip Profesional",
       "placeOfBirth": "Locul nașterii",
       "idIssuingAuthority": "Emisă de",
+      "age": "Vârstă",
       "idCardNumber": "Nr. card",
       "idValidFrom": "Valabil de la",
       "idValidUntil": "Valabil până la",
       "idMrzRaw": "MRZ (text brut)",
       "idLink": "Carte de identitate asociată",
-      "notes": "Note"
+      "notes": "Note",
+      "correspondenceSameAsHome": "Adresa de corespondență aceeași cu domiciliul"
     },
     "options": {
       "idDoc": {

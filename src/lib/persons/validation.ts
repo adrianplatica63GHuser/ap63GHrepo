@@ -173,6 +173,8 @@ export type NaturalPersonSnapshotFields = {
   citizenshipId:          string | null;
   // Slice #18.16.VL: Professional Type FK (lookup_person_type).
   physicalPersonTypeId:   string | null;
+  // Slice #19.01: mirrors correspondenceSameAsHq on judicial_person.
+  correspondenceSameAsHome: boolean;
 };
 
 export type NaturalPersonSnapshot = {
