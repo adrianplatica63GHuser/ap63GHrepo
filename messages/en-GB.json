@@ -588,7 +588,8 @@
       "countryRequiredIfAddressFilled": "Required if any other address field is filled",
       "idLinkNone": "No ID card document linked",
       "idExpired": "EXPIRED",
-      "idExpiringSoon": "EXPIRES IN {n} DAYS"
+      "idExpiringSoon": "EXPIRES IN {n} DAYS",
+      "idValid": "VALID"
     },
     "tabs": {
       "details": "Details",

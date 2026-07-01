@@ -676,7 +676,7 @@ export function NaturalPersonForm({
               highlight={displayHighlights?.fields.idCardNumber}
             />
           </div>
-          {/* Row 3 (3-col): Valid From | Valid Until (red when expired) | (empty) */}
+          {/* Row 3 (3-col): Valid From | Until (coloured border) | status annotation */}
           <div className="grid grid-cols-3 gap-2">
             <Field
               label={t("fields.idValidFrom")}
@@ -695,15 +695,25 @@ export function NaturalPersonForm({
               highlight={displayHighlights?.fields.idValidUntil}
               expired={idValidUntilExpired}
               expiringSoon={idValidUntilExpiringSoon}
-              annotation={
-                idValidUntilExpired
-                  ? t("hints.idExpired")
-                  : idValidUntilExpiringSoon && idValidUntilDaysLeft !== null
-                    ? t("hints.idExpiringSoon", { n: idValidUntilDaysLeft })
-                    : undefined
-              }
-              annotationColor={idValidUntilExpired ? "red" : "blue"}
             />
+            {/* Third cell: validity status label shown to the right of the Until field */}
+            <div className="flex items-center">
+              {idValidUntilExpired && (
+                <span className="text-xs font-bold uppercase text-red-600 dark:text-red-400">
+                  {t("hints.idExpired")}
+                </span>
+              )}
+              {!idValidUntilExpired && idValidUntilExpiringSoon && idValidUntilDaysLeft !== null && (
+                <span className="text-xs font-bold uppercase text-orange-600 dark:text-orange-400">
+                  {t("hints.idExpiringSoon", { n: idValidUntilDaysLeft })}
+                </span>
+              )}
+              {!idValidUntilExpired && !idValidUntilExpiringSoon && idValidUntilDate !== null && (
+                <span className="text-xs font-bold uppercase text-green-600 dark:text-green-400">
+                  {t("hints.idValid")}
+                </span>
+              )}
+            </div>
           </div>
           {/* MRZ Raw — full width */}
           <TextAreaField
@@ -882,15 +892,11 @@ type FieldProps = {
   highlight?: HighlightColor;
   /** Adds a red border — used for expired dates. */
   expired?: boolean;
-  /** Adds a blue border — used for dates expiring within 3 months. */
+  /** Adds an orange border — used for dates expiring within 3 months. */
   expiringSoon?: boolean;
-  /** Text shown to the right of the input (e.g. "EXPIRED"). */
-  annotation?: string;
-  /** Colour of the annotation text. */
-  annotationColor?: "red" | "blue";
 };
 
-function Field({ label, name, type = "text", register, error, hint, highlight, expired, expiringSoon, annotation, annotationColor }: FieldProps) {
+function Field({ label, name, type = "text", register, error, hint, highlight, expired, expiringSoon }: FieldProps) {
   const ring = usePulseRing(highlight);
   return (
     <label className="flex items-center gap-2 text-sm">
@@ -905,23 +911,11 @@ function Field({ label, name, type = "text", register, error, hint, highlight, e
             error || expired
               ? "border-red-500 focus:border-red-600"
               : expiringSoon
-                ? "border-blue-500 focus:border-blue-600"
+                ? "border-orange-500 focus:border-orange-600"
                 : "border-wire focus:border-focus dark:border-zinc-700",
             ring,
           ].join(" ")}
         />
-        {annotation && (
-          <span
-            className={[
-              "text-xs font-bold uppercase",
-              annotationColor === "red"
-                ? "text-red-600 dark:text-red-400"
-                : "text-blue-600 dark:text-blue-400",
-            ].join(" ")}
-          >
-            {annotation}
-          </span>
-        )}
         {hint && !error && (
           <span className="text-xs text-fade dark:text-zinc-400">{hint}</span>
         )}

@@ -588,7 +588,8 @@
       "countryRequiredIfAddressFilled": "Necesar dacă orice alt câmp al adresei este completat",
       "idLinkNone": "Niciun document de carte de identitate asociat",
       "idExpired": "EXPIRAT",
-      "idExpiringSoon": "EXPIRĂ ÎN {n} ZILE"
+      "idExpiringSoon": "EXPIRĂ ÎN {n} ZILE",
+      "idValid": "VALABIL"
     },
     "tabs": {
       "details": "Detalii",
