@@ -812,6 +812,17 @@ export const document = pgTable("document", {
   // partiesBText: Cumparatori / Chiriasi / Donatari / Mostenitori
   partiesBText:  text("parties_b_text"),
 
+  // ── Slice #19.03: type-specific fields ────────────────────────────────
+  // subject — brief subject / dispozitie; shown on every document type.
+  subject:       text("subject"),
+  // date_valid_until — validity/expiry date (permits, decisions, etc.)
+  dateValidUntil: date("date_valid_until", { mode: "string" }),
+  // surveyor_id — FK to the person (natural or judicial) who performed
+  // the cadastral work. ON DELETE SET NULL so removing the person just
+  // clears the tag rather than blocking the delete.
+  surveyorId: uuid("surveyor_id")
+    .references(() => person.id, { onDelete: "set null" }),
+
   // ── Always present ─────────────────────────────────────────────────────
   notes: text("notes"), // Observatii
 

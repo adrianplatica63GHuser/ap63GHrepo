@@ -28,6 +28,10 @@ export type TypeConfig = {
   showDateRange:    boolean;
   /** Show defunctText field (as "Defunct" or "Testator" based on type) */
   showDefunct:      boolean;
+  /** Show date_valid_until field (validity/expiry date for decisions, permits) */
+  showValidUntil:   boolean;
+  /** Show surveyor FK picker (for DOCUMENTATIE_CADASTRALA) */
+  showSurveyor:     boolean;
 
   /** Override labels for common fields (Romanian domain terms) */
   labels: {
@@ -50,6 +54,8 @@ const GENERIC: TypeConfig = {
   showParties:    false,
   showDateRange:  false,
   showDefunct:    false,
+  showValidUntil: false,
+  showSurveyor:   false,
   labels: {
     nrDocument:   "Nr. document",
     dateDocument: "Data autentificării",
@@ -69,6 +75,8 @@ const CONFIG: Record<string, TypeConfig> = {
     showParties:    false,
     showDateRange:  false,
     showDefunct:    true,
+    showValidUntil: false,
+    showSurveyor:   false,
     labels: {
       nrDocument:   "Nr. titlu proprietate",
       dateDocument: "Data eliberării",
@@ -83,6 +91,8 @@ const CONFIG: Record<string, TypeConfig> = {
     showParties:    true,
     showDateRange:  false,
     showDefunct:    true,
+    showValidUntil: false,
+    showSurveyor:   false,
     labels: {
       nrDocument:   "Nr. certificat de moștenitor",
       dateDocument: "Data eliberării",
@@ -98,6 +108,8 @@ const CONFIG: Record<string, TypeConfig> = {
     showParties:    true,
     showDateRange:  false,
     showDefunct:    false,
+    showValidUntil: false,
+    showSurveyor:   false,
     labels: {
       nrDocument:   "Nr. act autentic",
       dateDocument: "Data autentificării",
@@ -113,6 +125,8 @@ const CONFIG: Record<string, TypeConfig> = {
     showParties:    true,
     showDateRange:  true,
     showDefunct:    false,
+    showValidUntil: false,
+    showSurveyor:   false,
     labels: {
       nrDocument:   "Nr. contract de închiriere",
       dateDocument: "Data autentificării",
@@ -128,6 +142,8 @@ const CONFIG: Record<string, TypeConfig> = {
     showParties:    true,
     showDateRange:  true,
     showDefunct:    false,
+    showValidUntil: false,
+    showSurveyor:   false,
     labels: {
       nrDocument:   "Nr. contract de arendă",
       dateDocument: "Data autentificării",
@@ -143,6 +159,8 @@ const CONFIG: Record<string, TypeConfig> = {
     showParties:    true,
     showDateRange:  false,
     showDefunct:    false,
+    showValidUntil: false,
+    showSurveyor:   false,
     labels: {
       nrDocument:   "Nr. act autentic donație",
       dateDocument: "Data autentificării",
@@ -158,11 +176,75 @@ const CONFIG: Record<string, TypeConfig> = {
     showParties:    false,
     showDateRange:  false,
     showDefunct:    true,
+    showValidUntil: false,
+    showSurveyor:   false,
     labels: {
       nrDocument:   "Nr. act autentic testament",
       dateDocument: "Data autentificării",
       institution:  "Notariat",
       defunctText:  "Testator",
+    },
+  },
+
+  // ── Slice #19.03: new type entries ──────────────────────────────────────
+
+  HOTARARE_JUDECATOREASCA: {
+    showTitlu:      false,
+    showMostenitor: false,
+    showParties:    false,
+    showDateRange:  false,
+    showDefunct:    false,
+    showValidUntil: true,
+    showSurveyor:   false,
+    labels: {
+      nrDocument:   "Nr. hotărâre",
+      dateDocument: "Data hotărârii",
+      institution:  "Instanță / Autoritate",
+    },
+  },
+
+  HOTARARE_ADMINISTRATIVA: {
+    showTitlu:      false,
+    showMostenitor: false,
+    showParties:    false,
+    showDateRange:  false,
+    showDefunct:    false,
+    showValidUntil: true,
+    showSurveyor:   false,
+    labels: {
+      nrDocument:   "Nr. hotărâre",
+      dateDocument: "Data emiterii",
+      institution:  "Autoritate emitentă",
+    },
+  },
+
+  DOCUMENTATIE_CADASTRALA: {
+    showTitlu:      false,
+    showMostenitor: false,
+    showParties:    false,
+    showDateRange:  false,
+    showDefunct:    false,
+    showValidUntil: false,
+    showSurveyor:   true,
+    labels: {
+      nrDocument:   "Nr. OCPI",
+      dateDocument: "Data înregistrării",
+      institution:  "OCPI / Autoritate",
+    },
+  },
+
+  AUTORIZATIE_CONSTRUIRE: {
+    showTitlu:      false,
+    showMostenitor: false,
+    showParties:    false,
+    showDateRange:  false,
+    showDefunct:    false,
+    showValidUntil: true,
+    showSurveyor:   false,
+    labels: {
+      nrDocument:   "Nr. autorizație",
+      dateDocument: "Data emiterii",
+      institution:  "Autoritate emitentă",
     },
   },
 };

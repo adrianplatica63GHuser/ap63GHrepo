@@ -49,6 +49,11 @@ const documentBase = z.object({
 
   // Always present
   notes: z.string().nullish(),
+
+  // Slice #19.03: type-specific fields
+  subject:        z.string().nullish(),
+  dateValidUntil: z.string().nullish(), // ISO date string "YYYY-MM-DD"
+  surveyorId:     z.string().uuid().nullish(),
 });
 
 // ---------------------------------------------------------------------------
@@ -128,4 +133,8 @@ export type DocumentSnapshot = {
   partiesAText:      string | null;
   partiesBText:      string | null;
   notes:             string | null;
+  // Slice #19.03
+  subject:           string | null;
+  dateValidUntil:    string | null;
+  surveyorId:        string | null;
 };

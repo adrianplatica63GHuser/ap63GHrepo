@@ -12,7 +12,7 @@
 
 import { asc, and, count, desc, eq, ilike, inArray, isNull, or, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { document, documentVersion, groupMember, groups, lookupDocumentType, principalObject } from "@/db/schema";
+import { document, documentVersion, groupMember, groups, lookupDocumentType, person, principalObject } from "@/db/schema";
 import type {
   DocumentCreate,
   DocumentListQuery,
@@ -166,6 +166,8 @@ const SNAPSHOT_KEYS: (keyof DocumentSnapshot)[] = [
   "nrDosarSuccesoral", "dataDecesului", "ultimulDomiciliu", "nrCertificatDeces",
   "dateStart", "dateEnd", "titularText", "defunctText", "partiesAText",
   "partiesBText", "notes",
+  // Slice #19.03
+  "subject", "dateValidUntil", "surveyorId",
 ];
 
 /** Build the canonical document snapshot from a freshly-fetched record. */
@@ -194,7 +196,50 @@ export function snapshotFromFull(full: DocumentFull): DocumentSnapshot {
     partiesAText:      full.partiesAText      ?? null,
     partiesBText:      full.partiesBText      ?? null,
     notes:             full.notes             ?? null,
+    // Slice #19.03
+    subject:           full.subject           ?? null,
+    dateValidUntil:    full.dateValidUntil     ?? null,
+    surveyorId:        full.surveyorId         ?? null,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Get by id — extended with surveyor display info (Slice #19.03)
+// ---------------------------------------------------------------------------
+
+export type DocumentWithSurveyor = DocumentFull & {
+  surveyorDisplayName: string | null;
+  surveyorPersonType:  "NATURAL" | "JUDICIAL" | null;
+};
+
+export async function getDocumentWithSurveyor(
+  id: string,
+): Promise<DocumentWithSurveyor | null> {
+  const rows = await db
+    .select()
+    .from(document)
+    .where(and(eq(document.id, id), isNull(document.deletedAt)))
+    .limit(1);
+
+  const doc = rows[0] ?? null;
+  if (!doc) return null;
+
+  let surveyorDisplayName: string | null = null;
+  let surveyorPersonType:  "NATURAL" | "JUDICIAL" | null = null;
+
+  if (doc.surveyorId) {
+    const pRows = await db
+      .select({ displayName: person.displayName, type: person.type })
+      .from(person)
+      .where(and(eq(person.id, doc.surveyorId), isNull(person.deletedAt)))
+      .limit(1);
+    if (pRows[0]) {
+      surveyorDisplayName = pRows[0].displayName;
+      surveyorPersonType  = pRows[0].type as "NATURAL" | "JUDICIAL";
+    }
+  }
+
+  return { ...doc, surveyorDisplayName, surveyorPersonType };
 }
 
 /**
@@ -318,6 +363,11 @@ export async function updateDocument(
 
     if (input.notes !== undefined) patch.notes = input.notes ?? null;
 
+    // Slice #19.03
+    if (input.subject        !== undefined) patch.subject        = input.subject        ?? null;
+    if (input.dateValidUntil !== undefined) patch.dateValidUntil = input.dateValidUntil ?? null;
+    if (input.surveyorId     !== undefined) patch.surveyorId     = input.surveyorId     ?? null;
+
     if (Object.keys(patch).length > 0) {
       await tx.update(document).set(patch).where(eq(document.id, id));
     }
@@ -407,6 +457,11 @@ function inputToValues(
     partiesBText: input.partiesBText ?? null,
 
     notes: input.notes ?? null,
+
+    // Slice #19.03
+    subject:        input.subject        ?? null,
+    dateValidUntil: input.dateValidUntil ?? null,
+    surveyorId:     input.surveyorId     ?? null,
   };
 }
 
