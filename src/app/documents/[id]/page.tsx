@@ -34,6 +34,4 @@ export default async function EditDocumentPage({ params, searchParams }: PagePar
           initialTab={initialTab}
         />
       </main>
-    </div>
-  );
-}
+  
