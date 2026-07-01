@@ -866,7 +866,9 @@
       "mostenitor": "Date succesorale",
       "parties": "Părți",
       "dateRange": "Perioadă contract",
-      "notes": "Observații"
+      "notes": "Observații",
+      "validUntil": "Valabilitate",
+      "surveyor": "Topograf / Cadastrist"
     },
     "fields": {
       "code": "Cod",
@@ -890,7 +892,35 @@
       "defunctText": "Defunct / Testator",
       "partiesAText": "Părți A",
       "partiesBText": "Părți B",
-      "notes": "Observații"
+      "notes": "Observații",
+      "subject": "Subiect",
+      "dateValidUntil": "Valabil până la",
+      "surveyor": "Topograf / Cadastrist"
+    },
+    "actions": {
+      "addSurveyor": "Selectați topograful",
+      "removeSurveyor": "Elimină"
+    },
+    "hints": {
+      "surveyorNotInSystem": "Dacă topograful nu se află în sistem, acesta trebuie introdus mai întâi ca persoană fizică sau juridică."
+    },
+    "surveyorPicker": {
+      "title": "Selectați Topograful",
+      "stepChooseType": "Ce tip de persoană este topograful?",
+      "btnNatural": "Persoană Fizică",
+      "btnJudicial": "Persoană Juridică",
+      "labelName": "Nume",
+      "labelCode": "Cod",
+      "namePlaceholder": "Nume…",
+      "codePlaceholder": "Cod…",
+      "colCode": "Cod",
+      "colName": "Nume",
+      "resultsEmpty": "Nicio persoană găsită",
+      "loading": "Se caută…",
+      "error": "Eroare la căutare",
+      "select": "Selectează",
+      "back": "Înapoi",
+      "cancel": "Anulează"
     },
     "buttons": {
       "save": "Salvează",

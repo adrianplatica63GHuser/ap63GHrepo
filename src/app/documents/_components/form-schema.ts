@@ -61,6 +61,15 @@ export const formSchema = z.object({
 
   // Always present
   notes: z.string(),
+
+  // Slice #19.03: type-specific fields
+  subject:        z.string(), // brief subject / dispozitie — shown for all types
+  dateValidUntil: z.string(), // "YYYY-MM-DD" or "" — validity/expiry date
+  surveyorId:     z.string(), // uuid or "" — persisted FK
+  // Display-only: populated from server JOIN on page load; not sent to API;
+  // not in DOC_FIELD_KEYS (so they don't drive edit-dirty or version diff).
+  surveyorName:       z.string(),
+  surveyorPersonType: z.string(), // "NATURAL" | "JUDICIAL" | ""
 });
 
 export type FormValues = z.infer<typeof formSchema>;
@@ -91,6 +100,11 @@ export const emptyFormValues: FormValues = {
   partiesAText: "",
   partiesBText: "",
   notes: "",
+  subject: "",
+  dateValidUntil: "",
+  surveyorId: "",
+  surveyorName: "",
+  surveyorPersonType: "",
 };
 
 // ---------------------------------------------------------------------------
@@ -120,6 +134,13 @@ type ApiRecord = {
   partiesAText: string | null;
   partiesBText: string | null;
   notes:        string | null;
+  // Slice #19.03
+  subject:             string | null;
+  dateValidUntil:      string | null;
+  surveyorId:          string | null;
+  // Display-only — populated by getDocumentWithSurveyor JOIN:
+  surveyorDisplayName: string | null;
+  surveyorPersonType:  "NATURAL" | "JUDICIAL" | null;
 };
 
 export function fromApiRecord(r: ApiRecord): FormValues {
@@ -145,6 +166,11 @@ export function fromApiRecord(r: ApiRecord): FormValues {
     partiesAText: r.partiesAText ?? "",
     partiesBText: r.partiesBText ?? "",
     notes: r.notes ?? "",
+    subject:            r.subject            ?? "",
+    dateValidUntil:     r.dateValidUntil      ?? "",
+    surveyorId:         r.surveyorId          ?? "",
+    surveyorName:       r.surveyorDisplayName ?? "",
+    surveyorPersonType: r.surveyorPersonType  ?? "",
   };
 }
 
@@ -184,6 +210,11 @@ export function toApiPayload(values: FormValues): Record<string, unknown> {
     partiesAText: str(values.partiesAText),
     partiesBText: str(values.partiesBText),
     notes: str(values.notes),
+    // Slice #19.03
+    subject:        str(values.subject),
+    dateValidUntil: dateStr(values.dateValidUntil),
+    surveyorId:     uuid(values.surveyorId),
+    // surveyorName and surveyorPersonType are display-only; not sent to API.
   };
 }
 
@@ -198,15 +229,19 @@ export function toApiPayload(values: FormValues): Record<string, unknown> {
 // @/lib/versioning/field-diff. All pure, so they unit-test directly.
 // ===========================================================================
 
-// The 21 document field names — identical between FormValues, DocumentSnapshot,
-// and the migration backfill. Used for highlights and edit-dirty.
+// The persisted document field names — identical between FormValues,
+// DocumentSnapshot, and the migration backfill. Used for highlights and
+// edit-dirty. Display-only fields (surveyorName, surveyorPersonType) are
+// intentionally excluded — they don't drive version diffs or dirty state.
 // Slice #18.16.VL: "institution" → "institutionId"
+// Slice #19.03: added subject, dateValidUntil, surveyorId (now 24 keys)
 const DOC_FIELD_KEYS = [
   "documentTypeId", "title", "nrDocument", "dateDocument", "institutionId",
   "emitent", "bazaLegala", "uatProprietate", "uatProprietar", "suprafata",
   "nrDosarSuccesoral", "dataDecesului", "ultimulDomiciliu", "nrCertificatDeces",
   "dateStart", "dateEnd", "titularText", "defunctText", "partiesAText",
   "partiesBText", "notes",
+  "subject", "dateValidUntil", "surveyorId",
 ] as const satisfies readonly (keyof FormValues)[];
 
 /** Per-field highlight frames, keyed by document field name. */
@@ -215,9 +250,17 @@ export type DocumentFieldHighlights = Partial<
 >;
 
 /** Snapshot → RHF form values (edit/view hydration). The snapshot is already a
- *  flat string|null map; documentTypeId is coerced to "" when absent. */
+ *  flat string|null map; documentTypeId is coerced to "" when absent.
+ *  surveyorDisplayName and surveyorPersonType are not stored in the snapshot
+ *  (they are display-only and fetched server-side at page load); historical
+ *  version snapshots leave them as empty strings. */
 export function snapshotToFormValues(snap: DocumentSnapshot): FormValues {
-  return fromApiRecord({ ...snap, documentTypeId: snap.documentTypeId ?? "" });
+  return fromApiRecord({
+    ...snap,
+    documentTypeId:      snap.documentTypeId ?? "",
+    surveyorDisplayName: null,
+    surveyorPersonType:  null,
+  });
 }
 
 /** Per-field highlight frames for `curr` vs `prev` (empty for version 0). The

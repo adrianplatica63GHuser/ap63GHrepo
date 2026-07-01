@@ -20,6 +20,7 @@ import {
 import { FieldPulseContext, usePulseRing } from "@/components/versioning/field-pulse";
 import type { HighlightColor } from "@/lib/versioning/field-diff";
 import type { DocumentSnapshot } from "@/lib/documents/validation";
+import { PaginationControls } from "@/components/pagination-controls";
 import {
   computeFieldHighlights,
   type DocumentFieldHighlights,
@@ -70,6 +71,32 @@ async function fetchInstitutions(): Promise<InstitutionOption[]> {
     value: item.id,   // SelectField value = the UUID (FK stored in institution_id)
     label: item.institutionType ? `${item.name} (${item.institutionType})` : item.name,
   }));
+}
+
+// ---------------------------------------------------------------------------
+// Surveyor person search (Slice #19.03)
+// ---------------------------------------------------------------------------
+
+const SURVEYOR_PAGE_SIZE = 10;
+type PersonType = "NATURAL" | "JUDICIAL";
+type PersonSearchItem = { id: string; code: string; type: PersonType; displayName: string };
+
+async function searchSurveyorPersons(
+  name: string,
+  code: string,
+  type: PersonType,
+  page: number,
+): Promise<{ items: PersonSearchItem[]; total: number }> {
+  const params = new URLSearchParams();
+  if (name.trim()) params.set("name", name.trim());
+  if (code.trim()) params.set("code", code.trim());
+  params.set("type",   type);
+  params.set("limit",  String(SURVEYOR_PAGE_SIZE));
+  params.set("offset", String(page * SURVEYOR_PAGE_SIZE));
+  const res = await fetch(`/api/people/search?${params.toString()}`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  return { items: data.items as PersonSearchItem[], total: data.total as number };
 }
 
 // ---------------------------------------------------------------------------
@@ -162,6 +189,9 @@ export function DocumentForm({
   const [submitError,       setSubmitError]       = useState<string | null>(null);
   const [confirmDelete,     setConfirmDelete]     = useState(false);
   const [confirmMakeCurrent, setConfirmMakeCurrent] = useState(false);
+
+  // Slice #19.03 — surveyor picker state
+  const [surveyorPickerOpen, setSurveyorPickerOpen] = useState(false);
 
   const isCreate = mode === "create";
   // Subscribe to all values so the edit-dirty check recomputes live.
@@ -534,7 +564,15 @@ export function DocumentForm({
           options={institutionOptions}
           highlight={displayHighlights?.institutionId}
         />
-        {/* Row 4: Short Label (right before Notes) */}
+        {/* Row 4: Subject / Dispozitie — always visible (Slice #19.03) */}
+        <Field
+          label={t("fields.subject")}
+          name="subject"
+          register={register}
+          error={errors.subject?.message}
+          highlight={displayHighlights?.subject}
+        />
+        {/* Row 5: Short Label */}
         <Field
           label={t("fields.title")}
           name="title"
@@ -758,6 +796,43 @@ export function DocumentForm({
           )}
         </Section>
       )}
+      {/* ── Validity / expiry date (Slice #19.03) ───────────────────────── */}
+      {cfg.showValidUntil && (
+        <Section title={t("sections.validUntil")} columns={2}>
+          <Field
+            label={t("fields.dateValidUntil")}
+            name="dateValidUntil"
+            type="date"
+            register={register}
+            error={errors.dateValidUntil?.message}
+            highlight={displayHighlights?.dateValidUntil}
+          />
+        </Section>
+      )}
+
+      {/* ── Surveyor picker (DOCUMENTATIE_CADASTRALA) (Slice #19.03) ─────── */}
+      {cfg.showSurveyor && (
+        <Section title={t("sections.surveyor")} columns={1}>
+          <SurveyorRow
+            surveyorId={watchedValues.surveyorId}
+            surveyorName={watchedValues.surveyorName}
+            surveyorPersonType={watchedValues.surveyorPersonType as PersonType | ""}
+            readOnly={effectiveMode === "view"}
+            highlight={displayHighlights?.surveyorId}
+            onOpen={() => setSurveyorPickerOpen(true)}
+            onRemove={() => {
+              form.setValue("surveyorId", "");
+              form.setValue("surveyorName", "");
+              form.setValue("surveyorPersonType", "");
+            }}
+            t={t}
+          />
+          <p className="text-xs text-fade dark:text-zinc-500 mt-1">
+            {t("hints.surveyorNotInSystem")}
+          </p>
+        </Section>
+      )}
+
       </fieldset>
 
       {submitError && (
@@ -866,6 +941,20 @@ export function DocumentForm({
         onYes={handleMakeCurrent}
         onNo={() => setConfirmMakeCurrent(false)}
         busy={submitting}
+      />
+    )}
+
+    {/* Slice #19.03 — surveyor picker dialog */}
+    {surveyorPickerOpen && (
+      <SurveyorPickerDialog
+        onSelect={(person) => {
+          form.setValue("surveyorId",         person.id);
+          form.setValue("surveyorName",       person.displayName);
+          form.setValue("surveyorPersonType", person.type);
+          setSurveyorPickerOpen(false);
+        }}
+        onClose={() => setSurveyorPickerOpen(false)}
+        t={t}
       />
     )}
     </div>
@@ -1018,6 +1107,290 @@ function ReadOnlyField({ label, value }: { label: string; value: string }) {
       <span className="w-36 shrink-0 font-medium text-ink dark:text-zinc-300">{label}</span>
       <div className="flex-1 rounded-md border border-wire bg-canvas px-2 py-1 font-mono text-sm text-ink dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-300">
         {value}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Surveyor row + two-step picker dialog (Slice #19.03)
+// ---------------------------------------------------------------------------
+
+type TFunc = ReturnType<typeof useTranslations<"document">>;
+
+function SurveyorRow({
+  surveyorId,
+  surveyorName,
+  surveyorPersonType,
+  readOnly,
+  highlight,
+  onOpen,
+  onRemove,
+  t,
+}: {
+  surveyorId:         string;
+  surveyorName:       string;
+  surveyorPersonType: PersonType | "";
+  readOnly:           boolean;
+  highlight?:         HighlightColor;
+  onOpen:             () => void;
+  onRemove:           () => void;
+  t:                  TFunc;
+}) {
+  const ring = usePulseRing(highlight);
+  const href =
+    surveyorPersonType === "NATURAL"
+      ? `/natural-persons/${surveyorId}?readonly=true`
+      : surveyorPersonType === "JUDICIAL"
+        ? `/judicial-persons/${surveyorId}?readonly=true`
+        : null;
+
+  return (
+    <div className={["flex items-center gap-2 text-sm rounded-md border border-wire px-2 py-1", ring].join(" ")}>
+      <span className="w-36 shrink-0 font-medium text-ink dark:text-zinc-300">
+        {t("fields.surveyor")}
+      </span>
+      <div className="flex flex-1 items-center gap-2 min-w-0">
+        {surveyorId ? (
+          <>
+            {href ? (
+              <a
+                href={href}
+                className="flex-1 truncate text-cta hover:underline"
+                target="_blank"
+                rel="noreferrer"
+              >
+                {surveyorName || surveyorId}
+              </a>
+            ) : (
+              <span className="flex-1 truncate text-ink">{surveyorName || surveyorId}</span>
+            )}
+            {!readOnly && (
+              <button
+                type="button"
+                onClick={onRemove}
+                className="shrink-0 text-xs text-red-600 hover:text-red-800 dark:text-red-400"
+              >
+                {t("actions.removeSurveyor")}
+              </button>
+            )}
+          </>
+        ) : (
+          <>
+            <span className="flex-1 text-fade dark:text-zinc-500">—</span>
+            {!readOnly && (
+              <button
+                type="button"
+                onClick={onOpen}
+                className="shrink-0 rounded-md border border-wire bg-white px-2 py-0.5 text-xs font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+              >
+                {t("actions.addSurveyor")}
+              </button>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+type SurveyorPickerStep = "choose-type" | "search";
+
+function SurveyorPickerDialog({
+  onSelect,
+  onClose,
+  t,
+}: {
+  onSelect: (person: PersonSearchItem) => void;
+  onClose:  () => void;
+  t:        TFunc;
+}) {
+  const [step,           setStep]           = useState<SurveyorPickerStep>("choose-type");
+  const [personType,     setPersonType]     = useState<PersonType>("NATURAL");
+  const [nameFilter,     setNameFilter]     = useState("");
+  const [codeFilter,     setCodeFilter]     = useState("");
+  const [page,           setPage]           = useState(0);
+
+  // Debounce the search inputs slightly.
+  const [debouncedName, setDebouncedName] = useState("");
+  const [debouncedCode, setDebouncedCode] = useState("");
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedName(nameFilter), 300);
+    return () => clearTimeout(id);
+  }, [nameFilter]);
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedCode(codeFilter), 300);
+    return () => clearTimeout(id);
+  }, [codeFilter]);
+
+  const searchQuery = useQuery({
+    queryKey:  ["surveyor-search", personType, debouncedName, debouncedCode, page],
+    queryFn:   () => searchSurveyorPersons(debouncedName, debouncedCode, personType, page),
+    enabled:   step === "search",
+    staleTime: 30_000,
+  });
+
+  const handleChooseType = (type: PersonType) => {
+    setPersonType(type);
+    setPage(0);
+    setNameFilter("");
+    setCodeFilter("");
+    setDebouncedName("");
+    setDebouncedCode("");
+    setStep("search");
+  };
+
+  const items = searchQuery.data?.items ?? [];
+  const total = searchQuery.data?.total ?? 0;
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="surveyor-picker-title"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+    >
+      <div className="flex w-full max-w-lg flex-col gap-3 rounded-lg bg-card p-5 shadow-xl dark:bg-zinc-900">
+        <div className="flex items-center justify-between">
+          <h3 id="surveyor-picker-title" className="text-base font-semibold text-ink dark:text-zinc-100">
+            {t("surveyorPicker.title")}
+          </h3>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-fade hover:text-ink dark:text-zinc-500"
+            aria-label={t("surveyorPicker.cancel")}
+          >
+            ✕
+          </button>
+        </div>
+
+        {step === "choose-type" ? (
+          <div className="flex flex-col gap-3">
+            <p className="text-sm text-fade dark:text-zinc-400">
+              {t("surveyorPicker.stepChooseType")}
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => handleChooseType("NATURAL")}
+                className="flex-1 rounded-md border border-wire bg-white px-4 py-3 text-sm font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+              >
+                {t("surveyorPicker.btnNatural")}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleChooseType("JUDICIAL")}
+                className="flex-1 rounded-md border border-wire bg-white px-4 py-3 text-sm font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+              >
+                {t("surveyorPicker.btnJudicial")}
+              </button>
+            </div>
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-md border border-wire bg-white px-4 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900"
+              >
+                {t("surveyorPicker.cancel")}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {/* Search filters */}
+            <div className="grid grid-cols-2 gap-2">
+              <label className="flex flex-col gap-1 text-xs font-medium text-ink dark:text-zinc-300">
+                {t("surveyorPicker.labelName")}
+                <input
+                  type="text"
+                  value={nameFilter}
+                  onChange={(e) => { setNameFilter(e.target.value); setPage(0); }}
+                  placeholder={t("surveyorPicker.namePlaceholder")}
+                  className="rounded-md border border-wire bg-white px-2 py-1 text-sm shadow-sm focus:outline-none dark:border-zinc-700 dark:bg-zinc-950"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-xs font-medium text-ink dark:text-zinc-300">
+                {t("surveyorPicker.labelCode")}
+                <input
+                  type="text"
+                  value={codeFilter}
+                  onChange={(e) => { setCodeFilter(e.target.value); setPage(0); }}
+                  placeholder={t("surveyorPicker.codePlaceholder")}
+                  className="rounded-md border border-wire bg-white px-2 py-1 text-sm shadow-sm focus:outline-none dark:border-zinc-700 dark:bg-zinc-950"
+                />
+              </label>
+            </div>
+
+            {/* Results table */}
+            <div className="max-h-64 overflow-y-auto rounded-md border border-wire dark:border-zinc-700">
+              {searchQuery.isLoading ? (
+                <p className="p-3 text-sm text-fade">{t("surveyorPicker.loading")}</p>
+              ) : searchQuery.isError ? (
+                <p className="p-3 text-sm text-red-600">{t("surveyorPicker.error")}</p>
+              ) : items.length === 0 ? (
+                <p className="p-3 text-sm text-fade">{t("surveyorPicker.resultsEmpty")}</p>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead className="bg-canvas dark:bg-zinc-800">
+                    <tr>
+                      <th className="px-3 py-1.5 text-left text-xs font-medium text-fade">{t("surveyorPicker.colCode")}</th>
+                      <th className="px-3 py-1.5 text-left text-xs font-medium text-fade">{t("surveyorPicker.colName")}</th>
+                      <th className="px-3 py-1.5" />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {items.map((item) => (
+                      <tr
+                        key={item.id}
+                        className="border-t border-wire hover:bg-canvas dark:border-zinc-700 dark:hover:bg-zinc-800"
+                      >
+                        <td className="px-3 py-1.5 font-mono text-xs text-fade">{item.code}</td>
+                        <td className="px-3 py-1.5 text-ink dark:text-zinc-200">{item.displayName}</td>
+                        <td className="px-3 py-1.5 text-right">
+                          <button
+                            type="button"
+                            onClick={() => onSelect(item)}
+                            className="rounded-md bg-cta px-2 py-0.5 text-xs font-medium text-white hover:bg-cta-d"
+                          >
+                            {t("surveyorPicker.select")}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+
+            {/* Pagination + footer buttons */}
+            {total > SURVEYOR_PAGE_SIZE && (
+              <PaginationControls
+                page={page}
+                pageSize={SURVEYOR_PAGE_SIZE}
+                total={total}
+                onPageChange={setPage}
+              />
+            )}
+
+            <div className="flex justify-between">
+              <button
+                type="button"
+                onClick={() => setStep("choose-type")}
+                className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900"
+              >
+                {t("surveyorPicker.back")}
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900"
+              >
+                {t("surveyorPicker.cancel")}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

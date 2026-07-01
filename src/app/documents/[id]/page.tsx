@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getDocumentById } from "@/lib/documents/queries";
+import { getDocumentWithSurveyor } from "@/lib/documents/queries";
 import { DocumentDetailTabs } from "../_components/document-detail-tabs";
 import { fromApiRecord } from "../_components/form-schema";
 
@@ -14,7 +14,7 @@ type PageParams = {
 export default async function EditDocumentPage({ params, searchParams }: PageParams) {
   const { id }             = await params;
   const { readonly, tab }  = await searchParams;
-  const record  = await getDocumentById(id);
+  const record  = await getDocumentWithSurveyor(id);
   if (!record) notFound();
 
   const initialValues = fromApiRecord(record);

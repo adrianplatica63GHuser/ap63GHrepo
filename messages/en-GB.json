@@ -866,7 +866,9 @@
       "mostenitor": "Succession Details",
       "parties": "Parties",
       "dateRange": "Contract Period",
-      "notes": "Notes"
+      "notes": "Notes",
+      "validUntil": "Validity",
+      "surveyor": "Surveyor"
     },
     "fields": {
       "code": "Code",
@@ -890,7 +892,35 @@
       "defunctText": "Deceased / Testator",
       "partiesAText": "Parties A",
       "partiesBText": "Parties B",
-      "notes": "Notes"
+      "notes": "Notes",
+      "subject": "Subject",
+      "dateValidUntil": "Valid Until",
+      "surveyor": "Surveyor"
+    },
+    "actions": {
+      "addSurveyor": "Select surveyor",
+      "removeSurveyor": "Remove"
+    },
+    "hints": {
+      "surveyorNotInSystem": "If the surveyor is not yet in the system, add them first as a natural person or judicial person."
+    },
+    "surveyorPicker": {
+      "title": "Select Surveyor",
+      "stepChooseType": "What type of person is the surveyor?",
+      "btnNatural": "Natural Person",
+      "btnJudicial": "Judicial Person",
+      "labelName": "Name",
+      "labelCode": "Code",
+      "namePlaceholder": "Name…",
+      "codePlaceholder": "Code…",
+      "colCode": "Code",
+      "colName": "Name",
+      "resultsEmpty": "No persons found",
+      "loading": "Searching…",
+      "error": "Search failed",
+      "select": "Select",
+      "back": "Back",
+      "cancel": "Cancel"
     },
     "buttons": {
       "save": "Save",
