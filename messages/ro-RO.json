@@ -361,7 +361,7 @@
     "groupsFilterUngrouped": "Fara grup"
   },
   "address": {
-    "streetLine": "Stradă, Nr., Ap",
+    "streetLine": "Stradă, Nr., etaj, ap",
     "postalCode": "Cod poștal",
     "locality": "Localitate",
     "county": "Județ / Sector",
@@ -543,11 +543,11 @@
       "idDocumentNumber": "Nr. document",
       "gender": "Gen",
       "dateOfBirth": "Data nașterii",
-      "personalPhone1": "Telefon Pers 1",
-      "personalPhone2": "Telefon Pers 2",
+      "personalPhone1": "Telefon Personal 1",
+      "personalPhone2": "Telefon Personal 2",
       "workPhone": "Telefon serviciu",
-      "personalEmail1": "Email Pers 1",
-      "personalEmail2": "Email Pers 2",
+      "personalEmail1": "Email Personal 1",
+      "personalEmail2": "Email Personal 2",
       "workEmail": "Email serviciu",
       "citizenship": "Cetățenie",
       "physicalPersonTypeId": "Tip Profesional",
@@ -556,7 +556,7 @@
       "age": "Vârstă",
       "idCardNumber": "Nr. card",
       "idValidFrom": "Valabil de la",
-      "idValidUntil": "Valabil până la",
+      "idValidUntil": "Până la",
       "idMrzRaw": "MRZ (text brut)",
       "idLink": "Carte de identitate asociată",
       "notes": "Note",
@@ -586,7 +586,9 @@
     "hints": {
       "cnpLocked": "CNP-ul nu poate fi modificat odată setat — ștergeți și creați din nou pentru a-l schimba",
       "countryRequiredIfAddressFilled": "Necesar dacă orice alt câmp al adresei este completat",
-      "idLinkNone": "Niciun document de carte de identitate asociat"
+      "idLinkNone": "Niciun document de carte de identitate asociat",
+      "idExpired": "EXPIRAT",
+      "idExpiringSoon": "EXPIRĂ ÎN {n} ZILE"
     },
     "tabs": {
       "details": "Detalii",

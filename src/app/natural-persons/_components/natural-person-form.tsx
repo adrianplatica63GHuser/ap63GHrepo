@@ -153,10 +153,18 @@ export function NaturalPersonForm({
 
   // Derived display values (recalculate on every render since watchedValues is live).
   const calculatedAge = calculateAge(watchedValues.dateOfBirth);
-  const idValidUntilExpired =
-    watchedValues.idValidUntil
-      ? new Date(watchedValues.idValidUntil) < new Date()
-      : false;
+  const idValidUntilDate = watchedValues.idValidUntil
+    ? new Date(watchedValues.idValidUntil)
+    : null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const idValidUntilExpired = idValidUntilDate !== null && idValidUntilDate < today;
+  const idValidUntilDaysLeft =
+    idValidUntilDate !== null && !idValidUntilExpired
+      ? Math.ceil((idValidUntilDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+      : null;
+  const idValidUntilExpiringSoon =
+    idValidUntilDaysLeft !== null && idValidUntilDaysLeft <= 90;
 
   // --- Version history (Slice #18.05) ------------------------------------
   const versionsQuery = useQuery({
@@ -564,7 +572,7 @@ export function NaturalPersonForm({
           {t("sections.contact")}
         </h2>
         <div className="flex flex-col gap-2">
-          {/* Row 1 (3-col): Pers Phone 1 | Pers Email 1 | Pers Phone 2 */}
+          {/* Row 1 (3-col): Personal Phone 1 | Personal Phone 2 | Work Phone */}
           <div className="grid grid-cols-3 gap-2">
             <Field
               label={t("fields.personalPhone1")}
@@ -574,28 +582,11 @@ export function NaturalPersonForm({
               highlight={displayHighlights?.fields.personalPhone1}
             />
             <Field
-              label={t("fields.personalEmail1")}
-              name="personalEmail1"
-              register={register}
-              error={errors.personalEmail1?.message}
-              highlight={displayHighlights?.fields.personalEmail1}
-            />
-            <Field
               label={t("fields.personalPhone2")}
               name="personalPhone2"
               register={register}
               error={errors.personalPhone2?.message}
               highlight={displayHighlights?.fields.personalPhone2}
-            />
-          </div>
-          {/* Row 2 (3-col): Pers Email 2 | Work Phone | Work Email */}
-          <div className="grid grid-cols-3 gap-2">
-            <Field
-              label={t("fields.personalEmail2")}
-              name="personalEmail2"
-              register={register}
-              error={errors.personalEmail2?.message}
-              highlight={displayHighlights?.fields.personalEmail2}
             />
             <Field
               label={t("fields.workPhone")}
@@ -603,6 +594,23 @@ export function NaturalPersonForm({
               register={register}
               error={errors.workPhone?.message}
               highlight={displayHighlights?.fields.workPhone}
+            />
+          </div>
+          {/* Row 2 (3-col): Personal Email 1 | Personal Email 2 | Work Email */}
+          <div className="grid grid-cols-3 gap-2">
+            <Field
+              label={t("fields.personalEmail1")}
+              name="personalEmail1"
+              register={register}
+              error={errors.personalEmail1?.message}
+              highlight={displayHighlights?.fields.personalEmail1}
+            />
+            <Field
+              label={t("fields.personalEmail2")}
+              name="personalEmail2"
+              register={register}
+              error={errors.personalEmail2?.message}
+              highlight={displayHighlights?.fields.personalEmail2}
             />
             <Field
               label={t("fields.workEmail")}
@@ -686,6 +694,15 @@ export function NaturalPersonForm({
               error={errors.idValidUntil?.message}
               highlight={displayHighlights?.fields.idValidUntil}
               expired={idValidUntilExpired}
+              expiringSoon={idValidUntilExpiringSoon}
+              annotation={
+                idValidUntilExpired
+                  ? t("hints.idExpired")
+                  : idValidUntilExpiringSoon && idValidUntilDaysLeft !== null
+                    ? t("hints.idExpiringSoon", { n: idValidUntilDaysLeft })
+                    : undefined
+              }
+              annotationColor={idValidUntilExpired ? "red" : "blue"}
             />
           </div>
           {/* MRZ Raw — full width */}
@@ -698,7 +715,7 @@ export function NaturalPersonForm({
           />
           {mode !== "create" && (
             <div className="flex items-center gap-2 text-sm">
-              <span className="w-[5.5rem] shrink-0 font-medium text-ink dark:text-zinc-300">
+              <span className="w-[5.5rem] shrink-0 text-center font-medium text-ink dark:text-zinc-300">
                 {t("fields.idLink")}
               </span>
               {linkedIdCard ? (
@@ -863,15 +880,21 @@ type FieldProps = {
   error?: string;
   hint?: string;
   highlight?: HighlightColor;
-  /** Adds a red border independently of validation — used for expired dates. */
+  /** Adds a red border — used for expired dates. */
   expired?: boolean;
+  /** Adds a blue border — used for dates expiring within 3 months. */
+  expiringSoon?: boolean;
+  /** Text shown to the right of the input (e.g. "EXPIRED"). */
+  annotation?: string;
+  /** Colour of the annotation text. */
+  annotationColor?: "red" | "blue";
 };
 
-function Field({ label, name, type = "text", register, error, hint, highlight, expired }: FieldProps) {
+function Field({ label, name, type = "text", register, error, hint, highlight, expired, expiringSoon, annotation, annotationColor }: FieldProps) {
   const ring = usePulseRing(highlight);
   return (
     <label className="flex items-center gap-2 text-sm">
-      <span className="w-[5.5rem] shrink-0 font-medium text-ink dark:text-zinc-300">{label}</span>
+      <span className="w-[5.5rem] shrink-0 text-center font-medium text-ink dark:text-zinc-300">{label}</span>
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <input
           type={type}
@@ -881,10 +904,24 @@ function Field({ label, name, type = "text", register, error, hint, highlight, e
             "w-full rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none disabled:bg-canvas disabled:text-fade disabled:cursor-default dark:bg-zinc-950 dark:disabled:bg-zinc-800",
             error || expired
               ? "border-red-500 focus:border-red-600"
-              : "border-wire focus:border-focus dark:border-zinc-700",
+              : expiringSoon
+                ? "border-blue-500 focus:border-blue-600"
+                : "border-wire focus:border-focus dark:border-zinc-700",
             ring,
           ].join(" ")}
         />
+        {annotation && (
+          <span
+            className={[
+              "text-xs font-bold uppercase",
+              annotationColor === "red"
+                ? "text-red-600 dark:text-red-400"
+                : "text-blue-600 dark:text-blue-400",
+            ].join(" ")}
+          >
+            {annotation}
+          </span>
+        )}
         {hint && !error && (
           <span className="text-xs text-fade dark:text-zinc-400">{hint}</span>
         )}
@@ -907,7 +944,7 @@ function TextAreaField({
   const ring = usePulseRing(highlight);
   return (
     <label className="flex items-start gap-2 text-sm">
-      <span className="w-[5.5rem] shrink-0 pt-1 font-medium text-ink dark:text-zinc-300">{label}</span>
+      <span className="w-[5.5rem] shrink-0 pt-1 text-center font-medium text-ink dark:text-zinc-300">{label}</span>
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <textarea
           {...register(name)}
@@ -941,7 +978,7 @@ function SelectField({
   const ring = usePulseRing(highlight);
   return (
     <label className="flex items-center gap-2 text-sm">
-      <span className="w-[5.5rem] shrink-0 font-medium text-ink dark:text-zinc-300">{label}</span>
+      <span className="w-[5.5rem] shrink-0 text-center font-medium text-ink dark:text-zinc-300">{label}</span>
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <select
           {...register(name)}
@@ -971,7 +1008,7 @@ function SelectField({
 function ReadOnlyField({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center gap-2 text-sm">
-      <span className="w-[5.5rem] shrink-0 font-medium text-ink dark:text-zinc-300">{label}</span>
+      <span className="w-[5.5rem] shrink-0 text-center font-medium text-ink dark:text-zinc-300">{label}</span>
       <div className="flex-1 rounded-md border border-wire bg-canvas px-2 py-1 font-mono text-sm text-ink dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-300">
         {value}
       </div>

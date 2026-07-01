@@ -361,7 +361,7 @@
     "groupsFilterUngrouped": "Not in a group"
   },
   "address": {
-    "streetLine": "Street Address",
+    "streetLine": "Street, No., Floor, Apt",
     "postalCode": "Postal Code",
     "locality": "Locality",
     "county": "County / Sector",
@@ -543,11 +543,11 @@
       "idDocumentNumber": "ID Number",
       "gender": "Gender",
       "dateOfBirth": "Date of Birth",
-      "personalPhone1": "Pers Phone 1",
-      "personalPhone2": "Pers Phone 2",
+      "personalPhone1": "Personal Phone 1",
+      "personalPhone2": "Personal Phone 2",
       "workPhone": "Work Phone",
-      "personalEmail1": "Pers Email 1",
-      "personalEmail2": "Pers Email 2",
+      "personalEmail1": "Personal Email 1",
+      "personalEmail2": "Personal Email 2",
       "workEmail": "Work Email",
       "citizenship": "Citizenship",
       "physicalPersonTypeId": "Professional Type",
@@ -556,7 +556,7 @@
       "age": "Age",
       "idCardNumber": "ID Card Number",
       "idValidFrom": "ID Valid From",
-      "idValidUntil": "ID Valid Until",
+      "idValidUntil": "Until",
       "idMrzRaw": "MRZ (raw)",
       "idLink": "Linked ID Card",
       "notes": "Notes",
@@ -586,7 +586,9 @@
     "hints": {
       "cnpLocked": "CNP cannot be changed once set — delete and recreate to change",
       "countryRequiredIfAddressFilled": "Required if any other address field is filled",
-      "idLinkNone": "No ID card document linked"
+      "idLinkNone": "No ID card document linked",
+      "idExpired": "EXPIRED",
+      "idExpiringSoon": "EXPIRES IN {n} DAYS"
     },
     "tabs": {
       "details": "Details",

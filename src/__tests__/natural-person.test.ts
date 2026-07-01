@@ -160,6 +160,9 @@ describe("formSchema — address country", () => {
 
   it("rejects CORRESPONDENCE with locality but no country", () => {
     const v = minValid({
+      // correspondenceSameAsHome must be false so the refine actually
+      // validates the CORRESPONDENCE block (true skips it by design).
+      correspondenceSameAsHome: false,
       addresses: {
         HOME: emptyFormValues.addresses.HOME,
         CORRESPONDENCE: {
@@ -250,6 +253,9 @@ describe("toApiPayload", () => {
 
   it("includes both address blocks when both have country", () => {
     const v = minValid({
+      // correspondenceSameAsHome must be false so toApiPayload doesn't
+      // skip the CORRESPONDENCE block (true omits it by design).
+      correspondenceSameAsHome: false,
       addresses: {
         HOME: { ...emptyFormValues.addresses.HOME, country: "Romania" },
         CORRESPONDENCE: {
