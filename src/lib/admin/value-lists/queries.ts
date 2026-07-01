@@ -334,4 +334,8 @@ export async function deleteValue(key: ListKey, id: string): Promise<boolean> {
     case "interests":
     case "stamps": {
       const r = await db
-    
+        .returning({ id: lookupOthers.id });
+      return r.length > 0;
+    }
+  }
+}
