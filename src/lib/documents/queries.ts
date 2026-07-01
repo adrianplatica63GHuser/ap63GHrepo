@@ -472,7 +472,6 @@ function inputToValues(
 import {
   property,
   propertyDocument,
-  person,
   personDocument,
   documentDocument,
   lookupPersonRole,
@@ -635,95 +634,4 @@ export async function listPersonRolesForDocument(documentId: string): Promise<Ro
   // 2a. Fetch roles specific to this document type.
   const rows = await db
     .select({
-      id:   lookupPersonRole.id,
-      name: lookupPersonRole.name,
-    })
-    .from(lookupDocTypePersonRole)
-    .innerJoin(lookupPersonRole, eq(lookupDocTypePersonRole.personRoleId, lookupPersonRole.id))
-    .where(eq(lookupDocTypePersonRole.documentTypeId, doc.documentTypeId))
-    .orderBy(asc(lookupPersonRole.name));
-
-  if (rows.length > 0) return rows;
-
-  // 2b. Fallback — this type has no specific mapping (or its mapped list is
-  // empty): return all distinct roles across any document type.
-  return db
-    .selectDistinct({
-      id:   lookupPersonRole.id,
-      name: lookupPersonRole.name,
-    })
-    .from(lookupDocTypePersonRole)
-    .innerJoin(lookupPersonRole, eq(lookupDocTypePersonRole.personRoleId, lookupPersonRole.id))
-    .orderBy(asc(lookupPersonRole.name));
-}
-
-export async function dissociatePersonFromDocument(documentId: string, personId: string): Promise<boolean> {
-  const result = await db.delete(personDocument)
-    .where(and(eq(personDocument.documentId, documentId), eq(personDocument.personId, personId)))
-    .returning({ id: personDocument.id });
-  return result.length > 0;
-}
-
-// ---------------------------------------------------------------------------
-// Document <-> Document  (self-ref, symmetric)
-// ---------------------------------------------------------------------------
-
-export type DocumentRefItem = {
-  id:             string;
-  code:           string;
-  documentTypeId: string;
-  typeName:       string | null;
-  title:          string | null;
-  associatedAt:   Date;
-};
-
-export async function listDocumentReferences(documentId: string): Promise<DocumentRefItem[]> {
-  const rows = await db
-    .select({
-      documentIdA:  documentDocument.documentIdA,
-      documentIdB:  documentDocument.documentIdB,
-      associatedAt: documentDocument.createdAt,
-      id:             document.id,
-      code:           document.code,
-      documentTypeId: document.documentTypeId,
-      typeName:       lookupDocumentType.name,
-      title:          document.title,
-    })
-    .from(documentDocument)
-    .innerJoin(
-      document,
-      and(
-        or(
-          and(eq(documentDocument.documentIdA, documentId), eq(document.id, documentDocument.documentIdB)),
-          and(eq(documentDocument.documentIdB, documentId), eq(document.id, documentDocument.documentIdA)),
-        ),
-        isNull(document.deletedAt),
-      ),
-    )
-    .leftJoin(lookupDocumentType, eq(document.documentTypeId, lookupDocumentType.id))
-    .where(or(eq(documentDocument.documentIdA, documentId), eq(documentDocument.documentIdB, documentId)))
-    .orderBy(document.code);
-
-  return rows.map((r) => ({
-    id: r.id, code: r.code, documentTypeId: r.documentTypeId, typeName: r.typeName, title: r.title, associatedAt: r.associatedAt,
-  }));
-}
-
-export async function associateDocumentToDocument(documentId: string, otherIds: string[]): Promise<void> {
-  const values = otherIds
-    .filter((id) => id !== documentId)
-    .map((otherId) => {
-      const [a, b] = [documentId, otherId].sort();
-      return { documentIdA: a, documentIdB: b };
-    });
-  if (values.length === 0) return;
-  await db.insert(documentDocument).values(values).onConflictDoNothing();
-}
-
-export async function dissociateDocumentFromDocument(documentId: string, otherId: string): Promise<boolean> {
-  const [a, b] = [documentId, otherId].sort();
-  const result = await db.delete(documentDocument)
-    .where(and(eq(documentDocument.documentIdA, a), eq(documentDocument.documentIdB, b)))
-    .returning({ id: documentDocument.id });
-  return result.length > 0;
-}
+      id:   
