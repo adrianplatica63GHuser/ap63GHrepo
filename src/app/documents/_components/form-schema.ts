@@ -232,4 +232,61 @@ export function toApiPayload(values: FormValues): Record<string, unknown> {
 // The persisted document field names — identical between FormValues,
 // DocumentSnapshot, and the migration backfill. Used for highlights and
 // edit-dirty. Display-only fields (surveyorName, surveyorPersonType) are
-// inte
+// intentionally excluded — they don't drive version diffs or dirty state.
+// Slice #18.16.VL: "institution" → "institutionId"
+// Slice #19.03: added subject, dateValidUntil, surveyorId (now 24 keys)
+const DOC_FIELD_KEYS = [
+  "documentTypeId", "title", "nrDocument", "dateDocument", "institutionId",
+  "emitent", "bazaLegala", "uatProprietate", "uatProprietar", "suprafata",
+  "nrDosarSuccesoral", "dataDecesului", "ultimulDomiciliu", "nrCertificatDeces",
+  "dateStart", "dateEnd", "titularText", "defunctText", "partiesAText",
+  "partiesBText", "notes",
+  "subject", "dateValidUntil", "surveyorId",
+] as const satisfies readonly (keyof FormValues)[];
+
+/** Per-field highlight frames, keyed by document field name. */
+export type DocumentFieldHighlights = Partial<
+  Record<(typeof DOC_FIELD_KEYS)[number], HighlightColor>
+>;
+
+/** Snapshot → RHF form values (edit/view hydration). The snapshot is already a
+ *  flat string|null map; documentTypeId is coerced to "" when absent.
+ *  surveyorDisplayName and surveyorPersonType are not stored in the snapshot
+ *  (they are display-only and fetched server-side at page load); historical
+ *  version snapshots leave them as empty strings. */
+export function snapshotToFormValues(snap: DocumentSnapshot): FormValues {
+  return fromApiRecord({
+    ...snap,
+    documentTypeId:      snap.documentTypeId ?? "",
+    surveyorDisplayName: null,
+    surveyorPersonType:  null,
+  });
+}
+
+/** Per-field highlight frames for `curr` vs `prev` (empty for version 0). The
+ *  DocumentSnapshot IS the flat field map, so it diffs directly. */
+export function computeFieldHighlights(
+  prev: DocumentSnapshot | null,
+  curr: DocumentSnapshot,
+): DocumentFieldHighlights {
+  return diffFieldMap(prev, curr, DOC_FIELD_KEYS);
+}
+
+/** Version label colour. v0 green; red if any field modified/deleted; else green. */
+export function versionLabelColor(
+  prev: DocumentSnapshot | null,
+  curr: DocumentSnapshot,
+): HighlightColor {
+  if (!prev) return "green";
+  return labelColorFromHighlights(true, computeFieldHighlights(prev, curr));
+}
+
+/** True when two form-value sets are equal field-by-field (empty == ""). Used
+ *  by edit mode to detect divergence from the loaded baseline, independent of
+ *  RHF's reset-sensitive `isDirty`. */
+export function formValuesEqual(a: FormValues, b: FormValues): boolean {
+  for (const k of DOC_FIELD_KEYS) {
+    if (normVal(a[k]) !== normVal(b[k])) return false;
+  }
+  return true;
+}
