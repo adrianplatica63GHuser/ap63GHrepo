@@ -131,7 +131,11 @@ export async function listValues(key: ListKey): Promise<LookupRow[]> {
     case "judicial-person-types":
       return db.select().from(lookupJudicialPersonType).orderBy(asc(lookupJudicialPersonType.sortOrder)) as Promise<LookupRow[]>;
     case "document-types":
-      return db.select().from(lookupDocumentType).orderBy(asc(lookupDocumentType.name)) as Promise<LookupRow[]>;
+      // UNCLASSIFIED (NECLASIFICAT) pinned first; rest alphabetical.
+      return db.select().from(lookupDocumentType).orderBy(
+        sql`CASE WHEN key = 'UNCLASSIFIED' THEN 0 ELSE 1 END`,
+        asc(lookupDocumentType.name),
+      ) as Promise<LookupRow[]>;
     case "institutions":
       return db.select().from(lookupInstitution).orderBy(asc(lookupInstitution.sortOrder)) as Promise<LookupRow[]>;
     case "services":
@@ -330,10 +334,4 @@ export async function deleteValue(key: ListKey, id: string): Promise<boolean> {
     case "interests":
     case "stamps": {
       const r = await db
-        .delete(lookupOthers)
-        .where(eq(lookupOthers.id, id))
-        .returning({ id: lookupOthers.id });
-      return r.length > 0;
-    }
-  }
-}
+    
