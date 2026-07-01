@@ -823,6 +823,7 @@ export const document = pgTable("document", {
   surveyorId: uuid("surveyor_id")
     .references(() => person.id, { onDelete: "set null" }),
 
+
   // ── Always present ─────────────────────────────────────────────────────
   notes: text("notes"), // Observatii
 

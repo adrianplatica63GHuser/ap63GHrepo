@@ -1,8 +1,8 @@
--- Slice #19.03 — add subject, date_valid_until, surveyor_id to document
+-- Slice #19.03 -- add subject, date_valid_until, surveyor_id to document
 --
--- subject          TEXT    — brief subject/dispozitie, shown on ALL document types.
--- date_valid_until DATE    — validity/expiry date (decisions, permits, etc.).
--- surveyor_id      UUID FK — person (natural or judicial) who performed the
+-- subject          TEXT    -- brief subject/dispozitie, shown on ALL document types.
+-- date_valid_until DATE    -- validity/expiry date (decisions, permits, etc.).
+-- surveyor_id      UUID FK -- person (natural or judicial) who performed the
 --                            cadastral work. ON DELETE SET NULL: removing the
 --                            person from the system clears the tag, not blocks it.
 --
