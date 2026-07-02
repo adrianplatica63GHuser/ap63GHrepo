@@ -110,7 +110,9 @@
       "groupsNotInGroup": "Not in a group",
       "groupsEmpty": "No named groups",
       "rulerButton": "Ruler",
-      "rulerHint": "Ruler — click two points to measure the distance between them"
+      "rulerHint": "Ruler — click two points to measure the distance between them",
+      "anglesButton": "Angles",
+      "anglesHint": "Angles — click a corner to see its interior angle(s)"
     },
     "createTitle": "New Property",
     "saveError": "Could not save",
@@ -176,7 +178,9 @@
       "makeCurrent": "Make Current",
       "makeCurrentHint": "Make this version the current one",
       "showStreetView": "Show Street View",
-      "hideStreetView": "Hide Street View"
+      "hideStreetView": "Hide Street View",
+      "showAngles": "Show Angles",
+      "hideAngles": "Hide Angles"
     },
     "streetView": {
       "loading": "Loading Street View…",

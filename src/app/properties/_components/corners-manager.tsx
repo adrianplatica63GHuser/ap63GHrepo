@@ -35,6 +35,9 @@ type Props = {
   // Slice #18.03b — Street View panel toggle, rendered beside Show Big Map.
   streetView?:       boolean;
   onToggleStreetView?: () => void;
+  // Slice #19.05 — angle overlay toggle on the mini-map.
+  showAngles?:       boolean;
+  onToggleAngles?:   () => void;
   // Slice #18.02 — when set (read-only historical version view), the table
   // renders from this diff: added/changed corners framed red, removed corners
   // shown as a thick red line at their former position.
@@ -340,7 +343,7 @@ function displayFmtToInputMode(fmt: DisplayFormat): InputMode {
 // Main manager
 // ---------------------------------------------------------------------------
 
-export function CornersManager({ corners, onChange, readOnly = false, hoveredCornerIdx, onCornerHover, bigMap = false, onToggleBigMap, streetView = false, onToggleStreetView, cornerDiff }: Props) {
+export function CornersManager({ corners, onChange, readOnly = false, hoveredCornerIdx, onCornerHover, bigMap = false, onToggleBigMap, streetView = false, onToggleStreetView, showAngles = false, onToggleAngles, cornerDiff }: Props) {
   const t = useTranslations("property.corners");
 
   const [displayFmt,  setDisplayFmt]  = useState<DisplayFormat>("S70");
@@ -604,9 +607,9 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
         </table>
       </div>
 
-      {((!adding && editingIdx === null) || onToggleBigMap || onToggleStreetView) && (
-        // Toolbar: Add ↔ Show Big/Small Map ↔ Show/Hide Street View. The
-        // version-nav controls moved to the page header in Slice #18.UX.04.
+      {((!adding && editingIdx === null) || onToggleBigMap || onToggleStreetView || onToggleAngles) && (
+        // Toolbar: Add ↔ Show Big/Small Map ↔ Show/Hide Street View ↔ Show/Hide Angles.
+        // Version-nav controls moved to the page header in Slice #18.UX.04.
         <div className="flex flex-wrap items-center gap-y-2">
           {!adding && editingIdx === null && (
             <button
@@ -634,6 +637,20 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
               className="ml-4 first:ml-0 rounded-md border border-wire bg-white px-3 py-1.5 text-xs font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
             >
               {streetView ? t("hideStreetView") : t("showStreetView")}
+            </button>
+          )}
+          {onToggleAngles && corners.length >= 3 && (
+            <button
+              type="button"
+              onClick={onToggleAngles}
+              className={[
+                "ml-4 first:ml-0 rounded-md border px-3 py-1.5 text-xs font-medium shadow-sm transition-colors",
+                showAngles
+                  ? "border-green-600 bg-green-600 text-white hover:bg-green-700"
+                  : "border-wire bg-white text-ink hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800",
+              ].join(" ")}
+            >
+              {showAngles ? t("hideAngles") : t("showAngles")}
             </button>
           )}
         </div>

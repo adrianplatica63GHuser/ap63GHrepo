@@ -191,6 +191,7 @@ export function PropertyForm({
   const [confirmMakeCurrent, setConfirmMakeCurrent] = useState(false);
   const [bigMap,           setBigMap]           = useState(false);
   const [showStreetView,   setShowStreetView]   = useState(false);
+  const [showAngles,       setShowAngles]       = useState(false);
 
   // Slice #18.UX.04: remembers whether Street View was open before Big Map
   // hid it, so switching back to the small map can auto-restore it.
@@ -890,6 +891,8 @@ export function PropertyForm({
               onToggleBigMap={handleToggleBigMap}
               streetView={showStreetView && !typeConfig.hideStreetView}
               onToggleStreetView={typeConfig.hideStreetView ? undefined : handleToggleStreetView}
+              showAngles={showAngles}
+              onToggleAngles={() => setShowAngles((v) => !v)}
               cornerDiff={cornerDiff ?? undefined}
             />
           </section>
@@ -912,6 +915,7 @@ export function PropertyForm({
                 readOnly={effectiveMode === "view"}
                 hoveredCornerIdx={hoveredCornerIdx}
                 onCornerHover={setHoveredCornerIdx}
+                showAngles={showAngles}
               />
             </div>
           </div>

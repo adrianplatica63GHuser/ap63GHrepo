@@ -110,7 +110,9 @@
       "groupsNotInGroup": "Fara grup",
       "groupsEmpty": "Niciun grup denumit",
       "rulerButton": "Riglă",
-      "rulerHint": "Riglă — apasă două puncte pentru a măsura distanța dintre ele"
+      "rulerHint": "Riglă — apasă două puncte pentru a măsura distanța dintre ele",
+      "anglesButton": "Unghiuri",
+      "anglesHint": "Unghiuri — apasă un colț pentru a vedea unghiul (unghiurile) sale"
     },
     "createTitle": "Proprietate nouă",
     "saveError": "Salvarea a eșuat",
@@ -176,7 +178,9 @@
       "makeCurrent": "Setează ca actuală",
       "makeCurrentHint": "Setează această versiune ca versiune actuală",
       "showStreetView": "Arată Street View",
-      "hideStreetView": "Ascunde Street View"
+      "hideStreetView": "Ascunde Street View",
+      "showAngles": "Arată Unghiuri",
+      "hideAngles": "Ascunde Unghiuri"
     },
     "streetView": {
       "loading": "Se încarcă Street View…",

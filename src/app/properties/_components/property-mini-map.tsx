@@ -19,9 +19,10 @@ type Props = {
   readOnly?:         boolean;
   hoveredCornerIdx?: number | null;
   onCornerHover?:    (idx: number | null) => void;
+  showAngles?:       boolean;
 };
 
-export function PropertyMiniMap({ corners, onChange, readOnly, hoveredCornerIdx, onCornerHover }: Props) {
+export function PropertyMiniMap({ corners, onChange, readOnly, hoveredCornerIdx, onCornerHover, showAngles }: Props) {
   return (
     <Inner
       corners={corners}
@@ -29,6 +30,7 @@ export function PropertyMiniMap({ corners, onChange, readOnly, hoveredCornerIdx,
       readOnly={readOnly}
       hoveredCornerIdx={hoveredCornerIdx}
       onCornerHover={onCornerHover}
+      showAngles={showAngles}
     />
   );
 }

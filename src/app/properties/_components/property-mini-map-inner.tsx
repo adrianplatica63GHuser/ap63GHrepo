@@ -11,6 +11,12 @@ import {
   type MapMouseEvent,
 } from "@vis.gl/react-google-maps";
 import type { Corner } from "./form-schema";
+import {
+  computePolygonAngles,
+  arcSvgPath,
+  arcLabelPosition,
+  type AngleArcInfo,
+} from "@/lib/geo/angles";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -49,19 +55,85 @@ function FitBounds({ corners }: { corners: Corner[] }) {
 // Props
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// AngleArcMarker — renders one angle arc as an SVG overlay at a corner
+// ---------------------------------------------------------------------------
+
+const ARC_RADIUS     = 20; // px
+const ARC_LABEL_OFFSET = 8; // px beyond radius
+
+function AngleArcMarker({
+  corner,
+  info,
+}: {
+  corner: Corner;
+  info:   AngleArcInfo;
+}) {
+  const path  = arcSvgPath(info, ARC_RADIUS);
+  const lp    = arcLabelPosition(info, ARC_RADIUS, ARC_LABEL_OFFSET);
+  const label = `${Math.round(info.angleDeg)}°`;
+
+  return (
+    <AdvancedMarker position={{ lat: corner.lat, lng: corner.lon }}>
+      {/*
+        * 0×0 anchor div — AdvancedMarker places the bottom-centre of this div
+        * at the lat/lng, which for a 0×0 element is exactly the point itself.
+        * The SVG is absolutely positioned with overflow:visible so its (0,0)
+        * coincides with the corner and the arc paths radiate outward.
+        */}
+      <div style={{ width: 0, height: 0, overflow: "visible" }}>
+        <svg
+          width={0}
+          height={0}
+          style={{ position: "absolute", overflow: "visible" }}
+        >
+          {/* Filled sector */}
+          <path
+            d={path}
+            fill="rgba(34,197,94,0.35)"
+            stroke="#16a34a"
+            strokeWidth={1.5}
+          />
+          {/* Degree label with white halo for legibility */}
+          <text
+            x={lp.x}
+            y={lp.y}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fontSize={9}
+            fontWeight="bold"
+            fill="#15803d"
+            stroke="white"
+            strokeWidth={2.5}
+            paintOrder="stroke"
+          >
+            {label}
+          </text>
+        </svg>
+      </div>
+    </AdvancedMarker>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Props
+// ---------------------------------------------------------------------------
+
 type Props = {
   corners:           Corner[];
   onChange:          (next: Corner[]) => void;
   readOnly?:         boolean;
   hoveredCornerIdx?: number | null;
   onCornerHover?:    (idx: number | null) => void;
+  /** When true, renders a green angle-arc overlay at each polygon corner. */
+  showAngles?:       boolean;
 };
 
 // ---------------------------------------------------------------------------
 // Mini-map inner
 // ---------------------------------------------------------------------------
 
-export default function PropertyMiniMapInner({ corners, onChange, readOnly = false, hoveredCornerIdx, onCornerHover }: Props) {
+export default function PropertyMiniMapInner({ corners, onChange, readOnly = false, hoveredCornerIdx, onCornerHover, showAngles = false }: Props) {
   const [mapType,     setMapType]     = useState<MapTypeId>("roadmap");
   const [drawing,     setDrawing]     = useState(false);
   const [hoverLatLng, setHoverLatLng] = useState<google.maps.LatLngLiteral | null>(null);
@@ -229,6 +301,13 @@ export default function PropertyMiniMapInner({ corners, onChange, readOnly = fal
             </AdvancedMarker>
           );
         })}
+
+        {/* Angle arc overlays — rendered when showAngles is active */}
+        {showAngles && corners.length >= 3 &&
+          computePolygonAngles(corners).map((info, idx) => (
+            <AngleArcMarker key={`angle-${idx}`} corner={corners[idx]} info={info} />
+          ))
+        }
 
         {/* Draw-mode preview line: last corner → mouse cursor */}
         {previewPath && (

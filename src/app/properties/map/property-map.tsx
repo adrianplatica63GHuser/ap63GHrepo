@@ -26,6 +26,12 @@ import {
   SNAP_PX,
   type AffineWgs84ToStereo70,
 } from "@/lib/geo/ruler";
+import {
+  computeVertexAngles,
+  arcSvgPath,
+  arcLabelPosition,
+  type AngleArcInfo,
+} from "@/lib/geo/angles";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -352,8 +358,49 @@ function CornerMarker({
 // Ruler tool — inner components + helpers  (Slice #18.14.ruler)
 // ---------------------------------------------------------------------------
 
+// Angles-tool glyph: a right-angle triangle with a corner marker at the
+// right-angle vertex.
+function AnglesIcon() {
+  return (
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <polygon points="2,14 2,2 14,14" />
+      {/* Right-angle marker at (2,14) */}
+      <polyline points="2,11 5,11 5,14" />
+    </svg>
+  );
+}
+
+// Groups filter glyph: an outer circle containing three small filled
+// quadrilaterals of different sizes to suggest grouped items.
+function GroupsIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 16 16"
+      fill="none"
+      aria-hidden="true"
+    >
+      <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
+      {/* Three filled rects of different sizes inside the circle */}
+      <rect x="3"  y="4"  width="3" height="2" rx="0.3" fill="currentColor" />
+      <rect x="4"  y="8"  width="4" height="3" rx="0.3" fill="currentColor" />
+      <rect x="9"  y="5"  width="4" height="4" rx="0.3" fill="currentColor" />
+    </svg>
+  );
+}
+
 // Ruler glyph: a horizontal bar crossed by short tick marks (shown on the
-// toolbar button). The cursor uses the same shape as a data-URI (below).
+// toolbar button). The cursor now uses a crosshair shape (see RULER_CURSOR above).
 function RulerIcon() {
   return (
     <svg
@@ -375,17 +422,115 @@ function RulerIcon() {
   );
 }
 
-// Custom cursor — a small white ruler so the pointer "turns into" the tool.
+// ---------------------------------------------------------------------------
+// Angles tool — corner-pixel → neighbor collection → arc computation (pure)
+// ---------------------------------------------------------------------------
+
+/**
+ * For every polygon corner in `items` that coincides with `snap` (within
+ * CORNER_TOL degrees ≈ 10 m), collect its two polygon neighbours. Then
+ * delegate to computeVertexAngles to determine the displayable arc sectors.
+ */
+const CORNER_TOL = 0.0001; // degrees
+
+function computeAnglesAtSnap(snap: LatLng, items: MapProperty[]): AngleArcInfo[] {
+  const neighbors: Corner[] = [];
+  for (const prop of items) {
+    const n = prop.corners.length;
+    if (n < 2) continue;
+    for (let i = 0; i < n; i++) {
+      const c = prop.corners[i];
+      if (
+        Math.abs(c.lat - snap.lat) < CORNER_TOL &&
+        Math.abs(c.lon - snap.lng) < CORNER_TOL
+      ) {
+        // This corner matches the snapped point — collect its neighbours.
+        neighbors.push(prop.corners[(i - 1 + n) % n]);
+        neighbors.push(prop.corners[(i + 1) % n]);
+      }
+    }
+  }
+  return computeVertexAngles({ lat: snap.lat, lon: snap.lng }, neighbors);
+}
+
+// ---------------------------------------------------------------------------
+// MapAngleArcOverlay — renders the angle arc(s) for one snapped corner
+// ---------------------------------------------------------------------------
+
+const MAP_ARC_RADIUS       = 24;
+const MAP_ARC_LABEL_OFFSET = 10;
+
+function MapAngleArcOverlay({
+  corner,
+  arcs,
+}: {
+  corner: LatLng;
+  arcs:   AngleArcInfo[];
+}) {
+  return (
+    <>
+      {arcs.map((info, i) => {
+        const path  = arcSvgPath(info, MAP_ARC_RADIUS);
+        const lp    = arcLabelPosition(info, MAP_ARC_RADIUS, MAP_ARC_LABEL_OFFSET);
+        const label = `${Math.round(info.angleDeg)}°`;
+        return (
+          <AdvancedMarker key={i} position={corner}>
+            <div style={{ width: 0, height: 0, overflow: "visible" }}>
+              <svg
+                width={0}
+                height={0}
+                style={{ position: "absolute", overflow: "visible" }}
+              >
+                <path
+                  d={path}
+                  fill="rgba(34,197,94,0.35)"
+                  stroke="#16a34a"
+                  strokeWidth={1.5}
+                />
+                <text
+                  x={lp.x}
+                  y={lp.y}
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  fontSize={10}
+                  fontWeight="bold"
+                  fill="#15803d"
+                  stroke="white"
+                  strokeWidth={2.5}
+                  paintOrder="stroke"
+                >
+                  {label}
+                </text>
+              </svg>
+            </div>
+          </AdvancedMarker>
+        );
+      })}
+    </>
+  );
+}
+
+// Custom cursor — a sniper-scope crosshair (28×28, hot-spot at centre 14 14).
 const RULER_CURSOR_SVG =
-  "<svg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 26 26'>" +
-  "<rect x='2' y='9' width='22' height='8' rx='1' fill='#ffffff' stroke='#111111' stroke-width='1.5'/>" +
-  "<line x1='7' y1='9' x2='7' y2='13' stroke='#111111' stroke-width='1.2'/>" +
-  "<line x1='12' y1='9' x2='12' y2='13' stroke='#111111' stroke-width='1.2'/>" +
-  "<line x1='17' y1='9' x2='17' y2='13' stroke='#111111' stroke-width='1.2'/>" +
+  "<svg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'>" +
+  "<line x1='14' y1='0' x2='14' y2='28' stroke='#111111' stroke-width='1.5'/>" +
+  "<line x1='0' y1='14' x2='28' y2='14' stroke='#111111' stroke-width='1.5'/>" +
+  "<circle cx='14' cy='14' r='4' fill='none' stroke='#111111' stroke-width='1.5'/>" +
   "</svg>";
 const RULER_CURSOR = `url("data:image/svg+xml;utf8,${encodeURIComponent(
   RULER_CURSOR_SVG,
-)}") 4 13, crosshair`;
+)}") 14 14, crosshair`;
+
+// Angles-tool cursor — a filled green right-angle triangle (20×20, hot-spot at
+// the right-angle vertex: bottom-left, pixel 2 18).
+const ANGLES_CURSOR_SVG =
+  "<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'>" +
+  "<polygon points='2,18 2,2 18,18' fill='rgba(34,197,94,0.75)' stroke='#15803d' stroke-width='1.5' stroke-linejoin='round'/>" +
+  "<polyline points='2,14 6,14 6,18' fill='none' stroke='#15803d' stroke-width='1.2'/>" +
+  "</svg>";
+const ANGLES_CURSOR = `url("data:image/svg+xml;utf8,${encodeURIComponent(
+  ANGLES_CURSOR_SVG,
+)}") 2 18, crosshair`;
 
 const RULER_GREEN = "#22c55e";
 const RULER_LINE  = "#15803d";
@@ -574,11 +719,19 @@ export default function PropertyMap() {
   const [rulerSnap,   setRulerSnap]   = useState<LatLng | null>(null);
   const [rulerAffine, setRulerAffine] = useState<AffineWgs84ToStereo70 | null>(null);
 
+  // Angles tool (Slice #19.05) — mutually exclusive with ruler + select mode.
+  // anglesSnap is the corner being hovered (drives the snap ring).
+  // anglesDisplay is the committed result of a corner click.
+  const [anglesMode,    setAnglesMode]    = useState(false);
+  const [anglesSnap,    setAnglesSnap]    = useState<LatLng | null>(null);
+  const [anglesDisplay, setAnglesDisplay] = useState<{ corner: LatLng; arcs: AngleArcInfo[] } | null>(null);
+
   // Refs read inside the container-level ruler listeners so their closures
   // always see the latest values without re-binding on every change.
   const rulerStartRef   = useRef<LatLng | null>(null);
   const rulerEndRef     = useRef<LatLng | null>(null);
   const rulerCornersRef = useRef<LatLng[]>([]);
+  const anglesSnapRef   = useRef<LatLng | null>(null);
 
   // Delete flow
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -646,6 +799,7 @@ export default function PropertyMap() {
     activeTabRef.current    = activeTab;
     rulerStartRef.current   = rulerStart;
     rulerEndRef.current     = rulerEnd;
+    anglesSnapRef.current   = anglesSnap;
     rulerCornersRef.current = displayItems.flatMap((p) =>
       p.corners.map((c) => ({ lat: c.lat, lng: c.lon })),
     );
@@ -705,13 +859,16 @@ export default function PropertyMap() {
   const toggleSelectMode = useCallback(() => {
     setSelectMode((prev) => {
       if (!prev) {
-        // Entering select mode: close any open InfoWindow + exit ruler mode.
+        // Entering select mode: close any open InfoWindow + exit ruler/angles modes.
         setSelected(null);
         setRulerMode(false);
         setRulerStart(null);
         setRulerEnd(null);
         setRulerCursor(null);
         setRulerSnap(null);
+        setAnglesMode(false);
+        setAnglesSnap(null);
+        setAnglesDisplay(null);
       } else {
         // Exiting select mode: clear selection + hide tabs.
         setShowTabs(false);
@@ -815,8 +972,61 @@ export default function PropertyMap() {
     setRulerMode((prev) => {
       const next = !prev;
       if (next) {
-        // Entering ruler mode: close InfoWindow + exit select mode.
+        // Entering ruler mode: close InfoWindow + exit select + angles modes.
         setSelected(null);
+        setSelectMode(false);
+        setSelectedIds(new Set());
+        setDragStart(null);
+        setDragCurrent(null);
+        setShowTabs(false);
+        setActiveTab("all");
+        setAnglesMode(false);
+        setAnglesSnap(null);
+        setAnglesDisplay(null);
+      }
+      return next;
+    });
+    // Clear any previous measurement on either toggle direction.
+    setRulerStart(null);
+    setRulerEnd(null);
+    setRulerCursor(null);
+    setRulerSnap(null);
+  }, []);
+
+  // -------------------------------------------------------------------------
+  // Angles tool (Slice #19.05)
+  // -------------------------------------------------------------------------
+
+  const computeAnglesSnap = useCallback((px: PixelPoint): LatLng | null => {
+    const map       = mapRef.current;
+    const container = containerRef.current;
+    if (!map || !container) return null;
+    const corners = rulerCornersRef.current;
+    if (corners.length === 0) return null;
+    const pixels = corners.map(
+      (c) => latLngToPixel(map, container, c.lat, c.lng) ?? { x: -1e9, y: -1e9 },
+    );
+    const idx = nearestCornerWithinPx(px, pixels, SNAP_PX);
+    return idx === null ? null : corners[idx];
+  }, []);
+
+  const resetAngles = useCallback(() => {
+    setAnglesMode(false);
+    setAnglesSnap(null);
+    setAnglesDisplay(null);
+  }, []);
+
+  const toggleAnglesMode = useCallback(() => {
+    setAnglesMode((prev) => {
+      const next = !prev;
+      if (next) {
+        // Entering angles mode: close InfoWindow + exit ruler + select modes.
+        setSelected(null);
+        setRulerMode(false);
+        setRulerStart(null);
+        setRulerEnd(null);
+        setRulerCursor(null);
+        setRulerSnap(null);
         setSelectMode(false);
         setSelectedIds(new Set());
         setDragStart(null);
@@ -826,11 +1036,8 @@ export default function PropertyMap() {
       }
       return next;
     });
-    // Clear any previous measurement on either toggle direction.
-    setRulerStart(null);
-    setRulerEnd(null);
-    setRulerCursor(null);
-    setRulerSnap(null);
+    setAnglesSnap(null);
+    setAnglesDisplay(null);
   }, []);
 
   // Container-level listeners for the ruler. Mirrors the drag-select effect: a
@@ -897,6 +1104,72 @@ export default function PropertyMap() {
       container.removeEventListener("contextmenu", onContextMenu);
     };
   }, [rulerMode, computeRulerSnap, handleRulerClick, resetRuler]);
+
+  // Container-level listeners for the angles tool — mirrors the ruler listener
+  // pattern. mousemove snaps; click on a snapped corner commits the arcs; click
+  // on empty space clears the display (keeps mode active); right-click exits.
+  useEffect(() => {
+    if (!anglesMode) return;
+    const container = containerRef.current;
+    if (!container) return;
+
+    let downPx: PixelPoint | null = null;
+    let moved = false;
+
+    const isUi = (e: Event) =>
+      !!(e.target as Element).closest?.("[data-map-ui],.gm-style-iw,.gmnoprint");
+
+    const onMouseDown = (e: MouseEvent) => {
+      if (isUi(e)) return;
+      const rect = container.getBoundingClientRect();
+      downPx = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+      moved = false;
+    };
+
+    const onMouseMove = (e: MouseEvent) => {
+      const rect = container.getBoundingClientRect();
+      const px = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+      if (downPx && Math.hypot(px.x - downPx.x, px.y - downPx.y) > 5) moved = true;
+      if (isUi(e)) return;
+      setAnglesSnap(computeAnglesSnap(px));
+    };
+
+    const onMouseUp = (e: MouseEvent) => {
+      if (!downPx) return;
+      const rect  = container.getBoundingClientRect();
+      const px    = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+      const isClick = !moved && Math.hypot(px.x - downPx.x, px.y - downPx.y) <= 5;
+      downPx = null;
+      moved  = false;
+      if (!isClick || isUi(e)) return;
+
+      const snap = anglesSnapRef.current;
+      if (!snap) {
+        // Click on empty map — clear the committed display but stay in mode.
+        setAnglesDisplay(null);
+      } else {
+        const arcs = computeAnglesAtSnap(snap, withGeometryRef.current);
+        setAnglesDisplay({ corner: snap, arcs });
+      }
+    };
+
+    const onContextMenu = (e: MouseEvent) => {
+      if (isUi(e)) return;
+      e.preventDefault();
+      resetAngles();
+    };
+
+    container.addEventListener("mousedown",   onMouseDown);
+    container.addEventListener("mousemove",   onMouseMove);
+    document.addEventListener("mouseup",      onMouseUp);
+    container.addEventListener("contextmenu", onContextMenu);
+    return () => {
+      container.removeEventListener("mousedown",   onMouseDown);
+      container.removeEventListener("mousemove",   onMouseMove);
+      document.removeEventListener("mouseup",      onMouseUp);
+      container.removeEventListener("contextmenu", onContextMenu);
+    };
+  }, [anglesMode, computeAnglesSnap, resetAngles]);
 
   // -------------------------------------------------------------------------
   // Individual property select / unselect (via InfoWindow in select mode)
@@ -1166,11 +1439,13 @@ export default function PropertyMap() {
         ref={containerRef}
         className="flex-1 min-h-0 relative"
         style={{
-          cursor: rulerMode
-            ? RULER_CURSOR
-            : (selectMode && activeTab === "all")
-              ? "crosshair"
-              : undefined,
+          cursor: anglesMode
+            ? ANGLES_CURSOR
+            : rulerMode
+              ? RULER_CURSOR
+              : (selectMode && activeTab === "all")
+                ? "crosshair"
+                : undefined,
         }}
       >
 
@@ -1191,11 +1466,11 @@ export default function PropertyMap() {
           disableDefaultUI
           streetViewControl
           gestureHandling={selectMode && activeTab === "all" ? "none" : "greedy"}
-          draggableCursor={rulerMode ? RULER_CURSOR : undefined}
-          draggingCursor={rulerMode ? RULER_CURSOR : undefined}
+          draggableCursor={anglesMode ? ANGLES_CURSOR : rulerMode ? RULER_CURSOR : undefined}
+          draggingCursor={anglesMode ? ANGLES_CURSOR : rulerMode ? RULER_CURSOR : undefined}
           style={{ width: "100%", height: "100%" }}
-          onClick={(e) => { if (!rulerMode) handleMapClick(e.detail.latLng); }}
-          onDblclick={(e) => { if (!rulerMode) handleMapDblClick(e.detail.latLng); }}
+          onClick={(e) => { if (!rulerMode && !anglesMode) handleMapClick(e.detail.latLng); }}
+          onDblclick={(e) => { if (!rulerMode && !anglesMode) handleMapDblClick(e.detail.latLng); }}
         >
           {/* Inner helpers that require useMap() / useMapsLibrary() */}
           <MapRefCapture mapRef={mapRef} />
@@ -1293,6 +1568,17 @@ export default function PropertyMap() {
             />
           )}
 
+          {/* Angles tool overlays (Slice #19.05) */}
+          {anglesMode && anglesSnap && (
+            <RulerSnapRing corner={anglesSnap} />
+          )}
+          {anglesMode && anglesDisplay && anglesDisplay.arcs.length > 0 && (
+            <MapAngleArcOverlay
+              corner={anglesDisplay.corner}
+              arcs={anglesDisplay.arcs}
+            />
+          )}
+
           {/* InfoWindow — shown on click in both normal and select modes.     */}
           {/* Double-click navigates straight to "Open →" when the click      */}
           {/* resolves to exactly one property (see handleMapDblClick).       */}
@@ -1380,6 +1666,24 @@ export default function PropertyMap() {
         {/* ---------------------------------------------------------------- */}
         {activeTab === "all" && (
           <div data-map-ui className="absolute top-3 right-3 z-20 flex items-start gap-2">
+            {/* Angles tool — show interior angles at corners (Slice #19.05).   */}
+            {/* Sits to the left of Ruler; depressed while active.              */}
+            <button
+              type="button"
+              onClick={toggleAnglesMode}
+              aria-pressed={anglesMode}
+              title={t("map.anglesHint")}
+              className={[
+                "flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded shadow border transition-colors",
+                anglesMode
+                  ? "bg-green-600 text-white border-green-600"
+                  : "bg-white text-ink border-wire hover:bg-canvas",
+              ].join(" ")}
+            >
+              <AnglesIcon />
+              {t("map.anglesButton")}
+            </button>
+
             {/* Ruler — measure real ground distance (Slice #18.14.ruler).      */}
             {/* Sits to the left of Groups; depressed while active.             */}
             <button
@@ -1410,12 +1714,13 @@ export default function PropertyMap() {
                 aria-expanded={groupsPanelOpen}
                 title={t("map.groupsButton")}
                 className={[
-                  "flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded shadow border transition-colors",
+                  "flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold rounded shadow border transition-colors",
                   groupsPanelOpen
                     ? "bg-cta text-white border-cta"
                     : "bg-white text-ink border-wire hover:bg-canvas",
                 ].join(" ")}
               >
+                <GroupsIcon />
                 {t("map.groupsButton")}
               </button>
 
