@@ -42,15 +42,16 @@
  *     last cut. Because the road area depends on L and the final areas depend
  *     on the road area, L is found by a short fixed-point iteration.
  *
- * 6.  Borders between owners 1…N-2 are perpendicular to the road. Walking from
- *     the start corner, each owner's far border is placed so the area of its
- *     slice (beyond the road strip) equals its Final Area. Owner N-1's far
- *     border instead runs parallel to the polygon's end/width sides through the
- *     road's far corner (slope fixed, position solved for owner N-1's exact Final
- *     Area). Owner N takes the whole full-height remainder beyond the road end —
- *     so any tiny rounding in the fractions (e.g. 33.33 % × 3 = 99.99 %) is
- *     absorbed by owner N. The road's far end (where it meets owner N) is a true
- *     right-angle cap; its start end follows the polygon's existing slanted side.
+ * 6.  EVERY border between owners is perpendicular to the road (a constant-u
+ *     line). Walking from the start corner, each owner's far border is placed so
+ *     the area of its slice (beyond the road strip) equals its Final Area. The
+ *     last border (owner N-1 | owner N) coincides with the road's perpendicular
+ *     end cap — a single straight line from the road edge to the far edge, of
+ *     which the part inside the road band is the cap. Owner N takes the whole
+ *     full-height remainder beyond that line, so any tiny rounding in the
+ *     fractions (e.g. 33.33 % × 3 = 99.99 %) is absorbed by owner N. Only the
+ *     road's START end follows the polygon's existing (irregular) side, which is
+ *     generally not a right angle.
  */
 
 // ---------------------------------------------------------------------------
@@ -223,43 +224,6 @@ function removeCollinear(poly: P[]): P[] {
   return out.length >= 3 ? out : poly;
 }
 
-/**
- * Merge two convex polygons (both CCW) that share exactly one full edge into a
- * single ring. Used to assemble owner N (the road-band part east of the
- * perpendicular road cap + the north-band part east of the slanted border),
- * which together form an L-shaped / pentagonal parcel. Returns null if no shared
- * edge is found.
- */
-function mergeAlongSharedEdge(lower: P[], upper: P[]): P[] | null {
-  const eq = (a: P, b: P) => Math.hypot(a.x - b.x, a.y - b.y) < 1e-6;
-  const indexOfPt = (poly: P[], pt: P) => poly.findIndex((q) => eq(q, pt));
-  const n = lower.length;
-  const m = upper.length;
-  for (let i = 0; i < n; i++) {
-    const a = lower[i];
-    const b = lower[(i + 1) % n];
-    const ja = indexOfPt(upper, a);
-    const jb = indexOfPt(upper, b);
-    if (ja >= 0 && jb >= 0) {
-      const res: P[] = [];
-      // Walk lower from b around to a (inclusive).
-      for (let k = 0; k < n; k++) {
-        const v = lower[(i + 1 + k) % n];
-        res.push(v);
-        if (eq(v, a)) break;
-      }
-      // Walk upper from a's next vertex around until reaching b (exclusive).
-      for (let k = 1; k < m; k++) {
-        const v = upper[(ja + k) % m];
-        if (eq(v, b)) break;
-        res.push(v);
-      }
-      return dedupeConsecutive(res);
-    }
-  }
-  return null;
-}
-
 const toP = (s: S70Point): P => ({ x: s.east, y: s.north });
 const toS70 = (p: P): S70Point => ({ north: p.y, east: p.x });
 
@@ -409,83 +373,40 @@ export function computeDivision(input: DivisionInput): DivisionResult {
 
   const N = owners.length;
 
-  // Width-side direction in the (u,v) frame. Owner N-1's east border (and the
-  // road's east end) run PARALLEL to the parcel's end/width sides, passing
-  // through the road's NE corner — not strictly perpendicular to the road. For a
-  // true rectangle this is exactly vertical (= perpendicular); for the usual
-  // near-rectangle it is the slight tilt of the existing side boundaries. The
-  // slope is fixed (parallel to the width sides) and only the line's POSITION is
-  // solved for owner N-1's area, so owner N-1 still gets its exact final area
-  // and owner N takes the remainder.
-  const widthDirUV = (() => {
-    let du = 0;
-    let dv = 0;
-    for (const e of widthEdges) {
-      const a = toUV(e.a);
-      const b = toUV(e.b);
-      let eu = b.x - a.x;
-      let ev = b.y - a.y;
-      if (ev < 0) {
-        eu = -eu;
-        ev = -ev;
-      } // orient toward +v (north)
-      const len = Math.hypot(eu, ev) || 1;
-      du += eu / len;
-      dv += ev / len;
-    }
-    const len = Math.hypot(du, dv) || 1;
-    return { wu: du / len, wv: dv / len };
-  })();
-  const { wu, wv } = widthDirUV;
-
-  // Road-top line T: the horizontal line at perpendicular distance w from the
-  // road edge (v = vT). The slanted boundary pivots about R_NE = (cutN, vT).
-  const vT = vRoad + interiorSign * roadWidth;
-
   const roadBand = clipHalfPlane(Q, inRoadBand); // full-length road band (all u)
   const northBand = clipHalfPlane(Q, beyondRoad); // owner strip (all u)
-  const uWest = Math.min(...northBand.map((p) => p.x));
+  const uStart = Math.min(...northBand.map((p) => p.x));
 
-  // Owner N-1's east border = the line through R_NE = (cutN, vT) parallel to the
-  // width direction (the slanted parcel boundary). The ROAD's east end is a
-  // SEPARATE, perpendicular cap at u = cutN (a right angle to the road's long
-  // sides), meeting the slanted border exactly at the shared corner R_NE.
-  const eastOfSlant = (cutN: number) => (p: P) =>
-    (p.x - cutN) * wv - (p.y - vT) * wu;
-  const westOfSlant = (cutN: number) => (p: P) =>
-    -((p.x - cutN) * wv - (p.y - vT) * wu);
-
-  // Road area: the band WEST of the perpendicular cap (u <= cutN) — right-angled
-  // end, NOT cut by the slant.
+  // Road area = the band WEST of the perpendicular end cap (u <= cutN). The cap
+  // is a right angle to the road's parallel long sides.
   const roadAreaFor = (cutN: number) =>
     polyArea(clipHalfPlane(roadBand, (p) => cutN - p.x));
-  const northStrip = (lo: number, hi: number) =>
+  // Area of the owner strip (beyond the road) between two perpendicular cuts.
+  const strip = (lo: number, hi: number) =>
     polyArea(clipHalfPlane(clipHalfPlane(northBand, (p) => p.x - lo), (p) => hi - p.x));
-  // Owner N-1: north-of-road, east of c_{N-2}, west of the slanted line.
-  const ownerN1AreaFor = (cLast: number, cutN: number) =>
-    polyArea(
-      clipHalfPlane(clipHalfPlane(northBand, (p) => p.x - cLast), westOfSlant(cutN)),
-    );
 
-  // Fixed-point on the road area: owners 1..N-2 are perpendicular strips; owner
-  // N-1's slanted boundary position (cutN) is solved for its final area; the road
-  // ends at the perpendicular cap at u = cutN. Iterate until the road area settles.
+  // Fixed-point on the road area. EVERY inter-owner border is perpendicular to
+  // the road (a constant-u line): walking from the start corner, each owner's
+  // far border is placed so its strip (beyond the road) equals its Final Area.
+  // The last cut (cutN) is BOTH owner N-1's far border AND the road's end cap —
+  // one straight perpendicular line from the road edge to the far edge, of which
+  // the part within the road band is the cap. Owner N takes the full-height
+  // remainder beyond cutN, absorbing any percentage rounding.
   let A_road = 0;
   let cutN = uMax;
-  let cuts: number[] = [uWest];
+  let cuts: number[] = [uStart];
   let finals: number[] = [];
   for (let iter = 0; iter < 100; iter++) {
     finals = owners.map((o) => o.fraction * (A_total - A_road));
-    cuts = [uWest];
-    let lo = uWest;
-    for (let i = 0; i < N - 2; i++) {
+    cuts = [uStart];
+    let lo = uStart;
+    for (let i = 0; i < N - 1; i++) {
       const target = finals[i];
-      const c = bisect((c2) => northStrip(lo, c2) - target, lo, uMax);
+      const c = bisect((c2) => strip(lo, c2) - target, lo, uMax);
       cuts.push(c);
       lo = c;
     }
-    const cLast = cuts[cuts.length - 1]; // west border of owner N-1
-    cutN = bisect((c) => ownerN1AreaFor(cLast, c) - finals[N - 2], cLast, uMax);
+    cutN = cuts[N - 1];
     const newRoad = roadAreaFor(cutN);
     if (Math.abs(newRoad - A_road) < 1e-7) {
       A_road = newRoad;
@@ -493,7 +414,6 @@ export function computeDivision(input: DivisionInput): DivisionResult {
     }
     A_road = newRoad;
   }
-  const cLast = cuts[cuts.length - 1];
 
   // Build the owner polygons (in the road-aligned frame, then back to Stereo 70).
   const toResultPoly = (uv: P[]): S70Point[] =>
@@ -502,26 +422,17 @@ export function computeDivision(input: DivisionInput): DivisionResult {
   const ownerResults: OwnerResult[] = [];
   for (let i = 0; i < N; i++) {
     let uvPoly: P[];
-    if (i < N - 2) {
-      // Owners 1..N-2: perpendicular strips north of the road.
+    if (i < N - 1) {
+      // Owners 1..N-1: perpendicular strips beyond the road.
       uvPoly = clipHalfPlane(
         clipHalfPlane(northBand, (p) => p.x - cuts[i]),
         (p) => cuts[i + 1] - p.x,
       );
-    } else if (i === N - 2) {
-      // Owner N-1: east of its perpendicular west border, west of the slanted line.
-      uvPoly = clipHalfPlane(
-        clipHalfPlane(northBand, (p) => p.x - cLast),
-        westOfSlant(cutN),
-      );
     } else {
-      // Owner N: the full-height remainder east of the boundary — the road-band
-      // part east of the perpendicular cap PLUS the north-band part east of the
-      // slanted border, merged into one (pentagonal) ring along their shared
-      // edge on the road-top line.
-      const lower = clipHalfPlane(roadBand, (p) => p.x - cutN); // road band, u >= cutN
-      const upper = clipHalfPlane(northBand, eastOfSlant(cutN)); // north band, east of slant
-      uvPoly = mergeAlongSharedEdge(lower, upper) ?? upper;
+      // Owner N: the full-height remainder beyond the last cut. Its near border
+      // is cutN — the road's perpendicular end cap extended straight to the far
+      // edge (a single perpendicular line, road-edge → far-edge).
+      uvPoly = clipHalfPlane(Q, (p) => p.x - cutN);
     }
     ownerResults.push({
       name: owners[i].name,
@@ -534,7 +445,7 @@ export function computeDivision(input: DivisionInput): DivisionResult {
     });
   }
 
-  // Road polygon: band west of the perpendicular cap (right-angled east end).
+  // Road polygon: band west of the perpendicular cap (right-angled end).
   const roadUV = clipHalfPlane(roadBand, (p) => cutN - p.x);
 
   return {

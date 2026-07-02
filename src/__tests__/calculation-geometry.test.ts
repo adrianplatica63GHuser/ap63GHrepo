@@ -55,8 +55,16 @@ describe("computeDivision — sample file", () => {
   it("computes a road that fits within the polygon length", () => {
     expect(result.roadLength).toBeGreaterThan(0);
     expect(result.roadLength).toBeLessThan(result.lengthSide);
-    expect(result.roadLength).toBeCloseTo(190.53, 0);
-    expect(result.roadArea).toBeCloseTo(1336.14, 0);
+    expect(result.roadLength).toBeCloseTo(189.39, 0);
+    expect(result.roadArea).toBeCloseTo(1328.14, 0);
+  });
+
+  it("makes the last owner border a perpendicular straight extension of the road cap", () => {
+    // Every inter-owner border is perpendicular to the road; the border between
+    // owner N-1 and owner N coincides with the road's perpendicular end cap, so
+    // owner N is a clean quad (not a slanted pentagon).
+    const ownerN = result.owners[result.owners.length - 1];
+    expect(ownerN.polygon.length).toBe(4);
   });
 
   it("ends the road with a right-angle (perpendicular) cap", () => {
