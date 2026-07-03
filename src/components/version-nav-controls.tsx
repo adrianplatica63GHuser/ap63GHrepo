@@ -42,14 +42,14 @@ export type VersionNavLabels = {
   makeCurrentHint: string;
 };
 
-// Thick-stroked directional arrow (shaft + head). 24px = 50% larger than the
-// ~16px line-box of the old text-xs glyph; strokeWidth 3 makes it bold and
-// clearly visible. Colour follows the button text via `currentColor`.
+// Thick-stroked directional arrow (shaft + head). 28px — bare, no button
+// chrome around it; strokeWidth 3 keeps it bold and clearly visible.
+// Colour follows the button text via `currentColor`.
 function NavArrow({ dir }: { dir: "left" | "right" }) {
   return (
     <svg
-      width="24"
-      height="24"
+      width="28"
+      height="28"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -68,10 +68,10 @@ function NavArrow({ dir }: { dir: "left" | "right" }) {
   );
 }
 
-// ◀/▶ arrow button — 50% larger than the base small control (px-3 py-1.5 vs
-// px-2 py-1) and hosting the thick SVG arrow.
+// ◀/▶ arrow button — bare (no border / background / shadow); just the SVG
+// arrow with hover opacity and disabled state.
 const ARROW_BTN_CLASS =
-  "inline-flex items-center justify-center rounded-md border border-wire bg-white px-3 py-1.5 text-ink shadow-sm hover:bg-canvas disabled:opacity-30 disabled:cursor-not-allowed dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800";
+  "inline-flex items-center justify-center p-0 text-ink hover:opacity-70 disabled:opacity-30 disabled:cursor-not-allowed";
 
 export function VersionNavControls({
   nav,
@@ -92,10 +92,10 @@ export function VersionNavControls({
       >
         <NavArrow dir="left" />
       </button>
-      {/* Version label — 25% larger than the base text-xs (0.75rem → 0.9375rem). */}
+      {/* Version label — tightly flanked by the bare arrows. */}
       <span
         className={[
-          "ml-4 text-[0.9375rem] font-semibold whitespace-nowrap",
+          "mx-1 text-[0.9375rem] font-semibold whitespace-nowrap",
           nav.color === "red"
             ? "text-red-600 dark:text-red-400"
             : "text-green-600 dark:text-green-400",
@@ -109,7 +109,7 @@ export function VersionNavControls({
         disabled={!nav.canNext}
         aria-label={labels.nextVersion}
         title={labels.nextVersion}
-        className={`ml-4 ${ARROW_BTN_CLASS}`}
+        className={ARROW_BTN_CLASS}
       >
         <NavArrow dir="right" />
       </button>

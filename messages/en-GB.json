@@ -171,7 +171,7 @@
       "empty": "No corners yet",
       "showBigMap": "Show Big Map",
       "showSmallMap": "Show Small Map",
-      "versionLabel": "version {n}",
+      "versionLabel": "v {n}",
       "prevVersion": "Previous version",
       "nextVersion": "Next version",
       "removedCorner": "Corner removed in this version",
@@ -506,7 +506,7 @@
     "saveErrorSession": "Your session expired — please sign in again and retry.",
     "deleteError": "Could not delete",
     "version": {
-      "label": "version {n}",
+      "label": "v {n}",
       "prev": "Previous version",
       "next": "Next version",
       "makeCurrent": "Make Current",
@@ -617,7 +617,7 @@
     "saveErrorSession": "Your session expired — please sign in again and retry.",
     "deleteError": "Could not delete",
     "version": {
-      "label": "version {n}",
+      "label": "v {n}",
       "prev": "Previous version",
       "next": "Next version",
       "makeCurrent": "Make Current",
@@ -817,7 +817,7 @@
     "saveErrorSession": "Your session expired — please sign in again and retry.",
     "deleteError": "Could not delete",
     "version": {
-      "label": "version {n}",
+      "label": "v {n}",
       "prev": "Previous version",
       "next": "Next version",
       "makeCurrent": "Make Current",

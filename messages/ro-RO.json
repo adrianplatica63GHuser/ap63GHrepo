@@ -171,7 +171,7 @@
       "empty": "Niciun punct de contur",
       "showBigMap": "Arată Harta Mare",
       "showSmallMap": "Arată Harta Mică",
-      "versionLabel": "versiunea {n}",
+      "versionLabel": "v {n}",
       "prevVersion": "Versiunea anterioară",
       "nextVersion": "Versiunea următoare",
       "removedCorner": "Punct eliminat în această versiune",
@@ -506,7 +506,7 @@
     "saveErrorSession": "Sesiunea a expirat — autentificați-vă din nou și reîncercați.",
     "deleteError": "Ștergerea a eșuat",
     "version": {
-      "label": "versiunea {n}",
+      "label": "v {n}",
       "prev": "Versiunea anterioară",
       "next": "Versiunea următoare",
       "makeCurrent": "Fă curentă",
@@ -617,7 +617,7 @@
     "saveErrorSession": "Sesiunea a expirat — autentificați-vă din nou și reîncercați.",
     "deleteError": "Ștergerea a eșuat",
     "version": {
-      "label": "versiunea {n}",
+      "label": "v {n}",
       "prev": "Versiunea anterioară",
       "next": "Versiunea următoare",
       "makeCurrent": "Fă curentă",
@@ -817,7 +817,7 @@
     "saveErrorSession": "Sesiunea a expirat — autentificați-vă din nou și reîncercați.",
     "deleteError": "Ștergerea a eșuat",
     "version": {
-      "label": "versiunea {n}",
+      "label": "v {n}",
       "prev": "Versiunea anterioară",
       "next": "Versiunea următoare",
       "makeCurrent": "Fă curentă",

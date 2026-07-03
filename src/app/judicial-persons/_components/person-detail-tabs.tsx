@@ -42,13 +42,13 @@ export function JudicialPersonDetailTabs({
 
   return (
     <>
-      {/* Slice #18.05: name on the left, version controls centered on the same
-          line (portalled in by the details form via navSlot). */}
+      {/* Slice #19.07: name on the left, version controls right-aligned on the
+          same line (portalled in by the details form via navSlot). */}
       <header className="relative flex min-h-[2.5rem] items-center">
         <h1 className="text-2xl font-semibold tracking-tight">{personName}</h1>
         <div
           ref={setNavSlot}
-          className="pointer-events-none absolute inset-y-0 left-1/2 flex -translate-x-1/2 items-center"
+          className="pointer-events-none absolute inset-y-0 right-0 flex items-center"
         />
       </header>
 
