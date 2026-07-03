@@ -18,8 +18,8 @@
   --font-mono: var(--font-geist-mono);
 
   /* ── 6-colour palette ──────────────────────────────────────────────────── */
-  --color-or-strong: #B85C00;   /* strong orange  — primary CTA / accent       */
-  --color-or-light:  #FEF0E6;   /* light  orange  — row hovers, warm tints     */
+  --color-or-strong: #334155;   /* strong slate   — primary CTA / accent       */
+  --color-or-light:  #f1f5f9;   /* light  slate   — row hovers, cool tints     */
   --color-bl-strong: #1A5296;   /* strong blue    — focus rings, links         */
   --color-bl-light:  #EEF4FA;   /* light  blue    — panel / card backgrounds   */
   --color-gy-strong: #3C4149;   /* strong grey    — headings, labels           */
@@ -30,9 +30,9 @@
   --color-card:      #EEF4FA;   /* bg-card     — panel / section background    */
   --color-card-rim:  #C6D4E8;   /* border-card-rim — panel border              */
 
-  --color-cta:       #B85C00;   /* bg-cta / text-cta — primary buttons         */
-  --color-cta-d:     #965100;   /* bg-cta-d  — primary button :hover           */
-  --color-cta-pale:  #FEF0E6;   /* bg-cta-pale — light orange wash / row hover */
+  --color-cta:       #334155;   /* bg-cta / text-cta — primary buttons         */
+  --color-cta-d:     #1e293b;   /* bg-cta-d  — primary button :hover           */
+  --color-cta-pale:  #f1f5f9;   /* bg-cta-pale — light slate wash / row hover  */
 
   --color-focus:     #1A5296;   /* border-focus — input focus border           */
   --color-navy:      #1E3A8A;   /* text-navy — back-navigation arrows + labels */
