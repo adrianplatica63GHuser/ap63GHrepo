@@ -1207,6 +1207,7 @@
       "fileListLabel": "Files",
       "classifyButton": "Classify ({count})",
       "unclassifyButton": "Unclassify",
+      "scanFolderButton": "Scan Folder ({count})",
       "previewTitle": "Preview",
       "noPreview": "Select a file to preview it.",
       "noPreviewType": "Preview not available for this file type.",
@@ -1268,6 +1269,38 @@
         "saving": "Creating…",
         "success": "Person created."
       }
+    },
+    "scan": {
+      "title": "Scan Folder for Documents",
+      "hint": "AI classifies every file (Haiku). You approve which ones to extract and create (Sonnet).",
+      "noFiles": "No files in this folder.",
+      "scanAllButton": "Scan All ({count})",
+      "scanning": "Scanning…",
+      "extractSelectedButton": "Extract & Create ({count})",
+      "extracting": "Extracting…",
+      "close": "Close",
+      "selectAll": "Select / deselect all extractable",
+      "costNote": "Scan: ~0.01 cents/file (Haiku). Extract+Create: ~1.25 cents/file (Sonnet).",
+      "colFile": "File",
+      "colType": "Document Type",
+      "colInstitution": "Institution",
+      "colConfidence": "Confidence",
+      "colStatus": "Status",
+      "noType": "none",
+      "confidence": {
+        "high": "High",
+        "medium": "Medium",
+        "low": "Low"
+      },
+      "convertingPdf": "Converting PDF…",
+      "scanningFile": "Scanning…",
+      "extractingFile": "Extracting…",
+      "creatingDoc": "Creating…",
+      "skipped": "Skipped",
+      "errorShort": "Error",
+      "notExtractable": "Not extractable",
+      "ready": "Ready",
+      "viewDocument": "View →"
     }
   },
   "usersAccess": {

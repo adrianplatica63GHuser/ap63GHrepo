@@ -42,6 +42,7 @@ import {
   isFileHandle,
 } from "./file-system-types";
 import { ClassifyDialog } from "./classify-dialog";
+import { FolderScanDialog } from "./folder-scan-dialog";
 
 type Entry = { name: string; handle: FSFileHandle };
 
@@ -144,6 +145,7 @@ export function ImportBrowser() {
   const [classifyOpen, setClassifyOpen] = useState(false);
   const [classifyFiles, setClassifyFiles] = useState<File[]>([]);
   const [resolving, setResolving] = useState(false);
+  const [scanOpen, setScanOpen] = useState(false);
 
   const listRef = useRef<HTMLUListElement>(null);
 
@@ -359,6 +361,15 @@ export function ImportBrowser() {
         {folderName && (
           <span className="text-sm font-medium text-ink dark:text-zinc-300">📁 {folderName}</span>
         )}
+        {dirHandle && entries.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setScanOpen(true)}
+            className="inline-flex items-center rounded-md border border-wire bg-white px-4 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900"
+          >
+            {t("scanFolderButton", { count: entries.length })}
+          </button>
+        )}
       </div>
 
       {loadError && (
@@ -558,6 +569,14 @@ export function ImportBrowser() {
           files={classifyFiles}
           onClassified={markClassified}
           onClose={() => setClassifyOpen(false)}
+        />
+      )}
+
+      {scanOpen && (
+        <FolderScanDialog
+          entries={entries}
+          onClose={() => setScanOpen(false)}
+          onCreated={markClassified}
         />
       )}
     </div>

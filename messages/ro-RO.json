@@ -1207,6 +1207,7 @@
       "fileListLabel": "Fișiere",
       "classifyButton": "Clasifică ({count})",
       "unclassifyButton": "Declasifică",
+      "scanFolderButton": "Scanează Dosarul ({count})",
       "previewTitle": "Previzualizare",
       "noPreview": "Selectați un fișier pentru a-l previzualiza.",
       "noPreviewType": "Previzualizarea nu este disponibilă pentru acest tip de fișier.",
@@ -1268,6 +1269,38 @@
         "saving": "Se creează…",
         "success": "Persoană creată."
       }
+    },
+    "scan": {
+      "title": "Scanează Dosarul pentru Documente",
+      "hint": "AI clasifică fiecare fișier (Haiku). Dvs. aprobați ce se extrage și se creează (Sonnet).",
+      "noFiles": "Nu există fișiere în acest dosar.",
+      "scanAllButton": "Scanează Toate ({count})",
+      "scanning": "Se scanează…",
+      "extractSelectedButton": "Extrage și Creează ({count})",
+      "extracting": "Se extrage…",
+      "close": "Închide",
+      "selectAll": "Selectează / deselectează toate extractibile",
+      "costNote": "Scanare: ~0,01 cenți/fișier (Haiku). Extragere+Creare: ~1,25 cenți/fișier (Sonnet).",
+      "colFile": "Fișier",
+      "colType": "Tip Document",
+      "colInstitution": "Instituție",
+      "colConfidence": "Încredere",
+      "colStatus": "Status",
+      "noType": "niciunul",
+      "confidence": {
+        "high": "Ridicată",
+        "medium": "Medie",
+        "low": "Scăzută"
+      },
+      "convertingPdf": "Se convertește PDF…",
+      "scanningFile": "Se scanează…",
+      "extractingFile": "Se extrage…",
+      "creatingDoc": "Se creează…",
+      "skipped": "Ignorat",
+      "errorShort": "Eroare",
+      "notExtractable": "Neextractibil",
+      "ready": "Gata",
+      "viewDocument": "Vezi →"
     }
   },
   "usersAccess": {
