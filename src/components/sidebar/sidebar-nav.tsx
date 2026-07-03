@@ -87,7 +87,7 @@ function NavSubItem({
       }}
       className={`${base} ${
         isActive
-          ? "bg-cta-pale text-cta font-medium"
+          ? "bg-slate-100 text-slate-700 font-medium dark:bg-slate-800 dark:text-slate-200"
           : "text-ink hover:bg-or-light"
       }`}
     >
@@ -135,7 +135,7 @@ function NavSectionRow({
         className={[
           "w-full flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
           isCollapsed ? "justify-center" : "justify-between",
-          isSectionActive ? "text-cta" : "text-ink hover:bg-crease",
+          isSectionActive ? "text-slate-700 dark:text-slate-200" : "text-ink hover:bg-crease",
         ].join(" ")}
       >
         <span className={`flex items-center ${isCollapsed ? "" : "gap-2.5"}`}>
@@ -207,7 +207,7 @@ function NavFlatSectionRow({
       className={[
         "w-full flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
         isCollapsed ? "justify-center" : "justify-between",
-        isActive ? "text-cta" : "text-ink hover:bg-crease",
+        isActive ? "text-slate-700 dark:text-slate-200" : "text-ink hover:bg-crease",
       ].join(" ")}
     >
       <span className={`flex items-center ${isCollapsed ? "" : "gap-2.5"}`}>

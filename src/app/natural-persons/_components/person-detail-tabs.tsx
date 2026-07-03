@@ -69,8 +69,8 @@ export function PersonDetailTabs({
               className={[
                 "relative px-6 py-3 rounded-t-xl -mb-[2px] transition-all duration-150 focus:outline-none uppercase",
                 activeTab === tab.key
-                  ? "border-t-2 border-l-2 border-r-2 border-fade dark:border-zinc-500 bg-canvas dark:bg-zinc-900 text-cta font-bold text-base z-10"
-                  : "border-t-2 border-l-2 border-r-2 border-wire dark:border-zinc-700 bg-card dark:bg-zinc-800/60 text-fade dark:text-zinc-400 font-bold text-sm z-0 hover:text-ink dark:hover:text-zinc-200 hover:bg-cap dark:hover:bg-zinc-700/50",
+                  ? "border-t-2 border-l-2 border-r-2 border-slate-700 dark:border-slate-500 bg-slate-700 dark:bg-slate-800 text-white font-bold text-base z-10"
+                  : "border-t-2 border-l-2 border-r-2 border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 font-bold text-sm z-0 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700/50",
               ].join(" ")}
             >
               {tab.label}
@@ -79,7 +79,7 @@ export function PersonDetailTabs({
         </nav>
 
         {/* Content "page" — bordered rectangle framing all panels */}
-        <div role="tabpanel" className="relative z-[1] border-2 border-fade dark:border-zinc-500 bg-canvas dark:bg-zinc-900 p-4">
+        <div role="tabpanel" className="relative z-[1] border-2 border-slate-700 dark:border-slate-500 bg-slate-50 dark:bg-slate-900 p-4">
           {activeTab === "details" && (
             <NaturalPersonForm
               mode={readonly ? "view" : "edit"}
