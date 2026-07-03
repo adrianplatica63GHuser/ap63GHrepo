@@ -52,8 +52,8 @@ export function JudicialPersonDetailTabs({
         />
       </header>
 
-      {/* Tab bar — phone-book card-tab style (Slice 19.08) */}
-      <div className="border-b-2 border-wire dark:border-zinc-600">
+      {/* Tab nav + content page grouped — no gap so the border is one contiguous rectangle (Slice 19.08) */}
+      <div className="flex flex-col">
         <nav className="flex items-end gap-1 pt-2" role="tablist" aria-label={personName}>
           {tabs.map((tab) => (
             <button
@@ -62,38 +62,38 @@ export function JudicialPersonDetailTabs({
               aria-selected={activeTab === tab.key}
               onClick={() => setActiveTab(tab.key)}
               className={[
-                "relative px-6 py-3 rounded-t-xl -mb-[2px] transition-all duration-150 focus:outline-none",
+                "relative px-6 py-3 rounded-t-xl -mb-[2px] transition-all duration-150 focus:outline-none uppercase",
                 activeTab === tab.key
-                  ? "border-t-2 border-l-2 border-r-2 border-wire dark:border-zinc-500 bg-background text-cta font-bold text-base z-10"
-                  : "border-2 border-wire/50 dark:border-zinc-700 bg-cap/60 dark:bg-zinc-800/40 text-fade dark:text-zinc-400 font-medium text-sm hover:text-ink dark:hover:text-zinc-200 hover:bg-card dark:hover:bg-zinc-700/50",
+                  ? "border-t-2 border-l-2 border-r-2 border-fade dark:border-zinc-500 bg-canvas dark:bg-zinc-900 text-cta font-bold text-base z-10"
+                  : "border-t-2 border-l-2 border-r-2 border-wire dark:border-zinc-700 bg-card dark:bg-zinc-800/60 text-fade dark:text-zinc-400 font-bold text-sm z-0 hover:text-ink dark:hover:text-zinc-200 hover:bg-cap dark:hover:bg-zinc-700/50",
               ].join(" ")}
             >
               {tab.label}
             </button>
           ))}
         </nav>
-      </div>
 
-      {/* Tab content */}
-      <div role="tabpanel">
-        {activeTab === "details" && (
-          <JudicialPersonForm
-            mode={readonly ? "view" : "edit"}
-            personId={personId}
-            personCode={personCode}
-            initialValues={initialValues}
-            versionNavSlot={navSlot}
-          />
-        )}
-        {activeTab === "properties" && (
-          <PersonPropertiesTab personId={personId} backBase="/judicial-persons" />
-        )}
-        {activeTab === "document" && (
-          <PersonDocumentTab personId={personId} backBase="/judicial-persons" />
-        )}
-        {activeTab === "references" && (
-          <PersonReferencesTab personId={personId} backBase="/judicial-persons" />
-        )}
+        {/* Content "page" — bordered rectangle framing all panels */}
+        <div role="tabpanel" className="relative z-[1] border-2 border-fade dark:border-zinc-500 bg-canvas dark:bg-zinc-900 p-4">
+          {activeTab === "details" && (
+            <JudicialPersonForm
+              mode={readonly ? "view" : "edit"}
+              personId={personId}
+              personCode={personCode}
+              initialValues={initialValues}
+              versionNavSlot={navSlot}
+            />
+          )}
+          {activeTab === "properties" && (
+            <PersonPropertiesTab personId={personId} backBase="/judicial-persons" />
+          )}
+          {activeTab === "document" && (
+            <PersonDocumentTab personId={personId} backBase="/judicial-persons" />
+          )}
+          {activeTab === "references" && (
+            <PersonReferencesTab personId={personId} backBase="/judicial-persons" />
+          )}
+        </div>
       </div>
     </>
   );
