@@ -66,44 +66,27 @@ type ScanEntry = {
 };
 
 // ---------------------------------------------------------------------------
-// PDF.js dynamic loader
+// PDF.js rasteriser — uses the locally-installed pdfjs-dist package.
+// The worker file is copied to public/pdf.worker.min.js by the postinstall
+// script (scripts/copy-pdfjs-worker.mjs), so it is always served locally
+// with no CDN dependency.
 // ---------------------------------------------------------------------------
 
-const PDFJS_CDN =
-  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
-const PDFJS_WORKER_CDN =
-  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
-declare global {
-  interface Window {
-    pdfjsLib: any;
-  }
-}
-
-let pdfJsLoading: Promise<void> | null = null;
+// Lazy-loaded on first PDF — keeps the initial bundle small.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let pdfjsLib: any = null;
 
 async function ensurePdfJs(): Promise<void> {
-  if (window.pdfjsLib) return;
-  if (!pdfJsLoading) {
-    pdfJsLoading = new Promise<void>((resolve, reject) => {
-      const s = document.createElement("script");
-      s.src = PDFJS_CDN;
-      s.onload = () => {
-        window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER_CDN;
-        resolve();
-      };
-      s.onerror = () => reject(new Error("Failed to load PDF.js from CDN"));
-      document.head.appendChild(s);
-    });
-  }
-  return pdfJsLoading;
+  if (pdfjsLib) return;
+  pdfjsLib = await import("pdfjs-dist");
+  // Worker is copied to /public by scripts/copy-pdfjs-worker.mjs
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
 }
 
 async function pdfToImageBlob(file: File): Promise<Blob> {
   await ensurePdfJs();
   const buf = await file.arrayBuffer();
-  const pdf = await window.pdfjsLib.getDocument({ data: buf }).promise;
+  const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
   const page = await pdf.getPage(1);
   const viewport = page.getViewport({ scale: 1.5 });
   const canvas = document.createElement("canvas");
@@ -119,7 +102,6 @@ async function pdfToImageBlob(file: File): Promise<Blob> {
     ),
   );
 }
-/* eslint-enable @typescript-eslint/no-explicit-any */
 
 // ---------------------------------------------------------------------------
 // File-type helpers (mirrors import-browser.tsx — no circular import needed)

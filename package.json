@@ -17,7 +17,8 @@
     "seed:admin": "node --env-file=.env node_modules/tsx/dist/cli.mjs scripts/seed-admin.ts",
     "supabase:sync": "node --env-file=.env node_modules/tsx/dist/cli.mjs scripts/supabase-sync.ts",
     "storage:migrate-bucket": "node --env-file=.env node_modules/tsx/dist/cli.mjs scripts/storage-migrate-bucket.ts",
-    "export:reference-data": "node --env-file=.env node_modules/tsx/dist/cli.mjs scripts/export-reference-data.ts"
+    "export:reference-data": "node --env-file=.env node_modules/tsx/dist/cli.mjs scripts/export-reference-data.ts",
+    "postinstall": "node scripts/copy-pdfjs-worker.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -32,6 +33,7 @@
     "lucide-react": "^1.14.0",
     "next": "^16.2.9",
     "next-intl": "^4.9.1",
+    "pdfjs-dist": "^3.11.174",
     "pg": "^8.20.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
