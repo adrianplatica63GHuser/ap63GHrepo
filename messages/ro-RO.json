@@ -569,18 +569,37 @@
         "saving": "Se salvează…",
         "saved": "✓ Salvat"
       },
+      "markReviewed": {
+        "button": "Marchează ca verificat",
+        "marking": "Se marchează…",
+        "marked": "✓ Verificat"
+      },
+      "tags": {
+        "title": "Etichete / Cuvinte cheie",
+        "note": "Etichete libere care te ajută să găsești și să filtrezi acest element. Introduceți câte o etichetă pe rând și apăsați Adaugă sau Enter.",
+        "placeholder": "Introduceți o etichetă…",
+        "add": "Adaugă",
+        "adding": "Se adaugă…",
+        "remove": "Elimină eticheta",
+        "empty": "Nicio etichetă adăugată încă"
+      },
       "groups": {
         "title": "Grupuri",
-        "empty": "Nu face parte din niciun grup"
+        "empty": "Nu face parte din niciun grup",
+        "add": "+ Adaugă în grup",
+        "addPlaceholder": "— selectează un grup —",
+        "remove": "Elimină din grup"
       },
       "stamps": {
         "title": "Ștampile",
-        "empty": "Nicio ștampilă aplicată"
+        "empty": "Nicio ștampilă aplicată",
+        "add": "+ Aplică ștampilă",
+        "addPlaceholder": "— selectează o ștampilă —",
+        "remove": "Elimină ștampila"
       },
       "mentions": {
         "title": "Mențiuni",
-        "wip": "În lucru — disponibil în curând",
-        "update": "Actualizare"
+        "description": "Mențiunile acestui element în alte înregistrări, documente sau note vor fi afișate aici."
       },
       "version": {
         "label": "v {n}",

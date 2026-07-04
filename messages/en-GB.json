@@ -569,18 +569,37 @@
         "saving": "Saving…",
         "saved": "✓ Saved"
       },
+      "markReviewed": {
+        "button": "Mark as reviewed",
+        "marking": "Marking…",
+        "marked": "✓ Reviewed"
+      },
+      "tags": {
+        "title": "Tags / Keywords",
+        "note": "Free-form tags that help you find and filter this item. Enter one tag at a time and press Add or Enter.",
+        "placeholder": "Enter a tag…",
+        "add": "Add",
+        "adding": "Adding…",
+        "remove": "Remove tag",
+        "empty": "No tags added yet"
+      },
       "groups": {
         "title": "Groups",
-        "empty": "Not a member of any group"
+        "empty": "Not a member of any group",
+        "add": "+ Add to group",
+        "addPlaceholder": "— select a group —",
+        "remove": "Remove from group"
       },
       "stamps": {
         "title": "Stamps",
-        "empty": "No stamps applied"
+        "empty": "No stamps applied",
+        "add": "+ Apply stamp",
+        "addPlaceholder": "— select a stamp —",
+        "remove": "Remove stamp"
       },
       "mentions": {
         "title": "Mentions",
-        "wip": "Work in progress — coming soon",
-        "update": "Update"
+        "description": "Mentions of this item within other records, documents, or notes will be listed here."
       },
       "version": {
         "label": "v {n}",

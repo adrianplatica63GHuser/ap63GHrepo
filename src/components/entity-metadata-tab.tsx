@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
@@ -32,6 +32,8 @@ const PROVENANCE_VALUES = [
 type GroupTag     = { id: string; code: string; position: number; description: string };
 type StampTag     = { id: string; code: string; shortDescription: string };
 type HistoryEntry = { method: string; date: string };
+type AvailableGroup = { id: string; code: string; description: string };
+type AvailableStamp = { id: string; code: string; shortDescription: string };
 
 type MetaData = {
   principalObjectId:    string | null;
@@ -79,8 +81,8 @@ function fieldHighlight(
   curr: string | null,
 ): HighlightColor | undefined {
   if (prev === curr) return undefined;
-  if (prev === null) return "green";   // added
-  return "red";                         // modified or deleted
+  if (prev === null) return "green";
+  return "red";
 }
 
 /** Compute all field highlights by diffing two snapshots. */
@@ -148,10 +150,7 @@ function MetaSelect({
 }
 
 // ---------------------------------------------------------------------------
-// MetadataSection — one editable section (select + statement + save button).
-//
-// `useEffect` keeps val in sync with initialValue so a refetch (or version
-// navigation) correctly updates the displayed dropdown value.
+// MetadataSection — one editable section (select + statement + save + review)
 // ---------------------------------------------------------------------------
 
 function MetadataSection({
@@ -164,36 +163,46 @@ function MetadataSection({
   labelSave,
   labelSaving,
   labelSaved,
+  labelMarkReviewed,
+  labelMarkingReviewed,
+  labelMarkedReviewed,
   daysText,
   reviewWarning,
   onSave,
+  onMarkReviewed,
   readOnly,
   highlight,
   children,
 }: {
-  title:         string;
-  note:          string;
-  initialValue:  string | null;
-  options:       { value: string; label: string }[];
-  statementMap:  Record<string, string>;
-  placeholder:   string;
-  labelSave:     string;
-  labelSaving:   string;
-  labelSaved:    string;
+  title:                 string;
+  note:                  string;
+  initialValue:          string | null;
+  options:               { value: string; label: string }[];
+  statementMap:          Record<string, string>;
+  placeholder:           string;
+  labelSave:             string;
+  labelSaving:           string;
+  labelSaved:            string;
+  labelMarkReviewed:     string;
+  labelMarkingReviewed:  string;
+  labelMarkedReviewed:   string;
   /** Pre-formatted "Updated X days ago" text, or null if never saved. */
-  daysText:      string | null;
+  daysText:              string | null;
   /** Non-null when >90 days — shown in red. */
-  reviewWarning: string | null;
-  onSave:        (value: string | null) => Promise<void>;
+  reviewWarning:         string | null;
+  onSave:                (value: string | null) => Promise<void>;
+  onMarkReviewed:        () => Promise<void>;
   /** When true: dropdown is disabled, save button is hidden. */
-  readOnly?:     boolean;
+  readOnly?:             boolean;
   /** Version-diff highlight colour for this field. */
-  highlight?:    HighlightColor | undefined;
-  children?:     React.ReactNode;
+  highlight?:            HighlightColor | undefined;
+  children?:             React.ReactNode;
 }) {
-  const [val,    setVal]    = useState<string>(initialValue ?? "");
-  const [saving, setSaving] = useState(false);
-  const [saved,  setSaved]  = useState(false);
+  const [val,          setVal]          = useState<string>(initialValue ?? "");
+  const [saving,       setSaving]       = useState(false);
+  const [saved,        setSaved]        = useState(false);
+  const [reviewing,    setReviewing]    = useState(false);
+  const [reviewed,     setReviewed]     = useState(false);
 
   // Keep val in sync when initialValue changes (refetch or version nav).
   useEffect(() => {
@@ -211,6 +220,17 @@ function MetadataSection({
     }
   }
 
+  async function handleMarkReviewed() {
+    setReviewing(true);
+    try {
+      await onMarkReviewed();
+      setReviewed(true);
+      setTimeout(() => setReviewed(false), 2000);
+    } finally {
+      setReviewing(false);
+    }
+  }
+
   const statement = val ? statementMap[val] : null;
 
   return (
@@ -218,7 +238,7 @@ function MetadataSection({
       <h2 className="mb-2 text-xl font-semibold text-ink dark:text-zinc-100">{title}</h2>
       <p className="mb-3 text-sm text-fade dark:text-zinc-400">{note}</p>
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <MetaSelect
           value={val}
           onChange={setVal}
@@ -235,6 +255,16 @@ function MetadataSection({
             className="rounded px-3 py-1.5 text-sm font-medium bg-slate-700 hover:bg-slate-800 dark:bg-slate-600 dark:hover:bg-slate-500 text-white disabled:opacity-60 transition-colors"
           >
             {saved ? labelSaved : saving ? labelSaving : labelSave}
+          </button>
+        )}
+        {!readOnly && (
+          <button
+            type="button"
+            onClick={handleMarkReviewed}
+            disabled={reviewing || reviewed}
+            className="rounded px-3 py-1.5 text-sm font-medium border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-zinc-800 disabled:opacity-60 transition-colors"
+          >
+            {reviewed ? labelMarkedReviewed : reviewing ? labelMarkingReviewed : labelMarkReviewed}
           </button>
         )}
       </div>
@@ -257,6 +287,453 @@ function MetadataSection({
       )}
 
       {children && <div className="mt-4">{children}</div>}
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// TagsSection — text input + chip display
+// ---------------------------------------------------------------------------
+
+function TagsSection({
+  principalObjectId,
+  queryKey,
+  labelTitle,
+  labelNote,
+  labelPlaceholder,
+  labelAdd,
+  labelAdding,
+  labelRemove,
+  labelEmpty,
+}: {
+  principalObjectId: string;
+  queryKey:          string;
+  labelTitle:        string;
+  labelNote:         string;
+  labelPlaceholder:  string;
+  labelAdd:          string;
+  labelAdding:       string;
+  labelRemove:       string;
+  labelEmpty:        string;
+}) {
+  const queryClient = useQueryClient();
+  const tagsKey     = `${queryKey}-tags`;
+  const apiBase     = `/api/metadata/${principalObjectId}/tags`;
+
+  const { data } = useQuery<{ tags: string[] }>({
+    queryKey:             [tagsKey],
+    queryFn:              async () => {
+      const res = await fetch(apiBase);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    },
+    staleTime:            0,
+    refetchOnWindowFocus: false,
+  });
+
+  const tags = data?.tags ?? [];
+
+  const [input,   setInput]   = useState("");
+  const [adding,  setAdding]  = useState(false);
+  const [removing, setRemoving] = useState<string | null>(null);
+
+  async function handleAdd() {
+    const tag = input.trim();
+    if (!tag) return;
+    setAdding(true);
+    try {
+      const res = await fetch(apiBase, {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ tag }),
+      });
+      if (res.ok) {
+        setInput("");
+        await queryClient.invalidateQueries({ queryKey: [tagsKey] });
+      }
+    } finally {
+      setAdding(false);
+    }
+  }
+
+  async function handleRemove(tag: string) {
+    setRemoving(tag);
+    try {
+      const res = await fetch(apiBase, {
+        method:  "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ tag }),
+      });
+      if (res.ok) {
+        await queryClient.invalidateQueries({ queryKey: [tagsKey] });
+      }
+    } finally {
+      setRemoving(null);
+    }
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Enter") { e.preventDefault(); void handleAdd(); }
+  }
+
+  return (
+    <section>
+      <h2 className="mb-2 text-xl font-semibold text-ink dark:text-zinc-100">{labelTitle}</h2>
+      <p className="mb-3 text-sm text-fade dark:text-zinc-400">{labelNote}</p>
+
+      {/* Input row */}
+      <div className="flex items-center gap-2 mb-3">
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+          disabled={adding}
+          placeholder={labelPlaceholder}
+          className="flex-1 max-w-xs rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-ink dark:text-zinc-100 text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-slate-500"
+        />
+        <button
+          type="button"
+          onClick={handleAdd}
+          disabled={adding || !input.trim()}
+          className="rounded px-3 py-1.5 text-sm font-medium bg-slate-700 hover:bg-slate-800 dark:bg-slate-600 dark:hover:bg-slate-500 text-white disabled:opacity-60 transition-colors"
+        >
+          {adding ? labelAdding : labelAdd}
+        </button>
+      </div>
+
+      {/* Chip display */}
+      {tags.length === 0 ? (
+        <p className="text-sm text-fade dark:text-zinc-400">{labelEmpty}</p>
+      ) : (
+        <div className="flex flex-wrap gap-2">
+          {tags.map((tag) => (
+            <span
+              key={tag}
+              className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-zinc-800 px-3 py-1 text-sm text-ink dark:text-zinc-100"
+            >
+              {tag}
+              <button
+                type="button"
+                onClick={() => handleRemove(tag)}
+                disabled={removing === tag}
+                aria-label={`${labelRemove} ${tag}`}
+                className="text-slate-400 hover:text-red-500 dark:text-zinc-500 dark:hover:text-red-400 transition-colors leading-none disabled:opacity-50"
+              >
+                ×
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// InlineGroupsSection — groups with add/remove
+// ---------------------------------------------------------------------------
+
+function InlineGroupsSection({
+  principalObjectId,
+  currentGroups,
+  mainQueryKey,
+  isOnLatest,
+  labelTitle,
+  labelEmpty,
+  labelAdd,
+  labelAddPlaceholder,
+  labelRemove,
+  withBack,
+}: {
+  principalObjectId: string;
+  currentGroups:     GroupTag[];
+  mainQueryKey:      string;
+  isOnLatest:        boolean;
+  labelTitle:        string;
+  labelEmpty:        string;
+  labelAdd:          string;
+  labelAddPlaceholder: string;
+  labelRemove:       string;
+  withBack:          (href: string) => string;
+}) {
+  const queryClient  = useQueryClient();
+  const availKey     = `${mainQueryKey}-avail-groups`;
+  const groupsApiBase = `/api/metadata/${principalObjectId}/groups`;
+
+  const [showAdd,   setShowAdd]   = useState(false);
+  const [adding,    setAdding]    = useState(false);
+  const [removing,  setRemoving]  = useState<string | null>(null);
+  const selectRef   = useRef<HTMLSelectElement>(null);
+
+  const { data: availData, isLoading: availLoading } = useQuery<{ groups: AvailableGroup[] }>({
+    queryKey:             [availKey],
+    queryFn:              async () => {
+      const res = await fetch(groupsApiBase);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    },
+    enabled:              showAdd && !!principalObjectId,
+    staleTime:            0,
+    refetchOnWindowFocus: false,
+  });
+
+  const available = availData?.groups ?? [];
+
+  async function handleAdd(groupId: string) {
+    if (!groupId) return;
+    setAdding(true);
+    try {
+      const res = await fetch(groupsApiBase, {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ groupId }),
+      });
+      if (res.ok) {
+        setShowAdd(false);
+        await queryClient.invalidateQueries({ queryKey: [mainQueryKey] });
+        await queryClient.invalidateQueries({ queryKey: [availKey] });
+      }
+    } finally {
+      setAdding(false);
+    }
+  }
+
+  async function handleRemove(groupId: string) {
+    setRemoving(groupId);
+    try {
+      const res = await fetch(`${groupsApiBase}/${groupId}`, { method: "DELETE" });
+      if (res.ok) {
+        await queryClient.invalidateQueries({ queryKey: [mainQueryKey] });
+        await queryClient.invalidateQueries({ queryKey: [availKey] });
+      }
+    } finally {
+      setRemoving(null);
+    }
+  }
+
+  return (
+    <section>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-xl font-semibold text-ink dark:text-zinc-100">{labelTitle}</h2>
+        {isOnLatest && (
+          <button
+            type="button"
+            onClick={() => setShowAdd((v) => !v)}
+            className="text-sm text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-200 transition-colors"
+          >
+            {showAdd ? "▲" : labelAdd}
+          </button>
+        )}
+      </div>
+
+      {/* Add group dropdown (lazy) */}
+      {showAdd && isOnLatest && (
+        <div className="mb-3 flex items-center gap-2">
+          <select
+            ref={selectRef}
+            defaultValue=""
+            disabled={adding || availLoading}
+            onChange={(e) => { void handleAdd(e.target.value); }}
+            className="rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-ink dark:text-zinc-100 text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:opacity-50"
+          >
+            <option value="" disabled>
+              {availLoading ? "…" : labelAddPlaceholder}
+            </option>
+            {available.map((g) => (
+              <option key={g.id} value={g.id}>
+                {g.code} — {g.description}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {!currentGroups.length ? (
+        <p className="text-sm text-fade dark:text-zinc-400">{labelEmpty}</p>
+      ) : (
+        <ul className="flex flex-col gap-2">
+          {currentGroups.map((g) => (
+            <li key={g.code} className="flex items-center gap-2">
+              <Link
+                href={withBack(`/admin/groups/${encodeURIComponent(g.id)}`)}
+                className="inline-flex items-center gap-3 rounded-md px-2 py-1 text-sm transition-colors hover:bg-canvas dark:hover:bg-zinc-800"
+              >
+                <span className="font-mono text-xs rounded border border-card-rim bg-card px-1.5 py-0.5 text-fade dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
+                  {g.code}&nbsp;[{String(g.position).padStart(2, "0")}]
+                </span>
+                <span className="text-ink underline-offset-2 hover:underline dark:text-zinc-100">
+                  {g.description}
+                </span>
+              </Link>
+              {isOnLatest && (
+                <button
+                  type="button"
+                  onClick={() => handleRemove(g.id)}
+                  disabled={removing === g.id}
+                  aria-label={`${labelRemove} ${g.code}`}
+                  className="ml-auto text-xs text-slate-400 hover:text-red-500 dark:text-zinc-500 dark:hover:text-red-400 transition-colors disabled:opacity-50 px-1"
+                >
+                  ×
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// InlineStampsSection — stamps with add/remove
+// ---------------------------------------------------------------------------
+
+function InlineStampsSection({
+  principalObjectId,
+  currentStamps,
+  mainQueryKey,
+  isOnLatest,
+  labelTitle,
+  labelEmpty,
+  labelAdd,
+  labelAddPlaceholder,
+  labelRemove,
+  withBack,
+}: {
+  principalObjectId: string;
+  currentStamps:     StampTag[];
+  mainQueryKey:      string;
+  isOnLatest:        boolean;
+  labelTitle:        string;
+  labelEmpty:        string;
+  labelAdd:          string;
+  labelAddPlaceholder: string;
+  labelRemove:       string;
+  withBack:          (href: string) => string;
+}) {
+  const queryClient   = useQueryClient();
+  const availKey      = `${mainQueryKey}-avail-stamps`;
+  const stampsApiBase = `/api/metadata/${principalObjectId}/stamps`;
+
+  const [showAdd,  setShowAdd]  = useState(false);
+  const [adding,   setAdding]   = useState(false);
+  const [removing, setRemoving] = useState<string | null>(null);
+
+  const { data: availData, isLoading: availLoading } = useQuery<{ stamps: AvailableStamp[] }>({
+    queryKey:             [availKey],
+    queryFn:              async () => {
+      const res = await fetch(stampsApiBase);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    },
+    enabled:              showAdd && !!principalObjectId,
+    staleTime:            0,
+    refetchOnWindowFocus: false,
+  });
+
+  const available = availData?.stamps ?? [];
+
+  async function handleAdd(stampId: string) {
+    if (!stampId) return;
+    setAdding(true);
+    try {
+      const res = await fetch(stampsApiBase, {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ stampId }),
+      });
+      if (res.ok) {
+        setShowAdd(false);
+        await queryClient.invalidateQueries({ queryKey: [mainQueryKey] });
+        await queryClient.invalidateQueries({ queryKey: [availKey] });
+      }
+    } finally {
+      setAdding(false);
+    }
+  }
+
+  async function handleRemove(stampId: string) {
+    setRemoving(stampId);
+    try {
+      const res = await fetch(`${stampsApiBase}/${stampId}`, { method: "DELETE" });
+      if (res.ok) {
+        await queryClient.invalidateQueries({ queryKey: [mainQueryKey] });
+        await queryClient.invalidateQueries({ queryKey: [availKey] });
+      }
+    } finally {
+      setRemoving(null);
+    }
+  }
+
+  return (
+    <section>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-xl font-semibold text-ink dark:text-zinc-100">{labelTitle}</h2>
+        {isOnLatest && (
+          <button
+            type="button"
+            onClick={() => setShowAdd((v) => !v)}
+            className="text-sm text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-200 transition-colors"
+          >
+            {showAdd ? "▲" : labelAdd}
+          </button>
+        )}
+      </div>
+
+      {/* Add stamp dropdown (lazy) */}
+      {showAdd && isOnLatest && (
+        <div className="mb-3 flex items-center gap-2">
+          <select
+            defaultValue=""
+            disabled={adding || availLoading}
+            onChange={(e) => { void handleAdd(e.target.value); }}
+            className="rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-ink dark:text-zinc-100 text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:opacity-50"
+          >
+            <option value="" disabled>
+              {availLoading ? "…" : labelAddPlaceholder}
+            </option>
+            {available.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.code} — {s.shortDescription}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {!currentStamps.length ? (
+        <p className="text-sm text-fade dark:text-zinc-400">{labelEmpty}</p>
+      ) : (
+        <ul className="flex flex-col gap-2">
+          {currentStamps.map((s) => (
+            <li key={s.code} className="flex items-center gap-2">
+              <Link
+                href={withBack(`/admin/stamps/${encodeURIComponent(s.id)}`)}
+                className="inline-flex items-center gap-3 rounded-md px-2 py-1 text-sm transition-colors hover:bg-canvas dark:hover:bg-zinc-800"
+              >
+                <span className="font-mono text-xs rounded border border-card-rim bg-card px-1.5 py-0.5 text-fade dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
+                  {s.code}
+                </span>
+                <span className="text-ink underline-offset-2 hover:underline dark:text-zinc-100">
+                  {s.shortDescription}
+                </span>
+              </Link>
+              {isOnLatest && (
+                <button
+                  type="button"
+                  onClick={() => handleRemove(s.id)}
+                  disabled={removing === s.id}
+                  aria-label={`${labelRemove} ${s.code}`}
+                  className="ml-auto text-xs text-slate-400 hover:text-red-500 dark:text-zinc-500 dark:hover:text-red-400 transition-colors disabled:opacity-50 px-1"
+                >
+                  ×
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   );
 }
@@ -388,7 +865,6 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName 
 
   function goToPrev() {
     if (viewingVersionNumber === null) {
-      // Latest → go to last historical
       if (latestIndex > 0) setViewingVersionNumber(versions[latestIndex - 1].versionNumber);
     } else {
       const idx = versions.findIndex((v) => v.versionNumber === viewingVersionNumber);
@@ -397,21 +873,18 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName 
   }
 
   function goToNext() {
-    if (viewingVersionNumber === null) return; // already on latest
+    if (viewingVersionNumber === null) return;
     const idx = versions.findIndex((v) => v.versionNumber === viewingVersionNumber);
     if (idx < latestIndex - 1) {
       setViewingVersionNumber(versions[idx + 1].versionNumber);
     } else {
-      setViewingVersionNumber(null); // jump to latest
+      setViewingVersionNumber(null);
     }
   }
 
-  // Label colour for the version badge
   const navColor: HighlightColor =
     viewedVersion && prevVersion
       ? versionLabelColor(prevVersion.snapshot, viewedVersion.snapshot)
-      : viewedVersion?.versionNumber === 0
-      ? "green"
       : "green";
 
   const displayedVersionNumber =
@@ -458,6 +931,18 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName 
     }
   }
 
+  // ── Mark as reviewed helper ───────────────────────────────────────────────
+
+  async function touchField(field: "importance" | "relevance" | "provenance") {
+    const res = await fetch(apiPath, {
+      method:  "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify({ field, action: "touch" }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    await queryClient.invalidateQueries({ queryKey: [queryKey] });
+  }
+
   // ── Make current ─────────────────────────────────────────────────────────
 
   async function handleMakeCurrent() {
@@ -474,7 +959,7 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName 
       if (versionsQueryKey) {
         await queryClient.invalidateQueries({ queryKey: [versionsQueryKey] });
       }
-      setViewingVersionNumber(null); // go to latest
+      setViewingVersionNumber(null);
     } finally {
       setRestoring(false);
       setShowConfirm(false);
@@ -513,7 +998,7 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName 
     label: t(`provenance.${camel(v)}` as Parameters<typeof t>[0]),
   }));
 
-  // ── Statement maps (value → qualifying text shown below the dropdown) ─────
+  // ── Statement maps ────────────────────────────────────────────────────────
 
   const importanceStatements: Record<string, string> = {
     LOW:    t("importance.statementLow"),
@@ -537,7 +1022,6 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName 
     EXTERNAL_IMPORT: t("provenance.statementExternalImport"),
   };
 
-  // Also used for history row labels
   const provenanceLabelMap: Record<string, string> = {};
   for (const v of PROVENANCE_VALUES) {
     provenanceLabelMap[v] = t(`provenance.${camel(v)}` as Parameters<typeof t>[0]);
@@ -605,9 +1089,13 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName 
           labelSave={t("importance.save")}
           labelSaving={t("importance.saving")}
           labelSaved={t("importance.saved")}
+          labelMarkReviewed={t("markReviewed.button")}
+          labelMarkingReviewed={t("markReviewed.marking")}
+          labelMarkedReviewed={t("markReviewed.marked")}
           daysText={buildDaysText(data.importanceUpdatedAt)}
           reviewWarning={buildReviewWarning(data.importanceUpdatedAt)}
           onSave={(v) => saveField("importance", v)}
+          onMarkReviewed={() => touchField("importance")}
           readOnly={!isOnLatest}
           highlight={highlights.importance}
         />
@@ -623,9 +1111,13 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName 
           labelSave={t("relevance.save")}
           labelSaving={t("relevance.saving")}
           labelSaved={t("relevance.saved")}
+          labelMarkReviewed={t("markReviewed.button")}
+          labelMarkingReviewed={t("markReviewed.marking")}
+          labelMarkedReviewed={t("markReviewed.marked")}
           daysText={buildDaysText(data.relevanceUpdatedAt)}
           reviewWarning={buildReviewWarning(data.relevanceUpdatedAt)}
           onSave={(v) => saveField("relevance", v)}
+          onMarkReviewed={() => touchField("relevance")}
           readOnly={!isOnLatest}
           highlight={highlights.relevance}
         />
@@ -641,9 +1133,13 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName 
           labelSave={t("provenance.save")}
           labelSaving={t("provenance.saving")}
           labelSaved={t("provenance.saved")}
+          labelMarkReviewed={t("markReviewed.button")}
+          labelMarkingReviewed={t("markReviewed.marking")}
+          labelMarkedReviewed={t("markReviewed.marked")}
           daysText={buildDaysText(data.provenanceUpdatedAt)}
           reviewWarning={buildReviewWarning(data.provenanceUpdatedAt)}
           onSave={(v) => saveField("provenance", v)}
+          onMarkReviewed={() => touchField("provenance")}
           readOnly={!isOnLatest}
           highlight={highlights.provenance}
         >
@@ -665,75 +1161,69 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName 
           )}
         </MetadataSection>
 
-        {/* ── 4. Grupuri / Groups ──────────────────────────────────────────── */}
-        <section>
-          <h2 className="mb-3 text-xl font-semibold text-ink dark:text-zinc-100">
-            {t("groups.title")}
-          </h2>
-          {!data.groups.length ? (
+        {/* ── 4. Etichete / Tags ───────────────────────────────────────────── */}
+        {data.principalObjectId && isOnLatest && (
+          <TagsSection
+            principalObjectId={data.principalObjectId}
+            queryKey={queryKey}
+            labelTitle={t("tags.title")}
+            labelNote={t("tags.note")}
+            labelPlaceholder={t("tags.placeholder")}
+            labelAdd={t("tags.add")}
+            labelAdding={t("tags.adding")}
+            labelRemove={t("tags.remove")}
+            labelEmpty={t("tags.empty")}
+          />
+        )}
+
+        {/* ── 5. Grupuri / Groups ──────────────────────────────────────────── */}
+        {data.principalObjectId ? (
+          <InlineGroupsSection
+            principalObjectId={data.principalObjectId}
+            currentGroups={data.groups}
+            mainQueryKey={queryKey}
+            isOnLatest={isOnLatest}
+            labelTitle={t("groups.title")}
+            labelEmpty={t("groups.empty")}
+            labelAdd={t("groups.add")}
+            labelAddPlaceholder={t("groups.addPlaceholder")}
+            labelRemove={t("groups.remove")}
+            withBack={withBack}
+          />
+        ) : (
+          <section>
+            <h2 className="mb-3 text-xl font-semibold text-ink dark:text-zinc-100">{t("groups.title")}</h2>
             <p className="text-sm text-fade dark:text-zinc-400">{t("groups.empty")}</p>
-          ) : (
-            <ul className="flex flex-col gap-2">
-              {data.groups.map((g) => (
-                <li key={g.code}>
-                  <Link
-                    href={withBack(`/admin/groups/${encodeURIComponent(g.id)}`)}
-                    className="inline-flex items-center gap-3 rounded-md px-2 py-1 text-sm transition-colors hover:bg-canvas dark:hover:bg-zinc-800"
-                  >
-                    <span className="font-mono text-xs rounded border border-card-rim bg-card px-1.5 py-0.5 text-fade dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
-                      {g.code}&nbsp;[{String(g.position).padStart(2, "0")}]
-                    </span>
-                    <span className="text-ink underline-offset-2 hover:underline dark:text-zinc-100">
-                      {g.description}
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+          </section>
+        )}
 
-        {/* ── 5. Ștampile / Stamps ─────────────────────────────────────────── */}
-        <section>
-          <h2 className="mb-3 text-xl font-semibold text-ink dark:text-zinc-100">
-            {t("stamps.title")}
-          </h2>
-          {!data.stamps.length ? (
+        {/* ── 6. Ștampile / Stamps ─────────────────────────────────────────── */}
+        {data.principalObjectId ? (
+          <InlineStampsSection
+            principalObjectId={data.principalObjectId}
+            currentStamps={data.stamps}
+            mainQueryKey={queryKey}
+            isOnLatest={isOnLatest}
+            labelTitle={t("stamps.title")}
+            labelEmpty={t("stamps.empty")}
+            labelAdd={t("stamps.add")}
+            labelAddPlaceholder={t("stamps.addPlaceholder")}
+            labelRemove={t("stamps.remove")}
+            withBack={withBack}
+          />
+        ) : (
+          <section>
+            <h2 className="mb-3 text-xl font-semibold text-ink dark:text-zinc-100">{t("stamps.title")}</h2>
             <p className="text-sm text-fade dark:text-zinc-400">{t("stamps.empty")}</p>
-          ) : (
-            <ul className="flex flex-col gap-2">
-              {data.stamps.map((s) => (
-                <li key={s.code}>
-                  <Link
-                    href={withBack(`/admin/stamps/${encodeURIComponent(s.id)}`)}
-                    className="inline-flex items-center gap-3 rounded-md px-2 py-1 text-sm transition-colors hover:bg-canvas dark:hover:bg-zinc-800"
-                  >
-                    <span className="font-mono text-xs rounded border border-card-rim bg-card px-1.5 py-0.5 text-fade dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
-                      {s.code}
-                    </span>
-                    <span className="text-ink underline-offset-2 hover:underline dark:text-zinc-100">
-                      {s.shortDescription}
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+          </section>
+        )}
 
-        {/* ── 6. Mențiuni / Mentions ───────────────────────────────────────── */}
+        {/* ── 7. Mențiuni / Mentions ───────────────────────────────────────── */}
         <section>
           <h2 className="mb-3 text-xl font-semibold text-ink dark:text-zinc-100">
             {t("mentions.title")}
           </h2>
-          <p className="mb-3 text-sm text-fade dark:text-zinc-400">{t("mentions.wip")}</p>
-          <button
-            type="button"
-            disabled
-            className="rounded px-3 py-1.5 text-sm font-medium border border-slate-300 dark:border-slate-600 text-slate-400 dark:text-slate-500 cursor-not-allowed"
-          >
-            {t("mentions.update")}
-          </button>
+          <p className="text-sm text-fade dark:text-zinc-400">{t("mentions.description")}</p>
         </section>
 
       </div>
