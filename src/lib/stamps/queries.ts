@@ -404,33 +404,33 @@ export async function deleteStamp(id: string): Promise<boolean> {
 // Stamp tags for an entity — e.g. for badges on detail pages.
 // ---------------------------------------------------------------------------
 
-/** Enriched stamp tag for the References tab (code + short description). */
-export type StampEntityTag = { code: string; shortDescription: string };
+/** Enriched stamp tag for the References tab (id + code + short description). */
+export type StampEntityTag = { id: string; code: string; shortDescription: string };
 
 export async function listEntityStampTags(opts: {
   propertyId?: string;
   personId?: string;
   documentId?: string;
 }): Promise<StampEntityTag[]> {
-  let rows: { code: string; shortDescription: string }[] = [];
+  let rows: { id: string; code: string; shortDescription: string }[] = [];
 
   if (opts.propertyId) {
     rows = await db
-      .select({ code: stamps.code, shortDescription: stamps.shortDescription })
+      .select({ id: stamps.id, code: stamps.code, shortDescription: stamps.shortDescription })
       .from(stampMember)
       .innerJoin(stamps, eq(stamps.id, stampMember.stampId))
       .where(eq(stampMember.propertyId, opts.propertyId))
       .orderBy(asc(stamps.code));
   } else if (opts.personId) {
     rows = await db
-      .select({ code: stamps.code, shortDescription: stamps.shortDescription })
+      .select({ id: stamps.id, code: stamps.code, shortDescription: stamps.shortDescription })
       .from(stampMember)
       .innerJoin(stamps, eq(stamps.id, stampMember.stampId))
       .where(eq(stampMember.personId, opts.personId))
       .orderBy(asc(stamps.code));
   } else if (opts.documentId) {
     rows = await db
-      .select({ code: stamps.code, shortDescription: stamps.shortDescription })
+      .select({ id: stamps.id, code: stamps.code, shortDescription: stamps.shortDescription })
       .from(stampMember)
       .innerJoin(stamps, eq(stamps.id, stampMember.stampId))
       .where(eq(stampMember.documentId, opts.documentId))

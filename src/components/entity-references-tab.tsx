@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 
@@ -7,8 +8,8 @@ import { useTranslations } from "next-intl";
 // Types
 // ---------------------------------------------------------------------------
 
-type GroupTag  = { code: string; position: number; description: string };
-type StampTag  = { code: string; shortDescription: string };
+type GroupTag  = { id: string; code: string; position: number; description: string };
+type StampTag  = { id: string; code: string; shortDescription: string };
 type RefsData  = { groups: GroupTag[]; stamps: StampTag[] };
 
 // ---------------------------------------------------------------------------
@@ -69,11 +70,18 @@ export function EntityReferencesTab({ apiPath, queryKey }: Props) {
         ) : (
           <ul className="flex flex-col gap-2">
             {data.groups.map((g) => (
-              <li key={g.code} className="flex items-center gap-3 text-sm">
-                <span className="font-mono text-xs rounded border border-card-rim bg-card px-1.5 py-0.5 text-fade dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
-                  {g.code}&nbsp;[{String(g.position).padStart(2, "0")}]
-                </span>
-                <span className="text-ink dark:text-zinc-100">{g.description}</span>
+              <li key={g.code}>
+                <Link
+                  href={`/admin/groups/${encodeURIComponent(g.id)}`}
+                  className="inline-flex items-center gap-3 rounded-md px-2 py-1 text-sm transition-colors hover:bg-canvas dark:hover:bg-zinc-800"
+                >
+                  <span className="font-mono text-xs rounded border border-card-rim bg-card px-1.5 py-0.5 text-fade dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
+                    {g.code}&nbsp;[{String(g.position).padStart(2, "0")}]
+                  </span>
+                  <span className="text-ink underline-offset-2 hover:underline dark:text-zinc-100">
+                    {g.description}
+                  </span>
+                </Link>
               </li>
             ))}
           </ul>
@@ -90,11 +98,18 @@ export function EntityReferencesTab({ apiPath, queryKey }: Props) {
         ) : (
           <ul className="flex flex-col gap-2">
             {data.stamps.map((s) => (
-              <li key={s.code} className="flex items-center gap-3 text-sm">
-                <span className="font-mono text-xs rounded border border-card-rim bg-card px-1.5 py-0.5 text-fade dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
-                  {s.code}
-                </span>
-                <span className="text-ink dark:text-zinc-100">{s.shortDescription}</span>
+              <li key={s.code}>
+                <Link
+                  href={`/admin/stamps/${encodeURIComponent(s.id)}`}
+                  className="inline-flex items-center gap-3 rounded-md px-2 py-1 text-sm transition-colors hover:bg-canvas dark:hover:bg-zinc-800"
+                >
+                  <span className="font-mono text-xs rounded border border-card-rim bg-card px-1.5 py-0.5 text-fade dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
+                    {s.code}
+                  </span>
+                  <span className="text-ink underline-offset-2 hover:underline dark:text-zinc-100">
+                    {s.shortDescription}
+                  </span>
+                </Link>
               </li>
             ))}
           </ul>

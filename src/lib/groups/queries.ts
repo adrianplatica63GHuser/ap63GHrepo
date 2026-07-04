@@ -591,7 +591,7 @@ export async function listPropertyGroupTags(propertyId: string): Promise<GroupTa
 // Returns { code, position, description } for all groups the item belongs to.
 // ---------------------------------------------------------------------------
 
-export type GroupEntityTag = { code: string; position: number; description: string };
+export type GroupEntityTag = { id: string; code: string; position: number; description: string };
 
 export async function listEntityGroupTags(opts: {
   propertyId?: string;
@@ -599,11 +599,11 @@ export async function listEntityGroupTags(opts: {
   documentId?: string;
 }): Promise<GroupEntityTag[]> {
   const base = db
-    .select({ code: groups.code, position: groupMember.position, description: groups.description })
+    .select({ id: groups.id, code: groups.code, position: groupMember.position, description: groups.description })
     .from(groupMember)
     .innerJoin(groups, eq(groups.id, groupMember.groupId));
 
-  let rows: { code: string; position: number; description: string }[];
+  let rows: { id: string; code: string; position: number; description: string }[];
 
   if (opts.propertyId) {
     rows = await base.where(eq(groupMember.propertyId, opts.propertyId)).orderBy(asc(groups.code));
