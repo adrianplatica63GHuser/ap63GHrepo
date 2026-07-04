@@ -12,7 +12,7 @@
 
 import { asc, and, count, desc, eq, ilike, inArray, isNull, or, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { document, documentVersion, groupMember, groups, lookupDocumentType, person, principalObject } from "@/db/schema";
+import { document, documentVersion, entityMetadata, groupMember, groups, lookupDocumentType, person, principalObject } from "@/db/schema";
 import type {
   DocumentCreate,
   DocumentListQuery,
@@ -32,6 +32,10 @@ export type DocumentListItem = {
   title:            string | null;
   nrDocument:       string | null;
   dateDocument:     string | null;
+  /** Metadata fields (always fetched via LEFT JOIN; null when no metadata row exists). */
+  importance:       string | null;
+  relevance:        string | null;
+  provenance:       string | null;
   createdAt:        Date;
   updatedAt:        Date;
 };
@@ -114,11 +118,15 @@ export async function listDocument(opts: DocumentListQuery): Promise<{
         title:            document.title,
         nrDocument:       document.nrDocument,
         dateDocument:     document.dateDocument,
+        importance:       entityMetadata.importance,
+        relevance:        entityMetadata.relevance,
+        provenance:       entityMetadata.provenance,
         createdAt:        document.createdAt,
         updatedAt:        document.updatedAt,
       })
       .from(document)
       .leftJoin(lookupDocumentType, eq(document.documentTypeId, lookupDocumentType.id))
+      .leftJoin(entityMetadata, eq(entityMetadata.principalObjectId, document.principalObjectId))
       .where(where)
       // Slice #16.UX.01: most-recently modified/created first.
       .orderBy(sql`greatest(${document.updatedAt}, ${document.createdAt}) desc`)

@@ -11,7 +11,7 @@
 
 import { and, count, desc, eq, ilike, inArray, isNull, or, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { groupMember, groups, lookupPersonRole, person, principalObject, property, propertyAddress, propertyCorner, propertyPerson, propertyVersion } from "@/db/schema";
+import { entityMetadata, groupMember, groups, lookupPersonRole, person, principalObject, property, propertyAddress, propertyCorner, propertyPerson, propertyVersion } from "@/db/schema";
 import { wgs84ToStereo70 } from "@/lib/geo/transdatRO";
 import { shoelaceAreaM2 } from "./area";
 import type {
@@ -60,6 +60,10 @@ export type PropertyListItem = {
   calculatedAreaMp: string | null;
   locality:         string | null;
   county:           string | null;
+  /** Metadata fields (always fetched via LEFT JOIN; null when no metadata row exists). */
+  importance:       string | null;
+  relevance:        string | null;
+  provenance:       string | null;
   createdAt:        Date;
   updatedAt:        Date;
 };
@@ -256,6 +260,9 @@ export async function listProperties(opts: PropertyListQuery): Promise<{
         calculatedAreaMp: property.calculatedAreaMp,
         locality:        propertyAddress.locality,
         county:          propertyAddress.county,
+        importance:      entityMetadata.importance,
+        relevance:       entityMetadata.relevance,
+        provenance:      entityMetadata.provenance,
         createdAt:       property.createdAt,
         updatedAt:       property.updatedAt,
       })
@@ -263,6 +270,10 @@ export async function listProperties(opts: PropertyListQuery): Promise<{
       .leftJoin(
         propertyAddress,
         eq(propertyAddress.propertyId, property.id),
+      )
+      .leftJoin(
+        entityMetadata,
+        eq(entityMetadata.principalObjectId, property.principalObjectId),
       )
       .where(where)
       // Slice #16.UX.01: most-recently modified/created first.

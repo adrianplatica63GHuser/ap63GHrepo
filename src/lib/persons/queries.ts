@@ -17,6 +17,7 @@ import { and, count, desc, eq, ilike, inArray, isNull, or, sql } from "drizzle-o
 import { db } from "@/db";
 import {
   address,
+  entityMetadata,
   groupMember,
   groups,
   judicialPerson,
@@ -58,6 +59,10 @@ export type PersonListItem = {
   nickname: string | null;
   email: string | null;
   phone: string | null;
+  /** Metadata fields (always fetched via LEFT JOIN; null when no metadata row exists). */
+  importance: string | null;
+  relevance:  string | null;
+  provenance: string | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -131,11 +136,15 @@ export async function listPersons(opts: ListQuery): Promise<{
         nickname: naturalPerson.nickname,
         email: sql<string | null>`coalesce(${naturalPerson.personalEmail1}, ${naturalPerson.personalEmail2}, ${naturalPerson.workEmail})`,
         phone: sql<string | null>`coalesce(${naturalPerson.personalPhone1}, ${naturalPerson.personalPhone2}, ${naturalPerson.workPhone})`,
+        importance: entityMetadata.importance,
+        relevance:  entityMetadata.relevance,
+        provenance: entityMetadata.provenance,
         createdAt: person.createdAt,
         updatedAt: person.updatedAt,
       })
       .from(person)
       .leftJoin(naturalPerson, eq(naturalPerson.personId, person.id))
+      .leftJoin(entityMetadata, eq(entityMetadata.principalObjectId, person.principalObjectId))
       .where(where)
       // Slice #16.UX.01: most-recently modified/created first.
       .orderBy(sql`greatest(${person.updatedAt}, ${person.createdAt}) desc`)

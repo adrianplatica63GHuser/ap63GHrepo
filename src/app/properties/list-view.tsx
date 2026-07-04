@@ -5,25 +5,30 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { GroupsFilter, GroupsFilterDropdown } from "@/components/groups-filter-dropdown";
 import { RecencyBadge } from "@/components/recency-badge";
 
 const PAGE_SIZE = 15;
+const LS_KEY    = "ga40-col-property";
+const MAX_OPT   = 4;
+const DEFAULT_COLS = ["nickname", "cadastralNumber", "surfaceAreaMp", "locality"];
 
 type PropertyListItem = {
-  id:              string;
-  code:            string;
-  nickname:        string | null;
-  tarlaSola:       string | null;
-  parcela:         string | null;
-  cadastralNumber: string | null;
-  carteFunciara:   string | null;
-  surfaceAreaMp:   string | null;
+  id:               string;
+  code:             string;
+  nickname:         string | null;
+  tarlaSola:        string | null;
+  parcela:          string | null;
+  cadastralNumber:  string | null;
+  carteFunciara:    string | null;
+  surfaceAreaMp:    string | null;
   calculatedAreaMp: string | null;
-  locality:        string | null;
-  county:          string | null;
-  createdAt:       string;
-  updatedAt:       string;
+  locality:         string | null;
+  county:           string | null;
+  importance:       string | null;
+  relevance:        string | null;
+  provenance:       string | null;
+  createdAt:        string;
+  updatedAt:        string;
 };
 
 type ListResponse = {
@@ -36,26 +41,14 @@ type ListResponse = {
 async function fetchProperties(
   q: string,
   page: number,
-  filter?: GroupsFilter,
 ): Promise<ListResponse> {
   const url = new URL("/api/properties", window.location.origin);
   if (q) url.searchParams.set("q", q);
-  if (filter !== undefined) {
-    url.searchParams.set("groupCodes", filter.codes.join(","));
-    if (!filter.includeUngrouped) url.searchParams.set("includeUngrouped", "false");
-  }
   url.searchParams.set("limit",  String(PAGE_SIZE));
   url.searchParams.set("offset", String(page * PAGE_SIZE));
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Request failed (${res.status})`);
   return res.json();
-}
-
-async function fetchPropertyGroupCodes(): Promise<string[]> {
-  const res = await fetch("/api/groups?targetType=PROPERTY");
-  if (!res.ok) return [];
-  const body = await res.json();
-  return ((body.items ?? []) as { code: string }[]).map((g) => g.code).sort();
 }
 
 async function callBatchDelete(ids: string[]): Promise<void> {
@@ -126,6 +119,17 @@ function ConfirmDialog({
   );
 }
 
+function readStoredCols(): string[] {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return DEFAULT_COLS;
+    const parsed = JSON.parse(raw) as unknown;
+    return Array.isArray(parsed) ? (parsed as string[]) : DEFAULT_COLS;
+  } catch {
+    return DEFAULT_COLS;
+  }
+}
+
 export function PropertyListView() {
   const t    = useTranslations("property");
   const tPag = useTranslations("shared.pagination");
@@ -137,21 +141,32 @@ export function PropertyListView() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [currentPage,     setCurrentPage]     = useState(0);
 
-  // Slice #18.17: Groups filter (component state, server-side).
-  const [groupFilter, setGroupFilter] = useState<GroupsFilter>(undefined);
-  const [groupDropdownOpen, setGroupDropdownOpen] = useState(false);
-
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const [confirmOpen,  setConfirmOpen]  = useState(false);
   const [deleting,     setDeleting]     = useState(false);
   const [deleteError,  setDeleteError]  = useState<string | null>(null);
 
-  // Fetch available PROPERTY group codes for the dropdown.
-  const { data: availableGroupCodes = [] } = useQuery<string[]>({
-    queryKey: ["groups", "codes", "PROPERTY"],
-    queryFn:  fetchPropertyGroupCodes,
-    staleTime: 5 * 60 * 1000,
-  });
+  // Column picker
+  const [visibleCols, setVisibleCols] = useState<string[]>(DEFAULT_COLS);
+  const [showColPicker, setShowColPicker] = useState(false);
+  const colPickerRef = useRef<HTMLDivElement>(null);
+
+  // Load from localStorage on mount (client-only)
+  useEffect(() => {
+    setVisibleCols(readStoredCols());
+  }, []);
+
+  // Close col picker on outside click
+  useEffect(() => {
+    if (!showColPicker) return;
+    function handler(e: MouseEvent) {
+      if (colPickerRef.current && !colPickerRef.current.contains(e.target as Node)) {
+        setShowColPicker(false);
+      }
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showColPicker]);
 
   useEffect(() => {
     const handle = setTimeout(() => {
@@ -161,19 +176,9 @@ export function PropertyListView() {
     return () => clearTimeout(handle);
   }, [searchInput]);
 
-  // Reset page when group filter changes.
-  const groupFilterKey = groupFilter === undefined
-    ? "__all__"
-    : `${groupFilter.includeUngrouped ? "1" : "0"}:${groupFilter.codes.join(",")}`;
-  const [prevGroupKey, setPrevGroupKey] = useState(groupFilterKey);
-  if (prevGroupKey !== groupFilterKey) {
-    setPrevGroupKey(groupFilterKey);
-    setCurrentPage(0);
-  }
-
   const query = useQuery<ListResponse>({
-    queryKey: ["properties", "list", debouncedSearch, currentPage, groupFilterKey],
-    queryFn:  () => fetchProperties(debouncedSearch, currentPage, groupFilter),
+    queryKey: ["properties", "list", debouncedSearch, currentPage],
+    queryFn:  () => fetchProperties(debouncedSearch, currentPage),
   });
 
   const total      = query.data?.total ?? 0;
@@ -181,9 +186,6 @@ export function PropertyListView() {
   const paginate   = total > PAGE_SIZE;
   const items      = query.data?.items ?? [];
 
-  // Derived-state-during-render reset: clear the selection whenever the
-  // visible page changes (search or page number) instead of carrying stale
-  // ids over to a different set of rows. Avoids react-hooks/set-state-in-effect.
   const pageKey = `${debouncedSearch}|${currentPage}`;
   const [prevPageKey, setPrevPageKey] = useState(pageKey);
   if (prevPageKey !== pageKey) {
@@ -237,30 +239,106 @@ export function PropertyListView() {
     }
   }
 
+  function toggleCol(key: string) {
+    setVisibleCols((prev) => {
+      let next: string[];
+      if (prev.includes(key)) {
+        next = prev.filter((k) => k !== key);
+      } else if (prev.length < MAX_OPT) {
+        next = [...prev, key];
+      } else {
+        return prev;
+      }
+      localStorage.setItem(LS_KEY, JSON.stringify(next));
+      return next;
+    });
+  }
+
+  // Optional column definitions (ordered)
+  const optionalCols = [
+    { key: "nickname",         label: t("table.nickname") },
+    { key: "parcela",          label: t("table.parcela") },
+    { key: "tarlaSola",        label: t("table.tarlaSola") },
+    { key: "cadastralNumber",  label: t("table.cadastralNumber") },
+    { key: "carteFunciara",    label: t("table.carteFunciara") },
+    { key: "surfaceAreaMp",    label: t("table.surfaceAreaMp") },
+    { key: "calculatedAreaMp", label: t("table.calculatedAreaMp") },
+    { key: "locality",         label: t("table.locality") },
+    { key: "importance",       label: t("table.importance") },
+    { key: "relevance",        label: t("table.relevance") },
+    { key: "provenance",       label: t("table.provenance") },
+  ];
+
+  function cellValue(item: PropertyListItem, key: string): React.ReactNode {
+    switch (key) {
+      case "nickname":         return item.nickname ?? <span className="text-fade italic">—</span>;
+      case "parcela":          return item.parcela ?? "";
+      case "tarlaSola":        return item.tarlaSola ?? "";
+      case "cadastralNumber":  return item.cadastralNumber ?? "";
+      case "carteFunciara":    return item.carteFunciara ?? "";
+      case "surfaceAreaMp":    return formatArea(item.surfaceAreaMp);
+      case "calculatedAreaMp": return formatArea(item.calculatedAreaMp);
+      case "locality":         return [item.locality, item.county].filter(Boolean).join(", ");
+      case "importance":       return item.importance ?? "";
+      case "relevance":        return item.relevance ?? "";
+      case "provenance":       return item.provenance ?? "";
+      default:                 return null;
+    }
+  }
+
+  // Total <td> count = checkbox + code + visible optionals + open = 3 + visibleCols.length
+  const colCount = 3 + visibleCols.length;
+
   return (
     <div className="flex flex-col gap-4">
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-3">
-        {availableGroupCodes.length > 0 && (
-          <GroupsFilterDropdown
-            availableCodes={availableGroupCodes}
-            selectedFilter={groupFilter}
-            label={t("groupsFilterLabel")}
-            allLabel={t("groupsFilterAll")}
-            ungroupedLabel={t("groupsFilterUngrouped")}
-            open={groupDropdownOpen}
-            onOpenChange={setGroupDropdownOpen}
-            onChange={(f) => setGroupFilter(f)}
-          />
-        )}
         <input
           type="search"
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           placeholder={t("searchPlaceholder")}
           aria-label={t("searchPlaceholder")}
-          className="flex-1 min-w-48 max-w-md rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm placeholder:text-fade focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:placeholder:text-zinc-500"
+          className="w-64 rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm placeholder:text-fade focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:placeholder:text-zinc-500"
         />
+
+        {/* Choose fields */}
+        <div ref={colPickerRef} className="relative">
+          <button
+            type="button"
+            onClick={() => setShowColPicker((v) => !v)}
+            aria-haspopup="true"
+            aria-expanded={showColPicker}
+            className="inline-flex items-center gap-1.5 rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+          >
+            <span className="text-fade">{t("chooseFields")}</span>
+            <span className="font-mono text-xs text-fade">{visibleCols.length}/{MAX_OPT}</span>
+          </button>
+          {showColPicker && (
+            <div className="absolute z-20 mt-1 left-0 w-56 rounded-md border border-wire bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900 p-3">
+              <p className="mb-2 text-xs text-fade dark:text-zinc-500">
+                {t("chooseFieldsHint", { max: MAX_OPT })}
+              </p>
+              {optionalCols.map((col) => {
+                const checked  = visibleCols.includes(col.key);
+                const disabled = !checked && visibleCols.length >= MAX_OPT;
+                return (
+                  <label key={col.key} className="flex items-center gap-2 py-0.5 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      disabled={disabled}
+                      onChange={() => toggleCol(col.key)}
+                      className="h-4 w-4 rounded border-wire accent-cta disabled:opacity-40"
+                    />
+                    <span className="text-sm text-ink dark:text-zinc-100">{col.label}</span>
+                  </label>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
         <div className="ml-auto flex items-center gap-2">
           {selectedIds.size > 0 && (
             <button
@@ -303,33 +381,32 @@ export function PropertyListView() {
                 />
               </th>
               <th className="px-4 py-2">{t("table.code")}</th>
-              <th className="px-4 py-2">{t("table.nickname")}</th>
-              <th className="px-4 py-2">{t("table.cadastralNumber")}</th>
-              <th className="px-4 py-2">{t("table.carteFunciara")}</th>
-              <th className="px-4 py-2 text-right">{t("table.surfaceAreaMp")}</th>
-              <th className="px-4 py-2 text-right">{t("table.calculatedAreaMp")}</th>
-              <th className="px-4 py-2">{t("table.locality")}</th>
+              {visibleCols.map((key) => (
+                <th key={key} className="px-4 py-2">
+                  {optionalCols.find((c) => c.key === key)?.label ?? key}
+                </th>
+              ))}
               <th className="px-4 py-2 w-24" />
             </tr>
           </thead>
           <tbody className="divide-y divide-crease dark:divide-zinc-800">
             {query.isLoading && (
               <tr>
-                <td colSpan={9} className="px-4 py-6 text-center text-fade">
+                <td colSpan={colCount} className="px-4 py-6 text-center text-fade">
                   {t("loading")}
                 </td>
               </tr>
             )}
             {query.isError && (
               <tr>
-                <td colSpan={9} className="px-4 py-6 text-center text-red-600">
+                <td colSpan={colCount} className="px-4 py-6 text-center text-red-600">
                   {t("error")}
                 </td>
               </tr>
             )}
             {query.data && query.data.items.length === 0 && (
               <tr>
-                <td colSpan={9} className="px-4 py-6 text-center text-fade">
+                <td colSpan={colCount} className="px-4 py-6 text-center text-fade">
                   {t("empty")}
                 </td>
               </tr>
@@ -355,26 +432,11 @@ export function PropertyListView() {
                 <td className="px-4 py-2 font-mono text-xs text-fade">
                   {item.code}
                 </td>
-                <td className="px-4 py-2 font-medium">
-                  {item.nickname ?? (
-                    <span className="text-fade italic">—</span>
-                  )}
-                </td>
-                <td className="px-4 py-2 text-fade dark:text-zinc-400">
-                  {item.cadastralNumber ?? ""}
-                </td>
-                <td className="px-4 py-2 text-fade dark:text-zinc-400">
-                  {item.carteFunciara ?? ""}
-                </td>
-                <td className="px-4 py-2 text-right tabular-nums text-fade dark:text-zinc-400">
-                  {formatArea(item.surfaceAreaMp)}
-                </td>
-                <td className="px-4 py-2 text-right tabular-nums text-fade dark:text-zinc-400">
-                  {formatArea(item.calculatedAreaMp)}
-                </td>
-                <td className="px-4 py-2 text-fade dark:text-zinc-400">
-                  {[item.locality, item.county].filter(Boolean).join(", ")}
-                </td>
+                {visibleCols.map((key) => (
+                  <td key={key} className="px-4 py-2 text-fade dark:text-zinc-400">
+                    {cellValue(item, key)}
+                  </td>
+                ))}
                 <td className="px-4 py-2">
                   <Link
                     href={`/properties/${item.id}`}
