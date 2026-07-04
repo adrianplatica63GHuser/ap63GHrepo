@@ -4,8 +4,8 @@ import { db } from "@/db";
 import { person } from "@/db/schema";
 import { listEntityGroupTags } from "@/lib/groups/queries";
 import { listEntityStampTags } from "@/lib/stamps/queries";
-import { getEntityMetadata, patchEntityMetadata } from "@/lib/metadata/queries";
-import type { MetadataPatch } from "@/lib/metadata/queries";
+import { getEntityMetadata, patchEntityMetadata, restoreEntityMetadataSnapshot } from "@/lib/metadata/queries";
+import type { MetadataPatch, MetadataSnapshot } from "@/lib/metadata/queries";
 
 // ---------------------------------------------------------------------------
 // GET — groups + stamps + entity metadata
@@ -70,5 +70,37 @@ export async function PATCH(
   }
 
   const updated = await patchEntityMetadata(principalObjectId, { field, value } as MetadataPatch);
+  return NextResponse.json(updated);
+}
+
+// ---------------------------------------------------------------------------
+// PUT — restore a historical metadata snapshot ("Make current")
+// ---------------------------------------------------------------------------
+
+export async function PUT(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const { id } = await params;
+
+  const body = (await req.json()) as { snapshot: MetadataSnapshot };
+  const { snapshot } = body;
+
+  if (!snapshot || typeof snapshot !== "object") {
+    return NextResponse.json({ error: "snapshot required" }, { status: 400 });
+  }
+
+  const personRows = await db
+    .select({ principalObjectId: person.principalObjectId })
+    .from(person)
+    .where(eq(person.id, id))
+    .limit(1);
+
+  const principalObjectId = personRows[0]?.principalObjectId;
+  if (!principalObjectId) {
+    return NextResponse.json({ error: "Person not found" }, { status: 404 });
+  }
+
+  const updated = await restoreEntityMetadataSnapshot(principalObjectId, snapshot);
   return NextResponse.json(updated);
 }
