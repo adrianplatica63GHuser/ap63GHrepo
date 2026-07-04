@@ -581,6 +581,17 @@
         "title": "Mențiuni",
         "wip": "În lucru — disponibil în curând",
         "update": "Actualizare"
+      },
+      "version": {
+        "label": "v {n}",
+        "prev": "Versiunea anterioară",
+        "next": "Versiunea următoare",
+        "makeCurrent": "Fă curentă",
+        "makeCurrentHint": "Fă această versiune cea curentă",
+        "makeCurrentTitle": "Faceți această versiune curentă?",
+        "makeCurrentBody": "Versiunea {viewed} va fi copiată într-o nouă versiune {next}, care devine versiunea curentă. Continuați?",
+        "makeCurrentOk": "OK",
+        "makeCurrentCancel": "Anulează"
       }
     }
   },

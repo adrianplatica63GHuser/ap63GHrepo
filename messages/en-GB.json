@@ -581,6 +581,17 @@
         "title": "Mentions",
         "wip": "Work in progress — coming soon",
         "update": "Update"
+      },
+      "version": {
+        "label": "v {n}",
+        "prev": "Previous version",
+        "next": "Next version",
+        "makeCurrent": "Make current",
+        "makeCurrentHint": "Make this version current",
+        "makeCurrentTitle": "Make this version current?",
+        "makeCurrentBody": "Version {viewed} will be copied as a new version {next}, which becomes the current version. Continue?",
+        "makeCurrentOk": "OK",
+        "makeCurrentCancel": "Cancel"
       }
     }
   },
