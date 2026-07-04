@@ -106,7 +106,12 @@ export function ValueListHub() {
           >
             {t("lists.groups")}
           </Link>
-          <ListBtn label={t("lists.stamps")}    onClick={() => open("stamps")} />
+          <Link
+            href="/admin/stamps"
+            className="rounded-md bg-cta px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-cta-d"
+          >
+            {t("lists.stamps")}
+          </Link>
         </Section>
       </div>
 

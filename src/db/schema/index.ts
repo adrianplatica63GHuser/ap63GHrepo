@@ -1094,6 +1094,50 @@ export const groupMember = pgTable(
 );
 
 // ---------------------------------------------------------------------------
+// stamps + stamp_member — Stamps feature  (Slice #19.09)
+// ---------------------------------------------------------------------------
+//
+// A Stamp can be applied to items of ANY target type (unlike a Group, which
+// is locked to a single target type at creation). The three-letter `code`
+// (STMP-AAA … STMP-ZZZ, same 24-letter alphabet as groups, skipping I/O)
+// is allocated from `stamp_code_seq` and never reused.
+//
+// stamp_member has one nullable FK per target type; exactly one is non-NULL
+// per row (matching target_type). The "applied only once per item" constraint
+// is enforced by the partial unique indexes in migration_044_stamps.sql.
+
+export const stamps = pgTable("stamps", {
+  id:               uuid("id").primaryKey().defaultRandom(),
+  code:             text("code").notNull().unique(),
+  shortDescription: text("short_description").notNull(),
+  notes:            text("notes"),
+  createdAt:        timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt:        timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const stampMember = pgTable(
+  "stamp_member",
+  {
+    id:         uuid("id").primaryKey().defaultRandom(),
+    stampId:    uuid("stamp_id")
+      .notNull()
+      .references(() => stamps.id, { onDelete: "cascade" }),
+    // Reuse the group_target_type enum — same four values.
+    targetType: groupTargetTypeEnum("target_type").notNull(),
+    // Exactly one of the three FKs below is non-NULL per row.
+    personId:   uuid("person_id")
+      .references(() => person.id,     { onDelete: "cascade" }),
+    propertyId: uuid("property_id")
+      .references(() => property.id,   { onDelete: "cascade" }),
+    documentId: uuid("document_id")
+      .references(() => document.id,   { onDelete: "cascade" }),
+    createdAt:  timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  // Partial unique indexes (WHERE … IS NOT NULL) are defined in the migration;
+  // Drizzle cannot express them inline here.
+);
+
+// ---------------------------------------------------------------------------
 // Auth — user_requests + app_users  (Slice #7.0)
 // ---------------------------------------------------------------------------
 //

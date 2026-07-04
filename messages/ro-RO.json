@@ -1369,6 +1369,66 @@
       "successMessage": "Un administrator va analiza cererea ta. Vei primi un email când contul tău este aprobat."
     }
   },
+  "stamp": {
+    "pageTitle": "Ștampile",
+    "backToValueLists": "Înapoi la Liste de valori",
+    "backToStamps": "Înapoi la Ștampile",
+    "createTitle": "Creare ștampilă",
+    "createExplanation": "O ștampilă este o etichetă pe care o poți aplica oricărei combinații de persoane, proprietăți și documente. Codul este atribuit automat; descrierea scurtă este cea vizibilă în liste.",
+    "create": "Creare ștampilă",
+    "save": "Salvează",
+    "saving": "Se salvează…",
+    "cancel": "Anulează",
+    "codeAssignedOnSave": "Atribuit automat la salvare",
+    "shortDescCount": "{count}/{max} caractere",
+    "unsavedChanges": "Modificări nesalvate",
+    "saveErrorSession": "Sesiunea a expirat. Autentifică-te din nou și reîncearcă.",
+    "count": "{count} ștampile",
+    "fields": {
+      "code": "Cod",
+      "shortDescription": "Descriere scurtă",
+      "notes": "Note"
+    },
+    "targets": {
+      "PHYSICAL_PERSON": "Persoană fizică",
+      "JUDICIAL_PERSON": "Persoană juridică",
+      "PROPERTY": "Proprietate",
+      "DOCUMENT": "Document"
+    },
+    "table": {
+      "stamp": "Ștampilă",
+      "members": "Elemente",
+      "apply": "Aplică",
+      "delete": "Șterge",
+      "loading": "Se încarcă…",
+      "error": "Eroare la încărcare",
+      "empty": "Nicio ștampilă încă"
+    },
+    "applicator": {
+      "pageTitle": "Aplică ștampila: {stamp}",
+      "targetTypeLabel": "Tip element",
+      "typeNote": "Sunt afișate doar elementele de tipul selectat. Schimbă lista de mai sus pentru a vedea sau ștampila elemente de alt tip.",
+      "unsavedChangesForType": "Modificări în așteptare",
+      "loading": "Se încarcă…",
+      "loadError": "Eroare la încărcarea elementelor",
+      "available": "Disponibile",
+      "stamped": "Ștampilate",
+      "availableEmpty": "Niciun element disponibil",
+      "stampedEmpty": "Niciun element ștampilat încă",
+      "searchPlaceholder": "Caută…",
+      "searchAvailable": "Caută în elementele disponibile",
+      "searchStamped": "Caută în elementele ștampilate",
+      "applyStamp": "Aplică ștampila ({count})",
+      "removeStamp": "Elimină ștampila ({count})",
+      "saveStamps": "Salvează ștampilele"
+    },
+    "confirm": {
+      "deleteBody": "Ștergeți această ștampilă și o eliminați de pe toate elementele? Această acțiune nu poate fi anulată.",
+      "delete": "Șterge",
+      "deleting": "Se șterge…",
+      "cancel": "Anulează"
+    }
+  },
   "group": {
     "pageTitle": "Grupuri",
     "backToValueLists": "Înapoi la Liste de valori",

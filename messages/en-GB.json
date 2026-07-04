@@ -1369,6 +1369,66 @@
       "successMessage": "An administrator will review your request. You will receive an email once your account is approved."
     }
   },
+  "stamp": {
+    "pageTitle": "Stamps",
+    "backToValueLists": "Back to Value Lists",
+    "backToStamps": "Back to Stamps",
+    "createTitle": "Create stamp",
+    "createExplanation": "A stamp is a label you can apply to any mix of people, properties, and documents. The code is assigned automatically; the short description is what you see in lists.",
+    "create": "Create stamp",
+    "save": "Save",
+    "saving": "Saving…",
+    "cancel": "Cancel",
+    "codeAssignedOnSave": "Assigned automatically on save",
+    "shortDescCount": "{count}/{max} characters",
+    "unsavedChanges": "Unsaved changes",
+    "saveErrorSession": "Your session expired. Please sign in again and retry.",
+    "count": "{count} stamps",
+    "fields": {
+      "code": "Code",
+      "shortDescription": "Short description",
+      "notes": "Notes"
+    },
+    "targets": {
+      "PHYSICAL_PERSON": "Physical person",
+      "JUDICIAL_PERSON": "Judicial person",
+      "PROPERTY": "Property",
+      "DOCUMENT": "Document"
+    },
+    "table": {
+      "stamp": "Stamp",
+      "members": "Members",
+      "apply": "Apply",
+      "delete": "Delete",
+      "loading": "Loading…",
+      "error": "Failed to load",
+      "empty": "No stamps yet"
+    },
+    "applicator": {
+      "pageTitle": "Apply stamp: {stamp}",
+      "targetTypeLabel": "Item type",
+      "typeNote": "Only items of the selected type are shown. Switch the dropdown above to see or stamp items of a different type.",
+      "unsavedChangesForType": "Staged changes",
+      "loading": "Loading…",
+      "loadError": "Failed to load items",
+      "available": "Available",
+      "stamped": "Stamped",
+      "availableEmpty": "No items available",
+      "stampedEmpty": "Nothing stamped yet",
+      "searchPlaceholder": "Search…",
+      "searchAvailable": "Search available items",
+      "searchStamped": "Search stamped items",
+      "applyStamp": "Apply stamp ({count})",
+      "removeStamp": "Remove stamp ({count})",
+      "saveStamps": "Save stamps"
+    },
+    "confirm": {
+      "deleteBody": "Delete this stamp and remove it from all items? This cannot be undone.",
+      "delete": "Delete",
+      "deleting": "Deleting…",
+      "cancel": "Cancel"
+    }
+  },
   "group": {
     "pageTitle": "Groups",
     "backToValueLists": "Back to Value Lists",
