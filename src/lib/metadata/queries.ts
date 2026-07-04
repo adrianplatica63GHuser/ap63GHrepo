@@ -1,5 +1,5 @@
 /**
- * DB query helpers for entity metadata  (Slice #19.10.Metadata)
+ * DB query helpers for entity metadata  (Slice #19.10 / #19.11)
  *
  * entity_metadata stores per-entity subjective tags (importance, relevance,
  * provenance) keyed by principal_object_id. One optional row per entity;
@@ -9,14 +9,22 @@
  * specific field is saved, letting the UI show "last changed N days ago"
  * and flag values older than 90 days as potentially stale.
  *
- * Provenance history: [{method, date}] JSONB array (oldest first).
- * When a new provenance value differs from the current one, the old value is
- * automatically appended to the history with today's ISO date.
+ * Provenance history: stored in entity_provenance_log (one row per change,
+ * recording the method value that was active BEFORE the change).
+ *
+ * Version history: every patchEntityMetadata / restoreEntityMetadataSnapshot
+ * call appends a full snapshot to entity_metadata_version (same pattern as
+ * property_version / person_version / document_version). Deduplication: a new
+ * version is NOT appended if the new snapshot equals the latest stored one.
  */
 
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { db } from "@/db";
-import { entityMetadata } from "@/db/schema";
+import {
+  entityMetadata,
+  entityProvenanceLog,
+  entityMetadataVersion,
+} from "@/db/schema";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -24,16 +32,37 @@ import { entityMetadata } from "@/db/schema";
 
 export type ProvenanceHistoryEntry = { method: string; date: string };
 
+/** Snapshot stored in entity_metadata_version — all fields string | null. */
+export type MetadataSnapshot = {
+  importance: string | null;
+  relevance:  string | null;
+  provenance: string | null;
+};
+
 export type EntityMetadataRow = {
   importance:           string | null;
   relevance:            string | null;
   provenance:           string | null;
+  /** Ordered oldest-first; sourced from entity_provenance_log. */
   provenanceHistory:    ProvenanceHistoryEntry[];
   /** ISO timestamp of the last time importance was explicitly saved. Null = never saved. */
   importanceUpdatedAt:  string | null;
   relevanceUpdatedAt:   string | null;
   provenanceUpdatedAt:  string | null;
 };
+
+export type MetadataVersionItem = {
+  id:            string;
+  versionNumber: number;
+  snapshot:      MetadataSnapshot;
+  createdAt:     string;
+};
+
+/** Which single field the caller wants to update in one save action. */
+export type MetadataPatch =
+  | { field: "importance"; value: string | null }
+  | { field: "relevance";  value: string | null }
+  | { field: "provenance"; value: string | null };
 
 /** Shared null-filled default when no row exists yet. */
 const EMPTY_ROW: EntityMetadataRow = {
@@ -46,11 +75,48 @@ const EMPTY_ROW: EntityMetadataRow = {
   provenanceUpdatedAt: null,
 };
 
-/** Which single field the caller wants to update in one save action. */
-export type MetadataPatch =
-  | { field: "importance"; value: string | null }
-  | { field: "relevance";  value: string | null }
-  | { field: "provenance"; value: string | null };
+// ---------------------------------------------------------------------------
+// Internal helpers
+// ---------------------------------------------------------------------------
+
+function snapshotsEqual(a: MetadataSnapshot, b: MetadataSnapshot): boolean {
+  return (
+    a.importance === b.importance &&
+    a.relevance  === b.relevance  &&
+    a.provenance === b.provenance
+  );
+}
+
+async function getLatestVersion(
+  entityMetadataId: string,
+): Promise<{ versionNumber: number; snapshot: MetadataSnapshot } | null> {
+  const rows = await db
+    .select()
+    .from(entityMetadataVersion)
+    .where(eq(entityMetadataVersion.entityMetadataId, entityMetadataId))
+    .orderBy(desc(entityMetadataVersion.versionNumber))
+    .limit(1);
+  if (!rows[0]) return null;
+  return {
+    versionNumber: rows[0].versionNumber,
+    snapshot:      rows[0].snapshot as MetadataSnapshot,
+  };
+}
+
+async function appendVersion(
+  entityMetadataId: string,
+  snapshot: MetadataSnapshot,
+): Promise<void> {
+  const latest = await getLatestVersion(entityMetadataId);
+  // No-op deduplication: skip if the snapshot is identical to the latest stored one.
+  if (latest && snapshotsEqual(snapshot, latest.snapshot)) return;
+  const nextNumber = latest ? latest.versionNumber + 1 : 0;
+  await db.insert(entityMetadataVersion).values({
+    entityMetadataId,
+    versionNumber: nextNumber,
+    snapshot,
+  });
+}
 
 // ---------------------------------------------------------------------------
 // Read
@@ -59,28 +125,65 @@ export type MetadataPatch =
 export async function getEntityMetadata(
   principalObjectId: string,
 ): Promise<EntityMetadataRow> {
-  const rows = await db
+  const metaRows = await db
     .select()
     .from(entityMetadata)
     .where(eq(entityMetadata.principalObjectId, principalObjectId))
     .limit(1);
 
-  const row = rows[0];
+  const row = metaRows[0];
   if (!row) return { ...EMPTY_ROW };
+
+  // Fetch provenance history from the relational log table (oldest first).
+  const logRows = await db
+    .select()
+    .from(entityProvenanceLog)
+    .where(eq(entityProvenanceLog.entityMetadataId, row.id))
+    .orderBy(entityProvenanceLog.loggedAt, entityProvenanceLog.createdAt);
+
+  const provenanceHistory: ProvenanceHistoryEntry[] = logRows.map((l) => ({
+    method: l.method,
+    date:   l.loggedAt,
+  }));
 
   return {
     importance:          row.importance,
     relevance:           row.relevance,
     provenance:          row.provenance,
-    provenanceHistory:   (row.provenanceHistory as ProvenanceHistoryEntry[] | null) ?? [],
+    provenanceHistory,
     importanceUpdatedAt: row.importanceUpdatedAt?.toISOString() ?? null,
     relevanceUpdatedAt:  row.relevanceUpdatedAt?.toISOString()  ?? null,
     provenanceUpdatedAt: row.provenanceUpdatedAt?.toISOString() ?? null,
   };
 }
 
+export async function listMetadataVersions(
+  principalObjectId: string,
+): Promise<MetadataVersionItem[]> {
+  const metaRows = await db
+    .select({ id: entityMetadata.id })
+    .from(entityMetadata)
+    .where(eq(entityMetadata.principalObjectId, principalObjectId))
+    .limit(1);
+
+  if (!metaRows[0]) return [];
+
+  const rows = await db
+    .select()
+    .from(entityMetadataVersion)
+    .where(eq(entityMetadataVersion.entityMetadataId, metaRows[0].id))
+    .orderBy(entityMetadataVersion.versionNumber);
+
+  return rows.map((r) => ({
+    id:            r.id,
+    versionNumber: r.versionNumber,
+    snapshot:      r.snapshot as MetadataSnapshot,
+    createdAt:     r.createdAt.toISOString(),
+  }));
+}
+
 // ---------------------------------------------------------------------------
-// Write
+// Write — single field patch
 // ---------------------------------------------------------------------------
 
 /**
@@ -88,7 +191,9 @@ export async function getEntityMetadata(
  *
  * - Sets the matching field_updated_at to now().
  * - For provenance: if the new value differs from the stored current value,
- *   the old value is appended to provenanceHistory with today's ISO date.
+ *   a row is inserted into entity_provenance_log recording the OLD value.
+ * - After every upsert a new version snapshot is appended to
+ *   entity_metadata_version (skipped if snapshot is identical to the latest).
  * - All other fields are preserved from the existing row (read-then-write).
  */
 export async function patchEntityMetadata(
@@ -101,17 +206,7 @@ export async function patchEntityMetadata(
   // Compute merged values
   const newImportance = patch.field === "importance" ? patch.value : current.importance;
   const newRelevance  = patch.field === "relevance"  ? patch.value : current.relevance;
-
-  let newProvenance = current.provenance;
-  let newHistory    = current.provenanceHistory;
-  if (patch.field === "provenance") {
-    const incoming = patch.value;
-    if (current.provenance && current.provenance !== incoming) {
-      const today = now.toISOString().slice(0, 10); // YYYY-MM-DD
-      newHistory = [...current.provenanceHistory, { method: current.provenance, date: today }];
-    }
-    newProvenance = incoming;
-  }
+  const newProvenance = patch.field === "provenance" ? patch.value : current.provenance;
 
   // Per-field timestamps — only update the one being patched
   const newImportanceUpdatedAt =
@@ -121,14 +216,14 @@ export async function patchEntityMetadata(
   const newProvenanceUpdatedAt =
     patch.field === "provenance" ? now : (current.provenanceUpdatedAt ? new Date(current.provenanceUpdatedAt) : null);
 
-  await db
+  // Upsert and retrieve the entity_metadata.id
+  const upserted = await db
     .insert(entityMetadata)
     .values({
       principalObjectId,
       importance:          newImportance,
       relevance:           newRelevance,
       provenance:          newProvenance,
-      provenanceHistory:   newHistory,
       importanceUpdatedAt: newImportanceUpdatedAt,
       relevanceUpdatedAt:  newRelevanceUpdatedAt,
       provenanceUpdatedAt: newProvenanceUpdatedAt,
@@ -139,21 +234,102 @@ export async function patchEntityMetadata(
         importance:          newImportance,
         relevance:           newRelevance,
         provenance:          newProvenance,
-        provenanceHistory:   newHistory,
         importanceUpdatedAt: newImportanceUpdatedAt,
         relevanceUpdatedAt:  newRelevanceUpdatedAt,
         provenanceUpdatedAt: newProvenanceUpdatedAt,
         updatedAt:           now,
       },
-    });
+    })
+    .returning({ id: entityMetadata.id });
 
-  return {
-    importance:          newImportance,
-    relevance:           newRelevance,
-    provenance:          newProvenance,
-    provenanceHistory:   newHistory,
-    importanceUpdatedAt: newImportanceUpdatedAt?.toISOString() ?? null,
-    relevanceUpdatedAt:  newRelevanceUpdatedAt?.toISOString()  ?? null,
-    provenanceUpdatedAt: newProvenanceUpdatedAt?.toISOString() ?? null,
+  const metadataId = upserted[0].id;
+
+  // If provenance changed, log the OLD value into entity_provenance_log
+  if (
+    patch.field === "provenance" &&
+    current.provenance !== null &&
+    current.provenance !== patch.value
+  ) {
+    await db.insert(entityProvenanceLog).values({
+      entityMetadataId: metadataId,
+      method:           current.provenance,
+      loggedAt:         now.toISOString().slice(0, 10),
+    });
+  }
+
+  // Append a version snapshot (skipped if identical to latest)
+  const newSnapshot: MetadataSnapshot = {
+    importance: newImportance,
+    relevance:  newRelevance,
+    provenance: newProvenance,
   };
+  await appendVersion(metadataId, newSnapshot);
+
+  // Return the full updated row (including refreshed provenance history)
+  return getEntityMetadata(principalObjectId);
+}
+
+// ---------------------------------------------------------------------------
+// Write — restore full snapshot (used by "Make current" in the version nav)
+// ---------------------------------------------------------------------------
+
+/**
+ * Restore all three metadata fields from a historical snapshot in one
+ * atomic write.  Writes exactly one new version entry (no 3-field loop).
+ * Also logs the provenance change if provenance differs.
+ */
+export async function restoreEntityMetadataSnapshot(
+  principalObjectId: string,
+  snapshot: MetadataSnapshot,
+): Promise<EntityMetadataRow> {
+  const current = await getEntityMetadata(principalObjectId);
+  const now     = new Date();
+
+  const upserted = await db
+    .insert(entityMetadata)
+    .values({
+      principalObjectId,
+      importance:          snapshot.importance,
+      relevance:           snapshot.relevance,
+      provenance:          snapshot.provenance,
+      importanceUpdatedAt: now,
+      relevanceUpdatedAt:  now,
+      provenanceUpdatedAt: now,
+    })
+    .onConflictDoUpdate({
+      target: entityMetadata.principalObjectId,
+      set: {
+        importance:          snapshot.importance,
+        relevance:           snapshot.relevance,
+        provenance:          snapshot.provenance,
+        importanceUpdatedAt: now,
+        relevanceUpdatedAt:  now,
+        provenanceUpdatedAt: now,
+        updatedAt:           now,
+      },
+    })
+    .returning({ id: entityMetadata.id });
+
+  const metadataId = upserted[0].id;
+
+  // Log old provenance value if it changed
+  if (
+    current.provenance !== null &&
+    current.provenance !== snapshot.provenance
+  ) {
+    await db.insert(entityProvenanceLog).values({
+      entityMetadataId: metadataId,
+      method:           current.provenance,
+      loggedAt:         now.toISOString().slice(0, 10),
+    });
+  }
+
+  // Append version (deduplication inside appendVersion)
+  await appendVersion(metadataId, {
+    importance: snapshot.importance,
+    relevance:  snapshot.relevance,
+    provenance: snapshot.provenance,
+  });
+
+  return getEntityMetadata(principalObjectId);
 }

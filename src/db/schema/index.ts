@@ -1142,11 +1142,19 @@ export const stampMember = pgTable(
 // ---------------------------------------------------------------------------
 //
 // One optional row per principal_object (property / person / document).
-// Stores importance (LOW/MEDIUM/HIGH), relevance (OBSOLETE/HISTORICAL/CURRENT/
-// FUTURE), provenance (how the item entered the system), and a JSONB array
-// provenanceHistory recording past provenance states [{method, date}].
+// Stores importance (LOW/MEDIUM/HIGH), relevance (INACTIVE/HISTORICAL/CURRENT/
+// FUTURE) and provenance (how the item entered the system).
 // Created on first save; absent rows are treated as all-null defaults by the
 // query layer.
+//
+// Provenance change history lives in entity_provenance_log (proper relational
+// table, added in migration_047 to replace the old provenance_history JSONB).
+// Full-snapshot version history lives in entity_metadata_version (same pattern
+// as property_version / person_version / document_version).
+//
+// CHECK constraints on importance / relevance / provenance and indexes on
+// those columns are in migration_047_metadata_fixes.sql (not expressible
+// inline in Drizzle).
 
 export const entityMetadata = pgTable("entity_metadata", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -1156,19 +1164,14 @@ export const entityMetadata = pgTable("entity_metadata", {
     .unique()
     .references(() => principalObject.id, { onDelete: "cascade" }),
 
-  // 'LOW' | 'MEDIUM' | 'HIGH'
+  // 'LOW' | 'MEDIUM' | 'HIGH'  — CHECK constraint in migration_047
   importance: text("importance"),
 
-  // 'OBSOLETE' | 'HISTORICAL' | 'CURRENT' | 'FUTURE'
+  // 'INACTIVE' | 'HISTORICAL' | 'CURRENT' | 'FUTURE'  — CHECK constraint in migration_047
   relevance: text("relevance"),
 
-  // Current provenance value — one of the PROVENANCE_* constants.
+  // One of the PROVENANCE_* constants  — CHECK constraint in migration_047
   provenance: text("provenance"),
-
-  // [{method: string, date: string}] — oldest first.
-  // Appended automatically (by the API layer) when provenance changes.
-  // Untyped here to avoid circular imports; cast in the query layer.
-  provenanceHistory: jsonb("provenance_history"),
 
   // Per-field last-save timestamps (migration_046). Used by the UI to show
   // "last changed N days ago" and flag values older than 90 days in red.
@@ -1180,6 +1183,71 @@ export const entityMetadata = pgTable("entity_metadata", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+// ---------------------------------------------------------------------------
+// entity_provenance_log — provenance change history  (Slice #19.11)
+// ---------------------------------------------------------------------------
+//
+// One row per provenance change on an entity_metadata row, recording the
+// method value that was active BEFORE the change (what it was, not what it
+// became). Replaces the old provenance_history JSONB column dropped in
+// migration_047. Ordered by logged_at + created_at for display.
+
+export const entityProvenanceLog = pgTable("entity_provenance_log", {
+  id: uuid("id").primaryKey().defaultRandom(),
+
+  entityMetadataId: uuid("entity_metadata_id")
+    .notNull()
+    .references(() => entityMetadata.id, { onDelete: "cascade" }),
+
+  // The provenance method that was active BEFORE this change.
+  method: text("method").notNull(),
+
+  // Calendar date the change was recorded (YYYY-MM-DD).
+  loggedAt: date("logged_at", { mode: "string" }).notNull(),
+
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ---------------------------------------------------------------------------
+// entity_metadata_version — full-snapshot version history  (Slice #19.11)
+// ---------------------------------------------------------------------------
+//
+// One row per saved version of an entity's metadata. version_number is 0-based:
+// version 0 is the state at first save (backfilled for existing rows in
+// migration_047), every subsequent change appends the next number. Each row
+// stores a COMPLETE snapshot {importance, relevance, provenance} as JSONB —
+// reconstructing "version N" is a direct lookup, no delta replay.
+//
+// Follows the same pattern as property_version / person_version /
+// document_version. Snapshot shape: { importance, relevance, provenance }
+// (all string | null).
+
+export const entityMetadataVersion = pgTable(
+  "entity_metadata_version",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+
+    entityMetadataId: uuid("entity_metadata_id")
+      .notNull()
+      .references(() => entityMetadata.id, { onDelete: "cascade" }),
+
+    // 0-based; unique per entity_metadata row.
+    versionNumber: integer("version_number").notNull(),
+
+    // Full snapshot: {importance, relevance, provenance}. Untyped to avoid
+    // circular import; cast to MetadataSnapshot in the query layer.
+    snapshot: jsonb("snapshot").notNull(),
+
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("entity_metadata_version_meta_num_unique").on(
+      t.entityMetadataId,
+      t.versionNumber,
+    ),
+  ],
+);
 
 // ---------------------------------------------------------------------------
 // Auth — user_requests + app_users  (Slice #7.0)
