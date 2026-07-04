@@ -21,13 +21,24 @@ type Props = {
   apiPath: string;
   /** Unique prefix for the TanStack Query cache key, e.g. "property-refs-abc" */
   queryKey: string;
+  /**
+   * The URL of the current entity page (e.g. /properties/abc).
+   * Passed as ?from=… to the group/stamp admin pages so they can show
+   * a "Back to <entity>" link instead of "Back to groups / stamps".
+   */
+  backHref: string;
+  /**
+   * Display name of the current entity (e.g. "Parcel P001").
+   * Passed as ?fromLabel=… to the group/stamp admin pages.
+   */
+  backLabel: string;
 };
 
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
-export function EntityReferencesTab({ apiPath, queryKey }: Props) {
+export function EntityReferencesTab({ apiPath, queryKey, backHref, backLabel }: Props) {
   const t = useTranslations("shared.entityReferences");
 
   const { data, isLoading, isError } = useQuery<RefsData>({
@@ -40,6 +51,11 @@ export function EntityReferencesTab({ apiPath, queryKey }: Props) {
     staleTime: 0,
     refetchOnWindowFocus: false,
   });
+
+  /** Appends ?from=…&fromLabel=… so the target page can render a contextual back link. */
+  function withBack(href: string): string {
+    return `${href}?from=${encodeURIComponent(backHref)}&fromLabel=${encodeURIComponent(backLabel)}`;
+  }
 
   if (isLoading) {
     return (
@@ -72,7 +88,7 @@ export function EntityReferencesTab({ apiPath, queryKey }: Props) {
             {data.groups.map((g) => (
               <li key={g.code}>
                 <Link
-                  href={`/admin/groups/${encodeURIComponent(g.id)}`}
+                  href={withBack(`/admin/groups/${encodeURIComponent(g.id)}`)}
                   className="inline-flex items-center gap-3 rounded-md px-2 py-1 text-sm transition-colors hover:bg-canvas dark:hover:bg-zinc-800"
                 >
                   <span className="font-mono text-xs rounded border border-card-rim bg-card px-1.5 py-0.5 text-fade dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
@@ -100,7 +116,7 @@ export function EntityReferencesTab({ apiPath, queryKey }: Props) {
             {data.stamps.map((s) => (
               <li key={s.code}>
                 <Link
-                  href={`/admin/stamps/${encodeURIComponent(s.id)}`}
+                  href={withBack(`/admin/stamps/${encodeURIComponent(s.id)}`)}
                   className="inline-flex items-center gap-3 rounded-md px-2 py-1 text-sm transition-colors hover:bg-canvas dark:hover:bg-zinc-800"
                 >
                   <span className="font-mono text-xs rounded border border-card-rim bg-card px-1.5 py-0.5 text-fade dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">

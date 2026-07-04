@@ -105,6 +105,8 @@ export function DocumentDetailTabs({
             <EntityReferencesTab
               apiPath={`/api/documents/${encodeURIComponent(documentId)}/entity-references`}
               queryKey={`entity-references-document-${documentId}`}
+              backHref={`/documents/${encodeURIComponent(documentId)}`}
+              backLabel={documentName}
             />
           )}
         </div>

@@ -99,6 +99,8 @@ export function JudicialPersonDetailTabs({
             <EntityReferencesTab
               apiPath={`/api/people/${encodeURIComponent(personId)}/entity-references`}
               queryKey={`entity-references-person-${personId}`}
+              backHref={`/judicial-persons/${encodeURIComponent(personId)}`}
+              backLabel={personName}
             />
           )}
         </div>

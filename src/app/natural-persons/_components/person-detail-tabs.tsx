@@ -105,6 +105,8 @@ export function PersonDetailTabs({
             <EntityReferencesTab
               apiPath={`/api/people/${encodeURIComponent(personId)}/entity-references`}
               queryKey={`entity-references-person-${personId}`}
+              backHref={`/natural-persons/${encodeURIComponent(personId)}`}
+              backLabel={personName}
             />
           )}
         </div>
