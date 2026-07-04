@@ -1138,6 +1138,43 @@ export const stampMember = pgTable(
 );
 
 // ---------------------------------------------------------------------------
+// entity_metadata — subjective metadata per principal_object  (Slice #19.10)
+// ---------------------------------------------------------------------------
+//
+// One optional row per principal_object (property / person / document).
+// Stores importance (LOW/MEDIUM/HIGH), relevance (OBSOLETE/HISTORICAL/CURRENT/
+// FUTURE), provenance (how the item entered the system), and a JSONB array
+// provenanceHistory recording past provenance states [{method, date}].
+// Created on first save; absent rows are treated as all-null defaults by the
+// query layer.
+
+export const entityMetadata = pgTable("entity_metadata", {
+  id: uuid("id").primaryKey().defaultRandom(),
+
+  principalObjectId: uuid("principal_object_id")
+    .notNull()
+    .unique()
+    .references(() => principalObject.id, { onDelete: "cascade" }),
+
+  // 'LOW' | 'MEDIUM' | 'HIGH'
+  importance: text("importance"),
+
+  // 'OBSOLETE' | 'HISTORICAL' | 'CURRENT' | 'FUTURE'
+  relevance: text("relevance"),
+
+  // Current provenance value — one of the PROVENANCE_* constants.
+  provenance: text("provenance"),
+
+  // [{method: string, date: string}] — oldest first.
+  // Appended automatically (by the API layer) when provenance changes.
+  // Untyped here to avoid circular imports; cast in the query layer.
+  provenanceHistory: jsonb("provenance_history"),
+
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ---------------------------------------------------------------------------
 // Auth — user_requests + app_users  (Slice #7.0)
 // ---------------------------------------------------------------------------
 //

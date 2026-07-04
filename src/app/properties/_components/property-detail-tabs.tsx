@@ -6,7 +6,7 @@ import { PropertyForm } from "./property-form";
 import { PropertyPersonsTab } from "./property-persons-tab";
 import { PropertyDocumentTab } from "./property-document-tab";
 import { PropertyReferencesTab } from "./property-references-tab";
-import { EntityReferencesTab } from "@/components/entity-references-tab";
+import { EntityMetadataTab } from "@/components/entity-metadata-tab";
 import { type FormValues, type Corner } from "./form-schema";
 
 type Tab = "details" | "related" | "persons" | "document" | "references";
@@ -109,7 +109,7 @@ export function PropertyDetailTabs({
             <PropertyReferencesTab propertyId={propertyId} />
           )}
           {activeTab === "references" && (
-            <EntityReferencesTab
+            <EntityMetadataTab
               apiPath={`/api/properties/${encodeURIComponent(propertyId)}/entity-references`}
               queryKey={`entity-references-property-${propertyId}`}
               backHref={`/properties/${encodeURIComponent(propertyId)}`}

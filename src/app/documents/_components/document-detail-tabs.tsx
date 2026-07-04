@@ -6,7 +6,7 @@ import { DocumentForm } from "./document-form";
 import { DocumentPersonsTab } from "./document-persons-tab";
 import { DocumentPropertiesTab } from "./document-properties-tab";
 import { DocumentReferencesTab } from "./document-references-tab";
-import { EntityReferencesTab } from "@/components/entity-references-tab";
+import { EntityMetadataTab } from "@/components/entity-metadata-tab";
 import { type FormValues } from "./form-schema";
 
 type Tab = "details" | "related" | "persons" | "properties" | "references";
@@ -102,7 +102,7 @@ export function DocumentDetailTabs({
             <DocumentReferencesTab documentId={documentId} />
           )}
           {activeTab === "references" && (
-            <EntityReferencesTab
+            <EntityMetadataTab
               apiPath={`/api/documents/${encodeURIComponent(documentId)}/entity-references`}
               queryKey={`entity-references-document-${documentId}`}
               backHref={`/documents/${encodeURIComponent(documentId)}`}

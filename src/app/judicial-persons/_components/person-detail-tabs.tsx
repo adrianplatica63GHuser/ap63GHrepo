@@ -6,7 +6,7 @@ import { JudicialPersonForm } from "./judicial-person-form";
 import { PersonPropertiesTab } from "../../properties/_components/person-properties-tab";
 import { PersonDocumentTab } from "../../documents/_components/person-document-tab";
 import { PersonReferencesTab } from "../../natural-persons/_components/person-references-tab";
-import { EntityReferencesTab } from "@/components/entity-references-tab";
+import { EntityMetadataTab } from "@/components/entity-metadata-tab";
 import { type FormValues } from "./form-schema";
 
 type Tab = "details" | "related" | "properties" | "document" | "references";
@@ -96,7 +96,7 @@ export function JudicialPersonDetailTabs({
             <PersonReferencesTab personId={personId} backBase="/judicial-persons" />
           )}
           {activeTab === "references" && (
-            <EntityReferencesTab
+            <EntityMetadataTab
               apiPath={`/api/people/${encodeURIComponent(personId)}/entity-references`}
               queryKey={`entity-references-person-${personId}`}
               backHref={`/judicial-persons/${encodeURIComponent(personId)}`}

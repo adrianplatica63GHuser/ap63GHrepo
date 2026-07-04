@@ -226,7 +226,7 @@
     "tabs": {
       "details": "Detalii",
       "related": "Asocieri",
-      "references": "Referințe",
+      "references": "META INFO",
       "persons": "Persoane",
       "document": "Acte",
       "comingSoon": "În curând — această secțiune va fi disponibilă într-o actualizare viitoare."
@@ -508,6 +508,67 @@
         "title": "Mențiuni",
         "wip": "În lucru — disponibil în curând"
       }
+    },
+    "entityMetadata": {
+      "loading": "Se încarcă…",
+      "error": "Metadatele nu au putut fi încărcate",
+      "backTo": "Înapoi la {name}",
+      "importance": {
+        "title": "Importanță",
+        "note1": "Reflectă valoarea subiectivă pe care o acorzi acestui element, indiferent de context sau moment în timp.",
+        "note2": "Nu este necesară nicio justificare — aceasta este evaluarea ta personală.",
+        "placeholder": "— selectează —",
+        "low": "Scăzută",
+        "medium": "Medie",
+        "high": "Ridicată",
+        "save": "Salvează",
+        "saving": "Se salvează…",
+        "saved": "✓ Salvat"
+      },
+      "relevance": {
+        "title": "Relevanță",
+        "note1": "Indică poziția acestui element pe axa timpului — dacă este depășit, relevant în trecut, activ în prezent sau anticipat a fi valoros în viitor.",
+        "note2": "Un element poate fi depășit și totuși să aibă importanță ridicată (ex: un act de proprietate istoric).",
+        "placeholder": "— selectează —",
+        "obsolete": "Depășit — nu mai este relevant",
+        "historical": "Relevant în trecut",
+        "current": "Actual — relevant în prezent",
+        "future": "De perspectivă — valoros pentru viitor",
+        "save": "Salvează",
+        "saving": "Se salvează…",
+        "saved": "✓ Salvat"
+      },
+      "provenance": {
+        "title": "Proveniență",
+        "note1": "Înregistrează modul în care acest element a intrat în sistem. Selectează metoda care descrie cel mai bine originea sa.",
+        "note2": "Fiecare modificare este consemnată în istoricul de mai jos împreună cu data la care a fost înregistrată.",
+        "placeholder": "— selectează —",
+        "manual": "Introdus manual (butonul Adaugă nou)",
+        "imageUpload": "Încărcat ca imagine, PDF sau document",
+        "textFile": "Importat dintr-un fișier text (coordonate)",
+        "algorithm": "Generat de algoritm (ex: divizare poligon)",
+        "aiInterpreted": "Interpretat de AI dintr-o imagine (cloud API)",
+        "externalImport": "Importat dintr-un sistem sau bază de date externă",
+        "digitized": "Digitizat din documente pe hârtie",
+        "historyTitle": "Istoric",
+        "historyEmpty": "Niciun istoric înregistrat încă",
+        "save": "Salvează",
+        "saving": "Se salvează…",
+        "saved": "✓ Salvat"
+      },
+      "groups": {
+        "title": "Grupuri",
+        "empty": "Nu face parte din niciun grup"
+      },
+      "stamps": {
+        "title": "Ștampile",
+        "empty": "Nicio ștampilă aplicată"
+      },
+      "mentions": {
+        "title": "Mențiuni",
+        "wip": "În lucru — disponibil în curând",
+        "update": "Actualizare"
+      }
     }
   },
   "naturalPerson": {
@@ -616,7 +677,7 @@
     "tabs": {
       "details": "Detalii",
       "related": "Asocieri",
-      "references": "Referințe",
+      "references": "META INFO",
       "properties": "Proprietăți",
       "document": "Acte",
       "comingSoon": "În curând — această secțiune va fi disponibilă într-o actualizare viitoare."
@@ -715,7 +776,7 @@
     "tabs": {
       "details": "Detalii",
       "related": "Asocieri",
-      "references": "Referințe",
+      "references": "META INFO",
       "properties": "Proprietăți",
       "document": "Acte",
       "comingSoon": "În curând — această secțiune va fi disponibilă într-o actualizare viitoare."
@@ -960,7 +1021,7 @@
     "tabs": {
       "details": "Detalii",
       "related": "Asocieri",
-      "references": "Referințe",
+      "references": "META INFO",
       "persons": "Persoane",
       "properties": "Proprietăți",
       "comingSoon": "În curând — această secțiune va fi disponibilă într-o actualizare viitoare."
