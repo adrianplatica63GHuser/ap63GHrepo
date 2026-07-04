@@ -18,7 +18,6 @@ const PROVENANCE_VALUES = [
   "ALGORITHM",
   "AI_INTERPRETED",
   "EXTERNAL_IMPORT",
-  "DIGITIZED",
 ] as const;
 
 // ---------------------------------------------------------------------------
@@ -293,7 +292,6 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName 
     ALGORITHM:       t("provenance.statementAlgorithm"),
     AI_INTERPRETED:  t("provenance.statementAiInterpreted"),
     EXTERNAL_IMPORT: t("provenance.statementExternalImport"),
-    DIGITIZED:       t("provenance.statementDigitized"),
   };
 
   // Also used for history row labels
