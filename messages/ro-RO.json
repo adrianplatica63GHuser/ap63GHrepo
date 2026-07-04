@@ -597,6 +597,22 @@
         "addPlaceholder": "— selectează o ștampilă —",
         "remove": "Elimină ștampila"
       },
+      "crossRef": {
+        "title": "Vezi și",
+        "note": "Trimiteri informale — folosiți-le atunci când o legătură contează, dar nu este surprinsă de nicio asociere formală sau document. Introduceți codul celeilalte entități (ex. PERS00001) și o notă opțională.",
+        "add": "+ Adaugă trimitere",
+        "addConfirm": "Leagă",
+        "adding": "Se leagă…",
+        "remove": "Elimină trimiterea",
+        "codePlaceholder": "Codul entității",
+        "notePlaceholder": "De ce contează această legătură (opțional)",
+        "codeHint": "Folosiți codul de sistem al entității — PERS, PROP sau DOC urmat de număr.",
+        "empty": "Nicio trimitere adăugată încă",
+        "referencedBy": "referit de",
+        "typePerson": "Persoană",
+        "typeProp": "Proprietate",
+        "typeDoc": "Document"
+      },
       "mentions": {
         "title": "Mențiuni",
         "description": "Mențiunile acestui element în alte înregistrări, documente sau note vor fi afișate aici."

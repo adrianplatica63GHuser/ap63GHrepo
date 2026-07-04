@@ -597,6 +597,22 @@
         "addPlaceholder": "— select a stamp —",
         "remove": "Remove stamp"
       },
+      "crossRef": {
+        "title": "See Also",
+        "note": "Informal cross-references — use these when a connection matters but is not captured by any formal association or document. Type the other entity's code (e.g. PERS00001) and an optional short note.",
+        "add": "+ Add link",
+        "addConfirm": "Link",
+        "adding": "Linking…",
+        "remove": "Remove link",
+        "codePlaceholder": "Entity code",
+        "notePlaceholder": "Why this link matters (optional)",
+        "codeHint": "Use the entity's system code — PERS, PROP, or DOC followed by the number.",
+        "empty": "No cross-references added yet",
+        "referencedBy": "referenced by",
+        "typePerson": "Person",
+        "typeProp": "Property",
+        "typeDoc": "Document"
+      },
       "mentions": {
         "title": "Mentions",
         "description": "Mentions of this item within other records, documents, or notes will be listed here."

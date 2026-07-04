@@ -739,6 +739,237 @@ function InlineStampsSection({
 }
 
 // ---------------------------------------------------------------------------
+// CrossRefsSection — "See Also / Related to" informal links
+// ---------------------------------------------------------------------------
+
+type CrossRefItem = {
+  id:                    string;
+  peerPrincipalObjectId: string;
+  peerCode:              string;
+  peerType:              string;
+  peerName:              string | null;
+  peerEntityId:          string;
+  note:                  string | null;
+  isOwner:               boolean;
+  createdAt:             string;
+};
+
+/** Derive the detail-page href from the peer entity type + id. */
+function peerHref(peerType: string, peerEntityId: string): string {
+  if (peerType === "PROPERTY") return `/properties/${peerEntityId}`;
+  if (peerType === "DOCUMENT") return `/documents/${peerEntityId}`;
+  return `/persons/${peerEntityId}`;
+}
+
+/** Short type badge label. */
+function peerTypeBadge(peerType: string, t: (k: string) => string): string {
+  if (peerType === "PROPERTY") return t("crossRef.typeProp");
+  if (peerType === "DOCUMENT") return t("crossRef.typeDoc");
+  return t("crossRef.typePerson");
+}
+
+function CrossRefsSection({
+  principalObjectId,
+  mainQueryKey,
+  isOnLatest,
+  t,
+  withBack,
+}: {
+  principalObjectId: string;
+  mainQueryKey:      string;
+  isOnLatest:        boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  t:                 (key: string, opts?: any) => string;
+  withBack:          (href: string) => string;
+}) {
+  const queryClient = useQueryClient();
+  const crossRefKey = `${mainQueryKey}-cross-refs`;
+  const apiBase     = `/api/metadata/${principalObjectId}/cross-refs`;
+
+  const { data, isLoading } = useQuery<{ crossRefs: CrossRefItem[] }>({
+    queryKey:             [crossRefKey],
+    queryFn:              async () => {
+      const res = await fetch(apiBase);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    },
+    staleTime:            0,
+    refetchOnWindowFocus: false,
+  });
+
+  const crossRefs = data?.crossRefs ?? [];
+
+  // Add form state
+  const [showAdd,   setShowAdd]   = useState(false);
+  const [codeInput, setCodeInput] = useState("");
+  const [noteInput, setNoteInput] = useState("");
+  const [adding,    setAdding]    = useState(false);
+  const [addError,  setAddError]  = useState<string | null>(null);
+  const [removing,  setRemoving]  = useState<string | null>(null);
+
+  async function handleAdd() {
+    const code = codeInput.trim().toUpperCase();
+    if (!code) return;
+    setAdding(true);
+    setAddError(null);
+    try {
+      const res = await fetch(apiBase, {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ targetCode: code, note: noteInput.trim() || undefined }),
+      });
+      const json = await res.json() as { ok?: boolean; error?: string };
+      if (!res.ok || !json.ok) {
+        setAddError(json.error ?? "Unknown error");
+      } else {
+        setCodeInput("");
+        setNoteInput("");
+        setShowAdd(false);
+        await queryClient.invalidateQueries({ queryKey: [crossRefKey] });
+      }
+    } finally {
+      setAdding(false);
+    }
+  }
+
+  async function handleRemove(crossRefId: string) {
+    setRemoving(crossRefId);
+    try {
+      const res = await fetch(`${apiBase}/${crossRefId}`, { method: "DELETE" });
+      if (res.ok) {
+        await queryClient.invalidateQueries({ queryKey: [crossRefKey] });
+      }
+    } finally {
+      setRemoving(null);
+    }
+  }
+
+  return (
+    <section>
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="text-xl font-semibold text-ink dark:text-zinc-100">
+          {t("crossRef.title")}
+        </h2>
+        {isOnLatest && (
+          <button
+            type="button"
+            onClick={() => { setShowAdd((v) => !v); setAddError(null); }}
+            className="text-sm text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-200 transition-colors"
+          >
+            {showAdd ? "▲" : t("crossRef.add")}
+          </button>
+        )}
+      </div>
+
+      {/* Clarifying note — always visible so the purpose is self-documenting */}
+      <p className="mb-3 text-sm text-fade dark:text-zinc-400 italic">
+        {t("crossRef.note")}
+      </p>
+
+      {/* Add form (inline, no modal) */}
+      {showAdd && isOnLatest && (
+        <div className="mb-4 rounded-md border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800/50 p-3 flex flex-col gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <input
+              type="text"
+              value={codeInput}
+              onChange={(e) => setCodeInput(e.target.value.toUpperCase())}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void handleAdd(); } }}
+              placeholder={t("crossRef.codePlaceholder")}
+              disabled={adding}
+              className="rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-ink dark:text-zinc-100 text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-slate-500 w-36 font-mono uppercase"
+            />
+            <input
+              type="text"
+              value={noteInput}
+              onChange={(e) => setNoteInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void handleAdd(); } }}
+              placeholder={t("crossRef.notePlaceholder")}
+              disabled={adding}
+              maxLength={500}
+              className="rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-ink dark:text-zinc-100 text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-slate-500 flex-1 min-w-0"
+            />
+            <button
+              type="button"
+              onClick={handleAdd}
+              disabled={adding || !codeInput.trim()}
+              className="rounded px-3 py-1.5 text-sm font-medium bg-slate-700 hover:bg-slate-800 dark:bg-slate-600 dark:hover:bg-slate-500 text-white disabled:opacity-60 transition-colors"
+            >
+              {adding ? t("crossRef.adding") : t("crossRef.addConfirm")}
+            </button>
+          </div>
+          {addError && (
+            <p className="text-xs text-red-600 dark:text-red-400">{addError}</p>
+          )}
+          <p className="text-xs text-fade dark:text-zinc-500">{t("crossRef.codeHint")}</p>
+        </div>
+      )}
+
+      {/* Cross-ref list */}
+      {isLoading ? (
+        <p className="text-sm text-fade dark:text-zinc-400">…</p>
+      ) : crossRefs.length === 0 ? (
+        <p className="text-sm text-fade dark:text-zinc-400">{t("crossRef.empty")}</p>
+      ) : (
+        <ul className="flex flex-col gap-3">
+          {crossRefs.map((ref) => (
+            <li key={ref.id} className="flex items-start gap-2">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  {/* Type badge */}
+                  <span className="inline-block font-mono text-xs rounded border border-card-rim bg-card px-1.5 py-0.5 text-fade dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
+                    {ref.peerCode}
+                  </span>
+                  <span className="inline-block text-xs text-fade dark:text-zinc-500 border border-slate-200 dark:border-zinc-700 rounded px-1.5 py-0.5">
+                    {peerTypeBadge(ref.peerType, t)}
+                  </span>
+                  {/* Name / link */}
+                  {ref.peerEntityId ? (
+                    <Link
+                      href={withBack(peerHref(ref.peerType, ref.peerEntityId))}
+                      className="text-sm text-ink dark:text-zinc-100 underline-offset-2 hover:underline"
+                    >
+                      {ref.peerName ?? ref.peerCode}
+                    </Link>
+                  ) : (
+                    <span className="text-sm text-ink dark:text-zinc-100">
+                      {ref.peerName ?? ref.peerCode}
+                    </span>
+                  )}
+                  {/* "referenced by" indicator */}
+                  {!ref.isOwner && (
+                    <span className="text-xs text-fade dark:text-zinc-500 italic">
+                      ({t("crossRef.referencedBy")})
+                    </span>
+                  )}
+                </div>
+                {ref.note && (
+                  <p className="mt-0.5 text-xs text-slate-500 dark:text-zinc-400 italic pl-0.5">
+                    {ref.note}
+                  </p>
+                )}
+              </div>
+              {/* Delete — only the owner may remove */}
+              {ref.isOwner && isOnLatest && (
+                <button
+                  type="button"
+                  onClick={() => handleRemove(ref.id)}
+                  disabled={removing === ref.id}
+                  aria-label={t("crossRef.remove")}
+                  className="text-xs text-slate-400 hover:text-red-500 dark:text-zinc-500 dark:hover:text-red-400 transition-colors disabled:opacity-50 shrink-0 px-1 pt-0.5"
+                >
+                  ×
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Confirm dialog — "Make current?"
 // ---------------------------------------------------------------------------
 
@@ -1218,7 +1449,18 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName 
           </section>
         )}
 
-        {/* ── 7. Mențiuni / Mentions ───────────────────────────────────────── */}
+        {/* ── 7. Trimiteri / See Also ──────────────────────────────────────── */}
+        {data.principalObjectId && (
+          <CrossRefsSection
+            principalObjectId={data.principalObjectId}
+            mainQueryKey={queryKey}
+            isOnLatest={isOnLatest}
+            t={(key, opts) => t(key as Parameters<typeof t>[0], opts)}
+            withBack={withBack}
+          />
+        )}
+
+        {/* ── 8. Mențiuni / Mentions ───────────────────────────────────────── */}
         <section>
           <h2 className="mb-3 text-xl font-semibold text-ink dark:text-zinc-100">
             {t("mentions.title")}
