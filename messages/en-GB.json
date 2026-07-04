@@ -495,6 +495,7 @@
     "entityReferences": {
       "loading": "Loading…",
       "error": "Failed to load references",
+      "backTo": "Back to {name}",
       "groups": {
         "title": "Groups",
         "empty": "Not a member of any group"

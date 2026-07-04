@@ -28,18 +28,22 @@ type Props = {
    */
   backHref: string;
   /**
-   * Display name of the current entity (e.g. "Parcel P001").
-   * Passed as ?fromLabel=… to the group/stamp admin pages.
+   * Raw display name of the current entity (e.g. "Parcel P001").
+   * The component prepends the locale-appropriate "Back to" prefix
+   * before encoding it in the link's ?fromLabel=… query param.
    */
-  backLabel: string;
+  backEntityName: string;
 };
 
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
-export function EntityReferencesTab({ apiPath, queryKey, backHref, backLabel }: Props) {
+export function EntityReferencesTab({ apiPath, queryKey, backHref, backEntityName }: Props) {
   const t = useTranslations("shared.entityReferences");
+
+  // Locale-aware "Back to {name}" label — encoded into every group/stamp link.
+  const backLabel = t("backTo", { name: backEntityName });
 
   const { data, isLoading, isError } = useQuery<RefsData>({
     queryKey: [queryKey],

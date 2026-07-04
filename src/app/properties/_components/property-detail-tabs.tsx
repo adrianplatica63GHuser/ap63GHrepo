@@ -113,7 +113,7 @@ export function PropertyDetailTabs({
               apiPath={`/api/properties/${encodeURIComponent(propertyId)}/entity-references`}
               queryKey={`entity-references-property-${propertyId}`}
               backHref={`/properties/${encodeURIComponent(propertyId)}`}
-              backLabel={propertyName}
+              backEntityName={propertyName}
             />
           )}
         </div>
