@@ -150,39 +150,39 @@ function MetaSelect({
 }
 
 // ---------------------------------------------------------------------------
-// MetadataSection — one editable section (select + statement + save + review)
+// MetadataSection — one editable section (controlled select + review button)
 // ---------------------------------------------------------------------------
 
 function MetadataSection({
   title,
   note,
-  initialValue,
+  value,
+  onChange,
   options,
   statementMap,
   placeholder,
-  labelSave,
-  labelSaving,
-  labelSaved,
   labelMarkReviewed,
   labelMarkingReviewed,
   labelMarkedReviewed,
   daysText,
   reviewWarning,
-  onSave,
   onMarkReviewed,
   readOnly,
   highlight,
+  /** When true: wraps the qualifying statement in a collapsible <details> element. */
+  collapsibleStatement,
+  /** Summary text for the collapsible, e.g. "Ce înseamnă asta?" */
+  labelWhatMeansThis,
   children,
 }: {
   title:                 string;
   note:                  string;
-  initialValue:          string | null;
+  /** Controlled value — empty string means "no selection". */
+  value:                 string;
+  onChange:              (v: string) => void;
   options:               { value: string; label: string }[];
   statementMap:          Record<string, string>;
   placeholder:           string;
-  labelSave:             string;
-  labelSaving:           string;
-  labelSaved:            string;
   labelMarkReviewed:     string;
   labelMarkingReviewed:  string;
   labelMarkedReviewed:   string;
@@ -190,35 +190,17 @@ function MetadataSection({
   daysText:              string | null;
   /** Non-null when >90 days — shown in red. */
   reviewWarning:         string | null;
-  onSave:                (value: string | null) => Promise<void>;
   onMarkReviewed:        () => Promise<void>;
-  /** When true: dropdown is disabled, save button is hidden. */
+  /** When true: dropdown is disabled. */
   readOnly?:             boolean;
   /** Version-diff highlight colour for this field. */
   highlight?:            HighlightColor | undefined;
+  collapsibleStatement?: boolean;
+  labelWhatMeansThis?:   string;
   children?:             React.ReactNode;
 }) {
-  const [val,          setVal]          = useState<string>(initialValue ?? "");
-  const [saving,       setSaving]       = useState(false);
-  const [saved,        setSaved]        = useState(false);
-  const [reviewing,    setReviewing]    = useState(false);
-  const [reviewed,     setReviewed]     = useState(false);
-
-  // Keep val in sync when initialValue changes (refetch or version nav).
-  useEffect(() => {
-    setVal(initialValue ?? "");
-  }, [initialValue]);
-
-  async function handleSave() {
-    setSaving(true);
-    try {
-      await onSave(val || null);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
-    } finally {
-      setSaving(false);
-    }
-  }
+  const [reviewing, setReviewing] = useState(false);
+  const [reviewed,  setReviewed]  = useState(false);
 
   async function handleMarkReviewed() {
     setReviewing(true);
@@ -231,7 +213,7 @@ function MetadataSection({
     }
   }
 
-  const statement = val ? statementMap[val] : null;
+  const statement = value ? statementMap[value] : null;
 
   return (
     <section>
@@ -240,23 +222,13 @@ function MetadataSection({
 
       <div className="flex flex-wrap items-center gap-3">
         <MetaSelect
-          value={val}
-          onChange={setVal}
-          disabled={saving || readOnly}
+          value={value}
+          onChange={onChange}
+          disabled={readOnly}
           placeholder={placeholder}
           options={options}
           highlight={highlight}
         />
-        {!readOnly && (
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={saving || saved}
-            className="rounded px-3 py-1.5 text-sm font-medium bg-slate-700 hover:bg-slate-800 dark:bg-slate-600 dark:hover:bg-slate-500 text-white disabled:opacity-60 transition-colors"
-          >
-            {saved ? labelSaved : saving ? labelSaving : labelSave}
-          </button>
-        )}
         {!readOnly && (
           <button
             type="button"
@@ -271,7 +243,16 @@ function MetadataSection({
 
       {/* Qualifying statement shown once a value is selected */}
       {statement && (
-        <p className="mt-2 text-sm text-slate-600 dark:text-slate-300 italic">{statement}</p>
+        collapsibleStatement ? (
+          <details className="mt-2">
+            <summary className="cursor-pointer text-sm text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-200 transition-colors select-none">
+              {labelWhatMeansThis}
+            </summary>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300 italic pl-1">{statement}</p>
+          </details>
+        ) : (
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300 italic">{statement}</p>
+        )
       )}
 
       {/* Days-since indicator (hidden on historical read-only views) */}
@@ -1029,6 +1010,15 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName 
   const [showConfirm,          setShowConfirm]          = useState(false);
   const [restoring,            setRestoring]            = useState(false);
 
+  // ── Lifted classification-field state (Task #20) ──────────────────────────
+  // Controlled values for the three metadata dropdowns.  Initialised from live
+  // data on load; reset whenever data refetches (e.g. after a save).
+  const [localImportance, setLocalImportance] = useState<string>("");
+  const [localRelevance,  setLocalRelevance]  = useState<string>("");
+  const [localProvenance, setLocalProvenance] = useState<string>("");
+  const [saving,          setSaving]          = useState(false);
+  const [saved,           setSaved]           = useState(false);
+
   // ── Data loading ──────────────────────────────────────────────────────────
 
   const { data, isLoading, isError } = useQuery<MetaData>({
@@ -1063,6 +1053,15 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName 
   const versions    = versionsData?.items ?? [];
   const totalVer    = versions.length;
   const latestIndex = totalVer - 1;
+
+  // Sync local classification state from server data (on load and after save refetch).
+  useEffect(() => {
+    if (!data) return;
+    setLocalImportance(data.importance ?? "");
+    setLocalRelevance(data.relevance   ?? "");
+    setLocalProvenance(data.provenance ?? "");
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data?.importance, data?.relevance, data?.provenance]);
 
   // Which version is currently displayed in the UI
   const viewedVersion =
@@ -1144,23 +1143,47 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName 
     makeCurrentHint: t("version.makeCurrentHint"),
   };
 
-  // ── Save helper ───────────────────────────────────────────────────────────
+  // ── Dirty detection ───────────────────────────────────────────────────────
 
-  async function saveField(
-    field: "importance" | "relevance" | "provenance",
-    value: string | null,
-  ) {
-    const res = await fetch(apiPath, {
-      method:  "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify({ field, value }),
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    await queryClient.invalidateQueries({ queryKey: [queryKey] });
-    if (versionsQueryKey) {
-      await queryClient.invalidateQueries({ queryKey: [versionsQueryKey] });
+  const isDirty = isOnLatest && (
+    localImportance !== (data?.importance ?? "") ||
+    localRelevance  !== (data?.relevance  ?? "") ||
+    localProvenance !== (data?.provenance ?? "")
+  );
+
+  // ── Unified save (all three fields) ───────────────────────────────────────
+
+  async function saveAll() {
+    if (!data?.principalObjectId) return;
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/metadata/${data.principalObjectId}`, {
+        method:  "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({
+          importance: localImportance || null,
+          relevance:  localRelevance  || null,
+          provenance: localProvenance || null,
+        }),
+      });
+      if (res.redirected) throw new Error(t("saveErrorSession"));
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      await queryClient.invalidateQueries({ queryKey: [queryKey] });
+      if (versionsQueryKey) {
+        await queryClient.invalidateQueries({ queryKey: [versionsQueryKey] });
+      }
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } finally {
+      setSaving(false);
     }
   }
+
+  // ── Display values (local on latest; snapshot on historical) ─────────────
+
+  const displayImportance = isOnLatest ? localImportance : (displayedSnapshot.importance ?? "");
+  const displayRelevance  = isOnLatest ? localRelevance  : (displayedSnapshot.relevance  ?? "");
+  const displayProvenance = isOnLatest ? localProvenance : (displayedSnapshot.provenance ?? "");
 
   // ── Mark as reviewed helper ───────────────────────────────────────────────
 
@@ -1309,23 +1332,27 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName 
           </div>
         )}
 
+        {/* ── Section subheader: Clasificare subiectivă / Subjective Classification ── */}
+        <div className="pb-1 border-b border-card-rim dark:border-zinc-700">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-fade dark:text-zinc-500">
+            {t("sectionClassification")}
+          </h3>
+        </div>
+
         {/* ── 1. Importanță / Importance ──────────────────────────────────── */}
         <MetadataSection
           title={t("importance.title")}
           note={t("importance.note")}
-          initialValue={displayedSnapshot.importance}
+          value={displayImportance}
+          onChange={setLocalImportance}
           options={importanceOptions}
           statementMap={importanceStatements}
           placeholder={t("importance.placeholder")}
-          labelSave={t("importance.save")}
-          labelSaving={t("importance.saving")}
-          labelSaved={t("importance.saved")}
           labelMarkReviewed={t("markReviewed.button")}
           labelMarkingReviewed={t("markReviewed.marking")}
           labelMarkedReviewed={t("markReviewed.marked")}
           daysText={buildDaysText(data.importanceUpdatedAt)}
           reviewWarning={buildReviewWarning(data.importanceUpdatedAt)}
-          onSave={(v) => saveField("importance", v)}
           onMarkReviewed={() => touchField("importance")}
           readOnly={!isOnLatest}
           highlight={highlights.importance}
@@ -1335,44 +1362,40 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName 
         <MetadataSection
           title={t("relevance.title")}
           note={t("relevance.note")}
-          initialValue={displayedSnapshot.relevance}
+          value={displayRelevance}
+          onChange={setLocalRelevance}
           options={relevanceOptions}
           statementMap={relevanceStatements}
           placeholder={t("relevance.placeholder")}
-          labelSave={t("relevance.save")}
-          labelSaving={t("relevance.saving")}
-          labelSaved={t("relevance.saved")}
           labelMarkReviewed={t("markReviewed.button")}
           labelMarkingReviewed={t("markReviewed.marking")}
           labelMarkedReviewed={t("markReviewed.marked")}
           daysText={buildDaysText(data.relevanceUpdatedAt)}
           reviewWarning={buildReviewWarning(data.relevanceUpdatedAt)}
-          onSave={(v) => saveField("relevance", v)}
           onMarkReviewed={() => touchField("relevance")}
           readOnly={!isOnLatest}
           highlight={highlights.relevance}
         />
 
-        {/* ── 3. Proveniență / Provenience (with history) ──────────────────── */}
+        {/* ── 3. Proveniență / Provenience (with history + collapsible statement) ── */}
         <MetadataSection
           title={t("provenance.title")}
           note={t("provenance.note")}
-          initialValue={displayedSnapshot.provenance}
+          value={displayProvenance}
+          onChange={setLocalProvenance}
           options={provenanceOptions}
           statementMap={provenanceStatements}
           placeholder={t("provenance.placeholder")}
-          labelSave={t("provenance.save")}
-          labelSaving={t("provenance.saving")}
-          labelSaved={t("provenance.saved")}
           labelMarkReviewed={t("markReviewed.button")}
           labelMarkingReviewed={t("markReviewed.marking")}
           labelMarkedReviewed={t("markReviewed.marked")}
           daysText={buildDaysText(data.provenanceUpdatedAt)}
           reviewWarning={buildReviewWarning(data.provenanceUpdatedAt)}
-          onSave={(v) => saveField("provenance", v)}
           onMarkReviewed={() => touchField("provenance")}
           readOnly={!isOnLatest}
           highlight={highlights.provenance}
+          collapsibleStatement
+          labelWhatMeansThis={t("whatDoesThisMean")}
         >
           {/* History — sourced from entity_provenance_log via the main query */}
           <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-fade dark:text-zinc-500">
@@ -1391,6 +1414,27 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName 
             </ul>
           )}
         </MetadataSection>
+
+        {/* ── Unified Save button (Task #20) ───────────────────────────────── */}
+        {isOnLatest && (
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={saveAll}
+              disabled={saving || saved || !isDirty}
+              className="rounded px-4 py-2 text-sm font-medium bg-slate-700 hover:bg-slate-800 dark:bg-slate-600 dark:hover:bg-slate-500 text-white disabled:opacity-50 transition-colors"
+            >
+              {saved ? t("saved") : saving ? t("saving") : t("save")}
+            </button>
+          </div>
+        )}
+
+        {/* ── Section subheader: Conexiuni / Connections ────────────────────── */}
+        <div className="pb-1 border-b border-card-rim dark:border-zinc-700">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-fade dark:text-zinc-500">
+            {t("sectionConnections")}
+          </h3>
+        </div>
 
         {/* ── 4. Etichete / Tags ───────────────────────────────────────────── */}
         {data.principalObjectId && isOnLatest && (

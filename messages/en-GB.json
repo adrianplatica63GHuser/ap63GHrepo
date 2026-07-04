@@ -93,6 +93,8 @@
   "property": {
     "listTitle": "Properties",
     "searchPlaceholder": "search by code, nickname, cadastral no., or carte funciara",
+    "chooseFields": "Choose fields",
+    "chooseFieldsHint": "Select up to {max} optional columns",
     "addNew": "Add new Property",
     "open": "Open",
     "loading": "Loading…",
@@ -217,11 +219,16 @@
     "table": {
       "code": "Code",
       "nickname": "Nickname",
+      "parcela": "Parcelă",
+      "tarlaSola": "Tarla/Solă",
       "cadastralNumber": "Cadastral No.",
       "carteFunciara": "Carte Funciara",
       "surfaceAreaMp": "Official (m²)",
       "calculatedAreaMp": "Calculated (m²)",
-      "locality": "Locality"
+      "locality": "Locality",
+      "importance": "Importance",
+      "relevance": "Relevance",
+      "provenance": "Provenance"
     },
     "tabs": {
       "details": "Details",
@@ -627,13 +634,22 @@
         "makeCurrentBody": "Version {viewed} will be copied as a new version {next}, which becomes the current version. Continue?",
         "makeCurrentOk": "OK",
         "makeCurrentCancel": "Cancel"
-      }
+      },
+      "save": "Save",
+      "saving": "Saving…",
+      "saved": "✓ Saved",
+      "saveErrorSession": "Your session expired — please sign in again and retry.",
+      "sectionClassification": "Subjective classification",
+      "sectionConnections": "Connections",
+      "whatDoesThisMean": "What does this mean?"
     }
   },
   "naturalPerson": {
     "listTitle": "Natural Person",
     "createTitle": "New Natural Person",
     "searchPlaceholder": "search by name, email, or phone",
+    "chooseFields": "Choose fields",
+    "chooseFieldsHint": "Select up to {max} optional columns",
     "addNew": "Add new Person",
     "open": "Open",
     "loading": "Loading…",
@@ -661,7 +677,10 @@
       "name": "Name",
       "nickname": "Nickname",
       "email": "Email",
-      "phone": "Phone"
+      "phone": "Phone",
+      "importance": "Importance",
+      "relevance": "Relevance",
+      "provenance": "Provenance"
     },
     "groupsFilterLabel": "Groups",
     "groupsFilterAll": "All groups",
@@ -877,6 +896,7 @@
       "referenceData": "Reference Data",
       "import": "Import",
       "calculation": "Calculation",
+      "complexQuery": "Complex Querying",
       "export": "Export",
       "helpContent": "Help Content",
       "settings": "Settings"
@@ -947,6 +967,8 @@
     "listTitle": "Documents",
     "createTitle": "New Document",
     "searchPlaceholder": "OR search by code, title, or document no.",
+    "chooseFields": "Choose fields",
+    "chooseFieldsHint": "Select up to {max} optional columns",
     "addNew": "Add new Document",
     "open": "Open",
     "loading": "Loading…",
@@ -1001,7 +1023,10 @@
       "title": "Title",
       "nrDocument": "Document No.",
       "dateDocument": "Date",
-      "institution": "Institution / Notariat"
+      "institution": "Institution / Notariat",
+      "importance": "Importance",
+      "relevance": "Relevance",
+      "provenance": "Provenance"
     },
     "sections": {
       "typeSelect": "Document Type",
@@ -1623,6 +1648,70 @@
       "delete": "Delete",
       "deleting": "Deleting…",
       "cancel": "Cancel"
+    }
+  },
+  "complexQuery": {
+    "pageTitle": "Complex Querying",
+    "pageSubtitle": "Search across all entities by combining metadata, group, stamp, and tag filters. All active filters are ANDed together. Up to 200 results.",
+    "search": "Search",
+    "searching": "Searching…",
+    "reset": "Reset",
+    "noResults": "No entities match the selected filters.",
+    "resultsCount": "{count, plural, one {# result} other {# results}}",
+    "resultsCapped": "Showing first {count} results — narrow your filters to see more.",
+    "filters": {
+      "entityType": "Entity type",
+      "importance": "Importance",
+      "relevance": "Relevance",
+      "provenance": "Provenance",
+      "hasMetadata": "Has metadata",
+      "hasMetadataYes": "Has metadata",
+      "hasMetadataNo": "No metadata yet",
+      "search": "Name / code search",
+      "searchPlaceholder": "e.g. Popescu or PERS00012",
+      "groupCode": "Group code",
+      "groupCodePlaceholder": "e.g. AA",
+      "stampCode": "Stamp code",
+      "stampCodePlaceholder": "e.g. STMP-AAA",
+      "tag": "Tag",
+      "tagPlaceholder": "e.g. priority",
+      "updatedFrom": "Metadata updated from",
+      "updatedTo": "Metadata updated to",
+      "any": "Any"
+    },
+    "entityTypes": {
+      "PERSON": "Person",
+      "PROPERTY": "Property",
+      "DOCUMENT": "Document"
+    },
+    "importanceValues": {
+      "LOW": "Low",
+      "MEDIUM": "Medium",
+      "HIGH": "High"
+    },
+    "relevanceValues": {
+      "INACTIVE": "Inactive",
+      "HISTORICAL": "Historical",
+      "CURRENT": "Current",
+      "FUTURE": "Future"
+    },
+    "provenanceValues": {
+      "TEXT_FILE": "Text file",
+      "ALGORITHM": "Algorithm",
+      "SCAN_OCR": "Scan / OCR",
+      "MANUAL_ENTRY": "Manual entry",
+      "EXTERNAL_DB": "External DB",
+      "OTHER": "Other"
+    },
+    "table": {
+      "code": "Code",
+      "type": "Type",
+      "name": "Name",
+      "importance": "Importance",
+      "relevance": "Relevance",
+      "provenance": "Provenance",
+      "updatedBy": "Updated by",
+      "metadataUpdated": "Metadata updated"
     }
   }
 }

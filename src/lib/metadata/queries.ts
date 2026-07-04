@@ -200,6 +200,7 @@ export async function listMetadataVersions(
 export async function patchEntityMetadata(
   principalObjectId: string,
   patch: MetadataPatch,
+  updatedBy?: string | null,
 ): Promise<EntityMetadataRow> {
   const current = await getEntityMetadata(principalObjectId);
   const now     = new Date();
@@ -238,6 +239,7 @@ export async function patchEntityMetadata(
         importanceUpdatedAt: newImportanceUpdatedAt,
         relevanceUpdatedAt:  newRelevanceUpdatedAt,
         provenanceUpdatedAt: newProvenanceUpdatedAt,
+        updatedBy:           updatedBy ?? null,
         updatedAt:           now,
       },
     })
@@ -271,6 +273,75 @@ export async function patchEntityMetadata(
 }
 
 // ---------------------------------------------------------------------------
+// Write — patch all three fields at once (used by unified "Save" button)
+// ---------------------------------------------------------------------------
+
+/**
+ * Upsert all three metadata fields in one write.
+ * Used by the unified Save button that saves importance + relevance + provenance together.
+ * Sets all three field_updated_at timestamps to now().
+ * Logs old provenance into entity_provenance_log if it changed.
+ * Appends a version snapshot (deduplication inside appendVersion).
+ */
+export async function patchAllEntityMetadata(
+  principalObjectId: string,
+  patch: { importance: string | null; relevance: string | null; provenance: string | null },
+  updatedBy?: string | null,
+): Promise<EntityMetadataRow> {
+  const current = await getEntityMetadata(principalObjectId);
+  const now     = new Date();
+
+  const upserted = await db
+    .insert(entityMetadata)
+    .values({
+      principalObjectId,
+      importance:          patch.importance,
+      relevance:           patch.relevance,
+      provenance:          patch.provenance,
+      importanceUpdatedAt: now,
+      relevanceUpdatedAt:  now,
+      provenanceUpdatedAt: now,
+    })
+    .onConflictDoUpdate({
+      target: entityMetadata.principalObjectId,
+      set: {
+        importance:          patch.importance,
+        relevance:           patch.relevance,
+        provenance:          patch.provenance,
+        importanceUpdatedAt: now,
+        relevanceUpdatedAt:  now,
+        provenanceUpdatedAt: now,
+        updatedBy:           updatedBy ?? null,
+        updatedAt:           now,
+      },
+    })
+    .returning({ id: entityMetadata.id });
+
+  const metadataId = upserted[0].id;
+
+  // Log old provenance if it changed
+  if (
+    current.provenance !== null &&
+    current.provenance !== patch.provenance
+  ) {
+    await db.insert(entityProvenanceLog).values({
+      entityMetadataId: metadataId,
+      method:           current.provenance,
+      loggedAt:         now.toISOString().slice(0, 10),
+    });
+  }
+
+  // Append version snapshot
+  await appendVersion(metadataId, {
+    importance: patch.importance,
+    relevance:  patch.relevance,
+    provenance: patch.provenance,
+  });
+
+  return getEntityMetadata(principalObjectId);
+}
+
+// ---------------------------------------------------------------------------
 // Write — restore full snapshot (used by "Make current" in the version nav)
 // ---------------------------------------------------------------------------
 
@@ -282,6 +353,7 @@ export async function patchEntityMetadata(
 export async function restoreEntityMetadataSnapshot(
   principalObjectId: string,
   snapshot: MetadataSnapshot,
+  updatedBy?: string | null,
 ): Promise<EntityMetadataRow> {
   const current = await getEntityMetadata(principalObjectId);
   const now     = new Date();
@@ -306,6 +378,7 @@ export async function restoreEntityMetadataSnapshot(
         importanceUpdatedAt: now,
         relevanceUpdatedAt:  now,
         provenanceUpdatedAt: now,
+        updatedBy:           updatedBy ?? null,
         updatedAt:           now,
       },
     })
@@ -347,6 +420,7 @@ export async function restoreEntityMetadataSnapshot(
 export async function touchEntityMetadataField(
   principalObjectId: string,
   field: "importance" | "relevance" | "provenance",
+  updatedBy?: string | null,
 ): Promise<EntityMetadataRow> {
   const current = await getEntityMetadata(principalObjectId);
   const now     = new Date();
@@ -375,6 +449,7 @@ export async function touchEntityMetadataField(
         importanceUpdatedAt: newImportanceUpdatedAt,
         relevanceUpdatedAt:  newRelevanceUpdatedAt,
         provenanceUpdatedAt: newProvenanceUpdatedAt,
+        updatedBy:           updatedBy ?? null,
         updatedAt:           now,
       },
     });

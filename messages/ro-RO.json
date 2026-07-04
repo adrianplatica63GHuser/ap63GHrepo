@@ -93,6 +93,8 @@
   "property": {
     "listTitle": "Proprietăți",
     "searchPlaceholder": "caută după cod, poreclă, nr. cadastru sau carte funciară",
+    "chooseFields": "Câmpuri afișate",
+    "chooseFieldsHint": "Selectați până la {max} coloane opționale",
     "addNew": "Adaugă proprietate",
     "open": "Deschide",
     "loading": "Se încarcă…",
@@ -217,11 +219,16 @@
     "table": {
       "code": "Cod",
       "nickname": "Poreclă",
+      "parcela": "Parcelă",
+      "tarlaSola": "Tarla/Solă",
       "cadastralNumber": "Nr. cadastru",
       "carteFunciara": "Nr. CF",
       "surfaceAreaMp": "Oficială (m²)",
       "calculatedAreaMp": "Calculată (m²)",
-      "locality": "Localitate"
+      "locality": "Localitate",
+      "importance": "Importanță",
+      "relevance": "Relevanță",
+      "provenance": "Proveniență"
     },
     "tabs": {
       "details": "Detalii",
@@ -627,13 +634,22 @@
         "makeCurrentBody": "Versiunea {viewed} va fi copiată într-o nouă versiune {next}, care devine versiunea curentă. Continuați?",
         "makeCurrentOk": "OK",
         "makeCurrentCancel": "Anulează"
-      }
+      },
+      "save": "Salvează",
+      "saving": "Se salvează…",
+      "saved": "✓ Salvat",
+      "saveErrorSession": "Sesiunea a expirat — autentificați-vă din nou și reîncercați.",
+      "sectionClassification": "Clasificare subiectivă",
+      "sectionConnections": "Conexiuni",
+      "whatDoesThisMean": "Ce înseamnă asta?"
     }
   },
   "naturalPerson": {
     "listTitle": "Persoană fizică",
     "createTitle": "Persoană fizică nouă",
     "searchPlaceholder": "caută după nume, email sau telefon",
+    "chooseFields": "Câmpuri afișate",
+    "chooseFieldsHint": "Selectați până la {max} coloane opționale",
     "addNew": "Adaugă persoană",
     "open": "Deschide",
     "loading": "Se încarcă…",
@@ -661,7 +677,10 @@
       "name": "Nume",
       "nickname": "Poreclă",
       "email": "Email",
-      "phone": "Telefon"
+      "phone": "Telefon",
+      "importance": "Importanță",
+      "relevance": "Relevanță",
+      "provenance": "Proveniență"
     },
     "groupsFilterLabel": "Grupuri",
     "groupsFilterAll": "Toate grupurile",
@@ -877,6 +896,7 @@
       "referenceData": "Date de referință",
       "import": "Import",
       "calculation": "Calcul",
+      "complexQuery": "Interogare Complexă",
       "export": "Export",
       "helpContent": "Conținut Ajutor",
       "settings": "Setări"
@@ -947,6 +967,8 @@
     "listTitle": "Acte",
     "createTitle": "Act nou",
     "searchPlaceholder": "SAU caută după cod, titlu sau nr. document",
+    "chooseFields": "Câmpuri afișate",
+    "chooseFieldsHint": "Selectați până la {max} coloane opționale",
     "addNew": "Adaugă act",
     "open": "Deschide",
     "loading": "Se încarcă…",
@@ -1001,7 +1023,10 @@
       "title": "Titlu",
       "nrDocument": "Nr. document",
       "dateDocument": "Data",
-      "institution": "Instituție / Notariat"
+      "institution": "Instituție / Notariat",
+      "importance": "Importanță",
+      "relevance": "Relevanță",
+      "provenance": "Proveniență"
     },
     "sections": {
       "typeSelect": "Tip document",
@@ -1623,6 +1648,70 @@
       "delete": "Șterge",
       "deleting": "Se șterge…",
       "cancel": "Anulează"
+    }
+  },
+  "complexQuery": {
+    "pageTitle": "Interogare Complexă",
+    "pageSubtitle": "Căutați printre toate entitățile combinând filtre de metadate, grupuri, ștampile și etichete. Toate filtrele active sunt combinate cu AND. Maxim 200 de rezultate.",
+    "search": "Caută",
+    "searching": "Se caută…",
+    "reset": "Resetează",
+    "noResults": "Nicio entitate nu corespunde filtrelor selectate.",
+    "resultsCount": "{count, plural, one {# rezultat} other {# rezultate}}",
+    "resultsCapped": "Se afișează primele {count} rezultate — restrângeți filtrele pentru a vedea mai multe.",
+    "filters": {
+      "entityType": "Tip entitate",
+      "importance": "Importanță",
+      "relevance": "Relevanță",
+      "provenance": "Proveniență",
+      "hasMetadata": "Are metadate",
+      "hasMetadataYes": "Are metadate",
+      "hasMetadataNo": "Fără metadate",
+      "search": "Căutare nume / cod",
+      "searchPlaceholder": "ex. Popescu sau PERS00012",
+      "groupCode": "Cod grup",
+      "groupCodePlaceholder": "ex. AA",
+      "stampCode": "Cod ștampilă",
+      "stampCodePlaceholder": "ex. STMP-AAA",
+      "tag": "Etichetă",
+      "tagPlaceholder": "ex. prioritar",
+      "updatedFrom": "Metadate actualizate de la",
+      "updatedTo": "Metadate actualizate până la",
+      "any": "Orice"
+    },
+    "entityTypes": {
+      "PERSON": "Persoană",
+      "PROPERTY": "Proprietate",
+      "DOCUMENT": "Document"
+    },
+    "importanceValues": {
+      "LOW": "Scăzută",
+      "MEDIUM": "Medie",
+      "HIGH": "Ridicată"
+    },
+    "relevanceValues": {
+      "INACTIVE": "Inactiv",
+      "HISTORICAL": "Istoric",
+      "CURRENT": "Curent",
+      "FUTURE": "Viitor"
+    },
+    "provenanceValues": {
+      "TEXT_FILE": "Fișier text",
+      "ALGORITHM": "Algoritm",
+      "SCAN_OCR": "Scanare / OCR",
+      "MANUAL_ENTRY": "Introducere manuală",
+      "EXTERNAL_DB": "Bază de date externă",
+      "OTHER": "Altele"
+    },
+    "table": {
+      "code": "Cod",
+      "type": "Tip",
+      "name": "Nume",
+      "importance": "Importanță",
+      "relevance": "Relevanță",
+      "provenance": "Proveniență",
+      "updatedBy": "Actualizat de",
+      "metadataUpdated": "Metadate actualizate"
     }
   }
 }
