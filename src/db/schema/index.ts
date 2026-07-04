@@ -1250,6 +1250,25 @@ export const entityMetadataVersion = pgTable(
 );
 
 // ---------------------------------------------------------------------------
+// entity_tag — free-text tags per principal_object  (Slice #19.11.PM)
+// ---------------------------------------------------------------------------
+//
+// One row per tag per entity.  Tags are simple lower-case-unique text strings.
+// Deletion is hard-delete.
+
+export const entityTag = pgTable("entity_tag", {
+  id: uuid("id").primaryKey().defaultRandom(),
+
+  principalObjectId: uuid("principal_object_id")
+    .notNull()
+    .references(() => principalObject.id, { onDelete: "cascade" }),
+
+  tag: text("tag").notNull(),
+
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ---------------------------------------------------------------------------
 // Auth — user_requests + app_users  (Slice #7.0)
 // ---------------------------------------------------------------------------
 //

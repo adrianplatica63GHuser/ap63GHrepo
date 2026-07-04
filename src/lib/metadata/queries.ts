@@ -18,12 +18,13 @@
  * version is NOT appended if the new snapshot equals the latest stored one.
  */
 
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, asc } from "drizzle-orm";
 import { db } from "@/db";
 import {
   entityMetadata,
   entityProvenanceLog,
   entityMetadataVersion,
+  entityTag,
 } from "@/db/schema";
 
 // ---------------------------------------------------------------------------
@@ -332,4 +333,107 @@ export async function restoreEntityMetadataSnapshot(
   });
 
   return getEntityMetadata(principalObjectId);
+}
+
+// ---------------------------------------------------------------------------
+// Write — touch a single field (update *_updated_at without changing value)
+// ---------------------------------------------------------------------------
+
+/**
+ * Update only the `<field>_updated_at` timestamp for the given entity, leaving
+ * the field value unchanged.  Used by the "Mark as reviewed" button.
+ * If no entity_metadata row exists yet, one is created with all null values.
+ */
+export async function touchEntityMetadataField(
+  principalObjectId: string,
+  field: "importance" | "relevance" | "provenance",
+): Promise<EntityMetadataRow> {
+  const current = await getEntityMetadata(principalObjectId);
+  const now     = new Date();
+
+  const newImportanceUpdatedAt =
+    field === "importance" ? now : (current.importanceUpdatedAt ? new Date(current.importanceUpdatedAt) : null);
+  const newRelevanceUpdatedAt =
+    field === "relevance"  ? now : (current.relevanceUpdatedAt  ? new Date(current.relevanceUpdatedAt)  : null);
+  const newProvenanceUpdatedAt =
+    field === "provenance" ? now : (current.provenanceUpdatedAt ? new Date(current.provenanceUpdatedAt) : null);
+
+  await db
+    .insert(entityMetadata)
+    .values({
+      principalObjectId,
+      importance:          current.importance,
+      relevance:           current.relevance,
+      provenance:          current.provenance,
+      importanceUpdatedAt: newImportanceUpdatedAt,
+      relevanceUpdatedAt:  newRelevanceUpdatedAt,
+      provenanceUpdatedAt: newProvenanceUpdatedAt,
+    })
+    .onConflictDoUpdate({
+      target: entityMetadata.principalObjectId,
+      set: {
+        importanceUpdatedAt: newImportanceUpdatedAt,
+        relevanceUpdatedAt:  newRelevanceUpdatedAt,
+        provenanceUpdatedAt: newProvenanceUpdatedAt,
+        updatedAt:           now,
+      },
+    });
+
+  return getEntityMetadata(principalObjectId);
+}
+
+// ---------------------------------------------------------------------------
+// Tags — list, add, remove
+// ---------------------------------------------------------------------------
+
+/** All tags for an entity, oldest-first. */
+export async function listEntityTags(principalObjectId: string): Promise<string[]> {
+  const rows = await db
+    .select({ tag: entityTag.tag })
+    .from(entityTag)
+    .where(eq(entityTag.principalObjectId, principalObjectId))
+    .orderBy(asc(entityTag.createdAt));
+  return rows.map((r) => r.tag);
+}
+
+/**
+ * Add a tag to an entity.  Duplicates (case-insensitive) are silently ignored
+ * (DB unique index handles it).
+ */
+export async function addEntityTag(
+  principalObjectId: string,
+  tag: string,
+): Promise<string[]> {
+  const trimmed = tag.trim();
+  if (!trimmed) return listEntityTags(principalObjectId);
+
+  await db
+    .insert(entityTag)
+    .values({ principalObjectId, tag: trimmed })
+    .onConflictDoNothing();
+
+  return listEntityTags(principalObjectId);
+}
+
+/** Remove a tag from an entity (case-insensitive match). */
+export async function removeEntityTag(
+  principalObjectId: string,
+  tag: string,
+): Promise<string[]> {
+  const lower = tag.toLowerCase();
+
+  const fullRows = await db
+    .select({ id: entityTag.id, tag: entityTag.tag })
+    .from(entityTag)
+    .where(eq(entityTag.principalObjectId, principalObjectId));
+
+  const idsToDelete = fullRows
+    .filter((r) => r.tag.toLowerCase() === lower)
+    .map((r) => r.id);
+
+  if (idsToDelete.length > 0) {
+    await db.delete(entityTag).where(eq(entityTag.id, idsToDelete[0]));
+  }
+
+  return listEntityTags(principalObjectId);
 }
