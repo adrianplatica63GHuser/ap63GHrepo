@@ -1250,6 +1250,32 @@ export const entityMetadataVersion = pgTable(
 );
 
 // ---------------------------------------------------------------------------
+// entity_cross_reference — informal "See Also" links between entities  (Slice #19.11.PM)
+// ---------------------------------------------------------------------------
+//
+// Unidirectional: source points to target. The UI shows both directions so
+// both entities see the link; only the source side may delete it.
+// relationship_note: optional free text (max 500 chars) explaining why the
+// link is meaningful.
+
+export const entityCrossReference = pgTable("entity_cross_reference", {
+  id: uuid("id").primaryKey().defaultRandom(),
+
+  sourcePrincipalObjectId: uuid("source_principal_object_id")
+    .notNull()
+    .references(() => principalObject.id, { onDelete: "cascade" }),
+
+  targetPrincipalObjectId: uuid("target_principal_object_id")
+    .notNull()
+    .references(() => principalObject.id, { onDelete: "cascade" }),
+
+  /** Short free-text note explaining the connection (≤500 chars). */
+  relationshipNote: text("relationship_note"),
+
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ---------------------------------------------------------------------------
 // entity_tag — free-text tags per principal_object  (Slice #19.11.PM)
 // ---------------------------------------------------------------------------
 //
