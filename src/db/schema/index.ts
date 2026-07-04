@@ -1170,6 +1170,13 @@ export const entityMetadata = pgTable("entity_metadata", {
   // Untyped here to avoid circular imports; cast in the query layer.
   provenanceHistory: jsonb("provenance_history"),
 
+  // Per-field last-save timestamps (migration_046). Used by the UI to show
+  // "last changed N days ago" and flag values older than 90 days in red.
+  // NULL = that field has never been explicitly saved.
+  importanceUpdatedAt: timestamp("importance_updated_at", { withTimezone: true }),
+  relevanceUpdatedAt:  timestamp("relevance_updated_at",  { withTimezone: true }),
+  provenanceUpdatedAt: timestamp("provenance_updated_at", { withTimezone: true }),
+
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });

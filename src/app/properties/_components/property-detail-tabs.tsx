@@ -9,7 +9,7 @@ import { PropertyReferencesTab } from "./property-references-tab";
 import { EntityMetadataTab } from "@/components/entity-metadata-tab";
 import { type FormValues, type Corner } from "./form-schema";
 
-type Tab = "details" | "related" | "persons" | "document" | "references";
+type Tab = "details" | "related" | "persons" | "document" | "metadata";
 
 type GroupTag = { code: string; position: number };
 
@@ -47,7 +47,7 @@ export function PropertyDetailTabs({
     { key: "related",    label: t("tabs.related")    },
     { key: "persons",    label: t("tabs.persons")    },
     { key: "document",   label: t("tabs.document")   },
-    { key: "references", label: t("tabs.references") },
+    { key: "metadata", label: t("tabs.metadata") },
   ];
 
   return (
@@ -108,7 +108,7 @@ export function PropertyDetailTabs({
           {activeTab === "related" && (
             <PropertyReferencesTab propertyId={propertyId} />
           )}
-          {activeTab === "references" && (
+          {activeTab === "metadata" && (
             <EntityMetadataTab
               apiPath={`/api/properties/${encodeURIComponent(propertyId)}/entity-references`}
               queryKey={`entity-references-property-${propertyId}`}

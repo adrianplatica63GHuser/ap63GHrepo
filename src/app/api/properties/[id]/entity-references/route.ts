@@ -31,7 +31,7 @@ export async function GET(
     listEntityStampTags({ propertyId: id }),
     principalObjectId
       ? getEntityMetadata(principalObjectId)
-      : Promise.resolve({ importance: null, relevance: null, provenance: null, provenanceHistory: [] }),
+      : Promise.resolve({ importance: null, relevance: null, provenance: null, provenanceHistory: [], importanceUpdatedAt: null, relevanceUpdatedAt: null, provenanceUpdatedAt: null }),
   ]);
 
   return NextResponse.json({

@@ -9,7 +9,7 @@ import { PersonReferencesTab } from "./person-references-tab";
 import { EntityMetadataTab } from "@/components/entity-metadata-tab";
 import { type FormValues } from "./form-schema";
 
-type Tab = "details" | "related" | "properties" | "document" | "references";
+type Tab = "details" | "related" | "properties" | "document" | "metadata";
 
 type IdCardLink = { id: string; code: string } | null;
 
@@ -44,7 +44,7 @@ export function PersonDetailTabs({
     { key: "related",    label: t("tabs.related")    },
     { key: "properties", label: t("tabs.properties") },
     { key: "document",   label: t("tabs.document")   },
-    { key: "references", label: t("tabs.references") },
+    { key: "metadata", label: t("tabs.metadata") },
   ];
 
   return (
@@ -101,7 +101,7 @@ export function PersonDetailTabs({
           {activeTab === "related" && (
             <PersonReferencesTab personId={personId} backBase="/natural-persons" />
           )}
-          {activeTab === "references" && (
+          {activeTab === "metadata" && (
             <EntityMetadataTab
               apiPath={`/api/people/${encodeURIComponent(personId)}/entity-references`}
               queryKey={`entity-references-person-${personId}`}

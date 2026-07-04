@@ -10,7 +10,7 @@ import { useTranslations } from "next-intl";
 // ---------------------------------------------------------------------------
 
 const IMPORTANCE_VALUES = ["LOW", "MEDIUM", "HIGH"] as const;
-const RELEVANCE_VALUES  = ["OBSOLETE", "HISTORICAL", "CURRENT", "FUTURE"] as const;
+const RELEVANCE_VALUES  = ["INACTIVE", "HISTORICAL", "CURRENT", "FUTURE"] as const;
 const PROVENANCE_VALUES = [
   "MANUAL",
   "IMAGE_UPLOAD",
@@ -30,16 +30,19 @@ type StampTag     = { id: string; code: string; shortDescription: string };
 type HistoryEntry = { method: string; date: string };
 
 type MetaData = {
-  groups:            GroupTag[];
-  stamps:            StampTag[];
-  importance:        string | null;
-  relevance:         string | null;
-  provenance:        string | null;
-  provenanceHistory: HistoryEntry[];
+  groups:               GroupTag[];
+  stamps:               StampTag[];
+  importance:           string | null;
+  relevance:            string | null;
+  provenance:           string | null;
+  provenanceHistory:    HistoryEntry[];
+  importanceUpdatedAt:  string | null;
+  relevanceUpdatedAt:   string | null;
+  provenanceUpdatedAt:  string | null;
 };
 
 // ---------------------------------------------------------------------------
-// Props — identical to EntityReferencesTab so callers need no changes
+// Props
 // ---------------------------------------------------------------------------
 
 type Props = {
@@ -48,6 +51,22 @@ type Props = {
   backHref:       string;
   backEntityName: string;
 };
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/** Convert a DB key like IMAGE_UPLOAD → imageUpload for i18n lookups. */
+function camel(s: string) {
+  return s.toLowerCase().replace(/_([a-z])/g, (_: string, c: string) => c.toUpperCase());
+}
+
+/** Days since an ISO timestamp, or null if no timestamp. */
+function daysSince(isoDate: string | null): number | null {
+  if (!isoDate) return null;
+  const ms = Date.now() - new Date(isoDate).getTime();
+  return Math.floor(ms / (1000 * 60 * 60 * 24));
+}
 
 // ---------------------------------------------------------------------------
 // MetaSelect — thin styled select
@@ -82,7 +101,7 @@ function MetaSelect({
 }
 
 // ---------------------------------------------------------------------------
-// MetadataSection — one editable section (select + save button).
+// MetadataSection — one editable section (select + statement + save button).
 //
 // Keeps its own local state initialised from `initialValue` at mount time.
 // No useEffect needed — the component only mounts once `data` is available,
@@ -91,29 +110,34 @@ function MetaSelect({
 
 function MetadataSection({
   title,
-  note1,
-  note2,
+  note,
   initialValue,
   options,
+  statementMap,
   placeholder,
   labelSave,
   labelSaving,
   labelSaved,
+  daysText,
+  reviewWarning,
   onSave,
   children,
 }: {
-  title:        string;
-  note1:        string;
-  note2:        string;
-  initialValue: string | null;
-  options:      { value: string; label: string }[];
-  placeholder:  string;
-  labelSave:    string;
-  labelSaving:  string;
-  labelSaved:   string;
-  onSave:       (value: string | null) => Promise<void>;
-  /** Optional extra content rendered below the save row (e.g. history). */
-  children?:    React.ReactNode;
+  title:         string;
+  note:          string;
+  initialValue:  string | null;
+  options:       { value: string; label: string }[];
+  statementMap:  Record<string, string>;
+  placeholder:   string;
+  labelSave:     string;
+  labelSaving:   string;
+  labelSaved:    string;
+  /** Pre-formatted "Updated X days ago" text, or null if never saved. */
+  daysText:      string | null;
+  /** Non-null when >90 days — shown in red. */
+  reviewWarning: string | null;
+  onSave:        (value: string | null) => Promise<void>;
+  children?:     React.ReactNode;
 }) {
   const [val,    setVal]    = useState<string>(initialValue ?? "");
   const [saving, setSaving] = useState(false);
@@ -130,12 +154,14 @@ function MetadataSection({
     }
   }
 
+  const statement = val ? statementMap[val] : null;
+
   return (
     <section>
-      <h2 className="mb-1 text-base font-semibold text-ink dark:text-zinc-100">{title}</h2>
-      <p className="mb-0.5 text-xs text-fade dark:text-zinc-400">{note1}</p>
-      <p className="mb-3 text-xs text-fade dark:text-zinc-400">{note2}</p>
-      <div className="flex items-center gap-3 mb-4">
+      <h2 className="mb-2 text-xl font-semibold text-ink dark:text-zinc-100">{title}</h2>
+      <p className="mb-3 text-sm text-fade dark:text-zinc-400">{note}</p>
+
+      <div className="flex items-center gap-3">
         <MetaSelect
           value={val}
           onChange={setVal}
@@ -152,7 +178,25 @@ function MetadataSection({
           {saved ? labelSaved : saving ? labelSaving : labelSave}
         </button>
       </div>
-      {children}
+
+      {/* Qualifying statement shown once a value is selected */}
+      {statement && (
+        <p className="mt-2 text-sm text-slate-600 dark:text-slate-300 italic">{statement}</p>
+      )}
+
+      {/* Days-since indicator */}
+      {(daysText || reviewWarning) && (
+        <div className="mt-1.5 flex flex-col gap-0.5">
+          {daysText && (
+            <p className="text-sm text-fade dark:text-zinc-500">{daysText}</p>
+          )}
+          {reviewWarning && (
+            <p className="text-sm font-medium text-red-600 dark:text-red-400">{reviewWarning}</p>
+          )}
+        </div>
+      )}
+
+      {children && <div className="mt-4">{children}</div>}
     </section>
   );
 }
@@ -176,7 +220,7 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName 
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return res.json() as Promise<MetaData>;
     },
-    staleTime:           0,
+    staleTime:            0,
     refetchOnWindowFocus: false,
   });
 
@@ -210,11 +254,7 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName 
     return <p className="py-6 text-sm text-red-600 dark:text-red-400">{t("error")}</p>;
   }
 
-  // ── Option arrays (built from constants so they stay in sync with the API) ─
-
-  function camel(s: string) {
-    return s.toLowerCase().replace(/_([a-z])/g, (_: string, c: string) => c.toUpperCase());
-  }
+  // ── Option arrays ─────────────────────────────────────────────────────────
 
   const importanceOptions = IMPORTANCE_VALUES.map((v) => ({
     value: v,
@@ -231,14 +271,51 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName 
     label: t(`provenance.${camel(v)}` as Parameters<typeof t>[0]),
   }));
 
-  // Build a lookup map for displaying provenance history entries
+  // ── Statement maps (value → qualifying text shown below the dropdown) ─────
+
+  const importanceStatements: Record<string, string> = {
+    LOW:    t("importance.statementLow"),
+    MEDIUM: t("importance.statementMedium"),
+    HIGH:   t("importance.statementHigh"),
+  };
+
+  const relevanceStatements: Record<string, string> = {
+    INACTIVE:   t("relevance.statementInactive"),
+    HISTORICAL: t("relevance.statementHistorical"),
+    CURRENT:    t("relevance.statementCurrent"),
+    FUTURE:     t("relevance.statementFuture"),
+  };
+
+  const provenanceStatements: Record<string, string> = {
+    MANUAL:          t("provenance.statementManual"),
+    IMAGE_UPLOAD:    t("provenance.statementImageUpload"),
+    TEXT_FILE:       t("provenance.statementTextFile"),
+    ALGORITHM:       t("provenance.statementAlgorithm"),
+    AI_INTERPRETED:  t("provenance.statementAiInterpreted"),
+    EXTERNAL_IMPORT: t("provenance.statementExternalImport"),
+    DIGITIZED:       t("provenance.statementDigitized"),
+  };
+
+  // Also used for history row labels
   const provenanceLabelMap: Record<string, string> = {};
   for (const v of PROVENANCE_VALUES) {
-    try {
-      provenanceLabelMap[v] = t(`provenance.${camel(v)}` as Parameters<typeof t>[0]);
-    } catch {
-      provenanceLabelMap[v] = v;
-    }
+    provenanceLabelMap[v] = t(`provenance.${camel(v)}` as Parameters<typeof t>[0]);
+  }
+
+  // ── Days-since helpers ────────────────────────────────────────────────────
+
+  function buildDaysText(isoDate: string | null): string | null {
+    const d = daysSince(isoDate);
+    if (d === null) return null;
+    if (d === 0) return t("lastChangedToday");
+    if (d === 1) return t("lastChangedYesterday");
+    return t("lastChangedDays", { days: d });
+  }
+
+  function buildReviewWarning(isoDate: string | null): string | null {
+    const d = daysSince(isoDate);
+    if (d === null || d <= 90) return null;
+    return t("reviewWarning", { days: d });
   }
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -249,45 +326,51 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName 
       {/* ── 1. Importanță / Importance ──────────────────────────────────── */}
       <MetadataSection
         title={t("importance.title")}
-        note1={t("importance.note1")}
-        note2={t("importance.note2")}
+        note={t("importance.note")}
         initialValue={data.importance}
         options={importanceOptions}
+        statementMap={importanceStatements}
         placeholder={t("importance.placeholder")}
         labelSave={t("importance.save")}
         labelSaving={t("importance.saving")}
         labelSaved={t("importance.saved")}
+        daysText={buildDaysText(data.importanceUpdatedAt)}
+        reviewWarning={buildReviewWarning(data.importanceUpdatedAt)}
         onSave={(v) => saveField("importance", v)}
       />
 
       {/* ── 2. Relevanță / Relevance ─────────────────────────────────────── */}
       <MetadataSection
         title={t("relevance.title")}
-        note1={t("relevance.note1")}
-        note2={t("relevance.note2")}
+        note={t("relevance.note")}
         initialValue={data.relevance}
         options={relevanceOptions}
+        statementMap={relevanceStatements}
         placeholder={t("relevance.placeholder")}
         labelSave={t("relevance.save")}
         labelSaving={t("relevance.saving")}
         labelSaved={t("relevance.saved")}
+        daysText={buildDaysText(data.relevanceUpdatedAt)}
+        reviewWarning={buildReviewWarning(data.relevanceUpdatedAt)}
         onSave={(v) => saveField("relevance", v)}
       />
 
       {/* ── 3. Proveniență / Provenience (with history) ──────────────────── */}
       <MetadataSection
         title={t("provenance.title")}
-        note1={t("provenance.note1")}
-        note2={t("provenance.note2")}
+        note={t("provenance.note")}
         initialValue={data.provenance}
         options={provenanceOptions}
+        statementMap={provenanceStatements}
         placeholder={t("provenance.placeholder")}
         labelSave={t("provenance.save")}
         labelSaving={t("provenance.saving")}
         labelSaved={t("provenance.saved")}
+        daysText={buildDaysText(data.provenanceUpdatedAt)}
+        reviewWarning={buildReviewWarning(data.provenanceUpdatedAt)}
         onSave={(v) => saveField("provenance", v)}
       >
-        {/* History — rendered by the parent so it updates on every refetch */}
+        {/* History — rendered inside children so it updates on every refetch */}
         <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-fade dark:text-zinc-500">
           {t("provenance.historyTitle")}
         </h3>
@@ -307,7 +390,7 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName 
 
       {/* ── 4. Grupuri / Groups ──────────────────────────────────────────── */}
       <section>
-        <h2 className="mb-3 text-base font-semibold text-ink dark:text-zinc-100">
+        <h2 className="mb-3 text-xl font-semibold text-ink dark:text-zinc-100">
           {t("groups.title")}
         </h2>
         {!data.groups.length ? (
@@ -335,7 +418,7 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName 
 
       {/* ── 5. Ștampile / Stamps ─────────────────────────────────────────── */}
       <section>
-        <h2 className="mb-3 text-base font-semibold text-ink dark:text-zinc-100">
+        <h2 className="mb-3 text-xl font-semibold text-ink dark:text-zinc-100">
           {t("stamps.title")}
         </h2>
         {!data.stamps.length ? (
@@ -363,7 +446,7 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName 
 
       {/* ── 6. Mențiuni / Mentions ───────────────────────────────────────── */}
       <section>
-        <h2 className="mb-3 text-base font-semibold text-ink dark:text-zinc-100">
+        <h2 className="mb-3 text-xl font-semibold text-ink dark:text-zinc-100">
           {t("mentions.title")}
         </h2>
         <p className="mb-3 text-sm text-fade dark:text-zinc-400">{t("mentions.wip")}</p>

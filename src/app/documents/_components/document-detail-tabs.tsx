@@ -9,7 +9,7 @@ import { DocumentReferencesTab } from "./document-references-tab";
 import { EntityMetadataTab } from "@/components/entity-metadata-tab";
 import { type FormValues } from "./form-schema";
 
-type Tab = "details" | "related" | "persons" | "properties" | "references";
+type Tab = "details" | "related" | "persons" | "properties" | "metadata";
 
 type Props = {
   documentId:    string;
@@ -44,7 +44,7 @@ export function DocumentDetailTabs({
     { key: "related",    label: t("tabs.related")    },
     { key: "persons",    label: t("tabs.persons")    },
     { key: "properties", label: t("tabs.properties") },
-    { key: "references", label: t("tabs.references") },
+    { key: "metadata", label: t("tabs.metadata") },
   ];
 
   return (
@@ -101,7 +101,7 @@ export function DocumentDetailTabs({
           {activeTab === "related" && (
             <DocumentReferencesTab documentId={documentId} />
           )}
-          {activeTab === "references" && (
+          {activeTab === "metadata" && (
             <EntityMetadataTab
               apiPath={`/api/documents/${encodeURIComponent(documentId)}/entity-references`}
               queryKey={`entity-references-document-${documentId}`}
