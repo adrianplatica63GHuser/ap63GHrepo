@@ -4,7 +4,7 @@ import { db } from "@/db";
 import { person } from "@/db/schema";
 import { listEntityGroupTags } from "@/lib/groups/queries";
 import { listEntityStampTags } from "@/lib/stamps/queries";
-import { getEntityMetadata, patchEntityMetadata, restoreEntityMetadataSnapshot } from "@/lib/metadata/queries";
+import { getEntityMetadata, patchEntityMetadata, restoreEntityMetadataSnapshot, touchEntityMetadataField } from "@/lib/metadata/queries";
 import type { MetadataPatch, MetadataSnapshot } from "@/lib/metadata/queries";
 
 // ---------------------------------------------------------------------------
@@ -51,8 +51,8 @@ export async function PATCH(
 ) {
   const { id } = await params;
 
-  const body = (await req.json()) as { field: string; value: string | null };
-  const { field, value } = body;
+  const body = (await req.json()) as { field: string; value?: string | null; action?: string };
+  const { field, value, action } = body;
 
   if (!["importance", "relevance", "provenance"].includes(field)) {
     return NextResponse.json({ error: "Invalid field" }, { status: 400 });
@@ -69,7 +69,14 @@ export async function PATCH(
     return NextResponse.json({ error: "Person not found" }, { status: 404 });
   }
 
-  const updated = await patchEntityMetadata(principalObjectId, { field, value } as MetadataPatch);
+  const metaField = field as "importance" | "relevance" | "provenance";
+
+  if (action === "touch") {
+    const updated = await touchEntityMetadataField(principalObjectId, metaField);
+    return NextResponse.json(updated);
+  }
+
+  const updated = await patchEntityMetadata(principalObjectId, { field: metaField, value: value ?? null } as MetadataPatch);
   return NextResponse.json(updated);
 }
 
