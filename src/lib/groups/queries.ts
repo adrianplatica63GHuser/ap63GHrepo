@@ -587,6 +587,38 @@ export async function listPropertyGroupTags(propertyId: string): Promise<GroupTa
 }
 
 // ---------------------------------------------------------------------------
+// Enriched group tags for any entity — for the References tab.
+// Returns { code, position, description } for all groups the item belongs to.
+// ---------------------------------------------------------------------------
+
+export type GroupEntityTag = { code: string; position: number; description: string };
+
+export async function listEntityGroupTags(opts: {
+  propertyId?: string;
+  personId?: string;
+  documentId?: string;
+}): Promise<GroupEntityTag[]> {
+  const base = db
+    .select({ code: groups.code, position: groupMember.position, description: groups.description })
+    .from(groupMember)
+    .innerJoin(groups, eq(groups.id, groupMember.groupId));
+
+  let rows: { code: string; position: number; description: string }[];
+
+  if (opts.propertyId) {
+    rows = await base.where(eq(groupMember.propertyId, opts.propertyId)).orderBy(asc(groups.code));
+  } else if (opts.personId) {
+    rows = await base.where(eq(groupMember.personId, opts.personId)).orderBy(asc(groups.code));
+  } else if (opts.documentId) {
+    rows = await base.where(eq(groupMember.documentId, opts.documentId)).orderBy(asc(groups.code));
+  } else {
+    rows = [];
+  }
+
+  return rows as GroupEntityTag[];
+}
+
+// ---------------------------------------------------------------------------
 // Group codes by target type — for list-page "Groups" filter dropdowns
 // (Slice #18.17)
 // ---------------------------------------------------------------------------

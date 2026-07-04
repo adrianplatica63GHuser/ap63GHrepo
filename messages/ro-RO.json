@@ -225,6 +225,7 @@
     },
     "tabs": {
       "details": "Detalii",
+      "related": "Asocieri",
       "references": "Referințe",
       "persons": "Persoane",
       "document": "Acte",
@@ -490,6 +491,22 @@
       "delete": "Șterge",
       "deleting": "Se șterge…",
       "error": "Ștergerea elementelor selectate a eșuat"
+    },
+    "entityReferences": {
+      "loading": "Se încarcă…",
+      "error": "Referințele nu au putut fi încărcate",
+      "groups": {
+        "title": "Grupuri",
+        "empty": "Nu face parte din niciun grup"
+      },
+      "stamps": {
+        "title": "Ștampile",
+        "empty": "Nicio ștampilă aplicată"
+      },
+      "mentions": {
+        "title": "Mențiuni",
+        "wip": "În lucru — disponibil în curând"
+      }
     }
   },
   "naturalPerson": {
@@ -597,6 +614,7 @@
     },
     "tabs": {
       "details": "Detalii",
+      "related": "Asocieri",
       "references": "Referințe",
       "properties": "Proprietăți",
       "document": "Acte",
@@ -695,6 +713,7 @@
     },
     "tabs": {
       "details": "Detalii",
+      "related": "Asocieri",
       "references": "Referințe",
       "properties": "Proprietăți",
       "document": "Acte",
@@ -939,6 +958,7 @@
     },
     "tabs": {
       "details": "Detalii",
+      "related": "Asocieri",
       "references": "Referințe",
       "persons": "Persoane",
       "properties": "Proprietăți",

@@ -6,9 +6,10 @@ import { DocumentForm } from "./document-form";
 import { DocumentPersonsTab } from "./document-persons-tab";
 import { DocumentPropertiesTab } from "./document-properties-tab";
 import { DocumentReferencesTab } from "./document-references-tab";
+import { EntityReferencesTab } from "@/components/entity-references-tab";
 import { type FormValues } from "./form-schema";
 
-type Tab = "details" | "references" | "persons" | "properties";
+type Tab = "details" | "related" | "persons" | "properties" | "references";
 
 type Props = {
   documentId:    string;
@@ -40,9 +41,10 @@ export function DocumentDetailTabs({
 
   const tabs: { key: Tab; label: string }[] = [
     { key: "details",    label: t("tabs.details")    },
-    { key: "references", label: t("tabs.references") },
+    { key: "related",    label: t("tabs.related")    },
     { key: "persons",    label: t("tabs.persons")    },
     { key: "properties", label: t("tabs.properties") },
+    { key: "references", label: t("tabs.references") },
   ];
 
   return (
@@ -96,8 +98,14 @@ export function DocumentDetailTabs({
           {activeTab === "properties" && (
             <DocumentPropertiesTab documentId={documentId} />
           )}
-          {activeTab === "references" && (
+          {activeTab === "related" && (
             <DocumentReferencesTab documentId={documentId} />
+          )}
+          {activeTab === "references" && (
+            <EntityReferencesTab
+              apiPath={`/api/documents/${encodeURIComponent(documentId)}/entity-references`}
+              queryKey={`entity-references-document-${documentId}`}
+            />
           )}
         </div>
       </div>

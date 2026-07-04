@@ -225,6 +225,7 @@
     },
     "tabs": {
       "details": "Details",
+      "related": "Related",
       "references": "References",
       "persons": "Persons",
       "document": "Documents",
@@ -490,6 +491,22 @@
       "delete": "Delete",
       "deleting": "Deleting…",
       "error": "Could not delete the selected items"
+    },
+    "entityReferences": {
+      "loading": "Loading…",
+      "error": "Failed to load references",
+      "groups": {
+        "title": "Groups",
+        "empty": "Not a member of any group"
+      },
+      "stamps": {
+        "title": "Stamps",
+        "empty": "No stamps applied"
+      },
+      "mentions": {
+        "title": "Mentions",
+        "wip": "Work in progress — coming soon"
+      }
     }
   },
   "naturalPerson": {
@@ -597,6 +614,7 @@
     },
     "tabs": {
       "details": "Details",
+      "related": "Related",
       "references": "References",
       "properties": "Properties",
       "document": "Documents",
@@ -695,6 +713,7 @@
     },
     "tabs": {
       "details": "Details",
+      "related": "Related",
       "references": "References",
       "properties": "Properties",
       "document": "Documents",
@@ -939,6 +958,7 @@
     },
     "tabs": {
       "details": "Details",
+      "related": "Related",
       "references": "References",
       "persons": "Persons",
       "properties": "Properties",

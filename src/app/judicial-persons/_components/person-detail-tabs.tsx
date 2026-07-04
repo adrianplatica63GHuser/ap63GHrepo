@@ -6,9 +6,10 @@ import { JudicialPersonForm } from "./judicial-person-form";
 import { PersonPropertiesTab } from "../../properties/_components/person-properties-tab";
 import { PersonDocumentTab } from "../../documents/_components/person-document-tab";
 import { PersonReferencesTab } from "../../natural-persons/_components/person-references-tab";
+import { EntityReferencesTab } from "@/components/entity-references-tab";
 import { type FormValues } from "./form-schema";
 
-type Tab = "details" | "references" | "properties" | "document";
+type Tab = "details" | "related" | "properties" | "document" | "references";
 
 type Props = {
   personId:      string;
@@ -35,9 +36,10 @@ export function JudicialPersonDetailTabs({
 
   const tabs: { key: Tab; label: string }[] = [
     { key: "details",    label: t("tabs.details")    },
-    { key: "references", label: t("tabs.references") },
+    { key: "related",    label: t("tabs.related")    },
     { key: "properties", label: t("tabs.properties") },
     { key: "document",   label: t("tabs.document")   },
+    { key: "references", label: t("tabs.references") },
   ];
 
   return (
@@ -90,8 +92,14 @@ export function JudicialPersonDetailTabs({
           {activeTab === "document" && (
             <PersonDocumentTab personId={personId} backBase="/judicial-persons" />
           )}
-          {activeTab === "references" && (
+          {activeTab === "related" && (
             <PersonReferencesTab personId={personId} backBase="/judicial-persons" />
+          )}
+          {activeTab === "references" && (
+            <EntityReferencesTab
+              apiPath={`/api/people/${encodeURIComponent(personId)}/entity-references`}
+              queryKey={`entity-references-person-${personId}`}
+            />
           )}
         </div>
       </div>

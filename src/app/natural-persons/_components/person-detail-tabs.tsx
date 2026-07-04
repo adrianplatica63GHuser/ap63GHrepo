@@ -6,9 +6,10 @@ import { NaturalPersonForm } from "./natural-person-form";
 import { PersonPropertiesTab } from "../../properties/_components/person-properties-tab";
 import { PersonDocumentTab } from "../../documents/_components/person-document-tab";
 import { PersonReferencesTab } from "./person-references-tab";
+import { EntityReferencesTab } from "@/components/entity-references-tab";
 import { type FormValues } from "./form-schema";
 
-type Tab = "details" | "references" | "properties" | "document";
+type Tab = "details" | "related" | "properties" | "document" | "references";
 
 type IdCardLink = { id: string; code: string } | null;
 
@@ -40,9 +41,10 @@ export function PersonDetailTabs({
 
   const tabs: { key: Tab; label: string }[] = [
     { key: "details",    label: t("tabs.details")    },
-    { key: "references", label: t("tabs.references") },
+    { key: "related",    label: t("tabs.related")    },
     { key: "properties", label: t("tabs.properties") },
     { key: "document",   label: t("tabs.document")   },
+    { key: "references", label: t("tabs.references") },
   ];
 
   return (
@@ -96,8 +98,14 @@ export function PersonDetailTabs({
           {activeTab === "document" && (
             <PersonDocumentTab personId={personId} backBase="/natural-persons" />
           )}
-          {activeTab === "references" && (
+          {activeTab === "related" && (
             <PersonReferencesTab personId={personId} backBase="/natural-persons" />
+          )}
+          {activeTab === "references" && (
+            <EntityReferencesTab
+              apiPath={`/api/people/${encodeURIComponent(personId)}/entity-references`}
+              queryKey={`entity-references-person-${personId}`}
+            />
           )}
         </div>
       </div>

@@ -6,9 +6,10 @@ import { PropertyForm } from "./property-form";
 import { PropertyPersonsTab } from "./property-persons-tab";
 import { PropertyDocumentTab } from "./property-document-tab";
 import { PropertyReferencesTab } from "./property-references-tab";
+import { EntityReferencesTab } from "@/components/entity-references-tab";
 import { type FormValues, type Corner } from "./form-schema";
 
-type Tab = "details" | "references" | "persons" | "document";
+type Tab = "details" | "related" | "persons" | "document" | "references";
 
 type GroupTag = { code: string; position: number };
 
@@ -43,9 +44,10 @@ export function PropertyDetailTabs({
 
   const tabs: { key: Tab; label: string }[] = [
     { key: "details",    label: t("tabs.details")    },
-    { key: "references", label: t("tabs.references") },
+    { key: "related",    label: t("tabs.related")    },
     { key: "persons",    label: t("tabs.persons")    },
     { key: "document",   label: t("tabs.document")   },
+    { key: "references", label: t("tabs.references") },
   ];
 
   return (
@@ -103,8 +105,14 @@ export function PropertyDetailTabs({
           {activeTab === "document" && (
             <PropertyDocumentTab propertyId={propertyId} />
           )}
-          {activeTab === "references" && (
+          {activeTab === "related" && (
             <PropertyReferencesTab propertyId={propertyId} />
+          )}
+          {activeTab === "references" && (
+            <EntityReferencesTab
+              apiPath={`/api/properties/${encodeURIComponent(propertyId)}/entity-references`}
+              queryKey={`entity-references-property-${propertyId}`}
+            />
           )}
         </div>
       </div>
