@@ -708,16 +708,6 @@ export const lookupDocTypePersonRole = pgTable(
 // Stampila. The `category` column is injected by the query layer; the UI only
 // exposes the `name` field.
 
-export const lookupOthers = pgTable("lookup_others", {
-  id:          uuid("id").primaryKey().defaultRandom(),
-  name:        text("name").notNull(),
-  description: text("description"),
-  category:    text("category"),
-  sortOrder:   integer("sort_order").notNull().default(0),
-  createdAt:   timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  updatedAt:   timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-});
-
 // ---------------------------------------------------------------------------
 // document — root entity
 // ---------------------------------------------------------------------------

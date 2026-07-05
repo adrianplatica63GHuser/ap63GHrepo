@@ -68,13 +68,6 @@ export const institutionSchema = z.object({
   sortOrder,
 });
 
-export const serviceInterestSchema = z.object({
-  name:        z.string().min(1, "required"),
-  description: z.string().nullish(),
-  category:    z.string().nullish(),
-  sortOrder,
-});
-
 // ── Dispatch map ─────────────────────────────────────────────────────────────
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -88,5 +81,4 @@ export const LIST_SCHEMAS: Record<ListKey, z.ZodType<any>> = {
   "judicial-person-types": judicialPersonTypeSchema,
   "document-types":  documentTypeSchema,
   "institutions":    institutionSchema,
-  "stamps":          serviceInterestSchema,
 };

@@ -7,9 +7,9 @@
  * `LIST_META` provides field metadata consumed by the API validation layer
  * and the UI's add/edit form — it is the single place to add a new column.
  *
- * NOTE: "stamps" ('Stampila') in lookup_others was added in Slice 9.8.
- * "services" and "interests" were removed in migration_052 (no longer exposed
- * in the UI). The category field is injected automatically by the query layer.
+ * NOTE: lookup_others (formerly used for Services, Interests, and Stamps) was
+ * dropped entirely in migration_052. Services and Interests had no UI replacement;
+ * Stamps are now managed via the dedicated stamps/stamp_member tables (Slice #19.09).
  *
  * NOTE (Slice #18.07): "groups" was removed from this generic list flow —
  * Groups is now a first-class feature with its own tables (groups /
@@ -26,7 +26,6 @@ export const VALID_LIST_KEYS = [
   "judicial-person-types",
   "document-types",
   "institutions",
-  "stamps",
 ] as const;
 
 export type ListKey = (typeof VALID_LIST_KEYS)[number];
@@ -129,16 +128,6 @@ export const LIST_META: Record<ListKey, ListMeta> = {
     fields: [
       { key: "name",            labelKey: "name",            required: true  },
       { key: "institutionType", labelKey: "institutionType", required: false },
-    ],
-  },
-  // "stamps" reads from lookup_others filtered by category='Stampila'.
-  // The category value is injected by the query layer; the form exposes
-  // name + description. (Groups moved to its own feature in Slice #18.07.)
-  stamps: {
-    titleKey: "stamps",
-    fields: [
-      { key: "name",        labelKey: "name",        required: true  },
-      { key: "description", labelKey: "description", required: false, multiline: true },
     ],
   },
 };

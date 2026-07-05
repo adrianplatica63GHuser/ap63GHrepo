@@ -2,10 +2,13 @@
 --
 -- 1. Drop free-text columns from document that are no longer used
 --    (replaced by FK relationships and the linked-persons pattern).
--- 2. Drop lookup_others rows for Services (Serviciu) and Interests (Interes)
---    categories, which are no longer exposed in the UI.
+-- 2. Drop the lookup_others table entirely — all three categories
+--    (Serviciu, Interes, Stampila) are obsolete:
+--      - Services and Interests: removed from UI; no replacement needed.
+--      - Stamps: superseded by the dedicated stamps/stamp_member tables
+--        (Slice #19.09); the old lookup_others stamp names are discarded.
 --
--- Safe to run multiple times (IF EXISTS / no rows left to delete).
+-- Safe to run multiple times (IF EXISTS guards).
 
 BEGIN;
 
@@ -16,6 +19,6 @@ ALTER TABLE document
   DROP COLUMN IF EXISTS parties_b_text,
   DROP COLUMN IF EXISTS institution;
 
-DELETE FROM lookup_others WHERE category IN ('Serviciu', 'Interes');
+DROP TABLE IF EXISTS lookup_others;
 
 COMMIT;
