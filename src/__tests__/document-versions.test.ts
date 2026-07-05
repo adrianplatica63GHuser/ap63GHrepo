@@ -37,10 +37,6 @@ const EMPTY_SNAP: DocumentSnapshot = {
   nrCertificatDeces: null,
   dateStart:         null,
   dateEnd:           null,
-  titularText:       null,
-  defunctText:       null,
-  partiesAText:      null,
-  partiesBText:      null,
   notes:             null,
 };
 

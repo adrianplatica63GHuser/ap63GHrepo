@@ -66,14 +66,11 @@ describe("documentCreateSchema", () => {
       title:          "Titlu Teren Nord",
       nrDocument:     "123/2021",
       dateDocument:   "2021-06-15",
-      institution:    "OCPI Ilfov",
       emitent:        "Comisia Locală",
       bazaLegala:     "Legea 18/1991",
       uatProprietate: "Voluntari",
       uatProprietar:  "Voluntari",
       suprafata:      2.5,
-      titularText:    "Ion Popescu",
-      defunctText:    "Maria Popescu",
       notes:          "Terenul din zona de nord",
     });
     expect(result.success).toBe(true);
@@ -84,13 +81,10 @@ describe("documentCreateSchema", () => {
       documentTypeId:     SOME_TYPE_ID,
       nrDocument:         "42/2022",
       dateDocument:       "2022-03-10",
-      institution:        "Notariat Popescu",
       nrDosarSuccesoral:  "DOS-100/2022",
       dataDecesului:      "2021-12-01",
       ultimulDomiciliu:   "Str. Florilor 5, București",
       nrCertificatDeces:  "CD-555/2021",
-      defunctText:        "Maria Popescu",
-      partiesBText:       "Ion Popescu, Ana Ionescu",
     });
     expect(result.success).toBe(true);
   });
@@ -100,11 +94,8 @@ describe("documentCreateSchema", () => {
       documentTypeId: SOME_TYPE_ID,
       nrDocument:     "C-77/2023",
       dateDocument:   "2023-01-01",
-      institution:    "Primăria Sector 1",
       dateStart:      "2023-02-01",
       dateEnd:        "2024-01-31",
-      partiesAText:   "SC Proprietăți SRL",
-      partiesBText:   "Ioan Chirias",
     });
     expect(result.success).toBe(true);
   });
@@ -149,67 +140,56 @@ describe("documentUpdateSchema", () => {
 describe("getTypeConfig", () => {
   it("returns the generic config when key is null/undefined", () => {
     expect(getTypeConfig(null).showTitlu).toBe(false);
-    expect(getTypeConfig(undefined).showParties).toBe(false);
+    expect(getTypeConfig(undefined).showDateRange).toBe(false);
   });
 
   it("returns generic config for a simple type (ACT_ADJUDECARE)", () => {
     const cfg = getTypeConfig("ACT_ADJUDECARE");
     expect(cfg.showTitlu).toBe(false);
     expect(cfg.showMostenitor).toBe(false);
-    expect(cfg.showParties).toBe(false);
     expect(cfg.showDateRange).toBe(false);
-    expect(cfg.showDefunct).toBe(false);
+    expect(cfg.showValidUntil).toBe(false);
   });
 
   it("returns correct config for TITLU_PROPRIETATE", () => {
     const cfg = getTypeConfig("TITLU_PROPRIETATE");
     expect(cfg.showTitlu).toBe(true);
-    expect(cfg.showDefunct).toBe(true);
     expect(cfg.labels.nrDocument).toBe("Nr. titlu proprietate");
   });
 
   it("returns correct config for CERTIFICAT_MOSTENITOR", () => {
     const cfg = getTypeConfig("CERTIFICAT_MOSTENITOR");
     expect(cfg.showMostenitor).toBe(true);
-    expect(cfg.showParties).toBe(true);
-    expect(cfg.showDefunct).toBe(true);
-    expect(cfg.labels.partiesBText).toBe("Moștenitori");
+    expect(cfg.labels.nrDocument).toBe("Nr. certificat de moștenitor");
   });
 
   it("returns correct config for CONTRACT_INCHIRIERE", () => {
     const cfg = getTypeConfig("CONTRACT_INCHIRIERE");
-    expect(cfg.showParties).toBe(true);
     expect(cfg.showDateRange).toBe(true);
-    expect(cfg.labels.partiesAText).toBe("Proprietari");
-    expect(cfg.labels.partiesBText).toBe("Chiriași");
+    expect(cfg.labels.nrDocument).toBe("Nr. contract de închiriere");
   });
 
   it("returns correct config for CONTRACT_VANZARE", () => {
     const cfg = getTypeConfig("CONTRACT_VANZARE");
-    expect(cfg.showParties).toBe(true);
     expect(cfg.showDateRange).toBe(false);
-    expect(cfg.labels.partiesAText).toBe("Vânzători");
-    expect(cfg.labels.partiesBText).toBe("Cumpărători");
+    expect(cfg.labels.nrDocument).toBe("Nr. act autentic");
   });
 
   it("returns correct config for ACT_DONATIE", () => {
     const cfg = getTypeConfig("ACT_DONATIE");
-    expect(cfg.showParties).toBe(true);
-    expect(cfg.labels.partiesAText).toBe("Donatori");
-    expect(cfg.labels.partiesBText).toBe("Donatari");
+    expect(cfg.showTitlu).toBe(false);
+    expect(cfg.labels.institution).toBe("Notariat");
   });
 
   it("returns correct config for TESTAMENT", () => {
     const cfg = getTypeConfig("TESTAMENT");
-    expect(cfg.showDefunct).toBe(true);
-    expect(cfg.showParties).toBe(false);
-    expect(cfg.labels.defunctText).toBe("Testator");
+    expect(cfg.showTitlu).toBe(false);
+    expect(cfg.labels.institution).toBe("Notariat");
   });
 
-  it("returns correct config for CONTRACT_ARENDA (date range + parties)", () => {
+  it("returns correct config for CONTRACT_ARENDA (date range)", () => {
     const cfg = getTypeConfig("CONTRACT_ARENDA");
     expect(cfg.showDateRange).toBe(true);
-    expect(cfg.showParties).toBe(true);
   });
 
   it("falls back to generic config for an unknown key", () => {

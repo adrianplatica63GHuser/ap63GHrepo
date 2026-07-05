@@ -772,14 +772,10 @@ export const document = pgTable("document", {
   nrDocument:   text("nr_document"),
   // "Data autentificarii" / "Data eliberarii" / "Data emiterii"
   dateDocument: date("date_document", { mode: "string" }),
-  // "Notariat" / "Institutie unde este inregistrat" / "Emitent" (generic).
-  // Kept as nullable text for backward compat (historical free-text values).
-  // New writes use institutionId (FK) instead — see Slice #18.16.VL.
-  institution:  text("institution"),
 
   // FK to lookup_institution (Slice #18.16.VL). Replaces the free-text
-  // `institution` field; ON DELETE SET NULL so removing an institution from
-  // Reference Data just clears the tag rather than blocking the delete.
+  // `institution` column (dropped in migration_052); ON DELETE SET NULL so
+  // removing an institution from Reference Data just clears the tag.
   institutionId: uuid("institution_id")
     .references(() => lookupInstitution.id, { onDelete: "set null" }),
 
@@ -800,17 +796,6 @@ export const document = pgTable("document", {
   // ── Contract de Închiriere specific ───────────────────────────────────
   dateStart: date("date_start", { mode: "string" }), // Data incepere contract
   dateEnd:   date("date_end",   { mode: "string" }), // Data incheierii valabilitate
-
-  // ── Party placeholders (→ Slice 5 Person relationships) ───────────────
-  // titularText : Titlu proprietate — Titular
-  titularText:   text("titular_text"),
-  // defunctText : Titlu proprietate / Certificat mostenitor — Defunct
-  //               Testament — Testator
-  defunctText:   text("defunct_text"),
-  // partiesAText: Vanzatori / Proprietari / Donatori
-  partiesAText:  text("parties_a_text"),
-  // partiesBText: Cumparatori / Chiriasi / Donatari / Mostenitori
-  partiesBText:  text("parties_b_text"),
 
   // ── Slice #19.03: type-specific fields ────────────────────────────────
   // subject — brief subject / dispozitie; shown on every document type.

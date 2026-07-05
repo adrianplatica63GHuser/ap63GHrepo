@@ -14,7 +14,6 @@
  *   {
  *     classifiedLabel: string,
  *     suggestedTypeKey: string | null,
- *     institution: string | null,
  *     confidence: "high" | "medium" | "low",
  *     extractable: boolean,
  *     notes: string | null,
@@ -34,7 +33,6 @@ const CLASSIFY_MODEL = "claude-haiku-4-5-20251001";
 type ClassifyResult = {
   classifiedLabel: string;
   suggestedTypeKey: string | null;
-  institution: string | null;
   confidence: "high" | "medium" | "low";
   extractable: boolean;
   notes: string | null;
@@ -74,7 +72,13 @@ export async function POST(request: NextRequest): Promise<Response> {
 
   const buffer = Buffer.from(await fileField.arrayBuffer());
   const base64 = buffer.toString("base64");
-  const mediaType = fileField.type as "image/jpeg" | "image/png" | "image/gif" | "image/webp";
+  // Anthropic accepts only these four media types; normalise anything else
+  // (e.g. image/bmp, image/tiff) to jpeg so the request isn't rejected.
+  const SUPPORTED = ["image/jpeg", "image/png", "image/gif", "image/webp"] as const;
+  type SupportedMime = (typeof SUPPORTED)[number];
+  const mediaType: SupportedMime = (SUPPORTED as readonly string[]).includes(fileField.type)
+    ? (fileField.type as SupportedMime)
+    : "image/jpeg";
 
   let anthropicRes: globalThis.Response;
   try {
@@ -146,7 +150,6 @@ export async function POST(request: NextRequest): Promise<Response> {
     parsed = {
       classifiedLabel: raw.classifiedLabel ?? "Document necunoscut",
       suggestedTypeKey,
-      institution: raw.institution ?? null,
       confidence: raw.confidence === "high" || raw.confidence === "medium" || raw.confidence === "low"
         ? raw.confidence
         : "low",

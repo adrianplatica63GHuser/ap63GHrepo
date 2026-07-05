@@ -41,7 +41,6 @@ type DocumentTypeOption = { id: string; key: string; name: string };
 type Classification = {
   classifiedLabel: string;
   suggestedTypeKey: string | null;
-  institution: string | null;
   confidence: "high" | "medium" | "low";
   extractable: boolean;
   notes: string | null;
@@ -119,8 +118,23 @@ function fileIsPdf(file: File): boolean {
   );
 }
 
+const EXT_TO_MIME: Record<string, string> = {
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".webp": "image/webp",
+  ".gif": "image/gif",
+};
+
+function imageMimeType(file: File): string {
+  // file.type can be "" when the OS didn't set it (common with File System
+  // Access API on Windows). Fall back to extension-based detection.
+  if (file.type.startsWith("image/")) return file.type;
+  return EXT_TO_MIME[extOf(file.name)] ?? "image/png";
+}
+
 function fileIsImage(file: File): boolean {
-  return file.type.startsWith("image/") || [".png", ".jpg", ".jpeg", ".webp", ".gif"].includes(extOf(file.name));
+  return file.type.startsWith("image/") || extOf(file.name) in EXT_TO_MIME;
 }
 
 function isScannable(file: File): boolean {
@@ -138,9 +152,19 @@ async function fetchDocumentTypes(): Promise<DocumentTypeOption[]> {
   return body.items ?? [];
 }
 
+function blobToFile(blob: Blob, fallbackName: string): File {
+  // If blob is already a File (original image), preserve its name and type.
+  // Otherwise it's a canvas-rendered PNG from a PDF page.
+  if (blob instanceof File) {
+    const mime = imageMimeType(blob);
+    return mime === blob.type ? blob : new File([blob], blob.name, { type: mime });
+  }
+  return new File([blob], fallbackName, { type: "image/png" });
+}
+
 async function callScanFolder(imageBlob: Blob): Promise<Classification> {
   const fd = new FormData();
-  fd.append("file", new File([imageBlob], "page.png", { type: "image/png" }));
+  fd.append("file", blobToFile(imageBlob, "page.png"));
   const res = await fetch("/api/admin/import/scan-folder", { method: "POST", body: fd });
   if (!res.ok) {
     const body = (await res.json().catch(() => ({}))) as { error?: string };
@@ -158,7 +182,7 @@ async function callExtractDocument(
   unmappedRaw: Record<string, string>;
 }> {
   const fd = new FormData();
-  fd.append("file", new File([imageBlob], "page.png", { type: "image/png" }));
+  fd.append("file", blobToFile(imageBlob, "page.png"));
   if (typeKey) fd.append("typeKey", typeKey);
   const res = await fetch("/api/admin/import/extract-document", { method: "POST", body: fd });
   if (!res.ok) {
@@ -180,7 +204,6 @@ async function callCreateDocument(
       title: fields.title ?? null,
       nrDocument: fields.nrDocument ?? null,
       dateDocument: fields.dateDocument ?? null,
-      institution: fields.institution ?? null,
       subject: fields.subject ?? null,
       notes: fields.notes ?? null,
     }),
@@ -494,7 +517,6 @@ export function FolderScanDialog({ entries, onClose, onCreated }: Props) {
                   </th>
                   <th className="pb-2 pr-3">{t("colFile")}</th>
                   <th className="w-56 pb-2 pr-3">{t("colType")}</th>
-                  <th className="w-40 pb-2 pr-3">{t("colInstitution")}</th>
                   <th className="w-24 pb-2 pr-2">{t("colConfidence")}</th>
                   <th className="w-28 pb-2">{t("colStatus")}</th>
                 </tr>
@@ -681,13 +703,6 @@ function ScanRow({ row, docTypes, onToggleCheck, onTypeKeyChange, t }: RowProps)
             {row.classification.classifiedLabel}
           </span>
         ) : null}
-      </td>
-
-      {/* Institution */}
-      <td className="py-2 pr-3">
-        <span className="truncate block max-w-[10rem] text-xs text-fade" title={row.classification?.institution ?? ""}>
-          {row.classification?.institution ?? ""}
-        </span>
       </td>
 
       {/* Confidence */}

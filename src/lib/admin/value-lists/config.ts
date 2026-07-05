@@ -7,12 +7,9 @@
  * `LIST_META` provides field metadata consumed by the API validation layer
  * and the UI's add/edit form — it is the single place to add a new column.
  *
- * NOTE: "service-interests" was replaced in Slice 9.7 by "services" and
- * "interests". Both filter the same underlying lookup_others table (renamed
- * from lookup_service_interest in Slice 9.8) by category ('Serviciu' vs
- * 'Interes'). "stamps" ('Stampila') was added in Slice 9.8 and uses the same
- * table + pattern. The category field is injected automatically by the query
- * layer and is never exposed in the UI form.
+ * NOTE: "stamps" ('Stampila') in lookup_others was added in Slice 9.8.
+ * "services" and "interests" were removed in migration_052 (no longer exposed
+ * in the UI). The category field is injected automatically by the query layer.
  *
  * NOTE (Slice #18.07): "groups" was removed from this generic list flow —
  * Groups is now a first-class feature with its own tables (groups /
@@ -29,8 +26,6 @@ export const VALID_LIST_KEYS = [
   "judicial-person-types",
   "document-types",
   "institutions",
-  "services",
-  "interests",
   "stamps",
 ] as const;
 
@@ -136,24 +131,9 @@ export const LIST_META: Record<ListKey, ListMeta> = {
       { key: "institutionType", labelKey: "institutionType", required: false },
     ],
   },
-  // "services", "interests", and "stamps" all read from lookup_others,
-  // filtered by category. The category value is injected by the query layer;
-  // the form exposes name + description. (Groups moved to its own feature in
-  // Slice #18.07 — see /admin/groups.)
-  services: {
-    titleKey: "services",
-    fields: [
-      { key: "name",        labelKey: "name",        required: true  },
-      { key: "description", labelKey: "description", required: false, multiline: true },
-    ],
-  },
-  interests: {
-    titleKey: "interests",
-    fields: [
-      { key: "name",        labelKey: "name",        required: true  },
-      { key: "description", labelKey: "description", required: false, multiline: true },
-    ],
-  },
+  // "stamps" reads from lookup_others filtered by category='Stampila'.
+  // The category value is injected by the query layer; the form exposes
+  // name + description. (Groups moved to its own feature in Slice #18.07.)
   stamps: {
     titleKey: "stamps",
     fields: [

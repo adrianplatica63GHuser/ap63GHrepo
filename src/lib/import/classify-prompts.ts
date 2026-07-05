@@ -61,9 +61,8 @@ Shape:
 {
   "classifiedLabel": string,       // short human-readable Romanian name, e.g. "Titlu de Proprietate"
   "suggestedTypeKey": string,      // one of the known keys above, or null if none fits
-  "institution": string | null,    // issuing authority, e.g. "OCPI Ilfov" or "Judecatoria Sectorului 6"
   "confidence": "high" | "medium" | "low",
-  "extractable": boolean,          // true if structured fields (title, number, date, parties) can be read
+  "extractable": boolean,          // true if structured fields (title, number, date) can be read
   "notes": string | null           // optional 1-sentence note about unusual features or why it is not extractable
 }
 
@@ -99,10 +98,6 @@ Fields to extract (all nullable — only set what you can actually read):
     "nrCertificatDeces": string | null,  // death certificate number
     "dateStart": string | null,          // period start date, ISO yyyy-mm-dd
     "dateEnd": string | null,            // period end date, ISO yyyy-mm-dd
-    "titularText": string | null,        // name of the holder / titular
-    "defunctText": string | null,        // name of the deceased
-    "partiesAText": string | null,       // party A names (seller / proprietar / creditor etc.)
-    "partiesBText": string | null,       // party B names (buyer / dobanditor / debitor etc.)
     "subject": string | null,            // brief subject / object of the document
     "notes": string | null               // any important information not captured by the above fields
   },

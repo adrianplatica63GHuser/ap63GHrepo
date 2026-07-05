@@ -43,10 +43,6 @@ export type DocumentExtractedFields = {
   nrCertificatDeces: string | null;
   dateStart: string | null;
   dateEnd: string | null;
-  titularText: string | null;
-  defunctText: string | null;
-  partiesAText: string | null;
-  partiesBText: string | null;
   subject: string | null;
   notes: string | null;
 };
@@ -97,7 +93,11 @@ export async function POST(request: NextRequest): Promise<Response> {
 
   const buffer = Buffer.from(await fileField.arrayBuffer());
   const base64 = buffer.toString("base64");
-  const mediaType = fileField.type as "image/jpeg" | "image/png" | "image/gif" | "image/webp";
+  const SUPPORTED = ["image/jpeg", "image/png", "image/gif", "image/webp"] as const;
+  type SupportedMime = (typeof SUPPORTED)[number];
+  const mediaType: SupportedMime = (SUPPORTED as readonly string[]).includes(fileField.type)
+    ? (fileField.type as SupportedMime)
+    : "image/jpeg";
 
   const userText = typeHint
     ? `Extract fields from this Romanian document. Document type hint: ${typeHint}.`

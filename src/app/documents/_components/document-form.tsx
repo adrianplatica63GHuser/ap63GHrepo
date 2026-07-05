@@ -634,60 +634,37 @@ export function DocumentForm({
         </Section>
       )}
 
-      {/* ── Certificat de Moștenitor — merged Succession Details ──────
-           Combines the succession-specific fields, the free-text party
-           fields, and (outside the fieldset below) the linked-person list.
-      ────────────────────────────────────────────────────────────────── */}
+      {/* ── Certificat de Moștenitor — Succession Details ───────────────── */}
       {isMostenitor && (
-        <Section title={t("sections.mostenitor")} columns={1}>
-          {/* Succession-specific fields in a 2-col row */}
-          <div className="grid grid-cols-2 gap-2">
-            <Field
-              label={t("fields.nrDosarSuccesoral")}
-              name="nrDosarSuccesoral"
-              register={register}
-              error={errors.nrDosarSuccesoral?.message}
-              highlight={displayHighlights?.nrDosarSuccesoral}
-            />
-            <Field
-              label={t("fields.nrCertificatDeces")}
-              name="nrCertificatDeces"
-              register={register}
-              error={errors.nrCertificatDeces?.message}
-              highlight={displayHighlights?.nrCertificatDeces}
-            />
-            <Field
-              label={t("fields.dataDecesului")}
-              name="dataDecesului"
-              type="date"
-              register={register}
-              error={errors.dataDecesului?.message}
-              highlight={displayHighlights?.dataDecesului}
-            />
-            <Field
-              label={t("fields.ultimulDomiciliu")}
-              name="ultimulDomiciliu"
-              register={register}
-              error={errors.ultimulDomiciliu?.message}
-              highlight={displayHighlights?.ultimulDomiciliu}
-            />
-          </div>
-          {/* Free-text party fields — kept alongside linked persons */}
-          <TextAreaField
-            label={t("fields.defunctText")}
-            name="defunctText"
+        <Section title={t("sections.mostenitor")} columns={2}>
+          <Field
+            label={t("fields.nrDosarSuccesoral")}
+            name="nrDosarSuccesoral"
             register={register}
-            error={errors.defunctText?.message}
-            rows={2}
-            highlight={displayHighlights?.defunctText}
+            error={errors.nrDosarSuccesoral?.message}
+            highlight={displayHighlights?.nrDosarSuccesoral}
           />
-          <TextAreaField
-            label={t("fields.partiesBText")}
-            name="partiesBText"
+          <Field
+            label={t("fields.nrCertificatDeces")}
+            name="nrCertificatDeces"
             register={register}
-            error={errors.partiesBText?.message}
-            rows={2}
-            highlight={displayHighlights?.partiesBText}
+            error={errors.nrCertificatDeces?.message}
+            highlight={displayHighlights?.nrCertificatDeces}
+          />
+          <Field
+            label={t("fields.dataDecesului")}
+            name="dataDecesului"
+            type="date"
+            register={register}
+            error={errors.dataDecesului?.message}
+            highlight={displayHighlights?.dataDecesului}
+          />
+          <Field
+            label={t("fields.ultimulDomiciliu")}
+            name="ultimulDomiciliu"
+            register={register}
+            error={errors.ultimulDomiciliu?.message}
+            highlight={displayHighlights?.ultimulDomiciliu}
           />
         </Section>
       )}
@@ -749,53 +726,6 @@ export function DocumentForm({
         </Section>
       )}
 
-      {/* ── Parties (Titular / Defunct / Vânzători–Cumpărători / etc.) ── */}
-      {/* ── Parties — CERTIFICAT_MOSTENITOR handled above in merged section ── */}
-      {(cfg.showParties || cfg.showDefunct) && !isMostenitor && (
-        <Section title={t("sections.parties")} columns={1}>
-          {cfg.showDefunct && (
-            <TextAreaField
-              label={cfg.labels.defunctText ?? t("fields.defunctText")}
-              name="defunctText"
-              register={register}
-              error={errors.defunctText?.message}
-              rows={2}
-              highlight={displayHighlights?.defunctText}
-            />
-          )}
-          {/* Titular only shows for TITLU_PROPRIETATE */}
-          {selectedTypeKey === "TITLU_PROPRIETATE" && (
-            <TextAreaField
-              label={t("fields.titularText")}
-              name="titularText"
-              register={register}
-              error={errors.titularText?.message}
-              rows={2}
-              highlight={displayHighlights?.titularText}
-            />
-          )}
-          {cfg.showParties && cfg.labels.partiesAText && (
-            <TextAreaField
-              label={cfg.labels.partiesAText}
-              name="partiesAText"
-              register={register}
-              error={errors.partiesAText?.message}
-              rows={2}
-              highlight={displayHighlights?.partiesAText}
-            />
-          )}
-          {cfg.showParties && cfg.labels.partiesBText && (
-            <TextAreaField
-              label={cfg.labels.partiesBText}
-              name="partiesBText"
-              register={register}
-              error={errors.partiesBText?.message}
-              rows={2}
-              highlight={displayHighlights?.partiesBText}
-            />
-          )}
-        </Section>
-      )}
       {/* ── Validity / expiry date (Slice #19.03) ───────────────────────── */}
       {cfg.showValidUntil && (
         <Section title={t("sections.validUntil")} columns={2}>
@@ -1365,7 +1295,8 @@ function SurveyorPickerDialog({
                 page={page}
                 pageSize={SURVEYOR_PAGE_SIZE}
                 total={total}
-                onPageChange={setPage}
+                onPrev={() => setPage((p) => p - 1)}
+                onNext={() => setPage((p) => p + 1)}
               />
             )}
 

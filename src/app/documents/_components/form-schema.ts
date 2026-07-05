@@ -53,12 +53,6 @@ export const formSchema = z.object({
   dateStart: z.string(), // "YYYY-MM-DD" or ""
   dateEnd:   z.string(), // "YYYY-MM-DD" or ""
 
-  // Party placeholders
-  titularText:  z.string(),
-  defunctText:  z.string(),
-  partiesAText: z.string(),
-  partiesBText: z.string(),
-
   // Always present
   notes: z.string(),
 
@@ -95,10 +89,6 @@ export const emptyFormValues: FormValues = {
   nrCertificatDeces: "",
   dateStart: "",
   dateEnd:   "",
-  titularText:  "",
-  defunctText:  "",
-  partiesAText: "",
-  partiesBText: "",
   notes: "",
   subject: "",
   dateValidUntil: "",
@@ -129,10 +119,6 @@ type ApiRecord = {
   nrCertificatDeces: string | null;
   dateStart: string | null;
   dateEnd:   string | null;
-  titularText:  string | null;
-  defunctText:  string | null;
-  partiesAText: string | null;
-  partiesBText: string | null;
   notes:        string | null;
   // Slice #19.03
   subject:             string | null;
@@ -161,10 +147,6 @@ export function fromApiRecord(r: ApiRecord): FormValues {
     nrCertificatDeces: r.nrCertificatDeces ?? "",
     dateStart: r.dateStart ?? "",
     dateEnd:   r.dateEnd   ?? "",
-    titularText:  r.titularText  ?? "",
-    defunctText:  r.defunctText  ?? "",
-    partiesAText: r.partiesAText ?? "",
-    partiesBText: r.partiesBText ?? "",
     notes: r.notes ?? "",
     subject:            r.subject            ?? "",
     dateValidUntil:     r.dateValidUntil      ?? "",
@@ -205,10 +187,6 @@ export function toApiPayload(values: FormValues): Record<string, unknown> {
     nrCertificatDeces: str(values.nrCertificatDeces),
     dateStart: dateStr(values.dateStart),
     dateEnd:   dateStr(values.dateEnd),
-    titularText:  str(values.titularText),
-    defunctText:  str(values.defunctText),
-    partiesAText: str(values.partiesAText),
-    partiesBText: str(values.partiesBText),
     notes: str(values.notes),
     // Slice #19.03
     subject:        str(values.subject),
@@ -234,13 +212,13 @@ export function toApiPayload(values: FormValues): Record<string, unknown> {
 // edit-dirty. Display-only fields (surveyorName, surveyorPersonType) are
 // intentionally excluded — they don't drive version diffs or dirty state.
 // Slice #18.16.VL: "institution" → "institutionId"
-// Slice #19.03: added subject, dateValidUntil, surveyorId (now 24 keys)
+// Slice #19.03: added subject, dateValidUntil, surveyorId
+// Slice #052: removed titularText, defunctText, partiesAText, partiesBText (now 20 keys)
 const DOC_FIELD_KEYS = [
   "documentTypeId", "title", "nrDocument", "dateDocument", "institutionId",
   "emitent", "bazaLegala", "uatProprietate", "uatProprietar", "suprafata",
   "nrDosarSuccesoral", "dataDecesului", "ultimulDomiciliu", "nrCertificatDeces",
-  "dateStart", "dateEnd", "titularText", "defunctText", "partiesAText",
-  "partiesBText", "notes",
+  "dateStart", "dateEnd", "notes",
   "subject", "dateValidUntil", "surveyorId",
 ] as const satisfies readonly (keyof FormValues)[];
 

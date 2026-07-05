@@ -96,8 +96,6 @@ export function ValueListHub() {
 
         {/* ── Others ── */}
         <Section label={t("sections.others")}>
-          <ListBtn label={t("lists.services")}  onClick={() => open("services")} />
-          <ListBtn label={t("lists.interests")} onClick={() => open("interests")} />
           {/* Slice #18.07: Groups is now a dedicated screen (target type +
               system code + member items), not a simple lookup modal. */}
           <Link

@@ -41,12 +41,6 @@ const documentBase = z.object({
   dateStart: z.string().nullish(), // ISO date string
   dateEnd:   z.string().nullish(), // ISO date string
 
-  // Party placeholders (→ Slice 5 Person relationships)
-  titularText:  z.string().nullish(),
-  defunctText:  z.string().nullish(),
-  partiesAText: z.string().nullish(),
-  partiesBText: z.string().nullish(),
-
   // Always present
   notes: z.string().nullish(),
 
@@ -102,7 +96,7 @@ export type DocumentListQuery = z.infer<typeof documentListQuerySchema>;
 // helpers (src/app/documents/_components/form-schema.ts). The JSON shape here
 // matches migration_031's backfill exactly — keep all three in lockstep.
 //
-// A flat object of the document's 21 editable fields; all values string|null
+// A flat object of the document's 20 editable fields; all values string|null
 // (the form's blanked-empty convention) so two snapshots diff field-by-field
 // uniformly. `suprafata` is the numeric column read as a string (drizzle).
 // NOT included: the M:M associations and the uploaded document_page files —
@@ -128,10 +122,6 @@ export type DocumentSnapshot = {
   nrCertificatDeces: string | null;
   dateStart:         string | null;
   dateEnd:           string | null;
-  titularText:       string | null;
-  defunctText:       string | null;
-  partiesAText:      string | null;
-  partiesBText:      string | null;
   notes:             string | null;
   // Slice #19.03
   subject:           string | null;

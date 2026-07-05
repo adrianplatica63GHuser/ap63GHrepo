@@ -172,8 +172,7 @@ const SNAPSHOT_KEYS: (keyof DocumentSnapshot)[] = [
   "documentTypeId", "title", "nrDocument", "dateDocument", "institutionId",
   "emitent", "bazaLegala", "uatProprietate", "uatProprietar", "suprafata",
   "nrDosarSuccesoral", "dataDecesului", "ultimulDomiciliu", "nrCertificatDeces",
-  "dateStart", "dateEnd", "titularText", "defunctText", "partiesAText",
-  "partiesBText", "notes",
+  "dateStart", "dateEnd", "notes",
   // Slice #19.03
   "subject", "dateValidUntil", "surveyorId",
 ];
@@ -199,10 +198,6 @@ export function snapshotFromFull(full: DocumentFull): DocumentSnapshot {
     nrCertificatDeces: full.nrCertificatDeces ?? null,
     dateStart:         full.dateStart         ?? null,
     dateEnd:           full.dateEnd           ?? null,
-    titularText:       full.titularText       ?? null,
-    defunctText:       full.defunctText       ?? null,
-    partiesAText:      full.partiesAText      ?? null,
-    partiesBText:      full.partiesBText      ?? null,
     notes:             full.notes             ?? null,
     // Slice #19.03
     subject:           full.subject           ?? null,
