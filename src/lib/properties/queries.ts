@@ -654,7 +654,7 @@ export async function softDeleteProperty(id: string): Promise<boolean> {
 // Property <-> Document  (Slice #5.2)
 // ---------------------------------------------------------------------------
 
-import { document, lookupDocumentType, propertyDocument, propertyProperty } from "@/db/schema";
+import { document, lookupDocumentType, lookupPropertyPropertyRole, propertyDocument, propertyProperty } from "@/db/schema";
 
 export type PropertyDocumentItem = {
   id:             string;
@@ -702,22 +702,26 @@ export async function dissociateDocumentFromProperty(propertyId: string, documen
 // ---------------------------------------------------------------------------
 
 export type PropertyRefItem = {
-  id:           string;
-  code:         string;
-  nickname:     string | null;
-  label:        string;   // nickname ?? code
-  associatedAt: Date;
+  id:               string;
+  code:             string;
+  nickname:         string | null;
+  label:            string;   // nickname ?? code
+  associatedAt:     Date;
+  relationshipRoleId:   string | null;
+  relationshipRoleName: string | null;
 };
 
 export async function listPropertyReferences(propertyId: string): Promise<PropertyRefItem[]> {
   const rows = await db
     .select({
-      propertyIdA:  propertyProperty.propertyIdA,
-      propertyIdB:  propertyProperty.propertyIdB,
-      associatedAt: propertyProperty.createdAt,
-      id:           property.id,
-      code:         property.code,
-      nickname:     property.nickname,
+      propertyIdA:          propertyProperty.propertyIdA,
+      propertyIdB:          propertyProperty.propertyIdB,
+      associatedAt:         propertyProperty.createdAt,
+      relationshipRoleId:   propertyProperty.relationshipRoleId,
+      relationshipRoleName: lookupPropertyPropertyRole.name,
+      id:                   property.id,
+      code:                 property.code,
+      nickname:             property.nickname,
     })
     .from(propertyProperty)
     .innerJoin(
@@ -730,24 +734,38 @@ export async function listPropertyReferences(propertyId: string): Promise<Proper
         isNull(property.deletedAt),
       ),
     )
+    .leftJoin(
+      lookupPropertyPropertyRole,
+      eq(propertyProperty.relationshipRoleId, lookupPropertyPropertyRole.id),
+    )
     .where(or(eq(propertyProperty.propertyIdA, propertyId), eq(propertyProperty.propertyIdB, propertyId)))
     .orderBy(property.code);
 
   return rows.map((r) => ({
-    id: r.id,
-    code: r.code,
-    nickname: r.nickname,
-    label: r.nickname ?? r.code,
-    associatedAt: r.associatedAt,
+    id:                   r.id,
+    code:                 r.code,
+    nickname:             r.nickname,
+    label:                r.nickname ?? r.code,
+    associatedAt:         r.associatedAt,
+    relationshipRoleId:   r.relationshipRoleId ?? null,
+    relationshipRoleName: r.relationshipRoleName ?? null,
   }));
 }
 
-export async function associatePropertiesToProperty(propertyId: string, otherIds: string[]): Promise<void> {
+export async function associatePropertiesToProperty(
+  propertyId:         string,
+  otherIds:           string[],
+  relationshipRoleId: string | null = null,
+): Promise<void> {
   const values = otherIds
     .filter((id) => id !== propertyId)
     .map((otherId) => {
       const [a, b] = [propertyId, otherId].sort();
-      return { propertyIdA: a, propertyIdB: b };
+      return {
+        propertyIdA:         a,
+        propertyIdB:         b,
+        relationshipRoleId:  relationshipRoleId ?? undefined,
+      };
     });
   if (values.length === 0) return;
   await db.insert(propertyProperty).values(values).onConflictDoNothing();

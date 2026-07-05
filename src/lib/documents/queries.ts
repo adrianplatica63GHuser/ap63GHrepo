@@ -484,6 +484,7 @@ import {
   documentDocument,
   lookupPersonRole,
   lookupDocTypePersonRole,
+  lookupDocumentDocumentRole,
 } from "@/db/schema";
 
 export type DocumentSearchItem = {
@@ -676,25 +677,29 @@ export async function dissociatePersonFromDocument(documentId: string, personId:
 // ---------------------------------------------------------------------------
 
 export type DocumentRefItem = {
-  id:             string;
-  code:           string;
-  documentTypeId: string;
-  typeName:       string | null;
-  title:          string | null;
-  associatedAt:   Date;
+  id:                   string;
+  code:                 string;
+  documentTypeId:       string;
+  typeName:             string | null;
+  title:                string | null;
+  associatedAt:         Date;
+  relationshipRoleId:   string | null;
+  relationshipRoleName: string | null;
 };
 
 export async function listDocumentReferences(documentId: string): Promise<DocumentRefItem[]> {
   const rows = await db
     .select({
-      documentIdA:  documentDocument.documentIdA,
-      documentIdB:  documentDocument.documentIdB,
-      associatedAt: documentDocument.createdAt,
-      id:             document.id,
-      code:           document.code,
-      documentTypeId: document.documentTypeId,
-      typeName:       lookupDocumentType.name,
-      title:          document.title,
+      documentIdA:          documentDocument.documentIdA,
+      documentIdB:          documentDocument.documentIdB,
+      associatedAt:         documentDocument.createdAt,
+      relationshipRoleId:   documentDocument.relationshipRoleId,
+      relationshipRoleName: lookupDocumentDocumentRole.name,
+      id:                   document.id,
+      code:                 document.code,
+      documentTypeId:       document.documentTypeId,
+      typeName:             lookupDocumentType.name,
+      title:                document.title,
     })
     .from(documentDocument)
     .innerJoin(
@@ -708,20 +713,36 @@ export async function listDocumentReferences(documentId: string): Promise<Docume
       ),
     )
     .leftJoin(lookupDocumentType, eq(document.documentTypeId, lookupDocumentType.id))
+    .leftJoin(lookupDocumentDocumentRole, eq(documentDocument.relationshipRoleId, lookupDocumentDocumentRole.id))
     .where(or(eq(documentDocument.documentIdA, documentId), eq(documentDocument.documentIdB, documentId)))
     .orderBy(document.code);
 
   return rows.map((r) => ({
-    id: r.id, code: r.code, documentTypeId: r.documentTypeId, typeName: r.typeName, title: r.title, associatedAt: r.associatedAt,
+    id:                   r.id,
+    code:                 r.code,
+    documentTypeId:       r.documentTypeId,
+    typeName:             r.typeName,
+    title:                r.title,
+    associatedAt:         r.associatedAt,
+    relationshipRoleId:   r.relationshipRoleId ?? null,
+    relationshipRoleName: r.relationshipRoleName ?? null,
   }));
 }
 
-export async function associateDocumentToDocument(documentId: string, otherIds: string[]): Promise<void> {
+export async function associateDocumentToDocument(
+  documentId:         string,
+  otherIds:           string[],
+  relationshipRoleId: string | null = null,
+): Promise<void> {
   const values = otherIds
     .filter((id) => id !== documentId)
     .map((otherId) => {
       const [a, b] = [documentId, otherId].sort();
-      return { documentIdA: a, documentIdB: b };
+      return {
+        documentIdA:         a,
+        documentIdB:         b,
+        relationshipRoleId:  relationshipRoleId ?? undefined,
+      };
     });
   if (values.length === 0) return;
   await db.insert(documentDocument).values(values).onConflictDoNothing();

@@ -908,24 +908,28 @@ export async function dissociateDocumentFromPerson(personId: string, documentId:
 // ---------------------------------------------------------------------------
 
 export type PersonRefItem = {
-  id:          string;
-  code:        string;
-  type:        "NATURAL" | "JUDICIAL";
-  displayName: string;
-  associatedAt: Date;
+  id:                   string;
+  code:                 string;
+  type:                 "NATURAL" | "JUDICIAL";
+  displayName:          string;
+  associatedAt:         Date;
+  relationshipRoleId:   string | null;
+  relationshipRoleName: string | null;
 };
 
 export async function listPersonReferences(personId: string): Promise<PersonRefItem[]> {
   // Query both sides of the symmetric pair.
   const rows = await db
     .select({
-      personIdA:    personPerson.personIdA,
-      personIdB:    personPerson.personIdB,
-      associatedAt: personPerson.createdAt,
-      id:           person.id,
-      code:         person.code,
-      type:         person.type,
-      displayName:  person.displayName,
+      personIdA:            personPerson.personIdA,
+      personIdB:            personPerson.personIdB,
+      associatedAt:         personPerson.createdAt,
+      relationshipRoleId:   personPerson.relationshipRoleId,
+      relationshipRoleName: lookupPersonRole.name,
+      id:                   person.id,
+      code:                 person.code,
+      type:                 person.type,
+      displayName:          person.displayName,
     })
     .from(personPerson)
     .innerJoin(
@@ -938,24 +942,35 @@ export async function listPersonReferences(personId: string): Promise<PersonRefI
         isNull(person.deletedAt),
       ),
     )
+    .leftJoin(lookupPersonRole, eq(personPerson.relationshipRoleId, lookupPersonRole.id))
     .where(or(eq(personPerson.personIdA, personId), eq(personPerson.personIdB, personId)))
     .orderBy(person.displayName);
 
   return rows.map((r) => ({
-    id: r.id,
-    code: r.code,
-    type: r.type as "NATURAL" | "JUDICIAL",
-    displayName: r.displayName,
-    associatedAt: r.associatedAt,
+    id:                   r.id,
+    code:                 r.code,
+    type:                 r.type as "NATURAL" | "JUDICIAL",
+    displayName:          r.displayName,
+    associatedAt:         r.associatedAt,
+    relationshipRoleId:   r.relationshipRoleId ?? null,
+    relationshipRoleName: r.relationshipRoleName ?? null,
   }));
 }
 
-export async function associatePersonsToPerson(personId: string, otherIds: string[]): Promise<void> {
+export async function associatePersonsToPerson(
+  personId:           string,
+  otherIds:           string[],
+  relationshipRoleId: string | null = null,
+): Promise<void> {
   const values = otherIds
     .filter((id) => id !== personId)
     .map((otherId) => {
       const [a, b] = [personId, otherId].sort();
-      return { personIdA: a, personIdB: b };
+      return {
+        personIdA:          a,
+        personIdB:          b,
+        relationshipRoleId: relationshipRoleId ?? undefined,
+      };
     });
   if (values.length === 0) return;
   await db.insert(personPerson).values(values).onConflictDoNothing();
