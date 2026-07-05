@@ -10,8 +10,18 @@ const PAGE_SIZE = 15;
 
 type PersonSearchItem = { id: string; code: string; type: "NATURAL" | "JUDICIAL"; displayName: string };
 type SearchResponse = { items: PersonSearchItem[]; total: number };
+type RoleItem = { id: string; name: string };
 
 type Props = { personId: string; personName: string; backBase: string };
+
+async function fetchPersonPersonRoles(): Promise<RoleItem[]> {
+  const res = await fetch("/api/admin/person-person-roles");
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  // Each item has id (= lookupPersonPersonRole.id) and name (from joined lookupPersonRole)
+  return (data.items as Array<{ id: string; personRoleId: string; name: string; description: string | null }>)
+    .map((r) => ({ id: r.personRoleId, name: r.name }));
+}
 
 async function searchPersons(name: string, code: string, page: number): Promise<SearchResponse> {
   const params = new URLSearchParams();
@@ -30,16 +40,22 @@ export function AssociatePersonView({ personId, personName, backBase }: Props) {
   const router      = useRouter();
   const queryClient = useQueryClient();
 
-  const [nameInput,   setNameInput]   = useState("");
-  const [codeInput,   setCodeInput]   = useState("");
-  const [page,        setPage]        = useState(0);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [submitting,  setSubmitting]  = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [nameInput,      setNameInput]      = useState("");
+  const [codeInput,      setCodeInput]      = useState("");
+  const [page,           setPage]           = useState(0);
+  const [selectedIds,    setSelectedIds]    = useState<Set<string>>(new Set());
+  const [selectedRoleId, setSelectedRoleId] = useState<string>("");
+  const [submitting,     setSubmitting]     = useState(false);
+  const [submitError,    setSubmitError]    = useState<string | null>(null);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["person-search-ref", nameInput, codeInput, page],
     queryFn:  () => searchPersons(nameInput, codeInput, page),
+  });
+
+  const { data: roles } = useQuery({
+    queryKey: ["person-person-roles"],
+    queryFn:  fetchPersonPersonRoles,
   });
 
   const items = useMemo(() => data?.items ?? [], [data?.items]);
@@ -68,7 +84,10 @@ export function AssociatePersonView({ personId, personName, backBase }: Props) {
       const res = await fetch(`/api/people/${encodeURIComponent(personId)}/references`, {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ personIds: Array.from(selectedIds) }),
+        body:    JSON.stringify({
+          personIds:          Array.from(selectedIds),
+          relationshipRoleId: selectedRoleId || null,
+        }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -163,6 +182,25 @@ export function AssociatePersonView({ personId, personName, backBase }: Props) {
         onPrev={() => setPage((p) => p - 1)}
         onNext={() => setPage((p) => p + 1)}
       />
+
+      {/* Role selector — only shown when admin has whitelisted at least one person-person role */}
+      {roles && roles.length > 0 && (
+        <div className="flex items-center gap-3">
+          <label className="text-sm font-medium text-ink dark:text-zinc-300">
+            {t("labelRole")}
+          </label>
+          <select
+            value={selectedRoleId}
+            onChange={(e) => setSelectedRoleId(e.target.value)}
+            className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+          >
+            <option value="">{t("roleNone")}</option>
+            {roles.map((r) => (
+              <option key={r.id} value={r.id}>{r.name}</option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {submitError && <p className="text-sm text-red-600 dark:text-red-400" role="alert">{submitError}</p>}
 

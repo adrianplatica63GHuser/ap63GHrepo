@@ -6,11 +6,13 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 
 type AssociatedDocument = {
-  id:           string;
-  code:         string;
-  typeName:     string | null;
-  title:        string | null;
-  associatedAt: string;
+  id:                  string;
+  code:                string;
+  typeName:            string | null;
+  title:               string | null;
+  associatedAt:        string;
+  relationshipRoleId:  string | null;
+  relationshipRoleName: string | null;
 };
 
 type Props = { documentId: string };
@@ -81,6 +83,7 @@ export function DocumentReferencesTab({ documentId }: Props) {
                 <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400">{t("colCode")}</th>
                 <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400">{t("colType")}</th>
                 <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400">{t("colTitle")}</th>
+                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400">{t("colRole")}</th>
               </tr>
             </thead>
             <tbody>
@@ -109,6 +112,15 @@ export function DocumentReferencesTab({ documentId }: Props) {
                   <td className="px-3 py-2 font-mono text-xs text-fade dark:text-zinc-400">{item.code}</td>
                   <td className="px-3 py-2 text-fade dark:text-zinc-400">{item.typeName ?? "—"}</td>
                   <td className="px-3 py-2 font-medium text-ink dark:text-zinc-100">{item.title ?? "—"}</td>
+                  <td className="px-3 py-2">
+                    {item.relationshipRoleName ? (
+                      <span className="inline-flex items-center rounded-full bg-cta-pale px-2 py-0.5 text-xs font-medium text-cta dark:bg-cta/15 dark:text-cta-light">
+                        {item.relationshipRoleName}
+                      </span>
+                    ) : (
+                      <span className="text-fade dark:text-zinc-500">—</span>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>

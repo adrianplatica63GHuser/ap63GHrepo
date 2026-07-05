@@ -6,11 +6,13 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 
 type AssociatedPerson = {
-  id:          string;
-  code:        string;
-  type:        "NATURAL" | "JUDICIAL";
-  displayName: string;
-  associatedAt: string;
+  id:                  string;
+  code:                string;
+  type:                "NATURAL" | "JUDICIAL";
+  displayName:         string;
+  associatedAt:        string;
+  relationshipRoleId:  string | null;
+  relationshipRoleName: string | null;
 };
 
 type Props = {
@@ -88,6 +90,7 @@ export function PersonReferencesTab({ personId, backBase }: Props) {
                 <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400">{t("colCode")}</th>
                 <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400">{t("colName")}</th>
                 <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400">{t("colType")}</th>
+                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400">{t("colRole")}</th>
               </tr>
             </thead>
             <tbody>
@@ -126,6 +129,15 @@ export function PersonReferencesTab({ personId, backBase }: Props) {
                   <td className="px-3 py-2 font-medium text-ink dark:text-zinc-100">{item.displayName}</td>
                   <td className="px-3 py-2 text-fade dark:text-zinc-400">
                     {item.type === "NATURAL" ? t("typeNatural") : t("typeJudicial")}
+                  </td>
+                  <td className="px-3 py-2">
+                    {item.relationshipRoleName ? (
+                      <span className="inline-flex items-center rounded-full bg-cta-pale px-2 py-0.5 text-xs font-medium text-cta dark:bg-cta/15 dark:text-cta-light">
+                        {item.relationshipRoleName}
+                      </span>
+                    ) : (
+                      <span className="text-fade dark:text-zinc-500">—</span>
+                    )}
                   </td>
                 </tr>
               ))}
