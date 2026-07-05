@@ -17,6 +17,8 @@ const config: Config = {
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/src/$1",
   },
+  // Exclude Playwright e2e tests — those run via `npx playwright test`, not Jest.
+  testPathIgnorePatterns: ["/node_modules/", "<rootDir>/e2e/"],
 };
 
 export default createJestConfig(config);
