@@ -25,8 +25,7 @@ import {
   type HighlightColor,
 } from "@/lib/versioning/field-diff";
 
-const ADDRESS_KINDS = ["HOME", "CORRESPONDENCE"] as const;
-type AddressKind = (typeof ADDRESS_KINDS)[number];
+type AddressKind = "HOME" | "CORRESPONDENCE";
 
 // One address block in form-shape (all strings, including country which
 // in the API is required-when-row-present).

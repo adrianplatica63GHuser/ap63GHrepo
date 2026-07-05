@@ -4,6 +4,11 @@
  * A Group gathers items of a single target type. As of Slice #18.17, all four
  * target types are wired: PROPERTY, PHYSICAL_PERSON, JUDICIAL_PERSON, DOCUMENT.
  *
+ * As of migration_051, group_member stores a single `principal_object_id` FK
+ * instead of the old nullable triple (property_id, person_id, document_id).
+ * All queries join through the entity table using the principal_object_id →
+ * entity.principal_object_id link to recover the entity-specific columns.
+ *
  * Codes are allocated from `group_code_seq` and prefixed by target type
  * (PROP-, PERS-, DOC-) in src/lib/groups/code.ts — never reused. Member
  * positions are allocated from groups.last_position (a high-water counter) —
@@ -62,8 +67,7 @@ export type GroupListItem = {
 
 /**
  * Normalised member row — works for all target types.
- * `memberId` is the FK value relevant to the group's target type
- * (propertyId / personId / documentId).
+ * `memberId` is the entity-table PK (property.id / person.id / document.id).
  */
 export type GroupMemberItem = {
   memberId:     string;
@@ -111,25 +115,23 @@ export async function listGroups(
   // "id"), which Postgres rejects as ambiguous when the subquery's own FROM
   // exposes an "id" column. Always reference outer columns as literal qualified
   // names inside sql`` templates used as correlated subqueries.
-
-  // Each target type has its own member-count subquery because it joins a
-  // different entity table (with its own deleted_at guard).
+  //
+  // After migration_051, group_member.principal_object_id links to
+  // principal_object. We join to the entity table to check deleted_at.
   const memberCount = sql<number>`(
     SELECT count(*)::int
-    FROM ${groupMember} gm
+    FROM group_member gm
+    JOIN principal_object po ON po.id = gm.principal_object_id
     WHERE gm.group_id = groups.id
       AND (
-        -- PROPERTY
-        (gm.property_id IS NOT NULL AND EXISTS (
-          SELECT 1 FROM ${property} p WHERE p.id = gm.property_id AND p.deleted_at IS NULL
+        (po.object_type = 'PROPERTY' AND EXISTS (
+          SELECT 1 FROM property p WHERE p.principal_object_id = po.id AND p.deleted_at IS NULL
         ))
-        -- PHYSICAL_PERSON / JUDICIAL_PERSON
-        OR (gm.person_id IS NOT NULL AND EXISTS (
-          SELECT 1 FROM ${person} pe WHERE pe.id = gm.person_id AND pe.deleted_at IS NULL
+        OR (po.object_type = 'PERSON' AND EXISTS (
+          SELECT 1 FROM person pe WHERE pe.principal_object_id = po.id AND pe.deleted_at IS NULL
         ))
-        -- DOCUMENT
-        OR (gm.document_id IS NOT NULL AND EXISTS (
-          SELECT 1 FROM ${document} d WHERE d.id = gm.document_id AND d.deleted_at IS NULL
+        OR (po.object_type = 'DOCUMENT' AND EXISTS (
+          SELECT 1 FROM document d WHERE d.principal_object_id = po.id AND d.deleted_at IS NULL
         ))
       )
   )`;
@@ -194,14 +196,14 @@ export async function getGroupDetail(id: string): Promise<GroupDetail | null> {
   const targetType = g.targetType as GroupTargetType;
 
   // ------------------------------------------------------------------
-  // Members
+  // Members — join through entity table via principal_object_id
   // ------------------------------------------------------------------
   let members: GroupMemberItem[] = [];
 
   if (targetType === "PROPERTY") {
     const rows = await db
       .select({
-        memberId: groupMember.propertyId,
+        memberId: property.id,
         position: groupMember.position,
         code:     property.code,
         nickname: property.nickname,
@@ -209,13 +211,16 @@ export async function getGroupDetail(id: string): Promise<GroupDetail | null> {
       .from(groupMember)
       .innerJoin(
         property,
-        and(eq(property.id, groupMember.propertyId), isNull(property.deletedAt)),
+        and(
+          eq(property.principalObjectId, groupMember.principalObjectId),
+          isNull(property.deletedAt),
+        ),
       )
       .where(eq(groupMember.groupId, id))
       .orderBy(asc(groupMember.position));
 
     members = rows.map((r) => ({
-      memberId:     r.memberId!,
+      memberId:     r.memberId,
       position:     r.position,
       displayLabel: propLabel(r.code, r.nickname),
     }));
@@ -224,7 +229,7 @@ export async function getGroupDetail(id: string): Promise<GroupDetail | null> {
     const personType = targetType === "PHYSICAL_PERSON" ? "NATURAL" : "JUDICIAL";
     const rows = await db
       .select({
-        memberId:    groupMember.personId,
+        memberId:    person.id,
         position:    groupMember.position,
         displayName: person.displayName,
         code:        person.code,
@@ -233,7 +238,7 @@ export async function getGroupDetail(id: string): Promise<GroupDetail | null> {
       .innerJoin(
         person,
         and(
-          eq(person.id, groupMember.personId),
+          eq(person.principalObjectId, groupMember.principalObjectId),
           isNull(person.deletedAt),
           eq(person.type, personType),
         ),
@@ -242,7 +247,7 @@ export async function getGroupDetail(id: string): Promise<GroupDetail | null> {
       .orderBy(asc(groupMember.position));
 
     members = rows.map((r) => ({
-      memberId:     r.memberId!,
+      memberId:     r.memberId,
       position:     r.position,
       displayLabel: r.displayName?.trim() || r.code,
     }));
@@ -250,7 +255,7 @@ export async function getGroupDetail(id: string): Promise<GroupDetail | null> {
   } else if (targetType === "DOCUMENT") {
     const rows = await db
       .select({
-        memberId: groupMember.documentId,
+        memberId: document.id,
         position: groupMember.position,
         title:    document.title,
         code:     document.code,
@@ -258,30 +263,34 @@ export async function getGroupDetail(id: string): Promise<GroupDetail | null> {
       .from(groupMember)
       .innerJoin(
         document,
-        and(eq(document.id, groupMember.documentId), isNull(document.deletedAt)),
+        and(
+          eq(document.principalObjectId, groupMember.principalObjectId),
+          isNull(document.deletedAt),
+        ),
       )
       .where(eq(groupMember.groupId, id))
       .orderBy(asc(groupMember.position));
 
     members = rows.map((r) => ({
-      memberId:     r.memberId!,
+      memberId:     r.memberId,
       position:     r.position,
       displayLabel: r.title?.trim() || r.code,
     }));
   }
 
   // ------------------------------------------------------------------
-  // Candidates
+  // Candidates — items not yet in this group, under the per-item cap.
+  // Correlated subqueries use literal qualified column names to avoid
+  // the Drizzle unqualified-column gotcha (CLAUDE.md).
   // ------------------------------------------------------------------
   let candidates: GroupCandidate[] = [];
 
   if (targetType === "PROPERTY") {
-    // NOTE: Drizzle renders ${property.id} unqualified inside these correlated
-    // subqueries; use literal qualified name `property.id` instead.
     const otherGroupCount = sql<number>`(
       SELECT count(DISTINCT gm.group_id)::int
-      FROM ${groupMember} gm
-      WHERE gm.property_id = property.id AND gm.group_id <> ${id}
+      FROM group_member gm
+      WHERE gm.principal_object_id = property.principal_object_id
+        AND gm.group_id <> ${id}
     )`;
 
     const rows = await db
@@ -296,8 +305,9 @@ export async function getGroupDetail(id: string): Promise<GroupDetail | null> {
         and(
           isNull(property.deletedAt),
           sql`NOT EXISTS (
-            SELECT 1 FROM ${groupMember} gm2
-            WHERE gm2.group_id = ${id} AND gm2.property_id = property.id
+            SELECT 1 FROM group_member gm2
+            WHERE gm2.group_id = ${id}
+              AND gm2.principal_object_id = property.principal_object_id
           )`,
         ),
       )
@@ -314,14 +324,14 @@ export async function getGroupDetail(id: string): Promise<GroupDetail | null> {
   } else if (targetType === "PHYSICAL_PERSON" || targetType === "JUDICIAL_PERSON") {
     const personType = targetType === "PHYSICAL_PERSON" ? "NATURAL" : "JUDICIAL";
 
-    // Count other SAME-type groups the person belongs to (different target types
-    // are separate namespaces, so a PERS-XX physical group doesn't count against
-    // a PERS-YY judicial group and vice versa).
+    // Count other SAME-type groups the person belongs to (PHYSICAL and JUDICIAL
+    // are separate namespaces — a PERS-XX physical group does not count against
+    // a PERS-YY judicial group).
     const otherGroupCount = sql<number>`(
       SELECT count(DISTINCT gm.group_id)::int
-      FROM ${groupMember} gm
-      JOIN ${groups} g2 ON g2.id = gm.group_id
-      WHERE gm.person_id = person.id
+      FROM group_member gm
+      JOIN groups g2 ON g2.id = gm.group_id
+      WHERE gm.principal_object_id = person.principal_object_id
         AND gm.group_id <> ${id}
         AND g2.target_type = ${targetType}
     )`;
@@ -339,8 +349,9 @@ export async function getGroupDetail(id: string): Promise<GroupDetail | null> {
           isNull(person.deletedAt),
           eq(person.type, personType),
           sql`NOT EXISTS (
-            SELECT 1 FROM ${groupMember} gm2
-            WHERE gm2.group_id = ${id} AND gm2.person_id = person.id
+            SELECT 1 FROM group_member gm2
+            WHERE gm2.group_id = ${id}
+              AND gm2.principal_object_id = person.principal_object_id
           )`,
         ),
       )
@@ -357,8 +368,9 @@ export async function getGroupDetail(id: string): Promise<GroupDetail | null> {
   } else if (targetType === "DOCUMENT") {
     const otherGroupCount = sql<number>`(
       SELECT count(DISTINCT gm.group_id)::int
-      FROM ${groupMember} gm
-      WHERE gm.document_id = document.id AND gm.group_id <> ${id}
+      FROM group_member gm
+      WHERE gm.principal_object_id = document.principal_object_id
+        AND gm.group_id <> ${id}
     )`;
 
     const rows = await db
@@ -373,8 +385,9 @@ export async function getGroupDetail(id: string): Promise<GroupDetail | null> {
         and(
           isNull(document.deletedAt),
           sql`NOT EXISTS (
-            SELECT 1 FROM ${groupMember} gm2
-            WHERE gm2.group_id = ${id} AND gm2.document_id = document.id
+            SELECT 1 FROM group_member gm2
+            WHERE gm2.group_id = ${id}
+              AND gm2.principal_object_id = document.principal_object_id
           )`,
         ),
       )
@@ -422,49 +435,89 @@ export async function updateGroup(
       const targetType = g.targetType as GroupTargetType;
 
       // ------------------------------------------------------------------
-      // Resolve current member ids (type-appropriate FK column)
+      // Resolve current member entity IDs by joining through entity table.
       // ------------------------------------------------------------------
       let current: string[] = [];
+
       if (targetType === "PROPERTY") {
         const rows = await tx
-          .select({ propertyId: groupMember.propertyId })
+          .select({ entityId: property.id })
           .from(groupMember)
+          .innerJoin(property, eq(property.principalObjectId, groupMember.principalObjectId))
           .where(eq(groupMember.groupId, id));
-        current = rows.map((r) => r.propertyId).filter((p): p is string => p !== null);
+        current = rows.map((r) => r.entityId);
 
       } else if (targetType === "PHYSICAL_PERSON" || targetType === "JUDICIAL_PERSON") {
         const rows = await tx
-          .select({ personId: groupMember.personId })
+          .select({ entityId: person.id })
           .from(groupMember)
+          .innerJoin(person, eq(person.principalObjectId, groupMember.principalObjectId))
           .where(eq(groupMember.groupId, id));
-        current = rows.map((r) => r.personId).filter((p): p is string => p !== null);
+        current = rows.map((r) => r.entityId);
 
       } else if (targetType === "DOCUMENT") {
         const rows = await tx
-          .select({ documentId: groupMember.documentId })
+          .select({ entityId: document.id })
           .from(groupMember)
+          .innerJoin(document, eq(document.principalObjectId, groupMember.principalObjectId))
           .where(eq(groupMember.groupId, id));
-        current = rows.map((r) => r.documentId).filter((d): d is string => d !== null);
+        current = rows.map((r) => r.entityId);
       }
 
       const { toAdd, toRemove } = computeMemberDelta(current, input.memberIds);
 
       // ------------------------------------------------------------------
-      // Enforce the per-item group cap on new additions
+      // Translate entity IDs → principal_object_ids for all affected rows.
+      // One query covers both toAdd and toRemove to minimise round-trips.
       // ------------------------------------------------------------------
-      if (toAdd.length > 0) {
+      const allEntityIds = [...toAdd, ...toRemove];
+      let entityPoMap = new Map<string, string>(); // entityId → principalObjectId
+
+      if (allEntityIds.length > 0) {
+        if (targetType === "PROPERTY") {
+          const rows = await tx
+            .select({ entityId: property.id, poId: property.principalObjectId })
+            .from(property)
+            .where(inArray(property.id, allEntityIds));
+          entityPoMap = new Map(rows.map((r) => [r.entityId, r.poId]));
+
+        } else if (targetType === "PHYSICAL_PERSON" || targetType === "JUDICIAL_PERSON") {
+          const rows = await tx
+            .select({ entityId: person.id, poId: person.principalObjectId })
+            .from(person)
+            .where(inArray(person.id, allEntityIds));
+          entityPoMap = new Map(rows.map((r) => [r.entityId, r.poId]));
+
+        } else if (targetType === "DOCUMENT") {
+          const rows = await tx
+            .select({ entityId: document.id, poId: document.principalObjectId })
+            .from(document)
+            .where(inArray(document.id, allEntityIds));
+          entityPoMap = new Map(rows.map((r) => [r.entityId, r.poId]));
+        }
+      }
+
+      const toAddPoIds    = toAdd.map((eid) => entityPoMap.get(eid)).filter(Boolean) as string[];
+      const toRemovePoIds = toRemove.map((eid) => entityPoMap.get(eid)).filter(Boolean) as string[];
+
+      // ------------------------------------------------------------------
+      // Enforce the per-item group cap on new additions.
+      // ------------------------------------------------------------------
+      if (toAddPoIds.length > 0) {
         if (targetType === "PROPERTY") {
           const counts = await tx
             .select({
-              propertyId: groupMember.propertyId,
-              n: sql<number>`count(DISTINCT ${groupMember.groupId})::int`,
+              poId: groupMember.principalObjectId,
+              n:    sql<number>`count(DISTINCT ${groupMember.groupId})::int`,
             })
             .from(groupMember)
-            .where(and(inArray(groupMember.propertyId, toAdd), ne(groupMember.groupId, id)))
-            .groupBy(groupMember.propertyId);
-          const countById = new Map(counts.map((c) => [c.propertyId, c.n]));
-          for (const pid of toAdd) {
-            if ((countById.get(pid) ?? 0) >= MAX_GROUPS_PER_PROPERTY) {
+            .where(and(inArray(groupMember.principalObjectId, toAddPoIds), ne(groupMember.groupId, id)))
+            .groupBy(groupMember.principalObjectId);
+          const countByPoId = new Map(counts.map((c) => [c.poId, c.n]));
+
+          for (const eid of toAdd) {
+            const poId = entityPoMap.get(eid);
+            if ((countByPoId.get(poId ?? "") ?? 0) >= MAX_GROUPS_PER_PROPERTY) {
               throw new GroupError(
                 `A property cannot belong to more than ${MAX_GROUPS_PER_PROPERTY} groups`,
                 409,
@@ -473,25 +526,27 @@ export async function updateGroup(
           }
 
         } else if (targetType === "PHYSICAL_PERSON" || targetType === "JUDICIAL_PERSON") {
-          // Count OTHER same-type groups (PERS- physical and judicial are separate namespaces).
+          // Count only same-type groups (PHYSICAL and JUDICIAL namespaces are separate).
           const counts = await tx
             .select({
-              personId: groupMember.personId,
-              n: sql<number>`count(DISTINCT ${groupMember.groupId})::int`,
+              poId: groupMember.principalObjectId,
+              n:    sql<number>`count(DISTINCT ${groupMember.groupId})::int`,
             })
             .from(groupMember)
             .innerJoin(groups, eq(groups.id, groupMember.groupId))
             .where(
               and(
-                inArray(groupMember.personId, toAdd),
+                inArray(groupMember.principalObjectId, toAddPoIds),
                 ne(groupMember.groupId, id),
                 eq(groups.targetType, targetType),
               ),
             )
-            .groupBy(groupMember.personId);
-          const countById = new Map(counts.map((c) => [c.personId, c.n]));
-          for (const pid of toAdd) {
-            if ((countById.get(pid) ?? 0) >= MAX_GROUPS_PER_ITEM) {
+            .groupBy(groupMember.principalObjectId);
+          const countByPoId = new Map(counts.map((c) => [c.poId, c.n]));
+
+          for (const eid of toAdd) {
+            const poId = entityPoMap.get(eid);
+            if ((countByPoId.get(poId ?? "") ?? 0) >= MAX_GROUPS_PER_ITEM) {
               throw new GroupError(
                 `A person cannot belong to more than ${MAX_GROUPS_PER_ITEM} groups of the same type`,
                 409,
@@ -502,15 +557,17 @@ export async function updateGroup(
         } else if (targetType === "DOCUMENT") {
           const counts = await tx
             .select({
-              documentId: groupMember.documentId,
-              n: sql<number>`count(DISTINCT ${groupMember.groupId})::int`,
+              poId: groupMember.principalObjectId,
+              n:    sql<number>`count(DISTINCT ${groupMember.groupId})::int`,
             })
             .from(groupMember)
-            .where(and(inArray(groupMember.documentId, toAdd), ne(groupMember.groupId, id)))
-            .groupBy(groupMember.documentId);
-          const countById = new Map(counts.map((c) => [c.documentId, c.n]));
-          for (const did of toAdd) {
-            if ((countById.get(did) ?? 0) >= MAX_GROUPS_PER_ITEM) {
+            .where(and(inArray(groupMember.principalObjectId, toAddPoIds), ne(groupMember.groupId, id)))
+            .groupBy(groupMember.principalObjectId);
+          const countByPoId = new Map(counts.map((c) => [c.poId, c.n]));
+
+          for (const eid of toAdd) {
+            const poId = entityPoMap.get(eid);
+            if ((countByPoId.get(poId ?? "") ?? 0) >= MAX_GROUPS_PER_ITEM) {
               throw new GroupError(
                 `A document cannot belong to more than ${MAX_GROUPS_PER_ITEM} groups`,
                 409,
@@ -523,36 +580,20 @@ export async function updateGroup(
       // ------------------------------------------------------------------
       // Apply removes
       // ------------------------------------------------------------------
-      if (toRemove.length > 0) {
-        if (targetType === "PROPERTY") {
-          await tx.delete(groupMember).where(
-            and(eq(groupMember.groupId, id), inArray(groupMember.propertyId, toRemove)),
-          );
-        } else if (targetType === "PHYSICAL_PERSON" || targetType === "JUDICIAL_PERSON") {
-          await tx.delete(groupMember).where(
-            and(eq(groupMember.groupId, id), inArray(groupMember.personId, toRemove)),
-          );
-        } else if (targetType === "DOCUMENT") {
-          await tx.delete(groupMember).where(
-            and(eq(groupMember.groupId, id), inArray(groupMember.documentId, toRemove)),
-          );
-        }
+      if (toRemovePoIds.length > 0) {
+        await tx.delete(groupMember).where(
+          and(eq(groupMember.groupId, id), inArray(groupMember.principalObjectId, toRemovePoIds)),
+        );
       }
 
       // ------------------------------------------------------------------
       // Apply adds (allocate positions from the high-water counter)
       // ------------------------------------------------------------------
-      if (toAdd.length > 0) {
+      if (toAddPoIds.length > 0) {
         let pos = g.lastPosition;
-        const values = toAdd.map((memberId) => {
+        const values = toAdd.map((eid) => {
           pos += 1;
-          if (targetType === "PROPERTY") {
-            return { groupId: id, propertyId: memberId, position: pos };
-          } else if (targetType === "PHYSICAL_PERSON" || targetType === "JUDICIAL_PERSON") {
-            return { groupId: id, personId: memberId, position: pos };
-          } else {
-            return { groupId: id, documentId: memberId, position: pos };
-          }
+          return { groupId: id, principalObjectId: entityPoMap.get(eid)!, position: pos };
         });
         await tx.insert(groupMember).values(values);
         await tx.update(groups).set({ lastPosition: pos }).where(eq(groups.id, id));
@@ -573,54 +614,45 @@ export async function deleteGroup(id: string): Promise<boolean> {
 }
 
 // ---------------------------------------------------------------------------
-// Group tags for a property — for the badge on the property detail page.
+// Group tags for a property — for the [code position] badges on the property
+// detail page.  Accepts the property's principal_object_id (not property.id).
 // ---------------------------------------------------------------------------
 
-export async function listPropertyGroupTags(propertyId: string): Promise<GroupTag[]> {
+export async function listPropertyGroupTags(principalObjectId: string): Promise<GroupTag[]> {
   const rows = await db
     .select({ code: groups.code, position: groupMember.position })
     .from(groupMember)
     .innerJoin(groups, eq(groups.id, groupMember.groupId))
-    .where(eq(groupMember.propertyId, propertyId))
+    .where(eq(groupMember.principalObjectId, principalObjectId))
     .orderBy(asc(groups.code));
   return rows as GroupTag[];
 }
 
 // ---------------------------------------------------------------------------
 // Enriched group tags for any entity — for the References tab.
+// Accepts the entity's principal_object_id directly (no branching needed).
 // Returns { code, position, description } for all groups the item belongs to.
 // ---------------------------------------------------------------------------
 
 export type GroupEntityTag = { id: string; code: string; position: number; description: string };
 
-export async function listEntityGroupTags(opts: {
-  propertyId?: string;
-  personId?: string;
-  documentId?: string;
-}): Promise<GroupEntityTag[]> {
-  const base = db
-    .select({ id: groups.id, code: groups.code, position: groupMember.position, description: groups.description })
+export async function listEntityGroupTags(principalObjectId: string): Promise<GroupEntityTag[]> {
+  const rows = await db
+    .select({
+      id:          groups.id,
+      code:        groups.code,
+      position:    groupMember.position,
+      description: groups.description,
+    })
     .from(groupMember)
-    .innerJoin(groups, eq(groups.id, groupMember.groupId));
-
-  let rows: { id: string; code: string; position: number; description: string }[];
-
-  if (opts.propertyId) {
-    rows = await base.where(eq(groupMember.propertyId, opts.propertyId)).orderBy(asc(groups.code));
-  } else if (opts.personId) {
-    rows = await base.where(eq(groupMember.personId, opts.personId)).orderBy(asc(groups.code));
-  } else if (opts.documentId) {
-    rows = await base.where(eq(groupMember.documentId, opts.documentId)).orderBy(asc(groups.code));
-  } else {
-    rows = [];
-  }
-
+    .innerJoin(groups, eq(groups.id, groupMember.groupId))
+    .where(eq(groupMember.principalObjectId, principalObjectId))
+    .orderBy(asc(groups.code));
   return rows as GroupEntityTag[];
 }
 
 // ---------------------------------------------------------------------------
 // Group codes by target type — for list-page "Groups" filter dropdowns
-// (Slice #18.17)
 // ---------------------------------------------------------------------------
 
 /** All PROPERTY-target group codes, ascending. Includes empty groups. */
@@ -668,42 +700,42 @@ export async function listPropertyGroupMemberships(): Promise<
   { propertyId: string; code: string }[]
 > {
   const rows = await db
-    .select({ propertyId: groupMember.propertyId, code: groups.code })
+    .select({ propertyId: property.id, code: groups.code })
     .from(groupMember)
     .innerJoin(groups, eq(groups.id, groupMember.groupId))
     .innerJoin(
       property,
-      and(eq(property.id, groupMember.propertyId), isNull(property.deletedAt)),
+      and(
+        eq(property.principalObjectId, groupMember.principalObjectId),
+        isNull(property.deletedAt),
+      ),
     )
     .where(eq(groups.targetType, "PROPERTY"));
-  return rows.filter(
-    (r): r is { propertyId: string; code: string } => r.propertyId !== null,
-  );
+  return rows;
 }
 
 /**
  * (personId, group code) pairs for every non-deleted person that is a member
- * of a PHYSICAL_PERSON or JUDICIAL_PERSON group. Used by the Persons list
- * filter. The group code carries the PERS- prefix so the client can match it
- * directly against the codes returned by listPersonGroupCodes().
+ * of a PHYSICAL_PERSON or JUDICIAL_PERSON group.
  */
 export async function listPersonGroupMemberships(): Promise<
   { personId: string; code: string }[]
 > {
   const rows = await db
-    .select({ personId: groupMember.personId, code: groups.code })
+    .select({ personId: person.id, code: groups.code })
     .from(groupMember)
     .innerJoin(groups, eq(groups.id, groupMember.groupId))
     .innerJoin(
       person,
-      and(eq(person.id, groupMember.personId), isNull(person.deletedAt)),
+      and(
+        eq(person.principalObjectId, groupMember.principalObjectId),
+        isNull(person.deletedAt),
+      ),
     )
     .where(
       sql`${groups.targetType} IN ('PHYSICAL_PERSON', 'JUDICIAL_PERSON')`,
     );
-  return rows.filter(
-    (r): r is { personId: string; code: string } => r.personId !== null,
-  );
+  return rows;
 }
 
 /** (documentId, group code) pairs for every non-deleted document that is a
@@ -712,17 +744,18 @@ export async function listDocumentGroupMemberships(): Promise<
   { documentId: string; code: string }[]
 > {
   const rows = await db
-    .select({ documentId: groupMember.documentId, code: groups.code })
+    .select({ documentId: document.id, code: groups.code })
     .from(groupMember)
     .innerJoin(groups, eq(groups.id, groupMember.groupId))
     .innerJoin(
       document,
-      and(eq(document.id, groupMember.documentId), isNull(document.deletedAt)),
+      and(
+        eq(document.principalObjectId, groupMember.principalObjectId),
+        isNull(document.deletedAt),
+      ),
     )
     .where(eq(groups.targetType, "DOCUMENT"));
-  return rows.filter(
-    (r): r is { documentId: string; code: string } => r.documentId !== null,
-  );
+  return rows;
 }
 
 // Re-export so consumers don't reach across files for the cap.

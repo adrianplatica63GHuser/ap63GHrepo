@@ -70,13 +70,13 @@ export async function listDocument(opts: DocumentListQuery): Promise<{
     const hasNoGroup = sql`NOT EXISTS (
       SELECT 1 FROM ${groupMember} gm_f
       JOIN ${groups} g_f ON g_f.id = gm_f.group_id
-      WHERE gm_f.document_id = document.id
+      WHERE gm_f.principal_object_id = document.principal_object_id
         AND g_f.target_type = 'DOCUMENT'
     )`;
     const hasMatchingCode = sql`EXISTS (
       SELECT 1 FROM ${groupMember} gm_f2
       JOIN ${groups} g_f2 ON g_f2.id = gm_f2.group_id
-      WHERE gm_f2.document_id = document.id
+      WHERE gm_f2.principal_object_id = document.principal_object_id
         AND g_f2.code = ANY(ARRAY[${sql.join(
           opts.groupCodes.map((c) => sql`${c}`),
           sql`, `,

@@ -21,7 +21,7 @@ export default async function EditPropertyPage({ params, searchParams }: PagePar
 
   // Slice #18.07: group memberships shown as [code position] badges on the
   // corners panel header.
-  const groupTags = await listPropertyGroupTags(id);
+  const groupTags = await listPropertyGroupTags(data.property.principalObjectId);
 
   const initialValues = fromApiPayload({
     property: data.property,

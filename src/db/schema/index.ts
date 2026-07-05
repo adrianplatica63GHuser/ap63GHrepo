@@ -1071,25 +1071,19 @@ export const groupMember = pgTable(
     groupId: uuid("group_id")
       .notNull()
       .references(() => groups.id, { onDelete: "cascade" }),
-    // PROPERTY membership (the original implementation — Slice #18.07).
-    propertyId: uuid("property_id")
-      .references(() => property.id, { onDelete: "cascade" }),
-    // PHYSICAL_PERSON + JUDICIAL_PERSON membership (Slice #18.17).
-    // Both natural and judicial persons FK to the `person` table.
-    personId: uuid("person_id")
-      .references(() => person.id, { onDelete: "cascade" }),
-    // DOCUMENT membership (Slice #18.17).
-    documentId: uuid("document_id")
-      .references(() => document.id, { onDelete: "cascade" }),
+    // Single polymorphic FK — replaces the old (property_id, person_id,
+    // document_id) nullable triple (migration_051).  Every member row points
+    // to the entity's principal_object row regardless of entity type.
+    principalObjectId: uuid("principal_object_id")
+      .notNull()
+      .references(() => principalObject.id, { onDelete: "cascade" }),
     // 1-based position within the group; unique per group; never reused.
     position: integer("position").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
     uniqueIndex("group_member_group_position_unique").on(t.groupId, t.position),
-    uniqueIndex("group_member_group_property_unique").on(t.groupId, t.propertyId),
-    // Partial unique indices for person_id and document_id are in the migration
-    // (Drizzle cannot express WHERE-clause partial indices inline here).
+    uniqueIndex("group_member_group_principal_object_unique").on(t.groupId, t.principalObjectId),
   ],
 );
 
@@ -1102,9 +1096,11 @@ export const groupMember = pgTable(
 // (STMP-AAA … STMP-ZZZ, same 24-letter alphabet as groups, skipping I/O)
 // is allocated from `stamp_code_seq` and never reused.
 //
-// stamp_member has one nullable FK per target type; exactly one is non-NULL
-// per row (matching target_type). The "applied only once per item" constraint
-// is enforced by the partial unique indexes in migration_044_stamps.sql.
+// stamp_member uses a single principal_object_id FK (migration_051) instead
+// of the old nullable triple (person_id, property_id, document_id).
+// target_type is kept because it distinguishes PHYSICAL_PERSON from
+// JUDICIAL_PERSON — information not available from principal_object.object_type
+// alone (which only has PERSON, PROPERTY, DOCUMENT).
 
 export const stamps = pgTable("stamps", {
   id:               uuid("id").primaryKey().defaultRandom(),
@@ -1123,18 +1119,16 @@ export const stampMember = pgTable(
       .notNull()
       .references(() => stamps.id, { onDelete: "cascade" }),
     // Reuse the group_target_type enum — same four values.
+    // Kept after migration_051: distinguishes PHYSICAL_PERSON / JUDICIAL_PERSON.
     targetType: groupTargetTypeEnum("target_type").notNull(),
-    // Exactly one of the three FKs below is non-NULL per row.
-    personId:   uuid("person_id")
-      .references(() => person.id,     { onDelete: "cascade" }),
-    propertyId: uuid("property_id")
-      .references(() => property.id,   { onDelete: "cascade" }),
-    documentId: uuid("document_id")
-      .references(() => document.id,   { onDelete: "cascade" }),
+    // Single polymorphic FK — replaces (person_id, property_id, document_id).
+    principalObjectId: uuid("principal_object_id")
+      .notNull()
+      .references(() => principalObject.id, { onDelete: "cascade" }),
     createdAt:  timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  // Partial unique indexes (WHERE … IS NOT NULL) are defined in the migration;
-  // Drizzle cannot express them inline here.
+  // Unique index on (stamp_id, principal_object_id) is defined in the migration;
+  // Drizzle cannot express it inline here.
 );
 
 // ---------------------------------------------------------------------------
@@ -1179,6 +1173,10 @@ export const entityMetadata = pgTable("entity_metadata", {
   importanceUpdatedAt: timestamp("importance_updated_at", { withTimezone: true }),
   relevanceUpdatedAt:  timestamp("relevance_updated_at",  { withTimezone: true }),
   provenanceUpdatedAt: timestamp("provenance_updated_at", { withTimezone: true }),
+
+  // Email / identifier of the last user to write any metadata field.
+  // NULL for rows written before migration_050.
+  updatedBy: text("updated_by"),
 
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),

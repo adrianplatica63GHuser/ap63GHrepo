@@ -7,13 +7,29 @@
  *
  * Codes: STMP-AAA … STMP-ZZZ, allocated from `stamp_code_seq`, never reused.
  * Display name: "{code} - {shortDescription}"
+ *
+ * As of migration_051, stamp_member stores a single `principal_object_id` FK
+ * instead of the old nullable triple (property_id, person_id, document_id).
+ * The `target_type` column is kept to distinguish PHYSICAL_PERSON from
+ * JUDICIAL_PERSON (since principal_object.object_type only has PERSON).
  */
 
 import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { document, person, property, stampMember, stamps } from "@/db/schema";
+import {
+  document,
+  person,
+  property,
+  stampMember,
+  stamps,
+} from "@/db/schema";
 import { encodeFullStampCode } from "./code";
-import type { StampCreate, StampMemberChangeEntry, StampTargetType, StampUpdate } from "./validation";
+import type {
+  StampCreate,
+  StampMemberChangeEntry,
+  StampTargetType,
+  StampUpdate,
+} from "./validation";
 
 // ---------------------------------------------------------------------------
 // Error type
@@ -74,8 +90,9 @@ function propLabel(code: string, nickname: string | null): string {
 // ---------------------------------------------------------------------------
 
 export async function listStamps(): Promise<StampListItem[]> {
+  // stamp_member has a single principal_object_id — count is straightforward.
   const memberCount = sql<number>`(
-    SELECT count(*)::int FROM ${stampMember} sm WHERE sm.stamp_id = stamps.id
+    SELECT count(*)::int FROM stamp_member sm WHERE sm.stamp_id = stamps.id
   )`;
 
   const rows = await db
@@ -141,19 +158,23 @@ export async function getStampDetail(
   if (!s) return null;
 
   // ── Members for this type ────────────────────────────────────────────────
+  // Join via entity.principal_object_id = stamp_member.principal_object_id.
   let members: StampMemberItem[] = [];
 
   if (targetType === "PROPERTY") {
     const rows = await db
       .select({
-        memberId: stampMember.propertyId,
+        memberId: property.id,
         code:     property.code,
         nickname: property.nickname,
       })
       .from(stampMember)
       .innerJoin(
         property,
-        and(eq(property.id, stampMember.propertyId), isNull(property.deletedAt)),
+        and(
+          eq(property.principalObjectId, stampMember.principalObjectId),
+          isNull(property.deletedAt),
+        ),
       )
       .where(
         and(eq(stampMember.stampId, id), eq(stampMember.targetType, "PROPERTY")),
@@ -161,7 +182,7 @@ export async function getStampDetail(
       .orderBy(asc(property.code));
 
     members = rows.map((r) => ({
-      memberId:     r.memberId!,
+      memberId:     r.memberId,
       displayLabel: propLabel(r.code, r.nickname),
     }));
 
@@ -169,7 +190,7 @@ export async function getStampDetail(
     const personType = targetType === "PHYSICAL_PERSON" ? "NATURAL" : "JUDICIAL";
     const rows = await db
       .select({
-        memberId:    stampMember.personId,
+        memberId:    person.id,
         displayName: person.displayName,
         code:        person.code,
       })
@@ -177,7 +198,7 @@ export async function getStampDetail(
       .innerJoin(
         person,
         and(
-          eq(person.id, stampMember.personId),
+          eq(person.principalObjectId, stampMember.principalObjectId),
           isNull(person.deletedAt),
           eq(person.type, personType),
         ),
@@ -188,21 +209,24 @@ export async function getStampDetail(
       .orderBy(asc(person.displayName));
 
     members = rows.map((r) => ({
-      memberId:     r.memberId!,
+      memberId:     r.memberId,
       displayLabel: r.displayName?.trim() || r.code,
     }));
 
   } else if (targetType === "DOCUMENT") {
     const rows = await db
       .select({
-        memberId: stampMember.documentId,
+        memberId: document.id,
         title:    document.title,
         code:     document.code,
       })
       .from(stampMember)
       .innerJoin(
         document,
-        and(eq(document.id, stampMember.documentId), isNull(document.deletedAt)),
+        and(
+          eq(document.principalObjectId, stampMember.principalObjectId),
+          isNull(document.deletedAt),
+        ),
       )
       .where(
         and(eq(stampMember.stampId, id), eq(stampMember.targetType, "DOCUMENT")),
@@ -210,12 +234,16 @@ export async function getStampDetail(
       .orderBy(asc(document.code));
 
     members = rows.map((r) => ({
-      memberId:     r.memberId!,
+      memberId:     r.memberId,
       displayLabel: r.title?.trim() || r.code,
     }));
   }
 
-  // ── Candidates for this type — items NOT yet stamped with this stamp ─────
+  // ── Candidates — items NOT yet stamped with this stamp ───────────────────
+  // Correlated NOT EXISTS uses literal qualified column names to avoid the
+  // Drizzle unqualified-column gotcha (CLAUDE.md): ${table.col} inside a
+  // correlated sql`` subquery emits a bare column name that Postgres may
+  // reject as ambiguous. Write the outer table reference as a literal string.
   let candidates: StampCandidate[] = [];
 
   if (targetType === "PROPERTY") {
@@ -226,9 +254,9 @@ export async function getStampDetail(
         and(
           isNull(property.deletedAt),
           sql`NOT EXISTS (
-            SELECT 1 FROM ${stampMember} sm2
+            SELECT 1 FROM stamp_member sm2
             WHERE sm2.stamp_id = ${id}
-              AND sm2.property_id = property.id
+              AND sm2.principal_object_id = property.principal_object_id
           )`,
         ),
       )
@@ -249,9 +277,9 @@ export async function getStampDetail(
           isNull(person.deletedAt),
           eq(person.type, personType),
           sql`NOT EXISTS (
-            SELECT 1 FROM ${stampMember} sm2
+            SELECT 1 FROM stamp_member sm2
             WHERE sm2.stamp_id = ${id}
-              AND sm2.person_id = person.id
+              AND sm2.principal_object_id = person.principal_object_id
           )`,
         ),
       )
@@ -270,9 +298,9 @@ export async function getStampDetail(
         and(
           isNull(document.deletedAt),
           sql`NOT EXISTS (
-            SELECT 1 FROM ${stampMember} sm2
+            SELECT 1 FROM stamp_member sm2
             WHERE sm2.stamp_id = ${id}
-              AND sm2.document_id = document.id
+              AND sm2.principal_object_id = document.principal_object_id
           )`,
         ),
       )
@@ -340,50 +368,61 @@ async function applyMemberChange(
 ): Promise<void> {
   const { targetType, toAdd, toRemove } = change;
 
-  // ── Removes ───────────────────────────────────────────────────────────────
-  if (toRemove.length > 0) {
+  // Translate entity IDs → principal_object_ids once, reuse for removes + adds.
+  const allEntityIds = [...toAdd, ...toRemove];
+  let entityPoMap = new Map<string, string>(); // entityId → principalObjectId
+
+  if (allEntityIds.length > 0) {
     if (targetType === "PROPERTY") {
-      await tx
-        .delete(stampMember)
-        .where(
-          and(
-            eq(stampMember.stampId, stampId),
-            inArray(stampMember.propertyId, toRemove),
-          ),
-        );
+      const rows = await tx
+        .select({ entityId: property.id, poId: property.principalObjectId })
+        .from(property)
+        .where(inArray(property.id, allEntityIds));
+      entityPoMap = new Map(rows.map((r: { entityId: string; poId: string }) => [r.entityId, r.poId]));
+
     } else if (targetType === "PHYSICAL_PERSON" || targetType === "JUDICIAL_PERSON") {
-      await tx
-        .delete(stampMember)
-        .where(
-          and(
-            eq(stampMember.stampId, stampId),
-            eq(stampMember.targetType, targetType),
-            inArray(stampMember.personId, toRemove),
-          ),
-        );
+      const rows = await tx
+        .select({ entityId: person.id, poId: person.principalObjectId })
+        .from(person)
+        .where(inArray(person.id, allEntityIds));
+      entityPoMap = new Map(rows.map((r: { entityId: string; poId: string }) => [r.entityId, r.poId]));
+
     } else if (targetType === "DOCUMENT") {
-      await tx
-        .delete(stampMember)
-        .where(
-          and(
-            eq(stampMember.stampId, stampId),
-            inArray(stampMember.documentId, toRemove),
-          ),
-        );
+      const rows = await tx
+        .select({ entityId: document.id, poId: document.principalObjectId })
+        .from(document)
+        .where(inArray(document.id, allEntityIds));
+      entityPoMap = new Map(rows.map((r: { entityId: string; poId: string }) => [r.entityId, r.poId]));
     }
   }
 
+  const toRemovePoIds = toRemove
+    .map((eid) => entityPoMap.get(eid))
+    .filter(Boolean) as string[];
+  const toAddPoIds = toAdd
+    .map((eid) => entityPoMap.get(eid))
+    .filter(Boolean) as string[];
+
+  // ── Removes ───────────────────────────────────────────────────────────────
+  if (toRemovePoIds.length > 0) {
+    await tx
+      .delete(stampMember)
+      .where(
+        and(
+          eq(stampMember.stampId, stampId),
+          eq(stampMember.targetType, targetType),
+          inArray(stampMember.principalObjectId, toRemovePoIds),
+        ),
+      );
+  }
+
   // ── Adds ──────────────────────────────────────────────────────────────────
-  if (toAdd.length > 0) {
-    const values = toAdd.map((memberId) => {
-      if (targetType === "PROPERTY") {
-        return { stampId, targetType, propertyId: memberId };
-      } else if (targetType === "PHYSICAL_PERSON" || targetType === "JUDICIAL_PERSON") {
-        return { stampId, targetType, personId: memberId };
-      } else {
-        return { stampId, targetType, documentId: memberId };
-      }
-    });
+  if (toAddPoIds.length > 0) {
+    const values = toAddPoIds.map((poId) => ({
+      stampId,
+      targetType,
+      principalObjectId: poId,
+    }));
     await tx.insert(stampMember).values(values).onConflictDoNothing();
   }
 }
@@ -401,74 +440,40 @@ export async function deleteStamp(id: string): Promise<boolean> {
 }
 
 // ---------------------------------------------------------------------------
-// Stamp tags for an entity — e.g. for badges on detail pages.
+// Stamp tags for an entity — e.g. for badges / the References tab.
+// Accepts the entity's principal_object_id directly (no branching needed).
 // ---------------------------------------------------------------------------
 
 /** Enriched stamp tag for the References tab (id + code + short description). */
 export type StampEntityTag = { id: string; code: string; shortDescription: string };
 
-export async function listEntityStampTags(opts: {
-  propertyId?: string;
-  personId?: string;
-  documentId?: string;
-}): Promise<StampEntityTag[]> {
-  let rows: { id: string; code: string; shortDescription: string }[] = [];
-
-  if (opts.propertyId) {
-    rows = await db
-      .select({ id: stamps.id, code: stamps.code, shortDescription: stamps.shortDescription })
-      .from(stampMember)
-      .innerJoin(stamps, eq(stamps.id, stampMember.stampId))
-      .where(eq(stampMember.propertyId, opts.propertyId))
-      .orderBy(asc(stamps.code));
-  } else if (opts.personId) {
-    rows = await db
-      .select({ id: stamps.id, code: stamps.code, shortDescription: stamps.shortDescription })
-      .from(stampMember)
-      .innerJoin(stamps, eq(stamps.id, stampMember.stampId))
-      .where(eq(stampMember.personId, opts.personId))
-      .orderBy(asc(stamps.code));
-  } else if (opts.documentId) {
-    rows = await db
-      .select({ id: stamps.id, code: stamps.code, shortDescription: stamps.shortDescription })
-      .from(stampMember)
-      .innerJoin(stamps, eq(stamps.id, stampMember.stampId))
-      .where(eq(stampMember.documentId, opts.documentId))
-      .orderBy(asc(stamps.code));
-  }
+export async function listEntityStampTags(
+  principalObjectId: string,
+): Promise<StampEntityTag[]> {
+  const rows = await db
+    .select({
+      id:               stamps.id,
+      code:             stamps.code,
+      shortDescription: stamps.shortDescription,
+    })
+    .from(stampMember)
+    .innerJoin(stamps, eq(stamps.id, stampMember.stampId))
+    .where(eq(stampMember.principalObjectId, principalObjectId))
+    .orderBy(asc(stamps.code));
 
   return rows;
 }
 
-export async function listEntityStampCodes(opts: {
-  propertyId?: string;
-  personId?: string;
-  documentId?: string;
-}): Promise<string[]> {
-  let rows: { code: string }[] = [];
-
-  if (opts.propertyId) {
-    rows = await db
-      .select({ code: stamps.code })
-      .from(stampMember)
-      .innerJoin(stamps, eq(stamps.id, stampMember.stampId))
-      .where(eq(stampMember.propertyId, opts.propertyId))
-      .orderBy(asc(stamps.code));
-  } else if (opts.personId) {
-    rows = await db
-      .select({ code: stamps.code })
-      .from(stampMember)
-      .innerJoin(stamps, eq(stamps.id, stampMember.stampId))
-      .where(eq(stampMember.personId, opts.personId))
-      .orderBy(asc(stamps.code));
-  } else if (opts.documentId) {
-    rows = await db
-      .select({ code: stamps.code })
-      .from(stampMember)
-      .innerJoin(stamps, eq(stamps.id, stampMember.stampId))
-      .where(eq(stampMember.documentId, opts.documentId))
-      .orderBy(asc(stamps.code));
-  }
+export async function listEntityStampCodes(
+  principalObjectId: string,
+): Promise<string[]> {
+  const rows = await db
+    .select({ code: stamps.code })
+    .from(stampMember)
+    .innerJoin(stamps, eq(stamps.id, stampMember.stampId))
+    .where(eq(stampMember.principalObjectId, principalObjectId))
+    .orderBy(asc(stamps.code));
 
   return rows.map((r) => r.code);
 }
+

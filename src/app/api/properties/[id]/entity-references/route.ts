@@ -6,6 +6,7 @@ import { listEntityGroupTags } from "@/lib/groups/queries";
 import { listEntityStampTags } from "@/lib/stamps/queries";
 import { getEntityMetadata, patchEntityMetadata, restoreEntityMetadataSnapshot, touchEntityMetadataField } from "@/lib/metadata/queries";
 import type { MetadataPatch, MetadataSnapshot } from "@/lib/metadata/queries";
+import { createServerClient } from "@/lib/supabase/server";
 
 // ---------------------------------------------------------------------------
 // GET — groups + stamps + entity metadata
@@ -27,8 +28,8 @@ export async function GET(
   const principalObjectId = propRows[0]?.principalObjectId ?? null;
 
   const [entityGroups, entityStamps, metadata] = await Promise.all([
-    listEntityGroupTags({ propertyId: id }),
-    listEntityStampTags({ propertyId: id }),
+    principalObjectId ? listEntityGroupTags(principalObjectId) : Promise.resolve([]),
+    principalObjectId ? listEntityStampTags(principalObjectId) : Promise.resolve([]),
     principalObjectId
       ? getEntityMetadata(principalObjectId)
       : Promise.resolve({ importance: null, relevance: null, provenance: null, provenanceHistory: [], importanceUpdatedAt: null, relevanceUpdatedAt: null, provenanceUpdatedAt: null }),
@@ -72,12 +73,17 @@ export async function PATCH(
 
   const metaField = field as "importance" | "relevance" | "provenance";
 
+  // Resolve caller identity for the updated_by audit column
+  const supabase = await createServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const updatedBy = user?.email ?? user?.id ?? null;
+
   if (action === "touch") {
-    const updated = await touchEntityMetadataField(principalObjectId, metaField);
+    const updated = await touchEntityMetadataField(principalObjectId, metaField, updatedBy);
     return NextResponse.json(updated);
   }
 
-  const updated = await patchEntityMetadata(principalObjectId, { field: metaField, value: value ?? null } as MetadataPatch);
+  const updated = await patchEntityMetadata(principalObjectId, { field: metaField, value: value ?? null } as MetadataPatch, updatedBy);
   return NextResponse.json(updated);
 }
 
@@ -109,6 +115,10 @@ export async function PUT(
     return NextResponse.json({ error: "Property not found" }, { status: 404 });
   }
 
-  const updated = await restoreEntityMetadataSnapshot(principalObjectId, snapshot);
+  const supabase2 = await createServerClient();
+  const { data: { user: user2 } } = await supabase2.auth.getUser();
+  const updatedBy2 = user2?.email ?? user2?.id ?? null;
+
+  const updated = await restoreEntityMetadataSnapshot(principalObjectId, snapshot, updatedBy2);
   return NextResponse.json(updated);
 }

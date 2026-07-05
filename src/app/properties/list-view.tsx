@@ -146,15 +146,13 @@ export function PropertyListView() {
   const [deleting,     setDeleting]     = useState(false);
   const [deleteError,  setDeleteError]  = useState<string | null>(null);
 
-  // Column picker
-  const [visibleCols, setVisibleCols] = useState<string[]>(DEFAULT_COLS);
+  // Column picker — lazy initializer reads localStorage on the client; falls back
+  // to DEFAULT_COLS during SSR (no window). Avoids a separate mount effect.
+  const [visibleCols, setVisibleCols] = useState<string[]>(() =>
+    typeof window !== "undefined" ? readStoredCols() : DEFAULT_COLS
+  );
   const [showColPicker, setShowColPicker] = useState(false);
   const colPickerRef = useRef<HTMLDivElement>(null);
-
-  // Load from localStorage on mount (client-only)
-  useEffect(() => {
-    setVisibleCols(readStoredCols());
-  }, []);
 
   // Close col picker on outside click
   useEffect(() => {

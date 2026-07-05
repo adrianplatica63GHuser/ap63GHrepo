@@ -302,7 +302,6 @@ export function PropertyForm({
   // Slice #19.02: close the Street View panel when the selected type hides it.
   useEffect(() => {
     if (typeConfig.hideStreetView) setShowStreetView(false);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [typeConfig.hideStreetView]);
 
   // --- Version history (Slice #18.02) ------------------------------------

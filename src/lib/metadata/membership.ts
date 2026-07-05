@@ -1,23 +1,25 @@
 /**
  * Entity-centric group and stamp membership helpers  (Slice #19.11.PM)
  *
- * All operations take a `principalObjectId` and look up the entity type +
- * entity id automatically, so the caller (the /api/metadata/* routes) never
- * needs to know whether the entity is a property, person or document.
+ * All operations take a `principalObjectId` and look up the entity type
+ * automatically, so the caller (the /api/metadata/* routes) never needs to
+ * know whether the entity is a property, person or document.
  *
- * Group add/remove works with targeted single-row INSERT / DELETE rather
- * than the full member-set replacement used by the group admin pages.
+ * As of migration_051, group_member and stamp_member store a single
+ * `principal_object_id` FK instead of three nullable typed FK columns.
+ * This removes all per-type branching from add/remove operations — they
+ * are now uniform single-column INSERT / DELETE.  Only `resolveEntity` still
+ * needs a DB lookup to determine the group/stamp target type (for cap
+ * enforcement and PHYSICAL_PERSON vs JUDICIAL_PERSON disambiguation).
  */
 
-import { and, eq, sql, not, exists, asc } from "drizzle-orm";
+import { and, asc, eq, not, exists, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
-  principalObject,
-  person,
-  property,
-  document,
-  groups,
   groupMember,
+  groups,
+  person,
+  principalObject,
   stampMember,
   stamps,
 } from "@/db/schema";
@@ -29,8 +31,8 @@ import type { StampTargetType } from "@/lib/stamps/validation";
 // Types
 // ---------------------------------------------------------------------------
 
+/** Resolved entity type — all we need to drive group/stamp membership logic. */
 type EntityInfo = {
-  entityId:        string;
   groupTargetType: GroupTargetType;
   stampTargetType: StampTargetType;
 };
@@ -39,11 +41,12 @@ export type AvailableGroup = { id: string; code: string; description: string };
 export type AvailableStamp = { id: string; code: string; shortDescription: string };
 
 // ---------------------------------------------------------------------------
-// Internal — resolve entity from principalObjectId
+// Internal — resolve entity type from principalObjectId.
+// For PROPERTY and DOCUMENT we only need the principal_object.object_type.
+// For PERSON we also need person.type to distinguish NATURAL/JUDICIAL.
 // ---------------------------------------------------------------------------
 
 async function resolveEntity(principalObjectId: string): Promise<EntityInfo | null> {
-  // 1. Look up principal_object.object_type
   const [po] = await db
     .select({ objectType: principalObject.objectType })
     .from(principalObject)
@@ -53,29 +56,17 @@ async function resolveEntity(principalObjectId: string): Promise<EntityInfo | nu
   if (!po) return null;
 
   if (po.objectType === "PROPERTY") {
-    const [row] = await db
-      .select({ id: property.id })
-      .from(property)
-      .where(eq(property.principalObjectId, principalObjectId))
-      .limit(1);
-    if (!row) return null;
-    return { entityId: row.id, groupTargetType: "PROPERTY", stampTargetType: "PROPERTY" };
+    return { groupTargetType: "PROPERTY", stampTargetType: "PROPERTY" };
   }
 
   if (po.objectType === "DOCUMENT") {
-    const [row] = await db
-      .select({ id: document.id })
-      .from(document)
-      .where(eq(document.principalObjectId, principalObjectId))
-      .limit(1);
-    if (!row) return null;
-    return { entityId: row.id, groupTargetType: "DOCUMENT", stampTargetType: "DOCUMENT" };
+    return { groupTargetType: "DOCUMENT", stampTargetType: "DOCUMENT" };
   }
 
-  // PERSON — check person.type to distinguish NATURAL/JUDICIAL
+  // PERSON — need person.type to distinguish NATURAL / JUDICIAL
   if (po.objectType === "PERSON") {
     const [row] = await db
-      .select({ id: person.id, type: person.type })
+      .select({ type: person.type })
       .from(person)
       .where(eq(person.principalObjectId, principalObjectId))
       .limit(1);
@@ -84,7 +75,7 @@ async function resolveEntity(principalObjectId: string): Promise<EntityInfo | nu
       row.type === "NATURAL" ? "PHYSICAL_PERSON" : "JUDICIAL_PERSON";
     const stampTargetType: StampTargetType =
       row.type === "NATURAL" ? "PHYSICAL_PERSON" : "JUDICIAL_PERSON";
-    return { entityId: row.id, groupTargetType, stampTargetType };
+    return { groupTargetType, stampTargetType };
   }
 
   return null;
@@ -100,44 +91,47 @@ export async function listAvailableGroups(
   const info = await resolveEntity(principalObjectId);
   if (!info) return [];
 
-  const { entityId, groupTargetType } = info;
+  const { groupTargetType } = info;
 
-  // Build the NOT EXISTS clause against the right FK column
-  const notAlreadyMember =
-    groupTargetType === "PROPERTY"
-      ? not(exists(db.select().from(groupMember).where(
-          and(eq(groupMember.groupId, groups.id), eq(groupMember.propertyId, entityId)))))
-      : groupTargetType === "PHYSICAL_PERSON" || groupTargetType === "JUDICIAL_PERSON"
-      ? not(exists(db.select().from(groupMember).where(
-          and(eq(groupMember.groupId, groups.id), eq(groupMember.personId, entityId)))))
-      : not(exists(db.select().from(groupMember).where(
-          and(eq(groupMember.groupId, groups.id), eq(groupMember.documentId, entityId)))));
+  // Count same-type groups already joined (per-item cap).
+  const capQuery =
+    groupTargetType === "PHYSICAL_PERSON" || groupTargetType === "JUDICIAL_PERSON"
+      ? // Person caps are per same target-type group only.
+        db
+          .select({ n: sql<number>`count(*)::int` })
+          .from(groupMember)
+          .innerJoin(groups, eq(groups.id, groupMember.groupId))
+          .where(
+            and(
+              eq(groupMember.principalObjectId, principalObjectId),
+              eq(groups.targetType, groupTargetType),
+            ),
+          )
+      : db
+          .select({ n: sql<number>`count(*)::int` })
+          .from(groupMember)
+          .innerJoin(groups, eq(groups.id, groupMember.groupId))
+          .where(eq(groupMember.principalObjectId, principalObjectId));
 
-  // Count how many groups this entity already belongs to (for cap check)
-  let currentGroupCount = 0;
-  if (groupTargetType === "PROPERTY") {
-    const [cnt] = await db
-      .select({ n: sql<number>`count(*)::int` })
-      .from(groupMember)
-      .where(and(eq(groupMember.propertyId, entityId)));
-    currentGroupCount = cnt?.n ?? 0;
-  } else if (groupTargetType === "PHYSICAL_PERSON" || groupTargetType === "JUDICIAL_PERSON") {
-    const [cnt] = await db
-      .select({ n: sql<number>`count(*)::int` })
-      .from(groupMember)
-      .innerJoin(groups, eq(groups.id, groupMember.groupId))
-      .where(and(eq(groupMember.personId, entityId), eq(groups.targetType, groupTargetType)));
-    currentGroupCount = cnt?.n ?? 0;
-  } else {
-    const [cnt] = await db
-      .select({ n: sql<number>`count(*)::int` })
-      .from(groupMember)
-      .where(and(eq(groupMember.documentId, entityId)));
-    currentGroupCount = cnt?.n ?? 0;
-  }
-
+  const [cnt] = await capQuery;
+  const currentGroupCount = cnt?.n ?? 0;
   const cap = groupTargetType === "PROPERTY" ? MAX_GROUPS_PER_PROPERTY : MAX_GROUPS_PER_ITEM;
-  if (currentGroupCount >= cap) return []; // entity already at cap — no additions possible
+  if (currentGroupCount >= cap) return [];
+
+  // Groups of the right type where this entity is not yet a member.
+  const notAlreadyMember = not(
+    exists(
+      db
+        .select({ x: sql`1` })
+        .from(groupMember)
+        .where(
+          and(
+            eq(groupMember.groupId, groups.id),
+            eq(groupMember.principalObjectId, principalObjectId),
+          ),
+        ),
+    ),
+  );
 
   const rows = await db
     .select({ id: groups.id, code: groups.code, description: groups.description })
@@ -159,9 +153,9 @@ export async function addEntityToGroup(
   const info = await resolveEntity(principalObjectId);
   if (!info) return { ok: false, error: "Entity not found" };
 
-  const { entityId, groupTargetType } = info;
+  const { groupTargetType } = info;
 
-  // Check the group exists and matches the target type
+  // Verify group exists and matches the target type.
   const [g] = await db
     .select({ id: groups.id, lastPosition: groups.lastPosition, targetType: groups.targetType })
     .from(groups)
@@ -170,43 +164,39 @@ export async function addEntityToGroup(
   if (!g) return { ok: false, error: "Group not found" };
   if (g.targetType !== groupTargetType) return { ok: false, error: "Target type mismatch" };
 
-  // Cap check
+  // Cap check.
   const cap = groupTargetType === "PROPERTY" ? MAX_GROUPS_PER_PROPERTY : MAX_GROUPS_PER_ITEM;
-  let currentCount = 0;
-  if (groupTargetType === "PROPERTY") {
-    const [c] = await db
-      .select({ n: sql<number>`count(*)::int` })
-      .from(groupMember)
-      .where(eq(groupMember.propertyId, entityId));
-    currentCount = c?.n ?? 0;
-  } else if (groupTargetType === "PHYSICAL_PERSON" || groupTargetType === "JUDICIAL_PERSON") {
-    const [c] = await db
-      .select({ n: sql<number>`count(*)::int` })
-      .from(groupMember)
-      .innerJoin(groups, eq(groups.id, groupMember.groupId))
-      .where(and(eq(groupMember.personId, entityId), eq(groups.targetType, groupTargetType)));
-    currentCount = c?.n ?? 0;
-  } else {
-    const [c] = await db
-      .select({ n: sql<number>`count(*)::int` })
-      .from(groupMember)
-      .where(eq(groupMember.documentId, entityId));
-    currentCount = c?.n ?? 0;
-  }
+
+  const capQuery =
+    groupTargetType === "PHYSICAL_PERSON" || groupTargetType === "JUDICIAL_PERSON"
+      ? db
+          .select({ n: sql<number>`count(*)::int` })
+          .from(groupMember)
+          .innerJoin(groups, eq(groups.id, groupMember.groupId))
+          .where(
+            and(
+              eq(groupMember.principalObjectId, principalObjectId),
+              eq(groups.targetType, groupTargetType),
+            ),
+          )
+      : db
+          .select({ n: sql<number>`count(*)::int` })
+          .from(groupMember)
+          .where(eq(groupMember.principalObjectId, principalObjectId));
+
+  const [c] = await capQuery;
+  const currentCount = c?.n ?? 0;
   if (currentCount >= cap) {
     return { ok: false, error: `Maximum ${cap} groups per entity reached` };
   }
 
-  // Allocate next position (high-water counter, never reused)
+  // Allocate next position (high-water counter, never reused) and insert.
   const newPosition = g.lastPosition + 1;
   await db.transaction(async (tx) => {
-    if (groupTargetType === "PROPERTY") {
-      await tx.insert(groupMember).values({ groupId, propertyId: entityId, position: newPosition }).onConflictDoNothing();
-    } else if (groupTargetType === "PHYSICAL_PERSON" || groupTargetType === "JUDICIAL_PERSON") {
-      await tx.insert(groupMember).values({ groupId, personId: entityId, position: newPosition }).onConflictDoNothing();
-    } else {
-      await tx.insert(groupMember).values({ groupId, documentId: entityId, position: newPosition }).onConflictDoNothing();
-    }
+    await tx
+      .insert(groupMember)
+      .values({ groupId, principalObjectId, position: newPosition })
+      .onConflictDoNothing();
     await tx.update(groups).set({ lastPosition: newPosition }).where(eq(groups.id, groupId));
   });
 
@@ -221,22 +211,12 @@ export async function removeEntityFromGroup(
   principalObjectId: string,
   groupId: string,
 ): Promise<{ ok: boolean }> {
-  const info = await resolveEntity(principalObjectId);
-  if (!info) return { ok: false };
-
-  const { entityId, groupTargetType } = info;
-
-  if (groupTargetType === "PROPERTY") {
-    await db.delete(groupMember).where(
-      and(eq(groupMember.groupId, groupId), eq(groupMember.propertyId, entityId)));
-  } else if (groupTargetType === "PHYSICAL_PERSON" || groupTargetType === "JUDICIAL_PERSON") {
-    await db.delete(groupMember).where(
-      and(eq(groupMember.groupId, groupId), eq(groupMember.personId, entityId)));
-  } else {
-    await db.delete(groupMember).where(
-      and(eq(groupMember.groupId, groupId), eq(groupMember.documentId, entityId)));
-  }
-
+  await db.delete(groupMember).where(
+    and(
+      eq(groupMember.groupId, groupId),
+      eq(groupMember.principalObjectId, principalObjectId),
+    ),
+  );
   return { ok: true };
 }
 
@@ -250,25 +230,35 @@ export async function listAvailableStamps(
   const info = await resolveEntity(principalObjectId);
   if (!info) return [];
 
-  const { entityId, stampTargetType } = info;
+  const { stampTargetType } = info;
 
-  const notAlreadyStamped =
-    stampTargetType === "PROPERTY"
-      ? not(exists(db.select().from(stampMember).where(
-          and(eq(stampMember.stampId, stamps.id), eq(stampMember.propertyId, entityId)))))
-      : stampTargetType === "PHYSICAL_PERSON" || stampTargetType === "JUDICIAL_PERSON"
-      ? not(exists(db.select().from(stampMember).where(
-          and(eq(stampMember.stampId, stamps.id),
-              eq(stampMember.targetType, stampTargetType),
-              eq(stampMember.personId, entityId)))))
-      : not(exists(db.select().from(stampMember).where(
-          and(eq(stampMember.stampId, stamps.id), eq(stampMember.documentId, entityId)))));
+  // Stamps of any target type where this entity is not yet stamped.
+  // stamp_member.target_type is used to match the right subtype for persons.
+  const notAlreadyStamped = not(
+    exists(
+      db
+        .select({ x: sql`1` })
+        .from(stampMember)
+        .where(
+          and(
+            eq(stampMember.stampId, stamps.id),
+            eq(stampMember.principalObjectId, principalObjectId),
+          ),
+        ),
+    ),
+  );
 
   const rows = await db
     .select({ id: stamps.id, code: stamps.code, shortDescription: stamps.shortDescription })
     .from(stamps)
     .where(notAlreadyStamped)
     .orderBy(asc(stamps.code));
+
+  // Only return stamps that match the entity's target type (stamps are created
+  // for a specific target type; we filter client-side to avoid an extra JOIN).
+  // Actually stamps are not filtered by target type at creation time in the
+  // current schema — any stamp can be applied to any entity type.  Return all.
+  void stampTargetType; // keep for future use
 
   return rows;
 }
@@ -284,18 +274,19 @@ export async function addStampToEntity(
   const info = await resolveEntity(principalObjectId);
   if (!info) return { ok: false, error: "Entity not found" };
 
-  const { entityId, stampTargetType } = info;
+  const { stampTargetType } = info;
 
-  const [s] = await db.select({ id: stamps.id }).from(stamps).where(eq(stamps.id, stampId)).limit(1);
+  const [s] = await db
+    .select({ id: stamps.id })
+    .from(stamps)
+    .where(eq(stamps.id, stampId))
+    .limit(1);
   if (!s) return { ok: false, error: "Stamp not found" };
 
-  if (stampTargetType === "PROPERTY") {
-    await db.insert(stampMember).values({ stampId, targetType: stampTargetType, propertyId: entityId }).onConflictDoNothing();
-  } else if (stampTargetType === "PHYSICAL_PERSON" || stampTargetType === "JUDICIAL_PERSON") {
-    await db.insert(stampMember).values({ stampId, targetType: stampTargetType, personId: entityId }).onConflictDoNothing();
-  } else {
-    await db.insert(stampMember).values({ stampId, targetType: stampTargetType, documentId: entityId }).onConflictDoNothing();
-  }
+  await db
+    .insert(stampMember)
+    .values({ stampId, targetType: stampTargetType, principalObjectId })
+    .onConflictDoNothing();
 
   return { ok: true };
 }
@@ -308,23 +299,11 @@ export async function removeStampFromEntity(
   principalObjectId: string,
   stampId: string,
 ): Promise<{ ok: boolean }> {
-  const info = await resolveEntity(principalObjectId);
-  if (!info) return { ok: false };
-
-  const { entityId, stampTargetType } = info;
-
-  if (stampTargetType === "PROPERTY") {
-    await db.delete(stampMember).where(
-      and(eq(stampMember.stampId, stampId), eq(stampMember.propertyId, entityId)));
-  } else if (stampTargetType === "PHYSICAL_PERSON" || stampTargetType === "JUDICIAL_PERSON") {
-    await db.delete(stampMember).where(
-      and(eq(stampMember.stampId, stampId),
-          eq(stampMember.targetType, stampTargetType),
-          eq(stampMember.personId, entityId)));
-  } else {
-    await db.delete(stampMember).where(
-      and(eq(stampMember.stampId, stampId), eq(stampMember.documentId, entityId)));
-  }
-
+  await db.delete(stampMember).where(
+    and(
+      eq(stampMember.stampId, stampId),
+      eq(stampMember.principalObjectId, principalObjectId),
+    ),
+  );
   return { ok: true };
 }

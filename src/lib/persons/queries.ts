@@ -84,13 +84,13 @@ export async function listPersons(opts: ListQuery): Promise<{
     const hasNoMatchingGroup = sql`NOT EXISTS (
       SELECT 1 FROM ${groupMember} gm_f
       JOIN ${groups} g_f ON g_f.id = gm_f.group_id
-      WHERE gm_f.person_id = person.id
+      WHERE gm_f.principal_object_id = person.principal_object_id
         AND g_f.target_type = 'PHYSICAL_PERSON'
     )`;
     const hasMatchingCode = sql`EXISTS (
       SELECT 1 FROM ${groupMember} gm_f2
       JOIN ${groups} g_f2 ON g_f2.id = gm_f2.group_id
-      WHERE gm_f2.person_id = person.id
+      WHERE gm_f2.principal_object_id = person.principal_object_id
         AND g_f2.code = ANY(ARRAY[${sql.join(
           opts.groupCodes.map((c) => sql`${c}`),
           sql`, `,
@@ -206,7 +206,7 @@ export async function listAllPersons(opts: AllPersonsListQuery): Promise<{
     const hasNoMatchingGroup = sql`NOT EXISTS (
       SELECT 1 FROM ${groupMember} gm_f
       JOIN ${groups} g_f ON g_f.id = gm_f.group_id
-      WHERE gm_f.person_id = person.id
+      WHERE gm_f.principal_object_id = person.principal_object_id
         AND (
           (person.type = 'NATURAL'   AND g_f.target_type = 'PHYSICAL_PERSON')
           OR (person.type = 'JUDICIAL' AND g_f.target_type = 'JUDICIAL_PERSON')
@@ -215,7 +215,7 @@ export async function listAllPersons(opts: AllPersonsListQuery): Promise<{
     const hasMatchingCode = sql`EXISTS (
       SELECT 1 FROM ${groupMember} gm_f2
       JOIN ${groups} g_f2 ON g_f2.id = gm_f2.group_id
-      WHERE gm_f2.person_id = person.id
+      WHERE gm_f2.principal_object_id = person.principal_object_id
         AND g_f2.code = ANY(ARRAY[${sql.join(
           opts.groupCodes.map((c) => sql`${c}`),
           sql`, `,

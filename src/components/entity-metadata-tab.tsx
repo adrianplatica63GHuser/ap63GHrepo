@@ -1012,12 +1012,15 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName 
 
   // ── Lifted classification-field state (Task #20) ──────────────────────────
   // Controlled values for the three metadata dropdowns.  Initialised from live
-  // data on load; reset whenever data refetches (e.g. after a save).
+  // data on load; reset whenever server data changes (e.g. after a save).
   const [localImportance, setLocalImportance] = useState<string>("");
   const [localRelevance,  setLocalRelevance]  = useState<string>("");
   const [localProvenance, setLocalProvenance] = useState<string>("");
   const [saving,          setSaving]          = useState(false);
   const [saved,           setSaved]           = useState(false);
+  // Tracks the last server-data key so we can sync state during rendering
+  // instead of in a useEffect (React "adjusting state during rendering" pattern).
+  const [lastFetchedKey, setLastFetchedKey] = useState<string>("");
 
   // ── Data loading ──────────────────────────────────────────────────────────
 
@@ -1055,13 +1058,19 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName 
   const latestIndex = totalVer - 1;
 
   // Sync local classification state from server data (on load and after save refetch).
-  useEffect(() => {
-    if (!data) return;
+  // Using the "adjusting state during rendering" pattern (React docs) instead of
+  // useEffect to avoid the react-hooks/set-state-in-effect lint error.
+  // React discards the current render and immediately re-renders when setState is
+  // called during rendering, so there is no extra paint / cascade.
+  const currentDataKey = data
+    ? `${data.importance ?? ""}|${data.relevance ?? ""}|${data.provenance ?? ""}`
+    : "";
+  if (data && currentDataKey !== lastFetchedKey) {
+    setLastFetchedKey(currentDataKey);
     setLocalImportance(data.importance ?? "");
     setLocalRelevance(data.relevance   ?? "");
     setLocalProvenance(data.provenance ?? "");
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data?.importance, data?.relevance, data?.provenance]);
+  }
 
   // Which version is currently displayed in the UI
   const viewedVersion =

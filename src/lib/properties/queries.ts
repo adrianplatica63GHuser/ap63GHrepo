@@ -9,7 +9,7 @@
  *   those rows untouched. Passing address: null deletes the address row.
  */
 
-import { and, count, desc, eq, ilike, inArray, isNull, or, sql } from "drizzle-orm";
+import { and, count, desc, eq, ilike, isNull, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { entityMetadata, groupMember, groups, lookupPersonRole, person, principalObject, property, propertyAddress, propertyCorner, propertyPerson, propertyVersion } from "@/db/schema";
 import { wgs84ToStereo70 } from "@/lib/geo/transdatRO";
@@ -203,13 +203,13 @@ export async function listProperties(opts: PropertyListQuery): Promise<{
     const hasNoGroup = sql`NOT EXISTS (
       SELECT 1 FROM ${groupMember} gm_f
       JOIN ${groups} g_f ON g_f.id = gm_f.group_id
-      WHERE gm_f.property_id = property.id
+      WHERE gm_f.principal_object_id = property.principal_object_id
         AND g_f.target_type = 'PROPERTY'
     )`;
     const hasMatchingCode = sql`EXISTS (
       SELECT 1 FROM ${groupMember} gm_f2
       JOIN ${groups} g_f2 ON g_f2.id = gm_f2.group_id
-      WHERE gm_f2.property_id = property.id
+      WHERE gm_f2.principal_object_id = property.principal_object_id
         AND g_f2.target_type = 'PROPERTY'
         AND g_f2.code = ANY(ARRAY[${sql.join(
           opts.groupCodes.map((c) => sql`${c}`),
