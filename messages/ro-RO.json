@@ -648,6 +648,13 @@
       "sectionClassification": "Clasificare subiectivă",
       "sectionConnections": "Conexiuni",
       "whatDoesThisMean": "Ce înseamnă asta?"
+    },
+    "errorBoundary": {
+      "map":        "Harta nu a putut fi afișată.",
+      "streetView": "Street View nu a putut fi afișat.",
+      "pages":      "Vizualizatorul de pagini nu a putut fi afișat.",
+      "ocr":        "Dialogul de import nu a putut fi afișat.",
+      "default":    "A apărut o eroare neașteptată."
     }
   },
   "naturalPerson": {

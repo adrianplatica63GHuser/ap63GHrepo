@@ -36,6 +36,7 @@ import {
 import { getTypeConfig } from "@/lib/documents/type-config";
 import { PagesPanel, PagesViewerBox, usePagesPanelState } from "./pages-panel";
 import { SuccessionPartiesPanel } from "./succession-parties-panel";
+import { ErrorBoundary, PanelError } from "@/components/error-boundary";
 
 // ---------------------------------------------------------------------------
 // Document type list — fetched dynamically from the admin-managed
@@ -147,7 +148,8 @@ export function DocumentForm({
   onBigPageChange,
   versionNavSlot,
 }: Props) {
-  const t = useTranslations("document");
+  const t       = useTranslations("document");
+  const tShared = useTranslations("shared");
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -778,13 +780,15 @@ export function DocumentForm({
          renders the table/controls only — the viewer moves to the right
          column below. ──────────────────────────────────────────────────── */}
     {mode !== "create" && documentId && (
-      <PagesPanel
-        documentId={documentId}
-        mode={mode === "view" ? "view" : "edit"}
-        state={pagesState}
-        bigPage={bigPage}
-        onToggleBigPage={handleToggleBigPage}
-      />
+      <ErrorBoundary fallback={<PanelError>{tShared("errorBoundary.pages")}</PanelError>}>
+        <PagesPanel
+          documentId={documentId}
+          mode={mode === "view" ? "view" : "edit"}
+          state={pagesState}
+          bigPage={bigPage}
+          onToggleBigPage={handleToggleBigPage}
+        />
+      </ErrorBoundary>
     )}
     </div>
 
@@ -796,7 +800,9 @@ export function DocumentForm({
     {bigPage && mode !== "create" && documentId && (
       <div className="relative flex-1 min-w-0 overflow-hidden rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <div className="absolute inset-3">
-          <PagesViewerBox state={pagesState} fill />
+          <ErrorBoundary fallback={<PanelError>{tShared("errorBoundary.pages")}</PanelError>}>
+            <PagesViewerBox state={pagesState} fill />
+          </ErrorBoundary>
         </div>
       </div>
     )}

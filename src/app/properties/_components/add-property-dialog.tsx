@@ -23,6 +23,7 @@ import { useTranslations }  from "next-intl";
 import { useRouter }        from "next/navigation";
 import Link                 from "next/link";
 import { NavArrowIcon }      from "@/components/back-arrow";
+import { ErrorBoundary, PanelError } from "@/components/error-boundary";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -131,6 +132,7 @@ interface Props {
 
 export function AddPropertyDialog({ onClose }: Props) {
   const t           = useTranslations("property.addDialog");
+  const tShared     = useTranslations("shared");
   const router      = useRouter();
   const queryClient = useQueryClient();
 
@@ -399,6 +401,7 @@ export function AddPropertyDialog({ onClose }: Props) {
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
+    <ErrorBoundary fallback={<PanelError>{tShared("errorBoundary.ocr")}</PanelError>}>
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
       role="dialog"
@@ -740,6 +743,7 @@ export function AddPropertyDialog({ onClose }: Props) {
         </div>
       </div>
     </div>
+    </ErrorBoundary>
   );
 }
 

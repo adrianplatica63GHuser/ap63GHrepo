@@ -40,6 +40,7 @@ import {
 import { CornersManager } from "./corners-manager";
 import { PropertyMiniMap } from "./property-mini-map";
 import { StreetViewPanel } from "./street-view-panel";
+import { ErrorBoundary, PanelError } from "@/components/error-boundary";
 import { VersionNavControls } from "@/components/version-nav-controls";
 import { FieldPulseContext, usePulseRing } from "@/components/versioning/field-pulse";
 import { highlightRingClass } from "@/lib/versioning/highlight-ring";
@@ -130,7 +131,8 @@ export function PropertyForm({
   onBigMapChange,
   versionNavSlot,
 }: Props) {
-  const t  = useTranslations("property");
+  const t       = useTranslations("property");
+  const tShared = useTranslations("shared");
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -897,14 +899,16 @@ export function PropertyForm({
             style={{ height: bigMap ? "calc(100vh - 220px)" : "440px" }}
           >
             <div className="absolute inset-0">
-              <PropertyMiniMap
-                corners={corners}
-                onChange={setCorners}
-                readOnly={effectiveMode === "view"}
-                hoveredCornerIdx={hoveredCornerIdx}
-                onCornerHover={setHoveredCornerIdx}
-                showAngles={showAngles}
-              />
+              <ErrorBoundary fallback={<PanelError>{tShared("errorBoundary.map")}</PanelError>}>
+                <PropertyMiniMap
+                  corners={corners}
+                  onChange={setCorners}
+                  readOnly={effectiveMode === "view"}
+                  hoveredCornerIdx={hoveredCornerIdx}
+                  onCornerHover={setHoveredCornerIdx}
+                  showAngles={showAngles}
+                />
+              </ErrorBoundary>
             </div>
           </div>
           {/* Slice #18.03b: Street View panel — mounted only while open so the
@@ -912,7 +916,9 @@ export function PropertyForm({
               open. */}
           {showStreetView && !typeConfig.hideStreetView && (
             <div className="rounded-md border border-card-rim overflow-hidden dark:border-zinc-800" style={{ height: "360px" }}>
-              <StreetViewPanel centroid={streetViewCentroid} />
+              <ErrorBoundary fallback={<PanelError>{tShared("errorBoundary.streetView")}</PanelError>}>
+                <StreetViewPanel centroid={streetViewCentroid} />
+              </ErrorBoundary>
             </div>
           )}
         </div>
