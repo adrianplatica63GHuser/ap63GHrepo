@@ -9,12 +9,14 @@ import { useRouter } from "next/navigation";
 // Types
 // ---------------------------------------------------------------------------
 
+import type { PersonDocumentQuality } from "@/lib/documents/queries";
+
 type PartyItem = {
   id:          string;
   code:        string;
   type:        "NATURAL" | "JUDICIAL";
   displayName: string;
-  quality:     string | null;
+  quality:     PersonDocumentQuality | null;
 };
 
 type Props = {

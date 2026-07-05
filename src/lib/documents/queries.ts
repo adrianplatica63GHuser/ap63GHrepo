@@ -573,12 +573,14 @@ export async function dissociatePropertyFromDocument(documentId: string, propert
 // Document <-> Person
 // ---------------------------------------------------------------------------
 
+export type PersonDocumentQuality = "DEFUNCT" | "MOSTENITOR";
+
 export type DocumentPersonItem = {
   id:           string;
   code:         string;
   type:         "NATURAL" | "JUDICIAL";
   displayName:  string;
-  quality:      string | null;
+  quality:      PersonDocumentQuality | null;
   roleName:     string | null;
   associatedAt: Date;
 };
@@ -606,7 +608,7 @@ export async function listDocumentPersons(documentId: string): Promise<DocumentP
 export async function associatePersonsToDocument(
   documentId:   string,
   personIds:    string[],
-  quality?:     string | null,
+  quality?:     PersonDocumentQuality | null,
   personRoleId: string | null = null,
 ): Promise<void> {
   await db.insert(personDocument)

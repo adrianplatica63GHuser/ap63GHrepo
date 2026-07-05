@@ -18,7 +18,7 @@ const bodySchema = z.object({
   personIds: z.array(z.string().uuid()).min(1),
   // Optional role for Certificat de Moștenitor party links.
   // 'DEFUNCT' | 'MOSTENITOR' — null / absent for general associations.
-  quality: z.string().optional(),
+  quality: z.enum(["DEFUNCT", "MOSTENITOR"]).nullable().optional(),
   // Optional person role from the Document Persons whitelist.
   personRoleId: z.string().uuid().nullable().optional(),
 });

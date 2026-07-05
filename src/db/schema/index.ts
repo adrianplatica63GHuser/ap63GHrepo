@@ -1000,6 +1000,7 @@ export const personDocument = pgTable(
     // Optional role tag — used by Certificat de Moștenitor.
     // 'DEFUNCT' = the deceased person; 'MOSTENITOR' = an inheritor.
     // NULL for persons linked via the general Persons tab on any doc type.
+    // DB-enforced by person_document_quality_check (migration_056).
     quality:    text("quality"),
     // Optional person role from the Document Persons whitelist (lookup_doc_type_person_role).
     // ON DELETE SET NULL — cleared automatically if the role is removed from lookup_person_role.
@@ -1007,7 +1008,13 @@ export const personDocument = pgTable(
       .references(() => lookupPersonRole.id, { onDelete: "set null" }),
     createdAt:  timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [uniqueIndex("person_document_unique").on(t.personId, t.documentId)],
+  (t) => [
+    uniqueIndex("person_document_unique").on(t.personId, t.documentId),
+    check(
+      "person_document_quality_check",
+      sql`${t.quality} IS NULL OR ${t.quality} IN ('DEFUNCT', 'MOSTENITOR')`,
+    ),
+  ],
 );
 
 

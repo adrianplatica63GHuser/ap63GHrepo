@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { PaginationControls } from "@/components/pagination-controls";
+import type { PersonDocumentQuality } from "@/lib/documents/queries";
 
 const PAGE_SIZE = 15;
 
@@ -16,8 +17,6 @@ type PersonSearchItem = {
 };
 
 type SearchResponse = { items: PersonSearchItem[]; total: number };
-
-type Quality = "DEFUNCT" | "MOSTENITOR";
 
 type Props = { documentId: string; documentName: string };
 
@@ -50,7 +49,7 @@ export function AssociatePartyView({ documentId, documentName }: Props) {
   const [codeInput,   setCodeInput]   = useState("");
   const [page,        setPage]        = useState(0);
   const [selectedId,  setSelectedId]  = useState<string | null>(null);
-  const [quality,     setQuality]     = useState<Quality | null>(null);
+  const [quality,     setQuality]     = useState<PersonDocumentQuality | null>(null);
   const [submitting,  setSubmitting]  = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
