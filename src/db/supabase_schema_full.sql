@@ -759,6 +759,70 @@ INSERT INTO lookup_property_person_role (id, person_role_id, created_at)
 INSERT INTO lookup_property_person_role (id, person_role_id, created_at)
   SELECT gen_random_uuid(), id, now() FROM lookup_person_role WHERE name = 'Titular de drept' ON CONFLICT (person_role_id) DO NOTHING;
 
+-- ── lookup_property_property_role  (migration 055) ────────────
+CREATE TABLE lookup_property_property_role (
+  id          uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  name        text        NOT NULL,
+  description text,
+  sort_order  integer     NOT NULL DEFAULT 0,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  updated_at  timestamptz NOT NULL DEFAULT now()
+);
+
+INSERT INTO lookup_property_property_role (name, description, sort_order)
+SELECT v.name, v.description, v.sort_order
+FROM (VALUES
+  ('Adiacent',         'Proprietăți cu latură comună',                         1),
+  ('Inclus în',        'O proprietate este parte dintr-o alta',                 2),
+  ('Contiguu',         'Proprietăți vecine fără latură comună directă',         3),
+  ('Subdiviziune a',   'Parcelă rezultată din dezmembrarea alteia',             4),
+  ('Suprapus cu',      'Zone cu suprapunere parțială',                          5),
+  ('Acces prin',       'Acces la drum sau utilități prin altă proprietate',     6),
+  ('Alipit de',        'Proprietăți unite sau alipite cadastral',               7)
+) AS v(name, description, sort_order)
+WHERE NOT EXISTS (SELECT 1 FROM lookup_property_property_role LIMIT 1);
+
+CREATE TRIGGER touch_lookup_property_property_role_updated_at
+  BEFORE UPDATE ON lookup_property_property_role
+  FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
+
+-- ── lookup_document_document_role  (migration 055) ────────────
+CREATE TABLE lookup_document_document_role (
+  id          uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  name        text        NOT NULL,
+  description text,
+  sort_order  integer     NOT NULL DEFAULT 0,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  updated_at  timestamptz NOT NULL DEFAULT now()
+);
+
+INSERT INTO lookup_document_document_role (name, description, sort_order)
+SELECT v.name, v.description, v.sort_order
+FROM (VALUES
+  ('Înlocuiește',          'Document care supersedează un altul',                  1),
+  ('Modifică',             'Document cu modificări parțiale față de altul',        2),
+  ('Prelungește',          'Document care extinde valabilitatea altuia',            3),
+  ('Anulează',             'Document care desființează un altul',                   4),
+  ('Consolidat cu',        'Documente corelate legal',                              5),
+  ('Versiune anterioară a','Formă anterioară a unui document în vigoare',           6),
+  ('Anexă la',             'Document atașat ca anexă unui document principal',      7),
+  ('Corecție a',           'Document care rectifică erori dintr-un altul',          8)
+) AS v(name, description, sort_order)
+WHERE NOT EXISTS (SELECT 1 FROM lookup_document_document_role LIMIT 1);
+
+CREATE TRIGGER touch_lookup_document_document_role_updated_at
+  BEFORE UPDATE ON lookup_document_document_role
+  FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
+
+-- ── lookup_person_person_role  (migration 055) ────────────────
+-- Whitelist: each row marks a lookup_person_role entry as valid for
+-- Person <-> Person associations.
+CREATE TABLE lookup_person_person_role (
+  id             uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  person_role_id uuid        NOT NULL UNIQUE REFERENCES lookup_person_role(id) ON DELETE CASCADE,
+  created_at     timestamptz NOT NULL DEFAULT now()
+);
+
 -- ============================================================
 -- DOCUMENT domain  (drizzle 0003, renamed from "paperwork" in
 -- migration 020 — Slice #15.05)
@@ -835,12 +899,13 @@ CREATE TABLE property_document (
 );
 CREATE UNIQUE INDEX property_document_unique ON property_document (property_id, document_id);
 
--- property_property  (self-ref, symmetric)
+-- property_property  (self-ref, symmetric; relationship_role_id added migration 055)
 CREATE TABLE property_property (
-  id              uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  property_id_a   uuid        NOT NULL REFERENCES property(id) ON DELETE CASCADE,
-  property_id_b   uuid        NOT NULL REFERENCES property(id) ON DELETE CASCADE,
-  created_at      timestamptz NOT NULL DEFAULT now(),
+  id                   uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  property_id_a        uuid        NOT NULL REFERENCES property(id) ON DELETE CASCADE,
+  property_id_b        uuid        NOT NULL REFERENCES property(id) ON DELETE CASCADE,
+  relationship_role_id uuid        REFERENCES lookup_property_property_role(id) ON DELETE SET NULL,
+  created_at           timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT property_property_order CHECK (property_id_a < property_id_b)
 );
 CREATE UNIQUE INDEX property_property_unique ON property_property (property_id_a, property_id_b);
@@ -857,22 +922,25 @@ CREATE TABLE person_document (
 );
 CREATE UNIQUE INDEX person_document_unique ON person_document (person_id, document_id);
 
--- person_person  (self-ref, symmetric)
+-- person_person  (self-ref, symmetric; relationship_role_id added migration 055)
 CREATE TABLE person_person (
-  id           uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  person_id_a  uuid        NOT NULL REFERENCES person(id) ON DELETE CASCADE,
-  person_id_b  uuid        NOT NULL REFERENCES person(id) ON DELETE CASCADE,
-  created_at   timestamptz NOT NULL DEFAULT now(),
+  id                   uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  person_id_a          uuid        NOT NULL REFERENCES person(id) ON DELETE CASCADE,
+  person_id_b          uuid        NOT NULL REFERENCES person(id) ON DELETE CASCADE,
+  relationship_role_id uuid        REFERENCES lookup_person_role(id) ON DELETE SET NULL,
+  created_at           timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT person_person_order CHECK (person_id_a < person_id_b)
 );
 CREATE UNIQUE INDEX person_person_unique ON person_person (person_id_a, person_id_b);
 
--- document_document  (self-ref, symmetric; renamed from paperwork_paperwork)
+-- document_document  (self-ref, symmetric; renamed from paperwork_paperwork;
+--                     relationship_role_id added migration 055)
 CREATE TABLE document_document (
-  id              uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  document_id_a   uuid        NOT NULL REFERENCES document(id) ON DELETE CASCADE,
-  document_id_b   uuid        NOT NULL REFERENCES document(id) ON DELETE CASCADE,
-  created_at      timestamptz NOT NULL DEFAULT now(),
+  id                   uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  document_id_a        uuid        NOT NULL REFERENCES document(id) ON DELETE CASCADE,
+  document_id_b        uuid        NOT NULL REFERENCES document(id) ON DELETE CASCADE,
+  relationship_role_id uuid        REFERENCES lookup_document_document_role(id) ON DELETE SET NULL,
+  created_at           timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT document_document_order CHECK (document_id_a < document_id_b)
 );
 CREATE UNIQUE INDEX document_document_unique ON document_document (document_id_a, document_id_b);

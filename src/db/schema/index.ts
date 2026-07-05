@@ -715,6 +715,48 @@ export const lookupDocTypePersonRole = pgTable(
   ],
 );
 
+// ── Relationship roles for self-reference junction tables (Slice #19.21) ────
+//
+// Three new lookup tables control what typed roles can be attached to the
+// bare self-reference junctions (property_property, document_document,
+// person_person). All are admin-managed via Administration → Reference Data →
+// Roles panel. Seeded with Romanian defaults in migration_055.
+
+// Property <-> Property relationship types (e.g. Adiacent, Inclus în, …)
+export const lookupPropertyPropertyRole = pgTable("lookup_property_property_role", {
+  id:          uuid("id").primaryKey().defaultRandom(),
+  name:        text("name").notNull(),
+  description: text("description"),
+  sortOrder:   integer("sort_order").notNull().default(0),
+  createdAt:   timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt:   timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// Document <-> Document relationship types (e.g. Înlocuiește, Modifică, …)
+export const lookupDocumentDocumentRole = pgTable("lookup_document_document_role", {
+  id:          uuid("id").primaryKey().defaultRandom(),
+  name:        text("name").notNull(),
+  description: text("description"),
+  sortOrder:   integer("sort_order").notNull().default(0),
+  createdAt:   timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt:   timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// Person <-> Person role whitelist — each row marks a lookup_person_role entry
+// as valid for Person <-> Person associations. Same pattern as
+// lookup_property_person_role. ON DELETE CASCADE keeps the table clean.
+export const lookupPersonPersonRole = pgTable(
+  "lookup_person_person_role",
+  {
+    id:           uuid("id").primaryKey().defaultRandom(),
+    personRoleId: uuid("person_role_id")
+      .notNull()
+      .unique()
+      .references(() => lookupPersonRole.id, { onDelete: "cascade" }),
+    createdAt:    timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+);
+
 // ── Others (was lookup_service_interest, renamed in migration 011) ──────────
 //
 // General-purpose bucket for categorised lookup values that don't belong to
@@ -935,6 +977,11 @@ export const propertyProperty = pgTable(
     id:           uuid("id").primaryKey().defaultRandom(),
     propertyIdA:  uuid("property_id_a").notNull().references(() => property.id, { onDelete: "cascade" }),
     propertyIdB:  uuid("property_id_b").notNull().references(() => property.id, { onDelete: "cascade" }),
+    // Optional relationship role — set by admin via lookup_property_property_role.
+    // ON DELETE SET NULL so removing a role from Reference Data never breaks
+    // existing associations; it just clears the role tag.
+    relationshipRoleId: uuid("relationship_role_id")
+      .references(() => lookupPropertyPropertyRole.id, { onDelete: "set null" }),
     createdAt:    timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
@@ -971,6 +1018,11 @@ export const personPerson = pgTable(
     id:          uuid("id").primaryKey().defaultRandom(),
     personIdA:   uuid("person_id_a").notNull().references(() => person.id, { onDelete: "cascade" }),
     personIdB:   uuid("person_id_b").notNull().references(() => person.id, { onDelete: "cascade" }),
+    // Optional role from the master lookup_person_role list, further filtered
+    // by the lookup_person_person_role whitelist in the UI.
+    // ON DELETE SET NULL — cleared automatically if the role is removed.
+    relationshipRoleId: uuid("relationship_role_id")
+      .references(() => lookupPersonRole.id, { onDelete: "set null" }),
     createdAt:   timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
@@ -1022,6 +1074,11 @@ export const documentDocument = pgTable(
     id:          uuid("id").primaryKey().defaultRandom(),
     documentIdA: uuid("document_id_a").notNull().references(() => document.id, { onDelete: "cascade" }),
     documentIdB: uuid("document_id_b").notNull().references(() => document.id, { onDelete: "cascade" }),
+    // Optional relationship role — set by admin via lookup_document_document_role.
+    // ON DELETE SET NULL so removing a role from Reference Data never breaks
+    // existing associations; it just clears the role tag.
+    relationshipRoleId: uuid("relationship_role_id")
+      .references(() => lookupDocumentDocumentRole.id, { onDelete: "set null" }),
     createdAt:   timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
