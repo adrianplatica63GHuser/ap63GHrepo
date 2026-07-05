@@ -95,6 +95,7 @@ export async function listStamps(): Promise<StampListItem[]> {
     SELECT count(*)::int FROM stamp_member sm WHERE sm.stamp_id = stamps.id
   )`;
 
+  // Slice #19.30: exclude soft-deleted stamps.
   const rows = await db
     .select({
       id:               stamps.id,
@@ -105,6 +106,7 @@ export async function listStamps(): Promise<StampListItem[]> {
       createdAt:        stamps.createdAt,
     })
     .from(stamps)
+    .where(isNull(stamps.deletedAt))
     .orderBy(desc(stamps.createdAt));
 
   return rows as StampListItem[];
@@ -150,10 +152,11 @@ export async function getStampDetail(
   id: string,
   targetType: StampTargetType,
 ): Promise<StampDetail | null> {
+  // Slice #19.30: treat soft-deleted stamps as not found.
   const [s] = await db
     .select()
     .from(stamps)
-    .where(eq(stamps.id, id))
+    .where(and(eq(stamps.id, id), isNull(stamps.deletedAt)))
     .limit(1);
   if (!s) return null;
 
@@ -331,10 +334,11 @@ export async function updateStamp(
   id: string,
   input: StampUpdate,
 ): Promise<boolean> {
+  // Slice #19.30: treat soft-deleted stamps as not found.
   const [s] = await db
     .select({ id: stamps.id })
     .from(stamps)
-    .where(eq(stamps.id, id))
+    .where(and(eq(stamps.id, id), isNull(stamps.deletedAt)))
     .limit(1);
   if (!s) return false;
 
@@ -428,13 +432,15 @@ async function applyMemberChange(
 }
 
 // ---------------------------------------------------------------------------
-// Delete — cascades to stamp_member.
+// Delete (soft) — Slice #19.30: sets deleted_at instead of hard-deleting.
+// stamp_member rows are kept; the stamp disappears from all lists.
 // ---------------------------------------------------------------------------
 
 export async function deleteStamp(id: string): Promise<boolean> {
   const r = await db
-    .delete(stamps)
-    .where(eq(stamps.id, id))
+    .update(stamps)
+    .set({ deletedAt: sql`NOW()` })
+    .where(and(eq(stamps.id, id), isNull(stamps.deletedAt)))
     .returning({ id: stamps.id });
   return r.length > 0;
 }
@@ -450,6 +456,7 @@ export type StampEntityTag = { id: string; code: string; shortDescription: strin
 export async function listEntityStampTags(
   principalObjectId: string,
 ): Promise<StampEntityTag[]> {
+  // Slice #19.30: exclude soft-deleted stamps from the References tab.
   const rows = await db
     .select({
       id:               stamps.id,
@@ -458,7 +465,7 @@ export async function listEntityStampTags(
     })
     .from(stampMember)
     .innerJoin(stamps, eq(stamps.id, stampMember.stampId))
-    .where(eq(stampMember.principalObjectId, principalObjectId))
+    .where(and(eq(stampMember.principalObjectId, principalObjectId), isNull(stamps.deletedAt)))
     .orderBy(asc(stamps.code));
 
   return rows;
@@ -467,11 +474,12 @@ export async function listEntityStampTags(
 export async function listEntityStampCodes(
   principalObjectId: string,
 ): Promise<string[]> {
+  // Slice #19.30: exclude soft-deleted stamps.
   const rows = await db
     .select({ code: stamps.code })
     .from(stampMember)
     .innerJoin(stamps, eq(stamps.id, stampMember.stampId))
-    .where(eq(stampMember.principalObjectId, principalObjectId))
+    .where(and(eq(stampMember.principalObjectId, principalObjectId), isNull(stamps.deletedAt)))
     .orderBy(asc(stamps.code));
 
   return rows.map((r) => r.code);

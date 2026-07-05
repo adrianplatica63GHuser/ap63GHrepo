@@ -592,6 +592,8 @@ export const lookupPropertyType = pgTable("lookup_property_type", {
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  // Slice #19.30: soft-delete — set by API DELETE instead of hard-deleting.
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });
 
 export const lookupTarla = pgTable("lookup_tarla", {
@@ -601,6 +603,7 @@ export const lookupTarla = pgTable("lookup_tarla", {
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });
 
 export const lookupUseCategory = pgTable("lookup_use_category", {
@@ -609,6 +612,7 @@ export const lookupUseCategory = pgTable("lookup_use_category", {
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });
 
 // ── Persoană group ──────────────────────────────────────────────────────────
@@ -619,6 +623,7 @@ export const lookupPersonType = pgTable("lookup_person_type", {
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });
 
 export const lookupPersonRole = pgTable("lookup_person_role", {
@@ -628,6 +633,7 @@ export const lookupPersonRole = pgTable("lookup_person_role", {
   sortOrder:   integer("sort_order").notNull().default(0),
   createdAt:   timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt:   timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  deletedAt:   timestamp("deleted_at", { withTimezone: true }),
 });
 
 // Judicial-person legal/organisational form (SRL/SA/PFA/etc.). Replaces the
@@ -639,6 +645,7 @@ export const lookupJudicialPersonType = pgTable("lookup_judicial_person_type", {
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });
 
 export const lookupCitizenship = pgTable("lookup_citizenship", {
@@ -647,6 +654,7 @@ export const lookupCitizenship = pgTable("lookup_citizenship", {
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });
 
 // ── Document group ──────────────────────────────────────────────────────────
@@ -664,6 +672,7 @@ export const lookupDocumentType = pgTable("lookup_document_type", {
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });
 
 export const lookupInstitution = pgTable("lookup_institution", {
@@ -673,6 +682,7 @@ export const lookupInstitution = pgTable("lookup_institution", {
   sortOrder:       integer("sort_order").notNull().default(0),
   createdAt:       timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt:       timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  deletedAt:       timestamp("deleted_at", { withTimezone: true }),
 });
 
 // ── Property ↔ Person Role whitelist ────────────────────────────────────────
@@ -730,6 +740,7 @@ export const lookupPropertyPropertyRole = pgTable("lookup_property_property_role
   sortOrder:   integer("sort_order").notNull().default(0),
   createdAt:   timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt:   timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  deletedAt:   timestamp("deleted_at", { withTimezone: true }),
 });
 
 // Document <-> Document relationship types (e.g. Înlocuiește, Modifică, …)
@@ -740,6 +751,7 @@ export const lookupDocumentDocumentRole = pgTable("lookup_document_document_role
   sortOrder:   integer("sort_order").notNull().default(0),
   createdAt:   timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt:   timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  deletedAt:   timestamp("deleted_at", { withTimezone: true }),
 });
 
 // Person <-> Person role whitelist — each row marks a lookup_person_role entry
@@ -1122,6 +1134,8 @@ export const groups = pgTable("groups", {
   lastPosition: integer("last_position").notNull().default(0),
   createdAt:   timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt:   timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  // Slice #19.30: soft-delete — set by API DELETE instead of hard-deleting.
+  deletedAt:   timestamp("deleted_at", { withTimezone: true }),
 });
 
 export const groupMember = pgTable(
@@ -1169,6 +1183,8 @@ export const stamps = pgTable("stamps", {
   notes:            text("notes"),
   createdAt:        timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt:        timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  // Slice #19.30: soft-delete — set by API DELETE instead of hard-deleting.
+  deletedAt:        timestamp("deleted_at", { withTimezone: true }),
 });
 
 export const stampMember = pgTable(

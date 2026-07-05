@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, isNull, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { lookupDocumentDocumentRole } from "@/db/schema";
 
@@ -22,6 +22,7 @@ export async function listDocumentDocumentRoles(): Promise<DocumentDocumentRoleR
       sortOrder:   lookupDocumentDocumentRole.sortOrder,
     })
     .from(lookupDocumentDocumentRole)
+    .where(isNull(lookupDocumentDocumentRole.deletedAt))
     .orderBy(lookupDocumentDocumentRole.sortOrder, lookupDocumentDocumentRole.name);
 }
 
@@ -52,8 +53,10 @@ export async function updateDocumentDocumentRole(
     .where(eq(lookupDocumentDocumentRole.id, id));
 }
 
+// Slice #19.30: soft-delete
 export async function deleteDocumentDocumentRole(id: string): Promise<void> {
   await db
-    .delete(lookupDocumentDocumentRole)
+    .update(lookupDocumentDocumentRole)
+    .set({ deletedAt: sql`NOW()` })
     .where(eq(lookupDocumentDocumentRole.id, id));
 }

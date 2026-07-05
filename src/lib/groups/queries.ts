@@ -136,6 +136,8 @@ export async function listGroups(
       )
   )`;
 
+  const baseWhere = isNull(groups.deletedAt);
+
   const query = db
     .select({
       id:          groups.id,
@@ -149,8 +151,8 @@ export async function listGroups(
     .orderBy(desc(groups.createdAt));
 
   const rows = targetType
-    ? await query.where(eq(groups.targetType, targetType))
-    : await query;
+    ? await query.where(and(baseWhere, eq(groups.targetType, targetType)))
+    : await query.where(baseWhere);
 
   return rows as GroupListItem[];
 }
@@ -190,7 +192,8 @@ export async function createGroup(input: GroupCreate): Promise<GroupListItem> {
 // ---------------------------------------------------------------------------
 
 export async function getGroupDetail(id: string): Promise<GroupDetail | null> {
-  const [g] = await db.select().from(groups).where(eq(groups.id, id)).limit(1);
+  // Slice #19.30: treat soft-deleted groups as not found.
+  const [g] = await db.select().from(groups).where(and(eq(groups.id, id), isNull(groups.deletedAt))).limit(1);
   if (!g) return null;
 
   const targetType = g.targetType as GroupTargetType;
@@ -421,7 +424,8 @@ export async function updateGroup(
   input: GroupUpdate,
 ): Promise<GroupDetail | null> {
   await db.transaction(async (tx) => {
-    const [g] = await tx.select().from(groups).where(eq(groups.id, id)).limit(1);
+    // Slice #19.30: treat soft-deleted groups as not found.
+    const [g] = await tx.select().from(groups).where(and(eq(groups.id, id), isNull(groups.deletedAt))).limit(1);
     if (!g) return;
 
     if (input.description !== undefined) {
@@ -605,11 +609,16 @@ export async function updateGroup(
 }
 
 // ---------------------------------------------------------------------------
-// Delete — cascades to group_member.
+// Delete (soft) — Slice #19.30: sets deleted_at instead of hard-deleting.
+// group_member rows are kept; the group simply disappears from all lists.
 // ---------------------------------------------------------------------------
 
 export async function deleteGroup(id: string): Promise<boolean> {
-  const r = await db.delete(groups).where(eq(groups.id, id)).returning({ id: groups.id });
+  const r = await db
+    .update(groups)
+    .set({ deletedAt: sql`NOW()` })
+    .where(and(eq(groups.id, id), isNull(groups.deletedAt)))
+    .returning({ id: groups.id });
   return r.length > 0;
 }
 
@@ -619,11 +628,12 @@ export async function deleteGroup(id: string): Promise<boolean> {
 // ---------------------------------------------------------------------------
 
 export async function listPropertyGroupTags(principalObjectId: string): Promise<GroupTag[]> {
+  // Slice #19.30: exclude soft-deleted groups from tag badges.
   const rows = await db
     .select({ code: groups.code, position: groupMember.position })
     .from(groupMember)
     .innerJoin(groups, eq(groups.id, groupMember.groupId))
-    .where(eq(groupMember.principalObjectId, principalObjectId))
+    .where(and(eq(groupMember.principalObjectId, principalObjectId), isNull(groups.deletedAt)))
     .orderBy(asc(groups.code));
   return rows as GroupTag[];
 }
@@ -637,6 +647,7 @@ export async function listPropertyGroupTags(principalObjectId: string): Promise<
 export type GroupEntityTag = { id: string; code: string; position: number; description: string };
 
 export async function listEntityGroupTags(principalObjectId: string): Promise<GroupEntityTag[]> {
+  // Slice #19.30: exclude soft-deleted groups from the References tab.
   const rows = await db
     .select({
       id:          groups.id,
@@ -646,7 +657,7 @@ export async function listEntityGroupTags(principalObjectId: string): Promise<Gr
     })
     .from(groupMember)
     .innerJoin(groups, eq(groups.id, groupMember.groupId))
-    .where(eq(groupMember.principalObjectId, principalObjectId))
+    .where(and(eq(groupMember.principalObjectId, principalObjectId), isNull(groups.deletedAt)))
     .orderBy(asc(groups.code));
   return rows as GroupEntityTag[];
 }
@@ -660,7 +671,7 @@ export async function listPropertyGroupCodes(): Promise<string[]> {
   const rows = await db
     .select({ code: groups.code })
     .from(groups)
-    .where(eq(groups.targetType, "PROPERTY"))
+    .where(and(eq(groups.targetType, "PROPERTY"), isNull(groups.deletedAt)))
     .orderBy(asc(groups.code));
   return rows.map((r) => r.code);
 }
@@ -674,7 +685,10 @@ export async function listPersonGroupCodes(): Promise<string[]> {
     .select({ code: groups.code })
     .from(groups)
     .where(
-      sql`${groups.targetType} IN ('PHYSICAL_PERSON', 'JUDICIAL_PERSON')`,
+      and(
+        sql`${groups.targetType} IN ('PHYSICAL_PERSON', 'JUDICIAL_PERSON')`,
+        isNull(groups.deletedAt),
+      ),
     )
     .orderBy(asc(groups.code));
   return rows.map((r) => r.code);
@@ -685,7 +699,7 @@ export async function listDocumentGroupCodes(): Promise<string[]> {
   const rows = await db
     .select({ code: groups.code })
     .from(groups)
-    .where(eq(groups.targetType, "DOCUMENT"))
+    .where(and(eq(groups.targetType, "DOCUMENT"), isNull(groups.deletedAt)))
     .orderBy(asc(groups.code));
   return rows.map((r) => r.code);
 }
@@ -710,7 +724,7 @@ export async function listPropertyGroupMemberships(): Promise<
         isNull(property.deletedAt),
       ),
     )
-    .where(eq(groups.targetType, "PROPERTY"));
+    .where(and(eq(groups.targetType, "PROPERTY"), isNull(groups.deletedAt)));
   return rows;
 }
 

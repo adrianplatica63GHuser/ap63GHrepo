@@ -36,6 +36,7 @@
 import type { NextRequest }   from "next/server";
 import { NextResponse }       from "next/server";
 import { db }                 from "@/db";
+import { isNull }             from "drizzle-orm";
 import { lookupCitizenship }  from "@/db/schema";
 import { unexpectedError }    from "@/lib/api/errors";
 import { createServerClient } from "@/lib/supabase/server";
@@ -357,9 +358,11 @@ export async function POST(request: NextRequest): Promise<Response> {
   }
 
   // Resolve citizenshipRaw -> citizenshipId against the live lookup table.
+  // Slice #19.30: only match against active (non-soft-deleted) citizenships.
   const citizenshipRows = await db
     .select({ id: lookupCitizenship.id, name: lookupCitizenship.name })
-    .from(lookupCitizenship);
+    .from(lookupCitizenship)
+    .where(isNull(lookupCitizenship.deletedAt));
 
   const citizenshipId = matchCitizenship(parsed.fields.citizenshipRaw, citizenshipRows);
   if (!citizenshipId && parsed.fields.citizenshipRaw) {

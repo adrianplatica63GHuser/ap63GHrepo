@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, isNull, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { lookupPropertyPropertyRole } from "@/db/schema";
 
@@ -22,6 +22,7 @@ export async function listPropertyPropertyRoles(): Promise<PropertyPropertyRoleR
       sortOrder:   lookupPropertyPropertyRole.sortOrder,
     })
     .from(lookupPropertyPropertyRole)
+    .where(isNull(lookupPropertyPropertyRole.deletedAt))
     .orderBy(lookupPropertyPropertyRole.sortOrder, lookupPropertyPropertyRole.name);
 }
 
@@ -60,8 +61,10 @@ export async function updatePropertyPropertyRole(
     .where(eq(lookupPropertyPropertyRole.id, id));
 }
 
+// Slice #19.30: soft-delete
 export async function deletePropertyPropertyRole(id: string): Promise<void> {
   await db
-    .delete(lookupPropertyPropertyRole)
+    .update(lookupPropertyPropertyRole)
+    .set({ deletedAt: sql`NOW()` })
     .where(eq(lookupPropertyPropertyRole.id, id));
 }
