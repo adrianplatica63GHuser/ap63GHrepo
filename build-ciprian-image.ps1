@@ -9,9 +9,15 @@
 #   - Docker Desktop running
 #   - .env file present in C:\dev\ga40prj\ with real values filled in
 #   - C:\dev\ga40prj.Ciprian\ folder exists (created once manually)
-#   - ga40prj-postgres container running with your current local schema applied
+#   - ga40prj-postgres container running with ALL migrations applied
+#     (run scripts\Apply-Migration.ps1 first if unsure -- this script checks)
 #
 # What this script does:
+#   0. Sanity checks (folder, .env)
+#   0.5. PRE-FLIGHT: verifies dev DB has no unapplied migrations before dumping.
+#        If any migration_*.sql in src\db\ is not recorded in schema_migrations,
+#        the script aborts -- generating ciprian-schema-update.sql from an
+#        incomplete schema would silently corrupt Ciprian's database.
 #   1. Reads NEXT_PUBLIC_* values from your .env file
 #   2. Builds the Docker image (takes 5-10 min on first run; faster after)
 #   3. Exports the image to C:\dev\ga40prj.Ciprian\docker\app\ga40prj-app.tar
@@ -27,11 +33,21 @@
 #      script runs, so it can never silently drift out of sync.
 #
 # To update Ciprian after a new slice (whether or not it touches the DB):
-#   1. Run this script again
-#   2. Send the new ga40prj-app.tar AND ciprian-schema-update.sql to Ciprian
+#   1. Run scripts\Apply-Migration.ps1 to make sure dev is fully up to date
+#   2. Run this script
+#   3. Send the new ga40prj-app.tar AND ciprian-schema-update.sql to Ciprian
 #      (replace both of his copies, same filenames every time)
-#   3. Ciprian runs update.bat, then applies ciprian-schema-update.sql per UC-C6
+#   4. Ciprian runs update.bat, then applies ciprian-schema-update.sql per UC-C6
 #      (this wipes and reloads his UAT database -- by design, at this stage)
+#
+# NOTE -- upcoming transition (data-preservation mode):
+#   Once Ciprian starts keeping real data, the full-wipe delivery above will be
+#   replaced by a delta-migration approach: only the migration_*.sql files that
+#   Ciprian has NOT yet applied (identified by querying his schema_migrations
+#   table) are sent and applied in order. The pre-flight check in Step 0.5 is
+#   already the foundation for that: it confirms dev's schema_migrations is
+#   complete before any delivery action. A future script
+#   (ciprian-send-migrations.ps1 or similar) will handle the delta delivery.
 
 $ErrorActionPreference = "Stop"
 
@@ -49,6 +65,59 @@ if (-not (Test-Path $ciprianRoot)) {
     exit 1
 }
 $refDataDumpLocal = Join-Path $repoRoot "ga40prj-refdata-dump.sql"
+
+# ---- Step 0.5: pre-flight -- verify dev DB has no unapplied migrations -------
+#
+# pg_dump (Step 4) captures whatever state ga40prj-postgres is in right now.
+# If a migration file exists in src\db\ but has not been applied, the dump
+# produces an incomplete schema and Ciprian gets a corrupt database.
+# This block aborts early with a clear error before any expensive work starts.
+
+Write-Host ""
+Write-Host "Pre-flight: checking dev migration state..." -ForegroundColor Cyan
+
+# Is schema_migrations present in the dev DB?
+$smExists = docker exec ga40prj-postgres psql -U postgres -d ga40db -t -c `
+    "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='schema_migrations');" `
+    2>&1 | ForEach-Object { "$_".Trim() } | Where-Object { $_ -ne "" }
+
+if ($smExists -eq "f") {
+    Write-Host ""
+    Write-Host "ERROR: schema_migrations table not found in ga40prj-postgres." -ForegroundColor Red
+    Write-Host "       Run  scripts\Apply-Migration.ps1  to bootstrap it, then retry." -ForegroundColor Yellow
+    exit 1
+}
+
+# Read applied migration filenames from dev DB
+$appliedRaw = docker exec ga40prj-postgres psql -U postgres -d ga40db -t -c `
+    "SELECT filename FROM schema_migrations ORDER BY filename;" `
+    2>&1
+$appliedSet = @{}
+foreach ($line in $appliedRaw) {
+    $trimmed = "$line".Trim()
+    if ($trimmed -ne "") { $appliedSet[$trimmed] = $true }
+}
+
+# Compare against migration_*.sql files on disk
+$migrationsDir  = Join-Path $repoRoot "src\db"
+$migrationFiles = @(Get-ChildItem -Path $migrationsDir -Filter "migration_*.sql" | Sort-Object Name)
+$unapplied      = @($migrationFiles | Where-Object { -not $appliedSet.ContainsKey($_.Name) })
+
+if ($unapplied.Count -gt 0) {
+    Write-Host ""
+    Write-Host "ERROR: $($unapplied.Count) migration(s) in src\db\ have not been applied to dev:" -ForegroundColor Red
+    foreach ($f in $unapplied) {
+        Write-Host "         - $($f.Name)" -ForegroundColor Red
+    }
+    Write-Host ""
+    Write-Host "       Generating ciprian-schema-update.sql now would capture an incomplete" -ForegroundColor Red
+    Write-Host "       schema and corrupt Ciprian's database." -ForegroundColor Red
+    Write-Host ""
+    Write-Host "       Fix: run  scripts\Apply-Migration.ps1  then re-run this script." -ForegroundColor Yellow
+    exit 1
+}
+
+Write-Host "OK -- all $($appliedSet.Count) migration(s) applied. Dev schema is complete." -ForegroundColor Green
 
 # ---- Step 1: read NEXT_PUBLIC_* from .env ------------------------------------
 
