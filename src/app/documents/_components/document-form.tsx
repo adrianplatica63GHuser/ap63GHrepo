@@ -13,6 +13,7 @@ import {
   useWatch,
 } from "react-hook-form";
 import { useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-provider";
+import { safeMutate } from "@/lib/api/safe-mutate";
 import {
   VersionNavControls,
   type VersionNavView,
@@ -367,22 +368,11 @@ export function DocumentForm({
           ? "/api/documents"
           : `/api/documents/${encodeURIComponent(documentId!)}`;
       const method = mode === "create" ? "POST" : "PATCH";
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      // An expired session is redirected to /sign-in by the auth middleware;
-      // fetch follows that as a 200, which would otherwise look like a
-      // successful save and silently lose the change. Treat any redirect as
-      // an auth failure.
-      if (res.redirected) {
-        throw new Error(t("saveErrorSession"));
-      }
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body?.error ?? `${t("saveError")} (HTTP ${res.status})`);
-      }
+      await safeMutate(
+        url,
+        { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) },
+        t,
+      );
       await queryClient.invalidateQueries({ queryKey: ["documents"] });
       // Slice #18.06: a save appended a new version — drop the cached list so
       // reopening shows it (and the ◀/▶ nav enables / advances).

@@ -43,6 +43,7 @@ import { StreetViewPanel } from "./street-view-panel";
 import { VersionNavControls } from "@/components/version-nav-controls";
 import { FieldPulseContext, usePulseRing } from "@/components/versioning/field-pulse";
 import { highlightRingClass } from "@/lib/versioning/highlight-ring";
+import { safeMutate } from "@/lib/api/safe-mutate";
 
 // ---------------------------------------------------------------------------
 // Version history fetch (Slice #18.02)
@@ -516,23 +517,11 @@ export function PropertyForm({
           ? "/api/properties"
           : `/api/properties/${encodeURIComponent(propertyId!)}`;
       const method = mode === "create" ? "POST" : "PATCH";
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      // An expired session is redirected to /sign-in by the auth middleware;
-      // fetch silently follows that redirect and yields a 200 (the sign-in
-      // HTML), which would otherwise look like a successful save and lose the
-      // change. Treat any redirected response as an auth failure so the user
-      // gets a clear "sign in again" message instead of a silent no-op.
-      if (res.redirected) {
-        throw new Error(t("saveErrorSession"));
-      }
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body?.error ?? `${t("saveError")} (HTTP ${res.status})`);
-      }
+      await safeMutate(
+        url,
+        { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) },
+        t,
+      );
       await queryClient.invalidateQueries({ queryKey: ["properties"] });
       // Slice #18.02: a save appended a new version — drop the cached list so
       // reopening the property shows it (and the ◀/▶ nav enables).

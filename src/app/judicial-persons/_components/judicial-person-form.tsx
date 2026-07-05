@@ -15,6 +15,7 @@ import {
   Controller,
 } from "react-hook-form";
 import { NavArrowIcon } from "@/components/back-arrow";
+import { safeMutate } from "@/lib/api/safe-mutate";
 import { PaginationControls } from "@/components/pagination-controls";
 import { useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-provider";
 import {
@@ -257,24 +258,11 @@ export function JudicialPersonForm({
           ? "/api/judicial-persons"
           : `/api/judicial-persons/${encodeURIComponent(personId!)}`;
       const method = mode === "create" ? "POST" : "PATCH";
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      // An expired session is redirected to /sign-in by the auth middleware;
-      // fetch follows that as a 200, which would otherwise look like a
-      // successful save and silently lose the change. Treat any redirect as
-      // an auth failure.
-      if (res.redirected) {
-        throw new Error(t("saveErrorSession"));
-      }
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(
-          body?.error ?? `${t("saveError")} (HTTP ${res.status})`,
-        );
-      }
+      await safeMutate(
+        url,
+        { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) },
+        t,
+      );
       await queryClient.invalidateQueries({ queryKey: ["judicial-persons"] });
       // The unified /persons list (Slice #15.09) caches under ["persons"];
       // invalidate it too so a created/edited/deleted person shows without a
