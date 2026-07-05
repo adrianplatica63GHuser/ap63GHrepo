@@ -331,6 +331,7 @@ export async function getPropertyById(
 
 export async function createProperty(
   input: PropertyCreate,
+  updatedBy: string | null = null,
 ): Promise<PropertyFull> {
   const { address: addrInput, corners: cornerList, ...propFields } = input;
 
@@ -362,6 +363,7 @@ export async function createProperty(
         // Slice #18.09: computed from the corners supplied at creation.
         calculatedAreaMp: computeCalculatedAreaMp(cornerList),
         notes:           propFields.notes           ?? null,
+        updatedBy,
       })
       .returning();
 
@@ -406,6 +408,7 @@ export async function createProperty(
       propertyId:    propRow.id,
       versionNumber: 0,
       snapshot:      snapshotFromFull(full),
+      updatedBy,
     });
 
     return full;
@@ -419,6 +422,7 @@ export async function createProperty(
 export async function updateProperty(
   id:    string,
   input: PropertyUpdate,
+  updatedBy: string | null = null,
 ): Promise<PropertyFull | null> {
   const { address: addrInput, corners: cornerList, ...propFields } = input;
 
@@ -432,7 +436,8 @@ export async function updateProperty(
     if (existing.length === 0) return null;
 
     // Build property patch from only explicitly-provided fields.
-    const propPatch: Partial<typeof property.$inferInsert> = {};
+    // Always include updatedBy so the audit trail is always current.
+    const propPatch: Partial<typeof property.$inferInsert> = { updatedBy };
     if (propFields.propertyTypeId  !== undefined) propPatch.propertyTypeId  = propFields.propertyTypeId  ?? null;
     if (propFields.nickname        !== undefined) propPatch.nickname        = propFields.nickname        ?? null;
     if (propFields.tarlaSola       !== undefined) propPatch.tarlaSola       = propFields.tarlaSola       ?? null;
@@ -447,9 +452,7 @@ export async function updateProperty(
     }
     if (propFields.notes           !== undefined) propPatch.notes           = propFields.notes           ?? null;
 
-    if (Object.keys(propPatch).length > 0) {
-      await tx.update(property).set(propPatch).where(eq(property.id, id));
-    }
+    await tx.update(property).set(propPatch).where(eq(property.id, id));
 
     // Address: undefined = untouched; null = delete; object = replace.
     if (addrInput !== undefined) {
@@ -547,6 +550,7 @@ export async function updateProperty(
         propertyId:    id,
         versionNumber: (latestVer?.versionNumber ?? -1) + 1,
         snapshot:      newSnapshot,
+        updatedBy,
       });
     }
 

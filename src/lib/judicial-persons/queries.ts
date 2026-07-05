@@ -327,6 +327,7 @@ function judicialSnapshotsEqual(
 
 export async function createJudicialPerson(
   input: JudicialPersonCreate,
+  updatedBy: string | null = null,
 ): Promise<JudicialPersonFull> {
   const {
     addresses: addressList,
@@ -358,6 +359,7 @@ export async function createJudicialPerson(
         type: "JUDICIAL",
         displayName,
         notes: notes ?? null,
+        updatedBy,
       })
       .returning();
 
@@ -400,6 +402,7 @@ export async function createJudicialPerson(
       personId:      pRow.id,
       versionNumber: 0,
       snapshot:      judicialSnapshotFromFull({ person: pRow, judicial: jRow, addresses: addressRows }),
+      updatedBy,
     });
 
     return {
@@ -420,6 +423,7 @@ export async function createJudicialPerson(
 export async function updateJudicialPerson(
   id: string,
   input: JudicialPersonUpdate,
+  updatedBy: string | null = null,
 ): Promise<JudicialPersonFull | null> {
   const {
     addresses: addressList,
@@ -463,8 +467,9 @@ export async function updateJudicialPerson(
     // or notes changed.
     const needsDisplayNameRefresh = judUpdate.name !== undefined;
 
-    if (needsDisplayNameRefresh || notes !== undefined) {
-      const personPatch: Partial<typeof person.$inferInsert> = {};
+    // Always update person.updatedBy; also refresh notes/displayName when changed.
+    {
+      const personPatch: Partial<typeof person.$inferInsert> = { updatedBy };
       if (notes !== undefined) personPatch.notes = notes ?? null;
       if (needsDisplayNameRefresh) {
         const fresh = await tx
@@ -475,9 +480,7 @@ export async function updateJudicialPerson(
         const newDisplay = (fresh[0]?.name ?? "").trim() || "(unnamed)";
         personPatch.displayName = newDisplay;
       }
-      if (Object.keys(personPatch).length > 0) {
-        await tx.update(person).set(personPatch).where(eq(person.id, id));
-      }
+      await tx.update(person).set(personPatch).where(eq(person.id, id));
     }
 
     // Address merge-by-kind: omitted = leave alone; provided = delete all + reinsert.
@@ -544,6 +547,7 @@ export async function updateJudicialPerson(
         personId:      id,
         versionNumber: (latestVer?.versionNumber ?? -1) + 1,
         snapshot:      newSnapshot,
+        updatedBy,
       });
     }
 

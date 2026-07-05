@@ -19,6 +19,7 @@ import {
   judicialListQuerySchema,
   judicialPersonCreateSchema,
 } from "@/lib/judicial-persons/validation";
+import { createServerClient } from "@/lib/supabase/server";
 
 export async function GET(request: NextRequest): Promise<Response> {
   const url = new URL(request.url);
@@ -72,7 +73,9 @@ export async function POST(request: NextRequest): Promise<Response> {
   }
 
   try {
-    const result = await createJudicialPerson(parsed.data);
+    const supabase = await createServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    const result = await createJudicialPerson(parsed.data, user?.email ?? null);
     return Response.json(result, { status: 201 });
   } catch (err) {
     const dbResponse = dbErrorToResponse(err);

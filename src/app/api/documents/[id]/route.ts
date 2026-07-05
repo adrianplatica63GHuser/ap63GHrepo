@@ -18,6 +18,7 @@ import {
   updateDocument,
 } from "@/lib/documents/queries";
 import { documentUpdateSchema } from "@/lib/documents/validation";
+import { createServerClient } from "@/lib/supabase/server";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -53,7 +54,9 @@ export async function PATCH(
   }
 
   try {
-    const result = await updateDocument(id, parsed.data);
+    const supabase = await createServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    const result = await updateDocument(id, parsed.data, user?.email ?? null);
     if (!result) {
       return Response.json({ error: "Not found" }, { status: 404 });
     }

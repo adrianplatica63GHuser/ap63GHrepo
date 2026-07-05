@@ -18,6 +18,7 @@ import {
   updateNaturalPerson,
 } from "@/lib/persons/queries";
 import { naturalPersonUpdateSchema } from "@/lib/persons/validation";
+import { createServerClient } from "@/lib/supabase/server";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -53,7 +54,9 @@ export async function PATCH(
   }
 
   try {
-    const result = await updateNaturalPerson(id, parsed.data);
+    const supabase = await createServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    const result = await updateNaturalPerson(id, parsed.data, user?.email ?? null);
     if (!result) {
       return Response.json({ error: "Not found" }, { status: 404 });
     }

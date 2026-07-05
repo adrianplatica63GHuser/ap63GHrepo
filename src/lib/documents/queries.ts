@@ -285,6 +285,7 @@ export async function listDocumentVersions(
 
 export async function createDocument(
   input: DocumentCreate,
+  updatedBy: string | null = null,
 ): Promise<DocumentFull> {
   return await db.transaction(async (tx) => {
     // Allocate a code from the shared sequence via the principal_object row.
@@ -302,6 +303,7 @@ export async function createDocument(
         ...inputToValues(input),
         principalObjectId: poRow.id,
         code: poRow.code,
+        updatedBy,
       })
       .returning();
 
@@ -310,6 +312,7 @@ export async function createDocument(
       documentId:    row.id,
       versionNumber: 0,
       snapshot:      snapshotFromFull(row),
+      updatedBy,
     });
 
     return row;
@@ -323,6 +326,7 @@ export async function createDocument(
 export async function updateDocument(
   id:    string,
   input: DocumentUpdate,
+  updatedBy: string | null = null,
 ): Promise<DocumentFull | null> {
   return await db.transaction(async (tx) => {
     // Verify exists and not deleted.
@@ -334,7 +338,8 @@ export async function updateDocument(
 
     if (existing.length === 0) return null;
 
-    const patch: Partial<typeof document.$inferInsert> = {};
+    // Always include updatedBy so the audit trail is always current.
+    const patch: Partial<typeof document.$inferInsert> = { updatedBy };
 
     if (input.documentTypeId !== undefined) patch.documentTypeId = input.documentTypeId;
     if (input.title          !== undefined) patch.title          = input.title          ?? null;
@@ -371,9 +376,8 @@ export async function updateDocument(
     if (input.dateValidUntil !== undefined) patch.dateValidUntil = input.dateValidUntil ?? null;
     if (input.surveyorId     !== undefined) patch.surveyorId     = input.surveyorId     ?? null;
 
-    if (Object.keys(patch).length > 0) {
-      await tx.update(document).set(patch).where(eq(document.id, id));
-    }
+    // patch always has at least updatedBy
+    await tx.update(document).set(patch).where(eq(document.id, id));
 
     const [updated] = await tx
       .select()
@@ -405,6 +409,7 @@ export async function updateDocument(
         documentId:    id,
         versionNumber: (latestVer?.versionNumber ?? -1) + 1,
         snapshot:      newSnapshot,
+        updatedBy,
       });
     }
 

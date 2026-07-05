@@ -100,6 +100,10 @@ export const person = pgTable("person", {
 
   notes: text("notes"),
 
+  // Email of the user who last wrote this record (set by the API layer from
+  // the Supabase session; null for legacy rows and seed data).
+  updatedBy: text("updated_by"),
+
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -334,6 +338,9 @@ export const personVersion = pgTable(
     // subtype's snapshot type.
     snapshot: jsonb("snapshot").notNull(),
 
+    // Email of the user who created this version (from the Supabase session).
+    updatedBy: text("updated_by"),
+
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -408,6 +415,10 @@ export const property = pgTable("property", {
   calculatedAreaMp: numeric("calculated_area_mp", { precision: 12, scale: 2 }),
 
   notes: text("notes"),
+
+  // Email of the user who last wrote this record (set by the API layer from
+  // the Supabase session; null for legacy rows and seed data).
+  updatedBy: text("updated_by"),
 
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
@@ -537,6 +548,9 @@ export const propertyVersion = pgTable(
     // corners). Untyped here to avoid a circular import; the query layer casts
     // it to PropertySnapshot.
     snapshot: jsonb("snapshot").notNull(),
+
+    // Email of the user who created this version (from the Supabase session).
+    updatedBy: text("updated_by"),
 
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
@@ -802,6 +816,10 @@ export const document = pgTable("document", {
   // ── Always present ─────────────────────────────────────────────────────
   notes: text("notes"), // Observatii
 
+  // Email of the user who last wrote this record (set by the API layer from
+  // the Supabase session; null for legacy rows and seed data).
+  updatedBy: text("updated_by"),
+
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -843,6 +861,9 @@ export const documentVersion = pgTable(
     // Full snapshot of the document at this version. Untyped here to avoid a
     // circular import; the query layer casts it to DocumentSnapshot.
     snapshot: jsonb("snapshot").notNull(),
+
+    // Email of the user who created this version (from the Supabase session).
+    updatedBy: text("updated_by"),
 
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()

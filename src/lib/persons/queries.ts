@@ -471,6 +471,7 @@ export async function listPersonVersions(
 
 export async function createNaturalPerson(
   input: NaturalPersonCreate,
+  updatedBy: string | null = null,
 ): Promise<PersonFull> {
   const { addresses: addressList, notes, ...natFields } = input;
   const displayName =
@@ -497,6 +498,7 @@ export async function createNaturalPerson(
         type: "NATURAL",
         displayName,
         notes: notes ?? null,
+        updatedBy,
       })
       .returning();
 
@@ -558,6 +560,7 @@ export async function createNaturalPerson(
       personId:      pRow.id,
       versionNumber: 0,
       snapshot:      naturalSnapshotFromFull(full),
+      updatedBy,
     });
 
     return full;
@@ -571,6 +574,7 @@ export async function createNaturalPerson(
 export async function updateNaturalPerson(
   id: string,
   input: NaturalPersonUpdate,
+  updatedBy: string | null = null,
 ): Promise<PersonFull | null> {
   const { addresses: addressList, notes, ...natUpdate } = input;
 
@@ -598,8 +602,9 @@ export async function updateNaturalPerson(
     const needsDisplayNameRefresh =
       natUpdate.firstName !== undefined || natUpdate.lastName !== undefined;
 
-    if (needsDisplayNameRefresh || notes !== undefined) {
-      const personPatch: Partial<typeof person.$inferInsert> = {};
+    // Always update person.updatedBy; also refresh notes/displayName when changed.
+    {
+      const personPatch: Partial<typeof person.$inferInsert> = { updatedBy };
       if (notes !== undefined) personPatch.notes = notes ?? null;
       if (needsDisplayNameRefresh) {
         const fresh = await tx
@@ -615,9 +620,7 @@ export async function updateNaturalPerson(
           "(unnamed)";
         personPatch.displayName = newDisplay;
       }
-      if (Object.keys(personPatch).length > 0) {
-        await tx.update(person).set(personPatch).where(eq(person.id, id));
-      }
+      await tx.update(person).set(personPatch).where(eq(person.id, id));
     }
 
     // Address merge-by-kind: omitted = leave alone; provided = delete all + reinsert.
@@ -684,6 +687,7 @@ export async function updateNaturalPerson(
         personId:      id,
         versionNumber: (latestVer?.versionNumber ?? -1) + 1,
         snapshot:      newSnapshot,
+        updatedBy,
       });
     }
 
