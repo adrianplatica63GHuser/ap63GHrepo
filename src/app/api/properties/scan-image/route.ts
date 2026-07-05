@@ -21,10 +21,13 @@
 export const runtime    = "nodejs";
 export const maxDuration = 60; // Tesseract can be slow on cold start
 
-import path                 from "path";
-import type { NextRequest } from "next/server";
-import { createWorker }     from "tesseract.js";
-import { stereo70ToWgs84 }  from "@/lib/geo/transdatRO";
+import path                     from "path";
+import type { NextRequest }     from "next/server";
+import { NextResponse }         from "next/server";
+import { createWorker }         from "tesseract.js";
+import { stereo70ToWgs84 }      from "@/lib/geo/transdatRO";
+import { createServerClient }   from "@/lib/supabase/server";
+import { checkOcrRateLimit }    from "@/lib/rate-limit/ocr";
 
 // When Next.js/Turbopack bundles server code, __dirname resolves to a virtual
 // path (e.g. "C:\ROOT\...") instead of the real node_modules location.
@@ -529,6 +532,17 @@ function parseOcrText(rawText: string): ScanResult {
 // ---------------------------------------------------------------------------
 
 export async function POST(request: NextRequest): Promise<Response> {
+  // ── Rate limiting (10 OCR requests / minute per user) ─────────────────────
+  const supabase = await createServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const rl = checkOcrRateLimit(user?.id ?? "anonymous");
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: "Prea multe cereri OCR. Încercați din nou în curând." },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfterSeconds) } },
+    );
+  }
+
   // Parse multipart form data
   let formData: FormData;
   try {
