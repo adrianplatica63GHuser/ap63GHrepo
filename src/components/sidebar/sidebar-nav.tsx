@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, ChevronDown, LogOut, KeyRound } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronDown, LogOut, KeyRound, Search } from "lucide-react";
 import { LocaleToggle } from "@/components/locale-toggle";
 import { createClient } from "@/lib/supabase/client";
 import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
@@ -245,6 +245,17 @@ export function SidebarNav() {
     });
   }
 
+  // ── Quick-search ──────────────────────────────────────────────────────────
+  const [quickSearch, setQuickSearch] = useState("");
+
+  function handleQuickSearch(e: React.FormEvent) {
+    e.preventDefault();
+    const q = quickSearch.trim();
+    if (!q) return;
+    setQuickSearch("");
+    guardedNavigate(`/admin/complex-query?search=${encodeURIComponent(q)}`);
+  }
+
   // ── Collapsed state — persisted in localStorage ───────────────────────────
   // Lazy initializer reads localStorage on the client; returns false on the
   // server (SSR). suppressHydrationWarning on <aside> handles the potential
@@ -389,6 +400,27 @@ export function SidebarNav() {
         <div className="px-4 py-1.5 text-xs text-fade truncate border-b border-wire">
           {t("signedInAs")} <span className="font-medium text-ink">{me.username}</span>
         </div>
+      )}
+
+      {/* ── Quick-search bar (expanded mode) ───────────────────────────── */}
+      {!isCollapsed && (
+        <form
+          onSubmit={handleQuickSearch}
+          className="px-2 py-2 border-b border-wire shrink-0"
+          aria-label={t("quickSearch")}
+        >
+          <div className="flex items-center gap-1.5 rounded-md border border-wire bg-card px-2 py-1.5 focus-within:border-slate-400 dark:focus-within:border-slate-500 transition-colors">
+            <Search size={12} className="shrink-0 text-fade" aria-hidden="true" />
+            <input
+              type="search"
+              value={quickSearch}
+              onChange={(e) => setQuickSearch(e.target.value)}
+              placeholder={t("quickSearchPlaceholder")}
+              className="flex-1 min-w-0 bg-transparent text-xs text-ink outline-none placeholder:text-fade"
+              aria-label={t("quickSearch")}
+            />
+          </div>
+        </form>
       )}
 
       {/* ── Nav sections ───────────────────────────────────────────────── */}

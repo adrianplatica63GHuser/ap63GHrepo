@@ -905,7 +905,9 @@
     "expand": "Extinde bara laterală",
     "signedInAs": "Autentificat ca",
     "changePassword": "Schimbă parola",
-    "signOut": "Ieșire"
+    "signOut": "Ieșire",
+    "quickSearch": "Căutare rapidă",
+    "quickSearchPlaceholder": "Nume, cod…"
   },
   "welcome": {
     "title": "GA40",
@@ -1669,12 +1671,17 @@
       "tagPlaceholder": "ex. prioritar",
       "updatedFrom": "Metadate actualizate de la",
       "updatedTo": "Metadate actualizate până la",
-      "any": "Orice"
+      "any": "Orice",
+      "personSubtype": "Subtip persoană"
     },
     "entityTypes": {
       "PERSON": "Persoană",
       "PROPERTY": "Proprietate",
       "DOCUMENT": "Document"
+    },
+    "personSubtypeValues": {
+      "NATURAL": "Persoană fizică",
+      "JUDICIAL": "Persoană juridică"
     },
     "importanceValues": {
       "LOW": "Scăzută",

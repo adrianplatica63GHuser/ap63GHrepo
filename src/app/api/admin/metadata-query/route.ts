@@ -3,11 +3,12 @@
  *
  * Complex entity search combining filters across:
  *   - entity type (PERSON / PROPERTY / DOCUMENT)
+ *   - person subtype (NATURAL / JUDICIAL — only when entityType=PERSON or unset)
  *   - metadata fields (importance, relevance, provenance)
  *   - group membership (by group code, e.g. "AA")
  *   - stamp membership (by stamp code, e.g. "STMP-AAA")
  *   - tag (substring match against entity_tag.tag)
- *   - text search on display name / code (substring, case-insensitive)
+ *   - text search on display name / code / key cadastral/document fields
  *   - metadata last-updated date range (updatedAt from/to)
  *   - "has metadata" / "has no metadata" filter
  *
@@ -15,10 +16,25 @@
  * Returns up to 200 results, ordered by entity code ascending.
  *
  * Response: { results: QueryResultItem[] }
+ *
+ * Slice #21.01 fixes:
+ *   (1) person.deleted_at / property.deleted_at / document.deleted_at were
+ *       missing from every WHERE clause — soft-deleted entities were leaking
+ *       into results.
+ *   (2) tagExists correlated subquery used ${principalObject.id} which Drizzle
+ *       renders as a bare "id" inside sql`` — ambiguous when entity_tag also
+ *       exposes an id.  Fixed to the literal qualified name "principal_object.id".
+ *   (3) Property text search now covers carte_funciara, tarla_sola, and
+ *       cadastral_number in addition to nickname.
+ *   (4) Document text search now covers nr_document and subject in addition to
+ *       title.
+ *   (5) New personSubtype filter (NATURAL | JUDICIAL).
  */
 
 import { NextResponse } from "next/server";
-import { and, or, eq, ilike, isNull, isNotNull, gte, lte, sql } from "drizzle-orm";
+import {
+  and, or, eq, ilike, isNull, isNotNull, gte, lte, sql,
+} from "drizzle-orm";
 import { db } from "@/db";
 import {
   principalObject,
@@ -45,19 +61,20 @@ export type QueryResultItem = {
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
-  const p = (key: string) => url.searchParams.get(key)?.trim() || null;
+  const p   = (key: string) => url.searchParams.get(key)?.trim() || null;
 
-  const entityType  = p("entityType");   // PERSON | PROPERTY | DOCUMENT | null=all
-  const importance  = p("importance");
-  const relevance   = p("relevance");
-  const provenance  = p("provenance");
-  const groupCode   = p("groupCode");    // group.code exact/ilike, e.g. "AA"
-  const stampCode   = p("stampCode");    // stamp.code exact/ilike, e.g. "STMP-AAA"
-  const tag         = p("tag");          // entity_tag.tag substring
-  const search      = p("search");       // code or display-name substring
-  const updatedFrom = p("updatedFrom");  // ISO date — metadata.updated_at >=
-  const updatedTo   = p("updatedTo");    // ISO date — metadata.updated_at <=
-  const hasMetadata = p("hasMetadata"); // "yes" | "no" | null=any
+  const entityType    = p("entityType");    // PERSON | PROPERTY | DOCUMENT | null=all
+  const personSubtype = p("personSubtype"); // NATURAL | JUDICIAL | null=both
+  const importance    = p("importance");
+  const relevance     = p("relevance");
+  const provenance    = p("provenance");
+  const groupCode     = p("groupCode");
+  const stampCode     = p("stampCode");
+  const tag           = p("tag");
+  const search        = p("search");
+  const updatedFrom   = p("updatedFrom");
+  const updatedTo     = p("updatedTo");
+  const hasMetadata   = p("hasMetadata");  // "yes" | "no" | null=any
 
   const types: Array<"PERSON" | "PROPERTY" | "DOCUMENT"> =
     entityType
@@ -67,9 +84,8 @@ export async function GET(req: Request) {
   const results: QueryResultItem[] = [];
 
   for (const type of types) {
-    // ------------------------------------------------------------------
-    // Build the WHERE conditions that apply to ALL types
-    // ------------------------------------------------------------------
+    // ── Shared conditions (metadata + group + stamp + tag) ─────────────────
+
     const metaConditions = [];
     if (importance)  metaConditions.push(eq(entityMetadata.importance, importance));
     if (relevance)   metaConditions.push(eq(entityMetadata.relevance,  relevance));
@@ -81,11 +97,9 @@ export async function GET(req: Request) {
 
     // Group filter via correlated EXISTS.
     // After migration_051, group_member has a single principal_object_id FK.
-    // The outer query always joins principalObject, so we correlate on that.
-    // NOTE: use literal "principal_object.id" (not ${principalObject.id}) —
-    // Drizzle renders ${column} as a bare "id" inside sql`` subqueries, which
-    // Postgres would resolve to gm.id or g.id (both in scope).  Literal
-    // qualified name is safe (CLAUDE.md gotcha).
+    // NOTE: use the literal qualified name "principal_object.id" — Drizzle's
+    // ${principalObject.id} renders as a bare "id" inside sql`` correlated
+    // subqueries and Postgres resolves it to the wrong table (CLAUDE.md gotcha).
     const groupExists = groupCode
       ? sql`EXISTS (
             SELECT 1 FROM group_member gm
@@ -105,31 +119,42 @@ export async function GET(req: Request) {
           )`
       : null;
 
-    // Tag filter via correlated EXISTS on entity_tag (keyed by principal_object_id)
+    // Tag filter — bug fix: was ${principalObject.id} (Drizzle renders as
+    // bare "id", ambiguous against entity_tag.id).  Now uses literal name.
     const tagExists = tag
       ? sql`EXISTS (
-          SELECT 1 FROM entity_tag et
-          WHERE et.principal_object_id = ${principalObject.id}
-            AND et.tag ILIKE ${`%${tag}%`}
-        )`
+            SELECT 1 FROM entity_tag et
+            WHERE et.principal_object_id = principal_object.id
+              AND et.tag ILIKE ${`%${tag}%`}
+          )`
       : null;
 
-    // ------------------------------------------------------------------
-    // Per-type query
-    // ------------------------------------------------------------------
+    // ── Per-type queries ────────────────────────────────────────────────────
 
     if (type === "PERSON") {
+      // Text search covers display_name (= last+first for natural persons,
+      // company name for judicial) and the shared principal_object code.
       const searchCond = search
-        ? or(ilike(person.displayName, `%${search}%`), ilike(principalObject.code, `%${search}%`))
+        ? or(
+            ilike(person.displayName,  `%${search}%`),
+            ilike(principalObject.code, `%${search}%`),
+          )
+        : null;
+
+      // Person subtype filter (NATURAL / JUDICIAL).
+      const subtypeCond = personSubtype
+        ? eq(person.type, personSubtype as "NATURAL" | "JUDICIAL")
         : null;
 
       const where = and(
         eq(principalObject.objectType, "PERSON"),
+        isNull(person.deletedAt),           // ← (fix 1) exclude soft-deleted
         ...metaConditions,
-        ...(groupExists ? [groupExists] : []),
-        ...(stampExists ? [stampExists] : []),
-        ...(tagExists   ? [tagExists]   : []),
-        ...(searchCond  ? [searchCond]  : []),
+        ...(groupExists  ? [groupExists]  : []),
+        ...(stampExists  ? [stampExists]  : []),
+        ...(tagExists    ? [tagExists]    : []),
+        ...(searchCond   ? [searchCond]   : []),
+        ...(subtypeCond  ? [subtypeCond]  : []),
       );
 
       const rows = await db
@@ -170,12 +195,22 @@ export async function GET(req: Request) {
     }
 
     if (type === "PROPERTY") {
+      // Text search expanded (fix 3): nickname + carte_funciara + tarla_sola
+      // + cadastral_number + code.  GIN trigram indexes (migration_053) make
+      // each ILIKE sub-clause fast.
       const searchCond = search
-        ? or(ilike(property.nickname, `%${search}%`), ilike(principalObject.code, `%${search}%`))
+        ? or(
+            ilike(property.nickname,        `%${search}%`),
+            ilike(property.carteFunciara,   `%${search}%`),
+            ilike(property.tarlaSola,       `%${search}%`),
+            ilike(property.cadastralNumber, `%${search}%`),
+            ilike(principalObject.code,     `%${search}%`),
+          )
         : null;
 
       const where = and(
         eq(principalObject.objectType, "PROPERTY"),
+        isNull(property.deletedAt),         // ← (fix 1) exclude soft-deleted
         ...metaConditions,
         ...(groupExists ? [groupExists] : []),
         ...(stampExists ? [stampExists] : []),
@@ -220,12 +255,19 @@ export async function GET(req: Request) {
     }
 
     if (type === "DOCUMENT") {
+      // Text search expanded (fix 4): title + nr_document + subject + code.
       const searchCond = search
-        ? or(ilike(document.title, `%${search}%`), ilike(principalObject.code, `%${search}%`))
+        ? or(
+            ilike(document.title,       `%${search}%`),
+            ilike(document.nrDocument,  `%${search}%`),
+            ilike(document.subject,     `%${search}%`),
+            ilike(principalObject.code, `%${search}%`),
+          )
         : null;
 
       const where = and(
         eq(principalObject.objectType, "DOCUMENT"),
+        isNull(document.deletedAt),         // ← (fix 1) exclude soft-deleted
         ...metaConditions,
         ...(groupExists ? [groupExists] : []),
         ...(stampExists ? [stampExists] : []),
@@ -270,8 +312,7 @@ export async function GET(req: Request) {
     }
   }
 
-  // Final sort across types
+  // Final cross-type sort by code
   results.sort((a, b) => a.code.localeCompare(b.code));
-
   return NextResponse.json({ results: results.slice(0, 200) });
 }

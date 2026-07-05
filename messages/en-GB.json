@@ -905,7 +905,9 @@
     "expand": "Expand sidebar",
     "signedInAs": "Signed in as",
     "changePassword": "Change password",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "quickSearch": "Quick search",
+    "quickSearchPlaceholder": "Name, code…"
   },
   "welcome": {
     "title": "GA40",
@@ -1669,12 +1671,17 @@
       "tagPlaceholder": "e.g. priority",
       "updatedFrom": "Metadata updated from",
       "updatedTo": "Metadata updated to",
-      "any": "Any"
+      "any": "Any",
+      "personSubtype": "Person subtype"
     },
     "entityTypes": {
       "PERSON": "Person",
       "PROPERTY": "Property",
       "DOCUMENT": "Document"
+    },
+    "personSubtypeValues": {
+      "NATURAL": "Natural person",
+      "JUDICIAL": "Judicial person"
     },
     "importanceValues": {
       "LOW": "Low",
