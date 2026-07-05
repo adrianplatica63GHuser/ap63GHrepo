@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import { RecencyBadge } from "@/components/recency-badge";
 
 const PAGE_SIZE = 15;
-const LS_KEY    = "ga40-col-property";
+const LS_KEY    = "ga40-col-property-v2";
 const MAX_OPT   = 4;
 const DEFAULT_COLS = ["nickname", "cadastralNumber", "surfaceAreaMp", "locality"];
 
