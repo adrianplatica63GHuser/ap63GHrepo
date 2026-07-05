@@ -10,6 +10,15 @@
  * and response shape.
  */
 
+// Mock Supabase server client so routes that call createServerClient()
+// for the updatedBy user email don't throw "cookies outside request scope".
+jest.mock("@/lib/supabase/server", () => ({
+  __esModule: true,
+  createServerClient: jest.fn().mockResolvedValue({
+    auth: { getUser: jest.fn().mockResolvedValue({ data: { user: null } }) },
+  }),
+}));
+
 jest.mock("@/lib/judicial-persons/queries", () => ({
   __esModule: true,
   listJudicialPersons: jest.fn(),

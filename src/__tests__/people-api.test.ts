@@ -17,6 +17,15 @@
 //
 // Each handler imports from "@/lib/persons/queries"; mocking the module
 // here means those imports resolve to our jest mocks at test time.
+// Mock Supabase server client so routes that call createServerClient()
+// for the updatedBy user email don't throw "cookies outside request scope".
+jest.mock("@/lib/supabase/server", () => ({
+  __esModule: true,
+  createServerClient: jest.fn().mockResolvedValue({
+    auth: { getUser: jest.fn().mockResolvedValue({ data: { user: null } }) },
+  }),
+}));
+
 jest.mock("@/lib/persons/queries", () => ({
   __esModule: true,
   listPersons: jest.fn(),
