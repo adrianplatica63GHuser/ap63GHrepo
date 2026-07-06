@@ -244,6 +244,7 @@
       "showBigMap": "Arată Harta Mare",
       "showSmallMap": "Arată Harta Mică",
       "versionLabel": "v {n}",
+      "historyChip": "{n} versiuni",
       "prevVersion": "Versiunea anterioară",
       "nextVersion": "Versiunea următoare",
       "removedCorner": "Punct eliminat în această versiune",
@@ -739,6 +740,7 @@
     "deleteError": "Ștergerea a eșuat",
     "version": {
       "label": "v {n}",
+      "historyChip": "{n} versiuni",
       "prev": "Versiunea anterioară",
       "next": "Versiunea următoare",
       "makeCurrent": "Fă curentă",
@@ -854,6 +856,7 @@
     "deleteError": "Ștergerea a eșuat",
     "version": {
       "label": "v {n}",
+      "historyChip": "{n} versiuni",
       "prev": "Versiunea anterioară",
       "next": "Versiunea următoare",
       "makeCurrent": "Fă curentă",
@@ -1060,6 +1063,7 @@
     "deleteError": "Ștergerea a eșuat",
     "version": {
       "label": "v {n}",
+      "historyChip": "{n} versiuni",
       "prev": "Versiunea anterioară",
       "next": "Versiunea următoare",
       "makeCurrent": "Fă curentă",

@@ -620,6 +620,7 @@ export function PropertyForm({
             nav={versionNav}
             labels={{
               versionLabel:    t("corners.versionLabel", { n: versionNav.current }),
+              historyChip:     t("corners.historyChip", { n: versions.length }),
               prevVersion:     t("corners.prevVersion"),
               nextVersion:     t("corners.nextVersion"),
               makeCurrent:     t("corners.makeCurrent"),

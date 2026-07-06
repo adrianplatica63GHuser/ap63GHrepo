@@ -40,6 +40,12 @@ export type VersionNavLabels = {
   nextVersion:     string;
   makeCurrent:     string;
   makeCurrentHint: string;
+  /**
+   * Discovery chip label shown on the latest version when history exists,
+   * e.g. "4 versiuni". Clicking it navigates one step back. If omitted the
+   * chip falls back to the full strip (old behaviour).
+   */
+  historyChip?:    string;
 };
 
 // Thick-stroked directional arrow (shaft + head). 28px — bare, no button
@@ -73,6 +79,28 @@ function NavArrow({ dir }: { dir: "left" | "right" }) {
 const ARROW_BTN_CLASS =
   "inline-flex items-center justify-center p-0 text-ink hover:opacity-70 disabled:opacity-30 disabled:cursor-not-allowed";
 
+// Small counterclockwise-rotate icon for the history discovery chip.
+function HistoryIcon() {
+  return (
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      {/* counterclockwise arc arrow */}
+      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+      <path d="M3 3v5h5" />
+    </svg>
+  );
+}
+
 export function VersionNavControls({
   nav,
   labels,
@@ -80,6 +108,27 @@ export function VersionNavControls({
   nav:    VersionNavView;
   labels: VersionNavLabels;
 }) {
+  // Discovery chip: shown on the latest version when there is at least one
+  // prior version (nav.current >= 1) and a chip label was supplied. Clicking
+  // steps back to the previous version so the user sees the diff highlights.
+  const isOnLatest = !nav.canNext;
+  if (isOnLatest && nav.current >= 1 && labels.historyChip) {
+    return (
+      <div className="pointer-events-auto flex items-center">
+        <button
+          type="button"
+          onClick={nav.onPrev}
+          disabled={!nav.canPrev}
+          title={labels.prevVersion}
+          className="inline-flex items-center gap-1.5 rounded-full border border-zinc-300 bg-white px-2.5 py-0.5 text-xs font-medium text-zinc-500 shadow-sm transition-colors hover:border-zinc-400 hover:text-zinc-700 disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-500 dark:hover:text-zinc-200"
+        >
+          <HistoryIcon />
+          {labels.historyChip}
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="pointer-events-auto flex items-center">
       <button

@@ -480,6 +480,7 @@ export function DocumentForm({
           nav={versionNav}
           labels={{
             versionLabel:    t("version.label", { n: versionNav.current }),
+            historyChip:     t("version.historyChip", { n: versions.length }),
             prevVersion:     t("version.prev"),
             nextVersion:     t("version.next"),
             makeCurrent:     t("version.makeCurrent"),

@@ -244,6 +244,7 @@
       "showBigMap": "Show Big Map",
       "showSmallMap": "Show Small Map",
       "versionLabel": "v {n}",
+      "historyChip": "{n} versions",
       "prevVersion": "Previous version",
       "nextVersion": "Next version",
       "removedCorner": "Corner removed in this version",
@@ -739,6 +740,7 @@
     "deleteError": "Could not delete",
     "version": {
       "label": "v {n}",
+      "historyChip": "{n} versions",
       "prev": "Previous version",
       "next": "Next version",
       "makeCurrent": "Make Current",
@@ -854,6 +856,7 @@
     "deleteError": "Could not delete",
     "version": {
       "label": "v {n}",
+      "historyChip": "{n} versions",
       "prev": "Previous version",
       "next": "Next version",
       "makeCurrent": "Make Current",
@@ -1060,6 +1063,7 @@
     "deleteError": "Could not delete",
     "version": {
       "label": "v {n}",
+      "historyChip": "{n} versions",
       "prev": "Previous version",
       "next": "Next version",
       "makeCurrent": "Make Current",
