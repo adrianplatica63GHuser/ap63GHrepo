@@ -1513,13 +1513,6 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName 
           />
         )}
 
-        {/* ── 8. Mențiuni / Mentions ───────────────────────────────────────── */}
-        <section>
-          <h2 className="mb-3 text-xl font-semibold text-ink dark:text-zinc-100">
-            {t("mentions.title")}
-          </h2>
-          <p className="text-sm text-fade dark:text-zinc-400">{t("mentions.description")}</p>
-        </section>
 
       </div>
     </>

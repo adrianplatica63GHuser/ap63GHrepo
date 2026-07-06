@@ -517,10 +517,6 @@
         "title": "Stamps",
         "empty": "No stamps applied"
       },
-      "mentions": {
-        "title": "Mentions",
-        "wip": "Work in progress — coming soon"
-      }
     },
     "entityMetadata": {
       "loading": "Loading…",
@@ -625,10 +621,6 @@
         "typePerson": "Person",
         "typeProp": "Property",
         "typeDoc": "Document"
-      },
-      "mentions": {
-        "title": "Mentions",
-        "description": "Mentions of this item within other records, documents, or notes will be listed here."
       },
       "version": {
         "label": "v {n}",

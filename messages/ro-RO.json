@@ -517,10 +517,6 @@
         "title": "Ștampile",
         "empty": "Nicio ștampilă aplicată"
       },
-      "mentions": {
-        "title": "Mențiuni",
-        "wip": "În lucru — disponibil în curând"
-      }
     },
     "entityMetadata": {
       "loading": "Se încarcă…",
@@ -625,10 +621,6 @@
         "typePerson": "Persoană",
         "typeProp": "Proprietate",
         "typeDoc": "Document"
-      },
-      "mentions": {
-        "title": "Mențiuni",
-        "description": "Mențiunile acestui element în alte înregistrări, documente sau note vor fi afișate aici."
       },
       "version": {
         "label": "v {n}",
