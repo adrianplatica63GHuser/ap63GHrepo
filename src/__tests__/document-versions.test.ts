@@ -38,6 +38,10 @@ const EMPTY_SNAP: DocumentSnapshot = {
   dateStart:         null,
   dateEnd:           null,
   notes:             null,
+  // Slice #19.03
+  subject:           null,
+  dateValidUntil:    null,
+  surveyorId:        null,
 };
 
 function snap(over: Partial<DocumentSnapshot> = {}): DocumentSnapshot {
