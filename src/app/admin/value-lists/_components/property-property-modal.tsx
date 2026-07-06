@@ -66,10 +66,13 @@ function RoleForm({
   const [error, setError]             = useState<string | null>(null);
 
   const mutation = useMutation({
-    mutationFn: () =>
-      initial
-        ? patchRole(initial.id, name.trim(), desc.trim())
-        : createRole(name.trim(), desc.trim()),
+    mutationFn: async () => {
+      if (initial) {
+        await patchRole(initial.id, name.trim(), desc.trim());
+      } else {
+        await createRole(name.trim(), desc.trim());
+      }
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["property-property-roles"] });
       onSaved();
