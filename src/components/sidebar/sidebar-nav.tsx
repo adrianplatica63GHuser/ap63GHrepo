@@ -253,7 +253,7 @@ export function SidebarNav() {
     const q = quickSearch.trim();
     if (!q) return;
     setQuickSearch("");
-    guardedNavigate(`/admin/complex-query?search=${encodeURIComponent(q)}`);
+    guardedNavigate(`/admin/global-search?search=${encodeURIComponent(q)}`);
   }
 
   // ── Collapsed state — persisted in localStorage ───────────────────────────

@@ -909,7 +909,7 @@
       "referenceData": "Reference Data",
       "import": "Import",
       "calculation": "Calculation",
-      "complexQuery": "Complex Querying",
+      "globalSearch": "Global Search",
       "export": "Export",
       "helpContent": "Help Content",
       "settings": "Settings"
@@ -1733,9 +1733,9 @@
       "cancel": "Cancel"
     }
   },
-  "complexQuery": {
-    "pageTitle": "Complex Querying",
-    "pageSubtitle": "Search across all entities by combining metadata, group, stamp, and tag filters. All active filters are ANDed together. Up to 200 results.",
+  "globalSearch": {
+    "pageTitle": "Global Search",
+    "pageSubtitle": "Search across all entities by name, code, address, or combining metadata, group, stamp, and tag filters. All active filters are ANDed together. Up to 200 results.",
     "search": "Search",
     "searching": "Searching…",
     "reset": "Reset",

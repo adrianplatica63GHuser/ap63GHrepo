@@ -1,14 +1,15 @@
 /**
  * GET /api/admin/metadata-query
  *
- * Complex entity search combining filters across:
+ * Global entity search combining filters across:
  *   - entity type (PERSON / PROPERTY / DOCUMENT)
  *   - person subtype (NATURAL / JUDICIAL — only when entityType=PERSON or unset)
  *   - metadata fields (importance, relevance, provenance)
  *   - group membership (by group code, e.g. "AA")
  *   - stamp membership (by stamp code, e.g. "STMP-AAA")
  *   - tag (substring match against entity_tag.tag)
- *   - text search on display name / code / key cadastral/document fields
+ *   - text search on display name / code / key cadastral/document fields /
+ *     property address (street_line, locality) / group description
  *   - metadata last-updated date range (updatedAt from/to)
  *   - "has metadata" / "has no metadata" filter
  *
@@ -17,18 +18,21 @@
  *
  * Response: { results: QueryResultItem[] }
  *
- * Slice #21.01 fixes:
- *   (1) person.deleted_at / property.deleted_at / document.deleted_at were
- *       missing from every WHERE clause — soft-deleted entities were leaking
- *       into results.
- *   (2) tagExists correlated subquery used ${principalObject.id} which Drizzle
- *       renders as a bare "id" inside sql`` — ambiguous when entity_tag also
- *       exposes an id.  Fixed to the literal qualified name "principal_object.id".
- *   (3) Property text search now covers carte_funciara, tarla_sola, and
- *       cadastral_number in addition to nickname.
- *   (4) Document text search now covers nr_document and subject in addition to
- *       title.
- *   (5) New personSubtype filter (NATURAL | JUDICIAL).
+ * Slice #20.02 additions (formerly "Complex Query", now "Global Search"):
+ *   (A) Property text search now includes property_address.street_line and
+ *       property_address.locality via a LEFT JOIN on property_address.
+ *   (B) Text search also matches group descriptions via a correlated EXISTS
+ *       on groups.description (any group the entity belongs to).
+ *   (C) Property QueryResultItem now includes tarlaSola, parcela,
+ *       cadastralNumber, and nickname as separate fields so the UI can apply
+ *       the priority: tarla+parcela → nickname → cadastralNumber.
+ *
+ * Slice #21.01 fixes (preserved):
+ *   (1) Soft-deleted entities excluded from all three type queries.
+ *   (2) tagExists correlated subquery uses literal "principal_object.id".
+ *   (3) Property text search covers carte_funciara, tarla_sola, cadastral_number.
+ *   (4) Document text search covers nr_document and subject.
+ *   (5) personSubtype filter (NATURAL | JUDICIAL).
  */
 
 import { NextResponse } from "next/server";
@@ -40,6 +44,7 @@ import {
   principalObject,
   person,
   property,
+  propertyAddress,
   document,
   entityMetadata,
 } from "@/db/schema";
@@ -57,6 +62,11 @@ export type QueryResultItem = {
   provenance:        string | null;
   updatedBy:         string | null;
   metadataUpdatedAt: string | null;
+  /** PROPERTY only — used by the UI to build display priority label. */
+  propertyTarlaSola:       string | null;
+  propertyParcela:         string | null;
+  propertyNickname:        string | null;
+  propertyCadastralNumber: string | null;
 };
 
 export async function GET(req: Request) {
@@ -129,6 +139,18 @@ export async function GET(req: Request) {
           )`
       : null;
 
+    // Slice #20.02 (B): group description search — matches when the entity
+    // belongs to ANY group whose description contains the search term.
+    // Uses literal "principal_object.id" for the same Drizzle gotcha reason.
+    const groupDescriptionExists = search
+      ? sql`EXISTS (
+            SELECT 1 FROM group_member gm2
+            JOIN groups g2 ON g2.id = gm2.group_id
+            WHERE gm2.principal_object_id = principal_object.id
+              AND g2.description ILIKE ${`%${search}%`}
+          )`
+      : null;
+
     // ── Per-type queries ────────────────────────────────────────────────────
 
     if (type === "PERSON") {
@@ -136,8 +158,9 @@ export async function GET(req: Request) {
       // company name for judicial) and the shared principal_object code.
       const searchCond = search
         ? or(
-            ilike(person.displayName,  `%${search}%`),
+            ilike(person.displayName,   `%${search}%`),
             ilike(principalObject.code, `%${search}%`),
+            ...(groupDescriptionExists ? [groupDescriptionExists] : []),
           )
         : null;
 
@@ -179,32 +202,40 @@ export async function GET(req: Request) {
 
       for (const r of rows) {
         results.push({
-          principalObjectId: r.principalObjectId,
-          code:              r.code,
-          entityType:        "PERSON",
-          entityId:          r.entityId,
-          displayName:       r.displayName,
-          personType:        r.personType,
-          importance:        r.importance,
-          relevance:         r.relevance,
-          provenance:        r.provenance,
-          updatedBy:         r.updatedBy,
-          metadataUpdatedAt: r.metadataUpdatedAt?.toISOString() ?? null,
+          principalObjectId:       r.principalObjectId,
+          code:                    r.code,
+          entityType:              "PERSON",
+          entityId:                r.entityId,
+          displayName:             r.displayName,
+          personType:              r.personType,
+          importance:              r.importance,
+          relevance:               r.relevance,
+          provenance:              r.provenance,
+          updatedBy:               r.updatedBy,
+          metadataUpdatedAt:       r.metadataUpdatedAt?.toISOString() ?? null,
+          propertyTarlaSola:       null,
+          propertyParcela:         null,
+          propertyNickname:        null,
+          propertyCadastralNumber: null,
         });
       }
     }
 
     if (type === "PROPERTY") {
-      // Text search expanded (fix 3): nickname + carte_funciara + tarla_sola
-      // + cadastral_number + code.  GIN trigram indexes (migration_053) make
-      // each ILIKE sub-clause fast.
+      // Text search (fix 3 + Slice #20.02 A):
+      //   nickname, carte_funciara, tarla_sola, cadastral_number, code
+      //   + property_address.street_line, property_address.locality (new)
+      //   + group description (new, via correlated EXISTS)
       const searchCond = search
         ? or(
-            ilike(property.nickname,        `%${search}%`),
-            ilike(property.carteFunciara,   `%${search}%`),
-            ilike(property.tarlaSola,       `%${search}%`),
-            ilike(property.cadastralNumber, `%${search}%`),
-            ilike(principalObject.code,     `%${search}%`),
+            ilike(property.nickname,         `%${search}%`),
+            ilike(property.carteFunciara,    `%${search}%`),
+            ilike(property.tarlaSola,        `%${search}%`),
+            ilike(property.cadastralNumber,  `%${search}%`),
+            ilike(principalObject.code,      `%${search}%`),
+            ilike(propertyAddress.streetLine, `%${search}%`),
+            ilike(propertyAddress.locality,   `%${search}%`),
+            ...(groupDescriptionExists ? [groupDescriptionExists] : []),
           )
         : null;
 
@@ -223,7 +254,11 @@ export async function GET(req: Request) {
           principalObjectId: principalObject.id,
           code:              principalObject.code,
           entityId:          property.id,
-          displayName:       property.nickname,
+          // Slice #20.02 (C): return individual fields for priority display
+          tarlaSola:         property.tarlaSola,
+          parcela:           property.parcela,
+          nickname:          property.nickname,
+          cadastralNumber:   property.cadastralNumber,
           importance:        entityMetadata.importance,
           relevance:         entityMetadata.relevance,
           provenance:        entityMetadata.provenance,
@@ -232,36 +267,49 @@ export async function GET(req: Request) {
         })
         .from(principalObject)
         .innerJoin(property, eq(property.principalObjectId, principalObject.id))
+        // Slice #20.02 (A): LEFT JOIN property_address for street search
+        .leftJoin(propertyAddress, eq(propertyAddress.propertyId, property.id))
         .leftJoin(entityMetadata, eq(entityMetadata.principalObjectId, principalObject.id))
         .where(where)
         .orderBy(principalObject.code)
         .limit(200);
 
       for (const r of rows) {
+        // Build a summary displayName for legacy callers / plain text export.
+        // Priority: tarla+parcela → nickname → cadastralNumber → ""
+        const tarlaParcela = [r.tarlaSola, r.parcela].filter(Boolean).join(" / ");
+        const displayName  = tarlaParcela || r.nickname || r.cadastralNumber || "";
+
         results.push({
-          principalObjectId: r.principalObjectId,
-          code:              r.code,
-          entityType:        "PROPERTY",
-          entityId:          r.entityId,
-          displayName:       r.displayName ?? "",
-          personType:        null,
-          importance:        r.importance,
-          relevance:         r.relevance,
-          provenance:        r.provenance,
-          updatedBy:         r.updatedBy,
-          metadataUpdatedAt: r.metadataUpdatedAt?.toISOString() ?? null,
+          principalObjectId:       r.principalObjectId,
+          code:                    r.code,
+          entityType:              "PROPERTY",
+          entityId:                r.entityId,
+          displayName,
+          personType:              null,
+          importance:              r.importance,
+          relevance:               r.relevance,
+          provenance:              r.provenance,
+          updatedBy:               r.updatedBy,
+          metadataUpdatedAt:       r.metadataUpdatedAt?.toISOString() ?? null,
+          propertyTarlaSola:       r.tarlaSola,
+          propertyParcela:         r.parcela,
+          propertyNickname:        r.nickname,
+          propertyCadastralNumber: r.cadastralNumber,
         });
       }
     }
 
     if (type === "DOCUMENT") {
-      // Text search expanded (fix 4): title + nr_document + subject + code.
+      // Text search expanded (fix 4): title + nr_document + subject + code
+      // + group description (new, via correlated EXISTS).
       const searchCond = search
         ? or(
             ilike(document.title,       `%${search}%`),
             ilike(document.nrDocument,  `%${search}%`),
             ilike(document.subject,     `%${search}%`),
             ilike(principalObject.code, `%${search}%`),
+            ...(groupDescriptionExists ? [groupDescriptionExists] : []),
           )
         : null;
 
@@ -296,17 +344,21 @@ export async function GET(req: Request) {
 
       for (const r of rows) {
         results.push({
-          principalObjectId: r.principalObjectId,
-          code:              r.code,
-          entityType:        "DOCUMENT",
-          entityId:          r.entityId,
-          displayName:       r.displayName ?? "",
-          personType:        null,
-          importance:        r.importance,
-          relevance:         r.relevance,
-          provenance:        r.provenance,
-          updatedBy:         r.updatedBy,
-          metadataUpdatedAt: r.metadataUpdatedAt?.toISOString() ?? null,
+          principalObjectId:       r.principalObjectId,
+          code:                    r.code,
+          entityType:              "DOCUMENT",
+          entityId:                r.entityId,
+          displayName:             r.displayName ?? "",
+          personType:              null,
+          importance:              r.importance,
+          relevance:               r.relevance,
+          provenance:              r.provenance,
+          updatedBy:               r.updatedBy,
+          metadataUpdatedAt:       r.metadataUpdatedAt?.toISOString() ?? null,
+          propertyTarlaSola:       null,
+          propertyParcela:         null,
+          propertyNickname:        null,
+          propertyCadastralNumber: null,
         });
       }
     }

@@ -13,6 +13,7 @@ import {
   Settings,
   HelpCircle,
   Calculator,
+  Search,
 } from "lucide-react";
 
 export type NavItem = {
@@ -81,6 +82,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { key: "referenceData", href: "/admin/value-lists", icon: Database },
       { key: "import", href: "/admin/import", icon: Upload },
       { key: "calculation", href: "/admin/calculation", icon: Calculator },
+      { key: "globalSearch", href: "/admin/global-search", icon: Search },
       { key: "export", icon: Download },
       { key: "helpContent", href: "/admin/help-content", icon: HelpCircle },
       { key: "settings", icon: Settings },

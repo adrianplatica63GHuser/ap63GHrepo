@@ -909,7 +909,7 @@
       "referenceData": "Date de referință",
       "import": "Import",
       "calculation": "Calcul",
-      "complexQuery": "Interogare Complexă",
+      "globalSearch": "Căutare Globală",
       "export": "Export",
       "helpContent": "Conținut Ajutor",
       "settings": "Setări"
@@ -1733,9 +1733,9 @@
       "cancel": "Anulează"
     }
   },
-  "complexQuery": {
-    "pageTitle": "Interogare Complexă",
-    "pageSubtitle": "Căutați printre toate entitățile combinând filtre de metadate, grupuri, ștampile și etichete. Toate filtrele active sunt combinate cu AND. Maxim 200 de rezultate.",
+  "globalSearch": {
+    "pageTitle": "Căutare Globală",
+    "pageSubtitle": "Căutați printre toate entitățile după nume, cod, adresă sau combinând filtre de metadate, grupuri, ștampile și etichete. Toate filtrele active sunt combinate cu AND. Maxim 200 de rezultate.",
     "search": "Caută",
     "searching": "Se caută…",
     "reset": "Resetează",
