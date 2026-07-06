@@ -159,6 +159,12 @@ export function ValueListHub() {
           >
             {t("lists.stamps")}
           </Link>
+          <Link
+            href="/admin/tags"
+            className="rounded-md bg-cta px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-cta-d"
+          >
+            {t("lists.tags")}
+          </Link>
         </Section>
       </div>
 

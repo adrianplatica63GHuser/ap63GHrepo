@@ -1287,6 +1287,7 @@
       "institutions": "Institutions",
       "groups": "Groups",
       "stamps": "Stamps",
+      "tags": "Tags",
       "personToProperty": "Person → Property",
       "personToDocument": "Person → Document",
       "personToPerson": "Person → Person",
@@ -1436,6 +1437,50 @@
       "title": "Document → Property",
       "body": "The relationship between a document and a property is defined by the document type (e.g. cadastral plan, land-register extract). No separate relationship type configuration is needed.",
       "close": "Close"
+    }
+  },
+  "adminTags": {
+    "pageTitle": "Tag Management",
+    "pageNote": "View all tags in the system, rename them or merge duplicates to reduce entropy.",
+    "loading": "Loading…",
+    "error": "Failed to load",
+    "empty": "No tags in the system yet.",
+    "cloud": {
+      "title": "Tag cloud",
+      "note": "Tag size reflects the number of tagged entities. Click a tag to locate it in the table below.",
+      "count": "{count} distinct tags",
+      "usageHint": "Used by {count} entities"
+    },
+    "list": {
+      "title": "All tags",
+      "colTag": "Tag",
+      "colUsage": "Uses",
+      "colActions": "Actions",
+      "rename": "Rename"
+    },
+    "rename": {
+      "title": "Rename tag",
+      "labelFrom": "Current tag",
+      "labelTo": "New name",
+      "hint": "Tag is always stored lowercase. If the new name already exists, the two will merge.",
+      "save": "Save",
+      "saving": "Saving…",
+      "cancel": "Cancel",
+      "errorSame": "New name is the same as the current one.",
+      "errorGeneric": "An error occurred. Please try again."
+    },
+    "merge": {
+      "open": "Merge tags",
+      "title": "Merge tags",
+      "note": "Tick the tags you want to merge, then select which one to keep as the final tag.",
+      "keepThis": "Keep this",
+      "preview": "Tags \"{sources}\" will become \"{target}\".",
+      "save": "Merge",
+      "saving": "Merging…",
+      "cancel": "Cancel",
+      "errorRequirements": "Tick at least two tags and select which one to keep.",
+      "errorNothingToMerge": "All selected tags are already the same as the target.",
+      "errorGeneric": "An error occurred. Please try again."
     }
   },
   "adminImport": {

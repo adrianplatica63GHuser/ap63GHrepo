@@ -1287,6 +1287,7 @@
       "institutions": "Instituții",
       "groups": "Grupuri",
       "stamps": "Ștampile",
+      "tags": "Etichete",
       "personToProperty": "Persoană → Proprietate",
       "personToDocument": "Persoană → Document",
       "personToPerson": "Persoană → Persoană",
@@ -1436,6 +1437,50 @@
       "title": "Document → Proprietate",
       "body": "Relația dintre un document și o proprietate este definită de tipul documentului (de exemplu: plan cadastral, extras de carte funciară). Nu este necesară configurarea separată a unui tip de relație.",
       "close": "Închide"
+    }
+  },
+  "adminTags": {
+    "pageTitle": "Gestionare Etichete",
+    "pageNote": "Vizualizați toate etichetele din sistem, redenuminți-le sau fuzionați-le pentru a reduce redundanța.",
+    "loading": "Se încarcă…",
+    "error": "Eroare la încărcare",
+    "empty": "Nu există etichete în sistem încă.",
+    "cloud": {
+      "title": "Nor de etichete",
+      "note": "Mărimea fiecărei etichete reflectă numărul de entități etichetate. Apăsați o etichetă pentru a o localiza în tabel.",
+      "count": "{count} etichete distincte",
+      "usageHint": "Utilizată de {count} entități"
+    },
+    "list": {
+      "title": "Toate etichetele",
+      "colTag": "Etichetă",
+      "colUsage": "Utilizări",
+      "colActions": "Acțiuni",
+      "rename": "Redenumește"
+    },
+    "rename": {
+      "title": "Redenumire etichetă",
+      "labelFrom": "Eticheta curentă",
+      "labelTo": "Noul nume",
+      "hint": "Eticheta va fi convertită automat la litere mici. Dacă noua etichetă există deja, cele două se vor contopi.",
+      "save": "Salvează",
+      "saving": "Se salvează…",
+      "cancel": "Anulează",
+      "errorSame": "Noul nume este identic cu cel curent.",
+      "errorGeneric": "A apărut o eroare. Reîncercați."
+    },
+    "merge": {
+      "open": "Fuzionează etichete",
+      "title": "Fuzionare etichete",
+      "note": "Bifați etichetele pe care doriți să le fuzionați, apoi selectați pe care să o păstrați ca etichetă finală.",
+      "keepThis": "Păstrează aceasta",
+      "preview": "Etichetele \"{sources}\" vor deveni \"{target}\".",
+      "save": "Fuzionează",
+      "saving": "Se fuzionează…",
+      "cancel": "Anulează",
+      "errorRequirements": "Bifați cel puțin două etichete și selectați care să fie păstrată.",
+      "errorNothingToMerge": "Toate etichetele selectate sunt deja identice cu ținta.",
+      "errorGeneric": "A apărut o eroare. Reîncercați."
     }
   },
   "adminImport": {
