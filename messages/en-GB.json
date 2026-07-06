@@ -516,7 +516,7 @@
       "stamps": {
         "title": "Stamps",
         "empty": "No stamps applied"
-      },
+      }
     },
     "entityMetadata": {
       "loading": "Loading…",
