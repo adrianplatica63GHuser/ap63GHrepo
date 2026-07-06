@@ -300,6 +300,7 @@ function TagsSection({
   const queryClient = useQueryClient();
   const tagsKey     = `${queryKey}-tags`;
   const apiBase     = `/api/metadata/${principalObjectId}/tags`;
+  const datalistId  = `tag-suggestions-${principalObjectId}`;
 
   const { data } = useQuery<{ tags: string[] }>({
     queryKey:             [tagsKey],
@@ -312,14 +313,28 @@ function TagsSection({
     refetchOnWindowFocus: false,
   });
 
-  const tags = data?.tags ?? [];
+  // Fetch the global tag corpus for autocomplete suggestions.
+  const { data: allTagsData } = useQuery<{ tags: { tag: string; count: number }[] }>({
+    queryKey:             ["all-tags-autocomplete"],
+    queryFn:              async () => {
+      const res = await fetch("/api/tags");
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    },
+    staleTime:            60_000,   // re-fetch at most once per minute
+    refetchOnWindowFocus: false,
+  });
 
-  const [input,   setInput]   = useState("");
-  const [adding,  setAdding]  = useState(false);
+  const tags    = data?.tags ?? [];
+  const allTags = allTagsData?.tags ?? [];
+
+  const [input,    setInput]    = useState("");
+  const [adding,   setAdding]   = useState(false);
   const [removing, setRemoving] = useState<string | null>(null);
 
   async function handleAdd() {
-    const tag = input.trim();
+    // Normalise to lowercase before sending — mirrors server-side normalisation.
+    const tag = input.trim().toLowerCase();
     if (!tag) return;
     setAdding(true);
     try {
@@ -331,6 +346,8 @@ function TagsSection({
       if (res.ok) {
         setInput("");
         await queryClient.invalidateQueries({ queryKey: [tagsKey] });
+        // Invalidate the global corpus so autocomplete stays fresh.
+        await queryClient.invalidateQueries({ queryKey: ["all-tags-autocomplete"] });
       }
     } finally {
       setAdding(false);
@@ -357,15 +374,27 @@ function TagsSection({
     if (e.key === "Enter") { e.preventDefault(); void handleAdd(); }
   }
 
+  // Filter out tags already applied so autocomplete doesn't suggest duplicates.
+  const tagSet = new Set(tags);
+  const suggestions = allTags.filter((t) => !tagSet.has(t.tag));
+
   return (
     <section>
       <h2 className="mb-2 text-xl font-semibold text-ink dark:text-zinc-100">{labelTitle}</h2>
       <p className="mb-3 text-sm text-fade dark:text-zinc-400">{labelNote}</p>
 
+      {/* Autocomplete suggestions list — native HTML5, zero deps */}
+      <datalist id={datalistId}>
+        {suggestions.map((t) => (
+          <option key={t.tag} value={t.tag} />
+        ))}
+      </datalist>
+
       {/* Input row */}
       <div className="flex items-center gap-2 mb-3">
         <input
           type="text"
+          list={datalistId}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
