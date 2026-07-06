@@ -553,30 +553,6 @@ INSERT INTO lookup_institution (name, institution_type, sort_order) VALUES
   ('Judecătorie',           'Juridic',                 6),
   ('Tribunal',              'Juridic',                 7);
 
--- ── lookup_others  (final name; was lookup_service_interest) ─
--- Categories: Serviciu, Interes, Grup, Stampila
-CREATE TABLE lookup_others (
-  id          uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  name        text        NOT NULL,
-  description text,
-  category    text,
-  sort_order  integer     NOT NULL DEFAULT 0,
-  created_at  timestamptz NOT NULL DEFAULT now(),
-  updated_at  timestamptz NOT NULL DEFAULT now()
-);
-CREATE TRIGGER lookup_others_touch_updated_at
-  BEFORE UPDATE ON lookup_others
-  FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
-INSERT INTO lookup_others (name, category, sort_order) VALUES
-  ('Consultanță Juridică', 'Serviciu', 1),
-  ('Evaluare Imobiliară',  'Serviciu', 2),
-  ('Mediere',              'Serviciu', 3),
-  ('Topografie',           'Serviciu', 4),
-  ('Cumpărare',            'Interes',  5),
-  ('Vânzare',              'Interes',  6),
-  ('Închiriere',           'Interes',  7),
-  ('Arendare',             'Interes',  8);
-
 -- ── lookup_person_role  (migration 013) ──────────────────────
 CREATE TABLE lookup_person_role (
   id          uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -848,10 +824,6 @@ CREATE TABLE document (
   nr_certificat_deces text,
   date_start          date,
   date_end            date,
-  titular_text        text,
-  defunct_text        text,
-  parties_a_text      text,
-  parties_b_text      text,
   notes               text,
   created_at          timestamptz    NOT NULL DEFAULT now(),
   updated_at          timestamptz    NOT NULL DEFAULT now(),
