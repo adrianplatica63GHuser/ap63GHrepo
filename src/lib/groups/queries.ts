@@ -9,8 +9,8 @@
  * All queries join through the entity table using the principal_object_id →
  * entity.principal_object_id link to recover the entity-specific columns.
  *
- * Codes are allocated from `group_code_seq` and prefixed by target type
- * (PROP-, PERS-, DOC-) in src/lib/groups/code.ts — never reused. Member
+ * Codes are allocated from `group_code_seq` and encoded as GRP-001, GRP-002…
+ * in src/lib/groups/code.ts — never reused. Member
  * positions are allocated from groups.last_position (a high-water counter) —
  * never reused (removing a member leaves a gap).
  * Each item may belong to at most MAX_GROUPS_PER_ITEM groups of the same
@@ -26,7 +26,7 @@ import {
   person,
   property,
 } from "@/db/schema";
-import { encodeGroupCode, groupCodePrefix } from "./code";
+import { encodeGroupCode } from "./code";
 import { computeMemberDelta } from "./members";
 import {
   MAX_GROUPS_PER_ITEM,
@@ -165,7 +165,7 @@ export async function createGroup(input: GroupCreate): Promise<GroupListItem> {
   return await db.transaction(async (tx) => {
     const seqRes = await tx.execute(sql`SELECT nextval('group_code_seq')::int AS n`);
     const n = (seqRes.rows[0] as { n: number }).n;
-    const code = groupCodePrefix(input.targetType) + encodeGroupCode(n);
+    const code = encodeGroupCode(n);
 
     const [row] = await tx
       .insert(groups)

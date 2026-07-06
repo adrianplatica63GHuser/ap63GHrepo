@@ -1713,6 +1713,14 @@
       "delete": "Șterge",
       "deleting": "Se șterge…",
       "cancel": "Anulează"
+    },
+    "infoPanel": {
+      "title": "Ce este o Ștampilă?",
+      "body1": "O ștampilă definește o caracteristică pe termen lung sau permanentă a obiectelor — persoane, proprietăți sau documente, indiferent de tip. De exemplu, o inițiativă de doi ani care implică multe persoane, proprietăți și documente primește o ștampilă specifică.",
+      "body2": "Spre deosebire de grupuri, o ștampilă poate fi aplicată simultan pe orice combinație de tipuri de entități.",
+      "body3": "Ștampilele pot descrie și calificatori subiectivi: nivelul de încredere ATT, potențialul unui obiect, prioritatea sau orice altă etichetă de evaluare personală. Este o practică recomandată să aplici cât mai multe ștampile și să creezi ștampile variate — aceasta adaugă valoare și bogăție utilizării datelor.",
+      "codeNote": "Fiecare ștampilă primește un cod unic de trei litere (ex. STMP-AAA) atribuit automat.",
+      "seeAlso": "Pentru acțiuni temporare pe un singur tip de obiect, folosește Grupuri."
     }
   },
   "group": {
@@ -1768,6 +1776,13 @@
       "delete": "Șterge",
       "deleting": "Se șterge…",
       "cancel": "Anulează"
+    },
+    "infoPanel": {
+      "title": "Ce este un Grup?",
+      "body1": "Un grup reunește elemente de un singur tip — proprietăți, persoane fizice, persoane juridice sau documente — pentru acțiuni și activități pe termen scurt. De exemplu: grupezi câteva proprietăți pentru o evaluare, câteva persoane pentru a le trimite un mesaj, sau câteva documente relevante pentru un eveniment cu o instituție.",
+      "body2": "Elementele pot face parte din unul sau mai multe grupuri și pot fi eliminate oricând. Când un grup și-a îndeplinit misiunea, poate fi șters — elementele continuă să existe independent.",
+      "codeNote": "Fiecare grup primește un cod numeric unic (ex. GRP-001, GRP-002…) atribuit automat.",
+      "seeAlso": "Pentru caracteristici pe termen lung sau permanente care se aplică pe mai multe tipuri de obiecte, folosește Ștampile."
     }
   },
   "globalSearch": {
@@ -1790,7 +1805,7 @@
       "search": "Căutare nume / cod",
       "searchPlaceholder": "ex. Popescu sau PERS00012",
       "groupCode": "Cod grup",
-      "groupCodePlaceholder": "ex. AA",
+      "groupCodePlaceholder": "ex. GRP-001",
       "stampCode": "Cod ștampilă",
       "stampCodePlaceholder": "ex. STMP-AAA",
       "tag": "Etichetă",

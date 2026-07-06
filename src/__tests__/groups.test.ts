@@ -1,73 +1,54 @@
 /**
- * Unit tests for the Groups (Slice #18.07 + Slice #18.17 + Slice #18.18) pure helpers:
- *   - encodeGroupCode:  1-based sequence value -> two-letter code (I/O excluded)
- *   - groupCodePrefix:  target type -> display prefix (PROP-, PPERS-, JPERS-, DOC-)
+ * Unit tests for the Groups pure helpers
+ * (Slice #18.07, updated Slice #20.08 — new GRP-NNN code scheme)
+ *
+ * Tests:
+ *   - encodeGroupCode:    1-based sequence value -> GRP-NNN string
  *   - computeMemberDelta: desired vs current member sets -> add/remove lists
+ *   - isPropertyVisibleForGroups: map-filter visibility helper
  *
  * No DB / React — pure functions only.
  */
 
-import { encodeGroupCode, GROUP_CODE_ALPHABET, groupCodePrefix } from "@/lib/groups/code";
+import { encodeGroupCode } from "@/lib/groups/code";
 import { computeMemberDelta } from "@/lib/groups/members";
 import { isPropertyVisibleForGroups } from "@/lib/groups/map-filter";
 
 describe("encodeGroupCode", () => {
-  it("starts at AA and steps through the alphabet", () => {
-    expect(encodeGroupCode(1)).toBe("AA");
-    expect(encodeGroupCode(2)).toBe("AB");
+  it("encodes 1 as GRP-001", () => {
+    expect(encodeGroupCode(1)).toBe("GRP-001");
   });
 
-  it("skips the letter I (8th position is H, 9th is J)", () => {
-    expect(encodeGroupCode(8)).toBe("AH");
-    expect(encodeGroupCode(9)).toBe("AJ");
+  it("encodes 2 as GRP-002", () => {
+    expect(encodeGroupCode(2)).toBe("GRP-002");
   });
 
-  it("rolls the second letter to Z then carries to the next first letter", () => {
-    expect(encodeGroupCode(24)).toBe("AZ");
-    expect(encodeGroupCode(25)).toBe("BA");
+  it("zero-pads single-digit values to 3 digits", () => {
+    expect(encodeGroupCode(9)).toBe("GRP-009");
   });
 
-  it("reaches ZZ at the end of the two-letter range (576)", () => {
-    expect(encodeGroupCode(576)).toBe("ZZ");
+  it("zero-pads double-digit values to 3 digits", () => {
+    expect(encodeGroupCode(42)).toBe("GRP-042");
   });
 
-  it("never produces the excluded letters I or O", () => {
-    expect(GROUP_CODE_ALPHABET).not.toMatch(/[IO]/);
-    for (let n = 1; n <= 576; n++) {
-      expect(encodeGroupCode(n)).not.toMatch(/[IO]/);
-    }
+  it("encodes 999 as GRP-999", () => {
+    expect(encodeGroupCode(999)).toBe("GRP-999");
   });
 
-  it("throws on out-of-range values", () => {
+  it("encodes 1000 as GRP-1000 (4 digits, no cap)", () => {
+    expect(encodeGroupCode(1000)).toBe("GRP-1000");
+  });
+
+  it("throws on zero", () => {
     expect(() => encodeGroupCode(0)).toThrow();
+  });
+
+  it("throws on negative values", () => {
     expect(() => encodeGroupCode(-1)).toThrow();
+  });
+
+  it("throws on non-integer values", () => {
     expect(() => encodeGroupCode(1.5)).toThrow();
-    expect(() => encodeGroupCode(577)).toThrow();
-  });
-});
-
-describe("groupCodePrefix (Slice #18.17, updated #18.18)", () => {
-  it("returns PROP- for PROPERTY", () => {
-    expect(groupCodePrefix("PROPERTY")).toBe("PROP-");
-  });
-
-  it("returns PPERS- for PHYSICAL_PERSON", () => {
-    expect(groupCodePrefix("PHYSICAL_PERSON")).toBe("PPERS-");
-  });
-
-  it("returns JPERS- for JUDICIAL_PERSON", () => {
-    expect(groupCodePrefix("JUDICIAL_PERSON")).toBe("JPERS-");
-  });
-
-  it("returns DOC- for DOCUMENT", () => {
-    expect(groupCodePrefix("DOCUMENT")).toBe("DOC-");
-  });
-
-  it("combines with encodeGroupCode to form the full stored code", () => {
-    expect(groupCodePrefix("PROPERTY")        + encodeGroupCode(1)).toBe("PROP-AA");
-    expect(groupCodePrefix("PHYSICAL_PERSON") + encodeGroupCode(2)).toBe("PPERS-AB");
-    expect(groupCodePrefix("JUDICIAL_PERSON") + encodeGroupCode(25)).toBe("JPERS-BA");
-    expect(groupCodePrefix("DOCUMENT")        + encodeGroupCode(576)).toBe("DOC-ZZ");
   });
 });
 
@@ -109,41 +90,39 @@ describe("isPropertyVisibleForGroups", () => {
   });
 
   it("unchecking named codes does not affect ungrouped items", () => {
-    // Only the _ungrouped sentinel hides ungrouped properties.
-    expect(isPropertyVisibleForGroups([], new Set(["AA", "AB"]))).toBe(true);
+    expect(isPropertyVisibleForGroups([], new Set(["GRP-001", "GRP-002"]))).toBe(true);
   });
 
   it("ungrouped item hidden only when _ungrouped is in the unchecked set", () => {
-    expect(isPropertyVisibleForGroups([], new Set(["AA", "_ungrouped"]))).toBe(false);
+    expect(isPropertyVisibleForGroups([], new Set(["GRP-001", "_ungrouped"]))).toBe(false);
   });
 
   // --- Grouped items ---
 
   it("is visible when none of its groups are unchecked", () => {
-    expect(isPropertyVisibleForGroups(["AA"], new Set())).toBe(true);
-    expect(isPropertyVisibleForGroups(["AA", "AB"], new Set())).toBe(true);
+    expect(isPropertyVisibleForGroups(["GRP-001"], new Set())).toBe(true);
+    expect(isPropertyVisibleForGroups(["GRP-001", "GRP-002"], new Set())).toBe(true);
   });
 
   it("hides a single-group property when its only group is unchecked", () => {
-    expect(isPropertyVisibleForGroups(["AA"], new Set(["AA"]))).toBe(false);
+    expect(isPropertyVisibleForGroups(["GRP-001"], new Set(["GRP-001"]))).toBe(false);
   });
 
   it("keeps a multi-group property visible while at least one group is checked", () => {
-    // AA unchecked but AB still checked -> visible.
-    expect(isPropertyVisibleForGroups(["AA", "AB"], new Set(["AA"]))).toBe(true);
+    expect(isPropertyVisibleForGroups(["GRP-001", "GRP-002"], new Set(["GRP-001"]))).toBe(true);
   });
 
   it("hides a multi-group property only when every one of its groups is unchecked", () => {
-    expect(isPropertyVisibleForGroups(["AA", "AB"], new Set(["AA", "AB"]))).toBe(false);
+    expect(
+      isPropertyVisibleForGroups(["GRP-001", "GRP-002"], new Set(["GRP-001", "GRP-002"])),
+    ).toBe(false);
   });
 
   it("ignores unchecked codes the property does not belong to", () => {
-    // Property is in AB (checked); AA + AC unchecked but irrelevant -> visible.
-    expect(isPropertyVisibleForGroups(["AB"], new Set(["AA", "AC"]))).toBe(true);
+    expect(isPropertyVisibleForGroups(["GRP-002"], new Set(["GRP-001", "GRP-003"]))).toBe(true);
   });
 
   it("_ungrouped sentinel does not affect grouped items", () => {
-    // A property in group AA is still visible even when _ungrouped is unchecked.
-    expect(isPropertyVisibleForGroups(["AA"], new Set(["_ungrouped"]))).toBe(true);
+    expect(isPropertyVisibleForGroups(["GRP-001"], new Set(["_ungrouped"]))).toBe(true);
   });
 });
