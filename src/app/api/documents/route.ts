@@ -43,12 +43,16 @@ export async function GET(request: NextRequest): Promise<Response> {
     iuRaw === null ? undefined : iuRaw !== "false";
 
   const parsed = documentListQuerySchema.safeParse({
-    q:               url.searchParams.get("q")      ?? undefined,
+    q:               url.searchParams.get("q")            ?? undefined,
     documentTypeIds: idsArr,
-    limit:           url.searchParams.get("limit")  ?? undefined,
-    offset:          url.searchParams.get("offset") ?? undefined,
+    limit:           url.searchParams.get("limit")         ?? undefined,
+    offset:          url.searchParams.get("offset")        ?? undefined,
     groupCodes,
     includeUngrouped,
+    // Slice #20.06: metadata filters.
+    importance:      url.searchParams.get("importance")    ?? undefined,
+    relevance:       url.searchParams.get("relevance")     ?? undefined,
+    expiringSoon:    url.searchParams.get("expiringSoon")  ?? undefined,
   });
 
   if (!parsed.success) {

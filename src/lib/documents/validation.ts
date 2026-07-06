@@ -85,6 +85,13 @@ export const documentListQuerySchema = z.object({
   //   includeUngrouped true  → include documents with no group (default)
   groupCodes:       z.array(z.string()).optional(),
   includeUngrouped: z.boolean().optional(),
+  // Slice #20.06: Metadata filters.
+  //   undefined → no filter (show all)
+  importance: z.enum(["LOW", "MEDIUM", "HIGH"]).optional(),
+  relevance:  z.enum(["INACTIVE", "HISTORICAL", "CURRENT", "FUTURE"]).optional(),
+  // Slice #20.06: Expiring-soon shortcut — true → only documents where
+  // date_valid_until IS NOT NULL AND date_valid_until <= today + 30 days.
+  expiringSoon: z.coerce.boolean().optional(),
 });
 export type DocumentListQuery = z.infer<typeof documentListQuerySchema>;
 

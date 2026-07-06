@@ -150,5 +150,11 @@ export const propertyListQuerySchema = z.object({
   //   includeUngrouped true  → include properties with no group (default)
   groupCodes:       z.array(z.string()).optional(),
   includeUngrouped: z.boolean().optional(),
+  // Slice #20.06: Metadata filters.
+  //   undefined → no filter (show all)
+  //   "LOW"|"MEDIUM"|"HIGH" → filter to that importance value
+  importance: z.enum(["LOW", "MEDIUM", "HIGH"]).optional(),
+  //   "INACTIVE"|"HISTORICAL"|"CURRENT"|"FUTURE" → filter to that relevance value
+  relevance:  z.enum(["INACTIVE", "HISTORICAL", "CURRENT", "FUTURE"]).optional(),
 });
 export type PropertyListQuery = z.infer<typeof propertyListQuerySchema>;

@@ -112,6 +112,9 @@ export async function listPersons(opts: ListQuery): Promise<{
     eq(person.type, "NATURAL"),
     isNull(person.deletedAt),
     groupFilter,
+    // Slice #20.06: metadata filters.
+    opts.importance ? eq(entityMetadata.importance, opts.importance) : undefined,
+    opts.relevance  ? eq(entityMetadata.relevance,  opts.relevance)  : undefined,
     searchPattern
       ? or(
           ilike(person.displayName, searchPattern),
@@ -154,6 +157,8 @@ export async function listPersons(opts: ListQuery): Promise<{
       .select({ total: count() })
       .from(person)
       .leftJoin(naturalPerson, eq(naturalPerson.personId, person.id))
+      // Slice #20.06: must join entityMetadata when importance/relevance filter active.
+      .leftJoin(entityMetadata, eq(entityMetadata.principalObjectId, person.principalObjectId))
       .where(where),
   ]);
 

@@ -1792,6 +1792,13 @@
       "provenance": "Provenance",
       "updatedBy": "Updated by",
       "metadataUpdated": "Metadata updated"
+    },
+    "listFilters": {
+      "importanceLabel": "Importance:",
+      "allImportances": "All",
+      "relevanceLabel": "Relevance:",
+      "allRelevances": "All",
+      "expiringSoon": "Expiring soon"
     }
   },
   "dashboard": {

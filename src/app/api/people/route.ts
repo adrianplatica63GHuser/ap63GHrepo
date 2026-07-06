@@ -32,11 +32,14 @@ export async function GET(request: NextRequest): Promise<Response> {
     iuRaw === null ? undefined : iuRaw !== "false";
 
   const parsed = listQuerySchema.safeParse({
-    q: url.searchParams.get("q") ?? undefined,
-    limit: url.searchParams.get("limit") ?? undefined,
-    offset: url.searchParams.get("offset") ?? undefined,
+    q:               url.searchParams.get("q")          ?? undefined,
+    limit:           url.searchParams.get("limit")       ?? undefined,
+    offset:          url.searchParams.get("offset")      ?? undefined,
     groupCodes,
     includeUngrouped,
+    // Slice #20.06: metadata filters.
+    importance:      url.searchParams.get("importance")  ?? undefined,
+    relevance:       url.searchParams.get("relevance")   ?? undefined,
   });
 
   if (!parsed.success) {

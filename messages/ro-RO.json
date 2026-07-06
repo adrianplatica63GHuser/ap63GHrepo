@@ -1792,6 +1792,13 @@
       "provenance": "Proveniență",
       "updatedBy": "Actualizat de",
       "metadataUpdated": "Metadate actualizate"
+    },
+    "listFilters": {
+      "importanceLabel": "Importanță:",
+      "allImportances": "Toate",
+      "relevanceLabel": "Relevanță:",
+      "allRelevances": "Toate",
+      "expiringSoon": "Expiră curând"
     }
   },
   "dashboard": {

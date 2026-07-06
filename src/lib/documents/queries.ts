@@ -10,7 +10,7 @@
  * explicitly directed) — never auto-seeded by application code.
  */
 
-import { asc, and, count, desc, eq, ilike, inArray, isNull, or, sql } from "drizzle-orm";
+import { asc, and, count, desc, eq, ilike, inArray, isNotNull, isNull, lte, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { document, documentVersion, entityMetadata, groupMember, groups, lookupDocumentType, person, principalObject } from "@/db/schema";
 import type {
@@ -99,6 +99,19 @@ export async function listDocument(opts: DocumentListQuery): Promise<{
       ? inArray(document.documentTypeId, opts.documentTypeIds)
       : undefined,
     groupFilter,
+    // Slice #20.06: metadata filters.
+    opts.importance ? eq(entityMetadata.importance, opts.importance) : undefined,
+    opts.relevance  ? eq(entityMetadata.relevance,  opts.relevance)  : undefined,
+    // Slice #20.06: expiring-soon shortcut.
+    opts.expiringSoon
+      ? and(
+          isNotNull(document.dateValidUntil),
+          lte(
+            document.dateValidUntil,
+            sql`to_char(CURRENT_DATE + INTERVAL '30 days', 'YYYY-MM-DD')`,
+          ),
+        )
+      : undefined,
     pat
       ? or(
           ilike(document.code,       pat),
@@ -136,6 +149,8 @@ export async function listDocument(opts: DocumentListQuery): Promise<{
     db
       .select({ total: count() })
       .from(document)
+      // Slice #20.06: must join entityMetadata when importance/relevance/expiringSoon filter active.
+      .leftJoin(entityMetadata, eq(entityMetadata.principalObjectId, document.principalObjectId))
       .where(where),
   ]);
 

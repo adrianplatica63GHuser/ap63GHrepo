@@ -244,6 +244,9 @@ export async function listProperties(opts: PropertyListQuery): Promise<{
         )
       : undefined,
     groupFilter,
+    // Slice #20.06: metadata filters.
+    opts.importance ? eq(entityMetadata.importance, opts.importance) : undefined,
+    opts.relevance  ? eq(entityMetadata.relevance,  opts.relevance)  : undefined,
   );
 
   const [items, totals] = await Promise.all([
@@ -284,6 +287,11 @@ export async function listProperties(opts: PropertyListQuery): Promise<{
     db
       .select({ total: count() })
       .from(property)
+      // Slice #20.06: must join entityMetadata when importance/relevance filter active.
+      .leftJoin(
+        entityMetadata,
+        eq(entityMetadata.principalObjectId, property.principalObjectId),
+      )
       .where(where),
   ]);
 

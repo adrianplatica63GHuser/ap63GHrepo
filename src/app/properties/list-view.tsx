@@ -41,9 +41,13 @@ type ListResponse = {
 async function fetchProperties(
   q: string,
   page: number,
+  importance: string,
+  relevance: string,
 ): Promise<ListResponse> {
   const url = new URL("/api/properties", window.location.origin);
-  if (q) url.searchParams.set("q", q);
+  if (q)          url.searchParams.set("q",          q);
+  if (importance) url.searchParams.set("importance", importance);
+  if (relevance)  url.searchParams.set("relevance",  relevance);
   url.searchParams.set("limit",  String(PAGE_SIZE));
   url.searchParams.set("offset", String(page * PAGE_SIZE));
   const res = await fetch(url);
@@ -131,15 +135,19 @@ function readStoredCols(): string[] {
 }
 
 export function PropertyListView() {
-  const t    = useTranslations("property");
-  const tPag = useTranslations("shared.pagination");
-  const tBulk = useTranslations("shared.bulkDelete");
+  const t       = useTranslations("property");
+  const tPag    = useTranslations("shared.pagination");
+  const tBulk   = useTranslations("shared.bulkDelete");
+  const tFilter = useTranslations("shared.listFilters");
+  const tMeta   = useTranslations("shared");
   const router = useRouter();
   const queryClient = useQueryClient();
 
   const [searchInput,     setSearchInput]     = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [currentPage,     setCurrentPage]     = useState(0);
+  const [importance,      setImportance]      = useState("");
+  const [relevance,       setRelevance]       = useState("");
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const [confirmOpen,  setConfirmOpen]  = useState(false);
@@ -175,8 +183,8 @@ export function PropertyListView() {
   }, [searchInput]);
 
   const query = useQuery<ListResponse>({
-    queryKey: ["properties", "list", debouncedSearch, currentPage],
-    queryFn:  () => fetchProperties(debouncedSearch, currentPage),
+    queryKey: ["properties", "list", debouncedSearch, importance, relevance, currentPage],
+    queryFn:  () => fetchProperties(debouncedSearch, currentPage, importance, relevance),
   });
 
   const total      = query.data?.total ?? 0;
@@ -299,6 +307,39 @@ export function PropertyListView() {
           aria-label={t("searchPlaceholder")}
           className="w-64 rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm placeholder:text-fade focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:placeholder:text-zinc-500"
         />
+
+        {/* Importance filter */}
+        <div className="inline-flex items-center gap-1.5 rounded-md border border-wire bg-white px-2 py-1.5 text-sm shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+          <span className="text-fade">{tFilter("importanceLabel")}</span>
+          <select
+            value={importance}
+            onChange={(e) => { setImportance(e.target.value); setCurrentPage(0); }}
+            aria-label={tFilter("importanceLabel")}
+            className="bg-transparent text-sm font-medium text-ink focus:outline-none dark:text-zinc-100"
+          >
+            <option value="">{tFilter("allImportances")}</option>
+            <option value="LOW">{tMeta("importanceValues.LOW")}</option>
+            <option value="MEDIUM">{tMeta("importanceValues.MEDIUM")}</option>
+            <option value="HIGH">{tMeta("importanceValues.HIGH")}</option>
+          </select>
+        </div>
+
+        {/* Relevance filter */}
+        <div className="inline-flex items-center gap-1.5 rounded-md border border-wire bg-white px-2 py-1.5 text-sm shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+          <span className="text-fade">{tFilter("relevanceLabel")}</span>
+          <select
+            value={relevance}
+            onChange={(e) => { setRelevance(e.target.value); setCurrentPage(0); }}
+            aria-label={tFilter("relevanceLabel")}
+            className="bg-transparent text-sm font-medium text-ink focus:outline-none dark:text-zinc-100"
+          >
+            <option value="">{tFilter("allRelevances")}</option>
+            <option value="INACTIVE">{tMeta("relevanceValues.INACTIVE")}</option>
+            <option value="HISTORICAL">{tMeta("relevanceValues.HISTORICAL")}</option>
+            <option value="CURRENT">{tMeta("relevanceValues.CURRENT")}</option>
+            <option value="FUTURE">{tMeta("relevanceValues.FUTURE")}</option>
+          </select>
+        </div>
 
         {/* Choose fields */}
         <div ref={colPickerRef} className="relative">
