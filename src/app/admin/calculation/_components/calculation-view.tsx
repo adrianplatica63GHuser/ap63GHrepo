@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
+import { useSearchParams } from "next/navigation";
 import { PreviewMap } from "./preview-map";
 
 // ---------------------------------------------------------------------------
@@ -39,8 +40,10 @@ type Computation = {
 };
 
 type CommitResult = {
-  groupId: string;
-  groupCode: string;
+  groupId:    string;
+  groupCode:  string;
+  runId:      string;
+  runCode:    string;
   properties: { id: string; code: string; nickname: string | null }[];
 };
 
@@ -66,19 +69,69 @@ function fmtLen(n: number): string {
 // Component
 // ---------------------------------------------------------------------------
 
-export function CalculationView() {
-  const t = useTranslations("calculation");
+// ---------------------------------------------------------------------------
+// Re-run payload helpers  (Slice #20.09)
+// ---------------------------------------------------------------------------
 
-  const [fileName, setFileName] = useState<string | null>(null);
-  const [fileText, setFileText] = useState<string | null>(null);
+type RerunPayload = {
+  text:    string;
+  options: { groupDescription: string; includeRoad: boolean; roadNickname: string };
+};
+
+/** Read + consume the calc_rerun sessionStorage entry on the client side. */
+function consumeRerunPayload(isRerun: boolean): RerunPayload | null {
+  if (!isRerun) return null;
+  if (typeof window === "undefined") return null;
+  const raw = sessionStorage.getItem("calc_rerun");
+  if (!raw) return null;
+  sessionStorage.removeItem("calc_rerun");
+  try { return JSON.parse(raw) as RerunPayload; } catch { return null; }
+}
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
+
+export function CalculationView() {
+  const t            = useTranslations("calculation");
+  const searchParams = useSearchParams();
+
+  // Slice #20.09: parse a re-run payload from sessionStorage during the first
+  // render (lazy initializer) — avoids calling setState synchronously inside
+  // an effect, which triggers the react-hooks/set-state-in-effect lint error.
+  const [rerunPayload] = useState<RerunPayload | null>(() =>
+    consumeRerunPayload(searchParams.get("rerun") === "1"),
+  );
+
+  const [fileName, setFileName] = useState<string | null>(
+    rerunPayload ? t("rerun.fileName") : null,
+  );
+  const [fileText, setFileText] = useState<string | null>(
+    rerunPayload?.text ?? null,
+  );
 
   const [computation, setComputation] = useState<Computation | null>(null);
   const [previewing, setPreviewing] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
 
-  const [groupDescription, setGroupDescription] = useState("");
-  const [includeRoad, setIncludeRoad] = useState(true);
-  const [roadNickname, setRoadNickname] = useState(t("road.defaultNickname"));
+  const [groupDescription, setGroupDescription] = useState(
+    rerunPayload?.options.groupDescription ?? "",
+  );
+  const [includeRoad, setIncludeRoad] = useState(
+    rerunPayload?.options.includeRoad ?? true,
+  );
+  const [roadNickname, setRoadNickname] = useState(
+    rerunPayload?.options.roadNickname ?? t("road.defaultNickname"),
+  );
+
+  // Kick off preview automatically when re-running — the effect only calls the
+  // async doPreview function; no setState calls in the effect body.
+  useEffect(() => {
+    if (rerunPayload) {
+      doPreview(rerunPayload.text, t("rerun.fileName"));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [committing, setCommitting] = useState(false);
   const [commitError, setCommitError] = useState<string | null>(null);
@@ -163,6 +216,16 @@ export function CalculationView() {
         <div className="rounded-md border border-green-300 bg-green-50 p-4 text-sm dark:border-green-900 dark:bg-green-950">
           <p className="font-semibold text-green-800 dark:text-green-300">
             {t("success.title", { code: committed.groupCode })}
+          </p>
+          <p className="mt-1 text-xs text-green-700 dark:text-green-400">
+            {t("success.runCode", { code: committed.runCode })}
+            {" · "}
+            <Link
+              href={`/admin/calculation/history/${committed.runId}`}
+              className="underline hover:no-underline"
+            >
+              {t("success.viewRun")}
+            </Link>
           </p>
           <ul className="mt-2 flex flex-col gap-1">
             {committed.properties.map((p) => (

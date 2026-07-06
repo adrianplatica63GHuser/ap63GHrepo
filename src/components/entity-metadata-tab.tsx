@@ -57,6 +57,13 @@ type Props = {
   queryKey:       string;
   backHref:       string;
   backEntityName: string;
+  /**
+   * Slice #20.09 — optional API path to fetch provenance source details when
+   * provenance = 'ALGORITHM'. For properties, pass
+   * `/api/properties/{id}/calculation-source`. When provided and provenance
+   * is ALGORITHM, the tab fetches this path and displays a link to the run.
+   */
+  calculationSourcePath?: string;
 };
 
 // ---------------------------------------------------------------------------
@@ -1025,10 +1032,70 @@ function MakeCurrentDialog({
 }
 
 // ---------------------------------------------------------------------------
+// CalculationSourceLink  (Slice #20.09)
+// ---------------------------------------------------------------------------
+//
+// Fetches /api/properties/[id]/calculation-source and renders a link to the
+// calculation run history page. Only mounted when provenance = 'ALGORITHM'
+// AND the parent passes a calculationSourcePath prop.
+
+type CalcSource = { runId: string; runCode: string; status: string } | null;
+
+function CalculationSourceLink({
+  apiPath,
+  queryKey,
+  labelSource,
+  labelView,
+  labelNotFound,
+}: {
+  apiPath:      string;
+  queryKey:     string;
+  labelSource:  string;
+  labelView:    string;
+  labelNotFound: string;
+}) {
+  const { data, isLoading } = useQuery<{ source: CalcSource }>({
+    queryKey:             [queryKey],
+    queryFn:              async () => {
+      const res = await fetch(apiPath);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    },
+    staleTime:            60_000,
+    refetchOnWindowFocus: false,
+  });
+
+  if (isLoading || !data) return null;
+  const src = data.source;
+  if (!src) {
+    return (
+      <p className="mb-3 text-xs text-fade dark:text-zinc-500">{labelNotFound}</p>
+    );
+  }
+  return (
+    <div className="mb-3 flex items-center gap-2 rounded-md border border-card-rim bg-canvas px-3 py-2 dark:border-zinc-700 dark:bg-zinc-800">
+      <span className="text-xs text-fade dark:text-zinc-400">{labelSource}:</span>
+      <span className="font-mono text-xs font-medium text-ink dark:text-zinc-100">{src.runCode}</span>
+      {src.status === "superseded" && (
+        <span className="rounded-full bg-zinc-200 px-1.5 py-0.5 text-[10px] text-zinc-600 dark:bg-zinc-700 dark:text-zinc-400">
+          superseded
+        </span>
+      )}
+      <Link
+        href={`/admin/calculation/history/${encodeURIComponent(src.runId)}`}
+        className="ml-auto text-xs font-medium text-cta hover:underline dark:text-cta-light"
+      >
+        {labelView} →
+      </Link>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Main component
 // ---------------------------------------------------------------------------
 
-export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName }: Props) {
+export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName, calculationSourcePath }: Props) {
   const t = useTranslations("shared.entityMetadata");
   const queryClient = useQueryClient();
 
@@ -1435,6 +1502,17 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName 
           collapsibleStatement
           labelWhatMeansThis={t("whatDoesThisMean")}
         >
+          {/* Slice #20.09: calculation source link (shown when provenance = ALGORITHM) */}
+          {calculationSourcePath && displayProvenance === "ALGORITHM" && (
+            <CalculationSourceLink
+              apiPath={calculationSourcePath}
+              queryKey={`calc-source-${queryKey}`}
+              labelSource={t("provenance.algorithmSource")}
+              labelView={t("provenance.algorithmViewRun")}
+              labelNotFound={t("provenance.algorithmNotFound")}
+            />
+          )}
+
           {/* History — sourced from entity_provenance_log via the main query */}
           <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-fade dark:text-zinc-500">
             {t("provenance.historyTitle")}

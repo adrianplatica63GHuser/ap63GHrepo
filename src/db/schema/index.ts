@@ -1474,3 +1474,38 @@ export const helpHint = pgTable(
     uniqueIndex("help_hint_screen_hint_unique").on(t.screenKey, t.hintKey),
   ],
 );
+
+// ---------------------------------------------------------------------------
+// calculation_run + calculation_run_output  (Slice #20.09)
+// ---------------------------------------------------------------------------
+//
+// Stores a record of every calculation committed via Administration →
+// Calculation, linking it to the Group it created and to each Property that
+// was created as a result (via principal_object).
+
+export const calculationRun = pgTable("calculation_run", {
+  id:            uuid("id").primaryKey().defaultRandom(),
+  code:          text("code").notNull().unique(),          // CALC00001
+  algorithmType: text("algorithm_type").notNull(),         // 'LAND_DIVISION'
+  inputParams:   jsonb("input_params").notNull(),           // raw text + options
+  stepsLog:      jsonb("steps_log"),                        // DivisionComputation
+  resultGroupId: uuid("result_group_id").references(() => groups.id, { onDelete: "set null" }),
+  status:        text("status").notNull().default("active"),// 'active'|'superseded'
+  notes:         text("notes"),
+  createdBy:     text("created_by"),
+  createdAt:     timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const calculationRunOutput = pgTable(
+  "calculation_run_output",
+  {
+    id:                  uuid("id").primaryKey().defaultRandom(),
+    calculationRunId:    uuid("calculation_run_id").notNull().references(() => calculationRun.id, { onDelete: "cascade" }),
+    principalObjectId:   uuid("principal_object_id").notNull().references(() => principalObject.id, { onDelete: "cascade" }),
+    outputRole:          text("output_role").notNull(),     // 'OWNER_PARCEL' | 'ROAD_PARCEL'
+    createdAt:           timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("calc_run_output_run_po_unique").on(t.calculationRunId, t.principalObjectId),
+  ],
+);

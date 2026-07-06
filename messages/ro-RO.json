@@ -54,10 +54,80 @@
       "defaultNickname": "Drum comun"
     },
     "success": {
-      "title": "S-a creat grupul {code} cu următoarele proprietăți:"
+      "title": "S-a creat grupul {code} cu următoarele proprietăți:",
+      "runCode": "Calculul înregistrat: {code}",
+      "viewRun": "Vezi istoricul calculului"
+    },
+    "rerun": {
+      "fileName": "(re-rulare)"
     },
     "errors": {
       "session": "Sesiunea a expirat — autentificați-vă din nou și reîncercați."
+    }
+  },
+  "calculationHistory": {
+    "pageTitle": "Istoricul calculelor",
+    "backToCalculation": "Înapoi la Calcul",
+    "backToHistory": "Înapoi la Istoricul calculelor",
+    "linkFromCalculation": "Istoricul calculelor",
+    "detailTitle": "Detalii calcul",
+    "loading": "Se încarcă…",
+    "error": "Eroare la încărcarea datelor.",
+    "empty": "Niciun calcul efectuat încă.",
+    "viewDetail": "Detalii",
+    "col": {
+      "code": "Cod",
+      "algorithm": "Algoritm",
+      "parcels": "Parcele",
+      "group": "Grup",
+      "status": "Stare",
+      "createdBy": "Creat de",
+      "date": "Data"
+    },
+    "status": {
+      "active": "Activ",
+      "superseded": "Depășit"
+    },
+    "algorithmType": {
+      "PARCEL_DIVISION": "Divizare parcelă"
+    },
+    "outputRole": {
+      "OWNER_PARCEL": "Parcelă proprietar",
+      "ROAD_PARCEL": "Drum comun"
+    },
+    "detail": {
+      "paramsTitle": "Parametrii calculului",
+      "orientation": "Orientare",
+      "totalArea": "Suprafață totală",
+      "roadCorner": "Colțul drumului / prop. 1",
+      "roadWidth": "Lățime drum",
+      "lengthSide": "Lungime (latura lungă)",
+      "widthSide": "Lățime (latura scurtă)",
+      "roadLength": "Lungime drum",
+      "roadArea": "Suprafață drum",
+      "groupDesc": "Descriere grup",
+      "stepsTitle": "Pașii calculului",
+      "stepsCol": {
+        "owner": "Proprietar",
+        "percent": "Cotă",
+        "originalArea": "Suprafață inițială (m²)",
+        "roadParticipation": "Participare drum (m²)",
+        "finalArea": "Suprafață finală (m²)",
+        "computedArea": "Suprafață calculată (m²)"
+      },
+      "pdfNotice": "Generarea unui PDF cu pașii calculului va fi disponibilă într-o versiune viitoare.",
+      "mapTitle": "Previzualizare hartă",
+      "parcelsTitle": "Parcele create",
+      "parcelsEmpty": "Nicio parcelă înregistrată.",
+      "parcelsCol": {
+        "code": "Cod",
+        "nickname": "Poreclă",
+        "role": "Rol"
+      },
+      "viewProperty": "Vezi proprietatea",
+      "deleted": "(ștearsă)",
+      "group": "Grup",
+      "rerun": "Re-rulează cu acești parametri"
     }
   },
   "home": {
@@ -572,6 +642,9 @@
         "statementAlgorithm": "Acest element a fost generat automat de un algoritm (ex: divizare poligon sau calcul geometric).",
         "statementAiInterpreted": "Acest element a fost interpretat de un model AI dintr-o imagine sau document prin intermediul unui API cloud — rezultatul trebuie verificat de o persoană.",
         "statementExternalImport": "Acest element a fost importat dintr-un sistem sau bază de date externă — verificați sursa și exactitatea datelor.",
+        "algorithmSource": "Calcul sursă",
+        "algorithmViewRun": "Vezi calculul",
+        "algorithmNotFound": "Calculul sursă nu a fost găsit (posibil șters).",
         "historyTitle": "Istoric",
         "historyEmpty": "Niciun istoric înregistrat încă",
         "save": "Salvează",

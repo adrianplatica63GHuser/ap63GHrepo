@@ -54,10 +54,80 @@
       "defaultNickname": "Common road"
     },
     "success": {
-      "title": "Created group {code} with the following properties:"
+      "title": "Created group {code} with the following properties:",
+      "runCode": "Calculation recorded: {code}",
+      "viewRun": "View calculation history"
+    },
+    "rerun": {
+      "fileName": "(re-run)"
     },
     "errors": {
       "session": "Your session expired — please sign in again and retry."
+    }
+  },
+  "calculationHistory": {
+    "pageTitle": "Calculation History",
+    "backToCalculation": "Back to Calculation",
+    "backToHistory": "Back to Calculation History",
+    "linkFromCalculation": "Calculation History",
+    "detailTitle": "Calculation Detail",
+    "loading": "Loading…",
+    "error": "Error loading data.",
+    "empty": "No calculations performed yet.",
+    "viewDetail": "Details",
+    "col": {
+      "code": "Code",
+      "algorithm": "Algorithm",
+      "parcels": "Parcels",
+      "group": "Group",
+      "status": "Status",
+      "createdBy": "Created by",
+      "date": "Date"
+    },
+    "status": {
+      "active": "Active",
+      "superseded": "Superseded"
+    },
+    "algorithmType": {
+      "PARCEL_DIVISION": "Parcel division"
+    },
+    "outputRole": {
+      "OWNER_PARCEL": "Owner parcel",
+      "ROAD_PARCEL": "Common road"
+    },
+    "detail": {
+      "paramsTitle": "Calculation parameters",
+      "orientation": "Orientation",
+      "totalArea": "Total area",
+      "roadCorner": "Road corner / owner 1",
+      "roadWidth": "Road width",
+      "lengthSide": "Length (long side)",
+      "widthSide": "Width (short side)",
+      "roadLength": "Road length",
+      "roadArea": "Road area",
+      "groupDesc": "Group description",
+      "stepsTitle": "Calculation steps",
+      "stepsCol": {
+        "owner": "Owner",
+        "percent": "Share",
+        "originalArea": "Original area (m²)",
+        "roadParticipation": "Road participation (m²)",
+        "finalArea": "Final area (m²)",
+        "computedArea": "Computed area (m²)"
+      },
+      "pdfNotice": "PDF generation from calculation steps will be available in a future version.",
+      "mapTitle": "Map preview",
+      "parcelsTitle": "Created parcels",
+      "parcelsEmpty": "No parcels recorded.",
+      "parcelsCol": {
+        "code": "Code",
+        "nickname": "Nickname",
+        "role": "Role"
+      },
+      "viewProperty": "View property",
+      "deleted": "(deleted)",
+      "group": "Group",
+      "rerun": "Re-run with these parameters"
     }
   },
   "home": {
@@ -572,6 +642,9 @@
         "statementAlgorithm": "This item was generated automatically by an algorithm (e.g. polygon division or geometric computation).",
         "statementAiInterpreted": "This item was interpreted by an AI model from an image or document via a cloud API — the result should be reviewed by a person.",
         "statementExternalImport": "This item was imported from an external system or database — verify the source and accuracy of the data.",
+        "algorithmSource": "Source calculation",
+        "algorithmViewRun": "View calculation",
+        "algorithmNotFound": "Source calculation not found (may have been deleted).",
         "historyTitle": "History",
         "historyEmpty": "No history recorded yet",
         "save": "Save",
