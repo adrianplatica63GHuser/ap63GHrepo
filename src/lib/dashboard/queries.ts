@@ -89,7 +89,6 @@ export async function getDashboardRecentCounts(): Promise<RecentCounts> {
 // ---------------------------------------------------------------------------
 
 export async function getDashboardExpiringDocuments(): Promise<ExpiringDocument[]> {
-  const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
   const horizon = new Date();
   horizon.setDate(horizon.getDate() + 60);
   const horizonStr = horizon.toISOString().split("T")[0];

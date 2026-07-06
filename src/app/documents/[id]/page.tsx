@@ -3,8 +3,8 @@ import { getDocumentWithSurveyor } from "@/lib/documents/queries";
 import { DocumentDetailTabs } from "../_components/document-detail-tabs";
 import { fromApiRecord } from "../_components/form-schema";
 
-type Tab = "details" | "references" | "persons" | "properties";
-const VALID_TABS: Tab[] = ["details", "references", "persons", "properties"];
+type Tab = "details" | "related" | "persons" | "properties" | "metadata";
+const VALID_TABS: Tab[] = ["details", "related", "persons", "properties", "metadata"];
 
 type PageParams = {
   params:       Promise<{ id: string }>;
@@ -34,4 +34,6 @@ export default async function EditDocumentPage({ params, searchParams }: PagePar
           initialTab={initialTab}
         />
       </main>
-  
+    </div>
+  );
+}
