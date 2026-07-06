@@ -18,7 +18,7 @@
  * version is NOT appended if the new snapshot equals the latest stored one.
  */
 
-import { eq, desc, asc } from "drizzle-orm";
+import { eq, desc, asc, sql, count } from "drizzle-orm";
 import { db } from "@/db";
 import {
   entityMetadata,
@@ -472,19 +472,20 @@ export async function listEntityTags(principalObjectId: string): Promise<string[
 }
 
 /**
- * Add a tag to an entity.  Duplicates (case-insensitive) are silently ignored
- * (DB unique index handles it).
+ * Add a tag to an entity.  Always normalises to lowercase + trim so the corpus
+ * stays consistent.  Duplicates (case-insensitive) are silently ignored via the
+ * DB unique index on (principal_object_id, lower(tag)).
  */
 export async function addEntityTag(
   principalObjectId: string,
   tag: string,
 ): Promise<string[]> {
-  const trimmed = tag.trim();
-  if (!trimmed) return listEntityTags(principalObjectId);
+  const normalised = tag.trim().toLowerCase();
+  if (!normalised) return listEntityTags(principalObjectId);
 
   await db
     .insert(entityTag)
-    .values({ principalObjectId, tag: trimmed })
+    .values({ principalObjectId, tag: normalised })
     .onConflictDoNothing();
 
   return listEntityTags(principalObjectId);
@@ -511,4 +512,69 @@ export async function removeEntityTag(
   }
 
   return listEntityTags(principalObjectId);
+}
+
+// ---------------------------------------------------------------------------
+// Tags — global management (tag cloud, rename, merge)
+// ---------------------------------------------------------------------------
+
+export type TagWithCount = { tag: string; count: number };
+
+/**
+ * Returns every distinct tag in the corpus with its usage count, sorted by
+ * count DESC then tag ASC.  Used for the tag cloud and autocomplete list.
+ */
+export async function listAllTags(): Promise<TagWithCount[]> {
+  const rows = await db
+    .select({
+      tag:   entityTag.tag,
+      count: count(entityTag.id),
+    })
+    .from(entityTag)
+    .groupBy(entityTag.tag)
+    .orderBy(desc(count(entityTag.id)), asc(entityTag.tag));
+
+  return rows.map((r) => ({ tag: r.tag, count: Number(r.count) }));
+}
+
+/**
+ * Renames a tag globally: every entity_tag row with tag = from (case-insensitive)
+ * gets updated to the normalised (lowercase+trim) value of `to`.
+ *
+ * If `to` is empty or the same as `from` after normalisation, does nothing.
+ * Rows that already have the target tag on the same entity are hard-deleted
+ * (merge semantics — the existing target row wins, the renamed duplicate is
+ * dropped via ON CONFLICT DO NOTHING pattern below).
+ *
+ * Returns the updated tag corpus.
+ */
+export async function renameTag(from: string, to: string): Promise<TagWithCount[]> {
+  const normFrom = from.trim().toLowerCase();
+  const normTo   = to.trim().toLowerCase();
+
+  if (!normFrom || !normTo || normFrom === normTo) return listAllTags();
+
+  // Update all rows matching `from`.  When a row would collide with an existing
+  // `to` tag on the same entity, the unique index raises a conflict — we handle
+  // this by deleting the conflicting row first and then updating, effectively
+  // merging duplicates on the same entity.
+  //
+  // Step 1: delete any `to` rows on entities that ALSO have a `from` row
+  //         (so the subsequent UPDATE has no collisions).
+  await db.execute(sql`
+    DELETE FROM entity_tag
+    WHERE  tag = ${normTo}
+      AND  principal_object_id IN (
+        SELECT principal_object_id FROM entity_tag WHERE tag = ${normFrom}
+      )
+  `);
+
+  // Step 2: rename all remaining `from` rows to `to`.
+  await db.execute(sql`
+    UPDATE entity_tag
+    SET    tag = ${normTo}
+    WHERE  tag = ${normFrom}
+  `);
+
+  return listAllTags();
 }
