@@ -364,11 +364,6 @@ export async function updateDocument(
     if (input.dateStart !== undefined) patch.dateStart = input.dateStart ?? null;
     if (input.dateEnd   !== undefined) patch.dateEnd   = input.dateEnd   ?? null;
 
-    if (input.titularText  !== undefined) patch.titularText  = input.titularText  ?? null;
-    if (input.defunctText  !== undefined) patch.defunctText  = input.defunctText  ?? null;
-    if (input.partiesAText !== undefined) patch.partiesAText = input.partiesAText ?? null;
-    if (input.partiesBText !== undefined) patch.partiesBText = input.partiesBText ?? null;
-
     if (input.notes !== undefined) patch.notes = input.notes ?? null;
 
     // Slice #19.03
@@ -458,11 +453,6 @@ function inputToValues(
 
     dateStart: input.dateStart ?? null,
     dateEnd:   input.dateEnd   ?? null,
-
-    titularText:  input.titularText  ?? null,
-    defunctText:  input.defunctText  ?? null,
-    partiesAText: input.partiesAText ?? null,
-    partiesBText: input.partiesBText ?? null,
 
     notes: input.notes ?? null,
 
