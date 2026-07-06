@@ -1,20 +1,15 @@
-import { getTranslations } from "next-intl/server";
+import { DashboardClient } from "./_components/dashboard-client";
 
 /**
- * Welcome / landing screen.  Navigation lives in the sidebar — this page is
- * shown when the user hasn't navigated anywhere specific yet.
+ * Operational dashboard — "ce necesită atenția mea azi?"
+ *
+ * Slice #22.01: replaced the old static landing pad with a live dashboard
+ * showing recent activity, expiring documents, and stale metadata.
  */
-export default async function Home() {
-  const t = await getTranslations("welcome");
-
+export default function Home() {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center bg-canvas px-6 py-16 gap-3">
-      <h1 className="text-3xl font-semibold tracking-tight text-ink">
-        {t("title")}
-      </h1>
-      <p className="text-sm text-fade text-center max-w-sm">
-        {t("subtitle")}
-      </p>
+    <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-zinc-950">
+      <DashboardClient />
     </div>
   );
 }

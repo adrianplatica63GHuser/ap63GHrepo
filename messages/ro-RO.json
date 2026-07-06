@@ -1801,5 +1801,46 @@
       "updatedBy": "Actualizat de",
       "metadataUpdated": "Metadate actualizate"
     }
+  },
+  "dashboard": {
+    "title": "Tablou de bord",
+    "subtitle": "Ce necesită atenția dumneavoastră azi",
+    "loadError": "Eroare la încărcarea tabloului de bord",
+    "recentCounts": {
+      "title": "Adăugate în ultimele 7 zile",
+      "subtitle": "Înregistrări noi față de săptămâna trecută",
+      "persons": "Persoane",
+      "properties": "Proprietăți",
+      "documents": "Acte"
+    },
+    "expiringDocuments": {
+      "title": "Acte cu valabilitate limitată",
+      "empty": "Niciun act nu expiră în următoarele 60 de zile",
+      "colCode": "Cod",
+      "colType": "Tip",
+      "colTitle": "Titlu",
+      "colDate": "Dată expirare",
+      "colStatus": "Stare",
+      "expired": "Expirat",
+      "expiresTODAY": "Expiră AZI",
+      "expiresTomorrow": "Expiră mâine",
+      "expiresInDays": "Expiră în {days} zile"
+    },
+    "staleMetadata": {
+      "title": "Metadate care necesită atenție",
+      "allGood": "Toate metadatele sunt actualizate",
+      "description": "{total} înregistrări cu metadate neactualizate de peste 90 de zile",
+      "persons": "persoane",
+      "properties": "proprietăți",
+      "documents": "acte",
+      "hint": "Faceți clic pe un tip pentru a deschide lista corespunzătoare"
+    },
+    "recentActivity": {
+      "title": "Activitate recentă",
+      "empty": "Nicio activitate recentă",
+      "typePerson": "Persoană",
+      "typeProperty": "Proprietate",
+      "typeDocument": "Act"
+    }
   }
 }

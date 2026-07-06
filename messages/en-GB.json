@@ -1801,5 +1801,46 @@
       "updatedBy": "Updated by",
       "metadataUpdated": "Metadata updated"
     }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "What needs your attention today",
+    "loadError": "Failed to load dashboard",
+    "recentCounts": {
+      "title": "Added in the last 7 days",
+      "subtitle": "New records since last week",
+      "persons": "Persons",
+      "properties": "Properties",
+      "documents": "Documents"
+    },
+    "expiringDocuments": {
+      "title": "Documents with limited validity",
+      "empty": "No documents expiring in the next 60 days",
+      "colCode": "Code",
+      "colType": "Type",
+      "colTitle": "Title",
+      "colDate": "Expiry date",
+      "colStatus": "Status",
+      "expired": "Expired",
+      "expiresTODAY": "Expires TODAY",
+      "expiresTomorrow": "Expires tomorrow",
+      "expiresInDays": "Expires in {days} days"
+    },
+    "staleMetadata": {
+      "title": "Metadata needing attention",
+      "allGood": "All metadata is up to date",
+      "description": "{total} records with metadata not updated in over 90 days",
+      "persons": "persons",
+      "properties": "properties",
+      "documents": "documents",
+      "hint": "Click a type to open the corresponding list"
+    },
+    "recentActivity": {
+      "title": "Recent activity",
+      "empty": "No recent activity",
+      "typePerson": "Person",
+      "typeProperty": "Property",
+      "typeDocument": "Document"
+    }
   }
 }
