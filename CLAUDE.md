@@ -22,6 +22,8 @@ These apply regardless of which slice is in progress:
 
 Adrian is the sole user of this repo. He's a business analyst, not a full-time developer — comfortable reading code, running commands, and reasoning about architecture, but he leans on Claude as a full-stack development partner. He works on Windows (PowerShell), keeps reference docs in `C:\dev.docs\ga40prj` (read-only to Claude), and prefers small, deliberate changes over big rewrites.
 
+**Language:** Adrian prefers all conversations with Claude to be in English only.
+
 ## Domain model
 
 Three core objects with multiple many-to-many relationships, including self-referential ones:
