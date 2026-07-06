@@ -13,6 +13,7 @@ import {
   useWatch,
 } from "react-hook-form";
 import { useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-provider";
+import { UnsavedChangesBanner } from "@/components/unsaved-changes-banner";
 import { safeMutate } from "@/lib/api/safe-mutate";
 import {
   VersionNavControls,
@@ -489,6 +490,9 @@ export function DocumentForm({
         />,
         versionNavSlot,
       )}
+
+    {/* Slice #20.13: sticky "Modificări nesalvate" banner. */}
+    <UnsavedChangesBanner show={editDirty} />
 
     {/* Two-column layout when "Show Big Page" is active (Slice #15.13) —
         mirrors PropertyForm's "Show Big Map" mechanism exactly: the left

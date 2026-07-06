@@ -16,6 +16,7 @@ import type { PropertySnapshot } from "@/lib/properties/validation";
 import { shoelaceAreaM2 } from "@/lib/properties/area";
 import { cornersToS70Key, wgs84ToStereo70Batch } from "@/lib/geo/convert-client";
 import { streetLineFromGeocodeResult } from "@/lib/geo/reverse-geocode";
+import { UnsavedChangesBanner } from "@/components/unsaved-changes-banner";
 import { useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-provider";
 import {
   computeCornerDiff,
@@ -610,6 +611,9 @@ export function PropertyForm({
       className="flex flex-col gap-4"
       noValidate
     >
+      {/* Slice #20.13: sticky "Modificări nesalvate" banner. */}
+      <UnsavedChangesBanner show={editDirty} />
+
       {/* Version controls (Slice #18.UX.04) — portalled into the page header so
           they sit centered on the property-title line. Only rendered for an
           existing property once its versions have loaded (versionNav != null)

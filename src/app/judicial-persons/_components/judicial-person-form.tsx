@@ -17,6 +17,7 @@ import {
 import { NavArrowIcon } from "@/components/back-arrow";
 import { safeMutate } from "@/lib/api/safe-mutate";
 import { PaginationControls } from "@/components/pagination-controls";
+import { UnsavedChangesBanner } from "@/components/unsaved-changes-banner";
 import { useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-provider";
 import {
   VersionNavControls,
@@ -395,6 +396,9 @@ export function JudicialPersonForm({
       className="flex flex-col gap-4"
       noValidate
     >
+      {/* Slice #20.13: sticky "Modificări nesalvate" banner. */}
+      <UnsavedChangesBanner show={editDirty} />
+
       {/* Slice #18.05: version controls portalled onto the person-name line. */}
       {versionNavSlot && versionNav &&
         createPortal(

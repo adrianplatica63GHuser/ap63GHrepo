@@ -15,6 +15,7 @@ import {
 import { AddressBlock } from "@/components/address/address-block";
 import { safeMutate } from "@/lib/api/safe-mutate";
 import { NavArrowIcon } from "@/components/back-arrow";
+import { UnsavedChangesBanner } from "@/components/unsaved-changes-banner";
 import { useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-provider";
 import {
   VersionNavControls,
@@ -433,6 +434,10 @@ export function NaturalPersonForm({
       className="flex flex-col gap-4"
       noValidate
     >
+      {/* Slice #20.13: sticky "Modificări nesalvate" banner — visible whenever
+          the form has unsaved edits, even when Save is below the fold. */}
+      <UnsavedChangesBanner show={editDirty} />
+
       {/* Slice #18.05: version controls portalled into the detail-tabs header
           so they sit on the person-name line. Only for an existing person once
           its versions have loaded, and only when the header provided a slot. */}
