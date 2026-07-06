@@ -10,7 +10,7 @@ export const SUPPORTED_LOCALES = ["en-GB", "ro-RO"] as const;
 
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
 
-export const DEFAULT_LOCALE: SupportedLocale = "en-GB";
+export const DEFAULT_LOCALE: SupportedLocale = "ro-RO";
 
 export const LOCALE_COOKIE_NAME = "NEXT_LOCALE";
 

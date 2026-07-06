@@ -85,7 +85,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { key: "globalSearch", href: "/admin/global-search", icon: Search },
       { key: "export", icon: Download },
       { key: "helpContent", href: "/admin/help-content", icon: HelpCircle },
-      { key: "settings", icon: Settings },
+      { key: "settings", href: "/admin/settings", icon: Settings },
     ],
   },
 ];

@@ -1974,5 +1974,11 @@
       "typeProperty": "Property",
       "typeDocument": "Document"
     }
+  },
+  "settings": {
+    "pageTitle": "Settings",
+    "sectionDeveloper": "Developer options",
+    "useEnglish": "Use English language",
+    "showDevNotes": "Show developer notes"
   }
 }

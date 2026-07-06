@@ -6,7 +6,6 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, ChevronDown, LogOut, KeyRound, Search } from "lucide-react";
-import { LocaleToggle } from "@/components/locale-toggle";
 import { createClient } from "@/lib/supabase/client";
 import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
 import { NAV_SECTIONS, type NavItem, type NavSection } from "./nav-config";
@@ -351,6 +350,7 @@ export function SidebarNav() {
     referenceData:             t("items.referenceData"),
     import:                    t("items.import"),
     calculation:               t("items.calculation"),
+    globalSearch:              t("items.globalSearch"),
     export:                    t("items.export"),
     helpContent:               t("items.helpContent"),
     settings:                  t("items.settings"),
@@ -378,7 +378,6 @@ export function SidebarNav() {
             GA40
           </span>
         )}
-        {!isCollapsed && <LocaleToggle />}
         <button
           type="button"
           onClick={toggleCollapsed}

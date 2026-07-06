@@ -1974,5 +1974,11 @@
       "typeProperty": "Proprietate",
       "typeDocument": "Act"
     }
+  },
+  "settings": {
+    "pageTitle": "Setări",
+    "sectionDeveloper": "Opțiuni pentru dezvoltator",
+    "useEnglish": "Folosește limba engleză",
+    "showDevNotes": "Afișează note pentru dezvoltatori"
   }
 }
