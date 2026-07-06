@@ -4,8 +4,8 @@ import { listPropertyGroupTags } from "@/lib/groups/queries";
 import { PropertyDetailTabs } from "../_components/property-detail-tabs";
 import { fromApiPayload } from "../_components/form-schema";
 
-type Tab = "details" | "references" | "persons" | "document";
-const VALID_TABS: Tab[] = ["details", "references", "persons", "document"];
+type Tab = "details" | "related" | "persons" | "document" | "metadata";
+const VALID_TABS: Tab[] = ["details", "related", "persons", "document", "metadata"];
 
 type PageParams = {
   params:       Promise<{ id: string }>;
