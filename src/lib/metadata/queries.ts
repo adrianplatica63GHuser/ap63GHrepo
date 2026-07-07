@@ -18,13 +18,15 @@
  * version is NOT appended if the new snapshot equals the latest stored one.
  */
 
-import { eq, desc, asc, sql, count } from "drizzle-orm";
+import { eq, desc, asc, sql, count, and, inArray, isNull } from "drizzle-orm";
 import { db } from "@/db";
 import {
+  document,
   entityMetadata,
   entityProvenanceLog,
   entityMetadataVersion,
   entityTag,
+  person,
 } from "@/db/schema";
 
 // ---------------------------------------------------------------------------
@@ -577,4 +579,56 @@ export async function renameTag(from: string, to: string): Promise<TagWithCount[
   `);
 
   return listAllTags();
+}
+
+// ---------------------------------------------------------------------------
+// Cross-entity tag lookup  (Slice #21.02)
+// ---------------------------------------------------------------------------
+
+export type EntitiesByTag = {
+  documents: { id: string; principalObjectId: string; code: string }[];
+  persons:   { id: string; principalObjectId: string; code: string }[];
+};
+
+/**
+ * Find all non-deleted documents and persons that have the given tag
+ * (case-insensitive — tags are stored lowercase, so `tag` is lowercased
+ * before matching).
+ *
+ * Used by the Document "Process" feature to bulk-associate entities that
+ * share a property-folder tag with a freshly-created Property.
+ */
+export async function findEntitiesByTag(tag: string): Promise<EntitiesByTag> {
+  const lower = tag.trim().toLowerCase();
+  if (!lower) return { documents: [], persons: [] };
+
+  const tagRows = await db
+    .select({ principalObjectId: entityTag.principalObjectId })
+    .from(entityTag)
+    .where(eq(entityTag.tag, lower));
+
+  if (tagRows.length === 0) return { documents: [], persons: [] };
+
+  const poids = tagRows.map((r) => r.principalObjectId);
+
+  const [docs, people] = await Promise.all([
+    db
+      .select({
+        id:                document.id,
+        principalObjectId: document.principalObjectId,
+        code:              document.code,
+      })
+      .from(document)
+      .where(and(inArray(document.principalObjectId, poids), isNull(document.deletedAt))),
+    db
+      .select({
+        id:                person.id,
+        principalObjectId: person.principalObjectId,
+        code:              person.code,
+      })
+      .from(person)
+      .where(and(inArray(person.principalObjectId, poids), isNull(person.deletedAt))),
+  ]);
+
+  return { documents: docs, persons: people };
 }

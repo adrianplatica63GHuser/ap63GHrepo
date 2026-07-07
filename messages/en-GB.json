@@ -1359,7 +1359,23 @@
     },
     "groupsFilterLabel": "Groups:",
     "groupsFilterAll": "All (in groups or not)",
-    "groupsFilterUngrouped": "Not in a group"
+    "groupsFilterUngrouped": "Not in a group",
+    "processPanel": {
+      "title": "Process Coordinate File",
+      "description": "This document contains a text file with Stereo 70 cadastral coordinates. Click the button below to parse the corners, create a Property, and associate all documents and persons that share the same folder tag.",
+      "buttonLabel": "Process",
+      "processing": "Processing…",
+      "alreadyProcessed": "Already processed",
+      "provenanceLabel": "Created property:",
+      "viewProperty": "Open property",
+      "resultDocuments": "{count} document(s) associated",
+      "resultPersons": "{count} person(s) associated",
+      "resultNoTag": "No folder tag found — property created without bulk associations.",
+      "errorNoTextFile": "No plain-text file found in this document's pages.",
+      "errorTooFewCorners": "Fewer than 3 coordinate corners were parsed from the file.",
+      "errorAlreadyProcessed": "This document has already been processed.",
+      "errorGeneric": "Processing failed. Please try again."
+    }
   },
   "valueList": {
     "pageTitle": "Reference Data",

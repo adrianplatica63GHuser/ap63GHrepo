@@ -29,6 +29,7 @@ export default async function EditDocumentPage({ params, searchParams }: PagePar
           documentId={record.id}
           documentCode={record.code}
           documentName={label}
+          principalObjectId={record.principalObjectId}
           initialValues={initialValues}
           readonly={readonly === "true"}
           initialTab={initialTab}

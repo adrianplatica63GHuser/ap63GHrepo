@@ -1359,7 +1359,23 @@
     },
     "groupsFilterLabel": "Grupuri:",
     "groupsFilterAll": "Toate (in grup sau nu)",
-    "groupsFilterUngrouped": "Fara grup"
+    "groupsFilterUngrouped": "Fara grup",
+    "processPanel": {
+      "title": "Procesare fișier coordonate",
+      "description": "Documentul conține un fișier text cu coordonate cadastrale Stereo 70. Apăsați butonul de mai jos pentru a interpreta colțurile, crea o Proprietate și asocia toate documentele și persoanele care au același tag de dosar.",
+      "buttonLabel": "Procesează",
+      "processing": "Se procesează…",
+      "alreadyProcessed": "Deja procesat",
+      "provenanceLabel": "Proprietate creată:",
+      "viewProperty": "Deschide proprietatea",
+      "resultDocuments": "{count} document(e) asociat(e)",
+      "resultPersons": "{count} persoană/persoane asociat(e)",
+      "resultNoTag": "Nu s-a găsit niciun tag de dosar — proprietate creată fără asocieri în masă.",
+      "errorNoTextFile": "Nu s-a găsit niciun fișier text în paginile acestui document.",
+      "errorTooFewCorners": "S-au interpretat mai puțin de 3 colțuri din fișier.",
+      "errorAlreadyProcessed": "Acest document a fost deja procesat.",
+      "errorGeneric": "Procesarea a eșuat. Vă rugăm să încercați din nou."
+    }
   },
   "valueList": {
     "pageTitle": "Date de referință",

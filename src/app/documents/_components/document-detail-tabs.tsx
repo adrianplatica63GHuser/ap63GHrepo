@@ -8,23 +8,26 @@ import { DocumentPersonsTab } from "./document-persons-tab";
 import { DocumentPropertiesTab } from "./document-properties-tab";
 import { DocumentReferencesTab } from "./document-references-tab";
 import { EntityMetadataTab } from "@/components/entity-metadata-tab";
+import { ProcessPanel } from "./process-panel";
 import { type FormValues } from "./form-schema";
 
 type Tab = "details" | "related" | "persons" | "properties" | "metadata";
 
 type Props = {
-  documentId:    string;
-  documentCode:  string;
-  documentName:  string;
-  initialValues: FormValues;
-  readonly?:     boolean;
-  initialTab?:   Tab;
+  documentId:        string;
+  documentCode:      string;
+  documentName:      string;
+  principalObjectId: string;
+  initialValues:     FormValues;
+  readonly?:         boolean;
+  initialTab?:       Tab;
 };
 
 export function DocumentDetailTabs({
   documentId,
   documentCode,
   documentName,
+  principalObjectId,
   initialValues,
   readonly,
   initialTab,
@@ -83,13 +86,19 @@ export function DocumentDetailTabs({
         {/* Content "page" — bordered rectangle framing all panels */}
         <div role="tabpanel" className="relative z-[1] border-2 border-slate-700 dark:border-slate-500 bg-slate-50 dark:bg-slate-900 p-4">
           {activeTab === "details" && (
-            <DocumentForm
-              mode={readonly ? "view" : "edit"}
-              documentId={documentId}
-              documentCode={documentCode}
-              initialValues={initialValues}
-              versionNavSlot={navSlot}
-            />
+            <>
+              <DocumentForm
+                mode={readonly ? "view" : "edit"}
+                documentId={documentId}
+                documentCode={documentCode}
+                initialValues={initialValues}
+                versionNavSlot={navSlot}
+              />
+              <ProcessPanel
+                documentId={documentId}
+                principalObjectId={principalObjectId}
+              />
+            </>
           )}
           {activeTab === "persons" && (
             <DocumentPersonsTab documentId={documentId} />

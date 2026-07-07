@@ -77,6 +77,31 @@ export async function deleteFile(filePath: string): Promise<void> {
 }
 
 /**
+ * Read a file's raw content from storage.
+ *
+ * Dev:  reads from the local uploads directory.
+ * Prod: downloads from Supabase Storage.
+ *
+ * @param filePath Storage key used when the file was uploaded.
+ */
+export async function readFileContent(filePath: string): Promise<Buffer> {
+  if (isProduction) {
+    const supabase = createAdminClient();
+    const { data, error } = await supabase.storage
+      .from(SUPABASE_BUCKET)
+      .download(filePath);
+    if (error || !data) {
+      throw new Error(`Failed to download file: ${error?.message ?? "no data"}`);
+    }
+    const ab = await data.arrayBuffer();
+    return Buffer.from(ab);
+  } else {
+    const fullPath = path.join(LOCAL_UPLOADS_DIR, filePath);
+    return fs.readFile(fullPath);
+  }
+}
+
+/**
  * Return a URL that serves the file.
  *
  * Dev:  a relative URL to the local file-serving API route (/api/files/…)
