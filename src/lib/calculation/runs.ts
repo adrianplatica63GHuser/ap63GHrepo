@@ -74,10 +74,10 @@ export type CalcSourceResult = {
 
 export async function createCalculationRun(input: CalcRunCreate): Promise<{ id: string; code: string }> {
   // Allocate a CALC code from the dedicated sequence.
-  const [codeRow] = await db.execute<{ code: string }>(
+  const codeResult = await db.execute<{ code: string }>(
     sql`SELECT 'CALC' || lpad(nextval('calculation_run_code_seq')::text, 5, '0') AS code`
   );
-  const code = codeRow.code;
+  const code = (codeResult.rows[0] as { code: string }).code;
 
   const inputParams = {
     text:    input.inputText,
