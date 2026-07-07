@@ -548,12 +548,12 @@ export async function POST(request: NextRequest): Promise<Response> {
   try {
     formData = await request.formData();
   } catch {
-    return Response.json({ error: "Invalid form data" }, { status: 400 });
+    return Response.json({ error: "Date de formular invalide. Vă rugăm să reîncercați." }, { status: 400 });
   }
 
   const imageField = formData.get("image");
   if (!imageField || !(imageField instanceof File)) {
-    return Response.json({ error: "No image file provided" }, { status: 400 });
+    return Response.json({ error: "Niciun fișier imagine nu a fost selectat." }, { status: 400 });
   }
 
   // Convert File → Buffer (Tesseract.js accepts Buffer)
@@ -569,7 +569,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     rawText = data.text;
   } catch (err) {
     console.error("[scan-image] OCR error:", err);
-    return Response.json({ error: "OCR processing failed" }, { status: 500 });
+    return Response.json({ error: "Imaginea nu a putut fi procesată. Asigurați-vă că fișierul este o imagine clară cu un tabel de coordonate Stereo 70 vizibil." }, { status: 500 });
   } finally {
     await worker.terminate();
   }

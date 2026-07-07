@@ -136,12 +136,12 @@ export async function POST(request: NextRequest): Promise<Response> {
   try {
     formData = await request.formData();
   } catch {
-    return Response.json({ error: "Invalid form data" }, { status: 400 });
+    return Response.json({ error: "Date de formular invalide. Vă rugăm să reîncercați." }, { status: 400 });
   }
 
   const fileField = formData.get("file");
   if (!fileField || !(fileField instanceof File)) {
-    return Response.json({ error: "No file provided" }, { status: 400 });
+    return Response.json({ error: "Niciun fișier nu a fost selectat." }, { status: 400 });
   }
 
   // Read as text (handles UTF-8 BOM automatically via TextDecoder)
