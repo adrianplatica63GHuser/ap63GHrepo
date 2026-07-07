@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import { getPropertyById } from "@/lib/properties/queries";
-import { listPropertyGroupTags } from "@/lib/groups/queries";
 import { PropertyDetailTabs } from "../_components/property-detail-tabs";
 import { fromApiPayload } from "../_components/form-schema";
 
@@ -18,10 +17,6 @@ export default async function EditPropertyPage({ params, searchParams }: PagePar
 
   const data = await getPropertyById(id);
   if (!data) notFound();
-
-  // Slice #18.07: group memberships shown as [code position] badges on the
-  // corners panel header.
-  const groupTags = await listPropertyGroupTags(data.property.principalObjectId);
 
   const initialValues = fromApiPayload({
     property: data.property,
@@ -49,7 +44,6 @@ export default async function EditPropertyPage({ params, searchParams }: PagePar
           propertyName={label}
           initialValues={initialValues}
           initialCorners={initialCorners}
-          groupTags={groupTags}
           readonly={readonly === "true"}
           initialTab={initialTab}
         />

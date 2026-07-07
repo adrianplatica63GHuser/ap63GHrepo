@@ -11,15 +11,12 @@ import { type FormValues, type Corner } from "./form-schema";
 
 type Tab = "details" | "related" | "persons" | "document" | "metadata";
 
-type GroupTag = { code: string; position: number };
-
 type Props = {
   propertyId:     string;
   propertyCode:   string;
   propertyName:   string;
   initialValues:  FormValues;
   initialCorners: Corner[];
-  groupTags?:     GroupTag[];
   readonly?:      boolean;
   initialTab?:    Tab;
 };
@@ -30,7 +27,6 @@ export function PropertyDetailTabs({
   propertyName,
   initialValues,
   initialCorners,
-  groupTags,
   readonly,
   initialTab,
 }: Props) {
@@ -94,7 +90,6 @@ export function PropertyDetailTabs({
               propertyCode={propertyCode}
               initialValues={initialValues}
               initialCorners={initialCorners}
-              groupTags={groupTags}
               onBigMapChange={setBigMap}
               versionNavSlot={navSlot}
             />
