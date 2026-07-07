@@ -32,35 +32,6 @@ import { useNavigationHistory } from "@/components/providers/navigation-history-
 // messages.navigation.breadcrumb.  Order matters: more-specific entries
 // must come before their prefixes.
 
-type BreadcrumbKeys = {
-  home:               string;
-  naturalPersons:     string;
-  judicialPersons:    string;
-  properties:         string;
-  propertiesMap:      string;
-  documents:          string;
-  admin:              string;
-  groups:             string;
-  stamps:             string;
-  calculation:        string;
-  calculationHistory: string;
-  valueLists:         string;
-  import:             string;
-  users:              string;
-  tags:               string;
-  settings:           string;
-  globalSearch:       string;
-  complexQuery:       string;
-  helpContent:        string;
-  associatePerson:    string;
-  associateDocument:  string;
-  associateProperty:  string;
-  associateReference: string;
-  associateParty:     string;
-  new:                string;
-  entity:             string;
-};
-
 // ---------------------------------------------------------------------------
 // Build segments from current pathname
 // ---------------------------------------------------------------------------

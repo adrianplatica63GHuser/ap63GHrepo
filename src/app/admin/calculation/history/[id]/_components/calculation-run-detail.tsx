@@ -144,6 +144,7 @@ export function CalculationRunDetail({ runId }: { runId: string }) {
   const comp = run.stepsLog;
 
   function handleRerun() {
+    if (!run) return;
     // Encode the stored input text into sessionStorage so the calculation page
     // can pick it up and pre-fill the form.
     if (typeof window !== "undefined") {
