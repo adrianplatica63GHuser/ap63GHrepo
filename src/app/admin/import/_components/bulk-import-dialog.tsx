@@ -157,23 +157,28 @@ async function pdfFirstPageBlob(file: File): Promise<Blob> {
 // API helpers
 // ---------------------------------------------------------------------------
 
-/** Minimal document-type lookup — we use a well-known "ALTUL" fallback key */
-async function fetchFallbackDocTypeId(): Promise<string | null> {
-  try {
-    const res = await fetch("/api/admin/value-lists/document-types");
-    if (!res.ok) return null;
-    const body = (await res.json()) as { items?: { id: string; key: string }[] };
-    // Prefer ALTUL / OTHER, fall back to first available
-    const items = body.items ?? [];
-    const fallback =
-      items.find((x) => x.key === "ALTUL") ??
-      items.find((x) => x.key === "OTHER") ??
-      items[0] ??
-      null;
-    return fallback?.id ?? null;
-  } catch {
-    return null;
+/**
+ * Fetch the first available document type ID to use as default during bulk
+ * import (every Document row requires a non-null documentTypeId in the DB).
+ * Preference order: ALTUL → OTHER → first row alphabetically.
+ * Throws a user-visible Romanian error if no types exist at all.
+ */
+async function fetchFallbackDocTypeId(): Promise<string> {
+  const res = await fetch("/api/admin/value-lists/document-types");
+  if (!res.ok) throw new Error("Nu s-au putut încărca tipurile de documente (HTTP " + res.status + ").");
+  const body = (await res.json()) as { items?: { id: string; key: string; name: string }[] };
+  const items = body.items ?? [];
+  if (items.length === 0) {
+    throw new Error(
+      "Nu există niciun tip de document definit în Date de Referință. " +
+      "Adăugați cel puțin un tip înainte de a importa fișiere.",
+    );
   }
+  const pick =
+    items.find((x) => x.key === "ALTUL") ??
+    items.find((x) => x.key === "OTHER") ??
+    items[0];
+  return pick.id;
 }
 
 async function createDocument(payload: {
@@ -358,9 +363,10 @@ export function BulkImportDialog({
 
   useEffect(() => {
     let mounted = true;
-    let fallbackDocTypeId: string | null = null;
+    let fallbackDocTypeId: string;
 
     async function run() {
+      // fetchFallbackDocTypeId throws with a Romanian error if no types exist.
       fallbackDocTypeId = await fetchFallbackDocTypeId();
       if (!mounted) return;
 
@@ -662,8 +668,13 @@ export function BulkImportDialog({
                 ? t("doneTitle", { count: doneCount })
                 : t("title")}
             </h2>
-            {done && (
+            {done && errorCount === 0 && (
               <p className="mt-0.5 text-xs text-fade">{t("doneHint")}</p>
+            )}
+            {done && errorCount > 0 && (
+              <p className="mt-0.5 text-xs text-red-600 dark:text-red-400">
+                {doneCount} importate cu succes · {errorCount} erori (verificați coloana Status)
+              </p>
             )}
           </div>
           {done && (

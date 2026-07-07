@@ -37,8 +37,11 @@ function TimeFramesPanel() {
   const locale = useCurrentLocale();
   const isRo = locale !== "en-GB";
 
+  // NOTE: use a distinct key "time-frames-list" to avoid colliding with the
+  // useTimeFrames() hook (key "time-frames"), which caches a TimeFrameMap
+  // object — a different shape that would break the .find() below.
   const { data: rows, isLoading, isError } = useQuery<TimeFrameRow[]>({
-    queryKey:            ["time-frames"],
+    queryKey:            ["time-frames-list"],
     queryFn:             fetchTimeFrames,
     staleTime:           5 * 60 * 1000,
     refetchOnWindowFocus: false,
