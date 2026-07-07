@@ -723,6 +723,24 @@
       "pages":      "Vizualizatorul de pagini nu a putut fi afișat.",
       "ocr":        "Dialogul de import nu a putut fi afișat.",
       "default":    "A apărut o eroare neașteptată."
+    },
+    "importanceValues": {
+      "LOW":    "Scăzută",
+      "MEDIUM": "Medie",
+      "HIGH":   "Ridicată"
+    },
+    "relevanceValues": {
+      "INACTIVE":   "Inactiv",
+      "HISTORICAL": "Istoric",
+      "CURRENT":    "Curent",
+      "FUTURE":     "Viitor"
+    },
+    "listFilters": {
+      "importanceLabel": "Importanță:",
+      "allImportances":  "Toate",
+      "relevanceLabel":  "Relevanță:",
+      "allRelevances":   "Toate",
+      "expiringSoon":    "Expiră curând"
     }
   },
   "naturalPerson": {

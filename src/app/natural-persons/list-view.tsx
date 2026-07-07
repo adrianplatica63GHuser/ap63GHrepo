@@ -486,10 +486,10 @@ export function NaturalPersonListView() {
                 disabled={currentPage === 0}
                 className="rounded px-2 py-1 text-xs hover:bg-crease disabled:opacity-40"
               >
-                {tPag("prev")}
+                {tPag("previous")}
               </button>
               <span className="px-2">
-                {tPag("page", { current: currentPage + 1, total: totalPages })}
+                {tPag("pageOf", { page: currentPage + 1, total: totalPages })}
               </span>
               <button
                 type="button"
