@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
+import { useTimeFrames, tfDays } from "@/hooks/use-time-frames";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -135,6 +136,7 @@ export function NaturalPersonForm({
   const citizenshipOptions = useCitizenshipOptions();
   // Slice #18.16.VL:
   const personTypeOptions = usePersonTypeOptions();
+  const { data: tf } = useTimeFrames();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -166,7 +168,7 @@ export function NaturalPersonForm({
       ? Math.ceil((idValidUntilDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
       : null;
   const idValidUntilExpiringSoon =
-    idValidUntilDaysLeft !== null && idValidUntilDaysLeft <= 90;
+    idValidUntilDaysLeft !== null && idValidUntilDaysLeft <= tfDays(tf, "id_card_expiring_soon");
 
   // --- Version history (Slice #18.05) ------------------------------------
   const versionsQuery = useQuery({

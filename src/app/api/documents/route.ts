@@ -17,6 +17,8 @@ import {
   documentListQuerySchema,
 } from "@/lib/documents/validation";
 import { createServerClient } from "@/lib/supabase/server";
+import { getTimeFrameSettings } from "@/lib/time-frames/queries";
+import { getDays } from "@/lib/time-frames/config";
 
 export async function GET(request: NextRequest): Promise<Response> {
   const url = new URL(request.url);
@@ -60,7 +62,9 @@ export async function GET(request: NextRequest): Promise<Response> {
   }
 
   try {
-    const { items, total } = await listDocument(parsed.data);
+    const tf = await getTimeFrameSettings();
+    const expiringSoonDays = getDays(tf, "documents_expiring_soon");
+    const { items, total } = await listDocument(parsed.data, expiringSoonDays);
     return Response.json({
       items,
       total,

@@ -53,12 +53,12 @@ export type RecentActivityItem = {
 };
 
 // ---------------------------------------------------------------------------
-// 1. Items created in the last 7 days
+// 1. Items created in the last N days (configurable via time_frame_setting)
 // ---------------------------------------------------------------------------
 
-export async function getDashboardRecentCounts(): Promise<RecentCounts> {
+export async function getDashboardRecentCounts(recentDays = 7): Promise<RecentCounts> {
   const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - 7);
+  cutoff.setDate(cutoff.getDate() - recentDays);
 
   const [personsResult, propertiesResult, documentsResult] = await Promise.all([
     db
@@ -85,12 +85,12 @@ export async function getDashboardRecentCounts(): Promise<RecentCounts> {
 }
 
 // ---------------------------------------------------------------------------
-// 2. Documents with date_valid_until set, expiring within 60 days or already expired
+// 2. Documents expiring within N days or already expired (configurable)
 // ---------------------------------------------------------------------------
 
-export async function getDashboardExpiringDocuments(): Promise<ExpiringDocument[]> {
+export async function getDashboardExpiringDocuments(expiringDays = 60): Promise<ExpiringDocument[]> {
   const horizon = new Date();
-  horizon.setDate(horizon.getDate() + 60);
+  horizon.setDate(horizon.getDate() + expiringDays);
   const horizonStr = horizon.toISOString().split("T")[0];
 
   const rows = await db
@@ -125,15 +125,15 @@ export async function getDashboardExpiringDocuments(): Promise<ExpiringDocument[
 }
 
 // ---------------------------------------------------------------------------
-// 3. Entities with stale metadata (any field timestamp NULL or > 90 days old)
+// 3. Entities with stale metadata (any field timestamp NULL or > N days old)
 // ---------------------------------------------------------------------------
 
-export async function getDashboardStaleMetadata(): Promise<StaleMetadataCount> {
+export async function getDashboardStaleMetadata(staleDays = 90): Promise<StaleMetadataCount> {
   const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - 90);
+  cutoff.setDate(cutoff.getDate() - staleDays);
 
   // A metadata row is "stale" when ANY of the three per-field timestamps is
-  // NULL (never set) or older than 90 days.
+  // NULL (never set) or older than staleDays.
   const stale = sql<boolean>`(
     ${entityMetadata.importanceUpdatedAt} IS NULL
     OR ${entityMetadata.importanceUpdatedAt} < ${cutoff.toISOString()}

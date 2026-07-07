@@ -14,14 +14,18 @@ import {
   getDashboardRecentCounts,
   getDashboardStaleMetadata,
 } from "@/lib/dashboard/queries";
+import { getTimeFrameSettings } from "@/lib/time-frames/queries";
+import { getDays } from "@/lib/time-frames/config";
 
 export async function GET(): Promise<Response> {
   try {
+    const tf = await getTimeFrameSettings();
+
     const [recentCounts, expiringDocuments, staleMetadata, recentActivity] =
       await Promise.all([
-        getDashboardRecentCounts(),
-        getDashboardExpiringDocuments(),
-        getDashboardStaleMetadata(),
+        getDashboardRecentCounts(getDays(tf, "dashboard_recent_days")),
+        getDashboardExpiringDocuments(getDays(tf, "dashboard_expiring_docs")),
+        getDashboardStaleMetadata(getDays(tf, "dashboard_stale_metadata")),
         getDashboardRecentActivity(),
       ]);
 

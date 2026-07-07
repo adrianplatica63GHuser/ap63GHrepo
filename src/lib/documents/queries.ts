@@ -46,7 +46,10 @@ export type DocumentFull = typeof document.$inferSelect;
 // List
 // ---------------------------------------------------------------------------
 
-export async function listDocument(opts: DocumentListQuery): Promise<{
+export async function listDocument(
+  opts: DocumentListQuery,
+  expiringSoonDays = 30,
+): Promise<{
   items: DocumentListItem[];
   total: number;
 }> {
@@ -103,14 +106,17 @@ export async function listDocument(opts: DocumentListQuery): Promise<{
     opts.importance ? eq(entityMetadata.importance, opts.importance) : undefined,
     opts.relevance  ? eq(entityMetadata.relevance,  opts.relevance)  : undefined,
     // Slice #20.06: expiring-soon shortcut.
+    // expiringSoonDays is configurable via time_frame_setting (Slice #20.19).
     opts.expiringSoon
-      ? and(
-          isNotNull(document.dateValidUntil),
-          lte(
-            document.dateValidUntil,
-            sql`to_char(CURRENT_DATE + INTERVAL '30 days', 'YYYY-MM-DD')`,
-          ),
-        )
+      ? (() => {
+          const horizon = new Date();
+          horizon.setDate(horizon.getDate() + expiringSoonDays);
+          const horizonStr = horizon.toISOString().split("T")[0];
+          return and(
+            isNotNull(document.dateValidUntil),
+            lte(document.dateValidUntil, horizonStr),
+          );
+        })()
       : undefined,
     pat
       ? or(

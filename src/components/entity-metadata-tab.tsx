@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
+import { useTimeFrames, tfDays } from "@/hooks/use-time-frames";
 import { VersionNavControls } from "@/components/version-nav-controls";
 import type { VersionNavView, VersionNavLabels } from "@/components/version-nav-controls";
 import { highlightRingClass } from "@/lib/versioning/highlight-ring";
@@ -1098,6 +1099,7 @@ function CalculationSourceLink({
 export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName, calculationSourcePath }: Props) {
   const t = useTranslations("shared.entityMetadata");
   const queryClient = useQueryClient();
+  const { data: tf } = useTimeFrames();
 
   const backLabel = t("backTo", { name: backEntityName });
 
@@ -1398,7 +1400,8 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
 
   function buildReviewWarning(isoDate: string | null): string | null {
     const d = daysSince(isoDate);
-    if (d === null || d <= 90) return null;
+    const threshold = tfDays(tf, "metadata_review_warning");
+    if (d === null || d <= threshold) return null;
     return t("reviewWarning", { days: d });
   }
 

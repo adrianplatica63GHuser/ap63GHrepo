@@ -1509,3 +1509,29 @@ export const calculationRunOutput = pgTable(
     uniqueIndex("calc_run_output_run_po_unique").on(t.calculationRunId, t.principalObjectId),
   ],
 );
+
+// ---------------------------------------------------------------------------
+// time_frame_setting — runtime-configurable time thresholds  (Slice #20.19)
+// ---------------------------------------------------------------------------
+//
+// A key/value store for the application's configurable time thresholds.
+// Each row has:
+//   key         — machine identifier (unique, PK)
+//   value       — numeric quantity
+//   unit        — 'days' | 'minutes' | 'hours' | 'months'
+//   label_en/ro — human-readable label shown in the Settings panel
+//   description_en/ro — optional longer explanation
+//
+// Seeded with 10 rows in migration_063; updated by Adrian via Settings UI.
+// Read server-side via getTimeFrameSettings(); client-side via useTimeFrames().
+
+export const timeFrameSetting = pgTable("time_frame_setting", {
+  key:           text("key").primaryKey(),
+  value:         integer("value").notNull(),
+  unit:          text("unit").notNull().default("days"),
+  labelEn:       text("label_en").notNull(),
+  labelRo:       text("label_ro").notNull(),
+  descriptionEn: text("description_en"),
+  descriptionRo: text("description_ro"),
+  updatedAt:     timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});

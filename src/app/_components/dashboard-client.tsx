@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
+import { useTimeFrames, tfDays } from "@/hooks/use-time-frames";
 
 // ---------------------------------------------------------------------------
 // API response types — mirror src/lib/dashboard/queries.ts
@@ -202,14 +203,16 @@ function RecentCountsSection({
 function ExpiringDocumentsSection({
   data,
   t,
+  amberDays,
 }: {
   data: ExpiringDocument[] | undefined;
   t: ReturnType<typeof useTranslations>;
+  amberDays: number;
 }) {
   function rowColor(dateValidUntil: string): string {
     const days = daysFromToday(dateValidUntil);
-    if (days < 0)   return "text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20";
-    if (days <= 14) return "text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20";
+    if (days < 0)           return "text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20";
+    if (days <= amberDays)  return "text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20";
     return "text-yellow-700 dark:text-yellow-400 bg-yellow-50/60 dark:bg-yellow-900/10";
   }
 
@@ -406,6 +409,7 @@ function RecentActivitySection({
 
 export function DashboardClient() {
   const t = useTranslations("dashboard");
+  const { data: tf } = useTimeFrames();
 
   const { data, isError } = useQuery<DashboardData>({
     queryKey:           ["dashboard"],
@@ -440,7 +444,11 @@ export function DashboardClient() {
       </div>
 
       {/* Expiring documents — full width */}
-      <ExpiringDocumentsSection data={data?.expiringDocuments} t={t} />
+      <ExpiringDocumentsSection
+        data={data?.expiringDocuments}
+        t={t}
+        amberDays={tfDays(tf, "dashboard_expiring_amber")}
+      />
 
       {/* Recent activity — full width */}
       <RecentActivitySection data={data?.recentActivity} t={t} />

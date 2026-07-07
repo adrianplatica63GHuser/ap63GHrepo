@@ -2,22 +2,20 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
+import { useTimeFrames, tfMs } from "@/hooks/use-time-frames";
 
-const FIVE_MIN_MS = 5 * 60 * 1000;
-const FIFTEEN_MIN_MS = 15 * 60 * 1000;
-const THIRTY_MIN_MS = 30 * 60 * 1000;
 const TICK_MS = 30 * 1000;
 
 /**
  * Slice #16.UX.01 — small "New!" / "Nou!" badge rendered next to a list
  * row's checkbox when the record was created or modified within the last
- * 30 minutes.
+ * N minutes (configurable via time_frame_setting.recency_badge_window).
  *
  * Color fades as the record ages:
- *   - #FF0000 (red)       — modified within the last 5 minutes
- *   - #FF7C80 (mid pink)  — modified within the last 5–15 minutes
- *   - #FFCCCC (pale pink) — modified within the last 15–30 minutes
- *   - hidden              — older than 30 minutes
+ *   - #FF0000 (red)       — within recency_badge_red threshold (default 5 min)
+ *   - #FF7C80 (mid pink)  — within recency_badge_amber threshold (default 15 min)
+ *   - #FFCCCC (pale pink) — within recency_badge_window threshold (default 30 min)
+ *   - hidden              — older than the window
  *
  * "Modified" is computed as GREATEST(updatedAt, createdAt) — see
  * src/lib/persons|properties|documents/queries.ts for the matching
@@ -34,6 +32,7 @@ export function RecencyBadge({
   updatedAt: string | Date;
 }) {
   const t = useTranslations("shared.recency");
+  const { data: tf } = useTimeFrames();
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -41,19 +40,23 @@ export function RecencyBadge({
     return () => clearInterval(handle);
   }, []);
 
+  const redMs    = tfMs(tf, "recency_badge_red");
+  const amberMs  = tfMs(tf, "recency_badge_amber");
+  const windowMs = tfMs(tf, "recency_badge_window");
+
   const created = new Date(createdAt).getTime();
   const updated = new Date(updatedAt).getTime();
   const effective = Math.max(created, updated);
   const ageMs = now - effective;
 
-  if (!Number.isFinite(ageMs) || ageMs < 0 || ageMs > THIRTY_MIN_MS) {
+  if (!Number.isFinite(ageMs) || ageMs < 0 || ageMs > windowMs) {
     return null;
   }
 
   const color =
-    ageMs <= FIVE_MIN_MS
+    ageMs <= redMs
       ? "#FF0000"
-      : ageMs <= FIFTEEN_MIN_MS
+      : ageMs <= amberMs
       ? "#FF7C80"
       : "#FFCCCC";
 
