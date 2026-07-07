@@ -57,8 +57,8 @@ function isTextPage(page: PageItem): boolean {
   );
 }
 
-function propertyCodeFromProvenance(prov: string): string {
-  // provenance is "PROP:{code}", e.g. "PROP:PROP00042"
+function propertyIdFromProvenance(prov: string): string {
+  // provenance is "PROP:{uuid}"
   return prov.startsWith("PROP:") ? prov.slice(5) : prov;
 }
 
@@ -216,15 +216,14 @@ export function ProcessPanel({ documentId, principalObjectId }: Props) {
         </p>
       )}
 
-      {/* Already done: show provenance link */}
+      {/* Already done: show link to the created property */}
       {isAlreadyDone && (
         <div className="flex items-center gap-3 flex-wrap">
           <span className="text-sm text-emerald-700 dark:text-emerald-400">
-            {t("provenanceLabel")}{" "}
-            <strong>{propertyCodeFromProvenance(panelState.provenance)}</strong>
+            {t("alreadyProcessed")}
           </span>
           <Link
-            href={`/properties/${encodeURIComponent(panelState.provenance.slice(5))}`}
+            href={`/properties/${encodeURIComponent(propertyIdFromProvenance(panelState.provenance))}`}
             className="text-sm font-medium text-cta hover:underline"
           >
             {t("viewProperty")}
@@ -283,14 +282,14 @@ export function ProcessPanel({ documentId, principalObjectId }: Props) {
         </div>
       )}
 
-      {/* Disabled placeholder when already processed (belt-and-suspenders) */}
+      {/* Disabled button when already processed */}
       {isAlreadyDone && (
         <button
           type="button"
           disabled
-          className="w-fit rounded-md px-4 py-2 text-sm font-medium text-emerald-600 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-700 opacity-50 cursor-not-allowed"
+          className="w-fit rounded-md px-4 py-2 text-sm font-medium border border-emerald-300 dark:border-emerald-700 text-emerald-600 dark:text-emerald-400 opacity-50 cursor-not-allowed"
         >
-          {t("alreadyProcessed")}
+          {t("buttonLabel")}
         </button>
       )}
     </section>

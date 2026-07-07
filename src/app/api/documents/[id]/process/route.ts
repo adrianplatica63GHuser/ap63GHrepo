@@ -223,9 +223,10 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
     }
 
     // ── 8. Mark document as processed ─────────────────────────────────────
+    // Store the property UUID (not code) so the client can link directly.
     await patchEntityMetadata(
       principalObjectId,
-      { field: "provenance", value: `PROP:${propertyCode}` },
+      { field: "provenance", value: `PROP:${propertyId}` },
       updatedBy,
     );
 
