@@ -32,12 +32,6 @@ import { useNavigationHistory } from "@/components/providers/navigation-history-
 // messages.navigation.breadcrumb.  Order matters: more-specific entries
 // must come before their prefixes.
 
-type RouteEntry = {
-  match:  string;          // exact path to match against pathname segments
-  tKey:   keyof BreadcrumbKeys;
-  href:   string;
-};
-
 type BreadcrumbKeys = {
   home:               string;
   naturalPersons:     string;

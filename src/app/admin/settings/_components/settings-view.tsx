@@ -1,19 +1,39 @@
 "use client";
 
 import { useState } from "react";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { setLocaleCookie } from "@/lib/i18n/locale";
 
+const DEV_ENGLISH_KEY = "dev-use-english";
+
 export function SettingsView() {
   const t = useTranslations("settings");
-  const currentLocale = useLocale();
   const router = useRouter();
-  const isEnglish = currentLocale === "en-GB";
+
+  // Checkbox state is driven by localStorage, NOT useLocale().
+  // Initialised lazily so the correct value is read once on mount without
+  // needing a synchronous setState-in-effect (which the linter disallows).
+  const [isEnglish, setIsEnglish] = useState(() => {
+    if (typeof window === "undefined") return false;
+    const devEnglish = localStorage.getItem(DEV_ENGLISH_KEY) === "true";
+    // Ensure the locale cookie matches the stored preference.
+    // Clears any leftover en-GB cookie from before Slice #20.10.
+    setLocaleCookie(devEnglish ? "en-GB" : "ro-RO");
+    return devEnglish;
+  });
   const [showDevNotes, setShowDevNotes] = useState(false);
 
   function handleLanguageToggle(e: React.ChangeEvent<HTMLInputElement>) {
-    setLocaleCookie(e.target.checked ? "en-GB" : "ro-RO");
+    const checked = e.target.checked;
+    setIsEnglish(checked);
+    if (checked) {
+      localStorage.setItem(DEV_ENGLISH_KEY, "true");
+      setLocaleCookie("en-GB");
+    } else {
+      localStorage.removeItem(DEV_ENGLISH_KEY);
+      setLocaleCookie("ro-RO");
+    }
     router.refresh();
   }
 
