@@ -17,7 +17,7 @@
  * The concurrency limit is 3 in-flight import operations at a time.
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import {
@@ -334,9 +334,9 @@ export function BulkImportDialog({
     entries.map((entry) => ({ entry, status: "pending" })),
   );
   const [done, setDone] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
   const [aiState, setAiState] = useState<AiState | null>(null);
   const [parsedCorners, setParsedCorners] = useState<unknown[] | null>(null);
-  const cancelledRef = useRef(false);
 
   const updateResult = useCallback(
     (path: string, patch: Partial<ImportResult>) =>
@@ -347,17 +347,25 @@ export function BulkImportDialog({
   );
 
   // ---------------------------------------------------------------------------
-  // Run import on mount
+  // Run import on mount.
+  //
+  // IMPORTANT: use a per-invocation `mounted` boolean, NOT a shared ref.
+  // React Strict Mode (dev) double-invokes effects: the cleanup of the first
+  // invocation would set a shared ref to false and the second invocation would
+  // see it already false — but a new closure-local `mounted` starts as `true`
+  // on each invocation and is set to `false` only by *its own* cleanup.
   // ---------------------------------------------------------------------------
 
   useEffect(() => {
+    let mounted = true;
     let fallbackDocTypeId: string | null = null;
 
     async function run() {
       fallbackDocTypeId = await fetchFallbackDocTypeId();
+      if (!mounted) return;
 
       const tasks = entries.map((entry) => async () => {
-        if (cancelledRef.current) return;
+        if (!mounted) return;
         updateResult(entry.path, { status: "importing" });
 
         try {
@@ -377,7 +385,7 @@ export function BulkImportDialog({
           if (entry.kind === "page-group") {
             const pg = entry as FSPageGroupEntry;
             for (let i = 0; i < pg.handles.length; i++) {
-              if (cancelledRef.current) break;
+              if (!mounted) break;
               const file = await pg.handles[i].getFile();
               await uploadPage(docId, file, i + 1);
             }
@@ -393,20 +401,31 @@ export function BulkImportDialog({
             await addTag(principalObjectId, tag);
           }
 
-          updateResult(entry.path, { status: "done", docId, principalObjectId });
+          if (mounted) {
+            updateResult(entry.path, { status: "done", docId, principalObjectId });
+          }
         } catch (err) {
-          const msg = err instanceof Error ? err.message : "Import failed";
-          updateResult(entry.path, { status: "error", errorMsg: msg });
+          if (mounted) {
+            const msg = err instanceof Error ? err.message : "Import failed";
+            updateResult(entry.path, { status: "error", errorMsg: msg });
+          }
         }
       });
 
       await withConcurrencyLimit(tasks, CONCURRENCY, () => {});
-      if (!cancelledRef.current) setDone(true);
+      if (mounted) setDone(true);
     }
 
-    run();
+    run().catch((err) => {
+      if (mounted) {
+        const msg = err instanceof Error ? err.message : "Import failed unexpectedly";
+        setImportError(msg);
+      }
+    });
 
-    return () => { cancelledRef.current = true; };
+    return () => { mounted = false; };
+    // entries and rootFolderName are stable for the lifetime of this dialog;
+    // updateResult is a stable useCallback reference.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -657,6 +676,13 @@ export function BulkImportDialog({
             </button>
           )}
         </div>
+
+        {/* Fatal error banner (e.g. session expired before import started) */}
+        {importError && (
+          <div className="mx-5 mt-3 rounded-md bg-red-50 px-4 py-2 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
+            {importError}
+          </div>
+        )}
 
         {/* Progress bar (shown while importing) */}
         {!done && (
