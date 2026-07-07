@@ -25,9 +25,13 @@
 
 import dynamic from "next/dynamic";
 
-const ImportBrowser = dynamic(
-  () => import("./import-browser").then((m) => m.ImportBrowser),
+/**
+ * Slice #21.01.Import: switched from ImportBrowser → ImportWizard.
+ * The old ImportBrowser is kept on disk but no longer used in the nav flow.
+ */
+const ImportWizard = dynamic(
+  () => import("./import-wizard").then((m) => m.ImportWizard),
   { ssr: false },
 );
 
-export { ImportBrowser as ImportBrowserDynamic };
+export { ImportWizard as ImportBrowserDynamic };
