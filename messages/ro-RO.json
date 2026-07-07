@@ -997,9 +997,9 @@
       "referenceData": "Date de referință",
       "import": "Import",
       "calculation": "Calcul",
-      "globalSearch": "Căutare Globală",
+      "globalSearch": "Căutare globală",
       "export": "Export",
-      "helpContent": "Conținut Ajutor",
+      "helpContent": "Informații de ajutor",
       "settings": "Setări"
     },
     "collapse": "Restrânge bara laterală",
@@ -1022,7 +1022,7 @@
     "close": "Închide",
     "hintLabel": "Sfat",
     "admin": {
-      "pageTitle": "Conținut Ajutor",
+      "pageTitle": "Informații de ajutor",
       "screensTab": "Ecrane",
       "hintsTab": "Sfaturi rapide",
       "statusComplete": "Complet",
@@ -1362,7 +1362,7 @@
     "groupsFilterUngrouped": "Fara grup"
   },
   "valueList": {
-    "pageTitle": "Liste de Valori",
+    "pageTitle": "Date de referință",
     "sections": {
       "property": "Proprietate",
       "person": "Persoană",
@@ -1539,7 +1539,7 @@
     }
   },
   "adminTags": {
-    "pageTitle": "Gestionare Etichete",
+    "pageTitle": "Etichete",
     "pageNote": "Vizualizați toate etichetele din sistem, redenuminți-le sau fuzionați-le pentru a reduce redundanța.",
     "loading": "Se încarcă…",
     "error": "Eroare la încărcare",
@@ -1756,7 +1756,7 @@
   },
   "stamp": {
     "pageTitle": "Ștampile",
-    "backToValueLists": "Înapoi la Liste de valori",
+    "backToValueLists": "Înapoi la Date de referință",
     "backToStamps": "Înapoi la Ștampile",
     "createTitle": "Creare ștampilă",
     "createExplanation": "O ștampilă este o etichetă pe care o poți aplica oricărei combinații de persoane, proprietăți și documente. Codul este atribuit automat; descrierea scurtă este cea vizibilă în liste.",
@@ -1824,7 +1824,7 @@
   },
   "group": {
     "pageTitle": "Grupuri",
-    "backToValueLists": "Înapoi la Liste de valori",
+    "backToValueLists": "Înapoi la Date de referință",
     "backToGroups": "Înapoi la Grupuri",
     "editorTitle": "Grup {code}",
     "add": "Adaugă",
@@ -1885,7 +1885,7 @@
     }
   },
   "globalSearch": {
-    "pageTitle": "Căutare Globală",
+    "pageTitle": "Căutare globală",
     "pageSubtitle": "Căutați printre toate entitățile după nume, cod, adresă sau combinând filtre de metadate, grupuri, ștampile și etichete. Toate filtrele active sunt combinate cu AND. Maxim 200 de rezultate.",
     "search": "Caută",
     "searching": "Se caută…",
@@ -2003,6 +2003,27 @@
   },
   "settings": {
     "pageTitle": "Setări",
+    "sectionOthers": "Altele",
+    "othersGroups": "Grupuri",
+    "othersStamps": "Ștampile",
+    "othersTags": "Etichete",
+    "sectionTimeFrames": "Intervale de timp",
+    "timeFrames": {
+      "loading": "Se încarcă…",
+      "loadError": "Eroare la încărcarea setărilor",
+      "save": "Salvează",
+      "saving": "Se salvează…",
+      "cancel": "Anulează",
+      "saved": "Salvat cu succes.",
+      "saveError": "Salvarea a eșuat. Reîncercați.",
+      "validationError": "Toate valorile trebuie să fie numere între 1 și 3650.",
+      "unit": {
+        "days": "zile",
+        "hours": "ore",
+        "minutes": "minute",
+        "months": "luni"
+      }
+    },
     "sectionDeveloper": "Opțiuni pentru dezvoltator",
     "useEnglish": "Folosește limba engleză",
     "showDevNotes": "Afișează note pentru dezvoltatori"
@@ -2020,9 +2041,9 @@
       "stamps": "Ștampile",
       "calculation": "Calcul",
       "calculationHistory": "Istoric",
-      "valueLists": "Liste de Valori",
+      "valueLists": "Date de referință",
       "import": "Import",
-      "users": "Utilizatori",
+      "users": "Utilizatori & Acces",
       "tags": "Etichete",
       "settings": "Setări",
       "globalSearch": "Căutare globală",

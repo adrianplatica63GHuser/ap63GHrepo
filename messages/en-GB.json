@@ -997,9 +997,9 @@
       "referenceData": "Reference Data",
       "import": "Import",
       "calculation": "Calculation",
-      "globalSearch": "Global Search",
+      "globalSearch": "Global search",
       "export": "Export",
-      "helpContent": "Help Content",
+      "helpContent": "Help information",
       "settings": "Settings"
     },
     "collapse": "Collapse sidebar",
@@ -1022,7 +1022,7 @@
     "close": "Close",
     "hintLabel": "Tip",
     "admin": {
-      "pageTitle": "Help Content",
+      "pageTitle": "Help information",
       "screensTab": "Screens",
       "hintsTab": "Micro-hints",
       "statusComplete": "Complete",
@@ -1362,7 +1362,7 @@
     "groupsFilterUngrouped": "Not in a group"
   },
   "valueList": {
-    "pageTitle": "Value Lists",
+    "pageTitle": "Reference Data",
     "sections": {
       "property": "Property",
       "person": "Person",
@@ -1539,7 +1539,7 @@
     }
   },
   "adminTags": {
-    "pageTitle": "Tag Management",
+    "pageTitle": "Tags",
     "pageNote": "View all tags in the system, rename them or merge duplicates to reduce entropy.",
     "loading": "Loading…",
     "error": "Failed to load",
@@ -1756,7 +1756,7 @@
   },
   "stamp": {
     "pageTitle": "Stamps",
-    "backToValueLists": "Back to Value Lists",
+    "backToValueLists": "Back to Reference Data",
     "backToStamps": "Back to Stamps",
     "createTitle": "Create stamp",
     "createExplanation": "A stamp is a label you can apply to any mix of people, properties, and documents. The code is assigned automatically; the short description is what you see in lists.",
@@ -1824,7 +1824,7 @@
   },
   "group": {
     "pageTitle": "Groups",
-    "backToValueLists": "Back to Value Lists",
+    "backToValueLists": "Back to Reference Data",
     "backToGroups": "Back to Groups",
     "editorTitle": "Group {code}",
     "add": "Add",
@@ -1885,7 +1885,7 @@
     }
   },
   "globalSearch": {
-    "pageTitle": "Global Search",
+    "pageTitle": "Global search",
     "pageSubtitle": "Search across all entities by name, code, address, or combining metadata, group, stamp, and tag filters. All active filters are ANDed together. Up to 200 results.",
     "search": "Search",
     "searching": "Searching…",
@@ -2003,6 +2003,27 @@
   },
   "settings": {
     "pageTitle": "Settings",
+    "sectionOthers": "Others",
+    "othersGroups": "Groups",
+    "othersStamps": "Stamps",
+    "othersTags": "Tags",
+    "sectionTimeFrames": "Time frames",
+    "timeFrames": {
+      "loading": "Loading…",
+      "loadError": "Failed to load settings",
+      "save": "Save",
+      "saving": "Saving…",
+      "cancel": "Cancel",
+      "saved": "Saved successfully.",
+      "saveError": "Save failed. Please try again.",
+      "validationError": "All values must be numbers between 1 and 3650.",
+      "unit": {
+        "days": "days",
+        "hours": "hours",
+        "minutes": "minutes",
+        "months": "months"
+      }
+    },
     "sectionDeveloper": "Developer options",
     "useEnglish": "Use English language",
     "showDevNotes": "Show developer notes"
@@ -2020,9 +2041,9 @@
       "stamps": "Stamps",
       "calculation": "Calculation",
       "calculationHistory": "History",
-      "valueLists": "Value Lists",
+      "valueLists": "Reference Data",
       "import": "Import",
-      "users": "Users",
+      "users": "Users & Access",
       "tags": "Tags",
       "settings": "Settings",
       "globalSearch": "Global search",
