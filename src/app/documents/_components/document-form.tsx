@@ -154,16 +154,21 @@ export function DocumentForm({
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  // Shared Pages-panel state (Slice #15.13) — lifted up here, exactly like
-  // PropertyForm lifts `corners` state, so the table (left column) and the
-  // detached big viewer (right column) both read/write the same data.
+  // Shared Pages-panel state — lifted so the panel table and the theater
+  // overlay viewer both read/write the same selected-page data.
   const pagesState = usePagesPanelState(documentId);
   const [bigPage, setBigPage] = useState(false);
-  const handleToggleBigPage = () => {
-    const next = !bigPage;
-    setBigPage(next);
-    onBigPageChange?.(next);
-  };
+  // Slice #20.16: Theater overlay — opens a portal full-screen pages viewer.
+  const handleToggleBigPage = () => setBigPage((v) => !v);
+  const handleCloseTheaterPage = () => setBigPage(false);
+
+  // Close theater overlay on Escape key.
+  useEffect(() => {
+    if (!bigPage) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setBigPage(false); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [bigPage]);
 
   const { data: documentTypes } = useQuery({
     queryKey: ["document-types"],
@@ -494,13 +499,8 @@ export function DocumentForm({
     {/* Slice #20.13: sticky "Modificări nesalvate" banner. */}
     <UnsavedChangesBanner show={editDirty} />
 
-    {/* Two-column layout when "Show Big Page" is active (Slice #15.13) —
-        mirrors PropertyForm's "Show Big Map" mechanism exactly: the left
-        column (form + panels) keeps a fixed width, and a tall right column
-        hosts the detached page viewer. In normal mode this wrapper is a
-        no-op ("contents") so the original single-column flow is unchanged. */}
-    <div className={bigPage ? "flex flex-row gap-4 items-stretch" : "contents"}>
-    <div className={bigPage ? "w-[540px] flex-none flex flex-col gap-4" : "contents"}>
+    {/* Slice #20.16: no two-column layout — "Pagini extinse" button opens a
+        full-screen theater overlay portal instead. Single column always. */}
     {/* id is used by the submit button's form="document-form" attribute below,
         which lets the button live outside the <form> element (after PagesPanel)
         while still submitting this form. */}
@@ -781,42 +781,66 @@ export function DocumentForm({
 
     {/* ── Pages panel — outside <form> so its TanStack Query re-renders
          never interfere with React Hook Form state. Only shown once the
-         document has been saved (documentId present). In big-page mode this
-         renders the table/controls only — the viewer moves to the right
-         column below. ──────────────────────────────────────────────────── */}
+         document has been saved. The "Pagini extinse" button opens a
+         full-screen theater overlay (portal) — no two-column layout. ──── */}
     {mode !== "create" && documentId && (
       <ErrorBoundary fallback={<PanelError>{tShared("errorBoundary.pages")}</PanelError>}>
         <PagesPanel
           documentId={documentId}
           mode={mode === "view" ? "view" : "edit"}
           state={pagesState}
-          bigPage={bigPage}
           onToggleBigPage={handleToggleBigPage}
         />
       </ErrorBoundary>
     )}
-    </div>
 
-    {/* ── Big-page viewer column — only rendered while "Show Big Page" is
-         active. Reads from the same `pagesState` the table above writes to,
-         so selecting a row on the left immediately updates the viewer on
-         the right. Mirrors PropertyMiniMap's "absolute inset-0" bounding
-         box trick for giving its content a concrete pixel height. ──────── */}
-    {bigPage && mode !== "create" && documentId && (
-      <div className="relative flex-1 min-w-0 overflow-hidden rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="absolute inset-3">
-          <ErrorBoundary fallback={<PanelError>{tShared("errorBoundary.pages")}</PanelError>}>
-            <PagesViewerBox state={pagesState} fill />
-          </ErrorBoundary>
+    {/* Slice #20.16: Theater overlay — full-screen pages viewer portal.
+        Reads the same pagesState as the panel above, so selecting a page
+        in the overlay immediately reflects in the panel. Dismiss via ✕,
+        backdrop, or Escape. */}
+    {bigPage && mode !== "create" && documentId && createPortal(
+      <div role="dialog" aria-modal="true" aria-label={t("pages.theaterTitle")}>
+        {/* Backdrop — click to close */}
+        <div
+          className="fixed inset-0 z-50 bg-black/50"
+          aria-hidden="true"
+          onClick={handleCloseTheaterPage}
+        />
+        {/* Panel */}
+        <div
+          className="fixed inset-4 z-50 flex flex-col rounded-xl border border-card-rim bg-white shadow-2xl overflow-hidden dark:border-zinc-700 dark:bg-zinc-900"
+          style={{ animation: "ga-theater-in 180ms ease" }}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between gap-4 px-4 py-2 border-b border-crease dark:border-zinc-700 bg-white dark:bg-zinc-900">
+            <span className="text-sm font-semibold text-ink dark:text-zinc-200">
+              {t("pages.theaterTitle")}
+            </span>
+            <button
+              type="button"
+              onClick={handleCloseTheaterPage}
+              aria-label={t("pages.theaterClose")}
+              className="rounded-md border border-wire bg-white px-3 py-1.5 text-xs font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+            >
+              ✕ {t("pages.theaterClose")}
+            </button>
+          </div>
+          {/* Viewer fills the rest */}
+          <div className="relative flex-1 min-h-0">
+            <div className="absolute inset-0 p-3">
+              <ErrorBoundary fallback={<PanelError>{tShared("errorBoundary.pages")}</PanelError>}>
+                <PagesViewerBox state={pagesState} fill />
+              </ErrorBoundary>
+            </div>
+          </div>
         </div>
-      </div>
+      </div>,
+      document.body
     )}
-    </div>
 
-    {/* ── Action buttons — at the very bottom, full width regardless of
-         big-page mode. Hidden in view mode (incl. any read-only historical
-         version). The submit button uses form="document-form" so it targets
-         the <form> above even though it lives outside it (standard HTML5). ── */}
+    {/* ── Action buttons — at the very bottom, full width. Hidden in view mode
+         (incl. any read-only historical version). The submit button uses
+         form="document-form" to target the <form> above. ── */}
     {effectiveMode !== "view" && (
       <div className="flex items-center justify-center gap-3 border-t border-crease pt-6 dark:border-zinc-800">
         <button

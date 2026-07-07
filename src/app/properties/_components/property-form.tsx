@@ -193,25 +193,18 @@ export function PropertyForm({
   const [showStreetView,   setShowStreetView]   = useState(false);
   const [showAngles,       setShowAngles]       = useState(false);
 
-  // Slice #18.UX.04: remembers whether Street View was open before Big Map
-  // hid it, so switching back to the small map can auto-restore it.
-  const streetViewBeforeBigRef = useRef(false);
+  // Slice #20.16: Theater overlay — opens a portal full-screen map overlay.
+  // No layout shift; the inline right-column map stays at 440px always.
+  const handleToggleBigMap = () => setBigMap((v) => !v);
+  const handleCloseTheaterMap = () => setBigMap(false);
 
-  const handleToggleBigMap = () => {
-    const next = !bigMap;
-    setBigMap(next);
-    onBigMapChange?.(next);
-    if (next) {
-      // Entering Big Map: remember Street View's state, then hide it (the big
-      // map takes over the right column) — mirrors a manual "Hide Street View".
-      streetViewBeforeBigRef.current = showStreetView;
-      setShowStreetView(false);
-    } else {
-      // Returning to the small map: auto-restore Street View if it was open
-      // before (or if it was manually turned on while in Big Map).
-      setShowStreetView((cur) => cur || streetViewBeforeBigRef.current);
-    }
-  };
+  // Close theater overlay on Escape key.
+  useEffect(() => {
+    if (!bigMap) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setBigMap(false); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [bigMap]);
 
   const handleToggleStreetView = () => setShowStreetView((v) => !v);
 
@@ -876,14 +869,13 @@ export function PropertyForm({
 
         </div>{/* end left column */}
 
-        {/* Right column — map + Street View. The Big/Small Map toggle only
-            changes the map height (and the shell's container width cap); the
-            column is flex-1 in both modes, so its on-screen width follows the
-            shell's max-width (≈480px capped vs full-width). */}
+        {/* Right column — map + Street View. Map is always 440px; the
+            "Hartă extinsă" button opens a full-screen theater overlay instead
+            of changing this layout. */}
         <div className="flex-1 min-w-[320px] flex flex-col gap-4">
           <div
             className="relative rounded-md border border-card-rim overflow-hidden dark:border-zinc-800"
-            style={{ height: bigMap ? "calc(100vh - 220px)" : "440px" }}
+            style={{ height: "440px" }}
           >
             <div className="absolute inset-0">
               <ErrorBoundary fallback={<PanelError>{tShared("errorBoundary.map")}</PanelError>}>
@@ -911,6 +903,56 @@ export function PropertyForm({
         </div>
 
       </div>{/* end two-column layout */}
+
+      {/* Slice #20.16: Theater overlay — full-screen map portal. Rendered above
+          everything via document.body so no layout shift occurs. Dismiss via
+          the ✕ button, the backdrop, or the Escape key. */}
+      {bigMap && createPortal(
+        <div role="dialog" aria-modal="true" aria-label={t("corners.theaterTitle")}>
+          {/* Backdrop — click to close */}
+          <div
+            className="fixed inset-0 z-50 bg-black/50"
+            aria-hidden="true"
+            onClick={handleCloseTheaterMap}
+          />
+          {/* Panel */}
+          <div
+            className="fixed inset-4 z-50 flex flex-col rounded-xl border border-card-rim bg-white shadow-2xl overflow-hidden dark:border-zinc-700 dark:bg-zinc-900"
+            style={{ animation: "ga-theater-in 180ms ease" }}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between gap-4 px-4 py-2 border-b border-crease dark:border-zinc-700 bg-white dark:bg-zinc-900">
+              <span className="text-sm font-semibold text-ink dark:text-zinc-200">
+                {t("corners.theaterTitle")}
+              </span>
+              <button
+                type="button"
+                onClick={handleCloseTheaterMap}
+                aria-label={t("corners.theaterClose")}
+                className="rounded-md border border-wire bg-white px-3 py-1.5 text-xs font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+              >
+                ✕ {t("corners.theaterClose")}
+              </button>
+            </div>
+            {/* Map fills the rest */}
+            <div className="relative flex-1 min-h-0">
+              <div className="absolute inset-0">
+                <ErrorBoundary fallback={<PanelError>{tShared("errorBoundary.map")}</PanelError>}>
+                  <PropertyMiniMap
+                    corners={corners}
+                    onChange={setCorners}
+                    readOnly={effectiveMode === "view"}
+                    hoveredCornerIdx={hoveredCornerIdx}
+                    onCornerHover={setHoveredCornerIdx}
+                    showAngles={showAngles}
+                  />
+                </ErrorBoundary>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
 
       {submitError && (
         <p className="text-sm text-red-600 dark:text-red-400" role="alert">

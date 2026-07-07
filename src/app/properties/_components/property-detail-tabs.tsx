@@ -32,7 +32,6 @@ export function PropertyDetailTabs({
 }: Props) {
   const t = useTranslations("property");
   const [activeTab, setActiveTab] = useState<Tab>(initialTab ?? "details");
-  const [bigMap,    setBigMap]    = useState(false);
   // Slice #18.UX.04: the details form portals its version-nav controls into
   // this header slot. A ref-callback into state so the portal target is
   // available once mounted (and re-renders the form when it lands).
@@ -47,9 +46,8 @@ export function PropertyDetailTabs({
   ];
 
   return (
-    // Small map: cap at ~1040px (540px left column + ~480px map) and center.
-    // Big map: drop the cap so the right column fills the content area.
-    <div className={bigMap ? "w-full flex flex-col gap-4" : "max-w-[1040px] mx-auto w-full flex flex-col gap-4"}>
+    // Slice #20.16: Theater overlay handles big-map — no container width change needed.
+    <div className="max-w-[1040px] mx-auto w-full flex flex-col gap-4">
       {/* Slice #19.07: name on the left, version controls right-aligned on the
           same line (portalled in by the details form via navSlot). */}
       <header className="relative flex min-h-[2.5rem] items-center">
@@ -90,7 +88,6 @@ export function PropertyDetailTabs({
               propertyCode={propertyCode}
               initialValues={initialValues}
               initialCorners={initialCorners}
-              onBigMapChange={setBigMap}
               versionNavSlot={navSlot}
             />
           )}

@@ -30,10 +30,8 @@ export function DocumentDetailTabs({
 }: Props) {
   const t = useTranslations("document");
   const [activeTab, setActiveTab] = useState<Tab>(initialTab ?? "details");
-  // "Show Big Page" (Slice #15.13) — mirrors PropertyDetailTabs' `bigMap`:
-  // when active, the page's outer container widens to full width so the
-  // detached page viewer has room to sit beside the form/panels.
-  const [bigPage, setBigPage] = useState(false);
+  // Slice #20.16: no container-width change needed — theater overlay is a
+  // fixed-position portal that doesn't depend on the container width.
   // Slice #18.06: the details form portals its version-nav controls into this
   // header slot. A ref-callback into state so the portal target is available
   // once mounted (and re-renders the form when it lands).
@@ -48,7 +46,7 @@ export function DocumentDetailTabs({
   ];
 
   return (
-    <div className={bigPage ? "w-full flex flex-col gap-4" : "max-w-4xl mx-auto w-full flex flex-col gap-4"}>
+    <div className="max-w-4xl mx-auto w-full flex flex-col gap-4">
       {/* Slice #19.07: name on the left, version controls right-aligned on the
           same line (portalled in by the details form via navSlot). */}
       <header className="relative flex min-h-[2.5rem] items-center">
@@ -88,7 +86,6 @@ export function DocumentDetailTabs({
               documentId={documentId}
               documentCode={documentCode}
               initialValues={initialValues}
-              onBigPageChange={setBigPage}
               versionNavSlot={navSlot}
             />
           )}

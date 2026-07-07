@@ -98,3 +98,19 @@ body {
   .ga-vpulse-green { animation: none; outline-color: rgba(34, 197, 94, 0.95) !important; }
   .ga-vpulse-red   { animation: none; outline-color: rgba(239, 68, 68, 0.95) !important; }
 }
+
+/* ── Theater overlay entrance animation  (Slice #20.16) ─────────────────────
+   Used by the "Hartă extinsă" / "Pagini extinse" full-screen overlay that
+   replaces the old abrupt layout toggle. 180ms — noticeable but not slow. */
+
+@keyframes ga-theater-in {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes ga-theater-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+}
