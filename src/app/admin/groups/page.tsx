@@ -1,6 +1,8 @@
 import { getTranslations } from "next-intl/server";
-import { BackLink } from "@/components/back-arrow";
 import { GroupsListView } from "./_components/groups-list-view";
+
+// Slice #20.17: BackLink removed — BreadcrumbBar shows "Admin > Grupuri"
+// with "Admin" linking to /admin/value-lists.
 
 export default async function GroupsPage() {
   const t = await getTranslations("group");
@@ -9,9 +11,6 @@ export default async function GroupsPage() {
     <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-zinc-950">
       <main className="mx-auto w-full max-w-4xl px-6 py-8 flex flex-col gap-6">
         <header className="flex flex-col gap-1">
-          <BackLink href="/admin/value-lists">
-            {t("backToValueLists")}
-          </BackLink>
           <h1 className="text-2xl font-semibold tracking-tight">
             {t("pageTitle")}
           </h1>

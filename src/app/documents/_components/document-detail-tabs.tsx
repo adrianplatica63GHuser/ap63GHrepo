@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { useRegisterPage } from "@/hooks/use-register-page";
 import { DocumentForm } from "./document-form";
 import { DocumentPersonsTab } from "./document-persons-tab";
 import { DocumentPropertiesTab } from "./document-properties-tab";
@@ -29,6 +30,7 @@ export function DocumentDetailTabs({
   initialTab,
 }: Props) {
   const t = useTranslations("document");
+  useRegisterPage(documentName, documentCode, "DOCUMENT");
   const [activeTab, setActiveTab] = useState<Tab>(initialTab ?? "details");
   // Slice #20.16: no container-width change needed — theater overlay is a
   // fixed-position portal that doesn't depend on the container width.

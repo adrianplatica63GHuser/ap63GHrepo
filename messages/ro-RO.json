@@ -1988,5 +1988,39 @@
     "sectionDeveloper": "Opțiuni pentru dezvoltator",
     "useEnglish": "Folosește limba engleză",
     "showDevNotes": "Afișează note pentru dezvoltatori"
+  },
+  "navigation": {
+    "breadcrumb": {
+      "home": "Acasă",
+      "naturalPersons": "Persoane fizice",
+      "judicialPersons": "Persoane juridice",
+      "properties": "Proprietăți",
+      "propertiesMap": "Hartă",
+      "documents": "Documente",
+      "admin": "Admin",
+      "groups": "Grupuri",
+      "stamps": "Ștampile",
+      "calculation": "Calcul",
+      "calculationHistory": "Istoric",
+      "valueLists": "Liste de Valori",
+      "import": "Import",
+      "users": "Utilizatori",
+      "tags": "Etichete",
+      "settings": "Setări",
+      "globalSearch": "Căutare globală",
+      "complexQuery": "Interogare complexă",
+      "helpContent": "Informații de ajutor",
+      "associatePerson": "Adaugă persoană",
+      "associateDocument": "Adaugă document",
+      "associateProperty": "Adaugă proprietate",
+      "associateReference": "Adaugă referință",
+      "associateParty": "Adaugă parte",
+      "new": "Nou",
+      "entity": "Entitate"
+    },
+    "recentlyViewed": {
+      "title": "Recente",
+      "empty": "Niciun element vizitat recent"
+    }
   }
 }

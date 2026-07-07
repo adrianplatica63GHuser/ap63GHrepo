@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { useRegisterPage } from "@/hooks/use-register-page";
 import { NaturalPersonForm } from "./natural-person-form";
 import { PersonPropertiesTab } from "../../properties/_components/person-properties-tab";
 import { PersonDocumentTab } from "../../documents/_components/person-document-tab";
@@ -33,6 +34,7 @@ export function PersonDetailTabs({
   linkedIdCard,
 }: Props) {
   const t = useTranslations("naturalPerson");
+  useRegisterPage(personName, personCode, "NATURAL_PERSON");
   const [activeTab, setActiveTab] = useState<Tab>(initialTab ?? "details");
   // Slice #18.05: the details form portals its version-nav controls into this
   // header slot. A ref-callback into state so the portal target is available

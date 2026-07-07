@@ -4,6 +4,7 @@ import { getLocale, getMessages } from "next-intl/server";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ConditionalAppShell } from "@/components/conditional-app-shell";
 import { MapsProvider } from "@/components/providers/maps-provider";
+import { NavigationHistoryProvider } from "@/components/providers/navigation-history-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { UnsavedChangesProvider } from "@/components/providers/unsaved-changes-provider";
 import "./globals.css";
@@ -41,7 +42,9 @@ export default async function RootLayout({
           <MapsProvider>
             <QueryProvider>
               <UnsavedChangesProvider>
-                <ConditionalAppShell>{children}</ConditionalAppShell>
+                <NavigationHistoryProvider>
+                  <ConditionalAppShell>{children}</ConditionalAppShell>
+                </NavigationHistoryProvider>
               </UnsavedChangesProvider>
             </QueryProvider>
           </MapsProvider>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { useRegisterPage } from "@/hooks/use-register-page";
 import { PropertyForm } from "./property-form";
 import { PropertyPersonsTab } from "./property-persons-tab";
 import { PropertyDocumentTab } from "./property-document-tab";
@@ -31,6 +32,7 @@ export function PropertyDetailTabs({
   initialTab,
 }: Props) {
   const t = useTranslations("property");
+  useRegisterPage(propertyName, propertyCode, "PROPERTY");
   const [activeTab, setActiveTab] = useState<Tab>(initialTab ?? "details");
   // Slice #18.UX.04: the details form portals its version-nav controls into
   // this header slot. A ref-callback into state so the portal target is

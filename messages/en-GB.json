@@ -1988,5 +1988,39 @@
     "sectionDeveloper": "Developer options",
     "useEnglish": "Use English language",
     "showDevNotes": "Show developer notes"
+  },
+  "navigation": {
+    "breadcrumb": {
+      "home": "Home",
+      "naturalPersons": "Natural persons",
+      "judicialPersons": "Judicial persons",
+      "properties": "Properties",
+      "propertiesMap": "Map",
+      "documents": "Documents",
+      "admin": "Admin",
+      "groups": "Groups",
+      "stamps": "Stamps",
+      "calculation": "Calculation",
+      "calculationHistory": "History",
+      "valueLists": "Value Lists",
+      "import": "Import",
+      "users": "Users",
+      "tags": "Tags",
+      "settings": "Settings",
+      "globalSearch": "Global search",
+      "complexQuery": "Complex query",
+      "helpContent": "Help information",
+      "associatePerson": "Add person",
+      "associateDocument": "Add document",
+      "associateProperty": "Add property",
+      "associateReference": "Add reference",
+      "associateParty": "Add party",
+      "new": "New",
+      "entity": "Entity"
+    },
+    "recentlyViewed": {
+      "title": "Recently viewed",
+      "empty": "No recently viewed items"
+    }
   }
 }

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { useRegisterPage } from "@/hooks/use-register-page";
 import { JudicialPersonForm } from "./judicial-person-form";
 import { PersonPropertiesTab } from "../../properties/_components/person-properties-tab";
 import { PersonDocumentTab } from "../../documents/_components/person-document-tab";
@@ -29,6 +30,7 @@ export function JudicialPersonDetailTabs({
   initialTab,
 }: Props) {
   const t = useTranslations("judicialPerson");
+  useRegisterPage(personName, personCode, "JUDICIAL_PERSON");
   const [activeTab, setActiveTab] = useState<Tab>(initialTab ?? "details");
   // Slice #18.05: the details form portals its version-nav controls into this
   // header slot.

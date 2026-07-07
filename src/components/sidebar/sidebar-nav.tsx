@@ -8,6 +8,8 @@ import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, ChevronDown, LogOut, KeyRound, Search } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
+import { RecentlyViewedPanel } from "@/components/recently-viewed-panel";
+import { clearRecentlyViewed } from "@/components/providers/navigation-history-provider";
 import { NAV_SECTIONS, type NavItem, type NavSection } from "./nav-config";
 import {
   getActiveHref,
@@ -239,6 +241,7 @@ export function SidebarNav() {
     guardedAction(async () => {
       const supabase = createClient();
       await supabase.auth.signOut();
+      clearRecentlyViewed();
       router.push("/login");
       router.refresh();
     });
@@ -470,6 +473,9 @@ export function SidebarNav() {
           );
         })}
       </nav>
+
+      {/* ── Recently viewed — Slice #20.17 ────────────────────────────────── */}
+      <RecentlyViewedPanel isCollapsed={isCollapsed} />
 
       {/* ── Bottom strip — change password + logout ─────────────────────── */}
       <div
