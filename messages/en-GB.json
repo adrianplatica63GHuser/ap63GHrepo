@@ -1724,6 +1724,9 @@
       "statusSkipped": "Not scannable",
       "statusError": "Error",
       "pageGroupLabel": "Group of {count} pages",
+      "confidence_high": "High confidence",
+      "confidence_medium": "Medium confidence",
+      "confidence_low": "Low confidence",
       "tagDialog": {
         "title": "Create tags from folders",
         "message": "Tags will be created for {count} folders in the selected structure. Each imported document will be automatically tagged with its folders.",
@@ -1765,7 +1768,11 @@
         "aiNicknameLabel": "Property nickname",
         "sessionExpiredBanner": "Your session expired during import. The files marked with errors below were not saved. Please sign in again, then re-import them.",
         "sessionExpiredShort": "Session expired",
-        "signInAgain": "Sign in again"
+        "signInAgain": "Sign in again",
+        "aiConfidence_high": "high",
+        "aiConfidence_medium": "medium",
+        "aiConfidence_low": "low",
+        "aiConfidenceWarning": "AI confidence is {level} — verify the data carefully before saving."
       }
     }
   },

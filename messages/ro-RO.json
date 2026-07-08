@@ -1724,6 +1724,9 @@
       "statusSkipped": "Nescanabil",
       "statusError": "Eroare",
       "pageGroupLabel": "Grup de {count} pagini",
+      "confidence_high": "Încredere ridicată",
+      "confidence_medium": "Încredere medie",
+      "confidence_low": "Încredere scăzută",
       "tagDialog": {
         "title": "Creare etichete din dosare",
         "message": "Vor fi create etichete pentru {count} dosare din structura selectată. Fiecare document importat va fi etichetat automat cu dosarele sale.",
@@ -1765,7 +1768,11 @@
         "aiNicknameLabel": "Poreclă proprietate",
         "sessionExpiredBanner": "Sesiunea a expirat în timpul importului. Fișierele marcate cu erori mai jos nu au fost salvate. Conectați-vă din nou, apoi reimportați-le.",
         "sessionExpiredShort": "Sesiune expirată",
-        "signInAgain": "Conectați-vă"
+        "signInAgain": "Conectați-vă",
+        "aiConfidence_high": "ridicată",
+        "aiConfidence_medium": "medie",
+        "aiConfidence_low": "scăzută",
+        "aiConfidenceWarning": "Încrederea AI este {level} — verificați datele cu atenție înainte de a salva."
       }
     }
   },
