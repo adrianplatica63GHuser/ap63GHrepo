@@ -128,6 +128,8 @@ type Props = {
   documentId?:      string;
   documentCode?:    string;
   initialValues?:   FormValues;
+  /** Slice #21.02.Import: ISO string if AI-interpret has already run; null otherwise. */
+  aiInterpretedAt?: string | null;
   /** Notified whenever the "Show Big Page" toggle changes, so the parent
    *  (DocumentDetailTabs) can widen the page's outer container — mirrors
    *  PropertyForm's onBigMapChange. */
@@ -146,6 +148,7 @@ export function DocumentForm({
   documentId,
   documentCode,
   initialValues,
+  aiInterpretedAt,
   onBigPageChange,
   versionNavSlot,
 }: Props) {
@@ -204,6 +207,15 @@ export function DocumentForm({
   const [submitError,       setSubmitError]       = useState<string | null>(null);
   const [confirmDelete,     setConfirmDelete]     = useState(false);
   const [confirmMakeCurrent, setConfirmMakeCurrent] = useState(false);
+
+  // Slice #21.02.Import: AI-Interpret button state.
+  // `aiInterpreted` is true once the user has successfully run AI extraction in
+  // this session (mirrors the server-side ai_interpreted_at stamp so the button
+  // disables immediately without a refetch).
+  const [aiInterpreted, setAiInterpreted]   = useState(false);
+  const [aiExtracting,  setAiExtracting]    = useState(false);
+  const [aiExtractMsg,  setAiExtractMsg]    = useState<string | null>(null);
+  const [aiExtractErr,  setAiExtractErr]    = useState<string | null>(null);
 
   // Slice #19.03 — surveyor picker state
   const [surveyorPickerOpen, setSurveyorPickerOpen] = useState(false);
@@ -436,6 +448,60 @@ export function DocumentForm({
     setViewingVersion(null);
     setConfirmMakeCurrent(false);
     router.refresh();
+  };
+
+  // ── Slice #21.02.Import: AI-Interpret handler ────────────────────────────
+  //
+  // Calls the server-side route which reads the first uploaded page from
+  // storage and calls Anthropic, then fills the form via form.setValue and
+  // PATCHes ai_interpreted_at on the document record.
+  const handleAiInterpret = async () => {
+    if (!documentId) return;
+    setAiExtracting(true);
+    setAiExtractMsg(null);
+    setAiExtractErr(null);
+    try {
+      const res = await fetch(`/api/documents/${encodeURIComponent(documentId)}/ai-interpret`, {
+        method: "POST",
+      });
+      if (res.redirected) throw new Error(t("saveErrorSession"));
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(body.error ?? `HTTP ${res.status}`);
+      }
+      const { fields } = (await res.json()) as { fields: Record<string, string | null> };
+
+      // Fill form fields from extracted data.
+      if (fields.title)             form.setValue("title",             fields.title);
+      if (fields.nrDocument)        form.setValue("nrDocument",        fields.nrDocument);
+      if (fields.dateDocument)      form.setValue("dateDocument",      fields.dateDocument);
+      if (fields.subject)           form.setValue("subject",           fields.subject);
+      if (fields.emitent)           form.setValue("emitent",           fields.emitent);
+      if (fields.bazaLegala)        form.setValue("bazaLegala",        fields.bazaLegala);
+      if (fields.uatProprietate)    form.setValue("uatProprietate",    fields.uatProprietate);
+      if (fields.uatProprietar)     form.setValue("uatProprietar",     fields.uatProprietar);
+      if (fields.nrDosarSuccesoral) form.setValue("nrDosarSuccesoral", fields.nrDosarSuccesoral);
+      if (fields.dataDecesului)     form.setValue("dataDecesului",     fields.dataDecesului);
+      if (fields.ultimulDomiciliu)  form.setValue("ultimulDomiciliu",  fields.ultimulDomiciliu);
+      if (fields.nrCertificatDeces) form.setValue("nrCertificatDeces", fields.nrCertificatDeces);
+      if (fields.dateStart)         form.setValue("dateStart",         fields.dateStart);
+      if (fields.dateEnd)           form.setValue("dateEnd",           fields.dateEnd);
+      if (fields.notes)             form.setValue("notes",             fields.notes);
+
+      // Mark as interpreted on the server (non-versioned PATCH).
+      await fetch(`/api/documents/${encodeURIComponent(documentId)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ aiInterpretedAt: new Date().toISOString() }),
+      });
+
+      setAiInterpreted(true);
+      setAiExtractMsg(t("aiExtractSuccess"));
+    } catch (err) {
+      setAiExtractErr(err instanceof Error ? err.message : t("aiExtractError"));
+    } finally {
+      setAiExtracting(false);
+    }
   };
 
   // Page uploads/deletes save immediately via their own API calls (see
@@ -848,33 +914,82 @@ export function DocumentForm({
          (incl. any read-only historical version). The submit button uses
          form="document-form" to target the <form> above. ── */}
     {effectiveMode !== "view" && (
-      <div className="flex items-center justify-center gap-3 border-t border-crease pt-6 dark:border-zinc-800">
-        <button
-          type="submit"
-          form="document-form"
-          disabled={saveDisabled}
-          className="inline-flex items-center rounded-md bg-cta px-5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {t("buttons.save")}
-        </button>
-        {mode === "edit" && (
+      <div className="flex flex-col items-center gap-2 border-t border-crease pt-6 dark:border-zinc-800">
+        <div className="flex items-center justify-center gap-3">
+          <button
+            type="submit"
+            form="document-form"
+            disabled={saveDisabled}
+            className="inline-flex items-center rounded-md bg-cta px-5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {t("buttons.save")}
+          </button>
+          {mode === "edit" && (
+            <button
+              type="button"
+              onClick={() => setConfirmDelete(true)}
+              disabled={submitting}
+              className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-red-600 shadow-sm hover:bg-red-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-red-950/30"
+            >
+              {t("buttons.delete")}
+            </button>
+          )}
           <button
             type="button"
-            onClick={() => setConfirmDelete(true)}
+            onClick={() => router.push("/documents")}
             disabled={submitting}
-            className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-red-600 shadow-sm hover:bg-red-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-red-950/30"
+            className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
           >
-            {t("buttons.delete")}
+            {t("buttons.cancel")}
           </button>
+
+          {/* Slice #21.02.Import: AI-Interpret button — only in edit mode on a
+              saved document. Disabled with tooltip when no pages are uploaded;
+              disabled (different label) once already processed. */}
+          {mode === "edit" && documentId && (() => {
+            const isAlreadyInterpreted = !!(aiInterpretedAt) || aiInterpreted;
+            const hasPages = pagesState.pages.length > 0;
+            const busy = aiExtracting;
+            if (isAlreadyInterpreted) {
+              return (
+                <button
+                  type="button"
+                  disabled
+                  className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-fade shadow-sm disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-500"
+                >
+                  {t("buttons.aiInterpreted")}
+                </button>
+              );
+            }
+            return (
+              <span
+                title={!hasPages ? t("hints.aiInterpretNoPages") : undefined}
+                className="inline-flex"
+              >
+                <button
+                  type="button"
+                  disabled={!hasPages || busy}
+                  onClick={handleAiInterpret}
+                  className="inline-flex items-center rounded-md border border-indigo-300 bg-indigo-50 px-5 py-2 text-sm font-medium text-indigo-700 shadow-sm hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-indigo-800 dark:bg-indigo-950/30 dark:text-indigo-300 dark:hover:bg-indigo-900/40"
+                >
+                  {busy ? t("aiExtracting") : t("buttons.aiInterpret")}
+                </button>
+              </span>
+            );
+          })()}
+        </div>
+
+        {/* Inline feedback for AI extraction */}
+        {aiExtractMsg && (
+          <p className="text-sm text-green-700 dark:text-green-400" role="status">
+            {aiExtractMsg}
+          </p>
         )}
-        <button
-          type="button"
-          onClick={() => router.push("/documents")}
-          disabled={submitting}
-          className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-        >
-          {t("buttons.cancel")}
-        </button>
+        {aiExtractErr && (
+          <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+            {aiExtractErr}
+          </p>
+        )}
       </div>
     )}
 

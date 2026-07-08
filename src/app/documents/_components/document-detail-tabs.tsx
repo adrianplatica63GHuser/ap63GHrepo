@@ -19,6 +19,8 @@ type Props = {
   documentName:      string;
   principalObjectId: string;
   initialValues:     FormValues;
+  /** Slice #21.02.Import: timestamp set when AI-interpret has run; null if not yet processed. */
+  aiInterpretedAt?:  string | null;
   readonly?:         boolean;
   initialTab?:       Tab;
 };
@@ -29,6 +31,7 @@ export function DocumentDetailTabs({
   documentName,
   principalObjectId,
   initialValues,
+  aiInterpretedAt,
   readonly,
   initialTab,
 }: Props) {
@@ -92,6 +95,7 @@ export function DocumentDetailTabs({
                 documentId={documentId}
                 documentCode={documentCode}
                 initialValues={initialValues}
+                aiInterpretedAt={aiInterpretedAt ?? null}
                 versionNavSlot={navSlot}
               />
               <ProcessPanel

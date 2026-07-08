@@ -718,29 +718,29 @@
       "whatDoesThisMean": "Ce înseamnă asta?"
     },
     "errorBoundary": {
-      "map":        "Harta nu a putut fi afișată.",
+      "map": "Harta nu a putut fi afișată.",
       "streetView": "Street View nu a putut fi afișat.",
-      "pages":      "Vizualizatorul de pagini nu a putut fi afișat.",
-      "ocr":        "Dialogul de import nu a putut fi afișat.",
-      "default":    "A apărut o eroare neașteptată."
+      "pages": "Vizualizatorul de pagini nu a putut fi afișat.",
+      "ocr": "Dialogul de import nu a putut fi afișat.",
+      "default": "A apărut o eroare neașteptată."
     },
     "importanceValues": {
-      "LOW":    "Scăzută",
+      "LOW": "Scăzută",
       "MEDIUM": "Medie",
-      "HIGH":   "Ridicată"
+      "HIGH": "Ridicată"
     },
     "relevanceValues": {
-      "INACTIVE":   "Inactiv",
+      "INACTIVE": "Inactiv",
       "HISTORICAL": "Istoric",
-      "CURRENT":    "Curent",
-      "FUTURE":     "Viitor"
+      "CURRENT": "Curent",
+      "FUTURE": "Viitor"
     },
     "listFilters": {
       "importanceLabel": "Importanță:",
-      "allImportances":  "Toate",
-      "relevanceLabel":  "Relevanță:",
-      "allRelevances":   "Toate",
-      "expiringSoon":    "Expiră curând"
+      "allImportances": "Toate",
+      "relevanceLabel": "Relevanță:",
+      "allRelevances": "Toate",
+      "expiringSoon": "Expiră curând"
     }
   },
   "naturalPerson": {
@@ -1170,7 +1170,8 @@
       "removeSurveyor": "Elimină"
     },
     "hints": {
-      "surveyorNotInSystem": "Dacă topograful nu se află în sistem, acesta trebuie introdus mai întâi ca persoană fizică sau juridică."
+      "surveyorNotInSystem": "Dacă topograful nu se află în sistem, acesta trebuie introdus mai întâi ca persoană fizică sau juridică.",
+      "aiInterpretNoPages": "Adăugați pagini pentru a folosi AI"
     },
     "surveyorPicker": {
       "title": "Selectați Topograful",
@@ -1195,7 +1196,9 @@
       "delete": "Șterge",
       "cancel": "Anulează",
       "yes": "Da",
-      "no": "Nu"
+      "no": "Nu",
+      "aiInterpret": "Interpretează AI",
+      "aiInterpreted": "Deja procesat de AI"
     },
     "confirmDelete": {
       "title": "Ștergeți actul?",
@@ -1375,7 +1378,10 @@
       "errorTooFewCorners": "S-au interpretat mai puțin de 3 colțuri din fișier.",
       "errorAlreadyProcessed": "Acest document a fost deja procesat.",
       "errorGeneric": "Procesarea a eșuat. Vă rugăm să încercați din nou."
-    }
+    },
+    "aiExtracting": "Se extrage…",
+    "aiExtractSuccess": "Câmpuri completate din documentul scanat",
+    "aiExtractError": "Extragerea AI a eșuat"
   },
   "valueList": {
     "pageTitle": "Date de referință",
@@ -1779,7 +1785,8 @@
         "aiConfidence_high": "ridicată",
         "aiConfidence_medium": "medie",
         "aiConfidence_low": "scăzută",
-        "aiConfidenceWarning": "Încrederea AI este {level} — verificați datele cu atenție înainte de a salva."
+        "aiConfidenceWarning": "Încrederea AI este {level} — verificați datele cu atenție înainte de a salva.",
+        "aiProcessedBadge": "Procesat AI"
       }
     }
   },

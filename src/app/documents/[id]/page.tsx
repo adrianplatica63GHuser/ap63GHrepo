@@ -31,6 +31,7 @@ export default async function EditDocumentPage({ params, searchParams }: PagePar
           documentName={label}
           principalObjectId={record.principalObjectId}
           initialValues={initialValues}
+          aiInterpretedAt={record.aiInterpretedAt ? record.aiInterpretedAt.toISOString() : null}
           readonly={readonly === "true"}
           initialTab={initialTab}
         />

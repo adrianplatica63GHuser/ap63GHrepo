@@ -718,29 +718,29 @@
       "whatDoesThisMean": "What does this mean?"
     },
     "errorBoundary": {
-      "map":        "Harta nu a putut fi afișată.",
+      "map": "Harta nu a putut fi afișată.",
       "streetView": "Street View nu a putut fi afișat.",
-      "pages":      "Vizualizatorul de pagini nu a putut fi afișat.",
-      "ocr":        "Dialogul de import nu a putut fi afișat.",
-      "default":    "A apărut o eroare neașteptată."
+      "pages": "Vizualizatorul de pagini nu a putut fi afișat.",
+      "ocr": "Dialogul de import nu a putut fi afișat.",
+      "default": "A apărut o eroare neașteptată."
     },
     "importanceValues": {
-      "LOW":    "Low",
+      "LOW": "Low",
       "MEDIUM": "Medium",
-      "HIGH":   "High"
+      "HIGH": "High"
     },
     "relevanceValues": {
-      "INACTIVE":   "Inactive",
+      "INACTIVE": "Inactive",
       "HISTORICAL": "Historical",
-      "CURRENT":    "Current",
-      "FUTURE":     "Future"
+      "CURRENT": "Current",
+      "FUTURE": "Future"
     },
     "listFilters": {
       "importanceLabel": "Importance:",
-      "allImportances":  "All",
-      "relevanceLabel":  "Relevance:",
-      "allRelevances":   "All",
-      "expiringSoon":    "Expiring soon"
+      "allImportances": "All",
+      "relevanceLabel": "Relevance:",
+      "allRelevances": "All",
+      "expiringSoon": "Expiring soon"
     }
   },
   "naturalPerson": {
@@ -1170,7 +1170,8 @@
       "removeSurveyor": "Remove"
     },
     "hints": {
-      "surveyorNotInSystem": "If the surveyor is not yet in the system, add them first as a natural person or judicial person."
+      "surveyorNotInSystem": "If the surveyor is not yet in the system, add them first as a natural person or judicial person.",
+      "aiInterpretNoPages": "Add pages before using AI"
     },
     "surveyorPicker": {
       "title": "Select Surveyor",
@@ -1195,7 +1196,9 @@
       "delete": "Delete",
       "cancel": "Cancel",
       "yes": "Yes",
-      "no": "No"
+      "no": "No",
+      "aiInterpret": "AI Interpret",
+      "aiInterpreted": "Already AI-processed"
     },
     "confirmDelete": {
       "title": "Delete document?",
@@ -1375,7 +1378,10 @@
       "errorTooFewCorners": "Fewer than 3 coordinate corners were parsed from the file.",
       "errorAlreadyProcessed": "This document has already been processed.",
       "errorGeneric": "Processing failed. Please try again."
-    }
+    },
+    "aiExtracting": "Extracting…",
+    "aiExtractSuccess": "Fields filled from scanned document",
+    "aiExtractError": "AI extraction failed"
   },
   "valueList": {
     "pageTitle": "Reference Data",
@@ -1779,7 +1785,8 @@
         "aiConfidence_high": "high",
         "aiConfidence_medium": "medium",
         "aiConfidence_low": "low",
-        "aiConfidenceWarning": "AI confidence is {level} — verify the data carefully before saving."
+        "aiConfidenceWarning": "AI confidence is {level} — verify the data carefully before saving.",
+        "aiProcessedBadge": "AI Done"
       }
     }
   },
