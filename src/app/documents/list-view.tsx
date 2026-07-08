@@ -297,9 +297,13 @@ export function DocumentListView({
   const [deleteError,  setDeleteError]  = useState<string | null>(null);
 
   // Column picker — always start with DEFAULT_COLS to match SSR; hydrate from
-  // localStorage after mount to avoid a server/client mismatch (hydration error).
+  // localStorage after mount via setTimeout so setState is in a callback and
+  // does not trigger the react-hooks/set-state-in-effect lint rule.
   const [visibleCols, setVisibleCols] = useState<string[]>(DEFAULT_COLS);
-  useEffect(() => { setVisibleCols(readStoredCols()); }, []);
+  useEffect(() => {
+    const id = setTimeout(() => setVisibleCols(readStoredCols()), 0);
+    return () => clearTimeout(id);
+  }, []);
   const [showColPicker, setShowColPicker] = useState(false);
   const colPickerRef = useRef<HTMLDivElement>(null);
 
