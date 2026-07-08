@@ -296,11 +296,10 @@ export function DocumentListView({
   const [deleting,     setDeleting]     = useState(false);
   const [deleteError,  setDeleteError]  = useState<string | null>(null);
 
-  // Column picker — lazy initializer reads localStorage on the client; falls back
-  // to DEFAULT_COLS during SSR (no window). Avoids a separate mount effect.
-  const [visibleCols, setVisibleCols] = useState<string[]>(() =>
-    typeof window !== "undefined" ? readStoredCols() : DEFAULT_COLS
-  );
+  // Column picker — always start with DEFAULT_COLS to match SSR; hydrate from
+  // localStorage after mount to avoid a server/client mismatch (hydration error).
+  const [visibleCols, setVisibleCols] = useState<string[]>(DEFAULT_COLS);
+  useEffect(() => { setVisibleCols(readStoredCols()); }, []);
   const [showColPicker, setShowColPicker] = useState(false);
   const colPickerRef = useRef<HTMLDivElement>(null);
 
