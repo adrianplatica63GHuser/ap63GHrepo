@@ -152,18 +152,32 @@ describe("parseFolderName", () => {
 // ---------------------------------------------------------------------------
 
 describe("folderNameToTitleHint", () => {
-  it("expands known abbreviations", () => {
+  it("expands uppercase abbreviations", () => {
     expect(folderNameToTitleHint("CVC_2021-04-12")).toBe(
       "Contract de Vânzare-Cumpărare 2021-04-12",
     );
     expect(folderNameToTitleHint("TP_1234")).toBe("Titlu de Proprietate 1234");
   });
 
+  // fix 7.11: case-insensitive abbreviation matching
+  it("expands lowercase abbreviations (fix 7.11)", () => {
+    expect(folderNameToTitleHint("cvc_2021-04-12")).toBe(
+      "Contract de Vânzare-Cumpărare 2021-04-12",
+    );
+    expect(folderNameToTitleHint("tp_1234")).toBe("Titlu de Proprietate 1234");
+  });
+
+  it("expands mixed-case abbreviations (fix 7.11)", () => {
+    expect(folderNameToTitleHint("Cvc_2021")).toBe(
+      "Contract de Vânzare-Cumpărare 2021",
+    );
+  });
+
   it("replaces underscores with spaces", () => {
     expect(folderNameToTitleHint("scan_folder_01")).toBe("scan folder 01");
   });
 
-  it("leaves unknown names unchanged (except underscore → space)", () => {
+  it("leaves non-abbreviation words unchanged (does NOT uppercase them)", () => {
     expect(folderNameToTitleHint("dosar_NR_5")).toBe("dosar NR 5");
   });
 });

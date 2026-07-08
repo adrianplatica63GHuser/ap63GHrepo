@@ -121,15 +121,20 @@ const ABBR: Record<string, string> = {
 
 /**
  * Convert a folder/group name into a human-readable document title hint.
- * Expands known abbreviations at word boundaries, replaces underscores with spaces.
+ * Expands known abbreviations at word boundaries (case-insensitive — fix 7.11),
+ * replaces underscores with spaces.
  *
  * "CVC_2021-04-12" → "Contract de Vânzare-Cumpărare 2021-04-12"
+ * "cvc_2021-04-12" → "Contract de Vânzare-Cumpărare 2021-04-12"  (7.11)
  * "TP_1234"        → "Titlu de Proprietate 1234"
  */
 export function folderNameToTitleHint(name: string): string {
   let s = name.replace(/_/g, " ");
   for (const [k, v] of Object.entries(ABBR)) {
-    s = s.replace(new RegExp(`\\b${k}\\b`, "g"), v);
+    // "gi" — global + case-insensitive so "cvc", "Cvc", "CVC" all expand.
+    // The replacement value v is always the full Romanian expansion, so
+    // uppercasing the input is NOT needed (and would corrupt non-ABBR words).
+    s = s.replace(new RegExp(`\\b${k}\\b`, "gi"), v);
   }
   return s.replace(/\s+/g, " ").trim();
 }
