@@ -1727,6 +1727,13 @@
       "confidence_high": "Încredere ridicată",
       "confidence_medium": "Încredere medie",
       "confidence_low": "Încredere scăzută",
+      "resumeButton": "Reia ultimul import ({folder})",
+      "resumedTitle": "Ultimul import — {folder}",
+      "resumedAge": "acum {minutes} min",
+      "resumedDone": "importate",
+      "resumedErrors": "erori",
+      "resumedNewImport": "Import nou",
+      "resumedHint": "Fișierele nu sunt disponibile după închiderea filei browserului. Pentru a utiliza AI Interpret, deschideți documentele individual.",
       "tagDialog": {
         "title": "Creare etichete din dosare",
         "message": "Vor fi create etichete pentru {count} dosare din structura selectată. Fiecare document importat va fi etichetat automat cu dosarele sale.",

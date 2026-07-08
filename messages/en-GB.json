@@ -1727,6 +1727,13 @@
       "confidence_high": "High confidence",
       "confidence_medium": "Medium confidence",
       "confidence_low": "Low confidence",
+      "resumeButton": "Resume last import ({folder})",
+      "resumedTitle": "Last import — {folder}",
+      "resumedAge": "{minutes} min ago",
+      "resumedDone": "imported",
+      "resumedErrors": "errors",
+      "resumedNewImport": "New import",
+      "resumedHint": "File handles are unavailable after closing the browser tab. To use AI Interpret, open each document directly.",
       "tagDialog": {
         "title": "Create tags from folders",
         "message": "Tags will be created for {count} folders in the selected structure. Each imported document will be automatically tagged with its folders.",
