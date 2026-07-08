@@ -18,8 +18,8 @@
  *     (the value is already TEXT_FILE from step 3; this call is idempotent on
  *     the value itself but still writes the entity_metadata_version row).
  *
- * If property creation fails after the provenance was claimed (step 4 error),
- * the provenance is reset to null so the panel does not get stuck in "done".
+ * If anything in step 4 fails, a compensating delete removes any orphaned
+ * property row and provenance is reset to null so the panel stays in "ready".
  *
  * Response: { propertyId, propertyCode, documentCount, personCount }
  *
@@ -40,7 +40,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse }     from "next/server";
 import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import { db }               from "@/db";
-import { document, entityMetadata, propertyDocument, propertyPerson } from "@/db/schema";
+import { document, entityMetadata, property as dbProperty, propertyDocument, propertyPerson } from "@/db/schema";
 import { listDocumentPages }            from "@/lib/documents/pages-queries";
 import { readFileContent }              from "@/lib/storage";
 import { stereo70ToWgs84 }             from "@/lib/geo/transdatRO";
@@ -229,13 +229,28 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
 
     // ── 7. Create property + associate + write audit trail ──────────────────
     //
-    // provenance is already TEXT_FILE (claimed in step 6).
-    // If anything here throws, the catch block resets provenance to null.
+    // Design (fix for issue 7.5 — no transaction around property creation +
+    // association):
+    //
+    // `createProperty` internally runs its own Drizzle transaction for the
+    // version snapshot, so it cannot be wrapped in an outer transaction without
+    // a full refactor (passing `tx` through every call).  Instead we use a
+    // compensating-action pattern:
+    //
+    //   a) Track whether the property row was created (`createdPropertyId`).
+    //   b) If any step AFTER property creation throws (association inserts,
+    //      patchEntityMetadata), the catch block deletes the orphaned property
+    //      and resets provenance to null — so the Process panel shows "ready"
+    //      and the user can retry with a clean slate.
+    //   c) If property creation itself throws, `createdPropertyId` is still
+    //      undefined so the delete is skipped, and provenance is still reset.
+    //
+    // This ensures the system never ends up with a property that has no
+    // provenance marker (half-imported state).
 
-    let propertyId:   string;
-    let propertyCode: string;
-    let documentCount = 0;
-    let personCount   = 0;
+    let documentCount     = 0;
+    let personCount       = 0;
+    let createdPropertyId: string | undefined;
 
     try {
       const created = await createProperty(
@@ -248,8 +263,9 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
         updatedBy,
       );
 
-      propertyId   = created.property.id;
-      propertyCode = created.property.code;
+      createdPropertyId = created.property.id;
+      const propertyId   = createdPropertyId;
+      const propertyCode = created.property.code;
 
       // Associate all Documents and Persons sharing the property folder tag
       if (propertyTag) {
@@ -316,9 +332,29 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
         updatedBy,
       );
 
+      return NextResponse.json({ propertyId, propertyCode, documentCount, personCount });
+
     } catch (err) {
-      // Something failed after we claimed provenance.  Reset to null so the
-      // Process panel shows "ready" rather than "done" with no property behind it.
+      // ── Compensating actions (issue 7.5) ─────────────────────────────────
+      //
+      // If property creation SUCCEEDED but a later step (associations or
+      // patchEntityMetadata) failed, delete the orphaned property so the DB
+      // stays consistent.  The principal_object and related rows (corners,
+      // address) are removed via ON DELETE CASCADE.
+      //
+      // If property creation itself FAILED, createdPropertyId is undefined and
+      // the delete is skipped.
+      //
+      // In both cases we reset provenance to null so the Process panel shows
+      // "ready" and the user can safely retry.
+      if (createdPropertyId) {
+        await db
+          .delete(dbProperty)
+          .where(eq(dbProperty.id, createdPropertyId))
+          .catch(() => {
+            // Best-effort cleanup — do not mask the original error.
+          });
+      }
       if (provClaimedByUs) {
         await patchEntityMetadata(
           principalObjectId,
@@ -330,8 +366,6 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
       }
       throw err;
     }
-
-    return NextResponse.json({ propertyId, propertyCode, documentCount, personCount });
 
   } catch (err) {
     return unexpectedError(err, "POST /api/documents/[id]/process");
