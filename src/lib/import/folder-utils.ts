@@ -150,8 +150,35 @@ export function isImageName(name: string): boolean {
 }
 
 /**
+ * System / hidden files that should be ignored during folder walks.
+ *
+ * Hidden files (names starting with ".") cover macOS .DS_Store, .gitkeep,
+ * etc.  The explicit set covers Windows thumbnail/metadata files that do NOT
+ * start with a dot.  Comparison is case-insensitive so "Thumbs.db" and
+ * "thumbs.db" are both ignored.
+ *
+ * Fix for issue 7.9: without this filter, a folder with 10 scan images plus
+ * one Thumbs.db fails `isPageGroup` and each image is imported separately.
+ */
+const SYSTEM_FILE_NAMES_LC = new Set([
+  "thumbs.db",
+  "ehthumbs.db",
+  "ehthumbs_vista.db",
+  "desktop.ini",
+  "folder.jpg",     // Windows folder thumbnail
+]);
+
+export function isSystemFile(name: string): boolean {
+  if (name.startsWith(".")) return true;                      // hidden (macOS, Linux)
+  return SYSTEM_FILE_NAMES_LC.has(name.toLowerCase());       // known Windows system files
+}
+
+/**
  * True if ALL names are image files with purely numeric basenames.
  * ["001.jpg","002.jpg"] → true; ["scan.jpg","001.jpg"] → false.
+ *
+ * Callers are responsible for pre-filtering system files (via `isSystemFile`)
+ * before passing names here — `isPageGroup` itself is intentionally pure.
  */
 export function isPageGroup(names: string[]): boolean {
   if (names.length === 0) return false;
@@ -211,7 +238,11 @@ export async function walkFolder(
 
   for await (const child of dirHandle.values()) {
     if (child.kind === "file") {
-      childFiles.push({ name: child.name, handle: child as FSFileHandle });
+      // fix 7.9: skip hidden and known system files so they don't break
+      // page-group detection or pollute the import list.
+      if (!isSystemFile(child.name)) {
+        childFiles.push({ name: child.name, handle: child as FSFileHandle });
+      }
     } else {
       childDirs.push({ name: child.name, handle: child as FSDirectoryHandle });
     }
