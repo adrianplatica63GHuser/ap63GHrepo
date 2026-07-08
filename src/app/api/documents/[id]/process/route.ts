@@ -45,6 +45,7 @@ import { listDocumentPages }            from "@/lib/documents/pages-queries";
 import { readFileContent }              from "@/lib/storage";
 import { stereo70ToWgs84 }             from "@/lib/geo/transdatRO";
 import { parseLine }                   from "@/lib/geo/stereo70-parse";
+import { perToSlash }                 from "@/lib/import/folder-utils";
 import {
   addEntityTag,
   listEntityTags,
@@ -147,8 +148,12 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
     if (propertyTag) {
       const parts = propertyTag.split("-");
       if (parts.length >= 2) {
-        tarlaSola = parts[0].trim() || null;
-        parcela   = parts[1].trim() || null;
+        // perToSlash: "47per2" → "47/2", "225per3per24" → "225/3/24"
+        // In Romanian cadastral folder names "/" cannot appear in path segments,
+        // so parcel fractions are written with "per".  Restore the canonical
+        // form before writing to the DB (fix for Adrian's test session).
+        tarlaSola = perToSlash(parts[0].trim()) || null;
+        parcela   = perToSlash(parts[1].trim()) || null;
       }
     }
 
