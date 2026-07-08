@@ -28,9 +28,15 @@ import {
   type FSDirectoryHandle,
   type FSEntry,
 } from "@/lib/import/folder-utils";
+import {
+  loadSavedSession,
+  clearSavedSession,
+  type SavedImportSession,
+} from "@/lib/import/session";
 import { ScanTable, type ScanResult } from "./scan-table";
 import { TagDialog, type TagFolderInfo } from "./tag-dialog";
 import { BulkImportDialog } from "./bulk-import-dialog";
+import { ResumedSessionView } from "./resumed-session-view";
 
 // ---------------------------------------------------------------------------
 // Module-level singleton — preserves FS handles across React re-renders
@@ -133,7 +139,8 @@ type Phase =
   | "scanning"
   | "ready"
   | "tag-dialog"
-  | "importing";
+  | "importing"
+  | "resumed";
 
 // ---------------------------------------------------------------------------
 // Unique folder names for tagging
@@ -180,6 +187,11 @@ export function ImportWizard() {
   const [scanResults, setScanResults] = useState<Map<string, ScanResult>>(new Map());
   const [scanProgress, setScanProgress] = useState({ done: 0, total: 0 });
   const [walkError, setWalkError] = useState<string | null>(null);
+  // Saved session — lazy-initialised from localStorage so no effect is needed.
+  // loadSavedSession() guards against SSR with a `typeof window` check.
+  const [savedSession, setSavedSession] = useState<SavedImportSession | null>(
+    () => loadSavedSession(),
+  );
 
   const cancelScanRef = useRef(false);
 
@@ -335,6 +347,17 @@ export function ImportWizard() {
           {rootFolderName ? t("changeFolderButton") : t("chooseFolderButton")}
         </button>
 
+        {/* Resume last session — shown only while idle and a saved session exists */}
+        {phase === "idle" && savedSession && (
+          <button
+            type="button"
+            onClick={() => setPhase("resumed")}
+            className="inline-flex items-center rounded-md border border-amber-400 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-800 hover:bg-amber-100 dark:border-amber-600 dark:bg-amber-950/30 dark:text-amber-300 dark:hover:bg-amber-900/40"
+          >
+            {t("resumeButton", { folder: savedSession.rootFolderName })}
+          </button>
+        )}
+
         {rootFolderName && (
           <span className="font-mono text-sm text-ink dark:text-zinc-200">
             📁 {rootFolderName}
@@ -377,8 +400,8 @@ export function ImportWizard() {
         </div>
       )}
 
-      {/* File table */}
-      {entries.length > 0 && (
+      {/* File table — hidden while showing a resumed session */}
+      {entries.length > 0 && phase !== "resumed" && (
         <div className="rounded-xl border border-card-rim bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
           <ScanTable
             entries={entries}
@@ -386,6 +409,18 @@ export function ImportWizard() {
             scanResults={scanResults}
           />
         </div>
+      )}
+
+      {/* Resumed session view — replaces the file table while active */}
+      {phase === "resumed" && savedSession && (
+        <ResumedSessionView
+          session={savedSession}
+          onClear={() => {
+            clearSavedSession();
+            setSavedSession(null);
+            setPhase("idle");
+          }}
+        />
       )}
 
       {/* Tag dialog (modal) */}

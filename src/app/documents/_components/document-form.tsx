@@ -159,16 +159,22 @@ export function DocumentForm({
   const pagesState = usePagesPanelState(documentId);
   const [bigPage, setBigPage] = useState(false);
   // Slice #20.16: Theater overlay — opens a portal full-screen pages viewer.
-  const handleToggleBigPage = () => setBigPage((v) => !v);
-  const handleCloseTheaterPage = () => setBigPage(false);
+  const handleToggleBigPage = () => {
+    const next = !bigPage;
+    setBigPage(next);
+    onBigPageChange?.(next);
+  };
+  const handleCloseTheaterPage = () => { setBigPage(false); onBigPageChange?.(false); };
 
   // Close theater overlay on Escape key.
   useEffect(() => {
     if (!bigPage) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setBigPage(false); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") { setBigPage(false); onBigPageChange?.(false); }
+    };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [bigPage]);
+  }, [bigPage, onBigPageChange]);
 
   const { data: documentTypes } = useQuery({
     queryKey: ["document-types"],

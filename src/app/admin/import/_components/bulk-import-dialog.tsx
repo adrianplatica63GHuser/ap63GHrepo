@@ -27,6 +27,11 @@ import {
   tagsForEntry,
   extOf,
 } from "@/lib/import/folder-utils";
+import {
+  IMPORT_SESSION_KEY,
+  type SavedImportEntry,
+  type SavedImportSession,
+} from "@/lib/import/session";
 import type { ScanResult } from "./scan-table";
 
 // ---------------------------------------------------------------------------
@@ -123,7 +128,6 @@ const PDF_EXT = ".pdf";
 function isImageFile(name: string) { return IMAGE_EXTS_SET.has(extOf(name)); }
 function isPdfFile(name: string)   { return extOf(name) === PDF_EXT; }
 function isTextFile(name: string)  { return TEXT_EXTS_SET.has(extOf(name)); }
-function isScannable(name: string) { return isImageFile(name) || isPdfFile(name); }
 
 // ---------------------------------------------------------------------------
 // PDF rasterization via Web Worker  (fix 7.7 — off-main-thread rendering)
@@ -282,24 +286,6 @@ async function createProperty(payload: {
   const id = body.property?.id ?? body.id;
   if (!id) throw new Error("No property id");
   return id;
-}
-
-/** POST /api/admin/import/scan-folder → Classification */
-async function scanFileForAI(imageBlob: Blob): Promise<{
-  classifiedLabel: string;
-  suggestedTypeKey: string | null;
-  confidence: "high" | "medium" | "low";
-  extractable: boolean;
-  notes: string | null;
-}> {
-  const fd = new FormData();
-  const f = imageBlob instanceof File
-    ? imageBlob
-    : new File([imageBlob], "page.png", { type: "image/png" });
-  fd.append("file", f);
-  const res = await fetch("/api/admin/import/scan-folder", { method: "POST", body: fd });
-  if (!res.ok) throw new Error(`Scan HTTP ${res.status}`);
-  return res.json();
 }
 
 /** POST /api/admin/import/extract-document → { fields } */
@@ -480,6 +466,41 @@ export function BulkImportDialog({
   useEffect(() => {
     if (done) router.refresh();
   }, [done, router]);
+
+  // Persist the completed session to localStorage so the user can "Resume"
+  // it after navigating away (e.g. to inspect an individual document).
+  // File System Access API handles cannot be serialised, so the resumed view
+  // is read-only: doc links work, but AI Interpret requires the actual files.
+  useEffect(() => {
+    if (!done) return;
+    const sessionEntries: SavedImportEntry[] = results.map((r) => {
+      const displayName =
+        r.entry.kind === "page-group"
+          ? r.entry.titleHint
+          : (r.entry as FSFileEntry).name;
+      const sr = scanResults.get(r.entry.path);
+      return {
+        path:             r.entry.path,
+        displayName,
+        kind:             r.entry.kind,
+        status:           r.status,
+        docId:            r.docId,
+        errorMsg:         r.errorMsg,
+        scanDescription:  sr?.description,
+        confidence:       sr?.confidence,
+      };
+    });
+    const session: SavedImportSession = {
+      rootFolderName,
+      savedAt: new Date().toISOString(),
+      entries:  sessionEntries,
+    };
+    try {
+      localStorage.setItem(IMPORT_SESSION_KEY, JSON.stringify(session));
+    } catch {
+      // localStorage quota exceeded — ignore; links still work for this session.
+    }
+  }, [done, results, rootFolderName, scanResults]);
 
   // ---------------------------------------------------------------------------
   // AI interpretation handler
@@ -856,6 +877,8 @@ function ResultRow({ result, aiActive, t, onAiClick }: ResultRowProps) {
         {status === "done" && docId && (
           <a
             href={`/documents/${docId}`}
+            target="_blank"
+            rel="noopener noreferrer"
             className="text-xs font-medium text-emerald-600 hover:underline dark:text-emerald-400"
           >
             {t("viewLink")}

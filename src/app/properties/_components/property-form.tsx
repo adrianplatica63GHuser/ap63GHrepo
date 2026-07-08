@@ -195,16 +195,22 @@ export function PropertyForm({
 
   // Slice #20.16: Theater overlay — opens a portal full-screen map overlay.
   // No layout shift; the inline right-column map stays at 440px always.
-  const handleToggleBigMap = () => setBigMap((v) => !v);
-  const handleCloseTheaterMap = () => setBigMap(false);
+  const handleToggleBigMap = () => {
+    const next = !bigMap;
+    setBigMap(next);
+    onBigMapChange?.(next);
+  };
+  const handleCloseTheaterMap = () => { setBigMap(false); onBigMapChange?.(false); };
 
   // Close theater overlay on Escape key.
   useEffect(() => {
     if (!bigMap) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setBigMap(false); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") { setBigMap(false); onBigMapChange?.(false); }
+    };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [bigMap]);
+  }, [bigMap, onBigMapChange]);
 
   const handleToggleStreetView = () => setShowStreetView((v) => !v);
 
