@@ -108,15 +108,21 @@ export function parseFolderName(name: string): ParsedFolder {
 // ---------------------------------------------------------------------------
 
 const ABBR: Record<string, string> = {
-  CVC: "Contract de Vânzare-Cumpărare",
-  TP: "Titlu de Proprietate",
-  CM: "Certificat de Moștenitor",
-  CF: "Carte Funciară",
-  PV: "Proces Verbal",
-  AC: "Autorizație de Construire",
-  CI: "Carte de Identitate",
-  PS: "Plan de Situație",
-  DS: "Dosar Succesoral",
+  CVC:             "Contract de Vânzare-Cumpărare",
+  TP:              "Titlu de Proprietate",
+  CM:              "Certificat de Moștenitor",
+  CF:              "Carte Funciară",
+  PV:              "Proces Verbal",
+  AC:              "Autorizație de Construire",
+  CI:              "Carte de Identitate",
+  PS:              "Plan de Situație",
+  DS:              "Dosar Succesoral",
+  // Additions from Adrian's test session
+  "Inch Intab":    "Incheiere Intabulare",
+  PAD:             "Plan de Amplasament si Delimitare",
+  "Plan Parcelar": "Plan Parcelar",
+  Antec:           "Antecontract",
+  "Cert urbanism": "Certificat urbanism",
 };
 
 /**
@@ -137,6 +143,30 @@ export function folderNameToTitleHint(name: string): string {
     s = s.replace(new RegExp(`\\b${k}\\b`, "gi"), v);
   }
   return s.replace(/\s+/g, " ").trim();
+}
+
+// ---------------------------------------------------------------------------
+// Cadastral identifier normalisation
+// ---------------------------------------------------------------------------
+
+/**
+ * Translate "per" separators to "/" in Romanian cadastral identifiers.
+ *
+ * In Romanian folder/file names "/" cannot appear, so parcel fractions
+ * normally written as "47/2" are encoded as "47per2".  Call this on
+ * `tarlaSola` and `parcela` values **before** writing them to the database.
+ *
+ * Examples:
+ *   "47per2"           → "47/2"
+ *   "225per3per24"     → "225/3/24"
+ *   "47per2-225per3"   → this function is NOT called on the full tag — only
+ *                         on the individual segments after splitting on "-"
+ *
+ * Only applied to narrow cadastral fields, not to general text, so false
+ * positives on words like "superintendent" are not a concern in practice.
+ */
+export function perToSlash(s: string): string {
+  return s.replace(/per/gi, "/");
 }
 
 // ---------------------------------------------------------------------------

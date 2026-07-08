@@ -14,6 +14,7 @@ import {
   parseFolderName,
   folderNameToTitleHint,
   tagsForEntry,
+  perToSlash,
 } from "@/lib/import/folder-utils";
 
 // ---------------------------------------------------------------------------
@@ -179,6 +180,52 @@ describe("folderNameToTitleHint", () => {
 
   it("leaves non-abbreviation words unchanged (does NOT uppercase them)", () => {
     expect(folderNameToTitleHint("dosar_NR_5")).toBe("dosar NR 5");
+  });
+
+  // New abbreviations from Adrian's test session
+  it("expands new two-word abbreviations", () => {
+    expect(folderNameToTitleHint("Inch_Intab_2023")).toBe(
+      "Incheiere Intabulare 2023",
+    );
+    expect(folderNameToTitleHint("PAD_47-225")).toBe(
+      "Plan de Amplasament si Delimitare 47-225",
+    );
+    expect(folderNameToTitleHint("Antec_2020")).toBe("Antecontract 2020");
+    expect(folderNameToTitleHint("Cert_urbanism_2024")).toBe(
+      "Certificat urbanism 2024",
+    );
+  });
+
+  it("expands multi-word abbreviations case-insensitively", () => {
+    expect(folderNameToTitleHint("inch_intab_2023")).toBe(
+      "Incheiere Intabulare 2023",
+    );
+    expect(folderNameToTitleHint("CERT_URBANISM")).toBe("Certificat urbanism");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// perToSlash
+// ---------------------------------------------------------------------------
+
+describe("perToSlash", () => {
+  it("replaces 'per' with '/' (lowercase)", () => {
+    expect(perToSlash("47per2")).toBe("47/2");
+    expect(perToSlash("225per3per24")).toBe("225/3/24");
+  });
+
+  it("replaces 'per' case-insensitively", () => {
+    expect(perToSlash("47PER2")).toBe("47/2");
+    expect(perToSlash("47Per2")).toBe("47/2");
+  });
+
+  it("handles strings without 'per' unchanged", () => {
+    expect(perToSlash("47")).toBe("47");
+    expect(perToSlash("225")).toBe("225");
+  });
+
+  it("handles empty string", () => {
+    expect(perToSlash("")).toBe("");
   });
 });
 
