@@ -61,7 +61,13 @@ export type DocumentCreate = z.infer<typeof documentCreateSchema>;
 // Update schema — all fields optional (partial patch)
 // ---------------------------------------------------------------------------
 
-export const documentUpdateSchema = documentBase.partial();
+// Slice #21.02.Import: aiInterpretedAt can be patched directly; it is NOT
+// included in documentBase (not a versioned form field) so it is attached here
+// as an extension. updateDocument reads it from the patch but omits it from
+// the version snapshot.
+export const documentUpdateSchema = documentBase.partial().extend({
+  aiInterpretedAt: z.string().nullish(),
+});
 export type DocumentUpdate = z.infer<typeof documentUpdateSchema>;
 
 // ---------------------------------------------------------------------------

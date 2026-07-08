@@ -874,6 +874,11 @@ export const document = pgTable("document", {
   // the Supabase session; null for legacy rows and seed data).
   updatedBy: text("updated_by"),
 
+  // Slice #21.02.Import: set when the server-side AI-interpret action has been
+  // run on this document (extracts fields from the first uploaded page).
+  // NOT versioned — operational metadata only; snapshotFromFull omits this.
+  aiInterpretedAt: timestamp("ai_interpreted_at", { withTimezone: true }),
+
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

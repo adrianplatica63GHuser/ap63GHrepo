@@ -392,6 +392,13 @@ export async function updateDocument(
     if (input.dateValidUntil !== undefined) patch.dateValidUntil = input.dateValidUntil ?? null;
     if (input.surveyorId     !== undefined) patch.surveyorId     = input.surveyorId     ?? null;
 
+    // Slice #21.02.Import: operational field — NOT included in version snapshot.
+    if (input.aiInterpretedAt !== undefined) {
+      patch.aiInterpretedAt = input.aiInterpretedAt
+        ? new Date(input.aiInterpretedAt)
+        : null;
+    }
+
     // patch always has at least updatedBy
     await tx.update(document).set(patch).where(eq(document.id, id));
 
