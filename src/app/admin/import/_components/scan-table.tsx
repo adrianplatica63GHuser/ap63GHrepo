@@ -12,6 +12,7 @@
  */
 
 import { useTranslations } from "next-intl";
+import { parseFolderName, perToSlash } from "@/lib/import/folder-utils";
 import type { FSEntry } from "@/lib/import/folder-utils";
 
 // ---------------------------------------------------------------------------
@@ -43,6 +44,51 @@ type Props = {
 };
 
 // ---------------------------------------------------------------------------
+// Grouping helpers
+// ---------------------------------------------------------------------------
+
+type EntryGroup = {
+  /** pathParts[0] — the first-level property subfolder name */
+  key:     string;
+  entries: FSEntry[];
+};
+
+/**
+ * Slice #21.02.Import: partition entries into property-subfolder groups and an
+ * ungrouped remainder.
+ *
+ * An entry belongs to a group when its first path segment (`pathParts[0]`) is
+ * itself a property folder (starts with a digit, matches the tarla-parcela
+ * pattern). All such entries are collected per first segment; everything else
+ * goes into `ungrouped`.
+ */
+function partitionEntries(entries: FSEntry[]): {
+  groups:     EntryGroup[];
+  ungrouped:  FSEntry[];
+} {
+  const groupMap = new Map<string, FSEntry[]>();
+  const ungrouped: FSEntry[] = [];
+
+  for (const entry of entries) {
+    const first = entry.pathParts[0];
+    if (first && parseFolderName(first).isPropertyFolder) {
+      const arr = groupMap.get(first) ?? [];
+      arr.push(entry);
+      groupMap.set(first, arr);
+    } else {
+      ungrouped.push(entry);
+    }
+  }
+
+  const groups: EntryGroup[] = [];
+  for (const [key, groupEntries] of groupMap.entries()) {
+    groups.push({ key, entries: groupEntries });
+  }
+
+  return { groups, ungrouped };
+}
+
+// ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
@@ -57,28 +103,94 @@ export function ScanTable({ entries, rootFolderName, scanResults }: Props) {
     );
   }
 
+  const { groups, ungrouped } = partitionEntries(entries);
+
+  const tableHeader = (
+    <thead>
+      <tr className="border-b border-crease text-left text-xs font-semibold uppercase tracking-wide text-fade dark:border-zinc-700">
+        <th className="pb-2 pr-3">{t("colPath")}</th>
+        <th className="w-56 pb-2 pr-3">{t("colDescription")}</th>
+        <th className="w-36 pb-2 pr-3 hidden md:table-cell">{t("colFolderInfo")}</th>
+        <th className="w-28 pb-2">{t("colStatus")}</th>
+      </tr>
+    </thead>
+  );
+
+  // When there are no property-folder groups, render a single flat table (original layout).
+  if (groups.length === 0) {
+    return (
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm" aria-label={rootFolderName}>
+          {tableHeader}
+          <tbody>
+            {ungrouped.map((entry) => (
+              <ScanRow
+                key={entry.path}
+                entry={entry}
+                result={scanResults.get(entry.path)}
+                t={t}
+                stripPrefix={null}
+              />
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
+  // Grouped layout: one table per group, then ungrouped at the bottom.
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm" aria-label={rootFolderName}>
-        <thead>
-          <tr className="border-b border-crease text-left text-xs font-semibold uppercase tracking-wide text-fade dark:border-zinc-700">
-            <th className="pb-2 pr-3">{t("colPath")}</th>
-            <th className="w-56 pb-2 pr-3">{t("colDescription")}</th>
-            <th className="w-36 pb-2 pr-3 hidden md:table-cell">{t("colFolderInfo")}</th>
-            <th className="w-28 pb-2">{t("colStatus")}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {entries.map((entry) => (
-            <ScanRow
-              key={entry.path}
-              entry={entry}
-              result={scanResults.get(entry.path)}
-              t={t}
-            />
-          ))}
-        </tbody>
-      </table>
+    <div className="space-y-6">
+      {groups.map(({ key, entries: groupEntries }) => (
+        <div key={key}>
+          {/* Group header — rootFolderName / perToSlash(key) */}
+          <p className="mb-1 text-xs font-semibold text-ink dark:text-zinc-200">
+            <span className="text-fade dark:text-zinc-400">{rootFolderName}</span>
+            {" / "}
+            <span>{perToSlash(key)}</span>
+          </p>
+          <div className="overflow-x-auto rounded border border-crease dark:border-zinc-700">
+            <table className="w-full text-sm" aria-label={`${rootFolderName} / ${perToSlash(key)}`}>
+              {tableHeader}
+              <tbody>
+                {groupEntries.map((entry) => (
+                  <ScanRow
+                    key={entry.path}
+                    entry={entry}
+                    result={scanResults.get(entry.path)}
+                    t={t}
+                    stripPrefix={key}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ))}
+
+      {ungrouped.length > 0 && (
+        <div>
+          <p className="mb-1 text-xs font-semibold text-fade dark:text-zinc-400">
+            {rootFolderName}
+          </p>
+          <div className="overflow-x-auto rounded border border-crease dark:border-zinc-700">
+            <table className="w-full text-sm" aria-label={rootFolderName}>
+              {tableHeader}
+              <tbody>
+                {ungrouped.map((entry) => (
+                  <ScanRow
+                    key={entry.path}
+                    entry={entry}
+                    result={scanResults.get(entry.path)}
+                    t={t}
+                    stripPrefix={null}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -91,10 +203,19 @@ type RowProps = {
   entry: FSEntry;
   result: ScanResult | undefined;
   t: ReturnType<typeof useTranslations<"adminImport.wizard">>;
+  /** Slice #21.02.Import: when set, strip this prefix + "/" from the
+   *  displayed path so the group folder name isn't repeated in each row. */
+  stripPrefix: string | null;
 };
 
-function ScanRow({ entry, result, t }: RowProps) {
+function ScanRow({ entry, result, t, stripPrefix }: RowProps) {
   const isSkipped = result?.status === "skip";
+
+  // Strip the group folder prefix from the displayed path.
+  const displayPath =
+    stripPrefix && entry.path.startsWith(stripPrefix + "/")
+      ? entry.path.slice(stripPrefix.length + 1)
+      : entry.path;
 
   return (
     <tr
@@ -109,7 +230,7 @@ function ScanRow({ entry, result, t }: RowProps) {
           className="block truncate font-mono text-xs text-ink dark:text-zinc-200"
           title={entry.path}
         >
-          {entry.path}
+          {displayPath}
         </span>
         {entry.kind === "page-group" && (
           <span className="mt-0.5 inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-medium text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">

@@ -48,6 +48,8 @@ export type ImportResult = {
   docId?: string;
   /** principalObjectId for tagging */
   principalObjectId?: string;
+  /** Slice #21.02.Import: true once AI-interpret has been successfully run on this entry. */
+  aiProcessed?: boolean;
 };
 
 type AiPhase =
@@ -180,12 +182,18 @@ async function pdfFirstPageBlob(file: File): Promise<Blob> {
 // ---------------------------------------------------------------------------
 
 /**
- * Fetch the first available document type ID to use as default during bulk
- * import (every Document row requires a non-null documentTypeId in the DB).
- * Preference order: ALTUL → OTHER → first row alphabetically.
+ * Fetch all active document types.
+ * Returns:
+ *   - `fallbackId`: ALTUL → OTHER → first row alphabetically (used when
+ *     the scan result has no type or low/medium confidence).
+ *   - `typeMap`: key → id, used to resolve a high-confidence scan typeKey
+ *     to the correct document type at creation time.
  * Throws a user-visible Romanian error if no types exist at all.
  */
-async function fetchFallbackDocTypeId(): Promise<string> {
+async function fetchDocTypes(): Promise<{
+  fallbackId: string;
+  typeMap: Record<string, string>;
+}> {
   const res = await fetch("/api/admin/value-lists/document-types");
   if (!res.ok) throw new Error("Nu s-au putut încărca tipurile de documente (HTTP " + res.status + ").");
   const body = (await res.json()) as { items?: { id: string; key: string; name: string }[] };
@@ -196,11 +204,13 @@ async function fetchFallbackDocTypeId(): Promise<string> {
       "Adăugați cel puțin un tip înainte de a importa fișiere.",
     );
   }
-  const pick =
+  const fallback =
     items.find((x) => x.key === "ALTUL") ??
     items.find((x) => x.key === "OTHER") ??
     items[0];
-  return pick.id;
+  const typeMap: Record<string, string> = {};
+  for (const item of items) typeMap[item.key] = item.id;
+  return { fallbackId: fallback.id, typeMap };
 }
 
 async function createDocument(payload: {
@@ -372,10 +382,13 @@ export function BulkImportDialog({
   useEffect(() => {
     let mounted = true;
     let fallbackDocTypeId: string;
+    let docTypeMap: Record<string, string> = {};
 
     async function run() {
-      // fetchFallbackDocTypeId throws with a Romanian error if no types exist.
-      fallbackDocTypeId = await fetchFallbackDocTypeId();
+      // fetchDocTypes throws with a Romanian error if no types exist.
+      const { fallbackId, typeMap } = await fetchDocTypes();
+      fallbackDocTypeId = fallbackId;
+      docTypeMap = typeMap;
       if (!mounted) return;
 
       const tasks = entries.map((entry) => async () => {
@@ -399,13 +412,23 @@ export function BulkImportDialog({
               ? entry.titleHint
               : entry.name;
 
-          // 2. Create the Document record
+          // 2. Resolve document type.
+          //    Slice #21.02.Import: when the scan result has high confidence AND
+          //    a recognised typeKey, use that type instead of the fallback so the
+          //    created document already has the right type set.
+          const sr = scanResults.get(entry.path);
+          const resolvedTypeId =
+            (sr?.confidence === "high" && sr.typeKey && docTypeMap[sr.typeKey])
+              ? docTypeMap[sr.typeKey]
+              : fallbackDocTypeId;
+
+          // 3. Create the Document record
           const { id: docId, principalObjectId } = await createDocument({
-            documentTypeId: fallbackDocTypeId,
+            documentTypeId: resolvedTypeId,
             title,
           });
 
-          // 3. Upload file(s) as pages
+          // 4. Upload file(s) as pages
           if (entry.kind === "page-group") {
             const pg = entry as FSPageGroupEntry;
             for (let i = 0; i < pg.handles.length; i++) {
@@ -419,7 +442,7 @@ export function BulkImportDialog({
             await uploadPage(docId, file, 1);
           }
 
-          // 4. Tag with all ancestor folder names
+          // 5. Tag with all ancestor folder names
           const tags = tagsForEntry(rootFolderName, entry);
           for (const tag of tags) {
             await addTag(principalObjectId, tag);
@@ -488,6 +511,7 @@ export function BulkImportDialog({
         errorMsg:         r.errorMsg,
         scanDescription:  sr?.description,
         confidence:       sr?.confidence,
+        aiProcessed:      r.aiProcessed,
       };
     });
     const session: SavedImportSession = {
@@ -681,12 +705,21 @@ export function BulkImportDialog({
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            title: fields.title ?? undefined,
-            nrDocument: fields.nrDocument ?? undefined,
+            title:        fields.title        ?? undefined,
+            nrDocument:   fields.nrDocument   ?? undefined,
             dateDocument: fields.dateDocument ?? undefined,
-            subject: fields.subject ?? undefined,
+            subject:      fields.subject      ?? undefined,
           }),
         });
+
+        // Slice #21.02.Import: stamp ai_interpreted_at on the document record
+        // and mark the result row as AI-processed so the badge renders.
+        await fetch(`/api/documents/${docId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ aiInterpretedAt: new Date().toISOString() }),
+        });
+        updateResult(entryPath, { aiProcessed: true });
 
         setAiState((s) => s ? { ...s, phase: "done", successMsg: t("aiExtracted") } : s);
       } catch (err) {
@@ -701,7 +734,7 @@ export function BulkImportDialog({
         );
       }
     },
-    [results, t],
+    [results, updateResult, t],
   );
 
   // ---------------------------------------------------------------------------
@@ -849,7 +882,7 @@ type ResultRowProps = {
 };
 
 function ResultRow({ result, aiActive, t, onAiClick }: ResultRowProps) {
-  const { entry, status, errorMsg, docId } = result;
+  const { entry, status, errorMsg, docId, aiProcessed } = result;
   const displayName = entry.kind === "page-group" ? entry.titleHint : (entry as FSFileEntry).name;
 
   return (
@@ -887,14 +920,22 @@ function ResultRow({ result, aiActive, t, onAiClick }: ResultRowProps) {
       </td>
 
       <td className="py-2">
+        {/* Slice #21.02.Import: once AI extraction is done show a disabled badge
+            instead of the action button so there's no accidental double-run. */}
         {status === "done" && docId && (
-          <button
-            type="button"
-            onClick={onAiClick}
-            className="rounded border border-wire px-2 py-0.5 text-xs font-medium text-ink hover:bg-canvas dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
-          >
-            {t("aiButton")}
-          </button>
+          aiProcessed ? (
+            <span className="inline-flex items-center rounded border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[10px] font-medium text-indigo-600 dark:border-indigo-800 dark:bg-indigo-950/30 dark:text-indigo-300">
+              {t("aiProcessedBadge")}
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={onAiClick}
+              className="rounded border border-wire px-2 py-0.5 text-xs font-medium text-ink hover:bg-canvas dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            >
+              {t("aiButton")}
+            </button>
+          )
         )}
       </td>
     </tr>

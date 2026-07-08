@@ -29,6 +29,8 @@ export type SavedImportEntry = {
   errorMsg?:        string;
   scanDescription?: string;
   confidence?:      "high" | "medium" | "low";
+  /** Slice #21.02.Import: true once AI-interpret has been successfully run on this entry's document. */
+  aiProcessed?:     boolean;
 };
 
 export type SavedImportSession = {
