@@ -472,6 +472,9 @@ export function DocumentForm({
       const { fields } = (await res.json()) as { fields: Record<string, string | null> };
 
       // Fill form fields from extracted data.
+      // documentTypeId first so the form re-renders with the correct type config
+      // before other fields are set (type controls which fields are visible).
+      if (fields.documentTypeId)    form.setValue("documentTypeId",    fields.documentTypeId);
       if (fields.title)             form.setValue("title",             fields.title);
       if (fields.nrDocument)        form.setValue("nrDocument",        fields.nrDocument);
       if (fields.dateDocument)      form.setValue("dateDocument",      fields.dateDocument);

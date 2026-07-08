@@ -34,14 +34,24 @@ function StatusBadge({ entry }: { entry: SavedImportEntry }) {
 
   if (entry.status === "done" && entry.docId) {
     return (
-      <a
-        href={`/documents/${entry.docId}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-xs font-medium text-emerald-600 hover:underline dark:text-emerald-400"
-      >
-        {tD("viewLink")}
-      </a>
+      <span className="inline-flex items-center gap-1.5">
+        {entry.aiProcessed && (
+          <span
+            className="inline-flex items-center rounded border border-indigo-200 bg-indigo-50 px-1.5 py-0.5 text-[10px] font-medium text-indigo-600 dark:border-indigo-800 dark:bg-indigo-950/30 dark:text-indigo-300"
+            title={tD("aiProcessedBadge")}
+          >
+            ✓ AI
+          </span>
+        )}
+        <a
+          href={`/documents/${entry.docId}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs font-medium text-emerald-600 hover:underline dark:text-emerald-400"
+        >
+          {tD("viewLink")}
+        </a>
+      </span>
     );
   }
   if (entry.status === "error") {

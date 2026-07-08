@@ -20,8 +20,12 @@
 
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { and, eq, isNull } from "drizzle-orm";
+import { db } from "@/db";
+import { lookupDocumentType } from "@/db/schema";
 import { unexpectedError } from "@/lib/api/errors";
-import { EXTRACT_SYSTEM_PROMPT } from "@/lib/import/classify-prompts";
+import { EXTRACT_SYSTEM_PROMPT, KNOWN_TYPE_KEYS } from "@/lib/import/classify-prompts";
+import { createValue } from "@/lib/admin/value-lists/queries";
 import { listDocumentPages } from "@/lib/documents/pages-queries";
 import { readFileContent } from "@/lib/storage";
 import { createServerClient } from "@/lib/supabase/server";
@@ -180,10 +184,25 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
     return Response.json({ error: "Anthropic API returned no text" }, { status: 502 });
   }
 
+  type AiExtractResponse = {
+    fields?: Record<string, string | null>;
+    suggestedTypeKey?: string | null;
+    classifiedLabel?: string | null;
+  };
+
   let fields: Record<string, string | null>;
+  let suggestedTypeKey: string | null = null;
+  let classifiedLabel: string | null = null;
   try {
-    const raw = extractJson(textBlock) as { fields?: Record<string, string | null> };
+    const raw = extractJson(textBlock) as AiExtractResponse;
     fields = raw.fields ?? {};
+    suggestedTypeKey =
+      raw.suggestedTypeKey &&
+      (KNOWN_TYPE_KEYS as readonly string[]).includes(raw.suggestedTypeKey) &&
+      raw.suggestedTypeKey !== "UNCLASSIFIED"
+        ? raw.suggestedTypeKey
+        : null;
+    classifiedLabel = raw.classifiedLabel?.trim() || null;
   } catch (err) {
     console.error("[ai-interpret] failed to parse model output:", textBlock, err);
     return Response.json(
@@ -192,5 +211,37 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
     );
   }
 
-  return Response.json({ fields });
+  // ── Resolve documentTypeId ──────────────────────────────────────────────────
+  // 1. Match by known typeKey slug in the DB.
+  // 2. Fall back to match by label name.
+  // 3. Auto-create if the label is meaningful and not already present.
+  let documentTypeId: string | null = null;
+  try {
+    if (suggestedTypeKey) {
+      const [byKey] = await db
+        .select({ id: lookupDocumentType.id })
+        .from(lookupDocumentType)
+        .where(and(eq(lookupDocumentType.key, suggestedTypeKey), isNull(lookupDocumentType.deletedAt)));
+      if (byKey) documentTypeId = byKey.id;
+    }
+
+    if (!documentTypeId && classifiedLabel && classifiedLabel !== "Document necunoscut") {
+      const [byName] = await db
+        .select({ id: lookupDocumentType.id })
+        .from(lookupDocumentType)
+        .where(and(eq(lookupDocumentType.name, classifiedLabel), isNull(lookupDocumentType.deletedAt)));
+      if (byName) {
+        documentTypeId = byName.id;
+      } else {
+        // Auto-create a new document type (key auto-generated from name).
+        const newRow = await createValue("document-types", { name: classifiedLabel });
+        documentTypeId = newRow.id as string;
+      }
+    }
+  } catch (err) {
+    // Non-fatal: log and continue — fields are still useful even without a type.
+    console.warn("[ai-interpret] documentTypeId resolution failed:", err);
+  }
+
+  return Response.json({ fields: { ...fields, documentTypeId } });
 }

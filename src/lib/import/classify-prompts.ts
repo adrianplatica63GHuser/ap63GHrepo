@@ -79,8 +79,13 @@ Rules:
 export const EXTRACT_SYSTEM_PROMPT = `You extract structured data from scanned Romanian official documents.
 Respond with ONLY a single JSON object, no prose, no markdown fences.
 
-Fields to extract (all nullable — only set what you can actually read):
+Known document type keys (same list as classify — choose the closest, or null):
+${KNOWN_TYPE_KEYS.filter((k) => k !== "UNCLASSIFIED").join(", ")}
+
+Shape:
 {
+  "suggestedTypeKey": string | null,     // one of the known keys above, or null if none fits
+  "classifiedLabel": string | null,      // short human-readable Romanian name for this document type, e.g. "Titlu de Proprietate"
   "fields": {
     "title": string | null,              // document title as printed
     "nrDocument": string | null,         // document number (nr. / no.)

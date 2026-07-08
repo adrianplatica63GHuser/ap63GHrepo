@@ -26,6 +26,7 @@ import {
   type FSPageGroupEntry,
   tagsForEntry,
   extOf,
+  perToSlash,
 } from "@/lib/import/folder-utils";
 import {
   IMPORT_SESSION_KEY,
@@ -184,15 +185,14 @@ async function pdfFirstPageBlob(file: File): Promise<Blob> {
 /**
  * Fetch all active document types.
  * Returns:
- *   - `fallbackId`: ALTUL → OTHER → first row alphabetically (used when
- *     the scan result has no type or low/medium confidence).
- *   - `typeMap`: key → id, used to resolve a high-confidence scan typeKey
- *     to the correct document type at creation time.
- * Throws a user-visible Romanian error if no types exist at all.
+ *   - `fallbackId`: ALTUL → OTHER → first row alphabetically (used when no type can be resolved)
+ *   - `typeMap`: key → id (slug match)
+ *   - `nameMap`: lowercased name → id (label match, used for auto-create dedup)
  */
 async function fetchDocTypes(): Promise<{
   fallbackId: string;
   typeMap: Record<string, string>;
+  nameMap: Record<string, string>;
 }> {
   const res = await fetch("/api/admin/value-lists/document-types");
   if (!res.ok) throw new Error("Nu s-au putut încărca tipurile de documente (HTTP " + res.status + ").");
@@ -209,8 +209,69 @@ async function fetchDocTypes(): Promise<{
     items.find((x) => x.key === "OTHER") ??
     items[0];
   const typeMap: Record<string, string> = {};
-  for (const item of items) typeMap[item.key] = item.id;
-  return { fallbackId: fallback.id, typeMap };
+  const nameMap: Record<string, string> = {};
+  for (const item of items) {
+    typeMap[item.key] = item.id;
+    nameMap[item.name.toLowerCase().trim()] = item.id;
+  }
+  return { fallbackId: fallback.id, typeMap, nameMap };
+}
+
+// Session-scoped cache for auto-created types so the same label is not
+// created more than once during a single import run.
+const autoCreatedTypeCache = new Map<string, string>();
+
+/**
+ * Resolve a document type ID for an entry:
+ * 1. Exact key match in typeMap (seeded types)
+ * 2. Label name match in nameMap (previously created types)
+ * 3. Auto-create via Reference Data API and cache the new ID
+ * 4. Fall back to fallbackId if label is empty or API fails
+ */
+async function ensureDocType(
+  typeKey:     string | null | undefined,
+  label:       string | null | undefined,
+  typeMap:     Record<string, string>,
+  nameMap:     Record<string, string>,
+  fallbackId:  string,
+): Promise<string> {
+  // 1. Exact key match (any non-null, non-UNCLASSIFIED typeKey)
+  if (typeKey && typeKey !== "UNCLASSIFIED") {
+    const id = typeMap[typeKey];
+    if (id) return id;
+  }
+
+  // 2. Resolve by label
+  const trimmedLabel = label?.trim();
+  if (!trimmedLabel || trimmedLabel === "Document necunoscut") return fallbackId;
+
+  // 2a. Name match in existing types
+  const nameKey = trimmedLabel.toLowerCase();
+  const existingByName = nameMap[nameKey];
+  if (existingByName) return existingByName;
+
+  // 2b. Session cache (already auto-created this run)
+  const cached = autoCreatedTypeCache.get(nameKey);
+  if (cached) return cached;
+
+  // 3. Auto-create new document type
+  try {
+    const res = await fetch("/api/admin/value-lists/document-types", {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify({ name: trimmedLabel }),
+    });
+    if (res.ok) {
+      const row = (await res.json()) as { id?: string };
+      if (row.id) {
+        autoCreatedTypeCache.set(nameKey, row.id);
+        nameMap[nameKey] = row.id; // update for subsequent rows
+        return row.id;
+      }
+    }
+  } catch { /* ignore — fall through to fallback */ }
+
+  return fallbackId;
 }
 
 async function createDocument(payload: {
@@ -280,13 +341,20 @@ async function parseTextFileForProperty(
 
 /** POST /api/properties → { property: { id } } */
 async function createProperty(payload: {
-  nickname: string;
-  corners: unknown[];
+  nickname:   string;
+  corners:    unknown[];
+  tarlaSola?: string | null;
+  parcela?:   string | null;
 }): Promise<string> {
   const res = await fetch("/api/properties", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ nickname: payload.nickname, corners: payload.corners }),
+    body: JSON.stringify({
+      nickname:  payload.nickname,
+      corners:   payload.corners,
+      tarlaSola: payload.tarlaSola ?? null,
+      parcela:   payload.parcela   ?? null,
+    }),
   });
   if (!res.ok) {
     const body = (await res.json().catch(() => ({}))) as { error?: string };
@@ -383,12 +451,14 @@ export function BulkImportDialog({
     let mounted = true;
     let fallbackDocTypeId: string;
     let docTypeMap: Record<string, string> = {};
+    let docNameMap: Record<string, string> = {};
 
     async function run() {
       // fetchDocTypes throws with a Romanian error if no types exist.
-      const { fallbackId, typeMap } = await fetchDocTypes();
+      const { fallbackId, typeMap, nameMap } = await fetchDocTypes();
       fallbackDocTypeId = fallbackId;
       docTypeMap = typeMap;
+      docNameMap = nameMap;
       if (!mounted) return;
 
       const tasks = entries.map((entry) => async () => {
@@ -413,14 +483,17 @@ export function BulkImportDialog({
               : entry.name;
 
           // 2. Resolve document type.
-          //    Slice #21.02.Import: when the scan result has high confidence AND
-          //    a recognised typeKey, use that type instead of the fallback so the
-          //    created document already has the right type set.
+          //    Slice #21.02.Import: use the scan's typeKey/label to look up or
+          //    auto-create the matching document type; falls back to fallbackId
+          //    only when no meaningful classification is available.
           const sr = scanResults.get(entry.path);
-          const resolvedTypeId =
-            (sr?.confidence === "high" && sr.typeKey && docTypeMap[sr.typeKey])
-              ? docTypeMap[sr.typeKey]
-              : fallbackDocTypeId;
+          const resolvedTypeId = await ensureDocType(
+            sr?.typeKey,
+            sr?.description,
+            docTypeMap,
+            docNameMap,
+            fallbackDocTypeId,
+          );
 
           // 3. Create the Document record
           const { id: docId, principalObjectId } = await createDocument({
@@ -591,7 +664,15 @@ export function BulkImportDialog({
       if (!parsedCorners) return;
       setAiState((s) => s ? { ...s, phase: "creating" } : s);
       try {
-        const propertyId = await createProperty({ nickname, corners: parsedCorners });
+        // Derive tarla/parcela from the entry's property-folder info.
+        // "per" is the Romanian separator meaning "/" in cadastral notation
+        // (e.g. "64per2" → "64/2", "234per7per8" → "234/7/8").
+        const entryResult = results.find((r) => r.entry.path === entryPath);
+        const folderInfo = entryResult?.entry.folderInfo;
+        const tarlaSola = folderInfo?.tarlaSola ? perToSlash(folderInfo.tarlaSola) : null;
+        const parcela   = folderInfo?.parcela   ? perToSlash(folderInfo.parcela)   : null;
+
+        const propertyId = await createProperty({ nickname, corners: parsedCorners, tarlaSola, parcela });
 
         // Associate siblings from the same top-level folder
         const topFolder = entryPath.split("/")[0];
