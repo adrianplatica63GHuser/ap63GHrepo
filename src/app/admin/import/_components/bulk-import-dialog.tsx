@@ -55,11 +55,13 @@ type AiPhase =
   | "error";
 
 type AiState = {
-  path: string;
-  phase: AiPhase;
-  nickname: string;
+  path:        string;
+  phase:       AiPhase;
+  nickname:    string;
+  /** AI scan confidence (7.8 — shown as warning in the panel) */
+  confidence?: "high" | "medium" | "low";
   successMsg?: string;
-  errorMsg?: string;
+  errorMsg?:   string;
 };
 
 type Props = {
@@ -124,33 +126,49 @@ function isTextFile(name: string)  { return TEXT_EXTS_SET.has(extOf(name)); }
 function isScannable(name: string) { return isImageFile(name) || isPdfFile(name); }
 
 // ---------------------------------------------------------------------------
-// PDF.js (lazy-loaded for page-group rasterisation — only page 1)
+// PDF rasterization via Web Worker  (fix 7.7 — off-main-thread rendering)
 // ---------------------------------------------------------------------------
+//
+// A singleton Worker instance is reused across calls; concurrent calls are
+// demultiplexed by a random `id` that is echoed back by the worker.
+// The Worker uses OffscreenCanvas so no DOM canvas is needed on the main thread.
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let pdfjsLib: any = null;
+let _pdfWorker: Worker | null = null;
 
-async function ensurePdfJs(): Promise<void> {
-  if (pdfjsLib) return;
-  pdfjsLib = await import("pdfjs-dist");
-  pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
+function getPdfWorker(): Worker {
+  if (!_pdfWorker) {
+    _pdfWorker = new Worker(
+      // Webpack bundles the worker as a separate entry point when this URL
+      // pattern is used — standard Next.js / webpack 5 Web Worker support.
+      new URL("../_workers/pdf-rasterizer.worker.ts", import.meta.url),
+    );
+  }
+  return _pdfWorker;
 }
 
 async function pdfFirstPageBlob(file: File): Promise<Blob> {
-  await ensurePdfJs();
-  const buf = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
-  const page = await pdf.getPage(1);
-  const viewport = page.getViewport({ scale: 1.5 });
-  const canvas = document.createElement("canvas");
-  canvas.width = viewport.width;
-  canvas.height = viewport.height;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("Canvas 2D context not available");
-  await page.render({ canvasContext: ctx, viewport }).promise;
-  return new Promise<Blob>((res, rej) =>
-    canvas.toBlob((b) => (b ? res(b) : rej(new Error("canvas.toBlob null"))), "image/png"),
-  );
+  const buffer = await file.arrayBuffer();
+  const worker = getPdfWorker();
+  const id     = Math.random().toString(36).slice(2);
+
+  return new Promise<Blob>((resolve, reject) => {
+    function handleMessage(
+      e: MessageEvent<{ id: string; buffer?: ArrayBuffer; error?: string }>,
+    ) {
+      if (e.data.id !== id) return; // belongs to a different concurrent call
+      worker.removeEventListener("message", handleMessage);
+      if (e.data.error) {
+        reject(new Error(e.data.error));
+      } else if (e.data.buffer) {
+        resolve(new Blob([e.data.buffer], { type: "image/png" }));
+      } else {
+        reject(new Error("PDF worker returned no buffer"));
+      }
+    }
+    worker.addEventListener("message", handleMessage);
+    // Transfer the ArrayBuffer to avoid a copy across the thread boundary.
+    worker.postMessage({ id, buffer, scale: 1.5 }, [buffer]);
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -505,14 +523,15 @@ export function BulkImportDialog({
           label.includes("id card") ||
           label.includes("buletin");
         setAiState({
-          path: entry.path,
-          phase: isIdCard ? "id-card" : "generic-doc",
-          nickname: name,
+          path:       entry.path,
+          phase:      isIdCard ? "id-card" : "generic-doc",
+          nickname:   name,
+          confidence: scanResult.confidence, // 7.8: pass through for warning display
         });
         return;
       }
 
-      // No scan result — offer generic
+      // No scan result — offer generic (confidence unknown)
       setAiState({ path: entry.path, phase: "generic-doc", nickname: name });
     },
     [scanResults],
@@ -864,13 +883,13 @@ function ResultRow({ result, aiActive, t, onAiClick }: ResultRowProps) {
 // ---------------------------------------------------------------------------
 
 type AiPanelProps = {
-  state: AiState;
-  results: ImportResult[];
-  t: ReturnType<typeof useTranslations<"adminImport.wizard.importDialog">>;
+  state:            AiState;
+  results:          ImportResult[];
+  t:                ReturnType<typeof useTranslations<"adminImport.wizard.importDialog">>;
   onCreateProperty: (path: string, nickname: string) => void;
-  onCreatePerson: (path: string) => void;
-  onExtractFields: (path: string, docId: string) => void;
-  onClose: () => void;
+  onCreatePerson:   (path: string) => void;
+  onExtractFields:  (path: string, docId: string) => void;
+  onClose:          () => void;
 };
 
 function AiPanel({
@@ -900,6 +919,18 @@ function AiPanel({
           ✕
         </button>
       </div>
+
+      {/* 7.8 — confidence warning: shown when AI classified with low/medium confidence
+           and an action (id-card, generic-doc, coordinates) is about to be taken.
+           Coordinates use a different signal (coordinate-range check, not AI confidence)
+           so we only warn on the AI-driven phases. */}
+      {(state.phase === "id-card" || state.phase === "generic-doc") &&
+        (state.confidence === "low" || state.confidence === "medium") && (
+          <div className="mb-2 flex items-center gap-1.5 rounded bg-amber-50 px-3 py-1.5 text-xs text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+            <span aria-hidden="true">⚠</span>
+            {t("aiConfidenceWarning", { level: t(`aiConfidence_${state.confidence}`) })}
+          </div>
+        )}
 
       {state.phase === "coordinates" && (
         <div className="space-y-2">
