@@ -49,72 +49,9 @@ export const runtime = "nodejs";
 import type { NextRequest }   from "next/server";
 import { NextResponse }       from "next/server";
 import { stereo70ToWgs84 }    from "@/lib/geo/transdatRO";
+import { parseLine }          from "@/lib/geo/stereo70-parse";
 import { createServerClient } from "@/lib/supabase/server";
 import { checkOcrRateLimit }  from "@/lib/rate-limit/ocr";
-
-// ---------------------------------------------------------------------------
-// Parsing helpers
-// ---------------------------------------------------------------------------
-
-/** True if n falls in the Stereo70 coordinate range (100 000 – 999 999). */
-function isStereo(n: number): boolean {
-  const i = Math.floor(Math.abs(n));
-  return i >= 100_000 && i <= 999_999;
-}
-
-/**
- * Parse one data line and return { northing, easting, originalIndex } or null.
- *
- * Accepts whitespace, comma, semicolon, pipe, or tab as separators.
- *
- * Supported formats:
- *  3-column: <token0> <X [m]> <Y [m]>  — token0 is any finite number < 1 000,
- *                                         captured as `originalIndex`. Corner
- *                                         order is still determined by line
- *                                         order, not by this value.
- *  2-column: <X [m]> <Y [m]>            — no leading token (auto-detected when
- *                                          token 0 is itself a Stereo70 value);
- *                                          `originalIndex` is null.
- *
- * Token mapping (Romanian geodetic convention — X = Northing, Y = Easting):
- *   X column → `northing`; Y column → `easting`
- */
-function parseLine(
-  line: string,
-): { northing: number; easting: number; originalIndex: number | null } | null {
-  const tokens = line
-    .trim()
-    .split(/[\s,;|\t]+/)
-    .map((t) => t.trim())
-    .filter(Boolean);
-
-  if (tokens.length < 2) return null;
-
-  // --- 3-column format: leading token (< 1 000) + X + Y ---
-  // token[0] is an arbitrary numeric label, captured as originalIndex.
-  // Corner order is always determined by line order, not by this value.
-  if (tokens.length >= 3) {
-    const idx = parseFloat(tokens[0].replace(",", "."));
-    if (Number.isFinite(idx) && idx < 1_000) {
-      const northing = parseFloat(tokens[1].replace(",", "."));
-      const easting  = parseFloat(tokens[2].replace(",", "."));
-      if (!isNaN(northing) && isStereo(northing) && !isNaN(easting) && isStereo(easting)) {
-        return { northing, easting, originalIndex: idx };
-      }
-    }
-  }
-
-  // --- 2-column (or N-column) format: first token is itself a Stereo70 value ---
-  const firstNum = parseFloat(tokens[0].replace(",", "."));
-  if (!isNaN(firstNum) && isStereo(firstNum)) {
-    const secondNum = parseFloat(tokens[1].replace(",", "."));
-    if (!isNaN(secondNum) && isStereo(secondNum)) {
-      return { northing: firstNum, easting: secondNum, originalIndex: null };
-    }
-  }
-
-  return null;
-}
 
 // ---------------------------------------------------------------------------
 // Route handler
