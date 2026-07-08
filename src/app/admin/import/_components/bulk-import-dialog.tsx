@@ -17,7 +17,7 @@
  * The concurrency limit is 3 in-flight import operations at a time.
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import {
@@ -208,6 +208,7 @@ async function uploadPage(documentId: string, file: File, pageNumber: number): P
   fd.append("file", file, file.name);
   fd.append("pageNumber", String(pageNumber));
   const res = await fetch(`/api/documents/${documentId}/pages`, { method: "POST", body: fd });
+  if (res.redirected) throw new Error("session-expired");
   if (!res.ok) {
     const body = (await res.json().catch(() => ({}))) as { error?: string };
     throw new Error(body.error ?? `HTTP ${res.status}`);
@@ -340,6 +341,9 @@ export function BulkImportDialog({
   );
   const [done, setDone] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
+  // fix 7.6 — session-expiry detection during bulk import
+  const [sessionExpired, setSessionExpired] = useState(false);
+  const abortRef = useRef(false);
   const [aiState, setAiState] = useState<AiState | null>(null);
   const [parsedCorners, setParsedCorners] = useState<unknown[] | null>(null);
 
@@ -371,7 +375,17 @@ export function BulkImportDialog({
       if (!mounted) return;
 
       const tasks = entries.map((entry) => async () => {
+        // fix 7.6: if a previous task detected session expiry, skip all
+        // remaining pending tasks rather than hammering a dead session.
         if (!mounted) return;
+        if (abortRef.current) {
+          updateResult(entry.path, {
+            status: "error",
+            errorMsg: t("sessionExpiredShort"),
+          });
+          return;
+        }
+
         updateResult(entry.path, { status: "importing" });
 
         try {
@@ -411,8 +425,18 @@ export function BulkImportDialog({
             updateResult(entry.path, { status: "done", docId, principalObjectId });
           }
         } catch (err) {
-          if (mounted) {
-            const msg = err instanceof Error ? err.message : "Import failed";
+          if (!mounted) return;
+          const msg = err instanceof Error ? err.message : "Import failed";
+
+          // fix 7.6: session-expired thrown by createDocument or uploadPage
+          // when the server redirects to /sign-in instead of returning JSON.
+          // Abort remaining tasks and show a dedicated banner; preserve the
+          // error rows so the user knows which files to re-import after login.
+          if (msg === "session-expired") {
+            abortRef.current = true;
+            setSessionExpired(true);
+            updateResult(entry.path, { status: "error", errorMsg: t("sessionExpiredShort") });
+          } else {
             updateResult(entry.path, { status: "error", errorMsg: msg });
           }
         }
@@ -692,6 +716,21 @@ export function BulkImportDialog({
         {importError && (
           <div className="mx-5 mt-3 rounded-md bg-red-50 px-4 py-2 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
             {importError}
+          </div>
+        )}
+
+        {/* Session-expired banner (fix 7.6): shown when the Supabase session
+            expired mid-import.  Lists which rows failed so the user can
+            re-import them after signing in again. */}
+        {sessionExpired && (
+          <div className="mx-5 mt-3 rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-300">
+            {t("sessionExpiredBanner")}{" "}
+            <a
+              href="/sign-in"
+              className="font-semibold underline hover:text-amber-900 dark:hover:text-amber-200"
+            >
+              {t("signInAgain")}
+            </a>
           </div>
         )}
 

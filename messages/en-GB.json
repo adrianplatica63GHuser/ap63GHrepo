@@ -1365,7 +1365,7 @@
       "description": "This document contains a text file with Stereo 70 cadastral coordinates. Click the button below to parse the corners, create a Property, and associate all documents and persons that share the same folder tag.",
       "buttonLabel": "Process",
       "processing": "Processing…",
-      "alreadyProcessed": "Already processed",
+      "alreadyProcessed": "Already processed — the created property is listed in the Properties tab.",
       "provenanceLabel": "Created property:",
       "viewProperty": "Open property",
       "resultDocuments": "{count} document(s) associated",
@@ -1762,7 +1762,10 @@
         "aiExtracted": "Fields extracted and saved.",
         "aiError": "AI interpretation failed.",
         "aiCancel": "Cancel",
-        "aiNicknameLabel": "Property nickname"
+        "aiNicknameLabel": "Property nickname",
+        "sessionExpiredBanner": "Your session expired during import. The files marked with errors below were not saved. Please sign in again, then re-import them.",
+        "sessionExpiredShort": "Session expired",
+        "signInAgain": "Sign in again"
       }
     }
   },

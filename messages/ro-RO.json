@@ -1365,7 +1365,7 @@
       "description": "Documentul conține un fișier text cu coordonate cadastrale Stereo 70. Apăsați butonul de mai jos pentru a interpreta colțurile, crea o Proprietate și asocia toate documentele și persoanele care au același tag de dosar.",
       "buttonLabel": "Procesează",
       "processing": "Se procesează…",
-      "alreadyProcessed": "Deja procesat",
+      "alreadyProcessed": "Deja procesat — proprietatea creată apare în tab-ul Proprietăți.",
       "provenanceLabel": "Proprietate creată:",
       "viewProperty": "Deschide proprietatea",
       "resultDocuments": "{count} document(e) asociat(e)",
@@ -1762,7 +1762,10 @@
         "aiExtracted": "Câmpuri extrase și salvate.",
         "aiError": "Interpretarea AI a eșuat.",
         "aiCancel": "Renunță",
-        "aiNicknameLabel": "Poreclă proprietate"
+        "aiNicknameLabel": "Poreclă proprietate",
+        "sessionExpiredBanner": "Sesiunea a expirat în timpul importului. Fișierele marcate cu erori mai jos nu au fost salvate. Conectați-vă din nou, apoi reimportați-le.",
+        "sessionExpiredShort": "Sesiune expirată",
+        "signInAgain": "Conectați-vă"
       }
     }
   },
