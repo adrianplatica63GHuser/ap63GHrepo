@@ -46,6 +46,7 @@ import { readFileContent }              from "@/lib/storage";
 import { stereo70ToWgs84 }             from "@/lib/geo/transdatRO";
 import { parseLine }                   from "@/lib/geo/stereo70-parse";
 import {
+  addEntityTag,
   listEntityTags,
   patchEntityMetadata,
   findEntitiesByTag,
@@ -264,8 +265,26 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
       );
 
       createdPropertyId = created.property.id;
-      const propertyId   = createdPropertyId;
-      const propertyCode = created.property.code;
+      const propertyId               = createdPropertyId;
+      const propertyCode             = created.property.code;
+      const propertyPrincipalObjId   = created.property.principalObjectId;
+
+      // ── 7.10  Apply the document's folder tags to the property ─────────────
+      //
+      // During bulk import every document is tagged with its ancestor folder
+      // names (root → parent).  The newly-created property should carry the
+      // same tags so that `findEntitiesByTag` can locate it alongside the
+      // sibling documents and persons that share the same folder tag.
+      //
+      // `tags` was fetched from the source document's entity_tag rows (step 5).
+      // We reuse that list verbatim — `addEntityTag` normalises to lowercase
+      // and is idempotent (ON CONFLICT DO NOTHING).
+      //
+      // We run the inserts sequentially (not Promise.all) to avoid hammering
+      // the DB with a burst of short writes; there are at most 2-3 tags.
+      for (const tag of tags) {
+        await addEntityTag(propertyPrincipalObjId, tag);
+      }
 
       // Associate all Documents and Persons sharing the property folder tag
       if (propertyTag) {
