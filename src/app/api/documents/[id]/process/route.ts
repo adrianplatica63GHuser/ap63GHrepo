@@ -38,9 +38,9 @@ export const runtime = "nodejs";
 
 import type { NextRequest } from "next/server";
 import { NextResponse }     from "next/server";
-import { and, eq, isNull, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import { db }               from "@/db";
-import { document, entityMetadata } from "@/db/schema";
+import { document, entityMetadata, propertyDocument, propertyPerson } from "@/db/schema";
 import { listDocumentPages }            from "@/lib/documents/pages-queries";
 import { readFileContent }              from "@/lib/storage";
 import { stereo70ToWgs84 }             from "@/lib/geo/transdatRO";
@@ -131,7 +131,15 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
 
     // ── 5. Identify property-folder tag ─────────────────────────────────────
     const tags = await listEntityTags(principalObjectId);
-    const propertyTag = tags.find((t) => /^\d/.test(t)) ?? null;
+    // Property folder tags follow the pattern "tarla[-parcela[-description]]":
+    //   \d+         — tarla number (required)
+    //   (-\d+)?     — dash + parcela number (optional)
+    //   (-\w+)?     — dash + description word (optional, e.g. "livada")
+    // No spaces allowed.  Tags like "2024-archive" are rejected because a
+    // 4-digit first segment looks like a year, not a tarla — but more
+    // importantly, tags containing spaces ("3 calea victoriei") are rejected
+    // because \w+ does not match spaces (fix for issue 7.3).
+    const propertyTag = tags.find((t) => /^\d+(-\d+)?(-\w+)?$/.test(t)) ?? null;
 
     let tarlaSola: string | null = null;
     let parcela:   string | null = null;
@@ -250,13 +258,49 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
         const docIds    = entities.documents.map((d) => d.id);
         const personIds = entities.persons.map((p) => p.id);
 
-        if (docIds.length > 0) {
-          await associateDocumentsToProperty(propertyId, docIds);
-          documentCount = docIds.length;
+        // Fix for issue 7.4 — Sibling Association Spans Across Import Sessions:
+        //
+        // Without this guard, documents/persons from a PREVIOUS import that share
+        // the same property folder tag (e.g. "1-2") would be re-associated with
+        // the NEW property every time a new coordinate file is processed.
+        //
+        // We filter out any entity already linked to ANY property before calling
+        // the association helpers — we only associate "fresh" entities (those not
+        // yet attached to any property).  The `associateDocumentsToProperty` /
+        // `associatePersonsToProperty` helpers already use .onConflictDoNothing()
+        // for duplicate (propertyId, entityId) pairs within a single property, but
+        // that does NOT prevent cross-property re-association, which is what we
+        // address here.
+        //
+        // We keep this logic in the route (not inside the shared helpers) so that
+        // the manual association UI is unaffected and can still link an entity to
+        // multiple properties when the user does so deliberately.
+
+        const alreadyLinkedDocs = docIds.length > 0
+          ? await db
+              .select({ documentId: propertyDocument.documentId })
+              .from(propertyDocument)
+              .where(inArray(propertyDocument.documentId, docIds))
+          : [];
+        const linkedDocSet  = new Set(alreadyLinkedDocs.map((r) => r.documentId));
+        const freshDocIds   = docIds.filter((id) => !linkedDocSet.has(id));
+
+        const alreadyLinkedPersons = personIds.length > 0
+          ? await db
+              .select({ personId: propertyPerson.personId })
+              .from(propertyPerson)
+              .where(inArray(propertyPerson.personId, personIds))
+          : [];
+        const linkedPersonSet  = new Set(alreadyLinkedPersons.map((r) => r.personId));
+        const freshPersonIds   = personIds.filter((id) => !linkedPersonSet.has(id));
+
+        if (freshDocIds.length > 0) {
+          await associateDocumentsToProperty(propertyId, freshDocIds);
+          documentCount = freshDocIds.length;
         }
-        if (personIds.length > 0) {
-          await associatePersonsToProperty(propertyId, personIds, null);
-          personCount = personIds.length;
+        if (freshPersonIds.length > 0) {
+          await associatePersonsToProperty(propertyId, freshPersonIds, null);
+          personCount = freshPersonIds.length;
         }
       }
 
