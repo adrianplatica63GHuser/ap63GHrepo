@@ -134,26 +134,29 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
     // ── 5. Identify property-folder tag ─────────────────────────────────────
     const tags = await listEntityTags(principalObjectId);
     // Property folder tags follow the pattern "tarla[-parcela[-description]]":
-    //   \d+         — tarla number (required)
-    //   (-\d+)?     — dash + parcela number (optional)
+    //   \d\w*       — tarla number (required; starts with digit, may contain
+    //                 "per" for fractional cadastral numbers, e.g. "64per2")
+    //   (-\d\w*)?   — dash + parcela number (optional; same per-notation)
     //   (-\w+)?     — dash + description word (optional, e.g. "livada")
-    // No spaces allowed.  Tags like "2024-archive" are rejected because a
-    // 4-digit first segment looks like a year, not a tarla — but more
-    // importantly, tags containing spaces ("3 calea victoriei") are rejected
-    // because \w+ does not match spaces (fix for issue 7.3).
-    const propertyTag = tags.find((t) => /^\d+(-\d+)?(-\w+)?$/.test(t)) ?? null;
+    // No spaces allowed.  Tags containing spaces ("3 calea victoriei") are
+    // rejected because \w does not match spaces (fix for issue 7.3).
+    // The "per" separator is used in folder names because "/" cannot appear in
+    // a path segment; it is restored to "/" by perToSlash before DB writes.
+    const propertyTag = tags.find((t) => /^\d\w*(-\d\w*)?(-\w+)?$/.test(t)) ?? null;
 
     let tarlaSola: string | null = null;
     let parcela:   string | null = null;
     if (propertyTag) {
       const parts = propertyTag.split("-");
-      if (parts.length >= 2) {
-        // perToSlash: "47per2" → "47/2", "225per3per24" → "225/3/24"
-        // In Romanian cadastral folder names "/" cannot appear in path segments,
-        // so parcel fractions are written with "per".  Restore the canonical
-        // form before writing to the DB (fix for Adrian's test session).
+      // perToSlash: "47per2" → "47/2", "225per3per24" → "225/3/24"
+      // In Romanian cadastral folder names "/" cannot appear in path segments,
+      // so parcel fractions are written with "per".  Restore the canonical
+      // form before writing to the DB.
+      if (parts.length >= 1) {
         tarlaSola = perToSlash(parts[0].trim()) || null;
-        parcela   = perToSlash(parts[1].trim()) || null;
+      }
+      if (parts.length >= 2) {
+        parcela = perToSlash(parts[1].trim()) || null;
       }
     }
 

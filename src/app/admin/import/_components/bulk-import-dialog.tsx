@@ -674,20 +674,24 @@ export function BulkImportDialog({
 
         const propertyId = await createProperty({ nickname, corners: parsedCorners, tarlaSola, parcela });
 
-        // Associate siblings from the same top-level folder
-        const topFolder = entryPath.split("/")[0];
+        // Associate siblings from the same containing folder.
+        // Use pathParts.join("/") (the folder path, e.g. "64per2-234" or ""
+        // for flat root entries) rather than path.split("/")[0], which for
+        // flat entries returns the filename itself and matches nothing.
+        const entryFolder = (entryResult?.entry.pathParts ?? []).join("/");
         const siblingDocIds = results
           .filter(
             (r) =>
               r.status === "done" &&
               r.docId &&
               r.entry.path !== entryPath &&
-              r.entry.path.split("/")[0] === topFolder,
+              r.entry.pathParts.join("/") === entryFolder,
           )
           .map((r) => r.docId as string);
 
-        // Also associate the current document
-        const currentDocId = results.find((r) => r.entry.path === entryPath)?.docId;
+        // Also associate the current document (the text file itself is saved
+        // as a document so it can appear in the property's Documents tab).
+        const currentDocId = entryResult?.docId;
         if (currentDocId) siblingDocIds.push(currentDocId);
 
         await associateDocumentsWithProperty(propertyId, siblingDocIds);
