@@ -45,7 +45,7 @@ import { listDocumentPages }            from "@/lib/documents/pages-queries";
 import { readFileContent }              from "@/lib/storage";
 import { stereo70ToWgs84 }             from "@/lib/geo/transdatRO";
 import { parseLine }                   from "@/lib/geo/stereo70-parse";
-import { perToSlash }                 from "@/lib/import/folder-utils";
+import { perToSlash, parseFolderName } from "@/lib/import/folder-utils";
 import {
   addEntityTag,
   listEntityTags,
@@ -133,31 +133,29 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
 
     // ── 5. Identify property-folder tag ─────────────────────────────────────
     const tags = await listEntityTags(principalObjectId);
-    // Property folder tags follow the pattern "tarla[-parcela[-description]]":
-    //   \d\w*       — tarla number (required; starts with digit, may contain
-    //                 "per" for fractional cadastral numbers, e.g. "64per2")
-    //   (-\d\w*)?   — dash + parcela number (optional; same per-notation)
-    //   (-\w+)?     — dash + description word (optional, e.g. "livada")
-    // No spaces allowed.  Tags containing spaces ("3 calea victoriei") are
-    // rejected because \w does not match spaces (fix for issue 7.3).
-    // The "per" separator is used in folder names because "/" cannot appear in
-    // a path segment; it is restored to "/" by perToSlash before DB writes.
-    const propertyTag = tags.find((t) => /^\d\w*(-\d\w*)?(-\w+)?$/.test(t)) ?? null;
+    // Identify the property-folder tag by reusing parseFolderName — the same
+    // function used in the scan table.  It recognises any tag that starts with
+    // a digit (tarla) and tolerates "per"-notation fractions and free-text rest
+    // segments (e.g. "47per2-225per3per24-2716 Prisecaru").
+    // Tags are stored lowercase; parseFolderName works case-insensitively for
+    // the digit-start check.
+    let propertyTag: string | null = null;
+    let parsedFolder: ReturnType<typeof parseFolderName> | null = null;
+    for (const tag of tags) {
+      const pf = parseFolderName(tag);
+      if (pf.isPropertyFolder) {
+        propertyTag  = tag;
+        parsedFolder = pf;
+        break;
+      }
+    }
 
     let tarlaSola: string | null = null;
     let parcela:   string | null = null;
-    if (propertyTag) {
-      const parts = propertyTag.split("-");
+    if (parsedFolder) {
       // perToSlash: "47per2" → "47/2", "225per3per24" → "225/3/24"
-      // In Romanian cadastral folder names "/" cannot appear in path segments,
-      // so parcel fractions are written with "per".  Restore the canonical
-      // form before writing to the DB.
-      if (parts.length >= 1) {
-        tarlaSola = perToSlash(parts[0].trim()) || null;
-      }
-      if (parts.length >= 2) {
-        parcela = perToSlash(parts[1].trim()) || null;
-      }
+      tarlaSola = parsedFolder.tarlaSola ? perToSlash(parsedFolder.tarlaSola) || null : null;
+      parcela   = parsedFolder.parcela   ? perToSlash(parsedFolder.parcela)   || null : null;
     }
 
     // ── 6. Atomically claim provenance = TEXT_FILE ──────────────────────────
