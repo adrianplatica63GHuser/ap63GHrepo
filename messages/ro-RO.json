@@ -1377,7 +1377,8 @@
       "errorNoTextFile": "Nu s-a găsit niciun fișier text în paginile acestui document.",
       "errorTooFewCorners": "S-au interpretat mai puțin de 3 colțuri din fișier.",
       "errorAlreadyProcessed": "Acest document a fost deja procesat.",
-      "errorGeneric": "Procesarea a eșuat. Vă rugăm să încercați din nou."
+      "errorGeneric": "Procesarea a eșuat. Vă rugăm să încercați din nou.",
+      "errorSession": "Sesiunea a expirat. Vă rugăm să vă autentificați din nou și să reîncercați."
     },
     "aiExtracting": "Se extrage…",
     "aiExtractSuccess": "Câmpuri completate din documentul scanat",

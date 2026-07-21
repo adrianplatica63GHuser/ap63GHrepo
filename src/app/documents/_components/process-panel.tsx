@@ -17,7 +17,7 @@
  * On error a red message is displayed; the button is re-enabled.
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslations }     from "next-intl";
 import Link                    from "next/link";
 
@@ -57,10 +57,6 @@ function isTextPage(page: PageItem): boolean {
   );
 }
 
-function propertyIdFromProvenance(prov: string): string {
-  // provenance is "PROP:{uuid}"
-  return prov.startsWith("PROP:") ? prov.slice(5) : prov;
-}
 
 // ---------------------------------------------------------------------------
 // Component
@@ -76,6 +72,9 @@ export function ProcessPanel({ documentId, principalObjectId }: Props) {
 
   const [panelState, setPanelState] = useState<PanelState>({ status: "loading" });
   const [processing, setProcessing] = useState(false);
+  // Synchronous gate — prevents concurrent clicks before React re-renders the
+  // disabled button (state updates are async; a ref check is synchronous).
+  const processingRef = useRef(false);
 
   // On mount: fetch pages + metadata to determine initial state
   useEffect(() => {
@@ -107,7 +106,7 @@ export function ProcessPanel({ documentId, principalObjectId }: Props) {
         }
 
         const prov = meta.provenance ?? null;
-        if (prov?.startsWith("PROP:")) {
+        if (prov === "TEXT_FILE") {
           setPanelState({ status: "done", provenance: prov });
         } else {
           setPanelState({ status: "ready", provenance: prov });
@@ -123,6 +122,9 @@ export function ProcessPanel({ documentId, principalObjectId }: Props) {
 
   // ── Process handler ───────────────────────────────────────────────────────
   async function handleProcess() {
+    // Synchronous guard — drops concurrent clicks before the button re-renders as disabled.
+    if (processingRef.current) return;
+    processingRef.current = true;
     setProcessing(true);
 
     try {
@@ -131,8 +133,8 @@ export function ProcessPanel({ documentId, principalObjectId }: Props) {
         { method: "POST" },
       );
 
-      if (res.redirected) {
-        setPanelState({ status: "error", message: t("errorGeneric") });
+      if (res.redirected || res.status === 401) {
+        setPanelState({ status: "error", message: t("errorSession") });
         return;
       }
 
@@ -181,6 +183,7 @@ export function ProcessPanel({ documentId, principalObjectId }: Props) {
     } catch {
       setPanelState({ status: "error", message: t("errorGeneric") });
     } finally {
+      processingRef.current = false;
       setProcessing(false);
     }
   }
@@ -216,19 +219,11 @@ export function ProcessPanel({ documentId, principalObjectId }: Props) {
         </p>
       )}
 
-      {/* Already done: show link to the created property */}
+      {/* Already done: direct user to Properties tab */}
       {isAlreadyDone && (
-        <div className="flex items-center gap-3 flex-wrap">
-          <span className="text-sm text-emerald-700 dark:text-emerald-400">
-            {t("alreadyProcessed")}
-          </span>
-          <Link
-            href={`/properties/${encodeURIComponent(propertyIdFromProvenance(panelState.provenance))}`}
-            className="text-sm font-medium text-cta hover:underline"
-          >
-            {t("viewProperty")}
-          </Link>
-        </div>
+        <p className="text-sm text-emerald-700 dark:text-emerald-400">
+          {t("alreadyProcessed")}
+        </p>
       )}
 
       {/* Success state */}

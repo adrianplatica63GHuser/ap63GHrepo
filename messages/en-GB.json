@@ -1377,7 +1377,8 @@
       "errorNoTextFile": "No plain-text file found in this document's pages.",
       "errorTooFewCorners": "Fewer than 3 coordinate corners were parsed from the file.",
       "errorAlreadyProcessed": "This document has already been processed.",
-      "errorGeneric": "Processing failed. Please try again."
+      "errorGeneric": "Processing failed. Please try again.",
+      "errorSession": "Your session has expired. Please sign in again and retry."
     },
     "aiExtracting": "Extracting…",
     "aiExtractSuccess": "Fields filled from scanned document",
