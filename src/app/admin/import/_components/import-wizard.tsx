@@ -24,7 +24,6 @@ import { useTranslations } from "next-intl";
 import {
   walkFolder,
   tagsForEntry,
-  parseFolderName,
   type FSDirectoryHandle,
   type FSEntry,
 } from "@/lib/import/folder-utils";
@@ -165,8 +164,7 @@ function collectFolders(
       if (!seen.has(name)) {
         seen.add(name);
         // Check if this segment corresponds to a property folder
-        const pf = parseFolderName(name);
-        result.push({ name, parsedFolder: pf.isPropertyFolder ? pf : undefined });
+        result.push({ name });
       }
     }
   }

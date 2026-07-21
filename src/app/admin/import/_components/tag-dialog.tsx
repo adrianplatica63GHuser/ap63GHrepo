@@ -27,8 +27,6 @@ import { parseFolderName } from "@/lib/import/folder-utils";
 
 export type TagFolderInfo = {
   name: string;
-  /** Populated when the folder is a recognised property folder */
-  parsedFolder?: ParsedFolder;
 };
 
 type Phase = "confirm" | "animating" | "done";

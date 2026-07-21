@@ -933,8 +933,7 @@ export function BulkImportDialog({
             <thead>
               <tr className="border-b border-crease text-left text-xs font-semibold uppercase tracking-wide text-fade dark:border-zinc-700">
                 <th className="pb-2 pr-3">{t("colDocument")}</th>
-                <th className="w-28 pb-2 pr-3">{t("colStatus")}</th>
-                <th className="w-28 pb-2">{t("colAi")}</th>
+                <th className="w-28 pb-2">{t("colStatus")}</th>
               </tr>
             </thead>
             <tbody>
@@ -942,9 +941,7 @@ export function BulkImportDialog({
                 <ResultRow
                   key={r.entry.path}
                   result={r}
-                  aiActive={aiState?.path === r.entry.path}
                   t={t}
-                  onAiClick={() => handleAiInterpret(r)}
                 />
               ))}
             </tbody>
@@ -961,17 +958,15 @@ export function BulkImportDialog({
 
 type ResultRowProps = {
   result: ImportResult;
-  aiActive: boolean;
   t: ReturnType<typeof useTranslations<"adminImport.wizard.importDialog">>;
-  onAiClick: () => void;
 };
 
-function ResultRow({ result, aiActive, t, onAiClick }: ResultRowProps) {
-  const { entry, status, errorMsg, docId, aiProcessed } = result;
+function ResultRow({ result, t }: ResultRowProps) {
+  const { entry, status, errorMsg, docId } = result;
   const displayName = entry.kind === "page-group" ? entry.titleHint : (entry as FSFileEntry).name;
 
   return (
-    <tr className={["border-b border-crease dark:border-zinc-800", aiActive ? "bg-blue-50 dark:bg-blue-950/30" : ""].join(" ")}>
+    <tr className="border-b border-crease dark:border-zinc-800">
       <td className="py-2 pr-3 min-w-0">
         <span
           className="block truncate font-mono text-xs text-ink dark:text-zinc-200"
@@ -1001,26 +996,6 @@ function ResultRow({ result, aiActive, t, onAiClick }: ResultRowProps) {
           >
             {t("viewLink")}
           </a>
-        )}
-      </td>
-
-      <td className="py-2">
-        {/* Slice #21.02.Import: once AI extraction is done show a disabled badge
-            instead of the action button so there's no accidental double-run. */}
-        {status === "done" && docId && (
-          aiProcessed ? (
-            <span className="inline-flex items-center rounded border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[10px] font-medium text-indigo-600 dark:border-indigo-800 dark:bg-indigo-950/30 dark:text-indigo-300">
-              {t("aiProcessedBadge")}
-            </span>
-          ) : (
-            <button
-              type="button"
-              onClick={onAiClick}
-              className="rounded border border-wire px-2 py-0.5 text-xs font-medium text-ink hover:bg-canvas dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
-            >
-              {t("aiButton")}
-            </button>
-          )
         )}
       </td>
     </tr>
