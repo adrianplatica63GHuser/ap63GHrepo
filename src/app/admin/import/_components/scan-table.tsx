@@ -282,8 +282,8 @@ function FolderInfoCell({ entry }: { entry: FSEntry }) {
   if (!fi?.isPropertyFolder || (!fi.tarlaSola && !fi.parcela)) return null;
 
   const parts: string[] = [];
-  if (fi.tarlaSola) parts.push("T " + fi.tarlaSola);
-  if (fi.parcela)   parts.push("P " + fi.parcela);
+  if (fi.tarlaSola) parts.push("T " + perToSlash(fi.tarlaSola));
+  if (fi.parcela)   parts.push("P " + perToSlash(fi.parcela));
 
   return (
     <span className="text-xs text-fade dark:text-zinc-400">
