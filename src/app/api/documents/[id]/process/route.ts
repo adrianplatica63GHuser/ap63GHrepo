@@ -139,16 +139,34 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
     // segments (e.g. "47per2-225per3per24-2716 Prisecaru").
     // Tags are stored lowercase; parseFolderName works case-insensitively for
     // the digit-start check.
-    let propertyTag: string | null = null;
-    let parsedFolder: ReturnType<typeof parseFolderName> | null = null;
+    // Identify the canonical property-folder tag.
+    //
+    // Since addEntityTag now auto-creates alias tags ("47/2", "225/3/24",
+    // "47/2-225/3/24") alongside the original ("47per2-225per3per24-2716
+    // prisecaru"), several tags in the list satisfy parseFolderName.  All aliases
+    // share the same created_at (batch insert) so ordering is non-deterministic
+    // and we can't rely on "first match".
+    //
+    // Strategy: among all property-folder tags, prefer the most complete one —
+    //   1. tag with rest + parcela + tarlaSola  (most specific)
+    //   2. tag with parcela + tarlaSola
+    //   3. tag with tarlaSola only              (least specific; e.g. "47/2")
+    //
+    // Within each tier, prefer the longest tag (guards against unlikely ties).
+    type Candidate = { tag: string; pf: ReturnType<typeof parseFolderName>; rank: number };
+    const candidates: Candidate[] = [];
     for (const tag of tags) {
       const pf = parseFolderName(tag);
-      if (pf.isPropertyFolder) {
-        propertyTag  = tag;
-        parsedFolder = pf;
-        break;
-      }
+      if (!pf.isPropertyFolder) continue;
+      const rank = pf.rest ? 3 : pf.parcela ? 2 : 1;
+      candidates.push({ tag, pf, rank });
     }
+    candidates.sort((a, b) =>
+      b.rank - a.rank || b.tag.length - a.tag.length,
+    );
+    const best = candidates[0] ?? null;
+    let propertyTag: string | null = best?.tag ?? null;
+    let parsedFolder: ReturnType<typeof parseFolderName> | null = best?.pf ?? null;
 
     let tarlaSola: string | null = null;
     let parcela:   string | null = null;
