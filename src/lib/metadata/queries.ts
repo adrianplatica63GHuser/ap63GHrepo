@@ -477,6 +477,13 @@ export async function listEntityTags(principalObjectId: string): Promise<string[
  * Add a tag to an entity.  Always normalises to lowercase + trim so the corpus
  * stays consistent.  Duplicates (case-insensitive) are silently ignored via the
  * DB unique index on (principal_object_id, lower(tag)).
+ *
+ * For property-folder tags (tags that start with a digit) the "per"-notation
+ * form used in folder names (e.g. "47per2-225per3per24-2716 prisecaru") and the
+ * canonical slash form ("47/2-225/3/24-2716 prisecaru") are both stored, so
+ * that searches and findEntitiesByTag work regardless of which form the caller
+ * uses.  The regex /per(?=\d)/gi only replaces "per" immediately before a digit,
+ * so proper names (e.g. "perescu", "prisecaru") are never corrupted.
  */
 export async function addEntityTag(
   principalObjectId: string,
@@ -485,9 +492,23 @@ export async function addEntityTag(
   const normalised = tag.trim().toLowerCase();
   if (!normalised) return listEntityTags(principalObjectId);
 
+  // Compute slash alias for cadastral "per"-notation tags.
+  // Only produced when the tag starts with a digit and contains "per" before
+  // another digit — avoids false positives on ordinary words.
+  const slashForm = /^\d/.test(normalised)
+    ? normalised.replace(/per(?=\d)/gi, "/")
+    : normalised;
+
+  const valuesToInsert = slashForm !== normalised
+    ? [
+        { principalObjectId, tag: normalised },
+        { principalObjectId, tag: slashForm },
+      ]
+    : [{ principalObjectId, tag: normalised }];
+
   await db
     .insert(entityTag)
-    .values({ principalObjectId, tag: normalised })
+    .values(valuesToInsert)
     .onConflictDoNothing();
 
   return listEntityTags(principalObjectId);
