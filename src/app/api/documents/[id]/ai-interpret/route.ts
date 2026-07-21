@@ -189,6 +189,8 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
     fields?: Record<string, string | null>;
     suggestedTypeKey?: string | null;
     classifiedLabel?: string | null;
+    lowConfidenceFields?: string[];
+    unmappedRaw?: Record<string, string>;
   };
 
   let fields: Record<string, string | null>;
@@ -204,6 +206,26 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
         ? raw.suggestedTypeKey
         : null;
     classifiedLabel = raw.classifiedLabel?.trim() || null;
+
+    // ── Diagnostic log — what did the model actually extract? ────────────────
+    const extracted = Object.entries(fields).filter(([, v]) => v !== null && v !== "");
+    const nulled     = Object.entries(fields).filter(([, v]) => v === null || v === "");
+    console.log("\n─────────────────────────────────────────────────────");
+    console.log(`[ai-interpret] Document: ${firstPage.fileName}`);
+    console.log(`  Type key   : ${suggestedTypeKey ?? "(none)"}`);
+    console.log(`  Label      : ${classifiedLabel ?? "(none)"}`);
+    console.log(`  Fields extracted (${extracted.length}):`);
+    for (const [k, v] of extracted) console.log(`    ${k.padEnd(22)}: ${v}`);
+    if (nulled.length)
+      console.log(`  Fields null/empty (${nulled.length}): ${nulled.map(([k]) => k).join(", ")}`);
+    if (raw.lowConfidenceFields?.length)
+      console.log(`  Low confidence : ${raw.lowConfidenceFields.join(", ")}`);
+    if (raw.unmappedRaw && Object.keys(raw.unmappedRaw).length) {
+      console.log(`  Unmapped text (${Object.keys(raw.unmappedRaw).length}):`);
+      for (const [label, val] of Object.entries(raw.unmappedRaw))
+        console.log(`    "${label}" → "${val}"`);
+    }
+    console.log("─────────────────────────────────────────────────────\n");
   } catch (err) {
     console.error("[ai-interpret] failed to parse model output:", textBlock, err);
     return Response.json(
