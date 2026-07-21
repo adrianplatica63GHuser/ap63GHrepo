@@ -135,7 +135,7 @@ export function TagDialog({ folders, totalFiles, onConfirm, onCancel }: Props) {
               {/* Folder list */}
               <ul className="max-h-64 overflow-y-auto space-y-1 rounded-lg border border-crease bg-canvas px-3 py-2 dark:border-zinc-700 dark:bg-zinc-800">
                 {folders.map((fi) => (
-                  <FolderRow key={fi.name} fi={fi} t={t} />
+                  <FolderRow key={fi.name} fi={fi} />
                 ))}
               </ul>
             </>
@@ -182,24 +182,41 @@ export function TagDialog({ folders, totalFiles, onConfirm, onCancel }: Props) {
 // FolderRow — one item in the folder list
 // ---------------------------------------------------------------------------
 
-function FolderRow({
-  fi,
-  t,
-}: {
-  fi: TagFolderInfo;
-  t: ReturnType<typeof useTranslations<"adminImport.wizard.tagDialog">>;
-}) {
+function FolderRow({ fi }: { fi: TagFolderInfo }) {
   const pf = fi.parsedFolder;
+
+  // Compute alias tags using the same rules as addEntityTag (server-side).
+  // /per(?=\d)/gi replaces "per" only before a digit — proper names are safe.
+  const aliases: string[] = [];
+  if (/^\d/.test(fi.name)) {
+    const slashFull = fi.name.replace(/per(?=\d)/gi, "/");
+    if (slashFull !== fi.name) aliases.push(slashFull);
+
+    if (pf?.isPropertyFolder) {
+      const tarla   = pf.tarlaSola ? pf.tarlaSola.replace(/per(?=\d)/gi, "/") : null;
+      const parcela = pf.parcela   ? pf.parcela.replace(/per(?=\d)/gi,   "/") : null;
+      if (tarla)            aliases.push(tarla);
+      if (parcela)          aliases.push(parcela);
+      if (tarla && parcela) aliases.push(`${tarla}-${parcela}`);
+    }
+  }
+
   return (
-    <li className="flex items-baseline gap-2">
-      <span className="font-medium text-sm text-ink dark:text-zinc-200">{fi.name}</span>
-      {pf?.isPropertyFolder && pf.tarlaSola && pf.parcela && (
-        <span className="text-xs text-fade dark:text-zinc-400">
-          {t("propertyFolderHint", {
-            tarlaSola: pf.tarlaSola,
-            parcela: pf.parcela,
-          })}
-        </span>
+    <li className="flex flex-col gap-1 py-1.5">
+      <span className="font-medium text-sm font-mono text-ink dark:text-zinc-200">
+        {fi.name}
+      </span>
+      {aliases.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {aliases.map((alias) => (
+            <span
+              key={alias}
+              className="inline-flex items-center rounded px-1.5 py-0.5 text-[11px] font-mono bg-cta-pale text-cta dark:bg-cta/15 dark:text-cta border border-cta/20"
+            >
+              {alias}
+            </span>
+          ))}
+        </div>
       )}
     </li>
   );
