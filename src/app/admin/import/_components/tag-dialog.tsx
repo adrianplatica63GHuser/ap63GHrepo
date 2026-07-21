@@ -19,7 +19,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import type { ParsedFolder } from "@/lib/import/folder-utils";
+import { parseFolderName } from "@/lib/import/folder-utils";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -183,22 +183,20 @@ export function TagDialog({ folders, totalFiles, onConfirm, onCancel }: Props) {
 // ---------------------------------------------------------------------------
 
 function FolderRow({ fi }: { fi: TagFolderInfo }) {
-  const pf = fi.parsedFolder;
-
-  // Compute alias tags using the same rules as addEntityTag (server-side).
+  // Parse the folder name directly — self-contained, no reliance on the caller.
   // /per(?=\d)/gi replaces "per" only before a digit — proper names are safe.
+  const pf = parseFolderName(fi.name);
+
   const aliases: string[] = [];
-  if (/^\d/.test(fi.name)) {
+  if (pf.isPropertyFolder) {
     const slashFull = fi.name.replace(/per(?=\d)/gi, "/");
     if (slashFull !== fi.name) aliases.push(slashFull);
 
-    if (pf?.isPropertyFolder) {
-      const tarla   = pf.tarlaSola ? pf.tarlaSola.replace(/per(?=\d)/gi, "/") : null;
-      const parcela = pf.parcela   ? pf.parcela.replace(/per(?=\d)/gi,   "/") : null;
-      if (tarla)            aliases.push(tarla);
-      if (parcela)          aliases.push(parcela);
-      if (tarla && parcela) aliases.push(`${tarla}-${parcela}`);
-    }
+    const tarla   = pf.tarlaSola ? pf.tarlaSola.replace(/per(?=\d)/gi, "/") : null;
+    const parcela = pf.parcela   ? pf.parcela.replace(/per(?=\d)/gi,   "/") : null;
+    if (tarla)            aliases.push(tarla);
+    if (parcela)          aliases.push(parcela);
+    if (tarla && parcela) aliases.push(`${tarla}-${parcela}`);
   }
 
   return (
