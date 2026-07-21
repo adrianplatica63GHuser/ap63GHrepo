@@ -118,12 +118,13 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
     };
     extraHeaders = { "anthropic-beta": "pdfs-2024-09-25" };
   } else {
-    // For unsupported types (e.g. .docx), treat as image/jpeg and let
-    // the model report it cannot read the file — better than a hard 422.
-    fileBlock = {
-      type: "image",
-      source: { type: "base64", media_type: "image/jpeg", data: base64 },
-    };
+    // Unsupported file type (e.g. .txt coordinate files, .docx) — return a
+    // user-friendly 422 rather than sending garbage bytes to Anthropic as JPEG.
+    const isText = mimeType === "text/plain" || firstPage.fileName.toLowerCase().endsWith(".txt");
+    const friendlyMsg = isText
+      ? "Fișierele text (coordonate cadastrale) nu pot fi interpretate cu AI. Funcția este disponibilă doar pentru imagini și PDF-uri."
+      : `Tipul de fișier "${mimeType}" nu este acceptat pentru interpretare AI. Încărcați o imagine sau un PDF.`;
+    return Response.json({ error: friendlyMsg, code: "unsupported_file_type" }, { status: 422 });
   }
 
   // ── Call Anthropic ─────────────────────────────────────────────────────────

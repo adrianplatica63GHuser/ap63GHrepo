@@ -947,12 +947,19 @@ export function DocumentForm({
           </button>
 
           {/* Slice #21.02.Import: AI-Interpret button — only in edit mode on a
-              saved document. Disabled with tooltip when no pages are uploaded;
+              saved document. Hidden entirely for text/coordinate files.
+              Disabled with tooltip when no pages are uploaded;
               disabled (different label) once already processed. */}
           {mode === "edit" && documentId && (() => {
             const isAlreadyInterpreted = !!(aiInterpretedAt) || aiInterpreted;
             const hasPages = pagesState.pages.length > 0;
+            // Text files (coordinate cadastral files) cannot be AI-interpreted.
+            const hasTextOnlyPages = hasPages && pagesState.pages.every(
+              (p) => p.fileName.toLowerCase().endsWith(".txt"),
+            );
             const busy = aiExtracting;
+            // Don't show button at all for text files
+            if (hasTextOnlyPages) return null;
             if (isAlreadyInterpreted) {
               return (
                 <button
@@ -984,14 +991,22 @@ export function DocumentForm({
 
         {/* Inline feedback for AI extraction */}
         {aiExtractMsg && (
-          <p className="text-sm text-green-700 dark:text-green-400" role="status">
-            {aiExtractMsg}
-          </p>
+          <div
+            role="status"
+            className="flex items-start gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300"
+          >
+            <span className="mt-0.5 shrink-0">✓</span>
+            <span>{aiExtractMsg}</span>
+          </div>
         )}
         {aiExtractErr && (
-          <p className="text-sm text-red-600 dark:text-red-400" role="alert">
-            {aiExtractErr}
-          </p>
+          <div
+            role="alert"
+            className="flex items-start gap-2 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-950/30 dark:text-red-300"
+          >
+            <span className="mt-0.5 shrink-0 font-bold">!</span>
+            <span>{aiExtractErr}</span>
+          </div>
         )}
       </div>
     )}
