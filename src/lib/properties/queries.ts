@@ -11,7 +11,7 @@
 
 import { and, count, desc, eq, ilike, isNull, or, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { entityMetadata, groupMember, groups, lookupPersonRole, person, principalObject, property, propertyAddress, propertyCorner, propertyPerson, propertyVersion } from "@/db/schema";
+import { entityMetadata, groupMember, groups, lookupPersonRole, lookupTarla, person, principalObject, property, propertyAddress, propertyCorner, propertyPerson, propertyVersion } from "@/db/schema";
 import { wgs84ToStereo70 } from "@/lib/geo/transdatRO";
 import { shoelaceAreaM2 } from "./area";
 import type {
@@ -418,6 +418,20 @@ export async function createProperty(
       snapshot:      snapshotFromFull(full),
       updatedBy,
     });
+
+    // Auto-seed lookup_tarla: if the imported tarla value (e.g. "47/2") is not
+    // already in the reference table, add it so it appears in the form dropdown.
+    // Idempotent — skipped when the indicativ already exists (active or soft-deleted).
+    if (propFields.tarlaSola) {
+      const existing = await tx
+        .select({ id: lookupTarla.id })
+        .from(lookupTarla)
+        .where(eq(lookupTarla.indicativ, propFields.tarlaSola))
+        .limit(1);
+      if (existing.length === 0) {
+        await tx.insert(lookupTarla).values({ indicativ: propFields.tarlaSola });
+      }
+    }
 
     return full;
   });
