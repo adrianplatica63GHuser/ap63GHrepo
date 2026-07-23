@@ -16,6 +16,7 @@
 
 import { z } from "zod/v4";
 import type { DocumentSnapshot } from "@/lib/documents/validation";
+import { customFieldsEqual } from "@/lib/documents/template-fields";
 import {
   diffFieldMap,
   labelColorFromHighlights,
@@ -64,6 +65,13 @@ export const formSchema = z.object({
   // not in DOC_FIELD_KEYS (so they don't drive edit-dirty or version diff).
   surveyorName:       z.string(),
   surveyorPersonType: z.string(), // "NATURAL" | "JUDICIAL" | ""
+
+  // Slice #21.03.Import: values for the active document type's template
+  // fields (see src/lib/documents/template-fields.ts), keyed by field `key`.
+  // Not in DOC_FIELD_KEYS — compared/diffed separately via customFieldsEqual
+  // (nested record, not a flat string), same treatment as Person's address
+  // blocks or Property's corners.
+  customFields: z.record(z.string(), z.string()),
 });
 
 export type FormValues = z.infer<typeof formSchema>;
@@ -95,6 +103,7 @@ export const emptyFormValues: FormValues = {
   surveyorId: "",
   surveyorName: "",
   surveyorPersonType: "",
+  customFields: {},
 };
 
 // ---------------------------------------------------------------------------
@@ -127,6 +136,8 @@ type ApiRecord = {
   // Display-only — populated by getDocumentWithSurveyor JOIN:
   surveyorDisplayName: string | null;
   surveyorPersonType:  "NATURAL" | "JUDICIAL" | null;
+  // Slice #21.03.Import
+  customFields: Record<string, string | null> | null;
 };
 
 export function fromApiRecord(r: ApiRecord): FormValues {
@@ -153,6 +164,9 @@ export function fromApiRecord(r: ApiRecord): FormValues {
     surveyorId:         r.surveyorId          ?? "",
     surveyorName:       r.surveyorDisplayName ?? "",
     surveyorPersonType: r.surveyorPersonType  ?? "",
+    customFields: Object.fromEntries(
+      Object.entries(r.customFields ?? {}).map(([k, v]) => [k, v ?? ""]),
+    ),
   };
 }
 
@@ -193,6 +207,12 @@ export function toApiPayload(values: FormValues): Record<string, unknown> {
     dateValidUntil: dateStr(values.dateValidUntil),
     surveyorId:     uuid(values.surveyorId),
     // surveyorName and surveyorPersonType are display-only; not sent to API.
+
+    // Slice #21.03.Import: blank out empty strings so a cleared custom field
+    // is stored as null, not "" (same "blank" convention as every other field).
+    customFields: Object.fromEntries(
+      Object.entries(values.customFields).map(([k, v]) => [k, str(v)]),
+    ),
   };
 }
 
@@ -266,5 +286,9 @@ export function formValuesEqual(a: FormValues, b: FormValues): boolean {
   for (const k of DOC_FIELD_KEYS) {
     if (normVal(a[k]) !== normVal(b[k])) return false;
   }
+  // Slice #21.03.Import: customFields is a nested record — not in
+  // DOC_FIELD_KEYS (see the flat-map note on that const) — compared
+  // separately so a template-field edit still marks the form dirty.
+  if (!customFieldsEqual(a.customFields, b.customFields)) return false;
   return true;
 }

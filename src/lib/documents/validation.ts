@@ -48,6 +48,12 @@ const documentBase = z.object({
   subject:        z.string().nullish(),
   dateValidUntil: z.string().nullish(), // ISO date string "YYYY-MM-DD"
   surveyorId:     z.string().uuid().nullish(),
+
+  // Slice #21.03.Import: values for the active document type's template
+  // fields (see src/lib/documents/template-fields.ts), keyed by field `key`.
+  // Loosely typed on purpose — the actual shape is admin/AI-defined per type,
+  // not known at compile time.
+  customFields: z.record(z.string(), z.string().nullable()).nullish(),
 });
 
 // ---------------------------------------------------------------------------
@@ -140,4 +146,8 @@ export type DocumentSnapshot = {
   subject:           string | null;
   dateValidUntil:    string | null;
   surveyorId:        string | null;
+  // Slice #21.03.Import: template-defined field values for the active
+  // document type. Compared as a normalised record (see customFieldsEqual in
+  // template-fields.ts), not via the flat `!==` used for the other keys.
+  customFields:      Record<string, string | null> | null;
 };

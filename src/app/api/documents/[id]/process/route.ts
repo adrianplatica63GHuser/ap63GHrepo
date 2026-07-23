@@ -165,8 +165,8 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
       b.rank - a.rank || b.tag.length - a.tag.length,
     );
     const best = candidates[0] ?? null;
-    let propertyTag: string | null = best?.tag ?? null;
-    let parsedFolder: ReturnType<typeof parseFolderName> | null = best?.pf ?? null;
+    const propertyTag: string | null = best?.tag ?? null;
+    const parsedFolder: ReturnType<typeof parseFolderName> | null = best?.pf ?? null;
 
     let tarlaSola: string | null = null;
     let parcela:   string | null = null;

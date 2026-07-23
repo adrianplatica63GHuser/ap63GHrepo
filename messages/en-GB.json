@@ -1140,7 +1140,8 @@
       "dateRange": "Contract Period",
       "notes": "Notes",
       "validUntil": "Validity",
-      "surveyor": "Surveyor"
+      "surveyor": "Surveyor",
+      "customFields": "Document-type-specific fields"
     },
     "fields": {
       "code": "Code",
@@ -1160,7 +1161,7 @@
       "nrCertificatDeces": "Death Certificate No.",
       "dateStart": "Start Date",
       "dateEnd": "End Date",
-      "notes": "Notes",
+      "notes": "Enhanced Notes",
       "subject": "Subject",
       "dateValidUntil": "Valid Until",
       "surveyor": "Surveyor"

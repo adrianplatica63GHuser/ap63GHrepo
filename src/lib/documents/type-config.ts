@@ -1,16 +1,21 @@
 /**
  * Per-type UI configuration for the Document form.
  *
- * Each document type declares:
- *  - which sections are visible in the form
- *  - per-type overrides for common field labels (nrDocument, dateDocument,
- *    institution)
+ * NOTE (Slice #21.03.Import — Phase 1): every document type now shares one
+ * generic field template (title, nr. document, date, institution, subject,
+ * Notes) — the per-type conditional sections (Titlu de Proprietate,
+ * Succession Details, Contract Period, Validity, Surveyor) were removed from
+ * the form. This config now carries ONLY the per-type label overrides for the
+ * three common fields (nrDocument / dateDocument / institution) — cosmetic
+ * text on the same shared fields, not extra fields. Type-specific *fields*
+ * are reintroduced dynamically per type via `lookup_document_type.template_fields`
+ * (see src/lib/documents/template-fields.ts) — pure data, no code change.
  *
  * Label strings are Romanian — they are domain terms that stay the same
  * regardless of the active locale (same as "Tarla/Sola", "Carte Funciară" in
  * the Property form).
  *
- * NOTE (Slice #15.05): configs are now keyed by `lookup_document_type.key`
+ * NOTE (Slice #15.05): configs are keyed by `lookup_document_type.key`
  * (a plain string slug, e.g. "CONTRACT_VANZARE") instead of the old
  * `PaperworkType` enum. The literal key values are unchanged — only the
  * source of truth moved from a hardcoded Postgres enum to an admin-managed
@@ -18,17 +23,6 @@
  */
 
 export type TypeConfig = {
-  /** Show Emitent + Baza Legala + UAT + Suprafata fields */
-  showTitlu:        boolean;
-  /** Show Certificat Mostenitor-specific fields */
-  showMostenitor:   boolean;
-  /** Show dateStart + dateEnd fields */
-  showDateRange:    boolean;
-  /** Show date_valid_until field (validity/expiry date for decisions, permits) */
-  showValidUntil:   boolean;
-  /** Show surveyor FK picker (for DOCUMENTATIE_CADASTRALA) */
-  showSurveyor:     boolean;
-
   /** Override labels for common fields (Romanian domain terms) */
   labels: {
     nrDocument:   string;
@@ -42,11 +36,6 @@ export type TypeConfig = {
 // ---------------------------------------------------------------------------
 
 const GENERIC: TypeConfig = {
-  showTitlu:      false,
-  showMostenitor: false,
-  showDateRange:  false,
-  showValidUntil: false,
-  showSurveyor:   false,
   labels: {
     nrDocument:   "Nr. document",
     dateDocument: "Data autentificării",
@@ -55,17 +44,12 @@ const GENERIC: TypeConfig = {
 };
 
 // ---------------------------------------------------------------------------
-// Per-type overrides — keyed by lookup_document_type.key
+// Per-type label overrides — keyed by lookup_document_type.key
 // ---------------------------------------------------------------------------
 
 const CONFIG: Record<string, TypeConfig> = {
 
   TITLU_PROPRIETATE: {
-    showTitlu:      true,
-    showMostenitor: false,
-    showDateRange:  false,
-    showValidUntil: false,
-    showSurveyor:   false,
     labels: {
       nrDocument:   "Nr. titlu proprietate",
       dateDocument: "Data eliberării",
@@ -74,11 +58,6 @@ const CONFIG: Record<string, TypeConfig> = {
   },
 
   CERTIFICAT_MOSTENITOR: {
-    showTitlu:      false,
-    showMostenitor: true,
-    showDateRange:  false,
-    showValidUntil: false,
-    showSurveyor:   false,
     labels: {
       nrDocument:   "Nr. certificat de moștenitor",
       dateDocument: "Data eliberării",
@@ -87,11 +66,6 @@ const CONFIG: Record<string, TypeConfig> = {
   },
 
   CONTRACT_VANZARE: {
-    showTitlu:      false,
-    showMostenitor: false,
-    showDateRange:  false,
-    showValidUntil: false,
-    showSurveyor:   false,
     labels: {
       nrDocument:   "Nr. act autentic",
       dateDocument: "Data autentificării",
@@ -100,11 +74,6 @@ const CONFIG: Record<string, TypeConfig> = {
   },
 
   CONTRACT_INCHIRIERE: {
-    showTitlu:      false,
-    showMostenitor: false,
-    showDateRange:  true,
-    showValidUntil: false,
-    showSurveyor:   false,
     labels: {
       nrDocument:   "Nr. contract de închiriere",
       dateDocument: "Data autentificării",
@@ -113,11 +82,6 @@ const CONFIG: Record<string, TypeConfig> = {
   },
 
   CONTRACT_ARENDA: {
-    showTitlu:      false,
-    showMostenitor: false,
-    showDateRange:  true,
-    showValidUntil: false,
-    showSurveyor:   false,
     labels: {
       nrDocument:   "Nr. contract de arendă",
       dateDocument: "Data autentificării",
@@ -126,11 +90,6 @@ const CONFIG: Record<string, TypeConfig> = {
   },
 
   ACT_DONATIE: {
-    showTitlu:      false,
-    showMostenitor: false,
-    showDateRange:  false,
-    showValidUntil: false,
-    showSurveyor:   false,
     labels: {
       nrDocument:   "Nr. act autentic donație",
       dateDocument: "Data autentificării",
@@ -139,11 +98,6 @@ const CONFIG: Record<string, TypeConfig> = {
   },
 
   TESTAMENT: {
-    showTitlu:      false,
-    showMostenitor: false,
-    showDateRange:  false,
-    showValidUntil: false,
-    showSurveyor:   false,
     labels: {
       nrDocument:   "Nr. act autentic testament",
       dateDocument: "Data autentificării",
@@ -154,11 +108,6 @@ const CONFIG: Record<string, TypeConfig> = {
   // ── Slice #19.03: new type entries ──────────────────────────────────────
 
   HOTARARE_JUDECATOREASCA: {
-    showTitlu:      false,
-    showMostenitor: false,
-    showDateRange:  false,
-    showValidUntil: true,
-    showSurveyor:   false,
     labels: {
       nrDocument:   "Nr. hotărâre",
       dateDocument: "Data hotărârii",
@@ -167,11 +116,6 @@ const CONFIG: Record<string, TypeConfig> = {
   },
 
   HOTARARE_ADMINISTRATIVA: {
-    showTitlu:      false,
-    showMostenitor: false,
-    showDateRange:  false,
-    showValidUntil: true,
-    showSurveyor:   false,
     labels: {
       nrDocument:   "Nr. hotărâre",
       dateDocument: "Data emiterii",
@@ -180,11 +124,6 @@ const CONFIG: Record<string, TypeConfig> = {
   },
 
   DOCUMENTATIE_CADASTRALA: {
-    showTitlu:      false,
-    showMostenitor: false,
-    showDateRange:  false,
-    showValidUntil: false,
-    showSurveyor:   true,
     labels: {
       nrDocument:   "Nr. OCPI",
       dateDocument: "Data înregistrării",
@@ -193,11 +132,6 @@ const CONFIG: Record<string, TypeConfig> = {
   },
 
   AUTORIZATIE_CONSTRUIRE: {
-    showTitlu:      false,
-    showMostenitor: false,
-    showDateRange:  false,
-    showValidUntil: true,
-    showSurveyor:   false,
     labels: {
       nrDocument:   "Nr. autorizație",
       dateDocument: "Data emiterii",

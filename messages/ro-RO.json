@@ -1140,7 +1140,8 @@
       "dateRange": "Perioadă contract",
       "notes": "Observații",
       "validUntil": "Valabilitate",
-      "surveyor": "Topograf / Cadastrist"
+      "surveyor": "Topograf / Cadastrist",
+      "customFields": "Câmpuri specifice tipului de document"
     },
     "fields": {
       "code": "Cod",
@@ -1160,7 +1161,7 @@
       "nrCertificatDeces": "Nr. certificat de deces",
       "dateStart": "Data începerii",
       "dateEnd": "Data încetării",
-      "notes": "Observații",
+      "notes": "Note extinse",
       "subject": "Subiect",
       "dateValidUntil": "Valabil până la",
       "surveyor": "Topograf / Cadastrist"

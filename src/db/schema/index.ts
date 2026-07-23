@@ -673,6 +673,13 @@ export const lookupDocumentType = pgTable("lookup_document_type", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
+  // Slice #21.03.Import: optional type-specific field definitions — an array
+  // of { key, labelRo, labelEn, type, order, aiHint } (see
+  // src/lib/documents/template-fields.ts). NULL/empty = no template yet, so
+  // the document form and the AI-extraction prompt fall back to the generic
+  // baseline fields only. Left untyped (jsonb) to avoid a circular import;
+  // the application layer parses it via parseTemplateFields.
+  templateFields: jsonb("template_fields"),
 });
 
 export const lookupInstitution = pgTable("lookup_institution", {
@@ -873,6 +880,13 @@ export const document = pgTable("document", {
   // Email of the user who last wrote this record (set by the API layer from
   // the Supabase session; null for legacy rows and seed data).
   updatedBy: text("updated_by"),
+
+  // Slice #21.03.Import: type-specific field VALUES, keyed by the active
+  // document type's template_fields[].key (see
+  // src/lib/documents/template-fields.ts). NULL/empty = no custom data
+  // captured yet. Versioned as part of the document snapshot — see
+  // DocumentSnapshot.customFields in src/lib/documents/validation.ts.
+  customFields: jsonb("custom_fields"),
 
   // Slice #21.02.Import: set when the server-side AI-interpret action has been
   // run on this document (extracts fields from the first uploaded page).

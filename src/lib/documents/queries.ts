@@ -19,6 +19,7 @@ import type {
   DocumentSnapshot,
   DocumentUpdate,
 } from "./validation";
+import { customFieldsEqual, parseTemplateFields, type DocumentTemplateField } from "./template-fields";
 
 // ---------------------------------------------------------------------------
 // Return types
@@ -196,6 +197,9 @@ const SNAPSHOT_KEYS: (keyof DocumentSnapshot)[] = [
   "dateStart", "dateEnd", "notes",
   // Slice #19.03
   "subject", "dateValidUntil", "surveyorId",
+  // Slice #21.03.Import — compared specially in snapshotsEqual (nested record,
+  // not a flat string), see the "customFields" branch there.
+  "customFields",
 ];
 
 /** Build the canonical document snapshot from a freshly-fetched record. */
@@ -224,6 +228,8 @@ export function snapshotFromFull(full: DocumentFull): DocumentSnapshot {
     subject:           full.subject           ?? null,
     dateValidUntil:    full.dateValidUntil     ?? null,
     surveyorId:        full.surveyorId         ?? null,
+    // Slice #21.03.Import
+    customFields:      (full.customFields as Record<string, string | null> | null) ?? null,
   };
 }
 
@@ -274,6 +280,12 @@ export async function getDocumentWithSurveyor(
  */
 function snapshotsEqual(a: DocumentSnapshot, b: DocumentSnapshot): boolean {
   for (const k of SNAPSHOT_KEYS) {
+    // customFields is a nested record — `!==` would always be true (different
+    // object identity) even when the contents match. Compare it separately.
+    if (k === "customFields") {
+      if (!customFieldsEqual(a.customFields, b.customFields)) return false;
+      continue;
+    }
     if (a[k] !== b[k]) return false;
   }
   return true;
@@ -392,6 +404,9 @@ export async function updateDocument(
     if (input.dateValidUntil !== undefined) patch.dateValidUntil = input.dateValidUntil ?? null;
     if (input.surveyorId     !== undefined) patch.surveyorId     = input.surveyorId     ?? null;
 
+    // Slice #21.03.Import
+    if (input.customFields !== undefined) patch.customFields = input.customFields ?? null;
+
     // Slice #21.02.Import: operational field — NOT included in version snapshot.
     if (input.aiInterpretedAt !== undefined) {
       patch.aiInterpretedAt = input.aiInterpretedAt
@@ -488,7 +503,43 @@ function inputToValues(
     subject:        input.subject        ?? null,
     dateValidUntil: input.dateValidUntil ?? null,
     surveyorId:     input.surveyorId     ?? null,
+
+    // Slice #21.03.Import
+    customFields: input.customFields ?? null,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Document type template  (Slice #21.03.Import)
+// ---------------------------------------------------------------------------
+
+export type DocumentTypeTemplate = {
+  key:    string;
+  name:   string;
+  fields: DocumentTemplateField[];
+};
+
+/**
+ * The document type's key/name + its parsed template fields (or an empty
+ * `fields` array when the type has no template yet). Used both by the
+ * document form (to render the type-specific section) and by the AI-Interpret
+ * route (to build a per-type extraction prompt).
+ */
+export async function getDocumentTypeTemplate(
+  documentTypeId: string,
+): Promise<DocumentTypeTemplate | null> {
+  const [row] = await db
+    .select({
+      key:            lookupDocumentType.key,
+      name:           lookupDocumentType.name,
+      templateFields: lookupDocumentType.templateFields,
+    })
+    .from(lookupDocumentType)
+    .where(eq(lookupDocumentType.id, documentTypeId))
+    .limit(1);
+
+  if (!row) return null;
+  return { key: row.key, name: row.name, fields: parseTemplateFields(row.templateFields) };
 }
 
 // ---------------------------------------------------------------------------

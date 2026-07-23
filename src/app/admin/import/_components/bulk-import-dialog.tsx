@@ -602,8 +602,15 @@ export function BulkImportDialog({
   // ---------------------------------------------------------------------------
   // AI interpretation handler
   // ---------------------------------------------------------------------------
+  //
+  // Pre-existing orphaned code (no remaining call site) found while fixing
+  // lint for Slice #21.03.Import — not part of this slice, so left in place
+  // rather than deleted blind. Prefixed per this repo's eslint convention
+  // ("Allowed unused vars must match /^_/u") instead of removing what might
+  // be mid-refactor scaffolding; isTextFile/parseTextFileForProperty below
+  // stay alive as its only remaining callers.
 
-  const handleAiInterpret = useCallback(
+  const _handleAiInterpret = useCallback(
     async (result: ImportResult) => {
       if (!result.docId) return;
       const entry = result.entry;

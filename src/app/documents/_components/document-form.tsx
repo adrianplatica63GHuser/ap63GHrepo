@@ -35,6 +35,7 @@ import {
   versionLabelColor,
 } from "./form-schema";
 import { getTypeConfig } from "@/lib/documents/type-config";
+import { parseTemplateFields } from "@/lib/documents/template-fields";
 import { PagesPanel, PagesViewerBox, usePagesPanelState } from "./pages-panel";
 import { SuccessionPartiesPanel } from "./succession-parties-panel";
 import { ErrorBoundary, PanelError } from "@/components/error-boundary";
@@ -48,6 +49,8 @@ type DocumentTypeOption = {
   id:   string;
   key:  string;
   name: string;
+  // Slice #21.03.Import: raw jsonb — parsed via parseTemplateFields before use.
+  templateFields?: unknown;
 };
 
 async function fetchDocumentTypes(): Promise<DocumentTypeOption[]> {
@@ -184,7 +187,10 @@ export function DocumentForm({
     queryFn:  fetchDocumentTypes,
     staleTime: 5 * 60 * 1000,
   });
-  const typeOptions = documentTypes ?? [];
+  // Slice #21.03.Import: memoized so the templateFields useMemo below (which
+  // depends on typeOptions) doesn't recompute every render — `documentTypes ?? []`
+  // would otherwise hand it a fresh array identity each time.
+  const typeOptions = useMemo(() => documentTypes ?? [], [documentTypes]);
 
   // Slice #18.16.VL — institution dropdown
   const { data: institutions } = useQuery({
@@ -234,6 +240,15 @@ export function DocumentForm({
   const cfg = getTypeConfig(selectedTypeKey);
   // True only for CERTIFICAT_MOSTENITOR — drives the merged Succession Details section.
   const isMostenitor = selectedTypeKey === "CERTIFICAT_MOSTENITOR";
+
+  // Slice #21.03.Import: the selected type's template fields, if any (Phase 3
+  // — reintroduces type-specific fields as data, not hardcoded sections).
+  const templateFields = useMemo(
+    () => parseTemplateFields(
+      typeOptions.find((opt) => opt.id === selectedDocumentTypeId)?.templateFields,
+    ),
+    [typeOptions, selectedDocumentTypeId],
+  );
 
   // --- Version history (Slice #18.06) ------------------------------------
   const versionsQuery = useQuery({
@@ -469,27 +484,40 @@ export function DocumentForm({
         const body = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(body.error ?? `HTTP ${res.status}`);
       }
-      const { fields } = (await res.json()) as { fields: Record<string, string | null> };
+      const { fields, customFields, notes } = (await res.json()) as {
+        fields: Record<string, string | null>;
+        customFields: Record<string, string | null>;
+        notes: string | null;
+      };
 
       // Fill form fields from extracted data.
       // documentTypeId first so the form re-renders with the correct type config
-      // before other fields are set (type controls which fields are visible).
+      // (and template fields) before other fields are set.
       if (fields.documentTypeId)    form.setValue("documentTypeId",    fields.documentTypeId);
       if (fields.title)             form.setValue("title",             fields.title);
       if (fields.nrDocument)        form.setValue("nrDocument",        fields.nrDocument);
       if (fields.dateDocument)      form.setValue("dateDocument",      fields.dateDocument);
       if (fields.subject)           form.setValue("subject",           fields.subject);
-      if (fields.emitent)           form.setValue("emitent",           fields.emitent);
-      if (fields.bazaLegala)        form.setValue("bazaLegala",        fields.bazaLegala);
-      if (fields.uatProprietate)    form.setValue("uatProprietate",    fields.uatProprietate);
-      if (fields.uatProprietar)     form.setValue("uatProprietar",     fields.uatProprietar);
-      if (fields.nrDosarSuccesoral) form.setValue("nrDosarSuccesoral", fields.nrDosarSuccesoral);
-      if (fields.dataDecesului)     form.setValue("dataDecesului",     fields.dataDecesului);
-      if (fields.ultimulDomiciliu)  form.setValue("ultimulDomiciliu",  fields.ultimulDomiciliu);
-      if (fields.nrCertificatDeces) form.setValue("nrCertificatDeces", fields.nrCertificatDeces);
-      if (fields.dateStart)         form.setValue("dateStart",         fields.dateStart);
-      if (fields.dateEnd)           form.setValue("dateEnd",           fields.dateEnd);
-      if (fields.notes)             form.setValue("notes",             fields.notes);
+
+      // Slice #21.03.Import: type-specific values extracted straight into the
+      // active type's template fields (falls back to {} when the type has no
+      // template yet — nothing to merge in that case).
+      if (Object.keys(customFields).length > 0) {
+        const current = form.getValues("customFields");
+        const merged = { ...current };
+        for (const [k, v] of Object.entries(customFields)) {
+          if (v) merged[k] = v;
+        }
+        form.setValue("customFields", merged);
+      }
+
+      // Enhanced Notes (Slice #21.03.Import): anything the model couldn't map
+      // to a known field (generic or template) is appended here, never
+      // overwriting whatever notes were already there.
+      if (notes) {
+        const currentNotes = form.getValues("notes");
+        form.setValue("notes", currentNotes?.trim() ? `${currentNotes.trim()}\n\n${notes}` : notes);
+      }
 
       // Mark as interpreted on the server (non-versioned PATCH).
       await fetch(`/api/documents/${encodeURIComponent(documentId)}`, {
@@ -652,186 +680,50 @@ export function DocumentForm({
           error={errors.title?.message}
           highlight={displayHighlights?.title}
         />
-        {/* Row 5: Notes (compact) */}
+        {/* Row 5: Enhanced Notes — 3 lines, native vertical scroll on overflow
+            (Slice #21.03.Import Phase 2). Anything AI Interpret can't map to
+            a known field is appended here, formatted, never dropped. */}
         <TextAreaField
           label={t("fields.notes")}
           name="notes"
           register={register}
           error={errors.notes?.message}
-          maxLength={1000}
-          rows={2}
+          maxLength={4000}
+          rows={3}
           highlight={displayHighlights?.notes}
         />
       </Section>
 
-      {/* ── Titlu de Proprietate specific ────────────────────────────── */}
-      {cfg.showTitlu && (
-        <Section title={t("sections.titlu")} columns={2}>
-          <Field
-            label={t("fields.emitent")}
-            name="emitent"
-            register={register}
-            error={errors.emitent?.message}
-            highlight={displayHighlights?.emitent}
-          />
-          <Field
-            label={t("fields.bazaLegala")}
-            name="bazaLegala"
-            register={register}
-            error={errors.bazaLegala?.message}
-            highlight={displayHighlights?.bazaLegala}
-          />
-          <Field
-            label={t("fields.uatProprietate")}
-            name="uatProprietate"
-            register={register}
-            error={errors.uatProprietate?.message}
-            highlight={displayHighlights?.uatProprietate}
-          />
-          <Field
-            label={t("fields.uatProprietar")}
-            name="uatProprietar"
-            register={register}
-            error={errors.uatProprietar?.message}
-            highlight={displayHighlights?.uatProprietar}
-          />
-          <Field
-            label={t("fields.suprafata")}
-            name="suprafata"
-            type="number"
-            register={register}
-            error={errors.suprafata?.message}
-            highlight={displayHighlights?.suprafata}
-          />
-        </Section>
-      )}
-
-      {/* ── Certificat de Moștenitor — Succession Details ───────────────── */}
-      {isMostenitor && (
-        <Section title={t("sections.mostenitor")} columns={2}>
-          <Field
-            label={t("fields.nrDosarSuccesoral")}
-            name="nrDosarSuccesoral"
-            register={register}
-            error={errors.nrDosarSuccesoral?.message}
-            highlight={displayHighlights?.nrDosarSuccesoral}
-          />
-          <Field
-            label={t("fields.nrCertificatDeces")}
-            name="nrCertificatDeces"
-            register={register}
-            error={errors.nrCertificatDeces?.message}
-            highlight={displayHighlights?.nrCertificatDeces}
-          />
-          <Field
-            label={t("fields.dataDecesului")}
-            name="dataDecesului"
-            type="date"
-            register={register}
-            error={errors.dataDecesului?.message}
-            highlight={displayHighlights?.dataDecesului}
-          />
-          <Field
-            label={t("fields.ultimulDomiciliu")}
-            name="ultimulDomiciliu"
-            register={register}
-            error={errors.ultimulDomiciliu?.message}
-            highlight={displayHighlights?.ultimulDomiciliu}
-          />
-        </Section>
-      )}
-
-      {/* ── Standard Succession Details (all other types) ────────────── */}
-      {cfg.showMostenitor && !isMostenitor && (
-        <Section title={t("sections.mostenitor")} columns={2}>
-          <Field
-            label={t("fields.nrDosarSuccesoral")}
-            name="nrDosarSuccesoral"
-            register={register}
-            error={errors.nrDosarSuccesoral?.message}
-            highlight={displayHighlights?.nrDosarSuccesoral}
-          />
-          <Field
-            label={t("fields.nrCertificatDeces")}
-            name="nrCertificatDeces"
-            register={register}
-            error={errors.nrCertificatDeces?.message}
-            highlight={displayHighlights?.nrCertificatDeces}
-          />
-          <Field
-            label={t("fields.dataDecesului")}
-            name="dataDecesului"
-            type="date"
-            register={register}
-            error={errors.dataDecesului?.message}
-            highlight={displayHighlights?.dataDecesului}
-          />
-          <Field
-            label={t("fields.ultimulDomiciliu")}
-            name="ultimulDomiciliu"
-            register={register}
-            error={errors.ultimulDomiciliu?.message}
-            highlight={displayHighlights?.ultimulDomiciliu}
-          />
-        </Section>
-      )}
-
-      {/* ── Contract period (date range) ─────────────────────────────── */}
-      {cfg.showDateRange && (
-        <Section title={t("sections.dateRange")} columns={2}>
-          <Field
-            label={t("fields.dateStart")}
-            name="dateStart"
-            type="date"
-            register={register}
-            error={errors.dateStart?.message}
-            highlight={displayHighlights?.dateStart}
-          />
-          <Field
-            label={t("fields.dateEnd")}
-            name="dateEnd"
-            type="date"
-            register={register}
-            error={errors.dateEnd?.message}
-            highlight={displayHighlights?.dateEnd}
-          />
-        </Section>
-      )}
-
-      {/* ── Validity / expiry date (Slice #19.03) ───────────────────────── */}
-      {cfg.showValidUntil && (
-        <Section title={t("sections.validUntil")} columns={2}>
-          <Field
-            label={t("fields.dateValidUntil")}
-            name="dateValidUntil"
-            type="date"
-            register={register}
-            error={errors.dateValidUntil?.message}
-            highlight={displayHighlights?.dateValidUntil}
-          />
-        </Section>
-      )}
-
-      {/* ── Surveyor picker (DOCUMENTATIE_CADASTRALA) (Slice #19.03) ─────── */}
-      {cfg.showSurveyor && (
-        <Section title={t("sections.surveyor")} columns={1}>
-          <SurveyorRow
-            surveyorId={watchedValues.surveyorId}
-            surveyorName={watchedValues.surveyorName}
-            surveyorPersonType={watchedValues.surveyorPersonType as PersonType | ""}
-            readOnly={effectiveMode === "view"}
-            highlight={displayHighlights?.surveyorId}
-            onOpen={() => setSurveyorPickerOpen(true)}
-            onRemove={() => {
-              form.setValue("surveyorId", "");
-              form.setValue("surveyorName", "");
-              form.setValue("surveyorPersonType", "");
-            }}
-            t={t}
-          />
-          <p className="text-xs text-fade dark:text-zinc-500 mt-1">
-            {t("hints.surveyorNotInSystem")}
-          </p>
+      {/* ── Type-specific fields (Slice #21.03.Import Phase 3) ──────────────
+          Rendered dynamically from the selected type's template_fields —
+          data, not a hardcoded per-type section. Empty (no template defined
+          yet for this type) → section doesn't render at all. */}
+      {templateFields.length > 0 && (
+        <Section title={t("sections.customFields")} columns={2}>
+          {templateFields.map((f) => {
+            // Double-cast: `FieldPath<FormValues>` is a narrow template-literal
+            // type RHF derives from the schema; a runtime-built string needs
+            // the `unknown` hop so TS doesn't reject the cast as non-overlapping.
+            const name = `customFields.${f.key}` as unknown as FieldPath<FormValues>;
+            const label = f.labelRo || f.labelEn || f.key;
+            return f.type === "textarea" ? (
+              <TextAreaField
+                key={f.key}
+                label={label}
+                name={name}
+                register={register}
+                rows={3}
+              />
+            ) : (
+              <Field
+                key={f.key}
+                label={label}
+                name={name}
+                type={f.type === "date" ? "date" : f.type === "number" ? "number" : "text"}
+                register={register}
+              />
+            );
+          })}
         </Section>
       )}
 
@@ -1212,81 +1104,12 @@ function ReadOnlyField({ label, value }: { label: string; value: string }) {
 
 type TFunc = ReturnType<typeof useTranslations<"document">>;
 
-function SurveyorRow({
-  surveyorId,
-  surveyorName,
-  surveyorPersonType,
-  readOnly,
-  highlight,
-  onOpen,
-  onRemove,
-  t,
-}: {
-  surveyorId:         string;
-  surveyorName:       string;
-  surveyorPersonType: PersonType | "";
-  readOnly:           boolean;
-  highlight?:         HighlightColor;
-  onOpen:             () => void;
-  onRemove:           () => void;
-  t:                  TFunc;
-}) {
-  const ring = usePulseRing(highlight);
-  const href =
-    surveyorPersonType === "NATURAL"
-      ? `/natural-persons/${surveyorId}?readonly=true`
-      : surveyorPersonType === "JUDICIAL"
-        ? `/judicial-persons/${surveyorId}?readonly=true`
-        : null;
-
-  return (
-    <div className={["flex items-center gap-2 text-sm rounded-md border border-wire px-2 py-1", ring].join(" ")}>
-      <span className="w-36 shrink-0 font-medium text-ink dark:text-zinc-300">
-        {t("fields.surveyor")}
-      </span>
-      <div className="flex flex-1 items-center gap-2 min-w-0">
-        {surveyorId ? (
-          <>
-            {href ? (
-              <a
-                href={href}
-                className="flex-1 truncate text-cta hover:underline"
-                target="_blank"
-                rel="noreferrer"
-              >
-                {surveyorName || surveyorId}
-              </a>
-            ) : (
-              <span className="flex-1 truncate text-ink">{surveyorName || surveyorId}</span>
-            )}
-            {!readOnly && (
-              <button
-                type="button"
-                onClick={onRemove}
-                className="shrink-0 text-xs text-red-600 hover:text-red-800 dark:text-red-400"
-              >
-                {t("actions.removeSurveyor")}
-              </button>
-            )}
-          </>
-        ) : (
-          <>
-            <span className="flex-1 text-fade dark:text-zinc-500">—</span>
-            {!readOnly && (
-              <button
-                type="button"
-                onClick={onOpen}
-                className="shrink-0 rounded-md border border-wire bg-white px-2 py-0.5 text-xs font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-              >
-                {t("actions.addSurveyor")}
-              </button>
-            )}
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
+// NOTE (Slice #21.03.Import): SurveyorRow (the trigger UI for the picker
+// below) was removed here — its only caller was the Surveyor section dropped
+// in Phase 1. SurveyorPickerDialog itself is left in place (still referenced
+// via `{surveyorPickerOpen && <SurveyorPickerDialog .../>}` further up, even
+// though nothing sets surveyorPickerOpen true anymore) as ready-to-reuse
+// scaffolding if a future template field type wants a person-picker.
 
 type SurveyorPickerStep = "choose-type" | "search";
 

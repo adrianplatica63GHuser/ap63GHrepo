@@ -7,13 +7,36 @@
  * first uploaded page directly from storage, so no client-side PDF rasterisation
  * is needed.
  *
+ * Slice #21.03.Import — the extraction prompt is now built dynamically per the
+ * document's own type: a small fixed baseline (title, nrDocument, dateDocument,
+ * subject) plus, when the type has one, its template_fields (see
+ * src/lib/documents/template-fields.ts). Every document already has a
+ * documentTypeId (NOT NULL FK), so the type — and its template — is always
+ * known up front; no chicken-and-egg with classification.
+ *
  * Supports:
  *   - image/* pages → sent as Anthropic image block
  *   - application/pdf pages → sent as Anthropic document block (PDF beta)
  *
- * On success:
- *   - Returns { fields } — the caller fills form fields and PATCHes
- *     ai_interpreted_at separately via PATCH /api/documents/[id].
+ * On success, returns:
+ *   {
+ *     fields:       { documentTypeId, title, nrDocument, dateDocument, subject },
+ *     customFields: Record<string, string | null>,  // template-defined values
+ *     notes:        string | null,                   // "Enhanced Notes" — unmappedRaw
+ *                                                      // formatted as readable text,
+ *                                                      // or null when nothing was unmapped
+ *     lowConfidenceFields: string[],
+ *     unmappedRaw:         Record<string, string>,
+ *   }
+ *   The caller fills form fields (fields + customFields, appends notes) and
+ *   PATCHes ai_interpreted_at separately via PATCH /api/documents/[id].
+ *
+ *   lowConfidenceFields / unmappedRaw are also still logged to the server
+ *   console for a quick terminal read — but as of this slice they are no
+ *   longer console-only: returning them in the response body lets the
+ *   AI-Interpret click be driven and inspected end-to-end via browser
+ *   automation, without needing to copy anything out of the dev-server
+ *   terminal.
  *
  * Rate-limited (same 10/min per user as the import-wizard routes).
  */
@@ -24,8 +47,13 @@ import { and, eq, isNull } from "drizzle-orm";
 import { db } from "@/db";
 import { lookupDocumentType } from "@/db/schema";
 import { unexpectedError } from "@/lib/api/errors";
-import { EXTRACT_SYSTEM_PROMPT, KNOWN_TYPE_KEYS } from "@/lib/import/classify-prompts";
+import {
+  buildExtractSystemPrompt,
+  GENERIC_EXTRACT_FIELD_DESCRIPTIONS,
+  KNOWN_TYPE_KEYS,
+} from "@/lib/import/classify-prompts";
 import { createValue } from "@/lib/admin/value-lists/queries";
+import { getDocumentById, getDocumentTypeTemplate } from "@/lib/documents/queries";
 import { listDocumentPages } from "@/lib/documents/pages-queries";
 import { readFileContent } from "@/lib/storage";
 import { createServerClient } from "@/lib/supabase/server";
@@ -84,6 +112,23 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
   const firstPage = pages[0];
   const mimeType = firstPage.mimeType ?? "application/octet-stream";
 
+  // ── Resolve the document's type + template (Slice #21.03.Import) ──────────
+  // documentTypeId is NOT NULL on every document, so we always know which
+  // template to extract into — no chicken-and-egg with classification. The
+  // model is still free to suggest a different type below (unchanged
+  // behaviour); if it does, a follow-up AI-Interpret run after the type
+  // change will build its prompt from the new type's template.
+  const docMeta = await getDocumentById(id);
+  if (!docMeta) {
+    return Response.json({ error: "Document not found" }, { status: 404 });
+  }
+  const typeTemplate = await getDocumentTypeTemplate(docMeta.documentTypeId);
+  const templateFields = typeTemplate?.fields ?? [];
+  const systemPrompt = buildExtractSystemPrompt(templateFields);
+  const typeHintText = typeTemplate
+    ? ` Known document type: ${typeTemplate.name} (${typeTemplate.key}).`
+    : "";
+
   // ── Read file from storage ─────────────────────────────────────────────────
   let fileBuffer: Buffer;
   try {
@@ -141,13 +186,13 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
       body: JSON.stringify({
         model: EXTRACT_MODEL,
         max_tokens: 2048,
-        system: EXTRACT_SYSTEM_PROMPT,
+        system: systemPrompt,
         messages: [
           {
             role: "user",
             content: [
               fileBlock,
-              { type: "text", text: "Extract fields from this Romanian document." },
+              { type: "text", text: `Extract fields from this Romanian document.${typeHintText}` },
             ],
           },
         ],
@@ -193,12 +238,28 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
     unmappedRaw?: Record<string, string>;
   };
 
-  let fields: Record<string, string | null>;
+  // Split by known-key membership: generic baseline keys → `fields`;
+  // template-defined keys for the active type → `customFieldsOut`. Any other
+  // stray key the model might invent is ignored — unmappedRaw is the
+  // sanctioned channel for "doesn't fit a known field".
+  const fields: Record<string, string | null> = {};
+  const customFieldsOut: Record<string, string | null> = {};
   let suggestedTypeKey: string | null = null;
   let classifiedLabel: string | null = null;
+  let lowConfidenceFields: string[] = [];
+  let unmappedRaw: Record<string, string> = {};
+  let enhancedNotes: string | null = null;
+
   try {
     const raw = extractJson(textBlock) as AiExtractResponse;
-    fields = raw.fields ?? {};
+    const allFields = raw.fields ?? {};
+    const templateKeys = new Set(templateFields.map((f) => f.key));
+
+    for (const [k, v] of Object.entries(allFields)) {
+      if (k in GENERIC_EXTRACT_FIELD_DESCRIPTIONS) fields[k] = v;
+      else if (templateKeys.has(k)) customFieldsOut[k] = v;
+    }
+
     suggestedTypeKey =
       raw.suggestedTypeKey &&
       (KNOWN_TYPE_KEYS as readonly string[]).includes(raw.suggestedTypeKey) &&
@@ -206,23 +267,36 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
         ? raw.suggestedTypeKey
         : null;
     classifiedLabel = raw.classifiedLabel?.trim() || null;
+    lowConfidenceFields = Array.isArray(raw.lowConfidenceFields) ? raw.lowConfidenceFields : [];
+    unmappedRaw = raw.unmappedRaw && typeof raw.unmappedRaw === "object" ? raw.unmappedRaw : {};
+
+    // ── Enhanced Notes (Slice #21.03.Import Phase 2) — fold anything the
+    // model couldn't map to a field into readable text instead of silently
+    // dropping it. The client appends this to the document's existing notes;
+    // it never overwrites them.
+    if (Object.keys(unmappedRaw).length > 0) {
+      const lines = Object.entries(unmappedRaw).map(([label, val]) => `${label}: ${val}`);
+      enhancedNotes = `[AI] Text neasociat unui câmp:\n${lines.join("\n")}`;
+    }
 
     // ── Diagnostic log — what did the model actually extract? ────────────────
-    const extracted = Object.entries(fields).filter(([, v]) => v !== null && v !== "");
-    const nulled     = Object.entries(fields).filter(([, v]) => v === null || v === "");
+    const extractedGeneric = Object.entries(fields).filter(([, v]) => v !== null && v !== "");
+    const extractedCustom  = Object.entries(customFieldsOut).filter(([, v]) => v !== null && v !== "");
     console.log("\n─────────────────────────────────────────────────────");
     console.log(`[ai-interpret] Document: ${firstPage.fileName}`);
-    console.log(`  Type key   : ${suggestedTypeKey ?? "(none)"}`);
-    console.log(`  Label      : ${classifiedLabel ?? "(none)"}`);
-    console.log(`  Fields extracted (${extracted.length}):`);
-    for (const [k, v] of extracted) console.log(`    ${k.padEnd(22)}: ${v}`);
-    if (nulled.length)
-      console.log(`  Fields null/empty (${nulled.length}): ${nulled.map(([k]) => k).join(", ")}`);
-    if (raw.lowConfidenceFields?.length)
-      console.log(`  Low confidence : ${raw.lowConfidenceFields.join(", ")}`);
-    if (raw.unmappedRaw && Object.keys(raw.unmappedRaw).length) {
-      console.log(`  Unmapped text (${Object.keys(raw.unmappedRaw).length}):`);
-      for (const [label, val] of Object.entries(raw.unmappedRaw))
+    console.log(`  Type       : ${typeTemplate?.name ?? "(unresolved)"} (${typeTemplate?.key ?? "?"}) — ${templateFields.length} template field(s)`);
+    console.log(`  AI reclass : ${suggestedTypeKey ?? "(none)"} / ${classifiedLabel ?? "(none)"}`);
+    console.log(`  Generic fields extracted (${extractedGeneric.length}):`);
+    for (const [k, v] of extractedGeneric) console.log(`    ${k.padEnd(22)}: ${v}`);
+    if (extractedCustom.length) {
+      console.log(`  Template fields extracted (${extractedCustom.length}):`);
+      for (const [k, v] of extractedCustom) console.log(`    ${k.padEnd(22)}: ${v}`);
+    }
+    if (lowConfidenceFields.length)
+      console.log(`  Low confidence : ${lowConfidenceFields.join(", ")}`);
+    if (Object.keys(unmappedRaw).length) {
+      console.log(`  Unmapped text (${Object.keys(unmappedRaw).length}) — candidate template fields for "${typeTemplate?.name ?? "?"}":`);
+      for (const [label, val] of Object.entries(unmappedRaw))
         console.log(`    "${label}" → "${val}"`);
     }
     console.log("─────────────────────────────────────────────────────\n");
@@ -238,6 +312,10 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
   // 1. Match by known typeKey slug in the DB.
   // 2. Fall back to match by label name.
   // 3. Auto-create if the label is meaningful and not already present.
+  // NOTE: if this switches the document to a different type than the one the
+  // prompt above was built for, customFieldsOut still reflects the *old*
+  // type's template for this run — a follow-up AI Interpret click after the
+  // type change picks up the new type's template.
   let documentTypeId: string | null = null;
   try {
     if (suggestedTypeKey) {
@@ -266,5 +344,11 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
     console.warn("[ai-interpret] documentTypeId resolution failed:", err);
   }
 
-  return Response.json({ fields: { ...fields, documentTypeId } });
+  return Response.json({
+    fields: { ...fields, documentTypeId },
+    customFields: customFieldsOut,
+    notes: enhancedNotes,
+    lowConfidenceFields,
+    unmappedRaw,
+  });
 }

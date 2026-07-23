@@ -12,6 +12,7 @@ import {
   documentUpdateSchema,
 } from "@/lib/documents/validation";
 import { getTypeConfig } from "@/lib/documents/type-config";
+import { customFieldsEqual, parseTemplateFields } from "@/lib/documents/template-fields";
 
 // A syntactically valid (RFC 4122 v4-shaped) uuid to stand in for a real
 // lookup_document_type.id in tests that don't care which type it resolves to.
@@ -138,62 +139,129 @@ describe("documentUpdateSchema", () => {
 // ---------------------------------------------------------------------------
 
 describe("getTypeConfig", () => {
-  it("returns the generic config when key is null/undefined", () => {
-    expect(getTypeConfig(null).showTitlu).toBe(false);
-    expect(getTypeConfig(undefined).showDateRange).toBe(false);
+  it("returns the generic labels when key is null/undefined", () => {
+    expect(getTypeConfig(null).labels.nrDocument).toBe("Nr. document");
+    expect(getTypeConfig(undefined).labels.nrDocument).toBe("Nr. document");
   });
 
-  it("returns generic config for a simple type (ACT_ADJUDECARE)", () => {
+  it("returns generic labels for a type with no override (ACT_ADJUDECARE)", () => {
     const cfg = getTypeConfig("ACT_ADJUDECARE");
-    expect(cfg.showTitlu).toBe(false);
-    expect(cfg.showMostenitor).toBe(false);
-    expect(cfg.showDateRange).toBe(false);
-    expect(cfg.showValidUntil).toBe(false);
+    expect(cfg.labels.nrDocument).toBe("Nr. document");
+    expect(cfg.labels.dateDocument).toBe("Data autentificării");
+    expect(cfg.labels.institution).toBe("Instituție înregistrare");
   });
 
-  it("returns correct config for TITLU_PROPRIETATE", () => {
+  it("returns correct label override for TITLU_PROPRIETATE", () => {
     const cfg = getTypeConfig("TITLU_PROPRIETATE");
-    expect(cfg.showTitlu).toBe(true);
     expect(cfg.labels.nrDocument).toBe("Nr. titlu proprietate");
+    expect(cfg.labels.dateDocument).toBe("Data eliberării");
+    expect(cfg.labels.institution).toBe("Emitent");
   });
 
-  it("returns correct config for CERTIFICAT_MOSTENITOR", () => {
+  it("returns correct label override for CERTIFICAT_MOSTENITOR", () => {
     const cfg = getTypeConfig("CERTIFICAT_MOSTENITOR");
-    expect(cfg.showMostenitor).toBe(true);
     expect(cfg.labels.nrDocument).toBe("Nr. certificat de moștenitor");
+    expect(cfg.labels.institution).toBe("Notariat");
   });
 
-  it("returns correct config for CONTRACT_INCHIRIERE", () => {
+  it("returns correct label override for CONTRACT_INCHIRIERE", () => {
     const cfg = getTypeConfig("CONTRACT_INCHIRIERE");
-    expect(cfg.showDateRange).toBe(true);
     expect(cfg.labels.nrDocument).toBe("Nr. contract de închiriere");
   });
 
-  it("returns correct config for CONTRACT_VANZARE", () => {
+  it("returns correct label override for CONTRACT_VANZARE", () => {
     const cfg = getTypeConfig("CONTRACT_VANZARE");
-    expect(cfg.showDateRange).toBe(false);
     expect(cfg.labels.nrDocument).toBe("Nr. act autentic");
   });
 
-  it("returns correct config for ACT_DONATIE", () => {
+  it("returns correct label override for ACT_DONATIE", () => {
     const cfg = getTypeConfig("ACT_DONATIE");
-    expect(cfg.showTitlu).toBe(false);
     expect(cfg.labels.institution).toBe("Notariat");
   });
 
-  it("returns correct config for TESTAMENT", () => {
+  it("returns correct label override for TESTAMENT", () => {
     const cfg = getTypeConfig("TESTAMENT");
-    expect(cfg.showTitlu).toBe(false);
     expect(cfg.labels.institution).toBe("Notariat");
   });
 
-  it("returns correct config for CONTRACT_ARENDA (date range)", () => {
+  it("returns correct label override for CONTRACT_ARENDA", () => {
     const cfg = getTypeConfig("CONTRACT_ARENDA");
-    expect(cfg.showDateRange).toBe(true);
+    expect(cfg.labels.nrDocument).toBe("Nr. contract de arendă");
   });
 
-  it("falls back to generic config for an unknown key", () => {
+  it("falls back to generic labels for an unknown key", () => {
     const cfg = getTypeConfig("SOME_UNKNOWN_KEY");
     expect(cfg).toEqual(getTypeConfig(null));
+  });
+
+  it("no longer exposes per-type show flags (Slice #21.03.Import Phase 1 — one generic template for all types)", () => {
+    const cfg = getTypeConfig("CERTIFICAT_MOSTENITOR") as Record<string, unknown>;
+    expect(cfg.showTitlu).toBeUndefined();
+    expect(cfg.showMostenitor).toBeUndefined();
+    expect(cfg.showDateRange).toBeUndefined();
+    expect(cfg.showValidUntil).toBeUndefined();
+    expect(cfg.showSurveyor).toBeUndefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Slice #21.03.Import — template-fields helpers
+// ---------------------------------------------------------------------------
+
+describe("parseTemplateFields", () => {
+  it("returns an empty array for null/undefined/non-array input", () => {
+    expect(parseTemplateFields(null)).toEqual([]);
+    expect(parseTemplateFields(undefined)).toEqual([]);
+    expect(parseTemplateFields("not-an-array")).toEqual([]);
+    expect(parseTemplateFields({})).toEqual([]);
+  });
+
+  it("parses a well-formed field list and sorts by order", () => {
+    const parsed = parseTemplateFields([
+      { key: "b", labelRo: "B", labelEn: "B", type: "date", order: 2 },
+      { key: "a", labelRo: "A", labelEn: "A", type: "text", order: 1 },
+    ]);
+    expect(parsed.map((f) => f.key)).toEqual(["a", "b"]);
+    expect(parsed[1].type).toBe("date");
+  });
+
+  it("drops entries without a key, and falls back to 'text' for an invalid type", () => {
+    const parsed = parseTemplateFields([
+      { key: "", labelRo: "No key" },
+      { key: "valid", labelRo: "Valid", type: "not-a-real-type" },
+    ]);
+    expect(parsed).toHaveLength(1);
+    expect(parsed[0].key).toBe("valid");
+    expect(parsed[0].type).toBe("text");
+  });
+
+  it("never throws on malformed entries", () => {
+    expect(() => parseTemplateFields([null, 42, "x", { key: "ok" }])).not.toThrow();
+    expect(parseTemplateFields([null, 42, "x", { key: "ok" }])).toHaveLength(1);
+  });
+});
+
+describe("customFieldsEqual", () => {
+  it("treats null and undefined as equal to an empty object", () => {
+    expect(customFieldsEqual(null, undefined)).toBe(true);
+    expect(customFieldsEqual(null, {})).toBe(true);
+    expect(customFieldsEqual({}, {})).toBe(true);
+  });
+
+  it("treats a missing key the same as an explicit null value", () => {
+    expect(customFieldsEqual({ a: null }, {})).toBe(true);
+    expect(customFieldsEqual({}, { a: null })).toBe(true);
+  });
+
+  it("is insensitive to key order", () => {
+    expect(customFieldsEqual({ a: "1", b: "2" }, { b: "2", a: "1" })).toBe(true);
+  });
+
+  it("detects an actual value change", () => {
+    expect(customFieldsEqual({ a: "1" }, { a: "2" })).toBe(false);
+  });
+
+  it("detects an added or removed key", () => {
+    expect(customFieldsEqual({ a: "1" }, { a: "1", b: "2" })).toBe(false);
   });
 });
