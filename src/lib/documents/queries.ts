@@ -229,7 +229,7 @@ export function snapshotFromFull(full: DocumentFull): DocumentSnapshot {
     dateValidUntil:    full.dateValidUntil     ?? null,
     surveyorId:        full.surveyorId         ?? null,
     // Slice #21.03.Import
-    customFields:      (full.customFields as Record<string, string | null> | null) ?? null,
+    customFields:      full.customFields ?? null,
   };
 }
 

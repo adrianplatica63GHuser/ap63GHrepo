@@ -886,7 +886,12 @@ export const document = pgTable("document", {
   // src/lib/documents/template-fields.ts). NULL/empty = no custom data
   // captured yet. Versioned as part of the document snapshot — see
   // DocumentSnapshot.customFields in src/lib/documents/validation.ts.
-  customFields: jsonb("custom_fields"),
+  // $type<...>() here is a plain built-in shape (no import needed, so no
+  // circular-import risk like templateFields below) — keeps DocumentFull's
+  // inferred type usable directly wherever a document row flows into
+  // ApiRecord/DocumentSnapshot-shaped code (e.g. src/app/documents/[id]/page.tsx)
+  // instead of every call site having to re-cast it from `unknown`.
+  customFields: jsonb("custom_fields").$type<Record<string, string | null> | null>(),
 
   // Slice #21.02.Import: set when the server-side AI-interpret action has been
   // run on this document (extracts fields from the first uploaded page).
