@@ -16,6 +16,7 @@ import type { PropertySnapshot } from "@/lib/properties/validation";
 import { shoelaceAreaM2 } from "@/lib/properties/area";
 import { cornersToS70Key, wgs84ToStereo70Batch } from "@/lib/geo/convert-client";
 import { streetLineFromGeocodeResult } from "@/lib/geo/reverse-geocode";
+import { NavArrowIcon } from "@/components/back-arrow";
 import { UnsavedChangesBanner } from "@/components/unsaved-changes-banner";
 import { useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-provider";
 import {
@@ -189,6 +190,14 @@ export function PropertyForm({
   const [submitError,      setSubmitError]      = useState<string | null>(null);
   const [confirmDelete,    setConfirmDelete]    = useState(false);
   const [confirmMakeCurrent, setConfirmMakeCurrent] = useState(false);
+  // Slice #21.04.Import: an associated record (opened via ?readonly=true from
+  // another record's association tab) starts read-only with a "Modify"
+  // button; clicking it flips this on, which makes effectiveMode resolve to
+  // "edit" below without ever changing the `mode` prop — `mode === "view"`
+  // keeps meaning "this page's identity is an associated record" throughout,
+  // which is what gates the cannot-delete-from-here dialog further down.
+  const [associatedEditing, setAssociatedEditing] = useState(false);
+  const [showCannotDelete,   setShowCannotDelete]   = useState(false);
   const [bigMap,           setBigMap]           = useState(false);
   const [showStreetView,   setShowStreetView]   = useState(false);
   const [showAngles,       setShowAngles]       = useState(false);
@@ -384,9 +393,16 @@ export function PropertyForm({
   }, [latestVersion, versionByNumber]);
 
   // Any non-latest version is strictly read-only; only the latest is editable
-  // (or stays "view" if opened read-only). Create mode is unaffected.
+  // (or stays "view" if opened read-only, unless Modify was clicked — see
+  // associatedEditing above). Create mode is unaffected.
   const effectiveMode: "create" | "edit" | "view" =
-    isCreate ? "create" : isOnLatest ? mode : "view";
+    isCreate
+      ? "create"
+      : !isOnLatest
+        ? "view"
+        : mode === "edit" || associatedEditing
+          ? "edit"
+          : "view";
 
   const createHasData = isCreate && hasFormData(watchedValues, corners);
 
@@ -551,6 +567,10 @@ export function PropertyForm({
     // refetches and shows the new version.
     setBaseline({ values, corners });
     setViewingVersion(null);
+    // Slice #21.04.Import: an associated record reverts to its read-only
+    // presentation (Back to list + Modify) once the edit is saved — Modify
+    // must be clicked again for a further change.
+    if (mode === "view") setAssociatedEditing(false);
     router.refresh();
   };
 
@@ -629,286 +649,325 @@ export function PropertyForm({
           versionNavSlot,
         )}
 
-      {/* Two-column layout (Slice #18.UX.04): a frozen 540px left column
-          (cadastral + address + corners table) and a right column holding the
-          map + Street View. The Big/Small Map toggle only changes the page
-          shell's width cap (full vs ~1040px) — never this structure. */}
-      <div className="flex flex-row flex-wrap gap-4 items-start">
+      {/* Slice #21.05.misc: full-width Cadastral panel on top, Corners +
+          Address side by side (50/50) underneath, and the map (+ Street View)
+          full width at the bottom. The Big/Small Map toggle only changes the
+          page shell's width cap (full vs ~1040px) — never this structure. */}
+      <div className="flex flex-col gap-4">
 
-        {/* Left column — frozen 540px */}
-        <div className="w-[540px] max-w-full flex-none flex flex-col gap-4">
-
-          {/* Slice #18.02: the disabled fieldset wraps ONLY the editable input
-              sections (cadastral + address). The corners section below is
-              intentionally OUTSIDE it — a disabled <fieldset> disables EVERY
-              descendant control (including the version ◀/▶ nav buttons, which
-              cannot be re-enabled per-button), and CornersManager enforces its
-              own read-only state via the readOnly prop. */}
-          <fieldset disabled={effectiveMode === "view"} className="contents">
-
-          {/* Cadastral data — always 2-col in the narrow (540px) left column */}
-          <Section title={t("sections.cadastral")} columns={2}>
-            {propertyCode && (
-              <ReadOnlyField label={t("fields.code")} value={propertyCode} />
-            )}
-            <SelectField
-              label={t("fields.propertyType")}
-              name="propertyTypeId"
-              register={register}
-              error={errors.propertyTypeId?.message}
-              options={propertyTypeOptions}
-              highlight={displayHighlights?.property.propertyTypeId}
-            />
-            <Field
-              label={t("fields.nickname")}
-              name="nickname"
-              register={register}
-              error={errors.nickname?.message}
-              highlight={displayHighlights?.property.nickname}
-            />
-            {/* Slice #19.02: Tarla/Parcela hidden for urban property types. */}
-            {!typeConfig.hideTarlaParcela && (
-              <>
-                {/* Slice #18.16.VL: was free-text Field; now a lookup dropdown */}
-                <SelectField
-                  label={t("fields.tarlaSola")}
-                  name="tarlaSola"
-                  register={register}
-                  error={errors.tarlaSola?.message}
-                  options={tarlaSolaOptions}
-                  highlight={displayHighlights?.property.tarlaSola}
-                />
+        {/* Cadastral data — full width, explicit 4-column / 3-row grid. Every
+            field is pinned with row-start/col-start (rather than relying on
+            grid auto-placement) so hidden fields (Tarla/Sola + Parcela on
+            urban types) leave a visible gap instead of shifting later fields
+            into the wrong cell. */}
+        <fieldset disabled={effectiveMode === "view"}>
+          <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+            <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
+              {t("sections.cadastral")}
+            </h2>
+            <div className="grid grid-cols-4 gap-2">
+              {/* Row 1: Code · Parcela · Tarla/Sola · Nickname */}
+              {propertyCode && (
+                <div className="row-start-1 col-start-1">
+                  <ReadOnlyField label={t("fields.code")} value={propertyCode} />
+                </div>
+              )}
+              {/* Slice #19.02: Tarla/Parcela hidden for urban property types —
+                  Code and Nickname stay pinned to columns 1 and 4, leaving a
+                  visible gap in columns 2-3 rather than collapsing together. */}
+              {!typeConfig.hideTarlaParcela && (
+                <>
+                  <div className="row-start-1 col-start-2">
+                    <Field
+                      label={t("fields.parcela")}
+                      name="parcela"
+                      register={register}
+                      error={errors.parcela?.message}
+                      highlight={displayHighlights?.property.parcela}
+                    />
+                  </div>
+                  {/* Slice #18.16.VL: was free-text Field; now a lookup dropdown */}
+                  <div className="row-start-1 col-start-3">
+                    <SelectField
+                      label={t("fields.tarlaSola")}
+                      name="tarlaSola"
+                      register={register}
+                      error={errors.tarlaSola?.message}
+                      options={tarlaSolaOptions}
+                      highlight={displayHighlights?.property.tarlaSola}
+                    />
+                  </div>
+                </>
+              )}
+              <div className="row-start-1 col-start-4">
                 <Field
-                  label={t("fields.parcela")}
-                  name="parcela"
+                  label={t("fields.nickname")}
+                  name="nickname"
                   register={register}
-                  error={errors.parcela?.message}
-                  highlight={displayHighlights?.property.parcela}
+                  error={errors.nickname?.message}
+                  highlight={displayHighlights?.property.nickname}
                 />
-              </>
-            )}
-            <Field
-              label={t("fields.cadastralNumber")}
-              name="cadastralNumber"
-              register={register}
-              error={errors.cadastralNumber?.message}
-              highlight={displayHighlights?.property.cadastralNumber}
-            />
-            <Field
-              label={t("fields.carteFunciara")}
-              name="carteFunciara"
-              register={register}
-              error={errors.carteFunciara?.message}
-              highlight={displayHighlights?.property.carteFunciara}
-            />
-            <SelectField
-              label={t("fields.useCategory")}
-              name="useCategoryId"
-              register={register}
-              error={errors.useCategoryId?.message}
-              options={useCategoryOptions}
-              highlight={displayHighlights?.property.useCategoryId}
-            />
-            <Field
-              label={t("fields.surfaceAreaMp")}
-              name="surfaceAreaMp"
-              type="number"
-              register={register}
-              error={errors.surfaceAreaMp?.message}
-              highlight={displayHighlights?.property.surfaceAreaMp}
-            />
-            {/* Slice #18.09: system-computed area from the corners — read-only,
-                live (not registered with RHF). Blank until 3+ corners exist. */}
-            <ReadOnlyField
-              label={t("fields.calculatedAreaMp")}
-              value={calculatedAreaDisplay}
-            />
-            <div className="col-span-2">
-              <TextAreaField
-                label={t("fields.notes")}
-                name="notes"
-                register={register}
-                error={errors.notes?.message}
-                maxLength={300}
-                highlight={displayHighlights?.property.notes}
-              />
+              </div>
+
+              {/* Row 2: Official Surface Area · Calculated Area · Carte Funciara · Cadastral No. */}
+              <div className="row-start-2 col-start-1">
+                <Field
+                  label={t("fields.surfaceAreaMp")}
+                  name="surfaceAreaMp"
+                  type="number"
+                  register={register}
+                  error={errors.surfaceAreaMp?.message}
+                  highlight={displayHighlights?.property.surfaceAreaMp}
+                />
+              </div>
+              {/* Slice #18.09: system-computed area from the corners — read-only,
+                  live (not registered with RHF). Blank until 3+ corners exist. */}
+              <div className="row-start-2 col-start-2">
+                <ReadOnlyField
+                  label={t("fields.calculatedAreaMp")}
+                  value={calculatedAreaDisplay}
+                />
+              </div>
+              <div className="row-start-2 col-start-3">
+                <Field
+                  label={t("fields.carteFunciara")}
+                  name="carteFunciara"
+                  register={register}
+                  error={errors.carteFunciara?.message}
+                  highlight={displayHighlights?.property.carteFunciara}
+                />
+              </div>
+              <div className="row-start-2 col-start-4">
+                <Field
+                  label={t("fields.cadastralNumber")}
+                  name="cadastralNumber"
+                  register={register}
+                  error={errors.cadastralNumber?.message}
+                  highlight={displayHighlights?.property.cadastralNumber}
+                />
+              </div>
+
+              {/* Row 3: Use Category · Property Type · Notes (double width) */}
+              <div className="row-start-3 col-start-1">
+                <SelectField
+                  label={t("fields.useCategory")}
+                  name="useCategoryId"
+                  register={register}
+                  error={errors.useCategoryId?.message}
+                  options={useCategoryOptions}
+                  highlight={displayHighlights?.property.useCategoryId}
+                />
+              </div>
+              <div className="row-start-3 col-start-2">
+                <SelectField
+                  label={t("fields.propertyType")}
+                  name="propertyTypeId"
+                  register={register}
+                  error={errors.propertyTypeId?.message}
+                  options={propertyTypeOptions}
+                  highlight={displayHighlights?.property.propertyTypeId}
+                />
+              </div>
+              <div className="row-start-3 col-start-3 col-span-2">
+                <TextAreaField
+                  label={t("fields.notes")}
+                  name="notes"
+                  register={register}
+                  error={errors.notes?.message}
+                  maxLength={300}
+                  highlight={displayHighlights?.property.notes}
+                />
+              </div>
             </div>
-          </Section>
+          </section>
+        </fieldset>
+
+        {/* Corners (left) + Address (right) — 50/50 under Cadastral. Corners
+            stays OUTSIDE any disabled <fieldset> (a disabled fieldset disables
+            EVERY descendant control, including the version ◀/▶ nav buttons
+            that live inside CornersManager's toolbar — Slice #18.02 pitfall
+            #4); it enforces its own read-only state via the readOnly prop
+            instead. Address keeps its own fieldset so it still locks in
+            read-only historical versions. When Address is hidden (Slice
+            #19.02, agricultural/forest types), Corners stays at its normal
+            half-width slot rather than expanding into the gap. */}
+        <div className="flex flex-row flex-wrap gap-4 items-start">
+
+          {/* Corners table. Bug 1: a red pulse ring on the whole card flags a
+              corner change in the just-navigated-to latest version (the
+              interactive table can't show the historical per-row diff). */}
+          <div className="flex-1 min-w-[320px]">
+            <section
+              className={[
+                "rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900",
+                cornersPulse ? "ga-vpulse-red" : "",
+              ].join(" ")}
+            >
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <h2 className="text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
+                  {t("sections.corners")}
+                </h2>
+              </div>
+              <CornersManager
+                corners={corners}
+                onChange={setCorners}
+                readOnly={effectiveMode === "view"}
+                hoveredCornerIdx={hoveredCornerIdx}
+                onCornerHover={setHoveredCornerIdx}
+                bigMap={bigMap}
+                onToggleBigMap={handleToggleBigMap}
+                streetView={showStreetView && !typeConfig.hideStreetView}
+                onToggleStreetView={typeConfig.hideStreetView ? undefined : handleToggleStreetView}
+                showAngles={showAngles}
+                onToggleAngles={() => setShowAngles((v) => !v)}
+                cornerDiff={cornerDiff ?? undefined}
+              />
+            </section>
+          </div>
 
           {/* Address — Slice #19.02: hidden for agricultural / forest types. */}
-          {!typeConfig.hideAddress && <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-            <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
-              {t("sections.address")}
-            </h2>
-            {/* Always stacked for the narrow (540px) left column: street + notes
-                full-width, then postal/city and county/country in 2-col pairs. */}
-            <div className="flex flex-col gap-2">
-              <Field
-                label={t("address.streetLine")}
-                name="address.streetLine"
-                register={register}
-                error={errors.address?.streetLine?.message}
-                highlight={displayHighlights?.address.streetLine}
-              />
-              {/* Slice #18.12: Street View address — only the street line may
-                  differ from the document-derived one above; the shared
-                  postal/locality/county/country fields below apply to both.
-                  The Fetch button reverse-geocodes the corners' centroid. In a
-                  read-only historical version the whole address fieldset is
-                  disabled, which also disables this button. */}
-              <label className="flex items-start gap-2 text-sm">
-                <span className="w-24 shrink-0 pt-1 font-medium text-ink dark:text-zinc-300">
-                  {t("streetViewAddress.label")}
-                </span>
-                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      {...register("address.streetViewStreetLine")}
-                      className={[
-                        "min-w-0 flex-1 rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none disabled:bg-canvas disabled:text-fade disabled:cursor-default dark:bg-zinc-950 dark:disabled:bg-zinc-800",
-                        "border-wire focus:border-focus dark:border-zinc-700",
-                        highlightRingClass(displayHighlights?.address.streetViewStreetLine, pulsing),
-                      ].join(" ")}
+          {!typeConfig.hideAddress && (
+            <fieldset disabled={effectiveMode === "view"} className="flex-1 min-w-[320px]">
+              <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+                <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
+                  {t("sections.address")}
+                </h2>
+                {/* Stacked within the half-width column: street + notes
+                    full-width, then postal/city and county/country in 2-col pairs. */}
+                <div className="flex flex-col gap-2">
+                  <Field
+                    label={t("address.streetLine")}
+                    name="address.streetLine"
+                    register={register}
+                    error={errors.address?.streetLine?.message}
+                    highlight={displayHighlights?.address.streetLine}
+                  />
+                  {/* Slice #18.12: Street View address — only the street line may
+                      differ from the document-derived one above; the shared
+                      postal/locality/county/country fields below apply to both.
+                      The Fetch button reverse-geocodes the corners' centroid. In a
+                      read-only historical version the whole address fieldset is
+                      disabled, which also disables this button. */}
+                  <label className="flex items-start gap-2 text-sm">
+                    <span className="w-24 shrink-0 pt-1 font-medium text-ink dark:text-zinc-300">
+                      {t("streetViewAddress.label")}
+                    </span>
+                    <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          {...register("address.streetViewStreetLine")}
+                          className={[
+                            "min-w-0 flex-1 rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none disabled:bg-canvas disabled:text-fade disabled:cursor-default dark:bg-zinc-950 dark:disabled:bg-zinc-800",
+                            "border-wire focus:border-focus dark:border-zinc-700",
+                            highlightRingClass(displayHighlights?.address.streetViewStreetLine, pulsing),
+                          ].join(" ")}
+                        />
+                        <button
+                          type="button"
+                          onClick={handleFetchStreetViewAddress}
+                          disabled={
+                            fetchingStreetView || !streetViewCentroid || !geocodingLib
+                          }
+                          title={
+                            !streetViewCentroid ? t("streetViewAddress.needsCorners") : undefined
+                          }
+                          className="inline-flex shrink-0 items-center rounded-md border border-wire bg-white px-2 py-1 text-xs font-medium text-ink shadow-sm hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+                        >
+                          {fetchingStreetView
+                            ? t("streetViewAddress.fetching")
+                            : t("streetViewAddress.fetch")}
+                        </button>
+                      </div>
+                      {streetViewFetchError ? (
+                        <span className="text-xs text-red-600 dark:text-red-400" role="alert">
+                          {streetViewFetchError}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-fade dark:text-zinc-400">
+                          {t("streetViewAddress.hint")}
+                        </span>
+                      )}
+                    </div>
+                  </label>
+                  <Field
+                    label={t("address.notes")}
+                    name="address.notes"
+                    register={register}
+                    error={errors.address?.notes?.message}
+                    highlight={displayHighlights?.address.notes}
+                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    <Field
+                      label={t("address.postalCode")}
+                      name="address.postalCode"
+                      register={register}
+                      error={errors.address?.postalCode?.message}
+                      highlight={displayHighlights?.address.postalCode}
                     />
-                    <button
-                      type="button"
-                      onClick={handleFetchStreetViewAddress}
-                      disabled={
-                        fetchingStreetView || !streetViewCentroid || !geocodingLib
-                      }
-                      title={
-                        !streetViewCentroid ? t("streetViewAddress.needsCorners") : undefined
-                      }
-                      className="inline-flex shrink-0 items-center rounded-md border border-wire bg-white px-2 py-1 text-xs font-medium text-ink shadow-sm hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-                    >
-                      {fetchingStreetView
-                        ? t("streetViewAddress.fetching")
-                        : t("streetViewAddress.fetch")}
-                    </button>
+                    <Field
+                      label={t("address.locality")}
+                      name="address.locality"
+                      register={register}
+                      error={errors.address?.locality?.message}
+                      highlight={displayHighlights?.address.locality}
+                    />
                   </div>
-                  {streetViewFetchError ? (
-                    <span className="text-xs text-red-600 dark:text-red-400" role="alert">
-                      {streetViewFetchError}
-                    </span>
-                  ) : (
-                    <span className="text-xs text-fade dark:text-zinc-400">
-                      {t("streetViewAddress.hint")}
-                    </span>
-                  )}
+                  <div className="grid grid-cols-2 gap-2">
+                    <Field
+                      label={t("address.county")}
+                      name="address.county"
+                      register={register}
+                      error={errors.address?.county?.message}
+                      highlight={displayHighlights?.address.county}
+                    />
+                    <Field
+                      label={t("address.country")}
+                      name="address.country"
+                      register={register}
+                      error={errors.address?.country?.message}
+                      highlight={displayHighlights?.address.country}
+                    />
+                  </div>
                 </div>
-              </label>
-              <Field
-                label={t("address.notes")}
-                name="address.notes"
-                register={register}
-                error={errors.address?.notes?.message}
-                highlight={displayHighlights?.address.notes}
-              />
-              <div className="grid grid-cols-2 gap-2">
-                <Field
-                  label={t("address.postalCode")}
-                  name="address.postalCode"
-                  register={register}
-                  error={errors.address?.postalCode?.message}
-                  highlight={displayHighlights?.address.postalCode}
-                />
-                <Field
-                  label={t("address.locality")}
-                  name="address.locality"
-                  register={register}
-                  error={errors.address?.locality?.message}
-                  highlight={displayHighlights?.address.locality}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <Field
-                  label={t("address.county")}
-                  name="address.county"
-                  register={register}
-                  error={errors.address?.county?.message}
-                  highlight={displayHighlights?.address.county}
-                />
-                <Field
-                  label={t("address.country")}
-                  name="address.country"
-                  register={register}
-                  error={errors.address?.country?.message}
-                  highlight={displayHighlights?.address.country}
-                />
-              </div>
-            </div>
-          </section>}
-          </fieldset>{/* end editable-inputs fieldset (cadastral + address) */}
-
-          {/* Corners table — OUTSIDE the disabled fieldset. The map and Street
-              View now live in the right column; only the table stays here.
-              Bug 1: a red pulse ring on the whole card flags a corner change in
-              the just-navigated-to latest version (the interactive table can't
-              show the historical per-row diff). */}
-          <section
-            className={[
-              "rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900",
-              cornersPulse ? "ga-vpulse-red" : "",
-            ].join(" ")}
-          >
-            <div className="mb-2 flex items-center justify-between gap-2">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
-                {t("sections.corners")}
-              </h2>
-            </div>
-            <CornersManager
-              corners={corners}
-              onChange={setCorners}
-              readOnly={effectiveMode === "view"}
-              hoveredCornerIdx={hoveredCornerIdx}
-              onCornerHover={setHoveredCornerIdx}
-              bigMap={bigMap}
-              onToggleBigMap={handleToggleBigMap}
-              streetView={showStreetView && !typeConfig.hideStreetView}
-              onToggleStreetView={typeConfig.hideStreetView ? undefined : handleToggleStreetView}
-              showAngles={showAngles}
-              onToggleAngles={() => setShowAngles((v) => !v)}
-              cornerDiff={cornerDiff ?? undefined}
-            />
-          </section>
-
-        </div>{/* end left column */}
-
-        {/* Right column — map + Street View. Map is always 440px; the
-            "Hartă extinsă" button opens a full-screen theater overlay instead
-            of changing this layout. */}
-        <div className="flex-1 min-w-[320px] flex flex-col gap-4">
-          <div
-            className="relative rounded-md border border-card-rim overflow-hidden dark:border-zinc-800"
-            style={{ height: "440px" }}
-          >
-            <div className="absolute inset-0">
-              <ErrorBoundary fallback={<PanelError>{tShared("errorBoundary.map")}</PanelError>}>
-                <PropertyMiniMap
-                  corners={corners}
-                  onChange={setCorners}
-                  readOnly={effectiveMode === "view"}
-                  hoveredCornerIdx={hoveredCornerIdx}
-                  onCornerHover={setHoveredCornerIdx}
-                  showAngles={showAngles}
-                />
-              </ErrorBoundary>
-            </div>
-          </div>
-          {/* Slice #18.03b: Street View panel — mounted only while open so the
-              (billed) panorama and Street View library never load on property
-              open. */}
-          {showStreetView && !typeConfig.hideStreetView && (
-            <div className="rounded-md border border-card-rim overflow-hidden dark:border-zinc-800" style={{ height: "360px" }}>
-              <ErrorBoundary fallback={<PanelError>{tShared("errorBoundary.streetView")}</PanelError>}>
-                <StreetViewPanel centroid={streetViewCentroid} />
-              </ErrorBoundary>
-            </div>
+              </section>
+            </fieldset>
           )}
-        </div>
 
-      </div>{/* end two-column layout */}
+        </div>{/* end Corners + Address row */}
+
+        {/* Map — full width. Always 440px tall; the "Hartă extinsă" button
+            opens a full-screen theater overlay instead of changing this
+            layout. */}
+        <div
+          className="relative rounded-md border border-card-rim overflow-hidden dark:border-zinc-800"
+          style={{ height: "440px" }}
+        >
+          <div className="absolute inset-0">
+            <ErrorBoundary fallback={<PanelError>{tShared("errorBoundary.map")}</PanelError>}>
+              <PropertyMiniMap
+                corners={corners}
+                onChange={setCorners}
+                readOnly={effectiveMode === "view"}
+                hoveredCornerIdx={hoveredCornerIdx}
+                onCornerHover={setHoveredCornerIdx}
+                showAngles={showAngles}
+              />
+            </ErrorBoundary>
+          </div>
+        </div>
+        {/* Slice #18.03b: Street View panel — mounted only while open so the
+            (billed) panorama and Street View library never load on property
+            open. Full width, directly under the map. */}
+        {showStreetView && !typeConfig.hideStreetView && (
+          <div className="rounded-md border border-card-rim overflow-hidden dark:border-zinc-800" style={{ height: "360px" }}>
+            <ErrorBoundary fallback={<PanelError>{tShared("errorBoundary.streetView")}</PanelError>}>
+              <StreetViewPanel centroid={streetViewCentroid} />
+            </ErrorBoundary>
+          </div>
+        )}
+
+      </div>{/* end Slice #21.05.misc layout */}
 
       {/* Slice #20.16: Theater overlay — full-screen map portal. Rendered above
           everything via document.body so no layout shift occurs. Dismiss via
@@ -966,8 +1025,63 @@ export function PropertyForm({
         </p>
       )}
 
-      {/* Action buttons — hidden in view mode (incl. any read-only historical version) */}
-      {effectiveMode !== "view" && (
+      {/* Action buttons. In true read-only view (opened via ?readonly=true from
+          an association list) show a Back-to-list button (left) + Modify
+          button (right). Once Modify is clicked (associatedEditing), it shows
+          Back-to-list (left) + Save/Delete (right) — no Cancel (Back-to-list
+          covers that). When effectiveMode is "view" only because an earlier
+          historical version is being viewed (mode is still "edit"), show
+          nothing here — the version nav arrows are the way back, matching the
+          natural/judicial person forms' convention. */}
+      {effectiveMode === "view" ? (
+        mode === "view" && (
+          <div className="flex items-center justify-between border-t border-crease pt-6 dark:border-zinc-800">
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className="inline-flex items-center gap-1.5 rounded-md border border-wire bg-white px-5 py-2 text-[0.9375rem] font-semibold text-navy shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:text-blue-300 dark:hover:bg-zinc-800"
+            >
+              <NavArrowIcon dir="left" />
+              <span>{tShared("readonlyView.backToList")}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setAssociatedEditing(true)}
+              className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+            >
+              {t("buttons.modify")}
+            </button>
+          </div>
+        )
+      ) : mode === "view" ? (
+        <div className="flex items-center justify-between border-t border-crease pt-6 dark:border-zinc-800">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="inline-flex items-center gap-1.5 rounded-md border border-wire bg-white px-5 py-2 text-[0.9375rem] font-semibold text-navy shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:text-blue-300 dark:hover:bg-zinc-800"
+          >
+            <NavArrowIcon dir="left" />
+            <span>{tShared("readonlyView.backToList")}</span>
+          </button>
+          <div className="flex items-center gap-3">
+            <button
+              type="submit"
+              disabled={saveDisabled}
+              className="inline-flex items-center rounded-md bg-cta px-5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {t("buttons.save")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowCannotDelete(true)}
+              disabled={submitting}
+              className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-red-600 shadow-sm hover:bg-red-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-red-950/30"
+            >
+              {t("buttons.delete")}
+            </button>
+          </div>
+        </div>
+      ) : (
         <div className="flex items-center justify-center gap-3 border-t border-crease pt-6 dark:border-zinc-800">
           <button
             type="submit"
@@ -1023,6 +1137,20 @@ export function PropertyForm({
           busy={submitting}
         />
       )}
+
+      {/* Slice #21.04.Import: an associated property can't be deleted from
+          this (readonly-opened) page — it must be disassociated first, then
+          deleted from its own page via the left navigation panel. Info-only
+          dialog (no noLabel/onNo) — a single OK button dismisses it. */}
+      {showCannotDelete && (
+        <ConfirmDialog
+          title={t("cannotDeleteAssociated.title")}
+          body={t("cannotDeleteAssociated.body")}
+          yesLabel={t("cannotDeleteAssociated.ok")}
+          onYes={() => setShowCannotDelete(false)}
+          busy={false}
+        />
+      )}
     </form>
     </FieldPulseContext.Provider>
   );
@@ -1031,34 +1159,6 @@ export function PropertyForm({
 // ---------------------------------------------------------------------------
 // Shared presentational helpers (mirrors natural-person-form pattern)
 // ---------------------------------------------------------------------------
-
-const COLUMNS_CLASS: Record<1 | 2 | 3 | 4, string> = {
-  1: "grid grid-cols-1 gap-2",
-  2: "grid grid-cols-1 gap-2 sm:grid-cols-2",
-  3: "grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3",
-  4: "grid grid-cols-2 gap-2 md:grid-cols-4",
-};
-
-function Section({
-  title,
-  columns = 2,
-  children,
-}: {
-  title:    string;
-  columns?: 1 | 2 | 3 | 4;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-      <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
-        {title}
-      </h2>
-      <div className={COLUMNS_CLASS[columns]}>
-        {children}
-      </div>
-    </section>
-  );
-}
 
 type FieldProps = {
   label:      string;
@@ -1147,6 +1247,20 @@ function SelectField({
       <span className="w-24 shrink-0 font-medium text-ink dark:text-zinc-300">{label}</span>
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <select
+          // Bug fix: `options` loads asynchronously (useQuery). This <select>
+          // is uncontrolled — react-hook-form's `register` assigns the DOM
+          // element's initial value once, at mount/ref-attach time. If that
+          // happens before `options` has arrived (e.g. a hard/direct
+          // navigation with a cold query cache), no <option> matches the
+          // real value yet, the browser silently drops the selection, and
+          // once the real options are appended afterwards the browser
+          // defaults to the first one — which visually looks like the field
+          // got reset, even though the underlying form value never changed.
+          // Keying on whether options have loaded forces a clean remount
+          // once they arrive, so register's initial-value assignment runs
+          // again against the now-populated list and the select displays the
+          // correct option instead of the first list entry.
+          key={options.length > 0 ? "loaded" : "loading"}
           {...register(name)}
           aria-invalid={error ? true : undefined}
           className={[
@@ -1186,11 +1300,15 @@ function ConfirmDialog({
   title:    string;
   body:     string;
   yesLabel: string;
-  noLabel:  string;
+  // Slice #21.04.Import: noLabel/onNo are optional — omitting both renders a
+  // single-button info dialog (e.g. "can't delete from here") instead of a
+  // yes/no confirmation.
+  noLabel?: string;
   onYes:    () => void;
-  onNo:     () => void;
+  onNo?:    () => void;
   busy:     boolean;
 }) {
+  const isConfirm = !!noLabel && !!onNo;
   return (
     <div
       role="dialog"
@@ -1204,19 +1322,25 @@ function ConfirmDialog({
         </h3>
         <p className="mt-2 text-sm text-fade dark:text-zinc-400">{body}</p>
         <div className="mt-5 flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={onNo}
-            disabled={busy}
-            className="inline-flex items-center rounded-md border border-wire bg-white px-4 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-          >
-            {noLabel}
-          </button>
+          {isConfirm && (
+            <button
+              type="button"
+              onClick={onNo}
+              disabled={busy}
+              className="inline-flex items-center rounded-md border border-wire bg-white px-4 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+            >
+              {noLabel}
+            </button>
+          )}
           <button
             type="button"
             onClick={onYes}
             disabled={busy}
-            className="inline-flex items-center rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 disabled:opacity-50"
+            className={
+              isConfirm
+                ? "inline-flex items-center rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 disabled:opacity-50"
+                : "inline-flex items-center rounded-md bg-cta px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-cta-d disabled:opacity-50"
+            }
           >
             {yesLabel}
           </button>
