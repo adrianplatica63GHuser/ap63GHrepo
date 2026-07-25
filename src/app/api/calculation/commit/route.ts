@@ -36,6 +36,7 @@ import { createGroup, updateGroup } from "@/lib/groups/queries";
 import { createProperty } from "@/lib/properties/queries";
 import { patchEntityMetadata } from "@/lib/metadata/queries";
 import { createServerClient } from "@/lib/supabase/server";
+import { inferProvenance } from "@/lib/metadata/provenance-rules";
 
 function round2(n: number): number {
   return Math.round(n * 100) / 100;
@@ -173,17 +174,23 @@ export async function POST(request: NextRequest): Promise<Response> {
       createdBy,
     });
 
-    // Slice #20.09: set provenance = 'ALGORITHM' on every created property's
-    // entity_metadata row (upsert — creates the row if it doesn't exist yet).
-    await Promise.all(
-      runOutputs.map((o) =>
-        patchEntityMetadata(
-          o.principalObjectId,
-          { field: "provenance", value: "ALGORITHM" },
-          createdBy,
+    // Slice #20.09: set provenance on every created property's entity_metadata
+    // row (upsert — creates the row if it doesn't exist yet).
+    // Slice #21.07.Import: the value now comes from the shared rule table
+    // instead of a bare 'ALGORITHM' literal, so this route cannot drift away
+    // from the code set the DB CHECK constraint enforces.
+    const calculationProvenance = inferProvenance("CALCULATION");
+    if (calculationProvenance) {
+      await Promise.all(
+        runOutputs.map((o) =>
+          patchEntityMetadata(
+            o.principalObjectId,
+            { field: "provenance", value: calculationProvenance },
+            createdBy,
+          ),
         ),
-      ),
-    );
+      );
+    }
 
     return Response.json(
       {

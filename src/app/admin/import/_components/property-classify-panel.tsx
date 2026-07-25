@@ -6,6 +6,10 @@
  * Reuses the existing /api/properties/parse-text + POST /api/properties
  * endpoints (same ones AddPropertyDialog's text-file flow already uses).
  * The filename (minus extension) becomes the new property's nickname.
+ *
+ * Provenance (Slice #21.07.Import): unambiguous by definition here - this
+ * branch exists only to build a Property out of a parsed coordinate file - so
+ * the rule fires and the field is read-only. The user is never asked.
  */
 
 import { useState } from "react";
@@ -14,6 +18,8 @@ import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { NavArrowIcon } from "@/components/back-arrow";
 import { useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-provider";
+import { inferProvenance } from "@/lib/metadata/provenance-rules";
+import { ProvenanceField } from "./provenance-field";
 
 type Corner = { lat: number; lon: number; originalIndex?: number | null };
 
@@ -40,11 +46,13 @@ async function callParseTextApi(file: File): Promise<Corner[]> {
   return data.corners ?? [];
 }
 
+const PROPERTY_PROVENANCE = inferProvenance("COORDINATE_FILE");
+
 async function callCreateProperty(corners: Corner[], nickname: string): Promise<string> {
   const res = await fetch("/api/properties", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ corners, nickname }),
+    body: JSON.stringify({ corners, nickname, provenance: PROPERTY_PROVENANCE }),
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
@@ -125,6 +133,8 @@ export function PropertyClassifyPanel({ file, onBack, onClassified, onClose }: P
           className="w-full min-w-0 flex-1 rounded-md border border-wire bg-white px-2 py-1 text-sm shadow-sm focus:border-focus focus:outline-none disabled:bg-canvas dark:border-zinc-700 dark:bg-zinc-950"
         />
       </label>
+
+      <ProvenanceField inferred={PROPERTY_PROVENANCE} value="" onChange={() => {}} />
 
       {error && (
         <p className="text-sm text-red-600 dark:text-red-400" role="alert">

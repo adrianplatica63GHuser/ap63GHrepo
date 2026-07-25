@@ -47,6 +47,7 @@ import { VersionNavControls } from "@/components/version-nav-controls";
 import { FieldPulseContext, usePulseRing } from "@/components/versioning/field-pulse";
 import { highlightRingClass } from "@/lib/versioning/highlight-ring";
 import { safeMutate } from "@/lib/api/safe-mutate";
+import { inferProvenance } from "@/lib/metadata/provenance-rules";
 
 // ---------------------------------------------------------------------------
 // Version history fetch (Slice #18.02)
@@ -531,9 +532,17 @@ export function PropertyForm({
           ? "/api/properties"
           : `/api/properties/${encodeURIComponent(propertyId!)}`;
       const method = mode === "create" ? "POST" : "PATCH";
+      // Slice #21.07.Import — Adrian's rule: an entity created through the
+      // "Add new" form has provenance MANUAL. Sent only on create; a PATCH must
+      // never rewrite provenance, which the user owns from the References tab
+      // once the record exists.
+      const requestBody =
+        mode === "create"
+          ? { ...payload, provenance: inferProvenance("MANUAL_FORM") }
+          : payload;
       await safeMutate(
         url,
-        { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) },
+        { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(requestBody) },
         t,
       );
       await queryClient.invalidateQueries({ queryKey: ["properties"] });

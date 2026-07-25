@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import type { QueryResultItem } from "@/app/api/admin/metadata-query/route";
+import { PROVENANCE_VALUES } from "@/lib/metadata/provenance";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -12,14 +13,11 @@ import type { QueryResultItem } from "@/app/api/admin/metadata-query/route";
 
 const IMPORTANCE_VALUES  = ["LOW", "MEDIUM", "HIGH"] as const;
 const RELEVANCE_VALUES   = ["INACTIVE", "HISTORICAL", "CURRENT", "FUTURE"] as const;
-const PROVENANCE_VALUES  = [
-  "TEXT_FILE",
-  "ALGORITHM",
-  "SCAN_OCR",
-  "MANUAL_ENTRY",
-  "EXTERNAL_DB",
-  "OTHER",
-] as const;
+// PROVENANCE_VALUES comes from @/lib/metadata/provenance (Slice #21.07.Import).
+// It used to be a local literal here that had drifted away from the DB CHECK
+// constraint entirely - SCAN_OCR / MANUAL_ENTRY / EXTERNAL_DB / OTHER are not
+// and never were storable values, so those filter options could never match a
+// single row.
 const ENTITY_TYPES       = ["PERSON", "PROPERTY", "DOCUMENT"] as const;
 const PERSON_SUBTYPES    = ["NATURAL", "JUDICIAL"] as const;
 

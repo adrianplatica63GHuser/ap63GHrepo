@@ -15,9 +15,22 @@
  *   - Other extractable docs → offer "Extract Fields" and update the record.
  *
  * The concurrency limit is 3 in-flight import operations at a time.
+ *
+ * Provenance (Slice #21.07.Import): each entry's provenance is inferred from
+ * its own file extension(s) - a page-group of scans and a single .jpg are IMAGE,
+ * a .pdf/.doc/.txt is DOC_FILE. A folder can hold anything, though, so entries
+ * whose extension is unrecognised (or a page-group mixing kinds) cannot be
+ * inferred; those hold the import at a gate that asks once, up front, rather
+ * than importing them with a guessed or empty provenance. When every entry is
+ * inferable - the normal case - the gate never appears and the import starts on
+ * mount exactly as before.
+ *
+ * The two follow-up creations in the results panel are unambiguous and never
+ * ask: a Property built from a coordinate file is COORDINATE_FILE, and a Person
+ * built from AI-extracted ID-card fields is AI_INTERPRETED.
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import {
@@ -34,6 +47,12 @@ import {
   type SavedImportSession,
 } from "@/lib/import/session";
 import type { ScanResult } from "./scan-table";
+import {
+  inferProvenance,
+  inferProvenanceForFiles,
+} from "@/lib/metadata/provenance-rules";
+import type { ProvenanceCode } from "@/lib/metadata/provenance";
+import { ProvenanceField } from "./provenance-field";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -84,6 +103,20 @@ type Props = {
 // ---------------------------------------------------------------------------
 
 const CONCURRENCY = 3;
+
+// ---------------------------------------------------------------------------
+// Provenance helpers  (Slice #21.07.Import)
+// ---------------------------------------------------------------------------
+
+/**
+ * The file name(s) an entry will be built from — a page-group carries one per
+ * image handle, a plain file carries its own. Used only to read extensions.
+ */
+function entryFileNames(entry: FSEntry): string[] {
+  return entry.kind === "page-group"
+    ? (entry as FSPageGroupEntry).handles.map((h) => h.name)
+    : [(entry as FSFileEntry).name];
+}
 
 async function withConcurrencyLimit<T>(
   tasks: (() => Promise<T>)[],
@@ -277,6 +310,7 @@ async function ensureDocType(
 async function createDocument(payload: {
   documentTypeId?: string | null;
   title?: string | null;
+  provenance: ProvenanceCode;
 }): Promise<{ id: string; principalObjectId: string }> {
   const res = await fetch("/api/documents", {
     method: "POST",
@@ -284,6 +318,7 @@ async function createDocument(payload: {
     body: JSON.stringify({
       documentTypeId: payload.documentTypeId ?? null,
       title: payload.title ?? null,
+      provenance: payload.provenance,
     }),
   });
   if (res.redirected) throw new Error("session-expired");
@@ -354,6 +389,8 @@ async function createProperty(payload: {
       corners:   payload.corners,
       tarlaSola: payload.tarlaSola ?? null,
       parcela:   payload.parcela   ?? null,
+      // Built from a parsed cadastral coordinate file - Adrian's rule.
+      provenance: inferProvenance("COORDINATE_FILE"),
     }),
   });
   if (!res.ok) {
@@ -393,6 +430,8 @@ async function createNaturalPersonFromFields(
       cnp: fields.cnp ?? null,
       idCardSeries: fields.idCardSeries ?? null,
       idCardNumber: fields.idCardNumber ?? null,
+      // Every field here came out of the AI extraction - Adrian's rule.
+      provenance: inferProvenance("AI_EXTRACTION"),
     }),
   });
   if (!res.ok) {
@@ -416,6 +455,7 @@ export function BulkImportDialog({
   onClose,
 }: Props) {
   const t = useTranslations("adminImport.wizard.importDialog");
+  const tprov = useTranslations("adminImport.provenance");
   const router = useRouter();
 
   const [results, setResults] = useState<ImportResult[]>(() =>
@@ -428,6 +468,55 @@ export function BulkImportDialog({
   const abortRef = useRef(false);
   const [aiState, setAiState] = useState<AiState | null>(null);
   const [parsedCorners, setParsedCorners] = useState<unknown[] | null>(null);
+
+  // ── Provenance (Slice #21.07.Import) ──────────────────────────────────────
+  //
+  // Inference is a pure function of the entry list, which is stable for this
+  // dialog's lifetime, so it is computed once with useMemo rather than held in
+  // state. Entries that come back null are the ones the gate asks about.
+  const inferredProvenance = useMemo(() => {
+    const map = new Map<string, ProvenanceCode | null>();
+    for (const entry of entries) {
+      map.set(entry.path, inferProvenanceForFiles(entryFileNames(entry)));
+    }
+    return map;
+    // `entries` is stable for the lifetime of this dialog.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const ambiguousEntries = useMemo(
+    () => entries.filter((e) => inferredProvenance.get(e.path) == null),
+    // as above — both inputs are stable.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [inferredProvenance],
+  );
+
+  /** User's answers for the ambiguous entries, keyed by entry path. */
+  const [pickedProvenance, setPickedProvenance] = useState<Record<string, ProvenanceCode | "">>({});
+
+  // The gate is open only while at least one ambiguous entry is unanswered.
+  // With nothing ambiguous it starts closed and the import runs on mount,
+  // exactly as it did before this slice.
+  const [gatePassed, setGatePassed] = useState(ambiguousEntries.length === 0);
+
+  const allAmbiguousAnswered = ambiguousEntries.every(
+    (e) => (pickedProvenance[e.path] ?? "") !== "",
+  );
+
+  /**
+   * Final provenance for an entry: the inferred value, or the user's answer.
+   * Never returns null once the gate has been passed — the gate is exactly the
+   * guarantee that every ambiguous entry has been answered.
+   */
+  const provenanceForEntry = useCallback(
+    (entry: FSEntry): ProvenanceCode | null =>
+      inferredProvenance.get(entry.path) ?? (pickedProvenance[entry.path] || null),
+    [inferredProvenance, pickedProvenance],
+  );
+
+  // Read by the import effect, which must not re-run when the picks change.
+  const provenanceRef = useRef(provenanceForEntry);
+  provenanceRef.current = provenanceForEntry;
 
   const updateResult = useCallback(
     (path: string, patch: Partial<ImportResult>) =>
@@ -448,6 +537,11 @@ export function BulkImportDialog({
   // ---------------------------------------------------------------------------
 
   useEffect(() => {
+    // Slice #21.07.Import: hold everything until every ambiguous entry has a
+    // provenance. Returning early (rather than never mounting the effect) keeps
+    // the existing StrictMode-safe `mounted` pattern intact.
+    if (!gatePassed) return;
+
     let mounted = true;
     let fallbackDocTypeId: string;
     let docTypeMap: Record<string, string> = {};
@@ -495,10 +589,18 @@ export function BulkImportDialog({
             fallbackDocTypeId,
           );
 
-          // 3. Create the Document record
+          // 3. Create the Document record.
+          //    Provenance is inferred from the entry's own file extension(s);
+          //    the gate above guarantees a value exists by the time we get
+          //    here, so the fallback branch is defensive only.
+          const entryProvenance = provenanceRef.current(entry);
+          if (!entryProvenance) {
+            throw new Error(tprov("required"));
+          }
           const { id: docId, principalObjectId } = await createDocument({
             documentTypeId: resolvedTypeId,
             title,
+            provenance: entryProvenance,
           });
 
           // 4. Upload file(s) as pages
@@ -555,9 +657,11 @@ export function BulkImportDialog({
 
     return () => { mounted = false; };
     // entries and rootFolderName are stable for the lifetime of this dialog;
-    // updateResult is a stable useCallback reference.
+    // updateResult is a stable useCallback reference; the per-entry provenance
+    // is read through provenanceRef so answering the gate does not restart an
+    // import that is already running.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [gatePassed]);
 
   useEffect(() => {
     if (done) router.refresh();
@@ -899,8 +1003,74 @@ export function BulkImportDialog({
           </div>
         )}
 
+        {/* Provenance gate (Slice #21.07.Import) — shown only when at least one
+            entry's provenance could not be inferred from its file extension.
+            Nothing is imported until every listed entry has an answer. */}
+        {!gatePassed && (
+          <div className="flex-1 overflow-y-auto px-5 py-4 min-h-0">
+            <h3 className="text-sm font-semibold text-ink dark:text-zinc-100">
+              {tprov("gateTitle")}
+            </h3>
+            <p className="mt-1 text-xs text-fade dark:text-zinc-400">{tprov("gateIntro")}</p>
+
+            <table className="mt-3 w-full text-sm">
+              <tbody>
+                {ambiguousEntries.map((entry) => (
+                  <tr key={entry.path} className="border-b border-crease dark:border-zinc-700">
+                    <td className="py-1.5 pr-3">
+                      <span className="block truncate" title={entry.path}>
+                        {entry.kind === "page-group"
+                          ? entry.titleHint
+                          : (entry as FSFileEntry).name}
+                      </span>
+                    </td>
+                    <td className="w-56 py-1.5">
+                      <ProvenanceField
+                        inferred={null}
+                        value={pickedProvenance[entry.path] ?? ""}
+                        onChange={(value) =>
+                          setPickedProvenance((prev) => ({ ...prev, [entry.path]: value }))
+                        }
+                        compact
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            <div className="mt-4 flex items-center justify-between gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  // "Apply to all" copies the first answered value down the
+                  // list — the common case is a folder of one odd file type.
+                  const first = ambiguousEntries
+                    .map((e) => pickedProvenance[e.path])
+                    .find((v): v is ProvenanceCode => !!v);
+                  if (!first) return;
+                  setPickedProvenance(
+                    Object.fromEntries(ambiguousEntries.map((e) => [e.path, first])),
+                  );
+                }}
+                className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm font-medium text-ink hover:bg-canvas disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+              >
+                {tprov("gateApplyAll")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setGatePassed(true)}
+                disabled={!allAmbiguousAnswered}
+                className="rounded-md bg-cta px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-cta-d disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {tprov("gateContinue")}
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Progress bar (shown while importing) */}
-        {!done && (
+        {gatePassed && !done && (
           <div className="px-5 py-3 border-b border-card-rim dark:border-zinc-700">
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs text-fade">{t("progressLabel", { done: doneCount + errorCount, total: totalCount })}</span>
@@ -919,6 +1089,7 @@ export function BulkImportDialog({
         )}
 
         {/* Results table */}
+        {gatePassed && (
         <div className="flex-1 overflow-y-auto px-5 py-4 min-h-0">
           {/* AI panel (inline, above results) */}
           {aiState && (
@@ -954,6 +1125,7 @@ export function BulkImportDialog({
             </tbody>
           </table>
         </div>
+        )}
       </div>
     </div>
   );

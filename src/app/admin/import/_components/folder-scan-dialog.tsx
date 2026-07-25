@@ -31,6 +31,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { type FSFileHandle } from "./file-system-types";
+import { inferProvenance } from "@/lib/metadata/provenance-rules";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -206,6 +207,12 @@ async function callCreateDocument(
       dateDocument: fields.dateDocument ?? null,
       subject: fields.subject ?? null,
       notes: fields.notes ?? null,
+      // Slice #21.07.Import: every field above was produced by the
+      // extract-document AI call, so AI_INTERPRETED describes this record more
+      // truthfully than the graphics file it was read from would. (Contrast the
+      // bulk-import path, which files the same kind of image as-is with nothing
+      // extracted, and is therefore IMAGE.)
+      provenance: inferProvenance("AI_EXTRACTION"),
     }),
   });
   if (!res.ok) {

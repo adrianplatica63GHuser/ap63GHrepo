@@ -283,11 +283,17 @@
       "delete": "Delete",
       "cancel": "Cancel",
       "yes": "Yes",
-      "no": "No"
+      "no": "No",
+      "modify": "Modify"
     },
     "confirmDelete": {
       "title": "Delete property?",
       "body": "Are you sure you want to delete this property? This cannot be undone."
+    },
+    "cannotDeleteAssociated": {
+      "title": "Can't delete from here",
+      "body": "This property can't be deleted from this screen. You must first disassociate it from the record you opened it from, then open it from the left navigation panel and delete it there.",
+      "ok": "OK"
     },
     "table": {
       "code": "Code",
@@ -633,18 +639,20 @@
         "title": "Provenience",
         "note": "Records how this item entered the system. Each change is logged in the history below with the date it was recorded.",
         "placeholder": "— select —",
-        "manual": "Manual",
-        "imageUpload": "Image / PDF",
-        "textFile": "Text file",
-        "algorithm": "Algorithm",
+        "manual": "Manual (Add new)",
+        "image": "Image (graphics)",
+        "docFile": "PDF/DOC/TXT",
+        "coordinateFile": "Coordinate file (.txt)",
+        "algorithm": "Calculated (algorithm)",
         "aiInterpreted": "AI interpretation",
-        "externalImport": "External import",
+        "externalFeed": "External feed",
         "statementManual": "This item was entered manually using the Add new button — all data was typed in directly by a user.",
-        "statementImageUpload": "This item was created by attaching a file (image, PDF or scanned document). The file is stored as-is — the nickname was taken from the filename and the code was auto-assigned. No content was extracted and no manual data entry took place.",
-        "statementTextFile": "This item was imported from a structured text file containing coordinates or field data.",
+        "statementImage": "This item was created from a graphics file (a scan or a photo). The image is stored as-is — the nickname was taken from the filename and the code was auto-assigned. No content was extracted from the image.",
+        "statementDocFile": "This item was created from a PDF, Word or plain-text file. The file is stored as-is; no content was extracted from it automatically.",
+        "statementCoordinateFile": "This item was created from a cadastral coordinate file (.txt) — the Stereo 70 corner coordinates were read from the file and used to build the geometry.",
         "statementAlgorithm": "This item was generated automatically by an algorithm (e.g. polygon division or geometric computation).",
         "statementAiInterpreted": "This item was interpreted by an AI model from an image or document via a cloud API — the result should be reviewed by a person.",
-        "statementExternalImport": "This item was imported from an external system or database — verify the source and accuracy of the data.",
+        "statementExternalFeed": "This item arrived from an external system or data feed — verify the source and accuracy of the data.",
         "algorithmSource": "Source calculation",
         "algorithmViewRun": "View calculation",
         "algorithmNotFound": "Source calculation not found (may have been deleted).",
@@ -741,6 +749,9 @@
       "relevanceLabel": "Relevance:",
       "allRelevances": "All",
       "expiringSoon": "Expiring soon"
+    },
+    "readonlyView": {
+      "backToList": "Back to list"
     }
   },
   "naturalPerson": {
@@ -838,11 +849,17 @@
       "delete": "Delete",
       "cancel": "Cancel",
       "yes": "Yes",
-      "no": "No"
+      "no": "No",
+      "modify": "Modify"
     },
     "confirmDelete": {
       "title": "Delete person?",
       "body": "Are you sure you want to delete this person?"
+    },
+    "cannotDeleteAssociated": {
+      "title": "Can't delete from here",
+      "body": "This person can't be deleted from this screen. You must first disassociate them from the record you opened them from, then open them from the left navigation panel and delete them there.",
+      "ok": "OK"
     },
     "hints": {
       "cnpLocked": "CNP cannot be changed once set — delete and recreate to change",
@@ -941,11 +958,17 @@
       "delete": "Delete",
       "cancel": "Cancel",
       "yes": "Yes",
-      "no": "No"
+      "no": "No",
+      "modify": "Modify"
     },
     "confirmDelete": {
       "title": "Delete judicial person?",
       "body": "Are you sure you want to delete this judicial person?"
+    },
+    "cannotDeleteAssociated": {
+      "title": "Can't delete from here",
+      "body": "This judicial person can't be deleted from this screen. You must first disassociate it from the record you opened it from, then open it from the left navigation panel and delete it there.",
+      "ok": "OK"
     },
     "hints": {
       "cuiLocked": "CUI cannot be changed once set — delete and recreate to change",
@@ -968,7 +991,8 @@
       "propertyList": "Properties List",
       "propertyMap": "Properties Map",
       "document": "Documents",
-      "administration": "Administration"
+      "administrationOperations": "Administration Operations",
+      "administrationSetup": "Administration Setup"
     },
     "items": {
       "naturalPerson": "Natural Person",
@@ -995,11 +1019,12 @@
       "titluProprietate": "Property Title",
       "users": "Users & Access",
       "referenceData": "Reference Data",
-      "import": "Import",
-      "calculation": "Calculation",
-      "globalSearch": "Global search",
-      "export": "Export",
-      "helpContent": "Help information",
+      "import": "Import to the System",
+      "preImportVerification": "Pre-Import Verification",
+      "postImportReport": "Post-Import Report",
+      "calculation": "Calculation of a Side Road",
+      "globalSearch": "Global Search",
+      "helpContent": "Help Information",
       "settings": "Settings"
     },
     "collapse": "Collapse sidebar",
@@ -1141,7 +1166,8 @@
       "notes": "Notes",
       "validUntil": "Validity",
       "surveyor": "Surveyor",
-      "customFields": "Document-type-specific fields"
+      "customFields": "Document-type-specific fields",
+      "fees": "Fees"
     },
     "fields": {
       "code": "Code",
@@ -1199,11 +1225,17 @@
       "yes": "Yes",
       "no": "No",
       "aiInterpret": "AI Interpret",
-      "aiInterpreted": "Already AI-processed"
+      "aiInterpreted": "Already AI-processed",
+      "modify": "Modify"
     },
     "confirmDelete": {
       "title": "Delete document?",
       "body": "Are you sure you want to delete this document? This cannot be undone."
+    },
+    "cannotDeleteAssociated": {
+      "title": "Can't delete from here",
+      "body": "This document can't be deleted from this screen. You must first disassociate it from the record you opened it from, then open it from the left navigation panel and delete it there.",
+      "ok": "OK"
     },
     "tabs": {
       "details": "Details",
@@ -1245,6 +1277,42 @@
       "associating": "Associating…",
       "cancel": "Cancel",
       "noSelection": "Select at least one person"
+    },
+    "aiPartyLinker": {
+      "title": "Confirm people from this document",
+      "subtitle": "Person {current} of {total}",
+      "close": "Close",
+      "typeNatural": "Natural person",
+      "typeJudicial": "Judicial person",
+      "fieldName": "Name",
+      "fieldCnp": "CNP",
+      "fieldCui": "CUI",
+      "fieldIdNumber": "ID document no.",
+      "fieldIdAuthority": "Issued by",
+      "fieldDomiciliu": "Address",
+      "fromDocumentTitle": "From the document",
+      "existingPersonTitle": "In the system",
+      "exactMatchTitle": "Existing person found",
+      "exactMatchBody": "Confirm this is the same person before linking — compare the details below carefully, for example the ID card number.",
+      "sameQuestion": "Is this the same person?",
+      "confirmLink": "Yes, link this person",
+      "createInsteadOfMatch": "No, create a new person instead",
+      "possibleMatchesTitle": "Possible matches (unconfirmed)",
+      "possibleMatchesBody": "These are name matches only, not confirmed by an ID document — review carefully before linking.",
+      "linkThis": "Link this one",
+      "noneOfThese": "None of these — create new",
+      "roleMissingTitle": "Role not configured",
+      "roleMissingBody": "The role \"{roleName}\" is not set up for this document type yet. Ask an administrator to add it in Reference Data → Document Persons, then re-run AI Interpret to link this person.",
+      "noMatchTitle": "No existing match found",
+      "noMatchBody": "A new person will be created with the extracted details.",
+      "createAndLink": "Create & link",
+      "skip": "Skip",
+      "linking": "Linking…",
+      "creating": "Creating…",
+      "linkError": "Could not link this person. Please try again.",
+      "createError": "Could not create this person. Please try again.",
+      "summary": "{linked} linked, {created} created, {skipped} skipped.",
+      "addedNote": "These people have also been added to the Persons tab of this document."
     },
     "successionParties": {
       "sectionTitle": "Parties",
@@ -1607,6 +1675,17 @@
     }
   },
   "adminImport": {
+    "provenance": {
+      "label": "Provenience",
+      "autoNote": "Set automatically by the system",
+      "askNote": "The system cannot determine how this item originated — please choose.",
+      "placeholder": "— select —",
+      "required": "Select a provenience before continuing.",
+      "gateTitle": "Unknown provenience",
+      "gateIntro": "The system cannot determine the provenience of the files below. Choose one for each, then continue the import.",
+      "gateApplyAll": "Apply to all",
+      "gateContinue": "Continue import"
+    },
     "pageTitle": "Import",
     "browser": {
       "chooseFolderButton": "Choose folder…",
@@ -2039,12 +2118,13 @@
       "FUTURE": "Future"
     },
     "provenanceValues": {
-      "TEXT_FILE": "Text file",
-      "ALGORITHM": "Algorithm",
-      "SCAN_OCR": "Scan / OCR",
-      "MANUAL_ENTRY": "Manual entry",
-      "EXTERNAL_DB": "External DB",
-      "OTHER": "Other"
+      "MANUAL": "Manual (Add new)",
+      "IMAGE": "Image (graphics)",
+      "DOC_FILE": "PDF/DOC/TXT",
+      "COORDINATE_FILE": "Coordinate file (.txt)",
+      "ALGORITHM": "Calculated (algorithm)",
+      "AI_INTERPRETED": "AI interpretation",
+      "EXTERNAL_FEED": "External feed"
     },
     "table": {
       "code": "Code",

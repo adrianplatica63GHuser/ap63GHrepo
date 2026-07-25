@@ -283,11 +283,17 @@
       "delete": "Șterge",
       "cancel": "Anulează",
       "yes": "Da",
-      "no": "Nu"
+      "no": "Nu",
+      "modify": "Modifică"
     },
     "confirmDelete": {
       "title": "Ștergeți proprietatea?",
       "body": "Sigur doriți să ștergeți această proprietate? Acțiunea nu poate fi anulată."
+    },
+    "cannotDeleteAssociated": {
+      "title": "Nu se poate șterge de aici",
+      "body": "Această proprietate nu poate fi ștearsă din acest ecran. Trebuie mai întâi să o disociați de înregistrarea din care a fost deschisă, apoi să o deschideți din panoul de navigare din stânga și să o ștergeți de acolo.",
+      "ok": "OK"
     },
     "table": {
       "code": "Cod",
@@ -633,18 +639,20 @@
         "title": "Proveniență",
         "note": "Înregistrează modul în care acest element a intrat în sistem. Fiecare modificare este consemnată în istoricul de mai jos împreună cu data la care a fost înregistrată.",
         "placeholder": "— selectează —",
-        "manual": "Manual",
-        "imageUpload": "Imagine / PDF",
-        "textFile": "Fișier text",
-        "algorithm": "Algoritm",
+        "manual": "Manual (Adaugă nou)",
+        "image": "Imagine (grafică)",
+        "docFile": "PDF/DOC/TXT",
+        "coordinateFile": "Fișier de coordonate (.txt)",
+        "algorithm": "Calculat (algoritm)",
         "aiInterpreted": "Interpretare AI",
-        "externalImport": "Import extern",
+        "externalFeed": "Flux extern",
         "statementManual": "Acest element a fost introdus manual folosind butonul Adaugă nou — toate datele au fost completate direct de un utilizator.",
-        "statementImageUpload": "Acest element a fost creat prin atașarea unui fișier (imagine, PDF sau document scanat). Fișierul este stocat ca atare — porecla a fost preluată din numele fișierului, codul a fost generat automat. Nu a fost extrasă nicio informație și nu a existat intervenție manuală.",
-        "statementTextFile": "Acest element a fost importat dintr-un fișier text structurat care conținea coordonate sau date câmp.",
+        "statementImage": "Acest element a fost creat dintr-un fișier grafic (o scanare sau o fotografie). Imaginea este stocată ca atare — porecla a fost preluată din numele fișierului, iar codul a fost generat automat. Nu a fost extras niciun conținut din imagine.",
+        "statementDocFile": "Acest element a fost creat dintr-un fișier PDF, Word sau text simplu. Fișierul este stocat ca atare; nu a fost extras automat niciun conținut din el.",
+        "statementCoordinateFile": "Acest element a fost creat dintr-un fișier cadastral de coordonate (.txt) — coordonatele colțurilor în Stereo 70 au fost citite din fișier și folosite pentru construirea geometriei.",
         "statementAlgorithm": "Acest element a fost generat automat de un algoritm (ex: divizare poligon sau calcul geometric).",
         "statementAiInterpreted": "Acest element a fost interpretat de un model AI dintr-o imagine sau document prin intermediul unui API cloud — rezultatul trebuie verificat de o persoană.",
-        "statementExternalImport": "Acest element a fost importat dintr-un sistem sau bază de date externă — verificați sursa și exactitatea datelor.",
+        "statementExternalFeed": "Acest element a provenit dintr-un sistem sau flux de date extern — verificați sursa și exactitatea datelor.",
         "algorithmSource": "Calcul sursă",
         "algorithmViewRun": "Vezi calculul",
         "algorithmNotFound": "Calculul sursă nu a fost găsit (posibil șters).",
@@ -741,6 +749,9 @@
       "relevanceLabel": "Relevanță:",
       "allRelevances": "Toate",
       "expiringSoon": "Expiră curând"
+    },
+    "readonlyView": {
+      "backToList": "Înapoi la listă"
     }
   },
   "naturalPerson": {
@@ -838,11 +849,17 @@
       "delete": "Șterge",
       "cancel": "Anulează",
       "yes": "Da",
-      "no": "Nu"
+      "no": "Nu",
+      "modify": "Modifică"
     },
     "confirmDelete": {
       "title": "Ștergeți persoana?",
       "body": "Sunteți sigur că doriți să ștergeți această persoană?"
+    },
+    "cannotDeleteAssociated": {
+      "title": "Nu se poate șterge de aici",
+      "body": "Această persoană nu poate fi ștearsă din acest ecran. Trebuie mai întâi să o disociați de înregistrarea din care a fost deschisă, apoi să o deschideți din panoul de navigare din stânga și să o ștergeți de acolo.",
+      "ok": "OK"
     },
     "hints": {
       "cnpLocked": "CNP-ul nu poate fi modificat odată setat — ștergeți și creați din nou pentru a-l schimba",
@@ -941,11 +958,17 @@
       "delete": "Șterge",
       "cancel": "Anulează",
       "yes": "Da",
-      "no": "Nu"
+      "no": "Nu",
+      "modify": "Modifică"
     },
     "confirmDelete": {
       "title": "Ștergeți persoana juridică?",
       "body": "Sunteți sigur că doriți să ștergeți această persoană juridică?"
+    },
+    "cannotDeleteAssociated": {
+      "title": "Nu se poate șterge de aici",
+      "body": "Această persoană juridică nu poate fi ștearsă din acest ecran. Trebuie mai întâi să o disociați de înregistrarea din care a fost deschisă, apoi să o deschideți din panoul de navigare din stânga și să o ștergeți de acolo.",
+      "ok": "OK"
     },
     "hints": {
       "cuiLocked": "CUI-ul nu poate fi modificat odată setat — ștergeți și creați din nou pentru a-l schimba",
@@ -968,7 +991,8 @@
       "propertyList": "Proprietăți — Listă",
       "propertyMap": "Proprietăți — Hartă",
       "document": "Acte",
-      "administration": "Administrare"
+      "administrationOperations": "Administrare Operațiuni",
+      "administrationSetup": "Administrare Configurare"
     },
     "items": {
       "naturalPerson": "Persoană Fizică",
@@ -995,10 +1019,11 @@
       "titluProprietate": "Titlu de Proprietate",
       "users": "Utilizatori & Acces",
       "referenceData": "Date de referință",
-      "import": "Import",
-      "calculation": "Calcul",
+      "import": "Import în sistem",
+      "preImportVerification": "Verificare pre-import",
+      "postImportReport": "Raport post-import",
+      "calculation": "Calcul drum lateral",
       "globalSearch": "Căutare globală",
-      "export": "Export",
       "helpContent": "Informații de ajutor",
       "settings": "Setări"
     },
@@ -1141,7 +1166,8 @@
       "notes": "Observații",
       "validUntil": "Valabilitate",
       "surveyor": "Topograf / Cadastrist",
-      "customFields": "Câmpuri specifice tipului de document"
+      "customFields": "Câmpuri specifice tipului de document",
+      "fees": "Taxe și onorarii"
     },
     "fields": {
       "code": "Cod",
@@ -1199,11 +1225,17 @@
       "yes": "Da",
       "no": "Nu",
       "aiInterpret": "Interpretează AI",
-      "aiInterpreted": "Deja procesat de AI"
+      "aiInterpreted": "Deja procesat de AI",
+      "modify": "Modifică"
     },
     "confirmDelete": {
       "title": "Ștergeți actul?",
       "body": "Sigur doriți să ștergeți acest act? Acțiunea nu poate fi anulată."
+    },
+    "cannotDeleteAssociated": {
+      "title": "Nu se poate șterge de aici",
+      "body": "Acest act nu poate fi șters din acest ecran. Trebuie mai întâi să îl disociați de înregistrarea din care a fost deschis, apoi să îl deschideți din panoul de navigare din stânga și să îl ștergeți de acolo.",
+      "ok": "OK"
     },
     "tabs": {
       "details": "Detalii",
@@ -1245,6 +1277,42 @@
       "associating": "Se asociază…",
       "cancel": "Anulează",
       "noSelection": "Selectați cel puțin o persoană"
+    },
+    "aiPartyLinker": {
+      "title": "Confirmați persoanele din acest document",
+      "subtitle": "Persoana {current} din {total}",
+      "close": "Închide",
+      "typeNatural": "Persoană fizică",
+      "typeJudicial": "Persoană juridică",
+      "fieldName": "Nume",
+      "fieldCnp": "CNP",
+      "fieldCui": "CUI",
+      "fieldIdNumber": "Nr. act identitate",
+      "fieldIdAuthority": "Emis de",
+      "fieldDomiciliu": "Adresă",
+      "fromDocumentTitle": "Din document",
+      "existingPersonTitle": "În sistem",
+      "exactMatchTitle": "Persoană existentă găsită",
+      "exactMatchBody": "Confirmați că este aceeași persoană înainte de a o asocia — comparați atent detaliile de mai jos, de exemplu seria/numărul actului de identitate.",
+      "sameQuestion": "Este aceeași persoană?",
+      "confirmLink": "Da, asociază această persoană",
+      "createInsteadOfMatch": "Nu, creează o persoană nouă",
+      "possibleMatchesTitle": "Potriviri posibile (neconfirmate)",
+      "possibleMatchesBody": "Acestea sunt potriviri doar după nume, neconfirmate printr-un act de identitate — verificați atent înainte de a asocia.",
+      "linkThis": "Asociază aceasta",
+      "noneOfThese": "Niciuna dintre acestea — creează nouă",
+      "roleMissingTitle": "Rol neconfigurat",
+      "roleMissingBody": "Rolul „{roleName}” nu este configurat încă pentru acest tip de document. Cereți unui administrator să-l adauge în Date de referință → Persoane document, apoi rulați din nou Interpretează AI pentru a asocia această persoană.",
+      "noMatchTitle": "Nicio potrivire găsită",
+      "noMatchBody": "Se va crea o persoană nouă cu detaliile extrase.",
+      "createAndLink": "Creează și asociază",
+      "skip": "Omite",
+      "linking": "Se asociază…",
+      "creating": "Se creează…",
+      "linkError": "Asocierea a eșuat. Încercați din nou.",
+      "createError": "Crearea a eșuat. Încercați din nou.",
+      "summary": "{linked} asociate, {created} create, {skipped} omise.",
+      "addedNote": "Aceste persoane au fost adăugate și în tab-ul Persoane al acestui document."
     },
     "successionParties": {
       "sectionTitle": "Părți",
@@ -1607,6 +1675,17 @@
     }
   },
   "adminImport": {
+    "provenance": {
+      "label": "Proveniență",
+      "autoNote": "Stabilită automat de sistem",
+      "askNote": "Sistemul nu poate stabili proveniența acestui element — alegeți una.",
+      "placeholder": "— selectați —",
+      "required": "Selectați proveniența înainte de a continua.",
+      "gateTitle": "Proveniență necunoscută",
+      "gateIntro": "Pentru fișierele de mai jos sistemul nu poate stabili proveniența. Alegeți câte una pentru fiecare, apoi continuați importul.",
+      "gateApplyAll": "Aplică tuturor",
+      "gateContinue": "Continuă importul"
+    },
     "pageTitle": "Import",
     "browser": {
       "chooseFolderButton": "Alege folder…",
@@ -2039,12 +2118,13 @@
       "FUTURE": "Viitor"
     },
     "provenanceValues": {
-      "TEXT_FILE": "Fișier text",
-      "ALGORITHM": "Algoritm",
-      "SCAN_OCR": "Scanare / OCR",
-      "MANUAL_ENTRY": "Introducere manuală",
-      "EXTERNAL_DB": "Bază de date externă",
-      "OTHER": "Altele"
+      "MANUAL": "Manual (Adaugă nou)",
+      "IMAGE": "Imagine (grafică)",
+      "DOC_FILE": "PDF/DOC/TXT",
+      "COORDINATE_FILE": "Fișier de coordonate (.txt)",
+      "ALGORITHM": "Calculat (algoritm)",
+      "AI_INTERPRETED": "Interpretare AI",
+      "EXTERNAL_FEED": "Flux extern"
     },
     "table": {
       "code": "Cod",

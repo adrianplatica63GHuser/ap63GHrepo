@@ -16,6 +16,8 @@ import {
   propertyCreateSchema,
   propertyListQuerySchema,
 } from "@/lib/properties/validation";
+import { provenanceFromRequestBody } from "@/lib/metadata/provenance";
+import { setInitialProvenance } from "@/lib/metadata/queries";
 import { createServerClient } from "@/lib/supabase/server";
 
 export async function GET(request: NextRequest): Promise<Response> {
@@ -81,6 +83,15 @@ export async function POST(request: NextRequest): Promise<Response> {
     const supabase = await createServerClient();
     const { data: { user } } = await supabase.auth.getUser();
     const result = await createProperty(parsed.data, user?.email ?? null);
+
+    // Slice #21.07.Import — record how this entity entered the system.
+    // Import paths pass the value their provenance rule inferred (or the one
+    // the user picked when no rule applies); the "Add new" forms pass MANUAL.
+    // Absent/unknown -> no provenance recorded, as before this slice.
+    const provenance = provenanceFromRequestBody(body);
+    if (provenance) {
+      await setInitialProvenance(result.property.principalObjectId, provenance, user?.email ?? null);
+    }
     return Response.json(result, { status: 201 });
   } catch (err) {
     const dbResponse = dbErrorToResponse(err);

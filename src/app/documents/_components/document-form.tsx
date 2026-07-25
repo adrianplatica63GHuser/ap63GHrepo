@@ -12,6 +12,7 @@ import {
   useForm,
   useWatch,
 } from "react-hook-form";
+import { NavArrowIcon } from "@/components/back-arrow";
 import { useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-provider";
 import { UnsavedChangesBanner } from "@/components/unsaved-changes-banner";
 import { safeMutate } from "@/lib/api/safe-mutate";
@@ -39,6 +40,12 @@ import { parseTemplateFields } from "@/lib/documents/template-fields";
 import { PagesPanel, PagesViewerBox, usePagesPanelState } from "./pages-panel";
 import { SuccessionPartiesPanel } from "./succession-parties-panel";
 import { ErrorBoundary, PanelError } from "@/components/error-boundary";
+import { inferProvenance } from "@/lib/metadata/provenance-rules";
+import {
+  AiPartyLinkerDialog,
+  type AiExtractedParty,
+  type AiPartyLinkerSummary,
+} from "./ai-party-linker-dialog";
 
 // ---------------------------------------------------------------------------
 // Document type list — fetched dynamically from the admin-managed
@@ -213,6 +220,14 @@ export function DocumentForm({
   const [submitError,       setSubmitError]       = useState<string | null>(null);
   const [confirmDelete,     setConfirmDelete]     = useState(false);
   const [confirmMakeCurrent, setConfirmMakeCurrent] = useState(false);
+  // Slice #21.04.Import: an associated record (opened via ?readonly=true from
+  // another record's association tab) starts read-only with a "Modify" button;
+  // clicking it flips this on, which makes effectiveMode resolve to "edit"
+  // below without ever changing the `mode` prop itself — `mode === "view"`
+  // keeps meaning "this page's identity is an associated record" throughout,
+  // which is what gates the cannot-delete-from-here dialog further down.
+  const [associatedEditing, setAssociatedEditing] = useState(false);
+  const [showCannotDelete,   setShowCannotDelete]   = useState(false);
 
   // Slice #21.02.Import: AI-Interpret button state.
   // `aiInterpreted` is true once the user has successfully run AI extraction in
@@ -222,6 +237,12 @@ export function DocumentForm({
   const [aiExtracting,  setAiExtracting]    = useState(false);
   const [aiExtractMsg,  setAiExtractMsg]    = useState<string | null>(null);
   const [aiExtractErr,  setAiExtractErr]    = useState<string | null>(null);
+
+  // Slice #21.04.Import (Slice 2) — parties extracted alongside the fields
+  // above, pending admin confirm-or-create via AiPartyLinkerDialog. null =
+  // no dialog open; [] never happens (handleAiInterpret only sets this when
+  // parties.length > 0).
+  const [pendingParties, setPendingParties] = useState<AiExtractedParty[] | null>(null);
 
   // Slice #19.03 — surveyor picker state
   const [surveyorPickerOpen, setSurveyorPickerOpen] = useState(false);
@@ -322,9 +343,16 @@ export function DocumentForm({
   }, [latestVersion, versionByNumber]);
 
   // Any non-latest version is strictly read-only; only the latest is editable
-  // (or stays "view" if opened read-only). Create mode is unaffected.
+  // (or stays "view" if opened read-only, unless Modify was clicked — see
+  // associatedEditing above). Create mode is unaffected.
   const effectiveMode: "create" | "edit" | "view" =
-    isCreate ? "create" : isOnLatest ? mode : "view";
+    isCreate
+      ? "create"
+      : !isOnLatest
+        ? "view"
+        : mode === "edit" || associatedEditing
+          ? "edit"
+          : "view";
 
   // Has the editable latest copy diverged from the loaded baseline?
   const editDirty =
@@ -395,7 +423,7 @@ export function DocumentForm({
   // right. Create mode keeps Save available (zodResolver blocks an invalid
   // submit); view / historical versions hide the button entirely.
   const saveDisabled =
-    submitting || (mode === "edit" && isOnLatest && !editDirty);
+    submitting || ((mode === "edit" || associatedEditing) && isOnLatest && !editDirty);
 
   // doSave performs the API call only (no navigation) so it can be reused by
   // the Save button (onSubmit), the unsaved-changes guard, and "Make Current".
@@ -409,9 +437,17 @@ export function DocumentForm({
           ? "/api/documents"
           : `/api/documents/${encodeURIComponent(documentId!)}`;
       const method = mode === "create" ? "POST" : "PATCH";
+      // Slice #21.07.Import — Adrian's rule: an entity created through the
+      // "Add new" form has provenance MANUAL. Sent only on create; a PATCH must
+      // never rewrite provenance, which the user owns from the References tab
+      // once the record exists.
+      const requestBody =
+        mode === "create"
+          ? { ...payload, provenance: inferProvenance("MANUAL_FORM") }
+          : payload;
       await safeMutate(
         url,
-        { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) },
+        { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(requestBody) },
         t,
       );
       await queryClient.invalidateQueries({ queryKey: ["documents"] });
@@ -443,6 +479,10 @@ export function DocumentForm({
     // bits (e.g. the page title if the document's label changed).
     setBaseline({ values });
     setViewingVersion(null);
+    // Slice #21.04.Import: an associated record reverts to its read-only
+    // presentation (Back to list + Modify) once the edit is saved — Modify
+    // must be clicked again for a further change.
+    if (mode === "view") setAssociatedEditing(false);
     router.refresh();
   };
 
@@ -484,10 +524,13 @@ export function DocumentForm({
         const body = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(body.error ?? `HTTP ${res.status}`);
       }
-      const { fields, customFields, notes } = (await res.json()) as {
+      const { fields, customFields, notes, parties } = (await res.json()) as {
         fields: Record<string, string | null>;
         customFields: Record<string, string | null>;
         notes: string | null;
+        // Slice #21.04.Import (Slice 2) — [] when partyRolesConfigured is
+        // false, i.e. this document type has no roles set up yet.
+        parties: AiExtractedParty[];
       };
 
       // Fill form fields from extracted data.
@@ -528,11 +571,34 @@ export function DocumentForm({
 
       setAiInterpreted(true);
       setAiExtractMsg(t("aiExtractSuccess"));
+
+      // Slice #21.04.Import (Slice 2) — open the confirm-or-create stepper
+      // for any parties the model found. Nothing is linked/created until the
+      // admin confirms each one in the dialog.
+      if (parties.length > 0) setPendingParties(parties);
     } catch (err) {
       setAiExtractErr(err instanceof Error ? err.message : t("aiExtractError"));
     } finally {
       setAiExtracting(false);
     }
+  };
+
+  // Slice #21.04.Import (Slice 2) — called once the dialog has stepped
+  // through every party (or the admin closed it early). Refreshes the
+  // Persons tab (if mounted) and appends a summary to the existing
+  // AI-Interpret success message rather than replacing it.
+  const handlePartyLinkerClose = (summary: AiPartyLinkerSummary) => {
+    setPendingParties(null);
+    if (summary.linked + summary.created > 0) {
+      void queryClient.invalidateQueries({ queryKey: ["document-persons", documentId] });
+    }
+    const summaryText = t("aiPartyLinker.summary", {
+      linked:  summary.linked,
+      created: summary.created,
+      skipped: summary.skipped,
+    });
+    const note = summary.linked + summary.created > 0 ? ` ${t("aiPartyLinker.addedNote")}` : "";
+    setAiExtractMsg((prev) => (prev ? `${prev} ${summaryText}${note}` : `${summaryText}${note}`));
   };
 
   // Page uploads/deletes save immediately via their own API calls (see
@@ -577,6 +643,221 @@ export function DocumentForm({
   const { register, formState } = form;
   const errors = formState.errors;
 
+  // Slice #21.06.misc: the Pages panel moves into a right-hand column next
+  // to the form (instead of stacking full-width below it), stretched to
+  // match the left column's height — but only once there's a document to
+  // show pages for; a brand-new "create" document has no id yet and no
+  // pages, so it keeps the form at full width.
+  const showPagesPanel = mode !== "create" && !!documentId;
+
+  // ── Group-name recognition (Slice #21.06.misc) ─────────────────────────
+  // The layout below gives three template-field group names special
+  // treatment by exact text match (Romanian or English) — Financiar/Taxe și
+  // onorarii pair up side by side at half width, Certificate și referințe
+  // always renders full-width/auto-grow. Any other group name keeps the
+  // generic 2-column rendering, unchanged from before this slice.
+  const isFeesGroup = (label: string) => label === "Taxe și onorarii" || label === "Fees";
+  const isFinancialGroup = (label: string) => label === "Financiar" || label === "Financial";
+  const isCertificatesGroup = (label: string) =>
+    label === "Certificate și referințe" || label === "Certificates and references";
+
+  // Bucket the active type's custom fields by group — same first-appearance
+  // ordering as before this slice — then pick out the three special-cased
+  // groups so the JSX below can lay each out on its own terms.
+  const customFieldGroups: { label: string; fields: typeof templateFields }[] = [];
+  {
+    const byLabel = new Map<string, typeof templateFields>();
+    for (const f of templateFields) {
+      const groupLabel = f.groupRo || f.groupEn || "";
+      let bucket = byLabel.get(groupLabel);
+      if (!bucket) {
+        bucket = [];
+        byLabel.set(groupLabel, bucket);
+        customFieldGroups.push({ label: groupLabel, fields: bucket });
+      }
+      bucket.push(f);
+    }
+  }
+  const feesGroup = customFieldGroups.find((g) => isFeesGroup(g.label));
+  const financialGroup = customFieldGroups.find((g) => isFinancialGroup(g.label));
+  const certificatesGroup = customFieldGroups.find((g) => isCertificatesGroup(g.label));
+  const otherGroups = customFieldGroups.filter(
+    (g) => g !== feesGroup && g !== financialGroup && g !== certificatesGroup,
+  );
+
+  // Renders one custom field's input — shared by every group below.
+  // `forceFullWidthTextarea` is set for Certificate și referințe so every
+  // field there gets Vecinătăți's exact full-width/auto-grow treatment,
+  // regardless of that field's own configured `type`.
+  const renderCustomField = (
+    f: (typeof templateFields)[number],
+    forceFullWidthTextarea = false,
+  ) => {
+    const name = `customFields.${f.key}` as unknown as FieldPath<FormValues>;
+    const fieldLabel = f.labelRo || f.labelEn || f.key;
+    return f.type === "textarea" || forceFullWidthTextarea ? (
+      <TextAreaField
+        key={f.key}
+        label={fieldLabel}
+        name={name}
+        register={register}
+        rows={1}
+        watchValue={watchedValues.customFields?.[f.key]}
+        fullWidth
+      />
+    ) : (
+      <Field
+        key={f.key}
+        label={fieldLabel}
+        name={name}
+        type={f.type === "date" ? "date" : f.type === "number" ? "number" : "text"}
+        register={register}
+      />
+    );
+  };
+
+  // ── Taxe și onorarii — always rendered (Slice #21.06.misc): the 3 fields
+  // moved out of General (Notariat / Nr. act autentic / Data autentificării
+  // — labels per type via cfg.labels), in the order a business user reads
+  // them (who/what act, then when, then the fees tied to it), followed by
+  // any custom fields the active type groups under "Taxe și onorarii" /
+  // "Fees". Uses the matched group's own label when one exists (preserves
+  // the admin's exact wording); falls back to the generic i18n title for
+  // types with no such template group.
+  const feesSection = (
+    <Section key="fees" title={feesGroup?.label || t("sections.fees")} columns={1}>
+      <SelectField
+        label={cfg.labels.institution}
+        name="institutionId"
+        register={register}
+        error={errors.institutionId?.message}
+        options={institutionOptions}
+        highlight={displayHighlights?.institutionId}
+      />
+      <Field
+        label={cfg.labels.nrDocument}
+        name="nrDocument"
+        register={register}
+        error={errors.nrDocument?.message}
+        highlight={displayHighlights?.nrDocument}
+      />
+      <Field
+        label={cfg.labels.dateDocument}
+        name="dateDocument"
+        type="date"
+        register={register}
+        error={errors.dateDocument?.message}
+        highlight={displayHighlights?.dateDocument}
+      />
+      {feesGroup?.fields.map((f) => renderCustomField(f))}
+    </Section>
+  );
+
+  // When the type also defines a "Financiar" group, the two panels pair up
+  // side by side at half width each — the horizontal gap (gap-4) is the
+  // same token as the vertical gap between stacked panels, so together they
+  // align exactly with a regular full-width panel. Otherwise Taxe și
+  // onorarii simply renders alone at full width.
+  const feesOrPairedSection = financialGroup ? (
+    <div className="grid grid-cols-1 items-stretch gap-4 sm:grid-cols-2">
+      <Section title={financialGroup.label} columns={1}>
+        {financialGroup.fields.map((f) => renderCustomField(f))}
+      </Section>
+      {feesSection}
+    </div>
+  ) : (
+    feesSection
+  );
+
+  const formElement = (
+    <form
+      id="document-form"
+      onSubmit={form.handleSubmit(onSubmit)}
+      className="flex flex-col gap-4"
+      noValidate
+    >
+      {/* Slice #18.06: the disabled fieldset wraps ONLY the editable input
+          sections; the version nav lives in the header (portalled), outside
+          this fieldset, so its ◀/▶ buttons stay clickable on read-only
+          historical versions. */}
+      <fieldset disabled={effectiveMode === "view"} className="contents">
+      {/* ── General — code shown inline on the heading line (Slice
+          #21.06.misc: mirrors Person's Identity heading) + type / subject /
+          title / notes. Nr. document / Date / Institution moved out to the
+          always-present Taxe și onorarii panel below, for every document
+          type. ──────────────────────────────────────────────────────────── */}
+      <Section
+        title={t("sections.general")}
+        code={mode !== "create" ? documentCode : undefined}
+        columns={1}
+      >
+        <SelectField
+          label={t("fields.type")}
+          name="documentTypeId"
+          register={register}
+          error={errors.documentTypeId?.message}
+          options={typeOptions.map((opt) => ({
+            value: opt.id,
+            label: opt.name,
+          }))}
+          highlight={displayHighlights?.documentTypeId}
+        />
+        <Field
+          label={t("fields.subject")}
+          name="subject"
+          register={register}
+          error={errors.subject?.message}
+          highlight={displayHighlights?.subject}
+        />
+        <Field
+          label={t("fields.title")}
+          name="title"
+          register={register}
+          error={errors.title?.message}
+          highlight={displayHighlights?.title}
+        />
+        <TextAreaField
+          label={t("fields.notes")}
+          name="notes"
+          register={register}
+          error={errors.notes?.message}
+          maxLength={4000}
+          rows={1}
+          highlight={displayHighlights?.notes}
+          watchValue={watchedValues.notes}
+        />
+      </Section>
+
+      {/* ── Taxe și onorarii (alone or paired with Financiar) ──────────── */}
+      {feesOrPairedSection}
+
+      {/* ── Certificate și referințe — every field forced full-width /
+          auto-grow (Vecinătăți's exact treatment), whatever `type` is
+          configured on it in Reference Data. ──────────────────────────── */}
+      {certificatesGroup && (
+        <Section title={certificatesGroup.label} columns={1}>
+          {certificatesGroup.fields.map((f) => renderCustomField(f, true))}
+        </Section>
+      )}
+
+      {/* ── Any other template groups — unchanged generic 2-column
+          rendering, same as before this slice. ─────────────────────────── */}
+      {otherGroups.map(({ label, fields }) => (
+        <Section key={label || "_ungrouped"} title={label || t("sections.customFields")} columns={2}>
+          {fields.map((f) => renderCustomField(f))}
+        </Section>
+      ))}
+
+      </fieldset>
+
+      {submitError && (
+        <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+          {submitError}
+        </p>
+      )}
+    </form>
+  );
+
   return (
     <FieldPulseContext.Provider value={pulsing}>
     <div className="flex flex-col gap-4">
@@ -602,139 +883,35 @@ export function DocumentForm({
     {/* Slice #20.13: sticky "Modificări nesalvate" banner. */}
     <UnsavedChangesBanner show={editDirty} />
 
-    {/* Slice #20.16: no two-column layout — "Pagini extinse" button opens a
-        full-screen theater overlay portal instead. Single column always. */}
-    {/* id is used by the submit button's form="document-form" attribute below,
-        which lets the button live outside the <form> element (after PagesPanel)
-        while still submitting this form. */}
-    <form
-      id="document-form"
-      onSubmit={form.handleSubmit(onSubmit)}
-      className="flex flex-col gap-4"
-      noValidate
-    >
-      {/* Slice #18.06: the disabled fieldset wraps ONLY the editable input
-          sections; the version nav lives in the header (portalled), outside
-          this fieldset, so its ◀/▶ buttons stay clickable on read-only
-          historical versions. */}
-      <fieldset disabled={effectiveMode === "view"} className="contents">
-      {/* ── General (merged: type selector + common fields + notes) ───── */}
-      <Section title={t("sections.general")} columns={1}>
-        {/* Row 1: Code (half) | Type (half) */}
-        <div className="grid grid-cols-2 gap-2">
-          {mode === "edit" && documentCode && (
-            <ReadOnlyField label={t("fields.code")} value={documentCode} />
-          )}
-          <SelectField
-            label={t("fields.type")}
-            name="documentTypeId"
-            register={register}
-            error={errors.documentTypeId?.message}
-            options={typeOptions.map((opt) => ({
-              value: opt.id,
-              label: opt.name,
-            }))}
-            highlight={displayHighlights?.documentTypeId}
-          />
+    {/* Slice #21.06.misc: the document's own fields sit in the left column;
+        once there's a document to show pages for, the Pages panel sits in a
+        right-hand column stretched to match the left column's height. The
+        "Pagini extinse" button still opens the full-screen theater overlay
+        (portal) below — unchanged by this layout. id is used by the submit
+        button's form="document-form" attribute, which lets the button live
+        outside the <form> element while still submitting this form. */}
+    {/* Slice #21.06.misc: left:right went from 2:1 to 3:2 (grid-cols-5,
+        col-span-3/2) — combined with the wider outer container in
+        document-detail-tabs.tsx, the left panels are ~50% wider and the
+        Pages panel ~100% wider than before this change. */}
+    {showPagesPanel ? (
+      <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-5">
+        <div className="lg:col-span-3">{formElement}</div>
+        <div className="flex flex-col lg:col-span-2">
+          <ErrorBoundary fallback={<PanelError>{tShared("errorBoundary.pages")}</PanelError>}>
+            <PagesPanel
+              documentId={documentId}
+              mode={mode === "view" && !associatedEditing ? "view" : "edit"}
+              state={pagesState}
+              onToggleBigPage={handleToggleBigPage}
+              sidebar
+            />
+          </ErrorBoundary>
         </div>
-        {/* Row 2: Nr. doc (half) | Date (half) */}
-        <div className="grid grid-cols-2 gap-2">
-          <Field
-            label={cfg.labels.nrDocument}
-            name="nrDocument"
-            register={register}
-            error={errors.nrDocument?.message}
-            highlight={displayHighlights?.nrDocument}
-          />
-          <Field
-            label={cfg.labels.dateDocument}
-            name="dateDocument"
-            type="date"
-            register={register}
-            error={errors.dateDocument?.message}
-            highlight={displayHighlights?.dateDocument}
-          />
-        </div>
-        {/* Row 3: Institution dropdown (Slice #18.16.VL: was free-text) */}
-        <SelectField
-          label={cfg.labels.institution}
-          name="institutionId"
-          register={register}
-          error={errors.institutionId?.message}
-          options={institutionOptions}
-          highlight={displayHighlights?.institutionId}
-        />
-        {/* Row 4: Subject / Dispozitie — always visible (Slice #19.03) */}
-        <Field
-          label={t("fields.subject")}
-          name="subject"
-          register={register}
-          error={errors.subject?.message}
-          highlight={displayHighlights?.subject}
-        />
-        {/* Row 5: Short Label */}
-        <Field
-          label={t("fields.title")}
-          name="title"
-          register={register}
-          error={errors.title?.message}
-          highlight={displayHighlights?.title}
-        />
-        {/* Row 5: Enhanced Notes — 3 lines, native vertical scroll on overflow
-            (Slice #21.03.Import Phase 2). Anything AI Interpret can't map to
-            a known field is appended here, formatted, never dropped. */}
-        <TextAreaField
-          label={t("fields.notes")}
-          name="notes"
-          register={register}
-          error={errors.notes?.message}
-          maxLength={4000}
-          rows={3}
-          highlight={displayHighlights?.notes}
-        />
-      </Section>
-
-      {/* ── Type-specific fields (Slice #21.03.Import Phase 3) ──────────────
-          Rendered dynamically from the selected type's template_fields —
-          data, not a hardcoded per-type section. Empty (no template defined
-          yet for this type) → section doesn't render at all. */}
-      {templateFields.length > 0 && (
-        <Section title={t("sections.customFields")} columns={2}>
-          {templateFields.map((f) => {
-            // Double-cast: `FieldPath<FormValues>` is a narrow template-literal
-            // type RHF derives from the schema; a runtime-built string needs
-            // the `unknown` hop so TS doesn't reject the cast as non-overlapping.
-            const name = `customFields.${f.key}` as unknown as FieldPath<FormValues>;
-            const label = f.labelRo || f.labelEn || f.key;
-            return f.type === "textarea" ? (
-              <TextAreaField
-                key={f.key}
-                label={label}
-                name={name}
-                register={register}
-                rows={3}
-              />
-            ) : (
-              <Field
-                key={f.key}
-                label={label}
-                name={name}
-                type={f.type === "date" ? "date" : f.type === "number" ? "number" : "text"}
-                register={register}
-              />
-            );
-          })}
-        </Section>
-      )}
-
-      </fieldset>
-
-      {submitError && (
-        <p className="text-sm text-red-600 dark:text-red-400" role="alert">
-          {submitError}
-        </p>
-      )}
-    </form>
+      </div>
+    ) : (
+      formElement
+    )}
 
     {/* ── Succession Parties panel (CERTIFICAT_MOSTENITOR only) ──────────
          Outside <form> + fieldset so TanStack Query state stays separate
@@ -742,23 +919,8 @@ export function DocumentForm({
     {mode !== "create" && documentId && isMostenitor && (
       <SuccessionPartiesPanel
         documentId={documentId}
-        mode={mode === "view" ? "view" : "edit"}
+        mode={mode === "view" && !associatedEditing ? "view" : "edit"}
       />
-    )}
-
-    {/* ── Pages panel — outside <form> so its TanStack Query re-renders
-         never interfere with React Hook Form state. Only shown once the
-         document has been saved. The "Pagini extinse" button opens a
-         full-screen theater overlay (portal) — no two-column layout. ──── */}
-    {mode !== "create" && documentId && (
-      <ErrorBoundary fallback={<PanelError>{tShared("errorBoundary.pages")}</PanelError>}>
-        <PagesPanel
-          documentId={documentId}
-          mode={mode === "view" ? "view" : "edit"}
-          state={pagesState}
-          onToggleBigPage={handleToggleBigPage}
-        />
-      </ErrorBoundary>
     )}
 
     {/* Slice #20.16: Theater overlay — full-screen pages viewer portal.
@@ -805,10 +967,66 @@ export function DocumentForm({
       document.body
     )}
 
-    {/* ── Action buttons — at the very bottom, full width. Hidden in view mode
-         (incl. any read-only historical version). The submit button uses
-         form="document-form" to target the <form> above. ── */}
-    {effectiveMode !== "view" && (
+    {/* ── Action buttons — at the very bottom, full width. In true read-only
+         view (opened via ?readonly=true from an association list) this shows
+         a Back-to-list button (left) + Modify button (right). Once Modify is
+         clicked (associatedEditing), it shows Back-to-list (left) + Save/
+         Delete (right) — no Cancel (Back-to-list covers that) and no
+         AI-Interpret (not offered on an associated record). When effectiveMode
+         is "view" only because an earlier historical version is being viewed
+         (mode is still "edit"), nothing renders here — the version nav arrows
+         are the way back, matching the person/property forms. The submit
+         button uses form="document-form" to target the <form> above. ── */}
+    {effectiveMode === "view" ? (
+      mode === "view" && (
+        <div className="flex items-center justify-between border-t border-crease pt-6 dark:border-zinc-800">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="inline-flex items-center gap-1.5 rounded-md border border-wire bg-white px-5 py-2 text-[0.9375rem] font-semibold text-navy shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:text-blue-300 dark:hover:bg-zinc-800"
+          >
+            <NavArrowIcon dir="left" />
+            <span>{tShared("readonlyView.backToList")}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setAssociatedEditing(true)}
+            className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+          >
+            {t("buttons.modify")}
+          </button>
+        </div>
+      )
+    ) : mode === "view" ? (
+      <div className="flex items-center justify-between border-t border-crease pt-6 dark:border-zinc-800">
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="inline-flex items-center gap-1.5 rounded-md border border-wire bg-white px-5 py-2 text-[0.9375rem] font-semibold text-navy shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:text-blue-300 dark:hover:bg-zinc-800"
+        >
+          <NavArrowIcon dir="left" />
+          <span>{tShared("readonlyView.backToList")}</span>
+        </button>
+        <div className="flex items-center gap-3">
+          <button
+            type="submit"
+            form="document-form"
+            disabled={saveDisabled}
+            className="inline-flex items-center rounded-md bg-cta px-5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {t("buttons.save")}
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowCannotDelete(true)}
+            disabled={submitting}
+            className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-red-600 shadow-sm hover:bg-red-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-red-950/30"
+          >
+            {t("buttons.delete")}
+          </button>
+        </div>
+      </div>
+    ) : (
       <div className="flex flex-col items-center gap-2 border-t border-crease pt-6 dark:border-zinc-800">
         <div className="flex items-center justify-center gap-3">
           <button
@@ -930,6 +1148,32 @@ export function DocumentForm({
       />
     )}
 
+    {/* Slice #21.04.Import: an associated document can't be deleted from this
+        (readonly-opened) page — it must be disassociated first, then deleted
+        from its own page via the left navigation panel. Info-only dialog
+        (no noLabel/onNo) — a single OK button dismisses it. */}
+    {showCannotDelete && (
+      <ConfirmDialog
+        title={t("cannotDeleteAssociated.title")}
+        body={t("cannotDeleteAssociated.body")}
+        yesLabel={t("cannotDeleteAssociated.ok")}
+        onYes={() => setShowCannotDelete(false)}
+        busy={false}
+      />
+    )}
+
+    {/* Slice #21.04.Import (Slice 2) — AI-detected party confirm-or-create
+        stepper. Opens automatically once handleAiInterpret sees a non-empty
+        parties array; nothing is linked or created until the admin confirms
+        each party one at a time. */}
+    {pendingParties && documentId && (
+      <AiPartyLinkerDialog
+        documentId={documentId}
+        parties={pendingParties}
+        onClose={handlePartyLinkerClose}
+      />
+    )}
+
     {/* Slice #19.03 — surveyor picker dialog */}
     {surveyorPickerOpen && (
       <SurveyorPickerDialog
@@ -961,17 +1205,27 @@ const COLUMNS_CLASS: Record<1 | 2 | 3 | 4, string> = {
 
 function Section({
   title,
+  code,
   columns = 2,
   children,
 }: {
   title:    string;
+  /** Slice #21.06.misc: shown inline on the heading line, mirroring how
+   *  Person's Identity section shows its personCode — used by General to
+   *  show documentCode instead of as its own field row. */
+  code?:    string | null;
   columns?: 1 | 2 | 3 | 4;
   children: React.ReactNode;
 }) {
   return (
     <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-      <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
+      <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
         {title}
+        {code && (
+          <span className="font-mono text-xs font-normal normal-case text-fade dark:text-zinc-500">
+            {code}
+          </span>
+        )}
       </h2>
       <div className={COLUMNS_CLASS[columns]}>
         {children}
@@ -998,6 +1252,9 @@ function Field({ label, name, type = "text", register, error, highlight }: Field
         <input
           type={type}
           {...register(name)}
+          // All content here is Romanian legal/notarial text — the browser's
+          // spell-checker (English by default) flags most of it as errors.
+          spellCheck={false}
           aria-invalid={error ? true : undefined}
           className={[
             "w-full rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none disabled:bg-canvas disabled:text-fade disabled:cursor-default dark:bg-zinc-950 dark:disabled:bg-zinc-800",
@@ -1021,21 +1278,86 @@ function TextAreaField({
   register,
   error,
   maxLength,
-  rows = 3,
+  // Slice #21.06.misc: default dropped from 3 to 1 — `rows` is a hard
+  // *minimum* height (the auto-grow effect can only grow scrollHeight
+  // beyond it, never shrink below it), so a 3-row floor made every short
+  // field look identically tall regardless of how little content it held.
+  // 1 row lets a field genuinely shrink to fit a single short line too.
+  rows = 1,
   highlight,
-}: FieldProps & { maxLength?: number; rows?: number }) {
+  watchValue,
+  fullWidth,
+}: FieldProps & { maxLength?: number; rows?: number; watchValue?: string | null; fullWidth?: boolean }) {
   const ring = usePulseRing(highlight);
+  const registered = register(name);
+  const elRef = useRef<HTMLTextAreaElement | null>(null);
+
+  // Auto-grow to fit content instead of a fixed `rows` box with internal
+  // scroll — full paragraphs (e.g. a boundary/vecinătăți description, or
+  // Enhanced Notes after AI Interpret appends text) are fully visible
+  // without scrolling inside a tiny box. Keyed on `watchValue` (passed by
+  // the caller from form.watch()) rather than a native 'input' listener so
+  // this also resizes when a field is filled programmatically via
+  // form.setValue (AI Interpret), which doesn't dispatch a DOM input event.
+  //
+  // Slice #21.06.misc: a single mount-time measurement could come out wrong
+  // (too small) and then stick forever, since this effect only re-runs when
+  // `watchValue` changes again — not on its own. Two known causes: the
+  // browser may still be showing a fallback font when this first runs (web
+  // fonts load asynchronously; the real font can wrap text differently once
+  // it swaps in), and the element's layout may not have fully settled yet
+  // right after mount. Re-measuring once more on the next animation frame
+  // and again once fonts finish loading fixes both without needing the user
+  // to type something first to trigger a resize.
+  useEffect(() => {
+    const el = elRef.current;
+    if (!el) return;
+    const resize = () => {
+      el.style.height = "auto";
+      el.style.height = `${el.scrollHeight}px`;
+    };
+    resize();
+    let cancelled = false;
+    const raf = requestAnimationFrame(() => {
+      if (!cancelled) resize();
+    });
+    if (typeof document !== "undefined" && document.fonts) {
+      document.fonts.ready.then(() => {
+        if (!cancelled) resize();
+      });
+    }
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(raf);
+    };
+  }, [watchValue]);
+
   return (
-    <label className="flex items-start gap-2 text-sm">
+    <label
+      className={[
+        "flex items-start gap-2 text-sm",
+        // Span both columns of the enclosing 2-column grouped Section, so this
+        // field renders at full section width instead of a half-width cell —
+        // used for longer free-text fields (e.g. vecinătăți) that read better
+        // as wide as Enhanced Notes rather than squeezed into one column.
+        fullWidth ? "sm:col-span-2" : "",
+      ].join(" ")}
+    >
       <span className="w-36 shrink-0 pt-1 font-medium text-ink dark:text-zinc-300">{label}</span>
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <textarea
-          {...register(name)}
+          {...registered}
+          ref={(el) => {
+            registered.ref(el);
+            elRef.current = el;
+          }}
           maxLength={maxLength}
           rows={rows}
+          // Same rationale as Field above — Romanian text, English spell-checker.
+          spellCheck={false}
           aria-invalid={error ? true : undefined}
           className={[
-            "w-full rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none disabled:bg-canvas disabled:text-fade disabled:cursor-default dark:bg-zinc-950 dark:disabled:bg-zinc-800",
+            "w-full resize-none overflow-hidden rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none disabled:bg-canvas disabled:text-fade disabled:cursor-default dark:bg-zinc-950 dark:disabled:bg-zinc-800",
             error
               ? "border-red-500 focus:border-red-600"
               : "border-wire focus:border-focus dark:border-zinc-700",
@@ -1064,6 +1386,20 @@ function SelectField({
       <span className="w-36 shrink-0 font-medium text-ink dark:text-zinc-300">{label}</span>
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <select
+          // Bug fix: `options` loads asynchronously (useQuery). This <select>
+          // is uncontrolled — react-hook-form's `register` assigns the DOM
+          // element's initial value once, at mount/ref-attach time. If that
+          // happens before `options` has arrived (e.g. a hard/direct
+          // navigation with a cold query cache), no <option> matches the
+          // real value yet, the browser silently drops the selection, and
+          // once the real options are appended afterwards the browser
+          // defaults to the first one — which visually looks like the field
+          // got reset, even though the underlying form value never changed.
+          // Keying on whether options have loaded forces a clean remount
+          // once they arrive, so register's initial-value assignment runs
+          // again against the now-populated list and the select displays the
+          // correct option instead of the first list entry.
+          key={options.length > 0 ? "loaded" : "loading"}
           {...register(name)}
           aria-invalid={error ? true : undefined}
           className={[
@@ -1084,17 +1420,6 @@ function SelectField({
         )}
       </div>
     </label>
-  );
-}
-
-function ReadOnlyField({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center gap-2 text-sm">
-      <span className="w-36 shrink-0 font-medium text-ink dark:text-zinc-300">{label}</span>
-      <div className="flex-1 rounded-md border border-wire bg-canvas px-2 py-1 font-mono text-sm text-ink dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-300">
-        {value}
-      </div>
-    </div>
   );
 }
 
@@ -1316,11 +1641,15 @@ function ConfirmDialog({
   title:    string;
   body:     string;
   yesLabel: string;
-  noLabel:  string;
+  // Slice #21.04.Import: noLabel/onNo are optional — omitting both renders a
+  // single-button info dialog (e.g. "can't delete from here") instead of a
+  // yes/no confirmation.
+  noLabel?: string;
   onYes:    () => void;
-  onNo:     () => void;
+  onNo?:    () => void;
   busy:     boolean;
 }) {
+  const isConfirm = !!noLabel && !!onNo;
   return (
     <div
       role="dialog"
@@ -1334,19 +1663,25 @@ function ConfirmDialog({
         </h3>
         <p className="mt-2 text-sm text-fade dark:text-zinc-400">{body}</p>
         <div className="mt-5 flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={onNo}
-            disabled={busy}
-            className="inline-flex items-center rounded-md border border-wire bg-white px-4 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-          >
-            {noLabel}
-          </button>
+          {isConfirm && (
+            <button
+              type="button"
+              onClick={onNo}
+              disabled={busy}
+              className="inline-flex items-center rounded-md border border-wire bg-white px-4 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+            >
+              {noLabel}
+            </button>
+          )}
           <button
             type="button"
             onClick={onYes}
             disabled={busy}
-            className="inline-flex items-center rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 disabled:opacity-50"
+            className={
+              isConfirm
+                ? "inline-flex items-center rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 disabled:opacity-50"
+                : "inline-flex items-center rounded-md bg-cta px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-cta-d disabled:opacity-50"
+            }
           >
             {yesLabel}
           </button>

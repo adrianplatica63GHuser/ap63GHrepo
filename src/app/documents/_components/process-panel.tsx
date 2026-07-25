@@ -106,7 +106,11 @@ export function ProcessPanel({ documentId, principalObjectId }: Props) {
         }
 
         const prov = meta.provenance ?? null;
-        if (prov === "TEXT_FILE") {
+        // Slice #21.07.Import: the marker written by POST
+        // /api/documents/[id]/process is now COORDINATE_FILE (TEXT_FILE was
+        // split into COORDINATE_FILE + DOC_FILE); migration_067 remapped the
+        // stored values, so no legacy "TEXT_FILE" check is needed here.
+        if (prov === "COORDINATE_FILE") {
           setPanelState({ status: "done", provenance: prov });
         } else {
           setPanelState({ status: "ready", provenance: prov });

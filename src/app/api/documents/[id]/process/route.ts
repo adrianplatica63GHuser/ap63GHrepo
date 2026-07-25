@@ -6,7 +6,7 @@
  *
  *  1. Reads the document's first text/plain page file.
  *  2. Parses Stereo 70 coordinate lines (shared parser from stereo70-parse.ts).
- *  3. Atomically claims provenance = TEXT_FILE via SELECT FOR UPDATE inside a
+ *  3. Atomically claims provenance = COORDINATE_FILE via SELECT FOR UPDATE inside a
  *     short DB transaction, so concurrent calls (multiple browser tabs, server
  *     retries) are serialised — only the first through the lock can proceed.
  *  4. Creates a new Property from the parsed corners.
@@ -15,7 +15,7 @@
  *  6. Finds every Document and Person that shares that tag and associates
  *     them all with the newly-created Property.
  *  7. Calls patchEntityMetadata to write the version snapshot + audit trail
- *     (the value is already TEXT_FILE from step 3; this call is idempotent on
+ *     (the value is already COORDINATE_FILE from step 3; this call is idempotent on
  *     the value itself but still writes the entity_metadata_version row).
  *
  * If anything in step 4 fails, a compensating delete removes any orphaned
@@ -26,7 +26,7 @@
  * Errors (4xx):
  *   401  — unauthenticated
  *   404  — document not found
- *   409  — document already processed (provenance = TEXT_FILE, or concurrent
+ *   409  — document already processed (provenance = COORDINATE_FILE, or concurrent
  *            request already claimed it)
  *   422  — no text page found, or fewer than 3 corners parsed
  *   500  — unexpected error
@@ -50,8 +50,10 @@ import {
   addEntityTag,
   listEntityTags,
   patchEntityMetadata,
+  setInitialProvenance,
   findEntitiesByTag,
 } from "@/lib/metadata/queries";
+import { inferProvenance } from "@/lib/metadata/provenance-rules";
 import {
   createProperty,
   associateDocumentsToProperty,
@@ -176,7 +178,13 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
       parcela   = parsedFolder.parcela   ? perToSlash(parsedFolder.parcela)   || null : null;
     }
 
-    // ── 6. Atomically claim provenance = TEXT_FILE ──────────────────────────
+    // NOTE (Slice #21.07.Import): the provenance value doubles as this
+    // route's "already processed" marker, so the COORDINATE_FILE code below is
+    // load-bearing for concurrency, not just for display. If the provenance
+    // value set ever changes again, the 409 check, the claim UPDATE and the
+    // reset in the catch block must all move together - and so must the
+    // matching check in process-panel.tsx.
+    // ── 6. Atomically claim provenance = COORDINATE_FILE ──────────────────────────
     //
     // Design (fix for issue 7.1 — duplicate entity creation on concurrent
     // requests from multiple browser tabs or server-side retries):
@@ -186,10 +194,10 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
     //        NOTHING) so there is always a concrete row to lock.
     //     b) Locks the row with SELECT … FOR UPDATE.  Any concurrent request
     //        for the same document blocks here until this transaction commits.
-    //     c) Re-reads provenance under the lock.  If it is already TEXT_FILE a
+    //     c) Re-reads provenance under the lock.  If it is already COORDINATE_FILE a
     //        prior (or concurrent) request already processed this document → 409.
-    //     d) Sets provenance = TEXT_FILE inside the lock so that the concurrent
-    //        request sees TEXT_FILE when it finally acquires the lock.
+    //     d) Sets provenance = COORDINATE_FILE inside the lock so that the concurrent
+    //        request sees COORDINATE_FILE when it finally acquires the lock.
     //
     // After this transaction commits the property creation is safe: no second
     // request can slip through the lock and create a duplicate property.
@@ -222,17 +230,17 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
           (lockRows.rows[0] as { provenance: string | null } | undefined)
             ?.provenance ?? null;
 
-        if (currentProvenance === "TEXT_FILE") {
+        if (currentProvenance === "COORDINATE_FILE") {
           throw Object.assign(new Error("already-processed"), {
             code: "ALREADY_PROCESSED",
           });
         }
 
         // d) Claim provenance inside the lock — any concurrent request's
-        //    transaction will see TEXT_FILE once this one commits
+        //    transaction will see COORDINATE_FILE once this one commits
         await tx.execute(
           sql`UPDATE entity_metadata
-              SET provenance            = 'TEXT_FILE',
+              SET provenance            = 'COORDINATE_FILE',
                   provenance_updated_at = NOW(),
                   updated_by            = ${updatedBy},
                   updated_at            = NOW()
@@ -245,7 +253,7 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
     } catch (err) {
       if ((err as { code?: string }).code === "ALREADY_PROCESSED") {
         return NextResponse.json(
-          { error: "Document already processed", provenance: "TEXT_FILE" },
+          { error: "Document already processed", provenance: "COORDINATE_FILE" },
           { status: 409 },
         );
       }
@@ -310,6 +318,22 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
         await addEntityTag(propertyPrincipalObjId, tag);
       }
 
+      // ── 7.15  Provenance of the new Property  (Slice #21.07.Import) ───────
+      //
+      // Adrian's rule: "for the property object created from coordinate file
+      // the provenience will be: coordinate file .TXT". Unambiguous, so the
+      // system sets it - the user is never asked here.
+      //
+      // Before this slice the source .txt DOCUMENT got a provenance marker but
+      // the Property built from it got none, which is the gap this closes.
+      //
+      // Best-effort inside setInitialProvenance: the property row is already
+      // committed, so a metadata write failure must not roll the import back.
+      const propertyProvenance = inferProvenance("COORDINATE_FILE");
+      if (propertyProvenance) {
+        await setInitialProvenance(propertyPrincipalObjId, propertyProvenance, updatedBy);
+      }
+
       // Associate all Documents and Persons sharing the property folder tag
       if (propertyTag) {
         const entities = await findEntitiesByTag(propertyTag);
@@ -363,7 +387,7 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
         }
       }
 
-      // Write entity_metadata_version snapshot for the null → TEXT_FILE
+      // Write entity_metadata_version snapshot for the null → COORDINATE_FILE
       // transition.  The value is already set in the DB (step 6), so
       // patchEntityMetadata is idempotent on the field value itself but still
       // triggers appendVersion (which has its own deduplication).
@@ -371,7 +395,7 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
       // (the log rule is "log the OLD value when it changes from non-null").
       await patchEntityMetadata(
         principalObjectId,
-        { field: "provenance", value: "TEXT_FILE" },
+        { field: "provenance", value: "COORDINATE_FILE" },
         updatedBy,
       );
 

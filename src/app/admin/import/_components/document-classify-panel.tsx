@@ -8,6 +8,11 @@
  * file as a page (POST /api/documents/[id]/pages) in selection order
  * (the order the files were clicked in ImportBrowser — preserved in the
  * `files` array passed down from ClassifyDialog).
+ *
+ * Provenance (Slice #21.07.Import): inferred from the selected files' own
+ * extensions - all images -> IMAGE, all PDF/DOC/TXT -> DOC_FILE. A mixed or
+ * unrecognised selection is genuinely ambiguous, so the panel asks and the
+ * Create button stays disabled until the user answers.
  */
 
 import { useState } from "react";
@@ -16,6 +21,9 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { NavArrowIcon } from "@/components/back-arrow";
 import { useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-provider";
+import { inferProvenanceForFiles } from "@/lib/metadata/provenance-rules";
+import type { ProvenanceCode } from "@/lib/metadata/provenance";
+import { ProvenanceField, resolveProvenance } from "./provenance-field";
 
 type Props = {
   files: File[];
@@ -38,11 +46,15 @@ async function fetchDocumentTypes(): Promise<DocumentTypeOption[]> {
   return (body.items ?? []) as DocumentTypeOption[];
 }
 
-async function callCreateDocument(documentTypeId: string, title: string | null): Promise<string> {
+async function callCreateDocument(
+  documentTypeId: string,
+  title: string | null,
+  provenance: ProvenanceCode,
+): Promise<string> {
   const res = await fetch("/api/documents", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ documentTypeId, title }),
+    body: JSON.stringify({ documentTypeId, title, provenance }),
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
@@ -75,6 +87,7 @@ async function callUploadPage(
 export function DocumentClassifyPanel({ files, onBack, onClassified, onClose }: Props) {
   const t = useTranslations("adminImport.classify");
   const td = useTranslations("adminImport.classify.document");
+  const tprov = useTranslations("adminImport.provenance");
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -91,6 +104,11 @@ export function DocumentClassifyPanel({ files, onBack, onClassified, onClose }: 
 
   const [typeId, setTypeId] = useState("");
   const [title, setTitle] = useState("");
+  // Slice #21.07.Import: inferred once from the staged files; `pickedProvenance`
+  // is only consulted when the inference came back null.
+  const inferredProvenance = inferProvenanceForFiles(files.map((f) => f.name));
+  const [pickedProvenance, setPickedProvenance] = useState<ProvenanceCode | "">("");
+  const provenance = resolveProvenance(inferredProvenance, pickedProvenance);
   const [importing, setImporting] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -105,11 +123,15 @@ export function DocumentClassifyPanel({ files, onBack, onClassified, onClose }: 
       setError(td("error"));
       return null;
     }
+    if (!provenance) {
+      setError(tprov("required"));
+      return null;
+    }
     setImporting(true);
     setError(null);
     setProgress(0);
     try {
-      const id = await callCreateDocument(effectiveTypeId, title.trim() || null);
+      const id = await callCreateDocument(effectiveTypeId, title.trim() || null, provenance);
       for (let i = 0; i < files.length; i++) {
         await callUploadPage(id, i + 1, files[i]);
         setProgress(i + 1);
@@ -178,6 +200,13 @@ export function DocumentClassifyPanel({ files, onBack, onClassified, onClose }: 
         />
       </label>
 
+      <ProvenanceField
+        inferred={inferredProvenance}
+        value={pickedProvenance}
+        onChange={setPickedProvenance}
+        disabled={importing}
+      />
+
       <div>
         <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-fade">
           {td("filesLabel")}
@@ -213,7 +242,7 @@ export function DocumentClassifyPanel({ files, onBack, onClassified, onClose }: 
         <button
           type="button"
           onClick={handleCreate}
-          disabled={importing}
+          disabled={importing || !provenance}
           className="inline-flex items-center rounded-md bg-cta px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-cta-d disabled:cursor-not-allowed disabled:opacity-50"
         >
           {importing ? `${td("importing")} (${progress}/${files.length})` : td("importButton")}

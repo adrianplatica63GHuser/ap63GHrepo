@@ -19,6 +19,14 @@
  *     POST /api/documents/[id]/persons (link the two) — the existing
  *     person-detail page already resolves this link into the "ID card" tag
  *     via getPersonIdCardLink().
+ *
+ * Provenance (Slice #21.07.Import): both records are unambiguous, so neither
+ * is asked about. The Person is AI_INTERPRETED - Adrian's rule "for the persons
+ * created from the AI interpretation of a document the provenience will be AI
+ * interpretation" - because every field on the review form came out of the
+ * vision model in step 1, even after the user corrects some of them. The ID-card
+ * Document is IMAGE: it is the scan itself, filed as-is, with nothing extracted
+ * into its own fields.
  */
 
 import { useEffect, useState } from "react";
@@ -36,6 +44,8 @@ import {
 import { NavArrowIcon } from "@/components/back-arrow";
 import { useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-provider";
 import { AddressBlock } from "@/components/address/address-block";
+import { inferProvenance } from "@/lib/metadata/provenance-rules";
+import { ProvenanceField } from "./provenance-field";
 
 // ---------------------------------------------------------------------------
 // Document type list — fetched dynamically from the admin-managed
@@ -130,11 +140,14 @@ function useCitizenshipOptions(): { value: string; label: string }[] {
   return options;
 }
 
+const PERSON_PROVENANCE   = inferProvenance("AI_EXTRACTION");
+const ID_CARD_PROVENANCE  = inferProvenance("IMAGE_FILE");
+
 async function callCreatePerson(payload: ReturnType<typeof toApiPayload>): Promise<string> {
   const res = await fetch("/api/people", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
+    body: JSON.stringify({ ...payload, provenance: PERSON_PROVENANCE }),
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
@@ -153,7 +166,7 @@ async function callCreateIdCardDocument(
   const createRes = await fetch("/api/documents", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ documentTypeId, title }),
+    body: JSON.stringify({ documentTypeId, title, provenance: ID_CARD_PROVENANCE }),
   });
   if (!createRes.ok) {
     const body = await createRes.json().catch(() => ({}));
@@ -414,6 +427,10 @@ export function PersonClassifyPanel({ file, onBack, onClassified, onClose }: Pro
       {lowConfidence.size > 0 && (
         <p className="text-xs text-amber-600 dark:text-amber-400">{tp("lowConfidenceNote")}</p>
       )}
+
+      {/* Slice #21.07.Import — read-only: the Person always comes from the AI
+          reading of the card, so the rule fires and nothing is asked. */}
+      <ProvenanceField inferred={PERSON_PROVENANCE} value="" onChange={() => {}} />
 
       <div className="flex flex-col gap-2">
         <div className="grid grid-cols-2 gap-2">

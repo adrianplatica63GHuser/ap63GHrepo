@@ -27,6 +27,7 @@ import { FieldPulseContext, usePulseRing } from "@/components/versioning/field-p
 import { highlightRingClass } from "@/lib/versioning/highlight-ring";
 import type { HighlightColor } from "@/lib/versioning/field-diff";
 import type { JudicialPersonSnapshot } from "@/lib/judicial-persons/validation";
+import { inferProvenance } from "@/lib/metadata/provenance-rules";
 import {
   computeFieldHighlights,
   emptyFormValues,
@@ -92,6 +93,9 @@ export function JudicialPersonForm({
   versionNavSlot,
 }: Props) {
   const t = useTranslations("judicialPerson");
+  // Shared read-only-view copy (Back to list button + edit hint) — reused
+  // identically across all four entity forms.
+  const tShared = useTranslations("shared.readonlyView");
   const router = useRouter();
   const queryClient = useQueryClient();
   // Hoist here so they aren't called inside JSX (Rules of Hooks).
@@ -108,6 +112,14 @@ export function JudicialPersonForm({
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmMakeCurrent, setConfirmMakeCurrent] = useState(false);
+  // Slice #21.04.Import: an associated record (opened via ?readonly=true from
+  // another record's association tab) starts read-only with a "Modify"
+  // button; clicking it flips this on, which makes effectiveMode resolve to
+  // "edit" below without ever changing the `mode` prop — `mode === "view"`
+  // keeps meaning "this page's identity is an associated record" throughout,
+  // which is what gates the cannot-delete-from-here dialog further down.
+  const [associatedEditing, setAssociatedEditing] = useState(false);
+  const [showCannotDelete, setShowCannotDelete] = useState(false);
 
   // Which contact-person picker is open: 1, 2, or null.
   const [pickerSlot, setPickerSlot] = useState<1 | 2 | null>(null);
@@ -186,8 +198,17 @@ export function JudicialPersonForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [latestVersion, versionByNumber]);
 
+  // Any non-latest version is strictly read-only; only the latest is editable
+  // (or stays "view" if opened read-only, unless Modify was clicked — see
+  // associatedEditing above). Create mode is unaffected.
   const effectiveMode: "create" | "edit" | "view" =
-    isCreate ? "create" : isOnLatest ? mode : "view";
+    isCreate
+      ? "create"
+      : !isOnLatest
+        ? "view"
+        : mode === "edit" || associatedEditing
+          ? "edit"
+          : "view";
 
   const editDirty =
     !isCreate && isOnLatest && !formValuesEqual(watchedValues, baseline.values);
@@ -247,7 +268,7 @@ export function JudicialPersonForm({
   const saveDisabled =
     submitting ||
     !form.formState.isValid ||
-    (mode === "edit" && isOnLatest && !editDirty);
+    ((mode === "edit" || associatedEditing) && isOnLatest && !editDirty);
 
   const doSave = async (values: FormValues): Promise<boolean> => {
     setSubmitting(true);
@@ -259,9 +280,17 @@ export function JudicialPersonForm({
           ? "/api/judicial-persons"
           : `/api/judicial-persons/${encodeURIComponent(personId!)}`;
       const method = mode === "create" ? "POST" : "PATCH";
+      // Slice #21.07.Import — Adrian's rule: an entity created through the
+      // "Add new" form has provenance MANUAL. Sent only on create; a PATCH must
+      // never rewrite provenance, which the user owns from the References tab
+      // once the record exists.
+      const requestBody =
+        mode === "create"
+          ? { ...payload, provenance: inferProvenance("MANUAL_FORM") }
+          : payload;
       await safeMutate(
         url,
-        { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) },
+        { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(requestBody) },
         t,
       );
       await queryClient.invalidateQueries({ queryKey: ["judicial-persons"] });
@@ -294,6 +323,10 @@ export function JudicialPersonForm({
     // version is visible.
     setBaseline({ values });
     setViewingVersion(null);
+    // Slice #21.04.Import: an associated record reverts to its read-only
+    // presentation (Back to list + Modify) once the edit is saved — Modify
+    // must be clicked again for a further change.
+    if (mode === "view") setAssociatedEditing(false);
     router.refresh();
   };
 
@@ -604,18 +637,44 @@ export function JudicialPersonForm({
         </p>
       )}
 
-      <div className="flex items-center justify-center gap-3 border-t border-crease pt-6 dark:border-zinc-800">
-        {mode === "view" ? (
+      {/* Slice #21.04.Import: in true read-only view (opened via ?readonly=true
+          from an association list) show Back-to-list (left) + Modify (right).
+          Once Modify is clicked (associatedEditing), show Back-to-list (left)
+          + Save/Delete (right) — no Cancel (Back-to-list covers that). When
+          effectiveMode is "view" only because an earlier historical version
+          is being viewed (mode is still "edit"), render nothing — the
+          version nav arrows are the way back. */}
+      {effectiveMode === "view" ? (
+        mode === "view" && (
+          <div className="flex items-center justify-between border-t border-crease pt-6 dark:border-zinc-800">
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className="inline-flex items-center gap-1.5 rounded-md border border-wire bg-white px-5 py-2 text-[0.9375rem] font-semibold text-navy shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:text-blue-300 dark:hover:bg-zinc-800"
+            >
+              <NavArrowIcon dir="left" />
+              <span>{tShared("backToList")}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setAssociatedEditing(true)}
+              className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+            >
+              {t("buttons.modify")}
+            </button>
+          </div>
+        )
+      ) : mode === "view" ? (
+        <div className="flex items-center justify-between border-t border-crease pt-6 dark:border-zinc-800">
           <button
             type="button"
             onClick={() => router.back()}
             className="inline-flex items-center gap-1.5 rounded-md border border-wire bg-white px-5 py-2 text-[0.9375rem] font-semibold text-navy shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:text-blue-300 dark:hover:bg-zinc-800"
           >
             <NavArrowIcon dir="left" />
-            <span>{t("buttons.cancel")}</span>
+            <span>{tShared("backToList")}</span>
           </button>
-        ) : effectiveMode === "view" ? null : (
-          <>
+          <div className="flex items-center gap-3">
             <button
               type="submit"
               disabled={saveDisabled}
@@ -623,27 +682,45 @@ export function JudicialPersonForm({
             >
               {t("buttons.save")}
             </button>
-            {mode === "edit" && (
-              <button
-                type="button"
-                onClick={() => setConfirmDelete(true)}
-                disabled={submitting}
-                className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-red-600 shadow-sm hover:bg-red-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-red-950/30"
-              >
-                {t("buttons.delete")}
-              </button>
-            )}
             <button
               type="button"
-              onClick={onCancel}
+              onClick={() => setShowCannotDelete(true)}
               disabled={submitting}
-              className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+              className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-red-600 shadow-sm hover:bg-red-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-red-950/30"
             >
-              {t("buttons.cancel")}
+              {t("buttons.delete")}
             </button>
-          </>
-        )}
-      </div>
+          </div>
+        </div>
+      ) : (
+        <div className="flex items-center justify-center gap-3 border-t border-crease pt-6 dark:border-zinc-800">
+          <button
+            type="submit"
+            disabled={saveDisabled}
+            className="inline-flex items-center rounded-md bg-cta px-5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {t("buttons.save")}
+          </button>
+          {mode === "edit" && (
+            <button
+              type="button"
+              onClick={() => setConfirmDelete(true)}
+              disabled={submitting}
+              className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-red-600 shadow-sm hover:bg-red-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-red-950/30"
+            >
+              {t("buttons.delete")}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={submitting}
+            className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+          >
+            {t("buttons.cancel")}
+          </button>
+        </div>
+      )}
 
       {confirmDelete && (
         <ConfirmDialog
@@ -669,6 +746,20 @@ export function JudicialPersonForm({
           onYes={handleMakeCurrent}
           onNo={() => setConfirmMakeCurrent(false)}
           busy={submitting}
+        />
+      )}
+
+      {/* Slice #21.04.Import: an associated judicial person can't be deleted
+          from this (readonly-opened) page — it must be disassociated first,
+          then deleted from its own page via the left navigation panel.
+          Info-only dialog (no noLabel/onNo) — a single OK button dismisses it. */}
+      {showCannotDelete && (
+        <ConfirmDialog
+          title={t("cannotDeleteAssociated.title")}
+          body={t("cannotDeleteAssociated.body")}
+          yesLabel={t("cannotDeleteAssociated.ok")}
+          onYes={() => setShowCannotDelete(false)}
+          busy={false}
         />
       )}
 
@@ -1175,11 +1266,15 @@ function ConfirmDialog({
   title: string;
   body: string;
   yesLabel: string;
-  noLabel: string;
+  // Slice #21.04.Import: noLabel/onNo are optional — omitting both renders a
+  // single-button info dialog (e.g. "can't delete from here") instead of a
+  // yes/no confirmation.
+  noLabel?: string;
   onYes: () => void;
-  onNo: () => void;
+  onNo?: () => void;
   busy: boolean;
 }) {
+  const isConfirm = !!noLabel && !!onNo;
   return (
     <div
       role="dialog"
@@ -1196,19 +1291,25 @@ function ConfirmDialog({
         </h3>
         <p className="mt-2 text-sm text-fade dark:text-zinc-400">{body}</p>
         <div className="mt-5 flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={onNo}
-            disabled={busy}
-            className="inline-flex items-center rounded-md border border-wire bg-white px-4 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-          >
-            {noLabel}
-          </button>
+          {isConfirm && (
+            <button
+              type="button"
+              onClick={onNo}
+              disabled={busy}
+              className="inline-flex items-center rounded-md border border-wire bg-white px-4 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+            >
+              {noLabel}
+            </button>
+          )}
           <button
             type="button"
             onClick={onYes}
             disabled={busy}
-            className="inline-flex items-center rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 disabled:opacity-50"
+            className={
+              isConfirm
+                ? "inline-flex items-center rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 disabled:opacity-50"
+                : "inline-flex items-center rounded-md bg-cta px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-cta-d disabled:opacity-50"
+            }
           >
             {yesLabel}
           </button>

@@ -10,6 +10,7 @@ import type { VersionNavView, VersionNavLabels } from "@/components/version-nav-
 import { highlightRingClass } from "@/lib/versioning/highlight-ring";
 import type { HighlightColor } from "@/lib/versioning/field-diff";
 import type { MetadataSnapshot, MetadataVersionItem } from "@/lib/metadata/queries";
+import { PROVENANCE_VALUES, provenanceI18nKey } from "@/lib/metadata/provenance";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -17,14 +18,9 @@ import type { MetadataSnapshot, MetadataVersionItem } from "@/lib/metadata/queri
 
 const IMPORTANCE_VALUES = ["LOW", "MEDIUM", "HIGH"] as const;
 const RELEVANCE_VALUES  = ["INACTIVE", "HISTORICAL", "CURRENT", "FUTURE"] as const;
-const PROVENANCE_VALUES = [
-  "MANUAL",
-  "IMAGE_UPLOAD",
-  "TEXT_FILE",
-  "ALGORITHM",
-  "AI_INTERPRETED",
-  "EXTERNAL_IMPORT",
-] as const;
+// PROVENANCE_VALUES is imported from @/lib/metadata/provenance - the single
+// source of truth shared with the API routes, the import wizard and the DB
+// CHECK constraint (Slice #21.07.Import).
 
 // ---------------------------------------------------------------------------
 // Types
@@ -70,11 +66,6 @@ type Props = {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-/** Convert a DB key like IMAGE_UPLOAD → imageUpload for i18n lookups. */
-function camel(s: string) {
-  return s.toLowerCase().replace(/_([a-z])/g, (_: string, c: string) => c.toUpperCase());
-}
 
 /** Days since an ISO timestamp, or null if no timestamp. */
 function daysSince(isoDate: string | null): number | null {
@@ -1356,7 +1347,7 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
 
   const provenanceOptions = PROVENANCE_VALUES.map((v) => ({
     value: v,
-    label: t(`provenance.${camel(v)}` as Parameters<typeof t>[0]),
+    label: t(`provenance.${provenanceI18nKey(v)}` as Parameters<typeof t>[0]),
   }));
 
   // ── Statement maps ────────────────────────────────────────────────────────
@@ -1374,18 +1365,20 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
     FUTURE:     t("relevance.statementFuture"),
   };
 
-  const provenanceStatements: Record<string, string> = {
-    MANUAL:          t("provenance.statementManual"),
-    IMAGE_UPLOAD:    t("provenance.statementImageUpload"),
-    TEXT_FILE:       t("provenance.statementTextFile"),
-    ALGORITHM:       t("provenance.statementAlgorithm"),
-    AI_INTERPRETED:  t("provenance.statementAiInterpreted"),
-    EXTERNAL_IMPORT: t("provenance.statementExternalImport"),
-  };
+  // Derived from PROVENANCE_VALUES rather than hand-listed, so adding a value
+  // to the shared list cannot leave a code without its explanatory sentence.
+  // "DOC_FILE" -> i18n key "statementDocFile".
+  const provenanceStatements: Record<string, string> = {};
+  for (const v of PROVENANCE_VALUES) {
+    const key = provenanceI18nKey(v);
+    provenanceStatements[v] = t(
+      `provenance.statement${key.charAt(0).toUpperCase()}${key.slice(1)}` as Parameters<typeof t>[0],
+    );
+  }
 
   const provenanceLabelMap: Record<string, string> = {};
   for (const v of PROVENANCE_VALUES) {
-    provenanceLabelMap[v] = t(`provenance.${camel(v)}` as Parameters<typeof t>[0]);
+    provenanceLabelMap[v] = t(`provenance.${provenanceI18nKey(v)}` as Parameters<typeof t>[0]);
   }
 
   // ── Days-since helpers ────────────────────────────────────────────────────

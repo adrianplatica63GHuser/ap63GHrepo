@@ -24,6 +24,8 @@ import { useRouter }        from "next/navigation";
 import Link                 from "next/link";
 import { NavArrowIcon }      from "@/components/back-arrow";
 import { ErrorBoundary, PanelError } from "@/components/error-boundary";
+import { inferProvenance } from "@/lib/metadata/provenance-rules";
+import type { ProvenanceSourceKind } from "@/lib/metadata/provenance-rules";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -84,14 +86,22 @@ async function callParseTextApi(file: File): Promise<Corner[]> {
   return data.corners ?? [];
 }
 
-/** Create one property via the main properties API. */
+/**
+ * Create one property via the main properties API.
+ *
+ * `source` (Slice #21.07.Import) says where the corners came from, so the row
+ * records an honest provenance: the OCR branch scans a graphics file, the two
+ * text branches parse a cadastral coordinate file.
+ */
 async function createProperty(
   corners:  Corner[],
   notes:    string | null,
   nickname: string | null,
+  source:   ProvenanceSourceKind,
 ): Promise<string> {
   const payload: Record<string, unknown> = {
     corners: corners.map((c) => ({ lat: c.lat, lon: c.lon, originalIndex: c.originalIndex ?? null })),
+    provenance: inferProvenance(source),
   };
   if (notes)    payload.notes    = notes;
   if (nickname) payload.nickname = nickname;
@@ -223,7 +233,7 @@ export function AddPropertyDialog({ onClose }: Props) {
     for (let i = 0; i < count; i++) {
       setSavingLabel(t("savingProperties", { count }));
       try {
-        const id = await createProperty(result.properties[i].corners, notesText, null);
+        const id = await createProperty(result.properties[i].corners, notesText, null, "IMAGE_FILE");
         savedIds.push(id);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Save failed");
@@ -291,7 +301,7 @@ export function AddPropertyDialog({ onClose }: Props) {
     setSavingLabel(t("savingProperties", { count: 1 }));
 
     try {
-      await createProperty(corners, null, nickname);
+      await createProperty(corners, null, nickname, "COORDINATE_FILE");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Save failed");
       setStep("upload-text");
@@ -362,7 +372,7 @@ export function AddPropertyDialog({ onClose }: Props) {
 
       const nickname = nicknameFromFilename(name);
       try {
-        const id = await createProperty(corners, null, nickname);
+        const id = await createProperty(corners, null, nickname, "COORDINATE_FILE");
         savedIds.push(id);
       } catch {
         // skip files that fail to save
