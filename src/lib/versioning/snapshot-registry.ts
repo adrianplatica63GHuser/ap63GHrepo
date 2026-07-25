@@ -29,6 +29,12 @@
  * of keys of T (no missing, no extra). It evaluates to `never` when they
  * differ, so assigning `true` to a variable of that type is a TypeScript
  * error — caught at build time.
+ *
+ * The assignment is load-bearing. These checks were originally written as
+ * `declare const _xCheck: AssertExactKeys<...>` with no initialiser, which is
+ * perfectly legal TypeScript even when the type is `never` — so the guard
+ * never fired, and DocumentSnapshot.customFields drifted unnoticed from Slice
+ * #21.03 until Slice #21.07.Import. Keep the `= true`.
  */
 
 import type {
@@ -85,10 +91,10 @@ export const PROPERTY_SNAPSHOT_PROPERTY_KEYS = [
   "notes",
 ] as const satisfies ReadonlyArray<keyof PropertySnapshotProperty>;
 
-declare const _propPropertyCheck: AssertExactKeys<
+const _propPropertyCheck: AssertExactKeys<
   PropertySnapshotProperty,
   typeof PROPERTY_SNAPSHOT_PROPERTY_KEYS
->;
+> = true;
 
 // ---------------------------------------------------------------------------
 // Property address snapshot
@@ -106,10 +112,10 @@ export const PROPERTY_SNAPSHOT_ADDRESS_KEYS = [
   "streetViewStreetLine",
 ] as const satisfies ReadonlyArray<keyof PropertySnapshotAddress>;
 
-declare const _propAddressCheck: AssertExactKeys<
+const _propAddressCheck: AssertExactKeys<
   PropertySnapshotAddress,
   typeof PROPERTY_SNAPSHOT_ADDRESS_KEYS
->;
+> = true;
 
 // ---------------------------------------------------------------------------
 // Property corner snapshot
@@ -123,10 +129,10 @@ export const PROPERTY_SNAPSHOT_CORNER_KEYS = [
   "originalIndex",
 ] as const satisfies ReadonlyArray<keyof PropertySnapshotCorner>;
 
-declare const _propCornerCheck: AssertExactKeys<
+const _propCornerCheck: AssertExactKeys<
   PropertySnapshotCorner,
   typeof PROPERTY_SNAPSHOT_CORNER_KEYS
->;
+> = true;
 
 // ---------------------------------------------------------------------------
 // Natural person snapshot fields
@@ -160,10 +166,10 @@ export const NATURAL_PERSON_SNAPSHOT_FIELDS_KEYS = [
   "correspondenceSameAsHome",
 ] as const satisfies ReadonlyArray<keyof NaturalPersonSnapshotFields>;
 
-declare const _naturalFieldsCheck: AssertExactKeys<
+const _naturalFieldsCheck: AssertExactKeys<
   NaturalPersonSnapshotFields,
   typeof NATURAL_PERSON_SNAPSHOT_FIELDS_KEYS
->;
+> = true;
 
 // ---------------------------------------------------------------------------
 // Person address snapshot (shared by Natural and Judicial)
@@ -180,10 +186,10 @@ export const PERSON_ADDRESS_SNAPSHOT_KEYS = [
   "notes",
 ] as const satisfies ReadonlyArray<keyof PersonAddressSnapshot>;
 
-declare const _personAddressCheck: AssertExactKeys<
+const _personAddressCheck: AssertExactKeys<
   PersonAddressSnapshot,
   typeof PERSON_ADDRESS_SNAPSHOT_KEYS
->;
+> = true;
 
 // ---------------------------------------------------------------------------
 // Judicial person snapshot fields
@@ -202,10 +208,10 @@ export const JUDICIAL_PERSON_SNAPSHOT_FIELDS_KEYS = [
   "correspondenceSameAsHq",
 ] as const satisfies ReadonlyArray<keyof JudicialPersonSnapshotFields>;
 
-declare const _judicialFieldsCheck: AssertExactKeys<
+const _judicialFieldsCheck: AssertExactKeys<
   JudicialPersonSnapshotFields,
   typeof JUDICIAL_PERSON_SNAPSHOT_FIELDS_KEYS
->;
+> = true;
 
 // ---------------------------------------------------------------------------
 // Document snapshot
@@ -234,12 +240,16 @@ export const DOCUMENT_SNAPSHOT_KEYS = [
   "subject",
   "dateValidUntil",
   "surveyorId",
+  // Slice #21.03 (registered in #21.07.Import — it was added to
+  // DocumentSnapshot but never mirrored here; the compile-time guard below was
+  // inert at the time, so nothing caught it).
+  "customFields",
 ] as const satisfies ReadonlyArray<keyof DocumentSnapshot>;
 
-declare const _documentCheck: AssertExactKeys<
+const _documentCheck: AssertExactKeys<
   DocumentSnapshot,
   typeof DOCUMENT_SNAPSHOT_KEYS
->;
+> = true;
 
 // ---------------------------------------------------------------------------
 // Entity metadata snapshot
@@ -253,7 +263,7 @@ export const METADATA_SNAPSHOT_KEYS = [
   "provenance",
 ] as const satisfies ReadonlyArray<keyof MetadataSnapshot>;
 
-declare const _metadataCheck: AssertExactKeys<
+const _metadataCheck: AssertExactKeys<
   MetadataSnapshot,
   typeof METADATA_SNAPSHOT_KEYS
->;
+> = true;

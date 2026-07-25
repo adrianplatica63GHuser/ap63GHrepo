@@ -42,6 +42,10 @@ const EMPTY_SNAP: DocumentSnapshot = {
   subject:           null,
   dateValidUntil:    null,
   surveyorId:        null,
+  // Slice #21.03 added customFields to DocumentSnapshot; this fixture was not
+  // updated with it, so the file no longer type-checked (found by the tsc pass
+  // in Slice #21.07.Import).
+  customFields:      null,
 };
 
 function snap(over: Partial<DocumentSnapshot> = {}): DocumentSnapshot {

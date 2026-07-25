@@ -213,6 +213,9 @@ describe("DOCUMENT_SNAPSHOT_KEYS", () => {
       subject:           null,
       dateValidUntil:    null,
       surveyorId:        null,
+      // Slice #21.03 added customFields to DocumentSnapshot; see the note in
+      // document-versions.test.ts.
+      customFields:      null,
     };
     expect(sortedKeys(dummy)).toEqual(sortedArray(DOCUMENT_SNAPSHOT_KEYS));
   });
