@@ -276,6 +276,43 @@ export async function patchEntityMetadata(
 }
 
 // ---------------------------------------------------------------------------
+// Write — initial provenance on a freshly created entity  (Slice #21.07.Import)
+// ---------------------------------------------------------------------------
+
+/**
+ * Record the provenance of an entity that has just been created.
+ *
+ * Best-effort by design: the entity row is already committed by the time this
+ * runs, so a failure here must NOT turn a successful create into an error
+ * response - that would tell the user their record was not created when in
+ * fact it was. A failure leaves provenance null, which is exactly the
+ * pre-slice behaviour and is fixable from the References tab. Mirrors how
+ * /api/calculation/commit already treats its ALGORITHM write.
+ *
+ * Goes through patchEntityMetadata rather than writing the column directly so
+ * the version snapshot (entity_metadata_version) is appended and the audit
+ * trail stays consistent with every other provenance write.
+ */
+export async function setInitialProvenance(
+  principalObjectId: string,
+  provenance: string,
+  updatedBy?: string | null,
+): Promise<void> {
+  try {
+    await patchEntityMetadata(
+      principalObjectId,
+      { field: "provenance", value: provenance },
+      updatedBy,
+    );
+  } catch (err) {
+    console.error(
+      `setInitialProvenance: failed to record provenance ${provenance} for principal object ${principalObjectId}`,
+      err,
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Write — patch all three fields at once (used by unified "Save" button)
 // ---------------------------------------------------------------------------
 
