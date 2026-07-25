@@ -30,7 +30,11 @@ export default async function EditNaturalPersonPage({ params, searchParams }: Pa
 
   return (
     <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-zinc-950">
-      <main className="mx-auto w-full max-w-3xl px-6 py-4 flex flex-col gap-4">
+      {/* Slice #21.08.misc: the max-w-3xl (768px) cap was removed so the
+          Details tab's two side-by-side panel stacks have room. Matches the
+          Property detail page, which is already uncapped. This widens every
+          tab on this page, not only Details — intended. */}
+      <main className="w-full px-6 py-4 flex flex-col gap-4">
         <PersonDetailTabs
           personId={data.person.id}
           personCode={data.person.code}

@@ -495,6 +495,19 @@ export function NaturalPersonForm({
           outside this fieldset, so its buttons stay clickable. */}
       <fieldset disabled={effectiveMode === "view"} className="flex flex-col gap-4 border-0 m-0 p-0 min-w-0">
 
+      {/* Slice #21.08.misc: the five panels sit in two side-by-side stacks.
+          flex-wrap (NOT an md:/lg:/xl: chain) so the pair collapses to a
+          single column by itself when the viewport cannot fit both at their
+          min width — see the 4-column-grid gotcha in CLAUDE.md. items-start
+          stops the shorter stack stretching to the taller one. min-w-[720px]
+          is the panels' pre-slice width, kept as a floor; flex-1 lets each
+          stack grow past it on a wide window. Same pattern as the Property
+          form Corners/Address row (Slice #21.05.misc). */}
+      <div className="flex flex-row flex-wrap gap-4 items-start">
+
+      {/* ── LEFT STACK — Identity + ID Card ── */}
+      <div className="flex-1 min-w-[720px] flex flex-col gap-4">
+
       {/* Identity — core biographical data */}
       <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
@@ -590,63 +603,6 @@ export function NaturalPersonForm({
             error={errors.notes?.message}
             highlight={displayHighlights?.fields.notes}
           />
-        </div>
-      </section>
-
-      {/* Contact — phones and emails */}
-      <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
-          {t("sections.contact")}
-        </h2>
-        <div className="flex flex-col gap-2">
-          {/* Row 1 (3-col): Personal Phone 1 | Personal Phone 2 | Work Phone */}
-          <div className="grid grid-cols-3 gap-2">
-            <Field
-              label={t("fields.personalPhone1")}
-              name="personalPhone1"
-              register={register}
-              error={errors.personalPhone1?.message}
-              highlight={displayHighlights?.fields.personalPhone1}
-            />
-            <Field
-              label={t("fields.personalPhone2")}
-              name="personalPhone2"
-              register={register}
-              error={errors.personalPhone2?.message}
-              highlight={displayHighlights?.fields.personalPhone2}
-            />
-            <Field
-              label={t("fields.workPhone")}
-              name="workPhone"
-              register={register}
-              error={errors.workPhone?.message}
-              highlight={displayHighlights?.fields.workPhone}
-            />
-          </div>
-          {/* Row 2 (3-col): Personal Email 1 | Personal Email 2 | Work Email */}
-          <div className="grid grid-cols-3 gap-2">
-            <Field
-              label={t("fields.personalEmail1")}
-              name="personalEmail1"
-              register={register}
-              error={errors.personalEmail1?.message}
-              highlight={displayHighlights?.fields.personalEmail1}
-            />
-            <Field
-              label={t("fields.personalEmail2")}
-              name="personalEmail2"
-              register={register}
-              error={errors.personalEmail2?.message}
-              highlight={displayHighlights?.fields.personalEmail2}
-            />
-            <Field
-              label={t("fields.workEmail")}
-              name="workEmail"
-              register={register}
-              error={errors.workEmail?.message}
-              highlight={displayHighlights?.fields.workEmail}
-            />
-          </div>
         </div>
       </section>
 
@@ -770,6 +726,68 @@ export function NaturalPersonForm({
         </div>
       </section>
 
+      </div>{/* end LEFT STACK */}
+
+      {/* ── RIGHT STACK — Contact + Home Address + Correspondence ── */}
+      <div className="flex-1 min-w-[720px] flex flex-col gap-4">
+
+      {/* Contact — phones and emails */}
+      <section className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">
+          {t("sections.contact")}
+        </h2>
+        <div className="flex flex-col gap-2">
+          {/* Row 1 (3-col): Personal Phone 1 | Personal Phone 2 | Work Phone */}
+          <div className="grid grid-cols-3 gap-2">
+            <Field
+              label={t("fields.personalPhone1")}
+              name="personalPhone1"
+              register={register}
+              error={errors.personalPhone1?.message}
+              highlight={displayHighlights?.fields.personalPhone1}
+            />
+            <Field
+              label={t("fields.personalPhone2")}
+              name="personalPhone2"
+              register={register}
+              error={errors.personalPhone2?.message}
+              highlight={displayHighlights?.fields.personalPhone2}
+            />
+            <Field
+              label={t("fields.workPhone")}
+              name="workPhone"
+              register={register}
+              error={errors.workPhone?.message}
+              highlight={displayHighlights?.fields.workPhone}
+            />
+          </div>
+          {/* Row 2 (3-col): Personal Email 1 | Personal Email 2 | Work Email */}
+          <div className="grid grid-cols-3 gap-2">
+            <Field
+              label={t("fields.personalEmail1")}
+              name="personalEmail1"
+              register={register}
+              error={errors.personalEmail1?.message}
+              highlight={displayHighlights?.fields.personalEmail1}
+            />
+            <Field
+              label={t("fields.personalEmail2")}
+              name="personalEmail2"
+              register={register}
+              error={errors.personalEmail2?.message}
+              highlight={displayHighlights?.fields.personalEmail2}
+            />
+            <Field
+              label={t("fields.workEmail")}
+              name="workEmail"
+              register={register}
+              error={errors.workEmail?.message}
+              highlight={displayHighlights?.fields.workEmail}
+            />
+          </div>
+        </div>
+      </section>
+
       <AddressBlock<FormValues>
         title={t("sections.homeAddress")}
         prefix="addresses.HOME"
@@ -824,6 +842,10 @@ export function NaturalPersonForm({
           highlights={displayHighlights?.addresses.CORRESPONDENCE}
         />
       )}
+
+      </div>{/* end RIGHT STACK */}
+
+      </div>{/* end two-stack row */}
 
       </fieldset>{/* end disabled fieldset */}
 
