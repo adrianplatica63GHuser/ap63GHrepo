@@ -1,75 +1,149 @@
 -- ============================================================
--- ga40prj — Full Schema Script (Supabase)
+-- ga40prj -- Full Schema Script (Supabase)
+--
+-- GENERATED FILE -- DO NOT EDIT BY HAND.
+-- Regenerate with:  .\scripts\Export-SupabaseSchema.ps1
+--
+-- Generated : 2026-07-26 08:06
+-- Source    : local Docker database (ga40db @ ga40prj-postgres)
 --
 -- Applies the complete schema from scratch after running
--- supabase_reset.sql. Combines all drizzle migrations
--- (0000–0007), src/db migrations (008–019), and migration 020
--- (Slice #15.05 — paperwork -> document rename).
+-- supabase_reset.sql. Run in the Supabase SQL Editor.
+-- PostGIS must already be enabled in the project.
 --
--- Run in the Supabase SQL Editor.
--- PostGIS must already be enabled in the project
--- (CREATE EXTENSION IF NOT EXISTS postgis).
+-- This file was hand-maintained until Slice #21.09.help.error, by which
+-- point it had drifted to 37 of 49 tables with 21 more missing columns.
+-- It is now generated from the live schema so it cannot drift again.
+-- For an ADDITIVE repair of an existing database (which this file is not --
+-- it assumes an empty schema), use supabase_repair_missing_tables.sql.
 -- ============================================================
 
 CREATE EXTENSION IF NOT EXISTS postgis;
+--
+-- PostgreSQL database dump
+--
 
--- ============================================================
--- FUNCTIONS
--- ============================================================
+-- Dumped from database version 16.4 (Debian 16.4-1.pgdg110+2)
+-- Dumped by pg_dump version 16.4 (Debian 16.4-1.pgdg110+2)
 
--- Reusable trigger: bumps updated_at on every UPDATE.
-CREATE OR REPLACE FUNCTION touch_updated_at() RETURNS trigger AS $$
-BEGIN
-  NEW.updated_at = now();
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
 
--- Lock CNP once set (NULL → value allowed; value → different value blocked).
-CREATE OR REPLACE FUNCTION natural_person_lock_cnp() RETURNS trigger AS $$
-BEGIN
-  IF OLD.cnp IS NOT NULL AND NEW.cnp IS DISTINCT FROM OLD.cnp THEN
-    RAISE EXCEPTION 'CNP cannot be changed once set; delete and recreate the person instead';
-  END IF;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+--
+-- Name: public; Type: SCHEMA; Schema: -; Owner: -
+--
 
--- Lock CUI once set (same pattern as CNP).
-CREATE OR REPLACE FUNCTION judicial_person_lock_cui() RETURNS trigger AS $$
-BEGIN
-  IF OLD.cui_number IS NOT NULL AND NEW.cui_number IS DISTINCT FROM OLD.cui_number THEN
-    RAISE EXCEPTION 'CUI cannot be changed once set; delete and recreate the judicial person instead';
-  END IF;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+CREATE SCHEMA public;
 
--- CNP uniqueness, but only among non-soft-deleted persons (migration_025).
--- A plain partial unique index can't see person.deleted_at (it lives on the
--- parent `person` row, not natural_person), so it would permanently block
--- reusing a CNP after its person was soft-deleted. This trigger joins to
--- `person` and only counts a collision when the existing row's person is
--- not soft-deleted.
-CREATE OR REPLACE FUNCTION natural_person_check_cnp_unique() RETURNS trigger AS $$
-BEGIN
-  IF NEW.cnp IS NOT NULL AND EXISTS (
-    SELECT 1
-    FROM natural_person np
-    JOIN person p ON p.id = np.person_id
-    WHERE np.cnp = NEW.cnp
-      AND np.person_id IS DISTINCT FROM NEW.person_id
-      AND p.deleted_at IS NULL
-  ) THEN
-    RAISE EXCEPTION 'A person with this CNP already exists'
-      USING ERRCODE = '23505';
-  END IF;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
 
--- CUI uniqueness, same pattern as CNP above.
-CREATE OR REPLACE FUNCTION judicial_person_check_cui_unique() RETURNS trigger AS $$
+--
+-- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON SCHEMA public IS 'standard public schema';
+
+
+--
+-- Name: address_kind; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.address_kind AS ENUM (
+    'HOME',
+    'POSTAL',
+    'HEADQUARTERS',
+    'CORRESPONDENCE'
+);
+
+
+--
+-- Name: app_user_role; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.app_user_role AS ENUM (
+    'superuser',
+    'user'
+);
+
+
+--
+-- Name: gender; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.gender AS ENUM (
+    'MALE',
+    'FEMALE'
+);
+
+
+--
+-- Name: group_target_type; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.group_target_type AS ENUM (
+    'PHYSICAL_PERSON',
+    'JUDICIAL_PERSON',
+    'PROPERTY',
+    'DOCUMENT'
+);
+
+
+--
+-- Name: id_document_type; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.id_document_type AS ENUM (
+    'ID_CARD',
+    'PASSPORT'
+);
+
+
+--
+-- Name: person_type; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.person_type AS ENUM (
+    'NATURAL',
+    'JUDICIAL'
+);
+
+
+--
+-- Name: principal_object_type; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.principal_object_type AS ENUM (
+    'PERSON',
+    'PROPERTY',
+    'DOCUMENT'
+);
+
+
+--
+-- Name: user_request_status; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.user_request_status AS ENUM (
+    'pending',
+    'approved',
+    'rejected'
+);
+
+
+--
+-- Name: judicial_person_check_cui_unique(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.judicial_person_check_cui_unique() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
 BEGIN
   IF NEW.cui_number IS NOT NULL AND EXISTS (
     SELECT 1
@@ -84,926 +158,2429 @@ BEGIN
   END IF;
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
--- ============================================================
--- ENUMS
--- ============================================================
 
-CREATE TYPE address_kind AS ENUM ('HOME', 'POSTAL', 'HEADQUARTERS', 'CORRESPONDENCE');
-CREATE TYPE gender AS ENUM ('MALE', 'FEMALE');
-CREATE TYPE id_document_type AS ENUM ('ID_CARD', 'PASSPORT');
-CREATE TYPE person_type AS ENUM ('NATURAL', 'JUDICIAL');
--- NOTE (Slice #15.07): the old hardcoded judicial_type enum is gone.
--- judicial_person.judicial_person_type_id is now a FK to
--- lookup_judicial_person_type (admin-managed via Reference Data) — see below.
--- NOTE (Slice #15.16): the old hardcoded property_type ('LAND') and
--- use_category ('CATEG1'/'CATEG2'/'CATEG3') enums are gone. property.type and
--- property.use_category are now nullable FK columns (property_type_id /
--- use_category_id) to lookup_property_type / lookup_use_category — see below.
--- NOTE (Slice #15.05): the old hardcoded paperwork_type enum is gone.
--- Document "type" is now a FK to lookup_document_type (admin-managed via
--- Reference Data), keyed off an immutable `key` slug column — see below.
-CREATE TYPE principal_object_type AS ENUM ('PERSON', 'PROPERTY', 'DOCUMENT');
-CREATE TYPE user_request_status AS ENUM ('pending', 'approved', 'rejected');
-CREATE TYPE app_user_role AS ENUM ('superuser', 'user');
-
--- ============================================================
--- principal_object  (migration 008)
--- ============================================================
-
-CREATE TABLE principal_object (
-  id          uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  code        text        NOT NULL UNIQUE,
-  object_type principal_object_type NOT NULL,
-  created_at  timestamptz NOT NULL DEFAULT now()
-);
-
-CREATE SEQUENCE principal_object_code_seq START 1;
-
--- ============================================================
--- PERSON domain  (drizzle 0000 + 0004 + migration 018)
--- ============================================================
-
-CREATE TABLE person (
-  id                  uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  principal_object_id uuid        NOT NULL UNIQUE REFERENCES principal_object(id),
-  code                text        NOT NULL UNIQUE,
-  type                person_type NOT NULL,
-  display_name        text        NOT NULL,
-  notes               text,
-  created_at          timestamptz NOT NULL DEFAULT now(),
-  updated_at          timestamptz NOT NULL DEFAULT now(),
-  deleted_at          timestamptz
-);
-
-CREATE TRIGGER person_touch_updated_at
-  BEFORE UPDATE ON person
-  FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
-
--- natural_person ─────────────────────────────────────────────
-CREATE TABLE natural_person (
-  person_id          uuid PRIMARY KEY REFERENCES person(id) ON DELETE CASCADE,
-  first_name         text,
-  last_name          text,
-  nickname           text,
-  cnp                text,
-  id_document_type   id_document_type,
-  id_document_number text,
-  gender             gender,
-  date_of_birth      date,
-  personal_phone_1   text,
-  personal_phone_2   text,
-  work_phone         text,
-  personal_email_1   text,
-  personal_email_2   text,
-  work_email         text,
-  place_of_birth         text,
-  id_issuing_authority    text,
-  id_valid_from           date,
-  id_valid_until          date,
-  id_card_number          text,
-  id_mrz_raw              text,
-  citizenship_id          uuid,
-  CONSTRAINT natural_person_has_name
-    CHECK (first_name IS NOT NULL OR last_name IS NOT NULL),
-  CONSTRAINT natural_person_id_doc_paired
-    CHECK ((id_document_type IS NULL) = (id_document_number IS NULL))
-);
--- NOTE (Slice.17.API.03 / migration_024): natural_person_has_contact
--- ("at least one phone or email required") was dropped — a Person can be
--- saved with no contact fields at all.
-
--- NOTE: CNP uniqueness is enforced by a trigger below
--- (natural_person_check_cnp_unique, migration_025), not a plain unique
--- index — see that function's comment for why.
-
-CREATE TRIGGER natural_person_lock_cnp
-  BEFORE UPDATE ON natural_person
-  FOR EACH ROW EXECUTE FUNCTION natural_person_lock_cnp();
-
-CREATE TRIGGER natural_person_check_cnp_unique
-  BEFORE INSERT OR UPDATE ON natural_person
-  FOR EACH ROW EXECUTE FUNCTION natural_person_check_cnp_unique();
-
--- judicial_person ────────────────────────────────────────────
--- Final state: includes contact_person FK columns from migration 018.
--- judicial_person_type_id FK added below, once lookup_judicial_person_type
--- exists (Slice #15.07; same deferred-FK pattern used for
--- natural_person.citizenship_id further down this file).
-CREATE TABLE judicial_person (
-  person_id                 uuid PRIMARY KEY REFERENCES person(id) ON DELETE CASCADE,
-  name                      text NOT NULL,
-  nickname                  text,
-  judicial_person_type_id   uuid,
-  cui_number                text,
-  trade_register_number     text,
-  -- Contact persons: FK to natural persons. ON DELETE SET NULL.
-  contact_person_1_id       uuid REFERENCES person(id) ON DELETE SET NULL,
-  contact_person_2_id       uuid REFERENCES person(id) ON DELETE SET NULL,
-  -- When true, correspondence address mirrors registered address.
-  correspondence_same_as_hq boolean NOT NULL DEFAULT false
-);
-
--- NOTE: CUI uniqueness is enforced by a trigger below
--- (judicial_person_check_cui_unique, migration_025), not a plain unique
--- index — see that function's comment for why.
-
-CREATE TRIGGER judicial_person_lock_cui
-  BEFORE UPDATE ON judicial_person
-  FOR EACH ROW EXECUTE FUNCTION judicial_person_lock_cui();
-
-CREATE TRIGGER judicial_person_check_cui_unique
-  BEFORE INSERT OR UPDATE ON judicial_person
-  FOR EACH ROW EXECUTE FUNCTION judicial_person_check_cui_unique();
-
--- address ────────────────────────────────────────────────────
-CREATE TABLE address (
-  id          uuid         PRIMARY KEY DEFAULT gen_random_uuid(),
-  person_id   uuid         NOT NULL REFERENCES person(id) ON DELETE CASCADE,
-  kind        address_kind NOT NULL,
-  street_line text,
-  postal_code text,
-  locality    text,
-  county      text,
-  country     text NOT NULL,
-  notes       text,
-  created_at  timestamptz  NOT NULL DEFAULT now(),
-  updated_at  timestamptz  NOT NULL DEFAULT now()
-);
-
-CREATE UNIQUE INDEX address_person_kind_unique ON address (person_id, kind);
-
-CREATE TRIGGER address_touch_updated_at
-  BEFORE UPDATE ON address
-  FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
-
--- person_version — full-snapshot version history (Slice #18.05). One shared
--- table for both subtypes (both FK person.id); snapshot JSON shape differs by
--- person.type. See migration_030_person_versions.sql.
-CREATE TABLE person_version (
-  id             uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  person_id      uuid        NOT NULL REFERENCES person(id) ON DELETE CASCADE,
-  version_number integer     NOT NULL,
-  snapshot       jsonb       NOT NULL,
-  created_at     timestamptz NOT NULL DEFAULT now()
-);
-
-CREATE UNIQUE INDEX person_version_person_number_unique
-  ON person_version (person_id, version_number);
-
--- ============================================================
--- PROPERTY domain  (drizzle 0001)
--- ============================================================
-
-CREATE TABLE property (
-  id                  uuid          PRIMARY KEY DEFAULT gen_random_uuid(),
-  principal_object_id uuid          NOT NULL UNIQUE REFERENCES principal_object(id),
-  code                text          NOT NULL UNIQUE,
-  -- property_type_id / use_category_id: nullable FKs to lookup_property_type /
-  -- lookup_use_category. Those tables are created further down, so the FK
-  -- constraints are added via ALTER TABLE after them (deferred-FK pattern,
-  -- same as natural_person.citizenship_id). Slice #15.16.
-  property_type_id    uuid,
-  nickname            text,
-  tarla_sola          text,
-  parcela             text,
-  cadastral_number    text,
-  carte_funciara      text,
-  use_category_id     uuid,
-  surface_area_mp     numeric(12,2),
-  calculated_area_mp  numeric(12,2),
-  notes               text,
-  created_at          timestamptz   NOT NULL DEFAULT now(),
-  updated_at          timestamptz   NOT NULL DEFAULT now(),
-  deleted_at          timestamptz
-);
-
-CREATE UNIQUE INDEX property_cadastral_number_unique
-  ON property (cadastral_number)
-  WHERE cadastral_number IS NOT NULL;
-
-CREATE TRIGGER property_touch_updated_at
-  BEFORE UPDATE ON property
-  FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
-
-CREATE TABLE property_address (
-  id          uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  property_id uuid        NOT NULL REFERENCES property(id) ON DELETE CASCADE,
-  street_line text,
-  postal_code text,
-  locality    text,
-  county      text,
-  country     text NOT NULL,
-  notes       text,
-  -- Slice #18.12: Street View-derived street line (number/block/floor/apt);
-  -- shares the row's postal/locality/county/country.
-  street_view_street_line text,
-  created_at  timestamptz NOT NULL DEFAULT now(),
-  updated_at  timestamptz NOT NULL DEFAULT now()
-);
-
-CREATE UNIQUE INDEX property_address_property_unique ON property_address (property_id);
-
-CREATE TRIGGER property_address_touch_updated_at
-  BEFORE UPDATE ON property_address
-  FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
-
-CREATE TABLE property_corner (
-  id          uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  property_id uuid        NOT NULL REFERENCES property(id) ON DELETE CASCADE,
-  sequence_no integer     NOT NULL,
-  lat         double precision NOT NULL,
-  lon         double precision NOT NULL,
-  created_at  timestamptz NOT NULL DEFAULT now(),
-  updated_at  timestamptz NOT NULL DEFAULT now()
-);
-
-CREATE UNIQUE INDEX property_corner_property_seq_unique
-  ON property_corner (property_id, sequence_no);
-
-CREATE INDEX property_corner_geom_idx
-  ON property_corner
-  USING GIST (CAST(ST_SetSRID(ST_MakePoint(lon, lat), 4326) AS geography));
-
-CREATE TRIGGER property_corner_touch_updated_at
-  BEFORE UPDATE ON property_corner
-  FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
-
--- Slice #18.02 — full-snapshot version history (one row per saved version).
-CREATE TABLE property_version (
-  id             uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  property_id    uuid        NOT NULL REFERENCES property(id) ON DELETE CASCADE,
-  version_number integer     NOT NULL,
-  snapshot       jsonb       NOT NULL,
-  created_at     timestamptz NOT NULL DEFAULT now()
-);
-
-CREATE UNIQUE INDEX property_version_property_number_unique
-  ON property_version (property_id, version_number);
-
--- ============================================================
--- LOOKUP / REFERENCE DATA  (drizzle 0002 + migrations 009–015, 020)
--- ============================================================
-
--- ── lookup_property_type ─────────────────────────────────────
-CREATE TABLE lookup_property_type (
-  id                  uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  name                text        NOT NULL,
-  key                 text        UNIQUE,
-  show_tarla_parcela  boolean     NOT NULL DEFAULT FALSE,
-  show_address        boolean     NOT NULL DEFAULT FALSE,
-  show_street_view    boolean     NOT NULL DEFAULT FALSE,
-  sort_order          integer     NOT NULL DEFAULT 0,
-  created_at          timestamptz NOT NULL DEFAULT now(),
-  updated_at          timestamptz NOT NULL DEFAULT now()
-);
-CREATE TRIGGER lookup_property_type_touch_updated_at
-  BEFORE UPDATE ON lookup_property_type
-  FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
--- name, key, show_tarla_parcela, show_address, show_street_view, sort_order
-INSERT INTO lookup_property_type (name, key, show_tarla_parcela, show_address, show_street_view, sort_order) VALUES
-  ('Teren Arabil',         'TEREN_ARABIL',         TRUE,  FALSE, FALSE,  1),
-  ('Teren Construit',      'TEREN_CONSTRUIT',       FALSE, TRUE,  TRUE,   2),
-  ('Liniară',              'LINIARA',               TRUE,  TRUE,  TRUE,   3),
-  ('Pășune',               'PASUNE',                TRUE,  FALSE, FALSE,  4),
-  ('Apartament',           'APARTAMENT',            FALSE, TRUE,  TRUE,   5),
-  ('Casă',                 'CASA',                  FALSE, TRUE,  TRUE,   6),
-  ('Garaj',                'GARAJ',                 FALSE, TRUE,  TRUE,   7),
-  ('Spațiu Comercial',     'SPATIU_COMERCIAL',      FALSE, TRUE,  TRUE,   8),
-  ('Birou',                'BIROU',                 FALSE, TRUE,  TRUE,   9),
-  ('Vie',                  'VIE',                   TRUE,  FALSE, FALSE, 10),
-  ('Livadă',               'LIVADA',                TRUE,  FALSE, FALSE, 11),
-  ('Fâneață',              'FANATA',                TRUE,  FALSE, FALSE, 12),
-  ('Pădure',               'PADURE',                TRUE,  FALSE, FALSE, 13),
-  ('Vegetație Forestieră', 'VEGETATIE_FORESTIERA',  TRUE,  FALSE, FALSE, 14);
-
--- ── lookup_tarla ─────────────────────────────────────────────
-CREATE TABLE lookup_tarla (
-  id         uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  indicativ  text        NOT NULL,
-  descriere  text,
-  sort_order integer     NOT NULL DEFAULT 0,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
-);
-CREATE TRIGGER lookup_tarla_touch_updated_at
-  BEFORE UPDATE ON lookup_tarla
-  FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
-INSERT INTO lookup_tarla (indicativ, descriere, sort_order) VALUES
-  ('T1',  'Tarla 1',  1), ('T2',  'Tarla 2',  2), ('T3',  'Tarla 3',  3),
-  ('T4',  'Tarla 4',  4), ('T5',  'Tarla 5',  5), ('T6',  'Tarla 6',  6),
-  ('T7',  'Tarla 7',  7), ('T8',  'Tarla 8',  8), ('T9',  'Tarla 9',  9),
-  ('T10', 'Tarla 10', 10);
-
--- ── lookup_use_category ──────────────────────────────────────
-CREATE TABLE lookup_use_category (
-  id         uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  name       text        NOT NULL,
-  sort_order integer     NOT NULL DEFAULT 0,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
-);
-CREATE TRIGGER lookup_use_category_touch_updated_at
-  BEFORE UPDATE ON lookup_use_category
-  FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
-INSERT INTO lookup_use_category (name, sort_order) VALUES
-  ('Arabil', 1), ('Pășune', 2), ('Fânețe', 3), ('Vie', 4),
-  ('Livadă', 5), ('Pădure', 6), ('Ape',    7), ('Neproductiv', 8);
-
--- Deferred FKs for property (Slice #15.16): lookup_property_type and
--- lookup_use_category did not yet exist when `property` was created above.
-ALTER TABLE property
-  ADD CONSTRAINT property_property_type_id_fkey
-  FOREIGN KEY (property_type_id) REFERENCES lookup_property_type(id) ON DELETE SET NULL;
-ALTER TABLE property
-  ADD CONSTRAINT property_use_category_id_fkey
-  FOREIGN KEY (use_category_id) REFERENCES lookup_use_category(id) ON DELETE SET NULL;
-
--- ── lookup_person_type ───────────────────────────────────────
-CREATE TABLE lookup_person_type (
-  id         uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  name       text        NOT NULL,
-  sort_order integer     NOT NULL DEFAULT 0,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
-);
-CREATE TRIGGER lookup_person_type_touch_updated_at
-  BEFORE UPDATE ON lookup_person_type
-  FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
-INSERT INTO lookup_person_type (name, sort_order) VALUES
-  ('Persoană Fizică',   1), ('Persoană Juridică', 2), ('Expert',       3),
-  ('PFA',               4), ('Instituție',         5), ('ONG',          6),
-  ('Consiliu Local',    7);
-
--- ── lookup_judicial_person_type  (migration 022, Slice #15.07) ─
--- Replaces the old hardcoded judicial_type Postgres enum. New rows are
--- added only by Adrian via Administration -> Reference Data (Person panel,
--- "Judicial Person Types" button), or by Claude when explicitly directed —
--- never auto-seeded by app code.
-CREATE TABLE lookup_judicial_person_type (
-  id         uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  name       text        NOT NULL,
-  sort_order integer     NOT NULL DEFAULT 0,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
-);
-CREATE TRIGGER lookup_judicial_person_type_touch_updated_at
-  BEFORE UPDATE ON lookup_judicial_person_type
-  FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
-INSERT INTO lookup_judicial_person_type (name, sort_order) VALUES
-  ('SRL', 1), ('SA', 2), ('SRL-D', 3), ('PFA', 4),
-  ('II',  5), ('IF', 6), ('ONG',   7), ('Altele', 8);
-
--- judicial_person.judicial_person_type_id FK — added here, not inline
--- above, because lookup_judicial_person_type didn't exist yet when
--- judicial_person was created.
-ALTER TABLE judicial_person
-  ADD CONSTRAINT judicial_person_judicial_person_type_id_fkey
-  FOREIGN KEY (judicial_person_type_id) REFERENCES lookup_judicial_person_type(id) ON DELETE SET NULL;
-
--- ── lookup_citizenship ───────────────────────────────────────
-CREATE TABLE lookup_citizenship (
-  id         uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  name       text        NOT NULL,
-  sort_order integer     NOT NULL DEFAULT 0,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
-);
-CREATE TRIGGER lookup_citizenship_touch_updated_at
-  BEFORE UPDATE ON lookup_citizenship
-  FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
-INSERT INTO lookup_citizenship (name, sort_order) VALUES
-  ('Română', 1), ('Moldoveană', 2), ('Americană', 3), ('Germană',  4),
-  ('Franceză', 5), ('Italiană', 6), ('Spaniolă',  7), ('Engleză',  8);
-
--- natural_person.citizenship_id FK — added here, not inline above, because
--- lookup_citizenship didn't exist yet when natural_person was created.
-ALTER TABLE natural_person
-  ADD CONSTRAINT natural_person_citizenship_id_fkey
-  FOREIGN KEY (citizenship_id) REFERENCES lookup_citizenship(id) ON DELETE SET NULL;
-
--- ── lookup_document_type ─────────────────────────────────────
--- NOTE: Row 6 is 'Certificat de Moștenitor' (the correct value).
--- The original migration 0002 had a typo ('Certificat de Macanentur')
--- which was fixed manually before Slice 10.04. Correct here from the start.
 --
--- `key` (added by migration 020) is the immutable slug business logic
--- switches on — never `name` (translatable/editable) and never the uuid
--- `id` (would break across environments). New type rows must only ever be
--- added by Adrian by hand via Administration -> Reference Data, or by
--- Claude when explicitly directed — never auto-seeded by app code.
-CREATE TABLE lookup_document_type (
-  id         uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  key        text        NOT NULL UNIQUE,
-  name       text        NOT NULL,
-  sort_order integer     NOT NULL DEFAULT 0,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
-);
-CREATE TRIGGER lookup_document_type_touch_updated_at
-  BEFORE UPDATE ON lookup_document_type
-  FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
-INSERT INTO lookup_document_type (key, name, sort_order) VALUES
-  ('ACT_ADJUDECARE',             'Act de Adjudecare',              1),
-  ('ACT_CADASTRU',               'Act Cadastru',                   2),
-  ('ACT_DONATIE',                'Act de Donație',                 3),
-  ('AUTORIZATIE',                'Autorizare',                     4),
-  ('AVIZ_INSTITUTIE',            'Aviz de Instituție',             5),
-  ('CARTE_IDENTITATE',           'Carte de Identitate',            6),
-  ('CERTIFICAT_FISCAL',          'Certificat Fiscal',              7),
-  ('CERTIFICAT_MOSTENITOR',      'Certificat de Moștenitor',       8),
-  ('CERTIFICAT_SARCINI',         'Certificat de Bunuri',           9),
-  ('CERTIFICAT_URBANISM',        'Certificat de Urbanism',        10),
-  ('CONTRACT_ARENDA',            'Contract de Arendă',            11),
-  ('CONTRACT_INCHIRIERE',        'Contract de Închiriere',        12),
-  ('CONTRACT_PARTAJ',            'Contract de Partaj',            13),
-  ('CONTRACT_PRESTARI_SERVICII', 'Contract de Prestări Servicii', 14),
-  ('CONTRACT_VANZARE',           'Contract de Vânzare',           15),
-  ('EXTRAS_CARTE_FUNCIARA',      'Extras din Carte Funciară',     16),
-  ('EXTRAS_PUG',                 'Extras din PUG',                17),
-  ('HOTARARE_JUDECATOREASCA',    'Hotărâre Judecătorească',       18),
-  ('TESTAMENT',                  'Testament',                     19),
-  ('TITLU_PROPRIETATE',          'Titlu de Proprietate',          20),
-  ('UNCLASSIFIED',               'Unclassified',                  21),
-  -- Alternate wordings kept as distinct types (Slice #15.06) — see
-  -- migration_021_keep_alternate_wordings.sql for the rationale.
-  ('AUTORIZATIE_ALT',            'Autorizație',                   22),
-  ('CERTIFICAT_SARCINI_ALT',     'Certificat de Sarcini',         23),
-  ('EXTRAS_CARTE_FUNCIARA_ALT',  'Extras de Carte Funciară',      24);
-
--- ── lookup_institution ───────────────────────────────────────
-CREATE TABLE lookup_institution (
-  id               uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  name             text        NOT NULL,
-  institution_type text,
-  sort_order       integer     NOT NULL DEFAULT 0,
-  created_at       timestamptz NOT NULL DEFAULT now(),
-  updated_at       timestamptz NOT NULL DEFAULT now()
-);
-CREATE TRIGGER lookup_institution_touch_updated_at
-  BEFORE UPDATE ON lookup_institution
-  FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
-INSERT INTO lookup_institution (name, institution_type, sort_order) VALUES
-  ('OCPI',                  'Cadastru',                1),
-  ('Primăria Municipiului', 'Administrație Locală',    2),
-  ('Consiliu Județean',     'Administrație Județeană', 3),
-  ('ANAF',                  'Fiscal',                  4),
-  ('Notariat',              'Juridic',                 5),
-  ('Judecătorie',           'Juridic',                 6),
-  ('Tribunal',              'Juridic',                 7);
-
--- ── lookup_person_role  (migration 013) ──────────────────────
-CREATE TABLE lookup_person_role (
-  id          uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  name        text        NOT NULL,
-  description text,
-  sort_order  integer     NOT NULL DEFAULT 0,
-  created_at  timestamptz NOT NULL DEFAULT now(),
-  updated_at  timestamptz NOT NULL DEFAULT now()
-);
-CREATE TRIGGER touch_updated_at_lookup_person_role
-  BEFORE UPDATE ON lookup_person_role
-  FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
-
-INSERT INTO lookup_person_role (id, name, description, sort_order, created_at, updated_at) VALUES
-  (gen_random_uuid(), 'Adjudecatar', '(principalul beneficiar care dobândește proprietatea prin licitație în executare silită)', 1, now(), now()),
-  (gen_random_uuid(), 'Arendator', '(proprietarul care dă în arendă)', 2, now(), now()),
-  (gen_random_uuid(), 'Arendaș', '(cel care ia în arendă și exploatează)', 3, now(), now()),
-  (gen_random_uuid(), 'Autoritate locală', '(emitent)', 4, now(), now()),
-  (gen_random_uuid(), 'Beneficiar / Client', NULL, 5, now(), now()),
-  (gen_random_uuid(), 'Beneficiar / Solicitant', '(cel care obține autorizația, de obicei proprietarul)', 6, now(), now()),
-  (gen_random_uuid(), 'Chiriaș / Locatar', '(cel care închiriază)', 7, now(), now()),
-  (gen_random_uuid(), 'Constructor / Antreprenor', '(responsabil de execuție)', 8, now(), now()),
-  (gen_random_uuid(), 'Coproprietar', '(în cazuri de indiviziune)', 9, now(), now()),
-  (gen_random_uuid(), 'Coproprietar / Co-moștenitor', '(apare în același certificat)', 10, now(), now()),
-  (gen_random_uuid(), 'Coproprietari / Coindivizari', '(părți care partajează)', 11, now(), now()),
-  (gen_random_uuid(), 'Creditor', '(inițiator al executării)', 12, now(), now()),
-  (gen_random_uuid(), 'Creditor / Ipotecar', '(pentru verificare sarcini)', 13, now(), now()),
-  (gen_random_uuid(), 'Cumpărător', '(Dobânditor)', 14, now(), now()),
-  (gen_random_uuid(), 'Debitor', '(cel al cărui bun este adjudecat)', 15, now(), now()),
-  (gen_random_uuid(), 'Debitor / Plătitor de impozite', '(cel pentru care se atestă situația fiscală)', 16, now(), now()),
-  (gen_random_uuid(), 'Executor judecătoresc', '(emitent)', 17, now(), now()),
-  (gen_random_uuid(), 'Garant', NULL, 18, now(), now()),
-  (gen_random_uuid(), 'Judecător / Instanță', '(emitent)', 19, now(), now()),
-  (gen_random_uuid(), 'Locator', '(proprietarul care închiriază)', 20, now(), now()),
-  (gen_random_uuid(), 'Martor / Notar', '(la autentificare, dacă e cazul)', 21, now(), now()),
-  (gen_random_uuid(), 'Mediator / Judecător', '(în caz de partaj judiciar)', 22, now(), now()),
-  (gen_random_uuid(), 'Moștenitor', '(principalul beneficiar)', 23, now(), now()),
-  (gen_random_uuid(), 'Moștenitor / succesor', '(în cazuri de continuare a procedurii)', 24, now(), now()),
-  (gen_random_uuid(), 'Moștenitor / Succesor', '(în cazuri specifice)', 25, now(), now()),
-  (gen_random_uuid(), 'Moștenitori', NULL, 26, now(), now()),
-  (gen_random_uuid(), 'Notar', '(autentificator)', 27, now(), now()),
-  (gen_random_uuid(), 'Notar public', '(care emite certificatul)', 28, now(), now()),
-  (gen_random_uuid(), 'Prestator', '(Furnizor de servicii)', 29, now(), now()),
-  (gen_random_uuid(), 'Proiectant', '(în unele cazuri)', 30, now(), now()),
-  (gen_random_uuid(), 'Proiectant / Arhitect', '(elaborator)', 31, now(), now()),
-  (gen_random_uuid(), 'Proiectant / Consultant', NULL, 32, now(), now()),
-  (gen_random_uuid(), 'Proprietar', '(Deținător de bunuri imobile/mobiliare)', 33, now(), now()),
-  (gen_random_uuid(), 'Proprietar / Coproprietar', '(al imobilului)', 34, now(), now()),
-  (gen_random_uuid(), 'Proprietar / Titular', '(al imobilului)', 35, now(), now()),
-  (gen_random_uuid(), 'Proprietar / Titular al imobilului', NULL, 36, now(), now()),
-  (gen_random_uuid(), 'Proprietar / Titular de drept real', '(principalul interesat)', 37, now(), now()),
-  (gen_random_uuid(), 'Proprietar / Titular de drepturi înscrise', NULL, 38, now(), now()),
-  (gen_random_uuid(), 'Pârât / Debitor', NULL, 39, now(), now()),
-  (gen_random_uuid(), 'Reclamant / Petent', NULL, 40, now(), now()),
-  (gen_random_uuid(), 'Reprezentant al instituției emitente', '(ex: mediu, cultură, utilități)', 41, now(), now()),
-  (gen_random_uuid(), 'Reprezentant legal', '(al părților)', 42, now(), now()),
-  (gen_random_uuid(), 'Reprezentant legal (al părților)', NULL, 43, now(), now()),
-  (gen_random_uuid(), 'Reprezentant legal / Mandatar', '(prin procură)', 44, now(), now()),
-  (gen_random_uuid(), 'Solicitant', '(cel care cere eliberarea certificatului)', 45, now(), now()),
-  (gen_random_uuid(), 'Solicitant / Beneficiar', '(cel care comandă lucrarea)', 46, now(), now()),
-  (gen_random_uuid(), 'Solicitant / Titular de drepturi', NULL, 47, now(), now()),
-  (gen_random_uuid(), 'Solicitant / Titular de rol fiscal', NULL, 48, now(), now()),
-  (gen_random_uuid(), 'Succesor universal', '(cu titlu particular)', 49, now(), now()),
-  (gen_random_uuid(), 'Titular / Proprietar', '(principalul beneficiar)', 50, now(), now()),
-  (gen_random_uuid(), 'Titular al imobilului', NULL, 51, now(), now()),
-  (gen_random_uuid(), 'Titular al succesiunii / Defunct', '(persoana decedată)', 52, now(), now()),
-  (gen_random_uuid(), 'Titular de drept', '(cel în favoarea căruia s-a pronunțat)', 53, now(), now()),
-  (gen_random_uuid(), 'Topograf / Expert cadastral', '(cel care întocmește documentația)', 54, now(), now()),
-  (gen_random_uuid(), 'Urbanist / Proiectant', NULL, 55, now(), now()),
-  (gen_random_uuid(), 'Vânzător', '(Transmitent)', 56, now(), now())
-ON CONFLICT DO NOTHING;
-
--- ── lookup_doc_type_person_role  (migration 014) ─────────────
-CREATE TABLE lookup_doc_type_person_role (
-  id               uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  document_type_id uuid        NOT NULL REFERENCES lookup_document_type(id) ON DELETE CASCADE,
-  person_role_id   uuid        NOT NULL REFERENCES lookup_person_role(id)   ON DELETE CASCADE,
-  created_at       timestamptz NOT NULL DEFAULT now(),
-  UNIQUE (document_type_id, person_role_id)
-);
-
-WITH doc AS (SELECT id, name FROM lookup_document_type),
-     rol AS (SELECT id, name FROM lookup_person_role)
-INSERT INTO lookup_doc_type_person_role (id, document_type_id, person_role_id, created_at)
-SELECT gen_random_uuid(), d.id, r.id, now()
-FROM (VALUES
-  ('Act de Adjudecare',             'Adjudecatar'),
-  ('Act de Adjudecare',             'Debitor'),
-  ('Act de Adjudecare',             'Executor judecătoresc'),
-  ('Act de Adjudecare',             'Creditor'),
-  ('Act de Adjudecare',             'Moștenitor / succesor'),
-  ('Act Cadastru',                  'Proprietar / Titular de drept real'),
-  ('Act Cadastru',                  'Solicitant / Beneficiar'),
-  ('Act Cadastru',                  'Coproprietar'),
-  ('Act Cadastru',                  'Reprezentant legal / Mandatar'),
-  ('Act Cadastru',                  'Topograf / Expert cadastral'),
-  ('Autorizare',                    'Beneficiar / Solicitant'),
-  ('Autorizare',                    'Proprietar / Titular'),
-  ('Autorizare',                    'Constructor / Antreprenor'),
-  ('Autorizare',                    'Proiectant / Arhitect'),
-  ('Autorizare',                    'Reprezentant legal'),
-  ('Aviz de Instituție',            'Solicitant / Beneficiar'),
-  ('Aviz de Instituție',            'Titular al imobilului'),
-  ('Aviz de Instituție',            'Reprezentant al instituției emitente'),
-  ('Aviz de Instituție',            'Proiectant / Consultant'),
-  ('Certificat Fiscal',             'Solicitant / Titular de rol fiscal'),
-  ('Certificat Fiscal',             'Proprietar / Coproprietar'),
-  ('Certificat Fiscal',             'Moștenitor / Succesor'),
-  ('Certificat Fiscal',             'Debitor / Plătitor de impozite'),
-  ('Certificat de Moștenitor',      'Moștenitor'),
-  ('Certificat de Moștenitor',      'Solicitant'),
-  ('Certificat de Moștenitor',      'Titular al succesiunii / Defunct'),
-  ('Certificat de Moștenitor',      'Coproprietar / Co-moștenitor'),
-  ('Certificat de Moștenitor',      'Reprezentant legal / Mandatar'),
-  ('Certificat de Moștenitor',      'Notar public'),
-  ('Certificat de Moștenitor',      'Succesor universal'),
-  ('Certificat de Bunuri',          'Solicitant / Titular de drepturi'),
-  ('Certificat de Bunuri',          'Proprietar'),
-  ('Certificat de Bunuri',          'Moștenitor'),
-  ('Certificat de Bunuri',          'Coproprietar'),
-  ('Certificat de Urbanism',        'Solicitant / Beneficiar'),
-  ('Certificat de Urbanism',        'Proprietar / Titular al imobilului'),
-  ('Certificat de Urbanism',        'Reprezentant legal / Mandatar'),
-  ('Certificat de Urbanism',        'Proiectant'),
-  ('Contract de Arendă',            'Arendator'),
-  ('Contract de Arendă',            'Arendaș'),
-  ('Contract de Arendă',            'Reprezentant legal'),
-  ('Contract de Arendă',            'Martor / Notar'),
-  ('Contract de Închiriere',        'Locator'),
-  ('Contract de Închiriere',        'Chiriaș / Locatar'),
-  ('Contract de Închiriere',        'Garant'),
-  ('Contract de Închiriere',        'Reprezentant legal'),
-  ('Contract de Partaj',            'Coproprietari / Coindivizari'),
-  ('Contract de Partaj',            'Moștenitori'),
-  ('Contract de Partaj',            'Notar'),
-  ('Contract de Partaj',            'Mediator / Judecător'),
-  ('Contract de Prestări Servicii', 'Prestator'),
-  ('Contract de Prestări Servicii', 'Beneficiar / Client'),
-  ('Contract de Prestări Servicii', 'Reprezentant legal (al părților)'),
-  ('Contract de Vânzare',           'Vânzător'),
-  ('Contract de Vânzare',           'Cumpărător'),
-  ('Contract de Vânzare',           'Notar'),
-  ('Contract de Vânzare',           'Reprezentant legal / Mandatar'),
-  ('Contract de Vânzare',           'Moștenitor / Succesor'),
-  ('Extras din Carte Funciară',     'Solicitant / Beneficiar'),
-  ('Extras din Carte Funciară',     'Proprietar / Titular de drepturi înscrise'),
-  ('Extras din Carte Funciară',     'Reprezentant legal'),
-  ('Extras din Carte Funciară',     'Creditor / Ipotecar'),
-  ('Extras din PUG',                'Solicitant / Beneficiar'),
-  ('Extras din PUG',                'Autoritate locală'),
-  ('Extras din PUG',                'Urbanist / Proiectant'),
-  ('Hotărâre Judecătorească',       'Reclamant / Petent'),
-  ('Hotărâre Judecătorească',       'Pârât / Debitor'),
-  ('Hotărâre Judecătorească',       'Moștenitor / Succesor'),
-  ('Hotărâre Judecătorească',       'Titular de drept'),
-  ('Hotărâre Judecătorească',       'Judecător / Instanță'),
-  ('Titlu de Proprietate',          'Titular / Proprietar'),
-  ('Titlu de Proprietate',          'Moștenitor / Succesor'),
-  ('Titlu de Proprietate',          'Coproprietar'),
-  ('Titlu de Proprietate',          'Reprezentant legal')
-) AS pairs(doc_name, role_name)
-JOIN doc d ON d.name = pairs.doc_name
-JOIN rol r ON r.name = pairs.role_name
-ON CONFLICT DO NOTHING;
-
--- ── lookup_property_person_role  (migration 015) ─────────────
-CREATE TABLE lookup_property_person_role (
-  id             uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  person_role_id uuid        NOT NULL UNIQUE REFERENCES lookup_person_role(id) ON DELETE CASCADE,
-  created_at     timestamptz NOT NULL DEFAULT now()
-);
-
--- Seed: roles valid for Property ↔ Person associations (matches dev)
-INSERT INTO lookup_property_person_role (id, person_role_id, created_at)
-  SELECT gen_random_uuid(), id, now() FROM lookup_person_role WHERE name = 'Coproprietari / Coindivizari' ON CONFLICT (person_role_id) DO NOTHING;
-INSERT INTO lookup_property_person_role (id, person_role_id, created_at)
-  SELECT gen_random_uuid(), id, now() FROM lookup_person_role WHERE name = 'Cumpărător' ON CONFLICT (person_role_id) DO NOTHING;
-INSERT INTO lookup_property_person_role (id, person_role_id, created_at)
-  SELECT gen_random_uuid(), id, now() FROM lookup_person_role WHERE name = 'Proprietar / Titular de drept real' ON CONFLICT (person_role_id) DO NOTHING;
-INSERT INTO lookup_property_person_role (id, person_role_id, created_at)
-  SELECT gen_random_uuid(), id, now() FROM lookup_person_role WHERE name = 'Titular de drept' ON CONFLICT (person_role_id) DO NOTHING;
-
--- ── lookup_property_property_role  (migration 055) ────────────
-CREATE TABLE lookup_property_property_role (
-  id          uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  name        text        NOT NULL,
-  description text,
-  sort_order  integer     NOT NULL DEFAULT 0,
-  created_at  timestamptz NOT NULL DEFAULT now(),
-  updated_at  timestamptz NOT NULL DEFAULT now()
-);
-
-INSERT INTO lookup_property_property_role (name, description, sort_order)
-SELECT v.name, v.description, v.sort_order
-FROM (VALUES
-  ('Adiacent',         'Proprietăți cu latură comună',                         1),
-  ('Inclus în',        'O proprietate este parte dintr-o alta',                 2),
-  ('Contiguu',         'Proprietăți vecine fără latură comună directă',         3),
-  ('Subdiviziune a',   'Parcelă rezultată din dezmembrarea alteia',             4),
-  ('Suprapus cu',      'Zone cu suprapunere parțială',                          5),
-  ('Acces prin',       'Acces la drum sau utilități prin altă proprietate',     6),
-  ('Alipit de',        'Proprietăți unite sau alipite cadastral',               7)
-) AS v(name, description, sort_order)
-WHERE NOT EXISTS (SELECT 1 FROM lookup_property_property_role LIMIT 1);
-
-CREATE TRIGGER touch_lookup_property_property_role_updated_at
-  BEFORE UPDATE ON lookup_property_property_role
-  FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
-
--- ── lookup_document_document_role  (migration 055) ────────────
-CREATE TABLE lookup_document_document_role (
-  id          uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  name        text        NOT NULL,
-  description text,
-  sort_order  integer     NOT NULL DEFAULT 0,
-  created_at  timestamptz NOT NULL DEFAULT now(),
-  updated_at  timestamptz NOT NULL DEFAULT now()
-);
-
-INSERT INTO lookup_document_document_role (name, description, sort_order)
-SELECT v.name, v.description, v.sort_order
-FROM (VALUES
-  ('Înlocuiește',          'Document care supersedează un altul',                  1),
-  ('Modifică',             'Document cu modificări parțiale față de altul',        2),
-  ('Prelungește',          'Document care extinde valabilitatea altuia',            3),
-  ('Anulează',             'Document care desființează un altul',                   4),
-  ('Consolidat cu',        'Documente corelate legal',                              5),
-  ('Versiune anterioară a','Formă anterioară a unui document în vigoare',           6),
-  ('Anexă la',             'Document atașat ca anexă unui document principal',      7),
-  ('Corecție a',           'Document care rectifică erori dintr-un altul',          8)
-) AS v(name, description, sort_order)
-WHERE NOT EXISTS (SELECT 1 FROM lookup_document_document_role LIMIT 1);
-
-CREATE TRIGGER touch_lookup_document_document_role_updated_at
-  BEFORE UPDATE ON lookup_document_document_role
-  FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
-
--- ── lookup_person_person_role  (migration 055) ────────────────
--- Whitelist: each row marks a lookup_person_role entry as valid for
--- Person <-> Person associations.
-CREATE TABLE lookup_person_person_role (
-  id             uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  person_role_id uuid        NOT NULL UNIQUE REFERENCES lookup_person_role(id) ON DELETE CASCADE,
-  created_at     timestamptz NOT NULL DEFAULT now()
-);
-
--- ============================================================
--- DOCUMENT domain  (drizzle 0003, renamed from "paperwork" in
--- migration 020 — Slice #15.05)
--- ============================================================
-
-CREATE TABLE document (
-  id                  uuid           PRIMARY KEY DEFAULT gen_random_uuid(),
-  principal_object_id uuid           NOT NULL UNIQUE REFERENCES principal_object(id),
-  code                text           NOT NULL UNIQUE,
-  document_type_id    uuid           NOT NULL REFERENCES lookup_document_type(id),
-  title               text,
-  nr_document         text,
-  date_document       date,
-  institution         text,
-  emitent             text,
-  baza_legala         text,
-  uat_proprietate     text,
-  uat_proprietar      text,
-  suprafata           numeric(12,2),
-  nr_dosar_succesoral text,
-  data_decesului      date,
-  ultimul_domiciliu   text,
-  nr_certificat_deces text,
-  date_start          date,
-  date_end            date,
-  notes               text,
-  created_at          timestamptz    NOT NULL DEFAULT now(),
-  updated_at          timestamptz    NOT NULL DEFAULT now(),
-  deleted_at          timestamptz
-);
-
-CREATE TRIGGER document_touch_updated_at
-  BEFORE UPDATE ON document
-  FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
-
--- document_version — full-snapshot version history (Slice #18.06). Snapshot is
--- a flat object of the document's editable fields. See
--- migration_031_document_versions.sql.
-CREATE TABLE document_version (
-  id             uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  document_id    uuid        NOT NULL REFERENCES document(id) ON DELETE CASCADE,
-  version_number integer     NOT NULL,
-  snapshot       jsonb       NOT NULL,
-  created_at     timestamptz NOT NULL DEFAULT now()
-);
-
-CREATE UNIQUE INDEX document_version_document_number_unique
-  ON document_version (document_id, version_number);
-
--- ============================================================
--- JUNCTION TABLES  (drizzle 0005–0006 + migrations 016–017, 020)
--- ============================================================
-
--- property_person  (final: includes person_role_id from migration 016)
-CREATE TABLE property_person (
-  id             uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  property_id    uuid        NOT NULL REFERENCES property(id)  ON DELETE CASCADE,
-  person_id      uuid        NOT NULL REFERENCES person(id)    ON DELETE CASCADE,
-  person_role_id uuid        REFERENCES lookup_person_role(id) ON DELETE SET NULL,
-  created_at     timestamptz NOT NULL DEFAULT now()
-);
-CREATE UNIQUE INDEX property_person_unique ON property_person (property_id, person_id);
-
--- property_document  (renamed from property_paperwork)
-CREATE TABLE property_document (
-  id          uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  property_id uuid        NOT NULL REFERENCES property(id) ON DELETE CASCADE,
-  document_id uuid        NOT NULL REFERENCES document(id) ON DELETE CASCADE,
-  created_at  timestamptz NOT NULL DEFAULT now()
-);
-CREATE UNIQUE INDEX property_document_unique ON property_document (property_id, document_id);
-
--- property_property  (self-ref, symmetric; relationship_role_id added migration 055)
-CREATE TABLE property_property (
-  id                   uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  property_id_a        uuid        NOT NULL REFERENCES property(id) ON DELETE CASCADE,
-  property_id_b        uuid        NOT NULL REFERENCES property(id) ON DELETE CASCADE,
-  relationship_role_id uuid        REFERENCES lookup_property_property_role(id) ON DELETE SET NULL,
-  created_at           timestamptz NOT NULL DEFAULT now(),
-  CONSTRAINT property_property_order CHECK (property_id_a < property_id_b)
-);
-CREATE UNIQUE INDEX property_property_unique ON property_property (property_id_a, property_id_b);
-
--- person_document  (final: includes quality from migration 013 + person_role_id
--- from migration 017; renamed from person_paperwork)
-CREATE TABLE person_document (
-  id             uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  person_id      uuid        NOT NULL REFERENCES person(id)    ON DELETE CASCADE,
-  document_id    uuid        NOT NULL REFERENCES document(id)  ON DELETE CASCADE,
-  quality        text,
-  person_role_id uuid        REFERENCES lookup_person_role(id) ON DELETE SET NULL,
-  created_at     timestamptz NOT NULL DEFAULT now()
-);
-CREATE UNIQUE INDEX person_document_unique ON person_document (person_id, document_id);
-
--- person_person  (self-ref, symmetric; relationship_role_id added migration 055)
-CREATE TABLE person_person (
-  id                   uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  person_id_a          uuid        NOT NULL REFERENCES person(id) ON DELETE CASCADE,
-  person_id_b          uuid        NOT NULL REFERENCES person(id) ON DELETE CASCADE,
-  relationship_role_id uuid        REFERENCES lookup_person_role(id) ON DELETE SET NULL,
-  created_at           timestamptz NOT NULL DEFAULT now(),
-  CONSTRAINT person_person_order CHECK (person_id_a < person_id_b)
-);
-CREATE UNIQUE INDEX person_person_unique ON person_person (person_id_a, person_id_b);
-
--- document_document  (self-ref, symmetric; renamed from paperwork_paperwork;
---                     relationship_role_id added migration 055)
-CREATE TABLE document_document (
-  id                   uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  document_id_a        uuid        NOT NULL REFERENCES document(id) ON DELETE CASCADE,
-  document_id_b        uuid        NOT NULL REFERENCES document(id) ON DELETE CASCADE,
-  relationship_role_id uuid        REFERENCES lookup_document_document_role(id) ON DELETE SET NULL,
-  created_at           timestamptz NOT NULL DEFAULT now(),
-  CONSTRAINT document_document_order CHECK (document_id_a < document_id_b)
-);
-CREATE UNIQUE INDEX document_document_unique ON document_document (document_id_a, document_id_b);
-
--- ============================================================
--- DOCUMENT_PAGE  (migration 010, renamed from paperwork_page in
--- migration 020)
--- ============================================================
-
-CREATE TABLE document_page (
-  id           uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  document_id  uuid        NOT NULL REFERENCES document(id) ON DELETE CASCADE,
-  page_number  integer     NOT NULL,
-  page_name    text,
-  page_notes   text,
-  file_name    text        NOT NULL,
-  file_path    text        NOT NULL,
-  file_size    integer,
-  mime_type    text,
-  created_at   timestamptz NOT NULL DEFAULT now(),
-  updated_at   timestamptz NOT NULL DEFAULT now(),
-  CONSTRAINT document_page_document_number_unique UNIQUE (document_id, page_number)
-);
-CREATE TRIGGER touch_updated_at_document_page
-  BEFORE UPDATE ON document_page
-  FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
-
--- ============================================================
--- AUTH  (drizzle 0007)
--- ============================================================
-
-CREATE TABLE user_requests (
-  id           uuid                 PRIMARY KEY DEFAULT gen_random_uuid(),
-  email        text                 NOT NULL,
-  username     text                 NOT NULL,
-  status       user_request_status  NOT NULL DEFAULT 'pending',
-  requested_at timestamptz          NOT NULL DEFAULT now(),
-  processed_at timestamptz,
-  processed_by text,
-  email_sent   boolean              NOT NULL DEFAULT false
-);
-CREATE UNIQUE INDEX user_requests_email_pending_unique
-  ON user_requests (email)
-  WHERE status = 'pending';
-
-CREATE TABLE app_users (
-  id           uuid           PRIMARY KEY DEFAULT gen_random_uuid(),
-  supabase_uid text           UNIQUE,
-  email        text           NOT NULL UNIQUE,
-  username     text           NOT NULL UNIQUE,
-  role         app_user_role  NOT NULL DEFAULT 'user',
-  approved_by  text,
-  created_at   timestamptz    NOT NULL DEFAULT now()
-);
-
--- ============================================================
--- GROUPS  (Slice #18.07)
--- ============================================================
+-- Name: judicial_person_lock_cui(); Type: FUNCTION; Schema: public; Owner: -
 --
--- A Group gathers items of a single target type. The two-letter `code`
--- (AA, AB, … skipping I/O) is allocated from group_code_seq and encoded by the
--- app layer (src/lib/groups/code.ts); codes are never reused. Member positions
--- are allocated from groups.last_position (a high-water counter) and never
--- reused. Only PROPERTY membership is wired in the app for now.
 
-CREATE TYPE group_target_type AS ENUM ('PHYSICAL_PERSON', 'JUDICIAL_PERSON', 'PROPERTY', 'DOCUMENT');
+CREATE FUNCTION public.judicial_person_lock_cui() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+  IF OLD.cui_number IS NOT NULL AND NEW.cui_number IS DISTINCT FROM OLD.cui_number THEN
+    RAISE EXCEPTION 'CUI cannot be changed once set; delete and recreate the judicial person instead';
+  END IF;
+  RETURN NEW;
+END;
+$$;
 
-CREATE SEQUENCE group_code_seq START 1;
 
-CREATE TABLE groups (
-  id            uuid               PRIMARY KEY DEFAULT gen_random_uuid(),
-  code          text               NOT NULL UNIQUE,
-  target_type   group_target_type  NOT NULL,
-  description   text               NOT NULL,
-  last_position integer            NOT NULL DEFAULT 0,
-  created_at    timestamptz        NOT NULL DEFAULT now(),
-  updated_at    timestamptz        NOT NULL DEFAULT now()
+--
+-- Name: natural_person_check_cnp_unique(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.natural_person_check_cnp_unique() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+  IF NEW.cnp IS NOT NULL AND EXISTS (
+    SELECT 1
+    FROM natural_person np
+    JOIN person p ON p.id = np.person_id
+    WHERE np.cnp = NEW.cnp
+      AND np.person_id IS DISTINCT FROM NEW.person_id
+      AND p.deleted_at IS NULL
+  ) THEN
+    RAISE EXCEPTION 'A person with this CNP already exists'
+      USING ERRCODE = '23505';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+
+--
+-- Name: natural_person_lock_cnp(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.natural_person_lock_cnp() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+  IF OLD.cnp IS NOT NULL AND NEW.cnp IS DISTINCT FROM OLD.cnp THEN
+    RAISE EXCEPTION 'CNP cannot be changed once set; delete and recreate the person instead';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+
+--
+-- Name: touch_updated_at(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.touch_updated_at() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN NEW.updated_at = now(); RETURN NEW; END;
+$$;
+
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- Name: address; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.address (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    person_id uuid NOT NULL,
+    kind public.address_kind NOT NULL,
+    street_line text,
+    postal_code text,
+    locality text,
+    county text,
+    country text NOT NULL,
+    notes text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
-CREATE TABLE group_member (
-  id          uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  group_id    uuid        NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
-  property_id uuid        REFERENCES property(id) ON DELETE CASCADE,
-  position    integer     NOT NULL,
-  created_at  timestamptz NOT NULL DEFAULT now()
-);
-CREATE UNIQUE INDEX group_member_group_position_unique
-  ON group_member (group_id, position);
-CREATE UNIQUE INDEX group_member_group_property_unique
-  ON group_member (group_id, property_id);
 
-CREATE TRIGGER groups_touch_updated_at
-  BEFORE UPDATE ON groups
-  FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
+--
+-- Name: app_users; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.app_users (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    supabase_uid text,
+    email text NOT NULL,
+    username text NOT NULL,
+    role public.app_user_role DEFAULT 'user'::public.app_user_role NOT NULL,
+    approved_by text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: calculation_run; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.calculation_run (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    code text NOT NULL,
+    algorithm_type text NOT NULL,
+    input_params jsonb NOT NULL,
+    steps_log jsonb DEFAULT '{}'::jsonb NOT NULL,
+    result_group_id uuid,
+    status text DEFAULT 'active'::text NOT NULL,
+    notes text,
+    created_by text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT calculation_run_status_check CHECK ((status = ANY (ARRAY['active'::text, 'superseded'::text])))
+);
+
+
+--
+-- Name: calculation_run_code_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.calculation_run_code_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: calculation_run_output; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.calculation_run_output (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    calculation_run_id uuid NOT NULL,
+    principal_object_id uuid NOT NULL,
+    output_role text DEFAULT 'OWNER_PARCEL'::text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: document; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.document (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    principal_object_id uuid NOT NULL,
+    code text NOT NULL,
+    title text,
+    nr_document text,
+    date_document date,
+    emitent text,
+    baza_legala text,
+    uat_proprietate text,
+    uat_proprietar text,
+    suprafata numeric(12,2),
+    nr_dosar_succesoral text,
+    data_decesului date,
+    ultimul_domiciliu text,
+    nr_certificat_deces text,
+    date_start date,
+    date_end date,
+    notes text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone,
+    document_type_id uuid NOT NULL,
+    institution_id uuid,
+    subject text,
+    date_valid_until date,
+    surveyor_id uuid,
+    updated_by text,
+    ai_interpreted_at timestamp with time zone,
+    custom_fields jsonb
+);
+
+
+--
+-- Name: document_document; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.document_document (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    document_id_a uuid NOT NULL,
+    document_id_b uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    relationship_role_id uuid,
+    CONSTRAINT document_document_order CHECK ((document_id_a < document_id_b))
+);
+
+
+--
+-- Name: document_page; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.document_page (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    document_id uuid NOT NULL,
+    page_number integer NOT NULL,
+    page_name text,
+    page_notes text,
+    file_name text NOT NULL,
+    file_path text NOT NULL,
+    file_size integer,
+    mime_type text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: document_version; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.document_version (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    document_id uuid NOT NULL,
+    version_number integer NOT NULL,
+    snapshot jsonb NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_by text
+);
+
+
+--
+-- Name: entity_cross_reference; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.entity_cross_reference (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    source_principal_object_id uuid NOT NULL,
+    target_principal_object_id uuid NOT NULL,
+    relationship_note text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT ecr_no_self_ref CHECK ((source_principal_object_id <> target_principal_object_id))
+);
+
+
+--
+-- Name: entity_metadata; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.entity_metadata (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    principal_object_id uuid NOT NULL,
+    importance text,
+    relevance text,
+    provenance text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    importance_updated_at timestamp with time zone,
+    relevance_updated_at timestamp with time zone,
+    provenance_updated_at timestamp with time zone,
+    updated_by text,
+    CONSTRAINT chk_em_importance CHECK ((importance = ANY (ARRAY['LOW'::text, 'MEDIUM'::text, 'HIGH'::text]))),
+    CONSTRAINT chk_em_provenance CHECK ((provenance = ANY (ARRAY['MANUAL'::text, 'IMAGE'::text, 'DOC_FILE'::text, 'COORDINATE_FILE'::text, 'ALGORITHM'::text, 'AI_INTERPRETED'::text, 'EXTERNAL_FEED'::text]))),
+    CONSTRAINT chk_em_relevance CHECK ((relevance = ANY (ARRAY['INACTIVE'::text, 'HISTORICAL'::text, 'CURRENT'::text, 'FUTURE'::text])))
+);
+
+
+--
+-- Name: entity_metadata_version; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.entity_metadata_version (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    entity_metadata_id uuid NOT NULL,
+    version_number integer NOT NULL,
+    snapshot jsonb NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: entity_provenance_log; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.entity_provenance_log (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    entity_metadata_id uuid NOT NULL,
+    method text NOT NULL,
+    logged_at date DEFAULT CURRENT_DATE NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: entity_tag; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.entity_tag (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    principal_object_id uuid NOT NULL,
+    tag text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: group_code_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.group_code_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: group_member; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.group_member (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    group_id uuid NOT NULL,
+    "position" integer NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    principal_object_id uuid NOT NULL
+);
+
+
+--
+-- Name: groups; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.groups (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    code text NOT NULL,
+    target_type public.group_target_type NOT NULL,
+    description text NOT NULL,
+    last_position integer DEFAULT 0 NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: help_content; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.help_content (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    screen_key text NOT NULL,
+    background_en text,
+    background_ro text,
+    how_to_en text,
+    how_to_ro text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: help_hint; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.help_hint (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    screen_key text NOT NULL,
+    hint_key text NOT NULL,
+    text_en text,
+    text_ro text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: judicial_person; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.judicial_person (
+    person_id uuid NOT NULL,
+    name text NOT NULL,
+    nickname text,
+    cui_number text,
+    trade_register_number text,
+    contact_person_1_id uuid,
+    contact_person_2_id uuid,
+    correspondence_same_as_hq boolean DEFAULT false NOT NULL,
+    judicial_person_type_id uuid
+);
+
+
+--
+-- Name: lookup_citizenship; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.lookup_citizenship (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name text NOT NULL,
+    sort_order integer DEFAULT 0 NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: lookup_doc_type_person_role; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.lookup_doc_type_person_role (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    document_type_id uuid NOT NULL,
+    person_role_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: lookup_document_document_role; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.lookup_document_document_role (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name text NOT NULL,
+    description text,
+    sort_order integer DEFAULT 0 NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: lookup_document_type; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.lookup_document_type (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name text NOT NULL,
+    sort_order integer DEFAULT 0 NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    key text NOT NULL,
+    deleted_at timestamp with time zone,
+    template_fields jsonb
+);
+
+
+--
+-- Name: lookup_institution; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.lookup_institution (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name text NOT NULL,
+    institution_type text,
+    sort_order integer DEFAULT 0 NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: lookup_judicial_person_type; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.lookup_judicial_person_type (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name text NOT NULL,
+    sort_order integer DEFAULT 0 NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: lookup_person_person_role; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.lookup_person_person_role (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    person_role_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: lookup_person_role; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.lookup_person_role (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name text NOT NULL,
+    description text,
+    sort_order integer DEFAULT 0 NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: lookup_person_type; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.lookup_person_type (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name text NOT NULL,
+    sort_order integer DEFAULT 0 NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: lookup_property_person_role; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.lookup_property_person_role (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    person_role_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: lookup_property_property_role; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.lookup_property_property_role (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name text NOT NULL,
+    description text,
+    sort_order integer DEFAULT 0 NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: lookup_property_type; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.lookup_property_type (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name text NOT NULL,
+    sort_order integer DEFAULT 0 NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    key text,
+    show_tarla_parcela boolean DEFAULT false NOT NULL,
+    show_address boolean DEFAULT false NOT NULL,
+    show_street_view boolean DEFAULT false NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: lookup_tarla; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.lookup_tarla (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    indicativ text NOT NULL,
+    descriere text,
+    sort_order integer DEFAULT 0 NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: lookup_use_category; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.lookup_use_category (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name text NOT NULL,
+    sort_order integer DEFAULT 0 NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: natural_person; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.natural_person (
+    person_id uuid NOT NULL,
+    first_name text,
+    last_name text,
+    nickname text,
+    cnp text,
+    id_document_type public.id_document_type,
+    id_document_number text,
+    gender public.gender,
+    date_of_birth date,
+    personal_phone_1 text,
+    personal_phone_2 text,
+    work_phone text,
+    personal_email_1 text,
+    personal_email_2 text,
+    work_email text,
+    place_of_birth text,
+    id_issuing_authority text,
+    id_valid_from date,
+    id_valid_until date,
+    id_card_number text,
+    id_mrz_raw text,
+    citizenship_id uuid,
+    physical_person_type_id uuid,
+    correspondence_same_as_home boolean DEFAULT false NOT NULL,
+    CONSTRAINT natural_person_has_name CHECK (((first_name IS NOT NULL) OR (last_name IS NOT NULL)))
+);
+
+
+--
+-- Name: person; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.person (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    principal_object_id uuid NOT NULL,
+    code text NOT NULL,
+    type public.person_type NOT NULL,
+    display_name text NOT NULL,
+    notes text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone,
+    updated_by text
+);
+
+
+--
+-- Name: person_document; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.person_document (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    person_id uuid NOT NULL,
+    document_id uuid NOT NULL,
+    quality text,
+    person_role_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT person_document_quality_check CHECK (((quality IS NULL) OR (quality = ANY (ARRAY['DEFUNCT'::text, 'MOSTENITOR'::text]))))
+);
+
+
+--
+-- Name: person_person; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.person_person (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    person_id_a uuid NOT NULL,
+    person_id_b uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    relationship_role_id uuid,
+    CONSTRAINT person_person_order CHECK ((person_id_a < person_id_b))
+);
+
+
+--
+-- Name: person_version; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.person_version (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    person_id uuid NOT NULL,
+    version_number integer NOT NULL,
+    snapshot jsonb NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_by text
+);
+
+
+--
+-- Name: principal_object; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.principal_object (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    code text NOT NULL,
+    object_type public.principal_object_type NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: principal_object_code_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.principal_object_code_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: property; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.property (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    principal_object_id uuid NOT NULL,
+    code text NOT NULL,
+    nickname text,
+    tarla_sola text,
+    parcela text,
+    cadastral_number text,
+    carte_funciara text,
+    surface_area_mp numeric(12,2),
+    notes text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone,
+    property_type_id uuid,
+    use_category_id uuid,
+    calculated_area_mp numeric(12,2),
+    updated_by text
+);
+
+
+--
+-- Name: property_address; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.property_address (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    property_id uuid NOT NULL,
+    street_line text,
+    postal_code text,
+    locality text,
+    county text,
+    country text NOT NULL,
+    notes text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    street_view_street_line text
+);
+
+
+--
+-- Name: property_corner; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.property_corner (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    property_id uuid NOT NULL,
+    sequence_no integer NOT NULL,
+    lat double precision NOT NULL,
+    lon double precision NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    original_index integer
+);
+
+
+--
+-- Name: property_document; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.property_document (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    property_id uuid NOT NULL,
+    document_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: property_person; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.property_person (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    property_id uuid NOT NULL,
+    person_id uuid NOT NULL,
+    person_role_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: property_property; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.property_property (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    property_id_a uuid NOT NULL,
+    property_id_b uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    relationship_role_id uuid,
+    CONSTRAINT property_property_order CHECK ((property_id_a < property_id_b))
+);
+
+
+--
+-- Name: property_version; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.property_version (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    property_id uuid NOT NULL,
+    version_number integer NOT NULL,
+    snapshot jsonb NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_by text
+);
+
+
+--
+-- Name: schema_migrations; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.schema_migrations (
+    filename text NOT NULL,
+    applied_at timestamp with time zone DEFAULT now() NOT NULL,
+    checksum text
+);
+
+
+--
+-- Name: stamp_code_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.stamp_code_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: stamp_member; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.stamp_member (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    stamp_id uuid NOT NULL,
+    target_type public.group_target_type NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    principal_object_id uuid NOT NULL
+);
+
+
+--
+-- Name: stamps; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.stamps (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    code text NOT NULL,
+    short_description text NOT NULL,
+    notes text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: time_frame_setting; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.time_frame_setting (
+    key text NOT NULL,
+    value integer NOT NULL,
+    unit text DEFAULT 'days'::text NOT NULL,
+    label_en text NOT NULL,
+    label_ro text NOT NULL,
+    description_en text,
+    description_ro text,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: user_requests; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.user_requests (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    email text NOT NULL,
+    username text NOT NULL,
+    status public.user_request_status DEFAULT 'pending'::public.user_request_status NOT NULL,
+    requested_at timestamp with time zone DEFAULT now() NOT NULL,
+    processed_at timestamp with time zone,
+    processed_by text,
+    email_sent boolean DEFAULT false NOT NULL
+);
+
+
+--
+-- Name: address address_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.address
+    ADD CONSTRAINT address_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: app_users app_users_email_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.app_users
+    ADD CONSTRAINT app_users_email_key UNIQUE (email);
+
+
+--
+-- Name: app_users app_users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.app_users
+    ADD CONSTRAINT app_users_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: app_users app_users_supabase_uid_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.app_users
+    ADD CONSTRAINT app_users_supabase_uid_key UNIQUE (supabase_uid);
+
+
+--
+-- Name: app_users app_users_username_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.app_users
+    ADD CONSTRAINT app_users_username_key UNIQUE (username);
+
+
+--
+-- Name: calculation_run calculation_run_code_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.calculation_run
+    ADD CONSTRAINT calculation_run_code_key UNIQUE (code);
+
+
+--
+-- Name: calculation_run_output calculation_run_output_calculation_run_id_principal_object__key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.calculation_run_output
+    ADD CONSTRAINT calculation_run_output_calculation_run_id_principal_object__key UNIQUE (calculation_run_id, principal_object_id);
+
+
+--
+-- Name: calculation_run_output calculation_run_output_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.calculation_run_output
+    ADD CONSTRAINT calculation_run_output_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: calculation_run calculation_run_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.calculation_run
+    ADD CONSTRAINT calculation_run_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: document_page document_page_document_number_unique; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.document_page
+    ADD CONSTRAINT document_page_document_number_unique UNIQUE (document_id, page_number);
+
+
+--
+-- Name: document_version document_version_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.document_version
+    ADD CONSTRAINT document_version_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: entity_cross_reference ecr_unique_pair; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.entity_cross_reference
+    ADD CONSTRAINT ecr_unique_pair UNIQUE (source_principal_object_id, target_principal_object_id);
+
+
+--
+-- Name: entity_cross_reference entity_cross_reference_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.entity_cross_reference
+    ADD CONSTRAINT entity_cross_reference_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: entity_metadata entity_metadata_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.entity_metadata
+    ADD CONSTRAINT entity_metadata_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: entity_metadata entity_metadata_principal_object_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.entity_metadata
+    ADD CONSTRAINT entity_metadata_principal_object_id_key UNIQUE (principal_object_id);
+
+
+--
+-- Name: entity_metadata_version entity_metadata_version_entity_metadata_id_version_number_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.entity_metadata_version
+    ADD CONSTRAINT entity_metadata_version_entity_metadata_id_version_number_key UNIQUE (entity_metadata_id, version_number);
+
+
+--
+-- Name: entity_metadata_version entity_metadata_version_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.entity_metadata_version
+    ADD CONSTRAINT entity_metadata_version_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: entity_provenance_log entity_provenance_log_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.entity_provenance_log
+    ADD CONSTRAINT entity_provenance_log_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: entity_tag entity_tag_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.entity_tag
+    ADD CONSTRAINT entity_tag_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: group_member group_member_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.group_member
+    ADD CONSTRAINT group_member_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: groups groups_code_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.groups
+    ADD CONSTRAINT groups_code_key UNIQUE (code);
+
+
+--
+-- Name: groups groups_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.groups
+    ADD CONSTRAINT groups_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: help_content help_content_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.help_content
+    ADD CONSTRAINT help_content_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: help_content help_content_screen_key_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.help_content
+    ADD CONSTRAINT help_content_screen_key_key UNIQUE (screen_key);
+
+
+--
+-- Name: help_hint help_hint_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.help_hint
+    ADD CONSTRAINT help_hint_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: help_hint help_hint_screen_hint_unique; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.help_hint
+    ADD CONSTRAINT help_hint_screen_hint_unique UNIQUE (screen_key, hint_key);
+
+
+--
+-- Name: judicial_person judicial_person_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.judicial_person
+    ADD CONSTRAINT judicial_person_pkey PRIMARY KEY (person_id);
+
+
+--
+-- Name: lookup_citizenship lookup_citizenship_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lookup_citizenship
+    ADD CONSTRAINT lookup_citizenship_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: lookup_doc_type_person_role lookup_doc_type_person_role_document_type_id_person_role_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lookup_doc_type_person_role
+    ADD CONSTRAINT lookup_doc_type_person_role_document_type_id_person_role_id_key UNIQUE (document_type_id, person_role_id);
+
+
+--
+-- Name: lookup_doc_type_person_role lookup_doc_type_person_role_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lookup_doc_type_person_role
+    ADD CONSTRAINT lookup_doc_type_person_role_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: lookup_document_document_role lookup_document_document_role_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lookup_document_document_role
+    ADD CONSTRAINT lookup_document_document_role_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: lookup_document_type lookup_document_type_key_unique; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lookup_document_type
+    ADD CONSTRAINT lookup_document_type_key_unique UNIQUE (key);
+
+
+--
+-- Name: lookup_document_type lookup_document_type_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lookup_document_type
+    ADD CONSTRAINT lookup_document_type_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: lookup_institution lookup_institution_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lookup_institution
+    ADD CONSTRAINT lookup_institution_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: lookup_judicial_person_type lookup_judicial_person_type_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lookup_judicial_person_type
+    ADD CONSTRAINT lookup_judicial_person_type_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: lookup_person_person_role lookup_person_person_role_person_role_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lookup_person_person_role
+    ADD CONSTRAINT lookup_person_person_role_person_role_id_key UNIQUE (person_role_id);
+
+
+--
+-- Name: lookup_person_person_role lookup_person_person_role_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lookup_person_person_role
+    ADD CONSTRAINT lookup_person_person_role_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: lookup_person_role lookup_person_role_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lookup_person_role
+    ADD CONSTRAINT lookup_person_role_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: lookup_person_type lookup_person_type_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lookup_person_type
+    ADD CONSTRAINT lookup_person_type_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: lookup_property_person_role lookup_property_person_role_person_role_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lookup_property_person_role
+    ADD CONSTRAINT lookup_property_person_role_person_role_id_key UNIQUE (person_role_id);
+
+
+--
+-- Name: lookup_property_person_role lookup_property_person_role_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lookup_property_person_role
+    ADD CONSTRAINT lookup_property_person_role_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: lookup_property_property_role lookup_property_property_role_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lookup_property_property_role
+    ADD CONSTRAINT lookup_property_property_role_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: lookup_property_type lookup_property_type_key_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lookup_property_type
+    ADD CONSTRAINT lookup_property_type_key_key UNIQUE (key);
+
+
+--
+-- Name: lookup_property_type lookup_property_type_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lookup_property_type
+    ADD CONSTRAINT lookup_property_type_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: lookup_tarla lookup_tarla_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lookup_tarla
+    ADD CONSTRAINT lookup_tarla_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: lookup_use_category lookup_use_category_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lookup_use_category
+    ADD CONSTRAINT lookup_use_category_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: natural_person natural_person_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.natural_person
+    ADD CONSTRAINT natural_person_pkey PRIMARY KEY (person_id);
+
+
+--
+-- Name: document paperwork_code_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.document
+    ADD CONSTRAINT paperwork_code_key UNIQUE (code);
+
+
+--
+-- Name: document_page paperwork_page_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.document_page
+    ADD CONSTRAINT paperwork_page_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: document_document paperwork_paperwork_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.document_document
+    ADD CONSTRAINT paperwork_paperwork_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: document paperwork_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.document
+    ADD CONSTRAINT paperwork_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: document paperwork_principal_object_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.document
+    ADD CONSTRAINT paperwork_principal_object_id_key UNIQUE (principal_object_id);
+
+
+--
+-- Name: person person_code_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.person
+    ADD CONSTRAINT person_code_key UNIQUE (code);
+
+
+--
+-- Name: person_document person_paperwork_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.person_document
+    ADD CONSTRAINT person_paperwork_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: person_person person_person_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.person_person
+    ADD CONSTRAINT person_person_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: person person_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.person
+    ADD CONSTRAINT person_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: person person_principal_object_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.person
+    ADD CONSTRAINT person_principal_object_id_key UNIQUE (principal_object_id);
+
+
+--
+-- Name: person_version person_version_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.person_version
+    ADD CONSTRAINT person_version_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: principal_object principal_object_code_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.principal_object
+    ADD CONSTRAINT principal_object_code_key UNIQUE (code);
+
+
+--
+-- Name: principal_object principal_object_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.principal_object
+    ADD CONSTRAINT principal_object_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: property_address property_address_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.property_address
+    ADD CONSTRAINT property_address_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: property property_code_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.property
+    ADD CONSTRAINT property_code_key UNIQUE (code);
+
+
+--
+-- Name: property_corner property_corner_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.property_corner
+    ADD CONSTRAINT property_corner_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: property_document property_paperwork_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.property_document
+    ADD CONSTRAINT property_paperwork_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: property_person property_person_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.property_person
+    ADD CONSTRAINT property_person_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: property property_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.property
+    ADD CONSTRAINT property_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: property property_principal_object_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.property
+    ADD CONSTRAINT property_principal_object_id_key UNIQUE (principal_object_id);
+
+
+--
+-- Name: property_property property_property_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.property_property
+    ADD CONSTRAINT property_property_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: property_version property_version_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.property_version
+    ADD CONSTRAINT property_version_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: schema_migrations schema_migrations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.schema_migrations
+    ADD CONSTRAINT schema_migrations_pkey PRIMARY KEY (filename);
+
+
+--
+-- Name: stamp_member stamp_member_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.stamp_member
+    ADD CONSTRAINT stamp_member_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: stamps stamps_code_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.stamps
+    ADD CONSTRAINT stamps_code_key UNIQUE (code);
+
+
+--
+-- Name: stamps stamps_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.stamps
+    ADD CONSTRAINT stamps_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: time_frame_setting time_frame_setting_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.time_frame_setting
+    ADD CONSTRAINT time_frame_setting_pkey PRIMARY KEY (key);
+
+
+--
+-- Name: user_requests user_requests_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_requests
+    ADD CONSTRAINT user_requests_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: address_person_kind_unique; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX address_person_kind_unique ON public.address USING btree (person_id, kind);
+
+
+--
+-- Name: calculation_run_output_po_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX calculation_run_output_po_idx ON public.calculation_run_output USING btree (principal_object_id);
+
+
+--
+-- Name: calculation_run_output_run_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX calculation_run_output_run_idx ON public.calculation_run_output USING btree (calculation_run_id);
+
+
+--
+-- Name: document_document_unique; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX document_document_unique ON public.document_document USING btree (document_id_a, document_id_b);
+
+
+--
+-- Name: document_version_document_number_unique; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX document_version_document_number_unique ON public.document_version USING btree (document_id, version_number);
+
+
+--
+-- Name: ecr_source_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ecr_source_idx ON public.entity_cross_reference USING btree (source_principal_object_id);
+
+
+--
+-- Name: ecr_target_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ecr_target_idx ON public.entity_cross_reference USING btree (target_principal_object_id);
+
+
+--
+-- Name: entity_metadata_importance_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX entity_metadata_importance_idx ON public.entity_metadata USING btree (importance);
+
+
+--
+-- Name: entity_metadata_provenance_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX entity_metadata_provenance_idx ON public.entity_metadata USING btree (provenance);
+
+
+--
+-- Name: entity_metadata_relevance_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX entity_metadata_relevance_idx ON public.entity_metadata USING btree (relevance);
+
+
+--
+-- Name: entity_metadata_version_meta_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX entity_metadata_version_meta_idx ON public.entity_metadata_version USING btree (entity_metadata_id, version_number);
+
+
+--
+-- Name: entity_provenance_log_meta_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX entity_provenance_log_meta_idx ON public.entity_provenance_log USING btree (entity_metadata_id, logged_at);
+
+
+--
+-- Name: entity_tag_entity_tag_unique; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX entity_tag_entity_tag_unique ON public.entity_tag USING btree (principal_object_id, lower(tag));
+
+
+--
+-- Name: entity_tag_principal_object_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX entity_tag_principal_object_idx ON public.entity_tag USING btree (principal_object_id);
+
+
+--
+-- Name: group_member_group_position_unique; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX group_member_group_position_unique ON public.group_member USING btree (group_id, "position");
+
+
+--
+-- Name: group_member_group_principal_object_unique; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX group_member_group_principal_object_unique ON public.group_member USING btree (group_id, principal_object_id);
+
+
+--
+-- Name: idx_document_nr_document_trgm; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_document_nr_document_trgm ON public.document USING gin (nr_document public.gin_trgm_ops) WHERE (nr_document IS NOT NULL);
+
+
+--
+-- Name: idx_document_subject_trgm; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_document_subject_trgm ON public.document USING gin (subject public.gin_trgm_ops) WHERE (subject IS NOT NULL);
+
+
+--
+-- Name: idx_document_title_trgm; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_document_title_trgm ON public.document USING gin (title public.gin_trgm_ops) WHERE (title IS NOT NULL);
+
+
+--
+-- Name: idx_person_display_name_trgm; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_person_display_name_trgm ON public.person USING gin (display_name public.gin_trgm_ops);
+
+
+--
+-- Name: idx_principal_object_code_trgm; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_principal_object_code_trgm ON public.principal_object USING gin (code public.gin_trgm_ops);
+
+
+--
+-- Name: idx_property_cadastral_number_trgm; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_property_cadastral_number_trgm ON public.property USING gin (cadastral_number public.gin_trgm_ops) WHERE (cadastral_number IS NOT NULL);
+
+
+--
+-- Name: idx_property_carte_funciara_trgm; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_property_carte_funciara_trgm ON public.property USING gin (carte_funciara public.gin_trgm_ops) WHERE (carte_funciara IS NOT NULL);
+
+
+--
+-- Name: idx_property_nickname_trgm; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_property_nickname_trgm ON public.property USING gin (nickname public.gin_trgm_ops) WHERE (nickname IS NOT NULL);
+
+
+--
+-- Name: idx_property_tarla_sola_trgm; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_property_tarla_sola_trgm ON public.property USING gin (tarla_sola public.gin_trgm_ops) WHERE (tarla_sola IS NOT NULL);
+
+
+--
+-- Name: person_document_unique; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX person_document_unique ON public.person_document USING btree (person_id, document_id);
+
+
+--
+-- Name: person_person_unique; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX person_person_unique ON public.person_person USING btree (person_id_a, person_id_b);
+
+
+--
+-- Name: person_version_person_number_unique; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX person_version_person_number_unique ON public.person_version USING btree (person_id, version_number);
+
+
+--
+-- Name: property_address_property_unique; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX property_address_property_unique ON public.property_address USING btree (property_id);
+
+
+--
+-- Name: property_cadastral_number_unique; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX property_cadastral_number_unique ON public.property USING btree (cadastral_number) WHERE (cadastral_number IS NOT NULL);
+
+
+--
+-- Name: property_corner_geom_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX property_corner_geom_idx ON public.property_corner USING gist (((public.st_setsrid(public.st_makepoint(lon, lat), 4326))::public.geography));
+
+
+--
+-- Name: property_corner_property_seq_unique; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX property_corner_property_seq_unique ON public.property_corner USING btree (property_id, sequence_no);
+
+
+--
+-- Name: property_document_unique; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX property_document_unique ON public.property_document USING btree (property_id, document_id);
+
+
+--
+-- Name: property_person_unique; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX property_person_unique ON public.property_person USING btree (property_id, person_id);
+
+
+--
+-- Name: property_property_unique; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX property_property_unique ON public.property_property USING btree (property_id_a, property_id_b);
+
+
+--
+-- Name: property_version_property_number_unique; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX property_version_property_number_unique ON public.property_version USING btree (property_id, version_number);
+
+
+--
+-- Name: stamp_member_principal_object_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX stamp_member_principal_object_idx ON public.stamp_member USING btree (principal_object_id);
+
+
+--
+-- Name: stamp_member_stamp_principal_object_unique; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX stamp_member_stamp_principal_object_unique ON public.stamp_member USING btree (stamp_id, principal_object_id);
+
+
+--
+-- Name: user_requests_email_pending_unique; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX user_requests_email_pending_unique ON public.user_requests USING btree (email) WHERE (status = 'pending'::public.user_request_status);
+
+
+--
+-- Name: address address_touch_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER address_touch_updated_at BEFORE UPDATE ON public.address FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
+
+
+--
+-- Name: groups groups_touch_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER groups_touch_updated_at BEFORE UPDATE ON public.groups FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
+
+
+--
+-- Name: judicial_person judicial_person_check_cui_unique; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER judicial_person_check_cui_unique BEFORE INSERT OR UPDATE ON public.judicial_person FOR EACH ROW EXECUTE FUNCTION public.judicial_person_check_cui_unique();
+
+
+--
+-- Name: judicial_person judicial_person_lock_cui; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER judicial_person_lock_cui BEFORE UPDATE ON public.judicial_person FOR EACH ROW EXECUTE FUNCTION public.judicial_person_lock_cui();
+
+
+--
+-- Name: lookup_citizenship lookup_citizenship_touch_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER lookup_citizenship_touch_updated_at BEFORE UPDATE ON public.lookup_citizenship FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
+
+
+--
+-- Name: lookup_document_type lookup_document_type_touch_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER lookup_document_type_touch_updated_at BEFORE UPDATE ON public.lookup_document_type FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
+
+
+--
+-- Name: lookup_institution lookup_institution_touch_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER lookup_institution_touch_updated_at BEFORE UPDATE ON public.lookup_institution FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
+
+
+--
+-- Name: lookup_person_type lookup_person_type_touch_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER lookup_person_type_touch_updated_at BEFORE UPDATE ON public.lookup_person_type FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
+
+
+--
+-- Name: lookup_property_type lookup_property_type_touch_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER lookup_property_type_touch_updated_at BEFORE UPDATE ON public.lookup_property_type FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
+
+
+--
+-- Name: lookup_tarla lookup_tarla_touch_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER lookup_tarla_touch_updated_at BEFORE UPDATE ON public.lookup_tarla FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
+
+
+--
+-- Name: lookup_use_category lookup_use_category_touch_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER lookup_use_category_touch_updated_at BEFORE UPDATE ON public.lookup_use_category FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
+
+
+--
+-- Name: natural_person natural_person_check_cnp_unique; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER natural_person_check_cnp_unique BEFORE INSERT OR UPDATE ON public.natural_person FOR EACH ROW EXECUTE FUNCTION public.natural_person_check_cnp_unique();
+
+
+--
+-- Name: natural_person natural_person_lock_cnp; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER natural_person_lock_cnp BEFORE UPDATE ON public.natural_person FOR EACH ROW EXECUTE FUNCTION public.natural_person_lock_cnp();
+
+
+--
+-- Name: document paperwork_touch_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER paperwork_touch_updated_at BEFORE UPDATE ON public.document FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
+
+
+--
+-- Name: person person_touch_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER person_touch_updated_at BEFORE UPDATE ON public.person FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
+
+
+--
+-- Name: property_address property_address_touch_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER property_address_touch_updated_at BEFORE UPDATE ON public.property_address FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
+
+
+--
+-- Name: property_corner property_corner_touch_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER property_corner_touch_updated_at BEFORE UPDATE ON public.property_corner FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
+
+
+--
+-- Name: property property_touch_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER property_touch_updated_at BEFORE UPDATE ON public.property FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
+
+
+--
+-- Name: lookup_document_document_role touch_lookup_document_document_role_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER touch_lookup_document_document_role_updated_at BEFORE UPDATE ON public.lookup_document_document_role FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
+
+
+--
+-- Name: lookup_property_property_role touch_lookup_property_property_role_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER touch_lookup_property_property_role_updated_at BEFORE UPDATE ON public.lookup_property_property_role FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
+
+
+--
+-- Name: entity_metadata touch_updated_at_entity_metadata; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER touch_updated_at_entity_metadata BEFORE UPDATE ON public.entity_metadata FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
+
+
+--
+-- Name: help_content touch_updated_at_help_content; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER touch_updated_at_help_content BEFORE UPDATE ON public.help_content FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
+
+
+--
+-- Name: help_hint touch_updated_at_help_hint; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER touch_updated_at_help_hint BEFORE UPDATE ON public.help_hint FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
+
+
+--
+-- Name: lookup_judicial_person_type touch_updated_at_lookup_judicial_person_type; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER touch_updated_at_lookup_judicial_person_type BEFORE UPDATE ON public.lookup_judicial_person_type FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
+
+
+--
+-- Name: lookup_person_role touch_updated_at_lookup_person_role; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER touch_updated_at_lookup_person_role BEFORE UPDATE ON public.lookup_person_role FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
+
+
+--
+-- Name: document_page touch_updated_at_paperwork_page; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER touch_updated_at_paperwork_page BEFORE UPDATE ON public.document_page FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
+
+
+--
+-- Name: stamps touch_updated_at_stamps; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER touch_updated_at_stamps BEFORE UPDATE ON public.stamps FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
+
+
+--
+-- Name: address address_person_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.address
+    ADD CONSTRAINT address_person_id_fkey FOREIGN KEY (person_id) REFERENCES public.person(id) ON DELETE CASCADE;
+
+
+--
+-- Name: calculation_run_output calculation_run_output_calculation_run_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.calculation_run_output
+    ADD CONSTRAINT calculation_run_output_calculation_run_id_fkey FOREIGN KEY (calculation_run_id) REFERENCES public.calculation_run(id) ON DELETE CASCADE;
+
+
+--
+-- Name: calculation_run_output calculation_run_output_principal_object_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.calculation_run_output
+    ADD CONSTRAINT calculation_run_output_principal_object_id_fkey FOREIGN KEY (principal_object_id) REFERENCES public.principal_object(id) ON DELETE CASCADE;
+
+
+--
+-- Name: calculation_run calculation_run_result_group_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.calculation_run
+    ADD CONSTRAINT calculation_run_result_group_id_fkey FOREIGN KEY (result_group_id) REFERENCES public.groups(id) ON DELETE SET NULL;
+
+
+--
+-- Name: document_document document_document_relationship_role_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.document_document
+    ADD CONSTRAINT document_document_relationship_role_id_fkey FOREIGN KEY (relationship_role_id) REFERENCES public.lookup_document_document_role(id) ON DELETE SET NULL;
+
+
+--
+-- Name: document document_document_type_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.document
+    ADD CONSTRAINT document_document_type_id_fkey FOREIGN KEY (document_type_id) REFERENCES public.lookup_document_type(id);
+
+
+--
+-- Name: document document_institution_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.document
+    ADD CONSTRAINT document_institution_id_fkey FOREIGN KEY (institution_id) REFERENCES public.lookup_institution(id) ON DELETE SET NULL;
+
+
+--
+-- Name: document document_surveyor_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.document
+    ADD CONSTRAINT document_surveyor_id_fkey FOREIGN KEY (surveyor_id) REFERENCES public.person(id) ON DELETE SET NULL;
+
+
+--
+-- Name: document_version document_version_document_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.document_version
+    ADD CONSTRAINT document_version_document_id_fkey FOREIGN KEY (document_id) REFERENCES public.document(id) ON DELETE CASCADE;
+
+
+--
+-- Name: entity_cross_reference entity_cross_reference_source_principal_object_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.entity_cross_reference
+    ADD CONSTRAINT entity_cross_reference_source_principal_object_id_fkey FOREIGN KEY (source_principal_object_id) REFERENCES public.principal_object(id) ON DELETE CASCADE;
+
+
+--
+-- Name: entity_cross_reference entity_cross_reference_target_principal_object_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.entity_cross_reference
+    ADD CONSTRAINT entity_cross_reference_target_principal_object_id_fkey FOREIGN KEY (target_principal_object_id) REFERENCES public.principal_object(id) ON DELETE CASCADE;
+
+
+--
+-- Name: entity_metadata entity_metadata_principal_object_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.entity_metadata
+    ADD CONSTRAINT entity_metadata_principal_object_id_fkey FOREIGN KEY (principal_object_id) REFERENCES public.principal_object(id) ON DELETE CASCADE;
+
+
+--
+-- Name: entity_metadata_version entity_metadata_version_entity_metadata_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.entity_metadata_version
+    ADD CONSTRAINT entity_metadata_version_entity_metadata_id_fkey FOREIGN KEY (entity_metadata_id) REFERENCES public.entity_metadata(id) ON DELETE CASCADE;
+
+
+--
+-- Name: entity_provenance_log entity_provenance_log_entity_metadata_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.entity_provenance_log
+    ADD CONSTRAINT entity_provenance_log_entity_metadata_id_fkey FOREIGN KEY (entity_metadata_id) REFERENCES public.entity_metadata(id) ON DELETE CASCADE;
+
+
+--
+-- Name: entity_tag entity_tag_principal_object_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.entity_tag
+    ADD CONSTRAINT entity_tag_principal_object_id_fkey FOREIGN KEY (principal_object_id) REFERENCES public.principal_object(id) ON DELETE CASCADE;
+
+
+--
+-- Name: group_member group_member_group_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.group_member
+    ADD CONSTRAINT group_member_group_id_fkey FOREIGN KEY (group_id) REFERENCES public.groups(id) ON DELETE CASCADE;
+
+
+--
+-- Name: group_member group_member_principal_object_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.group_member
+    ADD CONSTRAINT group_member_principal_object_id_fkey FOREIGN KEY (principal_object_id) REFERENCES public.principal_object(id) ON DELETE CASCADE;
+
+
+--
+-- Name: judicial_person judicial_person_contact_person_1_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.judicial_person
+    ADD CONSTRAINT judicial_person_contact_person_1_id_fkey FOREIGN KEY (contact_person_1_id) REFERENCES public.person(id) ON DELETE SET NULL;
+
+
+--
+-- Name: judicial_person judicial_person_contact_person_2_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.judicial_person
+    ADD CONSTRAINT judicial_person_contact_person_2_id_fkey FOREIGN KEY (contact_person_2_id) REFERENCES public.person(id) ON DELETE SET NULL;
+
+
+--
+-- Name: judicial_person judicial_person_judicial_person_type_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.judicial_person
+    ADD CONSTRAINT judicial_person_judicial_person_type_id_fkey FOREIGN KEY (judicial_person_type_id) REFERENCES public.lookup_judicial_person_type(id) ON DELETE SET NULL;
+
+
+--
+-- Name: judicial_person judicial_person_person_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.judicial_person
+    ADD CONSTRAINT judicial_person_person_id_fkey FOREIGN KEY (person_id) REFERENCES public.person(id) ON DELETE CASCADE;
+
+
+--
+-- Name: lookup_doc_type_person_role lookup_doc_type_person_role_document_type_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lookup_doc_type_person_role
+    ADD CONSTRAINT lookup_doc_type_person_role_document_type_id_fkey FOREIGN KEY (document_type_id) REFERENCES public.lookup_document_type(id) ON DELETE CASCADE;
+
+
+--
+-- Name: lookup_doc_type_person_role lookup_doc_type_person_role_person_role_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lookup_doc_type_person_role
+    ADD CONSTRAINT lookup_doc_type_person_role_person_role_id_fkey FOREIGN KEY (person_role_id) REFERENCES public.lookup_person_role(id) ON DELETE CASCADE;
+
+
+--
+-- Name: lookup_person_person_role lookup_person_person_role_person_role_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lookup_person_person_role
+    ADD CONSTRAINT lookup_person_person_role_person_role_id_fkey FOREIGN KEY (person_role_id) REFERENCES public.lookup_person_role(id) ON DELETE CASCADE;
+
+
+--
+-- Name: lookup_property_person_role lookup_property_person_role_person_role_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lookup_property_person_role
+    ADD CONSTRAINT lookup_property_person_role_person_role_id_fkey FOREIGN KEY (person_role_id) REFERENCES public.lookup_person_role(id) ON DELETE CASCADE;
+
+
+--
+-- Name: natural_person natural_person_citizenship_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.natural_person
+    ADD CONSTRAINT natural_person_citizenship_id_fkey FOREIGN KEY (citizenship_id) REFERENCES public.lookup_citizenship(id) ON DELETE SET NULL;
+
+
+--
+-- Name: natural_person natural_person_person_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.natural_person
+    ADD CONSTRAINT natural_person_person_id_fkey FOREIGN KEY (person_id) REFERENCES public.person(id) ON DELETE CASCADE;
+
+
+--
+-- Name: natural_person natural_person_physical_person_type_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.natural_person
+    ADD CONSTRAINT natural_person_physical_person_type_id_fkey FOREIGN KEY (physical_person_type_id) REFERENCES public.lookup_person_type(id) ON DELETE SET NULL;
+
+
+--
+-- Name: document_page paperwork_page_paperwork_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.document_page
+    ADD CONSTRAINT paperwork_page_paperwork_id_fkey FOREIGN KEY (document_id) REFERENCES public.document(id) ON DELETE CASCADE;
+
+
+--
+-- Name: document_document paperwork_paperwork_paperwork_id_a_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.document_document
+    ADD CONSTRAINT paperwork_paperwork_paperwork_id_a_fkey FOREIGN KEY (document_id_a) REFERENCES public.document(id) ON DELETE CASCADE;
+
+
+--
+-- Name: document_document paperwork_paperwork_paperwork_id_b_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.document_document
+    ADD CONSTRAINT paperwork_paperwork_paperwork_id_b_fkey FOREIGN KEY (document_id_b) REFERENCES public.document(id) ON DELETE CASCADE;
+
+
+--
+-- Name: document paperwork_principal_object_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.document
+    ADD CONSTRAINT paperwork_principal_object_id_fkey FOREIGN KEY (principal_object_id) REFERENCES public.principal_object(id);
+
+
+--
+-- Name: person_document person_paperwork_paperwork_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.person_document
+    ADD CONSTRAINT person_paperwork_paperwork_id_fkey FOREIGN KEY (document_id) REFERENCES public.document(id) ON DELETE CASCADE;
+
+
+--
+-- Name: person_document person_paperwork_person_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.person_document
+    ADD CONSTRAINT person_paperwork_person_id_fkey FOREIGN KEY (person_id) REFERENCES public.person(id) ON DELETE CASCADE;
+
+
+--
+-- Name: person_document person_paperwork_person_role_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.person_document
+    ADD CONSTRAINT person_paperwork_person_role_id_fkey FOREIGN KEY (person_role_id) REFERENCES public.lookup_person_role(id) ON DELETE SET NULL;
+
+
+--
+-- Name: person_person person_person_person_id_a_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.person_person
+    ADD CONSTRAINT person_person_person_id_a_fkey FOREIGN KEY (person_id_a) REFERENCES public.person(id) ON DELETE CASCADE;
+
+
+--
+-- Name: person_person person_person_person_id_b_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.person_person
+    ADD CONSTRAINT person_person_person_id_b_fkey FOREIGN KEY (person_id_b) REFERENCES public.person(id) ON DELETE CASCADE;
+
+
+--
+-- Name: person_person person_person_relationship_role_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.person_person
+    ADD CONSTRAINT person_person_relationship_role_id_fkey FOREIGN KEY (relationship_role_id) REFERENCES public.lookup_person_role(id) ON DELETE SET NULL;
+
+
+--
+-- Name: person person_principal_object_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.person
+    ADD CONSTRAINT person_principal_object_id_fkey FOREIGN KEY (principal_object_id) REFERENCES public.principal_object(id);
+
+
+--
+-- Name: person_version person_version_person_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.person_version
+    ADD CONSTRAINT person_version_person_id_fkey FOREIGN KEY (person_id) REFERENCES public.person(id) ON DELETE CASCADE;
+
+
+--
+-- Name: property_address property_address_property_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.property_address
+    ADD CONSTRAINT property_address_property_id_fkey FOREIGN KEY (property_id) REFERENCES public.property(id) ON DELETE CASCADE;
+
+
+--
+-- Name: property_corner property_corner_property_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.property_corner
+    ADD CONSTRAINT property_corner_property_id_fkey FOREIGN KEY (property_id) REFERENCES public.property(id) ON DELETE CASCADE;
+
+
+--
+-- Name: property_document property_paperwork_paperwork_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.property_document
+    ADD CONSTRAINT property_paperwork_paperwork_id_fkey FOREIGN KEY (document_id) REFERENCES public.document(id) ON DELETE CASCADE;
+
+
+--
+-- Name: property_document property_paperwork_property_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.property_document
+    ADD CONSTRAINT property_paperwork_property_id_fkey FOREIGN KEY (property_id) REFERENCES public.property(id) ON DELETE CASCADE;
+
+
+--
+-- Name: property_person property_person_person_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.property_person
+    ADD CONSTRAINT property_person_person_id_fkey FOREIGN KEY (person_id) REFERENCES public.person(id) ON DELETE CASCADE;
+
+
+--
+-- Name: property_person property_person_person_role_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.property_person
+    ADD CONSTRAINT property_person_person_role_id_fkey FOREIGN KEY (person_role_id) REFERENCES public.lookup_person_role(id) ON DELETE SET NULL;
+
+
+--
+-- Name: property_person property_person_property_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.property_person
+    ADD CONSTRAINT property_person_property_id_fkey FOREIGN KEY (property_id) REFERENCES public.property(id) ON DELETE CASCADE;
+
+
+--
+-- Name: property property_principal_object_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.property
+    ADD CONSTRAINT property_principal_object_id_fkey FOREIGN KEY (principal_object_id) REFERENCES public.principal_object(id);
+
+
+--
+-- Name: property_property property_property_property_id_a_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.property_property
+    ADD CONSTRAINT property_property_property_id_a_fkey FOREIGN KEY (property_id_a) REFERENCES public.property(id) ON DELETE CASCADE;
+
+
+--
+-- Name: property_property property_property_property_id_b_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.property_property
+    ADD CONSTRAINT property_property_property_id_b_fkey FOREIGN KEY (property_id_b) REFERENCES public.property(id) ON DELETE CASCADE;
+
+
+--
+-- Name: property_property property_property_relationship_role_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.property_property
+    ADD CONSTRAINT property_property_relationship_role_id_fkey FOREIGN KEY (relationship_role_id) REFERENCES public.lookup_property_property_role(id) ON DELETE SET NULL;
+
+
+--
+-- Name: property property_property_type_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.property
+    ADD CONSTRAINT property_property_type_id_fkey FOREIGN KEY (property_type_id) REFERENCES public.lookup_property_type(id) ON DELETE SET NULL;
+
+
+--
+-- Name: property property_use_category_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.property
+    ADD CONSTRAINT property_use_category_id_fkey FOREIGN KEY (use_category_id) REFERENCES public.lookup_use_category(id) ON DELETE SET NULL;
+
+
+--
+-- Name: property_version property_version_property_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.property_version
+    ADD CONSTRAINT property_version_property_id_fkey FOREIGN KEY (property_id) REFERENCES public.property(id) ON DELETE CASCADE;
+
+
+--
+-- Name: stamp_member stamp_member_principal_object_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.stamp_member
+    ADD CONSTRAINT stamp_member_principal_object_id_fkey FOREIGN KEY (principal_object_id) REFERENCES public.principal_object(id) ON DELETE CASCADE;
+
+
+--
+-- Name: stamp_member stamp_member_stamp_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.stamp_member
+    ADD CONSTRAINT stamp_member_stamp_id_fkey FOREIGN KEY (stamp_id) REFERENCES public.stamps(id) ON DELETE CASCADE;
+
+
+--
+-- PostgreSQL database dump complete
+--
+
