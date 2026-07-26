@@ -109,6 +109,12 @@ Write-Host ""
 
 if ($pending.Count -eq 0) {
     Write-Host "Database is up to date. Nothing to do."
+    Write-Host ""
+    Write-Host "NOTE: 'up to date' only means every filename is recorded in"
+    Write-Host "schema_migrations -- it does NOT mean the tables actually exist."
+    Write-Host "migration_056 backfilled 008-055 by assertion, so a migration that"
+    Write-Host "was never really applied still shows as applied here."
+    Write-Host "Confirm with:  .\scripts\Verify-Schema.ps1"
     exit 0
 }
 
@@ -155,6 +161,8 @@ Write-Host "Applied  : $ok"
 Write-Host "Failed   : $fail"
 Write-Host "Baseline : $($applied.Count) (were already recorded)"
 Write-Host "================================"
+Write-Host ""
+Write-Host "Next: .\scripts\Verify-Schema.ps1  (confirms the tables really exist)"
 
 if ($fail -gt 0) {
     exit 1
