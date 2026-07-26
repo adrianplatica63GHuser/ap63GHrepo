@@ -1,6 +1,5 @@
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
-import { HelpButton } from "@/components/help/help-button";
 import { CalculationView } from "./_components/calculation-view";
 
 export default async function CalculationPage() {
@@ -11,8 +10,13 @@ export default async function CalculationPage() {
     <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-zinc-950">
       <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-6 py-8">
         <header className="flex items-center gap-2">
+          {/*
+            Slice #21.10.help.rollout: the hand-placed <HelpButton> that used
+            to sit here was removed. Screen help is now auto-mounted in the
+            breadcrumb bar for every route, so a per-page button would render
+            a second, duplicate "?" on this screen alone.
+          */}
           <h1 className="text-2xl font-semibold tracking-tight">{t("pageTitle")}</h1>
-          <HelpButton screenKey="admin-calculation" />
           <div className="ml-auto">
             <Link
               href="/admin/calculation/history"

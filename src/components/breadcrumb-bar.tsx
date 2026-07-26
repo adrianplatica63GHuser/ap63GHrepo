@@ -24,6 +24,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Suspense } from "react";
 import { useNavigationHistory } from "@/components/providers/navigation-history-provider";
+import { ScreenHelpButton } from "@/components/help/screen-help-button";
 
 // ---------------------------------------------------------------------------
 // Route segment map
@@ -215,6 +216,20 @@ function BreadcrumbBarInner() {
           </span>
         );
       })}
+
+      {/*
+        Slice #21.10.help.rollout — screen help is auto-mounted here rather
+        than hand-placed per page. The breadcrumb bar is the only element
+        rendered on every screen that already knows the route, which makes it
+        the natural anchor: a new screen gets its "?" from a registry entry
+        alone, with no JSX change.
+
+        ml-auto pushes it to the far right. It renders nothing when the route
+        has no registered help screen, or when that screen has no content.
+      */}
+      <span className="ml-auto pl-4 shrink-0">
+        <ScreenHelpButton />
+      </span>
     </nav>
   );
 }

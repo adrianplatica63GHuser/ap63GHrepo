@@ -27,13 +27,21 @@ async function fetchHelp(screenKey: string): Promise<HelpApiResponse> {
 /**
  * Shared data hook for <HelpButton> and <HelpHint>. Both components on the
  * same screen use the same screenKey, so they share one cached fetch — a
- * screen with a HelpButton plus two micro-hints only ever hits
- * GET /api/help/[screenKey] once.
+ * screen with a HelpButton plus six micro-hints (the Properties Map) only
+ * ever hits GET /api/help/[screenKey] once.
+ *
+ * Accepts null so callers that resolve their screen from the route can pass
+ * the result straight through without a conditional hook call.
  */
-export function useHelpData(screenKey: string) {
+export function useHelpData(screenKey: string | null | undefined) {
   return useQuery({
     queryKey: ["help", screenKey],
-    queryFn: () => fetchHelp(screenKey),
+    queryFn: () => fetchHelp(screenKey as string),
+    // A route with no registered help screen resolves to null. Disabling the
+    // query rather than fetching "/api/help/" avoids a guaranteed 404 on every
+    // such page — hooks cannot be called conditionally, so the guard lives
+    // here rather than at the call site.
+    enabled: !!screenKey,
     staleTime: 5 * 60 * 1000,
   });
 }

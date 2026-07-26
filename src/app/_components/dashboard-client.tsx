@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useTimeFrames, tfDays } from "@/hooks/use-time-frames";
+import { ScreenHelpButton } from "@/components/help/screen-help-button";
 
 // ---------------------------------------------------------------------------
 // API response types — mirror src/lib/dashboard/queries.ts
@@ -429,9 +430,17 @@ export function DashboardClient() {
   return (
     <div className="mx-auto w-full max-w-5xl px-6 py-8 flex flex-col gap-6">
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
-          {t("title")}
-        </h1>
+        {/*
+          The dashboard mounts its own help button because <BreadcrumbBar>
+          hides itself on the home page, so the app-wide auto-mount does not
+          reach here. This is the ONLY screen that needs a manual placement.
+        */}
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
+            {t("title")}
+          </h1>
+          <ScreenHelpButton />
+        </div>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
           {t("subtitle")}
         </p>

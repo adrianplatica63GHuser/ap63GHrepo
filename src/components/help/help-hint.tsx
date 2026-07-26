@@ -6,10 +6,18 @@ import { useLocale, useTranslations } from "next-intl";
 import { Lightbulb, X } from "lucide-react";
 import { useHelpData, pickLocaleText } from "./use-help-data";
 import type { HelpScreenKey } from "@/lib/help/registry";
+import { resolveRegisteredHelpScreenKey } from "@/lib/help/route-map";
 
 type Props = {
-  screenKey: HelpScreenKey;
   hintKey: string;
+  /**
+   * Optional. Omit it and the screen is derived from the current route, which
+   * is what almost every placement should do — a component shared by two
+   * routes (the property form serves both /properties/new and
+   * /properties/[id]) cannot know its own screen. Pass it explicitly only to
+   * override that resolution.
+   */
+  screenKey?: HelpScreenKey;
   className?: string;
 };
 
@@ -20,14 +28,20 @@ type Props = {
  * Admin Import). Lighter-weight than <HelpButton> — a single short tip, no
  * Background/How-To split.
  *
- * Renders nothing when the registry has no matching hint or the DB has no
- * content for it yet. Same navigation-reset pattern as <HelpButton>.
+ * Renders nothing when the route has no registered screen, when the registry
+ * has no matching hint, or when the DB has no content for it yet. Same
+ * navigation-reset pattern as <HelpButton>.
+ *
+ * Every hintKey used here must be registered in HELP_HINTS — the coverage
+ * test in src/__tests__/help-coverage.test.ts fails on a registered hint that
+ * is never placed, which is the defect this slice was written to fix.
  */
-export function HelpHint({ screenKey, hintKey, className }: Props) {
+export function HelpHint({ hintKey, screenKey, className }: Props) {
   const t = useTranslations("help");
   const locale = useLocale();
   const pathname = usePathname();
-  const { data } = useHelpData(screenKey);
+  const resolvedScreenKey = screenKey ?? resolveRegisteredHelpScreenKey(pathname ?? "/");
+  const { data } = useHelpData(resolvedScreenKey ?? "");
 
   const [isOpen, setIsOpen] = useState(false);
   const [prevPathname, setPrevPathname] = useState(pathname);
@@ -39,7 +53,7 @@ export function HelpHint({ screenKey, hintKey, className }: Props) {
   const hint = data?.hints.find((h) => h.hintKey === hintKey) ?? null;
   const text = pickLocaleText(locale, hint?.textEn, hint?.textRo);
 
-  if (!text) return null;
+  if (!resolvedScreenKey || !text) return null;
 
   return (
     <span className={["relative inline-block", className].filter(Boolean).join(" ")}>
