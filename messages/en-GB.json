@@ -991,8 +991,8 @@
       "propertyList": "Properties List",
       "propertyMap": "Properties Map",
       "document": "Documents",
-      "administrationOperations": "Administration Operations",
-      "administrationSetup": "Administration Setup"
+      "administrationOperations": "Admin-Ops",
+      "administrationSetup": "Admin-Setup"
     },
     "items": {
       "naturalPerson": "Natural Person",
@@ -1064,7 +1064,8 @@
       "saved": "Saved",
       "previewTitle": "Preview",
       "noScreenSelected": "Select a screen from the list to edit its help content.",
-      "noHintSelected": "Select a hint from the list to edit its text."
+      "noHintSelected": "Select a hint from the list to edit its text.",
+      "appearsOn": "Appears on {count} screens — saving writes to all of them."
     }
   },
   "person": {

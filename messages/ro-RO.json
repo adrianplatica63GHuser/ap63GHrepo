@@ -991,8 +991,8 @@
       "propertyList": "Proprietăți — Listă",
       "propertyMap": "Proprietăți — Hartă",
       "document": "Acte",
-      "administrationOperations": "Administrare Operațiuni",
-      "administrationSetup": "Administrare Configurare"
+      "administrationOperations": "Admin-Operațiuni",
+      "administrationSetup": "Admin-Configurare"
     },
     "items": {
       "naturalPerson": "Persoană Fizică",
@@ -1064,7 +1064,8 @@
       "saved": "Salvat",
       "previewTitle": "Previzualizare",
       "noScreenSelected": "Selectați un ecran din listă pentru a edita conținutul de ajutor.",
-      "noHintSelected": "Selectați un sfat din listă pentru a edita textul."
+      "noHintSelected": "Selectați un sfat din listă pentru a edita textul.",
+      "appearsOn": "Apare pe {count} ecrane — textul se salvează pe toate."
     }
   },
   "person": {

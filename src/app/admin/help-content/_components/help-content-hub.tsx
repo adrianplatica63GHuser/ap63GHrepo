@@ -11,6 +11,13 @@ import {
   type HelpScreenKey,
 } from "@/lib/help/registry";
 
+// Slice #21.10.help.rollout: a hint now declares the screen(s) it appears on
+// (`screens`) rather than a single screenKey. Several hints legitimately span
+// screens — the four list views share their selection behaviour, and the
+// property form serves both /properties/new and /properties/[id]. The list
+// below therefore shows ONE row per hintKey, and saving fans the same text
+// out to every screen the hint covers, so it is never typed twice.
+
 // ---------------------------------------------------------------------------
 // Admin -> Help Content management screen (Slice #16.UX.02).
 //
@@ -255,12 +262,12 @@ function ScreenEditor({
 // ---------------------------------------------------------------------------
 
 function HintEditor({
-  screenKey,
   hintKey,
+  screens,
   row,
 }: {
-  screenKey: string;
   hintKey: string;
+  screens: readonly string[];
   row: HintRow | undefined;
 }) {
   const t = useTranslations("help.admin");
@@ -273,25 +280,44 @@ function HintEditor({
 
   const mutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`/api/admin/help-hints/${screenKey}/${hintKey}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
-      });
-      if (!res.ok) throw new Error("save failed");
-      return res.json();
+      // Fan-out: one PUT per screen this hint appears on. Each request is
+      // still validated against the registry as a (screenKey, hintKey) pair,
+      // so the write path keeps its existing guard. Promise.all rather than a
+      // sequential loop — these are independent upserts.
+      const results = await Promise.all(
+        screens.map((screenKey) =>
+          fetch(`/api/admin/help-hints/${screenKey}/${hintKey}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(values),
+          }),
+        ),
+      );
+      if (results.some((r) => !r.ok)) throw new Error("save failed");
+      return Promise.all(results.map((r) => r.json()));
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-help-hints"] });
-      qc.invalidateQueries({ queryKey: ["help", screenKey] });
+      // Invalidate the public query for every affected screen so an open
+      // popover anywhere in the app picks the edit up without a reload.
+      for (const screenKey of screens) {
+        qc.invalidateQueries({ queryKey: ["help", screenKey] });
+      }
     },
   });
 
   return (
     <div className="rounded-lg border border-card-rim bg-white dark:border-zinc-800 dark:bg-zinc-900 p-4 flex flex-col gap-4">
-      <h2 className="text-sm font-semibold text-ink dark:text-zinc-100">
-        {helpHintLabel(screenKey, hintKey)}
-      </h2>
+      <div className="flex flex-col gap-1">
+        <h2 className="text-sm font-semibold text-ink dark:text-zinc-100">
+          {helpHintLabel(hintKey)}
+        </h2>
+        {screens.length > 1 && (
+          <p className="text-xs text-fade">
+            {t("appearsOn", { count: screens.length })}
+          </p>
+        )}
+      </div>
 
       <div className="grid grid-cols-2 gap-4">
         <Field
@@ -339,7 +365,8 @@ export function HelpContentHub() {
   const t = useTranslations("help.admin");
   const [tab, setTab] = useState<Tab>("screens");
   const [selectedScreen, setSelectedScreen] = useState<HelpScreenKey | null>(null);
-  const [selectedHint, setSelectedHint] = useState<{ screenKey: string; hintKey: string } | null>(null);
+  // Selection is by hintKey alone now — a hint may span several screens.
+  const [selectedHint, setSelectedHint] = useState<string | null>(null);
 
   const contentQuery = useQuery({ queryKey: ["admin-help-content"], queryFn: fetchContentList });
   const hintsQuery = useQuery({ queryKey: ["admin-help-hints"], queryFn: fetchHintsList });
@@ -348,6 +375,10 @@ export function HelpContentHub() {
   const hintsByKey = new Map(
     (hintsQuery.data ?? []).map((r) => [`${r.screenKey}::${r.hintKey}`, r]),
   );
+
+  const selectedHintEntry = selectedHint
+    ? (HELP_HINTS.find((h) => h.hintKey === selectedHint) ?? null)
+    : null;
 
   return (
     <div className="flex flex-col gap-4">
@@ -403,14 +434,19 @@ export function HelpContentHub() {
 
           {tab === "hints" &&
             HELP_HINTS.map((h) => {
-              const complete = isHintComplete(hintsByKey.get(`${h.screenKey}::${h.hintKey}`));
-              const isSelected =
-                selectedHint?.screenKey === h.screenKey && selectedHint?.hintKey === h.hintKey;
+              // A multi-screen hint counts as complete only when every screen
+              // it covers has content. They are written together by the
+              // fan-out save, so they should never disagree — if they do, the
+              // badge stays grey, which is the honest signal.
+              const complete = h.screens.every((s) =>
+                isHintComplete(hintsByKey.get(`${s}::${h.hintKey}`)),
+              );
+              const isSelected = selectedHint === h.hintKey;
               return (
                 <button
-                  key={`${h.screenKey}::${h.hintKey}`}
+                  key={h.hintKey}
                   type="button"
-                  onClick={() => setSelectedHint({ screenKey: h.screenKey, hintKey: h.hintKey })}
+                  onClick={() => setSelectedHint(h.hintKey)}
                   className={[
                     "w-full flex items-center justify-between gap-2 px-3 py-2 text-left text-sm border-b border-card-rim last:border-b-0 dark:border-zinc-800",
                     isSelected
@@ -442,12 +478,17 @@ export function HelpContentHub() {
             ))}
 
           {tab === "hints" &&
-            (selectedHint ? (
+            (selectedHintEntry ? (
               <HintEditor
-                key={`${selectedHint.screenKey}::${selectedHint.hintKey}`}
-                screenKey={selectedHint.screenKey}
-                hintKey={selectedHint.hintKey}
-                row={hintsByKey.get(`${selectedHint.screenKey}::${selectedHint.hintKey}`)}
+                key={selectedHintEntry.hintKey}
+                hintKey={selectedHintEntry.hintKey}
+                screens={selectedHintEntry.screens}
+                // Seed the editor from the first screen's row: the fan-out
+                // save keeps every screen's text identical, so any one of
+                // them is representative.
+                row={hintsByKey.get(
+                  `${selectedHintEntry.screens[0]}::${selectedHintEntry.hintKey}`,
+                )}
               />
             ) : (
               <EmptyState text={t("noHintSelected")} />
