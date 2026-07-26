@@ -40,7 +40,7 @@ function isPlainLeftClick(e: MouseEvent<HTMLAnchorElement>): boolean {
 // Auth helpers
 // ---------------------------------------------------------------------------
 
-async function fetchMe(): Promise<{ username: string; role: string }> {
+async function fetchMe(): Promise<{ username: string; role: string; uatMode?: boolean }> {
   const res = await fetch("/api/auth/me");
   if (!res.ok) return { username: "", role: "user" };
   return res.json();
@@ -236,6 +236,10 @@ export function SidebarNav() {
     staleTime: 5 * 60 * 1000, // 5 min — re-fetch in background
   });
   const isSuperuser = me?.role === "superuser";
+  // UAT mode (Ciprian's local box) has no real Supabase session — hide the
+  // Sign Out / Change Password controls, which would otherwise dead-end at
+  // a login screen that can't actually authenticate anyone there.
+  const isUatMode = me?.uatMode === true;
 
   function handleLogout() {
     guardedAction(async () => {
@@ -345,16 +349,20 @@ export function SidebarNav() {
     propertyList: t("sections.propertyList"),
     propertyMap: t("sections.propertyMap"),
     document: t("sections.document"),
-    administration: t("sections.administration"),
+    // Slice #22.05: the former single "administration" section is now two —
+    // see nav-config.ts.
+    administrationOperations: t("sections.administrationOperations"),
+    administrationSetup: t("sections.administrationSetup"),
   };
 
   const itemLabels: Record<string, string> = {
     users:                     t("items.users"),
     referenceData:             t("items.referenceData"),
     import:                    t("items.import"),
+    preImportVerification:     t("items.preImportVerification"),
+    postImportReport:          t("items.postImportReport"),
     calculation:               t("items.calculation"),
     globalSearch:              t("items.globalSearch"),
-    export:                    t("items.export"),
     helpContent:               t("items.helpContent"),
     settings:                  t("items.settings"),
   };
@@ -397,8 +405,8 @@ export function SidebarNav() {
       </div>
 
 
-      {/* ── Logged-in username (expanded mode) ────────────────────────── */}
-      {!isCollapsed && me?.username && (
+      {/* ── Logged-in username (expanded mode; hidden in UAT mode) ──────── */}
+      {!isCollapsed && !isUatMode && me?.username && (
         <div className="px-4 py-1.5 text-xs text-fade truncate border-b border-wire">
           {t("signedInAs")} <span className="font-medium text-ink">{me.username}</span>
         </div>
@@ -430,89 +438,103 @@ export function SidebarNav() {
         className="flex-1 overflow-y-auto py-2 px-2 flex flex-col gap-0.5"
         aria-label="Main navigation"
       >
-        {NAV_SECTIONS.map((section) => {
-          // Filter administration items based on role
-          const filteredSection =
-            section.key === "administration"
-              ? {
-                  ...section,
-                  items: section.items.filter(
-                    (item) => item.key !== "users" || isSuperuser,
-                  ),
-                }
-              : section;
+        {NAV_SECTIONS
+          // Slice #22.01 (extended by #22.05's Operations/Setup split): BOTH
+          // "administrationOperations" and "administrationSetup" sections are
+          // superuser-only — matched by prefix so this doesn't need updating
+          // again if the split changes further. Previously only the "users"
+          // item was filtered out for regular users, leaving Reference Data /
+          // Import / Calculation / Global Search / Help Content / Settings
+          // reachable by anyone. The server-side guard at
+          // src/app/admin/layout.tsx enforces the same rule for direct
+          // navigation / deep links.
+          .filter((section) => !section.key.startsWith("administration") || isSuperuser)
+          // Slice #21.11.uat.auth: Users & Access approves Supabase Auth
+          // sign-up requests through the Admin API, which does not exist on a
+          // UAT box with no Supabase project. Strip the item there rather than
+          // let it dead-end — the same reasoning as hiding Sign Out / Change
+          // Password below. The server-side guard in
+          // src/app/admin/users/page.tsx still catches a hand-typed URL.
+          .map((section) =>
+            isUatMode && section.items.some((i) => i.key === "users")
+              ? { ...section, items: section.items.filter((i) => i.key !== "users") }
+              : section,
+          )
+          .map((section) => {
+            // Flat-link sections are identified structurally (no items, has a
+            // direct href) rather than by a hardcoded key list — "document"
+            // (Slice #15.08), "people" (Slice #15.09), and "propertyList" /
+            // "propertyMap" (Slice #15.09.2) all qualify.
+            const isFlatLinkSection =
+              section.items.length === 0 && !!section.href;
 
-          // Flat-link sections are identified structurally (no items, has a
-          // direct href) rather than by a hardcoded key list — "document"
-          // (Slice #15.08), "people" (Slice #15.09), and "propertyList" /
-          // "propertyMap" (Slice #15.09.2) all qualify.
-          const isFlatLinkSection =
-            filteredSection.items.length === 0 && !!filteredSection.href;
-
-          return isFlatLinkSection ? (
-            <NavFlatSectionRow
-              key={filteredSection.key}
-              section={filteredSection}
-              isActive={isFlatSectionActive(filteredSection.key)}
-              isCollapsed={isCollapsed}
-              sectionLabel={sectionLabels[filteredSection.key] ?? filteredSection.key}
-              onNavigate={guardedNavigate}
-            />
-          ) : (
-            <NavSectionRow
-              key={filteredSection.key}
-              section={filteredSection}
-              isOpen={openSection === filteredSection.key}
-              isCollapsed={isCollapsed}
-              activeHref={activeHref}
-              sectionLabel={sectionLabels[filteredSection.key] ?? filteredSection.key}
-              itemLabels={itemLabels}
-              onToggle={() => toggleSection(filteredSection.key)}
-              onExpandSidebar={expandSidebar}
-            />
-          );
-        })}
+            return isFlatLinkSection ? (
+              <NavFlatSectionRow
+                key={section.key}
+                section={section}
+                isActive={isFlatSectionActive(section.key)}
+                isCollapsed={isCollapsed}
+                sectionLabel={sectionLabels[section.key] ?? section.key}
+                onNavigate={guardedNavigate}
+              />
+            ) : (
+              <NavSectionRow
+                key={section.key}
+                section={section}
+                isOpen={openSection === section.key}
+                isCollapsed={isCollapsed}
+                activeHref={activeHref}
+                sectionLabel={sectionLabels[section.key] ?? section.key}
+                itemLabels={itemLabels}
+                onToggle={() => toggleSection(section.key)}
+                onExpandSidebar={expandSidebar}
+              />
+            );
+          })}
       </nav>
 
       {/* ── Recently viewed — Slice #20.17 ────────────────────────────────── */}
       <RecentlyViewedPanel isCollapsed={isCollapsed} />
 
-      {/* ── Bottom strip — change password + logout ─────────────────────── */}
-      <div
-        className={[
-          "border-t border-wire shrink-0 px-2 py-2 flex flex-col gap-0.5",
-        ].join(" ")}
-      >
-        <Link
-          href="/account/change-password"
-          onClick={(e) => {
-            if (!isPlainLeftClick(e)) return;
-            e.preventDefault();
-            guardedNavigate("/account/change-password");
-          }}
-          title={t("changePassword")}
+      {/* ── Bottom strip — change password + logout (hidden in UAT mode, */}
+      {/*    which has no real Supabase session to change or sign out of) */}
+      {!isUatMode && (
+        <div
           className={[
-            "flex items-center gap-2.5 rounded-md px-3 py-1.5 text-sm text-fade hover:bg-crease hover:text-ink transition-colors",
-            isCollapsed ? "justify-center" : "",
+            "border-t border-wire shrink-0 px-2 py-2 flex flex-col gap-0.5",
           ].join(" ")}
         >
-          <KeyRound size={14} className="shrink-0" aria-hidden="true" />
-          {!isCollapsed && <span className="truncate">{t("changePassword")}</span>}
-        </Link>
+          <Link
+            href="/account/change-password"
+            onClick={(e) => {
+              if (!isPlainLeftClick(e)) return;
+              e.preventDefault();
+              guardedNavigate("/account/change-password");
+            }}
+            title={t("changePassword")}
+            className={[
+              "flex items-center gap-2.5 rounded-md px-3 py-1.5 text-sm text-fade hover:bg-crease hover:text-ink transition-colors",
+              isCollapsed ? "justify-center" : "",
+            ].join(" ")}
+          >
+            <KeyRound size={14} className="shrink-0" aria-hidden="true" />
+            {!isCollapsed && <span className="truncate">{t("changePassword")}</span>}
+          </Link>
 
-        <button
-          type="button"
-          onClick={handleLogout}
-          title={t("signOut")}
-          className={[
-            "flex items-center gap-2.5 rounded-md px-3 py-1.5 text-sm text-fade hover:bg-crease hover:text-ink transition-colors w-full",
-            isCollapsed ? "justify-center" : "",
-          ].join(" ")}
-        >
-          <LogOut size={14} className="shrink-0" aria-hidden="true" />
-          {!isCollapsed && <span className="truncate">{t("signOut")}</span>}
-        </button>
-      </div>
+          <button
+            type="button"
+            onClick={handleLogout}
+            title={t("signOut")}
+            className={[
+              "flex items-center gap-2.5 rounded-md px-3 py-1.5 text-sm text-fade hover:bg-crease hover:text-ink transition-colors w-full",
+              isCollapsed ? "justify-center" : "",
+            ].join(" ")}
+          >
+            <LogOut size={14} className="shrink-0" aria-hidden="true" />
+            {!isCollapsed && <span className="truncate">{t("signOut")}</span>}
+          </button>
+        </div>
+      )}
     </aside>
   );
 }
