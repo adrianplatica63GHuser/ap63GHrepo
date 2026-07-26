@@ -9,14 +9,24 @@
  * 401: { error: "Unauthorized" }
  */
 import { NextResponse } from "next/server";
-import { createServerClient } from "@/lib/supabase/server";
+import { getCurrentUser, isUatNoAuth } from "@/lib/auth/current-user";
 import { db } from "@/db";
 import { appUsers } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 export async function GET() {
-  const supabase = await createServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  // UAT mode (Ciprian's local box, Slice #9.0) — no real Supabase project.
+  // Mirror the same bypass as middleware.ts and admin/layout.tsx: report
+  // everyone as a superuser (so nothing in the sidebar looks hidden, which
+  // would be inconsistent with middleware already letting every route
+  // through unauthenticated) and flag uatMode so the client can hide the
+  // Sign Out / Change Password controls — both assume a real Supabase
+  // session that doesn't exist on this box.
+  if (isUatNoAuth()) {
+    return NextResponse.json({ username: "UAT", role: "superuser", uatMode: true });
+  }
+
+  const user = await getCurrentUser();
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

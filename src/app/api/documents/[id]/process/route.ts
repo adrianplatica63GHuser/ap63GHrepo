@@ -59,7 +59,7 @@ import {
   associateDocumentsToProperty,
   associatePersonsToProperty,
 } from "@/lib/properties/queries";
-import { createServerClient } from "@/lib/supabase/server";
+import { getCurrentUser }     from "@/lib/auth/current-user";
 import { unexpectedError }    from "@/lib/api/errors";
 
 // ---------------------------------------------------------------------------
@@ -72,12 +72,16 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
   const { id: documentId } = await ctx.params;
 
   // ── 1. Auth ───────────────────────────────────────────────────────────────
-  const supabase = await createServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  // getCurrentUser() honours UAT_NO_AUTH. Before Slice #21.11.uat.auth this
+  // called supabase.auth.getUser() directly and returned 401 on Ciprian's UAT
+  // box, where there is no Supabase project at all — and the client rendered
+  // that as "session expired, please sign in again" on a build whose login
+  // link is deliberately hidden. Do not reintroduce a direct call here.
+  const user = await getCurrentUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  const updatedBy = user.email ?? user.id ?? null;
+  const updatedBy = user.email ?? null;
 
   try {
     // ── 2. Load document ────────────────────────────────────────────────────
