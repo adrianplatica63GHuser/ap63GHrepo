@@ -50,7 +50,7 @@ import type { NextRequest }   from "next/server";
 import { NextResponse }       from "next/server";
 import { stereo70ToWgs84 }    from "@/lib/geo/transdatRO";
 import { parseLine }          from "@/lib/geo/stereo70-parse";
-import { createServerClient } from "@/lib/supabase/server";
+import { getCurrentUserId } from "@/lib/auth/current-user";
 import { checkOcrRateLimit }  from "@/lib/rate-limit/ocr";
 
 // ---------------------------------------------------------------------------
@@ -59,9 +59,7 @@ import { checkOcrRateLimit }  from "@/lib/rate-limit/ocr";
 
 export async function POST(request: NextRequest): Promise<Response> {
   // ── Rate limiting (10 OCR requests / minute per user) ─────────────────────
-  const supabase = await createServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  const rl = checkOcrRateLimit(user?.id ?? "anonymous");
+  const rl = checkOcrRateLimit(await getCurrentUserId());
   if (!rl.allowed) {
     return NextResponse.json(
       { error: "Prea multe cereri. Încercați din nou în curând." },

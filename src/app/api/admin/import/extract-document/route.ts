@@ -20,7 +20,7 @@ import type { NextRequest }   from "next/server";
 import { NextResponse }       from "next/server";
 import { unexpectedError }    from "@/lib/api/errors";
 import { EXTRACT_SYSTEM_PROMPT } from "@/lib/import/classify-prompts";
-import { createServerClient } from "@/lib/supabase/server";
+import { getCurrentUserId } from "@/lib/auth/current-user";
 import { checkOcrRateLimit }  from "@/lib/rate-limit/ocr";
 
 export const runtime = "nodejs";
@@ -63,9 +63,7 @@ function extractJson(text: string): unknown {
 
 export async function POST(request: NextRequest): Promise<Response> {
   // ── Rate limiting (10 OCR/AI requests / minute per user) ──────────────────
-  const supabase = await createServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  const rl = checkOcrRateLimit(user?.id ?? "anonymous");
+  const rl = checkOcrRateLimit(await getCurrentUserId());
   if (!rl.allowed) {
     return NextResponse.json(
       { error: "Prea multe cereri. Încercați din nou în curând.", code: "rate_limited_local" },

@@ -18,9 +18,10 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { appUsers, userRequests } from "@/db/schema";
-import { createAdminClient, createServerClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import { buildApprovalEmail, sendEmail } from "@/lib/email/send-email";
 import { eq } from "drizzle-orm";
+import { getCurrentUser } from "@/lib/auth/current-user";
 
 function generatePassword(length = 12): string {
   const chars =
@@ -36,8 +37,7 @@ function generatePassword(length = 12): string {
 
 export async function POST(request: Request) {
   // Auth check — must be logged in (superuser check relies on app_users role)
-  const supabase = await createServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   // Verify the caller is a superuser

@@ -21,7 +21,7 @@ import {
 } from "@/lib/judicial-persons/validation";
 import { provenanceFromRequestBody } from "@/lib/metadata/provenance";
 import { setInitialProvenance } from "@/lib/metadata/queries";
-import { createServerClient } from "@/lib/supabase/server";
+import { getCurrentUserEmail } from "@/lib/auth/current-user";
 
 export async function GET(request: NextRequest): Promise<Response> {
   const url = new URL(request.url);
@@ -75,9 +75,7 @@ export async function POST(request: NextRequest): Promise<Response> {
   }
 
   try {
-    const supabase = await createServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    const result = await createJudicialPerson(parsed.data, user?.email ?? null);
+    const result = await createJudicialPerson(parsed.data, await getCurrentUserEmail());
 
     // Slice #21.07.Import — record how this entity entered the system.
     // Import paths pass the value their provenance rule inferred (or the one

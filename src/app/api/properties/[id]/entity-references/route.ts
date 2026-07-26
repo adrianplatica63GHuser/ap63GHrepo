@@ -6,7 +6,7 @@ import { listEntityGroupTags } from "@/lib/groups/queries";
 import { listEntityStampTags } from "@/lib/stamps/queries";
 import { getEntityMetadata, patchEntityMetadata, restoreEntityMetadataSnapshot, touchEntityMetadataField } from "@/lib/metadata/queries";
 import type { MetadataPatch, MetadataSnapshot } from "@/lib/metadata/queries";
-import { createServerClient } from "@/lib/supabase/server";
+import { getCurrentUserEmail } from "@/lib/auth/current-user";
 
 // ---------------------------------------------------------------------------
 // GET — groups + stamps + entity metadata
@@ -74,9 +74,7 @@ export async function PATCH(
   const metaField = field as "importance" | "relevance" | "provenance";
 
   // Resolve caller identity for the updated_by audit column
-  const supabase = await createServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  const updatedBy = user?.email ?? user?.id ?? null;
+  const updatedBy = await getCurrentUserEmail();
 
   if (action === "touch") {
     const updated = await touchEntityMetadataField(principalObjectId, metaField, updatedBy);
@@ -115,9 +113,7 @@ export async function PUT(
     return NextResponse.json({ error: "Property not found" }, { status: 404 });
   }
 
-  const supabase2 = await createServerClient();
-  const { data: { user: user2 } } = await supabase2.auth.getUser();
-  const updatedBy2 = user2?.email ?? user2?.id ?? null;
+  const updatedBy2 = await getCurrentUserEmail();
 
   const updated = await restoreEntityMetadataSnapshot(principalObjectId, snapshot, updatedBy2);
   return NextResponse.json(updated);

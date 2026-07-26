@@ -18,7 +18,7 @@ import {
   updateProperty,
 } from "@/lib/properties/queries";
 import { propertyUpdateSchema } from "@/lib/properties/validation";
-import { createServerClient } from "@/lib/supabase/server";
+import { getCurrentUserEmail } from "@/lib/auth/current-user";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -54,9 +54,7 @@ export async function PATCH(
   }
 
   try {
-    const supabase = await createServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    const result = await updateProperty(id, parsed.data, user?.email ?? null);
+    const result = await updateProperty(id, parsed.data, await getCurrentUserEmail());
     if (!result) {
       return Response.json({ error: "Not found" }, { status: 404 });
     }

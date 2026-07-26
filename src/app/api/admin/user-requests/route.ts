@@ -11,13 +11,12 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { userRequests } from "@/db/schema";
-import { createServerClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/auth/current-user";
 import { desc, eq } from "drizzle-orm";
 
 export async function GET(request: Request) {
   // Auth check — must be superuser
-  const supabase = await createServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { searchParams } = new URL(request.url);

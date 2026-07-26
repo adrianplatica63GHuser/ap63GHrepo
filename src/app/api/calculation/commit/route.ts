@@ -35,7 +35,7 @@ import { ParseError } from "@/lib/calculation/parse";
 import { createGroup, updateGroup } from "@/lib/groups/queries";
 import { createProperty } from "@/lib/properties/queries";
 import { patchEntityMetadata } from "@/lib/metadata/queries";
-import { createServerClient } from "@/lib/supabase/server";
+import { getCurrentUserEmail } from "@/lib/auth/current-user";
 import { inferProvenance } from "@/lib/metadata/provenance-rules";
 
 function round2(n: number): number {
@@ -72,9 +72,7 @@ export async function POST(request: NextRequest): Promise<Response> {
   // Resolve the current user for audit trail.
   let createdBy: string | null = null;
   try {
-    const supabase = await createServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    createdBy = user?.email ?? null;
+    createdBy = await getCurrentUserEmail();
   } catch {
     // Non-fatal — provenance fields just stay null.
   }

@@ -4,7 +4,7 @@
  * Slice #21.02.Import — server-side AI field extraction for an existing
  * document.  Unlike the import-wizard's POST /api/admin/import/extract-document
  * (which receives an image from the client), this route reads the document's
- * first uploaded page directly from storage, so no client-side PDF rasterisation
+ * uploaded pages directly from storage, so no client-side PDF rasterisation
  * is needed.
  *
  * Slice #21.03.Import — the extraction prompt is now built dynamically per the
@@ -14,9 +14,29 @@
  * documentTypeId (NOT NULL FK), so the type — and its template — is always
  * known up front; no chicken-and-egg with classification.
  *
- * Supports:
+ * Slice #21.03.Import (multi-page) — ALL of the document's pages are sent to
+ * the model in one call, not just the first. Verified against a real
+ * Contract de Vânzare: the notarial "Încheiere de autentificare" block that
+ * carries nrDocument/dateDocument/institution is typically on the LAST page,
+ * not the first — page-1-only extraction was systematically missing those
+ * fields for authenticated acts. Cost scales with page count; that trade-off
+ * was chosen deliberately over missing this data.
+ *
+ * Supports (per page, mixed within one document is fine):
  *   - image/* pages → sent as Anthropic image block
  *   - application/pdf pages → sent as Anthropic document block (PDF beta)
+ *   - unsupported pages (e.g. stray .txt coordinate files) are skipped
+ *     individually rather than failing the whole request, as long as at
+ *     least one page is usable.
+ *
+ * Slice #21.04.Import (party extraction) — when the document's type has
+ * person roles configured (Reference Data → Document Persons, e.g.
+ * "Vânzător"/"Cumpărător"/"Notar"/"Reprezentant legal / Mandatar" for
+ * Contract de Vânzare), the prompt also asks for structured parties per
+ * role, and each extracted party is matched against existing Persons by
+ * exact CNP/CUI (never fuzzy). This route only extracts + matches — it
+ * never creates a Person or writes person_document rows; that's the
+ * confirm-or-create UI (a later slice) built on top of this response.
  *
  * On success, returns:
  *   {
@@ -27,6 +47,8 @@
  *                                                      // or null when nothing was unmapped
  *     lowConfidenceFields: string[],
  *     unmappedRaw:         Record<string, string>,
+ *     parties:             ExtractedParty[],  // see type below — [] if partyRolesConfigured is false
+ *     partyRolesConfigured: boolean,          // false = this document type has no roles set up yet
  *   }
  *   The caller fills form fields (fields + customFields, appends notes) and
  *   PATCHes ai_interpreted_at separately via PATCH /api/documents/[id].
@@ -53,11 +75,25 @@ import {
   KNOWN_TYPE_KEYS,
 } from "@/lib/import/classify-prompts";
 import { createValue } from "@/lib/admin/value-lists/queries";
-import { getDocumentById, getDocumentTypeTemplate } from "@/lib/documents/queries";
+import {
+  getDocumentById,
+  getDocumentTypeTemplate,
+  listPersonRolesForDocumentType,
+} from "@/lib/documents/queries";
 import { listDocumentPages } from "@/lib/documents/pages-queries";
 import { readFileContent } from "@/lib/storage";
-import { createServerClient } from "@/lib/supabase/server";
+import { getCurrentUserId } from "@/lib/auth/current-user";
 import { checkOcrRateLimit } from "@/lib/rate-limit/ocr";
+import {
+  findNaturalPersonByCnp,
+  searchPersonsAll,
+  type NaturalPersonMatchCandidate,
+  type PersonSearchItem,
+} from "@/lib/persons/queries";
+import {
+  findJudicialPersonByCui,
+  type JudicialPersonMatchCandidate,
+} from "@/lib/judicial-persons/queries";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -76,9 +112,7 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
   const { id } = await ctx.params;
 
   // ── Rate limiting ──────────────────────────────────────────────────────────
-  const supabase = await createServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  const rl = checkOcrRateLimit(user?.id ?? "anonymous");
+  const rl = checkOcrRateLimit(await getCurrentUserId());
   if (!rl.allowed) {
     return NextResponse.json(
       { error: "Prea multe cereri. Încercați din nou în curând.", code: "rate_limited_local" },
@@ -94,7 +128,7 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
     );
   }
 
-  // ── Get first page ─────────────────────────────────────────────────────────
+  // ── Get all pages ──────────────────────────────────────────────────────────
   let pages: Awaited<ReturnType<typeof listDocumentPages>>;
   try {
     pages = await listDocumentPages(id);
@@ -109,9 +143,6 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
     );
   }
 
-  const firstPage = pages[0];
-  const mimeType = firstPage.mimeType ?? "application/octet-stream";
-
   // ── Resolve the document's type + template (Slice #21.03.Import) ──────────
   // documentTypeId is NOT NULL on every document, so we always know which
   // template to extract into — no chicken-and-egg with classification. The
@@ -124,22 +155,24 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
   }
   const typeTemplate = await getDocumentTypeTemplate(docMeta.documentTypeId);
   const templateFields = typeTemplate?.fields ?? [];
-  const systemPrompt = buildExtractSystemPrompt(templateFields);
+
+  // ── Party roles for this document type (Slice #21.04.Import) ──────────────
+  // Only ask the model to look for parties when the type has roles
+  // SPECIFICALLY configured (no "show every role from every type" fallback
+  // here — see listPersonRolesForDocumentType's own comment). If none are
+  // configured, partyRoles stays empty, buildExtractSystemPrompt omits the
+  // "parties" section entirely, and the response tells the caller this type
+  // isn't set up for party linking yet rather than guessing at role names.
+  const partyRoles = await listPersonRolesForDocumentType(docMeta.documentTypeId);
+  const partyRoleNames = partyRoles.map((r) => r.name);
+
+  const systemPrompt = buildExtractSystemPrompt(templateFields, partyRoleNames);
   const typeHintText = typeTemplate
     ? ` Known document type: ${typeTemplate.name} (${typeTemplate.key}).`
     : "";
 
-  // ── Read file from storage ─────────────────────────────────────────────────
-  let fileBuffer: Buffer;
-  try {
-    fileBuffer = await readFileContent(firstPage.filePath);
-  } catch (err) {
-    return unexpectedError(err, "ai-interpret:read-file");
-  }
-
-  const base64 = fileBuffer.toString("base64");
-
-  // ── Build Anthropic content block based on MIME type ──────────────────────
+  // ── Read all pages from storage, building one Anthropic content block per
+  // supported page (Slice #21.03.Import multi-page) ─────────────────────────
   const SUPPORTED_IMAGES = ["image/jpeg", "image/png", "image/gif", "image/webp"] as const;
   type SupportedImage = (typeof SUPPORTED_IMAGES)[number];
 
@@ -148,27 +181,52 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
     | { type: "document"; source: { type: "base64"; media_type: "application/pdf"; data: string } }
     | { type: "text";     text: string };
 
-  let fileBlock: ContentBlock;
-  let extraHeaders: Record<string, string> = {};
+  const isTextFile = (p: { mimeType: string | null; fileName: string }) =>
+    p.mimeType === "text/plain" || p.fileName.toLowerCase().endsWith(".txt");
 
-  if ((SUPPORTED_IMAGES as readonly string[]).includes(mimeType)) {
-    fileBlock = {
-      type: "image",
-      source: { type: "base64", media_type: mimeType as SupportedImage, data: base64 },
-    };
-  } else if (mimeType === "application/pdf") {
-    fileBlock = {
-      type: "document",
-      source: { type: "base64", media_type: "application/pdf", data: base64 },
-    };
-    extraHeaders = { "anthropic-beta": "pdfs-2024-09-25" };
-  } else {
-    // Unsupported file type (e.g. .txt coordinate files, .docx) — return a
-    // user-friendly 422 rather than sending garbage bytes to Anthropic as JPEG.
-    const isText = mimeType === "text/plain" || firstPage.fileName.toLowerCase().endsWith(".txt");
-    const friendlyMsg = isText
+  const fileBlocks: ContentBlock[] = [];
+  let sawPdf = false;
+
+  for (const page of pages) {
+    const pageMimeType = page.mimeType ?? "application/octet-stream";
+
+    if ((SUPPORTED_IMAGES as readonly string[]).includes(pageMimeType)) {
+      let buf: Buffer;
+      try {
+        buf = await readFileContent(page.filePath);
+      } catch (err) {
+        return unexpectedError(err, "ai-interpret:read-file");
+      }
+      fileBlocks.push({
+        type: "image",
+        source: { type: "base64", media_type: pageMimeType as SupportedImage, data: buf.toString("base64") },
+      });
+    } else if (pageMimeType === "application/pdf") {
+      let buf: Buffer;
+      try {
+        buf = await readFileContent(page.filePath);
+      } catch (err) {
+        return unexpectedError(err, "ai-interpret:read-file");
+      }
+      fileBlocks.push({
+        type: "document",
+        source: { type: "base64", media_type: "application/pdf", data: buf.toString("base64") },
+      });
+      sawPdf = true;
+    }
+    // else: unsupported page (e.g. .txt coordinate files, .docx) — skipped
+    // individually rather than failing the whole request.
+  }
+
+  const extraHeaders: Record<string, string> = sawPdf ? { "anthropic-beta": "pdfs-2024-09-25" } : {};
+
+  if (fileBlocks.length === 0) {
+    // None of this document's pages are in a supported format — return a
+    // user-friendly 422 rather than sending garbage bytes to Anthropic.
+    const allText = pages.every(isTextFile);
+    const friendlyMsg = allText
       ? "Fișierele text (coordonate cadastrale) nu pot fi interpretate cu AI. Funcția este disponibilă doar pentru imagini și PDF-uri."
-      : `Tipul de fișier "${mimeType}" nu este acceptat pentru interpretare AI. Încărcați o imagine sau un PDF.`;
+      : "Niciuna dintre paginile acestui document nu este într-un format acceptat pentru interpretare AI (imagine sau PDF).";
     return Response.json({ error: friendlyMsg, code: "unsupported_file_type" }, { status: 422 });
   }
 
@@ -185,14 +243,23 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
       },
       body: JSON.stringify({
         model: EXTRACT_MODEL,
-        max_tokens: 2048,
+        // Slice #21.04.Import: raised from 2048 — with party extraction
+        // (multiple people per role, ~10 fields each) plus unmappedRaw plus
+        // template fields, output for a document with several parties can
+        // exceed 2048 tokens and get truncated mid-JSON (observed on the
+        // real Contract de Vânzare sample, 4 sellers + buyer + mandatar +
+        // notary). 8192 leaves generous headroom.
+        max_tokens: 8192,
         system: systemPrompt,
         messages: [
           {
             role: "user",
             content: [
-              fileBlock,
-              { type: "text", text: `Extract fields from this Romanian document.${typeHintText}` },
+              ...fileBlocks,
+              {
+                type: "text",
+                text: `Extract fields from this Romanian document (${fileBlocks.length} page(s), in order — treat them as one document; the closing/authentication block is often on the last page).${typeHintText}`,
+              },
             ],
           },
         ],
@@ -230,12 +297,57 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
     return Response.json({ error: "Anthropic API returned no text" }, { status: 502 });
   }
 
+  type RawParty = {
+    roleName?:           string;
+    personType?:         "NATURAL" | "JUDICIAL";
+    name?:               string | null;
+    firstName?:          string | null;
+    lastName?:           string | null;
+    cnp?:                string | null;
+    cuiNumber?:          string | null;
+    idDocumentNumber?:   string | null;
+    idIssuingAuthority?: string | null;
+    domiciliu?:          string | null;
+    rawText?:            string;
+  };
+
   type AiExtractResponse = {
     fields?: Record<string, string | null>;
     suggestedTypeKey?: string | null;
     classifiedLabel?: string | null;
     lowConfidenceFields?: string[];
     unmappedRaw?: Record<string, string>;
+    parties?: RawParty[];
+  };
+
+  // Extracted party, enriched with the resolved lookup_person_role id (by
+  // exact name match — see listPersonRolesForDocumentType) and, when a
+  // CNP/CUI was extracted, a possible existing-Person match candidate. The
+  // caller (Slice #21.04.Import UI, not yet built) is responsible for
+  // confirming matches and creating/linking Person records — this route
+  // only extracts and matches, it never writes person/person_document rows.
+  type ExtractedParty = {
+    roleName:           string;
+    personRoleId:       string | null;
+    roleMissing:        boolean;   // true if roleName didn't match a configured role — don't guess, ask the admin
+    personType:         "NATURAL" | "JUDICIAL";
+    name:               string | null;
+    firstName:          string | null;
+    lastName:           string | null;
+    cnp:                string | null;
+    cuiNumber:          string | null;
+    idDocumentNumber:   string | null;
+    idIssuingAuthority: string | null;
+    domiciliu:          string | null;
+    rawText:            string;
+    matchCandidate:     NaturalPersonMatchCandidate | JudicialPersonMatchCandidate | null;
+    // Fuzzy name-match suggestions — only populated when there's no exact
+    // CNP/CUI match (either because none was extracted, e.g. sellers on a
+    // sale contract, or the CNP/CUI didn't match anyone). Name matching is
+    // inherently uncertain, so these are always "possible", never treated
+    // as confirmed the way matchCandidate is — the confirm UI must label
+    // them accordingly and still require an explicit user decision.
+    possibleMatches:    PersonSearchItem[];
   };
 
   // Split by known-key membership: generic baseline keys → `fields`;
@@ -249,6 +361,7 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
   let lowConfidenceFields: string[] = [];
   let unmappedRaw: Record<string, string> = {};
   let enhancedNotes: string | null = null;
+  const parties: ExtractedParty[] = [];
 
   try {
     const raw = extractJson(textBlock) as AiExtractResponse;
@@ -279,11 +392,73 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
       enhancedNotes = `[AI] Text neasociat unui câmp:\n${lines.join("\n")}`;
     }
 
+    // ── Party extraction + matching (Slice #21.04.Import) ─────────────────────
+    // Resolve each extracted party's roleName to a real lookup_person_role.id
+    // by exact name match (case/whitespace-insensitive) against the roles we
+    // actually gave the model — never a fuzzy guess. If a role somehow
+    // doesn't match (model invented a name, or roles changed mid-request),
+    // roleMissing=true tells the caller to surface it rather than link
+    // against the wrong role or silently drop the party.
+    const roleByName = new Map<string, string>(partyRoles.map((r) => [r.name.trim().toLowerCase(), r.id]));
+    const rawParties = Array.isArray(raw.parties) ? raw.parties : [];
+
+    for (const p of rawParties) {
+      const roleName = p.roleName?.trim();
+      if (!roleName) continue; // no role named — nothing to link this party to, skip
+
+      const personRoleId = roleByName.get(roleName.toLowerCase()) ?? null;
+      const personType: "NATURAL" | "JUDICIAL" = p.personType === "JUDICIAL" ? "JUDICIAL" : "NATURAL";
+
+      let matchCandidate: NaturalPersonMatchCandidate | JudicialPersonMatchCandidate | null = null;
+      let possibleMatches: PersonSearchItem[] = [];
+      try {
+        if (personType === "NATURAL" && p.cnp?.trim()) {
+          matchCandidate = await findNaturalPersonByCnp(p.cnp);
+        } else if (personType === "JUDICIAL" && p.cuiNumber?.trim()) {
+          matchCandidate = await findJudicialPersonByCui(p.cuiNumber);
+        }
+
+        // No CNP/CUI extracted (or it matched nobody) — fall back to a
+        // fuzzy name search so the confirm UI can at least surface "maybe
+        // this one?" instead of always defaulting to create-new. These are
+        // never auto-linked; the UI must label them as unconfirmed guesses.
+        if (!matchCandidate) {
+          const fullName = (p.name ?? `${p.firstName ?? ""} ${p.lastName ?? ""}`).trim();
+          if (fullName) {
+            const { items } = await searchPersonsAll({ name: fullName, type: personType, limit: 5, offset: 0 });
+            possibleMatches = items;
+          }
+        }
+      } catch (err) {
+        // Non-fatal: a failed match lookup shouldn't sink the whole
+        // extraction — the party is still returned, just without a candidate.
+        console.warn("[ai-interpret] party match lookup failed:", err);
+      }
+
+      parties.push({
+        roleName,
+        personRoleId,
+        roleMissing: personRoleId === null,
+        personType,
+        name: p.name ?? null,
+        firstName: p.firstName ?? null,
+        lastName: p.lastName ?? null,
+        cnp: p.cnp ?? null,
+        cuiNumber: p.cuiNumber ?? null,
+        idDocumentNumber: p.idDocumentNumber ?? null,
+        idIssuingAuthority: p.idIssuingAuthority ?? null,
+        domiciliu: p.domiciliu ?? null,
+        rawText: p.rawText ?? "",
+        matchCandidate,
+        possibleMatches,
+      });
+    }
+
     // ── Diagnostic log — what did the model actually extract? ────────────────
     const extractedGeneric = Object.entries(fields).filter(([, v]) => v !== null && v !== "");
     const extractedCustom  = Object.entries(customFieldsOut).filter(([, v]) => v !== null && v !== "");
     console.log("\n─────────────────────────────────────────────────────");
-    console.log(`[ai-interpret] Document: ${firstPage.fileName}`);
+    console.log(`[ai-interpret] Document: ${pages.map((p) => p.fileName).join(", ")} (${fileBlocks.length}/${pages.length} page(s) sent)`);
     console.log(`  Type       : ${typeTemplate?.name ?? "(unresolved)"} (${typeTemplate?.key ?? "?"}) — ${templateFields.length} template field(s)`);
     console.log(`  AI reclass : ${suggestedTypeKey ?? "(none)"} / ${classifiedLabel ?? "(none)"}`);
     console.log(`  Generic fields extracted (${extractedGeneric.length}):`);
@@ -298,6 +473,20 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
       console.log(`  Unmapped text (${Object.keys(unmappedRaw).length}) — candidate template fields for "${typeTemplate?.name ?? "?"}":`);
       for (const [label, val] of Object.entries(unmappedRaw))
         console.log(`    "${label}" → "${val}"`);
+    }
+    if (partyRoles.length === 0) {
+      console.log(`  Parties     : (skipped — no person roles configured for "${typeTemplate?.name ?? "?"}" in Reference Data → Document Persons)`);
+    } else if (parties.length) {
+      console.log(`  Parties extracted (${parties.length}):`);
+      for (const p of parties) {
+        const idBit = p.cnp ? ` CNP ${p.cnp}` : p.cuiNumber ? ` CUI ${p.cuiNumber}` : "";
+        const matchBit = p.matchCandidate
+          ? ` — exact match: ${p.matchCandidate.displayName} (${p.matchCandidate.code})`
+          : p.possibleMatches.length
+            ? ` — ${p.possibleMatches.length} possible name match(es), unconfirmed`
+            : p.roleMissing ? " — ROLE NOT CONFIGURED" : "";
+        console.log(`    [${p.roleName}] ${p.name ?? `${p.firstName ?? ""} ${p.lastName ?? ""}`.trim()}${idBit}${matchBit}`);
+      }
     }
     console.log("─────────────────────────────────────────────────────\n");
   } catch (err) {
@@ -350,5 +539,11 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
     notes: enhancedNotes,
     lowConfidenceFields,
     unmappedRaw,
+    // Slice #21.04.Import (party extraction) — see ExtractedParty above.
+    // partyRolesConfigured=false means this document type has no roles set
+    // up in Reference Data → Document Persons yet; parties is always [] in
+    // that case rather than a guess against unrelated roles.
+    parties,
+    partyRolesConfigured: partyRoles.length > 0,
   });
 }

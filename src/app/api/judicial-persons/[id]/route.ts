@@ -20,7 +20,7 @@ import { judicialPersonUpdateSchema } from "@/lib/judicial-persons/validation";
 // softDeletePerson is type-agnostic — it lives in the natural-person module
 // only because that was the first subtype shipped.
 import { softDeletePerson } from "@/lib/persons/queries";
-import { createServerClient } from "@/lib/supabase/server";
+import { getCurrentUserEmail } from "@/lib/auth/current-user";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -56,9 +56,7 @@ export async function PATCH(
   }
 
   try {
-    const supabase = await createServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    const result = await updateJudicialPerson(id, parsed.data, user?.email ?? null);
+    const result = await updateJudicialPerson(id, parsed.data, await getCurrentUserEmail());
     if (!result) {
       return Response.json({ error: "Not found" }, { status: 404 });
     }

@@ -8,7 +8,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { createServerClient } from "@/lib/supabase/server";
+import { getCurrentUserEmail } from "@/lib/auth/current-user";
 import { getEntityMetadata, patchAllEntityMetadata } from "@/lib/metadata/queries";
 
 export async function GET(
@@ -32,11 +32,7 @@ export async function PATCH(
     provenance?: string | null;
   };
 
-  const supabase = await createServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const updatedBy = user?.email ?? user?.id ?? null;
+  const updatedBy = await getCurrentUserEmail();
 
   const updated = await patchAllEntityMetadata(
     principalObjectId,

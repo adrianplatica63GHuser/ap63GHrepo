@@ -15,14 +15,13 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { appUsers, userRequests } from "@/db/schema";
-import { createServerClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/auth/current-user";
 import { buildRejectionEmail, sendEmail } from "@/lib/email/send-email";
 import { eq } from "drizzle-orm";
 
 export async function POST(request: Request) {
   // Auth check
-  const supabase = await createServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   // Verify superuser role
