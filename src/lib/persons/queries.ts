@@ -769,6 +769,48 @@ export async function searchPersonsAll(opts: {
 }
 
 // ---------------------------------------------------------------------------
+// Exact-match lookup by CNP (Slice #21.04.Import — party extraction)
+// ---------------------------------------------------------------------------
+//
+// Unlike searchPersonsAll (fuzzy ILIKE on name/code), this is a precise
+// exact-match lookup used to check "does a natural person with this CNP
+// already exist" when the AI-interpret route extracts a party's CNP off a
+// scanned document. CNP is unique among non-soft-deleted persons (enforced
+// by a DB trigger — see natural_person.cnp comment in schema/index.ts), so
+// at most one match is possible.
+
+export type NaturalPersonMatchCandidate = {
+  id:                 string;
+  code:               string;
+  type:               "NATURAL";
+  displayName:        string;
+  cnp:                string | null;
+  idDocumentNumber:   string | null;
+  idIssuingAuthority: string | null;
+};
+
+export async function findNaturalPersonByCnp(cnp: string): Promise<NaturalPersonMatchCandidate | null> {
+  const trimmed = cnp.trim();
+  if (!trimmed) return null;
+
+  const [row] = await db
+    .select({
+      id:                 person.id,
+      code:               person.code,
+      displayName:        person.displayName,
+      cnp:                naturalPerson.cnp,
+      idDocumentNumber:   naturalPerson.idDocumentNumber,
+      idIssuingAuthority: naturalPerson.idIssuingAuthority,
+    })
+    .from(naturalPerson)
+    .innerJoin(person, eq(person.id, naturalPerson.personId))
+    .where(and(eq(naturalPerson.cnp, trimmed), isNull(person.deletedAt)))
+    .limit(1);
+
+  return row ? { ...row, type: "NATURAL" as const } : null;
+}
+
+// ---------------------------------------------------------------------------
 // Person <-> Property  (uses existing property_person junction — reverse side)
 // ---------------------------------------------------------------------------
 

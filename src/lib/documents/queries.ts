@@ -736,6 +736,27 @@ export async function listPersonRolesForDocument(documentId: string): Promise<Ro
     .orderBy(asc(lookupPersonRole.name));
 }
 
+// Slice #21.04.Import (party extraction) — roles *specifically* configured
+// for a document type, with NO fallback to "all roles everywhere" (unlike
+// listPersonRolesForDocument above, which exists for the manual Associate
+// Person picker where showing every role as a fallback is a reasonable UX).
+// AI-driven party extraction must not guess: if a type has zero specific
+// role mappings, the caller should skip party extraction entirely for that
+// type and tell the admin to configure roles first (Reference Data ->
+// Document Persons), rather than asking the model to match against a
+// meaningless pool of unrelated roles from other document types.
+export async function listPersonRolesForDocumentType(documentTypeId: string): Promise<RoleItem[]> {
+  return db
+    .select({
+      id:   lookupPersonRole.id,
+      name: lookupPersonRole.name,
+    })
+    .from(lookupDocTypePersonRole)
+    .innerJoin(lookupPersonRole, eq(lookupDocTypePersonRole.personRoleId, lookupPersonRole.id))
+    .where(eq(lookupDocTypePersonRole.documentTypeId, documentTypeId))
+    .orderBy(asc(lookupPersonRole.name));
+}
+
 export async function dissociatePersonFromDocument(documentId: string, personId: string): Promise<boolean> {
   const result = await db.delete(personDocument)
     .where(and(eq(personDocument.documentId, documentId), eq(personDocument.personId, personId)))

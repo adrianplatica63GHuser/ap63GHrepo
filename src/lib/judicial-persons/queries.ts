@@ -135,6 +135,44 @@ export async function listJudicialPersons(opts: JudicialListQuery): Promise<{
 }
 
 // ---------------------------------------------------------------------------
+// Exact-match lookup by CUI (Slice #21.04.Import — party extraction)
+// ---------------------------------------------------------------------------
+//
+// Mirrors findNaturalPersonByCnp in src/lib/persons/queries.ts. CUI is
+// unique among non-soft-deleted persons (DB trigger — see
+// judicial_person.cui_number comment in schema/index.ts), so at most one
+// match is possible.
+
+export type JudicialPersonMatchCandidate = {
+  id:                  string;
+  code:                string;
+  type:                "JUDICIAL";
+  displayName:         string;
+  cuiNumber:           string | null;
+  tradeRegisterNumber: string | null;
+};
+
+export async function findJudicialPersonByCui(cui: string): Promise<JudicialPersonMatchCandidate | null> {
+  const trimmed = cui.trim();
+  if (!trimmed) return null;
+
+  const [row] = await db
+    .select({
+      id:                  person.id,
+      code:                person.code,
+      displayName:         person.displayName,
+      cuiNumber:           judicialPerson.cuiNumber,
+      tradeRegisterNumber: judicialPerson.tradeRegisterNumber,
+    })
+    .from(judicialPerson)
+    .innerJoin(person, eq(person.id, judicialPerson.personId))
+    .where(and(eq(judicialPerson.cuiNumber, trimmed), isNull(person.deletedAt)))
+    .limit(1);
+
+  return row ? { ...row, type: "JUDICIAL" as const } : null;
+}
+
+// ---------------------------------------------------------------------------
 // Get by id (full record: person + judicial_person + addresses + contact names)
 // ---------------------------------------------------------------------------
 
