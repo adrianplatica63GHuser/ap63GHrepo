@@ -46,6 +46,7 @@ import { useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-p
 import { AddressBlock } from "@/components/address/address-block";
 import { inferProvenance } from "@/lib/metadata/provenance-rules";
 import { ProvenanceField } from "./provenance-field";
+import { HelpHint } from "@/components/help/help-hint";
 
 // ---------------------------------------------------------------------------
 // Document type list — fetched dynamically from the admin-managed
@@ -407,14 +408,17 @@ export function PersonClassifyPanel({ file, onBack, onClassified, onClose }: Pro
           />
         )}
         <div className="flex flex-col items-end gap-1 pt-1">
-          <button
-            type="button"
-            onClick={runExtraction}
-            disabled={busy}
-            className="inline-flex w-fit items-center rounded-md bg-cta px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-cta-d disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {extracting ? tp("extracting") : tp("extractButton")}
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={runExtraction}
+              disabled={busy}
+              className="inline-flex w-fit items-center rounded-md bg-cta px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-cta-d disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {extracting ? tp("extracting") : tp("extractButton")}
+            </button>
+            <HelpHint hintKey="ocr-extract" />
+          </div>
           {extractError && (
             <p className="max-w-[14rem] text-right text-xs text-red-600 dark:text-red-400" role="alert">
               {extractError}
@@ -546,13 +550,16 @@ export function PersonClassifyPanel({ file, onBack, onClassified, onClose }: Pro
           <NavArrowIcon dir="left" />
           <span>{t("back")}</span>
         </button>
-        <button
-          type="submit"
-          disabled={busy || !formState.isValid}
-          className="inline-flex items-center rounded-md bg-cta px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-cta-d disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {saving ? tp("saving") : tp("saveButton")}
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            type="submit"
+            disabled={busy || !formState.isValid}
+            className="inline-flex items-center rounded-md bg-cta px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-cta-d disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {saving ? tp("saving") : tp("saveButton")}
+          </button>
+          <HelpHint hintKey="import-leave-warning" />
+        </div>
       </div>
       </form>
     </>

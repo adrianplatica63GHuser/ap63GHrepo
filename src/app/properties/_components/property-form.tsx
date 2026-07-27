@@ -42,6 +42,7 @@ import {
 import { CornersManager } from "./corners-manager";
 import { PropertyMiniMap } from "./property-mini-map";
 import { StreetViewPanel } from "./street-view-panel";
+import { HelpHint } from "@/components/help/help-hint";
 import { ErrorBoundary, PanelError } from "@/components/error-boundary";
 import { VersionNavControls } from "@/components/version-nav-controls";
 import { FieldPulseContext, usePulseRing } from "@/components/versioning/field-pulse";
@@ -735,6 +736,7 @@ export function PropertyForm({
                 <ReadOnlyField
                   label={t("fields.calculatedAreaMp")}
                   value={calculatedAreaDisplay}
+                  hint={<HelpHint hintKey="calculated-area-auto" />}
                 />
               </div>
               <div className="row-start-2 col-start-3">
@@ -887,6 +889,7 @@ export function PropertyForm({
                             ? t("streetViewAddress.fetching")
                             : t("streetViewAddress.fetch")}
                         </button>
+                        <HelpHint hintKey="street-view-fetch-address" />
                       </div>
                       {streetViewFetchError ? (
                         <span className="text-xs text-red-600 dark:text-red-400" role="alert">
@@ -1292,10 +1295,22 @@ function SelectField({
   );
 }
 
-function ReadOnlyField({ label, value }: { label: string; value: string }) {
+function ReadOnlyField({
+  label,
+  value,
+  hint,
+}: {
+  label: string;
+  value: string;
+  /** Optional <HelpHint> — most callers have no hidden behaviour to explain. */
+  hint?: React.ReactNode;
+}) {
   return (
     <div className="flex items-center gap-2 text-sm">
-      <span className="w-24 shrink-0 font-medium text-ink dark:text-zinc-300">{label}</span>
+      <span className="w-24 shrink-0 font-medium text-ink dark:text-zinc-300 flex items-center gap-1">
+        {label}
+        {hint}
+      </span>
       <div className="flex-1 rounded-md border border-wire bg-canvas px-2 py-1 font-mono text-sm text-ink dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-300">
         {value}
       </div>

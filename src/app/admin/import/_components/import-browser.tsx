@@ -43,6 +43,7 @@ import {
 } from "./file-system-types";
 import { ClassifyDialog } from "./classify-dialog";
 import { FolderScanDialog } from "./folder-scan-dialog";
+import { HelpHint } from "@/components/help/help-hint";
 
 type Entry = { name: string; handle: FSFileHandle };
 
@@ -385,8 +386,9 @@ export function ImportBrowser() {
       <div className="flex flex-1 min-h-0 gap-4 rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         {/* Left pane — file list */}
         <div className="flex w-72 shrink-0 min-h-0 flex-col border-r border-crease pr-3 dark:border-zinc-800">
-          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-fade">
+          <h2 className="mb-2 flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-fade">
             {t("fileListLabel")}
+            <HelpHint hintKey="ctrl-click-multi-select" />
           </h2>
           {!dirHandle ? (
             <p className="text-sm text-fade dark:text-zinc-500">{t("noFolderChosen")}</p>

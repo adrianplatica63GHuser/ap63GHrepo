@@ -35,6 +35,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { NavArrowIcon } from "@/components/back-arrow";
+import { HelpHint } from "@/components/help/help-hint";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -582,6 +583,7 @@ export function PagesPanel({
               {bigPage ? t("showSmallPage") : t("showBigPage")}
             </button>
           )}
+          {bigPage && <HelpHint hintKey="big-page-zoom" />}
           {mode === "edit" && (
             <button
               type="button"

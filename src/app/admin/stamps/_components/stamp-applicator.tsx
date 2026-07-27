@@ -7,6 +7,7 @@ import {
   GROUP_TARGET_TYPES,
   type StampTargetType,
 } from "@/lib/stamps/validation";
+import { HelpHint } from "@/components/help/help-hint";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -353,6 +354,7 @@ export function StampApplicator({
               </option>
             ))}
           </select>
+          <HelpHint hintKey="stamp-type-switch-keeps-changes" />
 
           {hasStagedForType && (
             <span className="text-xs italic text-amber-600 dark:text-amber-400">
@@ -469,6 +471,7 @@ export function StampApplicator({
         >
           {mutation.isPending ? t("saving") : t("applicator.saveStamps")}
         </button>
+        <HelpHint hintKey="stamp-staged-changes" />
         {dirty && (
           <span className="text-xs text-fade dark:text-zinc-500">
             {t("unsavedChanges")}

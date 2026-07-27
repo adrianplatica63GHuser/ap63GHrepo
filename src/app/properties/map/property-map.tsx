@@ -32,6 +32,7 @@ import {
   arcLabelPosition,
   type AngleArcInfo,
 } from "@/lib/geo/angles";
+import { HelpHint } from "@/components/help/help-hint";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -1683,6 +1684,7 @@ export default function PropertyMap() {
               <AnglesIcon />
               {t("map.anglesButton")}
             </button>
+            <HelpHint hintKey="angles-click-corner" />
 
             {/* Ruler — measure real ground distance (Slice #18.14.ruler).      */}
             {/* Sits to the left of Groups; depressed while active.             */}
@@ -1701,6 +1703,7 @@ export default function PropertyMap() {
               <RulerIcon />
               {t("map.rulerButton")}
             </button>
+            <HelpHint hintKey="ruler-two-clicks" />
 
             {/* Groups filter — button + dropdown panel (Slice #18.08).        */}
             {/* Panel is anchored under the button (left-0 right-0 → exactly    */}
@@ -1797,8 +1800,19 @@ export default function PropertyMap() {
             >
               {selectMode ? "✕ Cancel select" : "⬚ Select"}
             </button>
+            <HelpHint hintKey="drag-select" />
 
             <MapTypeToggle value={mapType} onChange={setMapType} />
+          </div>
+        )}
+
+        {/* ---------------------------------------------------------------- */}
+        {/* Top-left info cluster — hints with no single button to anchor to */}
+        {/* ---------------------------------------------------------------- */}
+        {activeTab === "all" && (
+          <div className="absolute top-3 left-3 z-20 flex items-center gap-1.5 rounded bg-white/90 px-2 py-1 shadow border border-wire">
+            <HelpHint hintKey="map-double-click-open" />
+            <HelpHint hintKey="map-blinking-duplicates" />
           </div>
         )}
 
@@ -1831,6 +1845,7 @@ export default function PropertyMap() {
             >
               {t("map.displayAllSelected")} ({selectedIds.size})
             </button>
+            <HelpHint hintKey="map-selected-tab" />
           </div>
         )}
 

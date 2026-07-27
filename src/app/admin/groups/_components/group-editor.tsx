@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import type { GroupTargetType } from "@/lib/groups/validation";
+import { HelpHint } from "@/components/help/help-hint";
 
 // ── Types (mirror GroupDetail from src/lib/groups/queries.ts) ────────────────
 // Normalised shapes: memberId is the FK id for the group's target type.
@@ -314,7 +315,12 @@ export function GroupEditor({
 
           {/* Panel C — in group */}
           <Panel
-            title={t("panels.inGroup")}
+            title={
+              <span className="flex items-center gap-1">
+                {t("panels.inGroup")}
+                <HelpHint hintKey="group-pending-position" />
+              </span>
+            }
             rows={memberRows}
             renderRow={(id) => {
               const pos = originalPositionById.get(id);
@@ -359,6 +365,7 @@ export function GroupEditor({
         >
           {mutation.isPending ? t("saving") : t("saveGroup")}
         </button>
+        <HelpHint hintKey="group-staged-members" />
         {dirty && (
           <span className="text-xs text-fade dark:text-zinc-500">
             {t("unsavedChanges")}
@@ -379,7 +386,7 @@ function Panel({
   toolbar,
   footer,
 }: {
-  title: string;
+  title: React.ReactNode;
   rows: string[];
   renderRow: (id: string) => React.ReactNode;
   empty: string;

@@ -41,6 +41,7 @@ import { PagesPanel, PagesViewerBox, usePagesPanelState } from "./pages-panel";
 import { SuccessionPartiesPanel } from "./succession-parties-panel";
 import { ErrorBoundary, PanelError } from "@/components/error-boundary";
 import { inferProvenance } from "@/lib/metadata/provenance-rules";
+import { HelpHint } from "@/components/help/help-hint";
 import {
   AiPartyLinkerDialog,
   type AiExtractedParty,
@@ -1094,6 +1095,7 @@ export function DocumentForm({
                 >
                   {busy ? t("aiExtracting") : t("buttons.aiInterpret")}
                 </button>
+                <HelpHint hintKey="ai-interpret-once" />
               </span>
             );
           })()}

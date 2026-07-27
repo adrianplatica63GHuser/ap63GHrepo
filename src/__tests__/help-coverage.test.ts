@@ -87,20 +87,7 @@ describe("help coverage", () => {
     );
   });
 
-  // ---------------------------------------------------------------------------
-  // TEMPORARILY SKIPPED — re-enable in the hint-placement commit.
-  //
-  // The registry declares 26 hints and none of them have a <HelpHint>
-  // placement yet: this commit ships the foundation (route map, auto-mounted
-  // screen help, registry, admin fan-out) and the placements follow in the
-  // next commit. Running this block now would fail on all 26, which is
-  // correct but would leave the foundation commit red on its own.
-  //
-  // Change `describe.skip` back to `describe` in the same commit that adds
-  // the placements. Do not delete it — this invariant is the entire reason
-  // the help system cannot silently rot again.
-  // ---------------------------------------------------------------------------
-  describe.skip("invariant 2 — every registered hint is placed in the UI", () => {
+  describe("invariant 2 — every registered hint is placed in the UI", () => {
     const sourceFiles = walk(SRC, (f) => f.endsWith(".tsx"));
     const allSource = sourceFiles
       // The registry itself and this test both mention every hintKey; excluding

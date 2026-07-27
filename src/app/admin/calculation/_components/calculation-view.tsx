@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { PreviewMap } from "./preview-map";
+import { HelpHint } from "@/components/help/help-hint";
 
 // ---------------------------------------------------------------------------
 // Types (mirror src/lib/calculation/compute.ts — redeclared so this client
@@ -275,6 +276,7 @@ export function CalculationView() {
             className="sr-only"
           />
         </label>
+        <HelpHint hintKey="calc-file-format" />
         {fileName && (
           <span className="text-xs text-fade dark:text-zinc-400">{fileName}</span>
         )}
@@ -370,9 +372,10 @@ export function CalculationView() {
             </h3>
 
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-ink dark:text-zinc-400">
+              <label className="flex items-center gap-1 text-xs font-medium text-ink dark:text-zinc-400">
                 {t("commit.groupDescription")}
-                <span className="ml-0.5 text-red-500">*</span>
+                <span className="text-red-500">*</span>
+                <HelpHint hintKey="calc-group-description-autofill" />
               </label>
               <input
                 type="text"
@@ -421,6 +424,7 @@ export function CalculationView() {
               >
                 {committing ? t("buttons.creating") : t("buttons.confirm")}
               </button>
+              <HelpHint hintKey="calc-preview-not-saved" />
             </div>
           </div>
         </>

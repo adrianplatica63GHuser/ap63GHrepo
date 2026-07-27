@@ -39,6 +39,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { inferProvenance } from "@/lib/metadata/provenance-rules";
+import { HelpHint } from "@/components/help/help-hint";
 
 // ---------------------------------------------------------------------------
 // Types — mirror (but deliberately don't import from) the API route's
@@ -255,8 +256,9 @@ export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
     >
       <div className="w-full max-w-2xl rounded-lg bg-card p-6 shadow-xl dark:bg-zinc-900">
         <div className="flex items-start justify-between gap-4">
-          <h3 id="ai-party-linker-title" className="text-base font-semibold text-ink dark:text-zinc-100">
+          <h3 id="ai-party-linker-title" className="flex items-center gap-1 text-base font-semibold text-ink dark:text-zinc-100">
             {t("aiPartyLinker.title")}
+            <HelpHint hintKey="ai-party-confirm" />
           </h3>
           <div className="flex items-center gap-3">
             <span className="whitespace-nowrap text-sm text-fade dark:text-zinc-400">

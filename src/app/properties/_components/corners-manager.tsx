@@ -10,6 +10,7 @@ import {
   type Stereo70Point,
 } from "@/lib/geo/convert-client";
 import type { Corner, CornerDiffEntry } from "./form-schema";
+import { HelpHint } from "@/components/help/help-hint";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -493,6 +494,7 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
         ))}
         {showS70Loading && <span className="text-xs text-fade animate-pulse">Converting...</span>}
         {showS70Error   && <span className="text-xs text-red-500">{t("convertError")}</span>}
+        {!readOnly && <HelpHint hintKey="corner-reorder" />}
       </div>
 
       <div className="overflow-x-auto rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
