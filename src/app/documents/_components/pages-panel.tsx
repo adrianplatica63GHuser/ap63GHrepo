@@ -488,6 +488,13 @@ type Props = {
   state:            PagesPanelState;
   bigPage?:         boolean;
   onToggleBigPage?: () => void;
+  /** Slice #21.06.misc: renders in the document form's right-hand column,
+   *  stretched to match the left column's height. Forces the viewer+table
+   *  body to always stack vertically — the lg: side-by-side split would
+   *  otherwise still kick in from viewport width alone, even though this
+   *  column itself is narrow — and lets the panel grow/scroll to fill the
+   *  stretched height instead of keeping its own shorter natural size. */
+  sidebar?:         boolean;
 };
 
 export function PagesPanel({
@@ -496,6 +503,7 @@ export function PagesPanel({
   state,
   bigPage = false,
   onToggleBigPage,
+  sidebar = false,
 }: Props) {
   const {
     t,
@@ -521,7 +529,10 @@ export function PagesPanel({
 
   return (
     <section
-      className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+      className={[
+        "rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900",
+        sidebar ? "flex h-full flex-col" : "",
+      ].join(" ")}
       aria-label={t("sectionTitle")}
     >
       {/* Section header */}
@@ -538,10 +549,9 @@ export function PagesPanel({
                 disabled={!canGoPrev}
                 aria-label={t("prevPage")}
                 title={t("prevPage")}
-                className="inline-flex items-center gap-1 rounded-md border border-wire px-2 py-1 text-[0.9375rem] font-semibold text-navy hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:text-blue-300 dark:hover:bg-zinc-800"
+                className="inline-flex items-center rounded-md border border-wire px-2 py-1 text-[0.9375rem] font-semibold text-navy hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:text-blue-300 dark:hover:bg-zinc-800"
               >
                 <NavArrowIcon dir="left" />
-                <span>{t("prevPage")}</span>
               </button>
               <span className="text-xs tabular-nums text-fade">
                 {t("pageIndicator", {
@@ -555,9 +565,8 @@ export function PagesPanel({
                 disabled={!canGoNext}
                 aria-label={t("nextPage")}
                 title={t("nextPage")}
-                className="inline-flex items-center gap-1 rounded-md border border-wire px-2 py-1 text-[0.9375rem] font-semibold text-ink hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                className="inline-flex items-center rounded-md border border-wire px-2 py-1 text-[0.9375rem] font-semibold text-ink hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
               >
-                <span>{t("nextPage")}</span>
                 <NavArrowIcon dir="right" />
               </button>
             </div>
@@ -596,23 +605,27 @@ export function PagesPanel({
       {/* Main body */}
       {!isLoading && !isError && (
         <div
-          className={
-            bigPage
+          className={[
+            bigPage || sidebar
               ? "flex flex-col gap-3"
-              : "flex flex-col gap-3 lg:flex-row lg:items-start"
-          }
+              : "flex flex-col gap-3 lg:flex-row lg:items-start",
+            // Slice #21.06.misc: in the sidebar slot, let the body grow to
+            // fill (and scroll within) the height the outer grid stretched
+            // this panel to, instead of staying its own shorter natural size.
+            sidebar ? "min-h-0 flex-1 overflow-y-auto" : "",
+          ].join(" ")}
         >
           {/* ── Viewer (left on lg, below on sm) — only when not big-page ── */}
           {!bigPage && (
-            <div className="order-2 lg:order-1 lg:flex-1">
+            <div className={sidebar ? "w-full" : "order-2 lg:order-1 lg:flex-1"}>
               <PagesViewerBox state={state} />
             </div>
           )}
 
-          {/* ── Table (right on lg, above on sm; full width in big-page) ── */}
+          {/* ── Table (right on lg, above on sm; full width in big-page or sidebar) ── */}
           <div
             className={
-              bigPage
+              bigPage || sidebar
                 ? "w-full"
                 : "order-1 w-full lg:order-2 lg:w-[380px] lg:shrink-0"
             }
