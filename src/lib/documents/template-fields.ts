@@ -28,6 +28,17 @@ export type DocumentTemplateField = {
   order: number;
   /** Optional hint shown to the AI extractor (what to look for / expected format). */
   aiHint?: string | null;
+  /**
+   * Optional sub-panel grouping (e.g. "Financiar" / "Financial") — fields
+   * sharing the same group render together under their own titled section
+   * instead of one flat "type-specific fields" block. Purely a display
+   * concern: grouped or not, all fields still write to the same flat
+   * `document.custom_fields` record keyed by `key`. Fields with no group
+   * (null on both) fall into a single ungrouped section, so older/simpler
+   * templates keep working unchanged.
+   */
+  groupRo?: string | null;
+  groupEn?: string | null;
 };
 
 const VALID_TYPES: readonly DocumentTemplateFieldType[] = ["text", "textarea", "date", "number"];
@@ -50,6 +61,8 @@ export function parseTemplateFields(raw: unknown): DocumentTemplateField[] {
         : "text",
       order:   typeof f.order === "number" ? f.order : 0,
       aiHint:  typeof f.aiHint === "string" ? f.aiHint : null,
+      groupRo: typeof f.groupRo === "string" ? f.groupRo : null,
+      groupEn: typeof f.groupEn === "string" ? f.groupEn : null,
     }))
     .filter((f) => f.key.length > 0)
     .sort((a, b) => a.order - b.order);

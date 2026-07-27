@@ -142,7 +142,22 @@ export const GENERIC_EXTRACT_FIELD_DESCRIPTIONS: Record<string, string> = {
   subject:      "brief subject / object of the document",
 };
 
-export function buildExtractSystemPrompt(templateFields: DocumentTemplateField[]): string {
+// ---------------------------------------------------------------------------
+// Slice #21.04.Import (party extraction) — structured people/organizations
+// acting in one of the document type's configured lookup_doc_type_person_role
+// roles (e.g. "Vânzător", "Cumpărător", "Notar", "Reprezentant legal /
+// Mandatar"). Fully data-driven: the caller passes whatever role names are
+// actually configured for the document's type — this module has no
+// hardcoded notion of "seller" or "buyer". If a type has no roles configured
+// at all, the caller should omit partyRoleNames (or pass []) and skip this
+// section entirely rather than asking the model to guess at role names —
+// matching the app's "admin-managed roles, never auto-guessed" convention.
+// ---------------------------------------------------------------------------
+
+export function buildExtractSystemPrompt(
+  templateFields: DocumentTemplateField[],
+  partyRoleNames: string[] = [],
+): string {
   const genericLines = Object.entries(GENERIC_EXTRACT_FIELD_DESCRIPTIONS)
     .map(([key, desc]) => `    "${key}": string | null,  // ${desc}`)
     .join("\n");
@@ -153,6 +168,29 @@ export function buildExtractSystemPrompt(templateFields: DocumentTemplateField[]
       return `    "${f.key}": string | null,  // ${templateFieldFormatHint(f.type)}${hint} (${f.labelRo})`;
     })
     .join("\n");
+
+  const partiesSection = partyRoleNames.length > 0
+    ? `,
+  "parties": [                            // people/organizations acting in one of these roles for THIS document: ${partyRoleNames.join(", ")}
+    {
+      "roleName": string,                 // must exactly match one of: ${partyRoleNames.join(", ")}
+      "personType": "NATURAL" | "JUDICIAL",
+      "name": string | null,              // judicial: full legal name. natural: leave null if firstName/lastName given below
+      "firstName": string | null,         // natural person only
+      "lastName": string | null,          // natural person only
+      "cnp": string | null,               // Romanian CNP (natural person only), digits only
+      "cuiNumber": string | null,         // Romanian CUI (judicial person only)
+      "idDocumentNumber": string | null,  // ID card series+number (natural person only)
+      "idIssuingAuthority": string | null,
+      "domiciliu": string | null,         // address / registered office, as printed
+      "rawText": string                   // the full original text describing this party, verbatim
+    }
+  ]`
+    : "";
+
+  const partiesRule = partyRoleNames.length > 0
+    ? "\n- \"parties\": one entry per distinct real person or organization — if a role has several people (e.g. multiple sellers), include one entry per person, all with the same roleName. Only include a party if the document actually names a specific person/organization for that role; never invent or guess an entry. Do not also repeat this party's information under \"unmappedRaw\" — parties are captured once, here."
+    : "";
 
   return `You extract structured data from scanned Romanian official documents.
 Respond with ONLY a single JSON object, no prose, no markdown fences.
@@ -168,12 +206,12 @@ Shape:
 ${genericLines}${customLines ? "\n" + customLines : ""}
   },
   "lowConfidenceFields": string[],       // field keys (generic or type-specific) where you are not confident
-  "unmappedRaw": { [label: string]: string }  // ANY other printed text that does not fit a field above — never drop information
+  "unmappedRaw": { [label: string]: string }  // ANY other printed text that does not fit a field above — never drop information${partiesSection}
 }
 
 Rules:
 - Dates must be ISO yyyy-mm-dd or null. Convert Romanian format (zi.luna.an) to ISO.
 - Numbers must be numeric strings only (digits + decimal separator), no units.
-- Do not guess. If a field is not visible or not applicable for this document, return null.
+- Do not guess. If a field is not visible or not applicable for this document, return null.${partiesRule}
 - Output strictly valid JSON — no comments, no trailing commas, no markdown code fences.`;
 }
