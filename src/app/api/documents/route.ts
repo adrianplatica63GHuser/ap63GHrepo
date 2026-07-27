@@ -92,7 +92,10 @@ export async function POST(request: NextRequest): Promise<Response> {
   }
 
   try {
-    const result = await createDocument(parsed.data, await getCurrentUserEmail());
+    // Resolved once and reused below — setInitialProvenance needs the same
+    // identity, and getCurrentUserEmail() hits the Supabase session each call.
+    const updatedBy = await getCurrentUserEmail();
+    const result = await createDocument(parsed.data, updatedBy);
 
     // Slice #21.07.Import — record how this entity entered the system.
     // Import paths pass the value their provenance rule inferred (or the one
@@ -100,7 +103,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     // Absent/unknown -> no provenance recorded, as before this slice.
     const provenance = provenanceFromRequestBody(body);
     if (provenance) {
-      await setInitialProvenance(result.principalObjectId, provenance, user?.email ?? null);
+      await setInitialProvenance(result.principalObjectId, provenance, updatedBy);
     }
     return Response.json(result, { status: 201 });
   } catch (err) {
