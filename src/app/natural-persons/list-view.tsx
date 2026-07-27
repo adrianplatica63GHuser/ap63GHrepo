@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { RecencyBadge } from "@/components/recency-badge";
+import { HelpHint } from "@/components/help/help-hint";
 
 const PAGE_SIZE = 15;
 const LS_KEY    = "ga40-col-person-v2";
@@ -360,6 +361,7 @@ export function NaturalPersonListView() {
               {tBulk("deleteSelected", { count: selectedIds.size })}
             </button>
           )}
+          <HelpHint hintKey="select-all-page-only" />
           <Link
             href="/natural-persons/new"
             className="inline-flex items-center rounded-md bg-cta px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d"

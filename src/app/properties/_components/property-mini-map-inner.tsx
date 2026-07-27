@@ -17,6 +17,7 @@ import {
   arcLabelPosition,
   type AngleArcInfo,
 } from "@/lib/geo/angles";
+import { HelpHint } from "@/components/help/help-hint";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -347,13 +348,17 @@ export default function PropertyMiniMapInner({ corners, onChange, readOnly = fal
       {!readOnly && (
       <div className="absolute bottom-2 left-2 z-10 flex items-center gap-2">
         {!drawing ? (
-          <button
-            type="button"
-            onClick={() => setDrawing(true)}
-            className="rounded shadow border border-wire bg-white px-2.5 py-1 text-xs font-semibold text-ink hover:bg-canvas transition-colors"
-          >
-            ✏ Draw
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={() => setDrawing(true)}
+              className="rounded shadow border border-wire bg-white px-2.5 py-1 text-xs font-semibold text-ink hover:bg-canvas transition-colors"
+            >
+              ✏ Draw
+            </button>
+            <HelpHint hintKey="map-draw-corners" />
+            {corners.length > 0 && <HelpHint hintKey="map-drag-corner" />}
+          </>
         ) : (
           <>
             <button
@@ -370,6 +375,7 @@ export default function PropertyMiniMapInner({ corners, onChange, readOnly = fal
                   ? "Click map to add corners"
                   : "Click map to add corners · click corner 1 to close"}
             </span>
+            {corners.length >= 3 && <HelpHint hintKey="map-close-polygon" />}
           </>
         )}
       </div>

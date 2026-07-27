@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { GroupsFilter, GroupsFilterDropdown } from "@/components/groups-filter-dropdown";
 import { RecencyBadge } from "@/components/recency-badge";
+import { HelpHint } from "@/components/help/help-hint";
 
 const PAGE_SIZE = 15;
 
@@ -248,6 +249,7 @@ export function JudicialPersonListView() {
               {tBulk("deleteSelected", { count: selectedIds.size })}
             </button>
           )}
+          <HelpHint hintKey="select-all-page-only" />
           <Link
             href="/judicial-persons/new"
             className="inline-flex items-center rounded-md bg-cta px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d"
