@@ -429,10 +429,10 @@ export function NaturalPersonListView() {
             {items.map((item) => (
               <tr
                 key={item.id}
-                onDoubleClick={() => router.push(`/natural-persons/${item.id}`)}
+                onClick={() => router.push(`/natural-persons/${item.id}`)}
                 className="whitespace-nowrap hover:bg-cta-pale dark:hover:bg-zinc-800/50 cursor-pointer"
               >
-                <td className="px-4 py-2" onClick={(e) => e.stopPropagation()} onDoubleClick={(e) => e.stopPropagation()}>
+                <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
                   <span className="inline-flex items-center">
                     <input
                       type="checkbox"
@@ -460,7 +460,7 @@ export function NaturalPersonListView() {
                     {cellValue(item, key)}
                   </td>
                 ))}
-                <td className="px-4 py-2">
+                <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
                   <Link
                     href={`/natural-persons/${item.id}`}
                     className="inline-flex items-center rounded-md border border-wire bg-white px-3 py-1 text-xs font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"

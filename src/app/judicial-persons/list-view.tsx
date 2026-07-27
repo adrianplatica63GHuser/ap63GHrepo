@@ -312,10 +312,10 @@ export function JudicialPersonListView() {
             {items.map((item) => (
               <tr
                 key={item.id}
-                onDoubleClick={() => router.push(`/judicial-persons/${item.id}`)}
+                onClick={() => router.push(`/judicial-persons/${item.id}`)}
                 className="whitespace-nowrap hover:bg-cta-pale dark:hover:bg-zinc-800/50 cursor-pointer"
               >
-                <td className="px-4 py-2" onClick={(e) => e.stopPropagation()} onDoubleClick={(e) => e.stopPropagation()}>
+                <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
                   <span className="inline-flex items-center">
                     <input
                       type="checkbox"
@@ -338,7 +338,7 @@ export function JudicialPersonListView() {
                 <td className="px-4 py-2 text-fade dark:text-zinc-400">
                   {item.nickname || <span className="italic">—</span>}
                 </td>
-                <td className="px-4 py-2">
+                <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
                   <Link
                     href={`/judicial-persons/${item.id}`}
                     className="inline-flex items-center rounded-md border border-wire bg-white px-3 py-1 text-xs font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
