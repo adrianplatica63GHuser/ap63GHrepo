@@ -857,10 +857,21 @@ export default function PropertyMap() {
   // Selection mode toggle
   // -------------------------------------------------------------------------
 
+  // Slice #21.10.help.rollout bugfix: switching between Select / Ruler /
+  // Angles used to silently discard whatever properties were selected,
+  // because every "entering this tool" branch called
+  // setSelectedIds(new Set()) even though selectedIds isn't owned by any one
+  // tool — it's read by the polygon highlighting and the bottom action bar
+  // regardless of which tool (if any) is active. The three toggle functions
+  // now clear only the OUTGOING tool's own overlay state (ruler points,
+  // angle readout, the in-progress drag rectangle) and leave selectedIds
+  // alone. The one place selectedIds is still cleared is the Select button's
+  // own "Cancel select" action — its label promises that, so it must.
   const toggleSelectMode = useCallback(() => {
     setSelectMode((prev) => {
       if (!prev) {
-        // Entering select mode: close any open InfoWindow + exit ruler/angles modes.
+        // Entering select mode: close any open InfoWindow + exit ruler/angles
+        // modes. Property selection is preserved.
         setSelected(null);
         setRulerMode(false);
         setRulerStart(null);
@@ -871,13 +882,14 @@ export default function PropertyMap() {
         setAnglesSnap(null);
         setAnglesDisplay(null);
       } else {
-        // Exiting select mode: clear selection + hide tabs.
+        // Exiting select mode via its own "Cancel select" button: this is the
+        // one legitimate place selection is cleared.
         setShowTabs(false);
         setActiveTab("all");
+        setSelectedIds(new Set());
       }
       return !prev;
     });
-    setSelectedIds(new Set());
     setDragStart(null);
     setDragCurrent(null);
   }, []);
@@ -974,13 +986,12 @@ export default function PropertyMap() {
       const next = !prev;
       if (next) {
         // Entering ruler mode: close InfoWindow + exit select + angles modes.
+        // Property selection is preserved — see the note on
+        // toggleSelectMode above.
         setSelected(null);
         setSelectMode(false);
-        setSelectedIds(new Set());
         setDragStart(null);
         setDragCurrent(null);
-        setShowTabs(false);
-        setActiveTab("all");
         setAnglesMode(false);
         setAnglesSnap(null);
         setAnglesDisplay(null);
@@ -1022,6 +1033,8 @@ export default function PropertyMap() {
       const next = !prev;
       if (next) {
         // Entering angles mode: close InfoWindow + exit ruler + select modes.
+        // Property selection is preserved — see the note on
+        // toggleSelectMode above.
         setSelected(null);
         setRulerMode(false);
         setRulerStart(null);
@@ -1029,11 +1042,8 @@ export default function PropertyMap() {
         setRulerCursor(null);
         setRulerSnap(null);
         setSelectMode(false);
-        setSelectedIds(new Set());
         setDragStart(null);
         setDragCurrent(null);
-        setShowTabs(false);
-        setActiveTab("all");
       }
       return next;
     });

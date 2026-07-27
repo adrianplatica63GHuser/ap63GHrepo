@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { RecencyBadge } from "@/components/recency-badge";
+import { HelpHint } from "@/components/help/help-hint";
 
 const PAGE_SIZE = 15;
 const LS_KEY    = "ga40-col-property-v2";
@@ -391,6 +392,7 @@ export function PropertyListView() {
               {tBulk("deleteSelected", { count: selectedIds.size })}
             </button>
           )}
+          <HelpHint hintKey="select-all-page-only" />
           <Link
             href="/properties/new"
             className="inline-flex items-center rounded-md bg-cta px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d"
@@ -456,10 +458,10 @@ export function PropertyListView() {
             {items.map((item) => (
               <tr
                 key={item.id}
-                onDoubleClick={() => router.push(`/properties/${item.id}`)}
+                onClick={() => router.push(`/properties/${item.id}`)}
                 className="whitespace-nowrap hover:bg-cta-pale dark:hover:bg-zinc-800/50 cursor-pointer"
               >
-                <td className="px-4 py-2" onClick={(e) => e.stopPropagation()} onDoubleClick={(e) => e.stopPropagation()}>
+                <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
                   <span className="inline-flex items-center">
                     <input
                       type="checkbox"
@@ -479,7 +481,7 @@ export function PropertyListView() {
                     {cellValue(item, key)}
                   </td>
                 ))}
-                <td className="px-4 py-2">
+                <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
                   <Link
                     href={`/properties/${item.id}`}
                     className="inline-flex items-center rounded-md border border-wire bg-white px-3 py-1 text-xs font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
