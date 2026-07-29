@@ -9,7 +9,10 @@ import {
   UserCog,
   Database,
   Upload,
-  Download,
+  Archive,
+  ClipboardCheck,
+  ClipboardList,
+  Wrench,
   Settings,
   HelpCircle,
   Calculator,
@@ -75,15 +78,37 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [],
   },
   {
-    key: "administration",
+    // Slice #22.05: the former single "Administration" accordion is now two
+    // — "Administration Operations" (the day-to-day workflows: search,
+    // import pipeline, road calculation) and "Administration Setup" (the
+    // configuration/reference screens, below). Both stay gated by the exact
+    // same superuser-only rule "administration" used — see the
+    // isSuperuser filter in sidebar-nav.tsx and the server-side guard in
+    // src/app/admin/layout.tsx (route-based, so it needs no change here).
+    key: "administrationOperations",
     icon: LayoutDashboard,
+    items: [
+      { key: "globalSearch", href: "/admin/global-search", icon: Search },
+      // "Pre-import verification" and "post-import report" don't have pages
+      // yet — rendered as disabled "coming soon" placeholders (no href),
+      // same convention the old "export" item used, until a future slice
+      // builds them out.
+      { key: "preImportVerification", icon: ClipboardCheck },
+      { key: "import", href: "/admin/import", icon: Upload },
+      // Re-exposed on request: the original pre-#21.01.Import flow, kept
+      // reachable for reference alongside the live wizard above. See
+      // src/app/admin/import-legacy/page.tsx for the full explanation.
+      { key: "importLegacy", href: "/admin/import-legacy", icon: Archive },
+      { key: "postImportReport", icon: ClipboardList },
+      { key: "calculation", href: "/admin/calculation", icon: Calculator },
+    ],
+  },
+  {
+    key: "administrationSetup",
+    icon: Wrench,
     items: [
       { key: "users", href: "/admin/users", icon: UserCog },
       { key: "referenceData", href: "/admin/value-lists", icon: Database },
-      { key: "import", href: "/admin/import", icon: Upload },
-      { key: "calculation", href: "/admin/calculation", icon: Calculator },
-      { key: "globalSearch", href: "/admin/global-search", icon: Search },
-      { key: "export", icon: Download },
       { key: "helpContent", href: "/admin/help-content", icon: HelpCircle },
       { key: "settings", href: "/admin/settings", icon: Settings },
     ],

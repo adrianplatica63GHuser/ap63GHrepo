@@ -1020,6 +1020,7 @@
       "users": "Utilizatori & Acces",
       "referenceData": "Date de referință",
       "import": "Import în sistem",
+      "importLegacy": "Import (versiune veche)",
       "preImportVerification": "Verificare pre-import",
       "postImportReport": "Raport post-import",
       "calculation": "Calcul drum lateral",
@@ -1199,7 +1200,8 @@
     },
     "hints": {
       "surveyorNotInSystem": "Dacă topograful nu se află în sistem, acesta trebuie introdus mai întâi ca persoană fizică sau juridică.",
-      "aiInterpretNoPages": "Adăugați pagini pentru a folosi AI"
+      "aiInterpretNoPages": "Adăugați pagini pentru a folosi AI",
+      "aiDiscover": "Citește documentul fără a completa câmpuri — rezultatul apare în consola serverului"
     },
     "surveyorPicker": {
       "title": "Selectați Topograful",
@@ -1227,6 +1229,7 @@
       "no": "Nu",
       "aiInterpret": "Interpretează AI",
       "aiInterpreted": "Deja procesat de AI",
+      "aiDiscover": "Descoperire AI",
       "modify": "Modifică"
     },
     "confirmDelete": {
@@ -1452,7 +1455,12 @@
     },
     "aiExtracting": "Se extrage…",
     "aiExtractSuccess": "Câmpuri completate din documentul scanat",
-    "aiExtractError": "Extragerea AI a eșuat"
+    "aiExtractError": "Extragerea AI a eșuat",
+    "aiDiscovering": "Se citește documentul…",
+    "aiDiscoverSuccess": "Document citit: {pairs} perechi nume/valoare și {sections} secțiuni. Raportul complet a fost scris în consola serverului.",
+    "aiDiscoverSkipped": "{count} pagini nu au putut fi trimise — motivele sunt în consolă.",
+    "aiDiscoverTruncated": "Atenție: raportul este incomplet, documentul a depășit limita de răspuns.",
+    "aiDiscoverError": "Citirea AI a eșuat"
   },
   "valueList": {
     "pageTitle": "Date de referință",
@@ -1688,6 +1696,8 @@
       "gateContinue": "Continuă importul"
     },
     "pageTitle": "Import",
+    "legacyPageTitle": "Import (versiune veche)",
+    "legacyBanner": "Acesta este ecranul original de Import, păstrat pentru referință. Ecranul activ, folosit în prezent, este \"Import în sistem\" din meniu. Unele câmpuri de aici pot fi neactualizate față de structura curentă a datelor.",
     "browser": {
       "chooseFolderButton": "Alege folder…",
       "changeFolderButton": "Schimbă folder…",

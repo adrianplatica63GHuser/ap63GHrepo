@@ -31,6 +31,11 @@ export const HELP_OPTED_OUT: readonly string[] = [
   "/login",                    // pre-auth, nothing to explain
   "/signup",                   // pre-auth, the form is self-describing
   "/account/change-password",  // single-purpose, three labelled fields
+  // Archived reference screen (the pre-#21.01.Import flow, re-exposed on
+  // request) — not part of the standard workflow, and it already carries its
+  // own inline explanation (the banner in page.tsx) rather than a Background /
+  // How-To pair authored through Admin -> Help Content.
+  "/admin/import-legacy",
 ];
 
 /** True when a pathname is explicitly excluded from the help system. */

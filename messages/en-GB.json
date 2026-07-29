@@ -1020,6 +1020,7 @@
       "users": "Users & Access",
       "referenceData": "Reference Data",
       "import": "Import to the System",
+      "importLegacy": "Import (Old Version)",
       "preImportVerification": "Pre-Import Verification",
       "postImportReport": "Post-Import Report",
       "calculation": "Calculation of a Side Road",
@@ -1199,7 +1200,8 @@
     },
     "hints": {
       "surveyorNotInSystem": "If the surveyor is not yet in the system, add them first as a natural person or judicial person.",
-      "aiInterpretNoPages": "Add pages before using AI"
+      "aiInterpretNoPages": "Add pages before using AI",
+      "aiDiscover": "Read the document without filling any fields — the result appears in the server console"
     },
     "surveyorPicker": {
       "title": "Select Surveyor",
@@ -1227,6 +1229,7 @@
       "no": "No",
       "aiInterpret": "AI Interpret",
       "aiInterpreted": "Already AI-processed",
+      "aiDiscover": "AI Discover",
       "modify": "Modify"
     },
     "confirmDelete": {
@@ -1452,7 +1455,12 @@
     },
     "aiExtracting": "Extracting…",
     "aiExtractSuccess": "Fields filled from scanned document",
-    "aiExtractError": "AI extraction failed"
+    "aiExtractError": "AI extraction failed",
+    "aiDiscovering": "Reading document…",
+    "aiDiscoverSuccess": "Document read: {pairs} name/value pairs and {sections} sections. The full report was written to the server console.",
+    "aiDiscoverSkipped": "{count} page(s) could not be sent — reasons are in the console.",
+    "aiDiscoverTruncated": "Warning: the report is incomplete, the document exceeded the response limit.",
+    "aiDiscoverError": "AI read failed"
   },
   "valueList": {
     "pageTitle": "Reference Data",
@@ -1688,6 +1696,8 @@
       "gateContinue": "Continue import"
     },
     "pageTitle": "Import",
+    "legacyPageTitle": "Import (Old Version)",
+    "legacyBanner": "This is the original Import screen, kept for reference. The active screen currently in use is \"Import to the System\" in the menu. Some fields here may not reflect the current data structure.",
     "browser": {
       "chooseFolderButton": "Choose folder…",
       "changeFolderButton": "Change folder…",
