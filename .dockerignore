@@ -21,3 +21,12 @@ README*
 
 # Test output
 coverage
+
+# Playwright E2E — never needed inside the image, and e2e/.auth/ holds a live
+# Supabase session cookie for the test account. .dockerignore does NOT inherit
+# .gitignore, so without this line that token would be shipped into the build
+# context and baked into the builder layer.
+e2e
+playwright.config.ts
+playwright-report
+test-results

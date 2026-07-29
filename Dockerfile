@@ -2,6 +2,22 @@
 FROM node:22-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
+# Reproducible install from the lockfile, same as CI.
+#
+# Do NOT switch this to `npm install --ignore-scripts`. Two things break:
+#   1. `npm install` can silently update the lockfile, so the image stops
+#      matching what CI built and tested — the exact drift `npm ci` prevents.
+#   2. `--ignore-scripts` skips the "postinstall" script
+#      (scripts/copy-pdfjs-worker.mjs), which is what puts
+#      public/pdf.worker.min.js in place. That file is gitignored and exists
+#      ONLY because postinstall generates it, so on a clean checkout the
+#      `COPY . .` below finds nothing to copy and the runtime image ships
+#      without it. PDF rasterisation in Admin → Import then fails at runtime
+#      with a 404 for /pdf.worker.min.js — and only on a clean build, so it
+#      would look intermittent.
+# Playwright is a devDependency here, but none of the playwright packages
+# declare an install script (hasInstallScript=false in package-lock.json), so
+# `npm ci` will not try to download browsers into the image.
 RUN npm ci
 
 # ── Stage 2: build the Next.js app ────────────────────────────────────────────
