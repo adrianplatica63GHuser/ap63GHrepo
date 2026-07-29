@@ -17,9 +17,21 @@ import { expect, type Page } from "@playwright/test";
 const versionLabelLoc = (page: Page) =>
   page.getByText(/^v \d+$/).first();
 
-/** ◀ button — aria-label from property.corners.prevVersion in ro-RO.json. */
-const prevBtnLoc = (page: Page) =>
-  page.getByRole("button", { name: "Versiunea anterioară" });
+/**
+ * ◀ / "step back" button — matched by `title`, NOT by accessible role name.
+ *
+ * VersionNavControls (Slice #20.12) has two states for "on the latest version
+ * with prior history": the full strip's bare ◀ arrow (aria-label AND title
+ * both = "Versiunea anterioară", so its accessible NAME is that string), and
+ * the compact discovery chip (title = "Versiunea anterioară" too, but its
+ * visible text — and therefore its accessible NAME — is the version COUNT,
+ * e.g. "2 versiuni"). Both call the same nav.onPrev handler, so from a test's
+ * point of view they are the same button in two skins. Matching by role+name
+ * only finds the full-strip arrow and hangs forever while the chip is
+ * showing; matching by `title` finds either one, since that attribute is the
+ * one thing both states were already given identically.
+ */
+const prevBtnLoc = (page: Page) => page.getByTitle("Versiunea anterioară");
 
 /** ▶ button — aria-label from property.corners.nextVersion in ro-RO.json. */
 const nextBtnLoc = (page: Page) =>
@@ -39,9 +51,19 @@ const makeCurrentBtnLoc = (page: Page) =>
  * Wait until the version nav strip has loaded on the page.
  * The strip appears after the async /api/properties/{id}/versions query
  * resolves and sets versionNav != null in the form component.
+ *
+ * Timeout is generous (30s, not the usual 5-8s used elsewhere in this file)
+ * because the Property detail page is unusually heavy for Next dev-mode's
+ * on-demand compilation: it pulls in two next/dynamic client-only imports
+ * (the mini-map and Street View panel, both Google Maps) plus the corners
+ * table and four other tabs. A cold first hit to this route — especially
+ * right after other files in the repo were edited while `npm run dev` was
+ * running — can genuinely take longer than a normal page's compile time.
+ * This is a dev-server characteristic, not something a test should be
+ * flaky about.
  */
 export async function waitForNav(page: Page): Promise<void> {
-  await expect(versionLabelLoc(page)).toBeVisible({ timeout: 15_000 });
+  await expect(versionLabelLoc(page)).toBeVisible({ timeout: 30_000 });
 }
 
 /**
