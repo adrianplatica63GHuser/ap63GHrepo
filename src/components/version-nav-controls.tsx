@@ -115,6 +115,16 @@ export function VersionNavControls({
   if (isOnLatest && nav.current >= 1 && labels.historyChip) {
     return (
       <div className="pointer-events-auto flex items-center">
+        {/* sr-only version label — the chip's visible text is a total COUNT
+            ("2 versiuni"), not the current version number, so a screen-reader
+            user on latest has no way to hear which version they're viewing.
+            This mirrors the "v N" text shown in the full strip (below) without
+            changing anything sighted users see. Also the anchor Playwright's
+            e2e suite (e2e/helpers/version-nav.ts) matches against — it needs
+            to find "v N" regardless of which of these two branches rendered,
+            since which one is showing depends on version count, not on
+            anything the test controls. */}
+        <span className="sr-only">{labels.versionLabel}</span>
         <button
           type="button"
           onClick={nav.onPrev}
