@@ -1,3 +1,20 @@
+/**
+ * help_content / help_hint — runtime-editable bilingual content.
+ *
+ * INTENTIONAL I18N EXCEPTION (see CLAUDE.md "Two-track i18n" gotcha):
+ * These tables store bilingual text as explicit DB columns (_en / _ro suffixes)
+ * rather than as next-intl keys in messages/*.json.  The reason: help copy is
+ * authored by Adrian in the Admin UI at runtime, without a code deploy.
+ * next-intl messages are baked into the build and cannot change at runtime.
+ *
+ * Rule of thumb:
+ *   - Developer-authored static UI strings  → messages/*.json (next-intl)
+ *   - Admin-authored runtime-editable text  → DB columns with _en / _ro suffix
+ *
+ * Any future runtime-editable multilingual feature should follow this same
+ * DB-column pattern, NOT add keys to messages/*.json.
+ */
+
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { helpContent, helpHint } from "@/db/schema";

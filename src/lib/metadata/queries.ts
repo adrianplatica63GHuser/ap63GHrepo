@@ -305,6 +305,22 @@ export async function setInitialProvenance(
       updatedBy,
     );
   } catch (err) {
+    // 23514 = check_violation. In practice this means the code set in
+    // src/lib/metadata/provenance.ts is ahead of the chk_em_provenance
+    // constraint in the database — i.e. the provenance migration has not been
+    // applied to THIS database yet. Say so in one line instead of leaving a
+    // 400-line driver stack as the only clue (hit during Slice #21.07.Import
+    // testing, before migration_067 was applied to the dev DB).
+    if ((err as { code?: string }).code === "23514") {
+      console.error(
+        `setInitialProvenance: the database rejected provenance '${provenance}' ` +
+        `(chk_em_provenance). This database is missing the provenance migration — ` +
+        `run scripts\\Apply-Migration.ps1 locally, or apply the migration SQL in the ` +
+        `Supabase SQL Editor for the cloud DB. The entity itself was created; only ` +
+        `its provenance was not recorded.`,
+      );
+      return;
+    }
     console.error(
       `setInitialProvenance: failed to record provenance ${provenance} for principal object ${principalObjectId}`,
       err,
