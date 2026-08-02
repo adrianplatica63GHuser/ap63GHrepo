@@ -57,3 +57,6 @@ supabase_migrations.sql
 next-env.d.ts
 
 public/pdf.worker.min.js
+
+# user-guide drafts kept at repo root, not part of the codebase
+/UserGuide-*.docx
