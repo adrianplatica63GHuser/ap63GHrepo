@@ -1,0 +1,733 @@
+"use client";
+
+/**
+ * PropertyStepDialog — Slice #23.00.Import
+ *
+ * The step that gives the import run its Property. It sits between "scan
+ * complete" and the tag dialog, and the import cannot proceed past it.
+ *
+ * WHY THIS EXISTS
+ * ───────────────
+ * Before this slice a picked folder was an arbitrary tree of documents, and
+ * the link between those documents and a Property was made *indirectly*:
+ * folder names became tags, a folder name starting with a digit was assumed to
+ * be "<tarla>-<parcela>-<rest>", and later on `findEntitiesByTag` associated
+ * everything in the system that happened to share the tag string. Both halves
+ * were guesses that failed quietly — "3 Calea Victoriei" parsed as tarla "3",
+ * and reusing a folder name across two unrelated imports cross-linked their
+ * records.
+ *
+ * The folder now simply IS one Property. The user says which one, once, here;
+ * every Document created by the run is linked to it directly. Tags survive,
+ * but only as descriptive labels for browsing — they no longer link anything.
+ *
+ * WHAT THIS DIALOG DECIDES
+ *   1. The Property — created now (nickname pre-filled from the folder name)
+ *      or picked from the existing ones (re-importing more documents into a
+ *      property created by an earlier run).
+ *   2. Optionally, which coordinate file in the folder defines its corners.
+ *      Candidates are shortlisted by extension and then actually parsed, so
+ *      the corner count shown is real, not a guess from the filename.
+ *   3. When an existing property already has corners AND a coordinate file was
+ *      chosen, whether to replace them. Never silently: replacing discards
+ *      hand-fixed corner order (the bow-tie reorder case), so the user is
+ *      shown both counts and asked.
+ *
+ * A newly created property receives its corners inside the POST that creates
+ * it, so they land in version 0 rather than as an immediate v0 -> v1 edit.
+ */
+
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
+import type { FSEntry, FSFileEntry } from "@/lib/import/folder-utils";
+import {
+  coordinateCandidates,
+  nicknameFromFolderName,
+} from "@/lib/import/coordinate-file";
+import { inferProvenance } from "@/lib/metadata/provenance-rules";
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+/** What the wizard needs to know about the property once this step is done. */
+export type ResolvedProperty = {
+  id: string;
+  code: string;
+  nickname: string | null;
+  principalObjectId: string;
+  /** Corners the run ended up with — display only, for the wizard's chip. */
+  cornerCount: number;
+};
+
+type Corner = { lat: number; lon: number; originalIndex: number | null };
+
+/** One coordinate-file candidate, after it has actually been parsed. */
+type Candidate = {
+  entry: FSFileEntry;
+  /** null while still parsing. */
+  corners: Corner[] | null;
+  /** Set when the file could not be read or the server rejected it. */
+  error: string | null;
+};
+
+type PropertySearchItem = {
+  id: string;
+  code: string;
+  nickname: string | null;
+  tarlaSola: string | null;
+  parcela: string | null;
+  locality: string | null;
+};
+
+type Mode = "new" | "existing";
+
+type Props = {
+  entries: FSEntry[];
+  rootFolderName: string;
+  onCancel: () => void;
+  onResolved: (property: ResolvedProperty) => void;
+};
+
+const PAGE_SIZE = 10;
+const NO_COORDINATE_FILE = "";
+
+// ---------------------------------------------------------------------------
+// API helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Every mutating call here goes through this guard.
+ *
+ * `res.redirected` is the expired-Supabase-session tell documented in
+ * CLAUDE.md: the middleware redirects the request to /sign-in and fetch
+ * follows it, so the response is a perfectly cheerful 200 full of sign-in
+ * HTML. Without this check the dialog would report success and the wizard
+ * would carry on importing into a property that was never created.
+ */
+async function assertNotRedirected(res: Response, sessionMsg: string): Promise<void> {
+  if (res.redirected) throw new Error(sessionMsg);
+}
+
+async function parseCoordinateFile(file: File): Promise<Corner[]> {
+  const fd = new FormData();
+  fd.append("file", file, file.name);
+  const res = await fetch("/api/properties/parse-text", { method: "POST", body: fd });
+  if (!res.ok) {
+    const body = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new Error(body.error ?? `HTTP ${res.status}`);
+  }
+  const body = (await res.json()) as { corners?: Corner[] };
+  return body.corners ?? [];
+}
+
+async function searchProperties(
+  q: string,
+  page: number,
+): Promise<{ items: PropertySearchItem[]; total: number }> {
+  const params = new URLSearchParams({
+    limit: String(PAGE_SIZE),
+    offset: String(page * PAGE_SIZE),
+  });
+  if (q.trim()) params.set("q", q.trim());
+  const res = await fetch(`/api/properties?${params.toString()}`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return (await res.json()) as { items: PropertySearchItem[]; total: number };
+}
+
+type PropertyFullResponse = {
+  property: { id: string; code: string; nickname: string | null; principalObjectId: string };
+  corners: unknown[];
+};
+
+async function fetchPropertyDetail(id: string): Promise<PropertyFullResponse> {
+  const res = await fetch(`/api/properties/${id}`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return (await res.json()) as PropertyFullResponse;
+}
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
+
+export function PropertyStepDialog({
+  entries,
+  rootFolderName,
+  onCancel,
+  onResolved,
+}: Props) {
+  const t = useTranslations("adminImport.wizard.propertyStep");
+
+  // ── Coordinate-file candidates ────────────────────────────────────────────
+  //
+  // Shortlisted by extension once; `entries` is stable for this dialog's life.
+  const candidateEntries = useMemo(
+    () => coordinateCandidates(entries),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+
+  const [candidates, setCandidates] = useState<Candidate[]>(() =>
+    candidateEntries.map((entry) => ({ entry, corners: null, error: null })),
+  );
+  const [parsing, setParsing] = useState(candidateEntries.length > 0);
+
+  // ── Selection state ───────────────────────────────────────────────────────
+
+  const [mode, setMode] = useState<Mode>("new");
+  const [nickname, setNickname] = useState(() => nicknameFromFolderName(rootFolderName));
+
+  const [selectedCoordPath, setSelectedCoordPath] = useState<string>(NO_COORDINATE_FILE);
+  const [replaceCorners, setReplaceCorners] = useState(false);
+
+  const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [page, setPage] = useState(0);
+  const [selectedExistingId, setSelectedExistingId] = useState<string | null>(null);
+
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedQuery(query), 300);
+    return () => clearTimeout(id);
+  }, [query]);
+
+  // Parse every candidate on mount so the list can show REAL corner counts.
+  // A ".csv" of phone numbers and a ".csv" of corners look identical until
+  // parsed, and "0 corners" is exactly the signal that tells them apart.
+  //
+  // Every setState below runs in an async continuation, never synchronously in
+  // the effect body — that is what react-hooks/set-state-in-effect forbids.
+  useEffect(() => {
+    if (candidateEntries.length === 0) return;
+    let mounted = true;
+
+    (async () => {
+      const parsed: Candidate[] = [];
+
+      for (const entry of candidateEntries) {
+        let corners: Corner[] = [];
+        let error: string | null = null;
+        try {
+          const file = await entry.handle.getFile();
+          corners = await parseCoordinateFile(file);
+        } catch (err) {
+          error = err instanceof Error ? err.message : String(err);
+        }
+        if (!mounted) return;
+        const done: Candidate = { entry, corners, error };
+        parsed.push(done);
+        setCandidates((prev) =>
+          prev.map((c) => (c.entry.path === entry.path ? done : c)),
+        );
+      }
+      if (!mounted) return;
+
+      // Pre-select only when exactly ONE file actually yielded corners — that
+      // is a fact, not a guess. With two or more the user chooses: preferring
+      // "the one with the most corners" would let a stray CSV win silently.
+      const usable = parsed.filter((c) => (c.corners?.length ?? 0) > 0);
+      if (usable.length === 1) setSelectedCoordPath(usable[0].entry.path);
+
+      setParsing(false);
+    })();
+
+    return () => { mounted = false; };
+    // candidateEntries is derived from the stable `entries` prop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const searchQuery = useQuery({
+    queryKey: ["import-property-search", debouncedQuery, page],
+    queryFn: () => searchProperties(debouncedQuery, page),
+    enabled: mode === "existing",
+    staleTime: 30_000,
+  });
+
+  const detailQuery = useQuery({
+    queryKey: ["import-property-detail", selectedExistingId],
+    queryFn: () => fetchPropertyDetail(selectedExistingId as string),
+    enabled: mode === "existing" && selectedExistingId !== null,
+    staleTime: 0,
+  });
+
+  const existingCornerCount = detailQuery.data?.corners.length ?? 0;
+
+  const chosenCandidate =
+    selectedCoordPath === NO_COORDINATE_FILE
+      ? null
+      : candidates.find((c) => c.entry.path === selectedCoordPath) ?? null;
+  const chosenCorners = chosenCandidate?.corners ?? null;
+
+  /**
+   * The conflict: an existing property that already has corners, and a
+   * coordinate file that wants to define them. Both counts are shown and the
+   * user picks — replacing is destructive (it discards any manual reordering)
+   * and must never happen by default.
+   */
+  const cornerConflict =
+    mode === "existing" &&
+    selectedExistingId !== null &&
+    existingCornerCount > 0 &&
+    (chosenCorners?.length ?? 0) > 0;
+
+  /**
+   * Change what the conflict is ABOUT and the answer to it is void.
+   *
+   * Done in the two handlers rather than in an effect on purpose: a
+   * synchronous setState inside a useEffect body is what
+   * react-hooks/set-state-in-effect rejects (see Slice #4.5), and there are
+   * exactly two places that can invalidate the answer, so resetting at the
+   * source is also the clearer read.
+   */
+  const chooseExisting = useCallback((id: string) => {
+    setSelectedExistingId(id);
+    setReplaceCorners(false);
+  }, []);
+
+  const chooseCoordinateFile = useCallback((path: string) => {
+    setSelectedCoordPath(path);
+    setReplaceCorners(false);
+  }, []);
+
+  // ── Confirm ───────────────────────────────────────────────────────────────
+
+  const canConfirm =
+    !submitting &&
+    !parsing &&
+    (mode === "new"
+      ? nickname.trim().length > 0
+      : selectedExistingId !== null && !detailQuery.isLoading);
+
+  const handleConfirm = useCallback(async () => {
+    setSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      if (mode === "new") {
+        // Corners travel INSIDE the create call so they are part of version 0.
+        // Creating first and patching after would make the property's history
+        // open with an edit the user never made.
+        const corners = chosenCorners ?? [];
+        const res = await fetch("/api/properties", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            nickname: nickname.trim(),
+            corners,
+            // Where this property came from. A parsed cadastral file is
+            // unambiguous; a hand-named empty property is a manual entry.
+            provenance: inferProvenance(
+              corners.length > 0 ? "COORDINATE_FILE" : "MANUAL_FORM",
+            ),
+          }),
+        });
+        await assertNotRedirected(res, t("errorSession"));
+        if (!res.ok) {
+          const body = (await res.json().catch(() => ({}))) as { error?: string };
+          throw new Error(body.error ?? `HTTP ${res.status}`);
+        }
+        const body = (await res.json()) as PropertyFullResponse;
+        onResolved({
+          id: body.property.id,
+          code: body.property.code,
+          nickname: body.property.nickname,
+          principalObjectId: body.property.principalObjectId,
+          cornerCount: corners.length,
+        });
+        return;
+      }
+
+      // ── Existing property ──────────────────────────────────────────────
+      const detail = detailQuery.data;
+      if (!detail) throw new Error(t("errorNoDetail"));
+
+      let finalCornerCount = existingCornerCount;
+
+      // Write corners only when they were actually chosen AND either the
+      // property has none yet, or the user explicitly asked to replace.
+      const shouldWriteCorners =
+        (chosenCorners?.length ?? 0) > 0 && (!cornerConflict || replaceCorners);
+
+      if (shouldWriteCorners && chosenCorners) {
+        const res = await fetch(`/api/properties/${detail.property.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ corners: chosenCorners }),
+        });
+        await assertNotRedirected(res, t("errorSession"));
+        if (!res.ok) {
+          const body = (await res.json().catch(() => ({}))) as { error?: string };
+          throw new Error(body.error ?? `HTTP ${res.status}`);
+        }
+        finalCornerCount = chosenCorners.length;
+      }
+
+      onResolved({
+        id: detail.property.id,
+        code: detail.property.code,
+        nickname: detail.property.nickname,
+        principalObjectId: detail.property.principalObjectId,
+        cornerCount: finalCornerCount,
+      });
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : String(err));
+      setSubmitting(false);
+    }
+  }, [
+    mode,
+    nickname,
+    chosenCorners,
+    detailQuery.data,
+    existingCornerCount,
+    cornerConflict,
+    replaceCorners,
+    onResolved,
+    t,
+  ]);
+
+  // ESC cancels, but never mid-write.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !submitting) onCancel();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onCancel, submitting]);
+
+  const items = searchQuery.data?.items ?? [];
+  const total = searchQuery.data?.total ?? 0;
+
+  // ── Render ────────────────────────────────────────────────────────────────
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="import-property-step-title"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+    >
+      <div className="flex max-h-[90vh] w-full max-w-2xl flex-col rounded-xl border border-card-rim bg-white shadow-xl dark:border-zinc-700 dark:bg-zinc-900">
+        {/* Header */}
+        <div className="border-b border-card-rim px-5 py-4 dark:border-zinc-700">
+          <h2
+            id="import-property-step-title"
+            className="text-base font-semibold text-ink dark:text-zinc-100"
+          >
+            {t("title")}
+          </h2>
+          <p className="mt-1 text-sm text-fade dark:text-zinc-400">
+            {t("intro", { folder: rootFolderName })}
+          </p>
+        </div>
+
+        {/* Body */}
+        <div className="flex-1 space-y-5 overflow-y-auto px-5 py-5">
+          {/* ── Section 1: which property ─────────────────────────────────── */}
+          <section className="space-y-3">
+            <h3 className="text-sm font-semibold text-ink dark:text-zinc-200">
+              {t("sectionProperty")}
+            </h3>
+
+            <div
+              className="flex gap-2"
+              role="radiogroup"
+              aria-label={t("sectionProperty")}
+            >
+              <ModeButton
+                active={mode === "new"}
+                onClick={() => setMode("new")}
+                label={t("modeNew")}
+              />
+              <ModeButton
+                active={mode === "existing"}
+                onClick={() => setMode("existing")}
+                label={t("modeExisting")}
+              />
+            </div>
+
+            {mode === "new" ? (
+              <label className="flex flex-col gap-1 text-xs font-medium text-ink dark:text-zinc-300">
+                {t("nicknameLabel")}
+                <input
+                  type="text"
+                  value={nickname}
+                  onChange={(e) => setNickname(e.target.value)}
+                  spellCheck={false}
+                  className="rounded-md border border-wire bg-white px-2 py-1.5 text-sm text-ink shadow-sm focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
+                />
+                <span className="font-normal text-fade dark:text-zinc-500">
+                  {t("nicknameHint")}
+                </span>
+              </label>
+            ) : (
+              <div className="space-y-2">
+                <label className="flex flex-col gap-1 text-xs font-medium text-ink dark:text-zinc-300">
+                  {t("searchLabel")}
+                  <input
+                    type="text"
+                    value={query}
+                    onChange={(e) => { setQuery(e.target.value); setPage(0); }}
+                    placeholder={t("searchPlaceholder")}
+                    spellCheck={false}
+                    className="rounded-md border border-wire bg-white px-2 py-1.5 text-sm text-ink shadow-sm focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
+                  />
+                </label>
+
+                <div className="max-h-56 overflow-y-auto rounded-md border border-wire dark:border-zinc-700">
+                  {searchQuery.isLoading ? (
+                    <p className="p-3 text-sm text-fade">{t("searchLoading")}</p>
+                  ) : searchQuery.isError ? (
+                    <p className="p-3 text-sm text-red-600 dark:text-red-400">
+                      {t("searchError")}
+                    </p>
+                  ) : items.length === 0 ? (
+                    <p className="p-3 text-sm text-fade">{t("searchEmpty")}</p>
+                  ) : (
+                    <ul>
+                      {items.map((item) => {
+                        const selected = item.id === selectedExistingId;
+                        return (
+                          <li key={item.id}>
+                            <button
+                              type="button"
+                              onClick={() => chooseExisting(item.id)}
+                              aria-pressed={selected}
+                              className={[
+                                "flex w-full items-baseline gap-2 border-b border-crease px-3 py-2 text-left last:border-b-0 dark:border-zinc-800",
+                                selected
+                                  ? "bg-cta-pale dark:bg-cta/15"
+                                  : "hover:bg-canvas dark:hover:bg-zinc-800",
+                              ].join(" ")}
+                            >
+                              <span className="font-mono text-xs text-fade">
+                                {item.code}
+                              </span>
+                              <span className="flex-1 truncate text-sm text-ink dark:text-zinc-200">
+                                {item.nickname ?? t("noNickname")}
+                              </span>
+                              {item.locality && (
+                                <span className="text-xs text-fade">{item.locality}</span>
+                              )}
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
+
+                {total > PAGE_SIZE && (
+                  <div className="flex items-center justify-between text-xs text-fade">
+                    <button
+                      type="button"
+                      onClick={() => setPage((p) => Math.max(0, p - 1))}
+                      disabled={page === 0}
+                      className="rounded-md border border-wire px-2 py-1 disabled:opacity-40 dark:border-zinc-700"
+                    >
+                      {t("prevPage")}
+                    </button>
+                    <span>
+                      {t("pageOf", {
+                        page: page + 1,
+                        pages: Math.ceil(total / PAGE_SIZE),
+                      })}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setPage((p) => p + 1)}
+                      disabled={(page + 1) * PAGE_SIZE >= total}
+                      className="rounded-md border border-wire px-2 py-1 disabled:opacity-40 dark:border-zinc-700"
+                    >
+                      {t("nextPage")}
+                    </button>
+                  </div>
+                )}
+
+                {selectedExistingId && (
+                  <p className="text-xs text-fade dark:text-zinc-400">
+                    {detailQuery.isLoading
+                      ? t("detailLoading")
+                      : detailQuery.isError
+                      ? t("detailError")
+                      : t("existingCorners", { count: existingCornerCount })}
+                  </p>
+                )}
+              </div>
+            )}
+          </section>
+
+          {/* ── Section 2: coordinate file ────────────────────────────────── */}
+          <section className="space-y-3 border-t border-crease pt-4 dark:border-zinc-800">
+            <h3 className="text-sm font-semibold text-ink dark:text-zinc-200">
+              {t("sectionCoordinates")}
+            </h3>
+
+            {candidateEntries.length === 0 ? (
+              <p className="text-sm text-fade dark:text-zinc-400">{t("noCandidates")}</p>
+            ) : (
+              <>
+                {parsing && (
+                  <p className="text-sm text-fade animate-pulse">{t("parsing")}</p>
+                )}
+                <ul
+                  className="space-y-1"
+                  role="radiogroup"
+                  aria-label={t("sectionCoordinates")}
+                >
+                  {candidates.map((c) => {
+                    const count = c.corners?.length ?? 0;
+                    const usable = count > 0;
+                    return (
+                      <li key={c.entry.path}>
+                        <label
+                          className={[
+                            "flex items-center gap-2 rounded-md border px-3 py-2 text-sm",
+                            usable
+                              ? "cursor-pointer border-wire hover:bg-canvas dark:border-zinc-700 dark:hover:bg-zinc-800"
+                              : "border-crease opacity-60 dark:border-zinc-800",
+                          ].join(" ")}
+                        >
+                          <input
+                            type="radio"
+                            name="coordinate-file"
+                            value={c.entry.path}
+                            checked={selectedCoordPath === c.entry.path}
+                            disabled={!usable}
+                            onChange={() => chooseCoordinateFile(c.entry.path)}
+                          />
+                          <span className="flex-1 truncate font-mono text-xs text-ink dark:text-zinc-200">
+                            {c.entry.path}
+                          </span>
+                          <span className="text-xs text-fade">
+                            {c.corners === null && !c.error
+                              ? t("candidateParsing")
+                              : c.error
+                              ? t("candidateError")
+                              : usable
+                              ? t("candidateCorners", { count })
+                              : t("candidateNotCoordinates")}
+                          </span>
+                        </label>
+                      </li>
+                    );
+                  })}
+
+                  <li>
+                    <label className="flex cursor-pointer items-center gap-2 rounded-md border border-wire px-3 py-2 text-sm hover:bg-canvas dark:border-zinc-700 dark:hover:bg-zinc-800">
+                      <input
+                        type="radio"
+                        name="coordinate-file"
+                        value={NO_COORDINATE_FILE}
+                        checked={selectedCoordPath === NO_COORDINATE_FILE}
+                        onChange={() => chooseCoordinateFile(NO_COORDINATE_FILE)}
+                      />
+                      <span className="text-ink dark:text-zinc-200">{t("noCoordinateFile")}</span>
+                    </label>
+                  </li>
+                </ul>
+              </>
+            )}
+          </section>
+
+          {/* ── Section 3: corner conflict ────────────────────────────────── */}
+          {cornerConflict && (
+            <section className="space-y-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 dark:border-amber-700 dark:bg-amber-950/30">
+              <h3 className="text-sm font-semibold text-amber-900 dark:text-amber-200">
+                {t("conflictTitle")}
+              </h3>
+              <p className="text-sm text-amber-900 dark:text-amber-200">
+                {t("conflictBody", {
+                  existing: existingCornerCount,
+                  parsed: chosenCorners?.length ?? 0,
+                })}
+              </p>
+              <div className="space-y-1">
+                <label className="flex cursor-pointer items-center gap-2 text-sm text-amber-900 dark:text-amber-200">
+                  <input
+                    type="radio"
+                    name="corner-conflict"
+                    checked={!replaceCorners}
+                    onChange={() => setReplaceCorners(false)}
+                  />
+                  {t("conflictKeep")}
+                </label>
+                <label className="flex cursor-pointer items-center gap-2 text-sm text-amber-900 dark:text-amber-200">
+                  <input
+                    type="radio"
+                    name="corner-conflict"
+                    checked={replaceCorners}
+                    onChange={() => setReplaceCorners(true)}
+                  />
+                  {t("conflictReplace")}
+                </label>
+              </div>
+            </section>
+          )}
+
+          {submitError && (
+            <p
+              role="alert"
+              className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950 dark:text-red-300"
+            >
+              {submitError}
+            </p>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-end gap-3 border-t border-card-rim px-5 py-3 dark:border-zinc-700">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={submitting}
+            className="rounded-md border border-wire bg-white px-4 py-2 text-sm font-medium text-ink hover:bg-canvas disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+          >
+            {t("cancelButton")}
+          </button>
+          <button
+            type="button"
+            onClick={handleConfirm}
+            disabled={!canConfirm}
+            className="inline-flex items-center rounded-md bg-cta px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-cta-d disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {submitting ? t("confirmBusy") : t("confirmButton")}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// ModeButton — "create new" / "pick existing" toggle
+// ---------------------------------------------------------------------------
+
+function ModeButton({
+  active,
+  onClick,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={active}
+      onClick={onClick}
+      className={[
+        "flex-1 rounded-md border px-4 py-2 text-sm font-medium shadow-sm",
+        active
+          ? "border-cta bg-cta-pale text-cta dark:bg-cta/15"
+          : "border-wire bg-white text-ink hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800",
+      ].join(" ")}
+    >
+      {label}
+    </button>
+  );
+}
