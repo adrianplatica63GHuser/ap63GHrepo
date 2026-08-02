@@ -51,8 +51,6 @@ export function PropertyPersonsTab({ propertyId }: Props) {
     queryFn:  () => fetchPropertyPersons(propertyId),
   });
 
-  const selectedPerson = persons?.find((p) => p.id === selectedId) ?? null;
-
   const handleAssociate = () => {
     router.push(`/properties/${encodeURIComponent(propertyId)}/associate-person`);
   };
@@ -79,12 +77,6 @@ export function PropertyPersonsTab({ propertyId }: Props) {
     }
   };
 
-  const handleView = () => {
-    if (!selectedPerson) return;
-    const base = selectedPerson.type === "NATURAL" ? "/natural-persons" : "/judicial-persons";
-    router.push(`${base}/${encodeURIComponent(selectedPerson.id)}?readonly=true`);
-  };
-
   if (isLoading) {
     return (
       <p className="py-6 text-sm text-fade dark:text-zinc-400">{t("loading")}</p>
@@ -107,14 +99,12 @@ export function PropertyPersonsTab({ propertyId }: Props) {
               <tr className="border-b border-card-rim dark:border-zinc-800">
                 <th className="w-8 px-3 py-2" aria-label="select" />
                 <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400">
-                  {t("colCode")}
-                </th>
-                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400">
                   {t("colName")}
                 </th>
                 <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400">
                   {t("colRole")}
                 </th>
+                <th className="w-16 px-3 py-2" aria-label="view" />
               </tr>
             </thead>
             <tbody>
@@ -143,14 +133,24 @@ export function PropertyPersonsTab({ propertyId }: Props) {
                       aria-label={p.displayName}
                     />
                   </td>
-                  <td className="px-3 py-2 font-mono text-xs text-fade dark:text-zinc-400">
-                    {p.code}
-                  </td>
                   <td className="px-3 py-2 font-medium text-ink dark:text-zinc-100">
                     {p.displayName}
                   </td>
                   <td className="px-3 py-2 text-fade dark:text-zinc-400">
                     {p.roleName ?? "—"}
+                  </td>
+                  <td className="px-3 py-2">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const base = p.type === "NATURAL" ? "/natural-persons" : "/judicial-persons";
+                        router.push(`${base}/${encodeURIComponent(p.id)}?readonly=true`);
+                      }}
+                      className="inline-flex items-center rounded-md border border-wire bg-white px-2 py-1 text-xs font-medium text-ink shadow-sm transition-colors hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+                    >
+                      {t("view")}
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -181,14 +181,6 @@ export function PropertyPersonsTab({ propertyId }: Props) {
             className="inline-flex items-center rounded-md border border-wire bg-white px-4 py-2 text-sm font-medium text-ink shadow-sm transition-colors hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
           >
             {dissociating ? t("dissociating") : t("dissociate")}
-          </button>
-          <button
-            type="button"
-            onClick={handleView}
-            disabled={selectedId === null}
-            className="inline-flex items-center rounded-md border border-wire bg-white px-4 py-2 text-sm font-medium text-ink shadow-sm transition-colors hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-          >
-            {t("view")}
           </button>
         </div>
         {dissociateErr && (

@@ -64,11 +64,6 @@ export function DocumentReferencesTab({ documentId }: Props) {
     }
   };
 
-  const handleView = () => {
-    if (!selectedId) return;
-    router.push(`/documents/${encodeURIComponent(selectedId)}?readonly=true`);
-  };
-
   if (isLoading) return <p className="py-6 text-sm text-fade dark:text-zinc-400">{t("loading")}</p>;
   if (isError)   return <p className="py-6 text-sm text-red-600 dark:text-red-400">{t("error")}</p>;
 
@@ -80,10 +75,10 @@ export function DocumentReferencesTab({ documentId }: Props) {
             <thead>
               <tr className="border-b border-card-rim dark:border-zinc-800">
                 <th className="w-8 px-3 py-2" aria-label="select" />
-                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400">{t("colCode")}</th>
                 <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400">{t("colType")}</th>
                 <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400">{t("colTitle")}</th>
                 <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400">{t("colRole")}</th>
+                <th className="w-16 px-3 py-2" aria-label="view" />
               </tr>
             </thead>
             <tbody>
@@ -109,7 +104,6 @@ export function DocumentReferencesTab({ documentId }: Props) {
                       aria-label={item.title ?? item.code}
                     />
                   </td>
-                  <td className="px-3 py-2 font-mono text-xs text-fade dark:text-zinc-400">{item.code}</td>
                   <td className="px-3 py-2 text-fade dark:text-zinc-400">{item.typeName ?? "—"}</td>
                   <td className="px-3 py-2 font-medium text-ink dark:text-zinc-100">{item.title ?? "—"}</td>
                   <td className="px-3 py-2">
@@ -120,6 +114,18 @@ export function DocumentReferencesTab({ documentId }: Props) {
                     ) : (
                       <span className="text-fade dark:text-zinc-500">—</span>
                     )}
+                  </td>
+                  <td className="px-3 py-2">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        router.push(`/documents/${encodeURIComponent(item.id)}?readonly=true`);
+                      }}
+                      className="inline-flex items-center rounded-md border border-wire bg-white px-2 py-1 text-xs font-medium text-ink shadow-sm transition-colors hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+                    >
+                      {t("view")}
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -147,14 +153,6 @@ export function DocumentReferencesTab({ documentId }: Props) {
             className="inline-flex items-center rounded-md border border-wire bg-white px-4 py-2 text-sm font-medium text-ink shadow-sm transition-colors hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
           >
             {dissociating ? t("dissociating") : t("dissociate")}
-          </button>
-          <button
-            type="button"
-            onClick={handleView}
-            disabled={selectedId === null}
-            className="inline-flex items-center rounded-md border border-wire bg-white px-4 py-2 text-sm font-medium text-ink shadow-sm transition-colors hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-          >
-            {t("view")}
           </button>
         </div>
         {dissociateErr && (

@@ -34,7 +34,6 @@ export function PersonReferencesTab({ personId, backBase }: Props) {
   const queryClient = useQueryClient();
 
   const [selectedId,    setSelectedId]    = useState<string | null>(null);
-  const [selectedType,  setSelectedType]  = useState<"NATURAL" | "JUDICIAL" | null>(null);
   const [dissociating,  setDissociating]  = useState(false);
   const [dissociateErr, setDissociateErr] = useState<string | null>(null);
 
@@ -61,19 +60,12 @@ export function PersonReferencesTab({ personId, backBase }: Props) {
         throw new Error(body?.error ?? `HTTP ${res.status}`);
       }
       setSelectedId(null);
-      setSelectedType(null);
       await queryClient.invalidateQueries({ queryKey: ["person-references", personId] });
     } catch (err) {
       setDissociateErr(err instanceof Error ? err.message : String(err));
     } finally {
       setDissociating(false);
     }
-  };
-
-  const handleView = () => {
-    if (!selectedId || !selectedType) return;
-    const base = selectedType === "NATURAL" ? "/natural-persons" : "/judicial-persons";
-    router.push(`${base}/${encodeURIComponent(selectedId)}?readonly=true`);
   };
 
   if (isLoading) return <p className="py-6 text-sm text-fade dark:text-zinc-400">{t("loading")}</p>;
@@ -87,23 +79,17 @@ export function PersonReferencesTab({ personId, backBase }: Props) {
             <thead>
               <tr className="border-b border-card-rim dark:border-zinc-800">
                 <th className="w-8 px-3 py-2" aria-label="select" />
-                <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400">{t("colCode")}</th>
                 <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400">{t("colName")}</th>
                 <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400">{t("colType")}</th>
                 <th className="px-3 py-2 text-left font-semibold text-fade dark:text-zinc-400">{t("colRole")}</th>
+                <th className="w-16 px-3 py-2" aria-label="view" />
               </tr>
             </thead>
             <tbody>
               {items.map((item) => (
                 <tr
                   key={item.id}
-                  onClick={() => {
-                    if (item.id === selectedId) {
-                      setSelectedId(null); setSelectedType(null);
-                    } else {
-                      setSelectedId(item.id); setSelectedType(item.type);
-                    }
-                  }}
+                  onClick={() => setSelectedId(item.id === selectedId ? null : item.id)}
                   onDoubleClick={() => {
                     const base = item.type === "NATURAL" ? "/natural-persons" : "/judicial-persons";
                     router.push(`${base}/${encodeURIComponent(item.id)}?readonly=true`);
@@ -119,13 +105,12 @@ export function PersonReferencesTab({ personId, backBase }: Props) {
                     <input
                       type="radio"
                       checked={item.id === selectedId}
-                      onChange={() => { setSelectedId(item.id); setSelectedType(item.type); }}
+                      onChange={() => setSelectedId(item.id)}
                       onClick={(e) => e.stopPropagation()}
                       className="accent-cta"
                       aria-label={item.displayName}
                     />
                   </td>
-                  <td className="px-3 py-2 font-mono text-xs text-fade dark:text-zinc-400">{item.code}</td>
                   <td className="px-3 py-2 font-medium text-ink dark:text-zinc-100">{item.displayName}</td>
                   <td className="px-3 py-2 text-fade dark:text-zinc-400">
                     {item.type === "NATURAL" ? t("typeNatural") : t("typeJudicial")}
@@ -138,6 +123,19 @@ export function PersonReferencesTab({ personId, backBase }: Props) {
                     ) : (
                       <span className="text-fade dark:text-zinc-500">—</span>
                     )}
+                  </td>
+                  <td className="px-3 py-2">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const base = item.type === "NATURAL" ? "/natural-persons" : "/judicial-persons";
+                        router.push(`${base}/${encodeURIComponent(item.id)}?readonly=true`);
+                      }}
+                      className="inline-flex items-center rounded-md border border-wire bg-white px-2 py-1 text-xs font-medium text-ink shadow-sm transition-colors hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+                    >
+                      {t("view")}
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -165,14 +163,6 @@ export function PersonReferencesTab({ personId, backBase }: Props) {
             className="inline-flex items-center rounded-md border border-wire bg-white px-4 py-2 text-sm font-medium text-ink shadow-sm transition-colors hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
           >
             {dissociating ? t("dissociating") : t("dissociate")}
-          </button>
-          <button
-            type="button"
-            onClick={handleView}
-            disabled={selectedId === null}
-            className="inline-flex items-center rounded-md border border-wire bg-white px-4 py-2 text-sm font-medium text-ink shadow-sm transition-colors hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-          >
-            {t("view")}
           </button>
         </div>
         {dissociateErr && (
