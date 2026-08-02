@@ -52,9 +52,34 @@ export const citizenshipSchema = z.object({
   sortOrder,
 });
 
+// Slice #21.03.Import / Slice 3 — optional type-specific field template.
+// Mirrors DocumentTemplateField (src/lib/documents/template-fields.ts) but is
+// declared separately here rather than imported: that module is deliberately
+// framework-free and shared with AI-extraction prompt building, and keeping
+// this validation-only shape local avoids coupling the two. parseTemplateFields
+// on the read side never throws on malformed data regardless, so the two
+// staying loosely in sync (not literally sharing a type) is safe.
+const documentTemplateFieldSchema = z.object({
+  key:     z.string().min(1, "required"),
+  labelRo: z.string().min(1, "required"),
+  labelEn: z.string().min(1, "required"),
+  type:    z.enum(["text", "textarea", "date", "number"]),
+  order:   z.coerce.number().int().min(0).default(0),
+  aiHint:  z.string().nullish(),
+  // Optional sub-panel grouping (e.g. "Financiar" / "Financial") — see the
+  // DocumentTemplateField comment for how ungrouped fields behave.
+  groupRo: z.string().nullish(),
+  groupEn: z.string().nullish(),
+});
+
 export const documentTypeSchema = z.object({
   name:      z.string().min(1, "required"),
   sortOrder,
+  // Optional — omitted entirely by the admin UI's name/sortOrder-only edit
+  // form (see LIST_META["document-types"]), so a plain rename never touches
+  // this column. Only a caller that explicitly sends `templateFields` (e.g.
+  // a one-off admin API call to set a type's template) writes to it.
+  templateFields: z.array(documentTemplateFieldSchema).nullish(),
 });
 
 export const judicialPersonTypeSchema = z.object({
