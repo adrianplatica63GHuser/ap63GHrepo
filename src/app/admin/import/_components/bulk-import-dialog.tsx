@@ -52,6 +52,11 @@ import {
 } from "@/lib/metadata/provenance-rules";
 import type { ProvenanceCode } from "@/lib/metadata/provenance";
 import { ProvenanceField } from "./provenance-field";
+import { isIdCardEntry } from "@/lib/import/id-card";
+import {
+  IdCardPersonDialog,
+  type IdCardPersonOutcome,
+} from "./id-card-person-dialog";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -69,6 +74,14 @@ export type ImportResult = {
   principalObjectId?: string;
   /** Slice #21.02.Import: true once AI-interpret has been successfully run on this entry. */
   aiProcessed?: boolean;
+  /**
+   * Slice #23.01.Import: set once a Person has been confirmed or created from
+   * this entry's ID card and linked to the run's Property and this Document.
+   * Its only job is to stop the row offering the action a second time — the
+   * second run would resolve to the same person and the link calls are
+   * idempotent, but re-offering it reads as "that didn't work".
+   */
+  personId?: string;
 };
 
 type AiPhase =
@@ -493,6 +506,14 @@ export function BulkImportDialog({
   const [aiState, setAiState] = useState<AiState | null>(null);
   const [parsedCorners, setParsedCorners] = useState<unknown[] | null>(null);
 
+  // Slice #23.01.Import — the row whose ID card is being turned into a Person.
+  // The File is resolved up front (the FSEntry handle is only readable while
+  // this dialog is mounted) and held here so the child gets a plain File.
+  const [idCardTarget, setIdCardTarget] = useState<
+    { path: string; docId: string; label: string; file: File } | null
+  >(null);
+  const [idCardError, setIdCardError] = useState<string | null>(null);
+
   // ── Provenance (Slice #21.07.Import) ──────────────────────────────────────
   //
   // Inference is a pure function of the entry list, which is stable for this
@@ -739,6 +760,65 @@ export function BulkImportDialog({
       // localStorage quota exceeded — ignore; links still work for this session.
     }
   }, [done, results, rootFolderName, scanResults]);
+
+  // ---------------------------------------------------------------------------
+  // Slice #23.01.Import — "Creează persoană din CI"
+  // ---------------------------------------------------------------------------
+  //
+  // Offered on a row that finished importing AND that the scan classified as an
+  // identity card. It runs AFTER the import, deliberately: by then the Document
+  // and its page already exist and are already linked to the run's Property, so
+  // the person flow only has to resolve an identity and attach it. Offering it
+  // before the import would mean creating a second Document for the same image.
+  //
+  // The image is resolved here rather than in the child because the FSEntry
+  // handle is only readable while this dialog is mounted, and because a PDF has
+  // to be rasterised to its first page before a vision model can read it.
+  const handleOpenIdCard = useCallback(
+    async (result: ImportResult) => {
+      if (!result.docId) return;
+      setIdCardError(null);
+      try {
+        const entry = result.entry;
+        // A page-group is several scans of one document; the card's data side
+        // is page 1. (The orphaned handleCreatePerson handled only plain files
+        // and threw "Not a scannable file" on a two-page scan.)
+        const handle =
+          entry.kind === "page-group"
+            ? (entry as FSPageGroupEntry).handles[0]
+            : (entry as FSFileEntry).handle;
+        if (!handle) throw new Error(t("idCardNoFile"));
+
+        const file = await handle.getFile();
+        let image: File;
+        if (isPdfFile(file.name)) {
+          const blob = await pdfFirstPageBlob(file);
+          image = new File([blob], `${file.name}.png`, { type: blob.type || "image/png" });
+        } else if (isImageFile(file.name)) {
+          image = file;
+        } else {
+          throw new Error(t("idCardNoFile"));
+        }
+
+        const label =
+          entry.kind === "page-group"
+            ? (entry as FSPageGroupEntry).titleHint
+            : (entry as FSFileEntry).name;
+
+        setIdCardTarget({ path: entry.path, docId: result.docId, label, file: image });
+      } catch (err) {
+        setIdCardError(err instanceof Error ? err.message : t("idCardNoFile"));
+      }
+    },
+    [t],
+  );
+
+  const handleIdCardDone = useCallback((outcome: IdCardPersonOutcome) => {
+    setIdCardTarget((target) => {
+      if (target) updateResult(target.path, { personId: outcome.personId });
+      return null;
+    });
+  }, []);
 
   // ---------------------------------------------------------------------------
   // AI interpretation handler
@@ -1131,6 +1211,27 @@ export function BulkImportDialog({
         {/* Results table */}
         {gatePassed && (
         <div className="flex-1 overflow-y-auto px-5 py-4 min-h-0">
+          {/* Slice #23.01.Import — ID-card person flow for one row at a time. */}
+          {idCardTarget && (
+            <IdCardPersonDialog
+              file={idCardTarget.file}
+              entryLabel={idCardTarget.label}
+              propertyId={propertyId}
+              documentId={idCardTarget.docId}
+              onDone={handleIdCardDone}
+              onClose={() => setIdCardTarget(null)}
+            />
+          )}
+
+          {idCardError && (
+            <div
+              role="alert"
+              className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-800 dark:bg-red-950/30 dark:text-red-300"
+            >
+              {idCardError}
+            </div>
+          )}
+
           {/* AI panel (inline, above results) */}
           {aiState && (
             <AiPanel
@@ -1152,6 +1253,7 @@ export function BulkImportDialog({
               <tr className="border-b border-crease text-left text-xs font-semibold uppercase tracking-wide text-fade dark:border-zinc-700">
                 <th className="pb-2 pr-3">{t("colDocument")}</th>
                 <th className="w-28 pb-2">{t("colStatus")}</th>
+                <th className="w-44 pb-2">{t("colAction")}</th>
               </tr>
             </thead>
             <tbody>
@@ -1160,6 +1262,8 @@ export function BulkImportDialog({
                   key={r.entry.path}
                   result={r}
                   t={t}
+                  isIdCard={isIdCardEntry(scanResults.get(r.entry.path))}
+                  onCreatePerson={() => void handleOpenIdCard(r)}
                 />
               ))}
             </tbody>
@@ -1178,10 +1282,13 @@ export function BulkImportDialog({
 type ResultRowProps = {
   result: ImportResult;
   t: ReturnType<typeof useTranslations<"adminImport.wizard.importDialog">>;
+  /** Slice #23.01.Import: the scan says this entry is an identity card. */
+  isIdCard: boolean;
+  onCreatePerson: () => void;
 };
 
-function ResultRow({ result, t }: ResultRowProps) {
-  const { entry, status, errorMsg, docId } = result;
+function ResultRow({ result, t, isIdCard, onCreatePerson }: ResultRowProps) {
+  const { entry, status, errorMsg, docId, personId } = result;
   const displayName = entry.kind === "page-group" ? entry.titleHint : (entry as FSFileEntry).name;
 
   return (
@@ -1214,6 +1321,31 @@ function ResultRow({ result, t }: ResultRowProps) {
             className="text-xs font-medium text-emerald-600 hover:underline dark:text-emerald-400"
           >
             {t("viewLink")}
+          </a>
+        )}
+      </td>
+
+      {/* Slice #23.01.Import — the ID-card action. Only ever offered on a row
+          that imported cleanly: without a docId there is nothing to link the
+          person to. */}
+      <td className="py-2">
+        {status === "done" && docId && isIdCard && !personId && (
+          <button
+            type="button"
+            onClick={onCreatePerson}
+            className="rounded-md border border-cta/40 bg-cta-pale px-2 py-1 text-xs font-medium text-cta hover:bg-cta/15"
+          >
+            {t("createPersonButton")}
+          </button>
+        )}
+        {personId && (
+          <a
+            href={`/natural-persons/${personId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs font-medium text-emerald-600 hover:underline dark:text-emerald-400"
+          >
+            ✓ {t("personLinked")}
           </a>
         )}
       </td>
