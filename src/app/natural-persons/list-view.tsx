@@ -511,10 +511,10 @@ export function NaturalPersonListView() {
 
       {confirmOpen && (
         <ConfirmDialog
-          title={tBulk("title", { count: selectedIds.size })}
-          body={tBulk("body", { count: selectedIds.size })}
-          yesLabel={tBulk("yes")}
-          noLabel={tBulk("no")}
+          title={tBulk("confirmTitle")}
+          body={tBulk("confirmBody", { count: selectedIds.size })}
+          yesLabel={deleting ? tBulk("deleting") : tBulk("delete")}
+          noLabel={tBulk("cancel")}
           onYes={handleConfirmDelete}
           onNo={() => { setConfirmOpen(false); setDeleteError(null); }}
           busy={deleting}
