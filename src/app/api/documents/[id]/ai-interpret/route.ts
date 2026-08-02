@@ -60,6 +60,24 @@
  *   automation, without needing to copy anything out of the dev-server
  *   terminal.
  *
+ * Slice #21.10.Import — this route now has TWO modes, selected by an optional
+ * `{ "mode": "discover" }` request body. A bodyless POST (what every existing
+ * caller sends) keeps the schema-driven "extract" behaviour described above,
+ * unchanged.
+ *
+ * In "discover" mode the model gets NO target field list at all and is asked to
+ * report the document verbatim, split into label -> value pairs and
+ * model-inferred sections. It exists for document types the system does not
+ * understand yet, where the schema-driven prompt's four baseline fields plus a
+ * flat `unmappedRaw` leftovers map systematically under-reads the page.
+ *
+ * Discover mode PERSISTS NOTHING: no field mapping, no customFields, no
+ * documentTypeId resolution (so it never auto-creates a lookup_document_type
+ * row the way the extract path does), no party extraction, no
+ * ai_interpreted_at stamp. It is safe to run on any document, repeatedly. The
+ * report goes to the dev-server console (src/lib/documents/discover-log.ts) and
+ * is mirrored in the response body.
+ *
  * Rate-limited (same 10/min per user as the import-wizard routes).
  */
 
@@ -70,10 +88,17 @@ import { db } from "@/db";
 import { lookupDocumentType } from "@/db/schema";
 import { unexpectedError } from "@/lib/api/errors";
 import {
+  buildDiscoverSystemPrompt,
   buildExtractSystemPrompt,
   GENERIC_EXTRACT_FIELD_DESCRIPTIONS,
   KNOWN_TYPE_KEYS,
 } from "@/lib/import/classify-prompts";
+import {
+  formatDiscoverLog,
+  parseDiscoverPayload,
+  type DiscoverPayload,
+  type SkippedPage,
+} from "@/lib/documents/discover-log";
 import { createValue } from "@/lib/admin/value-lists/queries";
 import {
   getDocumentById,
@@ -108,8 +133,18 @@ function extractJson(text: string): unknown {
   return JSON.parse(cleaned);
 }
 
-export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
+export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
   const { id } = await ctx.params;
+
+  // ── Mode (Slice #21.10.Import) ─────────────────────────────────────────────
+  //
+  // "extract" (default, and what a bodyless POST still gets — the existing
+  // callers send no body at all) is the schema-driven path this route has
+  // always had. "discover" reads the document with NO target field list and
+  // reports everything to the dev console; it persists nothing, so it is safe
+  // to run on any document at any time.
+  const bodyJson = (await req.json().catch(() => ({}))) as { mode?: unknown };
+  const isDiscover = bodyJson.mode === "discover";
 
   // ── Rate limiting ──────────────────────────────────────────────────────────
   const rl = checkOcrRateLimit(await getCurrentUserId());
@@ -163,13 +198,25 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
   // configured, partyRoles stays empty, buildExtractSystemPrompt omits the
   // "parties" section entirely, and the response tells the caller this type
   // isn't set up for party linking yet rather than guessing at role names.
-  const partyRoles = await listPersonRolesForDocumentType(docMeta.documentTypeId);
+  //
+  // Discover mode skips this lookup entirely: it extracts no parties, so
+  // asking the DB for roles would be work whose result is thrown away.
+  const partyRoles = isDiscover
+    ? []
+    : await listPersonRolesForDocumentType(docMeta.documentTypeId);
   const partyRoleNames = partyRoles.map((r) => r.name);
 
-  const systemPrompt = buildExtractSystemPrompt(templateFields, partyRoleNames);
   const typeHintText = typeTemplate
     ? ` Known document type: ${typeTemplate.name} (${typeTemplate.key}).`
     : "";
+
+  // Discover mode deliberately does NOT pass typeHintText: naming the
+  // registered type would anchor the model back onto that type's expected
+  // fields, which is exactly the schema-fitting this mode exists to avoid.
+  // The registered type is still printed in the console report for context.
+  const systemPrompt = isDiscover
+    ? buildDiscoverSystemPrompt()
+    : buildExtractSystemPrompt(templateFields, partyRoleNames);
 
   // ── Read all pages from storage, building one Anthropic content block per
   // supported page (Slice #21.03.Import multi-page) ─────────────────────────
@@ -185,7 +232,29 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
     p.mimeType === "text/plain" || p.fileName.toLowerCase().endsWith(".txt");
 
   const fileBlocks: ContentBlock[] = [];
+  const skippedPages: SkippedPage[] = [];
   let sawPdf = false;
+
+  /**
+   * Why a page could not be sent — Slice #21.10.Import.
+   *
+   * Previously an unsupported page was skipped with only a code comment to
+   * explain it, which made two very different failures indistinguishable from
+   * the outside: "the model found nothing" and "the model never saw this page".
+   * The application/octet-stream case is the one worth calling out by name —
+   * it means the browser recorded no MIME type at upload (the File System
+   * Access API leaves File.type empty for some files on Windows), so the page
+   * is perfectly readable on disk and skipped purely on a bookkeeping gap.
+   */
+  function skipReason(page: { mimeType: string | null; fileName: string }): string {
+    if (isTextFile(page)) {
+      return "plain-text file (cadastral coordinates or notes) — the model is sent images and PDFs only";
+    }
+    if (!page.mimeType || page.mimeType === "application/octet-stream") {
+      return "no MIME type was recorded when this page was uploaded, so its format cannot be confirmed";
+    }
+    return "unsupported format — only JPEG/PNG/GIF/WebP images and PDF can be sent";
+  }
 
   for (const page of pages) {
     const pageMimeType = page.mimeType ?? "application/octet-stream";
@@ -213,9 +282,16 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
         source: { type: "base64", media_type: "application/pdf", data: buf.toString("base64") },
       });
       sawPdf = true;
+    } else {
+      // Unsupported page (e.g. .txt coordinate files, .docx, .rtf) — skipped
+      // individually rather than failing the whole request, but recorded so
+      // discover mode can report it instead of leaving a silent gap.
+      skippedPages.push({
+        fileName: page.fileName,
+        mimeType: page.mimeType,
+        reason: skipReason(page),
+      });
     }
-    // else: unsupported page (e.g. .txt coordinate files, .docx) — skipped
-    // individually rather than failing the whole request.
   }
 
   const extraHeaders: Record<string, string> = sawPdf ? { "anthropic-beta": "pdfs-2024-09-25" } : {};
@@ -227,7 +303,14 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
     const friendlyMsg = allText
       ? "Fișierele text (coordonate cadastrale) nu pot fi interpretate cu AI. Funcția este disponibilă doar pentru imagini și PDF-uri."
       : "Niciuna dintre paginile acestui document nu este într-un format acceptat pentru interpretare AI (imagine sau PDF).";
-    return Response.json({ error: friendlyMsg, code: "unsupported_file_type" }, { status: 422 });
+    // Slice #21.10.Import: carry the per-page reasons in the body. "Nothing
+    // could be read" is only actionable if you can see WHICH page was rejected
+    // and why — especially for the octet-stream case, where the file itself is
+    // fine and only its recorded MIME type is missing.
+    return Response.json(
+      { error: friendlyMsg, code: "unsupported_file_type", skippedPages },
+      { status: 422 },
+    );
   }
 
   // ── Call Anthropic ─────────────────────────────────────────────────────────
@@ -249,7 +332,14 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
         // exceed 2048 tokens and get truncated mid-JSON (observed on the
         // real Contract de Vânzare sample, 4 sellers + buyer + mandatar +
         // notary). 8192 leaves generous headroom.
-        max_tokens: 8192,
+        // Slice #21.10.Import: discover mode asks for the document's content
+        // VERBATIM, so its output is bounded by the document's length rather
+        // than by a fixed field count — a long contract can easily exceed the
+        // 8192 that suffices for schema-driven extraction. Truncation here is
+        // not a degraded answer but a wrong one (silently missing pages of
+        // content), so the ceiling is raised and a stop_reason check below
+        // reports it loudly if it is still hit.
+        max_tokens: isDiscover ? 16384 : 8192,
         system: systemPrompt,
         messages: [
           {
@@ -258,7 +348,9 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
               ...fileBlocks,
               {
                 type: "text",
-                text: `Extract fields from this Romanian document (${fileBlocks.length} page(s), in order — treat them as one document; the closing/authentication block is often on the last page).${typeHintText}`,
+                text: isDiscover
+                  ? `Read this Romanian document (${fileBlocks.length} page(s), in order — treat them as one document) and report everything printed on it, exactly as instructed. Do not omit anything.`
+                  : `Extract fields from this Romanian document (${fileBlocks.length} page(s), in order — treat them as one document; the closing/authentication block is often on the last page).${typeHintText}`,
               },
             ],
           },
@@ -291,10 +383,58 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
 
   const anthropicJson = (await anthropicRes.json()) as {
     content?: { type: string; text?: string }[];
+    stop_reason?: string;
   };
   const textBlock = anthropicJson.content?.find((b) => b.type === "text")?.text;
   if (!textBlock) {
     return Response.json({ error: "Anthropic API returned no text" }, { status: 502 });
+  }
+  const hitOutputLimit = anthropicJson.stop_reason === "max_tokens";
+
+  // ── Discover mode (Slice #21.10.Import) ────────────────────────────────────
+  //
+  // Returns before every line of the extraction path below: discover mode maps
+  // nothing into `fields`/`customFields`, resolves no documentTypeId (and so
+  // never auto-creates a lookup_document_type row), extracts no parties and
+  // stamps no ai_interpreted_at. It reads and reports, and that is all.
+  if (isDiscover) {
+    let payload: DiscoverPayload;
+    try {
+      payload = parseDiscoverPayload(extractJson(textBlock));
+    } catch (err) {
+      console.error("[ai-discover] failed to parse model output:", textBlock, err);
+      return Response.json(
+        { error: "Could not parse discover response", raw: textBlock },
+        { status: 502 },
+      );
+    }
+
+    console.log(
+      formatDiscoverLog({
+        pageFileNames: pages.map((p) => p.fileName),
+        pagesSent: fileBlocks.length,
+        pagesTotal: pages.length,
+        registeredTypeName: typeTemplate?.name ?? null,
+        registeredTypeKey: typeTemplate?.key ?? null,
+        skipped: skippedPages,
+        truncated: hitOutputLimit,
+        payload,
+      }),
+    );
+
+    // Same payload in the body as on the console — the precedent Slice
+    // #21.02.Import set when it stopped making these diagnostics console-only,
+    // so a run can be driven and inspected end-to-end by browser automation.
+    return Response.json({
+      mode: "discover",
+      documentLabel: payload.documentLabel,
+      recognised: payload.recognised,
+      sections: payload.sections,
+      skippedPages,
+      pagesSent: fileBlocks.length,
+      pagesTotal: pages.length,
+      truncated: hitOutputLimit,
+    });
   }
 
   type RawParty = {

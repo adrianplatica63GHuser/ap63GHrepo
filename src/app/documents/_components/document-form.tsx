@@ -239,6 +239,12 @@ export function DocumentForm({
   const [aiExtractMsg,  setAiExtractMsg]    = useState<string | null>(null);
   const [aiExtractErr,  setAiExtractErr]    = useState<string | null>(null);
 
+  // Slice #21.10.Import: discover-mode state. Kept separate from aiExtracting
+  // so the two buttons disable independently, but sharing aiExtractMsg /
+  // aiExtractErr — they are the same feedback strip, and only one of the two
+  // actions can be running at a time anyway.
+  const [aiDiscovering, setAiDiscovering]   = useState(false);
+
   // Slice #21.04.Import (Slice 2) — parties extracted alongside the fields
   // above, pending admin confirm-or-create via AiPartyLinkerDialog. null =
   // no dialog open; [] never happens (handleAiInterpret only sets this when
@@ -581,6 +587,55 @@ export function DocumentForm({
       setAiExtractErr(err instanceof Error ? err.message : t("aiExtractError"));
     } finally {
       setAiExtracting(false);
+    }
+  };
+
+  // ── Slice #21.10.Import: AI-Discover handler ─────────────────────────────
+  //
+  // Same route as AI Interpret, with { mode: "discover" }. The useful output
+  // is the block printed in the terminal running `npm run dev` — this handler
+  // only reports the shape of what came back, so the user knows the run
+  // finished and roughly what it found without leaving the page.
+  //
+  // Nothing is written to the form: discover mode reads a document the system
+  // does not understand yet, so there are no fields to fill in. It also does
+  // not set aiInterpreted — running it must never disable the real AI Interpret
+  // button, and it can be re-run as often as needed.
+  const handleAiDiscover = async () => {
+    if (!documentId) return;
+    setAiDiscovering(true);
+    setAiExtractMsg(null);
+    setAiExtractErr(null);
+    try {
+      const res = await fetch(`/api/documents/${encodeURIComponent(documentId)}/ai-interpret`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "discover" }),
+      });
+      if (res.redirected) throw new Error(t("saveErrorSession"));
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(body.error ?? `HTTP ${res.status}`);
+      }
+      const body = (await res.json()) as {
+        recognised?:   unknown[];
+        sections?:     unknown[];
+        skippedPages?: unknown[];
+        truncated?:    boolean;
+      };
+      const skipped = body.skippedPages?.length ?? 0;
+      setAiExtractMsg(
+        t("aiDiscoverSuccess", {
+          pairs:    body.recognised?.length ?? 0,
+          sections: body.sections?.length ?? 0,
+        }) +
+          (skipped > 0 ? ` ${t("aiDiscoverSkipped", { count: skipped })}` : "") +
+          (body.truncated ? ` ${t("aiDiscoverTruncated")}` : ""),
+      );
+    } catch (err) {
+      setAiExtractErr(err instanceof Error ? err.message : t("aiDiscoverError"));
+    } finally {
+      setAiDiscovering(false);
     }
   };
 
@@ -1068,7 +1123,9 @@ export function DocumentForm({
             const hasTextOnlyPages = hasPages && pagesState.pages.every(
               (p) => p.fileName.toLowerCase().endsWith(".txt"),
             );
-            const busy = aiExtracting;
+            // Slice #21.10.Import: either AI action locks both buttons — they
+            // hit the same route and the same rate-limit bucket.
+            const busy = aiExtracting || aiDiscovering;
             // Don't show button at all for text files
             if (hasTextOnlyPages) return null;
             if (isAlreadyInterpreted) {
@@ -1096,6 +1153,38 @@ export function DocumentForm({
                   {busy ? t("aiExtracting") : t("buttons.aiInterpret")}
                 </button>
                 <HelpHint hintKey="ai-interpret-once" />
+              </span>
+            );
+          })()}
+
+          {/* Slice #21.10.Import: AI-Discover — reads a document whose type the
+              system does not understand yet and prints everything it can read
+              to the dev-server console. Deliberately NOT gated on
+              aiInterpretedAt the way AI Interpret is: it writes nothing, so
+              re-running it is always safe and is often exactly what you want
+              (e.g. after adding template fields, to see what is still
+              unrecognised). Hidden for text-only documents for the same reason
+              AI Interpret is — those pages can never reach the model. */}
+          {mode === "edit" && documentId && (() => {
+            const hasPages = pagesState.pages.length > 0;
+            const hasTextOnlyPages = hasPages && pagesState.pages.every(
+              (p) => p.fileName.toLowerCase().endsWith(".txt"),
+            );
+            if (hasTextOnlyPages) return null;
+            const busy = aiExtracting || aiDiscovering;
+            return (
+              <span
+                title={!hasPages ? t("hints.aiInterpretNoPages") : t("hints.aiDiscover")}
+                className="inline-flex"
+              >
+                <button
+                  type="button"
+                  disabled={!hasPages || busy}
+                  onClick={handleAiDiscover}
+                  className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                >
+                  {aiDiscovering ? t("aiDiscovering") : t("buttons.aiDiscover")}
+                </button>
               </span>
             );
           })()}

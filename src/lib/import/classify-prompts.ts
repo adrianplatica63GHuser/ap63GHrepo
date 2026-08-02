@@ -215,3 +215,70 @@ Rules:
 - Do not guess. If a field is not visible or not applicable for this document, return null.${partiesRule}
 - Output strictly valid JSON — no comments, no trailing commas, no markdown code fences.`;
 }
+
+// ---------------------------------------------------------------------------
+// Slice #21.10.Import — discover mode (schema-free reading)
+// ---------------------------------------------------------------------------
+//
+// buildExtractSystemPrompt above is SCHEMA-DRIVEN: it hands the model a target
+// field list (the generic baseline plus the type's template_fields) and asks it
+// to fill those in, with `unmappedRaw` as the leftovers channel. That works well
+// for a document type we already understand.
+//
+// It works badly for a type we do NOT understand yet. With no template the
+// model is told to look for four fields and dump everything else into one flat
+// map — and because that map is framed as leftovers, the model self-censors: it
+// answers "what else is printed here?" rather than "read me this document".
+// Adrian's ask (Slice #21.10.Import) is the opposite framing.
+//
+// So discover mode gives the model NO target fields at all. It asks for two
+// lists instead:
+//   recognised — every label -> value pair, both sides VERBATIM as printed
+//   sections   — everything else, grouped by the model's own inferred headings,
+//                in document order
+//
+// Nothing here is persisted. The result is printed to the dev-server console
+// (see src/lib/documents/discover-log.ts) and returned in the response body so
+// the same run can be inspected via browser automation — the precedent set by
+// Slice #21.02.Import when it stopped making these diagnostics console-only.
+//
+// The deliberate design choice is VERBATIM on both sides of a pair. Normalising
+// "Nr. cadastral" to some canonical key, or reformatting its value, is exactly
+// the schema-fitting this mode exists to avoid: the printed Romanian label is
+// the evidence for what a future template field should be called, and a
+// normalised label has already thrown that evidence away.
+
+export function buildDiscoverSystemPrompt(): string {
+  return `You are reading a Romanian official document whose type this system does not yet understand.
+There is NO target field list. Do not try to fit the document into a schema.
+Your job is to report EVERYTHING the document says, split into two lists.
+
+Respond with ONLY a single JSON object, no prose, no markdown fences.
+
+Shape:
+{
+  "documentLabel": string | null,   // short Romanian name for what this appears to be, e.g. "Contract de arendă"
+  "recognised": [                   // every label -> value pair you can read anywhere in the document
+    {
+      "name":       string,         // the label EXACTLY as printed in Romanian, e.g. "Nr. cadastral"
+      "value":      string,         // the value EXACTLY as printed
+      "confidence": "high" | "medium" | "low"
+    }
+  ],
+  "sections": [                     // everything that is NOT a label -> value pair
+    {
+      "heading": string,            // the heading as printed, or a short Romanian description you infer if the block is unheaded
+      "lines":   [string]           // that block's lines, verbatim, in the order printed
+    }
+  ]
+}
+
+Rules:
+- "recognised" is for anything that reads as a field: a printed label followed by a value ("Nr. 1234", "Data: 12.04.2021", "Suprafață: 2.500 mp", a filled-in form box).
+- VERBATIM ON BOTH SIDES. Do not translate the label. Do not rename it to a tidier or more canonical field name. Do not reformat the value — leave dates as "12.04.2021" if that is what is printed, leave "2.500,00 RON" with its Romanian separators. The exact printed wording is the point.
+- "sections" is for prose, clauses, tables, signature blocks, stamps, headers and footers — anything with no label/value shape. Preserve document order, top to bottom, first page to last.
+- Every piece of printed text must appear in exactly ONE of the two lists. Do not summarise, do not paraphrase, do not omit boilerplate, do not drop text you judge unimportant. Completeness matters more than tidiness in this mode.
+- If something is hard to read, still report it and set confidence "low" — never drop it for being uncertain.
+- Report what is printed, not what you infer it means. Never invent a label that is not on the page.
+- Output strictly valid JSON — no comments, no trailing commas, no markdown code fences.`;
+}
