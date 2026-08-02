@@ -5,14 +5,17 @@
  *
  * Displays the full recursive list of files found in the picked folder.
  * Each row shows the path relative to the root, the Haiku AI description
- * (once scanned), property-folder metadata (tarla/parcela) when applicable,
- * page count for page-group entries, and a status badge.
+ * (once scanned), page count for page-group entries, and a status badge.
  *
  * Non-scannable files (not image/PDF) are rendered at reduced opacity.
+ *
+ * Slice #23.00.Import dropped the tarla/parcela column. Those values were
+ * decoded from the folder name by the digit-prefix heuristic, which is gone —
+ * the picked folder is one Property now, named by the user in the property
+ * step, so there is nothing cadastral to display per row.
  */
 
 import { useTranslations } from "next-intl";
-import { parseFolderName, perToSlash } from "@/lib/import/folder-utils";
 import type { FSEntry } from "@/lib/import/folder-utils";
 
 // ---------------------------------------------------------------------------
@@ -48,19 +51,21 @@ type Props = {
 // ---------------------------------------------------------------------------
 
 type EntryGroup = {
-  /** pathParts[0] — the first-level property subfolder name */
+  /** pathParts[0] — the first-level subfolder name */
   key:     string;
   entries: FSEntry[];
 };
 
 /**
- * Slice #21.02.Import: partition entries into property-subfolder groups and an
- * ungrouped remainder.
+ * Partition entries by their first path segment, with files sitting directly
+ * in the root going into `ungrouped`.
  *
- * An entry belongs to a group when its first path segment (`pathParts[0]`) is
- * itself a property folder (starts with a digit, matches the tarla-parcela
- * pattern). All such entries are collected per first segment; everything else
- * goes into `ungrouped`.
+ * Slice #21.02.Import grouped only by segments the digit-prefix heuristic
+ * recognised as property folders, which meant a folder named "Acte" got no
+ * heading while "3 Calea Victoriei" got one for the wrong reason. Slice
+ * #23.00.Import made this purely structural: ANY first-level subfolder is a
+ * group. It is a visual convenience for reading a long file list — it carries
+ * no meaning about entities.
  */
 function partitionEntries(entries: FSEntry[]): {
   groups:     EntryGroup[];
@@ -71,7 +76,7 @@ function partitionEntries(entries: FSEntry[]): {
 
   for (const entry of entries) {
     const first = entry.pathParts[0];
-    if (first && parseFolderName(first).isPropertyFolder) {
+    if (first) {
       const arr = groupMap.get(first) ?? [];
       arr.push(entry);
       groupMap.set(first, arr);
@@ -110,7 +115,6 @@ export function ScanTable({ entries, rootFolderName, scanResults }: Props) {
       <tr className="border-b border-crease text-left text-xs font-semibold uppercase tracking-wide text-fade dark:border-zinc-700">
         <th className="pb-2 pr-3">{t("colPath")}</th>
         <th className="w-56 pb-2 pr-3">{t("colDescription")}</th>
-        <th className="w-36 pb-2 pr-3 hidden md:table-cell">{t("colFolderInfo")}</th>
         <th className="w-28 pb-2">{t("colStatus")}</th>
       </tr>
     </thead>
@@ -143,14 +147,18 @@ export function ScanTable({ entries, rootFolderName, scanResults }: Props) {
     <div className="space-y-6">
       {groups.map(({ key, entries: groupEntries }) => (
         <div key={key}>
-          {/* Group header — rootFolderName / perToSlash(key) */}
+          {/* Group header — rootFolderName / subfolder name, verbatim.
+              perToSlash() used to be applied here to render "47per2" as
+              "47/2"; Slice #23.00.Import dropped it, since on an arbitrary
+              folder name it corrupts any word containing "per"
+              ("Personal" -> "/sonal"). */}
           <p className="mb-1 text-xs font-semibold text-ink dark:text-zinc-200">
             <span className="text-fade dark:text-zinc-400">{rootFolderName}</span>
             {" / "}
-            <span>{perToSlash(key)}</span>
+            <span>{key}</span>
           </p>
           <div className="overflow-x-auto rounded border border-crease dark:border-zinc-700">
-            <table className="w-full text-sm" aria-label={`${rootFolderName} / ${perToSlash(key)}`}>
+            <table className="w-full text-sm" aria-label={`${rootFolderName} / ${key}`}>
               {tableHeader}
               <tbody>
                 {groupEntries.map((entry) => (
@@ -260,35 +268,11 @@ function ScanRow({ entry, result, t, stripPrefix }: RowProps) {
         ) : null}
       </td>
 
-      {/* Folder info (tarla/parcela) — hidden on small screens */}
-      <td className="py-2 pr-3 hidden md:table-cell">
-        <FolderInfoCell entry={entry} />
-      </td>
-
       {/* Status badge */}
       <td className="py-2">
         <StatusBadge result={result} t={t} />
       </td>
     </tr>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// FolderInfoCell — shows tarla/parcela for property-folder entries
-// ---------------------------------------------------------------------------
-
-function FolderInfoCell({ entry }: { entry: FSEntry }) {
-  const fi = entry.folderInfo;
-  if (!fi?.isPropertyFolder || (!fi.tarlaSola && !fi.parcela)) return null;
-
-  const parts: string[] = [];
-  if (fi.tarlaSola) parts.push("T " + perToSlash(fi.tarlaSola));
-  if (fi.parcela)   parts.push("P " + perToSlash(fi.parcela));
-
-  return (
-    <span className="text-xs text-fade dark:text-zinc-400">
-      {parts.join(" / ")}
-    </span>
   );
 }
 

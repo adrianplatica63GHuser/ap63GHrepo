@@ -40,17 +40,21 @@ export type ParsedFolder = {
 /**
  * A single file (image, PDF, text, Word, etc.).
  * pathParts = folder names from root to the file's immediate parent (no filename).
+ *
+ * NOTE (Slice #23.00.Import): this used to carry a `folderInfo?: ParsedFolder`
+ * field — the nearest digit-prefixed ancestor, decoded as <tarla>-<parcela>.
+ * It was removed along with the heuristic: the picked folder now IS one
+ * Property, chosen explicitly by the user, so nothing cadastral is inferred
+ * from a folder name any more.
  */
 export type FSFileEntry = {
   kind: "file";
   name: string;
-  /** Path relative to the root, e.g. "47per2-225/scan.jpg" */
+  /** Path relative to the root, e.g. "Cadastru/scan.jpg" */
   path: string;
-  /** Folder segments from root (NOT the filename), e.g. ["47per2-225"] */
+  /** Folder segments from root (NOT the filename), e.g. ["Cadastru"] */
   pathParts: string[];
   handle: FSFileHandle;
-  /** Nearest property-folder ancestor, if any */
-  folderInfo?: ParsedFolder;
 };
 
 /**
@@ -61,15 +65,14 @@ export type FSPageGroupEntry = {
   kind: "page-group";
   /** The subfolder name, e.g. "CVC_2021-04-12" */
   name: string;
-  /** Path relative to root, e.g. "47per2-225/CVC_2021-04-12" */
+  /** Path relative to root, e.g. "Acte/CVC_2021-04-12" */
   path: string;
-  /** Folder segments including this group folder, e.g. ["47per2-225", "CVC_2021-04-12"] */
+  /** Folder segments including this group folder, e.g. ["Acte", "CVC_2021-04-12"] */
   pathParts: string[];
   /** Image handles sorted by numeric basename (001.jpg < 002.jpg …) */
   handles: FSFileHandle[];
   /** Human-readable title derived from folder name, abbreviations expanded */
   titleHint: string;
-  folderInfo?: ParsedFolder;
 };
 
 export type FSEntry = FSFileEntry | FSPageGroupEntry;
@@ -80,6 +83,23 @@ export type FSEntry = FSFileEntry | FSPageGroupEntry;
 
 /**
  * Parse a Romanian cadastral folder name.
+ *
+ * ⚠️ NOT USED BY THE IMPORT WIZARD ANY MORE (Slice #23.00.Import).
+ *
+ * The wizard used to treat a digit-prefixed folder as "<tarla>-<parcela>" and
+ * write those values onto a Property. That guess false-positived on ordinary
+ * names — "3 Calea Victoriei" became tarla "3", "2024-Arhiva" became tarla
+ * "2024" / parcela "Arhiva" — so the wizard now asks the user which Property
+ * the folder is, and infers nothing.
+ *
+ * Two SERVER-side consumers still call this and are deliberately unchanged:
+ *   - src/app/api/documents/[id]/process/route.ts — the Process panel on a
+ *     document detail page, a separate entry point with the same weakness.
+ *   - src/lib/metadata/queries.ts (addEntityTag) — generates "47/2"-style
+ *     alias tags. Harmless now that tags are descriptive only, but still
+ *     driven by the same digit test.
+ *
+ * Do not reintroduce it into the import wizard.
  *
  * Property folders start with a digit.
  * Format: "<tarla>-<parcela>[-<rest>]"
@@ -258,14 +278,16 @@ export function tagsForEntry(rootFolderName: string, entry: FSEntry): string[] {
  *  - All other files → individual FSFileEntry items.
  *  - Empty directories are skipped.
  *
+ * Slice #23.00.Import removed the third `ancestorInfo` parameter: the walk no
+ * longer tries to work out which ancestor folder is "the property", because
+ * the whole picked folder is one Property and the user names it explicitly.
+ *
  * @param dirHandle     Directory to walk
  * @param pathParts     Accumulated folder segments from root ([] at root)
- * @param ancestorInfo  ParsedFolder of the nearest property-folder ancestor
  */
 export async function walkFolder(
   dirHandle: FSDirectoryHandle,
   pathParts: string[] = [],
-  ancestorInfo?: ParsedFolder,
 ): Promise<FSEntry[]> {
   const results: FSEntry[] = [];
   const childFiles: { name: string; handle: FSFileHandle }[] = [];
@@ -296,7 +318,6 @@ export async function walkFolder(
         pathParts: [...pathParts],
         handles: sorted.map((n) => childFiles.find((f) => f.name === n)!.handle),
         titleHint: folderNameToTitleHint(groupName),
-        folderInfo: ancestorInfo,
       });
       return results;
     }
@@ -311,17 +332,13 @@ export async function walkFolder(
       path: [...pathParts, name].join("/"),
       pathParts: [...pathParts],
       handle,
-      folderInfo: ancestorInfo,
     });
   }
 
   // Recurse into subdirs
   childDirs.sort((a, b) => a.name.localeCompare(b.name));
   for (const { name, handle } of childDirs) {
-    const childPath = [...pathParts, name];
-    const parsed = parseFolderName(name);
-    const childAncestor = parsed.isPropertyFolder ? parsed : ancestorInfo;
-    const sub = await walkFolder(handle, childPath, childAncestor);
+    const sub = await walkFolder(handle, [...pathParts, name]);
     results.push(...sub);
   }
 

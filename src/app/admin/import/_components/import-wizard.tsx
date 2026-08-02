@@ -6,12 +6,21 @@
  * Main orchestrator for the new import flow.  Renders entirely client-side
  * (wrapped in a ssr:false dynamic import).
  *
+ * ONE FOLDER = ONE PROPERTY  (Slice #23.00.Import)
+ * ────────────────────────────────────────────────
+ * A picked folder is no longer an arbitrary tree tagged by ancestor folder
+ * names — it represents exactly one Property. Before any file is imported the
+ * user resolves that Property (pick an existing one, or create it now), and
+ * every Document the run creates is linked to it directly. Subfolder names
+ * still become tags, but tags are descriptive only and link nothing.
+ *
  * STATE MACHINE
  * ─────────────
  *  idle          → user hasn't picked a folder yet
  *  walking       → walkFolder() running (fast, <1 s)
  *  scanning      → concurrent Haiku AI scans running in background
  *  ready         → scan complete; scan-table rendered + "Import" CTA visible
+ *  property      → PropertyStepDialog is open (resolve the run's Property)
  *  tag-dialog    → TagDialog is open (animated tag-prep step)
  *  importing     → BulkImportDialog is running
  *
@@ -35,6 +44,10 @@ import {
 import { ScanTable, type ScanResult } from "./scan-table";
 import { TagDialog, type TagFolderInfo } from "./tag-dialog";
 import { BulkImportDialog } from "./bulk-import-dialog";
+import {
+  PropertyStepDialog,
+  type ResolvedProperty,
+} from "./property-step-dialog";
 import { ResumedSessionView } from "./resumed-session-view";
 
 // ---------------------------------------------------------------------------
@@ -137,6 +150,7 @@ type Phase =
   | "walking"
   | "scanning"
   | "ready"
+  | "property"
   | "tag-dialog"
   | "importing"
   | "resumed";
@@ -163,7 +177,6 @@ function collectFolders(
       const name = tags[i];
       if (!seen.has(name)) {
         seen.add(name);
-        // Check if this segment corresponds to a property folder
         result.push({ name });
       }
     }
@@ -185,6 +198,10 @@ export function ImportWizard() {
   const [scanResults, setScanResults] = useState<Map<string, ScanResult>>(new Map());
   const [scanProgress, setScanProgress] = useState({ done: 0, total: 0 });
   const [walkError, setWalkError] = useState<string | null>(null);
+  // Slice #23.00.Import: the one Property this folder represents. Null until
+  // the user resolves it in the property step; the import cannot start
+  // without it.
+  const [resolvedProperty, setResolvedProperty] = useState<ResolvedProperty | null>(null);
   // Saved session — lazy-initialised from localStorage so no effect is needed.
   // loadSavedSession() guards against SSR with a `typeof window` check.
   const [savedSession, setSavedSession] = useState<SavedImportSession | null>(
@@ -221,6 +238,9 @@ export function ImportWizard() {
     setWalkError(null);
     setScanResults(new Map());
     setScanProgress({ done: 0, total: 0 });
+    // A new folder is a new Property question — never carry the previous
+    // run's answer over, or documents would silently land on the wrong one.
+    setResolvedProperty(null);
     setPhase("walking");
 
     let walked: FSEntry[] = [];
@@ -362,6 +382,18 @@ export function ImportWizard() {
           </span>
         )}
 
+        {/* Resolved property chip — the run's destination, always visible
+            once chosen so it can't be forgotten mid-import. */}
+        {resolvedProperty && (
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-cta/30 bg-cta-pale px-3 py-1 text-xs font-medium text-cta dark:bg-cta/15">
+            <span className="font-mono">{resolvedProperty.code}</span>
+            <span>{resolvedProperty.nickname ?? t("propertyStep.noNickname")}</span>
+            <span className="text-cta/70">
+              {t("propertyStep.chipCorners", { count: resolvedProperty.cornerCount })}
+            </span>
+          </span>
+        )}
+
         {phase === "walking" && (
           <span className="text-sm text-fade animate-pulse">{t("walkingFolder")}</span>
         )}
@@ -382,7 +414,7 @@ export function ImportWizard() {
         {(phase === "ready" || phase === "scanning") && entries.length > 0 && (
           <button
             type="button"
-            onClick={() => setPhase("tag-dialog")}
+            onClick={() => setPhase("property")}
             disabled={phase === "scanning"}
             className="ml-auto inline-flex items-center rounded-md border border-cta px-4 py-2 text-sm font-medium text-cta hover:bg-cta/10 disabled:cursor-not-allowed disabled:opacity-50"
           >
@@ -421,6 +453,21 @@ export function ImportWizard() {
         />
       )}
 
+      {/* Property step (modal) — Slice #23.00.Import.
+          Resolves the one Property this folder represents, and optionally
+          seeds/refreshes its corners from a coordinate file in the folder. */}
+      {phase === "property" && (
+        <PropertyStepDialog
+          entries={entries}
+          rootFolderName={rootFolderName}
+          onCancel={() => setPhase("ready")}
+          onResolved={(property) => {
+            setResolvedProperty(property);
+            setPhase("tag-dialog");
+          }}
+        />
+      )}
+
       {/* Tag dialog (modal) */}
       {phase === "tag-dialog" && (
         <TagDialog
@@ -431,12 +478,16 @@ export function ImportWizard() {
         />
       )}
 
-      {/* Bulk import dialog (modal) */}
-      {phase === "importing" && (
+      {/* Bulk import dialog (modal).
+          `resolvedProperty` is non-null by construction — the only route into
+          the importing phase runs through the property step — but the guard
+          keeps the required propertyId prop honest rather than asserting. */}
+      {phase === "importing" && resolvedProperty && (
         <BulkImportDialog
           entries={entries}
           rootFolderName={rootFolderName}
           scanResults={scanResults}
+          propertyId={resolvedProperty.id}
           onClose={() => {
             setPhase("ready");
             // Reset scan results so the table shows fresh state

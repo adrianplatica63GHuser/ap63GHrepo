@@ -39,7 +39,6 @@ import {
   type FSPageGroupEntry,
   tagsForEntry,
   extOf,
-  perToSlash,
 } from "@/lib/import/folder-utils";
 import {
   IMPORT_SESSION_KEY,
@@ -95,6 +94,13 @@ type Props = {
   entries: FSEntry[];
   rootFolderName: string;
   scanResults: Map<string, ScanResult>;
+  /**
+   * Slice #23.00.Import: the single Property this whole run belongs to,
+   * resolved by PropertyStepDialog before the import starts. Every document
+   * created here is linked to it directly. Required — the wizard cannot reach
+   * this dialog without one.
+   */
+  propertyId: string;
   onClose: () => void;
 };
 
@@ -351,16 +357,33 @@ async function addTag(principalObjectId: string, tag: string): Promise<void> {
   });
 }
 
+/**
+ * Link documents to the run's Property.
+ *
+ * Slice #23.00.Import made this load-bearing: it is now THE mechanism that
+ * attaches an imported document to its property, on the main import path, for
+ * every single document. It used to be a fire-and-forget call on a dead AI
+ * branch, so its failure was ignored — a silently dropped link is exactly the
+ * outcome this slice exists to prevent, so it now throws and the entry is
+ * marked as an error.
+ */
 async function associateDocumentsWithProperty(
   propertyId: string,
   documentIds: string[],
 ): Promise<void> {
   if (documentIds.length === 0) return;
-  await fetch(`/api/properties/${propertyId}/documents`, {
+  const res = await fetch(`/api/properties/${propertyId}/documents`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ documentIds }),
   });
+  // Same expired-session tell as createDocument/uploadPage: the middleware
+  // redirects to /sign-in and fetch follows it into a 200 of HTML.
+  if (res.redirected) throw new Error("session-expired");
+  if (!res.ok) {
+    const body = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new Error(body.error ?? `HTTP ${res.status}`);
+  }
 }
 
 /** POST /api/properties/parse-text → { corners } */
@@ -452,6 +475,7 @@ export function BulkImportDialog({
   entries,
   rootFolderName,
   scanResults,
+  propertyId,
   onClose,
 }: Props) {
   const t = useTranslations("adminImport.wizard.importDialog");
@@ -617,7 +641,20 @@ export function BulkImportDialog({
             await uploadPage(docId, file, 1);
           }
 
-          // 5. Tag with all ancestor folder names
+          // 5. Link the document to the run's Property.
+          //
+          // Slice #23.00.Import: DIRECT, and before the tags — this is the
+          // real relationship, so if anything below fails the document is
+          // still attached to the right property. The old flow had no step
+          // like this at all: the property was inferred later from a shared
+          // tag string via findEntitiesByTag, which matched every document
+          // anywhere in the system carrying that tag, not just this run's.
+          await associateDocumentsWithProperty(propertyId, [docId]);
+
+          // 6. Tag with all ancestor folder names.
+          //
+          // Tags are now DESCRIPTIVE ONLY — a browsing aid. They no longer
+          // link the document to anything; step 5 did that.
           const tags = tagsForEntry(rootFolderName, entry);
           for (const tag of tags) {
             await addTag(principalObjectId, tag);
@@ -775,13 +812,16 @@ export function BulkImportDialog({
       if (!parsedCorners) return;
       setAiState((s) => s ? { ...s, phase: "creating" } : s);
       try {
-        // Derive tarla/parcela from the entry's property-folder info.
-        // "per" is the Romanian separator meaning "/" in cadastral notation
-        // (e.g. "64per2" → "64/2", "234per7per8" → "234/7/8").
         const entryResult = results.find((r) => r.entry.path === entryPath);
-        const folderInfo = entryResult?.entry.folderInfo;
-        const tarlaSola = folderInfo?.tarlaSola ? perToSlash(folderInfo.tarlaSola) : null;
-        const parcela   = folderInfo?.parcela   ? perToSlash(folderInfo.parcela)   : null;
+
+        // Slice #23.00.Import: tarla/parcela used to be decoded here from the
+        // entry's `folderInfo` (the digit-prefix heuristic). That field no
+        // longer exists — the wizard infers nothing cadastral from a folder
+        // name, so these stay null and a human fills them in on the Property
+        // form. This whole handler is unreachable anyway (see the note on
+        // _handleAiInterpret above); it is kept compiling, not revived.
+        const tarlaSola = null;
+        const parcela   = null;
 
         const propertyId = await createProperty({ nickname, corners: parsedCorners, tarlaSola, parcela });
 
