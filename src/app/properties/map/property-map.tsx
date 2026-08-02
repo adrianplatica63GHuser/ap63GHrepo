@@ -429,10 +429,16 @@ function RulerIcon() {
 
 /**
  * For every polygon corner in `items` that coincides with `snap` (within
- * CORNER_TOL degrees ≈ 10 m), collect its two polygon neighbours. Then
- * delegate to computeVertexAngles to determine the displayable arc sectors.
+ * CORNER_TOL degrees), collect its two polygon neighbours. Then delegate to
+ * computeVertexAngles to determine the displayable arc sectors.
+ *
+ * The snap LatLng is taken directly from the stored corner data, so the
+ * tolerance is kept near-zero (1e-9°) to ensure only the exact snapped
+ * corner matches — not nearby corners from thin polygons or other properties.
+ * Using a wide tolerance (e.g. 0.0001° ≈ 10 m) causes false matches when
+ * two polygon corners are close together, producing spurious extra sectors.
  */
-const CORNER_TOL = 0.0001; // degrees
+const CORNER_TOL = 1e-9; // near-exact: snap returns the stored LatLng value
 
 function computeAnglesAtSnap(snap: LatLng, items: MapProperty[]): AngleArcInfo[] {
   const neighbors: Corner[] = [];
@@ -460,6 +466,9 @@ function computeAnglesAtSnap(snap: LatLng, items: MapProperty[]): AngleArcInfo[]
 
 const MAP_ARC_RADIUS       = 24;
 const MAP_ARC_LABEL_OFFSET = 10;
+// SVG canvas large enough to hold arc + label, centred on the corner point.
+const MAP_ARC_HALF = 50;
+const MAP_ARC_SIZE = MAP_ARC_HALF * 2;
 
 function MapAngleArcOverlay({
   corner,
@@ -476,11 +485,25 @@ function MapAngleArcOverlay({
         const label = `${Math.round(info.angleDeg)}°`;
         return (
           <AdvancedMarker key={i} position={corner}>
-            <div style={{ width: 0, height: 0, overflow: "visible" }}>
+            {/*
+              * 0×0 position:relative anchor — AdvancedMarker's bottom-centre
+              * on a 0×0 element is exactly the corner point. The SVG is
+              * absolutely positioned and offset by half its size so its (0,0)
+              * aligns with the anchor. The centred viewBox makes SVG (0,0) =
+              * the corner on screen, matching the M 0 0 start of every arc path.
+              */}
+            <div style={{ position: "relative", width: 0, height: 0, pointerEvents: "none" }}>
               <svg
-                width={0}
-                height={0}
-                style={{ position: "absolute", overflow: "visible" }}
+                width={MAP_ARC_SIZE}
+                height={MAP_ARC_SIZE}
+                viewBox={`${-MAP_ARC_HALF} ${-MAP_ARC_HALF} ${MAP_ARC_SIZE} ${MAP_ARC_SIZE}`}
+                style={{
+                  position: "absolute",
+                  top: -MAP_ARC_HALF,
+                  left: -MAP_ARC_HALF,
+                  overflow: "visible",
+                  pointerEvents: "none",
+                }}
               >
                 <path
                   d={path}
@@ -493,7 +516,7 @@ function MapAngleArcOverlay({
                   y={lp.y}
                   textAnchor="middle"
                   dominantBaseline="middle"
-                  fontSize={10}
+                  fontSize={20}
                   fontWeight="bold"
                   fill="#15803d"
                   stroke="white"

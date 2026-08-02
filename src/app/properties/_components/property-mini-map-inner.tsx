@@ -60,8 +60,12 @@ function FitBounds({ corners }: { corners: Corner[] }) {
 // AngleArcMarker — renders one angle arc as an SVG overlay at a corner
 // ---------------------------------------------------------------------------
 
-const ARC_RADIUS     = 20; // px
-const ARC_LABEL_OFFSET = 8; // px beyond radius
+const ARC_RADIUS       = 40; // px  (doubled for readability)
+const ARC_LABEL_OFFSET = 16; // px beyond radius (doubled)
+// SVG canvas for the arc overlay — large enough to hold arc + label,
+// centered on the corner point.
+const ARC_HALF = 80;  // half-size in px (doubled to match larger arc)
+const ARC_SIZE = ARC_HALF * 2;
 
 function AngleArcMarker({
   corner,
@@ -77,16 +81,25 @@ function AngleArcMarker({
   return (
     <AdvancedMarker position={{ lat: corner.lat, lng: corner.lon }}>
       {/*
-        * 0×0 anchor div — AdvancedMarker places the bottom-centre of this div
-        * at the lat/lng, which for a 0×0 element is exactly the point itself.
-        * The SVG is absolutely positioned with overflow:visible so its (0,0)
-        * coincides with the corner and the arc paths radiate outward.
+        * 0×0 anchor div (position:relative) — AdvancedMarker's bottom-centre
+        * anchor on a 0×0 element is just the single point at the corner's
+        * lat/lng. The SVG is absolutely positioned so its centre (half-size
+        * offsets) aligns with that point, giving us (0,0) in SVG coordinates
+        * = the corner on screen. The viewBox is centred at (0,0) so the arc
+        * paths that start from M 0 0 radiate in the correct direction.
         */}
-      <div style={{ width: 0, height: 0, overflow: "visible" }}>
+      <div style={{ position: "relative", width: 0, height: 0, pointerEvents: "none" }}>
         <svg
-          width={0}
-          height={0}
-          style={{ position: "absolute", overflow: "visible" }}
+          width={ARC_SIZE}
+          height={ARC_SIZE}
+          viewBox={`${-ARC_HALF} ${-ARC_HALF} ${ARC_SIZE} ${ARC_SIZE}`}
+          style={{
+            position: "absolute",
+            top: -ARC_HALF,
+            left: -ARC_HALF,
+            overflow: "visible",
+            pointerEvents: "none",
+          }}
         >
           {/* Filled sector */}
           <path
@@ -95,13 +108,13 @@ function AngleArcMarker({
             stroke="#16a34a"
             strokeWidth={1.5}
           />
-          {/* Degree label with white halo for legibility */}
+          {/* Degree label — white halo via stroke painted behind fill */}
           <text
             x={lp.x}
             y={lp.y}
             textAnchor="middle"
             dominantBaseline="middle"
-            fontSize={9}
+            fontSize={18}
             fontWeight="bold"
             fill="#15803d"
             stroke="white"
