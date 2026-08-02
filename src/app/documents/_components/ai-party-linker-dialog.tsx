@@ -4,25 +4,20 @@
  * AiPartyLinkerDialog — Slice #21.04.Import (Slice 2 of 3: confirm-or-create UI)
  *
  * One-at-a-time stepper over the `parties` array returned by
- * POST /api/documents/[id]/ai-interpret (Slice 1). For each extracted party
- * the admin explicitly confirms what happens — nothing is linked or created
- * automatically:
+ * POST /api/documents/[id]/ai-interpret (Slice 1). For each extracted party the
+ * admin explicitly confirms what happens — nothing is linked or created
+ * automatically.
  *
- *   - roleMissing            → explain the role isn't configured yet (Reference
- *                               Data → Document Persons) and only offer Skip.
- *   - matchCandidate present → exact CNP/CUI match. Show a side-by-side
- *                               comparison (name, CNP/CUI, ID card number +
- *                               issuing authority) so the admin can safely
- *                               confirm it's really the same person before
- *                               linking — this is the explicit safety
- *                               requirement Adrian asked for. "No" falls
- *                               through to the create-new branch.
- *   - possibleMatches only   → fuzzy name matches only, never auto-linked;
- *                               labelled unconfirmed. Per-item Link, or
- *                               "None of these — create new".
- *   - no match at all        → offer to create a new Person (Natural or
- *                               Judicial, per party.personType) from the
- *                               extracted fields and link it.
+ * Slice #23.01.Import moved the branch UI (role-missing / exact match /
+ * possible matches / no match) into the shared PersonResolutionDialog, so the
+ * ID-card path in the import wizard reuses this exact safety net instead of
+ * growing a second copy of it. What stayed here is what is genuinely specific
+ * to walking a document's parties:
+ *
+ *   - the stepper (index, per-outcome counts, advance/close-and-skip-rest)
+ *   - the network calls, which are document-scoped
+ *   - the NATURAL/JUDICIAL split on create — a party can be either; an ID card
+ *     is always a natural person
  *
  * Every Link/Create action calls the existing, already-shipped APIs:
  *   POST /api/documents/[id]/persons  — associate (personIds, personRoleId)
@@ -31,21 +26,25 @@
  * This component never talks to the DB directly.
  *
  * `domiciliu` (free text from the document) is not decomposed into
- * street/city/county — Slice 1 deliberately left addresses unstructured for
- * AI extraction. It's stored as a single address row's streetLine, with
- * country defaulted to "România" (the schema requires a non-empty country).
+ * street/city/county — Slice 1 deliberately left addresses unstructured for AI
+ * extraction. It is stored as a single address row's streetLine, with country
+ * defaulted to "România" (the schema requires a non-empty country).
  */
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { inferProvenance } from "@/lib/metadata/provenance-rules";
 import { HelpHint } from "@/components/help/help-hint";
+import {
+  PersonResolutionDialog,
+  type ResolutionSubject,
+} from "@/components/persons/person-resolution-dialog";
 
 // ---------------------------------------------------------------------------
-// Types — mirror (but deliberately don't import from) the API route's
-// response shape. Keeping this file's types local avoids ever pulling a
-// server-only module (route.ts, or anything importing node "fs"/db) into the
-// client bundle, even accidentally via a stray non-type import down the line.
+// Types — mirror (but deliberately don't import from) the API route's response
+// shape. Keeping this file's types local avoids ever pulling a server-only
+// module (route.ts, or anything importing node "fs"/db) into the client bundle,
+// even accidentally via a stray non-type import down the line.
 // ---------------------------------------------------------------------------
 
 export type AiPartyMatchCandidate = {
@@ -91,8 +90,6 @@ export type AiPartyLinkerSummary = {
   skipped: number;
 };
 
-type TFunc = ReturnType<typeof useTranslations<"document">>;
-
 type Props = {
   documentId: string;
   parties: AiExtractedParty[];
@@ -104,30 +101,39 @@ type Outcome = "linked" | "created" | "skipped";
 const orUndef = (v: string | null | undefined): string | undefined =>
   v && v.trim() ? v.trim() : undefined;
 
-// party.name is usually populated by the model, but on some runs it only
-// gives firstName/lastName separately (observed live: a Mandatar party with
-// a full CNP/ID match but a null `name`). Fall back so the safety-comparison
-// UI never shows a blank "—" where a name is actually available.
+// party.name is usually populated by the model, but on some runs it only gives
+// firstName/lastName separately (observed live: a Mandatar party with a full
+// CNP/ID match but a null `name`). Fall back so the safety-comparison UI never
+// shows a blank "—" where a name is actually available.
 const partyDisplayName = (party: AiExtractedParty): string | null => {
   if (party.name?.trim()) return party.name.trim();
   const combined = `${party.firstName ?? ""} ${party.lastName ?? ""}`.trim();
   return combined || null;
 };
 
+const subjectFromParty = (party: AiExtractedParty): ResolutionSubject => ({
+  heading: party.roleName,
+  personType: party.personType,
+  displayName: partyDisplayName(party),
+  cnp: party.cnp,
+  cuiNumber: party.cuiNumber,
+  idDocumentNumber: party.idDocumentNumber,
+  idIssuingAuthority: party.idIssuingAuthority,
+  domiciliu: party.domiciliu,
+});
+
 export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
-  const t = useTranslations("document");
+  const t = useTranslations("document.aiPartyLinker");
   const [index, setIndex] = useState(0);
   const [counts, setCounts] = useState<AiPartyLinkerSummary>({ linked: 0, created: 0, skipped: 0 });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // Overrides the exact-match / possible-match branches for the CURRENT
-  // party only — reset every time we advance to the next one.
+  // Overrides the exact-match / possible-match branches for the CURRENT party
+  // only — reset every time we advance to the next one.
   const [forceCreate, setForceCreate] = useState(false);
 
   const party = parties[index];
   const total = parties.length;
-
-  const finishNow = (finalCounts: AiPartyLinkerSummary) => onClose(finalCounts);
 
   const advance = (outcome: Outcome) => {
     const next = { ...counts, [outcome]: counts[outcome] + 1 };
@@ -135,7 +141,7 @@ export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
     setForceCreate(false);
     setBusy(false);
     if (index + 1 >= total) {
-      finishNow(next);
+      onClose(next);
     } else {
       setCounts(next);
       setIndex((i) => i + 1);
@@ -158,7 +164,7 @@ export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
       advance(outcome);
     } catch {
       setBusy(false);
-      setError(outcome === "created" ? t("aiPartyLinker.createError") : t("aiPartyLinker.linkError"));
+      setError(outcome === "created" ? t("createError") : t("linkError"));
     }
   };
 
@@ -202,8 +208,8 @@ export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         // createNaturalPerson returns { person, natural, ... } — the id is
         // nested under `person`, not top-level. (Caught live: sending the
-        // top-level `undefined` here silently became `null` in the JSON
-        // body, which the link call's zod schema rejected with a 400.)
+        // top-level `undefined` here silently became `null` in the JSON body,
+        // which the link call's zod schema rejected with a 400.)
         const body = (await res.json()) as { person: { id: string } };
         personId = body.person.id;
       } else {
@@ -235,315 +241,44 @@ export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
       advance("created");
     } catch {
       setBusy(false);
-      setError(t("aiPartyLinker.createError"));
+      setError(t("createError"));
     }
-  };
-
-  const skip = () => advance("skipped");
-
-  const closeAndSkipRest = () => {
-    finishNow({ ...counts, skipped: counts.skipped + (total - index) });
   };
 
   if (!party) return null;
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="ai-party-linker-title"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+    <PersonResolutionDialog
+      t={t}
+      title={
+        <>
+          {t("title")}
+          <HelpHint hintKey="ai-party-confirm" />
+        </>
+      }
+      subject={subjectFromParty(party)}
+      matchCandidate={party.matchCandidate}
+      possibleMatches={party.possibleMatches}
+      roleMissing={party.roleMissing}
+      current={index + 1}
+      total={total}
+      busy={busy}
+      forceCreate={forceCreate}
+      onForceCreate={() => setForceCreate(true)}
+      onConfirmMatch={(personId) => linkPerson(personId, "linked")}
+      onPickMatch={(personId) => linkPerson(personId, "linked")}
+      onCreateNew={createAndLink}
+      onSkip={() => advance("skipped")}
+      onClose={() => onClose({ ...counts, skipped: counts.skipped + (total - index) })}
     >
-      <div className="w-full max-w-2xl rounded-lg bg-card p-6 shadow-xl dark:bg-zinc-900">
-        <div className="flex items-start justify-between gap-4">
-          <h3 id="ai-party-linker-title" className="flex items-center gap-1 text-base font-semibold text-ink dark:text-zinc-100">
-            {t("aiPartyLinker.title")}
-            <HelpHint hintKey="ai-party-confirm" />
-          </h3>
-          <div className="flex items-center gap-3">
-            <span className="whitespace-nowrap text-sm text-fade dark:text-zinc-400">
-              {t("aiPartyLinker.subtitle", { current: index + 1, total })}
-            </span>
-            <button
-              type="button"
-              aria-label={t("aiPartyLinker.close")}
-              onClick={closeAndSkipRest}
-              className="text-lg leading-none text-fade hover:text-ink dark:text-zinc-500 dark:hover:text-zinc-200"
-            >
-              ×
-            </button>
-          </div>
+      {error && (
+        <div
+          role="alert"
+          className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-800 dark:bg-red-950/30 dark:text-red-300"
+        >
+          {error}
         </div>
-
-        <ExtractedSummary party={party} t={t} />
-
-        <div className="mt-4">
-          {party.roleMissing ? (
-            <RoleMissingBranch party={party} t={t} busy={busy} onSkip={skip} />
-          ) : party.matchCandidate && !forceCreate ? (
-            <ExactMatchBranch
-              party={party}
-              candidate={party.matchCandidate}
-              t={t}
-              busy={busy}
-              onConfirm={() => linkPerson(party.matchCandidate!.id, "linked")}
-              onCreateInstead={() => setForceCreate(true)}
-              onSkip={skip}
-            />
-          ) : !party.matchCandidate && party.possibleMatches.length > 0 && !forceCreate ? (
-            <PossibleMatchesBranch
-              matches={party.possibleMatches}
-              t={t}
-              busy={busy}
-              onLink={(id) => linkPerson(id, "linked")}
-              onCreateNew={() => setForceCreate(true)}
-              onSkip={skip}
-            />
-          ) : (
-            <NoMatchBranch t={t} busy={busy} onCreate={createAndLink} onSkip={skip} />
-          )}
-        </div>
-
-        {error && (
-          <div
-            role="alert"
-            className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-800 dark:bg-red-950/30 dark:text-red-300"
-          >
-            {error}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Extracted-from-document summary card — shown above every branch.
-// ---------------------------------------------------------------------------
-
-function ExtractedSummary({ party, t }: { party: AiExtractedParty; t: TFunc }) {
-  const rows: [string, string | null][] = [
-    [t("aiPartyLinker.fieldName"), partyDisplayName(party)],
-    [t("aiPartyLinker.fieldCnp"), party.cnp],
-    [t("aiPartyLinker.fieldCui"), party.cuiNumber],
-    [t("aiPartyLinker.fieldIdNumber"), party.idDocumentNumber],
-    [t("aiPartyLinker.fieldIdAuthority"), party.idIssuingAuthority],
-    [t("aiPartyLinker.fieldDomiciliu"), party.domiciliu],
-  ].filter(([, v]) => !!v) as [string, string][];
-
-  return (
-    <div className="mt-4 rounded-md border border-wire bg-canvas px-4 py-3 text-sm dark:border-zinc-700 dark:bg-zinc-950">
-      <div className="font-medium text-ink dark:text-zinc-100">
-        {party.roleName} —{" "}
-        {party.personType === "NATURAL" ? t("aiPartyLinker.typeNatural") : t("aiPartyLinker.typeJudicial")}
-      </div>
-      {rows.length > 0 && (
-        <dl className="mt-2 grid grid-cols-[max-content_1fr] gap-x-3 gap-y-1">
-          {rows.map(([label, value]) => (
-            <div key={label} className="contents">
-              <dt className="text-fade dark:text-zinc-400">{label}</dt>
-              <dd className="text-ink dark:text-zinc-200">{value}</dd>
-            </div>
-          ))}
-        </dl>
       )}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Branch: role not configured for this document type — Skip only.
-// ---------------------------------------------------------------------------
-
-function RoleMissingBranch({
-  party, t, busy, onSkip,
-}: {
-  party: AiExtractedParty;
-  t: TFunc;
-  busy: boolean;
-  onSkip: () => void;
-}) {
-  return (
-    <div>
-      <p className="text-sm font-medium text-amber-800 dark:text-amber-400">
-        {t("aiPartyLinker.roleMissingTitle")}
-      </p>
-      <p className="mt-1 text-sm text-fade dark:text-zinc-400">
-        {t("aiPartyLinker.roleMissingBody", { roleName: party.roleName })}
-      </p>
-      <div className="mt-4 flex justify-end">
-        <SecondaryButton onClick={onSkip} disabled={busy}>{t("aiPartyLinker.skip")}</SecondaryButton>
-      </div>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Branch: exact CNP/CUI match — side-by-side comparison before linking.
-// ---------------------------------------------------------------------------
-
-function ExactMatchBranch({
-  party, candidate, t, busy, onConfirm, onCreateInstead, onSkip,
-}: {
-  party: AiExtractedParty;
-  candidate: AiPartyMatchCandidate;
-  t: TFunc;
-  busy: boolean;
-  onConfirm: () => void;
-  onCreateInstead: () => void;
-  onSkip: () => void;
-}) {
-  const isNatural = candidate.type === "NATURAL";
-  return (
-    <div>
-      <p className="text-sm font-medium text-ink dark:text-zinc-100">{t("aiPartyLinker.exactMatchTitle")}</p>
-      <p className="mt-1 text-sm text-fade dark:text-zinc-400">{t("aiPartyLinker.exactMatchBody")}</p>
-
-      <div className="mt-3 grid grid-cols-2 gap-3">
-        <div className="rounded-md border border-wire px-3 py-2 text-sm dark:border-zinc-700">
-          <div className="mb-1 font-medium text-fade dark:text-zinc-400">{t("aiPartyLinker.fromDocumentTitle")}</div>
-          <div className="text-ink dark:text-zinc-200">{partyDisplayName(party) ?? "—"}</div>
-          {isNatural && party.cnp && <div className="text-ink dark:text-zinc-200">CNP: {party.cnp}</div>}
-          {!isNatural && party.cuiNumber && <div className="text-ink dark:text-zinc-200">CUI: {party.cuiNumber}</div>}
-          {party.idDocumentNumber && <div className="text-ink dark:text-zinc-200">{t("aiPartyLinker.fieldIdNumber")}: {party.idDocumentNumber}</div>}
-          {party.idIssuingAuthority && <div className="text-ink dark:text-zinc-200">{t("aiPartyLinker.fieldIdAuthority")}: {party.idIssuingAuthority}</div>}
-        </div>
-        <div className="rounded-md border border-emerald-200 bg-emerald-50/40 px-3 py-2 text-sm dark:border-emerald-800 dark:bg-emerald-950/20">
-          <div className="mb-1 font-medium text-fade dark:text-zinc-400">{t("aiPartyLinker.existingPersonTitle")}</div>
-          <div className="text-ink dark:text-zinc-200">{candidate.displayName} ({candidate.code})</div>
-          {isNatural && candidate.cnp && <div className="text-ink dark:text-zinc-200">CNP: {candidate.cnp}</div>}
-          {!isNatural && candidate.cuiNumber && <div className="text-ink dark:text-zinc-200">CUI: {candidate.cuiNumber}</div>}
-          {isNatural && candidate.idDocumentNumber && (
-            <div className="text-ink dark:text-zinc-200">{t("aiPartyLinker.fieldIdNumber")}: {candidate.idDocumentNumber}</div>
-          )}
-          {isNatural && candidate.idIssuingAuthority && (
-            <div className="text-ink dark:text-zinc-200">{t("aiPartyLinker.fieldIdAuthority")}: {candidate.idIssuingAuthority}</div>
-          )}
-          {!isNatural && candidate.tradeRegisterNumber && (
-            <div className="text-ink dark:text-zinc-200">{candidate.tradeRegisterNumber}</div>
-          )}
-        </div>
-      </div>
-
-      <p className="mt-3 text-sm font-medium text-ink dark:text-zinc-100">{t("aiPartyLinker.sameQuestion")}</p>
-      <div className="mt-3 flex flex-wrap justify-end gap-2">
-        <SecondaryButton onClick={onSkip} disabled={busy}>{t("aiPartyLinker.skip")}</SecondaryButton>
-        <SecondaryButton onClick={onCreateInstead} disabled={busy}>{t("aiPartyLinker.createInsteadOfMatch")}</SecondaryButton>
-        <PrimaryButton onClick={onConfirm} disabled={busy}>
-          {busy ? t("aiPartyLinker.linking") : t("aiPartyLinker.confirmLink")}
-        </PrimaryButton>
-      </div>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Branch: fuzzy name matches only — never auto-linked, always unconfirmed.
-// ---------------------------------------------------------------------------
-
-function PossibleMatchesBranch({
-  matches, t, busy, onLink, onCreateNew, onSkip,
-}: {
-  matches: AiPartyPossibleMatch[];
-  t: TFunc;
-  busy: boolean;
-  onLink: (personId: string) => void;
-  onCreateNew: () => void;
-  onSkip: () => void;
-}) {
-  return (
-    <div>
-      <p className="text-sm font-medium text-ink dark:text-zinc-100">{t("aiPartyLinker.possibleMatchesTitle")}</p>
-      <p className="mt-1 text-sm text-fade dark:text-zinc-400">{t("aiPartyLinker.possibleMatchesBody")}</p>
-
-      <ul className="mt-3 space-y-2">
-        {matches.map((m) => (
-          <li
-            key={m.id}
-            className="flex items-center justify-between rounded-md border border-wire px-3 py-2 text-sm dark:border-zinc-700"
-          >
-            <span className="text-ink dark:text-zinc-200">
-              {m.displayName} ({m.code}) — {m.type === "NATURAL" ? t("aiPartyLinker.typeNatural") : t("aiPartyLinker.typeJudicial")}
-            </span>
-            <SecondaryButton onClick={() => onLink(m.id)} disabled={busy}>
-              {t("aiPartyLinker.linkThis")}
-            </SecondaryButton>
-          </li>
-        ))}
-      </ul>
-
-      <div className="mt-4 flex flex-wrap justify-end gap-2">
-        <SecondaryButton onClick={onSkip} disabled={busy}>{t("aiPartyLinker.skip")}</SecondaryButton>
-        <PrimaryButton onClick={onCreateNew} disabled={busy}>{t("aiPartyLinker.noneOfThese")}</PrimaryButton>
-      </div>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Branch: nothing found at all — create a brand-new Person.
-// ---------------------------------------------------------------------------
-
-function NoMatchBranch({
-  t, busy, onCreate, onSkip,
-}: {
-  t: TFunc;
-  busy: boolean;
-  onCreate: () => void;
-  onSkip: () => void;
-}) {
-  return (
-    <div>
-      <p className="text-sm font-medium text-ink dark:text-zinc-100">{t("aiPartyLinker.noMatchTitle")}</p>
-      <p className="mt-1 text-sm text-fade dark:text-zinc-400">{t("aiPartyLinker.noMatchBody")}</p>
-      <div className="mt-4 flex justify-end gap-2">
-        <SecondaryButton onClick={onSkip} disabled={busy}>{t("aiPartyLinker.skip")}</SecondaryButton>
-        <PrimaryButton onClick={onCreate} disabled={busy}>
-          {busy ? t("aiPartyLinker.creating") : t("aiPartyLinker.createAndLink")}
-        </PrimaryButton>
-      </div>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Small shared button styles (match ConfirmDialog elsewhere in this feature).
-// ---------------------------------------------------------------------------
-
-function SecondaryButton({
-  onClick, disabled, children,
-}: {
-  onClick: () => void;
-  disabled: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className="inline-flex items-center rounded-md border border-wire bg-white px-4 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-    >
-      {children}
-    </button>
-  );
-}
-
-function PrimaryButton({
-  onClick, disabled, children,
-}: {
-  onClick: () => void;
-  disabled: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className="inline-flex items-center rounded-md bg-cta px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-90 disabled:opacity-50"
-    >
-      {children}
-    </button>
+    </PersonResolutionDialog>
   );
 }
