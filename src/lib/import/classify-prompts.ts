@@ -4,6 +4,27 @@
  * KNOWN_TYPE_KEYS is derived from the seeded rows in lookup_document_type.
  * Keep this list in sync whenever new types are added via migration.
  *
+ * Slice #23.01.Import re-synced it after it had drifted. A key in this list
+ * that has no seeded row is not harmless: the scan route whitelists the
+ * model's suggestedTypeKey against this array, ensureDocType then misses it
+ * in typeMap and falls through to auto-creating a type from the free-text
+ * label, so the document lands under a generated key nobody matches on.
+ * Six entries were removed:
+ *
+ *   CARTE_IDENTITATE_ALT  - never seeded. migration_021 deliberately defines
+ *                           the only three alternate Romanian wordings
+ *                           (AUTORIZATIE / CERTIFICAT_SARCINI /
+ *                           EXTRAS_CARTE_FUNCIARA); "Carte de Identitate"
+ *                           has one wording. Offering the key made an ID
+ *                           card land under an auto-created type, so
+ *                           getPersonIdCardLink (which matches the literal
+ *                           key CARTE_IDENTITATE) never found it.
+ *   CASA, LINIARA, PASUNE, TEREN_ARABIL, TEREN_CONSTRUIT
+ *                         - these are lookup_PROPERTY_type keys
+ *                           (migration_039), not document types. Listing
+ *                           them invited the model to classify a document as
+ *                           a kind of land parcel.
+ *
  * Slice #19.06 — folder scan + extract.
  */
 
@@ -16,8 +37,6 @@ export const KNOWN_TYPE_KEYS = [
   "AUTORIZATIE_CONSTRUIRE",
   "AVIZ_INSTITUTIE",
   "CARTE_IDENTITATE",
-  "CARTE_IDENTITATE_ALT",
-  "CASA",
   "CERTIFICAT_FISCAL",
   "CERTIFICAT_MOSTENITOR",
   "CERTIFICAT_SARCINI",
@@ -34,10 +53,6 @@ export const KNOWN_TYPE_KEYS = [
   "EXTRAS_PUG",
   "HOTARARE_ADMINISTRATIVA",
   "HOTARARE_JUDECATOREASCA",
-  "LINIARA",
-  "PASUNE",
-  "TEREN_ARABIL",
-  "TEREN_CONSTRUIT",
   "TESTAMENT",
   "TITLU_PROPRIETATE",
   "UNCLASSIFIED",
