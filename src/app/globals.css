@@ -34,6 +34,12 @@
   --color-cta-d:     #1e293b;   /* bg-cta-d  — primary button :hover           */
   --color-cta-pale:  #f1f5f9;   /* bg-cta-pale — light slate wash / row hover  */
 
+  /* Slice #23.05.UX — destructive actions. Deliberately desaturated to sit
+     with the slate palette rather than Tailwind's brighter red-600. White
+     label on #B91C1C measures 6.5 : 1, comfortably past AA.                  */
+  --color-danger:    #B91C1C;   /* bg-danger   — delete / remove buttons       */
+  --color-danger-d:  #991B1B;   /* bg-danger-d — destructive button :hover     */
+
   --color-focus:     #1A5296;   /* border-focus — input focus border           */
   --color-navy:      #1E3A8A;   /* text-navy — back-navigation arrows + labels */
 
