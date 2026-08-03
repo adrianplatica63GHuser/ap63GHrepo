@@ -1,7 +1,8 @@
 /**
  * Unit tests for src/lib/import/coordinate-file.ts  (Slice #23.00.Import)
  *
- * Covers: isCoordinateFileName, coordinateCandidates, nicknameFromFolderName.
+ * Covers: isCoordinateFileName, coordinateCandidates, nicknameFromFolderName,
+ * and cornersEqual (added by Slice #23.02.Import).
  *
  * The point of these helpers is that they are boring and predictable — the
  * folder no longer has to be decoded, because the folder IS the property. So
@@ -12,6 +13,8 @@
 
 import {
   COORDINATE_FILE_EXTS,
+  CORNER_EPSILON_DEG,
+  cornersEqual,
   isCoordinateFileName,
   coordinateCandidates,
   nicknameFromFolderName,
@@ -218,5 +221,79 @@ describe("nicknameFromFolderName", () => {
       "3 Calea Victoriei",
     );
     expect(nicknameFromFolderName("2024-Arhiva")).toBe("2024-Arhiva");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// cornersEqual  (Slice #23.02.Import)
+// ---------------------------------------------------------------------------
+
+describe("cornersEqual", () => {
+  const square = [
+    { lat: 44.4, lon: 26.0 },
+    { lat: 44.5, lon: 26.0 },
+    { lat: 44.5, lon: 26.1 },
+    { lat: 44.4, lon: 26.1 },
+  ];
+
+  it("matches a list against itself", () => {
+    expect(cornersEqual(square, square)).toBe(true);
+  });
+
+  it("matches an equal list built independently", () => {
+    expect(cornersEqual(square, square.map((c) => ({ ...c })))).toBe(true);
+  });
+
+  it("rejects lists of different lengths", () => {
+    expect(cornersEqual(square, square.slice(0, 3))).toBe(false);
+    expect(cornersEqual(square.slice(0, 3), square)).toBe(false);
+  });
+
+  it("rejects a moved corner", () => {
+    const moved = square.map((c, i) => (i === 2 ? { ...c, lat: 44.6 } : c));
+    expect(cornersEqual(square, moved)).toBe(false);
+  });
+
+  it("rejects a REORDERED list — corner order is the polygon's edge order", () => {
+    // This is the bow-tie fix: the same points in a different sequence are a
+    // different polygon, and re-applying the file's original order is a real
+    // change the user is entitled to make.
+    expect(cornersEqual(square, [...square].reverse())).toBe(false);
+  });
+
+  it("tolerates float noise below the epsilon", () => {
+    const nudged = square.map((c) => ({
+      lat: c.lat + CORNER_EPSILON_DEG / 2,
+      lon: c.lon - CORNER_EPSILON_DEG / 2,
+    }));
+    expect(cornersEqual(square, nudged)).toBe(true);
+  });
+
+  it("rejects a difference just above the epsilon", () => {
+    const nudged = square.map((c, i) =>
+      i === 0 ? { ...c, lat: c.lat + CORNER_EPSILON_DEG * 10 } : c,
+    );
+    expect(cornersEqual(square, nudged)).toBe(false);
+  });
+
+  it("ignores originalIndex — it is provenance, not geometry", () => {
+    const withIndices = square.map((c, i) => ({ ...c, originalIndex: i + 1 }));
+    const withOthers = square.map((c, i) => ({ ...c, originalIndex: 100 + i }));
+    expect(cornersEqual(withIndices, withOthers)).toBe(true);
+  });
+
+  it("treats two empty lists as equal", () => {
+    expect(cornersEqual([], [])).toBe(true);
+  });
+
+  it("never treats a non-finite coordinate as equal, even to itself", () => {
+    // A corner that failed to parse must not compare equal to another failure
+    // and be reported as "already applied".
+    expect(cornersEqual([{ lat: NaN, lon: 26 }], [{ lat: NaN, lon: 26 }])).toBe(
+      false,
+    );
+    expect(
+      cornersEqual([{ lat: Infinity, lon: 26 }], [{ lat: Infinity, lon: 26 }]),
+    ).toBe(false);
   });
 });
