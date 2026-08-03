@@ -192,23 +192,6 @@ export const HELP_HINTS = [
     label: "AI-found people must be confirmed one by one",
   },
 
-  // ── Import ──────────────────────────────────────────────────────────────
-  {
-    hintKey: "ocr-extract",
-    screens: ["admin-import"],
-    label: "Import — read fields off a scanned ID card",
-  },
-  {
-    hintKey: "ctrl-click-multi-select",
-    screens: ["admin-import"],
-    label: "Import — Ctrl-click order becomes the page order",
-  },
-  {
-    hintKey: "import-leave-warning",
-    screens: ["admin-import"],
-    label: "Import — leaving discards the staged file",
-  },
-
   // ── Groups ──────────────────────────────────────────────────────────────
   {
     hintKey: "group-staged-members",

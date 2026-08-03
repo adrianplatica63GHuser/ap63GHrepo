@@ -9,7 +9,6 @@ import {
   UserCog,
   Database,
   Upload,
-  Archive,
   ClipboardCheck,
   ClipboardList,
   Wrench,
@@ -95,10 +94,6 @@ export const NAV_SECTIONS: NavSection[] = [
       // builds them out.
       { key: "preImportVerification", icon: ClipboardCheck },
       { key: "import", href: "/admin/import", icon: Upload },
-      // Re-exposed on request: the original pre-#21.01.Import flow, kept
-      // reachable for reference alongside the live wizard above. See
-      // src/app/admin/import-legacy/page.tsx for the full explanation.
-      { key: "importLegacy", href: "/admin/import-legacy", icon: Archive },
       { key: "postImportReport", icon: ClipboardList },
       { key: "calculation", href: "/admin/calculation", icon: Calculator },
     ],
