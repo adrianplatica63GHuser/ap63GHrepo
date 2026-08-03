@@ -1,20 +1,37 @@
 "use client";
 
 /**
- * ProcessPanel — Slice #21.02
+ * ProcessPanel — Slice #21.02, reworked in #23.06.Import
  *
  * Shown on the Document "Details" tab for documents that have at least one
  * plain-text page file (potential Stereo 70 coordinate file).
  *
  * States:
- *  • loading  — checking pages + metadata
+ *  • loading  — checking pages + corner-source link
  *  • hidden   — no text page; panel is not rendered at all
- *  • ready    — text page found, not yet processed → shows "Procesează" button
- *  • done     — already processed (provenance starts with "PROP:") → shows
- *                disabled button + link to the created property
+ *  • ready    — text page found, not yet a corner source → "Procesează" button
+ *  • done     — this document ALREADY produced a Property → says which one, as
+ *               a link to it. No button.
+ *  • success  — this panel just produced one
+ *  • error    — something went wrong; the button stays available
  *
- * On success the panel shows the property code and counts.
- * On error a red message is displayed; the button is re-enabled.
+ * WHAT CHANGED IN #23.06.Import
+ *
+ * The done/ready decision used to be `provenance === "COORDINATE_FILE"`, read
+ * from GET /api/metadata/{principalObjectId}. That was wrong for every
+ * document the import wizard created: classifyFileSource maps a file by
+ * EXTENSION alone (a `.txt` is indistinguishable from any other text file by
+ * name), "txt" is in DOCUMENT_EXTENSIONS, so the wizard stamped DOC_FILE on
+ * the coordinate document it had just parsed. DOC_FILE is not COORDINATE_FILE,
+ * so this panel rendered ready on an already-processed document — and pressing
+ * the button built a SECOND Property with identical coordinates, visible on
+ * the map only as a flicker where the two polygons overlap.
+ *
+ * The question is now asked of the thing that actually knows:
+ * GET /api/documents/[id]/corner-source, backed by the property_corner_source
+ * table whose UNIQUE(document_id) is the real lock. A non-null answer means
+ * processed AND carries the Property to link to — so the done state can name
+ * the Property instead of telling the user to go and look for it.
  */
 
 import { useState, useEffect, useRef } from "react";
@@ -32,6 +49,13 @@ type PageItem = {
   mimeType:  string | null;
 };
 
+/** Shape returned by GET /api/documents/[id]/corner-source. */
+type CornerSourceLink = {
+  propertyId:       string;
+  propertyCode:     string;
+  propertyNickname: string | null;
+};
+
 type ProcessResult = {
   propertyId:    string;
   propertyCode:  string;
@@ -42,8 +66,9 @@ type ProcessResult = {
 type PanelState =
   | { status: "loading" }
   | { status: "hidden" }
-  | { status: "ready";   provenance: string | null }
-  | { status: "done";    provenance: string }
+  | { status: "ready" }
+  /** `link` is null only in the odd case where a 409 arrived without ids. */
+  | { status: "done";    link: CornerSourceLink | null }
   | { status: "success"; result: ProcessResult; hadTag: boolean }
   | { status: "error";   message: string };
 
@@ -58,45 +83,46 @@ function isTextPage(page: PageItem): boolean {
   );
 }
 
-
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
 type Props = {
-  documentId:       string;
-  principalObjectId: string;
+  documentId: string;
 };
 
-export function ProcessPanel({ documentId, principalObjectId }: Props) {
+export function ProcessPanel({ documentId }: Props) {
   const t = useTranslations("document.processPanel");
 
   const [panelState, setPanelState] = useState<PanelState>({ status: "loading" });
   const [processing, setProcessing] = useState(false);
   // Synchronous gate — prevents concurrent clicks before React re-renders the
   // disabled button (state updates are async; a ref check is synchronous).
+  // Still worth having even though the server can no longer be raced into a
+  // duplicate: a second click now costs a wasted round trip and a 409, and
+  // there is no reason to spend either.
   const processingRef = useRef(false);
 
-  // On mount: fetch pages + metadata to determine initial state
+  // On mount: fetch pages + the corner-source link to determine initial state
   useEffect(() => {
     let mounted = true;
 
     async function init() {
       try {
-        const [pagesRes, metaRes] = await Promise.all([
+        const [pagesRes, linkRes] = await Promise.all([
           fetch(`/api/documents/${encodeURIComponent(documentId)}/pages`),
-          fetch(`/api/metadata/${encodeURIComponent(principalObjectId)}`),
+          fetch(`/api/documents/${encodeURIComponent(documentId)}/corner-source`),
         ]);
 
         if (!mounted) return;
 
-        if (!pagesRes.ok || !metaRes.ok) {
+        if (!pagesRes.ok || !linkRes.ok) {
           setPanelState({ status: "hidden" });
           return;
         }
 
         const pages = (await pagesRes.json()) as PageItem[];
-        const meta  = (await metaRes.json()) as { provenance?: string | null };
+        const body  = (await linkRes.json()) as { link?: CornerSourceLink | null };
 
         if (!mounted) return;
 
@@ -106,16 +132,11 @@ export function ProcessPanel({ documentId, principalObjectId }: Props) {
           return;
         }
 
-        const prov = meta.provenance ?? null;
-        // Slice #21.07.Import: the marker written by POST
-        // /api/documents/[id]/process is now COORDINATE_FILE (TEXT_FILE was
-        // split into COORDINATE_FILE + DOC_FILE); migration_067 remapped the
-        // stored values, so no legacy "TEXT_FILE" check is needed here.
-        if (prov === "COORDINATE_FILE") {
-          setPanelState({ status: "done", provenance: prov });
-        } else {
-          setPanelState({ status: "ready", provenance: prov });
-        }
+        // The link IS the already-processed flag (Slice #23.06.Import).
+        // Do not reintroduce a provenance check here — provenance is metadata
+        // again, and it disagrees with reality on every wizard-imported file.
+        const link = body.link ?? null;
+        setPanelState(link ? { status: "done", link } : { status: "ready" });
       } catch {
         if (mounted) setPanelState({ status: "hidden" });
       }
@@ -123,7 +144,7 @@ export function ProcessPanel({ documentId, principalObjectId }: Props) {
 
     void init();
     return () => { mounted = false; };
-  }, [documentId, principalObjectId]);
+  }, [documentId]);
 
   // ── Process handler ───────────────────────────────────────────────────────
   async function handleProcess() {
@@ -145,16 +166,29 @@ export function ProcessPanel({ documentId, principalObjectId }: Props) {
 
       const body = await res.json() as {
         error?: string;
-        provenance?: string;
-        propertyId?: string;
-        propertyCode?: string;
+        propertyId?: string | null;
+        propertyCode?: string | null;
         documentCount?: number;
         personCount?: number;
       };
 
       if (!res.ok) {
         if (res.status === 409) {
-          setPanelState({ status: "error", message: t("errorAlreadyProcessed") });
+          // Someone else got here first — another tab, or the import wizard.
+          // The route returns the winning Property, so switch straight to the
+          // done state and show it. Reporting this as an error would be a lie:
+          // the user's intent (this document should have a Property) is
+          // satisfied, just not by this click.
+          setPanelState({
+            status: "done",
+            link: body.propertyId && body.propertyCode
+              ? {
+                  propertyId:       body.propertyId,
+                  propertyCode:     body.propertyCode,
+                  propertyNickname: null,
+                }
+              : null,
+          });
         } else if (res.status === 422) {
           const msg = body.error ?? "";
           if (msg.includes("text")) {
@@ -218,17 +252,38 @@ export function ProcessPanel({ documentId, principalObjectId }: Props) {
       </h3>
 
       {/* Ready state: explain and offer the button */}
-      {isReady && !isError && (
+      {isReady && (
         <p className="text-sm text-emerald-700 dark:text-emerald-400">
           {t("description")}
         </p>
       )}
 
-      {/* Already done: direct user to Properties tab */}
+      {/* Already done: name the Property this document produced, and link to
+          it. The old copy just said "look in the Properties tab", which is
+          what made the duplicate so hard to spot — two overlapping polygons
+          look like one until you count the rows. */}
       {isAlreadyDone && (
-        <p className="text-sm text-emerald-700 dark:text-emerald-400">
-          {t("alreadyProcessed")}
-        </p>
+        <div className="flex flex-col gap-1">
+          {panelState.link ? (
+            <>
+              <p className="text-sm text-emerald-700 dark:text-emerald-400">
+                {t("alreadyProcessedLink", { code: panelState.link.propertyCode })}
+              </p>
+              <Link
+                href={`/properties/${encodeURIComponent(panelState.link.propertyId)}`}
+                className="w-fit text-sm font-medium text-cta hover:underline"
+              >
+                {panelState.link.propertyNickname
+                  ? t("openPropertyNamed", { name: panelState.link.propertyNickname })
+                  : t("viewProperty")}
+              </Link>
+            </>
+          ) : (
+            <p className="text-sm text-emerald-700 dark:text-emerald-400">
+              {t("alreadyProcessed")}
+            </p>
+          )}
+        </div>
       )}
 
       {/* Success state */}
@@ -268,7 +323,10 @@ export function ProcessPanel({ documentId, principalObjectId }: Props) {
         </p>
       )}
 
-      {/* Button — hidden once done or succeeded */}
+      {/* Button — offered only while there is still something to do. The done
+          state no longer renders an inert disabled button beside the link:
+          a button that can never be pressed is noise, and the link is the
+          actual next step. */}
       {!isAlreadyDone && !isSuccess && (
         <div className="flex items-center gap-3">
           <button
@@ -280,17 +338,6 @@ export function ProcessPanel({ documentId, principalObjectId }: Props) {
             {processing ? t("processing") : t("buttonLabel")}
           </button>
         </div>
-      )}
-
-      {/* Disabled button when already processed */}
-      {isAlreadyDone && (
-        <button
-          type="button"
-          disabled
-          className="w-fit rounded-md px-4 py-2 text-sm font-medium border border-emerald-300 dark:border-emerald-700 text-emerald-600 dark:text-emerald-400 opacity-50 cursor-not-allowed"
-        >
-          {t("buttonLabel")}
-        </button>
       )}
     </section>
   );

@@ -47,6 +47,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
+import { claimCornerSource } from "@/lib/import/corner-source-client";
 import { useRouter } from "next/navigation";
 import {
   type FSEntry,
@@ -129,6 +130,21 @@ type Props = {
    * this dialog without one.
    */
   propertyId: string;
+  /**
+   * Slice #23.06.Import: the path of the coordinate file whose corners the
+   * property step actually WROTE to `propertyId`, or null if none did.
+   *
+   * The loop uses it to claim `property_corner_source` the moment it creates
+   * that file's Document — closing the hole that produced the duplicate
+   * Property this slice exists to fix.
+   *
+   * Null in three cases, all correct: no coordinate file was picked; the file
+   * parsed to zero corners; or the property already had corners and the user
+   * chose "Păstrează". In that last one the file was read but its corners were
+   * REJECTED, so it is not the origin of this Property's geometry and must
+   * stay free for a different one.
+   */
+  cornerSourcePath?: string | null;
   /**
    * Slice #23.02.Import: fired when a coordinate row rewrites the Property's
    * corners, so the wizard's toolbar chip stops advertising the count it had at
@@ -443,6 +459,7 @@ export function BulkImportDialog({
   rootFolderName,
   scanResults,
   propertyId,
+  cornerSourcePath = null,
   onPropertyCornersChanged,
   onClose,
 }: Props) {
@@ -468,8 +485,11 @@ export function BulkImportDialog({
   const [idCardError, setIdCardError] = useState<string | null>(null);
 
   // Slice #23.02.Import — the two new row actions, one at a time.
+  // Slice #23.06.Import added `docId`: the dialog now claims the
+  // coordinate-source link, and a claim is about a DOCUMENT, not a file
+  // handle. Same shape as idCardTarget/aiTarget, which have always carried it.
   const [coordinateTarget, setCoordinateTarget] = useState<
-    { path: string; entry: FSFileEntry } | null
+    { path: string; docId: string; entry: FSFileEntry } | null
   >(null);
   const [aiTarget, setAiTarget] = useState<
     { path: string; docId: string; label: string } | null
@@ -610,6 +630,39 @@ export function BulkImportDialog({
             title,
             provenance: entryProvenance,
           });
+
+          // 3.5 Claim the coordinate-source link  (Slice #23.06.Import)
+          //
+          // If THIS entry is the coordinate file whose corners the property
+          // step wrote to the run's Property, record that fact now — the first
+          // thing after the Document exists, before its pages, its property
+          // link or its tags.
+          //
+          // WHY HERE AND NOT AT THE PROPERTY STEP
+          //   PropertyStepDialog resolves the Property before the import runs,
+          //   when the coordinate file is still a local file handle with no
+          //   `document` row to point at. property_corner_source.document_id is
+          //   NOT NULL, so the link genuinely cannot be written until this
+          //   moment. Every instruction later in this loop widens the window in
+          //   which the Document exists unclaimed — and an unclaimed coordinate
+          //   document is exactly what let the Process panel build a second
+          //   Property on top of this run's.
+          //
+          // WHY A CONFLICT IS FATAL TO THE ROW
+          //   It means this file already produced a DIFFERENT Property. Nothing
+          //   good follows from continuing: the run would attach a document to
+          //   a Property whose corners came from a file that belongs somewhere
+          //   else, silently. Fail loudly, name the winner, let Adrian decide.
+          if (cornerSourcePath && entry.path === cornerSourcePath) {
+            const claim = await claimCornerSource(docId, propertyId, "session-expired");
+            if (claim.kind === "conflict") {
+              throw new Error(
+                t("cornerSourceConflict", {
+                  code: claim.link?.propertyCode ?? "?",
+                }),
+              );
+            }
+          }
 
           // 4. Upload file(s) as pages
           if (entry.kind === "page-group") {
@@ -796,8 +849,14 @@ export function BulkImportDialog({
    */
   const handleOpenCoordinate = useCallback((result: ImportResult) => {
     if (result.entry.kind !== "file") return;
+    // No docId means the row never finished importing, so there is no Document
+    // to claim and nothing sensible to do. The row action is already gated on
+    // `settled` (status === "done" && !!docId); this is the belt to that
+    // braces, and it keeps the prop non-optional in the dialog.
+    if (!result.docId) return;
     setCoordinateTarget({
       path: result.entry.path,
+      docId: result.docId,
       entry: result.entry as FSFileEntry,
     });
   }, []);
@@ -1026,6 +1085,7 @@ export function BulkImportDialog({
           {coordinateTarget && (
             <CoordinatePropertyDialog
               propertyId={propertyId}
+              documentId={coordinateTarget.docId}
               entry={coordinateTarget.entry}
               onDone={handleCoordinateDone}
               onClose={() => setCoordinateTarget(null)}

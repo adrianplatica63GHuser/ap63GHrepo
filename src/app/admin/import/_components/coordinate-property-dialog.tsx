@@ -32,12 +32,31 @@
  *      shaped like PropertyStepDialog's, defaulting to Keep. Replacing is
  *      destructive: it discards any hand-fixed corner order (the bow-tie fix),
  *      so it is never the default.
+ *
+ * Slice #23.06.Import adds a FIFTH outcome, checked before any of the above:
+ *
+ *   0. This file has already produced a DIFFERENT Property → say so, name it,
+ *      and offer nothing. `property_corner_source` records which document
+ *      built which Property, and UNIQUE(document_id) means one coordinate file
+ *      can only ever be the origin of one. Checking it up front spares the
+ *      user a replace/keep decision that would be refused anyway.
+ *
+ * and the write itself is now CLAIM-THEN-WRITE: the link is taken first, and
+ * the corners are only PATCHed once it is held. Writing first would let a file
+ * that belongs to another Property overwrite this one's geometry before anyone
+ * noticed. The claim is idempotent for a link that already points here, so a
+ * failed PATCH can simply be retried (see corner-source-client.ts).
  */
 
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import type { FSFileEntry } from "@/lib/import/folder-utils";
 import { cornersEqual } from "@/lib/import/coordinate-file";
+import {
+  claimCornerSource,
+  fetchCornerSource,
+  type CornerSourceLink,
+} from "@/lib/import/corner-source-client";
 import { buttonClass } from "@/lib/ui/button-styles";
 
 // ---------------------------------------------------------------------------
@@ -60,6 +79,12 @@ export type CoordinateOutcome = {
 
 type Props = {
   propertyId: string;
+  /**
+   * The Document this row created during the import. Required: without it the
+   * dialog cannot claim the coordinate-source link, and an unclaimed file is
+   * exactly what let the Process panel build a duplicate Property.
+   */
+  documentId: string;
   entry: FSFileEntry;
   onDone: (outcome: CoordinateOutcome) => void;
   onClose: () => void;
@@ -73,6 +98,8 @@ type Phase =
   | { kind: "loading" }
   | { kind: "error"; message: string }
   | { kind: "no-coordinates" }
+  /** This file already built a different Property; nothing is offered. */
+  | { kind: "claimed-elsewhere"; link: CornerSourceLink }
   | { kind: "already-applied"; count: number }
   | { kind: "write"; corners: Corner[] }
   | { kind: "conflict"; corners: Corner[]; existing: number }
@@ -118,6 +145,7 @@ async function fetchPropertyCorners(propertyId: string): Promise<Corner[]> {
 
 export function CoordinatePropertyDialog({
   propertyId,
+  documentId,
   entry,
   onDone,
   onClose,
@@ -145,6 +173,22 @@ export function CoordinatePropertyDialog({
 
         if (parsed.length === 0) {
           setPhase({ kind: "no-coordinates" });
+          return;
+        }
+
+        // Slice #23.06.Import — outcome 0. Ask BEFORE offering anything: a
+        // file that already built a different Property cannot build this one,
+        // so putting the replace/keep prompt in front of the user first would
+        // be asking a question whose answer we would then refuse.
+        //
+        // A link pointing at THIS property is not a blocker — it means the
+        // property step already used this same file, which is the ordinary
+        // "already applied" case handled below.
+        const claim = await fetchCornerSource(documentId);
+        if (!mounted) return;
+
+        if (claim && claim.propertyId !== propertyId) {
+          setPhase({ kind: "claimed-elsewhere", link: claim });
           return;
         }
 
@@ -183,6 +227,19 @@ export function CoordinatePropertyDialog({
     async (corners: Corner[]) => {
       setPhase({ kind: "saving" });
       try {
+        // Claim first. The link is the PERMISSION to write these corners, so
+        // it has to be held before the PATCH, not recorded after it.
+        //
+        // `already-ours` is a success: the property step may have used this
+        // same file, or a previous attempt may have claimed and then failed on
+        // the PATCH. Either way the file belongs to this Property and writing
+        // is legitimate. Only a link to a DIFFERENT Property stops us.
+        const claim = await claimCornerSource(documentId, propertyId, t("errorSession"));
+        if (claim.kind === "conflict") {
+          setPhase({ kind: "error", message: t("errorClaimConflict") });
+          return;
+        }
+
         const res = await fetch(`/api/properties/${encodeURIComponent(propertyId)}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -202,7 +259,7 @@ export function CoordinatePropertyDialog({
         });
       }
     },
-    [propertyId, onDone, t],
+    [propertyId, documentId, onDone, t],
   );
 
   /**
@@ -270,6 +327,15 @@ export function CoordinatePropertyDialog({
             </p>
           )}
 
+          {phase.kind === "claimed-elsewhere" && (
+            <p
+              role="alert"
+              className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-200"
+            >
+              {t("claimedElsewhere", { code: phase.link.propertyCode })}
+            </p>
+          )}
+
           {phase.kind === "already-applied" && (
             <p className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300">
               {t("alreadyApplied", { count: phase.count })}
@@ -330,6 +396,7 @@ export function CoordinatePropertyDialog({
         <div className="flex items-center justify-end gap-3 border-t border-card-rim px-5 py-3 dark:border-zinc-700">
           {(phase.kind === "error" ||
             phase.kind === "no-coordinates" ||
+            phase.kind === "claimed-elsewhere" ||
             phase.kind === "loading" ||
             phase.kind === "saving") && (
             <button
@@ -346,7 +413,7 @@ export function CoordinatePropertyDialog({
             <button
               type="button"
               onClick={() => handleAcknowledge(phase.count)}
-              className="rounded-md bg-cta px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-cta-d"
+              className={buttonClass({ variant: "primary", size: "lg" })}
             >
               {t("closeButton")}
             </button>
@@ -356,7 +423,7 @@ export function CoordinatePropertyDialog({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-md bg-cta px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-cta-d"
+              className={buttonClass({ variant: "primary", size: "lg" })}
             >
               {t("closeButton")}
             </button>
@@ -367,14 +434,14 @@ export function CoordinatePropertyDialog({
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-md border border-wire bg-white px-4 py-2 text-sm font-medium text-ink hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+                className={buttonClass({ variant: "secondary", size: "lg" })}
               >
                 {t("cancelButton")}
               </button>
               <button
                 type="button"
                 onClick={() => void handleApply(phase.corners)}
-                className="rounded-md bg-cta px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-cta-d"
+                className={buttonClass({ variant: "primary", size: "lg" })}
               >
                 {t("applyButton")}
               </button>
@@ -386,7 +453,7 @@ export function CoordinatePropertyDialog({
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-md border border-wire bg-white px-4 py-2 text-sm font-medium text-ink hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+                className={buttonClass({ variant: "secondary", size: "lg" })}
               >
                 {t("cancelButton")}
               </button>
@@ -397,7 +464,7 @@ export function CoordinatePropertyDialog({
                     ? void handleApply(phase.corners)
                     : handleKeep(phase.existing)
                 }
-                className="rounded-md bg-cta px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-cta-d"
+                className={buttonClass({ variant: "primary", size: "lg" })}
               >
                 {replace ? t("replaceButton") : t("keepButton")}
               </button>

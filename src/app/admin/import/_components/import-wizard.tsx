@@ -493,6 +493,15 @@ export function ImportWizard() {
           rootFolderName={rootFolderName}
           scanResults={scanResults}
           propertyId={resolvedProperty.id}
+          cornerSourcePath={
+            // Slice #23.06.Import — which picked file's corners actually
+            // landed on the Property, so the loop can claim
+            // property_corner_source the instant that file's Document exists.
+            // Null when nothing was written (no file, zero corners, or the
+            // user kept the existing corners): then no file is the origin of
+            // this Property's geometry and none may be locked to it.
+            resolvedProperty.cornerSourcePath
+          }
           onPropertyCornersChanged={(cornerCount) =>
             setResolvedProperty((prev) => (prev ? { ...prev, cornerCount } : prev))
           }

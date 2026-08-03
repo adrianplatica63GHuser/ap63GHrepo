@@ -1440,7 +1440,9 @@
       "description": "Documentul conține un fișier text cu coordonate cadastrale Stereo 70. Apăsați butonul de mai jos pentru a interpreta colțurile, crea o Proprietate și asocia toate documentele și persoanele care au același tag de dosar.",
       "buttonLabel": "Procesează",
       "processing": "Se procesează…",
-      "alreadyProcessed": "Deja procesat — proprietatea creată apare în tab-ul Proprietăți.",
+      "alreadyProcessed": "Acest document a fost deja folosit pentru a crea o proprietate.",
+      "alreadyProcessedLink": "Acest document a fost deja folosit pentru a crea proprietatea {code}.",
+      "openPropertyNamed": "Deschide proprietatea {name}",
       "provenanceLabel": "Proprietate creată:",
       "viewProperty": "Deschide proprietatea",
       "resultDocuments": "{count} document(e) asociat(e)",
@@ -1794,6 +1796,7 @@
         "colStatus": "Status",
         "sessionExpiredBanner": "Sesiunea a expirat în timpul importului. Fișierele marcate cu erori mai jos nu au fost salvate. Conectați-vă din nou, apoi reimportați-le.",
         "sessionExpiredShort": "Sesiune expirată",
+        "cornerSourceConflict": "Acest fișier de coordonate a fost deja folosit pentru proprietatea {code}. Un fișier de coordonate poate defini o singură proprietate.",
         "signInAgain": "Conectați-vă",
         "aiProcessedBadge": "Procesat AI",
         "idCard": {
@@ -1887,7 +1890,9 @@
           "keepButton": "Păstrează colțurile actuale",
           "cancelButton": "Anulează",
           "closeButton": "Închide",
-          "errorGeneric": "Aplicarea colțurilor pe proprietate a eșuat.",
+          "claimedElsewhere": "Acest fișier de coordonate a fost deja folosit pentru a crea proprietatea {code}. Un fișier de coordonate poate defini o singură proprietate, așa că nu poate fi aplicat și aici. Dacă proprietatea {code} este greșită, ștergeți-o mai întâi — asta eliberează fișierul — și apoi reluați.",
+      "errorClaimConflict": "Între timp, acest fișier a fost folosit pentru altă proprietate. Nu s-a modificat nimic.",
+      "errorGeneric": "Aplicarea colțurilor pe proprietate a eșuat.",
           "errorSession": "Sesiunea a expirat. Vă rugăm să vă autentificați din nou."
         },
         "aiInterpret": {

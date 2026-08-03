@@ -17,7 +17,6 @@ type Props = {
   documentId:        string;
   documentCode:      string;
   documentName:      string;
-  principalObjectId: string;
   initialValues:     FormValues;
   /** Slice #21.02.Import: timestamp set when AI-interpret has run; null if not yet processed. */
   aiInterpretedAt?:  string | null;
@@ -29,7 +28,6 @@ export function DocumentDetailTabs({
   documentId,
   documentCode,
   documentName,
-  principalObjectId,
   initialValues,
   aiInterpretedAt,
   readonly,
@@ -102,10 +100,12 @@ export function DocumentDetailTabs({
                 aiInterpretedAt={aiInterpretedAt ?? null}
                 versionNavSlot={navSlot}
               />
-              <ProcessPanel
-                documentId={documentId}
-                principalObjectId={principalObjectId}
-              />
+              {/* Slice #23.06.Import: principalObjectId is no longer needed —
+                  the panel asks /api/documents/[id]/corner-source whether this
+                  document already produced a Property, instead of inferring it
+                  from entity_metadata.provenance (which is wrong for every
+                  wizard-imported coordinate file). */}
+              <ProcessPanel documentId={documentId} />
             </>
           )}
           {activeTab === "persons" && (

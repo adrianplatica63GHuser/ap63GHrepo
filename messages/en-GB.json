@@ -1440,7 +1440,9 @@
       "description": "This document contains a text file with Stereo 70 cadastral coordinates. Click the button below to parse the corners, create a Property, and associate all documents and persons that share the same folder tag.",
       "buttonLabel": "Process",
       "processing": "Processing…",
-      "alreadyProcessed": "Already processed — the created property is listed in the Properties tab.",
+      "alreadyProcessed": "This document has already been used to create a property.",
+      "alreadyProcessedLink": "This document has already been used to create property {code}.",
+      "openPropertyNamed": "Open property {name}",
       "provenanceLabel": "Created property:",
       "viewProperty": "Open property",
       "resultDocuments": "{count} document(s) associated",
@@ -1794,6 +1796,7 @@
         "colStatus": "Status",
         "sessionExpiredBanner": "Your session expired during import. The files marked with errors below were not saved. Please sign in again, then re-import them.",
         "sessionExpiredShort": "Session expired",
+        "cornerSourceConflict": "This coordinate file has already been used for property {code}. A coordinate file can define only one property.",
         "signInAgain": "Sign in again",
         "aiProcessedBadge": "AI Done",
         "idCard": {
@@ -1887,7 +1890,9 @@
           "keepButton": "Keep the current corners",
           "cancelButton": "Cancel",
           "closeButton": "Close",
-          "errorGeneric": "Applying the corners to the property failed.",
+          "claimedElsewhere": "This coordinate file has already been used to create property {code}. A coordinate file can define only one property, so it cannot also be applied here. If property {code} is the wrong one, delete it first — that releases the file — and then run this again.",
+      "errorClaimConflict": "This file was used for another property in the meantime. Nothing was changed.",
+      "errorGeneric": "Applying the corners to the property failed.",
           "errorSession": "Your session has expired. Please sign in again."
         },
         "aiInterpret": {

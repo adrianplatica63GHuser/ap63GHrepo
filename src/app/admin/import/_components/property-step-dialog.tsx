@@ -60,6 +60,24 @@ export type ResolvedProperty = {
   principalObjectId: string;
   /** Corners the run ended up with — display only, for the wizard's chip. */
   cornerCount: number;
+  /**
+   * Slice #23.06.Import — the path of the coordinate file whose corners were
+   * actually WRITTEN to this Property, or null if none were.
+   *
+   * The import loop uses it to claim `property_corner_source` the moment that
+   * file's Document is created. It cannot be claimed here: at this point the
+   * file is still a local file handle and there is no `document` row for the
+   * link to point at.
+   *
+   * Null means "no file is the origin of this Property's geometry", which
+   * covers three distinct cases, all of them correct:
+   *   • no coordinate file was picked (or the folder had none);
+   *   • the picked file parsed to zero corners;
+   *   • the Property already had corners and the user chose "Păstrează" — the
+   *     file was read, but its corners were REJECTED, so it did not build
+   *     this Property and must stay free to build another.
+   */
+  cornerSourcePath: string | null;
 };
 
 type Corner = { lat: number; lon: number; originalIndex: number | null };
@@ -359,6 +377,11 @@ export function PropertyStepDialog({
           nickname: body.property.nickname,
           principalObjectId: body.property.principalObjectId,
           cornerCount: corners.length,
+          // The corners travelled inside the create body, so on this branch
+          // "written" and "parsed" are the same thing — but only if there were
+          // any. An empty file is not the origin of an empty polygon.
+          cornerSourcePath:
+            corners.length > 0 ? chosenCandidate?.entry.path ?? null : null,
         });
         return;
       }
@@ -394,6 +417,14 @@ export function PropertyStepDialog({
         nickname: detail.property.nickname,
         principalObjectId: detail.property.principalObjectId,
         cornerCount: finalCornerCount,
+        // Keyed on shouldWriteCorners, NOT on "a file was selected". If the
+        // Property already had corners and the user chose Păstrează, this file
+        // was parsed and then discarded — claiming it would lock a document to
+        // a Property whose geometry came from somewhere else entirely.
+        cornerSourcePath:
+          shouldWriteCorners && chosenCandidate
+            ? chosenCandidate.entry.path
+            : null,
       });
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : String(err));
@@ -407,6 +438,9 @@ export function PropertyStepDialog({
     mode,
     nickname,
     chosenCorners,
+    // Slice #23.06.Import — the handler now reads the candidate itself (for
+    // its path), not just its corners.
+    chosenCandidate,
     detailQuery.data,
     existingCornerCount,
     cornerConflict,
