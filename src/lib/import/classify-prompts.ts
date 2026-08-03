@@ -88,55 +88,12 @@ Rules:
 - Output strictly valid JSON — no comments, no trailing commas, no markdown code fences.`;
 
 // ---------------------------------------------------------------------------
-// Phase 2 — extraction (Sonnet 4.6, per approved file)
-// ---------------------------------------------------------------------------
-
-export const EXTRACT_SYSTEM_PROMPT = `You extract structured data from scanned Romanian official documents.
-Respond with ONLY a single JSON object, no prose, no markdown fences.
-
-Known document type keys (same list as classify — choose the closest, or null):
-${KNOWN_TYPE_KEYS.filter((k) => k !== "UNCLASSIFIED").join(", ")}
-
-Shape:
-{
-  "suggestedTypeKey": string | null,     // one of the known keys above, or null if none fits
-  "classifiedLabel": string | null,      // short human-readable Romanian name for this document type, e.g. "Titlu de Proprietate"
-  "fields": {
-    "title": string | null,              // document title as printed
-    "nrDocument": string | null,         // document number (nr. / no.)
-    "dateDocument": string | null,       // issue date, ISO yyyy-mm-dd
-    "institution": string | null,        // issuing institution
-    "institutionId": string | null,      // institution internal code / CUI if printed
-    "emitent": string | null,            // signatory / emitent name
-    "bazaLegala": string | null,         // legal basis reference (lege, articol)
-    "uatProprietate": string | null,     // UAT of the property
-    "uatProprietar": string | null,      // UAT of the owner
-    "suprafata": string | null,          // area/surface in m2 or ha — numeric string only, digits + decimal separator
-    "nrDosarSuccesoral": string | null,  // succession dossier number
-    "dataDecesului": string | null,      // date of death, ISO yyyy-mm-dd
-    "ultimulDomiciliu": string | null,   // last domicile of deceased
-    "nrCertificatDeces": string | null,  // death certificate number
-    "dateStart": string | null,          // period start date, ISO yyyy-mm-dd
-    "dateEnd": string | null,            // period end date, ISO yyyy-mm-dd
-    "subject": string | null,            // brief subject / object of the document
-    "notes": string | null               // any important information not captured by the above fields
-  },
-  "lowConfidenceFields": string[],       // field keys where you are not confident in the reading
-  "unmappedRaw": { [label: string]: string }  // other printed text that does not fit any field above
-}
-
-Rules:
-- Dates must be ISO yyyy-mm-dd or null. Convert Romanian format (zi.luna.an) to ISO.
-- suprafata: numeric value only (e.g. "1234.56" or "0.45"), no units.
-- Do not guess. If a field is not visible or not applicable for this document type, return null.
-- Output strictly valid JSON — no comments, no trailing commas, no markdown code fences.`;
-
-// ---------------------------------------------------------------------------
 // Slice #21.03.Import — per-type extraction prompt (document-detail AI Interpret)
 // ---------------------------------------------------------------------------
 //
-// EXTRACT_SYSTEM_PROMPT above is fixed and keeps serving the Import-wizard's
-// folder-scan flow (scan-folder + extract-document routes) unchanged.
+// A fixed EXTRACT_SYSTEM_PROMPT used to sit above this block, serving the
+// orphaned Import-wizard's extract-document route. Slice #23.04.Import deleted
+// both; the scan-folder route keeps using CLASSIFY_SYSTEM_PROMPT above.
 //
 // The document-detail "AI Interpret" action
 // (src/app/api/documents/[id]/ai-interpret/route.ts) builds its prompt

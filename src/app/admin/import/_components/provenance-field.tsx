@@ -36,17 +36,6 @@ type Props = {
   compact?: boolean;
 };
 
-/**
- * The value to send to the API, or null when the question is still open.
- * Callers use `=== null` to keep their submit button disabled.
- */
-export function resolveProvenance(
-  inferred: ProvenanceCode | null,
-  picked: ProvenanceCode | "",
-): ProvenanceCode | null {
-  return inferred ?? (picked === "" ? null : picked);
-}
-
 export function ProvenanceField({
   inferred,
   value,

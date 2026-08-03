@@ -2,10 +2,10 @@
  * POST /api/documents/[id]/ai-interpret
  *
  * Slice #21.02.Import — server-side AI field extraction for an existing
- * document.  Unlike the import-wizard's POST /api/admin/import/extract-document
- * (which receives an image from the client), this route reads the document's
- * uploaded pages directly from storage, so no client-side PDF rasterisation
- * is needed.
+ * document. It reads the document's uploaded pages directly from storage, so
+ * no client-side PDF rasterisation is needed. (Until Slice #23.04.Import the
+ * orphaned import-wizard had its own POST /api/admin/import/extract-document,
+ * which received a client-rasterised image instead; that route is gone.)
  *
  * Slice #21.03.Import — the extraction prompt is now built dynamically per the
  * document's own type: a small fixed baseline (title, nrDocument, dateDocument,

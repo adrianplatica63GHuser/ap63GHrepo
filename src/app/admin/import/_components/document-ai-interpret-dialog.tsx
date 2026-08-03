@@ -7,8 +7,10 @@
  *
  * This is NOT a port of the orphaned wizard's version. That one rasterised a
  * PDF in the browser and POSTed an image to /api/admin/import/extract-document,
- * whose EXTRACT_SYSTEM_PROMPT is a single fixed list of ~18 fields for every
- * document type ever. This calls POST /api/documents/[id]/ai-interpret in its
+ * whose EXTRACT_SYSTEM_PROMPT was a single fixed list of ~18 fields for every
+ * document type ever — Slice #23.04.Import deleted the route and the prompt
+ * together, precisely because this dialog had replaced them. This calls POST
+ * /api/documents/[id]/ai-interpret in its
  * default "extract" mode instead, which builds its prompt per document type via
  * buildExtractSystemPrompt: a generic four-field baseline when the type has no
  * template, otherwise the type's own lookup_document_type.template_fields. It

@@ -5,7 +5,6 @@
  *   POST /api/properties/scan-image
  *   POST /api/properties/parse-text
  *   POST /api/admin/import/extract-id-card
- *   POST /api/admin/import/extract-document
  *
  * Limit: MAX_REQUESTS requests per WINDOW_MS milliseconds, per authenticated user.
  * The bucket is keyed by user ID (Supabase UUID). Anonymous callers (no session)
