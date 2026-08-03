@@ -1,33 +1,66 @@
 /**
  * src/lib/import/coordinate-file.ts
  *
- * Pure helpers for Slice #23.00.Import — "the picked folder IS one Property".
+ * Pure helpers for the import wizard's property step.
  *
- * Two jobs, both deliberately dumb:
+ * WHAT LIVES HERE
+ * ───────────────
  *
- *  1. `coordinateCandidates` — find the files in a walked folder that COULD be
- *     a Stereo 70 cadastral coordinate export, by extension alone. It does not
- *     read or parse them; whether a candidate actually contains coordinates is
- *     decided by POSTing it to /api/properties/parse-text and counting the
- *     corners that come back. A `.csv` of contact details and a `.csv` of
- *     corners are indistinguishable by name, so the extension filter is only
- *     ever a shortlist for the user to choose from — never an answer.
+ *  1. `coordinateCandidates` / `isCoordinateFileName` — find the files in a
+ *     walked folder that COULD be a Stereo 70 cadastral coordinate export, by
+ *     extension alone. They do not read or parse anything; whether a candidate
+ *     actually contains coordinates is decided by POSTing it to
+ *     /api/properties/parse-text and counting the corners that come back. A
+ *     `.csv` of contact details and a `.csv` of corners are indistinguishable
+ *     by name, so the extension filter is only ever a shortlist for the user to
+ *     choose from — never an answer.
  *
- *  2. `nicknameFromFolderName` — turn the picked folder's name into a default
+ *  2. `coordinateNameConfidence` — Slice #23.07.Import. How well a candidate's
+ *     NAME matches the convention Adrian's coordinate files follow ("coord
+ *     47per2-225per3per24-2716.txt").
+ *
+ *     ⚠️ **The name is a ranking signal and a warning. It is never a filter.**
+ *     Only the parse decides whether a file is usable: a correctly-formed
+ *     export with an unconventional name still imports, and nothing here
+ *     narrows the extension shortlist above. What the confidence buys is (a) a
+ *     tie-break when two files both parse, so the user is not asked a question
+ *     the naming convention already answers, and (b) a quiet note when the one
+ *     usable file breaks the convention — Adrian's "the creator of the file may
+ *     have made a mistake" case, surfaced rather than silently accepted.
+ *
+ *  3. `nicknameFromFolderName` — turn the picked folder's name into a default
  *     Property nickname. It only tidies whitespace and underscores.
  *
  *     It deliberately does NOT expand abbreviations the way
  *     `folderNameToTitleHint` does (that is for document titles, where "CVC"
  *     really does mean "Contract de Vânzare-Cumpărare"), and it deliberately
- *     does NOT parse anything cadastral out of the name. Slice #23.00.Import
- *     retired the digit-prefix heuristic from the wizard precisely because
- *     "3 Calea Victoriei" and "2024-Arhiva" were being read as
- *     <tarla>-<parcela>. The folder name is a label, nothing more; tarla and
- *     parcela are typed by a human on the Property form.
+ *     decodes nothing cadastral: a nickname is a label the user recognises in a
+ *     list, so "47per2-225per3per24-2716 Prisecaru" stays verbatim.
+ *
+ *  4. `cadastralSuggestionFromFolderName` — Slice #23.07.Import. A SUGGESTED
+ *     tarla/parcela pair for the create-new-Property branch, derived from the
+ *     picked folder name via `parseFolderName`.
+ *
+ *     ⚠️ **This is not a reintroduction of the retired digit-prefix
+ *     heuristic**, and CLAUDE.md's standing "do not reintroduce
+ *     `parseFolderName` into the import wizard" rule is intact. That rule
+ *     forbids a silent INFERENCE — Slice #23.00.Import retired the heuristic
+ *     because the wizard wrote tarla "3" for "3 Calea Victoriei" and tarla
+ *     "2024" / parcela "Arhiva" for "2024-Arhiva" without ever showing the user
+ *     what it had decided. What this returns is a SUGGESTION: it lands in two
+ *     visible, editable, explicitly-labelled inputs that the user confirms
+ *     before anything is written, and an unparseable name yields two blank
+ *     fields rather than a guess. A value the user can see and correct before
+ *     it is saved is a different thing from a value the system decides alone.
+ *
+ *  5. `cornersEqual` / `CORNER_EPSILON_DEG` — corner-set identity, so a row can
+ *     tell "these corners already came from this very file" from "these are
+ *     different corners" without burning a property_version on a no-op.
  */
 
 import type { FSEntry, FSFileEntry } from "./folder-utils";
-import { extOf } from "./folder-utils";
+import { extOf, parseFolderName, perToSlash } from "./folder-utils";
+import { foldRomanian } from "./id-card";
 
 // ---------------------------------------------------------------------------
 // Coordinate-file candidates
@@ -38,6 +71,9 @@ import { extOf } from "./folder-utils";
  *
  * Matches TEXT_EXTS_SET in bulk-import-dialog.tsx — the same four extensions
  * the import surface has always treated as "plain text, might be coordinates".
+ *
+ * Slice #23.07.Import deliberately left this list untouched. The name
+ * convention ranks and warns; it does not shorten the shortlist.
  */
 export const COORDINATE_FILE_EXTS: ReadonlySet<string> = new Set([
   ".txt",
@@ -72,6 +108,61 @@ export function coordinateCandidates(entries: FSEntry[]): FSFileEntry[] {
 }
 
 // ---------------------------------------------------------------------------
+// Name-convention confidence  (Slice #23.07.Import)
+// ---------------------------------------------------------------------------
+
+/**
+ * How much the file NAME agrees that this is a coordinate export.
+ *
+ *  - `"strong"` — the extension is in the shortlist AND the name follows the
+ *    convention. Both signals agree.
+ *  - `"weak"`   — the extension is in the shortlist but the name does not
+ *    follow the convention. Still perfectly importable; worth a quiet note.
+ *  - `"none"`   — the extension is not one a coordinate export uses, so the
+ *    file was never a candidate in the first place.
+ */
+export type CoordinateNameConfidence = "strong" | "weak" | "none";
+
+/**
+ * The prefix Adrian's coordinate files start with, in folded form.
+ *
+ * Compared against `foldRomanian(name)`, so "COORD", "Coord" and a name with
+ * leading whitespace all match. It also matches the longer Romanian spelling
+ * ("coordonate …"), which is the same convention written out.
+ */
+export const COORDINATE_NAME_PREFIX = "coord";
+
+/**
+ * Does this file name follow the coordinate-file naming convention?
+ *
+ * Two independent signals, and the answer says which of them agree:
+ * the extension (already the shortlist rule) and the name's opening word.
+ * Adrian's example is `coord 47per2-225per3per24-2716.txt` — a name that
+ * carries the convention AND the cadastral identifiers.
+ *
+ * Why a folded prefix comparison and not a regex
+ * ----------------------------------------------
+ * `foldRomanian` (src/lib/import/id-card.ts) lowercases, trims, collapses
+ * whitespace and strips diacritics via NFD — which covers both the comma-below
+ * (U+0219/U+021B) and cedilla (U+015F/U+0163) encodings of ș/ț that appear in
+ * real data. On the folded string a plain `startsWith` is the whole test.
+ *
+ * ⚠️ Never reach for `\b` here. JavaScript's word-boundary assertion is defined
+ * over the ASCII word set, so it does not count ă â î ș ț as word characters at
+ * all — `/\bÎnch\b/i` can never match a string starting with "Î", and the
+ * symptom is a silent non-match that reads like a missing dictionary entry
+ * rather than a regex bug (CLAUDE.md records the slice that cost). Where a
+ * boundary really is needed, use Unicode-property lookarounds
+ * `(?<![\p{L}\p{N}])…(?![\p{L}\p{N}])` with the `u` flag. Here nothing is
+ * needed: the question is only "how does the name START", and a prefix
+ * comparison on the folded string answers it outright.
+ */
+export function coordinateNameConfidence(name: string): CoordinateNameConfidence {
+  if (!isCoordinateFileName(name)) return "none";
+  return foldRomanian(name).startsWith(COORDINATE_NAME_PREFIX) ? "strong" : "weak";
+}
+
+// ---------------------------------------------------------------------------
 // Default nickname
 // ---------------------------------------------------------------------------
 
@@ -93,6 +184,73 @@ export function coordinateCandidates(entries: FSEntry[]): FSFileEntry[] {
  */
 export function nicknameFromFolderName(name: string): string {
   return name.replace(/_/g, " ").replace(/\s+/g, " ").trim();
+}
+
+// ---------------------------------------------------------------------------
+// Cadastral suggestion  (Slice #23.07.Import)
+// ---------------------------------------------------------------------------
+
+/**
+ * A suggested tarla/parcela pair. `""` means "nothing to suggest" — the caller
+ * binds both straight to text inputs, and an empty input is the honest answer
+ * to a folder name that carries no cadastral identifiers.
+ */
+export type CadastralSuggestion = {
+  tarlaSola: string;
+  parcela: string;
+};
+
+/**
+ * Suggest tarla and parcela from the picked folder's name.
+ *
+ * Composes two existing, already-tested helpers and adds no new guessing of
+ * its own:
+ *
+ *   - `parseFolderName` decides whether the name looks cadastral at all (it
+ *     must start with a digit) and splits it into `<tarla>-<parcela>-<rest>`;
+ *   - `perToSlash` turns the filesystem-safe encoding into the form the DB
+ *     stores, because "/" cannot appear in a folder name: "47per2" -> "47/2",
+ *     "225per3per24" -> "225/3/24".
+ *
+ * The `perToSlash` step is what makes this path agree with the OTHER one.
+ * `/api/documents/[id]/process` has always applied it before writing
+ * `tarla_sola` / `parcela`, so a Property built there holds "47/2". Suggesting
+ * the raw "47per2" here would have produced two Properties whose cadastral
+ * identifiers differ only in encoding — the asymmetry this slice exists to
+ * remove, reintroduced one layer down.
+ *
+ * The bar for suggesting anything is the FULL "<tarla>-<parcela>" shape, not
+ * merely `parseFolderName`'s leading-digit test. With no separator the parser
+ * hands back the entire name as the tarla — "3 Calea Victoriei" becomes tarla
+ * "3 Calea Victoriei" — which is the #23.00 false positive wearing a different
+ * hat, and there is no parcela to go with it either way. Requiring the
+ * separator costs nothing real (Adrian's folders all carry it) and keeps a
+ * street address out of a cadastral field.
+ *
+ * What it does NOT do is decide whether the two halves are plausible. A name
+ * like "2024-Arhiva" still suggests tarla "2024" / parcela "Arhiva", and that
+ * is the design working rather than failing: the values land in two labelled,
+ * editable inputs, the user sees them before anything is written, and clearing
+ * them is one keystroke. The failure mode #23.00 retired was not a wrong guess
+ * — it was a wrong guess nobody was shown.
+ *
+ * A name that does not parse yields two empty strings, and a blank field is
+ * the honest answer to a folder name that carries no cadastral identifiers.
+ *
+ *   "47per2-225per3per24-2716 Prisecaru" -> { tarlaSola: "47/2", parcela: "225/3/24" }
+ *   "2024-Arhiva"                        -> { tarlaSola: "2024", parcela: "Arhiva" }
+ *   "3 Calea Victoriei"                  -> { tarlaSola: "", parcela: "" }
+ *   "Documente generale"                 -> { tarlaSola: "", parcela: "" }
+ */
+export function cadastralSuggestionFromFolderName(name: string): CadastralSuggestion {
+  const parsed = parseFolderName(name);
+  // `parcela` is only set when parseFolderName found a "-" separator, so this
+  // one test enforces the whole "<tarla>-<parcela>" shape.
+  if (!parsed.isPropertyFolder || !parsed.parcela) return { tarlaSola: "", parcela: "" };
+  return {
+    tarlaSola: parsed.tarlaSola ? perToSlash(parsed.tarlaSola).trim() : "",
+    parcela: parsed.parcela ? perToSlash(parsed.parcela).trim() : "",
+  };
 }
 
 // ---------------------------------------------------------------------------
