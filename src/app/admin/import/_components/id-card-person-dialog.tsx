@@ -18,6 +18,28 @@
  * for one image. So this dialog receives the existing `documentId` and only
  * links.
  *
+ * ── What Slice #23.08.Import added ───────────────────────────────────────────
+ *
+ * It does not create the Document, but it now WRITES to it. Adrian's question:
+ * why does an ID-card row carry two buttons? "Interpretează cu AI" built its
+ * prompt from the document type's template_fields, and CARTE_IDENTITATE has no
+ * template — so it asked for four generic baseline fields while this dialog's
+ * extraction had already read the card number, the issuing authority and both
+ * validity dates. A second Anthropic call that returned less than the first.
+ *
+ * So the card fields fold in here, in ONE PATCH alongside aiInterpretedAt (see
+ * documentFieldsFromIdCard in src/lib/import/id-card.ts for the mapping and for
+ * what is deliberately not mapped). The interpret button is hidden on ID-card
+ * rows in bulk-import-dialog.tsx as the other half of the same change.
+ *
+ * The write happens on BOTH branches — create-new and confirm-existing. The
+ * card was read either way, and whether the holder turned out to be a new
+ * person or one already in the system says nothing about the document's own
+ * fields. It is also the LAST step: if it fails, the person is already created
+ * and linked to both the Property and the Document, which is the outcome this
+ * import run exists to produce, so the failure is reported and carried out in
+ * the row rather than being allowed to discard the work.
+ *
  * ── The defect this exists to fix ────────────────────────────────────────────
  *
  * PersonClassifyPanel called POST /api/people unconditionally: no CNP check, no
@@ -71,6 +93,14 @@ import {
   ScanConfidenceWarning,
   type ScanConfidence,
 } from "./scan-confidence-warning";
+import {
+  documentFieldsFromIdCard,
+  idCardDocumentFieldCount,
+  type IdCardDocumentCurrent,
+  type IdCardDocumentPatch,
+  type IdCardDocumentSource,
+} from "@/lib/import/id-card";
+import { buttonClass } from "@/lib/ui/button-styles";
 
 // ---------------------------------------------------------------------------
 // Wire shapes
@@ -157,6 +187,18 @@ function useCitizenshipOptions(): { value: string; label: string }[] {
 export type IdCardPersonOutcome = {
   personId: string;
   created: boolean;
+  /**
+   * Slice #23.08.Import — how many of the Document's own fields the same click
+   * filled in. Zero is a legitimate outcome: the card gave nothing mappable, or
+   * every target was already filled and write-if-empty left them alone.
+   */
+  documentFieldsWritten: number;
+  /**
+   * The field write failed after the person was created and linked. Surfaced on
+   * the row rather than swallowed — the person half succeeded, so failing the
+   * whole action would misreport what is now in the database.
+   */
+  documentFieldsFailed: boolean;
 };
 
 type Props = {
@@ -340,12 +382,79 @@ export function IdCardPersonDialog({
     [propertyId, documentId, t],
   );
 
+  // ── The document field write (Slice #23.08.Import) ───────────────────────
+  //
+  // Reads the Document back first, for two reasons: the notes append must never
+  // substitute a note a human wrote, and every field is write-if-empty, which
+  // needs to know what "empty" currently means. That read is a GET — it appends
+  // no version row.
+  //
+  // Then ONE PATCH. aiInterpretedAt always rides along, even when the mapping
+  // produced nothing: the AI genuinely did read this document, and stamping it
+  // also greys out AI Interpret on the document's own detail page, closing the
+  // same redundant second call the wizard now hides. It is not part of the
+  // version snapshot, so a patch carrying only that appends no version row.
+  //
+  // Never throws. Returns what happened so the caller can report it without
+  // losing a person who was already created and linked.
+  const writeDocumentFields = useCallback(
+    async (values: FormValues): Promise<{ written: number; failed: boolean }> => {
+      try {
+        const card: IdCardDocumentSource = {
+          idCardNumber:       values.idCardNumber,
+          idIssuingAuthority: values.idIssuingAuthority,
+          idValidFrom:        values.idValidFrom,
+          idValidUntil:       values.idValidUntil,
+          firstName:          values.firstName,
+          lastName:           values.lastName,
+        };
+
+        let current: IdCardDocumentCurrent = {};
+        const cur = await fetch(`/api/documents/${encodeURIComponent(documentId)}`);
+        if (cur.redirected) throw new Error(t("sessionExpired"));
+        if (cur.ok) {
+          current = (await cur.json()) as IdCardDocumentCurrent;
+        }
+        // A failed read is NOT fatal and must not fall through to an empty
+        // `current`: that would read as "every field is blank" and could
+        // overwrite real values. Treat it as a failed write instead.
+        else {
+          return { written: 0, failed: true };
+        }
+
+        const patch = documentFieldsFromIdCard(card, current);
+
+        const res = await fetch(`/api/documents/${encodeURIComponent(documentId)}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...patch, aiInterpretedAt: new Date().toISOString() }),
+        });
+        if (res.redirected) throw new Error(t("sessionExpired"));
+        if (!res.ok) return { written: 0, failed: true };
+
+        return { written: idCardDocumentFieldCount(patch), failed: false };
+      } catch {
+        return { written: 0, failed: true };
+      }
+    },
+    [documentId, t],
+  );
+
   const finish = useCallback(
-    async (personId: string, created: boolean) => {
+    async (
+      personId: string,
+      created: boolean,
+      doc: { written: number; failed: boolean },
+    ) => {
       await queryClient.invalidateQueries({ queryKey: ["people"] });
       await queryClient.invalidateQueries({ queryKey: ["persons"] });
       await queryClient.invalidateQueries({ queryKey: ["documents"] });
-      onDone({ personId, created });
+      onDone({
+        personId,
+        created,
+        documentFieldsWritten: doc.written,
+        documentFieldsFailed: doc.failed,
+      });
     },
     [queryClient, onDone],
   );
@@ -356,13 +465,17 @@ export function IdCardPersonDialog({
       setError(null);
       try {
         await linkPerson(personId);
-        await finish(personId, false);
+        // The card's own fields are independent of whether its holder turned
+        // out to be new: this branch writes them too. The values are the raw
+        // extraction, since the review form only renders on the create branch.
+        const doc = await writeDocumentFields(getValues());
+        await finish(personId, false, doc);
       } catch (err) {
         setBusy(false);
         setError(err instanceof Error ? err.message : t("linkError"));
       }
     },
-    [linkPerson, finish, t],
+    [linkPerson, writeDocumentFields, getValues, finish, t],
   );
 
   const doCreate = useCallback(
@@ -387,13 +500,17 @@ export function IdCardPersonDialog({
         if (!personId) throw new Error(t("createError"));
 
         await linkPerson(personId);
-        await finish(personId, true);
+        // Uses `values` — the CORRECTED form values, not the raw extraction.
+        // Fixing a misread card number in the review form fixes what lands in
+        // the Document's nrDocument too, with no second set of inputs.
+        const doc = await writeDocumentFields(values);
+        await finish(personId, true, doc);
       } catch (err) {
         setBusy(false);
         setError(err instanceof Error ? err.message : t("createError"));
       }
     },
-    [linkPerson, finish, t],
+    [linkPerson, writeDocumentFields, finish, t],
   );
 
   // ── Render ───────────────────────────────────────────────────────────────
@@ -416,6 +533,43 @@ export function IdCardPersonDialog({
     phase === "ready" &&
     isCreateBranch({ matchCandidate, possibleMatches, forceCreate });
 
+  // ── Slice #23.08.Import: what this click will also write to the Document ──
+  //
+  // Sourced from form.watch(), not the getValues() snapshot above, so the
+  // preview tracks a card number corrected in the review form as it is typed.
+  // getValues() does not re-render, which would leave the preview showing the
+  // model's original misreading right up until the moment it was overwritten.
+  const [
+    wLastName, wFirstName, wIdCardNumber, wIdIssuingAuthority, wIdValidFrom, wIdValidUntil,
+  ] = form.watch([
+    "lastName", "firstName", "idCardNumber", "idIssuingAuthority", "idValidFrom", "idValidUntil",
+  ]);
+
+  // Built against an EMPTY current document on purpose: this shows what the
+  // CARD offers, not a promise about which targets are still blank. The real
+  // write-if-empty decision is made against a fresh read at submit time, and
+  // the hint string under the list says exactly that.
+  const docPreview: IdCardDocumentPatch = documentFieldsFromIdCard(
+    {
+      lastName:           wLastName,
+      firstName:          wFirstName,
+      idCardNumber:       wIdCardNumber,
+      idIssuingAuthority: wIdIssuingAuthority,
+      idValidFrom:        wIdValidFrom,
+      idValidUntil:       wIdValidUntil,
+    },
+    {},
+  );
+  const docPreviewRows = (
+    [
+      [t("docFieldTitle"),          docPreview.title],
+      [t("docFieldNrDocument"),     docPreview.nrDocument],
+      [t("docFieldDateDocument"),   docPreview.dateDocument],
+      [t("docFieldDateValidUntil"), docPreview.dateValidUntil],
+      [t("docFieldSubject"),        docPreview.subject],
+    ] as const
+  ).filter((row): row is readonly [string, string] => Boolean(row[1]));
+
   const unmappedEntries = Object.entries(unmappedRaw);
   const addressWarnFields = new Set(
     Object.entries(ADDRESS_FIELD_MAP)
@@ -437,11 +591,28 @@ export function IdCardPersonDialog({
           </h2>
           <p className="mt-2 text-sm text-fade dark:text-zinc-400">{fatalError}</p>
           <div className="mt-4 flex justify-end">
+            {/*
+              Slice #23.08.Import — converted to buttonClass. It was left
+              hand-written by #23.05.UX because it carries no hand-written
+              disabled-opacity utility, which is the only thing
+              button-styles-single-source.test.ts greps for, so the test never
+              saw it. The bare `hover:bg-cta-d` it used would also have
+              repainted it on hover had it ever been disabled. Same class of
+              leftover #23.06.Import found in coordinate-property-dialog.tsx,
+              and the same fix.
+
+              ⚠️ Note the careful wording above. That test greps raw FILE TEXT
+              and cannot tell a class string from a comment, so spelling the
+              utility out literally here makes this comment an offender and
+              fails the build — which is exactly what happened when this one
+              was first written. Describe the utility; never quote it inside
+              src/.
+            */}
             <button
               type="button"
               autoFocus
               onClick={onClose}
-              className="inline-flex items-center rounded-md bg-cta px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-cta-d"
+              className={buttonClass({ variant: "primary", size: "lg" })}
             >
               {t("extractErrorDismiss")}
             </button>
@@ -498,6 +669,36 @@ export function IdCardPersonDialog({
         <p className="mt-2 text-xs text-fade dark:text-zinc-400">
           {t("searchedFor", { name: searchedName })}
         </p>
+      )}
+
+      {/*
+        Slice #23.08.Import — the document write, shown before it happens.
+
+        Placed as a sibling of ScanConfidenceWarning rather than inside
+        `showForm`, so it renders on the confirm-existing branch too: that
+        branch writes these fields as well, and it is the branch where the user
+        never sees the review form, so it is the one where an unannounced write
+        would be genuinely invisible. Same principle as #23.07.Import's
+        tarla/parcela inputs — a value the system is about to store is shown
+        first, never inferred silently.
+      */}
+      {docPreviewRows.length > 0 && (
+        <div className="mt-3 rounded-md border border-wire bg-white px-3 py-2 dark:border-zinc-700 dark:bg-zinc-950">
+          <p className="text-xs font-semibold text-ink dark:text-zinc-300">
+            {t("docFieldsTitle")}
+          </p>
+          <ul className="mt-1 flex flex-col gap-0.5">
+            {docPreviewRows.map(([label, value]) => (
+              <li key={label} className="flex gap-2 text-xs">
+                <span className="w-32 shrink-0 text-fade dark:text-zinc-400">{label}</span>
+                <span className="min-w-0 flex-1 break-words text-ink dark:text-zinc-200">
+                  {value}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-1.5 text-xs text-fade dark:text-zinc-400">{t("docFieldsHint")}</p>
+        </div>
       )}
 
       {showForm && (
