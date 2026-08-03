@@ -45,7 +45,8 @@ DECLARE
     'entity_metadata', 'entity_provenance_log', 'entity_metadata_version',
     'entity_cross_reference', 'entity_tag',
     'calculation_run', 'calculation_run_output',
-    'time_frame_setting'
+    'time_frame_setting',
+    'property_corner_source'
   ];
   t       text;
   missing text[] := '{}';
@@ -60,7 +61,7 @@ BEGIN
   END LOOP;
 
   IF array_length(missing, 1) IS NULL THEN
-    RAISE NOTICE 'PRE-FLIGHT: all 12 tables already present. This run will be a no-op.';
+    RAISE NOTICE 'PRE-FLIGHT: all 13 tables already present. This run will be a no-op.';
   ELSE
     RAISE NOTICE 'PRE-FLIGHT: % table(s) missing and about to be created: %',
       array_length(missing, 1), array_to_string(missing, ', ');
@@ -423,7 +424,41 @@ ON CONFLICT (key) DO NOTHING;
 
 
 -- ===========================================================================
--- 7. COLUMN DRIFT -- columns added by migrations after supabase_schema_full.sql
+-- 7. property_corner_source                          (migration_068)
+-- ===========================================================================
+--
+-- Slice #23.06.Import. One row = "the corners of property_id were parsed out
+-- of document_id". The UNIQUE index on document_id IS the lock every creation
+-- path claims through (`ON CONFLICT (document_id) DO NOTHING … RETURNING`;
+-- zero rows back means someone else already claimed it -> 409).
+--
+-- Created here in its FINAL shape, per the CLAUDE.md rule -- there is no later
+-- migration reshaping it, so final and creating shape happen to coincide today.
+--
+-- There is NO backfill and none is possible: nothing in the database recorded
+-- which document produced which existing Property. Repairing a database with
+-- this file leaves pre-existing documents unlocked, exactly as applying
+-- migration_068 to the dev database does.
+
+CREATE TABLE IF NOT EXISTS property_corner_source (
+  id          uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  document_id uuid        NOT NULL
+                            REFERENCES document(id) ON DELETE CASCADE,
+  property_id uuid        NOT NULL
+                            REFERENCES property(id) ON DELETE CASCADE,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  created_by  text
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS property_corner_source_document_unique
+  ON property_corner_source (document_id);
+
+CREATE INDEX IF NOT EXISTS property_corner_source_property_idx
+  ON property_corner_source (property_id);
+
+
+-- ===========================================================================
+-- 8. COLUMN DRIFT -- columns added by migrations after supabase_schema_full.sql
 --    was last hand-maintained. All nullable adds, so all safe on live data.
 -- ===========================================================================
 
@@ -518,7 +553,7 @@ ALTER TABLE property
 
 
 -- ===========================================================================
--- 8. group_member -- NOT auto-repaired on purpose
+-- 9. group_member -- NOT auto-repaired on purpose
 -- ===========================================================================
 --
 -- migration_051 replaced group_member's (property_id, person_id, document_id)
@@ -552,7 +587,7 @@ END $$;
 
 
 -- ===========================================================================
--- 9. POST-FLIGHT -- confirm every expected table now exists
+-- 10. POST-FLIGHT -- confirm every expected table now exists
 -- ===========================================================================
 
 DO $$
@@ -563,7 +598,8 @@ DECLARE
     'entity_metadata', 'entity_provenance_log', 'entity_metadata_version',
     'entity_cross_reference', 'entity_tag',
     'calculation_run', 'calculation_run_output',
-    'time_frame_setting'
+    'time_frame_setting',
+    'property_corner_source'
   ];
   t       text;
   missing text[] := '{}';
@@ -578,7 +614,7 @@ BEGIN
   END LOOP;
 
   IF array_length(missing, 1) IS NULL THEN
-    RAISE NOTICE 'POST-FLIGHT OK: all 12 tables present.';
+    RAISE NOTICE 'POST-FLIGHT OK: all 13 tables present.';
   ELSE
     RAISE EXCEPTION 'POST-FLIGHT FAILED: still missing %', array_to_string(missing, ', ');
   END IF;

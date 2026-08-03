@@ -4,7 +4,7 @@
 -- GENERATED FILE -- DO NOT EDIT BY HAND.
 -- Regenerate with:  .\scripts\Export-SupabaseSchema.ps1
 --
--- Generated : 2026-07-26 08:06
+-- Generated : 2026-08-03 13:17
 -- Source    : local Docker database (ga40db @ ga40prj-postgres)
 --
 -- Applies the complete schema from scratch after running
@@ -935,6 +935,19 @@ CREATE TABLE public.property_corner (
 
 
 --
+-- Name: property_corner_source; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.property_corner_source (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    document_id uuid NOT NULL,
+    property_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    created_by text
+);
+
+
+--
 -- Name: property_document; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1575,6 +1588,14 @@ ALTER TABLE ONLY public.property_corner
 
 
 --
+-- Name: property_corner_source property_corner_source_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.property_corner_source
+    ADD CONSTRAINT property_corner_source_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: property_document property_paperwork_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1892,6 +1913,20 @@ CREATE INDEX property_corner_geom_idx ON public.property_corner USING gist (((pu
 --
 
 CREATE UNIQUE INDEX property_corner_property_seq_unique ON public.property_corner USING btree (property_id, sequence_no);
+
+
+--
+-- Name: property_corner_source_document_unique; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX property_corner_source_document_unique ON public.property_corner_source USING btree (document_id);
+
+
+--
+-- Name: property_corner_source_property_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX property_corner_source_property_idx ON public.property_corner_source USING btree (property_id);
 
 
 --
@@ -2466,6 +2501,22 @@ ALTER TABLE ONLY public.property_address
 
 ALTER TABLE ONLY public.property_corner
     ADD CONSTRAINT property_corner_property_id_fkey FOREIGN KEY (property_id) REFERENCES public.property(id) ON DELETE CASCADE;
+
+
+--
+-- Name: property_corner_source property_corner_source_document_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.property_corner_source
+    ADD CONSTRAINT property_corner_source_document_id_fkey FOREIGN KEY (document_id) REFERENCES public.document(id) ON DELETE CASCADE;
+
+
+--
+-- Name: property_corner_source property_corner_source_property_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.property_corner_source
+    ADD CONSTRAINT property_corner_source_property_id_fkey FOREIGN KEY (property_id) REFERENCES public.property(id) ON DELETE CASCADE;
 
 
 --

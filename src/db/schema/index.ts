@@ -1559,3 +1559,60 @@ export const timeFrameSetting = pgTable("time_frame_setting", {
   descriptionRo: text("description_ro"),
   updatedAt:     timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+// ---------------------------------------------------------------------------
+// property_corner_source — which document's coordinate file built which
+// Property  (Slice #23.06.Import, migration_068)
+// ---------------------------------------------------------------------------
+//
+// One row = "the corners of property_id were parsed out of document_id".
+//
+// Before this table the same fact was expressed by writing provenance =
+// COORDINATE_FILE on the document and reading it back as an "already
+// processed" flag. That failed for the wizard path, which stamps DOC_FILE
+// (classifyFileSource maps by extension and a .txt is indistinguishable from
+// any other text file by name), so the Process panel offered to process an
+// already-processed document and created a duplicate Property.
+//
+// THE UNIQUE INDEX IS THE LOCK. Every creation path claims with
+// `INSERT … ON CONFLICT (document_id) DO NOTHING … RETURNING`, and zero rows
+// back means someone else already claimed it → 409. Atomic by construction;
+// no SELECT … FOR UPDATE, no advisory lock, no provenance overloading.
+//
+// Provenance is still stamped where the code has parsed proof — it is honest
+// metadata now, not a lock.
+//
+// No backfill: nothing in the DB recorded which document produced which
+// existing Property. Pre-migration documents stay unlocked (accepted).
+//
+// Soft-delete: `property.deleted_at` means the ON DELETE CASCADE below never
+// fires on the normal delete path, so `softDeleteProperty` hard-deletes the
+// link row explicitly (see src/lib/properties/corner-source.ts).
+
+export const propertyCornerSource = pgTable(
+  "property_corner_source",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+
+    documentId: uuid("document_id")
+      .notNull()
+      .references(() => document.id, { onDelete: "cascade" }),
+
+    propertyId: uuid("property_id")
+      .notNull()
+      .references(() => property.id, { onDelete: "cascade" }),
+
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+
+    // Email from getCurrentUserEmail(); null under UAT_NO_AUTH and for
+    // sessionless paths, matching the updated_by convention from #21.02.
+    createdBy: text("created_by"),
+  },
+  (t) => [
+    // Both the business rule (one coordinate file → one Property) and the
+    // ON CONFLICT target the creation paths infer against.
+    uniqueIndex("property_corner_source_document_unique").on(t.documentId),
+  ],
+);
