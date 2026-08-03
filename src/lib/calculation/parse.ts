@@ -27,6 +27,11 @@
  */
 
 import type { CornerCode, S70Point } from "./geometry";
+// Slice #23.03.Import: this module used to carry its own private `isStereo`,
+// byte-identical to the one in the shared Stereo 70 parser. It was the THIRD
+// copy in the repo (the other two were consolidated into stereo70-parse.ts
+// earlier); a range that lives in three places is a range that drifts in two.
+import { isStereo } from "@/lib/geo/stereo70-parse";
 
 export class ParseError extends Error {
   constructor(message: string) {
@@ -57,12 +62,6 @@ export type ParsedDivisionFile = {
   /** Sum of the owner percentages as written (for the preview's transparency). */
   percentTotal: number;
 };
-
-/** True if n is in the Stereo70 coordinate range (100 000 – 999 999). */
-function isStereo(n: number): boolean {
-  const i = Math.floor(Math.abs(n));
-  return i >= 100_000 && i <= 999_999;
-}
 
 function num(token: string): number {
   return parseFloat(token.replace(",", "."));
