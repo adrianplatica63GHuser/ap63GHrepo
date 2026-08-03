@@ -521,7 +521,9 @@ export function BulkImportDialog({
 
   // Read by the import effect, which must not re-run when the picks change.
   const provenanceRef = useRef(provenanceForEntry);
-  provenanceRef.current = provenanceForEntry;
+  useEffect(() => {
+    provenanceRef.current = provenanceForEntry;
+  }, [provenanceForEntry]);
 
   const updateResult = useCallback(
     (path: string, patch: Partial<ImportResult>) =>
