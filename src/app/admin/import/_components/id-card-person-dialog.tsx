@@ -10,20 +10,21 @@
  *
  * ── Why it does NOT create a document ─────────────────────────────────────────
  *
- * The orphaned PersonClassifyPanel (now reachable only at /admin/import-legacy)
- * creates a CARTE_IDENTITATE Document and uploads the image as page 1. In the
- * live wizard the bulk import has ALREADY done exactly that for this entry —
+ * The orphaned PersonClassifyPanel — deleted in Slice #23.04.Import — created a
+ * CARTE_IDENTITATE Document and uploaded the image as page 1. In the live
+ * wizard the bulk import has ALREADY done exactly that for this entry —
  * createDocument -> uploadPage -> associateDocumentsWithProperty — before this
- * dialog can be opened. Porting that step would produce a second Document for
- * one image. So this dialog receives the existing `documentId` and only links.
+ * dialog can be opened. Porting that step would have produced a second Document
+ * for one image. So this dialog receives the existing `documentId` and only
+ * links.
  *
  * ── The defect this exists to fix ────────────────────────────────────────────
  *
- * PersonClassifyPanel calls POST /api/people unconditionally: no CNP check, no
+ * PersonClassifyPanel called POST /api/people unconditionally: no CNP check, no
  * fuzzy fallback, no decision. Re-importing the same card, or a single OCR slip
- * in a name, silently creates a duplicate person. Every other AI-extraction
+ * in a name, silently created a duplicate person. Every other AI-extraction
  * path in this app resolves first and requires an explicit confirm/pick/create/
- * skip, and this one now does too — through the same PersonResolutionDialog the
+ * skip, and this one does too — through the same PersonResolutionDialog the
  * document-party path uses.
  *
  * ── Order of operations ──────────────────────────────────────────────────────
