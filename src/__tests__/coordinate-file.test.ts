@@ -1,20 +1,30 @@
 /**
- * Unit tests for src/lib/import/coordinate-file.ts  (Slice #23.00.Import)
+ * Unit tests for src/lib/import/coordinate-file.ts
  *
- * Covers: isCoordinateFileName, coordinateCandidates, nicknameFromFolderName,
- * and cornersEqual (added by Slice #23.02.Import).
+ * Covers: isCoordinateFileName, coordinateCandidates, nicknameFromFolderName
+ * (Slice #23.00.Import), cornersEqual (#23.02.Import), and
+ * coordinateNameConfidence + cadastralSuggestionFromFolderName (#23.07.Import).
  *
- * The point of these helpers is that they are boring and predictable — the
- * folder no longer has to be decoded, because the folder IS the property. So
- * the tests lean hard on the cases the retired digit-prefix heuristic used to
- * get wrong ("3 Calea Victoriei", "2024-Arhiva"): nothing cadastral may be
- * inferred from a folder name any more.
+ * Most of these helpers are boring and predictable on purpose — the folder no
+ * longer has to be decoded, because the folder IS the property. The #23.00
+ * tests therefore lean hard on the cases the retired digit-prefix heuristic
+ * used to get wrong ("3 Calea Victoriei", "2024-Arhiva"): a nickname decodes
+ * nothing cadastral, ever.
+ *
+ * `cadastralSuggestionFromFolderName` is the one helper that reads a folder
+ * name cadastrally again, and the tests pin the two things that make it a
+ * SUGGESTION rather than the retired inference: it demands the full
+ * "<tarla>-<parcela>" shape (so "3 Calea Victoriei" yields nothing at all),
+ * and it emits the same slash-separated form the Process route writes, so the
+ * two ways into a Property cannot disagree about what "47per2" means.
  */
 
 import {
   COORDINATE_FILE_EXTS,
   CORNER_EPSILON_DEG,
+  cadastralSuggestionFromFolderName,
   cornersEqual,
+  coordinateNameConfidence,
   isCoordinateFileName,
   coordinateCandidates,
   nicknameFromFolderName,
@@ -295,5 +305,184 @@ describe("cornersEqual", () => {
     expect(
       cornersEqual([{ lat: Infinity, lon: 26 }], [{ lat: Infinity, lon: 26 }]),
     ).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// coordinateNameConfidence  (Slice #23.07.Import)
+// ---------------------------------------------------------------------------
+
+describe("coordinateNameConfidence", () => {
+  it("is strong for Adrian's real coordinate file", () => {
+    // The example from the UAT report: the convention AND the cadastral
+    // identifiers, in one name.
+    expect(coordinateNameConfidence("coord 47per2-225per3per24-2716.txt")).toBe(
+      "strong",
+    );
+  });
+
+  it("folds case", () => {
+    expect(coordinateNameConfidence("COORD_47.TXT")).toBe("strong");
+    expect(coordinateNameConfidence("Coord 47.txt")).toBe("strong");
+    expect(coordinateNameConfidence("CoOrD.csv")).toBe("strong");
+  });
+
+  it("accepts the written-out Romanian form of the same convention", () => {
+    expect(coordinateNameConfidence("coordonate.txt")).toBe("strong");
+    expect(coordinateNameConfidence("Coordonate teren.csv")).toBe("strong");
+  });
+
+  it("ignores leading whitespace, because foldRomanian trims", () => {
+    expect(coordinateNameConfidence("  coord 47.txt")).toBe("strong");
+  });
+
+  it("folds Romanian diacritics elsewhere in the name", () => {
+    // Both encodings of s-comma-below: U+0219 (correct) and U+015F (the legacy
+    // cedilla form some OCR and older fonts still emit). Neither may change
+    // the answer, and neither may throw.
+    expect(coordinateNameConfidence("coord \u00cemprejmuire Tarla.txt")).toBe("strong");
+    expect(coordinateNameConfidence("coord \u0218oseaua.txt")).toBe("strong");
+    expect(coordinateNameConfidence("coord \u015eoseaua.txt")).toBe("strong");
+  });
+
+  it("is weak when a shortlisted extension carries an unconventional name", () => {
+    expect(coordinateNameConfidence("puncte.txt")).toBe("weak");
+    expect(coordinateNameConfidence("47per2-225per3.txt")).toBe("weak");
+    expect(coordinateNameConfidence("date.csv")).toBe("weak");
+  });
+
+  it("requires the convention at the START of the name, not anywhere in it", () => {
+    expect(coordinateNameConfidence("documente-coord.txt")).toBe("weak");
+    expect(coordinateNameConfidence("export coord final.txt")).toBe("weak");
+  });
+
+  it("handles a name that BEGINS with a diacritic", () => {
+    // The \b trap in one test: a word-boundary assertion can never match at
+    // offset 0 of a string starting with a non-ASCII letter, so an
+    // implementation written that way would misbehave here rather than simply
+    // answer "weak". (CLAUDE.md: \b is ASCII-only, never use it on Romanian.)
+    expect(coordinateNameConfidence("\u00cemprejmuire coord.txt")).toBe("weak");
+    expect(coordinateNameConfidence("\u0218tampile.txt")).toBe("weak");
+  });
+
+  it("is none when the extension was never a candidate — the name cannot promote it", () => {
+    // The convention RANKS candidates; it never creates one. A .pdf named
+    // "coord" is still not something coordinateCandidates would offer.
+    expect(coordinateNameConfidence("coord 47.pdf")).toBe("none");
+    expect(coordinateNameConfidence("coordonate.docx")).toBe("none");
+    expect(coordinateNameConfidence("coord.jpg")).toBe("none");
+  });
+
+  it("is none for a name with no extension at all", () => {
+    expect(coordinateNameConfidence("coord")).toBe("none");
+    expect(coordinateNameConfidence("")).toBe("none");
+  });
+
+  it("agrees with isCoordinateFileName on exactly which names are none", () => {
+    // The two must never disagree: "none" is DEFINED as "not a candidate".
+    const names = [
+      "coord 47.txt",
+      "puncte.csv",
+      "coord.pdf",
+      "scan.jpg",
+      "raport.pdf.txt",
+      "coordonate.txt.pdf",
+      "",
+    ];
+    for (const name of names) {
+      expect(coordinateNameConfidence(name) === "none").toBe(
+        !isCoordinateFileName(name),
+      );
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// cadastralSuggestionFromFolderName  (Slice #23.07.Import)
+// ---------------------------------------------------------------------------
+
+describe("cadastralSuggestionFromFolderName", () => {
+  it("suggests both identifiers from a real property folder name", () => {
+    expect(
+      cadastralSuggestionFromFolderName("47per2-225per3per24-2716 Prisecaru"),
+    ).toEqual({ tarlaSola: "47/2", parcela: "225/3/24" });
+  });
+
+  it("emits the SLASH form, the same one the Process route writes", () => {
+    // This is the whole point of the perToSlash step. /api/documents/[id]/
+    // process has always applied it before writing tarla_sola / parcela, so
+    // suggesting the raw "47per2" here would give two Properties whose
+    // cadastral identifiers differ only in encoding — the asymmetry this
+    // slice exists to remove, reintroduced one layer down.
+    const s = cadastralSuggestionFromFolderName("47per2-225per3");
+    expect(s.tarlaSola).toBe("47/2");
+    expect(s.parcela).toBe("225/3");
+    expect(s.tarlaSola).not.toContain("per");
+    expect(s.parcela).not.toContain("per");
+  });
+
+  it("suggests nothing for a name with no <tarla>-<parcela> separator", () => {
+    // parseFolderName alone would hand back the WHOLE name as the tarla here,
+    // which is the #23.00 false positive wearing a different hat.
+    expect(cadastralSuggestionFromFolderName("3 Calea Victoriei")).toEqual({
+      tarlaSola: "",
+      parcela: "",
+    });
+    expect(cadastralSuggestionFromFolderName("2716 Prisecaru")).toEqual({
+      tarlaSola: "",
+      parcela: "",
+    });
+  });
+
+  it("suggests nothing for a name that is not cadastral at all", () => {
+    expect(cadastralSuggestionFromFolderName("Documente generale")).toEqual({
+      tarlaSola: "",
+      parcela: "",
+    });
+    expect(cadastralSuggestionFromFolderName("Arhiva 2024")).toEqual({
+      tarlaSola: "",
+      parcela: "",
+    });
+  });
+
+  it("suggests nothing for an empty or blank name", () => {
+    expect(cadastralSuggestionFromFolderName("")).toEqual({
+      tarlaSola: "",
+      parcela: "",
+    });
+    expect(cadastralSuggestionFromFolderName("   ")).toEqual({
+      tarlaSola: "",
+      parcela: "",
+    });
+  });
+
+  it("still suggests for a digit-led non-cadastral name that HAS a separator", () => {
+    // "2024-Arhiva" is the accepted residual false positive, and pinning it
+    // is deliberate: the design's answer is not that the guess is always
+    // right, it is that the user sees the guess in a labelled, editable field
+    // and can clear it before anything is written. If a future change makes
+    // this return blanks, that is a behaviour change worth noticing.
+    expect(cadastralSuggestionFromFolderName("2024-Arhiva")).toEqual({
+      tarlaSola: "2024",
+      parcela: "Arhiva",
+    });
+  });
+
+  it("never returns null or undefined for either field", () => {
+    // Both values are bound straight to controlled text inputs; an undefined
+    // would flip the input to uncontrolled and React would warn on first edit.
+    for (const name of ["", "x", "1-2", "3 Calea Victoriei", "47per2-225per3-rest"]) {
+      const s = cadastralSuggestionFromFolderName(name);
+      expect(typeof s.tarlaSola).toBe("string");
+      expect(typeof s.parcela).toBe("string");
+    }
+  });
+
+  it("does not disturb the nickname, which still decodes nothing", () => {
+    // The two helpers read the same name and must keep answering differently:
+    // the nickname is a label the user recognises, the suggestion is data.
+    const folder = "47per2-225per3per24-2716 Prisecaru";
+    expect(nicknameFromFolderName(folder)).toBe(folder);
+    expect(cadastralSuggestionFromFolderName(folder).tarlaSola).toBe("47/2");
   });
 });
