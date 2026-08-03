@@ -22,9 +22,10 @@
  * but only as descriptive labels for browsing — they no longer link anything.
  *
  * WHAT THIS DIALOG DECIDES
- *   1. The Property — created now (nickname pre-filled from the folder name)
- *      or picked from the existing ones (re-importing more documents into a
- *      property created by an earlier run).
+ *   1. The Property — created now (nickname, and since Slice #23.07.Import
+ *      tarla + parcela, pre-filled from the folder name) or picked from the
+ *      existing ones (re-importing more documents into a property created by
+ *      an earlier run).
  *   2. Optionally, which coordinate file in the folder defines its corners.
  *      Candidates are shortlisted by extension and then actually parsed, so
  *      the corner count shown is real, not a guess from the filename.
@@ -33,8 +34,30 @@
  *      hand-fixed corner order (the bow-tie reorder case), so the user is
  *      shown both counts and asked.
  *
- * A newly created property receives its corners inside the POST that creates
- * it, so they land in version 0 rather than as an immediate v0 -> v1 edit.
+ * A newly created property receives its corners — and its tarla/parcela —
+ * inside the POST that creates it, so they land in version 0 rather than as an
+ * immediate v0 -> v1 edit.
+ *
+ * TARLA / PARCELA ARE A SUGGESTION, NOT AN INFERENCE  (Slice #23.07.Import)
+ * ────────────────────────────────────────────────────────────────────────
+ * The two inputs on the create-new branch are pre-filled from the folder name
+ * via `cadastralSuggestionFromFolderName`, which composes the same
+ * `parseFolderName` Slice #23.00.Import retired from this wizard. That is not
+ * a regression and CLAUDE.md's standing "do not reintroduce `parseFolderName`
+ * into the import wizard" rule still holds: what it forbids is a value the
+ * system decides ALONE and writes without showing anyone. Here the value is
+ * visible, labelled as a suggestion in Romanian, editable, and blank whenever
+ * the name does not carry the "<tarla>-<parcela>" shape — the user confirms it
+ * before the POST. Adrian asked for this because the OTHER path into a
+ * Property (the Process panel on a document detail page) has always filled
+ * these fields, and a Property born in the wizard arriving with them empty was
+ * an asymmetry he could see.
+ *
+ * The inputs render unconditionally. `lookup_property_type.show_tarla_parcela`
+ * governs the panel on the Property form, but this branch picks no property
+ * type, so there is no flag to consult — Adrian's call, made knowing a
+ * Property later typed with the flag off would hold values its own detail form
+ * does not show.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -42,7 +65,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import type { FSEntry, FSFileEntry } from "@/lib/import/folder-utils";
 import {
+  cadastralSuggestionFromFolderName,
   coordinateCandidates,
+  coordinateNameConfidence,
   nicknameFromFolderName,
 } from "@/lib/import/coordinate-file";
 import { inferProvenance } from "@/lib/metadata/provenance-rules";
@@ -111,6 +136,18 @@ type Props = {
 
 const PAGE_SIZE = 10;
 const NO_COORDINATE_FILE = "";
+
+/**
+ * Shared text-input classes for this dialog's three free-text fields
+ * (nickname, tarla, parcela), so they cannot drift apart.
+ *
+ * A plain constant rather than a helper with options: unlike `buttonClass`
+ * there is no variant or state to express here, and per the Tailwind
+ * stylesheet-order gotcha in CLAUDE.md a caller must never be able to override
+ * one of these utilities by appending a conflicting one anyway.
+ */
+const TEXT_INPUT_CLASS =
+  "rounded-md border border-wire bg-white px-2 py-1.5 text-sm text-ink shadow-sm focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100";
 
 // ---------------------------------------------------------------------------
 // API helpers
@@ -197,6 +234,19 @@ export function PropertyStepDialog({
   const [mode, setMode] = useState<Mode>("new");
   const [nickname, setNickname] = useState(() => nicknameFromFolderName(rootFolderName));
 
+  // Slice #23.07.Import — suggested cadastral identifiers. Computed once from
+  // the folder name (stable for this dialog's life, exactly like `nickname`)
+  // and then owned by the user: every later read comes from the input state,
+  // never from the folder name again.
+  const cadastralSuggestion = useMemo(
+    () => cadastralSuggestionFromFolderName(rootFolderName),
+    [rootFolderName],
+  );
+  const [tarlaSola, setTarlaSola] = useState(cadastralSuggestion.tarlaSola);
+  const [parcela, setParcela] = useState(cadastralSuggestion.parcela);
+  const hasCadastralSuggestion =
+    cadastralSuggestion.tarlaSola !== "" || cadastralSuggestion.parcela !== "";
+
   const [selectedCoordPath, setSelectedCoordPath] = useState<string>(NO_COORDINATE_FILE);
   const [replaceCorners, setReplaceCorners] = useState(false);
 
@@ -263,10 +313,25 @@ export function PropertyStepDialog({
       if (!mounted) return;
 
       // Pre-select only when exactly ONE file actually yielded corners — that
-      // is a fact, not a guess. With two or more the user chooses: preferring
-      // "the one with the most corners" would let a stray CSV win silently.
+      // is a fact, not a guess.
+      //
+      // Slice #23.07.Import adds the two-or-more case. #23.00 left it to the
+      // user on the reasoning that "most corners wins" would let a stray CSV
+      // take it silently — true, and a name-convention match is better
+      // evidence than a corner count, because it is a statement the file's
+      // author made on purpose. So exactly ONE candidate matching the "coord…"
+      // convention is pre-selected; two or more matching it is a tie the name
+      // cannot break, and the user chooses as before. Every candidate stays
+      // visible and selectable in both cases — this only moves the radio.
       const usable = parsed.filter((c) => (c.corners?.length ?? 0) > 0);
-      if (usable.length === 1) setSelectedCoordPath(usable[0].entry.path);
+      if (usable.length === 1) {
+        setSelectedCoordPath(usable[0].entry.path);
+      } else if (usable.length > 1) {
+        const strong = usable.filter(
+          (c) => coordinateNameConfidence(c.entry.name) === "strong",
+        );
+        if (strong.length === 1) setSelectedCoordPath(strong[0].entry.path);
+      }
 
       setParsing(false);
     })();
@@ -297,6 +362,29 @@ export function PropertyStepDialog({
       ? null
       : candidates.find((c) => c.entry.path === selectedCoordPath) ?? null;
   const chosenCorners = chosenCandidate?.corners ?? null;
+
+  /**
+   * Slice #23.07.Import — the file name of the ONE usable candidate when its
+   * name breaks the "coord…" convention, or null when there is nothing to say.
+   *
+   * This is Adrian's "the creator of the file may have made a mistake" case:
+   * the file parses, so it imports, and the note never blocks anything. It
+   * only points out that the two signals disagree — a correctly-formed export
+   * with an unconventional name is far more likely than the reverse, but it is
+   * also exactly what a wrong file looks like from here.
+   *
+   * Derived from `candidates` at render time rather than copied into state
+   * when the parse finishes, so there is no second copy to fall out of step
+   * with the list the user is looking at.
+   */
+  const conventionNote = useMemo(() => {
+    const usable = candidates.filter((c) => (c.corners?.length ?? 0) > 0);
+    if (usable.length !== 1) return null;
+    const only = usable[0];
+    return coordinateNameConfidence(only.entry.name) === "strong"
+      ? null
+      : only.entry.name;
+  }, [candidates]);
 
   /**
    * The conflict: an existing property that already has corners, and a
@@ -357,6 +445,14 @@ export function PropertyStepDialog({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             nickname: nickname.trim(),
+            // Slice #23.07.Import — these travel in the SAME body as the
+            // corners, for the same reason: creating the Property first and
+            // patching the cadastral fields after would open its history with
+            // a v0 -> v1 edit nobody made. `null` rather than "" for a blank
+            // field, so an untouched suggestion leaves the column NULL instead
+            // of storing an empty string.
+            tarlaSola: tarlaSola.trim() || null,
+            parcela: parcela.trim() || null,
             corners,
             // Where this property came from. A parsed cadastral file is
             // unambiguous; a hand-named empty property is a manual entry.
@@ -437,6 +533,9 @@ export function PropertyStepDialog({
   }, [
     mode,
     nickname,
+    // Slice #23.07.Import — read inside the create branch's POST body.
+    tarlaSola,
+    parcela,
     chosenCorners,
     // Slice #23.06.Import — the handler now reads the candidate itself (for
     // its path), not just its corners.
@@ -510,19 +609,57 @@ export function PropertyStepDialog({
             </div>
 
             {mode === "new" ? (
-              <label className="flex flex-col gap-1 text-xs font-medium text-ink dark:text-zinc-300">
-                {t("nicknameLabel")}
-                <input
-                  type="text"
-                  value={nickname}
-                  onChange={(e) => setNickname(e.target.value)}
-                  spellCheck={false}
-                  className="rounded-md border border-wire bg-white px-2 py-1.5 text-sm text-ink shadow-sm focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
-                />
-                <span className="font-normal text-fade dark:text-zinc-500">
-                  {t("nicknameHint")}
-                </span>
-              </label>
+              <div className="space-y-3">
+                <label className="flex flex-col gap-1 text-xs font-medium text-ink dark:text-zinc-300">
+                  {t("nicknameLabel")}
+                  <input
+                    type="text"
+                    value={nickname}
+                    onChange={(e) => setNickname(e.target.value)}
+                    spellCheck={false}
+                    className={TEXT_INPUT_CLASS}
+                  />
+                  <span className="font-normal text-fade dark:text-zinc-500">
+                    {t("nicknameHint")}
+                  </span>
+                </label>
+
+                {/*
+                  Slice #23.07.Import — the cadastral suggestion. Labelled as a
+                  suggestion in the hint below, editable, and blank when the
+                  folder name carries no "<tarla>-<parcela>" shape. See the
+                  header docblock for why this is not the retired heuristic.
+                */}
+                <div className="space-y-1">
+                  <div className="grid grid-cols-2 gap-3">
+                    <label className="flex flex-col gap-1 text-xs font-medium text-ink dark:text-zinc-300">
+                      {t("tarlaLabel")}
+                      <input
+                        type="text"
+                        value={tarlaSola}
+                        onChange={(e) => setTarlaSola(e.target.value)}
+                        spellCheck={false}
+                        className={TEXT_INPUT_CLASS}
+                      />
+                    </label>
+                    <label className="flex flex-col gap-1 text-xs font-medium text-ink dark:text-zinc-300">
+                      {t("parcelaLabel")}
+                      <input
+                        type="text"
+                        value={parcela}
+                        onChange={(e) => setParcela(e.target.value)}
+                        spellCheck={false}
+                        className={TEXT_INPUT_CLASS}
+                      />
+                    </label>
+                  </div>
+                  <p className="text-xs text-fade dark:text-zinc-500">
+                    {hasCadastralSuggestion
+                      ? t("cadastralHint")
+                      : t("cadastralHintEmpty")}
+                  </p>
+                </div>
+              </div>
             ) : (
               <div className="space-y-2">
                 <label className="flex flex-col gap-1 text-xs font-medium text-ink dark:text-zinc-300">
@@ -689,6 +826,15 @@ export function PropertyStepDialog({
                     </label>
                   </li>
                 </ul>
+
+                {!parsing && conventionNote !== null && (
+                  <p
+                    role="status"
+                    className="text-xs text-amber-700 dark:text-amber-400"
+                  >
+                    {t("coordinateNameNote", { name: conventionNote })}
+                  </p>
+                )}
               </>
             )}
           </section>
