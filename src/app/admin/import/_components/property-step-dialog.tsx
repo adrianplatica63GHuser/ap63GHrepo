@@ -37,7 +37,7 @@
  * it, so they land in version 0 rather than as an immediate v0 -> v1 edit.
  */
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import type { FSEntry, FSFileEntry } from "@/lib/import/folder-utils";
@@ -189,6 +189,24 @@ export function PropertyStepDialog({
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  /**
+   * Synchronous in-flight latch for the Confirm button (Slice #23.03.Import).
+   *
+   * `submitting` alone is not enough. Setting state does not disable the
+   * button until React has re-rendered, so every click dispatched inside that
+   * window still passes the `disabled={!canConfirm}` gate and still runs the
+   * handler. On the "new property" branch each one of those is a separate
+   * POST /api/properties, and the route has nothing to deduplicate them
+   * against — a triple-click produces three real Properties with the same
+   * nickname, and the wizard then attaches the run's documents to whichever
+   * one answered last.
+   *
+   * A ref flips in the same synchronous turn as the click, so clicks two and
+   * three return immediately. `submitting` is kept for the button's label and
+   * disabled styling; this guards correctness.
+   */
+  const inFlightRef = useRef(false);
+
   useEffect(() => {
     const id = setTimeout(() => setDebouncedQuery(query), 300);
     return () => clearTimeout(id);
@@ -302,6 +320,10 @@ export function PropertyStepDialog({
       : selectedExistingId !== null && !detailQuery.isLoading);
 
   const handleConfirm = useCallback(async () => {
+    // See inFlightRef above — this must run before the first await.
+    if (inFlightRef.current) return;
+    inFlightRef.current = true;
+
     setSubmitting(true);
     setSubmitError(null);
 
@@ -375,6 +397,10 @@ export function PropertyStepDialog({
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : String(err));
       setSubmitting(false);
+      // Release the latch ONLY on failure, so the user can correct and retry.
+      // On success the dialog is unmounted by onResolved and the latch stays
+      // closed, which is what keeps a late duplicate click from firing.
+      inFlightRef.current = false;
     }
   }, [
     mode,
