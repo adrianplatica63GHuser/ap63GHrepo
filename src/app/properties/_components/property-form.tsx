@@ -49,6 +49,7 @@ import { FieldPulseContext, usePulseRing } from "@/components/versioning/field-p
 import { highlightRingClass } from "@/lib/versioning/highlight-ring";
 import { safeMutate } from "@/lib/api/safe-mutate";
 import { inferProvenance } from "@/lib/metadata/provenance-rules";
+import { buttonClass } from "@/lib/ui/button-styles";
 
 // ---------------------------------------------------------------------------
 // Version history fetch (Slice #18.02)
@@ -883,7 +884,7 @@ export function PropertyForm({
                           title={
                             !streetViewCentroid ? t("streetViewAddress.needsCorners") : undefined
                           }
-                          className="inline-flex shrink-0 items-center rounded-md border border-wire bg-white px-2 py-1 text-xs font-medium text-ink shadow-sm hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+                          className={buttonClass({ variant: "secondary", size: "xs" })}
                         >
                           {fetchingStreetView
                             ? t("streetViewAddress.fetching")
@@ -1006,7 +1007,7 @@ export function PropertyForm({
                 type="button"
                 onClick={handleCloseTheaterMap}
                 aria-label={t("corners.theaterClose")}
-                className="rounded-md border border-wire bg-white px-3 py-1.5 text-xs font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                className={buttonClass({ variant: "secondary", size: "sm" })}
               >
                 ✕ {t("corners.theaterClose")}
               </button>
@@ -1059,7 +1060,7 @@ export function PropertyForm({
             <button
               type="button"
               onClick={() => setAssociatedEditing(true)}
-              className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+              className={buttonClass({ variant: "secondary", size: "lg" })}
             >
               {t("buttons.modify")}
             </button>
@@ -1079,7 +1080,7 @@ export function PropertyForm({
             <button
               type="submit"
               disabled={saveDisabled}
-              className="inline-flex items-center rounded-md bg-cta px-5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d disabled:cursor-not-allowed disabled:opacity-50"
+              className={buttonClass({ variant: "primary", size: "lg" })}
             >
               {t("buttons.save")}
             </button>
@@ -1087,7 +1088,7 @@ export function PropertyForm({
               type="button"
               onClick={() => setShowCannotDelete(true)}
               disabled={submitting}
-              className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-red-600 shadow-sm hover:bg-red-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-red-950/30"
+              className={buttonClass({ variant: "danger", size: "lg" })}
             >
               {t("buttons.delete")}
             </button>
@@ -1098,7 +1099,7 @@ export function PropertyForm({
           <button
             type="submit"
             disabled={saveDisabled}
-            className="inline-flex items-center rounded-md bg-cta px-5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d disabled:cursor-not-allowed disabled:opacity-50"
+            className={buttonClass({ variant: "primary", size: "lg" })}
           >
             {t("buttons.save")}
           </button>
@@ -1107,7 +1108,7 @@ export function PropertyForm({
               type="button"
               onClick={() => setConfirmDelete(true)}
               disabled={submitting}
-              className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-red-600 shadow-sm hover:bg-red-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-red-950/30"
+              className={buttonClass({ variant: "danger", size: "lg" })}
             >
               {t("buttons.delete")}
             </button>
@@ -1116,7 +1117,7 @@ export function PropertyForm({
             type="button"
             onClick={() => router.push("/properties")}
             disabled={submitting}
-            className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+            className={buttonClass({ variant: "secondary", size: "lg" })}
           >
             {t("buttons.cancel")}
           </button>
@@ -1351,7 +1352,7 @@ function ConfirmDialog({
               type="button"
               onClick={onNo}
               disabled={busy}
-              className="inline-flex items-center rounded-md border border-wire bg-white px-4 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+              className={buttonClass({ variant: "secondary", size: "lg" })}
             >
               {noLabel}
             </button>
@@ -1360,11 +1361,10 @@ function ConfirmDialog({
             type="button"
             onClick={onYes}
             disabled={busy}
-            className={
-              isConfirm
-                ? "inline-flex items-center rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 disabled:opacity-50"
-                : "inline-flex items-center rounded-md bg-cta px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-cta-d disabled:opacity-50"
-            }
+            className={buttonClass({
+              variant: isConfirm ? "danger" : "primary",
+              size: "lg",
+            })}
           >
             {yesLabel}
           </button>

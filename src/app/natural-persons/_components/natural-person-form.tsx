@@ -38,6 +38,7 @@ import {
   toApiPayload,
   versionLabelColor,
 } from "./form-schema";
+import { buttonClass } from "@/lib/ui/button-styles";
 
 type IdCardLink = { id: string; code: string } | null;
 
@@ -876,7 +877,7 @@ export function NaturalPersonForm({
             <button
               type="button"
               onClick={() => setAssociatedEditing(true)}
-              className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+              className={buttonClass({ variant: "secondary", size: "lg" })}
             >
               {t("buttons.modify")}
             </button>
@@ -896,7 +897,7 @@ export function NaturalPersonForm({
             <button
               type="submit"
               disabled={saveDisabled}
-              className="inline-flex items-center rounded-md bg-cta px-5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d disabled:cursor-not-allowed disabled:opacity-50"
+              className={buttonClass({ variant: "primary", size: "lg" })}
             >
               {t("buttons.save")}
             </button>
@@ -904,7 +905,7 @@ export function NaturalPersonForm({
               type="button"
               onClick={() => setShowCannotDelete(true)}
               disabled={submitting}
-              className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-red-600 shadow-sm hover:bg-red-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-red-950/30"
+              className={buttonClass({ variant: "danger", size: "lg" })}
             >
               {t("buttons.delete")}
             </button>
@@ -915,7 +916,7 @@ export function NaturalPersonForm({
           <button
             type="submit"
             disabled={saveDisabled}
-            className="inline-flex items-center rounded-md bg-cta px-5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d disabled:cursor-not-allowed disabled:opacity-50"
+            className={buttonClass({ variant: "primary", size: "lg" })}
           >
             {t("buttons.save")}
           </button>
@@ -924,7 +925,7 @@ export function NaturalPersonForm({
               type="button"
               onClick={() => setConfirmDelete(true)}
               disabled={submitting}
-              className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-red-600 shadow-sm hover:bg-red-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-red-950/30"
+              className={buttonClass({ variant: "danger", size: "lg" })}
             >
               {t("buttons.delete")}
             </button>
@@ -933,7 +934,7 @@ export function NaturalPersonForm({
             type="button"
             onClick={onCancel}
             disabled={submitting}
-            className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+            className={buttonClass({ variant: "secondary", size: "lg" })}
           >
             {t("buttons.cancel")}
           </button>
@@ -1159,7 +1160,7 @@ function ConfirmDialog({
               type="button"
               onClick={onNo}
               disabled={busy}
-              className="inline-flex items-center rounded-md border border-wire bg-white px-4 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+              className={buttonClass({ variant: "secondary", size: "lg" })}
             >
               {noLabel}
             </button>
@@ -1168,11 +1169,10 @@ function ConfirmDialog({
             type="button"
             onClick={onYes}
             disabled={busy}
-            className={
-              isConfirm
-                ? "inline-flex items-center rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 disabled:opacity-50"
-                : "inline-flex items-center rounded-md bg-cta px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-cta-d disabled:opacity-50"
-            }
+            className={buttonClass({
+              variant: isConfirm ? "danger" : "primary",
+              size: "lg",
+            })}
           >
             {yesLabel}
           </button>

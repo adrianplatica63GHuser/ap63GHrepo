@@ -21,6 +21,7 @@
 // more visible than the hairline ←/→ unicode glyphs they replaced).
 
 import type { HighlightColor } from "@/lib/versioning/field-diff";
+import { buttonClass } from "@/lib/ui/button-styles";
 
 export type VersionNavView = {
   current:        number;
@@ -75,9 +76,10 @@ function NavArrow({ dir }: { dir: "left" | "right" }) {
 }
 
 // ◀/▶ arrow button — bare (no border / background / shadow); just the SVG
-// arrow with hover opacity and disabled state.
-const ARROW_BTN_CLASS =
-  "inline-flex items-center justify-center p-0 text-ink hover:opacity-70 disabled:opacity-30 disabled:cursor-not-allowed";
+// arrow. Slice #23.05.UX: the disabled state is now a real colour change
+// (ink -> wire) via the shared helper's `bare` variant, rather than a 30%
+// opacity dip on the enabled colour.
+const ARROW_BTN_CLASS = buttonClass({ variant: "bare", size: "md" });
 
 // Small counterclockwise-rotate icon for the history discovery chip.
 function HistoryIcon() {
@@ -130,7 +132,7 @@ export function VersionNavControls({
           onClick={nav.onPrev}
           disabled={!nav.canPrev}
           title={labels.prevVersion}
-          className="inline-flex items-center gap-1.5 rounded-full border border-zinc-300 bg-white px-2.5 py-0.5 text-xs font-medium text-zinc-500 shadow-sm transition-colors hover:border-zinc-400 hover:text-zinc-700 disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-500 dark:hover:text-zinc-200"
+          className={buttonClass({ variant: "secondary", size: "xs", pill: true, className: "gap-1.5" })}
         >
           <HistoryIcon />
           {labels.historyChip}
@@ -178,7 +180,7 @@ export function VersionNavControls({
         onClick={nav.onMakeCurrent}
         disabled={!nav.canMakeCurrent}
         title={labels.makeCurrentHint}
-        className="ml-4 rounded-md border border-cta bg-white px-[0.9375rem] py-[0.3125rem] text-[0.9375rem] font-medium text-cta shadow-sm hover:bg-cta-pale disabled:opacity-30 disabled:cursor-not-allowed dark:border-zinc-600 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+        className={buttonClass({ variant: "secondary", size: "lg", className: "ml-4" })}
       >
         {labels.makeCurrent}
       </button>

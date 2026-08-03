@@ -11,6 +11,7 @@ import {
 } from "@/lib/geo/convert-client";
 import type { Corner, CornerDiffEntry } from "./form-schema";
 import { HelpHint } from "@/components/help/help-hint";
+import { buttonClass } from "@/lib/ui/button-styles";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -311,7 +312,7 @@ function CornerInputRow({
             type="button"
             onClick={handleSave}
             disabled={converting}
-            className="rounded bg-cta px-3 py-1 text-xs font-medium text-white hover:bg-cta-d disabled:opacity-50"
+            className={buttonClass({ variant: "primary", size: "sm" })}
           >
             {converting ? t("converting") : t("save")}
           </button>
@@ -319,7 +320,7 @@ function CornerInputRow({
             type="button"
             onClick={onCancel}
             disabled={converting}
-            className="rounded border border-wire bg-white px-3 py-1 text-xs font-medium text-ink hover:bg-canvas disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+            className={buttonClass({ variant: "secondary", size: "sm" })}
           >
             {t("cancel")}
           </button>
@@ -562,7 +563,7 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
                         onClick={() => moveUp(idx)}
                         disabled={idx === 0}
                         title="Move up"
-                        className="px-1.5 py-0.5 text-xs rounded border border-wire text-ink hover:bg-canvas disabled:opacity-30 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                        className={buttonClass({ variant: "secondary", size: "xs" })}
                       >
                         ↑
                       </button>
@@ -571,21 +572,21 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
                         onClick={() => moveDown(idx)}
                         disabled={idx === corners.length - 1}
                         title="Move down"
-                        className="px-1.5 py-0.5 text-xs rounded border border-wire text-ink hover:bg-canvas disabled:opacity-30 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                        className={buttonClass({ variant: "secondary", size: "xs" })}
                       >
                         ↓
                       </button>
                       <button
                         type="button"
                         onClick={() => { setEditingIdx(idx); setAdding(false); }}
-                        className="px-2 py-0.5 text-xs rounded border border-wire text-ink hover:bg-canvas dark:border-zinc-700 dark:hover:bg-zinc-800"
+                        className={buttonClass({ variant: "secondary", size: "xs" })}
                       >
                         {t("edit")}
                       </button>
                       <button
                         type="button"
                         onClick={() => handleDelete(idx)}
-                        className="px-2 py-0.5 text-xs rounded border border-red-200 text-red-600 hover:bg-red-50 dark:border-red-900 dark:hover:bg-red-950/30"
+                        className={buttonClass({ variant: "danger", size: "xs" })}
                       >
                         {t("delete")}
                       </button>
@@ -618,7 +619,7 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
               type="button"
               onClick={() => setAdding(true)}
               disabled={readOnly}
-              className="rounded-md border border-wire bg-white px-3 py-1.5 text-xs font-medium text-ink shadow-sm hover:bg-canvas disabled:opacity-30 disabled:cursor-not-allowed dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+              className={buttonClass({ variant: "secondary", size: "sm" })}
             >
               + {t("add")}
             </button>
@@ -627,7 +628,7 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
             <button
               type="button"
               onClick={onToggleBigMap}
-              className="ml-4 first:ml-0 rounded-md border border-wire bg-white px-3 py-1.5 text-xs font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+              className={buttonClass({ variant: "secondary", size: "sm", className: "ml-4 first:ml-0" })}
             >
               {bigMap ? t("showSmallMap") : t("showBigMap")}
             </button>
@@ -636,7 +637,7 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
             <button
               type="button"
               onClick={onToggleStreetView}
-              className="ml-4 first:ml-0 rounded-md border border-wire bg-white px-3 py-1.5 text-xs font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+              className={buttonClass({ variant: "secondary", size: "sm", className: "ml-4 first:ml-0" })}
             >
               {streetView ? t("hideStreetView") : t("showStreetView")}
             </button>

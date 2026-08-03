@@ -39,6 +39,7 @@ import {
   toApiPayload,
   versionLabelColor,
 } from "./form-schema";
+import { buttonClass } from "@/lib/ui/button-styles";
 
 type Props = {
   mode: "create" | "edit" | "view";
@@ -658,7 +659,7 @@ export function JudicialPersonForm({
             <button
               type="button"
               onClick={() => setAssociatedEditing(true)}
-              className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+              className={buttonClass({ variant: "secondary", size: "lg" })}
             >
               {t("buttons.modify")}
             </button>
@@ -678,7 +679,7 @@ export function JudicialPersonForm({
             <button
               type="submit"
               disabled={saveDisabled}
-              className="inline-flex items-center rounded-md bg-cta px-5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d disabled:cursor-not-allowed disabled:opacity-50"
+              className={buttonClass({ variant: "primary", size: "lg" })}
             >
               {t("buttons.save")}
             </button>
@@ -686,7 +687,7 @@ export function JudicialPersonForm({
               type="button"
               onClick={() => setShowCannotDelete(true)}
               disabled={submitting}
-              className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-red-600 shadow-sm hover:bg-red-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-red-950/30"
+              className={buttonClass({ variant: "danger", size: "lg" })}
             >
               {t("buttons.delete")}
             </button>
@@ -697,7 +698,7 @@ export function JudicialPersonForm({
           <button
             type="submit"
             disabled={saveDisabled}
-            className="inline-flex items-center rounded-md bg-cta px-5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d disabled:cursor-not-allowed disabled:opacity-50"
+            className={buttonClass({ variant: "primary", size: "lg" })}
           >
             {t("buttons.save")}
           </button>
@@ -706,7 +707,7 @@ export function JudicialPersonForm({
               type="button"
               onClick={() => setConfirmDelete(true)}
               disabled={submitting}
-              className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-red-600 shadow-sm hover:bg-red-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-red-950/30"
+              className={buttonClass({ variant: "danger", size: "lg" })}
             >
               {t("buttons.delete")}
             </button>
@@ -715,7 +716,7 @@ export function JudicialPersonForm({
             type="button"
             onClick={onCancel}
             disabled={submitting}
-            className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+            className={buttonClass({ variant: "secondary", size: "lg" })}
           >
             {t("buttons.cancel")}
           </button>
@@ -835,7 +836,7 @@ function ContactPersonRow({
               <button
                 type="button"
                 onClick={onClear}
-                className="shrink-0 rounded border border-wire px-2 py-0.5 text-xs text-fade hover:bg-canvas hover:text-red-600 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                className={buttonClass({ variant: "danger", size: "xs", className: "shrink-0" })}
               >
                 {removeLabel}
               </button>
@@ -846,7 +847,7 @@ function ContactPersonRow({
             <button
               type="button"
               onClick={onAdd}
-              className="inline-flex items-center rounded-md border border-wire bg-white px-3 py-1 text-xs font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+              className={buttonClass({ variant: "secondary", size: "sm" })}
             >
               + {addLabel}
             </button>
@@ -1029,7 +1030,7 @@ function ContactPersonPickerDialog({
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex items-center rounded-md border border-wire bg-white px-4 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+            className={buttonClass({ variant: "secondary", size: "lg" })}
           >
             {t.cancel}
           </button>
@@ -1037,7 +1038,7 @@ function ContactPersonPickerDialog({
             type="button"
             onClick={handleConfirm}
             disabled={!selectedId}
-            className="inline-flex items-center rounded-md bg-cta px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d disabled:cursor-not-allowed disabled:opacity-50"
+            className={buttonClass({ variant: "primary", size: "lg" })}
           >
             {t.select}
           </button>
@@ -1296,7 +1297,7 @@ function ConfirmDialog({
               type="button"
               onClick={onNo}
               disabled={busy}
-              className="inline-flex items-center rounded-md border border-wire bg-white px-4 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+              className={buttonClass({ variant: "secondary", size: "lg" })}
             >
               {noLabel}
             </button>
@@ -1305,11 +1306,10 @@ function ConfirmDialog({
             type="button"
             onClick={onYes}
             disabled={busy}
-            className={
-              isConfirm
-                ? "inline-flex items-center rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 disabled:opacity-50"
-                : "inline-flex items-center rounded-md bg-cta px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-cta-d disabled:opacity-50"
-            }
+            className={buttonClass({
+              variant: isConfirm ? "danger" : "primary",
+              size: "lg",
+            })}
           >
             {yesLabel}
           </button>

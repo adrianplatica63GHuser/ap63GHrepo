@@ -47,6 +47,7 @@ import {
   type AiExtractedParty,
   type AiPartyLinkerSummary,
 } from "./ai-party-linker-dialog";
+import { buttonClass } from "@/lib/ui/button-styles";
 
 // ---------------------------------------------------------------------------
 // Document type list — fetched dynamically from the admin-managed
@@ -1005,7 +1006,7 @@ export function DocumentForm({
               type="button"
               onClick={handleCloseTheaterPage}
               aria-label={t("pages.theaterClose")}
-              className="rounded-md border border-wire bg-white px-3 py-1.5 text-xs font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+              className={buttonClass({ variant: "secondary", size: "sm" })}
             >
               ✕ {t("pages.theaterClose")}
             </button>
@@ -1047,7 +1048,7 @@ export function DocumentForm({
           <button
             type="button"
             onClick={() => setAssociatedEditing(true)}
-            className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+            className={buttonClass({ variant: "secondary", size: "lg" })}
           >
             {t("buttons.modify")}
           </button>
@@ -1068,7 +1069,7 @@ export function DocumentForm({
             type="submit"
             form="document-form"
             disabled={saveDisabled}
-            className="inline-flex items-center rounded-md bg-cta px-5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d disabled:cursor-not-allowed disabled:opacity-50"
+            className={buttonClass({ variant: "primary", size: "lg" })}
           >
             {t("buttons.save")}
           </button>
@@ -1076,7 +1077,7 @@ export function DocumentForm({
             type="button"
             onClick={() => setShowCannotDelete(true)}
             disabled={submitting}
-            className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-red-600 shadow-sm hover:bg-red-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-red-950/30"
+            className={buttonClass({ variant: "danger", size: "lg" })}
           >
             {t("buttons.delete")}
           </button>
@@ -1089,7 +1090,7 @@ export function DocumentForm({
             type="submit"
             form="document-form"
             disabled={saveDisabled}
-            className="inline-flex items-center rounded-md bg-cta px-5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d disabled:cursor-not-allowed disabled:opacity-50"
+            className={buttonClass({ variant: "primary", size: "lg" })}
           >
             {t("buttons.save")}
           </button>
@@ -1098,7 +1099,7 @@ export function DocumentForm({
               type="button"
               onClick={() => setConfirmDelete(true)}
               disabled={submitting}
-              className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-red-600 shadow-sm hover:bg-red-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-red-950/30"
+              className={buttonClass({ variant: "danger", size: "lg" })}
             >
               {t("buttons.delete")}
             </button>
@@ -1107,7 +1108,7 @@ export function DocumentForm({
             type="button"
             onClick={() => router.push("/documents")}
             disabled={submitting}
-            className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+            className={buttonClass({ variant: "secondary", size: "lg" })}
           >
             {t("buttons.cancel")}
           </button>
@@ -1133,7 +1134,7 @@ export function DocumentForm({
                 <button
                   type="button"
                   disabled
-                  className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-fade shadow-sm disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-500"
+                  className={buttonClass({ variant: "secondary", size: "lg" })}
                 >
                   {t("buttons.aiInterpreted")}
                 </button>
@@ -1148,7 +1149,7 @@ export function DocumentForm({
                   type="button"
                   disabled={!hasPages || busy}
                   onClick={handleAiInterpret}
-                  className="inline-flex items-center rounded-md border border-indigo-300 bg-indigo-50 px-5 py-2 text-sm font-medium text-indigo-700 shadow-sm hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-indigo-800 dark:bg-indigo-950/30 dark:text-indigo-300 dark:hover:bg-indigo-900/40"
+                  className={buttonClass({ variant: "primary", size: "lg" })}
                 >
                   {busy ? t("aiExtracting") : t("buttons.aiInterpret")}
                 </button>
@@ -1181,7 +1182,7 @@ export function DocumentForm({
                   type="button"
                   disabled={!hasPages || busy}
                   onClick={handleAiDiscover}
-                  className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                  className={buttonClass({ variant: "secondary", size: "lg" })}
                 >
                   {aiDiscovering ? t("aiDiscovering") : t("buttons.aiDiscover")}
                 </button>
@@ -1590,7 +1591,7 @@ function SurveyorPickerDialog({
           <button
             type="button"
             onClick={onClose}
-            className="text-fade hover:text-ink dark:text-zinc-500"
+            className={buttonClass({ variant: "bare", size: "md" })}
             aria-label={t("surveyorPicker.cancel")}
           >
             ✕
@@ -1606,14 +1607,14 @@ function SurveyorPickerDialog({
               <button
                 type="button"
                 onClick={() => handleChooseType("NATURAL")}
-                className="flex-1 rounded-md border border-wire bg-white px-4 py-3 text-sm font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+                className={buttonClass({ variant: "secondary", size: "lg", className: "flex-1" })}
               >
                 {t("surveyorPicker.btnNatural")}
               </button>
               <button
                 type="button"
                 onClick={() => handleChooseType("JUDICIAL")}
-                className="flex-1 rounded-md border border-wire bg-white px-4 py-3 text-sm font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+                className={buttonClass({ variant: "secondary", size: "lg", className: "flex-1" })}
               >
                 {t("surveyorPicker.btnJudicial")}
               </button>
@@ -1622,7 +1623,7 @@ function SurveyorPickerDialog({
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-md border border-wire bg-white px-4 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900"
+                className={buttonClass({ variant: "secondary", size: "lg" })}
               >
                 {t("surveyorPicker.cancel")}
               </button>
@@ -1681,7 +1682,7 @@ function SurveyorPickerDialog({
                           <button
                             type="button"
                             onClick={() => onSelect(item)}
-                            className="rounded-md bg-cta px-2 py-0.5 text-xs font-medium text-white hover:bg-cta-d"
+                            className={buttonClass({ variant: "primary", size: "xs" })}
                           >
                             {t("surveyorPicker.select")}
                           </button>
@@ -1707,14 +1708,14 @@ function SurveyorPickerDialog({
               <button
                 type="button"
                 onClick={() => setStep("choose-type")}
-                className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900"
+                className={buttonClass({ variant: "secondary", size: "md" })}
               >
                 {t("surveyorPicker.back")}
               </button>
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900"
+                className={buttonClass({ variant: "secondary", size: "md" })}
               >
                 {t("surveyorPicker.cancel")}
               </button>
@@ -1759,7 +1760,7 @@ function ConfirmDialog({
               type="button"
               onClick={onNo}
               disabled={busy}
-              className="inline-flex items-center rounded-md border border-wire bg-white px-4 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+              className={buttonClass({ variant: "secondary", size: "lg" })}
             >
               {noLabel}
             </button>
@@ -1768,11 +1769,10 @@ function ConfirmDialog({
             type="button"
             onClick={onYes}
             disabled={busy}
-            className={
-              isConfirm
-                ? "inline-flex items-center rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 disabled:opacity-50"
-                : "inline-flex items-center rounded-md bg-cta px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-cta-d disabled:opacity-50"
-            }
+            className={buttonClass({
+              variant: isConfirm ? "danger" : "primary",
+              size: "lg",
+            })}
           >
             {yesLabel}
           </button>
