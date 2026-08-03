@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { PreviewMap } from "./preview-map";
 import { HelpHint } from "@/components/help/help-hint";
+import { buttonClass } from "@/lib/ui/button-styles";
 
 // ---------------------------------------------------------------------------
 // Types (mirror src/lib/calculation/compute.ts — redeclared so this client
@@ -245,7 +246,7 @@ export function CalculationView() {
         <div>
           <button
             onClick={resetAll}
-            className="inline-flex items-center rounded-md bg-cta px-3 py-1.5 text-xs font-medium text-white hover:bg-cta-d"
+            className={buttonClass({ variant: "primary", size: "sm" })}
           >
             {t("buttons.startOver")}
           </button>
@@ -283,7 +284,7 @@ export function CalculationView() {
         {(computation || fileName) && (
           <button
             onClick={resetAll}
-            className="inline-flex items-center rounded-md border border-wire bg-white px-3 py-1.5 text-xs font-medium text-ink hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+            className={buttonClass({ variant: "secondary", size: "sm" })}
           >
             {t("buttons.reset")}
           </button>
@@ -420,7 +421,7 @@ export function CalculationView() {
               <button
                 onClick={doCommit}
                 disabled={committing || groupDescription.trim().length === 0}
-                className="inline-flex items-center rounded-md bg-cta px-4 py-2 text-sm font-medium text-white hover:bg-cta-d disabled:opacity-50"
+                className={buttonClass({ variant: "primary", size: "lg" })}
               >
                 {committing ? t("buttons.creating") : t("buttons.confirm")}
               </button>

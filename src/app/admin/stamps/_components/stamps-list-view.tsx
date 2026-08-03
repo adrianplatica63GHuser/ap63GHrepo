@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { buttonClass } from "@/lib/ui/button-styles";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -148,13 +149,13 @@ function CreateForm({ onClose }: { onClose: () => void }) {
         <button
           onClick={() => mutation.mutate()}
           disabled={!canSave}
-          className="inline-flex items-center rounded-md bg-cta px-3 py-1.5 text-xs font-medium text-white hover:bg-cta-d disabled:opacity-50"
+          className={buttonClass({ variant: "primary", size: "sm" })}
         >
           {mutation.isPending ? t("saving") : t("save")}
         </button>
         <button
           onClick={onClose}
-          className="inline-flex items-center rounded-md border border-wire bg-white px-3 py-1.5 text-xs font-medium text-ink hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+          className={buttonClass({ variant: "secondary", size: "sm" })}
         >
           {t("cancel")}
         </button>
@@ -194,7 +195,7 @@ export function StampsListView() {
         <button
           onClick={() => setCreating(true)}
           disabled={creating}
-          className="inline-flex items-center rounded-md bg-cta px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-cta-d disabled:opacity-40"
+          className={buttonClass({ variant: "primary", size: "sm" })}
         >
           + {t("create")}
         </button>
@@ -265,7 +266,7 @@ export function StampsListView() {
                     </Link>
                     <button
                       onClick={() => setConfirmDeleteId(s.id)}
-                      className="rounded border border-red-200 bg-white px-2 py-0.5 text-xs text-red-600 hover:bg-red-50 dark:border-red-900 dark:bg-zinc-900 dark:hover:bg-red-950"
+                      className={buttonClass({ variant: "danger", size: "xs" })}
                     >
                       {t("table.delete")}
                     </button>
@@ -292,7 +293,7 @@ export function StampsListView() {
               <button
                 onClick={() => deleteMutation.mutate(confirmDeleteId)}
                 disabled={deleteMutation.isPending}
-                className="rounded-md bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                className={buttonClass({ variant: "danger", size: "sm" })}
               >
                 {deleteMutation.isPending
                   ? t("confirm.deleting")
@@ -300,7 +301,7 @@ export function StampsListView() {
               </button>
               <button
                 onClick={() => setConfirmDeleteId(null)}
-                className="rounded-md border border-wire bg-white px-3 py-1.5 text-xs font-medium text-ink hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+                className={buttonClass({ variant: "secondary", size: "sm" })}
               >
                 {t("confirm.cancel")}
               </button>

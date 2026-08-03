@@ -8,6 +8,7 @@ import {
   type StampTargetType,
 } from "@/lib/stamps/validation";
 import { HelpHint } from "@/components/help/help-hint";
+import { buttonClass } from "@/lib/ui/button-styles";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -409,7 +410,7 @@ export function StampApplicator({
                 type="button"
                 onClick={applySelected}
                 disabled={selAvailable.size === 0}
-                className="inline-flex items-center rounded-md bg-cta px-3 py-1.5 text-xs font-medium text-white hover:bg-cta-d disabled:opacity-40"
+                className={buttonClass({ variant: "primary", size: "sm" })}
               >
                 {t("applicator.applyStamp", { count: selAvailable.size })}
               </button>
@@ -446,7 +447,7 @@ export function StampApplicator({
                 type="button"
                 onClick={removeSelected}
                 disabled={selStamped.size === 0}
-                className="inline-flex items-center rounded-md border border-wire bg-white px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-red-950/30"
+                className={buttonClass({ variant: "danger", size: "sm" })}
               >
                 {t("applicator.removeStamp", { count: selStamped.size })}
               </button>
@@ -467,7 +468,7 @@ export function StampApplicator({
           type="button"
           onClick={() => mutation.mutate()}
           disabled={!dirty || mutation.isPending}
-          className="inline-flex items-center rounded-md bg-cta px-5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d disabled:cursor-not-allowed disabled:opacity-50"
+          className={buttonClass({ variant: "primary", size: "lg" })}
         >
           {mutation.isPending ? t("saving") : t("applicator.saveStamps")}
         </button>

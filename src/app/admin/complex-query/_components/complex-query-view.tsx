@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import type { QueryResultItem } from "@/app/api/admin/metadata-query/route";
 import { PROVENANCE_VALUES } from "@/lib/metadata/provenance";
+import { buttonClass } from "@/lib/ui/button-styles";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -323,14 +324,14 @@ function FilterForm({ filters, onChange, onSearch, onReset, loading }: FilterFor
         <button
           type="submit"
           disabled={loading}
-          className="rounded bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+          className={buttonClass({ variant: "primary", size: "lg" })}
         >
           {loading ? t("searching") : t("search")}
         </button>
         <button
           type="button"
           onClick={onReset}
-          className="rounded border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          className={buttonClass({ variant: "secondary", size: "lg" })}
         >
           {t("reset")}
         </button>

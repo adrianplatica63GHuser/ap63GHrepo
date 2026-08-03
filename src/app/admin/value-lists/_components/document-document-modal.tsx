@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
+import { buttonClass } from "@/lib/ui/button-styles";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -119,13 +120,13 @@ function RoleForm({
         <button
           onClick={handleSubmit}
           disabled={mutation.isPending}
-          className="inline-flex items-center rounded-md bg-cta px-3 py-1.5 text-xs font-medium text-white hover:bg-cta-d disabled:opacity-50"
+          className={buttonClass({ variant: "primary", size: "sm" })}
         >
           {mutation.isPending ? t("saving") : t("save")}
         </button>
         <button
           onClick={onCancel}
-          className="inline-flex items-center rounded-md border border-wire bg-white px-3 py-1.5 text-xs font-medium text-ink hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+          className={buttonClass({ variant: "secondary", size: "sm" })}
         >
           {t("cancel")}
         </button>
@@ -183,7 +184,7 @@ export function DocumentDocumentModal({ onClose }: { onClose: () => void }) {
           <h2 className="text-base font-semibold text-ink dark:text-zinc-100">{t("title")}</h2>
           <button
             onClick={onClose}
-            className="rounded-md p-1 text-fade hover:bg-cap hover:text-ink dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+            className={buttonClass({ variant: "bare", size: "md" })}
             aria-label={tModal("close")}
           >✕</button>
         </div>
@@ -205,7 +206,7 @@ export function DocumentDocumentModal({ onClose }: { onClose: () => void }) {
               <button
                 onClick={() => { setShowAdd(true); setEditRow(null); }}
                 disabled={showAdd || !!editRow}
-                className="inline-flex items-center rounded-md bg-cta px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-cta-d disabled:opacity-40"
+                className={buttonClass({ variant: "primary", size: "sm" })}
               >
                 + {t("add")}
               </button>
@@ -247,13 +248,13 @@ export function DocumentDocumentModal({ onClose }: { onClose: () => void }) {
                         <div className="flex gap-1">
                           <button
                             onClick={() => { setEditRow(row); setShowAdd(false); }}
-                            className="rounded border border-wire bg-white px-2 py-0.5 text-xs text-ink hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+                            className={buttonClass({ variant: "secondary", size: "xs" })}
                           >
                             {t("edit")}
                           </button>
                           <button
                             onClick={() => setConfirmDeleteId(row.id)}
-                            className="rounded border border-red-200 bg-white px-2 py-0.5 text-xs text-red-600 hover:bg-red-50 dark:border-red-900 dark:bg-zinc-900 dark:hover:bg-red-950"
+                            className={buttonClass({ variant: "danger", size: "xs" })}
                           >
                             {t("delete")}
                           </button>
@@ -277,13 +278,13 @@ export function DocumentDocumentModal({ onClose }: { onClose: () => void }) {
               <button
                 onClick={() => deleteMutation.mutate(confirmDeleteId)}
                 disabled={deleteMutation.isPending}
-                className="rounded-md bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                className={buttonClass({ variant: "danger", size: "sm" })}
               >
                 {deleteMutation.isPending ? t("deleting") : t("delete")}
               </button>
               <button
                 onClick={() => setConfirmDeleteId(null)}
-                className="rounded-md border border-wire bg-white px-3 py-1.5 text-xs font-medium text-ink hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+                className={buttonClass({ variant: "secondary", size: "sm" })}
               >
                 {t("cancel")}
               </button>

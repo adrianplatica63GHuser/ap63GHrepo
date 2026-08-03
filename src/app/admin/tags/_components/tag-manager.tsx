@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
+import { buttonClass } from "@/lib/ui/button-styles";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -139,7 +140,7 @@ function RenameModal({
             type="button"
             onClick={onClose}
             disabled={saving}
-            className="rounded px-3 py-1.5 text-sm font-medium border border-slate-300 dark:border-slate-600 text-ink dark:text-zinc-100 hover:bg-slate-50 dark:hover:bg-zinc-800 disabled:opacity-60"
+            className={buttonClass({ variant: "secondary", size: "md" })}
           >
             {t("rename.cancel")}
           </button>
@@ -147,7 +148,7 @@ function RenameModal({
             type="button"
             onClick={handleSave}
             disabled={saving || !to.trim() || to.trim().toLowerCase() === from}
-            className="rounded px-3 py-1.5 text-sm font-medium bg-slate-700 hover:bg-slate-800 dark:bg-slate-600 dark:hover:bg-slate-500 text-white disabled:opacity-60 transition-colors"
+            className={buttonClass({ variant: "primary", size: "md" })}
           >
             {saving ? t("rename.saving") : t("rename.save")}
           </button>
@@ -300,7 +301,7 @@ function MergeModal({
             type="button"
             onClick={onClose}
             disabled={saving}
-            className="rounded px-3 py-1.5 text-sm font-medium border border-slate-300 dark:border-slate-600 text-ink dark:text-zinc-100 hover:bg-slate-50 dark:hover:bg-zinc-800 disabled:opacity-60"
+            className={buttonClass({ variant: "secondary", size: "md" })}
           >
             {t("merge.cancel")}
           </button>
@@ -308,7 +309,7 @@ function MergeModal({
             type="button"
             onClick={handleSave}
             disabled={saving || sources.size < 2 || !target}
-            className="rounded px-3 py-1.5 text-sm font-medium bg-blue-700 hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-500 text-white disabled:opacity-60 transition-colors"
+            className={buttonClass({ variant: "primary", size: "md" })}
           >
             {saving ? t("merge.saving") : t("merge.save")}
           </button>
@@ -440,7 +441,7 @@ export function TagManager() {
           <button
             type="button"
             onClick={() => { setMergeInit([]); setShowMerge(true); }}
-            className="rounded px-3 py-1.5 text-sm font-medium border border-slate-300 dark:border-slate-600 text-ink dark:text-zinc-100 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors"
+            className={buttonClass({ variant: "secondary", size: "md" })}
           >
             {t("merge.open")}
           </button>
@@ -475,7 +476,7 @@ export function TagManager() {
                     <button
                       type="button"
                       onClick={() => setRenameTarget(row.tag)}
-                      className="text-xs text-slate-500 dark:text-zinc-400 hover:text-ink dark:hover:text-zinc-100 transition-colors px-1"
+                      className={buttonClass({ variant: "bare", size: "xs" })}
                     >
                       {t("list.rename")}
                     </button>

@@ -8,6 +8,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { setLocaleCookie } from "@/lib/i18n/locale";
 import type { TimeFrameRow } from "@/lib/time-frames/config";
 import { TIME_FRAME_KEYS } from "@/lib/time-frames/config";
+import { buttonClass } from "@/lib/ui/button-styles";
 
 // ---------------------------------------------------------------------------
 // Locale helper — read the current cookie locale so we can pick _en vs _ro
@@ -172,7 +173,7 @@ function TimeFramesPanel() {
             <button
               onClick={handleSave}
               disabled={!isDirty || saving}
-              className="rounded-md bg-cta px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-cta-d disabled:opacity-40 disabled:cursor-not-allowed"
+              className={buttonClass({ variant: "primary", size: "lg" })}
             >
               {saving ? t("timeFrames.saving") : t("timeFrames.save")}
             </button>
@@ -180,7 +181,7 @@ function TimeFramesPanel() {
               <button
                 onClick={handleReset}
                 disabled={saving}
-                className="rounded-md border border-wire px-4 py-2 text-sm font-medium text-ink transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-40"
+                className={buttonClass({ variant: "secondary", size: "lg" })}
               >
                 {t("timeFrames.cancel")}
               </button>

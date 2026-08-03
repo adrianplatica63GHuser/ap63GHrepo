@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslations, useLocale } from "next-intl";
 import { CheckCircle, XCircle, Clock, UserCheck, UserX } from "lucide-react";
+import { buttonClass } from "@/lib/ui/button-styles";
 
 type RequestStatus = "pending" | "approved" | "rejected";
 
@@ -321,7 +322,7 @@ function RequestTable({
                       type="button"
                       onClick={() => onApprove(row.id)}
                       disabled={isBusy}
-                      className="inline-flex items-center gap-1.5 rounded-md bg-green-600 hover:bg-green-700 text-white px-3 py-1 text-xs font-medium disabled:opacity-50 transition"
+                      className={buttonClass({ variant: "primary", size: "sm", className: "gap-1.5" })}
                     >
                       <UserCheck size={12} />
                       {t("actions.approve")}
@@ -330,7 +331,7 @@ function RequestTable({
                       type="button"
                       onClick={() => onReject(row.id)}
                       disabled={isBusy}
-                      className="inline-flex items-center gap-1.5 rounded-md bg-red-600 hover:bg-red-700 text-white px-3 py-1 text-xs font-medium disabled:opacity-50 transition"
+                      className={buttonClass({ variant: "danger", size: "sm", className: "gap-1.5" })}
                     >
                       <UserX size={12} />
                       {t("actions.reject")}

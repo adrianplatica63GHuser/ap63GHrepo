@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import type { GroupTargetType } from "@/lib/groups/validation";
 import { HelpHint } from "@/components/help/help-hint";
+import { buttonClass } from "@/lib/ui/button-styles";
 
 // ── Types (mirror GroupDetail from src/lib/groups/queries.ts) ────────────────
 // Normalised shapes: memberId is the FK id for the group's target type.
@@ -267,7 +268,7 @@ export function GroupEditor({
             <button
               type="button"
               onClick={() => setShowItems((v) => !v)}
-              className="inline-flex items-center rounded-md border border-wire bg-white px-3 py-1.5 text-sm font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+              className={buttonClass({ variant: "secondary", size: "md" })}
             >
               {showItems ? t("hideItems") : t("addItems")}
             </button>
@@ -306,7 +307,7 @@ export function GroupEditor({
                 type="button"
                 onClick={addSelected}
                 disabled={selAvailable.size === 0}
-                className="inline-flex items-center rounded-md bg-cta px-3 py-1.5 text-xs font-medium text-white hover:bg-cta-d disabled:opacity-40"
+                className={buttonClass({ variant: "primary", size: "sm" })}
               >
                 {t("addToGroup", { count: selAvailable.size })}
               </button>
@@ -340,7 +341,7 @@ export function GroupEditor({
                 type="button"
                 onClick={removeSelected}
                 disabled={selMembers.size === 0}
-                className="inline-flex items-center rounded-md border border-wire bg-white px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-red-950/30"
+                className={buttonClass({ variant: "danger", size: "sm" })}
               >
                 {t("removeFromGroup", { count: selMembers.size })}
               </button>
@@ -361,7 +362,7 @@ export function GroupEditor({
           type="button"
           onClick={() => mutation.mutate()}
           disabled={!dirty || !descriptionValid || mutation.isPending}
-          className="inline-flex items-center rounded-md bg-cta px-5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d disabled:cursor-not-allowed disabled:opacity-50"
+          className={buttonClass({ variant: "primary", size: "lg" })}
         >
           {mutation.isPending ? t("saving") : t("saveGroup")}
         </button>

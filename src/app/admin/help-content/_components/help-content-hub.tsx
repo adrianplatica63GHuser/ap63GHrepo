@@ -10,6 +10,7 @@ import {
   helpHintLabel,
   type HelpScreenKey,
 } from "@/lib/help/registry";
+import { buttonClass } from "@/lib/ui/button-styles";
 
 // Slice #21.10.help.rollout: a hint now declares the screen(s) it appears on
 // (`screens`) rather than a single screenKey. Several hints legitimately span
@@ -150,7 +151,7 @@ function SaveBar({
         type="button"
         onClick={onSave}
         disabled={pending}
-        className="inline-flex items-center rounded-md bg-cta px-4 py-1.5 text-sm font-medium text-white hover:bg-cta-d disabled:opacity-50"
+        className={buttonClass({ variant: "primary", size: "lg" })}
       >
         {pending ? savingLabel : saveLabel}
       </button>

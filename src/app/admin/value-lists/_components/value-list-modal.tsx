@@ -8,6 +8,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { LIST_META, type ListKey } from "@/lib/admin/value-lists/config";
+import { buttonClass } from "@/lib/ui/button-styles";
 
 // ── API helpers ───────────────────────────────────────────────────────────────
 
@@ -185,13 +186,13 @@ function EditForm({
         <button
           onClick={() => mutation.mutate()}
           disabled={mutation.isPending}
-          className="inline-flex items-center rounded-md bg-cta px-3 py-1.5 text-xs font-medium text-white hover:bg-cta-d disabled:opacity-50"
+          className={buttonClass({ variant: "primary", size: "sm" })}
         >
           {mutation.isPending ? t("form.saving") : t("form.save")}
         </button>
         <button
           onClick={onClose}
-          className="inline-flex items-center rounded-md border border-wire bg-white px-3 py-1.5 text-xs font-medium text-ink hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+          className={buttonClass({ variant: "secondary", size: "sm" })}
         >
           {t("form.cancel")}
         </button>
@@ -307,7 +308,7 @@ export function ValueListModal({
           </h2>
           <button
             onClick={onClose}
-            className="rounded-md p-1 text-fade hover:bg-cap hover:text-ink dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+            className={buttonClass({ variant: "bare", size: "md" })}
             aria-label={t("modal.close")}
           >
             ✕
@@ -332,7 +333,7 @@ export function ValueListModal({
               <button
                 onClick={startAdd}
                 disabled={!!form}
-                className="inline-flex items-center rounded-md bg-cta px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-cta-d disabled:opacity-40"
+                className={buttonClass({ variant: "primary", size: "sm" })}
               >
                 + {t("toolbar.add")}
               </button>
@@ -409,13 +410,13 @@ export function ValueListModal({
                           <button
                             onClick={() => startEdit(row)}
                             disabled={!!form}
-                            className="rounded border border-wire bg-white px-2 py-0.5 text-xs text-ink hover:bg-canvas disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+                            className={buttonClass({ variant: "secondary", size: "xs" })}
                           >
                             {t("table.edit")}
                           </button>
                           <button
                             onClick={() => setConfirmDeleteId(row.id)}
-                            className="rounded border border-red-200 bg-white px-2 py-0.5 text-xs text-red-600 hover:bg-red-50 dark:border-red-900 dark:bg-zinc-900 dark:hover:bg-red-950"
+                            className={buttonClass({ variant: "danger", size: "xs" })}
                           >
                             {t("table.delete")}
                           </button>
@@ -448,7 +449,7 @@ export function ValueListModal({
               <button
                 onClick={() => deleteMutation.mutate(confirmDeleteId)}
                 disabled={deleteMutation.isPending}
-                className="rounded-md bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                className={buttonClass({ variant: "danger", size: "sm" })}
               >
                 {deleteMutation.isPending
                   ? t("confirm.deleting")
@@ -456,7 +457,7 @@ export function ValueListModal({
               </button>
               <button
                 onClick={() => setConfirmDeleteId(null)}
-                className="rounded-md border border-wire bg-white px-3 py-1.5 text-xs font-medium text-ink hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+                className={buttonClass({ variant: "secondary", size: "sm" })}
               >
                 {t("confirm.cancel")}
               </button>
