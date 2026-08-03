@@ -202,6 +202,55 @@ describe("folderNameToTitleHint", () => {
     );
     expect(folderNameToTitleHint("CERT_URBANISM")).toBe("Certificat urbanism");
   });
+
+  // -------------------------------------------------------------------------
+  // Diacritic-insensitive matching (Slice #23.03.Import)
+  // -------------------------------------------------------------------------
+
+  it("expands an abbreviation written with diacritics", () => {
+    // "Încheiere Intabulare" is normally typed with the Î. Before #23.03 this
+    // silently failed to expand, because \b does not treat "Î" as a word
+    // character and so never matched at offset 0.
+    expect(folderNameToTitleHint("Înch_Intab_2019")).toBe(
+      "Incheiere Intabulare 2019",
+    );
+    expect(folderNameToTitleHint("înch intab")).toBe("Incheiere Intabulare");
+  });
+
+  it("accepts both encodings of ș/ț", () => {
+    // Comma-below (U+0219, correct Romanian) and cedilla (U+015F, the legacy
+    // form some keyboards and OCR still emit) must behave identically.
+    expect(folderNameToTitleHint("Pș_1")).toBe("Plan de Situație 1");
+    expect(folderNameToTitleHint("Pş_1")).toBe("Plan de Situație 1");
+  });
+
+  it("tolerates repeated whitespace inside a multi-word abbreviation", () => {
+    expect(folderNameToTitleHint("Inch  Intab  7")).toBe(
+      "Incheiere Intabulare 7",
+    );
+  });
+
+  it("still requires a whole-word match", () => {
+    // The diacritic classes must not loosen the boundaries: an abbreviation
+    // embedded in a longer word is not an abbreviation.
+    expect(folderNameToTitleHint("MyCVCfolder")).toBe("MyCVCfolder");
+    expect(folderNameToTitleHint("Cinci acte")).toBe("Cinci acte");
+    expect(folderNameToTitleHint("Personal")).toBe("Personal");
+  });
+
+  it("matches across non-letter separators, as \\b did", () => {
+    expect(folderNameToTitleHint("3-CVC-2021")).toBe(
+      "3-Contract de Vânzare-Cumpărare-2021",
+    );
+  });
+
+  it("does not re-expand its own output", () => {
+    // Every expansion value is itself scanned by the remaining keys, so a
+    // value containing a standalone abbreviation would expand twice.
+    const once = folderNameToTitleHint("CVC");
+    expect(folderNameToTitleHint(once)).toBe(once);
+    expect(folderNameToTitleHint("Antec")).toBe("Antecontract");
+  });
 });
 
 // ---------------------------------------------------------------------------

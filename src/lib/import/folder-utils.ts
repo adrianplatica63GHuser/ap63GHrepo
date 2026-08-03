@@ -146,21 +146,85 @@ const ABBR: Record<string, string> = {
 };
 
 /**
- * Convert a folder/group name into a human-readable document title hint.
- * Expands known abbreviations at word boundaries (case-insensitive — fix 7.11),
- * replaces underscores with spaces.
+ * Romanian letters that a folder name may spell either with or without its
+ * diacritic. Each entry maps an ASCII base letter to every form that should be
+ * treated as that letter.
  *
- * "CVC_2021-04-12" → "Contract de Vânzare-Cumpărare 2021-04-12"
- * "cvc_2021-04-12" → "Contract de Vânzare-Cumpărare 2021-04-12"  (7.11)
- * "TP_1234"        → "Titlu de Proprietate 1234"
+ * Both encodings of ș/ț are listed — comma-below (U+0219/U+021B, correct
+ * Romanian) and cedilla (U+015F/U+0163, the legacy Turkish-borrowed forms still
+ * produced by some keyboards, fonts and OCR — the same pair `foldRomanian` in
+ * src/lib/import/id-card.ts covers via NFD decomposition).
+ */
+const DIACRITIC_FORMS: Record<string, string> = {
+  a: "aăâàáäã",
+  e: "eèéêë",
+  i: "iîìíï",
+  o: "oòóôöõ",
+  u: "uùúûü",
+  s: "sșş",
+  t: "tțţ",
+  c: "cç",
+  n: "nñ",
+};
+
+/**
+ * Build a diacritic-insensitive regex source for one abbreviation key.
+ *
+ * Each ASCII letter becomes a character class of its accented forms, regex
+ * metacharacters are escaped (defensive — no current key contains one, but a
+ * future key holding a "." would otherwise match any character), and the space
+ * inside a multi-word key becomes `\s+` so "Inch  Intab" still matches.
+ *
+ * The `i` flag on the compiled regex covers the uppercase forms, so only the
+ * lowercase variants need listing above.
+ */
+function abbrPattern(key: string): string {
+  return key
+    .split(/\s+/)
+    .map((word) =>
+      word
+        .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+        .replace(/[a-zA-Z]/g, (ch) => {
+          const forms = DIACRITIC_FORMS[ch.toLowerCase()];
+          return forms ? `[${forms}]` : ch;
+        }),
+    )
+    .join("\\s+");
+}
+
+/**
+ * Convert a folder/group name into a human-readable document title hint.
+ * Expands known abbreviations at word boundaries — case-insensitive (fix 7.11)
+ * and diacritic-insensitive (Slice #23.03.Import) — and replaces underscores
+ * with spaces.
+ *
+ * "CVC_2021-04-12"  → "Contract de Vânzare-Cumpărare 2021-04-12"
+ * "cvc_2021-04-12"  → "Contract de Vânzare-Cumpărare 2021-04-12"  (7.11)
+ * "TP_1234"         → "Titlu de Proprietate 1234"
+ * "Înch Intab 2019" → "Incheiere Intabulare 2019"                 (#23.03)
+ *
+ * Why the boundaries are lookarounds and not `\b`
+ * -----------------------------------------------
+ * JavaScript's `\b` is defined over the ASCII word set, so it does not count a
+ * diacritic letter as a word character at all. `\bÎnch\b` can therefore never
+ * match a name that STARTS with "Î": at offset 0 `\b` asks whether the first
+ * character is an ASCII word character, "Î" is not, and the match fails before
+ * the diacritic class is ever reached. Unicode-property lookarounds ask the
+ * question we actually mean — "is the neighbour a letter or a digit, in any
+ * script?" — and behave identically to `\b` for the ASCII names that already
+ * worked.
  */
 export function folderNameToTitleHint(name: string): string {
   let s = name.replace(/_/g, " ");
   for (const [k, v] of Object.entries(ABBR)) {
-    // "gi" — global + case-insensitive so "cvc", "Cvc", "CVC" all expand.
-    // The replacement value v is always the full Romanian expansion, so
-    // uppercasing the input is NOT needed (and would corrupt non-ABBR words).
-    s = s.replace(new RegExp(`\\b${k}\\b`, "gi"), v);
+    // "giu" — global, case-insensitive, Unicode (required by \p{...}).
+    // The replacement is passed as a function so a "$" in a future expansion
+    // value is never re-read as a capture-group reference.
+    const re = new RegExp(
+      `(?<![\\p{L}\\p{N}])${abbrPattern(k)}(?![\\p{L}\\p{N}])`,
+      "giu",
+    );
+    s = s.replace(re, () => v);
   }
   return s.replace(/\s+/g, " ").trim();
 }
