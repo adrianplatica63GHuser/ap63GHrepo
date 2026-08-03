@@ -66,6 +66,10 @@ import {
   type ResolutionSubject,
 } from "@/components/persons/person-resolution-dialog";
 import { ProvenanceField } from "./provenance-field";
+import {
+  ScanConfidenceWarning,
+  type ScanConfidence,
+} from "./scan-confidence-warning";
 
 // ---------------------------------------------------------------------------
 // Wire shapes
@@ -163,6 +167,13 @@ type Props = {
   propertyId: string;
   /** The Document the import already created for this same image. */
   documentId: string;
+  /**
+   * Slice #23.03.Import — how sure the folder scan was that this entry is an
+   * identity card at all. `isIdCardEntry` is a yes/no gate and discards that
+   * nuance, so a "low" row offers the action just as confidently as a "high"
+   * one. Undefined when the entry was never scanned.
+   */
+  scanConfidence?: ScanConfidence;
   onDone: (outcome: IdCardPersonOutcome) => void;
   onClose: () => void;
 };
@@ -174,6 +185,7 @@ export function IdCardPersonDialog({
   entryLabel,
   propertyId,
   documentId,
+  scanConfidence,
   onDone,
   onClose,
 }: Props) {
@@ -473,6 +485,14 @@ export function IdCardPersonDialog({
       onSkip={onClose}
       onClose={onClose}
     >
+      {/*
+        Slice #23.03.Import — first child, so it sits above BOTH branches the
+        resolution dialog can render. On the confirm-match branch it warns
+        before two real people are merged; on the create branch it warns before
+        a person is created from a card the scan was not sure it had read.
+      */}
+      <ScanConfidenceWarning confidence={scanConfidence} className="mt-3" />
+
       {searchedName && possibleMatches.length > 0 && (
         <p className="mt-2 text-xs text-fade dark:text-zinc-400">
           {t("searchedFor", { name: searchedName })}

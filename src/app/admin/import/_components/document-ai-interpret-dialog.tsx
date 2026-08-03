@@ -48,6 +48,10 @@ import {
   type AiExtractedParty,
   type AiPartyLinkerSummary,
 } from "@/app/documents/_components/ai-party-linker-dialog";
+import {
+  ScanConfidenceWarning,
+  type ScanConfidence,
+} from "./scan-confidence-warning";
 
 // ---------------------------------------------------------------------------
 // Types — mirror the route's response rather than importing it, so no
@@ -81,6 +85,16 @@ export type AiInterpretOutcome = {
 type Props = {
   documentId: string;
   entryLabel: string;
+  /**
+   * Slice #23.03.Import — how sure the folder scan was about this entry.
+   *
+   * It matters more on this action than anywhere else in the wizard: the route
+   * builds its extraction prompt from the document TYPE's template_fields, so
+   * a mis-classified document is asked for the wrong fields entirely and comes
+   * back looking just as complete as a correct one. Undefined when the entry
+   * was never scanned.
+   */
+  scanConfidence?: ScanConfidence;
   onDone: (outcome: AiInterpretOutcome) => void;
   onClose: () => void;
 };
@@ -112,6 +126,7 @@ function assertNotRedirected(res: Response, sessionMsg: string): void {
 export function DocumentAiInterpretDialog({
   documentId,
   entryLabel,
+  scanConfidence,
   onDone,
   onClose,
 }: Props) {
@@ -282,6 +297,14 @@ export function DocumentAiInterpretDialog({
         </div>
 
         <div className="space-y-3 px-5 py-4">
+          {/*
+            Slice #23.03.Import — shown in every phase, including "done".
+            A finished extraction is exactly when the user is most likely to
+            accept the result, so the caveat has to still be on screen then,
+            not only while the spinner runs.
+          */}
+          <ScanConfidenceWarning confidence={scanConfidence} />
+
           {phase.kind === "running" && (
             <p className="animate-pulse text-sm text-fade">{t("running")}</p>
           )}

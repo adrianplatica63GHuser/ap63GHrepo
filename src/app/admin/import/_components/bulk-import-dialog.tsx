@@ -1011,6 +1011,11 @@ export function BulkImportDialog({
               entryLabel={idCardTarget.label}
               propertyId={propertyId}
               documentId={idCardTarget.docId}
+              // Slice #23.03.Import — the scan's own confidence, read here
+              // rather than stored on the target: scanResults is keyed by the
+              // same path and never changes after the scan, so there is no
+              // second copy to keep in step.
+              scanConfidence={scanResults.get(idCardTarget.path)?.confidence}
               onDone={handleIdCardDone}
               onClose={() => setIdCardTarget(null)}
             />
@@ -1031,6 +1036,8 @@ export function BulkImportDialog({
             <DocumentAiInterpretDialog
               documentId={aiTarget.docId}
               entryLabel={aiTarget.label}
+              // Slice #23.03.Import — see the note on the ID-card dialog above.
+              scanConfidence={scanResults.get(aiTarget.path)?.confidence}
               onDone={handleAiDone}
               onClose={() => setAiTarget(null)}
             />

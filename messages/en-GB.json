@@ -1863,6 +1863,12 @@
       "confidence_high": "High confidence",
       "confidence_medium": "Medium confidence",
       "confidence_low": "Low confidence",
+      "scanConfidence": {
+        "titleMedium": "Medium classification confidence",
+        "bodyMedium": "The AI scan recognised this file with medium confidence. Check the document type and the filled-in fields before saving.",
+        "titleLow": "Low classification confidence",
+        "bodyLow": "The AI scan recognised this file with low confidence. The document type may be wrong, and the extracted fields may not match the real document. Check every value carefully before saving."
+      },
       "resumeButton": "Resume last import ({folder})",
       "resumedTitle": "Last import — {folder}",
       "resumedAge": "{minutes} min ago",

@@ -1863,6 +1863,12 @@
       "confidence_high": "Încredere ridicată",
       "confidence_medium": "Încredere medie",
       "confidence_low": "Încredere scăzută",
+      "scanConfidence": {
+        "titleMedium": "Încredere medie la clasificare",
+        "bodyMedium": "Scanarea AI a recunoscut acest fișier cu încredere medie. Verificați tipul documentului și câmpurile completate înainte de a salva.",
+        "titleLow": "Încredere scăzută la clasificare",
+        "bodyLow": "Scanarea AI a recunoscut acest fișier cu încredere scăzută. Este posibil ca tipul documentului să fie greșit, iar câmpurile extrase să nu corespundă documentului real. Verificați cu atenție fiecare valoare înainte de a salva."
+      },
       "resumeButton": "Reia ultimul import ({folder})",
       "resumedTitle": "Ultimul import — {folder}",
       "resumedAge": "acum {minutes} min",
