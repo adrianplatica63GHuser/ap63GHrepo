@@ -54,6 +54,7 @@ import {
   ScanConfidenceWarning,
   type ScanConfidence,
 } from "./scan-confidence-warning";
+import { buttonClass } from "@/lib/ui/button-styles";
 
 // ---------------------------------------------------------------------------
 // Types — mirror the route's response rather than importing it, so no
@@ -355,7 +356,7 @@ export function DocumentAiInterpretDialog({
             type="button"
             onClick={onClose}
             disabled={phase.kind === "running"}
-            className="rounded-md bg-cta px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-cta-d disabled:cursor-not-allowed disabled:opacity-50"
+            className={buttonClass({ variant: "primary", size: "lg" })}
           >
             {t("closeButton")}
           </button>

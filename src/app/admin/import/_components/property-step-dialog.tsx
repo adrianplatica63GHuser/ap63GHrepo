@@ -46,6 +46,7 @@ import {
   nicknameFromFolderName,
 } from "@/lib/import/coordinate-file";
 import { inferProvenance } from "@/lib/metadata/provenance-rules";
+import { buttonClass } from "@/lib/ui/button-styles";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -551,7 +552,7 @@ export function PropertyStepDialog({
                       type="button"
                       onClick={() => setPage((p) => Math.max(0, p - 1))}
                       disabled={page === 0}
-                      className="rounded-md border border-wire px-2 py-1 disabled:opacity-40 dark:border-zinc-700"
+                      className={buttonClass({ variant: "secondary", size: "xs" })}
                     >
                       {t("prevPage")}
                     </button>
@@ -565,7 +566,7 @@ export function PropertyStepDialog({
                       type="button"
                       onClick={() => setPage((p) => p + 1)}
                       disabled={(page + 1) * PAGE_SIZE >= total}
-                      className="rounded-md border border-wire px-2 py-1 disabled:opacity-40 dark:border-zinc-700"
+                      className={buttonClass({ variant: "secondary", size: "xs" })}
                     >
                       {t("nextPage")}
                     </button>
@@ -709,7 +710,7 @@ export function PropertyStepDialog({
             type="button"
             onClick={onCancel}
             disabled={submitting}
-            className="rounded-md border border-wire bg-white px-4 py-2 text-sm font-medium text-ink hover:bg-canvas disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+            className={buttonClass({ variant: "secondary", size: "lg" })}
           >
             {t("cancelButton")}
           </button>
@@ -717,7 +718,7 @@ export function PropertyStepDialog({
             type="button"
             onClick={handleConfirm}
             disabled={!canConfirm}
-            className="inline-flex items-center rounded-md bg-cta px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-cta-d disabled:cursor-not-allowed disabled:opacity-50"
+            className={buttonClass({ variant: "primary", size: "lg" })}
           >
             {submitting ? t("confirmBusy") : t("confirmButton")}
           </button>

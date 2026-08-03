@@ -38,6 +38,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import type { FSFileEntry } from "@/lib/import/folder-utils";
 import { cornersEqual } from "@/lib/import/coordinate-file";
+import { buttonClass } from "@/lib/ui/button-styles";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -335,7 +336,7 @@ export function CoordinatePropertyDialog({
               type="button"
               onClick={onClose}
               disabled={busy}
-              className="rounded-md border border-wire bg-white px-4 py-2 text-sm font-medium text-ink hover:bg-canvas disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+              className={buttonClass({ variant: "secondary", size: "lg" })}
             >
               {t("closeButton")}
             </button>

@@ -66,6 +66,7 @@ import type { ProvenanceCode } from "@/lib/metadata/provenance";
 import { ProvenanceField } from "./provenance-field";
 import { isIdCardEntry } from "@/lib/import/id-card";
 import { isCoordinateFileName } from "@/lib/import/coordinate-file";
+import { buttonClass } from "@/lib/ui/button-styles";
 import {
   IdCardPersonDialog,
   type IdCardPersonOutcome,
@@ -966,7 +967,7 @@ export function BulkImportDialog({
                     Object.fromEntries(ambiguousEntries.map((e) => [e.path, first])),
                   );
                 }}
-                className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm font-medium text-ink hover:bg-canvas disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+                className={buttonClass({ variant: "secondary", size: "md" })}
               >
                 {tprov("gateApplyAll")}
               </button>
@@ -974,7 +975,7 @@ export function BulkImportDialog({
                 type="button"
                 onClick={() => setGatePassed(true)}
                 disabled={!allAmbiguousAnswered}
-                className="rounded-md bg-cta px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-cta-d disabled:cursor-not-allowed disabled:opacity-50"
+                className={buttonClass({ variant: "primary", size: "lg" })}
               >
                 {tprov("gateContinue")}
               </button>

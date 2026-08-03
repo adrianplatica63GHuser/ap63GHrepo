@@ -49,6 +49,7 @@ import {
   type ResolvedProperty,
 } from "./property-step-dialog";
 import { ResumedSessionView } from "./resumed-session-view";
+import { buttonClass } from "@/lib/ui/button-styles";
 
 // ---------------------------------------------------------------------------
 // Module-level singleton — preserves FS handles across React re-renders
@@ -360,7 +361,7 @@ export function ImportWizard() {
           type="button"
           onClick={handlePickFolder}
           disabled={phase === "walking" || phase === "scanning" || phase === "importing"}
-          className="inline-flex items-center rounded-md bg-cta px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-cta-d disabled:cursor-not-allowed disabled:opacity-50"
+          className={buttonClass({ variant: "primary", size: "lg" })}
         >
           {rootFolderName ? t("changeFolderButton") : t("chooseFolderButton")}
         </button>
@@ -416,7 +417,11 @@ export function ImportWizard() {
             type="button"
             onClick={() => setPhase("property")}
             disabled={phase === "scanning"}
-            className="ml-auto inline-flex items-center rounded-md border border-cta px-4 py-2 text-sm font-medium text-cta hover:bg-cta/10 disabled:cursor-not-allowed disabled:opacity-50"
+            className={buttonClass({
+              variant: "primary",
+              size: "lg",
+              className: "ml-auto",
+            })}
           >
             {t("importButton")}
           </button>
