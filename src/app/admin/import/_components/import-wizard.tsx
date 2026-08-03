@@ -488,6 +488,9 @@ export function ImportWizard() {
           rootFolderName={rootFolderName}
           scanResults={scanResults}
           propertyId={resolvedProperty.id}
+          onPropertyCornersChanged={(cornerCount) =>
+            setResolvedProperty((prev) => (prev ? { ...prev, cornerCount } : prev))
+          }
           onClose={() => {
             setPhase("ready");
             // Reset scan results so the table shows fresh state

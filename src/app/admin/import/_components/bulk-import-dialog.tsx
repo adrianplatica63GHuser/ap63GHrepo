@@ -4,17 +4,29 @@
  * BulkImportDialog — Slice #21.01.Import
  *
  * Step 3 of the import wizard: imports every FSEntry (file or page-group)
- * as a Document, uploads its file(s) as pages, and tags the document with
- * all ancestor folder names.
+ * as a Document, uploads its file(s) as pages, links it to the run's Property
+ * and tags it with all ancestor folder names.
  *
- * After import:
- *   - A results table shows every entry with "Open →" links.
- *   - Each row has an "AI Interpret" button that opens an inline AI panel.
- *   - Coordinate text files  → offer "Create Property" + associate siblings.
- *   - ID-card images         → offer "Create Person" from extracted data.
- *   - Other extractable docs → offer "Extract Fields" and update the record.
+ * After import, the results table offers up to three per-row follow-ups, each
+ * on a row that finished cleanly:
  *
- * The concurrency limit is 3 in-flight import operations at a time.
+ *   - "Interpretează AI"  (Slice #23.02.Import) — any row with an image or PDF
+ *     page. Extracts fields per the document's own type template and, when the
+ *     type has person roles configured, walks the extracted parties through the
+ *     shared confirm-or-create stepper.
+ *   - "Creează persoană din CI"  (Slice #23.01.Import) — rows the scan
+ *     classified as an identity card.
+ *   - "Aplică pe proprietate"  (Slice #23.02.Import) — rows that are coordinate
+ *     files, offering their corners to the run's Property.
+ *
+ * All three run AFTER the import, deliberately: by then the Document exists, its
+ * pages are uploaded and it is already attached to the Property, so each action
+ * only has to add one thing. Offering any of them beforehand would mean the
+ * wizard creating a second Document for the same file, since it imports every
+ * entry unconditionally and has no skip mechanism.
+ *
+ * The concurrency limit is 3 in-flight import operations at a time. The
+ * follow-up actions are one-at-a-time: each opens a modal.
  *
  * Provenance (Slice #21.07.Import): each entry's provenance is inferred from
  * its own file extension(s) - a page-group of scans and a single .jpg are IMAGE,
@@ -25,9 +37,12 @@
  * inferable - the normal case - the gate never appears and the import starts on
  * mount exactly as before.
  *
- * The two follow-up creations in the results panel are unambiguous and never
- * ask: a Property built from a coordinate file is COORDINATE_FILE, and a Person
- * built from AI-extracted ID-card fields is AI_INTERPRETED.
+ * Slice #23.02.Import removed the dead AI scaffolding this file used to carry:
+ * the AiPhase state machine, the callerless _handleAiInterpret that fed it, the
+ * AiPanel it was meant to drive, and the three handlers behind that panel
+ * (handleCreateProperty / handleCreatePerson / handleExtractFields). Two of
+ * those offers now exist for real, above; the third (ID card) shipped in
+ * #23.01. Nothing is left running both versions.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -46,17 +61,23 @@ import {
   type SavedImportSession,
 } from "@/lib/import/session";
 import type { ScanResult } from "./scan-table";
-import {
-  inferProvenance,
-  inferProvenanceForFiles,
-} from "@/lib/metadata/provenance-rules";
+import { inferProvenanceForFiles } from "@/lib/metadata/provenance-rules";
 import type { ProvenanceCode } from "@/lib/metadata/provenance";
 import { ProvenanceField } from "./provenance-field";
 import { isIdCardEntry } from "@/lib/import/id-card";
+import { isCoordinateFileName } from "@/lib/import/coordinate-file";
 import {
   IdCardPersonDialog,
   type IdCardPersonOutcome,
 } from "./id-card-person-dialog";
+import {
+  CoordinatePropertyDialog,
+  type CoordinateOutcome,
+} from "./coordinate-property-dialog";
+import {
+  DocumentAiInterpretDialog,
+  type AiInterpretOutcome,
+} from "./document-ai-interpret-dialog";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -74,6 +95,10 @@ export type ImportResult = {
   principalObjectId?: string;
   /** Slice #21.02.Import: true once AI-interpret has been successfully run on this entry. */
   aiProcessed?: boolean;
+  /** Slice #23.02.Import: how many document fields that run filled in. */
+  aiFieldCount?: number;
+  /** Slice #23.02.Import: party stepper tally, null when the type has no roles. */
+  aiParties?: { linked: number; created: number; skipped: number } | null;
   /**
    * Slice #23.01.Import: set once a Person has been confirmed or created from
    * this entry's ID card and linked to the run's Property and this Document.
@@ -82,25 +107,14 @@ export type ImportResult = {
    * idempotent, but re-offering it reads as "that didn't work".
    */
   personId?: string;
-};
-
-type AiPhase =
-  | "idle"
-  | "coordinates"       // text file with Stereo70 content
-  | "id-card"           // Romanian ID card image
-  | "generic-doc"       // other extractable document
-  | "creating"
-  | "done"
-  | "error";
-
-type AiState = {
-  path:        string;
-  phase:       AiPhase;
-  nickname:    string;
-  /** AI scan confidence (7.8 — shown as warning in the panel) */
-  confidence?: "high" | "medium" | "low";
-  successMsg?: string;
-  errorMsg?:   string;
+  /**
+   * Slice #23.02.Import: set once this coordinate file has been offered to the
+   * Property — whether its corners were written, kept, or found already
+   * applied. Same job as personId: stop re-offering a settled question.
+   */
+  coordinateSettled?: boolean;
+  /** Corner count the Property ended up with, for the row's summary. */
+  cornerCount?: number;
 };
 
 type Props = {
@@ -114,6 +128,12 @@ type Props = {
    * this dialog without one.
    */
   propertyId: string;
+  /**
+   * Slice #23.02.Import: fired when a coordinate row rewrites the Property's
+   * corners, so the wizard's toolbar chip stops advertising the count it had at
+   * the property step.
+   */
+  onPropertyCornersChanged?: (cornerCount: number) => void;
   onClose: () => void;
 };
 
@@ -175,14 +195,28 @@ async function withConcurrencyLimit<T>(
 // ---------------------------------------------------------------------------
 // File-type helpers (no circular import from folder-utils needed)
 // ---------------------------------------------------------------------------
+//
+// Slice #23.02.Import removed the local TEXT_EXTS_SET / isTextFile pair: the
+// coordinate-file extension list now has exactly one home, the pure
+// isCoordinateFileName in src/lib/import/coordinate-file.ts, which the property
+// step already uses. Two copies of "which extensions might hold corners" is one
+// copy too many.
 
 const IMAGE_EXTS_SET = new Set([".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".tiff", ".tif"]);
-const TEXT_EXTS_SET = new Set([".txt", ".csv", ".dat", ".asc"]);
 const PDF_EXT = ".pdf";
 
 function isImageFile(name: string) { return IMAGE_EXTS_SET.has(extOf(name)); }
 function isPdfFile(name: string)   { return extOf(name) === PDF_EXT; }
-function isTextFile(name: string)  { return TEXT_EXTS_SET.has(extOf(name)); }
+
+/**
+ * True when at least one of this entry's files is something the AI-interpret
+ * route can actually send to the model. A text-only document comes back 422
+ * with "fișierele text ... nu pot fi interpretate cu AI", so offering the
+ * button there would only ever produce that error.
+ */
+function hasReadablePage(entry: FSEntry): boolean {
+  return entryFileNames(entry).some((n) => isImageFile(n) || isPdfFile(n));
+}
 
 // ---------------------------------------------------------------------------
 // PDF rasterization via Web Worker  (fix 7.7 — off-main-thread rendering)
@@ -399,87 +433,6 @@ async function associateDocumentsWithProperty(
   }
 }
 
-/** POST /api/properties/parse-text → { corners } */
-async function parseTextFileForProperty(
-  file: File,
-): Promise<{ corners: unknown[] } | null> {
-  const fd = new FormData();
-  fd.append("file", file, file.name);
-  const res = await fetch("/api/properties/parse-text", { method: "POST", body: fd });
-  if (!res.ok) return null;
-  return res.json() as Promise<{ corners: unknown[] }>;
-}
-
-/** POST /api/properties → { property: { id } } */
-async function createProperty(payload: {
-  nickname:   string;
-  corners:    unknown[];
-  tarlaSola?: string | null;
-  parcela?:   string | null;
-}): Promise<string> {
-  const res = await fetch("/api/properties", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      nickname:  payload.nickname,
-      corners:   payload.corners,
-      tarlaSola: payload.tarlaSola ?? null,
-      parcela:   payload.parcela   ?? null,
-      // Built from a parsed cadastral coordinate file - Adrian's rule.
-      provenance: inferProvenance("COORDINATE_FILE"),
-    }),
-  });
-  if (!res.ok) {
-    const body = (await res.json().catch(() => ({}))) as { error?: string };
-    throw new Error(body.error ?? `HTTP ${res.status}`);
-  }
-  const body = (await res.json()) as { property?: { id?: string }; id?: string };
-  const id = body.property?.id ?? body.id;
-  if (!id) throw new Error("No property id");
-  return id;
-}
-
-/** POST /api/admin/import/extract-document → { fields } */
-async function extractDocumentFields(imageBlob: Blob): Promise<Record<string, string | null>> {
-  const fd = new FormData();
-  const f = imageBlob instanceof File
-    ? imageBlob
-    : new File([imageBlob], "page.png", { type: "image/png" });
-  fd.append("file", f);
-  const res = await fetch("/api/admin/import/extract-document", { method: "POST", body: fd });
-  if (!res.ok) throw new Error(`Extract HTTP ${res.status}`);
-  const body = (await res.json()) as { fields?: Record<string, string | null> };
-  return body.fields ?? {};
-}
-
-/** POST /api/people → { person: { id } } using extracted fields */
-async function createNaturalPersonFromFields(
-  fields: Record<string, string | null>,
-): Promise<string> {
-  const res = await fetch("/api/people", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      type: "natural",
-      firstName: fields.firstName ?? null,
-      lastName: fields.lastName ?? null,
-      cnp: fields.cnp ?? null,
-      idCardSeries: fields.idCardSeries ?? null,
-      idCardNumber: fields.idCardNumber ?? null,
-      // Every field here came out of the AI extraction - Adrian's rule.
-      provenance: inferProvenance("AI_EXTRACTION"),
-    }),
-  });
-  if (!res.ok) {
-    const body = (await res.json().catch(() => ({}))) as { error?: string };
-    throw new Error(body.error ?? `HTTP ${res.status}`);
-  }
-  const body = (await res.json()) as { person?: { id?: string }; id?: string };
-  const id = body.person?.id ?? body.id;
-  if (!id) throw new Error("No person id");
-  return id;
-}
-
 // ---------------------------------------------------------------------------
 // Main Component
 // ---------------------------------------------------------------------------
@@ -489,6 +442,7 @@ export function BulkImportDialog({
   rootFolderName,
   scanResults,
   propertyId,
+  onPropertyCornersChanged,
   onClose,
 }: Props) {
   const t = useTranslations("adminImport.wizard.importDialog");
@@ -503,8 +457,6 @@ export function BulkImportDialog({
   // fix 7.6 — session-expiry detection during bulk import
   const [sessionExpired, setSessionExpired] = useState(false);
   const abortRef = useRef(false);
-  const [aiState, setAiState] = useState<AiState | null>(null);
-  const [parsedCorners, setParsedCorners] = useState<unknown[] | null>(null);
 
   // Slice #23.01.Import — the row whose ID card is being turned into a Person.
   // The File is resolved up front (the FSEntry handle is only readable while
@@ -513,6 +465,14 @@ export function BulkImportDialog({
     { path: string; docId: string; label: string; file: File } | null
   >(null);
   const [idCardError, setIdCardError] = useState<string | null>(null);
+
+  // Slice #23.02.Import — the two new row actions, one at a time.
+  const [coordinateTarget, setCoordinateTarget] = useState<
+    { path: string; entry: FSFileEntry } | null
+  >(null);
+  const [aiTarget, setAiTarget] = useState<
+    { path: string; docId: string; label: string } | null
+  >(null);
 
   // ── Provenance (Slice #21.07.Import) ──────────────────────────────────────
   //
@@ -818,239 +778,70 @@ export function BulkImportDialog({
       if (target) updateResult(target.path, { personId: outcome.personId });
       return null;
     });
+    // updateResult is a stable useCallback reference.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ---------------------------------------------------------------------------
-  // AI interpretation handler
-  // ---------------------------------------------------------------------------
-  //
-  // Pre-existing orphaned code (no remaining call site) found while fixing
-  // lint for Slice #21.03.Import — not part of this slice, so left in place
-  // rather than deleted blind. Prefixed per this repo's eslint convention
-  // ("Allowed unused vars must match /^_/u") instead of removing what might
-  // be mid-refactor scaffolding; isTextFile/parseTextFileForProperty below
-  // stay alive as its only remaining callers.
-
-  const _handleAiInterpret = useCallback(
-    async (result: ImportResult) => {
-      if (!result.docId) return;
-      const entry = result.entry;
-      const scanResult = scanResults.get(entry.path);
-
-      // Determine what AI action to offer
-      const name = entry.kind === "page-group" ? entry.name : (entry as FSFileEntry).name;
-      const entryName = entry.kind === "file" ? (entry as FSFileEntry).name : name;
-
-      if (isTextFile(entryName)) {
-        // Try to parse Stereo70 coordinates
-        setAiState({ path: entry.path, phase: "creating", nickname: name, });
-        try {
-          const file = entry.kind === "file"
-            ? await (entry as FSFileEntry).handle.getFile()
-            : null;
-          if (file) {
-            const parsed = await parseTextFileForProperty(file);
-            if (parsed && parsed.corners.length > 0) {
-              setParsedCorners(parsed.corners);
-              setAiState({ path: entry.path, phase: "coordinates", nickname: name });
-              return;
-            }
-          }
-        } catch { /* fall through */ }
-        setAiState({ path: entry.path, phase: "idle", nickname: name });
-        return;
-      }
-
-      // Image or PDF — check scan result first
-      if (scanResult?.description) {
-        const label = scanResult.description.toLowerCase();
-        const isIdCard =
-          label.includes("carte de identitate") ||
-          label.includes("id card") ||
-          label.includes("buletin");
-        setAiState({
-          path:       entry.path,
-          phase:      isIdCard ? "id-card" : "generic-doc",
-          nickname:   name,
-          confidence: scanResult.confidence, // 7.8: pass through for warning display
-        });
-        return;
-      }
-
-      // No scan result — offer generic (confidence unknown)
-      setAiState({ path: entry.path, phase: "generic-doc", nickname: name });
-    },
-    [scanResults],
-  );
-
-  // ---------------------------------------------------------------------------
-  // AI action handlers
+  // Slice #23.02.Import — the two ported actions
   // ---------------------------------------------------------------------------
 
-  const handleCreateProperty = useCallback(
-    async (entryPath: string, nickname: string) => {
-      if (!parsedCorners) return;
-      setAiState((s) => s ? { ...s, phase: "creating" } : s);
-      try {
-        const entryResult = results.find((r) => r.entry.path === entryPath);
+  /**
+   * "Aplică pe proprietate" — offer this coordinate file's corners to the run's
+   * Property. Only ever on a plain file entry: a page-group is by definition a
+   * folder of sequentially-numbered images and can never hold a text export.
+   */
+  const handleOpenCoordinate = useCallback((result: ImportResult) => {
+    if (result.entry.kind !== "file") return;
+    setCoordinateTarget({
+      path: result.entry.path,
+      entry: result.entry as FSFileEntry,
+    });
+  }, []);
 
-        // Slice #23.00.Import: tarla/parcela used to be decoded here from the
-        // entry's `folderInfo` (the digit-prefix heuristic). That field no
-        // longer exists — the wizard infers nothing cadastral from a folder
-        // name, so these stay null and a human fills them in on the Property
-        // form. This whole handler is unreachable anyway (see the note on
-        // _handleAiInterpret above); it is kept compiling, not revived.
-        const tarlaSola = null;
-        const parcela   = null;
-
-        const propertyId = await createProperty({ nickname, corners: parsedCorners, tarlaSola, parcela });
-
-        // Associate siblings from the same containing folder.
-        // Use pathParts.join("/") (the folder path, e.g. "64per2-234" or ""
-        // for flat root entries) rather than path.split("/")[0], which for
-        // flat entries returns the filename itself and matches nothing.
-        const entryFolder = (entryResult?.entry.pathParts ?? []).join("/");
-        const siblingDocIds = results
-          .filter(
-            (r) =>
-              r.status === "done" &&
-              r.docId &&
-              r.entry.path !== entryPath &&
-              r.entry.pathParts.join("/") === entryFolder,
-          )
-          .map((r) => r.docId as string);
-
-        // Also associate the current document (the text file itself is saved
-        // as a document so it can appear in the property's Documents tab).
-        const currentDocId = entryResult?.docId;
-        if (currentDocId) siblingDocIds.push(currentDocId);
-
-        await associateDocumentsWithProperty(propertyId, siblingDocIds);
-        setAiState((s) =>
-          s
-            ? {
-                ...s,
-                phase: "done",
-                successMsg: t("aiPropertyCreated", { count: siblingDocIds.length }),
-              }
-            : s,
-        );
-      } catch (err) {
-        setAiState((s) =>
-          s
-            ? {
-                ...s,
-                phase: "error",
-                errorMsg: err instanceof Error ? err.message : t("aiError"),
-              }
-            : s,
-        );
-      }
-    },
-    [parsedCorners, results, t],
-  );
-
-  const handleCreatePerson = useCallback(
-    async (entryPath: string) => {
-      setAiState((s) => s ? { ...s, phase: "creating" } : s);
-      try {
-        // Get the image blob
-        const result = results.find((r) => r.entry.path === entryPath);
-        if (!result) throw new Error("Entry not found");
-        const entry = result.entry;
-
-        let imageBlob: Blob | null = null;
-        if (entry.kind === "file") {
-          const file = await (entry as FSFileEntry).handle.getFile();
-          if (isPdfFile(file.name)) {
-            imageBlob = await pdfFirstPageBlob(file);
-          } else if (isImageFile(file.name)) {
-            imageBlob = file;
-          }
+  const handleCoordinateDone = useCallback(
+    (outcome: CoordinateOutcome) => {
+      setCoordinateTarget((target) => {
+        if (target) {
+          updateResult(target.path, {
+            coordinateSettled: true,
+            cornerCount: outcome.cornerCount,
+          });
         }
-
-        if (!imageBlob) throw new Error("Not a scannable file");
-
-        const fields = await extractDocumentFields(imageBlob);
-        await createNaturalPersonFromFields(fields);
-        setAiState((s) => s ? { ...s, phase: "done", successMsg: t("aiPersonCreated") } : s);
-      } catch (err) {
-        setAiState((s) =>
-          s
-            ? {
-                ...s,
-                phase: "error",
-                errorMsg: err instanceof Error ? err.message : t("aiError"),
-              }
-            : s,
-        );
-      }
+        return target;
+      });
+      // Only a real write invalidates the wizard's chip; keeping the existing
+      // corners changed nothing to report.
+      if (outcome.changed) onPropertyCornersChanged?.(outcome.cornerCount);
     },
-    [results, t],
+    [onPropertyCornersChanged, updateResult],
   );
 
-  const handleExtractFields = useCallback(
-    async (entryPath: string, docId: string) => {
-      setAiState((s) => s ? { ...s, phase: "creating" } : s);
-      try {
-        const result = results.find((r) => r.entry.path === entryPath);
-        if (!result) throw new Error("Entry not found");
-        const entry = result.entry;
+  /** "Interpretează AI" — extract fields, then walk any parties. */
+  const handleOpenAi = useCallback((result: ImportResult) => {
+    if (!result.docId) return;
+    const entry = result.entry;
+    const label =
+      entry.kind === "page-group"
+        ? (entry as FSPageGroupEntry).titleHint
+        : (entry as FSFileEntry).name;
+    setAiTarget({ path: entry.path, docId: result.docId, label });
+  }, []);
 
-        let imageBlob: Blob | null = null;
-        if (entry.kind === "file") {
-          const file = await (entry as FSFileEntry).handle.getFile();
-          if (isPdfFile(file.name)) {
-            imageBlob = await pdfFirstPageBlob(file);
-          } else if (isImageFile(file.name)) {
-            imageBlob = file;
-          }
-        } else if (entry.kind === "page-group") {
-          const pg = entry as FSPageGroupEntry;
-          if (pg.handles.length > 0) {
-            imageBlob = await pg.handles[0].getFile();
-          }
+  const handleAiDone = useCallback(
+    (outcome: AiInterpretOutcome) => {
+      setAiTarget((target) => {
+        if (target) {
+          updateResult(target.path, {
+            aiProcessed: true,
+            aiFieldCount: outcome.fieldCount,
+            aiParties: outcome.parties,
+          });
         }
-
-        if (!imageBlob) throw new Error("Not scannable");
-
-        const fields = await extractDocumentFields(imageBlob);
-
-        // PATCH the document with extracted fields
-        await fetch(`/api/documents/${docId}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            title:        fields.title        ?? undefined,
-            nrDocument:   fields.nrDocument   ?? undefined,
-            dateDocument: fields.dateDocument ?? undefined,
-            subject:      fields.subject      ?? undefined,
-          }),
-        });
-
-        // Slice #21.02.Import: stamp ai_interpreted_at on the document record
-        // and mark the result row as AI-processed so the badge renders.
-        await fetch(`/api/documents/${docId}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ aiInterpretedAt: new Date().toISOString() }),
-        });
-        updateResult(entryPath, { aiProcessed: true });
-
-        setAiState((s) => s ? { ...s, phase: "done", successMsg: t("aiExtracted") } : s);
-      } catch (err) {
-        setAiState((s) =>
-          s
-            ? {
-                ...s,
-                phase: "error",
-                errorMsg: err instanceof Error ? err.message : t("aiError"),
-              }
-            : s,
-        );
-      }
+        return target;
+      });
     },
-    [results, updateResult, t],
+    [updateResult],
   );
 
   // ---------------------------------------------------------------------------
@@ -1223,6 +1014,26 @@ export function BulkImportDialog({
             />
           )}
 
+          {/* Slice #23.02.Import — coordinate file → the run's Property. */}
+          {coordinateTarget && (
+            <CoordinatePropertyDialog
+              propertyId={propertyId}
+              entry={coordinateTarget.entry}
+              onDone={handleCoordinateDone}
+              onClose={() => setCoordinateTarget(null)}
+            />
+          )}
+
+          {/* Slice #23.02.Import — per-type AI extraction + party linking. */}
+          {aiTarget && (
+            <DocumentAiInterpretDialog
+              documentId={aiTarget.docId}
+              entryLabel={aiTarget.label}
+              onDone={handleAiDone}
+              onClose={() => setAiTarget(null)}
+            />
+          )}
+
           {idCardError && (
             <div
               role="alert"
@@ -1230,19 +1041,6 @@ export function BulkImportDialog({
             >
               {idCardError}
             </div>
-          )}
-
-          {/* AI panel (inline, above results) */}
-          {aiState && (
-            <AiPanel
-              state={aiState}
-              results={results}
-              t={t}
-              onCreateProperty={handleCreateProperty}
-              onCreatePerson={handleCreatePerson}
-              onExtractFields={handleExtractFields}
-              onClose={() => { setAiState(null); setParsedCorners(null); }}
-            />
           )}
 
           <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-fade dark:text-zinc-400">
@@ -1253,7 +1051,7 @@ export function BulkImportDialog({
               <tr className="border-b border-crease text-left text-xs font-semibold uppercase tracking-wide text-fade dark:border-zinc-700">
                 <th className="pb-2 pr-3">{t("colDocument")}</th>
                 <th className="w-28 pb-2">{t("colStatus")}</th>
-                <th className="w-44 pb-2">{t("colAction")}</th>
+                <th className="w-64 pb-2">{t("colAction")}</th>
               </tr>
             </thead>
             <tbody>
@@ -1263,7 +1061,14 @@ export function BulkImportDialog({
                   result={r}
                   t={t}
                   isIdCard={isIdCardEntry(scanResults.get(r.entry.path))}
+                  isCoordinate={
+                    r.entry.kind === "file" &&
+                    isCoordinateFileName((r.entry as FSFileEntry).name)
+                  }
+                  canInterpret={hasReadablePage(r.entry)}
                   onCreatePerson={() => void handleOpenIdCard(r)}
+                  onApplyCoordinates={() => handleOpenCoordinate(r)}
+                  onInterpret={() => handleOpenAi(r)}
                 />
               ))}
             </tbody>
@@ -1284,12 +1089,43 @@ type ResultRowProps = {
   t: ReturnType<typeof useTranslations<"adminImport.wizard.importDialog">>;
   /** Slice #23.01.Import: the scan says this entry is an identity card. */
   isIdCard: boolean;
+  /** Slice #23.02.Import: this entry's extension could hold Stereo 70 corners. */
+  isCoordinate: boolean;
+  /** Slice #23.02.Import: at least one page is an image or PDF. */
+  canInterpret: boolean;
   onCreatePerson: () => void;
+  onApplyCoordinates: () => void;
+  onInterpret: () => void;
 };
 
-function ResultRow({ result, t, isIdCard, onCreatePerson }: ResultRowProps) {
-  const { entry, status, errorMsg, docId, personId } = result;
+function ResultRow({
+  result,
+  t,
+  isIdCard,
+  isCoordinate,
+  canInterpret,
+  onCreatePerson,
+  onApplyCoordinates,
+  onInterpret,
+}: ResultRowProps) {
+  const {
+    entry,
+    status,
+    errorMsg,
+    docId,
+    personId,
+    aiProcessed,
+    aiFieldCount,
+    aiParties,
+    coordinateSettled,
+    cornerCount,
+  } = result;
   const displayName = entry.kind === "page-group" ? entry.titleHint : (entry as FSFileEntry).name;
+
+  // Every follow-up action needs a cleanly imported row: without a docId there
+  // is nothing to attach to, and an errored row most often failed because the
+  // session expired, in which case these calls would fail too.
+  const settled = status === "done" && !!docId;
 
   return (
     <tr className="border-b border-crease dark:border-zinc-800">
@@ -1325,172 +1161,69 @@ function ResultRow({ result, t, isIdCard, onCreatePerson }: ResultRowProps) {
         )}
       </td>
 
-      {/* Slice #23.01.Import — the ID-card action. Only ever offered on a row
-          that imported cleanly: without a docId there is nothing to link the
-          person to. */}
       <td className="py-2">
-        {status === "done" && docId && isIdCard && !personId && (
-          <button
-            type="button"
-            onClick={onCreatePerson}
-            className="rounded-md border border-cta/40 bg-cta-pale px-2 py-1 text-xs font-medium text-cta hover:bg-cta/15"
-          >
-            {t("createPersonButton")}
-          </button>
-        )}
-        {personId && (
-          <a
-            href={`/natural-persons/${personId}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs font-medium text-emerald-600 hover:underline dark:text-emerald-400"
-          >
-            ✓ {t("personLinked")}
-          </a>
-        )}
+        <div className="flex flex-wrap items-center gap-1.5">
+          {/* Slice #23.02.Import — AI extraction. Offered on any readable row,
+              ID cards included: reading a card's fields into the Document and
+              turning it into a Person are independent jobs. */}
+          {settled && canInterpret && !aiProcessed && (
+            <button
+              type="button"
+              onClick={onInterpret}
+              className="rounded-md border border-cta/40 bg-cta-pale px-2 py-1 text-xs font-medium text-cta hover:bg-cta/15"
+            >
+              {t("interpretButton")}
+            </button>
+          )}
+          {aiProcessed && (
+            <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+              ✓ {t("interpretDone", { count: aiFieldCount ?? 0 })}
+              {aiParties
+                ? ` · ${t("interpretParties", {
+                    count: aiParties.linked + aiParties.created,
+                  })}`
+                : ""}
+            </span>
+          )}
+
+          {/* Slice #23.01.Import — the ID-card action. */}
+          {settled && isIdCard && !personId && (
+            <button
+              type="button"
+              onClick={onCreatePerson}
+              className="rounded-md border border-cta/40 bg-cta-pale px-2 py-1 text-xs font-medium text-cta hover:bg-cta/15"
+            >
+              {t("createPersonButton")}
+            </button>
+          )}
+          {personId && (
+            <a
+              href={`/natural-persons/${personId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs font-medium text-emerald-600 hover:underline dark:text-emerald-400"
+            >
+              ✓ {t("personLinked")}
+            </a>
+          )}
+
+          {/* Slice #23.02.Import — coordinate file → the run's Property. */}
+          {settled && isCoordinate && !coordinateSettled && (
+            <button
+              type="button"
+              onClick={onApplyCoordinates}
+              className="rounded-md border border-cta/40 bg-cta-pale px-2 py-1 text-xs font-medium text-cta hover:bg-cta/15"
+            >
+              {t("coordinatesButton")}
+            </button>
+          )}
+          {coordinateSettled && (
+            <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+              ✓ {t("coordinatesDone", { count: cornerCount ?? 0 })}
+            </span>
+          )}
+        </div>
       </td>
     </tr>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// AiPanel — inline interpretation panel
-// ---------------------------------------------------------------------------
-
-type AiPanelProps = {
-  state:            AiState;
-  results:          ImportResult[];
-  t:                ReturnType<typeof useTranslations<"adminImport.wizard.importDialog">>;
-  onCreateProperty: (path: string, nickname: string) => void;
-  onCreatePerson:   (path: string) => void;
-  onExtractFields:  (path: string, docId: string) => void;
-  onClose:          () => void;
-};
-
-function AiPanel({
-  state,
-  results,
-  t,
-  onCreateProperty,
-  onCreatePerson,
-  onExtractFields,
-  onClose,
-}: AiPanelProps) {
-  const [nickname, setNickname] = useState(state.nickname);
-  const docId = results.find((r) => r.entry.path === state.path)?.docId ?? "";
-
-  return (
-    <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950/30">
-      <div className="flex items-start justify-between mb-2">
-        <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
-          {t("aiPanelTitle", { name: state.nickname })}
-        </p>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label={t("aiCancel")}
-          className="ml-2 rounded p-0.5 text-blue-500 hover:text-blue-700 dark:text-blue-400"
-        >
-          ✕
-        </button>
-      </div>
-
-      {/* 7.8 — confidence warning: shown when AI classified with low/medium confidence
-           and an action (id-card, generic-doc, coordinates) is about to be taken.
-           Coordinates use a different signal (coordinate-range check, not AI confidence)
-           so we only warn on the AI-driven phases. */}
-      {(state.phase === "id-card" || state.phase === "generic-doc") &&
-        (state.confidence === "low" || state.confidence === "medium") && (
-          <div className="mb-2 flex items-center gap-1.5 rounded bg-amber-50 px-3 py-1.5 text-xs text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
-            <span aria-hidden="true">⚠</span>
-            {t("aiConfidenceWarning", { level: t(`aiConfidence_${state.confidence}`) })}
-          </div>
-        )}
-
-      {state.phase === "coordinates" && (
-        <div className="space-y-2">
-          <p className="text-sm text-blue-700 dark:text-blue-300">{t("aiCoordinatesOffer")}</p>
-          <label className="block text-xs text-fade dark:text-zinc-400">
-            {t("aiNicknameLabel")}
-            <input
-              type="text"
-              value={nickname}
-              onChange={(e) => setNickname(e.target.value)}
-              className="mt-1 block w-full rounded border border-wire px-2 py-1 text-sm dark:border-zinc-600 dark:bg-zinc-800"
-            />
-          </label>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => onCreateProperty(state.path, nickname)}
-              className="rounded-md bg-cta px-3 py-1.5 text-xs font-medium text-white hover:bg-cta-d"
-            >
-              {t("aiCreatePropertyButton")}
-            </button>
-            <button type="button" onClick={onClose} className="text-xs text-fade hover:text-ink">
-              {t("aiCancel")}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {state.phase === "id-card" && (
-        <div className="space-y-2">
-          <p className="text-sm text-blue-700 dark:text-blue-300">{t("aiIdCardOffer")}</p>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => onCreatePerson(state.path)}
-              className="rounded-md bg-cta px-3 py-1.5 text-xs font-medium text-white hover:bg-cta-d"
-            >
-              {t("aiCreatePersonButton")}
-            </button>
-            <button type="button" onClick={onClose} className="text-xs text-fade hover:text-ink">
-              {t("aiCancel")}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {state.phase === "generic-doc" && (
-        <div className="space-y-2">
-          <p className="text-sm text-blue-700 dark:text-blue-300">{t("aiDocumentOffer")}</p>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => onExtractFields(state.path, docId)}
-              className="rounded-md bg-cta px-3 py-1.5 text-xs font-medium text-white hover:bg-cta-d"
-            >
-              {t("aiExtractButton")}
-            </button>
-            <button type="button" onClick={onClose} className="text-xs text-fade hover:text-ink">
-              {t("aiCancel")}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {state.phase === "creating" && (
-        <p className="text-sm text-blue-700 animate-pulse dark:text-blue-300">
-          {t("aiCreating")}
-        </p>
-      )}
-
-      {state.phase === "done" && (
-        <p className="text-sm text-emerald-700 dark:text-emerald-300">
-          ✓ {state.successMsg}
-        </p>
-      )}
-
-      {state.phase === "error" && (
-        <p className="text-sm text-red-600 dark:text-red-400">
-          {state.errorMsg ?? t("aiError")}
-        </p>
-      )}
-
-      {state.phase === "idle" && (
-        <p className="text-sm text-fade">{t("aiNoAction")}</p>
-      )}
-    </div>
   );
 }
