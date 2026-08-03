@@ -26,6 +26,7 @@ import { NavArrowIcon }      from "@/components/back-arrow";
 import { ErrorBoundary, PanelError } from "@/components/error-boundary";
 import { inferProvenance } from "@/lib/metadata/provenance-rules";
 import type { ProvenanceSourceKind } from "@/lib/metadata/provenance-rules";
+import { buttonClass } from "@/lib/ui/button-styles";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -428,7 +429,7 @@ export function AddPropertyDialog({ onClose }: Props) {
             type="button"
             onClick={onClose}
             aria-label={t("cancel")}
-            className="rounded p-1 text-fade hover:bg-canvas dark:hover:bg-zinc-800"
+            className={buttonClass({ variant: "bare", size: "md" })}
           >
             ✕
           </button>
@@ -454,7 +455,7 @@ export function AddPropertyDialog({ onClose }: Props) {
               <button
                 type="button"
                 onClick={() => setStep("upload")}
-                className="flex flex-col rounded-lg border-2 border-wire bg-white px-4 py-3 text-left transition-colors hover:border-cta hover:bg-cta-pale dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-cta"
+                className={buttonClass({ variant: "secondary", size: "lg" })}
               >
                 <span className="font-medium">{t("choiceScan")}</span>
                 <span className="mt-0.5 text-xs text-fade">{t("choiceScanDesc")}</span>
@@ -464,7 +465,7 @@ export function AddPropertyDialog({ onClose }: Props) {
               <button
                 type="button"
                 onClick={() => setStep("upload-text")}
-                className="flex flex-col rounded-lg border-2 border-wire bg-white px-4 py-3 text-left transition-colors hover:border-cta hover:bg-cta-pale dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-cta"
+                className={buttonClass({ variant: "secondary", size: "lg" })}
               >
                 <span className="font-medium">{t("choiceTextFile")}</span>
                 <span className="mt-0.5 text-xs text-fade">{t("choiceTextFileDesc")}</span>
@@ -474,7 +475,7 @@ export function AddPropertyDialog({ onClose }: Props) {
               <button
                 type="button"
                 onClick={() => setStep("upload-folder")}
-                className="flex flex-col rounded-lg border-2 border-wire bg-white px-4 py-3 text-left transition-colors hover:border-cta hover:bg-cta-pale dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-cta"
+                className={buttonClass({ variant: "secondary", size: "lg" })}
               >
                 <span className="font-medium">{t("choiceTextFolder")}</span>
                 <span className="mt-0.5 text-xs text-fade">{t("choiceTextFolderDesc")}</span>
@@ -518,7 +519,7 @@ export function AddPropertyDialog({ onClose }: Props) {
                   type="button"
                   onClick={() => { void handleProcess(); }}
                   disabled={!selectedFile}
-                  className="rounded-md bg-cta px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d disabled:cursor-not-allowed disabled:opacity-40"
+                  className={buttonClass({ variant: "primary", size: "lg" })}
                 >
                   {t("processButton")}
                 </button>
@@ -589,7 +590,7 @@ export function AddPropertyDialog({ onClose }: Props) {
                 <button
                   type="button"
                   onClick={handleConfirmSave}
-                  className="rounded-md bg-cta px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d"
+                  className={buttonClass({ variant: "primary", size: "lg" })}
                 >
                   {saveCount === 1
                     ? t("saveCount1")
@@ -635,7 +636,7 @@ export function AddPropertyDialog({ onClose }: Props) {
                   type="button"
                   onClick={() => { void handleImportText(); }}
                   disabled={!textFile}
-                  className="rounded-md bg-cta px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d disabled:cursor-not-allowed disabled:opacity-40"
+                  className={buttonClass({ variant: "primary", size: "lg" })}
                 >
                   {t("importButton")}
                 </button>
@@ -700,7 +701,7 @@ export function AddPropertyDialog({ onClose }: Props) {
                   type="button"
                   onClick={() => { void handleImportFolder(); }}
                   disabled={folderFiles.length === 0}
-                  className="rounded-md bg-cta px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d disabled:cursor-not-allowed disabled:opacity-40"
+                  className={buttonClass({ variant: "primary", size: "lg" })}
                 >
                   {t("importAllButton")}
                 </button>
@@ -726,7 +727,7 @@ export function AddPropertyDialog({ onClose }: Props) {
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-md bg-cta px-6 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d"
+                className={buttonClass({ variant: "primary", size: "lg" })}
               >
                 {t("close")}
               </button>
@@ -743,7 +744,7 @@ export function AddPropertyDialog({ onClose }: Props) {
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-md bg-cta px-6 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d"
+                className={buttonClass({ variant: "primary", size: "lg" })}
               >
                 {t("close")}
               </button>
@@ -821,7 +822,7 @@ function BackButton({ onClick, label }: { onClick: () => void; label: string }) 
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex items-center gap-1.5 rounded-md border border-wire bg-white px-4 py-2 text-[0.9375rem] font-semibold text-navy shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:text-blue-300 dark:hover:bg-zinc-800"
+      className={buttonClass({ variant: "secondary", size: "lg", className: "gap-1.5" })}
     >
       <NavArrowIcon dir="left" />
       <span>{label}</span>

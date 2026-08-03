@@ -5,6 +5,7 @@
  * to avoid SSR/client locale hydration mismatches.
  */
 import { useState } from "react";
+import { buttonClass } from "@/lib/ui/button-styles";
 
 type FormState = "idle" | "submitting" | "success" | "error";
 
@@ -121,7 +122,7 @@ export function SignupForm({
       <button
         type="submit"
         disabled={state === "submitting"}
-        className="rounded-md bg-cta px-4 py-2 text-sm font-semibold text-white hover:bg-cta/90 disabled:opacity-60 transition"
+        className={buttonClass({ variant: "primary", size: "lg" })}
       >
         {state === "submitting" ? buttonSubmitting : buttonSubmit}
       </button>

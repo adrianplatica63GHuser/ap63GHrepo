@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
+import { buttonClass } from "@/lib/ui/button-styles";
 
 type AssociatedDocument = {
   id:                  string;
@@ -122,7 +123,7 @@ export function DocumentReferencesTab({ documentId }: Props) {
                         e.stopPropagation();
                         router.push(`/documents/${encodeURIComponent(item.id)}?readonly=true`);
                       }}
-                      className="inline-flex items-center rounded-md border border-wire bg-white px-2 py-1 text-xs font-medium text-ink shadow-sm transition-colors hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+                      className={buttonClass({ variant: "secondary", size: "xs" })}
                     >
                       {t("view")}
                     </button>
@@ -142,7 +143,7 @@ export function DocumentReferencesTab({ documentId }: Props) {
             type="button"
             onClick={handleAssociate}
             disabled={selectedId !== null}
-            className="inline-flex items-center rounded-md bg-cta px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d disabled:cursor-not-allowed disabled:opacity-40"
+            className={buttonClass({ variant: "primary", size: "lg" })}
           >
             {t("associate")}
           </button>
@@ -150,7 +151,7 @@ export function DocumentReferencesTab({ documentId }: Props) {
             type="button"
             onClick={handleDissociate}
             disabled={selectedId === null || dissociating}
-            className="inline-flex items-center rounded-md border border-wire bg-white px-4 py-2 text-sm font-medium text-ink shadow-sm transition-colors hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+            className={buttonClass({ variant: "secondary", size: "lg" })}
           >
             {dissociating ? t("dissociating") : t("dissociate")}
           </button>

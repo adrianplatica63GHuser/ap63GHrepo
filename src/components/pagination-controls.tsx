@@ -1,9 +1,11 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { buttonClass } from "@/lib/ui/button-styles";
 
-const BTN =
-  "inline-flex items-center rounded-md border border-wire bg-white px-3 py-1.5 text-xs font-medium text-ink shadow-sm transition-colors hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800";
+// Slice #23.05.UX: this constant was the codebase's only pre-existing attempt
+// at a shared button class string. It is now just a call to the real helper.
+const BTN = buttonClass({ variant: "secondary", size: "sm" });
 
 interface Props {
   page:     number;

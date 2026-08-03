@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { PaginationControls } from "@/components/pagination-controls";
+import { buttonClass } from "@/lib/ui/button-styles";
 
 const PAGE_SIZE = 15;
 
@@ -190,11 +191,11 @@ export function AssociateReferenceView({ documentId, documentName }: Props) {
 
       <div className="flex items-center gap-3 border-t border-crease pt-4 dark:border-zinc-800">
         <button type="button" onClick={handleAssociate} disabled={submitting || selectedIds.size === 0}
-          className="inline-flex items-center rounded-md bg-cta px-5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d disabled:cursor-not-allowed disabled:opacity-50">
+          className={buttonClass({ variant: "primary", size: "lg" })}>
           {submitting ? t("associating") : t("associate")}
         </button>
         <button type="button" onClick={handleCancel} disabled={submitting}
-          className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800">
+          className={buttonClass({ variant: "secondary", size: "lg" })}>
           {t("cancel")}
         </button>
         {selectedIds.size === 0 && !isLoading && displayList.length > 0 && (

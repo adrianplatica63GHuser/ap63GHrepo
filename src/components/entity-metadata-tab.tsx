@@ -11,6 +11,7 @@ import { highlightRingClass } from "@/lib/versioning/highlight-ring";
 import type { HighlightColor } from "@/lib/versioning/field-diff";
 import type { MetadataSnapshot, MetadataVersionItem } from "@/lib/metadata/queries";
 import { PROVENANCE_VALUES, provenanceI18nKey } from "@/lib/metadata/provenance";
+import { buttonClass } from "@/lib/ui/button-styles";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -233,7 +234,7 @@ function MetadataSection({
             type="button"
             onClick={handleMarkReviewed}
             disabled={reviewing || reviewed}
-            className="rounded px-3 py-1.5 text-sm font-medium border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-zinc-800 disabled:opacity-60 transition-colors"
+            className={buttonClass({ variant: "secondary", size: "md" })}
           >
             {reviewed ? labelMarkedReviewed : reviewing ? labelMarkingReviewed : labelMarkReviewed}
           </button>
@@ -405,7 +406,7 @@ function TagsSection({
           type="button"
           onClick={handleAdd}
           disabled={adding || !input.trim()}
-          className="rounded px-3 py-1.5 text-sm font-medium bg-slate-700 hover:bg-slate-800 dark:bg-slate-600 dark:hover:bg-slate-500 text-white disabled:opacity-60 transition-colors"
+          className={buttonClass({ variant: "primary", size: "md" })}
         >
           {adding ? labelAdding : labelAdd}
         </button>
@@ -427,7 +428,7 @@ function TagsSection({
                 onClick={() => handleRemove(tag)}
                 disabled={removing === tag}
                 aria-label={`${labelRemove} ${tag}`}
-                className="text-slate-400 hover:text-red-500 dark:text-zinc-500 dark:hover:text-red-400 transition-colors leading-none disabled:opacity-50"
+                className={buttonClass({ variant: "bare-danger", size: "md" })}
               >
                 ×
               </button>
@@ -529,7 +530,7 @@ function InlineGroupsSection({
           <button
             type="button"
             onClick={() => setShowAdd((v) => !v)}
-            className="text-sm text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-200 transition-colors"
+            className={buttonClass({ variant: "bare", size: "md" })}
           >
             {showAdd ? "▲" : labelAdd}
           </button>
@@ -581,7 +582,7 @@ function InlineGroupsSection({
                   onClick={() => handleRemove(g.id)}
                   disabled={removing === g.id}
                   aria-label={`${labelRemove} ${g.code}`}
-                  className="ml-auto text-xs text-slate-400 hover:text-red-500 dark:text-zinc-500 dark:hover:text-red-400 transition-colors disabled:opacity-50 px-1"
+                  className={buttonClass({ variant: "bare-danger", size: "xs", className: "ml-auto" })}
                 >
                   ×
                 </button>
@@ -683,7 +684,7 @@ function InlineStampsSection({
           <button
             type="button"
             onClick={() => setShowAdd((v) => !v)}
-            className="text-sm text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-200 transition-colors"
+            className={buttonClass({ variant: "bare", size: "md" })}
           >
             {showAdd ? "▲" : labelAdd}
           </button>
@@ -734,7 +735,7 @@ function InlineStampsSection({
                   onClick={() => handleRemove(s.id)}
                   disabled={removing === s.id}
                   aria-label={`${labelRemove} ${s.code}`}
-                  className="ml-auto text-xs text-slate-400 hover:text-red-500 dark:text-zinc-500 dark:hover:text-red-400 transition-colors disabled:opacity-50 px-1"
+                  className={buttonClass({ variant: "bare-danger", size: "xs", className: "ml-auto" })}
                 >
                   ×
                 </button>
@@ -863,7 +864,7 @@ function CrossRefsSection({
           <button
             type="button"
             onClick={() => { setShowAdd((v) => !v); setAddError(null); }}
-            className="text-sm text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-200 transition-colors"
+            className={buttonClass({ variant: "bare", size: "md" })}
           >
             {showAdd ? "▲" : t("crossRef.add")}
           </button>
@@ -902,7 +903,7 @@ function CrossRefsSection({
               type="button"
               onClick={handleAdd}
               disabled={adding || !codeInput.trim()}
-              className="rounded px-3 py-1.5 text-sm font-medium bg-slate-700 hover:bg-slate-800 dark:bg-slate-600 dark:hover:bg-slate-500 text-white disabled:opacity-60 transition-colors"
+              className={buttonClass({ variant: "primary", size: "md" })}
             >
               {adding ? t("crossRef.adding") : t("crossRef.addConfirm")}
             </button>
@@ -965,7 +966,7 @@ function CrossRefsSection({
                   onClick={() => handleRemove(ref.id)}
                   disabled={removing === ref.id}
                   aria-label={t("crossRef.remove")}
-                  className="text-xs text-slate-400 hover:text-red-500 dark:text-zinc-500 dark:hover:text-red-400 transition-colors disabled:opacity-50 shrink-0 px-1 pt-0.5"
+                  className={buttonClass({ variant: "bare-danger", size: "xs", className: "shrink-0" })}
                 >
                   ×
                 </button>
@@ -1006,14 +1007,14 @@ function MakeCurrentDialog({
           <button
             type="button"
             onClick={onCancel}
-            className="rounded px-4 py-2 text-sm font-medium border border-slate-300 dark:border-slate-600 text-ink dark:text-zinc-100 hover:bg-slate-50 dark:hover:bg-zinc-800"
+            className={buttonClass({ variant: "secondary", size: "lg" })}
           >
             {labelCancel}
           </button>
           <button
             type="button"
             onClick={onOk}
-            className="rounded px-4 py-2 text-sm font-medium bg-slate-700 hover:bg-slate-800 dark:bg-slate-600 dark:hover:bg-slate-500 text-white"
+            className={buttonClass({ variant: "primary", size: "lg" })}
           >
             {labelOk}
           </button>
@@ -1534,7 +1535,7 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
               type="button"
               onClick={saveAll}
               disabled={saving || saved || !isDirty}
-              className="rounded px-4 py-2 text-sm font-medium bg-slate-700 hover:bg-slate-800 dark:bg-slate-600 dark:hover:bg-slate-500 text-white disabled:opacity-50 transition-colors"
+              className={buttonClass({ variant: "primary", size: "lg" })}
             >
               {saved ? t("saved") : saving ? t("saving") : t("save")}
             </button>

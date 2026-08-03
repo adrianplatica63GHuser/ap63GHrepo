@@ -20,6 +20,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useTranslations }     from "next-intl";
 import Link                    from "next/link";
+import { buttonClass } from "@/lib/ui/button-styles";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -274,7 +275,7 @@ export function ProcessPanel({ documentId, principalObjectId }: Props) {
             type="button"
             onClick={handleProcess}
             disabled={processing}
-            className="rounded-md bg-emerald-700 hover:bg-emerald-800 disabled:opacity-40 disabled:cursor-not-allowed px-4 py-2 text-sm font-medium text-white transition-colors"
+            className={buttonClass({ variant: "primary", size: "lg" })}
           >
             {processing ? t("processing") : t("buttonLabel")}
           </button>

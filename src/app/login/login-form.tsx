@@ -17,6 +17,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { buttonClass } from "@/lib/ui/button-styles";
 
 interface LoginFormProps {
   labelIdentity: string;
@@ -132,7 +133,7 @@ export function LoginForm({
       <button
         type="submit"
         disabled={loading}
-        className="rounded-md bg-cta px-4 py-2 text-sm font-semibold text-white hover:bg-cta/90 disabled:opacity-60 transition"
+        className={buttonClass({ variant: "primary", size: "lg" })}
       >
         {loading ? buttonSigningIn : buttonSignIn}
       </button>

@@ -33,6 +33,7 @@ import {
   type AngleArcInfo,
 } from "@/lib/geo/angles";
 import { HelpHint } from "@/components/help/help-hint";
+import { buttonClass } from "@/lib/ui/button-styles";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -1865,7 +1866,7 @@ export default function PropertyMap() {
             <button
               type="button"
               onClick={() => { setDeleteError(null); setShowDeleteConfirm(true); }}
-              className="px-5 py-2.5 bg-red-600 text-white text-sm font-semibold rounded-lg shadow-lg hover:bg-red-700 active:bg-red-800 transition-colors border border-red-700"
+              className={buttonClass({ variant: "danger", size: "lg" })}
             >
               Delete all selected ({selectedIds.size})
             </button>
@@ -1874,7 +1875,7 @@ export default function PropertyMap() {
             <button
               type="button"
               onClick={() => { setShowTabs(true); setActiveTab("selected"); }}
-              className="px-5 py-2.5 bg-white text-zinc-900 text-sm font-semibold rounded-lg shadow-lg hover:bg-zinc-100 active:bg-zinc-200 transition-colors border border-zinc-300"
+              className={buttonClass({ variant: "secondary", size: "lg" })}
             >
               {t("map.displayAllSelected")} ({selectedIds.size})
             </button>
@@ -1888,7 +1889,7 @@ export default function PropertyMap() {
             <button
               type="button"
               onClick={() => { setDeleteError(null); setShowDeleteConfirm(true); }}
-              className="px-5 py-2.5 bg-red-600 text-white text-sm font-semibold rounded-lg shadow-lg hover:bg-red-700 active:bg-red-800 transition-colors border border-red-700"
+              className={buttonClass({ variant: "danger", size: "lg" })}
             >
               Delete all selected ({selectedIds.size})
             </button>
@@ -1916,7 +1917,7 @@ export default function PropertyMap() {
                   type="button"
                   disabled={deleting}
                   onClick={() => { setShowDeleteConfirm(false); setDeleteError(null); }}
-                  className="px-4 py-2 text-sm font-medium text-zinc-700 bg-zinc-100 rounded-lg hover:bg-zinc-200 disabled:opacity-50 transition-colors"
+                  className={buttonClass({ variant: "secondary", size: "lg" })}
                 >
                   Cancel
                 </button>
@@ -1924,7 +1925,7 @@ export default function PropertyMap() {
                   type="button"
                   disabled={deleting}
                   onClick={handleDeleteConfirm}
-                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors min-w-[80px]"
+                  className={buttonClass({ variant: "danger", size: "lg" })}
                 >
                   {deleting ? "Deleting…" : "Approve"}
                 </button>

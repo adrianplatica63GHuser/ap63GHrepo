@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { RecencyBadge } from "@/components/recency-badge";
 import { HelpHint } from "@/components/help/help-hint";
+import { buttonClass } from "@/lib/ui/button-styles";
 
 const PAGE_SIZE = 15;
 const LS_KEY    = "ga40-col-person-v2";
@@ -89,7 +90,7 @@ function ConfirmDialog({
             type="button"
             onClick={onNo}
             disabled={busy}
-            className="inline-flex items-center rounded-md border border-wire bg-white px-4 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+            className={buttonClass({ variant: "secondary", size: "lg" })}
           >
             {noLabel}
           </button>
@@ -97,7 +98,7 @@ function ConfirmDialog({
             type="button"
             onClick={onYes}
             disabled={busy}
-            className="inline-flex items-center rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 disabled:opacity-50"
+            className={buttonClass({ variant: "danger", size: "lg" })}
           >
             {yesLabel}
           </button>
@@ -320,7 +321,7 @@ export function NaturalPersonListView() {
               onClick={() => setShowColPicker((v) => !v)}
               aria-haspopup="true"
               aria-expanded={showColPicker}
-              className="inline-flex items-center gap-1.5 rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+              className={buttonClass({ variant: "secondary", size: "md", className: "gap-1.5" })}
             >
               <span className="text-fade">{t("chooseFields")}</span>
               <span className="font-mono text-xs text-fade">{visibleCols.length}/{MAX_OPT}</span>
@@ -356,7 +357,7 @@ export function NaturalPersonListView() {
             <button
               type="button"
               onClick={() => setConfirmOpen(true)}
-              className="inline-flex items-center rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-red-700"
+              className={buttonClass({ variant: "danger", size: "lg" })}
             >
               {tBulk("deleteSelected", { count: selectedIds.size })}
             </button>
@@ -489,7 +490,7 @@ export function NaturalPersonListView() {
                 type="button"
                 onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
                 disabled={currentPage === 0}
-                className="rounded px-2 py-1 text-xs hover:bg-crease disabled:opacity-40"
+                className={buttonClass({ variant: "secondary", size: "xs" })}
               >
                 {tPag("previous")}
               </button>
@@ -500,7 +501,7 @@ export function NaturalPersonListView() {
                 type="button"
                 onClick={() => setCurrentPage((p) => Math.min(totalPages - 1, p + 1))}
                 disabled={currentPage >= totalPages - 1}
-                className="rounded px-2 py-1 text-xs hover:bg-crease disabled:opacity-40"
+                className={buttonClass({ variant: "secondary", size: "xs" })}
               >
                 {tPag("next")}
               </button>

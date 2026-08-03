@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 // ---------------------------------------------------------------------------
 
 import type { PersonDocumentQuality } from "@/lib/documents/queries";
+import { buttonClass } from "@/lib/ui/button-styles";
 
 type PartyItem = {
   id:          string;
@@ -148,7 +149,7 @@ export function SuccessionPartiesPanel({ documentId, mode }: Props) {
                       type="button"
                       onClick={() => handleRemove(item.id)}
                       disabled={removingId === item.id}
-                      className="text-xs text-red-600 hover:underline disabled:opacity-50 dark:text-red-400"
+                      className={buttonClass({ variant: "bare-danger", size: "xs" })}
                     >
                       {removingId === item.id ? t("removing") : t("remove")}
                     </button>
@@ -169,7 +170,7 @@ export function SuccessionPartiesPanel({ documentId, mode }: Props) {
           <button
             type="button"
             onClick={handleAddParty}
-            className="inline-flex items-center rounded-md border border-wire bg-white px-3 py-1.5 text-sm font-medium text-ink shadow-sm transition-colors hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+            className={buttonClass({ variant: "secondary", size: "md" })}
           >
             + {t("addButton")}
           </button>

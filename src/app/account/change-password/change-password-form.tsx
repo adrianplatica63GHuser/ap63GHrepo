@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { buttonClass } from "@/lib/ui/button-styles";
 
 type State = "idle" | "saving" | "success" | "error";
 
@@ -99,14 +100,14 @@ export function ChangePasswordForm() {
         <button
           type="submit"
           disabled={state === "saving"}
-          className="flex-1 rounded-md bg-cta px-4 py-2 text-sm font-semibold text-white hover:bg-cta/90 disabled:opacity-60 transition"
+          className={buttonClass({ variant: "primary", size: "lg", className: "flex-1" })}
         >
           {state === "saving" ? "Saving…" : "Update Password"}
         </button>
         <button
           type="button"
           onClick={() => router.back()}
-          className="rounded-md border border-wire px-4 py-2 text-sm font-medium text-ink hover:bg-surface transition"
+          className={buttonClass({ variant: "secondary", size: "lg" })}
         >
           Cancel
         </button>

@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { PaginationControls } from "@/components/pagination-controls";
 import type { PersonDocumentQuality } from "@/lib/documents/queries";
+import { buttonClass } from "@/lib/ui/button-styles";
 
 const PAGE_SIZE = 15;
 
@@ -226,7 +227,7 @@ export function AssociatePartyView({ documentId, documentName }: Props) {
           type="button"
           onClick={handleConfirm}
           disabled={!canConfirm}
-          className="inline-flex items-center rounded-md bg-cta px-5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d disabled:cursor-not-allowed disabled:opacity-50"
+          className={buttonClass({ variant: "primary", size: "lg" })}
         >
           {submitting ? t("confirming") : t("confirm")}
         </button>
@@ -234,7 +235,7 @@ export function AssociatePartyView({ documentId, documentName }: Props) {
           type="button"
           onClick={handleCancel}
           disabled={submitting}
-          className="inline-flex items-center rounded-md border border-wire bg-white px-5 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+          className={buttonClass({ variant: "secondary", size: "lg" })}
         >
           {t("cancel")}
         </button>

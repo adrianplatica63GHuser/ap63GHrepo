@@ -36,6 +36,7 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { NavArrowIcon } from "@/components/back-arrow";
 import { HelpHint } from "@/components/help/help-hint";
+import { buttonClass } from "@/lib/ui/button-styles";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -550,7 +551,7 @@ export function PagesPanel({
                 disabled={!canGoPrev}
                 aria-label={t("prevPage")}
                 title={t("prevPage")}
-                className="inline-flex items-center rounded-md border border-wire px-2 py-1 text-[0.9375rem] font-semibold text-navy hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:text-blue-300 dark:hover:bg-zinc-800"
+                className={buttonClass({ variant: "secondary", size: "xs" })}
               >
                 <NavArrowIcon dir="left" />
               </button>
@@ -566,7 +567,7 @@ export function PagesPanel({
                 disabled={!canGoNext}
                 aria-label={t("nextPage")}
                 title={t("nextPage")}
-                className="inline-flex items-center rounded-md border border-wire px-2 py-1 text-[0.9375rem] font-semibold text-ink hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                className={buttonClass({ variant: "secondary", size: "xs" })}
               >
                 <NavArrowIcon dir="right" />
               </button>
@@ -578,7 +579,7 @@ export function PagesPanel({
             <button
               type="button"
               onClick={onToggleBigPage}
-              className="rounded-md border border-wire bg-white px-3 py-1.5 text-xs font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+              className={buttonClass({ variant: "secondary", size: "sm" })}
             >
               {bigPage ? t("showSmallPage") : t("showBigPage")}
             </button>
@@ -588,7 +589,7 @@ export function PagesPanel({
             <button
               type="button"
               onClick={() => setDialogOpen(true)}
-              className="inline-flex items-center gap-1 rounded-md bg-cta px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-cta-d"
+              className={buttonClass({ variant: "primary", size: "sm", className: "gap-1" })}
             >
               + {t("addPage")}
             </button>
@@ -1010,7 +1011,7 @@ function AddPageDialog({
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="inline-flex items-center rounded-md border border-wire bg-white px-3 py-1.5 text-sm font-medium text-ink shadow-sm hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+              className={buttonClass({ variant: "secondary", size: "md" })}
             >
               {t("dialog.upload")}
             </button>
@@ -1039,7 +1040,7 @@ function AddPageDialog({
             type="button"
             onClick={onClose}
             disabled={saving}
-            className="inline-flex items-center rounded-md border border-wire bg-white px-4 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+            className={buttonClass({ variant: "secondary", size: "lg" })}
           >
             {t("dialog.cancel")}
           </button>
@@ -1047,7 +1048,7 @@ function AddPageDialog({
             type="button"
             onClick={handleSave}
             disabled={saving || !stagedFile}
-            className="inline-flex items-center rounded-md bg-cta px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-cta-d disabled:cursor-not-allowed disabled:opacity-50"
+            className={buttonClass({ variant: "primary", size: "lg" })}
           >
             {saving ? t("dialog.saving") : t("dialog.save")}
           </button>
@@ -1111,7 +1112,7 @@ function DeleteConfirmDialog({
             type="button"
             onClick={onCancel}
             disabled={busy}
-            className="inline-flex items-center rounded-md border border-wire bg-white px-4 py-2 text-sm font-medium text-ink shadow-sm hover:bg-canvas disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+            className={buttonClass({ variant: "secondary", size: "lg" })}
           >
             {t("deleteConfirm.no")}
           </button>
@@ -1119,7 +1120,7 @@ function DeleteConfirmDialog({
             type="button"
             onClick={onConfirm}
             disabled={busy}
-            className="inline-flex items-center rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 disabled:opacity-50"
+            className={buttonClass({ variant: "danger", size: "lg" })}
           >
             {t("deleteConfirm.yes")}
           </button>
