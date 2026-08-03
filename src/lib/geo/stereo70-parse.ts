@@ -35,7 +35,21 @@ export function isStereo(n: number): boolean {
  * not contain a recognisable Stereo 70 coordinate pair.
  *
  * Accepted delimiters: whitespace, comma, semicolon, pipe, or tab (any mix).
- * Decimal separator: dot or comma (both normalised to dot before parsing).
+ *
+ * Decimal separator: DOT only.
+ *   This comment used to claim comma was accepted too. It is not, and never
+ *   was: comma is in the delimiter class, so "321762,117" is split into the
+ *   tokens "321762" and "117" before the `.replace(",", ".")` below is
+ *   reached — by then a token can no longer contain a comma, which makes that
+ *   replace dead code. A comma-decimal line is REJECTED (returns null), not
+ *   misread, so no wrong coordinate is ever stored.
+ *
+ *   Left as-is deliberately (Slice #23.03.Import): the two readings conflict.
+ *   "1,321762.117,584000.250" is a real comma-DELIMITED row that parses
+ *   correctly today, and treating comma as a decimal point would break it.
+ *   Supporting both needs a per-file separator decision, which is its own
+ *   slice. Pinned by src/__tests__/stereo70-parse.test.ts so the limitation
+ *   cannot regress into a misread.
  *
  * Supported formats
  * -----------------
