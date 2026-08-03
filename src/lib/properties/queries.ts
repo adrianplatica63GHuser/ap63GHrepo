@@ -14,6 +14,7 @@ import { db } from "@/db";
 import { entityMetadata, groupMember, groups, lookupPersonRole, lookupTarla, person, principalObject, property, propertyAddress, propertyCorner, propertyPerson, propertyVersion } from "@/db/schema";
 import { wgs84ToStereo70 } from "@/lib/geo/transdatRO";
 import { shoelaceAreaM2 } from "./area";
+import { releaseCornerSourceForProperty } from "./corner-source";
 import type {
   PropertyCreate,
   PropertyListQuery,
@@ -669,7 +670,40 @@ export async function softDeleteProperty(id: string): Promise<boolean> {
     .set({ deletedAt: new Date() })
     .where(and(eq(property.id, id), isNull(property.deletedAt)))
     .returning({ id: property.id });
-  return result.length > 0;
+
+  const deleted = result.length > 0;
+
+  // ── Release the coordinate-source claim  (Slice #23.06.Import) ───────────
+  //
+  // `property_corner_source` records which document's coordinate file built
+  // which Property, and its UNIQUE(document_id) is what stops one file
+  // producing two Properties. The FK is ON DELETE CASCADE — but this is a SOFT
+  // delete, so the row survives and the cascade never fires. Without this call
+  // the link would outlive its Property and lock its source document forever:
+  // the Process panel would point at a deleted Property and refuse to run
+  // again, with no way back short of hand-written SQL.
+  //
+  // This is the same shape as the CNP-uniqueness problem in CLAUDE.md — a
+  // partial unique index cannot see the PARENT row's `deleted_at`, so it keeps
+  // enforcing uniqueness against logically-deleted data. That one is solved
+  // with a trigger. This one is solved by cleaning up on delete instead, on
+  // purpose: the link carries no history worth keeping (it answers exactly one
+  // question, "is this document already spent?", and once its Property is gone
+  // the honest answer is "no"), a trigger would put a second source of truth
+  // in SQL where nobody reading the query layer would find it, and with a
+  // single delete path the thing a trigger buys you — catching callers you
+  // forgot — is worth nothing here.
+  //
+  // It also makes the re-point story work: soft-delete the wrong Property,
+  // which frees the document, then re-run the correct path.
+  //
+  // Only on a real transition. Re-deleting an already-deleted Property returns
+  // false and must not release a claim it did not just orphan.
+  if (deleted) {
+    await releaseCornerSourceForProperty(id);
+  }
+
+  return deleted;
 }
 
 // ---------------------------------------------------------------------------
