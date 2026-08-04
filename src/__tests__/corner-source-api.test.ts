@@ -67,8 +67,6 @@ const LINK_A = {
   createdAt:        new Date("2026-08-03T00:00:00Z"),
   createdBy:        "adrian@example.com",
 };
-const LINK_B = { ...LINK_A, propertyId: PROP_B, propertyCode: "PROP00002", propertyNickname: "Lot 2" };
-
 function ctx(id: string) {
   return { params: Promise.resolve({ id }) };
 }
