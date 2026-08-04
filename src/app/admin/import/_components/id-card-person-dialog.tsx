@@ -72,7 +72,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, type FieldPath, type UseFormRegister } from "react-hook-form";
+import { useForm, useWatch, type FieldPath, type UseFormRegister } from "react-hook-form";
 import {
   emptyFormValues,
   formSchema,
@@ -536,15 +536,29 @@ export function IdCardPersonDialog({
 
   // ── Slice #23.08.Import: what this click will also write to the Document ──
   //
-  // Sourced from form.watch(), not the getValues() snapshot above, so the
-  // preview tracks a card number corrected in the review form as it is typed.
-  // getValues() does not re-render, which would leave the preview showing the
-  // model's original misreading right up until the moment it was overwritten.
+  // Subscribed, not sampled: the getValues() snapshot above does not re-render,
+  // which would leave the preview showing the model's original misreading right
+  // up until the moment it was overwritten. The preview has to track a card
+  // number corrected in the review form as it is typed.
+  //
+  // `useWatch`, not `form.watch([...])` — and that is this codebase's existing
+  // split, not a new preference. `watch()` returns a fresh function on every
+  // render, so React Compiler must skip memoizing any component that calls it;
+  // the four entity forms accept that deliberately because they need ALL values
+  // for their edit-dirty checks, and each carries an
+  // `eslint-disable-next-line react-hooks/incompatible-library` saying so. This
+  // call needs SIX NAMED fields, which is exactly what `useWatch` is for — it is
+  // already used that way in document-form.tsx and judicial-person-form.tsx.
+  // Choosing it here narrows the subscription to those six fields AND lets the
+  // component be memoized, so it is strictly better than a suppression comment.
+  // (Slice #23.09.UX: this was the one `form.watch(...)` in `src/` with no
+  // suppression, and therefore the one React Compiler lint warning in the repo.)
   const [
     wLastName, wFirstName, wIdCardNumber, wIdIssuingAuthority, wIdValidFrom, wIdValidUntil,
-  ] = form.watch([
-    "lastName", "firstName", "idCardNumber", "idIssuingAuthority", "idValidFrom", "idValidUntil",
-  ]);
+  ] = useWatch({
+    control: form.control,
+    name: ["lastName", "firstName", "idCardNumber", "idIssuingAuthority", "idValidFrom", "idValidUntil"],
+  });
 
   // Built against an EMPTY current document on purpose: this shows what the
   // CARD offers, not a promise about which targets are still blank. The real
