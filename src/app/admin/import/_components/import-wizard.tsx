@@ -395,8 +395,14 @@ export function ImportWizard() {
           </span>
         )}
 
+        {/* Slice #23.09.UX — a toolbar chip, so it takes the blink and the
+            live region directly rather than through ActivityCue, whose
+            block layout would break this flex row. No bar for the same
+            reason. */}
         {phase === "walking" && (
-          <span className="text-sm text-fade animate-pulse">{t("walkingFolder")}</span>
+          <span role="status" className="ga-cue-blink text-sm font-medium text-cta">
+            {t("walkingFolder")}
+          </span>
         )}
 
         {phase === "scanning" && (

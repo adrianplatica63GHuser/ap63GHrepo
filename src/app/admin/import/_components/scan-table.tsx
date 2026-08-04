@@ -327,13 +327,18 @@ function StatusBadge({
   switch (result.status) {
     case "converting":
       return (
-        <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 animate-pulse dark:bg-amber-900/40 dark:text-amber-300">
+        // Slice #23.09.UX — the pills are already high-contrast on a tinted
+        // fill, so they need the stronger blink but not the colour change.
+        // No role="status": one live region per row would announce a whole
+        // folder's worth of state changes. The toolbar's scanningProgress
+        // already announces this pass once.
+        <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 ga-cue-blink dark:bg-amber-900/40 dark:text-amber-300">
           {t("statusConverting")}
         </span>
       );
     case "scanning":
       return (
-        <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 animate-pulse dark:bg-blue-900/40 dark:text-blue-300">
+        <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 ga-cue-blink dark:bg-blue-900/40 dark:text-blue-300">
           {t("statusScanning")}
         </span>
       );

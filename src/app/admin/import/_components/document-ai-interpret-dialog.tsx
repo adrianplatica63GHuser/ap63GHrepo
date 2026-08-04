@@ -54,6 +54,7 @@ import {
   ScanConfidenceWarning,
   type ScanConfidence,
 } from "./scan-confidence-warning";
+import { ActivityCue } from "@/components/activity-cue";
 import { buttonClass } from "@/lib/ui/button-styles";
 
 // ---------------------------------------------------------------------------
@@ -308,8 +309,15 @@ export function DocumentAiInterpretDialog({
           */}
           <ScanConfidenceWarning confidence={scanConfidence} />
 
+          {/*
+            Slice #23.09.UX — the cue Adrian reported. Tailwind's pulse
+            utility on `text-fade` was a grey line dipping to 50% opacity; it
+            is now a strong blink in the CTA colour over an indeterminate
+            bar. The bar is indeterminate and not a percentage because one
+            ai-interpret call reports nothing between "sent" and "answered".
+          */}
           {phase.kind === "running" && (
-            <p className="animate-pulse text-sm text-fade">{t("running")}</p>
+            <ActivityCue progress>{t("running")}</ActivityCue>
           )}
 
           {phase.kind === "error" && (

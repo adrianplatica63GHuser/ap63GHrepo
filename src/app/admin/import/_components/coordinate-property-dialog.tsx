@@ -57,6 +57,7 @@ import {
   fetchCornerSource,
   type CornerSourceLink,
 } from "@/lib/import/corner-source-client";
+import { ActivityCue } from "@/components/activity-cue";
 import { buttonClass } from "@/lib/ui/button-styles";
 
 // ---------------------------------------------------------------------------
@@ -304,12 +305,17 @@ export function CoordinatePropertyDialog({
 
         {/* Body */}
         <div className="space-y-3 px-5 py-4">
+          {/*
+            Slice #23.09.UX — both phases are a single opaque round trip (a
+            parse-and-compare, then a PATCH), so both get the blink plus an
+            indeterminate bar. Neither can honestly report a percentage.
+          */}
           {phase.kind === "loading" && (
-            <p className="animate-pulse text-sm text-fade">{t("loading")}</p>
+            <ActivityCue progress>{t("loading")}</ActivityCue>
           )}
 
           {phase.kind === "saving" && (
-            <p className="animate-pulse text-sm text-fade">{t("saving")}</p>
+            <ActivityCue progress>{t("saving")}</ActivityCue>
           )}
 
           {phase.kind === "error" && (

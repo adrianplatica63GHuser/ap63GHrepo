@@ -71,6 +71,7 @@ import {
   nicknameFromFolderName,
 } from "@/lib/import/coordinate-file";
 import { inferProvenance } from "@/lib/metadata/provenance-rules";
+import { ActivityCue } from "@/components/activity-cue";
 import { buttonClass } from "@/lib/ui/button-styles";
 
 // ---------------------------------------------------------------------------
@@ -767,9 +768,10 @@ export function PropertyStepDialog({
               <p className="text-sm text-fade dark:text-zinc-400">{t("noCandidates")}</p>
             ) : (
               <>
-                {parsing && (
-                  <p className="text-sm text-fade animate-pulse">{t("parsing")}</p>
-                )}
+                {/* Slice #23.09.UX — blink only, no bar: this is an inline
+                    note inside a populated section, where a progress bar
+                    would read as chrome rather than as a cue. */}
+                {parsing && <ActivityCue>{t("parsing")}</ActivityCue>}
                 <ul
                   className="space-y-1"
                   role="radiogroup"

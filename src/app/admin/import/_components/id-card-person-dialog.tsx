@@ -88,6 +88,7 @@ import {
   type ResolutionMatch,
   type ResolutionSubject,
 } from "@/components/persons/person-resolution-dialog";
+import { ActivityCue } from "@/components/activity-cue";
 import { ProvenanceField } from "./provenance-field";
 import {
   ScanConfidenceWarning,
@@ -631,9 +632,11 @@ export function IdCardPersonDialog({
         className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
       >
         <div className="w-full max-w-sm rounded-lg bg-card p-6 text-center shadow-xl dark:bg-zinc-900">
-          <p className="animate-pulse text-sm text-ink dark:text-zinc-200">
+          {/* Slice #23.09.UX — one extract-id-card call, then one resolve
+              call; neither reports intermediate progress. */}
+          <ActivityCue progress className="text-center">
             {phase === "extracting" ? t("extracting") : t("resolving")}
-          </p>
+          </ActivityCue>
         </div>
       </div>
     );
