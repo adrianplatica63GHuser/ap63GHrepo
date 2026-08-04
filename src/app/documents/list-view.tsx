@@ -8,6 +8,8 @@ import { useEffect, useRef, useState } from "react";
 import { RecencyBadge } from "@/components/recency-badge";
 import { HelpHint } from "@/components/help/help-hint";
 import { buttonClass } from "@/lib/ui/button-styles";
+import { DevOnly } from "@/components/dev-only";
+import { isDevToolsEnabled } from "@/lib/features/dev-tools";
 
 const PAGE_SIZE   = 15;
 const LS_KEY      = "ga40-col-document-v2";
@@ -253,12 +255,34 @@ function ConfirmDialog({
 // Helpers
 // ---------------------------------------------------------------------------
 
+/**
+ * Slice #23.10.dev — Importance / Relevance / Provenance are set on the entity
+ * Metadata tab, which is a developer surface, so the columns fed from it are
+ * too.
+ *
+ * The filter belongs HERE and not only in the column picker. A choice made
+ * while developer tools were on is already sitting in localStorage, and
+ * localStorage does not know the build changed underneath it — so on a build
+ * without them the picker would offer no such column while the table happily
+ * rendered one, under a header the user has no way to switch off. Restoring is
+ * the only moment the two can be reconciled. DEFAULT_COLS contains none of
+ * these keys, so every other return path below is already safe.
+ *
+ * The stored value is left alone rather than rewritten: flipping the flag back
+ * on should restore the columns the user actually chose, not a copy pruned by
+ * a build they were briefly running.
+ */
+const DEV_ONLY_COLS = ["importance", "relevance", "provenance"];
+
 function readStoredCols(): string[] {
   try {
     const raw = localStorage.getItem(LS_KEY);
     if (!raw) return DEFAULT_COLS;
     const parsed = JSON.parse(raw) as unknown;
-    return Array.isArray(parsed) ? (parsed as string[]) : DEFAULT_COLS;
+    const stored = Array.isArray(parsed) ? (parsed as string[]) : DEFAULT_COLS;
+    return isDevToolsEnabled()
+      ? stored
+      : stored.filter((key) => !DEV_ONLY_COLS.includes(key));
   } catch {
     return DEFAULT_COLS;
   }
@@ -432,9 +456,16 @@ export function DocumentListView({
   const optionalCols = [
     { key: "nrDocument",   label: t("table.nrDocument") },
     { key: "dateDocument", label: t("table.dateDocument") },
-    { key: "importance",   label: t("table.importance") },
-    { key: "relevance",    label: t("table.relevance") },
-    { key: "provenance",   label: t("table.provenance") },
+    // Slice #23.10.dev: the three metadata columns follow the Metadata tab
+    // that feeds them. Spread rather than filtered afterwards so the column
+    // ORDER stays literal and readable.
+    ...(isDevToolsEnabled()
+      ? [
+          { key: "importance",   label: t("table.importance") },
+          { key: "relevance",    label: t("table.relevance") },
+          { key: "provenance",   label: t("table.provenance") },
+        ]
+      : []),
   ];
 
   function cellValue(item: DocumentListItem, key: string): React.ReactNode {
@@ -470,38 +501,54 @@ export function DocumentListView({
           className="w-64 rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm placeholder:text-fade focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:placeholder:text-zinc-500"
         />
 
-        {/* Importance filter */}
-        <div className="inline-flex items-center gap-1.5 rounded-md border border-wire bg-white px-2 py-1.5 text-sm shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-          <span className="text-fade">{tFilter("importanceLabel")}</span>
-          <select
-            value={importance}
-            onChange={(e) => { setImportance(e.target.value); setCurrentPage(0); }}
-            aria-label={tFilter("importanceLabel")}
-            className="bg-transparent text-sm font-medium text-ink focus:outline-none dark:text-zinc-100"
-          >
-            <option value="">{tFilter("allImportances")}</option>
-            <option value="LOW">{tMeta("importanceValues.LOW")}</option>
-            <option value="MEDIUM">{tMeta("importanceValues.MEDIUM")}</option>
-            <option value="HIGH">{tMeta("importanceValues.HIGH")}</option>
-          </select>
-        </div>
+        {/* Slice #23.10.dev: Importance and Relevance are curation values set
+            on the Metadata tab, which is developer-only — a filter over values
+            a business user cannot see or set filters on nothing they know
+            about. The query state stays mounted and simply stays "" (the
+            all-values default), so the fetch below is unchanged.
 
-        {/* Relevance filter */}
-        <div className="inline-flex items-center gap-1.5 rounded-md border border-wire bg-white px-2 py-1.5 text-sm shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-          <span className="text-fade">{tFilter("relevanceLabel")}</span>
-          <select
-            value={relevance}
-            onChange={(e) => { setRelevance(e.target.value); setCurrentPage(0); }}
-            aria-label={tFilter("relevanceLabel")}
-            className="bg-transparent text-sm font-medium text-ink focus:outline-none dark:text-zinc-100"
-          >
-            <option value="">{tFilter("allRelevances")}</option>
-            <option value="INACTIVE">{tMeta("relevanceValues.INACTIVE")}</option>
-            <option value="HISTORICAL">{tMeta("relevanceValues.HISTORICAL")}</option>
-            <option value="CURRENT">{tMeta("relevanceValues.CURRENT")}</option>
-            <option value="FUTURE">{tMeta("relevanceValues.FUTURE")}</option>
-          </select>
-        </div>
+            The Expiring-soon toggle below is deliberately NOT in here. It
+            filters on the document's own date_valid_until, entered on the
+            Details tab — a business question ("what expires soon?"), not a
+            curation value. Slice #20.06 shipped the three together, which is
+            the only reason they look like one group. Note its threshold is
+            configured in Settings → Time frames, which IS dev-only now; the
+            stored value keeps applying, exactly as every other time frame
+            does. */}
+        <DevOnly>
+          {/* Importance filter */}
+          <div className="inline-flex items-center gap-1.5 rounded-md border border-wire bg-white px-2 py-1.5 text-sm shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+            <span className="text-fade">{tFilter("importanceLabel")}</span>
+            <select
+              value={importance}
+              onChange={(e) => { setImportance(e.target.value); setCurrentPage(0); }}
+              aria-label={tFilter("importanceLabel")}
+              className="bg-transparent text-sm font-medium text-ink focus:outline-none dark:text-zinc-100"
+            >
+              <option value="">{tFilter("allImportances")}</option>
+              <option value="LOW">{tMeta("importanceValues.LOW")}</option>
+              <option value="MEDIUM">{tMeta("importanceValues.MEDIUM")}</option>
+              <option value="HIGH">{tMeta("importanceValues.HIGH")}</option>
+            </select>
+          </div>
+
+          {/* Relevance filter */}
+          <div className="inline-flex items-center gap-1.5 rounded-md border border-wire bg-white px-2 py-1.5 text-sm shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+            <span className="text-fade">{tFilter("relevanceLabel")}</span>
+            <select
+              value={relevance}
+              onChange={(e) => { setRelevance(e.target.value); setCurrentPage(0); }}
+              aria-label={tFilter("relevanceLabel")}
+              className="bg-transparent text-sm font-medium text-ink focus:outline-none dark:text-zinc-100"
+            >
+              <option value="">{tFilter("allRelevances")}</option>
+              <option value="INACTIVE">{tMeta("relevanceValues.INACTIVE")}</option>
+              <option value="HISTORICAL">{tMeta("relevanceValues.HISTORICAL")}</option>
+              <option value="CURRENT">{tMeta("relevanceValues.CURRENT")}</option>
+              <option value="FUTURE">{tMeta("relevanceValues.FUTURE")}</option>
+            </select>
+          </div>
+        </DevOnly>
 
         {/* Expiring-soon toggle */}
         <button

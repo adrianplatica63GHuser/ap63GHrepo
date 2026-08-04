@@ -22,6 +22,20 @@ export type NavItem = {
   key: string;
   href?: string;  // undefined = coming soon (rendered disabled)
   icon: LucideIcon;
+  /**
+   * Slice #23.10.dev — hidden unless the build has developer tools enabled.
+   *
+   * Declared here rather than as a key list in sidebar-nav.tsx so the decision
+   * sits beside the item it describes and cannot drift away from it. The
+   * filter that reads it calls isDevToolsEnabled() from
+   * src/lib/features/dev-tools.ts; a nav item is an array entry, so <DevOnly>
+   * cannot wrap it.
+   *
+   * Hiding the item is only half the gate — each of these routes also refuses
+   * server-side in its own page.tsx, the same division of labour Slice #22.01
+   * set up between this filter and src/app/admin/layout.tsx.
+   */
+  devOnly?: boolean;
 };
 
 export type NavSection = {
@@ -104,8 +118,12 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [
       { key: "users", href: "/admin/users", icon: UserCog },
       { key: "referenceData", href: "/admin/value-lists", icon: Database },
-      { key: "helpContent", href: "/admin/help-content", icon: HelpCircle },
-      { key: "settings", href: "/admin/settings", icon: Settings },
+      // Slice #23.10.dev: both are developer surfaces. Help information
+      // authors the Background/How-To copy the "?" buttons show; Settings
+      // holds the time-frame thresholds and the developer options panel.
+      // A business user configures neither.
+      { key: "helpContent", href: "/admin/help-content", icon: HelpCircle, devOnly: true },
+      { key: "settings", href: "/admin/settings", icon: Settings, devOnly: true },
     ],
   },
 ];

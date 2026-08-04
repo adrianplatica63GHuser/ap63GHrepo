@@ -2,10 +2,8 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { setLocaleCookie } from "@/lib/i18n/locale";
 import type { TimeFrameRow } from "@/lib/time-frames/config";
 import { TIME_FRAME_KEYS } from "@/lib/time-frames/config";
 import { buttonClass } from "@/lib/ui/button-styles";
@@ -197,46 +195,37 @@ function TimeFramesPanel() {
 // Developer options panel
 // ---------------------------------------------------------------------------
 
-const DEV_ENGLISH_KEY = "dev-use-english";
-
+/**
+ * Slice #23.10.dev removed the "Use English language" checkbox that used to
+ * open this panel, and with it DEV_ENGLISH_KEY ("dev-use-english"),
+ * setLocaleCookie and useRouter — none of which had another consumer here.
+ *
+ * WHY IT WENT
+ *   Slice #20.10 introduced it as the replacement for the sidebar's EN/RO
+ *   flags. The flags are back now (dev-only, in sidebar-nav.tsx), so keeping
+ *   the checkbox would leave two controls writing the same NEXT_LOCALE cookie
+ *   by different means — and this one also wrote localStorage, so the two could
+ *   disagree about what the current locale was.
+ *
+ *   Its state initialiser additionally called setLocaleCookie as a SIDE EFFECT,
+ *   which meant merely opening this page re-asserted the locale from a
+ *   localStorage key the user may have set months earlier. That is gone too.
+ *
+ * A STALE "dev-use-english" IN localStorage IS HARMLESS
+ *   Nothing reads that key any more, so it is inert. next-intl reads the
+ *   NEXT_LOCALE cookie, and the flags write the cookie — so anyone left in
+ *   English by the old checkbox is one click from Romanian, and no migration
+ *   or cleanup pass is needed. It is deliberately not removed on mount: that
+ *   would be code whose only purpose is to delete a value nobody reads.
+ */
 function DeveloperPanel() {
   const t = useTranslations("settings");
-  const router = useRouter();
 
-  const [isEnglish, setIsEnglish] = useState(() => {
-    if (typeof window === "undefined") return false;
-    const devEnglish = localStorage.getItem(DEV_ENGLISH_KEY) === "true";
-    setLocaleCookie(devEnglish ? "en-GB" : "ro-RO");
-    return devEnglish;
-  });
   const [showDevNotes, setShowDevNotes] = useState(false);
-
-  function handleLanguageToggle(e: React.ChangeEvent<HTMLInputElement>) {
-    const checked = e.target.checked;
-    setIsEnglish(checked);
-    if (checked) {
-      localStorage.setItem(DEV_ENGLISH_KEY, "true");
-      setLocaleCookie("en-GB");
-    } else {
-      localStorage.removeItem(DEV_ENGLISH_KEY);
-      setLocaleCookie("ro-RO");
-    }
-    router.refresh();
-  }
 
   return (
     <section className="rounded-lg border border-wire bg-card p-5 flex flex-col gap-4">
       <h2 className="text-sm font-semibold text-ink">{t("sectionDeveloper")}</h2>
-
-      <label className="flex items-center gap-3 cursor-pointer select-none">
-        <input
-          type="checkbox"
-          checked={isEnglish}
-          onChange={handleLanguageToggle}
-          className="h-4 w-4 rounded border-wire accent-blue-600"
-        />
-        <span className="text-sm text-ink">{t("useEnglish")}</span>
-      </label>
 
       <label className="flex items-center gap-3 cursor-pointer select-none">
         <input

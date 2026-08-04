@@ -48,6 +48,7 @@ import {
   type AiPartyLinkerSummary,
 } from "./ai-party-linker-dialog";
 import { buttonClass } from "@/lib/ui/button-styles";
+import { DevOnly } from "@/components/dev-only";
 
 // ---------------------------------------------------------------------------
 // Document type list — fetched dynamically from the admin-managed
@@ -1166,29 +1167,31 @@ export function DocumentForm({
               (e.g. after adding template fields, to see what is still
               unrecognised). Hidden for text-only documents for the same reason
               AI Interpret is — those pages can never reach the model. */}
-          {mode === "edit" && documentId && (() => {
-            const hasPages = pagesState.pages.length > 0;
-            const hasTextOnlyPages = hasPages && pagesState.pages.every(
-              (p) => p.fileName.toLowerCase().endsWith(".txt"),
-            );
-            if (hasTextOnlyPages) return null;
-            const busy = aiExtracting || aiDiscovering;
-            return (
-              <span
-                title={!hasPages ? t("hints.aiInterpretNoPages") : t("hints.aiDiscover")}
-                className="inline-flex"
-              >
-                <button
-                  type="button"
-                  disabled={!hasPages || busy}
-                  onClick={handleAiDiscover}
-                  className={buttonClass({ variant: "secondary", size: "lg" })}
+          <DevOnly>
+            {mode === "edit" && documentId && (() => {
+              const hasPages = pagesState.pages.length > 0;
+              const hasTextOnlyPages = hasPages && pagesState.pages.every(
+                (p) => p.fileName.toLowerCase().endsWith(".txt"),
+              );
+              if (hasTextOnlyPages) return null;
+              const busy = aiExtracting || aiDiscovering;
+              return (
+                <span
+                  title={!hasPages ? t("hints.aiInterpretNoPages") : t("hints.aiDiscover")}
+                  className="inline-flex"
                 >
-                  {aiDiscovering ? t("aiDiscovering") : t("buttons.aiDiscover")}
-                </button>
-              </span>
-            );
-          })()}
+                  <button
+                    type="button"
+                    disabled={!hasPages || busy}
+                    onClick={handleAiDiscover}
+                    className={buttonClass({ variant: "secondary", size: "lg" })}
+                  >
+                    {aiDiscovering ? t("aiDiscovering") : t("buttons.aiDiscover")}
+                  </button>
+                </span>
+              );
+            })()}
+          </DevOnly>
         </div>
 
         {/* Inline feedback for AI extraction */}

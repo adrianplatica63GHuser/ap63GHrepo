@@ -34,12 +34,19 @@ ARG NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID=DEMO_MAP_ID
 ARG NEXT_PUBLIC_SUPABASE_URL
 ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
 ARG NEXT_PUBLIC_APP_URL=http://localhost:3000
+# Slice #23.10.dev -- developer diagnostics (AI Discover, the Metadata tab and
+# the filters/columns fed from it, Help content, Settings, the locale flags).
+# Defaults to false so an image built without the arg ships WITHOUT them: the
+# safe direction, since forgetting the flag hides a diagnostic rather than
+# exposing one. build-ciprian-image.ps1 passes false explicitly anyway.
+ARG NEXT_PUBLIC_DEV_TOOLS=false
 
 ENV NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=$NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
 ENV NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID=$NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID
 ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
 ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
 ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
+ENV NEXT_PUBLIC_DEV_TOOLS=$NEXT_PUBLIC_DEV_TOOLS
 ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN npm run build

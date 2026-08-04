@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import { LocaleToggle } from "@/components/locale-toggle";
+import { DevOnly } from "@/components/dev-only";
 import { LoginForm } from "./login-form";
 
 export const metadata = { title: "Sign in — GA40" };
@@ -9,10 +10,17 @@ export default async function LoginPage() {
 
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-base p-4">
-      {/* Locale toggle — top-right corner */}
-      <div className="absolute top-4 right-4">
-        <LocaleToggle />
-      </div>
+      {/* Locale toggle — top-right corner.
+          Slice #23.10.dev: developer-only. Every user of this application is
+          Romanian, so an English flag on the sign-in page is a control that can
+          only do harm there. It stays on a developer build because checking the
+          English rendering of the auth screens needs a switch that works before
+          anyone is signed in. */}
+      <DevOnly>
+        <div className="absolute top-4 right-4">
+          <LocaleToggle />
+        </div>
+      </DevOnly>
 
       <div className="w-full max-w-sm">
         {/* Wordmark */}

@@ -7,6 +7,9 @@ import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, ChevronDown, LogOut, KeyRound, Search } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { LocaleToggle } from "@/components/locale-toggle";
+import { DevOnly } from "@/components/dev-only";
+import { isDevToolsEnabled } from "@/lib/features/dev-tools";
 import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
 import { RecentlyViewedPanel } from "@/components/recently-viewed-panel";
 import { clearRecentlyViewed } from "@/components/providers/navigation-history-provider";
@@ -240,6 +243,11 @@ export function SidebarNav() {
   // Sign Out / Change Password controls, which would otherwise dead-end at
   // a login screen that can't actually authenticate anyone there.
   const isUatMode = me?.uatMode === true;
+  // Slice #23.10.dev. Read as a value here because the nav filter below works
+  // on an ARRAY of items, where <DevOnly> cannot reach; the locale toggle in
+  // the header is JSX and uses the wrapper instead. Both resolve to the same
+  // predicate in src/lib/features/dev-tools.ts.
+  const devTools = isDevToolsEnabled();
 
   function handleLogout() {
     guardedAction(async () => {
@@ -389,6 +397,17 @@ export function SidebarNav() {
             GA40
           </span>
         )}
+        {/* Slice #23.10.dev — the EN/RO flags are back, exactly where Slice
+            #20.10 took them from (the header comment above never stopped
+            claiming they were here), but now only on a developer build.
+            #20.10 replaced them with a "Use English language" checkbox on the
+            Settings page; that checkbox is gone again in this slice, because
+            Settings is itself dev-only now and a Romanian user must never have
+            a control that can put the whole UI into English.
+
+            Collapsed sidebars still hide them: two flags do not fit a 3rem
+            rail, which is why the original carried the same !isCollapsed. */}
+        <DevOnly>{!isCollapsed && <LocaleToggle />}</DevOnly>
         <button
           type="button"
           onClick={toggleCollapsed}
@@ -458,6 +477,16 @@ export function SidebarNav() {
           .map((section) =>
             isUatMode && section.items.some((i) => i.key === "users")
               ? { ...section, items: section.items.filter((i) => i.key !== "users") }
+              : section,
+          )
+          // Slice #23.10.dev: strip items marked devOnly in nav-config.ts
+          // (Help information, Settings) on a build without developer tools.
+          // Unconditional map rather than a guarded one so the common case —
+          // a dev build, where nothing is stripped — still produces the same
+          // section objects and this stays one readable step in the chain.
+          .map((section) =>
+            section.items.some((i) => i.devOnly) && !devTools
+              ? { ...section, items: section.items.filter((i) => !i.devOnly) }
               : section,
           )
           .map((section) => {

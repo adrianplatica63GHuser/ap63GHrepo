@@ -8,6 +8,7 @@ import { DocumentPersonsTab } from "./document-persons-tab";
 import { DocumentPropertiesTab } from "./document-properties-tab";
 import { DocumentReferencesTab } from "./document-references-tab";
 import { EntityMetadataTab } from "@/components/entity-metadata-tab";
+import { isDevToolsEnabled } from "@/lib/features/dev-tools";
 import { ProcessPanel } from "./process-panel";
 import { type FormValues } from "./form-schema";
 
@@ -35,7 +36,21 @@ export function DocumentDetailTabs({
 }: Props) {
   const t = useTranslations("document");
   useRegisterPage(documentName, documentCode, "DOCUMENT");
-  const [activeTab, setActiveTab] = useState<Tab>(initialTab ?? "details");
+  // Slice #23.10.dev — the Metadata tab is a developer surface: Importance,
+  // Relevance and Provenance are curation values Adrian sets, and a business
+  // user has no use for them. An array entry cannot be wrapped in <DevOnly>,
+  // so the predicate is read once here and used three times below.
+  const devTools = isDevToolsEnabled();
+
+  // The tab also arrives from the URL (?tab=metadata, resolved into initialTab
+  // by the page). Filtering the tab strip alone would leave a build without
+  // developer tools showing an EMPTY tab body on that link — the panel is
+  // gated too, so nothing would render and no tab would look selected. Fall
+  // back to "details" instead, which is what an unknown ?tab value already
+  // does one level up.
+  const [activeTab, setActiveTab] = useState<Tab>(
+    initialTab && !(initialTab === "metadata" && !devTools) ? initialTab : "details",
+  );
   // Slice #20.16: no container-width change needed — theater overlay is a
   // fixed-position portal that doesn't depend on the container width.
   // Slice #18.06: the details form portals its version-nav controls into this
@@ -48,7 +63,7 @@ export function DocumentDetailTabs({
     { key: "related",    label: t("tabs.related")    },
     { key: "persons",    label: t("tabs.persons")    },
     { key: "properties", label: t("tabs.properties") },
-    { key: "metadata", label: t("tabs.metadata") },
+    ...(devTools ? [{ key: "metadata" as Tab, label: t("tabs.metadata") }] : []),
   ];
 
   return (
@@ -117,7 +132,7 @@ export function DocumentDetailTabs({
           {activeTab === "related" && (
             <DocumentReferencesTab documentId={documentId} />
           )}
-          {activeTab === "metadata" && (
+          {devTools && activeTab === "metadata" && (
             <EntityMetadataTab
               apiPath={`/api/documents/${encodeURIComponent(documentId)}/entity-references`}
               queryKey={`entity-references-document-${documentId}`}

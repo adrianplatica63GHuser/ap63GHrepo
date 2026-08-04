@@ -143,6 +143,21 @@ if (-not $mapsKey) {
     Write-Host "WARNING: NEXT_PUBLIC_GOOGLE_MAPS_API_KEY not found in .env -- maps will not work." -ForegroundColor Yellow
 }
 
+# NOTE (Slice #23.10.dev): NEXT_PUBLIC_DEV_TOOLS is deliberately NOT read from
+# .env above, unlike every other NEXT_PUBLIC_* value. Adrian's .env has dev
+# tools ON -- that is the whole point of it locally -- so harvesting the key
+# here would ship AI Discover, the Metadata tab, Help content, Settings and the
+# locale flags straight to Ciprian by inheritance, silently, on the next build.
+# The build below hardcodes false. If a UAT build ever needs the diagnostics,
+# change the literal on that line and change it back afterwards; do not wire it
+# to .env.
+#
+# Reminder on why this must happen HERE and cannot be fixed on Ciprian's side:
+# NEXT_PUBLIC_* is substituted into the JS bundle when `npm run build` runs
+# inside the image. Setting the variable in his compose file or with
+# `docker run -e` does nothing whatsoever -- the value baked now is the value
+# he gets.
+
 # ---- Step 2: build the Docker image ------------------------------------------
 
 Write-Host ""
@@ -156,6 +171,7 @@ docker build `
     --build-arg "NEXT_PUBLIC_SUPABASE_URL=$sbUrl" `
     --build-arg "NEXT_PUBLIC_SUPABASE_ANON_KEY=$sbAnon" `
     --build-arg "NEXT_PUBLIC_APP_URL=http://localhost:3000" `
+    --build-arg "NEXT_PUBLIC_DEV_TOOLS=false" `
     -t ga40prj-app:latest `
     .
 

@@ -8,6 +8,7 @@ import { PersonPropertiesTab } from "../../properties/_components/person-propert
 import { PersonDocumentTab } from "../../documents/_components/person-document-tab";
 import { PersonReferencesTab } from "../../natural-persons/_components/person-references-tab";
 import { EntityMetadataTab } from "@/components/entity-metadata-tab";
+import { isDevToolsEnabled } from "@/lib/features/dev-tools";
 import { type FormValues } from "./form-schema";
 
 type Tab = "details" | "related" | "properties" | "document" | "metadata";
@@ -31,7 +32,21 @@ export function JudicialPersonDetailTabs({
 }: Props) {
   const t = useTranslations("judicialPerson");
   useRegisterPage(personName, personCode, "JUDICIAL_PERSON");
-  const [activeTab, setActiveTab] = useState<Tab>(initialTab ?? "details");
+  // Slice #23.10.dev — the Metadata tab is a developer surface: Importance,
+  // Relevance and Provenance are curation values Adrian sets, and a business
+  // user has no use for them. An array entry cannot be wrapped in <DevOnly>,
+  // so the predicate is read once here and used three times below.
+  const devTools = isDevToolsEnabled();
+
+  // The tab also arrives from the URL (?tab=metadata, resolved into initialTab
+  // by the page). Filtering the tab strip alone would leave a build without
+  // developer tools showing an EMPTY tab body on that link — the panel is
+  // gated too, so nothing would render and no tab would look selected. Fall
+  // back to "details" instead, which is what an unknown ?tab value already
+  // does one level up.
+  const [activeTab, setActiveTab] = useState<Tab>(
+    initialTab && !(initialTab === "metadata" && !devTools) ? initialTab : "details",
+  );
   // Slice #18.05: the details form portals its version-nav controls into this
   // header slot.
   const [navSlot, setNavSlot] = useState<HTMLDivElement | null>(null);
@@ -41,7 +56,7 @@ export function JudicialPersonDetailTabs({
     { key: "related",    label: t("tabs.related")    },
     { key: "properties", label: t("tabs.properties") },
     { key: "document",   label: t("tabs.document")   },
-    { key: "metadata", label: t("tabs.metadata") },
+    ...(devTools ? [{ key: "metadata" as Tab, label: t("tabs.metadata") }] : []),
   ];
 
   return (
@@ -97,7 +112,7 @@ export function JudicialPersonDetailTabs({
           {activeTab === "related" && (
             <PersonReferencesTab personId={personId} backBase="/judicial-persons" />
           )}
-          {activeTab === "metadata" && (
+          {devTools && activeTab === "metadata" && (
             <EntityMetadataTab
               apiPath={`/api/people/${encodeURIComponent(personId)}/entity-references`}
               queryKey={`entity-references-person-${personId}`}

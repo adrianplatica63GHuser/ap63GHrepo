@@ -100,6 +100,7 @@ import {
   type SkippedPage,
 } from "@/lib/documents/discover-log";
 import { createValue } from "@/lib/admin/value-lists/queries";
+import { isDevToolsEnabled } from "@/lib/features/dev-tools";
 import {
   getDocumentById,
   getDocumentTypeTemplate,
@@ -145,6 +146,24 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
   // to run on any document at any time.
   const bodyJson = (await req.json().catch(() => ({}))) as { mode?: unknown };
   const isDiscover = bodyJson.mode === "discover";
+
+  // ── Dev-only gate (Slice #23.10.dev) ───────────────────────────────────────
+  //
+  // Hiding the button does not remove the endpoint. Discover mode is a
+  // developer diagnostic that reads every page of a document with a 16 384-token
+  // budget, so on a build where it has no UI it must also have no route.
+  //
+  // 404 rather than 403: with the flag off this mode does not exist on this
+  // build, and 403 would confirm that it does. Note the extract path below is
+  // untouched — a bodyless POST is what every existing caller sends and it
+  // still behaves exactly as before.
+  //
+  // Placed HERE, above the rate limiter and above the ANTHROPIC_API_KEY read,
+  // so a probe costs nothing: no Anthropic call, no billing, and no consumed
+  // slot in the shared OCR bucket that AI Interpret depends on.
+  if (isDiscover && !isDevToolsEnabled()) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
 
   // ── Rate limiting ──────────────────────────────────────────────────────────
   const rl = checkOcrRateLimit(await getCurrentUserId());
