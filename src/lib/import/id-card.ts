@@ -20,21 +20,44 @@
  * on "carte de identitate" classifies it as a person's ID card, which would
  * send a vehicle registration to the ID-card extractor.
  *
+ * Slice #23.08.Import added a second, related job to this module: mapping the
+ * fields the card extraction already produced onto the Document the import
+ * created for the same image (see documentFieldsFromIdCard at the foot of the
+ * file). Both halves answer "what does this image mean", so they share a home.
+ *
  * Pure module — no React, no fetch, no DB. Unit-tested in
- * src/__tests__/id-card.test.ts.
+ * src/__tests__/id-card.test.ts and src/__tests__/id-card-document-fields.test.ts.
  */
 
 /**
  * Document-type keys that mean "this is a personal identity card".
  *
- * CARTE_IDENTITATE is the only one the model can still suggest —
- * Slice #23.01.Import removed CARTE_IDENTITATE_ALT from KNOWN_TYPE_KEYS
- * because no migration ever seeded it. It is kept here deliberately as a
- * defensive match: a hand-created type row, or a saved import session from
- * before that change, can still carry the key, and treating it as anything
- * other than an ID card would be wrong.
+ * Slice #23.08.Import removed CARTE_IDENTITATE_ALT. It had been kept as a
+ * "defensive match" against a hand-created row or a stale scan, and that
+ * justification does not survive inspection:
+ *
+ *   - This array is matched against Haiku's `suggestedTypeKey`, and the scan
+ *     route whitelists that answer against KNOWN_TYPE_KEYS — which has not
+ *     contained CARTE_IDENTITATE_ALT since Slice #23.01.Import. The model
+ *     cannot emit it any more.
+ *   - It cannot arrive from the DB either. An unseeded key never reaches a
+ *     lookup_document_type row under its own name: ensureDocType misses
+ *     typeMap and auto-creates a type from the free-text label, generating a
+ *     DIFFERENT key (see the KNOWN_TYPE_KEYS gotcha in CLAUDE.md).
+ *   - Confirmed empirically: `SELECT key FROM lookup_document_type` returns 26
+ *     rows and CARTE_IDENTITATE_ALT is not among them.
+ *
+ * The three real alternate wordings seeded by migration_021 are
+ * AUTORIZATIE_ALT, CERTIFICAT_SARCINI_ALT and EXTRAS_CARTE_FUNCIARA_ALT.
+ * CARTE_IDENTITATE_ALT looked like a fourth member of that family and never
+ * was one — that resemblance is exactly why it survived this long, so if you
+ * are about to re-add it, check the seed list first.
+ *
+ * Kept as an array rather than collapsed to a constant: a genuine alternate
+ * wording for an identity card is a one-line addition here, and every consumer
+ * already treats it as a set.
  */
-export const ID_CARD_TYPE_KEYS = ["CARTE_IDENTITATE", "CARTE_IDENTITATE_ALT"] as const;
+export const ID_CARD_TYPE_KEYS = ["CARTE_IDENTITATE"] as const;
 
 /**
  * Lowercase and strip Romanian diacritics.
@@ -111,4 +134,198 @@ export function isIdCardEntry(scan: IdCardScanSignal | null | undefined): boolea
   }
 
   return isIdCardLabel(scan.description);
+}
+
+// ---------------------------------------------------------------------------
+// Slice #23.08.Import — card fields → the Document the import already created
+// ---------------------------------------------------------------------------
+//
+// Adrian's question was why an ID-card row offered two buttons. "Interpretează
+// cu AI" built its prompt from the document type's template_fields, and
+// CARTE_IDENTITATE has no template — so on an ID card it asked for four generic
+// baseline fields and little else, while extract-id-card had ALREADY read the
+// card number, the issuing authority and both validity dates. A second
+// Anthropic call that returned less than the first one already had.
+//
+// So the card write folds into "Creează persoană": one button, one AI call,
+// more data than either had alone.
+//
+// ── What is deliberately NOT mapped ──────────────────────────────────────────
+//
+// cnp, dateOfBirth, placeOfBirth, gender and idMrzRaw describe the PERSON, and
+// they are already written to natural_person by the same action. Copying them
+// onto the Document would create a second, freely-editable copy of a CNP that
+// migration_025's trigger makes immutable on the person — two sources of truth
+// for the one field the schema goes out of its way to protect. The Document
+// gets the fields that describe the card AS A DOCUMENT, and nothing else.
+//
+// institutionId is not a target either: it is an FK to lookup_institution, so
+// resolving "SPCLEP Bragadiru" would mean auto-creating lookup rows from an AI
+// reading — the exact trap the KNOWN_TYPE_KEYS gotcha records. The issuing
+// authority goes into the free-text `subject` instead.
+//
+// No customFields keys are invented. CARTE_IDENTITATE has no template_fields,
+// and a key written without a template is invisible in the document form. If
+// richer per-field capture on ID cards is wanted, the right move is a
+// template_fields template for the type — a data change, not a code change.
+//
+// Pure module: no React, no fetch, no DB. Unit-tested in
+// src/__tests__/id-card-document-fields.test.ts.
+
+/** Card-derived values, as they stand in the review form at submit time. */
+export type IdCardDocumentSource = {
+  idCardNumber?: string | null;
+  idIssuingAuthority?: string | null;
+  idValidFrom?: string | null;
+  idValidUntil?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+};
+
+/** The Document's current values, as read back before the patch is built. */
+export type IdCardDocumentCurrent = {
+  title?: string | null;
+  nrDocument?: string | null;
+  dateDocument?: string | null;
+  dateValidUntil?: string | null;
+  subject?: string | null;
+  notes?: string | null;
+};
+
+/** Only the keys that should actually change. Empty object = nothing to write. */
+export type IdCardDocumentPatch = {
+  title?: string;
+  nrDocument?: string;
+  dateDocument?: string;
+  dateValidUntil?: string;
+  subject?: string;
+  notes?: string;
+};
+
+/**
+ * Romanian prefix for the `subject` line. Always Romanian, never translated —
+ * see ID_CARD_NOTE_LINE below for why.
+ */
+export const ID_CARD_SUBJECT_PREFIX = "Eliberată de ";
+
+/** Romanian prefix for a generated document title. */
+export const ID_CARD_TITLE_PREFIX = "CI ";
+
+/**
+ * Marker that makes the notes append idempotent.
+ *
+ * Deliberately machine-shaped: a human writing a note about an identity card
+ * might reasonably type "[CI]", and a false positive there would silently
+ * suppress the provenance line on a document that never had one.
+ */
+export const ID_CARD_NOTE_MARKER = "[CI-AI]";
+
+/**
+ * The provenance line appended to the Document's notes.
+ *
+ * ⚠️ Hardcoded Romanian, ON PURPOSE, and this is not a violation of the
+ * two-track i18n rule. That rule governs UI STRINGS — text next-intl renders
+ * for whoever is looking. The moment this sentence is written into
+ * document.notes it stops being UI and becomes user DATA, living in a Romanian
+ * record that Romanian users read. Sourcing it from the active locale would
+ * mean an en-GB session permanently stamps an English sentence into a Romanian
+ * document's notes, which is precisely the outcome the project rule "Romanian
+ * user data stays Romanian and is never translated" exists to prevent.
+ *
+ * The WHEN is not recorded here on purpose — document.aiInterpretedAt carries
+ * it, and a timestamp inside the text would make the marker check the only
+ * thing standing between a re-run and a growing pile of near-identical lines.
+ */
+export const ID_CARD_NOTE_LINE =
+  `${ID_CARD_NOTE_MARKER} Date preluate automat de pe cartea de identitate (interpretare AI).`;
+
+/** Trimmed-non-empty. A whitespace-only field counts as absent. */
+const filled = (v: string | null | undefined): v is string =>
+  typeof v === "string" && v.trim() !== "";
+
+/**
+ * ISO calendar date, the only shape `date` columns accept.
+ *
+ * The review form's inputs are `type="date"` so they already produce this, but
+ * the guard is worth its two lines: a malformed date does not fail on its own,
+ * it makes Postgres reject the WHOLE patch, so one bad character would cost
+ * every other field on the card. Failing one field closed is strictly better
+ * than failing five open.
+ */
+const isoDate = (v: string | null | undefined): v is string =>
+  filled(v) && /^\d{4}-\d{2}-\d{2}$/.test(v.trim());
+
+/**
+ * Build the single PATCH body for the Document behind an ID-card row.
+ *
+ * ── Write-if-empty ───────────────────────────────────────────────────────────
+ *
+ * A value is only ever written into a target the Document has left blank. In
+ * the normal case the two rules coincide — the bulk import created this
+ * Document seconds earlier and every target is null — but write-if-empty makes
+ * a second click on the row, or a card re-read against a document someone has
+ * since filled in, non-destructive for free. Nothing a human typed is ever
+ * overwritten by a machine reading.
+ *
+ * ── One PATCH ────────────────────────────────────────────────────────────────
+ *
+ * Everything travels together because `document` is versioned: two PATCHes
+ * would append two document_version rows for one click, which is the defect
+ * Slice #23.02.Import recorded when it replaced the orphaned two-call code.
+ * If every target is already filled this returns `{}` and the caller sends only
+ * aiInterpretedAt — which is not versioned, so the no-op backstop appends no
+ * version row at all rather than an empty one.
+ */
+export function documentFieldsFromIdCard(
+  card: IdCardDocumentSource,
+  current: IdCardDocumentCurrent,
+): IdCardDocumentPatch {
+  const patch: IdCardDocumentPatch = {};
+
+  // Card series+number → "Nr. document". The card's own identifier.
+  if (filled(card.idCardNumber) && !filled(current.nrDocument)) {
+    patch.nrDocument = card.idCardNumber.trim();
+  }
+
+  // Valid-from IS the issue date on a Romanian CI, which is what dateDocument
+  // means for this type ("Data eliberării").
+  if (isoDate(card.idValidFrom) && !filled(current.dateDocument)) {
+    patch.dateDocument = card.idValidFrom.trim();
+  }
+
+  if (isoDate(card.idValidUntil) && !filled(current.dateValidUntil)) {
+    patch.dateValidUntil = card.idValidUntil.trim();
+  }
+
+  if (filled(card.idIssuingAuthority) && !filled(current.subject)) {
+    patch.subject = `${ID_CARD_SUBJECT_PREFIX}${card.idIssuingAuthority.trim()}`;
+  }
+
+  // Title is generated from the name only when the import left it blank — a
+  // file the user deliberately named keeps its name.
+  if (!filled(current.title)) {
+    const name = [card.lastName, card.firstName]
+      .filter(filled)
+      .map((s) => s.trim())
+      .join(" ");
+    if (name) patch.title = `${ID_CARD_TITLE_PREFIX}${name}`;
+  }
+
+  // The provenance line goes on only when something was actually written —
+  // a note claiming data was taken from the card, on a document where nothing
+  // was, would be a lie in the one place nobody would think to check.
+  const wroteSomething = Object.keys(patch).length > 0;
+  const alreadyNoted = (current.notes ?? "").includes(ID_CARD_NOTE_MARKER);
+  if (wroteSomething && !alreadyNoted) {
+    patch.notes = filled(current.notes)
+      ? `${current.notes.trimEnd()}\n\n${ID_CARD_NOTE_LINE}`
+      : ID_CARD_NOTE_LINE;
+  }
+
+  return patch;
+}
+
+/** How many real document FIELDS a patch carries (the notes line is not one). */
+export function idCardDocumentFieldCount(patch: IdCardDocumentPatch): number {
+  return Object.keys(patch).filter((k) => k !== "notes").length;
 }

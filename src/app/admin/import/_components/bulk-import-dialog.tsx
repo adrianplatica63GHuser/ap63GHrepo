@@ -110,6 +110,19 @@ export type ImportResult = {
    */
   personId?: string;
   /**
+   * Slice #23.08.Import: how many of the Document's own fields the ID-card
+   * action filled in on the same click. Zero is legitimate — the card gave
+   * nothing mappable, or every target was already filled.
+   */
+  idCardDocFields?: number;
+  /**
+   * Slice #23.08.Import: the person was created and linked, but the document
+   * field write that follows it failed. Kept distinct from an outright error
+   * because the row's main outcome DID happen; hiding the difference would
+   * misreport what is in the database.
+   */
+  idCardDocFieldsFailed?: boolean;
+  /**
    * Slice #23.02.Import: set once this coordinate file has been offered to the
    * Property — whether its corners were written, kept, or found already
    * applied. Same job as personId: stop re-offering a settled question.
@@ -831,7 +844,16 @@ export function BulkImportDialog({
 
   const handleIdCardDone = useCallback((outcome: IdCardPersonOutcome) => {
     setIdCardTarget((target) => {
-      if (target) updateResult(target.path, { personId: outcome.personId });
+      if (target) {
+        updateResult(target.path, {
+          personId: outcome.personId,
+          // Slice #23.08.Import — the same click also wrote the card's fields
+          // onto the Document; the row reports both halves separately because
+          // the second can fail while the first succeeded.
+          idCardDocFields: outcome.documentFieldsWritten,
+          idCardDocFieldsFailed: outcome.documentFieldsFailed,
+        });
+      }
       return null;
     });
     // updateResult is a stable useCallback reference.
@@ -1184,6 +1206,8 @@ function ResultRow({
     errorMsg,
     docId,
     personId,
+    idCardDocFields,
+    idCardDocFieldsFailed,
     aiProcessed,
     aiFieldCount,
     aiParties,
@@ -1233,14 +1257,23 @@ function ResultRow({
 
       <td className="py-2">
         <div className="flex flex-wrap items-center gap-1.5">
-          {/* Slice #23.02.Import — AI extraction. Offered on any readable row,
-              ID cards included: reading a card's fields into the Document and
-              turning it into a Person are independent jobs. */}
-          {settled && canInterpret && !aiProcessed && (
+          {/* Slice #23.02.Import — AI extraction on any readable row.
+
+              Slice #23.08.Import added `!isIdCard`. The two actions were framed
+              as independent jobs, and on an ID card that was not true: this
+              route builds its prompt from the document type's template_fields,
+              and CARTE_IDENTITATE has no template, so on a card it asked for
+              four generic baseline fields — while "Creează persoană" had
+              already extracted the card number, the issuing authority and both
+              validity dates. A second Anthropic call, billed in full, that
+              returned strictly less than the first one already had. Those
+              fields are now written by the person action itself, so the button
+              is not merely redundant here, it is worse than the alternative. */}
+          {settled && canInterpret && !isIdCard && !aiProcessed && (
             <button
               type="button"
               onClick={onInterpret}
-              className="rounded-md border border-cta/40 bg-cta-pale px-2 py-1 text-xs font-medium text-cta hover:bg-cta/15"
+              className={buttonClass({ variant: "ghost", size: "xs" })}
             >
               {t("interpretButton")}
             </button>
@@ -1261,7 +1294,7 @@ function ResultRow({
             <button
               type="button"
               onClick={onCreatePerson}
-              className="rounded-md border border-cta/40 bg-cta-pale px-2 py-1 text-xs font-medium text-cta hover:bg-cta/15"
+              className={buttonClass({ variant: "ghost", size: "xs" })}
             >
               {t("createPersonButton")}
             </button>
@@ -1276,13 +1309,29 @@ function ResultRow({
               ✓ {t("personLinked")}
             </a>
           )}
+          {/* Slice #23.08.Import — the document half of the same click. Amber,
+              not red: the person was created and linked either way, so this is
+              an incomplete success rather than a failed row. */}
+          {personId && idCardDocFieldsFailed && (
+            <span
+              role="status"
+              className="text-xs font-medium text-amber-600 dark:text-amber-400"
+            >
+              ⚠ {t("personDocFieldsFailed")}
+            </span>
+          )}
+          {personId && !idCardDocFieldsFailed && (idCardDocFields ?? 0) > 0 && (
+            <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+              · {t("personDocFields", { count: idCardDocFields ?? 0 })}
+            </span>
+          )}
 
           {/* Slice #23.02.Import — coordinate file → the run's Property. */}
           {settled && isCoordinate && !coordinateSettled && (
             <button
               type="button"
               onClick={onApplyCoordinates}
-              className="rounded-md border border-cta/40 bg-cta-pale px-2 py-1 text-xs font-medium text-cta hover:bg-cta/15"
+              className={buttonClass({ variant: "ghost", size: "xs" })}
             >
               {t("coordinatesButton")}
             </button>
