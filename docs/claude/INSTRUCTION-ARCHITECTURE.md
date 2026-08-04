@@ -224,18 +224,16 @@ the owner repo runs. Both load, neither duplicates the other.
 
 ---
 
-## 6. What you have to do by hand
+## 6. The editorial cleanup — done
 
 The split was done **mechanically** — every gotcha and rule outside the slice log was moved
-as exact text, so nothing could be silently reworded. The editorial problems came along for
-the ride. `REVIEW-CHECKLIST.md` lists them: 12 self-retractions to delete, 4 contradictions
-to resolve, 9 dead entries to remove. Working through it cuts the rule files roughly in half
-again — `import-wizard.md` drops by about two thirds.
+as exact text, so nothing could be silently reworded. That meant the editorial problems came
+along for the ride: 12 self-retractions, 4 contradictions, 9 dead entries.
 
-**Three are not optional**, and all three sit in always-loaded files — see §A of the
-checklist. The worst is the sentence in `sandbox-and-toolchain.md` claiming `tsc`'s JSX
-errors are "phantom artefacts, not real errors". It is the only surviving instruction telling
-Claude to disbelieve a real type error, and it directly undermines your strongest rule.
+**All of it has since been applied.** `CLEANUP-LOG.md` is the plain-language record. The
+headline: the sentence telling Claude that sandbox type errors were "phantom artefacts, not
+real errors" is gone — it was the one surviving instruction that licensed dismissing a real
+error, with the file's own authority behind it.
 
 ### The near-miss worth knowing about
 
@@ -274,17 +272,35 @@ extract the rule *at the time*, into the rule file, and let git keep the story.
 
 | File | Bytes | Status |
 |---|---:|---|
-| `shared/CLAUDE.md` → `C:\dev\CLAUDE.md` | 6.0 K | **New** — written from scratch |
-| `shared/.claude/rules/sandbox-and-toolchain.md` | 10.3 K | Extracted verbatim · always-on |
-| `shared/.claude/rules/powershell-and-windows.md` | 1.9 K | Extracted verbatim · always-on |
-| `shared/.claude/rules/shared-database.md` | 2.6 K | **New** — the multi-app schema contract |
-| `ga40prj/CLAUDE.md` | 5.9 K | **New** — 428 lines → 107 |
-| `ga40prj/.claude/rules/` ×13 | 70.4 K | 10 extracted verbatim, 3 harvested from the slice log |
-| `ga40prj/.claude/skills/` ×2 | 23.8 K | Extracted verbatim |
+| `C:\dev\CLAUDE.md` | ~6.6 K | **New** — deployed copy of `docs/claude/shared/CLAUDE.md` |
+| `C:\dev\.claude\rules\` ×3 | ~14 K | Deployed copies of `docs/claude/shared/rules/` |
+| `ga40prj/CLAUDE.md` | ~6.2 K | **New** — 428 lines → ~110 |
+| `ga40prj/.claude/rules/` ×13 | ~64 K | 10 extracted verbatim, 3 harvested from the slice log |
+| `ga40prj/.claude/skills/` ×2 | ~21 K | Extracted verbatim, then deduplicated |
+| `ga40prj/docs/claude/shared/` | ~20 K | **Versioned source** for the four files above the repo |
+| `ga40prj/scripts/Sync-SharedClaude.ps1` | ~4 K | **New** — deploys `docs/claude/shared/` to `C:\dev\` |
 | `ga40prj/docs/claude/slice-log-archive.md` | 99.4 K | The slice log, frozen and never loaded |
-| `SLICE-HEADER-TEMPLATE.md` | 3.6 K | **New** — ~600 words → 5 lines |
-| `REVIEW-CHECKLIST.md` | 12.2 K | The by-hand edits, with original line numbers |
-| `INSTRUCTION-ARCHITECTURE.md` | 11.5 K | This file |
+| `ga40prj/docs/claude/SLICE-HEADER-TEMPLATE.md` | 3.9 K | **New** — ~600 words → 5 lines |
+| `ga40prj/docs/claude/CLEANUP-LOG.md` | ~4 K | What the editorial pass removed, and why |
+| `ga40prj/docs/claude/INSTRUCTION-ARCHITECTURE.md` | ~13 K | This file |
 
-The last three are documentation *about* the system — keep them wherever you like, or
-nowhere. Only the first eight rows go into `C:\dev\`.
+### Why there are two copies of the shared tier
+
+`C:\dev\CLAUDE.md` and `C:\dev\.claude\rules\` must sit **above** the repo to be inherited by
+every app under `C:\dev`. That also puts them outside git — nothing version-controls them,
+and a bad edit is unrecoverable.
+
+So the versioned source of truth is `ga40prj\docs\claude\shared\`, and `C:\dev\` holds a
+deployed copy. Edit the repo copy, commit, then run:
+
+```powershell
+.\scripts\Sync-SharedClaude.ps1
+```
+
+`-Check` compares without writing and exits non-zero on drift (useful in CI, or just to
+answer "is the deployed copy current?"). `-Pull` reverses the direction, for when you edited
+`C:\dev\` by mistake and want to keep those edits — review with `git diff` afterwards. The
+deployed files carry a banner saying they're copies, so the mistake is at least visible.
+
+When the second app arrives it needs nothing new here: it inherits `C:\dev\` automatically,
+and `ga40prj` stays the repo that owns the shared source, exactly as it owns the schema.

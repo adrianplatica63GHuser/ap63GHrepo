@@ -34,7 +34,8 @@ applies to all of Adrian's projects. This file holds only what is true of *this*
   "the dev server isn't running." Say so every time you ask Adrian to run it.
 - **Then stop the dev server.** `next dev` rewrites `.next/` continuously, so `tsc` reads a
   moving target, and `jest` workers OOM against it and report it as a test failure.
-- Claude runs `tsc --noEmit` in the sandbox before every handover. Adrian runs all four
+- Claude runs `tsc --noEmit` in the sandbox before every handover where the mount allows it;
+  where it doesn't, say plainly that only parser diagnostics were run. Adrian runs all four
   locally before anything is considered done. See `C:\dev\.claude\rules\sandbox-and-toolchain.md`.
 
 ## Domain model
@@ -96,6 +97,7 @@ the source of truth for decisions and traps, and load automatically when relevan
 | Need | Location |
 |---|---|
 | Working contract, autonomy, commits, PowerShell | `C:\dev\CLAUDE.md` + `C:\dev\.claude\rules\` |
+| **Editing** any of those four shared files | `docs/claude/shared/`, then `scripts\Sync-SharedClaude.ps1` |
 | Traps for a file family you're editing | `.claude/rules/*.md` — auto-loads on matching paths |
 | Add version history to an entity | `.claude/skills/add-entity-versioning/` |
 | Onboard a new document type | `.claude/skills/onboard-document-type/` |

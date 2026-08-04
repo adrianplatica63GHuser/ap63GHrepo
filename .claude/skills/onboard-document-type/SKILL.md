@@ -53,5 +53,5 @@ Per field:
 
 ### Verification & delivery (sandbox-specific, not domain-specific)
 
-- Sandbox verification: prefer a full-project `tsc --noEmit` where the sandbox can reach the toolchain, and fall back to per-file parser diagnostics only where it cannot. See "The sandbox CAN run `tsc` …" under **Gotchas we've learned** for which applies when — the blanket "the sandbox can't run the toolchain" claim that used to sit here was wrong about `tsc`. Neither is a substitute for Adrian's real `npm run e2e` → `npm run lint` → `npx jest`.
-- Every delivered file still needs Adrian to run `npm run e2e`, then lint + Jest, locally before it's considered done — that hasn't changed and won't change per document type.
+- Sandbox verification: prefer a full-project `tsc --noEmit` where the sandbox can reach the toolchain, and fall back to per-file parser diagnostics only where it cannot — see `C:\dev\.claude\rules\sandbox-and-toolchain.md` for which applies when. Neither is a substitute for Adrian's real `npm run e2e` → `npm run lint` → `npx tsc --noEmit` → `npx jest`.
+- Every delivered file still needs Adrian to run that full sequence locally before it's considered done — that won't change per document type.

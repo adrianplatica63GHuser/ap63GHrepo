@@ -11,32 +11,22 @@ description: Add full-snapshot version history to an entity (version table, v0 b
 
 Property versioning shipped in Slice #18.02; Person versioning (both subtypes) shipped in Slice #18.05; Document versioning shipped in Slice #18.06. All three core entities are now versioned. This section is the canonical reference for the pattern — read it before adding versioning to any future entity or extending the existing ones.
 
-**Document-specific notes (Slice #18.06) — the simplest application:**
+**Document-specific notes — the simplest application:**
 - **Single table, flat snapshot.** No subtypes, no corners, no satellites — `DocumentSnapshot` is just the document's 21 own fields, all `string | null`, so the snapshot IS the flat field map (`computeFieldHighlights` diffs it directly, no flattening step). `suprafata` is the numeric column read as a string; cast `::text` in the migration backfill to match.
 - **Scope = form fields only.** The uploaded `document_page` files and the M:M associations (persons / properties / documents) are deliberately OUT of the versioned scope — they have their own immediate-save lifecycles, like Property's associations and Person's associations.
-- **`updateDocument` was wrapped in a transaction** for this slice (it previously did a bare update) so the version-append insert is atomic with the field patch.
+- **`updateDocument` is wrapped in a transaction** so the version-append insert is atomic with the field patch.
 - **Reuses the shared primitives** from `src/lib/versioning/field-diff.ts` (the entity-neutral diff core — relocated here from `src/lib/persons/version-diff.ts` once Document became the third consumer) and the shared `VersionNavControls` (`src/components/version-nav-controls.tsx`). i18n keys live under the `document` namespace as `version.*` + a `makeCurrent.*` confirm block.
 - **Type-specific field visibility:** the snapshot always captures all 21 fields regardless of which are visible for the current document type; highlight frames render on whatever fields are visible for the viewed version's type, while the label colour reflects ALL field changes (even ones hidden under the current type). `documentTypeId` is itself a versioned field, so changing the type reads as a red modification.
 
-**Person-specific notes (Slice #18.05), as a template for multi-subtype entities:**
+**Person-specific notes — the template for any multi-subtype entity:**
 - **Two subtypes, one shared table.** Natural and judicial persons both FK `person.id`, so a single `person_version` table serves both; the snapshot JSON shape simply differs by `person.type`. `listPersonVersions` (in `src/lib/persons/queries.ts`) is type-agnostic; each route/form casts to its subtype snapshot. The natural snapshot build + equality live in `persons/queries.ts`; the judicial ones in `judicial-persons/queries.ts`.
 - **No corners** — drop the entire corner-diff clause. The diff is purely field-level (own fields + `person.notes` + the owned address blocks). The shared pure primitives (`fieldFrame`, `diffFieldMap`, `fieldMapsEqual`, `labelColorFromHighlights`) live in `src/lib/versioning/field-diff.ts`; each subtype's `form-schema.ts` supplies its field-key list and builds `computeFieldHighlights` / `versionLabelColor` / `snapshotToFormValues` / `formValuesEqual` on top.
 - **Address-block highlights** reuse the shared `AddressBlock` component, which gained an optional `highlights` prop (per-subfield green/red ring). The judicial form inlines its own `AddressFields` (single Office Address card) and got the same `highlights` wiring.
 - **Booleans in the snapshot** (judicial `correspondenceSameAsHq`) are diffed by stringifying to `"true"`/`"false"` in the field map (so a toggle reads as a red modification) while `formValuesEqual` compares them as booleans.
-- **The version nav sits on the entity-name header line.** Each detail-tabs component renders a centered `pointer-events-none` slot in its `<header>`; the form portals the shared `VersionNavControls` into it. i18n keys live under each namespace as `version.*` (label/prev/next/makeCurrent/makeCurrentHint) + a `makeCurrent.*` confirm block.
+- **The version nav sits on the entity-name header line.** Each detail-tabs component (e.g. `natural-persons` / `judicial-persons` `_components/person-detail-tabs.tsx`) renders a centered `pointer-events-none` slot in its `<header>`; the form portals the shared `VersionNavControls` (`src/components/version-nav-controls.tsx`) into it. i18n keys live under each entity's namespace as `version.*` (label/prev/next/makeCurrent/makeCurrentHint) + a `makeCurrent.*` confirm block — NOT under a `corners` namespace.
 - **Judicial update writes the version inside the tx** from a tx-consistent refetch — `getJudicialPersonById` (the function it returns) reads via the global `db` connection and would not see the tx's uncommitted writes.
 
-Property versioning shipped in Slice #18.02. The Property recipe below is the canonical reference; the Person/Document notes above record where each diverged.
-
-**Person-specific notes (Slice #18.05), as a template for Document:**
-- **Two subtypes, one shared table.** Natural and judicial persons both FK `person.id`, so a single `person_version` table serves both; the snapshot JSON shape simply differs by `person.type`. `listPersonVersions` (in `src/lib/persons/queries.ts`) is type-agnostic; each route/form casts to its subtype snapshot. The natural snapshot build + equality live in `persons/queries.ts`; the judicial ones in `judicial-persons/queries.ts`.
-- **No corners** — drop the entire corner-diff clause. The diff is purely field-level (own fields + `person.notes` + the owned address blocks). The shared pure primitives (`fieldFrame`, `diffFieldMap`, `fieldMapsEqual`, `labelColorFromHighlights`) live in `src/lib/versioning/field-diff.ts`; each subtype's `form-schema.ts` supplies its field-key list and builds `computeFieldHighlights` / `versionLabelColor` / `snapshotToFormValues` / `formValuesEqual` on top.
-- **Address-block highlights** reuse the shared `AddressBlock` component, which gained an optional `highlights` prop (per-subfield green/red ring). The judicial form inlines its own `AddressFields` (single Office Address card) and got the same `highlights` wiring.
-- **Booleans in the snapshot** (judicial `correspondenceSameAsHq`) are diffed by stringifying to `"true"`/`"false"` in the field map (so a toggle reads as a red modification) while `formValuesEqual` compares them as booleans.
-- **The version nav sits on the person-name header line.** Each detail-tabs component (`natural-persons` / `judicial-persons` `_components/person-detail-tabs.tsx`) renders a centered `pointer-events-none` slot in its `<header>`; the form portals the shared `VersionNavControls` (`src/components/version-nav-controls.tsx`) into it. i18n keys live under each person namespace as `version.*` (label/prev/next/makeCurrent/makeCurrentHint) + a `makeCurrent.*` confirm block — NOT under a `corners` namespace.
-- **Judicial update writes the version inside the tx** from a tx-consistent refetch — `getJudicialPersonById` (the function it returns) reads via the global `db` connection and would not see the tx's uncommitted writes.
-
-Property versioning shipped in Slice #18.02. The Property recipe below is the canonical reference; the Person notes above record where Person diverged.
+The Property recipe below is the canonical reference; the Person and Document notes above record where each diverged.
 
 ### Design — full snapshots, not deltas
 
@@ -55,7 +45,7 @@ Property versioning shipped in Slice #18.02. The Property recipe below is the ca
 
 ### Layers to touch (mirror Slice #18.02's file set)
 
-1. `migration_NNN_<entity>_versions.sql` (new) — create table + **backfill version 0 for every existing row** (idempotent: skip rows that already have a v0). The backfill's `jsonb_build_object` shape MUST match the JS snapshot shape exactly — **cast numerics to `::text`** so they match drizzle's string reads. Apply locally via `docker cp` + `psql -f` (NOT `npm run db:migrate`), to Supabase via SQL Editor, and add the table to `supabase_schema_full.sql`.
+1. `migration_NNN_<entity>_versions.sql` (new) — create table + **backfill version 0 for every existing row** (idempotent: skip rows that already have a v0). The backfill's `jsonb_build_object` shape MUST match the JS snapshot shape exactly — **cast numerics to `::text`** so they match drizzle's string reads. Apply locally with `scripts\Apply-Migration.ps1` (NOT `npm run db:migrate`, which exits silently) — `docker cp` + `psql -f` only for the documented exception where `schema_migrations` already holds a false entry for a migration that was never run. Apply to Supabase via the SQL Editor, and regenerate `supabase_schema_full.sql` so the new table is in it. See `.claude/rules/database-and-migrations.md`.
 2. `src/db/schema/index.ts` — add the version table (`jsonb("snapshot")` left untyped to avoid a circular import; cast to the snapshot type in the query layer).
 3. `src/lib/<entity>/validation.ts` — shared `EntitySnapshot` (+ sub-shapes) types. Pure types, safe to `import type` from client modules.
 4. `src/lib/<entity>/queries.ts` — `snapshotFromFull`, `snapshotsEqual` (field-by-field), write v0 in `createX`, append-with-dedup in `updateX`, `listEntityVersions(id)` (oldest-first).
@@ -75,7 +65,7 @@ Nav-line spacing (Adrian's spec, base gap `g`): `[+ Add] —g— [Show Big Map] 
 6. **Stay-on-page after an edit-save.** On success: reset the baseline to the just-saved state (Save disables), set `viewingVersion = null` (follow the new latest), and `router.refresh()` for server-rendered bits (e.g. the page title). The versions query invalidation makes the nav jump to the new version.
 7. **Lock the nav while the latest is dirty.** Disable ◀/▶ when on the latest with unsaved edits, so a dirty draft is never stranded on a read-only historical view (where the page-leave guard wouldn't fire) — returning to the latest always restores the clean baseline.
 8. **Zod 4 `z.string().uuid()` is strict** (it validates the version/variant nibbles). Test fixtures must use real-shaped v4 UUIDs (e.g. `...-4xxx-8xxx-...`); production ids are `gen_random_uuid` (v4) so live data is fine.
-9. **Sandbox toolchain limits — see the authoritative gotcha below, not this line.** This pitfall used to say `tsc`/`jest`/`tsx` all fail in the sandbox. That is wrong about `tsc`, which is pure JavaScript and unaffected by the Windows-only native binaries. The current, correct statement lives in "The sandbox CAN run `tsc` …" under **Gotchas we've learned**; read it there, including the case where even `tsc` is out of reach. **Adrian still runs `npm run e2e` (dev server running separately) then `npm run lint` + `npx jest`** on his machine before committing — that has not changed.
+9. **Sandbox toolchain limits — see `C:\dev\.claude\rules\sandbox-and-toolchain.md`.** It states what the sandbox can and cannot run, and what Adrian must still run locally before committing.
 
 ## Harvested from the slice log
 
