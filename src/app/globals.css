@@ -120,3 +120,56 @@ body {
     to   { opacity: 1; }
   }
 }
+
+/* ── Activity cues: visible blink + indeterminate progress  (Slice #23.09.UX) ─
+   Every in-progress cue in the app used Tailwind's `animate-pulse`, which only
+   dips opacity to 50% over a 2s cubic-bezier — Adrian's report was that the
+   text "seemed to fade just a little bit and come back", which is exactly what
+   that animation does. It was invisible for a SECOND reason too: the cue text
+   was `text-sm text-fade` (muted grey), so it is low-contrast even at full
+   opacity. Animating a grey whisper harder is still a grey whisper, so the
+   call sites move to `text-cta font-medium` alongside this class.
+
+   1s (half the period) and a swing to 0.2 (4x the amplitude) read as a BLINK
+   rather than a breath.
+
+   Reduced motion: freeze at FULL opacity, not at some average. A status cue's
+   reduced-motion fallback has to stay clearly legible — the colour and weight
+   at the call site carry it from there. Same contract as the
+   `ga-version-pulse-*` fallback above.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+@keyframes ga-cue-blink {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.2; }
+}
+
+.ga-cue-blink {
+  animation: ga-cue-blink 1s ease-in-out infinite;
+}
+
+/* The indeterminate progress bar's sliding sliver. A single opaque call (one
+   ai-interpret / extract-id-card round trip) reports no intermediate progress,
+   so an animated indeterminate bar is the honest maximum — never a faked
+   percentage. The sliver is 35% of the track; translateX is a percentage of
+   the SLIVER's own width, so 285.7% puts its left edge at the track's right
+   edge, and -100% puts its right edge at the left edge. */
+
+@keyframes ga-progress-indeterminate {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(286%); }
+}
+
+.ga-progress-indeterminate {
+  width: 35%;
+  animation: ga-progress-indeterminate 1.4s ease-in-out infinite;
+}
+
+/* Reduced motion: a motionless bar cannot say "running" on its own, so it stops
+   trying to — it becomes a steady, visible tinted track and the `role="status"`
+   cue text beside it carries the meaning. That pairing is why `ActivityCue`
+   renders the text and the bar together rather than exposing the bar alone. */
+@media (prefers-reduced-motion: reduce) {
+  .ga-cue-blink { animation: none; opacity: 1; }
+  .ga-progress-indeterminate { animation: none; width: 100%; opacity: 0.55; }
+}
