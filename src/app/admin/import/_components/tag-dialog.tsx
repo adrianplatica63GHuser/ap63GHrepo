@@ -19,6 +19,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
+import { ProgressBar } from "@/components/progress-bar";
 import { parseFolderName } from "@/lib/import/folder-utils";
 
 // ---------------------------------------------------------------------------
@@ -233,20 +234,25 @@ function AnimationPhase({
 }) {
   return (
     <div className="space-y-3 py-2">
-      <p className="text-sm font-medium text-ink dark:text-zinc-200">
+      <p
+        id="ga-tag-progress-title"
+        className="text-sm font-medium text-ink dark:text-zinc-200"
+      >
         {t("progressTitle")}
       </p>
-      {/* Progress bar */}
-      <div className="h-2.5 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
-        <div
-          className="h-full rounded-full bg-cta transition-none"
-          style={{ width: `${(progress * 100).toFixed(1)}%` }}
-          role="progressbar"
-          aria-valuenow={Math.round(progress * 100)}
-          aria-valuemin={0}
-          aria-valuemax={100}
-        />
-      </div>
+      {/*
+        Slice #23.09.UX — the app's second determinate bar, near-identical to
+        the import loop's. Extracting one shared component and leaving this
+        copy in place would have shipped three implementations instead of
+        one. Its `transition-none` is deliberate (the tag pass cycles fast
+        enough that a 300ms ease lags behind the count), so it survives as
+        the component's default rather than being quietly smoothed.
+      */}
+      <ProgressBar
+        value={progress * 100}
+        size="md"
+        labelledBy="ga-tag-progress-title"
+      />
       {/* Cycling tag name */}
       <p
         className="text-center text-sm text-fade dark:text-zinc-400 tabular-nums transition-opacity duration-150"

@@ -1795,6 +1795,7 @@
         "doneHint": "Each file has been saved as a document and tagged with its folders.",
         "closeButton": "Close",
         "viewLink": "Open →",
+        "importingShort": "Importing…",
         "errorShort": "Error",
         "resultsTitle": "Results",
         "colDocument": "Document",

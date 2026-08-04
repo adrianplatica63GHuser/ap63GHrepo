@@ -67,6 +67,7 @@ import type { ProvenanceCode } from "@/lib/metadata/provenance";
 import { ProvenanceField } from "./provenance-field";
 import { isIdCardEntry } from "@/lib/import/id-card";
 import { isCoordinateFileName } from "@/lib/import/coordinate-file";
+import { ProgressBar } from "@/components/progress-bar";
 import { buttonClass } from "@/lib/ui/button-styles";
 import {
   IdCardPersonDialog,
@@ -1067,19 +1068,23 @@ export function BulkImportDialog({
         {/* Progress bar (shown while importing) */}
         {gatePassed && !done && (
           <div className="px-5 py-3 border-b border-card-rim dark:border-zinc-700">
+            {/*
+              Slice #23.09.UX — this bar is the real determinate one (the
+              import loop knows exactly how many entries remain), and it is
+              now the SAME component as the indeterminate variant the single-
+              call dialogs use, in a different mode. It names itself from the
+              visible "{done} / {total}" label rather than carrying its own.
+            */}
             <div className="flex items-center justify-between mb-1">
-              <span className="text-xs text-fade">{t("progressLabel", { done: doneCount + errorCount, total: totalCount })}</span>
+              <span id="ga-import-progress-label" className="text-xs text-fade">
+                {t("progressLabel", { done: doneCount + errorCount, total: totalCount })}
+              </span>
             </div>
-            <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
-              <div
-                className="h-full rounded-full bg-cta transition-all duration-300"
-                style={{ width: `${progressPct.toFixed(1)}%` }}
-                role="progressbar"
-                aria-valuenow={Math.round(progressPct)}
-                aria-valuemin={0}
-                aria-valuemax={100}
-              />
-            </div>
+            <ProgressBar
+              value={progressPct}
+              smooth
+              labelledBy="ga-import-progress-label"
+            />
           </div>
         )}
 
@@ -1235,8 +1240,19 @@ function ResultRow({
 
       <td className="py-2 pr-3">
         {status === "pending" && <span className="text-xs text-fade">—</span>}
+        {/*
+          Slice #23.09.UX — the blink, and the string finally goes through
+          next-intl: it was hardcoded Romanian in the component, which is the
+          two-track-i18n rule backwards (dev-authored UI copy belongs in
+          messages/*.json). New key, no rename, so no e2e locator moves.
+          No role="status" here on purpose: one live region per table row
+          would announce every row of a whole folder. The determinate bar
+          above the table is what announces this run's progress.
+        */}
         {status === "importing" && (
-          <span className="text-xs text-cta animate-pulse">Se importă…</span>
+          <span className="ga-cue-blink text-xs font-medium text-cta">
+            {t("importingShort")}
+          </span>
         )}
         {status === "error" && (
           <span className="text-xs text-red-600 dark:text-red-400" title={errorMsg}>

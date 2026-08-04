@@ -493,7 +493,18 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
             {fmtLabel[f]}
           </button>
         ))}
-        {showS70Loading && <span className="text-xs text-fade animate-pulse">Converting...</span>}
+        {/*
+          Slice #23.09.UX — blink, plus the string stops being hardcoded
+          ENGLISH on a Romanian screen. No new key was needed:
+          `property.corners.converting` already existed in both locales
+          ("Se convertește…" / "Converting…") and this component simply never
+          used it.
+        */}
+        {showS70Loading && (
+          <span role="status" className="ga-cue-blink text-xs font-medium text-cta">
+            {t("converting")}
+          </span>
+        )}
         {showS70Error   && <span className="text-xs text-red-500">{t("convertError")}</span>}
         {!readOnly && <HelpHint hintKey="corner-reorder" />}
       </div>

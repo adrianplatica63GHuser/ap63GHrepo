@@ -1795,6 +1795,7 @@
         "doneHint": "Fiecare fișier a fost salvat ca document și etichetat cu dosarele sale.",
         "closeButton": "Închide",
         "viewLink": "Deschide →",
+        "importingShort": "Se importă…",
         "errorShort": "Eroare",
         "resultsTitle": "Rezultate",
         "colDocument": "Document",
