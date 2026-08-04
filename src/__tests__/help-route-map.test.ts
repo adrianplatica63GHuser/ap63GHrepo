@@ -84,7 +84,6 @@ describe("resolveHelpScreenKey", () => {
       ["/admin/settings", "admin-settings"],
       ["/admin/users", "admin-users"],
       ["/admin/global-search", "admin-global-search"],
-      ["/admin/complex-query", "admin-complex-query"],
       ["/admin/help-content", "admin-help-content"],
       ["/admin/groups", "admin-groups"],
       ["/admin/groups/[id]", "admin-group-editor"],
@@ -148,7 +147,6 @@ describe("resolveHelpScreenKey", () => {
       "/admin/settings",
       "/admin/users",
       "/admin/global-search",
-      "/admin/complex-query",
       "/admin/help-content",
     ];
 

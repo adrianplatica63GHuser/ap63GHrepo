@@ -2121,13 +2121,20 @@
   },
   "globalSearch": {
     "pageTitle": "Global search",
-    "pageSubtitle": "Search across all entities by name, code, address, or combining metadata, group, stamp, and tag filters. All active filters are ANDed together. Up to 200 results.",
+    "pageSubtitle": "Search across all entities by name, code, address, or combining metadata, group, stamp, and tag filters. All active filters are ANDed together. Up to 50 results per entity type, 15 per page.",
     "search": "Search",
     "searching": "Searching…",
     "reset": "Reset",
     "noResults": "No entities match the selected filters.",
     "resultsCount": "{count, plural, one {# result} other {# results}}",
-    "resultsCapped": "Showing first {count} results — narrow your filters to see more.",
+    "truncatedNotice": "Showing {list} — there are more. Narrow your search.",
+    "truncatedFragment": "{count, plural, one {the first {type}} other {the first # {type}}}",
+    "truncatedTypes": {
+      "DOCUMENT": "documents",
+      "JUDICIAL_PERSON": "judicial persons",
+      "NATURAL_PERSON": "natural persons",
+      "PROPERTY": "properties"
+    },
     "filters": {
       "entityType": "Entity type",
       "importance": "Importance",
@@ -2182,6 +2189,8 @@
       "code": "Code",
       "type": "Type",
       "name": "Name",
+      "groups": "Groups",
+      "stamps": "Stamps",
       "importance": "Importance",
       "relevance": "Relevance",
       "provenance": "Provenance",
@@ -2261,7 +2270,6 @@
       }
     },
     "sectionDeveloper": "Developer options",
-    "useEnglish": "Use English language",
     "showDevNotes": "Show developer notes"
   },
   "navigation": {
@@ -2283,7 +2291,6 @@
       "tags": "Tags",
       "settings": "Settings",
       "globalSearch": "Global search",
-      "complexQuery": "Complex query",
       "helpContent": "Help information",
       "associatePerson": "Add person",
       "associateDocument": "Add document",

@@ -102,7 +102,6 @@ function buildSegments(
     if (part === "tags")           { segments.push({ label: t("tags"),               href: accumulated }); continue; }
     if (part === "settings")       { segments.push({ label: t("settings"),           href: accumulated }); continue; }
     if (part === "global-search")  { segments.push({ label: t("globalSearch"),       href: accumulated }); continue; }
-    if (part === "complex-query")  { segments.push({ label: t("complexQuery"),       href: accumulated }); continue; }
     if (part === "help-content")   { segments.push({ label: t("helpContent"),        href: accumulated }); continue; }
     if (part === "history" && parts[i - 1] === "calculation") {
       segments.push({ label: t("calculationHistory"), href: accumulated });

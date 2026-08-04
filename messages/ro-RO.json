@@ -2121,13 +2121,20 @@
   },
   "globalSearch": {
     "pageTitle": "Căutare globală",
-    "pageSubtitle": "Căutați printre toate entitățile după nume, cod, adresă sau combinând filtre de metadate, grupuri, ștampile și etichete. Toate filtrele active sunt combinate cu AND. Maxim 200 de rezultate.",
+    "pageSubtitle": "Căutați printre toate entitățile după nume, cod, adresă sau combinând filtre de metadate, grupuri, ștampile și etichete. Toate filtrele active sunt combinate cu AND. Se afișează cel mult 50 de rezultate pentru fiecare tip de entitate, câte 15 pe pagină.",
     "search": "Caută",
     "searching": "Se caută…",
     "reset": "Resetează",
     "noResults": "Nicio entitate nu corespunde filtrelor selectate.",
     "resultsCount": "{count, plural, one {# rezultat} other {# rezultate}}",
-    "resultsCapped": "Se afișează primele {count} rezultate — restrângeți filtrele pentru a vedea mai multe.",
+    "truncatedNotice": "Se afișează {list} — există mai multe. Restrângeți căutarea.",
+    "truncatedFragment": "{count, plural, one {primul rezultat de tip {type}} few {primele # {type}} other {primele # de {type}}}",
+    "truncatedTypes": {
+      "DOCUMENT": "documente",
+      "JUDICIAL_PERSON": "persoane juridice",
+      "NATURAL_PERSON": "persoane fizice",
+      "PROPERTY": "proprietăți"
+    },
     "filters": {
       "entityType": "Tip entitate",
       "importance": "Importanță",
@@ -2182,6 +2189,8 @@
       "code": "Cod",
       "type": "Tip",
       "name": "Nume",
+      "groups": "Grupuri",
+      "stamps": "Ștampile",
       "importance": "Importanță",
       "relevance": "Relevanță",
       "provenance": "Proveniență",
@@ -2261,7 +2270,6 @@
       }
     },
     "sectionDeveloper": "Opțiuni pentru dezvoltator",
-    "useEnglish": "Folosește limba engleză",
     "showDevNotes": "Afișează note pentru dezvoltatori"
   },
   "navigation": {
@@ -2283,7 +2291,6 @@
       "tags": "Etichete",
       "settings": "Setări",
       "globalSearch": "Căutare globală",
-      "complexQuery": "Interogare complexă",
       "helpContent": "Informații de ajutor",
       "associatePerson": "Adaugă persoană",
       "associateDocument": "Adaugă document",

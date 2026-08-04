@@ -774,3 +774,51 @@ export async function listDocumentGroupMemberships(): Promise<
 
 // Re-export so consumers don't reach across files for the cap.
 export { MAX_GROUPS_PER_PROPERTY };
+
+// ---------------------------------------------------------------------------
+// Batched group tags for many entities at once  (Slice #23.11.search)
+// ---------------------------------------------------------------------------
+
+/** One group membership, flattened for a results table. */
+export type GroupTagRow = { principalObjectId: string; code: string; position: number };
+
+/**
+ * `listEntityGroupTags` for a whole page of results, in ONE query.
+ *
+ * Global search returns up to 200 rows and shows a Grup column on each, so the
+ * single-id helper would mean 200 round trips for one screen. Same filter
+ * (soft-deleted groups excluded) and same ordering, keyed by
+ * principal_object_id.
+ *
+ * An empty id list short-circuits: `inArray(col, [])` is not a query worth
+ * sending, and some drivers render it as invalid SQL rather than "no rows".
+ */
+export async function listGroupTagsForEntities(
+  principalObjectIds: readonly string[],
+): Promise<Map<string, GroupTagRow[]>> {
+  const out = new Map<string, GroupTagRow[]>();
+  if (principalObjectIds.length === 0) return out;
+
+  const rows = await db
+    .select({
+      principalObjectId: groupMember.principalObjectId,
+      code:              groups.code,
+      position:          groupMember.position,
+    })
+    .from(groupMember)
+    .innerJoin(groups, eq(groups.id, groupMember.groupId))
+    .where(
+      and(
+        inArray(groupMember.principalObjectId, [...principalObjectIds]),
+        isNull(groups.deletedAt),
+      ),
+    )
+    .orderBy(asc(groups.code));
+
+  for (const row of rows) {
+    const list = out.get(row.principalObjectId);
+    if (list) list.push(row);
+    else out.set(row.principalObjectId, [row]);
+  }
+  return out;
+}

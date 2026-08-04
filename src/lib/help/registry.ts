@@ -75,7 +75,6 @@ export const HELP_SCREENS = [
   { key: "admin-settings", label: "Administration — Settings" },
   { key: "admin-users", label: "Administration — Users & Access" },
   { key: "admin-global-search", label: "Administration — Global Search" },
-  { key: "admin-complex-query", label: "Administration — Complex Query" },
   { key: "admin-help-content", label: "Administration — Help Content" },
 ] as const;
 

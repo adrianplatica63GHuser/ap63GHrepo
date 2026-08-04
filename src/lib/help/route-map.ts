@@ -31,6 +31,13 @@ export const HELP_OPTED_OUT: readonly string[] = [
   "/login",                    // pre-auth, nothing to explain
   "/signup",                   // pre-auth, the form is self-describing
   "/account/change-password",  // single-purpose, three labelled fields
+  // Slice #23.11.search: /admin/complex-query is a bare redirect() to
+  // /admin/global-search, kept only so old sidebar quick-search deep-links
+  // still resolve. It renders no UI, so the "?" button could never appear —
+  // but its page.tsx still exists, and the coverage test walks page files, so
+  // the route needs an explicit decision rather than a deleted rule.
+  // Same shape as /admin/import-legacy in Slice #22.06.
+  "/admin/complex-query",
 ];
 
 /** True when a pathname is explicitly excluded from the help system. */
@@ -100,7 +107,6 @@ export function resolveHelpScreenKey(pathname: string): HelpScreenKey | null {
       case "settings":      return "admin-settings";
       case "users":         return "admin-users";
       case "global-search": return "admin-global-search";
-      case "complex-query": return "admin-complex-query";
       case "help-content":  return "admin-help-content";
 
       case "calculation":

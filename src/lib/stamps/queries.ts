@@ -485,3 +485,44 @@ export async function listEntityStampCodes(
   return rows.map((r) => r.code);
 }
 
+
+// ---------------------------------------------------------------------------
+// Batched stamp codes for many entities at once  (Slice #23.11.search)
+// ---------------------------------------------------------------------------
+
+/**
+ * `listEntityStampCodes` for a whole page of results, in ONE query.
+ *
+ * See the matching note on listGroupTagsForEntities in src/lib/groups/queries.ts:
+ * global search renders a Stamps column on up to 200 rows, and the single-id
+ * helper would cost one round trip per row. Soft-deleted stamps are excluded,
+ * same as the single-id version.
+ */
+export async function listStampCodesForEntities(
+  principalObjectIds: readonly string[],
+): Promise<Map<string, string[]>> {
+  const out = new Map<string, string[]>();
+  if (principalObjectIds.length === 0) return out;
+
+  const rows = await db
+    .select({
+      principalObjectId: stampMember.principalObjectId,
+      code:              stamps.code,
+    })
+    .from(stampMember)
+    .innerJoin(stamps, eq(stamps.id, stampMember.stampId))
+    .where(
+      and(
+        inArray(stampMember.principalObjectId, [...principalObjectIds]),
+        isNull(stamps.deletedAt),
+      ),
+    )
+    .orderBy(asc(stamps.code));
+
+  for (const row of rows) {
+    const list = out.get(row.principalObjectId);
+    if (list) list.push(row.code);
+    else out.set(row.principalObjectId, [row.code]);
+  }
+  return out;
+}
