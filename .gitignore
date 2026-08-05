@@ -60,3 +60,9 @@ public/pdf.worker.min.js
 
 # user-guide drafts kept at repo root, not part of the codebase
 /UserGuide-*.docx
+
+# Staging area for files awaiting deletion. Nothing here is part of the build:
+# it is also excluded in tsconfig.json, because `include: ["**/*.ts"]` would
+# otherwise type-check a parked file and fail the whole project on code that is
+# on its way out.
+/_to_delete/
