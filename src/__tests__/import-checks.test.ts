@@ -314,6 +314,28 @@ describe("skipped files", () => {
   });
 });
 
+describe("paths are complete, not a sample", () => {
+  it("keeps EVERY path on the finding, however many there are", () => {
+    // Each rule used to cap itself with a `.slice(0, 5)`, which made the
+    // downloadable report a truncated copy advertising itself as exhaustive:
+    // F-15 rendered "86 names appear more than once" above exactly five of
+    // them. Truncation is a rendering decision — the panel shows four and
+    // says how many it hid; the document shows all of them.
+    const entries = Array.from({ length: 40 }, (_, i) => file(`F${i}/nota.docx`));
+    const f = find(run({ entries }), "officeFiles")!;
+    expect(f.paths).toHaveLength(40);
+    expect(f.counts.files).toBe(40);
+    // The count in the sentence and the list under it must agree — that
+    // mismatch is exactly what made the document misleading.
+    expect(f.paths).toHaveLength(f.counts.files);
+  });
+
+  it("keeps every gate-file path too", () => {
+    const entries = Array.from({ length: 30 }, (_, i) => file(`x${i}.zzz`));
+    expect(find(run({ entries }), "gateFiles")!.paths).toHaveLength(30);
+  });
+});
+
 describe("ordering", () => {
   it("puts every loud finding before every quiet one", () => {
     const r = run({
