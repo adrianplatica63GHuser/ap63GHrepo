@@ -7,8 +7,6 @@
  */
 
 import {
-  extOf,
-  isImageName,
   isSystemFile,
   isPageGroup,
   parseFolderName,
@@ -88,33 +86,9 @@ describe("isPageGroup", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// extOf / isImageName
-// ---------------------------------------------------------------------------
-
-describe("extOf", () => {
-  it("returns lowercase extension with dot", () => {
-    expect(extOf("photo.JPG")).toBe(".jpg");
-    expect(extOf("file.tar.gz")).toBe(".gz");
-  });
-
-  it("returns empty string for no extension", () => {
-    expect(extOf("README")).toBe("");
-  });
-});
-
-describe("isImageName", () => {
-  it("recognises image extensions", () => {
-    expect(isImageName("001.jpg")).toBe(true);
-    expect(isImageName("img.PNG")).toBe(true);
-    expect(isImageName("photo.TIFF")).toBe(true);
-  });
-
-  it("rejects non-image extensions", () => {
-    expect(isImageName("doc.pdf")).toBe(false);
-    expect(isImageName("data.txt")).toBe(false);
-  });
-});
+// extOf and isImageName moved to src/lib/files/file-kinds.ts in Slice #24.03
+// (as `extensionOf` and `isFileKind(name, "image")`); their cases live in
+// src/__tests__/file-kinds.test.ts.
 
 // ---------------------------------------------------------------------------
 // parseFolderName

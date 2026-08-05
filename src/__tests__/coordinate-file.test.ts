@@ -71,16 +71,25 @@ function pageGroupEntry(path: string, names: string[]): FSPageGroupEntry {
 // ---------------------------------------------------------------------------
 
 describe("isCoordinateFileName", () => {
-  it("accepts the four coordinate-export extensions", () => {
+  it("accepts .txt, the one coordinate-export extension", () => {
     expect(isCoordinateFileName("corners.txt")).toBe(true);
-    expect(isCoordinateFileName("corners.csv")).toBe(true);
-    expect(isCoordinateFileName("corners.dat")).toBe(true);
-    expect(isCoordinateFileName("corners.asc")).toBe(true);
+  });
+
+  it("rejects .csv, .dat and .asc, all refused in Slice #24.03", () => {
+    // .dat and .asc were candidates and members of no other kind, which made
+    // them the only coordinate extensions that could not also infer a
+    // provenance — a .dat blocked its own import row at the provenance gate
+    // while a .txt sailed through. .csv followed on Adrian's decision that a
+    // cadastral export arrives as a .txt and nothing else. All three are still
+    // importable as documents; none is OFFERED as a source of corners.
+    expect(isCoordinateFileName("corners.csv")).toBe(false);
+    expect(isCoordinateFileName("corners.dat")).toBe(false);
+    expect(isCoordinateFileName("corners.asc")).toBe(false);
   });
 
   it("is case-insensitive on the extension", () => {
     expect(isCoordinateFileName("CORNERS.TXT")).toBe(true);
-    expect(isCoordinateFileName("Corners.Csv")).toBe(true);
+    expect(isCoordinateFileName("Corners.Txt")).toBe(true);
   });
 
   it("rejects scans, PDFs and Word files", () => {
@@ -100,12 +109,7 @@ describe("isCoordinateFileName", () => {
   });
 
   it("exposes the extension set it uses", () => {
-    expect([...COORDINATE_FILE_EXTS].sort()).toEqual([
-      ".asc",
-      ".csv",
-      ".dat",
-      ".txt",
-    ]);
+    expect([...COORDINATE_FILE_EXTS].sort()).toEqual([".txt"]);
   });
 });
 
@@ -150,15 +154,15 @@ describe("coordinateCandidates", () => {
     const entries: FSEntry[] = [
       fileEntry("a.txt"),
       fileEntry("scan.jpg"),
-      fileEntry("Sub/b.csv", ["Sub"]),
-      fileEntry("c.dat"),
+      fileEntry("Sub/b.txt", ["Sub"]),
+      fileEntry("c.TXT"),
     ];
     // Choosing between these is the user's job (Slice #23.00.Import) — the
     // helper must not silently prefer one.
     expect(coordinateCandidates(entries).map((e) => e.path)).toEqual([
       "a.txt",
-      "Sub/b.csv",
-      "c.dat",
+      "Sub/b.txt",
+      "c.TXT",
     ]);
   });
 
@@ -324,12 +328,12 @@ describe("coordinateNameConfidence", () => {
   it("folds case", () => {
     expect(coordinateNameConfidence("COORD_47.TXT")).toBe("strong");
     expect(coordinateNameConfidence("Coord 47.txt")).toBe("strong");
-    expect(coordinateNameConfidence("CoOrD.csv")).toBe("strong");
+    expect(coordinateNameConfidence("CoOrD.TxT")).toBe("strong");
   });
 
   it("accepts the written-out Romanian form of the same convention", () => {
     expect(coordinateNameConfidence("coordonate.txt")).toBe("strong");
-    expect(coordinateNameConfidence("Coordonate teren.csv")).toBe("strong");
+    expect(coordinateNameConfidence("Coordonate teren.txt")).toBe("strong");
   });
 
   it("ignores leading whitespace, because foldRomanian trims", () => {
@@ -348,7 +352,7 @@ describe("coordinateNameConfidence", () => {
   it("is weak when a shortlisted extension carries an unconventional name", () => {
     expect(coordinateNameConfidence("puncte.txt")).toBe("weak");
     expect(coordinateNameConfidence("47per2-225per3.txt")).toBe("weak");
-    expect(coordinateNameConfidence("date.csv")).toBe("weak");
+    expect(coordinateNameConfidence("date.txt")).toBe("weak");
   });
 
   it("requires the convention at the START of the name, not anywhere in it", () => {
@@ -382,7 +386,7 @@ describe("coordinateNameConfidence", () => {
     // The two must never disagree: "none" is DEFINED as "not a candidate".
     const names = [
       "coord 47.txt",
-      "puncte.csv",
+      "puncte.csv",   // a document, but never a coordinate candidate -> "none"
       "coord.pdf",
       "scan.jpg",
       "raport.pdf.txt",

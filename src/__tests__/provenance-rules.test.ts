@@ -184,7 +184,7 @@ describe("fileExtension", () => {
 
 describe("classifyFileSource", () => {
   it("recognises graphics files", () => {
-    for (const n of ["a.jpg", "a.JPEG", "a.png", "a.tif", "a.tiff", "a.bmp", "a.webp", "a.heic"]) {
+    for (const n of ["a.jpg", "a.JPEG", "a.png", "a.gif", "a.tif", "a.tiff", "a.bmp", "a.webp"]) {
       expect(classifyFileSource(n)).toBe("IMAGE_FILE");
     }
   });
@@ -199,6 +199,21 @@ describe("classifyFileSource", () => {
     for (const n of ["plan.dwg", "archive.zip", "mail.msg", "noext"]) {
       expect(classifyFileSource(n)).toBe("UNKNOWN");
     }
+  });
+
+  it("no longer treats HEIC as a graphics file (Slice #24.03)", () => {
+    // .heic/.heif were images HERE and in no other list, so a HEIC scan was
+    // stamped IMAGE while failing page-group detection and the AI gate. They
+    // now belong to no kind, which means UNKNOWN — and UNKNOWN means the
+    // import gate asks the user instead of guessing.
+    expect(classifyFileSource("a.heic")).toBe("UNKNOWN");
+    expect(classifyFileSource("a.HEIF")).toBe("UNKNOWN");
+  });
+
+  it("treats .xls and .csv as document files", () => {
+    // Both were in DOCUMENT_EXTENSIONS and neither was ever asserted.
+    expect(classifyFileSource("a.xls")).toBe("DOCUMENT_FILE");
+    expect(classifyFileSource("a.csv")).toBe("DOCUMENT_FILE");
   });
 
   it("never guesses COORDINATE_FILE from a .txt name", () => {
