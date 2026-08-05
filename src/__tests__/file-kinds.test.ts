@@ -173,8 +173,11 @@ describe("the registry is well formed", () => {
     expect(isFileKind("data.txt", "image")).toBe(false);
   });
 
-  it("answers an unknown extension with no kinds at all", () => {
-    for (const n of ["plan.dwg", "archive.zip", "mail.msg", "noext", ""]) {
+  it("answers a genuinely unrecognised extension with no kinds at all", () => {
+    // `.dwg` and `.zip` lived in this list until Slice #24.04 gave them the
+    // "ignored" kind. They moved to the #24.04 block below; what stays here is
+    // an extension the registry has never heard of.
+    for (const n of ["mail.msg", "noext", ""]) {
       expect(fileKindsOf(n)).toEqual([]);
       expect(isUnknownFileKind(n)).toBe(true);
     }
@@ -434,5 +437,37 @@ describe("FILE_KINDS", () => {
       for (const kind of fileKindsOf(`file${ext}`)) claimed.add(kind);
     }
     for (const kind of claimed) expect(FILE_KINDS).toContain(kind);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The two membership decisions taken in Slice #24.04
+// ---------------------------------------------------------------------------
+
+describe("Slice #24.04 membership decisions", () => {
+  it("puts the eight ignored extensions in exactly one kind", () => {
+    for (const n of ["plan.dwg", "archive.zip", "T 10.dwl", "T 10.dwl2",
+                     "plan.bak", "scan.jpg - Shortcut.lnk", "a.rar", "a.7z"]) {
+      expect(fileKindsOf(n)).toEqual(["ignored"]);
+      // Known — known to be noise. The walk drops it and nobody is ever asked,
+      // which is the whole difference from an extension of no kind at all.
+      expect(isUnknownFileKind(n)).toBe(false);
+    }
+  });
+
+  it("puts .csv in forbidden and in nothing else", () => {
+    expect(fileKindsOf("inventar.csv")).toEqual(["forbidden"]);
+    expect(isFileKind("inventar.csv", "document")).toBe(false);
+    expect(isFileKind("inventar.csv", "coordinate-candidate")).toBe(false);
+  });
+
+  it("makes .csv the one file where the two 'unknown' answers disagree", () => {
+    // `isUnknownFileKind` asks "any kind at all?" — a .csv has one, so false.
+    // `classifyFileSource` asks "image or document?" — a .csv is neither, so
+    // UNKNOWN. That gap is not an accident: it is what routes a stray .csv to
+    // the provenance gate and halts the import, which is the accepted interim
+    // until Slice #24.02 can refuse it in words that mean what they say.
+    expect(isUnknownFileKind("inventar.csv")).toBe(false);
+    expect(classifyFileSource("inventar.csv")).toBe("UNKNOWN");
   });
 });
