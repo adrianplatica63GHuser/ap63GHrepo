@@ -8,14 +8,16 @@
  *  - Title-hint generation with abbreviation expansion
  *  - Tag-string extraction from entry path
  *
- * Slice #24.03 removed this file's `IMAGE_EXTS` set, `extOf` and `isImageName`.
+ * Slice #24.03 removed this file's `IMAGE_EXTS` set, `extOf` and `isImageName`;
+ * #24.04 renamed `isSystemFile` to `isIgnoredFileName` and gave it the
+ * registry's `"ignored"` kind as a third rule.
  * "Which extensions are images" and "how do I read an extension" are now asked
  * of src/lib/files/file-kinds.ts, the one module that answers them. What stays
  * here is the walk: page-group detection keeps the "and ALL of them, and at
  * least one" half of the rule, and delegates the per-file half.
  */
 
-import { isPageGroupMember } from "@/lib/files/file-kinds";
+import { baseNameOf, isFileKind, isPageGroupMember } from "@/lib/files/file-kinds";
 
 // ---------------------------------------------------------------------------
 // Minimal File System Access API types (avoids app/ -> lib/ import)
@@ -266,15 +268,13 @@ export function perToSlash(s: string): string {
 // ---------------------------------------------------------------------------
 
 /**
- * System / hidden files that should be ignored during folder walks.
+ * Windows metadata files matched by NAME, not by extension.
  *
- * Hidden files (names starting with ".") cover macOS .DS_Store, .gitkeep,
- * etc.  The explicit set covers Windows thumbnail/metadata files that do NOT
- * start with a dot.  Comparison is case-insensitive so "Thumbs.db" and
- * "thumbs.db" are both ignored.
- *
- * Fix for issue 7.9: without this filter, a folder with 10 scan images plus
- * one Thumbs.db fails `isPageGroup` and each image is imported separately.
+ * `folder.jpg` is the reason this list exists separately from any extension
+ * rule: it is a real image extension that is nonetheless never content. The
+ * rest are Windows thumbnail and view-state files that do not start with a
+ * dot, so the hidden-file rule below cannot catch them. Comparison is
+ * case-insensitive, so "Thumbs.db" and "thumbs.db" are both matched.
  */
 const SYSTEM_FILE_NAMES_LC = new Set([
   "thumbs.db",
@@ -284,17 +284,64 @@ const SYSTEM_FILE_NAMES_LC = new Set([
   "folder.jpg",     // Windows folder thumbnail
 ]);
 
-export function isSystemFile(name: string): boolean {
-  if (name.startsWith(".")) return true;                      // hidden (macOS, Linux)
-  return SYSTEM_FILE_NAMES_LC.has(name.toLowerCase());       // known Windows system files
+/**
+ * Should the walk drop this file without a word?
+ *
+ * Three rules, and they are three because they are answers to three different
+ * questions:
+ *
+ *  1. **Hidden** — the name starts with "." (.DS_Store, .gitkeep, ._metadata).
+ *  2. **A Windows metadata file, by name** — `SYSTEM_FILE_NAMES_LC` above.
+ *  3. **An extension of the `"ignored"` kind** — AutoCAD sidecars, autosave
+ *     backups, Windows shortcuts, archives and drawings (Slice #24.04). The
+ *     LIST lives in src/lib/files/file-kinds.ts and may not be written here:
+ *     one module answers "what kind of file is this", and the guard test in
+ *     src/__tests__/file-kinds-single-source.test.ts fails the build on a
+ *     second copy.
+ *
+ * Renamed from `isSystemFile` in #24.04. A `.dwg` is not a system file by any
+ * reading, and the old name would have made rule 3 look like a category error
+ * rather than the point.
+ *
+ * Why this matters beyond tidiness (fix 7.9, and now again): the walk applies
+ * this BEFORE page-group detection, so a folder of ten numbered scans plus one
+ * Thumbs.db is still one multi-page document rather than ten separate ones.
+ * The same now holds for ten scans plus a stray `.bak`.
+ *
+ * ⚠️ That cuts further than it first appears, and #24.04 widened its reach.
+ * Dropping a file can PROMOTE a folder into a page group that was not one
+ * before, and promotion changes more than the row count: `["001.jpg",
+ * "plan.dwg"]` used to emit two `FSFileEntry` rows and now emits a single
+ * `FSPageGroupEntry`, which takes its title from the FOLDER name rather than
+ * the file name and loses the file-only row actions in bulk-import-dialog
+ * (the coordinate-source claim, the ID-card extraction). It needs only ONE
+ * surviving numbered image, not ten. The mechanism is not new — `Thumbs.db`
+ * has always promoted `["001.jpg", "Thumbs.db"]` the same way — but the set of
+ * files that can trigger it just grew by eight extensions. Measured against
+ * Adrian's archive at the time of the slice: zero folders change
+ * classification, in either direction.
+ */
+export function isIgnoredFileName(name: string): boolean {
+  // All three rules ask about the BASENAME, and they have to agree on what
+  // that is. Rule 3 delegates to `isFileKind`, which strips path segments; if
+  // rules 1 and 2 read the raw string instead, then "C:\\scans\\.hidden" is
+  // not hidden while ".hidden" is — the same file, two answers, decided by how
+  // the caller happened to spell it. `walkFolder` only ever passes a bare
+  // name, so this is a latent inconsistency rather than a live bug; it is
+  // closed here because the next caller will not know that.
+  const base = baseNameOf(name);
+  if (base.startsWith(".")) return true;                 // hidden (macOS, Linux)
+  if (SYSTEM_FILE_NAMES_LC.has(base.toLowerCase())) return true;
+  return isFileKind(base, "ignored");
 }
 
 /**
  * True if ALL names are image files with purely numeric basenames.
  * ["001.jpg","002.jpg"] → true; ["scan.jpg","001.jpg"] → false.
  *
- * Callers are responsible for pre-filtering system files (via `isSystemFile`)
- * before passing names here — `isPageGroup` itself is intentionally pure.
+ * Callers are responsible for pre-filtering dropped files (via
+ * `isIgnoredFileName`) before passing names here — `isPageGroup` itself is
+ * intentionally pure.
  */
 export function isPageGroup(names: string[]): boolean {
   if (names.length === 0) return false;
@@ -354,9 +401,10 @@ export async function walkFolder(
 
   for await (const child of dirHandle.values()) {
     if (child.kind === "file") {
-      // fix 7.9: skip hidden and known system files so they don't break
-      // page-group detection or pollute the import list.
-      if (!isSystemFile(child.name)) {
+      // fix 7.9 (and Slice #24.04): drop hidden files, Windows metadata and
+      // the "ignored" extensions here, before page-group detection, so they
+      // neither break it nor pollute the import list.
+      if (!isIgnoredFileName(child.name)) {
         childFiles.push({ name: child.name, handle: child as FSFileHandle });
       }
     } else {

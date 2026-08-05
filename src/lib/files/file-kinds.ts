@@ -56,9 +56,9 @@
  *    requires the dot to fall inside the basename, so `".txt"` as an entire
  *    file name is extensionless and therefore of no kind, where the former
  *    `extOf` called it a `.txt`. Unreachable through the import wizard —
- *    `isSystemFile` in folder-utils drops every name starting with "." before
- *    the walk emits it — but pinned by tests so it stays a known answer rather
- *    than a surprise if that filter is ever relaxed.
+ *    `isIgnoredFileName` in folder-utils drops every name starting with "."
+ *    before the walk emits it — but pinned by tests so it stays a known answer
+ *    rather than a surprise if that filter is ever relaxed.
  *
  *  - **Only `.txt` is a coordinate candidate.** The shortlist held four
  *    extensions and now holds one. `.dat` and `.asc` went first: they were
@@ -70,26 +70,49 @@
  *    importable as documents; they are simply no longer OFFERED as the file
  *    that might define a Property's corners.
  *
- * Both decisions are Adrian's, taken at the top of this slice. Reversing either
- * is a one-line edit to REGISTRY below, and nothing else in the codebase has to
- * change — which is the whole point of the module.
+ * MEMBERSHIP DECISIONS TAKEN IN SLICE #24.04
+ * ──────────────────────────────────────────
+ *
+ *  - **Eight extensions are `"ignored"`** — `.dwl`, `.dwl2`, `.bak`, `.lnk`,
+ *    `.zip`, `.rar`, `.7z`, `.dwg`. The folder walk drops them exactly as it
+ *    drops `desktop.ini`. Fifteen files in Adrian's test archive had no kind
+ *    at all, and every one of them was an AutoCAD sidecar, an autosave, a
+ *    Windows shortcut or an archive — so every import of those folders opened
+ *    the provenance gate and demanded a provenance for a lock file, then filed
+ *    that lock file in the archive as a Document.
+ *
+ *    `.bak` is ANY backup, not only AutoCAD's, and `.dwg` — the drawing
+ *    itself — is on the list too. That second one reads like genuine archive
+ *    material and looks wrong; it is deliberate, taken with the file census in
+ *    front of us. A dropped file leaves no trace anywhere in the wizard, which
+ *    is the price, and Slice #24.02's "skipped" list is what pays it back.
+ *
+ *  - **`.csv` is `"forbidden"` and nothing else.** See the entry in REGISTRY:
+ *    holding no other kind is precisely what routes it to the provenance gate
+ *    today, which is the accepted interim until #24.02 can refuse it in words
+ *    that mean what they say.
+ *
+ * Every decision here is Adrian's. Reversing any of them is a one-line edit to
+ * REGISTRY below, and nothing else in the codebase has to change — which is
+ * the whole point of the module.
  *
  * KNOWN GAPS THIS SLICE DELIBERATELY DID NOT CLOSE
  * ────────────────────────────────────────────────
  *
  *  - `.bmp` is an image kind but has no entry in the serving `MIME_MAP`, so a
  *    stored `.bmp` page is served as `application/octet-stream` and the viewer
- *    renders a download prompt instead of the picture. Pre-existing; the map is
- *    Slice #24.04's.
+ *    renders a download prompt instead of the picture. Pre-existing. #24.03
+ *    deferred it to "#24.04"; #24.04 turned out to be the walk-and-refuse
+ *    slice and did not touch it, so it is still open and unassigned.
  *  - `.html` / `.xml` appear in `MIME_MAP` and in the upload `accept` string
- *    but belong to no kind here. Also #24.04.
+ *    but belong to no kind here. Still open, same as above.
  *  - The only gap this slice CREATED: `.heic` left `MIME_MAP` with the rest of
  *    the HEIC decision, but `ACCEPTED_FILE_TYPES` in pages-panel.tsx is still
  *    `image/*`, which every OS file picker resolves to include HEIC. So a HEIC
  *    page can still be uploaded, and one already stored now serves as
  *    `application/octet-stream` — a download prompt where there used to be a
- *    picture. Small in practice (only Safari renders `image/heic` at all), and
- *    it is #24.04 that owns what the picker offers.
+ *    picture. Small in practice (only Safari renders `image/heic` at all).
+ *    Whichever slice takes the `accept` strings owns it; #24.04 did not.
  */
 
 // ---------------------------------------------------------------------------
@@ -110,8 +133,25 @@
  *    indistinguishable by name, so only POST /api/properties/parse-text
  *    counting real corners decides. This kind is a shortlist for the user to
  *    choose from, never an answer.
+ *  - `"ignored"` — the folder walk drops it on sight, exactly as it drops
+ *    `desktop.ini`. Not archive material and not worth a question: an AutoCAD
+ *    lock file exists only while someone has the drawing open, a `.bak` is an
+ *    autosave, a `.lnk` is a pointer to a file rather than a file.
+ *  - `"forbidden"` — must not be in the folder at all, and somebody has to be
+ *    TOLD. This is the difference from `"ignored"`: silence is the right
+ *    answer for noise and the wrong answer for a file that should not exist.
+ *
+ * The last two are the only kinds that say what to DO rather than what a file
+ * IS, and that is deliberate — both answers are properties of the extension
+ * and both were previously spread across callers or absent entirely.
  */
-export type FileKind = "image" | "pdf" | "document" | "coordinate-candidate";
+export type FileKind =
+  | "image"
+  | "pdf"
+  | "document"
+  | "coordinate-candidate"
+  | "ignored"
+  | "forbidden";
 
 /** Every kind, for tests and exhaustiveness checks. Frozen — see `REGISTRY`. */
 export const FILE_KINDS: readonly FileKind[] = Object.freeze([
@@ -119,6 +159,8 @@ export const FILE_KINDS: readonly FileKind[] = Object.freeze([
   "pdf",
   "document",
   "coordinate-candidate",
+  "ignored",
+  "forbidden",
 ] as const);
 
 // ---------------------------------------------------------------------------
@@ -132,6 +174,12 @@ export const FILE_KINDS: readonly FileKind[] = Object.freeze([
  * useful answer: `classifyFileSource` turns it into UNKNOWN, and UNKNOWN means
  * ASK THE USER. Adding an extension here is the ONLY way to change what the
  * import path thinks about it — that is what "one source of truth" buys.
+ *
+ * Note the three-way difference, because two of them look alike from outside:
+ * an ABSENT extension reaches the provenance gate and is asked about; an
+ * `"ignored"` one never gets that far, because the walk drops it; a
+ * `"forbidden"` one is absent from every other kind ON PURPOSE, so today it
+ * behaves like the first while meaning the third.
  */
 const REGISTRY: Readonly<Record<string, readonly FileKind[]>> = (() => {
   const raw: Record<string, FileKind[]> = {
@@ -159,7 +207,29 @@ const REGISTRY: Readonly<Record<string, readonly FileKind[]>> = (() => {
     // Plain text: a document, and possibly a coordinate export. `.txt` is the
     // ONLY extension a cadastral export may arrive in — see the header.
     ".txt":  ["document", "coordinate-candidate"],
-    ".csv":  ["document"],
+
+    // Refused outright (Slice #24.04). `.csv` deliberately holds NO other
+    // kind: dropping `"document"` is what makes `classifyFileSource` answer
+    // UNKNOWN, which is what routes a stray `.csv` to the provenance gate and
+    // halts the import. That gate asks the wrong question — it asks for a
+    // provenance where the honest answer is "take this file out of the
+    // folder" — and that is the accepted interim until the pre-import screen
+    // (Slice #24.02) gives this kind a consumer that can say so properly.
+    ".csv":  ["forbidden"],
+
+    // Dropped by the walk, never seen again (Slice #24.04). Every one of these
+    // used to reach the provenance gate as an unclassifiable file, so a folder
+    // of scans could not be imported until somebody invented a provenance for
+    // an AutoCAD lock file — and then that lock file became a Document sitting
+    // in the archive next to the deeds.
+    ".dwl":  ["ignored"],   // AutoCAD drawing lock — exists only while open
+    ".dwl2": ["ignored"],   // AutoCAD drawing lock, second form
+    ".bak":  ["ignored"],   // autosave backup, AutoCAD's or anyone else's
+    ".lnk":  ["ignored"],   // Windows shortcut — a pointer, not a file
+    ".zip":  ["ignored"],
+    ".rar":  ["ignored"],
+    ".7z":   ["ignored"],
+    ".dwg":  ["ignored"],   // see the header: deliberate, and it will look wrong
   };
 
   // Frozen, and frozen DEEPLY. `fileKindsOf` hands the caller the registry's
@@ -181,8 +251,17 @@ const NO_KINDS: readonly FileKind[] = Object.freeze([]);
 // Extension extraction — one contract, replacing two
 // ---------------------------------------------------------------------------
 
-/** The basename of `name`, with any Windows or POSIX path segments removed. */
-function baseNameOf(name: string): string {
+/**
+ * The basename of `name`, with any Windows or POSIX path segments removed.
+ *
+ * Exported because `isIgnoredFileName` in src/lib/import/folder-utils.ts needs
+ * the SAME answer for its own name-based rules as this module's extension
+ * rules use. Two implementations of "strip the path" would let one predicate
+ * answer about the basename and another about the whole string — which is how
+ * `isIgnoredFileName("C:\\x\\.hidden")` came to disagree with
+ * `isIgnoredFileName(".hidden")` for the same file.
+ */
+export function baseNameOf(name: string): string {
   return name.split(/[\\/]/).pop() ?? "";
 }
 
