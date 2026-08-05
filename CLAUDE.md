@@ -84,10 +84,11 @@ assuming any API, and fix this section whenever the two disagree.
 - `C:\dev` — the session root. Adrian connects **this** folder, not the repo, so that
   `C:\dev\CLAUDE.md` and `C:\dev\.claude\rules\` load.
 - `C:\dev\ga40prj` — this repo, read-write. **Access is granted; never ask for it.**
-- `C:\dev.docs\ga40prj` — Adrian's reference docs, read-only: stack decisions, install logs,
-  credentials, future mockups.
-- `C:\dev.docs\ga40prj\01.Slice.Inputs\` — slice input docs. Read only the folder for the
-  current slice; don't re-read mockups from earlier slices.
+- `C:\dev.docs` — Adrian's reference docs: stack decisions, install logs, credentials,
+  future mockups. There is **no `ga40prj` level** under it — the numbered folders
+  (`01.Slice.Inputs`, `02.01.Import.topics`, `05.02.User.Manual` …) sit at its root.
+- `C:\dev.docs\01.Slice.Inputs\` — slice input docs, one folder per slice. Read only the
+  folder for the current slice; don't re-read mockups from earlier slices.
 
 ## Where the rest of the knowledge lives
 
