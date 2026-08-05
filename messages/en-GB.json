@@ -1967,7 +1967,8 @@
         "nothingToImport": "No file in this folder will be imported. Some files are skipped automatically — archives, drawings and temporary files, for example.",
         "ignoredFiles": "Files that will be skipped",
         "uploadSize": "To upload",
-        "megabytes": "{mb} MB"
+        "megabytes": "{mb} MB",
+        "recheckFolder": "Check this folder again"
       },
       "report": {
         "title": "What to check before you continue",
@@ -1985,7 +1986,7 @@
           "rootIsScanFolder": "{numbered} of the {total} files in the chosen folder are numbered scans. They will become {numbered} separate documents. If these are pages of one document, choose the folder ABOVE this one instead.",
           "nearMissNaming": "{images} images that look like pages of one document. Because their names are not plain numbers (1, 2, 3…), they will become {documentsNow} separate documents.",
           "nearMissStrayFile": "{numbered} of the {total} files here are numbered scans, so they are pages of one document — but the other {strays} files mean this folder becomes {documentsNow} separate documents. Moving the {numbered} numbered files into a folder of their own would make them a single {numbered}-page document.",
-          "nearMissSubfolder": "This folder has {subfolders} subfolders, so its {documents} files become {documents} separate documents rather than one. This is usually correct for a property folder.",
+          "nearMissSubfolder": "This folder has {subfolders} subfolders, so it cannot become a single multi-page document — a folder with any subfolder is never merged. Its own {documents} files will each become a separate document. For a property folder that is normally exactly what you want, and there is nothing to fix. Look closer only if you expected those {documents} files to be the pages of one scanned document: in that case move them into a subfolder of their own, and they will merge.",
           "pageOrderAmbiguous": "{collisions} pages of this {pages}-page document have the same page number (for example 1.jpg and 01.jpg). Their order will be arbitrary.",
           "pageNumbersIrregular": "The {pages} pages of this document are numbered {lowest} to {highest} — scanner numbers rather than page numbers. Page order follows those numbers.",
           "multipleProperties": "The chosen folder contains {folders} subfolders that look like separate properties. The import links EVERY document to a single property, so they will all be merged into one.",
@@ -1998,9 +1999,20 @@
           "emptyFiles": "{files} files are empty (0 bytes) and will fail to upload.",
           "unknownMimeFiles": "Windows did not report a file type for {files} files. They will upload, but automatic data extraction will never work on them.",
           "largeFolderJpg": "{files} files named “folder.jpg” are too big to be Windows thumbnails. They look like real scans, and they will be skipped without a trace."
-        }
+        },
+        "downloadButton": "Download this list",
+        "downloadHint": "Saves a file you can open in Word. It lists every affected file, not only the examples shown on screen.",
+        "documentTitle": "Pre-import check",
+        "documentGenerated": "Generated",
+        "documentFolder": "Folder",
+        "documentQuietTitle": "Less important notes",
+        "documentSkippedTitle": "Files that will be skipped",
+        "documentNothingSkipped": "No file will be skipped.",
+        "documentFilePrefix": "pre-import-check"
       },
-      "readingMetadata": "Reading files… {done} of {total}"
+      "readingMetadata": "Reading files… {done} of {total}",
+      "walkFailed": "This folder could not be read. It may have been moved, renamed, or disconnected.",
+      "recheckFailed": "This folder could not be read again. It may have been moved or renamed while you were working on it — the list below is the previous result. Choose the folder again to start over."
     }
   },
   "usersAccess": {

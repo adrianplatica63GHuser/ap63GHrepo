@@ -233,6 +233,11 @@ export function ImportWizard() {
   const [observations, setObservations] = useState<DirectoryObservation[]>([]);
   const [metadata, setMetadata] = useState<Map<string, FileMeta> | null>(null);
   const [metaProgress, setMetaProgress] = useState({ done: 0, total: 0 });
+  // The report's two disclosures live here, not in the panel: the panel
+  // unmounts during a re-walk, so component state would collapse every
+  // expanded section on each turn of the fix-and-re-check loop.
+  const [showQuiet, setShowQuiet] = useState(false);
+  const [showSkipped, setShowSkipped] = useState(false);
 
   /**
    * The preconditions' verdict, hoisted so the picker can be gated on it.
@@ -260,6 +265,102 @@ export function ImportWizard() {
   // Pick folder
   // -------------------------------------------------------------------
 
+  /**
+   * Walk a folder we already hold a handle for, and build the report.
+   *
+   * Split out of `handlePickFolder` in Slice #24.02c so that "I fixed the
+   * files, check again" costs one click instead of a round trip through the
+   * OS picker. The browser keeps the directory handle alive for the session,
+   * and re-enumerating it sees the user's edits — so the report can be a live
+   * checklist worked against in Explorer, rather than a snapshot that goes
+   * stale the moment someone acts on it.
+   */
+  const runWalk = useCallback(
+    async (handle: FSDirectoryHandle, mode: "pick" | "recheck") => {
+      setWalkError(null);
+      cancelScanRef.current = false;
+      setMetaProgress({ done: 0, total: 0 });
+      setPhase("walking");
+
+      // A permission grant can lapse between two walks. `requestPermission`
+      // only works inside a user gesture, which is exactly where this runs —
+      // so ask, rather than letting the walk throw and sending the user back
+      // through the OS picker this button exists to avoid.
+      try {
+        if (typeof handle.queryPermission === "function") {
+          let state = await handle.queryPermission({ mode: "read" });
+          if (state === "prompt" && typeof handle.requestPermission === "function") {
+            state = await handle.requestPermission({ mode: "read" });
+          }
+          if (state === "denied") throw new Error("permission-denied");
+        }
+      } catch {
+        // Fall through — the walk below reports the failure properly.
+      }
+
+      let walked: FSEntry[] = [];
+      const seen: DirectoryObservation[] = [];
+      try {
+        // The observer records each directory's shape at the moment the walk
+        // decides about it. Collected here rather than re-derived later because
+        // by the time the walk returns its flat list, the evidence for WHY a
+        // folder did not become one document is gone.
+        walked = await walkFolder(handle, [], (o) => seen.push(o));
+      } catch {
+        // The DOMException message here is untranslated English ("A requested
+        // file or directory could not be found"), which has no place in a
+        // Romanian UI — and the folder may legitimately have moved, because
+        // acting on this very report is what the user was told to do.
+        setWalkError(t(mode === "recheck" ? "recheckFailed" : "walkFailed"));
+        // Crucially, nothing above this point cleared the existing report, so
+        // a failed re-check returns the user to the list they were working
+        // from rather than destroying it. `mode` is the whole answer here: the
+        // re-check button exists only on the report screen, so a re-check has
+        // a report to go back to by construction, and a failed PICK has just
+        // cleared one and belongs at the picker. Reading `entries` to work
+        // that out would have meant either a ref read during render or a
+        // dependency that re-creates this callback on every walk.
+        setPhase(mode === "recheck" ? "folder-report" : "idle");
+        return;
+      }
+
+      if (mode === "pick") {
+        // A new folder is a new Property question — never carry the previous
+        // run's answer over, or documents would silently land on the wrong one.
+        setResolvedProperty(null);
+      }
+      setRootFolderName(handle.name);
+      setScanResults(new Map());
+      setScanProgress({ done: 0, total: 0 });
+
+      // Slice #24.02a — the walk ends here. It used to fall straight into the
+      // classification pass in this same async block, which is how choosing a
+      // folder came to cost one Claude call per image before anything had been
+      // validated or shown. The scan waits for `startScan`, behind Continuă.
+      setEntries(walked);
+      setObservations(seen);
+
+      // T1: one getFile() per file. Metadata only — it does not read contents
+      // — but it is ~760 calls on Adrian's archive, so it reports progress
+      // rather than assuming every machine is as quick as his.
+      try {
+        const meta = await readFileMetadata(walked, seen, {
+          onProgress: setMetaProgress,
+          isCancelled: () => cancelScanRef.current,
+        });
+        setMetadata(meta);
+      } catch {
+        // The four size/MIME rules simply do not fire. Everything derived from
+        // names still works, so a failure here degrades the report rather than
+        // stopping the import.
+        setMetadata(null);
+      }
+
+      setPhase("folder-report");
+    },
+    [t],
+  );
+
   const handlePickFolder = useCallback(async () => {
     // Check browser support
     if (typeof window === "undefined" || !("showDirectoryPicker" in window)) {
@@ -279,64 +380,14 @@ export function ImportWizard() {
     }
 
     _dirHandle = handle;
-    const name = handle.name;
-    setRootFolderName(name);
-    setWalkError(null);
-    // Clear the PREVIOUS folder's entries before the new name goes up. Without
-    // this, a walk that fails — or simply takes a moment — leaves the old
-    // folder's file table on screen labelled with the new folder's name, and
-    // every status cell blank because nothing has been scanned.
-    cancelScanRef.current = false;
+    // A different folder: drop the previous one's report before walking, so a
+    // slow or failing walk cannot leave folder A's findings under folder B's
+    // name. A RE-check deliberately does the opposite and keeps them.
     setEntries([]);
     setObservations([]);
     setMetadata(null);
-    setMetaProgress({ done: 0, total: 0 });
-    setScanResults(new Map());
-    setScanProgress({ done: 0, total: 0 });
-    // A new folder is a new Property question — never carry the previous
-    // run's answer over, or documents would silently land on the wrong one.
-    setResolvedProperty(null);
-    setPhase("walking");
-
-    let walked: FSEntry[] = [];
-    const seen: DirectoryObservation[] = [];
-    try {
-      // The observer records each directory's shape at the moment the walk
-      // decides about it. Collected here rather than re-derived later because
-      // by the time the walk returns its flat list, the evidence for WHY a
-      // folder did not become one document is gone.
-      walked = await walkFolder(handle, [], (o) => seen.push(o));
-    } catch (err) {
-      setWalkError(err instanceof Error ? err.message : "Walk failed");
-      setPhase("idle");
-      return;
-    }
-
-    // Slice #24.02a — the walk ends here. It used to fall straight into the
-    // classification pass in this same async block, which is how choosing a
-    // folder came to cost one Claude call per image before anything had been
-    // validated or shown. The scan now waits for `startScan`, behind Continuă.
-    setEntries(walked);
-    setObservations(seen);
-
-    // T1: one getFile() per file. Metadata only — it does not read contents —
-    // but it is ~760 calls on Adrian's archive, so it reports progress rather
-    // than assuming every machine is as quick as his.
-    try {
-      const meta = await readFileMetadata(walked, seen, {
-        onProgress: setMetaProgress,
-        isCancelled: () => cancelScanRef.current,
-      });
-      setMetadata(meta);
-    } catch {
-      // The four size/MIME rules simply do not fire. Everything derived from
-      // names still works, so a failure here degrades the report rather than
-      // stopping the import.
-      setMetadata(null);
-    }
-
-    setPhase("folder-report");
-  }, [t]);
+    await runWalk(handle, "pick");
+  }, [t, runWalk]);
 
   // -------------------------------------------------------------------
   // Classification pass — everything below this line costs money
@@ -435,6 +486,21 @@ export function ImportWizard() {
       setPhase("ready");
     }
   }, []);
+
+  /**
+   * "I have fixed the files — check again." Re-walks the folder already
+   * picked, with no picker dialog.
+   *
+   * A handle can stop working between the first walk and this one: the folder
+   * may have been moved or unmounted, or the permission may have lapsed. The
+   * walk's own error path already covers that — it surfaces `walkError` and
+   * returns to `idle`, which is exactly the right outcome, because from there
+   * the user can pick the folder again.
+   */
+  const handleRecheck = useCallback(async () => {
+    if (!_dirHandle) return;
+    await runWalk(_dirHandle, "recheck");
+  }, [runWalk]);
 
   // Cancel the scan AND the metadata pass on unmount. The ref guards both
   // long-running loops; leaving the metadata pass out of it meant navigating
@@ -587,8 +653,18 @@ export function ImportWizard() {
             droppedCount={report.droppedCount}
             onContinue={() => void startScan(entries)}
             onChangeFolder={handlePickFolder}
+            onRecheck={() => void handleRecheck()}
           />
-          <ReportSections report={report} />
+          <ReportSections
+            report={report}
+            forecast={forecast}
+            uploadBytes={report.uploadBytes}
+            folderName={rootFolderName}
+            showQuiet={showQuiet}
+            onShowQuietChange={setShowQuiet}
+            showSkipped={showSkipped}
+            onShowSkippedChange={setShowSkipped}
+          />
         </>
       )}
 

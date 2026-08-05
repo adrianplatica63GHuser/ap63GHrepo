@@ -29,10 +29,21 @@ export type FSFileHandle = {
   getFile: () => Promise<File>;
 };
 
+/** Permission descriptor for the File System Access API. */
+export type FSPermissionDescriptor = { mode?: "read" | "readwrite" };
+export type FSPermissionState = "granted" | "denied" | "prompt";
+
 export type FSDirectoryHandle = {
   kind: "directory";
   name: string;
   values: () => AsyncIterable<FSFileHandle | FSDirectoryHandle>;
+  /**
+   * Optional in this type because the walk never needs them and the test stubs
+   * do not implement them — but real Chromium handles do, and a lapsed grant
+   * can only be recovered inside a user gesture (Slice #24.02c's re-check).
+   */
+  queryPermission?: (descriptor?: FSPermissionDescriptor) => Promise<FSPermissionState>;
+  requestPermission?: (descriptor?: FSPermissionDescriptor) => Promise<FSPermissionState>;
 };
 
 // ---------------------------------------------------------------------------

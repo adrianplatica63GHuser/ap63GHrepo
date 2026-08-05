@@ -107,7 +107,17 @@ export type Finding = {
   ruleId: string;
   kind: FindingKind;
   loudness: Loudness;
-  /** What to look at. Capped by the caller when rendering, never here. */
+  /**
+   * Every path this finding covers — the COMPLETE list, never a sample.
+   *
+   * Each rule used to cap its own paths with a `.slice(0, 5)`, which quietly
+   * made this a sample and made the downloadable report a truncated copy
+   * advertising itself as exhaustive: F-15 rendered "86 names appear more than
+   * once" above exactly five of them. Truncation is a RENDERING decision and
+   * belongs to whoever renders — `report-sections.tsx` shows four and says how
+   * many it hid; the document shows all of them, which is its whole reason to
+   * exist.
+   */
   paths: string[];
   /** Interpolated into the message. Keys are per-kind and match the i18n string. */
   counts: Record<string, number>;
@@ -223,7 +233,7 @@ function pageGroupFindings(observations: readonly DirectoryObservation[]): Findi
           ruleId: "S-07",
           kind: "rootIsScanFolder",
           loudness: "loud",
-          paths: numbered.slice(0, 6),
+          paths: numbered,
           counts: { numbered: numbered.length, total: obs.keptNames.length },
         });
       }
@@ -237,7 +247,7 @@ function pageGroupFindings(observations: readonly DirectoryObservation[]): Findi
         ruleId: "S-03",
         kind: "nearMissSubfolder",
         loudness: "quiet",
-        paths: [obs.path, ...obs.dirNames.slice(0, 4)],
+        paths: [obs.path, ...obs.dirNames],
         // `documents` is this folder's OWN files only — its subfolders produce
         // their own documents on top. The Romanian says "fișierele sale" for
         // that reason; do not reword it into a subtree total it is not.
@@ -263,7 +273,7 @@ function pageGroupFindings(observations: readonly DirectoryObservation[]): Findi
         ruleId: "S-04",
         kind: "nearMissStrayFile",
         loudness: "loud",
-        paths: [obs.path, ...strays.slice(0, 5)],
+        paths: [obs.path, ...strays],
         counts: {
           numbered: numbered.length,
           total: obs.keptNames.length,
@@ -285,7 +295,7 @@ function pageGroupFindings(observations: readonly DirectoryObservation[]): Findi
       ruleId: "S-05",
       kind: "nearMissNaming",
       loudness: looksLikePageSequence(images) ? "loud" : "quiet",
-      paths: [obs.path, ...images.slice(0, 5)],
+      paths: [obs.path, ...images],
       counts: { images: images.length, documentsNow: obs.keptNames.length },
     });
   }
@@ -436,7 +446,7 @@ function structureFindings(observations: readonly DirectoryObservation[]): Findi
         ruleId: "S-01",
         kind: "multipleProperties",
         loudness: "loud",
-        paths: propertyShaped.slice(0, 8),
+        paths: propertyShaped,
         counts: { folders: propertyShaped.length },
       });
     }
@@ -454,7 +464,7 @@ function structureFindings(observations: readonly DirectoryObservation[]): Findi
       ruleId: "F-03",
       kind: "osDirectories",
       loudness: "loud",
-      paths: osDirs.slice(0, 6),
+      paths: osDirs,
       counts: { folders: osDirs.length },
     });
   }
@@ -493,7 +503,7 @@ function fileFindings(entries: readonly FSEntry[]): Finding[] {
       ruleId: "F-05",
       kind: "gateFiles",
       loudness: "loud",
-      paths: gate.slice(0, 8).map((f) => f.path),
+      paths: gate.map((f) => f.path),
       counts: { files: gate.length, extensions: distinctExtensions(gate.map((f) => f.name)) },
     });
   }
@@ -507,7 +517,7 @@ function fileFindings(entries: readonly FSEntry[]): Finding[] {
       ruleId: "F-07",
       kind: "heicFiles",
       loudness: "loud",
-      paths: heic.slice(0, 6).map((f) => f.path),
+      paths: heic.map((f) => f.path),
       counts: { files: heic.length },
     });
   }
@@ -521,7 +531,7 @@ function fileFindings(entries: readonly FSEntry[]): Finding[] {
       ruleId: "F-17",
       kind: "officeFiles",
       loudness: "quiet",
-      paths: officeNonText.slice(0, 6).map((f) => f.path),
+      paths: officeNonText.map((f) => f.path),
       counts: { files: officeNonText.length },
     });
   }
@@ -539,7 +549,7 @@ function fileFindings(entries: readonly FSEntry[]): Finding[] {
       ruleId: "F-15",
       kind: "duplicateBasenames",
       loudness: "quiet",
-      paths: dupes.slice(0, 5).map((paths) => paths[0]),
+      paths: dupes.map((paths) => paths[0]),
       counts: { names: dupes.length, documents: dupes.reduce((n, p) => n + p.length, 0) },
     });
   }
@@ -586,7 +596,7 @@ function metadataFindings(
       ruleId: "F-08",
       kind: "oversizedFiles",
       loudness: "loud",
-      paths: oversized.slice(0, 6),
+      paths: oversized,
       counts: { files: oversized.length, limitMb: Math.round(MAX_UPLOAD_BYTES / 1024 / 1024) },
     });
   }
@@ -598,7 +608,7 @@ function metadataFindings(
       ruleId: "F-09",
       kind: "emptyFiles",
       loudness: "loud",
-      paths: empty.slice(0, 6),
+      paths: empty,
       counts: { files: empty.length },
     });
   }
@@ -611,7 +621,7 @@ function metadataFindings(
       ruleId: "F-11",
       kind: "unknownMimeFiles",
       loudness: "loud",
-      paths: unknownMime.slice(0, 6),
+      paths: unknownMime,
       counts: { files: unknownMime.length },
     });
   }
@@ -628,7 +638,7 @@ function metadataFindings(
       ruleId: "F-02",
       kind: "largeFolderJpg",
       loudness: "loud",
-      paths: bigFolderJpgs.slice(0, 5).map((d) => d.path),
+      paths: bigFolderJpgs.map((d) => d.path),
       counts: { files: bigFolderJpgs.length },
     });
   }

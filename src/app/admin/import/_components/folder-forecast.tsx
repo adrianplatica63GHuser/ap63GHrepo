@@ -39,12 +39,29 @@ type Props = {
   droppedCount: number;
   onContinue: () => void;
   onChangeFolder: () => void;
+  /** Re-walk the SAME folder — no picker dialog. See the button's comment. */
+  onRecheck: () => void;
 };
 
 function formatMb(bytes: number): string {
   const mb = bytes / (1024 * 1024);
   return mb >= 10 ? String(Math.round(mb)) : mb.toFixed(1);
 }
+
+/**
+ * The sentences on this screen that say what has and has not been spent.
+ *
+ * Deliberately louder than the fine print they used to be. These are the only
+ * warning that the NEXT click is the one that costs money, and rendered as
+ * muted 12px grey they read as boilerplate — the thing a user's eye is trained
+ * to skip. Amber, italic and a size up puts them between body text and a
+ * warning, which is what they are.
+ *
+ * Exported so the report panel's opening line gets the same treatment: three
+ * sentences with one job should not be able to drift into three styles.
+ */
+export const COST_NOTE_CLASS =
+  "text-sm font-medium italic text-amber-700 dark:text-amber-400";
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
@@ -62,6 +79,7 @@ export function FolderForecast({
   droppedCount,
   onContinue,
   onChangeFolder,
+  onRecheck,
 }: Props) {
   const t = useTranslations("adminImport.wizard.forecast");
 
@@ -80,10 +98,8 @@ export function FolderForecast({
 
   return (
     <section className="rounded-xl border border-card-rim bg-white p-5 dark:border-zinc-700 dark:bg-zinc-900">
-      <h2 className="text-sm font-semibold text-ink dark:text-zinc-100">{t("title")}</h2>
-      <p className="mt-1 text-xs text-fade dark:text-zinc-400">
-        {t("intro", { folder: rootFolderName })}
-      </p>
+      <h2 className="text-lg font-semibold text-ink dark:text-zinc-100">{t("title")}</h2>
+      <p className={`mt-1.5 ${COST_NOTE_CLASS}`}>{t("intro", { folder: rootFolderName })}</p>
 
       <dl className="mt-4">
         <Row label={t("documents")} value={String(documents)} />
@@ -99,7 +115,7 @@ export function FolderForecast({
         )}
       </dl>
 
-      <p className="mt-3 text-xs text-fade dark:text-zinc-400">{t("nothingSpentYet")}</p>
+      <p className={`mt-3 ${COST_NOTE_CLASS}`}>{t("nothingSpentYet")}</p>
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
         {/* The ONLY disabled case is an empty folder, where there is literally
@@ -113,6 +129,19 @@ export function FolderForecast({
           className={buttonClass({ variant: "primary", size: "lg" })}
         >
           {t("continueButton", { count: classificationCalls })}
+        </button>
+        {/* Slice #24.02c. The report is a to-do list acted on in Windows
+            Explorer, so the expensive part of this loop was coming BACK: the
+            user had to re-open the OS picker and find the folder again just to
+            see whether their fix worked. The browser still holds the handle,
+            so re-walking it is one click and no dialog — which is what turns
+            the report from a snapshot into a checklist. */}
+        <button
+          type="button"
+          onClick={onRecheck}
+          className={buttonClass({ variant: "secondary", size: "md" })}
+        >
+          {t("recheckFolder")}
         </button>
         <button
           type="button"

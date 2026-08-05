@@ -1967,7 +1967,8 @@
         "nothingToImport": "Niciun fișier din acest folder nu va fi importat. Unele fișiere sunt ignorate automat — de exemplu arhive, desene și fișiere temporare.",
         "ignoredFiles": "Fișiere care vor fi ignorate",
         "uploadSize": "De încărcat",
-        "megabytes": "{mb} MB"
+        "megabytes": "{mb} MB",
+        "recheckFolder": "Verifică din nou folderul"
       },
       "report": {
         "title": "De verificat înainte de a continua",
@@ -1985,7 +1986,7 @@
           "rootIsScanFolder": "{numbered} dintre cele {total} fișiere din folderul ales sunt scanări numerotate. Vor deveni {numbered} documente separate. Dacă acestea sunt paginile unui singur document, alegeți folderul DE DEASUPRA acestuia.",
           "nearMissNaming": "{images, plural, one {O imagine care pare} few {# imagini care par} other {# de imagini care par}} paginile unui singur document. Fiindcă numele lor nu sunt numere simple (1, 2, 3…), vor deveni {documentsNow} documente separate.",
           "nearMissStrayFile": "{numbered} din cele {total} fișiere de aici sunt scanări numerotate, deci sunt paginile unui singur document — dar celelalte {strays} fișiere fac ca acest folder să devină {documentsNow} documente separate. Mutarea celor {numbered} fișiere numerotate într-un folder al lor le-ar transforma într-un singur document de {numbered} pagini.",
-          "nearMissSubfolder": "Acest folder are {subfolders} subfoldere, deci cele {documents} fișiere ale sale devin {documents} documente separate, nu unul singur. De obicei acest lucru este corect pentru un folder de proprietate.",
+          "nearMissSubfolder": "Acest folder are {subfolders} subfoldere, deci nu poate deveni un singur document cu mai multe pagini — un folder care are orice subfolder nu este niciodată unificat. Cele {documents} fișiere proprii ale sale vor deveni fiecare un document separat. Pentru un folder de proprietate acest lucru este de obicei exact ceea ce doriți și nu aveți nimic de corectat. Verificați mai atent doar dacă vă așteptați ca acele {documents} fișiere să fie paginile unui singur document scanat: în acest caz mutați-le într-un subfolder al lor și vor fi unificate.",
           "pageOrderAmbiguous": "{collisions} pagini ale acestui document de {pages} pagini au același număr de pagină (de exemplu 1.jpg și 01.jpg). Ordinea lor va fi arbitrară.",
           "pageNumbersIrregular": "Cele {pages} pagini ale acestui document sunt numerotate de la {lowest} la {highest} — numere de scaner, nu numere de pagină. Ordinea paginilor urmează aceste numere.",
           "multipleProperties": "Folderul ales conține {folders} subfoldere care par proprietăți separate. Importul leagă TOATE documentele de o singură proprietate, deci vor fi contopite într-una singură.",
@@ -1998,9 +1999,20 @@
           "emptyFiles": "{files, plural, one {Un fișier este gol} few {# fișiere sunt goale} other {# de fișiere sunt goale}} (0 octeți) și nu se vor putea încărca.",
           "unknownMimeFiles": "Windows nu a raportat tipul {files, plural, one {unui fișier} few {a # fișiere} other {a # de fișiere}}. Se vor încărca, dar extragerea automată a datelor nu va funcționa niciodată pentru ele.",
           "largeFolderJpg": "{files, plural, one {Un fișier numit „folder.jpg” este prea mare} few {# fișiere numite „folder.jpg” sunt prea mari} other {# de fișiere numite „folder.jpg” sunt prea mari}} pentru a fi miniaturi Windows. Par scanări reale și vor fi ignorate fără urmă."
-        }
+        },
+        "downloadButton": "Descarcă această listă",
+        "downloadHint": "Salvează un fișier pe care îl puteți deschide în Word. Conține toate fișierele vizate, nu doar exemplele arătate pe ecran.",
+        "documentTitle": "Verificare înainte de import",
+        "documentGenerated": "Generat",
+        "documentFolder": "Folder",
+        "documentQuietTitle": "Observații mai puțin importante",
+        "documentSkippedTitle": "Fișiere care vor fi ignorate",
+        "documentNothingSkipped": "Niciun fișier nu va fi ignorat.",
+        "documentFilePrefix": "verificare-import"
       },
-      "readingMetadata": "Se citesc fișierele… {done} din {total}"
+      "readingMetadata": "Se citesc fișierele… {done} din {total}",
+      "walkFailed": "Acest folder nu a putut fi citit. Este posibil să fi fost mutat, redenumit sau deconectat.",
+      "recheckFailed": "Acest folder nu a putut fi citit din nou. Este posibil să fi fost mutat sau redenumit în timp ce lucrați la el — lista de mai jos este rezultatul anterior. Alegeți din nou folderul pentru a reîncepe."
     }
   },
   "usersAccess": {

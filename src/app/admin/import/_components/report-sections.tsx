@@ -20,11 +20,31 @@
  * always" is not "always" and the evidence should still be reachable.
  */
 
-import { useState } from "react";
-import { useTranslations } from "next-intl";
+import { useCallback } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import { buildReportHtml, reportFileName } from "@/lib/import/report-html";
+import { buttonClass } from "@/lib/ui/button-styles";
+import type { ImportForecast } from "@/lib/import/preflight";
 import type { Finding, ImportReport, SkippedGroup } from "@/lib/import/checks";
 
-type Props = { report: ImportReport };
+type Props = {
+  report: ImportReport;
+  /** Repeated in the downloadable copy, in full — including the rows the
+   *  first draft dropped: the coordinate file and the upload size. */
+  forecast: ImportForecast;
+  uploadBytes: number | null;
+  folderName: string;
+  /**
+   * The two disclosures live in the PARENT so they survive a re-check. This
+   * whole subtree unmounts while the folder is re-walked, so component state
+   * would collapse every expanded section on each iteration of the exact
+   * fix-and-re-check loop this slice was built for.
+   */
+  showQuiet: boolean;
+  onShowQuietChange: (open: boolean) => void;
+  showSkipped: boolean;
+  onShowSkippedChange: (open: boolean) => void;
+};
 
 /** How many example paths one finding shows before it stops listing them. */
 const MAX_PATHS_SHOWN = 4;
@@ -74,9 +94,16 @@ function FindingRow({ finding }: { finding: Finding }) {
   );
 }
 
-function SkippedSection({ groups }: { groups: SkippedGroup[] }) {
+function SkippedSection({
+  groups,
+  open,
+  onOpenChange,
+}: {
+  groups: SkippedGroup[];
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
   const t = useTranslations("adminImport.wizard.report");
-  const [open, setOpen] = useState(false);
   const total = groups.reduce((n, g) => n + g.paths.length, 0);
   if (total === 0) return null;
 
@@ -84,7 +111,7 @@ function SkippedSection({ groups }: { groups: SkippedGroup[] }) {
     <div className="mt-4">
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => onOpenChange(!open)}
         aria-expanded={open}
         className="text-sm font-medium text-cta underline-offset-2 hover:underline"
       >
@@ -117,9 +144,89 @@ function SkippedSection({ groups }: { groups: SkippedGroup[] }) {
   );
 }
 
-export function ReportSections({ report }: Props) {
+export function ReportSections({
+  report,
+  forecast,
+  uploadBytes,
+  folderName,
+  showQuiet,
+  onShowQuietChange,
+  showSkipped,
+  onShowSkippedChange,
+}: Props) {
   const t = useTranslations("adminImport.wizard.report");
-  const [showQuiet, setShowQuiet] = useState(false);
+  const tf = useTranslations("adminImport.wizard.forecast");
+  const locale = useLocale();
+
+  /**
+   * Build the take-away copy and hand it to the browser as a download.
+   *
+   * Everything user-facing is translated HERE and passed in as plain strings:
+   * `report-html.ts` must never become a second place Romanian lives. The
+   * screen truncates each finding to four example paths; this does not
+   * truncate at all, which is the point of having it.
+   *
+   * The screen is left exactly as it was afterwards. Downloading is not a
+   * decision about what to do next — the user may fix the files and press
+   * Verifică din nou, or continue anyway, and neither should be pre-empted.
+   */
+  const handleDownload = useCallback(() => {
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}`;
+
+    const html = buildReportHtml({
+      folderName,
+      generatedAt: now.toLocaleString(locale),
+      report,
+      locale,
+      strings: {
+        documentTitle: t("documentTitle"),
+        generatedAt: t("documentGenerated"),
+        folderLabel: t("documentFolder"),
+        forecastTitle: tf("title"),
+        forecastRows: [
+          { label: tf("documents"), value: String(forecast.documents) },
+          { label: tf("pageGroups"), value: String(forecast.pageGroups) },
+          { label: tf("classificationCalls"), value: String(forecast.classificationCalls) },
+          { label: tf("ignoredFiles"), value: String(report.droppedCount) },
+          // The first draft stopped here and dropped both of these. The
+          // coordinate file decides where the Property's corners come from —
+          // the single most consequential line in the forecast.
+          {
+            label: tf("coordinateFile"),
+            value:
+              forecast.coordinateCandidates.length === 0
+                ? tf("noCoordinateFile")
+                : forecast.coordinateCandidates.join(", "),
+          },
+          ...(uploadBytes === null
+            ? []
+            : [{
+                label: tf("uploadSize"),
+                value: tf("megabytes", { mb: (uploadBytes / (1024 * 1024)).toFixed(1) }),
+              }]),
+        ],
+        findingsTitle: t("title"),
+        quietTitle: t("documentQuietTitle"),
+        skippedTitle: t("documentSkippedTitle"),
+        allClear: t("allClear"),
+        nothingSkipped: t("documentNothingSkipped"),
+        renderFinding: (kind, counts) => t(`finding.${kind}`, counts),
+        renderSkippedReason: (reason, count) => t(`skippedReason.${reason}`, { count }),
+      },
+    });
+
+    const url = URL.createObjectURL(new Blob([html], { type: "text/html;charset=utf-8" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = reportFileName(t("documentFilePrefix"), folderName, stamp);
+    link.click();
+    // Revoked on the next tick rather than immediately: Firefox and Safari
+    // have both been observed to cancel a download whose object URL is
+    // revoked in the same frame as the click.
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+  }, [folderName, forecast, uploadBytes, report, t, tf, locale]);
 
   const loud = report.findings.filter((f) => f.loudness === "loud");
   const quiet = report.findings.filter((f) => f.loudness === "quiet");
@@ -127,12 +234,19 @@ export function ReportSections({ report }: Props) {
 
   return (
     <section className="rounded-xl border border-card-rim bg-white p-5 dark:border-zinc-700 dark:bg-zinc-900">
-      <h2 className="text-sm font-semibold text-ink dark:text-zinc-100">{t("title")}</h2>
+      <h2 className="text-lg font-semibold text-ink dark:text-zinc-100">{t("title")}</h2>
 
       {nothingToSay ? (
-        <p className="mt-2 text-sm text-emerald-700 dark:text-emerald-400">{t("allClear")}</p>
+        <p className="mt-2 text-sm font-medium text-emerald-700 dark:text-emerald-400">{t("allClear")}</p>
       ) : (
-        <p className="mt-1 text-xs text-fade dark:text-zinc-400">{t("intro")}</p>
+        // Prominent, but NOT amber. Amber in this panel already means "this
+        // is a warning" on the finding rows below, and this line's job is the
+        // opposite — it says the import will run regardless. Same size, weight
+        // and italics as the cost notes; different colour, because it carries
+        // a different meaning.
+        <p className="mt-1.5 text-sm font-medium italic text-ink dark:text-zinc-200">
+          {t("intro")}
+        </p>
       )}
 
       {loud.length > 0 && (
@@ -147,7 +261,7 @@ export function ReportSections({ report }: Props) {
         <div className="mt-4">
           <button
             type="button"
-            onClick={() => setShowQuiet((v) => !v)}
+            onClick={() => onShowQuietChange(!showQuiet)}
             aria-expanded={showQuiet}
             className="text-sm font-medium text-cta underline-offset-2 hover:underline"
           >
@@ -163,7 +277,24 @@ export function ReportSections({ report }: Props) {
         </div>
       )}
 
-      <SkippedSection groups={report.skipped} />
+      <SkippedSection
+        groups={report.skipped}
+        open={showSkipped}
+        onOpenChange={onShowSkippedChange}
+      />
+
+      {/* The take-away copy. Offered even when nothing was found, because
+          "this folder is clean" is itself worth filing. */}
+      <div className="mt-5 border-t border-crease pt-4 dark:border-zinc-800">
+        <button
+          type="button"
+          onClick={handleDownload}
+          className={buttonClass({ variant: "secondary", size: "md" })}
+        >
+          {t("downloadButton")}
+        </button>
+        <p className="mt-1.5 text-xs text-fade dark:text-zinc-400">{t("downloadHint")}</p>
+      </div>
     </section>
   );
 }
