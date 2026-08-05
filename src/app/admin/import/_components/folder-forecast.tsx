@@ -34,9 +34,17 @@ import type { ImportForecast } from "@/lib/import/preflight";
 type Props = {
   rootFolderName: string;
   forecast: ImportForecast;
+  /** Slice #24.02b: null when the metadata pass did not complete. */
+  uploadBytes: number | null;
+  droppedCount: number;
   onContinue: () => void;
   onChangeFolder: () => void;
 };
+
+function formatMb(bytes: number): string {
+  const mb = bytes / (1024 * 1024);
+  return mb >= 10 ? String(Math.round(mb)) : mb.toFixed(1);
+}
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
@@ -50,6 +58,8 @@ function Row({ label, value }: { label: string; value: string }) {
 export function FolderForecast({
   rootFolderName,
   forecast,
+  uploadBytes,
+  droppedCount,
   onContinue,
   onChangeFolder,
 }: Props) {
@@ -58,8 +68,9 @@ export function FolderForecast({
   const { documents, pageGroups, classificationCalls, coordinateCandidates } = forecast;
 
   // One candidate is the normal case and is named. Zero and several are both
-  // worth saying out loud, and #24.02b turns the second into a blocker —
-  // several coordinate files means several properties in one folder.
+  // worth saying out loud. (#24.02a guessed that #24.02b would turn "several"
+  // into a blocker; it did not — that slice blocks nothing at all, and C-02 is
+  // explicitly out of its scope. See the header of src/lib/import/checks.ts.)
   const coordinateValue =
     coordinateCandidates.length === 0
       ? t("noCoordinateFile")
@@ -79,11 +90,22 @@ export function FolderForecast({
         <Row label={t("pageGroups")} value={String(pageGroups)} />
         <Row label={t("classificationCalls")} value={String(classificationCalls)} />
         <Row label={t("coordinateFile")} value={coordinateValue} />
+        {/* Both parked in #24.02a for want of plumbing, both answerable now:
+            the walk reports what it dropped, and the metadata pass has sized
+            every file. */}
+        <Row label={t("ignoredFiles")} value={String(droppedCount)} />
+        {uploadBytes !== null && (
+          <Row label={t("uploadSize")} value={t("megabytes", { mb: formatMb(uploadBytes) })} />
+        )}
       </dl>
 
       <p className="mt-3 text-xs text-fade dark:text-zinc-400">{t("nothingSpentYet")}</p>
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
+        {/* The ONLY disabled case is an empty folder, where there is literally
+            nothing to import. No finding in the report disables this button —
+            see the header of src/lib/import/checks.ts for why the checker is
+            advisory throughout. */}
         <button
           type="button"
           onClick={onContinue}

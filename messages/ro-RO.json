@@ -1964,8 +1964,43 @@
         "nothingSpentYet": "Nu s-a trimis nimic încă spre clasificare. Acest lucru începe când apăsați Continuă și este primul pas care costă.",
         "continueButton": "Continuă — trimite {count, plural, one {o imagine} few {# imagini} other {# de imagini}} spre clasificare",
         "changeFolder": "Alegeți alt folder",
-        "nothingToImport": "Niciun fișier din acest folder nu va fi importat. Unele fișiere sunt ignorate automat — de exemplu arhive, desene și fișiere temporare."
-      }
+        "nothingToImport": "Niciun fișier din acest folder nu va fi importat. Unele fișiere sunt ignorate automat — de exemplu arhive, desene și fișiere temporare.",
+        "ignoredFiles": "Fișiere care vor fi ignorate",
+        "uploadSize": "De încărcat",
+        "megabytes": "{mb} MB"
+      },
+      "report": {
+        "title": "De verificat înainte de a continua",
+        "intro": "Importul va rula oricum — acestea sunt lucruri care de obicei nu sunt cele dorite.",
+        "allClear": "Nu s-a găsit nimic neobișnuit în acest folder.",
+        "quietToggle": "Arată {count, plural, one {o observație mai puțin importantă} few {# observații mai puțin importante} other {# de observații mai puțin importante}}",
+        "skippedToggle": "Arată {count, plural, one {fișierul care va fi ignorat} few {cele # fișiere care vor fi ignorate} other {cele # de fișiere care vor fi ignorate}}",
+        "morePaths": "…și încă {count}",
+        "skippedReason": {
+          "ignored-extension": "{count, plural, one {un fișier al cărui tip nu se importă niciodată} few {# fișiere ale căror tipuri nu se importă niciodată} other {# de fișiere ale căror tipuri nu se importă niciodată}} (desene, arhive, copii de siguranță)",
+          "system-file": "{count, plural, one {un fișier de sistem Windows} few {# fișiere de sistem Windows} other {# de fișiere de sistem Windows}}",
+          "hidden": "{count, plural, one {un fișier ascuns} few {# fișiere ascunse} other {# de fișiere ascunse}}"
+        },
+        "finding": {
+          "rootIsScanFolder": "{numbered} dintre cele {total} fișiere din folderul ales sunt scanări numerotate. Vor deveni {numbered} documente separate. Dacă acestea sunt paginile unui singur document, alegeți folderul DE DEASUPRA acestuia.",
+          "nearMissNaming": "{images, plural, one {O imagine care pare} few {# imagini care par} other {# de imagini care par}} paginile unui singur document. Fiindcă numele lor nu sunt numere simple (1, 2, 3…), vor deveni {documentsNow} documente separate.",
+          "nearMissStrayFile": "{numbered} din cele {total} fișiere de aici sunt scanări numerotate, deci sunt paginile unui singur document — dar celelalte {strays} fișiere fac ca acest folder să devină {documentsNow} documente separate. Mutarea celor {numbered} fișiere numerotate într-un folder al lor le-ar transforma într-un singur document de {numbered} pagini.",
+          "nearMissSubfolder": "Acest folder are {subfolders} subfoldere, deci cele {documents} fișiere ale sale devin {documents} documente separate, nu unul singur. De obicei acest lucru este corect pentru un folder de proprietate.",
+          "pageOrderAmbiguous": "{collisions} pagini ale acestui document de {pages} pagini au același număr de pagină (de exemplu 1.jpg și 01.jpg). Ordinea lor va fi arbitrară.",
+          "pageNumbersIrregular": "Cele {pages} pagini ale acestui document sunt numerotate de la {lowest} la {highest} — numere de scaner, nu numere de pagină. Ordinea paginilor urmează aceste numere.",
+          "multipleProperties": "Folderul ales conține {folders} subfoldere care par proprietăți separate. Importul leagă TOATE documentele de o singură proprietate, deci vor fi contopite într-una singură.",
+          "gateFiles": "{files, plural, one {Un fișier pe care importul nu îl recunoaște} few {# fișiere pe care importul nu le recunoaște} other {# de fișiere pe care importul nu le recunoaște}} ({extensions} tipuri diferite). Importul se va opri și vă va întreba despre fiecare înainte de a importa ceva.",
+          "osDirectories": "{folders, plural, one {Un folder de sistem Windows va fi importat} few {# foldere de sistem Windows vor fi importate} other {# de foldere de sistem Windows vor fi importate}} ca foldere obișnuite, iar numele lor vor deveni etichete.",
+          "duplicateBasenames": "{names, plural, one {Un nume de fișier apare} few {# nume de fișiere apar} other {# de nume de fișiere apar}} de mai multe ori, rezultând {documents} documente cu titluri identice.",
+          "officeFiles": "{files, plural, one {Un fișier Word/Excel va fi păstrat} few {# fișiere Word/Excel vor fi păstrate} other {# de fișiere Word/Excel vor fi păstrate}}, dar conținutul lor nu poate fi citit sau căutat.",
+          "heicFiles": "{files, plural, one {O fotografie de iPhone (.heic) va fi încărcată} few {# fotografii de iPhone (.heic) vor fi încărcate} other {# de fotografii de iPhone (.heic) vor fi încărcate}}, dar nu va putea fi citită sau clasificată niciodată.",
+          "oversizedFiles": "{files, plural, one {Un fișier depășește} few {# fișiere depășesc} other {# de fișiere depășesc}} {limitMb} MB și nu se vor putea încărca, lăsând în urmă un document gol.",
+          "emptyFiles": "{files, plural, one {Un fișier este gol} few {# fișiere sunt goale} other {# de fișiere sunt goale}} (0 octeți) și nu se vor putea încărca.",
+          "unknownMimeFiles": "Windows nu a raportat tipul {files, plural, one {unui fișier} few {a # fișiere} other {a # de fișiere}}. Se vor încărca, dar extragerea automată a datelor nu va funcționa niciodată pentru ele.",
+          "largeFolderJpg": "{files, plural, one {Un fișier numit „folder.jpg” este prea mare} few {# fișiere numite „folder.jpg” sunt prea mari} other {# de fișiere numite „folder.jpg” sunt prea mari}} pentru a fi miniaturi Windows. Par scanări reale și vor fi ignorate fără urmă."
+        }
+      },
+      "readingMetadata": "Se citesc fișierele… {done} din {total}"
     }
   },
   "usersAccess": {

@@ -321,7 +321,21 @@ const SYSTEM_FILE_NAMES_LC = new Set([
  * Adrian's archive at the time of the slice: zero folders change
  * classification, in either direction.
  */
-export function isIgnoredFileName(name: string): boolean {
+export type IgnoredReason = "hidden" | "system-file" | "ignored-extension";
+
+/**
+ * WHY the walk drops a file, or `null` if it keeps it.
+ *
+ * Slice #24.02b split this out of `isIgnoredFileName`. The pre-import report
+ * has to tell the user *which* rule removed their file — "hidden" and "this is
+ * an AutoCAD sidecar" lead to completely different reactions, and `folder.jpg`
+ * (a real scan Windows treats as a thumbnail) is the case that most needs
+ * naming. Re-deriving the reason at the call site would have meant a second
+ * copy of the rule ORDER, which is the part that actually matters: a file
+ * named `.dwg` is hidden first and an ignored extension second, and any copy
+ * that disagreed would mislabel it.
+ */
+export function classifyIgnoredFileName(name: string): IgnoredReason | null {
   // All three rules ask about the BASENAME, and they have to agree on what
   // that is. Rule 3 delegates to `isFileKind`, which strips path segments; if
   // rules 1 and 2 read the raw string instead, then "C:\\scans\\.hidden" is
@@ -330,9 +344,14 @@ export function isIgnoredFileName(name: string): boolean {
   // name, so this is a latent inconsistency rather than a live bug; it is
   // closed here because the next caller will not know that.
   const base = baseNameOf(name);
-  if (base.startsWith(".")) return true;                 // hidden (macOS, Linux)
-  if (SYSTEM_FILE_NAMES_LC.has(base.toLowerCase())) return true;
-  return isFileKind(base, "ignored");
+  if (base.startsWith(".")) return "hidden";             // hidden (macOS, Linux)
+  if (SYSTEM_FILE_NAMES_LC.has(base.toLowerCase())) return "system-file";
+  if (isFileKind(base, "ignored")) return "ignored-extension";
+  return null;
+}
+
+export function isIgnoredFileName(name: string): boolean {
+  return classifyIgnoredFileName(name) !== null;
 }
 
 /**
@@ -372,6 +391,75 @@ export function tagsForEntry(rootFolderName: string, entry: FSEntry): string[] {
 }
 
 // ---------------------------------------------------------------------------
+// Walk observation  (Slice #24.02b)
+// ---------------------------------------------------------------------------
+
+/** A file the walk removed, and the rule that removed it. */
+export type DroppedFile = {
+  name: string;
+  /** Full path from the picked root, so the report can point at it. */
+  path: string;
+  reason: IgnoredReason;
+  /** Kept so the metadata pass can size it — `folder.jpg` is only alarming when it is big. */
+  handle: FSFileHandle;
+};
+
+/**
+ * What one directory looked like at the moment the walk decided about it.
+ *
+ * This exists so the pre-import report can explain a decision instead of
+ * merely reporting its result. "This folder became 40 documents" is not
+ * actionable; "39 of its 40 files are numbered — `plan.jpg` is the one that
+ * is not, and removing it would make this a single 39-page document" is.
+ */
+export type DirectoryObservation = {
+  /** "" at the picked root. */
+  path: string;
+  pathParts: string[];
+  depth: number;
+  /** Files that survived the drop filter, in enumeration order. */
+  keptNames: string[];
+  /**
+   * Subdirectory names. Never filtered — the system-file rule applies to
+   * files only, so `.git` and `$RECYCLE.BIN` are walked like any folder and
+   * any one of them disqualifies a page group (F-03, S-03).
+   */
+  dirNames: string[];
+  dropped: DroppedFile[];
+  /** Did this directory collapse into a single multi-page Document? */
+  becamePageGroup: boolean;
+};
+
+/**
+ * Called once per directory, at the exact point the walk commits to its
+ * decision about that directory.
+ *
+ * An observer rather than a second return value, and rather than the separate
+ * simulation the spec sketched: the report must describe the walk that will
+ * actually run, and any parallel re-implementation is one refactor away from
+ * disagreeing with it. Optional, so every existing caller is untouched.
+ */
+export type WalkObserver = (observation: DirectoryObservation) => void;
+
+function makeObservation(
+  pathParts: string[],
+  childFiles: { name: string; handle: FSFileHandle }[],
+  childDirs: { name: string; handle: FSDirectoryHandle }[],
+  dropped: DroppedFile[],
+  becamePageGroup: boolean,
+): DirectoryObservation {
+  return {
+    path: pathParts.join("/"),
+    pathParts: [...pathParts],
+    depth: pathParts.length,
+    keptNames: childFiles.map((f) => f.name),
+    dirNames: childDirs.map((d) => d.name),
+    dropped,
+    becamePageGroup,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Recursive folder walk
 // ---------------------------------------------------------------------------
 
@@ -388,24 +476,40 @@ export function tagsForEntry(rootFolderName: string, entry: FSEntry): string[] {
  * longer tries to work out which ancestor folder is "the property", because
  * the whole picked folder is one Property and the user names it explicitly.
  *
+ * Slice #24.02b added the optional `observe` callback. It changes nothing
+ * about what the walk returns; it reports what the walk SAW on the way, so the
+ * pre-import report can explain each decision rather than re-deriving it from
+ * the flattened result — by which point the evidence is gone.
+ *
  * @param dirHandle     Directory to walk
  * @param pathParts     Accumulated folder segments from root ([] at root)
+ * @param observe       Optional per-directory observer (see WalkObserver)
  */
 export async function walkFolder(
   dirHandle: FSDirectoryHandle,
   pathParts: string[] = [],
+  observe?: WalkObserver,
 ): Promise<FSEntry[]> {
   const results: FSEntry[] = [];
   const childFiles: { name: string; handle: FSFileHandle }[] = [];
   const childDirs: { name: string; handle: FSDirectoryHandle }[] = [];
+  const dropped: DroppedFile[] = [];
 
   for await (const child of dirHandle.values()) {
     if (child.kind === "file") {
       // fix 7.9 (and Slice #24.04): drop hidden files, Windows metadata and
       // the "ignored" extensions here, before page-group detection, so they
       // neither break it nor pollute the import list.
-      if (!isIgnoredFileName(child.name)) {
+      const reason = classifyIgnoredFileName(child.name);
+      if (reason === null) {
         childFiles.push({ name: child.name, handle: child as FSFileHandle });
+      } else {
+        dropped.push({
+          name: child.name,
+          path: [...pathParts, child.name].join("/"),
+          reason,
+          handle: child as FSFileHandle,
+        });
       }
     } else {
       childDirs.push({ name: child.name, handle: child as FSDirectoryHandle });
@@ -416,6 +520,7 @@ export async function walkFolder(
   if (pathParts.length > 0 && childDirs.length === 0 && childFiles.length > 0) {
     const names = childFiles.map((f) => f.name);
     if (isPageGroup(names)) {
+      observe?.(makeObservation(pathParts, childFiles, childDirs, dropped, true));
       const sorted = sortNumericFilenames(names);
       const groupName = pathParts[pathParts.length - 1];
       results.push({
@@ -429,6 +534,8 @@ export async function walkFolder(
       return results;
     }
   }
+
+  observe?.(makeObservation(pathParts, childFiles, childDirs, dropped, false));
 
   // Emit individual files
   childFiles.sort((a, b) => a.name.localeCompare(b.name));
@@ -445,7 +552,7 @@ export async function walkFolder(
   // Recurse into subdirs
   childDirs.sort((a, b) => a.name.localeCompare(b.name));
   for (const { name, handle } of childDirs) {
-    const sub = await walkFolder(handle, [...pathParts, name]);
+    const sub = await walkFolder(handle, [...pathParts, name], observe);
     results.push(...sub);
   }
 

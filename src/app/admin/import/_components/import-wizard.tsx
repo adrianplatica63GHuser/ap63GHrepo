@@ -56,6 +56,10 @@ import { ResumedSessionView } from "./resumed-session-view";
 import { PreflightChecklist } from "./preflight-checklist";
 import { FolderForecast } from "./folder-forecast";
 import { forecastImport } from "@/lib/import/preflight";
+import { ReportSections } from "./report-sections";
+import { checkFolder, type FileMeta } from "@/lib/import/checks";
+import { readFileMetadata } from "@/lib/import/metadata-pass";
+import type { DirectoryObservation } from "@/lib/import/folder-utils";
 import { buttonClass } from "@/lib/ui/button-styles";
 
 // ---------------------------------------------------------------------------
@@ -224,6 +228,12 @@ export function ImportWizard() {
 
   const cancelScanRef = useRef(false);
 
+  // Slice #24.02b — what the walk SAW, and what each file weighs. Both feed
+  // the report; neither changes what the import does.
+  const [observations, setObservations] = useState<DirectoryObservation[]>([]);
+  const [metadata, setMetadata] = useState<Map<string, FileMeta> | null>(null);
+  const [metaProgress, setMetaProgress] = useState({ done: 0, total: 0 });
+
   /**
    * The preconditions' verdict, hoisted so the picker can be gated on it.
    *
@@ -276,7 +286,11 @@ export function ImportWizard() {
     // this, a walk that fails — or simply takes a moment — leaves the old
     // folder's file table on screen labelled with the new folder's name, and
     // every status cell blank because nothing has been scanned.
+    cancelScanRef.current = false;
     setEntries([]);
+    setObservations([]);
+    setMetadata(null);
+    setMetaProgress({ done: 0, total: 0 });
     setScanResults(new Map());
     setScanProgress({ done: 0, total: 0 });
     // A new folder is a new Property question — never carry the previous
@@ -285,8 +299,13 @@ export function ImportWizard() {
     setPhase("walking");
 
     let walked: FSEntry[] = [];
+    const seen: DirectoryObservation[] = [];
     try {
-      walked = await walkFolder(handle);
+      // The observer records each directory's shape at the moment the walk
+      // decides about it. Collected here rather than re-derived later because
+      // by the time the walk returns its flat list, the evidence for WHY a
+      // folder did not become one document is gone.
+      walked = await walkFolder(handle, [], (o) => seen.push(o));
     } catch (err) {
       setWalkError(err instanceof Error ? err.message : "Walk failed");
       setPhase("idle");
@@ -298,6 +317,24 @@ export function ImportWizard() {
     // folder came to cost one Claude call per image before anything had been
     // validated or shown. The scan now waits for `startScan`, behind Continuă.
     setEntries(walked);
+    setObservations(seen);
+
+    // T1: one getFile() per file. Metadata only — it does not read contents —
+    // but it is ~760 calls on Adrian's archive, so it reports progress rather
+    // than assuming every machine is as quick as his.
+    try {
+      const meta = await readFileMetadata(walked, seen, {
+        onProgress: setMetaProgress,
+        isCancelled: () => cancelScanRef.current,
+      });
+      setMetadata(meta);
+    } catch {
+      // The four size/MIME rules simply do not fire. Everything derived from
+      // names still works, so a failure here degrades the report rather than
+      // stopping the import.
+      setMetadata(null);
+    }
+
     setPhase("folder-report");
   }, [t]);
 
@@ -399,7 +436,9 @@ export function ImportWizard() {
     }
   }, []);
 
-  // Cancel scan on unmount
+  // Cancel the scan AND the metadata pass on unmount. The ref guards both
+  // long-running loops; leaving the metadata pass out of it meant navigating
+  // away mid-pass kept ~760 getFile() calls running against a dead component.
   useEffect(() => () => { cancelScanRef.current = true; }, []);
 
   // -------------------------------------------------------------------
@@ -415,6 +454,18 @@ export function ImportWizard() {
   // one copy cannot drift from the list the user is looking at. Cheap — it is
   // a single pass over names, no file contents and no I/O.
   const forecast = useMemo(() => forecastImport(entries), [entries]);
+
+  // Pure, and derived at render time for the same reason as the forecast: a
+  // copy in state is a copy that can disagree with the list on screen.
+  const report = useMemo(
+    () =>
+      checkFolder({
+        entries,
+        observations,
+        metadata: metadata ?? undefined,
+      }),
+    [entries, observations, metadata],
+  );
 
   // -------------------------------------------------------------------
   // Render
@@ -486,7 +537,9 @@ export function ImportWizard() {
             reason. */}
         {phase === "walking" && (
           <span role="status" className="ga-cue-blink text-sm font-medium text-cta">
-            {t("walkingFolder")}
+            {metaProgress.total > 0
+              ? t("readingMetadata", { done: metaProgress.done, total: metaProgress.total })
+              : t("walkingFolder")}
           </span>
         )}
 
@@ -526,12 +579,17 @@ export function ImportWizard() {
 
       {/* The walk is done and nothing has been spent yet. */}
       {phase === "folder-report" && (
-        <FolderForecast
-          rootFolderName={rootFolderName}
-          forecast={forecast}
-          onContinue={() => void startScan(entries)}
-          onChangeFolder={handlePickFolder}
-        />
+        <>
+          <FolderForecast
+            rootFolderName={rootFolderName}
+            forecast={forecast}
+            uploadBytes={report.uploadBytes}
+            droppedCount={report.droppedCount}
+            onContinue={() => void startScan(entries)}
+            onChangeFolder={handlePickFolder}
+          />
+          <ReportSections report={report} />
+        </>
       )}
 
       {/* Walk error */}

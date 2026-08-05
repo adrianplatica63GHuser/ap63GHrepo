@@ -1964,8 +1964,43 @@
         "nothingSpentYet": "Nothing has been sent for classification yet. That starts when you press Continue, and it is the first step that costs anything.",
         "continueButton": "Continue — send {count} images for classification",
         "changeFolder": "Choose another folder",
-        "nothingToImport": "No file in this folder will be imported. Some files are skipped automatically — archives, drawings and temporary files, for example."
-      }
+        "nothingToImport": "No file in this folder will be imported. Some files are skipped automatically — archives, drawings and temporary files, for example.",
+        "ignoredFiles": "Files that will be skipped",
+        "uploadSize": "To upload",
+        "megabytes": "{mb} MB"
+      },
+      "report": {
+        "title": "What to check before you continue",
+        "intro": "The import will run either way — these are things that are usually not what was intended.",
+        "allClear": "Nothing unusual found in this folder.",
+        "quietToggle": "Show {count} less important notes",
+        "skippedToggle": "Show the {count} files that will be skipped",
+        "morePaths": "…and {count} more",
+        "skippedReason": {
+          "ignored-extension": "{count} files whose type is never imported (drawings, archives, backups)",
+          "system-file": "{count} Windows system files",
+          "hidden": "{count} hidden files"
+        },
+        "finding": {
+          "rootIsScanFolder": "{numbered} of the {total} files in the chosen folder are numbered scans. They will become {numbered} separate documents. If these are pages of one document, choose the folder ABOVE this one instead.",
+          "nearMissNaming": "{images} images that look like pages of one document. Because their names are not plain numbers (1, 2, 3…), they will become {documentsNow} separate documents.",
+          "nearMissStrayFile": "{numbered} of the {total} files here are numbered scans, so they are pages of one document — but the other {strays} files mean this folder becomes {documentsNow} separate documents. Moving the {numbered} numbered files into a folder of their own would make them a single {numbered}-page document.",
+          "nearMissSubfolder": "This folder has {subfolders} subfolders, so its {documents} files become {documents} separate documents rather than one. This is usually correct for a property folder.",
+          "pageOrderAmbiguous": "{collisions} pages of this {pages}-page document have the same page number (for example 1.jpg and 01.jpg). Their order will be arbitrary.",
+          "pageNumbersIrregular": "The {pages} pages of this document are numbered {lowest} to {highest} — scanner numbers rather than page numbers. Page order follows those numbers.",
+          "multipleProperties": "The chosen folder contains {folders} subfolders that look like separate properties. The import links EVERY document to a single property, so they will all be merged into one.",
+          "gateFiles": "{files} files ({extensions} different types) that the import cannot recognise. It will stop and ask you about each one before anything is imported.",
+          "osDirectories": "{folders} Windows system folders will be imported like ordinary folders, and their names will become tags.",
+          "duplicateBasenames": "{names} file names appear more than once, producing {documents} documents with identical titles.",
+          "officeFiles": "{files} Word/Excel files will be stored, but their contents cannot be read or searched.",
+          "heicFiles": "{files} iPhone photos (.heic) will be uploaded but can never be read or classified.",
+          "oversizedFiles": "{files} files are larger than {limitMb} MB and will fail to upload, leaving an empty document behind.",
+          "emptyFiles": "{files} files are empty (0 bytes) and will fail to upload.",
+          "unknownMimeFiles": "Windows did not report a file type for {files} files. They will upload, but automatic data extraction will never work on them.",
+          "largeFolderJpg": "{files} files named “folder.jpg” are too big to be Windows thumbnails. They look like real scans, and they will be skipped without a trace."
+        }
+      },
+      "readingMetadata": "Reading files… {done} of {total}"
     }
   },
   "usersAccess": {
