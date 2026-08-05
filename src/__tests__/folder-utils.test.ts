@@ -1,18 +1,28 @@
 /**
  * Unit tests for src/lib/import/folder-utils.ts
  *
- * Covers: isIgnoredFileName (7.9, #24.04), isPageGroup, parseFolderName, folderNameToTitleHint,
- * tagsForEntry.  walkFolder is not tested here (requires a real FSDirectoryHandle
- * stub — integration-level concern).
+ * Covers: isIgnoredFileName (7.9, #24.04), classifyIgnoredFileName and the walk's
+ * observation contract (#24.02b), isPageGroup, parseFolderName,
+ * folderNameToTitleHint, tagsForEntry.
+ *
+ * `walkFolder` used to be excluded here as "an integration-level concern".
+ * #24.02b made that untenable: the pre-import report is built entirely from
+ * what the walk observes, so an unobserved branch is a silently blind report,
+ * and the stub needed is a dozen lines of async generator rather than the
+ * integration harness the old note implied.
  */
 
 import {
+  classifyIgnoredFileName,
   isIgnoredFileName,
   isPageGroup,
   parseFolderName,
   folderNameToTitleHint,
   tagsForEntry,
   perToSlash,
+  walkFolder,
+  type DirectoryObservation,
+  type FSDirectoryHandle,
 } from "@/lib/import/folder-utils";
 
 // ---------------------------------------------------------------------------
@@ -319,5 +329,100 @@ describe("tagsForEntry", () => {
       titleHint: "Contract de Vânzare-Cumpărare 2021",
     };
     expect(tagsForEntry("casa", entry)).toEqual(["casa", "47-225", "CVC_2021"]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The walk's observation contract  (Slice #24.02b)
+// ---------------------------------------------------------------------------
+
+/**
+ * `walkFolder` gained an optional observer. The pre-import report is built
+ * ENTIRELY from what it emits, so a directory the walk forgets to report is a
+ * directory the report is silently blind to — and the walk has three exits
+ * (page-group return, normal emit, and the empty-directory path), which is
+ * exactly the shape that grows an unobserved branch.
+ */
+describe("walkFolder observation (#24.02b)", () => {
+  type Child = { kind: "file"; name: string } | { kind: "directory"; name: string; children: Child[] };
+
+  function handleFor(name: string, children: Child[]): FSDirectoryHandle {
+    return {
+      kind: "directory",
+      name,
+      async *values() {
+        for (const c of children) {
+          if (c.kind === "file") {
+            yield { kind: "file", name: c.name, getFile: async () => new File([], c.name) } as never;
+          } else {
+            yield handleFor(c.name, c.children) as never;
+          }
+        }
+      },
+    } as unknown as FSDirectoryHandle;
+  }
+
+  const tree: Child[] = [
+    { kind: "file", name: "contract.pdf" },
+    { kind: "file", name: "Thumbs.db" },
+    { kind: "directory", name: "Scan", children: [
+      { kind: "file", name: "001.jpg" }, { kind: "file", name: "002.jpg" } ] },
+    { kind: "directory", name: "Gol", children: [] },
+    { kind: "directory", name: "Doar ignorate", children: [{ kind: "file", name: "plan.dwg" }] },
+  ];
+
+  it("reports every directory exactly once, including empty ones", async () => {
+    const seen: DirectoryObservation[] = [];
+    await walkFolder(handleFor("root", tree), [], (o) => seen.push(o));
+    expect(seen.map((o) => o.path).sort()).toEqual(["", "Doar ignorate", "Gol", "Scan"]);
+  });
+
+  it("marks the page-group directory and only that one", async () => {
+    const seen: DirectoryObservation[] = [];
+    await walkFolder(handleFor("root", tree), [], (o) => seen.push(o));
+    expect(seen.filter((o) => o.becamePageGroup).map((o) => o.path)).toEqual(["Scan"]);
+  });
+
+  it("reports dropped files with the rule that dropped them", async () => {
+    const seen: DirectoryObservation[] = [];
+    await walkFolder(handleFor("root", tree), [], (o) => seen.push(o));
+    const root = seen.find((o) => o.path === "")!;
+    expect(root.dropped.map((d) => [d.name, d.reason])).toEqual([["Thumbs.db", "system-file"]]);
+    const ignored = seen.find((o) => o.path === "Doar ignorate")!;
+    expect(ignored.dropped.map((d) => d.reason)).toEqual(["ignored-extension"]);
+    // …and that directory contributes no entries at all, so the report is the
+    // only place those files are ever mentioned.
+    expect(ignored.keptNames).toEqual([]);
+  });
+
+  it("returns exactly what it returned before, observer or not", async () => {
+    // The observer must be inert. If adding it changed the walk's output, every
+    // downstream consumer would shift under a change advertised as diagnostic.
+    const withOut = await walkFolder(handleFor("root", tree));
+    const withObs = await walkFolder(handleFor("root", tree), [], () => {});
+    expect(withObs.map((e) => `${e.kind}:${e.path}`)).toEqual(withOut.map((e) => `${e.kind}:${e.path}`));
+  });
+});
+
+describe("classifyIgnoredFileName (#24.02b)", () => {
+  it("names the rule, in the order the walk applies them", () => {
+    expect(classifyIgnoredFileName(".DS_Store")).toBe("hidden");
+    expect(classifyIgnoredFileName("Thumbs.db")).toBe("system-file");
+    expect(classifyIgnoredFileName("desktop.ini")).toBe("system-file");
+    expect(classifyIgnoredFileName("folder.jpg")).toBe("system-file");
+    expect(classifyIgnoredFileName("plan.dwg")).toBe("ignored-extension");
+    expect(classifyIgnoredFileName("scan.jpg")).toBeNull();
+  });
+
+  it("puts hidden ahead of extension, so a dotted .dwg is reported as hidden", () => {
+    // Order is the part that matters: the report tells the user WHY a file
+    // vanished, and two rules can both apply to one name.
+    expect(classifyIgnoredFileName(".backup.dwg")).toBe("hidden");
+  });
+
+  it("still agrees with the boolean wrapper for every case", () => {
+    for (const n of [".x", "Thumbs.db", "plan.dwg", "scan.jpg", "a.pdf", "folder.jpg"]) {
+      expect(isIgnoredFileName(n)).toBe(classifyIgnoredFileName(n) !== null);
+    }
   });
 });
