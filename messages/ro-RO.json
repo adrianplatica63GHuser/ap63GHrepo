@@ -1723,7 +1723,7 @@
         "detailError": "Detaliile proprietății nu au putut fi încărcate.",
         "existingCorners": "Proprietatea are {count, plural, =0 {niciun colț înregistrat} one {un colț înregistrat} few {# colțuri înregistrate} other {# de colțuri înregistrate}}.",
         "sectionCoordinates": "2. Fișierul de coordonate",
-        "noCandidates": "Folderul nu conține niciun fișier de coordonate (.txt, .csv, .dat, .asc). Proprietatea va fi creată fără colțuri.",
+        "noCandidates": "Folderul nu conține niciun fișier de coordonate (.txt). Proprietatea va fi creată fără colțuri.",
         "parsing": "Se citesc fișierele de coordonate…",
         "candidateParsing": "se citește…",
         "candidateError": "nu a putut fi citit",

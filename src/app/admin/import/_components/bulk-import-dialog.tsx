@@ -54,8 +54,8 @@ import {
   type FSFileEntry,
   type FSPageGroupEntry,
   tagsForEntry,
-  extOf,
 } from "@/lib/import/folder-utils";
+import { isFileKind, isImageOrPdf } from "@/lib/files/file-kinds";
 import {
   IMPORT_SESSION_KEY,
   type SavedImportEntry,
@@ -224,7 +224,7 @@ async function withConcurrencyLimit<T>(
 }
 
 // ---------------------------------------------------------------------------
-// File-type helpers (no circular import from folder-utils needed)
+// File-type helpers (thin readable names over the file-kind registry)
 // ---------------------------------------------------------------------------
 //
 // Slice #23.02.Import removed the local TEXT_EXTS_SET / isTextFile pair: the
@@ -232,12 +232,14 @@ async function withConcurrencyLimit<T>(
 // isCoordinateFileName in src/lib/import/coordinate-file.ts, which the property
 // step already uses. Two copies of "which extensions might hold corners" is one
 // copy too many.
+//
+// Slice #24.03 finished the job: the local IMAGE_EXTS_SET and PDF_EXT are gone
+// too, and both questions are asked of the file-kind registry in
+// src/lib/files/file-kinds.ts. These two names survive only because they read
+// better at the call sites below than a kind query does.
 
-const IMAGE_EXTS_SET = new Set([".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".tiff", ".tif"]);
-const PDF_EXT = ".pdf";
-
-function isImageFile(name: string) { return IMAGE_EXTS_SET.has(extOf(name)); }
-function isPdfFile(name: string)   { return extOf(name) === PDF_EXT; }
+const isImageFile = (name: string) => isFileKind(name, "image");
+const isPdfFile   = (name: string) => isFileKind(name, "pdf");
 
 /**
  * True when at least one of this entry's files is something the AI-interpret
@@ -246,7 +248,7 @@ function isPdfFile(name: string)   { return extOf(name) === PDF_EXT; }
  * button there would only ever produce that error.
  */
 function hasReadablePage(entry: FSEntry): boolean {
-  return entryFileNames(entry).some((n) => isImageFile(n) || isPdfFile(n));
+  return entryFileNames(entry).some(isImageOrPdf);
 }
 
 // ---------------------------------------------------------------------------

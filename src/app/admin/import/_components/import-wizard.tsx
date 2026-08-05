@@ -36,6 +36,7 @@ import {
   type FSDirectoryHandle,
   type FSEntry,
 } from "@/lib/import/folder-utils";
+import { isFileKind, isImageOrPdf } from "@/lib/files/file-kinds";
 import {
   loadSavedSession,
   clearSavedSession,
@@ -61,24 +62,18 @@ let _dirHandle: FSDirectoryHandle | null = null;
 // Scan helpers
 // ---------------------------------------------------------------------------
 
-const IMAGE_EXTS = new Set([".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".tiff", ".tif"]);
-const PDF_EXT = ".pdf";
+// Slice #24.03: the local IMAGE_EXTS set, PDF_EXT and extOf are gone. Which
+// extensions are images, which is a PDF, and how an extension is read are all
+// asked of the file-kind registry in src/lib/files/file-kinds.ts — the same
+// module the folder walk, the coordinate shortlist and the provenance rules
+// now read from, so "scannable here" and "an image there" can no longer drift.
 
-function extOf(name: string): string {
-  const i = name.lastIndexOf(".");
-  return i === -1 ? "" : name.slice(i).toLowerCase();
-}
-
-function isScannable(name: string): boolean {
-  return IMAGE_EXTS.has(extOf(name)) || extOf(name) === PDF_EXT;
-}
-
-/** Check if any file in the entry is scannable */
+/** Check if any file in the entry is worth sending to the scan route. */
 function entryScannable(entry: FSEntry): boolean {
   if (entry.kind === "page-group") {
-    return entry.handles.length > 0 && isScannable(entry.handles[0].name);
+    return entry.handles.length > 0 && isImageOrPdf(entry.handles[0].name);
   }
-  return isScannable(entry.name);
+  return isImageOrPdf(entry.name);
 }
 
 // ---------------------------------------------------------------------------
@@ -129,7 +124,7 @@ async function scanEntry(entry: FSEntry): Promise<{
   }
 
   let blob: Blob = file;
-  if (extOf(file.name) === PDF_EXT) {
+  if (isFileKind(file.name, "pdf")) {
     blob = await pdfToImageBlob(file);
   }
 
@@ -283,9 +278,10 @@ export function ImportWizard() {
           running++;
 
           // Mark as scanning/converting
-          const isImg = IMAGE_EXTS.has(extOf(
+          const isImg = isFileKind(
             entry.kind === "page-group" ? entry.handles[0].name : entry.name,
-          ));
+            "image",
+          );
           setScanResults((prev) => {
             const next = new Map(prev);
             next.set(entry.path, { status: isImg ? "scanning" : "converting" });

@@ -26,6 +26,11 @@
  * Client-safe: pure, no DB or server-only imports.
  */
 
+import {
+  bareExtensionOf,
+  bareExtensionsOfKind,
+  isFileKind,
+} from "@/lib/files/file-kinds";
 import type { ProvenanceCode } from "./provenance";
 
 export type ProvenanceSourceKind =
@@ -62,21 +67,33 @@ export function inferProvenance(source: ProvenanceSourceKind): ProvenanceCode | 
   return RULES[source] ?? null;
 }
 
-/** Extensions treated as graphics files. */
-export const IMAGE_EXTENSIONS = [
-  "jpg", "jpeg", "png", "gif", "bmp", "tif", "tiff", "webp", "heic", "heif",
-] as const;
+/**
+ * Extensions treated as graphics files.
+ *
+ * ⚠️ DERIVED VIEW (Slice #24.03) — the membership lives in the `"image"` kind
+ * in src/lib/files/file-kinds.ts and can only be changed there. `.heic` and
+ * `.heif` used to be in this list and in no other, so a HEIC scan was an image
+ * for provenance while failing page-group detection and the AI gate. They now
+ * belong to no kind at all, on Adrian's decision.
+ */
+export const IMAGE_EXTENSIONS: readonly string[] = bareExtensionsOfKind("image");
 
-/** Extensions treated as document files (stored as-is, nothing extracted). */
-export const DOCUMENT_EXTENSIONS = [
-  "pdf", "doc", "docx", "txt", "rtf", "odt", "xls", "xlsx", "csv",
-] as const;
+/**
+ * Extensions treated as document files (stored as-is, nothing extracted).
+ *
+ * ⚠️ DERIVED VIEW (Slice #24.03) — see `IMAGE_EXTENSIONS` above.
+ */
+export const DOCUMENT_EXTENSIONS: readonly string[] = bareExtensionsOfKind("document");
 
-/** Lowercased extension without the dot, or "" when the name has none. */
+/**
+ * Lowercased extension without the dot, or "" when the name has none.
+ *
+ * ⚠️ DERIVED (Slice #24.03) — one extractor now serves the whole codebase.
+ * The contract is unchanged: path segments are stripped first, and a dotfile
+ * such as `.gitignore` has no extension.
+ */
 export function fileExtension(fileName: string): string {
-  const base = fileName.split(/[\\/]/).pop() ?? "";
-  const dot  = base.lastIndexOf(".");
-  return dot > 0 ? base.slice(dot + 1).toLowerCase() : "";
+  return bareExtensionOf(fileName);
 }
 
 /**
@@ -86,11 +103,16 @@ export function fileExtension(fileName: string): string {
  * is indistinguishable from any other text file by name alone, so those two
  * kinds are passed explicitly by the code paths that actually parse
  * coordinates or call the AI, rather than being guessed from a filename.
+ *
+ * The image test comes first because a `.pdf` is both a `"pdf"` and a
+ * `"document"` in the registry, and DOCUMENT_FILE is the right answer for it;
+ * no extension is both an image and a document, so the order is a formality
+ * rather than a tie-break. An extension in no kind is UNKNOWN, and UNKNOWN
+ * means ASK THE USER — never a silent default.
  */
 export function classifyFileSource(fileName: string): ProvenanceSourceKind {
-  const ext = fileExtension(fileName);
-  if ((IMAGE_EXTENSIONS    as readonly string[]).includes(ext)) return "IMAGE_FILE";
-  if ((DOCUMENT_EXTENSIONS as readonly string[]).includes(ext)) return "DOCUMENT_FILE";
+  if (isFileKind(fileName, "image"))    return "IMAGE_FILE";
+  if (isFileKind(fileName, "document")) return "DOCUMENT_FILE";
   return "UNKNOWN";
 }
 

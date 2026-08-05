@@ -18,7 +18,18 @@ import * as fs from "fs/promises";
 
 const useLocalStorage = process.env.LOCAL_FILE_STORAGE === "true";
 
-// Shared MIME-type map (also used by the storage layer in dev).
+// Extension -> Content-Type for the local-storage serve path.
+//
+// This map answers "what Content-Type do I label these bytes with", which is a
+// DIFFERENT question from "what kind of file is this" — the latter has exactly
+// one home in src/lib/files/file-kinds.ts (Slice #24.03) and this map is
+// deliberately not derived from it. What the client offers and what the routes
+// accept is Slice #24.04.
+//
+// #24.03 removed ".heic" from this map: HEIC belongs to no file kind any more,
+// so it is served as application/octet-stream like any other unrecognised type.
+// Known gaps left for #24.04: ".bmp" IS an image kind and still has no entry
+// here, and ".html"/".xml" have entries here but belong to no kind.
 const MIME_MAP: Record<string, string> = {
   ".pdf":  "application/pdf",
   ".jpg":  "image/jpeg",
@@ -28,7 +39,6 @@ const MIME_MAP: Record<string, string> = {
   ".webp": "image/webp",
   ".tiff": "image/tiff",
   ".tif":  "image/tiff",
-  ".heic": "image/heic",
   ".txt":  "text/plain",
   ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   ".doc":  "application/msword",

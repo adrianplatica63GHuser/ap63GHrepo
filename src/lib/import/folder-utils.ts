@@ -7,7 +7,15 @@
  *  - Page-group detection (numbered-image scanner subfolders)
  *  - Title-hint generation with abbreviation expansion
  *  - Tag-string extraction from entry path
+ *
+ * Slice #24.03 removed this file's `IMAGE_EXTS` set, `extOf` and `isImageName`.
+ * "Which extensions are images" and "how do I read an extension" are now asked
+ * of src/lib/files/file-kinds.ts, the one module that answers them. What stays
+ * here is the walk: page-group detection keeps the "and ALL of them, and at
+ * least one" half of the rule, and delegates the per-file half.
  */
+
+import { isPageGroupMember } from "@/lib/files/file-kinds";
 
 // ---------------------------------------------------------------------------
 // Minimal File System Access API types (avoids app/ -> lib/ import)
@@ -257,17 +265,6 @@ export function perToSlash(s: string): string {
 // Page-group detection
 // ---------------------------------------------------------------------------
 
-const IMAGE_EXTS = new Set([".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".tiff", ".tif"]);
-
-export function extOf(name: string): string {
-  const i = name.lastIndexOf(".");
-  return i === -1 ? "" : name.slice(i).toLowerCase();
-}
-
-export function isImageName(name: string): boolean {
-  return IMAGE_EXTS.has(extOf(name));
-}
-
 /**
  * System / hidden files that should be ignored during folder walks.
  *
@@ -301,11 +298,9 @@ export function isSystemFile(name: string): boolean {
  */
 export function isPageGroup(names: string[]): boolean {
   if (names.length === 0) return false;
-  return names.every((n) => {
-    const dot = n.lastIndexOf(".");
-    if (dot === -1) return false;
-    return isImageName(n) && /^\d+$/.test(n.slice(0, dot));
-  });
+  // The per-file half of the rule (image kind + numeric basename) lives in the
+  // file-kind registry; what is left here is "and every one of them".
+  return names.every(isPageGroupMember);
 }
 
 function sortNumericFilenames(names: string[]): string[] {

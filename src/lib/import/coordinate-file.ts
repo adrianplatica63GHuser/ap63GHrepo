@@ -11,7 +11,7 @@
  *     extension alone. They do not read or parse anything; whether a candidate
  *     actually contains coordinates is decided by POSTing it to
  *     /api/properties/parse-text and counting the corners that come back. A
- *     `.csv` of contact details and a `.csv` of corners are indistinguishable
+ *     `.txt` of contact details and a `.txt` of corners are indistinguishable
  *     by name, so the extension filter is only ever a shortlist for the user to
  *     choose from — never an answer.
  *
@@ -59,7 +59,8 @@
  */
 
 import type { FSEntry, FSFileEntry } from "./folder-utils";
-import { extOf, parseFolderName, perToSlash } from "./folder-utils";
+import { parseFolderName, perToSlash } from "./folder-utils";
+import { extensionsOfKind, isFileKind } from "@/lib/files/file-kinds";
 import { foldRomanian } from "./id-card";
 
 // ---------------------------------------------------------------------------
@@ -69,22 +70,30 @@ import { foldRomanian } from "./id-card";
 /**
  * Extensions a cadastral coordinate export is plausibly delivered in.
  *
- * Matches TEXT_EXTS_SET in bulk-import-dialog.tsx — the same four extensions
- * the import surface has always treated as "plain text, might be coordinates".
+ * ⚠️ This is a DERIVED VIEW, not a list. The membership lives in the
+ * `"coordinate-candidate"` kind in src/lib/files/file-kinds.ts (Slice #24.03),
+ * which is the only place it can be changed. The constant survives because
+ * callers and tests already import it by this name, and a shortlist is easier
+ * to read as a set than as a kind query.
+ *
+ * Slice #24.03 narrowed the shortlist from four extensions to one, on Adrian's
+ * decision: `.dat` and `.asc` were coordinate candidates and nothing else,
+ * which made them the only coordinate extensions that could not also infer a
+ * provenance; `.csv` followed, because a cadastral export arrives as a `.txt`.
+ *
+ * What did NOT change is the rule one section down: the NAME still ranks and
+ * warns and is never a filter. Narrowing the extension shortlist and turning
+ * the name into a gate are different decisions, and only the first was taken.
  *
  * Slice #23.07.Import deliberately left this list untouched. The name
  * convention ranks and warns; it does not shorten the shortlist.
  */
-export const COORDINATE_FILE_EXTS: ReadonlySet<string> = new Set([
-  ".txt",
-  ".csv",
-  ".dat",
-  ".asc",
-]);
+export const COORDINATE_FILE_EXTS: ReadonlySet<string> =
+  extensionsOfKind("coordinate-candidate");
 
 /** True when `name`'s extension is one a coordinate export might use. */
 export function isCoordinateFileName(name: string): boolean {
-  return COORDINATE_FILE_EXTS.has(extOf(name));
+  return isFileKind(name, "coordinate-candidate");
 }
 
 /**

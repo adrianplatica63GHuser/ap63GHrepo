@@ -1723,7 +1723,7 @@
         "detailError": "The property details could not be loaded.",
         "existingCorners": "This property has {count, plural, =0 {no corners} one {# corner} other {# corners}} on record.",
         "sectionCoordinates": "2. The coordinate file",
-        "noCandidates": "The folder contains no coordinate file (.txt, .csv, .dat, .asc). The property will be created without corners.",
+        "noCandidates": "The folder contains no coordinate file (.txt). The property will be created without corners.",
         "parsing": "Reading the coordinate files…",
         "candidateParsing": "reading…",
         "candidateError": "could not be read",
