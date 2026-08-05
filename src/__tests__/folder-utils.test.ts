@@ -1,13 +1,13 @@
 /**
  * Unit tests for src/lib/import/folder-utils.ts
  *
- * Covers: isSystemFile (7.9), isPageGroup, parseFolderName, folderNameToTitleHint,
+ * Covers: isIgnoredFileName (7.9, #24.04), isPageGroup, parseFolderName, folderNameToTitleHint,
  * tagsForEntry.  walkFolder is not tested here (requires a real FSDirectoryHandle
  * stub — integration-level concern).
  */
 
 import {
-  isSystemFile,
+  isIgnoredFileName,
   isPageGroup,
   parseFolderName,
   folderNameToTitleHint,
@@ -16,33 +16,62 @@ import {
 } from "@/lib/import/folder-utils";
 
 // ---------------------------------------------------------------------------
-// isSystemFile (fix 7.9)
+// isIgnoredFileName (fix 7.9; renamed and extended in Slice #24.04)
 // ---------------------------------------------------------------------------
 
-describe("isSystemFile", () => {
+describe("isIgnoredFileName", () => {
   it("rejects hidden files (leading dot)", () => {
-    expect(isSystemFile(".DS_Store")).toBe(true);
-    expect(isSystemFile(".gitkeep")).toBe(true);
-    expect(isSystemFile("._metadata")).toBe(true);
+    expect(isIgnoredFileName(".DS_Store")).toBe(true);
+    expect(isIgnoredFileName(".gitkeep")).toBe(true);
+    expect(isIgnoredFileName("._metadata")).toBe(true);
   });
 
   it("rejects known Windows system files (case-insensitive)", () => {
-    expect(isSystemFile("Thumbs.db")).toBe(true);
-    expect(isSystemFile("thumbs.db")).toBe(true);
-    expect(isSystemFile("THUMBS.DB")).toBe(true);
-    expect(isSystemFile("desktop.ini")).toBe(true);
-    expect(isSystemFile("Desktop.ini")).toBe(true);
-    expect(isSystemFile("ehthumbs.db")).toBe(true);
+    expect(isIgnoredFileName("Thumbs.db")).toBe(true);
+    expect(isIgnoredFileName("thumbs.db")).toBe(true);
+    expect(isIgnoredFileName("THUMBS.DB")).toBe(true);
+    expect(isIgnoredFileName("desktop.ini")).toBe(true);
+    expect(isIgnoredFileName("Desktop.ini")).toBe(true);
+    expect(isIgnoredFileName("ehthumbs.db")).toBe(true);
   });
 
   it("accepts normal image files", () => {
-    expect(isSystemFile("001.jpg")).toBe(false);
-    expect(isSystemFile("scan.png")).toBe(false);
+    expect(isIgnoredFileName("001.jpg")).toBe(false);
+    expect(isIgnoredFileName("scan.png")).toBe(false);
   });
 
   it("accepts normal document files", () => {
-    expect(isSystemFile("contract.pdf")).toBe(false);
-    expect(isSystemFile("titlu.txt")).toBe(false);
+    expect(isIgnoredFileName("contract.pdf")).toBe(false);
+    expect(isIgnoredFileName("titlu.txt")).toBe(false);
+  });
+
+  it("drops the ignored extensions (Slice #24.04)", () => {
+    // The list itself is asserted in file-kinds.test.ts — this pins that the
+    // walk actually consults it, which is the half that can silently rot.
+    for (const n of [
+      "T 10 Gore Dima Badea.dwl",
+      "T 10 Gore Dima Badea.dwl2",
+      "plan T 58 Clinceni padure.bak",
+      "adev intrav 3867 CNAIR 2020.jpg - Shortcut.lnk",
+      "CLINCENI.zip",
+      "arhiva.rar",
+      "arhiva.7z",
+      "cadastre T 58 Clinceni Anton Doru (1).dwg",
+    ]) {
+      expect(isIgnoredFileName(n)).toBe(true);
+    }
+  });
+
+  it("is case-insensitive on the ignored extensions too", () => {
+    expect(isIgnoredFileName("PLAN.DWG")).toBe(true);
+    expect(isIgnoredFileName("Arhiva.Zip")).toBe(true);
+  });
+
+  it("does NOT drop a .csv — forbidden is not ignored", () => {
+    // The whole point of two kinds: noise goes quietly, a file that should not
+    // be in the folder must reach somebody. Dropping .csv here would make it
+    // vanish silently, which is the opposite of what Slice #24.02 will need.
+    expect(isIgnoredFileName("inventar.csv")).toBe(false);
   });
 });
 
@@ -70,16 +99,17 @@ describe("isPageGroup", () => {
     expect(isPageGroup(["001.jpg", "002.txt"])).toBe(false);
   });
 
-  // Demonstrates the 7.9 fix: callers pre-filter system files so isPageGroup
-  // only sees the real image files.
-  it("returns true for filtered list after removing system files", () => {
-    const allNames = ["001.jpg", "002.jpg", "003.jpg", "Thumbs.db", ".DS_Store"];
-    const filtered = allNames.filter((n) => !isSystemFile(n));
+  // Demonstrates the 7.9 fix: callers pre-filter dropped files so isPageGroup
+  // only sees the real image files. Slice #24.04 widened what gets dropped, so
+  // a stray .bak beside the scans no longer splits a page group either.
+  it("returns true for filtered list after removing dropped files", () => {
+    const allNames = ["001.jpg", "002.jpg", "003.jpg", "Thumbs.db", ".DS_Store", "scan.bak"];
+    const filtered = allNames.filter((n) => !isIgnoredFileName(n));
     expect(filtered).toEqual(["001.jpg", "002.jpg", "003.jpg"]);
     expect(isPageGroup(filtered)).toBe(true);
   });
 
-  it("returns false when system files are NOT filtered (pre-7.9 behaviour)", () => {
+  it("returns false when dropped files are NOT filtered (pre-7.9 behaviour)", () => {
     const allNames = ["001.jpg", "002.jpg", "Thumbs.db"];
     // Without filtering, Thumbs.db (non-image, non-numeric) breaks the group.
     expect(isPageGroup(allNames)).toBe(false);

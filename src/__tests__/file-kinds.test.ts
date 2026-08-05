@@ -204,21 +204,50 @@ describe("Slice #24.03 membership decisions", () => {
     expect(isUnknownFileKind("corners.asc")).toBe(true);
   });
 
-  it("leaves .csv a document but no longer a coordinate candidate", () => {
-    // Unlike .dat/.asc it keeps a kind, so it still infers DOC_FILE provenance
-    // and imports exactly as before. What it lost is being OFFERED in the
-    // property step as a possible source of corners.
-    expect(isFileKind("date.csv", "document")).toBe(true);
+  it("makes .csv forbidden and nothing else (Slice #24.04)", () => {
+    // Holding no other kind is the mechanism, not an oversight: dropping
+    // "document" is exactly what makes classifyFileSource answer UNKNOWN,
+    // which routes a stray .csv to the provenance gate and halts the import.
+    // Wrong words for the moment, right outcome — the accepted interim until
+    // Slice #24.02 has a consumer for this kind.
+    expect(fileKindsOf("date.csv")).toEqual(["forbidden"]);
+    expect(isFileKind("date.csv", "document")).toBe(false);
     expect(isFileKind("date.csv", "coordinate-candidate")).toBe(false);
-    expect(classifyFileSource("date.csv")).toBe("DOCUMENT_FILE");
+    expect(classifyFileSource("date.csv")).toBe("UNKNOWN");
+  });
+
+  it("puts the eight noise extensions in the ignored kind (Slice #24.04)", () => {
+    const IGNORED = [".dwl", ".dwl2", ".bak", ".lnk", ".zip", ".rar", ".7z", ".dwg"];
+    expect([...extensionsOfKind("ignored")].sort()).toEqual([...IGNORED].sort());
+    for (const ext of IGNORED) {
+      // Exactly one kind each — an ignored file is dropped by the walk, so it
+      // must never also be an image, a document or a coordinate candidate.
+      expect(fileKindsOf(`file${ext}`)).toEqual(["ignored"]);
+    }
+  });
+
+  it("keeps the ignored and forbidden kinds disjoint from EVERY other kind", () => {
+    // Including each other. An extension that is both would be dropped in
+    // silence by the walk while claiming somebody has to be told about it —
+    // the two kinds mean opposite things about who finds out, so holding both
+    // is not a stricter rule, it is an incoherent one.
+    const exclusive: FileKind[] = ["ignored", "forbidden"];
+    for (const kind of exclusive) {
+      for (const ext of extensionsOfKind(kind)) {
+        for (const other of FILE_KINDS) {
+          if (other === kind) continue;
+          expect(extensionsOfKind(other).has(ext)).toBe(false);
+        }
+      }
+    }
   });
 
   it("gives a file whose WHOLE name is an extension no kind at all", () => {
     // A consequence of adopting the stricter extractor, not a decision: the
     // former `extOf` called ".txt" a .txt file. Unreachable through the wizard
-    // (`isSystemFile` drops every dot-leading name before the walk emits it),
-    // pinned here so it stays a known answer rather than a surprise if that
-    // filter is ever relaxed.
+    // (`isIgnoredFileName` drops every dot-leading name before the walk emits
+    // it), pinned here so it stays a known answer rather than a surprise if
+    // that filter is ever relaxed.
     for (const n of [".txt", ".jpg", ".pdf", ".csv"]) {
       expect(isUnknownFileKind(n)).toBe(true);
     }
@@ -260,7 +289,7 @@ describe("every derived view still agrees with the registry", () => {
 
   it("DOCUMENT_EXTENSIONS is the document kind, dotless", () => {
     expect([...DOCUMENT_EXTENSIONS].sort()).toEqual([
-      "csv", "doc", "docx", "odt", "pdf", "rtf", "txt", "xls", "xlsx",
+      "doc", "docx", "odt", "pdf", "rtf", "txt", "xls", "xlsx",
     ]);
     expect([...DOCUMENT_EXTENSIONS].sort()).toEqual([...bareExtensionsOfKind("document")].sort());
   });
@@ -289,7 +318,19 @@ describe("every derived view still agrees with the registry", () => {
       ".xls": "DOCUMENT_FILE",
       ".xlsx": "DOCUMENT_FILE",
       ".txt": "DOCUMENT_FILE",
-      ".csv": "DOCUMENT_FILE",
+
+      // Slice #24.04 — neither kind is image or document, so both answer
+      // UNKNOWN. The ignored ones never reach this question in practice
+      // because the walk drops them first.
+      ".csv": "UNKNOWN",
+      ".dwl": "UNKNOWN",
+      ".dwl2": "UNKNOWN",
+      ".bak": "UNKNOWN",
+      ".lnk": "UNKNOWN",
+      ".zip": "UNKNOWN",
+      ".rar": "UNKNOWN",
+      ".7z": "UNKNOWN",
+      ".dwg": "UNKNOWN",
     };
 
     expect([...KNOWN_EXTENSIONS].sort()).toEqual(Object.keys(EXPECTED).sort());
@@ -354,7 +395,10 @@ describe("isPageGroupMember", () => {
     // `isFileKind`, so the test would agree with the code by construction
     // however wrong the table was.
     const ACCEPTS = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".tif", ".tiff"];
-    const REJECTS = [".pdf", ".doc", ".docx", ".rtf", ".odt", ".xls", ".xlsx", ".txt", ".csv"];
+    const REJECTS = [
+      ".pdf", ".doc", ".docx", ".rtf", ".odt", ".xls", ".xlsx", ".txt", ".csv",
+      ".dwl", ".dwl2", ".bak", ".lnk", ".zip", ".rar", ".7z", ".dwg",
+    ];
 
     // Between them they must be the whole registry, or this test is checking
     // a subset and calling it "every".

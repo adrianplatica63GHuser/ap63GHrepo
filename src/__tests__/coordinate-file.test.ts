@@ -386,7 +386,7 @@ describe("coordinateNameConfidence", () => {
     // The two must never disagree: "none" is DEFINED as "not a candidate".
     const names = [
       "coord 47.txt",
-      "puncte.csv",   // a document, but never a coordinate candidate -> "none"
+      "puncte.csv",   // forbidden since #24.04, never a candidate -> "none"
       "coord.pdf",
       "scan.jpg",
       "raport.pdf.txt",

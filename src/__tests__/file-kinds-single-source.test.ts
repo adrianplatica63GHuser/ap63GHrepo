@@ -259,7 +259,13 @@ function stripComments(source: string): string {
 /** Every extension worth policing, dotted or not. */
 const ANY_EXT =
   "jpe?g|png|gif|webp|bmp|tiff?|svg|avif|jfif|heic|heif|" +
-  "pdf|docx?|rtf|odt|xlsx?|txt|csv|dat|asc|html?|xml";
+  "pdf|docx?|rtf|odt|xlsx?|txt|csv|dat|asc|html?|xml|" +
+  // Slice #24.04's ignored list, so a second copy of THAT is caught too.
+  // `dwl2?` is `dwl|dwl2` written short; both behave identically here, because
+  // the engine backtracks into the next alternative when the closing quote
+  // fails. It is compactness, not correctness — do not "fix" it back believing
+  // the long form is broken.
+  "dwl2?|bak|lnk|zip|rar|7z|dwg";
 
 /**
  * The subset safe to police WITHOUT a leading dot.
@@ -271,7 +277,17 @@ const ANY_EXT =
  * `DOCUMENT_EXTENSIONS = ["pdf","doc","docx","txt","rtf","odt","xls","xlsx","csv"]`
  * is caught on `"docx"`, `"rtf"`, `"odt"` and `"xlsx"` alone.
  */
-const BARE_EXT = "jpe?g|png|gif|webp|bmp|tiff|avif|jfif|heic|heif|docx|rtf|odt|xlsx";
+const BARE_EXT =
+  "jpe?g|png|gif|webp|bmp|tiff|avif|jfif|heic|heif|docx|rtf|odt|xlsx|" +
+  // Slice #24.04. `dwl`, `dwl2`, `dwg`, `lnk` and `rar` are not words in this
+  // codebase, so a bare one is always an extension. `zip` and `bak` are held
+  // back: "zip" is a plausible address field and "bak" a plausible
+  // abbreviation, and a false positive here fails CI on innocent code.
+  //
+  // This matters more than it looks: every historical duplicate this guard
+  // exists to prevent was DOTLESS — `["pdf","doc","docx",…]` — so leaving the
+  // new list dotted-only would have policed the shape nobody writes.
+  "dwl2?|dwg|lnk|rar|7z";
 
 const QUOTE = "[\"'`]";
 
@@ -440,6 +456,8 @@ describe("file kinds are declared in exactly one place", () => {
 const EVASIONS: { name: string; code: string; catches: boolean }[] = [
   { name: "dotted array",           code: 'const A = [".jpg", ".png", ".gif"];',                       catches: true },
   { name: "dotless array",          code: 'const A = ["jpg", "jpeg", "png", "webp"];',                 catches: true },
+  { name: "dotless ignored list",   code: 'const A = ["dwl", "dwl2", "bak", "lnk", "zip", "rar", "7z", "dwg"];', catches: true },
+  { name: "dotted ignored list",    code: 'const A = [".dwl", ".dwl2", ".bak"];',                       catches: true },
   { name: "single quotes",          code: "const A = ['.jpg', '.png'];",                                catches: true },
   { name: "template literals",      code: "const A = [`.jpg`, `.png`];",                                catches: true },
   { name: "nested object values",   code: 'const A = { ".jpg": { k: "image" }, ".png": { k: "x" } };',  catches: true },
@@ -455,6 +473,7 @@ const EVASIONS: { name: string; code: string; catches: boolean }[] = [
   { name: "after a URL regex",      code: 'const A = { s: p.replace(/https?:\\/\\//, ""), e: [".jpg", ".png"] };', catches: true },
 
   { name: "a lone .txt test",       code: 'if (n.toLowerCase().endsWith(".txt")) return true;',         catches: false },
+  { name: "a bare zip field name",  code: 'const addr = { city: "x", zip: "010101" };',                   catches: false },
   { name: "the SAME ext twice",     code: 'const a = n.endsWith(".txt");\nconst b = m.endsWith(".txt");', catches: false },
   { name: "contentKind union",      code: 'const k = a ? "image" : b ? "pdf" : "other";',                catches: false },
   { name: "MIME allow-list (#24.04)", code: 'const S = ["image/jpeg", "image/png", "image/gif"];',      catches: false },

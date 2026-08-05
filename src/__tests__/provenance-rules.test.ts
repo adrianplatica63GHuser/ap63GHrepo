@@ -196,9 +196,21 @@ describe("classifyFileSource", () => {
   });
 
   it("returns UNKNOWN for anything else, so the user gets asked", () => {
-    for (const n of ["plan.dwg", "archive.zip", "mail.msg", "noext"]) {
+    for (const n of ["plan.xyz", "mail.msg", "noext"]) {
       expect(classifyFileSource(n)).toBe("UNKNOWN");
     }
+  });
+
+  it("also returns UNKNOWN for the ignored and forbidden kinds", () => {
+    // Slice #24.04. These DO have a kind now, so `isUnknownFileKind` is false
+    // for them — but neither kind is image or document, so the provenance
+    // answer is still UNKNOWN. For the ignored ones nobody ever asks, because
+    // the walk drops them; `.csv` reaching this line at all is the known
+    // interim until Slice #24.02 refuses it in words that mean it.
+    for (const n of ["plan.dwg", "archive.zip", "drawing.dwl2", "auto.bak"]) {
+      expect(classifyFileSource(n)).toBe("UNKNOWN");
+    }
+    expect(classifyFileSource("date.csv")).toBe("UNKNOWN");
   });
 
   it("no longer treats HEIC as a graphics file (Slice #24.03)", () => {
@@ -210,10 +222,10 @@ describe("classifyFileSource", () => {
     expect(classifyFileSource("a.HEIF")).toBe("UNKNOWN");
   });
 
-  it("treats .xls and .csv as document files", () => {
-    // Both were in DOCUMENT_EXTENSIONS and neither was ever asserted.
+  it("treats .xls as a document file", () => {
+    // Was in DOCUMENT_EXTENSIONS and was never asserted. `.csv` used to be
+    // here too; Slice #24.04 moved it to the forbidden kind — see above.
     expect(classifyFileSource("a.xls")).toBe("DOCUMENT_FILE");
-    expect(classifyFileSource("a.csv")).toBe("DOCUMENT_FILE");
   });
 
   it("never guesses COORDINATE_FILE from a .txt name", () => {
