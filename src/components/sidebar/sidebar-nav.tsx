@@ -367,7 +367,6 @@ export function SidebarNav() {
     users:                     t("items.users"),
     referenceData:             t("items.referenceData"),
     import:                    t("items.import"),
-    preImportVerification:     t("items.preImportVerification"),
     postImportReport:          t("items.postImportReport"),
     calculation:               t("items.calculation"),
     globalSearch:              t("items.globalSearch"),

@@ -1,0 +1,116 @@
+"use client";
+
+/**
+ * FolderForecast — the screen's promise, kept.   (Slice #24.02a)
+ *
+ * The folder has been walked. Nothing has been sent anywhere, nothing has been
+ * written, and no classification call has been spent. This panel says what the
+ * import is about to do, and **Continuă** is the first thing in the whole flow
+ * that costs money.
+ *
+ * That ordering is the slice. Before it, `handlePickFolder` walked the folder
+ * and started the classification pass in the same uninterrupted async block —
+ * 451 Claude calls on Adrian's archive, spent by the act of choosing a folder,
+ * before a single precondition had been checked or a single number shown.
+ *
+ * The button carries a count on purpose — a number argues better than a
+ * warning, and a user who expected 330 has one thing to notice rather than a
+ * paragraph to read. It carries the number the CLICK acts on, which is the
+ * count of images about to be sent for classification, NOT the document total.
+ * Pressing Continuă creates nothing: four more steps stand between here and
+ * the first Document row, and a button that promised to create 357 documents
+ * while spending 451 classification calls would be lying in both directions.
+ * The document total is a line in the panel, where it belongs.
+ *
+ * Slice #24.02b fills the space below with the blockers, the skipped list and
+ * the warnings. This is the frame they land in, and the forecast stays at the
+ * top of it — shown even when everything passes.
+ */
+
+import { useTranslations } from "next-intl";
+import { buttonClass } from "@/lib/ui/button-styles";
+import type { ImportForecast } from "@/lib/import/preflight";
+
+type Props = {
+  rootFolderName: string;
+  forecast: ImportForecast;
+  onContinue: () => void;
+  onChangeFolder: () => void;
+};
+
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-baseline justify-between gap-4 border-b border-crease py-1.5 last:border-0 dark:border-zinc-800">
+      <dt className="text-sm text-fade dark:text-zinc-400">{label}</dt>
+      <dd className="font-mono text-sm text-ink dark:text-zinc-200">{value}</dd>
+    </div>
+  );
+}
+
+export function FolderForecast({
+  rootFolderName,
+  forecast,
+  onContinue,
+  onChangeFolder,
+}: Props) {
+  const t = useTranslations("adminImport.wizard.forecast");
+
+  const { documents, pageGroups, classificationCalls, coordinateCandidates } = forecast;
+
+  // One candidate is the normal case and is named. Zero and several are both
+  // worth saying out loud, and #24.02b turns the second into a blocker —
+  // several coordinate files means several properties in one folder.
+  const coordinateValue =
+    coordinateCandidates.length === 0
+      ? t("noCoordinateFile")
+      : coordinateCandidates.length === 1
+        ? coordinateCandidates[0]
+        : t("severalCoordinateFiles", { count: coordinateCandidates.length });
+
+  return (
+    <section className="rounded-xl border border-card-rim bg-white p-5 dark:border-zinc-700 dark:bg-zinc-900">
+      <h2 className="text-sm font-semibold text-ink dark:text-zinc-100">{t("title")}</h2>
+      <p className="mt-1 text-xs text-fade dark:text-zinc-400">
+        {t("intro", { folder: rootFolderName })}
+      </p>
+
+      <dl className="mt-4">
+        <Row label={t("documents")} value={String(documents)} />
+        <Row label={t("pageGroups")} value={String(pageGroups)} />
+        <Row label={t("classificationCalls")} value={String(classificationCalls)} />
+        <Row label={t("coordinateFile")} value={coordinateValue} />
+      </dl>
+
+      <p className="mt-3 text-xs text-fade dark:text-zinc-400">{t("nothingSpentYet")}</p>
+
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        <button
+          type="button"
+          onClick={onContinue}
+          disabled={documents === 0}
+          className={buttonClass({ variant: "primary", size: "lg" })}
+        >
+          {t("continueButton", { count: classificationCalls })}
+        </button>
+        <button
+          type="button"
+          onClick={onChangeFolder}
+          className={buttonClass({ variant: "secondary", size: "md" })}
+        >
+          {t("changeFolder")}
+        </button>
+        {documents === 0 && (
+          <p role="status" className="text-sm text-red-700 dark:text-red-400">
+            {/* Deliberately does not say "the folder is empty". The walk drops
+                hidden files, Windows metadata and the eight ignored extensions
+                before this panel ever sees them, so a folder holding nothing
+                but a .zip and a .dwg walks to zero entries while looking full
+                in Explorer. Slice #24.02b names those files; until then the
+                copy must not claim a folder is empty when it is not. */}
+            {t("nothingToImport")}
+          </p>
+        )}
+      </div>
+    </section>
+  );
+}

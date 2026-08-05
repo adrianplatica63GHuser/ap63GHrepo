@@ -1020,7 +1020,6 @@
       "users": "Users & Access",
       "referenceData": "Reference Data",
       "import": "Import to the System",
-      "preImportVerification": "Pre-Import Verification",
       "postImportReport": "Post-Import Report",
       "calculation": "Calculation of a Side Road",
       "globalSearch": "Global Search",
@@ -1906,8 +1905,8 @@
           "cancelButton": "Cancel",
           "closeButton": "Close",
           "claimedElsewhere": "This coordinate file has already been used to create property {code}. A coordinate file can define only one property, so it cannot also be applied here. If property {code} is the wrong one, delete it first — that releases the file — and then run this again.",
-      "errorClaimConflict": "This file was used for another property in the meantime. Nothing was changed.",
-      "errorGeneric": "Applying the corners to the property failed.",
+          "errorClaimConflict": "This file was used for another property in the meantime. Nothing was changed.",
+          "errorGeneric": "Applying the corners to the property failed.",
           "errorSession": "Your session has expired. Please sign in again."
         },
         "aiInterpret": {
@@ -1920,6 +1919,52 @@
           "errorGeneric": "AI interpretation failed.",
           "errorSession": "Your session has expired. Please sign in again."
         }
+      },
+      "preflight": {
+        "title": "Before you choose a folder",
+        "intro": "Every line must be green. Until then the import cannot start, so a folder that could not be imported costs nothing.",
+        "recheck": "Check again",
+        "checking": "Checking…",
+        "allGreen": "Everything is ready — choose a folder.",
+        "notReady": "The import cannot start yet. Fix the items above, then check again.",
+        "statusPass": "in order",
+        "statusFail": "problem",
+        "statusUnknown": "not checked yet",
+        "documentTypesLink": "Open Reference Data",
+        "check": {
+          "browser": "This browser can open a folder from your computer",
+          "session": "You are signed in",
+          "role": "Your account may import",
+          "documentTypes": "At least one document type is defined",
+          "classification": "Automatic classification is available",
+          "storage": "File storage can be reached",
+          "pdfReader": "The PDF reader component is present",
+          "database": "The database is up to date"
+        },
+        "fail": {
+          "browser": "This browser cannot open a folder from your computer. Open the application in Google Chrome or Microsoft Edge.",
+          "session": "Your session has expired. Please sign in again.",
+          "role": "Your account does not have import rights. Ask an administrator for the superuser role.",
+          "documentTypes": "No document type is defined. Add at least one under Reference Data → Document types, then come back here.",
+          "classification": "Automatic classification is not responding. The import is stopped: without it, every document would be imported as “Unclassified”. Try again in a few minutes, or tell your administrator.",
+          "storage": "File storage is not responding. Files could not be saved. Please tell your administrator.",
+          "pdfReader": "The component that reads PDF files could not be loaded. Please tell your administrator.",
+          "database": "The database is not up to date. Please tell your administrator."
+        }
+      },
+      "forecast": {
+        "title": "What this import will do",
+        "intro": "Folder “{folder}” has been read. Nothing has been sent or saved yet.",
+        "documents": "Documents that will be created",
+        "pageGroups": "…of which multi-page",
+        "classificationCalls": "Images sent for automatic classification",
+        "coordinateFile": "Coordinate file",
+        "noCoordinateFile": "none found",
+        "severalCoordinateFiles": "{count} files found",
+        "nothingSpentYet": "Nothing has been sent for classification yet. That starts when you press Continue, and it is the first step that costs anything.",
+        "continueButton": "Continue — send {count} images for classification",
+        "changeFolder": "Choose another folder",
+        "nothingToImport": "No file in this folder will be imported. Some files are skipped automatically — archives, drawings and temporary files, for example."
       }
     }
   },

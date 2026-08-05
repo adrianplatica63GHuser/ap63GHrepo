@@ -1020,7 +1020,6 @@
       "users": "Utilizatori & Acces",
       "referenceData": "Date de referință",
       "import": "Import în sistem",
-      "preImportVerification": "Verificare pre-import",
       "postImportReport": "Raport post-import",
       "calculation": "Calcul drum lateral",
       "globalSearch": "Căutare globală",
@@ -1906,8 +1905,8 @@
           "cancelButton": "Anulează",
           "closeButton": "Închide",
           "claimedElsewhere": "Acest fișier de coordonate a fost deja folosit pentru a crea proprietatea {code}. Un fișier de coordonate poate defini o singură proprietate, așa că nu poate fi aplicat și aici. Dacă proprietatea {code} este greșită, ștergeți-o mai întâi — asta eliberează fișierul — și apoi reluați.",
-      "errorClaimConflict": "Între timp, acest fișier a fost folosit pentru altă proprietate. Nu s-a modificat nimic.",
-      "errorGeneric": "Aplicarea colțurilor pe proprietate a eșuat.",
+          "errorClaimConflict": "Între timp, acest fișier a fost folosit pentru altă proprietate. Nu s-a modificat nimic.",
+          "errorGeneric": "Aplicarea colțurilor pe proprietate a eșuat.",
           "errorSession": "Sesiunea a expirat. Vă rugăm să vă autentificați din nou."
         },
         "aiInterpret": {
@@ -1920,6 +1919,52 @@
           "errorGeneric": "Interpretarea AI a eșuat.",
           "errorSession": "Sesiunea a expirat. Vă rugăm să vă autentificați din nou."
         }
+      },
+      "preflight": {
+        "title": "Înainte de a alege un folder",
+        "intro": "Toate rândurile trebuie să fie verzi. Până atunci importul nu poate începe — un folder care nu ar putea fi importat nu costă astfel nimic.",
+        "recheck": "Verifică din nou",
+        "checking": "Se verifică…",
+        "allGreen": "Totul este pregătit — alegeți un folder.",
+        "notReady": "Importul nu poate începe încă. Rezolvați punctele de mai sus, apoi verificați din nou.",
+        "statusPass": "în regulă",
+        "statusFail": "problemă",
+        "statusUnknown": "neverificat încă",
+        "documentTypesLink": "Deschideți Date de Referință",
+        "check": {
+          "browser": "Acest browser poate deschide un folder de pe calculator",
+          "session": "Sunteți autentificat",
+          "role": "Contul dumneavoastră are drepturi de import",
+          "documentTypes": "Există cel puțin un tip de document definit",
+          "classification": "Clasificarea automată este disponibilă",
+          "storage": "Spațiul de stocare este accesibil",
+          "pdfReader": "Componenta pentru citirea fișierelor PDF este disponibilă",
+          "database": "Baza de date este actualizată"
+        },
+        "fail": {
+          "browser": "Acest browser nu poate deschide un folder de pe calculator. Deschideți aplicația în Google Chrome sau Microsoft Edge.",
+          "session": "Sesiunea a expirat. Autentificați-vă din nou.",
+          "role": "Contul dumneavoastră nu are drepturi de import. Cereți unui administrator rolul de superutilizator.",
+          "documentTypes": "Nu există niciun tip de document definit. Adăugați cel puțin unul în Date de Referință → Tipuri de documente, apoi reveniți aici.",
+          "classification": "Clasificarea automată nu răspunde. Importul este oprit: fără ea, toate documentele ar fi importate ca „Neclasificat”. Reîncercați peste câteva minute sau anunțați administratorul.",
+          "storage": "Spațiul de stocare nu răspunde. Fișierele nu ar putea fi salvate. Anunțați administratorul.",
+          "pdfReader": "Componenta pentru citirea fișierelor PDF nu a putut fi încărcată. Anunțați administratorul.",
+          "database": "Baza de date nu este actualizată la ultima versiune. Anunțați administratorul."
+        }
+      },
+      "forecast": {
+        "title": "Ce va face acest import",
+        "intro": "Folderul „{folder}” a fost citit. Nu s-a trimis și nu s-a salvat nimic încă.",
+        "documents": "Documente care vor fi create",
+        "pageGroups": "…dintre care cu mai multe pagini",
+        "classificationCalls": "Imagini trimise spre clasificare automată",
+        "coordinateFile": "Fișier de coordonate",
+        "noCoordinateFile": "niciunul găsit",
+        "severalCoordinateFiles": "{count, plural, one {un fișier găsit} few {# fișiere găsite} other {# de fișiere găsite}}",
+        "nothingSpentYet": "Nu s-a trimis nimic încă spre clasificare. Acest lucru începe când apăsați Continuă și este primul pas care costă.",
+        "continueButton": "Continuă — trimite {count, plural, one {o imagine} few {# imagini} other {# de imagini}} spre clasificare",
+        "changeFolder": "Alegeți alt folder",
+        "nothingToImport": "Niciun fișier din acest folder nu va fi importat. Unele fișiere sunt ignorate automat — de exemplu arhive, desene și fișiere temporare."
       }
     }
   },

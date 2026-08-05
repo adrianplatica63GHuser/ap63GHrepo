@@ -9,7 +9,6 @@ import {
   UserCog,
   Database,
   Upload,
-  ClipboardCheck,
   ClipboardList,
   Wrench,
   Settings,
@@ -102,11 +101,15 @@ export const NAV_SECTIONS: NavSection[] = [
     icon: LayoutDashboard,
     items: [
       { key: "globalSearch", href: "/admin/global-search", icon: Search },
-      // "Pre-import verification" and "post-import report" don't have pages
-      // yet — rendered as disabled "coming soon" placeholders (no href),
-      // same convention the old "export" item used, until a future slice
-      // builds them out.
-      { key: "preImportVerification", icon: ClipboardCheck },
+      // "Post-import report" doesn't have a page yet — rendered as a disabled
+      // "coming soon" placeholder (no href), same convention the old "export"
+      // item used, until a future slice builds it out.
+      //
+      // Slice #24.02a removed the "pre-import verification" placeholder that
+      // used to sit above /admin/import. Verification is not a screen you can
+      // visit beside the import; it IS the import's first phase, and a second
+      // nav entry would have been a second door to a picker that must have
+      // exactly one.
       { key: "import", href: "/admin/import", icon: Upload },
       { key: "postImportReport", icon: ClipboardList },
       { key: "calculation", href: "/admin/calculation", icon: Calculator },

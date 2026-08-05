@@ -16,19 +16,22 @@
  *
  * STATE MACHINE
  * ─────────────
- *  idle          → user hasn't picked a folder yet
+ *  preflight     → the preconditions checklist; no folder picker exists yet
+ *  idle          → checks passed, user hasn't picked a folder
  *  walking       → walkFolder() running (fast, <1 s)
+ *  folder-report → walked, nothing spent; the forecast awaits Continuă
  *  scanning      → concurrent Haiku AI scans running in background
  *  ready         → scan complete; scan-table rendered + "Import" CTA visible
  *  property      → PropertyStepDialog is open (resolve the run's Property)
  *  tag-dialog    → TagDialog is open (animated tag-prep step)
  *  importing     → BulkImportDialog is running
+ *  resumed       → ResumedSessionView is showing a previous run's record
  *
  * File System Access API handles are stored in a module-level singleton so
  * they survive React unmount/remount (handles cannot be serialised).
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   walkFolder,
@@ -50,6 +53,9 @@ import {
   type ResolvedProperty,
 } from "./property-step-dialog";
 import { ResumedSessionView } from "./resumed-session-view";
+import { PreflightChecklist } from "./preflight-checklist";
+import { FolderForecast } from "./folder-forecast";
+import { forecastImport } from "@/lib/import/preflight";
 import { buttonClass } from "@/lib/ui/button-styles";
 
 // ---------------------------------------------------------------------------
@@ -142,8 +148,20 @@ async function scanEntry(entry: FSEntry): Promise<{
 // ---------------------------------------------------------------------------
 
 type Phase =
+  /**
+   * Slice #24.02a. `preflight` is the new FIRST phase: the folder picker does
+   * not exist until every precondition is green. `folder-report` is the new
+   * gate between the walk and the classification pass — before this slice the
+   * two ran as one uninterrupted async block, so choosing a folder spent one
+   * Claude call per image before anything had been checked or shown.
+   *
+   * `idle` survives as "checks passed, no folder chosen yet", which is what
+   * the resume button and the picker have always been gated on.
+   */
+  | "preflight"
   | "idle"
   | "walking"
+  | "folder-report"
   | "scanning"
   | "ready"
   | "property"
@@ -188,7 +206,7 @@ function collectFolders(
 export function ImportWizard() {
   const t = useTranslations("adminImport.wizard");
 
-  const [phase, setPhase] = useState<Phase>("idle");
+  const [phase, setPhase] = useState<Phase>("preflight");
   const [rootFolderName, setRootFolderName] = useState<string>("");
   const [entries, setEntries] = useState<FSEntry[]>([]);
   const [scanResults, setScanResults] = useState<Map<string, ScanResult>>(new Map());
@@ -205,6 +223,28 @@ export function ImportWizard() {
   );
 
   const cancelScanRef = useRef(false);
+
+  /**
+   * The preconditions' verdict, hoisted so the picker can be gated on it.
+   *
+   * Kept out of `phase` on purpose: a failing check is not a phase, it is a
+   * fact about the world that can change under a screen the user is already
+   * looking at. `Verifică din nou` re-runs while the phase stays `preflight`.
+   */
+  const [preflightPassed, setPreflightPassed] = useState(false);
+
+  const handlePreflightVerdict = useCallback((passed: boolean) => {
+    setPreflightPassed(passed);
+    // A gate, not a watchdog. The checklist is mounted only while the phase is
+    // `preflight`, so a passing verdict is the one and only transition this
+    // can make; there is deliberately no "failing takes the picker away again"
+    // branch, because the component that would emit it has already unmounted
+    // by then. Under React StrictMode's double-invoked mount effect such a
+    // branch would fire from a stale closure and yank the user off a picker
+    // they had just been given. A precondition that breaks after the picker
+    // appears surfaces where it always did: as a failure during the run.
+    if (passed) setPhase((current) => (current === "preflight" ? "idle" : current));
+  }, []);
 
   // -------------------------------------------------------------------
   // Pick folder
@@ -232,6 +272,11 @@ export function ImportWizard() {
     const name = handle.name;
     setRootFolderName(name);
     setWalkError(null);
+    // Clear the PREVIOUS folder's entries before the new name goes up. Without
+    // this, a walk that fails — or simply takes a moment — leaves the old
+    // folder's file table on screen labelled with the new folder's name, and
+    // every status cell blank because nothing has been scanned.
+    setEntries([]);
     setScanResults(new Map());
     setScanProgress({ done: 0, total: 0 });
     // A new folder is a new Property question — never carry the previous
@@ -248,7 +293,28 @@ export function ImportWizard() {
       return;
     }
 
+    // Slice #24.02a — the walk ends here. It used to fall straight into the
+    // classification pass in this same async block, which is how choosing a
+    // folder came to cost one Claude call per image before anything had been
+    // validated or shown. The scan now waits for `startScan`, behind Continuă.
     setEntries(walked);
+    setPhase("folder-report");
+  }, [t]);
+
+  // -------------------------------------------------------------------
+  // Classification pass — everything below this line costs money
+  // -------------------------------------------------------------------
+
+  /**
+   * Send every scannable entry for automatic classification, 3 at a time.
+   *
+   * Lifted verbatim out of `handlePickFolder` in Slice #24.02a; the only
+   * change is that it takes the walked entries as an argument instead of
+   * closing over a local. It has exactly one caller — the Continuă button —
+   * and `scanEntry` is called from nowhere else, which together are what make
+   * "no classification without a press" a property rather than an intention.
+   */
+  const startScan = useCallback(async (walked: FSEntry[]) => {
     setPhase("scanning");
     cancelScanRef.current = false;
 
@@ -331,7 +397,7 @@ export function ImportWizard() {
     if (!cancelScanRef.current) {
       setPhase("ready");
     }
-  }, [t]);
+  }, []);
 
   // Cancel scan on unmount
   useEffect(() => () => { cancelScanRef.current = true; }, []);
@@ -345,6 +411,11 @@ export function ImportWizard() {
   const scannableCount = entries.filter(entryScannable).length;
   const scanDone = phase === "ready";
 
+  // Derived at render time rather than copied into state when the walk ends:
+  // one copy cannot drift from the list the user is looking at. Cheap — it is
+  // a single pass over names, no file contents and no I/O.
+  const forecast = useMemo(() => forecastImport(entries), [entries]);
+
   // -------------------------------------------------------------------
   // Render
   // -------------------------------------------------------------------
@@ -353,16 +424,34 @@ export function ImportWizard() {
     <div className="space-y-4">
       {/* Toolbar row */}
       <div className="flex items-center gap-3 flex-wrap">
-        <button
-          type="button"
-          onClick={handlePickFolder}
-          disabled={phase === "walking" || phase === "scanning" || phase === "importing"}
-          className={buttonClass({ variant: "primary", size: "lg" })}
-        >
-          {rootFolderName ? t("changeFolderButton") : t("chooseFolderButton")}
-        </button>
+        {/* Slice #24.02a — the picker does not exist until every precondition
+            is green. Rendering it disabled would invite the user to click at
+            it; not rendering it at all makes the checklist the only thing on
+            screen with something to do. */}
+        {/* Hidden during `folder-report`: that panel carries its own
+            "choose another folder", and two controls with different labels
+            doing the same thing is a question the user has to stop and
+            answer. */}
+        {preflightPassed && phase !== "folder-report" && (
+          <button
+            type="button"
+            onClick={handlePickFolder}
+            disabled={
+              phase === "walking" || phase === "scanning" || phase === "importing"
+            }
+            className={buttonClass({ variant: "primary", size: "lg" })}
+          >
+            {rootFolderName ? t("changeFolderButton") : t("chooseFolderButton")}
+          </button>
+        )}
 
-        {/* Resume last session — shown only while idle and a saved session exists */}
+        {/* Resume last session — stays gated on `idle`, i.e. behind the
+            checklist. Slice #24.02a briefly made it reachable from `preflight`
+            on the grounds that a resumed session touches no filesystem — but
+            ResumedSessionView's only control is "new import", which CLEARS the
+            saved session. Reaching it with failing preconditions would have
+            meant the sole way back to the checklist was destroying the record
+            of the previous run. */}
         {phase === "idle" && savedSession && (
           <button
             type="button"
@@ -430,6 +519,21 @@ export function ImportWizard() {
         )}
       </div>
 
+      {/* Step zero — the preconditions. Shown until they all pass. */}
+      {phase === "preflight" && (
+        <PreflightChecklist onVerdict={handlePreflightVerdict} />
+      )}
+
+      {/* The walk is done and nothing has been spent yet. */}
+      {phase === "folder-report" && (
+        <FolderForecast
+          rootFolderName={rootFolderName}
+          forecast={forecast}
+          onContinue={() => void startScan(entries)}
+          onChangeFolder={handlePickFolder}
+        />
+      )}
+
       {/* Walk error */}
       {walkError && (
         <div className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
@@ -437,8 +541,10 @@ export function ImportWizard() {
         </div>
       )}
 
-      {/* File table — hidden while showing a resumed session */}
-      {entries.length > 0 && phase !== "resumed" && (
+      {/* File table — hidden while showing a resumed session, and while the
+          folder report is up: the scan has not run, so every row would render
+          a blank status behind a panel asking whether to run it. */}
+      {entries.length > 0 && phase !== "resumed" && phase !== "folder-report" && (
         <div className="rounded-xl border border-card-rim bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
           <ScanTable
             entries={entries}
@@ -455,7 +561,10 @@ export function ImportWizard() {
           onClear={() => {
             clearSavedSession();
             setSavedSession(null);
-            setPhase("idle");
+            // The resume button is reachable from `preflight` too, so this
+            // must not drop the user onto a picker whose preconditions never
+            // passed.
+            setPhase(preflightPassed ? "idle" : "preflight");
           }}
         />
       )}
