@@ -24,10 +24,27 @@ applies to all of Adrian's projects. This file holds only what is true of *this*
   suffixes. Never mix the two tracks. See `.claude/rules/i18n-and-romanian.md`.
 - e2e locators match Romanian strings from `messages/ro-RO.json`. Renaming a Romanian UI
   string breaks the Playwright suite **by design** — fix the locator, don't fight it.
+- **Write Romanian straight into `messages/ro-RO.json`. Do not hold it back for review.**
+  Adrian reviews the strings in the diff as a matter of course, and Ciprian is the only
+  other reader, so an approval round costs a handover and buys nothing. Quote the new
+  user-facing sentences in the handover so they are easy to find — but ship them.
+  (Superseded rule, kept so it is not reintroduced: strings used to be held out of
+  `ro-RO.json` pending review. That is now actively wrong — `DEFAULT_LOCALE` is `ro-RO`,
+  so a missing key renders as a raw key path *in the shipping locale*.)
 
 ## Verification order
 
 `npm run e2e` → `npm run lint` → `npx tsc --noEmit` → `npx jest`, in that order, every time.
+
+- **Every slice gets an adversarial review before handover — not optional.** Once the code
+  is written and type-clean, spawn a subagent whose brief is to *prove the change wrong*:
+  find the input, state transition or call site that breaks it, and do not summarise
+  approvingly. Give it the diff, the new files, the claims the slice makes, and a numbered
+  list of specific things to attack. Tell it to prefer running code over reading it, and to
+  end with one line on what it could not break. Then fix what it finds and say so in the
+  handover, including anything deliberately left. It has caught a lying CTA, a probe that
+  would have blocked every import on Vercel, and a dialog that forced users to destroy
+  their own saved session — none of which type-checking or lint would ever see.
 
 - **`npm run e2e` needs `npm run dev` already running in a separate terminal.** When it isn't,
   every test times out waiting for a page load — a failure mode that looks nothing like
