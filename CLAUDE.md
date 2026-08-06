@@ -46,6 +46,31 @@ applies to all of Adrian's projects. This file holds only what is true of *this*
   would have blocked every import on Vercel, and a dialog that forced users to destroy
   their own saved session — none of which type-checking or lint would ever see.
 
+- **The recurring defect in this codebase is confident output that was never measured
+  against a realistic input.** Recorded after Slice #26.00, when the import work had to be
+  stopped and redesigned. The lesson is *not* "the folders were messy". Every near-miss had
+  the same shape: a result that was internally consistent, well worded, and never once run
+  against data of the shape it would actually meet. A pre-import report truncated its own
+  evidence to five paths while its sentence claimed eighty-six. A copy-detection threshold
+  looked clean on the one archive it was tried on and, on a shape that archive did not
+  contain — twenty property folders sharing three boilerplate filenames — told the user to
+  keep one folder and discard nineteen. In #26.01 a folder-name repair suggestion, correct
+  on every name it was designed for, proposed renaming `48-50Arhiva` to `48-50Arh||iva`.
+  Not one of the three was visible in the code; every one was obvious the moment a real
+  input was pushed through it. **So: before claiming a rule, a threshold or a generated
+  value is right, run it over the shape that would embarrass it** — the archive, the
+  boundary, the folder full of near-identical siblings — and put the measured numbers in
+  the comment. Where a number is load-bearing, say so beside it and re-measure when the
+  rule changes rather than assuming it still holds.
+
+- **A rule that describes what the system does must be derived from the code that does it,
+  never from the document that asked for it.** Slice #26.01's structure rules delegate to
+  `isPageGroupMember` and `coordinateNameConfidence` rather than restating them, because a
+  rule written from the source document alone would have blessed a folder of `1.pdf` /
+  `2.pdf` that `isPageGroup` refuses — telling the user the folder is correct, reporting a
+  successful import, and producing three documents where one was meant. A validator that
+  disagrees with the executor is worse than no validator, because it is believed.
+
 - **`npm run e2e` needs `npm run dev` already running in a separate terminal.** When it isn't,
   every test times out waiting for a page load — a failure mode that looks nothing like
   "the dev server isn't running." Say so every time you ask Adrian to run it.
