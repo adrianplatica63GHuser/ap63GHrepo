@@ -2017,6 +2017,80 @@
       "readingMetadata": "Se citesc fișierele… {done} din {total}",
       "walkFailed": "Acest folder nu a putut fi citit. Este posibil să fi fost mutat, redenumit sau deconectat.",
       "recheckFailed": "Acest folder nu a putut fi citit din nou. Este posibil să fi fost mutat sau redenumit în timp ce lucrați la el — lista de mai jos este rezultatul anterior. Alegeți din nou folderul pentru a reîncepe."
+    },
+    "structure": {
+      "rule": {
+        "STR-01": {
+          "requirement": "Folderul pe care îl alegeți conține numai foldere: câte unul pentru fiecare proprietate, plus, dacă vă trebuie, „common” și „floating”. Niciun fișier nu stă direct în el.",
+          "example": "Corect: 47per2-225per3per24, 48-50D, common. Greșit: un fișier „contract.pdf” pus direct în folderul ales.",
+          "violation": "Folderul ales conține {files, plural, one {un fișier care nu se află într-un folder} few {# fișiere care nu se află într-un folder} other {# de fișiere care nu se află într-un folder}}: {examples}. Mutați fiecare fișier în folderul proprietății de care aparține, în „common” sau în „floating”."
+        },
+        "STR-02": {
+          "requirement": "Folderul ales conține cel mult {max} proprietăți. „common” și „floating” nu se numără.",
+          "example": "Corect: {max} foldere de proprietate, plus „common” și „floating”. Greșit: încă un folder de proprietate pe lângă acestea.",
+          "violation": "Folderul ales conține {found, plural, one {o proprietate} few {# proprietăți} other {# de proprietăți}}, iar limita este {max}. Mai multe deodată sunt greu de urmărit. Faceți un al doilea folder și împărțiți proprietățile între ele; dacă aveți documente comune, puneți câte o copie a folderului „common” în fiecare."
+        },
+        "STR-03": {
+          "requirement": "Două foldere din folderul ales nu pot însemna aceeași proprietate.",
+          "example": "Corect: un singur folder pentru fiecare proprietate. Greșit: „47per2-225per3” alături de „47PER2-225per3||acte vechi” — aceeași tarla și aceeași parcelă, scrise altfel.",
+          "violation": "Folderele „{folder}” și „{other}” înseamnă aceeași proprietate ({identity}). Păstrați un singur folder pentru ea și mutați în el documentele din celălalt."
+        },
+        "STR-04": {
+          "requirement": "Fiecare folder din folderul ales este ori o proprietate, ori „common”, ori „floating”. Numele unei proprietăți începe cu tarlaua și parcela, despărțite printr-o liniuță. „per” ține locul semnului „/”, care nu poate fi folosit în numele unui folder.",
+          "example": "Corect: 47per2-225per3per24, 48-50D, 225per3-24bis. Greșit: „Acte 2019”, „Teren Bragadiru”, „2024-Arhiva”.",
+          "violation": "Folderul „{folder}” nu este nici o proprietate, nici „common”, nici „floating”. Redenumiți-l cu tarlaua și parcela, de exemplu 47per2-225per3per24, sau mutați-l în „common” ori în „floating”."
+        },
+        "STR-05": {
+          "requirement": "Folderele comune se numesc exact „common” și „floating”, cu litere mici.",
+          "example": "Corect: common, floating. Greșit: „Common”, „COMMON”, „Floating”.",
+          "violation": "Folderul „{folder}” pare să fie „{expected}”, dar nu este scris la fel. Redenumiți-l exact „{expected}”, cu litere mici."
+        },
+        "STR-06": {
+          "requirement": "Dacă adăugați o descriere după tarla și parcelă, o despărțiți prin două bare verticale: ||.",
+          "example": "Corect: 47per2-225per3per24||2716 Prisecaru. Greșit: 47per2-225per3per24-2716 Prisecaru.",
+          "violation": "Numele „{folder}” are un text în plus după tarla și parcelă, dar nu îl desparte prin ||. Redenumiți folderul „{suggestion}”."
+        },
+        "STR-07": {
+          "requirement": "Fișierele aflate direct într-un folder de proprietate nu pot fi toate scanări numerotate. Paginile unui document scanat stau într-un subfolder al cărui nume este titlul documentului.",
+          "example": "Corect: 48-50D ▸ Contract vânzare ▸ 1.jpg, 2.jpg. Greșit: 48-50D ▸ 1.jpg, 2.jpg.",
+          "violation": "Toate fișierele aflate direct în „{folder}” sunt scanări numerotate ({files, plural, one {un fișier} few {# fișiere} other {# de fișiere}}), așa că întregul folder ar deveni un singur document numit „{folder}”, iar proprietatea nu ar primi documentele ei. Mutați-le într-un subfolder al cărui nume să fie titlul documentului."
+        },
+        "STR-08": {
+          "requirement": "O proprietate are cel mult un fișier de coordonate: numele lui începe cu „coord” și are extensia .txt. Dacă nu are niciunul, proprietatea se creează fără contur, ceea ce este permis.",
+          "example": "Corect: „coord 47per2-225per3per24.txt”, singur în folderul proprietății. Greșit: „coord 47per2.txt” și „coord vechi.txt” în același folder.",
+          "violation": "Proprietatea „{folder}” conține {found, plural, one {un fișier de coordonate} few {# fișiere de coordonate} other {# de fișiere de coordonate}}: {examples}. Poate exista cel mult unul. Păstrați-l doar pe cel corect și scoateți restul din folderul proprietății."
+        },
+        "STR-09": {
+          "requirement": "Folderele „common” și „floating” nu conțin fișiere de coordonate. Coordonatele aparțin unei singure proprietăți.",
+          "example": "Corect: „coord 47per2-225per3per24.txt” în folderul proprietății. Greșit: același fișier pus în „common”.",
+          "violation": "Folderul „{folder}” conține {found, plural, one {un fișier de coordonate} few {# fișiere de coordonate} other {# de fișiere de coordonate}}: {examples}. Mutați fiecare fișier de coordonate în folderul proprietății la care se referă."
+        },
+        "STR-10": {
+          "requirement": "Un folder de pagini conține numai fișiere. Nu are alte foldere în el.",
+          "example": "Corect: 47per2-225per3per24 ▸ Contract vânzare ▸ 1.jpg, 2.jpg. Greșit: 47per2-225per3per24 ▸ Contract vânzare ▸ Anexe ▸ 1.jpg.",
+          "violation": "Folderul de pagini „{folder}” conține {subfolders, plural, one {un alt folder} few {alte # foldere} other {alte # de foldere}}: {examples}. Un folder de pagini nu poate avea foldere în el. Mutați fiecare astfel de folder direct sub folderul proprietății."
+        },
+        "STR-11": {
+          "requirement": "Fiecare folder de pagini conține cel puțin un fișier.",
+          "example": "Corect: „Contract vânzare” cu 1.jpg și 2.jpg în el. Greșit: „Contract vânzare” gol.",
+          "violation": "Folderul „{folder}” este gol. Ștergeți-l sau puneți în el paginile documentului."
+        },
+        "STR-12": {
+          "requirement": "În interiorul unui folder de pagini fiecare fișier este o scanare al cărei nume este doar un număr. Numele folderului devine titlul documentului.",
+          "example": "Corect: 1.jpg, 2.jpg, 3.jpg. Greșit: „CVC 1 pg 1.jpg”, „scan final.jpg”, „1.pdf”.",
+          "violation": "În folderul de pagini „{folder}” {offending, plural, one {un fișier nu este o scanare numerotată} few {# fișiere nu sunt scanări numerotate} other {# de fișiere nu sunt scanări numerotate}}: {examples}. Redenumiți fiecare astfel de fișier cu un număr — 1, 2, 3… — sau scoateți-l din acest folder; altfel fiecare pagină devine un document separat."
+        },
+        "STR-13": {
+          "requirement": "Într-un folder de pagini două fișiere nu pot avea același număr.",
+          "example": "Corect: 1.jpg, 2.jpg. Greșit: 1.jpg și 01.jpg, care sunt amândouă pagina 1.",
+          "violation": "În „{folder}” mai multe fișiere au numărul de pagină {number}: {examples}. Ordinea paginilor ar fi întâmplătoare. Renumerotați-le astfel încât fiecare număr să apară o singură dată."
+        },
+        "STR-14": {
+          "requirement": "Paginile sunt numerotate 1, 2, 3… fără sărituri.",
+          "example": "Corect: 1.jpg, 2.jpg, 3.jpg. Greșit: 1.jpg, 3.jpg, 4.jpg, sau 5449.jpg și 31316.jpg, care sunt numere de scaner, nu numere de pagină.",
+          "violation": "Folderul „{folder}” are {pages, plural, one {o pagină numerotată} few {# pagini numerotate} other {# de pagini numerotate}} de la {lowest} la {highest}. Paginile se numerotează 1, 2, 3… fără sărituri. Renumerotați fișierele din acest folder începând de la 1."
+        }
+      }
     }
   },
   "usersAccess": {
