@@ -626,6 +626,20 @@ describe("every sentence uses exactly the placeholders the catalogue declares", 
           expect(declared).toContain(arg);
         }
       }
+
+      // ⚠️ A PLURAL ARGUMENT MUST BE A COUNT, not a value (added #26.02).
+      //
+      // The check above compares against the UNION of `counts` and `values`,
+      // so it cannot see the difference — which became a live risk the moment
+      // #26.02 moved `number`, `lowest` and `highest` out of `counts` for
+      // Romanian's thousands separator. Move one more, and `{pages, plural, …}`
+      // is handed a string: `IntlMessageFormat` throws inside the screen that
+      // exists to explain what is wrong, and every other test still passes.
+      for (const part of RULE_MESSAGE_PARTS) {
+        for (const block of scanIcu(rules[id][part]).plurals) {
+          expect([...rule.counts]).toContain(block.arg);
+        }
+      }
     }
   });
 });

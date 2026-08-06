@@ -530,6 +530,37 @@ describe("walkFolder termination guards (#26.00)", () => {
     expect(seen.some((o) => o.truncated === "breadth")).toBe(true);
   });
 
+  it("keeps the truncation flag on a directory that BECAME a page group", async () => {
+    // ⚠️ Slice #26.02. The page-group branch returns before the general
+    // observation, and it used to omit `ranOutOfEntries` — so a directory
+    // whose surviving names all happened to be numbered scans was reported as
+    // a COMPLETE page group even though the walk had stopped part-way through
+    // reading it. Nothing downstream could tell: S-17 stayed silent, and the
+    // structure check, which suppresses "the pages run 1…n" on a partial
+    // listing precisely so it cannot lie, saw no reason to. The user was told
+    // to renumber a folder from 1 that was already numbered from 1, on every
+    // round of the loop, forever.
+    const numbered: FSDirectoryHandle = {
+      kind: "directory",
+      name: "Scan",
+      async *values() {
+        for (let i = 1; ; i++) {
+          yield { kind: "file", name: `${i}.jpg`, getFile: async () => new File([], "p.jpg") } as never;
+        }
+      },
+    } as unknown as FSDirectoryHandle;
+
+    const seen: DirectoryObservation[] = [];
+    await walkFolder(
+      { kind: "directory", name: "root", async *values() { yield numbered as never; } } as unknown as FSDirectoryHandle,
+      [],
+      (o) => seen.push(o),
+    );
+    const scan = seen.find((o) => o.path === "Scan")!;
+    expect(scan.becamePageGroup).toBe(true);
+    expect(scan.truncated).toBe("breadth");
+  });
+
   it("TERMINATES on a folder that contains itself", async () => {
     // If this regresses, this test does not fail — it hangs. That is the
     // point: it is the wizard's behaviour reproduced in a millisecond.

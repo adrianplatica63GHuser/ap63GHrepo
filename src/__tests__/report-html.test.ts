@@ -54,7 +54,9 @@ describe("buildReportHtml", () => {
     const paths = Array.from({ length: 40 }, (_, i) => `Acte/scan-${i}.jpg`);
     const html = build({
       findings: [
-        { ruleId: "S-04", kind: "nearMissStrayFile", loudness: "loud", paths, counts: { numbered: 40 } },
+        // Was S-04 nearMissStrayFile until #26.02 deleted it. Any loud finding
+        // carrying a long path list proves the same thing about the renderer.
+        { ruleId: "F-05", kind: "gateFiles", loudness: "loud", paths, counts: { files: 40 } },
       ],
     });
     for (const p of paths) expect(html).toContain(p);
@@ -63,14 +65,14 @@ describe("buildReportHtml", () => {
 
   it("separates loud from quiet, and only adds the quiet heading when there are any", () => {
     const loudOnly = build({
-      findings: [{ ruleId: "S-04", kind: "gateFiles", loudness: "loud", paths: [], counts: {} }],
+      findings: [{ ruleId: "F-05", kind: "gateFiles", loudness: "loud", paths: [], counts: {} }],
     });
     expect(loudOnly).not.toContain(STRINGS.quietTitle);
 
     const both = build({
       findings: [
-        { ruleId: "S-04", kind: "gateFiles", loudness: "loud", paths: [], counts: {} },
-        { ruleId: "S-03", kind: "officeFiles", loudness: "quiet", paths: [], counts: {} },
+        { ruleId: "F-05", kind: "gateFiles", loudness: "loud", paths: [], counts: {} },
+        { ruleId: "F-17", kind: "officeFiles", loudness: "quiet", paths: [], counts: {} },
       ],
     });
     expect(both).toContain(STRINGS.quietTitle);

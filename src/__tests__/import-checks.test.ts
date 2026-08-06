@@ -1,15 +1,30 @@
 /**
- * Unit tests for src/lib/import/checks.ts   (Slice #24.02b)
+ * Unit tests for src/lib/import/checks.ts   (Slice #24.02b, trimmed by #26.02)
  *
  * The report's whole value is that a user believes it, so the tests that
- * matter are the ones pinning DISCRIMINATION: loud vs quiet, and near-miss vs
- * folder-behaving-correctly. A checker that shouts at everything is the same
- * as no checker, and these are the cases where the line actually sits.
+ * matter are the ones pinning what a finding CLAIMS: that its counts and its
+ * path list agree, and that a rule stays silent on a folder behaving as
+ * intended. A checker that shouts at everything is the same as no checker.
+ *
+ * ⚠️ **What #26.02 removed from this file, and why nothing replaced it here.**
+ * Two describe blocks are gone — the near-miss classification (S-03, S-04,
+ * S-05, S-07) and the page-order hazards (S-09, S-10) — along with the S-16
+ * duplicate-archive block. Those rules now live as STR-01 and STR-10 … STR-14
+ * in `structure-rules.ts`, and their tests as
+ * `src/__tests__/import-structure-check.test.ts`. They did not merely move:
+ * each was an ADVISORY guess about a folder shape nobody had agreed on, and
+ * each is now a rule that blocks until the folder complies. A test asserting
+ * "this is loud" would be testing the wrong contract.
+ *
+ * That is also why the loud/quiet cases went with them. The split was measured
+ * on those three near-miss rules; with them gone only F-15 and F-17 are quiet,
+ * so the one surviving loudness test asserts the ORDER (loud before quiet)
+ * rather than where the line sits.
  *
  * Cross-checked against the real archive by running this module over
- * C:\dev\TEST.DATA. Two aggregate counts reproduce the spec's independent
- * measurements in PRE-IMPORT-RULES.md §6 exactly — 8 irregular page groups
- * (S-10) and 67 Office files (F-17).
+ * C:\dev\TEST.DATA. One aggregate count reproduces the spec's independent
+ * measurement in PRE-IMPORT-RULES.md §6 exactly — 67 Office files (F-17). The
+ * other, 8 irregular page groups, measured S-10 and went with it.
  *
  * The spec's third number, "15 gate files", deliberately does NOT reproduce:
  * it counts 0, and that is the correct answer now. Slice #24.04 moved
@@ -52,21 +67,10 @@ function file(path: string): FSEntry {
   };
 }
 
-function pageGroupEntry(path: string, pageNames: string[]): FSEntry {
-  const parts = path.split("/");
-  return {
-    kind: "page-group",
-    name: parts[parts.length - 1],
-    path,
-    pathParts: parts,
-    handles: pageNames.map((n) => ({
-      kind: "file" as const,
-      name: n,
-      getFile: async () => new File([], n),
-    })),
-    titleHint: parts[parts.length - 1],
-  };
-}
+/** T1 metadata, keyed the way `metadataKeyFor` keys it. Hoisted by #26.02 —
+ *  the ordering test needs a loud metadata finding to sort against. */
+const meta = (entries: [string, number, string][]) =>
+  new Map<string, FileMeta>(entries.map(([p, size, type]) => [p, { size, type }]));
 
 function dropped(path: string, reason: DroppedFile["reason"]): DroppedFile {
   const name = path.split("/").pop()!;
@@ -93,114 +97,6 @@ function run(input: {
 const kinds = (r: ReturnType<typeof run>) => r.findings.map((f) => f.kind);
 const find = (r: ReturnType<typeof run>, kind: string) =>
   r.findings.find((f) => f.kind === kind);
-
-// ---------------------------------------------------------------------------
-// Page-group near-misses — the class this screen exists for
-// ---------------------------------------------------------------------------
-
-describe("near-miss classification", () => {
-  it("is LOUD when a stray file breaks an otherwise-numbered folder", () => {
-    // S-04. The user numbered the scans correctly; one stray turns 5 pages
-    // into 6 documents, and the fix is to move one file.
-    const r = run({
-      observations: [obs({ keptNames: ["001.jpg", "002.jpg", "003.jpg", "004.jpg", "plan.jpg"] })],
-    });
-    const f = find(r, "nearMissStrayFile")!;
-    expect(f.loudness).toBe("loud");
-    expect(f.counts).toMatchObject({ numbered: 4, total: 5, strays: 1, documentsNow: 5 });
-    expect(f.paths).toContain("plan.jpg");
-  });
-
-  it("is QUIET when a subfolder is what disqualified the folder", () => {
-    // S-03. On the real archive this is overwhelmingly a property folder
-    // behaving exactly as designed — and it is where the BIGGEST folders are,
-    // which is why a size threshold would have got this backwards.
-    const r = run({
-      observations: [
-        obs({ keptNames: ["001.jpg", "002.jpg"], dirNames: ["Anexe"] }),
-      ],
-    });
-    expect(find(r, "nearMissSubfolder")!.loudness).toBe("quiet");
-  });
-
-  it("is LOUD for names that read as a page sequence", () => {
-    // The real case from the archive: "CVC 1 pg 1.jpg" / "CVC 1 pg 2.jpg".
-    const r = run({ observations: [obs({ keptNames: ["CVC 1 pg 1.jpg", "CVC 1 pg 2.jpg"] })] });
-    expect(find(r, "nearMissNaming")!.loudness).toBe("loud");
-  });
-
-  it("is LOUD for a Romanian recto/verso pair", () => {
-    // "TP 36034 fata.jpg" / "TP 36034 verso.jpg" are two sides of one sheet.
-    const r = run({ observations: [obs({ keptNames: ["TP 36034 fata.jpg", "TP 36034 verso.jpg"] })] });
-    expect(find(r, "nearMissNaming")!.loudness).toBe("loud");
-  });
-
-  it("is QUIET for unrelated images that merely share a folder", () => {
-    // "Google aeroport.jpg" + "PAD teren aeroport.jpg" ARE two documents and
-    // are meant to be. Shouting here is what would make the list unreadable —
-    // it is half of all S-05 hits on the real archive.
-    const r = run({
-      observations: [obs({ keptNames: ["Google aeroport.jpg", "PAD teren aeroport.jpg"] })],
-    });
-    expect(find(r, "nearMissNaming")!.loudness).toBe("quiet");
-  });
-
-  it("says nothing about a folder holding a single image", () => {
-    const r = run({ observations: [obs({ keptNames: ["contract.jpg"] })] });
-    expect(kinds(r)).toEqual([]);
-  });
-
-  it("says nothing about a folder that DID become one document", () => {
-    const r = run({
-      observations: [obs({ keptNames: ["1.jpg", "2.jpg", "3.jpg"], becamePageGroup: true })],
-    });
-    expect(kinds(r)).toEqual([]);
-  });
-
-  it("warns loudly when numbered scans sit at the PICKED ROOT", () => {
-    // S-07. Depth 0 can never be a page group however perfect the names, so
-    // the user almost certainly picked the scan folder instead of its parent.
-    const r = run({
-      observations: [obs({ pathParts: [], path: "", depth: 0, keptNames: ["001.jpg", "002.jpg", "003.jpg"] })],
-    });
-    const f = find(r, "rootIsScanFolder")!;
-    expect(f.loudness).toBe("loud");
-    expect(f.counts).toMatchObject({ numbered: 3, total: 3 });
-    // …and it must not ALSO be reported as an ordinary near-miss.
-    expect(kinds(r)).not.toContain("nearMissNaming");
-  });
-});
-
-// ---------------------------------------------------------------------------
-// Page order inside a document that did form
-// ---------------------------------------------------------------------------
-
-describe("page-order hazards", () => {
-  it("flags two pages that parse to the same number", () => {
-    // S-09: "1.jpg" and "01.jpg" both parseInt to 1; the comparator returns 0
-    // and the resulting order is whatever the sort happened to do — yet it is
-    // written as an authoritative pageNumber.
-    const r = run({
-      observations: [obs({ keptNames: ["1.jpg", "01.jpg", "2.jpg"], becamePageGroup: true })],
-    });
-    expect(find(r, "pageOrderAmbiguous")!.counts).toMatchObject({ collisions: 1, pages: 3 });
-  });
-
-  it("flags scanner counters masquerading as page numbers", () => {
-    // S-10, from the archive: 5449.jpg beside 31316.jpg.
-    const r = run({
-      observations: [obs({ keptNames: ["5449.jpg", "31316.jpg"], becamePageGroup: true })],
-    });
-    expect(find(r, "pageNumbersIrregular")!.counts).toMatchObject({ lowest: 5449, highest: 31316 });
-  });
-
-  it("leaves a clean 1..N group alone", () => {
-    const r = run({
-      observations: [obs({ keptNames: ["1.jpg", "2.jpg", "3.jpg"], becamePageGroup: true })],
-    });
-    expect(kinds(r)).toEqual([]);
-  });
-});
 
 // ---------------------------------------------------------------------------
 // Structure
@@ -256,129 +152,10 @@ describe("file findings", () => {
 });
 
 // ---------------------------------------------------------------------------
-// S-16 — several copies of one archive under the picked folder
-// ---------------------------------------------------------------------------
-
-describe("duplicate archive copies (S-16)", () => {
-  const copyOf = (folder: string, names: string[]) => names.map((n) => file(`${folder}/${n}`));
-  const docs = (n: number, prefix = "document") =>
-    Array.from({ length: n }, (_, i) => `${prefix}-${i}.pdf`);
-
-  it("reports a pair of folders holding the same files", () => {
-    const files = docs(30);
-    const r = run({ entries: [...copyOf("Arhiva", files), ...copyOf("Arhiva.backup", files)] });
-    const f = find(r, "duplicateArchiveCopies")!;
-    expect(f.loudness).toBe("loud");
-    expect(f.paths).toEqual(["Arhiva", "Arhiva.backup"]);
-    expect(f.counts).toMatchObject({ sharedFiles: 30, smaller: 30 });
-  });
-
-  it("catches a PARTIAL copy, where one folder is a subset of the other", () => {
-    // `CLINCENI` holds 20 identifying files against `CLINCENI.original`'s 248,
-    // and every one of them is in the original. An overlap coefficient scores
-    // that 1.00; a Jaccard index would score it 0.08 and miss the real case.
-    const big = docs(120);
-    const r = run({ entries: [...copyOf("Full", big), ...copyOf("Light", big.slice(0, 22))] });
-    expect(find(r, "duplicateArchiveCopies")!.paths).toEqual(["Full", "Light"]);
-  });
-
-  // ---- the false positives that nearly shipped -------------------------
-
-  it("stays SILENT for twenty distinct properties sharing boilerplate names", () => {
-    // The near-miss this rule's thresholds exist for. At 0.75/3 every pair of
-    // these scored 3/4 and all twenty collapsed into one "family", so the
-    // report told the user — loudly, directly beneath S-01 saying these are
-    // twenty separate properties — to keep one and discard nineteen.
-    const entries = Array.from({ length: 20 }, (_, i) =>
-      copyOf(`prop-${i}`, [
-        "Fisa corp proprietate.jpg",
-        "PAD.jpg",
-        "Plan parcelar.jpg",
-        `Extras CF owner${i}.pdf`,
-      ]),
-    ).flat();
-    expect(kinds(run({ entries }))).not.toContain("duplicateArchiveCopies");
-  });
-
-  it("stays silent even when siblings share TEN boilerplate names", () => {
-    const boiler = Array.from({ length: 10 }, (_, k) => `boiler${k}.jpg`);
-    const entries = Array.from({ length: 20 }, (_, i) =>
-      copyOf(`prop-${i}`, [...boiler, `unic${i}.pdf`]),
-    ).flat();
-    expect(kinds(run({ entries }))).not.toContain("duplicateArchiveCopies");
-  });
-
-  it("stays silent for two properties whose scan folders are both 001..N", () => {
-    // Purely numeric basenames are scanner output and identify nothing: two
-    // unrelated properties scanned on the same machine both hold 001.jpg…
-    // This is the most common folder shape in the whole archive.
-    const pages = Array.from({ length: 40 }, (_, i) => `${String(i).padStart(3, "0")}.jpg`);
-    const r = run({
-      entries: [
-        ...copyOf("Casa Bucuresti/Scan", pages),
-        ...copyOf("Teren Ilfov/Scan", pages),
-      ],
-    });
-    expect(kinds(r)).not.toContain("duplicateArchiveCopies");
-  });
-
-  it("ignores numeric page names inside page GROUPS too", () => {
-    // The same trap by the other route: a page group contributes its pages'
-    // names, so two unrelated multi-page scans would otherwise look identical.
-    const pages = Array.from({ length: 40 }, (_, i) => `${String(i).padStart(3, "0")}.jpg`);
-    const r = run({
-      entries: [pageGroupEntry("A/Scan", pages), pageGroupEntry("B/Scan", pages)],
-    });
-    expect(kinds(r)).not.toContain("duplicateArchiveCopies");
-  });
-
-  it("does not link two archives through a small folder that overlaps both", () => {
-    // Connected components merged Alpha and Gamma — 100 files each, half in
-    // common — into one family because a 25-file folder was a subset of both.
-    // Pairs cannot do that: each finding names two folders the user can open
-    // side by side and check.
-    const alpha = docs(100, "a");
-    const gamma = [...alpha.slice(0, 50), ...docs(50, "c")];
-    const r = run({
-      entries: [...copyOf("Alpha", alpha), ...copyOf("Gamma", gamma), ...copyOf("Bridge", alpha.slice(0, 25))],
-    });
-    const pairs = r.findings
-      .filter((f) => f.kind === "duplicateArchiveCopies")
-      .map((f) => f.paths.join("+"));
-    expect(pairs).not.toContain("Alpha+Gamma");
-  });
-
-  it("ignores a handful of shared names between big folders", () => {
-    const r = run({
-      entries: [...copyOf("A", docs(60, "a")), ...copyOf("B", [...docs(5, "a"), ...docs(55, "b")])],
-    });
-    expect(kinds(run({ entries: [] }))).toEqual([]);
-    expect(kinds(r)).not.toContain("duplicateArchiveCopies");
-  });
-
-  it("says nothing when there is only one top-level folder", () => {
-    expect(kinds(run({ entries: copyOf("Only", docs(40)) }))).not.toContain(
-      "duplicateArchiveCopies",
-    );
-  });
-
-  it("does not run at all on an archive with hundreds of top-level folders", () => {
-    // The pair loop is O(n²) inside a render-time useMemo — measured at ~4.6s
-    // of blocked main thread at 3000 folders, paid twice per walk, to produce
-    // nothing. A folder-per-document archive is not exotic.
-    const entries = Array.from({ length: 200 }, (_, i) => copyOf(`f-${i}`, docs(30))).flat();
-    expect(kinds(run({ entries }))).not.toContain("duplicateArchiveCopies");
-  });
-});
-
-// ---------------------------------------------------------------------------
 // T1 — metadata
 // ---------------------------------------------------------------------------
 
 describe("metadata findings", () => {
-  const meta = (entries: [string, number, string][]) =>
-    new Map<string, FileMeta>(entries.map(([p, size, type]) => [p, { size, type }]));
-
   it("flags oversized, empty and type-less files", () => {
     const r = run({
       entries: [file("big.jpg"), file("empty.jpg"), file("mystery.jpg")],
@@ -476,15 +253,18 @@ describe("paths are complete, not a sample", () => {
 
 describe("ordering", () => {
   it("puts every loud finding before every quiet one", () => {
+    // #26.02 rewrote this case: it used to pair a quiet S-03 against a loud
+    // S-04 and both are gone. The pair below is chosen so the sort has
+    // something to do — F-17 is quiet and is pushed by `fileFindings`, F-08 is
+    // loud and is pushed by `metadataFindings`, several steps later. A
+    // no-op sort would leave the quiet one first.
     const r = run({
-      entries: [file("a.xyz")],
-      observations: [
-        obs({ pathParts: ["Q"], keptNames: ["x.jpg", "y.jpg"], dirNames: ["sub"] }),
-        obs({ pathParts: ["L"], keptNames: ["001.jpg", "002.jpg", "stray.jpg"] }),
-      ],
+      entries: [file("nota.docx"), file("scan.jpg")],
+      metadata: meta([
+        ["nota.docx", 1_000, "application/vnd.openxmlformats-officedocument.wordprocessingml.document"],
+        ["scan.jpg", 40 * 1024 * 1024, "image/jpeg"],
+      ]),
     });
-    const loudness = r.findings.map((f) => f.loudness);
-    expect(loudness).toEqual([...loudness].sort((a, b) => (a === b ? 0 : a === "loud" ? -1 : 1)));
-    expect(loudness[0]).toBe("loud");
+    expect(r.findings.map((f) => f.kind)).toEqual(["oversizedFiles", "officeFiles"]);
   });
 });
