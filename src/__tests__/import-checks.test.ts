@@ -52,6 +52,22 @@ function file(path: string): FSEntry {
   };
 }
 
+function pageGroupEntry(path: string, pageNames: string[]): FSEntry {
+  const parts = path.split("/");
+  return {
+    kind: "page-group",
+    name: parts[parts.length - 1],
+    path,
+    pathParts: parts,
+    handles: pageNames.map((n) => ({
+      kind: "file" as const,
+      name: n,
+      getFile: async () => new File([], n),
+    })),
+    titleHint: parts[parts.length - 1],
+  };
+}
+
 function dropped(path: string, reason: DroppedFile["reason"]): DroppedFile {
   const name = path.split("/").pop()!;
   return {
@@ -227,9 +243,131 @@ describe("file findings", () => {
     expect(find(r, "heicFiles")!.loudness).toBe("loud");
   });
 
-  it("reports duplicate basenames across folders", () => {
+  it("reports duplicate basenames across folders, listing every affected file", () => {
     const r = run({ entries: [file("A/fisa.jpg"), file("B/fisa.jpg"), file("C/alt.jpg")] });
-    expect(find(r, "duplicateBasenames")!.counts).toMatchObject({ names: 1, documents: 2 });
+    const f = find(r, "duplicateBasenames")!;
+    expect(f.counts).toMatchObject({ names: 1, documents: 2 });
+    // The path list must agree with `documents`, not with `names` — it used
+    // to show one example per group, so a finding claiming 192 affected files
+    // listed 86 paths.
+    expect(f.paths).toHaveLength(f.counts.documents);
+    expect(f.paths).toEqual(["A/fisa.jpg", "B/fisa.jpg"]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// S-16 — several copies of one archive under the picked folder
+// ---------------------------------------------------------------------------
+
+describe("duplicate archive copies (S-16)", () => {
+  const copyOf = (folder: string, names: string[]) => names.map((n) => file(`${folder}/${n}`));
+  const docs = (n: number, prefix = "document") =>
+    Array.from({ length: n }, (_, i) => `${prefix}-${i}.pdf`);
+
+  it("reports a pair of folders holding the same files", () => {
+    const files = docs(30);
+    const r = run({ entries: [...copyOf("Arhiva", files), ...copyOf("Arhiva.backup", files)] });
+    const f = find(r, "duplicateArchiveCopies")!;
+    expect(f.loudness).toBe("loud");
+    expect(f.paths).toEqual(["Arhiva", "Arhiva.backup"]);
+    expect(f.counts).toMatchObject({ sharedFiles: 30, smaller: 30 });
+  });
+
+  it("catches a PARTIAL copy, where one folder is a subset of the other", () => {
+    // `CLINCENI` holds 20 identifying files against `CLINCENI.original`'s 248,
+    // and every one of them is in the original. An overlap coefficient scores
+    // that 1.00; a Jaccard index would score it 0.08 and miss the real case.
+    const big = docs(120);
+    const r = run({ entries: [...copyOf("Full", big), ...copyOf("Light", big.slice(0, 22))] });
+    expect(find(r, "duplicateArchiveCopies")!.paths).toEqual(["Full", "Light"]);
+  });
+
+  // ---- the false positives that nearly shipped -------------------------
+
+  it("stays SILENT for twenty distinct properties sharing boilerplate names", () => {
+    // The near-miss this rule's thresholds exist for. At 0.75/3 every pair of
+    // these scored 3/4 and all twenty collapsed into one "family", so the
+    // report told the user — loudly, directly beneath S-01 saying these are
+    // twenty separate properties — to keep one and discard nineteen.
+    const entries = Array.from({ length: 20 }, (_, i) =>
+      copyOf(`prop-${i}`, [
+        "Fisa corp proprietate.jpg",
+        "PAD.jpg",
+        "Plan parcelar.jpg",
+        `Extras CF owner${i}.pdf`,
+      ]),
+    ).flat();
+    expect(kinds(run({ entries }))).not.toContain("duplicateArchiveCopies");
+  });
+
+  it("stays silent even when siblings share TEN boilerplate names", () => {
+    const boiler = Array.from({ length: 10 }, (_, k) => `boiler${k}.jpg`);
+    const entries = Array.from({ length: 20 }, (_, i) =>
+      copyOf(`prop-${i}`, [...boiler, `unic${i}.pdf`]),
+    ).flat();
+    expect(kinds(run({ entries }))).not.toContain("duplicateArchiveCopies");
+  });
+
+  it("stays silent for two properties whose scan folders are both 001..N", () => {
+    // Purely numeric basenames are scanner output and identify nothing: two
+    // unrelated properties scanned on the same machine both hold 001.jpg…
+    // This is the most common folder shape in the whole archive.
+    const pages = Array.from({ length: 40 }, (_, i) => `${String(i).padStart(3, "0")}.jpg`);
+    const r = run({
+      entries: [
+        ...copyOf("Casa Bucuresti/Scan", pages),
+        ...copyOf("Teren Ilfov/Scan", pages),
+      ],
+    });
+    expect(kinds(r)).not.toContain("duplicateArchiveCopies");
+  });
+
+  it("ignores numeric page names inside page GROUPS too", () => {
+    // The same trap by the other route: a page group contributes its pages'
+    // names, so two unrelated multi-page scans would otherwise look identical.
+    const pages = Array.from({ length: 40 }, (_, i) => `${String(i).padStart(3, "0")}.jpg`);
+    const r = run({
+      entries: [pageGroupEntry("A/Scan", pages), pageGroupEntry("B/Scan", pages)],
+    });
+    expect(kinds(r)).not.toContain("duplicateArchiveCopies");
+  });
+
+  it("does not link two archives through a small folder that overlaps both", () => {
+    // Connected components merged Alpha and Gamma — 100 files each, half in
+    // common — into one family because a 25-file folder was a subset of both.
+    // Pairs cannot do that: each finding names two folders the user can open
+    // side by side and check.
+    const alpha = docs(100, "a");
+    const gamma = [...alpha.slice(0, 50), ...docs(50, "c")];
+    const r = run({
+      entries: [...copyOf("Alpha", alpha), ...copyOf("Gamma", gamma), ...copyOf("Bridge", alpha.slice(0, 25))],
+    });
+    const pairs = r.findings
+      .filter((f) => f.kind === "duplicateArchiveCopies")
+      .map((f) => f.paths.join("+"));
+    expect(pairs).not.toContain("Alpha+Gamma");
+  });
+
+  it("ignores a handful of shared names between big folders", () => {
+    const r = run({
+      entries: [...copyOf("A", docs(60, "a")), ...copyOf("B", [...docs(5, "a"), ...docs(55, "b")])],
+    });
+    expect(kinds(run({ entries: [] }))).toEqual([]);
+    expect(kinds(r)).not.toContain("duplicateArchiveCopies");
+  });
+
+  it("says nothing when there is only one top-level folder", () => {
+    expect(kinds(run({ entries: copyOf("Only", docs(40)) }))).not.toContain(
+      "duplicateArchiveCopies",
+    );
+  });
+
+  it("does not run at all on an archive with hundreds of top-level folders", () => {
+    // The pair loop is O(n²) inside a render-time useMemo — measured at ~4.6s
+    // of blocked main thread at 3000 folders, paid twice per walk, to produce
+    // nothing. A folder-per-document archive is not exotic.
+    const entries = Array.from({ length: 200 }, (_, i) => copyOf(`f-${i}`, docs(30))).flat();
+    expect(kinds(run({ entries }))).not.toContain("duplicateArchiveCopies");
   });
 });
 

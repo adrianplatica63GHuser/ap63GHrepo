@@ -12,6 +12,7 @@
  * integration harness the old note implied.
  */
 
+import { checkFolder } from "@/lib/import/checks";
 import {
   classifyIgnoredFileName,
   isIgnoredFileName,
@@ -21,6 +22,9 @@ import {
   tagsForEntry,
   perToSlash,
   walkFolder,
+  MAX_WALK_DEPTH,
+  MAX_WALK_DIRECTORIES,
+  MAX_WALK_ENTRIES,
   type DirectoryObservation,
   type FSDirectoryHandle,
 } from "@/lib/import/folder-utils";
@@ -424,5 +428,180 @@ describe("classifyIgnoredFileName (#24.02b)", () => {
     for (const n of [".x", "Thumbs.db", "plan.dwg", "scan.jpg", "a.pdf", "folder.jpg"]) {
       expect(isIgnoredFileName(n)).toBe(classifyIgnoredFileName(n) !== null);
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The walk terminates  (Slice #26.00)
+// ---------------------------------------------------------------------------
+
+/**
+ * These are the only tests in the suite whose failure mode is "the test run
+ * never finishes". Before the guards existed, `cyclicHandle` below hung
+ * `walkFolder` forever — which is precisely what it did to the wizard, with
+ * no timeout, no cancel, and no exit but closing the tab.
+ */
+describe("walkFolder termination guards (#26.00)", () => {
+  /**
+   * A directory that contains ITSELF.
+   *
+   * This is not a contrived shape. A Windows directory junction or shortcut
+   * pointing at one of its own ancestors produces exactly this, and the File
+   * System Access API reports it as an ordinary subdirectory — there is
+   * nothing in the handle to distinguish it from a real folder.
+   */
+  function cyclicHandle(name: string): FSDirectoryHandle {
+    const self = {
+      kind: "directory",
+      name,
+      async *values() {
+        yield { kind: "file", name: "act.pdf", getFile: async () => new File([], "act.pdf") } as never;
+        yield self as never;      // ← the junction
+      },
+    };
+    return self as unknown as FSDirectoryHandle;
+  }
+
+  /** A directory with `width` self-referencing children — a branching cycle. */
+  function branchingCycle(name: string, width: number): FSDirectoryHandle {
+    const self = {
+      kind: "directory",
+      name,
+      async *values() {
+        for (let i = 0; i < width; i++) yield self as never;
+      },
+    };
+    return self as unknown as FSDirectoryHandle;
+  }
+
+  function chain(depth: number): FSDirectoryHandle {
+    const make = (d: number): FSDirectoryHandle =>
+      ({
+        kind: "directory",
+        name: `d${d}`,
+        async *values() {
+          yield { kind: "file", name: `f${d}.pdf`, getFile: async () => new File([], "f.pdf") } as never;
+          if (d < depth) yield make(d + 1) as never;
+        },
+      }) as unknown as FSDirectoryHandle;
+    return make(0);
+  }
+
+  function wideTree(dirs: number): FSDirectoryHandle {
+    return {
+      kind: "directory",
+      name: "root",
+      async *values() {
+        for (let i = 0; i < dirs; i++) {
+          yield {
+            kind: "directory",
+            name: `sub-${i}`,
+            async *values() {
+              yield { kind: "file", name: "a.pdf", getFile: async () => new File([], "a.pdf") } as never;
+            },
+          } as never;
+        }
+      },
+    } as unknown as FSDirectoryHandle;
+  }
+
+  /** A single directory that yields entries forever — breadth, not depth. */
+  function endlessDirectory(): FSDirectoryHandle {
+    return {
+      kind: "directory",
+      name: "Scanari",
+      async *values() {
+        for (let i = 0; ; i++) {
+          yield { kind: "file", name: `p${i}.jpg`, getFile: async () => new File([], "p.jpg") } as never;
+        }
+      },
+    } as unknown as FSDirectoryHandle;
+  }
+
+  it("TERMINATES on ONE folder that never stops yielding files", async () => {
+    // The depth and directory guards are both irrelevant here: the walk never
+    // returns from a single directory's enumeration, so neither is ever
+    // consulted. The first version of this slice missed this entirely and
+    // still claimed "the walk cannot hang" — in a browser this is an OOM tab,
+    // not a slow read.
+    const seen: DirectoryObservation[] = [];
+    const entries = await walkFolder(endlessDirectory(), [], (o) => seen.push(o));
+    expect(entries.length).toBeLessThanOrEqual(MAX_WALK_ENTRIES);
+    expect(seen.some((o) => o.truncated === "breadth")).toBe(true);
+  });
+
+  it("TERMINATES on a folder that contains itself", async () => {
+    // If this regresses, this test does not fail — it hangs. That is the
+    // point: it is the wizard's behaviour reproduced in a millisecond.
+    const seen: DirectoryObservation[] = [];
+    const entries = await walkFolder(cyclicHandle("Arhiva"), [], (o) => seen.push(o));
+    expect(seen.some((o) => o.truncated !== undefined)).toBe(true);
+    expect(entries.length).toBeGreaterThan(0);
+    expect(entries.length).toBeLessThan(MAX_WALK_DEPTH + 2);
+  });
+
+  it("terminates on a cycle that BRANCHES, where the depth cap alone is not enough", async () => {
+    // Three self-links per level is 3^12 paths before the depth cap bites.
+    // The directory budget is what actually stops this one.
+    const seen: DirectoryObservation[] = [];
+    await walkFolder(branchingCycle("Arhiva", 3), [], (o) => seen.push(o));
+    expect(seen.filter((o) => o.truncated === "budget").length).toBeGreaterThan(0);
+    expect(seen.length).toBeLessThan(MAX_WALK_DIRECTORIES * 4);
+  });
+
+  it("says WHY it stopped rather than returning a quietly smaller archive", async () => {
+    const seen: DirectoryObservation[] = [];
+    const entriesFromCycle = await walkFolder(cyclicHandle("Arhiva"), [], (o) => seen.push(o));
+    const stopped = seen.filter((o) => o.truncated !== undefined);
+    expect(stopped.length).toBeGreaterThan(0);
+    expect(stopped[0].truncated).toBe("depth");
+    // A shortcut loop does not SHRINK the archive, it multiplies it — the same
+    // files are read again under `Arhiva/Arhiva/…`. The report's numbers come
+    // out inflated, which is why its message says "do not import".
+    expect(entriesFromCycle.length).toBeGreaterThan(1);
+    // A refused directory reports nothing read — the report must not mistake
+    // "I could not look" for "there was nothing there".
+    expect(stopped[0].keptNames).toEqual([]);
+    expect(stopped[0].dirNames).toEqual([]);
+  });
+
+  it("reads a chain right up to the limit without complaining", async () => {
+    const seen: DirectoryObservation[] = [];
+    const entries = await walkFolder(chain(MAX_WALK_DEPTH), [], (o) => seen.push(o));
+    expect(seen.some((o) => o.truncated !== undefined)).toBe(false);
+    expect(entries).toHaveLength(MAX_WALK_DEPTH + 1);
+  });
+
+  it("stops one level past the limit", async () => {
+    const seen: DirectoryObservation[] = [];
+    await walkFolder(chain(MAX_WALK_DEPTH + 3), [], (o) => seen.push(o));
+    expect(seen.filter((o) => o.truncated === "depth").length).toBe(1);
+  });
+
+  it("does not put ten thousand near-identical paths in the finding", async () => {
+    // A branching cycle truncates in ~10,000 places whose paths are the same
+    // folder name in 10,000 combinations. The first version of this rule put
+    // every one of them in the finding, which the HTML export then wrote out
+    // in full. The count must stay true while the list stays readable.
+    const obs: DirectoryObservation[] = [];
+    const entries = await walkFolder(branchingCycle("X", 3), [], (o) => obs.push(o));
+    const { findings } = checkFolder({ entries, observations: obs });
+    const truncation = findings.filter((f) =>
+      ["walkLoopedOnShortcut", "walkTooManyFolders", "walkTooManyFiles"].includes(f.kind),
+    );
+    expect(truncation.length).toBeGreaterThan(0);
+    for (const f of truncation) {
+      expect(f.paths).toHaveLength(1);
+      expect(f.counts.places).toBeGreaterThan(1);   // the total is not hidden
+    }
+  });
+
+  it("leaves a real archive completely untouched", async () => {
+    // The deepest real folder is 5 levels and 118 directories; the guards sit
+    // at 12 and 5000. This pins that they are nowhere near ordinary use.
+    const seen: DirectoryObservation[] = [];
+    const entries = await walkFolder(wideTree(118), [], (o) => seen.push(o));
+    expect(seen.some((o) => o.truncated !== undefined)).toBe(false);
+    expect(entries).toHaveLength(118);
   });
 });
