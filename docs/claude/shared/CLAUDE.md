@@ -16,12 +16,60 @@ commands and reasoning about architecture, but he leans on Claude as a full-stac
 partner. Windows + PowerShell 5.1. He prefers small, deliberate changes over big rewrites.
 All conversation with Claude is in English.
 
+## Speed is a requirement, not a preference
+
+**This is a property archive for one business user, not a flight system.** Ciprian is one
+room away from the development team, which is Adrian. Nothing here fails in a way that
+cannot be corrected in the next slice. Care that would be proportionate at NASA is, here,
+simply a way of shipping less — and shipping less is the real risk to this project.
+
+The measure that matters is **slices per session**, not defects per slice. A session that
+ships six good-enough slices beats one that ships two immaculate ones, because the six get
+in front of a user who will tell us which of them was actually wrong.
+
+So the default changed:
+
+- **Claude decides. Claude does not ask.** When a choice has a defensible answer, take it,
+  say in one line what was taken and why, and keep going. Adrian picks the recommended
+  option almost every time, and when he does not recognise the question he is trusting
+  Claude to answer it anyway — so the question was costing time and buying nothing.
+- **Ask only about the irreversible.** Data that cannot be recovered, money that cannot be
+  refunded, a decision that cannot be undone in a later slice. Everything else is a
+  decision, not a question.
+- **Good enough now beats perfect later.** Ship the recommended choice, note it in the
+  handover, and revisit it when real use or a periodic review says it was wrong. A decision
+  revisited with evidence costs one small slice; a decision debated in advance costs an
+  afternoon and is still a guess.
+- **Never block on a question.** If something genuinely needs Adrian, make the call that
+  can be reversed most cheaply, carry on to the end of the slice, and put the question in
+  the handover. Waiting on an answer is the single most expensive thing in a session.
+- **Do not re-litigate a settled decision.** Once a choice is made and stated, build on it.
+  Offering to revert it later in the same handover is another question wearing a hat.
+
+**The adversarial review is the one thing that does NOT get cut** (Adrian, explicitly). Every
+non-trivial slice goes to a fresh-context subagent with a "find what breaks" brief, and after
+the fixes it goes again — round after round until one comes back with nothing that matters.
+It has earned this: in Slice #26.02 the first round found a rule that told a business user to
+delete a folder full of documents, and the SECOND round — on the already-fixed code — found a
+walk bug that made a violation message unfixable, so the user could never leave the loop.
+A round that finds nothing is cheap; a round skipped is how those ship.
+
+What that costs is tokens and subagent time, not Adrian's time, which is the whole point:
+review rounds run without anyone waiting on them, and they never turn into a question. Do not
+ask whether to run one, do not report the clean rounds at length, and do not let a review
+round become a reason to stop and check in.
+
+Everything else in verification is proportionate: `tsc` and `jest` green, re-read your own
+diff, and stop. Do not gold-plate the parts a review would not have caught anyway.
+
 ## The working contract
 
-- **One vertical slice at a time.** Confirm the current slice before writing any code.
-- **Wait for approval before writing code** at the start of every slice.
-- **Plan first, then build the whole thing.** Present the plan and wait for a go-ahead. Once
-  Adrian says go, implement the slice end-to-end — do not stop for per-file approval.
+- **One vertical slice at a time.** If which slice is meant is genuinely ambiguous, say which
+  one you are taking and take it. Do not ask.
+- **Plan first, then build the whole thing.** Present the plan and start building. Do not
+  wait for a go-ahead unless the slice destroys data or changes a migration — a plan Adrian
+  disagrees with costs one message to redirect, and a plan he never had time to read costs
+  the whole session. Do not stop for per-file approval.
 - **One exception: migrations.** When a slice adds or changes a migration, stop after the
   migration file and the matching `schema/index.ts` change, and wait for confirmation before
   writing anything against them. A wrong schema decision caught here costs one file; caught
@@ -45,30 +93,34 @@ All conversation with Claude is in English.
 
 ## Autonomy — what Claude may do without asking
 
-Token budget is no longer the constraint. Spend it on **certainty**, not on volume of code.
-More tokens should buy a better-understood, better-verified slice — never a bigger one.
+Token budget is not the constraint and never was. **Wall-clock is.** Spend tokens to avoid
+waiting: read in parallel, work in parallel, decide rather than ask. More tokens should buy
+a slice that arrives sooner, not one that arrives later with a better pedigree.
 
 **Read freely.** Read whatever files you need, whenever you need them, without asking. Grep
 before assuming. When a question spans many files or you're unfamiliar with an area, fan out
 parallel subagents to map it and report back — that is cheaper than one wrong assumption.
 The old "read only these three files" restriction is withdrawn.
 
-**Verify deeply.** Beyond the standard verification order, before handing work over:
-run the full-project `tsc --noEmit`; re-read your own diff end to end; and for anything
-non-trivial, hand the diff to a fresh-context subagent with an adversarial brief ("find what
-breaks") rather than reviewing it yourself.
+**Verify deeply, and review adversarially every time.** `tsc --noEmit` and `jest` green, and
+re-read your own diff. Then hand the diff to a fresh-context subagent briefed to find what
+breaks — and keep handing it back after each round of fixes until a round returns nothing
+worth acting on. This is not the thing to economise on; see "Speed is a requirement" above
+for what is.
 
-**Flag what you notice.** If you spot adjacent bugs, dead code, pattern drift or a rule in an
-instruction file that the code contradicts, say so — in a short **"Noticed, not fixed"**
-section at the end of the handover. Report it; do not fix it inside the slice without asking.
+**Fix what you notice, when it is small.** An adjacent one-line bug, a stale comment, a
+message that contradicts the code: fix it and list it under **"Fixed in passing"** in the
+handover. Anything larger than a few lines, or that changes a shipped contract, goes under
+**"Noticed, not fixed"** with what you would do. Do not ask permission for either.
 
-**Still requires an explicit go-ahead, every time:**
+**Still requires an explicit go-ahead, every time — and this list is now the whole list:**
 
-- Committing or pushing. Adrian commits; Claude prepares content. Same for anything else
-  irreversible.
-- Writing outside the current repo.
+- Committing or pushing. Adrian commits; Claude prepares content.
+- Deleting or overwriting anything of Adrian's outside the repo.
 - Any destructive database operation, and any command against a UAT or production box.
-- Widening the slice: implementing something adjacent because it seemed useful.
+
+Everything else is Claude's call. Widening a slice by a file or two to make the work coherent
+is a decision to state, not a permission to request.
 
 ## Delivering work
 
