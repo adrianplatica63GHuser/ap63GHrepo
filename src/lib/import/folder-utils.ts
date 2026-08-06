@@ -439,7 +439,19 @@ export type DirectoryObservation = {
   dropped: DroppedFile[];
   /** Did this directory collapse into a single multi-page Document? */
   becamePageGroup: boolean;
+  /**
+   * Set when the walk REFUSED to read this directory, and why.
+   *
+   * When present, `keptNames` and `dirNames` are empty because nothing was
+   * enumerated — not because the directory is empty. The distinction matters:
+   * the report must say "I could not read this" rather than silently showing
+   * a smaller archive than the user has.
+   */
+  truncated?: WalkLimit;
 };
+
+/** Which guard stopped the walk. */
+export type WalkLimit = "depth" | "budget" | "breadth";
 
 /**
  * Called once per directory, at the exact point the walk commits to its
@@ -451,6 +463,55 @@ export type DirectoryObservation = {
  * disagreeing with it. Optional, so every existing caller is untouched.
  */
 export type WalkObserver = (observation: DirectoryObservation) => void;
+
+/**
+ * How deep the walk will go before refusing to descend further.
+ *
+ * ⚠️ **This guard is the only thing standing between the wizard and an
+ * unrecoverable hang.** A Windows directory junction (or any symlink) that
+ * points at one of its own ancestors makes the recursion below infinite: the
+ * File System Access API reports it as an ordinary subdirectory, the walk
+ * descends, and finds the same junction again. There is no timeout on the
+ * walk and no way to cancel it once started, so the tab must be killed.
+ *
+ * Twelve is far outside anything legitimate. The deepest folder in the real
+ * archive is 5, and the structure rules now being introduced cap a compliant
+ * archive at 3 (root → property → page folder). Twelve leaves room for the
+ * undisciplined folders that exist today while still killing a cycle almost
+ * immediately.
+ */
+export const MAX_WALK_DEPTH = 12;
+
+/**
+ * How many directories the walk will read in total before giving up.
+ *
+ * The depth cap alone is not sufficient. A directory containing TWO junctions
+ * back to its ancestors branches at every level, so the number of paths grows
+ * as 2^depth — bounded, but 4096 subtree walks before the depth cap bites.
+ * Three junctions is half a million. This budget bounds the total work
+ * regardless of how the cycle is shaped, and incidentally bounds a genuinely
+ * enormous archive too.
+ *
+ * The largest real folder reads 118 directories, so 5000 is roughly forty
+ * times the observed maximum.
+ */
+export const MAX_WALK_DIRECTORIES = 5000;
+
+/**
+ * How many directory entries the walk will enumerate in total.
+ *
+ * ⚠️ **Without this, the other two guards do not deliver what they claim.**
+ * They bound how DEEP the walk goes and how many directories it descends into
+ * — but a single directory's `values()` is iterated with no cap at all, so one
+ * folder yielding millions of entries (or a stalled network mount whose
+ * generator never returns) hangs or OOMs the tab before either guard is ever
+ * consulted. Depth and breadth are separate failure modes and the first review
+ * of this slice caught only the first one being handled.
+ *
+ * The largest real folder yields 592 files across 118 directories, so 50,000
+ * is roughly eighty times the observed maximum while still failing fast.
+ */
+export const MAX_WALK_ENTRIES = 50_000;
 
 function makeObservation(
   pathParts: string[],
@@ -501,12 +562,59 @@ export async function walkFolder(
   pathParts: string[] = [],
   observe?: WalkObserver,
 ): Promise<FSEntry[]> {
+  // A budget shared by the whole walk, not per-branch — a cycle that branches
+  // would defeat any per-branch counter.
+  return walkInto(dirHandle, pathParts, observe, { directoriesRead: 0, entriesSeen: 0 });
+}
+
+type WalkBudget = { directoriesRead: number; entriesSeen: number };
+
+async function walkInto(
+  dirHandle: FSDirectoryHandle,
+  pathParts: string[],
+  observe: WalkObserver | undefined,
+  budget: WalkBudget,
+): Promise<FSEntry[]> {
+  // Refuse BEFORE enumerating. Stopping here keeps the refusal cheap and the
+  // reason unambiguous.
+  const limit: WalkLimit | null =
+    pathParts.length > MAX_WALK_DEPTH
+      ? "depth"
+      : budget.directoriesRead >= MAX_WALK_DIRECTORIES
+        ? "budget"
+        : null;
+  if (limit !== null) {
+    // Announce it. A guard that stops quietly produces exactly the failure
+    // this codebase has already had once: a confident report describing less
+    // data than the user actually has.
+    observe?.({
+      path: pathParts.join("/"),
+      pathParts: [...pathParts],
+      depth: pathParts.length,
+      keptNames: [],
+      dirNames: [],
+      dropped: [],
+      becamePageGroup: false,
+      truncated: limit,
+    });
+    return [];
+  }
+  budget.directoriesRead += 1;
+
   const results: FSEntry[] = [];
   const childFiles: { name: string; handle: FSFileHandle }[] = [];
   const childDirs: { name: string; handle: FSDirectoryHandle }[] = [];
   const dropped: DroppedFile[] = [];
 
+  let ranOutOfEntries = false;
   for await (const child of dirHandle.values()) {
+    // Checked INSIDE the enumeration, because this is the only guard that can
+    // stop a single directory that never stops yielding.
+    if (budget.entriesSeen >= MAX_WALK_ENTRIES) {
+      ranOutOfEntries = true;
+      break;
+    }
+    budget.entriesSeen += 1;
     if (child.kind === "file") {
       // fix 7.9 (and Slice #24.04): drop hidden files, Windows metadata and
       // the "ignored" extensions here, before page-group detection, so they
@@ -546,7 +654,10 @@ export async function walkFolder(
     }
   }
 
-  observe?.(makeObservation(pathParts, childFiles, childDirs, dropped, false));
+  observe?.({
+    ...makeObservation(pathParts, childFiles, childDirs, dropped, false),
+    ...(ranOutOfEntries ? { truncated: "breadth" as const } : {}),
+  });
 
   // Emit individual files
   childFiles.sort((a, b) => a.name.localeCompare(b.name));
@@ -563,8 +674,13 @@ export async function walkFolder(
   // Recurse into subdirs
   childDirs.sort((a, b) => a.name.localeCompare(b.name));
   for (const { name, handle } of childDirs) {
-    const sub = await walkFolder(handle, [...pathParts, name], observe);
-    results.push(...sub);
+    const sub = await walkInto(handle, [...pathParts, name], observe, budget);
+    // NOT `results.push(...sub)`. Spreading puts every entry of the subtree on
+    // the call stack as arguments, which throws RangeError at roughly 125,000
+    // entries — about 250 directories of ordinary size, one twentieth of the
+    // 5000 MAX_WALK_DIRECTORIES advertises as supported. A large but perfectly
+    // legitimate archive crashed the walk before any guard was reached.
+    for (const entry of sub) results.push(entry);
   }
 
   return results;

@@ -66,6 +66,8 @@
  */
 
 import {
+  MAX_WALK_DIRECTORIES,
+  MAX_WALK_ENTRIES,
   type DirectoryObservation,
   type FSEntry,
   type IgnoredReason,
@@ -95,6 +97,10 @@ export type FindingKind =
   | "gateFiles"               // F-05 — the run halts on a modal per file
   | "osDirectories"           // F-03
   | "duplicateBasenames"      // F-15
+  | "duplicateArchiveCopies"  // S-16 — see the rule; not in the spec catalogue
+  | "walkLoopedOnShortcut"    // S-17 — a shortcut makes the folder endless
+  | "walkTooManyFolders"      // S-17 — more subfolders than can be read at once
+  | "walkTooManyFiles"        // S-17 — more files than can be read at once
   | "officeFiles"             // F-17
   | "heicFiles"               // F-07
   | "oversizedFiles"          // F-08 — T1
@@ -160,6 +166,49 @@ const MAX_PAGE_NUMBER = 50;
 /** Below this a folder is not "trying" to be a page group, it is just a folder. */
 const MIN_IMAGES_FOR_NEAR_MISS = 2;
 
+/**
+ * S-16 thresholds — how alike two top-level folders must be to call them
+ * copies of one archive rather than two collections that share some names.
+ *
+ * ⚠️ **These are deliberately severe, and the reason is a near-miss that would
+ * have been destructive.** The first draft used 0.75 / 3 shared, on the
+ * grounds that the separation looked clean on Adrian's archive. It is not
+ * clean at all on the shape this application exists for: twenty property
+ * folders each holding `Fisa corp proprietate.jpg`, `PAD.jpg` and
+ * `Plan parcelar.jpg` plus one unique file score 3/4 = 0.75 against EVERY
+ * sibling, so all twenty collapse into one "family" and the report tells the
+ * user — loudly, in amber, directly beneath S-01 saying these are twenty
+ * separate properties — to keep one and discard nineteen. Following that
+ * advice destroys the archive.
+ *
+ * So the rule now only speaks when the evidence is overwhelming:
+ *
+ *  - `COPY_MIN_SHARED = 20` — boilerplate is a handful of names; a real copy
+ *    shares dozens. This is what excludes the property-sibling case, and it
+ *    accepts that small copies go unreported. A four-file folder that happens
+ *    to be a copy is not worth the risk of the twenty-property false positive.
+ *  - `COPY_OVERLAP = 0.9` — near-total, not merely substantial.
+ *  - Purely numeric basenames are excluded entirely (see `identifyingNames`).
+ *
+ * Overlap is |A∩B| / min(|A|,|B|) rather than Jaccard, because a partial copy
+ * is still a copy: a light export holds a fraction of the original's files and
+ * every one of them is in the original.
+ */
+const COPY_OVERLAP = 0.9;
+const COPY_MIN_SHARED = 20;
+
+/**
+ * Above this many top-level folders the rule does not run at all.
+ *
+ * The pair loop is O(n²) with a set intersection each, inside a `useMemo` that
+ * runs on render — measured at ~4.6 s of blocked main thread for 3000 folders,
+ * paid twice per walk, to produce nothing. An archive organised one-folder-per-
+ * document is not exotic, and a comparison that costs seconds is not worth
+ * making when a hundred folders already means the picked root is not a
+ * two-or-three-copies situation.
+ */
+const COPY_MAX_FOLDERS = 150;
+
 /** Directory names that are never content, whatever the walk does with them (F-03). */
 const OS_DIRECTORY_NAMES_LC = new Set([
   "$recycle.bin",
@@ -187,6 +236,8 @@ export function checkFolder(input: {
     ...pageGroupFindings(observations),
     ...structureFindings(observations),
     ...fileFindings(entries),
+    ...duplicateCopyFindings(entries),
+    ...truncationFindings(observations),
     ...(metadata ? metadataFindings(entries, observations, metadata) : []),
   ];
 
@@ -538,6 +589,12 @@ function fileFindings(entries: readonly FSEntry[]): Finding[] {
 
   // F-15 — same basename in two folders produces two Documents with identical
   // titles, indistinguishable in every list in the application.
+  //
+  // Note this reports the SYMPTOM. When the duplicates cluster across
+  // top-level folders, the cause is usually S-16 below — the picked folder
+  // holds several copies of one archive — and that is the finding worth
+  // acting on, because the remedy is to pick a different folder rather than
+  // to rename anything.
   const byName = new Map<string, string[]>();
   for (const f of fileNames) {
     const key = f.name.toLowerCase();
@@ -549,11 +606,141 @@ function fileFindings(entries: readonly FSEntry[]): Finding[] {
       ruleId: "F-15",
       kind: "duplicateBasenames",
       loudness: "quiet",
-      paths: dupes.map((paths) => paths[0]),
+      // EVERY path, not one example per group. The sentence says "192 files
+      // share only 86 names"; listing 86 paths under it would contradict the
+      // number directly above them, which is the exact defect that made the
+      // first draft of the downloadable report misleading.
+      paths: dupes.flat(),
       counts: { names: dupes.length, documents: dupes.reduce((n, p) => n + p.length, 0) },
     });
   }
 
+  return out;
+}
+
+// ---------------------------------------------------------------------------
+// S-16 — the picked folder holds several copies of the same archive
+// ---------------------------------------------------------------------------
+
+/**
+ * Not in the spec catalogue. It came out of reading a real F-15 result:
+ * `01.Teren CLINCENI` reported 67 duplicated names across 154 files, and 45 of
+ * those 67 spanned more than one top-level subfolder — because the folder
+ * contains `CLINCENI`, `CLINCENI.original`, `CLINCENI.light.01` and
+ * `CIPI.coord.Clinceni.txt`, which are one archive at four stages.
+ *
+ * That matters because it changes the remedy completely. Sixty-seven unrelated
+ * name clashes would mean "rename some files, or live with it". Four copies of
+ * one archive means "pick `CLINCENI.original` and import once" — and the
+ * import has no concept of a copy, so without this it happily creates a
+ * document for every file in every copy.
+ *
+ * Related to F-14, but not the same and not blocked by it: F-14 compares the
+ * folder against Documents already in the database, which cannot run here
+ * because the Property is not resolved until after this report. This compares
+ * the copies against EACH OTHER, inside the walk already paid for.
+ */
+/**
+ * S-17 — the walk stopped early, and what that means depends on WHY.
+ *
+ * ⚠️ **The first version of this rule told the user the opposite of the truth.**
+ * It said the report was "incomplete" and that every number in it was
+ * understated. For the shortcut-loop case — the one it was written for — the
+ * numbers are *overstated*, often severalfold: a shortcut pointing at a parent
+ * folder makes the walk read the same files again under
+ * `Backup/Arhiva/Backup/Arhiva/…`, so a measured five-file archive reported as
+ * thirty-one documents, six page groups and twenty-four classification calls
+ * instead of four. A user who proceeded would have created twenty-six
+ * duplicate Documents and paid six times the AI cost. "Incomplete" invited
+ * exactly that. The truth is "do not import this until the shortcut is gone".
+ *
+ * The three reasons are three separate findings rather than one shared
+ * sentence, because their remedies have nothing in common: delete a shortcut,
+ * split a folder with too many subfolders, split a folder with too many files.
+ * One message covering all three told a user with six thousand legitimate
+ * property folders to go and find a shortcut that did not exist.
+ */
+function truncationFindings(observations: readonly DirectoryObservation[]): Finding[] {
+  const BY_REASON = {
+    depth: { kind: "walkLoopedOnShortcut", limit: 0 },
+    budget: { kind: "walkTooManyFolders", limit: MAX_WALK_DIRECTORIES },
+    breadth: { kind: "walkTooManyFiles", limit: MAX_WALK_ENTRIES },
+  } as const;
+
+  const out: Finding[] = [];
+  for (const reason of ["depth", "budget", "breadth"] as const) {
+    const hits = observations.filter((o) => o.truncated === reason);
+    if (hits.length === 0) continue;
+    const { kind, limit } = BY_REASON[reason];
+    // ONE example path, not all of them — the single exception to the "list
+    // every affected path" contract the rest of the report follows. A
+    // branching loop truncates in thousands of places whose paths are the same
+    // folder names in thousands of orders; listing them is noise, not
+    // completeness, and `places` still carries the true total.
+    //
+    // For a loop the example is useful despite its length: the repetition IS
+    // the evidence, and `Scurtatura/Acte/Scurtatura/Acte/…` shows the user
+    // their own loop. (An earlier version claimed to pick the "shallowest"
+    // path. It could not: a depth stop only ever happens at one exact depth,
+    // so every candidate tied and the reduce was a no-op dressed as a choice.)
+    out.push({
+      ruleId: "S-17",
+      kind,
+      loudness: "loud",
+      paths: [hits[0].path],
+      counts: { places: hits.length, limit },
+    });
+  }
+  return out;
+}
+
+function duplicateCopyFindings(entries: readonly FSEntry[]): Finding[] {
+  // Identifying filenames per top-level subfolder.
+  const byTopLevel = new Map<string, Set<string>>();
+  for (const entry of entries) {
+    const top = entry.pathParts[0];
+    if (!top) continue;                       // a file sitting at the root
+    let names = byTopLevel.get(top);
+    if (!names) byTopLevel.set(top, (names = new Set()));
+    if (entry.kind === "file") addIdentifying(names, entry.name);
+    else for (const handle of entry.handles) addIdentifying(names, handle.name);
+  }
+
+  const tops = [...byTopLevel.keys()];
+  if (tops.length < 2 || tops.length > COPY_MAX_FOLDERS) return [];
+
+  // ONE FINDING PER PAIR, deliberately — not per connected "family".
+  //
+  // Grouping A–B–C by connected components sounded right (the user's decision
+  // is "which of these do I keep") and was wrong twice over. It merged folders
+  // that are not copies of each other: a 25-file folder overlapping two
+  // 100-file archives linked those two into one family although they share
+  // half their contents at most. And it made the headline number unverifiable
+  // — "the same N files" had no true reading across a family whose members
+  // overlap pairwise but not jointly.
+  //
+  // A pair states something the user can check by opening two folders side by
+  // side, which is exactly what they will do next.
+  const out: Finding[] = [];
+  for (let i = 0; i < tops.length; i++) {
+    for (let j = i + 1; j < tops.length; j++) {
+      const a = byTopLevel.get(tops[i])!;
+      const b = byTopLevel.get(tops[j])!;
+      // Iterate the SMALLER set — on the real archive this compares a
+      // 4-element set against a 409-element one.
+      const [small, large] = a.size <= b.size ? [a, b] : [b, a];
+      let shared = 0;
+      for (const name of small) if (large.has(name)) shared++;
+      if (shared < COPY_MIN_SHARED || shared / small.size < COPY_OVERLAP) continue;
+      out.push({
+        ruleId: "S-16",
+        kind: "duplicateArchiveCopies",
+        loudness: "loud",
+        paths: [tops[i], tops[j]],
+        counts: { sharedFiles: shared, smaller: small.size },
+      });
+    }
+  }
   return out;
 }
 
@@ -674,6 +861,20 @@ function groupSkipped(observations: readonly DirectoryObservation[]): SkippedGro
 // ---------------------------------------------------------------------------
 // Small helpers
 // ---------------------------------------------------------------------------
+
+/**
+ * Add a filename only if it can identify anything.
+ *
+ * Purely numeric basenames — `001.jpg`, `8415.jpg` — are scanner output and
+ * carry no identity whatsoever: two unrelated properties scanned on the same
+ * machine both contain `001.jpg…004.jpg`, which made every pair of numbered
+ * scan folders look like copies of each other. That is the single most common
+ * shape in this archive.
+ */
+function addIdentifying(into: Set<string>, fileName: string): void {
+  if (/^\d+$/.test(baseName(fileName))) return;
+  into.add(fileName.toLowerCase());
+}
 
 function baseName(name: string): string {
   const dot = name.lastIndexOf(".");
