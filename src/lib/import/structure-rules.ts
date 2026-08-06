@@ -259,13 +259,23 @@ export const STRUCTURE_RULES: readonly StructureRule[] = Object.freeze([
   // of making that agree turns one sentence into three nested plurals. The
   // count of offenders plus the names is what the user acts on.
   { id: "STR-12", scope: "pageFolder",     counts: ["offending"],    values: ["folder", "examples"] },
-  { id: "STR-13", scope: "pageFolder",     counts: ["number"],       values: ["folder", "examples"] },
+  // ⚠️ A PAGE NUMBER IS AN IDENTIFIER, NOT A QUANTITY — so `number`, `lowest`
+  // and `highest` are values and not counts (moved there in #26.02).
+  //
+  // A bare `{n}` holding a JavaScript number is formatted by ICU with the
+  // locale's number format, and Romanian groups thousands with a full stop.
+  // These two sentences exist to be matched against filenames: as counts, the
+  // catalogue's own motivating example renders "numerotate de la 5.449 la
+  // 31.316" above files named `5449.jpg` and `31316.jpg`, and the user is
+  // asked to find a number that appears nowhere on their disk. `pages` stays
+  // a count, because it genuinely is one and because it drives a plural.
+  { id: "STR-13", scope: "pageFolder",     counts: [],               values: ["folder", "examples", "number"] },
   // STR-14 names the RANGE rather than the missing numbers. A folder of
   // scanner counters (`5449.jpg`, `31316.jpg`) is missing 25,867 page numbers,
   // and a sentence that tries to list them is unusable at exactly the moment
   // it matters most. "numbered from 5449 to 31316" says the same thing in one
   // line and is true of a simple gap too.
-  { id: "STR-14", scope: "pageFolder",     counts: ["pages", "lowest", "highest"], values: ["folder"] },
+  { id: "STR-14", scope: "pageFolder",     counts: ["pages"],        values: ["folder", "lowest", "highest"] },
 ] as const satisfies readonly StructureRule[]);
 
 /** Lookup by ID, so a caller never re-derives the order or the placeholders. */

@@ -433,7 +433,8 @@ export type DirectoryObservation = {
   /**
    * Subdirectory names. Never filtered — the system-file rule applies to
    * files only, so `.git` and `$RECYCLE.BIN` are walked like any folder and
-   * any one of them disqualifies a page group (F-03, S-03).
+   * any one of them disqualifies a page group (F-03, and STR-10 since #26.02
+   * deleted S-03).
    */
   dirNames: string[];
   dropped: DroppedFile[];
@@ -639,7 +640,22 @@ async function walkInto(
   if (pathParts.length > 0 && childDirs.length === 0 && childFiles.length > 0) {
     const names = childFiles.map((f) => f.name);
     if (isPageGroup(names)) {
-      observe?.(makeObservation(pathParts, childFiles, childDirs, dropped, true));
+      // ⚠️ THE TRUNCATION FLAG BELONGS HERE TOO (Slice #26.02).
+      //
+      // This branch returns before the observation below, and it used to omit
+      // `ranOutOfEntries` — so a directory that ran out of entry budget while
+      // being read, and whose surviving names happened to all be numbered
+      // scans, was reported as a COMPLETE page group. Nothing downstream could
+      // tell: S-17 stayed silent, and #26.02's structure check, which
+      // suppresses "the pages run 1…n" on a partial listing precisely so it
+      // cannot lie, saw no reason to. A folder of 200 pages read to page 96
+      // was reported as a 96-page document numbered 1 to 185, with an
+      // instruction to renumber from 1 that was already true — a fix-and-
+      // re-check loop the user could never leave.
+      observe?.({
+        ...makeObservation(pathParts, childFiles, childDirs, dropped, true),
+        ...(ranOutOfEntries ? { truncated: "breadth" as const } : {}),
+      });
       const sorted = sortNumericFilenames(names);
       const groupName = pathParts[pathParts.length - 1];
       results.push({

@@ -1983,12 +1983,6 @@
           "hidden": "{count} hidden files"
         },
         "finding": {
-          "rootIsScanFolder": "{numbered} of the {total} files in the chosen folder are numbered scans. They will become {numbered} separate documents. If these are pages of one document, choose the folder ABOVE this one instead.",
-          "nearMissNaming": "{images} images that look like pages of one document. Because their names are not plain numbers (1, 2, 3…), they will become {documentsNow} separate documents.",
-          "nearMissStrayFile": "{numbered} of the {total} files here are numbered scans, so they are pages of one document — but the other {strays} files mean this folder becomes {documentsNow} separate documents. Moving the {numbered} numbered files into a folder of their own would make them a single {numbered}-page document.",
-          "nearMissSubfolder": "This folder has {subfolders} subfolders, so it cannot become a single multi-page document — a folder with any subfolder is never merged. Its own {documents} files will each become a separate document. For a property folder that is normally exactly what you want, and there is nothing to fix. Look closer only if you expected those {documents} files to be the pages of one scanned document: in that case move them into a subfolder of their own, and they will merge.",
-          "pageOrderAmbiguous": "{collisions} pages of this {pages}-page document have the same page number (for example 1.jpg and 01.jpg). Their order will be arbitrary.",
-          "pageNumbersIrregular": "The {pages} pages of this document are numbered {lowest} to {highest} — scanner numbers rather than page numbers. Page order follows those numbers.",
           "multipleProperties": "The chosen folder contains {folders} subfolders that look like separate properties. The import links EVERY document to a single property, so they will all be merged into one.",
           "gateFiles": "{files} files ({extensions} different types) that the import cannot recognise. It will stop and ask you about each one before anything is imported.",
           "osDirectories": "{folders} Windows system folders will be imported like ordinary folders, and their names will become tags.",
@@ -1999,7 +1993,6 @@
           "emptyFiles": "{files} files are empty (0 bytes) and will fail to upload.",
           "unknownMimeFiles": "Windows did not report a file type for {files} files. They will upload, but automatic data extraction will never work on them.",
           "largeFolderJpg": "{files} files named “folder.jpg” are too big to be Windows thumbnails. They look like real scans, and they will be skipped without a trace.",
-          "duplicateArchiveCopies": "These two folders hold the same {sharedFiles} of the smaller one's {smaller} files — they look like two copies of one archive. The import has no concept of a copy: it will create a separate document for every file in both. Consider picking just one of them.",
           "walkLoopedOnShortcut": "This folder contains a shortcut pointing back at a folder above it, which makes it endlessly deep. The same files were therefore read many times over, so **every number in this report is larger than reality** — the documents, the pages and the AI costs are all inflated. Do not start the import. Delete the shortcut, then check the folder again.",
           "walkTooManyFolders": "This folder holds more than {limit} subfolders, which is more than can be read in one go, so this report is incomplete. Split it into several smaller folders and check again.",
           "walkTooManyFiles": "This folder holds more than {limit} files, which is more than can be read in one go, so this report is incomplete. Split it into several smaller folders and check again."
@@ -2038,7 +2031,7 @@
         "STR-04": {
           "requirement": "Every folder in the chosen folder is either a property, or common, or floating. A property name starts with the tarla and the parcela separated by a hyphen. per stands in for the slash, which cannot be used in a folder name.",
           "example": "Correct: 47per2-225per3per24, 48-50D, 225per3-24bis. Wrong: Acte 2019, Teren Bragadiru, 2024-Arhiva.",
-          "violation": "The folder {folder} is neither a property, nor common, nor floating. Rename it with the tarla and the parcela, for example 47per2-225per3per24, or move it into common or floating."
+          "violation": "The folder {folder} is neither a property, nor common, nor floating. Rename it with the tarla and the parcela, for example 47per2-225per3per24, or move the files out of it into common or floating and delete the empty folder."
         },
         "STR-05": {
           "requirement": "The shared folders are named exactly common and floating, in lower case.",
@@ -2051,9 +2044,9 @@
           "violation": "The name {folder} carries extra text after the tarla and the parcela but does not separate it with ||. Rename the folder to {suggestion}."
         },
         "STR-07": {
-          "requirement": "The files sitting directly in a property folder cannot all be numbered scans. The pages of a scanned document live in a subfolder whose name is the document title.",
+          "requirement": "The files sitting directly in a property folder — or in common or floating — cannot all be numbered scans. The pages of a scanned document live in a subfolder whose name is the document title.",
           "example": "Correct: 48-50D > Contract vanzare > 1.jpg, 2.jpg. Wrong: 48-50D > 1.jpg, 2.jpg.",
-          "violation": "Every file sitting directly in {folder} is a numbered scan ({files, plural, one {one file} other {# files}}), so the whole folder would become a single document called {folder} and the property would receive none of its documents. Move them into a subfolder whose name is the document title."
+          "violation": "Every file sitting directly in {folder} is a numbered scan ({files, plural, one {one file} other {# files}}). A number is not a document title, so the import would fall back on the folder name, or on the numbers themselves. Move them into a subfolder whose name is the document title."
         },
         "STR-08": {
           "requirement": "A property has at most one coordinate file: its name starts with coord and its extension is .txt. Having none is allowed and creates a property with no outline.",
@@ -2068,7 +2061,7 @@
         "STR-10": {
           "requirement": "A page folder contains only files. It has no further folders inside it.",
           "example": "Correct: 47per2-225per3per24 > Contract vanzare > 1.jpg, 2.jpg. Wrong: 47per2-225per3per24 > Contract vanzare > Anexe > 1.jpg.",
-          "violation": "The page folder {folder} contains {subfolders, plural, one {one more folder} other {# more folders}}: {examples}. A page folder cannot have folders inside it. Move each of them directly under the property folder."
+          "violation": "The page folder {folder} contains {subfolders, plural, one {one more folder} other {# more folders}}: {examples}. A page folder cannot have folders inside it. Move each of them one level up, beside this folder."
         },
         "STR-11": {
           "requirement": "Every page folder contains at least one file.",

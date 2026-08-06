@@ -1983,12 +1983,6 @@
           "hidden": "{count, plural, one {un fișier ascuns} few {# fișiere ascunse} other {# de fișiere ascunse}}"
         },
         "finding": {
-          "rootIsScanFolder": "{numbered} dintre cele {total} fișiere din folderul ales sunt scanări numerotate. Vor deveni {numbered} documente separate. Dacă acestea sunt paginile unui singur document, alegeți folderul DE DEASUPRA acestuia.",
-          "nearMissNaming": "{images, plural, one {O imagine care pare} few {# imagini care par} other {# de imagini care par}} paginile unui singur document. Fiindcă numele lor nu sunt numere simple (1, 2, 3…), vor deveni {documentsNow} documente separate.",
-          "nearMissStrayFile": "{numbered} din cele {total} fișiere de aici sunt scanări numerotate, deci sunt paginile unui singur document — dar celelalte {strays} fișiere fac ca acest folder să devină {documentsNow} documente separate. Mutarea celor {numbered} fișiere numerotate într-un folder al lor le-ar transforma într-un singur document de {numbered} pagini.",
-          "nearMissSubfolder": "Acest folder are {subfolders} subfoldere, deci nu poate deveni un singur document cu mai multe pagini — un folder care are orice subfolder nu este niciodată unificat. Cele {documents} fișiere proprii ale sale vor deveni fiecare un document separat. Pentru un folder de proprietate acest lucru este de obicei exact ceea ce doriți și nu aveți nimic de corectat. Verificați mai atent doar dacă vă așteptați ca acele {documents} fișiere să fie paginile unui singur document scanat: în acest caz mutați-le într-un subfolder al lor și vor fi unificate.",
-          "pageOrderAmbiguous": "{collisions} pagini ale acestui document de {pages} pagini au același număr de pagină (de exemplu 1.jpg și 01.jpg). Ordinea lor va fi arbitrară.",
-          "pageNumbersIrregular": "Cele {pages} pagini ale acestui document sunt numerotate de la {lowest} la {highest} — numere de scaner, nu numere de pagină. Ordinea paginilor urmează aceste numere.",
           "multipleProperties": "Folderul ales conține {folders} subfoldere care par proprietăți separate. Importul leagă TOATE documentele de o singură proprietate, deci vor fi contopite într-una singură.",
           "gateFiles": "{files, plural, one {Un fișier pe care importul nu îl recunoaște} few {# fișiere pe care importul nu le recunoaște} other {# de fișiere pe care importul nu le recunoaște}} ({extensions} tipuri diferite). Importul se va opri și vă va întreba despre fiecare înainte de a importa ceva.",
           "osDirectories": "{folders, plural, one {Un folder de sistem Windows va fi importat} few {# foldere de sistem Windows vor fi importate} other {# de foldere de sistem Windows vor fi importate}} ca foldere obișnuite, iar numele lor vor deveni etichete.",
@@ -1999,7 +1993,6 @@
           "emptyFiles": "{files, plural, one {Un fișier este gol} few {# fișiere sunt goale} other {# de fișiere sunt goale}} (0 octeți) și nu se vor putea încărca.",
           "unknownMimeFiles": "Windows nu a raportat tipul {files, plural, one {unui fișier} few {a # fișiere} other {a # de fișiere}}. Se vor încărca, dar extragerea automată a datelor nu va funcționa niciodată pentru ele.",
           "largeFolderJpg": "{files, plural, one {Un fișier numit „folder.jpg” este prea mare} few {# fișiere numite „folder.jpg” sunt prea mari} other {# de fișiere numite „folder.jpg” sunt prea mari}} pentru a fi miniaturi Windows. Par scanări reale și vor fi ignorate fără urmă.",
-          "duplicateArchiveCopies": "Aceste două foldere conțin aceleași {sharedFiles, plural, one {fișier} few {# fișiere} other {# de fișiere}} din cele {smaller} ale folderului mai mic — par să fie două copii ale aceleiași arhive. Importul nu recunoaște copiile: va crea câte un document separat pentru fiecare fișier din amândouă. Luați în considerare alegerea unuia singur dintre ele.",
           "walkLoopedOnShortcut": "Acest folder conține o scurtătură care trimite înapoi către un folder de deasupra, ceea ce îl face infinit de adânc. Din această cauză aceleași fișiere au fost citite de mai multe ori, deci **toate cifrele din acest raport sunt mai mari decât în realitate** — și numărul de documente, și numărul de pagini, și costurile AI. Nu porniți importul. Ștergeți scurtătura și verificați folderul din nou.",
           "walkTooManyFolders": "Acest folder conține mai mult de {limit} de subfoldere, mai multe decât pot fi citite dintr-o dată, deci acest raport este incomplet. Împărțiți-l în mai multe foldere mai mici și verificați din nou.",
           "walkTooManyFiles": "Acest folder conține mai mult de {limit} de fișiere, mai multe decât pot fi citite dintr-o dată, deci acest raport este incomplet. Împărțiți-l în mai multe foldere mai mici și verificați din nou."
@@ -2038,7 +2031,7 @@
         "STR-04": {
           "requirement": "Fiecare folder din folderul ales este ori o proprietate, ori „common”, ori „floating”. Numele unei proprietăți începe cu tarlaua și parcela, despărțite printr-o liniuță. „per” ține locul semnului „/”, care nu poate fi folosit în numele unui folder.",
           "example": "Corect: 47per2-225per3per24, 48-50D, 225per3-24bis. Greșit: „Acte 2019”, „Teren Bragadiru”, „2024-Arhiva”.",
-          "violation": "Folderul „{folder}” nu este nici o proprietate, nici „common”, nici „floating”. Redenumiți-l cu tarlaua și parcela, de exemplu 47per2-225per3per24, sau mutați-l în „common” ori în „floating”."
+          "violation": "Folderul „{folder}” nu este nici o proprietate, nici „common”, nici „floating”. Redenumiți-l cu tarlaua și parcela, de exemplu 47per2-225per3per24, sau mutați fișierele din el în „common” ori în „floating” și ștergeți folderul rămas gol."
         },
         "STR-05": {
           "requirement": "Folderele comune se numesc exact „common” și „floating”, cu litere mici.",
@@ -2051,9 +2044,9 @@
           "violation": "Numele „{folder}” are un text în plus după tarla și parcelă, dar nu îl desparte prin ||. Redenumiți folderul „{suggestion}”."
         },
         "STR-07": {
-          "requirement": "Fișierele aflate direct într-un folder de proprietate nu pot fi toate scanări numerotate. Paginile unui document scanat stau într-un subfolder al cărui nume este titlul documentului.",
+          "requirement": "Fișierele aflate direct într-un folder de proprietate — sau în „common” ori „floating” — nu pot fi toate scanări numerotate. Paginile unui document scanat stau într-un subfolder al cărui nume este titlul documentului.",
           "example": "Corect: 48-50D ▸ Contract vânzare ▸ 1.jpg, 2.jpg. Greșit: 48-50D ▸ 1.jpg, 2.jpg.",
-          "violation": "Toate fișierele aflate direct în „{folder}” sunt scanări numerotate ({files, plural, one {un fișier} few {# fișiere} other {# de fișiere}}), așa că întregul folder ar deveni un singur document numit „{folder}”, iar proprietatea nu ar primi documentele ei. Mutați-le într-un subfolder al cărui nume să fie titlul documentului."
+          "violation": "Toate fișierele aflate direct în „{folder}” sunt scanări numerotate ({files, plural, one {un fișier} few {# fișiere} other {# de fișiere}}). Un număr nu este un titlu de document, așa că importul ar folosi numele folderului sau chiar numerele fișierelor. Mutați-le într-un subfolder al cărui nume să fie titlul documentului."
         },
         "STR-08": {
           "requirement": "O proprietate are cel mult un fișier de coordonate: numele lui începe cu „coord” și are extensia .txt. Dacă nu are niciunul, proprietatea se creează fără contur, ceea ce este permis.",
@@ -2068,7 +2061,7 @@
         "STR-10": {
           "requirement": "Un folder de pagini conține numai fișiere. Nu are alte foldere în el.",
           "example": "Corect: 47per2-225per3per24 ▸ Contract vânzare ▸ 1.jpg, 2.jpg. Greșit: 47per2-225per3per24 ▸ Contract vânzare ▸ Anexe ▸ 1.jpg.",
-          "violation": "Folderul de pagini „{folder}” conține {subfolders, plural, one {un alt folder} few {alte # foldere} other {alte # de foldere}}: {examples}. Un folder de pagini nu poate avea foldere în el. Mutați fiecare astfel de folder direct sub folderul proprietății."
+          "violation": "Folderul de pagini „{folder}” conține {subfolders, plural, one {un alt folder} few {alte # foldere} other {alte # de foldere}}: {examples}. Un folder de pagini nu poate avea foldere în el. Mutați fiecare astfel de folder cu un nivel mai sus, lângă acest folder."
         },
         "STR-11": {
           "requirement": "Fiecare folder de pagini conține cel puțin un fișier.",

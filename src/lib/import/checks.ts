@@ -26,28 +26,51 @@
  * user decides — which also means every message has to earn its place, because
  * a wall of warnings nobody reads is the same as no warnings at all.
  *
+ * ⚠️ WHAT #26.02 TOOK OUT OF THIS FILE, AND WHY IT IS NOT COMING BACK
+ * ──────────────────────────────────────────────────────────────────
+ *
+ * Seven rules left in one commit, every one of them a question
+ * `structure-check.ts` now answers from the catalogue in `structure-rules.ts`:
+ *
+ *   S-16 duplicateArchiveCopies  → a nested copy is a plain STR-04 / STR-10 /
+ *                                  STR-12 violation with one instruction
+ *   S-03 nearMissSubfolder       → STR-10
+ *   S-04 nearMissStrayFile       → STR-12 inside a page folder; and LEGAL in a
+ *                                  property folder, where the user declared
+ *                                  separate documents by not making a subfolder
+ *   S-05 nearMissNaming          → STR-12
+ *   S-07 rootIsScanFolder        → STR-01
+ *   S-09 pageOrderAmbiguous      → STR-13
+ *   S-10 pageNumbersIrregular    → STR-14
+ *
+ * They were not merely redundant, they were the opposite KIND of answer. Each
+ * one inferred what the user probably meant from a folder shape nobody had
+ * agreed on, and said so advisorily; an STR rule states what the folder must be
+ * and blocks until it is. Two systems answering one question is how they drift,
+ * and these two would have drifted in opposite directions — S-04 urging a user
+ * to merge exactly the files the new rules say they deliberately kept apart.
+ *
+ * What survives is what the STR catalogue does not ask: S-01, still true of
+ * today's wizard, which merges every document into one Property until #26.07
+ * creates one per folder; S-17, because a shortcut is possible inside a
+ * perfectly compliant folder; F-03; and the F-rules about the files
+ * themselves, which move to the Constraints stage in #26.05.
+ *
  * LOUD AND QUIET
  * ──────────────
  *
- * Findings carry a loudness, and the split is empirical rather than aesthetic.
+ * Findings carry a loudness, and it still earns the disclosure in the panel —
+ * but it no longer discriminates much, and saying so is the honest version. The
+ * measured near-misses that justified the split (48 folders on Adrian's
+ * archive, 20 of them loud) were S-03, S-04 and S-05, and they are gone. Two
+ * quiet rules remain: F-17, because an Office file imports faithfully and is
+ * merely never read, and F-15, because duplicate titles are survivable — the
+ * folder names are still kept as tags. Everything else here is loud, because
+ * everything else here loses or corrupts something.
  *
- * Measured by running this module over Adrian's archive: 48 folders miss
- * page-group detection, splitting 20 on how the FILES are named (S-05), 11 on
- * numbered scans sharing a folder with other files (S-04), and 17 on the
- * folder having a subdirectory (S-03). Of those 48, exactly 8 are loud —
- * every one a genuine page sequence (`CVC 1 pg 1.jpg`/`CVC 1 pg 2.jpg`,
- * `TP 36034 fata.jpg`/`verso.jpg`) — plus the 11 S-04 folders and one
- * multi-property root, for 20 loud findings across the whole archive.
- *
- * Subfolder misses are quiet because they are overwhelmingly property folders
- * behaving exactly as intended, and because that is also where the biggest
- * folders live: a size threshold would have shouted about the 27-image and
- * 17-image folders that are fine and whispered about the 2-image pairs that
- * are not.
- *
- * These numbers are load-bearing — they are the entire justification for the
- * loudness policy. If a rule changes, re-measure rather than assuming, and
- * update this paragraph. It has already been wrong once.
+ * ⚠️ That is a claim about the current rule set, not a policy. It was measured
+ * once, drifted, and had to be rewritten; if a rule is added, measure it rather
+ * than assuming, and rewrite this paragraph again.
  *
  * SCOPE (settled with Adrian)
  * ───────────────────────────
@@ -72,7 +95,7 @@ import {
   type FSEntry,
   type IgnoredReason,
 } from "./folder-utils";
-import { isFileKind, fileKindsOf, isPageGroupMember } from "@/lib/files/file-kinds";
+import { isFileKind, fileKindsOf } from "@/lib/files/file-kinds";
 import { classifyFileSource } from "@/lib/metadata/provenance-rules";
 
 // ---------------------------------------------------------------------------
@@ -87,17 +110,10 @@ export type Loudness = "loud" | "quiet";
  * here holds display text, so the rules and their wording stay separable.
  */
 export type FindingKind =
-  | "rootIsScanFolder"        // S-07
-  | "nearMissNaming"          // S-05 — images, none with a plain-number name
-  | "nearMissStrayFile"       // S-04 — numbered scans + something else
-  | "nearMissSubfolder"       // S-03 — a subdirectory disqualified the folder
-  | "pageOrderAmbiguous"      // S-09 — two pages parse to the same number
-  | "pageNumbersIrregular"    // S-10 — gaps, or a >10x magnitude spread
   | "multipleProperties"      // S-01
   | "gateFiles"               // F-05 — the run halts on a modal per file
   | "osDirectories"           // F-03
   | "duplicateBasenames"      // F-15
-  | "duplicateArchiveCopies"  // S-16 — see the rule; not in the spec catalogue
   | "walkLoopedOnShortcut"    // S-17 — a shortcut makes the folder endless
   | "walkTooManyFolders"      // S-17 — more subfolders than can be read at once
   | "walkTooManyFiles"        // S-17 — more files than can be read at once
@@ -157,58 +173,6 @@ const MAX_UPLOAD_BYTES = 20 * 1024 * 1024;
 /** A real scan named `folder.jpg` is data loss; a genuine Windows thumbnail is tiny. */
 const THUMBNAIL_BYTES = 100 * 1024;
 
-/** S-10: scanner counters vs page numbers. `5449.jpg` beside `31316.jpg` is not page 1 and page 2. */
-const PAGE_MAGNITUDE_SPREAD = 10;
-
-/** Above this, a trailing number in a filename is a year or a receipt number, not a page. */
-const MAX_PAGE_NUMBER = 50;
-
-/** Below this a folder is not "trying" to be a page group, it is just a folder. */
-const MIN_IMAGES_FOR_NEAR_MISS = 2;
-
-/**
- * S-16 thresholds — how alike two top-level folders must be to call them
- * copies of one archive rather than two collections that share some names.
- *
- * ⚠️ **These are deliberately severe, and the reason is a near-miss that would
- * have been destructive.** The first draft used 0.75 / 3 shared, on the
- * grounds that the separation looked clean on Adrian's archive. It is not
- * clean at all on the shape this application exists for: twenty property
- * folders each holding `Fisa corp proprietate.jpg`, `PAD.jpg` and
- * `Plan parcelar.jpg` plus one unique file score 3/4 = 0.75 against EVERY
- * sibling, so all twenty collapse into one "family" and the report tells the
- * user — loudly, in amber, directly beneath S-01 saying these are twenty
- * separate properties — to keep one and discard nineteen. Following that
- * advice destroys the archive.
- *
- * So the rule now only speaks when the evidence is overwhelming:
- *
- *  - `COPY_MIN_SHARED = 20` — boilerplate is a handful of names; a real copy
- *    shares dozens. This is what excludes the property-sibling case, and it
- *    accepts that small copies go unreported. A four-file folder that happens
- *    to be a copy is not worth the risk of the twenty-property false positive.
- *  - `COPY_OVERLAP = 0.9` — near-total, not merely substantial.
- *  - Purely numeric basenames are excluded entirely (see `identifyingNames`).
- *
- * Overlap is |A∩B| / min(|A|,|B|) rather than Jaccard, because a partial copy
- * is still a copy: a light export holds a fraction of the original's files and
- * every one of them is in the original.
- */
-const COPY_OVERLAP = 0.9;
-const COPY_MIN_SHARED = 20;
-
-/**
- * Above this many top-level folders the rule does not run at all.
- *
- * The pair loop is O(n²) with a set intersection each, inside a `useMemo` that
- * runs on render — measured at ~4.6 s of blocked main thread for 3000 folders,
- * paid twice per walk, to produce nothing. An archive organised one-folder-per-
- * document is not exotic, and a comparison that costs seconds is not worth
- * making when a hundred folders already means the picked root is not a
- * two-or-three-copies situation.
- */
-const COPY_MAX_FOLDERS = 150;
-
 /** Directory names that are never content, whatever the walk does with them (F-03). */
 const OS_DIRECTORY_NAMES_LC = new Set([
   "$recycle.bin",
@@ -233,10 +197,8 @@ export function checkFolder(input: {
   const { entries, observations, metadata } = input;
 
   const findings: Finding[] = [
-    ...pageGroupFindings(observations),
     ...structureFindings(observations),
     ...fileFindings(entries),
-    ...duplicateCopyFindings(entries),
     ...truncationFindings(observations),
     ...(metadata ? metadataFindings(entries, observations, metadata) : []),
   ];
@@ -253,229 +215,6 @@ export function checkFolder(input: {
     uploadBytes: metadata ? sumBytes(entries, metadata) : null,
     droppedCount: observations.reduce((n, o) => n + o.dropped.length, 0),
   };
-}
-
-// ---------------------------------------------------------------------------
-// Page groups — the highest-surprise class, and the reason this screen exists
-// ---------------------------------------------------------------------------
-
-function pageGroupFindings(observations: readonly DirectoryObservation[]): Finding[] {
-  const out: Finding[] = [];
-
-  for (const obs of observations) {
-    if (obs.becamePageGroup) {
-      out.push(...pageOrderFindings(obs));
-      continue;
-    }
-
-    const images = obs.keptNames.filter((n) => isFileKind(n, "image"));
-    if (images.length < MIN_IMAGES_FOR_NEAR_MISS) continue;
-
-    const numbered = obs.keptNames.filter(isPageGroupMember);
-
-    // S-07 — numbered scans at the PICKED ROOT can never be a page group, no
-    // matter how perfect the names, because the rule requires depth > 0. It
-    // almost always means the user picked the scan folder itself instead of
-    // its parent, and the whole run is one document's worth of pages exploded
-    // into one document each. Loud, and first.
-    if (obs.depth === 0) {
-      if (numbered.length >= MIN_IMAGES_FOR_NEAR_MISS) {
-        out.push({
-          ruleId: "S-07",
-          kind: "rootIsScanFolder",
-          loudness: "loud",
-          paths: numbered,
-          counts: { numbered: numbered.length, total: obs.keptNames.length },
-        });
-      }
-      continue;
-    }
-
-    // S-03 — quiet. A subdirectory disqualifies the folder outright, and on
-    // real archives this is overwhelmingly a property folder doing its job.
-    if (obs.dirNames.length > 0) {
-      out.push({
-        ruleId: "S-03",
-        kind: "nearMissSubfolder",
-        loudness: "quiet",
-        paths: [obs.path, ...obs.dirNames],
-        // `documents` is this folder's OWN files only — its subfolders produce
-        // their own documents on top. The Romanian says "fișierele sale" for
-        // that reason; do not reword it into a subtree total it is not.
-        counts: { documents: obs.keptNames.length, subfolders: obs.dirNames.length },
-      });
-      continue;
-    }
-
-    // S-04 — loud. Two or more numbered scans sit here alongside other files,
-    // so the numbered ones are a page sequence that will be exploded.
-    //
-    // Two things had to be right for this to be safe. It needs ≥2 numbered
-    // files, or `Donatie 2279 1998` — one scanner-counter name (`5421.jpg`)
-    // among four meaningful ones — would be diagnosed here instead of as the
-    // naming near-miss it actually is. And the advice must be "move the
-    // NUMBERED files into their own folder", never "move the odd files out":
-    // the second is destructive whenever the odd files are the majority,
-    // which on the real archive they usually are (13 of 26, 12 of 20, 13 of
-    // 15). Moving the numbered ones is correct at every ratio.
-    if (numbered.length >= MIN_IMAGES_FOR_NEAR_MISS) {
-      const strays = obs.keptNames.filter((n) => !isPageGroupMember(n));
-      out.push({
-        ruleId: "S-04",
-        kind: "nearMissStrayFile",
-        loudness: "loud",
-        paths: [obs.path, ...strays],
-        counts: {
-          numbered: numbered.length,
-          total: obs.keptNames.length,
-          strays: strays.length,
-          documentsNow: obs.keptNames.length,
-        },
-      });
-      continue;
-    }
-
-    // S-05 — nothing is a bare number. Whether that is an accident depends
-    // entirely on whether the names look like a SEQUENCE: "CVC 1 pg 1.jpg" and
-    // "CVC 1 pg 2.jpg" are two pages of one document about to become two
-    // documents, whereas "contract.jpg" and "plan.jpg" are two documents that
-    // are meant to be two documents. Firing loudly on both would have meant 17
-    // loud findings on Adrian's archive where roughly half are correct
-    // behaviour — and a warning list that is half noise is one nobody reads.
-    out.push({
-      ruleId: "S-05",
-      kind: "nearMissNaming",
-      loudness: looksLikePageSequence(images) ? "loud" : "quiet",
-      paths: [obs.path, ...images],
-      counts: { images: images.length, documentsNow: obs.keptNames.length },
-    });
-  }
-
-  return out;
-}
-
-/**
- * Do these filenames read as pages of ONE document rather than as separate
- * documents that happen to share a folder?
- *
- * Two patterns, both taken from Adrian's archive rather than invented:
- *
- *  1. A shared stem plus a varying tail that carries a digit —
- *     `CVC 1 pg 1.jpg` / `CVC 1 pg 2.jpg`, `Donatie pg1.jpg` / `Donatie pg2.jpg`.
- *  2. Romanian recto/verso markers — `TP 36034 fata.jpg` / `TP 36034 verso.jpg`,
- *     which are the two sides of one sheet and are never two documents.
- *
- * Deliberately conservative. A false positive here costs a loud warning about
- * a folder that is fine, which is exactly the currency this screen cannot
- * afford to debase.
- */
-function looksLikePageSequence(names: readonly string[]): boolean {
-  if (names.length < 2) return false;
-  const stems = names.map((n) => baseName(n).toLowerCase().trim());
-  if (new Set(stems).size !== stems.length) return false;   // identical stems: not a sequence
-
-  // Pattern 2 — every name carries a side marker.
-  //
-  // The boundary is a Unicode lookahead, NOT `\b`. `\b` is ASCII-only, so a
-  // `\b` after "față" can never match: `ă` is not a word character, so the
-  // assertion demands a word char before the position and finds none. The
-  // archive happens to spell it "fata", which is exactly why this would have
-  // shipped — folder-utils.ts documents the same trap at length for
-  // `folderNameToTitleHint` and this rule has to obey it too.
-  const SIDE = /(fata|față|fața|verso|recto)(?![\p{L}])/iu;
-  if (stems.every((s) => SIDE.test(s))) return true;
-
-  // Pattern 1 — a shared stem, and tails that are PAGE NUMBERS.
-  //
-  // "contains a digit" is far too weak on Romanian filenames: `contract
-  // 2019.jpg` / `contract 2020.jpg` are two contracts, `chit 0813.jpg` /
-  // `chit 6601.jpg` are two receipts, and both would read as a page sequence.
-  // What actually distinguishes pages is that their numbers are SMALL and
-  // CONSECUTIVE — pages run 1, 2, 3, not 2019, 2020. So the tails must parse
-  // to distinct small integers forming one contiguous run that starts at the
-  // beginning.
-  const prefix = commonPrefix(stems);
-  if (prefix.length < 3) return false;
-
-  const tails = stems.map((s) => s.slice(prefix.length));
-  const numbers = tails.map(trailingInteger);
-  if (numbers.some((n) => n === null)) return false;
-
-  const values = numbers as number[];
-  if (new Set(values).size !== values.length) return false;
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  return (
-    max <= MAX_PAGE_NUMBER &&
-    min <= 2 &&
-    max - min + 1 === values.length
-  );
-}
-
-/** The last run of digits in a string, or null when it holds none. */
-function trailingInteger(value: string): number | null {
-  const match = value.match(/(\d+)\D*$/);
-  return match ? parseInt(match[1], 10) : null;
-}
-
-function commonPrefix(values: readonly string[]): string {
-  if (values.length === 0) return "";
-  let prefix = values[0];
-  for (const v of values.slice(1)) {
-    let i = 0;
-    while (i < prefix.length && i < v.length && prefix[i] === v[i]) i++;
-    prefix = prefix.slice(0, i);
-    if (prefix === "") break;
-  }
-  return prefix;
-}
-
-/**
- * Hazards inside a folder that DID become one document — where the damage is
- * not the document count but the order of its pages, written to the DB as an
- * authoritative `pageNumber`.
- */
-function pageOrderFindings(obs: DirectoryObservation): Finding[] {
-  const out: Finding[] = [];
-  const numbers = obs.keptNames.map((n) => parseInt(baseName(n), 10)).filter(Number.isFinite);
-  if (numbers.length < 2) return out;
-
-  // S-09 — "1.jpg" and "01.jpg" both parse to 1. The comparator returns 0 and
-  // the resulting order is whatever the sort happened to do.
-  const seen = new Set<number>();
-  const collided = new Set<number>();
-  for (const n of numbers) {
-    if (seen.has(n)) collided.add(n);
-    seen.add(n);
-  }
-  if (collided.size > 0) {
-    out.push({
-      ruleId: "S-09",
-      kind: "pageOrderAmbiguous",
-      loudness: "loud",
-      paths: [obs.path],
-      counts: { collisions: collided.size, pages: numbers.length },
-    });
-  }
-
-  // S-10 — a scanner counter rather than a page number. `5449.jpg` next to
-  // `31316.jpg` is a page group whose order is decided by an arbitrary
-  // sequence, and nothing downstream doubts it.
-  const min = Math.min(...numbers);
-  const max = Math.max(...numbers);
-  const contiguous = max - min + 1 === numbers.length;
-  const wideSpread = min > 0 && max / min > PAGE_MAGNITUDE_SPREAD;
-  if (!contiguous || wideSpread) {
-    out.push({
-      ruleId: "S-10",
-      kind: "pageNumbersIrregular",
-      loudness: "quiet",
-      paths: [obs.path],
-      counts: { pages: numbers.length, lowest: min, highest: max },
-    });
-  }
-
-  return out;
 }
 
 // ---------------------------------------------------------------------------
@@ -590,11 +329,14 @@ function fileFindings(entries: readonly FSEntry[]): Finding[] {
   // F-15 — same basename in two folders produces two Documents with identical
   // titles, indistinguishable in every list in the application.
   //
-  // Note this reports the SYMPTOM. When the duplicates cluster across
-  // top-level folders, the cause is usually S-16 below — the picked folder
-  // holds several copies of one archive — and that is the finding worth
-  // acting on, because the remedy is to pick a different folder rather than
-  // to rename anything.
+  // It used to be read alongside S-16: duplicates clustering across top-level
+  // folders meant several copies of one archive, and picking a different
+  // folder was the real remedy. S-16 is gone (#26.02) because a compliant
+  // chosen folder cannot hold a copy of itself — a nested archive is a
+  // structure violation with one unambiguous instruction. What is left here is
+  // the ordinary case S-16 never covered: two genuinely different documents
+  // that happen to share a name. #26.06 absorbs this rule into the Duplication
+  // stage, where the comparison is by name AND size.
   const byName = new Map<string, string[]>();
   for (const f of fileNames) {
     const key = f.name.toLowerCase();
@@ -619,27 +361,9 @@ function fileFindings(entries: readonly FSEntry[]): Finding[] {
 }
 
 // ---------------------------------------------------------------------------
-// S-16 — the picked folder holds several copies of the same archive
+// S-17 — the walk stopped early
 // ---------------------------------------------------------------------------
 
-/**
- * Not in the spec catalogue. It came out of reading a real F-15 result:
- * `01.Teren CLINCENI` reported 67 duplicated names across 154 files, and 45 of
- * those 67 spanned more than one top-level subfolder — because the folder
- * contains `CLINCENI`, `CLINCENI.original`, `CLINCENI.light.01` and
- * `CIPI.coord.Clinceni.txt`, which are one archive at four stages.
- *
- * That matters because it changes the remedy completely. Sixty-seven unrelated
- * name clashes would mean "rename some files, or live with it". Four copies of
- * one archive means "pick `CLINCENI.original` and import once" — and the
- * import has no concept of a copy, so without this it happily creates a
- * document for every file in every copy.
- *
- * Related to F-14, but not the same and not blocked by it: F-14 compares the
- * folder against Documents already in the database, which cannot run here
- * because the Property is not resolved until after this report. This compares
- * the copies against EACH OTHER, inside the walk already paid for.
- */
 /**
  * S-17 — the walk stopped early, and what that means depends on WHY.
  *
@@ -690,56 +414,6 @@ function truncationFindings(observations: readonly DirectoryObservation[]): Find
       paths: [hits[0].path],
       counts: { places: hits.length, limit },
     });
-  }
-  return out;
-}
-
-function duplicateCopyFindings(entries: readonly FSEntry[]): Finding[] {
-  // Identifying filenames per top-level subfolder.
-  const byTopLevel = new Map<string, Set<string>>();
-  for (const entry of entries) {
-    const top = entry.pathParts[0];
-    if (!top) continue;                       // a file sitting at the root
-    let names = byTopLevel.get(top);
-    if (!names) byTopLevel.set(top, (names = new Set()));
-    if (entry.kind === "file") addIdentifying(names, entry.name);
-    else for (const handle of entry.handles) addIdentifying(names, handle.name);
-  }
-
-  const tops = [...byTopLevel.keys()];
-  if (tops.length < 2 || tops.length > COPY_MAX_FOLDERS) return [];
-
-  // ONE FINDING PER PAIR, deliberately — not per connected "family".
-  //
-  // Grouping A–B–C by connected components sounded right (the user's decision
-  // is "which of these do I keep") and was wrong twice over. It merged folders
-  // that are not copies of each other: a 25-file folder overlapping two
-  // 100-file archives linked those two into one family although they share
-  // half their contents at most. And it made the headline number unverifiable
-  // — "the same N files" had no true reading across a family whose members
-  // overlap pairwise but not jointly.
-  //
-  // A pair states something the user can check by opening two folders side by
-  // side, which is exactly what they will do next.
-  const out: Finding[] = [];
-  for (let i = 0; i < tops.length; i++) {
-    for (let j = i + 1; j < tops.length; j++) {
-      const a = byTopLevel.get(tops[i])!;
-      const b = byTopLevel.get(tops[j])!;
-      // Iterate the SMALLER set — on the real archive this compares a
-      // 4-element set against a 409-element one.
-      const [small, large] = a.size <= b.size ? [a, b] : [b, a];
-      let shared = 0;
-      for (const name of small) if (large.has(name)) shared++;
-      if (shared < COPY_MIN_SHARED || shared / small.size < COPY_OVERLAP) continue;
-      out.push({
-        ruleId: "S-16",
-        kind: "duplicateArchiveCopies",
-        loudness: "loud",
-        paths: [tops[i], tops[j]],
-        counts: { sharedFiles: shared, smaller: small.size },
-      });
-    }
   }
   return out;
 }
@@ -861,25 +535,6 @@ function groupSkipped(observations: readonly DirectoryObservation[]): SkippedGro
 // ---------------------------------------------------------------------------
 // Small helpers
 // ---------------------------------------------------------------------------
-
-/**
- * Add a filename only if it can identify anything.
- *
- * Purely numeric basenames — `001.jpg`, `8415.jpg` — are scanner output and
- * carry no identity whatsoever: two unrelated properties scanned on the same
- * machine both contain `001.jpg…004.jpg`, which made every pair of numbered
- * scan folders look like copies of each other. That is the single most common
- * shape in this archive.
- */
-function addIdentifying(into: Set<string>, fileName: string): void {
-  if (/^\d+$/.test(baseName(fileName))) return;
-  into.add(fileName.toLowerCase());
-}
-
-function baseName(name: string): string {
-  const dot = name.lastIndexOf(".");
-  return dot === -1 ? name : name.slice(0, dot);
-}
 
 function distinctExtensions(names: string[]): number {
   return new Set(names.map((n) => (n.includes(".") ? n.slice(n.lastIndexOf(".")).toLowerCase() : ""))).size;
