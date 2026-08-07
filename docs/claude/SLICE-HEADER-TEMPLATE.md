@@ -39,7 +39,7 @@ every slice.
 
 | Value | What Claude does |
 |---|---|
-| `normal` | Plan → build → `tsc` → self-review the diff → adversarial fresh-context review of the diff, repeated after each round of fixes until a round returns nothing worth acting on → hand over, with the `jest` command for you to run. The default. |
+| `normal` | Plan → build → `tsc` → self-review the diff → adversarial fresh-context review of the diff, repeated after each round of fixes until a round returns nothing worth acting on → commit → hand over, with the verification sequence and the push for you to run. The default. |
 | `deep` | Adds parallel subagents to map the affected code before planning. Use for anything touching versioning, auth, migrations, the import wizard, or more than ~10 files. |
 | `investigate` | No code at all. Claude reads, greps, fans out, and reports findings. No diff, so no adversarial round. Use when you're not yet sure a slice is the right shape. |
 
@@ -73,7 +73,7 @@ drifting apart:
 | Verification order + dev-server warning | `ga40prj/CLAUDE.md` → Verification order |
 | Sandbox can run `tsc`, not `jest`/`next` | `C:\dev\.claude\rules\sandbox-and-toolchain.md` |
 | "Never dismiss an error as pre-existing" | `C:\dev\CLAUDE.md` → The working contract |
-| Conventional commits, PowerShell 7, chain with `&&`, Claude never commits | `C:\dev\CLAUDE.md` → Delivering work / Autonomy |
+| Conventional commits, PowerShell 7, chain with `&&`, Claude commits and Adrian pushes | `C:\dev\CLAUDE.md` → Delivering work / Autonomy |
 | "Wait for my approval before writing any code" | `C:\dev\CLAUDE.md` → The working contract |
 | "Existing UI code is the source of truth" | `ga40prj/CLAUDE.md` → Where the rest of the knowledge lives |
 | "Skip everything else / don't re-read" | Withdrawn — replaced by the autonomy section |

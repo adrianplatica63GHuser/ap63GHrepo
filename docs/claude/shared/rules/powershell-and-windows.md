@@ -1,6 +1,7 @@
 # Windows / PowerShell 7
 
-Always loaded: commit delivery happens outside any file scope.
+Always loaded: the commands Claude hands to Adrian — the push, a seed run, an unblock — land in his
+shell, outside any file scope.
 
 ## The shell this assumes
 
@@ -26,12 +27,14 @@ re-running, and never assume a destructive line above the `&&` was skipped.
 
 ## What PS7 buys, and what to use
 
-- **Chain dependent *commands* with `&&` and `||`, never `;` or a newline.** `&&` runs the next command only if the previous
-  one succeeded (it keys off `$?` and `$LASTEXITCODE`, which together cover native exit codes and
-  cmdlet non-terminating errors); `;` and a plain newline run it regardless. For commit blocks the
-  danger is not an empty commit — git refuses those — it is `git add x ; git commit -m "..."`
-  committing whatever was *already* staged when the `add` failed, and exiting 0. **Never use `;` to
-  join two commands where the second depends on the first.**
+- **Chain dependent *commands* with `&&` and `||`, never `;` or a newline.** `&&` runs the next
+  command only if the previous one succeeded (it keys off `$?` and `$LASTEXITCODE`, which together
+  cover native exit codes and cmdlet non-terminating errors); `;` and a plain newline run it
+  regardless. The canonical trap is `git add x ; git commit -m "..."` — the `add` fails, the `commit`
+  runs anyway and ships whatever was *already* staged, exit 0, looking fine. (Claude's own commits use
+  a pathspec — `git commit -m "..." -- <files>` — which closes that hole independently; see
+  `C:\dev\CLAUDE.md` → Autonomy.) **Never use `;` to join two commands where the second depends on
+  the first.**
 
     **An assignment cannot be the left side of `&&`.** `&&` has higher precedence than `=`, so
     `$env:PGPASSWORD = 'x' && psql ...` parses as `$env:PGPASSWORD = ('x' && psql ...)`: `psql` runs
