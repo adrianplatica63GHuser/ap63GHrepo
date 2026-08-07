@@ -173,3 +173,68 @@ body {
   .ga-cue-blink { animation: none; opacity: 1; }
   .ga-progress-indeterminate { animation: none; width: 100%; opacity: 0.55; }
 }
+
+/* ── The current stage's amber halo  (Slice #26.03) ───────────────────────────
+   `StageIndicator` draws ten stage pills; the one the user is standing in has
+   to be findable at a glance from across the room. Two candidates, one of them
+   wrong for reasons this file already records:
+
+   - Fading the pill's opacity. That is the cue this codebase retired (see
+     ga-cue-blink above), and on a pill it is worse than on a line of text,
+     because fading the pill fades the LABEL inside it — the one word the user
+     most needs to read becomes the hardest to.
+   - Radiating a halo out of the pill's edge, as ga-version-pulse-* does. The
+     movement happens outside the pill, so the label sits at full contrast the
+     whole time.
+
+   THE DIRECTION MATTERS, and the first version of this had it backwards. It
+   went from `0 0 0 0` at alpha 0.55 to `0 0 0 5px` at alpha 0 — a zero-spread
+   shadow sits exactly under the border box and paints nothing, and the 5px one
+   was transparent, so BOTH authored frames were invisible and all that reached
+   the screen was the interpolation: a 2.5px band at alpha 0.275, twice per
+   cycle, the second beat contracting inward. That is the fade-a-little-and-
+   come-back cue this file already retired once. So it is written the way
+   ga-version-pulse-* is: invisible at rest, strongest in the middle.
+
+   THE COLOUR IS PER SCHEME, AND IT IS NOT amber-500. Measured: amber-500 at
+   alpha 0.6 composites to 1.59 : 1 against the white card — better than the
+   broken version's 1.23 : 1 and still nothing anyone would notice, and amber
+   cannot reach 3 : 1 on white at ANY alpha because opaque amber-500 is only
+   2.15 : 1. So light mode uses amber-700 (3.2 : 1 composited) and dark mode
+   amber-400, which is the same swap the palette makes for `primary`. One
+   variable, two values, because a single colour that works on both a white
+   card and a zinc-900 one does not exist here.
+
+   Reduced motion: a steady ring at full strength, never "no animation" and
+   never a transparent one. The glyphs (● ✓ ○) already distinguish the states,
+   so the ring is not the only signal — but it is the one that says "here"
+   without being read, and a reduced-motion user should not lose it.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* amber-700 #B45309 — the halo, on the white card. */
+  --ga-stage-halo: 180 83 9;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* amber-400 #FBBF24 — amber-700 measures 2.5 : 1 on zinc-900. */
+    --ga-stage-halo: 251 191 36;
+  }
+}
+
+@keyframes ga-stage-pulse {
+  0%, 100% { box-shadow: 0 0 0 0   rgb(var(--ga-stage-halo) / 0); }
+  50%      { box-shadow: 0 0 0 6px rgb(var(--ga-stage-halo) / 0.75); }
+}
+
+.ga-stage-pulse {
+  animation: ga-stage-pulse 1.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ga-stage-pulse {
+    animation: none;
+    box-shadow: 0 0 0 3px rgb(var(--ga-stage-halo) / 0.75);
+  }
+}

@@ -165,6 +165,17 @@ type Props = {
    * the property step.
    */
   onPropertyCornersChanged?: (cornerCount: number) => void;
+  /**
+   * Slice #26.03: fired once, the moment the FIRST Document of the run has
+   * actually been created.
+   *
+   * The shell's Cancel has to tell the user what is left behind, and "documents
+   * already imported stay in the archive" must not be said on a run that failed
+   * before it wrote anything — that sends a business user hunting a documents
+   * list for rows that do not exist. The wizard cannot know this from the
+   * outside: opening this dialog is not the same event as writing a row.
+   */
+  onFirstDocumentCreated?: () => void;
   onClose: () => void;
 };
 
@@ -477,6 +488,7 @@ export function BulkImportDialog({
   propertyId,
   cornerSourcePath = null,
   onPropertyCornersChanged,
+  onFirstDocumentCreated,
   onClose,
 }: Props) {
   const t = useTranslations("adminImport.wizard.importDialog");
@@ -491,6 +503,14 @@ export function BulkImportDialog({
   // fix 7.6 — session-expiry detection during bulk import
   const [sessionExpired, setSessionExpired] = useState(false);
   const abortRef = useRef(false);
+
+  // Slice #26.03 — held in a ref for the same reason `provenanceRef` is: the
+  // import effect depends only on `gatePassed`, so a caller passing a fresh
+  // arrow every render must not be able to restart an import already running.
+  const firstDocumentRef = useRef(onFirstDocumentCreated);
+  useEffect(() => {
+    firstDocumentRef.current = onFirstDocumentCreated;
+  }, [onFirstDocumentCreated]);
 
   // Slice #23.01.Import — the row whose ID card is being turned into a Person.
   // The File is resolved up front (the FSEntry handle is only readable while
@@ -587,6 +607,10 @@ export function BulkImportDialog({
     if (!gatePassed) return;
 
     let mounted = true;
+    // Slice #26.03 — see the `onFirstDocumentCreated` prop. Local to this run,
+    // so a StrictMode re-mount re-announces for its own first document rather
+    // than staying silent because a discarded run had already spoken.
+    let announcedFirstDocument = false;
     let fallbackDocTypeId: string;
     let docTypeMap: Record<string, string> = {};
     let docNameMap: Record<string, string> = {};
@@ -646,6 +670,14 @@ export function BulkImportDialog({
             title,
             provenance: entryProvenance,
           });
+
+          // Slice #26.03 — the run has now written something. Announced through
+          // a ref so answering it cannot re-run this effect, and guarded by a
+          // local flag so it fires exactly once however many documents follow.
+          if (!announcedFirstDocument) {
+            announcedFirstDocument = true;
+            firstDocumentRef.current?.();
+          }
 
           // 3.5 Claim the coordinate-source link  (Slice #23.06.Import)
           //

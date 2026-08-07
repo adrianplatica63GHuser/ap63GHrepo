@@ -2084,6 +2084,56 @@
           "violation": "Folderul „{folder}” are {pages, plural, one {o pagină numerotată} few {# pagini numerotate} other {# de pagini numerotate}} de la {lowest} la {highest}. Paginile se numerotează 1, 2, 3… fără sărituri. Renumerotați fișierele din acest folder începând de la 1."
         }
       }
+    },
+    "workflow": {
+      "indicatorLabel": "Pașii importului",
+      "announcement": "Pasul curent: {stage}",
+      "planned": "în curând",
+      "statusPending": "neînceput",
+      "statusCurrent": "în curs",
+      "statusDone": "terminat",
+      "line": {
+        "preparation": "Pregătire și verificare",
+        "classification": "Clasificare și import"
+      },
+      "stage": {
+        "information": "Informare",
+        "preconditions": "Precondiții",
+        "structure": "Structură",
+        "constraints": "Restricții",
+        "duplication": "Duplicate",
+        "preexisting": "Deja în sistem",
+        "evaluation": "Evaluare",
+        "scanning": "Scanare",
+        "import": "Import",
+        "result": "Rezultat"
+      }
+    },
+    "information": {
+      "title": "Cum decurge importul",
+      "lead": "Importul se face pe pași — cei de mai sus. La fiecare pas sistemul verifică un singur lucru și vă arată exact ce a găsit.",
+      "stops": "De câteva ori se va opri și vă va ruga să îndreptați ceva în folderul de pe calculator: să redenumiți un folder, să mutați un fișier sau să ștergeți o copie în plus. Când se întâmplă, deschideți folderul în File Explorer, faceți schimbarea, apoi reveniți aici și apăsați butonul de verificare din nou. Nu este o defecțiune — așa este gândit importul.",
+      "neverTouchesFiles": "Sistemul nu vă atinge fișierele. Nu le mută, nu le redenumește și nu le șterge niciodată. Singurul care le schimbă sunteți dumneavoastră, din File Explorer.",
+      "nothingSavedUntilTheEnd": "Nimic nu intră în arhivă până la pasul Import. Până atunci puteți renunța oricând, iar înainte de a renunța vi se spune exact ce rămâne în urmă.",
+      "acknowledge": "Am înțeles"
+    },
+    "cancel": {
+      "button": "Renunță la import",
+      "title": "Renunțați la import?",
+      "atStage": "Vă aflați la pasul {stage}.",
+      "intro": "Iată ce se întâmplă dacă renunțați acum:",
+      "keepGoing": "Nu, continui importul",
+      "confirm": "Da, renunț la import",
+      "consequence": {
+        "documentsKept": "Documentele deja importate rămân în arhivă. Nu sunt șterse — dacă nu le doriți, ștergeți-le din lista de documente.",
+        "propertyKept": "Proprietatea folosită pentru acest import rămâne în sistem — dacă a fost creată acum, nu este ștearsă.",
+        "savedReportKept": "Raportul ultimului import rămâne salvat și îl puteți redeschide de pe această pagină.",
+        "classificationStops": "Clasificarea automată se oprește. Documentele aflate chiar acum în lucru nu mai ajung să fie clasificate.",
+        "classificationAlreadyPaid": "Ce s-a clasificat automat până acum se pierde. Dacă reluați importul, aceleași documente vor fi trimise din nou.",
+        "folderForgotten": "Folderul ales este uitat. La un import următor va trebui să îl alegeți din nou.",
+        "nothingClassifiedYet": "Niciun document nu a fost trimis încă spre clasificare automată, deci nu s-a consumat nimic.",
+        "filesUntouched": "Fișierele de pe calculatorul dumneavoastră rămân neatinse."
+      }
     }
   },
   "usersAccess": {

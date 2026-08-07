@@ -2084,6 +2084,56 @@
           "violation": "The folder {folder} holds {pages, plural, one {one page numbered} other {# pages numbered}} from {lowest} to {highest}. Pages are numbered 1, 2, 3… with no gaps. Renumber the files in this folder starting from 1."
         }
       }
+    },
+    "workflow": {
+      "indicatorLabel": "Import steps",
+      "announcement": "Current step: {stage}",
+      "planned": "coming soon",
+      "statusPending": "not started",
+      "statusCurrent": "in progress",
+      "statusDone": "finished",
+      "line": {
+        "preparation": "Preparation & verification",
+        "classification": "Classification & import"
+      },
+      "stage": {
+        "information": "Information",
+        "preconditions": "Preconditions",
+        "structure": "Structure",
+        "constraints": "Constraints",
+        "duplication": "Duplicates",
+        "preexisting": "Already in the system",
+        "evaluation": "Evaluation",
+        "scanning": "Scanning",
+        "import": "Import",
+        "result": "Result"
+      }
+    },
+    "information": {
+      "title": "How the import works",
+      "lead": "The import runs in steps — the ones above. At each step the system checks one thing and shows you exactly what it found.",
+      "stops": "Several times it will stop and ask you to put something right in the folder on your computer: rename a folder, move a file, or delete a spare copy. When that happens, open the folder in File Explorer, make the change, then come back here and press the re-check button. This is not a fault — it is how the import is meant to work.",
+      "neverTouchesFiles": "The system never touches your files. It does not move them, rename them or delete them. You are the only one who changes them, from File Explorer.",
+      "nothingSavedUntilTheEnd": "Nothing goes into the archive until the Import step. Until then you can cancel at any time, and before it cancels you are told exactly what is left behind.",
+      "acknowledge": "I understand"
+    },
+    "cancel": {
+      "button": "Cancel import",
+      "title": "Cancel the import?",
+      "atStage": "You are at the {stage} step.",
+      "intro": "Here is what happens if you cancel now:",
+      "keepGoing": "No, keep importing",
+      "confirm": "Yes, cancel the import",
+      "consequence": {
+        "documentsKept": "Documents already imported stay in the archive. They are not deleted — if you do not want them, remove them from the documents list.",
+        "propertyKept": "The property used for this import stays in the system — if it was created now, it is not deleted.",
+        "savedReportKept": "The last import report stays saved and you can reopen it from this page.",
+        "classificationStops": "Automatic classification stops. The documents in progress right now will not be classified.",
+        "classificationAlreadyPaid": "Whatever has been classified automatically so far is lost. If you start the import again, the same documents will be sent again.",
+        "folderForgotten": "The chosen folder is forgotten. On a later import you will have to choose it again.",
+        "nothingClassifiedYet": "No document has been sent for automatic classification yet, so nothing has been spent.",
+        "filesUntouched": "The files on your computer are left untouched."
+      }
     }
   },
   "usersAccess": {
