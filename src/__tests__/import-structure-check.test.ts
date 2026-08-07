@@ -49,9 +49,12 @@ import {
   MAX_TRUNCATION_PATHS,
   checkStructure,
   checkStructureStage,
-  displayPathOf,
   emitStructureViolations,
 } from "@/lib/import/structure-check";
+// `displayPathOf` moved to `folder-utils.ts` in #26.05, when the Constraints
+// stage became its third and fourth renderer. Its tests stay here, where the
+// stage that needed it first is covered.
+import { displayPathOf } from "@/lib/import/folder-utils";
 import {
   STRUCTURE_RULE_BY_ID,
   STRUCTURE_RULE_IDS,

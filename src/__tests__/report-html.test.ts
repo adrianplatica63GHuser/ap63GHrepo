@@ -14,11 +14,11 @@
 
 import {
   buildReportHtml,
-  buildStructureHtml,
+  buildRulesPageHtml,
   reportFileName,
   type ReportHtmlStrings,
-  type StructureHtmlInput,
-  type StructureHtmlStrings,
+  type RulesPageInput,
+  type RulesPageStrings,
 } from "@/lib/import/report-html";
 import type { ImportReport } from "@/lib/import/checks";
 
@@ -61,9 +61,11 @@ describe("buildReportHtml", () => {
     const paths = Array.from({ length: 40 }, (_, i) => `Acte/scan-${i}.jpg`);
     const html = build({
       findings: [
-        // Was S-04 nearMissStrayFile until #26.02 deleted it. Any loud finding
-        // carrying a long path list proves the same thing about the renderer.
-        { ruleId: "F-05", kind: "gateFiles", loudness: "loud", paths, counts: { files: 40 } },
+        // Was S-04 nearMissStrayFile until #26.02 deleted it, and F-05
+        // gateFiles until #26.05 moved that to the Constraints stage. Any loud
+        // finding carrying a long path list proves the same thing about the
+        // renderer — this one is chosen because it is still in `checks.ts`.
+        { ruleId: "F-03", kind: "osDirectories", loudness: "loud", paths, counts: { folders: 40 } },
       ],
     });
     for (const p of paths) expect(html).toContain(p);
@@ -72,13 +74,13 @@ describe("buildReportHtml", () => {
 
   it("separates loud from quiet, and only adds the quiet heading when there are any", () => {
     const loudOnly = build({
-      findings: [{ ruleId: "F-05", kind: "gateFiles", loudness: "loud", paths: [], counts: {} }],
+      findings: [{ ruleId: "F-03", kind: "osDirectories", loudness: "loud", paths: [], counts: {} }],
     });
     expect(loudOnly).not.toContain(STRINGS.quietTitle);
 
     const both = build({
       findings: [
-        { ruleId: "F-05", kind: "gateFiles", loudness: "loud", paths: [], counts: {} },
+        { ruleId: "F-03", kind: "osDirectories", loudness: "loud", paths: [], counts: {} },
         { ruleId: "F-17", kind: "officeFiles", loudness: "quiet", paths: [], counts: {} },
       ],
     });
@@ -166,7 +168,7 @@ describe("reportFileName", () => {
  * page from "checked and clean", and printing the all-clear for the first is
  * the confident-output failure this repo keeps a rule about.
  */
-const STRUCTURE_STRINGS: StructureHtmlStrings = {
+const STRUCTURE_STRINGS: RulesPageStrings = {
   documentTitle: "Structura",
   generatedAt: "Generat",
   folderLabel: "Folder",
@@ -178,8 +180,8 @@ const STRUCTURE_STRINGS: StructureHtmlStrings = {
   warningsTitle: "Nu a putut fi citit tot",
 };
 
-function structure(over: Partial<StructureHtmlInput> = {}): string {
-  return buildStructureHtml({
+function structure(over: Partial<RulesPageInput> = {}): string {
+  return buildRulesPageHtml({
     folderName: "Teren",
     generatedAt: "05.08.2026, 14:30",
     locale: "ro-RO",
@@ -197,7 +199,7 @@ function structure(over: Partial<StructureHtmlInput> = {}): string {
   });
 }
 
-describe("buildStructureHtml", () => {
+describe("buildRulesPageHtml", () => {
   it("shares the report's document shell rather than restating it", () => {
     // The constraint, as a test. Both documents must carry the same doctype,
     // the same `lang`, the same charset and the same stylesheet — the pile of
@@ -305,6 +307,42 @@ describe("buildStructureHtml", () => {
     expect(html).toContain(STRUCTURE_STRINGS.warningsTitle);
     expect(html).toContain("Prea adânc");
     expect(html).toContain("Teren/a/b/c");
+  });
+
+  it("⚠️ prints a warning's INSTRUCTION, not only its heading and its paths", () => {
+    // The one line in #26.05 that carries the escape onto paper. The Constraints
+    // stage's blocking-but-ruleless case — files the metadata pass could not
+    // open — has no rule ID, so every copy guard that walks the rule catalogue
+    // is blind to it, and its remedy reaches the user through `sentence` and
+    // nowhere else. Delete the `sentence` branch in the exporter and, without
+    // this case, the whole suite stays green while the printed page goes back
+    // to listing files and telling the user nothing to do about them. That is
+    // round two's defect verbatim.
+    const html = structure({
+      warnings: [
+        {
+          sentence: "Două fișiere nu au putut fi deschise. Scoateți-le din folderul ales.",
+          paths: ["Teren/a.pdf", "Teren/b.pdf"],
+        },
+      ],
+    });
+    // Pinned as a PARAGRAPH, not merely as text somewhere on the page: a
+    // mutation that rendered the sentence inside the `<h3>` instead survives a
+    // bare substring check, and that is exactly the 350-character heading this
+    // field was introduced to stop producing.
+    expect(html).toContain('<p class="msg">Două fișiere nu au putut fi deschise. Scoateți-le din folderul ales.</p>');
+    expect(html).toContain("Teren/b.pdf");
+  });
+
+  it("omits a warning heading a caller did not give, rather than printing an empty one", () => {
+    // A stage that emits exactly one warning group has nothing to distinguish
+    // it from the section it is in. Filling the slot with the section's own
+    // title printed the same sentence as an `<h2>` and an `<h3>` one line
+    // apart — which reads as a rendering fault, and nests the entry under
+    // itself in Word's navigation pane.
+    const html = structure({ warnings: [{ sentence: "O propoziție.", paths: ["Teren/a"] }] });
+    expect(html).not.toContain("<h3></h3>");
+    expect(html).toContain(`<h2>${STRUCTURE_STRINGS.warningsTitle}</h2>`);
   });
 
   it("escapes folder names, culprits and evidence alike", () => {

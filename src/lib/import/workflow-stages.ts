@@ -12,9 +12,9 @@
  * WHY SOME STAGES CARRY `plannedIn`
  * ---------------------------------
  * The redesign (26.01 → 26.12) builds the stages one slice at a time, and
- * #26.03 shipped the shell before four of them existed (#26.04 has since built
- * one, leaving three). Two ways to handle that were available, and both of the
- * obvious ones lie:
+ * #26.03 shipped the shell before four of them existed (#26.04 built Structure
+ * and #26.05 built Constraints, leaving two). Two ways to handle that were
+ * available, and both of the obvious ones lie:
  *
  *   - Leave them out until they are built → the user never sees the journey,
  *     which is the one thing the shell exists to show.
@@ -24,9 +24,10 @@
  *
  * So a stage that has no screen yet is listed, is drawn grey, carries a visible
  * "în curând" note, and **can never be reported as current or done** —
- * `stageForPhase` never returns one, and a test pins that. When 26.04 gives
- * Structure its screen, that slice deletes the stage's `plannedIn` and adds its
- * phases to the map; nothing else has to move.
+ * `stageForPhase` never returns one, and a test pins that. When a slice gives a
+ * stage its screen, it deletes that stage's `plannedIn` and adds its phases to
+ * the map; nothing else has to move. #26.04 and #26.05 have each now done
+ * exactly that, which is the promise kept twice.
  *
  * THE STATE MODEL IS THE THREE THE SLICE NAMES, and no more: `pending` (grey),
  * `current` (amber, pulsing) and `done` (green). `plannedIn` is a property of
@@ -75,7 +76,9 @@ export const WORKFLOW_STAGES: readonly WorkflowStage[] = [
   // and green like any other stage — exactly the one-line change the header
   // above promised this slice would be.
   { id: "structure", line: "preparation" },
-  { id: "constraints", line: "preparation", plannedIn: "26.05" },
+  // #26.05 built its screen, so `plannedIn` is gone here too — the second time
+  // this row has been a one-line change rather than a refactor.
+  { id: "constraints", line: "preparation" },
   { id: "duplication", line: "preparation", plannedIn: "26.06" },
   { id: "preexisting", line: "classification", plannedIn: "26.08" },
   { id: "evaluation", line: "classification" },
@@ -103,7 +106,11 @@ export function stagesOnLine(line: WorkflowLineId): WorkflowStage[] {
  *  structure        → the Structure rules, the tick, and the picker (#26.04)
  *  walking          → walkFolder() running (fast, <1 s) — the structure check
  *  structure-report → the folder broke rules; the fix-and-re-check loop (#26.04)
- *  folder-report    → structure clean, nothing spent; the forecast awaits Continuă
+ *  constraints      → the Constraints rules and the tick; nothing checked (#26.05)
+ *  constraints-checking → the re-walk AND the ~760-call metadata pass, running
+ *  constraints-report   → files broke constraints; the same fix-and-re-check loop
+ *  folder-report    → structure and constraints clean, nothing spent; the
+ *                     forecast awaits Continuă
  *  scanning         → concurrent Haiku AI scans running in background
  *  ready            → scan complete; scan-table rendered + "Import" CTA visible
  *  property         → PropertyStepDialog is open (resolve the run's Property)
@@ -123,6 +130,9 @@ export const IMPORT_PHASES = [
   "structure",
   "walking",
   "structure-report",
+  "constraints",
+  "constraints-checking",
+  "constraints-report",
   "folder-report",
   "scanning",
   "ready",
@@ -148,22 +158,35 @@ export type ImportPhase = (typeof IMPORT_PHASES)[number];
  *    indicator goes back to amber on Structure while it runs, which is the
  *    truth: the folder is being re-checked against the structure rules, and it
  *    may well fail this time.
+ *  - `constraints` / `constraints-checking` / `constraints-report` all report
+ *    **constraints**, by the same argument #26.04 made for Structure: the rules
+ *    listing, the check and the violation list are three views of one stage.
+ *    `constraints-checking` covers a WALK as well as the metadata pass, and it
+ *    still reports Constraints rather than Structure — the walk is there because
+ *    the user has been in File Explorer since the last check, and the stage they
+ *    are standing in is the one whose button they pressed. When that re-walk
+ *    finds the structure broken again the phase moves to `structure-report` and
+ *    the indicator moves back with it, which is the truth rather than a glitch.
  *  - `folder-report` reports **evaluation**: today's post-folder-selection
  *    screen is what 26.09 renames Evaluation, and it is reachable only through
- *    a clean structure check.
+ *    a clean structure check AND a clean constraints check.
  *  - `ready` reports **import**, not scanning: the scan is finished and the one
  *    thing left on that screen is the Import button.
  *  - `resumed` reports **result** — the resumed view is a previous run's
  *    result, and it is the only way to reach that screen today.
  *
- * ⚠️ **Constraints and Duplication still have no phase, and Structure passing
- * therefore lands on Evaluation.** #26.04's brief says "Structure turns green
- * and Constraints begins", and half of that is buildable today: Structure does
- * turn green. Constraints cannot begin, because 26.05 builds it — and marking
- * it current anyway is the one thing `plannedIn` exists to forbid. So the amber
- * moves to Evaluation, the two planned stages stay grey with their "în curând"
- * note, and 26.05 inserts itself between them by deleting one `plannedIn` and
- * adding its phases here.
+ * ⚠️ **Duplication still has no phase, so Constraints passing lands on
+ * Evaluation.** The same rule applies as it did to Constraints one slice ago:
+ * Duplication cannot be marked current, because nothing builds its screen until
+ * 26.06 — and marking it current anyway is the one thing `plannedIn` exists to
+ * forbid. So the amber moves from Constraints to Evaluation, Duplication stays
+ * grey with its "în curând" note, and 26.06 inserts itself between them by
+ * deleting one `plannedIn` and adding its phases here.
+ *
+ * (What #26.04 wrote in this paragraph — "Constraints cannot begin, because
+ * 26.05 builds it" — is now done. It is kept in the same shape deliberately:
+ * one stage's name changed and nothing else, which is the evidence that the
+ * mechanism works rather than that it was got round.)
  *
  * KNOWN GAP, left for 26.10. Closing `BulkImportDialog` returns the wizard to
  * `ready`, so after a finished run the indicator still reads "Import — în
@@ -180,6 +203,9 @@ const STAGE_BY_PHASE: Record<ImportPhase, WorkflowStageId> = {
   structure: "structure",
   walking: "structure",
   "structure-report": "structure",
+  constraints: "constraints",
+  "constraints-checking": "constraints",
+  "constraints-report": "constraints",
   "folder-report": "evaluation",
   scanning: "scanning",
   ready: "import",

@@ -1,15 +1,24 @@
 /**
  * src/lib/import/report-html.ts — the import's paper trail, as files you can
- * take away.   (Slice #24.02c; the structure listing, #26.04)
+ * take away.   (Slice #24.02c; the rules listing, #26.04, generalised in #26.05)
  *
  * TWO DOCUMENTS, ONE SHELL
  * ────────────────────────
  *
- * `buildReportHtml` is the folder report; `buildStructureHtml` is the Structure
- * stage's rules-and-violations listing. They share `htmlDocument`, the CSS,
- * `esc`, `pathList` and `reportFileName`, and #26.04's constraint says why in
- * as many words: one exporter, not two. Everything this file knows about
- * surviving a trip through Word is written once and both documents inherit it.
+ * `buildReportHtml` is the folder report; `buildRulesPageHtml` is the take-away
+ * page a RULES STAGE produces — its rules, and what the last check found wrong
+ * with the folder. They share `htmlDocument`, the CSS, `esc`, `pathList` and
+ * `reportFileName`, and #26.04's constraint says why in as many words: one
+ * exporter, not two. Everything this file knows about surviving a trip through
+ * Word is written once and both documents inherit it.
+ *
+ * ⚠️ It was called `buildStructureHtml` until #26.05, when the Constraints
+ * stage became the second caller. The rename is not tidying: a function named
+ * for one stage while producing another stage's page is precisely the drift
+ * this codebase writes essays about — and the name is the only thing telling
+ * the next reader whether a Structure-shaped assumption is safe here. It is
+ * not; this module knows nothing about rules, only about sections, sentences
+ * and paths.
  *
  * WHY A FILE AT ALL
  * ─────────────────
@@ -42,7 +51,7 @@
  * than the screen it came from, rather than a copy of it.
  *
  * One list is an exception, and it is exempt for the opposite reason rather
- * than as a concession: `buildStructureHtml`'s `warnings` arrive already
+ * than as a concession: `buildRulesPageHtml`'s `warnings` arrive already
  * sampled, because a walk that ran out of budget reports one directory per
  * folder it never opened — thousands of them, none of which is the problem
  * (`StructureTruncationGroup`). Its heading quotes the true total and says
@@ -208,35 +217,71 @@ export function buildReportHtml(input: ReportHtmlInput): string {
  * `violations: null` means no folder has been checked yet, which is a different
  * document from "checked and clean" and must not print the all-clear.
  */
-export type StructureHtmlRule = {
+export type RulesPageRule = {
   /** Stable ID, printed as a reference so a phone call can quote it. */
   id: string;
   requirement: string;
   example: string;
 };
 
-export type StructureHtmlSection = {
+export type RulesPageSection = {
   heading: string;
-  rules: readonly StructureHtmlRule[];
+  rules: readonly RulesPageRule[];
 };
 
-export type StructureHtmlViolation = {
+export type RulesPageViolation = {
   ruleId: string;
-  /** Already display-ready: the chosen folder's own name when the culprit is it. */
-  culprit: string;
+  /**
+   * The one folder or file this violation is about, already display-ready — the
+   * chosen folder's own name when the culprit is the folder itself.
+   *
+   * ⚠️ OPTIONAL since #26.05, and its absence is meaningful rather than lazy. A
+   * structure violation always has exactly one culprit, because its remedy is
+   * bespoke to a place. A CONSTRAINT violation has none: its remedy is uniform
+   * across every file it names, so the sentence is stated once and `related`
+   * carries the whole list under it. A heading printed empty above that list
+   * would read as a name that failed to render.
+   */
+  culprit?: string;
   /** The rendered violation sentence, counts and names interpolated. */
   sentence: string;
   /** Complete, never a sample — the whole reason a take-away copy is better than the screen. */
   related: readonly string[];
 };
 
-/** A walk limit that stopped the listing, already worded for a business user. */
-export type StructureHtmlWarning = {
-  heading: string;
+/** Something that blocked the stage without breaking a rule, already worded. */
+export type RulesPageWarning = {
+  /**
+   * What tells this group apart from the others under `warningsTitle`.
+   *
+   * ⚠️ OPTIONAL, because a stage that emits exactly ONE group has nothing to
+   * distinguish. The Structure page emits up to three (depth, budget, breadth)
+   * and each names its own limit; the Constraints page emits one, and filling
+   * this with the section's own title printed `<h2>Fișiere care nu au putut fi
+   * citite</h2><h3>Fișiere care nu au putut fi citite</h3>` — the same sentence
+   * twice, one line apart, which reads as a rendering fault and nests the
+   * entry under itself in Word's navigation pane.
+   */
+  heading?: string;
+  /**
+   * The instruction under the heading — what to do about these paths.
+   *
+   * ⚠️ OPTIONAL, and added in #26.05 because the alternative was worse in both
+   * directions. The Structure stage's warnings put the whole remedy INSIDE the
+   * heading, which works only because each is one sentence. The Constraints
+   * stage's is a paragraph, and its first draft passed a bare count instead —
+   * so the saved page listed the files and gave no remedy at all, under a body
+   * line promising "see below for why". Passing the paragraph as the heading
+   * fixed that and produced a 350-character `<h3>`, which Word puts in the
+   * navigation pane and a screen reader announces as a heading label.
+   *
+   * A heading and a sentence, which is what both screens already draw.
+   */
+  sentence?: string;
   paths: readonly string[];
 };
 
-export type StructureHtmlStrings = {
+export type RulesPageStrings = {
   documentTitle: string;
   generatedAt: string;
   folderLabel: string;
@@ -255,14 +300,14 @@ export type StructureHtmlStrings = {
   warningsTitle: string;
 };
 
-export type StructureHtmlInput = {
+export type RulesPageInput = {
   /** `null` when no folder has been picked — the rules alone are worth printing. */
   folderName: string | null;
   generatedAt: string;
   locale: string;
-  sections: readonly StructureHtmlSection[];
+  sections: readonly RulesPageSection[];
   /** `null` = not checked yet. */
-  violations: readonly StructureHtmlViolation[] | null;
+  violations: readonly RulesPageViolation[] | null;
   /**
    * Did the folder PASS? Read only when `violations` is a (possibly empty)
    * array.
@@ -277,11 +322,11 @@ export type StructureHtmlInput = {
    * was fixed there first; this is the printed half of it.
    */
   clean: boolean;
-  warnings: readonly StructureHtmlWarning[];
-  strings: StructureHtmlStrings;
+  warnings: readonly RulesPageWarning[];
+  strings: RulesPageStrings;
 };
 
-export function buildStructureHtml(input: StructureHtmlInput): string {
+export function buildRulesPageHtml(input: RulesPageInput): string {
   const { folderName, generatedAt, locale, sections, violations, clean, warnings, strings } =
     input;
 
@@ -314,8 +359,10 @@ export function buildStructureHtml(input: StructureHtmlInput): string {
             .map((v) =>
               [
                 `<div class="finding">`,
-                `<p class="msg"><span class="rule">${esc(v.ruleId)}</span> <strong>${esc(v.culprit)}</strong></p>`,
-                `<p class="msg">${esc(v.sentence)}</p>`,
+                v.culprit === undefined
+                  ? `<p class="msg"><span class="rule">${esc(v.ruleId)}</span> ${esc(v.sentence)}</p>`
+                  : `<p class="msg"><span class="rule">${esc(v.ruleId)}</span> <strong>${esc(v.culprit)}</strong></p>` +
+                    `<p class="msg">${esc(v.sentence)}</p>`,
                 pathList(v.related),
                 `</div>`,
               ].join(""),
@@ -327,7 +374,12 @@ export function buildStructureHtml(input: StructureHtmlInput): string {
       ? ""
       : `<h2>${esc(strings.warningsTitle)}</h2>` +
         warnings
-          .map((w) => `<h3>${esc(w.heading)}</h3>${pathList(w.paths)}`)
+          .map(
+            (w) =>
+              (w.heading === undefined ? "" : `<h3>${esc(w.heading)}</h3>`) +
+              (w.sentence === undefined ? "" : `<p class="msg">${esc(w.sentence)}</p>`) +
+              pathList(w.paths),
+          )
           .join("");
 
   return htmlDocument({

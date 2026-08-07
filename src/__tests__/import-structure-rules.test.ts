@@ -43,16 +43,22 @@
  * `transformIgnorePatterns` to `jest.config.ts` — a change to how all 46 suites
  * are transformed, in a slice whose scope is a rules module.
  *
- * So `scanIcu` below reads the structure instead. It covers exactly the ICU
- * subset these messages use — simple placeholders and `plural` — and THROWS on
+ * So `scanIcu` reads the structure instead. It covers exactly the ICU subset
+ * these messages use — simple placeholders and `plural` — and THROWS on
  * anything else, which is what keeps it honest: the day a message needs
  * `select` or a date skeleton, this file fails rather than quietly under-
  * checking it, and that is the moment to reconsider the jest config.
+ *
+ * It moved to `src/test-support/icu.ts` in #26.05, when the Constraints
+ * catalogue became the second rule set that needs it — a hand-written ICU
+ * parser existing twice is exactly what this repo keeps single-source tests to
+ * prevent. Its own tests stayed here, where they were written.
  */
 
 import fs from "node:fs";
 import path from "node:path";
 
+import { scanIcu } from "@/test-support/icu";
 import { isPageGroup, isIgnoredFileName } from "@/lib/import/folder-utils";
 import {
   DESCRIPTION_SEPARATOR,
@@ -491,101 +497,6 @@ describe("rule text", () => {
     }
   });
 });
-
-// ---------------------------------------------------------------------------
-// A very small ICU reader — see the file header for why it exists
-// ---------------------------------------------------------------------------
-
-type IcuScan = {
-  /** Every placeholder the message interpolates, at any nesting depth. */
-  args: Set<string>;
-  /** Every `plural` block, with the categories it declares. */
-  plurals: { arg: string; categories: string[] }[];
-};
-
-/**
- * Read an ICU message's structure.
- *
- * The only thing that makes this safe to hand-write is that it REFUSES what it
- * does not understand. A regex that scrapes `{name` out of a message cannot
- * tell an argument from a plural branch — `one {gol}` would read as an
- * argument called "gol" — so this tracks position properly: a `{` in message
- * text opens an argument, and a `{` after a category name opens a branch whose
- * body is message text again.
- *
- * Throws on any ICU feature beyond a simple placeholder and `plural`.
- */
-function scanIcu(message: string): IcuScan {
-  const args = new Set<string>();
-  const plurals: { arg: string; categories: string[] }[] = [];
-  const at = (i: number) => (i < message.length ? message[i] : "");
-  const skipSpace = (i: number) => {
-    while (/\s/.test(at(i))) i++;
-    return i;
-  };
-  const fail = (i: number, what: string): never => {
-    throw new Error(`${what} at ${i} in ${JSON.stringify(message)}`);
-  };
-
-  function scanMessage(from: number): number {
-    let i = from;
-    while (i < message.length) {
-      const ch = message[i];
-      if (ch === "}") return i;
-      if (ch !== "{") {
-        i++;
-        continue;
-      }
-      i = scanArgument(i);
-    }
-    return i;
-  }
-
-  function scanArgument(start: number): number {
-    let i = skipSpace(start + 1);
-    const nameStart = i;
-    while (/[A-Za-z0-9_]/.test(at(i))) i++;
-    const name = message.slice(nameStart, i);
-    if (name === "") fail(start, "empty placeholder");
-    args.add(name);
-    i = skipSpace(i);
-    if (at(i) === "}") return i + 1;
-    if (at(i) !== ",") fail(i, "unsupported placeholder syntax");
-    i = skipSpace(i + 1);
-    const typeStart = i;
-    while (/[A-Za-z]/.test(at(i))) i++;
-    const type = message.slice(typeStart, i);
-    if (type !== "plural") fail(typeStart, `unsupported ICU type "${type}"`);
-    i = skipSpace(i);
-    if (at(i) !== ",") fail(i, "expected a comma after plural");
-    i = skipSpace(i + 1);
-    const categories: string[] = [];
-    for (;;) {
-      i = skipSpace(i);
-      if (at(i) === "}") {
-        i++;
-        break;
-      }
-      if (i >= message.length) fail(i, "unterminated plural");
-      const catStart = i;
-      while (/[A-Za-z0-9=]/.test(at(i))) i++;
-      const category = message.slice(catStart, i);
-      if (category === "") fail(i, "expected a plural category");
-      categories.push(category);
-      i = skipSpace(i);
-      if (at(i) !== "{") fail(i, "expected a plural branch");
-      const end = scanMessage(i + 1);
-      if (at(end) !== "}") fail(end, "unterminated plural branch");
-      i = end + 1;
-    }
-    plurals.push({ arg: name, categories });
-    return i;
-  }
-
-  const consumed = scanMessage(0);
-  if (consumed !== message.length) fail(consumed, "unbalanced brace");
-  return { args, plurals };
-}
 
 describe("scanIcu — the reader the message tests depend on", () => {
   it("finds simple placeholders", () => {

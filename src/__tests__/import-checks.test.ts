@@ -1,5 +1,5 @@
 /**
- * Unit tests for src/lib/import/checks.ts   (Slice #24.02b, trimmed by #26.02)
+ * Unit tests for src/lib/import/checks.ts   (Slice #24.02b, trimmed by #26.02 and #26.05)
  *
  * The report's whole value is that a user believes it, so the tests that
  * matter are the ones pinning what a finding CLAIMS: that its counts and its
@@ -16,24 +16,34 @@
  * each is now a rule that blocks until the folder complies. A test asserting
  * "this is loud" would be testing the wrong contract.
  *
+ * ⚠️ **And what #26.05 removed, for the same reason one stage later.** F-08,
+ * F-09 and F-02 from the T1 block, and two of the file rules (F-05, F-07), are
+ * now CON-01 … CON-06 in `constraint-rules.ts`, tested in
+ * `import-constraint-check.test.ts`.
+ *
+ * F-11 was in that list and came back, which is the case worth a test rather
+ * than a comment: a constraint blocks, and a file whose type Windows does not
+ * report is stored, served and merely never auto-extracted — F-17's situation
+ * exactly. It is quiet here now, and there is a test below that it did not
+ * follow the others.
+ *
  * That is also why the loud/quiet cases went with them. The split was measured
- * on those three near-miss rules; with them gone only F-15 and F-17 are quiet,
+ * on the three near-miss rules; with them gone only F-15 and F-17 are quiet,
  * so the one surviving loudness test asserts the ORDER (loud before quiet)
- * rather than where the line sits.
+ * rather than where the line sits — and it had to be rewritten again in #26.05,
+ * because the loud finding it used to sort against was F-08.
  *
  * Cross-checked against the real archive by running this module over
  * C:\dev\TEST.DATA. One aggregate count reproduces the spec's independent
  * measurement in PRE-IMPORT-RULES.md §6 exactly — 67 Office files (F-17). The
  * other, 8 irregular page groups, measured S-10 and went with it.
  *
- * The spec's third number, "15 gate files", deliberately does NOT reproduce:
- * it counts 0, and that is the correct answer now. Slice #24.04 moved
- * `.dwg/.bak/.zip/.lnk/.dwl/.dwl2` into the `"ignored"` kind, so the walk
- * removes those exact 15 files before `entries` exists. They appear in the
- * Skipped section instead, where the same 15 paths show up as
- * `ignored-extension`. F-05 therefore only fires for extensions the registry
- * has never heard of — which is worth keeping, but is not the archive-wide
- * warning the catalogue described before #24.04 fixed its cause.
+ * The spec's third number, "15 gate files", never reproduced — it counted 0
+ * from #24.04 onwards, once `.dwg/.bak/.zip/.lnk/.dwl/.dwl2` became the
+ * `"ignored"` kind and the walk started removing those exact 15 files before
+ * `entries` existed. They appear in the Skipped section instead. The rule that
+ * counted them is CON-03 now, and it fires only for extensions the registry has
+ * never heard of.
  */
 
 import { checkFolder, type FileMeta } from "@/lib/import/checks";
@@ -53,6 +63,10 @@ function obs(over: Partial<DirectoryObservation> = {}): DirectoryObservation {
     dirNames: over.dirNames ?? [],
     dropped: over.dropped ?? [],
     becamePageGroup: over.becamePageGroup ?? false,
+    // Spread rather than defaulted: `truncated` is ABSENT on a normal
+    // observation, and a fixture setting it to `undefined` explicitly would
+    // still satisfy `"truncated" in obs`.
+    ...(over.truncated === undefined ? {} : { truncated: over.truncated }),
   };
 }
 
@@ -67,8 +81,7 @@ function file(path: string): FSEntry {
   };
 }
 
-/** T1 metadata, keyed the way `metadataKeyFor` keys it. Hoisted by #26.02 —
- *  the ordering test needs a loud metadata finding to sort against. */
+/** T1 metadata, keyed the way `metadataKeyFor` keys it. */
 const meta = (entries: [string, number, string][]) =>
   new Map<string, FileMeta>(entries.map(([p, size, type]) => [p, { size, type }]));
 
@@ -127,18 +140,6 @@ describe("multi-property root (S-01)", () => {
 // ---------------------------------------------------------------------------
 
 describe("file findings", () => {
-  it("flags files the provenance gate will stop the run for", () => {
-    // F-05, the catalogue's highest-value warning: the import halts behind a
-    // modal per file, for the whole run.
-    const r = run({ entries: [file("a.xyz"), file("b.qqq"), file("scan.jpg")] });
-    expect(find(r, "gateFiles")!.counts).toMatchObject({ files: 2, extensions: 2 });
-  });
-
-  it("flags .heic, which passes the gate and is then read by nothing", () => {
-    const r = run({ entries: [file("IMG_1.heic")] });
-    expect(find(r, "heicFiles")!.loudness).toBe("loud");
-  });
-
   it("reports duplicate basenames across folders, listing every affected file", () => {
     const r = run({ entries: [file("A/fisa.jpg"), file("B/fisa.jpg"), file("C/alt.jpg")] });
     const f = find(r, "duplicateBasenames")!;
@@ -149,56 +150,113 @@ describe("file findings", () => {
     expect(f.paths).toHaveLength(f.counts.documents);
     expect(f.paths).toEqual(["A/fisa.jpg", "B/fisa.jpg"]);
   });
+
+  it("keeps the Office note ADVISORY, and says nothing about a plain text file", () => {
+    // ⚠️ THE decision #26.05 made about this file. Every other file rule became
+    // a blocking constraint; this one did not, because an Office file imports
+    // faithfully — it is stored and downloadable, and only its TEXT is
+    // unreadable. A blocking version would tell a business user to delete every
+    // Word document in their archive before importing anything.
+    const r = run({ entries: [file("nota.docx"), file("contacte.txt"), file("acte.pdf")] });
+    const f = find(r, "officeFiles")!;
+    expect(f.loudness).toBe("quiet");
+    expect(f.paths).toEqual(["nota.docx"]);
+  });
+
+  it("no longer speaks for the rules that became constraints", () => {
+    // The other half of #26.02's warning about drift, applied to #26.05: a rule
+    // that moved must STOP answering here, or the user meets the same file
+    // twice — once as a blocking constraint at the Constraints stage and once
+    // as advice on the Evaluation screen it has already passed.
+    const r = run({
+      entries: [file("a.xyz"), file("IMG_1.heic"), file("big.jpg"), file("gol.jpg")],
+      metadata: meta([
+        ["a.xyz", 100, "application/octet-stream"],
+        ["IMG_1.heic", 100, "application/octet-stream"],
+        ["big.jpg", 40 * 1024 * 1024, "image/jpeg"],
+        ["gol.jpg", 0, "image/jpeg"],
+      ]),
+      observations: [obs({ dropped: [dropped("Acte/folder.jpg", "system-file")] })],
+    });
+    expect(kinds(r)).toEqual(
+      expect.not.arrayContaining([
+        "gateFiles",
+        "heicFiles",
+        "oversizedFiles",
+        "emptyFiles",
+        "largeFolderJpg",
+      ]),
+    );
+  });
 });
 
 // ---------------------------------------------------------------------------
-// T1 — metadata
+// T1 — what is left of it
 // ---------------------------------------------------------------------------
 
-describe("metadata findings", () => {
-  it("flags oversized, empty and type-less files", () => {
-    const r = run({
-      entries: [file("big.jpg"), file("empty.jpg"), file("mystery.jpg")],
-      metadata: meta([
-        ["big.jpg", 21 * 1024 * 1024, "image/jpeg"],
-        ["empty.jpg", 0, "image/jpeg"],
-        ["mystery.jpg", 5000, ""],
-      ]),
-    });
-    expect(find(r, "oversizedFiles")!.counts).toMatchObject({ files: 1, limitMb: 20 });
-    expect(find(r, "emptyFiles")!.counts).toMatchObject({ files: 1 });
-    expect(find(r, "unknownMimeFiles")!.counts).toMatchObject({ files: 1 });
+describe("F-11 — the one T1 rule that stayed", () => {
+  it("reports a file whose type Windows did not give, QUIETLY", () => {
+    // ⚠️ `.tif` and not `.jpg`, and the difference is the whole reason this
+    // rule is not a constraint. `File.type` comes from the extension by way of
+    // the OS registry — Chromium hard-codes `.jpg`, and falls through to the
+    // registry for `.tif`/`.bmp`. A `.jpg` with an empty type is a state the
+    // browser does not produce, so a test built on one proves nothing; a `.tif`
+    // on a machine with no registry entry is the case that actually happens,
+    // and it is a perfectly good archival scan that must NOT block an import.
+    const f = find(run({
+      entries: [file("Plan.tif")],
+      metadata: meta([["Plan.tif", 400_000, ""]]),
+    }), "unknownMimeFiles")!;
+    expect(f.loudness).toBe("quiet");
+    expect(f.counts).toMatchObject({ files: 1 });
+    expect(f.paths).toEqual(["Plan.tif"]);
   });
 
-  it("ignores an empty MIME on a file nothing would have read anyway", () => {
-    // F-11 only matters because it disables AI extraction. A .docx was never
-    // going to be extracted, so reporting it would be noise.
+  it("ignores an empty type on a file nothing would have read anyway", () => {
+    // It only matters because it disables automatic extraction. A Word file was
+    // never going to be extracted, so reporting it would be noise.
     const r = run({ entries: [file("nota.docx")], metadata: meta([["nota.docx", 900, ""]]) });
     expect(kinds(r)).not.toContain("unknownMimeFiles");
   });
 
-  it("flags a folder.jpg too big to be a thumbnail", () => {
-    // F-02: dropped by NAME, so size is the only way to tell a Windows
-    // thumbnail from someone's scan of a land title.
+  it("says nothing about a dropped file, which nothing was going to read", () => {
+    // The metadata map covers dropped files because CON-06 needs a
+    // `folder.jpg`'s size. A rule that iterated the map instead of the upload
+    // set would argue about an import that is not going to happen.
     const r = run({
       observations: [obs({ dropped: [dropped("Acte/folder.jpg", "system-file")] })],
-      metadata: meta([["Acte/folder.jpg", 400 * 1024, "image/jpeg"]]),
+      metadata: meta([["Acte/folder.jpg", 400_000, ""]]),
     });
-    expect(find(r, "largeFolderJpg")!.counts).toMatchObject({ files: 1 });
+    expect(kinds(r)).not.toContain("unknownMimeFiles");
   });
+});
 
-  it("leaves a genuine Windows thumbnail alone", () => {
+describe("uploadBytes", () => {
+  it("sums every file the run will upload", () => {
     const r = run({
-      observations: [obs({ dropped: [dropped("Acte/folder.jpg", "system-file")] })],
-      metadata: meta([["Acte/folder.jpg", 4 * 1024, "image/jpeg"]]),
+      entries: [file("a.jpg"), file("b.jpg")],
+      metadata: meta([["a.jpg", 1000, "image/jpeg"], ["b.jpg", 2500, "image/jpeg"]]),
     });
-    expect(kinds(r)).not.toContain("largeFolderJpg");
+    expect(r.uploadBytes).toBe(3500);
   });
 
-  it("skips all four metadata rules when the pass did not run", () => {
-    const r = run({ entries: [file("big.jpg")] });
-    expect(r.uploadBytes).toBeNull();
-    expect(kinds(r)).not.toContain("oversizedFiles");
+  it("ignores a dropped file, which nothing is going to upload", () => {
+    // The metadata map deliberately covers dropped files — CON-06 needs a
+    // `folder.jpg`'s size — so the sum has to restrict itself to the upload
+    // set or it overstates the total. Measured on Adrian's archive: 27 of 759
+    // sized files are drops, worth 11.3 MB.
+    const r = run({
+      entries: [file("a.jpg")],
+      observations: [obs({ dropped: [dropped("Acte/plan.dwg", "ignored-extension")] })],
+      metadata: meta([["a.jpg", 1000, "image/jpeg"], ["Acte/plan.dwg", 999_000, ""]]),
+    });
+    expect(r.uploadBytes).toBe(1000);
+  });
+
+  it("is null when the metadata pass has not run", () => {
+    // Since #26.05 that is the normal state of this report until the
+    // Constraints stage has been through: nothing else here reads a size.
+    expect(run({ entries: [file("big.jpg")] }).uploadBytes).toBeNull();
   });
 });
 
@@ -244,27 +302,20 @@ describe("paths are complete, not a sample", () => {
     // mismatch is exactly what made the document misleading.
     expect(f.paths).toHaveLength(f.counts.files);
   });
-
-  it("keeps every gate-file path too", () => {
-    const entries = Array.from({ length: 30 }, (_, i) => file(`x${i}.zzz`));
-    expect(find(run({ entries }), "gateFiles")!.paths).toHaveLength(30);
-  });
 });
 
 describe("ordering", () => {
   it("puts every loud finding before every quiet one", () => {
-    // #26.02 rewrote this case: it used to pair a quiet S-03 against a loud
-    // S-04 and both are gone. The pair below is chosen so the sort has
-    // something to do — F-17 is quiet and is pushed by `fileFindings`, F-08 is
-    // loud and is pushed by `metadataFindings`, several steps later. A
-    // no-op sort would leave the quiet one first.
+    // #26.05 rewrote this case for the second time: it used to pair the quiet
+    // F-17 against the loud F-08, and F-08 is now a constraint. The pair below
+    // is chosen so the sort still has something to do — F-17 is quiet and is
+    // pushed by `fileFindings`, S-17 is loud and is pushed by
+    // `truncationFindings`, after it. A no-op sort would leave the quiet one
+    // first.
     const r = run({
-      entries: [file("nota.docx"), file("scan.jpg")],
-      metadata: meta([
-        ["nota.docx", 1_000, "application/vnd.openxmlformats-officedocument.wordprocessingml.document"],
-        ["scan.jpg", 40 * 1024 * 1024, "image/jpeg"],
-      ]),
+      entries: [file("nota.docx")],
+      observations: [obs({ truncated: "breadth" })],
     });
-    expect(r.findings.map((f) => f.kind)).toEqual(["oversizedFiles", "officeFiles"]);
+    expect(r.findings.map((f) => f.kind)).toEqual(["walkTooManyFiles", "officeFiles"]);
   });
 });

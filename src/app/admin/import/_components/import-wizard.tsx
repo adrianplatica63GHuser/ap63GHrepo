@@ -31,13 +31,29 @@
  * behind a tick the user re-confirms on every round of the fix-and-re-check
  * loop. The walk IS the structure check now: the moment it finishes, the
  * verdict decides where the user lands — back on the violation list, or on the
- * Evaluation screen with Structure green behind them.
+ * next stage with Structure green behind them.
  *
- * ⚠️ **The metadata pass runs only when Structure is clean.** It is ~760
- * `getFile()` calls on Adrian's archive and it feeds the folder report, which a
- * failed structure check never reaches. Paying for it on every turn of a loop
- * built to be gone round several times would have made the loop slower than
- * the fixing it exists to prompt.
+ * THE CONSTRAINTS STAGE  (Slice #26.05)
+ * ─────────────────────────────────────
+ * A clean structure check no longer lands on the Evaluation screen. It lands on
+ * `ImportConstraintsStage`, which presents what the FILES must satisfy and then
+ * runs the identical loop against the same folder — no re-picking, exactly as
+ * #26.04's constraint requires and for the same reason.
+ *
+ * ⚠️ **The metadata pass moved with it, and that is the whole reason `runWalk`
+ * now takes a `target`.** It is ~760 `getFile()` calls on Adrian's archive, and
+ * it exists to answer four constraints (a file's size, and the type Windows
+ * reports for it). Leaving it on the structure round would mean paying for it
+ * on every turn of a loop the user may go round several times before a single
+ * constraint has been looked at — so a structure check now STOPS at the
+ * verdict, and the pass runs when the Constraints button is pressed.
+ *
+ * ⚠️ **A constraints check re-walks the folder first, and may fail back to
+ * Structure.** That is not defensive: the user has been in File Explorer since
+ * the last check, and a file deleted to fix a constraint can leave a page
+ * folder numbered 1, 2, 4. Re-running the structure check is the only way the
+ * stage's own precondition stays true, and landing back on `structure-report`
+ * when it does not is the honest outcome.
  *
  * File System Access API handles are stored in a module-level singleton so
  * they survive React unmount/remount (handles cannot be serialised).
@@ -76,8 +92,10 @@ import { buttonClass } from "@/lib/ui/button-styles";
 import { ImportStageBar, MODAL_PHASES } from "./import-stage-bar";
 import { ImportInformation } from "./import-information";
 import { ImportStructureStage } from "./import-structure-stage";
+import { ImportConstraintsStage } from "./import-constraints-stage";
 import { CancelImportDialog } from "./cancel-import-dialog";
 import { checkStructureStage } from "@/lib/import/structure-check";
+import { checkConstraintsStage } from "@/lib/import/constraint-check";
 import {
   stageForPhase,
   type ImportPhase,
@@ -309,6 +327,19 @@ export function ImportWizard() {
   const [structureRulesOpen, setStructureRulesOpen] = useState(false);
 
   /**
+   * Slice #26.05 — the Constraints stage's two, which are the same two.
+   *
+   * A separate tick rather than a shared one, and the reason is the sentence
+   * beside each: "Respect regulile de structură" and "Am citit restricțiile
+   * privind fișierele" are two different statements, and a user who confirmed
+   * the first has not made the second. Sharing one boolean would also mean a
+   * constraints check silently satisfying the structure gate on the round the
+   * re-walk bounces back to it.
+   */
+  const [constraintsAcknowledged, setConstraintsAcknowledged] = useState(false);
+  const [constraintsRulesOpen, setConstraintsRulesOpen] = useState(false);
+
+  /**
    * Slice #26.03 — the Cancel's two pieces of memory.
    *
    * `documentsCreated` is the only fact the cancel dialog needs that nothing
@@ -382,13 +413,26 @@ export function ImportWizard() {
       handle: FSDirectoryHandle,
       mode: "pick" | "recheck",
       /**
+       * How far this run goes.
+       *
+       * `"structure"` stops at the structure verdict and hands over to the
+       * Constraints stage's rules screen with nothing checked and nothing spent.
+       * `"constraints"` carries straight on through the metadata pass and the
+       * constraint check.
+       *
+       * An argument rather than a read of `phase`, because this decides whether
+       * ~760 `getFile()` calls happen and a decision that expensive belongs to
+       * the button that was pressed, not to a state value that may have moved.
+       */
+      target: "structure" | "constraints",
+      /**
        * Where a FAILED walk leaves the user.
        *
        * An explicit argument since #26.04, and `mode` can no longer stand in
-       * for it: the re-check button now exists on two screens — the structure
-       * violation list and the folder report — and a failed re-check must
-       * return to the one it was pressed from, not to whichever of the two the
-       * mode happens to imply.
+       * for it: the re-check button now exists on three screens — the structure
+       * violation list, the constraints violation list and the folder report —
+       * and a failed re-check must return to the one it was pressed from, not
+       * to whichever of them the mode happens to imply.
        */
       failurePhase: ImportPhase,
     ) => {
@@ -399,10 +443,15 @@ export function ImportWizard() {
 
       setWalkError(null);
       setMetaProgress({ done: 0, total: 0 });
-      // Every check re-asks the tick. Cleared here rather than in the two
-      // callers so that no route into a walk can skip it.
+      // Every check re-asks the tick. Cleared here rather than in the callers
+      // so that no route into a walk can skip it — and BOTH ticks, whatever the
+      // target, because a constraints check re-walks and can land the user back
+      // on the Structure screen, where a tick carried over from before their
+      // trip to File Explorer would let them press Verifică din nou without
+      // re-confirming anything.
       setStructureAcknowledged(false);
-      setPhase("walking");
+      setConstraintsAcknowledged(false);
+      setPhase(target === "structure" ? "walking" : "constraints-checking");
 
       // A permission grant can lapse between two walks. `requestPermission`
       // only works inside a user gesture, which is exactly where this runs —
@@ -459,12 +508,30 @@ export function ImportWizard() {
       setScanResults(new Map());
       setScanProgress({ done: 0, total: 0 });
 
-      // Slice #24.02a — the walk ends here. It used to fall straight into the
-      // classification pass in this same async block, which is how choosing a
-      // folder came to cost one Claude call per image before anything had been
-      // validated or shown. The scan waits for `startScan`, behind Continuă.
-      setEntries(walked);
-      setObservations(seen);
+      /**
+       * ⚠️ **`entries`, `observations` and `metadata` are published TOGETHER, at
+       * each of the three exits below — never here.**   (Slice #26.05)
+       *
+       * They were set at this point until the slice's second adversarial round
+       * ran, and the constraints branch is what made that wrong. Between here
+       * and `setMetadata` there is now an awaited ~760-call metadata pass, and
+       * every await yields: React flushes the commit and re-renders with THIS
+       * walk's entries beside the PREVIOUS check's file sizes. `constraintVerdict`
+       * is a `useMemo` over exactly those three, so for the whole duration of
+       * the pass the panel drew a red "these files could not be read" block
+       * naming precisely the files the user had just fixed — and Salvează wrote
+       * that hybrid into a dated page they then carried to File Explorer.
+       *
+       * The structure branch never had the bug and could not have: it decides
+       * from its local `seen` with no await in between. That is the difference
+       * to keep in mind — a state split across an await is only safe while
+       * nothing renders from both halves.
+       *
+       * (Slice #24.02a's original point stands and is why the walk still ends
+       * here rather than falling into the classification pass: choosing a folder
+       * used to cost one Claude call per image before anything had been
+       * validated or shown. The scan waits for `startScan`, behind Continuă.)
+       */
 
       /**
        * Slice #26.04 — the structure check, and the fork the whole stage turns
@@ -482,37 +549,79 @@ export function ImportWizard() {
        */
       const verdict = checkStructureStage(seen);
       if (!verdict.clean) {
-        // Nothing below this point is worth paying for — the folder report is
+        // Nothing below this point is worth paying for — every later stage is
         // unreachable until Structure passes. Metadata is dropped rather than
         // left standing, so no later render can pair this walk's entries with
         // the previous walk's file sizes.
+        setEntries(walked);
+        setObservations(seen);
         setMetadata(null);
         setPhase("structure-report");
+        return;
+      }
+
+      if (target === "structure") {
+        // Slice #26.05 — Structure is clean, so Constraints begins. Nothing is
+        // checked yet and nothing has been spent: the user reads the
+        // constraints, ticks, and presses the button that pays for the metadata
+        // pass. `metadata` is cleared rather than left alone so the derived
+        // verdict is `null` — "not checked" and "checked and clean" are
+        // different screens, and the all-clear must be earned by this folder.
+        setEntries(walked);
+        setObservations(seen);
+        setMetadata(null);
+        setPhase("constraints");
         return;
       }
 
       // T1: one getFile() per file. Metadata only — it does not read contents
       // — but it is ~760 calls on Adrian's archive, so it reports progress
       // rather than assuming every machine is as quick as his.
+      //
+      // ⚠️ `constraintMetadata` is what the verdict below is computed from, for
+      // the same reason the structure verdict reads the local `seen`: a phase
+      // decision cannot wait for a render, and reading the state here would
+      // decide this check's destination from the PREVIOUS check's file sizes —
+      // which, on the second turn of the loop, is exactly the list the user has
+      // just fixed.
+      let constraintMetadata: Map<string, FileMeta>;
       try {
-        const meta = await readFileMetadata(walked, seen, {
+        constraintMetadata = await readFileMetadata(walked, seen, {
           onProgress: (p) => {
             if (!token.cancelled) setMetaProgress(p);
           },
           isCancelled: () => token.cancelled,
         });
         if (token.cancelled) return;
-        setMetadata(meta);
       } catch {
         if (token.cancelled) return;
-        // The four size/MIME rules simply do not fire. Everything derived from
-        // names still works, so a failure here degrades the report rather than
-        // stopping the import.
-        setMetadata(null);
+        // ⚠️ An EMPTY map, not `null`, and the difference is a green tick over
+        // a folder nobody looked at. Before #26.05 a failed pass degraded an
+        // advisory report and that was the right call; now it feeds a stage
+        // that BLOCKS, so "we could not read anything" has to arrive as a
+        // measurable fact. Every upload file then lands in `unreadable`, the
+        // verdict is not clean, and the panel says so.
+        //
+        // No `walkError` beside it: the panel's own red block names the files
+        // and says what to do, and a second banner reading "the re-check failed"
+        // would contradict it — the check DID run, and its answer is that
+        // nothing could be read.
+        constraintMetadata = new Map();
       }
 
+      // One commit, so no render can pair this walk with the previous check's
+      // sizes. See the note above `checkStructureStage`.
+      setEntries(walked);
+      setObservations(seen);
+      setMetadata(constraintMetadata);
+
+      const constraints = checkConstraintsStage({
+        entries: walked,
+        observations: seen,
+        metadata: constraintMetadata,
+      });
       if (token.cancelled) return;
-      setPhase("folder-report");
+      setPhase(constraints.clean ? "folder-report" : "constraints-report");
     },
     [t, beginRun],
   );
@@ -554,7 +663,9 @@ export function ImportWizard() {
     setEntries([]);
     setObservations([]);
     setMetadata(null);
-    await runWalk(handle, "pick", "structure");
+    // Always `"structure"`: a folder that has just been picked has passed
+    // nothing, whichever screen the picker was pressed from.
+    await runWalk(handle, "pick", "structure", "structure");
   }, [t, runWalk]);
 
   // -------------------------------------------------------------------
@@ -674,28 +785,52 @@ export function ImportWizard() {
    * which screen the button is drawn on.
    */
   const handleRecheck = useCallback(async () => {
-    // Where a FAILED re-check puts the user back. The button exists on exactly
-    // two screens since #26.04, and each must return to itself: the structure
-    // violation list is a to-do list the user is working through, and the
-    // folder report is the same thing one stage later. Anything else throws
-    // away the list they were reading because the FOLDER went missing.
+    // Where a FAILED re-check puts the user back. The button exists on four
+    // screens since #26.05 — the Structure violation list, the Constraints
+    // rules screen, the Constraints violation list and the folder report — and
+    // each must return to itself: each is a to-do list the user is working
+    // through, and anything else throws away the list they were reading because
+    // the FOLDER went missing.
+    //
+    // `constraints` (the rules, never yet checked) is listed separately from
+    // `constraints-report` on purpose — returning a first-time user to a
+    // violation list they have never seen would be a screen made of nothing.
     const returnTo: ImportPhase =
-      phase === "folder-report" ? "folder-report" : "structure-report";
+      phase === "folder-report"
+        ? "folder-report"
+        : phase === "constraints"
+          ? "constraints"
+          : phase === "constraints-report"
+            ? "constraints-report"
+            : "structure-report";
+
+    // How far it goes. Pressed from either Structure screen it re-checks the
+    // structure and stops; pressed from anywhere later it goes the whole way,
+    // because those screens are only reachable through a clean structure check
+    // and the user is asking about the files.
+    const target: "structure" | "constraints" =
+      phase === "structure" || phase === "walking" || phase === "structure-report"
+        ? "structure"
+        : "constraints";
 
     if (!_dirHandle) {
       // Fixed in passing (#26.03): this used to return in silence, so a button
       // that had lost its handle would have done nothing at all — no message,
       // no cue — and the user would have been left pressing it.
       //
-      // No route to it is known: the button only exists at `folder-report`, and
-      // every route into that phase runs through a walk whose handle was
-      // non-null. It is a guard against a future one, not a fix for a reported
-      // bug, and it is here rather than deleted because the alternative to a
-      // message is silence.
+      // ⚠️ The comment here used to say "no route to it is known: the button
+      // only exists at `folder-report`". That stopped being true at #26.04 and
+      // is four screens out of date since #26.05 — and one of the four, the
+      // Constraints rules screen, is the stage's PRIMARY action rather than a
+      // re-check, so it is the press least likely to have been preceded by a
+      // successful walk in that stage. Every route still runs through a walk
+      // that set `_dirHandle`, so it stays a guard against a future route
+      // rather than a fix for a reported bug — but it is now a guard on a
+      // button the user presses first, not last.
       setWalkError(t("recheckFailed"));
       return;
     }
-    await runWalk(_dirHandle, "recheck", returnTo);
+    await runWalk(_dirHandle, "recheck", target, returnTo);
   }, [runWalk, t, phase]);
 
   /**
@@ -748,6 +883,9 @@ export function ImportWizard() {
     // read the rules on the way past.
     setStructureAcknowledged(false);
     setStructureRulesOpen(false);
+    // Slice #26.05 — and the same for Constraints, for the same reason.
+    setConstraintsAcknowledged(false);
+    setConstraintsRulesOpen(false);
   }, [endRun]);
 
   // Mint a token for this mount, and retire whatever token is live on unmount —
@@ -794,6 +932,20 @@ export function ImportWizard() {
   const inStructure =
     phase === "structure" || phase === "walking" || phase === "structure-report";
 
+  /**
+   * The three phases the Constraints panel owns.   (Slice #26.05)
+   *
+   * Same shape as Structure's, one stage later: the rules screen, the check
+   * running, and the fix list. `constraints-checking` covers a re-walk as well
+   * as the metadata pass, so a check that turns out to break the structure
+   * leaves this set and enters `inStructure` — which is the one transition
+   * between the two stages that goes backwards, and it is meant to.
+   */
+  const inConstraints =
+    phase === "constraints" ||
+    phase === "constraints-checking" ||
+    phase === "constraints-report";
+
   // Derived at render time rather than copied into state when the walk ends:
   // one copy cannot drift from the list the user is looking at. Cheap — it is
   // a single pass over names, no file contents and no I/O.
@@ -819,6 +971,31 @@ export function ImportWizard() {
   const structureVerdict = useMemo(
     () => (observations.length === 0 ? null : checkStructureStage(observations)),
     [observations],
+  );
+
+  /**
+   * The Constraints verdict on screen.   (Slice #26.05)
+   *
+   * Derived, not stored, exactly as the structure verdict and the report are.
+   *
+   * `metadata === null` is the sound test for "not checked in this run", and it
+   * is the reason `runWalk` clears it on the way into the Constraints stage: a
+   * folder arrives here with `entries` and `observations` already populated by
+   * the structure walk, so neither of those can tell the two states apart. An
+   * EMPTY map is a different thing entirely — it means the pass ran and read
+   * nothing, and the verdict then refuses the folder rather than passing it.
+   *
+   * `runWalk` computes the same verdict from its own locals to choose the next
+   * phase. Not a second copy of the rule: the same pure function over the same
+   * inputs, called once because a phase decision cannot wait for a render and
+   * once because a render cannot read a local.
+   */
+  const constraintVerdict = useMemo(
+    () =>
+      metadata === null
+        ? null
+        : checkConstraintsStage({ entries, observations, metadata }),
+    [entries, observations, metadata],
   );
 
   /**
@@ -997,7 +1174,14 @@ export function ImportWizard() {
             from the gate to the OS picker with the tick never touched. The
             resumed view's only intended control is "Import nou", which is what
             its own comment below has said since #24.02a. */}
-        {preflightPassed && phase !== "folder-report" && phase !== "resumed" && !inStructure && (
+        {preflightPassed &&
+          phase !== "folder-report" &&
+          phase !== "resumed" &&
+          !inStructure &&
+          // …and hidden through the Constraints phases for the reason it is
+          // hidden through the Structure ones: the picker there is BEHIND a
+          // tick, and a second copy up here would be a way round the gate.
+          !inConstraints && (
           <button
             type="button"
             onClick={handlePickFolder}
@@ -1097,20 +1281,44 @@ export function ImportWizard() {
           verdict={structureVerdict}
           folderName={rootFolderName}
           busy={phase === "walking"}
-          busyLabel={
-            // Two sentences, and which one is true says where the walk is:
-            // the metadata pass reports a running count, and it only starts
-            // once the structure has already passed.
-            metaProgress.total > 0
-              ? t("readingMetadata", { done: metaProgress.done, total: metaProgress.total })
-              : t("walkingFolder")
-          }
+          // One sentence now, not two. #26.04 chose between them on
+          // `metaProgress.total`, because the metadata pass ran at the end of a
+          // clean structure walk; #26.05 moved that pass to the Constraints
+          // stage, so this phase is only ever the walk. The conditional went
+          // with the pass rather than being left here to pick a branch that can
+          // no longer be taken.
+          busyLabel={t("walkingFolder")}
           acknowledged={structureAcknowledged}
           onAcknowledgedChange={setStructureAcknowledged}
           onChooseFolder={handlePickFolder}
           onRecheck={() => void handleRecheck()}
           rulesOpen={structureRulesOpen}
           onRulesOpenChange={setStructureRulesOpen}
+        />
+      )}
+
+      {/* Slice #26.05 — the Constraints stage: the same loop, one stage later,
+          against the same folder. One panel across all three of its phases, so
+          a check does not swap the screen out from under the reader. */}
+      {inConstraints && (
+        <ImportConstraintsStage
+          verdict={constraintVerdict}
+          folderName={rootFolderName}
+          busy={phase === "constraints-checking"}
+          busyLabel={
+            // Two sentences, and which one is true says where the check is: it
+            // re-walks the folder first (fast), then pays for the metadata
+            // pass, which reports a running count.
+            metaProgress.total > 0
+              ? t("readingMetadata", { done: metaProgress.done, total: metaProgress.total })
+              : t("walkingFolder")
+          }
+          acknowledged={constraintsAcknowledged}
+          onAcknowledgedChange={setConstraintsAcknowledged}
+          onCheck={() => void handleRecheck()}
+          onChooseFolder={handlePickFolder}
+          rulesOpen={constraintsRulesOpen}
+          onRulesOpenChange={setConstraintsRulesOpen}
         />
       )}
 

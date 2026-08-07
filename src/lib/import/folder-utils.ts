@@ -388,6 +388,86 @@ function sortNumericFilenames(names: string[]): string[] {
   });
 }
 
+/**
+ * ⚠️ **ONE collator, built once.** `a.localeCompare(b, undefined, {…})` has no
+ * V8 fast path: the three-argument form constructs a fresh `Intl.Collator` per
+ * comparison. Measured while #26.05 was in adversarial review — sorting 20,000
+ * paths went from 2–16 ms to 130–148 ms, ~18× — and both checking stages sort
+ * every list they emit, synchronously, on the UI thread. The same slice had
+ * just removed a quadratic accumulation from `constraint-check.ts` for exactly
+ * that reason, and this put a third of a second of it back at the walk ceiling.
+ * Hoisted, it is 8 ms, and the order is identical.
+ *
+ * `undefined` locale on purpose: the folder names come off a Windows disk and
+ * the host default is what every other `localeCompare` in the import path has
+ * always used.
+ */
+const DISPLAY_COLLATOR = new Intl.Collator(undefined, { numeric: true });
+
+
+/**
+ * The order every stage lists names and paths in.   (Slice #26.05)
+ *
+ * `localeCompare`, the comparator `walkInto` above uses on `childFiles` and
+ * `childDirs` — so a violation lists names in the order the user meets them
+ * everywhere else in the import — with one addition the walk does not need.
+ *
+ * ⚠️ `localeCompare` alone is not a total order. Collation-ignorable characters
+ * — a zero-width space, a soft hyphen, a left-to-right mark, all legal in a
+ * Windows filename and all invisible on screen — compare EQUAL to nothing, so
+ * `plan.jpg` and `plan\u200b.jpg` tie. `sort` is stable, which means a tie
+ * silently falls back to the raw `values()` enumeration order that the checkers
+ * exist to remove: `walkFolder` calls its observer BEFORE it sorts, so
+ * `keptNames` and `dirNames` arrive in whatever order the filesystem produced.
+ * The code-unit comparison behind it settles those pairs the same way every
+ * time, and never fires for names that differ visibly.
+ *
+ * ⚠️ **NUMERIC, since #26.05.** Page files are the one population where the
+ * order IS the subject, and `walkInto` sorts a page group's handles with
+ * `sortNumericFilenames` — so a plain collation here undid the walk's own order
+ * and listed a 25-page scan as 1, 10, 11, 12 … 2, 20. Every renderer truncates
+ * to the first four, so the user saw pages 1, 10, 11 and 12 in a list whose
+ * whole subject is page numbers.
+ *
+ * It CHANGES what ties, and that is worth knowing rather than assuming:
+ * `"01.jpg".localeCompare("1.jpg")` was a decisive `-1` and the tie-break never
+ * ran; numerically the two are equal and it now does. The order that comes out
+ * is identical — the code-unit comparison puts `0` before `1` — but that is a
+ * property of the tie-break rather than a coincidence, and STR-13 exists
+ * precisely because those two names are one page number.
+ *
+ * This lives here, beside the walk whose order it extends, because #26.05 made
+ * it the third place that needs it: the walk, `structure-check.ts` (which wrote
+ * it first, for the fix-and-re-check loop — a list that reshuffles between two
+ * checks of an unchanged folder is unusable) and now `constraint-check.ts`.
+ */
+export function compareForDisplay(a: string, b: string): number {
+  return DISPLAY_COLLATOR.compare(a, b) || (a < b ? -1 : a > b ? 1 : 0);
+}
+
+/** A sorted COPY, in the order above. The input is never mutated. */
+export function sortedForDisplay(names: readonly string[]): string[] {
+  return [...names].sort(compareForDisplay);
+}
+
+/**
+ * A checked path as the user will look for it in File Explorer.   (Slice #26.04)
+ *
+ * Every violation the two checking stages produce carries paths from the CHOSEN
+ * folder, and `""` is the chosen folder itself. Neither form is what a user
+ * needs while standing in Explorer: an empty string names nothing at all, and a
+ * bare `48-50D/Contract` omits the one folder they navigated to.
+ *
+ * Shared rather than written per component because four renderers need it — two
+ * screens and the two take-away pages they save — and four spellings of "where
+ * is this" is how one of them starts naming a folder the others do not. (It
+ * lived in `structure-check.ts` until #26.05 gave it a second stage.)
+ */
+export function displayPathOf(chosenFolderName: string, path: string): string {
+  if (path === "") return chosenFolderName;
+  return chosenFolderName === "" ? path : `${chosenFolderName}/${path}`;
+}
+
 // ---------------------------------------------------------------------------
 // Tag extraction
 // ---------------------------------------------------------------------------

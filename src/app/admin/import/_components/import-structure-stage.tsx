@@ -49,9 +49,10 @@ import { useLocale, useTranslations } from "next-intl";
 
 import { ActivityCue } from "@/components/activity-cue";
 import { buttonClass } from "@/lib/ui/button-styles";
-import { buildStructureHtml, reportFileName } from "@/lib/import/report-html";
+import { buildRulesPageHtml, reportFileName } from "@/lib/import/report-html";
 import { downloadHtmlFile, fileNameStamp } from "@/lib/ui/download-html";
-import { displayPathOf, type StructureVerdict } from "@/lib/import/structure-check";
+import { displayPathOf } from "@/lib/import/folder-utils";
+import { type StructureVerdict } from "@/lib/import/structure-check";
 import {
   RULE_SCOPES,
   messageKeyFor,
@@ -207,7 +208,7 @@ export function ImportStructureStage({
      */
     const namedFolder = checked && folderName !== "" ? folderName : null;
 
-    const html = buildStructureHtml({
+    const html = buildRulesPageHtml({
       folderName: namedFolder,
       generatedAt: now.toLocaleString(locale),
       locale,
@@ -307,14 +308,32 @@ export function ImportStructureStage({
    * the bottom to do it, is a worse bug than the one this fixes.
    */
   const checkboxRef = useRef<HTMLInputElement | null>(null);
+  const headingRef = useRef<HTMLHeadingElement | null>(null);
   const wasBusy = useRef(false);
+  const arrived = useRef(false);
   useEffect(() => {
+    // ⚠️ MOUNT counts too, since #26.05. The busy → idle edge is enough while
+    // this panel owns the whole loop, and it stopped being enough the moment a
+    // Constraints check could bounce back here: that transition unmounts the
+    // other panel and mounts this one in a single commit, with `wasBusy` false
+    // and `busy` false, so the edge never fires — and the button the user
+    // pressed was destroyed with the panel that held it, leaving focus on
+    // `<body>`. Same guard as `ImportConstraintsStage`'s, for the same swap
+    // seen from the other side.
+    // ⚠️ TWO TARGETS. On the busy → idle edge the tick is the next thing to do.
+    // On ARRIVAL it is the wrong place: the tick sits below the whole rules
+    // listing and `focus()` scrolls, so focusing it would scroll the rules off
+    // the top of the screen the first time the user ever sees them — the exact
+    // thing the paragraph above forbids. On arrival the keyboard goes to the
+    // heading, which is the ordinary route-change pattern.
     const finished = wasBusy.current && !busy;
+    const justMounted = !arrived.current;
+    arrived.current = true;
     wasBusy.current = busy;
-    if (!finished) return;
+    if (busy || (!finished && !justMounted)) return;
     const active = typeof document === "undefined" ? null : document.activeElement;
     const stranded = active === null || active === document.body;
-    if (stranded) checkboxRef.current?.focus();
+    if (stranded) (justMounted ? headingRef : checkboxRef).current?.focus();
   }, [busy]);
 
   return (
@@ -323,7 +342,18 @@ export function ImportStructureStage({
         {liveSummary}
       </p>
 
-      <h2 className="text-lg font-semibold text-ink dark:text-zinc-100">{t("title")}</h2>
+      {/* `tabIndex={-1}` so the effect above can put the keyboard here on
+          arrival. Not reachable by Tab, and deliberately NOT `outline-none`: a
+          click does not match `:focus-visible` so a pointer user gets no ring
+          either way, while a programmatic `.focus()` after a keypress DOES —
+          which is the ring the keyboard user this effect exists for needs. */}
+      <h2
+        ref={headingRef}
+        tabIndex={-1}
+        className="text-lg font-semibold text-ink dark:text-zinc-100"
+      >
+        {t("title")}
+      </h2>
       <p className="mt-1.5 text-sm text-ink dark:text-zinc-300">{t("intro")}</p>
 
       {/*

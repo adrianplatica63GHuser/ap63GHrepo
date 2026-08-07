@@ -4,13 +4,21 @@
  *
  * Reads `size` and `type` for every file the run will upload, by calling
  * `getFile()` on each handle. That is the only thing separating the four
- * cheapest high-value checks in the catalogue from being uncheckable:
+ * cheapest high-value checks from being uncheckable — three of them moved to
+ * the Constraints stage in #26.05, where they BLOCK rather than advise, and the
+ * fourth stayed behind as advice:
  *
- *   F-08  a file over 20 MB → HTTP 413, *after* its Document row exists
- *   F-09  a zero-byte file  → HTTP 400 "file is required", which misleads
- *   F-11  an empty `File.type` → AI extraction disabled for that page FOREVER,
- *         because the MIME is frozen at upload and never re-sniffed
- *   F-02  a real scan named `folder.jpg`, which the walk drops on sight
+ *   CON-05  a file over 20 MB → HTTP 413, *after* its Document row exists
+ *   CON-04  a zero-byte file  → HTTP 400 "file is required", which misleads
+ *   CON-06  a real scan named `folder.jpg`, which the walk drops on sight
+ *   F-11    an empty `File.type` → automatic extraction disabled for that page
+ *           FOREVER, because the MIME is frozen at upload and never re-sniffed
+ *
+ * ⚠️ **It therefore runs for the Constraints stage now, not for the report.**
+ * `ImportWizard` calls it once the structure check is clean and the user has
+ * pressed the Constraints button; the Evaluation report is handed whatever it
+ * produced. A pass that read nothing is not "no findings" at that stage — see
+ * `checkConstraintsStage`.
  *
  * `getFile()` returns a `File` whose `size` and `type` come from the directory
  * entry — it does not read the contents, so this is metadata, not I/O over the
@@ -19,9 +27,10 @@
  * second" is a claim about his laptop, not about every machine.
  *
  * ⚠️ It also touches the DROPPED files, which is deliberate and is the whole
- * point of F-02. `folder.jpg` is removed by NAME, so the only way to tell a
+ * point of CON-06. `folder.jpg` is removed by NAME, so the only way to tell a
  * Windows thumbnail from someone's scan of a land title is to look at how big
- * it is.
+ * it is. Every other consumer must restrict itself to `uploadKeysOf(entries)`
+ * for exactly that reason.
  */
 
 import { metadataKeyFor, type FileMeta } from "./checks";

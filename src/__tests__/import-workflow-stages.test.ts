@@ -4,17 +4,17 @@
  * The shell's whole value is that the indicator agrees with the screen. It can
  * disagree in three ways, and each of them is silent:
  *
- *  1. **A stage goes green that nothing did.** Three of the ten stages have no
- *     screen until 26.05–26.08, and the flow walks straight past them. A
- *     positional "everything before the current one is done" would tick all
- *     three — a system telling the user their files were checked against the
- *     size and format constraints when no code looked at them. That is the
- *     exact defect this repo recorded after #26.00: confident output never
- *     measured against a realistic input.
+ *  1. **A stage goes green that nothing did.** Two of the ten stages have no
+ *     screen until 26.06–26.08, and the flow walks straight past them. A
+ *     positional "everything before the current one is done" would tick them
+ *     both — a system telling the user their files were checked for duplicates
+ *     when no code looked at them. That is the exact defect this repo recorded
+ *     after #26.00: confident output never measured against a realistic input.
  *
- *     (It was four until #26.04 gave Structure its screen. That slice is the
- *     worked example of what `plannedIn` is for: one property deleted from one
- *     row of the catalogue, and the stage starts going amber and green.)
+ *     (It was four until #26.04 gave Structure its screen and #26.05 gave
+ *     Constraints its own. Those two slices are the worked example of what
+ *     `plannedIn` is for: one property deleted from one row of the catalogue,
+ *     and the stage starts going amber and green.)
  *
  *  2. **A phase has no stage, or a stage nobody can reach.** `Record<ImportPhase, …>`
  *     catches the first at compile time; the second needs a test, because a
@@ -328,6 +328,18 @@ describe("stageForPhase", () => {
     expect(stageForPhase("scanning")).toBe("scanning");
   });
 
+  it("reports the whole constraints loop as constraints, including its re-walk", () => {
+    // #26.05's split, and the judgement call inside it. `constraints-checking`
+    // covers a WALK as well as the metadata pass, and it still reports
+    // Constraints — the walk is there because the user has been in File
+    // Explorer since the last check, and the stage they are standing in is the
+    // one whose button they pressed. When that walk finds the structure broken
+    // the phase moves to `structure-report` and the indicator follows it back.
+    expect(stageForPhase("constraints")).toBe("constraints");
+    expect(stageForPhase("constraints-checking")).toBe("constraints");
+    expect(stageForPhase("constraints-report")).toBe("constraints");
+  });
+
   it("reports the whole structure loop as structure, including the walk", () => {
     // #26.04's split, and the judgement call inside it. `walking` reports
     // Structure rather than Evaluation because the walk exists to answer the
@@ -343,15 +355,14 @@ describe("stageForPhase", () => {
     expect(stageForPhase("folder-report")).toBe("evaluation");
   });
 
-  it("has no phase for the stages 26.05 and 26.06 will build", () => {
+  it("has no phase for the stages 26.06 and 26.08 will build", () => {
     // The other half of "never land on a planned stage": the phases exist for
-    // the stages that are built, and Constraints and Duplication are not among
-    // them. #26.04's brief says "Structure turns green and Constraints begins";
-    // only the first half is buildable, and this pins that the second was not
-    // faked by pointing an existing phase at an empty screen.
+    // the stages that are built, and Duplication and Pre-existing are not among
+    // them. #26.05's brief ends at Constraints, and this pins that the next
+    // stage was not faked by pointing an existing phase at an empty screen.
     const reached = new Set(IMPORT_PHASES.map(stageForPhase));
-    expect(reached.has("constraints")).toBe(false);
     expect(reached.has("duplication")).toBe(false);
+    expect(reached.has("preexisting")).toBe(false);
   });
 });
 
@@ -389,18 +400,27 @@ describe("stageStatuses", () => {
     expect(statuses.result).toBe("current");
   });
 
-  it("greens structure and keeps constraints and duplication grey during evaluation", () => {
-    // The shape #26.04 produces, and the whole point of the slice: Evaluation
-    // is unreachable except through a clean structure check, so Structure is
-    // genuinely done there — while Constraints and Duplication, which the flow
-    // walks straight past, must stay grey however far ahead the user gets.
+  it("greens structure AND constraints, and keeps duplication grey, during evaluation", () => {
+    // The shape #26.05 produces, and the whole point of the slice: Evaluation
+    // is unreachable except through a clean structure check AND a clean
+    // constraints check, so both are genuinely done there — while Duplication,
+    // which the flow still walks straight past, must stay grey however far
+    // ahead the user gets.
     const statuses = stageStatuses("evaluation");
     expect(statuses.information).toBe("done");
     expect(statuses.preconditions).toBe("done");
     expect(statuses.structure).toBe("done");
-    expect(statuses.constraints).toBe("pending");
+    expect(statuses.constraints).toBe("done");
     expect(statuses.duplication).toBe("pending");
     expect(statuses.evaluation).toBe("current");
+  });
+
+  it("greens structure and pulses constraints while the files are being checked", () => {
+    const statuses = stageStatuses("constraints");
+    expect(statuses.structure).toBe("done");
+    expect(statuses.constraints).toBe("current");
+    expect(statuses.duplication).toBe("pending");
+    expect(statuses.evaluation).toBe("pending");
   });
 
   it("greens nothing beyond preconditions while the structure is being checked", () => {
@@ -426,20 +446,32 @@ describe("stageStatuses", () => {
     expect(statuses.result).toBe("current");
     // The stages with no screen stay grey even here — being carried past a
     // check is still not passing it.
-    expect(statuses.constraints).toBe("pending");
+    expect(statuses.duplication).toBe("pending");
     expect(statuses.preexisting).toBe("pending");
-    // Structure is NOT among them any more: #26.04 built its screen, and a
-    // resumed run's folder did go through it. This line is the one that would
-    // have to change back if the stage were ever un-built.
+    // Structure and Constraints are NOT among them any more: #26.04 and #26.05
+    // built their screens, and a resumed run's folder did go through both.
+    // These two lines are the ones that would have to change back if either
+    // stage were ever un-built.
+    //
+    // ⚠️ KNOWN AND ACCEPTED, raised by #26.05's adversarial review: the wizard
+    // never inspects the saved record, so this is a claim about a run rather
+    // than a reading of one — and a session saved BEFORE #26.05 shipped went
+    // through no Constraints stage at all, because there was none. The cost is
+    // one wrongly-green pill on a screen that is itself a past run's report;
+    // the alternative is reversing #26.03's argued decision that a reopened
+    // result shows its journey green. Left as it is, deliberately. If a saved
+    // session ever needs to be trusted for more than this, version-stamp it and
+    // derive the greens from what that run actually completed.
     expect(statuses.structure).toBe("done");
+    expect(statuses.constraints).toBe("done");
   });
 
   it("refuses to make a planned stage current even if asked to", () => {
     // `stageForPhase` cannot produce this, but a later caller could. The answer
     // is to under-claim: no pulse anywhere rather than a pulse on a stage with
     // nothing behind it.
-    const statuses = stageStatuses("constraints");
-    expect(statuses.constraints).toBe("pending");
+    const statuses = stageStatuses("duplication");
+    expect(statuses.duplication).toBe("pending");
     expect(IDS.filter((id) => statuses[id] === "current")).toEqual([]);
   });
 

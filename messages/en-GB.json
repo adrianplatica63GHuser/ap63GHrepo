@@ -1983,19 +1983,14 @@
           "hidden": "{count} hidden files"
         },
         "finding": {
-          "multipleProperties": "The chosen folder contains {folders} subfolders that look like separate properties. The import links EVERY document to a single property, so they will all be merged into one.",
-          "gateFiles": "{files} files ({extensions} different types) that the import cannot recognise. It will stop and ask you about each one before anything is imported.",
+          "multipleProperties": "The chosen folder holds {folders, plural, one {one subfolder that looks like a separate property} other {# subfolders that look like separate properties}}. The import links ALL documents to a single property, so they will be merged into one.",
           "osDirectories": "{folders} Windows system folders will be imported like ordinary folders, and their names will become tags.",
           "duplicateBasenames": "{documents} files share only {names} {names, plural, one {name} other {names}} between them, so that many documents will have titles you cannot tell apart in any list. Folder names are still kept as tags, so the documents remain distinguishable — just not by title.",
           "officeFiles": "{files} Word/Excel files will be stored, but their contents cannot be read or searched.",
-          "heicFiles": "{files} iPhone photos (.heic) will be uploaded but can never be read or classified.",
-          "oversizedFiles": "{files} files are larger than {limitMb} MB and will fail to upload, leaving an empty document behind.",
-          "emptyFiles": "{files} files are empty (0 bytes) and will fail to upload.",
-          "unknownMimeFiles": "Windows did not report a file type for {files} files. They will upload, but automatic data extraction will never work on them.",
-          "largeFolderJpg": "{files} files named “folder.jpg” are too big to be Windows thumbnails. They look like real scans, and they will be skipped without a trace.",
           "walkLoopedOnShortcut": "This folder contains a shortcut pointing back at a folder above it, which makes it endlessly deep. The same files were therefore read many times over, so **every number in this report is larger than reality** — the documents, the pages and the AI costs are all inflated. Do not start the import. Delete the shortcut, then check the folder again.",
           "walkTooManyFolders": "This folder holds more than {limit} subfolders, which is more than can be read in one go, so this report is incomplete. Split it into several smaller folders and check again.",
-          "walkTooManyFiles": "This folder holds more than {limit} files, which is more than can be read in one go, so this report is incomplete. Split it into several smaller folders and check again."
+          "walkTooManyFiles": "This folder holds more than {limit} files, which is more than can be read in one go, so this report is incomplete. Split it into several smaller folders and check again.",
+          "unknownMimeFiles": "{files, plural, one {Windows does not say what kind of file one of the files in the folder is. It will be imported and will open, but automatic form-filling will never work on it.} other {Windows does not say what kind of files # of the files in the folder are. They will be imported and will open, but automatic form-filling will never work on them.}}"
         },
         "downloadButton": "Download this list",
         "downloadHint": "Saves a file you can open in Word. It lists every affected file, not only the examples shown on screen.",
@@ -2095,7 +2090,7 @@
         "pageFolder": "The folders holding a document's pages"
       },
       "acknowledge": "I follow the structure rules",
-      "acknowledgeHint": "Tick this once you have read the rules, and again once you have made the corrections in File Explorer. The tick is asked for on every check.",
+      "acknowledgeHint": "Tick once you have read the rules, and again after each correction you make in File Explorer. The tick is asked for on every check.",
       "chooseFolder": "Choose folder…",
       "chooseAnotherFolder": "Choose another folder…",
       "recheck": "Check again",
@@ -2112,7 +2107,7 @@
       },
       "save": {
         "button": "Save the rules as a page",
-        "hint": "Downloads an HTML page you can open or print while you work in File Explorer. It holds the rules and, if a folder has been checked, the complete list of what needs putting right.",
+        "hint": "Downloads a page you can open or print while you work in File Explorer. It holds the rules and, if a folder has been checked, the complete list of what needs putting right.",
         "filePrefix": "import-structure",
         "documentTitle": "Import folder structure",
         "generatedAt": "Generated",
@@ -2124,6 +2119,78 @@
         "warningsTitle": "The folder could not be read in full",
         "blocked": "No structure rule was broken in the part that could be read, but the folder still cannot be imported — see below for why.",
         "rulesOnlyName": "rules"
+      }
+    },
+    "constraints": {
+      "rule": {
+        "CON-01": {
+          "requirement": "A table saved as a .csv file cannot be imported: it is a set of data, not a document. Ordinary Excel files are imported and kept as they are.",
+          "example": "Right: the parcel schedule saved as “parcel schedule.pdf” or as “parcel schedule.xlsx”. Wrong: the same schedule saved as “parcel schedule.csv”.",
+          "violation": "{files, plural, one {One file in the folder is a .csv table and cannot be imported. Save it as a PDF from the program that produced it and delete the old file, or take it out of the chosen folder.} other {# files in the folder are .csv tables and cannot be imported. Save them as PDFs from the programs that produced them and delete the old files, or take them out of the chosen folder.}}"
+        },
+        "CON-02": {
+          "requirement": "Photographs taken on an iPhone are saved in a format the system can neither display nor read. They upload, but what is left in the archive is pages nobody can open.",
+          "example": "Right: “Ionescu ID card.jpg”. Wrong: “IMG_0421.heic”, the photo copied straight off the phone.",
+          "violation": "{files, plural, one {One file is a photograph taken on an iPhone, in a format the system cannot open. Copy the photo across from the phone again as an ordinary photograph ending in .jpg and delete the old file, or take it out of the chosen folder.} other {# files are photographs taken on an iPhone, in a format the system cannot open. Copy the photos across from the phone again as ordinary photographs ending in .jpg and delete the old files, or take them out of the chosen folder.}}"
+        },
+        "CON-03": {
+          "requirement": "A file the system does not recognise stops the whole import: it halts and asks you about each such file in turn before anything is imported. Scanned deeds, photographs, PDFs, Word and Excel documents, and text files are imported.",
+          "example": "Right: “sale contract.pdf”, “sketch.jpg”, “notes.txt”. Wrong: “project.xyz”, or a file whose name has no ending at all, such as “scan1”.",
+          "violation": "{files, plural, one {The system does not recognise one file in the folder. The import would stop and ask you about it before importing anything else. Save it as a PDF or as a photograph and delete the old file, or take it out of the chosen folder.} other {The system does not recognise # files in the folder. The import would stop and ask you about each of them before importing anything else. Save them as PDFs or as photographs and delete the old files, or take them out of the chosen folder.}}"
+        },
+        "CON-04": {
+          "requirement": "Every file has to contain something. An empty file is usually a scan that was never finished saving.",
+          "example": "Right: “1.jpg”, which File Explorer shows under View → Details as a few hundred KB. Wrong: “1.jpg” which File Explorer shows as 0 KB.",
+          "violation": "{files, plural, one {One file in the folder is empty. Scan the document again and put the new file in its place, or take it out of the chosen folder.} other {# files in the folder are empty. Scan the documents again and put the new files in their place, or take them out of the chosen folder.}}"
+        },
+        "CON-05": {
+          "requirement": "A file cannot be larger than {limitMb} MB. In File Explorer choose View → Details: the Size column shows KB, and a thousand KB is one MB.",
+          "example": "Right: a page scanned at 200 dpi, a few hundred KB. Wrong: the same page scanned at maximum resolution, over {limitMb} MB.",
+          "violation": "{files, plural, one {One file in the folder is larger than {limitMb} MB and would fail to upload. Scan it again at a lower resolution, or split it into several files, then put what comes out in its place — or take it out of the chosen folder.} other {# files in the folder are larger than {limitMb} MB and would fail to upload. Scan them again at a lower resolution, or split them into several files, then put what comes out in their place — or take them out of the chosen folder.}}"
+        },
+        "CON-06": {
+          "requirement": "A scan may not be called “folder.jpg”. Windows uses that name for the picture shown on a folder's icon, so the import passes over it and the scan would be lost without a trace. The small pictures Windows makes by itself are not a problem — the system speaks up only when a “folder.jpg” is large enough to be a real scan.",
+          "example": "Right: “Land registry extract.jpg”. Wrong: “folder.jpg”.",
+          "violation": "{files, plural, one {One file is called “folder.jpg” and is too large to be just the icon picture — it looks like a real scan, and the import would not take it. Rename it: if it sits in a folder holding the pages of one document, give it the next page number; otherwise name it after the document. Or take the file out of the chosen folder.} other {# files are called “folder.jpg” and are too large to be just the icon picture — they look like real scans, and the import would not take them. Rename each one: if it sits in a folder holding the pages of one document, give it the next page number; otherwise name it after the document. Or take the files out of the chosen folder.}}"
+        }
+      },
+      "title": "File constraints",
+      "intro": "The folder's structure is correct. One check is left: every file in it has to be something the system can take in. Read what can and cannot be imported below, tick that you have taken note, then press “Check the files” — the same folder is checked, you do not have to choose it again.",
+      "rulesTitle": "What the files have to satisfy",
+      "showRules": "Show the constraints again",
+      "hideRules": "Hide the constraints",
+      "scope": {
+        "fileType": "What kinds of file can be imported",
+        "fileSize": "How large a file may be",
+        "fileName": "What files may be called"
+      },
+      "acknowledge": "I have read the file constraints",
+      "acknowledgeHint": "Tick once you have read the constraints, and again after each correction you make in File Explorer. The tick is asked for on every check.",
+      "check": "Check the files",
+      "recheck": "Check again",
+      "chooseAnotherFolder": "Choose another folder…",
+      "clean": "Every file in the folder can be imported.",
+      "violationsTitle": "{count, plural, one {One thing to put right} other {# things to put right}}",
+      "fixInstructions": "Make the corrections above — the ones that are a move, a rename or a deletion you can make directly in File Explorer, and the system does not touch your files. If the file you took out was one page of a scanned document, renumber the remaining pages from 1. When you are done, come back here, tick again and press “Check again”.",
+      "morePaths": "{count, number} more…",
+      "unreadable": {
+        "title": "Files that could not be read",
+        "intro": "{count, plural, one {One file could not be opened, so we cannot say whether it satisfies the constraints. Usually the file is open in another program, the folder has been moved, or the drive is no longer connected. Close the program using it, make sure the folder is where it was, and check again. If it still cannot be read, take it out of the chosen folder.} other {# files could not be opened, so we cannot say whether they satisfy the constraints. Usually the files are open in another program, the folder has been moved, or the drive is no longer connected. Close the programs using them, make sure the folder is where it was, and check again. If they still cannot be read, take them out of the chosen folder.}}"
+      },
+      "save": {
+        "button": "Save the constraints as a page",
+        "hint": "Downloads a page you can open or print while working in File Explorer. It holds the constraints and, once the files have been checked, the complete list of things to put right.",
+        "filePrefix": "import-constraints",
+        "documentTitle": "Import file constraints",
+        "generatedAt": "Generated",
+        "folderLabel": "Folder",
+        "rulesTitle": "The file constraints",
+        "violationsTitle": "To put right",
+        "allClear": "Every file in the folder can be imported.",
+        "blocked": "No constraint was broken by the files that could be read, but the folder still cannot be imported — see below for why.",
+        "notCheckedYet": "The files have not been checked yet — this page holds the constraints only.",
+        "warningsTitle": "Files that could not be read",
+        "rulesOnlyName": "constraints"
       }
     },
     "workflow": {

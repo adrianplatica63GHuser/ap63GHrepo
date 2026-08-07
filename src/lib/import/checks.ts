@@ -16,8 +16,8 @@
  * documents is not an error at any layer: the walk is working exactly as
  * designed, every row goes green, and the archive is wrong.
  *
- * ADVISORY, ALWAYS
- * ────────────────
+ * ADVISORY, ALWAYS — AND SINCE #26.05 THAT IS THE WHOLE OF WHAT IS LEFT HERE
+ * ─────────────────────────────────────────────────────────────────────────
  *
  * Nothing here blocks. Continuă stays enabled no matter what this returns.
  * That is a decision, not an omission: a checker that blocks needs an override,
@@ -50,11 +50,60 @@
  * and these two would have drifted in opposite directions — S-04 urging a user
  * to merge exactly the files the new rules say they deliberately kept apart.
  *
- * What survives is what the STR catalogue does not ask: S-01, still true of
- * today's wizard, which merges every document into one Property until #26.07
- * creates one per folder; S-17, because a shortcut is possible inside a
- * perfectly compliant folder; F-03; and the F-rules about the files
- * themselves, which move to the Constraints stage in #26.05.
+ * ⚠️ AND WHAT #26.05 TOOK OUT, FOR THE SAME REASON ONE STAGE LATER
+ * ───────────────────────────────────────────────────────────────
+ *
+ * Five more, this time to the Constraints stage's catalogue in
+ * `constraint-rules.ts`, which states them BEFORE the check and blocks until
+ * the folder complies:
+ *
+ *   F-05 gateFiles         → CON-03
+ *   F-07 heicFiles         → CON-02
+ *   F-08 oversizedFiles    → CON-05
+ *   F-09 emptyFiles        → CON-04
+ *   F-02 largeFolderJpg    → CON-06
+ *
+ * Every one of them named a file the import would lose, mangle or halt on, and
+ * every one of them said so on the Evaluation screen — i.e. after the folder
+ * had been walked, sized and accepted, at the point where acting on the advice
+ * meant abandoning the screen the user had finally arrived at.
+ *
+ * ⚠️ **F-11 was drafted into that list and taken back out**, by the slice's own
+ * adversarial review, and the reason is the criterion rather than the rule: a
+ * constraint blocks, so it may only name a file the import would genuinely lose
+ * or mangle. A file with no reported type uploads, is stored and serves
+ * correctly; all that is lost is automatic extraction — which is F-17's
+ * situation exactly, and F-17 is why the criterion exists. It also had no
+ * remedy that could change the answer, since `File.type` is derived from the
+ * name and not from the bytes. So it stays here, and it is quiet now rather
+ * than loud: a rule that cannot be acted on must not shout.
+ *
+ * WHAT SURVIVES, AND WHY EACH ONE IS STILL HERE
+ * ─────────────────────────────────────────────
+ *
+ *  - **S-01** — one picked folder still becomes exactly ONE Property. #26.07
+ *    creates one per property folder and will retire this.
+ *  - **S-17** — a folder shortcut is possible inside a perfectly compliant
+ *    folder. (In today's flow the Structure stage refuses a truncated walk
+ *    outright, so this cannot reach the Evaluation screen; it is kept because
+ *    the refusal is #26.04's, not this module's, and a report that silently
+ *    depended on another stage's behaviour would be wrong the moment that
+ *    stage changed.)
+ *  - **F-03** — an OS directory is about a FOLDER, not a file, and no
+ *    constraint states it.
+ *  - **F-11** — see the note above: an unreadable type costs automatic
+ *    extraction and nothing else, and there is nothing the user can do about
+ *    it, so it informs rather than blocks.
+ *  - **F-15** — duplicate basenames, until #26.06's Duplication stage absorbs
+ *    it and matches on name AND size.
+ *  - **F-17** — Office files, and this one is a decision rather than an
+ *    omission. An Office file imports faithfully: it is stored, it is
+ *    downloadable, and the only thing missing is that nothing in this codebase
+ *    reads text out of it. A blocking constraint would tell a business user to
+ *    delete or convert every Word document in their archive before importing
+ *    anything, which is the shape of the worst near-miss this repo records. It
+ *    is advisory because it describes an inconvenience, not a loss, and
+ *    advisory findings live here.
  *
  * LOUD AND QUIET
  * ──────────────
@@ -63,10 +112,12 @@
  * but it no longer discriminates much, and saying so is the honest version. The
  * measured near-misses that justified the split (48 folders on Adrian's
  * archive, 20 of them loud) were S-03, S-04 and S-05, and they are gone. Two
- * quiet rules remain: F-17, because an Office file imports faithfully and is
- * merely never read, and F-15, because duplicate titles are survivable — the
- * folder names are still kept as tags. Everything else here is loud, because
- * everything else here loses or corrupts something.
+ * quiet rules remain from before, and #26.05 added a third: F-17, because an
+ * Office file imports faithfully and is merely never read; F-15, because
+ * duplicate titles are survivable — the folder names are still kept as tags;
+ * and F-11, for F-17's reason and because the user cannot act on it at all.
+ * Everything else here is loud, because everything else here loses or corrupts
+ * something.
  *
  * ⚠️ That is a claim about the current rule set, not a policy. It was measured
  * once, drifted, and had to be rewritten; if a rule is added, measure it rather
@@ -75,8 +126,10 @@
  * SCOPE (settled with Adrian)
  * ───────────────────────────
  *
- * Cost tiers T0 (the listing) and T1 (`File` metadata) only. Deliberately NOT
- * here, each for a reason rather than for lack of time:
+ * Cost tiers T0 (the listing) and T1 (`File` metadata), as before — but #26.05
+ * moved four of the five T1 rules to the Constraints stage, so what is left of
+ * T1 here is F-11 and the `uploadBytes` total. Deliberately NOT here, each for
+ * a reason rather than for lack of time:
  *
  *  - **T2 byte-reading** (coordinate-file encodings, PDF headers) — belongs
  *    with the coordinate path that #24.03/#24.04 already own.
@@ -96,7 +149,6 @@ import {
   type IgnoredReason,
 } from "./folder-utils";
 import { isFileKind, fileKindsOf } from "@/lib/files/file-kinds";
-import { classifyFileSource } from "@/lib/metadata/provenance-rules";
 
 // ---------------------------------------------------------------------------
 // Shape
@@ -111,18 +163,13 @@ export type Loudness = "loud" | "quiet";
  */
 export type FindingKind =
   | "multipleProperties"      // S-01
-  | "gateFiles"               // F-05 — the run halts on a modal per file
   | "osDirectories"           // F-03
   | "duplicateBasenames"      // F-15
   | "walkLoopedOnShortcut"    // S-17 — a shortcut makes the folder endless
   | "walkTooManyFolders"      // S-17 — more subfolders than can be read at once
   | "walkTooManyFiles"        // S-17 — more files than can be read at once
-  | "officeFiles"             // F-17
-  | "heicFiles"               // F-07
-  | "oversizedFiles"          // F-08 — T1
-  | "emptyFiles"              // F-09 — T1
   | "unknownMimeFiles"        // F-11 — T1
-  | "largeFolderJpg";         // F-02 — T1
+  | "officeFiles";            // F-17
 
 export type Finding = {
   /** The catalogue ID, shown to Adrian and Ciprian so a report maps to the spec. */
@@ -167,12 +214,6 @@ export type ImportReport = {
 // can check
 // ---------------------------------------------------------------------------
 
-/** `pages/route.ts:24` rejects anything larger with a 413, after creating the Document. */
-const MAX_UPLOAD_BYTES = 20 * 1024 * 1024;
-
-/** A real scan named `folder.jpg` is data loss; a genuine Windows thumbnail is tiny. */
-const THUMBNAIL_BYTES = 100 * 1024;
-
 /** Directory names that are never content, whatever the walk does with them (F-03). */
 const OS_DIRECTORY_NAMES_LC = new Set([
   "$recycle.bin",
@@ -191,7 +232,12 @@ const OS_DIRECTORY_NAMES_LC = new Set([
 export function checkFolder(input: {
   entries: readonly FSEntry[];
   observations: readonly DirectoryObservation[];
-  /** T1. Absent until the metadata pass has run; its four rules are then skipped. */
+  /**
+   * T1. Absent until the metadata pass has run — which, since #26.05, is the
+   * Constraints stage's job rather than this report's. Two things read it now:
+   * F-11, and the `uploadBytes` total. Both are simply absent without it rather
+   * than wrong.
+   */
   metadata?: ReadonlyMap<string, FileMeta>;
 }): ImportReport {
   const { entries, observations, metadata } = input;
@@ -200,7 +246,7 @@ export function checkFolder(input: {
     ...structureFindings(observations),
     ...fileFindings(entries),
     ...truncationFindings(observations),
-    ...(metadata ? metadataFindings(entries, observations, metadata) : []),
+    ...(metadata ? metadataFindings(entries, metadata) : []),
   ];
 
   // Loud first. Within a loudness the catalogue order already encodes
@@ -283,37 +329,13 @@ function fileFindings(entries: readonly FSEntry[]): Finding[] {
     if (e.kind === "file") fileNames.push({ name: e.name, path: e.path });
   }
 
-  // F-05 — THE highest-value warning in the catalogue. An extension in
-  // neither provenance list yields null provenance, and the import then stops
-  // for the ENTIRE run behind a modal that must be answered once per such
-  // file. Thirty of them is thirty dropdowns before anything imports.
-  const gate = fileNames.filter((f) => classifyFileSource(f.name) === "UNKNOWN");
-  if (gate.length > 0) {
-    out.push({
-      ruleId: "F-05",
-      kind: "gateFiles",
-      loudness: "loud",
-      paths: gate.map((f) => f.path),
-      counts: { files: gate.length, extensions: distinctExtensions(gate.map((f) => f.name)) },
-    });
-  }
-
-  // F-07 — .heic infers IMAGE provenance, so it sails through the gate, and is
-  // then invisible to page grouping, to classification and to AI interpret. It
-  // uploads and is never read by anything.
-  const heic = fileNames.filter((f) => /\.hei[cf]$/i.test(f.name));
-  if (heic.length > 0) {
-    out.push({
-      ruleId: "F-07",
-      kind: "heicFiles",
-      loudness: "loud",
-      paths: heic.map((f) => f.path),
-      counts: { files: heic.length },
-    });
-  }
-
   // F-17 — there is no text-extraction layer in the codebase at all. Office
   // files are stored faithfully and understood by nothing.
+  //
+  // ⚠️ It stays ADVISORY, and #26.05 is where that was decided rather than
+  // assumed: it was the one file rule not promoted to a blocking constraint,
+  // because the file arrives intact and a rule that blocks would be telling a
+  // business user to delete their own documents. See the module header.
   const office = fileNames.filter((f) => isFileKind(f.name, "document") && !isFileKind(f.name, "pdf"));
   const officeNonText = office.filter((f) => !/\.(txt|md)$/i.test(f.name));
   if (officeNonText.length > 0) {
@@ -419,92 +441,52 @@ function truncationFindings(observations: readonly DirectoryObservation[]): Find
 }
 
 // ---------------------------------------------------------------------------
-// Metadata (T1) — one getFile() per file has already been paid for
+// Metadata (T1) — what is left of it
 // ---------------------------------------------------------------------------
 
+/**
+ * F-11 — Windows reported no type for a file something would otherwise read.
+ *
+ * The MIME is frozen at upload and never re-sniffed, so an empty one disables
+ * automatic extraction for that page permanently — not for this run, for ever.
+ * Restricted to the files anything WOULD have read, because a missing type on a
+ * file nothing was going to open is not worth a sentence.
+ *
+ * ⚠️ **QUIET, and it must stay quiet.** #26.05 drafted this as a blocking
+ * constraint and its adversarial review took it back out: `File.type` comes
+ * from the extension by way of the OS registry, not from the bytes, so the rule
+ * fires on a `.tif` or a `.bmp` on a machine whose registry has no entry for it
+ * — a perfectly good archival scan — and never on the corrupt `.jpg` the draft
+ * example described. The file uploads, is stored, and serves correctly. There
+ * is also no remedy: re-saving the file does not change what the registry says,
+ * so a blocking version would have been a violation the user could work at for
+ * ever. It informs; it does not shout, and it must never block.
+ *
+ * ⚠️ Restricted to the UPLOAD set, not the whole metadata map. The map covers
+ * dropped files too, because CON-06 needs a dropped `folder.jpg`'s size, and a
+ * report that argued about files the walk had already removed would be telling
+ * the user about an import that is not going to happen.
+ */
 function metadataFindings(
   entries: readonly FSEntry[],
-  observations: readonly DirectoryObservation[],
   metadata: ReadonlyMap<string, FileMeta>,
 ): Finding[] {
-  const out: Finding[] = [];
-  const oversized: string[] = [];
-  const empty: string[] = [];
   const unknownMime: string[] = [];
-
-  // ⚠️ The metadata map deliberately covers DROPPED files too, because F-02
-  // below is the one rule that needs their size. Every other rule here must
-  // ignore them, or the report argues about uploads that will never happen:
-  // a 25 MB .zip is not "a file that will fail to upload leaving an empty
-  // document behind", it is a file the walk removed before any document
-  // existed. Measured on Adrian's archive, 27 of 759 sized files are drops,
-  // and counting them overstated the upload total by 11.3 MB.
-  const uploadKeys = uploadKeysOf(entries);
-
-  for (const path of uploadKeys) {
+  for (const path of uploadKeysOf(entries)) {
     const meta = metadata.get(path);
-    if (!meta) continue;
-    if (meta.size > MAX_UPLOAD_BYTES) oversized.push(path);
-    else if (meta.size === 0) empty.push(path);
-    // An empty type is only harmful for something the AI would otherwise read.
+    if (meta === undefined) continue;
     if (meta.type === "" && isReadableByAi(path)) unknownMime.push(path);
   }
-
-  // F-08 — 413 from the upload route, AFTER the Document row exists. The row
-  // stays behind with no page.
-  if (oversized.length > 0) {
-    out.push({
-      ruleId: "F-08",
-      kind: "oversizedFiles",
-      loudness: "loud",
-      paths: oversized,
-      counts: { files: oversized.length, limitMb: Math.round(MAX_UPLOAD_BYTES / 1024 / 1024) },
-    });
-  }
-
-  // F-09 — 400 "file is required", which reads as a missing field rather than
-  // as an empty file, so the message actively misleads.
-  if (empty.length > 0) {
-    out.push({
-      ruleId: "F-09",
-      kind: "emptyFiles",
-      loudness: "loud",
-      paths: empty,
-      counts: { files: empty.length },
-    });
-  }
-
-  // F-11 — the cheapest high-value check in the catalogue. The MIME is frozen
-  // at upload and never re-sniffed, so an empty one disables AI extraction for
-  // that page permanently — not for this run, forever.
-  if (unknownMime.length > 0) {
-    out.push({
+  if (unknownMime.length === 0) return [];
+  return [
+    {
       ruleId: "F-11",
       kind: "unknownMimeFiles",
-      loudness: "loud",
+      loudness: "quiet",
       paths: unknownMime,
       counts: { files: unknownMime.length },
-    });
-  }
-
-  // F-02 — `folder.jpg` is dropped by NAME. A Windows thumbnail is tiny; a
-  // real scan someone happened to name `folder.jpg` is not, and it vanishes
-  // with no row and no warning.
-  const bigFolderJpgs = observations
-    .flatMap((o) => o.dropped)
-    .filter((d) => d.name.toLowerCase() === "folder.jpg")
-    .filter((d) => (metadata.get(d.path)?.size ?? 0) > THUMBNAIL_BYTES);
-  if (bigFolderJpgs.length > 0) {
-    out.push({
-      ruleId: "F-02",
-      kind: "largeFolderJpg",
-      loudness: "loud",
-      paths: bigFolderJpgs.map((d) => d.path),
-      counts: { files: bigFolderJpgs.length },
-    });
-  }
-
-  return out;
+    },
+  ];
 }
 
 /** Would anything ever try to read this file's pixels or text? */
@@ -536,16 +518,19 @@ function groupSkipped(observations: readonly DirectoryObservation[]): SkippedGro
 // Small helpers
 // ---------------------------------------------------------------------------
 
-function distinctExtensions(names: string[]): number {
-  return new Set(names.map((n) => (n.includes(".") ? n.slice(n.lastIndexOf(".")).toLowerCase() : ""))).size;
-}
-
 /**
  * Every metadata key the import will actually upload — page-group pages
- * included, dropped files excluded. The exact set `metadataFindings` and
- * `sumBytes` must restrict themselves to.
+ * included, dropped files excluded.
+ *
+ * ⚠️ Exported since #26.05, and it is the reason `constraint-check.ts` does not
+ * decide for itself what "the files being imported" means. The metadata map
+ * deliberately covers DROPPED files too, because CON-06 needs a dropped
+ * `folder.jpg`'s size — so any consumer that iterated the map instead would be
+ * measuring files the walk has already removed, and would tell the user a 25 MB
+ * `.zip` is too big to upload when nothing was ever going to upload it.
+ * Measured on Adrian's archive: 27 of 759 sized files are drops.
  */
-function uploadKeysOf(entries: readonly FSEntry[]): string[] {
+export function uploadKeysOf(entries: readonly FSEntry[]): string[] {
   const keys: string[] = [];
   for (const entry of entries) {
     if (entry.kind === "file") {
@@ -567,4 +552,3 @@ function sumBytes(entries: readonly FSEntry[], metadata: ReadonlyMap<string, Fil
 export function metadataKeyFor(entryPath: string, pageFileName?: string): string {
   return pageFileName === undefined ? entryPath : `${entryPath}/${pageFileName}`;
 }
-

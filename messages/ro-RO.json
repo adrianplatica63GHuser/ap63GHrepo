@@ -1983,19 +1983,14 @@
           "hidden": "{count, plural, one {un fișier ascuns} few {# fișiere ascunse} other {# de fișiere ascunse}}"
         },
         "finding": {
-          "multipleProperties": "Folderul ales conține {folders} subfoldere care par proprietăți separate. Importul leagă TOATE documentele de o singură proprietate, deci vor fi contopite într-una singură.",
-          "gateFiles": "{files, plural, one {Un fișier pe care importul nu îl recunoaște} few {# fișiere pe care importul nu le recunoaște} other {# de fișiere pe care importul nu le recunoaște}} ({extensions} tipuri diferite). Importul se va opri și vă va întreba despre fiecare înainte de a importa ceva.",
+          "multipleProperties": "Folderul ales conține {folders, plural, one {un subfolder care pare o proprietate separată} few {# subfoldere care par proprietăți separate} other {# de subfoldere care par proprietăți separate}}. Importul leagă TOATE documentele de o singură proprietate, deci vor fi contopite într-una singură.",
           "osDirectories": "{folders, plural, one {Un folder de sistem Windows va fi importat} few {# foldere de sistem Windows vor fi importate} other {# de foldere de sistem Windows vor fi importate}} ca foldere obișnuite, iar numele lor vor deveni etichete.",
           "duplicateBasenames": "{documents, plural, one {Un fișier are} few {# fișiere au} other {# de fișiere au}} între ele doar {names, plural, one {un singur nume} few {# nume distincte} other {# de nume distincte}}, deci tot atâtea documente vor avea titluri pe care nu le veți putea deosebi în liste. Numele folderelor rămân păstrate ca etichete, deci documentele pot fi totuși deosebite — dar nu după titlu.",
           "officeFiles": "{files, plural, one {Un fișier Word/Excel va fi păstrat} few {# fișiere Word/Excel vor fi păstrate} other {# de fișiere Word/Excel vor fi păstrate}}, dar conținutul lor nu poate fi citit sau căutat.",
-          "heicFiles": "{files, plural, one {O fotografie de iPhone (.heic) va fi încărcată} few {# fotografii de iPhone (.heic) vor fi încărcate} other {# de fotografii de iPhone (.heic) vor fi încărcate}}, dar nu va putea fi citită sau clasificată niciodată.",
-          "oversizedFiles": "{files, plural, one {Un fișier depășește} few {# fișiere depășesc} other {# de fișiere depășesc}} {limitMb} MB și nu se vor putea încărca, lăsând în urmă un document gol.",
-          "emptyFiles": "{files, plural, one {Un fișier este gol} few {# fișiere sunt goale} other {# de fișiere sunt goale}} (0 octeți) și nu se vor putea încărca.",
-          "unknownMimeFiles": "Windows nu a raportat tipul {files, plural, one {unui fișier} few {a # fișiere} other {a # de fișiere}}. Se vor încărca, dar extragerea automată a datelor nu va funcționa niciodată pentru ele.",
-          "largeFolderJpg": "{files, plural, one {Un fișier numit „folder.jpg” este prea mare} few {# fișiere numite „folder.jpg” sunt prea mari} other {# de fișiere numite „folder.jpg” sunt prea mari}} pentru a fi miniaturi Windows. Par scanări reale și vor fi ignorate fără urmă.",
           "walkLoopedOnShortcut": "Acest folder conține o scurtătură care trimite înapoi către un folder de deasupra, ceea ce îl face infinit de adânc. Din această cauză aceleași fișiere au fost citite de mai multe ori, deci **toate cifrele din acest raport sunt mai mari decât în realitate** — și numărul de documente, și numărul de pagini, și costurile AI. Nu porniți importul. Ștergeți scurtătura și verificați folderul din nou.",
           "walkTooManyFolders": "Acest folder conține mai mult de {limit} de subfoldere, mai multe decât pot fi citite dintr-o dată, deci acest raport este incomplet. Împărțiți-l în mai multe foldere mai mici și verificați din nou.",
-          "walkTooManyFiles": "Acest folder conține mai mult de {limit} de fișiere, mai multe decât pot fi citite dintr-o dată, deci acest raport este incomplet. Împărțiți-l în mai multe foldere mai mici și verificați din nou."
+          "walkTooManyFiles": "Acest folder conține mai mult de {limit} de fișiere, mai multe decât pot fi citite dintr-o dată, deci acest raport este incomplet. Împărțiți-l în mai multe foldere mai mici și verificați din nou.",
+          "unknownMimeFiles": "{files, plural, one {Windows nu spune ce fel de fișier este unul dintre fișierele din folder. Se va importa și se va putea deschide, dar completarea automată a datelor nu va funcționa pentru el.} few {Windows nu spune ce fel de fișiere sunt # fișiere din folder. Se vor importa și se vor putea deschide, dar completarea automată a datelor nu va funcționa pentru ele.} other {Windows nu spune ce fel de fișiere sunt # de fișiere din folder. Se vor importa și se vor putea deschide, dar completarea automată a datelor nu va funcționa pentru ele.}}"
         },
         "downloadButton": "Descarcă această listă",
         "downloadHint": "Salvează un fișier pe care îl puteți deschide în Word. Conține toate fișierele vizate, nu doar exemplele arătate pe ecran.",
@@ -2095,7 +2090,7 @@
         "pageFolder": "Folderele cu paginile unui document"
       },
       "acknowledge": "Respect regulile de structură",
-      "acknowledgeHint": "Bifați după ce ați citit regulile, respectiv după ce ați făcut îndreptările în File Explorer. Bifa se cere din nou la fiecare verificare.",
+      "acknowledgeHint": "Bifați după ce ați citit regulile și apoi din nou după fiecare îndreptare făcută în File Explorer. Bifa se cere la fiecare verificare.",
       "chooseFolder": "Alege folderul…",
       "chooseAnotherFolder": "Alege alt folder…",
       "recheck": "Verifică din nou",
@@ -2112,7 +2107,7 @@
       },
       "save": {
         "button": "Salvează regulile ca pagină",
-        "hint": "Se descarcă o pagină HTML pe care o puteți deschide sau tipări cât timp lucrați în File Explorer. Conține regulile și, dacă folderul a fost verificat, lista completă a lucrurilor de îndreptat.",
+        "hint": "Se descarcă o pagină pe care o puteți deschide sau tipări cât timp lucrați în File Explorer. Conține regulile și, dacă folderul a fost verificat, lista completă a lucrurilor de îndreptat.",
         "filePrefix": "structura-import",
         "documentTitle": "Structura folderului de import",
         "generatedAt": "Generat",
@@ -2124,6 +2119,78 @@
         "warningsTitle": "Folderul nu a putut fi citit în întregime",
         "blocked": "Nicio regulă de structură nu a fost încălcată în partea care s-a putut citi, dar folderul tot nu poate fi importat — vedeți mai jos de ce.",
         "rulesOnlyName": "reguli"
+      }
+    },
+    "constraints": {
+      "rule": {
+        "CON-01": {
+          "requirement": "Un tabel salvat ca fișier .csv nu poate fi importat: este doar un set de date, nu un document. Fișierele Excel obișnuite se importă și se păstrează ca atare.",
+          "example": "Corect: situația parcelelor salvată ca „situatie parcele.pdf” sau ca „situatie parcele.xlsx”. Greșit: aceeași situație salvată ca „situatie parcele.csv”.",
+          "violation": "{files, plural, one {Un fișier din folder este un tabel .csv și nu poate fi importat. Salvați-l ca PDF din programul în care a fost făcut și ștergeți fișierul vechi, ori scoateți-l din folderul ales.} few {# fișiere din folder sunt tabele .csv și nu pot fi importate. Salvați-le ca PDF-uri din programele în care au fost făcute și ștergeți fișierele vechi, ori scoateți-le din folderul ales.} other {# de fișiere din folder sunt tabele .csv și nu pot fi importate. Salvați-le ca PDF-uri din programele în care au fost făcute și ștergeți fișierele vechi, ori scoateți-le din folderul ales.}}"
+        },
+        "CON-02": {
+          "requirement": "Fotografiile făcute cu un iPhone se salvează într-un format pe care sistemul nu îl poate nici arăta, nici citi. Ele se încarcă, dar în arhivă rămân niște pagini pe care nimeni nu le mai poate deschide.",
+          "example": "Corect: „buletin Ionescu.jpg”. Greșit: „IMG_0421.heic”, adică poza copiată direct de pe telefon.",
+          "violation": "{files, plural, one {Un fișier este o fotografie făcută cu un iPhone, într-un format pe care sistemul nu îl poate deschide. Copiați poza din nou de pe telefon ca poză obișnuită, cu terminația .jpg, și ștergeți fișierul vechi, ori scoateți-l din folderul ales.} few {# fișiere sunt fotografii făcute cu un iPhone, într-un format pe care sistemul nu îl poate deschide. Copiați pozele din nou de pe telefon ca poze obișnuite, cu terminația .jpg, și ștergeți fișierele vechi, ori scoateți-le din folderul ales.} other {# de fișiere sunt fotografii făcute cu un iPhone, într-un format pe care sistemul nu îl poate deschide. Copiați pozele din nou de pe telefon ca poze obișnuite, cu terminația .jpg, și ștergeți fișierele vechi, ori scoateți-le din folderul ales.}}"
+        },
+        "CON-03": {
+          "requirement": "Un fișier pe care sistemul nu îl recunoaște oprește tot importul: sistemul se oprește și vă întreabă despre fiecare astfel de fișier în parte, înainte de a importa ceva. Se importă acte scanate, fotografii, PDF-uri, documente Word și Excel, precum și fișiere text.",
+          "example": "Corect: „contract vanzare.pdf”, „schita.jpg”, „note.txt”. Greșit: „proiect.xyz” sau un fișier al cărui nume nu are nicio terminație, precum „scanare1”.",
+          "violation": "{files, plural, one {Sistemul nu recunoaște un fișier din folder. Importul s-ar opri și v-ar întreba despre el înainte de a importa orice altceva. Salvați-l ca PDF sau ca fotografie și ștergeți fișierul vechi, ori scoateți-l din folderul ales.} few {Sistemul nu recunoaște # fișiere din folder. Importul s-ar opri și v-ar întreba despre fiecare în parte înainte de a importa orice altceva. Salvați-le ca PDF-uri sau ca fotografii și ștergeți fișierele vechi, ori scoateți-le din folderul ales.} other {Sistemul nu recunoaște # de fișiere din folder. Importul s-ar opri și v-ar întreba despre fiecare în parte înainte de a importa orice altceva. Salvați-le ca PDF-uri sau ca fotografii și ștergeți fișierele vechi, ori scoateți-le din folderul ales.}}"
+        },
+        "CON-04": {
+          "requirement": "Fiecare fișier trebuie să conțină ceva. Un fișier gol este de obicei o scanare care nu s-a salvat până la capăt.",
+          "example": "Corect: „1.jpg”, pe care File Explorer îl arată, la Vizualizare → Detalii, cu câteva sute de KB. Greșit: „1.jpg” pe care File Explorer îl arată cu 0 KB.",
+          "violation": "{files, plural, one {Un fișier din folder este gol. Scanați documentul din nou și puneți fișierul nou în locul lui, ori scoateți-l din folderul ales.} few {# fișiere din folder sunt goale. Scanați documentele din nou și puneți fișierele noi în locul lor, ori scoateți-le din folderul ales.} other {# de fișiere din folder sunt goale. Scanați documentele din nou și puneți fișierele noi în locul lor, ori scoateți-le din folderul ales.}}"
+        },
+        "CON-05": {
+          "requirement": "Un fișier nu poate depăși {limitMb} MB. În File Explorer alegeți Vizualizare → Detalii: coloana „Dimensiune” arată mărimea în KB, iar o mie de KB înseamnă un MB.",
+          "example": "Corect: o pagină scanată la 200 dpi, de câteva sute de KB. Greșit: aceeași pagină scanată la rezoluție maximă, de peste {limitMb} MB.",
+          "violation": "{files, plural, one {Un fișier din folder depășește {limitMb} MB și nu s-ar putea încărca. Scanați-l din nou la o rezoluție mai mică sau împărțiți-l în mai multe fișiere, apoi puneți în locul lui ce a rezultat, ori scoateți-l din folderul ales.} few {# fișiere din folder depășesc {limitMb} MB și nu s-ar putea încărca. Scanați-le din nou la o rezoluție mai mică sau împărțiți-le în mai multe fișiere, apoi puneți în locul lor ce a rezultat, ori scoateți-le din folderul ales.} other {# de fișiere din folder depășesc {limitMb} MB și nu s-ar putea încărca. Scanați-le din nou la o rezoluție mai mică sau împărțiți-le în mai multe fișiere, apoi puneți în locul lor ce a rezultat, ori scoateți-le din folderul ales.}}"
+        },
+        "CON-06": {
+          "requirement": "O scanare nu se poate numi „folder.jpg”. Windows folosește acest nume pentru poza de pe iconița folderului, așa că importul îl trece cu vederea și scanarea s-ar pierde fără urmă. Pozele mici pe care Windows le face singur nu vă încurcă — sistemul vă spune doar când un fișier „folder.jpg” este destul de mare cât să fie o scanare adevărată.",
+          "example": "Corect: „Extras de carte funciara.jpg”. Greșit: „folder.jpg”.",
+          "violation": "{files, plural, one {Un fișier se numește „folder.jpg” și este prea mare ca să fie doar poza iconiței — pare o scanare adevărată, iar importul nu l-ar lua. Redenumiți-l: dacă stă într-un folder cu paginile unui document, cu următorul număr de pagină, altfel cu titlul documentului. Sau scoateți fișierul din folderul ales.} few {# fișiere se numesc „folder.jpg” și sunt prea mari ca să fie doar poza iconiței — par scanări adevărate, iar importul nu le-ar lua. Redenumiți fiecare fișier: dacă stă într-un folder cu paginile unui document, cu următorul număr de pagină, altfel cu titlul documentului. Sau scoateți fișierele din folderul ales.} other {# de fișiere se numesc „folder.jpg” și sunt prea mari ca să fie doar poza iconiței — par scanări adevărate, iar importul nu le-ar lua. Redenumiți fiecare fișier: dacă stă într-un folder cu paginile unui document, cu următorul număr de pagină, altfel cu titlul documentului. Sau scoateți fișierele din folderul ales.}}"
+        }
+      },
+      "title": "Restricții privind fișierele",
+      "intro": "Structura folderului este în regulă. Mai rămâne o verificare: fiecare fișier trebuie să poată fi preluat de sistem. Citiți mai jos ce se poate importa și ce nu, bifați că ați luat la cunoștință, apoi apăsați „Verifică fișierele” — se verifică același folder, nu trebuie să îl alegeți din nou.",
+      "rulesTitle": "Restricțiile pe care trebuie să le respecte fișierele",
+      "showRules": "Arată din nou restricțiile",
+      "hideRules": "Ascunde restricțiile",
+      "scope": {
+        "fileType": "Ce fel de fișiere se pot importa",
+        "fileSize": "Cât de mari pot fi fișierele",
+        "fileName": "Cum se numesc fișierele"
+      },
+      "acknowledge": "Am citit restricțiile privind fișierele",
+      "acknowledgeHint": "Bifați după ce ați citit restricțiile și apoi din nou după fiecare îndreptare făcută în File Explorer. Bifa se cere la fiecare verificare.",
+      "check": "Verifică fișierele",
+      "recheck": "Verifică din nou",
+      "chooseAnotherFolder": "Alege alt folder…",
+      "clean": "Toate fișierele din folder pot fi importate.",
+      "violationsTitle": "{count, plural, one {Un lucru de îndreptat} few {# lucruri de îndreptat} other {# de lucruri de îndreptat}}",
+      "fixInstructions": "Faceți îndreptările de mai sus — pe cele care țin de mutat, redenumit sau șters le puteți face direct în File Explorer, iar sistemul nu vă atinge fișierele. Dacă fișierul scos era o pagină dintr-un document scanat, renumerotați paginile rămase de la 1. Când ați terminat, reveniți aici, bifați din nou și apăsați „Verifică din nou”.",
+      "morePaths": "încă {count, number}…",
+      "unreadable": {
+        "title": "Fișiere care nu au putut fi citite",
+        "intro": "{count, plural, one {Un fișier nu a putut fi deschis, așa că nu putem spune dacă respectă restricțiile. De obicei fișierul este deschis în alt program, folderul a fost mutat sau discul nu mai este conectat. Închideți programul care îl folosește, asigurați-vă că folderul este la locul lui și verificați din nou. Dacă tot nu poate fi citit, scoateți-l din folderul ales.} few {# fișiere nu au putut fi deschise, așa că nu putem spune dacă respectă restricțiile. De obicei fișierele sunt deschise în alt program, folderul a fost mutat sau discul nu mai este conectat. Închideți programele care le folosesc, asigurați-vă că folderul este la locul lui și verificați din nou. Dacă tot nu pot fi citite, scoateți-le din folderul ales.} other {# de fișiere nu au putut fi deschise, așa că nu putem spune dacă respectă restricțiile. De obicei fișierele sunt deschise în alt program, folderul a fost mutat sau discul nu mai este conectat. Închideți programele care le folosesc, asigurați-vă că folderul este la locul lui și verificați din nou. Dacă tot nu pot fi citite, scoateți-le din folderul ales.}}"
+      },
+      "save": {
+        "button": "Salvează restricțiile ca pagină",
+        "hint": "Se descarcă o pagină pe care o puteți deschide sau tipări cât timp lucrați în File Explorer. Conține restricțiile și, dacă fișierele au fost verificate, lista completă a lucrurilor de îndreptat.",
+        "filePrefix": "restrictii-import",
+        "documentTitle": "Restricțiile fișierelor de import",
+        "generatedAt": "Generat",
+        "folderLabel": "Folder",
+        "rulesTitle": "Restricțiile fișierelor",
+        "violationsTitle": "De îndreptat",
+        "allClear": "Toate fișierele din folder pot fi importate.",
+        "blocked": "Nicio restricție nu a fost încălcată de fișierele care s-au putut citi, dar folderul tot nu poate fi importat — vedeți mai jos de ce.",
+        "notCheckedYet": "Fișierele nu au fost verificate încă — pagina conține doar restricțiile.",
+        "warningsTitle": "Fișiere care nu au putut fi citite",
+        "rulesOnlyName": "restrictii"
       }
     },
     "workflow": {

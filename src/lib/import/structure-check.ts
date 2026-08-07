@@ -132,6 +132,7 @@
  * and a user recognising a folder does not need to audit it.
  */
 
+import { sortedForDisplay } from "./folder-utils";
 import type { DirectoryObservation, WalkLimit } from "./folder-utils";
 import {
   MAX_PROPERTY_FOLDERS,
@@ -626,13 +627,13 @@ function pageFolder(
   // fired it whenever the walk had kept nothing — so a page folder holding
   // `folder.jpg`, `Thumbs.db` and `plan.dwg` was reported as empty and the
   // user was told to delete it. `folder.jpg` is a real scan often enough that
-  // `checks.ts` carries a whole rule about it (F-02), and `.dwg` is a drawing
-  // somebody made. Telling a business user to delete that folder is the worst
+  // the NEXT stage carries a whole rule about it (CON-06, formerly `checks.ts`'s
+  // F-02 — #26.05), and `.dwg` is a drawing somebody made. Telling a business user to delete that folder is the worst
   // thing this stage could do, and it would be doing it in Romanian with a
   // confident tone.
   //
   // So `dropped` is consulted, and a folder that holds only dropped files is
-  // passed over in silence here. It is not unreported: F-02 speaks up when a
+  // passed over in silence here. It is not unreported: CON-06 speaks up when a
   // `folder.jpg` is too big to be a thumbnail, and every dropped file appears
   // in the report's Skipped section under the rule that removed it. What this
   // stage must not do is claim something about a folder it can see is not
@@ -771,44 +772,17 @@ function walkedFiles(obs: DirectoryObservation): string[] {
 }
 
 /**
- * The order the walk itself puts entries in — `localeCompare`, the comparator
- * `walkInto` uses on `childFiles` and `childDirs` before emitting them.
+ * The order the walk itself puts entries in, made total.
  *
- * Deliberately the same one, so a violation lists names in the order the user
- * will meet them everywhere else in the import.
+ * The comparator and the reasoning behind it moved to `folder-utils.ts` in
+ * #26.05, when `constraint-check.ts` became the third place that needs the same
+ * order. This alias is kept so the rest of this module reads as it did.
  */
-function sorted(names: readonly string[]): string[] {
-  // ⚠️ `localeCompare` alone is not a total order. Collation-ignorable
-  // characters — a zero-width space, a soft hyphen, a left-to-right mark, all
-  // legal in a Windows filename and all invisible on screen — compare EQUAL to
-  // nothing, so `plan.jpg` and `plan\u200b.jpg` tie. `sort` is stable, which
-  // means a tie silently falls back to the enumeration order this function
-  // exists to remove. The code-unit comparison behind it settles those pairs
-  // the same way every time, and never fires for names that differ visibly.
-  return [...names].sort((a, b) => a.localeCompare(b) || (a < b ? -1 : a > b ? 1 : 0));
-}
+const sorted = sortedForDisplay;
 
 /** A path from the chosen folder. `obs.path` is `""` at the root. */
 function pathUnder(obs: DirectoryObservation, name: string): string {
   return obs.path === "" ? name : `${obs.path}/${name}`;
-}
-
-/**
- * A violation's path as the user will look for it in File Explorer.
- * (Slice #26.04)
- *
- * `culprit` and `related` are paths from the CHOSEN folder, and `""` is the
- * chosen folder itself. Neither form is what a user needs while standing in
- * Explorer: an empty string names nothing at all, and a bare `48-50D/Contract`
- * omits the one folder they navigated to.
- *
- * Here rather than in the component because both renderers need it — the screen
- * and the offline page — and two spellings of "where is this" is how one of
- * them starts naming a folder the other does not.
- */
-export function displayPathOf(chosenFolderName: string, path: string): string {
-  if (path === "") return chosenFolderName;
-  return chosenFolderName === "" ? path : `${chosenFolderName}/${path}`;
 }
 
 /** At most three names, with an ellipsis when there were more. See the header. */
