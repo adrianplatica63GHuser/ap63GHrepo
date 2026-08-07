@@ -13,7 +13,7 @@ in that project's own `CLAUDE.md`.
 
 Adrian is a business analyst, not a full-time developer — comfortable reading code, running
 commands and reasoning about architecture, but he leans on Claude as a full-stack development
-partner. Windows + PowerShell 5.1. He prefers small, deliberate changes over big rewrites.
+partner. Windows + PowerShell 7 (`pwsh`). He prefers small, deliberate changes over big rewrites.
 All conversation with Claude is in English.
 
 ## Speed is a requirement, not a preference
@@ -59,8 +59,9 @@ review rounds run without anyone waiting on them, and they never turn into a que
 ask whether to run one, do not report the clean rounds at length, and do not let a review
 round become a reason to stop and check in.
 
-Everything else in verification is proportionate: `tsc` and `jest` green, re-read your own
-diff, and stop. Do not gold-plate the parts a review would not have caught anyway.
+Everything else in verification is proportionate: `tsc --noEmit` green, the `jest` command handed to
+Adrian to run (the sandbox cannot run it), re-read your own diff, and stop. Do not gold-plate the
+parts a review would not have caught anyway.
 
 ## The working contract
 
@@ -102,7 +103,8 @@ before assuming. When a question spans many files or you're unfamiliar with an a
 parallel subagents to map it and report back — that is cheaper than one wrong assumption.
 The old "read only these three files" restriction is withdrawn.
 
-**Verify deeply, and review adversarially every time.** `tsc --noEmit` and `jest` green, and
+**Verify deeply, and review adversarially every time.** `tsc --noEmit` green, the `jest` command in
+the handover for Adrian to run — the sandbox cannot run `jest`, so never report it as passing — and
 re-read your own diff. Then hand the diff to a fresh-context subagent briefed to find what
 breaks — and keep handing it back after each round of fixes until a round returns nothing
 worth acting on. This is not the thing to economise on; see "Speed is a requirement" above
@@ -125,11 +127,21 @@ is a decision to state, not a permission to request.
 ## Delivering work
 
 - **Conventional commits** — `feat:`, `fix:`, `chore:`, `ci:`, `docs(scope):`, `test:`.
-- **Commits ship as ready-to-run PowerShell**: a full `git add <files>` followed by
-  `git commit -m "message"`, **each on its own line**. Never join with `&&` — Windows
-  PowerShell 5.1 rejects it as a statement separator. Use `;` only if a one-liner is forced.
-- **Every command is complete and runnable**, including `$env:` assignments, seed runs and
-  migrations. Never hand over a connection string or a value in isolation.
+- **Commits ship as ready-to-run PowerShell**, chained with `&&` (pwsh only — these blocks are a
+  ParserError in Windows PowerShell 5.1): `git add <files> && git commit -m "message"`.
+  `&&` stops on failure; `;` and a plain newline do not. The failure that matters is not an empty
+  commit — `git commit` with nothing staged exits 1 and writes nothing — it is a **wrong** commit:
+  if anything was already staged when the block ran, a failed `git add` followed by an unconditional
+  `git commit` commits that pre-existing content under this slice's message, exit 0, looking fine.
+  `&&` makes the block fail closed and leaves the `add` error as the last thing on screen instead of
+  burying it above a successful commit. (`&&` does not help when the `add` *succeeds* — `git commit`
+  always commits the whole index, so check `git status` first.) Use `||` for the fallback branch.
+  Never use `;` to join two **commands** where the second depends on the first. `&&` joins commands,
+  not statements — an `$env:` assignment or any `$x = ...` goes on its own line, never as the left
+  side of `&&`: it binds tighter than `=`, so the command runs before the variable is set, silently.
+- **Every command is complete and runnable**, including `$env:` assignments (a command that needs a
+  secret reads it from `.env` at runtime — never a pasted password), seed runs and migrations. Never
+  hand over a connection string or a value in isolation.
 - **Check `git status` before making changes.** Trust `HEAD` as the source of truth — the
   Linux sandbox can show stale or phantom file states. When in doubt, ask Adrian to run
   `git status` / `git diff` on his side.

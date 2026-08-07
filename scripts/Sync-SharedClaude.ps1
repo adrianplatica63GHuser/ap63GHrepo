@@ -31,6 +31,9 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+# Deliberately 5.1-compatible and ASCII-only: this script may be the thing that
+# deploys the rules, so it must run under whatever shell is available. No PS7 syntax.
+
 $RepoRoot   = Split-Path -Parent $PSScriptRoot
 $SourceRoot = Join-Path $RepoRoot 'docs\claude\shared'
 $DeployRoot = Split-Path -Parent $RepoRoot      # C:\dev
@@ -53,13 +56,22 @@ Write-Host "  deployed to : $DeployRoot"
 Write-Host ''
 
 function Get-FileHashOrNull([string] $Path) {
-    if (Test-Path -LiteralPath $Path -PathType Leaf) {
-        return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { return $null }
+    # Hash the NORMALISED text, not the raw bytes: the writer below strips any BOM,
+    # so a raw-byte compare would report permanent drift on a BOM'd source.
+    $text  = [System.IO.File]::ReadAllText((Resolve-Path -LiteralPath $Path))
+    $bytes = (New-Object System.Text.UTF8Encoding($false)).GetBytes($text)
+    $sha   = [System.Security.Cryptography.SHA256]::Create()
+    try {
+        return ([BitConverter]::ToString($sha.ComputeHash($bytes))).Replace('-', '')
+    } finally {
+        $sha.Dispose()
     }
-    return $null
 }
 
-$drift = 0
+$drift   = 0
+$written = 0
+$missing = 0
 
 foreach ($pair in $Pairs) {
     $src = Join-Path $SourceRoot $pair.Src
@@ -71,6 +83,7 @@ foreach ($pair in $Pairs) {
     if (-not (Test-Path -LiteralPath $from -PathType Leaf)) {
         Write-Host ("  MISSING  {0}" -f $from) -ForegroundColor Red
         $drift++
+        $missing++
         continue
     }
 
@@ -100,6 +113,7 @@ foreach ($pair in $Pairs) {
     $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
     [System.IO.File]::WriteAllText($to, $text, $utf8NoBom)
 
+    $written++
     $verb = if ($Pull) { 'pulled' } else { 'wrote' }
     Write-Host ("  {0,-8} {1}" -f $verb, $pair.Dst) -ForegroundColor Green
 }
@@ -111,16 +125,38 @@ if ($Check) {
         Write-Host '  In sync.' -ForegroundColor Green
         exit 0
     }
-    Write-Host ("  {0} file(s) out of sync. Run without -Check to deploy." -f $drift) -ForegroundColor Yellow
+    $outOfSync = $drift - $missing
+    if ($outOfSync -gt 0) {
+        Write-Host ("  {0} file(s) out of sync. Run without -Check to deploy." -f $outOfSync) -ForegroundColor Yellow
+    }
+    if ($missing -gt 0) {
+        Write-Host ("  {0} file(s) MISSING at the source and cannot be deployed." -f $missing) -ForegroundColor Red
+    }
     exit 1
 }
 
 if ($Pull) {
-    Write-Host '  Pulled into the repo. Review with: git diff docs/claude/shared' -ForegroundColor Cyan
+    if ($written -gt 0) {
+        Write-Host ("  Pulled {0} file(s) into the repo. Review with: git diff docs/claude/shared" -f $written) -ForegroundColor Cyan
+    } elseif ($missing -eq 0) {
+        Write-Host '  Nothing to pull - already in sync.' -ForegroundColor Green
+    }
+    if ($missing -gt 0) {
+        Write-Host ("  {0} deployed file(s) MISSING - not pulled." -f $missing) -ForegroundColor Red
+        Write-Host ''
+        exit 1
+    }
 } elseif ($drift -eq 0) {
     Write-Host '  Nothing to do - already in sync.' -ForegroundColor Green
 } else {
-    Write-Host ("  Deployed {0} file(s) to {1}." -f $drift, $DeployRoot) -ForegroundColor Green
+    if ($written -gt 0) {
+        Write-Host ("  Deployed {0} file(s) to {1}." -f $written, $DeployRoot) -ForegroundColor Green
+    }
+    if ($missing -gt 0) {
+        Write-Host ("  {0} source file(s) MISSING - not deployed." -f $missing) -ForegroundColor Red
+        Write-Host ''
+        exit 1
+    }
 }
 
 Write-Host ''
