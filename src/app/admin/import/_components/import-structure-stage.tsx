@@ -122,9 +122,21 @@ export function ImportStructureStage({
   const hintId = useId();
 
   const checked = verdict !== null;
-  const violations = verdict?.violations ?? [];
-  const truncations = verdict?.truncations ?? [];
   const showRules = !checked || rulesOpen;
+
+  /**
+   * How many rules the last check found broken. Counted here because three
+   * places ask, and `verdict?.violations?.length ?? 0` inline is the sort of
+   * expression that gets one of the three wrong later.
+   *
+   * ⚠️ A NUMBER, not the array, and never a dependency. `?? []` mints a fresh
+   * array on every render the verdict is null, so a `useMemo` that depended on
+   * one re-ran every render and re-translated every violation sentence —
+   * `react-hooks/exhaustive-deps` says so out loud. The two memos below read
+   * `verdict` and default inside their own callbacks instead: one dependency,
+   * and it changes only when a walk finishes.
+   */
+  const violationCount = verdict?.violations.length ?? 0;
 
   /**
    * The rules, grouped and translated once — used by the screen and by the
@@ -148,18 +160,18 @@ export function ImportStructureStage({
   /** One sentence per violation, rendered from the rule's own message. */
   const renderedViolations = useMemo(
     () =>
-      violations.map((v) => ({
+      (verdict?.violations ?? []).map((v) => ({
         ruleId: v.ruleId,
         culprit: displayPathOf(folderName, v.culprit),
         sentence: tk(messageKeyFor(v.ruleId, "violation"), { ...v.counts, ...v.values }),
         related: v.related.map((p) => displayPathOf(folderName, p)),
       })),
-    [violations, folderName, tk],
+    [verdict, folderName, tk],
   );
 
   const renderedWarnings = useMemo(
     () =>
-      truncations.map((group) => ({
+      (verdict?.truncations ?? []).map((group) => ({
         // `count` is the number of directories the limit stopped, which is not
         // `paths.length` — see `StructureTruncationGroup`. The sentence has to
         // quote the total or it under-reports a 15,000-folder refusal as ten.
@@ -167,7 +179,7 @@ export function ImportStructureStage({
         paths: group.paths.map((p) => displayPathOf(folderName, p)),
         total: group.count,
       })),
-    [truncations, folderName, t],
+    [verdict, folderName, t],
   );
 
   /**
@@ -205,7 +217,7 @@ export function ImportStructureStage({
       // the all-clear for the second is the confident-output failure this
       // codebase keeps a rule about.
       violations: checked ? renderedViolations : null,
-      // NOT `violations.length === 0`, which the exporter would otherwise have
+      // NOT an empty violation list, which the exporter would otherwise have
       // to infer. A truncated walk breaks no rule and is refused anyway, and
       // the all-clear printed for that case is green, affirmative and wrong.
       clean: verdict?.clean ?? false,
@@ -266,9 +278,9 @@ export function ImportStructureStage({
   const liveSummary =
     busy || verdict === null || verdict.clean
       ? ""
-      : violations.length === 0
+      : violationCount === 0
         ? t("truncated.title")
-        : t("violationsTitle", { count: violations.length });
+        : t("violationsTitle", { count: violationCount });
 
   /**
    * Give the keyboard back when a round of the loop ends.
@@ -349,10 +361,10 @@ export function ImportStructureStage({
       )}
 
       {/* ── The fix list ─────────────────────────────────────────────────── */}
-      {checked && violations.length > 0 && (
+      {checked && violationCount > 0 && (
         <>
           <h3 className="mt-5 text-sm font-semibold text-ink dark:text-zinc-100">
-            {t("violationsTitle", { count: violations.length })}
+            {t("violationsTitle", { count: violationCount })}
           </h3>
           <ul className="mt-2 space-y-2">
             {renderedViolations.map((v) => (
