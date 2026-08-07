@@ -58,6 +58,7 @@ import {
   DESCRIPTION_SEPARATOR,
   MAX_PROPERTY_FOLDERS,
   RULE_MESSAGE_PARTS,
+  RULE_SCOPES,
   STRUCTURE_RULES,
   STRUCTURE_RULE_BY_ID,
   STRUCTURE_RULE_IDS,
@@ -69,6 +70,9 @@ import {
   pageNumberOf,
   parsePropertyFolderName,
   propertyIdentityOf,
+  ruleListingValues,
+  rulesInScope,
+  scopeKeyFor,
   sharedFolderName,
   sharedFolderNearMiss,
   suggestedPropertyFolderName,
@@ -688,5 +692,65 @@ describe("Romanian plural agreement", () => {
     // `max` is a bare number and must stay one — it is never pluralised.
     expect(violation).toContain(`{max}`);
     expect(MAX_PROPERTY_FOLDERS).toBe(5);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The listing — the page #26.04 shows and saves
+// ---------------------------------------------------------------------------
+
+describe("the rules listing", () => {
+  it("covers the catalogue exactly once across the three scopes", () => {
+    // A rule in no scope never appears on the page; a rule in two appears
+    // twice. Neither is visible by reading the catalogue, because `scope` is a
+    // per-rule field and nothing cross-checks the partition.
+    const listed = RULE_SCOPES.flatMap((scope) => rulesInScope(scope).map((r) => r.id));
+    expect(listed).toEqual([...STRUCTURE_RULE_IDS]);
+  });
+
+  it("keeps each scope's rules in catalogue order, which is fixing order", () => {
+    for (const scope of RULE_SCOPES) {
+      const positions = rulesInScope(scope).map((r) => STRUCTURE_RULE_IDS.indexOf(r.id));
+      expect([...positions].sort((a, b) => a - b)).toEqual(positions);
+    }
+  });
+
+  it.each(LOCALES)("$file names every scope", ({ file }) => {
+    for (const scope of RULE_SCOPES) {
+      const heading = atKeyPath(file, scopeKeyFor(scope));
+      expect(typeof heading).toBe("string");
+      expect(String(heading).trim().length).toBeGreaterThan(0);
+    }
+  });
+
+  it.each(LOCALES)("$file's requirement and example sentences get every value they ask for", ({ file }) => {
+    // THE guard on `ruleListingValues`. These two sentences are rendered with
+    // no violation in sight — the listing is read before a folder is picked —
+    // so anything they interpolate has to be supplied from that one function.
+    // A rewording that introduces `{max}` into STR-04's example, or renames
+    // STR-02's, would otherwise print the placeholder verbatim on the one page
+    // the user is meant to print and carry to File Explorer.
+    const rules = loadRuleMessages(file);
+    // Collected rather than asserted one at a time, so a failure names every
+    // hole at once instead of the first.
+    const missing: string[] = [];
+    for (const id of STRUCTURE_RULE_IDS) {
+      const supplied = new Set(Object.keys(ruleListingValues(id)));
+      for (const part of ["requirement", "example"] as const) {
+        for (const arg of scanIcu(rules[id][part]).args) {
+          if (!supplied.has(arg)) missing.push(`${id}.${part} wants {${arg}}`);
+        }
+      }
+    }
+    expect(missing).toEqual([]);
+  });
+
+  it("supplies nothing for a rule whose listing sentences interpolate nothing", () => {
+    // The other direction: a stray value is harmless to render but it is a
+    // claim about a sentence that does not exist, and the next reader believes
+    // it. STR-01 is the case — its VIOLATION interpolates two things and its
+    // requirement and example interpolate none.
+    expect(ruleListingValues("STR-01")).toEqual({});
+    expect(ruleListingValues("STR-02")).toEqual({ max: MAX_PROPERTY_FOLDERS });
   });
 });

@@ -46,7 +46,10 @@
  */
 
 import {
+  MAX_TRUNCATION_PATHS,
   checkStructure,
+  checkStructureStage,
+  displayPathOf,
   emitStructureViolations,
 } from "@/lib/import/structure-check";
 import {
@@ -724,5 +727,151 @@ describe("the same folder, checked twice", () => {
       obs("2-2/A", { keptNames: ["plan.jpg"] }),
     ]);
     expect(ids(violations)).toEqual(["STR-01", "STR-04", "STR-12"]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The stage's verdict   (Slice #26.04)
+// ---------------------------------------------------------------------------
+
+describe("checkStructureStage", () => {
+  it("passes a compliant folder", () => {
+    const verdict = checkStructureStage(COMPLIANT);
+    expect(verdict.violations).toEqual([]);
+    expect(verdict.truncations).toEqual([]);
+    expect(verdict.clean).toBe(true);
+  });
+
+  it("passes an empty chosen folder — #26.04 decided not to refuse one", () => {
+    // Recorded because it is a decision rather than an oversight: an empty
+    // folder breaks no structure rule, and the Evaluation screen that follows
+    // already refuses to continue on a forecast of zero documents, in a
+    // sentence about what will be imported. A second refusal here would need a
+    // Romanian rule for a state the next screen states better.
+    const verdict = checkStructureStage([obs("")]);
+    expect(verdict.clean).toBe(true);
+  });
+
+  it("answers for a walk that never ran, rather than throwing", () => {
+    expect(checkStructureStage([])).toEqual({
+      violations: [],
+      truncations: [],
+      clean: true,
+    });
+  });
+
+  it("REFUSES a folder the walk could not finish reading, even with no violations", () => {
+    // THE reason this function exists on top of `checkStructure`. Three rules
+    // are suppressed on a partial listing (STR-07, STR-11, STR-14), so an empty
+    // violation list from a truncated walk means "nothing was found in the part
+    // that was read". A stage that blocks must not print that as "your folder
+    // is correct" — the confident-output failure this repo keeps a rule about.
+    const verdict = checkStructureStage([
+      obs("", { dirNames: ["1-1"] }),
+      obs("1-1", { truncated: "breadth" }),
+    ]);
+    expect(verdict.violations).toEqual([]);
+    expect(verdict.clean).toBe(false);
+    expect(verdict.truncations).toEqual([{ limit: "breadth", paths: ["1-1"], count: 1 }]);
+  });
+
+  it("groups the limits worst-first, and lists every folder under each", () => {
+    // `depth` and `budget` are refusals to read a directory at all; `breadth`
+    // is a directory read part-way. The order is fixing order, same principle
+    // as the catalogue's.
+    const verdict = checkStructureStage([
+      obs("", { dirNames: ["1-1", "2-2", "3-3"] }),
+      obs("3-3", { truncated: "breadth" }),
+      obs("2-2", { truncated: "depth" }),
+      obs("1-1", { truncated: "budget" }),
+      obs("1-1/x", { truncated: "depth" }),
+    ]);
+    expect(verdict.truncations).toEqual([
+      { limit: "depth", paths: ["1-1/x", "2-2"], count: 2 },
+      { limit: "budget", paths: ["1-1"], count: 1 },
+      { limit: "breadth", paths: ["3-3"], count: 1 },
+    ]);
+  });
+
+  it("names a sample and reports the true count, because the budgets are GLOBAL", () => {
+    // `MAX_WALK_DIRECTORIES` and `MAX_WALK_ENTRIES` are budgets for the whole
+    // walk, not for one directory — so once either is spent EVERY directory the
+    // walk reaches afterwards emits its own truncation. A 20,000-folder archive
+    // produces thousands of them, none of which is the problem. Listing them
+    // all would print hundreds of pages of folder names nobody can act on, so
+    // the group names ten and says how many there really were.
+    // Names are zero-padded WIDE ENOUGH that they sort the same as the numbers
+    // do — and the expectation is computed from the same generator rather than
+    // written out, so raising the cap re-derives it instead of failing against
+    // correct code.
+    const name = (i: number) => `p-${String(i).padStart(4, "0")}`;
+    const many = Array.from({ length: 40 }, (_, i) =>
+      obs(name(i), { truncated: "budget" as const }),
+    );
+    const [group] = checkStructureStage([obs(""), ...many]).truncations;
+    expect(group.count).toBe(40);
+    // The sample is the sorted head, so two checks of an unchanged folder name
+    // the same ones — which is what makes the red panel readable across a loop.
+    expect(group.paths).toEqual(
+      Array.from({ length: MAX_TRUNCATION_PATHS }, (_, i) => name(i)),
+    );
+  });
+
+  it("keeps a limit it has never heard of, rather than dropping it into `clean`", () => {
+    // `TRUNCATION_RANK` is a `Record<WalkLimit, number>`, so a fourth guard
+    // added to `folder-utils.ts` cannot compile without a rank here. This pins
+    // the runtime half of the same guarantee: the groups are built from what
+    // was OBSERVED, never filtered against the known list, so even an unranked
+    // limit reaches the verdict and keeps `clean` false. Dropping it is the one
+    // outcome that turns a half-read folder into a green tick.
+    const verdict = checkStructureStage([
+      obs("", { dirNames: ["1-1"] }),
+      obs("1-1", { truncated: "something-new" as never }),
+    ]);
+    expect(verdict.clean).toBe(false);
+    expect(verdict.truncations.map((g) => g.limit)).toEqual(["something-new"]);
+  });
+
+  it("reports the violations AND the truncation, never one instead of the other", () => {
+    const verdict = checkStructureStage([
+      obs("", { keptNames: ["loose.pdf"], dirNames: ["1-1"] }),
+      obs("1-1", { truncated: "budget" }),
+    ]);
+    expect(ids(verdict.violations)).toEqual(["STR-01"]);
+    expect(verdict.truncations.map((g) => g.limit)).toEqual(["budget"]);
+    expect(verdict.truncations[0].count).toBe(1);
+    expect(verdict.clean).toBe(false);
+  });
+
+  it("returns exactly what checkStructure returns, unreduced and unreordered", () => {
+    // The verdict must not become a second opinion about the violations. If it
+    // ever filtered or re-sorted them, the screen and the saved page would
+    // disagree with every test in this file.
+    const messy: DirectoryObservation[] = [
+      obs("", { keptNames: ["loose.pdf"], dirNames: ["Arhiva", "2-2"] }),
+      obs("Arhiva"),
+      obs("2-2", { dirNames: ["A"] }),
+      obs("2-2/A", { keptNames: ["plan.jpg"] }),
+    ];
+    expect(checkStructureStage(messy).violations).toEqual(checkStructure(messy));
+  });
+});
+
+describe("displayPathOf", () => {
+  it("names the chosen folder itself when the culprit is the root", () => {
+    // `culprit: ""` is the only empty path the contract allows, and an empty
+    // string on screen names nothing at all.
+    expect(displayPathOf("01.Teren CLINCENI", "")).toBe("01.Teren CLINCENI");
+  });
+
+  it("prefixes the chosen folder, because that is what Explorer shows", () => {
+    expect(displayPathOf("Arhiva", "48-50D/CVC 2019")).toBe("Arhiva/48-50D/CVC 2019");
+  });
+
+  it("degrades to the bare path when no folder name is known", () => {
+    // Reachable from the saved page, which may be produced before a folder has
+    // ever been picked. A leading "/" would read as an absolute path.
+    expect(displayPathOf("", "48-50D")).toBe("48-50D");
+    expect(displayPathOf("", "")).toBe("");
   });
 });
