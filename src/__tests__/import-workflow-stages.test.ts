@@ -4,12 +4,17 @@
  * The shell's whole value is that the indicator agrees with the screen. It can
  * disagree in three ways, and each of them is silent:
  *
- *  1. **A stage goes green that nothing did.** Four of the ten stages have no
- *     screen until 26.04–26.08, and the flow walks straight past them. A
+ *  1. **A stage goes green that nothing did.** Three of the ten stages have no
+ *     screen until 26.05–26.08, and the flow walks straight past them. A
  *     positional "everything before the current one is done" would tick all
- *     four — a system telling the user their folder structure was checked when
- *     no code looked at it. That is the exact defect this repo recorded after
- *     #26.00: confident output never measured against a realistic input.
+ *     three — a system telling the user their files were checked against the
+ *     size and format constraints when no code looked at them. That is the
+ *     exact defect this repo recorded after #26.00: confident output never
+ *     measured against a realistic input.
+ *
+ *     (It was four until #26.04 gave Structure its screen. That slice is the
+ *     worked example of what `plannedIn` is for: one property deleted from one
+ *     row of the catalogue, and the stage starts going amber and green.)
  *
  *  2. **A phase has no stage, or a stage nobody can reach.** `Record<ImportPhase, …>`
  *     catches the first at compile time; the second needs a test, because a
@@ -323,14 +328,30 @@ describe("stageForPhase", () => {
     expect(stageForPhase("scanning")).toBe("scanning");
   });
 
-  it("reports the folder screens as evaluation, not as structure", () => {
+  it("reports the whole structure loop as structure, including the walk", () => {
+    // #26.04's split, and the judgement call inside it. `walking` reports
+    // Structure rather than Evaluation because the walk exists to answer the
+    // structure question — including the re-walk started from the Evaluation
+    // screen, which really is Structure being asked again and really can fail.
+    expect(stageForPhase("structure")).toBe("structure");
+    expect(stageForPhase("walking")).toBe("structure");
+    expect(stageForPhase("structure-report")).toBe("structure");
+  });
+
+  it("reports the folder report as evaluation, reachable only past structure", () => {
     // Today's post-folder-selection screen is what 26.09 renames Evaluation.
-    // Claiming `structure` here would put an amber pulse on a stage whose
-    // validator (#26.02) is written but not mounted — the indicator would be
-    // describing 26.04's screen while showing 24.02's.
-    expect(stageForPhase("idle")).toBe("evaluation");
-    expect(stageForPhase("walking")).toBe("evaluation");
     expect(stageForPhase("folder-report")).toBe("evaluation");
+  });
+
+  it("has no phase for the stages 26.05 and 26.06 will build", () => {
+    // The other half of "never land on a planned stage": the phases exist for
+    // the stages that are built, and Constraints and Duplication are not among
+    // them. #26.04's brief says "Structure turns green and Constraints begins";
+    // only the first half is buildable, and this pins that the second was not
+    // faked by pointing an existing phase at an empty screen.
+    const reached = new Set(IMPORT_PHASES.map(stageForPhase));
+    expect(reached.has("constraints")).toBe(false);
+    expect(reached.has("duplication")).toBe(false);
   });
 });
 
@@ -368,14 +389,27 @@ describe("stageStatuses", () => {
     expect(statuses.result).toBe("current");
   });
 
-  it("keeps structure, constraints and duplication grey while the folder is being evaluated", () => {
+  it("greens structure and keeps constraints and duplication grey during evaluation", () => {
+    // The shape #26.04 produces, and the whole point of the slice: Evaluation
+    // is unreachable except through a clean structure check, so Structure is
+    // genuinely done there — while Constraints and Duplication, which the flow
+    // walks straight past, must stay grey however far ahead the user gets.
     const statuses = stageStatuses("evaluation");
     expect(statuses.information).toBe("done");
     expect(statuses.preconditions).toBe("done");
-    expect(statuses.structure).toBe("pending");
+    expect(statuses.structure).toBe("done");
     expect(statuses.constraints).toBe("pending");
     expect(statuses.duplication).toBe("pending");
     expect(statuses.evaluation).toBe("current");
+  });
+
+  it("greens nothing beyond preconditions while the structure is being checked", () => {
+    const statuses = stageStatuses("structure");
+    expect(statuses.information).toBe("done");
+    expect(statuses.preconditions).toBe("done");
+    expect(statuses.structure).toBe("current");
+    expect(statuses.constraints).toBe("pending");
+    expect(statuses.evaluation).toBe("pending");
   });
 
   it("shows the three finished stages green behind a reopened report — deliberately", () => {
@@ -392,16 +426,20 @@ describe("stageStatuses", () => {
     expect(statuses.result).toBe("current");
     // The stages with no screen stay grey even here — being carried past a
     // check is still not passing it.
-    expect(statuses.structure).toBe("pending");
+    expect(statuses.constraints).toBe("pending");
     expect(statuses.preexisting).toBe("pending");
+    // Structure is NOT among them any more: #26.04 built its screen, and a
+    // resumed run's folder did go through it. This line is the one that would
+    // have to change back if the stage were ever un-built.
+    expect(statuses.structure).toBe("done");
   });
 
   it("refuses to make a planned stage current even if asked to", () => {
     // `stageForPhase` cannot produce this, but a later caller could. The answer
     // is to under-claim: no pulse anywhere rather than a pulse on a stage with
     // nothing behind it.
-    const statuses = stageStatuses("structure");
-    expect(statuses.structure).toBe("pending");
+    const statuses = stageStatuses("constraints");
+    expect(statuses.constraints).toBe("pending");
     expect(IDS.filter((id) => statuses[id] === "current")).toEqual([]);
   });
 

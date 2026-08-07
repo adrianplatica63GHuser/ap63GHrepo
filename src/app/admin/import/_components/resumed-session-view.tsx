@@ -5,15 +5,17 @@
  *
  * Displays the results of a PREVIOUS import session that was saved to
  * localStorage.  Shown when the user clicks "Resume last import" on the
- * wizard's idle screen.
+ * wizard's Structure screen (the phase was called `idle` until Slice #26.04
+ * renamed it, and the button has not moved).
  *
  * File System Access API handles are not available in a resumed session, so
  * the AI Interpret action is unavailable here.  The "Open →" links open each
  * document in a new tab, which is the primary use-case (the user navigated
  * away to inspect a document and wants to come back to the list).
  *
- * The "New import" button clears the saved session and returns to the idle
- * phase so the user can pick a fresh folder.
+ * The "New import" button clears the saved session and returns to the
+ * Structure phase, where the rules and the folder picker are, so the user can
+ * pick a fresh folder.
  */
 
 import { useTranslations } from "next-intl";

@@ -1,6 +1,15 @@
 /**
- * src/lib/import/report-html.ts — the folder report as a file you can take away.
- * (Slice #24.02c)
+ * src/lib/import/report-html.ts — the import's paper trail, as files you can
+ * take away.   (Slice #24.02c; the structure listing, #26.04)
+ *
+ * TWO DOCUMENTS, ONE SHELL
+ * ────────────────────────
+ *
+ * `buildReportHtml` is the folder report; `buildStructureHtml` is the Structure
+ * stage's rules-and-violations listing. They share `htmlDocument`, the CSS,
+ * `esc`, `pathList` and `reportFileName`, and #26.04's constraint says why in
+ * as many words: one exporter, not two. Everything this file knows about
+ * surviving a trip through Word is written once and both documents inherit it.
  *
  * WHY A FILE AT ALL
  * ─────────────────
@@ -31,6 +40,13 @@
  * folder that is a few dozen paths out of several hundred. This has no reason
  * to truncate, so it does not. That makes the document strictly more useful
  * than the screen it came from, rather than a copy of it.
+ *
+ * One list is an exception, and it is exempt for the opposite reason rather
+ * than as a concession: `buildStructureHtml`'s `warnings` arrive already
+ * sampled, because a walk that ran out of budget reports one directory per
+ * folder it never opened — thousands of them, none of which is the problem
+ * (`StructureTruncationGroup`). Its heading quotes the true total and says
+ * "examples", so the document still does not truncate anything silently.
  *
  * PURE. No React, no next-intl, no `document`. Every user-facing string is
  * passed in already translated, because this module must not become a second
@@ -139,15 +155,226 @@ export function buildReportHtml(input: ReportHtmlInput): string {
           .join("")
       : `<h2>${esc(strings.skippedTitle)}</h2><p class="clear">${esc(strings.nothingSkipped)}</p>`;
 
-  // Word reads this file's inline CSS, so the styling survives the "Save As →
-  // .docx" step rather than arriving as a wall of unformatted text. Kept to
-  // properties Word actually honours — no flexbox, no CSS variables.
-  return `<!DOCTYPE html>
-<html lang="${esc(locale)}">
-<head>
-<meta charset="utf-8">
-<title>${esc(strings.documentTitle)} — ${esc(folderName)}</title>
-<style>
+  return htmlDocument({
+    locale,
+    title: `${strings.documentTitle} — ${folderName}`,
+    body: [
+      `<h1>${esc(strings.documentTitle)}</h1>`,
+      `<p class="meta">${esc(strings.folderLabel)}: <strong>${esc(folderName)}</strong></p>`,
+      `<p class="meta">${esc(strings.generatedAt)}: ${esc(generatedAt)}</p>`,
+      "",
+      `<h2>${esc(strings.forecastTitle)}</h2>`,
+      `<table>${forecastRows}</table>`,
+      "",
+      `<h2>${esc(strings.findingsTitle)}</h2>`,
+      loudBlocks,
+      quietBlocks,
+      skippedBlocks,
+    ].join("\n"),
+  });
+}
+
+// ---------------------------------------------------------------------------
+// The structure listing   (Slice #26.04)
+// ---------------------------------------------------------------------------
+
+/**
+ * The Structure stage's take-away page: the rules a folder must satisfy, and —
+ * once a folder has been checked — what is wrong with it.
+ *
+ * WHY IT LIVES IN THIS MODULE
+ * ───────────────────────────
+ *
+ * #26.04's constraint, in as many words: reuse this file rather than writing a
+ * second exporter. That is not filing tidiness. The document shell below is
+ * where every decision about "a file the user keeps offline and opens in Word"
+ * is recorded — inline CSS because Word reads it, no flexbox and no custom
+ * properties because Word does not, `esc` with `&` first, a `lang` that follows
+ * the UI locale rather than being hardcoded to Romanian. A second exporter
+ * would restate all of that, correctly at first.
+ *
+ * So the shell, the escaping, the path lists and `reportFileName` are shared;
+ * what differs is the body, and that is all this function contributes.
+ *
+ * IT KNOWS NOTHING ABOUT RULES
+ * ────────────────────────────
+ *
+ * No `StructureRuleId`, no `StructureViolation`, no import from
+ * `structure-rules.ts`. Every sentence arrives already rendered, exactly as
+ * `buildReportHtml` takes its findings — because the moment this module can
+ * name a rule it becomes the second place that decides how a rule is worded,
+ * and the first place is `messages/*.json`.
+ *
+ * `violations: null` means no folder has been checked yet, which is a different
+ * document from "checked and clean" and must not print the all-clear.
+ */
+export type StructureHtmlRule = {
+  /** Stable ID, printed as a reference so a phone call can quote it. */
+  id: string;
+  requirement: string;
+  example: string;
+};
+
+export type StructureHtmlSection = {
+  heading: string;
+  rules: readonly StructureHtmlRule[];
+};
+
+export type StructureHtmlViolation = {
+  ruleId: string;
+  /** Already display-ready: the chosen folder's own name when the culprit is it. */
+  culprit: string;
+  /** The rendered violation sentence, counts and names interpolated. */
+  sentence: string;
+  /** Complete, never a sample — the whole reason a take-away copy is better than the screen. */
+  related: readonly string[];
+};
+
+/** A walk limit that stopped the listing, already worded for a business user. */
+export type StructureHtmlWarning = {
+  heading: string;
+  paths: readonly string[];
+};
+
+export type StructureHtmlStrings = {
+  documentTitle: string;
+  generatedAt: string;
+  folderLabel: string;
+  rulesTitle: string;
+  violationsTitle: string;
+  /** Printed instead of a violation list when the folder was checked and PASSED. */
+  allClear: string;
+  /**
+   * Printed when the folder was checked, broke no rule, and is refused anyway
+   * — a walk that gave up part-way. See `clean` for why this is a third state
+   * and not the absence of the other two.
+   */
+  blocked: string;
+  /** Printed instead of a violation list when no folder has been checked. */
+  notCheckedYet: string;
+  warningsTitle: string;
+};
+
+export type StructureHtmlInput = {
+  /** `null` when no folder has been picked — the rules alone are worth printing. */
+  folderName: string | null;
+  generatedAt: string;
+  locale: string;
+  sections: readonly StructureHtmlSection[];
+  /** `null` = not checked yet. */
+  violations: readonly StructureHtmlViolation[] | null;
+  /**
+   * Did the folder PASS? Read only when `violations` is a (possibly empty)
+   * array.
+   *
+   * ⚠️ **An empty violation list is not the same as a pass, and inferring one
+   * from the other is the defect this field exists to remove.** A walk that
+   * gave up part-way suppresses three of the rules, so it can break none of
+   * them and still be refused — and the first version of this exporter mapped
+   * `[]` straight to the all-clear, printing "Structura folderului este în
+   * regulă" in green three lines above the section explaining that the folder
+   * could not be read. The screen had the same hole on its audible channel and
+   * was fixed there first; this is the printed half of it.
+   */
+  clean: boolean;
+  warnings: readonly StructureHtmlWarning[];
+  strings: StructureHtmlStrings;
+};
+
+export function buildStructureHtml(input: StructureHtmlInput): string {
+  const { folderName, generatedAt, locale, sections, violations, clean, warnings, strings } =
+    input;
+
+  const ruleBlocks = sections
+    .map((section) =>
+      [
+        `<h3>${esc(section.heading)}</h3>`,
+        ...section.rules.map((rule) =>
+          [
+            `<div class="finding">`,
+            `<p class="msg"><span class="rule">${esc(rule.id)}</span> ${esc(rule.requirement)}</p>`,
+            `<p class="eg">${esc(rule.example)}</p>`,
+            `</div>`,
+          ].join(""),
+        ),
+      ].join(""),
+    )
+    .join("");
+
+  const violationBlocks =
+    violations === null
+      ? `<p class="meta">${esc(strings.notCheckedYet)}</p>`
+      : violations.length === 0
+        ? clean
+          ? `<p class="clear">${esc(strings.allClear)}</p>`
+          : // Not `.clear`, which is green: the folder is refused. Plain body
+            // text, with the red section below carrying the reason.
+            `<p class="msg">${esc(strings.blocked)}</p>`
+        : violations
+            .map((v) =>
+              [
+                `<div class="finding">`,
+                `<p class="msg"><span class="rule">${esc(v.ruleId)}</span> <strong>${esc(v.culprit)}</strong></p>`,
+                `<p class="msg">${esc(v.sentence)}</p>`,
+                pathList(v.related),
+                `</div>`,
+              ].join(""),
+            )
+            .join("");
+
+  const warningBlocks =
+    warnings.length === 0
+      ? ""
+      : `<h2>${esc(strings.warningsTitle)}</h2>` +
+        warnings
+          .map((w) => `<h3>${esc(w.heading)}</h3>${pathList(w.paths)}`)
+          .join("");
+
+  return htmlDocument({
+    locale,
+    title:
+      folderName === null
+        ? strings.documentTitle
+        : `${strings.documentTitle} — ${folderName}`,
+    body: [
+      `<h1>${esc(strings.documentTitle)}</h1>`,
+      // Omitted rather than printed empty: a page saved before a folder was
+      // picked is the rules alone, and a "Folder:" line with nothing after it
+      // reads as a folder whose name failed to render.
+      folderName === null
+        ? ""
+        : `<p class="meta">${esc(strings.folderLabel)}: <strong>${esc(folderName)}</strong></p>`,
+      `<p class="meta">${esc(strings.generatedAt)}: ${esc(generatedAt)}</p>`,
+      `<h2>${esc(strings.violationsTitle)}</h2>`,
+      violationBlocks,
+      warningBlocks,
+      // The rules come SECOND on the page although they come first on the
+      // screen. The screen is read before a folder is picked, where the rules
+      // are the whole content; the page is printed and carried to File
+      // Explorer, where the fix list is what the user works through and the
+      // rules are the reference behind it.
+      `<h2>${esc(strings.rulesTitle)}</h2>`,
+      ruleBlocks,
+    ]
+      // Two parts above are conditionally absent — the folder line before a
+      // folder is picked, and the warnings when the walk finished. Dropping
+      // them here rather than leaving an empty string keeps the document free
+      // of blank lines that Word renders as real paragraphs.
+      .filter((part) => part !== "")
+      .join("\n"),
+  });
+}
+
+// ---------------------------------------------------------------------------
+// The document shell, shared by both
+// ---------------------------------------------------------------------------
+
+/**
+ * Word reads this file's inline CSS, so the styling survives the "Save As →
+ * .docx" step rather than arriving as a wall of unformatted text. Kept to
+ * properties Word actually honours — no flexbox, no CSS variables.
+ */
+const DOCUMENT_CSS = `
   body { font-family: Calibri, Arial, sans-serif; font-size: 11pt; color: #1a1a1a; margin: 2cm; }
   h1 { font-size: 18pt; margin: 0 0 4pt; }
   h2 { font-size: 14pt; margin: 18pt 0 6pt; border-bottom: 1px solid #ccc; padding-bottom: 2pt; }
@@ -159,24 +386,23 @@ export function buildReportHtml(input: ReportHtmlInput): string {
   td { font-family: Consolas, "Courier New", monospace; }
   .finding { margin: 0 0 10pt; }
   .msg { margin: 0 0 3pt; }
+  .eg { margin: 0 0 3pt 18pt; color: #444; font-size: 10pt; }
   .rule { font-family: Consolas, "Courier New", monospace; font-size: 9pt; color: #8a5a00; }
   .paths { margin: 0 0 0 18pt; padding: 0; }
   .paths li { font-family: Consolas, "Courier New", monospace; font-size: 9.5pt; color: #444; margin: 1pt 0; }
   .clear { color: #256029; }
-</style>
+`;
+
+function htmlDocument(input: { locale: string; title: string; body: string }): string {
+  return `<!DOCTYPE html>
+<html lang="${esc(input.locale)}">
+<head>
+<meta charset="utf-8">
+<title>${esc(input.title)}</title>
+<style>${DOCUMENT_CSS}</style>
 </head>
 <body>
-<h1>${esc(strings.documentTitle)}</h1>
-<p class="meta">${esc(strings.folderLabel)}: <strong>${esc(folderName)}</strong></p>
-<p class="meta">${esc(strings.generatedAt)}: ${esc(generatedAt)}</p>
-
-<h2>${esc(strings.forecastTitle)}</h2>
-<table>${forecastRows}</table>
-
-<h2>${esc(strings.findingsTitle)}</h2>
-${loudBlocks}
-${quietBlocks}
-${skippedBlocks}
+${input.body}
 </body>
 </html>`;
 }

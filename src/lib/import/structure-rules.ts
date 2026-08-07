@@ -145,8 +145,12 @@
  *  - A minimum. Nothing here requires the chosen folder to contain a single
  *    property: a `floating`-only import is legitimate, and an empty folder
  *    produces no violations and a forecast of zero documents, which is honest.
- *    If an empty pick should be refused, it is a stage decision in #26.04, not
- *    a structure rule.
+ *    Whether an empty pick should be refused was left to #26.04, and that slice
+ *    answered NO: an empty folder breaks no structure rule, so Structure passes
+ *    it, and the Evaluation screen that follows already refuses to continue on
+ *    a forecast of zero documents — in a sentence about what will be imported,
+ *    which is the question the user actually has. A second refusal here would
+ *    need a Romanian rule sentence for a state the next screen states better.
  *
  * KNOWN AND ACCEPTED AMBIGUITIES
  * ──────────────────────────────
@@ -312,6 +316,56 @@ export const RULE_MESSAGE_PARTS: readonly RuleMessagePart[] = Object.freeze([
  */
 export function messageKeyFor(id: StructureRuleId, part: RuleMessagePart): string {
   return `adminImport.structure.rule.${id}.${part}`;
+}
+
+/**
+ * Every scope, in the order the listing shows them: outside in.
+ *
+ * The same order the catalogue runs in, and not by coincidence — a printed page
+ * whose sections ran in one order while the fix list ran in another would be
+ * two documents pretending to be one. A test pins the agreement.
+ */
+export const RULE_SCOPES: readonly RuleScope[] = Object.freeze([
+  "chosenFolder",
+  "topLevelFolder",
+  "pageFolder",
+] as const);
+
+/** The rules answered at one scope, in catalogue order. */
+export function rulesInScope(scope: RuleScope): StructureRule[] {
+  return STRUCTURE_RULES.filter((r) => r.scope === scope);
+}
+
+/**
+ * The i18n key for a scope's heading — the section title on the listing.
+ *
+ * Here for the same reason as `messageKeyFor`: the message path is written in
+ * one place, so a rename is a change to this file rather than a grep across
+ * two renderers (the screen and the offline HTML page).
+ */
+export function scopeKeyFor(scope: RuleScope): string {
+  return `adminImport.structure.scope.${scope}`;
+}
+
+/**
+ * The placeholders a rule's `requirement` and `example` sentences interpolate.
+ *
+ * ⚠️ **Not the same set as the rule's `counts` and `values`.** Those describe
+ * the VIOLATION sentence, which is rendered out of a `StructureViolation` and
+ * therefore always has its data to hand. The other two sentences are rendered
+ * with no violation in sight — the listing is read BEFORE a folder is picked —
+ * so whatever they interpolate has to come from somewhere else, and today that
+ * is exactly one number: the property limit STR-02 quotes twice.
+ *
+ * A function rather than a map, so a caller cannot reach a rule that is missing
+ * from the map and hand next-intl `undefined`. A test walks both locales'
+ * `requirement` and `example` strings, extracts every placeholder, and fails if
+ * this does not supply it — which is what stops a future rewording from
+ * rendering `{max}` verbatim to a Romanian user on the one page meant to be
+ * printed and carried to File Explorer.
+ */
+export function ruleListingValues(id: StructureRuleId): Record<string, string | number> {
+  return id === "STR-02" ? { max: MAX_PROPERTY_FOLDERS } : {};
 }
 
 // ---------------------------------------------------------------------------

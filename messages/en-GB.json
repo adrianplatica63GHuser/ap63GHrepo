@@ -2083,6 +2083,47 @@
           "example": "Correct: 1.jpg, 2.jpg, 3.jpg. Wrong: 1.jpg, 3.jpg, 4.jpg, or 5449.jpg and 31316.jpg, which are scanner counters rather than page numbers.",
           "violation": "The folder {folder} holds {pages, plural, one {one page numbered} other {# pages numbered}} from {lowest} to {highest}. Pages are numbered 1, 2, 3… with no gaps. Renumber the files in this folder starting from 1."
         }
+      },
+      "title": "Folder structure",
+      "intro": "Before the import, the folder on your computer has to look a certain way. Read the rules below, tick that you follow them, then choose the folder. The system checks it immediately and tells you exactly what needs putting right.",
+      "rulesTitle": "The structure rules",
+      "showRules": "Show the rules again",
+      "hideRules": "Hide the rules",
+      "scope": {
+        "chosenFolder": "The folder you choose",
+        "topLevelFolder": "The folders inside it: properties, “common” and “floating”",
+        "pageFolder": "The folders holding a document's pages"
+      },
+      "acknowledge": "I follow the structure rules",
+      "acknowledgeHint": "Tick this once you have read the rules, and again once you have made the corrections in File Explorer. The tick is asked for on every check.",
+      "chooseFolder": "Choose folder…",
+      "chooseAnotherFolder": "Choose another folder…",
+      "recheck": "Check again",
+      "clean": "The folder structure is correct.",
+      "violationsTitle": "{count, plural, one {One thing to put right} other {# things to put right}}",
+      "fixInstructions": "Open the folder in File Explorer and make the corrections above — the system never touches your files. When you are done, come back here, tick again and press “Check again”.",
+      "morePaths": "{count, number} more…",
+      "truncated": {
+        "title": "The folder could not be read in full",
+        "intro": "The check stopped before it had been through the whole folder, so we cannot say it is correct. Put the following right and check again.",
+        "depth": "The check stopped: {count, plural, one {one folder is nested too deeply in the chosen folder} other {# folders are nested too deeply in the chosen folder}}. This is usually a shortcut pointing at a folder above it, which sends the check round in a circle. Delete the shortcut or move it out of the chosen folder. Examples:",
+        "budget": "The chosen folder holds too many folders. The check stopped, and {count, plural, one {one folder was left unread} other {# folders were left unread}}. Split the properties across several folders and choose them one at a time. Examples of unread folders:",
+        "breadth": "The chosen folder holds too many files. The check stopped, and {count, plural, one {one folder was not read to the end} other {# folders were not read to the end}}. Split the properties across several folders and choose them one at a time. Examples:"
+      },
+      "save": {
+        "button": "Save the rules as a page",
+        "hint": "Downloads an HTML page you can open or print while you work in File Explorer. It holds the rules and, if a folder has been checked, the complete list of what needs putting right.",
+        "filePrefix": "import-structure",
+        "documentTitle": "Import folder structure",
+        "generatedAt": "Generated",
+        "folderLabel": "Folder",
+        "rulesTitle": "The structure rules",
+        "violationsTitle": "To put right",
+        "allClear": "The folder structure is correct.",
+        "notCheckedYet": "No folder has been checked yet — this page holds the rules only.",
+        "warningsTitle": "The folder could not be read in full",
+        "blocked": "No structure rule was broken in the part that could be read, but the folder still cannot be imported — see below for why.",
+        "rulesOnlyName": "rules"
       }
     },
     "workflow": {

@@ -23,6 +23,7 @@
 import { useCallback } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { buildReportHtml, reportFileName } from "@/lib/import/report-html";
+import { downloadHtmlFile, fileNameStamp } from "@/lib/ui/download-html";
 import { buttonClass } from "@/lib/ui/button-styles";
 import type { ImportForecast } from "@/lib/import/preflight";
 import type { Finding, ImportReport, SkippedGroup } from "@/lib/import/checks";
@@ -172,8 +173,7 @@ export function ReportSections({
    */
   const handleDownload = useCallback(() => {
     const now = new Date();
-    const pad = (n: number) => String(n).padStart(2, "0");
-    const stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}`;
+    const stamp = fileNameStamp(now);
 
     const html = buildReportHtml({
       folderName,
@@ -217,15 +217,10 @@ export function ReportSections({
       },
     });
 
-    const url = URL.createObjectURL(new Blob([html], { type: "text/html;charset=utf-8" }));
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = reportFileName(t("documentFilePrefix"), folderName, stamp);
-    link.click();
-    // Revoked on the next tick rather than immediately: Firefox and Safari
-    // have both been observed to cancel a download whose object URL is
-    // revoked in the same frame as the click.
-    setTimeout(() => URL.revokeObjectURL(url), 0);
+    // Slice #26.04 moved the Blob/object-URL dance — and the next-tick revoke
+    // that Firefox and Safari need — into `download-html.ts`, because the
+    // Structure stage became the second place that saves a page.
+    downloadHtmlFile(html, reportFileName(t("documentFilePrefix"), folderName, stamp));
   }, [folderName, forecast, uploadBytes, report, t, tf, locale]);
 
   const loud = report.findings.filter((f) => f.loudness === "loud");

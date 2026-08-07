@@ -11,9 +11,10 @@
  *
  * WHY SOME STAGES CARRY `plannedIn`
  * ---------------------------------
- * The redesign (26.01 → 26.12) builds the stages one slice at a time, and this
- * slice ships the shell before four of them exist. Two ways to handle that were
- * available, and both of the obvious ones lie:
+ * The redesign (26.01 → 26.12) builds the stages one slice at a time, and
+ * #26.03 shipped the shell before four of them existed (#26.04 has since built
+ * one, leaving three). Two ways to handle that were available, and both of the
+ * obvious ones lie:
  *
  *   - Leave them out until they are built → the user never sees the journey,
  *     which is the one thing the shell exists to show.
@@ -70,7 +71,10 @@ export type WorkflowStage = {
 export const WORKFLOW_STAGES: readonly WorkflowStage[] = [
   { id: "information", line: "preparation" },
   { id: "preconditions", line: "preparation" },
-  { id: "structure", line: "preparation", plannedIn: "26.04" },
+  // #26.04 built its screen, so `plannedIn` is gone and Structure goes amber
+  // and green like any other stage — exactly the one-line change the header
+  // above promised this slice would be.
+  { id: "structure", line: "preparation" },
   { id: "constraints", line: "preparation", plannedIn: "26.05" },
   { id: "duplication", line: "preparation", plannedIn: "26.06" },
   { id: "preexisting", line: "classification", plannedIn: "26.08" },
@@ -94,23 +98,31 @@ export function stagesOnLine(line: WorkflowLineId): WorkflowStage[] {
  * that the phase → stage map can be tested without rendering anything, and so
  * that the two can never drift into disagreeing about which phases exist.
  *
- *  information   → the Information page; nothing has started      (Slice #26.03)
- *  preflight     → the preconditions checklist; no folder picker exists yet
- *  idle          → checks passed, user hasn't picked a folder
- *  walking       → walkFolder() running (fast, <1 s)
- *  folder-report → walked, nothing spent; the forecast awaits Continuă
- *  scanning      → concurrent Haiku AI scans running in background
- *  ready         → scan complete; scan-table rendered + "Import" CTA visible
- *  property      → PropertyStepDialog is open (resolve the run's Property)
- *  tag-dialog    → TagDialog is open (animated tag-prep step)
- *  importing     → BulkImportDialog is running
- *  resumed       → ResumedSessionView is showing a previous run's record
+ *  information      → the Information page; nothing has started   (Slice #26.03)
+ *  preflight        → the preconditions checklist; no folder picker exists yet
+ *  structure        → the Structure rules, the tick, and the picker (#26.04)
+ *  walking          → walkFolder() running (fast, <1 s) — the structure check
+ *  structure-report → the folder broke rules; the fix-and-re-check loop (#26.04)
+ *  folder-report    → structure clean, nothing spent; the forecast awaits Continuă
+ *  scanning         → concurrent Haiku AI scans running in background
+ *  ready            → scan complete; scan-table rendered + "Import" CTA visible
+ *  property         → PropertyStepDialog is open (resolve the run's Property)
+ *  tag-dialog       → TagDialog is open (animated tag-prep step)
+ *  importing        → BulkImportDialog is running
+ *  resumed          → ResumedSessionView is showing a previous run's record
+ *
+ * ⚠️ `idle` was renamed to `structure` in #26.04, and it is a rename rather
+ * than an addition: the phase has always meant "the preconditions passed and no
+ * folder has been walked yet", and that is precisely where the Structure screen
+ * now stands. Leaving it called `idle` would have left the machine's own name
+ * for the phase disagreeing with the only screen it renders.
  */
 export const IMPORT_PHASES = [
   "information",
   "preflight",
-  "idle",
+  "structure",
   "walking",
+  "structure-report",
   "folder-report",
   "scanning",
   "ready",
@@ -127,21 +139,31 @@ export type ImportPhase = (typeof IMPORT_PHASES)[number];
  *
  * Read this map as a statement about TODAY, not about the finished design:
  *
- *  - `idle` / `walking` / `folder-report` all report **evaluation**, because
- *    today's post-folder-selection screen is what 26.09 renames Evaluation.
- *    `idle` is the arguable one — no folder has been chosen there yet — and it
- *    reports evaluation anyway, because the alternatives are worse: the stage
- *    that comes next in the list is Structure, which has no screen and may
- *    never be reported, and leaving nothing current at all would show a bar
- *    with no amber pill on the one screen whose whole content is a button.
- *    Structure, Constraints and Duplication sit between Preconditions and it in
- *    the list, and they stay grey through all three phases — which is the
- *    truth: nothing checks the folder's structure yet. When 26.04–26.06 land,
- *    those phases split off and this map grows the rows to say so.
+ *  - `structure` / `walking` / `structure-report` all report **structure**.
+ *    #26.04 split them off from Evaluation, which is where #26.03 had to park
+ *    them: the rules listing, the walk that checks them and the violation list
+ *    are three views of one stage, and the walk belongs to Structure rather
+ *    than to Evaluation because checking the structure is the only reason it
+ *    runs. That includes a re-walk started from the Evaluation screen — the
+ *    indicator goes back to amber on Structure while it runs, which is the
+ *    truth: the folder is being re-checked against the structure rules, and it
+ *    may well fail this time.
+ *  - `folder-report` reports **evaluation**: today's post-folder-selection
+ *    screen is what 26.09 renames Evaluation, and it is reachable only through
+ *    a clean structure check.
  *  - `ready` reports **import**, not scanning: the scan is finished and the one
  *    thing left on that screen is the Import button.
  *  - `resumed` reports **result** — the resumed view is a previous run's
  *    result, and it is the only way to reach that screen today.
+ *
+ * ⚠️ **Constraints and Duplication still have no phase, and Structure passing
+ * therefore lands on Evaluation.** #26.04's brief says "Structure turns green
+ * and Constraints begins", and half of that is buildable today: Structure does
+ * turn green. Constraints cannot begin, because 26.05 builds it — and marking
+ * it current anyway is the one thing `plannedIn` exists to forbid. So the amber
+ * moves to Evaluation, the two planned stages stay grey with their "în curând"
+ * note, and 26.05 inserts itself between them by deleting one `plannedIn` and
+ * adding its phases here.
  *
  * KNOWN GAP, left for 26.10. Closing `BulkImportDialog` returns the wizard to
  * `ready`, so after a finished run the indicator still reads "Import — în
@@ -155,8 +177,9 @@ export type ImportPhase = (typeof IMPORT_PHASES)[number];
 const STAGE_BY_PHASE: Record<ImportPhase, WorkflowStageId> = {
   information: "information",
   preflight: "preconditions",
-  idle: "evaluation",
-  walking: "evaluation",
+  structure: "structure",
+  walking: "structure",
+  "structure-report": "structure",
   "folder-report": "evaluation",
   scanning: "scanning",
   ready: "import",

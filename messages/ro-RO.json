@@ -2083,6 +2083,47 @@
           "example": "Corect: 1.jpg, 2.jpg, 3.jpg. Greșit: 1.jpg, 3.jpg, 4.jpg, sau 5449.jpg și 31316.jpg, care sunt numere de scaner, nu numere de pagină.",
           "violation": "Folderul „{folder}” are {pages, plural, one {o pagină numerotată} few {# pagini numerotate} other {# de pagini numerotate}} de la {lowest} la {highest}. Paginile se numerotează 1, 2, 3… fără sărituri. Renumerotați fișierele din acest folder începând de la 1."
         }
+      },
+      "title": "Structura folderului",
+      "intro": "Înainte de import, folderul de pe calculator trebuie să arate într-un anumit fel. Citiți regulile de mai jos, bifați că le respectați, apoi alegeți folderul. Sistemul îl verifică imediat și vă spune exact ce este de îndreptat.",
+      "rulesTitle": "Regulile de structură",
+      "showRules": "Arată din nou regulile",
+      "hideRules": "Ascunde regulile",
+      "scope": {
+        "chosenFolder": "Folderul pe care îl alegeți",
+        "topLevelFolder": "Folderele din el: proprietățile, „common” și „floating”",
+        "pageFolder": "Folderele cu paginile unui document"
+      },
+      "acknowledge": "Respect regulile de structură",
+      "acknowledgeHint": "Bifați după ce ați citit regulile, respectiv după ce ați făcut îndreptările în File Explorer. Bifa se cere din nou la fiecare verificare.",
+      "chooseFolder": "Alege folderul…",
+      "chooseAnotherFolder": "Alege alt folder…",
+      "recheck": "Verifică din nou",
+      "clean": "Structura folderului este în regulă.",
+      "violationsTitle": "{count, plural, one {Un lucru de îndreptat} few {# lucruri de îndreptat} other {# de lucruri de îndreptat}}",
+      "fixInstructions": "Deschideți folderul în File Explorer și faceți îndreptările de mai sus — sistemul nu vă atinge fișierele. Când ați terminat, reveniți aici, bifați din nou și apăsați „Verifică din nou”.",
+      "morePaths": "încă {count, number}…",
+      "truncated": {
+        "title": "Folderul nu a putut fi citit în întregime",
+        "intro": "Verificarea s-a oprit înainte de a parcurge tot folderul, așa că nu putem spune că este în regulă. Îndreptați situația de mai jos și verificați din nou.",
+        "depth": "Verificarea s-a oprit: {count, plural, one {un folder este prea adânc în folderul ales} few {# foldere sunt prea adânc în folderul ales} other {# de foldere sunt prea adânc în folderul ales}}. De obicei este vorba de o scurtătură („shortcut”) către un folder de deasupra, care trimite verificarea în cerc. Ștergeți scurtătura sau scoateți-o din folderul ales. Exemple:",
+        "budget": "Folderul ales conține prea multe foldere. Verificarea s-a oprit, iar {count, plural, one {un folder a rămas necitit} few {# foldere au rămas necitite} other {# de foldere au rămas necitite}}. Împărțiți proprietățile în mai multe foldere pe care să le alegeți pe rând. Exemple de foldere necitite:",
+        "breadth": "Folderul ales conține prea multe fișiere. Verificarea s-a oprit, iar {count, plural, one {un folder nu a fost citit până la capăt} few {# foldere nu au fost citite până la capăt} other {# de foldere nu au fost citite până la capăt}}. Împărțiți proprietățile în mai multe foldere pe care să le alegeți pe rând. Exemple:"
+      },
+      "save": {
+        "button": "Salvează regulile ca pagină",
+        "hint": "Se descarcă o pagină HTML pe care o puteți deschide sau tipări cât timp lucrați în File Explorer. Conține regulile și, dacă folderul a fost verificat, lista completă a lucrurilor de îndreptat.",
+        "filePrefix": "structura-import",
+        "documentTitle": "Structura folderului de import",
+        "generatedAt": "Generat",
+        "folderLabel": "Folder",
+        "rulesTitle": "Regulile de structură",
+        "violationsTitle": "De îndreptat",
+        "allClear": "Structura folderului este în regulă.",
+        "notCheckedYet": "Niciun folder nu a fost verificat încă — pagina conține doar regulile.",
+        "warningsTitle": "Folderul nu a putut fi citit în întregime",
+        "blocked": "Nicio regulă de structură nu a fost încălcată în partea care s-a putut citi, dar folderul tot nu poate fi importat — vedeți mai jos de ce.",
+        "rulesOnlyName": "reguli"
       }
     },
     "workflow": {

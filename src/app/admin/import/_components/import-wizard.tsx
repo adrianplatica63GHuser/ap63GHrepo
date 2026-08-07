@@ -25,6 +25,20 @@
  * The state machine is documented beside that union, not here, for the same
  * reason: one copy.
  *
+ * THE STRUCTURE STAGE  (Slice #26.04)
+ * ───────────────────────────────────
+ * The folder picker moved out of the toolbar and into `ImportStructureStage`,
+ * behind a tick the user re-confirms on every round of the fix-and-re-check
+ * loop. The walk IS the structure check now: the moment it finishes, the
+ * verdict decides where the user lands — back on the violation list, or on the
+ * Evaluation screen with Structure green behind them.
+ *
+ * ⚠️ **The metadata pass runs only when Structure is clean.** It is ~760
+ * `getFile()` calls on Adrian's archive and it feeds the folder report, which a
+ * failed structure check never reaches. Paying for it on every turn of a loop
+ * built to be gone round several times would have made the loop slower than
+ * the fixing it exists to prompt.
+ *
  * File System Access API handles are stored in a module-level singleton so
  * they survive React unmount/remount (handles cannot be serialised).
  */
@@ -61,7 +75,9 @@ import type { DirectoryObservation } from "@/lib/import/folder-utils";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { ImportStageBar, MODAL_PHASES } from "./import-stage-bar";
 import { ImportInformation } from "./import-information";
+import { ImportStructureStage } from "./import-structure-stage";
 import { CancelImportDialog } from "./cancel-import-dialog";
+import { checkStructureStage } from "@/lib/import/structure-check";
 import {
   stageForPhase,
   type ImportPhase,
@@ -274,6 +290,25 @@ export function ImportWizard() {
   const [preflightPassed, setPreflightPassed] = useState(false);
 
   /**
+   * Slice #26.04 — the Structure stage's two pieces of screen state.
+   *
+   * `structureAcknowledged` is the "Respect regulile de structură" tick. It
+   * gates the picker AND the re-check, and `runWalk` clears it at the start of
+   * every walk so it comes back unticked on each round of the loop. That is the
+   * brief's wording ("the tick and the button return as Verifică din nou") and
+   * it is also the only signal available that the user actually went to File
+   * Explorer between two presses — the browser cannot tell us, and a loop whose
+   * button can be hammered is a loop that reads as broken.
+   *
+   * `structureRulesOpen` is the disclosure over the rules listing, hoisted here
+   * for the reason `showQuiet` and `showSkipped` are: the panel re-renders on
+   * every check, and a user reading the rules beside their fix list must not
+   * have them shut under them.
+   */
+  const [structureAcknowledged, setStructureAcknowledged] = useState(false);
+  const [structureRulesOpen, setStructureRulesOpen] = useState(false);
+
+  /**
    * Slice #26.03 — the Cancel's two pieces of memory.
    *
    * `documentsCreated` is the only fact the cancel dialog needs that nothing
@@ -325,7 +360,7 @@ export function ImportWizard() {
     // branch would fire from a stale closure and yank the user off a picker
     // they had just been given. A precondition that breaks after the picker
     // appears surfaces where it always did: as a failure during the run.
-    if (passed) setPhase((current) => (current === "preflight" ? "idle" : current));
+    if (passed) setPhase((current) => (current === "preflight" ? "structure" : current));
   }, []);
 
   // -------------------------------------------------------------------
@@ -343,7 +378,20 @@ export function ImportWizard() {
    * stale the moment someone acts on it.
    */
   const runWalk = useCallback(
-    async (handle: FSDirectoryHandle, mode: "pick" | "recheck") => {
+    async (
+      handle: FSDirectoryHandle,
+      mode: "pick" | "recheck",
+      /**
+       * Where a FAILED walk leaves the user.
+       *
+       * An explicit argument since #26.04, and `mode` can no longer stand in
+       * for it: the re-check button now exists on two screens — the structure
+       * violation list and the folder report — and a failed re-check must
+       * return to the one it was pressed from, not to whichever of the two the
+       * mode happens to imply.
+       */
+      failurePhase: ImportPhase,
+    ) => {
       // Everything below belongs to THIS token. Every `set*` after an await is
       // guarded on it, so a walk the user cancelled cannot put its folder,
       // its entries or its phase back on screen a second later.
@@ -351,6 +399,9 @@ export function ImportWizard() {
 
       setWalkError(null);
       setMetaProgress({ done: 0, total: 0 });
+      // Every check re-asks the tick. Cleared here rather than in the two
+      // callers so that no route into a walk can skip it.
+      setStructureAcknowledged(false);
       setPhase("walking");
 
       // A permission grant can lapse between two walks. `requestPermission`
@@ -385,15 +436,13 @@ export function ImportWizard() {
         // Romanian UI — and the folder may legitimately have moved, because
         // acting on this very report is what the user was told to do.
         setWalkError(t(mode === "recheck" ? "recheckFailed" : "walkFailed"));
-        // Crucially, nothing above this point cleared the existing report, so
+        // Crucially, nothing above this point cleared the existing findings, so
         // a failed re-check returns the user to the list they were working
-        // from rather than destroying it. `mode` is the whole answer here: the
-        // re-check button exists only on the report screen, so a re-check has
-        // a report to go back to by construction, and a failed PICK has just
-        // cleared one and belongs at the picker. Reading `entries` to work
-        // that out would have meant either a ref read during render or a
-        // dependency that re-creates this callback on every walk.
-        setPhase(mode === "recheck" ? "folder-report" : "idle");
+        // from rather than destroying it. Which list that is comes from the
+        // caller (`failurePhase`) — see the parameter's note; a failed PICK has
+        // just cleared one and belongs back at the Structure screen, where the
+        // picker now lives.
+        setPhase(failurePhase);
         return;
       }
 
@@ -416,6 +465,31 @@ export function ImportWizard() {
       // validated or shown. The scan waits for `startScan`, behind Continuă.
       setEntries(walked);
       setObservations(seen);
+
+      /**
+       * Slice #26.04 — the structure check, and the fork the whole stage turns
+       * on.
+       *
+       * Computed from the local `seen` rather than from the `observations`
+       * state set one line above: the phase decision cannot wait for a render,
+       * and reading the state here would decide this walk's destination from
+       * the PREVIOUS walk's observations — which, on the second turn of a
+       * fix-and-re-check loop, is exactly the list the user has just fixed.
+       *
+       * `clean` and not `violations.length === 0`: a walk that gave up part-way
+       * suppresses three of the rules, so an empty list from a truncated walk
+       * is not a clean folder. See `checkStructureStage`.
+       */
+      const verdict = checkStructureStage(seen);
+      if (!verdict.clean) {
+        // Nothing below this point is worth paying for — the folder report is
+        // unreachable until Structure passes. Metadata is dropped rather than
+        // left standing, so no later render can pair this walk's entries with
+        // the previous walk's file sizes.
+        setMetadata(null);
+        setPhase("structure-report");
+        return;
+      }
 
       // T1: one getFile() per file. Metadata only — it does not read contents
       // — but it is ~760 calls on Adrian's archive, so it reports progress
@@ -463,13 +537,24 @@ export function ImportWizard() {
 
     _dirHandle = handle;
     folderPickedRef.current = true;
+    // Named here rather than only after the walk resolves.
+    //
+    // Fixed in passing (#26.04): a walk that FAILED left this holding the
+    // PREVIOUS folder's name while `_dirHandle` already held the new one — so
+    // the toolbar said `📁 Arhiva 2024` and Verifică din nou re-walked
+    // `Arhiva 2025`. `_dirHandle` is the fact; the name must follow it, and it
+    // is known the moment the picker returns.
+    //
+    // It does not weaken what the Cancel dialog reads: that asks
+    // `folderPickedRef`, precisely because a display name is not the fact.
+    setRootFolderName(handle.name);
     // A different folder: drop the previous one's report before walking, so a
     // slow or failing walk cannot leave folder A's findings under folder B's
     // name. A RE-check deliberately does the opposite and keeps them.
     setEntries([]);
     setObservations([]);
     setMetadata(null);
-    await runWalk(handle, "pick");
+    await runWalk(handle, "pick", "structure");
   }, [t, runWalk]);
 
   // -------------------------------------------------------------------
@@ -580,10 +665,23 @@ export function ImportWizard() {
    * A handle can stop working between the first walk and this one: the folder
    * may have been moved or unmounted, or the permission may have lapsed. The
    * walk's own error path already covers that — it surfaces `walkError` and
-   * returns to `idle`, which is exactly the right outcome, because from there
-   * the user can pick the folder again.
+   * puts the user back on the screen they pressed the button from, where the
+   * "choose another folder" control sits beside this one.
+   *
+   * ⚠️ #26.04's brief names this explicitly: **re-checking must not require
+   * re-picking the folder, and that must survive.** It does — the module-level
+   * `_dirHandle` is untouched by this slice, and the only thing that changed is
+   * which screen the button is drawn on.
    */
   const handleRecheck = useCallback(async () => {
+    // Where a FAILED re-check puts the user back. The button exists on exactly
+    // two screens since #26.04, and each must return to itself: the structure
+    // violation list is a to-do list the user is working through, and the
+    // folder report is the same thing one stage later. Anything else throws
+    // away the list they were reading because the FOLDER went missing.
+    const returnTo: ImportPhase =
+      phase === "folder-report" ? "folder-report" : "structure-report";
+
     if (!_dirHandle) {
       // Fixed in passing (#26.03): this used to return in silence, so a button
       // that had lost its handle would have done nothing at all — no message,
@@ -597,8 +695,8 @@ export function ImportWizard() {
       setWalkError(t("recheckFailed"));
       return;
     }
-    await runWalk(_dirHandle, "recheck");
-  }, [runWalk, t]);
+    await runWalk(_dirHandle, "recheck", returnTo);
+  }, [runWalk, t, phase]);
 
   /**
    * Slice #26.03 — renounce the run and go back to the beginning.
@@ -644,6 +742,12 @@ export function ImportWizard() {
     setWalkError(null);
     setShowQuiet(false);
     setShowSkipped(false);
+    // Slice #26.04 — the Structure screen goes back to how a first-time visitor
+    // meets it: rules open, nothing ticked. A tick carried over from a
+    // renounced run would let the next one pick a folder without ever having
+    // read the rules on the way past.
+    setStructureAcknowledged(false);
+    setStructureRulesOpen(false);
   }, [endRun]);
 
   // Mint a token for this mount, and retire whatever token is live on unmount —
@@ -679,10 +783,43 @@ export function ImportWizard() {
   const scannableCount = entries.filter(entryScannable).length;
   const scanDone = phase === "ready";
 
+  /**
+   * The three phases the Structure panel owns.   (Slice #26.04)
+   *
+   * `walking` is one of them and that is the whole shape of the stage: the walk
+   * exists to answer the structure question, so the panel stays on screen while
+   * it runs rather than being replaced by a bare spinner and then re-appearing
+   * with a different answer.
+   */
+  const inStructure =
+    phase === "structure" || phase === "walking" || phase === "structure-report";
+
   // Derived at render time rather than copied into state when the walk ends:
   // one copy cannot drift from the list the user is looking at. Cheap — it is
   // a single pass over names, no file contents and no I/O.
   const forecast = useMemo(() => forecastImport(entries), [entries]);
+
+  /**
+   * The Structure verdict on screen.   (Slice #26.04)
+   *
+   * Derived, not stored, for the same reason as the forecast and the report —
+   * and `null` when nothing has been walked, which is what tells the panel to
+   * show the rules alone rather than an all-clear nobody earned.
+   *
+   * `observations.length === 0` is a sound test for "no walk yet": `walkFolder`
+   * observes every directory it visits including the chosen folder itself, so
+   * one observation is the minimum a completed walk can produce — an EMPTY
+   * folder still yields its own.
+   *
+   * `runWalk` computes the same verdict from its local `seen` to choose the
+   * next phase. That is not a second copy of the rule: it is the same pure
+   * function over the same array, called once because a phase decision cannot
+   * wait for a render and once because a render cannot read a local.
+   */
+  const structureVerdict = useMemo(
+    () => (observations.length === 0 ? null : checkStructureStage(observations)),
+    [observations],
+  );
 
   /**
    * Has this run already paid for classification?   (Slice #26.03)
@@ -754,10 +891,13 @@ export function ImportWizard() {
       facts: {
         // Neither the display name nor the module-level handle.
         //
-        // `rootFolderName` is only set after the walk RESOLVES, so through the
-        // whole `walking` phase — where the ~760-file metadata pass lives, and
-        // a very likely place to give up — it would read empty, and the dialog
-        // would say nothing about the folder it is about to drop.
+        // `rootFolderName` is a DISPLAY value, and this codebase's own rule is
+        // that a display value must never double as a lock. (It used to have a
+        // second fault as well — it was set only after the walk resolved, so it
+        // read empty through the whole `walking` phase, where the ~760-file
+        // metadata pass lives and a user is very likely to give up. #26.04
+        // moved it to the moment the picker returns, which fixes that one and
+        // changes nothing here: it is still a name, not a fact.)
         //
         // `_dirHandle` has the opposite fault: it is a module singleton that
         // outlives the component, so after an import, a route change and a
@@ -827,9 +967,18 @@ export function ImportWizard() {
 
       {/* Toolbar row. Hidden on the two screens where every one of its children
           is gated off, so the Information and preconditions cards do not sit
-          under an empty flex row that still spends a gap. */}
+          under an empty flex row that still spends a gap.
+
+          `empty:hidden` closes the case #26.04 introduced: on the Structure
+          screen with no saved session and no folder yet, every child is gated
+          off too, and the phase list above cannot say so without restating each
+          child's condition — which is two copies of the same set, one of which
+          would go stale. `:empty` asks the DOM instead. React renders a false
+          branch as nothing at all, and JSX strips whitespace-only lines, so the
+          div genuinely has no child nodes; if that ever stopped being true the
+          row would simply reappear, which is today's behaviour. */}
       {phase !== "information" && phase !== "preflight" && (
-      <div className="flex items-center gap-3 flex-wrap">
+      <div className="flex items-center gap-3 flex-wrap empty:hidden">
         {/* Slice #24.02a — the picker does not exist until every precondition
             is green. Rendering it disabled would invite the user to click at
             it; not rendering it at all makes the checklist the only thing on
@@ -837,28 +986,37 @@ export function ImportWizard() {
         {/* Hidden during `folder-report`: that panel carries its own
             "choose another folder", and two controls with different labels
             doing the same thing is a question the user has to stop and
-            answer. */}
-        {preflightPassed && phase !== "folder-report" && (
+            answer. Hidden through the Structure phases since #26.04 for the
+            stronger version of the same reason: the picker there is BEHIND a
+            tick, and a second copy of it up here would be a way round the gate
+            rather than merely a duplicate.
+
+            ⚠️ And hidden at `resumed`, which is the route that made the last
+            sentence true rather than decorative: the resume button is on the
+            Structure screen, so Structure → Reia → Alege folder… was two clicks
+            from the gate to the OS picker with the tick never touched. The
+            resumed view's only intended control is "Import nou", which is what
+            its own comment below has said since #24.02a. */}
+        {preflightPassed && phase !== "folder-report" && phase !== "resumed" && !inStructure && (
           <button
             type="button"
             onClick={handlePickFolder}
-            disabled={
-              phase === "walking" || phase === "scanning" || phase === "importing"
-            }
+            disabled={phase === "scanning" || phase === "importing"}
             className={buttonClass({ variant: "primary", size: "lg" })}
           >
             {rootFolderName ? t("changeFolderButton") : t("chooseFolderButton")}
           </button>
         )}
 
-        {/* Resume last session — stays gated on `idle`, i.e. behind the
-            checklist. Slice #24.02a briefly made it reachable from `preflight`
-            on the grounds that a resumed session touches no filesystem — but
+        {/* Resume last session — stays gated on the Structure screen, i.e.
+            behind the checklist, and only before a folder has been walked.
+            Slice #24.02a briefly made it reachable from `preflight` on the
+            grounds that a resumed session touches no filesystem — but
             ResumedSessionView's only control is "new import", which CLEARS the
             saved session. Reaching it with failing preconditions would have
             meant the sole way back to the checklist was destroying the record
             of the previous run. */}
-        {phase === "idle" && savedSession && (
+        {phase === "structure" && savedSession && (
           <button
             type="button"
             onClick={() => setPhase("resumed")}
@@ -886,17 +1044,13 @@ export function ImportWizard() {
           </span>
         )}
 
-        {/* Slice #23.09.UX — a toolbar chip, so it takes the blink and the
-            live region directly rather than through ActivityCue, whose
-            block layout would break this flex row. No bar for the same
-            reason. */}
-        {phase === "walking" && (
-          <span role="status" className="ga-cue-blink text-sm font-medium text-cta">
-            {metaProgress.total > 0
-              ? t("readingMetadata", { done: metaProgress.done, total: metaProgress.total })
-              : t("walkingFolder")}
-          </span>
-        )}
+        {/* Slice #26.04 — the walking cue used to live here as a toolbar chip.
+            It moved into `ImportStructureStage`, because `walking` is now
+            always a Structure phase, so a copy up here could only ever say the
+            same sentence twice — once in this row's `role="status"` and once
+            in the panel's `ActivityCue`, which is also one. The two SENTENCES
+            did not move: the panel is handed them already translated, out of
+            `adminImport.wizard`, so no key was renamed. */}
 
         {phase === "scanning" && (
           <span className="text-sm text-fade">
@@ -934,6 +1088,32 @@ export function ImportWizard() {
         <PreflightChecklist onVerdict={handlePreflightVerdict} />
       )}
 
+      {/* Slice #26.04 — the Structure stage: the rules, the tick, the picker,
+          and the fix-and-re-check loop. One panel across all three of its
+          phases, so a check does not swap the screen out from under the reader
+          and back again. */}
+      {inStructure && (
+        <ImportStructureStage
+          verdict={structureVerdict}
+          folderName={rootFolderName}
+          busy={phase === "walking"}
+          busyLabel={
+            // Two sentences, and which one is true says where the walk is:
+            // the metadata pass reports a running count, and it only starts
+            // once the structure has already passed.
+            metaProgress.total > 0
+              ? t("readingMetadata", { done: metaProgress.done, total: metaProgress.total })
+              : t("walkingFolder")
+          }
+          acknowledged={structureAcknowledged}
+          onAcknowledgedChange={setStructureAcknowledged}
+          onChooseFolder={handlePickFolder}
+          onRecheck={() => void handleRecheck()}
+          rulesOpen={structureRulesOpen}
+          onRulesOpenChange={setStructureRulesOpen}
+        />
+      )}
+
       {/* The walk is done and nothing has been spent yet. */}
       {phase === "folder-report" && (
         <>
@@ -959,17 +1139,46 @@ export function ImportWizard() {
         </>
       )}
 
-      {/* Walk error */}
+      {/* Walk error.
+
+          `role="alert"` since #26.04, and it is the loop that earns it. A
+          failed RE-check leaves the previous round's violation list on screen
+          unchanged — correctly, because it is still the best information there
+          is — so the only thing that says "this list is not the answer to the
+          button you just pressed" is this sentence. Without a live region a
+          screen-reader user hears the panel re-announce the old count and has
+          no way to know the check never ran.
+
+          `alert` and not `status`, against this codebase's usual preference:
+          the precedent (`scan-confidence-warning.tsx`) reserves `alert` for a
+          red warning that something is wrong, and a walk that could not read
+          the folder is exactly that. */}
       {walkError && (
-        <div className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
+        <div
+          role="alert"
+          className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-950 dark:text-red-300"
+        >
           {walkError}
         </div>
       )}
 
-      {/* File table — hidden while showing a resumed session, and while the
-          folder report is up: the scan has not run, so every row would render
-          a blank status behind a panel asking whether to run it. */}
-      {entries.length > 0 && phase !== "resumed" && phase !== "folder-report" && (
+      {/* File table — listed by the phases that MAY show it rather than by the
+          ones that may not.
+
+          It was the other way round until #26.04, and the new phases are what
+          broke it: `structure-report` walks a folder, so `entries` is non-empty
+          there, and an exclusion list that had never heard of it would have put
+          a table of files with blank statuses under a list of structure
+          violations. The scan is the only thing that fills those cells, so the
+          phases where the table has anything to say are exactly the ones from
+          the classification pass onwards — and a positive list cannot be made
+          wrong by a phase nobody thought to add to it. */}
+      {entries.length > 0 &&
+        (phase === "scanning" ||
+          phase === "ready" ||
+          phase === "property" ||
+          phase === "tag-dialog" ||
+          phase === "importing") && (
         <div className="rounded-xl border border-card-rim bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
           <ScanTable
             entries={entries}
@@ -988,11 +1197,11 @@ export function ImportWizard() {
             setSavedSession(null);
             // Fixed in passing (#26.03): the fallback used to be `preflight`,
             // under a comment claiming the resume button is reachable from
-            // there. It is not — the button is gated on `idle` — and since
-            // #26.03 the first screen is `information`, so a fallback that
-            // skipped it would drop the user into the checklist with no
+            // there. It is not — the button is gated on the Structure screen —
+            // and since #26.03 the first screen is `information`, so a fallback
+            // that skipped it would drop the user into the checklist with no
             // explanation of what the import is about to ask of them.
-            setPhase(preflightPassed ? "idle" : "information");
+            setPhase(preflightPassed ? "structure" : "information");
           }}
         />
       )}

@@ -61,10 +61,14 @@
  *    counterexample may be sitting in the part nobody read. Each is suppressed
  *    on a partial listing.
  *
- * ⚠️ A truncated folder can therefore still pass Structure with those three
- * unreported. Refusing to proceed at all while the walk could not finish is a
- * stage decision and belongs to #26.04 — recorded here so the next reader does
- * not mistake the remaining silence for a clean bill of health.
+ * ⚠️ A truncated folder can therefore still pass `checkStructure` with those
+ * three unreported. **#26.04 answered the stage question that raised: it does
+ * NOT pass the STAGE.** `checkStructureStage` reports the truncations alongside
+ * the violations and refuses to call the folder clean while any of them stands
+ * — because a stage that BLOCKS turns silence into "your folder is fine", and a
+ * chosen folder holding fifty thousand loose files would otherwise be waved
+ * through on the strength of the part nobody read. The violation list is
+ * unchanged; what changed is that an empty one is no longer enough by itself.
  *
  * DEPTH IS THE SCOPE
  * ──────────────────
@@ -128,7 +132,7 @@
  * and a user recognising a folder does not need to audit it.
  */
 
-import type { DirectoryObservation } from "./folder-utils";
+import type { DirectoryObservation, WalkLimit } from "./folder-utils";
 import {
   MAX_PROPERTY_FOLDERS,
   firstPerPlace,
@@ -159,9 +163,10 @@ const MAX_EXAMPLES = 3;
 /**
  * Every violation the chosen folder carries, one per place, in fixing order.
  *
- * The list #26.04 shows. An empty array means the folder may be imported as
- * far as STRUCTURE is concerned — the file constraints are a separate stage
- * (#26.05) and say nothing here.
+ * The list #26.04 shows. An empty array means no rule was broken in what the
+ * walk actually read — which is NOT the same as "the folder may proceed": see
+ * `checkStructureStage`, which is what the stage asks. The file constraints are
+ * a separate stage (#26.05) and say nothing here either way.
  *
  * An empty `observations` array answers `[]` rather than throwing: a walk that
  * observed nothing is a walk that has not run, and a validator is not the
@@ -174,7 +179,133 @@ export function checkStructure(
 }
 
 /**
- * The same, before `firstPerPlace` collapses a place to its first rule.
+ * The limits, in the order the stage lists them. Worst first: `depth` and
+ * `budget` mean the walk REFUSED a directory outright, `breadth` means it read
+ * part of one — so a folder hitting all three is described by the refusal
+ * first, which is also the one with the shorter remedy.
+ *
+ * ⚠️ **`Record<WalkLimit, number>` and not an array literal, and that is the
+ * whole point of the shape.** A hand-written list would compile perfectly after
+ * a fourth guard was added to `folder-utils.ts`, and the fourth limit would then
+ * be silently absent from the grouping — a truncated walk with no rule
+ * violations would come back `clean: true` and be waved through with a green
+ * tick, which is precisely the failure `checkStructureStage` exists to prevent.
+ * A `Record` keyed by the union does not compile until the new member is given
+ * a rank here, and the copy test then demands a sentence for it.
+ */
+const TRUNCATION_RANK: Record<WalkLimit, number> = {
+  depth: 0,
+  budget: 1,
+  breadth: 2,
+};
+
+export const STRUCTURE_TRUNCATION_LIMITS: readonly WalkLimit[] = Object.freeze(
+  (Object.keys(TRUNCATION_RANK) as WalkLimit[]).sort(
+    (a, b) => TRUNCATION_RANK[a] - TRUNCATION_RANK[b],
+  ),
+);
+
+/**
+ * How many directories one truncation group NAMES. See `count` below for why
+ * this is a sample rather than the whole list.
+ */
+export const MAX_TRUNCATION_PATHS = 10;
+
+/** The directories one walk limit stopped at. */
+export type StructureTruncationGroup = {
+  limit: WalkLimit;
+  /**
+   * At most `MAX_TRUNCATION_PATHS` of them, sorted. **A sample, deliberately**,
+   * and the one place in this module where a list is not complete.
+   *
+   * ⚠️ `MAX_WALK_DIRECTORIES` and `MAX_WALK_ENTRIES` are GLOBAL budgets, not
+   * per-directory ones. Once either is spent, every directory the walk reaches
+   * afterwards emits its own `truncated` observation and returns — so a
+   * 20,000-directory archive produces ~15,000 of them, one per folder that was
+   * never opened. Listing all of those is not completeness, it is noise: none
+   * of them is the problem, they are all downstream of it, and the saved page
+   * would print hundreds of sheets of folder names the user cannot act on.
+   *
+   * `related` on a violation stays complete for the opposite reason — there,
+   * every path IS a thing to fix.
+   */
+  paths: string[];
+  /** How many directories this limit stopped in total. `paths` may be shorter. */
+  count: number;
+};
+
+/**
+ * Everything the Structure STAGE needs in order to decide.   (Slice #26.04)
+ *
+ * `checkStructure` answers "which rules are broken". That is not the same
+ * question as "may this folder go through", and the difference is the
+ * truncation case described at length in the module header: a walk that gave up
+ * suppresses three universal rules, so an empty violation list from a truncated
+ * walk means "nothing was found in the part that was read" and NOT "the folder
+ * is correct". A stage that blocks must not print the second when it means the
+ * first.
+ *
+ * So `clean` is the conjunction, and it is computed here rather than in the
+ * component for the usual reason: it is the sentence the whole stage turns on,
+ * and a component cannot be tested against the states that produce it.
+ *
+ * A truncation is deliberately NOT dressed up as a violation. It has no rule
+ * ID, no culprit to rename and no instruction of the "rename this to that"
+ * kind — the remedies are of a different sort entirely (remove a folder
+ * shortcut that points at its own parent; split an archive that is too large),
+ * and forcing it into `StructureViolation` would mean inventing an STR- number
+ * for something no rule in #26.01's catalogue states.
+ */
+export type StructureVerdict = {
+  violations: StructureViolation[];
+  /** Empty in every normal run — the limits sit far outside legitimate use. */
+  truncations: StructureTruncationGroup[];
+  /** May Structure hand over to the next stage? */
+  clean: boolean;
+};
+
+export function checkStructureStage(
+  observations: readonly DirectoryObservation[],
+): StructureVerdict {
+  const violations = checkStructure(observations);
+
+  const byLimit = new Map<WalkLimit, string[]>();
+  for (const obs of observations) {
+    if (obs.truncated === undefined) continue;
+    byLimit.set(obs.truncated, [...(byLimit.get(obs.truncated) ?? []), obs.path]);
+  }
+
+  // Built from what was OBSERVED and then ordered, never filtered against the
+  // known list. Belt to `TRUNCATION_RANK`'s braces: even if a limit somehow
+  // arrives that this module has never heard of, it reaches the verdict and
+  // keeps `clean` false, because dropping it is the one outcome that turns a
+  // half-read folder into a green tick.
+  const truncations = [...byLimit.entries()]
+    .sort(
+      ([a], [b]) =>
+        (TRUNCATION_RANK[a] ?? Number.MAX_SAFE_INTEGER) -
+          (TRUNCATION_RANK[b] ?? Number.MAX_SAFE_INTEGER) ||
+        (a < b ? -1 : a > b ? 1 : 0),
+    )
+    .map(([limit, paths]) => ({
+      limit,
+      // Sorted for the same reason every other list here is: the user reads
+      // this twice, once before a fix and once after, and a list that
+      // reshuffles in between is unusable.
+      paths: sorted(paths).slice(0, MAX_TRUNCATION_PATHS),
+      count: paths.length,
+    }));
+
+  return {
+    violations,
+    truncations,
+    clean: violations.length === 0 && truncations.length === 0,
+  };
+}
+
+/**
+ * `checkStructure`'s list, before `firstPerPlace` collapses a place to its
+ * first rule.
  *
  * Exported for tests and for nothing else. A caller that shows this to a user
  * hands them three instructions for one folder, which is the guessing game
@@ -660,6 +791,24 @@ function sorted(names: readonly string[]): string[] {
 /** A path from the chosen folder. `obs.path` is `""` at the root. */
 function pathUnder(obs: DirectoryObservation, name: string): string {
   return obs.path === "" ? name : `${obs.path}/${name}`;
+}
+
+/**
+ * A violation's path as the user will look for it in File Explorer.
+ * (Slice #26.04)
+ *
+ * `culprit` and `related` are paths from the CHOSEN folder, and `""` is the
+ * chosen folder itself. Neither form is what a user needs while standing in
+ * Explorer: an empty string names nothing at all, and a bare `48-50D/Contract`
+ * omits the one folder they navigated to.
+ *
+ * Here rather than in the component because both renderers need it — the screen
+ * and the offline page — and two spellings of "where is this" is how one of
+ * them starts naming a folder the other does not.
+ */
+export function displayPathOf(chosenFolderName: string, path: string): string {
+  if (path === "") return chosenFolderName;
+  return chosenFolderName === "" ? path : `${chosenFolderName}/${path}`;
 }
 
 /** At most three names, with an ellipsis when there were more. See the header. */
