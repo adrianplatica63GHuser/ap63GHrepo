@@ -73,7 +73,7 @@ drifting apart:
 | Verification order + dev-server warning | `ga40prj/CLAUDE.md` → Verification order |
 | Sandbox can run `tsc`, not `jest`/`next` | `C:\dev\.claude\rules\sandbox-and-toolchain.md` |
 | "Never dismiss an error as pre-existing" | `C:\dev\CLAUDE.md` → The working contract |
-| Conventional commits, PowerShell 7, chain with `&&`, Claude commits and Adrian pushes | `C:\dev\CLAUDE.md` → Delivering work / Autonomy |
+| Conventional commits, PowerShell 7, chain with `&&`, Claude commits and Adrian pushes | `C:\dev\CLAUDE.md` → Delivering work / Autonomy; mechanics in `C:\dev\.claude\rules\git-and-commits.md` |
 | "Wait for my approval before writing any code" | `C:\dev\CLAUDE.md` → The working contract |
 | "Existing UI code is the source of truth" | `ga40prj/CLAUDE.md` → Where the rest of the knowledge lives |
 | "Skip everything else / don't re-read" | Withdrawn — replaced by the autonomy section |

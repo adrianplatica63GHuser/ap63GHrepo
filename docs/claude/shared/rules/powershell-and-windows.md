@@ -33,7 +33,7 @@ re-running, and never assume a destructive line above the `&&` was skipped.
   regardless. The canonical trap is `git add x ; git commit -m "..."` — the `add` fails, the `commit`
   runs anyway and ships whatever was *already* staged, exit 0, looking fine. (Claude's own commits use
   a pathspec — `git commit -m "..." -- <files>` — which closes that hole independently; see
-  `C:\dev\CLAUDE.md` → Autonomy.) **Never use `;` to join two commands where the second depends on
+  `C:\dev\.claude\rules\git-and-commits.md`.) **Never use `;` to join two commands where the second depends on
   the first.**
 
     **An assignment cannot be the left side of `&&`.** `&&` has higher precedence than `=`, so

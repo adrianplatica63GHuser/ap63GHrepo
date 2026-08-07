@@ -109,10 +109,11 @@ C:\dev\
 ├── .claude/rules/
 │   ├── sandbox-and-toolchain.md       ← always-on (no paths:)
 │   ├── powershell-and-windows.md      ← always-on
+│   ├── git-and-commits.md             ← always-on
 │   └── shared-database.md             ← paths: **/src/db/**
 │
 ├── ga40prj/
-│   ├── CLAUDE.md                      ← Tier 1: this app's facts. ~100 lines.
+│   ├── CLAUDE.md                      ← Tier 1: this app's facts. ~150 lines.
 │   ├── .claude/
 │   │   ├── rules/                     ← Tier 2: 13 path-scoped rule files
 │   │   │   ├── database-and-migrations.md
@@ -138,11 +139,10 @@ C:\dev\
 └── <vercel-portal>/                   ← future: same
 ```
 
-**What this costs at launch:** Tier 0 (6.0 KB) + the two always-on rules (12.2 KB) + Tier 1
-(5.9 KB) = **24 KB instead of 185 KB — an 87% cut**, dropping to about 17 KB (91%) once the
-editorial deletions in §6 are made, most of which land in `sandbox-and-toolchain.md`.
-Everything else arrives exactly when it's relevant: the largest rule file,
-`import-wizard.md`, loads only when you open something under `src/app/admin/import/`.
+**What this costs at launch:** Tier 0 (17 KB) + the three always-on rules (37 KB) + Tier 1
+(9.9 KB) = **64 KB instead of 185 KB — a 65% cut**. Everything else arrives exactly when it's
+relevant: the largest rule file, `import-wizard.md`, loads only when you open something under
+`src/app/admin/import/`.
 
 ---
 
@@ -198,7 +198,8 @@ Your future apps are separate repos under `C:\dev\`, sharing a database. The tie
 handles this with no per-app duplication:
 
 **Shared, automatically.** Anything at `C:\dev\` — the working contract, the sandbox facts,
-the PowerShell rules, the shared-database contract — is inherited by every repo underneath
+the PowerShell rules, the git commit mechanics, the shared-database contract — is inherited
+by every repo underneath
 with zero configuration. Write it once; fix it once.
 
 **Per-app, isolated.** Each app gets its own `CLAUDE.md` and `.claude/`. Claude only ever
@@ -272,12 +273,12 @@ extract the rule *at the time*, into the rule file, and let git keep the story.
 
 | File | Bytes | Status |
 |---|---:|---|
-| `C:\dev\CLAUDE.md` | ~6.6 K | **New** — deployed copy of `docs/claude/shared/CLAUDE.md` |
-| `C:\dev\.claude\rules\` ×3 | ~14 K | Deployed copies of `docs/claude/shared/rules/` |
-| `ga40prj/CLAUDE.md` | ~6.2 K | **New** — 428 lines → ~110 |
+| `C:\dev\CLAUDE.md` | ~17 K | **New** — deployed copy of `docs/claude/shared/CLAUDE.md` |
+| `C:\dev\.claude\rules\` ×4 | ~40 K | Deployed copies of `docs/claude/shared/rules/` |
+| `ga40prj/CLAUDE.md` | ~9.9 K | **New** — 428 lines → ~150 |
 | `ga40prj/.claude/rules/` ×13 | ~64 K | 10 extracted verbatim, 3 harvested from the slice log |
 | `ga40prj/.claude/skills/` ×2 | ~21 K | Extracted verbatim, then deduplicated |
-| `ga40prj/docs/claude/shared/` | ~20 K | **Versioned source** for the four files above the repo |
+| `ga40prj/docs/claude/shared/` | ~55 K | **Versioned source** for the five files above the repo |
 | `ga40prj/scripts/Sync-SharedClaude.ps1` | ~4 K | **New** — deploys `docs/claude/shared/` to `C:\dev\` |
 | `ga40prj/docs/claude/slice-log-archive.md` | 99.4 K | The slice log, frozen and never loaded |
 | `ga40prj/docs/claude/SLICE-HEADER-TEMPLATE.md` | 3.9 K | **New** — ~600 words → 5 lines |

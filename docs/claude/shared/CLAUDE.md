@@ -137,110 +137,21 @@ handover. Anything larger than a few lines, or that changes a shipped contract, 
 **Git is Claude's, up to the push.** Claude runs the git commands that do not rewrite history —
 `status`, `diff`, `log`, `show`, `blame`, plus `add` and `commit` — itself. Do not hand Adrian a
 command block and wait, and do not ask whether to commit. A commit is reversible in one command,
-which is why it does not need permission; the things below are not. (`status` and `diff` are not
-quite read-only: both refresh and rewrite the index, so both take `.git/index.lock` — and over the
-bridge, which cannot unlink it afterwards, **every read leaves a lock that blocks the next `add` or
-`commit`**. Read with `git --no-optional-locks status` / `--no-optional-locks diff`, and let the
-commit be the first command that touches the index. See
-`C:\dev\.claude\rules\sandbox-and-toolchain.md`.)
-
-Two standing constraints. **Stage by explicit path — never `git add -A`, `.` or `-u`** (the working
-tree may hold things that are not this slice). And **commit by explicit path too**:
-`git add <any new files> && git commit -m "message" -- <every path in this slice>`. Reading
-`git status` first is not enough on its own. A plain `git commit` writes the *whole* index, including
-hunks Adrian staged in VS Code's Source Control panel before you looked — they land under your
-message, exit 0, looking fine. A pathspec commit takes only the paths you name and leaves the rest of
-the index exactly as it was. If `status` shows something staged that is not yours, leave it staged,
-commit your paths, and say so in the handover. What it cannot close is the second between your `add`
-and your `commit`: a pathspec commit takes the file's content *at commit time*, so if Adrian saves one
-of your slice's files in that gap you commit his newer edit.
-
-**A rename needs both halves named.** `git mv old new` stages an add *and* a delete; `git commit -- new`
-commits only the add and leaves the delete staged, so `HEAD` ends up carrying **both copies**.
-Name `old` and `new` both — done right, `git show --stat HEAD`
-reads `old => new`; done wrong it reads `new | N +`, an add where you expected a rename, and
-`git status --short` still shows `D old` — fixed with `git commit --amend --no-edit -- <old>`, subject
-to the carve-out. Run `git show --stat HEAD` **and `git status --short`**
-after: the first catches a commit that took too much, the second catches one that took too little —
-anything of *yours* still staged did not go in.
-
-If the file list is wrong, say so immediately. **Every amend below is allowed only under the carve-out
-named just after the go-ahead list:** run `git branch -r --contains HEAD` first, and if it prints anything the
-commit is already pushed — do not amend, fix it forward in the next commit and say so in the handover.
-Claude having made the commit this session does not mean it is unpushed; Adrian pushes, and he can
-push between the commit and the amend. To add a file that was left out:
-`git add <it, if it is new> && git commit --amend --no-edit -- <the missed path>` — with a pathspec, amend keeps
-the rest of the commit and leaves the index alone, so nothing of Adrian's is swept in. An untracked
-path fails with `error: pathspec '<file>' did not match any file(s) known to git`, which is why the
-`add` comes first.
-
-**Always `--no-edit` on an amend.** A bare `git commit --amend` re-opens the message in an editor,
-and the bridge has no terminal: with `GIT_EDITOR`/`EDITOR` unset git aborts with `error: Terminal is
-dumb, but EDITOR unset` (or `error: There was a problem with the editor 'editor'`), exit 1, **and the
-amend does not happen** — leaving the index in exactly the `D <file>` state check 1 warns about.
-`--no-edit` keeps the existing message and needs no terminal; a message fix uses `-m` and is safe for
-the same reason.
-
-**Amend cannot remove a file that should not have gone in.** Two checks before touching anything, both
-of which mean *stop* rather than *proceed carefully*:
-
-1. `git show --stat HEAD` — **if what you want to remove is everything the commit contains, stop
-   here.**
-   Removing it would leave an empty commit, which `git commit --amend` refuses (`would make it empty`,
-   exit 1) *after* you have already unstaged the file — leaving it staged for removal: `D <file>` if
-   the commit added it, `M <file>` if the commit only modified it, and in both cases **the path is
-   still on disk**. Put it back with `git restore --source=HEAD --staged -- <file>` before anything
-   else, and do not read that lone `D <file>` as check 2's rename carve-out — that one's `<old>` is
-   gone from disk. `git reset HEAD^` is on the go-ahead list. `--allow-empty` is not covered by
-   it — the amend carve-out below would in fact permit it — but it keeps a commit that contains
-   nothing, which "each commit compiles, is scoped to one thing" does not allow. Hand
-   `git reset --soft HEAD^` to Adrian instead — `--soft`, not git's suggested plain `reset`, so
-   anything he has staged stays staged — and carry on. On a root commit there is no `HEAD^`
-   (`fatal: ambiguous argument 'HEAD^'`, exit 128); hand `git update-ref -d HEAD` there instead, which
-   drops the commit and leaves the index and the files exactly as they are, on an unborn branch.
-2. `git diff --cached --name-only` — the fix ends in a `git commit --amend --no-edit` with **no
-   pathspec**, which writes the *whole* index, so anything Adrian has staged lands in your commit.
-   After a clean pathspec commit it prints nothing. **If anything prints, do not run the no-pathspec
-   amend**: leave the extra file in the commit and say so in the handover.
-   **One entry can be yours, and it is a different problem: a `D <old>` left staged by a `git mv`
-   whose commit named only `new`.** The tell is that `<old>` is gone from disk — `git status --short`
-   shows `D <old>` with no `?? <old>` beside it, and `git show --stat HEAD` reads `new | N +` where a
-   rename should be. (A `D <file>` whose path is still on disk as `?? <file>` is check 1's trap, not
-   this one; go back to check 1.) That is a commit that took too *little*, and it is fixed forward
-   with `git commit --amend --no-edit -- <old>`: the pathspec means **this check does not gate it** —
-   amend records the deletion of a path that is gone from disk, the commit becomes the rename it
-   should have been, and everything else staged is left exactly as it was. Afterwards
-   `git show --stat HEAD` reads `old => new` and `git status --short` shows nothing of *yours* still
-   staged. Fix that first, then re-run this check.
-
-Both clean: `git restore --source=HEAD~1 --staged -- <file>` then `git commit --amend --no-edit`. That drops the
-file from the commit and leaves Adrian's working copy untouched; it works whether the commit modified
-the file or added it new (for a new file the index entry goes away and the file stays on disk,
-untracked). **On the first commit of a repo there is no `HEAD~1`** — `git restore --source=HEAD~1` is
-`fatal: could not resolve HEAD~1`, exit 128. Use `git rm --cached -- <file>` there instead, then the
-same `git commit --amend --no-edit` — subject to check 1, which on a root commit is the same trap.
-If an amend has already failed and left `D <file>` staged, put it back with
-`git restore --source=HEAD --staged -- <file>` before doing anything else.
+which is why it does not need permission; the things below are not. **The mechanics are not
+optional and they are not obvious** — pathspec commits, `--no-optional-locks` reads, `--no-edit` on
+every amend, both halves of a rename — and they live in `C:\dev\.claude\rules\git-and-commits.md`.
+Read it before the first git command of a slice — the read flag is needed before the commit is.
 
 **Still requires an explicit go-ahead, every time — this list, as narrowed by the one carve-out named
 under it, is the whole list:**
 
 - Pushing. Adrian pushes; Claude commits.
 - **Any git command that changes the working tree, `HEAD` or a ref by something other than adding a
-  commit.** The obvious ones — `reset --hard`, `rebase`, `commit --amend`, `clean`, `branch -D`,
-  `checkout`/`switch` to another branch, any force-push — and four that read as harmless and are not:
-  **`stash`** (it takes Adrian's uncommitted work off disk, and his editor buffers won't know),
-  **`pull`** (with `pull.rebase` set it *is* a rebase, and a conflicted one needs a banned command to
-  escape), **`merge`** and **`cherry-pick`** (same), and **`gc`** (it prunes the reflog that makes "a
-  commit is reversible in one command" true). Writing `git config` is on this list too — `.git/config`
-  is not versioned, so a setting you change is invisible to Adrian and permanent.
-  `git restore --staged`, `git rm --cached` and `git mv` are exempt — the first two touch only the
-  index, and `git mv` moves a file Claude is authoring anyway, which is no more a working-tree change
-  than an `Edit`. **`revert` is
-  exempt only when it applies cleanly:** a conflicting `git revert` stops with `REVERT_HEAD` set and
-  conflict markers on disk, and the ways out are `git revert --abort`/`--skip`, both on this list. If
-  a revert conflicts and the resolution is obvious, resolve it and commit it — a pathspec commit *is*
-  allowed mid-revert, unlike mid-merge. Otherwise hand `git revert --abort` to Adrian and carry on.
+  commit** — `reset --hard`, `rebase`, `commit --amend`, `clean`, `branch -D`, `checkout`/`switch` to
+  another branch, any force-push, and four that read as harmless and are not: `stash`, `pull`,
+  `merge`/`cherry-pick`, `gc`. Writing `git config` too. `git restore --staged`, `git rm --cached`,
+  `git mv` and a cleanly-applying `revert` are exempt. Full enumeration, with the reason each one is
+  on the list, in `C:\dev\.claude\rules\git-and-commits.md`.
 - Deleting or overwriting anything of Adrian's outside the repo.
 - Any destructive database operation, and any command against a UAT or production box.
 
@@ -253,19 +164,16 @@ the case this carve-out is for.) A bad message on the commit you just wrote gets
 `git commit --amend -m "<new subject>"` — not with a second commit apologising for the first.
 
 **When Claude cannot do a git step, it names the single command that unblocks it and carries on** —
-it does not stop and wait. The one that actually happens is a stale `.git/index.lock` the device
-bridge cannot delete; see `C:\dev\.claude\rules\sandbox-and-toolchain.md`.
+it does not stop and wait. The one that actually happens is a stale lock the device bridge cannot
+delete; see `C:\dev\.claude\rules\sandbox-and-toolchain.md`.
 
 Everything else is Claude's call. Widening a slice by a file or two to make the work coherent
 is a decision to state, not a permission to request.
 
 ## Delivering work
 
-- **Conventional commits** — `feat:`, `fix:`, `chore:`, `ci:`, `docs(scope):`, `test:`. The subject is
-  the prefix and one line; **the body is where the per-slice detail goes** — what changed and why, the
-  decisions taken under "Claude decides", anything listed as "Fixed in passing". The working contract
-  says that detail lives in git history; Claude now writes that history, so the body is the only place
-  it exists.
+- **Conventional commits.** The prefix set, the subject rule, and what belongs in the body:
+  `C:\dev\.claude\rules\git-and-commits.md` → Commit messages.
 - **Claude runs the commit, and shows the exact command it ran** — no reconstruction, no "I would have
   run". Claude executes through the bridge in `bash`, so show it as it ran; git's own syntax is
   identical either way. The type check is the only other thing Claude runs itself — show that as it
@@ -286,16 +194,15 @@ is a decision to state, not a permission to request.
   `&&` stops on failure; `;` and a plain newline do not — the full rule, including why an `$env:`
   assignment can never be the left side of `&&`, is in
   `C:\dev\.claude\rules\powershell-and-windows.md`. The pathspec commit form closes the classic
-  `add`/`commit` hole independently: if the `add` fails, `git commit -m "..." -- <files>` aborts with
-  `error: pathspec '<file>' did not match any file(s) known to git`, exit 1, writing nothing and
-  leaving the index exactly as it was.
+  `add`/`commit` hole independently — `C:\dev\.claude\rules\git-and-commits.md`.
 - **Every command is complete and runnable**, including `$env:` assignments (a command that needs a
   secret reads it from `.env` at runtime — never a pasted password), seed runs and migrations. Never
   hand over a connection string or a value in isolation.
-- **Check `git status` before making changes, and read your own diff before committing.** Claude runs
+- **Check `git --no-optional-locks status` before making changes, and read your own diff before
+  committing.** Claude runs
   both itself. Trust `HEAD` as the source of truth — the bridge's file view can be stale or show
   phantom states, so treat a surprising `status` as a stale read, not as news: re-run it, and if it
-  still disagrees with `git diff HEAD`, say so in the handover and let the pathspec commit contain the
+  still disagrees with `git --no-optional-locks diff HEAD`, say so in the handover and let the pathspec commit contain the
   damage. Only when git itself is unreachable — a permission error, a mount that has gone away — does
   the step fall to Adrian, and then Claude names the single command that clears it. A stale
   `.git/index.lock` is not that case: `status`, `diff`, `log` and `show` still exit 0 under it (they

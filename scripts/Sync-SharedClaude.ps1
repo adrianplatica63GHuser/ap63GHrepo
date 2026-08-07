@@ -43,6 +43,7 @@ $Pairs = @(
     @{ Src = 'CLAUDE.md'                             ; Dst = 'CLAUDE.md' },
     @{ Src = 'rules\sandbox-and-toolchain.md'        ; Dst = '.claude\rules\sandbox-and-toolchain.md' },
     @{ Src = 'rules\powershell-and-windows.md'       ; Dst = '.claude\rules\powershell-and-windows.md' },
+    @{ Src = 'rules\git-and-commits.md'              ; Dst = '.claude\rules\git-and-commits.md' },
     @{ Src = 'rules\shared-database.md'              ; Dst = '.claude\rules\shared-database.md' }
 )
 
