@@ -21,6 +21,7 @@ import {
   cadastralKey,
   cadastralValue,
   hasCadastralIdentity,
+  looksCadastral,
 } from "@/lib/properties/cadastral-identity";
 import { advisoryLockKeys } from "@/lib/properties/import-property-plan";
 import { parsePropertyFolderName, propertyIdentityOf } from "@/lib/import/structure-rules";
@@ -122,6 +123,104 @@ describe("hasCadastralIdentity", () => {
     // A Property whose parcela is a space could never be matched by the folder
     // that made it, which is the whole reason this gate exists.
     expect(hasCadastralIdentity("47/2", "   ")).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// looksCadastral — the SHAPE test  (Slice #26.07.fix)
+// ---------------------------------------------------------------------------
+
+describe("looksCadastral", () => {
+  it("accepts what a cadastral segment actually looks like", () => {
+    for (const value of ["47", "47/2", "225/3/24", "50D", "24bis", "048", "1"]) {
+      expect({ value, ok: looksCadastral(value) }).toEqual({ value, ok: true });
+    }
+  });
+
+  it("accepts the `per` spelling, because it decodes before it looks", () => {
+    expect(looksCadastral("47per2")).toBe(true);
+    expect(looksCadastral("225PER3per24")).toBe(true);
+  });
+
+  it("⚠️ accepts `50 bis` and `50 D`, which are real data and were nearly refused", () => {
+    // The test measures `cadastralKey`, which removes whitespace, because that
+    // is what the MATCH measures. An earlier version measured `cadastralValue`,
+    // which only trims — so `48-50 bis` failed this gate, skipped the dedupe,
+    // and the unconditional create wrote a second row whose key was identical
+    // to the one already there. Both carry both columns, so the wizard reported
+    // that parcel `ambiguous` from then on: a gate that manufactured the
+    // duplicate it was added to prevent. `structure-rules.ts` is explicit that
+    // Romanian writes "parcela 50 bis" constantly.
+    expect(looksCadastral("50 bis")).toBe(true);
+    expect(looksCadastral("50 D")).toBe(true);
+    expect(looksCadastral(" 225 / 3 ")).toBe(true);
+  });
+
+  it("⚠️ refuses the junk that `parseFolderName` hands back from a legacy tag", () => {
+    // These are the whole reason this function exists, and every one of them
+    // passes `hasCadastralIdentity` — they are non-empty. An archive folder
+    // tagged `2019-2020 dosare` splits into tarla "2019" and parcela
+    // "2020 dosare"; `12-superficie teren` becomes parcela "su/ficie teren"
+    // once perToSlash has run. Treated as identities, the first coordinate
+    // document in such a folder would claim it and lock every other document
+    // there — genuinely different parcels — out of ever getting a Property.
+    for (const value of [
+      "2020 dosare",
+      "arhiva",
+      "su/ficie teren",
+      "50Ana",
+      "acte vechi",
+      "",
+      "   ",
+      "47//2",
+      "-50",
+      "47/",
+    ]) {
+      expect({ value, ok: looksCadastral(value) }).toEqual({ value, ok: false });
+    }
+  });
+
+  it("is stricter than hasCadastralIdentity, which is the point", () => {
+    // Both halves non-empty, so the wizard's gate is satisfied and the shape
+    // gate is not. The wizard can rely on the weaker one because #26.01's
+    // grammar already refused everything this refuses; the Process route reads
+    // legacy tags and cannot.
+    expect(hasCadastralIdentity("2024", "arhiva")).toBe(true);
+    expect(looksCadastral("arhiva")).toBe(false);
+  });
+
+  it("⚠️ KNOWN: a date or year-range tag still passes, and the route acts on it", () => {
+    // `parseFolderName` splits a legacy tag on its dashes, so `01-02-2019` is
+    // tarla "01", parcela "02", rest "2019" — and step 5 of the Process route
+    // actively PREFERS a tag carrying a rest segment. Every half is
+    // cadastral-shaped, so nothing here can refuse it.
+    //
+    // Recorded rather than fixed, and the honest cost is worth writing down.
+    // The FIRST coordinate document under `01-02-2019` creates a real Property
+    // with tarla "01" / parcela "02" — junk, but junk that now sits inside the
+    // identity space `findPropertiesByCadastralIdentity` searches. Every later
+    // coordinate document under `01-02-2019` (or `01-02-2020`, which collides:
+    // the identity ignores the rest segment) is then REFUSED, where before this
+    // slice it would silently have made another duplicate.
+    //
+    // That is the trade, not an oversight: a refusal names the property in the
+    // way, tells the user nothing was written, and points at the folder tag —
+    // recoverable by someone who can see it. A duplicate is discovered months
+    // later as an `ambiguous` import. The real fault is `parseFolderName`,
+    // which #23.00 already retired from the wizard for exactly this reason;
+    // this route is the legacy path that still uses it, and replacing it there
+    // is its own slice.
+    expect(looksCadastral("01")).toBe(true);
+    expect(looksCadastral("02")).toBe(true);
+  });
+
+  it("⚠️ still reads a pair of plain numbers as cadastral", () => {
+    // `2019-2020` is a year range to a human and a parcel to this grammar, and
+    // nothing in the string tells them apart. `structure-rules.ts` records the
+    // same ambiguity as accepted; agreeing with it is better than a second,
+    // quieter answer.
+    expect(looksCadastral("2019")).toBe(true);
+    expect(looksCadastral("2020")).toBe(true);
   });
 });
 

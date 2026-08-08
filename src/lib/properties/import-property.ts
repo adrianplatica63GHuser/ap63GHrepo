@@ -368,11 +368,25 @@ export async function ensurePropertyForFolder(
       // had the provenance migration applied, and a Property that exists
       // without a provenance row is a smaller loss than a create rolled back
       // because a lookup table is behind.
+      //
+      // ⚠️ **`.catch()`, added by Slice #26.07.fix, and the reason is the
+      // CALLER.** The Property is already committed when this runs, so a throw
+      // here cannot undo it — it can only stop `ensurePropertyForFolder` from
+      // returning the id of the row it just made. `POST /api/documents/[id]/
+      // process` compensates on `createdPropertyId`, which it sets from that
+      // return value, so a rejection at this point leaves a Property nothing
+      // will ever delete, holding a cadastral identity that now refuses every
+      // further attempt to process that document. The comment above already
+      // calls this write the smaller loss; swallowing makes that true instead
+      // of nearly true.
       const provenance = inferProvenance(
         decision.hadCorners ? "COORDINATE_FILE" : "MANUAL_FORM",
       );
       if (provenance) {
-        await setInitialProvenance(decision.principalObjectId, provenance, updatedBy);
+        await setInitialProvenance(decision.principalObjectId, provenance, updatedBy)
+          .catch(() => {
+            // Best-effort, as documented — never at the cost of the id above.
+          });
       }
       return {
         outcome: "created",

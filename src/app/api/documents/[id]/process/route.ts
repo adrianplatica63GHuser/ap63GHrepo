@@ -4,23 +4,39 @@
  * "Process" a document that contains a plain-text file of Stereo 70
  * cadastral coordinates:
  *
- *  1. Reads the document's first text/plain page file.
- *  2. Parses Stereo 70 coordinate lines (shared parser from stereo70-parse.ts).
- *  3. Creates a new Property from the parsed corners, then atomically CLAIMS
- *     the document as that Property's corner source by inserting into
- *     property_corner_source (UNIQUE on document_id) with ON CONFLICT DO
- *     NOTHING. Losing the race means another path already turned this
- *     document into a Property → 409, and the Property just created here is
- *     compensated away.
- *  4. (Slice #23.06.Import) Provenance is no longer the lock. It is still
- *     stamped — COORDINATE_FILE is accurate here, this route really did parse
- *     coordinates — but nothing reads it to decide already-processed.
+ * In the order the code runs them. Every number below is a `── n.` marker you
+ * can search for in the body — a header list that counts differently from the
+ * function is a map of somewhere else:
+ *
+ *  1-4. Auth, loads the document, finds its first text/plain page file, and
+ *     parses the Stereo 70 coordinate lines (shared parser from
+ *     stereo70-parse.ts). Fewer than 3 corners → 422.
  *  5. Looks at the document's entity tags for a "property folder" tag
- *     (any tag whose first character is a digit — e.g. "1-2-livada").
- *  6. Finds every Document and Person that shares that tag and associates
- *     them all with the newly-created Property.
- *  7. Calls patchEntityMetadata to stamp provenance = COORDINATE_FILE on the
- *     source document and write the version snapshot + audit trail.
+ *     (any tag whose first character is a digit — e.g. "1-2-livada") and
+ *     parses tarla + parcela out of the most specific one.
+ *  6. Cheap pre-check: does this document already have a corner-source row?
+ *     → 409 `conflict: "document"`.
+ *  6.5 (Slice #26.07.fix) If step 5's tarla and parcela form a cadastral
+ *     identity — both halves present AND of cadastral SHAPE — asks whether
+ *     that parcel already has a Property, under the same advisory lock the
+ *     import wizard uses, and REFUSES with 409 `conflict: "parcel"` if it
+ *     does. Only an unidentified parcel reaches the unconditional create.
+ *  7. Creates the Property from the parsed corners.
+ *  7.05 Atomically CLAIMS the document as that Property's corner source by
+ *     inserting into property_corner_source (UNIQUE on document_id) with
+ *     ON CONFLICT DO NOTHING. Losing the race means another path already
+ *     turned this document into a Property → 409, and the Property just
+ *     created here is compensated away.
+ *  7.10 Copies the document's folder tags onto the new Property.
+ *  7.15 (Slice #23.06.Import) Provenance of the new Property. Provenance is no
+ *     longer the lock — it is still stamped, COORDINATE_FILE is accurate here
+ *     because this route really did parse coordinates, but nothing reads it to
+ *     decide already-processed. Skipped on the #26.07.fix path, where the
+ *     create already stamped it.
+ *  7.20 Finds every Document and Person that shares the tag from step 5 and
+ *     associates them all with the new Property.
+ *  7.90 Calls patchEntityMetadata to stamp provenance on the SOURCE document
+ *     and write the version snapshot + audit trail.
  *
  * If anything after property creation fails, a compensating delete removes the
  * orphaned property row AND releases its corner-source claim, so the panel
@@ -31,10 +47,22 @@
  * Errors (4xx):
  *   401  — unauthenticated
  *   404  — document not found
- *   409  — document already produced a Property (an existing
- *            property_corner_source row, or a concurrent request that won the
- *            claim). The body carries { propertyId, propertyCode } so the
- *            caller can link straight to it.
+ *   409  — one of TWO conflicts, told apart by `conflict`:
+ *            "document" — this document already produced a Property (an
+ *              existing property_corner_source row, or a concurrent request
+ *              that won the claim). The user's intent is satisfied.
+ *            "parcel"   — this document's tarla and parcela already belong to
+ *              a Property that something ELSE created. Nothing was processed
+ *              and nothing was written; a second Property for one parcel is
+ *              what #26.07 exists to stop. (Slice #26.07.fix)
+ *            Both carry { propertyId, propertyCode } so the caller can link
+ *            straight to the Property that does exist — nullable on the
+ *            claim-loss 409, where the winner is re-read and may already have
+ *            been compensated away. The parcel conflict adds { matchCount },
+ *            because two Properties for one parcel is a different problem from
+ *            one and needs different advice, and { tarla, parcela }, because
+ *            with several matches a code names an arbitrary one of them and
+ *            the parcel itself is the only thing worth naming.
  *   422  — no text page found, or fewer than 3 corners parsed
  *   500  — unexpected error
  *
@@ -66,6 +94,8 @@ import {
   associateDocumentsToProperty,
   associatePersonsToProperty,
 } from "@/lib/properties/queries";
+import { ensurePropertyForFolder } from "@/lib/properties/import-property";
+import { hasCadastralIdentity, looksCadastral } from "@/lib/properties/cadastral-identity";
 import {
   claimCornerSource,
   getCornerSourceForDocument,
@@ -171,6 +201,26 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
     //   3. tag with tarlaSola only              (least specific; e.g. "47/2")
     //
     // Within each tier, prefer the longest tag (guards against unlikely ties).
+    //
+    // ⚠️ **This ranking was left alone by #26.07.fix, and the attempt is worth
+    // recording so it is not made again.** Preferring a cadastral-SHAPED pair
+    // over a longer tag inside a tier looks like an easy win: a document filed
+    // under both an archive folder and its parcel folder carries both tags, and
+    // "2019-2020 dosare vechi" (22 chars) beats "47per2-2" (8) on length alone.
+    // But shape does not separate the two kinds of folder, it only correlates
+    // with one of them. Turn the preference on and `2019-2020` (cadastral: two
+    // bare numbers) beats `12-superficie teren` (not cadastral: a parcela made
+    // of words) — so a real property folder loses to its archive ancestor, the
+    // archive's halves get written into the Property's identity columns, and
+    // `findEntitiesByTag` then associates the whole archive to it. That is a
+    // worse failure than the one it fixes, and it is not hypothetical: both
+    // names come from this codebase's own examples.
+    //
+    // So the tie stays on length, and an ambiguous tag simply fails
+    // `looksCadastral` at step 6.5 and falls through to the unconditional
+    // create — the behaviour that shipped before this slice. The fix for both
+    // shapes is the same one: retire `parseFolderName` from this route in
+    // favour of #26.01's grammar, which is its own slice.
     type Candidate = { tag: string; pf: ReturnType<typeof parseFolderName>; rank: number };
     const candidates: Candidate[] = [];
     for (const tag of tags) {
@@ -215,12 +265,73 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
       return NextResponse.json(
         {
           error:        "Document already processed",
+          conflict:     "document",
           propertyId:   existingLink.propertyId,
           propertyCode: existingLink.propertyCode,
         },
         { status: 409 },
       );
     }
+
+    // ── 6.5  Does this parcel already have a Property?  (Slice #26.07.fix) ──
+    //
+    // #26.07 made the import create one Property per cadastral identity under
+    // an advisory lock. This route could still create a second: its lock is
+    // `property_corner_source`, UNIQUE on DOCUMENT — so two coordinate
+    // documents for one parcel, or one for a parcel the wizard had already
+    // imported, each produced a duplicate. Nothing detected it, and the next
+    // import of that folder then reported `ambiguous` and told a business user
+    // to delete one of two Properties that both looked real.
+    //
+    // ⚠️ **It REFUSES rather than links, and that is deliberate — twice over.**
+    // The wizard has a screen, so it can ask "this exists, may I attach your
+    // documents to it?" and wait. This is one POST behind one button.
+    //
+    // An earlier draft of this slice ADOPTED the existing Property instead,
+    // to rescue two states a refusal walls off: a wizard-made Property with no
+    // corners (whose geometry is then reachable only by hand-typing), and an
+    // orphan left by a run of this route that died before claiming. Three
+    // adversarial rounds found five defects in it, and the last was measured
+    // rather than argued: adoption gives a Property a SECOND possible claimer,
+    // and `property_corner_source` has no unique index on `property_id` to stop
+    // two documents both claiming one polygon. An `INSERT … WHERE NOT EXISTS`
+    // does not close that — under READ COMMITTED the sub-select reads a
+    // snapshot taken before the concurrent insert commits, and a four-client
+    // run on Postgres 16 put two sources on 1706 of 2000 properties. The
+    // guarantee needs `CREATE UNIQUE INDEX … (property_id)`, which is a
+    // migration; adoption is worth having and belongs in the slice that adds
+    // it. Refusing is recoverable by a user who can see what is in their way.
+    // Silent double-sourcing is not.
+    //
+    // The identity comes from the folder TAG parsed in step 5 — the legacy
+    // `parseFolderName`, not #26.01's strict grammar, because these are legacy
+    // tags and the strict grammar rejects the shape they have
+    // ("47per2-225per3per24-2716 prisecaru", no `||`). Both paths reach the
+    // same key: `perToSlash` above, `cadastralKey` inside the lookup.
+    //
+    // ⚠️ **`looksCadastral` on BOTH halves, not merely non-empty.**
+    // `hasCadastralIdentity` is the wizard's question, right there because
+    // #26.01's grammar has already refused everything that is not a cadastral
+    // segment. Here `parseFolderName` splits on the first `-` and returns
+    // whatever follows: `2019-2020 dosare` is tarla "2019" / parcela
+    // "2020 dosare", and `12-superficie teren` becomes parcela
+    // "su/ficie teren" once `perToSlash` has run. Both are non-empty. Treating
+    // either as an identity would let the FIRST coordinate document in an
+    // archive folder claim it and lock every other document there — genuinely
+    // different parcels — out of ever producing a Property.
+    //
+    // A document whose tags yield no identity falls through to the
+    // unconditional create below, exactly as before. That is not a hole left
+    // open so much as one that cannot be closed here: `hasCadastralIdentity`
+    // refuses half an identity precisely because a Property carrying one could
+    // never be found again, so there is nothing to compare it to. Leading zeros
+    // are the same shape — `047/2` and `47/2` are two identities to
+    // `cadastralKey`, deliberately, because the database stores what it is
+    // given.
+    const parcelIdentified =
+      hasCadastralIdentity(tarlaSola, parcela) &&
+      looksCadastral(tarlaSola as string) &&
+      looksCadastral(parcela as string);
 
     // ── 7. Create property + associate + write audit trail ──────────────────
     //
@@ -251,20 +362,116 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
     let claimedCornerSource = false;
 
     try {
-      const created = await createProperty(
-        {
-          nickname:   propertyTag ?? textPage.fileName ?? null,
-          tarlaSola,
-          parcela,
-          corners,
-        },
-        updatedBy,
-      );
+      const nickname = propertyTag ?? textPage.fileName ?? null;
 
-      createdPropertyId = created.property.id;
-      const propertyId               = createdPropertyId;
-      const propertyCode             = created.property.code;
-      const propertyPrincipalObjId   = created.property.principalObjectId;
+      /**
+       * Two creates, and the difference is whether there is an identity to
+       * dedupe on.
+       *
+       * With one, `ensurePropertyForFolder` is reused verbatim: the advisory
+       * lock, the lookup and the insert in one transaction, which is the only
+       * arrangement in which "there is no Property for this parcel" is still
+       * true at the moment the row lands. Called WITHOUT a `confirm`, so it
+       * writes nothing when it finds a match — it reports it, which is exactly
+       * the 409 this route needs.
+       *
+       * Without one, the old unconditional `createProperty`. Nothing else is
+       * available: there is no key to lock on and nothing to look up.
+       */
+      let propertyId: string;
+      let propertyCode: string;
+      let propertyPrincipalObjId: string;
+      let provenanceAlreadyStamped = false;
+
+      if (parcelIdentified) {
+        const outcome = await ensurePropertyForFolder(
+          { tarlaSola: tarlaSola as string, parcela: parcela as string, nickname, corners },
+          updatedBy,
+        );
+
+        if (outcome.outcome !== "created") {
+          // `linked` and `stale` need a `confirm`, which the call above does
+          // not send — so anything but `needs-confirmation` here is a broken
+          // contract, not a state to render. Answering it with `matchCount: 0`
+          // produced a panel sentence naming no property at all.
+          if (outcome.outcome !== "needs-confirmation") {
+            throw new Error(
+              `ensurePropertyForFolder answered ${outcome.outcome} without a confirm`,
+            );
+          }
+
+          // ── Did THIS document produce a Property while we were deciding? ──
+          //
+          // Two Process requests for one document — two tabs, or a click, a
+          // reload and a second click — both pass step 6, and the second finds
+          // what the first created. That is not a parcel conflict: the document
+          // HAS been processed, by its own coordinates, and telling the user
+          // "nu s-a creat nimic" while asking them to correct the tag of the
+          // Property they just made is the confusion `parcelTaken` was added to
+          // prevent, inverted.
+          //
+          // ⚠️ **Best-effort, and the narrow case it does NOT catch is the
+          // interesting one.** The loser is woken by the advisory lock the
+          // moment the winner's transaction COMMITS — which is before the
+          // winner has stamped provenance and claimed the corner source. So a
+          // loser that was blocked on the lock reads a corner source that is
+          // not there yet and reports `parcel`, about a Property built from its
+          // own file. (A loser that arrives after the winner has claimed never
+          // gets this far — step 6 answers it.) Nothing is written either way
+          // and pressing again answers `document` from step 6, so the cost is one wrong
+          // sentence on a repeat click; closing it properly means claiming
+          // inside `ensurePropertyForFolder`'s transaction, which is the same
+          // migration adoption needs. The panel re-reads the corner source
+          // before it renders this refusal, which shuts the window in practice.
+          const ownLink = await getCornerSourceForDocument(documentId);
+          if (ownLink) {
+            return NextResponse.json(
+              {
+                error:        "Document already processed",
+                conflict:     "document",
+                propertyId:   ownLink.propertyId,
+                propertyCode: ownLink.propertyCode,
+              },
+              { status: 409 },
+            );
+          }
+
+          const [first] = outcome.matches;
+          return NextResponse.json(
+            {
+              error:        "Parcel already has a property",
+              conflict:     "parcel",
+              propertyId:   first?.id ?? null,
+              propertyCode: first?.code ?? null,
+              matchCount:   outcome.matches.length,
+              // The identity itself, because with several matches a code names
+              // an arbitrary one of them and the user is left with a refusal
+              // about a parcel the screen never names. These are the written
+              // forms — `perToSlash` has already run.
+              tarla:        tarlaSola,
+              parcela,
+            },
+            { status: 409 },
+          );
+        }
+
+        createdPropertyId      = outcome.property.id;
+        propertyId             = outcome.property.id;
+        propertyCode           = outcome.property.code;
+        propertyPrincipalObjId = outcome.property.principalObjectId;
+        // ensurePropertyForFolder stamps COORDINATE_FILE on a create carrying
+        // corners, and this route never creates one without them.
+        provenanceAlreadyStamped = true;
+      } else {
+        const created = await createProperty(
+          { nickname, tarlaSola, parcela, corners },
+          updatedBy,
+        );
+        createdPropertyId      = created.property.id;
+        propertyId             = created.property.id;
+        propertyCode           = created.property.code;
+        propertyPrincipalObjId = created.property.principalObjectId;
+      }
 
       // ── 7.05  Claim the document as this Property's corner source ────────
       //
@@ -299,6 +506,7 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
         return NextResponse.json(
           {
             error:        "Document already processed",
+            conflict:     "document",
             propertyId:   winner?.propertyId   ?? null,
             propertyCode: winner?.propertyCode ?? null,
           },
@@ -334,12 +542,31 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
       //
       // Best-effort inside setInitialProvenance: the property row is already
       // committed, so a metadata write failure must not roll the import back.
-      const propertyProvenance = inferProvenance("COORDINATE_FILE");
+      // Slice #26.07.fix: skipped on the identified path, where
+      // `ensurePropertyForFolder` has already written it. Two writes of one
+      // value is how they drift.
+      //
+      // ⚠️ **And `.catch()`, because "best-effort" was only true of the inside
+      // of that function.** It swallows a database without the provenance
+      // lookup table; it does not swallow a dropped connection. An unswallowed
+      // rejection here lands in the compensating catch below, which releases
+      // the claim and DELETES a Property built from real parsed corners — for
+      // a metadata badge. Step 7.90 already guards its own metadata write with
+      // exactly this reasoning, in those words; this call was the one that had
+      // the comment without the guard.
+      const propertyProvenance = provenanceAlreadyStamped
+        ? null
+        : inferProvenance("COORDINATE_FILE");
       if (propertyProvenance) {
-        await setInitialProvenance(propertyPrincipalObjId, propertyProvenance, updatedBy);
+        await setInitialProvenance(propertyPrincipalObjId, propertyProvenance, updatedBy)
+          .catch(() => {
+            // Best-effort — never at the cost of the Property.
+          });
       }
 
-      // Associate all Documents and Persons sharing the property folder tag
+      // ── 7.20  Associate everything that shares the folder tag ─────────────
+      //
+      // All Documents and Persons carrying the property folder tag from step 5.
       if (propertyTag) {
         const entities = await findEntitiesByTag(propertyTag);
 

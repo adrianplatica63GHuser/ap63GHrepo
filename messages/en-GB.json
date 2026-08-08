@@ -162,7 +162,7 @@
   },
   "property": {
     "listTitle": "Properties",
-    "searchPlaceholder": "search by code, nickname, cadastral no., or carte funciara",
+    "searchPlaceholder": "search by code, nickname, cadastral no., carte funciara, tarla or parcela",
     "chooseFields": "Choose fields",
     "chooseFieldsHint": "Select up to {max} optional columns",
     "addNew": "Add new Property",
@@ -1451,7 +1451,12 @@
       "errorTooFewCorners": "Fewer than 3 coordinate corners were parsed from the file.",
       "errorAlreadyProcessed": "This document has already been processed.",
       "errorGeneric": "Processing failed. Please try again.",
-      "errorSession": "Your session has expired. Please sign in again and retry."
+      "errorSession": "Your session has expired. Please sign in again and retry.",
+      "parcelTaken": "This document's tarla and parcela already belong to property {code}. The document was not processed and nothing was created.",
+      "parcelTakenSeveral": "{count, plural, one {One property has} other {# properties have}} tarla {tarla} and parcela {parcela}, the same as this document. The document was not processed and nothing was created.",
+      "parcelTakenWhatToDo": "Open the property and add this document to it from the Documents tab, or, if this is a different parcel, correct the document's folder tag under the METADATA tab.",
+      "parcelTakenSeveralWhatToDo": "Open the properties list and search by tarla or parcela. Check what is attached to each, move those links onto the one you are keeping, and only then delete the rest — deletion cannot be undone. Keep a single one, then add this document to it from the Documents tab.",
+      "openPropertiesList": "Open the properties list"
     },
     "aiExtracting": "Extracting…",
     "aiExtractSuccess": "Fields filled from scanned document",

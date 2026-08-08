@@ -128,3 +128,44 @@ export function hasCadastralIdentity(
 ): boolean {
   return cadastralKey(tarla ?? "") !== "" && cadastralKey(parcela ?? "") !== "";
 }
+
+/**
+ * Does this identifier have the SHAPE of a cadastral segment?
+ *                                                    (Slice #26.07.fix)
+ *
+ * Digits, optionally slash-joined, with at most one allowed letter suffix —
+ * `47`, `47/2`, `225/3/24`, `50D`, `24bis`. The decoded mirror of
+ * `SEGMENT_RE` + `SUFFIX_ALLOWED` in `structure-rules.ts`, which say the same
+ * thing about the `per` form a folder name is written in.
+ *
+ * ⚠️ **This exists because `hasCadastralIdentity` is not a shape test, and one
+ * caller needs one.** The import wizard's identifiers come out of #26.01's
+ * grammar, which has already refused everything that is not this — so there,
+ * "both halves are non-empty" is the whole question. The Process route's come
+ * from a legacy folder TAG read by the retired `parseFolderName`, which splits
+ * on the first `-` and hands back whatever it finds: `2019-2020 dosare` is
+ * tarla "2019", parcela "2020 dosare", and `12-superficie teren` is parcela
+ * "su/ficie teren" once `perToSlash` has been at it. Both are non-empty, and
+ * treating either as an identity would let the first coordinate document in an
+ * archive folder claim it and lock every other document in that folder out of
+ * ever producing a Property.
+ *
+ * A pair of plain numbers is still read as cadastral — `2019-2020` passes.
+ * That ambiguity is inherent and `structure-rules.ts` already records it as
+ * accepted: nothing in a name distinguishes a year range from a parcel.
+ */
+export function looksCadastral(raw: string): boolean {
+  // ⚠️ `cadastralKey`, NOT `cadastralValue`, and the difference is `50 bis`.
+  //
+  // Matching compares `cadastralKey`, which removes all whitespace;
+  // `cadastralValue` only trims the ends. Measured against the value, a legacy
+  // tag of `48-50 bis` fails this test, skips the dedupe entirely, and the
+  // unconditional create then writes a SECOND row whose key is `50bis` —
+  // identical to the one already there. Both carry both columns, so
+  // `findPropertiesByCadastralIdentity` sees them both from then on and the
+  // wizard reports that parcel `ambiguous` for ever. A gate that manufactures
+  // the duplicate it was added to prevent has to measure the same string the
+  // comparison does. `structure-rules.ts` is explicit that "parcela 50 bis" is
+  // real data, not an edge case.
+  return /^\d+(?:\/\d+)*(?:[a-z]|bis)?$/.test(cadastralKey(raw));
+}
