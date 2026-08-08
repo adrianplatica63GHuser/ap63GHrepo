@@ -1,19 +1,25 @@
 /**
  * src/lib/import/coordinate-file.ts
  *
- * Pure helpers for the import wizard's property step.
+ * Pure helpers for reading a coordinate file's NAME.
+ *
+ * ⚠️ Not the import wizard's property step any more (Slice #26.07.fix). That
+ * screen used to ask three questions this module answered — which `.txt` holds
+ * the corners, what to call the Property, what its tarla and parcela might be —
+ * and #26.07 removed all three: a folder's identity now comes from its name
+ * under #26.01's grammar, its corners from the one file STR-08 declares, and
+ * its nickname is the folder. What is left serves `preflight.ts`, the import
+ * loop's coordinate row action, and `structure-rules.ts`.
  *
  * WHAT LIVES HERE
  * ───────────────
  *
- *  1. `coordinateCandidates` / `isCoordinateFileName` — find the files in a
- *     walked folder that COULD be a Stereo 70 cadastral coordinate export, by
- *     extension alone. They do not read or parse anything; whether a candidate
- *     actually contains coordinates is decided by POSTing it to
- *     /api/properties/parse-text and counting the corners that come back. A
- *     `.txt` of contact details and a `.txt` of corners are indistinguishable
- *     by name, so the extension filter is only ever a shortlist for the user to
- *     choose from — never an answer.
+ *  1. `isCoordinateFileName` — could this file be a Stereo 70 cadastral
+ *     coordinate export, by extension alone? It reads and parses nothing;
+ *     whether a candidate actually contains coordinates is decided by POSTing
+ *     it to /api/properties/parse-text and counting the corners that come back.
+ *     A `.txt` of contact details and a `.txt` of corners are indistinguishable
+ *     by name, so the extension test is only ever a shortlist — never an answer.
  *
  *  2. `coordinateNameConfidence` — Slice #23.07.Import. How well a candidate's
  *     NAME matches the convention Adrian's coordinate files follow ("coord
@@ -28,38 +34,11 @@
  *     usable file breaks the convention — Adrian's "the creator of the file may
  *     have made a mistake" case, surfaced rather than silently accepted.
  *
- *  3. `nicknameFromFolderName` — turn the picked folder's name into a default
- *     Property nickname. It only tidies whitespace and underscores.
- *
- *     It deliberately does NOT expand abbreviations the way
- *     `folderNameToTitleHint` does (that is for document titles, where "CVC"
- *     really does mean "Contract de Vânzare-Cumpărare"), and it deliberately
- *     decodes nothing cadastral: a nickname is a label the user recognises in a
- *     list, so "47per2-225per3per24-2716 Prisecaru" stays verbatim.
- *
- *  4. `cadastralSuggestionFromFolderName` — Slice #23.07.Import. A SUGGESTED
- *     tarla/parcela pair for the create-new-Property branch, derived from the
- *     picked folder name via `parseFolderName`.
- *
- *     ⚠️ **This is not a reintroduction of the retired digit-prefix
- *     heuristic**, and CLAUDE.md's standing "do not reintroduce
- *     `parseFolderName` into the import wizard" rule is intact. That rule
- *     forbids a silent INFERENCE — Slice #23.00.Import retired the heuristic
- *     because the wizard wrote tarla "3" for "3 Calea Victoriei" and tarla
- *     "2024" / parcela "Arhiva" for "2024-Arhiva" without ever showing the user
- *     what it had decided. What this returns is a SUGGESTION: it lands in two
- *     visible, editable, explicitly-labelled inputs that the user confirms
- *     before anything is written, and an unparseable name yields two blank
- *     fields rather than a guess. A value the user can see and correct before
- *     it is saved is a different thing from a value the system decides alone.
- *
- *  5. `cornersEqual` / `CORNER_EPSILON_DEG` — corner-set identity, so a row can
+ *  3. `cornersEqual` / `CORNER_EPSILON_DEG` — corner-set identity, so a row can
  *     tell "these corners already came from this very file" from "these are
  *     different corners" without burning a property_version on a no-op.
  */
 
-import type { FSEntry, FSFileEntry } from "./folder-utils";
-import { parseFolderName, perToSlash } from "./folder-utils";
 import { extensionsOfKind, isFileKind } from "@/lib/files/file-kinds";
 import { foldRomanian } from "./id-card";
 
@@ -94,26 +73,6 @@ export const COORDINATE_FILE_EXTS: ReadonlySet<string> =
 /** True when `name`'s extension is one a coordinate export might use. */
 export function isCoordinateFileName(name: string): boolean {
   return isFileKind(name, "coordinate-candidate");
-}
-
-/**
- * Every walked entry that could be a coordinate file, in walk order.
- *
- * Page-group entries are never candidates: a page group is by definition a
- * folder of sequentially-numbered IMAGES (see `isPageGroup`), so it can never
- * hold a text export.
- *
- * Returns [] when the folder holds none — a perfectly normal case (a folder of
- * scanned deeds with no cadastral file), which the caller renders as "no
- * coordinate file found" rather than as an error.
- */
-export function coordinateCandidates(entries: FSEntry[]): FSFileEntry[] {
-  const out: FSFileEntry[] = [];
-  for (const entry of entries) {
-    if (entry.kind !== "file") continue;
-    if (isCoordinateFileName(entry.name)) out.push(entry);
-  }
-  return out;
 }
 
 // ---------------------------------------------------------------------------
@@ -169,97 +128,6 @@ export const COORDINATE_NAME_PREFIX = "coord";
 export function coordinateNameConfidence(name: string): CoordinateNameConfidence {
   if (!isCoordinateFileName(name)) return "none";
   return foldRomanian(name).startsWith(COORDINATE_NAME_PREFIX) ? "strong" : "weak";
-}
-
-// ---------------------------------------------------------------------------
-// Default nickname
-// ---------------------------------------------------------------------------
-
-/**
- * Default Property nickname for a picked folder.
- *
- * Underscores become spaces, runs of whitespace collapse to one, and the
- * result is trimmed. Everything else — digits, dashes, diacritics, casing —
- * is left exactly as the user named the folder, because the user is the one
- * who will recognise it in a list.
- *
- * The caller always shows the result in an editable field; this is a starting
- * point, not a decision.
- *
- *   "47per2-225per3per24-2716 Prisecaru" -> "47per2-225per3per24-2716 Prisecaru"
- *   "Teren_Bragadiru_2024"               -> "Teren Bragadiru 2024"
- *   "  3 Calea   Victoriei  "            -> "3 Calea Victoriei"
- *   ""                                   -> ""
- */
-export function nicknameFromFolderName(name: string): string {
-  return name.replace(/_/g, " ").replace(/\s+/g, " ").trim();
-}
-
-// ---------------------------------------------------------------------------
-// Cadastral suggestion  (Slice #23.07.Import)
-// ---------------------------------------------------------------------------
-
-/**
- * A suggested tarla/parcela pair. `""` means "nothing to suggest" — the caller
- * binds both straight to text inputs, and an empty input is the honest answer
- * to a folder name that carries no cadastral identifiers.
- */
-export type CadastralSuggestion = {
-  tarlaSola: string;
-  parcela: string;
-};
-
-/**
- * Suggest tarla and parcela from the picked folder's name.
- *
- * Composes two existing, already-tested helpers and adds no new guessing of
- * its own:
- *
- *   - `parseFolderName` decides whether the name looks cadastral at all (it
- *     must start with a digit) and splits it into `<tarla>-<parcela>-<rest>`;
- *   - `perToSlash` turns the filesystem-safe encoding into the form the DB
- *     stores, because "/" cannot appear in a folder name: "47per2" -> "47/2",
- *     "225per3per24" -> "225/3/24".
- *
- * The `perToSlash` step is what makes this path agree with the OTHER one.
- * `/api/documents/[id]/process` has always applied it before writing
- * `tarla_sola` / `parcela`, so a Property built there holds "47/2". Suggesting
- * the raw "47per2" here would have produced two Properties whose cadastral
- * identifiers differ only in encoding — the asymmetry this slice exists to
- * remove, reintroduced one layer down.
- *
- * The bar for suggesting anything is the FULL "<tarla>-<parcela>" shape, not
- * merely `parseFolderName`'s leading-digit test. With no separator the parser
- * hands back the entire name as the tarla — "3 Calea Victoriei" becomes tarla
- * "3 Calea Victoriei" — which is the #23.00 false positive wearing a different
- * hat, and there is no parcela to go with it either way. Requiring the
- * separator costs nothing real (Adrian's folders all carry it) and keeps a
- * street address out of a cadastral field.
- *
- * What it does NOT do is decide whether the two halves are plausible. A name
- * like "2024-Arhiva" still suggests tarla "2024" / parcela "Arhiva", and that
- * is the design working rather than failing: the values land in two labelled,
- * editable inputs, the user sees them before anything is written, and clearing
- * them is one keystroke. The failure mode #23.00 retired was not a wrong guess
- * — it was a wrong guess nobody was shown.
- *
- * A name that does not parse yields two empty strings, and a blank field is
- * the honest answer to a folder name that carries no cadastral identifiers.
- *
- *   "47per2-225per3per24-2716 Prisecaru" -> { tarlaSola: "47/2", parcela: "225/3/24" }
- *   "2024-Arhiva"                        -> { tarlaSola: "2024", parcela: "Arhiva" }
- *   "3 Calea Victoriei"                  -> { tarlaSola: "", parcela: "" }
- *   "Documente generale"                 -> { tarlaSola: "", parcela: "" }
- */
-export function cadastralSuggestionFromFolderName(name: string): CadastralSuggestion {
-  const parsed = parseFolderName(name);
-  // `parcela` is only set when parseFolderName found a "-" separator, so this
-  // one test enforces the whole "<tarla>-<parcela>" shape.
-  if (!parsed.isPropertyFolder || !parsed.parcela) return { tarlaSola: "", parcela: "" };
-  return {
-    tarlaSola: parsed.tarlaSola ? perToSlash(parsed.tarlaSola).trim() : "",
-    parcela: parsed.parcela ? perToSlash(parsed.parcela).trim() : "",
-  };
 }
 
 // ---------------------------------------------------------------------------

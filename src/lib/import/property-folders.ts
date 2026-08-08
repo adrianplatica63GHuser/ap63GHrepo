@@ -74,7 +74,7 @@ export type PropertyFolderGroup = {
    * The folder's coordinate file, or null.
    *
    * ⚠️ **`isDeclaredCoordinateFile`, which is STR-08's definition, and NOT
-   * `coordinateCandidates`' extension shortlist.** The two answer different
+   * `isCoordinateFileName`'s extension test.** The two answer different
    * questions and this is the one the rules enforce: STR-08 allows at most one
    * `coord….txt` per property folder, and the source document is explicit that
    * other `.txt` files "may be under the property subfolder and they will be
@@ -221,8 +221,7 @@ export function groupByPropertyFolder(
     group.entries.push(entry);
 
     // A page group is a folder of numbered images and can never be a text
-    // export, so only plain files are considered — the same reasoning
-    // `coordinateCandidates` gives for skipping them.
+    // export, so only plain files are considered.
     if (entry.kind === "file" && isDeclaredCoordinateFile(entry.name)) {
       group.declaredCoordinateFiles.push(entry);
       if (group.coordinateFile === null) group.coordinateFile = entry;
