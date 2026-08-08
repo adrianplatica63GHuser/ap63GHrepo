@@ -1744,7 +1744,7 @@
       "unsupported": "Your browser doesn't support local folder access. Please use Chrome, Edge, or another Chromium-based browser.",
       "walkingFolder": "Reading folder structure…",
       "scanningProgress": "Scanning: {done} / {total} files",
-      "scanComplete": "Scan complete — {total} files ({scannable} scannable)",
+      "scanComplete": "Scan complete — {total} files ({scannable} sent for classification, {preexisting} already in the system)",
       "noEntries": "The selected folder contains no files.",
       "importButton": "Import",
       "colPath": "Path",
@@ -1788,7 +1788,7 @@
       "importDialog": {
         "title": "Importing files…",
         "progressLabel": "{done} / {total}",
-        "doneTitle": "{count} documents imported.",
+        "doneTitle": "{count, plural, one {One document imported.} other {# documents imported.}}",
         "doneHint": "Each file has been saved as a document and tagged with its folders.",
         "closeButton": "Close",
         "viewLink": "Open →",
@@ -1916,7 +1916,11 @@
           "closeButton": "Close",
           "errorGeneric": "AI interpretation failed.",
           "errorSession": "Your session has expired. Please sign in again."
-        }
+        },
+        "preexistingLinked": "✓ already here — linked to the property",
+        "preexistingSkipped": "✓ already here — not imported again",
+        "donePreexisting": "{count, plural, one {One document was already in the system: it was not imported again.} other {# documents were already in the system: they were not imported again.}}",
+        "doneWithErrors": "{created} imported successfully · {errors} errors (check the Status column)"
       },
       "preflight": {
         "title": "Before you choose a folder",
@@ -1966,7 +1970,8 @@
         "ignoredFiles": "Files that will be skipped",
         "uploadSize": "To upload",
         "megabytes": "{mb} MB",
-        "recheckFolder": "Check this folder again"
+        "recheckFolder": "Check this folder again",
+        "alreadyInSystem": "Documents already in the system (linked, not created)"
       },
       "report": {
         "title": "What to check before you continue",
@@ -2001,7 +2006,9 @@
       },
       "readingMetadata": "Reading files… {done} of {total}",
       "walkFailed": "This folder could not be read. It may have been moved, renamed, or disconnected.",
-      "recheckFailed": "This folder could not be read again. It may have been moved or renamed while you were working on it — the list below is the previous result. Choose the folder again to start over."
+      "recheckFailed": "This folder could not be read again. It may have been moved or renamed while you were working on it — the list below is the previous result. Choose the folder again to start over.",
+      "statusPreexisting": "Already here",
+      "resumedPreexisting": "{count, plural, one {one was already in the system} other {# were already in the system}}"
     },
     "structure": {
       "rule": {
@@ -2152,7 +2159,7 @@
         }
       },
       "title": "File constraints",
-      "intro": "The folder's structure is correct. One check is left: every file in it has to be something the system can take in. Read what can and cannot be imported below, tick that you have taken note, then press “Check the files” — the same folder is checked, you do not have to choose it again.",
+      "intro": "The folder's structure is correct. A check follows: every file in it has to be something the system can take in. Read what can and cannot be imported below, tick that you have taken note, then press “Check the files” — the same folder is checked, you do not have to choose it again.",
       "rulesTitle": "What the files have to satisfy",
       "showRules": "Show the constraints again",
       "hideRules": "Hide the constraints",
@@ -2204,7 +2211,7 @@
         }
       },
       "title": "Copies inside the chosen folder",
-      "intro": "The structure and the files are in order. One check is left, on the same folder: nothing must sit in it twice, or it reaches the archive twice as well. Only the files in the chosen folder are compared, against each other — what is already in the system is not checked here.",
+      "intro": "The structure and the files are in order. A check follows, on the same folder: nothing must sit in it twice, or it reaches the archive twice as well. Only the files in the chosen folder are compared, against each other — what is already in the system is checked at the next step.",
       "rulesTitle": "What counts as a copy",
       "showRules": "Show the explanations again",
       "hideRules": "Hide the explanations",
@@ -2239,6 +2246,90 @@
         "notCheckedYet": "The folder has not been checked yet — this page holds the explanations only.",
         "warningsTitle": "Files that could not be measured",
         "rulesOnlyName": "copies"
+      }
+    },
+    "preexisting": {
+      "note": {
+        "PEX-01": {
+          "explanation": "A document in the chosen folder counts as already in the system when the archive holds a document with the same name and exactly the same files — the same file names and the same sizes. For a page folder every page is compared, not just the first. If you have since renamed the document in the system, or renumbered the pages in the folder, the system no longer recognises it and will import it again.",
+          "example": "Right: “Contract vanzare.pdf” in the property's folder is 240 KB, and the archive already holds a document “Contract vanzare.pdf” with a single 240 KB file — it is the same document and is not imported a second time. Otherwise: if the archived document has a different name or a different size, it is treated as a new document."
+        },
+        "PEX-02": {
+          "explanation": "A document that is already in the system is not imported a second time. If the file sits in a property folder in this import, the archived document is linked to that property instead, so you will find the property with the document attached and no second copy anywhere. If the file belongs to no property in this import, nothing happens to it at all.",
+          "example": "A land-registry extract imported last year now sits in the folder for property 48-50: no second document is created, and the extract that already exists is linked to property 48-50."
+        },
+        "PEX-03": {
+          "explanation": "Identity cards are imported again even when they appear to be here already. The reason is deliberate: the one in the system may have expired, and two copies of the same person are less serious than a person missing altogether. The system recognises an identity card by its file name, so make a note of these files and check the people after the import has finished.",
+          "example": "“Buletin Ionescu.jpg” appears to be here already, but it is imported anyway. After the import, open the person Ionescu and see whether the details are the ones on the new card."
+        },
+        "PEX-04": {
+          "explanation": "Coordinate files are imported again even when they appear to be here already. A property's corners have to show which document they were read from, and that document is created by this import — had the file been skipped, the new property would be left with corners and no source.",
+          "example": "“coord 48-50.txt” has been imported once before, but it is imported again because the corners of property 48-50 in this import are made from it."
+        }
+      },
+      "section": {
+        "link": {
+          "title": "{count, plural, one {One existing document will be linked, not imported again} other {# existing documents will be linked, not imported again}}",
+          "intro": "These files are already in the archive, so they are not imported again. The documents that already exist will be linked to the properties in this import — the ones named beside each row — so you will find them on the property's page."
+        },
+        "skip": {
+          "title": "{count, plural, one {One document will not be imported again} other {# documents will not be imported again}}",
+          "intro": "These files are already in the archive and belong to no property in this import, so nothing happens to them. The archived documents are left untouched."
+        },
+        "id-card": {
+          "title": "{count, plural, one {One identity card will be imported anyway} other {# identity cards will be imported anyway}}",
+          "intro": "These files appear to be in the system already, but they are imported anyway because they look like identity cards: the one in the system may have expired, and it is better to have the person twice than not at all. Make a note of the files below and check the people once the import has finished."
+        },
+        "coordinates": {
+          "title": "{count, plural, one {One coordinate file will be imported anyway} other {# coordinate files will be imported anyway}}",
+          "intro": "These files appear to be in the system already, but they are imported anyway: the corners of the properties in this import are made from them, and those corners have to show which document they were read from."
+        }
+      },
+      "title": "Documents already in the system",
+      "intro": "The structure, the files and the copies are all in order. This is the first check that looks in the archive rather than in the chosen folder: the system tells you which of the documents are already in it and what will happen to each of them, before any of them is sent for classification. There is nothing to put right here: read what is about to happen, tick below, and carry on.",
+      "notesTitle": "What “already in the system” means",
+      "showNotes": "Show the explanations again",
+      "hideNotes": "Hide the explanations",
+      "acknowledge": "I have read what happens to documents that are already in the system",
+      "acknowledgeHint": "Tick this after reading the explanations, and again after each check. The tick is asked for every time.",
+      "check": "See what is already in the system",
+      "recheck": "Check again",
+      "continue": "Continue",
+      "continueWithout": "Continue without this check",
+      "chooseAnotherFolder": "Choose another folder…",
+      "reportTitle": "{count, plural, one {One document is already in the system} other {# documents are already in the system}}",
+      "nothingToFix": "There is nothing for you to put right in File Explorer about any of the above. Do read the list, though: if an archived document is not the one you had in mind, rename the file in your folder and the system will import it as a new document. When you are happy, tick below and press “Continue”.",
+      "morePaths": "{count, number} more…",
+      "row": {
+        "existing": "→ {code}",
+        "folders": "{count, plural, one {(property {folders})} other {(properties {folders})}}",
+        "line": "{path} → {code}"
+      },
+      "unchecked": {
+        "title": "Files that could not be checked",
+        "intro": "{count, plural, one {One file could not be measured, so we cannot say whether it is already in the system. It will be imported, and if it was already there you will end up with two copies — check it after the import. Usually the file is open in another program.} other {# files could not be measured, so we cannot say whether they are already in the system. They will be imported, and any that were already there will reach the archive a second time — check them after the import. Usually the files are open in other programs.}}"
+      },
+      "failed": {
+        "title": "We could not find out what is already in the system",
+        "intro": "The system got no answer from the archive, so we cannot say which of these documents are already there. Nothing is wrong with the chosen folder. Try again in a moment.",
+        "continueHint": "If you carry on without this check, every file will be imported, and anything that was already in the system will reach the archive a second time."
+      },
+      "save": {
+        "button": "Save the report as a page",
+        "hint": "Downloads a page you can open or print. It holds the explanations and every document found, with nothing left out.",
+        "filePrefix": "already-in-system",
+        "documentTitle": "Documents already in the system",
+        "generatedAt": "Generated",
+        "folderLabel": "Folder",
+        "rulesTitle": "What “already in the system” means",
+        "violationsTitle": "What the import will do",
+        "allClear": "No document in the chosen folder is already in the system.",
+        "blocked": "No document in the chosen folder was found in the system, but some files could not be checked — see below.",
+        "notCheckedYet": "The archive has not been asked yet — this page holds the explanations only.",
+        "warningsTitle": "Files that could not be checked",
+        "rulesOnlyName": "already-in-system",
+        "lookupFailedTitle": "The check could not be made",
+        "lookupFailed": "No answer came back from the archive, so this page does not hold the list of documents that are already in the system — see the explanations and the note below."
       }
     },
     "workflow": {

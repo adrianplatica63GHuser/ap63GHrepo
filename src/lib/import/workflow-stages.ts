@@ -83,7 +83,24 @@ export const WORKFLOW_STAGES: readonly WorkflowStage[] = [
   // this row has been a one-line change rather than a refactor, which is the
   // promise this file made once and has now kept three times.
   { id: "duplication", line: "preparation" },
-  { id: "preexisting", line: "classification", plannedIn: "26.08" },
+  // #26.08 built its screen, so `plannedIn` is gone here too - the fourth time
+  // this row has been a one-line change rather than a refactor. What is left
+  // planned is nothing: every stage in this list now has a screen, so
+  // `plannedIn` has no current holder. It stays in the type because 26.09 and
+  // 26.10 re-home three screens and build a fourth, and a property with no
+  // holder is cheaper to keep than to re-derive.
+  //
+  // ⚠️ **`line: "classification"` although nothing has been classified when the
+  // user stands here, and it is the source document's own grouping rather than
+  // an oversight.** That document names a second line, "Classification and
+  // Import", and makes Pre-existing its FIRST phase - the stage is where the
+  // archive enters the story, which is what the second line is about. The cost
+  // is that the pill sits under a heading naming work that has not started;
+  // the alternative - moving it to "Preparation & verification" - would put a
+  // stage that reads the database on the line the source document reserves for
+  // looking only inside the chosen folder. The panel's own intro says which
+  // it is, in the first sentence, for exactly this reason.
+  { id: "preexisting", line: "classification" },
   { id: "evaluation", line: "classification" },
   { id: "scanning", line: "classification" },
   { id: "import", line: "classification" },
@@ -115,8 +132,13 @@ export function stagesOnLine(line: WorkflowLineId): WorkflowStage[] {
  *  duplication      → what counts as a duplicate, and the tick; nothing checked (#26.06)
  *  duplication-checking → the re-walk, the metadata pass and the match, running
  *  duplication-report   → the folder holds copies; the same fix-and-re-check loop
- *  folder-report    → structure, constraints and duplication clean, nothing
- *                     spent; the forecast awaits Continuă
+ *  preexisting      → what "already in the system" means, and the tick; nothing
+ *                     asked of the archive yet (#26.08)
+ *  preexisting-checking → the re-walk, the metadata pass and the archive lookup
+ *  preexisting-report   → the archive already holds some of these; what will
+ *                     happen to each. Read and acknowledged, never fixed
+ *  folder-report    → structure, constraints, duplication and pre-existing all
+ *                     settled, nothing spent; the forecast awaits Continuă
  *  scanning         → concurrent Haiku AI scans running in background
  *  ready            → scan complete; scan-table rendered + "Import" CTA visible
  *  property         → PropertyStepDialog is open (resolve the run's Property)
@@ -142,6 +164,9 @@ export const IMPORT_PHASES = [
   "duplication",
   "duplication-checking",
   "duplication-report",
+  "preexisting",
+  "preexisting-checking",
+  "preexisting-report",
   "folder-report",
   "scanning",
   "ready",
@@ -185,22 +210,37 @@ export type ImportPhase = (typeof IMPORT_PHASES)[number];
  *    re-walk finds the structure or the constraints broken again the phase
  *    moves back to `structure-report` or `constraints-report` and the indicator
  *    moves back with it, which is the truth rather than a glitch.
+ *  - `preexisting` / `preexisting-checking` / `preexisting-report` all report
+ *    **preexisting**, by the argument the three stages before it made: the
+ *    explanations, the check and what it found are three views of one stage.
+ *    `preexisting-checking` covers the walk, the metadata pass, the duplication
+ *    match AND the archive lookup, and it still reports Pre-existing — the user
+ *    pressed this stage's button, and if the re-walk finds an earlier stage
+ *    broken again the phase moves back and the indicator moves back with it.
+ *
+ *    ⚠️ **This is the first stage that does not BLOCK, and the indicator treats
+ *    it exactly like the ones that do.** Nothing here is a violation and there
+ *    is nothing for the user to put right — the archive holding a document is
+ *    an ordinary state of affairs. What the green tick means for this stage is
+ *    "the user was told what will happen and said so", which is a real thing
+ *    that either happened or did not, and is therefore honest to draw.
  *  - `folder-report` reports **evaluation**: today's post-folder-selection
- *    screen is what 26.09 renames Evaluation, and since #26.06 it is reachable
- *    only through a clean structure check, a clean constraints check AND a
- *    clean duplication check — all three of which one press of Verifică din nou
- *    from that screen re-runs, in that order.
+ *    screen is what 26.09 renames Evaluation, and since #26.08 it is reachable
+ *    only through a clean structure check, a clean constraints check, a clean
+ *    duplication check AND a settled pre-existing report — all four of which
+ *    one press of Verifică din nou from that screen re-runs, in that order.
  *  - `ready` reports **import**, not scanning: the scan is finished and the one
  *    thing left on that screen is the Import button.
  *  - `resumed` reports **result** — the resumed view is a previous run's
  *    result, and it is the only way to reach that screen today.
  *
- * ⚠️ **The paragraph that stood here for three slices is gone, and that is what
- * it was for.** #26.04 wrote "Constraints cannot begin, because 26.05 builds
- * it"; #26.05 rewrote it for Duplication with one stage's name changed and
- * nothing else. Both are now done, `plannedIn` is off both rows, and the amber
- * runs from Information to Evaluation without a gap. What is left on the second
- * line is Pre-existing, and 26.08 deletes its `plannedIn` the same way.
+ * ⚠️ **And now there is no planned stage left at all.** #26.04 wrote
+ * "Constraints cannot begin, because 26.05 builds it"; #26.05 rewrote it for
+ * Duplication; #26.06 rewrote it for Pre-existing. #26.08 has deleted the last
+ * `plannedIn` in the file, so the amber runs from Information to Result without
+ * a gap and every green tick in the indicator now stands for a screen somebody
+ * actually looked at. The mechanism stays — see the note on the catalogue row —
+ * because 26.09 and 26.10 are still to come.
  *
  * KNOWN GAP, left for 26.10. Closing `BulkImportDialog` returns the wizard to
  * `ready`, so after a finished run the indicator still reads "Import — în
@@ -223,6 +263,9 @@ const STAGE_BY_PHASE: Record<ImportPhase, WorkflowStageId> = {
   duplication: "duplication",
   "duplication-checking": "duplication",
   "duplication-report": "duplication",
+  preexisting: "preexisting",
+  "preexisting-checking": "preexisting",
+  "preexisting-report": "preexisting",
   "folder-report": "evaluation",
   scanning: "scanning",
   ready: "import",
@@ -285,33 +328,35 @@ export function stageStatuses(
 }
 
 // ---------------------------------------------------------------------------
-// Where a walk ends up   (Slice #26.06)
+// Where a walk ends up   (Slice #26.06, extended by #26.08)
 // ---------------------------------------------------------------------------
 
 /**
  * How far a walk goes, and therefore what it costs.
  *
  * `structure` stops at the structure verdict and spends nothing beyond the
- * walk. The other two run the ~760-call metadata pass, and `duplication` runs
- * the match on top of it.
+ * walk. The other three run the ~760-call metadata pass; `duplication` runs the
+ * match on top of it, and `preexisting` adds one request to the archive.
  */
-export type WalkTarget = "structure" | "constraints" | "duplication";
+export type WalkTarget = "structure" | "constraints" | "duplication" | "preexisting";
 
 /**
  * The fork at the END of a walk that got as far as the file checks - which
- * screen the user lands on, and whether the duplication match ran.
+ * screen the user lands on, and which of the two optional checks actually ran.
  *
  * ⚠️ **HERE RATHER THAN IN THE WIZARD, and that is the whole reason it
- * exists.** This is the entire new decision #26.06 makes, it has eight
- * meaningful input combinations, and inside `runWalk` it sat behind an
- * `await`ed 760-call I/O pass with no way to reach it from a test. A wrong cell
- * in this table is not a crash: it is a user standing on a screen that has
- * nothing on it, or a stage going green that nobody ran. `import-wizard.tsx`
- * calls this and holds no copy of the rule.
+ * exists.** This is the entire new decision #26.06 made and #26.08 extended, it
+ * has more meaningful input combinations than anyone can hold in their head,
+ * and inside `runWalk` it sits behind an `await`ed 760-call I/O pass and a
+ * network request with no way to reach it from a test. A wrong cell in this
+ * table is not a crash: it is a user standing on a screen that has nothing on
+ * it, or a stage going green that nobody ran. `import-wizard.tsx` calls this
+ * and holds no copy of the rule.
  *
- * `duplicationRan` is returned rather than left to the caller to re-derive,
- * because the wizard publishes it as state beside `entries` and `metadata` and
- * a second expression of the same condition is a second thing to keep in step.
+ * `duplicationRan` and `preexistingRan` are returned rather than left to the
+ * caller to re-derive, because the wizard publishes both as state beside
+ * `entries` and `metadata` and a second expression of the same condition is a
+ * second thing to keep in step.
  *
  * The cases, in the order the flow meets them:
  *
@@ -322,8 +367,21 @@ export type WalkTarget = "structure" | "constraints" | "duplication";
  *    explanations, nothing checked. This is the stopping point the stage exists
  *    for: the user reads what a duplicate is before being shown files to
  *    remove.
- *  - **Constraints clean, target was `duplication`** -> `folder-report` or
- *    `duplication-report`, on the match.
+ *  - **Duplication broke** -> `duplication-report`, whatever the target beyond
+ *    it. Same argument one stage down: a run that came to ask the archive and
+ *    found copies inside the folder has not asked the archive.
+ *  - **Duplication clean, target was `duplication`** -> `preexisting`, the
+ *    explanations, nothing asked. The same stopping point one stage later, and
+ *    it is the ONE case #26.08 changed: this used to be `folder-report`.
+ *  - **Duplication clean, target was `preexisting`** -> `folder-report` when
+ *    the archive holds none of them and nothing was left unchecked, and
+ *    `preexisting-report` otherwise.
+ *
+ * ⚠️ **A CLEAN PRE-EXISTING CHECK SHOWS NO SCREEN, exactly as a clean
+ * duplication check shows none.** There is nothing to tell the user, and a
+ * screen reading "the archive holds none of these, press Continuă" is a click
+ * spent on a non-event. The stage still goes green behind them, which is true:
+ * the comparison ran.
  *
  * `target: "structure"` never reaches here - `runWalk` returns at the structure
  * verdict - which is why it is not a case below. It is accepted as an input
@@ -333,23 +391,50 @@ export type WalkTarget = "structure" | "constraints" | "duplication";
  * `constraints`, the earliest stage such a run has certainly not finished. An
  * earlier draft answered `duplication`, which would have carried a future
  * caller two stages forward past a screen it never showed them - the same
- * false-green failure `plannedIn` exists to prevent, one layer up.
+ * false-green failure `plannedIn` existed to prevent, one layer up.
  */
 export function phaseAfterFileChecks(input: {
   target: WalkTarget;
   constraintsClean: boolean;
   /** `null` when the match did not run - see `duplicationRan` in the result. */
   duplicationClean: boolean | null;
-}): { phase: ImportPhase; duplicationRan: boolean } {
+  /**
+   * `null` when the archive was never asked - see `preexistingRan`.
+   *
+   * ⚠️ **`false` means "there is something to say", NOT "something is wrong".**
+   * It covers both a document the archive already holds and a file that could
+   * not be fingerprinted, because both are things the report has to show and
+   * neither is a violation. See `PreexistingVerdict.clean`.
+   */
+  preexistingClean?: boolean | null;
+}): { phase: ImportPhase; duplicationRan: boolean; preexistingRan: boolean } {
   const { target, constraintsClean, duplicationClean } = input;
+  const preexistingClean = input.preexistingClean ?? null;
 
-  if (target === "structure") return { phase: "constraints", duplicationRan: false };
-  if (!constraintsClean) return { phase: "constraints-report", duplicationRan: false };
-  if (target !== "duplication" || duplicationClean === null) {
-    return { phase: "duplication", duplicationRan: false };
+  const stop = (phase: ImportPhase) => ({
+    phase,
+    duplicationRan: false,
+    preexistingRan: false,
+  });
+
+  if (target === "structure") return stop("constraints");
+  if (!constraintsClean) return stop("constraints-report");
+  if (target === "constraints" || duplicationClean === null) return stop("duplication");
+  if (!duplicationClean) {
+    return { phase: "duplication-report", duplicationRan: true, preexistingRan: false };
+  }
+  if (target === "duplication" || preexistingClean === null) {
+    // ⚠️ `preexistingClean === null` under `target: "preexisting"` means the
+    // lookup did not produce an answer at all, which is not the same as a
+    // FAILED lookup: a failure is an answer the stage renders and the user acts
+    // on, and it arrives as `false`. This branch is the under-claim for a
+    // caller that asked for the whole walk and handed back nothing, and it
+    // lands them on the explanations with the check still to press.
+    return { phase: "preexisting", duplicationRan: true, preexistingRan: false };
   }
   return {
-    phase: duplicationClean ? "folder-report" : "duplication-report",
+    phase: preexistingClean ? "folder-report" : "preexisting-report",
     duplicationRan: true,
+    preexistingRan: true,
   };
 }

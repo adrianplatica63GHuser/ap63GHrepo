@@ -28,6 +28,19 @@ export type ScanStatus =
   | "scanning"
   | "done"
   | "skip"
+  /**
+   * Not sent for classification because the archive already holds it.
+   * (Slice #26.08)
+   *
+   * ⚠️ **A status of its own, and NOT `skip`, although the mechanical outcome
+   * is identical — no Haiku call is made for the row.** `skip` is worded, in
+   * both locales, as a claim about the FILE: "Nescanabil" / "Not scannable". A
+   * 240 KB `Contract vanzare.pdf` is perfectly scannable and was not scanned
+   * for an entirely different reason, and a business user reading "Nescanabil"
+   * against it learns something untrue about their own document. Two reasons,
+   * two words.
+   */
+  | "preexisting"
   | "error";
 
 export type ScanResult = {
@@ -217,7 +230,8 @@ type RowProps = {
 };
 
 function ScanRow({ entry, result, t, stripPrefix }: RowProps) {
-  const isSkipped = result?.status === "skip";
+  // Both mean "nothing was sent for this row", which is what the dimming says.
+  const isSkipped = result?.status === "skip" || result?.status === "preexisting";
 
   // Strip the group folder prefix from the displayed path.
   const displayPath =
@@ -352,6 +366,12 @@ function StatusBadge({
       return (
         <span className="inline-flex items-center rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-400 dark:bg-zinc-800 dark:text-zinc-500">
           {t("statusSkipped")}
+        </span>
+      );
+    case "preexisting":
+      return (
+        <span className="inline-flex items-center rounded-full bg-sky-100 px-2 py-0.5 text-xs font-medium text-sky-700 dark:bg-sky-900/40 dark:text-sky-300">
+          {t("statusPreexisting")}
         </span>
       );
     case "error":

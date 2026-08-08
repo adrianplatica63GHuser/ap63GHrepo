@@ -48,6 +48,23 @@
  * constraint has been looked at — so a structure check now STOPS at the
  * verdict, and the pass runs when the Constraints button is pressed.
  *
+ * THE PRE-EXISTING STAGE  (Slice #26.08)
+ * ──────────────────────────────────────
+ * A clean duplication check no longer lands on the Evaluation screen either. It
+ * lands on `ImportPreexistingStage`, the first stage that asks a question of
+ * the ARCHIVE rather than of the folder — and the first that does not block:
+ * nothing there is a fault, so the user reads what the import will do with the
+ * documents the system already holds, ticks, and carries on.
+ *
+ * ⚠️ **Its answer is STATE, not a `useMemo`, and that is the one structural
+ * difference between it and the three stages before it.** Those three derive
+ * their verdict at render time from `entries`, `observations` and `metadata`,
+ * because their checks are pure functions over data already in hand. This one
+ * needs a round trip to the server, so the verdict cannot be re-derived during
+ * a render — it is computed once in `runWalk` and published in the same commit
+ * as everything else that walk produced. `preexisting === null` is therefore
+ * "not asked in this run", exactly as `metadata === null` is "not measured".
+ *
  * ⚠️ **A constraints check re-walks the folder first, and may fail back to
  * Structure.** That is not defensive: the user has been in File Explorer since
  * the last check, and a file deleted to fix a constraint can leave a page
@@ -86,7 +103,7 @@ import { PreflightChecklist } from "./preflight-checklist";
 import { FolderForecast } from "./folder-forecast";
 import { forecastImport } from "@/lib/import/preflight";
 import { ReportSections } from "./report-sections";
-import { checkFolder, type FileMeta } from "@/lib/import/checks";
+import { checkFolder, uploadKeysOf, type FileMeta } from "@/lib/import/checks";
 import { readFileMetadata } from "@/lib/import/metadata-pass";
 import type { DirectoryObservation } from "@/lib/import/folder-utils";
 import { buttonClass } from "@/lib/ui/button-styles";
@@ -95,10 +112,19 @@ import { ImportInformation } from "./import-information";
 import { ImportStructureStage } from "./import-structure-stage";
 import { ImportConstraintsStage } from "./import-constraints-stage";
 import { ImportDuplicationStage } from "./import-duplication-stage";
+import { ImportPreexistingStage } from "./import-preexisting-stage";
 import { CancelImportDialog } from "./cancel-import-dialog";
 import { checkStructureStage } from "@/lib/import/structure-check";
 import { checkConstraintsStage } from "@/lib/import/constraint-check";
 import { checkDuplicationStage } from "@/lib/import/duplication-check";
+import {
+  checkPreexistingStage,
+  preexistingCandidatesOf,
+  preexistingDecisionsByPath,
+  type PreexistingResult,
+  type PreexistingRow,
+} from "@/lib/import/preexisting-check";
+import { lookupPreexisting } from "@/lib/import/preexisting-client";
 import {
   phaseAfterFileChecks,
   stageForPhase,
@@ -435,6 +461,36 @@ export function ImportWizard() {
   const [duplicationChecked, setDuplicationChecked] = useState(false);
 
   /**
+   * Slice #26.08 - the Pre-existing stage's three, and the first of them is
+   * unlike anything the other stages hold.
+   *
+   * `preexisting` is the ANSWER, not a flag. The three stages before it derive
+   * their verdicts at render time from data already in hand; this one cannot,
+   * because the answer comes from the server. So it is stored, and stored as a
+   * discriminated result rather than as a list:
+   *
+   *   - `null`            - the archive has not been asked in this run.
+   *   - `{ ok: false }`   - it was asked and did not answer.
+   *   - `{ ok: true, … }` - it answered.
+   *
+   * ⚠️ **The middle case is the whole reason this is not a `PreexistingVerdict
+   * | null`.** "The archive holds none of these" and "we could not reach the
+   * archive" produce the same import and must never produce the same screen -
+   * see `PreexistingResult`. Collapsing them would print a green all-clear over
+   * a request that never arrived, in the one stage whose entire output is a
+   * claim about something the user cannot go and look at.
+   *
+   * It is published in the same commit as `entries` and `metadata` at every
+   * exit of `runWalk` - the discipline #26.05's second adversarial round
+   * established - and cleared at every exit that did not compute it, because a
+   * verdict from the previous walk beside this walk's entries is a report about
+   * files the user has since changed.
+   */
+  const [preexisting, setPreexisting] = useState<PreexistingResult | null>(null);
+  const [preexistingAcknowledged, setPreexistingAcknowledged] = useState(false);
+  const [preexistingNotesOpen, setPreexistingNotesOpen] = useState(false);
+
+  /**
    * Slice #26.03 — the Cancel's two pieces of memory.
    *
    * `documentsCreated` is the only fact the cancel dialog needs that nothing
@@ -570,12 +626,15 @@ export function ImportWizard() {
       setStructureAcknowledged(false);
       setConstraintsAcknowledged(false);
       setDuplicationAcknowledged(false);
+      setPreexistingAcknowledged(false);
       setPhase(
         target === "structure"
           ? "walking"
           : target === "constraints"
             ? "constraints-checking"
-            : "duplication-checking",
+            : target === "duplication"
+              ? "duplication-checking"
+              : "preexisting-checking",
       );
 
       // A permission grant can lapse between two walks. `requestPermission`
@@ -685,6 +744,11 @@ export function ImportWizard() {
         setObservations(seen);
         setMetadata(null);
         setDuplicationChecked(false);
+        // #26.08 - and the archive's answer goes with them. It was about the
+        // files this walk has just found to be wrongly arranged, so keeping it
+        // would put a report about a folder that no longer exists beside the
+        // list of what is wrong with the one that does.
+        setPreexisting(null);
         setPhase("structure-report");
         return;
       }
@@ -700,6 +764,7 @@ export function ImportWizard() {
         setObservations(seen);
         setMetadata(null);
         setDuplicationChecked(false);
+        setPreexisting(null);
         setPhase("constraints");
         return;
       }
@@ -760,34 +825,91 @@ export function ImportWizard() {
        * decision and there is no way to reach it from a test while it sits
        * behind an awaited 760-call I/O pass. See `phaseAfterFileChecks`.
        */
+      // #26.08 - `preexisting` runs the match too, because it is a later stage
+      // and everything before it has to be clean for its own question to mean
+      // anything. A run that came to ask the archive and found copies inside
+      // the folder has not asked the archive, and `phaseAfterFileChecks` sends
+      // it back to the Duplication list.
       const duplication =
-        constraints.clean && target === "duplication"
+        constraints.clean && (target === "duplication" || target === "preexisting")
           ? checkDuplicationStage({ entries: walked, metadata: constraintMetadata })
           : null;
+
+      /**
+       * The only question in the whole walk that leaves this machine.
+       * (Slice #26.08)
+       *
+       * Asked exactly when this press asked for it AND every check before it
+       * came back clean - the same shape as the duplication match above it, one
+       * stage later.
+       *
+       * ⚠️ **This is the await the guard below has been waiting for.** The note
+       * that used to stand there said the cancel check was above the writes
+       * although nothing awaited between the metadata pass and them, "the day
+       * anything does". This is that day: a run the user renounces while the
+       * archive is being asked must not come back and write its entries, its
+       * sizes and its report into a wizard `handleCancelConfirmed` has already
+       * reset. The `token.cancelled` test immediately after the lookup is the
+       * one that matters, and the one below the fork is now genuinely a second
+       * line rather than the only line.
+       *
+       * `lookupPreexisting` never throws and never returns a partial answer, so
+       * there is no try/catch here and no half-answered state to render - see
+       * its module header.
+       */
+      let preexistingResult: PreexistingResult | null = null;
+      if (target === "preexisting" && duplication !== null && duplication.clean) {
+        const { candidates, unchecked } = preexistingCandidatesOf({
+          entries: walked,
+          metadata: constraintMetadata,
+        });
+        const lookup = await lookupPreexisting(candidates);
+        if (token.cancelled) return;
+        preexistingResult = lookup.ok
+          ? {
+              ok: true,
+              verdict: checkPreexistingStage({
+                entries: walked,
+                matches: new Map(lookup.matches.map((m) => [m.path, m])),
+                unchecked,
+                // The walk's own listing of the chosen folder - the same source
+                // STR-02 counts and the property step reads. Without it a
+                // property subfolder holding no importable file is invisible
+                // here, and a `common` document in a run of nothing but such
+                // folders would be promised a link to a property nobody built.
+                topLevelDirNames: seen.find((o) => o.depth === 0)?.dirNames ?? [],
+              }),
+            }
+          : { ok: false };
+      }
+
       const next = phaseAfterFileChecks({
         target,
         constraintsClean: constraints.clean,
         duplicationClean: duplication === null ? null : duplication.clean,
+        // ⚠️ A FAILED lookup is `false`, not `null`. `null` means the archive
+        // was never asked and lands the user back on the explanations with the
+        // button still to press; `false` means there is something to show them,
+        // and a failure is very much something to show them.
+        preexistingClean:
+          preexistingResult === null
+            ? null
+            : preexistingResult.ok && preexistingResult.verdict.clean,
       });
 
-      // ⚠️ The cancel check goes ABOVE the writes, not between them and
-      // `setPhase`. Fixed in passing (#26.06): it has sat below them since
-      // #26.05, which contradicts this function's own rule two screens up -
-      // "every `set*` after an await is guarded on it" - and was harmless only
-      // because nothing awaits between the metadata pass and here. The day
-      // anything does, a renounced run writes its entries, its sizes and a
-      // `duplicationChecked: true` into a wizard `handleCancelConfirmed` has
-      // already reset, and the old guard would have stopped the phase while
-      // letting the verdict through.
+      // The second cancel check. See the note inside the lookup above for why
+      // it is no longer the only one.
       if (token.cancelled) return;
 
       // ONE commit, so no render can pair this walk with the previous check's
-      // sizes, and none can pair this walk's entries with the previous check's
-      // duplication verdict. See the note above `checkStructureStage`.
+      // sizes, none can pair this walk's entries with the previous check's
+      // duplication verdict, and none can pair either with the previous walk's
+      // report from the archive. See the note above `checkStructureStage`.
       setEntries(walked);
       setObservations(seen);
       setMetadata(constraintMetadata);
       setDuplicationChecked(next.duplicationRan);
+      setPreexisting(preexistingResult);
       setPhase(next.phase);
     },
     [t, beginRun],
@@ -831,6 +953,7 @@ export function ImportWizard() {
     setObservations([]);
     setMetadata(null);
     setDuplicationChecked(false);
+    setPreexisting(null);
     // Always `"structure"`: a folder that has just been picked has passed
     // nothing, whichever screen the picker was pressed from.
     await runWalk(handle, "pick", "structure", "structure");
@@ -849,7 +972,23 @@ export function ImportWizard() {
    * and `scanEntry` is called from nowhere else, which together are what make
    * "no classification without a press" a property rather than an intention.
    */
-  const startScan = useCallback(async (walked: FSEntry[]) => {
+  const startScan = useCallback(async (
+    walked: FSEntry[],
+    /**
+     * Entries the Pre-existing stage decided will not be imported.
+     * (Slice #26.08)
+     *
+     * An ARGUMENT rather than a read of state, for the reason `runWalk`'s
+     * `target` is one: this decides whether ~80 billed Haiku calls happen, and
+     * a decision that expensive belongs to the button that was pressed.
+     *
+     * They still get a row and a status — `skip`, the same one a non-scannable
+     * file gets — because `ScanTable` renders a missing result as `pending`,
+     * and a table of files stuck on "în așteptare" for ever is worse than the
+     * spend it saved.
+     */
+    skip: ReadonlyMap<string, unknown> = new Map(),
+  ) => {
     // The scan belongs to the walk that produced `walked`, so it takes that
     // run's token rather than minting a new one: cancelling the run has to
     // stop both, and a fresh token here would hand the scan a flag the Cancel
@@ -857,14 +996,21 @@ export function ImportWizard() {
     const token = runTokenRef.current;
 
     setPhase("scanning");
-    const scannable = walked.filter(entryScannable);
+    const willScan = (e: FSEntry) => entryScannable(e) && !skip.has(e.path);
+    const scannable = walked.filter(willScan);
     setScanProgress({ done: 0, total: scannable.length });
 
-    // Mark all scannable as pending, non-scannable as skip
+    // Three states, not two. `skip` says the file is not something the system
+    // can classify; `preexisting` says it is, and was not sent because the
+    // archive already holds it. Wearing one badge, the second row would tell a
+    // business user their perfectly ordinary PDF is unreadable — see
+    // `ScanStatus`.
     setScanResults(() => {
       const m = new Map<string, ScanResult>();
       for (const e of walked) {
-        m.set(e.path, { status: entryScannable(e) ? "pending" : "skip" });
+        m.set(e.path, {
+          status: skip.has(e.path) ? "preexisting" : entryScannable(e) ? "pending" : "skip",
+        });
       }
       return m;
     });
@@ -981,7 +1127,11 @@ export function ImportWizard() {
               ? "duplication"
               : phase === "duplication-report"
                 ? "duplication-report"
-                : "structure-report";
+                : phase === "preexisting"
+                  ? "preexisting"
+                  : phase === "preexisting-report"
+                    ? "preexisting-report"
+                    : "structure-report";
 
     // How far it goes. Pressed from either Structure screen it re-checks the
     // structure and stops; pressed from anywhere later it goes the whole way,
@@ -994,12 +1144,23 @@ export function ImportWizard() {
             phase === "constraints-checking" ||
             phase === "constraints-report"
           ? "constraints"
-          : // The Duplication screens and the Evaluation screen. Both are
-            // reachable only through a clean structure check AND a clean
-            // constraints check, so the press means "check the lot" - and from
-            // Evaluation that is the only honest reading, because the user has
-            // been in File Explorer and may have put a copy back.
-            "duplication";
+          : phase === "duplication" ||
+              phase === "duplication-checking" ||
+              phase === "duplication-report"
+            ? "duplication"
+            : // The Pre-existing screens and the Evaluation screen. Both are
+              // reachable only through three clean checks, so the press means
+              // "check the lot, then ask the archive" - and from Evaluation
+              // that is the only honest reading, because the user has been in
+              // File Explorer and may have put a copy back.
+              //
+              // ⚠️ #26.08 moved Evaluation from `duplication` to here, and it
+              // is not a widening for its own sake. The pre-existing report is
+              // a promise about the files that are about to be imported; a
+              // re-check from Evaluation that left it untouched would carry the
+              // previous folder's promise into the new one, and the import loop
+              // reads that promise rather than the screen.
+              "preexisting";
 
     if (!_dirHandle) {
       // Fixed in passing (#26.03): this used to return in silence, so a button
@@ -1083,6 +1244,12 @@ export function ImportWizard() {
     setDuplicationAcknowledged(false);
     setDuplicationRulesOpen(false);
     setDuplicationChecked(false);
+    // Slice #26.08 - and Pre-existing, including the archive's answer. A cancel
+    // drops the entries, so leaving the report standing would describe an
+    // import of files this wizard no longer holds.
+    setPreexisting(null);
+    setPreexistingAcknowledged(false);
+    setPreexistingNotesOpen(false);
   }, [endRun]);
 
   // Mint a token for this mount, and retire whatever token is live on unmount —
@@ -1115,7 +1282,6 @@ export function ImportWizard() {
 
   const folders = collectFolders(entries, rootFolderName);
 
-  const scannableCount = entries.filter(entryScannable).length;
   const scanDone = phase === "ready";
 
   /**
@@ -1158,10 +1324,125 @@ export function ImportWizard() {
     phase === "duplication-checking" ||
     phase === "duplication-report";
 
+  /**
+   * The three phases the Pre-existing panel owns.   (Slice #26.08)
+   *
+   * Same shape as the other three, one stage later: the explanations, the check
+   * running, and what the archive came back with. `preexisting-checking` covers
+   * the re-walk, the metadata pass, the duplication match AND the request to
+   * the archive, so a check that turns out to break an earlier stage leaves
+   * this set — the three transitions between stages that go backwards, and all
+   * of them are meant to.
+   */
+  const inPreexisting =
+    phase === "preexisting" ||
+    phase === "preexisting-checking" ||
+    phase === "preexisting-report";
+
+  /**
+   * What the import loop must do INSTEAD of importing, keyed by entry path.
+   * (Slice #26.08)
+   *
+   * Derived from the stored answer rather than stored beside it, so there is
+   * exactly one copy of the decision and the screen and the loop cannot come to
+   * disagree about it — the same argument every other derived value on this
+   * component carries, with one extra edge: this one is a promise the user has
+   * already read.
+   *
+   * ⚠️ **EMPTY when the lookup failed, and that is the honest reading.** A run
+   * that could not ask the archive imports everything, which is exactly what an
+   * empty map produces — and the screen the user pressed Continuă on said so in
+   * as many words.
+   */
+  const preexistingDecisions = useMemo(
+    () =>
+      preexisting !== null && preexisting.ok
+        ? preexistingDecisionsByPath(preexisting.verdict)
+        : new Map<string, PreexistingRow>(),
+    [preexisting],
+  );
+
+  /**
+   * The two numbers the Evaluation screen needs about them.   (Slice #26.08)
+   *
+   * `total` is how many of the folder's entries the archive already holds;
+   * `linked` is the subset that will actually attach one to a Property. They
+   * differ for a `floating` document and for a `common` one in a run that
+   * resolved no property — rows where nothing whatever happens — and the
+   * difference is what stops Continuă offering a journey that ends in "0
+   * documente importate". See `FolderForecast`'s prop.
+   */
+  const alreadyInSystem = useMemo(() => {
+    let linked = 0;
+    for (const row of preexistingDecisions.values()) if (row.outcome === "link") linked++;
+    return { total: preexistingDecisions.size, linked };
+  }, [preexistingDecisions]);
+
+  /**
+   * The entries this run will actually create a Document for.   (Slice #26.08)
+   *
+   * ⚠️ **EVERY NUMBER THE EVALUATION SCREEN QUOTES COMES FROM HERE, and the
+   * slice's own adversarial review is why.** Without it the screen one click
+   * after the Pre-existing report read "Documente care vor fi create: 40"
+   * directly under a promise that three of them would not be — the one stage
+   * whose whole job is to say what the import will do, contradicted by the next
+   * screen, in the numbers the user is being asked to approve.
+   *
+   * The same list gates the classification pass, which is the expensive half:
+   * `startScan` sent every entry, so a folder of 300 images with 80 already in
+   * the archive spent 80 billed Haiku calls on documents the loop then refused
+   * to create. Nothing read those answers.
+   *
+   * A `link` or `skip` row is not imported; a `reimport` row is, and is absent
+   * from the map for exactly that reason.
+   */
+  const entriesToImport = useMemo(
+    () =>
+      preexistingDecisions.size === 0
+        ? entries
+        : entries.filter((entry) => !preexistingDecisions.has(entry.path)),
+    [entries, preexistingDecisions],
+  );
+
   // Derived at render time rather than copied into state when the walk ends:
   // one copy cannot drift from the list the user is looking at. Cheap — it is
   // a single pass over names, no file contents and no I/O.
-  const forecast = useMemo(() => forecastImport(entries), [entries]);
+  const forecast = useMemo(() => forecastImport(entriesToImport), [entriesToImport]);
+
+  /**
+   * How many entries the classification pass actually sent.
+   *
+   * Over `entriesToImport`, not `entries`, and moved down here from beside
+   * `folders` for that reason: it feeds the toolbar's "scan complete" line, and
+   * after #26.08 the number of scannable FILES in the folder is no longer the
+   * number of files that were scanned. Saying otherwise on the screen that
+   * reports the finished scan is a small lie in the same direction as the two
+   * this slice's review found in the forecast.
+   */
+  const scannableCount = entriesToImport.filter(entryScannable).length;
+
+  /**
+   * Bytes the run will upload — over the entries it will actually import.
+   *
+   * `report.uploadBytes` is the same sum over the WHOLE folder, and it stays
+   * that way: `checkFolder` is the advisory report about what the walk found,
+   * and narrowing its input would silently drop findings about the files this
+   * run is not importing. What the two screens SHOW is this number, because
+   * both of them are describing the import rather than the folder.
+   *
+   * `null` when the metadata pass has not run, exactly as `report.uploadBytes`
+   * is — the panels already draw that state.
+   */
+  const uploadBytesToImport = useMemo(
+    () =>
+      metadata === null
+        ? null
+        : uploadKeysOf(entriesToImport).reduce(
+            (total, key) => total + (metadata.get(key)?.size ?? 0),
+            0,
+          ),
+    [entriesToImport, metadata],
+  );
 
   /**
    * The Structure verdict on screen.   (Slice #26.04)
@@ -1254,7 +1535,7 @@ export function ImportWizard() {
    *    was sent and billed.
    *
    * A settled request is a spent one. `error` is evidence of sending; only
-   * `pending` and `skip` are evidence of not having sent.
+   * `pending`, `skip` and `preexisting` are evidence of not having sent.
    *
    * A boolean rather than the `Map` itself, so that `openCancelDialog` depends
    * on the FACT rather than on the container: `scanResults` is a fresh `Map` on
@@ -1430,7 +1711,10 @@ export function ImportWizard() {
           !inConstraints &&
           // …and through the Duplication phases, for the third time and the
           // same reason.
-          !inDuplication && (
+          !inDuplication &&
+          // …and the Pre-existing ones, for the fourth. That panel carries its
+          // own "choose another folder" exactly as the other three do.
+          !inPreexisting && (
           <button
             type="button"
             onClick={handlePickFolder}
@@ -1498,7 +1782,18 @@ export function ImportWizard() {
 
         {scanDone && scannableCount > 0 && (
           <span className="text-sm text-fade">
-            {t("scanComplete", { total: entries.length, scannable: scannableCount })}
+            {/* THREE numbers since #26.08, and it took two rounds to get here.
+                `{total} fișiere ({scannable} scanabile)` asserted that every
+                unscanned file was one the system cannot read, which stopped
+                being true; narrowing `total` instead dropped the pre-existing
+                ones out of the count altogether, so a user reconciling this
+                line against the table below found files unaccounted for. Every
+                row is in exactly one of the three. */}
+            {t("scanComplete", {
+              total: entries.length,
+              scannable: scannableCount,
+              preexisting: preexistingDecisions.size,
+            })}
           </span>
         )}
 
@@ -1603,22 +1898,64 @@ export function ImportWizard() {
         />
       )}
 
+      {/* Slice #26.08 — the Pre-existing stage: the first question asked of the
+          archive, and the first stage that does not block. One panel across all
+          three of its phases, so a check does not swap the screen out from
+          under the reader. */}
+      {inPreexisting && (
+        <ImportPreexistingStage
+          result={preexisting}
+          folderName={rootFolderName}
+          busy={phase === "preexisting-checking"}
+          busyLabel={
+            // The same two sentences the Constraints and Duplication panels
+            // pick between, and for the same reason: this check re-walks the
+            // folder first (fast), then pays for the metadata pass, which
+            // reports a running count. The match and the one request to the
+            // archive are both too quick to have a sentence of their own.
+            metaProgress.total > 0
+              ? t("readingMetadata", { done: metaProgress.done, total: metaProgress.total })
+              : t("walkingFolder")
+          }
+          acknowledged={preexistingAcknowledged}
+          onAcknowledgedChange={setPreexistingAcknowledged}
+          onCheck={() => void handleRecheck()}
+          // The acknowledgement the source document asks for, and the ONLY
+          // route from this stage to Evaluation. It changes the phase and
+          // nothing else: the report itself stays in state, because the import
+          // loop reads it three screens later.
+          onContinue={() => setPhase("folder-report")}
+          onChooseFolder={handlePickFolder}
+          notesOpen={preexistingNotesOpen}
+          onNotesOpenChange={setPreexistingNotesOpen}
+        />
+      )}
+
       {/* The walk is done and nothing has been spent yet. */}
       {phase === "folder-report" && (
         <>
           <FolderForecast
             rootFolderName={rootFolderName}
             forecast={forecast}
-            uploadBytes={report.uploadBytes}
+            // Slice #26.08 — what this run will upload, not what the folder
+            // holds. See `uploadBytesToImport`.
+            uploadBytes={uploadBytesToImport}
+            // …and how many of them are already here, so a folder the archive
+            // holds in its entirety is not reported as an empty one.
+            alreadyInSystem={alreadyInSystem}
             droppedCount={report.droppedCount}
-            onContinue={() => void startScan(entries)}
+            // …and only the entries it will import go for classification. The
+            // rest are already in the archive and the loop will not create a
+            // Document for them, so a Haiku call on one buys nothing.
+            onContinue={() => void startScan(entries, preexistingDecisions)}
             onChangeFolder={handlePickFolder}
             onRecheck={() => void handleRecheck()}
           />
           <ReportSections
             report={report}
             forecast={forecast}
-            uploadBytes={report.uploadBytes}
+            uploadBytes={uploadBytesToImport}
+            alreadyInSystem={alreadyInSystem.total}
             folderName={rootFolderName}
             showQuiet={showQuiet}
             onShowQuietChange={setShowQuiet}
@@ -1746,7 +2083,9 @@ export function ImportWizard() {
       {phase === "tag-dialog" && (
         <TagDialog
           folders={folders}
-          totalFiles={entries.length}
+          // The files this run will create a Document for. `entries.length`
+          // counted the ones the Pre-existing stage has already excused.
+          totalFiles={entriesToImport.length}
           onCancel={() => setPhase("ready")}
           onConfirm={() => setPhase("importing")}
         />
@@ -1767,6 +2106,13 @@ export function ImportWizard() {
           // none. The rule is `assignEntryProperties`, computed once by the
           // property step; nothing here re-derives it.
           propertyIdsByPath={resolvedRun.assignment}
+          // Slice #26.08 — the documents the archive already holds, and what
+          // the Pre-existing screen promised would happen to each. Absent from
+          // the map means "import it normally", which is also what an entry the
+          // stage decided to import AGAIN looks like — see
+          // `preexistingDecisionsByPath` for why the exceptions are not carried
+          // here with a flag.
+          preexistingByPath={preexistingDecisions}
           cornerSourceByPath={
             // Slice #23.06.Import, per-folder since #26.07 — which coordinate
             // file's corners actually landed on which Property, so the loop can

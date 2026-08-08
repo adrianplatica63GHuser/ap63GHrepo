@@ -31,6 +31,19 @@ export type SavedImportEntry = {
   confidence?:      "high" | "medium" | "low";
   /** Slice #21.02.Import: true once AI-interpret has been successfully run on this entry's document. */
   aiProcessed?:     boolean;
+  /**
+   * Slice #26.08: the archive already held this document, so the run created
+   * nothing for it. `linked` means the existing Document was attached to this
+   * run's Property; `skipped` means nothing at all happened.
+   *
+   * ⚠️ **Without this the saved report LIES, and the lie outlives the run.**
+   * Such a row is persisted as `{ status: "done", docId }` like any other, so a
+   * resumed report says "6 documents imported" and offers a link to each —
+   * including, for a `skipped` row, a document this run neither created nor
+   * touched. The saved report is the only durable artefact of an import, and it
+   * was contradicting the screen the user had just acknowledged.
+   */
+  preexisting?:     "linked" | "skipped";
 };
 
 export type SavedImportSession = {

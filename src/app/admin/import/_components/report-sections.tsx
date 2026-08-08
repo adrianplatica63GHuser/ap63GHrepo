@@ -34,6 +34,16 @@ type Props = {
    *  first draft dropped: the coordinate file and the upload size. */
   forecast: ImportForecast;
   uploadBytes: number | null;
+  /**
+   * How many of the folder's entries the archive already holds.
+   * (Slice #26.08)
+   *
+   * The saved page is the artefact read later by someone who was not at the
+   * screen, so it must not be the LESS complete of the two: without this row a
+   * run that links forty existing documents and creates none prints "create 0,
+   * upload 0.0 MB" and says nowhere that anything happens at all.
+   */
+  alreadyInSystem: number;
   folderName: string;
   /**
    * The two disclosures live in the PARENT so they survive a re-check. This
@@ -149,6 +159,7 @@ export function ReportSections({
   report,
   forecast,
   uploadBytes,
+  alreadyInSystem,
   folderName,
   showQuiet,
   onShowQuietChange,
@@ -187,6 +198,11 @@ export function ReportSections({
         forecastTitle: tf("title"),
         forecastRows: [
           { label: tf("documents"), value: String(forecast.documents) },
+          // Only when there are any — mirroring the on-screen panel, so the
+          // page and the screen show the same rows for the same run.
+          ...(alreadyInSystem > 0
+            ? [{ label: tf("alreadyInSystem"), value: String(alreadyInSystem) }]
+            : []),
           { label: tf("pageGroups"), value: String(forecast.pageGroups) },
           { label: tf("classificationCalls"), value: String(forecast.classificationCalls) },
           { label: tf("ignoredFiles"), value: String(report.droppedCount) },

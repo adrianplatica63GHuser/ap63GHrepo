@@ -36,6 +36,26 @@ type Props = {
   forecast: ImportForecast;
   /** Slice #24.02b: null when the metadata pass did not complete. */
   uploadBytes: number | null;
+  /**
+   * The folder's entries the archive already holds.   (Slice #26.08)
+   *
+   * ⚠️ **It is here because without it this panel can refuse a run it should
+   * allow.** `forecast` counts what will be CREATED, and a folder the archive
+   * holds in its entirety creates nothing — so `documents === 0`, which used to
+   * mean "there is literally nothing to import" and disabled Continuă. Re-offer
+   * an already-imported folder in order to attach it to a new Property (the
+   * ordinary reason to do that) and the screen said the folder was empty while
+   * the stage one click earlier had promised every document would be linked.
+   *
+   * ⚠️ **TWO numbers, and the second is what the button turns on.** `total` is
+   * what the row reports; `linked` is the subset that will actually attach the
+   * archived document to a Property this run creates. The rest — a `floating`
+   * document, or a `common` one in a run that resolves no property — is a row
+   * where genuinely NOTHING happens, and gating Continuă on `total` walked the
+   * user through the property step, the tag dialog and the import dialog to
+   * arrive at "0 documente importate" over a run that wrote nothing at all.
+   */
+  alreadyInSystem: { total: number; linked: number };
   droppedCount: number;
   onContinue: () => void;
   onChangeFolder: () => void;
@@ -76,6 +96,7 @@ export function FolderForecast({
   rootFolderName,
   forecast,
   uploadBytes,
+  alreadyInSystem,
   droppedCount,
   onContinue,
   onChangeFolder,
@@ -84,6 +105,15 @@ export function FolderForecast({
   const t = useTranslations("adminImport.wizard.forecast");
 
   const { documents, pageGroups, classificationCalls, coordinateCandidates } = forecast;
+
+  /**
+   * Is there anything for Continuă to do?   (Slice #26.08)
+   *
+   * Creating a Document is one thing worth doing and linking an existing one is
+   * another, so the button is dead only when neither is on the table. See
+   * `alreadyInSystem`.
+   */
+  const nothingToDo = documents === 0 && alreadyInSystem.linked === 0;
 
   // One candidate is the normal case and is named. Zero and several are both
   // worth saying out loud. (#24.02a guessed that #24.02b would turn "several"
@@ -103,6 +133,11 @@ export function FolderForecast({
 
       <dl className="mt-4">
         <Row label={t("documents")} value={String(documents)} />
+        {/* Only when there are any: a run with none should not have to read a
+            row about a stage that found nothing. */}
+        {alreadyInSystem.total > 0 && (
+          <Row label={t("alreadyInSystem")} value={String(alreadyInSystem.total)} />
+        )}
         <Row label={t("pageGroups")} value={String(pageGroups)} />
         <Row label={t("classificationCalls")} value={String(classificationCalls)} />
         <Row label={t("coordinateFile")} value={coordinateValue} />
@@ -125,7 +160,7 @@ export function FolderForecast({
         <button
           type="button"
           onClick={onContinue}
-          disabled={documents === 0}
+          disabled={nothingToDo}
           className={buttonClass({ variant: "primary", size: "lg" })}
         >
           {t("continueButton", { count: classificationCalls })}
@@ -150,7 +185,7 @@ export function FolderForecast({
         >
           {t("changeFolder")}
         </button>
-        {documents === 0 && (
+        {nothingToDo && (
           <p role="status" className="text-sm text-red-700 dark:text-red-400">
             {/* Deliberately does not say "the folder is empty". The walk drops
                 hidden files, Windows metadata and the eight ignored extensions

@@ -68,6 +68,7 @@ import { ProvenanceField } from "./provenance-field";
 import { isIdCardEntry } from "@/lib/import/id-card";
 import { isCoordinateFileName } from "@/lib/import/coordinate-file";
 import type { EntryAssignment } from "@/lib/import/property-folders";
+import { titleForEntry, type PreexistingRow } from "@/lib/import/preexisting-check";
 import { ProgressBar } from "@/components/progress-bar";
 import { buttonClass } from "@/lib/ui/button-styles";
 import {
@@ -132,6 +133,18 @@ export type ImportResult = {
   coordinateSettled?: boolean;
   /** Corner count the Property ended up with, for the row's summary. */
   cornerCount?: number;
+  /**
+   * Slice #26.08: the archive already held this document, so the loop did not
+   * create one. `linked` means the existing Document was attached to this run's
+   * Property (or Properties); `skipped` means there was nothing to attach it
+   * to and the row is a statement that nothing happened.
+   *
+   * ⚠️ **A row carrying this has a `docId` it did not create**, and every
+   * follow-up action is suppressed on it for exactly that reason — see
+   * `ResultRow`. The id is here so the row can still LINK to the document,
+   * which is the one thing the user will want from it.
+   */
+  preexisting?: "linked" | "skipped";
 };
 
 type Props = {
@@ -157,6 +170,29 @@ type Props = {
    * result still names the file.
    */
   propertyIdsByPath: ReadonlyMap<string, EntryAssignment>;
+  /**
+   * The documents the archive already holds, and what the Pre-existing stage
+   * promised the import would do about each.   (Slice #26.08)
+   *
+   * ⚠️ **THIS MAP IS A PROMISE THAT HAS ALREADY BEEN SHOWN TO THE USER.** They
+   * read it on the Pre-existing screen, ticked, and pressed Continuă; this loop
+   * is where it either comes true or quietly does not. That is why the branch
+   * it drives sits at the very top of the per-entry task rather than being
+   * folded into one of the steps below — there is nothing to do "as well",
+   * there is a different thing to do.
+   *
+   * An ABSENT path means "import it normally", and it covers two states that
+   * are the same instruction: the archive does not hold this document, and the
+   * archive holds it but the stage decided to import it again anyway (an
+   * identity card, a coordinate file). `preexistingDecisionsByPath` leaves the
+   * second out on purpose, so no reader here has to remember the exception.
+   *
+   * Optional, and defaulting to nothing, because a run that reached this dialog
+   * without the stage having answered — a failed lookup the user chose to carry
+   * on past — must import everything, which is precisely what an absent map
+   * does.
+   */
+  preexistingByPath?: ReadonlyMap<string, PreexistingRow>;
   /**
    * The coordinate files whose corners actually LANDED on a Property, and which
    * one.   (Slice #23.06.Import, per-folder since #26.07.)
@@ -502,6 +538,7 @@ export function BulkImportDialog({
   rootFolderName,
   scanResults,
   propertyIdsByPath,
+  preexistingByPath,
   cornerSourceByPath,
   onPropertyCornersChanged,
   onFirstDocumentCreated,
@@ -600,6 +637,31 @@ export function BulkImportDialog({
    * could replace that Property's corners from a file the property step had
    * refused. See `EntryAssignment`.
    */
+  /**
+   * What the Pre-existing stage decided about this entry, or null.
+   * (Slice #26.08)
+   *
+   * A plain function over a prop for the reason `propertiesForEntry` is one: it
+   * is a `Map.get`, and a `useMemo` over a map the parent owns would only add a
+   * second thing that can be stale.
+   */
+  const preexistingForEntry = useCallback(
+    (path: string): PreexistingRow | null => preexistingByPath?.get(path) ?? null,
+    [preexistingByPath],
+  );
+
+  /**
+   * Held in a ref for the same reason `provenanceRef` is: the import effect
+   * depends only on `gatePassed`, and this map arrives from a `useMemo` in the
+   * wizard whose identity changes whenever the archive is asked again. Reading
+   * the prop directly inside the effect would put it in the dependency list —
+   * or, worse, leave it out of one and read a stale closure.
+   */
+  const preexistingRef = useRef(preexistingForEntry);
+  useEffect(() => {
+    preexistingRef.current = preexistingForEntry;
+  }, [preexistingForEntry]);
+
   const soleProperty = useCallback(
     (path: string): string | null => {
       const assignment = propertyIdsByPath.get(path);
@@ -624,11 +686,31 @@ export function BulkImportDialog({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  /**
+   * The entries the provenance gate has to ask about.
+   *
+   * ⚠️ **A pre-existing entry is NOT one of them, and leaving it in held the
+   * whole import.**   (Slice #26.08)
+   *
+   * The gate exists because a Document cannot be created without a provenance,
+   * and it blocks until every entry whose extension cannot be read has an
+   * answer. A `link` or `skip` row never reaches `createDocument` — the branch
+   * at the top of the task returns before it — so the gate was demanding the
+   * origin of a file the very next instruction refuses to touch, on a screen
+   * the user cannot get past by any other means.
+   *
+   * `preexistingByPath` rather than a ref: this runs during render, where the
+   * prop is the current value by definition.
+   */
   const ambiguousEntries = useMemo(
-    () => entries.filter((e) => inferredProvenance.get(e.path) == null),
-    // as above — both inputs are stable.
+    () =>
+      entries.filter(
+        (e) => inferredProvenance.get(e.path) == null && !preexistingByPath?.has(e.path),
+      ),
+    // `entries` and `inferredProvenance` are stable for this dialog's lifetime;
+    // `preexistingByPath` is built once by the wizard and held in state.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [inferredProvenance],
+    [inferredProvenance, preexistingByPath],
   );
 
   /** User's answers for the ambiguous entries, keyed by entry path. */
@@ -716,11 +798,65 @@ export function BulkImportDialog({
         updateResult(entry.path, { status: "importing" });
 
         try {
+          // 0. The archive already holds this document.  (Slice #26.08)
+          //
+          // The FIRST thing the task does, and it returns rather than falling
+          // through: this is not an extra step on the way to creating a
+          // Document, it is the decision not to create one. Everything below —
+          // the type lookup, the create, the corner-source claim, the page
+          // uploads, the tags — is what "import this file" means, and none of
+          // it applies to a file that is not being imported.
+          //
+          // ⚠️ **The rows that are imported ANYWAY are absent from this map**,
+          // not present with a flag. An identity card or a coordinate file the
+          // stage decided to re-import reaches the ordinary path below without
+          // this branch having to remember an exception. See
+          // `preexistingDecisionsByPath`.
+          //
+          // WHAT IT WRITES, AND WHAT IT DELIBERATELY DOES NOT
+          //   It writes property links and nothing else. It does not upload the
+          //   file again (the pages are already there), does not add this run's
+          //   folder tags to a document somebody else's import titled (a tag is
+          //   a mutation nobody asked for, on a record this run did not make),
+          //   and does not announce `onFirstDocumentCreated` — because no
+          //   document was created, and that callback is what tells the Cancel
+          //   confirmation that records would be left behind. The links it does
+          //   write hang off Properties this run created, which the Cancel
+          //   already reports through `propertyResolved`.
+          //
+          // A `skip` row writes nothing at all: `propertiesForEntry` answers
+          // with an empty list for `floating`, for anything the structure rules
+          // forbid, and for a `common` document in a run that resolved no
+          // Property — which is exactly the set `checkPreexistingStage` calls
+          // `skip`. The loop is written to survive the two disagreeing anyway:
+          // it links whatever the assignment names, so a `skip` that somehow
+          // carried a Property would be attached rather than silently dropped.
+          const already = preexistingRef.current(entry.path);
+          if (already !== null) {
+            for (const linkedPropertyId of propertiesForEntry(entry.path)) {
+              await associateDocumentsWithProperty(linkedPropertyId, [already.documentId]);
+            }
+            if (mounted) {
+              updateResult(entry.path, {
+                status: "done",
+                docId: already.documentId,
+                preexisting: already.outcome === "link" ? "linked" : "skipped",
+              });
+            }
+            return;
+          }
+
           // 1. Determine title
-          const title =
-            entry.kind === "page-group"
-              ? entry.titleHint
-              : entry.name;
+          //
+          // ⚠️ **`titleForEntry`, not the two-line expression it replaced, and
+          // the difference is not cosmetic.** #26.08 keys the archive on the
+          // title this line writes, so the two must be ONE expression — and
+          // they had already diverged: `titleForEntry` falls back to the folder
+          // name when `folderNameToTitleHint` trims to nothing, while this
+          // wrote the empty string. Such a document is stored untitled, the
+          // lookup refuses untitled documents, and the folder is reported "not
+          // in the system" and duplicated on every future run, in silence.
+          const title = titleForEntry(entry);
 
           // 2. Resolve document type.
           //    Slice #21.02.Import: use the scan's typeKey/label to look up or
@@ -887,16 +1023,20 @@ export function BulkImportDialog({
   useEffect(() => {
     if (!done) return;
     const sessionEntries: SavedImportEntry[] = results.map((r) => {
-      const displayName =
-        r.entry.kind === "page-group"
-          ? r.entry.titleHint
-          : (r.entry as FSFileEntry).name;
+      // `titleForEntry`, so the saved report names a document the same way the
+      // Document itself is titled — a page folder whose hint trims to nothing
+      // showed a blank row here while its Document had a name.
+      const displayName = titleForEntry(r.entry);
       const sr = scanResults.get(r.entry.path);
       return {
         path:             r.entry.path,
         displayName,
         kind:             r.entry.kind,
         status:           r.status,
+        // Slice #26.08 — carried, because the saved report is the only durable
+        // artefact of a run and it was calling these rows "imported". See
+        // `SavedImportEntry.preexisting`.
+        preexisting:      r.preexisting,
         docId:            r.docId,
         errorMsg:         r.errorMsg,
         scanDescription:  sr?.description,
@@ -955,10 +1095,7 @@ export function BulkImportDialog({
           throw new Error(t("idCardNoFile"));
         }
 
-        const label =
-          entry.kind === "page-group"
-            ? (entry as FSPageGroupEntry).titleHint
-            : (entry as FSFileEntry).name;
+        const label = titleForEntry(entry);
 
         // Slice #26.07 — the Property this row's Document actually went into.
         // Re-read here rather than captured when the row was imported: it comes
@@ -1054,11 +1191,7 @@ export function BulkImportDialog({
   const handleOpenAi = useCallback((result: ImportResult) => {
     if (!result.docId) return;
     const entry = result.entry;
-    const label =
-      entry.kind === "page-group"
-        ? (entry as FSPageGroupEntry).titleHint
-        : (entry as FSFileEntry).name;
-    setAiTarget({ path: entry.path, docId: result.docId, label });
+    setAiTarget({ path: entry.path, docId: result.docId, label: titleForEntry(entry) });
   }, []);
 
   const handleAiDone = useCallback(
@@ -1081,7 +1214,21 @@ export function BulkImportDialog({
   // Counts
   // ---------------------------------------------------------------------------
 
+  /**
+   * Rows that finished, split by whether this run actually made anything.
+   * (Slice #26.08)
+   *
+   * ⚠️ **`doneCount` covers both and must not be the number in the heading.**
+   * A `link` or `skip` row is `status: "done"` — correctly, it finished — but
+   * "6 documente importate" over a run that created three is the same lie the
+   * saved session carried until this slice, one screen earlier. The progress
+   * bar still counts settled rows, because that is what it measures.
+   */
   const doneCount = results.filter((r) => r.status === "done").length;
+  const createdCount = results.filter(
+    (r) => r.status === "done" && r.preexisting === undefined,
+  ).length;
+  const preexistingCount = results.filter((r) => r.preexisting !== undefined).length;
   const errorCount = results.filter((r) => r.status === "error").length;
   const totalCount = results.length;
   const progressPct = totalCount > 0 ? ((doneCount + errorCount) / totalCount) * 100 : 0;
@@ -1102,15 +1249,32 @@ export function BulkImportDialog({
           <div>
             <h2 className="text-base font-semibold text-ink dark:text-zinc-100">
               {done
-                ? t("doneTitle", { count: doneCount })
+                ? t("doneTitle", { count: createdCount })
                 : t("title")}
             </h2>
-            {done && errorCount === 0 && (
+            {/* Slice #26.08 — said whenever any row was already here, error or
+                no error: it is the difference between the count in the heading
+                and the number of rows in the table, and without it that gap
+                reads as files that went missing. */}
+            {done && preexistingCount > 0 && (
+              <p className="mt-0.5 text-xs text-sky-700 dark:text-sky-400">
+                {t("donePreexisting", { count: preexistingCount })}
+              </p>
+            )}
+            {/* `doneHint` says every file was saved as a document and tagged,
+                which is false of a row the archive already held — so it is now
+                the all-created case only. */}
+            {done && errorCount === 0 && preexistingCount === 0 && (
               <p className="mt-0.5 text-xs text-fade">{t("doneHint")}</p>
             )}
             {done && errorCount > 0 && (
               <p className="mt-0.5 text-xs text-red-600 dark:text-red-400">
-                {doneCount} importate cu succes · {errorCount} erori (verificați coloana Status)
+                {/* Fixed in passing (#26.08): this line was hardcoded Romanian
+                    in the component, which is the two-track-i18n rule
+                    backwards — the same defect #23.09 fixed two lines below for
+                    `importingShort`. Noticed because the slice had to change
+                    the count in it. */}
+                {t("doneWithErrors", { created: createdCount, errors: errorCount })}
               </p>
             )}
           </div>
@@ -1409,13 +1573,23 @@ function ResultRow({
     aiParties,
     coordinateSettled,
     cornerCount,
+    preexisting,
   } = result;
-  const displayName = entry.kind === "page-group" ? entry.titleHint : (entry as FSFileEntry).name;
+  const displayName = titleForEntry(entry);
 
   // Every follow-up action needs a cleanly imported row: without a docId there
   // is nothing to attach to, and an errored row most often failed because the
   // session expired, in which case these calls would fail too.
-  const settled = status === "done" && !!docId;
+  //
+  // ⚠️ **`preexisting === undefined` is the third condition, added by #26.08,
+  // and it is the one that is not obvious.** A pre-existing row DOES have a
+  // docId — the archive's own — so without this every follow-up would be
+  // offered on it and each would write to a document this run did not create:
+  // "Interpretează AI" would spend a billed call rewriting fields somebody
+  // already curated, and "Creează persoană" would read a file whose Document is
+  // not the one on screen. The row is a statement about what happened, which is
+  // exactly what 26.10 turns every row into.
+  const settled = status === "done" && !!docId && preexisting === undefined;
 
   return (
     <tr className="border-b border-crease dark:border-zinc-800">
@@ -1464,6 +1638,15 @@ function ResultRow({
 
       <td className="py-2">
         <div className="flex flex-wrap items-center gap-1.5">
+          {/* Slice #26.08 — the archive already held this document, so the row
+              describes what was done instead of offering something to do. The
+              first row in this table to read that way; 26.10 makes every row
+              read that way. */}
+          {preexisting !== undefined && (
+            <span className="text-xs font-medium text-sky-700 dark:text-sky-400">
+              {preexisting === "linked" ? t("preexistingLinked") : t("preexistingSkipped")}
+            </span>
+          )}
           {/* Slice #23.02.Import — AI extraction on any readable row.
 
               Slice #23.08.Import added `!isIdCard`. The two actions were framed

@@ -329,3 +329,68 @@ export function documentFieldsFromIdCard(
 export function idCardDocumentFieldCount(patch: IdCardDocumentPatch): number {
   return Object.keys(patch).filter((k) => k !== "notes").length;
 }
+
+// ---------------------------------------------------------------------------
+// Slice #26.08 — the same question, asked of a NAME, several stages earlier
+// ---------------------------------------------------------------------------
+
+/**
+ * Does this file or folder NAME say it is an identity card?
+ *
+ * ⚠️ **A weaker signal than `isIdCardEntry`, used at a point where the strong
+ * one does not exist yet.** Everything above this line reads Haiku's verdict,
+ * which arrives at the Scanning stage. The Pre-existing stage runs BEFORE
+ * classification — its whole purpose is to decide what to send there — so the
+ * only evidence it has about a JPEG is what it is called.
+ *
+ * #26.01 met the same wall and reached the opposite conclusion: the source
+ * document's "ID card scans sit directly under the property folder" was DROPPED
+ * as a structure rule, because a rule that BLOCKS an import cannot rest on a
+ * naming convention nobody was told to follow. That reasoning does not
+ * transfer, and the difference is which way being wrong hurts:
+ *
+ *  - A structure rule that guesses wrong REFUSES a correct folder and sends a
+ *    business user to rename files to satisfy a machine. Unaffordable.
+ *  - This test guessing wrong imports a document a second time. That is the
+ *    outcome Adrian's constraint explicitly PREFERS — "a duplicate person in
+ *    the system is better than a missing one" — so a false positive costs a
+ *    duplicate and a false negative costs a person.
+ *
+ * So it is deliberately allowed to over-claim, and the copy that reports it
+ * says plainly that this is what is happening.
+ *
+ * ⚠️ **It also catches precisely the dangerous case, which is not a
+ * coincidence.** The pre-existing match is name-and-size (see
+ * `preexisting-check.ts`), so a WRONG match needs two different cards sharing a
+ * file name — `Buletin.jpg`, `CI.jpg`, `Carte identitate.jpg` — and those are
+ * the very names this test recognises. A card named `scan001.jpg` is not
+ * covered, and cannot be: nothing in its name or its byte count says what it
+ * is. That residual gap is why the report asks the user to check afterwards
+ * rather than claiming the exception is complete.
+ *
+ * The extension comes off first, so the question asked is about the name the
+ * user typed rather than about the format it was saved in. `isIdCardLabel`
+ * folds diacritics before matching, which is also what makes the ASCII `\b`
+ * anchors in `POSITIVE_PATTERNS` legitimate here — by the time they run there
+ * is no non-ASCII letter left for them to mis-anchor against. (See CLAUDE.md's
+ * standing warning about `\b` and Romanian: it applies to matching RAW text,
+ * and every pattern in this module matches folded text only.)
+ */
+export function looksLikeIdCardName(name: string): boolean {
+  const dot = name.lastIndexOf(".");
+  // `dot > 0`, not `dot >= 0`: a dotfile is all stem, and `.buletin` must be
+  // matched on the whole of it rather than stripped to nothing.
+  const stem = dot > 0 ? name.slice(0, dot) : name;
+  // ⚠️ **UNDERSCORES BECOME SPACES FIRST, and leaving them out was a real hole
+  // found by this slice's adversarial review.** `_` is an ASCII WORD character,
+  // so `\b` does not fire beside it: `Buletin.jpg` matched and
+  // `Buletin_Popescu.jpg`, `Buletin_2.jpg` and `Carte_de_identitate.jpg` all
+  // did not. Underscore-as-separator is this archive's own convention —
+  // `folderNameToTitleHint` exists to turn `CVC_2021-04-12` into a title — so
+  // the misses were the ordinary spellings rather than exotic ones, and each
+  // was an identity card silently taking the "already in the system" path.
+  //
+  // Hyphens need no such treatment: `-` is not a word character, so `\b`
+  // already fires beside it.
+  return isIdCardLabel(stem.replace(/_+/g, " "));
+}

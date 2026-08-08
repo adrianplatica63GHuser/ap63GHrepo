@@ -37,6 +37,16 @@ function StatusBadge({ entry }: { entry: SavedImportEntry }) {
   if (entry.status === "done" && entry.docId) {
     return (
       <span className="inline-flex items-center gap-1.5">
+        {/* Slice #26.08 — this row created nothing. The link below still points
+            at a real document (the archive's own), and without this badge the
+            row is indistinguishable from one this run wrote. */}
+        {entry.preexisting !== undefined && (
+          <span className="text-[10px] font-medium text-sky-700 dark:text-sky-400">
+            {entry.preexisting === "linked"
+              ? tD("preexistingLinked")
+              : tD("preexistingSkipped")}
+          </span>
+        )}
         {entry.aiProcessed && (
           <span
             className="inline-flex items-center rounded border border-indigo-200 bg-indigo-50 px-1.5 py-0.5 text-[10px] font-medium text-indigo-600 dark:border-indigo-800 dark:bg-indigo-950/30 dark:text-indigo-300"
@@ -96,7 +106,13 @@ export function ResumedSessionView({ session, onClear }: Props) {
   const t = useTranslations("adminImport.wizard");
   const mins = minutesAgo(session.savedAt);
 
-  const doneCount  = session.entries.filter((e) => e.status === "done").length;
+  // Slice #26.08 — rows the archive already held are `done` and created
+  // nothing, so counting them here reported them as imported. See
+  // `SavedImportEntry.preexisting`, which exists for exactly this line.
+  const doneCount = session.entries.filter(
+    (e) => e.status === "done" && e.preexisting === undefined,
+  ).length;
+  const preexistingCount = session.entries.filter((e) => e.preexisting !== undefined).length;
   const errorCount = session.entries.filter((e) => e.status === "error").length;
 
   return (
@@ -111,6 +127,7 @@ export function ResumedSessionView({ session, onClear }: Props) {
             {t("resumedAge", { minutes: mins })}
             {" · "}
             {doneCount} {t("resumedDone")}
+            {preexistingCount > 0 && ` · ${t("resumedPreexisting", { count: preexistingCount })}`}
             {errorCount > 0 && ` · ${errorCount} ${t("resumedErrors")}`}
           </p>
         </div>

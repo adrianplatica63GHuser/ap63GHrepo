@@ -1744,7 +1744,7 @@
       "unsupported": "Browserul dvs. nu suportă accesul la foldere locale. Utilizați Chrome, Edge sau alt browser bazat pe Chromium.",
       "walkingFolder": "Se citește structura folderului…",
       "scanningProgress": "Se scanează: {done} / {total} fișiere",
-      "scanComplete": "Scanare completă — {total} fișiere ({scannable} scanabile)",
+      "scanComplete": "Scanare completă — {total} fișiere ({scannable} trimise spre clasificare, {preexisting} deja în sistem)",
       "noEntries": "Folderul selectat nu conține fișiere.",
       "importButton": "Importă",
       "colPath": "Cale",
@@ -1788,7 +1788,7 @@
       "importDialog": {
         "title": "Se importă fișierele…",
         "progressLabel": "{done} / {total}",
-        "doneTitle": "{count} documente importate.",
+        "doneTitle": "{count, plural, one {Un document importat.} few {# documente importate.} other {# de documente importate.}}",
         "doneHint": "Fiecare fișier a fost salvat ca document și etichetat cu dosarele sale.",
         "closeButton": "Închide",
         "viewLink": "Deschide →",
@@ -1916,7 +1916,11 @@
           "closeButton": "Închide",
           "errorGeneric": "Interpretarea AI a eșuat.",
           "errorSession": "Sesiunea a expirat. Vă rugăm să vă autentificați din nou."
-        }
+        },
+        "preexistingLinked": "✓ exista deja — a fost legat de proprietate",
+        "preexistingSkipped": "✓ exista deja — nu a fost importat din nou",
+        "donePreexisting": "{count, plural, one {Un document se afla deja în sistem: nu a fost importat din nou.} few {# documente se aflau deja în sistem: nu au fost importate din nou.} other {# de documente se aflau deja în sistem: nu au fost importate din nou.}}",
+        "doneWithErrors": "{created} importate cu succes · {errors} erori (verificați coloana Status)"
       },
       "preflight": {
         "title": "Înainte de a alege un folder",
@@ -1966,7 +1970,8 @@
         "ignoredFiles": "Fișiere care vor fi ignorate",
         "uploadSize": "De încărcat",
         "megabytes": "{mb} MB",
-        "recheckFolder": "Verifică din nou folderul"
+        "recheckFolder": "Verifică din nou folderul",
+        "alreadyInSystem": "Documente aflate deja în sistem (se leagă, nu se creează)"
       },
       "report": {
         "title": "De verificat înainte de a continua",
@@ -2001,7 +2006,9 @@
       },
       "readingMetadata": "Se citesc fișierele… {done} din {total}",
       "walkFailed": "Acest folder nu a putut fi citit. Este posibil să fi fost mutat, redenumit sau deconectat.",
-      "recheckFailed": "Acest folder nu a putut fi citit din nou. Este posibil să fi fost mutat sau redenumit în timp ce lucrați la el — lista de mai jos este rezultatul anterior. Alegeți din nou folderul pentru a reîncepe."
+      "recheckFailed": "Acest folder nu a putut fi citit din nou. Este posibil să fi fost mutat sau redenumit în timp ce lucrați la el — lista de mai jos este rezultatul anterior. Alegeți din nou folderul pentru a reîncepe.",
+      "statusPreexisting": "Deja în sistem",
+      "resumedPreexisting": "{count, plural, one {unul se afla deja în sistem} few {# se aflau deja în sistem} other {# se aflau deja în sistem}}"
     },
     "structure": {
       "rule": {
@@ -2152,7 +2159,7 @@
         }
       },
       "title": "Restricții privind fișierele",
-      "intro": "Structura folderului este în regulă. Mai rămâne o verificare: fiecare fișier trebuie să poată fi preluat de sistem. Citiți mai jos ce se poate importa și ce nu, bifați că ați luat la cunoștință, apoi apăsați „Verifică fișierele” — se verifică același folder, nu trebuie să îl alegeți din nou.",
+      "intro": "Structura folderului este în regulă. Urmează o verificare: fiecare fișier trebuie să poată fi preluat de sistem. Citiți mai jos ce se poate importa și ce nu, bifați că ați luat la cunoștință, apoi apăsați „Verifică fișierele” — se verifică același folder, nu trebuie să îl alegeți din nou.",
       "rulesTitle": "Restricțiile pe care trebuie să le respecte fișierele",
       "showRules": "Arată din nou restricțiile",
       "hideRules": "Ascunde restricțiile",
@@ -2204,7 +2211,7 @@
         }
       },
       "title": "Duplicate în folderul ales",
-      "intro": "Structura și fișierele sunt în regulă. A mai rămas o verificare, tot pe același folder: același lucru nu trebuie să se afle în el de două ori, altfel ajunge de două ori și în arhivă. Se compară doar fișierele din folderul ales, între ele — ce se află deja în sistem nu se verifică aici.",
+      "intro": "Structura și fișierele sunt în regulă. Urmează o verificare, tot pe același folder: același lucru nu trebuie să se afle în el de două ori, altfel ajunge de două ori și în arhivă. Se compară doar fișierele din folderul ales, între ele — ce se află deja în sistem se verifică la pasul următor.",
       "rulesTitle": "Ce se consideră duplicat",
       "showRules": "Arată din nou explicațiile",
       "hideRules": "Ascunde explicațiile",
@@ -2239,6 +2246,90 @@
         "notCheckedYet": "Folderul nu a fost verificat încă — pagina conține doar explicațiile.",
         "warningsTitle": "Fișiere care nu au putut fi măsurate",
         "rulesOnlyName": "duplicate"
+      }
+    },
+    "preexisting": {
+      "note": {
+        "PEX-01": {
+          "explanation": "Un document din folderul ales este considerat deja aflat în sistem dacă în arhivă există un document cu același nume și cu exact aceleași fișiere — aceleași denumiri și aceleași mărimi. Pentru un folder de pagini se compară toate paginile, nu doar prima. Dacă între timp ați redenumit documentul în sistem ori ați renumerotat paginile în folder, sistemul nu îl mai recunoaște și îl va importa din nou.",
+          "example": "Bine: „Contract vanzare.pdf” din folderul proprietății are 240 KB, iar în arhivă există deja un document „Contract vanzare.pdf” cu un singur fișier de 240 KB — este același document și nu se importă a doua oară. Altfel: dacă în arhivă documentul are alt nume ori altă mărime, este tratat ca document nou."
+        },
+        "PEX-02": {
+          "explanation": "Un document care se află deja în sistem nu se importă a doua oară. Dacă fișierul stă într-un folder de proprietate din acest import, documentul din arhivă va fi legat de proprietatea respectivă, așa că o veți găsi cu tot cu el — fără să apară un al doilea exemplar. Dacă fișierul nu ține de nicio proprietate din acest import, nu se întâmplă nimic cu el.",
+          "example": "Un extras de carte funciară importat anul trecut se află acum în folderul proprietății 48-50: nu se creează un al doilea document, ci extrasul care există deja este legat de proprietatea 48-50."
+        },
+        "PEX-03": {
+          "explanation": "Cărțile de identitate se importă din nou chiar dacă par să existe deja. Motivul este voit: cea din sistem poate fi expirată, iar două exemplare ale aceleiași persoane sunt mai puțin grave decât o persoană care lipsește cu totul. Sistemul recunoaște o carte de identitate după denumirea fișierului, așa că notați-vă aceste fișiere și verificați persoanele după ce se termină importul.",
+          "example": "„Buletin Ionescu.jpg” pare să existe deja, dar se importă totuși. După import, deschideți persoana Ionescu și vedeți dacă datele sunt cele de pe cartea de identitate nouă."
+        },
+        "PEX-04": {
+          "explanation": "Fișierele cu coordonate se importă din nou chiar dacă par să existe deja. Colțurile unei proprietăți trebuie să arate din ce document au fost citite, iar acel document se creează în acest import — dacă fișierul ar fi sărit, proprietatea nouă ar rămâne cu colțuri fără sursă.",
+          "example": "„coord 48-50.txt” a mai fost importat o dată, dar se importă din nou pentru că din el se fac colțurile proprietății 48-50 din acest import."
+        }
+      },
+      "section": {
+        "link": {
+          "title": "{count, plural, one {Un document existent va fi legat, nu importat din nou} few {# documente existente vor fi legate, nu importate din nou} other {# de documente existente vor fi legate, nu importate din nou}}",
+          "intro": "Aceste fișiere se află deja în arhivă, așa că nu se importă din nou. Documentele care există deja vor fi legate de proprietățile din acest import — cele scrise în dreptul fiecărui rând — deci le veți găsi pe pagina proprietății."
+        },
+        "skip": {
+          "title": "{count, plural, one {Un document nu va fi importat din nou} few {# documente nu vor fi importate din nou} other {# de documente nu vor fi importate din nou}}",
+          "intro": "Aceste fișiere se află deja în arhivă și nu țin de nicio proprietate din acest import, așa că nu se întâmplă nimic cu ele. Documentele din arhivă rămân neatinse."
+        },
+        "id-card": {
+          "title": "{count, plural, one {O carte de identitate se va importa totuși} few {# cărți de identitate se vor importa totuși} other {# de cărți de identitate se vor importa totuși}}",
+          "intro": "Aceste fișiere par să existe deja în sistem, dar se importă totuși, pentru că par a fi cărți de identitate: cea din sistem poate fi expirată și este mai bine să avem persoana de două ori decât deloc. Notați-vă fișierele de mai jos și verificați persoanele după ce se termină importul."
+        },
+        "coordinates": {
+          "title": "{count, plural, one {Un fișier cu coordonate se va importa totuși} few {# fișiere cu coordonate se vor importa totuși} other {# de fișiere cu coordonate se vor importa totuși}}",
+          "intro": "Aceste fișiere par să existe deja în sistem, dar se importă totuși: din ele se fac colțurile proprietăților din acest import, iar colțurile trebuie să arate din ce document au fost citite."
+        }
+      },
+      "title": "Documente aflate deja în sistem",
+      "intro": "Structura, fișierele și duplicatele sunt în regulă. Aceasta este prima verificare care se uită în arhivă, nu în folderul ales: sistemul vă spune care dintre documente se află deja în sistem și ce se va întâmpla cu fiecare, înainte ca ele să fie trimise spre clasificare. Aici nu aveți nimic de îndreptat: citiți ce urmează să se întâmple, bifați și mergeți mai departe.",
+      "notesTitle": "Ce înseamnă „se află deja în sistem”",
+      "showNotes": "Arată din nou explicațiile",
+      "hideNotes": "Ascunde explicațiile",
+      "acknowledge": "Am citit ce se întâmplă cu documentele care se află deja în sistem",
+      "acknowledgeHint": "Bifați după ce ați citit explicațiile și apoi din nou după fiecare verificare. Bifa se cere de fiecare dată.",
+      "check": "Vezi ce se află deja în sistem",
+      "recheck": "Verifică din nou",
+      "continue": "Continuă",
+      "continueWithout": "Continuă fără această verificare",
+      "chooseAnotherFolder": "Alege alt folder…",
+      "reportTitle": "{count, plural, one {Un document se află deja în sistem} few {# documente se află deja în sistem} other {# de documente se află deja în sistem}}",
+      "nothingToFix": "Nu aveți nimic de îndreptat în File Explorer pentru cele de mai sus. Citiți totuși lista: dacă un document din arhivă nu este cel la care vă gândeați, redenumiți fișierul din folder și sistemul îl va importa ca document nou. Când sunteți mulțumit, bifați mai jos și apăsați „Continuă”.",
+      "morePaths": "încă {count, number}…",
+      "row": {
+        "existing": "→ {code}",
+        "folders": "{count, plural, one {(proprietatea {folders})} few {(proprietățile {folders})} other {(proprietățile {folders})}}",
+        "line": "{path} → {code}"
+      },
+      "unchecked": {
+        "title": "Fișiere care nu au putut fi verificate",
+        "intro": "{count, plural, one {Un fișier nu a putut fi măsurat, așa că nu putem spune dacă se află deja în sistem. Va fi importat, iar dacă exista deja, veți avea două exemplare — verificați-l după import. De obicei fișierul este deschis într-un alt program.} few {# fișiere nu au putut fi măsurate, așa că nu putem spune dacă se află deja în sistem. Vor fi importate, iar cele care existau deja vor ajunge a doua oară în arhivă — verificați-le după import. De obicei fișierele sunt deschise în alte programe.} other {# de fișiere nu au putut fi măsurate, așa că nu putem spune dacă se află deja în sistem. Vor fi importate, iar cele care existau deja vor ajunge a doua oară în arhivă — verificați-le după import. De obicei fișierele sunt deschise în alte programe.}}"
+      },
+      "failed": {
+        "title": "Nu s-a putut afla ce se găsește deja în sistem",
+        "intro": "Sistemul nu a primit un răspuns de la arhivă, așa că nu putem spune care dintre documente se află deja acolo. Nu este nimic în neregulă cu folderul ales. Încercați din nou peste câteva clipe.",
+        "continueHint": "Dacă mergeți mai departe fără această verificare, toate fișierele vor fi importate, iar cele care se aflau deja în sistem vor ajunge a doua oară în arhivă."
+      },
+      "save": {
+        "button": "Salvează raportul ca pagină",
+        "hint": "Se descarcă o pagină pe care o puteți deschide sau tipări. Conține explicațiile și toate documentele găsite, fără prescurtări.",
+        "filePrefix": "deja-in-sistem",
+        "documentTitle": "Documente aflate deja în sistem",
+        "generatedAt": "Generat",
+        "folderLabel": "Folder",
+        "rulesTitle": "Ce înseamnă „se află deja în sistem”",
+        "violationsTitle": "Ce se va întâmpla la import",
+        "allClear": "Niciun document din folderul ales nu se află deja în sistem.",
+        "blocked": "Niciun document din folderul ales nu s-a găsit în sistem, dar unele fișiere nu au putut fi verificate — vedeți mai jos.",
+        "notCheckedYet": "Încă nu s-a verificat ce se află deja în sistem — pagina conține doar explicațiile.",
+        "warningsTitle": "Fișiere care nu au putut fi verificate",
+        "rulesOnlyName": "deja-in-sistem",
+        "lookupFailedTitle": "Verificarea nu s-a putut face",
+        "lookupFailed": "Nu s-a primit un răspuns de la arhivă, așa că pagina nu conține lista documentelor care se află deja în sistem — vedeți explicațiile și nota de mai jos."
       }
     },
     "workflow": {
