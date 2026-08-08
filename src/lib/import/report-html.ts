@@ -225,12 +225,35 @@ export type RulesPageRule = {
 };
 
 export type RulesPageSection = {
-  heading: string;
+  /**
+   * What tells this section of the listing apart from the others.
+   *
+   * ⚠️ OPTIONAL since #26.06, and the third time this module has learnt the
+   * same lesson — `RulesPageWarning.heading` and `RulesPageWarning.sentence`
+   * are the other two. A catalogue that groups its rules has headings worth
+   * printing; one that does not has only `rulesTitle`, and filling this with it
+   * printed `<h2>Regulile privind duplicatele</h2><h3>Regulile privind
+   * duplicatele</h3>` — the same sentence twice, one line apart, nested under
+   * itself in Word's navigation pane.
+   */
+  heading?: string;
   rules: readonly RulesPageRule[];
 };
 
 export type RulesPageViolation = {
-  ruleId: string;
+  /**
+   * The catalogue ID, printed as a chip so a phone call can quote it.
+   *
+   * ⚠️ OPTIONAL since #26.06, and the fourth time this module has learnt the
+   * same lesson (`RulesPageSection.heading`, `RulesPageWarning.heading` and
+   * `.sentence` are the other three): a block that is SUBORDINATE to the one
+   * above it must be able to look subordinate. The Duplication page prints one
+   * block carrying a rule's sentence and then one per set of copies beneath it;
+   * with the ID repeated on all of them, a run with twelve sets printed the
+   * `DUP-01` chip thirteen times at one indent, and the sentence read as a
+   * thirteenth count-only violation rather than as the heading for the twelve.
+   */
+  ruleId?: string;
   /**
    * The one folder or file this violation is about, already display-ready — the
    * chosen folder's own name when the culprit is the folder itself.
@@ -326,6 +349,37 @@ export type RulesPageInput = {
   strings: RulesPageStrings;
 };
 
+/**
+ * A rule whose finding is several SETS, laid out as blocks for the page.
+ *
+ * ⚠️ Here rather than inside the panel because the panel is a `"use client"`
+ * component that nothing in this repo's test suite renders, and this shape has
+ * already been wrong once: the Duplication page emitted the rule's AGGREGATE
+ * sentence ("2 files appear more than once, 5 in total") above every set, so a
+ * page listing two files carried "5 in total" directly over it, twice, on the
+ * one artefact that is explicitly the complete one and gets carried to File
+ * Explorer.
+ *
+ * The shape it produces: one block per rule carrying the ID and the aggregate
+ * sentence and NO paths, then one block per set carrying that set's heading as
+ * its sentence, that set's complete paths, and no ID - so a set reads as
+ * subordinate to the sentence rather than as another violation beside it.
+ *
+ * Everything arrives already translated; this module holds no display text.
+ */
+export function groupedViolationBlocks(
+  rules: readonly {
+    ruleId: string;
+    sentence: string;
+    groups: readonly { heading: string; paths: readonly string[] }[];
+  }[],
+): RulesPageViolation[] {
+  return rules.flatMap((rule) => [
+    { ruleId: rule.ruleId, sentence: rule.sentence, related: [] },
+    ...rule.groups.map((group) => ({ sentence: group.heading, related: group.paths })),
+  ]);
+}
+
 export function buildRulesPageHtml(input: RulesPageInput): string {
   const { folderName, generatedAt, locale, sections, violations, clean, warnings, strings } =
     input;
@@ -333,7 +387,7 @@ export function buildRulesPageHtml(input: RulesPageInput): string {
   const ruleBlocks = sections
     .map((section) =>
       [
-        `<h3>${esc(section.heading)}</h3>`,
+        section.heading === undefined ? "" : `<h3>${esc(section.heading)}</h3>`,
         ...section.rules.map((rule) =>
           [
             `<div class="finding">`,
@@ -359,10 +413,14 @@ export function buildRulesPageHtml(input: RulesPageInput): string {
             .map((v) =>
               [
                 `<div class="finding">`,
-                v.culprit === undefined
-                  ? `<p class="msg"><span class="rule">${esc(v.ruleId)}</span> ${esc(v.sentence)}</p>`
-                  : `<p class="msg"><span class="rule">${esc(v.ruleId)}</span> <strong>${esc(v.culprit)}</strong></p>` +
-                    `<p class="msg">${esc(v.sentence)}</p>`,
+                (() => {
+                  const chip =
+                    v.ruleId === undefined ? "" : `<span class="rule">${esc(v.ruleId)}</span> `;
+                  return v.culprit === undefined
+                    ? `<p class="msg">${chip}${esc(v.sentence)}</p>`
+                    : `<p class="msg">${chip}<strong>${esc(v.culprit)}</strong></p>` +
+                      `<p class="msg">${esc(v.sentence)}</p>`;
+                })(),
                 pathList(v.related),
                 `</div>`,
               ].join(""),

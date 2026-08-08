@@ -93,12 +93,16 @@ import { ImportStageBar, MODAL_PHASES } from "./import-stage-bar";
 import { ImportInformation } from "./import-information";
 import { ImportStructureStage } from "./import-structure-stage";
 import { ImportConstraintsStage } from "./import-constraints-stage";
+import { ImportDuplicationStage } from "./import-duplication-stage";
 import { CancelImportDialog } from "./cancel-import-dialog";
 import { checkStructureStage } from "@/lib/import/structure-check";
 import { checkConstraintsStage } from "@/lib/import/constraint-check";
+import { checkDuplicationStage } from "@/lib/import/duplication-check";
 import {
+  phaseAfterFileChecks,
   stageForPhase,
   type ImportPhase,
+  type WalkTarget,
   type WorkflowStageId,
 } from "@/lib/import/workflow-stages";
 import type { CancelFacts } from "@/lib/import/cancel-consequences";
@@ -340,6 +344,37 @@ export function ImportWizard() {
   const [constraintsRulesOpen, setConstraintsRulesOpen] = useState(false);
 
   /**
+   * Slice #26.06 - the Duplication stage's two, plus one that the other stages
+   * did not need.
+   */
+  const [duplicationAcknowledged, setDuplicationAcknowledged] = useState(false);
+  const [duplicationRulesOpen, setDuplicationRulesOpen] = useState(false);
+  /**
+   * Has the duplication match been run against THIS walk?   (Slice #26.06)
+   *
+   * The other two stages derive "not checked in this run" from data they own:
+   * Structure from `observations.length === 0`, Constraints from
+   * `metadata === null`. Duplication cannot, and the reason is the shape of the
+   * flow rather than an oversight - it is fed by exactly the same `entries` and
+   * `metadata` the Constraints check was, so by the time the user is standing
+   * on the Duplication rules screen with nothing checked, every input the
+   * verdict needs is already in state and complete. Deriving from them would
+   * put an answer on a screen that has not asked the question yet.
+   *
+   * A fact about the run, therefore, and published in the same commit as
+   * `entries` and `metadata` at every exit of `runWalk` - the discipline
+   * #26.05's second adversarial round established, for the same reason: a flag
+   * set on one side of an await and read beside data from the other renders a
+   * hybrid of two checks.
+   *
+   * NOT cleared at the top of a walk, deliberately. A re-check must leave the
+   * previous round's list on screen while it runs - that is the to-do list the
+   * user is working through, and it is what the other two panels do - and
+   * clearing this on the way in would blank it for the duration.
+   */
+  const [duplicationChecked, setDuplicationChecked] = useState(false);
+
+  /**
    * Slice #26.03 — the Cancel's two pieces of memory.
    *
    * `documentsCreated` is the only fact the cancel dialog needs that nothing
@@ -418,13 +453,36 @@ export function ImportWizard() {
        * `"structure"` stops at the structure verdict and hands over to the
        * Constraints stage's rules screen with nothing checked and nothing spent.
        * `"constraints"` carries straight on through the metadata pass and the
-       * constraint check.
+       * constraint check, and stops at the Duplication rules screen.
+       * `"duplication"` goes the whole way.
        *
        * An argument rather than a read of `phase`, because this decides whether
        * ~760 `getFile()` calls happen and a decision that expensive belongs to
        * the button that was pressed, not to a state value that may have moved.
+       *
+       * ⚠️ **Slice #26.06 added the third value, and the FIRST duplication
+       * check therefore re-walks and re-sizes a folder the constraints check
+       * measured seconds earlier.** That is a real second ~760-call pass, not a
+       * free ride on the first, and the slice's adversarial review was right to
+       * call an earlier draft of this note out for implying otherwise. It is
+       * the price of two things worth paying for:
+       *
+       *  - the check means "as the folder is NOW". Every screen before this one
+       *    has just told the user to go and work in File Explorer, and a stage
+       *    that answered from a snapshot taken before their last trip would be
+       *    the stale-state failure the whole redesign exists to remove.
+       *  - the stage gets a stopping point. The user reads what a duplicate is
+       *    before being shown files to remove, which is the one instruction in
+       *    the whole Preparation line that looks like a licence to delete.
+       *
+       * The alternative - deriving the first verdict from the state the
+       * constraints check left behind and making the button a re-check only -
+       * halves the cost and was considered. It was not taken because it puts an
+       * answer on a screen that has not asked the question, and because the
+       * expensive path exists either way the moment the user comes back from
+       * fixing something.
        */
-      target: "structure" | "constraints",
+      target: WalkTarget,
       /**
        * Where a FAILED walk leaves the user.
        *
@@ -451,7 +509,14 @@ export function ImportWizard() {
       // re-confirming anything.
       setStructureAcknowledged(false);
       setConstraintsAcknowledged(false);
-      setPhase(target === "structure" ? "walking" : "constraints-checking");
+      setDuplicationAcknowledged(false);
+      setPhase(
+        target === "structure"
+          ? "walking"
+          : target === "constraints"
+            ? "constraints-checking"
+            : "duplication-checking",
+      );
 
       // A permission grant can lapse between two walks. `requestPermission`
       // only works inside a user gesture, which is exactly where this runs —
@@ -556,6 +621,7 @@ export function ImportWizard() {
         setEntries(walked);
         setObservations(seen);
         setMetadata(null);
+        setDuplicationChecked(false);
         setPhase("structure-report");
         return;
       }
@@ -570,6 +636,7 @@ export function ImportWizard() {
         setEntries(walked);
         setObservations(seen);
         setMetadata(null);
+        setDuplicationChecked(false);
         setPhase("constraints");
         return;
       }
@@ -609,19 +676,56 @@ export function ImportWizard() {
         constraintMetadata = new Map();
       }
 
-      // One commit, so no render can pair this walk with the previous check's
-      // sizes. See the note above `checkStructureStage`.
-      setEntries(walked);
-      setObservations(seen);
-      setMetadata(constraintMetadata);
-
       const constraints = checkConstraintsStage({
         entries: walked,
         observations: seen,
         metadata: constraintMetadata,
       });
+
+      /**
+       * Slice #26.06 - the second fork, and it decides `duplicationChecked` as
+       * well as the phase.
+       *
+       * A duplication check is only what THIS press asked for AND what the
+       * constraints let it get to: a run that came for the constraints stops at
+       * the Duplication explanations with nothing checked, and a run that came
+       * for duplication but found a broken constraint never reaches the match.
+       *
+       * Computed from the locals, like both verdicts above it, because a phase
+       * decision cannot wait for a render - and the FORK ITSELF lives in
+       * `workflow-stages.ts`, because it is the whole of this slice's new
+       * decision and there is no way to reach it from a test while it sits
+       * behind an awaited 760-call I/O pass. See `phaseAfterFileChecks`.
+       */
+      const duplication =
+        constraints.clean && target === "duplication"
+          ? checkDuplicationStage({ entries: walked, metadata: constraintMetadata })
+          : null;
+      const next = phaseAfterFileChecks({
+        target,
+        constraintsClean: constraints.clean,
+        duplicationClean: duplication === null ? null : duplication.clean,
+      });
+
+      // ⚠️ The cancel check goes ABOVE the writes, not between them and
+      // `setPhase`. Fixed in passing (#26.06): it has sat below them since
+      // #26.05, which contradicts this function's own rule two screens up -
+      // "every `set*` after an await is guarded on it" - and was harmless only
+      // because nothing awaits between the metadata pass and here. The day
+      // anything does, a renounced run writes its entries, its sizes and a
+      // `duplicationChecked: true` into a wizard `handleCancelConfirmed` has
+      // already reset, and the old guard would have stopped the phase while
+      // letting the verdict through.
       if (token.cancelled) return;
-      setPhase(constraints.clean ? "folder-report" : "constraints-report");
+
+      // ONE commit, so no render can pair this walk with the previous check's
+      // sizes, and none can pair this walk's entries with the previous check's
+      // duplication verdict. See the note above `checkStructureStage`.
+      setEntries(walked);
+      setObservations(seen);
+      setMetadata(constraintMetadata);
+      setDuplicationChecked(next.duplicationRan);
+      setPhase(next.phase);
     },
     [t, beginRun],
   );
@@ -663,6 +767,7 @@ export function ImportWizard() {
     setEntries([]);
     setObservations([]);
     setMetadata(null);
+    setDuplicationChecked(false);
     // Always `"structure"`: a folder that has just been picked has passed
     // nothing, whichever screen the picker was pressed from.
     await runWalk(handle, "pick", "structure", "structure");
@@ -796,22 +901,42 @@ export function ImportWizard() {
     // `constraints-report` on purpose — returning a first-time user to a
     // violation list they have never seen would be a screen made of nothing.
     const returnTo: ImportPhase =
+      // ⚠️ No `structure` arm, and #26.06's adversarial review is why: the
+      // Structure panel renders its PICKER rather than the re-check while its
+      // verdict is null, and a failed pick clears `observations` on the way in,
+      // so `handleRecheck` cannot be reached from that phase at all. A round of
+      // this slice added one anyway, with a comment describing a defect that
+      // cannot occur — which is worse than the gap, because the next reader
+      // would build on it.
       phase === "folder-report"
         ? "folder-report"
         : phase === "constraints"
           ? "constraints"
           : phase === "constraints-report"
             ? "constraints-report"
-            : "structure-report";
+            : phase === "duplication"
+              ? "duplication"
+              : phase === "duplication-report"
+                ? "duplication-report"
+                : "structure-report";
 
     // How far it goes. Pressed from either Structure screen it re-checks the
     // structure and stops; pressed from anywhere later it goes the whole way,
     // because those screens are only reachable through a clean structure check
     // and the user is asking about the files.
-    const target: "structure" | "constraints" =
+    const target: WalkTarget =
       phase === "structure" || phase === "walking" || phase === "structure-report"
         ? "structure"
-        : "constraints";
+        : phase === "constraints" ||
+            phase === "constraints-checking" ||
+            phase === "constraints-report"
+          ? "constraints"
+          : // The Duplication screens and the Evaluation screen. Both are
+            // reachable only through a clean structure check AND a clean
+            // constraints check, so the press means "check the lot" - and from
+            // Evaluation that is the only honest reading, because the user has
+            // been in File Explorer and may have put a copy back.
+            "duplication";
 
     if (!_dirHandle) {
       // Fixed in passing (#26.03): this used to return in silence, so a button
@@ -886,6 +1011,12 @@ export function ImportWizard() {
     // Slice #26.05 — and the same for Constraints, for the same reason.
     setConstraintsAcknowledged(false);
     setConstraintsRulesOpen(false);
+    // Slice #26.06 — and Duplication, plus the flag that says its match ran.
+    // A cancel drops the entries and the metadata, so leaving this true would
+    // claim a check against a walk that no longer exists.
+    setDuplicationAcknowledged(false);
+    setDuplicationRulesOpen(false);
+    setDuplicationChecked(false);
   }, [endRun]);
 
   // Mint a token for this mount, and retire whatever token is live on unmount —
@@ -946,6 +1077,21 @@ export function ImportWizard() {
     phase === "constraints-checking" ||
     phase === "constraints-report";
 
+  /**
+   * The three phases the Duplication panel owns.   (Slice #26.06)
+   *
+   * Same shape as the other two, one stage later: the explanations, the check
+   * running, and the list of what it found. `duplication-checking` covers the
+   * re-walk and the metadata pass as well as the match, so a check that turns
+   * out to break the structure or a constraint leaves this set and enters
+   * `inStructure` or `inConstraints` — the two transitions between stages that
+   * go backwards, and both are meant to.
+   */
+  const inDuplication =
+    phase === "duplication" ||
+    phase === "duplication-checking" ||
+    phase === "duplication-report";
+
   // Derived at render time rather than copied into state when the walk ends:
   // one copy cannot drift from the list the user is looking at. Cheap — it is
   // a single pass over names, no file contents and no I/O.
@@ -996,6 +1142,34 @@ export function ImportWizard() {
         ? null
         : checkConstraintsStage({ entries, observations, metadata }),
     [entries, observations, metadata],
+  );
+
+  /**
+   * The Duplication verdict on screen.   (Slice #26.06)
+   *
+   * Derived, not stored, exactly as the other two verdicts are — and gated on
+   * `duplicationChecked`, which is the one thing that cannot be derived here.
+   * `entries` and `metadata` are both populated and complete the moment the
+   * Constraints check passes, so they cannot tell "the user is standing on the
+   * Duplication explanations, having checked nothing" apart from "the match ran
+   * and found nothing". See the flag's own note for why that is the shape of
+   * the flow rather than a gap in it.
+   *
+   * The `metadata === null` half is unreachable while the flag is true — they
+   * are set in one commit — and it stays because the alternative is a non-null
+   * assertion on a value another branch is allowed to clear.
+   *
+   * `runWalk` computes the same verdict from its own locals to choose the next
+   * phase. Not a second copy of the rule: the same pure function over the same
+   * inputs, called once because a phase decision cannot wait for a render and
+   * once because a render cannot read a local.
+   */
+  const duplicationVerdict = useMemo(
+    () =>
+      !duplicationChecked || metadata === null
+        ? null
+        : checkDuplicationStage({ entries, metadata }),
+    [duplicationChecked, entries, metadata],
   );
 
   /**
@@ -1181,7 +1355,10 @@ export function ImportWizard() {
           // …and hidden through the Constraints phases for the reason it is
           // hidden through the Structure ones: the picker there is BEHIND a
           // tick, and a second copy up here would be a way round the gate.
-          !inConstraints && (
+          !inConstraints &&
+          // …and through the Duplication phases, for the third time and the
+          // same reason.
+          !inDuplication && (
           <button
             type="button"
             onClick={handlePickFolder}
@@ -1319,6 +1496,33 @@ export function ImportWizard() {
           onChooseFolder={handlePickFolder}
           rulesOpen={constraintsRulesOpen}
           onRulesOpenChange={setConstraintsRulesOpen}
+        />
+      )}
+
+      {/* Slice #26.06 — the Duplication stage: the same loop, one stage later
+          again, against the same folder. One panel across all three of its
+          phases, so a check does not swap the screen out from under the
+          reader. */}
+      {inDuplication && (
+        <ImportDuplicationStage
+          verdict={duplicationVerdict}
+          folderName={rootFolderName}
+          busy={phase === "duplication-checking"}
+          busyLabel={
+            // The same two sentences the Constraints panel picks between, and
+            // for the same reason: this check re-walks the folder first (fast),
+            // then pays for the metadata pass, which reports a running count.
+            // The match itself is too quick to have a sentence.
+            metaProgress.total > 0
+              ? t("readingMetadata", { done: metaProgress.done, total: metaProgress.total })
+              : t("walkingFolder")
+          }
+          acknowledged={duplicationAcknowledged}
+          onAcknowledgedChange={setDuplicationAcknowledged}
+          onCheck={() => void handleRecheck()}
+          onChooseFolder={handlePickFolder}
+          rulesOpen={duplicationRulesOpen}
+          onRulesOpenChange={setDuplicationRulesOpen}
         />
       )}
 

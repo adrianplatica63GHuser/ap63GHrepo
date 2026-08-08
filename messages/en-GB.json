@@ -1985,7 +1985,6 @@
         "finding": {
           "multipleProperties": "The chosen folder holds {folders, plural, one {one subfolder that looks like a separate property} other {# subfolders that look like separate properties}}. The import links ALL documents to a single property, so they will be merged into one.",
           "osDirectories": "{folders} Windows system folders will be imported like ordinary folders, and their names will become tags.",
-          "duplicateBasenames": "{documents} files share only {names} {names, plural, one {name} other {names}} between them, so that many documents will have titles you cannot tell apart in any list. Folder names are still kept as tags, so the documents remain distinguishable — just not by title.",
           "officeFiles": "{files} Word/Excel files will be stored, but their contents cannot be read or searched.",
           "walkLoopedOnShortcut": "This folder contains a shortcut pointing back at a folder above it, which makes it endlessly deep. The same files were therefore read many times over, so **every number in this report is larger than reality** — the documents, the pages and the AI costs are all inflated. Do not start the import. Delete the shortcut, then check the folder again.",
           "walkTooManyFolders": "This folder holds more than {limit} subfolders, which is more than can be read in one go, so this report is incomplete. Split it into several smaller folders and check again.",
@@ -2191,6 +2190,57 @@
         "notCheckedYet": "The files have not been checked yet — this page holds the constraints only.",
         "warningsTitle": "Files that could not be read",
         "rulesOnlyName": "constraints"
+      }
+    },
+    "duplication": {
+      "rule": {
+        "DUP-01": {
+          "requirement": "The same file must not sit in the chosen folder more than once. The system recognises copies by name and by size, looking past the ending Windows adds when you copy a file, such as “ - Copy”. Files whose name is nothing but a number are treated as scanned pages and are not compared with each other: a page cannot be taken out of a document without breaking its numbering. Documents scanned into page folders are compared whole, under the next rule; pages left directly in the property's folder are not checked at all.",
+          "example": "Wrong: “contract vanzare.pdf” and “contract vanzare - Copy.pdf” both sit in the property's folder. Right: the file sits in one place only, and the copy has been taken out of the chosen folder.",
+          "violation": "{sets, plural, one {One file sits in the chosen folder more than once} other {# files sit in the chosen folder more than once}}, {files, plural, one {one file} other {# files}} in total. Look at each group below: if they really are the same file, keep the one in the right place and take the others out of the chosen folder. If they are different documents, rename one of them so they no longer look alike. If you cannot tell, take them all out of the chosen folder — you can import them later."
+        },
+        "DUP-02": {
+          "requirement": "The same document must not sit in more than one page folder inside the chosen folder. The system compares the pages: two folders holding exactly the same pages are very probably one and the same document, copied — even when the folders are named differently. Where the pages alone are not enough — a folder with a single page, or several pages of one size — the folders are only reported when one of them is marked as a copy and sits beside the other.",
+          "example": "Wrong: “Contract vanzare” and “Contract vanzare - Copy” hold the same scanned pages. Right: the document sits in one page folder only, and the copy has been taken out of the chosen folder.",
+          "violation": "{sets, plural, one {One document sits in more than one page folder} other {# documents sit in more than one page folder}}, {folders, plural, one {one folder} other {# folders}} in total. Open the folders below and compare the pages: if they are the same, keep one folder and take the others out of the chosen folder. If they are different documents, rename one of the folders so they no longer look alike. If you cannot tell, take them all out of the chosen folder — you can import them later."
+        }
+      },
+      "title": "Copies inside the chosen folder",
+      "intro": "The structure and the files are in order. One check is left, on the same folder: nothing must sit in it twice, or it reaches the archive twice as well. Only the files in the chosen folder are compared, against each other — what is already in the system is not checked here.",
+      "rulesTitle": "What counts as a copy",
+      "showRules": "Show the explanations again",
+      "hideRules": "Hide the explanations",
+      "acknowledge": "I have read what counts as a copy",
+      "acknowledgeHint": "Tick this after reading the explanations, and again after each correction made in File Explorer. The tick is asked for at every check.",
+      "check": "Look for copies",
+      "recheck": "Check again",
+      "chooseAnotherFolder": "Choose another folder…",
+      "clean": "Nothing sits in the chosen folder twice.",
+      "violationsTitle": "{count, plural, one {One thing to put right} other {# things to put right}}",
+      "fixInstructions": "Open the folder in File Explorer and take the copies out of it — the system does not touch your files and never deletes anything itself. Do not delete anything before looking at the files: the system says two files look alike, not that they are. When you are done, tick below and press “Check again”.",
+      "morePaths": "{count, number} more…",
+      "group": {
+        "name": "{count, plural, one {One file} other {# files}}, one of them “{name}”",
+        "pages": "{count, plural, one {One folder} other {# folders}}, {pages, plural, one {holding the same page} other {holding the same # pages}}"
+      },
+      "unsized": {
+        "title": "Files that could not be measured",
+        "intro": "{count, plural, one {One file could not be measured, so we cannot say whether it sits in the folder a second time. Usually the file is open in another program, or the folder has been moved in the meantime. Close the program using it and check again, or take it out of the chosen folder.} other {# files could not be measured, so we cannot say whether they sit in the folder a second time. Usually the files are open in other programs, or the folder has been moved in the meantime. Close the programs using them and check again, or take them out of the chosen folder.}}"
+      },
+      "save": {
+        "button": "Save the list as a page",
+        "hint": "Downloads a page you can open or print while you work in File Explorer. It holds the explanations and every copy found, with nothing left out.",
+        "filePrefix": "import-copies",
+        "documentTitle": "Copies in the import folder",
+        "generatedAt": "Generated",
+        "folderLabel": "Folder",
+        "rulesTitle": "What counts as a copy",
+        "violationsTitle": "To put right",
+        "allClear": "Nothing sits in the chosen folder twice.",
+        "blocked": "Nothing was found twice among the files that could be measured, but the folder still cannot be imported — see below for why.",
+        "notCheckedYet": "The folder has not been checked yet — this page holds the explanations only.",
+        "warningsTitle": "Files that could not be measured",
+        "rulesOnlyName": "copies"
       }
     },
     "workflow": {

@@ -141,12 +141,22 @@ export function ImportConstraintsStage({
    * behind "Arată din nou restricțiile", because the fix list is what the user
    * is working through.
    *
-   * The third case is the re-check started from the EVALUATION screen: this
-   * panel mounts with the previous round's CLEAN verdict, so `checked` is true
-   * and there is no fix list, no unreadable block and — correctly — no
-   * all-clear either, since one is running. Without this the user would be
-   * looking at a title, an intro, an empty box and a spinner. The constraints
-   * being re-checked are the honest content for that window.
+   * The third case WAS the re-check started from the EVALUATION screen, which
+   * mounted this panel with the previous round's CLEAN verdict.
+   *
+   * ⚠️ **That route no longer exists as of #26.06**, and saying so is the point
+   * of this note: an Evaluation re-check now targets Duplication, so it enters
+   * `duplication-checking` and mounts the Duplication panel instead. The only
+   * two ways into `constraints-checking` are from `constraints`, where
+   * `metadata` is null and the verdict is therefore null, and from
+   * `constraints-report`, where the verdict is by definition not clean — so a
+   * clean `ConstraintVerdict` can no longer be in scope here at all.
+   *
+   * The branch stays: it costs one boolean, it is the honest content for that
+   * window if the route ever returns, and deleting a guard because the machine
+   * currently cannot reach it is how the machine's next change reintroduces the
+   * bug. What must NOT stay is a comment claiming the route is live — the next
+   * reader would build on a model of the flow that is one slice out of date.
    */
   const nothingToShow =
     violationCount === 0 && (verdict?.unreadable.length ?? 0) === 0;
@@ -462,13 +472,15 @@ export function ImportConstraintsStage({
         running and may refuse them.
 
         ⚠️ WHICH MAKES THIS LINE UNREACHABLE, and that is not a reason to delete
-        the guard — it is the reason the guard has to stay. A clean verdict only
-        ever exists in the commit that also sets the phase to `folder-report`,
-        which unmounts this panel; every other route in has `metadata === null`
-        and therefore no verdict at all. So the only frame in which a clean
-        verdict is in scope is `constraints-checking`, where `busy` is true by
-        definition. A reader who notices the green line never appears and
-        "repairs" it by dropping `!busy` restores the lie exactly.
+        the guard — it is the reason the guard has to stay. It was already
+        unreachable when #26.05 wrote this note, and #26.06 removed the last
+        route that could have made it reachable again: an Evaluation re-check
+        now enters `duplication-checking`, not `constraints-checking`, so this
+        panel is never mounted holding a clean verdict at all. A reader who
+        notices the green line never appears and "repairs" it by dropping
+        `!busy` restores the lie the moment a later slice re-routes that button
+        — and the Duplication panel's identical guard IS live today, which is
+        what that would be copied from.
       */}
       {!busy && verdict !== null && verdict.clean && (
         <p className="mt-4 text-sm font-medium text-emerald-700 dark:text-emerald-400">
@@ -594,9 +606,17 @@ export function ImportConstraintsStage({
 
       {/* ── The take-away copy ───────────────────────────────────────────── */}
       <div className="mt-5 border-t border-crease pt-4 dark:border-zinc-800">
+        {/* Fixed in passing (#26.06): `disabled={busy}`. `settled` is
+            `checked && !busy`, so a Save pressed during a check wrote "the
+            files have not been checked yet" into a dated page while the screen
+            behind it still showed the previous round's complete fix list — the
+            one thing the user actually carries into File Explorer. The check
+            here is a re-walk plus the ~760-call metadata pass, so the window is
+            seconds long. */}
         <button
           type="button"
           onClick={handleSave}
+          disabled={busy}
           className={buttonClass({ variant: "secondary", size: "md" })}
         >
           {t("save.button")}

@@ -79,7 +79,10 @@ export const WORKFLOW_STAGES: readonly WorkflowStage[] = [
   // #26.05 built its screen, so `plannedIn` is gone here too — the second time
   // this row has been a one-line change rather than a refactor.
   { id: "constraints", line: "preparation" },
-  { id: "duplication", line: "preparation", plannedIn: "26.06" },
+  // #26.06 built its screen, so `plannedIn` is gone here too - the third time
+  // this row has been a one-line change rather than a refactor, which is the
+  // promise this file made once and has now kept three times.
+  { id: "duplication", line: "preparation" },
   { id: "preexisting", line: "classification", plannedIn: "26.08" },
   { id: "evaluation", line: "classification" },
   { id: "scanning", line: "classification" },
@@ -109,8 +112,11 @@ export function stagesOnLine(line: WorkflowLineId): WorkflowStage[] {
  *  constraints      → the Constraints rules and the tick; nothing checked (#26.05)
  *  constraints-checking → the re-walk AND the ~760-call metadata pass, running
  *  constraints-report   → files broke constraints; the same fix-and-re-check loop
- *  folder-report    → structure and constraints clean, nothing spent; the
- *                     forecast awaits Continuă
+ *  duplication      → what counts as a duplicate, and the tick; nothing checked (#26.06)
+ *  duplication-checking → the re-walk, the metadata pass and the match, running
+ *  duplication-report   → the folder holds copies; the same fix-and-re-check loop
+ *  folder-report    → structure, constraints and duplication clean, nothing
+ *                     spent; the forecast awaits Continuă
  *  scanning         → concurrent Haiku AI scans running in background
  *  ready            → scan complete; scan-table rendered + "Import" CTA visible
  *  property         → PropertyStepDialog is open (resolve the run's Property)
@@ -133,6 +139,9 @@ export const IMPORT_PHASES = [
   "constraints",
   "constraints-checking",
   "constraints-report",
+  "duplication",
+  "duplication-checking",
+  "duplication-report",
   "folder-report",
   "scanning",
   "ready",
@@ -167,26 +176,31 @@ export type ImportPhase = (typeof IMPORT_PHASES)[number];
  *    are standing in is the one whose button they pressed. When that re-walk
  *    finds the structure broken again the phase moves to `structure-report` and
  *    the indicator moves back with it, which is the truth rather than a glitch.
+ *  - `duplication` / `duplication-checking` / `duplication-report` all report
+ *    **duplication**, by the argument #26.04 made for Structure and #26.05
+ *    repeated for Constraints: the rules listing, the check and the list of
+ *    what it found are three views of one stage. `duplication-checking` covers
+ *    the walk AND the metadata pass as well as the match itself, and it still
+ *    reports Duplication — the user pressed this stage's button, and if the
+ *    re-walk finds the structure or the constraints broken again the phase
+ *    moves back to `structure-report` or `constraints-report` and the indicator
+ *    moves back with it, which is the truth rather than a glitch.
  *  - `folder-report` reports **evaluation**: today's post-folder-selection
- *    screen is what 26.09 renames Evaluation, and it is reachable only through
- *    a clean structure check AND a clean constraints check.
+ *    screen is what 26.09 renames Evaluation, and since #26.06 it is reachable
+ *    only through a clean structure check, a clean constraints check AND a
+ *    clean duplication check — all three of which one press of Verifică din nou
+ *    from that screen re-runs, in that order.
  *  - `ready` reports **import**, not scanning: the scan is finished and the one
  *    thing left on that screen is the Import button.
  *  - `resumed` reports **result** — the resumed view is a previous run's
  *    result, and it is the only way to reach that screen today.
  *
- * ⚠️ **Duplication still has no phase, so Constraints passing lands on
- * Evaluation.** The same rule applies as it did to Constraints one slice ago:
- * Duplication cannot be marked current, because nothing builds its screen until
- * 26.06 — and marking it current anyway is the one thing `plannedIn` exists to
- * forbid. So the amber moves from Constraints to Evaluation, Duplication stays
- * grey with its "în curând" note, and 26.06 inserts itself between them by
- * deleting one `plannedIn` and adding its phases here.
- *
- * (What #26.04 wrote in this paragraph — "Constraints cannot begin, because
- * 26.05 builds it" — is now done. It is kept in the same shape deliberately:
- * one stage's name changed and nothing else, which is the evidence that the
- * mechanism works rather than that it was got round.)
+ * ⚠️ **The paragraph that stood here for three slices is gone, and that is what
+ * it was for.** #26.04 wrote "Constraints cannot begin, because 26.05 builds
+ * it"; #26.05 rewrote it for Duplication with one stage's name changed and
+ * nothing else. Both are now done, `plannedIn` is off both rows, and the amber
+ * runs from Information to Evaluation without a gap. What is left on the second
+ * line is Pre-existing, and 26.08 deletes its `plannedIn` the same way.
  *
  * KNOWN GAP, left for 26.10. Closing `BulkImportDialog` returns the wizard to
  * `ready`, so after a finished run the indicator still reads "Import — în
@@ -206,6 +220,9 @@ const STAGE_BY_PHASE: Record<ImportPhase, WorkflowStageId> = {
   constraints: "constraints",
   "constraints-checking": "constraints",
   "constraints-report": "constraints",
+  duplication: "duplication",
+  "duplication-checking": "duplication",
+  "duplication-report": "duplication",
   "folder-report": "evaluation",
   scanning: "scanning",
   ready: "import",
@@ -265,4 +282,74 @@ export function stageStatuses(
     }
   });
   return out;
+}
+
+// ---------------------------------------------------------------------------
+// Where a walk ends up   (Slice #26.06)
+// ---------------------------------------------------------------------------
+
+/**
+ * How far a walk goes, and therefore what it costs.
+ *
+ * `structure` stops at the structure verdict and spends nothing beyond the
+ * walk. The other two run the ~760-call metadata pass, and `duplication` runs
+ * the match on top of it.
+ */
+export type WalkTarget = "structure" | "constraints" | "duplication";
+
+/**
+ * The fork at the END of a walk that got as far as the file checks - which
+ * screen the user lands on, and whether the duplication match ran.
+ *
+ * ⚠️ **HERE RATHER THAN IN THE WIZARD, and that is the whole reason it
+ * exists.** This is the entire new decision #26.06 makes, it has eight
+ * meaningful input combinations, and inside `runWalk` it sat behind an
+ * `await`ed 760-call I/O pass with no way to reach it from a test. A wrong cell
+ * in this table is not a crash: it is a user standing on a screen that has
+ * nothing on it, or a stage going green that nobody ran. `import-wizard.tsx`
+ * calls this and holds no copy of the rule.
+ *
+ * `duplicationRan` is returned rather than left to the caller to re-derive,
+ * because the wizard publishes it as state beside `entries` and `metadata` and
+ * a second expression of the same condition is a second thing to keep in step.
+ *
+ * The cases, in the order the flow meets them:
+ *
+ *  - **Constraints broke** -> `constraints-report`, whatever the target. A run
+ *    that came for Duplication and found a broken constraint has not checked
+ *    for duplicates and must not say it has.
+ *  - **Constraints clean, target was `constraints`** -> `duplication`, the
+ *    explanations, nothing checked. This is the stopping point the stage exists
+ *    for: the user reads what a duplicate is before being shown files to
+ *    remove.
+ *  - **Constraints clean, target was `duplication`** -> `folder-report` or
+ *    `duplication-report`, on the match.
+ *
+ * `target: "structure"` never reaches here - `runWalk` returns at the structure
+ * verdict - which is why it is not a case below. It is accepted as an input
+ * rather than being made unrepresentable, because the caller passes the same
+ * variable through and a union that excluded it would push a cast into the one
+ * place this function is meant to keep simple. It is answered by UNDER-CLAIMING:
+ * `constraints`, the earliest stage such a run has certainly not finished. An
+ * earlier draft answered `duplication`, which would have carried a future
+ * caller two stages forward past a screen it never showed them - the same
+ * false-green failure `plannedIn` exists to prevent, one layer up.
+ */
+export function phaseAfterFileChecks(input: {
+  target: WalkTarget;
+  constraintsClean: boolean;
+  /** `null` when the match did not run - see `duplicationRan` in the result. */
+  duplicationClean: boolean | null;
+}): { phase: ImportPhase; duplicationRan: boolean } {
+  const { target, constraintsClean, duplicationClean } = input;
+
+  if (target === "structure") return { phase: "constraints", duplicationRan: false };
+  if (!constraintsClean) return { phase: "constraints-report", duplicationRan: false };
+  if (target !== "duplication" || duplicationClean === null) {
+    return { phase: "duplication", duplicationRan: false };
+  }
+  return {
+    phase: duplicationClean ? "folder-report" : "duplication-report",
+    duplicationRan: true,
+  };
 }

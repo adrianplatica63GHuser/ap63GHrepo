@@ -1985,7 +1985,6 @@
         "finding": {
           "multipleProperties": "Folderul ales conține {folders, plural, one {un subfolder care pare o proprietate separată} few {# subfoldere care par proprietăți separate} other {# de subfoldere care par proprietăți separate}}. Importul leagă TOATE documentele de o singură proprietate, deci vor fi contopite într-una singură.",
           "osDirectories": "{folders, plural, one {Un folder de sistem Windows va fi importat} few {# foldere de sistem Windows vor fi importate} other {# de foldere de sistem Windows vor fi importate}} ca foldere obișnuite, iar numele lor vor deveni etichete.",
-          "duplicateBasenames": "{documents, plural, one {Un fișier are} few {# fișiere au} other {# de fișiere au}} între ele doar {names, plural, one {un singur nume} few {# nume distincte} other {# de nume distincte}}, deci tot atâtea documente vor avea titluri pe care nu le veți putea deosebi în liste. Numele folderelor rămân păstrate ca etichete, deci documentele pot fi totuși deosebite — dar nu după titlu.",
           "officeFiles": "{files, plural, one {Un fișier Word/Excel va fi păstrat} few {# fișiere Word/Excel vor fi păstrate} other {# de fișiere Word/Excel vor fi păstrate}}, dar conținutul lor nu poate fi citit sau căutat.",
           "walkLoopedOnShortcut": "Acest folder conține o scurtătură care trimite înapoi către un folder de deasupra, ceea ce îl face infinit de adânc. Din această cauză aceleași fișiere au fost citite de mai multe ori, deci **toate cifrele din acest raport sunt mai mari decât în realitate** — și numărul de documente, și numărul de pagini, și costurile AI. Nu porniți importul. Ștergeți scurtătura și verificați folderul din nou.",
           "walkTooManyFolders": "Acest folder conține mai mult de {limit} de subfoldere, mai multe decât pot fi citite dintr-o dată, deci acest raport este incomplet. Împărțiți-l în mai multe foldere mai mici și verificați din nou.",
@@ -2191,6 +2190,57 @@
         "notCheckedYet": "Fișierele nu au fost verificate încă — pagina conține doar restricțiile.",
         "warningsTitle": "Fișiere care nu au putut fi citite",
         "rulesOnlyName": "restrictii"
+      }
+    },
+    "duplication": {
+      "rule": {
+        "DUP-01": {
+          "requirement": "Același fișier nu trebuie să se afle de mai multe ori în folderul ales. Sistemul le recunoaște după nume și după mărime, trecând peste terminația pe care Windows o adaugă atunci când copiați un fișier, precum „ - Copie”. Fișierele al căror nume este doar un număr sunt considerate pagini scanate și nu se compară între ele: o pagină nu poate fi scoasă dintr-un document fără să strice numerotarea. Documentele scanate în foldere de pagini se compară întregi, la regula următoare; paginile lăsate direct în folderul proprietății nu se verifică deloc.",
+          "example": "Greșit: „contract vanzare.pdf” și „contract vanzare - Copie.pdf” se află amândouă în folderul proprietății. Corect: fișierul se află într-un singur loc, iar copia a fost scoasă din folderul ales.",
+          "violation": "{sets, plural, one {Un fișier se află de mai multe ori în folderul ales} few {# fișiere se află de mai multe ori în folderul ales} other {# de fișiere se află de mai multe ori în folderul ales}}, în total {files, plural, one {un fișier} few {# fișiere} other {# de fișiere}}. Uitați-vă la fiecare grup de mai jos: dacă sunt într-adevăr același fișier, păstrați-l pe cel din locul potrivit și scoateți-le pe celelalte din folderul ales. Dacă sunt documente diferite, redenumiți-l pe unul dintre ele, ca să nu mai semene. Dacă nu vă puteți da seama, scoateți-le pe toate din folderul ales — le puteți importa mai târziu."
+        },
+        "DUP-02": {
+          "requirement": "Același document nu trebuie să se afle în mai multe foldere de pagini din folderul ales. Sistemul compară paginile: două foldere care conțin exact aceleași pagini sunt foarte probabil unul și același document, copiat — chiar dacă folderele se numesc altfel. Când paginile singure nu ajung — un folder cu o singură pagină, ori mai multe pagini de aceeași mărime — folderele se raportează doar dacă unul dintre ele este marcat drept copie și se află lângă celălalt.",
+          "example": "Greșit: „Contract vanzare” și „Contract vanzare - Copy” conțin aceleași pagini scanate. Corect: documentul se află într-un singur folder de pagini, iar copia a fost scoasă din folderul ales.",
+          "violation": "{sets, plural, one {Un document se află în mai multe foldere de pagini} few {# documente se află în mai multe foldere de pagini} other {# de documente se află în mai multe foldere de pagini}}, în total {folders, plural, one {un folder} few {# foldere} other {# de foldere}}. Deschideți folderele de mai jos și comparați paginile: dacă sunt aceleași, păstrați un singur folder și scoateți-le pe celelalte din folderul ales. Dacă sunt documente diferite, redenumiți unul dintre foldere, ca să nu mai semene. Dacă nu vă puteți da seama, scoateți-le pe toate din folderul ales — le puteți importa mai târziu."
+        }
+      },
+      "title": "Duplicate în folderul ales",
+      "intro": "Structura și fișierele sunt în regulă. A mai rămas o verificare, tot pe același folder: același lucru nu trebuie să se afle în el de două ori, altfel ajunge de două ori și în arhivă. Se compară doar fișierele din folderul ales, între ele — ce se află deja în sistem nu se verifică aici.",
+      "rulesTitle": "Ce se consideră duplicat",
+      "showRules": "Arată din nou explicațiile",
+      "hideRules": "Ascunde explicațiile",
+      "acknowledge": "Am citit ce se consideră duplicat",
+      "acknowledgeHint": "Bifați după ce ați citit explicațiile și apoi din nou după fiecare îndreptare făcută în File Explorer. Bifa se cere la fiecare verificare.",
+      "check": "Caută duplicate",
+      "recheck": "Verifică din nou",
+      "chooseAnotherFolder": "Alege alt folder…",
+      "clean": "Nu se află nimic de două ori în folderul ales.",
+      "violationsTitle": "{count, plural, one {Un lucru de îndreptat} few {# lucruri de îndreptat} other {# de lucruri de îndreptat}}",
+      "fixInstructions": "Deschideți folderul în File Explorer și scoateți copiile din el — sistemul nu vă atinge fișierele și nu șterge nimic singur. Nu ștergeți nimic până nu v-ați uitat la fișiere: sistemul spune că două fișiere par la fel, nu că sunt. Când ați terminat, bifați mai jos și apăsați „Verifică din nou”.",
+      "morePaths": "încă {count, number}…",
+      "group": {
+        "name": "{count, plural, one {Un fișier} few {# fișiere} other {# de fișiere}}, printre care „{name}”",
+        "pages": "{count, plural, one {Un folder} few {# foldere} other {# de foldere}}, {pages, plural, one {cu aceeași pagină} few {cu aceleași # pagini} other {cu aceleași # de pagini}}"
+      },
+      "unsized": {
+        "title": "Fișiere care nu au putut fi măsurate",
+        "intro": "{count, plural, one {Un fișier nu a putut fi măsurat, așa că nu putem spune dacă se mai află o dată în folder. De obicei fișierul este deschis într-un alt program, ori folderul a fost mutat între timp. Închideți programul care îl folosește și verificați din nou, ori scoateți-l din folderul ales.} few {# fișiere nu au putut fi măsurate, așa că nu putem spune dacă se mai află o dată în folder. De obicei fișierele sunt deschise în alte programe, ori folderul a fost mutat între timp. Închideți programele care le folosesc și verificați din nou, ori scoateți-le din folderul ales.} other {# de fișiere nu au putut fi măsurate, așa că nu putem spune dacă se mai află o dată în folder. De obicei fișierele sunt deschise în alte programe, ori folderul a fost mutat între timp. Închideți programele care le folosesc și verificați din nou, ori scoateți-le din folderul ales.}}"
+      },
+      "save": {
+        "button": "Salvează lista ca pagină",
+        "hint": "Se descarcă o pagină pe care o puteți deschide sau tipări cât timp lucrați în File Explorer. Conține explicațiile și toate duplicatele găsite, fără prescurtări.",
+        "filePrefix": "duplicate-import",
+        "documentTitle": "Duplicate în folderul de import",
+        "generatedAt": "Generat",
+        "folderLabel": "Folder",
+        "rulesTitle": "Ce se consideră duplicat",
+        "violationsTitle": "De îndreptat",
+        "allClear": "Nu se află nimic de două ori în folderul ales.",
+        "blocked": "Nu s-a găsit nimic de două ori printre fișierele care s-au putut măsura, dar folderul tot nu poate fi importat — vedeți mai jos de ce.",
+        "notCheckedYet": "Folderul nu a fost verificat încă — pagina conține doar explicațiile.",
+        "warningsTitle": "Fișiere care nu au putut fi măsurate",
+        "rulesOnlyName": "duplicate"
       }
     },
     "workflow": {

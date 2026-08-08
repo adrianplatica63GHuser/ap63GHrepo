@@ -50,7 +50,23 @@
  * and these two would have drifted in opposite directions — S-04 urging a user
  * to merge exactly the files the new rules say they deliberately kept apart.
  *
- * ⚠️ AND WHAT #26.05 TOOK OUT, FOR THE SAME REASON ONE STAGE LATER
+ * ⚠️ AND WHAT #26.06 TOOK OUT, ONE STAGE LATER AGAIN
+ * ─────────────────────────────────────────────────
+ *
+ * One rule, F-15 (`duplicateBasenames`), to the Duplication stage's catalogue
+ * in `duplication-rules.ts`. Its brief said to absorb it rather than run both,
+ * and absorbing it meant changing the test: DUP-01 matches on name AND size,
+ * because under #26.01's structure rules every page folder holds a `1.jpg` and
+ * a name-only rule would be broken by every compliant archive. The reasoning is
+ * written out where the replacement lives.
+ *
+ * ⚠️ **Nothing replaces it HERE, and that is the point rather than an
+ * omission.** Duplication blocks, and it sits before the Evaluation screen this
+ * module feeds — so a folder that reaches this report has already been found to
+ * hold no copies, and a finding about copies would be dead code with a Romanian
+ * sentence attached.
+ *
+ * ⚠️ AND WHAT #26.05 TOOK OUT, FOR THE SAME REASON ONE STAGE EARLIER
  * ───────────────────────────────────────────────────────────────
  *
  * Five more, this time to the Constraints stage's catalogue in
@@ -94,8 +110,6 @@
  *  - **F-11** — see the note above: an unreadable type costs automatic
  *    extraction and nothing else, and there is nothing the user can do about
  *    it, so it informs rather than blocks.
- *  - **F-15** — duplicate basenames, until #26.06's Duplication stage absorbs
- *    it and matches on name AND size.
  *  - **F-17** — Office files, and this one is a decision rather than an
  *    omission. An Office file imports faithfully: it is stored, it is
  *    downloadable, and the only thing missing is that nothing in this codebase
@@ -112,12 +126,11 @@
  * but it no longer discriminates much, and saying so is the honest version. The
  * measured near-misses that justified the split (48 folders on Adrian's
  * archive, 20 of them loud) were S-03, S-04 and S-05, and they are gone. Two
- * quiet rules remain from before, and #26.05 added a third: F-17, because an
- * Office file imports faithfully and is merely never read; F-15, because
- * duplicate titles are survivable — the folder names are still kept as tags;
- * and F-11, for F-17's reason and because the user cannot act on it at all.
- * Everything else here is loud, because everything else here loses or corrupts
- * something.
+ * quiet rules remain: F-17, because an Office file imports faithfully and is
+ * merely never read, and F-11, for F-17's reason and because the user cannot
+ * act on it at all. (#26.05 made that three by adding F-11 and #26.06 took it
+ * back to two by deleting F-15.) Everything else here is loud, because
+ * everything else here loses or corrupts something.
  *
  * ⚠️ That is a claim about the current rule set, not a policy. It was measured
  * once, drifted, and had to be rewritten; if a rule is added, measure it rather
@@ -164,7 +177,6 @@ export type Loudness = "loud" | "quiet";
 export type FindingKind =
   | "multipleProperties"      // S-01
   | "osDirectories"           // F-03
-  | "duplicateBasenames"      // F-15
   | "walkLoopedOnShortcut"    // S-17 — a shortcut makes the folder endless
   | "walkTooManyFolders"      // S-17 — more subfolders than can be read at once
   | "walkTooManyFiles"        // S-17 — more files than can be read at once
@@ -181,8 +193,9 @@ export type Finding = {
    *
    * Each rule used to cap its own paths with a `.slice(0, 5)`, which quietly
    * made this a sample and made the downloadable report a truncated copy
-   * advertising itself as exhaustive: F-15 rendered "86 names appear more than
-   * once" above exactly five of them. Truncation is a RENDERING decision and
+   * advertising itself as exhaustive: the since-deleted F-15 rendered "86 names
+   * appear more than once" above exactly five of them. Truncation is a
+   * RENDERING decision and
    * belongs to whoever renders — `report-sections.tsx` shows four and says how
    * many it hid; the document shows all of them, which is its whole reason to
    * exist.
@@ -345,37 +358,6 @@ function fileFindings(entries: readonly FSEntry[]): Finding[] {
       loudness: "quiet",
       paths: officeNonText.map((f) => f.path),
       counts: { files: officeNonText.length },
-    });
-  }
-
-  // F-15 — same basename in two folders produces two Documents with identical
-  // titles, indistinguishable in every list in the application.
-  //
-  // It used to be read alongside S-16: duplicates clustering across top-level
-  // folders meant several copies of one archive, and picking a different
-  // folder was the real remedy. S-16 is gone (#26.02) because a compliant
-  // chosen folder cannot hold a copy of itself — a nested archive is a
-  // structure violation with one unambiguous instruction. What is left here is
-  // the ordinary case S-16 never covered: two genuinely different documents
-  // that happen to share a name. #26.06 absorbs this rule into the Duplication
-  // stage, where the comparison is by name AND size.
-  const byName = new Map<string, string[]>();
-  for (const f of fileNames) {
-    const key = f.name.toLowerCase();
-    byName.set(key, [...(byName.get(key) ?? []), f.path]);
-  }
-  const dupes = [...byName.values()].filter((paths) => paths.length > 1);
-  if (dupes.length > 0) {
-    out.push({
-      ruleId: "F-15",
-      kind: "duplicateBasenames",
-      loudness: "quiet",
-      // EVERY path, not one example per group. The sentence says "192 files
-      // share only 86 names"; listing 86 paths under it would contradict the
-      // number directly above them, which is the exact defect that made the
-      // first draft of the downloadable report misleading.
-      paths: dupes.flat(),
-      counts: { names: dupes.length, documents: dupes.reduce((n, p) => n + p.length, 0) },
     });
   }
 

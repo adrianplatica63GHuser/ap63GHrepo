@@ -423,7 +423,16 @@ export function ImportStructureStage({
         </>
       )}
 
-      {verdict !== null && verdict.clean && (
+      {/* Fixed in passing (#26.06): `!busy`, which both sibling panels carry
+          and this one did not. A clean verdict is not reachable here today —
+          a clean structure walk moves the phase to `constraints` in the same
+          commit — but this is the one of the three panels whose green line had
+          no guard at all, and `handleRecheck`'s `returnTo` falls through to
+          `structure-report` for any phase it does not name. The day a route
+          lands here with the previous walk's clean verdict, the guard is the
+          difference between a spinner and "Structura folderului este în regulă"
+          in emerald over a check that is still running. */}
+      {!busy && verdict !== null && verdict.clean && (
         <p className="mt-4 text-sm font-medium text-emerald-700 dark:text-emerald-400">
           {t("clean")}
         </p>
@@ -530,9 +539,14 @@ export function ImportStructureStage({
 
       {/* ── The take-away copy ───────────────────────────────────────────── */}
       <div className="mt-5 border-t border-crease pt-4 dark:border-zinc-800">
+        {/* Fixed in passing (#26.06): `disabled={busy}`, for the reason its two
+            siblings now carry the same attribute — a Save pressed during a
+            check writes "nothing has been checked yet" into a dated page while
+            the screen behind it still shows the previous round's fix list. */}
         <button
           type="button"
           onClick={handleSave}
+          disabled={busy}
           className={buttonClass({ variant: "secondary", size: "md" })}
         >
           {t("save.button")}
