@@ -28,10 +28,11 @@
  * follow the others.
  *
  * That is also why the loud/quiet cases went with them. The split was measured
- * on the three near-miss rules; with them gone only F-15 and F-17 are quiet,
+ * on the three near-miss rules; with them gone only F-11 and F-17 are quiet,
  * so the one surviving loudness test asserts the ORDER (loud before quiet)
- * rather than where the line sits — and it had to be rewritten again in #26.05,
- * because the loud finding it used to sort against was F-08.
+ * rather than where the line sits — it had to be rewritten in #26.05, because
+ * the loud finding it used to sort against was F-08, and again in #26.06, which
+ * deleted F-15.
  *
  * Cross-checked against the real archive by running this module over
  * C:\dev\TEST.DATA. One aggregate count reproduces the spec's independent
@@ -140,15 +141,19 @@ describe("multi-property root (S-01)", () => {
 // ---------------------------------------------------------------------------
 
 describe("file findings", () => {
-  it("reports duplicate basenames across folders, listing every affected file", () => {
+  it("⚠️ says NOTHING about two files sharing a name, since #26.06", () => {
+    // F-15 lived here from #24.02b until #26.06 moved the question to the
+    // Duplication stage, which blocks and matches on name AND size. This is
+    // the negative half of that move, and it is worth a test because the
+    // failure it guards is silent: a report that quietly grew the finding back
+    // would put an advisory sentence about copies on the Evaluation screen,
+    // one stage AFTER a blocking stage has already refused every folder that
+    // holds any — advice about a state the user cannot be in.
+    //
+    // The paths below share a name and would have been F-15; nothing here may
+    // mention them.
     const r = run({ entries: [file("A/fisa.jpg"), file("B/fisa.jpg"), file("C/alt.jpg")] });
-    const f = find(r, "duplicateBasenames")!;
-    expect(f.counts).toMatchObject({ names: 1, documents: 2 });
-    // The path list must agree with `documents`, not with `names` — it used
-    // to show one example per group, so a finding claiming 192 affected files
-    // listed 86 paths.
-    expect(f.paths).toHaveLength(f.counts.documents);
-    expect(f.paths).toEqual(["A/fisa.jpg", "B/fisa.jpg"]);
+    expect(kinds(r)).toEqual([]);
   });
 
   it("keeps the Office note ADVISORY, and says nothing about a plain text file", () => {
@@ -291,8 +296,8 @@ describe("paths are complete, not a sample", () => {
   it("keeps EVERY path on the finding, however many there are", () => {
     // Each rule used to cap itself with a `.slice(0, 5)`, which made the
     // downloadable report a truncated copy advertising itself as exhaustive:
-    // F-15 rendered "86 names appear more than once" above exactly five of
-    // them. Truncation is a rendering decision — the panel shows four and
+    // the since-deleted F-15 rendered "86 names appear more than once" above
+    // exactly five of them. Truncation is a rendering decision — the panel shows four and
     // says how many it hid; the document shows all of them.
     const entries = Array.from({ length: 40 }, (_, i) => file(`F${i}/nota.docx`));
     const f = find(run({ entries }), "officeFiles")!;

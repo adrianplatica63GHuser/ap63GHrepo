@@ -15,6 +15,7 @@
 import {
   buildReportHtml,
   buildRulesPageHtml,
+  groupedViolationBlocks,
   reportFileName,
   type ReportHtmlStrings,
   type RulesPageInput,
@@ -111,7 +112,7 @@ describe("buildReportHtml", () => {
 
   it("escapes a file path containing angle brackets", () => {
     const html = build({
-      findings: [{ ruleId: "F-15", kind: "duplicateBasenames", loudness: "loud", paths: ["a/<b>.jpg"], counts: {} }],
+      findings: [{ ruleId: "F-17", kind: "officeFiles", loudness: "quiet", paths: ["a/<b>.jpg"], counts: {} }],
     });
     expect(html).toContain("a/&lt;b&gt;.jpg");
   });
@@ -200,6 +201,84 @@ function structure(over: Partial<RulesPageInput> = {}): string {
 }
 
 describe("buildRulesPageHtml", () => {
+  it("⚠️ lays a multi-set rule out as one sentence and N subordinate sets", () => {
+    // The shape itself, pinned where a test can reach it - the panel that used
+    // to hold this `flatMap` is a client component nothing in this suite
+    // renders, which is why the wrong shape shipped once: the AGGREGATE
+    // sentence ("2 files appear more than once, 5 in total") was emitted above
+    // EVERY set, so a page listing two files carried "5 in total" over it.
+    const blocks = groupedViolationBlocks([
+      {
+        ruleId: "DUP-01",
+        sentence: "2 fișiere se află de mai multe ori, în total 5.",
+        groups: [
+          { heading: "2 fișiere, printre care „x.pdf”", paths: ["A/x.pdf", "B/x.pdf"] },
+          { heading: "3 fișiere, printre care „y.pdf”", paths: ["A/y.pdf", "B/y.pdf", "C/y.pdf"] },
+        ],
+      },
+    ]);
+    expect(blocks).toEqual([
+      { ruleId: "DUP-01", sentence: "2 fișiere se află de mai multe ori, în total 5.", related: [] },
+      { sentence: "2 fișiere, printre care „x.pdf”", related: ["A/x.pdf", "B/x.pdf"] },
+      { sentence: "3 fișiere, printre care „y.pdf”", related: ["A/y.pdf", "B/y.pdf", "C/y.pdf"] },
+    ]);
+    // The aggregate sentence appears ONCE, not once per set - the whole point.
+    expect(blocks.filter((b) => b.sentence.includes("în total 5"))).toHaveLength(1);
+    // And only the aggregate carries the rule ID.
+    expect(blocks.filter((b) => b.ruleId !== undefined)).toHaveLength(1);
+  });
+
+  it("⚠️ prints an aggregate sentence once, with its sets under it and no chip", () => {
+    // The Duplication page's shape, and the defect it was fixed from: the rule
+    // sentence is an AGGREGATE ("2 files appear more than once, 5 in total"),
+    // so emitting it above EVERY set printed "5 in total" over a list of two,
+    // twice, on the one artefact that is explicitly the complete one and gets
+    // carried to File Explorer.
+    //
+    // The leading block carries the ID and no paths; each set carries its own
+    // heading and list and NO ID, so it reads as one of the sets under the
+    // sentence rather than as another violation beside it.
+    const html = structure({
+      violations: [
+        { ruleId: "DUP-01", sentence: "2 fișiere se află de mai multe ori, în total 5.", related: [] },
+        { sentence: "2 fișiere, printre care „x.pdf”", related: ["A/x.pdf", "B/x.pdf"] },
+        { sentence: "3 fișiere, printre care „y.pdf”", related: ["A/y.pdf", "B/y.pdf", "C/y.pdf"] },
+      ],
+      clean: false,
+    });
+    // Exactly one chip for the three blocks.
+    expect(html.split('<span class="rule">DUP-01</span>')).toHaveLength(2);
+    // The aggregate's empty `related` prints no list at all - not an empty one.
+    expect(html).not.toContain("<ul class=\"paths\"></ul>");
+    for (const path of ["A/x.pdf", "B/x.pdf", "A/y.pdf", "B/y.pdf", "C/y.pdf"]) {
+      expect(html).toContain(path);
+    }
+    // And the aggregate is NOT mistaken for a pass: `clean` is false and there
+    // are violations, so neither the all-clear nor the blocked line appears.
+    expect(html).not.toContain(STRUCTURE_STRINGS.allClear);
+  });
+
+  it("⚠️ prints no section heading when a catalogue has none to give", () => {
+    // `RulesPageSection.heading` became optional in #26.06, for the Duplication
+    // catalogue: two rules do not group, so its only heading is `rulesTitle`
+    // and filling this with that printed the same sentence twice, one line
+    // apart, nested under itself in Word's navigation pane. This is the third
+    // time this module has learnt that lesson — `RulesPageWarning.heading` and
+    // `.sentence` are the other two — and the first time it has a test.
+    const html = structure({
+      sections: [
+        {
+          rules: [{ id: "DUP-01", requirement: "Fără copii.", example: "Corect: un singur loc." }],
+        },
+      ],
+    });
+    expect(html).toContain("Fără copii.");
+    expect(html).not.toContain("<h3></h3>");
+    // The rule still renders inside a finding block, i.e. the heading is the
+    // only thing that went missing.
+    expect(html).toContain('<span class="rule">DUP-01</span>');
+  });
+
   it("shares the report's document shell rather than restating it", () => {
     // The constraint, as a test. Both documents must carry the same doctype,
     // the same `lang`, the same charset and the same stylesheet — the pile of

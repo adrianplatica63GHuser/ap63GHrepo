@@ -4,17 +4,18 @@
  * The shell's whole value is that the indicator agrees with the screen. It can
  * disagree in three ways, and each of them is silent:
  *
- *  1. **A stage goes green that nothing did.** Two of the ten stages have no
- *     screen until 26.06–26.08, and the flow walks straight past them. A
- *     positional "everything before the current one is done" would tick them
- *     both — a system telling the user their files were checked for duplicates
- *     when no code looked at them. That is the exact defect this repo recorded
- *     after #26.00: confident output never measured against a realistic input.
+ *  1. **A stage goes green that nothing did.** One of the ten stages has no
+ *     screen until 26.08, and the flow walks straight past it. A positional
+ *     "everything before the current one is done" would tick it — a system
+ *     telling the user their files were checked against the archive when no
+ *     code looked at them. That is the exact defect this repo recorded after
+ *     #26.00: confident output never measured against a realistic input.
  *
- *     (It was four until #26.04 gave Structure its screen and #26.05 gave
- *     Constraints its own. Those two slices are the worked example of what
- *     `plannedIn` is for: one property deleted from one row of the catalogue,
- *     and the stage starts going amber and green.)
+ *     (It was four until #26.04 gave Structure its screen, #26.05 gave
+ *     Constraints its own and #26.06 gave Duplication its own. Those three
+ *     slices are the worked example of what `plannedIn` is for: one property
+ *     deleted from one row of the catalogue, and the stage starts going amber
+ *     and green.)
  *
  *  2. **A phase has no stage, or a stage nobody can reach.** `Record<ImportPhase, …>`
  *     catches the first at compile time; the second needs a test, because a
@@ -30,6 +31,7 @@ import path from "node:path";
 
 import {
   IMPORT_PHASES,
+  phaseAfterFileChecks,
   WORKFLOW_LINE_IDS,
   WORKFLOW_STAGES,
   stageForPhase,
@@ -355,13 +357,28 @@ describe("stageForPhase", () => {
     expect(stageForPhase("folder-report")).toBe("evaluation");
   });
 
-  it("has no phase for the stages 26.06 and 26.08 will build", () => {
+  it("reports the whole duplication loop as duplication, including its re-walk", () => {
+    // #26.06's split, by the same argument #26.05 made one stage earlier.
+    // `duplication-checking` covers a walk AND the metadata pass as well as the
+    // match, and it still reports Duplication — the user pressed this stage's
+    // button. When that walk finds the structure or a constraint broken the
+    // phase moves back and the indicator follows it.
+    expect(stageForPhase("duplication")).toBe("duplication");
+    expect(stageForPhase("duplication-checking")).toBe("duplication");
+    expect(stageForPhase("duplication-report")).toBe("duplication");
+  });
+
+  it("has no phase for the stage 26.08 will build", () => {
     // The other half of "never land on a planned stage": the phases exist for
-    // the stages that are built, and Duplication and Pre-existing are not among
-    // them. #26.05's brief ends at Constraints, and this pins that the next
-    // stage was not faked by pointing an existing phase at an empty screen.
+    // the stages that are built, and Pre-existing is not among them. #26.06's
+    // brief ends at Duplication, and this pins that the next stage was not
+    // faked by pointing an existing phase at an empty screen.
+    //
+    // ⚠️ Duplication left this list in #26.06 and the assertion was DELETED
+    // rather than inverted: "reached.has('duplication') === true" is already
+    // pinned, twice and more precisely, by the case above and by the
+    // exhaustiveness test over IMPORT_PHASES.
     const reached = new Set(IMPORT_PHASES.map(stageForPhase));
-    expect(reached.has("duplication")).toBe(false);
     expect(reached.has("preexisting")).toBe(false);
   });
 });
@@ -389,7 +406,7 @@ describe("stageStatuses", () => {
 
   it("never marks a not-yet-built stage done, however far past it the user is", () => {
     // The whole reason `plannedIn` exists. At the last stage every earlier
-    // stage is behind the user, and the four with no screen must still be grey.
+    // stage is behind the user, and the one with no screen must still be grey.
     const statuses = stageStatuses("result");
     for (const id of IDS.filter(planned)) {
       expect(statuses[id]).toBe("pending");
@@ -400,19 +417,30 @@ describe("stageStatuses", () => {
     expect(statuses.result).toBe("current");
   });
 
-  it("greens structure AND constraints, and keeps duplication grey, during evaluation", () => {
-    // The shape #26.05 produces, and the whole point of the slice: Evaluation
-    // is unreachable except through a clean structure check AND a clean
-    // constraints check, so both are genuinely done there — while Duplication,
-    // which the flow still walks straight past, must stay grey however far
-    // ahead the user gets.
+  it("greens the whole first line during evaluation, and nothing on the second", () => {
+    // The shape #26.06 produces, and the whole point of the slice: Evaluation
+    // is unreachable except through a clean structure check, a clean
+    // constraints check AND a clean duplication check, so all three are
+    // genuinely done there. Duplication was `pending` on this exact vector one
+    // slice ago; the line that changed is the slice.
     const statuses = stageStatuses("evaluation");
     expect(statuses.information).toBe("done");
     expect(statuses.preconditions).toBe("done");
     expect(statuses.structure).toBe("done");
     expect(statuses.constraints).toBe("done");
-    expect(statuses.duplication).toBe("pending");
+    expect(statuses.duplication).toBe("done");
     expect(statuses.evaluation).toBe("current");
+    // Still grey, and it is the one left: being carried past a check is not
+    // passing it, and nothing builds Pre-existing until 26.08.
+    expect(statuses.preexisting).toBe("pending");
+  });
+
+  it("greens structure and constraints and pulses duplication", () => {
+    const statuses = stageStatuses("duplication");
+    expect(statuses.structure).toBe("done");
+    expect(statuses.constraints).toBe("done");
+    expect(statuses.duplication).toBe("current");
+    expect(statuses.evaluation).toBe("pending");
   });
 
   it("greens structure and pulses constraints while the files are being checked", () => {
@@ -444,12 +472,12 @@ describe("stageStatuses", () => {
     expect(statuses.scanning).toBe("done");
     expect(statuses.import).toBe("done");
     expect(statuses.result).toBe("current");
-    // The stages with no screen stay grey even here — being carried past a
+    // The stage with no screen stays grey even here — being carried past a
     // check is still not passing it.
-    expect(statuses.duplication).toBe("pending");
     expect(statuses.preexisting).toBe("pending");
-    // Structure and Constraints are NOT among them any more: #26.04 and #26.05
-    // built their screens, and a resumed run's folder did go through both.
+    // Structure, Constraints and Duplication are NOT among them any more:
+    // #26.04, #26.05 and #26.06 built their screens, and a resumed run's folder
+    // did go through all three.
     // These two lines are the ones that would have to change back if either
     // stage were ever un-built.
     //
@@ -464,14 +492,15 @@ describe("stageStatuses", () => {
     // derive the greens from what that run actually completed.
     expect(statuses.structure).toBe("done");
     expect(statuses.constraints).toBe("done");
+    expect(statuses.duplication).toBe("done");
   });
 
   it("refuses to make a planned stage current even if asked to", () => {
     // `stageForPhase` cannot produce this, but a later caller could. The answer
     // is to under-claim: no pulse anywhere rather than a pulse on a stage with
     // nothing behind it.
-    const statuses = stageStatuses("duplication");
-    expect(statuses.duplication).toBe("pending");
+    const statuses = stageStatuses("preexisting");
+    expect(statuses.preexisting).toBe("pending");
     expect(IDS.filter((id) => statuses[id] === "current")).toEqual([]);
   });
 
@@ -624,5 +653,130 @@ describe("the indicator's copy", () => {
     };
     expect(Object.keys(w.stage).sort()).toEqual([...IDS].sort());
     expect(Object.keys(w.line).sort()).toEqual([...WORKFLOW_LINE_IDS].sort());
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The fork at the end of a walk   (Slice #26.06)
+// ---------------------------------------------------------------------------
+
+/**
+ * The whole of #26.06's new decision, as a table.
+ *
+ * It lives in `workflow-stages.ts` rather than inside `runWalk` precisely so
+ * these cases can be written: in the wizard it sits behind an awaited ~760-call
+ * metadata pass, and this repo has no test that renders `ImportWizard` at all.
+ *
+ * A wrong cell here is not a crash. It is a user standing on a screen with
+ * nothing on it, or the Duplication pill going green over a match that never
+ * ran - which is the exact class of failure `plannedIn` and the rest of this
+ * module were built to make impossible.
+ */
+describe("phaseAfterFileChecks", () => {
+  it("sends a broken constraint to the constraints list, whatever was asked for", () => {
+    for (const target of ["constraints", "duplication"] as const) {
+      expect(
+        phaseAfterFileChecks({ target, constraintsClean: false, duplicationClean: null }),
+      ).toEqual({ phase: "constraints-report", duplicationRan: false });
+    }
+  });
+
+  it("⚠️ never reports a match that did not run, even when the constraints passed", () => {
+    // The `plannedIn` argument one layer down. A run that came for Duplication
+    // and found a broken constraint has not looked for copies, and a run that
+    // came only for the constraints has not either. In both the flag is false,
+    // which is what keeps the panel showing its explanations rather than an
+    // all-clear nobody earned.
+    expect(
+      phaseAfterFileChecks({
+        target: "duplication",
+        constraintsClean: false,
+        duplicationClean: null,
+      }).duplicationRan,
+    ).toBe(false);
+    expect(
+      phaseAfterFileChecks({
+        target: "constraints",
+        constraintsClean: true,
+        duplicationClean: null,
+      }).duplicationRan,
+    ).toBe(false);
+  });
+
+  it("stops a clean constraints run at the Duplication explanations", () => {
+    // The stopping point the stage exists for: the user reads what a duplicate
+    // is before being shown files to remove.
+    expect(
+      phaseAfterFileChecks({
+        target: "constraints",
+        constraintsClean: true,
+        duplicationClean: null,
+      }),
+    ).toEqual({ phase: "duplication", duplicationRan: false });
+  });
+
+  it("sends a clean duplication check to the folder report", () => {
+    expect(
+      phaseAfterFileChecks({
+        target: "duplication",
+        constraintsClean: true,
+        duplicationClean: true,
+      }),
+    ).toEqual({ phase: "folder-report", duplicationRan: true });
+  });
+
+  it("sends a failing duplication check to its own fix list", () => {
+    expect(
+      phaseAfterFileChecks({
+        target: "duplication",
+        constraintsClean: true,
+        duplicationClean: false,
+      }),
+    ).toEqual({ phase: "duplication-report", duplicationRan: true });
+  });
+
+  it("⚠️ ignores a verdict it was handed against a target that did not ask for one", () => {
+    // Defensive, and the reason is the caller's shape rather than paranoia:
+    // `duplicationClean` and `target` are two expressions of one fact in
+    // `runWalk`, and the failure mode if they ever disagree is the Duplication
+    // stage going green off a verdict computed for a press that never happened.
+    // The target is the authority.
+    expect(
+      phaseAfterFileChecks({
+        target: "constraints",
+        constraintsClean: true,
+        duplicationClean: true,
+      }),
+    ).toEqual({ phase: "duplication", duplicationRan: false });
+  });
+
+  it("⚠️ UNDER-claims for a `structure` target rather than carrying it forward", () => {
+    // `runWalk` returns at the structure verdict, so this combination does not
+    // arise. It is accepted because the caller passes one variable through, and
+    // a union that excluded it would push a cast into the call site.
+    //
+    // The answer is the EARLIEST stage such a run has certainly not finished.
+    // An earlier draft answered `duplication`, which the third adversarial
+    // round pointed out would carry a future caller two stages forward past a
+    // screen it never showed them — the same false-green failure `plannedIn`
+    // exists to prevent, one layer up.
+    for (const constraintsClean of [true, false]) {
+      for (const duplicationClean of [true, false, null]) {
+        expect(
+          phaseAfterFileChecks({ target: "structure", constraintsClean, duplicationClean }),
+        ).toEqual({ phase: "constraints", duplicationRan: false });
+      }
+    }
+  });
+
+  it("only ever names a phase the machine actually has", () => {
+    for (const target of ["structure", "constraints", "duplication"] as const) {
+      for (const constraintsClean of [true, false]) {
+        for (const duplicationClean of [true, false, null]) {
+          const { phase } = phaseAfterFileChecks({ target, constraintsClean, duplicationClean });
+          expect(IMPORT_PHASES).toContain(phase);
+        }
+      }
+    }
   });
 });
