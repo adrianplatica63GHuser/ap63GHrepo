@@ -150,7 +150,8 @@ under it, is the whole list:**
   commit** — `reset --hard`, `rebase`, `commit --amend`, `clean`, `branch -D`, `checkout`/`switch` to
   another branch, any force-push, and four that read as harmless and are not: `stash`, `pull`,
   `merge`/`cherry-pick`, `gc`. Writing `git config` too. `git restore --staged`, `git rm --cached`,
-  `git mv` and a cleanly-applying `revert` are exempt. Full enumeration, with the reason each one is
+  `git mv` and a cleanly-applying `revert` are exempt — though over the device bridge `revert` cannot
+  complete at all, so in practice it goes to Adrian. Full enumeration, with the reason each one is
   on the list, in `C:\dev\.claude\rules\git-and-commits.md`.
 - Deleting or overwriting anything of Adrian's outside the repo.
 - Any destructive database operation, and any command against a UAT or production box.
@@ -164,8 +165,16 @@ the case this carve-out is for.) A bad message on the commit you just wrote gets
 `git commit --amend -m "<new subject>"` — not with a second commit apologising for the first.
 
 **When Claude cannot do a git step, it names the single command that unblocks it and carries on** —
-it does not stop and wait. The one that actually happens is a stale lock the device bridge cannot
-delete; see `C:\dev\.claude\rules\sandbox-and-toolchain.md`.
+it does not stop and wait. The one that actually happens is a stale `.git` lock, and **that one Claude
+clears itself** — the bridge cannot delete a file but it can *move* one, so the paths named by git's
+own `warning: unable to unlink` output — that command's output, in that same invocation — go into
+`.git\_stranded_locks\` and the slice carries on. **Two things are never Claude's to move, and
+both go to Adrian:** a lock found by *looking* rather than by reading a warning, and the lock named in
+`fatal: … Unable to create '<path>': File exists`, which is almost always something else's — over the
+bridge that something else is usually Adrian's VS Code Source Control panel, live. (The one exception,
+a command killed by the 45 s limit, and the check for it, are in the rule file.) The filter that
+decides, and why each test in it is there, is in `C:\dev\.claude\rules\sandbox-and-toolchain.md`; read
+it before the first `mv`.
 
 Everything else is Claude's call. Widening a slice by a file or two to make the work coherent
 is a decision to state, not a permission to request.
@@ -205,9 +214,11 @@ is a decision to state, not a permission to request.
   still disagrees with `git --no-optional-locks diff HEAD`, say so in the handover and let the pathspec commit contain the
   damage. Only when git itself is unreachable — a permission error, a mount that has gone away — does
   the step fall to Adrian, and then Claude names the single command that clears it. A stale
-  `.git/index.lock` is not that case: `status`, `diff`, `log` and `show` still exit 0 under it (they
+  `.git` lock is not that case: `status`, `diff`, `log` and `show` still exit 0 under it (they
   fail to take the lock and skip the index write), so Claude keeps reading; it is `add`/`commit` that
-  fail with exit 128, and that is where the unblock line goes.
+  fail with exit 128. **What happens there is in Autonomy above** — Claude quarantines the paths git's
+  own `warning: unable to unlink` output named and carries on; only a lock it cannot account for
+  becomes an unblock line for Adrian.
 - **Secrets stay out of chat.** `.env` is gitignored; never echo a password or API key back
   into the conversation. Add every secret path to `.gitignore` *and* `.dockerignore` — they
   are independent files with independent rules.

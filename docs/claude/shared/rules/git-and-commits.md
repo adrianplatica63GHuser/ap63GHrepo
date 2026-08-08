@@ -8,17 +8,29 @@ The *contract* — who may do what — lives in `C:\dev\CLAUDE.md` → Autonomy.
 ## Read without taking the lock
 
 `git status` and `git diff` are not read-only: both refresh and rewrite the index, so both take
-`.git/index.lock`. Over the device bridge, which cannot unlink it afterwards, **every read leaves a
+`.git/index.lock`. Over the device bridge, which cannot unlink it afterwards, **a read can leave a
 lock that blocks the next `add` or `commit`**. So:
 
-- Read with **`git --no-optional-locks status`** and **`git --no-optional-locks diff`**. Measured:
-  the flag stops git taking the lock at all, which is exactly what it is for.
+- Read with **`git --no-optional-locks status`**. Measured: the flag stops git taking the lock at
+  all, which is exactly what it is for — and `cmd_status` is its only call site in git 2.30–2.43.
+  **Pass it on `diff` too, for consistency, but do not rely on it there:** `builtin/diff.c` ignores
+  it and refreshes the index regardless. `diff` is safe for a different reason — it only refreshes
+  when the refresh will genuinely change the index, so its lock is committed by rename, never
+  rolled back, and so never stranded. `status` on a settled index is the one that rolls back, and
+  the rollback is the unlink that strands.
 - Let the **commit be the first command that touches the index**. A successful commit renames the
   lock over `.git/index`, so there is nothing left to unlink.
 - `log`, `show` and `blame` never take it and need no flag.
 
-See `C:\dev\.claude\rules\sandbox-and-toolchain.md` for the leftovers a commit still strands and the
-one-liner that clears them.
+**A successful commit still strands the rest of the set** — `HEAD.lock`, `next-index-<n>.lock`, a
+`tmp_obj_*` per object written, and `objects/maintenance.lock` unless you passed
+`-c maintenance.auto=false` — and `HEAD.lock` is the one that
+bites: it blocks your **next** commit in the same slice with `fatal: cannot lock ref 'HEAD' … File
+exists`, exit 128. **Claude clears that itself and carries on**, by moving exactly the paths git named
+in its own `warning: unable to unlink '<path>'` output into `.git/_stranded_locks/` — the bridge can
+move what it cannot delete. The test, what falls outside it, and the two different lines Adrian gets
+are all in `C:\dev\.claude\rules\sandbox-and-toolchain.md`. Read it before assuming a commit that
+exited 0 left nothing behind.
 
 ## Stage and commit by explicit path
 
@@ -28,6 +40,11 @@ one-liner that clears them.
 ```
 git add <any new files> && git commit -m "message" -- <every path in this slice>
 ```
+
+**Over the device bridge that whole chain goes inside the quarantine recipe's brace group**, both
+halves, with `-c maintenance.auto=false` on each — `git add … && git commit … 2>"$o"` binds as
+`add && (commit 2>"$o")`, so the `add`'s own stranded temps escape the capture and are still there
+when the next command runs. The recipe is in `C:\dev\.claude\rules\sandbox-and-toolchain.md`.
 
 Reading `git status` first is not enough on its own. A plain `git commit` writes the *whole* index,
 including hunks Adrian staged in VS Code's Source Control panel before you looked — they land under
@@ -52,7 +69,7 @@ anyway. (`&&` vs `;`, and why an `$env:` assignment can never be the left side o
 delete staged, so `HEAD` ends up carrying **both copies**. Name `old` and `new` both.
 
 Done right, `git show --stat HEAD` reads `old => new`. Done wrong it reads `new | N +` — an add where
-you expected a rename — and `git status --short` still shows `D old`. Fixed with
+you expected a rename — and `git --no-optional-locks status --short` still shows `D old`. Fixed with
 `git commit --amend --no-edit -- <old>`, subject to the carve-out.
 
 ## Check the commit you just made
@@ -101,8 +118,8 @@ of which mean *stop* rather than *proceed carefully*:
    After a clean pathspec commit it prints nothing. **If anything prints, do not run the no-pathspec
    amend**: leave the extra file in the commit and say so in the handover.
    **One entry can be yours, and it is a different problem: a `D <old>` left staged by a `git mv`
-   whose commit named only `new`.** The tell is that `<old>` is gone from disk — `git status --short`
-   shows `D <old>` with no `?? <old>` beside it, and `git show --stat HEAD` reads `new | N +` where a
+   whose commit named only `new`.** The tell is that `<old>` is gone from disk —
+   `git --no-optional-locks status --short` shows `D <old>` with no `?? <old>` beside it, and `git show --stat HEAD` reads `new | N +` where a
    rename should be. (A `D <file>` whose path is still on disk as `?? <file>` is check 1's trap, not
    this one; go back to check 1.) That is a commit that took too *little*, and it is fixed forward
    with `git commit --amend --no-edit -- <old>`: the pathspec means **this check does not gate it** —
@@ -141,6 +158,11 @@ conflict markers on disk, and the ways out are `git revert --abort`/`--skip`, bo
 conflicts and the resolution is obvious, resolve it and commit it: a pathspec commit *is* allowed
 mid-revert, unlike mid-merge (`fatal: cannot do a partial commit during a merge`). Otherwise hand
 `git revert --abort` to Adrian and carry on.
+
+**Over the device bridge that exemption is theoretical: `revert` cannot run at all** — it needs the
+index lock twice, and dies on the one it stranded itself, exit 128, on a clean board. Hand the whole
+revert to Adrian. The measurement, and which other commands share the shape, are in
+`C:\dev\.claude\rules\sandbox-and-toolchain.md`.
 
 ## Commit messages
 
