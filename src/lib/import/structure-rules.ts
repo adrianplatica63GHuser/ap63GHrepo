@@ -177,6 +177,7 @@ import { isPageGroupMember } from "@/lib/files/file-kinds";
 import { coordinateNameConfidence } from "./coordinate-file";
 import { isIgnoredFileName } from "./folder-utils";
 import { foldRomanian } from "./id-card";
+import { cadastralIdentityKey } from "@/lib/properties/cadastral-identity";
 
 // ---------------------------------------------------------------------------
 // The catalogue
@@ -727,6 +728,15 @@ export function suggestedPropertyFolderName(rawName: string): string | null {
  * feeding it. Whitespace inside the name is normalised for the same reason:
  * `48 - 50D` and `48-50D` parse to the same pair.
  *
+ * ⚠️ **The key itself is `cadastralIdentityKey`'s, not this module's** (Slice
+ * #26.07). It used to be three lines of local decoding here, and #26.07 needed
+ * the identical key to find the Property a folder already has in the database
+ * — at which point two implementations of "same parcel" would have existed, one
+ * refusing duplicate folders and one matching rows, free to drift apart by a
+ * space. The rule that STR-03 enforces and the rule the import matches on are
+ * now the same function. What this keeps is the part that IS structural: only a
+ * name that parses has an identity at all.
+ *
  * Leading zeros are NOT normalised, and the description is ignored entirely —
  * see "KNOWN AND ACCEPTED AMBIGUITIES" in the module header.
  *
@@ -736,8 +746,7 @@ export function suggestedPropertyFolderName(rawName: string): string | null {
 export function propertyIdentityOf(rawName: string): string | null {
   const parsed = parsePropertyFolderName(rawName);
   if (!parsed.ok) return null;
-  const decode = (s: string) => foldRomanian(s).replace(/per/g, "/");
-  return `${decode(parsed.tarla)}-${decode(parsed.parcela)}`;
+  return cadastralIdentityKey(parsed.tarla, parsed.parcela);
 }
 
 // ---------------------------------------------------------------------------

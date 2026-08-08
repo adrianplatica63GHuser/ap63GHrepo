@@ -9,8 +9,10 @@
  *   those rows untouched. Passing address: null deletes the address row.
  */
 
-import { and, count, desc, eq, ilike, isNull, or, sql } from "drizzle-orm";
-import { db } from "@/db";
+import { and, count, desc, eq, ilike, inArray, isNotNull, isNull, or, sql } from "drizzle-orm";
+import { db, type DbTransaction } from "@/db";
+import { cadastralKey } from "./cadastral-identity";
+import type { CadastralMatch } from "./import-property-plan";
 import { entityMetadata, groupMember, groups, lookupPersonRole, lookupTarla, person, principalObject, property, propertyAddress, propertyCorner, propertyPerson, propertyVersion } from "@/db/schema";
 import { wgs84ToStereo70 } from "@/lib/geo/transdatRO";
 import { shoelaceAreaM2 } from "./area";
@@ -21,6 +23,13 @@ import type {
   PropertySnapshot,
   PropertyUpdate,
 } from "./validation";
+
+/**
+ * Re-exported so a caller that already imports from this module does not need a
+ * second import for the row shape this module returns. It is DEFINED in
+ * `./import-property-plan`, which has no database in it — see that header.
+ */
+export type { CadastralMatch };
 
 // ---------------------------------------------------------------------------
 // Calculated area (Slice #18.09)
@@ -335,6 +344,86 @@ export async function getPropertyById(
 }
 
 // ---------------------------------------------------------------------------
+// Find by cadastral identity  (Slice #26.07)
+// ---------------------------------------------------------------------------
+
+/**
+ * Every non-deleted Property whose tarla and parcela mean the same parcel.
+ *
+ * **Returns a LIST, and that is not defensive typing.** Nothing in the database
+ * stops two Properties carrying one identity, and until this slice nothing
+ * stopped the import creating them — the create path had, in its own comment,
+ * "nothing to deduplicate against", so an archive imported twice already holds
+ * pairs. A function that returned the first row would pick one of them by
+ * `code` order and link a folder's documents to it silently, which is the
+ * failure this slice exists to end rather than to automate. The caller shows
+ * the user what it found.
+ *
+ * ⚠️ **The comparison is in JavaScript, over every candidate row, on purpose.**
+ * The obvious alternative is a `WHERE` clause that normalises both sides in
+ * SQL — and that is a SECOND implementation of "same parcel", free to disagree
+ * with `cadastralIdentityKey` about a space or a diacritic, in the one place
+ * where disagreeing means creating a duplicate. `cadastralIdentityKey` is the
+ * only answer to that question in this codebase (STR-03 uses it too), and
+ * keeping it that way costs a scan of three columns of a table that holds one
+ * business user's parcels. The SQL still does the part it cannot get wrong:
+ * only rows carrying BOTH identifiers can match anything, so only those are
+ * fetched.
+ */
+export async function findPropertiesByCadastralIdentity(
+  tx: DbTransaction,
+  tarlaSola: string,
+  parcela: string,
+): Promise<CadastralMatch[]> {
+  // ⚠️ The two halves are compared SEPARATELY, never through a joined key, and
+  // an adversarial round is what put them that way. `cadastralIdentityKey`
+  // joins with `-` and argues that neither half can contain one — true of every
+  // value the property-folder grammar produces, and NOT true of the rows this
+  // query reads, which include whatever a user typed into the Property form.
+  // Joined, `("47", "2-225/3")` and `("47-2", "225/3")` are one identity: two
+  // legitimate parcels would come back as a pair, the plan would report
+  // `ambiguous`, and a business user would be told to delete one of them.
+  // Field against field, there is nothing for a separator to be ambiguous in.
+  const wantedTarla = cadastralKey(tarlaSola);
+  const wantedParcela = cadastralKey(parcela);
+
+  const candidates = await tx
+    .select({
+      id: property.id,
+      code: property.code,
+      nickname: property.nickname,
+      principalObjectId: property.principalObjectId,
+      tarlaSola: property.tarlaSola,
+      parcela: property.parcela,
+    })
+    .from(property)
+    .where(
+      and(
+        isNull(property.deletedAt),
+        isNotNull(property.tarlaSola),
+        isNotNull(property.parcela),
+      ),
+    )
+    .orderBy(property.code);
+
+  const hits = candidates.filter(
+    (row) =>
+      cadastralKey(row.tarlaSola ?? "") === wantedTarla &&
+      cadastralKey(row.parcela ?? "") === wantedParcela,
+  );
+  if (hits.length === 0) return [];
+
+  const counts = await tx
+    .select({ propertyId: propertyCorner.propertyId, n: count() })
+    .from(propertyCorner)
+    .where(inArray(propertyCorner.propertyId, hits.map((h) => h.id)))
+    .groupBy(propertyCorner.propertyId);
+
+  const byId = new Map(counts.map((c) => [c.propertyId, c.n]));
+  return hits.map((h) => ({ ...h, cornerCount: byId.get(h.id) ?? 0 }));
+}
+
+// ---------------------------------------------------------------------------
 // Create
 // ---------------------------------------------------------------------------
 
@@ -342,9 +431,34 @@ export async function createProperty(
   input: PropertyCreate,
   updatedBy: string | null = null,
 ): Promise<PropertyFull> {
+  return await db.transaction((tx) => createPropertyIn(tx, input, updatedBy));
+}
+
+/**
+ * The same create, inside a transaction the CALLER opened.   (Slice #26.07)
+ *
+ * `createProperty` above is this function plus a transaction, and it is still
+ * what every route calls. This one exists because #26.07's import path has to
+ * do "look for a matching property, and create one only if there is none"
+ * without a second request slipping between the two halves — which means the
+ * lookup and the create must sit in one transaction, under one advisory lock,
+ * opened by the caller.
+ *
+ * The alternative was to let `createProperty` open its own transaction on a
+ * second pooled connection while the caller's was still open. That works —
+ * the inner commit happens before the outer one, so the lock is still held
+ * when the row lands — but it holds two connections per create, and a pool
+ * with `max: 10` is a deadlock waiting for a busy afternoon. Splitting the
+ * function costs one line and removes the shape entirely.
+ */
+export async function createPropertyIn(
+  tx: DbTransaction,
+  input: PropertyCreate,
+  updatedBy: string | null = null,
+): Promise<PropertyFull> {
   const { address: addrInput, corners: cornerList, ...propFields } = input;
 
-  return await db.transaction(async (tx) => {
+  {
     // Allocate a code from the shared sequence via the principal_object row.
     const [poRow] = await tx
       .insert(principalObject)
@@ -435,7 +549,7 @@ export async function createProperty(
     }
 
     return full;
-  });
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -447,9 +561,38 @@ export async function updateProperty(
   input: PropertyUpdate,
   updatedBy: string | null = null,
 ): Promise<PropertyFull | null> {
+  return await db.transaction((tx) => updatePropertyIn(tx, id, input, updatedBy));
+}
+
+/**
+ * The same update, inside a transaction the CALLER opened.   (Slice #26.07)
+ *
+ * Same split, and the same reason, as `createPropertyIn` above — but this half
+ * was added by an adversarial round rather than by the original design, and the
+ * bug it closes is worth stating.
+ *
+ * #26.07 gives an existing corner-less Property the corners from its folder's
+ * coordinate file. The first version checked `cornerCount === 0` inside the
+ * advisory-locked transaction and then called `updateProperty` AFTER it, with a
+ * comment claiming the check made the write safe. It did not:
+ * `pg_advisory_xact_lock` is released when the transaction ends, so the check
+ * was under the lock and the write was not. Two runs against one corner-less
+ * Property could both read zero, both commit, and both replace — last writer
+ * wins, and the loser's run still claims `property_corner_source` for a
+ * coordinate document whose corners are no longer stored. That is precisely the
+ * lie #23.06 exists to prevent, rebuilt one slice later.
+ *
+ * With this, the check and the write are the same transaction and the same lock.
+ */
+export async function updatePropertyIn(
+  tx:    DbTransaction,
+  id:    string,
+  input: PropertyUpdate,
+  updatedBy: string | null = null,
+): Promise<PropertyFull | null> {
   const { address: addrInput, corners: cornerList, ...propFields } = input;
 
-  return await db.transaction(async (tx) => {
+  {
     // Verify exists and not deleted.
     const existing = await tx
       .select()
@@ -578,7 +721,7 @@ export async function updateProperty(
     }
 
     return full;
-  });
+  }
 }
 
 // ---------------------------------------------------------------------------

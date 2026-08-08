@@ -33,3 +33,19 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 export const db = drizzle(pool, { schema });
+
+/**
+ * The `tx` a `db.transaction(...)` callback is handed.   (Slice #26.07)
+ *
+ * Derived from `db` rather than imported from `drizzle-orm/pg-core`, because
+ * the generic parameters of `PgTransaction` include the whole schema and the
+ * driver's result HKT — spelling them out by hand gives a type that compiles
+ * today and stops matching the moment the driver or the schema moves, with an
+ * error pointing at the annotation rather than at the change. This spelling
+ * cannot go stale: it is whatever `db.transaction` actually passes.
+ *
+ * Exported for query modules that need to run inside a transaction their
+ * CALLER opened — `createPropertyIn` is the first, so that a lookup and a
+ * create can share one transaction and one advisory lock.
+ */
+export type DbTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
