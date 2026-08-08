@@ -4,18 +4,19 @@
  * The shell's whole value is that the indicator agrees with the screen. It can
  * disagree in three ways, and each of them is silent:
  *
- *  1. **A stage goes green that nothing did.** One of the ten stages has no
- *     screen until 26.08, and the flow walks straight past it. A positional
- *     "everything before the current one is done" would tick it — a system
- *     telling the user their files were checked against the archive when no
- *     code looked at them. That is the exact defect this repo recorded after
+ *  1. **A stage goes green that nothing did.** A positional "everything before
+ *     the current one is done" would tick a stage with no screen behind it — a
+ *     system telling the user their files were checked against the archive when
+ *     no code looked at them. That is the exact defect this repo recorded after
  *     #26.00: confident output never measured against a realistic input.
  *
- *     (It was four until #26.04 gave Structure its screen, #26.05 gave
- *     Constraints its own and #26.06 gave Duplication its own. Those three
- *     slices are the worked example of what `plannedIn` is for: one property
- *     deleted from one row of the catalogue, and the stage starts going amber
- *     and green.)
+ *     (It was four stages until #26.04 gave Structure its screen, #26.05 gave
+ *     Constraints its own, #26.06 gave Duplication its own and #26.08 gave
+ *     Pre-existing its own. Those four slices are the worked example of what
+ *     `plannedIn` is for: one property deleted from one row of the catalogue,
+ *     and the stage starts going amber and green. As of #26.08 there is no
+ *     planned stage left — see the test that says so, and says what that makes
+ *     the two tests after it.)
  *
  *  2. **A phase has no stage, or a stage nobody can reach.** `Record<ImportPhase, …>`
  *     catches the first at compile time; the second needs a test, because a
@@ -296,11 +297,65 @@ describe("stageForPhase", () => {
   });
 
   it("never lands the user on a stage that has no screen yet", () => {
-    // THE invariant of this slice. A planned stage is a promise about a later
+    // THE invariant of #26.03. A planned stage is a promise about a later
     // slice; reporting the user as standing in one would make the indicator
     // point at a screen that does not exist.
+    //
+    // ⚠️ **Vacuous since #26.08 deleted the last `plannedIn`** — `planned` is
+    // false for every stage, so this filters an empty list for a reason that
+    // has nothing to do with `stageForPhase`. It stays because the mechanism
+    // does; the TABLE below is what actually pins the map today, and it was
+    // added because a round of review pointed out that this test passes with
+    // the map inverted, emptied, or pointing every phase at `result`.
     const reached = IMPORT_PHASES.map(stageForPhase);
     expect(reached.filter(planned)).toEqual([]);
+  });
+
+  it("⚠️ maps each phase to the ONE stage it belongs to, as a written-out table", () => {
+    // Written out rather than derived, which is the whole point: a derived
+    // expectation is the implementation twice. Every entry here is a claim
+    // about which pill lights while a given screen is on, and getting one wrong
+    // is a user told they are somewhere they are not.
+    expect(IMPORT_PHASES.map((phase) => [phase, stageForPhase(phase)])).toEqual([
+      ["information", "information"],
+      ["preflight", "preconditions"],
+      ["structure", "structure"],
+      ["walking", "structure"],
+      ["structure-report", "structure"],
+      ["constraints", "constraints"],
+      ["constraints-checking", "constraints"],
+      ["constraints-report", "constraints"],
+      ["duplication", "duplication"],
+      ["duplication-checking", "duplication"],
+      ["duplication-report", "duplication"],
+      ["preexisting", "preexisting"],
+      ["preexisting-checking", "preexisting"],
+      ["preexisting-report", "preexisting"],
+      ["folder-report", "evaluation"],
+      ["scanning", "scanning"],
+      ["ready", "import"],
+      ["property", "import"],
+      ["tag-dialog", "import"],
+      ["importing", "import"],
+      ["resumed", "result"],
+    ]);
+  });
+
+  it("⚠️ opens the second line with Pre-existing", () => {
+    // #26.08 argues at length, on the catalogue row itself, that this stage
+    // belongs to "Clasificare și import" although nothing has been classified
+    // when the user stands in it — the source document's own grouping. An
+    // argument in a comment that no test pins is an argument the next slice
+    // silently reverses, and moving the row to `preparation` passed every test
+    // in this suite before this one existed.
+    expect(stagesOnLine("classification").map((s) => s.id)[0]).toBe("preexisting");
+    expect(stagesOnLine("preparation").map((s) => s.id)).toEqual([
+      "information",
+      "preconditions",
+      "structure",
+      "constraints",
+      "duplication",
+    ]);
   });
 
   it("advances monotonically through the machine's own order", () => {
@@ -368,18 +423,29 @@ describe("stageForPhase", () => {
     expect(stageForPhase("duplication-report")).toBe("duplication");
   });
 
-  it("has no phase for the stage 26.08 will build", () => {
-    // The other half of "never land on a planned stage": the phases exist for
-    // the stages that are built, and Pre-existing is not among them. #26.06's
-    // brief ends at Duplication, and this pins that the next stage was not
-    // faked by pointing an existing phase at an empty screen.
+  it("reports the whole pre-existing loop as preexisting, including its lookup", () => {
+    // #26.08's split, by the same argument the three stages before it made. Its
+    // `preexisting-checking` is the longest of the four — a walk, the metadata
+    // pass, the duplication match AND one request to the archive — and it still
+    // reports Pre-existing, because that is the button the user pressed.
+    expect(stageForPhase("preexisting")).toBe("preexisting");
+    expect(stageForPhase("preexisting-checking")).toBe("preexisting");
+    expect(stageForPhase("preexisting-report")).toBe("preexisting");
+  });
+
+  it("⚠️ has nothing planned any more — and this test is what says so", () => {
+    // #26.08 deleted the last `plannedIn` in the catalogue. Two tests in this
+    // suite are therefore VACUOUS today — "never marks a not-yet-built stage
+    // done" iterates an empty list, and the pulse test below it lost its
+    // subject — and the mechanism stays in the type because 26.09 and 26.10
+    // re-home three screens and build a fourth.
     //
-    // ⚠️ Duplication left this list in #26.06 and the assertion was DELETED
-    // rather than inverted: "reached.has('duplication') === true" is already
-    // pinned, twice and more precisely, by the case above and by the
-    // exhaustiveness test over IMPORT_PHASES.
-    const reached = new Set(IMPORT_PHASES.map(stageForPhase));
-    expect(reached.has("preexisting")).toBe(false);
+    // This assertion is what makes that vacuum VISIBLE rather than silent. A
+    // reader who notices those tests passing over nothing can come here and
+    // find out why; and the day a slice adds a `plannedIn` back, the loops go
+    // live again with no edit and this line is the one that fails first,
+    // pointing at the slice that did it.
+    expect(WORKFLOW_STAGES.filter((s) => s.plannedIn !== undefined).map((s) => s.id)).toEqual([]);
   });
 });
 
@@ -417,22 +483,34 @@ describe("stageStatuses", () => {
     expect(statuses.result).toBe("current");
   });
 
-  it("greens the whole first line during evaluation, and nothing on the second", () => {
-    // The shape #26.06 produces, and the whole point of the slice: Evaluation
+  it("greens the whole first line AND pre-existing during evaluation", () => {
+    // The shape #26.08 produces, and the whole point of the slice: Evaluation
     // is unreachable except through a clean structure check, a clean
-    // constraints check AND a clean duplication check, so all three are
-    // genuinely done there. Duplication was `pending` on this exact vector one
-    // slice ago; the line that changed is the slice.
+    // constraints check, a clean duplication check AND a settled pre-existing
+    // report, so all four are genuinely done there. Pre-existing was `pending`
+    // on this exact vector one slice ago; the line that changed is the slice.
+    //
+    // ⚠️ Its green means something slightly different from the other three, and
+    // that is argued rather than overlooked: Pre-existing does not BLOCK, so
+    // "done" there means the user was told what the import will do and said so,
+    // not that a fault was corrected. Both are things that either happened or
+    // did not, which is all a green tick has ever claimed here.
     const statuses = stageStatuses("evaluation");
     expect(statuses.information).toBe("done");
     expect(statuses.preconditions).toBe("done");
     expect(statuses.structure).toBe("done");
     expect(statuses.constraints).toBe("done");
     expect(statuses.duplication).toBe("done");
+    expect(statuses.preexisting).toBe("done");
     expect(statuses.evaluation).toBe("current");
-    // Still grey, and it is the one left: being carried past a check is not
-    // passing it, and nothing builds Pre-existing until 26.08.
-    expect(statuses.preexisting).toBe("pending");
+    expect(statuses.scanning).toBe("pending");
+  });
+
+  it("greens the first line and pulses pre-existing", () => {
+    const statuses = stageStatuses("preexisting");
+    expect(statuses.duplication).toBe("done");
+    expect(statuses.preexisting).toBe("current");
+    expect(statuses.evaluation).toBe("pending");
   });
 
   it("greens structure and constraints and pulses duplication", () => {
@@ -472,12 +550,12 @@ describe("stageStatuses", () => {
     expect(statuses.scanning).toBe("done");
     expect(statuses.import).toBe("done");
     expect(statuses.result).toBe("current");
-    // The stage with no screen stays grey even here — being carried past a
-    // check is still not passing it.
-    expect(statuses.preexisting).toBe("pending");
-    // Structure, Constraints and Duplication are NOT among them any more:
-    // #26.04, #26.05 and #26.06 built their screens, and a resumed run's folder
-    // did go through all three.
+    // Pre-existing joined them in #26.08 and is no longer the exception on this
+    // vector — there is no stage without a screen left to be one.
+    expect(statuses.preexisting).toBe("done");
+    // Structure, Constraints, Duplication and Pre-existing are NOT grey any
+    // more: #26.04, #26.05, #26.06 and #26.08 built their screens, and a
+    // resumed run's folder did go through all four.
     // These two lines are the ones that would have to change back if either
     // stage were ever un-built.
     //
@@ -495,13 +573,26 @@ describe("stageStatuses", () => {
     expect(statuses.duplication).toBe("done");
   });
 
-  it("refuses to make a planned stage current even if asked to", () => {
-    // `stageForPhase` cannot produce this, but a later caller could. The answer
-    // is to under-claim: no pulse anywhere rather than a pulse on a stage with
-    // nothing behind it.
-    const statuses = stageStatuses("preexisting");
-    expect(statuses.preexisting).toBe("pending");
-    expect(IDS.filter((id) => statuses[id] === "current")).toEqual([]);
+  it("⚠️ pulses a built stage when asked to, and refuses for a planned one", () => {
+    // This replaces "refuses to make a planned stage current", which #26.08
+    // emptied of its subject: Pre-existing was the last stage with no screen,
+    // so the vector that test used is now an ordinary stage.
+    //
+    // Written over `planned(id)` rather than over a hard-coded id, so it says
+    // the invariant instead of an example of it: a stage the catalogue lists
+    // and a caller names DOES pulse, unless it has no screen, in which case
+    // nothing pulses at all — under-claiming rather than a pulse on a stage
+    // with nothing behind it. Today every branch on the right is taken and the
+    // left is empty; the day 26.09 or 26.10 adds a `plannedIn` back, this test
+    // covers it without an edit.
+    for (const id of IDS) {
+      const statuses = stageStatuses(id);
+      expect({ id, status: statuses[id] }).toEqual({
+        id,
+        status: planned(id) ? "pending" : "current",
+      });
+      if (planned(id)) expect(IDS.filter((i) => statuses[i] === "current")).toEqual([]);
+    }
   });
 
   it("under-claims rather than throwing on an id that is not in the catalogue", () => {
@@ -673,20 +764,27 @@ describe("the indicator's copy", () => {
  * module were built to make impossible.
  */
 describe("phaseAfterFileChecks", () => {
+  /** Every result now carries two flags. Spelt out so a case reads as one line. */
+  const at = (phase: string, dup = false, pex = false) => ({
+    phase,
+    duplicationRan: dup,
+    preexistingRan: pex,
+  });
+
   it("sends a broken constraint to the constraints list, whatever was asked for", () => {
-    for (const target of ["constraints", "duplication"] as const) {
+    for (const target of ["constraints", "duplication", "preexisting"] as const) {
       expect(
         phaseAfterFileChecks({ target, constraintsClean: false, duplicationClean: null }),
-      ).toEqual({ phase: "constraints-report", duplicationRan: false });
+      ).toEqual(at("constraints-report"));
     }
   });
 
-  it("⚠️ never reports a match that did not run, even when the constraints passed", () => {
-    // The `plannedIn` argument one layer down. A run that came for Duplication
-    // and found a broken constraint has not looked for copies, and a run that
-    // came only for the constraints has not either. In both the flag is false,
-    // which is what keeps the panel showing its explanations rather than an
-    // all-clear nobody earned.
+  it("⚠️ never reports a check that did not run, even when everything before it passed", () => {
+    // The `plannedIn` argument one layer down, now for two flags. A run that
+    // came for Duplication and found a broken constraint has not looked for
+    // copies; a run that came for the archive and found copies has not asked
+    // the archive. In each case the flag is false, which is what keeps the
+    // panel showing its explanations rather than an all-clear nobody earned.
     expect(
       phaseAfterFileChecks({
         target: "duplication",
@@ -701,10 +799,18 @@ describe("phaseAfterFileChecks", () => {
         duplicationClean: null,
       }).duplicationRan,
     ).toBe(false);
+    expect(
+      phaseAfterFileChecks({
+        target: "preexisting",
+        constraintsClean: true,
+        duplicationClean: false,
+        preexistingClean: null,
+      }).preexistingRan,
+    ).toBe(false);
   });
 
   it("stops a clean constraints run at the Duplication explanations", () => {
-    // The stopping point the stage exists for: the user reads what a duplicate
+    // The stopping point that stage exists for: the user reads what a duplicate
     // is before being shown files to remove.
     expect(
       phaseAfterFileChecks({
@@ -712,17 +818,22 @@ describe("phaseAfterFileChecks", () => {
         constraintsClean: true,
         duplicationClean: null,
       }),
-    ).toEqual({ phase: "duplication", duplicationRan: false });
+    ).toEqual(at("duplication"));
   });
 
-  it("sends a clean duplication check to the folder report", () => {
+  it("⚠️ stops a clean duplication run at the Pre-existing explanations", () => {
+    // THE one cell #26.08 changed. It was `folder-report` for two slices — a
+    // clean duplication check went straight to Evaluation — and the whole
+    // insertion of the new stage is this line. The same stopping point one
+    // stage later: the user reads what "already in the system" means before
+    // being shown which of their documents are.
     expect(
       phaseAfterFileChecks({
         target: "duplication",
         constraintsClean: true,
         duplicationClean: true,
       }),
-    ).toEqual({ phase: "folder-report", duplicationRan: true });
+    ).toEqual(at("preexisting", true));
   });
 
   it("sends a failing duplication check to its own fix list", () => {
@@ -732,22 +843,100 @@ describe("phaseAfterFileChecks", () => {
         constraintsClean: true,
         duplicationClean: false,
       }),
-    ).toEqual({ phase: "duplication-report", duplicationRan: true });
+    ).toEqual(at("duplication-report", true));
+  });
+
+  it("⚠️ sends a run that came for the archive but found copies back to Duplication", () => {
+    // A run that came to ask the archive and found copies inside the folder has
+    // not asked the archive, and must not say it has. The same argument the
+    // constraints case makes one stage down.
+    expect(
+      phaseAfterFileChecks({
+        target: "preexisting",
+        constraintsClean: true,
+        duplicationClean: false,
+        preexistingClean: null,
+      }),
+    ).toEqual(at("duplication-report", true));
+  });
+
+  it("sends a clean pre-existing check straight on to the folder report", () => {
+    // No screen for a clean answer, exactly as a clean duplication check shows
+    // none: there is nothing to tell the user, and a screen reading "the
+    // archive holds none of these, press Continuă" is a click spent on a
+    // non-event. The stage still goes green behind them — the comparison ran.
+    expect(
+      phaseAfterFileChecks({
+        target: "preexisting",
+        constraintsClean: true,
+        duplicationClean: true,
+        preexistingClean: true,
+      }),
+    ).toEqual(at("folder-report", true, true));
+  });
+
+  it("⚠️ shows the report when the archive answered with anything at all — including a failure", () => {
+    // `preexistingClean: false` covers three different states and they all land
+    // on the same screen: the archive holds some of these documents, some files
+    // could not be measured, and the lookup did not answer. That is deliberate
+    // — see the note on the parameter. What must NOT happen is any of them
+    // being carried past the screen, because the loop reads the answer.
+    expect(
+      phaseAfterFileChecks({
+        target: "preexisting",
+        constraintsClean: true,
+        duplicationClean: true,
+        preexistingClean: false,
+      }),
+    ).toEqual(at("preexisting-report", true, true));
+  });
+
+  it("⚠️ under-claims when a `preexisting` run produced no answer at all", () => {
+    // `null` is not `false`. A failure is an answer the stage renders and the
+    // user acts on and arrives as `false`; `null` means the lookup never
+    // happened, and the honest place for that caller is the explanations with
+    // the button still to press. Landing them on the report would draw an empty
+    // one and call it the archive's answer.
+    expect(
+      phaseAfterFileChecks({
+        target: "preexisting",
+        constraintsClean: true,
+        duplicationClean: true,
+        preexistingClean: null,
+      }),
+    ).toEqual(at("preexisting", true));
+    // …and the same when the caller omits it entirely, which is what every
+    // pre-#26.08 call site does.
+    expect(
+      phaseAfterFileChecks({
+        target: "preexisting",
+        constraintsClean: true,
+        duplicationClean: true,
+      }),
+    ).toEqual(at("preexisting", true));
   });
 
   it("⚠️ ignores a verdict it was handed against a target that did not ask for one", () => {
     // Defensive, and the reason is the caller's shape rather than paranoia:
     // `duplicationClean` and `target` are two expressions of one fact in
-    // `runWalk`, and the failure mode if they ever disagree is the Duplication
-    // stage going green off a verdict computed for a press that never happened.
-    // The target is the authority.
+    // `runWalk`, and the failure mode if they ever disagree is a stage going
+    // green off a verdict computed for a press that never happened. The target
+    // is the authority — for both flags.
     expect(
       phaseAfterFileChecks({
         target: "constraints",
         constraintsClean: true,
         duplicationClean: true,
       }),
-    ).toEqual({ phase: "duplication", duplicationRan: false });
+    ).toEqual(at("duplication"));
+    expect(
+      phaseAfterFileChecks({
+        target: "duplication",
+        constraintsClean: true,
+        duplicationClean: true,
+        preexistingClean: true,
+      }),
+    ).toEqual(at("preexisting", true));
   });
 
   it("⚠️ UNDER-claims for a `structure` target rather than carrying it forward", () => {
@@ -762,19 +951,58 @@ describe("phaseAfterFileChecks", () => {
     // exists to prevent, one layer up.
     for (const constraintsClean of [true, false]) {
       for (const duplicationClean of [true, false, null]) {
-        expect(
-          phaseAfterFileChecks({ target: "structure", constraintsClean, duplicationClean }),
-        ).toEqual({ phase: "constraints", duplicationRan: false });
+        for (const preexistingClean of [true, false, null]) {
+          expect(
+            phaseAfterFileChecks({
+              target: "structure",
+              constraintsClean,
+              duplicationClean,
+              preexistingClean,
+            }),
+          ).toEqual(at("constraints"));
+        }
       }
     }
   });
 
   it("only ever names a phase the machine actually has", () => {
-    for (const target of ["structure", "constraints", "duplication"] as const) {
+    for (const target of ["structure", "constraints", "duplication", "preexisting"] as const) {
       for (const constraintsClean of [true, false]) {
         for (const duplicationClean of [true, false, null]) {
-          const { phase } = phaseAfterFileChecks({ target, constraintsClean, duplicationClean });
-          expect(IMPORT_PHASES).toContain(phase);
+          for (const preexistingClean of [true, false, null]) {
+            const { phase } = phaseAfterFileChecks({
+              target,
+              constraintsClean,
+              duplicationClean,
+              preexistingClean,
+            });
+            expect(IMPORT_PHASES).toContain(phase);
+          }
+        }
+      }
+    }
+  });
+
+  it("⚠️ never claims a later check ran without the earlier one", () => {
+    // Two flags can disagree in a way one could not: `preexistingRan` true
+    // beside `duplicationRan` false would be the Pre-existing pill going green
+    // over a Duplication stage that never ran, which is the exact shape of
+    // false green this whole module exists to prevent — and it is invisible in
+    // any single case above, because each one asserts a correct pair.
+    for (const target of ["structure", "constraints", "duplication", "preexisting"] as const) {
+      for (const constraintsClean of [true, false]) {
+        for (const duplicationClean of [true, false, null]) {
+          for (const preexistingClean of [true, false, null]) {
+            const out = phaseAfterFileChecks({
+              target,
+              constraintsClean,
+              duplicationClean,
+              preexistingClean,
+            });
+            if (out.preexistingRan) {
+              expect({ target, dup: out.duplicationRan }).toEqual({ target, dup: true });
+            }
+          }
         }
       }
     }

@@ -14,6 +14,7 @@ import {
   isIdCardLabel,
   isIdCardEntry,
   ID_CARD_TYPE_KEYS,
+  looksLikeIdCardName,
 } from "@/lib/import/id-card";
 
 describe("foldRomanian", () => {
@@ -112,5 +113,70 @@ describe("isIdCardEntry", () => {
     expect(isIdCardEntry({})).toBe(false);
     expect(isIdCardEntry(null)).toBe(false);
     expect(isIdCardEntry(undefined)).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Slice #26.08 — the same question, asked of a NAME
+// ---------------------------------------------------------------------------
+
+describe("looksLikeIdCardName", () => {
+  /**
+   * The weak signal, used at the Pre-existing stage, several stages before
+   * Haiku has seen anything. It is allowed — meant — to over-claim: a false
+   * positive costs a duplicate document and a false negative costs a PERSON,
+   * because a wrong name-and-size match on a card is what the whole carve-out
+   * exists to prevent.
+   */
+  it("reads the ordinary spellings, however they are separated", () => {
+    for (const name of [
+      "Buletin.jpg",
+      "buletin popescu.png",
+      "Buletin-Popescu.jpg",
+      "CI Popescu.jpg",
+      "Carte de identitate.pdf",
+      "act de identitate.tif",
+      "ID card.png",
+    ]) {
+      expect({ name, idCard: looksLikeIdCardName(name) }).toEqual({ name, idCard: true });
+    }
+  });
+
+  it("⚠️ reads UNDERSCORES as separators, which `\\b` alone does not", () => {
+    // `_` is an ASCII WORD character, so `\b` does not fire beside it and every
+    // underscore-separated spelling was missed — while underscore is this
+    // archive's own convention (`folderNameToTitleHint` exists to turn
+    // `CVC_2021-04-12` into a title). Found by #26.08's adversarial review.
+    for (const name of [
+      "Buletin_Popescu.jpg",
+      "Buletin_2.jpg",
+      "Carte_de_identitate.jpg",
+      "act_de_identitate.png",
+    ]) {
+      expect({ name, idCard: looksLikeIdCardName(name) }).toEqual({ name, idCard: true });
+    }
+  });
+
+  it("keeps the veto and the word boundaries once underscores are spaces", () => {
+    // Over-claiming is cheap; claiming EVERYTHING would empty the stage of its
+    // value, so the negative half matters too.
+    for (const name of [
+      "Contract_vanzare.pdf",
+      "Buletinul_Oficial.pdf",
+      "carte_de_identitate_a_vehiculului.jpg",
+      "coord 48-50.txt",
+      "Certificat.pdf",
+      "cinci pagini.pdf",
+    ]) {
+      expect({ name, idCard: looksLikeIdCardName(name) }).toEqual({ name, idCard: false });
+    }
+  });
+
+  it("strips only a real extension, so a dotfile is matched whole", () => {
+    // `dot > 0` rather than `dot >= 0`: `.buletin` is all stem, and slicing at
+    // index 0 would leave nothing to match.
+    expect(looksLikeIdCardName(".buletin")).toBe(true);
+    expect(looksLikeIdCardName("buletin")).toBe(true);
+    expect(looksLikeIdCardName("plan.buletin")).toBe(false);
   });
 });
