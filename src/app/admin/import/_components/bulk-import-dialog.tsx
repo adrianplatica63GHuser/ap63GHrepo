@@ -67,6 +67,7 @@ import type { ProvenanceCode } from "@/lib/metadata/provenance";
 import { ProvenanceField } from "./provenance-field";
 import { isIdCardEntry } from "@/lib/import/id-card";
 import { isCoordinateFileName } from "@/lib/import/coordinate-file";
+import type { EntryAssignment } from "@/lib/import/property-folders";
 import { ProgressBar } from "@/components/progress-bar";
 import { buttonClass } from "@/lib/ui/button-styles";
 import {
@@ -138,33 +139,46 @@ type Props = {
   rootFolderName: string;
   scanResults: Map<string, ScanResult>;
   /**
-   * Slice #23.00.Import: the single Property this whole run belongs to,
-   * resolved by PropertyStepDialog before the import starts. Every document
-   * created here is linked to it directly. Required — the wizard cannot reach
-   * this dialog without one.
+   * Which Property (or Properties) each entry's Document is linked to, by entry
+   * path.   (Slice #23.00.Import as one id for the run; a map since #26.07.)
+   *
+   * Built once by `assignEntryProperties` at the property step, from rules that
+   * live in `src/lib/import/property-folders.ts` and nowhere else: a property
+   * folder's entries link to its own Property, `common` links to every Property
+   * the run resolved, `floating` and anything the structure rules forbid link
+   * to none.
+   *
+   * ⚠️ **An empty list and a missing key are different, and this dialog trusts
+   * the difference.** Every entry has a key, including the ones linked to
+   * nothing — so a `get` that returns `undefined` means the map was built from a
+   * different entry list than the one being imported, which is a bug rather
+   * than a floating document. Both are treated as "link nothing", because
+   * writing a link on a guess is the worse of the two failures, and the run's
+   * result still names the file.
    */
-  propertyId: string;
+  propertyIdsByPath: ReadonlyMap<string, EntryAssignment>;
   /**
-   * Slice #23.06.Import: the path of the coordinate file whose corners the
-   * property step actually WROTE to `propertyId`, or null if none did.
+   * The coordinate files whose corners actually LANDED on a Property, and which
+   * one.   (Slice #23.06.Import, per-folder since #26.07.)
    *
    * The loop uses it to claim `property_corner_source` the moment it creates
    * that file's Document — closing the hole that produced the duplicate
-   * Property this slice exists to fix.
+   * Property #23.06 existed to fix.
    *
-   * Null in three cases, all correct: no coordinate file was picked; the file
-   * parsed to zero corners; or the property already had corners and the user
-   * chose "Păstrează". In that last one the file was read but its corners were
-   * REJECTED, so it is not the origin of this Property's geometry and must
-   * stay free for a different one.
+   * A coordinate file is ABSENT in three cases, all correct: its folder's
+   * Property already had corners, so the file was read and its corners were not
+   * adopted; the file parsed to zero corners; or the folder had none. In each
+   * of those it is not the origin of any geometry and must stay free for a
+   * Property it really did build.
    */
-  cornerSourcePath?: string | null;
+  cornerSourceByPath?: ReadonlyMap<string, string>;
   /**
-   * Slice #23.02.Import: fired when a coordinate row rewrites the Property's
+   * Slice #23.02.Import: fired when a coordinate row rewrites a Property's
    * corners, so the wizard's toolbar chip stops advertising the count it had at
-   * the property step.
+   * the property step. Carries the Property id since #26.07 — the wizard now
+   * holds several, and a bare count could only be applied to a guess.
    */
-  onPropertyCornersChanged?: (cornerCount: number) => void;
+  onPropertyCornersChanged?: (propertyId: string, cornerCount: number) => void;
   /**
    * Slice #26.03: fired once, the moment the FIRST Document of the run has
    * actually been created.
@@ -239,10 +253,12 @@ async function withConcurrencyLimit<T>(
 // ---------------------------------------------------------------------------
 //
 // Slice #23.02.Import removed the local TEXT_EXTS_SET / isTextFile pair: the
-// coordinate-file extension list now has exactly one home, the pure
-// isCoordinateFileName in src/lib/import/coordinate-file.ts, which the property
-// step already uses. Two copies of "which extensions might hold corners" is one
-// copy too many.
+// coordinate-file extension list got exactly one home, the pure
+// isCoordinateFileName in src/lib/import/coordinate-file.ts, which this row
+// still asks. Slice #26.07 narrowed it to STR-08's `coord…` rule for one
+// adversarial round and put it back; the reasoning is at the call site, and
+// the short version is that a folder rule and a row action are two different
+// questions and only the first is allowed to be strict.
 //
 // Slice #24.03 finished the job: the local IMAGE_EXTS_SET and PDF_EXT are gone
 // too, and both questions are asked of the file-kind registry in
@@ -485,8 +501,8 @@ export function BulkImportDialog({
   entries,
   rootFolderName,
   scanResults,
-  propertyId,
-  cornerSourcePath = null,
+  propertyIdsByPath,
+  cornerSourceByPath,
   onPropertyCornersChanged,
   onFirstDocumentCreated,
   onClose,
@@ -516,7 +532,7 @@ export function BulkImportDialog({
   // The File is resolved up front (the FSEntry handle is only readable while
   // this dialog is mounted) and held here so the child gets a plain File.
   const [idCardTarget, setIdCardTarget] = useState<
-    { path: string; docId: string; label: string; file: File } | null
+    { path: string; docId: string; label: string; file: File; propertyId: string } | null
   >(null);
   const [idCardError, setIdCardError] = useState<string | null>(null);
 
@@ -525,11 +541,73 @@ export function BulkImportDialog({
   // coordinate-source link, and a claim is about a DOCUMENT, not a file
   // handle. Same shape as idCardTarget/aiTarget, which have always carried it.
   const [coordinateTarget, setCoordinateTarget] = useState<
-    { path: string; docId: string; entry: FSFileEntry } | null
+    { path: string; docId: string; entry: FSFileEntry; propertyId: string } | null
   >(null);
   const [aiTarget, setAiTarget] = useState<
     { path: string; docId: string; label: string } | null
   >(null);
+
+  /**
+   * The Property the LAST coordinate row action was opened against.
+   *
+   * `handleCoordinateDone` has always read its target through a
+   * `setCoordinateTarget` updater rather than depending on the state, so that a
+   * new target does not give the child dialog a new `onDone` identity. Since
+   * #26.07 it also needs to say WHICH Property's corner count changed, and a
+   * value read inside a state updater is only available inside it — on the next
+   * render, after the report would have happened.
+   *
+   * ⚠️ **Written when the action OPENS, and never cleared.** A first attempt
+   * mirrored `coordinateTarget` itself and read `?.propertyId`, which is null
+   * the moment the child closes — and the `if (target)` guard three lines below
+   * exists precisely because that ordering happens, so the report was
+   * conditional on a state the surrounding code already expects to be gone. The
+   * wizard's chip then kept advertising the count from the property step for
+   * the rest of the run, where before #26.07 it was corrected. A plain id that
+   * only ever moves forward has no such window.
+   */
+  const coordinatePropertyRef = useRef<string | null>(null);
+
+  /**
+   * The Property ids this entry's Document must be linked to.   (Slice #26.07)
+   *
+   * One reader, used by the import loop AND by the two row actions, so that a
+   * document written into Property X can never be offered a dialog that acts on
+   * Property Y. `?? []` covers the map-and-entries-disagree bug described on the
+   * prop: link nothing rather than link a guess.
+   *
+   * A plain function over a prop rather than a memo — it is a `Map.get`, and a
+   * `useMemo` over a map the parent owns would only add a second thing that can
+   * be stale.
+   */
+  const propertiesForEntry = useCallback(
+    (path: string): string[] => propertyIdsByPath.get(path)?.propertyIds ?? [],
+    [propertyIdsByPath],
+  );
+
+  /**
+   * The ONE Property a row action may act on, or null.
+   *
+   * The ID-card and coordinate dialogs each write to a single Property, and
+   * both are offered per row. An entry under `common` concerns EVERY property
+   * in the chosen folder, so there is no single answer and the action is not
+   * offered; an entry under `floating` has none at all.
+   *
+   * ⚠️ **Keyed on the BUCKET, not on the list length**, which is the same rule
+   * stated correctly. Length alone was wrong in the commonest shape of all —
+   * one property subfolder plus `common` — where a `common` document has
+   * exactly one id, so both actions were offered on it and the coordinate one
+   * could replace that Property's corners from a file the property step had
+   * refused. See `EntryAssignment`.
+   */
+  const soleProperty = useCallback(
+    (path: string): string | null => {
+      const assignment = propertyIdsByPath.get(path);
+      if (assignment === undefined || assignment.bucket !== "property") return null;
+      return assignment.propertyIds.length === 1 ? assignment.propertyIds[0] : null;
+    },
+    [propertyIdsByPath],
+  );
 
   // ── Provenance (Slice #21.07.Import) ──────────────────────────────────────
   //
@@ -701,8 +779,9 @@ export function BulkImportDialog({
           //   good follows from continuing: the run would attach a document to
           //   a Property whose corners came from a file that belongs somewhere
           //   else, silently. Fail loudly, name the winner, let Adrian decide.
-          if (cornerSourcePath && entry.path === cornerSourcePath) {
-            const claim = await claimCornerSource(docId, propertyId, "session-expired");
+          const cornerOwner = cornerSourceByPath?.get(entry.path);
+          if (cornerOwner !== undefined) {
+            const claim = await claimCornerSource(docId, cornerOwner, "session-expired");
             if (claim.kind === "conflict") {
               throw new Error(
                 t("cornerSourceConflict", {
@@ -726,7 +805,7 @@ export function BulkImportDialog({
             await uploadPage(docId, file, 1);
           }
 
-          // 5. Link the document to the run's Property.
+          // 5. Link the document to its folder's Property — or Properties.
           //
           // Slice #23.00.Import: DIRECT, and before the tags — this is the
           // real relationship, so if anything below fails the document is
@@ -734,7 +813,16 @@ export function BulkImportDialog({
           // like this at all: the property was inferred later from a shared
           // tag string via findEntitiesByTag, which matched every document
           // anywhere in the system carrying that tag, not just this run's.
-          await associateDocumentsWithProperty(propertyId, [docId]);
+          //
+          // Slice #26.07: a LIST, because the answer is no longer one id.
+          // Usually exactly one (the entry's own property folder); several for
+          // a `common` document, which concerns every property in the chosen
+          // folder; none for a `floating` one, which is stored and linked to
+          // nothing. An empty list writes nothing and is not an error — see
+          // `propertyIdsByPath`.
+          for (const linkedPropertyId of propertiesForEntry(entry.path)) {
+            await associateDocumentsWithProperty(linkedPropertyId, [docId]);
+          }
 
           // 6. Tag with all ancestor folder names.
           //
@@ -778,10 +866,13 @@ export function BulkImportDialog({
     });
 
     return () => { mounted = false; };
-    // entries and rootFolderName are stable for the lifetime of this dialog;
-    // updateResult is a stable useCallback reference; the per-entry provenance
-    // is read through provenanceRef so answering the gate does not restart an
-    // import that is already running.
+    // entries and rootFolderName are stable for the lifetime of this dialog,
+    // and so are `propertyIdsByPath` and `cornerSourceByPath` — the property
+    // step builds both once and the wizard holds them in state, so a re-render
+    // caused by a corner count changing hands the same Map back. updateResult
+    // is a stable useCallback reference; the per-entry provenance is read
+    // through provenanceRef so answering the gate does not restart an import
+    // that is already running.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gatePassed]);
 
@@ -869,12 +960,24 @@ export function BulkImportDialog({
             ? (entry as FSPageGroupEntry).titleHint
             : (entry as FSFileEntry).name;
 
-        setIdCardTarget({ path: entry.path, docId: result.docId, label, file: image });
+        // Slice #26.07 — the Property this row's Document actually went into.
+        // Re-read here rather than captured when the row was imported: it comes
+        // from the same one reader the loop used, so the two cannot disagree.
+        const rowProperty = soleProperty(entry.path);
+        if (rowProperty === null) return;
+
+        setIdCardTarget({
+          path: entry.path,
+          docId: result.docId,
+          label,
+          file: image,
+          propertyId: rowProperty,
+        });
       } catch (err) {
         setIdCardError(err instanceof Error ? err.message : t("idCardNoFile"));
       }
     },
-    [t],
+    [t, soleProperty],
   );
 
   const handleIdCardDone = useCallback((outcome: IdCardPersonOutcome) => {
@@ -911,12 +1014,19 @@ export function BulkImportDialog({
     // `settled` (status === "done" && !!docId); this is the belt to that
     // braces, and it keeps the prop non-optional in the dialog.
     if (!result.docId) return;
+    // Slice #26.07 — as above. `null` cannot happen from the UI (the row's
+    // button is not rendered without a sole Property), and returning here is
+    // the belt to those braces rather than a second rule.
+    const rowProperty = soleProperty(result.entry.path);
+    if (rowProperty === null) return;
+    coordinatePropertyRef.current = rowProperty;
     setCoordinateTarget({
       path: result.entry.path,
       docId: result.docId,
       entry: result.entry as FSFileEntry,
+      propertyId: rowProperty,
     });
-  }, []);
+  }, [soleProperty]);
 
   const handleCoordinateDone = useCallback(
     (outcome: CoordinateOutcome) => {
@@ -930,8 +1040,12 @@ export function BulkImportDialog({
         return target;
       });
       // Only a real write invalidates the wizard's chip; keeping the existing
-      // corners changed nothing to report.
-      if (outcome.changed) onPropertyCornersChanged?.(outcome.cornerCount);
+      // corners changed nothing to report. Slice #26.07 — named, because the
+      // wizard now shows one chip per Property and an unnamed count could only
+      // be applied to whichever it guessed.
+      if (outcome.changed && coordinatePropertyRef.current !== null) {
+        onPropertyCornersChanged?.(coordinatePropertyRef.current, outcome.cornerCount);
+      }
     },
     [onPropertyCornersChanged, updateResult],
   );
@@ -1130,7 +1244,7 @@ export function BulkImportDialog({
             <IdCardPersonDialog
               file={idCardTarget.file}
               entryLabel={idCardTarget.label}
-              propertyId={propertyId}
+              propertyId={idCardTarget.propertyId}
               documentId={idCardTarget.docId}
               // Slice #23.03.Import — the scan's own confidence, read here
               // rather than stored on the target: scanResults is keyed by the
@@ -1145,7 +1259,7 @@ export function BulkImportDialog({
           {/* Slice #23.02.Import — coordinate file → the run's Property. */}
           {coordinateTarget && (
             <CoordinatePropertyDialog
-              propertyId={propertyId}
+              propertyId={coordinateTarget.propertyId}
               documentId={coordinateTarget.docId}
               entry={coordinateTarget.entry}
               onDone={handleCoordinateDone}
@@ -1191,10 +1305,42 @@ export function BulkImportDialog({
                   key={r.entry.path}
                   result={r}
                   t={t}
+                  // ⚠️ `isIdCard` is a FACT about the file and must stay one.
+                  // #26.07 briefly ANDed the sole-property guard into it, and
+                  // `isIdCard` is not only the person button's gate — it is
+                  // also what SUPPRESSES "Interpretează AI" on an identity
+                  // card, which #23.08 removed because on a card it makes a
+                  // second billed Anthropic call that returns strictly less
+                  // than "Creează persoană" already had. The guard belongs on
+                  // the person button alone; that is `canCreatePerson`.
                   isIdCard={isIdCardEntry(scanResults.get(r.entry.path))}
+                  canCreatePerson={soleProperty(r.entry.path) !== null}
                   isCoordinate={
                     r.entry.kind === "file" &&
-                    isCoordinateFileName((r.entry as FSFileEntry).name)
+                    // ⚠️ The EXTENSION shortlist, deliberately — and this was
+                    // narrowed to STR-08's `coord…` rule for one round before
+                    // being put back, so the reasoning matters.
+                    //
+                    // The two rules answer different questions and both answers
+                    // are right. STR-08 decides which file a FOLDER's corners
+                    // are read from, and it is strict because the user was told
+                    // to name it: a `.txt` of notes must not become geometry
+                    // behind their back. This row is the opposite situation —
+                    // the user is looking at one document and pressing a button
+                    // — and narrowing it left a correctly-formed export named
+                    // `corners.txt` with NO path to its property at all: skipped
+                    // by the folder rule, silent (STR-08 only fires on a second
+                    // strong-named file), and then not offered here either.
+                    // `coordinate-file.ts`'s standing promise is that the name
+                    // ranks and warns and never filters; this is the half of it
+                    // that survives. A file that holds no corners parses to
+                    // none and the dialog does nothing.
+                    isCoordinateFileName((r.entry as FSFileEntry).name) &&
+                    // Slice #26.07 — the action writes corners to ONE Property.
+                    // A `common` document belongs to several and a `floating`
+                    // one to none, so there is nothing for the button to act on
+                    // and it is not drawn. See `soleProperty`.
+                    soleProperty(r.entry.path) !== null
                   }
                   canInterpret={hasReadablePage(r.entry)}
                   onCreatePerson={() => void handleOpenIdCard(r)}
@@ -1220,6 +1366,16 @@ type ResultRowProps = {
   t: ReturnType<typeof useTranslations<"adminImport.wizard.importDialog">>;
   /** Slice #23.01.Import: the scan says this entry is an identity card. */
   isIdCard: boolean;
+  /**
+   * May the person action act at all?   (Slice #26.07)
+   *
+   * The dialog it opens writes a Person and links it to ONE Property. A
+   * `common` document concerns every property in the run and a `floating` one
+   * none, so there is nothing for it to act on — and without this the button
+   * was drawn, the click read the file, and nothing happened. Separate from
+   * `isIdCard` because that one also suppresses the AI action; see the call site.
+   */
+  canCreatePerson: boolean;
   /** Slice #23.02.Import: this entry's extension could hold Stereo 70 corners. */
   isCoordinate: boolean;
   /** Slice #23.02.Import: at least one page is an image or PDF. */
@@ -1233,6 +1389,7 @@ function ResultRow({
   result,
   t,
   isIdCard,
+  canCreatePerson,
   isCoordinate,
   canInterpret,
   onCreatePerson,
@@ -1319,7 +1476,16 @@ function ResultRow({
               returned strictly less than the first one already had. Those
               fields are now written by the person action itself, so the button
               is not merely redundant here, it is worse than the alternative. */}
-          {settled && canInterpret && !isIdCard && !aiProcessed && (
+          {/* ⚠️ `!(isIdCard && canCreatePerson)`, not `!isIdCard`.
+              #23.08 suppressed the AI action on an identity card because
+              "Creează persoană" had already extracted the card and a second
+              billed call returned strictly less. That argument holds only
+              while the person action is AVAILABLE — and since #26.07 it is
+              not, on a card under `common` or `floating`, which is exactly
+              where an owner's carte de identitate belongs. Suppressing both
+              left the row with no action at all, so the file could be imported
+              and never read. */}
+          {settled && canInterpret && !(isIdCard && canCreatePerson) && !aiProcessed && (
             <button
               type="button"
               onClick={onInterpret}
@@ -1340,7 +1506,7 @@ function ResultRow({
           )}
 
           {/* Slice #23.01.Import — the ID-card action. */}
-          {settled && isIdCard && !personId && (
+          {settled && isIdCard && canCreatePerson && !personId && (
             <button
               type="button"
               onClick={onCreatePerson}

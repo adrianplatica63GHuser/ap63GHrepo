@@ -79,6 +79,7 @@ import { BulkImportDialog } from "./bulk-import-dialog";
 import {
   PropertyStepDialog,
   type ResolvedProperty,
+  type ResolvedRun,
 } from "./property-step-dialog";
 import { ResumedSessionView } from "./resumed-session-view";
 import { PreflightChecklist } from "./preflight-checklist";
@@ -248,10 +249,69 @@ export function ImportWizard() {
   const [scanResults, setScanResults] = useState<Map<string, ScanResult>>(new Map());
   const [scanProgress, setScanProgress] = useState({ done: 0, total: 0 });
   const [walkError, setWalkError] = useState<string | null>(null);
-  // Slice #23.00.Import: the one Property this folder represents. Null until
-  // the user resolves it in the property step; the import cannot start
-  // without it.
-  const [resolvedProperty, setResolvedProperty] = useState<ResolvedProperty | null>(null);
+  /**
+   * The Properties this run resolved, and which entry belongs to which.
+   * (Slice #23.00.Import as one Property; a run of up to five since #26.07.)
+   *
+   * Null until the property step has created or found every one of them —
+   * which is the ordering the brief asks for: no Document is created until the
+   * Property its folder belongs to exists.
+   *
+   * ⚠️ It is NOT null-means-"the import cannot start" any more. A chosen folder
+   * holding only `floating` resolves ZERO Properties, and that is a legitimate
+   * run: the source document says floating documents "are just saved into the
+   * system … but they are not linked to any of the properties". What the
+   * importing phase requires is that the step RAN, not that it produced
+   * something — `resolvedRun !== null` says the first, `properties.length > 0`
+   * would say the second and would refuse an import the rules allow.
+   */
+  const [resolvedRun, setResolvedRun] = useState<ResolvedRun | null>(null);
+
+  /**
+   * Has this run put a Property into the archive?   (Slice #26.07)
+   *
+   * NOT the same fact as `resolvedRun !== null`, and an adversarial round is
+   * what found the difference. The property step writes one folder at a time,
+   * so a failure on folder four leaves three real Properties behind while
+   * `resolvedRun` is still null — and the Cancel's account of what it leaves
+   * behind was gated on exactly that, so it stayed silent about properties in
+   * precisely the case where orphaned ones existed, and spoke only when the
+   * step had finished and nothing was orphaned. Backwards, both ways round.
+   *
+   * Set by the step as each Property lands; cleared when a new folder is picked
+   * and when the wizard resets.
+   */
+  const [propertiesTouched, setPropertiesTouched] = useState(false);
+
+  /**
+   * The Properties this run has actually put in the archive, as they land.
+   *
+   * ⚠️ **The toolbar chips come from HERE, not from `resolvedRun`**, and an
+   * adversarial round is why. The property step writes one folder at a time and
+   * its Cancel is no longer disabled mid-write, so a user who gives up after
+   * three of five leaves three real Properties behind — with `resolvedRun` null,
+   * because `onResolved` only fires on a complete loop. Chips read off
+   * `resolvedRun` showed none of them, while the Cancel's confirmation said
+   * properties remain: the user was told to go and find something and shown no
+   * code to find it by.
+   *
+   * On the ordinary path this holds exactly what `resolvedRun.properties` does,
+   * because every one of them was announced on its way through.
+   */
+  const [touchedProperties, setTouchedProperties] = useState<ResolvedProperty[]>([]);
+
+  /**
+   * Property folders whose corners the property step has already written.
+   *
+   * Held here rather than in the step for the same reason the chips are:
+   * cancelling mid-write and coming back is the ordinary way to fix the folder
+   * that failed, and a fresh dialog forgot — so the card told the user their
+   * coordinate file had been ignored and sent them to edit corners that came
+   * from that very file two minutes earlier.
+   */
+  const [cornersWritten, setCornersWritten] = useState<ReadonlySet<string>>(
+    () => new Set(),
+  );
   // Saved session — lazy-initialised from localStorage so no effect is needed.
   // loadSavedSession() guards against SSR with a `typeof window` check.
   const [savedSession, setSavedSession] = useState<SavedImportSession | null>(
@@ -563,7 +623,10 @@ export function ImportWizard() {
       if (mode === "pick") {
         // A new folder is a new Property question — never carry the previous
         // run's answer over, or documents would silently land on the wrong one.
-        setResolvedProperty(null);
+        setResolvedRun(null);
+        setPropertiesTouched(false);
+        setTouchedProperties([]);
+        setCornersWritten(new Set());
         // ...and a new run for the Cancel's account of what it would leave
         // behind. Documents imported under the previous folder are still in the
         // archive, but they are not something cancelling THIS run abandons.
@@ -997,7 +1060,10 @@ export function ImportWizard() {
     setMetaProgress({ done: 0, total: 0 });
     setScanResults(new Map());
     setScanProgress({ done: 0, total: 0 });
-    setResolvedProperty(null);
+    setResolvedRun(null);
+    setPropertiesTouched(false);
+    setTouchedProperties([]);
+    setCornersWritten(new Set());
     setDocumentsCreated(false);
     setWalkError(null);
     setShowQuiet(false);
@@ -1260,14 +1326,20 @@ export function ImportWizard() {
         folderPicked: folderPickedRef.current,
         classificationSpent,
         classificationRunning: phase === "scanning",
-        propertyResolved: resolvedProperty !== null,
+        // ⚠️ `propertiesTouched` ALONE, not `resolvedRun !== null ||` it. An
+        // adversarial round enumerated the three states: a step that finished
+        // with properties has already set this, a step that failed partway has
+        // too, and a step that finished with NONE — the legitimate
+        // `floating`-only run — is the one case the disjunct changed, by
+        // asserting that properties stay behind when the run created none.
+        propertyResolved: propertiesTouched,
         documentsCreated,
         savedReportExists: savedSession !== null,
       },
     });
     // `_dirHandle` is a module-level singleton read inside an event handler,
     // never during render, so it needs no dependency and cannot go stale here.
-  }, [classificationSpent, phase, resolvedProperty, documentsCreated, savedSession]);
+  }, [classificationSpent, phase, propertiesTouched, documentsCreated, savedSession]);
 
   const dismissCancelDialog = useCallback(() => setCancelSnapshot(null), []);
 
@@ -1393,17 +1465,22 @@ export function ImportWizard() {
           </span>
         )}
 
-        {/* Resolved property chip — the run's destination, always visible
-            once chosen so it can't be forgotten mid-import. */}
-        {resolvedProperty && (
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-cta/30 bg-cta-pale px-3 py-1 text-xs font-medium text-cta dark:bg-cta/15">
-            <span className="font-mono">{resolvedProperty.code}</span>
-            <span>{resolvedProperty.nickname ?? t("propertyStep.noNickname")}</span>
+        {/* Resolved property chips — the run's destinations, always visible
+            once chosen so they can't be forgotten mid-import. One per property
+            folder since #26.07; a run with none (a chosen folder of `floating`
+            only) shows nothing, which is the truth rather than an empty chip. */}
+        {touchedProperties.map((property) => (
+          <span
+            key={property.id}
+            className="inline-flex items-center gap-1.5 rounded-full border border-cta/30 bg-cta-pale px-3 py-1 text-xs font-medium text-cta dark:bg-cta/15"
+          >
+            <span className="font-mono">{property.code}</span>
+            <span>{property.nickname ?? t("propertyStep.noNickname")}</span>
             <span className="text-cta/70">
-              {t("propertyStep.chipCorners", { count: resolvedProperty.cornerCount })}
+              {t("propertyStep.chipCorners", { count: property.cornerCount })}
             </span>
           </span>
-        )}
+        ))}
 
         {/* Slice #26.04 — the walking cue used to live here as a toolbar chip.
             It moved into `ImportStructureStage`, because `walking` is now
@@ -1625,11 +1702,43 @@ export function ImportWizard() {
         <PropertyStepDialog
           entries={entries}
           rootFolderName={rootFolderName}
+          // Slice #26.07 — the folders the walk saw at depth 0. Without it a
+          // property subfolder holding no importable file is invisible to the
+          // step while STR-02 counts it, so the two stages disagree about how
+          // many properties this import has. Same source STR-02 reads.
+          topLevelDirNames={
+            observations.find((o) => o.depth === 0)?.dirNames ?? []
+          }
           onCancel={() => setPhase("ready")}
-          onResolved={(property) => {
-            setResolvedProperty(property);
+          onResolved={(run) => {
+            setResolvedRun(run);
+            // The completed run is authoritative: `touchedProperties` was
+            // filled one Property at a time for the benefit of a run that does
+            // NOT complete, and a run that did should not leave two lists free
+            // to drift with nothing comparing them.
+            setTouchedProperties(run.properties);
             setPhase("tag-dialog");
           }}
+          // Fired per Property, as each one lands — so a step that fails on
+          // folder four still tells the Cancel that three are in the archive.
+          onPropertyResolved={(property) => {
+            setPropertiesTouched(true);
+            // Replace rather than append: a retry re-answers the same folder,
+            // and two chips for one property folder would be the screen saying
+            // the import made two.
+            setTouchedProperties((prev) => [
+              ...prev.filter((p) => p.folderName !== property.folderName),
+              property,
+            ]);
+          }}
+          // …and before the first request too: a POST that commits and loses
+          // its response never reports, and the Cancel must say "a write may
+          // have landed" rather than wait to be told that one did.
+          onWriteStarted={() => setPropertiesTouched(true)}
+          cornersWrittenBefore={cornersWritten}
+          onCornersWritten={(folderName) =>
+            setCornersWritten((prev) => new Set(prev).add(folderName))
+          }
         />
       )}
 
@@ -1644,26 +1753,33 @@ export function ImportWizard() {
       )}
 
       {/* Bulk import dialog (modal).
-          `resolvedProperty` is non-null by construction — the only route into
-          the importing phase runs through the property step — but the guard
-          keeps the required propertyId prop honest rather than asserting. */}
-      {phase === "importing" && resolvedProperty && (
+          `resolvedRun` is non-null by construction — the only route into the
+          importing phase runs through the property step — but the guard keeps
+          the required props honest rather than asserting. */}
+      {phase === "importing" && resolvedRun && (
         <BulkImportDialog
           entries={entries}
           rootFolderName={rootFolderName}
           scanResults={scanResults}
-          propertyId={resolvedProperty.id}
-          cornerSourcePath={
-            // Slice #23.06.Import — which picked file's corners actually
-            // landed on the Property, so the loop can claim
-            // property_corner_source the instant that file's Document exists.
-            // Null when nothing was written (no file, zero corners, or the
-            // user kept the existing corners): then no file is the origin of
-            // this Property's geometry and none may be locked to it.
-            resolvedProperty.cornerSourcePath
+          // Slice #26.07 — which Property (or Properties) each entry belongs
+          // to. A property folder's entries link to its own; `common` links to
+          // every one of them; `floating` and anything the rules forbid link to
+          // none. The rule is `assignEntryProperties`, computed once by the
+          // property step; nothing here re-derives it.
+          propertyIdsByPath={resolvedRun.assignment}
+          cornerSourceByPath={
+            // Slice #23.06.Import, per-folder since #26.07 — which coordinate
+            // file's corners actually landed on which Property, so the loop can
+            // claim property_corner_source the instant that file's Document
+            // exists. A file that was read and NOT adopted is absent, because
+            // it is not the origin of anything and must stay free.
+            resolvedRun.cornerSourceByPath
           }
-          onPropertyCornersChanged={(cornerCount) =>
-            setResolvedProperty((prev) => (prev ? { ...prev, cornerCount } : prev))
+          onPropertyCornersChanged={(propertyId, cornerCount) =>
+            // The chips read `touchedProperties`, so that is what has to move.
+            setTouchedProperties((prev) =>
+              prev.map((p) => (p.id === propertyId ? { ...p, cornerCount } : p)),
+            )
           }
           // Slice #26.03 — the first Document of the run has been created, so
           // from now on cancelling leaves records behind and the confirmation
