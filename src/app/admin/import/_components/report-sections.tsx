@@ -237,7 +237,12 @@ export function ReportSections({
     // that Firefox and Safari need — into `download-html.ts`, because the
     // Structure stage became the second place that saves a page.
     downloadHtmlFile(html, reportFileName(t("documentFilePrefix"), folderName, stamp));
-  }, [folderName, forecast, uploadBytes, report, t, tf, locale]);
+    // `alreadyInSystem` was missing here since #26.08 added the row it feeds.
+    // A number, so listing it costs nothing — and without it the saved page
+    // could carry the count from a previous check while the screen showed the
+    // current one, which is precisely the stale-evidence failure the saved
+    // report exists not to have.
+  }, [folderName, forecast, uploadBytes, alreadyInSystem, report, t, tf, locale]);
 
   const loud = report.findings.filter((f) => f.loudness === "loud");
   const quiet = report.findings.filter((f) => f.loudness === "quiet");

@@ -1225,8 +1225,6 @@
       "cancel": "Cancel",
       "yes": "Yes",
       "no": "No",
-      "aiInterpret": "AI Interpret",
-      "aiInterpreted": "Already AI-processed",
       "aiDiscover": "AI Discover",
       "modify": "Modify"
     },
@@ -1304,7 +1302,7 @@
       "linkThis": "Link this one",
       "noneOfThese": "None of these — create new",
       "roleMissingTitle": "Role not configured",
-      "roleMissingBody": "The role \"{roleName}\" is not set up for this document type yet. Ask an administrator to add it in Reference Data → Document Persons, then re-run AI Interpret to link this person.",
+      "roleMissingBody": "The role \"{roleName}\" is not set up for this document type yet. Ask an administrator to add it in Reference Data → Document Persons, then add the person from the document\u2019s Persons tab.",
       "noMatchTitle": "No existing match found",
       "noMatchBody": "A new person will be created with the extracted details.",
       "createAndLink": "Create & link",
@@ -1312,9 +1310,7 @@
       "linking": "Linking…",
       "creating": "Creating…",
       "linkError": "Could not link this person. Please try again.",
-      "createError": "Could not create this person. Please try again.",
-      "summary": "{linked} linked, {created} created, {skipped} skipped.",
-      "addedNote": "These people have also been added to the Persons tab of this document."
+      "createError": "Could not create this person. Please try again."
     },
     "successionParties": {
       "sectionTitle": "Parties",
@@ -1458,9 +1454,6 @@
       "parcelTakenSeveralWhatToDo": "Open the properties list and search by tarla or parcela. Check what is attached to each, move those links onto the one you are keeping, and only then delete the rest — deletion cannot be undone. Keep a single one, then add this document to it from the Documents tab.",
       "openPropertiesList": "Open the properties list"
     },
-    "aiExtracting": "Extracting…",
-    "aiExtractSuccess": "Fields filled from scanned document",
-    "aiExtractError": "AI extraction failed",
     "aiDiscovering": "Reading document…",
     "aiDiscoverSuccess": "Document read: {pairs} name/value pairs and {sections} sections. The full report was written to the server console.",
     "aiDiscoverSkipped": "{count} page(s) could not be sent — reasons are in the console.",
@@ -1739,14 +1732,11 @@
         "cornersNone": "The property will have no corners.",
         "cornersKeptNoFile": "The property already has {existing, plural, one {one corner, which is left unchanged} other {# corners, which are left unchanged}}."
       },
-      "chooseFolderButton": "Choose folder…",
-      "changeFolderButton": "Change folder…",
       "unsupported": "Your browser doesn't support local folder access. Please use Chrome, Edge, or another Chromium-based browser.",
       "walkingFolder": "Reading folder structure…",
       "scanningProgress": "Scanning: {done} / {total} files",
       "scanComplete": "Scan complete — {total} files ({scannable} sent for classification, {preexisting} already in the system)",
       "noEntries": "The selected folder contains no files.",
-      "importButton": "Import",
       "colPath": "Path",
       "colDescription": "AI Description",
       "colPages": "{count} pages",
@@ -1773,7 +1763,7 @@
       "resumedDone": "imported",
       "resumedErrors": "errors",
       "resumedNewImport": "New import",
-      "resumedHint": "File handles are unavailable after closing the browser tab. To use AI Interpret, open each document directly.",
+      "resumedHint": "File handles are unavailable after closing the browser tab, so only the links remain here. Open each document directly to see it.",
       "tagDialog": {
         "title": "Create tags from folders",
         "message": "Tags will be created for {count} folders in the selected structure. Each imported document will be automatically tagged with its folders.",
@@ -1880,7 +1870,14 @@
         "personDocFields": "{count, plural, =0 {no document fields} one {# document field} other {# document fields}}",
         "personDocFieldsFailed": "The document fields could not be written",
         "idCardNoFile": "This entry's file cannot be read as an image.",
-        "interpretButton": "AI Interpret",
+        "interpretingShort": "Reading with AI…",
+        "interpretRetry": "Try the read again",
+        "interpretPartial": "The AI read only partly succeeded — the document’s current state could not be read in full before writing, so part of what it read — the document type, the notes or the type-specific fields — was not saved.",
+        "interpretRetryFailed": "The retry of the read failed: {reason}",
+        "interpretRetryFailedUnknown": "The retry of the read failed, with no reason reported.",
+        "interpretRetryHint": "Send the document to the AI again. That is one more read, and it costs money.",
+        "interpretFailed": "AI reading failed — the document was imported, but its fields were left empty.",
+        "interpretPartiesPending": "{count, plural, one {one person to confirm} other {# people to confirm}}",
         "interpretDone": "{count, plural, =0 {no fields filled} one {# field filled} other {# fields filled}}",
         "interpretParties": "{count, plural, =0 {no people} one {# person} other {# people}}",
         "coordinatesButton": "Apply to property",
@@ -1907,19 +1904,15 @@
           "errorGeneric": "Applying the corners to the property failed.",
           "errorSession": "Your session has expired. Please sign in again."
         },
-        "aiInterpret": {
-          "title": "AI Interpret",
-          "running": "Reading the document…",
-          "skippedTitle": "Pages that could not be sent:",
-          "doneFields": "{count, plural, =0 {No fields filled} one {# field filled} other {# fields filled}} from the document.",
-          "doneParties": "People: {linked} linked, {created} created, {skipped} skipped.",
-          "closeButton": "Close",
-          "errorGeneric": "AI interpretation failed.",
-          "errorSession": "Your session has expired. Please sign in again."
-        },
         "preexistingLinked": "✓ already here — linked to the property",
         "preexistingSkipped": "✓ already here — not imported again",
         "donePreexisting": "{count, plural, one {One document was already in the system: it was not imported again.} other {# documents were already in the system: they were not imported again.}}",
+        "doneUnread": "{count, plural, one {One document was not fully read by the AI. Try the read again here — each attempt is one more read and it costs money, and once you close there is nowhere left to.} other {# documents were not fully read by the AI. Try the read again here — each attempt is one more read and it costs money, and once you close there is nowhere left to.}}",
+        "doneUnreadLocked": "{count, plural, one {One document was not fully read by the AI. Sign in again — the link below opens a new tab — then try the read again on its row.} other {# documents were not fully read by the AI. Sign in again — the link below opens a new tab — then try the read again on their rows.}}",
+        "doneUnreadWaiting": "{count, plural, one {One document was not fully read by the AI. Wait for the steps in progress, and you will then be able to try the read again on its row.} other {# documents were not fully read by the AI. Wait for the steps in progress, and you will then be able to try the read again on their rows.}}",
+        "donePendingPeople": "{count, plural, one {One document has a person the AI found and nobody has confirmed yet. Once you close, there is nowhere left to.} other {# documents have people the AI found and nobody has confirmed yet. Once you close, there is nowhere left to.}}",
+        "donePendingPeopleLocked": "{count, plural, one {One document has a person the AI found and nobody has confirmed yet. Sign in again — the link below opens a new tab — then confirm them. Once you close, there is nowhere left to.} other {# documents have people the AI found and nobody has confirmed yet. Sign in again — the link below opens a new tab — then confirm them. Once you close, there is nowhere left to.}}",
+        "confirmPendingButton": "Confirm the people",
         "doneWithErrors": "{created} imported successfully · {errors} errors (check the Status column)"
       },
       "preflight": {
@@ -2355,6 +2348,31 @@
         "import": "Import",
         "result": "Result"
       }
+    },
+    "scanning": {
+      "title": "Scanning",
+      "intro": "The documents from {folder} that are about to be imported are being sent, a few at a time, to work out what kind of document each is. Nothing goes into the archive at this step.",
+      "whatItReads": "Only the first page of each document is sent — just enough to recognise its type. Files that cannot be read as an image, and files already in the system, are not sent at all.",
+      "whatItWrites": "What is recognised appears in the table below as it arrives.",
+      "waitHint": "Wait for it to finish. If you change your mind, use “Cancel import” in the bar above."
+    },
+    "importRun": {
+      "title": "Import",
+      "intro": "The scan has finished. Nothing has been saved from {folder} yet — the button below is the first one that writes to the archive.",
+      "introWithProperties": "The scan has finished. The properties you have confirmed so far have already been created and stay in the archive; the documents in {folder} have not been imported yet.",
+      "introRunning": "The import of {folder} is under way. Whatever has been written so far stays in the archive, even if you stop here.",
+      "introDone": "The import of {folder} has finished. The documents and properties it created are in the archive.",
+      "doneNote": "This import cannot be started again from here — it would create the documents a second time. Check the results in the documents and properties lists; for a different folder, choose it below and the import restarts at Structure.",
+      "stepsTitle": "What happens when you press “Import”",
+      "stepProperty": "You confirm this import's property (or properties). Each one is created before its documents.",
+      "stepTags": "The tags are prepared, from the folder names. Tags help you search — they link documents to nothing.",
+      "stepFiles": "{count, plural, =0 {No new document is created} one {One document is created, with its files} other {# documents are created, with their files}}.",
+      "stepInterpret": "Each document is then read by AI, automatically — its fields fill themselves in. People found in the documents are shown to you at the end, one at a time, for you to confirm; nobody is created without your confirmation.",
+      "costNote": "AI reading costs money: {count, plural, =0 {no document will be read} one {at most one document will be read} other {at most # documents will be read}}.",
+      "writesNote": "Documents already in the system were settled at the “Already in the system” step and are not imported a second time.",
+      "importButton": "Import",
+      "chooseAnotherFolder": "Choose another folder…",
+      "nothingToImport": "There are no files to import from this folder."
     },
     "information": {
       "title": "How the import works",

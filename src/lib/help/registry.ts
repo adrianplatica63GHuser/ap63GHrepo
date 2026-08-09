@@ -180,14 +180,18 @@ export const HELP_HINTS = [
     screens: ["document-detail"],
     label: "Big Page — wheel to zoom, drag to pan",
   },
-  {
-    hintKey: "ai-interpret-once",
-    screens: ["document-detail"],
-    label: "AI Interpret can only be run once per document",
-  },
+  // Slice #26.09 removed "ai-interpret-once". Its placement went with the AI
+  // Interpret button — all AI interpretation happens automatically during an
+  // import run now — and a registered hint with nowhere to appear is exactly
+  // what invariant 2 of help-coverage.test.ts exists to catch.
   {
     hintKey: "ai-party-confirm",
-    screens: ["document-detail"],
+    // Slice #26.09: `AiPartyLinkerDialog` is no longer reachable from a
+    // document page — the AI Interpret button that opened it there is gone, and
+    // the stepper now runs only from the import's own result dialog. A hint
+    // registered against a screen it can never appear on is content an admin
+    // can author and nobody can ever read.
+    screens: ["admin-import"],
     label: "AI-found people must be confirmed one by one",
   },
 

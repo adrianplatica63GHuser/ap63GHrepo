@@ -65,6 +65,29 @@
  * as everything else that walk produced. `preexisting === null` is therefore
  * "not asked in this run", exactly as `metadata === null` is "not measured".
  *
+ * EVALUATION, SCANNING AND IMPORT  (Slice #26.09)
+ * ───────────────────────────────────────────────
+ * The last three screens of the flow that existed before the shell are stages
+ * like any other now. Evaluation was already a panel — `FolderForecast` and the
+ * report under it — and it is unchanged. Scanning and Import were not: a
+ * running scan announced itself as a sentence in the toolbar row, and the one
+ * button in the whole workflow that writes to the archive sat in that same row
+ * with `ml-auto` and no sentence anywhere saying what it would do. Both now
+ * have a panel, `ImportScanningStage` and `ImportRunStage`, and the toolbar
+ * row keeps only what is about the RUN rather than about a stage: the folder's
+ * name and the property chips.
+ *
+ * ⚠️ **The folder picker left the toolbar with them, and that closes a hole
+ * rather than tidying one.** Every stage panel from #26.04 onwards carries its
+ * own "choose another folder" behind that stage's tick; a second copy two rows
+ * above them was a way round the gate. The remaining routes to the picker are
+ * the five panels' own buttons.
+ *
+ * ⚠️ **AI interpretation is no longer a button.** The brief's sentence is that
+ * all of it happens automatically during the import run, so `BulkImportDialog`
+ * reads every document it creates and the row reports what came back. What that
+ * costs is on the Import panel, before the click — see `ImportRunStage`.
+ *
  * ⚠️ **A constraints check re-walks the folder first, and may fail back to
  * Structure.** That is not defensive: the user has been in File Explorer since
  * the last check, and a file deleted to fix a constraint can leave a page
@@ -106,13 +129,16 @@ import { ReportSections } from "./report-sections";
 import { checkFolder, uploadKeysOf, type FileMeta } from "@/lib/import/checks";
 import { readFileMetadata } from "@/lib/import/metadata-pass";
 import type { DirectoryObservation } from "@/lib/import/folder-utils";
-import { buttonClass } from "@/lib/ui/button-styles";
 import { ImportStageBar, MODAL_PHASES } from "./import-stage-bar";
 import { ImportInformation } from "./import-information";
 import { ImportStructureStage } from "./import-structure-stage";
 import { ImportConstraintsStage } from "./import-constraints-stage";
 import { ImportDuplicationStage } from "./import-duplication-stage";
 import { ImportPreexistingStage } from "./import-preexisting-stage";
+import { shouldInterpretEntry } from "@/lib/import/ai-interpret-run";
+import { isIdCardEntry } from "@/lib/import/id-card";
+import { ImportScanningStage } from "./import-scanning-stage";
+import { ImportRunStage } from "./import-run-stage";
 import { CancelImportDialog } from "./cancel-import-dialog";
 import { checkStructureStage } from "@/lib/import/structure-check";
 import { checkConstraintsStage } from "@/lib/import/constraint-check";
@@ -511,6 +537,36 @@ export function ImportWizard() {
    * running scan, so the dialog would contradict itself.
    */
   const [documentsCreated, setDocumentsCreated] = useState(false);
+
+  /**
+   * Has a run of THIS folder finished?   (Slice #26.09)
+   *
+   * ⚠️ **Closing the import dialog returns the wizard to `ready`, which is the
+   * Import stage's own screen** — the gap `workflow-stages.ts` records as
+   * "KNOWN GAP, left for 26.10". Until this slice that screen was a toolbar
+   * button; now it is a panel that says what the button will do, and saying it
+   * a second time after a finished run is not merely untidy: pressing Importă
+   * again re-imports the whole folder. `preexistingDecisions` was computed
+   * during the walk and knows nothing about the documents the run has just
+   * created, so every one of them would be created again and every AI read paid
+   * for again.
+   *
+   * ⚠️ **It IS `documentsCreated` at the moment it is set, and the two
+   * questions only look alike.** `documentsCreated` asks "did this run write
+   * records the Cancel must warn about"; this asks "would pressing Importă
+   * again write them a SECOND time". A run that created no document has nothing
+   * to duplicate, so it must stay repeatable — otherwise a session that died on
+   * document one leaves a screen saying the import finished, with the only way
+   * forward a re-pick that re-walks and re-scans the folder at full price.
+   *
+   * The remaining write such a run makes is `associateDocumentsToProperty`,
+   * which is `onConflictDoNothing()`, and the property step refuses a second
+   * Property for a parcel that already has one (#26.07) — so repeating it costs
+   * clicks and nothing else.
+   *
+   * Cleared where the folder changes: a new pick, and the Cancel's full reset.
+   */
+  const [runCompleted, setRunCompleted] = useState(false);
   const [cancelSnapshot, setCancelSnapshot] = useState<{
     facts: CancelFacts;
     stage: WorkflowStageId;
@@ -954,6 +1010,10 @@ export function ImportWizard() {
     setMetadata(null);
     setDuplicationChecked(false);
     setPreexisting(null);
+    // ⚠️ Here rather than inside `runWalk`'s `mode === "pick"` block, which is
+    // AFTER the walk: a pick whose walk throws never reaches that block, and
+    // would have left this true against a folder the user has just changed.
+    setRunCompleted(false);
     // Always `"structure"`: a folder that has just been picked has passed
     // nothing, whichever screen the picker was pressed from.
     await runWalk(handle, "pick", "structure", "structure");
@@ -1226,6 +1286,7 @@ export function ImportWizard() {
     setTouchedProperties([]);
     setCornersWritten(new Set());
     setDocumentsCreated(false);
+    setRunCompleted(false);
     setWalkError(null);
     setShowQuiet(false);
     setShowSkipped(false);
@@ -1282,8 +1343,6 @@ export function ImportWizard() {
 
   const folders = collectFolders(entries, rootFolderName);
 
-  const scanDone = phase === "ready";
-
   /**
    * The three phases the Structure panel owns.   (Slice #26.04)
    *
@@ -1338,6 +1397,20 @@ export function ImportWizard() {
     phase === "preexisting" ||
     phase === "preexisting-checking" ||
     phase === "preexisting-report";
+
+  /**
+   * The four phases the Import panel stands behind.   (Slice #26.09)
+   *
+   * `ready` is the panel's own screen; the three after it are its modal steps,
+   * during which the panel stays on screen underneath and its controls are
+   * inert. Listed positively, for the reason the file table below is: a phase
+   * nobody thought of cannot make a positive list wrong.
+   */
+  const inImportStage =
+    phase === "ready" ||
+    phase === "property" ||
+    phase === "tag-dialog" ||
+    phase === "importing";
 
   /**
    * What the import loop must do INSTEAD of importing, keyed by entry path.
@@ -1408,6 +1481,39 @@ export function ImportWizard() {
   // one copy cannot drift from the list the user is looking at. Cheap — it is
   // a single pass over names, no file contents and no I/O.
   const forecast = useMemo(() => forecastImport(entriesToImport), [entriesToImport]);
+
+  /**
+   * How many documents the import run may read with the model.   (Slice #26.09)
+   *
+   * ⚠️ **An UPPER BOUND, and the panel words it as one.** The loop skips an
+   * identity card whose person action can act on it, and whether it can depends
+   * on which property the entry belongs to — an answer `PropertyStepDialog`
+   * produces two screens after this number is shown. Over-stating the spend is
+   * the safe direction; under-stating it is the one that surprises somebody.
+   *
+   * `shouldInterpretEntry` is the loop's own predicate, called rather than
+   * restated — a number on a screen and the loop it describes must be one
+   * expression.
+   *
+   * ⚠️ **Only ONE of its two arguments is guessed, and it is guessed in the
+   * safe direction.** `isIdCard` is a fact about the scan and is passed
+   * honestly; `canCreatePerson` depends on which property the entry lands in,
+   * which `PropertyStepDialog` decides two screens later, so it is answered
+   * `false` — the answer that makes the predicate return true more often. An
+   * earlier draft passed `isIdCard: false` as well, which short-circuited the
+   * whole rule and quietly reduced this to "has a readable page"; the same
+   * number, arrived at by asserting something untrue.
+   */
+  const interpretUpperBound = useMemo(
+    () =>
+      entriesToImport.filter((entry) =>
+        shouldInterpretEntry(entry, {
+          isIdCard: isIdCardEntry(scanResults.get(entry.path)),
+          canCreatePerson: false,
+        }),
+      ).length,
+    [entriesToImport, scanResults],
+  );
 
   /**
    * How many entries the classification pass actually sent.
@@ -1683,47 +1789,21 @@ export function ImportWizard() {
           row would simply reappear, which is today's behaviour. */}
       {phase !== "information" && phase !== "preflight" && (
       <div className="flex items-center gap-3 flex-wrap empty:hidden">
-        {/* Slice #24.02a — the picker does not exist until every precondition
-            is green. Rendering it disabled would invite the user to click at
-            it; not rendering it at all makes the checklist the only thing on
-            screen with something to do. */}
-        {/* Hidden during `folder-report`: that panel carries its own
-            "choose another folder", and two controls with different labels
-            doing the same thing is a question the user has to stop and
-            answer. Hidden through the Structure phases since #26.04 for the
-            stronger version of the same reason: the picker there is BEHIND a
-            tick, and a second copy of it up here would be a way round the gate
-            rather than merely a duplicate.
+        {/* Slice #26.09 — THE PICKER IS NO LONGER HERE.
+            It stood in this row from #21.01 until now, gated on a growing list
+            of "…and not during the Structure phases, and not during the
+            Constraints ones, and not during Duplication, and not during
+            Pre-existing" — one clause per slice that gave a stage its own
+            panel, each for the same reason: the panel's picker sits behind that
+            stage's tick, and a second copy up here is a way round the gate
+            rather than a duplicate of it.
 
-            ⚠️ And hidden at `resumed`, which is the route that made the last
-            sentence true rather than decorative: the resume button is on the
-            Structure screen, so Structure → Reia → Alege folder… was two clicks
-            from the gate to the OS picker with the tick never touched. The
-            resumed view's only intended control is "Import nou", which is what
-            its own comment below has said since #24.02a. */}
-        {preflightPassed &&
-          phase !== "folder-report" &&
-          phase !== "resumed" &&
-          !inStructure &&
-          // …and hidden through the Constraints phases for the reason it is
-          // hidden through the Structure ones: the picker there is BEHIND a
-          // tick, and a second copy up here would be a way round the gate.
-          !inConstraints &&
-          // …and through the Duplication phases, for the third time and the
-          // same reason.
-          !inDuplication &&
-          // …and the Pre-existing ones, for the fourth. That panel carries its
-          // own "choose another folder" exactly as the other three do.
-          !inPreexisting && (
-          <button
-            type="button"
-            onClick={handlePickFolder}
-            disabled={phase === "scanning" || phase === "importing"}
-            className={buttonClass({ variant: "primary", size: "lg" })}
-          >
-            {rootFolderName ? t("changeFolderButton") : t("chooseFolderButton")}
-          </button>
-        )}
+            ⚠️ It was NOT already unreachable — the honest version of this
+            note. The remaining phases were `scanning`, `ready` and the three
+            modal ones, and at `ready` the button rendered and was live: one
+            click there threw away a scan the user had just paid for, with no
+            confirmation. `ImportRunStage` carries the replacement, where the
+            panel can say what choosing another folder costs. */}
 
         {/* Resume last session — stays gated on the Structure screen, i.e.
             behind the checklist, and only before a folder has been walked.
@@ -1774,44 +1854,13 @@ export function ImportWizard() {
             did not move: the panel is handed them already translated, out of
             `adminImport.wizard`, so no key was renamed. */}
 
-        {phase === "scanning" && (
-          <span className="text-sm text-fade">
-            {t("scanningProgress", { done: scanProgress.done, total: scanProgress.total })}
-          </span>
-        )}
+        {/* Slice #26.09 — the running scan's count and the finished scan's
+            summary both moved into the stage panels below, and the Import
+            button with them. A row of loose sentences beside a button pushed to
+            the right with `ml-auto` was the shape of the flow before the shell
+            existed; what is left here is about the RUN — which folder, and
+            which properties — rather than about any one stage. */}
 
-        {scanDone && scannableCount > 0 && (
-          <span className="text-sm text-fade">
-            {/* THREE numbers since #26.08, and it took two rounds to get here.
-                `{total} fișiere ({scannable} scanabile)` asserted that every
-                unscanned file was one the system cannot read, which stopped
-                being true; narrowing `total` instead dropped the pre-existing
-                ones out of the count altogether, so a user reconciling this
-                line against the table below found files unaccounted for. Every
-                row is in exactly one of the three. */}
-            {t("scanComplete", {
-              total: entries.length,
-              scannable: scannableCount,
-              preexisting: preexistingDecisions.size,
-            })}
-          </span>
-        )}
-
-        {/* Import button — shown once we have at least one entry */}
-        {(phase === "ready" || phase === "scanning") && entries.length > 0 && (
-          <button
-            type="button"
-            onClick={() => setPhase("property")}
-            disabled={phase === "scanning"}
-            className={buttonClass({
-              variant: "primary",
-              size: "lg",
-              className: "ml-auto",
-            })}
-          >
-            {t("importButton")}
-          </button>
-        )}
       </div>
       )}
 
@@ -1963,6 +2012,67 @@ export function ImportWizard() {
             onShowSkippedChange={setShowSkipped}
           />
         </>
+      )}
+
+      {/* Slice #26.09 — the Scanning stage. Nothing to press: the scan runs to
+          the end and hands over to Import, and the way out is the Cancel in the
+          stage bar, as it is everywhere else. */}
+      {phase === "scanning" && (
+        <ImportScanningStage
+          folderName={rootFolderName}
+          // Handed in already translated, exactly as the four stage panels
+          // before it take their busy label — so `scanningProgress` stays the
+          // one place that sentence lives.
+          progressLabel={t("scanningProgress", {
+            done: scanProgress.done,
+            total: scanProgress.total,
+          })}
+        />
+      )}
+
+      {/* Slice #26.09 — the Import stage: the last screen before anything is
+          written, and the first place the automatic AI reads are priced. It
+          stays mounted behind its own three modal steps, so the shell does not
+          go blank under them. */}
+      {inImportStage && (
+        <ImportRunStage
+          folderName={rootFolderName}
+          // Three states rather than a `busy` boolean, because the panel has
+          // three different true things to say — see `ImportRunState`.
+          state={runCompleted ? "done" : phase === "ready" ? "ready" : "running"}
+          // ⚠️ The property step writes one folder at a time and cancelling
+          // returns here, so "nothing has been saved yet" can be false at
+          // `ready` too — with this run's own chips visible two rows above it.
+          //
+          // ⚠️ **`touchedProperties`, NOT `propertiesTouched`**, and the two are
+          // deliberately different facts. The boolean is set BEFORE the first
+          // request ("a write may have landed"), which is the safe direction for
+          // the Cancel's warning about orphans and the unsafe one for a positive
+          // claim: a POST that fails would have this screen asserting a Property
+          // was created while the toolbar directly above shows no chip for it.
+          // The list is filled by `onPropertyResolved`, which fires only on
+          // success, and is what draws those chips.
+          propertiesCreated={touchedProperties.length > 0}
+          scanSummary={
+            scannableCount > 0
+              ? t("scanComplete", {
+                  total: entries.length,
+                  scannable: scannableCount,
+                  preexisting: preexistingDecisions.size,
+                })
+              : null
+          }
+          documentCount={entriesToImport.length}
+          interpretUpperBound={interpretUpperBound}
+          // The same test the toolbar button carried: a walk that produced
+          // nothing has no subject for this button. Note it is `entries` and
+          // not `entriesToImport` — a folder the archive already holds in its
+          // entirety still has links to write, which is the case #26.08 built
+          // `alreadyInSystem.linked` for one screen earlier.
+          canImport={entries.length > 0}
+          onImport={() => setPhase("property")}
+          onChooseFolder={handlePickFolder}
+        />
       )}
 
       {/* Walk error.
@@ -2135,6 +2245,18 @@ export function ImportWizard() {
           onFirstDocumentCreated={() => setDocumentsCreated(true)}
           onClose={() => {
             setPhase("ready");
+            // Slice #26.09 — the run is over, and `ready` is the Import stage's
+            // own screen. See `runCompleted`: without this the panel re-offers
+            // a button that would import the whole folder a second time.
+            //
+            // ⚠️ **Gated on `documentsCreated`, and an adversarial round is
+            // why.** A run that wrote nothing — the session died on document
+            // one, or every row errored — has nothing to duplicate, and closing
+            // it must leave the button live: the alternative is a screen saying
+            // the import finished and its documents are in the archive, over a
+            // run that created none, with the only way forward being a re-pick
+            // that re-walks and re-scans the folder at full price.
+            setRunCompleted(documentsCreated);
             // Slice #26.03 — the dialog writes the run's report to
             // localStorage as it finishes, and this state was read once at
             // mount and never again, so the report existed while the wizard

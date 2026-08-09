@@ -7,26 +7,48 @@
  * as a Document, uploads its file(s) as pages, links it to the run's Property
  * and tags it with all ancestor folder names.
  *
- * After import, the results table offers up to three per-row follow-ups, each
- * on a row that finished cleanly:
+ * THE AI READ IS PART OF THE RUN NOW  (Slice #26.09)
+ * ──────────────────────────────────────────────────
+ * "Interpretează AI" used to be a button on each finished row. It is gone: the
+ * per-entry task reads the document with the model itself, as its last step,
+ * and `runAiInterpret` in `src/lib/import/ai-interpret-run.ts` is the same three
+ * calls the button's dialog made. The brief's sentence is the whole change —
+ * *all* AI interpretation now happens automatically during this run, so the
+ * button disappears rather than becoming optional.
  *
- *   - "Interpretează AI"  (Slice #23.02.Import) — any row with an image or PDF
- *     page. Extracts fields per the document's own type template and, when the
- *     type has person roles configured, walks the extracted parties through the
- *     shared confirm-or-create stepper.
+ * ⚠️ **A row is not `done` until its AI read has settled**, which is why the
+ * step sits inside the task rather than after the loop. `doneCount` drives the
+ * progress bar; marking a row finished while a billed call it started is still
+ * in flight would put the bar at 100% over a run with work left in it.
+ *
+ * ⚠️ **A FAILED READ IS NOT A FAILED ROW.** The Document exists, its pages are
+ * uploaded and it is linked; what the read would have added is fields. The row
+ * says so and the import carries on — with one exception, an expired session,
+ * which aborts the rest exactly as it does from `createDocument`.
+ *
+ * ⚠️ **PEOPLE ARE NOT WRITTEN AUTOMATICALLY.** The read returns the parties it
+ * found and nothing links them; once every row has settled, the queued
+ * documents are walked through the shared confirm-or-create stepper one at a
+ * time, in the folder's own order. A run that created people on its own is the
+ * failure the whole 26.xx redesign was opened to prevent.
+ *
+ * After import, the results table still offers two per-row follow-ups, each on
+ * a row that finished cleanly:
+ *
  *   - "Creează persoană din CI"  (Slice #23.01.Import) — rows the scan
  *     classified as an identity card.
  *   - "Aplică pe proprietate"  (Slice #23.02.Import) — rows that are coordinate
  *     files, offering their corners to the run's Property.
  *
- * All three run AFTER the import, deliberately: by then the Document exists, its
+ * Both run AFTER the import, deliberately: by then the Document exists, its
  * pages are uploaded and it is already attached to the Property, so each action
- * only has to add one thing. Offering any of them beforehand would mean the
- * wizard creating a second Document for the same file, since it imports every
- * entry unconditionally and has no skip mechanism.
+ * only has to add one thing. Offering either beforehand would mean the wizard
+ * creating a second Document for the same file, since it imports every entry
+ * unconditionally and has no skip mechanism.
  *
- * The concurrency limit is 3 in-flight import operations at a time. The
- * follow-up actions are one-at-a-time: each opens a modal.
+ * The concurrency limit is 3 in-flight import operations at a time — which,
+ * since #26.09, means up to 3 concurrent AI reads as well. The follow-up
+ * actions are one-at-a-time: each opens a modal.
  *
  * Provenance (Slice #21.07.Import): each entry's provenance is inferred from
  * its own file extension(s) - a page-group of scans and a single .jpg are IMAGE,
@@ -50,12 +72,13 @@ import { useTranslations } from "next-intl";
 import { claimCornerSource } from "@/lib/import/corner-source-client";
 import { useRouter } from "next/navigation";
 import {
+  entryFileNames,
   type FSEntry,
   type FSFileEntry,
   type FSPageGroupEntry,
   tagsForEntry,
 } from "@/lib/import/folder-utils";
-import { isFileKind, isImageOrPdf } from "@/lib/files/file-kinds";
+import { isFileKind } from "@/lib/files/file-kinds";
 import {
   IMPORT_SESSION_KEY,
   type SavedImportEntry,
@@ -80,9 +103,17 @@ import {
   type CoordinateOutcome,
 } from "./coordinate-property-dialog";
 import {
-  DocumentAiInterpretDialog,
-  type AiInterpretOutcome,
-} from "./document-ai-interpret-dialog";
+  AiPartyLinkerDialog,
+  type AiExtractedParty,
+  type AiPartyLinkerSummary,
+} from "@/app/documents/_components/ai-party-linker-dialog";
+import {
+  canRetryReads,
+  inFolderOrder,
+  runAiInterpret,
+  shouldInterpretEntry,
+  type AiInterpretRunResult,
+} from "@/lib/import/ai-interpret-run";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -98,12 +129,60 @@ export type ImportResult = {
   docId?: string;
   /** principalObjectId for tagging */
   principalObjectId?: string;
-  /** Slice #21.02.Import: true once AI-interpret has been successfully run on this entry. */
+  /**
+   * Slice #21.02.Import: true once AI interpretation has succeeded on this
+   * entry. Written by the run itself since #26.09 rather than by a button, and
+   * still the fact the saved session carries.
+   */
   aiProcessed?: boolean;
   /** Slice #23.02.Import: how many document fields that run filled in. */
   aiFieldCount?: number;
-  /** Slice #23.02.Import: party stepper tally, null when the type has no roles. */
+  /**
+   * Slice #23.02.Import: party stepper tally, null when the type has no roles.
+   *
+   * ⚠️ Since #26.09 this is `undefined` until the stepper for THIS document has
+   * been closed, which happens after every row has settled. `aiPartiesPending`
+   * is what the row shows in between — see it.
+   */
   aiParties?: { linked: number; created: number; skipped: number } | null;
+  /**
+   * How this row's automatic AI read went.   (Slice #26.09)
+   *
+   * A field of its own rather than a fourth `ImportStatus`, because it answers
+   * a different question: `status` is about the DOCUMENT — was it created, with
+   * its pages and its links — and this is about what was read out of it
+   * afterwards. Collapsing them would make a document whose fields could not be
+   * filled indistinguishable from a file that never made it into the archive.
+   *
+   *   - `running` — the call is in flight. The row is still `importing`.
+   *   - `done`    — fields were written; see `aiFieldCount`.
+   *   - `failed`  — the read did not happen. The Document is fine.
+   *   - `skipped` — the run deliberately did not read this one: it has no page
+   *     a model can see, or it is an identity card whose person action extracts
+   *     strictly more (the #23.08 argument, which outlived its button).
+   */
+  aiStatus?: "running" | "done" | "failed" | "skipped";
+  /** The route's own sentence about a failed read, plus the pages it skipped. */
+  aiErrorDetail?: string;
+  /**
+   * The read succeeded but part of what it found was not written, because the
+   * document's current state could not be read.   (Slice #26.09)
+   *
+   * A flag rather than a `failed` status: the baseline fields WERE written, and
+   * calling that a failure would send the user to re-do work that is done. It
+   * DOES make the row retryable, though — the loss is recoverable and the row
+   * is the only place it is visible. See `AiInterpretRunResult.partialWrite`.
+   */
+  aiPartialWrite?: boolean;
+  /**
+   * People this document's read found and nobody has confirmed yet.
+   * (Slice #26.09)
+   *
+   * Cleared to `undefined` when this document's stepper closes, at which point
+   * `aiParties` carries what actually happened. The two are never both set, and
+   * the row reads whichever is.
+   */
+  aiPartiesPending?: number;
   /**
    * Slice #23.01.Import: set once a Person has been confirmed or created from
    * this entry's ID card and linked to the run's Property and this Document.
@@ -146,6 +225,34 @@ export type ImportResult = {
    */
   preexisting?: "linked" | "skipped";
 };
+
+/**
+ * One document's unconfirmed people.   (Slice #26.09)
+ *
+ * Nothing here has been written. `parties` is exactly what the route read out
+ * of the document, handed to the same stepper the deleted button used to open,
+ * which links or creates only what the user confirms one at a time.
+ */
+type PartyStep = {
+  path: string;
+  docId: string;
+  parties: AiExtractedParty[];
+};
+
+/**
+ * Everything a failed read can tell the user, in one string.   (Slice #26.09)
+ *
+ * The route names the pages it could not send — a `.txt` inside a page folder,
+ * an octet-stream — and the old dialog listed them, deliberately, "rather than
+ * flattened into extraction failed". A table cell cannot hold a list, so they
+ * ride along on the row's tooltip instead of being dropped: a returned value
+ * nobody reads is a capability the product quietly stopped having.
+ */
+function failureDetail(result: Extract<AiInterpretRunResult, { ok: false }>): string | undefined {
+  const pages = result.skipped.map((p) => `${p.fileName} — ${p.reason}`);
+  const parts = [result.detail, ...pages].filter((part): part is string => !!part);
+  return parts.length > 0 ? parts.join("\n") : undefined;
+}
 
 type Props = {
   entries: FSEntry[];
@@ -239,16 +346,6 @@ const CONCURRENCY = 3;
 // Provenance helpers  (Slice #21.07.Import)
 // ---------------------------------------------------------------------------
 
-/**
- * The file name(s) an entry will be built from — a page-group carries one per
- * image handle, a plain file carries its own. Used only to read extensions.
- */
-function entryFileNames(entry: FSEntry): string[] {
-  return entry.kind === "page-group"
-    ? (entry as FSPageGroupEntry).handles.map((h) => h.name)
-    : [(entry as FSFileEntry).name];
-}
-
 async function withConcurrencyLimit<T>(
   tasks: (() => Promise<T>)[],
   limit: number,
@@ -303,16 +400,6 @@ async function withConcurrencyLimit<T>(
 
 const isImageFile = (name: string) => isFileKind(name, "image");
 const isPdfFile   = (name: string) => isFileKind(name, "pdf");
-
-/**
- * True when at least one of this entry's files is something the AI-interpret
- * route can actually send to the model. A text-only document comes back 422
- * with "fișierele text ... nu pot fi interpretate cu AI", so offering the
- * button there would only ever produce that error.
- */
-function hasReadablePage(entry: FSEntry): boolean {
-  return entryFileNames(entry).some(isImageOrPdf);
-}
 
 // ---------------------------------------------------------------------------
 // PDF rasterization via Web Worker  (fix 7.7 — off-main-thread rendering)
@@ -545,6 +632,41 @@ export function BulkImportDialog({
   onClose,
 }: Props) {
   const t = useTranslations("adminImport.wizard.importDialog");
+  /**
+   * The wizard's own namespace, for ONE thing: the scan's confidence.
+   * (Slice #26.09)
+   *
+   * ⚠️ **The caveat the deleted dialog carried, put back where it still
+   * applies.** `ScanConfidenceWarning` was rendered in every phase of that
+   * dialog because the route builds its extraction prompt from the document
+   * TYPE's template — so a mis-classified document is asked for the wrong
+   * fields entirely and comes back looking just as complete as a correct one.
+   * That argument did not weaken when the human left the loop; it is the only
+   * argument that got stronger. The strings are the scan table's own, so no
+   * wording is invented and no key is added.
+   */
+  const tw = useTranslations("adminImport.wizard");
+
+  /**
+   * ⚠️ The scanConfidence SENTENCES, not the pill labels beside them.
+   *
+   * A first version reached for `confidence_low`, which is the one-word badge
+   * `ScanTable` draws in a column headed "Încredere" — rendered on a result row
+   * it read "⚠ Încredere scăzută" with nothing saying why that matters here.
+   * `scanConfidence.titleLow` / `bodyLow` are the copy written for exactly this
+   * moment, and they are what `ScanConfidenceWarning` still shows on the ID-card
+   * path: the type may be wrong, the type chose the template, the template chose
+   * the fields. Title on the row, body on the tooltip — a cell cannot hold four
+   * lines and the argument is four lines long.
+   */
+  const confidenceNoteFor = (
+    confidence?: "high" | "medium" | "low",
+  ): { title: string; body: string } | null =>
+    confidence === "low"
+      ? { title: tw("scanConfidence.titleLow"), body: tw("scanConfidence.bodyLow") }
+      : confidence === "medium"
+        ? { title: tw("scanConfidence.titleMedium"), body: tw("scanConfidence.bodyMedium") }
+        : null;
   const tprov = useTranslations("adminImport.provenance");
   const router = useRouter();
 
@@ -580,9 +702,31 @@ export function BulkImportDialog({
   const [coordinateTarget, setCoordinateTarget] = useState<
     { path: string; docId: string; entry: FSFileEntry; propertyId: string } | null
   >(null);
-  const [aiTarget, setAiTarget] = useState<
-    { path: string; docId: string; label: string } | null
-  >(null);
+  /**
+   * The documents whose automatic read found people, waiting to be confirmed.
+   * (Slice #26.09)
+   *
+   * ⚠️ **Collected in a REF during the run and published as state once**, and
+   * the reason is the loop's shape: three tasks finish in whatever order their
+   * files and their calls allow, so appending to state would put the queue in
+   * completion order — a user confirming people for document 7, then 2, then 9,
+   * with no way to tell where they are. The ref is drained through `entries`,
+   * so the queue is the folder's own order.
+   *
+   * ⚠️ **And it is a ref rather than state for a second reason:** a `setState`
+   * per finished task inside the effect would re-render the table mid-import
+   * for a queue nothing is reading yet.
+   */
+  const partyStepsRef = useRef<Map<string, PartyStep>>(new Map());
+  /**
+   * Is this dialog still on screen?   (Slice #26.09)
+   *
+   * A ref rather than the effect's local `mounted`, because the retry handler
+   * is a `useCallback` outside that effect and its await is a model call.
+   */
+  const mountedRef = useRef(true);
+  const [partySteps, setPartySteps] = useState<PartyStep[]>([]);
+  const [partyIndex, setPartyIndex] = useState(0);
 
   /**
    * The Property the LAST coordinate row action was opened against.
@@ -767,6 +911,10 @@ export function BulkImportDialog({
     if (!gatePassed) return;
 
     let mounted = true;
+    // Slice #26.09 — a fresh queue for THIS invocation. StrictMode runs the
+    // effect twice in development, and a Map that survived the first would hand
+    // the second run's stepper a document the first had already queued.
+    partyStepsRef.current = new Map();
     // Slice #26.03 — see the `onFirstDocumentCreated` prop. Local to this run,
     // so a StrictMode re-mount re-announces for its own first document rather
     // than staying silent because a discarded run had already spoken.
@@ -969,9 +1117,82 @@ export function BulkImportDialog({
             await addTag(principalObjectId, tag);
           }
 
-          if (mounted) {
-            updateResult(entry.path, { status: "done", docId, principalObjectId });
+          // 7. Read the document with the model.   (Slice #26.09)
+          //
+          // The last step of the task, and the row stays `importing` until it
+          // settles — see the two warnings in this file's header for why that
+          // matters to the progress bar and why a failure here is not a failed
+          // row.
+          //
+          // The rule lives in `ai-interpret-run.ts` and is stated there once,
+          // because the Import screen counts the same predicate to price the
+          // click before it happens — see `shouldInterpretEntry`.
+          const willInterpret = shouldInterpretEntry(entry, {
+            isIdCard: isIdCardEntry(sr),
+            canCreatePerson: soleProperty(entry.path) !== null,
+          });
+
+          if (!willInterpret) {
+            if (mounted) {
+              updateResult(entry.path, {
+                status: "done",
+                docId,
+                principalObjectId,
+                aiStatus: "skipped",
+              });
+            }
+            return;
           }
+
+          // Published before the await so the row can say what it is doing for
+          // the seconds the call takes, and so the document is already linkable
+          // from the table while it runs.
+          if (mounted) {
+            updateResult(entry.path, { docId, principalObjectId, aiStatus: "running" });
+          }
+
+          const interpreted = await runAiInterpret(docId, new Date().toISOString());
+          if (!mounted) return;
+
+          if (interpreted.ok) {
+            // Queued, not walked: the stepper opens once every row has settled,
+            // so a user is not interrupted three times over while files are
+            // still uploading behind the dialog.
+            if (interpreted.parties.length > 0) {
+              partyStepsRef.current.set(entry.path, {
+                path: entry.path,
+                docId,
+                parties: interpreted.parties,
+              });
+            }
+            updateResult(entry.path, {
+              status: "done",
+              docId,
+              principalObjectId,
+              aiStatus: "done",
+              aiProcessed: true,
+              aiFieldCount: interpreted.fieldCount,
+              aiPartiesPending: interpreted.parties.length,
+              aiPartialWrite: interpreted.partialWrite,
+            });
+            return;
+          }
+
+          // An expired session is the one failure that is not about this
+          // document: every row after it would fail the same way, so it aborts
+          // the rest exactly as `createDocument` does. The row itself is still
+          // `done` — its Document was written before the session went.
+          if (interpreted.reason === "session") {
+            abortRef.current = true;
+            setSessionExpired(true);
+          }
+          updateResult(entry.path, {
+            status: "done",
+            docId,
+            principalObjectId,
+            aiStatus: "failed",
+            aiErrorDetail: failureDetail(interpreted),
+          });
         } catch (err) {
           if (!mounted) return;
           const msg = err instanceof Error ? err.message : "Import failed";
@@ -991,7 +1212,23 @@ export function BulkImportDialog({
       });
 
       await withConcurrencyLimit(tasks, CONCURRENCY, () => {});
-      if (mounted) setDone(true);
+
+      // Slice #26.09 — the queue, in the folder's order rather than in the
+      // order three concurrent tasks happened to finish. See `partyStepsRef`.
+      //
+      // ⚠️ **Not published at all after a session expiry.** Every write the
+      // stepper makes is a POST, so opening it over the "your session has
+      // expired" banner would walk the user through confirming people into six
+      // consecutive 401s. The parties are lost either way; the difference is
+      // whether the user spends five minutes discovering that.
+      const steps = abortRef.current
+        ? []
+        : inFolderOrder(entries, partyStepsRef.current);
+
+      if (mounted) {
+        setPartySteps(steps);
+        setDone(true);
+      }
     }
 
     run().catch((err) => {
@@ -1013,13 +1250,22 @@ export function BulkImportDialog({
   }, [gatePassed]);
 
   useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
     if (done) router.refresh();
   }, [done, router]);
 
   // Persist the completed session to localStorage so the user can "Resume"
   // it after navigating away (e.g. to inspect an individual document).
-  // File System Access API handles cannot be serialised, so the resumed view
-  // is read-only: doc links work, but AI Interpret requires the actual files.
+  // File System Access API handles cannot be serialised, so the resumed view is
+  // read-only: the document links work and nothing else does. Since #26.09 that
+  // costs less than it did — the AI read happens during the run rather than
+  // being a button somebody might come back for.
   useEffect(() => {
     if (!done) return;
     const sessionEntries: SavedImportEntry[] = results.map((r) => {
@@ -1187,32 +1433,223 @@ export function BulkImportDialog({
     [onPropertyCornersChanged, updateResult],
   );
 
-  /** "Interpretează AI" — extract fields, then walk any parties. */
-  const handleOpenAi = useCallback((result: ImportResult) => {
-    if (!result.docId) return;
-    const entry = result.entry;
-    setAiTarget({ path: entry.path, docId: result.docId, label: titleForEntry(entry) });
+  /**
+   * One document's people are settled — record the tally and move on.
+   * (Slice #26.09)
+   *
+   * `aiPartiesPending` goes to `undefined` in the same patch that sets
+   * `aiParties`, so the row never shows both "3 people to confirm" and the
+   * tally of what happened to them.
+   *
+   * The index advances whatever the summary says, including when the user
+   * closed the stepper without answering: `AiPartyLinkerDialog` counts those as
+   * `skipped` and there is nothing further to ask about this document. Re-
+   * offering it would be a queue with no end.
+   *
+   * ⚠️ Read straight from state and NOT through a `setPartyIndex` updater, the
+   * way the two row actions read their target. An updater is a reducer — React
+   * may call it twice for one dispatch — and `updateResult` inside one is a
+   * second dispatch riding on that. The dialog is keyed by path, so the extra
+   * dependency costs nothing: a new identity per step is exactly right.
+   */
+  /**
+   * Open the people nobody was asked about.   (Slice #26.09)
+   *
+   * ⚠️ **Free, and that is the point.** `partyStepsRef` already holds them,
+   * fully extracted, in memory — the only thing a session expiry took away was
+   * the `setPartySteps` that would have surfaced them. Until this button
+   * existed the only way to execute those two lines was to pay for a fresh
+   * model call on some OTHER row, and in the shape where the session dies
+   * during an upload rather than during a read there is no such row: every
+   * document either succeeded or never reached the read, so no amber block and
+   * no retry button is drawn anywhere in the table.
+   */
+  const handleConfirmPending = useCallback(() => {
+    setPartySteps(inFolderOrder(entries, partyStepsRef.current));
+    setPartyIndex(0);
+    // `entries` is stable for this dialog's lifetime.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleAiDone = useCallback(
-    (outcome: AiInterpretOutcome) => {
-      setAiTarget((target) => {
-        if (target) {
-          updateResult(target.path, {
-            aiProcessed: true,
-            aiFieldCount: outcome.fieldCount,
-            aiParties: outcome.parties,
-          });
+  const handlePartyStepClosed = useCallback(
+    (summary: AiPartyLinkerSummary) => {
+      const step = partySteps[partyIndex];
+      /**
+       * ⚠️ **SETTLED means somebody was linked or created — not merely that the
+       * question was put**, and the whole safety of the backlog turns on it.
+       *
+       * `AiPartyLinkerDialog` reports a dismissal as `skipped`, and it reports
+       * a link that failed the same way. So a stepper walked into a dead
+       * session — every POST a 401 — comes back all-skipped, and an
+       * unconditional delete would erase the ref entry for every document in
+       * the queue: the extracted people destroyed by the control that exists to
+       * rescue them, silently, in the one state where nothing else can reach
+       * them. The same is true of an accidental Escape.
+       *
+       * Not settled therefore means: leave the ref entry, leave
+       * `aiPartiesPending`, write no tally. The row goes on saying the people
+       * are unconfirmed, which is what they are, and the backlog survives to be
+       * offered again. The cost is that a user who deliberately skips everyone
+       * sees the offer once more — after their own click, not on a loop.
+       */
+      if (step && summary.linked + summary.created > 0) {
+        partyStepsRef.current.delete(step.path);
+        updateResult(step.path, { aiParties: summary, aiPartiesPending: undefined });
+      }
+      setPartyIndex(partyIndex + 1);
+    },
+    [partySteps, partyIndex, updateResult],
+  );
+
+  /**
+   * Read this document again, because the first attempt failed.
+   * (Slice #26.09)
+   *
+   * ⚠️ **THIS IS NOT THE BUTTON THE SLICE DELETED, and the difference is the
+   * whole justification for it existing.** "Interpretează AI" was offered on
+   * every finished row, so a user chose whether a document was read at all;
+   * this appears on a row that says the read FAILED, and all it offers is the
+   * automatic step again. The brief's sentence — all AI interpretation happens
+   * automatically during this run — stays true: nothing here is a second way to
+   * do the work, it is the only way to finish the work the run began.
+   *
+   * Without it the slice created a dead end it had also removed every exit
+   * from. Both manual entry points to extract mode go in this commit, so a rate
+   * limit at document twelve of forty — the failure mode three concurrent reads
+   * on one bucket actually produces — left twenty-eight documents permanently
+   * field-less, with re-importing the folder refused by the Pre-existing stage.
+   *
+   * ⚠️ **A retry REPLACES the queue with its one document rather than editing
+   * it, and two adversarial rounds went into that one line.** `partyIndex` is a
+   * positional cursor. A bare append could put two entries with the same `path`
+   * in the queue, defeating the `key` that forces each step to remount; and
+   * filter-then-append fixed that while leaving the cursor behind — removing
+   * one element and adding one keeps the LENGTH unchanged, so
+   * `partySteps[partyIndex]` stayed `undefined` and the stepper never opened.
+   * The people were extracted, counted on the row, and unreachable.
+   *
+   * Resetting is unambiguous, and safe because `canRetry` already requires the
+   * queue exhausted — there is nothing left in it to answer.
+   */
+  const handleRetryInterpret = useCallback(
+    async (result: ImportResult) => {
+      const docId = result.docId;
+      const path = result.entry.path;
+      if (!docId) return;
+
+      // ⚠️ **`aiPartialWrite` is cleared too, and forgetting it re-opened a
+      // double-fire.** The amber block that carries this button is drawn on
+      // `aiStatus === "failed" || aiPartialWrite`; on a `failed` row the first
+      // click flips `aiStatus` and the button goes with it, but on a partial
+      // row the second half stayed true, so the button sat live through its own
+      // call. Two clicks are two PATCHes and two `document_version` rows on a
+      // versioned entity — against this module's own one-patch rule — and two
+      // appends of the same document to the party queue.
+      const wasPartial = result.aiPartialWrite === true;
+      updateResult(path, {
+        aiStatus: "running",
+        aiErrorDetail: undefined,
+        aiPartialWrite: undefined,
+      });
+      const interpreted = await runAiInterpret(docId, new Date().toISOString());
+      // ⚠️ The one `runAiInterpret` call site outside the effect, so it needs
+      // its own liveness test — the effect's per-invocation `mounted` boolean
+      // is not in scope here. Without it a retry that outlives the dialog
+      // writes into an unmounted tree: silently in React 18, and taking the
+      // people it found with it.
+      if (!mountedRef.current) return;
+
+      if (interpreted.ok) {
+        // The session is demonstrably back — this call went through it. Nothing
+        // else clears the banner, and leaving it up over a working dialog is
+        // the state that made an expiry a one-way door.
+        setSessionExpired(false);
+        /**
+         * ⚠️ **NOT re-queued if this document's people are already settled.**
+         * A retry is about the half of the read that failed — usually the notes
+         * and the type-specific fields — and the model returns the parties again
+         * regardless, because they come from the extract call. Queueing them a
+         * second time asks the user to confirm people they have already linked,
+         * with nothing on screen saying so; answer "create" rather than "link"
+         * on that second pass and the run makes the duplicate person this whole
+         * redesign exists to prevent. `aiParties` is the record that the
+         * question was answered.
+         */
+        /**
+         * ⚠️ **`aiParties` records that the question was PUT, not that anyone
+         * answered it.** `AiPartyLinkerDialog` reports a dismissal as `skipped`
+         * and `handlePartyStepClosed` writes that summary like any other, so a
+         * stepper closed by an accidental Escape leaves a row that looks
+         * settled. Treating it as settled made the retry — the only control
+         * that could find those people again — quietly decline to re-queue
+         * them. A summary in which nobody was linked or created settled
+         * nothing.
+         */
+        const settled =
+          result.aiParties != null && result.aiParties.linked + result.aiParties.created > 0;
+        const queued = interpreted.parties.length > 0 && !settled;
+        if (queued) {
+          partyStepsRef.current.set(path, { path, docId, parties: interpreted.parties });
         }
-        return target;
+        updateResult(path, {
+          aiStatus: "done",
+          aiProcessed: true,
+          aiFieldCount: interpreted.fieldCount,
+          aiPartialWrite: interpreted.partialWrite,
+          aiErrorDetail: undefined,
+          // Only when this retry actually queued something. Setting both would
+          // make the row claim a tally AND a pending count, which the render
+          // resolves by showing the stale tally — see `aiPartiesPending`.
+          ...(queued ? { aiPartiesPending: interpreted.parties.length, aiParties: undefined } : {}),
+        });
+        return;
+      }
+
+      if (interpreted.reason === "session") {
+        abortRef.current = true;
+        setSessionExpired(true);
+      }
+      // ⚠️ A failed retry on a row that had already written its baseline fields
+      // is still a PARTIAL write, not a failed one. `interpretFailed` says the
+      // document's fields "au rămas necompletate", and on such a row that is
+      // flatly untrue — the first pass wrote them and the row says so two spans
+      // along. The state goes back to what it was, with the new reason on the
+      // tooltip.
+      // ⚠️ The tooltip says WHICH attempt failed. On a partial row the visible
+      // sentence describes the first read's missing half, and hanging the
+      // retry's own `HTTP 429` off it unlabelled answered a question the user
+      // had not asked, about a different event.
+      const reason = failureDetail(interpreted);
+      updateResult(path, {
+        aiStatus: wasPartial ? undefined : "failed",
+        aiPartialWrite: wasPartial ? true : undefined,
+        // A route that gave no message at all — a timeout, a thrown TypeError —
+        // gets its own sentence rather than a colon followed by a dash.
+        aiErrorDetail: reason
+          ? t("interpretRetryFailed", { reason })
+          : t("interpretRetryFailedUnknown"),
       });
     },
-    [updateResult],
+    // `t` is captured for the two sentences above; next-intl's translator is
+    // stable per namespace, so listing it costs no re-renders and keeps this in
+    // step with `handleOpenIdCard` thirty lines up. `entries` went when the
+    // retry stopped republishing the queue — `handleConfirmPending` owns that
+    // now, and a dependency the body no longer reads is a lint warning that
+    // teaches the next reader to ignore the rule.
+    [t, updateResult],
   );
 
   // ---------------------------------------------------------------------------
   // Counts
   // ---------------------------------------------------------------------------
+
+  /**
+   * The document whose people are being confirmed, or null.   (Slice #26.09)
+   *
+   * `partySteps` is empty until the loop has finished, so this is null for the
+   * whole import and the stepper cannot open over a run still in flight.
+   */
+  const currentPartyStep = partySteps[partyIndex] ?? null;
 
   /**
    * Rows that finished, split by whether this run actually made anything.
@@ -1230,6 +1667,66 @@ export function BulkImportDialog({
   ).length;
   const preexistingCount = results.filter((r) => r.preexisting !== undefined).length;
   const errorCount = results.filter((r) => r.status === "error").length;
+  /**
+   * Rows whose AI read did not finish the job.   (Slice #26.09)
+   *
+   * Said in the header, beside Close, because Close is the end of the retry
+   * window: `handleRetryInterpret` lives in this dialog and the wizard cannot
+   * re-open it. A user who closes without noticing has no way back short of
+   * re-picking the folder, which re-walks and re-scans it at full price.
+   */
+  const unreadCount = results.filter(
+    (r) => r.aiStatus === "failed" || r.aiPartialWrite,
+  ).length;
+  /**
+   * Documents whose people nobody has been asked about yet.   (Slice #26.09)
+   *
+   * ⚠️ **A SEPARATE COUNT FROM `unreadCount`, and folding the two together was
+   * wrong in both directions.** A row here has been read completely and
+   * successfully — it shows a green tick — so counting it under a sentence that
+   * begins "n documents were not fully read by the AI" contradicts twelve green
+   * ticks on the ordinary successful run; and the retry that sentence offers is
+   * not the remedy, because the amber block that carries the retry button is
+   * not drawn on such a row at all.
+   *
+   * Normally zero by the time anyone reads it: the queue opens in the same
+   * commit that sets `done` and each answer clears its row. It is non-zero when
+   * the queue was SUPPRESSED — a session expiry aborts the run and publishing a
+   * stepper into it would walk the user through 401s — and that is the case
+   * this count and its own button exist for.
+   */
+  const pendingPeopleCount = results.filter((r) => (r.aiPartiesPending ?? 0) > 0).length;
+  /** A retry is in flight, so the dialog must not be pulled out from under it. */
+  const retryRunning = results.some((r) => r.aiStatus === "running" && r.status === "done");
+  /**
+   * May any row be retried at all?   (Slice #26.09)
+   *
+   * ⚠️ **The header sentence and the buttons must never disagree about whether
+   * a retry is possible**, and three adversarial rounds went into that. The
+   * count had no session term and the button did, so after an expiry the header
+   * said "try the read again here" over a table with no such button anywhere;
+   * moving the header onto `sessionExpired` alone reintroduced the same
+   * mismatch with the branches swapped. The header now has THREE branches —
+   * expired, retryable, and neither — and this expression is the middle one.
+   *
+   * ⚠️ **`sessionExpired` is NOT a term, and three rounds went into that.**
+   * With it, an expiry was a one-way door: the flag never clears, so signing in
+   * again — in a new tab, which is what the banner's link now opens — brought
+   * no button back for the life of the dialog, while the copy written for that
+   * moment told the user to press one. The button stays. What switches on the
+   * session is the SENTENCE beside it: a press into a still-dead session
+   * re-raises the banner and costs one 401, and a press that succeeds clears it
+   * for every row at once.
+   *
+   * The rule lives in `canRetryReads` — a boolean that has been wrong in four
+   * consecutive rounds, and gained a term in the fourth, is exactly the kind
+   * that belongs where a test can reach every combination of its inputs.
+   */
+  const canRetry = canRetryReads({
+    done,
+    stepperOpen: currentPartyStep !== null,
+    retryRunning,
+  });
   const totalCount = results.length;
   const progressPct = totalCount > 0 ? ((doneCount + errorCount) / totalCount) * 100 : 0;
 
@@ -1256,6 +1753,72 @@ export function BulkImportDialog({
                 no error: it is the difference between the count in the heading
                 and the number of rows in the table, and without it that gap
                 reads as files that went missing. */}
+            {/* Slice #26.09 — said before Close, because Close is what makes
+                it permanent. The saved report records that a row finished, not
+                that its read failed, so after this dialog goes there is nothing
+                left that can name these rows. */}
+            {done && unreadCount > 0 && (
+              <p className="mt-0.5 text-xs font-medium text-amber-700 dark:text-amber-400">
+                {/* THREE branches, because `canRetry` goes false for two
+                    unrelated reasons and the header has to name the right one.
+                    A two-way switch on `sessionExpired` told a user mid-party-
+                    queue to "try the read again here" over rows with no button;
+                    a two-way switch on `canRetry` told a perfectly signed-in
+                    user to sign in again. The scrim over this line is
+                    `bg-black/40`, not `display:none` — it is dimmed, legible,
+                    and read out in full by a screen reader walking the dialog. */}
+                {sessionExpired
+                  ? t("doneUnreadLocked", { count: unreadCount })
+                  : canRetry
+                    ? t("doneUnread", { count: unreadCount })
+                    : t("doneUnreadWaiting", { count: unreadCount })}
+              </p>
+            )}
+            {/* Its own line and its own control, because it is a different
+                problem with a different remedy: these documents were read
+                perfectly and what is outstanding is a human answer. Shown only
+                when nothing is going to open by itself — on the ordinary run
+                the queue is already walking them. */}
+            {/* ⚠️ **The SENTENCE is not gated on the session and the BUTTON is
+                not gated on it either — but they say different things, and an
+                earlier draft hid both.** This state is reachable only through an
+                abort, and an abort always sets `sessionExpired`, so a
+                `!sessionExpired` wrapper hid the count in the only case it
+                occurs in: five documents' extracted people, named by nothing,
+                beside an enabled Close. In the shape where the session dies
+                during an UPLOAD it was worse than silent — no row is `failed`
+                or partial, so no retry button exists anywhere to prove the
+                session and bring the line back, and the people were
+                unreachable for the life of the dialog.
+
+                What made hiding it look necessary was the delete in
+                `handlePartyStepClosed`, which is now conditional: a walk into a
+                dead session links nobody, so it deletes nothing and the backlog
+                survives the attempt. Pressing this while signed out costs a few
+                dialogs and loses nothing, and the copy says to sign in first.
+
+                `!retryRunning` stays, for the reason `canRetryReads` carries
+                it: a retry captured its row's state before its model call, and
+                a confirmation completing inside that window would be
+                overwritten by the answer when it lands. */}
+            {done && pendingPeopleCount > 0 && currentPartyStep === null && (
+              <p className="mt-0.5 flex flex-wrap items-baseline gap-2 text-xs font-medium text-sky-700 dark:text-sky-400">
+                <span>
+                  {sessionExpired
+                    ? t("donePendingPeopleLocked", { count: pendingPeopleCount })
+                    : t("donePendingPeople", { count: pendingPeopleCount })}
+                </span>
+                {!retryRunning && (
+                  <button
+                    type="button"
+                    onClick={handleConfirmPending}
+                    className={buttonClass({ variant: "ghost", size: "xs" })}
+                  >
+                    {t("confirmPendingButton")}
+                  </button>
+                )}
+              </p>
+            )}
             {done && preexistingCount > 0 && (
               <p className="mt-0.5 text-xs text-sky-700 dark:text-sky-400">
                 {t("donePreexisting", { count: preexistingCount })}
@@ -1278,11 +1841,39 @@ export function BulkImportDialog({
               </p>
             )}
           </div>
-          {done && (
+          {(done || importError !== null) && (
             <button
               type="button"
               onClick={onClose}
-              className="rounded-md border border-wire bg-white px-4 py-2 text-sm font-medium text-ink hover:bg-canvas dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+              // ⚠️ Inert while a party stepper is open, and it is the same
+              // argument `ImportStageBar` records for the Cancel: none of this
+              // app's dialogs traps focus or sets `inert`, so from the stepper
+              // a Shift+Tab reaches this button — and pressing it unmounts the
+              // whole queue. The remaining documents' extracted people exist
+              // nowhere else (the saved session records `aiProcessed` and not
+              // what is still unanswered), so that click is silent data loss
+              // rather than a cancel. A `disabled` button is not focusable,
+              // which is the only thing that actually closes the route; no
+              // explanatory note, because the stepper is `fixed inset-0` over a
+              // scrim and copy nobody can read is not an explanation.
+              // …and while a retry is in flight, for the same reason: the
+              // PATCH may already have landed, and unmounting mid-call
+              // discards the people that read found with no record anywhere.
+              disabled={currentPartyStep !== null || retryRunning}
+              // ⚠️ `buttonClass`, not the hand-written classes this button
+              // carried since #21.01, and the change is forced rather than
+              // cosmetic: giving it a `disabled` state meant hand-writing the
+              // greyed-out utility, and `button-styles-single-source.test.ts`
+              // forbids that outside its allowlist — the helper owns the
+              // disabled look so a dozen buttons cannot drift into a dozen
+              // versions of it. `secondary`/`lg` is what the sibling dialog's
+              // Close already uses (`coordinate-property-dialog.tsx`), so this
+              // brings the two into line rather than inventing a third.
+              //
+              // ⚠️ **Do not name the utility in prose here.** That guard scans
+              // raw lines, so a comment quoting the class is an offender: this
+              // exact sentence failed the suite once already.
+              className={buttonClass({ variant: "secondary", size: "lg" })}
             >
               {t("closeButton")}
             </button>
@@ -1304,6 +1895,14 @@ export function BulkImportDialog({
             {t("sessionExpiredBanner")}{" "}
             <a
               href="/sign-in"
+              // ⚠️ A NEW TAB, and the retry window is why. This anchor sits
+              // inside a `fixed inset-0` dialog whose state is the only place a
+              // failed read can be retried from and the only record of which
+              // rows need it; a same-tab navigation unmounts all of it. The
+              // screen was offering, as its remedy, the one click that made the
+              // loss permanent.
+              target="_blank"
+              rel="noopener noreferrer"
               className="font-semibold underline hover:text-amber-900 dark:hover:text-amber-200"
             >
               {t("signInAgain")}
@@ -1431,15 +2030,16 @@ export function BulkImportDialog({
             />
           )}
 
-          {/* Slice #23.02.Import — per-type AI extraction + party linking. */}
-          {aiTarget && (
-            <DocumentAiInterpretDialog
-              documentId={aiTarget.docId}
-              entryLabel={aiTarget.label}
-              // Slice #23.03.Import — see the note on the ID-card dialog above.
-              scanConfidence={scanResults.get(aiTarget.path)?.confidence}
-              onDone={handleAiDone}
-              onClose={() => setAiTarget(null)}
+          {/* Slice #26.09 — the people the automatic reads found, confirmed
+              one document at a time now that every row has settled. The same
+              stepper the deleted "Interpretează AI" dialog opened; nothing is
+              linked or created until the user answers each one. */}
+          {currentPartyStep && (
+            <AiPartyLinkerDialog
+              key={currentPartyStep.path}
+              documentId={currentPartyStep.docId}
+              parties={currentPartyStep.parties}
+              onClose={handlePartyStepClosed}
             />
           )}
 
@@ -1470,12 +2070,12 @@ export function BulkImportDialog({
                   result={r}
                   t={t}
                   // ⚠️ `isIdCard` is a FACT about the file and must stay one.
-                  // #26.07 briefly ANDed the sole-property guard into it, and
-                  // `isIdCard` is not only the person button's gate — it is
-                  // also what SUPPRESSES "Interpretează AI" on an identity
-                  // card, which #23.08 removed because on a card it makes a
-                  // second billed Anthropic call that returns strictly less
-                  // than "Creează persoană" already had. The guard belongs on
+                  // #26.07 briefly ANDed the sole-property guard into it, which
+                  // was wrong because the same fact answers a second question:
+                  // #23.08's rule that a card is not worth a generic extraction
+                  // call. Since #26.09 that second reader is the import loop
+                  // rather than this row — `shouldInterpretEntry` — and it
+                  // takes the two apart explicitly. The guard still belongs on
                   // the person button alone; that is `canCreatePerson`.
                   isIdCard={isIdCardEntry(scanResults.get(r.entry.path))}
                   canCreatePerson={soleProperty(r.entry.path) !== null}
@@ -1506,10 +2106,32 @@ export function BulkImportDialog({
                     // and it is not drawn. See `soleProperty`.
                     soleProperty(r.entry.path) !== null
                   }
-                  canInterpret={hasReadablePage(r.entry)}
+                  // Slice #26.09 — the scan's own confidence, translated here
+                  // because the row already takes its translator as a prop and
+                  // a second one inside it would be a namespace per cell. Only
+                  // when it is NOT high: a caveat printed on every row is a
+                  // caveat nobody reads.
+                  confidenceNote={confidenceNoteFor(scanResults.get(r.entry.path)?.confidence)}
+                  // ⚠️ Only once the whole run has settled, and it is a race
+                  // rather than tidiness. The table is on screen while rows are
+                  // still importing, so a row that failed its read early would
+                  // offer the retry mid-run — and a retry that found people
+                  // appends to `partySteps`, which the effect ASSIGNS when the
+                  // loop ends. The append would open a stepper over a running
+                  // import and then be overwritten by the assignment, losing
+                  // the very people the retry went to fetch.
+                  // See `canRetry`: `done`, and not while a party stepper is
+                  // open — the latter for the reason the Close beside it is
+                  // disabled, that nothing in this app traps focus, so a
+                  // Shift+Tab from the stepper would reach these buttons.
+                  canRetryInterpret={canRetry}
+                  // Every row action, not just the retry: a Shift+Tab from the
+                  // open stepper reaches these too, and each mounts a SECOND
+                  // `fixed inset-0` dialog on top of the first.
+                  canAct={currentPartyStep === null}
                   onCreatePerson={() => void handleOpenIdCard(r)}
                   onApplyCoordinates={() => handleOpenCoordinate(r)}
-                  onInterpret={() => handleOpenAi(r)}
+                  onRetryInterpret={() => void handleRetryInterpret(r)}
                 />
               ))}
             </tbody>
@@ -1542,11 +2164,18 @@ type ResultRowProps = {
   canCreatePerson: boolean;
   /** Slice #23.02.Import: this entry's extension could hold Stereo 70 corners. */
   isCoordinate: boolean;
-  /** Slice #23.02.Import: at least one page is an image or PDF. */
-  canInterpret: boolean;
+  /**
+   * Already-translated caveat about the SCAN, or null when it was confident.
+   * (Slice #26.09) — see the call site for why it is here at all.
+   */
+  confidenceNote: { title: string; body: string } | null;
+  /** A retry can neither race the run nor be pointless — see the call site. */
+  canRetryInterpret: boolean;
+  /** No modal of this dialog's own is open over the row — see the call site. */
+  canAct: boolean;
   onCreatePerson: () => void;
   onApplyCoordinates: () => void;
-  onInterpret: () => void;
+  onRetryInterpret: () => void;
 };
 
 function ResultRow({
@@ -1555,10 +2184,12 @@ function ResultRow({
   isIdCard,
   canCreatePerson,
   isCoordinate,
-  canInterpret,
+  confidenceNote,
+  canRetryInterpret,
+  canAct,
   onCreatePerson,
   onApplyCoordinates,
-  onInterpret,
+  onRetryInterpret,
 }: ResultRowProps) {
   const {
     entry,
@@ -1571,6 +2202,10 @@ function ResultRow({
     aiProcessed,
     aiFieldCount,
     aiParties,
+    aiStatus,
+    aiErrorDetail,
+    aiPartiesPending,
+    aiPartialWrite,
     coordinateSettled,
     cornerCount,
     preexisting,
@@ -1585,10 +2220,14 @@ function ResultRow({
   // and it is the one that is not obvious.** A pre-existing row DOES have a
   // docId — the archive's own — so without this every follow-up would be
   // offered on it and each would write to a document this run did not create:
-  // "Interpretează AI" would spend a billed call rewriting fields somebody
-  // already curated, and "Creează persoană" would read a file whose Document is
-  // not the one on screen. The row is a statement about what happened, which is
-  // exactly what 26.10 turns every row into.
+  // "Creează persoană" would read a file whose Document is not the one on
+  // screen. The row is a statement about what happened, which is exactly what
+  // 26.10 turns every row into.
+  //
+  // Since #26.09 the automatic AI read is kept off these rows one layer
+  // earlier — the task returns at step 0 and never reaches step 7 — so a billed
+  // call rewriting fields somebody already curated is not merely un-offered, it
+  // is unreachable.
   const settled = status === "done" && !!docId && preexisting === undefined;
 
   return (
@@ -1616,7 +2255,12 @@ function ResultRow({
         */}
         {status === "importing" && (
           <span className="ga-cue-blink text-xs font-medium text-cta">
-            {t("importingShort")}
+            {/* Slice #26.09 — two sentences, and which one is true says where
+                the row is. The document is written well before its task ends
+                now, and a row blinking "Se importă…" through a Claude call
+                nobody mentioned is the kind of silence #24.02a exists to
+                remove. */}
+            {aiStatus === "running" ? t("interpretingShort") : t("importingShort")}
           </span>
         )}
         {status === "error" && (
@@ -1647,49 +2291,87 @@ function ResultRow({
               {preexisting === "linked" ? t("preexistingLinked") : t("preexistingSkipped")}
             </span>
           )}
-          {/* Slice #23.02.Import — AI extraction on any readable row.
+          {/* Slice #26.09 — the row DESCRIBES the AI read instead of offering
+              it. The button that used to stand here is gone: the run does the
+              read itself, so there is nothing left to press. (26.10 turns every
+              row in this table into a description; this is the second of them,
+              after the pre-existing note above.)
 
-              Slice #23.08.Import added `!isIdCard`. The two actions were framed
-              as independent jobs, and on an ID card that was not true: this
-              route builds its prompt from the document type's template_fields,
-              and CARTE_IDENTITATE has no template, so on a card it asked for
-              four generic baseline fields — while "Creează persoană" had
-              already extracted the card number, the issuing authority and both
-              validity dates. A second Anthropic call, billed in full, that
-              returned strictly less than the first one already had. Those
-              fields are now written by the person action itself, so the button
-              is not merely redundant here, it is worse than the alternative. */}
-          {/* ⚠️ `!(isIdCard && canCreatePerson)`, not `!isIdCard`.
-              #23.08 suppressed the AI action on an identity card because
-              "Creează persoană" had already extracted the card and a second
-              billed call returned strictly less. That argument holds only
-              while the person action is AVAILABLE — and since #26.07 it is
-              not, on a card under `common` or `floating`, which is exactly
-              where an owner's carte de identitate belongs. Suppressing both
-              left the row with no action at all, so the file could be imported
-              and never read. */}
-          {settled && canInterpret && !(isIdCard && canCreatePerson) && !aiProcessed && (
-            <button
-              type="button"
-              onClick={onInterpret}
-              className={buttonClass({ variant: "ghost", size: "xs" })}
-            >
-              {t("interpretButton")}
-            </button>
+              A failure is amber and not red on purpose. Red in this table means
+              the file did not make it into the archive; this file did, and what
+              is missing is its fields. The route's own sentence — which names
+              the reason, down to the octet-stream case — is on the title
+              attribute rather than in the row, because it is a paragraph and
+              this is a cell. */}
+          {/* A retry that is running: the status cell says "Se importă…" only
+              while the row is `importing`, and a retry happens on a row that is
+              already `done`. Without this the button vanished and nothing took
+              its place for the length of a model call. */}
+          {aiStatus === "running" && status === "done" && (
+            <span className="ga-cue-blink text-xs font-medium text-cta">
+              {t("interpretingShort")}
+            </span>
+          )}
+          {(aiStatus === "failed" || aiPartialWrite) && (
+            <>
+              <span
+                className="text-xs font-medium text-amber-700 dark:text-amber-400"
+                title={aiErrorDetail}
+              >
+                {aiStatus === "failed" ? t("interpretFailed") : t("interpretPartial")}
+              </span>
+              {/* ⚠️ NOT the button this slice deleted — see
+                  `handleRetryInterpret`. It is offered only on a row that says
+                  the automatic read failed, and all it does is that read again;
+                  without it the slice removed every exit from a dead end it had
+                  just introduced. */}
+              {canRetryInterpret && (
+                <button
+                  type="button"
+                  onClick={onRetryInterpret}
+                  // The click is one billed model call, and the count the user
+                  // approved before the run did not include retries.
+                  title={t("interpretRetryHint")}
+                  className={buttonClass({ variant: "ghost", size: "xs" })}
+                >
+                  {t("interpretRetry")}
+                </button>
+              )}
+            </>
           )}
           {aiProcessed && (
             <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
               ✓ {t("interpretDone", { count: aiFieldCount ?? 0 })}
+              {/* Three states, not two: the read found nobody, the read found
+                  people and they are still queued, or their stepper has been
+                  through. `aiParties` is set exactly when the third is true and
+                  `aiPartiesPending` is cleared in the same patch, so the row can
+                  never claim both. */}
               {aiParties
                 ? ` · ${t("interpretParties", {
                     count: aiParties.linked + aiParties.created,
                   })}`
-                : ""}
+                : (aiPartiesPending ?? 0) > 0
+                  ? ` · ${t("interpretPartiesPending", { count: aiPartiesPending ?? 0 })}`
+                  : ""}
+            </span>
+          )}
+          {/* ⚠️ Drawn only on a row the model actually read, and that is the
+              whole point: the extraction prompt is built from the document
+              TYPE's template, so a scan that was unsure which type this is
+              produced a form that looks just as complete as a correct one. On a
+              row nobody read, the caveat has nothing to caveat. */}
+          {aiProcessed && confidenceNote !== null && (
+            <span
+              className="text-xs font-medium text-amber-700 dark:text-amber-400"
+              title={confidenceNote.body}
+            >
+              ⚠ {confidenceNote.title}
             </span>
           )}
 
           {/* Slice #23.01.Import — the ID-card action. */}
-          {settled && isIdCard && canCreatePerson && !personId && (
+          {settled && canAct && isIdCard && canCreatePerson && !personId && (
             <button
               type="button"
               onClick={onCreatePerson}
@@ -1726,7 +2408,7 @@ function ResultRow({
           )}
 
           {/* Slice #23.02.Import — coordinate file → the run's Property. */}
-          {settled && isCoordinate && !coordinateSettled && (
+          {settled && canAct && isCoordinate && !coordinateSettled && (
             <button
               type="button"
               onClick={onApplyCoordinates}

@@ -8,8 +8,8 @@
  * wizard's Structure screen (the phase was called `idle` until Slice #26.04
  * renamed it, and the button has not moved).
  *
- * File System Access API handles are not available in a resumed session, so
- * the AI Interpret action is unavailable here.  The "Open →" links open each
+ * File System Access API handles are not available in a resumed session, so no
+ * file-backed action is available here.  The "Open →" links open each
  * document in a new tab, which is the primary use-case (the user navigated
  * away to inspect a document and wants to come back to the list).
  *

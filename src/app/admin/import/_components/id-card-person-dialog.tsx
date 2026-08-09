@@ -392,8 +392,8 @@ export function IdCardPersonDialog({
   //
   // Then ONE PATCH. aiInterpretedAt always rides along, even when the mapping
   // produced nothing: the AI genuinely did read this document, and stamping it
-  // also greys out AI Interpret on the document's own detail page, closing the
-  // same redundant second call the wizard now hides. It is not part of the
+  // also records on the document itself that a model has read it — which is
+  // what #26.12 derives its "AI processed" status from. It is not part of the
   // version snapshot, so a patch carrying only that appends no version row.
   //
   // Never throws. Returns what happened so the caller can report it without

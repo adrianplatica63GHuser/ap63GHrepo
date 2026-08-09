@@ -17,7 +17,12 @@
  * least one" half of the rule, and delegates the per-file half.
  */
 
-import { baseNameOf, isFileKind, isPageGroupMember } from "@/lib/files/file-kinds";
+import {
+  baseNameOf,
+  isFileKind,
+  isImageOrPdf,
+  isPageGroupMember,
+} from "@/lib/files/file-kinds";
 
 // ---------------------------------------------------------------------------
 // Minimal File System Access API types (avoids app/ -> lib/ import)
@@ -479,6 +484,36 @@ export function displayPathOf(chosenFolderName: string, path: string): string {
  */
 export function tagsForEntry(rootFolderName: string, entry: FSEntry): string[] {
   return [rootFolderName, ...entry.pathParts].filter(Boolean);
+}
+
+// ---------------------------------------------------------------------------
+// What an entry is made of   (moved here in Slice #26.09)
+// ---------------------------------------------------------------------------
+
+/**
+ * The file name(s) an entry will be built from — a page-group carries one per
+ * image handle, a plain file carries its own. Used only to read extensions.
+ *
+ * Lived in `bulk-import-dialog.tsx` until #26.09, which needed the rule below
+ * in TWO places: the import loop, which decides whether to spend an AI call on
+ * a row, and the Import stage screen, which tells the user in advance how many
+ * of those calls the button will spend. A number on a screen and the loop it
+ * describes must come from one expression or the screen is a guess.
+ */
+export function entryFileNames(entry: FSEntry): string[] {
+  return entry.kind === "page-group"
+    ? entry.handles.map((h) => h.name)
+    : [entry.name];
+}
+
+/**
+ * True when at least one of this entry's files is something the AI-interpret
+ * route can actually send to the model. A text-only document comes back 422
+ * with "fișierele text … nu pot fi interpretate cu AI", so reading one would
+ * only ever produce that error.
+ */
+export function hasReadablePage(entry: FSEntry): boolean {
+  return entryFileNames(entry).some(isImageOrPdf);
 }
 
 // ---------------------------------------------------------------------------

@@ -1225,8 +1225,6 @@
       "cancel": "Anulează",
       "yes": "Da",
       "no": "Nu",
-      "aiInterpret": "Interpretează AI",
-      "aiInterpreted": "Deja procesat de AI",
       "aiDiscover": "Descoperire AI",
       "modify": "Modifică"
     },
@@ -1304,7 +1302,7 @@
       "linkThis": "Asociază aceasta",
       "noneOfThese": "Niciuna dintre acestea — creează nouă",
       "roleMissingTitle": "Rol neconfigurat",
-      "roleMissingBody": "Rolul „{roleName}” nu este configurat încă pentru acest tip de document. Cereți unui administrator să-l adauge în Date de referință → Persoane document, apoi rulați din nou Interpretează AI pentru a asocia această persoană.",
+      "roleMissingBody": "Rolul „{roleName}” nu este configurat încă pentru acest tip de document. Cereți unui administrator să-l adauge în Date de referință → Persoane document, apoi adăugați persoana din fila Persoane a documentului.",
       "noMatchTitle": "Nicio potrivire găsită",
       "noMatchBody": "Se va crea o persoană nouă cu detaliile extrase.",
       "createAndLink": "Creează și asociază",
@@ -1312,9 +1310,7 @@
       "linking": "Se asociază…",
       "creating": "Se creează…",
       "linkError": "Asocierea a eșuat. Încercați din nou.",
-      "createError": "Crearea a eșuat. Încercați din nou.",
-      "summary": "{linked} asociate, {created} create, {skipped} omise.",
-      "addedNote": "Aceste persoane au fost adăugate și în tab-ul Persoane al acestui document."
+      "createError": "Crearea a eșuat. Încercați din nou."
     },
     "successionParties": {
       "sectionTitle": "Părți",
@@ -1458,9 +1454,6 @@
       "parcelTakenSeveralWhatToDo": "Deschideți lista de proprietăți și căutați după tarla sau parcelă. Verificați ce este asociat fiecăreia, mutați asocierile pe cea pe care o păstrați și abia apoi ștergeți restul — ștergerea nu poate fi anulată. Păstrați una singură, apoi adăugați-i acest document din fila Acte.",
       "openPropertiesList": "Deschide lista de proprietăți"
     },
-    "aiExtracting": "Se extrage…",
-    "aiExtractSuccess": "Câmpuri completate din documentul scanat",
-    "aiExtractError": "Extragerea AI a eșuat",
     "aiDiscovering": "Se citește documentul…",
     "aiDiscoverSuccess": "Document citit: {pairs} perechi nume/valoare și {sections} secțiuni. Raportul complet a fost scris în consola serverului.",
     "aiDiscoverSkipped": "{count} pagini nu au putut fi trimise — motivele sunt în consolă.",
@@ -1739,14 +1732,11 @@
         "cornersNone": "Proprietatea va rămâne fără colțuri.",
         "cornersKeptNoFile": "Proprietatea are deja {existing, plural, one {un colț, care rămâne neschimbat} few {# colțuri, care rămân neschimbate} other {# de colțuri, care rămân neschimbate}}."
       },
-      "chooseFolderButton": "Alege folder…",
-      "changeFolderButton": "Schimbă folder…",
       "unsupported": "Browserul dvs. nu suportă accesul la foldere locale. Utilizați Chrome, Edge sau alt browser bazat pe Chromium.",
       "walkingFolder": "Se citește structura folderului…",
       "scanningProgress": "Se scanează: {done} / {total} fișiere",
       "scanComplete": "Scanare completă — {total} fișiere ({scannable} trimise spre clasificare, {preexisting} deja în sistem)",
       "noEntries": "Folderul selectat nu conține fișiere.",
-      "importButton": "Importă",
       "colPath": "Cale",
       "colDescription": "Descriere AI",
       "colPages": "{count} pagini",
@@ -1773,7 +1763,7 @@
       "resumedDone": "importate",
       "resumedErrors": "erori",
       "resumedNewImport": "Import nou",
-      "resumedHint": "Fișierele nu sunt disponibile după închiderea filei browserului. Pentru a utiliza AI Interpret, deschideți documentele individual.",
+      "resumedHint": "Fișierele nu mai sunt disponibile după închiderea filei browserului, așa că aici rămân doar legăturile. Deschideți documentele individual pentru a le vedea.",
       "tagDialog": {
         "title": "Creare etichete din dosare",
         "message": "Vor fi create etichete pentru {count} dosare din structura selectată. Fiecare document importat va fi etichetat automat cu dosarele sale.",
@@ -1880,7 +1870,14 @@
         "personDocFields": "{count, plural, =0 {niciun câmp pe document} one {un câmp pe document} few {# câmpuri pe document} other {# de câmpuri pe document}}",
         "personDocFieldsFailed": "Câmpurile documentului nu au putut fi scrise",
         "idCardNoFile": "Fișierul acestei intrări nu poate fi citit ca imagine.",
-        "interpretButton": "Interpretează AI",
+        "interpretingShort": "Se citește cu AI…",
+        "interpretRetry": "Încearcă citirea din nou",
+        "interpretPartial": "Citirea AI a reușit doar în parte — starea actuală a documentului nu a putut fi citită complet înainte de scriere, așa că o parte din ce a citit — tipul documentului, notele sau câmpurile specifice tipului — nu a fost salvată.",
+        "interpretRetryFailed": "Reîncercarea citirii a eșuat: {reason}",
+        "interpretRetryFailedUnknown": "Reîncercarea citirii a eșuat, fără un motiv raportat.",
+        "interpretRetryHint": "Trimite documentul din nou către AI. Este o citire în plus, care se plătește.",
+        "interpretFailed": "Citirea AI nu a reușit — documentul a fost importat, dar câmpurile lui au rămas necompletate.",
+        "interpretPartiesPending": "{count, plural, one {o persoană de confirmat} few {# persoane de confirmat} other {# de persoane de confirmat}}",
         "interpretDone": "{count, plural, =0 {niciun câmp completat} one {un câmp completat} few {# câmpuri completate} other {# de câmpuri completate}}",
         "interpretParties": "{count, plural, =0 {nicio persoană} one {o persoană} few {# persoane} other {# de persoane}}",
         "coordinatesButton": "Aplică pe proprietate",
@@ -1907,19 +1904,15 @@
           "errorGeneric": "Aplicarea colțurilor pe proprietate a eșuat.",
           "errorSession": "Sesiunea a expirat. Vă rugăm să vă autentificați din nou."
         },
-        "aiInterpret": {
-          "title": "Interpretare AI",
-          "running": "Se citește documentul…",
-          "skippedTitle": "Pagini care nu au putut fi trimise:",
-          "doneFields": "{count, plural, =0 {Niciun câmp completat} one {Un câmp completat} few {# câmpuri completate} other {# de câmpuri completate}} din document.",
-          "doneParties": "Persoane: {linked} legate, {created} create, {skipped} omise.",
-          "closeButton": "Închide",
-          "errorGeneric": "Interpretarea AI a eșuat.",
-          "errorSession": "Sesiunea a expirat. Vă rugăm să vă autentificați din nou."
-        },
         "preexistingLinked": "✓ exista deja — a fost legat de proprietate",
         "preexistingSkipped": "✓ exista deja — nu a fost importat din nou",
         "donePreexisting": "{count, plural, one {Un document se afla deja în sistem: nu a fost importat din nou.} few {# documente se aflau deja în sistem: nu au fost importate din nou.} other {# de documente se aflau deja în sistem: nu au fost importate din nou.}}",
+        "doneUnread": "{count, plural, one {Un document nu a fost citit complet de AI. Încercați citirea din nou aici — fiecare încercare este o citire care se plătește, iar după ce închideți nu mai există unde.} few {# documente nu au fost citite complet de AI. Încercați citirea din nou aici — fiecare încercare este o citire care se plătește, iar după ce închideți nu mai există unde.} other {# de documente nu au fost citite complet de AI. Încercați citirea din nou aici — fiecare încercare este o citire care se plătește, iar după ce închideți nu mai există unde.}}",
+        "doneUnreadLocked": "{count, plural, one {Un document nu a fost citit complet de AI. Autentificați-vă din nou — linkul de mai jos deschide o filă nouă — apoi încercați citirea din nou pe rândul lui.} few {# documente nu au fost citite complet de AI. Autentificați-vă din nou — linkul de mai jos deschide o filă nouă — apoi încercați citirea din nou pe rândurile lor.} other {# de documente nu au fost citite complet de AI. Autentificați-vă din nou — linkul de mai jos deschide o filă nouă — apoi încercați citirea din nou pe rândurile lor.}}",
+        "doneUnreadWaiting": "{count, plural, one {Un document nu a fost citit complet de AI. Așteptați pașii aflați în curs, apoi veți putea încerca citirea din nou pe rândul lui.} few {# documente nu au fost citite complet de AI. Așteptați pașii aflați în curs, apoi veți putea încerca citirea din nou pe rândurile lor.} other {# de documente nu au fost citite complet de AI. Așteptați pașii aflați în curs, apoi veți putea încerca citirea din nou pe rândurile lor.}}",
+        "donePendingPeople": "{count, plural, one {Un document are o persoană găsită de AI și neconfirmată încă. După ce închideți, nu mai există unde.} few {# documente au persoane găsite de AI și neconfirmate încă. După ce închideți, nu mai există unde.} other {# de documente au persoane găsite de AI și neconfirmate încă. După ce închideți, nu mai există unde.}}",
+        "donePendingPeopleLocked": "{count, plural, one {Un document are o persoană găsită de AI și neconfirmată încă. Autentificați-vă din nou — linkul de mai jos deschide o filă nouă — apoi confirmați-o. După ce închideți, nu mai există unde.} few {# documente au persoane găsite de AI și neconfirmate încă. Autentificați-vă din nou — linkul de mai jos deschide o filă nouă — apoi confirmați-le. După ce închideți, nu mai există unde.} other {# de documente au persoane găsite de AI și neconfirmate încă. Autentificați-vă din nou — linkul de mai jos deschide o filă nouă — apoi confirmați-le. După ce închideți, nu mai există unde.}}",
+        "confirmPendingButton": "Confirmă persoanele",
         "doneWithErrors": "{created} importate cu succes · {errors} erori (verificați coloana Status)"
       },
       "preflight": {
@@ -2355,6 +2348,31 @@
         "import": "Import",
         "result": "Rezultat"
       }
+    },
+    "scanning": {
+      "title": "Scanare",
+      "intro": "Documentele din {folder} care urmează să fie importate sunt trimise, câteva deodată, ca să se afle ce fel de document este fiecare. Nimic nu intră în arhivă la acest pas.",
+      "whatItReads": "Se trimite doar prima pagină a fiecărui document — atât cât să i se recunoască tipul. Fișierele care nu pot fi citite ca imagine și cele care se aflau deja în sistem nu se trimit deloc.",
+      "whatItWrites": "Ce se recunoaște apare în tabelul de mai jos, pe măsură ce sosește.",
+      "waitHint": "Așteptați până se termină. Dacă vă răzgândiți, folosiți „Renunță la import” din bara de sus."
+    },
+    "importRun": {
+      "title": "Import",
+      "intro": "Scanarea s-a încheiat. Din folderul {folder} nu s-a salvat încă nimic — butonul de mai jos este primul care scrie în arhivă.",
+      "introWithProperties": "Scanarea s-a încheiat. Proprietățile confirmate până acum au fost deja create și rămân în arhivă; documentele din {folder} nu au fost încă importate.",
+      "introRunning": "Importul folderului {folder} este în curs. Ce s-a scris până acum rămâne în arhivă, chiar dacă vă opriți aici.",
+      "introDone": "Importul folderului {folder} s-a încheiat. Documentele și proprietățile create se află în arhivă.",
+      "doneNote": "Acest import nu se mai poate relua de aici — ar crea documentele a doua oară. Verificați rezultatele în listele de documente și proprietăți, iar pentru un alt folder alegeți-l mai jos și importul reîncepe de la Structură.",
+      "stepsTitle": "Ce se întâmplă când apăsați „Importă”",
+      "stepProperty": "Confirmați proprietatea (sau proprietățile) acestui import. Fiecare se creează înainte de documentele ei.",
+      "stepTags": "Se pregătesc etichetele, din denumirile folderelor. Etichetele ajută la căutare — nu leagă documentele de nimic.",
+      "stepFiles": "{count, plural, =0 {Nu se creează niciun document nou} one {Se creează un document, cu fișierele lui} few {Se creează # documente, cu fișierele lor} other {Se creează # de documente, cu fișierele lor}}.",
+      "stepInterpret": "Fiecare document este apoi citit de AI, automat — câmpurile lui se completează singure. Persoanele găsite în documente vi se arată la sfârșit, una câte una, ca să le confirmați dumneavoastră; nimeni nu este creat fără confirmare.",
+      "costNote": "Citirea AI se plătește: {count, plural, =0 {niciun document nu va fi citit} one {cel mult un document va fi citit} few {cel mult # documente vor fi citite} other {cel mult # de documente vor fi citite}}.",
+      "writesNote": "Documentele care se aflau deja în sistem au fost stabilite la pasul „Deja în sistem” și nu se importă a doua oară.",
+      "importButton": "Importă",
+      "chooseAnotherFolder": "Alege alt folder…",
+      "nothingToImport": "Nu există fișiere de importat din acest folder."
     },
     "information": {
       "title": "Cum decurge importul",

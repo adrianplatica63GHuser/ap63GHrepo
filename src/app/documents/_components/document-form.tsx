@@ -41,12 +41,6 @@ import { PagesPanel, PagesViewerBox, usePagesPanelState } from "./pages-panel";
 import { SuccessionPartiesPanel } from "./succession-parties-panel";
 import { ErrorBoundary, PanelError } from "@/components/error-boundary";
 import { inferProvenance } from "@/lib/metadata/provenance-rules";
-import { HelpHint } from "@/components/help/help-hint";
-import {
-  AiPartyLinkerDialog,
-  type AiExtractedParty,
-  type AiPartyLinkerSummary,
-} from "./ai-party-linker-dialog";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { DevOnly } from "@/components/dev-only";
 
@@ -141,7 +135,15 @@ type Props = {
   documentId?:      string;
   documentCode?:    string;
   initialValues?:   FormValues;
-  /** Slice #21.02.Import: ISO string if AI-interpret has already run; null otherwise. */
+  /**
+   * ⚠️ Kept in the contract and no longer READ here.   (Slice #26.09)
+   *
+   * It gated the AI Interpret button, and that button is gone: all AI
+   * interpretation happens automatically during an import run now. The prop
+   * stays because the page still passes it and #26.12 derives a document's
+   * status from exactly this stamp — removing it and putting it back is churn
+   * with a rename hiding in it.
+   */
   aiInterpretedAt?: string | null;
   /** Notified whenever the "Show Big Page" toggle changes, so the parent
    *  (DocumentDetailTabs) can widen the page's outer container — mirrors
@@ -161,7 +163,6 @@ export function DocumentForm({
   documentId,
   documentCode,
   initialValues,
-  aiInterpretedAt,
   onBigPageChange,
   versionNavSlot,
 }: Props) {
@@ -232,26 +233,14 @@ export function DocumentForm({
   const [associatedEditing, setAssociatedEditing] = useState(false);
   const [showCannotDelete,   setShowCannotDelete]   = useState(false);
 
-  // Slice #21.02.Import: AI-Interpret button state.
-  // `aiInterpreted` is true once the user has successfully run AI extraction in
-  // this session (mirrors the server-side ai_interpreted_at stamp so the button
-  // disables immediately without a refetch).
-  const [aiInterpreted, setAiInterpreted]   = useState(false);
-  const [aiExtracting,  setAiExtracting]    = useState(false);
+  // Slice #21.10.Import: discover-mode state. Slice #26.09 removed the AI
+  // Interpret button beside it — all AI interpretation now happens
+  // automatically during an import run — so `aiExtracting`, `aiInterpreted` and
+  // the pending-parties queue went with it, and this feedback strip has one
+  // writer left rather than two.
+  const [aiDiscovering, setAiDiscovering]   = useState(false);
   const [aiExtractMsg,  setAiExtractMsg]    = useState<string | null>(null);
   const [aiExtractErr,  setAiExtractErr]    = useState<string | null>(null);
-
-  // Slice #21.10.Import: discover-mode state. Kept separate from aiExtracting
-  // so the two buttons disable independently, but sharing aiExtractMsg /
-  // aiExtractErr — they are the same feedback strip, and only one of the two
-  // actions can be running at a time anyway.
-  const [aiDiscovering, setAiDiscovering]   = useState(false);
-
-  // Slice #21.04.Import (Slice 2) — parties extracted alongside the fields
-  // above, pending admin confirm-or-create via AiPartyLinkerDialog. null =
-  // no dialog open; [] never happens (handleAiInterpret only sets this when
-  // parties.length > 0).
-  const [pendingParties, setPendingParties] = useState<AiExtractedParty[] | null>(null);
 
   // Slice #19.03 — surveyor picker state
   const [surveyorPickerOpen, setSurveyorPickerOpen] = useState(false);
@@ -514,83 +503,15 @@ export function DocumentForm({
     router.refresh();
   };
 
-  // ── Slice #21.02.Import: AI-Interpret handler ────────────────────────────
+  // ── Slice #26.09: the AI-Interpret handler is gone ──────────────────────
   //
-  // Calls the server-side route which reads the first uploaded page from
-  // storage and calls Anthropic, then fills the form via form.setValue and
-  // PATCHes ai_interpreted_at on the document record.
-  const handleAiInterpret = async () => {
-    if (!documentId) return;
-    setAiExtracting(true);
-    setAiExtractMsg(null);
-    setAiExtractErr(null);
-    try {
-      const res = await fetch(`/api/documents/${encodeURIComponent(documentId)}/ai-interpret`, {
-        method: "POST",
-      });
-      if (res.redirected) throw new Error(t("saveErrorSession"));
-      if (!res.ok) {
-        const body = (await res.json().catch(() => ({}))) as { error?: string };
-        throw new Error(body.error ?? `HTTP ${res.status}`);
-      }
-      const { fields, customFields, notes, parties } = (await res.json()) as {
-        fields: Record<string, string | null>;
-        customFields: Record<string, string | null>;
-        notes: string | null;
-        // Slice #21.04.Import (Slice 2) — [] when partyRolesConfigured is
-        // false, i.e. this document type has no roles set up yet.
-        parties: AiExtractedParty[];
-      };
-
-      // Fill form fields from extracted data.
-      // documentTypeId first so the form re-renders with the correct type config
-      // (and template fields) before other fields are set.
-      if (fields.documentTypeId)    form.setValue("documentTypeId",    fields.documentTypeId);
-      if (fields.title)             form.setValue("title",             fields.title);
-      if (fields.nrDocument)        form.setValue("nrDocument",        fields.nrDocument);
-      if (fields.dateDocument)      form.setValue("dateDocument",      fields.dateDocument);
-      if (fields.subject)           form.setValue("subject",           fields.subject);
-
-      // Slice #21.03.Import: type-specific values extracted straight into the
-      // active type's template fields (falls back to {} when the type has no
-      // template yet — nothing to merge in that case).
-      if (Object.keys(customFields).length > 0) {
-        const current = form.getValues("customFields");
-        const merged = { ...current };
-        for (const [k, v] of Object.entries(customFields)) {
-          if (v) merged[k] = v;
-        }
-        form.setValue("customFields", merged);
-      }
-
-      // Enhanced Notes (Slice #21.03.Import): anything the model couldn't map
-      // to a known field (generic or template) is appended here, never
-      // overwriting whatever notes were already there.
-      if (notes) {
-        const currentNotes = form.getValues("notes");
-        form.setValue("notes", currentNotes?.trim() ? `${currentNotes.trim()}\n\n${notes}` : notes);
-      }
-
-      // Mark as interpreted on the server (non-versioned PATCH).
-      await fetch(`/api/documents/${encodeURIComponent(documentId)}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ aiInterpretedAt: new Date().toISOString() }),
-      });
-
-      setAiInterpreted(true);
-      setAiExtractMsg(t("aiExtractSuccess"));
-
-      // Slice #21.04.Import (Slice 2) — open the confirm-or-create stepper
-      // for any parties the model found. Nothing is linked/created until the
-      // admin confirms each one in the dialog.
-      if (parties.length > 0) setPendingParties(parties);
-    } catch (err) {
-      setAiExtractErr(err instanceof Error ? err.message : t("aiExtractError"));
-    } finally {
-      setAiExtracting(false);
-    }
-  };
+  // It called the same route AI Discover does, in its default "extract" mode,
+  // filled the form from the answer, stamped `aiInterpretedAt` and opened the
+  // party stepper. All of that now happens during the import run itself —
+  // `src/lib/import/ai-interpret-run.ts` — so the button here would be a second
+  // way to do one thing, which is how two answers to one question start to
+  // drift. AI Discover stays: it writes nothing, and #26.11 makes it the way a
+  // document type gets its custom form.
 
   // ── Slice #21.10.Import: AI-Discover handler ─────────────────────────────
   //
@@ -600,9 +521,10 @@ export function DocumentForm({
   // finished and roughly what it found without leaving the page.
   //
   // Nothing is written to the form: discover mode reads a document the system
-  // does not understand yet, so there are no fields to fill in. It also does
-  // not set aiInterpreted — running it must never disable the real AI Interpret
-  // button, and it can be re-run as often as needed.
+  // does not understand yet, so there are no fields to fill in. Nothing is
+  // stamped either, so it can be re-run as often as needed — which #26.11
+  // relies on, and which is why the AI Interpret button's once-per-document
+  // rule never applied to it even while that button existed.
   const handleAiDiscover = async () => {
     if (!documentId) return;
     setAiDiscovering(true);
@@ -639,24 +561,6 @@ export function DocumentForm({
     } finally {
       setAiDiscovering(false);
     }
-  };
-
-  // Slice #21.04.Import (Slice 2) — called once the dialog has stepped
-  // through every party (or the admin closed it early). Refreshes the
-  // Persons tab (if mounted) and appends a summary to the existing
-  // AI-Interpret success message rather than replacing it.
-  const handlePartyLinkerClose = (summary: AiPartyLinkerSummary) => {
-    setPendingParties(null);
-    if (summary.linked + summary.created > 0) {
-      void queryClient.invalidateQueries({ queryKey: ["document-persons", documentId] });
-    }
-    const summaryText = t("aiPartyLinker.summary", {
-      linked:  summary.linked,
-      created: summary.created,
-      skipped: summary.skipped,
-    });
-    const note = summary.linked + summary.created > 0 ? ` ${t("aiPartyLinker.addedNote")}` : "";
-    setAiExtractMsg((prev) => (prev ? `${prev} ${summaryText}${note}` : `${summaryText}${note}`));
   };
 
   // Page uploads/deletes save immediately via their own API calls (see
@@ -1114,59 +1018,16 @@ export function DocumentForm({
             {t("buttons.cancel")}
           </button>
 
-          {/* Slice #21.02.Import: AI-Interpret button — only in edit mode on a
-              saved document. Hidden entirely for text/coordinate files.
-              Disabled with tooltip when no pages are uploaded;
-              disabled (different label) once already processed. */}
-          {mode === "edit" && documentId && (() => {
-            const isAlreadyInterpreted = !!(aiInterpretedAt) || aiInterpreted;
-            const hasPages = pagesState.pages.length > 0;
-            // Text files (coordinate cadastral files) cannot be AI-interpreted.
-            const hasTextOnlyPages = hasPages && pagesState.pages.every(
-              (p) => p.fileName.toLowerCase().endsWith(".txt"),
-            );
-            // Slice #21.10.Import: either AI action locks both buttons — they
-            // hit the same route and the same rate-limit bucket.
-            const busy = aiExtracting || aiDiscovering;
-            // Don't show button at all for text files
-            if (hasTextOnlyPages) return null;
-            if (isAlreadyInterpreted) {
-              return (
-                <button
-                  type="button"
-                  disabled
-                  className={buttonClass({ variant: "secondary", size: "lg" })}
-                >
-                  {t("buttons.aiInterpreted")}
-                </button>
-              );
-            }
-            return (
-              <span
-                title={!hasPages ? t("hints.aiInterpretNoPages") : undefined}
-                className="inline-flex"
-              >
-                <button
-                  type="button"
-                  disabled={!hasPages || busy}
-                  onClick={handleAiInterpret}
-                  className={buttonClass({ variant: "primary", size: "lg" })}
-                >
-                  {busy ? t("aiExtracting") : t("buttons.aiInterpret")}
-                </button>
-                <HelpHint hintKey="ai-interpret-once" />
-              </span>
-            );
-          })()}
-
           {/* Slice #21.10.Import: AI-Discover — reads a document whose type the
               system does not understand yet and prints everything it can read
-              to the dev-server console. Deliberately NOT gated on
-              aiInterpretedAt the way AI Interpret is: it writes nothing, so
-              re-running it is always safe and is often exactly what you want
-              (e.g. after adding template fields, to see what is still
-              unrecognised). Hidden for text-only documents for the same reason
-              AI Interpret is — those pages can never reach the model. */}
+              to the dev-server console. It writes nothing, so re-running it is
+              always safe and is often exactly what you want (e.g. after adding
+              template fields, to see what is still unrecognised). Hidden for
+              text-only documents: those pages can never reach the model.
+
+              Slice #26.09 removed the AI Interpret button that stood beside it.
+              This one is the only AI action left on a document page, and #26.11
+              takes it out of `DevOnly`. */}
           <DevOnly>
             {mode === "edit" && documentId && (() => {
               const hasPages = pagesState.pages.length > 0;
@@ -1174,7 +1035,10 @@ export function DocumentForm({
                 (p) => p.fileName.toLowerCase().endsWith(".txt"),
               );
               if (hasTextOnlyPages) return null;
-              const busy = aiExtracting || aiDiscovering;
+              // One writer since #26.09 — see the state block. It stays a named
+              // `busy` rather than being inlined because the disabled test also
+              // carries `!hasPages`, and two conditions read better apart.
+              const busy = aiDiscovering;
               return (
                 <span
                   title={!hasPages ? t("hints.aiInterpretNoPages") : t("hints.aiDiscover")}
@@ -1194,7 +1058,7 @@ export function DocumentForm({
           </DevOnly>
         </div>
 
-        {/* Inline feedback for AI extraction */}
+        {/* Inline feedback for AI Discover — its only writer since #26.09. */}
         {aiExtractMsg && (
           <div
             role="status"
@@ -1254,18 +1118,6 @@ export function DocumentForm({
         yesLabel={t("cannotDeleteAssociated.ok")}
         onYes={() => setShowCannotDelete(false)}
         busy={false}
-      />
-    )}
-
-    {/* Slice #21.04.Import (Slice 2) — AI-detected party confirm-or-create
-        stepper. Opens automatically once handleAiInterpret sees a non-empty
-        parties array; nothing is linked or created until the admin confirms
-        each party one at a time. */}
-    {pendingParties && documentId && (
-      <AiPartyLinkerDialog
-        documentId={documentId}
-        parties={pendingParties}
-        onClose={handlePartyLinkerClose}
       />
     )}
 
