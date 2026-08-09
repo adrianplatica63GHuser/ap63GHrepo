@@ -42,7 +42,10 @@ import { SuccessionPartiesPanel } from "./succession-parties-panel";
 import { ErrorBoundary, PanelError } from "@/components/error-boundary";
 import { inferProvenance } from "@/lib/metadata/provenance-rules";
 import { buttonClass } from "@/lib/ui/button-styles";
-import { DevOnly } from "@/components/dev-only";
+import {
+  DiscoverReviewDialog,
+  type DiscoverReviewPair,
+} from "./discover-review-dialog";
 
 // ---------------------------------------------------------------------------
 // Document type list — fetched dynamically from the admin-managed
@@ -239,6 +242,16 @@ export function DocumentForm({
   // the pending-parties queue went with it, and this feedback strip has one
   // writer left rather than two.
   const [aiDiscovering, setAiDiscovering]   = useState(false);
+  // Slice #26.11: the last discovery run, held until its review dialog is
+  // closed. Non-null IS the open flag — a separate boolean would be a second
+  // piece of state saying the same thing, free to drift out of step with the
+  // data the dialog renders.
+  const [discoverResult, setDiscoverResult] = useState<{
+    pairs:          DiscoverReviewPair[];
+    partyRoleNames: string[];
+    skippedPages:   number;
+    truncated:      boolean;
+  } | null>(null);
   const [aiExtractMsg,  setAiExtractMsg]    = useState<string | null>(null);
   const [aiExtractErr,  setAiExtractErr]    = useState<string | null>(null);
 
@@ -530,34 +543,87 @@ export function DocumentForm({
     setAiDiscovering(true);
     setAiExtractMsg(null);
     setAiExtractErr(null);
+    // Drop the previous run before starting a new one. Nothing in this app
+    // traps focus, so the button under an open dialog is reachable by keyboard
+    // from inside it; without this, a second run would leave the dialog showing
+    // the FIRST run's rows while claiming to be the second's.
+    setDiscoverResult(null);
     try {
       const res = await fetch(`/api/documents/${encodeURIComponent(documentId)}/ai-interpret`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ mode: "discover" }),
       });
-      if (res.redirected) throw new Error(t("saveErrorSession"));
+      // ⚠️ NOTHING FROM THE SERVER IS SHOWN VERBATIM.   (Slice #26.11)
+      //
+      // This route serves an API and most of its failures are English, some of
+      // them Anthropic's own words: "ANTHROPIC_API_KEY is not configured on the
+      // server", "Anthropic API returned no text", a 529 overload. That was
+      // fine while the button was <DevOnly> and a developer was the only
+      // reader. It is Ciprian's screen now, so every branch lands on copy from
+      // this namespace, and the generic one is the default rather than the
+      // unreachable fallback it used to be (a thrown Error is always an Error,
+      // so the old `err instanceof Error` ternary never chose the Romanian).
+      if (res.redirected) {
+        setAiExtractErr(t("saveErrorSession"));
+        return;
+      }
       if (!res.ok) {
-        const body = (await res.json().catch(() => ({}))) as { error?: string };
-        throw new Error(body.error ?? `HTTP ${res.status}`);
+        const body = (await res.json().catch(() => ({}))) as { code?: string };
+        if (res.status === 429 || body.code === "rate_limited_local") {
+          setAiExtractErr(t("aiDiscoverErrorBusy"));
+        } else if (body.code === "no_pages") {
+          setAiExtractErr(t("aiDiscoverErrorNoPages"));
+        } else if (body.code === "unsupported_file_type") {
+          setAiExtractErr(t("aiDiscoverErrorUnreadable"));
+        } else if (body.code === "no_api_key") {
+          setAiExtractErr(t("aiDiscoverErrorNotConfigured"));
+        } else {
+          setAiExtractErr(t("aiDiscoverError"));
+        }
+        return;
       }
       const body = (await res.json()) as {
-        recognised?:   unknown[];
-        sections?:     unknown[];
-        skippedPages?: unknown[];
-        truncated?:    boolean;
+        recognised?:     DiscoverReviewPair[];
+        sections?:       unknown[];
+        skippedPages?:   unknown[];
+        truncated?:      boolean;
+        partyRoleNames?: unknown[];
       };
       const skipped = body.skippedPages?.length ?? 0;
-      setAiExtractMsg(
-        t("aiDiscoverSuccess", {
-          pairs:    body.recognised?.length ?? 0,
-          sections: body.sections?.length ?? 0,
-        }) +
-          (skipped > 0 ? ` ${t("aiDiscoverSkipped", { count: skipped })}` : "") +
-          (body.truncated ? ` ${t("aiDiscoverTruncated")}` : ""),
+      // Slice #26.11: the pairs no longer stop at a console report — they open
+      // the review step that turns them into this type's form. A run that found
+      // nothing has nothing to review, so it stays a one-line message; the
+      // skipped/truncated warnings ride along with whichever of the two the
+      // user actually sees.
+      const pairs = (body.recognised ?? []).filter(
+        (p): p is DiscoverReviewPair => !!p && typeof p.name === "string",
       );
-    } catch (err) {
-      setAiExtractErr(err instanceof Error ? err.message : t("aiDiscoverError"));
+      if (pairs.length === 0) {
+        setAiExtractMsg(
+          t("aiDiscoverNothing") +
+            (skipped > 0 ? ` ${t("aiDiscoverSkipped", { count: skipped })}` : "") +
+            (body.truncated ? ` ${t("aiDiscoverTruncated")}` : ""),
+        );
+      } else {
+        setDiscoverResult({
+          pairs,
+          // The type's person roles. The review step shows a row matching one
+          // as already captured rather than offering it as free text — the
+          // import links those to real Person records, and a second editable
+          // copy of a name and CNP on every document of the type is the thing
+          // src/lib/import/id-card.ts exists to refuse.
+          partyRoleNames: (body.partyRoleNames ?? []).filter(
+            (n): n is string => typeof n === "string",
+          ),
+          skippedPages: skipped,
+          truncated:    body.truncated === true,
+        });
+      }
+    } catch {
+      // A dropped connection or a gateway timeout rejects the fetch itself,
+      // whose message is the browser's own "Failed to fetch".
+      setAiExtractErr(t("aiDiscoverError"));
     } finally {
       setAiDiscovering(false);
     }
@@ -1019,43 +1085,51 @@ export function DocumentForm({
           </button>
 
           {/* Slice #21.10.Import: AI-Discover — reads a document whose type the
-              system does not understand yet and prints everything it can read
-              to the dev-server console. It writes nothing, so re-running it is
-              always safe and is often exactly what you want (e.g. after adding
-              template fields, to see what is still unrecognised). Hidden for
-              text-only documents: those pages can never reach the model.
+              system does not understand yet and reports everything it can
+              read. The run itself still writes nothing (the full report also
+              still goes to the dev-server console), so re-running it is always
+              safe and is often exactly what you want — e.g. after accepting a
+              form, to see what is STILL unrecognised. Nothing is persisted
+              until the review dialog below is accepted, which is why this
+              button is not gated on `aiInterpretedAt` and must not become so.
+              Hidden for text-only documents: those pages never reach the
+              model.
 
-              Slice #26.09 removed the AI Interpret button that stood beside it.
-              This one is the only AI action left on a document page, and #26.11
-              takes it out of `DevOnly`. */}
-          <DevOnly>
-            {mode === "edit" && documentId && (() => {
-              const hasPages = pagesState.pages.length > 0;
-              const hasTextOnlyPages = hasPages && pagesState.pages.every(
-                (p) => p.fileName.toLowerCase().endsWith(".txt"),
-              );
-              if (hasTextOnlyPages) return null;
-              // One writer since #26.09 — see the state block. It stays a named
-              // `busy` rather than being inlined because the disabled test also
-              // carries `!hasPages`, and two conditions read better apart.
-              const busy = aiDiscovering;
-              return (
-                <span
-                  title={!hasPages ? t("hints.aiInterpretNoPages") : t("hints.aiDiscover")}
-                  className="inline-flex"
+              Slice #26.09 removed the AI Interpret button that stood beside it,
+              and #26.11 took this one out of `DevOnly`: it is no longer a
+              developer diagnostic but the only way a USER can give a document
+              type a custom form — the other writer of `template_fields` is a
+              deliberate admin API call, which is Adrian with a terminal — so a
+              business user must be able to reach it. The
+              route's own dev-tools 404 went with the wrapper — a hidden button
+              and a missing endpoint were one decision, and it is reversed
+              here in one place, not two. */}
+          {mode === "edit" && documentId && (() => {
+            const hasPages = pagesState.pages.length > 0;
+            const hasTextOnlyPages = hasPages && pagesState.pages.every(
+              (p) => p.fileName.toLowerCase().endsWith(".txt"),
+            );
+            if (hasTextOnlyPages) return null;
+            // One writer since #26.09 — see the state block. It stays a named
+            // `busy` rather than being inlined because the disabled test also
+            // carries `!hasPages`, and two conditions read better apart.
+            const busy = aiDiscovering;
+            return (
+              <span
+                title={!hasPages ? t("hints.aiInterpretNoPages") : t("hints.aiDiscover")}
+                className="inline-flex"
+              >
+                <button
+                  type="button"
+                  disabled={!hasPages || busy}
+                  onClick={handleAiDiscover}
+                  className={buttonClass({ variant: "secondary", size: "lg" })}
                 >
-                  <button
-                    type="button"
-                    disabled={!hasPages || busy}
-                    onClick={handleAiDiscover}
-                    className={buttonClass({ variant: "secondary", size: "lg" })}
-                  >
-                    {aiDiscovering ? t("aiDiscovering") : t("buttons.aiDiscover")}
-                  </button>
-                </span>
-              );
-            })()}
-          </DevOnly>
+                  {aiDiscovering ? t("aiDiscovering") : t("buttons.aiDiscover")}
+                </button>
+              </span>
+            );
+          })()}
         </div>
 
         {/* Inline feedback for AI Discover — its only writer since #26.09. */}
@@ -1068,6 +1142,65 @@ export function DocumentForm({
             <span>{aiExtractMsg}</span>
           </div>
         )}
+        {/* Slice #26.11: the review step. Rendered from `discoverResult`, so it
+            appears the moment a run comes back with something and disappears
+            when the user decides — there is no third state to get wrong.
+
+            The type it writes to is the one SELECTED IN THE FORM, not the one
+            stored on the document, and the dialog names it in its own title
+            for exactly that reason: a user who changed the dropdown without
+            saving is told which type is about to gain a form. Discover mode
+            never sends the type to the model (see the route's comment on
+            typeHintText), so nothing about the read depends on this choice. */}
+        {discoverResult && selectedDocumentTypeId && (
+          <DiscoverReviewDialog
+            key={selectedDocumentTypeId}
+            pairs={discoverResult.pairs}
+            typeId={selectedDocumentTypeId}
+            typeName={
+              typeOptions.find((opt) => opt.id === selectedDocumentTypeId)?.name ?? ""
+            }
+            existing={templateFields}
+            partyRoleNames={discoverResult.partyRoleNames}
+            skippedPages={discoverResult.skippedPages}
+            truncated={discoverResult.truncated}
+            onTypesChanged={() => {
+              queryClient.invalidateQueries({ queryKey: ["document-types"] });
+            }}
+            onClose={() => setDiscoverResult(null)}
+            onSaved={(savedFieldCount, values) => {
+              setDiscoverResult(null);
+              setAiExtractMsg(t("aiDiscoverSaved", { count: savedFieldCount }));
+              // The form renders its custom section from this query's payload,
+              // so refetching is what makes the new fields appear without a
+              // reload — and it is an invalidate rather than a local patch
+              // because the server renumbered `order` and may have dropped a
+              // duplicate key, so its answer is the truth, not ours.
+              queryClient.invalidateQueries({ queryKey: ["document-types"] });
+              // ⚠️ AND FILL THEM IN, on THIS document.
+              //
+              // Without this the document that produced the discovery is the
+              // one document of its type that nothing can fill: the
+              // per-document AI-Interpret button went in #26.09, and
+              // `runAiInterpret` only runs inside an import. The user would
+              // have read each value on screen, accepted it, and been handed
+              // the same values back as empty boxes to retype.
+              //
+              // Left UNSAVED on purpose — this marks the form dirty and the
+              // user still presses Save, which is the same confirmation every
+              // other edit on this page gets. `shouldDirty` is explicit for
+              // that reason.
+              for (const [key, value] of Object.entries(values)) {
+                form.setValue(
+                  `customFields.${key}` as unknown as FieldPath<FormValues>,
+                  value,
+                  { shouldDirty: true },
+                );
+              }
+            }}
+          />
+        )}
+
         {aiExtractErr && (
           <div
             role="alert"

@@ -3,10 +3,13 @@
  * (Slice #23.10.dev)
  *
  * WHY THIS EXISTS
- *   Adrian needs diagnostics that a business user must never see: AI Discover,
- *   the entity Metadata tab and everything set on it, the Help-content and
- *   Settings admin screens, the locale flags. Ciprian's UAT box must ship
- *   without them.
+ *   Adrian needs diagnostics that a business user must never see: the entity
+ *   Metadata tab and everything set on it, the Help-content and Settings admin
+ *   screens, the locale flags. Ciprian's UAT box must ship without them.
+ *
+ *   AI Discover used to be on that list and is NOT any more (Slice #26.11): it
+ *   stopped being a diagnostic when it became the way a document type gets its
+ *   custom form, so it ships to Ciprian along with the route behind it.
  *
  *   The shape of this module is dictated by the UAT_NO_AUTH failure recorded in
  *   CLAUDE.md. That rule was honoured in four places while 25 files resolved

@@ -1199,7 +1199,7 @@
     "hints": {
       "surveyorNotInSystem": "Dacă topograful nu se află în sistem, acesta trebuie introdus mai întâi ca persoană fizică sau juridică.",
       "aiInterpretNoPages": "Adăugați pagini pentru a folosi AI",
-      "aiDiscover": "Citește documentul fără a completa câmpuri — rezultatul apare în consola serverului"
+      "aiDiscover": "Citește documentul și propune câmpurile formularului pentru acest tip de document — nu se salvează nimic până nu confirmați"
     },
     "surveyorPicker": {
       "title": "Selectați Topograful",
@@ -1455,10 +1455,54 @@
       "openPropertiesList": "Deschide lista de proprietăți"
     },
     "aiDiscovering": "Se citește documentul…",
-    "aiDiscoverSuccess": "Document citit: {pairs} perechi nume/valoare și {sections} secțiuni. Raportul complet a fost scris în consola serverului.",
-    "aiDiscoverSkipped": "{count} pagini nu au putut fi trimise — motivele sunt în consolă.",
-    "aiDiscoverTruncated": "Atenție: raportul este incomplet, documentul a depășit limita de răspuns.",
-    "aiDiscoverError": "Citirea AI a eșuat"
+    "aiDiscoverSkipped": "{count, plural, one {O pagină nu a putut fi citită} few {# pagini nu au putut fi citite} other {# de pagini nu au putut fi citite}}, deci este posibil să lipsească informații.",
+    "aiDiscoverTruncated": "Documentul este prea lung și nu a putut fi citit în întregime, așa că rezultatul poate fi incomplet.",
+    "aiDiscoverNothing": "Documentul a fost citit, dar nu s-a găsit nicio informație din care să se poată construi un formular.",
+    "aiDiscoverSaved": "{count, plural, one {Un câmp a fost adăugat} few {# câmpuri au fost adăugate} other {# de câmpuri au fost adăugate}} în formularul acestui tip de document. Valorile citite au fost completate mai jos — verificați-le și apăsați Salvează. Următoarele importuri vor completa câmpurile automat.",
+    "aiDiscoverError": "Citirea documentului nu a reușit. Încercați din nou peste câteva minute.",
+    "discoverReview": {
+      "title": "Câmpurile descoperite pentru tipul „{type}”",
+      "intro": "Bifați câmpurile pe care doriți să le adăugați în formularul acestui tip de document. Lângă fiecare rând apare valoarea citită din document, ca să o puteți verifica. Câmpurile bifate se adaugă tipului de document, deci vor apărea la toate documentele de acest tip, nu doar la acesta, și rămân acolo până când le șterge un administrator. Nimic nu se salvează până nu apăsați „Salvează formularul”.",
+      "warnSkipped": "{count, plural, one {O pagină nu a putut fi citită} few {# pagini nu au putut fi citite} other {# de pagini nu au putut fi citite}}, deci este posibil să lipsească câmpuri.",
+      "warnTruncated": "Documentul este prea lung și nu a putut fi citit în întregime, așa că lista de mai jos poate fi incompletă. Puteți relua descoperirea oricând.",
+      "nothingNew": "Tot ce s-a citit în document este deja preluat. Nu aveți nimic de adăugat aici.",
+      "tableCaption": "Câmpurile propuse pentru formular",
+      "colInclude": "Adaugă",
+      "colLabel": "Denumirea câmpului",
+      "colType": "Tip",
+      "colSample": "Valoarea citită din document",
+      "includeAria": "Adaugă câmpul {label}",
+      "labelAria": "Denumirea câmpului pentru {label}",
+      "typeAria": "Tipul câmpului pentru {label}",
+      "lowConfidence": "nesigur",
+      "sampleEmpty": "(denumirea apare în document, dar nu are nicio valoare)",
+      "alreadyTitle": "{count, plural, one {Un câmp este deja} few {# câmpuri sunt deja} other {# de câmpuri sunt deja}} preluat din document",
+      "alreadyBody": "Acestea rămân neschimbate. Sunt fie câmpuri standard, completate la fiecare document (titlu, număr, dată, subiect), fie persoane care se leagă de document ca înregistrări separate, fie câmpuri care există deja în formularul acestui tip.",
+      "selectedCount": "{count, plural, one {Un câmp selectat} few {# câmpuri selectate} other {# de câmpuri selectate}}",
+      "cancel": "Anulează",
+      "save": "Salvează formularul",
+      "saving": "Se salvează…",
+      "errorSession": "Sesiunea a expirat — autentificați-vă din nou și reîncercați.",
+      "errorChanged": "Formularul acestui tip de document a fost modificat între timp. Lista de mai jos a fost actualizată — verificați-o și apăsați din nou „Salvează formularul”.",
+      "errorSave": "Salvarea formularului a eșuat",
+      "types": {
+        "text": "Text scurt",
+        "textarea": "Text lung",
+        "date": "Dată",
+        "number": "Număr"
+      },
+      "errorNotFound": "Acest tip de document nu mai există în sistem.",
+      "errorTooMany": "Un tip de document poate avea cel mult {max} câmpuri. Debifați câteva și încercați din nou.",
+      "overLimit": "Prea multe câmpuri: ar rezulta {total}, iar maximul este {max}. Debifați câteva.",
+      "needSelection": "Bifați cel puțin un câmp ca să puteți salva. Rândurile marcate „nesigur” nu sunt bifate din start — verificați valoarea din dreapta și bifați-le dacă sunt corecte.",
+      "nothingToAddFooter": "Nu este nimic de adăugat în formular.",
+      "close": "Închide",
+      "typeFull": "Formularul acestui tip de document are deja numărul maxim de câmpuri ({max}), deci nu se mai poate adăuga niciunul. Un administrator poate elimina câmpuri care nu mai sunt folosite."
+    },
+    "aiDiscoverErrorBusy": "Prea multe citiri într-un timp scurt. Așteptați un minut și încercați din nou.",
+    "aiDiscoverErrorNoPages": "Documentul nu are pagini încărcate, deci nu are ce să fie citit.",
+    "aiDiscoverErrorUnreadable": "Paginile acestui document nu pot fi citite de sistem. Verificați formatul fișierelor.",
+    "aiDiscoverErrorNotConfigured": "Citirea automată nu este configurată pe acest server. Anunțați administratorul."
   },
   "valueList": {
     "pageTitle": "Date de referință",

@@ -1199,7 +1199,7 @@
     "hints": {
       "surveyorNotInSystem": "If the surveyor is not yet in the system, add them first as a natural person or judicial person.",
       "aiInterpretNoPages": "Add pages before using AI",
-      "aiDiscover": "Read the document without filling any fields — the result appears in the server console"
+      "aiDiscover": "Reads the document and proposes the form fields for this document type — nothing is saved until you accept"
     },
     "surveyorPicker": {
       "title": "Select Surveyor",
@@ -1455,10 +1455,54 @@
       "openPropertiesList": "Open the properties list"
     },
     "aiDiscovering": "Reading document…",
-    "aiDiscoverSuccess": "Document read: {pairs} name/value pairs and {sections} sections. The full report was written to the server console.",
-    "aiDiscoverSkipped": "{count} page(s) could not be sent — reasons are in the console.",
-    "aiDiscoverTruncated": "Warning: the report is incomplete, the document exceeded the response limit.",
-    "aiDiscoverError": "AI read failed"
+    "aiDiscoverSkipped": "{count, plural, one {One page could not be read} other {# pages could not be read}}, so information may be missing.",
+    "aiDiscoverTruncated": "The document is too long to be read in full, so the result may be incomplete.",
+    "aiDiscoverNothing": "The document was read, but nothing was found that a form could be built from.",
+    "aiDiscoverSaved": "{count, plural, one {One field was added} other {# fields were added}} to this document type's form. The values that were read have been filled in below — check them and press Save. Subsequent imports will fill the fields automatically.",
+    "aiDiscoverError": "Reading the document did not succeed. Try again in a few minutes.",
+    "discoverReview": {
+      "title": "Fields discovered for type “{type}”",
+      "intro": "Tick the fields you want to add to this document type's form. Beside each row is the value read from the document, so you can check it. Ticked fields are added to the document TYPE, so they appear on every document of that type, not just this one, and they stay there until an administrator removes them. Nothing is saved until you press “Save the form”.",
+      "warnSkipped": "{count, plural, one {One page could not be read} other {# pages could not be read}}, so fields may be missing.",
+      "warnTruncated": "The document is too long to be read in full, so the list below may be incomplete. You can run discovery again at any time.",
+      "nothingNew": "Everything read from the document is already captured. There is nothing to add here.",
+      "tableCaption": "Fields proposed for the form",
+      "colInclude": "Add",
+      "colLabel": "Field name",
+      "colType": "Kind",
+      "colSample": "Value read from the document",
+      "includeAria": "Add the field {label}",
+      "labelAria": "Field name for {label}",
+      "typeAria": "Kind of field for {label}",
+      "lowConfidence": "uncertain",
+      "sampleEmpty": "(the name appears in the document but has no value)",
+      "alreadyTitle": "{count, plural, one {One field is already} other {# fields are already}} captured from the document",
+      "alreadyBody": "These are left untouched. They are either standard fields captured on every document (title, number, date, subject), or people who are linked to the document as their own records, or fields already on this type's form.",
+      "selectedCount": "{count, plural, one {One field selected} other {# fields selected}}",
+      "cancel": "Cancel",
+      "save": "Save the form",
+      "saving": "Saving…",
+      "errorSession": "Your session has expired — sign in again and retry.",
+      "errorChanged": "This document type's form changed while you were reviewing. The list below has been updated — check it and press “Save the form” again.",
+      "errorSave": "Saving the form failed",
+      "types": {
+        "text": "Short text",
+        "textarea": "Long text",
+        "date": "Date",
+        "number": "Number"
+      },
+      "errorNotFound": "This document type no longer exists.",
+      "errorTooMany": "A document type may hold at most {max} fields. Untick a few and try again.",
+      "overLimit": "Too many fields: this would make {total}, and the maximum is {max}. Untick a few.",
+      "needSelection": "Tick at least one field to save. Rows marked “uncertain” are not ticked for you — check the value on the right and tick them if they are right.",
+      "nothingToAddFooter": "There is nothing to add to the form.",
+      "close": "Close",
+      "typeFull": "This document type's form already holds the maximum number of fields ({max}), so none can be added. An administrator can remove fields that are no longer used."
+    },
+    "aiDiscoverErrorBusy": "Too many reads in a short time. Wait a minute and try again.",
+    "aiDiscoverErrorNoPages": "This document has no pages uploaded, so there is nothing to read.",
+    "aiDiscoverErrorUnreadable": "The system cannot read this document's pages. Check the file formats.",
+    "aiDiscoverErrorNotConfigured": "Automatic reading is not configured on this server. Tell the administrator."
   },
   "valueList": {
     "pageTitle": "Reference Data",
