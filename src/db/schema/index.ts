@@ -690,6 +690,23 @@ export const lookupDocumentType = pgTable("lookup_document_type", {
   // baseline fields only. Left untyped (jsonb) to avoid a circular import;
   // the application layer parses it via parseTemplateFields.
   templateFields: jsonb("template_fields"),
+  // Slice #26.12: how this type came to exist — 'MANUAL' (added by hand in
+  // Reference Data) or 'IMPORT' (created by ensureDocType while an import scan
+  // was classifying a folder). CHECK constraint in
+  // migration_069_document_type_origin.sql; NOT NULL DEFAULT 'MANUAL', so an
+  // insert that says nothing is a hand-added type and only the import path has
+  // to speak up.
+  //
+  // ⚠️ **Write-once, and the PUT deliberately cannot touch it.** This is the
+  // ONE fact behind the New / AI scanned / AI completed labels that is not
+  // recoverable from the row — 'AI completed' is `templateFields` being
+  // non-empty, and the document-side labels are `document.aiInterpretedAt`
+  // plus that same test. Everything derived lives in one place,
+  // src/lib/documents/status.ts; nothing else may re-decide it. The value-lists
+  // update path strips `origin` from its payload (see updateValue in
+  // src/lib/admin/value-lists/queries.ts) so renaming a type in the admin list
+  // cannot silently re-origin it to the schema default.
+  origin: text("origin").notNull().default("MANUAL"),
 });
 
 export const lookupInstitution = pgTable("lookup_institution", {
