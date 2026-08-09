@@ -27,6 +27,10 @@ import {
   lookupInstitution,
 } from "@/db/schema";
 import type { ListKey } from "./config";
+import {
+  isDocumentTypeOrigin,
+  type DocumentTypeOrigin,
+} from "@/lib/documents/status";
 
 // Row types — inferred from the Drizzle table definitions.
 export type LookupRow = Record<string, unknown> & { id: string };
@@ -193,7 +197,20 @@ export async function createValue(
     }
     case "document-types": {
       const key = await generateUniqueDocumentTypeKey(data.name);
-      const [row] = await db.insert(lookupDocumentType).values({ ...data, key }).returning();
+      // Slice #26.12: origin is create-only and defaults to MANUAL here rather
+      // than in the Zod schema, so exactly one place decides what an unstated
+      // origin means. The import path (`ensureDocType` in
+      // bulk-import-dialog.tsx) is the only caller that sends "IMPORT"; a new
+      // writer that forgets is labelled hand-added, which is the conservative
+      // direction — it under-claims instead of crediting the machine with a
+      // type Adrian typed himself.
+      const origin: DocumentTypeOrigin = isDocumentTypeOrigin(data.origin)
+        ? data.origin
+        : "MANUAL";
+      const [row] = await db
+        .insert(lookupDocumentType)
+        .values({ ...data, key, origin })
+        .returning();
       return row as LookupRow;
     }
     case "institutions": {
@@ -241,7 +258,18 @@ export async function updateValue(
       return (row as LookupRow) ?? null;
     }
     case "document-types": {
-      const [row] = await db.update(lookupDocumentType).set(data).where(eq(lookupDocumentType.id, id)).returning();
+      // Slice #26.12 — the second of two guards on a write-once column.
+      //
+      // ⚠️ **`origin` is stripped here even though LIST_UPDATE_SCHEMAS already
+      // omits it**, and the redundancy is deliberate: this is a full-replace
+      // `.set(data)`, so anything that reaches `data` is written. The schema
+      // guard protects the HTTP route; this one protects every other caller of
+      // `updateValue` — a script, a future admin action, a test — from
+      // re-originating a type by passing the row it just read straight back in.
+      // A rename must never turn an imported type into a hand-added one.
+      const { origin: _ignoredOrigin, ...safe } = data as Record<string, unknown>;
+      void _ignoredOrigin;
+      const [row] = await db.update(lookupDocumentType).set(safe).where(eq(lookupDocumentType.id, id)).returning();
       return (row as LookupRow) ?? null;
     }
     case "institutions": {

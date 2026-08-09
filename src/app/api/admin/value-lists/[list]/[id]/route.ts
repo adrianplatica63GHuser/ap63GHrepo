@@ -12,7 +12,7 @@ import {
 } from "@/lib/api/errors";
 import { isValidListKey } from "@/lib/admin/value-lists/config";
 import { updateValue, deleteValue } from "@/lib/admin/value-lists/queries";
-import { LIST_SCHEMAS } from "@/lib/admin/value-lists/validation";
+import { LIST_UPDATE_SCHEMAS } from "@/lib/admin/value-lists/validation";
 
 type Ctx = { params: Promise<{ list: string; id: string }> };
 
@@ -33,7 +33,11 @@ export async function PUT(
     return Response.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const parsed = LIST_SCHEMAS[list].safeParse(body);
+  // Slice #26.12: the UPDATE schemas, not the create ones. They differ for
+  // document-types alone, where `origin` is write-once — see
+  // documentTypeUpdateSchema for what a shared schema would have done to a
+  // rename.
+  const parsed = LIST_UPDATE_SCHEMAS[list].safeParse(body);
   if (!parsed.success) {
     return zodErrorToResponse(parsed.error);
   }

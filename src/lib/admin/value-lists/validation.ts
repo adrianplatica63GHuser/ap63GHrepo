@@ -6,6 +6,7 @@
 
 import { z } from "zod/v4";
 import type { ListKey } from "./config";
+import { DOCUMENT_TYPE_ORIGINS } from "@/lib/documents/status";
 
 // ── Leaf schemas ─────────────────────────────────────────────────────────────
 
@@ -83,7 +84,34 @@ export const documentTypeSchema = z.object({
   // this column. Only a caller that explicitly sends `templateFields` (e.g.
   // a one-off admin API call to set a type's template) writes to it.
   templateFields: z.array(documentTemplateFieldSchema).nullish(),
+  // Slice #26.12 — how this type came to exist. CREATE ONLY: see
+  // documentTypeUpdateSchema below, which omits it, and updateValue, which
+  // strips it a second time.
+  //
+  // ⚠️ **No `.default()`, and that is the point.** A default would make the
+  // field present-and-MANUAL on every parse, so a payload that never mentioned
+  // origin would still arrive at the query layer carrying one. Left optional,
+  // an absent origin stays absent and `createValue` supplies MANUAL itself —
+  // one place decides the fallback instead of two.
+  origin: z.enum(DOCUMENT_TYPE_ORIGINS).optional(),
 });
+
+/**
+ * The same list, minus `origin`.   (Slice #26.12)
+ *
+ * ⚠️ **Origin is write-once, and a rename is what would have broken it.** The
+ * admin edit form sends only the fields in LIST_META — `{ name }` for document
+ * types — and PUT is a FULL-REPLACE update: `updateValue` does
+ * `.set(parsed.data)`. Had `origin` carried a `.default("MANUAL")` on the
+ * shared schema, every rename of an imported type would have parsed to
+ * `{ name, sortOrder: 0, origin: "MANUAL" }` and quietly re-originated it —
+ * blue to black, "AI scanned" to "New", with nothing in the diff to see. So the
+ * update path cannot even name the column.
+ *
+ * `.omit()` rather than a hand-written second object so the two can never fall
+ * out of step on `name`, `sortOrder` or `templateFields`.
+ */
+export const documentTypeUpdateSchema = documentTypeSchema.omit({ origin: true });
 
 export const judicialPersonTypeSchema = z.object({
   name:      z.string().min(1, "required"),
@@ -98,6 +126,7 @@ export const institutionSchema = z.object({
 
 // ── Dispatch map ─────────────────────────────────────────────────────────────
 
+/** POST bodies. Create-only fields (e.g. document-types' `origin`) live here. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const LIST_SCHEMAS: Record<ListKey, z.ZodType<any>> = {
   "property-types":  propertyTypeSchema,
@@ -109,4 +138,18 @@ export const LIST_SCHEMAS: Record<ListKey, z.ZodType<any>> = {
   "judicial-person-types": judicialPersonTypeSchema,
   "document-types":  documentTypeSchema,
   "institutions":    institutionSchema,
+};
+
+/**
+ * PUT bodies. Identical to LIST_SCHEMAS except where a list has a field that
+ * may be set at creation and never afterwards.
+ *
+ * Spread-then-override rather than a full second literal: a list added to
+ * VALID_LIST_KEYS gets its update schema for free, and only a list that
+ * genuinely needs a different one has to say so here.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const LIST_UPDATE_SCHEMAS: Record<ListKey, z.ZodType<any>> = {
+  ...LIST_SCHEMAS,
+  "document-types": documentTypeUpdateSchema,
 };
