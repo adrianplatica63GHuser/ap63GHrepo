@@ -83,16 +83,32 @@ export function templateFieldFormatHint(type: DocumentTemplateFieldType): string
  * snapshot no-op backstop (queries.ts) and the client edit-dirty check
  * (form-schema.ts). Treats null/undefined/"no key present" as equivalent, and
  * normalises key order, since Postgres jsonb does not preserve it.
+ *
+ * ⚠️ **AN EMPTY STRING IS ALSO UNSET, and that is not cosmetic** (Slice
+ * #26.11). React Hook Form writes `""` into its values for every input that
+ * mounts without a default, so the moment a document type gains a template
+ * field, every already-saved document of that type acquires a `key: ""` its
+ * baseline snapshot does not have. Comparing raw would make `editDirty` true
+ * on a document nobody touched — the unsaved-changes banner, version arrows
+ * locked, and a save offered on the next navigation. Trimming and treating ""
+ * as null is the same rule `normVal` (src/lib/versioning/field-diff.ts) and
+ * the forms' own `blank` helper already apply to every flat field; custom
+ * fields were the one place it was missing.
  */
 export function customFieldsEqual(
   a: Record<string, string | null> | null | undefined,
   b: Record<string, string | null> | null | undefined,
 ): boolean {
+  const norm = (v: string | null | undefined): string | null => {
+    if (v == null) return null;
+    const t = v.trim();
+    return t.length > 0 ? t : null;
+  };
   const av = a ?? {};
   const bv = b ?? {};
   const keys = new Set([...Object.keys(av), ...Object.keys(bv)]);
   for (const k of keys) {
-    if ((av[k] ?? null) !== (bv[k] ?? null)) return false;
+    if (norm(av[k]) !== norm(bv[k])) return false;
   }
   return true;
 }

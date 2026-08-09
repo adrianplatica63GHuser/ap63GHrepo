@@ -59,7 +59,10 @@ export const citizenshipSchema = z.object({
 // this validation-only shape local avoids coupling the two. parseTemplateFields
 // on the read side never throws on malformed data regardless, so the two
 // staying loosely in sync (not literally sharing a type) is safe.
-const documentTemplateFieldSchema = z.object({
+// Exported since Slice #26.11: PUT /api/document-types/[id]/template-fields
+// validates with the same shape, so the two write paths into template_fields
+// cannot disagree about what a field is.
+export const documentTemplateFieldSchema = z.object({
   key:     z.string().min(1, "required"),
   labelRo: z.string().min(1, "required"),
   labelEn: z.string().min(1, "required"),

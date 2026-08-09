@@ -78,6 +78,16 @@
  * report goes to the dev-server console (src/lib/documents/discover-log.ts) and
  * is mirrored in the response body.
  *
+ * Slice #26.11 — that "persists nothing" is now load-bearing rather than
+ * incidental, and MUST NOT be traded away. The response body is what the
+ * review dialog turns into a document type's custom form
+ * (src/lib/documents/discover-to-template.ts), and the write it leads to
+ * happens in a separate route the user has to accept
+ * (PUT /api/document-types/[id]/template-fields). Because this call still
+ * writes nothing, a user may re-run it as often as they like — on a type that
+ * already has a form, to see what is still unrecognised — so nothing here may
+ * ever be gated on `ai_interpreted_at`.
+ *
  * Rate-limited (same 10/min per user as the import-wizard routes).
  */
 
@@ -100,7 +110,6 @@ import {
   type SkippedPage,
 } from "@/lib/documents/discover-log";
 import { createValue } from "@/lib/admin/value-lists/queries";
-import { isDevToolsEnabled } from "@/lib/features/dev-tools";
 import {
   getDocumentById,
   getDocumentTypeTemplate,
@@ -147,23 +156,26 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
   const bodyJson = (await req.json().catch(() => ({}))) as { mode?: unknown };
   const isDiscover = bodyJson.mode === "discover";
 
-  // ── Dev-only gate (Slice #23.10.dev) ───────────────────────────────────────
+  // ── The dev-only gate is GONE (Slice #26.11) ───────────────────────────────
   //
-  // Hiding the button does not remove the endpoint. Discover mode is a
-  // developer diagnostic that reads every page of a document with a 16 384-token
-  // budget, so on a build where it has no UI it must also have no route.
+  // Slice #23.10.dev 404'd this mode on a build with NEXT_PUBLIC_DEV_TOOLS off,
+  // because discover was then a developer diagnostic whose only output was a
+  // block in the dev-server terminal: it had no UI on such a build, so it had
+  // no business having a route either.
   //
-  // 404 rather than 403: with the flag off this mode does not exist on this
-  // build, and 403 would confirm that it does. Note the extract path below is
-  // untouched — a bodyless POST is what every existing caller sends and it
-  // still behaves exactly as before.
+  // It is not a diagnostic any more. It is the only way a USER can give a
+  // document type a custom form — the other writer of `template_fields` is a
+  // deliberate admin API call, which is Adrian with a terminal, not Ciprian —
+  // and that form is what makes every subsequent import of that type fill
+  // itself in. So on Ciprian's build, where the flag is off, a 404 here would
+  // mean document types could never gain a form at all. The button
+  // left <DevOnly> in document-form.tsx in the same commit; a gate on the UI
+  // and a gate on the endpoint were one decision and are removed as one.
   //
-  // Placed HERE, above the rate limiter and above the ANTHROPIC_API_KEY read,
-  // so a probe costs nothing: no Anthropic call, no billing, and no consumed
-  // slot in the shared OCR bucket that AI Interpret depends on.
-  if (isDiscover && !isDevToolsEnabled()) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
-  }
+  // What still protects it is unchanged and is the right shape for a business
+  // action rather than a diagnostic: the middleware requires a session, and the
+  // rate limiter below caps it at the same 10/min per user as every other
+  // Anthropic-backed route.
 
   // ── Rate limiting ──────────────────────────────────────────────────────────
   const rl = checkOcrRateLimit(await getCurrentUserId());
@@ -218,11 +230,18 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
   // "parties" section entirely, and the response tells the caller this type
   // isn't set up for party linking yet rather than guessing at role names.
   //
-  // Discover mode skips this lookup entirely: it extracts no parties, so
-  // asking the DB for roles would be work whose result is thrown away.
-  const partyRoles = isDiscover
-    ? []
-    : await listPersonRolesForDocumentType(docMeta.documentTypeId);
+  // Discover mode extracts no parties, and until Slice #26.11 it skipped this
+  // lookup entirely as work whose result was thrown away. It now needs the
+  // ROLE NAMES for a different reason: the review step must not offer
+  // "Vanzator" or "Cumparator" as a free-text custom field, because the
+  // extraction prompt already asks for those as structured `parties` and the
+  // import links them to real Person records. Accepting one would put a
+  // second, freely-editable copy of a person's name and CNP on every document
+  // of the type — exactly what src/lib/import/id-card.ts refuses to do, and
+  // for the same reason. The roles are returned in the discover response and
+  // nothing else here changes: the prompt still gets no parties section,
+  // because buildDiscoverSystemPrompt takes no arguments at all.
+  const partyRoles = await listPersonRolesForDocumentType(docMeta.documentTypeId);
   const partyRoleNames = partyRoles.map((r) => r.name);
 
   const typeHintText = typeTemplate
@@ -453,6 +472,9 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
       pagesSent: fileBlocks.length,
       pagesTotal: pages.length,
       truncated: hitOutputLimit,
+      // Slice #26.11 — captured elsewhere, so the review step shows a row
+      // matching one of these as already handled instead of offering it.
+      partyRoleNames,
     });
   }
 

@@ -542,6 +542,75 @@ export async function getDocumentTypeTemplate(
   return { key: row.key, name: row.name, fields: parseTemplateFields(row.templateFields) };
 }
 
+/**
+ * The same row, plus the id and the raw template — for the save path.
+ *
+ * Separate from getDocumentTypeTemplate above because the two want different
+ * things. That one is a read for a prompt or a form and does not care whether
+ * the type has since been retired; this one backs a WRITE, so it excludes
+ * soft-deleted rows (a form must not be attached to a type that no longer
+ * appears in any dropdown) and returns the id the caller echoes back.
+ */
+export async function getDocumentTypeForTemplateEdit(
+  documentTypeId: string,
+): Promise<{ id: string; key: string; name: string; fields: DocumentTemplateField[] } | null> {
+  const [row] = await db
+    .select({
+      id:             lookupDocumentType.id,
+      key:            lookupDocumentType.key,
+      name:           lookupDocumentType.name,
+      templateFields: lookupDocumentType.templateFields,
+    })
+    .from(lookupDocumentType)
+    .where(and(eq(lookupDocumentType.id, documentTypeId), isNull(lookupDocumentType.deletedAt)))
+    .limit(1);
+
+  if (!row) return null;
+  return {
+    id:     row.id,
+    key:    row.key,
+    name:   row.name,
+    fields: parseTemplateFields(row.templateFields),
+  };
+}
+
+/**
+ * Replace a document type's custom form.   (Slice #26.11)
+ *
+ * Writes ONLY `template_fields` (plus `updated_at`) — deliberately not the
+ * full-row `set(data)` the generic value-lists update does. That one is a
+ * full-replace PUT whose schema requires `name` and defaults `sortOrder` to 0,
+ * so routing this write through it would need the caller to resend both, and a
+ * caller that forgot `sortOrder` would silently re-sort the admin list as a
+ * side effect of saving a form.
+ *
+ * Returns null when the id matches nothing live, so the route can 404 rather
+ * than report a save that wrote no row.
+ */
+export async function setDocumentTypeTemplateFields(
+  documentTypeId: string,
+  fields: DocumentTemplateField[],
+): Promise<{ id: string; key: string; name: string; fields: DocumentTemplateField[] } | null> {
+  const [row] = await db
+    .update(lookupDocumentType)
+    .set({ templateFields: fields, updatedAt: new Date() })
+    .where(and(eq(lookupDocumentType.id, documentTypeId), isNull(lookupDocumentType.deletedAt)))
+    .returning({
+      id:             lookupDocumentType.id,
+      key:            lookupDocumentType.key,
+      name:           lookupDocumentType.name,
+      templateFields: lookupDocumentType.templateFields,
+    });
+
+  if (!row) return null;
+  return {
+    id:     row.id,
+    key:    row.key,
+    name:   row.name,
+    fields: parseTemplateFields(row.templateFields),
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Document search  (used by associate-document flows)
 // ---------------------------------------------------------------------------
