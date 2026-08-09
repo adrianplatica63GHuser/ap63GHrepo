@@ -134,8 +134,15 @@ export function DiscoverReviewDialog({
    * exactly when it should fire, and the field that arrived in between would be
    * silently swallowed by the merge. Freezing it is what makes the concurrency
    * check a check on what was ACTUALLY reviewed.
+   *
+   * STATE, not a ref, for two reasons that are really one. The footer reads its
+   * length during render (the field-count ceiling), and `react-hooks/refs`
+   * rightly bans that — a ref's value is not something a render may depend on.
+   * And the one thing that does change it, the 409 reseed, has to repaint the
+   * counts it feeds. `useState(existing)` captures the prop exactly once, which
+   * is the freezing this needs; later prop changes do not touch it.
    */
-  const baselineRef = useRef<readonly DocumentTemplateField[]>(existing);
+  const [baseline, setBaseline] = useState<readonly DocumentTemplateField[]>(existing);
 
   /**
    * Seed the editable rows from a proposal list.
@@ -231,7 +238,7 @@ export function DiscoverReviewDialog({
   // Counted against the SAME ceiling the route enforces, so the user is stopped
   // before the click rather than rejected after it — and never by an English
   // sentence built on the server.
-  const storedCount = baselineRef.current.length;
+  const storedCount = baseline.length;
   const wouldTotal  = storedCount + selected.length;
   const typeFull    = storedCount >= MAX_TEMPLATE_FIELDS;
   const overLimit   = wouldTotal > MAX_TEMPLATE_FIELDS;
@@ -251,7 +258,6 @@ export function DiscoverReviewDialog({
     setSaving(true);
     setError(null);
     try {
-      const baseline = baselineRef.current;
       // `order` is sent as the position within the accepted set; the server
       // renumbers the merged list from scratch (mergeAcceptedFields), so this
       // only has to carry the user's ordering, not a global one.
@@ -306,7 +312,7 @@ export function DiscoverReviewDialog({
           // itself from the same stale cache reproduces the failure for ever,
           // with Cancel (which discards the whole run) as the only exit.
           const fresh = parseTemplateFields(body.fields);
-          baselineRef.current = fresh;
+          setBaseline(fresh);
           const reproposed = proposeTemplateFields(pairs, fresh, partyRoleNames);
           setRows((prev) => {
             // Carry the user's decisions across on the printed label, which is
