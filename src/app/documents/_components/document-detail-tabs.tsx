@@ -10,6 +10,10 @@ import { DocumentReferencesTab } from "./document-references-tab";
 import { EntityMetadataTab } from "@/components/entity-metadata-tab";
 import { isDevToolsEnabled } from "@/lib/features/dev-tools";
 import { ProcessPanel } from "./process-panel";
+import {
+  DOCUMENT_STATUS_CLASS,
+  type DocumentStatus,
+} from "@/lib/documents/status";
 import { type FormValues } from "./form-schema";
 
 type Tab = "details" | "related" | "persons" | "properties" | "metadata";
@@ -21,6 +25,18 @@ type Props = {
   initialValues:     FormValues;
   /** Slice #21.02.Import: timestamp set when AI-interpret has run; null if not yet processed. */
   aiInterpretedAt?:  string | null;
+  /**
+   * Slice #26.12 — New / Imported / AI processed, derived on the server.
+   *
+   * ⚠️ **Passed in rather than worked out here, and not from `aiInterpretedAt`
+   * alone.** The stamp is only half the test: the other half is whether THIS
+   * document's type has a custom form, which this component has no way to know
+   * — it never loads the type row. Deriving it locally would have produced
+   * "AI processed" for every imported document, including the ones whose type
+   * had no form to fill in, which is precisely the state the brief calls
+   * "Imported".
+   */
+  status?:           DocumentStatus;
   readonly?:         boolean;
   initialTab?:       Tab;
 };
@@ -31,6 +47,7 @@ export function DocumentDetailTabs({
   documentName,
   initialValues,
   aiInterpretedAt,
+  status,
   readonly,
   initialTab,
 }: Props) {
@@ -74,8 +91,26 @@ export function DocumentDetailTabs({
     <div className="max-w-[93rem] mx-auto w-full flex flex-col gap-4">
       {/* Slice #19.07: name on the left, version controls right-aligned on the
           same line (portalled in by the details form via navSlot). */}
-      <header className="relative flex min-h-[2.5rem] items-center">
+      <header className="relative flex min-h-[2.5rem] items-center gap-3">
         <h1 className="text-2xl font-semibold tracking-tight">{documentName}</h1>
+        {/* Slice #26.12: "near the top", as the source document asks — beside
+            the name, so it is read with the document rather than found. A
+            plain <span>, not a live region: it is a standing property of the
+            record, not something that changes while the page is open. The
+            label before it is what keeps the pill from being a bare colour and
+            a word with no subject. */}
+        {status && (
+          <span
+            className={[
+              "inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+              DOCUMENT_STATUS_CLASS[status],
+            ].join(" ")}
+            title={t("status.label")}
+          >
+            <span className="sr-only">{t("status.label")}: </span>
+            {t(`status.${status}` as Parameters<typeof t>[0])}
+          </span>
+        )}
         <div
           ref={setNavSlot}
           className="pointer-events-none absolute inset-y-0 right-0 flex items-center"

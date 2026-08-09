@@ -1169,6 +1169,12 @@
       "customFields": "Câmpuri specifice tipului de document",
       "fees": "Taxe și onorarii"
     },
+    "status": {
+      "label": "Stare document",
+      "new": "Nou",
+      "imported": "Importat",
+      "aiProcessed": "Procesat AI"
+    },
     "fields": {
       "code": "Cod",
       "type": "Tip document",
@@ -1543,7 +1549,13 @@
       "descriere": "Descriere",
       "description": "Descriere",
       "institutionType": "Tip instituție",
-      "category": "Categorie"
+      "category": "Categorie",
+      "status": "Stare"
+    },
+    "documentTypeStatus": {
+      "new": "Nou",
+      "aiScanned": "Scanat AI",
+      "aiCompleted": "Completat AI"
     },
     "modal": {
       "close": "Închide"

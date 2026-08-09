@@ -1169,6 +1169,12 @@
       "customFields": "Document-type-specific fields",
       "fees": "Fees"
     },
+    "status": {
+      "label": "Document status",
+      "new": "New",
+      "imported": "Imported",
+      "aiProcessed": "AI processed"
+    },
     "fields": {
       "code": "Code",
       "type": "Document Type",
@@ -1543,7 +1549,13 @@
       "descriere": "Description",
       "description": "Description",
       "institutionType": "Institution Type",
-      "category": "Category"
+      "category": "Category",
+      "status": "Status"
+    },
+    "documentTypeStatus": {
+      "new": "New",
+      "aiScanned": "AI scanned",
+      "aiCompleted": "AI completed"
     },
     "modal": {
       "close": "Close"

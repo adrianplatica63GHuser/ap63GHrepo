@@ -1,5 +1,9 @@
 import { notFound } from "next/navigation";
-import { getDocumentWithSurveyor } from "@/lib/documents/queries";
+import {
+  getDocumentTypeTemplate,
+  getDocumentWithSurveyor,
+} from "@/lib/documents/queries";
+import { documentStatus } from "@/lib/documents/status";
 import { DocumentDetailTabs } from "../_components/document-detail-tabs";
 import { fromApiRecord } from "../_components/form-schema";
 
@@ -19,6 +23,30 @@ export default async function EditDocumentPage({ params, searchParams }: PagePar
 
   const initialValues = fromApiRecord(record);
   const label = record.title ?? record.code;
+
+  // ── Slice #26.12: New / AI processed / Imported, derived, never stored ─────
+  //
+  // The brief asks for the status "near the top" of the document page, so it is
+  // decided on the server beside the record it describes rather than guessed in
+  // a component. Both halves come from facts the row already carries — the
+  // import's `ai_interpreted_at` stamp, and whether this document's type has a
+  // custom form — so there is nothing to keep in sync and nothing to migrate.
+  //
+  // `getDocumentTypeTemplate` is reused rather than a new one-column read: it
+  // is the same function the AI-extraction route asks "does this type have a
+  // form?", and two readers of one question should not be two queries that
+  // could answer it differently. It returns PARSED fields, which is what
+  // `documentTypeHasForm` re-parses — cheap, and it means the badge and the
+  // form the user sees are counting the same fields.
+  //
+  // The page re-renders after every save (`router.refresh()` in
+  // document-form.tsx), so changing a document's type updates the badge without
+  // a reload.
+  const typeTemplate = await getDocumentTypeTemplate(record.documentTypeId);
+  const status = documentStatus({
+    aiInterpretedAt:    record.aiInterpretedAt,
+    typeTemplateFields: typeTemplate?.fields ?? null,
+  });
   const initialTab: Tab =
     tab && VALID_TABS.includes(tab as Tab) ? (tab as Tab) : "details";
 
@@ -31,6 +59,7 @@ export default async function EditDocumentPage({ params, searchParams }: PagePar
           documentName={label}
           initialValues={initialValues}
           aiInterpretedAt={record.aiInterpretedAt ? record.aiInterpretedAt.toISOString() : null}
+          status={status}
           readonly={readonly === "true"}
           initialTab={initialTab}
         />

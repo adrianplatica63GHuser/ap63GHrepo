@@ -9,6 +9,10 @@ import {
 } from "@tanstack/react-query";
 import { LIST_META, type ListKey } from "@/lib/admin/value-lists/config";
 import { buttonClass } from "@/lib/ui/button-styles";
+import {
+  documentTypeNameClass,
+  documentTypeStatus,
+} from "@/lib/documents/status";
 
 // ── API helpers ───────────────────────────────────────────────────────────────
 
@@ -286,6 +290,25 @@ export function ValueListModal({
   // edit form but are shown as a ✓/– symbol in the row display.
   const displayFields = meta.fields;
 
+  // ── Slice #26.12: the Document Types list, and only that one ───────────────
+  //
+  // A derived column and a derived colour, in the shape #19.02's `usageCount`
+  // already set for property-types: the generic list stays generic, and the one
+  // list with something extra to say says it here rather than in LIST_META.
+  // LIST_META describes EDITABLE FIELDS — the add/edit form is built straight
+  // from it — and a status nobody can type is not one of those. Putting it
+  // there would have grown an input for a computed value.
+  //
+  // ⚠️ **The column exists so the colour is never the only carrier.** The brief
+  // asks for black / blue / bold green, and colour alone fails anyone who
+  // cannot distinguish them and every printout. The status word beside it says
+  // the same thing in text, from the same function — `documentTypeStatus` and
+  // `documentTypeNameClass` cannot disagree, because the second is the first
+  // with a lookup on the end.
+  const isDocumentTypes = listKey === "document-types";
+  // One extra column for the status, plus the always-present actions column.
+  const emptyStateColSpan = displayFields.length + (isDocumentTypes ? 2 : 1);
+
   return (
     <>
       {/* Overlay */}
@@ -354,6 +377,9 @@ export function ValueListModal({
                         {f.labelText ?? t(`fields.${f.labelKey}`)}
                       </th>
                     ))}
+                    {isDocumentTypes && (
+                      <th className="px-4 py-2">{t("fields.status")}</th>
+                    )}
                     <th className="w-28 px-4 py-2" />
                   </tr>
                 </thead>
@@ -361,7 +387,7 @@ export function ValueListModal({
                   {query.isLoading && (
                     <tr>
                       <td
-                        colSpan={displayFields.length + 1}
+                        colSpan={emptyStateColSpan}
                         className="px-4 py-6 text-center text-fade"
                       >
                         {t("table.loading")}
@@ -371,7 +397,7 @@ export function ValueListModal({
                   {query.isError && (
                     <tr>
                       <td
-                        colSpan={displayFields.length + 1}
+                        colSpan={emptyStateColSpan}
                         className="px-4 py-6 text-center text-red-600"
                       >
                         {t("table.error")}
@@ -381,7 +407,7 @@ export function ValueListModal({
                   {query.data?.length === 0 && (
                     <tr>
                       <td
-                        colSpan={displayFields.length + 1}
+                        colSpan={emptyStateColSpan}
                         className="px-4 py-6 text-center text-fade"
                       >
                         {t("table.empty")}
@@ -396,7 +422,21 @@ export function ValueListModal({
                       {displayFields.map((f) => (
                         <td
                           key={f.key}
-                          className={`px-4 py-2 text-ink dark:text-zinc-300 ${f.multiline ? "max-w-[240px] truncate" : ""}`}
+                          className={[
+                            "px-4 py-2",
+                            // Slice #26.12: the type's name carries the colour
+                            // coding; every other cell keeps the table's body
+                            // colour. `documentTypeNameClass` returns exactly
+                            // that body colour for a hand-added type, so an
+                            // untouched row looks as it always did.
+                            isDocumentTypes && f.key === "name"
+                              ? documentTypeNameClass({
+                                  origin:         row.origin,
+                                  templateFields: row.templateFields,
+                                })
+                              : "text-ink dark:text-zinc-300",
+                            f.multiline ? "max-w-[240px] truncate" : "",
+                          ].filter(Boolean).join(" ")}
                           title={f.multiline ? String(row[f.key] ?? "") : undefined}
                         >
                           {/* Slice #19.02: render checkboxes as ✓ / – symbols */}
@@ -405,6 +445,16 @@ export function ValueListModal({
                             : String(row[f.key] ?? "")}
                         </td>
                       ))}
+                      {isDocumentTypes && (
+                        <td className="px-4 py-2 text-ink dark:text-zinc-300">
+                          {t(
+                            `documentTypeStatus.${documentTypeStatus({
+                              origin:         row.origin,
+                              templateFields: row.templateFields,
+                            })}` as Parameters<typeof t>[0],
+                          )}
+                        </td>
+                      )}
                       <td className="px-4 py-2">
                         <div className="flex gap-2">
                           <button

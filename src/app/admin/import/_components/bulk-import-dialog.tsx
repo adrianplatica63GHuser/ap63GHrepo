@@ -794,11 +794,21 @@ async function ensureDocType(
   if (cached) return cached;
 
   // 3. Auto-create new document type
+  //
+  // Slice #26.12: `origin: "IMPORT"` is the one fact about a document type that
+  // cannot be worked out later — this is the only call site in the app that
+  // sends it, and it is what makes the new type read "AI scanned" and render
+  // blue in Reference Data instead of looking like something Adrian typed. Send
+  // nothing and the column defaults to MANUAL, which is silent and wrong.
+  //
+  // Nothing else about the type's status is sent, because nothing else needs
+  // to be: it gains a form (and turns bold green / "AI completed") only through
+  // #26.11's discovery review, which writes `template_fields`.
   try {
     const res = await fetch("/api/admin/value-lists/document-types", {
       method:  "POST",
       headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify({ name: trimmedLabel }),
+      body:    JSON.stringify({ name: trimmedLabel, origin: "IMPORT" }),
     });
     if (res.ok) {
       const row = (await res.json()) as { id?: string };
