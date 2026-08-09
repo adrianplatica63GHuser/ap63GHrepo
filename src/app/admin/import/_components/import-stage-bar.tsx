@@ -58,6 +58,12 @@ export const MODAL_PHASES: readonly ImportPhase[] = [
   "property",
   "tag-dialog",
   "importing",
+  // Slice #26.10 — the run has finished but a modal still owns the screen:
+  // `BulkImportDialog` as the result table, and the concluding message after
+  // it. The Shift+Tab route this list exists to close is open in both, and
+  // there is a second reason here: cancelling a run that is OVER cannot undo
+  // anything, so the button would offer a remedy for a state that has none.
+  "result",
 ];
 
 type Props = {

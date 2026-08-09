@@ -32,23 +32,34 @@
  * time, in the folder's own order. A run that created people on its own is the
  * failure the whole 26.xx redesign was opened to prevent.
  *
- * After import, the results table still offers two per-row follow-ups, each on
- * a row that finished cleanly:
+ * THE RESULT TABLE DESCRIBES, IT DOES NOT OFFER   (Slice #26.10)
+ * ────────────────────────────────────────────────────────────
+ * The actions column carried two buttons until this slice — "Creează persoană
+ * din CI" (#23.01) and "Aplică pe proprietate" (#23.02) — and the source
+ * document asks for the opposite: "instead of 'apply to property' button it will
+ * be a note 'was applied to property' and for ID card it will be 'a person was
+ * created from ID card'". A screen that describes cannot be built on work that
+ * has not happened, so each button became a fact:
  *
- *   - "Creează persoană din CI"  (Slice #23.01.Import) — rows the scan
- *     classified as an identity card.
- *   - "Aplică pe proprietate"  (Slice #23.02.Import) — rows that are coordinate
- *     files, offering their corners to the run's Property.
+ *   - The CORNERS were already written by the property step, which since #26.07
+ *     creates the Property from the coordinate file BEFORE any document exists.
+ *     `cornerSourceByPath` already records which file built which Property, so
+ *     the row had the fact all along and was offering to do it again.
+ *   - The PERSON is queued by the run and walked automatically once every row
+ *     has settled — the same shape #26.09 gave the extracted parties, and the
+ *     same guarantee: the user still confirms or creates each one, nothing is
+ *     written behind their back. What moved is who opens the dialog, not who
+ *     answers it.
  *
- * Both run AFTER the import, deliberately: by then the Document exists, its
- * pages are uploaded and it is already attached to the Property, so each action
- * only has to add one thing. Offering either beforehand would mean the wizard
- * creating a second Document for the same file, since it imports every entry
- * unconditionally and has no skip mechanism.
+ * The identity cards are walked BEFORE the party queue, deliberately. A card
+ * puts the property's own owner in the system; every party step afterwards
+ * resolves against an archive that already holds them, so the confirm branch is
+ * offered where a create branch would otherwise have made the duplicate this
+ * redesign exists to prevent.
  *
  * The concurrency limit is 3 in-flight import operations at a time — which,
  * since #26.09, means up to 3 concurrent AI reads as well. The follow-up
- * actions are one-at-a-time: each opens a modal.
+ * steps are one-at-a-time: each opens a modal.
  *
  * Provenance (Slice #21.07.Import): each entry's provenance is inferred from
  * its own file extension(s) - a page-group of scans and a single .jpg are IMAGE,
@@ -68,7 +79,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { claimCornerSource } from "@/lib/import/corner-source-client";
 import { useRouter } from "next/navigation";
 import {
@@ -89,7 +100,7 @@ import { inferProvenanceForFiles } from "@/lib/metadata/provenance-rules";
 import type { ProvenanceCode } from "@/lib/metadata/provenance";
 import { ProvenanceField } from "./provenance-field";
 import { isIdCardEntry } from "@/lib/import/id-card";
-import { isCoordinateFileName } from "@/lib/import/coordinate-file";
+import { isDeclaredCoordinateFile } from "@/lib/import/structure-rules";
 import type { EntryAssignment } from "@/lib/import/property-folders";
 import { titleForEntry, type PreexistingRow } from "@/lib/import/preexisting-check";
 import { ProgressBar } from "@/components/progress-bar";
@@ -99,10 +110,6 @@ import {
   type IdCardPersonOutcome,
 } from "./id-card-person-dialog";
 import {
-  CoordinatePropertyDialog,
-  type CoordinateOutcome,
-} from "./coordinate-property-dialog";
-import {
   AiPartyLinkerDialog,
   type AiExtractedParty,
   type AiPartyLinkerSummary,
@@ -110,10 +117,24 @@ import {
 import {
   canRetryReads,
   inFolderOrder,
+  interpretSkipReason,
   runAiInterpret,
-  shouldInterpretEntry,
   type AiInterpretRunResult,
 } from "@/lib/import/ai-interpret-run";
+import {
+  inResultOrder,
+  outcomeNotes,
+  runLandedSomething,
+  summariseImportRun,
+  summaryLines,
+  type ImportRunSummary,
+  type OutcomeNote,
+  type OutcomeNoteId,
+  type SummaryRow,
+} from "@/lib/import/import-outcome";
+import { buildResultReportHtml, reportFileName } from "@/lib/import/report-html";
+import { downloadHtmlFile, fileNameStamp } from "@/lib/ui/download-html";
+import type { ResolvedProperty } from "./property-step-dialog";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -162,6 +183,16 @@ export type ImportResult = {
    *     strictly more (the #23.08 argument, which outlived its button).
    */
   aiStatus?: "running" | "done" | "failed" | "skipped";
+  /**
+   * WHY the run did not read it, on a row whose `aiStatus` is `skipped`.
+   * (Slice #26.10)
+   *
+   * `interpretSkipReason` is the one expression that decides it — the loop does
+   * not get to have a second opinion. Until this slice a skipped row drew
+   * nothing at all in the actions column, which on a screen whose whole subject
+   * is what happened reads as a row nobody looked at.
+   */
+  aiSkipReason?: "no-page" | "id-card";
   /** The route's own sentence about a failed read, plus the pages it skipped. */
   aiErrorDetail?: string;
   /**
@@ -192,6 +223,52 @@ export type ImportResult = {
    */
   personId?: string;
   /**
+   * …and whether that Person was NEW.   (Slice #26.10)
+   *
+   * `IdCardPersonOutcome` has carried it since #23.01 and the row discarded it,
+   * because a button's job was done either way. A row that DESCRIBES cannot
+   * discard it: "o persoană a fost creată din cartea de identitate" and "a fost
+   * regăsită în sistem" are the two different things that happen, and the source
+   * document names the first one specifically.
+   */
+  personCreated?: boolean;
+  /**
+   * The card's question was put and closed without a person.   (Slice #26.10)
+   *
+   * Not a failure — a dismissal is a legitimate answer — but not "waiting"
+   * either, and the two have different sentences. The backlog entry survives,
+   * exactly as a dismissed party stepper's does, so the header's own control can
+   * offer it again; see `handleIdCardClosed`.
+   */
+  personDeclined?: boolean;
+  /**
+   * The card's image could not be prepared, so nobody was ever asked.
+   * (Slice #26.10)
+   *
+   * A PDF that would not rasterise, or a file whose extension is neither image
+   * nor PDF. The Document is fine and the file is in the archive; what did not
+   * happen is the person step, and the row has to say which of the two it is.
+   */
+  personFileUnreadable?: boolean;
+  /**
+   * The card's dialog was opened and gave up.   (Slice #26.10)
+   *
+   * A rate limit, a 5xx, an expired session, or its own timeout — everything
+   * `IdCardPersonDialog` reports through `onFailed`. Kept apart from
+   * `personFileUnreadable` because the image is fine, the step is still in the
+   * queue, and the remedy is to try again rather than to go and re-scan a good
+   * file. See `OutcomeRow.personStepUnfinished`.
+   */
+  personStepUnfinished?: boolean;
+  /**
+   * This card is in the follow-up queue.   (Slice #26.10)
+   *
+   * Written when the run queues it, never cleared. Read together with
+   * `personId` it is what makes "still unanswered" a fact the HEADER can count
+   * without reaching into a ref that no render subscribes to.
+   */
+  idCardQueued?: boolean;
+  /**
    * Slice #23.08.Import: how many of the Document's own fields the ID-card
    * action filled in on the same click. Zero is legitimate — the card gave
    * nothing mappable, or every target was already filled.
@@ -204,14 +281,6 @@ export type ImportResult = {
    * misreport what is in the database.
    */
   idCardDocFieldsFailed?: boolean;
-  /**
-   * Slice #23.02.Import: set once this coordinate file has been offered to the
-   * Property — whether its corners were written, kept, or found already
-   * applied. Same job as personId: stop re-offering a settled question.
-   */
-  coordinateSettled?: boolean;
-  /** Corner count the Property ended up with, for the row's summary. */
-  cornerCount?: number;
   /**
    * Slice #26.08: the archive already held this document, so the loop did not
    * create one. `linked` means the existing Document was attached to this run's
@@ -234,10 +303,44 @@ export type ImportResult = {
  * which links or creates only what the user confirms one at a time.
  */
 type PartyStep = {
+  kind: "parties";
   path: string;
   docId: string;
   parties: AiExtractedParty[];
 };
+
+/**
+ * One identity card's person, waiting to be confirmed or created.
+ * (Slice #26.10)
+ *
+ * ⚠️ **The `File` is resolved during the RUN and carried here**, rather than
+ * being read when the step opens. `FSEntry`'s handle is only readable while
+ * this dialog is mounted and while the user's permission grant is live, and the
+ * loop is already holding the file open to upload it — so resolving it there
+ * costs nothing and removes an await from the moment a modal appears. A PDF is
+ * rasterised to its first page in the same breath, because a vision model
+ * cannot read a PDF.
+ */
+type IdCardStep = {
+  kind: "id-card";
+  path: string;
+  docId: string;
+  /** The row's own label, used as the dialog's heading before a name is read. */
+  label: string;
+  file: File;
+  /** The ONE Property this card's person is linked to. See `soleProperty`. */
+  propertyId: string;
+};
+
+/**
+ * Everything the run queues for the user to answer once it has settled.
+ *
+ * One list and one cursor rather than two of each, and it is not tidiness: the
+ * Close button, the Cancel in the stage bar and every row control are disabled
+ * on "is a follow-up open", and two independent cursors would give that one
+ * question two answers. `kind` is what the render switches on.
+ */
+type FollowUpStep = IdCardStep | PartyStep;
 
 /**
  * Everything a failed read can tell the user, in one string.   (Slice #26.09)
@@ -316,12 +419,19 @@ type Props = {
    */
   cornerSourceByPath?: ReadonlyMap<string, string>;
   /**
-   * Slice #23.02.Import: fired when a coordinate row rewrites a Property's
-   * corners, so the wizard's toolbar chip stops advertising the count it had at
-   * the property step. Carries the Property id since #26.07 — the wizard now
-   * holds several, and a bare count could only be applied to a guess.
+   * The Properties this run resolved.   (Slice #26.10)
+   *
+   * Needed because the result screen now NAMES them: a coordinate row says
+   * which Property its corners built, and the concluding message counts them.
+   * The property step's own output, passed through the wizard unchanged, so
+   * there is no second list to drift.
+   *
+   * ⚠️ **`onPropertyCornersChanged` went with the button that fired it.** The
+   * corners can no longer change after the property step — the row describes
+   * what that step did rather than offering to redo it — so the wizard's chips
+   * cannot go stale and nothing has to tell them so.
    */
-  onPropertyCornersChanged?: (propertyId: string, cornerCount: number) => void;
+  properties: readonly ResolvedProperty[];
   /**
    * Slice #26.03: fired once, the moment the FIRST Document of the run has
    * actually been created.
@@ -333,7 +443,31 @@ type Props = {
    * outside: opening this dialog is not the same event as writing a row.
    */
   onFirstDocumentCreated?: () => void;
-  onClose: () => void;
+  /**
+   * Fired once, the moment the loop and its follow-up queue are finished and
+   * this dialog has become the RESULT screen.   (Slice #26.10)
+   *
+   * The workflow indicator has read "Import — în curs" over a finished run since
+   * #26.03, and `workflow-stages.ts` records it as a known gap for this slice.
+   * The wizard cannot see it from outside: opening this dialog and finishing its
+   * run are two different events and only one of them has a prop.
+   */
+  onRunFinished?: () => void;
+  /**
+   * Closed. The summary is what the concluding message reads out.
+   *
+   * ⚠️ **Handed over rather than recomputed by the wizard, because the wizard
+   * cannot compute it**: every fact in it — which reads failed, which people
+   * were created, which cards nobody answered — lives in this dialog's state and
+   * nowhere else. A run's statistics computed from what the wizard happens to
+   * know would be a second, quieter version of the same screen.
+   *
+   * ⚠️ **`null` when the run never finished.** This dialog's Close is also the
+   * way out of the fatal-error banner — a session that died before the first
+   * document — and there is no conclusion to report from there. See the call
+   * site for what that screen must not be allowed to say.
+   */
+  onClose: (summary: ImportRunSummary | null) => void;
 };
 
 // ---------------------------------------------------------------------------
@@ -387,11 +521,16 @@ async function withConcurrencyLimit<T>(
 //
 // Slice #23.02.Import removed the local TEXT_EXTS_SET / isTextFile pair: the
 // coordinate-file extension list got exactly one home, the pure
-// isCoordinateFileName in src/lib/import/coordinate-file.ts, which this row
-// still asks. Slice #26.07 narrowed it to STR-08's `coord…` rule for one
-// adversarial round and put it back; the reasoning is at the call site, and
-// the short version is that a folder rule and a row action are two different
-// questions and only the first is allowed to be strict.
+// isCoordinateFileName in src/lib/import/coordinate-file.ts. Slice #26.07
+// narrowed the ROW to STR-08's `coord…` rule for one adversarial round and put
+// it back, on the argument that a folder rule and a row action are two
+// different questions and only the first is allowed to be strict.
+//
+// ⚠️ **#26.10 settled it the other way, and the argument above is the reason
+// rather than a casualty of it.** The row stopped being an action. A button on
+// a stray `notite.txt` was a click that did nothing; the sentence that replaced
+// it is a claim, and a claim is exactly the thing that has to be strict. See
+// `isCoordinateRow`.
 //
 // Slice #24.03 finished the job: the local IMAGE_EXTS_SET and PDF_EXT are gone
 // too, and both questions are asked of the file-kind registry in
@@ -422,17 +561,55 @@ function getPdfWorker(): Worker {
   return _pdfWorker;
 }
 
+/**
+ * ⚠️ **NOTHING WAITS FOR EVER, AND THIS ONE USED TO.**   (hardened in #26.10)
+ *
+ * Until this slice the promise below settled on exactly one event: a `message`
+ * whose `id` matched. A worker that failed to load, threw inside pdf.js, or was
+ * killed for memory posted nothing at all, and the promise stayed pending.
+ * That was survivable while the only caller was a button the user could walk
+ * away from. It is not survivable now: #26.10 calls this from inside the import
+ * loop, where a pending promise means the entry's task never settles, so
+ * `withConcurrencyLimit` never resolves, `done` is never set — no Close, no
+ * result table, no report — and the stage bar's Cancel is disabled for the
+ * whole `importing` phase. One unreadable PDF would have left a page reload as
+ * the only exit, and a reload loses the queue.
+ *
+ * So: an `error` listener for a worker that dies loudly, and a timeout for one
+ * that dies quietly. Both reject, which the caller already handles by marking
+ * the row `personFileUnreadable` and carrying on.
+ */
+const PDF_RASTERIZE_TIMEOUT_MS = 30_000;
+
 async function pdfFirstPageBlob(file: File): Promise<Blob> {
   const buffer = await file.arrayBuffer();
   const worker = getPdfWorker();
   const id     = Math.random().toString(36).slice(2);
 
   return new Promise<Blob>((resolve, reject) => {
+    // The timer is armed FIRST so it can be a `const` — `prefer-const` is right
+    // about it, and a `let` assigned exactly once is a reader wondering where
+    // the second assignment is. It refers forward to `handleTimeout`, which is
+    // a hoisted function declaration and therefore already initialised when
+    // this line runs; nothing here can fire before the current turn ends.
+    const timer = setTimeout(handleTimeout, PDF_RASTERIZE_TIMEOUT_MS);
+    // Every exit runs this, so no listener and no timer outlives the call —
+    // and a late message for a timed-out id can no longer resolve a promise
+    // whose caller has already been told it failed.
+    function done() {
+      clearTimeout(timer);
+      worker.removeEventListener("message", handleMessage);
+      worker.removeEventListener("error", handleError);
+    }
+    function handleTimeout() {
+      done();
+      reject(new Error("PDF worker timed out"));
+    }
     function handleMessage(
       e: MessageEvent<{ id: string; buffer?: ArrayBuffer; error?: string }>,
     ) {
       if (e.data.id !== id) return; // belongs to a different concurrent call
-      worker.removeEventListener("message", handleMessage);
+      done();
       if (e.data.error) {
         reject(new Error(e.data.error));
       } else if (e.data.buffer) {
@@ -441,10 +618,103 @@ async function pdfFirstPageBlob(file: File): Promise<Blob> {
         reject(new Error("PDF worker returned no buffer"));
       }
     }
+    // ⚠️ Not filtered by `id` — a worker-level error carries none, and it
+    // takes every in-flight call down with it. Rejecting all of them is
+    // correct: none of them is going to be answered.
+    function handleError() {
+      done();
+      // ⚠️ **The singleton goes with it, and leaving it in place cost 30 s per
+      // remaining card.** A worker that has fired `error` — a chunk that 404s
+      // after a deploy, a script that threw on load — will not fire it again,
+      // so every later call registered its listeners on a corpse and could only
+      // exit through the timeout. A folder of eight PDF cards spent about
+      // eighty seconds of the import loop waiting for nothing.
+      _pdfWorker = null;
+      worker.terminate();
+      reject(new Error("PDF worker failed"));
+    }
     worker.addEventListener("message", handleMessage);
+    worker.addEventListener("error", handleError);
     // Transfer the ArrayBuffer to avoid a copy across the thread boundary.
     worker.postMessage({ id, buffer, scale: 1.5 }, [buffer]);
   });
+}
+
+/**
+ * The one page of an identity card a vision model can look at.
+ * (Moved out of `handleOpenIdCard` in Slice #26.10.)
+ *
+ * A page-group is several scans of ONE document and the card's data side is
+ * page 1 — the orphaned `handleCreatePerson` this replaced handled only plain
+ * files and threw "Not a scannable file" on a two-page scan. A PDF is
+ * rasterised because the extract route sends an image.
+ *
+ * Throws rather than returning null, and the message is never shown: this is a
+ * module-level function with no translator, and the ONE place Romanian may live
+ * is `messages/*.json`. The caller catches it and marks the row
+ * `personFileUnreadable`, which is the sentence the user actually reads.
+ */
+async function idCardImage(entry: FSEntry): Promise<File> {
+  const handle =
+    entry.kind === "page-group"
+      ? (entry as FSPageGroupEntry).handles[0]
+      : (entry as FSFileEntry).handle;
+  if (!handle) throw new Error("id-card-unreadable");
+
+  const file = await handle.getFile();
+  if (isPdfFile(file.name)) {
+    const blob = await pdfFirstPageBlob(file);
+    return new File([blob], `${file.name}.png`, { type: blob.type || "image/png" });
+  }
+  if (isImageFile(file.name)) return file;
+  throw new Error("id-card-unreadable");
+}
+
+/**
+ * Is this row THE coordinate file — the one a claim may be made about?
+ * (Slice #26.10)
+ *
+ * ⚠️ **`isDeclaredCoordinateFile`, which is STR-08's rule, and NOT
+ * `isCoordinateFileName`'s extension shortlist — the row action used the
+ * shortlist and an adversarial round is why this one must not.**
+ *
+ * The two answer different questions and the difference only started to matter
+ * when the row stopped offering and started asserting. A BUTTON on a stray
+ * `notite.txt` was a click that did nothing; a SENTENCE on it — "colțurile din
+ * acest fișier nu au fost preluate" — is the screen telling a business user
+ * that a page of notes failed to become geometry. `property-folders.ts` warns
+ * against exactly this substitution, and the source document is explicit that
+ * other text files under a property folder "will be interpreted as business
+ * content". They would also have been hoisted to the head of their folder's
+ * block, above the real `coord….txt`, which destroys the one ordering
+ * guarantee this screen makes.
+ *
+ * ⚠️ **And the name branch is confined to a PROPERTY folder**, which a second
+ * adversarial round is why. STR-08's one-per-folder rule constrains property
+ * folders only, so a `coord 47per2….txt` the user also keeps under `common`
+ * breaks nothing — and the property step never considers `common`, so it has no
+ * corner-source entry and the row would have said "colțurile din acest fișier
+ * nu au fost preluate", which is false on both of the alternatives that
+ * sentence offers. It would have been hoisted above `common`'s real documents
+ * too.
+ *
+ * The second half keeps `coordinate-file.ts`'s standing promise that a name
+ * ranks and never filters: a file that ACTUALLY built a Property is the
+ * coordinate file whatever it is called, and wherever it sits. That is a fact
+ * from `cornerSourceByPath`, not a guess from a name — which is the only ground
+ * on which this screen is allowed to make a claim at all.
+ */
+function isCoordinateRow(
+  result: ImportResult,
+  cornerSourceByPath: ReadonlyMap<string, string> | undefined,
+  inPropertyFolder: boolean,
+): boolean {
+  if (cornerSourceByPath?.has(result.entry.path) === true) return true;
+  return (
+    inPropertyFolder &&
+    result.entry.kind === "file" &&
+    isDeclaredCoordinateFile((result.entry as FSFileEntry).name)
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -627,8 +897,9 @@ export function BulkImportDialog({
   propertyIdsByPath,
   preexistingByPath,
   cornerSourceByPath,
-  onPropertyCornersChanged,
+  properties,
   onFirstDocumentCreated,
+  onRunFinished,
   onClose,
 }: Props) {
   const t = useTranslations("adminImport.wizard.importDialog");
@@ -659,15 +930,34 @@ export function BulkImportDialog({
    * the fields. Title on the row, body on the tooltip — a cell cannot hold four
    * lines and the argument is four lines long.
    */
-  const confidenceNoteFor = (
-    confidence?: "high" | "medium" | "low",
-  ): { title: string; body: string } | null =>
-    confidence === "low"
-      ? { title: tw("scanConfidence.titleLow"), body: tw("scanConfidence.bodyLow") }
-      : confidence === "medium"
-        ? { title: tw("scanConfidence.titleMedium"), body: tw("scanConfidence.bodyMedium") }
-        : null;
+  /**
+   * ⚠️ A `useCallback`, and #26.10 is what forced it. While the only reader was
+   * the row's own render this could be a plain arrow; the saved report now reads
+   * it too, from inside `handleSaveReport`'s dependency list, and a fresh
+   * function identity on every render there rebuilds that callback on every
+   * render as well. `tw` is stable per namespace, so this one never changes.
+   */
+  const confidenceNoteFor = useCallback(
+    (confidence?: "high" | "medium" | "low"): { title: string; body: string } | null =>
+      confidence === "low"
+        ? { title: tw("scanConfidence.titleLow"), body: tw("scanConfidence.bodyLow") }
+        : confidence === "medium"
+          ? { title: tw("scanConfidence.titleMedium"), body: tw("scanConfidence.bodyMedium") }
+          : null,
+    [tw],
+  );
   const tprov = useTranslations("adminImport.provenance");
+  /**
+   * The result screen's own namespace: the saved report and the statistics.
+   * (Slice #26.10)
+   *
+   * Separate from `importDialog` because the concluding message the wizard
+   * shows after this dialog closes reads the SAME labels, and a summary line
+   * whose wording lives under "the dialog that is no longer on screen" is a
+   * wording that gets edited in one of the two places.
+   */
+  const tres = useTranslations("adminImport.result");
+  const locale = useLocale();
   const router = useRouter();
 
   const [results, setResults] = useState<ImportResult[]>(() =>
@@ -687,21 +977,16 @@ export function BulkImportDialog({
     firstDocumentRef.current = onFirstDocumentCreated;
   }, [onFirstDocumentCreated]);
 
-  // Slice #23.01.Import — the row whose ID card is being turned into a Person.
-  // The File is resolved up front (the FSEntry handle is only readable while
-  // this dialog is mounted) and held here so the child gets a plain File.
-  const [idCardTarget, setIdCardTarget] = useState<
-    { path: string; docId: string; label: string; file: File; propertyId: string } | null
-  >(null);
-  const [idCardError, setIdCardError] = useState<string | null>(null);
-
-  // Slice #23.02.Import — the two new row actions, one at a time.
-  // Slice #23.06.Import added `docId`: the dialog now claims the
-  // coordinate-source link, and a claim is about a DOCUMENT, not a file
-  // handle. Same shape as idCardTarget/aiTarget, which have always carried it.
-  const [coordinateTarget, setCoordinateTarget] = useState<
-    { path: string; docId: string; entry: FSFileEntry; propertyId: string } | null
-  >(null);
+  /**
+   * The identity cards this run queued, keyed by entry path.   (Slice #26.10)
+   *
+   * A ref filled during the loop and published once, for both the reasons
+   * `partyStepsRef` below carries: three tasks finish in whatever order their
+   * files allow, so appending to state would queue them in completion order,
+   * and a `setState` per finished task would re-render the table mid-import for
+   * a queue nothing is reading yet.
+   */
+  const idCardStepsRef = useRef<Map<string, IdCardStep>>(new Map());
   /**
    * The documents whose automatic read found people, waiting to be confirmed.
    * (Slice #26.09)
@@ -725,29 +1010,22 @@ export function BulkImportDialog({
    * is a `useCallback` outside that effect and its await is a model call.
    */
   const mountedRef = useRef(true);
-  const [partySteps, setPartySteps] = useState<PartyStep[]>([]);
-  const [partyIndex, setPartyIndex] = useState(0);
+  const [followUps, setFollowUps] = useState<FollowUpStep[]>([]);
+  const [followUpIndex, setFollowUpIndex] = useState(0);
+  /** Saving the take-away report is a decision the screen remembers. */
+  const [reportSaved, setReportSaved] = useState(false);
 
   /**
-   * The Property the LAST coordinate row action was opened against.
+   * The Properties this run resolved, by id.   (Slice #26.10)
    *
-   * `handleCoordinateDone` has always read its target through a
-   * `setCoordinateTarget` updater rather than depending on the state, so that a
-   * new target does not give the child dialog a new `onDone` identity. Since
-   * #26.07 it also needs to say WHICH Property's corner count changed, and a
-   * value read inside a state updater is only available inside it — on the next
-   * render, after the report would have happened.
-   *
-   * ⚠️ **Written when the action OPENS, and never cleared.** A first attempt
-   * mirrored `coordinateTarget` itself and read `?.propertyId`, which is null
-   * the moment the child closes — and the `if (target)` guard three lines below
-   * exists precisely because that ordering happens, so the report was
-   * conditional on a state the surrounding code already expects to be gone. The
-   * wizard's chip then kept advertising the count from the property step for
-   * the rest of the run, where before #26.07 it was corrected. A plain id that
-   * only ever moves forward has no such window.
+   * Read by the coordinate note, which names the Property a file's corners
+   * built, and by the saved report, which links to each one.
    */
-  const coordinatePropertyRef = useRef<string | null>(null);
+  const propertyById = useMemo(() => {
+    const map = new Map<string, ResolvedProperty>();
+    for (const property of properties) map.set(property.id, property);
+    return map;
+  }, [properties]);
 
   /**
    * The Property ids this entry's Document must be linked to.   (Slice #26.07)
@@ -915,6 +1193,7 @@ export function BulkImportDialog({
     // effect twice in development, and a Map that survived the first would hand
     // the second run's stepper a document the first had already queued.
     partyStepsRef.current = new Map();
+    idCardStepsRef.current = new Map();
     // Slice #26.03 — see the `onFirstDocumentCreated` prop. Local to this run,
     // so a StrictMode re-mount re-announces for its own first document rather
     // than staying silent because a discarded run had already spoken.
@@ -1126,19 +1405,72 @@ export function BulkImportDialog({
           //
           // The rule lives in `ai-interpret-run.ts` and is stated there once,
           // because the Import screen counts the same predicate to price the
-          // click before it happens — see `shouldInterpretEntry`.
-          const willInterpret = shouldInterpretEntry(entry, {
+          // click before it happens — see `interpretSkipReason`, of which
+          // `shouldInterpretEntry` is the thinner view that screen reads.
+          const rowProperty = soleProperty(entry.path);
+          const skipReason = interpretSkipReason(entry, {
             isIdCard: isIdCardEntry(sr),
-            canCreatePerson: soleProperty(entry.path) !== null,
+            canCreatePerson: rowProperty !== null,
           });
 
-          if (!willInterpret) {
+          // 7a. The identity card's person — QUEUED, not written.  (#26.10)
+          //
+          // Until this slice the card was a button on the row; now the run
+          // queues it and the queue walks it once every row has settled, so the
+          // row can say what happened instead of offering to make it happen.
+          //
+          // ⚠️ **Nothing is created here.** The step opens the same
+          // confirm-or-create dialog the button opened, and the user still
+          // answers it. #26.09's rule — a run that creates people on its own is
+          // the failure the whole 26.xx redesign exists to prevent — is about
+          // WRITING without an answer, not about who opens the question.
+          //
+          // ⚠️ **Keyed on the FACT that it is a card, NOT on `skipReason ===
+          // "id-card"`, and an adversarial round is why.** The two are not the
+          // same set: `interpretSkipReason` answers `no-page` FIRST, so a card
+          // the model cannot see — a page folder of files the route refuses —
+          // never reached this branch, was never queued, and yet drew "cartea
+          // de identitate așteaptă să fie confirmată" beside a header that
+          // counted nothing and offered no control to answer it. The card path
+          // does not need `hasReadablePage`: it needs an IMAGE, and whether
+          // there is one is `idCardImage`'s answer, not the AI route's.
+          if (isIdCardEntry(sr) && rowProperty !== null) {
+            try {
+              const image = await idCardImage(entry);
+              // ⚠️ The `mounted` test guards the REF write too, not just the
+              // state patch beside it. The effect gives each invocation a fresh
+              // map, so a task belonging to a discarded StrictMode run that
+              // resolved late would otherwise write its own (duplicate,
+              // orphaned) `docId` into the LIVE run's queue — and the person
+              // the user then confirms would be linked to the document nobody
+              // can see.
+              if (!mounted) return;
+              idCardStepsRef.current.set(entry.path, {
+                kind: "id-card",
+                path: entry.path,
+                docId,
+                label: title,
+                file: image,
+                propertyId: rowProperty,
+              });
+              updateResult(entry.path, { idCardQueued: true });
+            } catch {
+              // The Document is written, its pages are uploaded and it is
+              // linked; what failed is the preparation of an image. The row
+              // says so and the import carries on — the same rule this file's
+              // header states for a failed read.
+              if (mounted) updateResult(entry.path, { personFileUnreadable: true });
+            }
+          }
+
+          if (skipReason !== null) {
             if (mounted) {
               updateResult(entry.path, {
                 status: "done",
                 docId,
                 principalObjectId,
                 aiStatus: "skipped",
+                aiSkipReason: skipReason,
               });
             }
             return;
@@ -1160,6 +1492,7 @@ export function BulkImportDialog({
             // still uploading behind the dialog.
             if (interpreted.parties.length > 0) {
               partyStepsRef.current.set(entry.path, {
+                kind: "parties",
                 path: entry.path,
                 docId,
                 parties: interpreted.parties,
@@ -1221,12 +1554,19 @@ export function BulkImportDialog({
       // expired" banner would walk the user through confirming people into six
       // consecutive 401s. The parties are lost either way; the difference is
       // whether the user spends five minutes discovering that.
-      const steps = abortRef.current
+      // Slice #26.10 — the identity cards first, then the parties, each in the
+      // folder's own order. The reason the cards go first is in this file's
+      // header: a card puts the property's owner in the system, so every party
+      // step after it resolves against an archive that already holds them.
+      const steps: FollowUpStep[] = abortRef.current
         ? []
-        : inFolderOrder(entries, partyStepsRef.current);
+        : [
+            ...inFolderOrder(entries, idCardStepsRef.current),
+            ...inFolderOrder(entries, partyStepsRef.current),
+          ];
 
       if (mounted) {
-        setPartySteps(steps);
+        setFollowUps(steps);
         setDone(true);
       }
     }
@@ -1259,6 +1599,21 @@ export function BulkImportDialog({
   useEffect(() => {
     if (done) router.refresh();
   }, [done, router]);
+
+  /**
+   * The run is over and this dialog is now the RESULT screen.   (Slice #26.10)
+   *
+   * Held in a ref for the reason `firstDocumentRef` is: a caller passing a
+   * fresh arrow every render must not be able to re-announce on every commit.
+   * `done` only ever goes false→true, so this fires exactly once.
+   */
+  const runFinishedRef = useRef(onRunFinished);
+  useEffect(() => {
+    runFinishedRef.current = onRunFinished;
+  }, [onRunFinished]);
+  useEffect(() => {
+    if (done) runFinishedRef.current?.();
+  }, [done]);
 
   // Persist the completed session to localStorage so the user can "Resume"
   // it after navigating away (e.g. to inspect an individual document).
@@ -1303,135 +1658,128 @@ export function BulkImportDialog({
   }, [done, results, rootFolderName, scanResults]);
 
   // ---------------------------------------------------------------------------
-  // Slice #23.01.Import — "Creează persoană din CI"
+  // The follow-up queue   (Slice #26.10, on #26.09's shape)
   // ---------------------------------------------------------------------------
   //
-  // Offered on a row that finished importing AND that the scan classified as an
-  // identity card. It runs AFTER the import, deliberately: by then the Document
-  // and its page already exist and are already linked to the run's Property, so
-  // the person flow only has to resolve an identity and attach it. Offering it
-  // before the import would mean creating a second Document for the same image.
-  //
-  // The image is resolved here rather than in the child because the FSEntry
-  // handle is only readable while this dialog is mounted, and because a PDF has
-  // to be rasterised to its first page before a vision model can read it.
-  const handleOpenIdCard = useCallback(
-    async (result: ImportResult) => {
-      if (!result.docId) return;
-      setIdCardError(null);
-      try {
-        const entry = result.entry;
-        // A page-group is several scans of one document; the card's data side
-        // is page 1. (The orphaned handleCreatePerson handled only plain files
-        // and threw "Not a scannable file" on a two-page scan.)
-        const handle =
-          entry.kind === "page-group"
-            ? (entry as FSPageGroupEntry).handles[0]
-            : (entry as FSFileEntry).handle;
-        if (!handle) throw new Error(t("idCardNoFile"));
+  // Two questions the run cannot answer by itself: who the person on an
+  // identity card is, and who the people a document read named are. Both are
+  // queued during the loop and walked here once every row has settled, one
+  // modal at a time, so a user is not interrupted three times over while files
+  // are still uploading behind the dialog.
 
-        const file = await handle.getFile();
-        let image: File;
-        if (isPdfFile(file.name)) {
-          const blob = await pdfFirstPageBlob(file);
-          image = new File([blob], `${file.name}.png`, { type: blob.type || "image/png" });
-        } else if (isImageFile(file.name)) {
-          image = file;
-        } else {
-          throw new Error(t("idCardNoFile"));
-        }
+  const currentFollowUp: FollowUpStep | null = followUps[followUpIndex] ?? null;
 
-        const label = titleForEntry(entry);
-
-        // Slice #26.07 — the Property this row's Document actually went into.
-        // Re-read here rather than captured when the row was imported: it comes
-        // from the same one reader the loop used, so the two cannot disagree.
-        const rowProperty = soleProperty(entry.path);
-        if (rowProperty === null) return;
-
-        setIdCardTarget({
-          path: entry.path,
-          docId: result.docId,
-          label,
-          file: image,
-          propertyId: rowProperty,
-        });
-      } catch (err) {
-        setIdCardError(err instanceof Error ? err.message : t("idCardNoFile"));
+  /**
+   * Move to the next question, and RELEASE the queue once there is none.
+   * (Slice #26.10)
+   *
+   * ⚠️ **The release is not tidiness — it is megabytes.** An `IdCardStep` holds
+   * a `File`, and for a PDF card that File is a PNG this dialog rasterised at
+   * 1.5× (roughly 1240×1754), living in memory rather than on disk. Advancing a
+   * cursor past the end leaves every one of them referenced by the state array
+   * for as long as the user keeps the result screen open — reading it, saving
+   * the report, confirming parties. Eight cards is tens of megabytes held for
+   * nothing.
+   *
+   * Emptying the array is safe because the BACKLOG is the refs, not this: the
+   * header's own control rebuilds the queue from them, so nothing that still
+   * needs answering is lost by dropping the walked copy.
+   */
+  const advanceFollowUp = useCallback(
+    (from: number) => {
+      if (from + 1 >= followUps.length) {
+        setFollowUps([]);
+        setFollowUpIndex(0);
+        return;
       }
+      setFollowUpIndex(from + 1);
     },
-    [t, soleProperty],
+    [followUps.length],
   );
 
-  const handleIdCardDone = useCallback((outcome: IdCardPersonOutcome) => {
-    setIdCardTarget((target) => {
-      if (target) {
-        updateResult(target.path, {
+  /**
+   * One card is settled — record who it produced and move on.
+   *
+   * `personCreated` is carried through rather than discarded: it is the whole
+   * difference between the source document's "a person was created from ID
+   * card" and the quieter truth that the person was already there.
+   */
+  const handleIdCardDone = useCallback(
+    (outcome: IdCardPersonOutcome) => {
+      const step = followUps[followUpIndex];
+      if (step !== undefined && step.kind === "id-card") {
+        idCardStepsRef.current.delete(step.path);
+        updateResult(step.path, {
           personId: outcome.personId,
-          // Slice #23.08.Import — the same click also wrote the card's fields
+          personCreated: outcome.created,
+          // A previous decline is no longer the answer, and a row carrying both
+          // would draw two contradictory sentences.
+          personDeclined: undefined,
+          // Slice #23.08.Import — the same step also wrote the card's fields
           // onto the Document; the row reports both halves separately because
           // the second can fail while the first succeeded.
           idCardDocFields: outcome.documentFieldsWritten,
           idCardDocFieldsFailed: outcome.documentFieldsFailed,
         });
       }
-      return null;
-    });
-    // updateResult is a stable useCallback reference.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // ---------------------------------------------------------------------------
-  // Slice #23.02.Import — the two ported actions
-  // ---------------------------------------------------------------------------
+      advanceFollowUp(followUpIndex);
+    },
+    [advanceFollowUp, followUps, followUpIndex, updateResult],
+  );
 
   /**
-   * "Aplică pe proprietate" — offer this coordinate file's corners to the run's
-   * Property. Only ever on a plain file entry: a page-group is by definition a
-   * folder of sequentially-numbered images and can never hold a text export.
+   * The card could not be read, so nobody was ever asked.   (Slice #26.10)
+   *
+   * ⚠️ **Distinct from a close, and an adversarial round is why.** Both end in
+   * `onClose`, so without this a 429 during the queue — the failure three
+   * concurrent reads on one bucket actually produce — drew "nicio persoană nu a
+   * fost creată din această carte de identitate" on the row and in the saved
+   * report: a sentence about a decision the user never took. The backlog entry
+   * survives either way, so the header's own control can still offer it.
+   *
+   * ⚠️ **`personStepUnfinished`, NOT `personFileUnreadable`.** A third round caught
+   * the two being merged: this dialog's fatal state is a 429, a 5xx, an expired
+   * session or its own timeout, and none of those is an image that would not
+   * open. The image opened — the loop rasterised it and it is still in the
+   * queue — so the sentence, the count and the remedy are all different. See
+   * `OutcomeRow.personStepUnfinished`.
    */
-  const handleOpenCoordinate = useCallback((result: ImportResult) => {
-    if (result.entry.kind !== "file") return;
-    // No docId means the row never finished importing, so there is no Document
-    // to claim and nothing sensible to do. The row action is already gated on
-    // `settled` (status === "done" && !!docId); this is the belt to that
-    // braces, and it keeps the prop non-optional in the dialog.
-    if (!result.docId) return;
-    // Slice #26.07 — as above. `null` cannot happen from the UI (the row's
-    // button is not rendered without a sole Property), and returning here is
-    // the belt to those braces rather than a second rule.
-    const rowProperty = soleProperty(result.entry.path);
-    if (rowProperty === null) return;
-    coordinatePropertyRef.current = rowProperty;
-    setCoordinateTarget({
-      path: result.entry.path,
-      docId: result.docId,
-      entry: result.entry as FSFileEntry,
-      propertyId: rowProperty,
-    });
-  }, [soleProperty]);
+  const handleIdCardFailed = useCallback(() => {
+    const step = followUps[followUpIndex];
+    if (step !== undefined && step.kind === "id-card") {
+      updateResult(step.path, { personStepUnfinished: true });
+    }
+  }, [followUps, followUpIndex, updateResult]);
 
-  const handleCoordinateDone = useCallback(
-    (outcome: CoordinateOutcome) => {
-      setCoordinateTarget((target) => {
-        if (target) {
-          updateResult(target.path, {
-            coordinateSettled: true,
-            cornerCount: outcome.cornerCount,
-          });
-        }
-        return target;
-      });
-      // Only a real write invalidates the wizard's chip; keeping the existing
-      // corners changed nothing to report. Slice #26.07 — named, because the
-      // wizard now shows one chip per Property and an unnamed count could only
-      // be applied to whichever it guessed.
-      if (outcome.changed && coordinatePropertyRef.current !== null) {
-        onPropertyCornersChanged?.(coordinatePropertyRef.current, outcome.cornerCount);
-      }
-    },
-    [onPropertyCornersChanged, updateResult],
-  );
+  /**
+   * The card's dialog was closed without a person.
+   *
+   * ⚠️ **The backlog entry SURVIVES**, for the reason `handlePartyStepClosed`
+   * records about its own: a dismissal, an Escape and a walk into a dead session
+   * are indistinguishable from here, and deleting the entry would destroy — in
+   * the one state where nothing else can reach them — the very cards the header
+   * control exists to rescue. The row says nobody was created, which is what
+   * happened, and the offer can be made again by hand.
+   */
+  const handleIdCardClosed = useCallback(() => {
+    const step = followUps[followUpIndex];
+    // ⚠️ Only a close that is genuinely the USER's answer writes `declined`.
+    // `handleIdCardFailed` has already marked the row unreadable when this
+    // close is the error panel's Dismiss, and overwriting that with "the user
+    // said no" is the false claim this pair exists to keep apart.
+    if (step !== undefined && step.kind === "id-card") {
+      setResults((prev) =>
+        prev.map((r) =>
+          r.entry.path === step.path &&
+          r.personFileUnreadable !== true &&
+          r.personStepUnfinished !== true
+            ? { ...r, personDeclined: true }
+            : r,
+        ),
+      );
+    }
+    advanceFollowUp(followUpIndex);
+  }, [advanceFollowUp, followUps, followUpIndex]);
 
   /**
    * One document's people are settled — record the tally and move on.
@@ -1446,34 +1794,16 @@ export function BulkImportDialog({
    * `skipped` and there is nothing further to ask about this document. Re-
    * offering it would be a queue with no end.
    *
-   * ⚠️ Read straight from state and NOT through a `setPartyIndex` updater, the
-   * way the two row actions read their target. An updater is a reducer — React
-   * may call it twice for one dispatch — and `updateResult` inside one is a
-   * second dispatch riding on that. The dialog is keyed by path, so the extra
-   * dependency costs nothing: a new identity per step is exactly right.
+   * ⚠️ Read straight from state and NOT through a `setFollowUpIndex` updater,
+   * the way the two row actions used to read their target. An updater is a
+   * reducer — React may call it twice for one dispatch — and `updateResult`
+   * inside one is a second dispatch riding on that. The dialog is keyed by path,
+   * so the extra dependency costs nothing: a new identity per step is exactly
+   * right.
    */
-  /**
-   * Open the people nobody was asked about.   (Slice #26.09)
-   *
-   * ⚠️ **Free, and that is the point.** `partyStepsRef` already holds them,
-   * fully extracted, in memory — the only thing a session expiry took away was
-   * the `setPartySteps` that would have surfaced them. Until this button
-   * existed the only way to execute those two lines was to pay for a fresh
-   * model call on some OTHER row, and in the shape where the session dies
-   * during an upload rather than during a read there is no such row: every
-   * document either succeeded or never reached the read, so no amber block and
-   * no retry button is drawn anywhere in the table.
-   */
-  const handleConfirmPending = useCallback(() => {
-    setPartySteps(inFolderOrder(entries, partyStepsRef.current));
-    setPartyIndex(0);
-    // `entries` is stable for this dialog's lifetime.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const handlePartyStepClosed = useCallback(
     (summary: AiPartyLinkerSummary) => {
-      const step = partySteps[partyIndex];
+      const step = followUps[followUpIndex];
       /**
        * ⚠️ **SETTLED means somebody was linked or created — not merely that the
        * question was put**, and the whole safety of the backlog turns on it.
@@ -1492,14 +1822,36 @@ export function BulkImportDialog({
        * offered again. The cost is that a user who deliberately skips everyone
        * sees the offer once more — after their own click, not on a loop.
        */
-      if (step && summary.linked + summary.created > 0) {
+      if (step !== undefined && step.kind === "parties" && summary.linked + summary.created > 0) {
         partyStepsRef.current.delete(step.path);
         updateResult(step.path, { aiParties: summary, aiPartiesPending: undefined });
       }
-      setPartyIndex(partyIndex + 1);
+      advanceFollowUp(followUpIndex);
     },
-    [partySteps, partyIndex, updateResult],
+    [advanceFollowUp, followUps, followUpIndex, updateResult],
   );
+
+  /**
+   * Open the questions nobody was asked.   (Slice #26.09, both queues since #26.10)
+   *
+   * ⚠️ **Free, and that is the point.** Both refs already hold their contents —
+   * the extracted people, and the card images the loop rasterised — so the only
+   * thing a session expiry took away was the `setFollowUps` that would have
+   * surfaced them. Until this button existed the only way to execute those two
+   * lines was to pay for a fresh model call on some OTHER row, and in the shape
+   * where the session dies during an upload rather than during a read there is
+   * no such row: every document either succeeded or never reached the read, so
+   * no amber block and no retry button is drawn anywhere in the table.
+   */
+  const handleConfirmPending = useCallback(() => {
+    setFollowUps([
+      ...inFolderOrder(entries, idCardStepsRef.current),
+      ...inFolderOrder(entries, partyStepsRef.current),
+    ]);
+    setFollowUpIndex(0);
+    // `entries` is stable for this dialog's lifetime.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /**
    * Read this document again, because the first attempt failed.
@@ -1520,12 +1872,12 @@ export function BulkImportDialog({
    * field-less, with re-importing the folder refused by the Pre-existing stage.
    *
    * ⚠️ **A retry REPLACES the queue with its one document rather than editing
-   * it, and two adversarial rounds went into that one line.** `partyIndex` is a
-   * positional cursor. A bare append could put two entries with the same `path`
-   * in the queue, defeating the `key` that forces each step to remount; and
-   * filter-then-append fixed that while leaving the cursor behind — removing
+   * it, and two adversarial rounds went into that one line.** `followUpIndex` is
+   * a positional cursor. A bare append could put two entries with the same
+   * `path` in the queue, defeating the `key` that forces each step to remount;
+   * and filter-then-append fixed that while leaving the cursor behind — removing
    * one element and adding one keeps the LENGTH unchanged, so
-   * `partySteps[partyIndex]` stayed `undefined` and the stepper never opened.
+   * `followUps[followUpIndex]` stayed `undefined` and the stepper never opened.
    * The people were extracted, counted on the row, and unreachable.
    *
    * Resetting is unambiguous, and safe because `canRetry` already requires the
@@ -1589,7 +1941,12 @@ export function BulkImportDialog({
           result.aiParties != null && result.aiParties.linked + result.aiParties.created > 0;
         const queued = interpreted.parties.length > 0 && !settled;
         if (queued) {
-          partyStepsRef.current.set(path, { path, docId, parties: interpreted.parties });
+          partyStepsRef.current.set(path, {
+            kind: "parties",
+            path,
+            docId,
+            parties: interpreted.parties,
+          });
         }
         updateResult(path, {
           aiStatus: "done",
@@ -1632,24 +1989,16 @@ export function BulkImportDialog({
     },
     // `t` is captured for the two sentences above; next-intl's translator is
     // stable per namespace, so listing it costs no re-renders and keeps this in
-    // step with `handleOpenIdCard` thirty lines up. `entries` went when the
-    // retry stopped republishing the queue — `handleConfirmPending` owns that
-    // now, and a dependency the body no longer reads is a lint warning that
-    // teaches the next reader to ignore the rule.
+    // step with the queue handlers above. `entries` went when the retry stopped
+    // republishing the queue — `handleConfirmPending` owns that now, and a
+    // dependency the body no longer reads is a lint warning that teaches the
+    // next reader to ignore the rule.
     [t, updateResult],
   );
 
   // ---------------------------------------------------------------------------
   // Counts
   // ---------------------------------------------------------------------------
-
-  /**
-   * The document whose people are being confirmed, or null.   (Slice #26.09)
-   *
-   * `partySteps` is empty until the loop has finished, so this is null for the
-   * whole import and the stepper cannot open over a run still in flight.
-   */
-  const currentPartyStep = partySteps[partyIndex] ?? null;
 
   /**
    * Rows that finished, split by whether this run actually made anything.
@@ -1695,7 +2044,22 @@ export function BulkImportDialog({
    * stepper into it would walk the user through 401s — and that is the case
    * this count and its own button exist for.
    */
-  const pendingPeopleCount = results.filter((r) => (r.aiPartiesPending ?? 0) > 0).length;
+  /**
+   * ⚠️ **Since #26.10 it also counts an identity card nobody answered**, and
+   * the two belong under one sentence because they have one remedy: the control
+   * beside it republishes both backlogs. A card whose dialog was dismissed is
+   * counted for the same reason a skipped party stepper is — the entry survives
+   * in its ref, so the offer can still be made, and a count that ignored it
+   * would leave the only control that can reach those cards drawn over a
+   * sentence claiming there is nothing left to confirm.
+   *
+   * `idCardQueued && !personId` is deliberately BOTH states at once: not asked
+   * yet, and asked and declined. `personFileUnreadable` rows are absent by
+   * construction — they were never queued.
+   */
+  const pendingPeopleCount = results.filter(
+    (r) => (r.aiPartiesPending ?? 0) > 0 || (r.idCardQueued === true && r.personId === undefined),
+  ).length;
   /** A retry is in flight, so the dialog must not be pulled out from under it. */
   const retryRunning = results.some((r) => r.aiStatus === "running" && r.status === "done");
   /**
@@ -1724,17 +2088,215 @@ export function BulkImportDialog({
    */
   const canRetry = canRetryReads({
     done,
-    stepperOpen: currentPartyStep !== null,
+    stepperOpen: currentFollowUp !== null,
     retryRunning,
   });
   const totalCount = results.length;
   const progressPct = totalCount > 0 ? ((doneCount + errorCount) / totalCount) * 100 : 0;
 
+  /**
+   * One row, as `import-outcome.ts` needs to see it.   (Slice #26.10)
+   *
+   * ⚠️ **The three facts that are NOT on `ImportResult` are resolved here and
+   * only here**: whether the file is coordinate-named, whether its Property is
+   * a single one, and which Property its corners actually built. All three come
+   * from the same readers the import loop and the property step used —
+   * `isCoordinateRow`, `soleProperty`, `cornerSourceByPath` — so a note and the
+   * run that produced it cannot disagree.
+   */
+  const outcomeRowOf = useCallback(
+    (r: ImportResult): SummaryRow => {
+      const cornerPropertyId = cornerSourceByPath?.get(r.entry.path);
+      const cornerProperty =
+        cornerPropertyId === undefined ? undefined : propertyById.get(cornerPropertyId);
+      return {
+        status: r.status,
+        preexisting: r.preexisting,
+        isCoordinate: isCoordinateRow(r, cornerSourceByPath, soleProperty(r.entry.path) !== null),
+        // The CODE, not the id: a note that named a uuid would be a note nobody
+        // can act on. An id with no Property behind it is treated as "not
+        // applied" rather than printed raw — see `coordinateNote`.
+        cornerPropertyCode: cornerProperty?.code ?? null,
+        cornerCount: cornerProperty?.cornerCount ?? 0,
+        isIdCard: isIdCardEntry(scanResults.get(r.entry.path)),
+        canLinkPerson: soleProperty(r.entry.path) !== null,
+        personId: r.personId,
+        personCreated: r.personCreated,
+        personDeclined: r.personDeclined,
+        personFileUnreadable: r.personFileUnreadable,
+        personStepUnfinished: r.personStepUnfinished,
+        readSkipped: r.aiSkipReason,
+        aiProcessed: r.aiProcessed,
+        aiFieldCount: r.aiFieldCount,
+        aiUnread: r.aiStatus === "failed" || r.aiPartialWrite === true,
+        aiPeopleSettled: r.aiParties ? r.aiParties.linked + r.aiParties.created : 0,
+        aiPeoplePending: r.aiPartiesPending ?? 0,
+        idCardQueued: r.idCardQueued,
+        idCardFieldsWritten: r.idCardDocFieldsFailed === true ? 0 : r.idCardDocFields ?? 0,
+      };
+    },
+    [cornerSourceByPath, propertyById, scanResults, soleProperty],
+  );
+
+  /**
+   * The rows, with each property folder's coordinate file at its head.
+   * (Slice #26.10)
+   *
+   * The source document's reason is that creating the Property from that file
+   * is the first thing that happened, so it is the first thing the record of
+   * what happened should say. The rule is `inResultOrder`, which is pure and
+   * tested; this is only where the two facts it needs are read.
+   */
+  const orderedResults = useMemo(
+    () =>
+      inResultOrder(results, (r) => ({
+        pathParts: r.entry.pathParts,
+        isCoordinate: isCoordinateRow(
+          r,
+          cornerSourceByPath,
+          soleProperty(r.entry.path) !== null,
+        ),
+      })),
+    [results, cornerSourceByPath, soleProperty],
+  );
+
+  /**
+   * What the concluding message reads out.   (Slice #26.10)
+   *
+   * Computed here rather than by the wizard because every fact in it lives in
+   * this component's state — see the `onClose` prop.
+   */
+  const summary: ImportRunSummary = useMemo(
+    () =>
+      summariseImportRun(
+        results.map(outcomeRowOf),
+        properties.length,
+        // The ones the property step actually WROTE. See `ResolvedProperty.created`
+        // and `runLandedSomething` for why a matched Property is not one of them.
+        properties.filter((property) => property.created).length,
+      ),
+    [results, outcomeRowOf, properties],
+  );
+
+  /**
+   * The take-away copy of this screen.   (Slice #26.10)
+   *
+   * ⚠️ **`window.location.origin` in front of every path, and the whole
+   * usefulness of the file turns on it.** The saved document is opened from the
+   * user's disk, where a root-relative href resolves against the filesystem —
+   * so a "working link" is an absolute one or it is not a link at all.
+   * `report-html.ts` refuses to build a URL for exactly this reason; this is
+   * the one place the origin is knowable.
+   *
+   * Everything user-facing is translated HERE and passed in as plain strings,
+   * the same contract `ReportSections` keeps with the same module.
+   */
+  const handleSaveReport = useCallback(() => {
+    const now = new Date();
+    const origin = window.location.origin;
+    const rows = orderedResults.map((r) => {
+      const row = outcomeRowOf(r);
+      const confidence = confidenceNoteFor(scanResults.get(r.entry.path)?.confidence);
+      // ⚠️ **THE SAME SENTENCES THE SCREEN DRAWS, IN THE SCREEN'S OWN ORDER,
+      // and two adversarial rounds went into this list.**
+      //
+      // A first version opened every non-errored row with "importat" — which is
+      // flatly false of a row the archive already held, printed one line above
+      // the note saying it was not imported again. That is the defect #26.08
+      // fixed for the saved SESSION, reintroduced in a new exporter. And it
+      // dropped the scan-confidence caveat, the party tallies and the ID-card
+      // field counts, so the artefact the user keeps and trusts later was
+      // strictly MORE reassuring than the screen it came from — the exact
+      // inversion this module's header forbids.
+      const notes: string[] = [
+        ...(r.status === "error"
+          ? [tres("reportRowFailed", { reason: r.errorMsg ?? t("errorShort") })]
+          : r.preexisting === undefined
+            ? [tres("reportRowImported")]
+            : [r.preexisting === "linked" ? t("preexistingLinked") : t("preexistingSkipped")]),
+        ...outcomeNotes(row).map((note) => t(`note.${note.id}`, note.values)),
+        ...(r.personId !== undefined && r.idCardDocFieldsFailed === true
+          ? [t("personDocFieldsFailed")]
+          : r.personId !== undefined && (r.idCardDocFields ?? 0) > 0
+            ? [t("personDocFields", { count: r.idCardDocFields ?? 0 })]
+            : []),
+        ...(r.aiStatus === "failed" ? [t("interpretFailed")] : []),
+        ...(r.aiPartialWrite === true ? [t("interpretPartial")] : []),
+        ...(r.aiProcessed === true ? [t("interpretDone", { count: r.aiFieldCount ?? 0 })] : []),
+        ...(r.aiParties
+          ? [t("interpretParties", { count: r.aiParties.linked + r.aiParties.created })]
+          : (r.aiPartiesPending ?? 0) > 0
+            ? [t("interpretPartiesPending", { count: r.aiPartiesPending ?? 0 })]
+            : []),
+        ...(r.aiProcessed === true && confidence !== null
+          ? [`${confidence.title} — ${confidence.body}`]
+          : []),
+      ];
+      return {
+        title: titleForEntry(r.entry),
+        path: r.entry.path,
+        documentUrl: r.docId === undefined ? null : `${origin}/documents/${r.docId}`,
+        notes,
+      };
+    });
+
+    const html = buildResultReportHtml({
+      folderName: rootFolderName,
+      generatedAt: now.toLocaleString(locale),
+      locale,
+      // Exactly the lines the concluding message draws, from the same pure
+      // rule — so the saved page and the message the user reads on the way out
+      // cannot describe two different runs.
+      summaryRows: summaryLines(summary).map((line) => ({
+        label: tres(`summary.${line.id}`),
+        value: String(line.value),
+      })),
+      properties: properties.map((property) => ({
+        code: property.code,
+        nickname: property.nickname,
+        url: `${origin}/properties/${property.id}`,
+        cornersLabel: t("coordinatesDone", { count: property.cornerCount }),
+      })),
+      rows,
+      strings: {
+        documentTitle: tres("reportTitle"),
+        generatedAt: tres("reportGenerated"),
+        folderLabel: tres("reportFolder"),
+        summaryTitle: tres("reportSummaryTitle"),
+        propertiesTitle: tres("reportPropertiesTitle"),
+        noProperties: tres("reportNoProperties"),
+        rowsTitle: t("resultsTitle"),
+        openLabel: t("viewLink"),
+      },
+    });
+
+    downloadHtmlFile(
+      html,
+      reportFileName(tres("reportFilePrefix"), rootFolderName, fileNameStamp(now)),
+    );
+    setReportSaved(true);
+  }, [
+    confidenceNoteFor,
+    locale,
+    orderedResults,
+    outcomeRowOf,
+    properties,
+    rootFolderName,
+    scanResults,
+    summary,
+    t,
+    tres,
+  ]);
+
   return (
     <div
       role="dialog"
       aria-modal="true"
-      aria-label={t("title")}
+      // ⚠️ Follows the HEADING, and it did not until an adversarial round
+      // noticed. A screen-reader user re-entering the finished dialog was told
+      // "Se importă fișierele…" over a table of settled rows, a Save button and
+      // a Close that leads to the concluding message.
+      aria-label={done ? t("doneTitle", { count: createdCount }) : t("title")}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
     >
       <div
@@ -1801,7 +2363,7 @@ export function BulkImportDialog({
                 it: a retry captured its row's state before its model call, and
                 a confirmation completing inside that window would be
                 overwritten by the answer when it lands. */}
-            {done && pendingPeopleCount > 0 && currentPartyStep === null && (
+            {done && pendingPeopleCount > 0 && currentFollowUp === null && (
               <p className="mt-0.5 flex flex-wrap items-baseline gap-2 text-xs font-medium text-sky-700 dark:text-sky-400">
                 <span>
                   {sessionExpired
@@ -1841,10 +2403,48 @@ export function BulkImportDialog({
               </p>
             )}
           </div>
+          <div className="flex shrink-0 items-center gap-2">
+          {/* The take-away copy.   (Slice #26.10)
+              Offered only once the run has settled, because a report of a run
+              still in flight would file half a story as the whole one — and
+              beside Close rather than under the table, so the two things a user
+              can do on this screen are in one place.
+
+              ⚠️ **Nothing is gated on it.** 26.10's constraint, in as many
+              words: closing must work whether or not the report was saved. So
+              this is a plain button with no state of its own beyond a
+              confirmation that it happened, and Close below never reads
+              `reportSaved`. */}
+          {done && (
+            <div className="text-right">
+              <button
+                type="button"
+                onClick={handleSaveReport}
+                // ⚠️ `retryRunning` as well as the follow-up, and it is the
+                // same argument the Close beside it carries. A report saved
+                // during a retry records that row as ordinary — `aiStatus` is
+                // `running`, `aiPartialWrite` was cleared when the click
+                // started and `aiProcessed` is not set yet — so the run's one
+                // durable artefact would say nothing at all about a read the
+                // screen behind it is visibly still doing.
+                disabled={currentFollowUp !== null || retryRunning}
+                className={buttonClass({ variant: "secondary", size: "md" })}
+              >
+                {tres("saveButton")}
+              </button>
+              <p className="mt-1 text-[10px] text-fade dark:text-zinc-400">
+                {reportSaved ? tres("saveDone") : tres("saveHint")}
+              </p>
+            </div>
+          )}
           {(done || importError !== null) && (
             <button
               type="button"
-              onClick={onClose}
+              // ⚠️ `runLandedSomething`, not `done`, and a second adversarial
+              // round is why: a loop that COMPLETED and produced nothing has no
+              // conclusion to report, and the concluding message's one button
+              // leaves the page. See the rule, and the `onClose` prop.
+              onClick={() => onClose(done && runLandedSomething(summary) ? summary : null)}
               // ⚠️ Inert while a party stepper is open, and it is the same
               // argument `ImportStageBar` records for the Cancel: none of this
               // app's dialogs traps focus or sets `inert`, so from the stepper
@@ -1859,16 +2459,16 @@ export function BulkImportDialog({
               // …and while a retry is in flight, for the same reason: the
               // PATCH may already have landed, and unmounting mid-call
               // discards the people that read found with no record anywhere.
-              disabled={currentPartyStep !== null || retryRunning}
+              disabled={currentFollowUp !== null || retryRunning}
               // ⚠️ `buttonClass`, not the hand-written classes this button
               // carried since #21.01, and the change is forced rather than
               // cosmetic: giving it a `disabled` state meant hand-writing the
               // greyed-out utility, and `button-styles-single-source.test.ts`
               // forbids that outside its allowlist — the helper owns the
               // disabled look so a dozen buttons cannot drift into a dozen
-              // versions of it. `secondary`/`lg` is what the sibling dialog's
-              // Close already uses (`coordinate-property-dialog.tsx`), so this
-              // brings the two into line rather than inventing a third.
+              // versions of it. `secondary`/`lg` is what the sibling dialogs'
+              // Close already uses, so this brings them into line rather than
+              // inventing a third.
               //
               // ⚠️ **Do not name the utility in prose here.** That guard scans
               // raw lines, so a comment quoting the class is an offender: this
@@ -1878,6 +2478,7 @@ export function BulkImportDialog({
               {t("closeButton")}
             </button>
           )}
+          </div>
         </div>
 
         {/* Fatal error banner (e.g. session expired before import started) */}
@@ -2002,54 +2603,42 @@ export function BulkImportDialog({
         {/* Results table */}
         {gatePassed && (
         <div className="flex-1 overflow-y-auto px-5 py-4 min-h-0">
-          {/* Slice #23.01.Import — ID-card person flow for one row at a time. */}
-          {idCardTarget && (
+          {/* The follow-up queue.   (Slice #26.09 for the parties, #26.10 for
+              the cards.)
+
+              One question at a time, opened by the RUN rather than by a button
+              on a row, now that the row's job is to say what happened. Both
+              dialogs are the shared confirm-or-create ones: nothing is linked
+              or created until the user answers.
+
+              ⚠️ **`key` is the entry path on both**, which is what forces a
+              remount between steps. Without it React reuses the instance and
+              the second card opens showing the first one's extracted fields. */}
+          {currentFollowUp?.kind === "id-card" && (
             <IdCardPersonDialog
-              file={idCardTarget.file}
-              entryLabel={idCardTarget.label}
-              propertyId={idCardTarget.propertyId}
-              documentId={idCardTarget.docId}
+              key={currentFollowUp.path}
+              file={currentFollowUp.file}
+              entryLabel={currentFollowUp.label}
+              propertyId={currentFollowUp.propertyId}
+              documentId={currentFollowUp.docId}
               // Slice #23.03.Import — the scan's own confidence, read here
-              // rather than stored on the target: scanResults is keyed by the
+              // rather than stored on the step: scanResults is keyed by the
               // same path and never changes after the scan, so there is no
               // second copy to keep in step.
-              scanConfidence={scanResults.get(idCardTarget.path)?.confidence}
+              scanConfidence={scanResults.get(currentFollowUp.path)?.confidence}
               onDone={handleIdCardDone}
-              onClose={() => setIdCardTarget(null)}
+              onFailed={handleIdCardFailed}
+              onClose={handleIdCardClosed}
             />
           )}
 
-          {/* Slice #23.02.Import — coordinate file → the run's Property. */}
-          {coordinateTarget && (
-            <CoordinatePropertyDialog
-              propertyId={coordinateTarget.propertyId}
-              documentId={coordinateTarget.docId}
-              entry={coordinateTarget.entry}
-              onDone={handleCoordinateDone}
-              onClose={() => setCoordinateTarget(null)}
-            />
-          )}
-
-          {/* Slice #26.09 — the people the automatic reads found, confirmed
-              one document at a time now that every row has settled. The same
-              stepper the deleted "Interpretează AI" dialog opened; nothing is
-              linked or created until the user answers each one. */}
-          {currentPartyStep && (
+          {currentFollowUp?.kind === "parties" && (
             <AiPartyLinkerDialog
-              key={currentPartyStep.path}
-              documentId={currentPartyStep.docId}
-              parties={currentPartyStep.parties}
+              key={currentFollowUp.path}
+              documentId={currentFollowUp.docId}
+              parties={currentFollowUp.parties}
               onClose={handlePartyStepClosed}
             />
-          )}
-
-          {idCardError && (
-            <div
-              role="alert"
-              className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-800 dark:bg-red-950/30 dark:text-red-300"
-            >
-              {idCardError}
-            </div>
           )}
 
           <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-fade dark:text-zinc-400">
@@ -2060,52 +2649,26 @@ export function BulkImportDialog({
               <tr className="border-b border-crease text-left text-xs font-semibold uppercase tracking-wide text-fade dark:border-zinc-700">
                 <th className="pb-2 pr-3">{t("colDocument")}</th>
                 <th className="w-28 pb-2">{t("colStatus")}</th>
-                <th className="w-64 pb-2">{t("colAction")}</th>
+                {/* Slice #26.10 — "Ce s-a făcut", not "Acțiuni". The column
+                    holds no actions any more, and a heading that says it does
+                    is the screen contradicting itself in one word. */}
+                <th className="w-64 pb-2">{t("colOutcome")}</th>
               </tr>
             </thead>
             <tbody>
-              {results.map((r) => (
+              {/* ⚠️ `orderedResults`, not `results` — each property folder's
+                  coordinate file at the head of its own block, because creating
+                  the Property from it is the first thing that happened. See
+                  `inResultOrder`. */}
+              {orderedResults.map((r) => (
                 <ResultRow
                   key={r.entry.path}
                   result={r}
                   t={t}
-                  // ⚠️ `isIdCard` is a FACT about the file and must stay one.
-                  // #26.07 briefly ANDed the sole-property guard into it, which
-                  // was wrong because the same fact answers a second question:
-                  // #23.08's rule that a card is not worth a generic extraction
-                  // call. Since #26.09 that second reader is the import loop
-                  // rather than this row — `shouldInterpretEntry` — and it
-                  // takes the two apart explicitly. The guard still belongs on
-                  // the person button alone; that is `canCreatePerson`.
-                  isIdCard={isIdCardEntry(scanResults.get(r.entry.path))}
-                  canCreatePerson={soleProperty(r.entry.path) !== null}
-                  isCoordinate={
-                    r.entry.kind === "file" &&
-                    // ⚠️ The EXTENSION shortlist, deliberately — and this was
-                    // narrowed to STR-08's `coord…` rule for one round before
-                    // being put back, so the reasoning matters.
-                    //
-                    // The two rules answer different questions and both answers
-                    // are right. STR-08 decides which file a FOLDER's corners
-                    // are read from, and it is strict because the user was told
-                    // to name it: a `.txt` of notes must not become geometry
-                    // behind their back. This row is the opposite situation —
-                    // the user is looking at one document and pressing a button
-                    // — and narrowing it left a correctly-formed export named
-                    // `corners.txt` with NO path to its property at all: skipped
-                    // by the folder rule, silent (STR-08 only fires on a second
-                    // strong-named file), and then not offered here either.
-                    // `coordinate-file.ts`'s standing promise is that the name
-                    // ranks and warns and never filters; this is the half of it
-                    // that survives. A file that holds no corners parses to
-                    // none and the dialog does nothing.
-                    isCoordinateFileName((r.entry as FSFileEntry).name) &&
-                    // Slice #26.07 — the action writes corners to ONE Property.
-                    // A `common` document belongs to several and a `floating`
-                    // one to none, so there is nothing for the button to act on
-                    // and it is not drawn. See `soleProperty`.
-                    soleProperty(r.entry.path) !== null
-                  }
+                  // Every sentence this row draws about the corners, the person
+                  // and the read it did not do, decided in one tested place.
+                  // The row renders; it does not reason. See `outcomeNotes`.
+                  notes={outcomeNotes(outcomeRowOf(r))}
                   // Slice #26.09 — the scan's own confidence, translated here
                   // because the row already takes its translator as a prop and
                   // a second one inside it would be a namespace per cell. Only
@@ -2116,21 +2679,15 @@ export function BulkImportDialog({
                   // rather than tidiness. The table is on screen while rows are
                   // still importing, so a row that failed its read early would
                   // offer the retry mid-run — and a retry that found people
-                  // appends to `partySteps`, which the effect ASSIGNS when the
+                  // appends to the backlog, which the effect drains when the
                   // loop ends. The append would open a stepper over a running
                   // import and then be overwritten by the assignment, losing
                   // the very people the retry went to fetch.
-                  // See `canRetry`: `done`, and not while a party stepper is
-                  // open — the latter for the reason the Close beside it is
-                  // disabled, that nothing in this app traps focus, so a
-                  // Shift+Tab from the stepper would reach these buttons.
+                  // See `canRetry`: `done`, and not while a follow-up is open —
+                  // the latter for the reason the Close beside it is disabled,
+                  // that nothing in this app traps focus, so a Shift+Tab from
+                  // the open dialog would reach this button.
                   canRetryInterpret={canRetry}
-                  // Every row action, not just the retry: a Shift+Tab from the
-                  // open stepper reaches these too, and each mounts a SECOND
-                  // `fixed inset-0` dialog on top of the first.
-                  canAct={currentPartyStep === null}
-                  onCreatePerson={() => void handleOpenIdCard(r)}
-                  onApplyCoordinates={() => handleOpenCoordinate(r)}
                   onRetryInterpret={() => void handleRetryInterpret(r)}
                 />
               ))}
@@ -2147,23 +2704,55 @@ export function BulkImportDialog({
 // ResultRow
 // ---------------------------------------------------------------------------
 
+/**
+ * How loudly one note is drawn.   (Slice #26.10)
+ *
+ * ⚠️ **Colour here means what it means everywhere else in this table, and that
+ * constrains it more than it looks.** Red says the file did not reach the
+ * archive; nothing in this map is red, because every note below is drawn on a
+ * row whose Document exists. Amber says something is outstanding and a person
+ * has to decide; emerald says a thing was done; sky says a thing was
+ * deliberately not done and nobody needs to act.
+ *
+ * `coordinateNotApplied` is sky rather than amber on purpose: a Property that
+ * already had corners keeping them is the property step working exactly as
+ * #26.07 built it, and a warning colour there would send a user to fix
+ * something that is right.
+ *
+ * (Statuses and their own colour coding are 26.12 and are a different subject:
+ * these are sentences about THIS run, not a status stored on a document.)
+ */
+const NOTE_TONE: Record<OutcomeNoteId, string> = {
+  coordinateApplied: "text-emerald-600 dark:text-emerald-400",
+  coordinateNotApplied: "text-sky-700 dark:text-sky-400",
+  personCreated: "text-emerald-600 dark:text-emerald-400",
+  personConfirmed: "text-emerald-600 dark:text-emerald-400",
+  personPending: "text-sky-700 dark:text-sky-400",
+  personDeclined: "text-amber-700 dark:text-amber-400",
+  personNoProperty: "text-sky-700 dark:text-sky-400",
+  personUnreadable: "text-amber-700 dark:text-amber-400",
+  personStepUnfinished: "text-amber-700 dark:text-amber-400",
+  readSkippedIdCard: "text-sky-700 dark:text-sky-400",
+  readSkippedNoPage: "text-sky-700 dark:text-sky-400",
+};
+
+/** The two notes that are about a Person who now exists and can be opened. */
+const PERSON_NOTES: ReadonlySet<OutcomeNoteId> = new Set<OutcomeNoteId>([
+  "personCreated",
+  "personConfirmed",
+]);
+
 type ResultRowProps = {
   result: ImportResult;
   t: ReturnType<typeof useTranslations<"adminImport.wizard.importDialog">>;
-  /** Slice #23.01.Import: the scan says this entry is an identity card. */
-  isIdCard: boolean;
   /**
-   * May the person action act at all?   (Slice #26.07)
+   * What this run did to this file, as ids for `note.<id>`.   (Slice #26.10)
    *
-   * The dialog it opens writes a Person and links it to ONE Property. A
-   * `common` document concerns every property in the run and a `floating` one
-   * none, so there is nothing for it to act on — and without this the button
-   * was drawn, the click read the file, and nothing happened. Separate from
-   * `isIdCard` because that one also suppresses the AI action; see the call site.
+   * Decided by `import-outcome.ts` and handed in already, rather than worked
+   * out here: a sentence that claims something about the database has to be
+   * testable, and a row rendered by nothing in this suite is not.
    */
-  canCreatePerson: boolean;
-  /** Slice #23.02.Import: this entry's extension could hold Stereo 70 corners. */
-  isCoordinate: boolean;
+  notes: OutcomeNote[];
   /**
    * Already-translated caveat about the SCAN, or null when it was confident.
    * (Slice #26.09) — see the call site for why it is here at all.
@@ -2171,24 +2760,15 @@ type ResultRowProps = {
   confidenceNote: { title: string; body: string } | null;
   /** A retry can neither race the run nor be pointless — see the call site. */
   canRetryInterpret: boolean;
-  /** No modal of this dialog's own is open over the row — see the call site. */
-  canAct: boolean;
-  onCreatePerson: () => void;
-  onApplyCoordinates: () => void;
   onRetryInterpret: () => void;
 };
 
 function ResultRow({
   result,
   t,
-  isIdCard,
-  canCreatePerson,
-  isCoordinate,
+  notes,
   confidenceNote,
   canRetryInterpret,
-  canAct,
-  onCreatePerson,
-  onApplyCoordinates,
   onRetryInterpret,
 }: ResultRowProps) {
   const {
@@ -2206,29 +2786,9 @@ function ResultRow({
     aiErrorDetail,
     aiPartiesPending,
     aiPartialWrite,
-    coordinateSettled,
-    cornerCount,
     preexisting,
   } = result;
   const displayName = titleForEntry(entry);
-
-  // Every follow-up action needs a cleanly imported row: without a docId there
-  // is nothing to attach to, and an errored row most often failed because the
-  // session expired, in which case these calls would fail too.
-  //
-  // ⚠️ **`preexisting === undefined` is the third condition, added by #26.08,
-  // and it is the one that is not obvious.** A pre-existing row DOES have a
-  // docId — the archive's own — so without this every follow-up would be
-  // offered on it and each would write to a document this run did not create:
-  // "Creează persoană" would read a file whose Document is not the one on
-  // screen. The row is a statement about what happened, which is exactly what
-  // 26.10 turns every row into.
-  //
-  // Since #26.09 the automatic AI read is kept off these rows one layer
-  // earlier — the task returns at step 0 and never reaches step 7 — so a billed
-  // call rewriting fields somebody already curated is not merely un-offered, it
-  // is unreachable.
-  const settled = status === "done" && !!docId && preexisting === undefined;
 
   return (
     <tr className="border-b border-crease dark:border-zinc-800">
@@ -2280,22 +2840,73 @@ function ResultRow({
         )}
       </td>
 
+      {/* ⚠️ **NOT "Acțiuni" any more, and the column heading moved with the
+          content.**   (Slice #26.10)
+
+          Every child of this cell is now a sentence about what the run did.
+          The two buttons that stood here — "Creează persoană din CI" and
+          "Aplică pe proprietate" — are gone: the corners were written by the
+          property step before any document existed, and the person is walked by
+          the run's own follow-up queue. What remains is one control, the retry,
+          and it is the exception this file's header states: it is not a second
+          way to do the work, it is the only way to finish work the run began
+          and could not complete. */}
       <td className="py-2">
         <div className="flex flex-wrap items-center gap-1.5">
           {/* Slice #26.08 — the archive already held this document, so the row
               describes what was done instead of offering something to do. The
-              first row in this table to read that way; 26.10 makes every row
-              read that way. */}
+              first row in this table to read that way; every row reads that way
+              since #26.10. */}
           {preexisting !== undefined && (
             <span className="text-xs font-medium text-sky-700 dark:text-sky-400">
               {preexisting === "linked" ? t("preexistingLinked") : t("preexistingSkipped")}
             </span>
           )}
+
+          {/* The corners, the person, and the read that deliberately did not
+              happen.   (Slice #26.10)
+
+              A Person that exists is a link, because the one thing a user wants
+              from "o persoană a fost creată" is to go and look at her. The rest
+              are plain spans: there is nothing behind them to open. */}
+          {notes.map((note) =>
+            PERSON_NOTES.has(note.id) && personId !== undefined ? (
+              <a
+                key={note.id}
+                href={`/natural-persons/${personId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`text-xs font-medium hover:underline ${NOTE_TONE[note.id]}`}
+              >
+                ✓ {t(`note.${note.id}`, note.values)}
+              </a>
+            ) : (
+              <span key={note.id} className={`text-xs font-medium ${NOTE_TONE[note.id]}`}>
+                {t(`note.${note.id}`, note.values)}
+              </span>
+            ),
+          )}
+
+          {/* Slice #23.08.Import — the document half of the same step. Amber,
+              not red: the person was created and linked either way, so this is
+              an incomplete success rather than a failed row. */}
+          {personId && idCardDocFieldsFailed && (
+            <span
+              role="status"
+              className="text-xs font-medium text-amber-600 dark:text-amber-400"
+            >
+              ⚠ {t("personDocFieldsFailed")}
+            </span>
+          )}
+          {personId && !idCardDocFieldsFailed && (idCardDocFields ?? 0) > 0 && (
+            <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+              · {t("personDocFields", { count: idCardDocFields ?? 0 })}
+            </span>
+          )}
+
           {/* Slice #26.09 — the row DESCRIBES the AI read instead of offering
               it. The button that used to stand here is gone: the run does the
-              read itself, so there is nothing left to press. (26.10 turns every
-              row in this table into a description; this is the second of them,
-              after the pre-existing note above.)
+              read itself, so there is nothing left to press.
 
               A failure is amber and not red on purpose. Red in this table means
               the file did not make it into the archive; this file did, and what
@@ -2320,11 +2931,11 @@ function ResultRow({
               >
                 {aiStatus === "failed" ? t("interpretFailed") : t("interpretPartial")}
               </span>
-              {/* ⚠️ NOT the button this slice deleted — see
-                  `handleRetryInterpret`. It is offered only on a row that says
-                  the automatic read failed, and all it does is that read again;
-                  without it the slice removed every exit from a dead end it had
-                  just introduced. */}
+              {/* ⚠️ NOT the button #26.09 deleted — see `handleRetryInterpret`.
+                  It is offered only on a row that says the automatic read
+                  failed, and all it does is that read again; without it the
+                  slice removed every exit from a dead end it had just
+                  introduced. */}
               {canRetryInterpret && (
                 <button
                   type="button"
@@ -2367,59 +2978,6 @@ function ResultRow({
               title={confidenceNote.body}
             >
               ⚠ {confidenceNote.title}
-            </span>
-          )}
-
-          {/* Slice #23.01.Import — the ID-card action. */}
-          {settled && canAct && isIdCard && canCreatePerson && !personId && (
-            <button
-              type="button"
-              onClick={onCreatePerson}
-              className={buttonClass({ variant: "ghost", size: "xs" })}
-            >
-              {t("createPersonButton")}
-            </button>
-          )}
-          {personId && (
-            <a
-              href={`/natural-persons/${personId}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs font-medium text-emerald-600 hover:underline dark:text-emerald-400"
-            >
-              ✓ {t("personLinked")}
-            </a>
-          )}
-          {/* Slice #23.08.Import — the document half of the same click. Amber,
-              not red: the person was created and linked either way, so this is
-              an incomplete success rather than a failed row. */}
-          {personId && idCardDocFieldsFailed && (
-            <span
-              role="status"
-              className="text-xs font-medium text-amber-600 dark:text-amber-400"
-            >
-              ⚠ {t("personDocFieldsFailed")}
-            </span>
-          )}
-          {personId && !idCardDocFieldsFailed && (idCardDocFields ?? 0) > 0 && (
-            <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
-              · {t("personDocFields", { count: idCardDocFields ?? 0 })}
-            </span>
-          )}
-
-          {/* Slice #23.02.Import — coordinate file → the run's Property. */}
-          {settled && canAct && isCoordinate && !coordinateSettled && (
-            <button
-              type="button"
-              onClick={onApplyCoordinates}
-              className={buttonClass({ variant: "ghost", size: "xs" })}
-            >
-              {t("coordinatesButton")}
-            </button>
-          )}
-          {coordinateSettled && (
-            <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
-              ✓ {t("coordinatesDone", { count: cornerCount ?? 0 })}
             </span>
           )}
         </div>

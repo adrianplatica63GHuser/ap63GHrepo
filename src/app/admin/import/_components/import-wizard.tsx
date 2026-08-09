@@ -101,6 +101,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
 import {
   walkFolder,
   tagsForEntry,
@@ -116,6 +117,8 @@ import {
 import { ScanTable, type ScanResult } from "./scan-table";
 import { TagDialog, type TagFolderInfo } from "./tag-dialog";
 import { BulkImportDialog } from "./bulk-import-dialog";
+import { ImportSummaryDialog } from "./import-summary-dialog";
+import type { ImportRunSummary } from "@/lib/import/import-outcome";
 import {
   PropertyStepDialog,
   type ResolvedProperty,
@@ -290,6 +293,39 @@ function collectFolders(
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
+
+/**
+ * Carry `ResolvedProperty.created` forward across attempts.   (Slice #26.10)
+ *
+ * ⚠️ **`created` is a fact about the RUN; every other field on that type is a
+ * fact about the ATTEMPT** — and an adversarial round found the difference the
+ * hard way. `PropertyStepDialog` sets it from the same expression that counts
+ * what THIS attempt wrote, so a folder created on attempt one comes back from
+ * attempt two as `{outcome: "linked", cornersAdded: 0}` — nothing left to write,
+ * because attempt one wrote it — and reports `created: false`. Replacing the
+ * entry by `folderName`, which both call sites do and must, then erases the
+ * only record that this run put a Property in the archive.
+ *
+ * What that costs is not cosmetic: `runLandedSomething` reads it. A run that
+ * created two Properties on attempt one, was retried, and then lost every
+ * document to an expired session would close with no concluding message, no
+ * statistics and no navigation — and nothing anywhere saying that two real
+ * Properties are now in the archive. That is the exact state the flag was added
+ * to prevent, inverted.
+ *
+ * The same shape as `cornersWrittenBefore`, which the dialog already takes back
+ * from the wizard for the same reason: only the thing that outlives the attempts
+ * can remember them.
+ */
+function keepCreated(
+  previous: readonly ResolvedProperty[],
+  incoming: ResolvedProperty,
+): ResolvedProperty {
+  const before = previous.find((p) => p.folderName === incoming.folderName);
+  return before?.created === true && !incoming.created
+    ? { ...incoming, created: true }
+    : incoming;
+}
 
 export function ImportWizard() {
   const t = useTranslations("adminImport.wizard");
@@ -567,10 +603,25 @@ export function ImportWizard() {
    * Cleared where the folder changes: a new pick, and the Cancel's full reset.
    */
   const [runCompleted, setRunCompleted] = useState(false);
+  /**
+   * The finished run's statistics, or null.   (Slice #26.10)
+   *
+   * Set by `BulkImportDialog`'s Close and it is the ONLY thing that draws the
+   * concluding message — a boolean beside a separate summary would be two
+   * states that can disagree about whether there is anything to show.
+   *
+   * ⚠️ **It comes from the dialog rather than being derived here**, because
+   * every fact in it — which reads failed, which people were created, which
+   * cards nobody answered — lives in that dialog's state and nowhere else. See
+   * the prop.
+   */
+  const [runSummary, setRunSummary] = useState<ImportRunSummary | null>(null);
   const [cancelSnapshot, setCancelSnapshot] = useState<{
     facts: CancelFacts;
     stage: WorkflowStageId;
   } | null>(null);
+  /** Slice #26.10 — the concluding message's one exit; see its own dialog. */
+  const router = useRouter();
 
   /**
    * The control the Cancel was opened from, so the keyboard can be given back.
@@ -1287,6 +1338,10 @@ export function ImportWizard() {
     setCornersWritten(new Set());
     setDocumentsCreated(false);
     setRunCompleted(false);
+    // Slice #26.10 — a renounced run has no conclusion to report. Left set, the
+    // message would open over the Information page of the NEXT import, quoting
+    // the statistics of the one the user just walked away from.
+    setRunSummary(null);
     setWalkError(null);
     setShowQuiet(false);
     setShowSkipped(false);
@@ -1410,7 +1465,12 @@ export function ImportWizard() {
     phase === "ready" ||
     phase === "property" ||
     phase === "tag-dialog" ||
-    phase === "importing";
+    phase === "importing" ||
+    // Slice #26.10 — the run has finished and its result screen is a modal, so
+    // this panel is what sits behind it. Leaving `result` out blanked the shell
+    // under the scrim for as long as the user read the result, which is the one
+    // moment they are most likely to look past it.
+    phase === "result";
 
   /**
    * What the import loop must do INSTEAD of importing, keyed by entry path.
@@ -2039,7 +2099,17 @@ export function ImportWizard() {
           folderName={rootFolderName}
           // Three states rather than a `busy` boolean, because the panel has
           // three different true things to say — see `ImportRunState`.
-          state={runCompleted ? "done" : phase === "ready" ? "ready" : "running"}
+          // Slice #26.10 — `result` is `done` as well: the run is over, and the
+          // panel must not go on saying "importul rulează" behind a screen
+          // reporting what it produced. `runCompleted` is the same statement
+          // made after the dialog has gone.
+          state={
+            runCompleted || phase === "result"
+              ? "done"
+              : phase === "ready"
+                ? "ready"
+                : "running"
+          }
           // ⚠️ The property step writes one folder at a time and cancelling
           // returns here, so "nothing has been saved yet" can be false at
           // `ready` too — with this run's own chips visible two rows above it.
@@ -2114,7 +2184,8 @@ export function ImportWizard() {
           phase === "ready" ||
           phase === "property" ||
           phase === "tag-dialog" ||
-          phase === "importing") && (
+          phase === "importing" ||
+          phase === "result") && (
         <div className="rounded-xl border border-card-rim bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
           <ScanTable
             entries={entries}
@@ -2163,7 +2234,13 @@ export function ImportWizard() {
             // filled one Property at a time for the benefit of a run that does
             // NOT complete, and a run that did should not leave two lists free
             // to drift with nothing comparing them.
-            setTouchedProperties(run.properties);
+            //
+            // ⚠️ **…authoritative about everything EXCEPT `created`**, and an
+            // adversarial round is why. See `keepCreated`: that flag is the
+            // only fact here that belongs to the RUN rather than to the
+            // attempt, and this assignment is one of the two places a later
+            // attempt would otherwise erase it.
+            setTouchedProperties((prev) => run.properties.map((p) => keepCreated(prev, p)));
             setPhase("tag-dialog");
           }}
           // Fired per Property, as each one lands — so a step that fails on
@@ -2175,7 +2252,7 @@ export function ImportWizard() {
             // the import made two.
             setTouchedProperties((prev) => [
               ...prev.filter((p) => p.folderName !== property.folderName),
-              property,
+              keepCreated(prev, property),
             ]);
           }}
           // …and before the first request too: a POST that commits and loses
@@ -2205,7 +2282,13 @@ export function ImportWizard() {
           `resolvedRun` is non-null by construction — the only route into the
           importing phase runs through the property step — but the guard keeps
           the required props honest rather than asserting. */}
-      {phase === "importing" && resolvedRun && (
+      {/* ⚠️ **`runSummary === null` is what takes this dialog off the screen**,
+          not the phase. Its Close hands the summary over and the phase STAYS
+          `result` — the run is still what the user is looking at — so without
+          this the concluding message would open on top of the result table
+          rather than in place of it. It also covers the fatal-error route,
+          where Close fires before the run ever finished. */}
+      {(phase === "importing" || phase === "result") && runSummary === null && resolvedRun && (
         <BulkImportDialog
           entries={entries}
           rootFolderName={rootFolderName}
@@ -2231,20 +2314,41 @@ export function ImportWizard() {
             // it is not the origin of anything and must stay free.
             resolvedRun.cornerSourceByPath
           }
-          onPropertyCornersChanged={(propertyId, cornerCount) =>
-            // The chips read `touchedProperties`, so that is what has to move.
-            setTouchedProperties((prev) =>
-              prev.map((p) => (p.id === propertyId ? { ...p, cornerCount } : p)),
-            )
-          }
+          // Slice #26.10 — the Properties this run resolved. The result screen
+          // NAMES them: a coordinate row says which one its corners built, the
+          // concluding message counts them, and the saved report links to each.
+          //
+          // ⚠️ **`onPropertyCornersChanged` went with the button that fired
+          // it.** Corners can no longer change after the property step — the row
+          // describes what that step did rather than offering to redo it — so
+          // the chips above cannot go stale and nothing has to tell them so.
+          properties={touchedProperties}
           // Slice #26.03 — the first Document of the run has been created, so
           // from now on cancelling leaves records behind and the confirmation
           // has to say so. Fired on the create rather than when this dialog
           // opened: a run that fails on document zero must not send a business
           // user hunting the documents list for rows that were never written.
           onFirstDocumentCreated={() => setDocumentsCreated(true)}
-          onClose={() => {
-            setPhase("ready");
+          // Slice #26.10 — the loop has settled and the dialog is now the
+          // result screen, which is its own stage. This closes the gap
+          // `workflow-stages.ts` recorded in #26.03: the indicator has read
+          // "Import — în curs" over a finished run ever since.
+          onRunFinished={() => setPhase("result")}
+          onClose={(summary) => {
+            // Slice #26.10 — the concluding message, which is the only thing
+            // that draws while this is set. The phase stays `result`: the run
+            // is still what is on screen, and the message's own button is what
+            // leaves for the properties list.
+            //
+            // ⚠️ **`null` means the run never finished** — the fatal-error
+            // banner's Close, which fires before a single row has settled. A
+            // message headed "the import has finished", over statistics that
+            // are all zero, inviting the user to go and check what was
+            // imported, is the most confidently wrong screen this slice could
+            // have shipped. That path goes back to the Import stage, exactly as
+            // it did before this slice.
+            if (summary === null) setPhase("ready");
+            else setRunSummary(summary);
             // Slice #26.09 — the run is over, and `ready` is the Import stage's
             // own screen. See `runCompleted`: without this the panel re-offers
             // a button that would import the whole folder a second time.
@@ -2264,6 +2368,34 @@ export function ImportWizard() {
             // reassurance that stops a user fearing the report went with the
             // run, and left Resume invisible until a page reload.
             setSavedSession(loadSavedSession());
+          }}
+        />
+      )}
+
+      {/* The concluding message.   (Slice #26.10)
+
+          Rendered where the run's own dialog was, and for the same reason it
+          is inside the `inert` wrapper: it is part of the wizard's screen, not
+          a layer over the whole app.
+
+          ⚠️ **Its Close leaves for the properties list**, which the source
+          document asks for by name — "ordered creation time so the first three
+          or four properties on the list are the ones that we just imported".
+          That order is what `/api/properties` already returns (most recently
+          created or updated first), so nothing here re-sorts anything; what
+          this slice adds is landing the user on it.
+
+          The wizard's own state is put back to a finished Import stage first,
+          so a user who navigates back finds the screen it has always been
+          rather than a message about a run that is over. */}
+      {runSummary !== null && (
+        <ImportSummaryDialog
+          folderName={rootFolderName}
+          summary={runSummary}
+          onClose={() => {
+            setRunSummary(null);
+            setPhase("ready");
+            router.push("/properties");
           }}
         />
       )}

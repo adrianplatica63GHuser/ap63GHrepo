@@ -337,6 +337,11 @@ describe("stageForPhase", () => {
       ["property", "import"],
       ["tag-dialog", "import"],
       ["importing", "import"],
+      // Slice #26.10 — the run is over and its result screen is what is on
+      // screen. Until this phase existed the indicator read "Import — în curs"
+      // over a finished run, which `workflow-stages.ts` recorded as a known gap
+      // for exactly this slice.
+      ["result", "result"],
       ["resumed", "result"],
     ]);
   });
@@ -369,7 +374,24 @@ describe("stageForPhase", () => {
   it("starts at information and ends at result", () => {
     expect(stageForPhase("information")).toBe("information");
     expect(stageForPhase("preflight")).toBe("preconditions");
+    expect(stageForPhase("result")).toBe("result");
     expect(stageForPhase("resumed")).toBe("result");
+  });
+
+  it("⚠️ separates the finished run from the running one", () => {
+    // Slice #26.10, and it is the assertion the gap comment asked for. The
+    // dialog is the same component in both phases — it is the run's progress
+    // table and then the run's result — so a wizard that never moved the phase
+    // would look identical and light the wrong pill for the whole time a user
+    // spends reading what happened.
+    expect(stageForPhase("importing")).toBe("import");
+    expect(stageForPhase("result")).toBe("result");
+
+    // …and the Import stage is DONE by then, not merely no longer current. A
+    // green tick against Import is the claim the result screen is standing on.
+    const statuses = stageStatuses(stageForPhase("result"));
+    expect(statuses.import).toBe("done");
+    expect(statuses.result).toBe("current");
   });
 
   it("reports the post-scan screen as import, not as scanning", () => {

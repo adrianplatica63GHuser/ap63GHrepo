@@ -68,7 +68,7 @@
  * corrects. The Document keeps whatever provenance the import assigned it.
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -219,10 +219,48 @@ type Props = {
    */
   scanConfidence?: ScanConfidence;
   onDone: (outcome: IdCardPersonOutcome) => void;
+  /**
+   * This card's step did not reach an answer.   (Slice #26.10)
+   *
+   * ⚠️ **A CLOSE AND A FAILURE ARE NOT THE SAME EVENT, and until #26.10 nothing
+   * needed to tell them apart.** While this dialog opened from a button, both
+   * ended the same way: the user pressed something and the row went back to
+   * offering it. Since #26.10 the row DESCRIBES what happened, and it draws
+   * "nicio persoană nu a fost creată din această carte de identitate" — a
+   * sentence about the user's decision — for a close. On a 429, an expired
+   * session or a timeout the user made no decision, and the result screen and
+   * the saved report would both be asserting one.
+   *
+   * Fired when this dialog gives up, and ALSO from the two write paths below:
+   * a Person that was created and then failed to link is the sharpest case of
+   * all, because a `natural_person` row exists in the archive while the result
+   * screen would otherwise say the user declined to make one. `onClose` still
+   * follows, from whichever control the user presses; this only says which kind
+   * of close it was. Idempotent — the caller sets a flag.
+   */
+  onFailed?: () => void;
   onClose: () => void;
 };
 
 type Phase = "extracting" | "resolving" | "ready";
+
+/**
+ * How long the card's two opening calls may take before this dialog gives up.
+ * (Slice #26.10)
+ *
+ * ⚠️ **A HANG HERE USED TO HAVE NO EXIT AT ALL.** While this opened from a
+ * button, a `fetch` that never settled left a spinner the user could ignore.
+ * Since #26.10 the run OPENS it, one card after another — and while it is open
+ * the result dialog's Close and Save are disabled and the stage bar's Cancel is
+ * inert, all deliberately, so that a Shift+Tab cannot unmount a queue mid-write.
+ * A gateway that holds the connection therefore removes every exit from the
+ * application, and a page reload — the only one left — destroys the unanswered
+ * cards and the unconfirmed parties, which exist in memory and nowhere else.
+ *
+ * The extract call is a vision-model round trip, so this is generous rather than
+ * tight: it exists to turn "for ever" into "an error with a Dismiss button".
+ */
+const ID_CARD_READ_TIMEOUT_MS = 180_000;
 
 export function IdCardPersonDialog({
   file,
@@ -231,6 +269,7 @@ export function IdCardPersonDialog({
   documentId,
   scanConfidence,
   onDone,
+  onFailed,
   onClose,
 }: Props) {
   const t = useTranslations("adminImport.wizard.importDialog.idCard");
@@ -265,12 +304,21 @@ export function IdCardPersonDialog({
   // `cancelled` guards the StrictMode double-invoke in dev.
   useEffect(() => {
     let cancelled = false;
+    // See `ID_CARD_READ_TIMEOUT_MS`. Aborting makes `fetch` reject, which the
+    // catch below already turns into the error panel — the one screen in this
+    // dialog that has a way out.
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), ID_CARD_READ_TIMEOUT_MS);
 
     async function run() {
       try {
         const fd = new FormData();
         fd.append("image", file);
-        const res = await fetch("/api/admin/import/extract-id-card", { method: "POST", body: fd });
+        const res = await fetch("/api/admin/import/extract-id-card", {
+          method: "POST",
+          body: fd,
+          signal: controller.signal,
+        });
         // The middleware redirects an expired session to /sign-in and fetch
         // follows it into a 200 of HTML — see CLAUDE.md. Without this the
         // JSON parse below fails with something that looks nothing like
@@ -326,6 +374,7 @@ export function IdCardPersonDialog({
             firstName: fields.firstName ?? null,
             lastName: fields.lastName ?? null,
           }),
+          signal: controller.signal,
         });
         if (resolveRes.redirected) throw new Error(t("sessionExpired"));
         if (cancelled) return;
@@ -351,10 +400,31 @@ export function IdCardPersonDialog({
     void run();
     return () => {
       cancelled = true;
+      clearTimeout(timer);
+      // Not `controller.abort()`: StrictMode runs this cleanup between the two
+      // development invocations, and aborting there would kill the second run's
+      // own request. The `cancelled` flag is what makes a discarded invocation
+      // harmless, exactly as it did before this slice.
     };
     // `file` is fixed for this dialog's lifetime; t/setValue are stable.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  /**
+   * Tell the caller this card produced nothing, exactly once.   (Slice #26.10)
+   *
+   * A ref, so a parent passing a fresh arrow every render cannot re-announce;
+   * an effect on `fatalError`, so every route into that state — a bad response,
+   * an expired session, the timeout above — reports without three call sites
+   * having to remember to.
+   */
+  const failedRef = useRef(onFailed);
+  useEffect(() => {
+    failedRef.current = onFailed;
+  }, [onFailed]);
+  useEffect(() => {
+    if (fatalError !== null) failedRef.current?.();
+  }, [fatalError]);
 
   // ── Linking ──────────────────────────────────────────────────────────────
   //
@@ -473,6 +543,12 @@ export function IdCardPersonDialog({
         await finish(personId, false, doc);
       } catch (err) {
         setBusy(false);
+        // ⚠️ **The caller is told, and not only from the FATAL path.**
+        // Everything reachable from here has already done work this dialog
+        // cannot finish reporting — a Person resolved, the property link
+        // written, or the document fields — and a close after it was being
+        // recorded as the user's refusal to create anybody.
+        failedRef.current?.();
         setError(err instanceof Error ? err.message : t("linkError"));
       }
     },
@@ -508,6 +584,10 @@ export function IdCardPersonDialog({
         await finish(personId, true, doc);
       } catch (err) {
         setBusy(false);
+        // As above, and this is the sharpest case: a 201 from POST /api/people
+        // followed by a 500 from the link leaves a real Person in the archive,
+        // and the row must not say that nobody was created.
+        failedRef.current?.();
         setError(err instanceof Error ? err.message : t("createError"));
       }
     },

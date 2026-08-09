@@ -166,8 +166,40 @@ export function shouldInterpretEntry(
   entry: FSEntry,
   scan: { isIdCard: boolean; canCreatePerson: boolean },
 ): boolean {
-  if (!hasReadablePage(entry)) return false;
-  return !(scan.isIdCard && scan.canCreatePerson);
+  return interpretSkipReason(entry, scan) === null;
+}
+
+/**
+ * WHY the run will not read this entry, or null when it will.   (Slice #26.10)
+ *
+ * ⚠️ **`shouldInterpretEntry` is now defined in terms of this, rather than the
+ * other way round, and that direction is the point.** 26.10 puts a sentence on
+ * every result row saying how far processing got, and the row that said nothing
+ * at all was the skipped one — so the screen needed the reason, not the
+ * boolean. Deriving the reason from a second expression beside the first is how
+ * a screen comes to explain a decision the loop did not make: the two would
+ * agree on the day they were written and drift on the day one of them gains a
+ * term. There is one rule here, and the boolean is the thinner view of it.
+ *
+ *   - `no-page`  — nothing a model can look at. A `.txt` document, a page
+ *     folder of files the route refuses; reading it returns 422 and nothing
+ *     else.
+ *   - `id-card`  — #23.08's argument, unchanged: the person action reads the
+ *     card number, the issuing authority and both validity dates, where this
+ *     route builds its prompt from the type's `template_fields` and
+ *     CARTE_IDENTITATE has none. A second billed call for strictly less.
+ *
+ * The order matters and is the same order the rule has always had: a card with
+ * no readable page is `no-page`, because that is the reason nothing could have
+ * been read from it whatever the type turned out to be.
+ */
+export function interpretSkipReason(
+  entry: FSEntry,
+  scan: { isIdCard: boolean; canCreatePerson: boolean },
+): "no-page" | "id-card" | null {
+  if (!hasReadablePage(entry)) return "no-page";
+  if (scan.isIdCard && scan.canCreatePerson) return "id-card";
+  return null;
 }
 
 /**

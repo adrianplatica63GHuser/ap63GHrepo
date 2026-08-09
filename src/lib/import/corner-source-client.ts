@@ -4,7 +4,9 @@
  *
  * Two import surfaces claim the link — the bulk import loop, for the
  * coordinate file that supplied the run's Property at the property step, and
- * CoordinatePropertyDialog, for the "Aplică pe proprietate" row action. This
+ * CoordinatePropertyDialog, for the "Aplică pe proprietate" row action — both
+ * deleted since, the dialog in #26.10, when the result row stopped offering to
+ * apply corners and started describing the corners the property step wrote. This
  * module is the one place either of them talks to
  * /api/documents/[id]/corner-source.
  *

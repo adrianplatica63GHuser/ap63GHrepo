@@ -40,7 +40,9 @@
  *
  * This is the endpoint the IMPORT WIZARD writes through — both the bulk import
  * loop (the coordinate file that supplied the run's Property at the property
- * step) and CoordinatePropertyDialog (the "Aplică pe proprietate" row action).
+ * step). It also served CoordinatePropertyDialog, the "Aplică pe proprietate"
+ * row action, until #26.10 deleted that dialog — the result screen describes
+ * what the property step did instead of offering to redo it.
  * The Process route does not use it; it calls claimCornerSource directly,
  * because it needs the claim inside its own compensating-action sequence.
  *

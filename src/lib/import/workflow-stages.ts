@@ -144,6 +144,8 @@ export function stagesOnLine(line: WorkflowLineId): WorkflowStage[] {
  *  property         → PropertyStepDialog is open (resolve the run's Property)
  *  tag-dialog       → TagDialog is open (animated tag-prep step)
  *  importing        → BulkImportDialog is running
+ *  result           → the run has finished and BulkImportDialog is now the
+ *                     result screen; then the concluding message  (Slice #26.10)
  *  resumed          → ResumedSessionView is showing a previous run's record
  *
  * ⚠️ `idle` was renamed to `structure` in #26.04, and it is a rename rather
@@ -173,6 +175,7 @@ export const IMPORT_PHASES = [
   "property",
   "tag-dialog",
   "importing",
+  "result",
   "resumed",
 ] as const;
 
@@ -231,8 +234,8 @@ export type ImportPhase = (typeof IMPORT_PHASES)[number];
  *    one press of Verifică din nou from that screen re-runs, in that order.
  *  - `ready` reports **import**, not scanning: the scan is finished and the one
  *    thing left on that screen is the Import button.
- *  - `resumed` reports **result** — the resumed view is a previous run's
- *    result, and it is the only way to reach that screen today.
+ *  - `resumed` reports **result** too — a resumed view is a previous run's
+ *    result screen, read from the saved report rather than from the run.
  *
  * ⚠️ **And now there is no planned stage left at all.** #26.04 wrote
  * "Constraints cannot begin, because 26.05 builds it"; #26.05 rewrote it for
@@ -242,14 +245,15 @@ export type ImportPhase = (typeof IMPORT_PHASES)[number];
  * actually looked at. The mechanism stays — see the note on the catalogue row —
  * because 26.09 and 26.10 are still to come.
  *
- * KNOWN GAP, left for 26.10. Closing `BulkImportDialog` returns the wizard to
- * `ready`, so after a finished run the indicator still reads "Import — în
- * curs". That is not a false green tick — the Import screen and its button are
- * genuinely what is on screen, and the user can import again from there — but
- * it is not the Result screen either, and `result` therefore only lights when a
- * saved report is reopened. 26.10 builds the real result screen and gives it
- * its own phase; until then the wizard at least refreshes the saved report on
- * close, so the report is reachable without a page reload.
+ * ⚠️ **THE 26.09 GAP IS CLOSED.** Until this slice the indicator read
+ * "Import — în curs" over a finished run, because closing `BulkImportDialog`
+ * returned the wizard to `ready` and there was no phase that meant "the run is
+ * over and its result is on screen". `result` now has one: the dialog announces
+ * the moment its loop settles (`onRunFinished`), the wizard moves the phase,
+ * and the indicator turns Import green and Result amber over the very screen
+ * the source document calls the result. It stays amber through the concluding
+ * message, which is still that stage, and the message's own button leaves the
+ * wizard entirely for the properties list.
  */
 const STAGE_BY_PHASE: Record<ImportPhase, WorkflowStageId> = {
   information: "information",
@@ -272,6 +276,7 @@ const STAGE_BY_PHASE: Record<ImportPhase, WorkflowStageId> = {
   property: "import",
   "tag-dialog": "import",
   importing: "import",
+  result: "result",
   resumed: "result",
 };
 

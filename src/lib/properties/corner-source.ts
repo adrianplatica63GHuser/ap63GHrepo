@@ -18,9 +18,10 @@
  *   Property with identical coordinates.
  *
  * The rule behind classifyFileSource is right in general; the wizard simply
- * isn't guessing. PropertyStepDialog and CoordinatePropertyDialog both run the
- * file through POST /api/properties/parse-text and count real corners. They
- * have proof. This table is where that proof now goes.
+ * isn't guessing. PropertyStepDialog — and CoordinatePropertyDialog, until
+ * #26.10 deleted it — run the file through POST /api/properties/parse-text and
+ * count real corners. They have proof. This table is where that proof now
+ * goes.
  *
  * THE UNIQUE INDEX IS THE LOCK
  *

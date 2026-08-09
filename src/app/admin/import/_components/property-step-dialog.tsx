@@ -84,6 +84,24 @@ export type ResolvedProperty = {
   nickname: string | null;
   /** Rows in `property_corner`. Display only — the wizard's chip. */
   cornerCount: number;
+  /**
+   * Did THIS step write anything for this Property?   (Slice #26.10)
+   *
+   * ⚠️ **"Resolved" and "written" are two different facts, and #26.10's result
+   * screen is the first reader that needs the second one.** The list this type
+   * belongs to carries every property folder the step settled — created,
+   * matched-and-confirmed, or already complete — because the wizard's chips and
+   * the Cancel's warning both want all of them. The concluding message uses it
+   * to decide whether the run put anything in the archive at all, and a second
+   * import of a folder whose Properties already exist writes nothing while
+   * still resolving three: without this distinction, a run whose every document
+   * failed would have announced itself finished and navigated the user off the
+   * wizard, losing a paid metadata pass and a folder of Haiku scans.
+   *
+   * True exactly where `wroteThisAttempt` is incremented, and from the same
+   * expression — a created Property, or corners added to an existing one.
+   */
+  created: boolean;
 };
 
 /** Everything the wizard needs once the property step is done. */
@@ -626,15 +644,20 @@ export function PropertyStepDialog({
             ? group.coordinateFile.path
             : null;
 
+        // One expression for both readers: the counter this step keeps, and the
+        // fact the result screen reads. Two spellings of "did we write" is how
+        // they come to disagree.
+        const wrote = result.outcome === "created" || result.cornersAdded > 0;
         const entry: ResolvedProperty = {
           folderName: plan.folderName,
           id: property.id,
           code: property.code,
           nickname: property.nickname,
           cornerCount: property.cornerCount,
+          created: wrote,
         };
         resolved.push(entry);
-        if (result.outcome === "created" || result.cornersAdded > 0) {
+        if (wrote) {
           wroteThisAttempt += 1;
           setWrittenEver((n) => n + 1);
           if (result.cornersMatchOffered) {

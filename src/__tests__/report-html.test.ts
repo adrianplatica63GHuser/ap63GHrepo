@@ -14,10 +14,12 @@
 
 import {
   buildReportHtml,
+  buildResultReportHtml,
   buildRulesPageHtml,
   groupedViolationBlocks,
   reportFileName,
   type ReportHtmlStrings,
+  type ResultReportInput,
   type RulesPageInput,
   type RulesPageStrings,
 } from "@/lib/import/report-html";
@@ -446,5 +448,154 @@ describe("buildRulesPageHtml", () => {
     expect(html).toContain("a/&lt;b&gt;.jpg");
     expect(html).toContain("Mutați &lt;acest&gt; fișier.");
     expect(html).toContain("a/&lt;c&gt;.jpg");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The result report   (Slice #26.10)
+// ---------------------------------------------------------------------------
+
+const RESULT_STRINGS = {
+  documentTitle: "Raportul importului",
+  generatedAt: "Generat",
+  folderLabel: "Folder",
+  summaryTitle: "Pe scurt",
+  propertiesTitle: "Proprietăți",
+  noProperties: "Niciuna",
+  rowsTitle: "Rezultate",
+  openLabel: "Deschide",
+};
+
+function resultReport(over: Partial<ResultReportInput> = {}): string {
+  return buildResultReportHtml({
+    folderName: "Teren",
+    generatedAt: "09.08.2026, 14:30",
+    locale: "ro-RO",
+    summaryRows: [{ label: "Documente create", value: "3" }],
+    properties: [
+      {
+        code: "PROP-AA",
+        nickname: "47/2",
+        url: "https://arhiva.local/properties/p1",
+        cornersLabel: "4 colțuri",
+      },
+    ],
+    rows: [
+      {
+        title: "Contract",
+        path: "47per2/contract.pdf",
+        documentUrl: "https://arhiva.local/documents/d1",
+        notes: ["importat", "3 câmpuri completate"],
+      },
+    ],
+    strings: RESULT_STRINGS,
+    ...over,
+  });
+}
+
+describe("buildResultReportHtml", () => {
+  it("⚠️ links with the ABSOLUTE url it was given, because the file is opened from disk", () => {
+    // The whole usefulness of "save the report with working links" turns on
+    // this. A saved document lives on a `file://` origin, where `/documents/d1`
+    // resolves against the filesystem root and lands nowhere — so the caller
+    // puts `window.location.origin` in front and this module never builds a URL
+    // of its own. A regression here is silent: the file saves, opens, looks
+    // right, and every link is dead.
+    const html = resultReport();
+    expect(html).toContain('<a href="https://arhiva.local/documents/d1">Deschide</a>');
+    expect(html).toContain('<a href="https://arhiva.local/properties/p1">PROP-AA — 47/2</a>');
+    expect(html).not.toContain('href="/documents/');
+  });
+
+  it("prints a row that has no Document, without a link", () => {
+    // A file that errored has nothing to open, and dropping it would make the
+    // saved copy the LESS complete artefact — the failure this module's header
+    // records about truncation, in a different disguise.
+    const html = resultReport({
+      // No Properties either, so the ONLY anchor this document could carry is
+      // the row's own — otherwise the assertion below passes on the property
+      // list's link and proves nothing about the row.
+      properties: [],
+      rows: [
+        {
+          title: "Scan stricat",
+          path: "47per2/x.jpg",
+          documentUrl: null,
+          notes: ["nu a fost importat: HTTP 500"],
+        },
+      ],
+    });
+    expect(html).toContain("Scan stricat");
+    expect(html).toContain("nu a fost importat: HTTP 500");
+    expect(html).not.toContain("<a href");
+  });
+
+  it("lists every note on a row, in the order it was given them", () => {
+    const html = resultReport({
+      rows: [
+        {
+          title: "Coord",
+          path: "47per2/coord.txt",
+          documentUrl: null,
+          notes: ["importat", "a fost aplicat proprietății PROP-AA", "nu a fost citit de AI"],
+        },
+      ],
+    });
+    const positions = [
+      html.indexOf("importat"),
+      html.indexOf("a fost aplicat"),
+      html.indexOf("nu a fost citit"),
+    ];
+    expect(positions.every((i) => i >= 0)).toBe(true);
+    expect([...positions].sort((a, b) => a - b)).toEqual(positions);
+  });
+
+  it("says so when the run was linked to no Property, rather than printing an empty list", () => {
+    const html = resultReport({ properties: [] });
+    expect(html).toContain("Niciuna");
+    expect(html).not.toContain("<ul class=\"paths\"></ul>");
+  });
+
+  it("prints a Property with no nickname without a trailing dash", () => {
+    const html = resultReport({
+      properties: [
+        { code: "PROP-AB", nickname: null, url: null, cornersLabel: "fără colțuri" },
+      ],
+    });
+    expect(html).toContain("PROP-AB · fără colțuri");
+    expect(html).not.toContain("PROP-AB — ");
+  });
+
+  it("escapes everything that came off the user's disk", () => {
+    const html = resultReport({
+      folderName: "Teren & <b>",
+      rows: [
+        {
+          title: 'Contract <script>alert("x")</script>',
+          path: "a/<c>.pdf",
+          documentUrl: "https://arhiva.local/documents/d1?a=1&b=2",
+          notes: ["<i>importat</i>"],
+        },
+      ],
+    });
+    expect(html).not.toContain("<script>");
+    expect(html).toContain("&lt;script&gt;");
+    expect(html).toContain("a/&lt;c&gt;.pdf");
+    expect(html).toContain("&lt;i&gt;importat&lt;/i&gt;");
+    // `&` first, so the entities the later replacements introduce are not
+    // double-escaped — the same rule the other two documents are pinned on.
+    expect(html).toContain("Teren &amp; &lt;b&gt;");
+    expect(html).not.toContain("&amp;amp;");
+    expect(html).toContain("d1?a=1&amp;b=2");
+  });
+
+  it("shares the shell, so it opens in Word the way the other two do", () => {
+    const html = resultReport();
+    expect(html.startsWith("<!DOCTYPE html>")).toBe(true);
+    expect(html).toContain('<html lang="ro-RO">');
+    expect(html).toContain("<style>");
+    expect(html).toContain("font-family: Calibri");
+    // The anchor colour was added for this document and must reach it.
+    expect(html).toContain("a { color:");
   });
 });

@@ -1,16 +1,18 @@
 /**
  * src/lib/import/report-html.ts — the import's paper trail, as files you can
- * take away.   (Slice #24.02c; the rules listing, #26.04, generalised in #26.05)
+ * take away.   (Slice #24.02c; the rules listing, #26.04, generalised in #26.05;
+ * the result report, #26.10)
  *
- * TWO DOCUMENTS, ONE SHELL
- * ────────────────────────
+ * THREE DOCUMENTS, ONE SHELL
+ * ──────────────────────────
  *
  * `buildReportHtml` is the folder report; `buildRulesPageHtml` is the take-away
  * page a RULES STAGE produces — its rules, and what the last check found wrong
- * with the folder. They share `htmlDocument`, the CSS, `esc`, `pathList` and
- * `reportFileName`, and #26.04's constraint says why in as many words: one
- * exporter, not two. Everything this file knows about surviving a trip through
- * Word is written once and both documents inherit it.
+ * with the folder; `buildResultReportHtml` is the record of a finished run.
+ * They share `htmlDocument`, the CSS, `esc`, `pathList` and `reportFileName`,
+ * and #26.04's constraint — repeated word for word by #26.10 — says why: one
+ * exporter, not three. Everything this file knows about surviving a trip
+ * through Word is written once and all three documents inherit it.
  *
  * ⚠️ It was called `buildStructureHtml` until #26.05, when the Constraints
  * stage became the second caller. The rename is not tidying: a function named
@@ -476,6 +478,153 @@ export function buildRulesPageHtml(input: RulesPageInput): string {
 }
 
 // ---------------------------------------------------------------------------
+// The result report   (Slice #26.10)
+// ---------------------------------------------------------------------------
+
+/**
+ * The take-away copy of what an import RUN did.
+ *
+ * WHY IT IS HERE AND NOT A THIRD EXPORTER
+ * ---------------------------------------
+ * 26.10's constraint, in as many words: reuse `report-html.ts` for the save.
+ * The shell below is where every decision about "a file the user keeps offline
+ * and opens in Word" already lives — inline CSS because Word reads it, `esc`
+ * with `&` first, a `lang` that follows the UI locale. This is the third
+ * document to inherit all of it and the second to be told to.
+ *
+ * WHAT MAKES THIS ONE DIFFERENT: IT HAS LINKS
+ * -------------------------------------------
+ * The other two describe files on a disk. This one describes rows in a
+ * database, and the source document asks for a report "which hopefully can also
+ * save Open hyperlinks". So each row carries an `<a>` back to its Document, and
+ * the Properties the run wrote get one each.
+ *
+ * ⚠️ **THE URLS MUST BE ABSOLUTE, AND THE CALLER IS WHAT MAKES THEM SO.** This
+ * file is downloaded and opened from the user's disk, where the page's own
+ * origin is `file://` — a `/documents/<id>` href resolves against the filesystem
+ * root and lands nowhere. The caller passes `window.location.origin` in front of
+ * every path, which is the one moment that value is knowable. This module takes
+ * finished URLs and refuses to build any, so there is no second place that can
+ * get it wrong.
+ *
+ * ⚠️ **A row whose URL is null still prints.** A file that errored has no
+ * Document to open, and dropping it would make the saved copy the LESS complete
+ * artefact — the same failure `buildReportHtml` records about truncation. The
+ * row prints its name, its path and what went wrong, without a link.
+ */
+export type ResultReportRow = {
+  /** How the Document is titled, or the file's own name where none was made. */
+  title: string;
+  /** Where it came from, inside the chosen folder. */
+  path: string;
+  /** Absolute, or null when this run created no Document for the row. */
+  documentUrl: string | null;
+  /**
+   * Everything the screen says about this row, already rendered — the status,
+   * the corners, the person, how far the read got.
+   *
+   * A list rather than a sentence because the screen draws a list, and the two
+   * artefacts must not disagree about what happened to a file.
+   */
+  notes: readonly string[];
+};
+
+/** One Property this run's documents were linked to. */
+export type ResultReportProperty = {
+  code: string;
+  /** The folder's own nickname, or null. */
+  nickname: string | null;
+  /** Absolute, or null — same rule as a row's. */
+  url: string | null;
+  /** Already-rendered, because "3 colțuri" is a plural this module must not own. */
+  cornersLabel: string;
+};
+
+export type ResultReportStrings = {
+  documentTitle: string;
+  generatedAt: string;
+  folderLabel: string;
+  summaryTitle: string;
+  propertiesTitle: string;
+  noProperties: string;
+  rowsTitle: string;
+  /** The anchor text on every document link. */
+  openLabel: string;
+};
+
+export type ResultReportInput = {
+  folderName: string;
+  generatedAt: string;
+  locale: string;
+  /** The same statistics the concluding message shows, already rendered. */
+  summaryRows: readonly { label: string; value: string }[];
+  properties: readonly ResultReportProperty[];
+  rows: readonly ResultReportRow[];
+  strings: ResultReportStrings;
+};
+
+export function buildResultReportHtml(input: ResultReportInput): string {
+  const { folderName, generatedAt, locale, summaryRows, properties, rows, strings } = input;
+
+  const summaryTable = summaryRows
+    .map((r) => `<tr><th>${esc(r.label)}</th><td>${esc(r.value)}</td></tr>`)
+    .join("");
+
+  const propertyBlocks =
+    properties.length === 0
+      ? `<p class="msg">${esc(strings.noProperties)}</p>`
+      : `<ul class="paths">` +
+        properties
+          .map((property) => {
+            const name = `${property.code}${
+              property.nickname === null ? "" : ` — ${property.nickname}`
+            }`;
+            const label =
+              property.url === null
+                ? esc(name)
+                : `<a href="${esc(property.url)}">${esc(name)}</a>`;
+            return `<li>${label} · ${esc(property.cornersLabel)}</li>`;
+          })
+          .join("") +
+        `</ul>`;
+
+  const rowBlocks = rows
+    .map((row) => {
+      const link =
+        row.documentUrl === null
+          ? ""
+          : ` — <a href="${esc(row.documentUrl)}">${esc(strings.openLabel)}</a>`;
+      return [
+        `<div class="finding">`,
+        `<p class="msg"><strong>${esc(row.title)}</strong>${link}</p>`,
+        `<p class="eg">${esc(row.path)}</p>`,
+        // Reuses the path list's own styling rather than inventing a fourth
+        // class: it is a short indented list under a heading line, which is
+        // exactly what that class already is.
+        pathList(row.notes),
+        `</div>`,
+      ].join("");
+    })
+    .join("");
+
+  return htmlDocument({
+    locale,
+    title: `${strings.documentTitle} — ${folderName}`,
+    body: [
+      `<h1>${esc(strings.documentTitle)}</h1>`,
+      `<p class="meta">${esc(strings.folderLabel)}: <strong>${esc(folderName)}</strong></p>`,
+      `<p class="meta">${esc(strings.generatedAt)}: ${esc(generatedAt)}</p>`,
+      `<h2>${esc(strings.summaryTitle)}</h2>`,
+      `<table>${summaryTable}</table>`,
+      `<h2>${esc(strings.propertiesTitle)}</h2>`,
+      propertyBlocks,
+      `<h2>${esc(strings.rowsTitle)}</h2>`,
+      rowBlocks,
+    ].join("\n"),
+  });
+}
+
+// ---------------------------------------------------------------------------
 // The document shell, shared by both
 // ---------------------------------------------------------------------------
 
@@ -501,6 +650,7 @@ const DOCUMENT_CSS = `
   .paths { margin: 0 0 0 18pt; padding: 0; }
   .paths li { font-family: Consolas, "Courier New", monospace; font-size: 9.5pt; color: #444; margin: 1pt 0; }
   .clear { color: #256029; }
+  a { color: #0b57a4; }
 `;
 
 function htmlDocument(input: { locale: string; title: string; body: string }): string {
