@@ -1170,8 +1170,8 @@
       "fees": "Fees"
     },
     "status": {
-      "label": "Document status",
-      "new": "New",
+      "label": "Processing status",
+      "new": "Entered by hand",
       "imported": "Imported",
       "aiProcessed": "AI processed"
     },
@@ -1550,12 +1550,12 @@
       "description": "Description",
       "institutionType": "Institution Type",
       "category": "Category",
-      "status": "Status"
+      "status": "Origin"
     },
     "documentTypeStatus": {
-      "new": "New",
-      "aiScanned": "AI scanned",
-      "aiCompleted": "AI completed"
+      "new": "Added by hand",
+      "aiScanned": "Created by an import",
+      "aiCompleted": "Has an AI form"
     },
     "modal": {
       "close": "Close"

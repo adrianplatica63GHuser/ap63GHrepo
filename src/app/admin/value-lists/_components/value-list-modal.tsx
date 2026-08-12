@@ -377,8 +377,12 @@ export function ValueListModal({
                         {f.labelText ?? t(`fields.${f.labelKey}`)}
                       </th>
                     ))}
+                    {/* w-32: the panel is max-w-2xl and this is a third column
+                        where there were two, so without a width the type name
+                        loses room and the modal grows a horizontal scrollbar.
+                        Matches the w-28 already on the actions column. */}
                     {isDocumentTypes && (
-                      <th className="px-4 py-2">{t("fields.status")}</th>
+                      <th className="w-32 px-4 py-2">{t("fields.status")}</th>
                     )}
                     <th className="w-28 px-4 py-2" />
                   </tr>

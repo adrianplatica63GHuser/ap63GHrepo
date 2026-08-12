@@ -91,8 +91,21 @@ export function DocumentDetailTabs({
     <div className="max-w-[93rem] mx-auto w-full flex flex-col gap-4">
       {/* Slice #19.07: name on the left, version controls right-aligned on the
           same line (portalled in by the details form via navSlot). */}
-      <header className="relative flex min-h-[2.5rem] items-center gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight">{documentName}</h1>
+      {/* ⚠️ `md:pr-[22rem]` and the h1's `min-w-0 truncate` are ONE fix, and an
+          adversarial round on #26.12 is why. `navSlot` below is
+          `absolute inset-y-0 right-0`, so it is out of flow and this flex row
+          cannot see it — document-form.tsx portals the whole version strip in
+          there ("v 3", the history chip, ◀ ▶, "Fă curentă"). Before the status
+          pill the h1 could already run under it; the pill is `shrink-0` and
+          adds a `gap-3`, so it moved the collision point ~100px left and made
+          it reachable at ordinary Romanian title lengths. The padding reserves
+          the strip's lane and the truncate makes the TITLE yield rather than
+          the pill. 22rem is an estimate of the strip's widest state, not a
+          measurement — re-measure it if a control is added there. Left off
+          below `md`, where the absolute slot already overlapped and this slice
+          did not make it worse. */}
+      <header className="relative flex min-h-[2.5rem] items-center gap-3 md:pr-[22rem]">
+        <h1 className="min-w-0 truncate text-2xl font-semibold tracking-tight">{documentName}</h1>
         {/* Slice #26.12: "near the top", as the source document asks — beside
             the name, so it is read with the document rather than found. A
             plain <span>, not a live region: it is a standing property of the
@@ -105,8 +118,10 @@ export function DocumentDetailTabs({
               "inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
               DOCUMENT_STATUS_CLASS[status],
             ].join(" ")}
-            title={t("status.label")}
           >
+            {/* The subject, for a screen reader only. No `title` beside it: the
+                two together read out as "Stare procesare, Stare procesare:
+                Importat". */}
             <span className="sr-only">{t("status.label")}: </span>
             {t(`status.${status}` as Parameters<typeof t>[0])}
           </span>

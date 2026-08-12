@@ -1170,10 +1170,10 @@
       "fees": "Taxe și onorarii"
     },
     "status": {
-      "label": "Stare document",
-      "new": "Nou",
+      "label": "Stare procesare",
+      "new": "Introdus manual",
       "imported": "Importat",
-      "aiProcessed": "Procesat AI"
+      "aiProcessed": "Procesat cu AI"
     },
     "fields": {
       "code": "Cod",
@@ -1550,12 +1550,12 @@
       "description": "Descriere",
       "institutionType": "Tip instituție",
       "category": "Categorie",
-      "status": "Stare"
+      "status": "Origine"
     },
     "documentTypeStatus": {
-      "new": "Nou",
-      "aiScanned": "Scanat AI",
-      "aiCompleted": "Completat AI"
+      "new": "Adăugat manual",
+      "aiScanned": "Creat la import",
+      "aiCompleted": "Cu formular AI"
     },
     "modal": {
       "close": "Închide"
