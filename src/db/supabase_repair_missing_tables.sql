@@ -502,6 +502,15 @@ ALTER TABLE lookup_document_type ADD COLUMN IF NOT EXISTS template_fields jsonb;
 ALTER TABLE lookup_document_type
   ADD COLUMN IF NOT EXISTS origin text NOT NULL DEFAULT 'MANUAL';
 
+-- ⚠️ ADD COLUMN IF NOT EXISTS is a complete no-op when the column already
+-- exists, INCLUDING when it exists as a nullable column with no default — so
+-- the three properties this file promises have to be asserted separately or a
+-- half-created column never converges, and its NULLs then block the CHECK
+-- below on every future run. All three are idempotent.
+UPDATE lookup_document_type SET origin = 'MANUAL' WHERE origin IS NULL;
+ALTER TABLE lookup_document_type ALTER COLUMN origin SET DEFAULT 'MANUAL';
+ALTER TABLE lookup_document_type ALTER COLUMN origin SET NOT NULL;
+
 DO $$
 DECLARE
   bad integer;
@@ -523,6 +532,35 @@ BEGIN
         ADD CONSTRAINT chk_ldt_origin CHECK (origin IN ('MANUAL', 'IMPORT'));
       RAISE NOTICE 'chk_ldt_origin added.';
     END IF;
+  END IF;
+END $$;
+
+-- Post-flight for THIS column specifically. The file's closing check counts
+-- TABLES, so without this a database that never got the column would still
+-- print "POST-FLIGHT OK" — and the column is not cosmetic: createValue names
+-- `origin` in .values() and selects it back in .returning(), so its absence
+-- breaks every document-type create, including the one ensureDocType does
+-- mid-import. Missing column is fatal; a missing CHECK is a warning, because
+-- the only way to reach that state is a row this file refused to constrain and
+-- the operator has already been told about it above.
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name   = 'lookup_document_type'
+      AND column_name  = 'origin'
+  ) THEN
+    RAISE EXCEPTION 'POST-FLIGHT FAILED: lookup_document_type.origin is missing.';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'chk_ldt_origin' AND conrelid = 'lookup_document_type'::regclass
+  ) THEN
+    RAISE WARNING 'lookup_document_type.origin exists but chk_ldt_origin does not -- see the warning above.';
+  ELSE
+    RAISE NOTICE 'POST-FLIGHT OK: lookup_document_type.origin present and constrained.';
   END IF;
 END $$;
 
