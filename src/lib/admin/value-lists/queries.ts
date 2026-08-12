@@ -27,6 +27,7 @@ import {
   lookupInstitution,
 } from "@/db/schema";
 import type { ListKey } from "./config";
+import { stripDocumentTypeOrigin } from "./validation";
 import {
   isDocumentTypeOrigin,
   type DocumentTypeOrigin,
@@ -222,6 +223,7 @@ export async function createValue(
 
 // ── Update ───────────────────────────────────────────────────────────────────
 
+
 export async function updateValue(
   key: ListKey,
   id: string,
@@ -258,18 +260,11 @@ export async function updateValue(
       return (row as LookupRow) ?? null;
     }
     case "document-types": {
-      // Slice #26.12 — the second of two guards on a write-once column.
-      //
-      // ⚠️ **`origin` is stripped here even though LIST_UPDATE_SCHEMAS already
-      // omits it**, and the redundancy is deliberate: this is a full-replace
-      // `.set(data)`, so anything that reaches `data` is written. The schema
-      // guard protects the HTTP route; this one protects every other caller of
-      // `updateValue` — a script, a future admin action, a test — from
-      // re-originating a type by passing the row it just read straight back in.
-      // A rename must never turn an imported type into a hand-added one.
-      const { origin: _ignoredOrigin, ...safe } = data as Record<string, unknown>;
-      void _ignoredOrigin;
-      const [row] = await db.update(lookupDocumentType).set(safe).where(eq(lookupDocumentType.id, id)).returning();
+      const [row] = await db
+        .update(lookupDocumentType)
+        .set(stripDocumentTypeOrigin(data))
+        .where(eq(lookupDocumentType.id, id))
+        .returning();
       return (row as LookupRow) ?? null;
     }
     case "institutions": {

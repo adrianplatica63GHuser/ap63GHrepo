@@ -185,10 +185,13 @@ export type DocumentStatusInput = {
 };
 
 export function documentStatus(input: DocumentStatusInput): DocumentStatus {
-  // ⚠️ An empty string is not a timestamp. `record.aiInterpretedAt?.toISOString()
-  // ?? null` is the shape the page passes, but a form value or a JSON round-trip
-  // can produce "" — and `"" != null` would have called an untouched document
-  // "Imported". Same rule the forms' own `blank` helper applies everywhere else.
+  // ⚠️ An empty string is not a timestamp. The one production caller — the
+  // document page — passes the raw `Date | null` off Drizzle, so this branch is
+  // defensive rather than load-bearing TODAY; it exists for a client-side or
+  // JSON-round-tripped caller, where `""` is what an unset form value and a
+  // serialised null both tend to become. `"" != null` is true, so without the
+  // trim an untouched document would read "Imported". Same rule the forms' own
+  // `blank` helper applies to every other field.
   const stamped = typeof input.aiInterpretedAt === "string"
     ? input.aiInterpretedAt.trim().length > 0
     : input.aiInterpretedAt != null;

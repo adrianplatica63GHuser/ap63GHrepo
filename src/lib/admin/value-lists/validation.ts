@@ -141,6 +141,37 @@ export const LIST_SCHEMAS: Record<ListKey, z.ZodType<any>> = {
 };
 
 /**
+ * Drop `origin` from an update payload.   (Slice #26.12)
+ *
+ * ⚠️ **The second of two guards on a write-once column, and the redundancy is
+ * deliberate.** `updateValue` in ./queries.ts is a full-replace `.set(...)`, so
+ * anything that reaches it is written. `LIST_UPDATE_SCHEMAS` below protects the
+ * HTTP route by omitting the column from the PUT schema; this protects every
+ * OTHER caller — a script, a future admin action, a test — from re-originating
+ * a type by handing back the row it just read. A rename must never turn an
+ * import-created type into a hand-added one.
+ *
+ * ⚠️ **It lives HERE, not next to its call site**, for one blunt reason:
+ * `queries.ts` imports `@/db`, which constructs a `pg.Pool` at module load, so
+ * a Jest test importing it would open a database connection to check a
+ * three-line object spread. This module is zod-only. Keeping it here also puts
+ * both halves of the guard in one file, which is where a reader looking for one
+ * would expect to find the other.
+ *
+ * Named and exported rather than inlined as a destructure so the guard can be
+ * asserted on BEHAVIOUR — the test it replaced looked for two source substrings
+ * anywhere in a 300-line file and would have stayed green after a refactor that
+ * moved the strip out of the branch that needs it.
+ */
+export function stripDocumentTypeOrigin<T extends Record<string, unknown>>(
+  data: T,
+): Omit<T, "origin"> {
+  const { origin: _ignored, ...safe } = data;
+  void _ignored;
+  return safe;
+}
+
+/**
  * PUT bodies. Identical to LIST_SCHEMAS except where a list has a field that
  * may be set at creation and never afterwards.
  *
