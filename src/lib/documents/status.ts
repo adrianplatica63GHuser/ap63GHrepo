@@ -114,6 +114,60 @@ export function documentTypeHasForm(templateFields: unknown): boolean {
   return parseTemplateFields(templateFields).length > 0;
 }
 
+/**
+ * How a document type is written in a PICKER: marked when it has a form, left
+ * exactly as it is when it does not.                            (Slice #27.02)
+ *
+ * ⚠️ **The marking is this way round on purpose, and the seed data is the
+ * argument.** Twenty-three of the twenty-four types in
+ * `src/db/sync-reference-data.sql` have no custom form, so annotating THOSE
+ * would hang the same parenthesis on almost every option in the list and say
+ * nothing. A form is the exception, so the exception is what gets said.
+ *
+ * ⚠️ **A formless type comes back byte-for-byte** — not the name plus an empty
+ * suffix, not a trimmed copy. Nothing about the majority of the list changes,
+ * which is what keeps "has no form" from reading as a fault. It is the correct
+ * and permanent answer for CARTE_IDENTITATE, whose data is captured by the
+ * identity-card step instead (`src/lib/import/id-card.ts`), and for any type
+ * whose content is the scan itself.
+ *
+ * NO ROMANIAN HERE either: the caller passes `mark`, which is a `t()` call. That
+ * is what lets the decision live beside `documentTypeStatus` rather than in the
+ * component — the dropdown and the Reference Data colour answer "has a form?"
+ * with the same function, so they cannot come to disagree.
+ */
+export function documentTypeOptionLabel(
+  name: string,
+  templateFields: unknown,
+  mark: (name: string) => string,
+): string {
+  return documentTypeHasForm(templateFields) ? mark(name) : name;
+}
+
+/**
+ * Should the "this type has no form" hint be shown for the type ROW passed in?
+ *                                                               (Slice #27.02)
+ *
+ * ⚠️ **`undefined` is not "no form".** While the document-type list is still
+ * loading — or when nothing is selected at all — there is no row to judge, and a
+ * naive `!documentTypeHasForm(row?.templateFields)` answers TRUE for both, which
+ * flashes the hint on first paint under every document whose type does have a
+ * form. That is the whole reason this is a function and not an inline `!`.
+ *
+ * It lives here, next to the decision it inverts, because a review round pointed
+ * out the obvious: an inline `!` in a component is a character, and deleting a
+ * character cannot be caught by a test that only checks which functions the
+ * component calls. This one has its own row in `document-status.test.ts`.
+ *
+ * The caller adds the questions that are about the SCREEN rather than the type
+ * — read-only mode, and a document whose pages the reader cannot see.
+ */
+export function documentTypeNeedsFormHint(
+  row: { templateFields?: unknown } | null | undefined,
+): boolean {
+  return !!row && !documentTypeHasForm(row.templateFields);
+}
+
 // ---------------------------------------------------------------------------
 // The document type's status  (and, identically, its colour)
 // ---------------------------------------------------------------------------

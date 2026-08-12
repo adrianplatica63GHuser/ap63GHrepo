@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   type FieldPath,
@@ -37,6 +37,10 @@ import {
 } from "./form-schema";
 import { getTypeConfig } from "@/lib/documents/type-config";
 import { parseTemplateFields } from "@/lib/documents/template-fields";
+import {
+  documentTypeNeedsFormHint,
+  documentTypeOptionLabel,
+} from "@/lib/documents/status";
 import { PagesPanel, PagesViewerBox, usePagesPanelState } from "./pages-panel";
 import { SuccessionPartiesPanel } from "./succession-parties-panel";
 import { ErrorBoundary, PanelError } from "@/components/error-boundary";
@@ -268,7 +272,15 @@ export function DocumentForm({
   // Conditional sections key off the *key* string (e.g. "TITLU_PROPRIETATE"),
   // not the uuid, so we resolve it via the fetched type list.
   const selectedDocumentTypeId = useWatch({ control: form.control, name: "documentTypeId" });
-  const selectedTypeKey = typeOptions.find((opt) => opt.id === selectedDocumentTypeId)?.key;
+  // Slice #27.02: ONE lookup, memoized. Three separate `.find()` calls already
+  // asked three questions about the same row, and this slice's question — does
+  // this type have a form? — would have been the fourth. That is the point at
+  // which a repetition has become a pattern worth removing.
+  const selectedType = useMemo(
+    () => typeOptions.find((opt) => opt.id === selectedDocumentTypeId),
+    [typeOptions, selectedDocumentTypeId],
+  );
+  const selectedTypeKey = selectedType?.key;
   const cfg = getTypeConfig(selectedTypeKey);
   // True only for CERTIFICAT_MOSTENITOR — drives the merged Succession Details section.
   const isMostenitor = selectedTypeKey === "CERTIFICAT_MOSTENITOR";
@@ -276,10 +288,8 @@ export function DocumentForm({
   // Slice #21.03.Import: the selected type's template fields, if any (Phase 3
   // — reintroduces type-specific fields as data, not hardcoded sections).
   const templateFields = useMemo(
-    () => parseTemplateFields(
-      typeOptions.find((opt) => opt.id === selectedDocumentTypeId)?.templateFields,
-    ),
-    [typeOptions, selectedDocumentTypeId],
+    () => parseTemplateFields(selectedType?.templateFields),
+    [selectedType],
   );
 
   // --- Version history (Slice #18.06) ------------------------------------
@@ -364,6 +374,63 @@ export function DocumentForm({
         : mode === "edit" || associatedEditing
           ? "edit"
           : "view";
+
+  // Slice #27.02: a document whose pages are ALL .txt never reaches the model,
+  // so #26.11 hides the Descoperire AI button for it. Hoisted out of that
+  // button's own IIFE by a review round, because the hint below has to answer
+  // the same question and two copies of it would eventually disagree — the hint
+  // would name a control the page deliberately does not render.
+  const hasTextOnlyPages = pagesState.pages.length > 0
+    && pagesState.pages.every((p) => p.fileName.toLowerCase().endsWith(".txt"));
+
+  // Slice #27.02: does the SELECTED type have no custom form — and is this a
+  // screen where saying so helps?
+  //
+  // ⚠️ `templateFields.length > 0` is the same answer computed a second time,
+  // and a second computation is exactly what #26.12 wrote `documentTypeHasForm`
+  // to prevent: the Reference Data label, the colour beside it and this hint are
+  // one decision. `documentTypeNeedsFormHint` is that decision, inverted once,
+  // in the module that owns it — including the part that says a MISSING row is
+  // not a formless one.
+  //
+  // ⚠️ **Everything in front of it is about the SCREEN, not the type.** The
+  // line the conditions draw, after three review rounds, is *not* "only where
+  // the Descoperire AI button is rendered" — create mode has no button and
+  // keeps the hint deliberately. It is: **suppress it where the feature is
+  // unreachable from this document at all, show it everywhere the user is one
+  // ordinary step away.**
+  //
+  //   `effectiveMode !== "view"`  — nothing here is editable. This covers an
+  //     earlier version (where the action row at the bottom of this file renders
+  //     NOTHING: its ternary is `effectiveMode === "view" ? (mode === "view" &&
+  //     <Back/Modifică>) : mode === "view" ? (<Back/Save/Delete>) :
+  //     (<Save/Delete/Cancel/Descoperire AI>)`, and an earlier version takes the
+  //     first arm with `mode === "edit"`, so it renders `false`) and an
+  //     associated record before Modifică. Round two. **This is why the whole
+  //     block lives HERE, below `effectiveMode`:** reading it before its `const`
+  //     is a TDZ crash on every render, not a lint warning.
+  //     There is deliberately no `mode !== "view"` beside it. Round three showed
+  //     it was subsumed in five of six states and wrong in the sixth — an
+  //     associated record AFTER Modifică is an editable picker, and it was
+  //     marking the options while withholding the sentence that explains them.
+  //   `!pagesState.isLoading`     — until the pages arrive, "not text-only" is a
+  //     guess. This does NOT remove the reflow (the hint still inserts when the
+  //     answer lands, as it already did when the type list landed); what it
+  //     removes is a sentence that renders and then turns out to have been
+  //     wrong.
+  //   `!hasTextOnlyPages`         — the model cannot read this document at all,
+  //     ever, so #26.11 hides the button permanently. The one case where the
+  //     feature is genuinely unreachable rather than one step away.
+  //
+  // A document with NO pages keeps the hint, and that is the same decision as
+  // create mode rather than an oversight: the button is there and disabled, one
+  // upload away, and its own tooltip says so ("Adăugați pagini pentru a folosi
+  // AI"). Round three would rather the sentence named that step; that is a copy
+  // decision for Ciprian, not a gate.
+  const showNoFormHint = effectiveMode !== "view"
+    && !pagesState.isLoading
+    && !hasTextOnlyPages
+    && documentTypeNeedsFormHint(selectedType);
 
   // Has the editable latest copy diverged from the loaded baseline?
   const editDirty =
@@ -826,9 +893,48 @@ export function DocumentForm({
           error={errors.documentTypeId?.message}
           options={typeOptions.map((opt) => ({
             value: opt.id,
-            label: opt.name,
+            // Slice #27.02: the types that HAVE a form say so; every other
+            // option is its own name, unchanged. Which way round that goes, and
+            // why, is argued in `documentTypeOptionLabel` — it is not a detail
+            // to re-decide here.
+            //
+            // ⚠️ **Every option, with no carve-out, and two review rounds went
+            // round the houses before settling there.** Both carve-outs that
+            // were tried are recorded here so the next round does not re-try
+            // them:
+            //
+            //   `effectiveMode === "view" ? opt.name : …` — meant to keep the
+            //     mark out of a read-only document's Tip field. It covered the
+            //     two rare screens and left the ordinary document page, which is
+            //     `mode="edit"`, marked exactly as before.
+            //   `opt.id === selectedDocumentTypeId ? opt.name : …` — meant to
+            //     keep it out of the CLOSED control, since a native <select>
+            //     renders the chosen option's label as its own text. But the
+            //     same <option> is the highlighted row in the OPEN list, so it
+            //     opted the user's own type out of the scheme: on a document
+            //     whose type HAS a form, every other form-having type read
+            //     "(are formular)" and theirs read as though it had none.
+            //
+            // The requirement is about picking — "a user picking a document type
+            // can see which types have a custom form" — so the picker has to be
+            // consistent, and that decides it. What the mark then also does in
+            // the closed field is not pollution but the positive half of this
+            // slice: the hint below speaks only when there is NO form, so
+            // "(are formular)" is the only place a user is told there IS one.
+            label: documentTypeOptionLabel(
+              opt.name,
+              opt.templateFields,
+              (name) => t("typeForm.optionHasForm", { name }),
+            ),
           }))}
           highlight={displayHighlights?.documentTypeId}
+          // Slice #27.02: shown for a type with no custom form, wherever the
+          // feature is reachable — see `showNoFormHint` for the line that draws.
+          // In create mode the Descoperire AI button is not on the page yet, and
+          // the hint shows anyway: the goal is that the user is told BEFORE the
+          // first save, so the sentence names the feature rather than pointing
+          // at a control.
+          hint={showNoFormHint ? t("typeForm.noFormHint") : undefined}
         />
         <Field
           label={t("fields.subject")}
@@ -1106,9 +1212,9 @@ export function DocumentForm({
               here in one place, not two. */}
           {mode === "edit" && documentId && (() => {
             const hasPages = pagesState.pages.length > 0;
-            const hasTextOnlyPages = hasPages && pagesState.pages.every(
-              (p) => p.fileName.toLowerCase().endsWith(".txt"),
-            );
+            // Slice #27.02: `hasTextOnlyPages` moved up to the component body —
+            // the type field's hint has to answer the same question, and it must
+            // answer it the same way.
             if (hasTextOnlyPages) return null;
             // One writer since #26.09 — see the state block. It stays a named
             // `busy` rather than being inlined because the disabled test also
@@ -1157,9 +1263,7 @@ export function DocumentForm({
             key={selectedDocumentTypeId}
             pairs={discoverResult.pairs}
             typeId={selectedDocumentTypeId}
-            typeName={
-              typeOptions.find((opt) => opt.id === selectedDocumentTypeId)?.name ?? ""
-            }
+            typeName={selectedType?.name ?? ""}
             existing={templateFields}
             partyRoleNames={discoverResult.partyRoleNames}
             skippedPages={discoverResult.skippedPages}
@@ -1459,11 +1563,45 @@ function SelectField({
   error,
   options,
   highlight,
-}: FieldProps & { options: { value: string; label: string }[] }) {
+  hint,
+}: FieldProps & {
+  options: { value: string; label: string }[];
+  /**
+   * Slice #27.02: a plain statement about the chosen option, rendered under the
+   * control. NOT a validation message — it is muted body text with no icon and
+   * no colour, because the only caller uses it to say a document type has no
+   * custom form, which is the correct and permanent answer for several types.
+   */
+  hint?: string;
+}) {
   const ring = usePulseRing(highlight);
+  // Slice #27.02: an explicit id, and a <label htmlFor> instead of a <label>
+  // wrapping the whole field. Two things a review round caught, both fixed by
+  // the same change:
+  //   • Everything inside a wrapping <label> is the control's ACCESSIBLE NAME.
+  //     The error text already joined it; a full sentence of hint would have
+  //     made the field announce itself as its own help text. Named by the label
+  //     alone now, described by the hint and the error.
+  //   • A click anywhere inside a wrapping <label> activates the control, so in
+  //     Chrome selecting the hint text to read it pops the dropdown open over
+  //     the form. Outside the label, the sentence is just a sentence.
+  const fieldId = useId();
+  const hintId  = `${fieldId}-hint`;
+  const errorId = `${fieldId}-error`;
+  const describedBy = [hint ? hintId : null, error ? errorId : null]
+    .filter(Boolean)
+    .join(" ");
   return (
-    <label className="flex items-center gap-2 text-sm">
-      <span className="w-36 shrink-0 font-medium text-ink dark:text-zinc-300">{label}</span>
+    // `items-start` once a hint is present, so the label sits on the select's
+    // line instead of drifting to the middle of a two-line block — the same
+    // treatment TextAreaField above gives its own taller control.
+    <div className={`flex gap-2 text-sm ${hint ? "items-start" : "items-center"}`}>
+      <label
+        htmlFor={fieldId}
+        className={`w-36 shrink-0 font-medium text-ink dark:text-zinc-300${hint ? " pt-1" : ""}`}
+      >
+        {label}
+      </label>
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <select
           // Bug fix: `options` loads asynchronously (useQuery). This <select>
@@ -1480,7 +1618,13 @@ function SelectField({
           // again against the now-populated list and the select displays the
           // correct option instead of the first list entry.
           key={options.length > 0 ? "loaded" : "loading"}
+          id={fieldId}
           {...register(name)}
+          // Slice #27.02: the hint AND the error, in that order. Before this the
+          // error was announced only because it happened to fall inside the
+          // wrapping <label>; naming the field properly would have silently
+          // dropped it, which is how an accessibility fix becomes a regression.
+          aria-describedby={describedBy || undefined}
           aria-invalid={error ? true : undefined}
           className={[
             "w-full rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none disabled:bg-canvas disabled:text-fade disabled:cursor-default dark:bg-zinc-950 dark:disabled:bg-zinc-800",
@@ -1495,11 +1639,14 @@ function SelectField({
             <option key={o.value} value={o.value}>{o.label}</option>
           ))}
         </select>
+        {hint && (
+          <span id={hintId} className="text-xs text-fade dark:text-zinc-400">{hint}</span>
+        )}
         {error && (
-          <span className="text-xs text-red-600 dark:text-red-400">{error}</span>
+          <span id={errorId} className="text-xs text-red-600 dark:text-red-400">{error}</span>
         )}
       </div>
-    </label>
+    </div>
   );
 }
 

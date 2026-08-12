@@ -35,6 +35,8 @@ import {
   documentStatus,
   documentTypeHasForm,
   documentTypeNameClass,
+  documentTypeNeedsFormHint,
+  documentTypeOptionLabel,
   documentTypeOriginOf,
   documentTypeStatus,
   isDocumentTypeOrigin,
@@ -75,6 +77,112 @@ describe("documentTypeHasForm — the AI-completed test", () => {
 
   it.each(HAS_FORM)("is true for %s", (_label, raw) => {
     expect(documentTypeHasForm(raw)).toBe(true);
+  });
+});
+
+describe("documentTypeOptionLabel — the picker marks the MINORITY", () => {
+  // Stands in for the `t("typeForm.optionHasForm")` call the form passes.
+  const mark = (name: string) => `${name} (are formular)`;
+
+  it.each(NO_FORM)("returns a type with %s byte-for-byte unchanged", (_label, raw) => {
+    expect(documentTypeOptionLabel("Contract", raw, mark)).toBe("Contract");
+  });
+
+  // ⚠️ A review round: thirteen cases all passing the same clean ASCII name
+  // prove nothing about "byte-for-byte". `name.trim()`, `String(name)` and
+  // `name.normalize("NFC")` all pass those and all change what a real row
+  // renders — the value-lists editor accepts a trailing space, and the comma-
+  // below/cedilla pair is a live hazard in this codebase's Romanian data.
+  //
+  // ⚠️ The DECOMPOSED row is the one that catches `.normalize("NFC")`. A second
+  // review round pointed out that the two precomposed diacritic rows below it
+  // (U+0163 cedilla, U+021B comma-below) are NFC no-ops and prove nothing the
+  // ASCII name does not; they stay because the cedilla/comma-below pair is a
+  // live hazard in this data, but the `t` + combining-cedilla row is what makes
+  // the normalise claim testable.
+  it.each([
+    ["a trailing space",       "Contract vânzare-cumpărare  "],
+    ["a leading space",        " Contract"],
+    ["cedilla diacritics",     "Proces verbal de recepţie"],
+    ["comma-below diacritics", "Proces verbal de recepție"],
+    ["decomposed diacritics",  "Proces verbal de recept\u0327ie"],
+    ["the empty string",       ""],
+  ])("returns a formless type's name with %s exactly as given", (_label, name) => {
+    expect(documentTypeOptionLabel(name, null, mark)).toBe(name);
+    // …and the marked path does not launder it either.
+    expect(documentTypeOptionLabel(name, [FIELD], (n) => n)).toBe(name);
+  });
+
+  it.each(HAS_FORM)("marks a type with %s", (_label, raw) => {
+    expect(documentTypeOptionLabel("Contract", raw, mark)).toBe("Contract (are formular)");
+  });
+
+  // ⚠️ Not the same assertion as the one above. A marker that happened to
+  // return its argument unchanged would satisfy "byte-for-byte" and still be
+  // wrong — the day the wording gains a suffix, twenty-three of twenty-four
+  // options grow one. This pins that the marker is not REACHED.
+  it("never calls the marker for a formless type", () => {
+    const calls: string[] = [];
+    documentTypeOptionLabel("Contract", null, (n) => { calls.push(n); return n; });
+    expect(calls).toEqual([]);
+  });
+
+  it("hands the marker the raw name and returns whatever it makes of it", () => {
+    expect(documentTypeOptionLabel("Contract", [FIELD], (n) => `<<${n}>>`)).toBe("<<Contract>>");
+  });
+
+  // The whole reason this lives in status.ts: a type that reads "Are formular"
+  // in bold green on the Reference Data list must be the same set of types the
+  // dropdown marks. One function, so the two cannot part company.
+  //
+  // ⚠️ Both origins, and a review round is why. Pinned at MANUAL this loop is
+  // `hasForm(raw) === hasForm(raw)` — it cannot fail. Varying the origin makes
+  // it say something: the mark follows the FORM alone, so a `documentTypeStatus`
+  // rewritten to test the origin first (returning aiScanned for an IMPORT type
+  // that has a form) breaks here, which is #26.12's own named failure mode.
+  it("marks exactly the types Reference Data calls AI completed", () => {
+    let checked = 0;
+    for (const origin of [...DOCUMENT_TYPE_ORIGINS, "AUTO", undefined]) {
+      for (const [label, raw] of [...NO_FORM, ...HAS_FORM]) {
+        const marked = documentTypeOptionLabel("Contract", raw, mark) !== "Contract";
+        const completed = documentTypeStatus({ origin, templateFields: raw }) === "aiCompleted";
+        expect([origin, label, marked]).toEqual([origin, label, completed]);
+        checked++;
+      }
+    }
+    expect(checked).toBe(4 * (NO_FORM.length + HAS_FORM.length));
+  });
+});
+
+describe("documentTypeNeedsFormHint — a MISSING row is not a formless one", () => {
+  it.each(NO_FORM)("is true for a row whose template_fields is %s", (_label, raw) => {
+    expect(documentTypeNeedsFormHint({ templateFields: raw })).toBe(true);
+  });
+
+  it.each(HAS_FORM)("is false for a row whose template_fields is %s", (_label, raw) => {
+    expect(documentTypeNeedsFormHint({ templateFields: raw })).toBe(false);
+  });
+
+  // ⚠️ The reason this is a function at all. `!documentTypeHasForm(row?.tf)`
+  // answers TRUE here, and the hint then flashes under EVERY document — the
+  // ones whose type has a form included — for as long as the react-query
+  // `["document-types"]` fetch is in flight, and forever in create mode before
+  // a type is picked.
+  it.each([
+    ["undefined — the list has not loaded", undefined],
+    ["null",                                null],
+  ])("is false for %s", (_label, row) => {
+    expect(documentTypeNeedsFormHint(row)).toBe(false);
+  });
+
+  // A row that EXISTS but carries no template_fields reads as formless, on
+  // purpose: `documentTypeHasForm` already says so everywhere else (the status
+  // badge, the Reference Data colour), and a second rule here would be the
+  // disagreement #26.12 exists to prevent. The way that shape actually reaches
+  // the browser — a projected `fetchDocumentTypes` poisoning the shared query
+  // cache — is headed off in `app/documents/list-view.tsx`, not here.
+  it("treats a row with no template_fields property as formless", () => {
+    expect(documentTypeNeedsFormHint({})).toBe(true);
   });
 });
 

@@ -1207,6 +1207,10 @@
       "aiInterpretNoPages": "Adăugați pagini pentru a folosi AI",
       "aiDiscover": "Citește documentul și propune câmpurile formularului pentru acest tip de document — nu se salvează nimic până nu confirmați"
     },
+    "typeForm": {
+      "optionHasForm": "{name} (are formular)",
+      "noFormHint": "Acest tip de document nu are formular propriu: Descoperire AI citește documentul și propune câmpuri care, după confirmare, se adaugă la tipul de document, așa că apar pe toate documentele de acest tip."
+    },
     "surveyorPicker": {
       "title": "Selectați Topograful",
       "stepChooseType": "Ce tip de persoană este topograful?",

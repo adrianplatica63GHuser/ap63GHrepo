@@ -26,6 +26,20 @@ type DocumentTypeOption = {
   name: string;
 };
 
+/**
+ * ⚠️ **Shares the react-query key `["document-types"]` with the document form's
+ * own copy of this function** (`_components/document-form.tsx`), so whichever
+ * page loads first fills the cache both of them read.   (Slice #27.02)
+ *
+ * That is fine only because both return `body.items` RAW. The form reads
+ * `templateFields` off those rows to mark the types that have a custom form and
+ * to decide whether to show its "this type has no form" hint; the day this
+ * function starts projecting (`.map(({ id, name }) => …)`, an obvious tidy given
+ * the type below names three fields), a user who arrives via the Documents list
+ * gets a form that marks nothing and tells them every type is formless —
+ * including the ones that are not. Project here and the form must stop sharing
+ * the key, or read the column it needs from somewhere else.
+ */
 async function fetchDocumentTypes(): Promise<DocumentTypeOption[]> {
   const res = await fetch("/api/admin/value-lists/document-types");
   if (!res.ok) throw new Error(`Request failed (${res.status})`);

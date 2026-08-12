@@ -1207,6 +1207,10 @@
       "aiInterpretNoPages": "Add pages before using AI",
       "aiDiscover": "Reads the document and proposes the form fields for this document type — nothing is saved until you accept"
     },
+    "typeForm": {
+      "optionHasForm": "{name} (has a form)",
+      "noFormHint": "This document type has no form of its own: AI Discover reads the document and proposes fields that, once you accept them, are added to the document type and so appear on every document of that type."
+    },
     "surveyorPicker": {
       "title": "Select Surveyor",
       "stepChooseType": "What type of person is the surveyor?",

@@ -28,8 +28,8 @@
  *
  * ONE literal on its own is never an offence, and neither is the SAME
  * extension twice: a lone `".txt"` is legitimate all over the codebase, and
- * `document-form.tsx` holds two identical `endsWith(".txt")` predicates that
- * someone will eventually and rightly hoist into one helper. Two DIFFERENT
+ * a lone `".txt"` was legitimate in two places in `document-form.tsx` until
+ * Slice #27.02 hoisted them into one `hasTextOnlyPages`. Two DIFFERENT
  * extensions close together is the signature of a re-typed list.
  *
  * WHAT IT DELIBERATELY DOES NOT LOOK FOR
@@ -449,8 +449,9 @@ describe("file kinds are declared in exactly one place", () => {
  *
  * The `catches: false` half matters as much as the other: it is what stops a
  * future tightening from failing CI on the `accept` strings and MIME lists
- * that Slice #24.04 owns, on `document-form.tsx`'s two identical `.txt`
- * predicates, or on an apostrophe in JSX text. Every entry here is a defect
+ * that Slice #24.04 owns, on a lone `.txt` predicate (`document-form.tsx` had
+ * two until #27.02 hoisted them), or on an apostrophe in JSX text. Every entry
+ * here is a defect
  * that was real in an earlier draft of this file.
  */
 const EVASIONS: { name: string; code: string; catches: boolean }[] = [
