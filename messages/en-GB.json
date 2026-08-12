@@ -1171,7 +1171,7 @@
     },
     "status": {
       "label": "Processing status",
-      "new": "Entered by hand",
+      "new": "Not processed",
       "imported": "Imported",
       "aiProcessed": "AI processed"
     },
@@ -1555,7 +1555,7 @@
     "documentTypeStatus": {
       "new": "Added by hand",
       "aiScanned": "Created by an import",
-      "aiCompleted": "Has an AI form"
+      "aiCompleted": "Has a form"
     },
     "modal": {
       "close": "Close"

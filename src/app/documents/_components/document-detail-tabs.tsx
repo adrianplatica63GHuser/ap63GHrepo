@@ -91,21 +91,37 @@ export function DocumentDetailTabs({
     <div className="max-w-[93rem] mx-auto w-full flex flex-col gap-4">
       {/* Slice #19.07: name on the left, version controls right-aligned on the
           same line (portalled in by the details form via navSlot). */}
-      {/* ⚠️ `md:pr-[22rem]` and the h1's `min-w-0 truncate` are ONE fix, and an
-          adversarial round on #26.12 is why. `navSlot` below is
-          `absolute inset-y-0 right-0`, so it is out of flow and this flex row
-          cannot see it — document-form.tsx portals the whole version strip in
-          there ("v 3", the history chip, ◀ ▶, "Fă curentă"). Before the status
-          pill the h1 could already run under it; the pill is `shrink-0` and
-          adds a `gap-3`, so it moved the collision point ~100px left and made
-          it reachable at ordinary Romanian title lengths. The padding reserves
-          the strip's lane and the truncate makes the TITLE yield rather than
-          the pill. 22rem is an estimate of the strip's widest state, not a
-          measurement — re-measure it if a control is added there. Left off
-          below `md`, where the absolute slot already overlapped and this slice
-          did not make it worse. */}
-      <header className="relative flex min-h-[2.5rem] items-center gap-3 md:pr-[22rem]">
-        <h1 className="min-w-0 truncate text-2xl font-semibold tracking-tight">{documentName}</h1>
+      {/* ⚠️ **`navSlot` is IN FLOW, and two adversarial rounds on #26.12 are why.**
+          It used to be `absolute inset-y-0 right-0`, so the flex row could not
+          see it — and document-form.tsx portals the whole version strip in
+          there ("v 3", the history chip, ◀ ▶, "Fă curentă"). The h1 could
+          already run underneath it; the status pill is `shrink-0` and adds a
+          `gap-3`, which moved the collision point about 100px left and made it
+          reachable at ordinary Romanian title lengths.
+
+          The first fix reserved the strip's lane with `md:pr-[22rem]`. Round
+          two killed it: the portal is `{versionNavSlot && versionNav && …}`, so
+          on first paint, on every tab but Details, and whenever `versionNav` is
+          falsy, the padding was 352px of dead space with the title truncated
+          beside it. `ml-auto shrink-0` in flow costs nothing when the slot is
+          empty and makes the row measure the strip when it is not — no magic
+          number, and nothing to re-measure when a control is added there.
+
+          `pointer-events-none` stays: VersionNavControls re-enables clicks on
+          its own wrappers (`pointer-events-auto`, see the comment there), and
+          without it an empty-but-sized slot could swallow clicks on the title.
+
+          `min-w-0 truncate` makes the TITLE yield rather than the pill, and
+          `title` keeps the full name reachable for a sighted user once it is
+          clipped — the pill's own `title` was removed as a duplicate
+          announcement, so nothing else on this row carries one. */}
+      <header className="relative flex min-h-[2.5rem] items-center gap-3">
+        <h1
+          className="min-w-0 truncate text-2xl font-semibold tracking-tight"
+          title={documentName}
+        >
+          {documentName}
+        </h1>
         {/* Slice #26.12: "near the top", as the source document asks — beside
             the name, so it is read with the document rather than found. A
             plain <span>, not a live region: it is a standing property of the
@@ -128,7 +144,7 @@ export function DocumentDetailTabs({
         )}
         <div
           ref={setNavSlot}
-          className="pointer-events-none absolute inset-y-0 right-0 flex items-center"
+          className="pointer-events-none ml-auto flex shrink-0 items-center"
         />
       </header>
 

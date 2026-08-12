@@ -1171,7 +1171,7 @@
     },
     "status": {
       "label": "Stare procesare",
-      "new": "Introdus manual",
+      "new": "Neprocesat",
       "imported": "Importat",
       "aiProcessed": "Procesat cu AI"
     },
@@ -1555,7 +1555,7 @@
     "documentTypeStatus": {
       "new": "Adăugat manual",
       "aiScanned": "Creat la import",
-      "aiCompleted": "Cu formular AI"
+      "aiCompleted": "Are formular"
     },
     "modal": {
       "close": "Închide"
