@@ -28,6 +28,7 @@
  * would catch it.
  */
 
+import { parseTemplateFields } from "@/lib/documents/template-fields";
 import {
   DOCUMENT_TYPE_ORIGINS,
   DOCUMENT_TYPE_STATUS_CLASS,
@@ -167,7 +168,7 @@ describe("documentStatus — New / Imported / AI processed", () => {
     expect(documentStatus({ aiInterpretedAt: stamp, typeTemplateFields: [FIELD] })).toBe("new");
   });
 
-  it("is AI processed when an import read it into its type's form", () => {
+  it("is AI processed when the stamp is set and the type CURRENTLY has a form", () => {
     expect(documentStatus({
       aiInterpretedAt:    new Date("2026-08-09T10:00:00.000Z"),
       typeTemplateFields: [FIELD],
@@ -178,7 +179,7 @@ describe("documentStatus — New / Imported / AI processed", () => {
     })).toBe("aiProcessed");
   });
 
-  it("is Imported when an import read it and the type had no form", () => {
+  it("is Imported when the stamp is set and the type has no form", () => {
     expect(documentStatus({
       aiInterpretedAt:    new Date("2026-08-09T10:00:00.000Z"),
       typeTemplateFields: null,
@@ -188,6 +189,33 @@ describe("documentStatus — New / Imported / AI processed", () => {
       aiInterpretedAt:    "2026-08-09T10:00:00.000Z",
       typeTemplateFields: [{}],
     })).toBe("imported");
+  });
+});
+
+describe("the consequence of reading the type's CURRENT form", () => {
+  // ⚠️ **Named, not fixed, and an adversarial round is why it is written down.**
+  // `documentStatus` never looks at `document.custom_fields`. So a document
+  // imported in January against a type that had no template reads "Importat",
+  // correctly — and the day an admin gives that type a form through #26.11's
+  // review, the SAME document starts reading "Procesat cu AI" although no
+  // extraction ever ran on it and its custom fields are empty.
+  //
+  // That is the brief's own rule ("AI processed if its type has a status of AI
+  // completed"), so it ships as specified rather than being quietly narrowed.
+  // It is pinned here so the behaviour is a decision on the record: if it turns
+  // out to mislead, the fix is to require a populated custom field and this
+  // test is the one to invert.
+  it("relabels an already-imported document when its type later gains a form", () => {
+    const before = documentStatus({
+      aiInterpretedAt:    new Date("2026-01-15T09:00:00.000Z"),
+      typeTemplateFields: null,
+    });
+    const after = documentStatus({
+      aiInterpretedAt:    new Date("2026-01-15T09:00:00.000Z"),
+      typeTemplateFields: [FIELD],
+    });
+    expect(before).toBe("imported");
+    expect(after).toBe("aiProcessed");
   });
 });
 
@@ -202,20 +230,43 @@ describe("the brief's own sentence, as a property", () => {
   ];
   const FIELDS: [string, unknown][] = [...NO_FORM, ...HAS_FORM];
 
-  it("keeps the document label and the type label in agreement", () => {
+  // ⚠️ **The expectation is rebuilt from the RAW inputs, not read back out of
+  // the module under test, and an adversarial round is why.** The first version
+  // of this loop compared `documentStatus(...)` against
+  // `documentTypeStatus(...)`, feeding both the same `templateFields` — which
+  // reduces to `hasForm(tf) === hasForm(tf)`, a tautology. Inverting the entire
+  // origin rule (IMPORT renders as New, MANUAL as AI scanned) passed all 312
+  // iterations of it. Deriving `expectedType` here from `parseTemplateFields`
+  // and `documentTypeOriginOf` is what makes the origin loop below load-bearing
+  // instead of decoration.
+  it("keeps both labels tied to the facts they are supposed to read", () => {
+    let checked = 0;
     for (const origin of [...DOCUMENT_TYPE_ORIGINS, "AUTO", undefined]) {
       for (const [, templateFields] of FIELDS) {
         for (const [, aiInterpretedAt] of STAMPS) {
-          const typeStatus = documentTypeStatus({ origin, templateFields });
-          const docStatus  = documentStatus({ aiInterpretedAt, typeTemplateFields: templateFields });
+          const hasForm = parseTemplateFields(templateFields).length > 0;
           const stamped = aiInterpretedAt instanceof Date
             || (typeof aiInterpretedAt === "string" && aiInterpretedAt.trim().length > 0);
 
-          expect(docStatus === "aiProcessed").toBe(stamped && typeStatus === "aiCompleted");
-          expect(docStatus === "imported").toBe(stamped && typeStatus !== "aiCompleted");
-          expect(docStatus === "new").toBe(!stamped);
+          const expectedType = hasForm
+            ? "aiCompleted"
+            : documentTypeOriginOf(origin) === "IMPORT" ? "aiScanned" : "new";
+          const expectedDoc = !stamped
+            ? "new"
+            : hasForm ? "aiProcessed" : "imported";
+
+          expect(documentTypeStatus({ origin, templateFields })).toBe(expectedType);
+          expect(documentStatus({ aiInterpretedAt, typeTemplateFields: templateFields }))
+            .toBe(expectedDoc);
+
+          // …and the brief's sentence, which is the LINK between the two.
+          expect(expectedDoc === "aiProcessed").toBe(stamped && expectedType === "aiCompleted");
+          checked += 1;
         }
       }
     }
+    // A guard on the guard: a typo that empties one of the three arrays would
+    // otherwise leave a green test that checked nothing.
+    expect(checked).toBe(4 * FIELDS.length * STAMPS.length);
   });
 });
