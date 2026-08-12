@@ -235,7 +235,7 @@ describe("the brief's own sentence, as a property", () => {
   // of this loop compared `documentStatus(...)` against
   // `documentTypeStatus(...)`, feeding both the same `templateFields` — which
   // reduces to `hasForm(tf) === hasForm(tf)`, a tautology. Inverting the entire
-  // origin rule (IMPORT renders as New, MANUAL as AI scanned) passed all 312
+  // origin rule (IMPORT renders as New, MANUAL as AI scanned) passed all 208
   // iterations of it. Deriving `expectedType` here from `parseTemplateFields`
   // and `documentTypeOriginOf` is what makes the origin loop below load-bearing
   // instead of decoration.

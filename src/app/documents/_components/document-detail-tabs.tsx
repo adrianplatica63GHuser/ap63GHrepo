@@ -111,13 +111,17 @@ export function DocumentDetailTabs({
           its own wrappers (`pointer-events-auto`, see the comment there), and
           without it an empty-but-sized slot could swallow clicks on the title.
 
-          `min-w-0 truncate` makes the TITLE yield rather than the pill, and
-          `title` keeps the full name reachable for a sighted user once it is
-          clipped — the pill's own `title` was removed as a duplicate
-          announcement, so nothing else on this row carries one. */}
+          `min-w-[8rem] truncate` makes the TITLE yield rather than the pill —
+          but only down to a floor. With a plain `min-w-0` the h1 was the only
+          item on the row that could shrink and its floor was ZERO, so on a
+          phone-width viewport the pill and the strip together reduced the name
+          to a sliver; the strip overflows instead now. `title` keeps the full
+          name reachable for a sighted user once it is clipped — the pill's own
+          `title` was removed as a duplicate announcement, so nothing else on
+          this row carries one. */}
       <header className="relative flex min-h-[2.5rem] items-center gap-3">
         <h1
-          className="min-w-0 truncate text-2xl font-semibold tracking-tight"
+          className="min-w-[8rem] truncate text-2xl font-semibold tracking-tight"
           title={documentName}
         >
           {documentName}

@@ -14,10 +14,21 @@
 --   being hand-maintained.
 --
 -- SAFETY
---   Every statement is idempotent (IF NOT EXISTS / guarded DO block) and
---   purely additive. Nothing is dropped, no data is rewritten. Running it
---   against an already-correct database is a no-op that reports "0 missing".
---   Safe to run on production with live data.
+--   Every statement is idempotent (IF NOT EXISTS / guarded DO block). Nothing
+--   is dropped. Running it against an already-correct database is a no-op that
+--   reports "0 missing". Safe to run on production with live data.
+--
+--   TWO STATEMENTS ARE NOT PURELY ADDITIVE, and they are named here rather
+--   than left for a reader to discover (Slice #26.12 review):
+--     * `UPDATE lookup_document_type SET origin = 'MANUAL' WHERE origin IS NULL`
+--       writes data. It touches ONLY rows whose origin is NULL, which the
+--       application already reads as MANUAL, so it changes no behaviour - but
+--       it is a write, and this file used to promise there were none.
+--     * `ALTER TABLE lookup_document_type ALTER COLUMN origin SET NOT NULL`
+--       takes ACCESS EXCLUSIVE for the length of a full-table scan. On a
+--       lookup table of a few dozen rows that is immeasurable; on a large
+--       table it would not be.
+--   Anything added here later should hold to "additive" unless it says why not.
 --
 -- HOW TO APPLY
 --   Supabase : paste this whole file into the SQL Editor and run.
@@ -535,34 +546,13 @@ BEGIN
   END IF;
 END $$;
 
--- Post-flight for THIS column specifically. The file's closing check counts
--- TABLES, so without this a database that never got the column would still
--- print "POST-FLIGHT OK" — and the column is not cosmetic: createValue names
--- `origin` in .values() and selects it back in .returning(), so its absence
--- breaks every document-type create, including the one ensureDocType does
--- mid-import. Missing column is fatal; a missing CHECK is a warning, because
--- the only way to reach that state is a row this file refused to constrain and
--- the operator has already been told about it above.
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_schema = 'public'
-      AND table_name   = 'lookup_document_type'
-      AND column_name  = 'origin'
-  ) THEN
-    RAISE EXCEPTION 'POST-FLIGHT FAILED: lookup_document_type.origin is missing.';
-  END IF;
-
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint
-    WHERE conname = 'chk_ldt_origin' AND conrelid = 'lookup_document_type'::regclass
-  ) THEN
-    RAISE WARNING 'lookup_document_type.origin exists but chk_ldt_origin does not -- see the warning above.';
-  ELSE
-    RAISE NOTICE 'POST-FLIGHT OK: lookup_document_type.origin present and constrained.';
-  END IF;
-END $$;
+-- The post-flight for this column lives in section 10, with the file's other
+-- one. A check in the middle of the file is a check nobody reads: under
+-- `psql -f` a mid-file RAISE EXCEPTION aborts only its own DO block, psql
+-- carries on and still prints "POST-FLIGHT OK: all 13 tables present." as the
+-- LAST line, exit 0 -- so the operator, whom the header tells to read the end
+-- of the output, is told everything is fine 150 lines after being told it is
+-- not. (Slice #26.12 review round 3.)
 
 -- migration_057 -- soft-delete on the 13 lookup / reference tables
 ALTER TABLE lookup_property_type          ADD COLUMN IF NOT EXISTS deleted_at timestamptz;
@@ -675,6 +665,7 @@ DECLARE
   ];
   t       text;
   missing text[] := '{}';
+  faults  text[] := '{}';
 BEGIN
   FOREACH t IN ARRAY expected LOOP
     IF NOT EXISTS (
@@ -685,9 +676,35 @@ BEGIN
     END IF;
   END LOOP;
 
-  IF array_length(missing, 1) IS NULL THEN
-    RAISE NOTICE 'POST-FLIGHT OK: all 13 tables present.';
+  -- Columns worth failing over, not just tables. lookup_document_type.origin
+  -- is the first: createValue names it in .values() and selects it back in
+  -- .returning(), so its absence breaks EVERY document-type create, including
+  -- the one ensureDocType does mid-import. A table-only post-flight reported
+  -- such a database as OK. (Slice #26.12.)
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name   = 'lookup_document_type'
+      AND column_name  = 'origin'
+  ) THEN
+    faults := array_append(faults, 'lookup_document_type.origin (column missing)');
+  ELSIF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'chk_ldt_origin' AND conrelid = 'lookup_document_type'::regclass
+  ) THEN
+    -- A warning, not a fault: the only route here is a row this file already
+    -- refused to constrain and warned about above, and the app reads an
+    -- unrecognised origin as MANUAL rather than breaking.
+    RAISE WARNING 'chk_ldt_origin is absent -- a row holds an origin outside (MANUAL, IMPORT). Find it with: SELECT id, name, origin FROM lookup_document_type WHERE origin NOT IN (''MANUAL'', ''IMPORT'');';
+  END IF;
+
+  IF array_length(missing, 1) IS NOT NULL THEN
+    faults := array_append(faults, 'tables: ' || array_to_string(missing, ', '));
+  END IF;
+
+  IF array_length(faults, 1) IS NULL THEN
+    RAISE NOTICE 'POST-FLIGHT OK: all 13 tables present, lookup_document_type.origin present.';
   ELSE
-    RAISE EXCEPTION 'POST-FLIGHT FAILED: still missing %', array_to_string(missing, ', ');
+    RAISE EXCEPTION 'POST-FLIGHT FAILED: %', array_to_string(faults, ' | ');
   END IF;
 END $$;

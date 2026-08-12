@@ -1550,7 +1550,7 @@
       "description": "Description",
       "institutionType": "Institution Type",
       "category": "Category",
-      "status": "Origin"
+      "status": "Status"
     },
     "documentTypeStatus": {
       "new": "Added by hand",

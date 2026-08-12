@@ -1550,7 +1550,7 @@
       "description": "Descriere",
       "institutionType": "Tip instituție",
       "category": "Categorie",
-      "status": "Origine"
+      "status": "Stare"
     },
     "documentTypeStatus": {
       "new": "Adăugat manual",
