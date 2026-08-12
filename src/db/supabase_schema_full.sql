@@ -4,7 +4,7 @@
 -- GENERATED FILE -- DO NOT EDIT BY HAND.
 -- Regenerate with:  .\scripts\Export-SupabaseSchema.ps1
 --
--- Generated : 2026-08-03 13:17
+-- Generated : 2026-08-12 09:30
 -- Source    : local Docker database (ga40db @ ga40prj-postgres)
 --
 -- Applies the complete schema from scratch after running
@@ -610,8 +610,17 @@ CREATE TABLE public.lookup_document_type (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     key text NOT NULL,
     deleted_at timestamp with time zone,
-    template_fields jsonb
+    template_fields jsonb,
+    origin text DEFAULT 'MANUAL'::text NOT NULL,
+    CONSTRAINT chk_ldt_origin CHECK ((origin = ANY (ARRAY['MANUAL'::text, 'IMPORT'::text])))
 );
+
+
+--
+-- Name: COLUMN lookup_document_type.origin; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.lookup_document_type.origin IS 'How this type came to exist: MANUAL = added in Reference Data, IMPORT = created by ensureDocType during an import scan. Write-once at creation; the value-lists PUT strips it. Everything else about a type''s status is derived - see src/lib/documents/status.ts.';
 
 
 --
