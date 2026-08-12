@@ -38,6 +38,11 @@ import {
 import { getTypeConfig } from "@/lib/documents/type-config";
 import { parseTemplateFields } from "@/lib/documents/template-fields";
 import {
+  isCertificatesGroup,
+  isFeesGroup,
+  isFinancialGroup,
+} from "@/lib/documents/template-groups";
+import {
   documentTypeNeedsFormHint,
   documentTypeOptionLabel,
 } from "@/lib/documents/status";
@@ -751,10 +756,15 @@ export function DocumentForm({
   // onorarii pair up side by side at half width, Certificate și referințe
   // always renders full-width/auto-grow. Any other group name keeps the
   // generic 2-column rendering, unchanged from before this slice.
-  const isFeesGroup = (label: string) => label === "Taxe și onorarii" || label === "Fees";
-  const isFinancialGroup = (label: string) => label === "Financiar" || label === "Financial";
-  const isCertificatesGroup = (label: string) =>
-    label === "Certificate și referințe" || label === "Certificates and references";
+  //
+  // Slice #27.03: the three names moved to `@/lib/documents/template-groups`
+  // and the local arrow functions became imports. Nothing about the matching
+  // changed — it is the same exact-text test on the same six strings. What
+  // changed is that Reference Data → Document Types now lets an administrator
+  // put a field in one of these groups from a keyboard, and it offers them BY
+  // NAME from that module. Had the names stayed spelled out here, the picker
+  // would have been a second copy of them, and a copy that drifted by one
+  // diacritic would cost a type this layout with nothing to see in a diff.
 
   // Bucket the active type's custom fields by group — same first-appearance
   // ordering as before this slice — then pick out the three special-cased

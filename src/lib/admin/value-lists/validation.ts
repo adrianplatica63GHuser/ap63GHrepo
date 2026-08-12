@@ -7,10 +7,60 @@
 import { z } from "zod/v4";
 import type { ListKey } from "./config";
 import { DOCUMENT_TYPE_ORIGINS } from "@/lib/documents/status";
+import {
+  MAX_TEMPLATE_FIELDS,
+  mergeAcceptedFields,
+} from "@/lib/documents/discover-to-template";
+import type { DocumentTemplateField } from "@/lib/documents/template-fields";
 
 // ── Leaf schemas ─────────────────────────────────────────────────────────────
 
 const sortOrder = z.coerce.number().int().min(0).default(0);
+
+/**
+ * The same field on a PUT: optional, and **with no `.default()`**.
+ *                                                            (Slice #27.03)
+ *
+ * ⚠️ **A default here is a silent data change on every rename in the app.** The
+ * admin edit form is built from `LIST_META`, and not one list lists
+ * `sortOrder` — so a PUT never carries it. `updateValue` is a full-replace
+ * `.set(parsed.data)`, so a `.default(0)` makes every rename ALSO write
+ * `sort_order = 0`. On Property Types, whose list is ordered by that column,
+ * renaming an entry jumps it to the top of the list; on Document Types the
+ * ordering is by name so nothing moves on screen and the reset is invisible
+ * until something else reads the column. Nothing in the UI can put the value
+ * back, because nothing in the UI can set it.
+ *
+ * Left `.optional()`, an absent `sortOrder` parses to `undefined`, and Drizzle's
+ * `mapUpdateSet` drops undefined entries before building the SQL — so the
+ * column is not named in the UPDATE at all and keeps whatever it had. Every
+ * list schema still has one required field that always parses to a value
+ * (`name` on eight of them, `indicativ` on `tarla`), so the set can never be
+ * empty — Drizzle throws "No values to set" on an empty one.
+ *
+ * ⚠️ **The `null` preprocess is not defensive noise — `z.coerce` makes `null`
+ * a 0.** `Number(null)` is 0, so a bare `z.coerce.number().optional()` accepts
+ * an explicit `sortOrder: null` and quietly parses it to zero, which is the
+ * exact reset this whole field exists to stop, arriving by the one route the
+ * `.optional()` does not cover. Mapping `null` to `undefined` FIRST makes the
+ * two spellings of "no sort order given" behave identically: the key is left
+ * out of the UPDATE and the column keeps what it had. Anything else still
+ * coerces as before, so a form value of `"7"` is still 7 and `-1` is still
+ * rejected.
+ *
+ * ⚠️ **Not `.nullish()` on the number itself.** That would let a real `null`
+ * through to `.set()` and write NULL into a NOT NULL column — a 500 where the
+ * point of this is a no-op.
+ *
+ * This is the shape of the `origin` guard above, one column over: the create
+ * path decides the value, and the update path does not name it. The difference
+ * is that `sortOrder` is not write-once — a caller that genuinely means to
+ * reorder still sends a number and still gets it written.
+ */
+const sortOrderOnUpdate = z.preprocess(
+  (v) => (v === null ? undefined : v),
+  z.coerce.number().int().min(0).optional(),
+);
 
 // Slice #19.02: boolean flags sent as actual JSON booleans from the admin UI.
 const boolField = z.preprocess(
@@ -83,7 +133,20 @@ export const documentTypeSchema = z.object({
   // form (see LIST_META["document-types"]), so a plain rename never touches
   // this column. Only a caller that explicitly sends `templateFields` (e.g.
   // a one-off admin API call to set a type's template) writes to it.
-  templateFields: z.array(documentTemplateFieldSchema).nullish(),
+  // Slice #27.03: the Reference Data form editor writes through this door and
+  // can ADD a field, so the ceiling that PUT /api/document-types/[id]/
+  // template-fields already enforces has to hold here too — otherwise the two
+  // writers disagree about how large a template may be and the smaller one is
+  // the only honest number. Capped on the array rather than checked in the
+  // route so a script that reaches the schema directly is bound by it as well.
+  //
+  // Editing an existing template can only hold the count or shrink it, and no
+  // stored template can exceed the cap (both writers enforce it), so this can
+  // never lock an administrator out of fixing a label on a type he already has.
+  templateFields: z
+    .array(documentTemplateFieldSchema)
+    .max(MAX_TEMPLATE_FIELDS, `at most ${MAX_TEMPLATE_FIELDS} fields`)
+    .nullish(),
   // Slice #26.12 — how this type came to exist. CREATE ONLY: see
   // documentTypeUpdateSchema below, which omits it, and updateValue, which
   // strips it a second time.
@@ -111,7 +174,9 @@ export const documentTypeSchema = z.object({
  * `.omit()` rather than a hand-written second object so the two can never fall
  * out of step on `name`, `sortOrder` or `templateFields`.
  */
-export const documentTypeUpdateSchema = documentTypeSchema.omit({ origin: true });
+export const documentTypeUpdateSchema = documentTypeSchema
+  .omit({ origin: true })
+  .extend({ sortOrder: sortOrderOnUpdate });
 
 export const judicialPersonTypeSchema = z.object({
   name:      z.string().min(1, "required"),
@@ -172,15 +237,81 @@ export function stripDocumentTypeOrigin<T extends Record<string, unknown>>(
 }
 
 /**
- * PUT bodies. Identical to LIST_SCHEMAS except where a list has a field that
- * may be set at creation and never afterwards.
+ * Drop a `templateFields` array through the one sanitiser.   (Slice #27.03)
  *
- * Spread-then-override rather than a full second literal: a list added to
- * VALID_LIST_KEYS gets its update schema for free, and only a list that
- * genuinely needs a different one has to say so here.
+ * ⚠️ **The value-lists PUT is now a keyboard, and it was not before.** Until
+ * this slice the only writer of `template_fields` was PUT /api/document-types/
+ * [id]/template-fields, which runs every field through `mergeAcceptedFields`.
+ * The Reference Data form editor writes through THIS door instead — it has to,
+ * because the other one is additive by construction and cannot rename, reorder
+ * or remove. So the same choke point has to sit on this door too, or a label
+ * typed with a line break reaches `buildExtractSystemPrompt`, which renders
+ * each field as ONE `//` comment line inside the JSON shape it shows the model,
+ * and breaks that shape.
+ *
+ * ⚠️ **`mergeAcceptedFields(fields, [])`, not a second sanitiser.** Its
+ * EXISTING-row arm is exactly the contract this door needs, stated in its own
+ * docblock: labels, hints and group names cleaned; `key` kept BYTE-FOR-BYTE,
+ * never re-slugged, because a key is what every document of the type already
+ * stores its value under; `order` renumbered 0..n-1 from array position, so the
+ * editor can reorder by moving rows and never has to compute a number; and two
+ * rows sharing one key collapsed to the first, because `custom_fields` is keyed
+ * by it and the second could only shadow the first.
+ *
+ * That arm also means **an unsafe key sent by a caller is stored as sent.** It
+ * is the right trade: re-slugging a stored key would strand real data on a save
+ * the user asked for something else entirely. The editor never lets a key be
+ * typed — an added field's key comes from `slugifyFieldKey`, which emits
+ * `[a-z0-9_]{1,40}` — and no stored key can be unsafe, because both writers
+ * have always produced them through that same function.
+ *
+ * `undefined` (the field absent — a plain rename) and `null` are returned
+ * untouched, so a rename still cannot disturb the column and an explicit
+ * `null` still clears the form.
+ *
+ * Lives here rather than beside its call site for the same blunt reason
+ * `stripDocumentTypeOrigin` does: `queries.ts` imports `@/db`, which opens a
+ * `pg.Pool` at module load, so a Jest test importing it would connect to a
+ * database to check an array transform. This module is zod-and-pure-imports
+ * only.
+ */
+export function sanitizeDocumentTypeTemplateFields<T extends Record<string, unknown>>(
+  data: T,
+): T {
+  const raw = data.templateFields;
+  if (!Array.isArray(raw)) return data;
+  return {
+    ...data,
+    templateFields: mergeAcceptedFields(raw as DocumentTemplateField[], []),
+  };
+}
+
+/**
+ * PUT bodies. Identical to LIST_SCHEMAS except for the two things a PUT must
+ * not say: a column that may be set at creation and never afterwards
+ * (`origin`, document-types only), and `sortOrder`, which is optional-without-
+ * a-default on EVERY list — see `sortOrderOnUpdate` for the rename it was
+ * silently resetting.
+ *
+ * ⚠️ **Written out per list rather than spread-then-overridden.** The spread
+ * was there so a list added to `VALID_LIST_KEYS` got its update schema for
+ * free; the `sortOrder` fix means every entry now needs the same `.extend`, and
+ * mapping over `LIST_SCHEMAS` to apply it would need a cast, because that map
+ * is typed `z.ZodType<any>` and `.extend` lives on `z.ZodObject`. A new list
+ * still fails loudly — `Record<ListKey, …>` will not compile with a key
+ * missing — which is what the spread was really buying.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const LIST_UPDATE_SCHEMAS: Record<ListKey, z.ZodType<any>> = {
-  ...LIST_SCHEMAS,
-  "document-types": documentTypeUpdateSchema,
+  "property-types":        propertyTypeSchema.extend({ sortOrder: sortOrderOnUpdate }),
+  "tarla":                 tarlaSchema.extend({ sortOrder: sortOrderOnUpdate }),
+  "use-categories":        useCategorySchema.extend({ sortOrder: sortOrderOnUpdate }),
+  "person-types":          personTypeSchema.extend({ sortOrder: sortOrderOnUpdate }),
+  "person-roles":          personRoleSchema.extend({ sortOrder: sortOrderOnUpdate }),
+  "citizenships":          citizenshipSchema.extend({ sortOrder: sortOrderOnUpdate }),
+  "judicial-person-types": judicialPersonTypeSchema.extend({ sortOrder: sortOrderOnUpdate }),
+  // Already carries `sortOrderOnUpdate` — the omit-plus-extend is on the
+  // exported schema itself, so the two cannot fall out of step.
+  "document-types":        documentTypeUpdateSchema,
+  "institutions":          institutionSchema.extend({ sortOrder: sortOrderOnUpdate }),
 };

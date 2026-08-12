@@ -13,6 +13,8 @@ import {
   documentTypeNameClass,
   documentTypeStatus,
 } from "@/lib/documents/status";
+import { parseTemplateFields } from "@/lib/documents/template-fields";
+import { DocumentTypeFormEditor } from "./document-type-form-editor";
 
 // ── API helpers ───────────────────────────────────────────────────────────────
 
@@ -220,6 +222,15 @@ export function ValueListModal({
 
   const [form, setForm] = useState<FormState | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  // Slice #27.03: the id of the document type whose template-fields editor is
+  // open, or null. Only ever set for listKey === "document-types".
+  const [formEditorId, setFormEditorId] = useState<string | null>(null);
+  // What to focus when the editor closes. Captured in the click handler, not in
+  // an effect: the same commit marks this panel `inert`, and the HTML
+  // focus-fixup rule blurs a focused element the moment it gains an inert
+  // ancestor — so by effect time `document.activeElement` is already `body`.
+  // (The lesson is written up in `cancel-import-dialog.tsx`.)
+  const formEditorOpenerRef = useRef<HTMLElement | null>(null);
 
   const query = useQuery<Row[]>({
     queryKey: ["value-list", listKey],
@@ -241,10 +252,54 @@ export function ValueListModal({
     },
   });
 
+  // Slice #27.03: the row whose form editor is open. Read out of the live query
+  // rather than captured into state at click time, so a refetch that lands
+  // while the editor is open cannot leave the button and the dialog disagreeing
+  // about which row this is — and a row that has since been deleted simply
+  // stops rendering the editor instead of editing a ghost.
+  //
+  // ⚠️ **Declared HERE, above the Escape handler that reads it, and not beside
+  // `confirmDeleteRow` further down.** The handler must guard on what is
+  // actually RENDERED, not on the id: if the row leaves `query.data` while the
+  // editor is open, the editor unmounts but `formEditorId` stays set, and a
+  // guard on the id would leave Escape a permanent no-op for the modal
+  // underneath — closable only with the mouse. Declaring it below the effect
+  // and adding it to the dep array is not an option: `const` in a function body
+  // is not hoisted, so the render would throw a TDZ ReferenceError.
+  const formEditorRow = formEditorId
+    ? query.data?.find((r) => r.id === formEditorId)
+    : null;
+
+  /**
+   * Hand focus back to the button that opened the form editor.
+   *
+   * ⚠️ **An effect, not a `queueMicrotask` inside `onClose`.** `focus()` on an
+   * element inside an `inert` subtree is a spec-mandated no-op, so the restore
+   * has to run AFTER React has removed the attribute. A microtask gets that
+   * right only when the close came from a click: a discrete event flushes
+   * synchronously in a microtask scheduled first. The SAVE path closes from
+   * `mutation.onSuccess` — a promise callback, so DefaultLane, so the commit
+   * runs in a Scheduler macrotask and the microtask fires while the panel is
+   * still inert. Effects run after `commitMutationEffects` on every lane, which
+   * is why `import-wizard.tsx` restores focus this way too.
+   */
+  useEffect(() => {
+    if (formEditorRow) return;
+    const opener = formEditorOpenerRef.current;
+    formEditorOpenerRef.current = null;
+    if (opener?.isConnected) opener.focus();
+  }, [formEditorRow]);
+
   // Close on Escape
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") {
+        // Slice #27.03: the form editor is a dialog ON TOP of this one and
+        // handles its own Escape (its open confirmation first, then itself).
+        // Without this early return both handlers fire on one keypress and the
+        // list modal underneath closes too, so Escape out of the editor lands
+        // the administrator back on Reference Data instead of on the list.
+        if (formEditorRow) return;
         if (confirmDeleteId) { setConfirmDeleteId(null); return; }
         if (form) { setForm(null); return; }
         onClose();
@@ -252,7 +307,7 @@ export function ValueListModal({
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [confirmDeleteId, form, onClose]);
+  }, [confirmDeleteId, form, formEditorRow, onClose]);
 
   function startAdd() {
     const blank: Record<string, unknown> = {};
@@ -319,9 +374,16 @@ export function ValueListModal({
       />
 
       {/* Panel */}
+      {/* Slice #27.03: `inert` while the form editor is on top. Its Tab trap
+          already keeps the keyboard out of here; this keeps a screen reader's
+          virtual cursor out too. Nested `aria-modal` is undefined behaviour —
+          AT picks one — and what a user could otherwise browse to and press
+          from behind the overlay is this list's Delete button, whose z-60
+          confirmation would then render UNDER the editor's z-70 backdrop. */}
       <div
         role="dialog"
         aria-modal="true"
+        inert={!!formEditorRow}
         className="fixed inset-x-4 top-[10%] z-50 mx-auto max-w-2xl rounded-xl border border-card-rim bg-card shadow-2xl dark:border-zinc-800 dark:bg-zinc-900"
       >
         {/* Header */}
@@ -468,6 +530,25 @@ export function ValueListModal({
                           >
                             {t("table.edit")}
                           </button>
+                          {/* Slice #27.03: the type's custom form. Document
+                              types only — no other list has one. The count is
+                              on the button rather than in a column of its own
+                              because the panel is max-w-2xl and #26.12 already
+                              spent the one spare column on the status. */}
+                          {isDocumentTypes && (
+                            <button
+                              onClick={(e) => {
+                                formEditorOpenerRef.current = e.currentTarget;
+                                setFormEditorId(row.id);
+                              }}
+                              disabled={!!form}
+                              className={buttonClass({ variant: "ghost", size: "xs" })}
+                            >
+                              {t("table.editForm", {
+                                count: parseTemplateFields(row.templateFields).length,
+                              })}
+                            </button>
+                          )}
                           <button
                             onClick={() => setConfirmDeleteId(row.id)}
                             className={buttonClass({ variant: "danger", size: "xs" })}
@@ -484,6 +565,19 @@ export function ValueListModal({
           </div>
         </div>
       </div>
+
+      {/* Slice #27.03: the template-fields editor for one document type.
+          Keyed on the row so reopening a different type remounts it with that
+          type's fields rather than keeping the first one's local edits. */}
+      {formEditorRow && (
+        <DocumentTypeFormEditor
+          key={formEditorRow.id}
+          typeId={formEditorRow.id}
+          typeName={String(formEditorRow.name ?? "")}
+          templateFields={formEditorRow.templateFields}
+          onClose={() => setFormEditorId(null)}
+        />
+      )}
 
       {/* Delete confirm dialog */}
       {confirmDeleteId && (

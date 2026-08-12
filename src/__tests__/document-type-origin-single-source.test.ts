@@ -197,16 +197,46 @@ describe("a rename cannot re-originate a document type", () => {
   it("is the strip the document-types update path actually uses", () => {
     const queries = fs.readFileSync(
       path.join(SRC, "lib/admin/value-lists/queries.ts"), "utf8");
-    expect(queries).toContain(".set(stripDocumentTypeOrigin(data))");
+    // Slice #27.03 composed a second guard around this one —
+    // `sanitizeDocumentTypeTemplateFields` — so the call is no longer the
+    // outermost thing in the `.set(...)`. Pinned as the exact composed
+    // expression rather than loosened to a bare substring: the two guards are
+    // both load-bearing on the same write, and a test that would stay green
+    // with either of them unwrapped is not guarding the write.
+    expect(queries).toContain(
+      ".set(sanitizeDocumentTypeTemplateFields(stripDocumentTypeOrigin(data)))",
+    );
   });
 
-  it("differs from the create schemas for document-types alone", () => {
+  /**
+   * ⚠️ **Object identity stopped saying anything in Slice #27.03.** This used
+   * to assert `LIST_UPDATE_SCHEMAS[key] === LIST_SCHEMAS[key]` for every list
+   * but document-types, which held while the update map was a spread with one
+   * override. #27.03 made `sortOrder` optional-without-a-default on EVERY
+   * update schema — a plain rename was silently resetting the column, because
+   * no admin form sends it — so every entry is now a distinct object and the
+   * old assertion would pass for the wrong reason on nine lists.
+   *
+   * What this file is actually about survives unchanged and is asserted
+   * behaviourally: document-types is the only list whose update schema drops a
+   * COLUMN, and that column is `origin`. (The `sortOrder` half has its own
+   * tests in `document-type-template-editor.test.ts`.)
+   */
+  it("is the only list whose update schema drops a create-only column", () => {
+    expect(documentTypeSchema.parse({ name: "Contract", origin: "IMPORT" }).origin)
+      .toBe("IMPORT");
+    expect(LIST_UPDATE_SCHEMAS["document-types"]).toBe(documentTypeUpdateSchema);
+
     for (const key of VALID_LIST_KEYS) {
-      if (key === "document-types") {
-        expect(LIST_UPDATE_SCHEMAS[key]).not.toBe(LIST_SCHEMAS[key]);
-      } else {
-        expect(LIST_UPDATE_SCHEMAS[key]).toBe(LIST_SCHEMAS[key]);
-      }
+      const createKeys = Object.keys(LIST_SCHEMAS[key].parse({ name: "X", indicativ: "T1" }));
+      const updateKeys = Object.keys(
+        LIST_UPDATE_SCHEMAS[key].parse({ name: "X", indicativ: "T1", origin: "IMPORT" }),
+      );
+      // `sortOrder` is absent from every update parse by design; `origin` is
+      // absent from document-types' by design. Nothing else may go missing.
+      const dropped = createKeys.filter((k) => !updateKeys.includes(k)).sort();
+      expect([key, dropped]).toEqual([key, ["sortOrder"]]);
+      expect([key, updateKeys.includes("origin")]).toEqual([key, false]);
     }
   });
 });

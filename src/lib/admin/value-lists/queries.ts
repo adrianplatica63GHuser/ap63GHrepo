@@ -27,7 +27,10 @@ import {
   lookupInstitution,
 } from "@/db/schema";
 import type { ListKey } from "./config";
-import { stripDocumentTypeOrigin } from "./validation";
+import {
+  sanitizeDocumentTypeTemplateFields,
+  stripDocumentTypeOrigin,
+} from "./validation";
 import {
   isDocumentTypeOrigin,
   type DocumentTypeOrigin,
@@ -208,9 +211,14 @@ export async function createValue(
       const origin: DocumentTypeOrigin = isDocumentTypeOrigin(data.origin)
         ? data.origin
         : "MANUAL";
+      // Slice #27.03: through the same template-field choke point as the
+      // update below. No admin form sends `templateFields` on a POST today —
+      // the create form is built from LIST_META, which lists `name` alone —
+      // but a door that sanitises on the way in and not on the way out is a
+      // door that will eventually be used the other way round.
       const [row] = await db
         .insert(lookupDocumentType)
-        .values({ ...data, key, origin })
+        .values({ ...sanitizeDocumentTypeTemplateFields(data), key, origin })
         .returning();
       return row as LookupRow;
     }
@@ -262,7 +270,13 @@ export async function updateValue(
     case "document-types": {
       const [row] = await db
         .update(lookupDocumentType)
-        .set(stripDocumentTypeOrigin(data))
+        // Two guards, composed. `stripDocumentTypeOrigin` keeps a rename from
+        // re-originating an imported type (#26.12); `sanitizeDocumentType-
+        // TemplateFields` keeps a hand-typed label out of the extraction
+        // prompt and renumbers `order` from array position (#27.03). Both
+        // named rather than inlined so each can be asserted on behaviour
+        // without opening a database connection.
+        .set(sanitizeDocumentTypeTemplateFields(stripDocumentTypeOrigin(data)))
         .where(eq(lookupDocumentType.id, id))
         .returning();
       return (row as LookupRow) ?? null;
