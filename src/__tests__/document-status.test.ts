@@ -265,8 +265,12 @@ describe("the brief's own sentence, as a property", () => {
         }
       }
     }
-    // A guard on the guard: a typo that empties one of the three arrays would
-    // otherwise leave a green test that checked nothing.
-    expect(checked).toBe(4 * FIELDS.length * STAMPS.length);
+    // ⚠️ A LITERAL, and round two of the review is why. This was
+    // `4 * FIELDS.length * STAMPS.length` — read from the very arrays it claims
+    // to protect, so emptying STAMPS took `checked` and `expected` to 0
+    // together and the guard passed on a loop that ran no iterations.
+    // 4 origins × 13 template shapes × 4 stamps. Update it deliberately when a
+    // row is added; that is the point of it being a number.
+    expect(checked).toBe(208);
   });
 });

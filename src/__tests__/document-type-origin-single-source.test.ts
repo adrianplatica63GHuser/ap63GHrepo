@@ -261,12 +261,25 @@ describe("only an import may stamp ai_interpreted_at", () => {
     expect(unlisted).toEqual([]);
   });
 
-  it("keeps both writers inside an import", () => {
+  // ⚠️ **Round two caught this asserting nothing.** It used to filter
+  // MENTIONS_ALLOWED — the literal declared twelve lines above — and check the
+  // paths in it, so moving `ai-interpret-run.ts` out of `lib/import/` while
+  // leaving the key string alone passed happily. It reads the filesystem now.
+  //
+  // What this still cannot catch, stated plainly rather than papered over: a
+  // new writer inside one of the two listed files, or a write built through
+  // `lib/documents/queries.ts`'s generic PATCH builder from a variable that
+  // never spells the column. `PATCH /api/documents/[id]` accepts
+  // `aiInterpretedAt` (validation.ts) and always has. The allowlist above is a
+  // speed bump on a decision, not a proof — its job is to make a second writer
+  // something a human had to type a reason for.
+  it("keeps both writers inside an import, and they exist", () => {
     const writers = Object.entries(MENTIONS_ALLOWED)
       .filter(([, why]) => why.startsWith("WRITES"))
       .map(([file]) => file);
     expect(writers.length).toBe(2);
     for (const file of writers) {
+      expect(fs.existsSync(path.join(SRC, file))).toBe(true);
       expect(file.startsWith("lib/import/") || file.startsWith("app/admin/import/")).toBe(true);
     }
   });
