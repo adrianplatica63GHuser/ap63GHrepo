@@ -706,7 +706,11 @@ export const lookupDocumentType = pgTable("lookup_document_type", {
   // update path strips `origin` from its payload (see updateValue in
   // src/lib/admin/value-lists/queries.ts) so renaming a type in the admin list
   // cannot silently re-origin it to the schema default.
-  origin: text("origin").notNull().default("MANUAL"),
+  // `$type` is a plain inline union, not an import — same reason customFields
+  // below states: no import means no circular-import risk, and it makes a
+  // stray value a compile error at every drizzle write site rather than a
+  // CHECK violation at runtime.
+  origin: text("origin").$type<"MANUAL" | "IMPORT">().notNull().default("MANUAL"),
 });
 
 export const lookupInstitution = pgTable("lookup_institution", {

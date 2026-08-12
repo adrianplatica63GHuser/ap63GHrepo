@@ -69,6 +69,20 @@
 --   update so a rename can never re-origin a type.
 --
 -- Idempotent: IF NOT EXISTS / DROP CONSTRAINT IF EXISTS throughout.
+--
+-- WRAPPED IN A TRANSACTION, AND AN ADVERSARIAL ROUND IS WHY
+--   The runner feeds this file to `psql -f` with no --single-transaction, so
+--   without a BEGIN each statement commits on its own. Section 2 DROPs the
+--   CHECK and re-ADDs it, which is what makes the file re-runnable - but on a
+--   database holding any origin outside the value set (a row restored from an
+--   older dump, a hand edit, an earlier half-applied run) the DROP succeeds and
+--   the ADD fails. Without a transaction the table is then left PERMANENTLY
+--   UNCONSTRAINED, and the report below is structurally blind to it: a row with
+--   a stray origin counts in neither total, so the NOTICE still reads clean.
+--   BEGIN/COMMIT turns that into a rollback and a loud failure, which is the
+--   only acceptable outcome. migration_057 is the sibling that does this.
+
+BEGIN;
 
 -- ---------------------------------------------------------------------------
 -- 1. The column
@@ -108,3 +122,5 @@ BEGIN
   SELECT count(*) INTO imported FROM lookup_document_type WHERE origin = 'IMPORT';
   RAISE NOTICE 'migration_069: % type(s) MANUAL, % IMPORT (expected all-MANUAL on first run - there is no backfill).', manual, imported;
 END $$;
+
+COMMIT;

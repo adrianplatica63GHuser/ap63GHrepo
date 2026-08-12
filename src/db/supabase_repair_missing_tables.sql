@@ -492,6 +492,40 @@ ALTER TABLE document
 -- migration_066 -- per-type field templates
 ALTER TABLE lookup_document_type ADD COLUMN IF NOT EXISTS template_fields jsonb;
 
+-- migration_069 -- how a document type came to exist (Slice #26.12)
+--
+-- Without this column every document-type CREATE fails on Supabase:
+-- createValue() names `origin` explicitly in .values() and selects it back in
+-- .returning(), so `ensureDocType` mid-import dies with
+-- `column "origin" does not exist`. NOT NULL DEFAULT fills existing rows in the
+-- same statement; there is no backfill, by design (see migration_069).
+ALTER TABLE lookup_document_type
+  ADD COLUMN IF NOT EXISTS origin text NOT NULL DEFAULT 'MANUAL';
+
+DO $$
+DECLARE
+  bad integer;
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'chk_ldt_origin' AND conrelid = 'lookup_document_type'::regclass
+  ) THEN
+    RAISE NOTICE 'chk_ldt_origin already present -- left untouched.';
+  ELSE
+    SELECT count(*) INTO bad
+      FROM lookup_document_type
+     WHERE origin IS NULL OR origin NOT IN ('MANUAL', 'IMPORT');
+    IF bad > 0 THEN
+      RAISE WARNING 'chk_ldt_origin NOT added: % row(s) hold a value outside '
+                    '(MANUAL, IMPORT). Fix those rows and re-run.', bad;
+    ELSE
+      ALTER TABLE lookup_document_type
+        ADD CONSTRAINT chk_ldt_origin CHECK (origin IN ('MANUAL', 'IMPORT'));
+      RAISE NOTICE 'chk_ldt_origin added.';
+    END IF;
+  END IF;
+END $$;
+
 -- migration_057 -- soft-delete on the 13 lookup / reference tables
 ALTER TABLE lookup_property_type          ADD COLUMN IF NOT EXISTS deleted_at timestamptz;
 ALTER TABLE lookup_tarla                  ADD COLUMN IF NOT EXISTS deleted_at timestamptz;

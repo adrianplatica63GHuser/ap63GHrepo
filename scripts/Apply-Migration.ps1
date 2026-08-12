@@ -78,7 +78,7 @@ if ($tableCheck -eq "f") {
     }
     $tmpBoot = "/tmp/migration_056_schema_migrations.sql"
     docker cp $bootstrap "${Container}:${tmpBoot}"
-    docker exec $Container psql -U $DbUser -d $Database -f $tmpBoot
+    docker exec $Container psql -U $DbUser -d $Database -v ON_ERROR_STOP=1 -f $tmpBoot
     if ($LASTEXITCODE -ne 0) {
         Write-Error "Bootstrap failed. Aborting."
         exit 1
@@ -137,7 +137,14 @@ foreach ($file in $pending) {
         break
     }
 
-    docker exec $Container psql -U $DbUser -d $Database -f $tmpPath
+    # ON_ERROR_STOP=1 is what makes the check below mean anything. Without it
+    # psql runs every remaining statement after one fails and still exits 0,
+    # so $LASTEXITCODE is 0, this function prints OK and the INSERT INTO
+    # schema_migrations below records a migration that did not apply --
+    # contradicting this script's own .DESCRIPTION. build-ciprian-image.ps1
+    # already passes the flag; this runner did not. (Found by the Slice
+    # #26.12 adversarial review.)
+    docker exec $Container psql -U $DbUser -d $Database -v ON_ERROR_STOP=1 -f $tmpPath
     if ($LASTEXITCODE -ne 0) {
         Write-Host "  FAILED (psql). Fix the error and re-run. Stopping."
         $fail++
