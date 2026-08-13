@@ -274,6 +274,12 @@ describe("only an import may stamp ai_interpreted_at", () => {
     "app/documents/_components/document-detail-tabs.tsx": "prop type, forwards it",
     "app/documents/_components/document-form.tsx":       "prop type + the comments explaining the removed button",
     "lib/import/id-card.ts":                             "comment only — records that the WHEN lives on the column",
+    // Slice #27.05. ⚠️ **WRITES NOTHING, and the mention is the point:** discover
+    // mode stamps nothing, which is exactly what lets it be re-run, so the
+    // one-per-type rule that stops a second call is about MONEY and not about
+    // this column. #26.11 refused that gate once and the comment is what stops
+    // it being reintroduced as an optimisation.
+    "lib/import/discover-run.ts":                        "comment only — records that discovery is NOT gated on the column",
     "app/api/documents/[id]/ai-interpret/route.ts":      "comments — the route stamps nothing itself",
 
     // ── Tests. ──

@@ -179,6 +179,10 @@ describe("runAiInterpret", () => {
     expect(result).toEqual({
       ok: true,
       fieldCount: 5,
+      // Slice #27.05 — null, because this patch left the type alone. See
+      // `AiInterpretRunResult.documentTypeId`: null means NOT CHANGED, never
+      // "unknown", which is why every one of these pins it explicitly.
+      documentTypeId: null,
       parties: [{ roleName: "Vânzător" }],
       partialWrite: false,
     });
@@ -203,7 +207,15 @@ describe("runAiInterpret", () => {
     expect(calls[2].body).toEqual({ aiInterpretedAt: STAMP, documentTypeId: "type-uuid" });
     // `partialWrite` is false because there was nothing to lose: no notes and
     // no custom fields came back. It reports a LOSS, not an unreadable GET.
-    expect(result).toEqual({ ok: true, fieldCount: 1, parties: [], partialWrite: false });
+    // Slice #27.05 — the one case in this suite where it is NOT null: the
+    // model moved the document, and the id it names is the id the PATCH wrote.
+    expect(result).toEqual({
+      ok: true,
+      fieldCount: 1,
+      documentTypeId: "type-uuid",
+      parties: [],
+      partialWrite: false,
+    });
   });
 
   it("⚠️ writes neither the notes nor the custom fields when it could not read the document", async () => {
@@ -228,6 +240,7 @@ describe("runAiInterpret", () => {
     expect(result).toEqual({
       ok: true,
       fieldCount: 3,
+      documentTypeId: null,
       parties: [{ roleName: "Vânzător" }],
       partialWrite: true,
     });
@@ -247,6 +260,7 @@ describe("runAiInterpret", () => {
     expect(await runAiInterpret("doc-1", STAMP)).toEqual({
       ok: true,
       fieldCount: 0,
+      documentTypeId: null,
       parties: [],
       partialWrite: true,
     });
@@ -349,7 +363,18 @@ describe("runAiInterpret", () => {
     const result = await runAiInterpret("doc-1", STAMP);
 
     expect(calls[2].body).toEqual({ aiInterpretedAt: STAMP, title: "Act" });
-    expect(result).toEqual({ ok: true, fieldCount: 1, parties: [], partialWrite: true });
+    // ⚠️ Slice #27.05 — null here is load-bearing: the re-type was SKIPPED
+    // because the current type could not be read, and a caller that keyed a
+    // discovery on a type the document may not be on would write one
+    // document's fields onto another type's form. `partialWrite` beside it is
+    // what says the skip happened.
+    expect(result).toEqual({
+      ok: true,
+      fieldCount: 1,
+      documentTypeId: null,
+      parties: [],
+      partialWrite: true,
+    });
   });
 
   it("⚠️ REPLACES the custom fields when the same patch re-types the document", async () => {
@@ -632,6 +657,7 @@ describe("runAiInterpret", () => {
     expect(await runAiInterpret("doc-1", STAMP)).toEqual({
       ok: true,
       fieldCount: 0,
+      documentTypeId: null,
       parties: [],
       partialWrite: false,
     });

@@ -3042,7 +3042,11 @@ export function BulkImportDialog({
     // republishing the queue — `handleConfirmPending` owns that now, and a
     // dependency the body no longer reads is a lint warning that teaches the
     // next reader to ignore the rule.
-    [scanResults, t, updateResult],
+    // `forgetTypeFormMissing` since #27.05 — the retry enriches its own new
+    // step, so it has to be able to take the sentence back off a type that
+    // turned out to be an identity card. It is a `useCallback` with no deps, so
+    // listing it costs no re-renders.
+    [forgetTypeFormMissing, scanResults, t, updateResult],
   );
 
   // ---------------------------------------------------------------------------
