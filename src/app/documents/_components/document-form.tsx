@@ -54,6 +54,7 @@ import { buttonClass } from "@/lib/ui/button-styles";
 import {
   DiscoverReviewDialog,
   type DiscoverReviewPair,
+  type NewTypeProgress,
 } from "./discover-review-dialog";
 
 // ---------------------------------------------------------------------------
@@ -214,6 +215,27 @@ export function DocumentForm({
   // depends on typeOptions) doesn't recompute every render — `documentTypes ?? []`
   // would otherwise hand it a fresh array identity each time.
   const typeOptions = useMemo(() => documentTypes ?? [], [documentTypes]);
+  // Slice #27.04: the names alone, for the review dialog's duplicate-name
+  // refusal. Memoized because it is a prop of a dialog that must not re-render
+  // more than it has to while a three-write save is in flight — not because
+  // anything downstream memoizes on its identity.
+  const typeNames = useMemo(() => typeOptions.map((opt) => opt.name), [typeOptions]);
+  /**
+   * Every `template_fields` key any document type declares.      (Slice #27.04)
+   *
+   * Read by `valuesForSave` to tell an orphaned custom-field value — one that
+   * belongs to a template this document has moved off — from a value whose key
+   * no template mentions, which is either freshly accepted and not yet in this
+   * cache or left behind by a field an administrator removed. The first is
+   * dropped on a re-type; the second two are the user's and are kept.
+   */
+  const someTypeDeclares = useMemo(
+    () =>
+      new Set(
+        typeOptions.flatMap((opt) => parseTemplateFields(opt.templateFields).map((f) => f.key)),
+      ),
+    [typeOptions],
+  );
 
   // Slice #18.16.VL — institution dropdown
   const { data: institutions } = useQuery({
@@ -257,12 +279,80 @@ export function DocumentForm({
   // data the dialog renders.
   const [discoverResult, setDiscoverResult] = useState<{
     pairs:          DiscoverReviewPair[];
+    // Slice #27.04: the model's own short Romanian name for what it read. The
+    // route has returned it since #21.10 and this component discarded it; it is
+    // what the review step pre-fills the new-type name box with.
+    documentLabel:  string | null;
     partyRoleNames: string[];
     skippedPages:   number;
     truncated:      boolean;
   } | null>(null);
   const [aiExtractMsg,  setAiExtractMsg]    = useState<string | null>(null);
   const [aiExtractErr,  setAiExtractErr]    = useState<string | null>(null);
+  /**
+   * A document type the review dialog created on the server, and whether it
+   * also managed to move this document onto it.                 (Slice #27.04)
+   *
+   * ⚠️ **Applied on close, never while the dialog is mounted.** The dialog's
+   * React `key` is the selected type id, so writing the new id into the form
+   * field would unmount it mid-save and take every tick, rename and in-flight
+   * write with it. A ref rather than state for the same reason: this must not
+   * repaint anything until the dialog is gone.
+   *
+   * Every status other than `moved` is a real and reachable state, and none of
+   * them touches the form: the document is still on its old type, or nobody
+   * can say which type it is on. They are still worth carrying — the type list
+   * has to learn about a row that exists, and the warning has to outlive the
+   * dialog that is about to be closed on top of it.
+   */
+  const pendingNewTypeRef = useRef<NewTypeProgress | null>(null);
+  /**
+   * Custom-field keys the review step has just accepted onto the type, not yet
+   * visible in the cached type list.                            (Slice #27.04)
+   *
+   * ⚠️ **`valuesForSave` must never strip one of these, and "no type declares
+   * it" is not a good enough test for that.** Discovery slugs keys from printed
+   * Romanian labels — `suprafata`, `notar`, `valoare` — which collide across
+   * types in this archive, so a freshly accepted key can be declared by some
+   * unrelated third type while the type being saved has not caught up yet. That
+   * made the value the user had just confirmed against the page vanish from the
+   * patch, and then from the form, under a green tick. Remembering the keys is
+   * exact where the cache is only approximate. Cleared on a successful save,
+   * after which the refetched template speaks for them.
+   *
+   * ⚠️ **Scoped to the type they were accepted ONTO, and that is the whole
+   * point of the object.** A bare set of keys is an exemption from the orphan
+   * rule that outlives the type it belongs to: accept fields onto type A, then
+   * pick type B in the dropdown and save, and A's keys ride into B's
+   * `custom_fields` — the exact orphaning this exemption sits inside a guard
+   * against.
+   */
+  const justAcceptedKeysRef = useRef<{ typeId: string; keys: Set<string> } | null>(null);
+  /**
+   * The document may or may not have been re-typed, and nothing here can tell.
+   *                                                             (Slice #27.04)
+   *
+   * While it is set, `doSave` leaves `documentTypeId` and `customFields` out of
+   * the patch: every value the form could send for them is a guess, and one of
+   * the two guesses silently reverts a write the server already made.
+   *
+   * ⚠️ **While it is set, the type dropdown and every custom-field input are
+   * DISABLED**, so the user cannot make an edit to those two that this form
+   * would then have to refuse or drop. That is what lets the rest of the form
+   * go on saving normally, and what makes "save and leave" through the
+   * unsaved-changes guard safe: there is never a contested edit to lose.
+   *
+   * ⚠️ **It does NOT survive this component being unmounted, and a review round
+   * argued both sides of that.** Parking it in the query cache so it survived
+   * the tab strip's unmount latched on states it had no business locking — a
+   * later legitimate re-type re-armed it for the rest of the session, with the
+   * banner explaining it long gone — and expired on its own after react-query's
+   * five-minute GC regardless. `router.refresh()` in `applyPendingNewType` is
+   * the real answer: it makes the server's own row the thing a remount reads.
+   * The residual window — a tab switch inside that round-trip — is in the
+   * handover.
+   */
+  const [typeMoveUnresolved, setTypeMoveUnresolved] = useState(false);
 
   // Slice #19.03 — surveyor picker state
   const [surveyorPickerOpen, setSurveyorPickerOpen] = useState(false);
@@ -486,12 +576,25 @@ export function DocumentForm({
           color: currSnap
             ? versionLabelColor(prevSnap ?? null, currSnap)
             : ("green" as HighlightColor),
-          canPrev: effectiveVersion > 0 && !navLocked,
+          // Slice #27.04: version navigation is frozen while nobody can say
+          // which type this document is on. Not because reading an old version
+          // is unsafe — it is a read — but because the AI feedback strip that
+          // explains the lock is only rendered on the latest version, so one
+          // press of ◀ took the explanation away and left "Fă versiunea
+          // curentă" greyed out with nothing on the page saying why.
+          canPrev: effectiveVersion > 0 && !navLocked && !typeMoveUnresolved,
           canNext:
-            latestVersion !== null && effectiveVersion < latestVersion && !navLocked,
+            latestVersion !== null &&
+            effectiveVersion < latestVersion &&
+            !navLocked &&
+            !typeMoveUnresolved,
           onPrev: () => goToVersion(effectiveVersion - 1),
           onNext: () => goToVersion(effectiveVersion + 1),
-          canMakeCurrent: !isOnLatest,
+          // Slice #27.04: "Make current" is a third door into `doSave`, and it
+          // re-saves a HISTORICAL snapshot — including that snapshot's
+          // `documentTypeId`, which is by definition the old type. Blocked for
+          // as long as nobody can say which type this document is on.
+          canMakeCurrent: !isOnLatest && !typeMoveUnresolved,
           onMakeCurrent: () => setConfirmMakeCurrent(true),
         }
       : null;
@@ -508,13 +611,139 @@ export function DocumentForm({
   const saveDisabled =
     submitting || ((mode === "edit" || associatedEditing) && isOnLatest && !editDirty);
 
+  /**
+   * The values a save would actually send, once a re-type has been accounted
+   * for.                                                        (Slice #27.04)
+   *
+   * ⚠️ **`custom_fields` is written WHOLE by `toApiPayload`, and the form
+   * keeps whatever the PREVIOUS type's template put there.** So changing the
+   * type in the dropdown and pressing Save carried the old type's keys onto the
+   * new one: persisted, snapshotted into every later `document_version`,
+   * rendered on no screen and editable from none. It is the same orphaning
+   * `runAiInterpret` clears on its own re-type and the one this slice's review
+   * step clears on its — the dropdown is the third door into that column, and
+   * it was the one still open. A review round found it by noticing that this
+   * slice's own recovery message ("pick the new type and save") walked the user
+   * straight into it.
+   *
+   * ⚠️ **Only when the type CHANGED since the last saved state, and a
+   * later review round is why.** Filtering on every save looked tidier and was
+   * wrong: it deleted the values of a field an administrator had removed under
+   * #27.03 — recoverable until then by re-adding the field — on the next
+   * unrelated save of every document of the type. Gated on the re-type, an
+   * ordinary save sends the column exactly as it found it.
+   *
+   * ⚠️ **And only keys that some OTHER document type declares, which is
+   * narrower again.** "Not on the new type" is not the same question as "left
+   * over from another type", and the difference is two real flows. A user who
+   * changes the type by hand and THEN runs discovery has freshly accepted keys
+   * in the form that the cached `templateFields` will not carry until the type
+   * list refetches; and a field an administrator removed under #27.03 leaves
+   * values whose key no template mentions at all. Both belong to no template as
+   * far as this component can see, and emptying them would delete — under a
+   * banner saying they had just been filled in, in the first case — exactly
+   * what the user had confirmed against the page. A key that some type in the
+   * list DOES declare, and the selected one does not, is the orphan.
+   *
+   * ⚠️ **Every type in the list, not just the last saved one.** Keyed on the
+   * type this document was saved under, a second change before a save escaped:
+   * A → B (fill in B's fields) → C → Save wrote B's keys into C's
+   * `custom_fields`, because B was neither the type left nor the type joined.
+   *
+   * Filtered, not emptied: a user who switches type and then fills in the NEW
+   * type's fields before saving keeps everything they typed.
+   *
+   * ⚠️ **`selectedType` must be loaded.** `templateFields` is derived from
+   * the document-types query, and is `[]` for every type while that is in
+   * flight; filtering against it then would empty the column.
+   */
+  const valuesForSave = (values: FormValues): FormValues => {
+    // ⚠️ Create mode is IN, not out. `baseline.values.documentTypeId` is "" on
+    // /documents/new, so the first pick makes this true and every later change
+    // of mind is caught — and it needs to be: `shouldUnregister` is off, so the
+    // template fields of a type the user filled in and then moved away from are
+    // still in `_formValues` when Save fires, and would be written into the
+    // brand-new document's `custom_fields` and its first version snapshot.
+    const retypedByHand = values.documentTypeId !== baseline.values.documentTypeId;
+    // ⚠️ **A flip BACK to the saved type is a re-type too.** Change the
+    // dropdown to A, accept fields onto A through the review step, then change
+    // it back to B and save: `retypedByHand` is false, nothing is filtered, and
+    // A's keys land in a B document's `custom_fields` with real values in them.
+    // The accepted keys carry the type they were accepted onto, so the question
+    // "is this document still on that type?" is answerable exactly.
+    const acceptedElsewhere =
+      justAcceptedKeysRef.current !== null &&
+      justAcceptedKeysRef.current.typeId !== values.documentTypeId;
+    if ((!retypedByHand && !acceptedElsewhere) || !selectedType) return values;
+    return {
+      ...values,
+      customFields: Object.fromEntries(
+        Object.entries(values.customFields).filter(
+          ([key]) =>
+          !someTypeDeclares.has(key) ||
+          (justAcceptedKeysRef.current?.typeId === values.documentTypeId &&
+            justAcceptedKeysRef.current.keys.has(key)) ||
+          templateFields.some((f) => f.key === key),
+        ),
+      ),
+    };
+  };
+
   // doSave performs the API call only (no navigation) so it can be reused by
   // the Save button (onSubmit), the unsaved-changes guard, and "Make Current".
-  const doSave = async (values: FormValues): Promise<boolean> => {
+  //
+  // Slice #27.04: returns the values it SENT rather than a bare boolean, so the
+  // callers that reset `baseline` record what the server actually has. Handing
+  // them the unfiltered values instead left the form permanently dirty against
+  // a column it had just stripped.
+  const doSave = async (values: FormValues): Promise<FormValues | null> => {
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const payload = toApiPayload(values);
+      /**
+       * The two columns nobody can vouch for.                    (Slice #27.04)
+       *
+       * After a `moveUnresolved` ending the server may or may not have re-typed
+       * this document and cleared its `custom_fields`, and this form cannot
+       * tell — so whichever value it holds for those two is a guess, and one of
+       * the two guesses silently reverts a write that landed.
+       *
+       * ⚠️ **Always left OUT of the patch, and never reported as saved.** Three
+       * review rounds pushed this around and both extremes were wrong. Blocking
+       * every save stranded Titlu / Subiect / Note edits behind a button whose
+       * only escapes threw them away — and, because this dialog opens on the
+       * SELECTED type, a user who had changed the dropdown before running
+       * discovery was blocked on every save from then on, under two banners
+       * promising the other fields still saved. Sending the reduced patch and
+       * then baselining the form as if it had all gone was worse: the contested
+       * edit vanished with every signal saying it had been written.
+       *
+       * What is honest is neither: the unrelated work is saved, the two
+       * uncertain columns are not sent, and `baseline` KEEPS ITS OLD VALUES for
+       * them — so if the user has changed either, the form stays visibly dirty
+       * on exactly that change and Save stays lit, which is true. It is unsaved,
+       * and it stays unsaved until the reload the banner asks for settles which
+       * type this document is on.
+       *
+       * `documentUpdateSchema` is a partial and `updateDocument` writes only the
+       * keys present, so an omitted column keeps whatever the server has.
+       * Make-current and Descoperire AI stay blocked outright: both are about
+       * the type itself, and neither has anything else to save.
+       */
+      const uncertainColumns = typeMoveUnresolved && mode !== "create";
+      const valuesToSave = valuesForSave(values);
+      const fullPayload = toApiPayload(valuesToSave);
+      // Destructured rather than `delete`d: both keys are required on the
+      // payload type, and `documentTypeId` is the one field a CREATE cannot do
+      // without — which `uncertainColumns` already excludes.
+      const {
+        documentTypeId: _uncertainType,
+        customFields:   _uncertainFields,
+        ...withoutUncertainColumns
+      } = fullPayload;
+      void _uncertainType;
+      void _uncertainFields;
+      const payload = uncertainColumns ? withoutUncertainColumns : fullPayload;
       const url =
         mode === "create"
           ? "/api/documents"
@@ -537,18 +766,52 @@ export function DocumentForm({
       // Slice #18.06: a save appended a new version — drop the cached list so
       // reopening shows it (and the ◀/▶ nav enables / advances).
       await queryClient.invalidateQueries({ queryKey: ["document-versions"] });
-      return true;
+      // Keep the form itself in step with what was sent. Without this the
+      // stripped keys stay in React Hook Form, `editDirty` compares them
+      // against a baseline that no longer has them, and Save stays lit for ever
+      // over a difference the user cannot see or act on.
+      //
+      // ⚠️ **The stripped keys are REMOVED; the survivors are left alone.**
+      // Writing `valuesToSave.customFields` back whole would replace the record
+      // with a snapshot taken before the request went out — and the inputs stay
+      // live throughout a PATCH and two awaited invalidations, so anything
+      // typed in that window would vanish, with `setBaseline` marking the form
+      // clean over the top of it. Removing only what was dropped leaves an
+      // in-flight edit intact and correctly dirty.
+      if (valuesToSave !== values && !uncertainColumns) {
+        const live = form.getValues("customFields");
+        form.setValue(
+          "customFields",
+          Object.fromEntries(
+            Object.entries(live).filter(([key]) => key in valuesToSave.customFields),
+          ),
+          { shouldDirty: false },
+        );
+      }
+      // The refetched template speaks for them from here on.
+      justAcceptedKeysRef.current = null;
+      // ⚠️ What the SERVER now has, which is what the callers baseline against.
+      // The two omitted columns were not written, so the baseline keeps the
+      // values it already had for them — reporting the form's instead would
+      // mark a change clean that never left the browser.
+      return uncertainColumns
+        ? {
+            ...valuesToSave,
+            documentTypeId: baseline.values.documentTypeId,
+            customFields:   baseline.values.customFields,
+          }
+        : valuesToSave;
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : String(err));
-      return false;
+      return null;
     } finally {
       setSubmitting(false);
     }
   };
 
   const onSubmit = async (values: FormValues) => {
-    const ok = await doSave(values);
-    if (!ok) return;
+    const saved = await doSave(values);
+    if (!saved) return;
 
     if (mode === "create") {
       router.push("/documents");
@@ -560,7 +823,7 @@ export function DocumentForm({
     // version is visible. Reset the clean baseline to the just-saved state (so
     // version nav unlocks), follow the new latest, and refresh server-rendered
     // bits (e.g. the page title if the document's label changed).
-    setBaseline({ values });
+    setBaseline({ values: saved });
     setViewingVersion(null);
     // Slice #21.04.Import: an associated record reverts to its read-only
     // presentation (Back to list + Modify) once the edit is saved — Modify
@@ -575,14 +838,14 @@ export function DocumentForm({
   // (it differs from the current latest); we then follow it.
   const handleMakeCurrent = async () => {
     const values = form.getValues();
-    const ok = await doSave(values);
-    if (!ok) {
+    const saved = await doSave(values);
+    if (!saved) {
       setConfirmMakeCurrent(false);
       return;
     }
     // Bug 1: pulse the restored change once the new version refetches in.
     pendingPulseRef.current = makeCurrentNextNumber;
-    setBaseline({ values });
+    setBaseline({ values: saved });
     setViewingVersion(null);
     setConfirmMakeCurrent(false);
     router.refresh();
@@ -615,10 +878,12 @@ export function DocumentForm({
     setAiDiscovering(true);
     setAiExtractMsg(null);
     setAiExtractErr(null);
-    // Drop the previous run before starting a new one. Nothing in this app
-    // traps focus, so the button under an open dialog is reachable by keyboard
-    // from inside it; without this, a second run would leave the dialog showing
-    // the FIRST run's rows while claiming to be the second's.
+    // Drop the previous run before starting a new one: without this, a second
+    // run would leave the dialog showing the FIRST run's rows while claiming to
+    // be the second's. (The reason given here used to be that nothing in this
+    // app traps focus. Untrue since #26.11 — the review dialog does — but the
+    // line still has to be here for the ordinary case where the dialog is
+    // closed and the button is simply pressed twice.)
     setDiscoverResult(null);
     try {
       const res = await fetch(`/api/documents/${encodeURIComponent(documentId)}/ai-interpret`, {
@@ -661,6 +926,8 @@ export function DocumentForm({
         skippedPages?:   unknown[];
         truncated?:      boolean;
         partyRoleNames?: unknown[];
+        // Slice #27.04 — read at last. See `documentLabel` on discoverResult.
+        documentLabel?:  unknown;
       };
       const skipped = body.skippedPages?.length ?? 0;
       // Slice #26.11: the pairs no longer stop at a console report — they open
@@ -680,6 +947,14 @@ export function DocumentForm({
       } else {
         setDiscoverResult({
           pairs,
+          // Slice #27.04: the schema allows null and the model may return an
+          // empty string, so anything that is not a usable name becomes null and
+          // the review step opens with an empty box rather than a blank name it
+          // would then have to reject.
+          documentLabel:
+            typeof body.documentLabel === "string" && body.documentLabel.trim()
+              ? body.documentLabel.trim()
+              : null,
           // The type's person roles. The review step shows a row matching one
           // as already captured rather than offering it as free text — the
           // import links those to real Person records, and a second editable
@@ -701,6 +976,93 @@ export function DocumentForm({
     }
   };
 
+  /**
+   * Bring the form into line with what the review dialog already wrote.
+   *                                                             (Slice #27.04)
+   *
+   * Called from `onClose` and from `onSaved` — after the dialog has been told
+   * to unmount, never before. Returns what it applied so the caller can name
+   * the type in its message, or null when there was nothing pending.
+   *
+   * ⚠️ **The new row is written into the cache before the refetch is asked
+   * for.** `documentTypeId` is about to point at a type the cached list does
+   * not contain, and until the refetch lands `selectedType` would be
+   * `undefined` — a type dropdown showing nothing selected and a custom-fields
+   * section with no fields, directly under a message saying the type was
+   * created. Seeding the row costs one line and closes that window; the
+   * invalidate right after it replaces the guess with the server's answer.
+   *
+   * ⚠️ **`customFields` is cleared here too, and not clearing it is a data
+   * bug rather than a cosmetic one.** The server has already emptied
+   * `document.custom_fields` — the values belonged to the OLD type's template.
+   * The values in React Hook Form did not go anywhere, and this form writes the
+   * column WHOLE on save (`toApiPayload`), so leaving them would put the old
+   * type's keys straight back on the next Save, on a document that no longer
+   * has a form to show them in.
+   *
+   * ⚠️ **`shouldDirty: false`, and the baseline moves with them.** Both writes
+   * have already happened on the server, so they are not a pending edit: marking
+   * them dirty would arm the unsaved-changes guard over a change the user
+   * cannot discard, and leaving the baseline behind would keep Save lit for ever
+   * on a document nobody had edited.
+   */
+  const applyPendingNewType = (): NewTypeProgress | null => {
+    const pending = pendingNewTypeRef.current;
+    if (!pending) return null;
+    pendingNewTypeRef.current = null;
+    /**
+     * ⚠️ **`router.refresh()` on every ending, and it is load-bearing.**
+     *
+     * This component is unmounted by its own tab strip — `document-detail-
+     * tabs.tsx` renders it only while the Details tab is showing — and on
+     * remount `baseline` re-initialises from `initialValues`, a SERVER-RENDERED
+     * prop. Nothing else in this slice refreshes that prop, so a click on
+     * Persoane and back reinstated the pre-re-type document: the corrections
+     * written below were gone, the red banner was gone, and the next ordinary
+     * Save PATCHed the old `documentTypeId` and the old `custom_fields` back
+     * over a re-type the server had made. Refreshing makes the server's answer
+     * the one a remount reads, whichever ending this is — including
+     * `moveUnresolved`, where the server is the only thing that knows.
+     */
+    router.refresh();
+    if (pending.status === "unresolved") {
+      // A type that MIGHT exist. Refresh the list so the user can go and look,
+      // which is what the message tells them to do; assume nothing else.
+      queryClient.invalidateQueries({ queryKey: ["document-types"] });
+      return pending;
+    }
+    const type = pending.type;
+    // The row exists on the server whether or not the document reached it, so
+    // the dropdown must be able to offer it either way — that is what the
+    // failure message tells the user to go and do.
+    queryClient.setQueryData<DocumentTypeOption[]>(["document-types"], (prev) =>
+      prev && !prev.some((opt) => opt.id === type.id)
+        ? [...prev, { id: type.id, key: type.key, name: type.name, templateFields: [] }]
+        : prev,
+    );
+    queryClient.invalidateQueries({ queryKey: ["document-types"] });
+    // ⚠️ `moved` AND `movedFieldsUnknown` write into the form; the other two do
+    // not. The two that do are the two where the re-type itself is CERTAIN —
+    // `movedFieldsUnknown` is only ever reported after write 2 returned moved,
+    // and doubts write 3 alone. `created` means the document is still on its old
+    // type; `moveUnresolved` means nobody knows which type it is on, and writing
+    // a guess there is how the wrong `documentTypeId` gets PATCHed back by the
+    // next ordinary Save — which is exactly what leaving `movedFieldsUnknown`
+    // out of this branch did: the form kept the old type over a document the
+    // server had already moved.
+    if (pending.status !== "moved" && pending.status !== "movedFieldsUnknown") return pending;
+    form.setValue("documentTypeId", type.id, { shouldDirty: false });
+    form.setValue("customFields",   {},      { shouldDirty: false });
+    setBaseline((prev) => ({
+      values: { ...prev.values, documentTypeId: type.id, customFields: {} },
+    }));
+    // The document list and this document's version history both moved. Not
+    // awaited — nothing here depends on them.
+    queryClient.invalidateQueries({ queryKey: ["documents"] });
+    queryClient.invalidateQueries({ queryKey: ["document-versions"] });
+    return pending;
+  };
+
   // Page uploads/deletes save immediately via their own API calls (see
   // PagesPanel), so they don't need this guard — only unsaved React Hook
   // Form field edits do. A read-only historical version is never dirty.
@@ -712,9 +1074,15 @@ export function DocumentForm({
           ? form.formState.isDirty
           : editDirty,
     onSave: async () => {
+      // Slice #27.04: no special case. While `typeMoveUnresolved` is set the two
+      // uncertain columns are disabled AND reset to the baseline (see where the
+      // state is set), so there is never a pending edit to them for this door to
+      // drop — and a refusal here would have rendered as the provider's generic
+      // "could not save", blocking the Titlu / Note work the banner beside it
+      // promises still saves.
       const valid = await form.trigger();
       if (!valid) return false;
-      return doSave(form.getValues());
+      return (await doSave(form.getValues())) !== null;
     },
   });
 
@@ -800,6 +1168,8 @@ export function DocumentForm({
   ) => {
     const name = `customFields.${f.key}` as unknown as FieldPath<FormValues>;
     const fieldLabel = f.labelRo || f.labelEn || f.key;
+    // Slice #27.04: the type-specific inputs are the second half of what a
+    // `moveUnresolved` ending cannot save — see `typeMoveUnresolved`.
     return f.type === "textarea" || forceFullWidthTextarea ? (
       <TextAreaField
         key={f.key}
@@ -809,6 +1179,7 @@ export function DocumentForm({
         rows={1}
         watchValue={watchedValues.customFields?.[f.key]}
         fullWidth
+        disabled={typeMoveUnresolved}
       />
     ) : (
       <Field
@@ -817,6 +1188,7 @@ export function DocumentForm({
         name={name}
         type={f.type === "date" ? "date" : f.type === "number" ? "number" : "text"}
         register={register}
+        disabled={typeMoveUnresolved}
       />
     );
   };
@@ -900,6 +1272,10 @@ export function DocumentForm({
           label={t("fields.type")}
           name="documentTypeId"
           register={register}
+          // Slice #27.04: not while nobody can say which type this document is
+          // already on — a change here could not be saved, and swallowing it
+          // silently was the worse of the two answers a review round tried.
+          disabled={typeMoveUnresolved}
           error={errors.documentTypeId?.message}
           options={typeOptions.map((opt) => ({
             value: opt.id,
@@ -1237,7 +1613,12 @@ export function DocumentForm({
               >
                 <button
                   type="button"
-                  disabled={!hasPages || busy}
+                  // Slice #27.04: also blocked while nobody can say which type
+                  // this document is on. A re-run would open the review step on
+                  // `selectedDocumentTypeId` — which in that state is the type
+                  // the document was being rescued FROM — and its first press
+                  // clears the very banner explaining why not to.
+                  disabled={!hasPages || busy || typeMoveUnresolved}
                   onClick={handleAiDiscover}
                   className={buttonClass({ variant: "secondary", size: "lg" })}
                 >
@@ -1268,12 +1649,18 @@ export function DocumentForm({
             saving is told which type is about to gain a form. Discover mode
             never sends the type to the model (see the route's comment on
             typeHintText), so nothing about the read depends on this choice. */}
-        {discoverResult && selectedDocumentTypeId && (
+        {discoverResult && selectedDocumentTypeId && documentId && (
           <DiscoverReviewDialog
             key={selectedDocumentTypeId}
             pairs={discoverResult.pairs}
+            documentId={documentId}
+            documentLabel={discoverResult.documentLabel}
             typeId={selectedDocumentTypeId}
             typeName={selectedType?.name ?? ""}
+            // Slice #27.04: so an exact duplicate name is refused before the
+            // type is created. The list is already in hand — the form renders
+            // its dropdown from it.
+            existingTypeNames={typeNames}
             existing={templateFields}
             partyRoleNames={discoverResult.partyRoleNames}
             skippedPages={discoverResult.skippedPages}
@@ -1281,10 +1668,74 @@ export function DocumentForm({
             onTypesChanged={() => {
               queryClient.invalidateQueries({ queryKey: ["document-types"] });
             }}
-            onClose={() => setDiscoverResult(null)}
+            // Slice #27.04: recorded, not applied — see pendingNewTypeRef.
+            onNewTypeProgress={(progress) => {
+              pendingNewTypeRef.current = progress;
+            }}
+            onClose={() => {
+              setDiscoverResult(null);
+              // ⚠️ Reaching close with something pending means the run stopped
+              // PART WAY — a complete one goes through onSaved. The dialog said
+              // so in red and has just been unmounted, so the page has to say
+              // it again, and as a failure: the green tick beside "the type was
+              // created" would read as a finished job on a document whose
+              // fields were discarded and whose form is empty.
+              const applied = applyPendingNewType();
+              if (applied) {
+                if (applied.status === "moveUnresolved") {
+                  setTypeMoveUnresolved(true);
+                  // ⚠️ Put the two uncertain columns back to the last saved
+                  // state, and say so in the message below. An edit to either
+                  // that was pending when this ending arrived cannot be written
+                  // — `doSave` leaves both columns out of the patch — so leaving
+                  // it on screen, in a control that is now disabled, would show
+                  // the user a value they can neither save nor revert, and hand
+                  // the unsaved-changes guard something to silently drop on the
+                  // way out. Undone here, while the reason is on screen.
+                  form.setValue("documentTypeId", baseline.values.documentTypeId, {
+                    shouldDirty: false,
+                  });
+                  // ⚠️ Every key the form currently HOLDS, not just the ones the
+                  // baseline has. React Hook Form pushes an object `setValue`
+                  // into the DOM key by key over the object it is GIVEN, so a
+                  // key absent from the baseline — every field accepted in an
+                  // earlier discovery run and left unsaved — would keep its
+                  // value on screen while leaving form state, in a disabled
+                  // input, under a banner saying it had been undone.
+                  const cleared: Record<string, string> = {};
+                  for (const key of Object.keys(form.getValues("customFields"))) cleared[key] = "";
+                  form.setValue(
+                    "customFields",
+                    { ...cleared, ...baseline.values.customFields },
+                    { shouldDirty: false },
+                  );
+                  justAcceptedKeysRef.current = null;
+                }
+                setAiExtractErr(
+                  applied.status === "moved"
+                    ? t("aiDiscoverNewTypeNoFields",   { type: applied.type.name })
+                    : applied.status === "created"
+                      ? t("aiDiscoverNewTypeNotMoved", { type: applied.type.name })
+                      : applied.status === "moveUnresolved"
+                        ? t("aiDiscoverNewTypeMoveUnknown", { type: applied.type.name })
+                        : applied.status === "movedFieldsUnknown"
+                          ? t("aiDiscoverNewTypeFieldsUnknown", { type: applied.type.name })
+                          : t("aiDiscoverNewTypeUnknown", { type: applied.name }),
+                );
+              }
+            }}
             onSaved={(savedFieldCount, values) => {
               setDiscoverResult(null);
-              setAiExtractMsg(t("aiDiscoverSaved", { count: savedFieldCount }));
+              // Only a `moved` progress can reach here — the other three all
+              // stop the save — but the message is built from the status rather
+              // than from its existence, so a future fourth cannot slip a
+              // half-finished run under a green tick.
+              const applied = applyPendingNewType();
+              setAiExtractMsg(
+                (applied?.status === "moved" || applied?.status === "movedFieldsUnknown"
+                  ? `${t("aiDiscoverNewType", { type: applied.type.name })} `
+                  : "") + t("aiDiscoverSaved", { count: savedFieldCount }),
+              );
               // The form renders its custom section from this query's payload,
               // so refetching is what makes the new fields appear without a
               // reload — and it is an invalidate rather than a local patch
@@ -1304,6 +1755,16 @@ export function DocumentForm({
               // user still presses Save, which is the same confirmation every
               // other edit on this page gets. `shouldDirty` is explicit for
               // that reason.
+              justAcceptedKeysRef.current = {
+                // The type they landed on: the one this run wrote to, which is
+                // the new one when the run created it and the selected one
+                // otherwise.
+                typeId:
+                  applied?.status === "moved" || applied?.status === "movedFieldsUnknown"
+                    ? applied.type.id
+                    : selectedDocumentTypeId,
+                keys:   new Set(Object.keys(values)),
+              };
               for (const [key, value] of Object.entries(values)) {
                 form.setValue(
                   `customFields.${key}` as unknown as FieldPath<FormValues>,
@@ -1435,9 +1896,17 @@ type FieldProps = {
   register:   UseFormRegister<FormValues>;
   error?:     string;
   highlight?: HighlightColor;
+  /**
+   * Slice #27.04: read-only for a reason the page states elsewhere. Used for
+   * the document-type select and the type-specific inputs while
+   * `typeMoveUnresolved` is set — the two things this form cannot save then, so
+   * the honest move is not to let them be edited rather than to swallow the
+   * edit afterwards. Every control here already carries `disabled:` styling.
+   */
+  disabled?:  boolean;
 };
 
-function Field({ label, name, type = "text", register, error, highlight }: FieldProps) {
+function Field({ label, name, type = "text", register, error, highlight, disabled }: FieldProps) {
   const ring = usePulseRing(highlight);
   return (
     <label className="flex items-center gap-2 text-sm">
@@ -1446,6 +1915,7 @@ function Field({ label, name, type = "text", register, error, highlight }: Field
         <input
           type={type}
           {...register(name)}
+          disabled={disabled}
           // All content here is Romanian legal/notarial text — the browser's
           // spell-checker (English by default) flags most of it as errors.
           spellCheck={false}
@@ -1481,6 +1951,7 @@ function TextAreaField({
   highlight,
   watchValue,
   fullWidth,
+  disabled,
 }: FieldProps & { maxLength?: number; rows?: number; watchValue?: string | null; fullWidth?: boolean }) {
   const ring = usePulseRing(highlight);
   const registered = register(name);
@@ -1547,6 +2018,7 @@ function TextAreaField({
           }}
           maxLength={maxLength}
           rows={rows}
+          disabled={disabled}
           // Same rationale as Field above — Romanian text, English spell-checker.
           spellCheck={false}
           aria-invalid={error ? true : undefined}
@@ -1574,6 +2046,7 @@ function SelectField({
   options,
   highlight,
   hint,
+  disabled,
 }: FieldProps & {
   options: { value: string; label: string }[];
   /**
@@ -1623,13 +2096,25 @@ function SelectField({
           // once the real options are appended afterwards the browser
           // defaults to the first one — which visually looks like the field
           // got reset, even though the underlying form value never changed.
-          // Keying on whether options have loaded forces a clean remount
-          // once they arrive, so register's initial-value assignment runs
-          // again against the now-populated list and the select displays the
-          // correct option instead of the first list entry.
-          key={options.length > 0 ? "loaded" : "loading"}
+          // Keying on the options forces a clean remount when they change, so
+          // register's initial-value assignment runs again against the
+          // now-populated list and the select displays the correct option
+          // instead of the first list entry.
+          //
+          // ⚠️ **Slice #27.04: keyed on the COUNT, not on loaded-vs-loading.**
+          // The original key only remounted on 0 → N. #27.04 added an N → N+1
+          // case: creating a document type from the discovery review seeds the
+          // new row into the query cache and writes its id into this field in
+          // the same handler, before React has appended the `<option>`. The
+          // select's `selectedIndex` goes to −1, and when the option arrives the
+          // browser resets the selection to the FIRST entry — so the field
+          // showed an unrelated type under a banner announcing the new one,
+          // with `_formValues` correct all along. Counting closes it: any change
+          // to the list remounts, and register re-assigns against the real list.
+          key={options.length}
           id={fieldId}
           {...register(name)}
+          disabled={disabled}
           // Slice #27.02: the hint AND the error, in that order. Before this the
           // error was announced only because it happened to fall inside the
           // wrapping <label>; naming the field properly would have silently

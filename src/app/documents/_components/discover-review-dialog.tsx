@@ -31,6 +31,41 @@
  * holds the rows the system captures some OTHER way: the four generic columns
  * every document has, and the type's person roles, which the import links to
  * real Person records rather than to free text.
+ *
+ * THE TYPE ITSELF CAN BE NEW                                    (Slice #27.04)
+ * --------------------------
+ * Everything above assumes the document already sits on the type that should
+ * gain the form. Often it does not: `ensureDocType` puts a document whose scan
+ * produced no usable label on the fallback type (UNCLASSIFIED / ALTUL), and
+ * saving this review onto THAT type writes one document's fields onto the
+ * catch-all that every unclassified document in the archive shares. Since
+ * #27.03 an administrator can remove a field again from Reference Data, so that
+ * is no longer literally permanent — but the field's KEY is: every document of
+ * the type that has since stored a value under it keeps that value in
+ * `custom_fields`, reachable from no screen once the field is gone.
+ *
+ * So the review can also say "this is a new document type", pre-filled with
+ * `documentLabel` — the model's own short Romanian name for what it read,
+ * which the discover response has always carried and this client used to throw
+ * away. Accepting then does three writes, IN THIS ORDER:
+ *
+ *   1. POST  /api/admin/value-lists/document-types    — create the type
+ *   2. PATCH /api/documents/[id]                      — re-type this document,
+ *                                                       clearing custom_fields
+ *   3. PUT   /api/document-types/[id]/template-fields  — the accepted fields
+ *
+ * ⚠️ **That order is a safety property, not a preference.** Fields last means a
+ * failure at any step leaves them written nowhere — and never on the type the
+ * document is being rescued FROM, which is the one outcome no screen can undo.
+ * Each step is resumable rather than repeatable: `createdType` and `retyped`
+ * make a second press of Save continue where the first stopped instead of
+ * creating a second type.
+ *
+ * ⚠️ **Discover mode itself still persists nothing.** These writes happen on
+ * the user's acceptance, in the same click that saves the fields — which is
+ * what keeps the Descoperire AI button safe to re-run.
+ *
+ * ⚠️ **`origin` is deliberately NOT sent** — see `createType` below.
  */
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -41,6 +76,7 @@ import {
   buildFieldHint,
   formValueForField,
   MAX_TEMPLATE_FIELDS,
+  normaliseKeyForComparison,
   proposeTemplateFields,
   type DiscoveredFieldProposal,
 } from "@/lib/documents/discover-to-template";
@@ -51,6 +87,39 @@ import {
 } from "@/lib/documents/template-fields";
 
 const FIELD_TYPES: DocumentTemplateFieldType[] = ["text", "textarea", "date", "number"];
+
+/**
+ * The template a BRAND-NEW type has.                            (Slice #27.04)
+ *
+ * A module constant rather than a `[]` literal at each use site: it is read by
+ * `useMemo`/`seedRows` inputs, and a fresh array identity on every render is
+ * the thing those memos exist to avoid.
+ */
+const NO_FIELDS: readonly DocumentTemplateField[] = [];
+
+/**
+ * Two type names that a business user would read as the same name.
+ *                                                               (Slice #27.04)
+ *
+ * Used only to REFUSE creating a duplicate, and deliberately no cleverer than
+ * that: merging or de-duplicating near-identical types is a different problem
+ * with a different answer (the archive has three deliberate alternate wordings
+ * — `AUTORIZATIE` / `AUTORIZATIE_ALT` and two more — that a fuzzy test would
+ * wrongly collapse; those differ by WORDING, which survives this).
+ *
+ * ⚠️ **Diacritics fold, and a review round is why.** Case and space alone let
+ * "Contract de arendă" and "Contract de arenda" — the same document read twice,
+ * once from a scan that dropped the diacritic — become two types that look
+ * identical in the dropdown and each hold half the archive's fields. The server
+ * already folds them the same way when it generates the KEY
+ * (`generateUniqueDocumentTypeKey`), so refusing here keeps the two ends
+ * agreeing about what "the same type" means. `normaliseKeyForComparison` is
+ * that fold, already written and already tested.
+ */
+function sameTypeName(a: string, b: string): boolean {
+  const left = normaliseKeyForComparison(a);
+  return left.length > 0 && left === normaliseKeyForComparison(b);
+}
 
 /** What the dialog shows and edits — a proposal plus the user's decisions. */
 type Row = DiscoveredFieldProposal & {
@@ -73,12 +142,50 @@ export type DiscoverReviewPair = {
   confidence: DiscoverConfidence;
 };
 
+/** A document type this dialog created. `key` is the server's, never guessed. */
+export type CreatedDocumentType = { id: string; key: string; name: string };
+
+/**
+ * The three ways the new-type path can leave the server.        (Slice #27.04)
+ *
+ * `created` — the row exists; this document is still on its old type.
+ * `moved`   — the row exists AND this document has been re-typed onto it.
+ * `moveUnresolved` — the row exists; whether the document reached it could not
+ *   be established. The caller must NOT write either type into its form: the
+ *   only honest next step is to reload the document and look.
+ * `movedFieldsUnknown` — the row exists and this document is on it, but whether
+ *   the accepted fields were saved onto it could not be established.
+ * `unresolved` — a create whose outcome could not be established. Nothing may
+ *   be assumed from it except that a row with this name MIGHT exist.
+ */
+// One member per status, rather than one member with three of them: a union
+// discriminant does not narrow away through a chain of `!==` tests, and the
+// caller reads `name` on the one member that has it.
+export type NewTypeProgress =
+  | { status: "created";            type: CreatedDocumentType }
+  | { status: "moved";              type: CreatedDocumentType }
+  | { status: "moveUnresolved";     type: CreatedDocumentType }
+  | { status: "movedFieldsUnknown"; type: CreatedDocumentType }
+  | { status: "unresolved";         name: string };
+
 type Props = {
   /** The pairs discovery reported, in the model's own reading order. */
   pairs:        readonly DiscoverReviewPair[];
+  /** The document that was read — the one that gets re-typed. (#27.04) */
+  documentId:   string;
+  /**
+   * The model's own short Romanian name for what it read, or null when it
+   * offered none. Seeds the new-type name box; the user may edit it. (#27.04)
+   */
+  documentLabel: string | null;
   /** The type these fields would be saved onto. */
   typeId:       string;
   typeName:     string;
+  /**
+   * Every type name already in the list, so an exact duplicate is refused
+   * before it is created rather than discovered later. (#27.04)
+   */
+  existingTypeNames: readonly string[];
   /** The type's current template — kept whole, shown as already captured. */
   existing:     readonly DocumentTemplateField[];
   /** The type's person roles — captured as linked Persons, never as text. */
@@ -93,6 +200,27 @@ type Props = {
    */
   onSaved:      (addedFieldCount: number, values: Record<string, string>) => void;
   /**
+   * How far the new-type path got on the server.                (Slice #27.04)
+   *
+   * ⚠️ **Reported after EACH write, not once at the end.** Each is committed
+   * the moment it returns and the write after it can still fail. A caller told
+   * only about a complete success would leave a created type missing from its
+   * cached type list — the list its own error message tells the user to go and
+   * pick the type from — and, worse, would keep rendering the OLD type for a
+   * document the server has already moved, so the next ordinary Save would
+   * PATCH it straight back and undo the rescue.
+   *
+   * `unresolved` carries no type because there is none to carry: the create
+   * neither certainly happened nor certainly did not. It exists so the warning
+   * outlives this dialog, which is about to be closed on top of it.
+   *
+   * ⚠️ **The caller must not apply any of it to a live form field while this
+   * dialog is mounted** — see the mount site in document-form.tsx, which defers
+   * it to close. Changing the selected type there changes this component's
+   * React `key`, which unmounts it mid-save.
+   */
+  onNewTypeProgress: (progress: NewTypeProgress) => void;
+  /**
    * Called when the stored template turned out to have moved on under us, so
    * the caller can refresh its own copy. This dialog does NOT depend on that
    * refresh: it reseeds from the fields the 409 itself returned.
@@ -103,13 +231,17 @@ type Props = {
 
 export function DiscoverReviewDialog({
   pairs,
+  documentId,
+  documentLabel,
   typeId,
   typeName,
+  existingTypeNames,
   existing,
   partyRoleNames,
   skippedPages,
   truncated,
   onSaved,
+  onNewTypeProgress,
   onTypesChanged,
   onClose,
 }: Props) {
@@ -169,6 +301,133 @@ export function DiscoverReviewDialog({
   const [saving,  setSaving]  = useState(false);
   const [error,   setError]   = useState<string | null>(null);
 
+  // ── Slice #27.04: "this is a new document type" ──────────────────────────
+  //
+  // Off by default. Ticking it does not create anything — it changes what Save
+  // will do, and nothing is written until Save is pressed.
+  const [createNew,   setCreateNew]   = useState(false);
+  const [newTypeName, setNewTypeName] = useState((documentLabel ?? "").trim());
+  /**
+   * The type this dialog CREATED, once it exists, and whether the document has
+   * been moved onto it.
+   *
+   * ⚠️ **These make Save resumable rather than repeatable.** Three writes stand
+   * behind one button, and the user's answer to a failure at write 2 or 3 is to
+   * press it again. Without these, that second press would create a second type
+   * named the same thing, leaving a stray empty one in Reference Data that
+   * nothing in the app would explain. Both are STATE: each is read during
+   * render as well as inside the handler — the name box locks once the type is
+   * real, and the help text under it branches on whether the document has moved.
+   */
+  const [createdType, setCreatedType] = useState<CreatedDocumentType | null>(null);
+  // State, not a ref: the help text under the name box says whether the
+  // document has been moved, and it was WRONG while this was a ref that render
+  // could not read. Set only inside the save handler.
+  const [retyped, setRetyped] = useState(false);
+  /**
+   * A write whose outcome could not be established, even after asking.
+   *
+   * ⚠️ **The one state where retrying is the dangerous answer, and it is
+   * therefore terminal.** `lookup_document_type` has no unique constraint on
+   * `name` (only on `key`, which is generated), so a second POST after a create
+   * that actually succeeded leaves two identically named types, one of them
+   * permanently empty. A dropped connection after the row was inserted, or a
+   * 201 whose body will not parse, are both this.
+   *
+   * ⚠️ **It locks the new-type CHECKBOX as well as Save, and a review round is
+   * why.** Left tickable, unticking it cleared the error and re-enabled a Save
+   * that would then write the fields onto the type this document is being
+   * rescued FROM — the shared catch-all — which is the single outcome the whole
+   * slice exists to prevent. From here the only exit is Close, and the caller
+   * repeats the warning on the page.
+   */
+  const [unresolved, setUnresolved] = useState(false);
+  /**
+   * The template of the type being written to when that type is NEW: empty,
+   * because it was just created. Separate from `baseline` so toggling the box
+   * off restores the stored type's frozen template rather than an emptied copy
+   * of it — and so the 409 path can reseed whichever one is live.
+   */
+  const [newTypeBaseline, setNewTypeBaseline] =
+    useState<readonly DocumentTemplateField[]>(NO_FIELDS);
+  const activeBaseline = createNew ? newTypeBaseline : baseline;
+  const setActiveBaseline = (fields: readonly DocumentTemplateField[]) =>
+    createNew ? setNewTypeBaseline(fields) : setBaseline(fields);
+
+  /**
+   * Re-apply those decisions over a fresh seed. A row that is already captured
+   * takes the seed regardless — it cannot be saved, so there is no decision to
+   * restore.
+   */
+  const applyDecisions = (seeded: Row[]): Row[] =>
+    seeded.map((s) => {
+      const decided = decisionsRef.current.get(s.rowId);
+      if (!decided || s.alreadyInForm) return s;
+      return { ...s, ...decided };
+    });
+
+  const trimmedNewName = newTypeName.trim();
+  const duplicateName =
+    trimmedNewName.length > 0 &&
+    createdType === null &&
+    existingTypeNames.some((name) => sameTypeName(name, trimmedNewName));
+  // The type the fields will land on, named. While the box is empty the old
+  // type is still the honest answer, and Save is blocked anyway.
+  const targetTypeName =
+    createNew && (createdType?.name ?? trimmedNewName)
+      ? (createdType?.name ?? trimmedNewName)
+      : typeName;
+
+  /**
+   * Every decision the USER has made, kept apart from the rows themselves.
+   *
+   * ⚠️ **Not derived from the previous rows, and a review round is why.** Rows
+   * are reseeded twice — by the 409 recovery and by the new-type toggle — and a
+   * carry-across that reads the previous rows cannot tell "the user left this
+   * ticked" from "the seed ticked it". Toggling the new-type box off and on
+   * again then walked over explicit choices with fresh defaults: a field the
+   * user had deliberately UNTICKED came back ticked, and a rename was lost —
+   * and a ticked field is one only an administrator can take back off the type
+   * again, from another screen, after the fact.
+   *
+   * ⚠️ **Keyed on `rowId`, NOT on the printed label**, and a second review
+   * round is why. A document that prints "Suprafață" twice yields two rows —
+   * `proposeTemplateFields` uniquifies the KEY (`suprafata`, `suprafata_2`) and
+   * leaves both labels identical, deliberately — so a label-keyed map gives
+   * them one shared decision and an untick on the second silently removes the
+   * first. `rowId` is the row's index in the proposal list, and that list is
+   * built from `pairs` alone: same length, same order, whichever template it is
+   * proposed against. It is the only identity here that survives a reseed AND
+   * distinguishes two rows that read the same.
+   */
+  const decisionsRef = useRef(
+    new Map<string, { include: boolean; label: string; type: DocumentTemplateFieldType }>(),
+  );
+
+  /**
+   * Ticking the box re-proposes against an EMPTY template.
+   *
+   * ⚠️ **Not a `useEffect`.** Reseeding rows from a prop is the thing this
+   * component's comments warn about twice; reseeding them from an explicit user
+   * action is a different act, and writing it in the handler is what keeps the
+   * two distinguishable.
+   *
+   * ⚠️ **The reseed is the point, not a side effect.** A document that landed on
+   * the WRONG type — not merely a formless one — has rows greyed as "already
+   * captured" by a template that is about to stop applying to it. Left alone
+   * they could never be moved to the new type, which is half of what this slice
+   * is for. The party roles stay captured-elsewhere regardless: a brand-new type
+   * has no roles configured yet, but offering "Vânzător" as a free-text field is
+   * precisely what `src/lib/import/id-card.ts` exists to refuse.
+   */
+  const toggleCreateNew = (checked: boolean) => {
+    setCreateNew(checked);
+    setError(null);
+    const base = checked ? newTypeBaseline : baseline;
+    const reproposed = proposeTemplateFields(pairs, base, partyRoleNames);
+    setRows(applyDecisions(seedRows(reproposed, base.length)));
+  };
+
   const closeRef = useRef<HTMLButtonElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
 
@@ -209,7 +468,18 @@ export function DiscoverReviewDialog({
           'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
         ),
       ).filter((el) => el.offsetParent !== null || el === document.activeElement);
-      if (focusable.length === 0) return;
+      // ⚠️ Slice #27.04: PREVENT, don't release. Every control in this panel is
+      // disabled while a save is in flight, so this list is empty for exactly
+      // as long as the write lasts — and returning here let Tab walk out to the
+      // page beneath, where the type dropdown sits. Changing that unmounts this
+      // dialog mid-save, and #27.04 made the save three sequential writes, so
+      // the window is wide and what it discards is the record of which of them
+      // already landed. Nothing to move focus TO is a reason to swallow Tab,
+      // not a reason to hand it to the page under the overlay.
+      if (focusable.length === 0) {
+        e.preventDefault();
+        return;
+      }
       const first = focusable[0];
       const last  = focusable[focusable.length - 1];
       const active = document.activeElement as HTMLElement | null;
@@ -238,7 +508,7 @@ export function DiscoverReviewDialog({
   // Counted against the SAME ceiling the route enforces, so the user is stopped
   // before the click rather than rejected after it — and never by an English
   // sentence built on the server.
-  const storedCount = baseline.length;
+  const storedCount = activeBaseline.length;
   const wouldTotal  = storedCount + selected.length;
   const typeFull    = storedCount >= MAX_TEMPLATE_FIELDS;
   const overLimit   = wouldTotal > MAX_TEMPLATE_FIELDS;
@@ -247,17 +517,319 @@ export function DiscoverReviewDialog({
   // the screen offers Close rather than a Save that can never fire. A type
   // already at the ceiling is the same dead end reached from the other side.
   const nothingToAdd = newRows.length === 0 || typeFull;
-  const canSave      = selected.length > 0 && !saving && !overLimit && !typeFull;
+  // Slice #27.04: a new type with no name is the fourth way to reach a disabled
+  // Save, and the only one the user can fix by typing. Answered in the footer
+  // like the other three rather than left as a dead button.
+  const newTypeReady = !createNew || (trimmedNewName.length > 0 && !duplicateName);
+  // ⚠️ `!unresolved` sits OUTSIDE `newTypeReady`, not inside it. Inside, it was
+  // reachable only through `createNew` — and unticking that box cleared the way
+  // back to a Save that would write the fields onto the shared catch-all type.
+  const canSave =
+    selected.length > 0 && !saving && !overLimit && !typeFull && newTypeReady && !unresolved;
   // Two labels can resolve to one captured field, so count the FIELDS.
   const presentCount = new Set(presentRows.map((r) => r.key)).size;
 
-  const patchRow = (rowId: string, patch: Partial<Row>) =>
+  const patchRow = (rowId: string, patch: Partial<Row>) => {
     setRows((prev) => prev.map((r) => (r.rowId === rowId ? { ...r, ...patch } : r)));
+    // Slice #27.04: remembered so a later reseed cannot walk over it. Recorded
+    // from the CURRENT render's rows, in the event handler — not inside the
+    // updater, which React may run twice.
+    const row = rows.find((r) => r.rowId === rowId);
+    if (row) {
+      const next = { ...row, ...patch };
+      decisionsRef.current.set(rowId, {
+        include: next.include,
+        label:   next.label,
+        type:    next.type,
+      });
+    }
+  };
+
+  /**
+   * Write 1 of 3 — create the type.                             (Slice #27.04)
+   *
+   * ⚠️ **No `origin` is sent, so `createValue` supplies MANUAL** (see its own
+   * comment in src/lib/admin/value-lists/queries.ts). The column is write-once
+   * and the value-lists PUT strips it, so this cannot be corrected from any
+   * screen — which is why it is the value that makes no new claim rather than
+   * the flattering one. IMPORT means "an import run invented this type with
+   * nobody looking" (`ensureDocType` is its only writer); what happened here is
+   * that a person read a machine's suggestion, edited the name and pressed a
+   * button. It also only shows for a WINDOW: the type gains a form seconds
+   * later and reads "Are formular" from then on, whichever origin it holds. The
+   * one moment origin is visible is when the field save failed — and there,
+   * "Adăugat manual" on a formless type is the truth.
+   *
+   * ⚠️ **Its three outcomes are not two.** "Created", "certainly not created"
+   * and "cannot tell" are different answers, and collapsing the last two is how
+   * a retry produces a duplicate — see `createUnknown`. A response that ARRIVED
+   * and was a failure is safe to retry; a request that never came back, or a
+   * 201 whose body will not parse, is not.
+   */
+  type CreateOutcome =
+    | { status: "created"; type: CreatedDocumentType }
+    | { status: "failed" }
+    | { status: "unknown" };
+
+  /**
+   * Turn "I do not know whether the type was created" into an answer, by
+   * asking.                                                     (Slice #27.04)
+   *
+   * ⚠️ **Ask, do not assume — and do not retry blind.** Both unknown outcomes
+   * (a rejected `fetch`, a 201 whose body will not parse) are recoverable by
+   * one GET, and a duplicate name is exactly what this dialog refuses before
+   * creating, so a single match is almost certainly the row we just wrote. Two
+   * matches means the list was stale when we checked and something else shares
+   * the name: that stays unknown rather than picking one, because picking wrong
+   * writes the fields onto somebody else's type.
+   *
+   * ⚠️ **"Almost certainly" is doing real work in that sentence, so the match
+   * must also have an EMPTY template.** The pre-flight refusal reads the
+   * client's type list, which react-query holds for five minutes — so a type
+   * another session created inside that window is invisible to it, and a
+   * single match could be that type rather than ours. A type this dialog just
+   * created has no fields yet; one that already has a form is somebody's
+   * finished work, and writing this document's fields onto it is the single
+   * outcome the whole slice exists to prevent. Ambiguous rather than adopted.
+   */
+  const resolveCreate = async (name: string): Promise<CreateOutcome> => {
+    let res: Response;
+    try {
+      res = await fetch("/api/admin/value-lists/document-types");
+    } catch {
+      return { status: "unknown" };
+    }
+    if (res.redirected || !res.ok) return { status: "unknown" };
+    const body = (await res.json().catch(() => ({}))) as { items?: unknown };
+    if (!Array.isArray(body.items)) return { status: "unknown" };
+    const matches = (
+      body.items as { id?: unknown; key?: unknown; name?: unknown; templateFields?: unknown }[]
+    ).filter((row) => typeof row.name === "string" && sameTypeName(row.name, name));
+    // Nothing with this name exists, so the POST certainly did not land — the
+    // safe answer, and the only one that lets the user simply press Save again.
+    // ⚠️ The message is set HERE. `handleSave` clears the banner before every
+    // attempt and answers a `failed` with a bare `return`, so a resolver that
+    // stayed silent turned a failed press into no visible change at all — and
+    // wiped the previous attempt's red banner on the way, which reads as
+    // success.
+    if (matches.length === 0) {
+      setError(t("errorCreateType"));
+      return { status: "failed" };
+    }
+    const only = matches[0];
+    if (
+      matches.length > 1 ||
+      typeof only.id !== "string" ||
+      only.id.length === 0 ||
+      parseTemplateFields(only.templateFields).length > 0
+    ) {
+      return { status: "unknown" };
+    }
+    return {
+      status: "created",
+      type: {
+        id:   only.id,
+        key:  typeof only.key  === "string" ? only.key  : "",
+        name: typeof only.name === "string" ? only.name : name,
+      },
+    };
+  };
+
+  const createType = async (name: string): Promise<CreateOutcome> => {
+    let res: Response;
+    try {
+      res = await fetch("/api/admin/value-lists/document-types", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ name }),
+      });
+    } catch {
+      // The browser's own "Failed to fetch": a dropped connection, a gateway
+      // timeout, a backgrounded tab. The INSERT may well have committed — so
+      // go and look rather than guessing either way.
+      return resolveCreate(name);
+    }
+    if (res.redirected) {
+      setError(t("errorSession"));
+      return { status: "failed" };
+    }
+    if (!res.ok) {
+      setError(t("errorCreateType"));
+      return { status: "failed" };
+    }
+    const row = (await res.json().catch(() => ({}))) as {
+      id?: unknown; key?: unknown; name?: unknown;
+    };
+    if (typeof row.id !== "string" || row.id.length === 0) {
+      // A 201 we cannot read is a row that exists and an id we do not have —
+      // recoverable from the list, which is keyed by the name we just sent.
+      return resolveCreate(name);
+    }
+    return {
+      status: "created",
+      type: {
+        id:   row.id,
+        key:  typeof row.key  === "string" ? row.key  : "",
+        name: typeof row.name === "string" ? row.name : name,
+      },
+    };
+  };
+
+  /**
+   * Write 2 of 3 — move this document onto the new type.        (Slice #27.04)
+   *
+   * ⚠️ **`customFields: {}` is sent every time, not only when the column holds
+   * something.** `custom_fields` is keyed by the OLD type's template, and a key
+   * carried across is persisted, snapshotted into every later
+   * `document_version`, and visible on no screen and editable from none — the
+   * reason `runAiInterpret` states at length about its own re-type. In practice
+   * the document being rescued is formless and the column is already empty, so
+   * this usually writes nothing; the case it protects is the one where it is
+   * not, and that case cannot be repaired afterwards.
+   *
+   * Deliberately a NARROW patch: two keys, nothing else. The form behind this
+   * dialog may hold unsaved edits, and they are the user's to save.
+   *
+   * ⚠️ **Its three outcomes are not two either, and for a worse reason than
+   * write 1's.** A PATCH that commits and whose answer is lost, reported as
+   * "not moved", sends the caller a document it believes is still on the old
+   * type — and the next ordinary Save writes that old `documentTypeId` back,
+   * undoing a re-type the server had already made and taking the cleared
+   * `custom_fields` with it. So a lost answer is resolved by READING the
+   * document back, not by assuming the safer-sounding half.
+   */
+  type RetypeOutcome = "moved" | "failed" | "unknown";
+
+  const resolveRetype = async (newTypeId: string): Promise<RetypeOutcome> => {
+    let res: Response;
+    try {
+      res = await fetch(`/api/documents/${encodeURIComponent(documentId)}`);
+    } catch {
+      return "unknown";
+    }
+    if (res.redirected || !res.ok) return "unknown";
+    const body = (await res.json().catch(() => ({}))) as { documentTypeId?: unknown };
+    // `documentTypeId` is NOT NULL on the row, so a response that does not
+    // carry it as a string is a response shape we do not understand — which is
+    // "I could not tell", not "it did not happen".
+    if (typeof body.documentTypeId !== "string") return "unknown";
+    if (body.documentTypeId === newTypeId) return "moved";
+    // Same rule as `resolveCreate`: a silent `failed` is a press that changes
+    // nothing on screen and clears the banner explaining the last one.
+    setError(t("errorRetype"));
+    return "failed";
+  };
+
+  const retypeDocument = async (newTypeId: string): Promise<RetypeOutcome> => {
+    let res: Response;
+    try {
+      res = await fetch(`/api/documents/${encodeURIComponent(documentId)}`, {
+        method:  "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ documentTypeId: newTypeId, customFields: {} }),
+      });
+    } catch {
+      return resolveRetype(newTypeId);
+    }
+    if (res.redirected) {
+      setError(t("errorSession"));
+      return "failed";
+    }
+    if (!res.ok) {
+      setError(t("errorRetype"));
+      return "failed";
+    }
+    return "moved";
+  };
+
+  /**
+   * Write 3 of 3, when its answer is lost.                       (Slice #27.04)
+   *
+   * ⚠️ **The third write needed this as much as the first two, and not having
+   * it made the page lie.** A rejected `fetch` on the PUT left the run
+   * reporting "the form was NOT saved and the fields that were read are lost"
+   * over a template the server had in fact written — and the obvious retry
+   * answered 409 `template_changed`, reseeded every row as already-captured,
+   * and left a dialog with nothing to add beside a red banner. The stored
+   * template is readable from the list, and the keys we asked for are the
+   * question, so ask it.
+   */
+  const resolveFieldsSaved = async (
+    typeIdToCheck: string,
+    expected: readonly string[],
+  ): Promise<{ status: "saved"; fields: DocumentTemplateField[] } | "failed" | "unknown"> => {
+    let res: Response;
+    try {
+      res = await fetch("/api/admin/value-lists/document-types");
+    } catch {
+      return "unknown";
+    }
+    if (res.redirected || !res.ok) return "unknown";
+    const body = (await res.json().catch(() => ({}))) as { items?: unknown };
+    if (!Array.isArray(body.items)) return "unknown";
+    const row = (body.items as { id?: unknown; templateFields?: unknown }[]).find(
+      (item) => item.id === typeIdToCheck,
+    );
+    if (!row) return "unknown";
+    const stored = parseTemplateFields(row.templateFields);
+    const storedKeys = new Set(stored.map((f) => f.key));
+    if (expected.every((key) => storedKeys.has(key))) return { status: "saved", fields: stored };
+    // Not one of them landed: the write certainly did not commit, so a retry is
+    // safe. A PARTIAL match is neither, and guessing either way is how a
+    // half-written template gets reported as finished.
+    if (expected.every((key) => !storedKeys.has(key))) return "failed";
+    return "unknown";
+  };
 
   const handleSave = async () => {
     setSaving(true);
     setError(null);
     try {
+      // ── Slice #27.04: writes 1 and 2, when the user asked for a new type ──
+      // Each is skipped if a previous press already completed it, so a retry
+      // after a failure resumes instead of duplicating.
+      let target = createdType;
+      if (createNew) {
+        if (!target) {
+          if (trimmedNewName.length === 0) {
+            setError(t("newTypeNameRequired"));
+            return;
+          }
+          if (duplicateName) {
+            setError(t("newTypeNameTaken"));
+            return;
+          }
+          const outcome = await createType(trimmedNewName);
+          if (outcome.status === "unknown") {
+            // Do NOT let the user press Save again: see `unresolved`.
+            setUnresolved(true);
+            setError(t("errorCreateTypeUnknown", { type: trimmedNewName }));
+            onNewTypeProgress({ status: "unresolved", name: trimmedNewName });
+            return;
+          }
+          if (outcome.status === "failed") return;
+          target = outcome.type;
+          setCreatedType(target);
+          // Announced before the next write, so a failure below still leaves
+          // the caller's type list able to offer what was created.
+          onNewTypeProgress({ status: "created", type: target });
+        }
+        if (!retyped) {
+          const outcome = await retypeDocument(target.id);
+          if (outcome === "unknown") {
+            setUnresolved(true);
+            setError(t("errorRetypeUnknown", { type: target.name }));
+            onNewTypeProgress({ status: "moveUnresolved", type: target });
+            return;
+          }
+          if (outcome === "failed") return;
+          setRetyped(true);
+          // Told to the caller HERE rather than on success: the document has
+          // already moved, and the field write below may still fail.
+          onNewTypeProgress({ status: "moved", type: target });
+        }
+      }
+      const saveTypeId = target?.id ?? typeId;
       // `order` is sent as the position within the accepted set; the server
       // renumbers the merged list from scratch (mergeAcceptedFields), so this
       // only has to carry the user's ordering, not a global one.
@@ -278,17 +850,85 @@ export function DiscoverReviewDialog({
         };
       });
 
-      const res = await fetch(
-        `/api/document-types/${encodeURIComponent(typeId)}/template-fields`,
-        {
-          method:  "PUT",
-          headers: { "Content-Type": "application/json" },
-          body:    JSON.stringify({
-            knownKeys: baseline.map((f) => f.key),
-            fields,
-          }),
-        },
-      );
+      /**
+       * What a save that LANDED means for the caller, wherever we learned it
+       * landed from — the PUT's own answer, or the list read that resolved a
+       * lost one.
+       */
+      const completeSave = (savedFields: DocumentTemplateField[]) => {
+        // How many fields the type ACTUALLY gained, from the server's own
+        // answer. `fields.length` would be what we asked for, and the merge
+        // legitimately drops a row whose key the template already had —
+        // reporting the request would let the dialog claim three fields were
+        // added when one was.
+        const savedKeys = new Set(savedFields.map((f) => f.key));
+        const added = savedFields.length > 0
+          ? savedFields.length - activeBaseline.length
+          : fields.length;
+        // The values discovery read, for the fields that actually landed. The
+        // caller fills the form it is standing on with them: the user has just
+        // confirmed each one against the page, and without this the document
+        // that produced the discovery is the one document of its type nothing
+        // can fill — the per-document AI-Interpret button went in #26.09, and
+        // `runAiInterpret` only runs inside an import.
+        // Through formValueForField, never raw: a date input holds only ISO and
+        // a number input only a dot-decimal, and a value they cannot hold is
+        // stored invisibly rather than shown. See that function's own comment.
+        const values: Record<string, string> = {};
+        for (const r of selected) {
+          if (!savedKeys.has(r.key)) continue;
+          const value = formValueForField(r.sampleValue, r.type);
+          if (value !== null) values[r.key] = value;
+        }
+        onSaved(Math.max(0, added), values);
+      };
+
+      let res: Response;
+      try {
+        res = await fetch(
+          `/api/document-types/${encodeURIComponent(saveTypeId)}/template-fields`,
+          {
+            method:  "PUT",
+            headers: { "Content-Type": "application/json" },
+            body:    JSON.stringify({
+              knownKeys: activeBaseline.map((f) => f.key),
+              fields,
+            }),
+          },
+        );
+      } catch {
+        const resolved = await resolveFieldsSaved(saveTypeId, fields.map((f) => f.key));
+        if (resolved === "unknown") {
+          /**
+           * ⚠️ **NOT terminal, unlike an unresolved write 1 or 2.** What makes
+           * those two terminal is that retrying them can create a second type
+           * or re-type twice; write 3 has neither hazard — `createdType` and
+           * `retyped` already hold, so a second press only re-PUTs the fields,
+           * and a PUT that already landed answers 409 `template_changed`, which
+           * this dialog recovers from by reseeding. Locking Save here turned the
+           * ordinary review's one-second Wi-Fi drop into a dead end whose only
+           * exit was Close, where before it was a retry — and the resolver's own
+           * GET fails under exactly the network condition that made the PUT
+           * fail, so "unknown" is the LIKELY branch on this path, not the rare
+           * one.
+           */
+          setError(t("errorFieldsUnknown", { type: targetTypeName }));
+          // If it did land, the type list is now stale and the form behind this
+          // dialog would not render the new fields. Not awaited.
+          onTypesChanged();
+          if (target) onNewTypeProgress({ status: "movedFieldsUnknown", type: target });
+          return;
+        }
+        if (resolved === "failed") {
+          setError(t("errorSave"));
+          // Same downgrade as the answered-failure branch below: the resolver
+          // read the stored template and none of the keys is there.
+          if (createNew && target) onNewTypeProgress({ status: "moved", type: target });
+          return;
+        }
+        completeSave(resolved.fields);
+        return;
+      }
       // An expired session is redirected to /login and followed silently by
       // fetch, which would otherwise look like a successful save.
       if (res.redirected) {
@@ -312,18 +952,32 @@ export function DiscoverReviewDialog({
           // itself from the same stale cache reproduces the failure for ever,
           // with Cancel (which discards the whole run) as the only exit.
           const fresh = parseTemplateFields(body.fields);
-          setBaseline(fresh);
+          /**
+           * ⚠️ **A 409 that already holds every key we asked for is OUR OWN
+           * write coming back, not somebody else's.**
+           *
+           * That is now the main way this branch is reached: a PUT whose answer
+           * was lost is retried (see `errorFieldsUnknown`), the retry sends the
+           * `knownKeys` the reviewer saw, and the server — which has since
+           * stored those very fields — answers 409. Reseeding there marked all
+           * five rows "already captured", never called `onSaved`, and left the
+           * user with the fields on the type, no values in the form, a banner
+           * blaming a concurrent edit, and no Save button to press. The
+           * discovered values were then unrecoverable: a fresh discovery run
+           * reports every one of them as already captured.
+           *
+           * The 409 body carries the stored fields, so the proof is in hand.
+           * Finish the save from it instead of reporting a conflict.
+           */
+          if (fields.every((f) => fresh.some((stored) => stored.key === f.key))) {
+            completeSave(fresh);
+            return;
+          }
+          // Slice #27.04: whichever baseline is live — the stored type's, or
+          // the one belonging to a type this dialog just created.
+          setActiveBaseline(fresh);
           const reproposed = proposeTemplateFields(pairs, fresh, partyRoleNames);
-          setRows((prev) => {
-            // Carry the user's decisions across on the printed label, which is
-            // the one thing a reseed cannot change: it comes from the pair.
-            const before = new Map(prev.map((r) => [r.labelRo, r]));
-            return seedRows(reproposed, fresh.length).map((seeded) => {
-              const old = before.get(seeded.labelRo);
-              if (!old || seeded.alreadyInForm) return seeded;
-              return { ...seeded, include: old.include, label: old.label, type: old.type };
-            });
-          });
+          setRows(applyDecisions(seedRows(reproposed, fresh.length)));
           setError(t("errorChanged"));
           // The form behind this dialog renders from the caller's cache, so it
           // is now out of date too. Not awaited, and nothing here depends on it.
@@ -335,34 +989,17 @@ export function DiscoverReviewDialog({
         } else {
           setError(t("errorSave"));
         }
+        // ⚠️ Slice #27.04: a definite failure DOWNGRADES an earlier "we could
+        // not tell". An answer that arrived proves the fields are not stored —
+        // a PUT that had committed would have answered 409, and the branch
+        // above would have finished the save — so leaving `movedFieldsUnknown`
+        // pending would close the run on "check whether the form was saved"
+        // when the honest ending is "it was not, run discovery again".
+        if (createNew && target) onNewTypeProgress({ status: "moved", type: target });
         return;
       }
-      // How many fields the type ACTUALLY gained, from the server's own answer.
-      // `fields.length` would be what we asked for, and the merge legitimately
-      // drops a row whose key the template already had — reporting the request
-      // would let the dialog claim three fields were added when one was.
       const saved = (await res.json().catch(() => ({}))) as { fields?: unknown };
-      const savedFields = parseTemplateFields(saved.fields);
-      const savedKeys = new Set(savedFields.map((f) => f.key));
-      const added = savedFields.length > 0
-        ? savedFields.length - baseline.length
-        : fields.length;
-      // The values discovery read, for the fields that actually landed. The
-      // caller fills the form it is standing on with them: the user has just
-      // confirmed each one against the page, and without this the document
-      // that produced the discovery is the one document of its type nothing
-      // can fill — the per-document AI-Interpret button went in #26.09, and
-      // `runAiInterpret` only runs inside an import.
-      // Through formValueForField, never raw: a date input holds only ISO and
-      // a number input only a dot-decimal, and a value they cannot hold is
-      // stored invisibly rather than shown. See that function's own comment.
-      const values: Record<string, string> = {};
-      for (const r of selected) {
-        if (!savedKeys.has(r.key)) continue;
-        const value = formValueForField(r.sampleValue, r.type);
-        if (value !== null) values[r.key] = value;
-      }
-      onSaved(Math.max(0, added), values);
+      completeSave(parseTemplateFields(saved.fields));
     } catch {
       setError(t("errorSave"));
     } finally {
@@ -390,9 +1027,110 @@ export function DiscoverReviewDialog({
           id="discover-review-title"
           className="text-base font-semibold text-ink dark:text-zinc-100"
         >
-          {t("title", { type: typeName })}
+          {t("title", { type: targetTypeName })}
         </h3>
-        <p className="mt-2 text-sm text-fade dark:text-zinc-400">{t("intro")}</p>
+        {/* Slice #27.04: the heading names the type the fields will land on, so
+            the paragraph under it has to be talking about the same type. The
+            stored-type wording says "this document type", which is the OLD one
+            the moment the new-type box is ticked. */}
+        <p className="mt-2 text-sm text-fade dark:text-zinc-400">
+          {createNew ? t("introNewType") : t("intro")}
+        </p>
+
+        {/* ── Slice #27.04: "this is a new document type" ─────────────────
+            Above the table, because it changes what every row below it means:
+            with the box ticked the fields land on a type that does not exist
+            yet, and the rows the CURRENT type already captures become
+            offerable again. Outside the scrolling area so it cannot be
+            scrolled away from the rows it governs. */}
+        <div className="mt-3 rounded-md border border-wire bg-cta-pale px-4 py-3 text-sm dark:border-zinc-700 dark:bg-zinc-800/40">
+          <label className="flex items-start gap-2 font-medium text-ink dark:text-zinc-200">
+            <input
+              type="checkbox"
+              checked={createNew}
+              // Locked once the type is real — unticking it would point Save at
+              // the old type while the document sits on the new one — and
+              // locked once a write is unresolved, where unticking cleared the
+              // warning and re-armed exactly that.
+              disabled={saving || createdType !== null || unresolved}
+              onChange={(e) => toggleCreateNew(e.target.checked)}
+              className="mt-0.5 h-4 w-4 shrink-0 rounded border-wire accent-cta"
+            />
+            <span>{t("newTypeToggle")}</span>
+          </label>
+          {createNew && (
+            <div className="mt-3 pl-6">
+              <label
+                htmlFor="discover-new-type-name"
+                className="block text-xs font-medium uppercase tracking-wide text-fade dark:text-zinc-400"
+              >
+                {t("newTypeNameLabel")}
+              </label>
+              <input
+                id="discover-new-type-name"
+                type="text"
+                value={createdType?.name ?? newTypeName}
+                // Same lock, same reason: the row exists, and this box cannot
+                // rename it. Reference Data can.
+                disabled={saving || createdType !== null || unresolved}
+                onChange={(e) => setNewTypeName(e.target.value)}
+                placeholder={t("newTypeNamePlaceholder")}
+                // Both, and in this order: a screen reader that only heard the
+                // help sentence would be told what Save is about to do at the
+                // moment Save has gone dead and cannot do it.
+                aria-describedby={
+                  duplicateName
+                    ? "discover-new-type-taken discover-new-type-help"
+                    : "discover-new-type-help"
+                }
+                aria-invalid={duplicateName || undefined}
+                // Disabled styling copied from `Field` in document-form.tsx,
+                // never an opacity dip: #23.05.UX retired that pattern because it
+                // multiplies the enabled appearance instead of replacing it, and
+                // `button-styles-single-source.test.ts` enforces the ban — by
+                // grepping the source, so naming the class even in a comment
+                // fails the build. (It did.)
+                className="mt-1 w-full max-w-md rounded-md border border-wire bg-transparent px-2 py-1.5 text-ink disabled:bg-canvas disabled:text-fade disabled:cursor-default dark:border-zinc-700 dark:text-zinc-100 dark:disabled:bg-zinc-800"
+              />
+              {duplicateName && (
+                <p
+                  id="discover-new-type-taken"
+                  role="alert"
+                  className="mt-2 text-red-700 dark:text-red-400"
+                >
+                  {t("newTypeNameTaken")}
+                </p>
+              )}
+              <p
+                id="discover-new-type-help"
+                className="mt-2 text-fade dark:text-zinc-400"
+              >
+                {/* ⚠️ Keyed off `retyped`, not off `createdType`. The type is
+                    created BEFORE the document is moved, so a help text that
+                    claimed both on the strength of the first sat directly above
+                    a red banner saying the second had failed. */}
+                {!createdType
+                  ? t("newTypeHelp", { current: typeName })
+                  : retyped
+                    ? t("newTypeCreated", { type: createdType.name })
+                    : t("newTypeCreatedNotMoved", { type: createdType.name })}
+              </p>
+              {/* Ticking the box cannot help when the reseed left nothing
+                  offerable — every pair is a generic column or a person role.
+                  Said here, because the Save button is not rendered at all in
+                  that state and the panel above it is still promising an
+                  action. */}
+              {createNew && nothingToAdd && !createdType && (
+                <p className="mt-2 text-fade dark:text-zinc-400">
+                  {t("newTypeNothingToAdd")}
+                </p>
+              )}
+              {!documentLabel && !createdType && (
+                <p className="mt-2 text-fade dark:text-zinc-400">{t("newTypeNoLabel")}</p>
+              )}
+            </div>
+          )}
+        </div>
 
         {(skippedPages > 0 || truncated) && (
           <div
@@ -549,6 +1287,16 @@ export function DiscoverReviewDialog({
                 {t("overLimit", { max: MAX_TEMPLATE_FIELDS, total: wouldTotal })}
               </span>
             )}
+            {/* Slice #27.04: the fourth way to a disabled Save, answered like
+                the other three rather than left as a dead button. Only the
+                EMPTY name is answered here — a name that is already taken is
+                said beside the box that holds it, and saying it twice on one
+                screen was a review finding. */}
+            {createNew && trimmedNewName.length === 0 && !nothingToAdd && (
+              <span className="mt-1 block text-red-700 dark:text-red-400">
+                {t("newTypeNameRequired")}
+              </span>
+            )}
           </p>
           <div className="flex gap-2">
             <button
@@ -557,11 +1305,21 @@ export function DiscoverReviewDialog({
               onClick={onClose}
               disabled={saving}
               className={buttonClass({
-                variant: nothingToAdd ? "primary" : "secondary",
+                // Slice #27.04: `unresolved` is a dead end — Save is disabled
+                // and cannot be re-armed — so this button is the only exit and
+                // reads as the primary one.
+                variant: nothingToAdd || unresolved ? "primary" : "secondary",
                 size: "lg",
               })}
             >
-              {nothingToAdd ? t("close") : t("cancel")}
+              {/* ⚠️ Slice #27.04: "Anulează" is a lie once anything has been
+                  written. A user who has just been told a type was created and
+                  to close the window should not have to press a button that
+                  says the run is being cancelled — it reads as undoing the type
+                  that now exists. */}
+              {nothingToAdd || createdType !== null || unresolved
+                ? t("close")
+                : t("cancel")}
             </button>
             {!nothingToAdd && (
               <button
