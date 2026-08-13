@@ -116,6 +116,12 @@ export const OUTCOME_NOTE_IDS = [
   // Whether this document's TYPE has somewhere to put what was read (#27.05)
   "typeFormPending",
   "typeFormAdded",
+  // …and whether THIS document, read before that form existed, has been read
+  // again against it.                                            (Slice #27.06)
+  "refillPending",
+  "refillDone",
+  "refillFailed",
+  "refillRetyped",
 ] as const;
 
 export type OutcomeNoteId = (typeof OUTCOME_NOTE_IDS)[number];
@@ -233,7 +239,107 @@ export type OutcomeRow = {
    * is the screen contradicting itself.
    */
   typeFormAdded?: boolean;
+  /**
+   * Where this document is in the run's re-read queue, or absent.
+   *                                                              (Slice #27.06)
+   *
+   * ⚠️ **This is a QUEUE POSITION, not a second copy of `ai_interpreted_at`.**
+   * The re-read stamps that column exactly as the first read did, and #27.06's
+   * constraint forbids a second stamp or a re-read count saying the same thing
+   * twice. What the database cannot express is the bit between the click being
+   * OFFERED and the click being answered — which documents this screen is still
+   * proposing to spend money on — and that lives here, in this dialog's state,
+   * for as long as the result screen is open and not one second longer.
+   */
+  refill?: RefillState;
 };
+
+/**
+ * The four positions a document can be in the re-read queue.  (Slice #27.06)
+ *
+ *   - `pending` — the type gained a form and this document was read before it
+ *     did. Nothing has been spent; the header is offering to.
+ *   - `running` — its call is in flight. Deliberately draws NO note: the status
+ *     cell is already blinking, and a row that says "waiting to be read again"
+ *     over a read in progress is the screen a beat behind itself.
+ *   - `done`    — it was read again, and `aiFieldCount` beside it is now that
+ *     read's number rather than the first one's.
+ *   - `failed`  — the second read did not fill the columns. Two shapes, one
+ *     answer: the call did not happen at all, or it came back `partialWrite` —
+ *     the extract succeeded and the GET of the document's current state did not,
+ *     so `runAiInterpret` withheld exactly the `customFields` this whole walk is
+ *     for. ⚠️ **The first read's fields are still there** either way, which is
+ *     why this is its own state rather than `aiStatus: "failed"` — that one's
+ *     sentence says the document's fields "au rămas necompletate", and on this
+ *     row it is flatly untrue. Offered again, because both causes are transient.
+ *   - `retyped` — ⚠️ **the second read happened, was paid for, and did not do
+ *     what it was bought for.** Two adversarial rounds converged on this one:
+ *     the route may RE-CLASSIFY the document on the same call, and it builds its
+ *     prompt from the template of the type the document was on when the POST was
+ *     made — so the values come back keyed by the OLD type's form and are then
+ *     written onto a document that is on a NEW one. They reach no column the new
+ *     form renders. Folded into `done` it drew an emerald "a fost citit din nou"
+ *     on the one document the walk achieved nothing for, permanently, in the
+ *     saved report; folded into `failed` it would claim a read that did not
+ *     happen. It is deliberately NOT re-offered — a second call would re-type it
+ *     the same way, and the remedy is a human opening the document and looking
+ *     at its type — but it IS counted as outstanding, because the information is
+ *     still in Notes.
+ */
+export type RefillState = "pending" | "running" | "done" | "failed" | "retyped";
+
+/**
+ * Is this row one the re-read control may spend a call on?     (Slice #27.06)
+ *
+ * ⚠️ **EXPORTED BECAUSE THE COUNT AND THE WALK MUST BE ONE EXPRESSION**, which
+ * is `canRetryReads`'s own argument and the one this codebase keeps re-learning:
+ * a header that offers "re-read 6 documents" over a walk that finds five is a
+ * button that never takes the count to zero, and it goes on offering itself for
+ * the life of the dialog.
+ *
+ * ⚠️ **`failed` is IN, and it is the term that looks wrong.** A rate limit at
+ * document twelve of forty is this run's commonest failure — `handleRetryInterpret`
+ * exists because of it — so a re-read that dropped its casualties would rebuild
+ * exactly the dead end #26.09 opened that control to close. Pressing again is
+ * the user's decision, made against a sentence that prices it; it is not a loop,
+ * because nothing presses it but a person.
+ *
+ * ⚠️ **IT TESTS EXACTLY WHAT `refillNote` TESTS, AND NOTHING ELSE, and it took
+ * two adversarial rounds to get there.** The first draft added a `docId` term
+ * that `refillNote` cannot have — `OutcomeRow` carries no document id — and that
+ * one extra term put the two out of step in BOTH directions across the two
+ * rounds: a row this took and the note refused would be billed while drawing no
+ * sentence at all; a row the note took and this refused is counted by
+ * `documentsAwaitingRefill`, printed on the row and filed in the saved report
+ * while `refillCount` is zero, so the whole header block — sentence and button —
+ * is never rendered. Counted by the artefact, reachable by no control.
+ *
+ * So the `docId` invariant is enforced where it can actually be enforced: at the
+ * one set site, which marks only a row that has one. The walk narrows it again
+ * anyway and DROPS a row that somehow lacks it, rather than skipping it — a
+ * skip would leave the count unable to reach zero, which is the same defect once
+ * more.
+ *
+ * ⚠️ **`status` is REQUIRED, not optional, and that is load-bearing.** With
+ * every field optional, `awaitsRefill(anything)` type-checks and quietly answers
+ * `false` — including `awaitsRefill(someOutcomeRow)`, which is exactly the call a
+ * future reader would write. Requiring the one field every real row has makes
+ * the compiler refuse a shape that is not a row.
+ *
+ * ⚠️ **`retyped` is NOT here, and it is the term that looks missing.** That read
+ * happened and was paid for; a second one would re-classify the document the
+ * same way and charge again. It is outstanding — `documentsAwaitingRefill`
+ * counts it — but the remedy is a person, not this button. See `RefillState`.
+ */
+export function awaitsRefill(row: {
+  refill?: RefillState;
+  status: OutcomeRow["status"];
+  preexisting?: OutcomeRow["preexisting"];
+}): boolean {
+  if (row.status !== "done") return false;
+  if (row.preexisting !== undefined) return false;
+  return row.refill === "pending" || row.refill === "failed";
+}
 
 /**
  * The coordinate file's note, or null.
@@ -351,13 +457,50 @@ export function typeFormNote(row: OutcomeRow): OutcomeNote | null {
   return null;
 }
 
+/**
+ * What became of this document once its type had a form.       (Slice #27.06)
+ *
+ * ⚠️ **Drawn BESIDE `typeFormAdded`, not instead of it, and the two are
+ * different sentences about different things.** "This type gained a form during
+ * this import" is a fact about the TYPE and stays true whatever happens next;
+ * this is a fact about THIS document — whether the values that went to Notes
+ * while the form did not exist have been read again into it. A screen that said
+ * only the first would be telling a user the job is done over forty documents
+ * whose columns are still empty.
+ *
+ * ⚠️ **Silent on `running`** — see `RefillState`. The status cell is blinking,
+ * and a note contradicting it is worse than no note.
+ */
+export function refillNote(row: OutcomeRow): OutcomeNote | null {
+  if (row.status !== "done") return null;
+  // The archive already held it, so this run neither created it nor read it —
+  // the same carve-out `readSkipNote` and `typeFormNote` make. A pre-existing
+  // row is a document from an earlier run, which #27.06 puts out of scope in as
+  // many words.
+  if (row.preexisting !== undefined) return null;
+  if (row.refill === "pending") return { id: "refillPending", values: {} };
+  // ⚠️ Ahead of `done`, because it IS a done read — and the whole point of the
+  // state is that saying only "it was read again" is the reassuring half of a
+  // sentence whose other half is that nothing reached the columns.
+  if (row.refill === "retyped") return { id: "refillRetyped", values: {} };
+  if (row.refill === "done") return { id: "refillDone", values: {} };
+  if (row.refill === "failed") return { id: "refillFailed", values: {} };
+  return null;
+}
+
 /** Every note for one row, in the order the row draws them. */
 export function outcomeNotes(row: OutcomeRow): OutcomeNote[] {
-  // `typeFormNote` last, because it is the only one of the four that is about
-  // the document TYPE rather than about this document.
-  return [coordinateNote(row), idCardNote(row), readSkipNote(row), typeFormNote(row)].filter(
-    (note): note is OutcomeNote => note !== null,
-  );
+  // `typeFormNote` fourth, because it is the only one of the first four that is
+  // about the document TYPE rather than about this document — and `refillNote`
+  // last, because it is what happened AFTER that type gained its form, so it
+  // reads as the end of the sentence the one before it starts.
+  return [
+    coordinateNote(row),
+    idCardNote(row),
+    readSkipNote(row),
+    typeFormNote(row),
+    refillNote(row),
+  ].filter((note): note is OutcomeNote => note !== null);
 }
 
 // ---------------------------------------------------------------------------
@@ -469,6 +612,28 @@ export type ImportRunSummary = {
    */
   typesWithoutForm: number;
   /**
+   * Documents read before their type had a form, which nobody read again.
+   *                                                              (Slice #27.06)
+   *
+   * ⚠️ **ITS OWN LINE BECAUSE ACCEPTING THE FORM DELETES THE ONE ABOVE IT**, and
+   * an adversarial round found what that leaves. `typesWithoutForm` only counts a
+   * type while `typeFormMissing` is set, and the acceptance clears that flag on
+   * every row of the type at once — so the moment a user reviews a form for
+   * forty documents the count drops to zero, `summaryLines` drops the line, and
+   * the concluding message reads "40 documente create · 40 citite de AI" over
+   * forty documents whose type-specific columns are still empty. The re-read
+   * queue lives in this dialog's state and dies with it (see
+   * `OutcomeRow.refill`), so without this the last screen of the wizard tells a
+   * user who never pressed the button that there was nothing outstanding.
+   *
+   * Counted off `refillNote`, not off the raw field, so the number and the
+   * sentences on the rows are one expression — and it counts every state in
+   * which the information is still in Notes, which is one MORE than the button
+   * offers: a re-read that re-classified the document did happen and is not
+   * worth a second attempt, and is still a document whose columns are empty.
+   */
+  documentsAwaitingRefill: number;
+  /**
    * Identity cards nobody could be asked about — the image would not open.
    *
    * ⚠️ **Its own line because NOTHING ELSE counts it**, and an adversarial round
@@ -505,6 +670,7 @@ export function summariseImportRun(
     cardsUnanswered: 0,
     cardsUnreadable: 0,
     typesWithoutForm: 0,
+    documentsAwaitingRefill: 0,
   };
 
   // Distinct TYPES, so a folder of thirty contracts of one new type reports one
@@ -572,6 +738,29 @@ export function summariseImportRun(
     ) {
       typesAwaitingForm.add(row.documentTypeId ?? `row:${typesAwaitingForm.size}`);
     }
+
+    // Slice #27.06 — read off the NOTE rather than off `row.refill`, so this
+    // number is by construction the count of rows that say so. `refillNote`
+    // already refuses an errored row, an unfinished one and one the archive
+    // already held; asking it is how the concluding message and the table are
+    // stopped from describing two different queues. `failed` counts as
+    // outstanding for the same reason `awaitsRefill` takes it: the document is
+    // still owed a read and the control still offers it.
+    const refill = refillNote(row);
+    if (
+      refill !== null &&
+      // ⚠️ `refillRetyped` counts, and it is the one that is not in
+      // `awaitsRefill`. The two answer different questions: that one is "may
+      // this button spend a call on it", this one is "did this document's
+      // information reach its columns". A re-read that re-typed the document is
+      // no to the second and no to the first, and dropping it here would let the
+      // run conclude that everything landed.
+      (refill.id === "refillPending" ||
+        refill.id === "refillFailed" ||
+        refill.id === "refillRetyped")
+    ) {
+      summary.documentsAwaitingRefill += 1;
+    }
   }
 
   summary.typesWithoutForm = typesAwaitingForm.size;
@@ -608,6 +797,8 @@ export const SUMMARY_LINE_IDS = [
   "cardsUnreadable",
   // Last, with the other things still outstanding.   (Slice #27.05)
   "typesWithoutForm",
+  // …and after it, because it is what that one leaves behind.   (Slice #27.06)
+  "documentsAwaitingRefill",
 ] as const;
 
 export type SummaryLineId = (typeof SUMMARY_LINE_IDS)[number];

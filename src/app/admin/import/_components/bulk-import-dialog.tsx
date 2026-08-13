@@ -57,9 +57,73 @@
  * offered where a create branch would otherwise have made the duplicate this
  * redesign exists to prevent.
  *
+ * A FORM FILLS IN THE DOCUMENTS THAT CAME BEFORE IT   (Slice #27.06)
+ * ─────────────────────────────────────────────────────────────
+ * #27.05 gave a brand-new type its form during the run. The documents of that
+ * type the run had ALREADY read were read against a type that had no columns,
+ * so their type-specific values went to Notes — and the first documents of a
+ * new type were the only ones left that way. This slice reads them again.
+ *
+ * ⚠️ **IT NEEDS NO NEW EXTRACTION PATH.** `runAiInterpret` builds nothing
+ * itself: the route reads the type's template on every call, so a second call
+ * picks up the fields that were just accepted with no code change, and that
+ * function's merge-not-replace rule is what makes a second pass safe on a
+ * document somebody touched in between.
+ *
+ * ⚠️ **THAT RULE COVERS TWO COLUMNS, NOT SEVEN, and an adversarial round was
+ * right to refuse the loose version of this sentence.** `customFields` is merged
+ * and `notes` are appended. The four baseline fields — `title`, `nrDocument`,
+ * `dateDocument`, `subject` — are written WHOLE whenever the model returns a
+ * non-empty value, with no comparison against what is stored, even though the
+ * GET that would allow one is already in hand. So a correction a human typed
+ * into one of those four between the run's read and this click is overwritten on
+ * the live record, surviving only in `document_version` history, which no screen
+ * in this wizard shows. And on the branch where the second read RE-TYPES the
+ * document, `customFields` is replaced rather than merged — deliberately, since
+ * the column holds the OLD type's values and carrying them over orphans them on
+ * a form that renders none of them.
+ *
+ * None of that is #27.06's to change: it is `runAiInterpret`'s behaviour on
+ * every call site, including the run's own read and the retry, and narrowing it
+ * belongs with whoever next opens that file. What this slice owes is not to
+ * claim a safety it does not have. The window is real but narrow — it needs the
+ * user to have opened and edited one of these documents in another tab while the
+ * result screen was still up — and the retyped case is now recorded on the row
+ * rather than drawn as a tick; see `RefillState`.
+ *
+ * ⚠️ **IT IS A CONFIRMED CLICK, NOT AN AUTOMATIC CONSEQUENCE OF ACCEPTING.**
+ * Every other write in the 26.xx redesign takes that shape, and this is the one
+ * place in the slice where spending money is the thing being decided: the click
+ * is priced in the sentence above it — how many billed reads, and how many
+ * document versions — because a cost discovered after the click is a cost
+ * nobody agreed to. Accepting a form and paying to re-read forty documents are
+ * two decisions, and the review dialog only ever asked the first.
+ *
+ * ⚠️ **THE RE-READ RE-STAMPS `ai_interpreted_at`, AND THAT IS THE WHOLE
+ * BOOKKEEPING.** No second stamp, no re-read counter: #26.12 derives the
+ * document's status from that column and the type's form together, and the
+ * import is still the only writer of it. (Worth saying precisely, because it is
+ * easy to over-claim: what moves a document from "Importat" to "Procesat cu AI"
+ * is the TYPE gaining its form — `status.ts` reads the type live — so the
+ * re-stamp is not what flips the status. What it does is keep the column
+ * honest about when the read that filled these columns actually happened.)
+ *
+ * ⚠️ **TWO CONSEQUENCES THE SENTENCE ABOVE THE BUTTON DOES NOT PRICE, because
+ * they are `runAiInterpret`'s and not this slice's** — but a reader deciding
+ * whether to widen this later should meet them here rather than discover them.
+ * The route may auto-create a `lookup_document_type` row when it re-classifies,
+ * so a re-read can add reference data; and the notes are APPENDED, so the
+ * "[AI] Text neasociat unui câmp" block the first read wrote — the very values
+ * this slice moves into columns — is still in Notes afterwards, with the second
+ * read's block under it. Neither is new to #27.06 (the run's own read and the
+ * retry both do it), and neither is fixable from this file. Deduplicating that
+ * superseded block belongs with whoever next opens `runAiInterpret`.
+ *
  * The concurrency limit is 3 in-flight import operations at a time — which,
  * since #26.09, means up to 3 concurrent AI reads as well. The follow-up
- * steps are one-at-a-time: each opens a modal.
+ * steps are one-at-a-time: each opens a modal, and #27.06's re-reads are
+ * serial for the same reason — one billed call at a time, with the screen
+ * saying which one.
  *
  * Provenance (Slice #21.07.Import): each entry's provenance is inferred from
  * its own file extension(s) - a page-group of scans and a single .jpg are IMAGE,
@@ -142,6 +206,7 @@ import {
   type AiInterpretRunResult,
 } from "@/lib/import/ai-interpret-run";
 import {
+  awaitsRefill,
   inResultOrder,
   outcomeNotes,
   runLandedSomething,
@@ -150,6 +215,7 @@ import {
   type ImportRunSummary,
   type OutcomeNote,
   type OutcomeNoteId,
+  type RefillState,
   type SummaryRow,
 } from "@/lib/import/import-outcome";
 import { buildResultReportHtml, reportFileName } from "@/lib/import/report-html";
@@ -336,6 +402,28 @@ export type ImportResult = {
   typeFormMissing?: boolean;
   /** …and the user gave that type a form during this run.   (Slice #27.05) */
   typeFormAdded?: boolean;
+  /**
+   * Where this document is in the run's re-read queue.        (Slice #27.06)
+   *
+   * ⚠️ **Set ONLY on a row that carried `typeFormMissing` and has a `docId`**,
+   * which is the invariant `awaitsRefill` is allowed to assume — see the set
+   * site in `handleDiscoverSaved`. Not persisted anywhere: the saved session
+   * records `aiProcessed` and this is a question about a click that has not
+   * happened yet.
+   */
+  refill?: RefillState;
+  /**
+   * Why the second read did not happen, for the row's tooltip. (Slice #27.06)
+   *
+   * ⚠️ **Its own field rather than `aiErrorDetail`, and it is not tidiness.**
+   * That one is drawn by the amber block, which is gated on `aiStatus ===
+   * "failed" || aiPartialWrite` — neither of which is true on a row whose FIRST
+   * read succeeded and whose second failed. Writing the second read's `HTTP 429`
+   * into it would either be invisible or, on a partial row, hang the wrong
+   * event's reason off the first read's sentence — the exact confusion
+   * `interpretRetryFailed` was worded to stop.
+   */
+  refillErrorDetail?: string;
 };
 
 /**
@@ -1486,6 +1574,77 @@ export function BulkImportDialog({
    */
   const [reviewTypesError, setReviewTypesError] = useState<string | null>(null);
   /**
+   * How far the re-read has got, or null when none is running. (Slice #27.06)
+   *
+   * ⚠️ **ONE state rather than a `refillRunning` boolean beside a counter**, so
+   * "is a billed read in flight" and "how far through" cannot come apart — the
+   * pair `canRetryReads` exists because two expressions answering one question
+   * disagreed three rounds running. `null` IS the boolean.
+   *
+   * The walk is serial, so `done` is the number of documents that have settled
+   * and `total` is what the click was priced at. `total` is captured at the
+   * click and never recomputed: the header sentence promised a number and the
+   * progress line has to be counting towards that same one.
+   */
+  const [refillProgress, setRefillProgress] = useState<{ done: number; total: number } | null>(
+    null,
+  );
+  /**
+   * A billed read on a settled row has STARTED, whether or not React has
+   * re-rendered yet.   (Slice #27.06)
+   *
+   * ⚠️ **A REF where every sibling guard on this screen is state, and the
+   * difference is what a double-fire costs.** `canRetry`, `canRefill` and
+   * `reviewingTypes` are all render-time values, so a closure made before the
+   * commit still sees the old one: two clicks landing in the SAME FRAME both
+   * pass. For `handleReviewTypes` that costs a second GET, which is why #27.05
+   * left it at state. Here it costs a billed model call and a
+   * `document_version` row per document — and an adversarial round pointed out
+   * that the window is open in BOTH directions, because `handleRetryInterpret`
+   * has no synchronous guard of its own either: retry row X, then press the
+   * re-read before the commit, and two `runAiInterpret` calls race on one
+   * `documentId`. Two PATCHes, two version rows, and the later one's
+   * `customFields` merge built from a GET taken before the earlier one landed.
+   *
+   * So it is ONE ref, claimed by whichever handler gets there first and released
+   * in that handler's `finally`. `readRunning` below is the render-time view of
+   * the same fact and is what actually draws the screen; this is only for the
+   * frame that view has not reached yet.
+   */
+  const readRunningRef = useRef(false);
+  /**
+   * How many times a call has reported the session GONE.   (Slice #27.06)
+   *
+   * ⚠️ **A counter rather than a boolean, and it exists to stop a STALE success
+   * clearing a FRESH failure.** `handleReviewTypes` clears `sessionExpired` when
+   * its GET comes back — the session is demonstrably alive, and #27.05 needed
+   * that because in its own failure shape nothing else can ever clear the flag.
+   * But that GET can be issued before a walk or a retry starts and return after
+   * one of them has hit a 401, and then a two-second-old "it was fine" pulls the
+   * banner down over a session that is dead. A third adversarial round showed
+   * the obvious guard — "not while a read is running" — is wrong in the other
+   * direction: it also suppresses the clear when the concurrent read fails for
+   * an ordinary reason like a 429, and the signed-in user is then told to sign
+   * in again with nothing left that can take it back.
+   *
+   * The question either guard was reaching for is "has anything said the session
+   * is dead SINCE I asked?", and that is what a sequence number answers exactly.
+   * Raised only through `raiseSessionExpired` below, so it cannot fall behind.
+   */
+  const sessionLossSeqRef = useRef(0);
+  /**
+   * Say the session has gone, and record that something said so.
+   *
+   * Every `setSessionExpired(true)` that can run CONCURRENTLY with the review
+   * GET goes through here — the walk and the retry. The run loop's own sites do
+   * not: they fire before `done`, and the control that reads the counter is not
+   * drawn until after it.
+   */
+  const raiseSessionExpired = useCallback(() => {
+    sessionLossSeqRef.current += 1;
+    setSessionExpired(true);
+  }, []);
+  /**
    * Is a follow-up queue open right now?   (Slice #27.05)
    *
    * A mirror of `followUps.length > 0` that an async handler can read AFTER its
@@ -2541,14 +2700,38 @@ export function BulkImportDialog({
    * no amber block and no retry button is drawn anywhere in the table.
    */
   const handleConfirmPending = useCallback(() => {
+    // ⚠️ **The fourth control gets the same synchronous claim — see
+    // `readRunningRef`.**   (Slice #27.06)
+    //
+    // Its only guard was `{!readRunning && …}` on the button, which is the
+    // render-time value that ref exists to distrust: this button and the re-read
+    // sit two lines apart in the same header block, so pressing both inside one
+    // frame published an identity-card or party stepper — a `fixed inset-0`
+    // modal — over N serial billed reads, hiding the progress line the copy had
+    // just told the user to watch, with Close and Save disabled and no
+    // explanation. The person steps are the ones that write permanent Person
+    // records, so this is the worst of the four to open unasked.
+    if (readRunningRef.current) return;
     // Slice #27.05 — a part-finished new-type run belongs to the step that
     // produced it; see `handleReviewTypes` for why it must not survive a queue
     // replacement.
     pendingNewTypeRef.current = null;
-    setFollowUps([
+    const steps = [
       ...inFolderOrder(entries, idCardStepsRef.current),
       ...inFolderOrder(entries, partyStepsRef.current),
-    ]);
+    ];
+    // ⚠️ **The mirror is set EAGERLY here, not left to its effect.**
+    // (Slice #27.06)
+    //
+    // `followUpsOpenRef` is normally kept in step by a `useEffect` on
+    // `followUps`, which is what makes it survive every route the queue can
+    // change by. That is one commit too late for the reader that matters now:
+    // `handleRefill` tests this ref to refuse starting a walk under an open
+    // modal, and this handler is synchronous, so a press here and a press there
+    // inside one frame would both pass. A publisher setting the thing it has
+    // just made true cannot disagree with the effect that follows it.
+    if (steps.length > 0) followUpsOpenRef.current = true;
+    setFollowUps(steps);
     setFollowUpIndex(0);
     // `entries` is stable for this dialog's lifetime.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -2582,15 +2765,23 @@ export function BulkImportDialog({
     // person 1 of 3 was already linked, and answering "create" the second time
     // makes the duplicate person the whole 26.xx redesign exists to prevent.
     if (reviewingTypes) return;
+    // ⚠️ **…and the synchronous half of it, added with #27.06's walk.** The
+    // state guard above is one commit behind, so this and the re-read button
+    // beside it could both be pressed in a single frame. Checked HERE, before
+    // anything is mutated, rather than only after the await: the post-await
+    // check below cannot un-refresh the backlog it has already published.
+    if (readRunningRef.current) return;
     setReviewingTypes(true);
     setReviewTypesError(null);
+    // Captured BEFORE the await — see `sessionLossSeqRef`.
+    const seenLosses = sessionLossSeqRef.current;
     const enriched = await enrichDiscoverSteps(discoverStepsRef.current);
     if (!mountedRef.current) return;
     setReviewingTypes(false);
     // A press into a still-dead session re-raises the banner rather than
     // reporting a connection problem, and costs one 401 to find out — the same
     // trade `canRetryReads` records for the retry button.
-    if (enriched.sessionLost) setSessionExpired(true);
+    if (enriched.sessionLost) raiseSessionExpired();
     forgetTypeFormMissing(enriched.idCardTypeIds);
     if (enriched.names !== null) {
       setTypeNames(enriched.names);
@@ -2603,7 +2794,15 @@ export function BulkImportDialog({
       // in this dialog can ever clear the flag. Without this, the header went
       // on telling a signed-in user to sign in again, over the control they had
       // just used successfully.
-      setSessionExpired(false);
+      //
+      // ⚠️ **Unless something said the session died while this GET was in
+      // flight** — see `sessionLossSeqRef`. A walk or a retry running alongside
+      // it can hit a 401 after the GET was issued, and a stale "it was fine"
+      // must not pull that banner down. Keyed on the counter rather than on
+      // "is a read running", which suppresses the clear for a concurrent read
+      // that failed for some ordinary reason and leaves a signed-in user being
+      // told to sign in again with nothing able to take it back.
+      if (sessionLossSeqRef.current === seenLosses) setSessionExpired(false);
     }
     // ⚠️ **Refreshed BEFORE the guard**, because `enrichDiscoverSteps` has
     // already pruned the ref by this point — a step whose type gained a form
@@ -2652,15 +2851,39 @@ export function BulkImportDialog({
     // is a ref rather than `followUps` itself because this closure was made
     // before the await and cannot see a queue that opened during it.
     if (followUpsOpenRef.current) return;
+    // ⚠️ **…and not while a billed read is in flight, which #27.06 added and an
+    // adversarial round found the same day.** This handler's guard asked whether
+    // a QUEUE was open and knew nothing about the re-read walk, whose control is
+    // drawn on the same ordinary end state. Press "Vezi câmpurile găsite", then
+    // press "Reia citirea" before the GET returns: the walk starts, and a second
+    // later this line opens `DiscoverReviewDialog` — a permanent decision about
+    // a document type — over N serial billed reads, with the progress line the
+    // user was told to watch behind the modal's scrim. Worse, accepting there
+    // writes `docTypeFormRef` while the walk is reading it, so a document the
+    // walk re-types onto that very type gets "acest tip nu are formular"
+    // decided by whichever landed first — on the screen and in the saved report.
+    if (readRunningRef.current) return;
     // A part-finished new-type run belongs to the step that produced it. It is
     // dropped rather than carried across a queue replacement — see
     // `applyPendingNewType` for what it is and why it must not outlive its step.
     pendingNewTypeRef.current = null;
+    // Eagerly, for the reason `handleConfirmPending` records about the same ref.
+    followUpsOpenRef.current = true;
     setFollowUps(discoverStepsInFolderOrder(entries, discoverStepsRef.current));
     setFollowUpIndex(0);
     // `entries` is stable for this dialog's lifetime.
+    // `raiseSessionExpired` is a no-dep `useCallback`, so listing it costs no
+    // re-renders and keeps this in step with the two handlers below.
+    // ⚠️ **The directive below stays immediately above the dependency array,
+    // with nothing between them.** It suppresses the NEXT LINE, and
+    // `exhaustive-deps` reports on the array node — so a comment slipped in
+    // between, as #27.06's first draft did, leaves it covering a comment and the
+    // rule firing again on a file that was clean. ⚠️ **And do not write the
+    // directive's own name in prose here**: ESLint reads any line containing it
+    // as a directive, so this paragraph would become a second, unused one — the
+    // same trap the Close button's comment records about naming a utility class.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reviewingTypes, t]);
+  }, [raiseSessionExpired, reviewingTypes, t]);
 
   /**
    * What #27.04's new-type path left on the server, in words — and the row
@@ -2763,16 +2986,51 @@ export function BulkImportDialog({
         // a primit un formular" on a card whose type must never have one, in
         // the table and, permanently, in the saved report. The set that may be
         // told a form arrived is exactly the set that was told one was missing.
+        // ⚠️ **…AND THE SAME SET IS QUEUED FOR A RE-READ.**   (Slice #27.06)
+        //
+        // Deliberately not a second predicate: the documents that are worth
+        // reading again are exactly the documents that were told a form was
+        // missing, because `typeFormMissing` is only ever written on a row the
+        // run READ (the loop's `ok` branch and the retry's, nowhere else). That
+        // rules out, without a single extra term, the three sets that must not
+        // be re-read — a row skipped as an identity card or as having no page a
+        // model can see, where a second call returns 422 for a billed attempt;
+        // a row the archive already held, which belongs to an earlier run and is
+        // out of this slice's scope in as many words; and a row whose first read
+        // FAILED, whose remedy is the retry button beside it, which does this
+        // and the discovery too.
+        //
+        // ⚠️ `docId` is a term because `awaitsRefill` is allowed to assume it —
+        // see that function. Unreachable (a read row has one), and the count and
+        // the walk agreeing about which rows exist is not a thing to leave to an
+        // invariant nobody restates.
+        //
+        // ⚠️ **`"pending"` is written even over an earlier `"done"`**, because
+        // the state is a queue position and not a history. The one route back
+        // into this map is the RETRY: it re-decides `typeFormMissing` against
+        // whatever type the document ended up on, so a row whose second read
+        // moved it to another formless type can be told a form is missing again
+        // and then be re-queued when that type is reviewed. The walk itself
+        // cannot produce that state — it makes no claim about a new type's form
+        // at all, deliberately; see its re-type branch.
         setResults((prev) =>
           prev.map((r) => {
             if (r.typeFormMissing !== true) return r;
+            const queued: Partial<ImportResult> =
+              r.docId !== undefined ? { refill: "pending", refillErrorDetail: undefined } : {};
             if (movedTo !== null) {
               return r.entry.path === step.path
-                ? { ...r, documentTypeId: movedTo, typeFormMissing: undefined, typeFormAdded: true }
+                ? {
+                    ...r,
+                    documentTypeId: movedTo,
+                    typeFormMissing: undefined,
+                    typeFormAdded: true,
+                    ...queued,
+                  }
                 : r;
             }
             return r.documentTypeId === step.typeId
-              ? { ...r, typeFormMissing: undefined, typeFormAdded: true }
+              ? { ...r, typeFormMissing: undefined, typeFormAdded: true, ...queued }
               : r;
           }),
         );
@@ -2810,6 +3068,273 @@ export function BulkImportDialog({
   }, [advanceFollowUp, applyPendingNewType, followUps, followUpIndex]);
 
   /**
+   * Read again, against the form the type has just been given. (Slice #27.06)
+   *
+   * ⚠️ **NOTHING HERE IS A NEW EXTRACTION PATH, and that is the slice.** It is
+   * `runAiInterpret`, unchanged, called a second time: the route builds its
+   * prompt from the type's `template_fields` and re-reads them on every call, so
+   * the second call asks for the columns the review has just created. What makes
+   * a second pass safe on a document somebody has touched in between is that
+   * function's own merge-not-replace rule, which was written for exactly this.
+   *
+   * ⚠️ **SERIAL, and not because the server minds.** The run itself reads three
+   * at a time; this one is walked one at a time because it is a queue the user
+   * is watching and has just paid for — the same promise this file's header
+   * makes about the follow-up steps. A progress line counting to a number the
+   * click was priced at is only possible while the calls are ordered.
+   *
+   * ⚠️ **DELIBERATELY NOT `handleRetryInterpret` WITH A FLAG.** The two make the
+   * same call and mean opposite things, and the failure branch is where that
+   * shows: a retry that fails writes `aiStatus: "failed"`, whose sentence says
+   * the document's fields "au rămas necompletate" — flatly untrue of a row whose
+   * FIRST read succeeded and wrote them. Three more differences follow from the
+   * same fact. The parties are left alone (see below). No discovery is queued:
+   * that is what the retry adds for a row whose only read failed, and here the
+   * type has just been reviewed. And `aiStatus` is never touched at all, so it
+   * goes on meaning "how the run's own read went".
+   *
+   * ⚠️ **THE PARTIES ARE NOT RE-QUEUED, and the asymmetry with the retry is the
+   * argument for it.** A retry re-queues because the read it is repeating never
+   * queued anything. This row's read succeeded, so its people were queued then —
+   * and `handlePartyStepClosed` deletes that ref entry only when somebody was
+   * actually linked or created, so a document whose people are still unconfirmed
+   * still HAS its entry and is still counted by `pendingPeopleCount`. There is
+   * nothing to restore, and re-queueing a document whose people were settled
+   * would ask the user to confirm people they have already linked — answer
+   * "create" on that second pass and the run makes the duplicate person the
+   * whole 26.xx redesign exists to prevent.
+   */
+  const handleRefill = useCallback(async () => {
+    // See `readRunningRef` — the shared claim, so this walk cannot start on top
+    // of a retry that began in the same frame, nor be started twice itself.
+    if (readRunningRef.current) return;
+    // ⚠️ **…and not underneath a follow-up modal, which a third round found the
+    // ref alone does not cover.** `handleConfirmPending` is synchronous: it
+    // publishes the person queue and returns without ever claiming the ref, so
+    // the ordering where IT lands first — both buttons are drawn together on an
+    // ordinary end state — left the walk starting under a `fixed inset-0`
+    // stepper. `followUpsOpenRef` is the same mirror `handleReviewTypes` reads
+    // for its own version of this, and it is up to date synchronously enough for
+    // the frame that matters because that handler sets the state that feeds it.
+    if (followUpsOpenRef.current) return;
+    const targets = results.filter(awaitsRefill);
+    if (targets.length === 0) return;
+    readRunningRef.current = true;
+    setRefillProgress({ done: 0, total: targets.length });
+    try {
+      for (let i = 0; i < targets.length; i++) {
+        const row = targets[i];
+        const path = row.entry.path;
+        const docId = row.docId;
+        // ⚠️ **DROPPED from the queue, not skipped, and a second adversarial
+        // round is why.** `awaitsRefill` no longer tests `docId` — it cannot,
+        // because `OutcomeRow` has none and the note and the count must ask the
+        // same question it does — so the invariant lives at the set site alone.
+        // A row that somehow arrived here without one is unreachable; if it were
+        // reachable, skipping it would leave it `pending` for ever and the
+        // offer's count could never fall to zero. Clearing the state is what
+        // makes even the impossible case converge.
+        if (docId === undefined) {
+          updateResult(path, { refill: undefined });
+          if (mountedRef.current) setRefillProgress({ done: i + 1, total: targets.length });
+          continue;
+        }
+
+        // ⚠️ `aiPartialWrite` is deliberately NOT cleared before the call, where
+        // `handleRetryInterpret` clears its own. That clear is there to stop the
+        // amber block's retry BUTTON sitting live through its own call — and
+        // this walk hides that button everywhere, because `readRunning` is true
+        // for the whole of it. Left alone, the row goes on saying the first read
+        // was partial, which it was, until the second read replaces the verdict.
+        updateResult(path, { refill: "running" });
+        const interpreted = await runAiInterpret(docId, new Date().toISOString());
+        // The same liveness test the retry needs and for the same reason: this
+        // is outside the run effect, so there is no per-invocation `mounted`
+        // boolean in scope, and a walk that outlives the dialog would write into
+        // an unmounted tree.
+        if (!mountedRef.current) return;
+
+        if (!interpreted.ok) {
+          if (interpreted.reason === "session") {
+            // Every call after this one would fail the same way, so the walk
+            // stops here and costs exactly one 401 to find out.
+            //
+            // ⚠️ **The row goes back to `pending`, not to `failed`.** It was
+            // `running` when the session went, and a row left in that state
+            // draws no note and is counted by nothing — the document would fall
+            // out of the offer, the count and the progress line at once, which
+            // is the shape #27.05's own backlog bugs all had. The documents
+            // after it were never touched and are still `pending`, so one press
+            // after signing in again picks up exactly where this stopped.
+            //
+            // ⚠️ **This row may already have been BILLED, and it is counted
+            // again anyway.** `runAiInterpret` reports a lost session from the
+            // PATCH as well as from the POST, so the extract call may have
+            // reached the model and only the write have died. Counting it again
+            // is the honest reading of what the offer's number is: reads this
+            // screen still has to MAKE, not reads it has never paid for. The
+            // document's columns are empty either way, and a row quietly dropped
+            // to spare the count would be the information lost to spare the
+            // arithmetic.
+            abortRef.current = true;
+            raiseSessionExpired();
+            updateResult(path, { refill: "pending" });
+            return;
+          }
+          updateResult(path, {
+            refill: "failed",
+            refillErrorDetail: failureDetail(interpreted),
+          });
+          setRefillProgress({ done: i + 1, total: targets.length });
+          continue;
+        }
+
+        // The session is demonstrably back — this call went through it. The same
+        // pair of clears `handleRetryInterpret` makes on its own success, for
+        // the same reason: nothing else in this dialog can take either sentence
+        // down, and leaving them up over a control that has just worked is what
+        // made an expiry a one-way door.
+        setSessionExpired(false);
+        setReviewTypesError(null);
+
+        /**
+         * ⚠️ **A SECOND READ CAN RE-CLASSIFY THE DOCUMENT, AND WHEN IT DOES,
+         * THE READ THE USER PAID FOR DID NOT DO WHAT IT WAS BOUGHT FOR.** Two
+         * adversarial rounds arrived at this from opposite directions and it is
+         * the hardest thing in the slice.
+         *
+         * The route builds its prompt from the template of the type the document
+         * is on WHEN THE POST IS MADE — here, the type whose form was just
+         * accepted. If the same response also moves the document to another
+         * type, the one patch writes the new `documentTypeId` AND `customFields`
+         * keyed by the OLD type's form, onto a document that now renders a
+         * different one. So the values reach no column the user can see, which
+         * is the exact thing this walk exists to stop; and `runAiInterpret`
+         * REPLACES the column on a re-type rather than merging, so anything
+         * curated under a key the new type does declare goes with it unless the
+         * model returned it again on this call.
+         *
+         * ⚠️ **So the row records `retyped`, not `done`.** Folded into `done` it
+         * drew an emerald "a fost citit din nou" on the one document the walk
+         * achieved nothing for, dropped out of every count, and filed that
+         * sentence permanently in the saved report. See `RefillState`.
+         *
+         * ⚠️ **AND THE ROW MAKES NO CLAIM ABOUT THE NEW TYPE'S FORM, which is
+         * the second round's finding and is a refusal rather than an
+         * omission.** The obvious move is to re-run `typeAwaitsForm` against the
+         * new type — the retry path does exactly that — but the retry has a
+         * backstop this walk deliberately does not: it queues a discovery, so
+         * `enrichDiscoverSteps` asks the identity-card question again of the name
+         * the SERVER holds, and `forgetTypeFormMissing` takes the sentence back.
+         * Here `docTypeIdCardRef` is the start-of-run list and a type the route
+         * invented on THIS call is not in it, and the scan's own signal is false
+         * on a card it mislabelled — so the walk would write "tipul acestui
+         * document nu are încă formular" onto an identity card, count it in
+         * `typesWithoutForm`, and send the user off to build the one form
+         * `status.ts` calls permanently wrong. "I cannot prove it" means do not
+         * say it: `typeFormAdded` goes, because this row is demonstrably no
+         * longer on the type that gained a form, and nothing takes its place.
+         * `refillRetyped` is what tells the user to go and look at the type.
+         */
+        const movedTo = interpreted.documentTypeId;
+
+        updateResult(path, {
+          /**
+           * ⚠️ **A PARTIAL SECOND READ IS NOT A DONE ONE, and a sixth
+           * adversarial round found it one branch over from where rounds 3 and 4
+           * had just closed the same shape.**
+           *
+           * `ok: true` with `partialWrite` means the extract call succeeded and
+           * the GET of the document's current state did not — a 5xx, a 30 s
+           * `RECORD_TIMEOUT_MS` abort, a truncated body — so `runAiInterpret`
+           * gated `customFields` behind `currentReadable` and did not send them.
+           * Those are precisely the columns this walk was bought to fill. Called
+           * `done`, the row drew the emerald "a fost citit din nou" over values
+           * that are still only in Notes, fell out of `awaitsRefill` so the
+           * offer's count dropped, and fell out of `documentsAwaitingRefill` so
+           * neither the concluding message nor the saved report listed it. The
+           * money was spent and every screen said the job was finished.
+           *
+           * `failed` is the honest one: the columns did not get written, the
+           * cause is transient, and the control offers it again. (The two
+           * branches are mutually exclusive — a re-type needs `typeKnown`, which
+           * needs the same GET — so the order of the ternary is not a
+           * precedence question, but it is written outermost-first anyway.)
+           */
+          refill: movedTo !== null ? "retyped" : interpreted.partialWrite ? "failed" : "done",
+          refillErrorDetail: undefined,
+          // ⚠️ **`aiProcessed` and `aiFieldCount` are written ONLY when the read
+          // landed on the document's own type, and a fourth adversarial round is
+          // why.** The row draws "✓ N câmpuri completate" off these two, in
+          // emerald, and on a re-typed row that number is built from the read
+          // that missed: `runAiInterpret` counts the re-type itself as a field
+          // and then counts every custom field it extracted — which are exactly
+          // the values keyed by the OLD type's form that reach no column the new
+          // one renders. So the cell said "✓ 11 câmpuri completate" beside
+          // "informațiile lui tot nu au ajuns în câmpuri", both from one patch,
+          // and `summariseImportRun` summed the 11 into "Câmpuri completate de
+          // AI" in the concluding message and the saved report. Removing the
+          // emerald tick from `refillDone` and leaving the emerald NUMBER beside
+          // it would have been half a fix. The first read's count stays, because
+          // it describes fields that are actually on screen.
+          // On the `done` branch it IS the second read's number, replacing the
+          // first's — the same thing the retry does with the same field, and the
+          // honest reading: it is what the read this row's other sentences
+          // describe actually wrote, not a running total. It can come out LOWER,
+          // because the count is of fields THIS call filled and a model that
+          // omits `subject` this time leaves the first read's value on the
+          // record while returning one less. That wobble in "Câmpuri completate
+          // de AI" is the price of the field meaning one thing rather than two;
+          // adding the two would claim the document holds more filled fields
+          // than it does.
+          //
+          // ⚠️ **AND THERE IS EXACTLY ONE WRITE OF IT IN THIS PATCH.** A fifth
+          // adversarial round found the fourth round's fix dead on arrival: the
+          // conditional spread above was followed, twenty-six lines of comment
+          // later, by a plain `aiFieldCount: interpreted.fieldCount`, and a
+          // literal property after a spread wins. Nothing warns about it —
+          // TypeScript allows spread-then-literal and so does lint — so the
+          // guard compiled, read correctly, and did nothing. If a later edit
+          // needs this field on both branches, it belongs INSIDE the ternary,
+          // not after it.
+          ...(movedTo === null
+            ? { aiProcessed: true, aiFieldCount: interpreted.fieldCount }
+            : {}),
+          // ⚠️ **A partial second read must not be drawn as a plain tick** —
+          // #27.06's constraint, in as many words. Setting this puts the row
+          // back in the amber block with its retry button and back into
+          // `unreadCount`, which is exactly right: the state it describes is
+          // real again.
+          aiPartialWrite: interpreted.partialWrite,
+          ...(movedTo !== null
+            ? {
+                // The id is written because it is where the document actually
+                // is, and every later reader of this row — a retry, the report,
+                // `summariseImportRun` — is entitled to the true one. It is NOT
+                // load-bearing for `handleDiscoverSaved`, which skips this row
+                // anyway now that `typeFormMissing` is left unset: that is the
+                // silence, not an oversight. `typeFormMissing` stays exactly as
+                // it was — see above.
+                documentTypeId: movedTo,
+                typeFormAdded: undefined,
+              }
+            : {}),
+        });
+        setRefillProgress({ done: i + 1, total: targets.length });
+      }
+    } finally {
+      readRunningRef.current = false;
+      if (mountedRef.current) setRefillProgress(null);
+    }
+    // `results` is what the targets are read from, so it belongs here; the walk
+    // only ever WRITES to rows afterwards, through the functional `updateResult`,
+    // so a list captured at the click is the list the sentence above it priced.
+    // `scanResults` went with the identity-card test the re-type branch stopped
+    // making — a dependency the body no longer reads is a lint warning that
+    // teaches the next reader to ignore the rule.
+  }, [raiseSessionExpired, results, updateResult]);
+
+  /**
    * Read this document again, because the first attempt failed.
    * (Slice #26.09)
    *
@@ -2844,6 +3369,25 @@ export function BulkImportDialog({
       const docId = result.docId;
       const path = result.entry.path;
       if (!docId) return;
+      // ⚠️ **The synchronous claim, shared with #27.06's walk — see
+      // `readRunningRef`.** Until that slice this handler had no guard but
+      // `canRetry`, which is render-time state and so is one commit behind: two
+      // clicks in the same frame, on this button and the re-read beside it,
+      // both passed and raced two `runAiInterpret` calls on one document.
+      if (readRunningRef.current) return;
+      // ⚠️ **…and not underneath a follow-up modal either, which a fifth round
+      // found the walk had and this did not.** `handleConfirmPending` is
+      // synchronous: it publishes the person queue and returns without claiming
+      // the ref, so pressing it and a row's retry inside one frame started a
+      // billed read under a `fixed inset-0` stepper. That is worse here than in
+      // the walk, because this handler's `settled` test reads the row snapshot
+      // captured at the CLICK — answer that document's party step while the call
+      // is in flight and the patch afterwards writes `aiPartiesPending` back
+      // over the answer and re-queues the same people, which is the duplicate
+      // person the whole 26.xx redesign exists to prevent.
+      if (followUpsOpenRef.current) return;
+      readRunningRef.current = true;
+      try {
 
       // ⚠️ **`aiPartialWrite` is cleared too, and forgetting it re-opened a
       // double-fire.** The amber block that carries this button is drawn on
@@ -2938,7 +3482,7 @@ export function BulkImportDialog({
         //
         // ⚠️ **BEFORE the row's own patch, so `aiStatus` is still `running`
         // for the whole of it.** That is what keeps Close and Save-report
-        // disabled — `retryRunning` reads `aiStatus === "running"` — over a
+        // disabled — `readRunning` reads `aiStatus === "running"` — over a
         // billed call in flight. Patching the row first would have left the
         // dialog closeable mid-read, discarding a proposal nobody can pay
         // for twice. Claimed the same way the loop claims it, so a second
@@ -2982,12 +3526,12 @@ export function BulkImportDialog({
             // not "the list could not be read". See `enrichDiscoverSteps`.
             if (enriched.sessionLost) {
               abortRef.current = true;
-              setSessionExpired(true);
+              raiseSessionExpired();
             }
             setDiscoverBacklog(discoverStepsRef.current.size);
           } else if (!discovered.ok && discovered.reason === "session") {
             abortRef.current = true;
-            setSessionExpired(true);
+            raiseSessionExpired();
           }
         }
 
@@ -3002,18 +3546,81 @@ export function BulkImportDialog({
           // A type that has since gained a form is no longer waiting for one,
           // and this row has never claimed it gained one — so the flag is
           // cleared rather than left to contradict the sentence beside it.
-          ...(awaitsForm ? { typeFormAdded: undefined } : {}),
+          // ⚠️ **…and a RE-TYPE clears it too, which #27.06's third adversarial
+          // round found missing here.** `awaitsForm` alone only covers the case
+          // where the new type ALSO has no form; when it has one, `awaitsForm`
+          // is false and the row went on drawing "tipul acestui document a
+          // primit un formular în acest import" about a type this very call had
+          // just moved it off. The walk clears it unconditionally on a re-type
+          // and says why; this is the same rule, said once more where the same
+          // patch is written.
+          ...(awaitsForm || interpreted.documentTypeId !== null
+            ? { typeFormAdded: undefined }
+            : {}),
           // Only when this retry actually queued something. Setting both would
           // make the row claim a tally AND a pending count, which the render
           // resolves by showing the stale tally — see `aiPartiesPending`.
           ...(queued ? { aiPartiesPending: interpreted.parties.length, aiParties: undefined } : {}),
+          /**
+           * ⚠️ **A SUCCESSFUL RETRY IS ALSO A RE-READ, and an adversarial round
+           * found what forgetting that costs.**   (Slice #27.06)
+           *
+           * The two controls are drawn side by side on one ordinary state: a
+           * row whose first read came back `partialWrite` AND whose type gained
+           * a form during the run carries both the amber retry button and a
+           * place in the re-read queue. This call went to the same route, for
+           * the same document, against the type's template as it now stands —
+           * which is exactly what the walk would have done. Leaving `refill` at
+           * `pending` afterwards left the row saying "informațiile specifice
+           * tipului au rămas în Note" over columns that had just been filled,
+           * kept it in `refillCount` so the offer never reached zero, and made
+           * the next press spend a third billed read on it. Same through the
+           * `failed` door: the amber "citirea din nou nu a reușit" survived a
+           * retry that had just succeeded.
+           *
+           * `awaitsRefill` and not a hand-written test, so the thing that
+           * decides a row is owed a read is the thing that decides it is not.
+           *
+           * ⚠️ **AND IT LANDS ON THE SAME FOUR-WAY ANSWER THE WALK GIVES, which
+           * a third round found it dodging.** A retry that re-classified the
+           * document is the case `RefillState.retyped` exists for — the values
+           * came back keyed by the old type's form and reach no column the new
+           * one renders — and writing `done` there drew the emerald "a fost citit
+           * din nou" on the one document nothing was achieved for, dropped it out
+           * of `documentsAwaitingRefill`, and filed that sentence in the saved
+           * report. Two controls, one route, one verdict.
+           */
+          ...(awaitsRefill(result)
+            ? {
+                // The same three-way answer the walk gives, including the
+                // partial case it records at length: a read whose columns did
+                // not land is not a finished one, whichever control made it.
+                refill: (interpreted.documentTypeId !== null
+                  ? "retyped"
+                  : interpreted.partialWrite
+                    ? "failed"
+                    : "done") as RefillState,
+                refillErrorDetail: undefined,
+                // ⚠️ …and the field count goes back to the first read's on a
+                // re-type, for the reason the walk's own patch states at length:
+                // the number this call produced counts the re-type plus the
+                // custom fields it wrote under the OLD type's keys, none of
+                // which the new type's form renders. Restored rather than left
+                // out, because the patch above has already set it. A refill
+                // target always has a first-read count, so this is never
+                // `undefined` in practice.
+                ...(interpreted.documentTypeId !== null
+                  ? { aiFieldCount: result.aiFieldCount }
+                  : {}),
+              }
+            : {}),
         });
         return;
       }
 
       if (interpreted.reason === "session") {
         abortRef.current = true;
-        setSessionExpired(true);
+        raiseSessionExpired();
       }
       // ⚠️ A failed retry on a row that had already written its baseline fields
       // is still a PARTIAL write, not a failed one. `interpretFailed` says the
@@ -3034,7 +3641,16 @@ export function BulkImportDialog({
         aiErrorDetail: reason
           ? t("interpretRetryFailed", { reason })
           : t("interpretRetryFailedUnknown"),
+        // ⚠️ `refill` is deliberately LEFT as it was. A retry that failed read
+        // nothing, so a row that was owed a re-read is still owed one and stays
+        // in the offer's count — the mirror of the success branch above.
       });
+      } finally {
+        // Released whichever way this returned, including the `!mountedRef`
+        // path: the ref outlives the render tree and a claim left standing
+        // would make every later retry and every re-read a no-op.
+        readRunningRef.current = false;
+      }
     },
     // `t` is captured for the two sentences above; next-intl's translator is
     // stable per namespace, so listing it costs no re-renders and keeps this in
@@ -3046,7 +3662,7 @@ export function BulkImportDialog({
     // step, so it has to be able to take the sentence back off a type that
     // turned out to be an identity card. It is a `useCallback` with no deps, so
     // listing it costs no re-renders.
-    [forgetTypeFormMissing, scanResults, t, updateResult],
+    [forgetTypeFormMissing, raiseSessionExpired, scanResults, t, updateResult],
   );
 
   // ---------------------------------------------------------------------------
@@ -3113,8 +3729,27 @@ export function BulkImportDialog({
   const pendingPeopleCount = results.filter(
     (r) => (r.aiPartiesPending ?? 0) > 0 || (r.idCardQueued === true && r.personId === undefined),
   ).length;
-  /** A retry is in flight, so the dialog must not be pulled out from under it. */
-  const retryRunning = results.some((r) => r.aiStatus === "running" && r.status === "done");
+  /**
+   * A billed read on a SETTLED row is in flight, so the dialog must not be
+   * pulled out from under it.
+   *
+   * ⚠️ **Renamed from `retryRunning` in #27.06, because it is no longer only
+   * the retry.** Two controls now make a model call on a row that is already
+   * `done` — the retry, and the re-read this slice adds — and every consumer of
+   * this boolean wants the same thing from both: Close and Save-report inert
+   * over a call whose PATCH may already have landed, the retry buttons hidden so
+   * two overlapping calls cannot resolve in turn and overwrite each other's row,
+   * and the review control hidden so a queue replacement cannot land mid-call. A
+   * name that said "retry" over a term that also covers the re-read is exactly
+   * the drift this file writes comments to stop. `canRetryReads` keeps its own
+   * parameter name; what it means there is unchanged.
+   *
+   * The re-read half is `refillProgress`, not a per-row test, because the walk
+   * holds the screen for its whole length and not merely for the row it is on.
+   */
+  const readRunning =
+    results.some((r) => r.aiStatus === "running" && r.status === "done") ||
+    refillProgress !== null;
   /**
    * May any row be retried at all?   (Slice #26.09)
    *
@@ -3142,7 +3777,10 @@ export function BulkImportDialog({
   const canRetry = canRetryReads({
     done,
     stepperOpen: currentFollowUp !== null,
-    retryRunning,
+    // Since #27.06 this term also covers a re-read walk — see `readRunning`.
+    // The rule is unchanged: no second billed call on a settled row while one
+    // is already in flight.
+    retryRunning: readRunning,
   });
   /**
    * May the queued forms be opened right now?   (Slice #27.05)
@@ -3159,7 +3797,40 @@ export function BulkImportDialog({
    * when it lands.
    */
   const canReviewTypes =
-    discoverBacklog > 0 && currentFollowUp === null && !retryRunning;
+    discoverBacklog > 0 && currentFollowUp === null && !readRunning;
+  /**
+   * Documents read before their type had a form, and not yet read again.
+   *                                                              (Slice #27.06)
+   *
+   * ⚠️ **`awaitsRefill` and not an expression here**, for the reason that
+   * function's own header gives: this number is what the sentence prices and
+   * what the button promises, and `handleRefill` walks the same predicate to
+   * decide what it actually reads. Two of them is a control that never takes its
+   * own count to zero.
+   */
+  const refillCount = results.filter(awaitsRefill).length;
+  /**
+   * May that re-read be started right now?   (Slice #27.06)
+   *
+   * The terms are `canReviewTypes`'s, one line above, and they are its for the
+   * same reasons — nothing in this app traps focus, so a control rendered under
+   * an open modal is reachable from inside it; and a walk started while another
+   * billed call is in flight would resolve against a row whose state that call
+   * captured before it began. The session is deliberately NOT a term: it is
+   * `canRetryReads`'s one-way-door argument, and it applies here unchanged —
+   * the flag never clears by itself, so gating on it would mean signing in again
+   * brought no control back for the life of the dialog. What the session changes
+   * is the sentence beside the button.
+   */
+  /**
+   * ⚠️ **`!reviewingTypes` is the term `canReviewTypes` does not need and this
+   * one does**, and it is the other half of the collision guarded in
+   * `handleReviewTypes`: that control awaits a GET and then REPLACES the queue,
+   * and for the length of that await no follow-up is open and no read is
+   * running, so without this the re-read button is live underneath it.
+   */
+  const canRefill =
+    refillCount > 0 && currentFollowUp === null && !readRunning && !reviewingTypes;
   const totalCount = results.length;
   const progressPct = totalCount > 0 ? ((doneCount + errorCount) / totalCount) * 100 : 0;
 
@@ -3209,6 +3880,11 @@ export function BulkImportDialog({
         documentTypeId: r.documentTypeId,
         typeFormMissing: r.typeFormMissing,
         typeFormAdded: r.typeFormAdded,
+        // Slice #27.06 — straight through, for the same reason the three above
+        // are: the rule that decides it is `awaitsRefill` and the set site in
+        // `handleDiscoverSaved`, and a second derivation here is how a row comes
+        // to describe a queue the walk is not walking.
+        refill: r.refill,
       };
     },
     [cornerSourceByPath, propertyById, scanResults, soleProperty],
@@ -3298,6 +3974,22 @@ export function BulkImportDialog({
             : []),
         ...(r.aiStatus === "failed" ? [t("interpretFailed")] : []),
         ...(r.aiPartialWrite === true ? [t("interpretPartial")] : []),
+        // Slice #27.06 — the REASON a re-read failed, which on the screen lives
+        // on the note's tooltip and would otherwise not survive into the one
+        // artefact the user keeps. `failureDetail`'s own rule: a returned value
+        // nobody reads is a capability the product quietly stopped having, and
+        // a tooltip is invisible on a printed page. The note itself is already
+        // in the list above, through `outcomeNotes`.
+        // ⚠️ **Wrapped in a sentence, not pushed in raw**, which a fourth round
+        // caught: the detail is the route's own text and can be a bare
+        // `HTTP 429`, and a bullet reading `HTTP 429` between two Romanian
+        // sentences is the leak every other branch here goes out of its way to
+        // stop. `interpretRetryFailed` does exactly this for the retry's copy of
+        // the same value; on screen the note explains itself and the raw string
+        // is only a tooltip, so this key exists for the report alone.
+        ...(r.refill === "failed" && r.refillErrorDetail
+          ? [t("refillFailedDetail", { reason: r.refillErrorDetail })]
+          : []),
         ...(r.aiProcessed === true ? [t("interpretDone", { count: r.aiFieldCount ?? 0 })] : []),
         ...(r.aiParties
           ? [t("interpretParties", { count: r.aiParties.linked + r.aiParties.created })]
@@ -3435,10 +4127,12 @@ export function BulkImportDialog({
                 survives the attempt. Pressing this while signed out costs a few
                 dialogs and loses nothing, and the copy says to sign in first.
 
-                `!retryRunning` stays, for the reason `canRetryReads` carries
+                `!readRunning` stays, for the reason `canRetryReads` carries
                 it: a retry captured its row's state before its model call, and
                 a confirmation completing inside that window would be
-                overwritten by the answer when it lands. */}
+                overwritten by the answer when it lands. Since #27.06 the same
+                is true of a re-read walk, which is why that term now covers
+                both — see `readRunning`. */}
             {done && pendingPeopleCount > 0 && currentFollowUp === null && (
               <p className="mt-0.5 flex flex-wrap items-baseline gap-2 text-xs font-medium text-sky-700 dark:text-sky-400">
                 <span>
@@ -3446,7 +4140,7 @@ export function BulkImportDialog({
                     ? t("donePendingPeopleLocked", { count: pendingPeopleCount })
                     : t("donePendingPeople", { count: pendingPeopleCount })}
                 </span>
-                {!retryRunning && (
+                {!readRunning && (
                   <button
                     type="button"
                     onClick={handleConfirmPending}
@@ -3523,6 +4217,91 @@ export function BulkImportDialog({
                 )}
               </p>
             )}
+            {/* Slice #27.06 — the documents that were read before their type
+                had anywhere to put what was read.
+
+                ⚠️ **DIRECTLY UNDER the type-form line, because it is the second
+                half of that sentence.** The one above says a type has no form
+                and offers the review; this one says which documents that review
+                arrived too late for, and offers the only thing that fixes them.
+
+                ⚠️ **BOTH COSTS ARE IN THE SENTENCE, BEFORE THE CLICK** — #27.06's
+                constraint, in as many words. One billed model call per document,
+                and one `document_version` row per document. The version count is
+                worded "cel mult" / "at most" on purpose and it is not hedging:
+                `updateDocument` skips the version insert when the new snapshot
+                equals the latest stored one, and `aiInterpretedAt` is
+                deliberately NOT in that snapshot — so a re-read that finds
+                nothing new to write appends no version at all. Saying a flat N
+                would be over-stating a cost, which is the safe direction to be
+                wrong in but is still a number that does not happen.
+
+                ⚠️ **SKY, not amber.** Nothing here failed. These documents were
+                read correctly against the type as it stood; what changed is the
+                type. Amber would send a business user looking for a fault. */}
+            {done && (refillCount > 0 || refillProgress !== null) && (
+              <p className="mt-0.5 flex flex-wrap items-baseline gap-2 text-xs font-medium text-sky-700 dark:text-sky-400">
+                <span
+                  // ⚠️ **A live region only while the walk runs, and a third
+                  // adversarial round is why it is here at all.** This is the
+                  // one place in the dialog that asks the user to wait minutes
+                  // for something they cannot see: the button vanishes, Close
+                  // and Save go inert, the determinate `ProgressBar` above the
+                  // table is unmounted once `done` is true, and the copy tells
+                  // them to watch a line that a screen reader was never told had
+                  // changed. `role="status"` is polite, which is right for a
+                  // number that ticks N times. Undefined otherwise, because the
+                  // other three branches are ordinary prose that is read when
+                  // the dialog is walked, and a live region around them would
+                  // announce the offer again on every unrelated re-render.
+                  role={refillProgress !== null ? "status" : undefined}
+                >
+                  {/* The progress line comes FIRST, because while the walk is
+                      running every one of the three branches below is a lie of
+                      the same kind: `refillCount` is falling as rows settle, so
+                      the offer would count down under the user and the "wait
+                      until you have finished what is open" branch would be
+                      telling them to wait for the thing they just started.
+                      Ordered otherwise: the session, which is the strongest
+                      constraint; then the offer; then the wait, the same third
+                      branch `doneUnreadWaiting` and `doneTypesNoFormWaiting`
+                      both carry, for the same reason — the button is hidden
+                      while a follow-up is open, and a sentence that offers what
+                      the screen does not is how a user learns to distrust it. */}
+                  {refillProgress !== null
+                    ? t("refillProgress", {
+                        done: refillProgress.done,
+                        total: refillProgress.total,
+                      })
+                    : sessionExpired
+                      ? t("doneRefillLocked", { count: refillCount })
+                      : canRefill
+                        ? t("doneRefill", { count: refillCount })
+                        : t("doneRefillWaiting", { count: refillCount })}
+                </span>
+                {canRefill && (
+                  <button
+                    type="button"
+                    onClick={() => void handleRefill()}
+                    // ⚠️ **No `disabled` here, unlike the review button above,
+                    // and a third adversarial round is why the first draft's was
+                    // removed rather than kept "for safety".** `canRefill`
+                    // contains `!readRunning`, which contains `refillProgress
+                    // !== null` — so every render in which the attribute would
+                    // be `true` is a render in which this button is not mounted,
+                    // and in the frame before that render it is not applied
+                    // either. A prop that can never take effect is a guard the
+                    // next reader will believe in. What actually holds that
+                    // frame is `readRunningRef`, in the handler. (The review
+                    // button's `disabled` IS live, because `reviewingTypes` is
+                    // not a term of `canReviewTypes`.)
+                    className={buttonClass({ variant: "ghost", size: "xs" })}
+                  >
+                    {t("refillButton", { count: refillCount })}
+                  </button>
+                )}
+              </p>
+            )}
             {done && preexistingCount > 0 && (
               <p className="mt-0.5 text-xs text-sky-700 dark:text-sky-400">
                 {t("donePreexisting", { count: preexistingCount })}
@@ -3562,14 +4341,16 @@ export function BulkImportDialog({
               <button
                 type="button"
                 onClick={handleSaveReport}
-                // ⚠️ `retryRunning` as well as the follow-up, and it is the
+                // ⚠️ `readRunning` as well as the follow-up, and it is the
                 // same argument the Close beside it carries. A report saved
                 // during a retry records that row as ordinary — `aiStatus` is
                 // `running`, `aiPartialWrite` was cleared when the click
                 // started and `aiProcessed` is not set yet — so the run's one
                 // durable artefact would say nothing at all about a read the
-                // screen behind it is visibly still doing.
-                disabled={currentFollowUp !== null || retryRunning}
+                // screen behind it is visibly still doing. Since #27.06 the
+                // same holds for a re-read walk, whose rows say "waiting to be
+                // read again" until each one lands.
+                disabled={currentFollowUp !== null || readRunning}
                 className={buttonClass({ variant: "secondary", size: "md" })}
               >
                 {tres("saveButton")}
@@ -3601,7 +4382,10 @@ export function BulkImportDialog({
               // …and while a retry is in flight, for the same reason: the
               // PATCH may already have landed, and unmounting mid-call
               // discards the people that read found with no record anywhere.
-              disabled={currentFollowUp !== null || retryRunning}
+              // Since #27.06, `readRunning` also covers a re-read walk —
+              // closing mid-walk would abandon the documents it has not reached
+              // with no record that they are still owed a read.
+              disabled={currentFollowUp !== null || readRunning}
               // ⚠️ `buttonClass`, not the hand-written classes this button
               // carried since #21.01, and the change is forced rather than
               // cosmetic: giving it a `disabled` state meant hand-writing the
@@ -3946,6 +4730,25 @@ const NOTE_TONE: Record<OutcomeNoteId, string> = {
   // answer is the one it already has.
   typeFormPending: "text-sky-700 dark:text-sky-400",
   typeFormAdded: "text-emerald-600 dark:text-emerald-400",
+  // Amber, and it is the one refill note that must not be emerald: the read
+  // happened, so the instinct is to tick it, and the whole reason the state
+  // exists is that the money was spent and the columns are still empty. See
+  // `RefillState.retyped`.
+  refillRetyped: "text-amber-700 dark:text-amber-400",
+  // Slice #27.06 — sky for the wait, and the precedent that settles it is
+  // `personPending` three lines up, not the header's one-line gloss on sky. The
+  // working distinction in this table is: a thing the run has QUEUED and a
+  // control is offering is sky ("cartea de identitate așteaptă să fie
+  // confirmată"), and a thing that was OFFERED and did not come to an end is
+  // amber (`personDeclined`, `personStepUnfinished`). A pending re-read is the
+  // first of those exactly — queued, counted, and one visible button away.
+  // Emerald for the second read that happened; amber for the one that did not,
+  // which is amber's own meaning here: something is outstanding and a person has
+  // to decide. Not red — the document is in the archive and its first read's
+  // fields are intact, which is what `refillFailed`'s own sentence says.
+  refillPending: "text-sky-700 dark:text-sky-400",
+  refillDone: "text-emerald-600 dark:text-emerald-400",
+  refillFailed: "text-amber-700 dark:text-amber-400",
 };
 
 /** The two notes that are about a Person who now exists and can be opened. */
@@ -3999,6 +4802,8 @@ function ResultRow({
     aiPartiesPending,
     aiPartialWrite,
     preexisting,
+    refill,
+    refillErrorDetail,
   } = result;
   const displayName = titleForEntry(entry);
 
@@ -4093,7 +4898,20 @@ function ResultRow({
                 ✓ {t(`note.${note.id}`, note.values)}
               </a>
             ) : (
-              <span key={note.id} className={`text-xs font-medium ${NOTE_TONE[note.id]}`}>
+              <span
+                key={note.id}
+                className={`text-xs font-medium ${NOTE_TONE[note.id]}`}
+                // Slice #27.06 — the one note in this catalogue with a REASON
+                // behind it. The route names why a read did not happen, down to
+                // the octet-stream case, and #26.09 already decided that belongs
+                // on a tooltip rather than in a cell: a cell cannot hold a
+                // paragraph, and a returned value nobody reads is a capability
+                // the product quietly stopped having. `aiErrorDetail` does this
+                // for the amber block; this row's block is not drawn, so the
+                // note carries it. `undefined` everywhere else, which renders no
+                // attribute at all.
+                title={note.id === "refillFailed" ? refillErrorDetail : undefined}
+              >
                 {t(`note.${note.id}`, note.values)}
               </span>
             ),
@@ -4133,6 +4951,19 @@ function ResultRow({
           {aiStatus === "running" && status === "done" && (
             <span className="ga-cue-blink text-xs font-medium text-cta">
               {t("interpretingShort")}
+            </span>
+          )}
+          {/* …and the same for a re-read.   (Slice #27.06)
+              ⚠️ **Its own sentence rather than `interpretingShort`, and its own
+              flag rather than borrowing `aiStatus`.** "Se citește cu AI…" over a
+              row that already shows a green tick and a field count reads as the
+              run having lost its place; "se citește din nou" says which of the
+              two reads this is. And `aiStatus` is left alone throughout so it
+              goes on meaning how the RUN's own read went — the retry above is
+              finishing that read, this is a second one after it succeeded. */}
+          {refill === "running" && status === "done" && (
+            <span className="ga-cue-blink text-xs font-medium text-cta">
+              {t("refillingShort")}
             </span>
           )}
           {(aiStatus === "failed" || aiPartialWrite) && (

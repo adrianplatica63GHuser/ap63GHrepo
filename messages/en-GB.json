@@ -2027,6 +2027,13 @@
         "doneTypesNoFormWaiting": "{count, plural, one {One document type in this import has no form yet. The fields that were found can be reviewed once you have finished what is open now.} other {# document types in this import have no form yet. The fields that were found can be reviewed once you have finished what is open now.}}",
         "doneTypesNoFormNothing": "{count, plural, one {One document type in this import has no form yet. There are no fields to review here — you can give it a form by opening a document of that type and pressing AI Discover.} other {# document types in this import have no form yet. There are no fields to review here — you can give them a form by opening one document of each and pressing AI Discover.}}",
         "reviewTypesButton": "See the fields found",
+        "doneRefill": "{count, plural, one {One document was read before its type gained a form, so its type-specific information went to Notes. It can be read again now, so that information also reaches its fields: one billed AI read and at most one new document version. After you close, there is nowhere left to do it.} other {# documents were read before their types gained a form, so their type-specific information went to Notes. They can be read again now, so that information also reaches their fields: # billed AI reads and at most # new document versions. After you close, there is nowhere left to do it.}}",
+        "doneRefillWaiting": "{count, plural, one {One document was read before its type gained a form. Wait for the steps in progress, then you will be able to read it again.} other {# documents were read before their types gained a form. Wait for the steps in progress, then you will be able to read them again.}}",
+        "doneRefillLocked": "{count, plural, one {One document was read before its type gained a form. Sign in again — the link below opens a new tab — then start the re-read here: one billed AI read and at most one new document version. After you close, there is nowhere left to do it.} other {# documents were read before their types gained a form. Sign in again — the link below opens a new tab — then start the re-read here: # billed AI reads and at most # new document versions. After you close, there is nowhere left to do it.}}",
+        "refillButton": "{count, plural, one {Read one document again} other {Read # documents again}}",
+        "refillProgress": "Reading again… ({done} of {total})",
+        "refillFailedDetail": "The second read failed: {reason}",
+        "refillingShort": "Reading again…",
         "typeListUnavailable": "The document type list could not be read, so the fields that were found cannot be opened right now. Check the connection and try again.",
         "importStartFailed": "The import could not start: the document type list could not be read. Check the connection and try again.",
         "typeNewTypeNoFields": "Document type “{type}” was created and the document was moved onto it, but the form was NOT saved and the fields that were read are lost. Open the document and press AI Discover to retry.",
@@ -2049,7 +2056,11 @@
           "readSkippedNoPage": "it has no page the AI can read",
           "personStepUnfinished": "the identity-card step did not finish — try again with the “Confirm people” button",
           "typeFormPending": "this document's type has no form yet, so the type-specific information went to Notes",
-          "typeFormAdded": "this document's type gained a form during this import"
+          "typeFormAdded": "this document's type gained a form during this import",
+          "refillPending": "it was not read again, so its type-specific information is still in Notes",
+          "refillDone": "it was read again",
+          "refillFailed": "the second read did not fill the fields — what the first read filled in is unchanged",
+          "refillRetyped": "it was read again, but the AI moved it onto another document type, so its information still did not reach the fields — open the document and check its type"
         }
       },
       "preflight": {
@@ -2559,7 +2570,8 @@
         "peopleUnconfirmed": "People found by the AI and not confirmed",
         "cardsUnanswered": "Identity cards left unanswered",
         "cardsUnreadable": "Identity cards that could not be read",
-        "typesWithoutForm": "Document types still without a form"
+        "typesWithoutForm": "Document types still without a form",
+        "documentsAwaitingRefill": "Documents whose information stayed in Notes"
       },
       "saveButton": "Save the report (HTML)",
       "saveHint": "Saved to your computer, with links that open in the system.",

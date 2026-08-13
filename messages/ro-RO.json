@@ -2027,6 +2027,13 @@
         "doneTypesNoFormWaiting": "{count, plural, one {Un tip de document din acest import nu are încă formular. Câmpurile găsite se pot verifica după ce terminați ce este deschis acum.} few {# tipuri de documente din acest import nu au încă formular. Câmpurile găsite se pot verifica după ce terminați ce este deschis acum.} other {# de tipuri de documente din acest import nu au încă formular. Câmpurile găsite se pot verifica după ce terminați ce este deschis acum.}}",
         "doneTypesNoFormNothing": "{count, plural, one {Un tip de document din acest import nu are încă formular. Aici nu sunt câmpuri de verificat — îi puteți da un formular deschizând un document de acel tip și apăsând Descoperire AI.} few {# tipuri de documente din acest import nu au încă formular. Aici nu sunt câmpuri de verificat — le puteți da un formular deschizând câte un document din fiecare și apăsând Descoperire AI.} other {# de tipuri de documente din acest import nu au încă formular. Aici nu sunt câmpuri de verificat — le puteți da un formular deschizând câte un document din fiecare și apăsând Descoperire AI.}}",
         "reviewTypesButton": "Vezi câmpurile găsite",
+        "doneRefill": "{count, plural, one {Un document a fost citit înainte ca tipul lui să primească formular, așa că informațiile specifice tipului au mers în Note. Poate fi citit din nou acum, ca informațiile să ajungă și în câmpurile lui: o citire AI care se plătește și cel mult o versiune nouă de document. După ce închideți, nu mai există unde.} few {# documente au fost citite înainte ca tipurile lor să primească formular, așa că informațiile specifice tipurilor au mers în Note. Pot fi citite din nou acum, ca informațiile să ajungă și în câmpurile lor: # citiri AI care se plătesc și cel mult # versiuni noi de document. După ce închideți, nu mai există unde.} other {# de documente au fost citite înainte ca tipurile lor să primească formular, așa că informațiile specifice tipurilor au mers în Note. Pot fi citite din nou acum, ca informațiile să ajungă și în câmpurile lor: # de citiri AI care se plătesc și cel mult # de versiuni noi de document. După ce închideți, nu mai există unde.}}",
+        "doneRefillWaiting": "{count, plural, one {Un document a fost citit înainte ca tipul lui să primească formular. Așteptați pașii aflați în curs, apoi îl veți putea citi din nou.} few {# documente au fost citite înainte ca tipurile lor să primească formular. Așteptați pașii aflați în curs, apoi le veți putea citi din nou.} other {# de documente au fost citite înainte ca tipurile lor să primească formular. Așteptați pașii aflați în curs, apoi le veți putea citi din nou.}}",
+        "doneRefillLocked": "{count, plural, one {Un document a fost citit înainte ca tipul lui să primească formular. Autentificați-vă din nou — linkul de mai jos deschide o filă nouă — apoi reluați citirea aici: o citire AI care se plătește și cel mult o versiune nouă de document. După ce închideți, nu mai există unde.} few {# documente au fost citite înainte ca tipurile lor să primească formular. Autentificați-vă din nou — linkul de mai jos deschide o filă nouă — apoi reluați citirea aici: # citiri AI care se plătesc și cel mult # versiuni noi de document. După ce închideți, nu mai există unde.} other {# de documente au fost citite înainte ca tipurile lor să primească formular. Autentificați-vă din nou — linkul de mai jos deschide o filă nouă — apoi reluați citirea aici: # de citiri AI care se plătesc și cel mult # de versiuni noi de document. După ce închideți, nu mai există unde.}}",
+        "refillButton": "{count, plural, one {Reia citirea pentru un document} few {Reia citirea pentru # documente} other {Reia citirea pentru # de documente}}",
+        "refillProgress": "Se citește din nou… ({done} din {total})",
+        "refillFailedDetail": "Citirea din nou a eșuat: {reason}",
+        "refillingShort": "Se citește din nou…",
         "typeListUnavailable": "Lista tipurilor de documente nu a putut fi citită, așa că formularele găsite nu pot fi deschise acum. Verificați conexiunea și încercați din nou.",
         "importStartFailed": "Importul nu a putut porni: lista tipurilor de documente nu a putut fi citită. Verificați conexiunea și încercați din nou.",
         "typeNewTypeNoFields": "Tipul de document „{type}” a fost creat și documentul a fost mutat pe el, dar formularul NU a fost salvat, iar câmpurile citite au fost pierdute. Deschideți documentul și apăsați Descoperire AI ca să reluați.",
@@ -2049,7 +2056,11 @@
           "readSkippedNoPage": "nu are nicio pagină pe care AI să o poată citi",
           "personStepUnfinished": "pasul pentru cartea de identitate nu s-a încheiat — încercați din nou cu butonul „Confirmă persoanele”",
           "typeFormPending": "tipul acestui document nu are încă formular, așa că informațiile specifice tipului au mers în Note",
-          "typeFormAdded": "tipul acestui document a primit un formular în acest import"
+          "typeFormAdded": "tipul acestui document a primit un formular în acest import",
+          "refillPending": "nu a fost citit din nou, așa că informațiile specifice tipului au rămas în Note",
+          "refillDone": "a fost citit din nou",
+          "refillFailed": "citirea din nou nu a completat câmpurile — ce completase prima citire a rămas neschimbat",
+          "refillRetyped": "a fost citit din nou, dar AI l-a mutat pe alt tip de document, așa că informațiile lui tot nu au ajuns în câmpuri — deschideți documentul și verificați ce tip are"
         }
       },
       "preflight": {
@@ -2559,7 +2570,8 @@
         "peopleUnconfirmed": "Persoane găsite de AI și neconfirmate",
         "cardsUnanswered": "Cărți de identitate fără răspuns",
         "cardsUnreadable": "Cărți de identitate care nu au putut fi citite",
-        "typesWithoutForm": "Tipuri de documente rămase fără formular"
+        "typesWithoutForm": "Tipuri de documente rămase fără formular",
+        "documentsAwaitingRefill": "Documente ale căror informații au rămas în Note"
       },
       "saveButton": "Salvează raportul (HTML)",
       "saveHint": "Se salvează pe calculatorul dumneavoastră, cu legături care se deschid în sistem.",
