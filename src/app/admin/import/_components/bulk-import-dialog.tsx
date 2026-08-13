@@ -99,7 +99,7 @@ import type { ScanResult } from "./scan-table";
 import { inferProvenanceForFiles } from "@/lib/metadata/provenance-rules";
 import type { ProvenanceCode } from "@/lib/metadata/provenance";
 import { ProvenanceField } from "./provenance-field";
-import { isIdCardEntry } from "@/lib/import/id-card";
+import { ID_CARD_TYPE_KEYS, isIdCardEntry, isIdCardTypeName } from "@/lib/import/id-card";
 import { isDeclaredCoordinateFile } from "@/lib/import/structure-rules";
 import type { EntryAssignment } from "@/lib/import/property-folders";
 import { titleForEntry, type PreexistingRow } from "@/lib/import/preexisting-check";
@@ -114,11 +114,31 @@ import {
   type AiExtractedParty,
   type AiPartyLinkerSummary,
 } from "@/app/documents/_components/ai-party-linker-dialog";
+// Slice #27.05 — the SAME review surface the Descoperire AI button opens, not a
+// second one. What #27.05 automates is the noticing and the running; the tick
+// boxes are the product, so the screen that carries them must be the screen
+// that has already been argued about for two slices.
+import {
+  DiscoverReviewDialog,
+  type DiscoverReviewPair,
+  type NewTypeProgress,
+} from "@/app/documents/_components/discover-review-dialog";
+import { discoverForType, shouldDiscoverType, typeAwaitsForm } from "@/lib/import/discover-run";
+import { documentTypeHasForm } from "@/lib/documents/status";
+import {
+  parseTemplateFields,
+  type DocumentTemplateField,
+} from "@/lib/documents/template-fields";
+import { proposeTemplateFields } from "@/lib/documents/discover-to-template";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   canRetryReads,
+  fetchWithTimeout,
   inFolderOrder,
   interpretSkipReason,
+  isSessionLoss,
   runAiInterpret,
+  servesHtml,
   type AiInterpretRunResult,
 } from "@/lib/import/ai-interpret-run";
 import {
@@ -293,6 +313,29 @@ export type ImportResult = {
    * which is the one thing the user will want from it.
    */
   preexisting?: "linked" | "skipped";
+  /**
+   * The document type this row's Document ended up on.   (Slice #27.05)
+   *
+   * ⚠️ **The type AFTER the AI read, not the one the loop resolved before
+   * creating the row.** `runAiInterpret` may re-classify the document — and
+   * that path also auto-creates `lookup_document_type` rows — so the two are
+   * different documents' worth of difference on an ordinary run. Everything
+   * #27.05 does is keyed on this: which type gets one discovery read, which
+   * rows stop saying "no form" when a form is accepted, and how many TYPES the
+   * summary reports rather than how many rows.
+   */
+  documentTypeId?: string;
+  /**
+   * …and that type has no custom form, so what the read found that was
+   * type-specific went to Notes.   (Slice #27.05)
+   *
+   * The rule is `typeAwaitsForm` in `src/lib/import/discover-run.ts` and is not
+   * restated here — see `OutcomeRow.typeFormMissing` for which documents it is
+   * deliberately silent about.
+   */
+  typeFormMissing?: boolean;
+  /** …and the user gave that type a form during this run.   (Slice #27.05) */
+  typeFormAdded?: boolean;
 };
 
 /**
@@ -333,6 +376,49 @@ type IdCardStep = {
 };
 
 /**
+ * One document TYPE's proposed form, waiting to be reviewed.   (Slice #27.05)
+ *
+ * ⚠️ **Keyed by TYPE, and queued once per type per run.** The second document
+ * of a type has nothing to add to a proposal that is already waiting and costs
+ * a billed read to say so — see `shouldDiscoverType`.
+ *
+ * ⚠️ **Nothing here has been written.** `discoverForType` reads and returns;
+ * the type gains its form only when the user ticks boxes in the dialog below,
+ * which is the point of the slice rather than the friction in it.
+ *
+ * `path` is the entry the read was made from, and it is what puts this step in
+ * the FOLDER's order alongside the other two queues — see `inFolderOrder`.
+ * `docId` is that same document: the review dialog needs it because #27.04's
+ * new-type path re-types the document it was read from.
+ */
+type DiscoverStep = {
+  kind: "discover";
+  path: string;
+  docId: string;
+  typeId: string;
+  /**
+   * The type's name as the SERVER holds it, re-read once the rows have settled.
+   *
+   * Not the label the scan produced: `ensureDocType` may have matched an
+   * existing row by name, and the dialog puts this in its own title over a
+   * decision that is about to be permanent.
+   */
+  typeName: string;
+  /**
+   * The type's template as it stood when the queue was published — empty, by
+   * construction, since a type with a form is never queued. Handed to the
+   * dialog anyway because that is what it sends as `knownKeys`, and the route's
+   * 409 is what catches a template that moved under the review.
+   */
+  existing: DocumentTemplateField[];
+  pairs: DiscoverReviewPair[];
+  documentLabel: string | null;
+  partyRoleNames: string[];
+  skippedPages: number;
+  truncated: boolean;
+};
+
+/**
  * Everything the run queues for the user to answer once it has settled.
  *
  * One list and one cursor rather than two of each, and it is not tidiness: the
@@ -340,7 +426,177 @@ type IdCardStep = {
  * on "is a follow-up open", and two independent cursors would give that one
  * question two answers. `kind` is what the render switches on.
  */
-type FollowUpStep = IdCardStep | PartyStep;
+type FollowUpStep = IdCardStep | PartyStep | DiscoverStep;
+
+/**
+ * Fill in each queued type's NAME and template from the server, and drop the
+ * ones that should no longer be reviewed.   (Slice #27.05)
+ *
+ * ⚠️ **Re-read rather than carried from the loop, and a type invented mid-run is
+ * why.** `runAiInterpret`'s route auto-creates `lookup_document_type` rows when
+ * it re-classifies a document, so such a type is in no map the tasks hold — its
+ * step would name an EMPTY type in the dialog's title, over a decision that is
+ * about to be permanent. The same read is what drops a type that gained a form
+ * while the run was going on, and what gives #27.04's new-type box the list of
+ * names it refuses duplicates against.
+ *
+ * Mutates the map it is given and returns the type names, or null when the list
+ * could not be read at all — in which case the queue is left exactly as it was.
+ * `sessionLost` is reported separately from that null, and an adversarial round
+ * is why: a bare `.catch(() => null)` here turned a dead session into "the list
+ * could not be read", so the run published its full follow-up queue and walked
+ * the user through confirming people into consecutive 401s — the one thing the
+ * publish site's own comment says must never happen — while the header
+ * diagnosed a dead session as a network fault.
+ * A stale `existing` is the one thing this does NOT have to get right: the
+ * dialog sends it as `knownKeys` and the route answers a template that moved
+ * with a 409 carrying the current fields.
+ */
+type EnrichResult = {
+  names: string[] | null;
+  sessionLost: boolean;
+  /**
+   * Types dropped here because the SERVER's name for them reads as an identity
+   * card.   (Slice #27.05)
+   *
+   * ⚠️ **Reported so the ROWS can stop saying a form is due, and a fifth
+   * adversarial round is why.** Dropping the step stops the permanent write and
+   * nothing else: the loop had already written `typeFormMissing` on every row it
+   * read of that type, so the table went on printing "tipul acestui document nu
+   * are încă formular" on an identity card, `typesWithoutForm` went on counting
+   * it, and the header sent the user off to hand-build a form for the one type
+   * `status.ts` calls permanently correct without one — in the saved report too,
+   * which outlives the dialog.
+   */
+  idCardTypeIds: string[];
+};
+
+async function enrichDiscoverSteps(byType: Map<string, DiscoverStep>): Promise<EnrichResult> {
+  if (byType.size === 0) return { names: null, sessionLost: false, idCardTypeIds: [] };
+  let sessionLost = false;
+  const fresh = await fetchDocTypeRows().catch((err: unknown) => {
+    // The same sentinel `createDocument` and `uploadPage` throw, read here
+    // rather than swallowed — see the header.
+    sessionLost = err instanceof Error && err.message === "session-expired";
+    return null;
+  });
+  // ⚠️ **An EMPTY list is treated as a failed read, not as "every type was
+  // deleted", and an adversarial round found what the other reading costs.**
+  // `fetchDocTypeRows` answers `body.items ?? []`, so any 200 whose JSON has no
+  // `items` array — a rewritten response, a proxy, a route that changed shape —
+  // arrives here as zero rows, and the loop below would then delete every step
+  // in the queue. Those pairs exist in no database: they were read at the cost
+  // of a model call each and this ref is the only place they are. `fetchDocTypes`
+  // refuses the same answer at the start of the run, in Romanian; this is the
+  // same refusal, one step quieter because there is a queue to protect rather
+  // than a run to stop.
+  if (fresh === null || fresh.length === 0) {
+    return { names: null, sessionLost, idCardTypeIds: [] };
+  }
+  const idCardTypeIds: string[] = [];
+  const byId = new Map(fresh.map((item) => [item.id, item]));
+  for (const [typeId, step] of [...byType]) {
+    const row = byId.get(typeId);
+    // Gone from the list — deleted, or a type we cannot account for. Dropped
+    // rather than shown: the dialog would write to an id the server no longer
+    // serves, and its own 404 would arrive after the ticks were made.
+    if (row === undefined) {
+      byType.delete(typeId);
+      continue;
+    }
+    // It gained a form while the run was going on — somebody else's session, or
+    // the same user in another tab. A discovery on a type that HAS a form is a
+    // legitimate thing to do by hand and not a thing to put in front of
+    // somebody unasked.
+    if (documentTypeHasForm(row.templateFields)) {
+      byType.delete(typeId);
+      continue;
+    }
+    // ⚠️ **The identity-card test again, on the name the SERVER holds — and
+    // this is the only place that has it.** The loop asks `docTypeIdCardRef`,
+    // built from the start-of-run list, so a type created DURING the run is not
+    // in it and the loop falls back to the scan's own signal, which is exactly
+    // the signal that is false on a mislabelled card. By the time we get here
+    // the read has been paid for; the permanent write has not. See
+    // `typeIsIdCard` in `discover-run.ts`.
+    if ((ID_CARD_TYPE_KEYS as readonly string[]).includes(row.key) || isIdCardTypeName(row.name)) {
+      idCardTypeIds.push(typeId);
+      byType.delete(typeId);
+      continue;
+    }
+    const existing = parseTemplateFields(row.templateFields);
+    // ⚠️ **A step with nothing PROPOSABLE is dropped here**, and an adversarial
+    // round found the loop it otherwise makes. The queue gates on
+    // `pairs.length > 0`, which is not the same question: a short document
+    // whose printed labels are all generic columns (`Nr.`, `Data`, `Titlu`) or
+    // the type's own person roles yields six pairs and zero rows anyone can
+    // tick — `proposeTemplateFields` marks every one `alreadyInForm`. The
+    // dialog then opens saying there is nothing to add, and closing it does not
+    // clear the backlog (deliberately — see `handleDiscoverClosed`), so the
+    // header goes on offering a review that reopens the same empty screen for
+    // the life of the dialog. The same pure module the dialog itself seeds from,
+    // so the two cannot disagree about what "nothing to add" means.
+    const proposable = proposeTemplateFields(step.pairs, existing, step.partyRoleNames);
+    if (!proposable.some((field) => !field.alreadyInForm)) {
+      byType.delete(typeId);
+      continue;
+    }
+    byType.set(typeId, { ...step, typeName: row.name, existing });
+  }
+  return { names: fresh.map((item) => item.name), sessionLost: false, idCardTypeIds };
+}
+
+/**
+ * The queued steps that can actually be OPENED.   (Slice #27.05)
+ *
+ * ⚠️ **`typeName === ""` means the enrichment never ran or never came back**,
+ * and such a step must not reach the dialog: it puts that name in its own title
+ * and in its new-type copy ("mutat de pe „”"), over a decision that is about to
+ * be permanent. An adversarial round found both publish sites handing it
+ * straight through when the end-of-run type-list read failed.
+ *
+ * ⚠️ **The step is KEPT in the ref rather than dropped, and `discoverBacklog`
+ * counts the REF rather than this** — an adversarial round caught the first
+ * version counting only openable steps, which made the whole rescue path
+ * unreachable in the state it was written for. A session expiry aborts the run;
+ * the end-of-run enrichment then fails with it, so every step keeps
+ * `typeName: ""`; a backlog of zero draws no control; and N proposals — one
+ * billed model call each, held nowhere but this ref — died on Close after the
+ * user had signed in again and come back for them. The button is drawn on what
+ * is THERE; the enrichment is retried each time it is pressed; and a press that
+ * still cannot open anything says so in words rather than doing nothing.
+ */
+function openableDiscoverSteps(byType: ReadonlyMap<string, DiscoverStep>): DiscoverStep[] {
+  return [...byType.values()].filter((step) => step.typeName !== "");
+}
+
+/**
+ * The discovery queue in the FOLDER's order.   (Slice #27.05)
+ *
+ * The steps are held by TYPE — one per type — and walked by document, so the
+ * re-key happens here rather than at each of the two call sites. `inFolderOrder`
+ * is the same tested reduction the other two queues use, for the same reason:
+ * a queue that jumps about is invisible until somebody is halfway through it.
+ */
+function discoverStepsInFolderOrder(
+  entries: readonly FSEntry[],
+  byType: ReadonlyMap<string, DiscoverStep>,
+): DiscoverStep[] {
+  // ⚠️ **A LIST per path, not one step, and an adversarial round is why.** Two
+  // types can legitimately be queued from one document: the first read of entry
+  // P proposes a form for type T, its retry re-types the document to U and
+  // proposes one for U as well. A `Map<path, step>` silently drops one of them —
+  // and it drops it from the QUEUE while `discoverBacklog` goes on counting the
+  // type map, so the header offers a button that walks past a review nothing
+  // else can reach.
+  const byPath = new Map<string, DiscoverStep[]>();
+  for (const step of openableDiscoverSteps(byType)) {
+    const at = byPath.get(step.path);
+    if (at === undefined) byPath.set(step.path, [step]);
+    else at.push(step);
+  }
+  return inFolderOrder(entries, byPath).flat();
+}
 
 /**
  * Everything a failed read can tell the user, in one string.   (Slice #26.09)
@@ -722,21 +978,77 @@ function isCoordinateRow(
 // ---------------------------------------------------------------------------
 
 /**
+ * One document type as the value-lists route returns it.   (Slice #27.05)
+ *
+ * `templateFields` is the raw JSONB column and is deliberately `unknown`: the
+ * one thing allowed to interpret it is `parseTemplateFields`, and asking
+ * "does this type have a form?" goes through `documentTypeHasForm` in
+ * `src/lib/documents/status.ts` — which is where #26.12 put that decision so a
+ * label, a colour and a queue can never disagree about it.
+ */
+type DocTypeRow = { id: string; key: string; name: string; templateFields?: unknown };
+
+/**
+ * The list, unindexed. Split out so the end of the run can re-read it. (#27.05)
+ *
+ * ⚠️ **TIMED, and an adversarial round is why.** Since #27.05 this call sits in
+ * front of `setDone(true)` — the run re-reads the type list once the rows have
+ * settled, to name the queued types — so a request that never comes back is the
+ * state this file's own timeout comment forbids: no Close, no result table, no
+ * report, and the stage bar's Cancel disabled for the whole `importing` phase,
+ * so a reload is the only way out and a reload loses the queue. `.catch()` does
+ * not cover a hang; only a timer does.
+ *
+ * ⚠️ **It bounds the HEADERS, not the body** — `fetchWithTimeout` says so about
+ * itself and this is not an exception to it. And it is not the only unbounded
+ * await on the path to `setDone`: the create, upload, tag and link calls in the
+ * loop are all bare `fetch`es of much larger bodies. Those are #26.09's to fix
+ * and are named in this slice's handover; what is claimed here is only that
+ * #27.05 did not add a sixth.
+ *
+ * ⚠️ **`no-store`, and a 200 is not proof of a live session.** This is the only
+ * GET in the run — the model calls are POSTs, which a browser cache cannot
+ * serve — and `handleReviewTypes` reads its success as evidence that a signed-in
+ * session is back. A cached 200, or a rewritten 200 carrying a sign-in PAGE,
+ * would clear that banner over a dead session; `servesHtml` is the same test
+ * `runAiInterpret` applies to its own three calls, exported so there is one
+ * copy of it.
+ */
+async function fetchDocTypeRows(): Promise<DocTypeRow[]> {
+  const res = await fetchWithTimeout(
+    "/api/admin/value-lists/document-types",
+    30_000,
+    { cache: "no-store" },
+  );
+  // ⚠️ **The SENTINEL, not a sentence, and an adversarial round is why.**
+  // `createDocument` and `uploadPage` signal a lost session by throwing exactly
+  // this string, and the per-task catch maps it to the amber banner with the
+  // sign-in link. A hand-written Romanian sentence thrown from here reached
+  // `run().catch` instead, which only sets `importError` — so an expiry before
+  // the first file drew a red box with bare prose in it and no link to sign in
+  // anywhere, under a banner whose own comment names that exact case. One
+  // protocol, mapped in both places.
+  if (isSessionLoss(res) || (res.ok && servesHtml(res))) throw new Error("session-expired");
+  if (!res.ok) throw new Error("Nu s-au putut încărca tipurile de documente (HTTP " + res.status + ").");
+  const body = (await res.json()) as { items?: DocTypeRow[] };
+  return body.items ?? [];
+}
+
+/**
  * Fetch all active document types.
  * Returns:
  *   - `fallbackId`: ALTUL → OTHER → first row alphabetically (used when no type can be resolved)
  *   - `typeMap`: key → id (slug match)
  *   - `nameMap`: lowercased name → id (label match, used for auto-create dedup)
+ *   - `items`: the rows themselves, so #27.05 can ask which types have a form
  */
 async function fetchDocTypes(): Promise<{
   fallbackId: string;
   typeMap: Record<string, string>;
   nameMap: Record<string, string>;
+  items: DocTypeRow[];
 }> {
-  const res = await fetch("/api/admin/value-lists/document-types");
-  if (!res.ok) throw new Error("Nu s-au putut încărca tipurile de documente (HTTP " + res.status + ").");
-  const body = (await res.json()) as { items?: { id: string; key: string; name: string }[] };
-  const items = body.items ?? [];
+  const items = await fetchDocTypeRows();
   if (items.length === 0) {
     throw new Error(
       "Nu există niciun tip de document definit în Date de Referință. " +
@@ -753,7 +1065,7 @@ async function fetchDocTypes(): Promise<{
     typeMap[item.key] = item.id;
     nameMap[item.name.toLowerCase().trim()] = item.id;
   }
-  return { fallbackId: fallback.id, typeMap, nameMap };
+  return { fallbackId: fallback.id, typeMap, nameMap, items };
 }
 
 // Session-scoped cache for auto-created types so the same label is not
@@ -969,6 +1281,10 @@ export function BulkImportDialog({
   const tres = useTranslations("adminImport.result");
   const locale = useLocale();
   const router = useRouter();
+  // Slice #27.05 — only so a form accepted here shows up on the screens that
+  // cache the type list (the document form, Reference Data). This dialog reads
+  // the list itself and does not depend on the cache.
+  const queryClient = useQueryClient();
 
   const [results, setResults] = useState<ImportResult[]>(() =>
     entries.map((entry) => ({ entry, status: "pending" })),
@@ -1013,6 +1329,170 @@ export function BulkImportDialog({
    * for a queue nothing is reading yet.
    */
   const partyStepsRef = useRef<Map<string, PartyStep>>(new Map());
+  /**
+   * The document TYPES this run read a proposed form for.   (Slice #27.05)
+   *
+   * Keyed by type id rather than by path, because that is what "one discovery
+   * per type per run" means and a map keyed the other way could not express it.
+   * A ref for both the reasons the two above are: three tasks settle in
+   * whatever order their files allow, and nothing reads this until the run
+   * ends.
+   */
+  const discoverStepsRef = useRef<Map<string, DiscoverStep>>(new Map());
+  /**
+   * The types a task has CLAIMED the run's one discovery read for.
+   * (Slice #27.05)
+   *
+   * ⚠️ **A separate set from `discoverStepsRef`, and it is the whole
+   * concurrency guard.** Three tasks are in flight; two documents of the same
+   * brand-new type finish within a second of each other; both test the map,
+   * both find it empty — because the entry is only written when the read
+   * RETURNS, tens of seconds later — and the run pays twice for a proposal it
+   * can only show once. The claim is made synchronously, before the await, so
+   * the check and the claim cannot be interleaved. It also holds types whose
+   * read FAILED, deliberately: a rate limit that killed the first attempt is
+   * not a reason to spend three more inside the same run.
+   */
+  const discoverClaimedRef = useRef<Set<string>>(new Set());
+  /**
+   * Which document types had a form when the run started, by id.
+   * (Slice #27.05)
+   *
+   * ⚠️ **An ABSENT id means "no form", and that is correct rather than
+   * convenient**: the ids this map does not have are the types created during
+   * the run — by `ensureDocType`, or by the route re-classifying a document
+   * onto a type it invented — and a type created mid-run has no form by
+   * construction.
+   */
+  const docTypeFormRef = useRef<Map<string, boolean>>(new Map());
+  /**
+   * Which document types ARE the identity-card type, by id.   (Slice #27.05)
+   *
+   * ⚠️ **A fact about the TYPE, which is the axis the rule actually needs** —
+   * see `typeIsIdCard` in `discover-run.ts` for the two ways the scan's own
+   * signal comes apart from it. `ID_CARD_TYPE_KEYS` is the seeded key;
+   * `isIdCardTypeName` is the NAME test, and it is deliberately NARROWER than
+   * the scan's own `isIdCardLabel` — see that function's header for the type
+   * names ("Buletin de analiză", "Copie CI") the wider heuristic would have
+   * silently cost a form.
+   *
+   * ⚠️ **An ABSENT id means "not known", not "not a card"**, and it is the hole
+   * a fourth adversarial round found: this map is built once, from the
+   * start-of-run list, so a type created DURING the run is not in it and the
+   * caller falls back to the scan's own signal — which is exactly the signal
+   * that is false on a card the scan mislabelled and the route then invented a
+   * type for. The read is lost to that; the permanent write is not.
+   * `enrichDiscoverSteps` asks the same question again of the name the SERVER
+   * holds, which is the only place that name exists, and drops the step.
+   */
+  const docTypeIdCardRef = useRef<Map<string, boolean>>(new Map());
+  /**
+   * The fallback document type's id — ALTUL / OTHER / the first row.
+   * (Slice #27.05)
+   *
+   * In a ref because the loop's own copy is a local of the effect, and
+   * `handleRetryInterpret` — which since #27.05 has to ask the same question
+   * about the same type — lives outside it. Null until the list has been read;
+   * `typeAwaitsForm` treats that as "the fallback is not known", which is the
+   * safe direction (it refuses nothing it would otherwise refuse, and the type
+   * still has to have no form).
+   */
+  const fallbackTypeIdRef = useRef<string | null>(null);
+  /**
+   * Every document type name the server holds, for the review dialog's
+   * duplicate-name refusal.   (Slice #27.05, feeding #27.04's new-type path.)
+   *
+   * ⚠️ **STATE, not a ref, and two adversarial findings put it here.** It is
+   * read in the render that mounts the review dialog, and `react-hooks/refs`
+   * rightly bans a render depending on a ref's value — the same argument
+   * `DiscoverReviewDialog` records for its own `baseline`. And it CHANGES while
+   * the queue is being walked: #27.04's path creates a type from inside the
+   * dialog, so a second step opened against a list captured before that would
+   * refuse nothing and let two `lookup_document_type` rows exist with the same
+   * display name — precisely what `sameTypeName` was written to prevent.
+   */
+  const [typeNames, setTypeNames] = useState<string[]>([]);
+  /**
+   * A name a review step has just created, folded in without a round trip.
+   * (Slice #27.05)
+   *
+   * Appended rather than re-fetched because the refusal must hold for the VERY
+   * NEXT step in the same queue, and a list that is a request behind is a list
+   * that agrees with the server about everything except the row it just made.
+   * Duplicates in the array are harmless — `sameTypeName` is a search.
+   */
+  /**
+   * These types are identity cards after all — take back the sentence.
+   *                                                              (Slice #27.05)
+   *
+   * See `EnrichResult.idCardTypeIds`. The rows keep their `documentTypeId` and
+   * everything else; what goes is the claim that a form is owed, which for this
+   * type is the one claim that must never be made.
+   */
+  const forgetTypeFormMissing = useCallback((typeIds: readonly string[]) => {
+    if (typeIds.length === 0) return;
+    const ids = new Set(typeIds);
+    setResults((prev) =>
+      prev.map((r) =>
+        r.documentTypeId !== undefined && ids.has(r.documentTypeId)
+          ? { ...r, typeFormMissing: undefined }
+          : r,
+      ),
+    );
+  }, []);
+
+  const rememberTypeName = useCallback((name: string) => {
+    const trimmed = name.trim();
+    if (trimmed === "") return;
+    setTypeNames((prev) => (prev.includes(trimmed) ? prev : [...prev, trimmed]));
+  }, []);
+  /**
+   * How many proposed forms are still waiting to be looked at.
+   * (Slice #27.05)
+   *
+   * State beside the ref, for the reason the header exists at all: a ref no
+   * render subscribes to cannot decide whether to draw a control. It is set
+   * where the ref is written and nowhere else.
+   */
+  const [discoverBacklog, setDiscoverBacklog] = useState(0);
+  /**
+   * What #27.04's new-type path did on the server, recorded while its dialog is
+   * still mounted and applied when it closes.   (Slice #27.05)
+   *
+   * A ref rather than state for the reason `document-form.tsx` gives for its
+   * own: this must not repaint anything until the dialog is gone.
+   */
+  const pendingNewTypeRef = useRef<NewTypeProgress | null>(null);
+  /**
+   * Part-finished new-type runs, in words.   (Slice #27.05)
+   *
+   * ⚠️ **A LIST, and an adversarial round is why.** One slot meant a second
+   * part-finished step in the same queue silently replaced the first, and each
+   * of these describes a DIFFERENT type left in a different state on the
+   * server — a type created with no form, a document that may or may not have
+   * been moved. None of them is superseded by a later one, and none is undone
+   * by a later step succeeding, so none of them is cleared.
+   */
+  const [typeWarnings, setTypeWarnings] = useState<string[]>([]);
+  /** The review-types control is mid-fetch — see `handleReviewTypes`. (#27.05) */
+  const [reviewingTypes, setReviewingTypes] = useState(false);
+  /**
+   * Why the last press of that control could not open anything, or null.
+   * (Slice #27.05)
+   *
+   * Separate from `typeWarnings` because it is the opposite kind of thing: a
+   * transient the next press can clear, rather than a permanent state left on
+   * the server. Cleared at the start of every press.
+   */
+  const [reviewTypesError, setReviewTypesError] = useState<string | null>(null);
+  /**
+   * Is a follow-up queue open right now?   (Slice #27.05)
+   *
+   * A mirror of `followUps.length > 0` that an async handler can read AFTER its
+   * await. `currentFollowUp` is captured when the closure is made, which is
+   * exactly one render too early to answer this question.
+   */
+  const followUpsOpenRef = useRef(false);
   /**
    * Is this dialog still on screen?   (Slice #26.09)
    *
@@ -1204,6 +1684,11 @@ export function BulkImportDialog({
     // the second run's stepper a document the first had already queued.
     partyStepsRef.current = new Map();
     idCardStepsRef.current = new Map();
+    // Slice #27.05 — fresh for THIS invocation, exactly as the two above are:
+    // in development StrictMode runs the effect twice, and a claim that
+    // survived the first would make the second run skip every discovery.
+    discoverStepsRef.current = new Map();
+    discoverClaimedRef.current = new Set();
     // Slice #26.03 — see the `onFirstDocumentCreated` prop. Local to this run,
     // so a StrictMode re-mount re-announces for its own first document rather
     // than staying silent because a discarded run had already spoken.
@@ -1214,11 +1699,32 @@ export function BulkImportDialog({
 
     async function run() {
       // fetchDocTypes throws with a Romanian error if no types exist.
-      const { fallbackId, typeMap, nameMap } = await fetchDocTypes();
+      const { fallbackId, typeMap, nameMap, items } = await fetchDocTypes();
+      // ⚠️ **The `mounted` test comes FIRST here**, ahead of every ref write
+      // below it — the rule this file states twice about the queue refs, and an
+      // adversarial round caught these four outside it. In StrictMode a
+      // discarded first invocation resolving late would otherwise overwrite the
+      // live one's `docTypeFormRef`, `docTypeIdCardRef` and `fallbackTypeIdRef`
+      // — the three maps that decide which types get a billed read and which
+      // rows say a form is missing.
+      if (!mounted) return;
       fallbackDocTypeId = fallbackId;
+      fallbackTypeIdRef.current = fallbackId;
       docTypeMap = typeMap;
       docNameMap = nameMap;
-      if (!mounted) return;
+      // Slice #27.05 — which types already have a form, decided by the one
+      // function #26.12 wrote for it rather than by a `length > 0` here.
+      docTypeFormRef.current = new Map(
+        items.map((item) => [item.id, documentTypeHasForm(item.templateFields)]),
+      );
+      docTypeIdCardRef.current = new Map(
+        items.map((item) => [
+          item.id,
+          (ID_CARD_TYPE_KEYS as readonly string[]).includes(item.key) ||
+            isIdCardTypeName(item.name),
+        ]),
+      );
+      setTypeNames(items.map((item) => item.name));
 
       const tasks = entries.map((entry) => async () => {
         // fix 7.6: if a previous task detected session expiry, skip all
@@ -1481,6 +1987,14 @@ export function BulkImportDialog({
                 principalObjectId,
                 aiStatus: "skipped",
                 aiSkipReason: skipReason,
+                // ⚠️ **The type is written on EVERY settled row, not only the
+                // read ones**, and an adversarial round is why: a row that
+                // reaches `handleRetryInterpret` with no type at all cannot be
+                // asked whether its type is waiting for a form, and the retry
+                // is the run's own commonest failure. `typeFormMissing` stays
+                // off — this row was never read, so nothing of its went to
+                // Notes.
+                documentTypeId: resolvedTypeId,
               });
             }
             return;
@@ -1508,6 +2022,107 @@ export function BulkImportDialog({
                 parties: interpreted.parties,
               });
             }
+
+            // 8. The TYPE's form — one schema-free read per type.  (#27.05)
+            //
+            // ⚠️ **IT RUNS INSIDE THE ROW'S TASK, so the row stays `importing`
+            // and holds one of the three slots while it does.** That is the
+            // deliberate half of a trade an adversarial round put plainly: the
+            // document's own work is finished by this point, so the row is
+            // labelled for work that is not about it, and a folder whose first
+            // three entries are three distinct new types holds all three slots
+            // for an extra model call each. The alternative is worse in the
+            // direction that matters — marking the row `done` first puts the
+            // progress bar at 100% over billed calls still in flight, which is
+            // the thing this file's header forbids in as many words. Under-
+            // reporting progress is the safe side of that line. What bounds the
+            // cost is that there is one such call per TYPE, not per document.
+            //
+            // ⚠️ **The type AFTER the read, not the one resolved at step 2.**
+            // The route may re-classify the document, and that is also the path
+            // that auto-creates `lookup_document_type` rows — so a discovery
+            // keyed on `resolvedTypeId` would open a review screen naming one
+            // type over pairs read out of a document that now sits on another,
+            // and write the fields onto the wrong one. `runAiInterpret` reports
+            // the move because nothing here can work it out.
+            const finalTypeId = interpreted.documentTypeId ?? resolvedTypeId;
+            const typeHasForm = docTypeFormRef.current.get(finalTypeId) === true;
+            // ⚠️ **Answered from the TYPE, with the scan only as the fallback
+            // for a type this run invented.** Not `skipReason === "id-card"` —
+            // that rule also requires `canCreatePerson`, so a card under
+            // `common` or `floating` never reaches it — and not the scan alone,
+            // which is false on a card the model re-typed onto CARTE_IDENTITATE
+            // and true on a document it correctly re-typed away from one. See
+            // `typeIsIdCard`.
+            // ⚠️ **`||`, NOT `??`, and a fifth adversarial round is why.** A
+            // nullish fallback let a map entry of `false` SUPPRESS the scan's
+            // own signal — and the map is only as good as `isIdCardTypeName` is
+            // at reading a type NAME, which is a heuristic. Either witness is
+            // enough. The two errors are not symmetric: a card wrongly read
+            // writes a CNP column onto a type nothing can take it off, and a
+            // real type wrongly skipped waits for one press of Descoperire AI.
+            const typeIsIdCard =
+              docTypeIdCardRef.current.get(finalTypeId) === true || isIdCardEntry(sr);
+            const awaitsForm = typeAwaitsForm({
+              typeId: finalTypeId,
+              fallbackTypeId: fallbackDocTypeId,
+              typeHasForm,
+              typeIsIdCard,
+            });
+
+            // ⚠️ **The claim is made SYNCHRONOUSLY, before the await**, and it
+            // is the only thing standing between three in-flight tasks and
+            // three billed reads of one brand-new type. See
+            // `discoverClaimedRef`.
+            if (
+              shouldDiscoverType({
+                typeId: finalTypeId,
+                fallbackTypeId: fallbackDocTypeId,
+                typeHasForm,
+                typeIsIdCard,
+                claimedTypeIds: discoverClaimedRef.current,
+              })
+            ) {
+              discoverClaimedRef.current.add(finalTypeId);
+              const discovered = await discoverForType(docId);
+              // ⚠️ The `mounted` test guards the REF write as well as anything
+              // else — the same argument the identity-card branch above makes:
+              // a task belonging to a discarded StrictMode run must not put its
+              // own document into the LIVE run's queue.
+              if (!mounted) return;
+              if (discovered.ok) {
+                // A read that found nothing has nothing to review, and a review
+                // dialog opened over zero rows is a puzzle rather than a
+                // screen. The row still says the type has no form, which is the
+                // true and useful half.
+                if (discovered.pairs.length > 0) {
+                  discoverStepsRef.current.set(finalTypeId, {
+                    kind: "discover",
+                    path: entry.path,
+                    docId,
+                    typeId: finalTypeId,
+                    // Both filled in at the end of the run, from a fresh read of
+                    // the type list — see the publish below. A type invented by
+                    // the route mid-run is not in any map this task holds.
+                    typeName: "",
+                    existing: [],
+                    pairs: discovered.pairs,
+                    documentLabel: discovered.documentLabel,
+                    partyRoleNames: discovered.partyRoleNames,
+                    skippedPages: discovered.skippedPages,
+                    truncated: discovered.truncated,
+                  });
+                }
+              } else if (discovered.reason === "session") {
+                // The same rule the extract call keeps: every row after this
+                // one would fail the same way. The row is still `done` — its
+                // Document, its pages and its fields were all written before
+                // the session went.
+                abortRef.current = true;
+                setSessionExpired(true);
+              }
+            }
+
             updateResult(entry.path, {
               status: "done",
               docId,
@@ -1517,6 +2132,12 @@ export function BulkImportDialog({
               aiFieldCount: interpreted.fieldCount,
               aiPartiesPending: interpreted.parties.length,
               aiPartialWrite: interpreted.partialWrite,
+              documentTypeId: finalTypeId,
+              // ⚠️ `|| undefined`, so a row that does NOT await a form carries
+              // no key at all rather than `false`. `summariseImportRun` reads
+              // `=== true`, but the saved session and the report both walk what
+              // is present, and a false flag is a fact nobody asked for.
+              typeFormMissing: awaitsForm || undefined,
             });
             return;
           }
@@ -1535,6 +2156,9 @@ export function BulkImportDialog({
             principalObjectId,
             aiStatus: "failed",
             aiErrorDetail: failureDetail(interpreted),
+            // See the skipped branch above. A failed read is exactly the row a
+            // retry lands on, and the retry needs to know this type.
+            documentTypeId: resolvedTypeId,
           });
         } catch (err) {
           if (!mounted) return;
@@ -1568,24 +2192,80 @@ export function BulkImportDialog({
       // folder's own order. The reason the cards go first is in this file's
       // header: a card puts the property's owner in the system, so every party
       // step after it resolves against an archive that already holds them.
+      //
+      // Slice #27.05 — and the proposed forms LAST, after the people. Three
+      // arguments, in the order they decide it: the two person queues are about
+      // documents this run wrote and this one is about a TYPE, which outlives
+      // the run; a discovery review is the only step here that spends a
+      // permanent decision, so it is put to a user whose run has otherwise
+      // settled; and #26.10's own reason for cards-before-parties does not
+      // reach it either way.
+      //
+      // ⚠️ **Enriched even when the run ABORTED**, though nothing is published
+      // then. The backlog outlives the abort — `handleReviewTypes` is what
+      // rescues it after a fresh sign-in — and under a dead session this GET
+      // simply fails and leaves the queue as it was, at the cost of one
+      // round trip nobody waits for.
+      const enriched = await enrichDiscoverSteps(discoverStepsRef.current);
+      if (!mounted) return;
+      if (enriched.names !== null) setTypeNames(enriched.names);
+      forgetTypeFormMissing(enriched.idCardTypeIds);
+      // ⚠️ **Before `steps` is computed, because `abortRef` is what suppresses
+      // it.** A session that died between the last row and this GET would
+      // otherwise publish the whole follow-up queue into it.
+      if (enriched.sessionLost) {
+        abortRef.current = true;
+        setSessionExpired(true);
+      }
+
       const steps: FollowUpStep[] = abortRef.current
         ? []
         : [
             ...inFolderOrder(entries, idCardStepsRef.current),
             ...inFolderOrder(entries, partyStepsRef.current),
+            ...discoverStepsInFolderOrder(entries, discoverStepsRef.current),
           ];
 
       if (mounted) {
+        setDiscoverBacklog(discoverStepsRef.current.size);
         setFollowUps(steps);
         setDone(true);
       }
     }
 
     run().catch((err) => {
-      if (mounted) {
-        const msg = err instanceof Error ? err.message : "Import failed unexpectedly";
-        setImportError(msg);
+      if (!mounted) return;
+      const msg = err instanceof Error ? err.message : "Import failed unexpectedly";
+      // Slice #27.05 — the same sentinel the per-entry catch maps, mapped here
+      // too: `fetchDocTypes` is the first thing the run does, so an expiry
+      // before the first file arrives on THIS path and nowhere else. Both are
+      // set — the banner carries the sign-in link, and `importError` is what
+      // draws the Close button on a run that has no rows to settle.
+      if (msg === "session-expired") {
+        abortRef.current = true;
+        setSessionExpired(true);
+        setImportError(t("sessionExpiredShort"));
+        // ⚠️ **And every row is MARKED, because the banner's own sentence says
+        // they are** — "Fișierele marcate cu erori mai jos nu au fost salvate."
+        // This path is the only one that reaches the banner with no task having
+        // run, so without this the one concrete claim it makes about the table
+        // is false, and its natural reading — that the unmarked rows WERE
+        // saved — is false over a run that wrote nothing. It is also simply
+        // true: nothing was imported. The same patch the per-entry catch
+        // applies to a task skipped after an abort.
+        setResults((prev) =>
+          prev.map((r) => ({ ...r, status: "error", errorMsg: t("sessionExpiredShort") })),
+        );
+        return;
       }
+      // ⚠️ **Never the raw message unless we wrote it.** `fetchDocTypes` throws
+      // two Romanian sentences of its own and they are worth showing; the other
+      // things that land here are a `DOMException` from this slice's own 30 s
+      // timer ("signal is aborted without reason") and a `TypeError: Failed to
+      // fetch` — English, on a Romanian screen, which is the leak every other
+      // branch in this slice goes out of its way to stop.
+      const ours = err instanceof Error && err.name === "Error";
+      setImportError(ours ? msg : t("importStartFailed"));
     });
 
     return () => { mounted = false; };
@@ -1609,6 +2289,13 @@ export function BulkImportDialog({
   useEffect(() => {
     if (done) router.refresh();
   }, [done, router]);
+
+  // Slice #27.05 — see `followUpsOpenRef`. An effect rather than a write beside
+  // each `setFollowUps`, so it cannot fall out of step with the state it
+  // mirrors however the queue comes to change.
+  useEffect(() => {
+    followUpsOpenRef.current = followUps.length > 0;
+  }, [followUps]);
 
   /**
    * The run is over and this dialog is now the RESULT screen.   (Slice #26.10)
@@ -1854,6 +2541,10 @@ export function BulkImportDialog({
    * no amber block and no retry button is drawn anywhere in the table.
    */
   const handleConfirmPending = useCallback(() => {
+    // Slice #27.05 — a part-finished new-type run belongs to the step that
+    // produced it; see `handleReviewTypes` for why it must not survive a queue
+    // replacement.
+    pendingNewTypeRef.current = null;
     setFollowUps([
       ...inFolderOrder(entries, idCardStepsRef.current),
       ...inFolderOrder(entries, partyStepsRef.current),
@@ -1862,6 +2553,261 @@ export function BulkImportDialog({
     // `entries` is stable for this dialog's lifetime.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  /**
+   * Open the proposed forms nobody looked at.   (Slice #27.05)
+   *
+   * ⚠️ **Its own control, and NOT folded into `handleConfirmPending`.** That one
+   * says "confirm the people" and rescues two backlogs with one remedy; this is
+   * a different question with a different answer — the people are about
+   * documents this run wrote, and this is about a type that outlives it. Two
+   * counts under one button is how a user comes to press it for the wrong
+   * reason and then not press it again.
+   *
+   * ⚠️ **It re-reads the type list first**, because the case it exists for is
+   * the one where the run ABORTED: a session expiry publishes no queue at all,
+   * and the enrichment that runs at the end of the loop failed with it. Without
+   * this the rescued step would open a dialog whose title names an empty type.
+   * It is also the honest read after a sign-in in another tab — a type may have
+   * gained a form in the meantime, and such a step is dropped rather than shown.
+   */
+  const handleReviewTypes = useCallback(async () => {
+    // ⚠️ **The in-flight guard is not tidiness, and an adversarial round found
+    // what it costs.** This handler awaits a GET and then REPLACES the queue.
+    // Pressing it and then "Confirmă persoanele" — both controls are drawn on
+    // the same ordinary end state — opened a card or party dialog and pulled it
+    // out from under the user a second later, mid-answer, with nothing on
+    // screen saying so. A party stepper interrupted that way never reaches
+    // `handlePartyStepClosed`, so it is re-offered later with no record that
+    // person 1 of 3 was already linked, and answering "create" the second time
+    // makes the duplicate person the whole 26.xx redesign exists to prevent.
+    if (reviewingTypes) return;
+    setReviewingTypes(true);
+    setReviewTypesError(null);
+    const enriched = await enrichDiscoverSteps(discoverStepsRef.current);
+    if (!mountedRef.current) return;
+    setReviewingTypes(false);
+    // A press into a still-dead session re-raises the banner rather than
+    // reporting a connection problem, and costs one 401 to find out — the same
+    // trade `canRetryReads` records for the retry button.
+    if (enriched.sessionLost) setSessionExpired(true);
+    forgetTypeFormMissing(enriched.idCardTypeIds);
+    if (enriched.names !== null) {
+      setTypeNames(enriched.names);
+      // ⚠️ **The session is demonstrably back — this GET went through it.** The
+      // same clear `handleRetryInterpret` makes on its own success, and it is
+      // needed here for a case that has no retry button at all: a session lost
+      // during the DISCOVERY read leaves every row `aiStatus: "done"` (the
+      // Document, its pages and its fields were written before the session
+      // went), so `unreadCount` is zero, no row is retryable, and nothing else
+      // in this dialog can ever clear the flag. Without this, the header went
+      // on telling a signed-in user to sign in again, over the control they had
+      // just used successfully.
+      setSessionExpired(false);
+    }
+    // ⚠️ **Refreshed BEFORE the guard**, because `enrichDiscoverSteps` has
+    // already pruned the ref by this point — a step whose type gained a form
+    // elsewhere, or whose proposals are all already captured, is gone. Left
+    // after the guard, a press that bailed showed the header a stale count and
+    // an offer over an empty queue.
+    setDiscoverBacklog(discoverStepsRef.current.size);
+    // ⚠️ **A press that cannot open anything says so.** The enrichment is what
+    // gives a step the type NAME the dialog puts in its own title over a
+    // permanent decision, so an unenriched step is not shown — and silently
+    // doing nothing, on the one control the user was told to press, is how a
+    // rescue path becomes indistinguishable from a broken button.
+    const openable = openableDiscoverSteps(discoverStepsRef.current);
+    if (openable.length === 0) {
+      // ⚠️ **Its own state, NOT `typeWarnings`, and a fourth round is why.**
+      // That list is red, `role="alert"`, append-only and never cleared,
+      // because what it holds is #27.04's permanent damage — a type left
+      // half-created on the server. This is a transient the very next press can
+      // clear, and filing the two together left "the forms cannot be opened" on
+      // screen, in the present tense, beside irreversible warnings, after the
+      // retry that opened them.
+      // ⚠️ **THREE causes, not two, and the third is the likeliest.** An empty
+      // `openable` also means the enrichment SUCCEEDED and legitimately pruned
+      // every step — a type that gained a form elsewhere, one whose proposals
+      // are all already captured, one that turned out to be an identity card.
+      // Reported as "the type list could not be read, check your connection"
+      // that was a false claim about a 200, told to a business user with a
+      // working connection, on the one control this rescue path has; and it
+      // could not be cleared afterwards, because the press had already taken
+      // the backlog to zero and unmounted the button that clears it. `names`
+      // is the fact that answers it: null means the read failed.
+      setReviewTypesError(
+        enriched.sessionLost
+          ? t("sessionExpiredShort")
+          : enriched.names === null
+            ? t("typeListUnavailable")
+            // Nothing went wrong and nothing is left. The header's own
+            // "nothing to review here" branch already says so, in a sentence
+            // written for it.
+            : null,
+      );
+      return;
+    }
+    setReviewTypesError(null);
+    // ⚠️ The queue is replaced only if there is nothing in it. `followUpsOpen`
+    // is a ref rather than `followUps` itself because this closure was made
+    // before the await and cannot see a queue that opened during it.
+    if (followUpsOpenRef.current) return;
+    // A part-finished new-type run belongs to the step that produced it. It is
+    // dropped rather than carried across a queue replacement — see
+    // `applyPendingNewType` for what it is and why it must not outlive its step.
+    pendingNewTypeRef.current = null;
+    setFollowUps(discoverStepsInFolderOrder(entries, discoverStepsRef.current));
+    setFollowUpIndex(0);
+    // `entries` is stable for this dialog's lifetime.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reviewingTypes, t]);
+
+  /**
+   * What #27.04's new-type path left on the server, in words — and the row
+   * changes that go with it.   (Slice #27.05)
+   *
+   * ⚠️ **Read and CLEARED**, so one part-finished run cannot be reported twice
+   * by the two callers below. Returns nothing: everything it has to say, it
+   * says by setting state.
+   */
+  const applyPendingNewType = useCallback(
+    (step: DiscoverStep) => {
+      const progress = pendingNewTypeRef.current;
+      pendingNewTypeRef.current = null;
+      if (progress === null) return;
+
+      // ⚠️ **The step is dropped from the backlog whatever happened**, and the
+      // reason is that every one of these endings has moved the ground under
+      // it: the document it was read from may now be on a different type, and
+      // the type it names may already exist twice. Re-offering it would write
+      // one document's fields onto whichever of the two the stale id points at.
+      discoverStepsRef.current.delete(step.typeId);
+      setDiscoverBacklog(discoverStepsRef.current.size);
+
+      // ⚠️ Remembered even on `unresolved`, where the row only MIGHT exist.
+      // Refusing a name that turns out not to have been created costs the user
+      // one rename; letting a name through that was created costs two types
+      // with the same label and half the archive's fields under each.
+      rememberTypeName(progress.status === "unresolved" ? progress.name : progress.type.name);
+
+      // The document really did move, so the row's type is the new one — and
+      // the rows still on the OLD type are still waiting for a form, which is
+      // why only this one is touched.
+      if (progress.status === "moved" || progress.status === "movedFieldsUnknown") {
+        updateResult(step.path, { documentTypeId: progress.type.id });
+      }
+
+      const sentence =
+        progress.status === "moved"
+          ? t("typeNewTypeNoFields", { type: progress.type.name })
+          : progress.status === "created"
+            ? t("typeNewTypeNotMoved", { type: progress.type.name })
+            : progress.status === "moveUnresolved"
+              ? t("typeNewTypeMoveUnknown", { type: progress.type.name })
+              : progress.status === "movedFieldsUnknown"
+                ? t("typeNewTypeFieldsUnknown", { type: progress.type.name })
+                : t("typeNewTypeUnresolved", { type: progress.name });
+      setTypeWarnings((prev) => (prev.includes(sentence) ? prev : [...prev, sentence]));
+    },
+    [rememberTypeName, t, updateResult],
+  );
+
+  /**
+   * A document type has its form.   (Slice #27.05)
+   *
+   * ⚠️ **`values` is deliberately ignored, and on this screen that is right.**
+   * The dialog hands back the values discovery read so the form the user is
+   * standing on can be filled in — there is no such form here, and the document
+   * they belong to is one of forty in a table. Filling them in is #27.06's job,
+   * which re-reads the documents of the type through `runAiInterpret` against
+   * the template that now exists, rather than writing one document's values
+   * from a client's memory.
+   *
+   * ⚠️ **Which rows stop saying "no form" depends on whether a NEW type was
+   * created.** On the ordinary path the fields landed on `step.typeId`, so
+   * every row of that type gained a form. On #27.04's path they landed on a
+   * type this document alone was moved to, and the rows left behind on the old
+   * one are exactly as formless as they were.
+   */
+  const handleDiscoverSaved = useCallback(
+    () => {
+      const step = followUps[followUpIndex];
+      if (step !== undefined && step.kind === "discover") {
+        discoverStepsRef.current.delete(step.typeId);
+        setDiscoverBacklog(discoverStepsRef.current.size);
+        const progress = pendingNewTypeRef.current;
+        pendingNewTypeRef.current = null;
+        const movedTo =
+          progress !== null &&
+          (progress.status === "moved" || progress.status === "movedFieldsUnknown")
+            ? progress.type.id
+            : null;
+        // The next step in this same queue must refuse this name — see
+        // `rememberTypeName`.
+        if (progress !== null) {
+          rememberTypeName(progress.status === "unresolved" ? progress.name : progress.type.name);
+        }
+        // ⚠️ **BOTH of the dialog's arguments are deliberately unread**, which
+        // is why this takes none: a zero-argument handler is assignable and
+        // says so without a lint suppression. `addedFieldCount` is the server's
+        // number and there is nowhere on this screen that counts a TYPE's
+        // fields — the row's sentence says a form arrived, and #27.07 is where
+        // the run's report grows a place to say how many. `values` is covered
+        // in this handler's own header.
+        // ⚠️ **`typeFormMissing === true` is the test, NOT `documentTypeId`
+        // alone, and an adversarial round is why.** Every settled row carries
+        // its type now — including a skipped identity card, a `.txt` with no
+        // page a model can see, and a row whose read failed. None of those was
+        // ever told its type was waiting for a form, and matching on the id
+        // alone printed the POSITIVE twin on all three: "tipul acestui document
+        // a primit un formular" on a card whose type must never have one, in
+        // the table and, permanently, in the saved report. The set that may be
+        // told a form arrived is exactly the set that was told one was missing.
+        setResults((prev) =>
+          prev.map((r) => {
+            if (r.typeFormMissing !== true) return r;
+            if (movedTo !== null) {
+              return r.entry.path === step.path
+                ? { ...r, documentTypeId: movedTo, typeFormMissing: undefined, typeFormAdded: true }
+                : r;
+            }
+            return r.documentTypeId === step.typeId
+              ? { ...r, typeFormMissing: undefined, typeFormAdded: true }
+              : r;
+          }),
+        );
+        // The type now has a form, so nothing may queue a second discovery for
+        // it — including a `handleReviewTypes` that runs before the enrichment
+        // above would have noticed.
+        docTypeFormRef.current.set(movedTo ?? step.typeId, true);
+        // The screens that cache the type list — the document form, Reference
+        // Data — now hold a type whose form is out of date. Same invalidate
+        // `document-form.tsx` runs after its own save.
+        queryClient.invalidateQueries({ queryKey: ["document-types"] });
+      }
+      advanceFollowUp(followUpIndex);
+    },
+    [advanceFollowUp, followUps, followUpIndex, queryClient, rememberTypeName],
+  );
+
+  /**
+   * The review was closed without a form.   (Slice #27.05)
+   *
+   * ⚠️ **The backlog SURVIVES a plain dismissal**, for the reason
+   * `handleIdCardClosed` records about its own: an Escape, a dismissal and a
+   * walk into a dead session are indistinguishable from here, and the pairs
+   * exist nowhere else — they were read at the cost of a model call and are not
+   * in any database. The row goes on saying the type has no form, which is
+   * true, and the header's own control can offer it again.
+   *
+   * The one close that does NOT survive is a part-finished new-type run, and
+   * `applyPendingNewType` is where that is decided and said.
+   */
+  const handleDiscoverClosed = useCallback(() => {
+    const step = followUps[followUpIndex];
+    if (step !== undefined && step.kind === "discover") applyPendingNewType(step);
+    advanceFollowUp(followUpIndex);
+  }, [advanceFollowUp, applyPendingNewType, followUps, followUpIndex]);
 
   /**
    * Read this document again, because the first attempt failed.
@@ -1926,6 +2872,11 @@ export function BulkImportDialog({
         // else clears the banner, and leaving it up over a working dialog is
         // the state that made an expiry a one-way door.
         setSessionExpired(false);
+        // …and so does the review control's own "Sesiune expirată", which is a
+        // transient about the same fact and had only one clearer of its own. An
+        // adversarial round left it on screen beside "Câmpurile găsite pot fi
+        // verificate acum", under a banner that had just gone.
+        setReviewTypesError(null);
         /**
          * ⚠️ **NOT re-queued if this document's people are already settled.**
          * A retry is about the half of the read that failed — usually the notes
@@ -1958,12 +2909,100 @@ export function BulkImportDialog({
             parties: interpreted.parties,
           });
         }
+        /**
+         * ⚠️ **The retry has to answer #27.05's questions too, and leaving it
+         * out was wrong in two directions.** This is the run's own commonest
+         * failure — a rate limit at document twelve of forty — so a type whose
+         * ONLY document failed its first read is a type the loop never asked
+         * about: no discovery, no count, no review, and the slice's headline
+         * sentence quietly false. And in the other direction, this call can
+         * RE-TYPE the document, so a row left carrying its old type is a row
+         * `handleDiscoverSaved` will later mark "gained a form" over a type it
+         * is no longer on — a false claim on the screen and in the saved report,
+         * which is the one artefact the user keeps.
+         */
+        const finalTypeId = interpreted.documentTypeId ?? result.documentTypeId ?? null;
+        const typeIsIdCard =
+          finalTypeId !== null &&
+          (docTypeIdCardRef.current.get(finalTypeId) === true ||
+            isIdCardEntry(scanResults.get(path)));
+        const awaitsForm =
+          finalTypeId !== null &&
+          typeAwaitsForm({
+            typeId: finalTypeId,
+            fallbackTypeId: fallbackTypeIdRef.current,
+            typeHasForm: docTypeFormRef.current.get(finalTypeId) === true,
+            typeIsIdCard,
+          });
+        // …and the discovery the failed read never got to.
+        //
+        // ⚠️ **BEFORE the row's own patch, so `aiStatus` is still `running`
+        // for the whole of it.** That is what keeps Close and Save-report
+        // disabled — `retryRunning` reads `aiStatus === "running"` — over a
+        // billed call in flight. Patching the row first would have left the
+        // dialog closeable mid-read, discarding a proposal nobody can pay
+        // for twice. Claimed the same way the loop claims it, so a second
+        // retry of the same type cannot buy a second read.
+        if (
+          finalTypeId !== null &&
+          shouldDiscoverType({
+            typeId: finalTypeId,
+            fallbackTypeId: fallbackTypeIdRef.current,
+            typeHasForm: docTypeFormRef.current.get(finalTypeId) === true,
+            typeIsIdCard,
+            claimedTypeIds: discoverClaimedRef.current,
+          })
+        ) {
+          discoverClaimedRef.current.add(finalTypeId);
+          const discovered = await discoverForType(docId);
+          if (!mountedRef.current) return;
+          if (discovered.ok && discovered.pairs.length > 0) {
+            discoverStepsRef.current.set(finalTypeId, {
+              kind: "discover",
+              path,
+              docId,
+              typeId: finalTypeId,
+              typeName: "",
+              existing: [],
+              pairs: discovered.pairs,
+              documentLabel: discovered.documentLabel,
+              partyRoleNames: discovered.partyRoleNames,
+              skippedPages: discovered.skippedPages,
+              truncated: discovered.truncated,
+            });
+            // ⚠️ **Named here rather than left to the header's own control**, so
+            // the backlog this raises is one the button can open immediately.
+            // The step is otherwise unenriched — `typeName` empty — and the
+            // dialog puts that name in a title over a permanent decision.
+            const enriched = await enrichDiscoverSteps(discoverStepsRef.current);
+            if (!mountedRef.current) return;
+            if (enriched.names !== null) setTypeNames(enriched.names);
+            forgetTypeFormMissing(enriched.idCardTypeIds);
+            // The same reading the other two call sites make: a lost session is
+            // not "the list could not be read". See `enrichDiscoverSteps`.
+            if (enriched.sessionLost) {
+              abortRef.current = true;
+              setSessionExpired(true);
+            }
+            setDiscoverBacklog(discoverStepsRef.current.size);
+          } else if (!discovered.ok && discovered.reason === "session") {
+            abortRef.current = true;
+            setSessionExpired(true);
+          }
+        }
+
         updateResult(path, {
           aiStatus: "done",
           aiProcessed: true,
           aiFieldCount: interpreted.fieldCount,
           aiPartialWrite: interpreted.partialWrite,
           aiErrorDetail: undefined,
+          ...(finalTypeId !== null ? { documentTypeId: finalTypeId } : {}),
+          typeFormMissing: awaitsForm || undefined,
+          // A type that has since gained a form is no longer waiting for one,
+          // and this row has never claimed it gained one — so the flag is
+          // cleared rather than left to contradict the sentence beside it.
+          ...(awaitsForm ? { typeFormAdded: undefined } : {}),
           // Only when this retry actually queued something. Setting both would
           // make the row claim a tally AND a pending count, which the render
           // resolves by showing the stale tally — see `aiPartiesPending`.
@@ -2003,7 +3042,7 @@ export function BulkImportDialog({
     // republishing the queue — `handleConfirmPending` owns that now, and a
     // dependency the body no longer reads is a lint warning that teaches the
     // next reader to ignore the rule.
-    [t, updateResult],
+    [scanResults, t, updateResult],
   );
 
   // ---------------------------------------------------------------------------
@@ -2101,6 +3140,22 @@ export function BulkImportDialog({
     stepperOpen: currentFollowUp !== null,
     retryRunning,
   });
+  /**
+   * May the queued forms be opened right now?   (Slice #27.05)
+   *
+   * ⚠️ **ONE expression, read by the sentence AND by the button beside it.**
+   * `canRetryReads` exists because those two disagreed three rounds running
+   * about the retry; this is the same pair asking the same question about the
+   * review, and an adversarial round had already caught them disagreeing once —
+   * the header offering "can be reviewed now" while a retry in flight hid the
+   * control. The terms are `canRetryReads`'s own, for its own reasons: nothing
+   * in this app traps focus, so a control rendered under an open modal is
+   * reachable from inside it; and a retry captured its row's state before its
+   * model call, so a review completing inside that window would be overwritten
+   * when it lands.
+   */
+  const canReviewTypes =
+    discoverBacklog > 0 && currentFollowUp === null && !retryRunning;
   const totalCount = results.length;
   const progressPct = totalCount > 0 ? ((doneCount + errorCount) / totalCount) * 100 : 0;
 
@@ -2143,6 +3198,13 @@ export function BulkImportDialog({
         aiPeoplePending: r.aiPartiesPending ?? 0,
         idCardQueued: r.idCardQueued,
         idCardFieldsWritten: r.idCardDocFieldsFailed === true ? 0 : r.idCardDocFields ?? 0,
+        // Slice #27.05 — straight through. The rule that decides them is
+        // `typeAwaitsForm`, applied once in the loop; nothing here re-derives
+        // it, for the reason this callback's own header gives about the three
+        // facts it does resolve.
+        documentTypeId: r.documentTypeId,
+        typeFormMissing: r.typeFormMissing,
+        typeFormAdded: r.typeFormAdded,
       };
     },
     [cornerSourceByPath, propertyById, scanResults, soleProperty],
@@ -2391,6 +3453,72 @@ export function BulkImportDialog({
                 )}
               </p>
             )}
+            {/* Slice #27.05 — the types this run met that have nowhere to put
+                what was read out of them.
+
+                ⚠️ **SKY, not amber, and #27.02's constraint is the reason.**
+                "Has no form" is not an error and must not be drawn as one: it
+                is the correct and permanent answer for CARTE_IDENTITATE and for
+                a type whose content is the scan itself. What is offered here is
+                a review, not a repair.
+
+                ⚠️ **The COUNT comes from `summariseImportRun`, not from a
+                second pass over `results`.** It counts distinct TYPES, and the
+                one thing a screen must not do is give a different number from
+                the report the same screen saves. */}
+            {done && summary.typesWithoutForm > 0 && (
+              <p className="mt-0.5 flex flex-wrap items-baseline gap-2 text-xs font-medium text-sky-700 dark:text-sky-400">
+                <span>
+                  {/* ⚠️ **FOUR branches, and each one was a lie in an earlier
+                      round.** The count and the review BACKLOG diverge in both
+                      directions — a type whose one read failed, was rate-
+                      limited, timed out or found nothing already captured is
+                      counted here with nothing queued — so a single sentence
+                      claiming "the fields that were found can be reviewed now"
+                      was false over a header with no control and nothing on
+                      screen. The empty branch is worded to make no claim about
+                      what the model DID: in four of the five states that reach
+                      it the answer was never asked for, and telling a user
+                      nothing was found is a different sentence from telling
+                      them there is nothing here to look at.
+
+                      The order matters. The session goes first because it is
+                      the strongest constraint — nothing can be saved at all —
+                      and its own copy no longer sends the user back to a review
+                      that may not exist. Then "nothing to review", then the
+                      offer, and last the wait, which is the same third branch
+                      `doneUnreadWaiting` carries three lines above for exactly
+                      the same reason: the button is hidden while a follow-up is
+                      open or a retry is in flight, and a sentence that offers
+                      what the screen does not is how a user learns to distrust
+                      it. */}
+                  {sessionExpired
+                    ? t("doneTypesNoFormLocked", { count: summary.typesWithoutForm })
+                    : discoverBacklog === 0
+                      ? t("doneTypesNoFormNothing", { count: summary.typesWithoutForm })
+                      : canReviewTypes
+                        ? t("doneTypesNoForm", { count: summary.typesWithoutForm })
+                        : t("doneTypesNoFormWaiting", { count: summary.typesWithoutForm })}
+                </span>
+                {reviewTypesError !== null && (
+                  <span className="text-amber-700 dark:text-amber-400">{reviewTypesError}</span>
+                )}
+                {canReviewTypes && (
+                  <button
+                    type="button"
+                    onClick={() => void handleReviewTypes()}
+                    // Its own press is an await, and a second one would set the
+                    // cursor back to zero under a user who had advanced. See
+                    // `handleReviewTypes`, which refuses re-entry as well —
+                    // this is the half of that guard the user can see.
+                    disabled={reviewingTypes}
+                    className={buttonClass({ variant: "ghost", size: "xs" })}
+                  >
+                    {t("reviewTypesButton")}
+                  </button>
+                )}
+              </p>
+            )}
             {done && preexistingCount > 0 && (
               <p className="mt-0.5 text-xs text-sky-700 dark:text-sky-400">
                 {t("donePreexisting", { count: preexistingCount })}
@@ -2521,6 +3649,23 @@ export function BulkImportDialog({
           </div>
         )}
 
+        {/* Slice #27.05 — a #27.04 new-type run that stopped part way.
+            Its own banner rather than a row note, because what it describes is
+            a state on the SERVER that no row can express: a type that exists
+            with no form, a document that may or may not have been moved onto
+            it. Red, because reaching it means the fields the user ticked were
+            not saved anywhere. */}
+        {typeWarnings.length > 0 && (
+          <div
+            role="alert"
+            className="mx-5 mt-3 space-y-2 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-950/30 dark:text-red-300"
+          >
+            {typeWarnings.map((warning) => (
+              <p key={warning}>{warning}</p>
+            ))}
+          </div>
+        )}
+
         {/* Provenance gate (Slice #21.07.Import) — shown only when at least one
             entry's provenance could not be inferred from its file extension.
             Nothing is imported until every listed entry has an answer. */}
@@ -2588,7 +3733,12 @@ export function BulkImportDialog({
         )}
 
         {/* Progress bar (shown while importing) */}
-        {gatePassed && !done && (
+        {/* ⚠️ `importError === null` since #27.05: a fatal before the first
+            task now marks every row `error` — because the session banner's own
+            sentence says the rows are marked — and `progressPct` counts errors,
+            so the bar sat at 100% and the label read "40 / 40" over a run that
+            created nothing. A bar is a claim about progress; there was none. */}
+        {gatePassed && !done && importError === null && (
           <div className="px-5 py-3 border-b border-card-rim dark:border-zinc-700">
             {/*
               Slice #23.09.UX — this bar is the real determinate one (the
@@ -2648,6 +3798,48 @@ export function BulkImportDialog({
               documentId={currentFollowUp.docId}
               parties={currentFollowUp.parties}
               onClose={handlePartyStepClosed}
+            />
+          )}
+
+          {/* The proposed form for one document type.   (Slice #27.05)
+
+              ⚠️ **The SAME dialog the Descoperire AI button opens, unchanged
+              and unforked.** What this slice automates is the noticing and the
+              running; the tick boxes are the product, and a second copy of the
+              screen that carries them would be a second set of rules about what
+              may be written to a type.
+
+              ⚠️ **`key` is the TYPE id here, not the entry path.** The queue is
+              one step per type, and the dialog's own state — the ticks, the
+              renames, the frozen baseline — must be thrown away between them
+              for the reason the two dialogs above carry: React would otherwise
+              reuse the instance and open the second type showing the first
+              one's rows. */}
+          {currentFollowUp?.kind === "discover" && (
+            <DiscoverReviewDialog
+              key={currentFollowUp.typeId}
+              pairs={currentFollowUp.pairs}
+              documentId={currentFollowUp.docId}
+              documentLabel={currentFollowUp.documentLabel}
+              typeId={currentFollowUp.typeId}
+              typeName={currentFollowUp.typeName}
+              existingTypeNames={typeNames}
+              existing={currentFollowUp.existing}
+              partyRoleNames={currentFollowUp.partyRoleNames}
+              skippedPages={currentFollowUp.skippedPages}
+              truncated={currentFollowUp.truncated}
+              onSaved={handleDiscoverSaved}
+              // Recorded, not applied — see `applyPendingNewType`. Writing
+              // anything into this component's state while the dialog is
+              // mounted would repaint the header behind an open modal, and on a
+              // `key` change unmount it mid-save.
+              onNewTypeProgress={(progress) => {
+                pendingNewTypeRef.current = progress;
+              }}
+              onTypesChanged={() => {
+                queryClient.invalidateQueries({ queryKey: ["document-types"] });
+              }}
+              onClose={handleDiscoverClosed}
             />
           )}
 
@@ -2744,6 +3936,12 @@ const NOTE_TONE: Record<OutcomeNoteId, string> = {
   personStepUnfinished: "text-amber-700 dark:text-amber-400",
   readSkippedIdCard: "text-sky-700 dark:text-sky-400",
   readSkippedNoPage: "text-sky-700 dark:text-sky-400",
+  // Slice #27.05 — sky, deliberately, and #27.02's constraint is the argument:
+  // a type with no form is not a fault, so the row must not colour it as one.
+  // Amber here would send a user to fix CARTE_IDENTITATE, whose only correct
+  // answer is the one it already has.
+  typeFormPending: "text-sky-700 dark:text-sky-400",
+  typeFormAdded: "text-emerald-600 dark:text-emerald-400",
 };
 
 /** The two notes that are about a Person who now exists and can be opened. */

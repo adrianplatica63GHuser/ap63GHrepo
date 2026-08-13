@@ -42,6 +42,7 @@ import {
   runLandedSomething,
   summariseImportRun,
   summaryLines,
+  typeFormNote,
   type OutcomeRow,
   type SummaryRow,
 } from "@/lib/import/import-outcome";
@@ -349,6 +350,91 @@ describe("outcomeNotes", () => {
 });
 
 // ---------------------------------------------------------------------------
+// 2b. The type's form   (Slice #27.05)
+// ---------------------------------------------------------------------------
+
+describe("what the row says about the document TYPE's form", () => {
+  const row = (over: Partial<OutcomeRow> = {}): OutcomeRow => ({
+    status: "done",
+    isCoordinate: false,
+    cornerPropertyCode: null,
+    cornerCount: 0,
+    isIdCard: false,
+    canLinkPerson: false,
+    ...over,
+  });
+
+  it("says the type is waiting when the loop marked it", () => {
+    expect(typeFormNote(row({ typeFormMissing: true }))).toEqual({
+      id: "typeFormPending",
+      values: {},
+    });
+  });
+
+  it("says nothing at all about a type that has a form", () => {
+    expect(typeFormNote(row())).toBeNull();
+  });
+
+  it("⚠️ stops saying 'waiting' the moment the user accepts a form", () => {
+    // The row has to stop drawing the old sentence over a decision it has just
+    // watched them take. Both flags at once is the shape a partial update
+    // leaves behind, and the newer one wins.
+    expect(typeFormNote(row({ typeFormMissing: true, typeFormAdded: true }))).toEqual({
+      id: "typeFormAdded",
+      values: {},
+    });
+    expect(typeFormNote(row({ typeFormAdded: true }))).toEqual({
+      id: "typeFormAdded",
+      values: {},
+    });
+  });
+
+  it("makes no claim about a row the archive already held, or one still running", () => {
+    expect(typeFormNote(row({ typeFormMissing: true, preexisting: "linked" }))).toBeNull();
+    expect(typeFormNote(row({ typeFormMissing: true, status: "error" }))).toBeNull();
+    expect(typeFormNote(row({ typeFormMissing: true, status: "importing" }))).toBeNull();
+  });
+
+  it("is drawn last, after everything about the document itself", () => {
+    const notes = outcomeNotes(
+      row({ isIdCard: true, canLinkPerson: true, personId: "p1", typeFormMissing: true }),
+    );
+    expect(notes.map((n) => n.id)).toEqual(["personConfirmed", "typeFormPending"]);
+  });
+
+  it("⚠️ counts TYPES, not rows", () => {
+    // Thirty documents of one new type are one type waiting for a form. The
+    // number under the heading is the one a user decides by.
+    const of = (documentTypeId: string): SummaryRow => ({
+      ...row({ typeFormMissing: true }),
+      documentTypeId,
+    });
+    expect(
+      summariseImportRun([of("t1"), of("t1"), of("t1"), of("t2")], 0).typesWithoutForm,
+    ).toBe(2);
+  });
+
+  it("stops counting a type once its form is accepted", () => {
+    const accepted: SummaryRow = {
+      ...row({ typeFormMissing: true, typeFormAdded: true }),
+      documentTypeId: "t1",
+    };
+    expect(summariseImportRun([accepted], 0).typesWithoutForm).toBe(0);
+  });
+
+  it("over-counts rather than under-counts a row with no type id", () => {
+    // Under-counting here would tell the user there is nothing left to do.
+    const anonymous: SummaryRow = row({ typeFormMissing: true });
+    expect(summariseImportRun([anonymous, anonymous], 0).typesWithoutForm).toBe(2);
+  });
+
+  it("counts nothing from a row that never reached the archive", () => {
+    const failed: SummaryRow = { ...row({ typeFormMissing: true, status: "error" }), documentTypeId: "t1" };
+    expect(summariseImportRun([failed], 0).typesWithoutForm).toBe(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // 3. The statistics
 // ---------------------------------------------------------------------------
 
@@ -600,6 +686,55 @@ describe("the result screen's copy", () => {
     expect([
       ...scanIcu(at(messages, "adminImport.result.reportRowFailed") as string).args,
     ]).toEqual(["reason"]);
+  });
+
+  /**
+   * The header sentences #27.05 added, which nothing else in this file walks.
+   *                                                              (Slice #27.05)
+   *
+   * ⚠️ **The note and summary catalogues are pinned by the two tests above
+   * because they have ID CONSTANTS to walk; these have none**, and an
+   * adversarial round pointed out what that leaves open: delete the `few` arm
+   * from one of the four Romanian plurals and both suites stay green while
+   * `DEFAULT_LOCALE` — which is `ro-RO` — renders the raw key path, or throws,
+   * on the one screen a business user reads to find out what the system just
+   * did to their archive. Romanian needs one/few/other; English needs one/other.
+   */
+  it.each(LOCALES)("%s carries every sentence the type-form header draws", (locale) => {
+    const messages = loadMessages(locale);
+    const plural = ["one", "few", "other"];
+    for (const key of [
+      "doneTypesNoForm",
+      "doneTypesNoFormWaiting",
+      "doneTypesNoFormLocked",
+      "doneTypesNoFormNothing",
+    ]) {
+      const value = at(messages, `adminImport.wizard.importDialog.${key}`) as string;
+      expect(typeof value).toBe("string");
+      // The count is the only argument the four call sites pass.
+      expect([...scanIcu(value).args]).toEqual(["count"]);
+      const needed = locale === "ro-RO.json" ? plural : ["one", "other"];
+      for (const form of needed) expect(value).toContain(`${form} {`);
+    }
+    for (const key of ["reviewTypesButton", "typeListUnavailable", "importStartFailed"]) {
+      const value = at(messages, `adminImport.wizard.importDialog.${key}`) as string;
+      expect(typeof value).toBe("string");
+      expect(value.trim()).not.toBe("");
+      expect([...scanIcu(value).args]).toEqual([]);
+    }
+    // The five endings of #27.04's new-type path, as the IMPORT dialog words
+    // them — each names the type it left on the server, and nothing else.
+    for (const key of [
+      "typeNewTypeNoFields",
+      "typeNewTypeNotMoved",
+      "typeNewTypeMoveUnknown",
+      "typeNewTypeFieldsUnknown",
+      "typeNewTypeUnresolved",
+    ]) {
+      const value = at(messages, `adminImport.wizard.importDialog.${key}`) as string;
+      expect(typeof value).toBe("string");
+      expect([...scanIcu(value).args]).toEqual(["type"]);
+    }
   });
 
   it.each(LOCALES)("%s no longer carries the keys of the deleted buttons", (locale) => {

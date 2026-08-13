@@ -110,6 +110,57 @@ export function isIdCardLabel(label: string | null | undefined): boolean {
   return POSITIVE_PATTERNS.some((re) => re.test(folded));
 }
 
+/**
+ * Does this document TYPE's NAME describe the identity-card type?
+ *                                                              (Slice #27.05)
+ *
+ * ⚠️ **A NARROWER TEST THAN `isIdCardLabel`, deliberately, and an adversarial
+ * round is why it is a second function rather than a second caller of that
+ * one.** The two read different distributions. `isIdCardLabel` judges a model's
+ * free-text classification of a scanned IMAGE, where a bare "buletin" or a
+ * standalone "CI" is reasonably a card; this judges a row in a land-registry
+ * archive's type list, where "Buletin de analiză", "Buletin de încercare" and
+ * "Copie CI" are ordinary names and `VETO_PATTERNS` — which only knows about
+ * vehicles — does not save them. A false positive here is silent and costs a
+ * whole type its form: #27.05 excludes it from discovery for the run and its
+ * rows never say a form is missing.
+ *
+ * So only the unambiguous wordings — but ALL of them, and a fifth adversarial
+ * round is why that second half matters as much as the first. A first draft
+ * matched `(carte|act) de identitate` and nothing else, which misses every one
+ * of these: **"Buletin de identitate"** (the pre-1997 official name, and the
+ * label a model reaches for), **"Cartea de identitate"** (the definite article —
+ * the form this very file uses in `ID_CARD_NOTE_LINE`), "Acte de identitate",
+ * "Cărți de identitate". Those are not corner cases: `ensureDocType` POSTs the
+ * scan's own free-text label as a type NAME, so the run that correctly declines
+ * to read a card can persist exactly such a row — and the NEXT run finds it in
+ * the type list, answers `false` here, and reads it.
+ *
+ * The KEY is the real answer wherever there is one (`ID_CARD_TYPE_KEYS`); this
+ * arm exists for a row somebody added by hand, or one an import invented from a
+ * classified label.
+ *
+ * The vehicle veto is kept: "carte de identitate a vehiculului" is a car's
+ * registration document and is exactly the phrase this would otherwise match.
+ *
+ * No `\b` anywhere near the Romanian — it is ASCII-only and this text has been
+ * folded, not transliterated; the space-and-anchor forms below say the same
+ * thing without it.
+ */
+export function isIdCardTypeName(name: string | null | undefined): boolean {
+  const folded = foldRomanian(name ?? "");
+  if (!folded) return false;
+  if (VETO_PATTERNS.some((re) => re.test(folded))) return false;
+  // `carte` / `cartea` / `carti` (folded from cărți), `act` / `acte`, and
+  // `buletin` — each optionally followed by "de", then "identitate". A bare
+  // "buletin" or a standalone "CI" is deliberately NOT here: those are what
+  // `isIdCardLabel` reads off a scanned image, and what make "Buletin de
+  // analiză" and "Copie CI" false positives in a type list.
+  return /(^|[^a-z0-9])(cart(e|ea|i)|act(e)?|buletin)\s+(de\s+)?identitate([^a-z0-9]|$)/.test(
+    folded,
+  );
+}
+
 /** The shape this module needs off a ScanResult. Structural, not imported. */
 export type IdCardScanSignal = {
   typeKey?: string | null;

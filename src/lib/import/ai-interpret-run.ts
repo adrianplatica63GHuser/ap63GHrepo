@@ -121,6 +121,26 @@ export type AiInterpretRunResult =
        * direction.
        */
       partialWrite: boolean;
+      /**
+       * The document type this call MOVED the document to, or null when it left
+       * the type alone.                                        (Slice #27.05)
+       *
+       * ⚠️ **The caller cannot work this out for itself, and #27.05 needs it to
+       * be right.** The route may re-classify the document — this file's own
+       * header calls that out, and says it is also the path that auto-creates
+       * `lookup_document_type` rows — so the type the import loop RESOLVED
+       * before creating the document is not necessarily the type the document
+       * is on afterwards. A discovery queued against the resolved id would then
+       * open a review screen naming one type, over pairs read out of a document
+       * that now sits on another, and write the fields onto the wrong one.
+       *
+       * ⚠️ **Null means "not changed", NOT "unknown".** It is the same
+       * expression the patch is built from (`retyped`), so it is null in all
+       * three of the cases where nothing was written: the model agreed, the
+       * model said nothing, or the current type could not be read and the
+       * re-type was skipped — which `partialWrite` beside it already reports.
+       */
+      documentTypeId: string | null;
     }
   | {
       ok: false;
@@ -299,8 +319,16 @@ const sessionFailure = (): AiInterpretRunResult => ({
  * ALL THREE calls: the PATCH is the only one that writes, and a 200 sign-in page
  * swallowing it made this function report `ok: true` over a document it had not
  * touched.
+ *
+ * ⚠️ **EXPORTED SINCE #27.05, and the export is what stops a second copy.**
+ * `discover-run.ts` makes the same call to the same route and needs the same
+ * three tests; every one of them was wrong once and was fixed by an adversarial
+ * round (401-but-not-403 here, HTML-on-a-2xx-only below, headers-not-body on
+ * the timer). A copy would carry today's version of those fixes and none of
+ * tomorrow's — which is the argument this file's own header makes about two
+ * paths to one result.
  */
-const isSessionLoss = (res: { redirected: boolean; status: number }): boolean =>
+export const isSessionLoss = (res: { redirected: boolean; status: number }): boolean =>
   res.redirected || res.status === 401;
 
 /**
@@ -327,8 +355,11 @@ const isSessionLoss = (res: { redirected: boolean; status: number }): boolean =>
  * and throws away the whole run's unconfirmed people, while suppressing the
  * `HTTP 504` the status branch would have put on the row. A page behind a 200
  * is a swallowed request; a page behind a 5xx is a gateway saying so.
+ *
+ * ⚠️ **Exported since #27.05** — see `isSessionLoss` above for why it is
+ * shared rather than copied.
  */
-const servesHtml = (res: { headers: { get(name: string): string | null } }): boolean =>
+export const servesHtml = (res: { headers: { get(name: string): string | null } }): boolean =>
   (res.headers.get("content-type") ?? "").toLowerCase().includes("html");
 
 /**
@@ -348,8 +379,14 @@ const servesHtml = (res: { headers: { get(name: string): string | null } }): boo
 const MODEL_TIMEOUT_MS = 120_000;
 const RECORD_TIMEOUT_MS = 30_000;
 
-/** `fetch` that gives up rather than hanging the whole import. */
-async function fetchWithTimeout(
+/**
+ * `fetch` that gives up rather than hanging the whole import.
+ *
+ * ⚠️ **Exported since #27.05**, with the MS as an argument rather than a
+ * constant inside — `discover-run.ts` has its own budget (the route asks the
+ * model for twice the output tokens in discover mode) and shares this wrapper.
+ */
+export async function fetchWithTimeout(
   url: string,
   ms: number,
   init?: RequestInit,
@@ -591,7 +628,17 @@ export async function runAiInterpret(
     // 4. Parties, when this document type has roles configured. When it does
     //    not, the route returns [] with partyRolesConfigured=false — not an
     //    error, just a type nobody has set up in Reference Data yet.
-    return { ok: true, fieldCount, parties: data.parties ?? [], partialWrite };
+    return {
+      ok: true,
+      fieldCount,
+      parties: data.parties ?? [],
+      partialWrite,
+      // ⚠️ Read off `retyped`, not off `fields.documentTypeId`, so it can never
+      // name a type this call did not actually write — `retyped` is the one
+      // expression the PATCH itself is built from, and `filled()` has already
+      // proved the value is a non-empty string by the time it is true.
+      documentTypeId: retyped ? (fields.documentTypeId as string) : null,
+    };
   } catch (err) {
     // ⚠️ An abort is OUR timer, not the user, and `DOMException`'s message says
     // "The user aborted a request." in English. Putting that on a row's tooltip

@@ -375,6 +375,39 @@ describe("has-a-form is decided once, and the dropdown asks that one function", 
     }
   });
 
+  /**
+   * The same invariant, at the fetcher that is NOT in the react-query cache.
+   *                                                             (Slice #27.05)
+   *
+   * ⚠️ **The loop above is keyed on `queryKey: ["document-types"]`, and this
+   * fetcher has none** — the import dialog reads the list with a bare `fetch`
+   * because it runs inside an effect, not a component subscription. So it was
+   * invisible to the guard while depending on the guard's invariant harder than
+   * either file above: it asks `documentTypeHasForm(item.templateFields)` of
+   * every row to decide which types get a billed model read and which rows tell
+   * the user their type has no form. Project the rows to `{ id, key, name }` —
+   * an obvious tidy, since three of the four fields are all `ensureDocType`
+   * wants — and every type reads as formless: one discovery read per distinct
+   * type in the folder, and a header that says the whole archive is unfinished.
+   */
+  it("keeps the import dialog's own document-types fetcher unprojected", () => {
+    const src = fs.readFileSync(
+      path.join(SRC, "app/admin/import/_components/bulk-import-dialog.tsx"),
+      "utf8",
+    );
+    expect(src).toContain("documentTypeHasForm(");
+    expect(src).toMatch(/return body\.items \?\? \[\];/);
+    // ⚠️ **And the CALLER too, which is where a projection would actually be
+    // written** — an adversarial round pointed out that the fetcher above is
+    // the tidy nobody makes. `templateFields` is OPTIONAL on `DocTypeRow`, so
+    // `(await fetchDocTypeRows()).map(({ id, key, name }) => …)` type-checks,
+    // lints, and makes `documentTypeHasForm(undefined)` false for every type:
+    // one billed discovery read per distinct type in the folder, and a header
+    // telling the user the whole archive is unfinished.
+    expect(src).toMatch(/const items = await fetchDocTypeRows\(\);/);
+    expect(src).not.toMatch(/fetchDocTypeRows\(\)[\s)]*\.map\(/);
+  });
+
   it("has one marking surface, and it is that dropdown", () => {
     expect(productionFilesContaining("documentTypeOptionLabel(")).toEqual([
       FORM_FILE,

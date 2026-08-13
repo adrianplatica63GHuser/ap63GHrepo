@@ -113,6 +113,9 @@ export const OUTCOME_NOTE_IDS = [
   // How far the automatic read got, where it did not run at all
   "readSkippedIdCard",
   "readSkippedNoPage",
+  // Whether this document's TYPE has somewhere to put what was read (#27.05)
+  "typeFormPending",
+  "typeFormAdded",
 ] as const;
 
 export type OutcomeNoteId = (typeof OUTCOME_NOTE_IDS)[number];
@@ -201,6 +204,35 @@ export type OutcomeRow = {
   personStepUnfinished?: boolean;
   /** Why the run did not read this document at all, when it did not. */
   readSkipped?: "id-card" | "no-page";
+  /**
+   * This document's type has no custom form, so what was read out of it went
+   * to Notes instead of to fields.                             (Slice #27.05)
+   *
+   * ⚠️ **Set only on a document the run actually READ, and the narrowing is
+   * deliberate in both directions it excludes.** An identity card is not
+   * waiting for a form — CARTE_IDENTITATE's data is captured as real Person
+   * records by `src/lib/import/id-card.ts`, and a custom form would put a
+   * second, freely-editable copy of somebody's CNP on the document. A file with
+   * no page a model can see is not waiting for one either: nothing was read, so
+   * nothing went to Notes. Saying "this type has no form" on either would turn
+   * a correct and permanent state into a to-do the user cannot close.
+   *
+   * ⚠️ **The fallback type is excluded too** — see `shouldDiscoverType` in
+   * `src/lib/import/discover-run.ts` for the argument. A document on ALTUL is
+   * not a document whose type lacks a form; it is a document whose type is
+   * wrong, which is a different sentence and #27.04's remedy.
+   */
+  typeFormMissing?: boolean;
+  /**
+   * …and the type GAINED one during this run, because the user accepted a
+   * discovery review for it.                                   (Slice #27.05)
+   *
+   * A separate flag rather than the absence of the one above, because the row
+   * has to stop saying "waiting for a form" the moment the form exists — a
+   * screen that keeps the old sentence over a decision the user has just taken
+   * is the screen contradicting itself.
+   */
+  typeFormAdded?: boolean;
 };
 
 /**
@@ -290,9 +322,40 @@ export function readSkipNote(row: OutcomeRow): OutcomeNote | null {
   return null;
 }
 
+/**
+ * Whether this document's TYPE has anywhere to put what was read out of it.
+ *                                                              (Slice #27.05)
+ *
+ * The run reads every document it can, but a type with no `template_fields`
+ * has no columns for the type-specific values — they land in Notes as
+ * "[AI] Text neasociat unui câmp" and the document reads "Importat" rather than
+ * "Procesat cu AI". That is #26.12's point, said on the row that it happened
+ * to: the TYPE is what is unfinished, not the document.
+ *
+ * ⚠️ **Neither sentence is an ERROR and the row must not draw them as one.**
+ * "Has no form" is the correct and permanent answer for a type whose content is
+ * the scan itself, and the run offers a review rather than a repair. The
+ * caller's severity mapping is what enforces that; this only decides which of
+ * the two true sentences applies.
+ */
+export function typeFormNote(row: OutcomeRow): OutcomeNote | null {
+  if (row.status !== "done") return null;
+  // The archive already held it, so this run neither created it nor read it —
+  // the same carve-out `readSkipNote` makes, for the same reason.
+  if (row.preexisting !== undefined) return null;
+  // Checked FIRST: the loop clears `typeFormMissing` when a form is accepted,
+  // but a row that somehow carried both must say the newer thing rather than
+  // leave the user looking at a job it has just watched them finish.
+  if (row.typeFormAdded === true) return { id: "typeFormAdded", values: {} };
+  if (row.typeFormMissing === true) return { id: "typeFormPending", values: {} };
+  return null;
+}
+
 /** Every note for one row, in the order the row draws them. */
 export function outcomeNotes(row: OutcomeRow): OutcomeNote[] {
-  return [coordinateNote(row), idCardNote(row), readSkipNote(row)].filter(
+  // `typeFormNote` last, because it is the only one of the four that is about
+  // the document TYPE rather than about this document.
+  return [coordinateNote(row), idCardNote(row), readSkipNote(row), typeFormNote(row)].filter(
     (note): note is OutcomeNote => note !== null,
   );
 }
@@ -336,6 +399,16 @@ export type SummaryRow = OutcomeRow & {
   aiPeopleSettled?: number;
   /** …and people it found that nobody has confirmed. */
   aiPeoplePending?: number;
+  /**
+   * The type this document ended up on.                        (Slice #27.05)
+   *
+   * ⚠️ **Carried only so `typesWithoutForm` can count TYPES rather than rows**,
+   * and the difference is the whole number: thirty documents of one new type
+   * are one type waiting for a form, not thirty. An absent id on a row that
+   * claims `typeFormMissing` is counted as its own type rather than dropped —
+   * under-counting here would tell the user there is nothing left to do.
+   */
+  documentTypeId?: string;
 };
 
 /**
@@ -384,6 +457,18 @@ export type ImportRunSummary = {
   /** Identity cards still waiting for an answer, or declined. */
   cardsUnanswered: number;
   /**
+   * Document TYPES this run met that still have no custom form. (Slice #27.05)
+   *
+   * A count of distinct types, not of rows — see `SummaryRow.documentTypeId`.
+   * It is the queue §4 of the 27.01 answer describes, made visible: a type
+   * without a form costs exactly one thing, which is that its documents'
+   * type-specific values go to Notes instead of to columns.
+   *
+   * ⚠️ **A zero here is good news and prints nothing**, like every other line
+   * but `documentsCreated` — see `summaryLines`.
+   */
+  typesWithoutForm: number;
+  /**
    * Identity cards nobody could be asked about — the image would not open.
    *
    * ⚠️ **Its own line because NOTHING ELSE counts it**, and an adversarial round
@@ -419,7 +504,14 @@ export function summariseImportRun(
     peopleUnconfirmed: 0,
     cardsUnanswered: 0,
     cardsUnreadable: 0,
+    typesWithoutForm: 0,
   };
+
+  // Distinct TYPES, so a folder of thirty contracts of one new type reports one
+  // type waiting for a form rather than thirty. A row with no id falls back to
+  // its own identity, which over-counts rather than under-counts — see
+  // `SummaryRow.documentTypeId`.
+  const typesAwaitingForm = new Set<string>();
 
   for (const row of rows) {
     if (row.status === "error") {
@@ -464,7 +556,25 @@ export function summariseImportRun(
     if (row.aiUnread === true) summary.documentsUnread += 1;
     summary.peopleFromDocuments += row.aiPeopleSettled ?? 0;
     summary.peopleUnconfirmed += row.aiPeoplePending ?? 0;
+
+    // ⚠️ `typeFormAdded` is not merely "not missing": the loop clears
+    // `typeFormMissing` on every row of a type the moment its form is accepted,
+    // and this second test is what keeps the count honest if a future caller
+    // sets one without clearing the other.
+    // ⚠️ `preexisting` too, so this and `typeFormNote` answer the same question
+    // the same way. Unreachable today — a pre-existing row is never read, so
+    // nothing sets the flag — but a count with no note behind it is a number on
+    // a screen that no row explains, and only one of the two was pinned.
+    if (
+      row.typeFormMissing === true &&
+      row.typeFormAdded !== true &&
+      row.preexisting === undefined
+    ) {
+      typesAwaitingForm.add(row.documentTypeId ?? `row:${typesAwaitingForm.size}`);
+    }
   }
+
+  summary.typesWithoutForm = typesAwaitingForm.size;
 
   return summary;
 }
@@ -496,6 +606,8 @@ export const SUMMARY_LINE_IDS = [
   "peopleUnconfirmed",
   "cardsUnanswered",
   "cardsUnreadable",
+  // Last, with the other things still outstanding.   (Slice #27.05)
+  "typesWithoutForm",
 ] as const;
 
 export type SummaryLineId = (typeof SUMMARY_LINE_IDS)[number];

@@ -2022,6 +2022,18 @@
         "donePendingPeople": "{count, plural, one {One document has a person to confirm — found by the AI or on the identity card. Once you close, there is nowhere left.} other {# documents have people to confirm — found by the AI or on the identity cards. Once you close, there is nowhere left.}}",
         "donePendingPeopleLocked": "{count, plural, one {One document has a person to confirm — found by the AI or on the identity card. Sign in again — the link below opens a new tab — then confirm it. Once you close, there is nowhere left.} other {# documents have people to confirm — found by the AI or on the identity cards. Sign in again — the link below opens a new tab — then confirm them. Once you close, there is nowhere left.}}",
         "confirmPendingButton": "Confirm the people",
+        "doneTypesNoForm": "{count, plural, one {One document type in this import has no form yet. The fields that were found can be reviewed now — nothing is saved without your tick boxes.} other {# document types in this import have no form yet. The fields that were found can be reviewed now — nothing is saved without your tick boxes.}}",
+        "doneTypesNoFormLocked": "{count, plural, one {One document type in this import has no form yet. The session has expired, so nothing can be saved now — sign in again (the link below opens a new tab).} other {# document types in this import have no form yet. The session has expired, so nothing can be saved now — sign in again (the link below opens a new tab).}}",
+        "doneTypesNoFormWaiting": "{count, plural, one {One document type in this import has no form yet. The fields that were found can be reviewed once you have finished what is open now.} other {# document types in this import have no form yet. The fields that were found can be reviewed once you have finished what is open now.}}",
+        "doneTypesNoFormNothing": "{count, plural, one {One document type in this import has no form yet. There are no fields to review here — you can give it a form by opening a document of that type and pressing AI Discover.} other {# document types in this import have no form yet. There are no fields to review here — you can give them a form by opening one document of each and pressing AI Discover.}}",
+        "reviewTypesButton": "See the fields found",
+        "typeListUnavailable": "The document type list could not be read, so the fields that were found cannot be opened right now. Check the connection and try again.",
+        "importStartFailed": "The import could not start: the document type list could not be read. Check the connection and try again.",
+        "typeNewTypeNoFields": "Document type “{type}” was created and the document was moved onto it, but the form was NOT saved and the fields that were read are lost. Open the document and press AI Discover to retry.",
+        "typeNewTypeNotMoved": "Document type “{type}” was created, but the document was NOT moved onto it and nothing was saved. Open the document, pick the new type, save, then press AI Discover.",
+        "typeNewTypeMoveUnknown": "Document type “{type}” was created, but it is not known whether the document was moved onto it. Open the document and check its type before trying again.",
+        "typeNewTypeFieldsUnknown": "Document type “{type}” was created and the document was moved onto it, but it is not known whether the form was saved. Check Reference Data → Document Types to see whether the type has fields.",
+        "typeNewTypeUnresolved": "It is not known whether document type “{type}” was created. Check Reference Data → Document Types before trying again, so two types with the same name do not appear.",
         "doneWithErrors": "{created} imported successfully · {errors} errors (check the Status column)",
         "colOutcome": "What was done",
         "note": {
@@ -2035,7 +2047,9 @@
           "personUnreadable": "the identity card image could not be prepared, so no person was created",
           "readSkippedIdCard": "the general AI read was skipped, because this is an identity card",
           "readSkippedNoPage": "it has no page the AI can read",
-          "personStepUnfinished": "the identity-card step did not finish — try again with the “Confirm people” button"
+          "personStepUnfinished": "the identity-card step did not finish — try again with the “Confirm people” button",
+          "typeFormPending": "this document's type has no form yet, so the type-specific information went to Notes",
+          "typeFormAdded": "this document's type gained a form during this import"
         }
       },
       "preflight": {
@@ -2544,7 +2558,8 @@
         "documentsUnread": "Documents not fully read by the AI",
         "peopleUnconfirmed": "People found by the AI and not confirmed",
         "cardsUnanswered": "Identity cards left unanswered",
-        "cardsUnreadable": "Identity cards that could not be read"
+        "cardsUnreadable": "Identity cards that could not be read",
+        "typesWithoutForm": "Document types still without a form"
       },
       "saveButton": "Save the report (HTML)",
       "saveHint": "Saved to your computer, with links that open in the system.",

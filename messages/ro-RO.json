@@ -2022,6 +2022,18 @@
         "donePendingPeople": "{count, plural, one {Un document are o persoană de confirmat — găsită de AI sau de pe cartea de identitate. După ce închideți, nu mai există unde.} few {# documente au persoane de confirmat — găsite de AI sau de pe cărțile de identitate. După ce închideți, nu mai există unde.} other {# de documente au persoane de confirmat — găsite de AI sau de pe cărțile de identitate. După ce închideți, nu mai există unde.}}",
         "donePendingPeopleLocked": "{count, plural, one {Un document are o persoană de confirmat — găsită de AI sau de pe cartea de identitate. Autentificați-vă din nou — linkul de mai jos deschide o filă nouă — apoi confirmați-o. După ce închideți, nu mai există unde.} few {# documente au persoane de confirmat — găsite de AI sau de pe cărțile de identitate. Autentificați-vă din nou — linkul de mai jos deschide o filă nouă — apoi confirmați-le. După ce închideți, nu mai există unde.} other {# de documente au persoane de confirmat — găsite de AI sau de pe cărțile de identitate. Autentificați-vă din nou — linkul de mai jos deschide o filă nouă — apoi confirmați-le. După ce închideți, nu mai există unde.}}",
         "confirmPendingButton": "Confirmă persoanele",
+        "doneTypesNoForm": "{count, plural, one {Un tip de document din acest import nu are încă formular. Câmpurile găsite pot fi verificate acum — nimic nu se salvează fără bifele dumneavoastră.} few {# tipuri de documente din acest import nu au încă formular. Câmpurile găsite pot fi verificate acum — nimic nu se salvează fără bifele dumneavoastră.} other {# de tipuri de documente din acest import nu au încă formular. Câmpurile găsite pot fi verificate acum — nimic nu se salvează fără bifele dumneavoastră.}}",
+        "doneTypesNoFormLocked": "{count, plural, one {Un tip de document din acest import nu are încă formular. Sesiunea a expirat, așa că nimic nu poate fi salvat acum — autentificați-vă din nou (linkul de mai jos deschide o filă nouă).} few {# tipuri de documente din acest import nu au încă formular. Sesiunea a expirat, așa că nimic nu poate fi salvat acum — autentificați-vă din nou (linkul de mai jos deschide o filă nouă).} other {# de tipuri de documente din acest import nu au încă formular. Sesiunea a expirat, așa că nimic nu poate fi salvat acum — autentificați-vă din nou (linkul de mai jos deschide o filă nouă).}}",
+        "doneTypesNoFormWaiting": "{count, plural, one {Un tip de document din acest import nu are încă formular. Câmpurile găsite se pot verifica după ce terminați ce este deschis acum.} few {# tipuri de documente din acest import nu au încă formular. Câmpurile găsite se pot verifica după ce terminați ce este deschis acum.} other {# de tipuri de documente din acest import nu au încă formular. Câmpurile găsite se pot verifica după ce terminați ce este deschis acum.}}",
+        "doneTypesNoFormNothing": "{count, plural, one {Un tip de document din acest import nu are încă formular. Aici nu sunt câmpuri de verificat — îi puteți da un formular deschizând un document de acel tip și apăsând Descoperire AI.} few {# tipuri de documente din acest import nu au încă formular. Aici nu sunt câmpuri de verificat — le puteți da un formular deschizând câte un document din fiecare și apăsând Descoperire AI.} other {# de tipuri de documente din acest import nu au încă formular. Aici nu sunt câmpuri de verificat — le puteți da un formular deschizând câte un document din fiecare și apăsând Descoperire AI.}}",
+        "reviewTypesButton": "Vezi câmpurile găsite",
+        "typeListUnavailable": "Lista tipurilor de documente nu a putut fi citită, așa că formularele găsite nu pot fi deschise acum. Verificați conexiunea și încercați din nou.",
+        "importStartFailed": "Importul nu a putut porni: lista tipurilor de documente nu a putut fi citită. Verificați conexiunea și încercați din nou.",
+        "typeNewTypeNoFields": "Tipul de document „{type}” a fost creat și documentul a fost mutat pe el, dar formularul NU a fost salvat, iar câmpurile citite au fost pierdute. Deschideți documentul și apăsați Descoperire AI ca să reluați.",
+        "typeNewTypeNotMoved": "Tipul de document „{type}” a fost creat, dar documentul NU a fost mutat pe el și nimic nu a fost salvat. Deschideți documentul, alegeți tipul nou, salvați, apoi apăsați Descoperire AI.",
+        "typeNewTypeMoveUnknown": "Tipul de document „{type}” a fost creat, dar nu se știe dacă documentul a fost mutat pe el. Deschideți documentul și verificați ce tip are înainte de a încerca din nou.",
+        "typeNewTypeFieldsUnknown": "Tipul de document „{type}” a fost creat și documentul a fost mutat pe el, dar nu se știe dacă formularul a fost salvat. Verificați în Date de Referință → Tipuri de documente dacă tipul are câmpuri.",
+        "typeNewTypeUnresolved": "Nu se știe dacă tipul de document „{type}” a fost creat. Verificați în Date de Referință → Tipuri de documente înainte de a încerca din nou, ca să nu apară două tipuri cu aceeași denumire.",
         "doneWithErrors": "{created} importate cu succes · {errors} erori (verificați coloana Status)",
         "colOutcome": "Ce s-a făcut",
         "note": {
@@ -2035,7 +2047,9 @@
           "personUnreadable": "imaginea cărții de identitate nu a putut fi pregătită, așa că nu s-a creat nicio persoană",
           "readSkippedIdCard": "nu a fost citit cu citirea generală AI, pentru că este o carte de identitate",
           "readSkippedNoPage": "nu are nicio pagină pe care AI să o poată citi",
-          "personStepUnfinished": "pasul pentru cartea de identitate nu s-a încheiat — încercați din nou cu butonul „Confirmă persoanele”"
+          "personStepUnfinished": "pasul pentru cartea de identitate nu s-a încheiat — încercați din nou cu butonul „Confirmă persoanele”",
+          "typeFormPending": "tipul acestui document nu are încă formular, așa că informațiile specifice tipului au mers în Note",
+          "typeFormAdded": "tipul acestui document a primit un formular în acest import"
         }
       },
       "preflight": {
@@ -2544,7 +2558,8 @@
         "documentsUnread": "Documente care nu au fost citite complet de AI",
         "peopleUnconfirmed": "Persoane găsite de AI și neconfirmate",
         "cardsUnanswered": "Cărți de identitate fără răspuns",
-        "cardsUnreadable": "Cărți de identitate care nu au putut fi citite"
+        "cardsUnreadable": "Cărți de identitate care nu au putut fi citite",
+        "typesWithoutForm": "Tipuri de documente rămase fără formular"
       },
       "saveButton": "Salvează raportul (HTML)",
       "saveHint": "Se salvează pe calculatorul dumneavoastră, cu legături care se deschid în sistem.",
