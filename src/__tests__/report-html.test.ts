@@ -462,6 +462,7 @@ const RESULT_STRINGS = {
   summaryTitle: "Pe scurt",
   propertiesTitle: "Proprietăți",
   noProperties: "Niciuna",
+  typesTitle: "Tipuri de documente",
   rowsTitle: "Rezultate",
   openLabel: "Deschide",
 };
@@ -472,6 +473,10 @@ function resultReport(over: Partial<ResultReportInput> = {}): string {
     generatedAt: "09.08.2026, 14:30",
     locale: "ro-RO",
     summaryRows: [{ label: "Documente create", value: "3" }],
+    // Slice #27.07 — empty by default, so every test written before this slice
+    // still describes the document it was written about, and the two below say
+    // what the section does on its own terms.
+    typeNotes: [],
     properties: [
       {
         code: "PROP-AA",
@@ -548,6 +553,50 @@ describe("buildResultReportHtml", () => {
     ];
     expect(positions.every((i) => i >= 0)).toBe(true);
     expect([...positions].sort((a, b) => a - b)).toEqual(positions);
+  });
+
+  // ── Slice #27.07: what the run did to the document types ─────────────────
+
+  it("prints the run's type sentences, above the Properties and below the numbers", () => {
+    // The order is the argument: these two sentences explain two of the numbers
+    // in the table directly above them, and they are about neither the
+    // Properties nor the individual files below.
+    const html = resultReport({
+      typeNotes: [
+        "Un tip de document a primit un formular în acest import: Contract de vânzare.",
+        "A rămas fără formular: Extras CF.",
+      ],
+    });
+    expect(html).toContain("Tipuri de documente");
+    expect(html).toContain("Contract de vânzare");
+    expect(html).toContain("Extras CF");
+    const positions = [
+      html.indexOf("Pe scurt"),
+      html.indexOf("Tipuri de documente"),
+      html.indexOf("Proprietăți"),
+    ];
+    expect(positions.every((i) => i >= 0)).toBe(true);
+    expect([...positions].sort((a, b) => a - b)).toEqual(positions);
+  });
+
+  it("⚠️ drops the HEADING too when there is nothing to say under it", () => {
+    // Not cosmetic. This document is printed and carried to a desk, and an
+    // empty section under a heading reads as a list that failed to render —
+    // which on the one artefact that outlives the dialog is exactly the wrong
+    // thing for a user to have to interpret. The blank line goes with it,
+    // because Word renders one as a real paragraph.
+    const html = resultReport({ typeNotes: [] });
+    expect(html).not.toContain("Tipuri de documente");
+    expect(html).not.toContain("\n\n");
+  });
+
+  it("escapes a document type named off the user's own data", () => {
+    // A type name reaches this document from `lookup_document_type.name`, which
+    // an administrator types by hand and an import auto-creates from a scanned
+    // label. It gets the same treatment as a folder name for the same reason.
+    const html = resultReport({ typeNotes: ['A rămas fără formular: Contract <b> & "x".'] });
+    expect(html).toContain("Contract &lt;b&gt; &amp; &quot;x&quot;.");
+    expect(html).not.toContain("<b> &");
   });
 
   it("says so when the run was linked to no Property, rather than printing an empty list", () => {

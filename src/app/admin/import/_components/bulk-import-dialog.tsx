@@ -210,12 +210,16 @@ import {
   inResultOrder,
   outcomeNotes,
   runLandedSomething,
+  runTypeNotes,
   summariseImportRun,
   summaryLines,
+  typesThatGainedForm,
   type ImportRunSummary,
   type OutcomeNote,
   type OutcomeNoteId,
   type RefillState,
+  type RunTypeFormChange,
+  type RunTypeNoteId,
   type SummaryRow,
 } from "@/lib/import/import-outcome";
 import { buildResultReportHtml, reportFileName } from "@/lib/import/report-html";
@@ -557,10 +561,48 @@ type EnrichResult = {
    * which outlives the dialog.
    */
   idCardTypeIds: string[];
+  /**
+   * Every type the SERVER holds — its name, and whether it has a form.
+   *                                                              (Slice #27.07)
+   *
+   * ⚠️ **The only place a type invented MID-RUN can be given a name.** The
+   * re-classify route auto-creates `lookup_document_type` rows, so such a type
+   * is in no map the tasks hold and the run knows it by uuid alone — which is
+   * exactly what a backlog sentence must not print at a business user. Same
+   * read, same freshness rules, same null: `null` here means the list could not
+   * be read, never that there are no types.
+   *
+   * ⚠️ **`hasForm` is the WHOLE list's answer and not just the queued types',
+   * and an adversarial round is why.** The walk below already dropped a step
+   * whose type had gained a form meanwhile — somebody else's session, or the
+   * same user in another tab, quite possibly through the Reference Data filter
+   * this very slice adds — but a type whose discovery produced nothing
+   * proposable has no step to drop, so a set collected inside that loop would
+   * absolve one type and say nothing about the other. Deriving it from every
+   * row instead is both simpler and complete; `absorbTypeList` is where it is
+   * acted on.
+   */
+  typeRows: { id: string; name: string; hasForm: boolean }[] | null;
 };
 
 async function enrichDiscoverSteps(byType: Map<string, DiscoverStep>): Promise<EnrichResult> {
-  if (byType.size === 0) return { names: null, sessionLost: false, idCardTypeIds: [] };
+  // ⚠️ **NO EARLY RETURN ON AN EMPTY QUEUE SINCE #27.07, and a third
+  // adversarial round is why the GET has to happen anyway.** This function is
+  // the only thing in the whole run that re-reads the type list, and since
+  // #27.07 it is also what refreshes `docTypeFormRef` and `docTypeIdCardRef`
+  // — the two maps `typeAwaitsForm` and `shouldDiscoverType` are decided from.
+  // Skipping the read when nothing is queued left those maps frozen at their
+  // start-of-run values for the whole of the archive's COMMONEST run: the one
+  // where every type already has a form, so nothing is ever queued. A retry
+  // pressed after the user had built a type's form in another tab then spent a
+  // billed discovery on a finished type and wrote "tipul acestui document nu
+  // are încă formular" back onto the row — named, permanently, in the saved
+  // report, with no review button left to take it back.
+  //
+  // The loop below is a no-op on an empty map, so what an empty queue costs is
+  // one GET after the tasks with nobody waiting on it — the cost this call site
+  // already accepts in writing — and what it buys is the run knowing what the
+  // archive currently looks like.
   let sessionLost = false;
   const fresh = await fetchDocTypeRows().catch((err: unknown) => {
     // The same sentinel `createDocument` and `uploadPage` throw, read here
@@ -579,7 +621,7 @@ async function enrichDiscoverSteps(byType: Map<string, DiscoverStep>): Promise<E
   // same refusal, one step quieter because there is a queue to protect rather
   // than a run to stop.
   if (fresh === null || fresh.length === 0) {
-    return { names: null, sessionLost, idCardTypeIds: [] };
+    return { names: null, sessionLost, idCardTypeIds: [], typeRows: null };
   }
   const idCardTypeIds: string[] = [];
   const byId = new Map(fresh.map((item) => [item.id, item]));
@@ -596,6 +638,12 @@ async function enrichDiscoverSteps(byType: Map<string, DiscoverStep>): Promise<E
     // the same user in another tab. A discovery on a type that HAS a form is a
     // legitimate thing to do by hand and not a thing to put in front of
     // somebody unasked.
+    // Slice #27.07 — and the rows' claim that a form is owed is taken back by
+    // `absorbTypeList`, off `typeRows` rather than off a set collected here.
+    // Dropping the step stops the review and nothing else; before this slice
+    // that left the table printing "tipul acestui document nu are încă
+    // formular" over a type that has one, and #27.07 would then have NAMED it
+    // in a backlog the user cannot empty because it is already empty.
     if (documentTypeHasForm(row.templateFields)) {
       byType.delete(typeId);
       continue;
@@ -631,7 +679,20 @@ async function enrichDiscoverSteps(byType: Map<string, DiscoverStep>): Promise<E
     }
     byType.set(typeId, { ...step, typeName: row.name, existing });
   }
-  return { names: fresh.map((item) => item.name), sessionLost: false, idCardTypeIds };
+  return {
+    names: fresh.map((item) => item.name),
+    sessionLost: false,
+    idCardTypeIds,
+    // Slice #27.07 — `documentTypeHasForm`, the one function #26.12 wrote for
+    // the question, exactly as the start-of-run map is built. A `length > 0` on
+    // the raw jsonb here would let a type whose template parses to no usable
+    // field read as finished on the one screen that reports the backlog.
+    typeRows: fresh.map((item) => ({
+      id: item.id,
+      name: item.name,
+      hasForm: documentTypeHasForm(item.templateFields),
+    })),
+  };
 }
 
 /**
@@ -1535,6 +1596,179 @@ export function BulkImportDialog({
     setTypeNames((prev) => (prev.includes(trimmed) ? prev : [...prev, trimmed]));
   }, []);
   /**
+   * What this run knows about each document TYPE it has seen: its name, and
+   * whether it had a form before and after.                      (Slice #27.07)
+   *
+   * ⚠️ **STATE, not a ref, for the reason `typeNames` above is** — the header
+   * draws sentences out of it, and a render may not depend on a ref's value.
+   * `docTypeFormRef` beside it stays a ref because nothing renders it: it is
+   * read inside the tasks and the handlers to decide whether to SPEND a billed
+   * discovery read, which is a different question from what the screen says.
+   *
+   * ⚠️ **A `Record`, not a `Map`, and not because Maps are unfashionable.**
+   * State is replaced rather than mutated, and a `Map` in state invites exactly
+   * the `.set()`-then-`setState(same-reference)` that renders nothing; an object
+   * spread cannot be written that way by accident.
+   *
+   * ⚠️ **`hasForm` is raised by THIS RUN'S acceptance and by nothing else.**
+   * `enrichDiscoverSteps` re-reads the whole type list, so it can see a type
+   * that gained a form in another tab — and folding that in would put its name
+   * under "a primit un formular în acest import" over work nobody did here.
+   * `mergeServerTypes` therefore refreshes NAMES for a type already known and
+   * only ever ADDS an unknown one, with `hadForm === hasForm` so it claims
+   * nothing about a before it never saw. See `RunTypeFormChange`.
+   */
+  const [runTypes, setRunTypes] = useState<
+    Record<string, { name: string; hadForm: boolean; hasForm: boolean }>
+  >({});
+  /**
+   * Fold a fresh server type list into `runTypes`.               (Slice #27.07)
+   *
+   * Names win from the server every time — it is the only place a type invented
+   * mid-run has one, and a rename in Reference Data mid-run should reach the
+   * backlog sentence rather than leave it naming something the user can no
+   * longer find. The two booleans do not: see the field's own header for which
+   * "gained a form" this run is allowed to claim.
+   */
+  const mergeServerTypes = useCallback(
+    (rows: readonly { id: string; name: string; hasForm: boolean }[] | null) => {
+      if (rows === null || rows.length === 0) return;
+      setRunTypes((prev) => {
+        const next = { ...prev };
+        for (const row of rows) {
+          const known = next[row.id];
+          next[row.id] =
+            known === undefined
+              ? { name: row.name, hadForm: row.hasForm, hasForm: row.hasForm }
+              : { ...known, name: row.name };
+        }
+        return next;
+      });
+    },
+    [],
+  );
+  /**
+   * A type gained a form while this run was going on, but NOT from it.
+   *                                                              (Slice #27.07)
+   *
+   * Somebody else's session, or the same user in another tab — quite possibly
+   * through the Reference Data filter this very slice adds.
+   *
+   * ⚠️ **NOT `forgetTypeFormMissing`, and an adversarial round found exactly
+   * what the difference costs.** That one takes back a claim and leaves nothing
+   * behind, which is right for an identity card: there is no form coming and
+   * nothing to re-read into. Here there IS a form now, and twelve documents
+   * whose type-specific values went to Notes while it did not exist. Clearing
+   * the flag alone drops them out of the row notes, out of `awaitsRefill`, out
+   * of `documentsAwaitingRefill` and out of `refillCount` — so no control is
+   * drawn — and the concluding message then describes a fully landed run over
+   * twelve documents with empty columns. That is the precise failure
+   * `documentsAwaitingRefill` was created in #27.06 to stop.
+   *
+   * ⚠️ **`typeFormAdded` is NOT set, and it is the term that looks missing.**
+   * That flag draws "tipul acestui document a primit un formular în acest
+   * import", and this import did no such thing. The row is left saying only
+   * what is true — that it has not been read again, so its information is still
+   * in Notes — which is `refillPending`'s own sentence.
+   *
+   * The narrowing is `handleDiscoverSaved`'s, term for term and for its
+   * reasons: `typeFormMissing === true` is the set that may be told a form
+   * arrived, and `docId` is what `awaitsRefill` is allowed to assume.
+   */
+  const formArrivedElsewhere = useCallback(
+    (rows: readonly { id: string; hasForm: boolean }[] | null) => {
+      if (rows === null) return;
+      const withForm = new Set(rows.filter((row) => row.hasForm).map((row) => row.id));
+      if (withForm.size === 0) return;
+      setResults((prev) =>
+        prev.map((r) =>
+          r.typeFormMissing === true &&
+          r.documentTypeId !== undefined &&
+          withForm.has(r.documentTypeId)
+            ? {
+                ...r,
+                typeFormMissing: undefined,
+                ...(r.docId !== undefined
+                  ? { refill: "pending" as const, refillErrorDetail: undefined }
+                  : {}),
+              }
+            : r,
+        ),
+      );
+    },
+    [],
+  );
+  /**
+   * Everything a fresh type-list read tells the rest of the screen.
+   *                                                              (Slice #27.07)
+   *
+   * ⚠️ **One function because there are FOUR call sites**, which is the habit
+   * this codebase names in as many words: centralise a rule at the third copy
+   * site, not the fourth. The end-of-run enrichment, `handleReviewTypes`, and
+   * the retry's preflight and its second read all enrich the same queue from
+   * the same GET, and all four owe the same follow-ups; before this slice each
+   * restated one of them by hand, and #27.07 was about to make that four each.
+   *
+   * `names` is deliberately NOT folded in here: ONE of the four does something
+   * extra in that branch — `handleReviewTypes` clears the session banner off the
+   * fact that its GET went through, gated on `sessionLossSeqRef` — and hiding a
+   * conditional it would then have to re-test outside would be trading one
+   * duplication for the loss of the only thing that stops a signed-in user being
+   * told to sign in again.
+   */
+  const absorbTypeList = useCallback(
+    (enriched: EnrichResult) => {
+      /**
+       * ⚠️ **THE REFS FIRST, AND THIS IS THE HALF THAT WAS MISSING.** Two
+       * adversarial rounds landed on the same defect independently: this
+       * enrichment is the only thing in the run that reads the SERVER's list,
+       * and its findings were being spent on the rows and thrown away. The two
+       * refs beside it — the ones `typeAwaitsForm` and `shouldDiscoverType`
+       * actually ask — were written once at the start of the run and once on
+       * acceptance, and never here.
+       *
+       * What that cost: the user builds a type's form in another tab (through
+       * the Reference Data filter this very slice adds), then presses the retry
+       * on a row whose first read was rate-limited. `docTypeFormRef` still says
+       * the type has no form, so the retry writes "tipul acestui document nu
+       * are încă formular" back onto the row, `typesWithoutForm` counts the
+       * type again, and #27.07 NAMES it — permanently, in the saved report —
+       * over a type that has a form. The user follows the sentence to Reference
+       * Data, ticks the box, and it is not in the list. And because the step was
+       * deleted by this same enrichment, nothing can take the claim back.
+       *
+       * Refreshing the refs closes it on every path at once — including the two
+       * where no enrichment runs at all, because `shouldDiscoverType` and
+       * `typeAwaitsForm` then read current knowledge — and stops a billed
+       * discovery being spent on a type that already has a form.
+       *
+       * ⚠️ **Raised to `true` and never lowered.** A type that has a form is
+       * exactly what these two refs are consulted about, and both already treat
+       * an absent id as the negative — see their headers. Writing `false` back
+       * for every formless type would be a claim about types this run has never
+       * met, made from a list read for another purpose.
+       */
+      for (const row of enriched.typeRows ?? []) {
+        if (row.hasForm) docTypeFormRef.current.set(row.id, true);
+      }
+      for (const id of enriched.idCardTypeIds) docTypeIdCardRef.current.set(id, true);
+
+      // ⚠️ **The identity cards before the form-arrived queue.** Both are
+      // functional `setResults` updaters, so the second is applied to what the
+      // first produced whether or not React batches them — the ordering is what
+      // stops a type in both lists being queued for a billed re-read of a card
+      // the run deliberately did not read. Defensive rather than load-bearing
+      // today: `enrichDiscoverSteps` tests the form BEFORE the card, so an id
+      // with a form never reaches `idCardTypeIds` and the two sets are disjoint
+      // by construction. It is written this way round because the disjointness
+      // lives in another function and nothing tests it.
+      forgetTypeFormMissing(enriched.idCardTypeIds);
+      mergeServerTypes(enriched.typeRows);
+      formArrivedElsewhere(enriched.typeRows);
+    },
+    [forgetTypeFormMissing, formArrivedElsewhere, mergeServerTypes],
+  );
+  /**
    * How many proposed forms are still waiting to be looked at.
    * (Slice #27.05)
    *
@@ -1884,6 +2118,19 @@ export function BulkImportDialog({
         ]),
       );
       setTypeNames(items.map((item) => item.name));
+      // Slice #27.07 — the BEFORE half of "gained a form during this run",
+      // taken once, here, from the same list and the same function the two maps
+      // above are built from. Replaced rather than merged: this is a fresh run,
+      // and a `hadForm` carried over from a discarded StrictMode invocation is a
+      // claim about a run that did not happen.
+      setRunTypes(
+        Object.fromEntries(
+          items.map((item) => {
+            const hasForm = documentTypeHasForm(item.templateFields);
+            return [item.id, { name: item.name, hadForm: hasForm, hasForm }];
+          }),
+        ),
+      );
 
       const tasks = entries.map((entry) => async () => {
         // fix 7.6: if a previous task detected session expiry, skip all
@@ -2368,7 +2615,7 @@ export function BulkImportDialog({
       const enriched = await enrichDiscoverSteps(discoverStepsRef.current);
       if (!mounted) return;
       if (enriched.names !== null) setTypeNames(enriched.names);
-      forgetTypeFormMissing(enriched.idCardTypeIds);
+      absorbTypeList(enriched);
       // ⚠️ **Before `steps` is computed, because `abortRef` is what suppresses
       // it.** A session that died between the last row and this GET would
       // otherwise publish the whole follow-up queue into it.
@@ -2782,7 +3029,7 @@ export function BulkImportDialog({
     // reporting a connection problem, and costs one 401 to find out — the same
     // trade `canRetryReads` records for the retry button.
     if (enriched.sessionLost) raiseSessionExpired();
-    forgetTypeFormMissing(enriched.idCardTypeIds);
+    absorbTypeList(enriched);
     if (enriched.names !== null) {
       setTypeNames(enriched.names);
       // ⚠️ **The session is demonstrably back — this GET went through it.** The
@@ -2960,11 +3207,16 @@ export function BulkImportDialog({
         setDiscoverBacklog(discoverStepsRef.current.size);
         const progress = pendingNewTypeRef.current;
         pendingNewTypeRef.current = null;
-        const movedTo =
+        // Slice #27.07 — the TYPE rather than just its id, because the run has
+        // to be able to name what it gained a form for and this is the one
+        // moment #27.04's brand-new type has a name at all. `movedTo` is
+        // unchanged; only what it was read off is.
+        const movedType =
           progress !== null &&
           (progress.status === "moved" || progress.status === "movedFieldsUnknown")
-            ? progress.type.id
+            ? progress.type
             : null;
+        const movedTo = movedType?.id ?? null;
         // The next step in this same queue must refuse this name — see
         // `rememberTypeName`.
         if (progress !== null) {
@@ -3038,6 +3290,47 @@ export function BulkImportDialog({
         // it — including a `handleReviewTypes` that runs before the enrichment
         // above would have noticed.
         docTypeFormRef.current.set(movedTo ?? step.typeId, true);
+        /**
+         * …and the RUN records that this type gained one, by name.
+         *                                                       (Slice #27.07)
+         *
+         * ⚠️ **HERE, and not derived from the rows' `typeFormAdded`.** The
+         * re-read walk clears that flag on any row its second read moved onto
+         * another type — correctly, because such a row is no longer on the type
+         * that gained the form. But this is a fact about the TYPE and it stays
+         * true whatever becomes of the documents that caused it: on a run whose
+         * one reviewed document was then re-typed, every row carrying the flag
+         * loses it, and a names list read off the rows would report that the
+         * run achieved nothing — over a `lookup_document_type` row that now has
+         * a permanent form the user built two clicks ago.
+         *
+         * ⚠️ **`hadForm: false` is not a guess.** Both routes here are types
+         * that had no form one moment ago: an ordinary step is only queued for
+         * a type without one (`shouldDiscoverType`, and `enrichDiscoverSteps`
+         * drops a type that gained one meanwhile), and #27.04's is a type
+         * created empty seconds earlier. A known entry keeps its own `hadForm`
+         * anyway, so the fallback only ever answers for an id this run had not
+         * met.
+         *
+         * ⚠️ **A blank name does not overwrite a known one.** `step.typeName`
+         * is empty exactly when the enrichment never came back — the state
+         * `openableDiscoverSteps` refuses to open, so it should not be
+         * reachable from here at all — and writing it over a name taken from
+         * the start-of-run list would turn a nameable type into a silent one.
+         */
+        const gainedName = (movedType?.name ?? step.typeName).trim();
+        setRunTypes((prev) => {
+          const id = movedTo ?? step.typeId;
+          const known = prev[id];
+          return {
+            ...prev,
+            [id]: {
+              name: gainedName === "" ? known?.name ?? "" : gainedName,
+              hadForm: known?.hadForm ?? false,
+              hasForm: true,
+            },
+          };
+        });
         // The screens that cache the type list — the document form, Reference
         // Data — now hold a type whose form is out of date. Same invalidate
         // `document-form.tsx` runs after its own save.
@@ -3466,6 +3759,122 @@ export function BulkImportDialog({
          * which is the one artefact the user keeps.
          */
         const finalTypeId = interpreted.documentTypeId ?? result.documentTypeId ?? null;
+        /**
+         * Has a type-list read absolved this type since `awaitsForm` was
+         * decided?                                               (Slice #27.07)
+         *
+         * ⚠️ **`awaitsForm` is computed from refs, in this tick, and a type
+         * list is the only thing that can contradict it.** Two enrichments run
+         * below and NEITHER sees everything, which is why this is a `let`
+         * written by both rather than a value:
+         *
+         *   - the PREFLIGHT sees the archive as it stands, including a type the
+         *     user finished in another tab — but it walks the discovery map it
+         *     is handed, so it cannot see a type this call is about to queue;
+         *   - the SECOND read, after the step is created, is the only thing in
+         *     the whole run that ever sees the SERVER's name for a type invented
+         *     mid-run, which is the only way a mislabelled identity card is ever
+         *     recognised.
+         *
+         * ⚠️ **Today only the second write can change an outcome, and saying so
+         * is the honest version.** `awaitsForm` is computed after
+         * `absorbTypeList(preflight)` has refreshed the two refs it reads, so
+         * wherever the preflight arm is true `awaitsForm` is already false and
+         * `awaitsForm && !typeAbsolved` was settled without it. The first write
+         * stays because it is what keeps this correct if `awaitsForm` ever moves
+         * back above the preflight — which is where it lived until this round —
+         * and because a flag that is right for one reason while silent about the
+         * other is how the next reader deletes the wrong half.
+         *
+         * ⚠️ **`||=` on the second, never `=`.** Writing `awaitsForm` back over
+         * `absorbTypeList`'s work — or letting a later read reset this to false
+         * — put the claim straight onto the one row that paid for the read: it
+         * drew "tipul acestui document nu are încă formular" over a finished
+         * type or an identity card, `typesWithoutForm` counted it, and #27.07
+         * NAMED it, permanently, in the saved report. Unfixable from the UI
+         * too: the enrichment deletes the step, so no review can clear it.
+         */
+        let typeAbsolved = false;
+        /**
+         * …and separately, whether `formArrivedElsewhere` QUEUED THIS ROW.
+         *                                                       (Slice #27.07)
+         *
+         * ⚠️ **A second flag rather than a term on the first, and a fourth
+         * adversarial round found both directions it was wrong in.**
+         * `typeAbsolved` answers "may this row still be told a form is owed",
+         * and it is true for TWO causes on the type the document ENDS on. The
+         * refill patch is asking something narrower: did the callback a few
+         * lines above write `refill: "pending"` onto this row — which it does
+         * for one of those causes only, matched on the type the row was on
+         * BEFORE this call.
+         *
+         *   - The identity-card cause queues nothing, deliberately: there is no
+         *     form coming and nothing to re-read into. Reusing `typeAbsolved`
+         *     drew "citirea din nou nu a completat câmpurile" on a card and had
+         *     the header offer a billed re-read of the one type `status.ts`
+         *     calls permanently correct without a form.
+         *   - A retry that RE-TYPES the document asks about the new type, which
+         *     has no form — so `typeAbsolved` was false while the callback had
+         *     matched the row on its old one and queued it. The row ended
+         *     carrying `refill: "pending"` over a read that had just happened,
+         *     with the header pricing another one.
+         *
+         * So this mirrors `formArrivedElsewhere`'s predicate term for term — as
+         * that callback is applied by the PREFLIGHT. ⚠️ **It is deliberately not
+         * widened by the second enrichment**, and the reason is the opposite of
+         * the one that widens `typeAbsolved` beside it: a form first seen there
+         * cannot have existed when `runAiInterpret` POSTed, so that row's queued
+         * re-read is correct and must stand. The argument is written out at the
+         * site where the widening is refused.
+         */
+        let refillQueuedByAbsorb = false;
+        /**
+         * ⚠️ **THE TYPE LIST IS READ FIRST, BEFORE ANYTHING DECIDES ANYTHING.**
+         *                                                       (Slice #27.07)
+         *
+         * A fifth adversarial round found the refresh nested two `if`s deep —
+         * inside `shouldDiscoverType`, inside `discovered.ok && pairs.length >
+         * 0` — so the three ordinary ways to miss it were all live: the type
+         * was already claimed by the main run, the discovery came back a rate
+         * limit, or it found nothing proposable. On every one of those,
+         * `awaitsForm` below was decided from a `docTypeFormRef` last written
+         * at the start of the run, and the row was told a form was owed for a
+         * type the user had finished in another tab — named, permanently, in
+         * the saved report, with `discoverBacklog` at zero so no control on the
+         * screen could take it back.
+         *
+         * Hoisting it costs one GET on a path that has just paid for a model
+         * call, and it buys three things at once: `typeIsIdCard` and
+         * `awaitsForm` decide from what the archive currently looks like,
+         * `shouldDiscoverType` stops buying a billed discovery for a type that
+         * already has a form, and the two flags declared above are read off the same
+         * answer the rows were patched from. #27.07 removed
+         * `enrichDiscoverSteps`' empty-queue early return precisely so this
+         * call is always a real read.
+         */
+        const preflight = await enrichDiscoverSteps(discoverStepsRef.current);
+        if (!mountedRef.current) return;
+        if (preflight.names !== null) setTypeNames(preflight.names);
+        absorbTypeList(preflight);
+        if (preflight.sessionLost) {
+          abortRef.current = true;
+          raiseSessionExpired();
+        }
+        setDiscoverBacklog(discoverStepsRef.current.size);
+        typeAbsolved =
+          finalTypeId !== null &&
+          (preflight.idCardTypeIds.includes(finalTypeId) ||
+            preflight.typeRows?.some((r) => r.id === finalTypeId && r.hasForm) === true);
+        // …and the narrower question, off `result` — the row as it was when the
+        // retry was pressed, which is the state `formArrivedElsewhere` matched
+        // on. See `refillQueuedByAbsorb`.
+        refillQueuedByAbsorb =
+          result.typeFormMissing === true &&
+          result.docId !== undefined &&
+          result.documentTypeId !== undefined &&
+          preflight.typeRows?.some(
+            (r) => r.id === result.documentTypeId && r.hasForm,
+          ) === true;
         const typeIsIdCard =
           finalTypeId !== null &&
           (docTypeIdCardRef.current.get(finalTypeId) === true ||
@@ -3488,6 +3897,27 @@ export function BulkImportDialog({
         // for twice. Claimed the same way the loop claims it, so a second
         // retry of the same type cannot buy a second read.
         if (
+          // ⚠️ **`!preflight.sessionLost` — the FRESH witness, and emphatically
+          // NOT `abortRef.current`.** The preflight above can report a dead
+          // session one step before this test, and `shouldDiscoverType` does
+          // not consult anything: unguarded, the handler spends a billed
+          // discovery on a call that is certain to 401. The claim it makes in
+          // `discoverClaimedRef` on the way is NOT the harm and must not be
+          // released — that ref's own header keeps a failed read claimed on
+          // purpose, so one rate limit cannot buy three more attempts inside a
+          // single run.
+          //
+          // ⚠️ **`abortRef` was this guard's first draft and two reviewers
+          // rejected it, correctly: it is a one-way latch nothing ever lowers.**
+          // `canRetryReads`' own header records three rounds spent making the
+          // retry BUTTON survive an expiry — "signing in again … in a new tab …
+          // brought no button back for the life of the dialog" — and gating on
+          // the latch here would have rebuilt that door one level down, with
+          // the button live and the discovery behind it silently gone for the
+          // rest of the session. This is the better witness on its own terms
+          // too: reaching this line took a model call and a GET that both went
+          // through the session moments ago.
+          !preflight.sessionLost &&
           finalTypeId !== null &&
           shouldDiscoverType({
             typeId: finalTypeId,
@@ -3518,10 +3948,58 @@ export function BulkImportDialog({
             // the backlog this raises is one the button can open immediately.
             // The step is otherwise unenriched — `typeName` empty — and the
             // dialog puts that name in a title over a permanent decision.
+            //
+            // ⚠️ **A SECOND read, and it is not the preflight repeated.** That
+            // one ran before this step existed; this one is what fills in the
+            // step's `typeName`, which is the whole reason it is here — and it
+            // is also the only read that can see the type this call just
+            // queued. Neither can be dropped in favour of the other, and the
+            // two flags are WIDENED by it rather than replaced; see below.
             const enriched = await enrichDiscoverSteps(discoverStepsRef.current);
             if (!mountedRef.current) return;
             if (enriched.names !== null) setTypeNames(enriched.names);
-            forgetTypeFormMissing(enriched.idCardTypeIds);
+            absorbTypeList(enriched);
+            /**
+             * ⚠️ **`||=`, and a sixth adversarial round is why it can be
+             * neither `=` nor omitted.**                         (Slice #27.07)
+             *
+             * `enrichDiscoverSteps` collects `idCardTypeIds` by walking the map
+             * it is HANDED, so the preflight — which ran before this step was
+             * added — structurally cannot contain this type. That is exactly
+             * the row the identity-card term exists for: a scan mislabels a
+             * card, the route invents a `lookup_document_type` row for it
+             * mid-run, so the type is in no start-of-run map and the scan's own
+             * signal is false. This read is the only place its real name is
+             * ever seen.
+             *
+             * Left out, `updateResult` below wrote `typeFormMissing: true` back
+             * over the clear `absorbTypeList` had just made — an explicit value
+             * beats a functional updater — and the row drew "tipul acestui
+             * document nu are încă formular" on an identity card, named,
+             * permanently, in the saved report, with the step already deleted
+             * so nothing on the screen could take it back.
+             */
+            typeAbsolved ||=
+              finalTypeId !== null &&
+              (enriched.idCardTypeIds.includes(finalTypeId) ||
+                enriched.typeRows?.some((r) => r.id === finalTypeId && r.hasForm) === true);
+            /**
+             * ⚠️ **`refillQueuedByAbsorb` is deliberately NOT widened here, and
+             * an eighth adversarial round is why.**              (Slice #27.07)
+             *
+             * It looks like the same omission the line above fixes, and it is
+             * the opposite. That flag exists to say "this row was just re-read,
+             * so throw away the `refill: "pending"` the callback wrote on it".
+             * A form that only appears at THIS read demonstrably was not there
+             * when `runAiInterpret` POSTed — the preflight answered `hasForm:
+             * false` for the type AFTER the POST had already come back — so the
+             * values this call extracted went to Notes exactly as the first
+             * read's did. `formArrivedElsewhere` queuing it is correct, and
+             * overwriting that with the read's own verdict wrote "a fost citit
+             * din nou" over a document whose columns are empty, dropped it out
+             * of `documentsAwaitingRefill` and out of the re-read offer, and
+             * filed both in the saved report.
+             */
             // The same reading the other two call sites make: a lost session is
             // not "the list could not be read". See `enrichDiscoverSteps`.
             if (enriched.sessionLost) {
@@ -3542,7 +4020,9 @@ export function BulkImportDialog({
           aiPartialWrite: interpreted.partialWrite,
           aiErrorDetail: undefined,
           ...(finalTypeId !== null ? { documentTypeId: finalTypeId } : {}),
-          typeFormMissing: awaitsForm || undefined,
+          // `&& !typeAbsolved` since #27.07 — see that flag's own header for the
+          // permanent, unfixable sentence it stops.
+          typeFormMissing: (awaitsForm && !typeAbsolved) || undefined,
           // A type that has since gained a form is no longer waiting for one,
           // and this row has never claimed it gained one — so the flag is
           // cleared rather than left to contradict the sentence beside it.
@@ -3590,7 +4070,24 @@ export function BulkImportDialog({
            * of `documentsAwaitingRefill`, and filed that sentence in the saved
            * report. Two controls, one route, one verdict.
            */
-          ...(awaitsRefill(result)
+          // ⚠️ **`|| refillQueuedByAbsorb` since #27.07, and an adversarial
+          // round found the row it is for: THIS one.** `result` is the
+          // click-time snapshot, so it cannot see what `absorbTypeList` wrote a
+          // few lines above — and on a retry whose enrichment discovered the
+          // type had gained a form elsewhere, what it wrote was
+          // `refill: "pending"` on every row of that type, this one included.
+          // Correct for its forty siblings and flatly wrong here: this document
+          // has just been re-read, against that very template, by the call
+          // whose result is being written. Left alone it drew "nu a fost citit
+          // din nou … au rămas în Note" over columns that had just been filled,
+          // counted itself in `documentsAwaitingRefill`, and had the header
+          // offer another billed read and another document version for it — in
+          // the saved report, permanently.
+          //
+          // ⚠️ **`refillQueuedByAbsorb`, NOT `typeAbsolved`** — see that flag's
+          // own header for the two rows the wider one got wrong in opposite
+          // directions.
+          ...(awaitsRefill(result) || refillQueuedByAbsorb
             ? {
                 // The same three-way answer the walk gives, including the
                 // partial case it records at length: a read whose columns did
@@ -3661,8 +4158,11 @@ export function BulkImportDialog({
     // `forgetTypeFormMissing` since #27.05 — the retry enriches its own new
     // step, so it has to be able to take the sentence back off a type that
     // turned out to be an identity card. It is a `useCallback` with no deps, so
-    // listing it costs no re-renders.
-    [forgetTypeFormMissing, raiseSessionExpired, scanResults, t, updateResult],
+    // listing it costs no re-renders. #27.07 folded it into `absorbTypeList`
+    // together with two more follow-ups of the same kind; that one is a
+    // `useCallback` over no-dep callbacks and is likewise stable for the
+    // dialog's life.
+    [absorbTypeList, raiseSessionExpired, scanResults, t, updateResult],
   );
 
   // ---------------------------------------------------------------------------
@@ -3878,6 +4378,15 @@ export function BulkImportDialog({
         // it, for the reason this callback's own header gives about the three
         // facts it does resolve.
         documentTypeId: r.documentTypeId,
+        // Slice #27.07 — the NAME behind that id, looked up rather than carried
+        // on the row. ⚠️ **A row is written once per event and a type is
+        // renamed independently of it**, so a name copied onto forty rows at
+        // import time is forty copies to keep in step; `runTypes` is refreshed
+        // by every type-list read the run makes, and this is a read of it.
+        // Absent for a type the run never learned a name for — see
+        // `SummaryRow.documentTypeName` for why that is counted and not named.
+        documentTypeName:
+          r.documentTypeId === undefined ? undefined : runTypes[r.documentTypeId]?.name,
         typeFormMissing: r.typeFormMissing,
         typeFormAdded: r.typeFormAdded,
         // Slice #27.06 — straight through, for the same reason the three above
@@ -3887,7 +4396,7 @@ export function BulkImportDialog({
         refill: r.refill,
       };
     },
-    [cornerSourceByPath, propertyById, scanResults, soleProperty],
+    [cornerSourceByPath, propertyById, runTypes, scanResults, soleProperty],
   );
 
   /**
@@ -3929,6 +4438,43 @@ export function BulkImportDialog({
       ),
     [results, outcomeRowOf, properties],
   );
+
+  /**
+   * What this run did to the document TYPES it met, in words.    (Slice #27.07)
+   *
+   * ⚠️ **TWO SOURCES FOR TWO HALVES, AND THAT IS THE DESIGN RATHER THAN AN
+   * ACCIDENT.** "Still without a form" is a fact about the ROWS this run read —
+   * it is exactly the set `summariseImportRun` already counts, which is what
+   * keeps the names and `typesWithoutForm` from describing two different
+   * backlogs, and what inherits for free every exclusion #27.05 argued for: an
+   * identity card, a file with no page a model can see, the fallback type, and
+   * a document the archive already held. "Gained a form" is a fact about the
+   * TYPE, recorded where the form is accepted, because a row can stop carrying
+   * it while the type keeps it — see `handleDiscoverSaved`.
+   *
+   * ⚠️ **`typesThatGainedForm` is asked over the WHOLE map rather than over the
+   * types the run met**, and it is safe because `hasForm` is raised in exactly
+   * one place: this run's own acceptance. A type the run never touched has
+   * `hadForm === hasForm` and drops out. See `runTypes`.
+   */
+  const runTypeSentences = useMemo(() => {
+    const changes: RunTypeFormChange[] = Object.entries(runTypes).map(([id, fact]) => ({
+      id,
+      ...fact,
+    }));
+    return runTypeNotes({
+      gained: typesThatGainedForm(changes),
+      withoutForm: summary.typesWithoutFormNames,
+      // ⚠️ **The number the header prints two lines above this block**, passed
+      // in so the sentence can say when its list is not all of them. An
+      // adversarial round found the two counting different things — that one is
+      // distinct by type ID, the names are distinct by string and drop the ones
+      // the run could not name — so "2 tipuri…" could sit directly above a
+      // one-item list that the Romanian reads as exhaustive, on screen and
+      // permanently in the report.
+      withoutFormTotal: summary.typesWithoutForm,
+    });
+  }, [runTypes, summary]);
 
   /**
    * The take-away copy of this screen.   (Slice #26.10)
@@ -4019,6 +4565,12 @@ export function BulkImportDialog({
         label: tres(`summary.${line.id}`),
         value: String(line.value),
       })),
+      // Slice #27.07 — the same two sentences the header draws, from the same
+      // memo, so the saved page and the screen it was saved from cannot name
+      // two different sets of types. The report is where this matters most: the
+      // dialog's backlog dies with the dialog, and this file is what the user
+      // still has tomorrow when they open Reference Data to work through it.
+      typeNotes: runTypeSentences.map((note) => t(`typeNote.${note.id}`, note.values)),
       properties: properties.map((property) => ({
         code: property.code,
         nickname: property.nickname,
@@ -4033,6 +4585,7 @@ export function BulkImportDialog({
         summaryTitle: tres("reportSummaryTitle"),
         propertiesTitle: tres("reportPropertiesTitle"),
         noProperties: tres("reportNoProperties"),
+        typesTitle: tres("reportTypesTitle"),
         rowsTitle: t("resultsTitle"),
         openLabel: t("viewLink"),
       },
@@ -4050,6 +4603,7 @@ export function BulkImportDialog({
     outcomeRowOf,
     properties,
     rootFolderName,
+    runTypeSentences,
     scanResults,
     summary,
     t,
@@ -4216,6 +4770,64 @@ export function BulkImportDialog({
                   </button>
                 )}
               </p>
+            )}
+            {/* Slice #27.07 — WHICH types, by name.
+
+                ⚠️ **A second block rather than more words in the one above,
+                because the two are not the same claim and do not appear
+                together.** That one is a count with an offer attached and is
+                drawn only while something is still without a form; this one
+                also has to be drawn on a run whose every type was finished,
+                which is precisely the run where "one type gained a form in this
+                import" is the whole news. Folding them would have made the good
+                outcome the one sentence nobody sees.
+
+                ⚠️ **Two tones, because they are two different kinds of fact.**
+                A type that gained a form is emerald — done, nobody must act —
+                and one still without a form is sky, for the reason the block
+                above states at length: "has no form" is not an error and must
+                not be drawn as one. `RUN_TYPE_NOTE_TONE` is the same total
+                `Record` guard `NOTE_TONE` is, so a third sentence cannot be
+                added without a colour being chosen for it.
+
+                ⚠️ **No control here.** The one that acts on this is in the
+                block above while a review is possible, and after that the
+                remedy is Reference Data, which #27.07 gives its own filter for
+                — a button here would be a second, differently-worded offer for
+                the same work. */}
+            {done && (
+              <div
+                className="mt-0.5 flex flex-col gap-0.5"
+                // ⚠️ **A live region, and unlike the count blocks above it this
+                // one is safe to make one.** These sentences appear or change
+                // only when a form is actually accepted — which happens inside
+                // a dialog drawn OVER this screen, so the change lands behind
+                // something the user is looking at and nothing announces it.
+                // The blocks above are re-rendered by every unrelated state
+                // change in a long-running dialog, which is why they are not
+                // live; the re-read line below carries `role="status"` for
+                // exactly this reason and its own comment states the rule.
+                //
+                // ⚠️ **RENDERED EMPTY rather than conditionally, and an
+                // adversarial round found why it has to be.** A live region
+                // inserted into the DOM in the same commit as its first content
+                // is not announced — screen readers announce changes INSIDE a
+                // region they were already tracking. On the run this matters
+                // most, `runTypeSentences` is empty when the dialog finishes and
+                // the block would have been mounted together with the one
+                // sentence that is that run's entire news. An empty `div` costs
+                // nothing and is what makes the announcement possible.
+                role="status"
+              >
+                {runTypeSentences.map((note) => (
+                  <p
+                    key={note.id}
+                    className={`text-xs font-medium ${RUN_TYPE_NOTE_TONE[note.id]}`}
+                  >
+                    {t(`typeNote.${note.id}`, note.values)}
+                  </p>
+                ))}
+              </div>
             )}
             {/* Slice #27.06 — the documents that were read before their type
                 had anywhere to put what was read.
@@ -4749,6 +5361,29 @@ const NOTE_TONE: Record<OutcomeNoteId, string> = {
   refillPending: "text-sky-700 dark:text-sky-400",
   refillDone: "text-emerald-600 dark:text-emerald-400",
   refillFailed: "text-amber-700 dark:text-amber-400",
+};
+
+/**
+ * …and the same vocabulary for the run-level type sentences.    (Slice #27.07)
+ *
+ * A second `Record` rather than two more entries in the one above, for the
+ * reason `RUN_TYPE_NOTE_IDS` is its own list: those are drawn once per ROW and
+ * these once per RUN. Same guard, though — a total `Record` over the id union,
+ * so a third sentence added in `import-outcome.ts` fails the compile here until
+ * somebody has decided what colour it is.
+ *
+ * Emerald and sky, and the pairing is the same one #27.05's header argues: what
+ * gained a form is finished and nobody must act, and what has none is a state
+ * rather than a fault. Amber would send a business user looking for a problem
+ * in a list whose whole purpose is to be worked through calmly.
+ */
+const RUN_TYPE_NOTE_TONE: Record<RunTypeNoteId, string> = {
+  typesGainedForm: "text-emerald-600 dark:text-emerald-400",
+  typesStillWithoutForm: "text-sky-700 dark:text-sky-400",
+  // Same sky as the complete list: the difference between the two is how much
+  // of the backlog the sentence can name, which is not a difference in how
+  // worried anybody should be.
+  typesStillWithoutFormPartial: "text-sky-700 dark:text-sky-400",
 };
 
 /** The two notes that are about a Person who now exists and can be opened. */

@@ -33,6 +33,7 @@ import path from "node:path";
 
 import {
   OUTCOME_NOTE_IDS,
+  RUN_TYPE_NOTE_IDS,
   SUMMARY_LINE_IDS,
   awaitsRefill,
   coordinateNote,
@@ -42,11 +43,14 @@ import {
   readSkipNote,
   refillNote,
   runLandedSomething,
+  runTypeNotes,
   summariseImportRun,
   summaryLines,
   typeFormNote,
+  typesThatGainedForm,
   type OutcomeRow,
   type RefillState,
+  type RunTypeFormChange,
   type SummaryRow,
 } from "@/lib/import/import-outcome";
 import { scanIcu } from "@/test-support/icu";
@@ -819,6 +823,331 @@ describe("summariseImportRun", () => {
     expect(summary.documentsCreated).toBe(0);
     expect(summary.failed).toBe(0);
   });
+
+  // ── Slice #27.07: the names behind `typesWithoutForm` ─────────────────────
+
+  describe("naming the types that are still without a form", () => {
+    it("names each type once, however many of its documents said so", () => {
+      // The same number `typesWithoutForm` reports, said in words — thirty
+      // contracts of one new type are one type waiting for a form.
+      const summary = summariseImportRun(
+        [
+          srow({ typeFormMissing: true, documentTypeId: "t1", documentTypeName: "Contract" }),
+          srow({ typeFormMissing: true, documentTypeId: "t1", documentTypeName: "Contract" }),
+          srow({ typeFormMissing: true, documentTypeId: "t2", documentTypeName: "Extras CF" }),
+        ],
+        0,
+      );
+      expect(summary.typesWithoutForm).toBe(2);
+      expect(summary.typesWithoutFormNames).toEqual(["Contract", "Extras CF"]);
+    });
+
+    it("⚠️ keeps the one row that knew the name, whatever order the rows arrive in", () => {
+      // The id is written by the import loop for every document; the name comes
+      // from the end-of-run type-list read and can be missing on a row settled
+      // before it. A last-wins merge would let the row that did not know decide
+      // that the type cannot be named.
+      const named = { typeFormMissing: true, documentTypeId: "t1", documentTypeName: "Contract" };
+      const unnamed = { typeFormMissing: true, documentTypeId: "t1" };
+      expect(summariseImportRun([srow(named), srow(unnamed)], 0).typesWithoutFormNames)
+        .toEqual(["Contract"]);
+      expect(summariseImportRun([srow(unnamed), srow(named)], 0).typesWithoutFormNames)
+        .toEqual(["Contract"]);
+    });
+
+    it("⚠️ counts a type it cannot name, and does not print a blank for it", () => {
+      // A type invented mid-run by the re-classify route is known by uuid alone
+      // until the end-of-run read fills the name in, and a uuid is not a thing
+      // to show a business user. The count stays true; the list is shorter,
+      // which is the safe direction — see `SummaryRow.documentTypeName`.
+      const summary = summariseImportRun(
+        [
+          srow({ typeFormMissing: true, documentTypeId: "t1", documentTypeName: "Contract" }),
+          srow({ typeFormMissing: true, documentTypeId: "t2" }),
+          srow({ typeFormMissing: true, documentTypeId: "t3", documentTypeName: "   " }),
+        ],
+        0,
+      );
+      expect(summary.typesWithoutForm).toBe(3);
+      expect(summary.typesWithoutFormNames).toEqual(["Contract"]);
+    });
+
+    it("names nothing for the rows the count already excludes", () => {
+      // Every exclusion #27.05 argued for is inherited rather than restated: a
+      // type whose form was accepted, and a document the archive already held.
+      const summary = summariseImportRun(
+        [
+          srow({
+            typeFormMissing: true,
+            typeFormAdded: true,
+            documentTypeId: "t1",
+            documentTypeName: "Contract",
+          }),
+          srow({
+            typeFormMissing: true,
+            preexisting: "linked",
+            documentTypeId: "t2",
+            documentTypeName: "Extras CF",
+          }),
+        ],
+        0,
+      );
+      expect(summary.typesWithoutForm).toBe(0);
+      expect(summary.typesWithoutFormNames).toEqual([]);
+    });
+
+    it("⚠️ is NOT a summary line, because a line is a number", () => {
+      // `summaryLines` reads `summary[id]` and prints it beside a label; a
+      // string list among the ids would render `[object Object]` into the
+      // concluding message and into the saved report.
+      expect([...SUMMARY_LINE_IDS]).not.toContain("typesWithoutFormNames");
+      for (const line of summaryLines(summariseImportRun([srow()], 0))) {
+        expect(typeof line.value).toBe("number");
+      }
+    });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 3b. What the run did to the document TYPES it met   (Slice #27.07)
+// ---------------------------------------------------------------------------
+
+describe("typesThatGainedForm", () => {
+  const change = (over: Partial<RunTypeFormChange> = {}): RunTypeFormChange => ({
+    id: "t1",
+    name: "Contract",
+    hadForm: false,
+    hasForm: false,
+    ...over,
+  });
+
+  it("takes the types whose answer changed, and only those", () => {
+    expect(
+      typesThatGainedForm([
+        change({ id: "t1", name: "Contract", hasForm: true }),
+        change({ id: "t2", name: "Extras CF" }),
+        change({ id: "t3", name: "Carte de identitate", hadForm: true, hasForm: true }),
+      ]),
+    ).toEqual(["Contract"]);
+  });
+
+  it("⚠️ claims nothing for a type the run met for the first time after the review", () => {
+    // Such a type appears in no start-of-run list, so the honest thing to say
+    // about what it had before is nothing — and the shape that says nothing is
+    // a pair of equal booleans. Defaulting `hadForm` to false would have
+    // reported a type that has had a form for a year as this run's doing.
+    expect(typesThatGainedForm([change({ hadForm: true, hasForm: true })])).toEqual([]);
+  });
+
+  it("⚠️ resolves a duplicated id to the LAST reading of it", () => {
+    // The caller assembles these from a map it maintains across a run; a
+    // duplicated id is the one shape that could put a type in both answers.
+    expect(
+      typesThatGainedForm([
+        change({ id: "t1", hasForm: false }),
+        change({ id: "t1", hasForm: true }),
+      ]),
+    ).toEqual(["Contract"]);
+    expect(
+      typesThatGainedForm([
+        change({ id: "t1", hasForm: true }),
+        change({ id: "t1", hasForm: false }),
+      ]),
+    ).toEqual([]);
+  });
+
+  it("drops a type it cannot name, rather than reporting an empty one", () => {
+    expect(typesThatGainedForm([change({ name: "  ", hasForm: true })])).toEqual([]);
+  });
+
+  it("sorts, so two runs over the same types read the same way", () => {
+    expect(
+      typesThatGainedForm([
+        change({ id: "t1", name: "Extras CF", hasForm: true }),
+        change({ id: "t2", name: "Contract", hasForm: true }),
+      ]),
+    ).toEqual(["Contract", "Extras CF"]);
+  });
+});
+
+describe("runTypeNotes", () => {
+  it("says what was finished first, then what is left", () => {
+    const notes = runTypeNotes({ gained: ["Contract"], withoutForm: ["Extras CF"] });
+    expect(notes.map((n) => n.id)).toEqual(["typesGainedForm", "typesStillWithoutForm"]);
+    expect(notes[0].values).toEqual({ count: 1, names: "Contract" });
+    expect(notes[1].values).toEqual({ count: 1, names: "Extras CF" });
+  });
+
+  it("prefers the unclaimed names whenever there are any", () => {
+    // ⚠️ **Retitled after an adversarial round: the module does NOT hold "never
+    // both", and this fixture passes only because it supplies a second name.**
+    // The rule is that a name claimed by `gained` is dropped WHILE something
+    // else survives — a screen listing one name under both headings reads as
+    // contradicting itself two lines apart — and kept when it is the only one,
+    // which the test eighty lines below pins. The collision itself is two
+    // `lookup_document_type` ids sharing a display name; one type cannot be in
+    // both, because accepting a form clears the flag on every row of that id.
+    const notes = runTypeNotes({
+      gained: ["Contract"],
+      withoutForm: ["Contract", "Extras CF"],
+    });
+    expect(notes.find((n) => n.id === "typesStillWithoutForm")?.values).toEqual({
+      count: 1,
+      names: "Extras CF",
+    });
+  });
+
+  it("⚠️ counts what it names, so the sentence cannot promise a name it has not got", () => {
+    const notes = runTypeNotes({
+      gained: ["Contract", "Contract", "  ", "Extras CF"],
+      withoutForm: [],
+    });
+    expect(notes).toHaveLength(1);
+    expect(notes[0].values.count).toBe(2);
+    expect(notes[0].values.names).toBe("Contract, Extras CF");
+  });
+
+  // ── the total the header prints, and the arm that admits to it ────────────
+
+  it("⚠️ says its list is a SAMPLE when the header counts more than it can name", () => {
+    // The two count different things: `typesWithoutForm` is distinct by type
+    // ID, these names are distinct strings with the unnameable ones dropped. An
+    // adversarial round found "2 tipuri de documente … nu au încă formular"
+    // sitting directly above a one-item list that the Romanian reads as
+    // exhaustive — on screen, and permanently in the saved report, where the
+    // user works the backlog from.
+    const notes = runTypeNotes({
+      gained: [],
+      withoutForm: ["Contract"],
+      withoutFormTotal: 2,
+    });
+    expect(notes.map((n) => n.id)).toEqual(["typesStillWithoutFormPartial"]);
+    // The COUNT is the true total, and the names are what it could name.
+    expect(notes[0].values).toEqual({ count: 2, names: "Contract" });
+  });
+
+  it("uses the plain sentence when the list really is all of them", () => {
+    const notes = runTypeNotes({
+      gained: [],
+      withoutForm: ["Contract", "Extras CF"],
+      withoutFormTotal: 2,
+    });
+    expect(notes.map((n) => n.id)).toEqual(["typesStillWithoutForm"]);
+    expect(notes[0].values).toEqual({ count: 2, names: "Contract, Extras CF" });
+  });
+
+  it("⚠️ keeps the total whole when a name is in BOTH lists, because that is two types", () => {
+    // ⚠️ **This test asserted the opposite for one round, and two independent
+    // reviewers found the same thing.** The intuitive reading is that a name
+    // dropped from the backlog because the review just gave that type a form
+    // should come off the count too. It must not: accepting a form clears
+    // `typeFormMissing` on every row of the id it was accepted for, so that id
+    // is ALREADY out of `typesWithoutForm` and out of the names. The only way
+    // one name can be in both lists is two `lookup_document_type` ids sharing a
+    // display name — and there the second id is genuinely still waiting.
+    //
+    // The input below is that case: t1 "Contract" gained a form, t2 "Contract"
+    // and t3 "Extras CF" did not. Subtracting printed the EXHAUSTIVE Romanian
+    // arm — "A rămas fără formular: Extras CF." — over two outstanding types,
+    // and t2 was named nowhere, on screen or in the saved report.
+    const notes = runTypeNotes({
+      gained: ["Contract"],
+      withoutForm: ["Contract", "Extras CF"],
+      withoutFormTotal: 2,
+    });
+    expect(notes.map((n) => n.id)).toEqual([
+      "typesGainedForm",
+      "typesStillWithoutFormPartial",
+    ]);
+    expect(notes[1].values).toEqual({ count: 2, names: "Extras CF" });
+  });
+
+  it("⚠️ still names the backlog when `gained` would have taken its only name", () => {
+    // Two `lookup_document_type` ids share the display name "Contract"; the run
+    // gives one of them a form and the other IS the backlog. An adversarial
+    // round found the subtraction emptying the list and the note vanishing —
+    // over a summary line still saying one type is outstanding, so the report
+    // read "Un tip de document a primit un formular … : Contract." and nothing
+    // else. Printing the name under both sentences looks contradictory and is
+    // true; an outstanding type nobody mentions is worse by a distance.
+    const notes = runTypeNotes({
+      gained: ["Contract"],
+      withoutForm: ["Contract"],
+      withoutFormTotal: 1,
+    });
+    expect(notes.map((n) => n.id)).toEqual(["typesGainedForm", "typesStillWithoutForm"]);
+    expect(notes[1].values).toEqual({ count: 1, names: "Contract" });
+  });
+
+  it("⚠️ falls silent rather than saying 'and N more' with nothing to show", () => {
+    // A run whose every formless type went unnamed. The count-and-offer header
+    // directly above this block already says how many are outstanding, from the
+    // same number — so a nameless sentence here would be that one said twice,
+    // the second time adding nothing.
+    expect(runTypeNotes({ gained: [], withoutForm: [], withoutFormTotal: 3 })).toEqual([]);
+  });
+
+  it("treats an absent total as 'no separate total', not as zero", () => {
+    // The honest default for a caller that has only the names — and a zero
+    // would have made every list look complete by accident.
+    const notes = runTypeNotes({ gained: [], withoutForm: ["Contract", "Extras CF"] });
+    expect(notes.map((n) => n.id)).toEqual(["typesStillWithoutForm"]);
+    expect(notes[0].values.count).toBe(2);
+  });
+
+  it("⚠️ cannot select the partial arm at a count of one", () => {
+    // The partial arm exists because the total exceeds what can be named, so
+    // reaching it needs at least two types and at least one name — its `one`
+    // arm is dead by construction. Pinned because the copy is written on that
+    // assumption: the live arms carry a plural subject — "# tipuri de documente
+    // AU RĂMAS fără formular, dintre care importul a putut numi doar…" — and a
+    // change that let count 1 through would print it over a single type.
+    for (const total of [0, 1, 2, 7]) {
+      for (const names of [[], ["A"], ["A", "B"]]) {
+        const note = runTypeNotes({ gained: [], withoutForm: names, withoutFormTotal: total })
+          .find((n) => n.id === "typesStillWithoutFormPartial");
+        if (note !== undefined) expect(note.values.count > 1).toBe(true);
+      }
+    }
+  });
+
+  it("never reports a total below what it is showing", () => {
+    // A caller passing a stale or smaller total must not produce "1 type" over
+    // a two-item list, which is the same unreadable sentence the other way up.
+    const notes = runTypeNotes({
+      gained: [],
+      withoutForm: ["Contract", "Extras CF"],
+      withoutFormTotal: 1,
+    });
+    expect(notes[0].id).toBe("typesStillWithoutForm");
+    expect(notes[0].values.count).toBe(2);
+  });
+
+  it("draws no note at all for an empty list", () => {
+    // Same rule as `summaryLines`' dropped zeroes, and here a zero would come
+    // with a dangling colon after it.
+    expect(runTypeNotes({ gained: [], withoutForm: [] })).toEqual([]);
+    expect(runTypeNotes({ gained: ["Contract"], withoutForm: [] }).map((n) => n.id)).toEqual([
+      "typesGainedForm",
+    ]);
+    expect(runTypeNotes({ gained: [], withoutForm: ["Contract"] }).map((n) => n.id)).toEqual([
+      "typesStillWithoutForm",
+    ]);
+  });
+
+  it("⚠️ draws the good news on a run where nothing is left, which is the run that needs it", () => {
+    // The count-and-offer header above this one is drawn only while something
+    // is still without a form. Folding these sentences into it would have made
+    // "one type gained a form in this import" the one line nobody ever sees.
+    expect(runTypeNotes({ gained: ["Contract"], withoutForm: [] }).map((n) => n.id)).toEqual([
+      "typesGainedForm",
+    ]);
+  });
+
+  it("produces only ids the catalogue declares", () => {
+    const notes = runTypeNotes({ gained: ["A"], withoutForm: ["B"] });
+    for (const note of notes) expect(RUN_TYPE_NOTE_IDS).toContain(note.id);
+  });
 });
 
 describe("summaryLines", () => {
@@ -886,6 +1215,11 @@ describe("the result screen's copy", () => {
       "reportSummaryTitle",
       "reportPropertiesTitle",
       "reportNoProperties",
+      // Slice #27.07 — the heading over the run's type sentences. Required by
+      // `ResultReportStrings` rather than optional, so a missing key here is a
+      // raw key path printed into the saved report rather than a section that
+      // quietly disappears.
+      "reportTypesTitle",
       "reportFilePrefix",
       "reportRowImported",
       "reportRowFailed",
@@ -1043,11 +1377,119 @@ describe("the result screen's copy", () => {
     }
   });
 
+  /**
+   * The run-level type sentences.                                (Slice #27.07)
+   *
+   * ⚠️ **These have an id constant, so they are walked rather than listed by
+   * hand** — which is the whole reason `RUN_TYPE_NOTE_IDS` exists as a list at
+   * all, and why it is a separate one from `OUTCOME_NOTE_IDS` rather than two
+   * more entries in it: those are drawn per ROW and these per RUN, and the
+   * `NOTE_TONE` guard in the dialog is a total `Record` over the first union.
+   */
+  it.each(LOCALES)("%s translates every run-level type note id", (locale) => {
+    const messages = loadMessages(locale);
+    const plural = locale === "ro-RO.json" ? ["one", "few", "other"] : ["one", "other"];
+    for (const id of RUN_TYPE_NOTE_IDS) {
+      const value = at(messages, `adminImport.wizard.importDialog.typeNote.${id}`) as string;
+      expect(typeof value).toBe("string");
+      expect(value.trim()).not.toBe("");
+      // ⚠️ **BOTH arguments, and neither is optional.** `count` picks the
+      // plural arm and `names` is the list the sentence exists to carry — a
+      // message that dropped `names` would render a count and a full stop over
+      // a backlog the user then has no way to identify, which is precisely the
+      // thing #27.05 already gave them and #27.07 was written to improve on.
+      expect([...scanIcu(value).args].sort()).toEqual(["count", "names"]);
+      // ⚠️ **…and the plural is keyed on `count`, which `args` alone cannot
+      // say.** `scanIcu` puts a plural's own selector into `args`, so a message
+      // written `{names, plural, …}` — pluralising on the STRING — satisfies
+      // both the set above and the substring checks below, ships green, and
+      // throws inside `intl-messageformat` at render, in `ro-RO`, on the block
+      // this slice exists to draw.
+      expect(scanIcu(value).plurals.map((p) => p.arg)).toEqual(["count"]);
+      for (const form of plural) expect(value).toContain(`${form} {`);
+    }
+  });
+
+  /**
+   * The sentence names a screen and quotes a checkbox on it.     (Slice #27.07)
+   *
+   * ⚠️ **Both halves of that pointer are copy in two files that nothing else
+   * ties together.** Rename the checkbox in `valueList.toolbar` and the import's
+   * sentence goes on quoting the old label — in the saved report, which is the
+   * artefact the user works the backlog from a day later, with no dialog left
+   * to compare it against. A test is the only thing that can notice.
+   */
+  it.each(LOCALES)("%s quotes the Reference Data checkbox by its real label", (locale) => {
+    const messages = loadMessages(locale);
+    const label = at(messages, "valueList.toolbar.onlyWithoutForm") as string;
+    expect(typeof label).toBe("string");
+    // ⚠️ **Quoted, not merely contained, and an adversarial round is why.** A
+    // bare `toContain` is satisfied by any label that happens to occur in the
+    // sentence for another reason — rename the checkbox to "fără formular" and
+    // it matches "Au rămas fără formular:" while the pointer goes on naming the
+    // old label. The quotation marks are the ones the copy actually uses, and
+    // they differ per locale.
+    const quoted = locale === "ro-RO.json" ? `„${label}”` : `“${label}”`;
+    for (const id of ["typesStillWithoutForm", "typesStillWithoutFormPartial"]) {
+      const value = at(messages, `adminImport.wizard.importDialog.typeNote.${id}`) as string;
+      expect(value).toContain(quoted);
+    }
+  });
+
+  /**
+   * The Reference Data list's own copy.                          (Slice #27.07)
+   *
+   * ⚠️ **Here, in the IMPORT suite, and that is deliberate rather than lazy
+   * filing.** The sentence this slice adds to the result screen ends by sending
+   * the user to that list and quoting the checkbox on it by name; the two
+   * screens are one journey, and this file already carries the machinery and the
+   * argument for why a message key is worth a test at all.
+   *
+   * ⚠️ **`toolbar.count` is the reason this exists.** #27.07 converted a shipped
+   * non-plural message into an ICU plural — the single highest-risk shape of
+   * edit in the slice — and nothing under `src/__tests__/` referenced `valueList`
+   * at all. `DEFAULT_LOCALE` is `ro-RO`, so a `few` arm lost here does not fall
+   * back to English: it renders the raw key path, or throws, on the screen a
+   * business user is standing on to work through the backlog.
+   */
+  it.each(LOCALES)("%s carries the Reference Data list's own copy", (locale) => {
+    const messages = loadMessages(locale);
+    const plural = locale === "ro-RO.json" ? ["one", "few", "other"] : ["one", "other"];
+
+    // ⚠️ **`plurals`, not a substring test, and an adversarial round is why.**
+    // `args` is a flat set of every placeholder at any depth and
+    // `toContain("few {")` is a search over the raw string, so both are
+    // satisfied by a message that pluralises on the WRONG argument — which is
+    // exactly the mistake worth guarding here. `scanIcu` already returns which
+    // argument each plural is keyed on; the earlier version threw it away.
+    const count = at(messages, "valueList.toolbar.count") as string;
+    expect([...scanIcu(count).args]).toEqual(["count"]);
+    expect(scanIcu(count).plurals.map((p) => p.arg)).toEqual(["count"]);
+    for (const form of plural) expect(count).toContain(`${form} {`);
+
+    // ⚠️ The plural agrees with `total`, NOT with `count` — "9 din 24 de
+    // înregistrări". A message pluralised on the first number would render
+    // "9 din 24 înregistrări", wrong on exactly the numbers this archive has,
+    // and would have passed every assertion this test made before that round.
+    const filtered = at(messages, "valueList.toolbar.countFiltered") as string;
+    expect([...scanIcu(filtered).args].sort()).toEqual(["count", "total"]);
+    expect(scanIcu(filtered).plurals.map((p) => p.arg)).toEqual(["total"]);
+    for (const form of plural) expect(filtered).toContain(`${form} {`);
+
+    for (const key of ["valueList.toolbar.onlyWithoutForm", "valueList.table.allHaveForm"]) {
+      const value = at(messages, key) as string;
+      expect(typeof value).toBe("string");
+      expect(value.trim()).not.toBe("");
+      expect([...scanIcu(value).args]).toEqual([]);
+    }
+  });
+
   it("keeps the two locales' note and summary catalogues identical", () => {
     const keysUnder = (locale: string, keyPath: string) =>
       Object.keys((at(loadMessages(locale), keyPath) ?? {}) as Record<string, unknown>).sort();
     for (const keyPath of [
       "adminImport.wizard.importDialog.note",
+      "adminImport.wizard.importDialog.typeNote",
       "adminImport.result.summary",
     ]) {
       expect(keysUnder("ro-RO.json", keyPath)).toEqual(keysUnder("en-GB.json", keyPath));
@@ -1055,6 +1497,9 @@ describe("the result screen's copy", () => {
     // …and neither locale has grown a note the code cannot draw.
     expect(keysUnder("ro-RO.json", "adminImport.wizard.importDialog.note")).toEqual(
       [...OUTCOME_NOTE_IDS].sort(),
+    );
+    expect(keysUnder("ro-RO.json", "adminImport.wizard.importDialog.typeNote")).toEqual(
+      [...RUN_TYPE_NOTE_IDS].sort(),
     );
     expect(keysUnder("ro-RO.json", "adminImport.result.summary")).toEqual(
       [...SUMMARY_LINE_IDS].sort(),

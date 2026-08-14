@@ -552,6 +552,27 @@ export type SummaryRow = OutcomeRow & {
    * under-counting here would tell the user there is nothing left to do.
    */
   documentTypeId?: string;
+  /**
+   * …and how that type is written in Reference Data.            (Slice #27.07)
+   *
+   * ⚠️ **A NAME, because a backlog nobody can read is not a backlog.** #27.05
+   * counted the types with no form; this is what lets the run SAY which ones,
+   * so the same list can be found again in Reference Data. The id is what makes
+   * the count distinct and the name is what makes it actionable, so both travel
+   * and neither replaces the other.
+   *
+   * ⚠️ **Optional, and an absent one is COUNTED BUT NOT NAMED.** The run reads
+   * every type in the archive before it starts, so in practice every id it
+   * meets has a name — but a type invented mid-run by the re-classify route is
+   * known to the run by id alone until the end-of-run re-read fills it in, and
+   * a run that ended before that read would otherwise print a uuid at a
+   * business user. `typesWithoutForm` stays the true count and
+   * `typesWithoutFormNames` names what it can, so the two can differ only in
+   * that direction — which is the safe one. A list shorter than its own count
+   * under-promises; a count shorter than its list is a number nobody can
+   * reconcile against the rows above it.
+   */
+  documentTypeName?: string;
 };
 
 /**
@@ -612,6 +633,21 @@ export type ImportRunSummary = {
    */
   typesWithoutForm: number;
   /**
+   * …and WHICH ones, by name.                                   (Slice #27.07)
+   *
+   * ⚠️ **NOT a summary line, and it must never become one.** `SUMMARY_LINE_IDS`
+   * is walked by `summaryLines`, which reads `summary[id]` as a number and
+   * prints it beside a label; a string list there would render `[object
+   * Object]` in the concluding message and in the saved report. This is the
+   * same fact in the shape a sentence needs, and `runTypeNotes` is what turns it
+   * into one.
+   *
+   * ⚠️ **Distinct, sorted, and possibly SHORTER than `typesWithoutForm`** — see
+   * `SummaryRow.documentTypeName` for why an unnamed type is counted and not
+   * named, and why that is the safe direction to be incomplete in.
+   */
+  typesWithoutFormNames: string[];
+  /**
    * Documents read before their type had a form, which nobody read again.
    *                                                              (Slice #27.06)
    *
@@ -670,6 +706,7 @@ export function summariseImportRun(
     cardsUnanswered: 0,
     cardsUnreadable: 0,
     typesWithoutForm: 0,
+    typesWithoutFormNames: [],
     documentsAwaitingRefill: 0,
   };
 
@@ -677,7 +714,12 @@ export function summariseImportRun(
   // type waiting for a form rather than thirty. A row with no id falls back to
   // its own identity, which over-counts rather than under-counts — see
   // `SummaryRow.documentTypeId`.
-  const typesAwaitingForm = new Set<string>();
+  //
+  // Slice #27.07 — a MAP rather than a Set, keyed by exactly the same id, so
+  // the names and the count are one walk over one set of rows. Two passes would
+  // be two chances to disagree about which rows are still waiting, and this is
+  // the number the header prints beside the names it is supposed to explain.
+  const typesAwaitingForm = new Map<string, string>();
 
   for (const row of rows) {
     if (row.status === "error") {
@@ -736,7 +778,18 @@ export function summariseImportRun(
       row.typeFormAdded !== true &&
       row.preexisting === undefined
     ) {
-      typesAwaitingForm.add(row.documentTypeId ?? `row:${typesAwaitingForm.size}`);
+      // Slice #27.07 — ⚠️ **the FIRST name for an id wins, and a later blank
+      // never erases it.** The same type reaches this loop once per row, and
+      // only some of those rows may carry the name: the id is written by the
+      // import loop for every document, while the name arrives from the
+      // end-of-run type-list read and can be missing on a row settled before
+      // it. `??=`-style first-wins keeps the one row that knew, rather than
+      // letting the last row over the type decide whether it can be named.
+      const typeKey = row.documentTypeId ?? `row:${typesAwaitingForm.size}`;
+      const known = typesAwaitingForm.get(typeKey);
+      if (known === undefined || known === "") {
+        typesAwaitingForm.set(typeKey, (row.documentTypeName ?? "").trim());
+      }
     }
 
     // Slice #27.06 — read off the NOTE rather than off `row.refill`, so this
@@ -764,8 +817,246 @@ export function summariseImportRun(
   }
 
   summary.typesWithoutForm = typesAwaitingForm.size;
+  // Slice #27.07 — the same map, said in words. Blanks out, sorted the way the
+  // list they send the user to is sorted, and deduped BY NAME on top of the
+  // id-keyed map above: two `lookup_document_type` rows sharing a display name
+  // is what `sameTypeName` exists to prevent, and printing the same name twice
+  // is how a user finds out it happened anyway — from the one screen least able
+  // to explain it. The count above still says two.
+  summary.typesWithoutFormNames = sortedDistinctNames(typesAwaitingForm.values());
 
   return summary;
+}
+
+/**
+ * Trim, drop the blanks, drop the repeats, and sort the way a person reads.
+ *                                                              (Slice #27.07)
+ *
+ * ⚠️ **`localeCompare` with no locale argument, deliberately.** This module is
+ * pure and framework-free and must stay so; passing a BCP-47 tag would make the
+ * order depend on a value only the caller has, and the caller is a client
+ * component whose locale can change under a list that is already on screen. The
+ * default collator orders Romanian diacritics acceptably — Ș after S rather
+ * than after Z, which is the only failure a user would actually notice — and
+ * the alternative, a raw `.sort()` on UTF-16 code units, puts "Ștampilă" after
+ * "Titlu de proprietate" and before nothing at all.
+ */
+function sortedDistinctNames(names: Iterable<string>): string[] {
+  const seen = new Set<string>();
+  for (const name of names) {
+    const trimmed = name.trim();
+    if (trimmed !== "") seen.add(trimmed);
+  }
+  return [...seen].sort((a, b) => a.localeCompare(b));
+}
+
+// ---------------------------------------------------------------------------
+// What this run did to the document TYPES it met   (Slice #27.07)
+// ---------------------------------------------------------------------------
+
+/**
+ * One document type, as the run found it and as it stands now.
+ *
+ * ⚠️ **`hadForm` is the answer `documentTypeHasForm` gave when the run STARTED
+ * READING, and nothing here recomputes it.** #27.07's constraint: "gained one
+ * during this run" is the difference between that answer before and after the
+ * review, which the run already holds. This module is handed both answers
+ * rather than either template, because the template a type has *now* is a fact
+ * about the server that this module has no way to fetch and no business
+ * caching — and because the two booleans are exactly what makes the difference
+ * a difference.
+ *
+ * ⚠️ **A type the run first LEARNED OF after the review must pass
+ * `hadForm === hasForm`, and the caller is what enforces it.** A type invented
+ * mid-run by the re-classify route appears in no start-of-run list, so the
+ * honest thing to say about what it had before is nothing — and the shape that
+ * says nothing is a pair of equal booleans, which lands the type in neither
+ * list. Defaulting its `hadForm` to `false` would claim every such type "gained
+ * a form during this run", including one that has had a form for a year and was
+ * simply met for the first time.
+ */
+export type RunTypeFormChange = {
+  /** `lookup_document_type.id` — what makes two rows for one type one type. */
+  id: string;
+  /** …and how Reference Data writes it. Blank where the run never learned it. */
+  name: string;
+  /** `documentTypeHasForm` as the run found the type. */
+  hadForm: boolean;
+  /** …and as it stands at the end of the run. */
+  hasForm: boolean;
+};
+
+/**
+ * The types that gained a custom form during this run, by name.
+ *
+ * ⚠️ **NOT derived from the rows' `typeFormAdded`, and an adversarial finding in
+ * the shipped code is why.** That flag lives on a DOCUMENT and the re-read walk
+ * clears it (`bulk-import-dialog.tsx`, the re-type branch) on any row the second
+ * read moved onto another type — correctly, because such a row is no longer on
+ * the type that gained the form. But "this type gained a form" is a fact about
+ * the TYPE, and it stays true whatever afterwards happens to the documents that
+ * caused it: on a run where the review covered one document and its re-read
+ * re-typed it, every row carrying the flag loses it, and a names list read off
+ * the rows would then report that nothing was achieved at all — over a
+ * `lookup_document_type` row that has a permanent form the user just built.
+ *
+ * ⚠️ **Deduped by ID before anything else.** The caller assembles these from a
+ * map it maintains across a run, and a duplicated id is the one shape that
+ * would let a type appear as both changed and unchanged; the LAST entry wins,
+ * because a later entry is a later reading of the same type.
+ */
+export function typesThatGainedForm(types: readonly RunTypeFormChange[]): string[] {
+  const byId = new Map<string, RunTypeFormChange>();
+  for (const type of types) byId.set(type.id, type);
+  return sortedDistinctNames(
+    [...byId.values()].filter((type) => type.hasForm && !type.hadForm).map((type) => type.name),
+  );
+}
+
+/**
+ * Every run-level sentence about document types this module can produce.
+ *
+ * A catalogue of its own rather than two more entries in `OUTCOME_NOTE_IDS`,
+ * and the difference is not filing: those are drawn once per ROW and this pair
+ * is drawn once per RUN. `NOTE_TONE` is a total `Record<OutcomeNoteId, string>`
+ * whose whole job is to fail the compile when a row note is added without a
+ * colour, and folding a run-level id into it would have asked for a colour for
+ * a sentence no row draws. Same shape, same both-locale test, separate list.
+ */
+export const RUN_TYPE_NOTE_IDS = [
+  "typesGainedForm",
+  "typesStillWithoutForm",
+  // ⚠️ **The same fact when the run cannot name all of them**, and it is its own
+  // message rather than an argument on the one above because the two make
+  // different promises. That one's list IS the backlog; this one's list is part
+  // of it, and a sentence that reads as complete over a partial list is how a
+  // user concludes they are finished when they are not — see `runTypeNotes`.
+  "typesStillWithoutFormPartial",
+] as const;
+
+export type RunTypeNoteId = (typeof RUN_TYPE_NOTE_IDS)[number];
+
+/**
+ * A run-level type sentence, and what its message interpolates.
+ *
+ * `count` and `names` both, because the message needs both: the count picks the
+ * plural arm and the names are the list.
+ *
+ * ⚠️ **`count` is the number of TYPES, which is `names`' length for two of the
+ * three ids and larger for the third.** An adversarial round found what a
+ * single id costs: `typesWithoutForm` counts distinct type IDS and the names are
+ * distinct STRINGS, so two `lookup_document_type` rows sharing a display name,
+ * or one type the run could not name, put a "2 tipuri" header directly above a
+ * one-item list that reads as exhaustive — on screen and permanently in the
+ * saved report. `typesStillWithoutFormPartial` is the arm that says the list is
+ * a sample; `runTypeNotes` is what chooses between them, so no caller has to.
+ */
+export type RunTypeNote = {
+  id: RunTypeNoteId;
+  values: { count: number; names: string };
+};
+
+/**
+ * The two sentences, in the order the run happened.             (Slice #27.07)
+ *
+ * What was finished first, then what is left — so the backlog reads as the
+ * remainder of the line above it rather than as a complaint on its own.
+ *
+ * ⚠️ **A name in both lists is resolved in favour of `gained` — BUT ONLY WHILE
+ * A NAME SURVIVES, and both halves of that took an adversarial round.** The
+ * collision is not one type in two states; accepting a form clears
+ * `typeFormMissing` on every row of the id it was accepted for, so that id
+ * leaves the backlog before this function sees it. What collides is two
+ * `lookup_document_type` ids sharing a display name, one of which gained a form
+ * and one of which did not. Dropping the name is right when there is something
+ * else to print — a screen listing one name under both headings reads as
+ * contradicting itself two lines apart — and wrong when it is the ONLY name,
+ * because then the note is not drawn at all and an outstanding type is
+ * mentioned nowhere, on screen or in the saved report, under a header still
+ * counting it. Looking contradictory beats going silent, so the fallback keeps
+ * the name.
+ *
+ * ⚠️ **An empty list draws NO note.** Same rule as `summaryLines`' dropped
+ * zeroes and for the same reason: "0 types gained a form" over an ordinary run
+ * is noise, and here it would be noise with a dangling colon after it.
+ *
+ * The names are joined here rather than by the caller so the count and the list
+ * cannot come apart, and because ICU has no way to render an array. ⚠️ **`", "`
+ * is punctuation and not prose** — it is the separator in both locales this
+ * application ships. A locale that needed another one would move the join to the
+ * caller, and would then also own keeping `count` equal to what it joined.
+ */
+export function runTypeNotes(input: {
+  gained: readonly string[];
+  withoutForm: readonly string[];
+  /**
+   * `ImportRunSummary.typesWithoutForm` — the count the header prints.
+   *
+   * ⚠️ **Passed in rather than inferred, because it counts a different thing
+   * from the names and an adversarial round found what that costs.** It is
+   * distinct by type ID; the names are distinct by STRING and drop the ones the
+   * run could not name. Two archive rows sharing a display name, or one type
+   * invented mid-run before the type list could be re-read, and the header says
+   * two where the list shows one — which the Romanian reads as exhaustive.
+   * Absent means "no separate total", which is the honest default for a caller
+   * that has only the names.
+   */
+  withoutFormTotal?: number;
+}): RunTypeNote[] {
+  const gained = sortedDistinctNames(input.gained);
+  const claimed = new Set(gained);
+  const named = sortedDistinctNames(input.withoutForm);
+  const unclaimed = named.filter((name) => !claimed.has(name));
+  // ⚠️ **The subtraction is skipped rather than allowed to empty the list, and
+  // a fourth adversarial round found the silence it otherwise makes.** Two
+  // `lookup_document_type` ids share the display name "Contract"; the run gives
+  // one of them a form and the other is the whole backlog. `claimed` then
+  // removes the only name there is, this note is not drawn at all, and the
+  // report reads "Un tip de document a primit un formular în acest import:
+  // Contract." over a summary line still saying one type is outstanding — so a
+  // user concludes the run finished it. Printing the name under both sentences
+  // looks contradictory and IS true: they are two different types. An
+  // outstanding type nobody mentions is the worse of the two by a distance.
+  const withoutForm = unclaimed.length > 0 ? unclaimed : named;
+
+  // ⚠️ **The total is NOT reduced by what `gained` took, and two adversarial
+  // rounds converged on why.** The obvious reading — "that name came off
+  // because the type demonstrably has a form now, so take it off the count too"
+  // — is only true if the name means the same type ID in both lists, and that
+  // overlap is unreachable: accepting a form clears `typeFormMissing` on every
+  // row of the id it was accepted for, so that id is already out of the count
+  // and out of the names. The overlap that CAN happen is two
+  // `lookup_document_type` ids sharing one display name, exactly what
+  // `sortedDistinctNames` collapses — and there the subtraction removed a type
+  // that is genuinely still waiting, printed the exhaustive Romanian arm over a
+  // short list, and left the second row named nowhere on screen or in the saved
+  // report. The whole point of taking a total is to be honest when the names
+  // are fewer than it; subtracting is that safeguard cancelling itself out.
+  //
+  // `Math.max` still clamps: a caller passing a stale or smaller total must not
+  // produce "1 type" over a two-item list, which is the same unreadable
+  // sentence the other way up.
+  const total = Math.max(withoutForm.length, input.withoutFormTotal ?? withoutForm.length);
+
+  const notes: RunTypeNote[] = [];
+  if (gained.length > 0) {
+    notes.push({
+      id: "typesGainedForm",
+      values: { count: gained.length, names: gained.join(", ") },
+    });
+  }
+  // ⚠️ **Nothing at all when it cannot name even one**, and that is the correct
+  // degradation rather than a gap. The count-and-offer header immediately above
+  // this block already says how many types are outstanding — it is #27.05's
+  // line and it is drawn from the same number — so a nameless "and N more" here
+  // would be that sentence said twice, the second time with nothing added.
+  if (withoutForm.length > 0) {
+    notes.push({
+      id: total > withoutForm.length ? "typesStillWithoutFormPartial" : "typesStillWithoutForm",
+      values: { count: total, names: withoutForm.join(", ") },
+    });
+  }
+  return notes;
 }
 
 // ---------------------------------------------------------------------------

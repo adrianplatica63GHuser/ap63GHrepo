@@ -220,6 +220,32 @@ export function documentTypeNameClass(row: DocumentTypeStatusInput): string {
   return DOCUMENT_TYPE_STATUS_CLASS[documentTypeStatus(row)];
 }
 
+/**
+ * Is this type still waiting for a custom form?                 (Slice #27.07)
+ *
+ * The Reference Data list can be narrowed to these, so "what is left to
+ * onboard" is one click rather than a scan of twenty-four rows.
+ *
+ * ⚠️ **DERIVED FROM `documentTypeStatus`, NOT FROM `documentTypeHasForm`, and
+ * that is the whole reason this function exists rather than a `!` at the call
+ * site.** The two answer the same question today, and a filter written on the
+ * second would be one edit away from silently disagreeing with the colour
+ * beside it. `documentTypeStatus` is what paints the row, so a filter built on
+ * it cannot select a row it then paints green. #27.07's constraint says this in
+ * as many words: a filter that re-derived the status would be the failure
+ * `document-type-origin-single-source.test.ts` exists to catch, wearing
+ * different clothes.
+ *
+ * ⚠️ **NOT a fourth status, and #27.07 forbids one explicitly.** "Still without
+ * a form" is the existing `new` and `aiScanned` said in a sentence: both mean
+ * the type has no form, and what separates them — who created it — is not what
+ * this question asks. A fourth status would have turned the one thing the brief
+ * calls a view into a fact somebody has to keep true.
+ */
+export function documentTypeAwaitsForm(row: DocumentTypeStatusInput): boolean {
+  return documentTypeStatus(row) !== "aiCompleted";
+}
+
 // ---------------------------------------------------------------------------
 // The document's status
 // ---------------------------------------------------------------------------

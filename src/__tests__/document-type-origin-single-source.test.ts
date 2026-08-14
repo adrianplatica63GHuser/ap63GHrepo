@@ -128,6 +128,15 @@ describe("the status colours have one home", () => {
       path.join(SRC, "app/admin/value-lists/_components/value-list-modal.tsx"), "utf8");
     expect(modal).toContain("documentTypeNameClass({");
     expect(modal).toContain("documentTypeStatus({");
+    // Slice #27.07 — and the FILTER, over the same derivation. Same argument as
+    // the two above: without this, swapping the call for a hand-written
+    // `parseTemplateFields(row.templateFields).length === 0` leaves every other
+    // assertion in this file and in `document-status.test.ts` green, and the
+    // list quietly grows a second rule that agrees with the colour beside it
+    // right up until one of the two is edited. (`documentTypeAwaitsForm`'s tie
+    // to `documentTypeStatus` is asserted over every template shape there; this
+    // is the half that says the modal is on the tied side of it.)
+    expect(modal).toContain("documentTypeAwaitsForm({");
 
     const tabs = fs.readFileSync(
       path.join(SRC, "app/documents/_components/document-detail-tabs.tsx"), "utf8");

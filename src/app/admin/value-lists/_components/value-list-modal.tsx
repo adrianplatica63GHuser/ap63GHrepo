@@ -10,11 +10,33 @@ import {
 import { LIST_META, type ListKey } from "@/lib/admin/value-lists/config";
 import { buttonClass } from "@/lib/ui/button-styles";
 import {
+  documentTypeAwaitsForm,
   documentTypeNameClass,
   documentTypeStatus,
 } from "@/lib/documents/status";
 import { parseTemplateFields } from "@/lib/documents/template-fields";
+import { ID_CARD_TYPE_KEYS, isIdCardTypeName } from "@/lib/import/id-card";
 import { DocumentTypeFormEditor } from "./document-type-form-editor";
+
+/**
+ * The catch-all type's key, in the order `fetchDocTypes` falls through them.
+ *                                                              (Slice #27.07)
+ *
+ * ⚠️ **Resolved to ONE row the way the import resolves it, not matched as a
+ * SET, and an adversarial round found the difference.** `typeAwaitsForm`
+ * excludes a single id — whatever `fetchDocTypes` settled on — so an archive
+ * holding both an ALTUL and an OTHER row has the import naming the OTHER one in
+ * its backlog while a set-match here would hide it, which is the "exclusion
+ * undone one screen later" failure with the sign flipped.
+ *
+ * ⚠️ **The import's third clause — `items[0]`, an ordinary alphabetically-first
+ * type when neither key exists — is knowingly NOT mirrored.** The two lists
+ * come from different routes with different ordering, so "the first row" is not
+ * the same row on both screens, and guessing would hide a type the sentence
+ * named. Adrian's seeded data has ALTUL, so the case is out of reach; if it ever
+ * is not, the honest failure is one extra row in a filter, not a missing one.
+ */
+const FALLBACK_TYPE_KEYS: readonly string[] = ["ALTUL", "OTHER"];
 
 // ── API helpers ───────────────────────────────────────────────────────────────
 
@@ -364,6 +386,138 @@ export function ValueListModal({
   // One extra column for the status, plus the always-present actions column.
   const emptyStateColSpan = displayFields.length + (isDocumentTypes ? 2 : 1);
 
+  // ── Slice #27.07: narrow the list to the types still without a form ────────
+  //
+  // The backlog an import reports by name is worked through here, and before
+  // this it meant reading twenty-four rows looking for the ones that were not
+  // green. One click instead.
+  //
+  // ⚠️ **`documentTypeAwaitsForm` is the SAME derivation `documentTypeStatus`
+  // above paints the row with** — see its header. A predicate written here as
+  // `parseTemplateFields(row.templateFields).length === 0` would be a second
+  // home for the rule, and #26.12's single-source test exists because the
+  // failure mode is silent: this list would then be able to hide a row it
+  // paints green, or show one it paints black, and either reads as the filter
+  // simply not working rather than as two rules disagreeing.
+  //
+  // ⚠️ **State, not a URL parameter or a stored preference.** It is a lens on
+  // one visit — a filter that survived the modal closing would have the
+  // administrator open Document Types next week, see nine rows where there are
+  // twenty-four, and have no way to know why.
+  const [onlyWithoutForm, setOnlyWithoutForm] = useState(false);
+  /**
+   * Types whose form editor has been opened during this visit.
+   *
+   * ⚠️ **The filter's own feedback loop, and without it the slice's headline
+   * flow ends in silence.** Tick the box, press "Formular (0)" on a type, add a
+   * field, save: the row stops satisfying `documentTypeAwaitsForm` and vanishes.
+   * A row disappearing is the only confirmation the work landed — and it is a
+   * bad one, because it is indistinguishable from a delete. Worse for the
+   * keyboard: `formEditorOpenerRef` holds that row's own button, so by the time
+   * the restore effect runs the element is gone, `isConnected` is false, and
+   * focus falls to `<body>` with nothing announced.
+   *
+   * Keeping the row until the next visit fixes both at once. It flips to bold
+   * green "Are formular" in place, which is the confirmation, and the button
+   * inside it is still there to take focus back. The row is drawn by exactly
+   * the same rule as always — this widens WHICH rows are shown, and changes
+   * nothing about what any of them says.
+   *
+   * ⚠️ **Never cleared while the modal is open, deliberately.** Clearing it
+   * when the filter is unticked and re-ticked would make the row vanish on the
+   * second tick, which is the same silent disappearance one interaction later.
+   * Closing the modal is what starts a fresh visit.
+   */
+  const [touchedTypeIds, setTouchedTypeIds] = useState<ReadonlySet<string>>(new Set());
+  /**
+   * Is this type WAITING for a form, as opposed to merely lacking one?
+   *                                                              (Slice #27.07)
+   *
+   * ⚠️ **`documentTypeAwaitsForm` AND NOT AN IDENTITY CARD, and two adversarial
+   * rounds converged on the second term.** The import's own backlog is decided
+   * by `typeAwaitsForm` (`src/lib/import/discover-run.ts`), which excludes the
+   * identity-card type for a reason `status.ts` states without qualification: a
+   * form is the correct and PERMANENT absence there, because the card's data is
+   * captured as real Person records and a custom form would put a second,
+   * freely-editable copy of somebody's CNP on the document. This screen is
+   * where the import's sentence sends the user, so listing "Carte de
+   * identitate" here as unfinished work is that exclusion undone one screen
+   * later — and the one form the code elsewhere says must never be built.
+   *
+   * It also made the list's own good news unreachable: `backlogEmpty` below
+   * could never be true in any real archive, because the seeded card type is
+   * permanently in the set.
+   *
+   * ⚠️ **This does NOT re-derive the status, which is what #27.07's constraint
+   * forbids.** `documentTypeAwaitsForm` is still the only thing deciding
+   * whether a type has a form, and every row still paints exactly what
+   * `documentTypeStatus` says. What is added is an orthogonal fact about ONE
+   * type, taken from the same two tests `enrichDiscoverSteps` uses — the seeded
+   * key and `isIdCardTypeName` — rather than restated here.
+   *
+   * ⚠️ **The FALLBACK type is excluded too, resolved by ID rather than matched
+   * by key — see `FALLBACK_TYPE_KEYS` — and the first draft of this function
+   * argued it should not be excluded at all.** The argument was that ALTUL is an
+   * ordinary type which could perfectly well be given a form. It is the wrong
+   * way round: a form on the catch-all is not onboarding — a document that
+   * lands on ALTUL is one whose TYPE is wrong, which is #27.04's remedy and not
+   * this list's — and `typeAwaitsForm` excludes it for exactly that reason. Left
+   * in, it also made this screen's own good news unreachable: `backlogEmpty`
+   * below could never be true in any archive that has a fallback type, so the
+   * green sentence and the `role="status"` region built to announce it were
+   * dead code.
+   *
+   * ⚠️ **`isIdCardTypeName` is a NAME heuristic and it runs over the whole
+   * archive here, not over a handful of queued types.** It is deliberately
+   * narrow and it vetoes before it matches: "Buletin de analiză", "Copie CI"
+   * and — an adversarial round corrected an earlier version of this very
+   * comment — "Carte de identitate a vehiculului" are all left alone, the last
+   * by an explicit `/vehicul/` veto, because a car's registration document is
+   * exactly the phrase the positive pattern would otherwise catch. What it does
+   * hide is a wording like "Acte de identitate ale asociaților": the same
+   * answer the import already gives such a type, one unticked checkbox away
+   * from being visible, and the row itself is never altered or relabelled.
+   */
+  const fallbackTypeId = isDocumentTypes
+    ? FALLBACK_TYPE_KEYS.reduce<Row | undefined>(
+        (found, key) => found ?? query.data?.find((r) => String(r.key ?? "") === key),
+        undefined,
+      )?.id
+    : undefined;
+  const awaitsFormRow = (row: Row): boolean =>
+    documentTypeAwaitsForm({ origin: row.origin, templateFields: row.templateFields }) &&
+    row.id !== fallbackTypeId &&
+    !(ID_CARD_TYPE_KEYS as readonly string[]).includes(String(row.key ?? "")) &&
+    !isIdCardTypeName(String(row.name ?? ""));
+  // ⚠️ **`onlyWithoutForm && isDocumentTypes`, in that order and both terms.**
+  // The checkbox is only rendered for document-types, but the state outlives a
+  // `listKey` change in a component that is keyed on nothing: without the
+  // second term, ticking it here and opening Institutions would filter that
+  // list by a document-type rule, which for a row with no `templateFields` is
+  // "true" for every row — a list that looks unfiltered until the day one of
+  // its rows is not.
+  const visibleRows =
+    onlyWithoutForm && isDocumentTypes
+      ? query.data?.filter((row) => awaitsFormRow(row) || touchedTypeIds.has(row.id))
+      : query.data;
+  /**
+   * Is there any of the backlog left?                            (Slice #27.07)
+   *
+   * ⚠️ **Derived from the FILTER's own rule and not from `visibleRows`, and an
+   * adversarial round found what the difference costs.** `visibleRows` retains
+   * the rows the administrator has just worked on, deliberately — so a version
+   * of this that tested `visibleRows.length === 0` could never fire in the one
+   * flow it was written for: finish the last formless type, and the row that
+   * proves you finished it is the row keeping the count above zero. The result
+   * this whole slice is working towards would have been unreachable.
+   */
+  const backlogEmpty =
+    onlyWithoutForm &&
+    isDocumentTypes &&
+    query.data !== undefined &&
+    query.data.length > 0 &&
+    !query.data.some(awaitsFormRow);
+
   return (
     <>
       {/* Overlay */}
@@ -414,7 +568,7 @@ export function ValueListModal({
             )}
 
             {/* Toolbar */}
-            <div className="mb-3 flex items-center justify-between">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
               <button
                 onClick={startAdd}
                 disabled={!!form}
@@ -422,12 +576,74 @@ export function ValueListModal({
               >
                 + {t("toolbar.add")}
               </button>
+              {/* Slice #27.07: the onboarding backlog, in one click.
+
+                  ⚠️ **A checkbox rather than a third status column or a sort.**
+                  The question is binary and the answer is a subset, and the row
+                  already SAYS which it is — in a word and in a colour — so a
+                  control that reorders or re-labels would be a third way of
+                  stating the same fact. This one only chooses how many rows are
+                  on screen.
+
+                  ⚠️ **The count beside it counts what is SHOWN, and says so
+                  when that is not everything.** A filter that leaves the total
+                  standing tells the administrator there are twenty-four rows
+                  above nine of them; a filter that silently rewrites the total
+                  loses the one number that says how much of the list this is. */}
+              {isDocumentTypes && (
+                <label className="flex cursor-pointer select-none items-center gap-2 text-xs text-ink dark:text-zinc-300">
+                  <input
+                    type="checkbox"
+                    checked={onlyWithoutForm}
+                    onChange={(e) => setOnlyWithoutForm(e.target.checked)}
+                    className="h-4 w-4 rounded border-wire accent-cta"
+                  />
+                  <span className="font-medium">{t("toolbar.onlyWithoutForm")}</span>
+                </label>
+              )}
               {query.data && (
                 <span className="text-xs text-fade dark:text-zinc-400">
-                  {t("toolbar.count", { count: query.data.length })}
+                  {visibleRows !== undefined && visibleRows.length !== query.data.length
+                    ? t("toolbar.countFiltered", {
+                        count: visibleRows.length,
+                        total: query.data.length,
+                      })
+                    : t("toolbar.count", { count: query.data.length })}
                 </span>
               )}
             </div>
+
+            {/* Slice #27.07: the backlog is empty.
+
+                ⚠️ **A banner above the table rather than an empty-state row,
+                because the table is NOT empty.** The rows the administrator has
+                just finished are still on it, in bold green — that is the
+                filter's confirmation that the work landed. A message inside the
+                tbody would be claiming there is nothing to show directly above
+                the things it is showing.
+
+                ⚠️ **Said in words rather than left as an absence.** This is the
+                one result the whole slice is working towards, and the
+                alternative — a list that quietly stops shrinking — is
+                indistinguishable from a filter that has stopped working.
+
+                `role="status"` because it appears in response to a save made in
+                a dialog ON TOP of this one, so a screen-reader user is looking
+                somewhere else when it arrives; rendered unconditionally under
+                the filter so the region exists before its content does.
+
+                ⚠️ **…and only while rows are still on screen.** With none left
+                the table's own empty row carries the same sentence, in the
+                place a reader is already looking. Drawing both would print it
+                twice, six pixels apart. */}
+            {onlyWithoutForm && isDocumentTypes && (
+              <p
+                role="status"
+                className="mb-3 text-xs font-medium text-emerald-700 dark:text-emerald-400"
+              >
+                {backlogEmpty && (visibleRows?.length ?? 0) > 0 ? t("table.allHaveForm") : ""}
+              </p>
+            )}
 
             {/* Table */}
             <div className="overflow-x-auto rounded-md border border-card-rim dark:border-zinc-800">
@@ -470,17 +686,30 @@ export function ValueListModal({
                       </td>
                     </tr>
                   )}
-                  {query.data?.length === 0 && (
+                  {/* ⚠️ **Keyed on what is RENDERED, not on what was fetched,
+                      and an adversarial round found the shell it otherwise
+                      leaves.** The day after the backlog is cleared, ticking the
+                      filter on a fresh open matches no row and retains none —
+                      so a test on `query.data.length` drew a bordered grey
+                      header bar over an empty tbody with nothing said anywhere.
+                      Which sentence it is depends on WHY it is empty: an archive
+                      with no types at all is a different fact from a filter that
+                      found nothing left to do, and the second is good news. */}
+                  {visibleRows?.length === 0 && (
                     <tr>
                       <td
                         colSpan={emptyStateColSpan}
-                        className="px-4 py-6 text-center text-fade"
+                        className={
+                          query.data?.length === 0
+                            ? "px-4 py-6 text-center text-fade"
+                            : "px-4 py-6 text-center text-emerald-700 dark:text-emerald-400"
+                        }
                       >
-                        {t("table.empty")}
+                        {query.data?.length === 0 ? t("table.empty") : t("table.allHaveForm")}
                       </td>
                     </tr>
                   )}
-                  {query.data?.map((row) => (
+                  {visibleRows?.map((row) => (
                     <tr
                       key={row.id}
                       className="hover:bg-cta-pale dark:hover:bg-zinc-800/50"
@@ -540,6 +769,37 @@ export function ValueListModal({
                               onClick={(e) => {
                                 formEditorOpenerRef.current = e.currentTarget;
                                 setFormEditorId(row.id);
+                                // Slice #27.07 — remembered on OPEN rather than
+                                // on save, because the editor reports nothing
+                                // back and a row that left the list is a row
+                                // whose opener has already unmounted. Marking a
+                                // type the user opened and then cancelled costs
+                                // one row staying visible until the modal is
+                                // closed; the other way round costs the focus.
+                                //
+                                // ⚠️ **Only while the filter is ON, and an
+                                // adversarial round found what the unguarded
+                                // version leaks.** The set is never cleared
+                                // while the modal is open, so a type opened
+                                // with the filter OFF — to look at a form it
+                                // already has — was retained, and ticking the
+                                // box afterwards then listed it under "Doar
+                                // cele care așteaptă un formular", in bold
+                                // green, with the status cell reading "Are
+                                // formular". That is
+                                // precisely the outcome `documentTypeAwaitsForm`
+                                // is written to make impossible, arriving
+                                // through the retention set instead of through
+                                // a second derivation. Retention exists to stop
+                                // a row vanishing out of the FILTERED list;
+                                // with the filter off there is nothing to keep.
+                                if (onlyWithoutForm) {
+                                  setTouchedTypeIds((prev) =>
+                                    prev.has(row.id)
+                                      ? prev
+                                      : new Set(prev).add(row.id),
+                                  );
+                                }
                               }}
                               disabled={!!form}
                               className={buttonClass({ variant: "ghost", size: "xs" })}

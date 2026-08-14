@@ -1595,7 +1595,9 @@
     },
     "toolbar": {
       "add": "Adaugă",
-      "count": "{count} înregistrări"
+      "count": "{count, plural, one {# înregistrare} few {# înregistrări} other {# de înregistrări}}",
+      "onlyWithoutForm": "Doar cele care așteaptă un formular",
+      "countFiltered": "{count} din {total, plural, one {# înregistrare} few {# înregistrări} other {# de înregistrări}}"
     },
     "table": {
       "loading": "Se încarcă…",
@@ -1603,7 +1605,8 @@
       "empty": "Nu există înregistrări",
       "edit": "Editează",
       "delete": "Șterge",
-      "editForm": "Formular ({count})"
+      "editForm": "Formular ({count})",
+      "allHaveForm": "Niciun tip de document nu mai așteaptă un formular."
     },
     "templateFields": {
       "title": "Formular pentru „{type}”",
@@ -2061,6 +2064,11 @@
           "refillDone": "a fost citit din nou",
           "refillFailed": "citirea din nou nu a completat câmpurile — ce completase prima citire a rămas neschimbat",
           "refillRetyped": "a fost citit din nou, dar AI l-a mutat pe alt tip de document, așa că informațiile lui tot nu au ajuns în câmpuri — deschideți documentul și verificați ce tip are"
+        },
+        "typeNote": {
+          "typesGainedForm": "{count, plural, one {Un tip de document a primit un formular în acest import: {names}.} few {# tipuri de documente au primit câte un formular în acest import: {names}.} other {# de tipuri de documente au primit câte un formular în acest import: {names}.}}",
+          "typesStillWithoutForm": "{count, plural, one {A rămas fără formular: {names}. Îl găsiți în Date de referință → Tipuri de Document, bifând „Doar cele care așteaptă un formular”.} few {Au rămas fără formular: {names}. Le găsiți în Date de referință → Tipuri de Document, bifând „Doar cele care așteaptă un formular”.} other {Au rămas fără formular: {names}. Le găsiți în Date de referință → Tipuri de Document, bifând „Doar cele care așteaptă un formular”.}}",
+          "typesStillWithoutFormPartial": "{count, plural, one {Un tip de document a rămas fără formular: {names}.} few {# tipuri de documente au rămas fără formular, dintre care importul a putut numi doar: {names}.} other {# de tipuri de documente au rămas fără formular, dintre care importul a putut numi doar: {names}.}} Pe toate le găsiți în Date de referință → Tipuri de Document, bifând „Doar cele care așteaptă un formular”."
         }
       },
       "preflight": {
@@ -2582,6 +2590,7 @@
       "reportSummaryTitle": "Pe scurt",
       "reportPropertiesTitle": "Proprietăți",
       "reportNoProperties": "Acest import nu a fost legat de nicio proprietate.",
+      "reportTypesTitle": "Tipuri de documente",
       "reportFilePrefix": "raport-import",
       "reportRowImported": "importat",
       "reportRowFailed": "nu a fost importat: {reason}"

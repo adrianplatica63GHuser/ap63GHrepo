@@ -33,6 +33,7 @@ import {
   DOCUMENT_TYPE_ORIGINS,
   DOCUMENT_TYPE_STATUS_CLASS,
   documentStatus,
+  documentTypeAwaitsForm,
   documentTypeHasForm,
   documentTypeNameClass,
   documentTypeNeedsFormHint,
@@ -260,6 +261,79 @@ describe("the colour cannot contradict the label", () => {
   it("gives the three statuses three distinct classes", () => {
     const classes = Object.values(DOCUMENT_TYPE_STATUS_CLASS);
     expect(new Set(classes).size).toBe(classes.length);
+  });
+});
+
+describe("documentTypeAwaitsForm — the Reference Data filter   (Slice #27.07)", () => {
+  it("is exactly the two statuses that mean 'no form yet'", () => {
+    expect(documentTypeAwaitsForm({ origin: "MANUAL", templateFields: null })).toBe(true);
+    expect(documentTypeAwaitsForm({ origin: "IMPORT", templateFields: null })).toBe(true);
+    expect(documentTypeAwaitsForm({ origin: "MANUAL", templateFields: [FIELD] })).toBe(false);
+    expect(documentTypeAwaitsForm({ origin: "IMPORT", templateFields: [FIELD] })).toBe(false);
+  });
+
+  it("⚠️ asks the SAME question that paints the row, on every shape either sees", () => {
+    // ⚠️ **The expectation is rebuilt from the RAW input, not read back out of
+    // the module, and an adversarial round is why.** The first version asserted
+    // `documentTypeAwaitsForm(row) === (documentTypeStatus(row) !==
+    // "aiCompleted")` — which is the function's own body, so it held for every
+    // input and proved nothing: rewriting `status.ts` to
+    // `documentTypeStatus(row) === "new"`, a filter that hides every
+    // import-created type from the backlog, passed it. `parseTemplateFields` is
+    // the fact both are supposed to be reading.
+    //
+    // The second assertion is what ties it to the SCREEN, and it is not the
+    // same claim: #27.07's constraint is that the filter cannot select a row it
+    // then paints green. A hand-written `length === 0` in the modal would agree
+    // with both on every example in the four-row test above and disagree here
+    // on `[{}]` — a template that parses to no usable field, green under a
+    // `length > 0` and black under `parseTemplateFields`.
+    let checked = 0;
+    for (const origin of [...DOCUMENT_TYPE_ORIGINS, "AUTO", undefined]) {
+      for (const [, templateFields] of [...NO_FORM, ...HAS_FORM]) {
+        const row = { origin, templateFields };
+        expect(documentTypeAwaitsForm(row)).toBe(
+          parseTemplateFields(templateFields).length === 0,
+        );
+        expect(documentTypeAwaitsForm(row)).toBe(
+          documentTypeNameClass(row) !== DOCUMENT_TYPE_STATUS_CLASS.aiCompleted,
+        );
+        checked += 1;
+      }
+    }
+    // 4 origins × 13 template shapes. A literal, for the reason the property
+    // test at the bottom of this file states about its own: read from the
+    // arrays it protects, it would pass a loop that ran no iterations.
+    expect(checked).toBe(52);
+  });
+
+  it("⚠️ ignores the origin, which is what stops it becoming a fourth status", () => {
+    // #27.07 forbids one in as many words: "still without a form" is the
+    // existing `new` and `aiScanned` said in a sentence, and what separates
+    // those two — who created the type — is not what this question asks. A
+    // filter that read the origin would hide half the backlog, and the row it
+    // hid would look identical to the ones it showed.
+    for (const [, templateFields] of [...NO_FORM, ...HAS_FORM]) {
+      const answers = [...DOCUMENT_TYPE_ORIGINS, "AUTO", undefined].map((origin) =>
+        documentTypeAwaitsForm({ origin, templateFields }),
+      );
+      expect(new Set(answers).size).toBe(1);
+    }
+    // ⚠️ **…and there really are only three statuses, which is the claim the
+    // filter's `!== "aiCompleted"` rests on.** An adversarial round caught the
+    // first version of this asserting nothing: it repeated two rows from the
+    // test above and then claimed to guard a fourth status. Add one — say a
+    // half-built form returning `aiPartial` — and `documentTypeAwaitsForm`
+    // silently starts selecting it while the row paints its own new colour.
+    expect(
+      new Set(
+        [...DOCUMENT_TYPE_ORIGINS, "AUTO", undefined].flatMap((origin) =>
+          [...NO_FORM, ...HAS_FORM].map(([, templateFields]) =>
+            documentTypeStatus({ origin, templateFields }),
+          ),
+        ),
+      ),
+    ).toEqual(new Set(["new", "aiScanned", "aiCompleted"]));
   });
 });
 

@@ -547,6 +547,18 @@ export type ResultReportStrings = {
   summaryTitle: string;
   propertiesTitle: string;
   noProperties: string;
+  /**
+   * The heading over the run's document-type sentences.          (Slice #27.07)
+   *
+   * ⚠️ **Required, although the section it heads can be absent.** The optional
+   * fields elsewhere in this module are optional because a caller legitimately
+   * has nothing to put there. This one is decided by `typeNotes` being empty,
+   * which the exporter can see for itself — so making the heading optional too
+   * would hand the caller a second and silent way to drop the section: pass the
+   * sentences, forget the title, and they vanish from the one artefact that
+   * outlives the dialog.
+   */
+  typesTitle: string;
   rowsTitle: string;
   /** The anchor text on every document link. */
   openLabel: string;
@@ -558,17 +570,50 @@ export type ResultReportInput = {
   locale: string;
   /** The same statistics the concluding message shows, already rendered. */
   summaryRows: readonly { label: string; value: string }[];
+  /**
+   * What the run did to the document TYPES it met, already rendered.
+   *                                                              (Slice #27.07)
+   *
+   * ⚠️ **A list of finished sentences, exactly like `ResultReportRow.notes`, and
+   * for the same reason this module states about itself twice already: it holds
+   * no display text.** `runTypeNotes` decides which sentences are true and
+   * `messages/*.json` owns the words; what arrives here is the result of both.
+   *
+   * ⚠️ **Empty drops the heading with it.** A run that met no formless type and
+   * gave none a form has nothing to say under this heading, and an empty section
+   * in a document that gets printed and carried around reads as a list that
+   * failed to render. Same call the warnings block in `buildRulesPageHtml`
+   * makes.
+   */
+  typeNotes: readonly string[];
   properties: readonly ResultReportProperty[];
   rows: readonly ResultReportRow[];
   strings: ResultReportStrings;
 };
 
 export function buildResultReportHtml(input: ResultReportInput): string {
-  const { folderName, generatedAt, locale, summaryRows, properties, rows, strings } = input;
+  const { folderName, generatedAt, locale, summaryRows, typeNotes, properties, rows, strings } =
+    input;
 
   const summaryTable = summaryRows
     .map((r) => `<tr><th>${esc(r.label)}</th><td>${esc(r.value)}</td></tr>`)
     .join("");
+
+  // Slice #27.07 — the whole section, or nothing at all.
+  //
+  // ⚠️ **`<p class="msg">` and NOT `pathList`, although the row notes use that
+  // one, and an adversarial round is why.** `.paths li` is 9.5pt grey Consolas,
+  // which is right for a file path and right for the short fragments a row
+  // draws beside one. These are two full Romanian sentences and they are this
+  // section's entire content: rendered in that class they print as grey
+  // monospace, diacritics and all, beside 11pt Calibri body text — the least
+  // legible thing on a page whose whole job is to be carried away and worked
+  // through.
+  const typeBlocks =
+    typeNotes.length === 0
+      ? ""
+      : `<h2>${esc(strings.typesTitle)}</h2>` +
+        typeNotes.map((note) => `<p class="msg">${esc(note)}</p>`).join("");
 
   const propertyBlocks =
     properties.length === 0
@@ -616,6 +661,19 @@ export function buildResultReportHtml(input: ResultReportInput): string {
       `<p class="meta">${esc(strings.generatedAt)}: ${esc(generatedAt)}</p>`,
       `<h2>${esc(strings.summaryTitle)}</h2>`,
       `<table>${summaryTable}</table>`,
+      // Slice #27.07 — after the statistics and before the Properties, because
+      // it explains two of the numbers directly above it and is about neither
+      // the Properties nor the individual files below.
+      //
+      // ⚠️ **Spliced away rather than filtered out of the finished array, and
+      // an adversarial round is why the difference matters.** A blanket
+      // `.filter(part => part !== "")` would also swallow `rowBlocks`, which is
+      // `""` on a run whose folder produced no importable entry — a different
+      // part, absent for a different reason, silently changing shape under a
+      // comment that named only this one. Dropping the empty string is what
+      // keeps Word from rendering a blank line as a real paragraph; doing it
+      // here says exactly which part that applies to.
+      ...(typeBlocks === "" ? [] : [typeBlocks]),
       `<h2>${esc(strings.propertiesTitle)}</h2>`,
       propertyBlocks,
       `<h2>${esc(strings.rowsTitle)}</h2>`,
