@@ -281,6 +281,24 @@ describe("only an import may stamp ai_interpreted_at", () => {
     // it being reintroduced as an optimisation.
     "lib/import/discover-run.ts":                        "comment only — records that discovery is NOT gated on the column",
     "app/api/documents/[id]/ai-interpret/route.ts":      "comments — the route stamps nothing itself",
+    // Slice #27.06. ⚠️ **BOTH WRITE NOTHING, and in both the mention is the
+    // point rather than a leak.** The re-read is `runAiInterpret` called a
+    // second time, so the stamp is re-written by the writer already listed
+    // above — the caller passes a `stamp` argument and nothing else. What these
+    // two comments record is the thing #27.06's constraint forbids: a SECOND
+    // stamp, or a re-read counter, saying twice what the column already says
+    // once. `refill` is a queue position that lives in a dialog's state and
+    // dies with it, and its own header says so in as many words. Delete these
+    // comments and the next reader's obvious optimisation — "the row needs to
+    // know it was re-read, put it on the document" — has nothing standing in
+    // front of it. (The dialog's second mention is the measured note that
+    // `aiInterpretedAt` is deliberately absent from the version snapshot, which
+    // is why the click is priced at "cel mult" N document versions rather than
+    // a flat N.)
+    "app/admin/import/_components/bulk-import-dialog.tsx":
+      "comments only — records that the re-read re-stamps through runAiInterpret and adds no stamp of its own",
+    "lib/import/import-outcome.ts":
+      "comment only — records that RefillState is a queue position, NOT a second copy of the column",
 
     // ── Tests. ──
     "__tests__/import-ai-interpret-run.test.ts": "pins the run's PATCH",
