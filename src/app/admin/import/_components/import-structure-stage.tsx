@@ -60,6 +60,7 @@ import {
   rulesInScope,
   scopeKeyFor,
 } from "@/lib/import/structure-rules";
+import { RuleExample } from "./rule-example";
 import { COST_NOTE_CLASS } from "./folder-forecast";
 
 /** How many related paths one violation shows before it stops listing them. */
@@ -213,6 +214,20 @@ export function ImportStructureStage({
       generatedAt: now.toLocaleString(locale),
       locale,
       sections: sections.map((s) => ({ heading: s.heading, rules: s.rules })),
+      // ⚠️ **The saved page carries the shared-folder explanation too.**
+      // (Slice #26.11.) This document is what the user takes to File Explorer,
+      // and "which of my documents goes in „comune” and which in „flotante”" is
+      // decided there, not here — so an explanation that existed only on the
+      // screen would be missing at the one moment it is needed. It is the same
+      // three sentences the panel renders, in the same order.
+      rulesNote: {
+        heading: t("sharedFolders.title"),
+        lines: [
+          t("sharedFolders.common"),
+          t("sharedFolders.floating"),
+          t("sharedFolders.optional"),
+        ],
+      },
       // `null`, not `[]`, when nothing has been checked: "we looked and found
       // nothing" and "we have not looked" are different pages, and printing
       // the all-clear for the second is the confident-output failure this
@@ -459,6 +474,47 @@ export function ImportStructureStage({
           <h3 className="text-sm font-semibold text-ink dark:text-zinc-100">
             {t("rulesTitle")}
           </h3>
+
+          {/*
+            WHAT THE TWO SPECIAL FOLDERS ARE FOR.   (Slice #26.11)
+
+            ⚠️ **This is the ONLY place in the flow that says it before the user
+            has already acted on it.** Adrian asked for the purpose to be given
+            "when first presenting the comune and flotante folders", and this
+            listing is that first presentation: it renders expanded before the
+            first check, and every rule in it — how they are spelled, that they
+            do not count toward the limit, that they hold no coordinate file —
+            is syntax. None of it says what a document in one MEANS.
+
+            The two sentences that do say it live in the property step, five
+            stages later, and they are gated on `grouping.common.length > 0`:
+            they are shown only to a user who has already built the folder,
+            which is exactly the user who no longer needs to be told. So the
+            explanation moves to where the decision is actually made — in File
+            Explorer, before the folder is picked — and the property step keeps
+            its own copy as the confirmation of what is about to happen.
+
+            Unconditional, unlike those two, and deliberately: a user with no
+            such folder is precisely the one who has to learn that the folders
+            exist and what they would be for.
+          */}
+          <div className="mt-3 rounded-md border border-card-rim bg-card p-3 dark:border-zinc-700 dark:bg-zinc-800/60">
+            <p className="text-xs font-semibold uppercase tracking-wide text-fade dark:text-zinc-400">
+              {t("sharedFolders.title")}
+            </p>
+            <ul className="mt-1.5 space-y-1">
+              <li className="text-sm text-ink dark:text-zinc-200">
+                {t("sharedFolders.common")}
+              </li>
+              <li className="text-sm text-ink dark:text-zinc-200">
+                {t("sharedFolders.floating")}
+              </li>
+            </ul>
+            <p className="mt-1.5 text-xs italic text-fade dark:text-zinc-400">
+              {t("sharedFolders.optional")}
+            </p>
+          </div>
+
           {sections.map((section) => (
             <div key={section.scope} className="mt-3">
               <p className="text-xs font-semibold uppercase tracking-wide text-fade dark:text-zinc-400">
@@ -476,9 +532,10 @@ export function ImportStructureStage({
                       </span>
                       <p className="text-sm text-ink dark:text-zinc-200">{rule.requirement}</p>
                     </div>
-                    <p className="mt-0.5 pl-1 text-xs italic text-fade dark:text-zinc-400">
-                      {rule.example}
-                    </p>
+                    <RuleExample
+                      text={rule.example}
+                      className="mt-0.5 pl-1 text-xs italic text-fade dark:text-zinc-400"
+                    />
                   </li>
                 ))}
               </ul>

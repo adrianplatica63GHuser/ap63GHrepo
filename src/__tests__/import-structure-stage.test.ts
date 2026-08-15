@@ -56,6 +56,15 @@ const REQUIRED_KEYS = [
   "title",
   "intro",
   "rulesTitle",
+  // ⚠️ Slice #26.11. Four strings, asked for by BOTH the panel and the saved
+  // page, and rendered UNCONDITIONALLY above the rules on the first screen of
+  // the import. A missing one prints `adminImport.structure.sharedFolders.title`
+  // as a heading in the shipping locale — precisely the failure this file's
+  // header exists to describe.
+  "sharedFolders.title",
+  "sharedFolders.common",
+  "sharedFolders.floating",
+  "sharedFolders.optional",
   "showRules",
   "hideRules",
   "acknowledge",

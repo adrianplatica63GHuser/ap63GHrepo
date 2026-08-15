@@ -25,6 +25,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { scanIcu } from "@/test-support/icu";
+import { SHARED_FOLDER_DISPLAY_NAMES } from "@/lib/import/structure-rules";
 
 const LOCALES = ["ro-RO.json", "en-GB.json"] as const;
 
@@ -397,12 +398,24 @@ describe("the property step's copy", () => {
     }
   });
 
-  it("says what happens to common and to floating, distinctly", () => {
+  it("says what happens to each shared folder, distinctly and by its real name", () => {
+    // ⚠️ **The expected strings come from the CODE, not from a literal here.**
+    // These sentences name a folder the user has to have made on a disk, and
+    // `SHARED_FOLDER_DISPLAY_NAMES` is what the structure checker tells them to
+    // call it. A literal here would let the two drift, which is exactly the
+    // failure #26.11 closed: the copy still said `common` after the product had
+    // moved on, and nothing failed.
+    //
+    // ⚠️ **Both locales, deliberately.** A folder name is a string on a disk,
+    // not copy. If en-GB told an English reader to make a differently-named
+    // folder, the two locales would be issuing contradictory orders about one
+    // filesystem — and only one of them would pass the structure check.
     for (const file of LOCALES) {
       const copy = loadCopy(file);
       expect(String(copy.commonNote)).not.toBe(String(copy.floatingNote));
-      expect(String(copy.commonNote)).toContain("common");
-      expect(String(copy.floatingNote)).toContain("floating");
+      expect(String(copy.commonNote)).toContain(SHARED_FOLDER_DISPLAY_NAMES.common);
+      expect(String(copy.floatingNote)).toContain(SHARED_FOLDER_DISPLAY_NAMES.floating);
+      expect(String(copy.commonNoteUnlinked)).toContain(SHARED_FOLDER_DISPLAY_NAMES.common);
     }
   });
 

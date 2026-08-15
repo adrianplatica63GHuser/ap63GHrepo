@@ -65,9 +65,11 @@ import {
   MAX_PROPERTY_FOLDERS,
   RULE_MESSAGE_PARTS,
   RULE_SCOPES,
+  SHARED_FOLDER_DISPLAY_NAMES,
   STRUCTURE_RULES,
   STRUCTURE_RULE_BY_ID,
   STRUCTURE_RULE_IDS,
+  acceptedSharedFolderSpellings,
   firstPerPlace,
   isDeclaredCoordinateFile,
   isPageFileName,
@@ -315,30 +317,85 @@ describe("propertyIdentityOf — what makes two folders the same property (STR-0
 // The shared folders
 // ---------------------------------------------------------------------------
 
-describe("common and floating", () => {
-  it("recognises them only when spelled exactly", () => {
+describe("the shared folders", () => {
+  it("recognises the Romanian names the product teaches", () => {
+    expect(sharedFolderName("comune")).toBe("common");
+    expect(sharedFolderName("flotante")).toBe("floating");
+  });
+
+  it("⚠️ still accepts the English names every existing archive is built on", () => {
+    // Slice #26.11 renamed what the user types, not what a disk already says.
+    // Adrian was mid-import against a folder holding `common` and `floating`
+    // when this landed, and every archive Ciprian has prepared is spelled the
+    // same way. Dropping these turns a copy change into a rename chore across
+    // every folder he owns.
     expect(sharedFolderName("common")).toBe("common");
     expect(sharedFolderName("floating")).toBe("floating");
+  });
+
+  it("⚠️ answers the IDENTITY, never the spelling it was handed", () => {
+    // The return value is a bucket tag (`EntryAssignment.bucket`), not
+    // something to show anyone. A caller that wants the name for a sentence
+    // goes through SHARED_FOLDER_DISPLAY_NAMES — returning the matched
+    // spelling here would put "common" back into a Romanian instruction for
+    // any user whose disk still says it.
+    expect(sharedFolderName("comune")).toBe(sharedFolderName("common"));
+    expect(SHARED_FOLDER_DISPLAY_NAMES[sharedFolderName("common")!]).toBe("comune");
+  });
+
+  it("recognises them only when spelled exactly", () => {
+    expect(sharedFolderName("Comune")).toBeNull();
+    expect(sharedFolderName("COMUNE")).toBeNull();
     expect(sharedFolderName("Common")).toBeNull();
     expect(sharedFolderName("COMMON")).toBeNull();
   });
 
   it("names the near miss so the user gets a rename, not a lecture", () => {
+    expect(sharedFolderNearMiss("Comune")).toBe("common");
+    expect(sharedFolderNearMiss("COMUNE")).toBe("common");
+    expect(sharedFolderNearMiss(" Flotante ")).toBe("floating");
+  });
+
+  it("⚠️ treats a miscased LEGACY name as a near miss too", () => {
+    // Someone whose disk says `Common` is fixing a capital letter either way,
+    // and the instruction they get names `comune` — so the one chore they are
+    // asked to do also brings them onto the spelling the product teaches.
     expect(sharedFolderNearMiss("Common")).toBe("common");
     expect(sharedFolderNearMiss("COMMON")).toBe("common");
     expect(sharedFolderNearMiss(" Floating ")).toBe("floating");
   });
 
-  it("STR-04 and STR-05 cannot both fire — an exact name is never a near miss", () => {
-    expect(sharedFolderNearMiss("common")).toBeNull();
-    expect(sharedFolderNearMiss("floating")).toBeNull();
+  it("STR-04 and STR-05 cannot both fire — an accepted name is never a near miss", () => {
+    for (const name of ["comune", "flotante", "common", "floating"]) {
+      expect(sharedFolderNearMiss(name)).toBeNull();
+    }
   });
 
   it("is not a general Romanian synonym matcher", () => {
-    // "comun" is a different word, not a misspelling of "common". It falls to
-    // STR-04, which tells the user to rename it or move it — the honest answer.
+    // "comun" is a different word, not a misspelling of "comune" — it folds to
+    // itself and matches nothing. It falls to STR-04, which tells the user to
+    // rename it or move it, rather than accusing them of a typo they did not
+    // make. Same for "flotant".
     expect(sharedFolderNearMiss("comun")).toBeNull();
+    expect(sharedFolderNearMiss("flotant")).toBeNull();
     expect(sharedFolderNearMiss("47per2-225per3")).toBeNull();
+  });
+
+  it("⚠️ keeps every accepted spelling out of the property grammar", () => {
+    // A shared folder must never parse as a property, or it would be counted
+    // toward MAX_PROPERTY_FOLDERS and given a cadastral identity.
+    for (const name of ["comune", "flotante", "common", "floating"]) {
+      expect(propertyIdentityOf(name)).toBeNull();
+      expect(parsePropertyFolderName(name).ok).toBe(false);
+    }
+  });
+
+  it("⚠️ lists the canonical spelling first", () => {
+    // `acceptedSharedFolderSpellings` is ordered so that a future caller
+    // wanting "the name to show" gets the one the product teaches rather than
+    // whichever alias it happened to match.
+    expect(acceptedSharedFolderSpellings("common")[0]).toBe("comune");
+    expect(acceptedSharedFolderSpellings("floating")[0]).toBe("flotante");
   });
 });
 

@@ -325,6 +325,31 @@ export type RulesPageStrings = {
   warningsTitle: string;
 };
 
+/**
+ * An explanatory block printed above the rules — a heading and some sentences,
+ * with no rule IDs and no paths.   (Slice #26.11)
+ *
+ * ⚠️ **OPTIONAL, and the Structure stage is the only caller that passes one.**
+ * It exists because that stage now explains what the two shared folders are FOR
+ * before it explains how they must be spelled, and this page is the artefact
+ * the user carries away from the screen — which is the whole reason
+ * `buildRulesPageHtml` exists (see "WHY A FILE AT ALL" in the module header).
+ * An explanation that lives only on screen is missing from the document at
+ * exactly the moment it is needed, because the decision it informs — which of
+ * my documents goes in which folder — is taken in File Explorer, not here.
+ *
+ * It is NOT modelled as a `RulesPageSection` holding two rules. That type's
+ * rows carry an ID chip and an example, and faking those would print an empty
+ * chip beside a sentence that is not a rule — the same "a block must be able to
+ * look like what it is" lesson `RulesPageSection.heading` and
+ * `RulesPageViolation.ruleId` have each recorded once already.
+ */
+export type RulesPageNote = {
+  heading: string;
+  /** Already-translated sentences, printed in order, one paragraph each. */
+  lines: readonly string[];
+};
+
 export type RulesPageInput = {
   /** `null` when no folder has been picked — the rules alone are worth printing. */
   folderName: string | null;
@@ -348,6 +373,11 @@ export type RulesPageInput = {
    */
   clean: boolean;
   warnings: readonly RulesPageWarning[];
+  /**
+   * Printed immediately under the rules heading, before the first section.
+   * Omitted entirely when absent — see `RulesPageNote`.
+   */
+  rulesNote?: RulesPageNote;
   strings: RulesPageStrings;
 };
 
@@ -383,8 +413,43 @@ export function groupedViolationBlocks(
 }
 
 export function buildRulesPageHtml(input: RulesPageInput): string {
-  const { folderName, generatedAt, locale, sections, violations, clean, warnings, strings } =
-    input;
+  const {
+    folderName,
+    generatedAt,
+    locale,
+    sections,
+    violations,
+    clean,
+    warnings,
+    rulesNote,
+    strings,
+  } = input;
+
+  /**
+   * The explanatory block, when the caller passed one.
+   *
+   * ⚠️ **A HEADING WITH NOTHING UNDER IT IS NOT PRINTED — the fourth time this
+   * module has had to say so.** `RulesPageSection.heading`,
+   * `RulesPageWarning.heading` and `RulesPageWarning.sentence` each record the
+   * same lesson: an `<h3>` with no content, sitting immediately above the first
+   * section's `<h3>`, reads in Word's navigation pane as a heading nested under
+   * an identical-looking heading. So a note with no lines — or with nothing but
+   * blank ones — is omitted whole, and so is one with no heading text.
+   *
+   * ⚠️ **AND IT IS `class="note"`, NOT a bare `<p class="msg">`.** Without its
+   * own style the block is typographically indistinguishable from a scope
+   * heading followed by three chipless rule requirements, so on the saved page
+   * a reader sees a fourth rule section rather than the explanation the screen
+   * shows as a tinted card. `RulesPageNote`'s own doc says it must not be able
+   * to look like a rule; refusing the ID chip was only half of that.
+   */
+  const noteLines = (rulesNote?.lines ?? []).filter((line) => line.trim() !== "");
+  const noteBlock =
+    rulesNote === undefined || rulesNote.heading.trim() === "" || noteLines.length === 0
+      ? ""
+      : `<div class="note"><h3>${esc(rulesNote.heading)}</h3>` +
+        noteLines.map((line) => `<p class="msg">${esc(line)}</p>`).join("") +
+        `</div>`;
 
   const ruleBlocks = sections
     .map((section) =>
@@ -466,6 +531,10 @@ export function buildRulesPageHtml(input: RulesPageInput): string {
       // Explorer, where the fix list is what the user works through and the
       // rules are the reference behind it.
       `<h2>${esc(strings.rulesTitle)}</h2>`,
+      // Above the sections, for the reason the screen puts it there: what the
+      // two shared folders MEAN has to be read before the rules about spelling
+      // them can be acted on.
+      noteBlock,
       ruleBlocks,
     ]
       // Two parts above are conditionally absent — the folder line before a
@@ -708,6 +777,15 @@ const DOCUMENT_CSS = `
   .paths { margin: 0 0 0 18pt; padding: 0; }
   .paths li { font-family: Consolas, "Courier New", monospace; font-size: 9.5pt; color: #444; margin: 1pt 0; }
   .clear { color: #256029; }
+  /* RulesPageNote (Slice #26.11). A tinted, ruled block, because without one an
+     <h3> plus three <p class="msg"> is byte-for-byte a scope heading plus three
+     chipless rule requirements — so the explanation of what the two shared
+     folders are FOR read on the saved page as a fourth rule section. The screen
+     draws the same content as a tinted card; this is that card, in the
+     vocabulary a Word document can keep. Its <h3> loses the section margin
+     because the block's own padding supplies the space. */
+  .note { border: 1px solid #ccd8e6; background: #f2f7fc; padding: 6pt 10pt; margin: 8pt 0 14pt; }
+  .note h3 { margin: 0 0 4pt; }
   a { color: #0b57a4; }
 `;
 

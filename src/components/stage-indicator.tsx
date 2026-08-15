@@ -23,17 +23,28 @@
  *
  * THE CURRENT STEP PULSES, AND IT IS NOT A DIPPING OPACITY
  * --------------------------------------------------------
- * `.ga-stage-pulse` (globals.css) radiates an amber halo out of the pill —
- * `box-shadow` spread, the same technique as `.ga-vpulse-*`. A fading opacity
- * was the obvious choice and is the wrong one twice over: this codebase already
- * retired the fade-and-return cue as unnoticeable, and fading a pill also fades
- * the label inside it, so the one step the user most needs to read becomes the
- * hardest to. The halo moves outside the pill and leaves the text at full
- * contrast throughout.
+ * `.ga-stage-pulse` (globals.css) swells the pill's own frame from its resting
+ * 1px to 3px and back — `box-shadow` spread at zero blur, flush against the
+ * border box, so the two read as one frame rather than as a border with a glow
+ * behind it. A fading opacity was the obvious choice and is the wrong one twice
+ * over: this codebase already retired the fade-and-return cue as unnoticeable,
+ * and fading a pill also fades the label inside it, so the one step the user
+ * most needs to read becomes the hardest to. The frame grows at the pill's edge
+ * and leaves the text at full contrast throughout.
  *
- * Under `prefers-reduced-motion` the halo freezes as a steady ring at full
- * strength — not "no animation", which would leave the current step looking
- * like any other amber thing on the screen.
+ * ⚠️ **THE `border` ON THE PILL BELOW IS HALF OF THAT CUE, IN BOTH ITS WIDTH
+ * AND ITS COLOUR.** The keyframes' 2px spread is `3 × 1px − 1px`, because this
+ * pill's border is Tailwind's 1px `border` and the amplitude is specified as a
+ * ×3 RATIO (Adrian, #26.11 — "pulsate between regular frame thickness and three
+ * times the regular thickness"): widening the border here without moving that
+ * spread silently turns the cue into ×2. And the colour is set by
+ * `.ga-stage-pulse` rather than by a utility on the pill, so that the border and
+ * the ring are one token — see the note on `PILL.current`. Both halves are
+ * pinned by `import-workflow-stages.test.ts`.
+ *
+ * Under `prefers-reduced-motion` the frame parks at its thick end — not "no
+ * animation", which would leave the current step looking like any other amber
+ * thing on the screen.
  *
  * ONE LIVE REGION, NOT ONE PER STEP
  * ---------------------------------
@@ -97,9 +108,15 @@ type Props = {
 const PILL: Record<StageStatus, string> = {
   pending:
     "border-wire bg-white text-fade dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400",
+  // ⚠️ **NO border-colour utility here, deliberately.** `.ga-stage-pulse` sets
+  // `border-color` from `--ga-stage-halo`, the same token its ring is painted
+  // in, so the 1px border and the 2px ring cannot drift into two different
+  // ambers — which is what the first version of this cue did, and it is why the
+  // peak looked like a border with a glow behind it instead of one 3px frame.
+  // Adding `border-amber-*` back here re-opens exactly that.
   current:
-    "ga-stage-pulse border-amber-400 bg-amber-50 text-amber-900 " +
-    "dark:border-amber-500 dark:bg-amber-950/40 dark:text-amber-200",
+    "ga-stage-pulse bg-amber-50 text-amber-900 " +
+    "dark:bg-amber-950/40 dark:text-amber-200",
   done:
     "border-emerald-400 bg-emerald-50 text-emerald-800 " +
     "dark:border-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300",
@@ -153,10 +170,13 @@ export function StageIndicator({
           <ol
             aria-labelledby={`${idPrefix}-${line.id}`}
             // `gap-x-2 gap-y-3` rather than a uniform `gap-1.5`: the current
-            // pill's halo reaches 6px past its edge, and a 6px gap put it
-            // exactly on its neighbours — including the row above once the
-            // line wraps, which it does at the 768–1023px widths this app is
-            // routinely used at.
+            // pill's frame reaches 2px past its edge at the top of the cycle,
+            // and a 6px halo used to reach further
+            // still — a 6px gap put it exactly on its neighbours, including
+            // the row above once the line wraps, which it does at the
+            // 768–1023px widths this app is routinely used at. #26.11 shrank
+            // the frame; the gaps stay, because they are also what keeps the
+            // wrapped rows legible as rows.
             className="flex flex-wrap items-center gap-x-2 gap-y-3"
           >
             {line.steps.map((step, index) => (

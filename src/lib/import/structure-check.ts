@@ -136,6 +136,7 @@ import { sortedForDisplay } from "./folder-utils";
 import type { DirectoryObservation, WalkLimit } from "./folder-utils";
 import {
   MAX_PROPERTY_FOLDERS,
+  SHARED_FOLDER_DISPLAY_NAMES,
   firstPerPlace,
   isDeclaredCoordinateFile,
   isPageFileName,
@@ -512,7 +513,14 @@ function classifyTopLevel(
       culprit: obs.path,
       related: [],
       counts: {},
-      values: { folder: name, expected: nearMiss },
+      // ⚠️ **The DISPLAY name, not the identity.** `sharedFolderNearMiss`
+      // answers `"common"` / `"floating"`, which #26.11 turned into internal
+      // tags that are never typed and never shown. This value is interpolated
+      // straight into the sentence telling a user what to rename their folder
+      // to, so it must be the one spelling the product teaches — handing them
+      // the tag would put an English word back into a Romanian instruction and,
+      // worse, tell them to type a name the rules screen never showed them.
+      values: { folder: name, expected: SHARED_FOLDER_DISPLAY_NAMES[nearMiss] },
     });
     return "unreadable";
   }

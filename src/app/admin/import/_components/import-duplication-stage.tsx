@@ -65,6 +65,7 @@ import {
   duplicationListingValues,
   duplicationMessageKeyFor,
 } from "@/lib/import/duplication-rules";
+import { RuleExample } from "./rule-example";
 import { COST_NOTE_CLASS } from "./folder-forecast";
 
 /** How many paths one group shows before it stops listing them. */
@@ -498,9 +499,10 @@ export function ImportDuplicationStage({
                 {/* The example is the rule, for this reader - and more so here
                     than in the other two catalogues, because "duplicate" is the
                     word a user is most likely to think they already understand. */}
-                <p className="mt-0.5 pl-1 text-xs italic text-fade dark:text-zinc-400">
-                  {rule.example}
-                </p>
+                <RuleExample
+                  text={rule.example}
+                  className="mt-0.5 pl-1 text-xs italic text-fade dark:text-zinc-400"
+                />
               </li>
             ))}
           </ul>

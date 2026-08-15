@@ -380,6 +380,61 @@ describe("buildRulesPageHtml", () => {
     expect(structure()).toContain(`${line}Teren</strong>`);
   });
 
+  it("prints the rules note above the sections, in a block of its own", () => {
+    // Slice #26.11. The Structure stage explains what the two shared folders
+    // are FOR before it explains how they must be spelled, and this page is the
+    // artefact carried to File Explorer — which is where that decision is
+    // actually taken.
+    expect(structure()).not.toContain("La ce folosesc");
+    const html = structure({
+      rulesNote: {
+        heading: "La ce folosesc cele două foldere speciale",
+        lines: ["„comune” — toate proprietățile.", "„flotante” — niciuna."],
+      },
+    });
+    expect(html).toContain('<div class="note"><h3>La ce folosesc cele două foldere speciale</h3>');
+    expect(html).toContain('<p class="msg">„comune” — toate proprietățile.</p>');
+    // Above the first section, in the order the screen reads them.
+    expect(html.indexOf("La ce folosesc")).toBeLessThan(html.indexOf("Folderul ales"));
+  });
+
+  it("⚠️ gives the rules note a style of its own, not a rule section's", () => {
+    // Without `class="note"` the block is byte-for-byte a scope heading
+    // followed by chipless rule requirements — both `<h3>` at 11pt/#444, both
+    // paragraphs `.msg` — so on the saved page the explanation reads as a
+    // fourth rule section. The screen draws it as a tinted card; this is that
+    // card in a vocabulary Word keeps.
+    const html = structure({ rulesNote: { heading: "Explicație", lines: ["Una."] } });
+    expect(html).toContain('class="note"');
+    expect(html).toMatch(/\.note \{[^}]*border:/);
+  });
+
+  it("⚠️ omits a rules note with nothing in it rather than printing a bare heading", () => {
+    // The fourth time this module has had to state it — `RulesPageSection.heading`,
+    // `RulesPageWarning.heading` and `.sentence` are the other three. An `<h3>`
+    // with nothing under it, immediately above the first section's `<h3>`,
+    // reads in Word's navigation pane as a heading nested under an
+    // identical-looking heading.
+    for (const rulesNote of [
+      { heading: "Explicație", lines: [] },
+      { heading: "Explicație", lines: ["  ", ""] },
+      { heading: "   ", lines: ["Una."] },
+    ]) {
+      const html = structure({ rulesNote });
+      expect(html).not.toContain("Explicație");
+      expect(html).not.toContain('<div class="note">');
+    }
+  });
+
+  it("escapes the rules note like every other caller-supplied string", () => {
+    const html = structure({
+      rulesNote: { heading: "A & B", lines: ["<b>x</b>"] },
+    });
+    expect(html).toContain("A &amp; B");
+    expect(html).not.toContain("<b>x</b>");
+    expect(html).toContain("&lt;b&gt;x&lt;/b&gt;");
+  });
+
   it("only adds the warnings heading when the walk actually gave up", () => {
     expect(structure()).not.toContain(STRUCTURE_STRINGS.warningsTitle);
     const html = structure({

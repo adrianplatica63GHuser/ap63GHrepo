@@ -74,6 +74,7 @@ import {
   preexistingSectionCounts,
   preexistingSectionKeyFor,
 } from "@/lib/import/preexisting-rules";
+import { RuleExample } from "./rule-example";
 import { COST_NOTE_CLASS } from "./folder-forecast";
 
 /** How many files one block shows before it stops listing them. */
@@ -529,9 +530,10 @@ export function ImportPreexistingStage({
                   </span>
                   <p className="text-sm text-ink dark:text-zinc-200">{note.requirement}</p>
                 </div>
-                <p className="mt-0.5 pl-1 text-xs italic text-fade dark:text-zinc-400">
-                  {note.example}
-                </p>
+                <RuleExample
+                  text={note.example}
+                  className="mt-0.5 pl-1 text-xs italic text-fade dark:text-zinc-400"
+                />
               </li>
             ))}
           </ul>

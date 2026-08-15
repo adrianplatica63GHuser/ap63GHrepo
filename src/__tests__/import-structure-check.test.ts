@@ -335,10 +335,38 @@ describe("a top-level folder", () => {
   });
 
   it("STR-05 — a misspelt shared folder gets the rename, not the lecture", () => {
-    const v = only(top("Common"), "STR-05");
-    expect(v.values).toEqual({ folder: "Common", expected: "common" });
+    const v = only(top("Comune"), "STR-05");
+    expect(v.values).toEqual({ folder: "Comune", expected: "comune" });
     // STR-04 and STR-05 are mutually exclusive by construction (#26.01).
-    expect(ids(top("Common"))).not.toContain("STR-04");
+    expect(ids(top("Comune"))).not.toContain("STR-04");
+  });
+
+  it("⚠️ STR-05 corrects a miscased LEGACY folder to the CANONICAL name", () => {
+    // Slice #26.11. `sharedFolderNearMiss` answers the identity `"common"`,
+    // which that slice stopped being a spelling — and `expected` is
+    // interpolated straight into "redenumiți-l exact „{expected}”". Passing the
+    // identity through would tell a Romanian user to type an English word the
+    // rules screen never showed them, which is precisely what the slice
+    // removed. So `Common` is corrected forward to `comune`, not back.
+    const v = only(top("Common"), "STR-05");
+    expect(v.values).toEqual({ folder: "Common", expected: "comune" });
+  });
+
+  it("⚠️ says nothing at all about a legacy `common` / `floating` folder", () => {
+    // Every archive prepared before #26.11 is spelled this way — Adrian's
+    // included, and it was mid-import when the rename landed. A legacy folder
+    // IS a shared folder: no STR-04, no STR-05, no deprecation nag. A warning
+    // nobody can act on without a morning of renaming is worse than the
+    // inconsistency it reports.
+    for (const name of ["common", "floating"]) {
+      expect(ids(top(name, { keptNames: ["Procura.pdf"] }))).toEqual([]);
+    }
+  });
+
+  it("⚠️ says nothing about the canonical `comune` / `flotante` either", () => {
+    for (const name of ["comune", "flotante"]) {
+      expect(ids(top(name, { keptNames: ["Procura.pdf"] }))).toEqual([]);
+    }
   });
 
   it("STR-06 — right identifiers, wrong separator, so the fix is one rename", () => {

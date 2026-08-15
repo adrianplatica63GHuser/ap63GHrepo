@@ -63,6 +63,7 @@ import {
   constraintRulesInScope,
   constraintScopeKeyFor,
 } from "@/lib/import/constraint-rules";
+import { RuleExample } from "./rule-example";
 import { COST_NOTE_CLASS } from "./folder-forecast";
 
 /** How many paths one violation shows before it stops listing them. */
@@ -536,9 +537,10 @@ export function ImportConstraintsStage({
                         catalogue's header. Not italic-and-small-and-forgotten:
                         same treatment as the Structure listing, so the two
                         pages read as one document. */}
-                    <p className="mt-0.5 pl-1 text-xs italic text-fade dark:text-zinc-400">
-                      {rule.example}
-                    </p>
+                    <RuleExample
+                      text={rule.example}
+                      className="mt-0.5 pl-1 text-xs italic text-fade dark:text-zinc-400"
+                    />
                   </li>
                 ))}
               </ul>

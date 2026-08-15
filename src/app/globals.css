@@ -174,7 +174,7 @@ body {
   .ga-progress-indeterminate { animation: none; width: 100%; opacity: 0.55; }
 }
 
-/* ── The current stage's amber halo  (Slice #26.03) ───────────────────────────
+/* ── The current stage's thickening frame  (Slice #26.03, retuned #26.11) ─────
    `StageIndicator` draws ten stage pills; the one the user is standing in has
    to be findable at a glance from across the room. Two candidates, one of them
    wrong for reasons this file already records:
@@ -183,9 +183,22 @@ body {
      ga-cue-blink above), and on a pill it is worse than on a line of text,
      because fading the pill fades the LABEL inside it — the one word the user
      most needs to read becomes the hardest to.
-   - Radiating a halo out of the pill's edge, as ga-version-pulse-* does. The
-     movement happens outside the pill, so the label sits at full contrast the
-     whole time.
+   - Growing the pill's own FRAME. The movement happens at the pill's edge and
+     just outside it, so the label sits at full contrast the whole time.
+
+   THE AMPLITUDE IS THE PILL'S OWN BORDER, ×1 TO ×3, AND THAT IS A CEILING
+   ──────────────────────────────────────────────────────────────────────────
+   #26.03 shipped this as a 6px halo radiating out of the edge, and Adrian's
+   report on it was "the pulsating is way too strong … the frame of the button
+   is way too thick". So the cue is no longer a glow: it is the pill's own 1px
+   border swelling to 3px and settling back. `box-shadow` with a zero blur and
+   a spread paints a ring flush against the border box, so 1px border + 2px
+   spread reads as ONE solid 3px frame rather than as a border with something
+   glowing behind it.
+
+   ⚠️ **THE TIMING IS UNCHANGED, AND MUST STAY SO** — Adrian, explicitly: "the
+   timing is perfect please keep the same timing". 1.8s, ease-in-out, infinite.
+   Only the spread and the alpha moved.
 
    THE DIRECTION MATTERS, and the first version of this had it backwards. It
    went from `0 0 0 0` at alpha 0.55 to `0 0 0 5px` at alpha 0 — a zero-spread
@@ -193,26 +206,33 @@ body {
    was transparent, so BOTH authored frames were invisible and all that reached
    the screen was the interpolation: a 2.5px band at alpha 0.275, twice per
    cycle, the second beat contracting inward. That is the fade-a-little-and-
-   come-back cue this file already retired once. So it is written the way
-   ga-version-pulse-* is: invisible at rest, strongest in the middle.
+   come-back cue this file already retired once.
+
+   The rest frame here is `0 0 0 0` at FULL alpha rather than a transparent one,
+   and the difference is the whole character of the cue: a zero-spread ring
+   paints nothing, so at rest the frame is exactly the pill's own 1px border,
+   and the interpolation between the two authored frames is a ring that grows
+   and shrinks at a CONSTANT colour. That is a frame thickening, which is what
+   was asked for — not a colour fading in and out, which is what a varying alpha
+   would have given and what this file retired twice already.
 
    THE COLOUR IS PER SCHEME, AND IT IS NOT amber-500. Measured: amber-500 at
-   alpha 0.6 composites to 1.59 : 1 against the white card — better than the
-   broken version's 1.23 : 1 and still nothing anyone would notice, and amber
-   cannot reach 3 : 1 on white at ANY alpha because opaque amber-500 is only
-   2.15 : 1. So light mode uses amber-700 (3.2 : 1 composited) and dark mode
-   amber-400, which is the same swap the palette makes for `primary`. One
-   variable, two values, because a single colour that works on both a white
-   card and a zinc-900 one does not exist here.
+   alpha 0.6 composites to 1.59 : 1 against the white card, and amber cannot
+   reach 3 : 1 on white at ANY alpha because opaque amber-500 is only 2.15 : 1.
+   So light mode uses amber-700 (4.7 : 1 opaque on white) and dark mode
+   amber-400, the same swap the palette makes for `primary`. One variable, two
+   values, because a single colour that works on both a white card and a
+   zinc-900 one does not exist here. Full alpha is what the drop from 6px to
+   2px pays for: a thin ring has to be solid to read as a frame at all.
 
-   Reduced motion: a steady ring at full strength, never "no animation" and
+   Reduced motion: the frame parks at its thick end, never "no animation" and
    never a transparent one. The glyphs (● ✓ ○) already distinguish the states,
    so the ring is not the only signal — but it is the one that says "here"
    without being read, and a reduced-motion user should not lose it.
    ─────────────────────────────────────────────────────────────────────────── */
 
 :root {
-  /* amber-700 #B45309 — the halo, on the white card. */
+  /* amber-700 #B45309 — the frame, on the white card. */
   --ga-stage-halo: 180 83 9;
 }
 
@@ -223,18 +243,45 @@ body {
   }
 }
 
+/* ⚠️ **THE SPREAD IS 2px, LITERALLY, AND IT IS A RATIO RATHER THAN A FREE
+   NUMBER.** The pill's border is Tailwind's 1px `border`, and the cue is
+   specified as "between regular frame thickness and three times the regular
+   thickness" — so `1px border + 2px ring = 3px`. Change the pill's border width
+   and this must move with it.
+
+   It is written out rather than held in a custom property, and that is not a
+   style preference: `import-workflow-stages.test.ts` guards this animation by
+   reading the box-shadow's LENGTHS out of the file, and a `var()` in the spread
+   slot contains no digit — so the guard silently measured 0px for every frame
+   and the one check that exists to catch an invisible ring went blind. Two
+   literals that a comment ties together beat one variable the guard cannot
+   see through. */
+
 @keyframes ga-stage-pulse {
-  0%, 100% { box-shadow: 0 0 0 0   rgb(var(--ga-stage-halo) / 0); }
-  50%      { box-shadow: 0 0 0 6px rgb(var(--ga-stage-halo) / 0.75); }
+  /* Zero spread paints nothing — the frame at rest is the pill's own border.
+     The alpha is the SAME at both ends on purpose: a constant colour is what
+     makes the ring read as a frame growing, rather than as a colour fading in,
+     which is the cue this file has now retired twice. */
+  0%, 100% { box-shadow: 0 0 0 0   rgb(var(--ga-stage-halo) / 1); }
+  50%      { box-shadow: 0 0 0 2px rgb(var(--ga-stage-halo) / 1); }
 }
 
+/* ⚠️ **THE BORDER COLOUR IS SET HERE, NOT IN `stage-indicator.tsx`, AND THAT IS
+   THE FIX FOR THE FIRST ATTEMPT AT THIS.** That version left the pill on
+   Tailwind's `border-amber-400` while the ring painted amber-700, so the peak
+   was a pale 1px outline with a dark 2px band swelling outside it — visibly two
+   things, i.e. exactly the "border with something glowing behind it" reading
+   the slice replaced the halo to be rid of. Border and ring now read one token,
+   so they cannot disagree; `stage-indicator.tsx` deliberately sets no
+   border-colour utility on the current pill. */
 .ga-stage-pulse {
+  border-color: rgb(var(--ga-stage-halo));
   animation: ga-stage-pulse 1.8s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .ga-stage-pulse {
     animation: none;
-    box-shadow: 0 0 0 3px rgb(var(--ga-stage-halo) / 0.75);
+    box-shadow: 0 0 0 2px rgb(var(--ga-stage-halo) / 1);
   }
 }

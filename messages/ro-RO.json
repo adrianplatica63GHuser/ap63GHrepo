@@ -1833,6 +1833,12 @@
       "gateContinue": "Continuă importul"
     },
     "pageTitle": "Import",
+    "exampleLabels": {
+      "correct": "Corect",
+      "correctAlt": "Bine",
+      "wrong": "Greșit",
+      "wrongAlt": "Altfel"
+    },
     "wizard": {
       "propertyStep": {
         "title": "Proprietățile acestui import",
@@ -1852,8 +1858,8 @@
         "cornersKept": "Proprietatea are deja {existing, plural, one {un colț} few {# colțuri} other {# de colțuri}}, iar fișierul din folder conține {offered, plural, one {unul} few {#} other {#}}. Colțurile existente rămân neschimbate. Dacă vreți să le înlocuiți cu cele din fișier, deschideți fișa proprietății după import și modificați colțurile acolo.",
         "ambiguous": "În sistem există {count, plural, one {o proprietate} few {# proprietăți} other {# de proprietăți}} cu aceeași tarla și aceeași parcelă:",
         "ambiguousBlocks": "Importul nu poate continua cât timp aceeași parcelă are mai multe proprietăți în sistem. Deschideți lista de proprietăți, păstrați una singură, apoi reveniți aici și apăsați „Încearcă din nou”.",
-        "commonNote": "Folderul „common”: {count, plural, one {un document, care va fi legat de toate proprietățile de mai sus} few {# documente, care vor fi legate de toate proprietățile de mai sus} other {# de documente, care vor fi legate de toate proprietățile de mai sus}}.",
-        "floatingNote": "Folderul „floating”: {count, plural, one {un document, care va fi salvat fără legătură cu vreo proprietate} few {# documente, care vor fi salvate fără legătură cu vreo proprietate} other {# de documente, care vor fi salvate fără legătură cu vreo proprietate}}.",
+        "commonNote": "Folderul „comune”: {count, plural, one {un document, care va fi legat de toate proprietățile de mai sus} few {# documente, care vor fi legate de toate proprietățile de mai sus} other {# de documente, care vor fi legate de toate proprietățile de mai sus}}.",
+        "floatingNote": "Folderul „flotante”: {count, plural, one {un document, care va fi salvat fără legătură cu vreo proprietate} few {# documente, care vor fi salvate fără legătură cu vreo proprietate} other {# de documente, care vor fi salvate fără legătură cu vreo proprietate}}.",
         "unassignedNote": "{count, plural, one {Un fișier nu se află în niciun subfolder de proprietate și nu va fi legat de nimic} few {# fișiere nu se află în niciun subfolder de proprietate și nu vor fi legate de nimic} other {# de fișiere nu se află în niciun subfolder de proprietate și nu vor fi legate de nimic}}.",
         "progress": "Se pregătesc proprietățile… {done} din {total}",
         "cancelButton": "Anulează",
@@ -1863,7 +1869,7 @@
         "errorStale": "Ceea ce se află în sistem pentru proprietatea din folderul „{folder}” nu mai este ceea ce vi s-a arătat. Lista de mai sus se recitește — verificați-o și confirmați din nou.",
         "noNickname": "(fără poreclă)",
         "chipCorners": "{count, plural, =0 {fără colțuri} one {un colț} few {# colțuri} other {# de colțuri}}",
-        "commonNoteUnlinked": "Folderul „common”: {count, plural, one {un document, dar nu există nicio proprietate de care să fie legat, așa că va fi salvat fără legătură} few {# documente, dar nu există nicio proprietate de care să fie legate, așa că vor fi salvate fără legătură} other {# de documente, dar nu există nicio proprietate de care să fie legate, așa că vor fi salvate fără legătură}}.",
+        "commonNoteUnlinked": "Folderul „comune”: {count, plural, one {un document, dar nu există nicio proprietate de care să fie legat, așa că va fi salvat fără legătură} few {# documente, dar nu există nicio proprietate de care să fie legate, așa că vor fi salvate fără legătură} other {# de documente, dar nu există nicio proprietate de care să fie legate, așa că vor fi salvate fără legătură}}.",
         "errorPartial": "{count, plural, one {O proprietate a fost deja creată sau actualizată și rămâne în sistem} few {# proprietăți au fost deja create sau actualizate și rămân în sistem} other {# de proprietăți au fost deja create sau actualizate și rămân în sistem}}.",
         "errorFolderMissing": "Folderul „{folder}” nu mai poate fi găsit în lista citită la început. Reluați importul.",
         "introNoProperties": "Folderul „{folder}” nu conține niciun subfolder de proprietate — niciun document din el nu va fi legat de vreo proprietate. Dacă nu vă așteptați la asta, renunțați și verificați numele subfolderelor.",
@@ -2053,7 +2059,7 @@
           "personConfirmed": "persoana din cartea de identitate exista deja și a fost legată",
           "personPending": "cartea de identitate așteaptă să fie confirmată",
           "personDeclined": "nicio persoană nu a fost creată din această carte de identitate",
-          "personNoProperty": "carte de identitate într-un folder comun — nu poate fi legată de o singură proprietate, așa că a fost citită ca document",
+          "personNoProperty": "carte de identitate dintr-un folder care nu ține de o proprietate anume — nu poate fi legată de o singură proprietate, așa că a fost citită ca document",
           "personUnreadable": "imaginea cărții de identitate nu a putut fi pregătită, așa că nu s-a creat nicio persoană",
           "readSkippedIdCard": "nu a fost citit cu citirea generală AI, pentru că este o carte de identitate",
           "readSkippedNoPage": "nu are nicio pagină pe care AI să o poată citi",
@@ -2162,14 +2168,14 @@
     "structure": {
       "rule": {
         "STR-01": {
-          "requirement": "Folderul pe care îl alegeți conține numai foldere: câte unul pentru fiecare proprietate, plus, dacă vă trebuie, „common” și „floating”. Niciun fișier nu stă direct în el.",
-          "example": "Corect: 47per2-225per3per24, 48-50D, common. Greșit: un fișier „contract.pdf” pus direct în folderul ales.",
-          "violation": "Folderul ales conține {files, plural, one {un fișier care nu se află într-un folder} few {# fișiere care nu se află într-un folder} other {# de fișiere care nu se află într-un folder}}: {examples}. Mutați fiecare fișier în folderul proprietății de care aparține, în „common” sau în „floating”."
+          "requirement": "Folderul pe care îl alegeți conține numai foldere: câte unul pentru fiecare proprietate, plus, dacă vă trebuie, „comune” și „flotante”. Niciun fișier nu stă direct în el.",
+          "example": "Corect: 47per2-225per3per24, 48-50D, comune. Greșit: un fișier „contract.pdf” pus direct în folderul ales.",
+          "violation": "Folderul ales conține {files, plural, one {un fișier care nu se află într-un folder} few {# fișiere care nu se află într-un folder} other {# de fișiere care nu se află într-un folder}}: {examples}. Mutați fiecare fișier în folderul proprietății de care aparține, în „comune” sau în „flotante”."
         },
         "STR-02": {
-          "requirement": "Folderul ales conține cel mult {max} proprietăți. „common” și „floating” nu se numără.",
-          "example": "Corect: {max} foldere de proprietate, plus „common” și „floating”. Greșit: încă un folder de proprietate pe lângă acestea.",
-          "violation": "Folderul ales conține {found, plural, one {o proprietate} few {# proprietăți} other {# de proprietăți}}, iar limita este {max}. Mai multe deodată sunt greu de urmărit. Faceți un al doilea folder și împărțiți proprietățile între ele; dacă aveți documente comune, puneți câte o copie a folderului „common” în fiecare."
+          "requirement": "Folderul ales conține cel mult {max} proprietăți. „comune” și „flotante” nu se numără.",
+          "example": "Corect: {max} foldere de proprietate, plus „comune” și „flotante”. Greșit: încă un folder de proprietate pe lângă acestea.",
+          "violation": "Folderul ales conține {found, plural, one {o proprietate} few {# proprietăți} other {# de proprietăți}}, iar limita este {max}. Mai multe deodată sunt greu de urmărit. Faceți un al doilea folder și împărțiți proprietățile între ele; dacă aveți documente care privesc toate proprietățile, puneți câte o copie a folderului „comune” în fiecare."
         },
         "STR-03": {
           "requirement": "Două foldere din folderul ales nu pot însemna aceeași proprietate.",
@@ -2177,13 +2183,13 @@
           "violation": "Folderele „{folder}” și „{other}” înseamnă aceeași proprietate ({identity}). Păstrați un singur folder pentru ea și mutați în el documentele din celălalt."
         },
         "STR-04": {
-          "requirement": "Fiecare folder din folderul ales este ori o proprietate, ori „common”, ori „floating”. Numele unei proprietăți începe cu tarlaua și parcela, despărțite printr-o liniuță. „per” ține locul semnului „/”, care nu poate fi folosit în numele unui folder.",
+          "requirement": "Fiecare folder din folderul ales este ori o proprietate, ori „comune”, ori „flotante”. Numele unei proprietăți începe cu tarlaua și parcela, despărțite printr-o liniuță. „per” ține locul semnului „/”, care nu poate fi folosit în numele unui folder.",
           "example": "Corect: 47per2-225per3per24, 48-50D, 225per3-24bis. Greșit: „Acte 2019”, „Teren Bragadiru”, „2024-Arhiva”.",
-          "violation": "Folderul „{folder}” nu este nici o proprietate, nici „common”, nici „floating”. Redenumiți-l cu tarlaua și parcela, de exemplu 47per2-225per3per24, sau mutați fișierele din el în „common” ori în „floating” și ștergeți folderul rămas gol."
+          "violation": "Folderul „{folder}” nu este nici o proprietate, nici „comune”, nici „flotante”. Redenumiți-l cu tarlaua și parcela, de exemplu 47per2-225per3per24, sau mutați fișierele din el în „comune” ori în „flotante” și ștergeți folderul rămas gol."
         },
         "STR-05": {
-          "requirement": "Folderele comune se numesc exact „common” și „floating”, cu litere mici.",
-          "example": "Corect: common, floating. Greșit: „Common”, „COMMON”, „Floating”.",
+          "requirement": "Cele două foldere speciale se numesc exact „comune” și „flotante”, cu litere mici.",
+          "example": "Corect: comune, flotante. Greșit: „Comune”, „COMUNE”, „Flotante”.",
           "violation": "Folderul „{folder}” pare să fie „{expected}”, dar nu este scris la fel. Redenumiți-l exact „{expected}”, cu litere mici."
         },
         "STR-06": {
@@ -2192,7 +2198,7 @@
           "violation": "Numele „{folder}” are un text în plus după tarla și parcelă, dar nu îl desparte prin ||. Redenumiți folderul „{suggestion}”."
         },
         "STR-07": {
-          "requirement": "Fișierele aflate direct într-un folder de proprietate — sau în „common” ori „floating” — nu pot fi toate scanări numerotate. Paginile unui document scanat stau într-un subfolder al cărui nume este titlul documentului.",
+          "requirement": "Fișierele aflate direct într-un folder de proprietate — sau în „comune” ori „flotante” — nu pot fi toate scanări numerotate. Paginile unui document scanat stau într-un subfolder al cărui nume este titlul documentului.",
           "example": "Corect: 48-50D ▸ Contract vânzare ▸ 1.jpg, 2.jpg. Greșit: 48-50D ▸ 1.jpg, 2.jpg.",
           "violation": "Toate fișierele aflate direct în „{folder}” sunt scanări numerotate ({files, plural, one {un fișier} few {# fișiere} other {# de fișiere}}). Un număr nu este un titlu de document, așa că importul ar folosi numele folderului sau chiar numerele fișierelor. Mutați-le într-un subfolder al cărui nume să fie titlul documentului."
         },
@@ -2202,8 +2208,8 @@
           "violation": "Proprietatea „{folder}” conține {found, plural, one {un fișier de coordonate} few {# fișiere de coordonate} other {# de fișiere de coordonate}}: {examples}. Poate exista cel mult unul. Păstrați-l doar pe cel corect și scoateți restul din folderul proprietății."
         },
         "STR-09": {
-          "requirement": "Folderele „common” și „floating” nu conțin fișiere de coordonate. Coordonatele aparțin unei singure proprietăți.",
-          "example": "Corect: „coord 47per2-225per3per24.txt” în folderul proprietății. Greșit: același fișier pus în „common”.",
+          "requirement": "Folderele „comune” și „flotante” nu conțin fișiere de coordonate. Coordonatele aparțin unei singure proprietăți.",
+          "example": "Corect: „coord 47per2-225per3per24.txt” în folderul proprietății. Greșit: același fișier pus în „comune”.",
           "violation": "Folderul „{folder}” conține {found, plural, one {un fișier de coordonate} few {# fișiere de coordonate} other {# de fișiere de coordonate}}: {examples}. Mutați fiecare fișier de coordonate în folderul proprietății la care se referă."
         },
         "STR-10": {
@@ -2239,8 +2245,14 @@
       "hideRules": "Ascunde regulile",
       "scope": {
         "chosenFolder": "Folderul pe care îl alegeți",
-        "topLevelFolder": "Folderele din el: proprietățile, „common” și „floating”",
+        "topLevelFolder": "Folderele din el: proprietățile, „comune” și „flotante”",
         "pageFolder": "Folderele cu paginile unui document"
+      },
+      "sharedFolders": {
+        "title": "La ce folosesc cele două foldere speciale",
+        "common": "„comune” — documente care privesc toate proprietățile din acest import. Fiecare va fi legat de fiecare dintre ele.",
+        "floating": "„flotante” — documente de sine stătătoare, care nu privesc nicio proprietate. Se salvează în arhivă fără nicio legătură.",
+        "optional": "Niciunul nu este obligatoriu: dacă nu aveți asemenea documente, nu faceți folderul."
       },
       "acknowledge": "Respect regulile de structură",
       "acknowledgeHint": "Bifați după ce ați citit regulile și apoi din nou după fiecare îndreptare făcută în File Explorer. Bifa se cere la fiecare verificare.",

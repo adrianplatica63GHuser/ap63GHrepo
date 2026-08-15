@@ -47,6 +47,7 @@ export type ButtonVariant =
   | "secondary"
   | "danger"
   | "ghost"
+  | "danger-link"
   | "bare"
   | "bare-danger";
 
@@ -58,6 +59,14 @@ export interface ButtonClassOptions {
    * secondary — the supporting action beside it (Close / Cancel / Back).
    * danger    — destructive actions (Delete / Remove).
    * ghost     — low-emphasis inline row actions and chips.
+   * danger-link — a destructive action that must be READ as a way out before it
+   *             is read as a button: red underlined label at rest, a solid red
+   *             button under the pointer and under keyboard focus. It is the
+   *             import shell's "Renunță la import", and it exists because
+   *             `bare-danger` at `xs` was too quiet for the one control that
+   *             abandons a run (Adrian, #26.11) while a resting solid `danger`
+   *             chip in the stage bar's corner reads as a warning about the
+   *             stage rather than as an exit from the flow.
    * bare      — icon-only glyph buttons with no surface at all (the version-nav
    *             ◀ ▶ arrows). See BARE_DISABLED below for how the state rule is
    *             adapted when there is no surface to neutralise.
@@ -130,9 +139,20 @@ const SIZE_TEXT: Record<ButtonSize, string> = {
  * 1.75:1 against white, which is fine — WCAG 1.4.11 (Non-text Contrast)
  * explicitly exempts disabled/inactive components from the 3:1 boundary rule,
  * and a faint edge is exactly the inert reading we want.
+ *
+ * ⚠️ **`disabled:no-underline` LIVES HERE RATHER THAN ON `danger-link`, ALTHOUGH
+ * that is the only variant that underlines.** (Slice #26.11.) Two reasons, and
+ * the second is the real one. It neutralises a fifth property, so the inert
+ * Cancel behind an open import dialog stops wearing full link affordance — a
+ * control inviting a click it cannot accept is the lying button #23.05.UX
+ * exists to have removed. And the disabled half must be BYTE-IDENTICAL across
+ * every surfaced variant — that is the slice's whole point and a test pins it —
+ * so a `disabled:*` utility scoped to one variant is not something this file
+ * can express. On the four variants that do not underline it is a no-op.
  */
 const SURFACE_DISABLED =
   "disabled:border-wire disabled:bg-white disabled:text-fade disabled:shadow-none " +
+  "disabled:no-underline " +
   "dark:disabled:border-zinc-700 dark:disabled:bg-zinc-900 dark:disabled:text-zinc-500";
 
 /**
@@ -192,6 +212,44 @@ const ENABLED: Record<ButtonVariant, string> = {
     "dark:border-cta/30 dark:bg-cta/15 dark:text-zinc-100 " +
     "dark:enabled:hover:bg-cta/25",
 
+  /**
+   * A link at rest, a full `danger` button under the pointer.
+   *
+   * Three details are load-bearing and none of them is decoration:
+   *
+   *  - **The resting border is `border-transparent`, not absent.** It reserves
+   *    the same 1px the hover state paints, so arriving on the button does not
+   *    grow it by 2px and shove the stage indicator beside it sideways. Same
+   *    reason the padding is the variant's own rather than something the call
+   *    site appends.
+   *  - **`focus-visible:` mirrors every hover rule.** The hover half is scoped
+   *    to `:enabled` (see the header), and a keyboard user gets no hover at all
+   *    — so without this the one control that abandons a run would be a red
+   *    underlined label with only an outline ring to say it is focused. The
+   *    focus rules are deliberately NOT `enabled:focus-visible:`: a disabled
+   *    button is not focusable in any browser, so the guard would be a
+   *    condition that can never fire, and `SURFACE_DISABLED` overrides the
+   *    colours anyway through the `:disabled` selector.
+   *  - **`**:text-white` on hover and focus, for the reason `secondary`
+   *    carries it.** This variant is the app's second one that inverts its
+   *    label colour, so a `<span className="text-fade">` label inside it would
+   *    stay #595F6A on the #B91C1C fill — 2.3 : 1, unreadable. Written now
+   *    rather than after someone reports it, because the failure is already in
+   *    this file's history.
+   *
+   * `dark:bg-transparent` is spelled out rather than inherited so the variant
+   * declares a dark background state like every other surfaced variant.
+   */
+  "danger-link":
+    "border border-transparent bg-transparent text-danger underline underline-offset-2 shadow-none " +
+    "enabled:hover:border-danger enabled:hover:bg-danger enabled:hover:text-white " +
+    "enabled:hover:**:text-white enabled:hover:no-underline enabled:hover:shadow-sm " +
+    "focus-visible:border-danger focus-visible:bg-danger focus-visible:text-white " +
+    "focus-visible:**:text-white focus-visible:no-underline " +
+    "dark:bg-transparent dark:text-red-400 " +
+    "dark:enabled:hover:border-red-500 dark:enabled:hover:bg-red-600 dark:enabled:hover:text-white " +
+    "dark:focus-visible:border-red-500 dark:focus-visible:bg-red-600 dark:focus-visible:text-white",
+
   bare:
     "border-0 bg-transparent shadow-none text-cta " +
     "enabled:hover:text-cta-d " +
@@ -203,12 +261,21 @@ const ENABLED: Record<ButtonVariant, string> = {
     "dark:text-red-400 dark:enabled:hover:text-red-300",
 };
 
-/** Variants that paint a surface — i.e. everything except `bare`. */
+/**
+ * Variants that paint a surface — i.e. everything except the two `bare` ones.
+ *
+ * `danger-link` is in the list although it is transparent at rest: it has the
+ * geometry of a surfaced button (padding, radius, a 1px border box) and it
+ * paints a full fill on hover and on focus, so the neutral disabled surface is
+ * exactly the right inert reading for it. `bare` is out because a glyph with no
+ * box has no surface to neutralise — see `BARE_DISABLED`.
+ */
 export const SURFACED_VARIANTS: readonly ButtonVariant[] = [
   "primary",
   "secondary",
   "danger",
   "ghost",
+  "danger-link",
 ] as const;
 
 /** Every variant name, for exhaustive iteration in tests. */

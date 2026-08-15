@@ -48,6 +48,9 @@ describe("buttonClass — the state rule", () => {
       secondary: "bg-cta-pale",
       danger: "bg-danger",
       ghost: "bg-cta-pale",
+      // A link at rest, so its strong treatment is the red LABEL; the fill
+      // arrives on hover and on focus and is pinned in its own block below.
+      "danger-link": "text-danger",
       bare: "text-cta",
       "bare-danger": "text-danger",
     };
@@ -79,6 +82,74 @@ describe("buttonClass — the state rule", () => {
     // ...but without growing a surface, which is what separates it from `danger`.
     expect(c).toContain("bg-transparent");
     expect(c).not.toContain("bg-danger");
+  });
+
+  it("makes danger-link a link at rest and a full danger button on hover", () => {
+    // Slice #26.11. The import shell's "Renunță la import" was `bare-danger`
+    // at `xs` — the quietest control in the app for the one action that
+    // abandons a run. It must read as red text at rest and fill in solid red
+    // under the pointer, which is the whole difference from `bare-danger`.
+    const c = classes(buttonClass({ variant: "danger-link" }));
+    expect(c).toContain("text-danger");
+    expect(c).toContain("bg-transparent");
+    expect(c).toContain("underline");
+    expect(c).toContain("enabled:hover:bg-danger");
+    expect(c).toContain("enabled:hover:text-white");
+    expect(c).toContain("enabled:hover:no-underline");
+  });
+
+  it("⚠️ reserves danger-link's hover border at rest, so hovering cannot reflow", () => {
+    // The button sits in the stage bar's corner beside a ten-pill indicator
+    // that wraps at the widths this app is used at. A border that appeared
+    // only on hover would grow the button by 2px under the pointer and shove
+    // the row it shares — the classic hover-jitter, on the one control whose
+    // click must not land somewhere else.
+    const c = classes(buttonClass({ variant: "danger-link" }));
+    expect(c).toContain("border");
+    expect(c).toContain("border-transparent");
+    expect(c).toContain("enabled:hover:border-danger");
+  });
+
+  it("⚠️ takes danger-link's underline away when it is disabled", () => {
+    // The Cancel is `disabled` for the three modal phases, and
+    // `SURFACE_DISABLED` neutralises border, background, text colour and
+    // shadow — but text-decoration is a fifth property nothing else in the app
+    // sets, so it was left behind: an inert grey label still wearing full link
+    // affordance, inviting a click it cannot accept. The rule lives on
+    // `SURFACE_DISABLED` rather than on the variant because the disabled half
+    // has to stay byte-identical across every surfaced variant.
+    const c = classes(buttonClass({ variant: "danger-link" }));
+    expect(c).toContain("underline");
+    expect(c).toContain("disabled:no-underline");
+  });
+
+  it("⚠️ gives danger-link the same fill on keyboard focus as on hover", () => {
+    // Hover is scoped to :enabled and a keyboard user never gets it, so
+    // without this the control that abandons a run would be a red underlined
+    // label with nothing but the outline ring to say it is focused.
+    const c = classes(buttonClass({ variant: "danger-link" }));
+    for (const key of [
+      "focus-visible:bg-danger",
+      "focus-visible:text-white",
+      "focus-visible:border-danger",
+      "focus-visible:no-underline",
+    ]) {
+      expect(c).toContain(key);
+    }
+  });
+
+  it("⚠️ stops a coloured child label defeating danger-link's inverted state", () => {
+    // The same failure `secondary` carries the `**:` variant for: a colour on
+    // a child beats inheritance from the button, so a `text-fade` label would
+    // stay #595F6A on the #B91C1C fill — 2.3 : 1, unreadable. `danger-link` is
+    // the app's second variant that inverts its label colour, so it is the
+    // second one defeatable this way.
+    const c = classes(buttonClass({ variant: "danger-link" }));
+    expect(c).toContain("enabled:hover:**:text-white");
+    expect(c).toContain("focus-visible:**:text-white");
+    // ...and hover-only, exactly as `secondary` does it: a muted child label
+    // at rest is legitimate and the design uses it.
+    expect([...c].filter((k) => k.startsWith("**:"))).toEqual([]);
   });
 });
 

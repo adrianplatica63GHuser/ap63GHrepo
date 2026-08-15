@@ -109,21 +109,33 @@ export function ImportStageBar({ phase, onCancel }: Props) {
         />
 
         <div className="shrink-0">
+          {/*
+            `danger-link` at `md`, not `bare-danger` at `xs`.   (Slice #26.11)
+
+            Adrian's report: "the Cancel import link must be more visible and
+            have a red colour of the fonts, and when hovering over it it should
+            become a big red button like other cancel buttons". The old pairing
+            was the quietest treatment the helper offers — 12px, no padding, no
+            surface — on the one control in the whole flow that abandons a run,
+            sitting in the corner of a card carrying a ten-pill indicator. It
+            lost every contest for the eye it was in.
+
+            The size is the helper's `md` rather than a `text-*` appended
+            through `className`: `size` exists precisely because appending a
+            conflicting utility resolves on Tailwind's emission order, which is
+            the bet the helper's contract forbids. `whitespace-nowrap` conflicts
+            with nothing it emits, and the hit target now comes from the
+            variant's own `px-3 py-1.5` instead of the `min-h-6` the bare
+            variant needed.
+          */}
           <button
             type="button"
             onClick={onCancel}
             disabled={inModal}
             className={buttonClass({
-              variant: "bare-danger",
-              size: "xs",
-              // Layout only, and `px-*` is deliberately NOT here: the bare
-              // variants emit `p-0`, so a padding utility appended through
-              // `className` would be a conflicting rule that wins or loses on
-              // Tailwind's emission order — the exact bet the helper's contract
-              // forbids. `min-h-6` conflicts with nothing the helper emits and
-              // brings the hit target up from the text box's ~16px to the 24px
-              // a pointer target needs.
-              className: "min-h-6 whitespace-nowrap",
+              variant: "danger-link",
+              size: "md",
+              className: "whitespace-nowrap",
             })}
           >
             {tc("button")}

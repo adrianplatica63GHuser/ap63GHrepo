@@ -466,21 +466,123 @@ export function firstPerPlace(
 export const MAX_PROPERTY_FOLDERS = 5;
 
 /**
- * The two folders that may sit beside the properties, spelled exactly.
+ * The two folders that may sit beside the properties.
  *
  * `common` holds documents concerning every property in this chosen folder;
  * they are processed after the properties exist and linked to all of them.
  * `floating` holds documents related to none of them — stored, possibly
  * creating Persons, linked to no Property.
  *
- * Lowercase and English on purpose, in an application whose UI is Romanian:
- * these are structural markers the user types into File Explorer, not copy. A
- * marker that has to be matched loosely is a marker that has already failed —
- * hence STR-05, which catches `Common` / `COMMON` and says exactly what to
- * rename it to instead of silently accepting it.
+ * ⚠️ **THESE ARE IDENTITIES, NOT SPELLINGS, AND #26.11 SPLIT THE TWO APART.**
+ * Until that slice this constant was both at once, and its own comment said the
+ * English lowercase names were "on purpose, in an application whose UI is
+ * Romanian: these are structural markers the user types into File Explorer, not
+ * copy". Adrian overruled that from the screen: he was looking at the Romanian
+ * import and reading two English words, and the words in question are precisely
+ * the ones a Romanian business user has to type into Windows Explorer.
+ *
+ * So the identity stays `common` / `floating` — it is a discriminated tag on
+ * `EntryAssignment.bucket` and a field name on `FolderGrouping`, it is never
+ * rendered and never typed, and renaming it would churn four modules and their
+ * tests to change nothing anyone can see. What the user types and reads is
+ * `SHARED_FOLDER_DISPLAY_NAMES`, and what is accepted on disk is
+ * `acceptedSharedFolderSpellings` — which is a SUPERSET of what was accepted
+ * before, so no archive already prepared on disk stops importing.
  */
 export const SHARED_FOLDER_NAMES = Object.freeze(["common", "floating"] as const);
 export type SharedFolderName = (typeof SHARED_FOLDER_NAMES)[number];
+
+/**
+ * What the user types in File Explorer, and what every sentence in the product
+ * calls these two folders.   (Slice #26.11)
+ *
+ * ⚠️ **THE SAME IN BOTH LOCALES, AND THAT IS NOT AN OVERSIGHT.** A folder name
+ * is a string on a disk, not copy: if `en-GB` told an English reader to create
+ * `common` while the checker's rename instruction said `comune`, the two would
+ * be giving contradictory orders about one filesystem. Both locales name these,
+ * and `messages/*.json` must keep quoting them verbatim — the copy test pins it.
+ *
+ * ⚠️ **CHANGING A VALUE HERE IS A CHANGE TO THE PRODUCT'S CONTRACT WITH A DISK
+ * SOMEBODY ALREADY POPULATED.** Whatever leaves this record is what STR-05
+ * tells a user to rename their folder to. Add the outgoing spelling to
+ * `LEGACY_SHARED_FOLDER_SPELLINGS` in the same commit, or every archive built
+ * against the old name starts failing the structure check the next morning.
+ */
+export const SHARED_FOLDER_DISPLAY_NAMES: Readonly<Record<SharedFolderName, string>> =
+  Object.freeze({
+    common: "comune",
+    floating: "flotante",
+  });
+
+/**
+ * Spellings still accepted on disk although the product no longer teaches them.
+ *
+ * ⚠️ **This is a compatibility list and it only ever grows.** Adrian was
+ * mid-import when #26.11 landed, against a folder on his own disk holding
+ * `common` and `floating` subfolders, and every archive Ciprian has prepared so
+ * far is spelled the same way. A rename that turned those into STR-05
+ * violations would have handed a business user a rename chore across every
+ * folder he owns as the price of a copy change he never asked for.
+ *
+ * They are accepted SILENTLY: nothing in the UI mentions them, so a user
+ * reading the rules learns one spelling, and a user whose folder is already
+ * named the old way is never told they are wrong. There is deliberately no
+ * "deprecated, please rename" nag — a warning nobody can act on without a
+ * morning of work is worse than the inconsistency it reports.
+ *
+ * ⚠️ **KNOWN AND ACCEPTED: BOTH SPELLINGS AT ONCE IS LEGAL AND LABELS BADLY.**
+ * A chosen folder holding `comune` AND `common` side by side breaks no rule,
+ * and it should not: both mean the same thing, both bucket to the same
+ * identity, and every document in either is linked to every property — which
+ * is correct. What is imprecise is the LABELLING downstream. The property
+ * step's sentence names one folder while counting the documents of two, and
+ * `inResultOrder` groups the result table by the raw `pathParts[0]`, so the
+ * same concept appears as two headings. Neither loses or mis-files a document.
+ *
+ * It is left alone on purpose. The state exists only for a user who renamed
+ * half of a transition and stopped, a rule against it would need a new ID, two
+ * Romanian sentences and a place in the fixing order, and the remedy it would
+ * print — "rename the other one too" — is one the user is already free to
+ * apply. If it turns out to happen in practice, it is a rule, not a redesign.
+ *
+ * ⚠️ **AND TWO CONSEQUENCES THAT NEED NO SUCH STATE — they land on the
+ * ordinary single-spelling legacy path, and they are the price of the rename:**
+ *
+ *  - **The product names the canonical folder even when the disk says
+ *    otherwise.** A user whose folder is `common` reads "Folderul „comune”: 1
+ *    document" at the property step, is offered `comune` as STR-05's rename
+ *    target, and sees `comune` throughout the rules listing and the saved
+ *    take-away page. Nothing tells them they are wrong; they are simply told
+ *    about a folder that is not on their disk. Making these name the folder
+ *    actually found would mean threading the real name through as an ICU
+ *    argument at each site, and it would still have to pick one when both
+ *    exist. The cheap alternative is the one already available: rename the
+ *    folder once and the mismatch is gone forever.
+ *  - **Tags record the spelling, because tags record the path.** `tagsForEntry`
+ *    persists `pathParts` verbatim, so a document imported from `common/` gets
+ *    an `entity_tag` row named `common` and one from `comune/` gets `comune`.
+ *    That is correct — a tag is a record of where the file was, and rewriting
+ *    history to a name the disk never used would be the lie — but it does mean
+ *    an archive imported across the rename is browsable under two tags for one
+ *    concept. Merging them is a data job, not a code one.
+ */
+export const LEGACY_SHARED_FOLDER_SPELLINGS: Readonly<Record<SharedFolderName, readonly string[]>> =
+  Object.freeze({
+    common: Object.freeze(["common"] as const),
+    floating: Object.freeze(["floating"] as const),
+  });
+
+/**
+ * Every spelling of one shared folder that a disk may legally use, canonical
+ * first.
+ *
+ * Canonical-first matters twice: `sharedFolderName` returns the identity so the
+ * order is invisible there, but any future caller wanting "the name to show"
+ * gets the one the product teaches rather than whichever alias it stumbled on.
+ */
+export function acceptedSharedFolderSpellings(id: SharedFolderName): readonly string[] {
+  return [SHARED_FOLDER_DISPLAY_NAMES[id], ...LEGACY_SHARED_FOLDER_SPELLINGS[id]];
+}
 
 /**
  * What separates the cadastral identifiers from free description in a property
@@ -753,30 +855,54 @@ export function propertyIdentityOf(rawName: string): string | null {
 // The rest of the vocabulary
 // ---------------------------------------------------------------------------
 
-/** Exactly `common` or `floating`, character for character. Anything else is not one. */
+/**
+ * Which shared folder this name IS — character for character, canonical
+ * spelling or accepted legacy one. Anything else is not one.
+ *
+ * ⚠️ **Returns the IDENTITY, never the string it was handed.** Before #26.11
+ * the two were the same value and the function could return its own argument;
+ * they are not any more, and a caller that wants the name to show the user must
+ * go through `SHARED_FOLDER_DISPLAY_NAMES`. Returning the matched spelling
+ * instead would put `common` back into a Romanian sentence for any user whose
+ * disk still says `common` — the exact thing the slice removed.
+ *
+ * Still exact rather than folded: a marker that has to be matched loosely is a
+ * marker that has already failed. `Comune` and `COMUNE` are STR-05, below.
+ */
 export function sharedFolderName(name: string): SharedFolderName | null {
-  return (SHARED_FOLDER_NAMES as readonly string[]).includes(name)
-    ? (name as SharedFolderName)
-    : null;
+  return (
+    SHARED_FOLDER_NAMES.find((id) => acceptedSharedFolderSpellings(id).includes(name)) ?? null
+  );
 }
 
 /**
- * A folder MEANT to be `common` or `floating` and misspelled — the STR-05 case.
+ * A folder MEANT to be one of the two and misspelled — the STR-05 case.
  *
- * Folded comparison, so `Common`, `COMMON` and ` common ` all resolve.
+ * Folded comparison, so `Comune`, `COMUNE` and ` comune ` all resolve — and so
+ * do `Common` and `COMMON`, because the legacy spellings are matched here too.
+ * That is deliberate: someone whose disk says `Common` is fixing a capital
+ * letter either way, and the rename instruction they get names the canonical
+ * `comune`, so the one chore they are asked to do also brings them forward.
  * `foldRomanian` is the codebase's one folding function (lowercase, trim,
  * collapse whitespace, strip diacritics through NFD, covering both encodings
  * of ș/ț) and re-implementing a subset of it here is how two definitions of
  * "the same name" begin disagreeing.
  *
- * Returns `null` for a name that is already exact, so STR-04 and STR-05 stay
+ * ⚠️ **`comun` is still NOT a near miss of `comune`**, by the same argument
+ * #26.01 made for it against `common`: it is a different word, it folds to
+ * itself, and it falls to STR-04, which asks the user to choose a real name
+ * rather than telling them they made a typo they did not make.
+ *
+ * Returns `null` for a name that is already accepted, so STR-04 and STR-05 stay
  * mutually exclusive by construction: a misspelt shared folder gets the rename
  * instruction, never the useless "this is not a property folder".
  */
 export function sharedFolderNearMiss(name: string): SharedFolderName | null {
   if (sharedFolderName(name) !== null) return null;
   const folded = foldRomanian(name);
-  return SHARED_FOLDER_NAMES.find((n) => n === folded) ?? null;
+  return (
+    SHARED_FOLDER_NAMES.find((id) => acceptedSharedFolderSpellings(id).includes(folded)) ?? null
+  );
 }
 
 /**

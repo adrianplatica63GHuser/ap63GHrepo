@@ -95,6 +95,25 @@ function balancedBlock(css: string, from: number): string {
   throw new Error("unbalanced CSS block");
 }
 
+/**
+ * `stage-indicator.tsx` with every comment stripped.
+ *
+ * ⚠️ **A BEHAVIOUR GUARD MUST READ ONLY CODE** (CLAUDE.md → Design habits).
+ * The two assertions that use this match Tailwind class SHAPES, and the very
+ * comments explaining why those classes must not appear quote the classes
+ * themselves — `border-color`, `border-amber-*`. They sit just outside the
+ * inspected slice today, which makes this a trap rather than a live bug: move
+ * one comment inside the record, which is the natural place to put it, and the
+ * guard goes red pointing at prose while the code it protects is perfectly
+ * correct. A red test nobody can act on is how a guard gets deleted.
+ */
+function pillSource(): string {
+  return fs
+    .readFileSync(path.join(process.cwd(), "src", "components", "stage-indicator.tsx"), "utf8")
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/\/\/[^\n]*/g, "");
+}
+
 /** The declarations of one keyframe selector, e.g. `50%`, inside one animation. */
 function keyframe(css: string, animation: string, selector: string): string {
   // Matched with a boundary, and required to be UNIQUE. A bare `indexOf` finds
@@ -190,7 +209,24 @@ function shadowIn(decls: string): { spreadPx: number; alpha: number } {
   const lengths = [...value.matchAll(/(-?\d*\.?\d+)(px|rem|em)?(?=\s|$)/g)]
     .map((x) => Number(x[1]));
 
-  return { spreadPx: lengths[3] ?? 0, alpha: alphaOf(value) };
+  // ⚠️ **THROWS on a value whose four lengths are not all numbers, rather than
+  // reading a missing one as 0.** `lengths[3] ?? 0` was the hole: a spread
+  // written `var(--anything)` contains no digit, so it never matched, the
+  // fourth length came back `undefined`, and the guard measured a 0px spread —
+  // silently, for any frame. That is inert at the peak, where the assertion is
+  // `toBe(2)` and a 0 fails loudly. At REST the assertion is `toBe(0)`, so a
+  // `var()` there would sail through and a visible ring at rest — the dipping
+  // cue this whole block exists to forbid — would ship green. Same argument as
+  // `alphaOf`'s: a reader that cannot see the number must say so, not assume a
+  // convenient one.
+  if (lengths.length < 4 || lengths.some((n) => Number.isNaN(n))) {
+    throw new Error(
+      "box-shadow must declare four literal lengths — a var() spread is " +
+        `unreadable here, see the note in globals.css: ${value.trim().slice(0, 80)}`,
+    );
+  }
+
+  return { spreadPx: lengths[3]!, alpha: alphaOf(value) };
 }
 
 /**
@@ -732,13 +768,56 @@ describe("the indicator's copy", () => {
     const rest = shadowIn(keyframe(css, "ga-stage-pulse", "0%, 100%"));
     const peak = shadowIn(keyframe(css, "ga-stage-pulse", "50%"));
 
-    // At rest: transparent. A visible ring at 0% makes the animation a DIP
-    // rather than a beat, which is the cue this codebase retired.
-    expect(rest.alpha).toBe(0);
-    // At the peak: a real spread AND a real alpha. Either one at zero is a
-    // halo nobody sees.
-    expect(peak.spreadPx).toBeGreaterThan(0);
+    // ⚠️ **THIS PINS #26.11's DESIGN, NOT "EITHER OF THE TWO DESIGNS".** The
+    // first rewrite of this block admitted both — a disjunction reading
+    // "transparent at rest OR zero-spread at rest" — and the result was a guard
+    // that passed on the exact CSS Adrian rejected: #26.03's 6px halo satisfies
+    // the first arm, which then skips the colour-constancy check on the second,
+    // and nothing capped the spread, so 6px and 2px were indistinguishable to
+    // it. A guard that cannot fail on the state it was rewritten because of is
+    // not a guard. There is one shipped design; assert it.
+    //
+    // At rest the ring paints NOTHING, by having no spread: a zero-spread
+    // shadow sits exactly under the border box, so the frame at rest is the
+    // pill's own 1px border and nothing else. (#26.03 achieved the same end by
+    // making a 5px ring transparent. That is gone — see globals.css.) A ring
+    // visible at rest would make the animation a DIP rather than a beat, which
+    // is the cue this codebase retired.
+    expect(rest.spreadPx).toBe(0);
+
+    // ⚠️ **The colour does not move while the spread does.** This is the whole
+    // difference between "the frame is getting thicker" — what was asked for —
+    // and "a colour is fading in", which is the cue retired above wearing a
+    // frame's clothes. Unconditional now: under this design a varying alpha is
+    // always the wrong answer.
+    expect(rest.alpha).toBe(peak.alpha);
     expect(peak.alpha).toBeGreaterThan(0.3);
+
+    // ⚠️ **THE PEAK SPREAD IS THE ×3 RATIO, TO THE PIXEL, AND `toBe` IS THE
+    // POINT.** Adrian specified the amplitude as "between regular frame
+    // thickness and three times the regular thickness"; the pill's border is
+    // Tailwind's 1px `border`, so the ring outside it is `3 × 1 − 1 = 2`. A
+    // `toBeGreaterThan(0)` here is what let the 6px halo through, and 6px was
+    // the report ("way too strong … way too thick") this slice answers. If the
+    // pill's border width ever changes, this number moves with it — see the
+    // note in `stage-indicator.tsx`.
+    //
+    // It also means the spread must stay a LITERAL in globals.css: `shadowIn`
+    // reads lengths out of the declaration text, and `var(--something)` holds
+    // no digit, so a custom property here measures 0 and the guard goes blind.
+    // That is not a false alarm to work around — it is why the value is spelt
+    // out in both places with a comment tying them together.
+    expect(peak.spreadPx).toBe(2);
+
+    // ⚠️ **The pill's border colour comes from the same token as the ring.**
+    // #26.11's first attempt left `border-amber-400` on the pill in
+    // `stage-indicator.tsx` while the ring painted amber-700, so the peak was a
+    // pale 1px outline with a dark 2px band swelling outside it — two visibly
+    // different ambers, i.e. precisely the "border with something glowing
+    // behind it" reading the slice replaced the halo to be rid of. Asserted on
+    // the class's own live rule, because that is the only place the two can be
+    // made to agree by construction.
+    expect(live[0].block).toMatch(/border-color:\s*rgb\(\s*var\(--ga-stage-halo\)/);
 
     // 4. The reduced-motion fallback is a steady ring at full strength, and it
     //    is the RULE that is asserted, inside the reduced-motion query and
@@ -753,8 +832,56 @@ describe("the indicator's copy", () => {
     expect(reduced).toHaveLength(1);
     expect(reduced[0].block).toMatch(/animation:\s*none/);
     const frozen = shadowIn(reduced[0].block);
-    expect(frozen.spreadPx).toBeGreaterThan(0);
-    expect(frozen.alpha).toBeGreaterThan(0.3);
+    // Parked at the thick end — the same ring the animation reaches, not some
+    // average of the two frames and not a third value invented here.
+    expect(frozen.spreadPx).toBe(peak.spreadPx);
+    expect(frozen.alpha).toBe(peak.alpha);
+  });
+
+  it("⚠️ keeps the current pill's border at the 1px the ×3 ratio is built on", () => {
+    // The peak spread is asserted as exactly 2px above, and 2 is `3 × 1 − 1`.
+    // The 1 is Tailwind's bare `border` on the pill's SHARED class list —
+    // which is not in the `current:` entry the next test inspects, so nothing
+    // read it until now. Change it to `border-2` and the cue silently becomes
+    // ×2 (a 2px rest frame growing to 4px) with every other assertion in this
+    // file still green. Both `globals.css` and `stage-indicator.tsx` say "change
+    // the pill's border width and the spread must move with it"; this is what
+    // makes that more than a wish.
+    const source = pillSource();
+    const shared = source.slice(
+      source.indexOf("inline-flex items-center"),
+      source.indexOf("PILL[step.status]"),
+    );
+    expect(shared).toMatch(/(^|\s)border(\s|")/);
+    expect(shared).not.toMatch(/(^|\s)border-\d/);
+  });
+
+  it("⚠️ leaves the current pill's border colour to .ga-stage-pulse", () => {
+    // The other half of the assertion above, and it has to be a separate read:
+    // the CSS can set `border-color` perfectly and still be overridden by a
+    // `border-amber-*` utility on the same element, because both are single
+    // class selectors and the winner is decided by stylesheet order — the exact
+    // bet `button-styles.ts` spends its header forbidding.
+    //
+    // So the current pill must carry NO border-colour utility at all, in either
+    // scheme. It still carries the 1px `border` (the width), which is half the
+    // ×3 ratio; only the colour is delegated.
+    const source = pillSource();
+    const currentEntry = source.slice(
+      source.indexOf("current:"),
+      source.indexOf("done:"),
+    );
+    // If the record is ever reordered so this slice grabs the wrong text, this
+    // line fails loudly rather than letting the assertion below pass vacuously.
+    expect(currentEntry).toContain("ga-stage-pulse");
+    // Any `border-…` utility, under any variant prefix and in any colour
+    // notation: `border-amber-400`, `dark:border-amber-500`,
+    // `dark:hover:border-amber-500`, `border-[#B45309]`, `border-transparent`,
+    // and the widths too — `border-2` would break the ×3 ratio just as surely
+    // as a colour breaks the one-frame reading. Plain `border` (the 1px width
+    // the ratio is built on) has no hyphen and is deliberately still allowed,
+    // although it lives on the shared class list rather than in here.
+    expect(currentEntry).not.toMatch(/(^|[\s"])([a-z0-9-]+:)*border-\S/);
   });
 
   it.each(LOCALES)("ships no stray stage or line keys in %s", (file) => {

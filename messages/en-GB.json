@@ -1833,6 +1833,12 @@
       "gateContinue": "Continue import"
     },
     "pageTitle": "Import",
+    "exampleLabels": {
+      "correct": "Correct",
+      "correctAlt": "Right",
+      "wrong": "Wrong",
+      "wrongAlt": "Otherwise"
+    },
     "wizard": {
       "propertyStep": {
         "title": "The properties in this import",
@@ -1852,8 +1858,8 @@
         "cornersKept": "The property already has {existing, plural, one {one corner} other {# corners}}, and the file in the folder holds {offered, plural, one {one} other {#}}. The existing corners are left unchanged. To replace them with the ones in the file, open the property's own page after the import and edit its corners there.",
         "ambiguous": "The system holds {count, plural, one {one property} other {# properties}} with the same tarla and parcela:",
         "ambiguousBlocks": "The import cannot continue while one parcel has more than one property in the system. Open the properties list, keep a single one, then come back here and press “Try again”.",
-        "commonNote": "The “common” folder: {count, plural, one {one document, which will be linked to every property above} other {# documents, which will be linked to every property above}}.",
-        "floatingNote": "The “floating” folder: {count, plural, one {one document, which will be saved without being linked to any property} other {# documents, which will be saved without being linked to any property}}.",
+        "commonNote": "The “comune” folder: {count, plural, one {one document, which will be linked to every property above} other {# documents, which will be linked to every property above}}.",
+        "floatingNote": "The “flotante” folder: {count, plural, one {one document, which will be saved without being linked to any property} other {# documents, which will be saved without being linked to any property}}.",
         "unassignedNote": "{count, plural, one {One file is not in any property subfolder and will not be linked to anything} other {# files are not in any property subfolder and will not be linked to anything}}.",
         "progress": "Preparing the properties… {done} of {total}",
         "cancelButton": "Cancel",
@@ -1863,7 +1869,7 @@
         "errorStale": "What the system holds for the property in folder “{folder}” is no longer what you were shown. The list above is being re-read — check it and confirm again.",
         "noNickname": "(no nickname)",
         "chipCorners": "{count, plural, =0 {no corners} one {one corner} other {# corners}}",
-        "commonNoteUnlinked": "The “common” folder: {count, plural, one {one document, but there is no property for it to be linked to, so it will be saved unlinked} other {# documents, but there is no property for them to be linked to, so they will be saved unlinked}}.",
+        "commonNoteUnlinked": "The “comune” folder: {count, plural, one {one document, but there is no property for it to be linked to, so it will be saved unlinked} other {# documents, but there is no property for them to be linked to, so they will be saved unlinked}}.",
         "errorPartial": "{count, plural, one {One property has already been created or updated and it stays in the system} other {# properties have already been created or updated and they stay in the system}}.",
         "errorFolderMissing": "The folder “{folder}” can no longer be found in the listing read at the start. Please start the import again.",
         "introNoProperties": "The folder “{folder}” holds no property subfolders — nothing in it will be linked to a property. If that is not what you expected, cancel and check the subfolder names.",
@@ -2053,7 +2059,7 @@
           "personConfirmed": "the person on the identity card was already in the system and was linked",
           "personPending": "the identity card is waiting to be confirmed",
           "personDeclined": "no person was created from this identity card",
-          "personNoProperty": "an identity card in a shared folder — it cannot be linked to a single property, so it was read as a document",
+          "personNoProperty": "an identity card in a folder that belongs to no property in particular — it cannot be linked to a single property, so it was read as a document",
           "personUnreadable": "the identity card image could not be prepared, so no person was created",
           "readSkippedIdCard": "the general AI read was skipped, because this is an identity card",
           "readSkippedNoPage": "it has no page the AI can read",
@@ -2162,14 +2168,14 @@
     "structure": {
       "rule": {
         "STR-01": {
-          "requirement": "The folder you choose contains only folders: one per property, plus common and floating if you need them. No file sits directly in it.",
-          "example": "Correct: 47per2-225per3per24, 48-50D, common. Wrong: a file contract.pdf placed directly in the chosen folder.",
-          "violation": "The chosen folder contains {files, plural, one {one file that is not inside a folder} other {# files that are not inside a folder}}: {examples}. Move each file into the property folder it belongs to, into common, or into floating."
+          "requirement": "The folder you choose contains only folders: one per property, plus comune and flotante if you need them. No file sits directly in it.",
+          "example": "Correct: 47per2-225per3per24, 48-50D, comune. Wrong: a file contract.pdf placed directly in the chosen folder.",
+          "violation": "The chosen folder contains {files, plural, one {one file that is not inside a folder} other {# files that are not inside a folder}}: {examples}. Move each file into the property folder it belongs to, into comune, or into flotante."
         },
         "STR-02": {
-          "requirement": "The chosen folder holds at most {max} properties. common and floating do not count.",
-          "example": "Correct: {max} property folders, plus common and floating. Wrong: one more property folder beyond those.",
-          "violation": "The chosen folder holds {found, plural, one {one property} other {# properties}}, and the limit is {max}. More than that at once is hard to keep track of. Make a second folder and split the properties between them; if you have shared documents, put a copy of the common folder in each."
+          "requirement": "The chosen folder holds at most {max} properties. comune and flotante do not count.",
+          "example": "Correct: {max} property folders, plus comune and flotante. Wrong: one more property folder beyond those.",
+          "violation": "The chosen folder holds {found, plural, one {one property} other {# properties}}, and the limit is {max}. More than that at once is hard to keep track of. Make a second folder and split the properties between them; if you have shared documents, put a copy of the comune folder in each."
         },
         "STR-03": {
           "requirement": "No two folders in the chosen folder may mean the same property.",
@@ -2177,13 +2183,13 @@
           "violation": "The folders {folder} and {other} mean the same property ({identity}). Keep a single folder for it and move the documents from the other one into it."
         },
         "STR-04": {
-          "requirement": "Every folder in the chosen folder is either a property, or common, or floating. A property name starts with the tarla and the parcela separated by a hyphen. per stands in for the slash, which cannot be used in a folder name.",
+          "requirement": "Every folder in the chosen folder is either a property, or comune, or flotante. A property name starts with the tarla and the parcela separated by a hyphen. per stands in for the slash, which cannot be used in a folder name.",
           "example": "Correct: 47per2-225per3per24, 48-50D, 225per3-24bis. Wrong: Acte 2019, Teren Bragadiru, 2024-Arhiva.",
-          "violation": "The folder {folder} is neither a property, nor common, nor floating. Rename it with the tarla and the parcela, for example 47per2-225per3per24, or move the files out of it into common or floating and delete the empty folder."
+          "violation": "The folder {folder} is neither a property, nor comune, nor flotante. Rename it with the tarla and the parcela, for example 47per2-225per3per24, or move the files out of it into comune or flotante and delete the empty folder."
         },
         "STR-05": {
-          "requirement": "The shared folders are named exactly common and floating, in lower case.",
-          "example": "Correct: common, floating. Wrong: Common, COMMON, Floating.",
+          "requirement": "The shared folders are named exactly comune and flotante, in lower case.",
+          "example": "Correct: comune, flotante. Wrong: Comune, COMUNE, Flotante.",
           "violation": "The folder {folder} looks like {expected} but is not spelled the same way. Rename it to exactly {expected}, in lower case."
         },
         "STR-06": {
@@ -2192,8 +2198,8 @@
           "violation": "The name {folder} carries extra text after the tarla and the parcela but does not separate it with ||. Rename the folder to {suggestion}."
         },
         "STR-07": {
-          "requirement": "The files sitting directly in a property folder — or in common or floating — cannot all be numbered scans. The pages of a scanned document live in a subfolder whose name is the document title.",
-          "example": "Correct: 48-50D > Contract vanzare > 1.jpg, 2.jpg. Wrong: 48-50D > 1.jpg, 2.jpg.",
+          "requirement": "The files sitting directly in a property folder — or in comune or flotante — cannot all be numbered scans. The pages of a scanned document live in a subfolder whose name is the document title.",
+          "example": "Correct: 48-50D ▸ Contract vanzare ▸ 1.jpg, 2.jpg. Wrong: 48-50D ▸ 1.jpg, 2.jpg.",
           "violation": "Every file sitting directly in {folder} is a numbered scan ({files, plural, one {one file} other {# files}}). A number is not a document title, so the import would fall back on the folder name, or on the numbers themselves. Move them into a subfolder whose name is the document title."
         },
         "STR-08": {
@@ -2202,13 +2208,13 @@
           "violation": "The property {folder} contains {found, plural, one {one coordinate file} other {# coordinate files}}: {examples}. At most one is allowed. Keep only the correct one and take the rest out of the property folder."
         },
         "STR-09": {
-          "requirement": "The common and floating folders contain no coordinate files. Coordinates belong to a single property.",
-          "example": "Correct: coord 47per2-225per3per24.txt in the property folder. Wrong: the same file placed in common.",
+          "requirement": "The comune and flotante folders contain no coordinate files. Coordinates belong to a single property.",
+          "example": "Correct: coord 47per2-225per3per24.txt in the property folder. Wrong: the same file placed in comune.",
           "violation": "The folder {folder} contains {found, plural, one {one coordinate file} other {# coordinate files}}: {examples}. Move each coordinate file into the property folder it refers to."
         },
         "STR-10": {
           "requirement": "A page folder contains only files. It has no further folders inside it.",
-          "example": "Correct: 47per2-225per3per24 > Contract vanzare > 1.jpg, 2.jpg. Wrong: 47per2-225per3per24 > Contract vanzare > Anexe > 1.jpg.",
+          "example": "Correct: 47per2-225per3per24 ▸ Contract vanzare ▸ 1.jpg, 2.jpg. Wrong: 47per2-225per3per24 ▸ Contract vanzare ▸ Anexe ▸ 1.jpg.",
           "violation": "The page folder {folder} contains {subfolders, plural, one {one more folder} other {# more folders}}: {examples}. A page folder cannot have folders inside it. Move each of them one level up, beside this folder."
         },
         "STR-11": {
@@ -2239,8 +2245,14 @@
       "hideRules": "Hide the rules",
       "scope": {
         "chosenFolder": "The folder you choose",
-        "topLevelFolder": "The folders inside it: properties, “common” and “floating”",
+        "topLevelFolder": "The folders inside it: properties, “comune” and “flotante”",
         "pageFolder": "The folders holding a document's pages"
+      },
+      "sharedFolders": {
+        "title": "What the two special folders are for",
+        "common": "“comune” — documents that concern every property in this import. Each one is linked to each of them.",
+        "floating": "“flotante” — stand-alone documents that concern no property at all. They are saved to the archive linked to nothing.",
+        "optional": "Neither is required: if you have no such documents, do not make the folder."
       },
       "acknowledge": "I follow the structure rules",
       "acknowledgeHint": "Tick once you have read the rules, and again after each correction you make in File Explorer. The tick is asked for on every check.",
