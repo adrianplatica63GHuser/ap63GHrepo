@@ -22,6 +22,17 @@
  * nothing to infer. That is the difference between reading a structure the user
  * was told to build and guessing at one they were not.
  *
+ * ⚠️ **AND SINCE SLICE #28.02 THE PARSE ITSELF IS POSITIONAL, SO STR-04 REFUSES
+ * MUCH LESS.** `2024-Arhiva` now parses, and what stops it becoming a Property
+ * is STR-15 — a question the user answers in the Structure stage, which BLOCKS
+ * until they do. This module is downstream of that block and deliberately knows
+ * nothing about it: by the time anything calls `groupByPropertyFolder` for real,
+ * every property folder in the grouping has either been confirmed or carries a
+ * `per`. It still groups an unconfirmed folder if asked, for the same reason it
+ * carries `unassigned` — a grouping function that silently dropped an entry
+ * would make a file vanish between the count on the Evaluation screen and the
+ * rows in the result.
+ *
  * WHAT IT DOES WITH THINGS THE RULES FORBID
  * ─────────────────────────────────────────
  * It carries them, in `unassigned`, and links them to nothing. The Structure
@@ -64,7 +75,11 @@ export type PropertyFolderGroup = {
   /** As written, `per` and all — the DB boundary applies `perToSlash`, not this. */
   tarlaSola: string;
   parcela: string;
-  /** Everything after `||`, or null. Free text; never part of identity. */
+  /**
+   * Everything after the SECOND dash, or null. Free text; never part of
+   * identity. (It was everything after `||` until Slice #28.02 retired the
+   * separator.)
+   */
   description: string | null;
   /** `propertyIdentityOf`'s key — what makes two folders the same parcel. */
   identity: string;
@@ -285,7 +300,7 @@ export function assignEntryProperties(
    * DEDUPED, and that is not belt-and-braces.
    *
    * Two property subfolders in one chosen folder can name the same parcel —
-   * `48-50D` and `48-50D||Livada` — in which case both resolve to ONE Property
+   * `48-50D` and `48-50D-Livada` — in which case both resolve to ONE Property
    * id. STR-03 refuses that folder, so no import should reach here holding it;
    * but if it ever did, a `common` document would be associated to the same
    * Property twice, and `associateDocumentsWithProperty` would be called twice

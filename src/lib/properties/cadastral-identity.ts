@@ -69,11 +69,14 @@ export function cadastralValue(raw: string): string {
  *   ""        → ""
  *
  * ⚠️ **Whitespace is REMOVED, not collapsed**, and that is one step further
- * than `foldRomanian` goes on its own. A segment that reached here from a
- * folder name can never contain a space — `structure-rules.ts`'s `SEGMENT_RE`
- * refuses one — so on that path the difference is invisible. It exists for the
- * other path: a value typed by hand into the Property form, where `50 D` and
- * `50D` are the same parcel to everyone except a string comparison.
+ * than `foldRomanian` goes on its own. It was written for a value typed by hand
+ * into the Property form, where `50 D` and `50D` are the same parcel to everyone
+ * except a string comparison — and since Slice #28.02 it earns its keep on the
+ * folder path too. `parsePropertyFolderName` no longer enforces a grammar, so a
+ * folder named `48-50 bis` now yields the parcela `50 bis` where it used to be
+ * refused outright; removing the space is what keeps it the same property as
+ * `48-50bis`, which is how Romanian cadastral practice writes the same parcel on
+ * a different day.
  */
 export function cadastralKey(raw: string): string {
   return foldRomanian(perToSlash(raw)).replace(/\s+/g, "");
@@ -134,21 +137,34 @@ export function hasCadastralIdentity(
  *                                                    (Slice #26.07.fix)
  *
  * Digits, optionally slash-joined, with at most one allowed letter suffix —
- * `47`, `47/2`, `225/3/24`, `50D`, `24bis`. The decoded mirror of
- * `SEGMENT_RE` + `SUFFIX_ALLOWED` in `structure-rules.ts`, which say the same
- * thing about the `per` form a folder name is written in.
+ * `47`, `47/2`, `225/3/24`, `50D`, `24bis`.
  *
- * ⚠️ **This exists because `hasCadastralIdentity` is not a shape test, and one
- * caller needs one.** The import wizard's identifiers come out of #26.01's
- * grammar, which has already refused everything that is not this — so there,
- * "both halves are non-empty" is the whole question. The Process route's come
+ * ⚠️ **THIS IS THE LAST SHAPE TEST IN THE SYSTEM, AND IT IS THE PROCESS ROUTE'S
+ * ALONE.** It used to be the decoded mirror of `SEGMENT_RE` + `SUFFIX_ALLOWED`
+ * in `structure-rules.ts`; Slice #28.02 deleted both of those, deliberately and
+ * on Adrian's instruction — the import's parse now carries no guard on the shape
+ * of a tarla or a parcela, and `212per40IE55821` is a legitimate parcela. **So
+ * this pattern no longer mirrors anything, and it must not be read as still
+ * describing what the import accepts.** Widening it to match would be
+ * meaningless (the import has nothing left to match) and narrowing the import to
+ * match it would be reintroducing the grammar the slice removed.
+ *
+ * ⚠️ **It exists because `hasCadastralIdentity` is not a shape test, and one
+ * caller needs one.** The import wizard's identifiers come from a positional
+ * parse plus STR-15's question to the user, so there "both halves are non-empty"
+ * is the whole question. The Process route's come
  * from a legacy folder TAG read by the retired `parseFolderName`, which splits
- * on the first `-` and hands back whatever it finds: `2019-2020 dosare` is
- * tarla "2019", parcela "2020 dosare", and `12-superficie teren` is parcela
- * "su/ficie teren" once `perToSlash` has been at it. Both are non-empty, and
+ * on the first `-` and hands back whatever it finds, with nobody to ask:
+ * `2019-2020 dosare` is tarla "2019", parcela "2020 dosare", and
+ * `12-superficie teren` is parcela "superficie teren". Both are non-empty, and
  * treating either as an identity would let the first coordinate document in an
  * archive folder claim it and lock every other document in that folder out of
  * ever producing a Property.
+ *
+ * (That second example read "su/ficie teren" until #28.02, when `perToSlash`
+ * stopped decoding `per` outside a run of digits. This guard refuses it either
+ * way; what changed is that the string it refuses is now the one the user
+ * actually typed.)
  *
  * A pair of plain numbers is still read as cadastral — `2019-2020` passes.
  * That ambiguity is inherent and `structure-rules.ts` already records it as

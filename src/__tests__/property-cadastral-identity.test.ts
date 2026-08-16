@@ -327,13 +327,20 @@ describe("propertyIdentityOf and cadastralIdentityKey are the same rule", () => 
   });
 
   it("keeps the description out of the identity", () => {
-    expect(propertyIdentityOf("48-50D||Prisecaru")).toBe(propertyIdentityOf("48-50D"));
+    // ⚠️ The description is what follows the SECOND dash since Slice #28.02.
+    // Written the old way — `48-50D||Prisecaru` — this is not a description at
+    // all any more but the parcela `50D||Prisecaru`, and therefore a different
+    // property; both halves are asserted so the change cannot be read as an
+    // accident of rewording.
+    expect(propertyIdentityOf("48-50D-Prisecaru")).toBe(propertyIdentityOf("48-50D"));
+    expect(propertyIdentityOf("48-50D||Prisecaru")).not.toBe(propertyIdentityOf("48-50D"));
   });
 
   it("⚠️ DELEGATES — the agreement above cannot be reached by two implementations", () => {
     // The eight names above agree whichever way `propertyIdentityOf` is
-    // written: `SEGMENT_RE` forbids whitespace and `foldRomanian` lowercases
-    // before the old private `/per/g` ran, so the inputs that would separate a
+    // written: the folder-name parse trims each half (`SEGMENT_RE` forbade
+    // whitespace outright until #28.02) and `foldRomanian` lowercases before
+    // the old private `/per/g` ran, so the inputs that would separate a
     // re-fork from the real thing cannot come out of a folder name. Restoring
     // the pre-#26.07 three-line decode leaves every assertion in this block
     // green — measured — which makes them a description rather than a guard.
@@ -365,10 +372,21 @@ describe("propertyIdentityOf and cadastralIdentityKey are the same rule", () => 
     );
   });
 
-  it("has no identity for a name the grammar refuses", () => {
-    // The three false positives that retired the old parseFolderName heuristic.
+  it("has no identity for a name that does not parse", () => {
+    // ⚠️ Slice #28.02 halved this list, and the removals ARE the slice. The
+    // parse is positional now, so `2024-Arhiva` and `48-50Ana-Maria` do have an
+    // identity — what refuses them is STR-15, a question the Structure stage
+    // asks and blocks on, not a null returned from here.
+    //
+    // `3 Calea Victoriei` stays: it carries no dash, so there is no parcela and
+    // nothing to identify. It is also #23.00's original false positive, which is
+    // why it is the one worth keeping in a suite about identity.
     expect(propertyIdentityOf("3 Calea Victoriei")).toBeNull();
-    expect(propertyIdentityOf("2024-Arhiva")).toBeNull();
-    expect(propertyIdentityOf("48-50Ana-Maria")).toBeNull();
+    expect(propertyIdentityOf("Documente generale")).toBeNull();
+    expect(propertyIdentityOf("48-")).toBeNull();
+    // …and the two that moved out of this rule's reach, stated so that a future
+    // reader does not "restore" them.
+    expect(propertyIdentityOf("2024-Arhiva")).toBe("2024-arhiva");
+    expect(propertyIdentityOf("48-50Ana-Maria")).toBe("48-50ana");
   });
 });

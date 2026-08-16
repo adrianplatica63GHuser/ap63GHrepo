@@ -378,6 +378,23 @@ export type RulesPageInput = {
    * Omitted entirely when absent — see `RulesPageNote`.
    */
   rulesNote?: RulesPageNote;
+  /**
+   * A second explanatory block, printed under the fix list rather than above
+   * the rules.   (Slice #28.02)
+   *
+   * ⚠️ **It exists because a DECISION the user took on screen is otherwise
+   * absent from the page they carry away.** The Structure stage's STR-15 asks
+   * "is this folder a property?", and a "yes" removes the violation — so the
+   * folder simply disappears, and the page prints the all-clear with no record
+   * of what was agreed to. Every other rule's remedy is visible on the page
+   * because it is still outstanding; this one's is invisible precisely because
+   * it is settled, and it is the only one that decides whether a row is written
+   * to the database.
+   *
+   * Same shape and same styling as `rulesNote`, a different PLACE: this one
+   * belongs beside the fix list it modifies, not above the reference section.
+   */
+  answersNote?: RulesPageNote;
   strings: RulesPageStrings;
 };
 
@@ -422,6 +439,7 @@ export function buildRulesPageHtml(input: RulesPageInput): string {
     clean,
     warnings,
     rulesNote,
+    answersNote,
     strings,
   } = input;
 
@@ -443,13 +461,20 @@ export function buildRulesPageHtml(input: RulesPageInput): string {
    * shows as a tinted card. `RulesPageNote`'s own doc says it must not be able
    * to look like a rule; refusing the ID chip was only half of that.
    */
-  const noteLines = (rulesNote?.lines ?? []).filter((line) => line.trim() !== "");
-  const noteBlock =
-    rulesNote === undefined || rulesNote.heading.trim() === "" || noteLines.length === 0
+  const noteBlockOf = (note: RulesPageNote | undefined): string => {
+    const lines = (note?.lines ?? []).filter((line) => line.trim() !== "");
+    return note === undefined || note.heading.trim() === "" || lines.length === 0
       ? ""
-      : `<div class="note"><h3>${esc(rulesNote.heading)}</h3>` +
-        noteLines.map((line) => `<p class="msg">${esc(line)}</p>`).join("") +
+      : `<div class="note"><h3>${esc(note.heading)}</h3>` +
+        lines.map((line) => `<p class="msg">${esc(line)}</p>`).join("") +
         `</div>`;
+  };
+  const noteBlock = noteBlockOf(rulesNote);
+  // Slice #28.02 — the same rule, applied to the second note: a heading with
+  // nothing under it is not printed. Shared through one function rather than
+  // copied, because the paragraph above is the fourth time this module has had
+  // to learn it and a fifth copy is how it gets unlearned.
+  const answersBlock = noteBlockOf(answersNote);
 
   const ruleBlocks = sections
     .map((section) =>
@@ -524,6 +549,9 @@ export function buildRulesPageHtml(input: RulesPageInput): string {
       `<p class="meta">${esc(strings.generatedAt)}: ${esc(generatedAt)}</p>`,
       `<h2>${esc(strings.violationsTitle)}</h2>`,
       violationBlocks,
+      // Under the fix list, because it is about the same list: these are the
+      // questions that are no longer on it.
+      answersBlock,
       warningBlocks,
       // The rules come SECOND on the page although they come first on the
       // screen. The screen is read before a folder is picked, where the rules

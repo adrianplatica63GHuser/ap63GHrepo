@@ -144,6 +144,10 @@ import { ImportScanningStage } from "./import-scanning-stage";
 import { ImportRunStage } from "./import-run-stage";
 import { CancelImportDialog } from "./cancel-import-dialog";
 import { checkStructureStage } from "@/lib/import/structure-check";
+import type {
+  PropertyConfirmation,
+  PropertyConfirmations,
+} from "@/lib/import/structure-rules";
 import { checkConstraintsStage } from "@/lib/import/constraint-check";
 import { checkDuplicationStage } from "@/lib/import/duplication-check";
 import {
@@ -444,6 +448,55 @@ export function ImportWizard() {
   const [observations, setObservations] = useState<DirectoryObservation[]>([]);
   const [metadata, setMetadata] = useState<Map<string, FileMeta> | null>(null);
   const [metaProgress, setMetaProgress] = useState({ done: 0, total: 0 });
+  /**
+   * The user's answers to STR-15, keyed by the folder's path from the chosen
+   * folder.   (Slice #28.02)
+   *
+   * ⚠️ **Here rather than in the panel, and it OUTLIVES a check.** The panel
+   * unmounts on every re-walk, so panel state would throw the answers away each
+   * time round the fix-and-re-check loop — and the loop is designed to be gone
+   * round several times, so the user would be asked the same question about the
+   * same folder after every unrelated fix. That is the same reason the two
+   * report disclosures below live up here.
+   *
+   * ⚠️ **And it is cleared on a NEW FOLDER, in `handlePickFolder`.** An answer
+   * is about one folder on one disk. Carrying `48-50D → property` into a
+   * different chosen folder that happens to hold a `48-50D` of its own would
+   * silently skip the one question standing between it and a Property nobody
+   * agreed to.
+   *
+   * ⚠️ **The ref is not a cache — it is the only copy `runWalk` can read.**
+   * `runWalk` is an async callback that decides the next PHASE from a verdict it
+   * computes itself, and a phase decision cannot wait for a render. Reading the
+   * state there would read the value captured when the callback was created,
+   * which on the turn after an answer is the answer's absence: the walk would
+   * come back not-clean, bounce to `structure-report`, and the panel — rendering
+   * from the fresh state — would show no violation at all. A folder that could
+   * not proceed, with nothing on screen saying why.
+   */
+  const [propertyAnswers, setPropertyAnswers] = useState<PropertyConfirmations>(
+    () => new Map(),
+  );
+  const propertyAnswersRef = useRef<PropertyConfirmations>(propertyAnswers);
+  const setPropertyAnswer = useCallback(
+    (path: string, answer: PropertyConfirmation | null) => {
+      // ⚠️ The REF is the source of truth here and the state is published from
+      // it, rather than the other way round. Two reasons, and the second is the
+      // one that bites: a functional updater that also wrote the ref would be a
+      // side effect inside a reducer, which StrictMode calls twice in
+      // development — and two clicks landing in one tick would each build their
+      // `next` from a `propertyAnswers` that has not re-rendered yet, so the
+      // second would discard the first. Reading the ref, which is written
+      // synchronously, makes both orders correct.
+      const next = new Map(propertyAnswersRef.current);
+      if (answer === null) next.delete(path);
+      else next.set(path, answer);
+      propertyAnswersRef.current = next;
+      setPropertyAnswers(next);
+    },
+    [],
+  );
+
   // The report's two disclosures live here, not in the panel: the panel
   // unmounts during a re-walk, so component state would collapse every
   // expanded section on each turn of the fix-and-re-check loop.
@@ -841,7 +894,7 @@ export function ImportWizard() {
        * suppresses three of the rules, so an empty list from a truncated walk
        * is not a clean folder. See `checkStructureStage`.
        */
-      const verdict = checkStructureStage(seen);
+      const verdict = checkStructureStage(seen, propertyAnswersRef.current);
       if (!verdict.clean) {
         // Nothing below this point is worth paying for — every later stage is
         // unreachable until Structure passes. Metadata is dropped rather than
@@ -1061,6 +1114,9 @@ export function ImportWizard() {
     setMetadata(null);
     setDuplicationChecked(false);
     setPreexisting(null);
+    // A different folder is a different set of questions — see the declaration.
+    setPropertyAnswers(new Map());
+    propertyAnswersRef.current = new Map();
     // ⚠️ Here rather than inside `runWalk`'s `mode === "pick"` block, which is
     // AFTER the walk: a pick whose walk throws never reaches that block, and
     // would have left this true against a folder the user has just changed.
@@ -1366,6 +1422,14 @@ export function ImportWizard() {
     setPreexisting(null);
     setPreexistingAcknowledged(false);
     setPreexistingNotesOpen(false);
+    // Slice #28.02 - and the STR-15 answers. Not currently reachable any other
+    // way (a cancel nulls `_dirHandle`, so the only route back to a walk is
+    // `handlePickFolder`, which clears these too) - but this function's contract
+    // is that every trace of the run is dropped here, and an answer about a
+    // folder on a disk is as much a trace as a tick. One invariant held in two
+    // places is how it stops being held in either.
+    setPropertyAnswers(new Map());
+    propertyAnswersRef.current = new Map();
   }, [endRun]);
 
   // Mint a token for this mount, and retire whatever token is live on unmount —
@@ -1628,8 +1692,15 @@ export function ImportWizard() {
    * wait for a render and once because a render cannot read a local.
    */
   const structureVerdict = useMemo(
-    () => (observations.length === 0 ? null : checkStructureStage(observations)),
-    [observations],
+    () =>
+      observations.length === 0
+        ? null
+        : checkStructureStage(observations, propertyAnswers),
+    // ⚠️ `propertyAnswers`, the STATE, and not the ref: a ref is not a render
+    // input, so a memo that read it would keep the previous answer on screen
+    // until something else happened to re-render. The ref exists for `runWalk`
+    // alone — see its declaration.
+    [observations, propertyAnswers],
   );
 
   /**
@@ -1952,6 +2023,8 @@ export function ImportWizard() {
           onRecheck={() => void handleRecheck()}
           rulesOpen={structureRulesOpen}
           onRulesOpenChange={setStructureRulesOpen}
+          propertyAnswers={propertyAnswers}
+          onPropertyAnswer={setPropertyAnswer}
         />
       )}
 

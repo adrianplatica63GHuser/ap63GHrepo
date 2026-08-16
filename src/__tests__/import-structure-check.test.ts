@@ -37,19 +37,33 @@
  * WHAT IS NOT TESTED HERE
  * ──────────────────────
  *
- * The grammar itself (`parsePropertyFolderName`, `suggestedPropertyFolderName`,
- * `propertyIdentityOf`, the shared-folder vocabulary) belongs to #26.01 and is
- * pinned in `import-structure-rules.test.ts`. Repeating it here would be a
- * second copy of the same claim, which is the drift this slice exists to
- * remove. What is tested here is the WIRING: that this module asks the right
- * question of the right folder and hands the answer the right payload.
+ * The parse itself (`parsePropertyFolderName`, `needsPropertyConfirmation`,
+ * `propertyIdentityOf`, the shared-folder vocabulary) belongs to
+ * `structure-rules.ts` and is pinned in `import-structure-rules.test.ts`.
+ * Repeating it here would be a second copy of the same claim, which is the
+ * drift this slice exists to remove. What is tested here is the WIRING: that
+ * this module asks the right question of the right folder and hands the answer
+ * the right payload.
+ *
+ * ⚠️ STR-15 AND THE DEFAULT ANSWERS   (Slice #28.02)
+ * ─────────────────────────────────────────────────
+ *
+ * STR-15 fires on any property folder whose identifiers carry no `per` until the
+ * user says it is a property — which is most of the short fixture names in this
+ * file (`10-20`, `1-1`, `2-2`). The wrappers below therefore answer it for every
+ * depth-1 folder by default, so that a test about STR-08 is about STR-08.
+ *
+ * The STR-15 tests do the opposite and call the module's own functions, imported
+ * under their `…Raw` names, with no answers at all. **Anything asserting that
+ * STR-15 does or does not fire must use those**, or it is asserting against the
+ * fixture rather than against the rule.
  */
 
 import {
   MAX_TRUNCATION_PATHS,
-  checkStructure,
-  checkStructureStage,
-  emitStructureViolations,
+  checkStructure as checkStructureRaw,
+  checkStructureStage as checkStructureStageRaw,
+  emitStructureViolations as emitStructureViolationsRaw,
 } from "@/lib/import/structure-check";
 // `displayPathOf` moved to `folder-utils.ts` in #26.05, when the Constraints
 // stage became its third and fourth renderer. Its tests stay here, where the
@@ -58,6 +72,8 @@ import { displayPathOf } from "@/lib/import/folder-utils";
 import {
   STRUCTURE_RULE_BY_ID,
   STRUCTURE_RULE_IDS,
+  needsPropertyConfirmation,
+  type PropertyConfirmations,
   type StructureRuleId,
   type StructureViolation,
 } from "@/lib/import/structure-rules";
@@ -88,6 +104,52 @@ function obs(path: string, over: Partial<DirectoryObservation> = {}): DirectoryO
   };
 }
 
+/**
+ * Every top-level property folder in the fixture, answered "yes, it is a
+ * property".   (Slice #28.02)
+ *
+ * ⚠️ Derived from `needsPropertyConfirmation` rather than from a list, so it
+ * only ever answers a question that was actually asked. A hand-written map
+ * would keep passing after a rule change that stopped asking — and would then
+ * be silently answering nothing.
+ *
+ * ⚠️ **BOTH SOURCES OF A TOP-LEVEL NAME, and the second is not belt-and-braces.**
+ * STR-15 is emitted from a depth-1 OBSERVATION, but STR-02 and STR-03 read the
+ * chosen folder's `dirNames` — and most fixtures in the depth-0 block list
+ * folders without observing them. Answering only the observed ones left every
+ * duplicate pair in that block unconfirmed, which since this slice suppresses
+ * STR-03 entirely: three tests went red for a reason that had nothing to do with
+ * what they were testing.
+ */
+function answeredYes(
+  observations: readonly DirectoryObservation[],
+): PropertyConfirmations {
+  const names = new Set<string>();
+  for (const o of observations) {
+    if (o.depth === 1) names.add(o.path);
+    if (o.depth === 0) for (const d of o.dirNames) names.add(d);
+  }
+  return new Map(
+    [...names]
+      .filter((name) => needsPropertyConfirmation(name))
+      .map((name) => [name, "property" as const]),
+  );
+}
+
+/** The three entry points, with STR-15 answered. See the module header. */
+const checkStructure = (
+  observations: readonly DirectoryObservation[],
+  confirmations: PropertyConfirmations = answeredYes(observations),
+) => checkStructureRaw(observations, confirmations);
+const emitStructureViolations = (
+  observations: readonly DirectoryObservation[],
+  confirmations: PropertyConfirmations = answeredYes(observations),
+) => emitStructureViolationsRaw(observations, confirmations);
+const checkStructureStage = (
+  observations: readonly DirectoryObservation[],
+  confirmations: PropertyConfirmations = answeredYes(observations),
+) => checkStructureStageRaw(observations, confirmations);
+
 /** A `DroppedFile` carries the handle so the metadata pass can size it; nothing here reads it. */
 const HANDLE: FSFileHandle = {
   kind: "file",
@@ -105,13 +167,18 @@ function only(violations: readonly StructureViolation[], id: StructureRuleId): S
 
 /**
  * A folder that satisfies every rule — two properties, both shared folders, a
- * coordinate file, a page folder, and a property whose description uses `||`.
+ * coordinate file, a page folder, and a property carrying a free description.
+ *
+ * ⚠️ The description used to be attached with `||` and is now attached with a
+ * second dash (Slice #28.02). Spelled the old way, `48-50D||Prisecaru` is no
+ * longer a description at all: it is the parcela `50D||Prisecaru`, which is a
+ * different property and a fixture that no longer means what its name says.
  *
  * Reused as the base for the "stays silent" cases, so a rule that starts
  * firing on good data fails several tests at once rather than none.
  */
 const COMPLIANT: DirectoryObservation[] = [
-  obs("", { dirNames: ["47per2-225per3per24", "48-50D||Prisecaru", "common", "floating"] }),
+  obs("", { dirNames: ["47per2-225per3per24", "48-50D-Prisecaru", "common", "floating"] }),
   obs("47per2-225per3per24", {
     keptNames: ["coord 47per2.txt", "Extras CF.pdf"],
     dirNames: ["CVC 2019"],
@@ -120,7 +187,7 @@ const COMPLIANT: DirectoryObservation[] = [
     keptNames: ["1.jpg", "2.jpg", "3.jpg"],
     becamePageGroup: true,
   }),
-  obs("48-50D||Prisecaru", { keptNames: ["PAD.jpg"] }),
+  obs("48-50D-Prisecaru", { keptNames: ["PAD.jpg"] }),
   obs("common", { keptNames: ["Procura.pdf"] }),
   obs("floating", { keptNames: ["Nota.pdf"] }),
 ];
@@ -170,8 +237,8 @@ describe("a partial listing", () => {
 
   it("suppresses every rule that argues from the ABSENCE of a counterexample", () => {
     // STR-07 ("every file here is a numbered scan"), STR-11 ("empty") and
-    // STR-14 ("the numbers run 1…n") are all claims about what is NOT there,
-    // and the counterexample may be in the part nobody read.
+    // STR-14 ("the numbers run consecutively") are all claims about what is NOT
+    // there, and the counterexample may be in the part nobody read.
     const violations = emitStructureViolations([
       obs("", { dirNames: ["10-20"] }),
       obs("10-20", { keptNames: ["1.jpg", "2.jpg"], dirNames: ["Scan"], truncated: "breadth" }),
@@ -245,31 +312,88 @@ describe("the chosen folder", () => {
     expect(ids(violations)).not.toContain("STR-02");
   });
 
-  it("STR-02 — counts a property whose only fault is the missing separator", () => {
-    // Its identifiers are already right, so it is provably a sixth property.
-    // Withholding the count until the user renames it costs a whole round of
-    // the loop, and the rename is pointless if the folder has to be split out
-    // of this import anyway.
+  it("STR-02 — counts a property the user has not answered STR-15 for yet", () => {
+    // ⚠️ Slice #28.02 replaced this test's subject and kept its shape. It used
+    // to prove that a folder whose only fault was the missing `||` still
+    // counted toward the limit; the same argument now applies to a folder whose
+    // STR-15 question is unanswered. It is a sixth property as far as the limit
+    // is concerned, and withholding the count until the user confirms it costs
+    // a whole round of the loop — the confirmation is pointless if the folder
+    // has to be split out of this import anyway.
     const v = only(
-      emitStructureViolations([
-        obs("", { dirNames: ["1-1", "2-2", "3-3", "4-4", "5-5", "6-6 descriere"] }),
+      emitStructureViolationsRaw([
+        obs("", { dirNames: ["1-1", "2-2", "3-3", "4-4", "5-5", "6-6"] }),
+        obs("6-6"),
       ]),
       "STR-02",
     );
     expect(v.counts).toEqual({ found: 6, max: 5 });
   });
 
-  it("STR-03 — sees through a missing separator to the property underneath", () => {
-    // `10-20` and `10-20 copie` are the same property. Reporting only the
-    // separator first tells the user to fix a name they are then told to
-    // merge away.
+  it("STR-03 — a description no longer hides a duplicate", () => {
+    // `10-20` and `10-20-copie` are the same property: since #28.02 the second
+    // parses directly as tarla 10 / parcela 20 with the description `copie`,
+    // and the description has never been part of the identity. This used to
+    // need `identityOf` to compose the parse with a rename suggestion.
     const v = only(
-      emitStructureViolations([obs("", { dirNames: ["10-20", "10-20 copie"] })]),
+      emitStructureViolations([obs("", { dirNames: ["10-20", "10-20-copie"] })]),
       "STR-03",
     );
-    expect(v.culprit).toBe("10-20 copie");
+    expect(v.culprit).toBe("10-20-copie");
     expect(v.values.other).toBe("10-20");
     expect(v.values.identity).toBe("10-20");
+  });
+
+  it("⚠️ STR-03 — and a different PARCELA is not a duplicate, however it reads", () => {
+    // The mirror of the test above, and the reason the old `identityOf` had to
+    // go rather than be widened. `10-20 copie` — a SPACE, not a second dash —
+    // is parcela "20 copie", which is a different parcel from "20". Calling
+    // those one property would tell the user to merge two folders that are not
+    // the same thing.
+    expect(ids(emitStructureViolations([obs("", { dirNames: ["10-20", "10-20 copie"] })])))
+      .not.toContain("STR-03");
+  });
+
+  it("⚠️ STR-02 — stops counting a folder the user has said is NOT a property", () => {
+    // First adversarial round of this slice. `isPropertyFolderName` is now just
+    // "a dash with something on both sides", so a chosen folder holding one
+    // property and five ordinary document folders was refused for holding six
+    // properties — and answering "Nu este o proprietate" to all five changed
+    // nothing, because the count never consulted the answers. The user was told
+    // to split an archive that has one property in it, with no way out.
+    const observations = [
+      obs("", {
+        dirNames: [
+          "Acte-notariale", "Contracte-2019", "Harti-vechi",
+          "Poze-teren", "Documente-scanate", "47per2-225per3",
+        ],
+      }),
+      obs("Acte-notariale"), obs("Contracte-2019"), obs("Harti-vechi"),
+      obs("Poze-teren"), obs("Documente-scanate"), obs("47per2-225per3"),
+    ];
+    expect(ids(emitStructureViolationsRaw(observations))).toContain("STR-02");
+
+    const disowned = new Map(
+      ["Acte-notariale", "Contracte-2019", "Harti-vechi", "Poze-teren", "Documente-scanate"]
+        .map((n) => [n, "not-property" as const]),
+    );
+    expect(ids(emitStructureViolationsRaw(observations, disowned))).not.toContain("STR-02");
+    // The five stay blocking, which is the point of a "no" — see STR-15 above.
+    expect(ids(emitStructureViolationsRaw(observations, disowned)))
+      .toEqual(["STR-15", "STR-15", "STR-15", "STR-15", "STR-15"]);
+  });
+
+  it("⚠️ STR-02 — still counts a property nobody has answered for", () => {
+    // The other half, and the two are not the same argument. A count is a
+    // FORECAST of what the import would create, so a folder the user has not
+    // disowned belongs in it; withholding the limit until every question is
+    // answered costs a whole round of the loop, after which the confirmations
+    // may be pointless because the folder has to be split out anyway.
+    const observations = [
+      obs("", { dirNames: ["1-1", "2-2", "3-3", "4-4", "5-5", "6-6"] }),
+      obs("1-1"), obs("2-2"), obs("3-3"), obs("4-4"), obs("5-5"), obs("6-6"),
+    ];
+    expect(ids(emitStructureViolationsRaw(observations))).toContain("STR-02");
   });
 
   it("STR-02 — does not count a folder whose name it could not read", () => {
@@ -286,26 +410,26 @@ describe("the chosen folder", () => {
 
   it("STR-03 — names the later folder as the culprit and the first as the target", () => {
     const v = only(
-      emitStructureViolations([obs("", { dirNames: ["47per2-2", "47PER2-2||copie"] })]),
+      emitStructureViolations([obs("", { dirNames: ["47per2-2", "47PER2-2-copie"] })]),
       "STR-03",
     );
     // The instruction is always "move this one into that one", never the
     // reverse — otherwise two checks of an unchanged folder could disagree.
-    expect(v.culprit).toBe("47PER2-2||copie");
-    expect(v.values.folder).toBe("47PER2-2||copie");
+    expect(v.culprit).toBe("47PER2-2-copie");
+    expect(v.values.folder).toBe("47PER2-2-copie");
     expect(v.values.other).toBe("47per2-2");
     expect(v.values.identity).toBe("47/2-2");
   });
 
   it("STR-03 — points three folders at the same first one, in two moves", () => {
     const violations = emitStructureViolations([
-      obs("", { dirNames: ["10-20", "10-20||a", "10-20||b"] }),
+      obs("", { dirNames: ["10-20", "10-20-a", "10-20-b"] }),
     ]);
     const three = violations.filter((v) => v.ruleId === "STR-03");
-    expect(three.map((v) => v.culprit)).toEqual(["10-20||a", "10-20||b"]);
+    expect(three.map((v) => v.culprit)).toEqual(["10-20-a", "10-20-b"]);
     expect(three.map((v) => v.values.other)).toEqual(["10-20", "10-20"]);
     // Every member is `related`, including the one being kept.
-    expect(three[0].related).toEqual(["10-20", "10-20||a", "10-20||b"]);
+    expect(three[0].related).toEqual(["10-20", "10-20-a", "10-20-b"]);
   });
 
   it("STR-03 — never compares two names it could not read", () => {
@@ -369,25 +493,138 @@ describe("a top-level folder", () => {
     }
   });
 
-  it("STR-06 — right identifiers, wrong separator, so the fix is one rename", () => {
-    const v = only(top("47per2-225per3per24-2716 Prisecaru"), "STR-06");
-    expect(v.values.suggestion).toBe("47per2-225per3per24||2716 Prisecaru");
-    expect(ids(top("47per2-225per3per24-2716 Prisecaru"))).not.toContain("STR-04");
+  it("⚠️ a description attached with a dash is now simply correct", () => {
+    // STR-06's whole subject. `47per2-225per3per24-2716 Prisecaru` was the
+    // headline example of a folder needing a rename; since #28.02 it is what
+    // the product asks for, and nothing at all is reported about it.
+    expect(ids(top("47per2-225per3per24-2716 Prisecaru"))).toEqual([]);
+    // …including the folder from the slice description, which the old cadastral
+    // grammar refused outright as STR-04.
+    expect(ids(top("40-212per40IE55821-Busuioc Ion"))).toEqual([]);
   });
 
-  it("STR-06 — the folder is still a property, so its contents are checked too", () => {
-    // The identifiers are already correct; only the name needs the separator.
-    // Its coordinate files are worth checking in the same pass, even though
-    // `firstPerPlace` shows the rename first.
-    const violations = top("48-50D 2716", {
-      keptNames: ["coord a.txt", "coord b.txt"],
+  it("⚠️ `||` is read as ordinary characters and produces no finding of its own", () => {
+    // It lands inside the parcela and is otherwise unremarkable: no STR-04, no
+    // rename, no mention. What it changes is the IDENTITY, which is pinned in
+    // `import-structure-rules.test.ts`; that no shipped SENTENCE offers `||`
+    // back to the user is pinned in the copy tests of both suites.
+    expect(ids(top("48-50D||Livada"))).toEqual([]);
+    const asked = only(
+      emitStructureViolationsRaw([
+        obs("", { dirNames: ["48-50D||Livada"] }),
+        obs("48-50D||Livada"),
+      ]),
+      "STR-15",
+    );
+    // Quoted back verbatim as the parcela it now is — the folder's own name,
+    // not a suggestion to spell anything that way.
+    expect(asked.values).toEqual({
+      folder: "48-50D||Livada",
+      tarla: "48",
+      parcela: "50D||Livada",
     });
-    expect(ids(violations)).toEqual(expect.arrayContaining(["STR-06", "STR-08"]));
-    // …and the user is shown exactly one of them.
-    expect(ids(checkStructure([
-      obs("", { dirNames: ["48-50D 2716"] }),
-      obs("48-50D 2716", { keptNames: ["coord a.txt", "coord b.txt"] }),
-    ]))).toEqual(["STR-06"]);
+  });
+
+  it("STR-15 — asks about a property folder whose identifiers carry no per", () => {
+    const v = only(
+      emitStructureViolationsRaw([obs("", { dirNames: ["2024-Arhiva"] }), obs("2024-Arhiva")]),
+      "STR-15",
+    );
+    expect(v.culprit).toBe("2024-Arhiva");
+    // The sentence names what WOULD be created, which is how a user who meant
+    // an archive sees that the system did not read it as one.
+    expect(v.values).toEqual({ folder: "2024-Arhiva", tarla: "2024", parcela: "Arhiva" });
+    expect(v.related).toEqual([]);
+    expect(v.counts).toEqual({});
+  });
+
+  it("STR-15 — and about a genuine 48-50D, with no exception carved for it", () => {
+    // The slice says so outright: nothing in a name distinguishes the two, and
+    // a rule that tried would be the grammar coming back.
+    expect(ids(emitStructureViolationsRaw([obs("", { dirNames: ["48-50D"] }), obs("48-50D")])))
+      .toContain("STR-15");
+  });
+
+  it("STR-15 — stays silent once the user has answered that it IS a property", () => {
+    const observations = [obs("", { dirNames: ["2024-Arhiva"] }), obs("2024-Arhiva")];
+    const answered = new Map([["2024-Arhiva", "property" as const]]);
+    expect(ids(emitStructureViolationsRaw(observations, answered))).toEqual([]);
+    expect(checkStructureStageRaw(observations, answered).clean).toBe(true);
+  });
+
+  it("⚠️ STR-15 — an answer of NOT a property does NOT clear it", () => {
+    // Adrian, #28.02: the system never touches the user's files, so "no" cannot
+    // remove the folder. It stays blocking, and the stage swaps the question for
+    // the instruction to take it out in File Explorer. A "no" that let the
+    // import proceed would import the folder the user has just disowned.
+    const observations = [obs("", { dirNames: ["2024-Arhiva"] }), obs("2024-Arhiva")];
+    const answered = new Map([["2024-Arhiva", "not-property" as const]]);
+    expect(ids(emitStructureViolationsRaw(observations, answered))).toEqual(["STR-15"]);
+    expect(checkStructureStageRaw(observations, answered).clean).toBe(false);
+  });
+
+  it("STR-15 — never asks about a folder that carries per, in either half", () => {
+    for (const name of ["47per2-225per3per24", "225PER3-24", "40-212per40IE55821-Busuioc Ion"]) {
+      expect(ids(emitStructureViolationsRaw([obs("", { dirNames: [name] }), obs(name)])))
+        .not.toContain("STR-15");
+    }
+  });
+
+  it("⚠️ STR-15 — never asks about a shared folder or an unreadable one", () => {
+    // Two instructions for one place is the guessing game `firstPerPlace`
+    // exists to prevent, and "is this a property?" is a question with no
+    // meaning for a folder already being renamed.
+    for (const name of ["comune", "flotante", "common", "Comune", "Documente vechi"]) {
+      expect(ids(emitStructureViolationsRaw([obs("", { dirNames: [name] }), obs(name)])))
+        .not.toContain("STR-15");
+    }
+  });
+
+  it("⚠️ STR-15 — survives a partial listing, unlike STR-07 and STR-11", () => {
+    // It reads the folder's OWN NAME, which the walk had before it enumerated
+    // anything. Suppressing it would drop the one question standing between
+    // `2024-Arhiva` and a Property called tarla 2024, in exactly the run where
+    // the folder was too big to read.
+    expect(ids(emitStructureViolationsRaw([
+      obs("", { dirNames: ["2024-Arhiva"] }),
+      obs("2024-Arhiva", { truncated: "budget" }),
+    ]))).toEqual(["STR-15"]);
+  });
+
+  it("⚠️ STR-15 — and before STR-03 tells the user to merge two folders", () => {
+    // First adversarial round of this slice. The positional parse reads
+    // `2024-Acte-notariale` and `2024-Acte-vechi` as one parcel (tarla 2024,
+    // parcela `Acte`, twice), and STR-03 outranks STR-15 — so the user was shown
+    // ONLY "these two folders mean the same property; keep one and move the
+    // documents from the other into it". That is an irreversible merge of two
+    // unrelated archives in File Explorer, and the question that would have
+    // stopped it appeared a loop round later, on the folder that now held both.
+    const observations = [
+      obs("", { dirNames: ["2024-Acte-notariale", "2024-Acte-vechi"] }),
+      obs("2024-Acte-notariale"),
+      obs("2024-Acte-vechi"),
+    ];
+    expect(ids(emitStructureViolationsRaw(observations)).sort()).toEqual(["STR-15", "STR-15"]);
+
+    // …and once both are confirmed as properties, STR-03 has its say — because
+    // then they really are two folders naming one parcel.
+    const both = new Map([
+      ["2024-Acte-notariale", "property" as const],
+      ["2024-Acte-vechi", "property" as const],
+    ]);
+    expect(ids(emitStructureViolationsRaw(observations, both))).toEqual(["STR-03"]);
+  });
+
+  it("⚠️ STR-15 — is asked BEFORE the folder's contents are rearranged", () => {
+    // Catalogue order is fixing order. A folder that is both unconfirmed and
+    // holds only numbered scans emits both, and the user is shown STR-15 —
+    // because STR-07's fix is work that STR-15's answer may throw away.
+    const observations = [
+      obs("", { dirNames: ["48-50D"] }),
+      obs("48-50D", { keptNames: ["1.jpg", "2.jpg"], becamePageGroup: true }),
+    ];
+    expect(ids(emitStructureViolationsRaw(observations)).sort()).toEqual(["STR-07", "STR-15"]);
+    expect(ids(checkStructureRaw(observations))).toEqual(["STR-15"]);
   });
 
   it("STR-07 — fires on the folder the walk MERGES", () => {
@@ -544,16 +781,38 @@ describe("a page folder", () => {
     expect(v.values.highest).toBe("31316");
   });
 
-  it("STR-14 — a gap, and a run that does not start at 1", () => {
+  it("STR-14 — a gap is still a gap", () => {
     expect(only(page({ keptNames: ["1.jpg", "2.jpg", "4.jpg"] }), "STR-14").values)
       .toEqual({ folder: "CVC", lowest: "1", highest: "4" });
-    expect(only(page({ keptNames: ["2.jpg", "3.jpg"] }), "STR-14").values)
-      .toEqual({ folder: "CVC", lowest: "2", highest: "3" });
+    expect(only(page({ keptNames: ["25.jpg", "26.jpg", "28.jpg"] }), "STR-14").values)
+      .toEqual({ folder: "CVC", lowest: "25", highest: "28" });
   });
 
-  it("STR-14 — leaves a clean 1…n alone, leading zeros and all", () => {
+  it("⚠️ STR-14 — a run that starts above 1 is now correct   (Slice #28.02)", () => {
+    // Relaxation #2, and the example the slice names. `2.jpg, 3.jpg` used to be
+    // reported with an instruction to renumber from 1; a folder of pages 25–28
+    // of a larger document is a real thing, and renumbering it destroys the one
+    // fact its filenames carried.
+    expect(ids(page({ keptNames: ["25.jpg", "26.jpg", "27.jpg", "28.jpg"] }))).toEqual([]);
+    expect(ids(page({ keptNames: ["2.jpg", "3.jpg"] }))).toEqual([]);
+    expect(ids(page({ keptNames: ["7.jpg"] }))).toEqual([]);
+  });
+
+  it("STR-14 — leaves a clean run alone, leading zeros and all", () => {
     expect(ids(page({ keptNames: ["001.jpg", "002.jpg", "003.jpg"] }))).toEqual([]);
     expect(ids(page({ keptNames: ["1.jpg"] }))).toEqual([]);
+    expect(ids(page({ keptNames: ["025.jpg", "026.jpg"] }))).toEqual([]);
+  });
+
+  it("⚠️ STR-14 — descending is not ascending, and a duplicate is not a run", () => {
+    // ⚠️ The two tests the `max - min === n - 1` shortcut needs beside it.
+    // `1, 1, 3` satisfies the arithmetic and is not a run — the `Set` test is
+    // what refuses it, and dropping it as "STR-13 covers that anyway" would let
+    // this folder through STR-14 silently. Order on disk is not the subject:
+    // `3.jpg, 2.jpg, 1.jpg` IS a valid run, because the numbers are what is
+    // numbered, not the enumeration.
+    expect(ids(page({ keptNames: ["1.jpg", "01.jpg", "3.jpg"] }))).toContain("STR-14");
+    expect(ids(page({ keptNames: ["3.jpg", "2.jpg", "1.jpg"] }))).toEqual([]);
   });
 
   it("STR-14 — catches a page number too large to be an exact integer", () => {
@@ -562,6 +821,18 @@ describe("a page folder", () => {
     // have stopped it.
     const huge = `${"9".repeat(20)}.jpg`;
     expect(ids(page({ keptNames: ["1.jpg", huge] }))).toContain("STR-14");
+  });
+
+  it("⚠️ STR-14 — a lone page with no page number at all", () => {
+    // The `Set` test's own case, and it had none: a folder holding ONE file
+    // whose basename is too long to be an exact integer. `pageNumberOf` answers
+    // null, so `numbers` is empty and `Set(numbers).size` is 0 against a
+    // `pages.length` of 1. Nothing else in the rule would stop it — the
+    // arithmetic is never even reached — and `isPageGroupMember` accepts the
+    // file, so the walk would merge the folder into a one-page document whose
+    // page number exists nowhere.
+    const huge = `${"9".repeat(20)}.jpg`;
+    expect(ids(page({ keptNames: [huge] }))).toContain("STR-14");
   });
 
   it("STR-14 — never quotes ∞ as a page number", () => {
@@ -588,9 +859,9 @@ describe("depth 3 and deeper", () => {
       obs("", { dirNames: ["10-20"] }),
       obs("10-20", { dirNames: ["CVC"] }),
       obs("10-20/CVC", { dirNames: ["Anexe"], keptNames: ["1.jpg"] }),
-      // Empty, holds a stray file, and its pages are numbered from 7 — three
-      // violations if anything looked. Nothing does.
-      obs("10-20/CVC/Anexe", { keptNames: ["plan.dwgx", "7.jpg"] }),
+      // Holds a stray file, and its pages are 7 and nothing else — violations
+      // if anything looked. Nothing does.
+      obs("10-20/CVC/Anexe", { keptNames: ["plan.dwgx", "7.jpg", "9.jpg"] }),
     ]);
     expect(violations.map((v) => v.culprit)).toEqual(["10-20/CVC"]);
     expect(ids(violations)).toEqual(["STR-10"]);
@@ -610,7 +881,7 @@ describe("checkStructure against emitStructureViolations", () => {
 
   it("emits every rule the folder breaks", () => {
     // Three at once: a file that is not a scan, two files sharing page 1, and
-    // numbers that do not run 1…n.
+    // numbers that do not run consecutively.
     expect(ids(emitStructureViolations(messy)).sort()).toEqual(["STR-12", "STR-13", "STR-14"]);
   });
 
@@ -638,28 +909,46 @@ describe("checkStructure against emitStructureViolations", () => {
  * The two tests below need violations of every rule from somewhere, and
  * collecting them here rather than re-listing the cases means a rule added to
  * the catalogue fails the coverage test until a case for it exists.
+ *
+ * ⚠️ **`emitStructureViolationsRaw`, with no answers.** The wrapper answers
+ * STR-15 for every property folder, which would make the rule unreachable here
+ * — and "is reachable" is precisely the test this array exists for, so it would
+ * have failed for the right reason with a misleading message. A rule the user
+ * has to ANSWER still has to be emitted before it can be answered.
  */
-const EVERY_VIOLATION: StructureViolation[] = emitStructureViolations([
-  // depth 0 — a loose file, six properties, and a duplicate pair
-  obs("", {
-    keptNames: ["loose.pdf"],
-    dirNames: [
-      "1-1", "2-2", "3-3", "4-4", "5-5", "6-6", "1-1||copie",
-      "Common", "Documente vechi", "48-50D 2716", "common", "floating",
-    ],
-  }),
-  obs("Common"),
-  obs("Documente vechi"),
-  obs("48-50D 2716", { keptNames: ["coord a.txt", "coord b.txt"] }),
-  obs("common", { keptNames: ["coord c.txt"] }),
-  obs("1-1", { keptNames: ["1.jpg", "2.jpg"], becamePageGroup: true }),
-  obs("2-2", { dirNames: ["Goala", "Amestec", "Coliziune", "Sarite", "Cuibar"] }),
-  obs("2-2/Goala"),
-  obs("2-2/Amestec", { keptNames: ["1.jpg", "plan.jpg"] }),
-  obs("2-2/Coliziune", { keptNames: ["1.jpg", "01.jpg"] }),
-  obs("2-2/Sarite", { keptNames: ["5449.jpg", "31316.jpg"] }),
-  obs("2-2/Cuibar", { dirNames: ["Mai adanc"], keptNames: ["1.jpg"] }),
-]);
+const EVERY_VIOLATION: StructureViolation[] = emitStructureViolationsRaw(
+  [
+    // depth 0 — a loose file, six properties, and a duplicate pair
+    obs("", {
+      keptNames: ["loose.pdf"],
+      dirNames: [
+        "1-1", "2-2", "3-3", "4-4", "5-5", "6-6", "1-1-copie",
+        "Common", "Documente vechi", "48-50D 2716", "common", "floating",
+      ],
+    }),
+    obs("Common"),
+    obs("Documente vechi"),
+    obs("48-50D 2716", { keptNames: ["coord a.txt", "coord b.txt"] }),
+    obs("common", { keptNames: ["coord c.txt"] }),
+    obs("1-1", { keptNames: ["1.jpg", "2.jpg"], becamePageGroup: true }),
+    obs("2-2", { dirNames: ["Goala", "Amestec", "Coliziune", "Sarite", "Cuibar"] }),
+    obs("2-2/Goala"),
+    obs("2-2/Amestec", { keptNames: ["1.jpg", "plan.jpg"] }),
+    obs("2-2/Coliziune", { keptNames: ["1.jpg", "01.jpg"] }),
+    obs("2-2/Sarite", { keptNames: ["5449.jpg", "31316.jpg"] }),
+    obs("2-2/Cuibar", { dirNames: ["Mai adanc"], keptNames: ["1.jpg"] }),
+  ],
+  // ⚠️ The duplicate pair is CONFIRMED and `6-6` is not, because this array has
+  // to reach both rules at once: STR-03 no longer compares two folders the user
+  // has not called properties (an instruction to merge is not something to give
+  // on a guess), and STR-15 only exists while a folder is unanswered. Answering
+  // everything makes STR-15 unreachable; answering nothing makes STR-03
+  // unreachable. This is the one fixture that needs both.
+  new Map([
+    ["1-1", "property" as const],
+    ["1-1-copie", "property" as const],
+  ]),
+);
 
 describe("every rule in the catalogue", () => {
   it("is reachable — no rule was declared and then never emitted", () => {
@@ -715,10 +1004,10 @@ describe("the same folder, checked twice", () => {
   const walk = (order: "asIs" | "reversed"): DirectoryObservation[] => {
     const put = (names: string[]) => (order === "asIs" ? names : [...names].reverse());
     return [
-      obs("", { dirNames: put(["1-1", "1-1||a", "1-1||b", "2-2"]) }),
+      obs("", { dirNames: put(["1-1", "1-1-a", "1-1-b", "2-2"]) }),
       obs("1-1"),
-      obs("1-1||a"),
-      obs("1-1||b"),
+      obs("1-1-a"),
+      obs("1-1-b"),
       obs("2-2", { dirNames: put(["A", "B"]) }),
       obs("2-2/A", { keptNames: put(["1.jpg", "01.jpg", "2.jpg", "002.jpg"]) }),
       obs("2-2/B", { keptNames: put(["3.jpg", "5.jpg", "plan.jpg", "harta.jpg"]) }),
@@ -737,7 +1026,7 @@ describe("the same folder, checked twice", () => {
     // tell the user to move A into B and then B into A.
     for (const order of ["asIs", "reversed"] as const) {
       const three = emitStructureViolations(walk(order)).filter((v) => v.ruleId === "STR-03");
-      expect(three.map((v) => v.culprit)).toEqual(["1-1||a", "1-1||b"]);
+      expect(three.map((v) => v.culprit)).toEqual(["1-1-a", "1-1-b"]);
       expect(three.map((v) => v.values.other)).toEqual(["1-1", "1-1"]);
     }
   });
@@ -788,7 +1077,73 @@ describe("checkStructureStage", () => {
       violations: [],
       truncations: [],
       clean: true,
+      confirmedProperties: [],
     });
+  });
+
+  it("lists back the STR-15 answers the user gave, so a stray click is visible", () => {
+    // ⚠️ A "yes" removes the violation, so without this the folder vanishes from
+    // the panel and the click cannot be taken back — and the consequence of THAT
+    // accident is `2024-Arhiva` imported as a Property with tarla 2024.
+    // ⚠️ FOUR folders, and the last two are the point. A version of this test
+    // with only the two confirmed ones passes even if the `=== "property"`
+    // filter is deleted altogether — measured — because the other two are
+    // excluded by `confirmablePropertyPath`'s own guards rather than by the
+    // answer. `10-30` is asked about and unanswered; `2019-Acte` is asked about
+    // and DISOWNED. Neither may appear, and without them nothing pins the half
+    // of this field that it exists for: a panel that asks "is this a property?"
+    // while also stating that the same folder is confirmed.
+    const observations = [
+      obs("", { dirNames: ["2024-Arhiva", "48-50D", "47per2-2", "10-30", "2019-Acte"] }),
+      obs("2024-Arhiva"),
+      obs("48-50D"),
+      obs("47per2-2"),
+      obs("10-30"),
+      obs("2019-Acte"),
+    ];
+    const verdict = checkStructureStageRaw(
+      observations,
+      new Map([
+        ["2024-Arhiva", "property" as const],
+        ["48-50D", "property" as const],
+        ["2019-Acte", "not-property" as const],
+      ]),
+    );
+    // ⚠️ Sorted with `sortedForDisplay`, like every other list this module
+    // produces — which is NUMERIC-aware, so `48-50D` comes before `2024-Arhiva`
+    // exactly as it does in the fix list above it and in File Explorer. An
+    // alphabetical expectation here would have been the test disagreeing with
+    // every other list on the same screen.
+    expect(verdict.confirmedProperties).toEqual(["48-50D", "2024-Arhiva"]);
+    // `47per2-2` was never asked about; `10-30` was asked and not answered;
+    // `2019-Acte` was asked and disowned. None of the three is a confirmation.
+    expect(verdict.confirmedProperties).not.toContain("47per2-2");
+    expect(verdict.confirmedProperties).not.toContain("10-30");
+    expect(verdict.confirmedProperties).not.toContain("2019-Acte");
+    // …and both of those still block, which is what makes the pairing coherent:
+    // no folder is ever both listed as confirmed and asked about.
+    expect(ids(checkStructureRaw(observations, new Map([
+      ["2024-Arhiva", "property" as const],
+      ["48-50D", "property" as const],
+      ["2019-Acte", "not-property" as const],
+    ])))).toEqual(["STR-15", "STR-15"]);
+    expect(verdict.clean).toBe(false);
+  });
+
+  it("⚠️ lists back only answers to questions that are still being asked", () => {
+    // The answers outlive a re-check by design — that is what stops the loop
+    // re-asking after every unrelated fix. So the map can still hold a folder
+    // the user has since renamed or removed, and offering a control over a
+    // folder that is no longer on their disk would be a screen describing a
+    // world that has moved on.
+    const verdict = checkStructureStageRaw(
+      [obs(""), obs("47per2-2")],
+      new Map([
+        ["2024-Arhiva", "property" as const],   // renamed away between checks
+        ["47per2-2", "property" as const],      // never needed answering
+      ]),
+    );
+    expect(verdict.confirmedProperties).toEqual([]);
   });
 
   it("REFUSES a folder the walk could not finish reading, even with no violations", () => {

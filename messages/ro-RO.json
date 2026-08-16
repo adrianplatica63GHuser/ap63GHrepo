@@ -2179,23 +2179,23 @@
         },
         "STR-03": {
           "requirement": "Două foldere din folderul ales nu pot însemna aceeași proprietate.",
-          "example": "Corect: un singur folder pentru fiecare proprietate. Greșit: „47per2-225per3” alături de „47PER2-225per3||acte vechi” — aceeași tarla și aceeași parcelă, scrise altfel.",
+          "example": "Corect: un singur folder pentru fiecare proprietate. Greșit: „47per2-225per3” alături de „47PER2-225per3-acte vechi” — aceeași tarla și aceeași parcelă, scrise altfel.",
           "violation": "Folderele „{folder}” și „{other}” înseamnă aceeași proprietate ({identity}). Păstrați un singur folder pentru ea și mutați în el documentele din celălalt."
         },
         "STR-04": {
-          "requirement": "Fiecare folder din folderul ales este ori o proprietate, ori „comune”, ori „flotante”. Numele unei proprietăți începe cu tarlaua și parcela, despărțite printr-o liniuță. „per” ține locul semnului „/”, care nu poate fi folosit în numele unui folder.",
-          "example": "Corect: 47per2-225per3per24, 48-50D, 225per3-24bis. Greșit: „Acte 2019”, „Teren Bragadiru”, „2024-Arhiva”.",
-          "violation": "Folderul „{folder}” nu este nici o proprietate, nici „comune”, nici „flotante”. Redenumiți-l cu tarlaua și parcela, de exemplu 47per2-225per3per24, sau mutați fișierele din el în „comune” ori în „flotante” și ștergeți folderul rămas gol."
+          "requirement": "Fiecare folder din folderul ales este ori o proprietate, ori „comune”, ori „flotante”. Numele unei proprietăți conține tarlaua, o liniuță, apoi parcela — și, dacă doriți, încă o liniuță și o descriere liberă. „per” ține locul semnului „/”, care nu poate fi folosit în numele unui folder.",
+          "example": "Corect: 47per2-225per3per24, 48-50D, 212per40IE55821-1745-Busuioc Ion. Greșit: „Acte 2019”, „Teren Bragadiru”, „Documente” — fără liniuță, deci fără parcelă.",
+          "violation": "Folderul „{folder}” nu are o tarla și o parcelă despărțite printr-o liniuță, deci nu este nici proprietate, nici „comune”, nici „flotante”. Redenumiți-l sub forma tarla-parcelă — de exemplu 47per2-225per3per24 — sau mutați fișierele din el în „comune” ori în „flotante” și ștergeți folderul rămas gol."
         },
         "STR-05": {
           "requirement": "Cele două foldere speciale se numesc exact „comune” și „flotante”, cu litere mici.",
           "example": "Corect: comune, flotante. Greșit: „Comune”, „COMUNE”, „Flotante”.",
           "violation": "Folderul „{folder}” pare să fie „{expected}”, dar nu este scris la fel. Redenumiți-l exact „{expected}”, cu litere mici."
         },
-        "STR-06": {
-          "requirement": "Dacă adăugați o descriere după tarla și parcelă, o despărțiți prin două bare verticale: ||.",
-          "example": "Corect: 47per2-225per3per24||2716 Prisecaru. Greșit: 47per2-225per3per24-2716 Prisecaru.",
-          "violation": "Numele „{folder}” are un text în plus după tarla și parcelă, dar nu îl desparte prin ||. Redenumiți folderul „{suggestion}”."
+        "STR-15": {
+          "requirement": "Un folder de proprietate a cărui tarla și a cărui parcelă nu conțin „per” este confirmat de dumneavoastră înainte ca importul să continue. „per” este semnul care deosebește o parcelă de un nume obișnuit.",
+          "example": "Corect: 48-50D — o parcelă reală, deși nu are „per” în nume: răspundeți „Da”. Greșit: 2024-Arhiva — un an și un cuvânt, citite ca tarlaua 2024 și parcela Arhiva: răspundeți „Nu”.",
+          "violation": "Folderul „{folder}” ar fi importat ca proprietate, cu tarlaua „{tarla}” și parcela „{parcela}”, dar niciuna dintre ele nu conține „per”. Spuneți dacă este într-adevăr o proprietate."
         },
         "STR-07": {
           "requirement": "Fișierele aflate direct într-un folder de proprietate — sau în „comune” ori „flotante” — nu pot fi toate scanări numerotate. Paginile unui document scanat stau într-un subfolder al cărui nume este titlul documentului.",
@@ -2233,9 +2233,9 @@
           "violation": "În „{folder}” mai multe fișiere au numărul de pagină {number}: {examples}. Ordinea paginilor ar fi întâmplătoare. Renumerotați-le astfel încât fiecare număr să apară o singură dată."
         },
         "STR-14": {
-          "requirement": "Paginile sunt numerotate 1, 2, 3… fără sărituri.",
-          "example": "Corect: 1.jpg, 2.jpg, 3.jpg. Greșit: 1.jpg, 3.jpg, 4.jpg, sau 5449.jpg și 31316.jpg, care sunt numere de scaner, nu numere de pagină.",
-          "violation": "Folderul „{folder}” are {pages, plural, one {o pagină numerotată} few {# pagini numerotate} other {# de pagini numerotate}} de la {lowest} la {highest}. Paginile se numerotează 1, 2, 3… fără sărituri. Renumerotați fișierele din acest folder începând de la 1."
+          "requirement": "Numerele paginilor merg unul după altul, fără sărituri — fiecare cu exact unu mai mare decât cel dinainte. Șirul poate începe de la orice număr.",
+          "example": "Corect: 1.jpg, 2.jpg, 3.jpg, sau 25.jpg, 26.jpg, 27.jpg. Greșit: 1.jpg, 3.jpg, 4.jpg, sau 5449.jpg și 31316.jpg, care sunt numere de scaner, nu numere de pagină.",
+          "violation": "Folderul „{folder}” are {pages, plural, one {o pagină numerotată} few {# pagini numerotate} other {# de pagini numerotate}} de la {lowest} la {highest}, care nu merg una după alta. Renumerotați fișierele din acest folder astfel încât fiecare număr să fie cu exact unu mai mare decât cel dinainte, fără sărituri."
         }
       },
       "title": "Structura folderului",
@@ -2253,6 +2253,17 @@
         "common": "„comune” — documente care privesc toate proprietățile din acest import. Fiecare va fi legat de fiecare dintre ele.",
         "floating": "„flotante” — documente de sine stătătoare, care nu privesc nicio proprietate. Se salvează în arhivă fără nicio legătură.",
         "optional": "Niciunul nu este obligatoriu: dacă nu aveți asemenea documente, nu faceți folderul."
+      },
+      "confirmProperty": {
+        "question": "Acest folder este o proprietate?",
+        "yes": "Da, este o proprietate",
+        "no": "Nu este o proprietate",
+        "confirmedTitle": "{count, plural, one {Un folder confirmat de dumneavoastră ca proprietate} few {# foldere confirmate de dumneavoastră ca proprietăți} other {# de foldere confirmate de dumneavoastră ca proprietăți}}",
+        "confirmedHint": "Importul va crea câte o proprietate pentru fiecare dintre ele. Dacă ați apăsat din greșeală, schimbați răspunsul aici.",
+        "confirmedPageHint": "Importul va crea câte o proprietate pentru fiecare dintre ele. Puteți schimba răspunsul pe ecranul de import.",
+        "change": "Schimbă răspunsul",
+        "savedPageNote": "La aceasta răspundeți pe ecranul de import, nu în File Explorer.",
+        "removeInstruction": "Mutați folderul în afara folderului ales, sau mutați fișierele din el în „comune” ori în „flotante” și ștergeți-l. Sistemul nu vă atinge niciodată fișierele."
       },
       "acknowledge": "Respect regulile de structură",
       "acknowledgeHint": "Bifați după ce ați citit regulile și apoi din nou după fiecare îndreptare făcută în File Explorer. Bifa se cere la fiecare verificare.",
@@ -2336,7 +2347,7 @@
       "chooseAnotherFolder": "Alege alt folder…",
       "clean": "Toate fișierele din folder pot fi importate.",
       "violationsTitle": "{count, plural, one {Un lucru de îndreptat} few {# lucruri de îndreptat} other {# de lucruri de îndreptat}}",
-      "fixInstructions": "Faceți îndreptările de mai sus — pe cele care țin de mutat, redenumit sau șters le puteți face direct în File Explorer, iar sistemul nu vă atinge fișierele. Dacă fișierul scos era o pagină dintr-un document scanat, renumerotați paginile rămase de la 1. Când ați terminat, reveniți aici, bifați din nou și apăsați „Verifică din nou”.",
+      "fixInstructions": "Faceți îndreptările de mai sus — pe cele care țin de mutat, redenumit sau șters le puteți face direct în File Explorer, iar sistemul nu vă atinge fișierele. Dacă fișierul scos era o pagină dintr-un document scanat, renumerotați paginile rămase astfel încât să meargă tot una după alta, fără sărituri. Când ați terminat, reveniți aici, bifați din nou și apăsați „Verifică din nou”.",
       "morePaths": "încă {count, number}…",
       "unreadable": {
         "title": "Fișiere care nu au putut fi citite",

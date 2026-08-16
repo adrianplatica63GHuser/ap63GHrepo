@@ -435,6 +435,57 @@ describe("buildRulesPageHtml", () => {
     expect(html).toContain("&lt;b&gt;x&lt;/b&gt;");
   });
 
+  it("⚠️ prints the STR-15 answers, UNDER the fix list   (Slice #28.02)", () => {
+    // The folders the user answered "yes, it is a property" to. A "yes" removes
+    // the violation, so without this block the folder simply vanishes from the
+    // page and it prints the all-clear with no record of the one answer in the
+    // whole catalogue that decides whether a Property row is written.
+    //
+    // ⚠️ **Its POSITION is the assertion, not decoration.** It belongs beside
+    // the fix list it modifies — these are the questions that are no longer on
+    // it — and not down among the rules, which are the reference section. An
+    // edit that moved it there would be invisible to a test that only asked
+    // whether the text was present somewhere.
+    const html = structure({
+      answersNote: {
+        heading: "2 foldere confirmate",
+        lines: ["Le puteți schimba pe ecran.", "Teren/48-50D", "Teren/2024-Arhiva"],
+      },
+    });
+    expect(html).toContain('<div class="note"><h3>2 foldere confirmate</h3>');
+    expect(html).toContain('<p class="msg">Teren/48-50D</p>');
+    expect(html.indexOf("2 foldere confirmate")).toBeLessThan(
+      html.indexOf(STRUCTURE_STRINGS.rulesTitle),
+    );
+  });
+
+  it("⚠️ omits an empty answers note, by the same rule as the rules note", () => {
+    // Shared through `noteBlockOf` rather than copied — this is the assertion
+    // that keeps the sharing honest, because the guard was written once for
+    // `rulesNote` and a second copy is how it gets unlearned.
+    for (const answersNote of [
+      { heading: "0 foldere", lines: [] },
+      { heading: "0 foldere", lines: ["  ", ""] },
+      { heading: "   ", lines: ["Teren/48-50D"] },
+    ]) {
+      const html = structure({ answersNote });
+      expect(html).not.toContain("0 foldere");
+      expect(html).not.toContain("Teren/48-50D");
+    }
+  });
+
+  it("escapes the answers note, which carries FOLDER NAMES off a real disk", () => {
+    // The likeliest place an unescaped angle bracket would ever arrive: every
+    // other string on this page is copy, and these are names a user typed into
+    // File Explorer.
+    const html = structure({
+      answersNote: { heading: "A & B", lines: ["<b>Teren</b>"] },
+    });
+    expect(html).toContain("A &amp; B");
+    expect(html).not.toContain("<b>Teren</b>");
+    expect(html).toContain("&lt;b&gt;Teren&lt;/b&gt;");
+  });
+
   it("only adds the warnings heading when the walk actually gave up", () => {
     expect(structure()).not.toContain(STRUCTURE_STRINGS.warningsTitle);
     const html = structure({

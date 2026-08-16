@@ -61,7 +61,6 @@ import path from "node:path";
 import { scanIcu } from "@/test-support/icu";
 import { isPageGroup, isIgnoredFileName } from "@/lib/import/folder-utils";
 import {
-  DESCRIPTION_SEPARATOR,
   MAX_PROPERTY_FOLDERS,
   RULE_MESSAGE_PARTS,
   RULE_SCOPES,
@@ -81,9 +80,9 @@ import {
   ruleListingValues,
   rulesInScope,
   scopeKeyFor,
+  needsPropertyConfirmation,
   sharedFolderName,
   sharedFolderNearMiss,
-  suggestedPropertyFolderName,
   type RuleMessagePart,
   type StructureRuleId,
   type StructureViolation,
@@ -158,14 +157,46 @@ describe("firstPerPlace — one instruction per folder", () => {
 // The property-folder name grammar
 // ---------------------------------------------------------------------------
 
-describe("parsePropertyFolderName — names that are correct", () => {
+describe("parsePropertyFolderName — a POSITION, not a grammar   (Slice #28.02)", () => {
   it.each([
+    // Everything the old cadastral grammar accepted still parses the same way.
     ["47per2-225per3per24", "47per2", "225per3per24", null],
     ["48-50D", "48", "50D", null],
     ["225per3-24bis", "225per3", "24bis", null],
     ["47-2", "47", "2", null],
-    ["47per2-225per3per24||2716 Prisecaru", "47per2", "225per3per24", "2716 Prisecaru"],
-    ["48-50D||Livada de sus", "48", "50D", "Livada de sus"],
+
+    // The slice's own example, and the reason the grammar had to go: the old
+    // parser refused this outright and told the user, in Romanian, to rename a
+    // folder that was already right.
+    ["40-212per40IE55821-Busuioc Ion", "40", "212per40IE55821", "Busuioc Ion"],
+
+    // Two dashes: the description is what follows the second.
+    ["48-50D-Livada de sus", "48", "50D", "Livada de sus"],
+
+    // THREE AND MORE. The third dash belongs to the description, not to a
+    // fourth field — the one thing about the positional rule that a reader is
+    // most likely to implement as `split("-")` and get wrong.
+    ["48-50D-Livada-de-sus", "48", "50D", "Livada-de-sus"],
+    ["1-2-3-4-5", "1", "2", "3-4-5"],
+
+    // Every one of these was a `cadastral` refusal before this slice, and the
+    // block below them is the whole of what replaces that refusal: STR-15 asks.
+    ["2024-Arhiva", "2024", "Arhiva", null],
+    ["48-50Ana-Maria", "48", "50Ana", "Maria"],
+    ["48-50Arhiva", "48", "50Arhiva", null],
+    ["10-20Sud-Est", "10", "20Sud", "Est"],
+    ["48-50 bis", "48", "50 bis", null],
+    ["47per-2", "47per", "2", null],
+
+    // ⚠️ `||` IS FOUR ORDINARY CHARACTERS. Not a separator, not a legacy
+    // spelling, not special in any way — they fall wherever the dash rule puts
+    // them, which for a name with one dash means inside the parcela.
+    ["48-50D||Livada", "48", "50D||Livada", null],
+    ["47per2-225per3per24||2716 Prisecaru", "47per2", "225per3per24||2716 Prisecaru", null],
+    ["47-2||a||b", "47", "2||a||b", null],
+    ["47-2||", "47", "2||", null],
+    // …and with two dashes it lands in the description, still meaning nothing.
+    ["48-50D-a||b", "48", "50D", "a||b"],
   ])("%s", (name, tarla, parcela, description) => {
     expect(parsePropertyFolderName(name)).toEqual({ ok: true, tarla, parcela, description });
   });
@@ -177,116 +208,114 @@ describe("parsePropertyFolderName — names that are correct", () => {
       parcela: "225per3",
       description: null,
     });
+    expect(parsePropertyFolderName("48 - 50D")).toEqual({
+      ok: true,
+      tarla: "48",
+      parcela: "50D",
+      description: null,
+    });
   });
 
   it("does not decode per — that happens at the database boundary", () => {
-    const parsed = parsePropertyFolderName("47per2-225per3per24");
-    expect(parsed.ok && parsed.tarla).toBe("47per2");
+    // The slice's constraint, stated as a test: `212per40IE55821` stays as
+    // written here and reaches the database as `212/40IE55821`, once.
+    const parsed = parsePropertyFolderName("40-212per40IE55821-Busuioc Ion");
+    expect(parsed.ok && parsed.parcela).toBe("212per40IE55821");
+  });
+
+  it("gives an all-whitespace description as null, not as an empty string", () => {
+    expect(parsePropertyFolderName("48-50D-   ")).toEqual({
+      ok: true,
+      tarla: "48",
+      parcela: "50D",
+      description: null,
+    });
   });
 });
 
-describe("parsePropertyFolderName — the identifiers are right, the separator is not", () => {
+describe("parsePropertyFolderName — the names that are still not properties", () => {
   it.each([
-    ["47per2-225per3per24-2716 Prisecaru", "47per2-225per3per24"],
-    ["48-50D 2716", "48-50D"],
-    ["47-2||", "47-2"],
-    ["47-2||a||b", "47-2"],
-    ["48-50 bis", "48-50"],
-  ])("%s → separator", (name, prefix) => {
-    expect(parsePropertyFolderName(name)).toEqual({ ok: false, reason: "separator", prefix });
-  });
-});
-
-describe("parsePropertyFolderName — nothing cadastral to recover", () => {
-  it.each([
-    "2024-Arhiva",           // #23.00's false positive: tarla 2024 / parcela "Arhiva"
-    "3 Calea Victoriei",     // #23.00's other one: tarla "3"
+    // No dash at all. This is now the ONLY ordinary way to fail.
+    "3 Calea Victoriei",
     "Documente generale",
-    "common",
-    "47",                    // a tarla with no parcela is not a property folder name
-    "47per",                 // a dangling per — perToSlash would make it "47/"
-    "47per-2",               // the same, as a tarla
-    "-2",
+    "comune",
+    "47",
+    "47per",
     "",
-  ])("%s → cadastral", (name) => {
-    expect(parsePropertyFolderName(name)).toEqual({
-      ok: false,
-      reason: "cadastral",
-      prefix: null,
-    });
-  });
-
-  it.each([
-    "48-50Arhiva",           // a letter run longer than any suffix
-    "48-50Ana-Maria",        // "Ana" is three letters and is not a suffix
-    "10-20Sud-Est",
-    "48-50Lot 3",
-    "48-50Ion-Popescu",
-  ])("%s → cadastral, not a mid-word cut", (name) => {
-    // Every one of these was diagnosed as a missing separator by the first
-    // draft, which allowed ANY run of up to three letters as a suffix. The
-    // user was told to rename "48-50Ana-Maria" to "48-50Ana||Maria", creating
-    // a Property whose parcela is "50Ana". A length limit cannot tell a suffix
-    // from the first syllable of a word; the allowlist can.
-    expect(parsePropertyFolderName(name)).toEqual({
-      ok: false,
-      reason: "cadastral",
-      prefix: null,
-    });
-    expect(suggestedPropertyFolderName(name)).toBeNull();
+    // …and the one condition beyond it, which is an absence rather than a
+    // shape: an empty half cannot identify a property, and a name blessed here
+    // would pass the whole Structure stage and then fail the property step with
+    // a 400 in the middle of a run that has already written rows.
+    "-2",
+    " - 2",
+    "48-",
+    "48-   ",
+    "-",
+  ])("%s", (name) => {
+    expect(parsePropertyFolderName(name)).toEqual({ ok: false });
   });
 });
 
-describe("suggestedPropertyFolderName", () => {
-  it("inserts the separator, dropping whatever the user used instead", () => {
-    expect(suggestedPropertyFolderName("47per2-225per3per24-2716 Prisecaru")).toBe(
-      `47per2-225per3per24${DESCRIPTION_SEPARATOR}2716 Prisecaru`,
-    );
-    expect(suggestedPropertyFolderName("48-50D 2716")).toBe(`48-50D${DESCRIPTION_SEPARATOR}2716`);
+describe("needsPropertyConfirmation — the question that replaced the grammar", () => {
+  it("asks about a property folder whose identifiers carry no per", () => {
+    // Both of these are asked about, and the second is the point: nothing in a
+    // name distinguishes a real `48-50D` from `2024-Arhiva`, so no exception is
+    // carved for the real one. The slice says so outright.
+    expect(needsPropertyConfirmation("2024-Arhiva")).toBe(true);
+    expect(needsPropertyConfirmation("48-50D")).toBe(true);
+    expect(needsPropertyConfirmation("1-2-3-4-5")).toBe(true);
   });
 
-  it("joins a suffix the user spaced out, rather than demoting it to description", () => {
-    // Romanian writes "parcela 50 bis". Suggesting "48-50||bis" would rename
-    // the folder to a DIFFERENT parcel — 50 rather than 50bis — and the user
-    // would accept it because the instruction said so.
-    expect(suggestedPropertyFolderName("48-50 bis")).toBe("48-50bis");
-    expect(suggestedPropertyFolderName("47-2 A")).toBe("47-2A");
+  it("does not ask when either identifier carries per, in any case", () => {
+    expect(needsPropertyConfirmation("47per2-225per3per24")).toBe(false);
+    expect(needsPropertyConfirmation("225PER3-24")).toBe(false);
+    expect(needsPropertyConfirmation("40-212per40IE55821-Busuioc Ion")).toBe(false);
   });
 
-  it("does not join when the parcela already carries a suffix", () => {
-    expect(suggestedPropertyFolderName("48-50D bis")).toBe(`48-50D${DESCRIPTION_SEPARATOR}bis`);
+  it("⚠️ reads the IDENTIFIERS, never the description", () => {
+    // `per` is a fragment of ordinary words. A test against the raw name would
+    // wave through exactly the folders the question exists to catch — and would
+    // do it silently, which is the worst available failure for a protection.
+    expect(needsPropertyConfirmation("40-212-Perdea")).toBe(true);
+    expect(needsPropertyConfirmation("2024-Arhiva-Persoane")).toBe(true);
+    expect(needsPropertyConfirmation("10-20-Superficie teren")).toBe(true);
   });
 
-  it("drops a separator the user started and did not finish", () => {
-    expect(suggestedPropertyFolderName("47-2||")).toBe("47-2");
+  it("⚠️ asks when `per` is a fragment of a WORD inside an identifier", () => {
+    // The first adversarial round of this slice. `/per/i.test(segment)` read
+    // these as cadastral fractions, so the question was never asked and
+    // `12-superficie teren` reached a clean Structure stage and became a
+    // Property — with `perToSlash` writing `parcela = "su/ficie teren"`.
+    //
+    // The test is `perToSlash` itself, so this can only ever agree with the
+    // value the database receives. Every name here is ordinary Romanian
+    // vocabulary in a land archive.
+    expect(needsPropertyConfirmation("12-superficie teren")).toBe(true);
+    expect(needsPropertyConfirmation("40-Perdea")).toBe(true);
+    expect(needsPropertyConfirmation("Perimetru-40")).toBe(true);
+    expect(needsPropertyConfirmation("2019-Persoane fizice")).toBe(true);
+    expect(needsPropertyConfirmation("33-Supermarket")).toBe(true);
+    // …and a dangling `per`, which decodes to nothing and identifies nothing.
+    expect(needsPropertyConfirmation("47per-2")).toBe(true);
   });
 
-  it("flattens a second separator rather than suggesting a name that fails the same rule", () => {
-    expect(suggestedPropertyFolderName("47-2||a||b")).toBe("47-2||a b");
+  it("says nothing about a folder that is not a property at all", () => {
+    // STR-04 has that one. Asking "is this a property?" about a folder already
+    // being reported as not one is two instructions for one place.
+    expect(needsPropertyConfirmation("Documente generale")).toBe(false);
+    expect(needsPropertyConfirmation("comune")).toBe(false);
+    expect(needsPropertyConfirmation("48-")).toBe(false);
   });
 
-  it("suggests nothing for a name that is already correct", () => {
-    expect(suggestedPropertyFolderName("47per2-225per3per24")).toBeNull();
-    expect(suggestedPropertyFolderName("48-50D||Livada")).toBeNull();
-  });
-
-  it("suggests nothing when there are no identifiers to keep", () => {
-    expect(suggestedPropertyFolderName("2024-Arhiva")).toBeNull();
-    expect(suggestedPropertyFolderName("Documente generale")).toBeNull();
-  });
-
-  it("always produces a name that parses", () => {
-    for (const wrong of [
-      "47per2-225per3per24-2716 Prisecaru",
-      "48-50D 2716",
-      "47-2||",
-      "47-2||a||b",
-      "48-50 bis",
-      "48-50D bis",
-    ]) {
-      const suggestion = suggestedPropertyFolderName(wrong);
-      expect(suggestion).not.toBeNull();
-      expect(parsePropertyFolderName(suggestion!).ok).toBe(true);
+  it("is stable across repeated calls", () => {
+    // `perToSlash` IS a `/g` regex, and a global regex keeps `lastIndex` between
+    // calls when it is `.test`ed. It is used through `.replace` here, which
+    // resets it — but the day someone "optimises" this into a shared `.test`,
+    // this is where it goes red rather than in production on alternate folders.
+    for (let i = 0; i < 4; i++) {
+      expect(needsPropertyConfirmation("47per2-225per3")).toBe(false);
+      expect(needsPropertyConfirmation("48-50D")).toBe(true);
+      expect(needsPropertyConfirmation("12-superficie teren")).toBe(true);
     }
   });
 });
@@ -295,7 +324,14 @@ describe("propertyIdentityOf — what makes two folders the same property (STR-0
   it("folds the encodings that reach the database identically", () => {
     expect(propertyIdentityOf("47per2-225per3")).toBe(propertyIdentityOf("47PER2-225per3"));
     expect(propertyIdentityOf("48-50D")).toBe(propertyIdentityOf("48 - 50D"));
-    expect(propertyIdentityOf("48-50D")).toBe(propertyIdentityOf("48-50D||acte vechi"));
+    // The description is not part of the identity — and since #28.02 the
+    // description is what follows the SECOND dash, so this is the pair that
+    // used to be spelled with `||`.
+    expect(propertyIdentityOf("48-50D")).toBe(propertyIdentityOf("48-50D-acte vechi"));
+    // …and `||` now being ordinary characters, it changes the parcela and
+    // therefore the identity. A folder still named the old way is a different
+    // property, which is the honest reading of a name nothing teaches any more.
+    expect(propertyIdentityOf("48-50D")).not.toBe(propertyIdentityOf("48-50D||acte vechi"));
   });
 
   it("keeps different properties different", () => {
@@ -381,12 +417,19 @@ describe("the shared folders", () => {
     expect(sharedFolderNearMiss("47per2-225per3")).toBeNull();
   });
 
-  it("⚠️ keeps every accepted spelling out of the property grammar", () => {
+  it("⚠️ keeps every accepted spelling out of the property parse", () => {
     // A shared folder must never parse as a property, or it would be counted
     // toward MAX_PROPERTY_FOLDERS and given a cadastral identity.
+    //
+    // ⚠️ Since #28.02 this holds for a reason that is one character wide: none
+    // of the four names contains a dash. A future shared spelling that did —
+    // `acte-comune`, say — WOULD parse as a property, and the guards in
+    // `classifyTopLevel` and `confirmablePropertyPath` are what stop it being
+    // treated as one. This test is where that would first go red.
     for (const name of ["comune", "flotante", "common", "floating"]) {
       expect(propertyIdentityOf(name)).toBeNull();
       expect(parsePropertyFolderName(name).ok).toBe(false);
+      expect(needsPropertyConfirmation(name)).toBe(false);
     }
   });
 
@@ -551,6 +594,21 @@ describe("rule text", () => {
       for (const part of RULE_MESSAGE_PARTS) {
         expect(ro[id][part]).not.toBe(en[id][part]);
       }
+    }
+  });
+
+  it("⚠️ never offers `||` back to the user, in either locale   (Slice #28.02)", () => {
+    // The slice's words: "Every string that suggests `||` to the user goes with
+    // it." The separator is retired, so a sentence still teaching it would send
+    // a business user to File Explorer to type a character the parser now reads
+    // as part of the parcela — creating a property called `50D||Livada` on the
+    // strength of an instruction the product printed itself.
+    //
+    // The WHOLE structure block, not only the rule sentences: the examples, the
+    // scope headings and the saved page's strings are all copy a user reads.
+    for (const { file } of LOCALES) {
+      const json = readMessages(file) as { adminImport?: { structure?: unknown } };
+      expect(JSON.stringify(json.adminImport?.structure)).not.toContain("||");
     }
   });
 });

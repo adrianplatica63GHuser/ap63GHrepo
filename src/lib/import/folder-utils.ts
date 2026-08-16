@@ -269,14 +269,35 @@ export function folderNameToTitleHint(name: string): string {
  * Examples:
  *   "47per2"           → "47/2"
  *   "225per3per24"     → "225/3/24"
+ *   "47 per 2"         → "47/2"      (typed by hand into the Property form)
+ *   "212per40IE55821"  → "212/40IE55821"
+ *   "superficie teren" → unchanged   ← see below
  *   "47per2-225per3"   → this function is NOT called on the full tag — only
  *                         on the individual segments after splitting on "-"
  *
- * Only applied to narrow cadastral fields, not to general text, so false
- * positives on words like "superintendent" are not a concern in practice.
+ * ⚠️ **ONLY BETWEEN DIGITS, SINCE SLICE #28.02, AND THE ASSUMPTION THAT USED TO
+ * EXCUSE THE BLUNT VERSION IS DEAD.** This was `s.replace(/per/gi, "/")`, and
+ * its own comment said false positives on words like "superintendent" were "not
+ * a concern in practice" — because #26.01's grammar had already refused every
+ * identifier that was not digits, `per` and a one-letter suffix, so no word
+ * could reach here. #28.02 deleted that grammar: the parse is positional now,
+ * and `12-superficie teren` is a folder name a user can legitimately have on
+ * disk. Measured on the blunt version, it wrote `parcela = "su/ficie teren"` to
+ * the database — and `40-Perdea` wrote `"/dea"`.
+ *
+ * `perdea`, `perimetru`, `superficie` and `persoane` are ordinary vocabulary in
+ * a Romanian land archive, so this is not a contrived input. The Process route
+ * has guarded against exactly this shape since #26.07.fix (`looksCadastral`,
+ * which quotes `12-superficie teren` verbatim); the import path had no guard
+ * because it did not need one, and then it did.
+ *
+ * `per` between two digits is unambiguously the fraction bar, and `per` anywhere
+ * else is a fragment of a word. Optional whitespace is allowed inside the match
+ * so a hand-typed `47 per 2` in the Property form still decodes — that path has
+ * never had a grammar in front of it.
  */
 export function perToSlash(s: string): string {
-  return s.replace(/per/gi, "/");
+  return s.replace(/(?<=\d)\s*per\s*(?=\d)/gi, "/");
 }
 
 // ---------------------------------------------------------------------------
@@ -762,7 +783,7 @@ async function walkInto(
       // being read, and whose surviving names happened to all be numbered
       // scans, was reported as a COMPLETE page group. Nothing downstream could
       // tell: S-17 stayed silent, and #26.02's structure check, which
-      // suppresses "the pages run 1…n" on a partial listing precisely so it
+      // suppresses "the pages run consecutively" on a partial listing so it
       // cannot lie, saw no reason to. A folder of 200 pages read to page 96
       // was reported as a 96-page document numbered 1 to 185, with an
       // instruction to renumber from 1 that was already true — a fix-and-

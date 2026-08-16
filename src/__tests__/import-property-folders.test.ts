@@ -49,7 +49,11 @@ function pageGroup(path: string): FSPageGroupEntry {
   };
 }
 
-const PROP_A = "47per2-225per3per24||Prisecaru";
+// ⚠️ The description is attached with a second dash since Slice #28.02.
+// Spelled `…||Prisecaru`, this folder is no longer a property with a
+// description — it is the parcela `225per3per24||Prisecaru`, and the fixture
+// would quietly stop meaning what its name says.
+const PROP_A = "47per2-225per3per24-Prisecaru";
 const PROP_B = "48-50D";
 
 // ---------------------------------------------------------------------------
@@ -153,10 +157,32 @@ describe("groupByPropertyFolder", () => {
     expect(grouping.unassigned.map((e) => e.path)).toEqual(["scan.jpg"]);
   });
 
-  it("keeps a folder whose name the grammar refuses", () => {
-    const grouping = groupByPropertyFolder([file("2024-Arhiva/x.pdf")]);
+  it("keeps a folder whose name does not parse at all", () => {
+    // ⚠️ Slice #28.02 changed this test's example, and the change is the whole
+    // slice. `2024-Arhiva` used to land here — the grammar refused it — and now
+    // parses as tarla 2024 / parcela Arhiva, so it is grouped as a property like
+    // any other. What stops it becoming a Property is STR-15, a question the
+    // Structure stage asks and BLOCKS on, several stages upstream of this
+    // module; see this file's own note on `2024-Arhiva` below.
+    //
+    // `Documente vechi` has no dash and so still does not parse, which is now
+    // the only ordinary way to reach `unassigned` from a named folder.
+    const grouping = groupByPropertyFolder([file("Documente vechi/x.pdf")]);
     expect(grouping.properties).toEqual([]);
-    expect(grouping.unassigned.map((e) => e.path)).toEqual(["2024-Arhiva/x.pdf"]);
+    expect(grouping.unassigned.map((e) => e.path)).toEqual(["Documente vechi/x.pdf"]);
+  });
+
+  it("⚠️ groups `2024-Arhiva` as a property, because STR-15 is what refuses it", () => {
+    // Recorded as its own test rather than left implicit, because it looks like
+    // a regression of Slice #23.00's whole point. It is not: the refusal moved
+    // from the parser to a question the user answers, and a folder that reaches
+    // here has already been through the Structure stage's block. This module
+    // stays deliberately ignorant of the answer — see its header.
+    const grouping = groupByPropertyFolder([file("2024-Arhiva/x.pdf")]);
+    expect(grouping.properties.map((p) => p.folderName)).toEqual(["2024-Arhiva"]);
+    expect(grouping.properties[0].tarlaSola).toBe("2024");
+    expect(grouping.properties[0].parcela).toBe("Arhiva");
+    expect(grouping.unassigned).toEqual([]);
   });
 
   it("loses nothing: every entry is in exactly one bucket", () => {
@@ -167,7 +193,7 @@ describe("groupByPropertyFolder", () => {
       file("common/c.pdf"),
       file("floating/f.pdf"),
       file("loose.pdf"),
-      file("2024-Arhiva/weird.pdf"),
+      file("Documente vechi/weird.pdf"),
     ];
     const g = groupByPropertyFolder(entries);
     const seen = [
@@ -231,8 +257,14 @@ describe("groupByPropertyFolder", () => {
     expect(grouping.properties.map((p) => p.folderName)).toEqual(["9-3", "10-2", "48-50D"]);
   });
 
-  it("does not seed a group for a listed folder the grammar refuses", () => {
-    const grouping = groupByPropertyFolder([], ["2024-Arhiva", "common", "floating", "Common"]);
+  it("does not seed a group for a listed folder that does not parse", () => {
+    // `Common` is a near miss (STR-05) and `Documente vechi` has no dash
+    // (STR-04); neither is a property. `2024-Arhiva` is deliberately NOT in this
+    // list any more — since #28.02 it parses, and seeding it is correct.
+    const grouping = groupByPropertyFolder(
+      [],
+      ["Documente vechi", "common", "floating", "Common"],
+    );
     expect(grouping.properties).toEqual([]);
   });
 
@@ -305,12 +337,12 @@ describe("assignEntryProperties", () => {
     // Property twice, on a rule that should be right on its own terms.
     const twoFolders = groupByPropertyFolder([
       file("48-50D/a.pdf"),
-      file("48-50D||Livada/b.pdf"),
+      file("48-50D-Livada/b.pdf"),
       file("common/c.pdf"),
     ]);
     const oneProperty = new Map([
       ["48-50D", "id-x"],
-      ["48-50D||Livada", "id-x"],
+      ["48-50D-Livada", "id-x"],
     ]);
     expect(assignEntryProperties(twoFolders, oneProperty).get("common/c.pdf")).toEqual({
       bucket: "common",

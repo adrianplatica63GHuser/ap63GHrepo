@@ -75,6 +75,26 @@ const REQUIRED_KEYS = [
   "clean",
   "violationsTitle",
   "fixInstructions",
+  // ⚠️ Slice #28.02. STR-15 is the one rule the user ANSWERS rather than fixes
+  // in File Explorer, and every one of these nine strings is a control or a
+  // consequence of that answer. A missing `confirmProperty.yes` puts the dotted
+  // key path on a button in the shipping locale, beside a question the user
+  // cannot get past without pressing it.
+  "confirmProperty.question",
+  "confirmProperty.yes",
+  "confirmProperty.no",
+  "confirmProperty.confirmedTitle",
+  "confirmProperty.confirmedHint",
+  // …and its page-only twin. The screen's version ends "change the answer here",
+  // which is false on a printed sheet with no controls on it.
+  "confirmProperty.confirmedPageHint",
+  "confirmProperty.change",
+  "confirmProperty.removeInstruction",
+  // ⚠️ The one most easily forgotten: it is appended ONLY to the
+  // saved take-away HTML page, so a missing key prints the dotted path into the
+  // one artefact designed to be read with the app closed — where nobody is
+  // watching a screen to notice.
+  "confirmProperty.savedPageNote",
   "morePaths",
   "truncated.title",
   "truncated.intro",
@@ -123,17 +143,45 @@ describe("the Structure stage's copy", () => {
   });
 
   it("counts things with a plural, in both locales", () => {
-    // Two sentences carry a number. Romanian needs `few` as well as `one` and
-    // `other` — the language has a third form for 2–19 — and #26.02 already
-    // shipped this exact bug once in a rule sentence.
+    // Three sentences carry a number, and two of those three are plurals:
+    // `morePaths` is `{count, number}` and takes no plural branch. Romanian
+    // needs `few` as well as `one` and `other` — the language has a third form
+    // for 2–19 — and #26.02 already shipped this exact bug once in a rule
+    // sentence.
     for (const file of LOCALES) {
       const copy = loadStructureCopy(file);
-      for (const key of ["violationsTitle", "morePaths"] as const) {
+      for (const key of [
+        "violationsTitle",
+        "morePaths",
+        "confirmProperty.confirmedTitle",
+      ] as const) {
         expect(String(at(copy, key))).toContain("{count");
       }
-      const title = String(at(copy, "violationsTitle"));
-      expect(title).toContain("plural");
-      if (file === "ro-RO.json") expect(title).toContain("few {");
+      for (const key of ["violationsTitle", "confirmProperty.confirmedTitle"] as const) {
+        const title = String(at(copy, key));
+        expect(title).toContain("plural");
+        if (file === "ro-RO.json") expect(title).toContain("few {");
+      }
+    }
+  });
+
+  it("⚠️ promises, in the answer the user gives, that nothing is deleted", () => {
+    // Adrian, #28.02: the slice's first sketch had the wizard offer to delete a
+    // folder the user says is not a property. It does not — the folder is picked
+    // `mode: "read"` and the remedy is a File Explorer round trip — and the
+    // sentence the user reads after answering "no" is the only place that
+    // promise is made at the moment it matters. A rewrite that dropped it would
+    // leave a business user wondering whether the button had already acted.
+    expect(String(at(loadStructureCopy("ro-RO.json"), "confirmProperty.removeInstruction")))
+      .toContain("nu vă atinge niciodată fișierele");
+  });
+
+  it("⚠️ carries no `||` anywhere in the stage's own copy", () => {
+    // The separator is retired (#28.02). Pinned in both suites because the
+    // strings live in two blocks — `structure.rule.*` here is the rules test's
+    // subject, and everything else in `structure` is this file's.
+    for (const file of LOCALES) {
+      expect(JSON.stringify(loadStructureCopy(file))).not.toContain("||");
     }
   });
 

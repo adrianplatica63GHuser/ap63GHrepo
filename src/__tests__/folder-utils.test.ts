@@ -294,6 +294,40 @@ describe("perToSlash", () => {
   it("handles empty string", () => {
     expect(perToSlash("")).toBe("");
   });
+
+  it("⚠️ decodes only BETWEEN DIGITS — a word containing 'per' is left alone", () => {
+    // Slice #28.02. This was `/per/gi` and its comment said false positives on
+    // words were "not a concern in practice", because #26.01's grammar had
+    // already refused every identifier that was not digits, `per` and a suffix.
+    // That grammar is gone, so `12-superficie teren` is now a folder name the
+    // parse accepts — and the blunt version wrote `parcela = "su/ficie teren"`
+    // to the database. Every one of these is ordinary vocabulary in a Romanian
+    // land archive.
+    expect(perToSlash("superficie teren")).toBe("superficie teren");
+    expect(perToSlash("Perdea")).toBe("Perdea");
+    expect(perToSlash("Perimetru")).toBe("Perimetru");
+    expect(perToSlash("Persoane fizice")).toBe("Persoane fizice");
+    expect(perToSlash("Supermarket")).toBe("Supermarket");
+    // A dangling `per` produced "47/" before, a cadastral identifier with a
+    // trailing separator, written to the database and matched against.
+    expect(perToSlash("47per")).toBe("47per");
+    expect(perToSlash("per2")).toBe("per2");
+  });
+
+  it("⚠️ still decodes the shapes that are real cadastral fractions", () => {
+    // The slice's own constraint: `212per40IE55821` must reach the database as
+    // `212/40IE55821`. `per` here is bounded by digits on both sides, which is
+    // the whole of the new rule.
+    expect(perToSlash("212per40IE55821")).toBe("212/40IE55821");
+    // Whitespace around it is allowed, for the one path that never had a
+    // grammar in front of it: a value typed by hand into the Property form.
+    expect(perToSlash("47 per 2")).toBe("47/2");
+    expect(perToSlash("47per 2")).toBe("47/2");
+  });
+
+  it("is idempotent, which the DB boundary relies on", () => {
+    expect(perToSlash(perToSlash("225per3per24"))).toBe("225/3/24");
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -536,7 +570,7 @@ describe("walkFolder termination guards (#26.00)", () => {
     // whose surviving names all happened to be numbered scans was reported as
     // a COMPLETE page group even though the walk had stopped part-way through
     // reading it. Nothing downstream could tell: S-17 stayed silent, and the
-    // structure check, which suppresses "the pages run 1…n" on a partial
+    // structure check, which suppresses "the pages run consecutively" on a partial
     // listing precisely so it cannot lie, saw no reason to. The user was told
     // to renumber a folder from 1 that was already numbered from 1, on every
     // round of the loop, forever.

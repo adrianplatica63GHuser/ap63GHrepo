@@ -310,15 +310,22 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
     // same key: `perToSlash` above, `cadastralKey` inside the lookup.
     //
     // ⚠️ **`looksCadastral` on BOTH halves, not merely non-empty.**
-    // `hasCadastralIdentity` is the wizard's question, right there because
-    // #26.01's grammar has already refused everything that is not a cadastral
-    // segment. Here `parseFolderName` splits on the first `-` and returns
-    // whatever follows: `2019-2020 dosare` is tarla "2019" / parcela
-    // "2020 dosare", and `12-superficie teren` becomes parcela
-    // "su/ficie teren" once `perToSlash` has run. Both are non-empty. Treating
+    // `hasCadastralIdentity` is the wizard's question, and since Slice #28.02 it
+    // is backed by STR-15 — a question put to the USER about any folder whose
+    // identifiers carry no `per` — rather than by #26.01's grammar, which that
+    // slice deleted. Here `parseFolderName` splits on the first `-` and returns
+    // whatever follows, with nobody to ask: `2019-2020 dosare` is tarla "2019" /
+    // parcela "2020 dosare", and `12-superficie teren` is parcela
+    // "superficie teren". Both are non-empty. Treating
     // either as an identity would let the FIRST coordinate document in an
     // archive folder claim it and lock every other document there — genuinely
     // different parcels — out of ever producing a Property.
+    //
+    // (Until #28.02 that second example read "su/ficie teren": `perToSlash` was
+    // a blunt `/per/gi` and punched a slash through the middle of the word. It
+    // now decodes only between digits, so this guard is refusing an honest
+    // string rather than a mangled one — the same refusal, for a cleaner
+    // reason.)
     //
     // A document whose tags yield no identity falls through to the
     // unconditional create below, exactly as before. That is not a hole left

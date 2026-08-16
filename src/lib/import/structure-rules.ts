@@ -116,12 +116,19 @@
  * folder, for the same reason, with two different instructions. They are one
  * rule (STR-04) and the grammar is stated in its own text.
  *
- * The pairs that survive are the ones that genuinely differ in what the user
- * must DO: STR-04 (rename it or move it — the identifiers are unrecoverable)
- * versus STR-06 (insert `||` — the identifiers are already right), and STR-04
- * versus STR-05 (this is a misspelt `common`, not a property at all). They are
- * mutually exclusive by construction, not by convention: see
- * `parsePropertyFolderName`'s two failure reasons and `sharedFolderNearMiss`.
+ * The pair that survives is the one that genuinely differs in what the user
+ * must DO: STR-04 (there is no tarla and parcela here — rename it or move it)
+ * versus STR-05 (this is a misspelt `comune`, not a property at all). They are
+ * mutually exclusive by construction, not by convention: `sharedFolderNearMiss`
+ * answers before the name is ever read as a property.
+ *
+ * ⚠️ **STR-06 was the third member of that set and Slice #28.02 retired it.** It
+ * said "the identifiers are already right, only the description is attached with
+ * the wrong separator", and the separator it recommended — `||` — no longer
+ * exists. A dash before a description is now exactly what the product asks for,
+ * so the rule has no subject left. **Its ID is a GAP in the catalogue and is
+ * never reused**: the rules listing is a page a user saves and carries to File
+ * Explorer, and a number that changes hands makes every saved copy lie.
  *
  * NO DISPLAY TEXT LIVES HERE
  * ──────────────────────────
@@ -155,27 +162,32 @@
  * KNOWN AND ACCEPTED AMBIGUITIES
  * ──────────────────────────────
  *
- *  - **A pair of plain numbers is always read as a cadastral pair.**
- *    `2024-2025 Arhiva` is reported as a missing `||` and the user is offered
- *    `2024-2025||Arhiva`, which would create a Property with tarla 2024 and
- *    parcela 2025. Nothing in a name distinguishes a year range from a
- *    cadastral pair, and inventing a heuristic for it is the thing this module
- *    exists to stop doing. The instruction states what the system understood,
- *    so a user who meant an archive can see that it did not — which is the
- *    honest failure mode, and the reason STR-04's text names tarla and parcela
- *    explicitly rather than saying "rename this".
+ *  - **ANY name carrying a dash is read as a property** (Slice #28.02).
+ *    `2024-Arhiva` is tarla 2024, parcela Arhiva; `2024-2025 Arhiva` is tarla
+ *    2024, parcela "2025 Arhiva". Nothing in a name distinguishes a year range
+ *    from a cadastral pair, and #23.00's grammar refused both by refusing
+ *    everything that did not look cadastral — at the cost of also refusing
+ *    `40-212per40IE55821-Busuioc Ion`, which is real data.
+ *
+ *    **The protection is no longer in the parse; it is a question.** STR-15 asks
+ *    about any property folder whose identifiers carry no `per`, names the tarla
+ *    and parcela it would create, and blocks until the user answers. A genuine
+ *    `48-50D` is asked about too, and that is intended: the question is cheap and
+ *    the alternative is a grammar. Do not reintroduce a digit test, a length test
+ *    or a suffix list.
  *  - **Leading zeros are significant.** `48-50` and `048-050` are two
  *    properties to STR-03 and to #26.07's matching. Normalising them here
  *    would silently disagree with the database, which stores what it is given.
  *  - **A numeric basename larger than `Number.MAX_SAFE_INTEGER`** is a page
  *    file to `isPageGroupMember` and has no page number here — see
  *    `pageNumberOf`. It cannot reach an import regardless, because STR-14
- *    requires the numbers to run 1…n.
+ *    requires every page in a folder to carry a number and the run to be
+ *    consecutive, and a file with no number satisfies neither.
  */
 
 import { isPageGroupMember } from "@/lib/files/file-kinds";
 import { coordinateNameConfidence } from "./coordinate-file";
-import { isIgnoredFileName } from "./folder-utils";
+import { isIgnoredFileName, perToSlash } from "./folder-utils";
 import { foldRomanian } from "./id-card";
 import { cadastralIdentityKey } from "@/lib/properties/cadastral-identity";
 
@@ -195,7 +207,9 @@ export type StructureRuleId =
   | "STR-03"   // no two property folders mean the same property
   | "STR-04"   // every folder in it is a property (<tarla>-<parcela>), `common` or `floating`
   | "STR-05"   // the shared folders are spelled exactly `common` / `floating`
-  | "STR-06"   // free description is separated by `||`
+  // STR-06 was "free description is separated by `||`". Retired in #28.02 with
+  // the separator itself. THE ID IS A GAP AND IS NEVER REUSED — module header.
+  | "STR-15"   // a property folder whose identifiers carry no `per` is confirmed by the user
   | "STR-07"   // a top-level folder's own files are not all numbered scans
   | "STR-08"   // at most one coordinate file per property folder
   | "STR-09"   // no coordinate file in `common` or `floating`
@@ -207,7 +221,7 @@ export type StructureRuleId =
 
 /** Every rule ID, in listing order — which is also fixing order. See `firstPerPlace`. */
 export const STRUCTURE_RULE_IDS: readonly StructureRuleId[] = Object.freeze([
-  "STR-01", "STR-02", "STR-03", "STR-04", "STR-05", "STR-06", "STR-07",
+  "STR-01", "STR-02", "STR-03", "STR-04", "STR-05", "STR-15", "STR-07",
   "STR-08", "STR-09", "STR-10", "STR-11", "STR-12", "STR-13", "STR-14",
 ] as const);
 
@@ -253,7 +267,13 @@ export const STRUCTURE_RULES: readonly StructureRule[] = Object.freeze([
   { id: "STR-03", scope: "chosenFolder",   counts: [],               values: ["folder", "other", "identity"] },
   { id: "STR-04", scope: "topLevelFolder", counts: [],               values: ["folder"] },
   { id: "STR-05", scope: "topLevelFolder", counts: [],               values: ["folder", "expected"] },
-  { id: "STR-06", scope: "topLevelFolder", counts: [],               values: ["folder", "suggestion"] },
+  // ⚠️ STR-15 sits in STR-06's old SLOT, not at the end of the array, and the
+  // slot is the point rather than the number. `firstPerPlace` shows the earliest
+  // rule per place, so a folder that both needs confirming and holds only
+  // numbered scans is asked "is this a property at all?" before it is asked to
+  // rearrange its contents. Answering the second first is work the first answer
+  // may throw away.
+  { id: "STR-15", scope: "topLevelFolder", counts: [],               values: ["folder", "tarla", "parcela"] },
   { id: "STR-07", scope: "topLevelFolder", counts: ["files"],        values: ["folder"] },
   { id: "STR-08", scope: "topLevelFolder", counts: ["found"],        values: ["folder", "examples"] },
   { id: "STR-09", scope: "topLevelFolder", counts: ["found"],        values: ["folder", "examples"] },
@@ -585,242 +605,218 @@ export function acceptedSharedFolderSpellings(id: SharedFolderName): readonly st
 }
 
 /**
- * What separates the cadastral identifiers from free description in a property
- * folder name (Adrian, #26.01 question (c)).
+ * ⚠️ **THERE IS NO `DESCRIPTION_SEPARATOR` ANY MORE, AND `||` IS NOT A LEGACY
+ * SPELLING.**   (Slice #28.02)
  *
- * Two vertical bars, and nothing else — not a space, not a third dash.
+ * Until this slice a property folder's free description was separated from the
+ * identifiers by two vertical bars, on the #26.01 reasoning that a description
+ * separated by the same character the identifiers use cannot be told from
+ * another identifier — `48-50D-2716` would be a three-part cadastral name or a
+ * two-part one with a description, and the parser would have to guess.
  *
- * The reason is question (a) from the same list: the surface segment in
- * `47per2-225per3per24-2716` is DECORATION, not identity. Two properties are
- * told apart by tarla and parcela alone, so everything after them is free
- * text — and free text separated by the same character the identifiers use
- * cannot be told from another identifier. `48-50D-2716` would be a three-part
- * cadastral name or a two-part one with a description, and the parser would
- * have to guess. This is the codebase that already retired one guessing
- * heuristic (`parseFolderName`, Slice #23.00) for exactly that.
+ * The guess is settled by POSITION instead: the first dash ends the tarla, the
+ * second ends the parcela, and everything after the second is description —
+ * third and further dashes included. There is nothing left to tell apart.
  *
- * `||` is chosen because it cannot appear in a Windows folder name by accident
- * and is legal in one on purpose.
+ * `||` is not accepted, not deprecated and not special. A folder named
+ * `48-50D||Livada` parses as tarla `48`, parcela `50D||Livada` — the bars are
+ * ordinary characters that fall where the dash rule puts them — and nothing
+ * anywhere suggests them back to the user. **Do not reintroduce the constant in
+ * order to "still accept the old form": accepting it would mean parcela `50D` in
+ * one archive and `50D||Livada` in another, decided by a character whose
+ * significance the user cannot see.**
  */
-export const DESCRIPTION_SEPARATOR = "||";
 
 // ---------------------------------------------------------------------------
-// The property-folder name grammar
+// The property-folder name — a POSITION, not a grammar   (Slice #28.02)
 // ---------------------------------------------------------------------------
-
-/**
- * The letter suffixes a tarla or parcela may end with.
- *
- * Letter suffixes are legal (Adrian, #26.01 question (b)): `48-50D` is tarla
- * 48, parcela 50D. `bis` is added because Romanian cadastral practice writes
- * "parcela 50 bis" constantly and refusing it would be refusing real data.
- *
- * ⚠️ **An allowlist, not a length limit, and the difference is not
- * pedantry.** The first draft allowed any run of up to three letters, which
- * makes `50Ana` a legal parcela — so `48-50Ana-Maria` was diagnosed as a
- * missing separator and the user was told to rename the folder
- * `48-50Ana||Maria`, creating a Property whose parcela is `50Ana`. The same
- * held for `10-20Sud-Est` and `48-50Lot 3`. A limit cannot tell a suffix from
- * the first syllable of a word; a list can. Adding a genuinely used suffix is
- * a one-token edit here.
- */
-const SUFFIX_ALLOWED = /^(?:[A-Za-z]|bis)$/i;
-
-/** The widest letter run the patterns below will even consider. Not the rule — `SUFFIX_ALLOWED` is. */
-const MAX_SUFFIX_SCAN = 3;
-
-/**
- * One cadastral segment: digits, optionally joined by `per`, with an optional
- * allowed letter suffix.
- *
- *   47            47per2            225per3per24            50D            48per2A
- *
- * `per` stands in for "/" because a slash cannot appear in a folder name while
- * Romanian real-estate writing uses it constantly ("47/2"). `perToSlash` turns
- * it back before anything reaches the database, so the encoding never escapes
- * the filesystem.
- *
- * ⚠️ **`per` must be followed by digits, and the suffix must not spell `per`.**
- * Without the second half the pattern accepts `47per`, whose suffix is the
- * letters "per" — and `perToSlash("47per")` is `"47/"`, a cadastral identifier
- * with a dangling separator, written to the database and matched against in
- * #26.07. `SUFFIX_ALLOWED` refuses it, since "per" is neither one letter nor
- * "bis".
- */
-const SEGMENT_RE = new RegExp(`^\\d+(?:per\\d+)*[A-Za-z]{0,${MAX_SUFFIX_SCAN}}$`, "i");
-
-/** The same shape anchored only at the start — used to recover the cadastral prefix of a wrong name. */
-const CADASTRAL_PREFIX_RE = new RegExp(
-  `^\\d+(?:per\\d+)*[A-Za-z]{0,${MAX_SUFFIX_SCAN}}-\\d+(?:per\\d+)*[A-Za-z]{0,${MAX_SUFFIX_SCAN}}`,
-  "i",
-);
-
-/** The trailing run of letters in a segment, `""` when it ends in a digit. */
-function suffixOf(segment: string): string {
-  return segment.match(/[A-Za-z]*$/)?.[0] ?? "";
-}
 
 /**
  * The outcome of reading a property folder's name.
  *
- * A discriminated result rather than `null`, because the two ways a name can
- * be wrong need two different sentences and #26.02 must not have to work out
- * which by re-parsing. `"cadastral"` means nothing usable was found at the
- * start, so the folder must be renamed or moved (STR-04); `"separator"` means
- * the identifiers are already right and only the description is attached
- * wrongly (STR-06), which is a far smaller correction and deserves to be
- * described as one.
+ * ⚠️ **ONE failure, where there used to be two, and that is the whole of
+ * relaxation #1.** Until #28.02 this enforced a cadastral grammar on both sides
+ * of the dash — digits, optionally joined by `per`, with a one-letter or `bis`
+ * suffix — and could fail in two ways: `"cadastral"` (nothing usable at the
+ * start of the name) and `"separator"` (the identifiers were right, the
+ * description was attached with a dash instead of `||`). The second reason is
+ * gone with the separator it existed for, and STR-06 went with it.
+ *
+ * The grammar is gone too. `40-212per40IE55821-Busuioc Ion` is real data and the
+ * grammar refused it, because `212per40IE55821` is not "digits, `per`, digits".
+ * A parcela is whatever the deed says it is, and no pattern this module could
+ * write knows that better than the person who typed the folder name.
+ *
+ * What replaces the grammar is not a looser pattern — it is a QUESTION. See
+ * `needsPropertyConfirmation` and STR-15.
  */
 export type PropertyFolderName =
   | {
       ok: true;
-      /** As written, `per` and all — `perToSlash` is the caller's job, at the DB boundary. */
+      /**
+       * Everything before the first dash, trimmed. As written, `per` and all —
+       * `perToSlash` is the caller's job, at the DB boundary.
+       */
       tarla: string;
+      /**
+       * Everything between the first dash and the second, trimmed; everything
+       * after the first when there is no second.
+       */
       parcela: string;
-      /** Everything after `||`, trimmed. `null` when the name carries none. */
+      /**
+       * Everything after the SECOND dash, trimmed — third and further dashes
+       * included, because they belong to the description and not to a fourth
+       * field. `null` when the name carries no second dash, or nothing after it.
+       */
       description: string | null;
     }
   | {
+      /**
+       * ⚠️ A one-member union rather than a bare `null`, and not out of
+       * ceremony: every call site reads `parsed.ok` and then reaches straight
+       * for `parsed.tarla`. The discriminant is what makes the compiler enforce
+       * the check that a `null` would leave to each caller to remember.
+       */
       ok: false;
-      reason: "cadastral" | "separator";
-      /** The recoverable `<tarla>-<parcela>` prefix; `null` on a `cadastral` failure. */
-      prefix: string | null;
     };
 
-function parseSegment(raw: string): string | null {
-  const s = raw.trim();
-  if (!SEGMENT_RE.test(s)) return null;
-  const suffix = suffixOf(s);
-  if (suffix !== "" && !SUFFIX_ALLOWED.test(foldRomanian(suffix))) return null;
-  return s;
-}
-
 /**
- * Read a property folder's name.
+ * Read a property folder's name. **Positional. No grammar, and no guard on the
+ * shape of either identifier.**
  *
- * The shape is `<tarla>-<parcela>` optionally followed by `||<description>`:
+ *   "47per2-225per3per24"             → tarla 47per2, parcela 225per3per24
+ *   "48-50D"                          → tarla 48,     parcela 50D
+ *   "40-212per40IE55821-Busuioc Ion"  → tarla 40,     parcela 212per40IE55821,
+ *                                        description "Busuioc Ion"
+ *   "48-50D-Livada-de-sus"            → tarla 48,     parcela 50D,
+ *                                        description "Livada-de-sus"
+ *   "2024-Arhiva"                     → tarla 2024,   parcela Arhiva   ← STR-15 asks
+ *   "48-50D||Livada"                  → tarla 48,     parcela "50D||Livada"
+ *   "Documente generale"              → not a property folder
  *
- *   "47per2-225per3per24"                    → tarla 47per2, parcela 225per3per24
- *   "47per2-225per3per24||2716 Prisecaru"    → …and description "2716 Prisecaru"
- *   "48-50D"                                 → tarla 48, parcela 50D
- *   "225per3-24bis"                          → tarla 225per3, parcela 24bis
+ * The last-but-one is `||` being read as what it now is: four ordinary
+ * characters in the middle of a parcela. See the note above.
  *
- * and these are the wrong ones, with the reason that produces the right
- * sentence:
+ * ⚠️ **THE ONE CONDITION BEYOND "there is a dash", AND IT IS NOT A SHAPE
+ * TEST.** Both identifiers must be non-empty once trimmed, so `-50D`, `48-` and
+ * `48 - ` are not property folders. That is an absence, not a shape: the slice
+ * forbids a digit test, a length test and a suffix list, and this is none of
+ * them. It is here because `hasCadastralIdentity` refuses a half identity at the
+ * database boundary — a Property carrying a tarla and no parcela can never be
+ * matched to a folder again — so a name blessed with an empty half would parse
+ * cleanly, pass the whole Structure stage, and then fail the property step with
+ * a 400 in the middle of a run that has already written rows. STR-04 catches it
+ * here instead, in a sentence that names what is missing.
  *
- *   "47per2-225per3per24-2716 Prisecaru"     → separator, prefix "47per2-225per3per24"
- *   "48-50D 2716"                            → separator, prefix "48-50D"
- *   "2024-Arhiva"                            → cadastral
- *   "48-50Ana-Maria"                         → cadastral ("Ana" is not a suffix)
- *   "Documente generale"                     → cadastral
- *   "3 Calea Victoriei"                      → cadastral
- *
- * The last two are the false positives that retired the old `parseFolderName`
- * heuristic in Slice #23.00: it read "3 Calea Victoriei" as tarla "3" and
- * "2024-Arhiva" as tarla "2024" / parcela "Arhiva", and wrote both without
- * showing anyone. This grammar refuses them outright — the whole difference
- * between a contract and a guess, and the reason nothing in this module
- * reaches for `parseFolderName`, whose leading-digit test IS the retired rule.
- *
- * A name carrying more than one `||` is a `separator` failure. The description
- * is free text and may hold almost anything, but a second separator means the
- * user is structuring it, and the honest answer is to say so rather than to
- * silently take the first split.
+ * ⚠️ **`per` is NOT decoded here.** `212per40IE55821` comes out exactly as
+ * written and reaches the database as `212/40IE55821`, once, through
+ * `cadastralValue` at the boundary.
  */
 export function parsePropertyFolderName(rawName: string): PropertyFolderName {
   const name = rawName.trim();
 
-  const parts = name.split(DESCRIPTION_SEPARATOR);
-  const cadastralPart = parts[0].trim();
+  const firstDash = name.indexOf("-");
+  if (firstDash === -1) return { ok: false };
 
-  const dash = cadastralPart.indexOf("-");
-  const tarla = dash === -1 ? null : parseSegment(cadastralPart.slice(0, dash));
-  const parcela = dash === -1 ? null : parseSegment(cadastralPart.slice(dash + 1));
+  const tarla = name.slice(0, firstDash).trim();
+  const afterTarla = name.slice(firstDash + 1);
 
-  if (tarla !== null && parcela !== null && parts.length <= 2) {
-    if (parts.length === 1) return { ok: true, tarla, parcela, description: null };
-    const description = parts[1].trim();
-    // A trailing `||` with nothing after it is a separator the user started
-    // and did not finish — reported as a separator problem, which it is.
-    if (description === "") return { ok: false, reason: "separator", prefix: cadastralPart };
-    return { ok: true, tarla, parcela, description };
-  }
+  const secondDash = afterTarla.indexOf("-");
+  const parcela = (secondDash === -1 ? afterTarla : afterTarla.slice(0, secondDash)).trim();
+  // `|| null` rather than `?? null`: an all-whitespace description trims to
+  // `""`, which is a description the user did not write.
+  const description =
+    secondDash === -1 ? null : afterTarla.slice(secondDash + 1).trim() || null;
 
-  // Wrong. Which sentence the user gets depends on whether the identifiers are
-  // recoverable from the start of the name.
-  const prefix = name.match(CADASTRAL_PREFIX_RE)?.[0] ?? null;
-  if (prefix === null) return { ok: false, reason: "cadastral", prefix: null };
+  if (tarla === "" || parcela === "") return { ok: false };
 
-  const d = prefix.indexOf("-");
-  const segmentsAreSound =
-    parseSegment(prefix.slice(0, d)) !== null && parseSegment(prefix.slice(d + 1)) !== null;
-
-  // ⚠️ The prefix must END somewhere a human would agree it ends.
-  //
-  // Belt to `SUFFIX_ALLOWED`'s braces. Without it the pattern cuts a word in
-  // half: "48-50Arhiva" would give a parcela of "50Arh" and a leftover of
-  // "iva", so the user is told — precisely, confidently and absurdly — to
-  // rename the folder "48-50Arh||iva". A suggestion nobody would accept is
-  // worse than no suggestion, because the rule that produced it stops being
-  // believed.
-  const nextChar = name.charAt(prefix.length);
-  const endsCleanly = nextChar === "" || /[\s|-]/.test(nextChar);
-
-  return segmentsAreSound && endsCleanly
-    ? { ok: false, reason: "separator", prefix }
-    : { ok: false, reason: "cadastral", prefix: null };
+  return { ok: true, tarla, parcela, description };
 }
 
 /**
- * The name this folder should be renamed to — the value STR-06's sentence puts
- * in front of the user.
+ * Does this identifier actually USE `per` as the fraction bar?
  *
- * Only ever answers for a `separator` failure, where the identifiers are
- * already correct and the description merely needs its separator. Returns
- * `null` for anything else, because there is nothing honest to suggest: a name
- * with no cadastral identifiers cannot be repaired by a machine, and offering
- * a guess is precisely how the retired heuristic did damage.
+ * ⚠️ **`perToSlash`, asked rather than restated, and the delegation IS the
+ * rule.** The obvious implementation is `/per/i.test(segment)` — and it was, for
+ * one adversarial round. `per` is a fragment of ordinary Romanian and English
+ * words, so that version answered "yes, this carries a cadastral fraction" for
+ * `superficie`, `Perdea`, `Perimetru`, `Persoane` and `Supermarket` — and STR-15
+ * then never asked about `12-superficie teren`, which sailed through a clean
+ * Structure stage and became a Property. (The value it wrote was mangled too;
+ * that half is fixed in `perToSlash` itself, which had the same assumption.)
  *
- * ⚠️ **A remainder that is itself a legal suffix is JOINED, not separated.**
- * Romanian writes "parcela 50 bis", so `48-50 bis` reaches here with a
- * remainder of "bis" — and suggesting `48-50||bis` would rename it to a
- * DIFFERENT parcel (50, with "bis" demoted to decoration), which the user
- * would then accept because the instruction told them to. `48-50bis` is the
- * only suggestion that preserves what the folder said.
+ * Asking the decoder closes it by construction: this is `true` exactly when the
+ * decoder would change the string, so the question STR-15 asks and the value the
+ * database receives can never disagree about what `per` meant. Two definitions
+ * of "is this a cadastral fraction" is the drift this codebase deletes rules to
+ * avoid.
  *
- * The one promise: whatever it returns parses as `ok: true`.
+ * ⚠️ **The IDENTIFIERS, never the description.** `40-212-Perdea` is asked about;
+ * the description is free text and says nothing about whether this is a parcel.
  */
-export function suggestedPropertyFolderName(rawName: string): string | null {
-  const parsed = parsePropertyFolderName(rawName);
-  if (parsed.ok || parsed.reason !== "separator" || parsed.prefix === null) return null;
-
-  const remainder = rawName
-    .trim()
-    .slice(parsed.prefix.length)
-    // Strip whatever separator the user actually used — a dash, a space, or a
-    // `||` they left dangling — so the suggestion does not carry it through.
-    .replace(/^[\s|-]+/, "")
-    // Any REMAINING bar is a second `||` inside what is meant to be free text.
-    // It has to go, or the suggestion is a name that fails the same rule it
-    // was offered to fix.
-    .replace(/\|/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-
-  if (remainder === "") return parsed.prefix;
-
-  // The "50 bis" case: the remainder belongs INSIDE the parcela, and only when
-  // the parcela does not already carry a suffix of its own ("48-50D bis" is
-  // two suffixes and genuinely a description).
-  const d = parsed.prefix.indexOf("-");
-  const parcelaHasSuffix = suffixOf(parsed.prefix.slice(d + 1)) !== "";
-  if (!parcelaHasSuffix && SUFFIX_ALLOWED.test(foldRomanian(remainder))) {
-    const joined = `${parsed.prefix}${remainder}`;
-    if (parsePropertyFolderName(joined).ok) return joined;
-  }
-
-  return `${parsed.prefix}${DESCRIPTION_SEPARATOR}${remainder}`;
+function usesPerAsSeparator(segment: string): boolean {
+  return perToSlash(segment) !== segment;
 }
+
+/**
+ * Must the user be asked whether this folder really is a property?
+ *
+ * The whole of Point #1. A positional parse with no grammar behind it reads
+ * `2024-Arhiva` as tarla 2024 / parcela Arhiva, which is precisely what #23.00's
+ * grammar existed to refuse — so the refusal moves out of the parser and becomes
+ * a question the user answers once per folder.
+ *
+ * ⚠️ **A genuine `48-50D` is asked about too, and no exception is carved for
+ * it.** It carries no `per`, so nothing in the name distinguishes it from
+ * `2024-Arhiva`, and a rule that tried would be a grammar wearing a hat. The
+ * question costs one click; the grammar cost a slice and still refused real
+ * data.
+ *
+ * ⚠️ **This is a QUESTION, never a refusal to parse** — the slice's constraint,
+ * in those words. Nothing here narrows what `parsePropertyFolderName` accepts,
+ * and nothing here is a digit test, a length test or a suffix list: it is one
+ * delegation to the decoder that has to run on these two strings anyway.
+ *
+ * `false` for anything that is not a property folder at all — STR-04 has that
+ * one, and asking "is this a property?" about a folder already reported as not
+ * one would be two instructions for one place.
+ *
+ * ⚠️ **`&&`, SO ONE HALF USING `per` VOUCHES FOR THE OTHER — probed three
+ * rounds running, and kept.** `47per2-50D` is asked about by an `||` version and
+ * is the commonest shape of real data there is; asking about it on every check
+ * would turn the question into noise, which is how a protection stops being
+ * read. The price is that `Arhiva 2019-2020per3` is not asked about either. That
+ * is the slice's own wording ("any such folder whose name contains no `per`")
+ * and the shipped Romanian sentence ("a cărui tarla **și** a cărui parcelă nu
+ * conțin „per”"), and the folder shape it lets through — a Windows copy, an
+ * archive named beside a real parcel — is caught by STR-03 whenever it duplicates
+ * a real property, which is the case that actually costs something.
+ */
+export function needsPropertyConfirmation(rawName: string): boolean {
+  const parsed = parsePropertyFolderName(rawName);
+  if (!parsed.ok) return false;
+  return !usesPerAsSeparator(parsed.tarla) && !usesPerAsSeparator(parsed.parcela);
+}
+
+/**
+ * The user's answer to STR-15, for one folder.
+ *
+ * `"property"` clears the violation and the folder imports normally.
+ * `"not-property"` does NOT clear it: the folder still cannot be imported, and
+ * the stage replaces the question with the instruction to take it out of the
+ * chosen folder.
+ *
+ * ⚠️ **Nothing here deletes anything** (Adrian, #28.02). The slice's first
+ * sketch had the wizard offer to delete the folder; the folder is picked
+ * `mode: "read"`, the screen promises in Romanian that the system never touches
+ * the user's files, and a recursive delete from a browser does not pass through
+ * the Recycle Bin. The remedy is the same File Explorer round trip every other
+ * finding asks for.
+ */
+export type PropertyConfirmation = "property" | "not-property";
+
+/** The answers so far, keyed by the folder's path from the chosen folder. */
+export type PropertyConfirmations = ReadonlyMap<string, PropertyConfirmation>;
 
 /**
  * What makes two property folders the same property — the STR-03 comparison.
@@ -944,7 +940,7 @@ export function isPageFileName(name: string): boolean {
  * `isPageFileName` accepts it. That asymmetry is inherited rather than
  * introduced — `sortNumericFilenames` computes `Infinity - Infinity` on the
  * same input — and it is harmless here because STR-14 requires the numbers to
- * run 1…n, which no such file can satisfy.
+ * run consecutively, which a file with no number can never be part of.
  */
 export function pageNumberOf(name: string): number | null {
   if (!isPageFileName(name)) return null;

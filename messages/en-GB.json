@@ -2179,23 +2179,23 @@
         },
         "STR-03": {
           "requirement": "No two folders in the chosen folder may mean the same property.",
-          "example": "Correct: one folder per property. Wrong: 47per2-225per3 next to 47PER2-225per3||acte vechi — the same tarla and parcela, spelled differently.",
+          "example": "Correct: one folder per property. Wrong: 47per2-225per3 next to 47PER2-225per3-acte vechi — the same tarla and parcela, spelled differently.",
           "violation": "The folders {folder} and {other} mean the same property ({identity}). Keep a single folder for it and move the documents from the other one into it."
         },
         "STR-04": {
-          "requirement": "Every folder in the chosen folder is either a property, or comune, or flotante. A property name starts with the tarla and the parcela separated by a hyphen. per stands in for the slash, which cannot be used in a folder name.",
-          "example": "Correct: 47per2-225per3per24, 48-50D, 225per3-24bis. Wrong: Acte 2019, Teren Bragadiru, 2024-Arhiva.",
-          "violation": "The folder {folder} is neither a property, nor comune, nor flotante. Rename it with the tarla and the parcela, for example 47per2-225per3per24, or move the files out of it into comune or flotante and delete the empty folder."
+          "requirement": "Every folder in the chosen folder is either a property, or comune, or flotante. A property name carries the tarla, a hyphen, then the parcela — and, if you want one, a second hyphen and a free description. per stands in for the slash, which cannot be used in a folder name.",
+          "example": "Correct: 47per2-225per3per24, 48-50D, 212per40IE55821-1745-Busuioc Ion. Wrong: Acte 2019, Teren Bragadiru, Documente — no hyphen, so no parcela.",
+          "violation": "The folder {folder} does not carry a tarla and a parcela separated by a hyphen, so it is neither a property, nor comune, nor flotante. Rename it as tarla-parcela — for example 47per2-225per3per24 — or move the files out of it into comune or flotante and delete the empty folder."
         },
         "STR-05": {
           "requirement": "The shared folders are named exactly comune and flotante, in lower case.",
           "example": "Correct: comune, flotante. Wrong: Comune, COMUNE, Flotante.",
           "violation": "The folder {folder} looks like {expected} but is not spelled the same way. Rename it to exactly {expected}, in lower case."
         },
-        "STR-06": {
-          "requirement": "If you add a description after the tarla and the parcela, separate it with two vertical bars: ||.",
-          "example": "Correct: 47per2-225per3per24||2716 Prisecaru. Wrong: 47per2-225per3per24-2716 Prisecaru.",
-          "violation": "The name {folder} carries extra text after the tarla and the parcela but does not separate it with ||. Rename the folder to {suggestion}."
+        "STR-15": {
+          "requirement": "A property folder whose tarla and parcela contain no per is confirmed by you before the import goes on. per is what tells a parcel apart from an ordinary name.",
+          "example": "Correct: 48-50D — a real parcel, even though it has no per in it: answer Yes. Wrong: 2024-Arhiva — a year and a word, read as tarla 2024 and parcela Arhiva: answer No.",
+          "violation": "The folder {folder} would be imported as a property with tarla {tarla} and parcela {parcela}, but neither carries per. Say whether it really is a property."
         },
         "STR-07": {
           "requirement": "The files sitting directly in a property folder — or in comune or flotante — cannot all be numbered scans. The pages of a scanned document live in a subfolder whose name is the document title.",
@@ -2233,9 +2233,9 @@
           "violation": "In {folder} several files carry page number {number}: {examples}. The page order would be arbitrary. Renumber them so each number appears exactly once."
         },
         "STR-14": {
-          "requirement": "Pages are numbered 1, 2, 3… with no gaps.",
-          "example": "Correct: 1.jpg, 2.jpg, 3.jpg. Wrong: 1.jpg, 3.jpg, 4.jpg, or 5449.jpg and 31316.jpg, which are scanner counters rather than page numbers.",
-          "violation": "The folder {folder} holds {pages, plural, one {one page numbered} other {# pages numbered}} from {lowest} to {highest}. Pages are numbered 1, 2, 3… with no gaps. Renumber the files in this folder starting from 1."
+          "requirement": "Page numbers run one after another with no gaps — each one exactly one more than the one before. The run may start at any number.",
+          "example": "Correct: 1.jpg, 2.jpg, 3.jpg, or 25.jpg, 26.jpg, 27.jpg. Wrong: 1.jpg, 3.jpg, 4.jpg, or 5449.jpg and 31316.jpg, which are scanner counters rather than page numbers.",
+          "violation": "The folder {folder} holds {pages, plural, one {one page numbered} other {# pages numbered}} from {lowest} to {highest}, which do not run one after another. Renumber the files in this folder so that each number is exactly one more than the one before, with no gaps."
         }
       },
       "title": "Folder structure",
@@ -2253,6 +2253,17 @@
         "common": "“comune” — documents that concern every property in this import. Each one is linked to each of them.",
         "floating": "“flotante” — stand-alone documents that concern no property at all. They are saved to the archive linked to nothing.",
         "optional": "Neither is required: if you have no such documents, do not make the folder."
+      },
+      "confirmProperty": {
+        "question": "Is this folder a property?",
+        "yes": "Yes, it is a property",
+        "no": "It is not a property",
+        "confirmedTitle": "{count, plural, one {One folder you have confirmed as a property} other {# folders you have confirmed as properties}}",
+        "confirmedHint": "The import will create a property for each of these. If you clicked by mistake, change the answer here.",
+        "confirmedPageHint": "The import will create a property for each of these. You can change the answer on the import screen.",
+        "change": "Change the answer",
+        "savedPageNote": "You answer this one on the import screen, not in File Explorer.",
+        "removeInstruction": "Take the folder out of the chosen folder, or move the files out of it into comune or flotante and delete it. The system never touches your files."
       },
       "acknowledge": "I follow the structure rules",
       "acknowledgeHint": "Tick once you have read the rules, and again after each correction you make in File Explorer. The tick is asked for on every check.",
@@ -2336,7 +2347,7 @@
       "chooseAnotherFolder": "Choose another folder…",
       "clean": "Every file in the folder can be imported.",
       "violationsTitle": "{count, plural, one {One thing to put right} other {# things to put right}}",
-      "fixInstructions": "Make the corrections above — the ones that are a move, a rename or a deletion you can make directly in File Explorer, and the system does not touch your files. If the file you took out was one page of a scanned document, renumber the remaining pages from 1. When you are done, come back here, tick again and press “Check again”.",
+      "fixInstructions": "Make the corrections above — the ones that are a move, a rename or a deletion you can make directly in File Explorer, and the system does not touch your files. If the file you took out was one page of a scanned document, renumber the remaining pages so that they still run one after another with no gaps. When you are done, come back here, tick again and press “Check again”.",
       "morePaths": "{count, number} more…",
       "unreadable": {
         "title": "Files that could not be read",

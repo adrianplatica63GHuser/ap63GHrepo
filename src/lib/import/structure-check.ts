@@ -56,10 +56,14 @@
  *    the unread remainder can only add more. Same for STR-04/05/06, which read
  *    a folder's own name and never its contents.
  *  - **Universal rules do not.** STR-07 ("EVERY file here is a numbered scan"),
- *    STR-11 ("this folder is empty") and STR-14 ("the numbers run 1…n with no
- *    gaps") are all claims about the absence of a counterexample, and the
- *    counterexample may be sitting in the part nobody read. Each is suppressed
- *    on a partial listing.
+ *    STR-11 ("this folder is empty") and STR-14 ("the numbers run consecutively
+ *    with no gaps") are all claims about the absence of a counterexample, and
+ *    the counterexample may be sitting in the part nobody read. Each is
+ *    suppressed on a partial listing.
+ *
+ *    ⚠️ STR-15 is neither, and it survives a partial listing: it reads a
+ *    FOLDER'S OWN NAME, like STR-04 and STR-05, and a name is either fully read
+ *    or the directory was not enumerated at all.
  *
  * ⚠️ A truncated folder can therefore still pass `checkStructure` with those
  * three unreported. **#26.04 answered the stage question that raised: it does
@@ -141,14 +145,30 @@ import {
   isDeclaredCoordinateFile,
   isPageFileName,
   isWalkedFileName,
+  needsPropertyConfirmation,
   pageNumberOf,
   parsePropertyFolderName,
   propertyIdentityOf,
   sharedFolderName,
   sharedFolderNearMiss,
-  suggestedPropertyFolderName,
+  type PropertyConfirmations,
   type StructureViolation,
 } from "./structure-rules";
+
+/**
+ * No answers at all — the state before the user has been asked anything.
+ *
+ * A module-level shared constant rather than `new Map()` in a default parameter:
+ * the wizard's `structureVerdict` is a `useMemo` over the verdict, and a fresh
+ * Map minted on every call would be a new object identity for a caller that
+ * compares.
+ *
+ * ⚠️ It is NOT frozen — an earlier draft of this comment said it was, and a
+ * `Map` ignores `Object.freeze` for its entries anyway. What actually stops it
+ * being written to is the `PropertyConfirmations` type, which is a
+ * `ReadonlyMap`: nothing in this module or above it can reach a `set`.
+ */
+const NO_CONFIRMATIONS: PropertyConfirmations = new Map();
 
 // ---------------------------------------------------------------------------
 // Entry points
@@ -176,8 +196,9 @@ const MAX_EXAMPLES = 3;
  */
 export function checkStructure(
   observations: readonly DirectoryObservation[],
+  confirmations: PropertyConfirmations = NO_CONFIRMATIONS,
 ): StructureViolation[] {
-  return firstPerPlace(emitStructureViolations(observations));
+  return firstPerPlace(emitStructureViolations(observations, confirmations));
 }
 
 /**
@@ -264,12 +285,30 @@ export type StructureVerdict = {
   truncations: StructureTruncationGroup[];
   /** May Structure hand over to the next stage? */
   clean: boolean;
+  /**
+   * The property folders the user has already answered `"property"` to, sorted.
+   *                                                          (Slice #28.02)
+   *
+   * ⚠️ **Carried in the verdict because an answered question leaves NO trace
+   * anywhere else, and an accidental "yes" is the one answer with a
+   * consequence.** A `"property"` answer removes STR-15 from the list, so the
+   * folder simply disappears from the screen — and `2024-Arhiva` would then be
+   * imported as a Property with tarla 2024, silently, on the strength of one
+   * mis-aimed click. The stage lists these back with a control to change the
+   * answer, which is what makes the click reversible.
+   *
+   * Only folders that still NEED confirming appear here. A folder renamed to
+   * carry a `per` between two checks drops out of the list rather than lingering
+   * as an answer to a question nobody is asking any more.
+   */
+  confirmedProperties: string[];
 };
 
 export function checkStructureStage(
   observations: readonly DirectoryObservation[],
+  confirmations: PropertyConfirmations = NO_CONFIRMATIONS,
 ): StructureVerdict {
-  const violations = checkStructure(observations);
+  const violations = checkStructure(observations, confirmations);
 
   const byLimit = new Map<WalkLimit, string[]>();
   for (const obs of observations) {
@@ -298,11 +337,44 @@ export function checkStructureStage(
       count: paths.length,
     }));
 
+  // Read from the observations rather than from `confirmations` itself: the
+  // answers outlive a re-check by design, so the map can still hold a folder
+  // that has since been renamed or removed, and listing that back would offer
+  // the user a control over a folder that is no longer on their disk.
+  const confirmedProperties = sorted(
+    observations
+      .map(confirmablePropertyPath)
+      .filter((path): path is string => path !== null)
+      .filter((path) => confirmations.get(path) === "property"),
+  );
+
   return {
     violations,
     truncations,
     clean: violations.length === 0 && truncations.length === 0,
+    confirmedProperties,
   };
+}
+
+/**
+ * The path of a depth-1 folder that STR-15 has a question about, or `null`.
+ *
+ * ⚠️ **Equivalent to `classifyTopLevel`'s `"property"` plus
+ * `needsPropertyConfirmation`, and it has to stay equivalent.** The two are
+ * separate because `classifyTopLevel` EMITS as it decides and this one must
+ * decide without emitting; the equivalence holds because the only kinds
+ * `classifyTopLevel` can return besides `"property"` are `"shared"` (an accepted
+ * spelling) and `"unreadable"` (a near miss, or a name that does not parse), and
+ * the two guards below plus `needsPropertyConfirmation`'s own parse cover
+ * exactly those. A test pins it against `emitStructureViolations`, which is the
+ * only thing that would notice the day they part company.
+ */
+function confirmablePropertyPath(obs: DirectoryObservation): string | null {
+  if (obs.depth !== TOP_LEVEL_DEPTH) return null;
+  const name = obs.pathParts[obs.pathParts.length - 1] ?? "";
+  if (sharedFolderName(name) !== null) return null;
+  if (sharedFolderNearMiss(name) !== null) return null;
+  return needsPropertyConfirmation(name) ? obs.path : null;
 }
 
 /**
@@ -315,6 +387,7 @@ export function checkStructureStage(
  */
 export function emitStructureViolations(
   observations: readonly DirectoryObservation[],
+  confirmations: PropertyConfirmations = NO_CONFIRMATIONS,
 ): StructureViolation[] {
   const out: StructureViolation[] = [];
   for (const obs of observations) {
@@ -326,10 +399,10 @@ export function emitStructureViolations(
       // (a loose file, a sixth property, a duplicate), so none of them can be
       // invalidated by the part of the listing nobody read.
       case CHOSEN_FOLDER_DEPTH:
-        chosenFolder(obs, out);
+        chosenFolder(obs, confirmations, out);
         break;
       case TOP_LEVEL_DEPTH:
-        topLevelFolder(obs, partial, out);
+        topLevelFolder(obs, partial, confirmations, out);
         break;
       case PAGE_FOLDER_DEPTH:
         pageFolder(obs, partial, out);
@@ -345,7 +418,42 @@ export function emitStructureViolations(
 // Depth 0 — the folder the user picked
 // ---------------------------------------------------------------------------
 
-function chosenFolder(obs: DirectoryObservation, out: StructureViolation[]): void {
+/**
+ * Is this top-level name a property AS FAR AS THE CHOSEN FOLDER'S RULES GO?
+ *                                                          (Slice #28.02)
+ *
+ * ⚠️ **Three states, not two, and the middle one is why this is a function.**
+ * STR-02 counts properties and STR-03 compares them, and since #28.02 a name
+ * that parses is not yet known to BE a property — STR-15 is the question, and it
+ * has three answers: not asked yet, yes, and no.
+ *
+ *  - **`"no"` → not a property.** The user has said so. Counting a disowned
+ *    folder toward the limit refuses a chosen folder for holding six properties
+ *    when the user can see one property and five folders they have just
+ *    disowned, and no amount of answering makes the refusal go away — measured
+ *    in the first adversarial round of this slice.
+ *  - **Unanswered → still a property.** #26.01's argument, inherited: a folder
+ *    the user has not disowned is one the import would create, and withholding
+ *    the count until they confirm costs a whole round of the loop, after which
+ *    the confirmation may be pointless because the folder has to be split out
+ *    anyway.
+ *  - **`"yes"` → a property, obviously.**
+ *
+ * `dirNames` at depth 0 are bare folder names, and a depth-1 culprit path IS its
+ * folder name, so the name is the confirmation key. That is the same identity
+ * `topLevelFolder` writes with `obs.path`; if the walk ever nested the chosen
+ * folder differently, both would move together.
+ */
+function countsAsProperty(name: string, confirmations: PropertyConfirmations): boolean {
+  if (!isPropertyFolderName(name)) return false;
+  return !(needsPropertyConfirmation(name) && confirmations.get(name) === "not-property");
+}
+
+function chosenFolder(
+  obs: DirectoryObservation,
+  confirmations: PropertyConfirmations,
+  out: StructureViolation[],
+): void {
   const files = walkedFiles(obs);
   const dirNames = sorted(obs.dirNames);
 
@@ -367,10 +475,10 @@ function chosenFolder(obs: DirectoryObservation, out: StructureViolation[]): voi
   // `floating` are not properties and never count (#26.01, Adrian) — a
   // compliant chosen folder may legitimately hold seven subfolders. And a
   // folder whose name cannot be read as a property is not evidence of a sixth
-  // property; it is evidence of a name to fix, which is STR-04's or STR-06's
+  // property; it is evidence of a name to fix, which is STR-04's
   // instruction. Counting it here would refuse a folder for holding six
   // properties when the user can see five and one typo.
-  const properties = dirNames.filter(isPropertyFolderName);
+  const properties = dirNames.filter((n) => countsAsProperty(n, confirmations));
   if (properties.length > MAX_PROPERTY_FOLDERS) {
     out.push({
       ruleId: "STR-02",
@@ -384,8 +492,24 @@ function chosenFolder(obs: DirectoryObservation, out: StructureViolation[]): voi
   // STR-03 — two folders that reach the database as the same tarla and
   // parcela. `propertyIdentityOf` answers null for anything that is not a
   // property folder, so unreadable names are never compared with each other.
+  //
+  // ⚠️ **AND NEITHER ARE TWO FOLDERS THE USER HAS NOT YET CALLED PROPERTIES.**
+  // (Slice #28.02, found by the first adversarial round.) The positional parse
+  // reads `2024-Acte-notariale` and `2024-Acte-vechi` as one parcel — tarla
+  // 2024, parcela `Acte`, twice — and STR-03 outranks STR-15, so `firstPerPlace`
+  // showed only "these two folders mean the same property; keep one and move the
+  // documents from the other into it". That is an instruction to merge two
+  // unrelated archives, irreversibly, in File Explorer — and the STR-15 question
+  // that would have stopped it appears one loop round LATER, on the folder that
+  // now holds both.
+  //
+  // So a folder is compared for duplication only once it is known to be a
+  // property. `countsAsProperty` is deliberately NOT the test here: STR-02
+  // counts an unanswered folder (a count is a forecast), while STR-03 instructs
+  // the user to destroy something (an instruction needs certainty).
   const byIdentity = new Map<string, string[]>();
   for (const name of dirNames) {
+    if (needsPropertyConfirmation(name) && confirmations.get(name) !== "property") continue;
     const identity = identityOf(name);
     if (identity === null) continue;
     byIdentity.set(identity, [...(byIdentity.get(identity) ?? []), name]);
@@ -413,22 +537,52 @@ function chosenFolder(obs: DirectoryObservation, out: StructureViolation[]): voi
 /**
  * What a top-level folder turned out to be.
  *
- * `"property"` covers a name that parses AND a name whose only fault is the
- * missing `||` separator: the identifiers are already correct in both cases,
- * so the folder's CONTENTS are worth checking either way. `"unreadable"` is
- * the folder that has to be renamed or moved before anything inside it means
- * anything.
+ * `"property"` is a name that parses — since Slice #28.02 that means "carries a
+ * dash with something on both sides of it", and nothing more. It says the folder
+ * has identifiers, NOT that the user has agreed they are real: STR-15 is the
+ * separate question, asked below, and a folder can be a `"property"` here and
+ * still be blocked. `"unreadable"` is the folder that has to be renamed or moved
+ * before anything inside it means anything.
  */
 type TopLevelKind = "property" | "shared" | "unreadable";
 
 function topLevelFolder(
   obs: DirectoryObservation,
   partial: boolean,
+  confirmations: PropertyConfirmations,
   out: StructureViolation[],
 ): void {
   const name = obs.pathParts[obs.pathParts.length - 1] ?? "";
   const files = walkedFiles(obs);
   const kind = classifyTopLevel(name, obs, out);
+
+  // STR-15 — the protection that used to be the grammar.   (Slice #28.02)
+  //
+  // ⚠️ NOT suppressed on a `partial` listing, unlike STR-07 and STR-11 above
+  // and below it. Those are claims about the ABSENCE of a counterexample among
+  // files nobody finished reading; this one reads the folder's own name, which
+  // the walk had in hand before it enumerated anything. Suppressing it would
+  // mean a truncated walk silently drops the one question standing between
+  // `2024-Arhiva` and a Property called tarla 2024.
+  //
+  // The parse is re-run rather than threaded out of `classifyTopLevel`: it is
+  // pure and cheap, and a second return value from a function whose job is to
+  // emit would be read by every caller and used by one.
+  const parsed = parsePropertyFolderName(name);
+  if (kind === "property" && parsed.ok && needsPropertyConfirmation(name)) {
+    if (confirmations.get(obs.path) !== "property") {
+      out.push({
+        ruleId: "STR-15",
+        culprit: obs.path,
+        related: [],
+        counts: {},
+        // As WRITTEN, not `perToSlash`-decoded — by definition these carry no
+        // `per`, so the two are the same string, and quoting the raw name is
+        // what lets the user compare the sentence against File Explorer.
+        values: { folder: name, tarla: parsed.tarla, parcela: parsed.parcela },
+      });
+    }
+  }
 
   // STR-07 — ⚠️ DELIBERATELY STRICTER THAN `becamePageGroup`, and the first
   // draft of this module was not.
@@ -495,9 +649,13 @@ function topLevelFolder(
  * anything yet.
  *
  * The order is the mutual exclusion #26.01 built the vocabulary for: an exact
- * `common` is never a near miss, a near miss never reaches the property
- * grammar, and a name with recoverable identifiers gets the small correction
- * (STR-06) rather than the useless "this is not a property folder" (STR-04).
+ * `comune` is never a near miss, and a near miss never reaches the property
+ * parse — so a misspelt shared folder gets the rename instruction rather than
+ * the useless "this is not a property folder".
+ *
+ * ⚠️ Since Slice #28.02 there is no third branch. STR-06's "the identifiers are
+ * right, the separator is not" is gone with the separator, and what is left is a
+ * clean two-way split: the name parses, or STR-04.
  */
 function classifyTopLevel(
   name: string,
@@ -525,28 +683,13 @@ function classifyTopLevel(
     return "unreadable";
   }
 
-  const parsed = parsePropertyFolderName(name);
-  if (parsed.ok) return "property";
+  if (parsePropertyFolderName(name).ok) return "property";
 
-  if (parsed.reason === "separator") {
-    const suggestion = suggestedPropertyFolderName(name);
-    if (suggestion !== null) {
-      out.push({
-        ruleId: "STR-06",
-        culprit: obs.path,
-        related: [],
-        counts: {},
-        values: { folder: name, suggestion },
-      });
-      return "property";
-    }
-    // Unreachable through `parsePropertyFolderName`, which only answers
-    // "separator" when it recovered a prefix — and a recovered prefix is
-    // always a suggestion. Kept because a rule that offers a rename it could
-    // not compute must fall back to the rule that asks the user to choose the
-    // name, never to a sentence with a hole in it.
-  }
-
+  // Everything else is STR-04, and since #28.02 that is a much smaller set: a
+  // name with no dash at all, or one whose tarla or parcela is empty (`-50D`,
+  // `48-`). STR-06's branch stood here and is gone with the rule — a dash before
+  // a description is now what the product asks for, so there is nothing left to
+  // report about one.
   out.push({
     ruleId: "STR-04",
     culprit: obs.path,
@@ -558,51 +701,46 @@ function classifyTopLevel(
 }
 
 /**
- * Does this name read as a property folder — separator fault and all?
+ * Does this name read as a property folder?
  *
- * ⚠️ **"And all" is the whole point, and the first draft got it backwards.** It
- * returned `parsePropertyFolderName(name).ok`, which is false for a missing
- * `||`, while `classifyTopLevel` twelve lines away calls that same folder a
- * `"property"`. So `1-1 … 5-5` plus `6-6 descriere` reported only the separator
- * fault; STR-02 appeared one whole loop round later, after the user had renamed
- * a folder they are about to be told to move anyway.
+ * ⚠️ **It counts a folder STR-15 has not been answered for yet, and that is
+ * deliberate.** #26.01's version had to add `|| reason === "separator"` so that
+ * a folder with correct identifiers and a wrong separator counted toward the
+ * limit; the shape of that argument survives its cause. A folder named
+ * `2024-Arhiva` is a property as far as STR-02 is concerned, because STR-02 asks
+ * "how many properties would this import create" and the honest answer includes
+ * the one the user has not disowned yet. Excluding it would report five
+ * properties, let the user confirm the sixth, and only then refuse the folder —
+ * one whole loop round later, which is exactly the failure the `"separator"`
+ * clause was added to prevent.
  *
- * A separator fault is the one wrong name whose IDENTIFIERS are already
- * correct — that is exactly why #26.01 gave it its own failure reason — so it
- * is provably a property, and a rule that counts properties must count it. A
- * `cadastral` failure is different and stays excluded: nothing about
- * `Documente vechi` says a property is hiding in it, and counting it would
- * refuse a folder for holding six properties when the user can see five and a
- * typo.
+ * A name that does not parse stays excluded: nothing about `Documente vechi`
+ * says a property is hiding in it, and counting it would refuse a folder for
+ * holding six properties when the user can see five and a typo.
  */
 function isPropertyFolderName(name: string): boolean {
   if (sharedFolderName(name) !== null) return false;
   if (sharedFolderNearMiss(name) !== null) return false;
-  const parsed = parsePropertyFolderName(name);
-  return parsed.ok || parsed.reason === "separator";
+  return parsePropertyFolderName(name).ok;
 }
 
 /**
- * Which property this folder means — through the suggested name when the only
- * fault is the separator.
+ * Which property this folder means.
  *
- * `propertyIdentityOf` answers `null` for anything that does not parse, and
- * that refusal is right: #26.01 built it so two unreadable names can never be
- * called equal. But `10-20` and `10-20 copie` ARE the same property, and
- * leaving STR-03 silent until the second one is renamed hides the violation
- * that makes the rename pointless — the user is told to insert `||`, does it,
- * and is then told to merge the folder they just fixed.
+ * ⚠️ **A plain alias since Slice #28.02, and the collapse is the point.** It
+ * used to compose `propertyIdentityOf` with `suggestedPropertyFolderName`, so
+ * that `10-20` and `10-20 copie` — the second being a separator fault — were
+ * seen as one property and STR-03 fired on the pair. The positional parse gets
+ * there directly: `10-20 copie` is tarla `10`, parcela `20 copie`, which is a
+ * DIFFERENT parcela and correctly no longer a duplicate, while `10-20-copie` is
+ * tarla `10`, parcela `20`, description `copie` — the same property, caught by
+ * `propertyIdentityOf` on its own because the description is not part of the
+ * identity.
  *
- * Composed from the two #26.01 functions rather than by loosening either:
- * `suggestedPropertyFolderName` only ever answers for a separator fault, and
- * promises whatever it returns parses.
+ * Kept as a named function rather than inlined so the STR-03 loop still reads as
+ * "the identity of this folder", and so this note has somewhere to live.
  */
-function identityOf(name: string): string | null {
-  const direct = propertyIdentityOf(name);
-  if (direct !== null) return direct;
-  const suggestion = suggestedPropertyFolderName(name);
-  return suggestion === null ? null : propertyIdentityOf(suggestion);
-}
+const identityOf = propertyIdentityOf;
 
 // ---------------------------------------------------------------------------
 // Depth 2 — the pages of one document
@@ -697,23 +835,46 @@ function pageFolder(
     });
   }
 
-  // STR-14 — the numbers must be exactly 1…n, each once.
+  // STR-14 — the numbers must form a CONSECUTIVE ASCENDING RUN, wherever it
+  // starts.   (Slice #28.02, relaxation #2)
+  //
+  // `25, 26, 27, 28` is now a valid four-page document. Everything else about
+  // the rule is unchanged: no gaps, no duplicates, and every page carries a
+  // number — only the requirement that the run begins at 1 is dropped.
+  //
+  // ⚠️ **Two of the three tests are load-bearing and the first is a statement
+  // of intent — say which, because an earlier draft of this comment claimed all
+  // three were and was wrong.**
+  //
+  //  - `Set(numbers).size === pages.length` is the one that does the work. It
+  //    says every page carries a number AND no two share one, because `numbers`
+  //    is a filter of `pages`, so its size can only reach `pages.length` when
+  //    nothing was filtered out and nothing collided. It is what refuses a
+  //    folder whose basename is too long to be an exact integer (`pageNumberOf`
+  //    answers `null`), and it is what refuses `1, 01, 3`.
+  //  - `max - min === n - 1` is only a theorem about DISTINCT values, so the
+  //    `Set` test is what licenses it. Drop it and `1, 3` passes; drop the `Set`
+  //    and `1, 1, 3` passes on the arithmetic alone (`3 - 1 === 3 - 1`), which
+  //    would be STR-13's job silently outsourced to a rule that cannot do it.
+  //  - `numbers.length === pages.length` is IMPLIED by the `Set` test and is
+  //    kept because the rule is written as three requirements and reads as
+  //    three. Removing it changes nothing; a mutation test proves that (the
+  //    suite stays green), and this note is here so the next reader does not
+  //    have to run one to find out.
   //
   // A page file whose basename is too long to be an exact integer has no page
-  // number at all (`pageNumberOf`), and cannot be part of a 1…n run — so it
-  // fails the length test below and is reported here, which is what #26.01
-  // promised would happen to it. `parseInt` is used for the bounds the
-  // sentence quotes, because a finite approximation the user can compare
-  // against their own filenames beats no number at all.
+  // number (`pageNumberOf`), so it fails the first test and is reported here —
+  // which is what #26.01 promised would happen to it. `parseInt` is used for the
+  // bounds the sentence quotes, because a finite approximation the user can
+  // compare against their own filenames beats no number at all.
   const numbers = pages
     .map((n) => pageNumberOf(n))
     .filter((n): n is number => n !== null);
-  const runsFromOne =
+  const runsConsecutively =
     numbers.length === pages.length &&
     new Set(numbers).size === pages.length &&
-    Math.min(...numbers) === 1 &&
-    Math.max(...numbers) === pages.length;
-  if (!runsFromOne && !partial) {
+    Math.max(...numbers) - Math.min(...numbers) === pages.length - 1;
+  if (!runsConsecutively && !partial) {
     const bounds = pages.map(displayNumberOf);
     out.push({
       ruleId: "STR-14",
@@ -739,14 +900,21 @@ function pageFolder(
  *
  * ⚠️ The clamp is not defensive tidiness. `parseInt` of a 400-digit basename —
  * a legal `isPageGroupMember`, since the rule is only "digits and an image
- * extension" — is `Infinity`, and the sentence would read "numbered from 1 to
- * ∞". Saying the largest number a page could be is wrong by a finite amount;
- * saying ∞ is not a number the user can look for.
+ * extension" — is `Infinity`, and the sentence would end "… la ∞". Saying the
+ * largest number a page could be is wrong by a finite amount; saying ∞ is not a
+ * number the user can look for.
  *
  * ACCEPTED: two basenames above the clamp quote the same bound, so a folder
- * holding a 400-digit and a 401-digit name reads "from … to …" with the same
- * number twice. Both are already being reported as needing renumbering from 1,
- * and no representation of those two names inside a sentence is useful.
+ * holding a 400-digit and a 401-digit name reads "de la … la …" with the same
+ * number twice, in a sentence whose claim is that they do not run one after
+ * another. Both are already being reported as needing renumbering, and no
+ * representation of those two names inside a sentence is useful.
+ *
+ * ⚠️ **Neither paragraph says "from 1" any more, and that is not a rewording.**
+ * Slice #28.02 relaxed STR-14 to accept a consecutive run starting anywhere, and
+ * the shipped sentence asks for "fiecare număr … cu exact unu mai mare decât cel
+ * dinainte" with no start named. A comment here still describing the old rule is
+ * how a future reader re-adds it.
  */
 function displayNumberOf(name: string): number {
   const parsed = parseInt(name.slice(0, name.lastIndexOf(".")), 10);
