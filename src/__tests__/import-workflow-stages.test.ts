@@ -32,12 +32,15 @@ import path from "node:path";
 
 import {
   IMPORT_PHASES,
+  SELF_ADVANCING_TRANSITIONS,
   phaseAfterFileChecks,
+  stepThroughRest,
   WORKFLOW_LINE_IDS,
   WORKFLOW_STAGES,
   stageForPhase,
   stageStatuses,
   stagesOnLine,
+  type ImportPhase,
   type WorkflowStageId,
 } from "@/lib/import/workflow-stages";
 
@@ -58,6 +61,35 @@ function loadWorkflowMessages(file: string): Messages {
     fs.readFileSync(path.join(process.cwd(), "messages", file), "utf8"),
   ) as { adminImport: { workflow: Messages } };
   return raw.adminImport.workflow;
+}
+
+/**
+ * The longest run of characters two sentences have in common, case- and
+ * whitespace-insensitive.   (Slice #29.02)
+ *
+ * O(n·m) and deliberately so: these are one-line UI strings, and a suffix
+ * automaton in a test file is a thing to debug rather than a thing to trust.
+ */
+function longestSharedRun(a: string, b: string): number {
+  const x = a.toLowerCase().replace(/\s+/g, " ");
+  const y = b.toLowerCase().replace(/\s+/g, " ");
+  let best = 0;
+  for (let i = 0; i < x.length; i++) {
+    for (let j = 0; j < y.length; j++) {
+      let k = 0;
+      while (i + k < x.length && j + k < y.length && x[i + k] === y[j + k]) k++;
+      if (k > best) best = k;
+    }
+  }
+  return best;
+}
+
+/** The step-through pause's own namespace.   (Slice #29.02) */
+function loadStepGateMessages(file: string): Messages {
+  const raw = JSON.parse(
+    fs.readFileSync(path.join(process.cwd(), "messages", file), "utf8"),
+  ) as { adminImport: { stepGate: Messages } };
+  return raw.adminImport.stepGate;
 }
 
 const LOCALES = ["ro-RO.json", "en-GB.json"] as const;
@@ -1155,5 +1187,347 @@ describe("phaseAfterFileChecks", () => {
         }
       }
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Step-through   (Slice #29.02)
+// ---------------------------------------------------------------------------
+
+describe("SELF_ADVANCING_TRANSITIONS", () => {
+  it("names only phases the machine actually has", () => {
+    for (const t of SELF_ADVANCING_TRANSITIONS) {
+      expect(IMPORT_PHASES).toContain(t.from);
+      expect(IMPORT_PHASES).toContain(t.to);
+      expect(IMPORT_PHASES).toContain(t.rest);
+    }
+  });
+
+  it("⚠️ rests on the stage that PASSED, never on the one coming next", () => {
+    // The whole design in one assertion. Resting on `to` would be what the
+    // wizard already does without the setting, which is the behaviour being
+    // fixed: the next stage's screen reports the next stage.
+    for (const t of SELF_ADVANCING_TRANSITIONS) {
+      expect({ from: t.from, restStage: stageForPhase(t.rest) }).toEqual({
+        from: t.from,
+        restStage: stageForPhase(t.from),
+      });
+      expect(stageForPhase(t.rest)).not.toBe(stageForPhase(t.to));
+    }
+  });
+
+  it("⚠️ moves the user forward, never back", () => {
+    // A gate must not be a way of re-entering a stage: `rest` reports the stage
+    // the user is in, and `to` must be strictly later in the catalogue.
+    const order = WORKFLOW_STAGES.map((s) => s.id);
+    for (const t of SELF_ADVANCING_TRANSITIONS) {
+      expect({
+        from: t.from,
+        forward: order.indexOf(stageForPhase(t.to)) > order.indexOf(stageForPhase(t.rest)),
+      }).toEqual({ from: t.from, forward: true });
+    }
+  });
+
+  it("lists each (from, to) pair once, so the lookup cannot be ambiguous", () => {
+    const keys = SELF_ADVANCING_TRANSITIONS.map((t) => `${t.from}->${t.to}`);
+    expect(new Set(keys).size).toBe(keys.length);
+  });
+
+  it("⚠️ covers exactly the six transitions the wizard makes on its own", () => {
+    // Written out rather than derived, for the reason the phase->stage table is
+    // written out: this list is a claim about `import-wizard.tsx`, and a test
+    // that recomputed it from the same array would agree with anything.
+    expect(SELF_ADVANCING_TRANSITIONS.map((t) => [t.from, t.to, t.rest])).toEqual([
+      ["preflight", "structure", "preflight"],
+      ["walking", "constraints", "structure"],
+      ["constraints-checking", "duplication", "constraints"],
+      ["duplication-checking", "preexisting", "duplication"],
+      ["preexisting-checking", "folder-report", "preexisting"],
+      ["scanning", "ready", "scanning"],
+    ]);
+  });
+});
+
+describe("stepThroughRest", () => {
+  it("answers the table for every pair in it", () => {
+    for (const t of SELF_ADVANCING_TRANSITIONS) {
+      expect(stepThroughRest(t.from, t.to)).toBe(t.rest);
+    }
+  });
+
+  it("⚠️ never gates a stage that FOUND something", () => {
+    // Those screens already stop, on a violation list ending in "Verifica din
+    // nou". A gate there would be a second button for a pause the user is
+    // already standing in - and, worse, a green all-clear over a fix list.
+    expect(stepThroughRest("walking", "structure-report")).toBeNull();
+    expect(stepThroughRest("constraints-checking", "constraints-report")).toBeNull();
+    expect(stepThroughRest("duplication-checking", "duplication-report")).toBeNull();
+    expect(stepThroughRest("preexisting-checking", "preexisting-report")).toBeNull();
+    // Reachable whatever the walk was asked for: a run that came for the
+    // archive and found a broken constraint lands on the constraints list.
+    expect(stepThroughRest("preexisting-checking", "constraints-report")).toBeNull();
+    expect(stepThroughRest("preexisting-checking", "duplication-report")).toBeNull();
+  });
+
+  it("⚠️ refuses the pair the one-column version of this table would have gated", () => {
+    // `phaseAfterFileChecks` answers `preexisting` twice, and only `from` tells
+    // the two apart: from `duplication-checking` it means "no copies, go and
+    // read what the archive is about to be asked", which is a real stage to
+    // green; from `preexisting-checking` it means the archive produced NO
+    // answer at all, which is nothing to green - and resting at `duplication`
+    // because that half was clean would put a note about copies in front of a
+    // user who had just pressed the archive's own button.
+    expect(stepThroughRest("duplication-checking", "preexisting")).toBe("duplication");
+    expect(stepThroughRest("preexisting-checking", "preexisting")).toBeNull();
+  });
+
+  it("⚠️ agrees with phaseAfterFileChecks on every input it can produce", () => {
+    // The wizard passes this function's `to` straight out of that one, so any
+    // destination it can return must either be in the table or be deliberately
+    // ungated. This is what catches a later slice adding a fifth destination
+    // there and nobody noticing the gate silently disappeared - or, worse,
+    // silently appearing over a screen with no message written for it.
+    const seen = new Set<string>();
+    for (const target of ["structure", "constraints", "duplication", "preexisting"] as const) {
+      for (const constraintsClean of [true, false]) {
+        for (const duplicationClean of [true, false, null]) {
+          for (const preexistingClean of [true, false, null]) {
+            const from: ImportPhase =
+              target === "structure"
+                ? "walking"
+                : target === "constraints"
+                  ? "constraints-checking"
+                  : target === "duplication"
+                    ? "duplication-checking"
+                    : "preexisting-checking";
+            const { phase } = phaseAfterFileChecks({
+              target,
+              constraintsClean,
+              duplicationClean,
+              preexistingClean,
+            });
+            const rest = stepThroughRest(from, phase);
+            if (rest !== null) {
+              expect(stageForPhase(rest)).toBe(stageForPhase(from));
+            }
+            seen.add(`${from}->${phase}=${rest ?? "null"}`);
+          }
+        }
+      }
+    }
+    // And the walk-side pairs it can reach, exhaustively, so a change to either
+    // function shows up here as a diff rather than as a shrug.
+    //
+    // ⚠️ **THREE OF THESE ROWS WERE MISSING FROM THE FIRST DRAFT OF THIS LIST,
+    // and writing it out by hand is what found them.** Two are
+    // `phaseAfterFileChecks` under-claiming with `duplicationClean: null` — the
+    // match did not run, so it answers `duplication` for a walk that asked for
+    // more — and neither is gated, correctly: there is no stage to green when
+    // nothing ran. The third is `walking->constraints`, which the loop reaches
+    // only because it feeds `target: "structure"` to a function the wizard
+    // never calls with it (a clean structure walk returns two branches earlier,
+    // at `setPhase("constraints")`'s own site). The ANSWER is right for the
+    // real route anyway — `structure` is where a clean structure walk rests —
+    // which is why the row is pinned rather than excluded.
+    expect([...seen].sort()).toEqual([
+      "constraints-checking->constraints-report=null",
+      "constraints-checking->duplication=constraints",
+      "duplication-checking->constraints-report=null",
+      "duplication-checking->duplication-report=null",
+      "duplication-checking->duplication=null",
+      "duplication-checking->preexisting=duplication",
+      "preexisting-checking->constraints-report=null",
+      "preexisting-checking->duplication-report=null",
+      "preexisting-checking->duplication=null",
+      "preexisting-checking->folder-report=preexisting",
+      "preexisting-checking->preexisting-report=null",
+      "preexisting-checking->preexisting=null",
+      "walking->constraints=structure",
+    ]);
+  });
+
+  it("⚠️ does not gate a transition the user already presses a button for", () => {
+    expect(stepThroughRest("folder-report", "scanning")).toBeNull();
+    expect(stepThroughRest("ready", "property")).toBeNull();
+    expect(stepThroughRest("property", "tag-dialog")).toBeNull();
+    expect(stepThroughRest("importing", "result")).toBeNull();
+    expect(stepThroughRest("information", "preflight")).toBeNull();
+  });
+
+  it("under-claims rather than throwing on a pair that is not a transition", () => {
+    for (const from of IMPORT_PHASES) {
+      for (const to of IMPORT_PHASES) {
+        const rest = stepThroughRest(from, to);
+        if (rest === null) continue;
+        expect(SELF_ADVANCING_TRANSITIONS).toContainEqual({ from, to, rest });
+      }
+    }
+  });
+});
+
+
+describe("the pause's copy", () => {
+  it.each(LOCALES)("has a sentence for every stage a pause can rest on in %s", (file) => {
+    const g = loadStepGateMessages(file) as { cleared: Record<string, string> };
+    for (const t of SELF_ADVANCING_TRANSITIONS) {
+      const stage = stageForPhase(t.rest);
+      expect(typeof g.cleared[stage]).toBe("string");
+      expect(g.cleared[stage].length).toBeGreaterThan(0);
+    }
+  });
+
+  it.each(LOCALES)("ships no sentence no pause can produce in %s", (file) => {
+    // The mirror of the test above, and the one that actually bites: a string
+    // for a stage that cannot be rested on is a promise of a pause that never
+    // happens, and it is invisible from the screen.
+    const g = loadStepGateMessages(file) as { cleared: Record<string, string> };
+    const rests = SELF_ADVANCING_TRANSITIONS.map((t) => stageForPhase(t.rest));
+    expect(Object.keys(g.cleared).sort()).toEqual([...new Set(rests)].sort());
+  });
+
+  it.each(LOCALES)("⚠️ does not restate the panel's own all-clear in %s", (file) => {
+    // The panel above the card is already showing its emerald `clean` line, so
+    // a card that says the same thing reads as a rendering fault. Four of the
+    // six stages have such a line.
+    //
+    // ⚠️ **THE FIRST VERSION OF THIS TEST WAS `not.toBe(clean)`, AND THE
+    // ADVERSARIAL ROUND SHOWED IT PASSING ON THE EXACT DEFECT IT NAMES.**
+    // Exact inequality only catches a literal copy-paste. The copy it was
+    // guarding read "Nu se află nimic de două ori în folderul ales." on the
+    // panel and "Nu s-a găsit nimic de două ori în folderul ales." on the card
+    // — two different strings, one sentence, 0.89 similar. So the property is
+    // the one a reader actually notices: no long run of characters in common.
+    // 16 is comfortably above the longest run these six sentences share with
+    // their panels today (11, measured across both locales) and far below the
+    // ~30 the near-duplicates scored.
+    const raw = JSON.parse(
+      fs.readFileSync(path.join(process.cwd(), "messages", file), "utf8"),
+    ) as { adminImport: Record<string, { clean?: string }> };
+    const g = loadStepGateMessages(file) as { cleared: Record<string, string> };
+    for (const section of ["structure", "constraints", "duplication", "preexisting"]) {
+      const clean = raw.adminImport[section]?.clean;
+      expect(typeof clean).toBe("string");
+      // The section name travels with the number so a failure says WHICH
+      // sentence drifted, rather than just "18 is not less than 16".
+      const run = longestSharedRun(g.cleared[section], clean!);
+      expect({ section, tooSimilar: run >= 16, run }).toEqual({
+        section,
+        tooSimilar: false,
+        run,
+      });
+    }
+  });
+
+  it.each(LOCALES)("⚠️ names the destination as a step, not as a bare label in %s", (file) => {
+    // `advance` used to be "Continuă la {stage}", which renders "Continuă la
+    // Deja în sistem" — the stage names are pill labels, not objects of a
+    // preposition. The word for the unit has to be there, and it has to be the
+    // same word the indicator uses ("Pasul curent"), not a second one.
+    const g = loadStepGateMessages(file) as Record<string, string>;
+    const w = loadWorkflowMessages(file) as Record<string, string>;
+    const unit = file.startsWith("ro") ? "pas" : "step";
+    expect(g.advance.toLowerCase()).toContain(unit);
+    expect(g.toggle.toLowerCase()).toContain(unit);
+    expect(w.announcement.toLowerCase()).toContain(unit);
+    // And no second word for it. "etapă" is the one that crept in.
+    if (file.startsWith("ro")) {
+      for (const v of [g.toggle, g.toggleHint, g.why, g.advance]) {
+        expect(v.toLowerCase()).not.toContain("etap");
+      }
+    }
+  });
+
+  it.each(LOCALES)("carries the pause's own strings in %s", (file) => {
+    const g = loadStepGateMessages(file) as Record<string, unknown>;
+    for (const key of ["toggle", "toggleHint", "why", "advance"]) {
+      expect(typeof g[key]).toBe("string");
+      expect((g[key] as string).length).toBeGreaterThan(0);
+    }
+    // The button names where it goes, and the name comes from the indicator's
+    // own vocabulary — a user stepping through on purpose is reading the pills.
+    expect(g.advance as string).toContain("{stage}");
+  });
+});
+
+describe("the wizard's side of the table", () => {
+  /**
+   * ⚠️ **EVERY OTHER TEST IN THIS FILE IS ABOUT A PURE FUNCTION, AND THE
+   * ADVERSARIAL ROUND'S SHARPEST POINT WAS THAT NONE OF THEM TOUCHES THE
+   * WIZARD.** `stepThroughRest` is a five-line `Array.find`; what can actually
+   * break is the wizard handing it the wrong `from`. The ternary that computes
+   * `fromPhase` from the walk's target is the single point of failure — change
+   * one arm and every gate on that branch silently stops appearing, with this
+   * whole suite still green.
+   *
+   * A source scan is the only instrument available: the wizard is a 2,500-line
+   * client component with `showDirectoryPicker` in it, and this repo already
+   * reads source text in a test where behaviour cannot be executed (the
+   * `globals.css` and `stage-indicator.tsx` assertions above). It is a weaker
+   * check than rendering, and it is not pretending otherwise — it catches a
+   * phase name that stopped matching, not a mis-wired callback.
+   */
+  const wizard = fs.readFileSync(
+    path.join(process.cwd(), "src", "app", "admin", "import", "_components", "import-wizard.tsx"),
+    "utf8",
+  );
+
+  it("finds the file it is asserting about", () => {
+    // The guard that stops every test below passing vacuously on a bad path.
+    expect(wizard.length).toBeGreaterThan(50_000);
+    expect(wizard).toContain("stepThroughRest");
+  });
+
+  it("⚠️ still names every `from` in the table", () => {
+    for (const t of SELF_ADVANCING_TRANSITIONS) {
+      expect({ from: t.from, named: wizard.includes(`"${t.from}"`) }).toEqual({
+        from: t.from,
+        named: true,
+      });
+    }
+  });
+
+  it("⚠️ maps the four walk targets onto the four checking phases the table expects", () => {
+    // The ternary itself. Written as a shape test rather than a string match so
+    // reformatting does not fail it, but a CHANGED phase name does.
+    const block = wizard.slice(
+      wizard.indexOf("const fromPhase: ImportPhase ="),
+      wizard.indexOf('setPhase(fromPhase);'),
+    );
+    expect(block.length).toBeGreaterThan(0);
+    const walkRests = SELF_ADVANCING_TRANSITIONS.filter((t) => t.from !== "preflight" && t.from !== "scanning");
+    expect(walkRests).toHaveLength(4);
+    for (const t of walkRests) {
+      expect({ from: t.from, inTernary: block.includes(`"${t.from}"`) }).toEqual({
+        from: t.from,
+        inTernary: true,
+      });
+    }
+  });
+
+  it("⚠️ calls settle from exactly the four sites that can reach the six transitions", () => {
+    // Four, not six: the `phaseAfterFileChecks` commit is one call site serving
+    // three of the transitions. A fifth call site means somebody added a
+    // transition without adding it to the table, which is the direction that
+    // produces a pause with no sentence written for it.
+    const calls = wizard.match(/(?<![A-Za-z])settle\(/g) ?? [];
+    expect(calls).toHaveLength(4);
+    expect(wizard).toContain('settle("preflight", "structure")');
+    expect(wizard).toContain('settle("scanning", "ready")');
+    expect(wizard).toContain('settle(fromPhase, "constraints")');
+    expect(wizard).toContain("settle(fromPhase, next.phase)");
+  });
+
+  it("⚠️ drops the pause when the preconditions come back FAILING", () => {
+    // The adversarial round's worst find: at the preconditions rest the
+    // checklist stays mounted with a live re-check, and a re-check that fails
+    // used to leave the emerald card and its live button standing over a red
+    // list. The fix is one early return, and this is what says it is still
+    // there.
+    const handler = wizard.slice(
+      wizard.indexOf("const handlePreflightVerdict"),
+      wizard.indexOf('settle("preflight", "structure")'),
+    );
+    expect(handler).toContain("if (!passed)");
+    expect(handler).toContain("setGate(null)");
   });
 });

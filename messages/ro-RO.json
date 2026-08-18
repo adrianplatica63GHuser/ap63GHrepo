@@ -2459,6 +2459,7 @@
       },
       "title": "Documente aflate deja în sistem",
       "intro": "Structura, fișierele și duplicatele sunt în regulă. Aceasta este prima verificare care se uită în arhivă, nu în folderul ales: sistemul vă spune care dintre documente se află deja în sistem și ce se va întâmpla cu fiecare, înainte ca ele să fie trimise spre clasificare. Aici nu aveți nimic de îndreptat: citiți ce urmează să se întâmple, bifați și mergeți mai departe.",
+      "clean": "Niciun document din folderul ales nu se află deja în sistem.",
       "notesTitle": "Ce înseamnă „se află deja în sistem”",
       "showNotes": "Arată din nou explicațiile",
       "hideNotes": "Ascunde explicațiile",
@@ -2526,6 +2527,20 @@
         "scanning": "Scanare",
         "import": "Import",
         "result": "Rezultat"
+      }
+    },
+    "stepGate": {
+      "toggle": "Oprește-te după fiecare pas",
+      "toggleHint": "În mod normal importul trece singur mai departe peste pașii care nu au nimic de îndreptat. Bifați dacă vreți să vedeți ce a găsit fiecare pas și să apăsați dumneavoastră pentru a merge mai departe.",
+      "why": "Importul s-a oprit aici pentru că este bifat „Oprește-te după fiecare pas”. Nu se consumă nimic cât timp citiți.",
+      "advance": "Continuă la pasul „{stage}”",
+      "cleared": {
+        "preconditions": "Cele opt precondiții au fost verificate una câte una și toate sunt îndeplinite. Nu aveți nimic de pregătit înainte de a merge mai departe.",
+        "structure": "Regulile de aranjare a folderelor au fost verificate toate și niciuna nu a fost încălcată. Nu aveți nimic de îndreptat în File Explorer.",
+        "constraints": "Fiecare fișier a fost măsurat și niciunul nu a fost respins. Nu aveți nimic de îndreptat în File Explorer.",
+        "duplication": "Fișierele au fost comparate între ele și niciunul nu apare de mai multe ori. Nu aveți nimic de îndreptat în File Explorer.",
+        "preexisting": "Arhiva a fost întrebată despre fiecare document și nu a recunoscut niciunul. Nu aveți nimic de hotărât înainte de a merge mai departe.",
+        "scanning": "Scanarea s-a încheiat și fiecare rând din tabelul de mai jos are un răspuns. Nimic nu a intrat încă în arhivă."
       }
     },
     "scanning": {

@@ -127,6 +127,23 @@ type Props = {
    * of the loop, and a user who opened the rules to read them alongside their
    * fix list must not have them shut on the next check.
    */
+  /**
+   * Is the wizard holding a step-through pause on this stage?   (Slice #29.02)
+   *
+   * At a pause the emerald card below this panel carries the screen's ONE
+   * primary action — the button that goes on to the next stage — so this
+   * panel's own primary drops to a secondary. It is not suppressed: a
+   * re-check is still a real thing to want here, and it is the only route
+   * back to File Explorer for this stage. But `runWalk` clears the
+   * acknowledgement tick on its way in, so at a pause this button is
+   * DISABLED, and a disabled `primary/lg` sitting above a live one is the
+   * "which of these am I supposed to press" screen the pause exists to avoid.
+   *
+   * Defaulted, so every caller that does not know about step-through — and
+   * the tests that render this panel on its own — keeps exactly today's
+   * screen.
+   */
+  gated?: boolean;
   rulesOpen: boolean;
   onRulesOpenChange: (open: boolean) => void;
   /**
@@ -151,6 +168,7 @@ export function ImportStructureStage({
   onAcknowledgedChange,
   onChooseFolder,
   onRecheck,
+  gated = false,
   rulesOpen,
   onRulesOpenChange,
   propertyAnswers,
@@ -944,7 +962,11 @@ export function ImportStructureStage({
             type="button"
             onClick={checked ? onRecheck : onChooseFolder}
             disabled={!acknowledged || busy}
-            className={buttonClass({ variant: "primary", size: "lg" })}
+            // Slice #29.02 — demoted at a pause; see the `gated` prop.
+            className={buttonClass({
+              variant: gated ? "secondary" : "primary",
+              size: gated ? "md" : "lg",
+            })}
           >
             {checked ? t("recheck") : t("chooseFolder")}
           </button>

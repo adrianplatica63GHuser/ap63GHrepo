@@ -141,6 +141,7 @@ import { ImportPreexistingStage } from "./import-preexisting-stage";
 import { shouldInterpretEntry } from "@/lib/import/ai-interpret-run";
 import { isIdCardEntry } from "@/lib/import/id-card";
 import { ImportScanningStage } from "./import-scanning-stage";
+import { ImportStepGate } from "./import-step-gate";
 import { ImportRunStage } from "./import-run-stage";
 import { CancelImportDialog } from "./cancel-import-dialog";
 import { checkStructureStage } from "@/lib/import/structure-check";
@@ -161,6 +162,7 @@ import { lookupPreexisting } from "@/lib/import/preexisting-client";
 import {
   phaseAfterFileChecks,
   stageForPhase,
+  stepThroughRest,
   type ImportPhase,
   type WalkTarget,
   type WorkflowStageId,
@@ -334,6 +336,8 @@ function keepCreated(
 export function ImportWizard() {
   const t = useTranslations("adminImport.wizard");
   const tStage = useTranslations("adminImport.workflow");
+  /** Slice #29.02 — for the always-mounted live region; the card has its own. */
+  const tStepGate = useTranslations("adminImport.stepGate");
 
   const [phase, setPhase] = useState<ImportPhase>("information");
   const [rootFolderName, setRootFolderName] = useState<string>("");
@@ -673,6 +677,67 @@ export function ImportWizard() {
     facts: CancelFacts;
     stage: WorkflowStageId;
   } | null>(null);
+
+  /**
+   * Step-through: does the run stop after every stage that passes?
+   *                                                        (Slice #29.02)
+   *
+   * Unchecked by default, which is the whole promise of the slice — with it
+   * unchecked nothing about the flow changes, not one extra click anywhere.
+   *
+   * ⚠️ **STATE *AND* A REF, and the ref is not an optimisation.** The decision
+   * is taken inside `runWalk` and `startScan`, both of which are deliberately
+   * tiny `useCallback`s (`[t, beginRun]` and `[]`) that close over none of the
+   * check state — a note on `runWalk` says why, and `propertyAnswersRef` exists
+   * for exactly the same reason one stage earlier. Adding `stepThrough` to
+   * those dependency lists would give `runWalk` a new identity every time the
+   * user ticked the box, and `handlePickFolder`/`handleRecheck` a new one after
+   * it. So the ref is what the transitions read, and the state is what the
+   * checkbox renders from; `changeStepThrough` writes both, in that order.
+   *
+   * ⚠️ **READ AT THE MOMENT OF THE TRANSITION, never captured earlier.** That
+   * is what makes ticking the box four stages in work, and it is the behaviour
+   * to keep: the control is a statement about what happens next, not a mode the
+   * run is started in.
+   *
+   * ⚠️ **NOT PERSISTED.** `IMPORT_SESSION_KEY` in `localStorage` holds a
+   * FINISHED RUN'S REPORT so it can be reopened; a viewing preference is not
+   * part of a report and does not belong in it. A new import starts unticked —
+   * see `handleCancelConfirmed`.
+   */
+  const [stepThrough, setStepThrough] = useState(false);
+  const stepThroughRef = useRef(false);
+
+  /**
+   * The pause currently on screen, or `null`.   (Slice #29.02)
+   *
+   * `rest` is the phase the wizard is holding at — the stage that just passed —
+   * and `to` is where the button goes. Both are needed: `to` alone cannot say
+   * which screen the card belongs under, and the render guard below is what
+   * keeps a stale gate from being drawn over the wrong one.
+   *
+   * ⚠️ **THE GUARD IS AT RENDER TIME BECAUSE IT CANNOT BE ANYWHERE ELSE.** The
+   * gate and the phase are set in one commit, and a state updater cannot be
+   * made conditional on a value it is itself updating — so `settle` writes both
+   * unconditionally and the render draws the card only while `phase` still
+   * equals `gate.rest`. A gate that does not match where the user is standing
+   * is not drawn at all, which is the under-claiming direction: at worst a
+   * pause is missed, never a pause shown over a screen it does not describe.
+   */
+  const [gate, setGate] = useState<{ rest: ImportPhase; to: ImportPhase } | null>(
+    null,
+  );
+
+  /**
+   * The pause actually on screen — the render guard, applied once.
+   *
+   * Three things read it (the card, and the two panels that have to know they
+   * are being paused over), and they must not each re-derive the condition:
+   * that is three chances for one of them to test `gate !== null` alone and
+   * start drawing a pause over a screen the user has already left.
+   */
+  const activeGate = gate !== null && phase === gate.rest ? gate : null;
+
   /** Slice #26.10 — the concluding message's one exit; see its own dialog. */
   const router = useRouter();
 
@@ -692,6 +757,46 @@ export function ImportWizard() {
   /** Has a folder been chosen in THIS visit? See `openCancelDialog`. */
   const folderPickedRef = useRef(false);
 
+  /**
+   * Tick or untick the control.   (Slice #29.02)
+   *
+   * The ref first, then the state, so a transition that fires between the two
+   * reads the value the user just chose rather than the one they just left.
+   *
+   * ⚠️ **UNTICKING DOES NOT RELEASE A PAUSE THAT IS ALREADY ON SCREEN**, and
+   * that is deliberate. The control governs the transitions still to come; a
+   * gate that is already drawn has a button under it, one click away. Releasing
+   * it on the untick would move the screen out from under a user who was
+   * reading it — a jump nobody asked for, to save them a click they can see.
+   */
+  const changeStepThrough = useCallback((next: boolean) => {
+    stepThroughRef.current = next;
+    setStepThrough(next);
+  }, []);
+
+  /**
+   * Make one of the six self-advancing transitions.   (Slice #29.02)
+   *
+   * Every caller passes the phase it is IN and the phase it would move to; what
+   * happens between them is `stepThroughRest`'s to decide, and this function
+   * holds no copy of that rule. A transition the table does not name is not
+   * gated whatever the checkbox says, which is why the `*-report` destinations
+   * and the archive's no-answer case need no special handling here.
+   *
+   * The `current === from` guard is `handlePreflightVerdict`'s, generalised.
+   * Its note explains the case: under StrictMode the checklist's mount effect
+   * is double-invoked, so a verdict can arrive from a stale closure after the
+   * phase has already moved on. Every other caller runs behind a cancellation
+   * token that has already returned early in that situation, so for them the
+   * guard is belt and braces — but it is the same guard, and one expression of
+   * it is cheaper to keep true than five.
+   */
+  const settle = useCallback((from: ImportPhase, to: ImportPhase) => {
+    const rest = stepThroughRef.current ? stepThroughRest(from, to) : null;
+    if (rest !== null) setGate({ rest, to });
+    setPhase((current) => (current === from ? (rest ?? to) : current));
+  }, []);
+
   const handlePreflightVerdict = useCallback((passed: boolean) => {
     setPreflightPassed(passed);
     // A gate, not a watchdog. The checklist is mounted only while the phase is
@@ -702,8 +807,32 @@ export function ImportWizard() {
     // branch would fire from a stale closure and yank the user off a picker
     // they had just been given. A precondition that breaks after the picker
     // appears surfaces where it always did: as a failure during the run.
-    if (passed) setPhase((current) => (current === "preflight" ? "structure" : current));
-  }, []);
+    // ⚠️ **AND SINCE #29.02 A FAILING VERDICT DOES HAVE SOMETHING TO DO, which
+    // is exactly what the paragraph above says cannot happen.** It was right
+    // until this slice: the checklist unmounted the instant it passed, so a
+    // later failure had no screen to arrive on. Step-through is what stops it
+    // unmounting - a pause REST at `preflight` leaves the checklist standing
+    // with its own live "Verifica din nou" - and a re-check that now fails
+    // publishes red lines under an emerald card reading "toate preconditiile
+    // sunt indeplinite", with a live button into the folder picker. Found by
+    // the adversarial round, and it is the worst kind of defect this codebase
+    // records: confident output that stopped being measured against its input.
+    //
+    // Dropping the pause is the whole fix. The phase is untouched - a failing
+    // checklist has always stayed on its own screen - so what the user is left
+    // with is the red list and the re-check, which is the screen they would
+    // have had if the first probe had failed.
+    if (!passed) {
+      setGate(null);
+      return;
+    }
+    // `settle` carries the functional guard this line used to hold on its own,
+    // and adds the pause when the user asked for one. At the rest the checklist
+    // stays mounted with all eight lines green and its own "toate verificarile
+    // au trecut" under them: the screen #26.11's floor was added to make
+    // visible at all, now held until it is dismissed.
+    settle("preflight", "structure");
+  }, [settle]);
 
   // -------------------------------------------------------------------
   // Pick folder
@@ -787,15 +916,27 @@ export function ImportWizard() {
       setConstraintsAcknowledged(false);
       setDuplicationAcknowledged(false);
       setPreexistingAcknowledged(false);
-      setPhase(
+      // Slice #29.02 - and the pause, if one is on screen. Every route into a
+      // walk passes through here, including "Verifica din nou" pressed from a
+      // gate, so this is the one place it has to be dropped. The render guard
+      // would hide it the moment the phase moved to a checking phase anyway;
+      // clearing it is what stops it reappearing when this walk lands back on
+      // the same rest phase with a different answer.
+      setGate(null);
+      // Slice #29.02 - hoisted out of the `setPhase` call it used to be
+      // written inline in, because the end of the walk needs the same value:
+      // `settle` is told the phase the wizard is IN, and the phase it is in is
+      // the one this line put it in. Deriving it twice from `target` would be
+      // two expressions of one fact.
+      const fromPhase: ImportPhase =
         target === "structure"
           ? "walking"
           : target === "constraints"
             ? "constraints-checking"
             : target === "duplication"
               ? "duplication-checking"
-              : "preexisting-checking",
-      );
+              : "preexisting-checking";
+      setPhase(fromPhase);
 
       // A permission grant can lapse between two walks. `requestPermission`
       // only works inside a user gesture, which is exactly where this runs —
@@ -925,7 +1066,12 @@ export function ImportWizard() {
         setMetadata(null);
         setDuplicationChecked(false);
         setPreexisting(null);
-        setPhase("constraints");
+        // Slice #29.02 - the transition Adrian could never see: a clean
+        // structure walk has no report screen at all, so Structure is replaced
+        // by Constraints without ever having said that it passed. Gated, it
+        // rests on `structure`, where the panel's own emerald `clean` line is
+        // already waiting for a verdict it could not previously be shown.
+        settle(fromPhase, "constraints");
         return;
       }
 
@@ -1070,9 +1216,14 @@ export function ImportWizard() {
       setMetadata(constraintMetadata);
       setDuplicationChecked(next.duplicationRan);
       setPreexisting(preexistingResult);
-      setPhase(next.phase);
+      // Slice #29.02 - still inside the ONE commit above: `settle` calls
+      // `setGate` and `setPhase`, both synchronously and nothing else, so this
+      // walk's entries, metadata, duplication flag, archive answer, phase and
+      // pause all land in a single render. Splitting them is exactly the
+      // hybrid render the comment above forbids.
+      settle(fromPhase, next.phase);
     },
-    [t, beginRun],
+    [t, beginRun, settle],
   );
 
   const handlePickFolder = useCallback(async () => {
@@ -1162,6 +1313,9 @@ export function ImportWizard() {
     // had already set and then discarded.
     const token = runTokenRef.current;
 
+    // Slice #29.02 - the Evaluation screen's Continua is what starts this, so
+    // any gate on screen belongs to the stage before it and is over.
+    setGate(null);
     setPhase("scanning");
     const willScan = (e: FSEntry) => entryScannable(e) && !skip.has(e.path);
     const scannable = walked.filter(willScan);
@@ -1246,9 +1400,12 @@ export function ImportWizard() {
     });
 
     if (!token.cancelled) {
-      setPhase("ready");
+      // Slice #29.02 - the scan hands over the moment the last request
+      // settles. Gated, it rests on `scanning`, and the panel is told the scan
+      // is over so that it stops telling the user to wait for it.
+      settle("scanning", "ready");
     }
-  }, []);
+  }, [settle]);
 
   /**
    * "I have fixed the files — check again." Re-walks the folder already
@@ -1277,14 +1434,25 @@ export function ImportWizard() {
     // `constraints-report` on purpose — returning a first-time user to a
     // violation list they have never seen would be a screen made of nothing.
     const returnTo: ImportPhase =
-      // ⚠️ No `structure` arm, and #26.06's adversarial review is why: the
+      // ⚠️ **THE `structure` ARM IS REACHABLE SINCE #29.02, AND #26.06's
+      // ADVERSARIAL REVIEW IS WHY IT WAS NOT BEFORE.** The note here said the
       // Structure panel renders its PICKER rather than the re-check while its
-      // verdict is null, and a failed pick clears `observations` on the way in,
-      // so `handleRecheck` cannot be reached from that phase at all. A round of
-      // this slice added one anyway, with a comment describing a defect that
-      // cannot occur — which is worse than the gap, because the next reader
-      // would build on it.
-      phase === "folder-report"
+      // verdict is null, and that a failed pick clears `observations` on the
+      // way in — so `handleRecheck` could not be reached from that phase at
+      // all, and a round of #26.06 that added an arm anyway was describing a
+      // defect that could not occur. Step-through built the route: a clean
+      // structure walk now RESTS on `structure` holding a non-null clean
+      // verdict, so `checked` is true, the button IS the re-check, and pressing
+      // it on a folder that has since been moved lands here.
+      //
+      // It returns to `structure`, not to `structure-report`: the verdict in
+      // hand is clean, and `structure-report` is the violation list. Without
+      // this arm the fall-through put the user on a fix list with nothing on
+      // it — found by the adversarial round, not by the type checker, because
+      // both phases render the same panel and neither is `busy`.
+      phase === "structure"
+        ? "structure"
+        : phase === "folder-report"
         ? "folder-report"
         : phase === "constraints"
           ? "constraints"
@@ -1430,6 +1598,14 @@ export function ImportWizard() {
     // places is how it stops being held in either.
     setPropertyAnswers(new Map());
     propertyAnswersRef.current = new Map();
+    // Slice #29.02 - the pause, and the setting that produced it. The setting
+    // goes back to unticked with everything else, because this function's
+    // contract is that the next import starts exactly as a first one does, and
+    // a control still ticked from a run the user walked away from is a state
+    // the Information page does not explain.
+    setGate(null);
+    stepThroughRef.current = false;
+    setStepThrough(false);
   }, [endRun]);
 
   // Mint a token for this mount, and retire whatever token is live on unmount —
@@ -1843,7 +2019,34 @@ export function ImportWizard() {
         // fact itself: this visit has a folder.
         folderPicked: folderPickedRef.current,
         classificationSpent,
-        classificationRunning: phase === "scanning",
+        // Slice #29.02 - `phase === "scanning"` stopped meaning "requests are
+        // in flight" the moment the scan could be HELD on its own screen: at a
+        // step-through pause every request has settled and the run is waiting
+        // on the user. Left as it was, the Cancel would have promised to stop
+        // classification "aflata chiar acum in lucru" over a scan that finished
+        // - and suppressed `nothingClassifiedYet` on the way past. This dialog
+        // exists to stop the flow lying about what a cancel costs, so a stale
+        // flag in it is worse here than anywhere else in the wizard.
+        // ⚠️ Slice #29.02 - `phase === "scanning"` ALONE stopped meaning
+        // "requests are in flight" the moment the scan could be HELD on its own
+        // screen: at a step-through pause every request has settled and the run
+        // is waiting on the user. Left as it was, the Cancel promised to stop
+        // classification "aflata chiar acum in lucru" over a scan that had
+        // finished - and suppressed `nothingClassifiedYet` on the way past.
+        // This dialog exists to stop the flow lying about what a cancel costs,
+        // so a stale flag in it is worse here than anywhere else in the wizard.
+        //
+        // ⚠️ **`activeGate` DIRECTLY, NOT THROUGH A REF, and a round of this
+        // slice used a ref until `react-hooks/refs` refused it: writing
+        // `ref.current` during render is the rule's exact subject, and the rule
+        // is right - a ref is not a render input, so a value mirrored into one
+        // during render is a value React is entitled to render stale.** The ref
+        // was there to keep this callback off `gate`'s identity, which turns
+        // out to buy nothing: `activeGate` returns the SAME object as `gate`
+        // rather than a fresh one, so its identity changes only when `gate` or
+        // `phase` changes - and `phase` is already in this list.
+        classificationRunning:
+          phase === "scanning" && activeGate?.rest !== "scanning",
         // ⚠️ `propertiesTouched` ALONE, not `resolvedRun !== null ||` it. An
         // adversarial round enumerated the three states: a step that finished
         // with properties has already set this, a step that failed partway has
@@ -1857,7 +2060,14 @@ export function ImportWizard() {
     });
     // `_dirHandle` is a module-level singleton read inside an event handler,
     // never during render, so it needs no dependency and cannot go stale here.
-  }, [classificationSpent, phase, propertiesTouched, documentsCreated, savedSession]);
+  }, [
+    classificationSpent,
+    phase,
+    activeGate,
+    propertiesTouched,
+    documentsCreated,
+    savedSession,
+  ]);
 
   const dismissCancelDialog = useCallback(() => setCancelSnapshot(null), []);
 
@@ -1899,7 +2109,29 @@ export function ImportWizard() {
       <div className="space-y-4" inert={cancelSnapshot !== null}>
       {/* The shell. Present in every phase, so the user can always see which of
           the ten stages they are in and always has a way out. */}
-      <ImportStageBar phase={phase} onCancel={openCancelDialog} />
+      {/* ⚠️ **PERMANENTLY MOUNTED, AND THAT IS THE ONLY REASON IT WORKS.**
+          (Slice #29.02) A `role="status"` inserted into the DOM together with
+          its text is not reliably announced — the region has to exist before
+          its content changes — so the pause card cannot carry its own. The
+          four stage panels already solve it exactly this way, with an sr-only
+          status paragraph that is always present and whose TEXT changes; this
+          is the same element one level up, because a pause can be raised over
+          a screen that does not remount at all (the checklist at the
+          preconditions rest, the scan panel at the scanning rest), and those
+          are precisely the two where nothing else would tell a screen-reader
+          user that the flow has stopped. */}
+      <p role="status" className="sr-only">
+        {activeGate !== null
+          ? tStepGate(`cleared.${stageForPhase(activeGate.rest)}`)
+          : ""}
+      </p>
+
+      <ImportStageBar
+        phase={phase}
+        onCancel={openCancelDialog}
+        stepThrough={stepThrough}
+        onStepThroughChange={changeStepThrough}
+      />
 
       {/* Step zero — what the import is going to ask of the user. */}
       {phase === "information" && (
@@ -1947,7 +2179,15 @@ export function ImportWizard() {
         {phase === "structure" && savedSession && (
           <button
             type="button"
-            onClick={() => setPhase("resumed")}
+            onClick={() => {
+              // Slice #29.02 — a pause belongs to the run being walked, and
+              // this button leaves it to read a PREVIOUS run's report. The
+              // render guard would hide the card either way; dropping it is
+              // what stops it reappearing when `onClear` comes back to this
+              // very phase.
+              setGate(null);
+              setPhase("resumed");
+            }}
             className="inline-flex items-center rounded-md border border-amber-400 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-800 hover:bg-amber-100 dark:border-amber-600 dark:bg-amber-950/30 dark:text-amber-300 dark:hover:bg-amber-900/40"
           >
             {t("resumeButton", { folder: savedSession.rootFolderName })}
@@ -2021,6 +2261,10 @@ export function ImportWizard() {
           onAcknowledgedChange={setStructureAcknowledged}
           onChooseFolder={handlePickFolder}
           onRecheck={() => void handleRecheck()}
+          // Slice #29.02 — see the prop. At a pause the emerald card below
+          // carries the screen's one primary action, so this panel's own drops
+          // to a secondary.
+          gated={activeGate?.rest === "structure"}
           rulesOpen={structureRulesOpen}
           onRulesOpenChange={setStructureRulesOpen}
           propertyAnswers={propertyAnswers}
@@ -2048,6 +2292,7 @@ export function ImportWizard() {
           onAcknowledgedChange={setConstraintsAcknowledged}
           onCheck={() => void handleRecheck()}
           onChooseFolder={handlePickFolder}
+          gated={activeGate?.rest === "constraints"}
           rulesOpen={constraintsRulesOpen}
           onRulesOpenChange={setConstraintsRulesOpen}
         />
@@ -2075,6 +2320,7 @@ export function ImportWizard() {
           onAcknowledgedChange={setDuplicationAcknowledged}
           onCheck={() => void handleRecheck()}
           onChooseFolder={handlePickFolder}
+          gated={activeGate?.rest === "duplication"}
           rulesOpen={duplicationRulesOpen}
           onRulesOpenChange={setDuplicationRulesOpen}
         />
@@ -2107,6 +2353,11 @@ export function ImportWizard() {
           // nothing else: the report itself stays in state, because the import
           // loop reads it three screens later.
           onContinue={() => setPhase("folder-report")}
+          // Slice #29.02 — at a pause this panel's own Continuă would be a
+          // second button to the same place, unticked and therefore disabled,
+          // sitting above the live one. The gate card carries the action; the
+          // panel keeps "Verifică din nou", which still means something.
+          gated={activeGate?.rest === "preexisting"}
           onChooseFolder={handlePickFolder}
           notesOpen={preexistingNotesOpen}
           onNotesOpenChange={setPreexistingNotesOpen}
@@ -2160,6 +2411,9 @@ export function ImportWizard() {
             done: scanProgress.done,
             total: scanProgress.total,
           })}
+          // Slice #29.02 — at a pause the scan has finished, so the panel must
+          // stop spinning a cue and stop telling the user to wait for it.
+          done={activeGate?.rest === "scanning"}
         />
       )}
 
@@ -2266,6 +2520,37 @@ export function ImportWizard() {
             scanResults={scanResults}
           />
         </div>
+      )}
+
+      {/* ── The step-through pause   (Slice #29.02) ─────────────────
+
+          ⚠️ **ONE RENDER SITE FOR ALL SIX GATES, and the branches above are
+          what make that legal.** Every panel branch is exclusive on `phase`, so
+          whichever one is on screen is the last thing rendered before this
+          point — the card always lands directly under the stage it is talking
+          about. It sits after `ScanTable` rather than before it for the one
+          gate where both are on screen: at the scanning rest the table IS the
+          stage's result, and a button to leave the stage does not belong above
+          the thing the user is being given the chance to read.
+
+          ⚠️ **`phase === gate.rest` IS THE GUARD, not a tidiness check.** See
+          the `gate` state's own note: the pause and the phase are written in
+          one commit and a state updater cannot be conditional on itself, so a
+          gate left over from a transition that did not land is refused here
+          rather than drawn over a screen it does not describe.
+
+          `walkError` renders below this. That is not a gap: a gate exists only
+          after a walk that came back clean, and such a walk cleared the error
+          on its way in. */}
+      {activeGate !== null && (
+        <ImportStepGate
+          stage={stageForPhase(activeGate.rest)}
+          nextStage={stageForPhase(activeGate.to)}
+          onAdvance={() => {
+            setGate(null);
+            setPhase(activeGate.to);
+          }}
+        />
       )}
 
       {/* Resumed session view — replaces the file table while active */}

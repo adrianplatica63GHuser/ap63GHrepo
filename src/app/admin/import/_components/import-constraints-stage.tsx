@@ -98,6 +98,23 @@ type Props = {
    * who opened the constraints to read them alongside their fix list must not
    * have them shut on the next check.
    */
+  /**
+   * Is the wizard holding a step-through pause on this stage?   (Slice #29.02)
+   *
+   * At a pause the emerald card below this panel carries the screen's ONE
+   * primary action — the button that goes on to the next stage — so this
+   * panel's own primary drops to a secondary. It is not suppressed: a
+   * re-check is still a real thing to want here, and it is the only route
+   * back to File Explorer for this stage. But `runWalk` clears the
+   * acknowledgement tick on its way in, so at a pause this button is
+   * DISABLED, and a disabled `primary/lg` sitting above a live one is the
+   * "which of these am I supposed to press" screen the pause exists to avoid.
+   *
+   * Defaulted, so every caller that does not know about step-through — and
+   * the tests that render this panel on its own — keeps exactly today's
+   * screen.
+   */
+  gated?: boolean;
   rulesOpen: boolean;
   onRulesOpenChange: (open: boolean) => void;
 };
@@ -111,6 +128,7 @@ export function ImportConstraintsStage({
   onAcknowledgedChange,
   onCheck,
   onChooseFolder,
+  gated = false,
   rulesOpen,
   onRulesOpenChange,
 }: Props) {
@@ -472,16 +490,24 @@ export function ImportConstraintsStage({
         in emerald is then an assertion about a check that is at that moment
         running and may refuse them.
 
-        ⚠️ WHICH MAKES THIS LINE UNREACHABLE, and that is not a reason to delete
-        the guard — it is the reason the guard has to stay. It was already
-        unreachable when #26.05 wrote this note, and #26.06 removed the last
-        route that could have made it reachable again: an Evaluation re-check
-        now enters `duplication-checking`, not `constraints-checking`, so this
-        panel is never mounted holding a clean verdict at all. A reader who
-        notices the green line never appears and "repairs" it by dropping
-        `!busy` restores the lie the moment a later slice re-routes that button
-        — and the Duplication panel's identical guard IS live today, which is
-        what that would be copied from.
+        ⚠️ THIS LINE WAS UNREACHABLE UNTIL #29.02, AND IS NOW LIVE. The note
+        that stood here said so and was right at the time: it was already
+        unreachable when #26.05 wrote it, and #26.06 removed the last route
+        that could have made it reachable again — an Evaluation re-check enters
+        `duplication-checking`, not `constraints-checking`, so this panel was
+        never mounted holding a clean verdict at all. #29.02 built a route.
+        With step-through ticked, a clean constraints check RESTS on this stage
+        instead of moving to Duplication, and this is the line the user is held
+        here to read.
+
+        The guard stays exactly as it was, and now earns its keep on the live
+        path rather than on the hypothetical one: the pause rests on `phase ===
+        "constraints"`, so `busy` is false at the pause, and a "Verifică din
+        nou" pressed FROM the pause enters `constraints-checking` with the
+        previous round's clean metadata still in state. Without `!busy`, the
+        emerald line would sit over a check that is running at that moment and
+        may refuse the folder — the very lie the old note predicted, arriving
+        by the route it did not have.
       */}
       {!busy && verdict !== null && verdict.clean && (
         <p className="mt-4 text-sm font-medium text-emerald-700 dark:text-emerald-400">
@@ -577,7 +603,11 @@ export function ImportConstraintsStage({
             type="button"
             onClick={onCheck}
             disabled={!acknowledged || busy}
-            className={buttonClass({ variant: "primary", size: "lg" })}
+            // Slice #29.02 — demoted at a pause; see the `gated` prop.
+            className={buttonClass({
+              variant: gated ? "secondary" : "primary",
+              size: gated ? "md" : "lg",
+            })}
           >
             {checked ? t("recheck") : t("check")}
           </button>

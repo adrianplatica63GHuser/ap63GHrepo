@@ -443,3 +443,114 @@ export function phaseAfterFileChecks(input: {
     preexistingRan: true,
   };
 }
+
+// ---------------------------------------------------------------------------
+// Step-through mode   (Slice #29.02)
+// ---------------------------------------------------------------------------
+
+/**
+ * The transitions the wizard makes ON ITS OWN, and where it rests when the user
+ * has asked to be stopped at each one.
+ *
+ * WHAT THIS IS FOR
+ * ----------------
+ * Adrian, walking the import: several stages "just fly to the next phase
+ * without any pause", so the one thing they exist to tell the user — that a
+ * real check ran and found nothing — is the thing that never gets shown. Every
+ * OTHER stage in the flow ends on a button, and the next screen's button is not
+ * a substitute: it reports the next stage, not the one that just passed.
+ *
+ * So the Information page carries a control, unchecked by default, and with it
+ * checked each of these six transitions comes to rest on the stage it has just
+ * FINISHED, holding that stage's own screen with its own all-clear on it, and
+ * waits for a button.
+ *
+ * ⚠️ **`rest` IS THE STAGE THAT PASSED, NOT THE ONE COMING NEXT, and that is
+ * the whole design.** Landing early on the next stage's screen is what the
+ * wizard already does; it is precisely the behaviour Adrian reported, because
+ * the Structure screen never says "the structure is fine" — it is replaced by
+ * Constraints the instant the walk comes back clean. Resting at `structure`
+ * with a clean verdict renders the emerald line those panels already carry, and
+ * three of the four have carried it as an unreachable branch until now.
+ *
+ * ⚠️ **A TRANSITION THAT IS NOT IN THIS TABLE IS NEVER GATED**, and the
+ * omissions are load-bearing rather than an oversight:
+ *
+ *  - Every `*-report` destination. A stage that FOUND something already stops,
+ *    on a violation list ending in "Verifică din nou". A gate there would be a
+ *    second button for a pause the user is already standing in.
+ *  - `preexisting-checking → preexisting`, which `phaseAfterFileChecks` answers
+ *    when the archive produced no answer at all. The walk got as far as the
+ *    archive and came back with nothing, so there is no stage to green — and
+ *    resting at `duplication` because the duplication half was clean would put
+ *    a note about copies in front of a user who pressed the archive's button.
+ *  - `folder-report → scanning`, `ready → property` and everything after them.
+ *    Those are already buttons the user presses.
+ *
+ * ⚠️ **KEYED ON `from` AS WELL AS `to`, and one pair is why.** `to` alone
+ * looks sufficient — the six destinations are distinct — but `preexisting` is
+ * reachable from two different places with two different meanings (the clean
+ * duplication check above, and the under-claim in the bullet before it), and
+ * only `from` tells them apart. A one-column table would have gated both.
+ */
+export const SELF_ADVANCING_TRANSITIONS: readonly {
+  /** The phase the wizard is in when it decides. */
+  from: ImportPhase;
+  /** Where it goes when nobody asked it to stop. */
+  to: ImportPhase;
+  /** Where it rests instead, when somebody did. */
+  rest: ImportPhase;
+}[] = [
+  // The preconditions checklist reports its verdict and the phase moves in the
+  // same tick. Resting is `preflight` itself: the checklist stays mounted with
+  // all eight lines green and its own "all green" line under them, which is
+  // the screen #26.11's three-second floor was added to let the user see at
+  // all. The floor still runs — see `phase-dwell.ts`.
+  { from: "preflight", to: "structure", rest: "preflight" },
+  // A clean structure walk shows no report screen whatsoever today.
+  { from: "walking", to: "constraints", rest: "structure" },
+  { from: "constraints-checking", to: "duplication", rest: "constraints" },
+  { from: "duplication-checking", to: "preexisting", rest: "duplication" },
+  // `phaseAfterFileChecks`'s own header states it: a clean pre-existing check
+  // shows no screen. This is the transition that makes that false on request.
+  { from: "preexisting-checking", to: "folder-report", rest: "preexisting" },
+  // The scan ends when the last request settles. Its results DO stay on screen
+  // afterwards — `ScanTable` is rendered for both phases — but the stage still
+  // hands over without a pause, and the panel says "wait until it finishes"
+  // over a scan that has finished.
+  { from: "scanning", to: "ready", rest: "scanning" },
+];
+
+/**
+ * Where the wizard should rest if step-through is on, or `null` to move on.
+ *
+ * Answers `null` for every transition not in the table above, which is the
+ * under-claiming direction: an unlisted transition behaves exactly as it does
+ * today, so a future phase pair added to the machine cannot accidentally
+ * acquire a gate nobody designed a message for.
+ *
+ * The caller checks the user's setting; this function only knows the shape of
+ * the flow. Keeping the two apart is what lets the whole rule be tested without
+ * rendering a component or faking a checkbox.
+ */
+export function stepThroughRest(
+  from: ImportPhase,
+  to: ImportPhase,
+): ImportPhase | null {
+  const match = SELF_ADVANCING_TRANSITIONS.find(
+    (t) => t.from === from && t.to === to,
+  );
+  return match ? match.rest : null;
+}
+
+/*
+ * ⚠️ **THERE IS DELIBERATELY NO `isGateRestPhase` HELPER**, and one was written
+ * and deleted rather than never considered. The wizard needs to know whether
+ * the pause it is holding belongs to the screen it is drawing, and the honest
+ * test for that is `phase === gate.rest` — nothing else. A second test asking
+ * "and is that a phase a pause is allowed to rest on?" cannot fail, because the
+ * only writer of `gate.rest` is `stepThroughRest`, which only ever answers from
+ * the table above. This file's own rule, stated at `stageStatuses`, is that a
+ * guard which cannot fire is the kind a later reader deletes the real one
+ * instead of.
+ */

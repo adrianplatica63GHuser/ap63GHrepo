@@ -2459,6 +2459,7 @@
       },
       "title": "Documents already in the system",
       "intro": "The structure, the files and the copies are all in order. This is the first check that looks in the archive rather than in the chosen folder: the system tells you which of the documents are already in it and what will happen to each of them, before any of them is sent for classification. There is nothing to put right here: read what is about to happen, tick below, and carry on.",
+      "clean": "No document in the chosen folder is already in the system.",
       "notesTitle": "What “already in the system” means",
       "showNotes": "Show the explanations again",
       "hideNotes": "Hide the explanations",
@@ -2526,6 +2527,20 @@
         "scanning": "Scanning",
         "import": "Import",
         "result": "Result"
+      }
+    },
+    "stepGate": {
+      "toggle": "Stop after every step",
+      "toggleHint": "Normally the import moves on by itself past the steps that have nothing to put right. Tick this if you want to see what each step found and press the button yourself.",
+      "why": "The import stopped here because “Stop after every step” is ticked. Nothing is being spent while you read.",
+      "advance": "Continue to the “{stage}” step",
+      "cleared": {
+        "preconditions": "All eight preconditions were checked one by one and every one is met. There is nothing for you to prepare before moving on.",
+        "structure": "Every rule about how the folders are arranged was checked, and none was broken. There is nothing for you to put right in File Explorer.",
+        "constraints": "Every file was measured and none was refused. There is nothing for you to put right in File Explorer.",
+        "duplication": "The files were compared against each other and none appears more than once. There is nothing for you to put right in File Explorer.",
+        "preexisting": "The archive was asked about every document and recognised none of them. There is nothing for you to decide before moving on.",
+        "scanning": "The scan has finished and every row in the table below has an answer. Nothing has entered the archive yet."
       }
     },
     "scanning": {

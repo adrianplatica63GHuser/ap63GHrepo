@@ -35,6 +35,7 @@
  * opened under the dialog.)
  */
 
+import { useId } from "react";
 import { useTranslations } from "next-intl";
 
 import {
@@ -69,11 +70,22 @@ export const MODAL_PHASES: readonly ImportPhase[] = [
 type Props = {
   phase: ImportPhase;
   onCancel: () => void;
+  /** Slice #29.02 — is the run stopping after every stage that passes? */
+  stepThrough: boolean;
+  onStepThroughChange: (next: boolean) => void;
 };
 
-export function ImportStageBar({ phase, onCancel }: Props) {
+export function ImportStageBar({
+  phase,
+  onCancel,
+  stepThrough,
+  onStepThroughChange,
+}: Props) {
   const t = useTranslations("adminImport.workflow");
   const tc = useTranslations("adminImport.cancel");
+  const tg = useTranslations("adminImport.stepGate");
+  const stepId = useId();
+  const stepHintId = useId();
 
   const current = stageForPhase(phase);
   const statuses = stageStatuses(current);
@@ -140,6 +152,56 @@ export function ImportStageBar({ phase, onCancel }: Props) {
           >
             {tc("button")}
           </button>
+
+          {/*
+            ── Step-through   (Slice #29.02) ──────────────────────────────
+
+            Adrian asked for it here, "under the Cancel Import link on the
+            first Import page", and here is where that is: the Cancel does not
+            live on the Information page, it lives in this bar, which is
+            rendered above every phase. So the control is on the first page as
+            asked AND stays reachable for the rest of the run — which is the
+            point, because a user four stages in who realises they wanted to
+            watch can tick it without starting again. It is read at the moment
+            of each transition, never earlier.
+
+            ⚠️ **DISABLED IN A MODAL PHASE, for the Cancel's own reason and one
+            of its own.** The reason above applies unchanged — none of this
+            app's dialogs traps focus, so a Shift+Tab from inside
+            `BulkImportDialog` lands in this bar — and on top of that there is
+            no self-advancing transition left after `ready`, so the control
+            could not change anything even if it were pressed. A `disabled`
+            input is not focusable, which is what actually closes the route.
+
+            It carries no note while disabled, for the same reason the Cancel
+            carries none: the whole bar is under a 40% scrim and unreachable by
+            keyboard, so copy placed here would be copy nobody can read.
+          */}
+          <div className="mt-3 max-w-56">
+            <div className="flex items-start gap-2">
+              <input
+                id={stepId}
+                type="checkbox"
+                checked={stepThrough}
+                disabled={inModal}
+                onChange={(e) => onStepThroughChange(e.target.checked)}
+                aria-describedby={stepHintId}
+                className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded border-wire accent-cta disabled:cursor-not-allowed"
+              />
+              <label
+                htmlFor={stepId}
+                className="cursor-pointer select-none text-xs font-medium text-ink dark:text-zinc-200"
+              >
+                {tg("toggle")}
+              </label>
+            </div>
+            <p
+              id={stepHintId}
+              className="mt-1 pl-6 text-xs text-fade dark:text-zinc-400"
+            >
+              {tg("toggleHint")}
+            </p>
+          </div>
         </div>
       </div>
     </section>

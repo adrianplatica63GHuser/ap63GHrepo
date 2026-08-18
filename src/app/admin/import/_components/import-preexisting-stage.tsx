@@ -30,12 +30,18 @@
  *    re-ask theirs.
  *  - **A failed lookup is a state of its own.** See below.
  *
- * ⚠️ **WHY THERE IS NO ALL-CLEAR MESSAGE, unlike all three siblings.** A clean
- * verdict moves the phase straight to Evaluation — `phaseAfterFileChecks` says
- * so and explains why — so this panel is never mounted holding one. A green
- * "the archive holds none of these" here would be a branch no route can reach,
- * and this codebase's own rule is that a guard which cannot fire is the kind a
- * later reader deletes the real one instead of.
+ * ⚠️ **THE ALL-CLEAR MESSAGE EXISTS SINCE #29.02, AND UNTIL THEN IT COULD NOT.**
+ * The note that stood here said there was none, and gave the correct reason: a
+ * clean verdict moved the phase straight to Evaluation — `phaseAfterFileChecks`
+ * says so and explains why — so the panel was never mounted holding one, and a
+ * green "the archive holds none of these" would have been a branch no route
+ * could reach. #29.02 built the route. With step-through ticked, a clean
+ * archive lookup now RESTS here instead of moving on, which is the whole point
+ * of that slice: the stage says what it found before it hands over. So the
+ * branch is live, `preexisting.clean` is a real string, and the rule the old
+ * note invoked — a guard that cannot fire is the kind a later reader deletes
+ * the real one instead of — is satisfied by the branch firing rather than by
+ * its absence.
  *
  * ⚠️ **THE FAILED LOOKUP IS THE ONE THING THIS SCREEN MUST NOT GET WRONG.**
  * "The archive holds none of these" and "we could not ask the archive" produce
@@ -106,6 +112,20 @@ type Props = {
   onCheck: () => void;
   /** Acknowledged — go on to Evaluation. */
   onContinue: () => void;
+  /**
+   * Is the wizard holding a step-through pause on this stage?   (Slice #29.02)
+   *
+   * When it is, the pause card below this panel carries the button that goes on
+   * to Evaluation, so this panel must not draw a second one: `onContinue` is
+   * gated on the acknowledgement tick, which the walk that produced the pause
+   * has just cleared, so the duplicate would render disabled directly above a
+   * live button doing the same thing.
+   *
+   * "Verifică din nou" is deliberately still drawn — it is the one action this
+   * screen offers that the pause card does not, and the user standing at a
+   * clean archive report may well want it after a trip to File Explorer.
+   */
+  gated?: boolean;
   onChooseFolder: () => void;
   /**
    * The explanations disclosure, hoisted into the wizard for the same reason
@@ -127,6 +147,7 @@ export function ImportPreexistingStage({
   onCheck,
   onContinue,
   onChooseFolder,
+  gated = false,
   notesOpen,
   onNotesOpenChange,
 }: Props) {
@@ -493,6 +514,21 @@ export function ImportPreexistingStage({
         <p className={`mt-3 ${COST_NOTE_CLASS}`}>{t("nothingToFix")}</p>
       )}
 
+      {/* Slice #29.02 — the all-clear, in the place and the treatment its three
+          siblings use, and reachable for the first time: see the header note.
+          The guards are theirs too. `!busy` keeps the line off a check that is
+          still running; `verdict !== null` distinguishes "asked and clean" from
+          "not asked", which is what `result === null` means here; and reading
+          `verdict` rather than `result` is what keeps a FAILED lookup — which
+          arrives as `{ ok: false }` and has no verdict at all — from rendering
+          as an archive that holds nothing. Those are two different screens and
+          this file's second warning exists because they must never merge. */}
+      {!busy && verdict !== null && verdict.clean && (
+        <p className="mt-4 text-sm font-medium text-emerald-700 dark:text-emerald-400">
+          {t("clean")}
+        </p>
+      )}
+
       </div>
 
       {/* -- The explanations ---------------------------------------------- */}
@@ -578,18 +614,33 @@ export function ImportPreexistingStage({
             </button>
           ) : (
             <>
-              <button
-                type="button"
-                onClick={onContinue}
-                disabled={!acknowledged || busy}
-                className={buttonClass({ variant: "primary", size: "lg" })}
-              >
-                {failed ? t("continueWithout") : t("continue")}
-              </button>
+              {/* Slice #29.02 — suppressed at a step-through pause, where the
+                  card under this panel carries the same action, enabled. See
+                  the `gated` prop. The re-check beside it is NOT suppressed:
+                  it is the one thing this screen offers that the card does
+                  not. */}
+              {!gated && (
+                <button
+                  type="button"
+                  onClick={onContinue}
+                  disabled={!acknowledged || busy}
+                  className={buttonClass({ variant: "primary", size: "lg" })}
+                >
+                  {failed ? t("continueWithout") : t("continue")}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={onCheck}
                 disabled={!acknowledged || busy}
+                // ⚠️ Slice #29.02 — NOT promoted at a pause, and a round of
+                // this slice promoted it before the adversarial review took it
+                // back. The reasoning was "with the primary suppressed this is
+                // the only action in the row"; it is not — "Alege alt folder"
+                // sits in the same row and is NOT gated on the tick, so it is
+                // live while this one is disabled. Promoting the disabled
+                // control would have made the dead button the largest thing in
+                // the row and the live one visually subordinate.
                 className={buttonClass({ variant: "secondary", size: "md" })}
               >
                 {t("recheck")}

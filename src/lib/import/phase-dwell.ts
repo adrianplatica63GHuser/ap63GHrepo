@@ -26,9 +26,32 @@
  * ⚠️ **THIS IS FOR PHASES THAT ADVANCE THEMSELVES, AND ONLY THOSE.** Every
  * other stage in the flow ends on a button the user presses, and a floor there
  * would be a control that ignores its first three seconds of clicks — a
- * misfeature, not a courtesy. Today the only self-advancing transition in the
- * wizard is `preflight → structure`. If a second one ever appears, it takes the
- * same floor; a stage the user cannot dismiss must not be able to flash past.
+ * misfeature, not a courtesy. `preflight → structure` is the only self-advancing
+ * transition this floor is applied to, and the only one it needs to be.
+ *
+ * ⚠️ **AND `preflight → structure` IS NOT THE ONLY SELF-ADVANCING TRANSITION —
+ * IT NEVER WAS. THE NOTE THAT SAID SO IS CORRECTED HERE.** #26.11 wrote "today
+ * the only self-advancing transition in the wizard is `preflight → structure`.
+ * If a second one ever appears, it takes the same floor." That was wrong on
+ * both halves. There are SIX — a clean structure walk, a clean constraints
+ * check, a clean duplication check, a clean archive lookup and the end of the
+ * scan are the other five, and #29.02 names them in one place,
+ * `SELF_ADVANCING_TRANSITIONS` in `workflow-stages.ts`. And a floor is the
+ * wrong instrument for the other five anyway: each of them ends work whose
+ * duration is set by the folder — a ~760-call metadata pass, an archive
+ * request, a whole classification run — so none of them can flash past, and
+ * three more seconds on top of a check that already took forty would be a tax,
+ * not a courtesy.
+ *
+ * ⚠️ **WHAT #29.02 GAVE THEM INSTEAD IS A BUTTON, AND IT DOES NOT TOUCH THIS
+ * FILE.** With `Oprește-te după fiecare etapă` ticked, all six — this one
+ * included — come to rest on the stage they finished and wait to be dismissed.
+ * That changes nothing here: the checklist still spends the floor ticking its
+ * eight lines from the top down, still calls `onVerdict` at `verdictAt`, and it
+ * is the WIZARD that then decides whether the verdict moves the phase or raises
+ * a pause. The floor is what makes the eight ticks visible; the pause is what
+ * keeps them on screen afterwards. Two different jobs, and this file still owns
+ * exactly the first.
  *
  * ⚠️ **THE FLOOR IS NOT DEAD TIME.** `PreflightChecklist` spends it ticking the
  * eight lines green from top to bottom (Adrian, explicitly: "spend these three

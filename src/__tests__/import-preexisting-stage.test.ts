@@ -54,6 +54,10 @@ function at(node: Record<string, unknown>, keyPath: string): unknown {
 const REQUIRED_KEYS = [
   "title",
   "intro",
+  // Slice #29.02 — the all-clear. This panel had none until step-through gave
+  // a clean archive lookup somewhere to rest; the module header says why it
+  // could not exist before.
+  "clean",
   "notesTitle",
   "showNotes",
   "hideNotes",
