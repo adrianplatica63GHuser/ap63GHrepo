@@ -809,24 +809,46 @@ function main(): void {
   // spatial_ref_sys and two views in public -- so the first version of this
   // guard refused the only server either entry point provides, and CI would
   // have been red on every push. (Round two of the Slice #31.01 review.)
-  const inPostgres = query(
+  //
+  // "Owned by an extension" has to be asked of the right catalogue row. A
+  // COMPOSITE TYPE an extension defines -- PostGIS has two in public,
+  // geometry_dump and valid_detail -- carries its pg_depend deptype='e' row
+  // against its pg_TYPE oid, not against the pg_class row that represents it.
+  // Asking only about pg_class counted both of them as somebody's data and
+  // refused the postgis container the two entry points exist to start.
+  // (Measured on Adrian's machine: "holds 2 object(s) in public".)
+  const foreignObjects = rows(
     "postgres",
-    `SELECT (SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
-              WHERE n.nspname='public' AND c.relkind IN ('r','p','v','m','S','f','c')
-                AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.objid=c.oid AND d.deptype='e'))
-          + (SELECT count(*) FROM pg_type t JOIN pg_namespace n ON n.oid=t.typnamespace
-              WHERE n.nspname='public' AND t.typtype IN ('e','d','c') AND t.typrelid = 0
-                AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.objid=t.oid AND d.deptype='e'))
-          + (SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
-              WHERE n.nspname='public' AND p.prokind IN ('f','p','a')
-                AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.objid=p.oid AND d.deptype='e'))`,
+    `SELECT c.relkind::text || ' ' || c.relname
+       FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+      WHERE n.nspname='public' AND c.relkind IN ('r','p','v','m','S','f','c')
+        AND NOT EXISTS (
+          SELECT 1 FROM pg_depend d
+           WHERE d.deptype='e'
+             AND ((d.classid = 'pg_class'::regclass AND d.objid = c.oid)
+               OR (d.classid = 'pg_type'::regclass  AND d.objid = c.reltype)))
+      UNION ALL
+     SELECT 'type ' || t.typname
+       FROM pg_type t JOIN pg_namespace n ON n.oid = t.typnamespace
+      WHERE n.nspname='public' AND t.typtype IN ('e','d') AND t.typrelid = 0
+        AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.objid=t.oid AND d.deptype='e')
+      UNION ALL
+     SELECT 'function ' || p.proname
+       FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+      WHERE n.nspname='public' AND p.prokind IN ('f','p','a')
+        AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.objid=p.oid AND d.deptype='e')
+      ORDER BY 1`,
   );
+  const inPostgres = String(foreignObjects.length);
   if (inPostgres !== "0") {
+    // NAMED, not counted. "holds 2 object(s)" cost a round trip and told nobody
+    // which two; the answer was two PostGIS composite types and the guard's own
+    // ownership test being asked of the wrong catalogue row.
     bad(
       `the \`postgres\` database on ${HOST}:${PORT} holds ${inPostgres} object(s) in public that ` +
         `no extension owns. A throwaway server has none. This looks like a real database - a ` +
         `Supabase project's database is also called \`postgres\` - and this check destroys what it ` +
-        `points at.`,
+        `points at. They are:\n${indent(foreignObjects.join("\n"))}`,
     );
     finish();
     return;
