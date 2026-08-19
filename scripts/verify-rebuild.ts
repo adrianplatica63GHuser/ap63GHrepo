@@ -597,6 +597,21 @@ function stripTsComments(text: string): string {
   return text.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
 }
 
+/**
+ * The container's own log, for the one failure that cannot be diagnosed from
+ * psql's exit code alone. `exited 2` covers refused, timed out and password
+ * authentication failed, and the postgres entrypoint says which in its log.
+ */
+function containerLog(name: string): string {
+  const r = spawnSync("docker", ["logs", "--tail", "25", name], {
+    encoding: "utf-8",
+    maxBuffer: 8 * 1024 * 1024,
+  });
+  if (r.error) return `(could not read the log: ${r.error.message})`;
+  const text = `${r.stdout ?? ""}${r.stderr ?? ""}`.trim();
+  return text === "" ? "(the container has logged nothing)" : text;
+}
+
 function tablesIn(db: string): string[] {
   return rows(
     db,
@@ -607,7 +622,7 @@ function tablesIn(db: string): string[] {
 function indent(s: string): string {
   return (s || "")
     .split("\n")
-    .slice(0, 25)
+    .slice(0, 40)
     .map((l) => `          ${l}`)
     .join("\n");
 }
@@ -721,12 +736,17 @@ function main(): void {
     const how = CONTAINER
       ? `docker exec ${CONTAINER} psql (the container's own client)`
       : "psql from PATH";
+    // The WHOLE message, not its first line. psql puts "exited 2" on line one
+    // and the reason -- refused, no such host, password authentication failed --
+    // on the next, and an earlier version of this printed only the first, which
+    // made a diagnosable failure undiagnosable.
     bad(
-      `cannot reach a Postgres server as ${USER} via ${how}: ${(e as Error).message.split("\n")[0]}. ` +
+      `cannot reach a Postgres server as ${USER} via ${how}:\n${indent((e as Error).message)}\n` +
         (CONTAINER
-          ? `Is the container running? (docker ps)`
-          : `If there is no psql on this machine -- there is none on a Windows box with only Docker ` +
-            `Desktop -- pass --container <name> and it will use the container's own binaries instead.`),
+          ? `        The container's own last 25 log lines follow, because the reason is usually there\n` +
+            `        and asking for them is another round trip.\n${indent(containerLog(CONTAINER))}`
+          : `        If there is no psql on this machine -- there is none on a Windows box with only ` +
+            `Docker Desktop -- pass --container <name> to use the container's own binaries instead.`),
     );
     finish();
     return;
