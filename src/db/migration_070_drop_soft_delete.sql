@@ -111,6 +111,11 @@
 --     FK shape in advance. The old section-0 guard promised to stop rather
 --     than guess, and it did not cover the shape that actually breaks the
 --     predicate: an FK onto one of the CASCADE CHILDREN that 1c ignores.
+--   * The duplicate CNP/CUI pre-check runs AFTER the tombstones are purged,
+--     not before. natural_person inherits its parent person's deleted_at, so
+--     checking first counted deleted duplicates as collisions — and refused a
+--     migration that would have worked, on Adrian's own database, where one
+--     CNP carried nine tombstones from repeated ID-card imports.
 --   * Section 1c repeats until a pass purges nothing. A lookup row referenced
 --     only by ANOTHER lookup row's tombstone was kept on a single pass,
 --     because the referencing tombstone was purged later in the same loop.
@@ -161,48 +166,6 @@ BEGIN;
 -- section 1c's dynamic DELETE can hit a same-named table in another schema
 -- while its guard reports the column missing.
 SET LOCAL search_path = pg_catalog, public;
-
--- ---------------------------------------------------------------------------
--- 0. Pre-check: the one thing section 3 can fail on, named before it happens
--- ---------------------------------------------------------------------------
---
--- Section 3 restores the plain partial unique indexes on natural_person.cnp
--- and judicial_person.cui_number. Those CREATEs fail if two LIVE rows already
--- share a value, and the raw failure ("Key (cnp)=(...) is duplicated") does
--- not say which people, so nobody can act on it.
---
--- It is reachable. The triggers being replaced were BEFORE INSERT EXISTS
--- checks, and an EXISTS check is not a unique constraint: under READ
--- COMMITTED two concurrent POST /api/people with the same CNP both pass it
--- and both commit. Measured with two overlapping psql sessions.
---
--- So: look first, and if there is a collision say exactly which rows, inside
--- the same transaction, before anything has been dropped.
-
-DO $$
-DECLARE
-  dup text;
-BEGIN
-  SELECT string_agg(format('CNP %s on person_id %s', np.cnp, np.person_id), '; ')
-    INTO dup
-    FROM natural_person np
-   WHERE np.cnp IS NOT NULL
-     AND EXISTS (SELECT 1 FROM natural_person o
-                  WHERE o.cnp = np.cnp AND o.person_id IS DISTINCT FROM np.person_id);
-  IF dup IS NOT NULL THEN
-    RAISE EXCEPTION 'migration_070: duplicate live CNP(s) block the unique index that section 3 restores. Merge or correct these first: %', dup;
-  END IF;
-
-  SELECT string_agg(format('CUI %s on person_id %s', jp.cui_number, jp.person_id), '; ')
-    INTO dup
-    FROM judicial_person jp
-   WHERE jp.cui_number IS NOT NULL
-     AND EXISTS (SELECT 1 FROM judicial_person o
-                  WHERE o.cui_number = jp.cui_number AND o.person_id IS DISTINCT FROM jp.person_id);
-  IF dup IS NOT NULL THEN
-    RAISE EXCEPTION 'migration_070: duplicate live CUI(s) block the unique index that section 3 restores. Merge or correct these first: %', dup;
-  END IF;
-END $$;
 
 -- ---------------------------------------------------------------------------
 -- 1a. Purge tombstoned entities, and the principal_object row each one owns
@@ -446,6 +409,63 @@ BEGIN
   END LOOP;
 
   RAISE NOTICE 'migration_070: purged % unreferenced lookup row(s) in % pass(es).', purged, pass;
+END $$;
+
+-- ---------------------------------------------------------------------------
+-- 1d. Pre-check: the one thing section 3 can fail on, named before it happens
+-- ---------------------------------------------------------------------------
+--
+-- Section 3 restores the plain partial unique indexes on natural_person.cnp
+-- and judicial_person.cui_number. Those CREATEs fail if two rows that SURVIVE
+-- share a value, and the raw failure ("Key (cnp)=(...) is duplicated") names
+-- no person, so nobody can act on it. This says which.
+--
+-- It is reachable on live rows. The triggers being replaced were BEFORE INSERT
+-- EXISTS checks, and an EXISTS check is not a unique constraint: under READ
+-- COMMITTED two concurrent POST /api/people with the same CNP both pass it and
+-- both commit. Measured with two overlapping psql sessions.
+--
+-- ⚠️ WHY THIS RUNS AFTER 1a AND NOT BEFORE IT, WHICH IS WHERE IT STARTED.
+--   natural_person and judicial_person have no deleted_at of their own — they
+--   inherit the parent person row's — so a check placed before the purge
+--   counts TOMBSTONED people as collisions. That is not a corner case, it is
+--   the single most common shape in this database and the exact one
+--   migration_025 was written for: import an ID card, delete the duplicate,
+--   import it again. Each repetition leaves another tombstone holding the same
+--   CNP, and on Adrian's development database one CNP had NINE.
+--
+--   Run before the purge, this refused a migration that would have succeeded —
+--   loudly, and about rows the user had already deleted. Run after it, the set
+--   it examines is exactly the set CREATE UNIQUE INDEX will examine. Nothing
+--   is lost by moving it: the whole file is one transaction, so a failure here
+--   still rolls the purge back and still happens before anything is dropped.
+
+DO $$
+DECLARE
+  dup text;
+BEGIN
+  SELECT string_agg(format('CNP %s on person_id %s', np.cnp, np.person_id), '; ')
+    INTO dup
+    FROM natural_person np
+   WHERE np.cnp IS NOT NULL
+     AND EXISTS (SELECT 1 FROM natural_person o
+                  WHERE o.cnp = np.cnp AND o.person_id IS DISTINCT FROM np.person_id);
+  IF dup IS NOT NULL THEN
+    RAISE EXCEPTION 'migration_070: % live person(s) share a CNP with another live person, which blocks the unique index section 3 restores. These are NOT soft-deleted duplicates - those were already purged above. Merge or correct them, then re-run: %',
+      (SELECT count(*) FROM natural_person np WHERE np.cnp IS NOT NULL
+        AND EXISTS (SELECT 1 FROM natural_person o WHERE o.cnp = np.cnp AND o.person_id IS DISTINCT FROM np.person_id)),
+      dup;
+  END IF;
+
+  SELECT string_agg(format('CUI %s on person_id %s', jp.cui_number, jp.person_id), '; ')
+    INTO dup
+    FROM judicial_person jp
+   WHERE jp.cui_number IS NOT NULL
+     AND EXISTS (SELECT 1 FROM judicial_person o
+                  WHERE o.cui_number = jp.cui_number AND o.person_id IS DISTINCT FROM jp.person_id);
+  IF dup IS NOT NULL THEN
+    RAISE EXCEPTION 'migration_070: live judicial person(s) share a CUI, which blocks the unique index section 3 restores. These are NOT soft-deleted duplicates. Merge or correct them, then re-run: %', dup;
+  END IF;
 END $$;
 
 -- ---------------------------------------------------------------------------
