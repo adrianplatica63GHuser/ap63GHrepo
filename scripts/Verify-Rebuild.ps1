@@ -102,26 +102,30 @@ try {
         -p "127.0.0.1:${Port}:5432" `
         $image > $null
 
-    # 180 probes, not 60: a cold first boot of postgis/postgis on Docker Desktop
-    # runs initdb and then loads postgis, topology, fuzzystrmatch and
-    # tiger_geocoder, which on WSL2 routinely takes longer than a minute.
-    Write-Host "Waiting for it to accept connections (180 probes, several minutes at worst)..."
+    # PROBE WITH THE CLIENT THE CHECK USES, AND REQUIRE A ROW BACK.
+    # This polled `pg_isready` and broke out of the loop while the image was
+    # still running initdb, so the check ran against a server that was not
+    # there and reported "cannot reach a Postgres server" -- measured on
+    # Adrian's machine, with the container's own log ending at "performing
+    # post-bootstrap initialization". Whatever made that probe answer yes,
+    # `SELECT 1` returning the string 1 cannot: it is the same binary, the same
+    # transport and the same credentials the next step uses, and it is tested on
+    # its output rather than only on an exit code.
+    #
+    # 180 probes: a cold first boot of postgis/postgis on Docker Desktop runs
+    # initdb and then loads postgis, topology, fuzzystrmatch and tiger_geocoder,
+    # which on WSL2 routinely takes longer than a minute. verify-rebuild.ts
+    # retries the first connection for 120s of its own besides.
+    Write-Host "Waiting for it to accept connections (up to 180 probes)..."
     $ready = $false
-    $LASTEXITCODE = 0   # so the read below is defined under Set-StrictMode even
-                        # if the pre-clean above is ever removed
     foreach ($i in 1..180) {
         Start-Sleep -Seconds 1
         if ($i % 15 -eq 0) { Write-Host "  ...still waiting ($i s)" }
-        # -h 127.0.0.1 makes this a TCP check, which is what the check itself
-        # uses. Without it pg_isready goes over the container's Unix socket and
-        # answers yes during the entrypoint's socket-only initdb phase -- while
-        # the postgis image is still loading its extensions and nothing is
-        # listening on TCP -- so the loop broke early and the check then failed
-        # with "cannot reach a Postgres server".
         $PSNativeCommandUseErrorActionPreference = $false
-        docker exec $container pg_isready -h 127.0.0.1 -U postgres -q 2> $null > $null
+        $probe = docker exec -e PGPASSWORD=$password $container psql -h 127.0.0.1 -p 5432 -U postgres -d postgres -tAc 'SELECT 1' 2> $null
+        $probeCode = $LASTEXITCODE
         $PSNativeCommandUseErrorActionPreference = $true
-        if ($LASTEXITCODE -eq 0) {
+        if ($probeCode -eq 0 -and "$probe".Trim() -eq '1') {
             $ready = $true
             break
         }

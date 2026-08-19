@@ -70,6 +70,8 @@
  *                       no psql on PATH; --host and --port are then ignored,
  *                       because inside the container the server is on its own
  *                       127.0.0.1:5432.
+ *   --wait <seconds>    how long to keep retrying the first connection while a
+ *                       fresh container finishes initdb. Default 120.
  *   --host <h>          default 127.0.0.1 (loopback only, enforced)
  *   --port <p>          default 5433
  *   --user <u>          default postgres
@@ -181,6 +183,7 @@ const PORT = arg("port", "5433");
 const USER = arg("user", "postgres");
 const PASSWORD = arg("password", "rebuild-check");
 const CONTAINER = arg("container", "");
+const WAIT_SECONDS = Number(arg("wait", "120"));
 const STUB_POSTGIS = flag("stub-postgis");
 const UPDATE_BASELINE = flag("update-baseline");
 const KEEP = flag("keep");
@@ -612,6 +615,41 @@ function containerLog(name: string): string {
   return text === "" ? "(the container has logged nothing)" : text;
 }
 
+/**
+ * The first connection, retried.
+ *
+ * Readiness is not the caller's job to get right, and the evidence is that it
+ * is easy to get wrong: Verify-Rebuild.ps1's first version polled `pg_isready`
+ * and broke out of the loop while the postgis image was still running initdb,
+ * so the check reported "cannot reach a Postgres server" against a container
+ * that was thirty seconds from being fine. CI's service-container health-cmd is
+ * the same shape of promise from a different direction.
+ *
+ * So the check waits for itself, with the client it actually uses, and only
+ * gives up after --wait seconds. A server that is genuinely absent still fails,
+ * just later.
+ */
+function waitForServer(): string[] {
+  const deadline = Date.now() + WAIT_SECONDS * 1000;
+  let last: Error | undefined;
+  let announced = false;
+  for (;;) {
+    try {
+      return rows("postgres", "SELECT datname FROM pg_database WHERE NOT datistemplate ORDER BY datname");
+    } catch (e) {
+      last = e as Error;
+      if (Date.now() >= deadline) throw last;
+      if (!announced) {
+        info(`server not accepting connections yet - retrying for up to ${WAIT_SECONDS}s`);
+        announced = true;
+      }
+      // Synchronous, because nothing else in this file is asynchronous and a
+      // sleep that yields would need every caller above it to become async.
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1000);
+    }
+  }
+}
+
 function tablesIn(db: string): string[] {
   return rows(
     db,
@@ -728,10 +766,7 @@ function main(): void {
 
   let existing: string[];
   try {
-    existing = rows(
-      "postgres",
-      "SELECT datname FROM pg_database WHERE NOT datistemplate ORDER BY datname",
-    );
+    existing = waitForServer();
   } catch (e) {
     const how = CONTAINER
       ? `docker exec ${CONTAINER} psql (the container's own client)`
