@@ -125,20 +125,61 @@ export async function deleteFiles(filePaths: string[]): Promise<string[]> {
       }
     }
   } else {
+    const parents = new Set<string>();
     for (const filePath of filePaths) {
       const fullPath = path.join(LOCAL_UPLOADS_DIR, filePath);
       try {
         await fs.unlink(fullPath);
+        parents.add(path.dirname(fullPath));
       } catch (err) {
-        // ENOENT means somebody already removed it — that is success.
-        if ((err as NodeJS.ErrnoException)?.code !== "ENOENT") {
+        // ENOENT means somebody already removed it — that is success, and the
+        // directory is still worth trying: this is how a retry after a
+        // half-finished delete tidies up the half that succeeded.
+        if ((err as NodeJS.ErrnoException)?.code === "ENOENT") {
+          parents.add(path.dirname(fullPath));
+        } else {
           failed.push(filePath);
         }
       }
     }
+    await removeEmptyDirs(parents);
   }
 
   return failed;
+}
+
+/**
+ * Remove the per-document directories a delete has just emptied.
+ *
+ * `uploadFile` creates `<uploads>/document-pages/<documentId>/` with
+ * `mkdir -p` and NOTHING has ever removed one. Deleting a document's pages
+ * therefore left a folder named after a document that no longer exists — and
+ * on Adrian's development database, migration_070's purge plus the orphan
+ * sweep left 795 of them behind, which reads exactly like the delete having
+ * failed. It had not; the files were gone and the folders were not.
+ *
+ * Local storage only. Supabase Storage has no directories: a prefix with no
+ * objects under it does not exist, so there is nothing to tidy on that side.
+ *
+ * Best-effort by construction. ENOTEMPTY is the expected and CORRECT outcome
+ * whenever a page was deleted individually and its siblings remain — it is not
+ * a failure and is not reported. Nothing here can affect whether the delete
+ * succeeded: the bytes are already gone.
+ */
+async function removeEmptyDirs(dirs: Set<string>): Promise<void> {
+  for (const dir of dirs) {
+    // Never touch the uploads root or the bucket root. A page key is
+    // `document-pages/<documentId>/<file>`, so a directory worth removing is
+    // at least two levels below LOCAL_UPLOADS_DIR. Anything shallower is
+    // structure, not residue — and a path outside the root is not ours at all.
+    const rel = path.relative(LOCAL_UPLOADS_DIR, dir);
+    if (!rel || rel.startsWith("..") || path.isAbsolute(rel)) continue;
+    if (rel.split(path.sep).length < 2) continue;
+
+    await fs.rmdir(dir).catch(() => {
+      // ENOTEMPTY (siblings remain) or ENOENT (already gone). Both fine.
+    });
+  }
 }
 
 /**
