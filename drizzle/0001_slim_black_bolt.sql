@@ -65,4 +65,14 @@ CREATE TRIGGER "property_corner_touch_updated_at"
 -- Enables fast bounding-box queries and ST_DWithin range searches.
 CREATE INDEX "property_corner_geom_idx"
   ON "property_corner"
-  USING GIST (ST_SetSRID(ST_MakePoint(lon, lat), 4326)::geography);
+  -- The expression needs its OWN parentheses inside the index's column list.
+  -- Postgres only accepts a bare function call there; anything else -- a cast
+  -- included -- is a syntax error, and this statement has carried one since it
+  -- was written. It has never applied: replaying the chain onto an empty
+  -- database dies here, on the second file, with `syntax error at or near "::"`.
+  -- The live databases have the index because it was created outside this file;
+  -- pg_dump reports it as
+  --   USING gist (((public.st_setsrid(public.st_makepoint(lon, lat), 4326))::public.geography))
+  -- which is what the form below produces. (Found by scripts/verify-rebuild.ts,
+  -- Slice #31.01.)
+  USING GIST ((ST_SetSRID(ST_MakePoint(lon, lat), 4326)::geography));
