@@ -155,6 +155,26 @@ $body = [System.IO.File]::ReadAllText($rawFile)
 # 'schema "topology" already exists' under ON_ERROR_STOP.
 $body = $body -replace 'CREATE SCHEMA topology;', 'CREATE SCHEMA IF NOT EXISTS topology;'
 
+# ...and the same is true of `public`, which the line above never covered.
+# pg_dump emits CREATE SCHEMA public because it is dumping a schema object;
+# but `public` exists in every Postgres database ever created, and Supabase is
+# no exception, so replaying this file aborted on its 44th line with
+# 'schema "public" already exists' under ON_ERROR_STOP. That is the first
+# statement after the SETs, so `npm run supabase:sync` could never get past
+# it -- measured on Slice #29.04, and true of every generated version of this
+# file since #21.09.help.error made it generated. supabase_reset.sql does not
+# drop the schema (it drops the objects INSIDE it, deliberately, so Supabase's
+# own grants on `public` survive), so IF NOT EXISTS is the whole fix.
+$body = $body -replace 'CREATE SCHEMA public;', 'CREATE SCHEMA IF NOT EXISTS public;'
+
+# The comment on `public` goes entirely. COMMENT ON SCHEMA requires ownership,
+# and on a Supabase project `public` is owned by pg_database_owner rather than
+# by the role the sync connects as -- so this is the next statement that could
+# stop the rebuild, one line after the one that did. It restates the default
+# Postgres comment and is worth nothing.
+$body = $body -replace "(?m)^--\r?\n-- Name: SCHEMA public; Type: COMMENT.*\r?\n--\r?\n\r?\n", ''
+$body = $body -replace "(?m)^COMMENT ON SCHEMA public IS 'standard public schema';\r?\n\r?\n\r?\n", ''
+
 # Normalise CRLF -> LF (.gitattributes enforces LF everywhere in this repo).
 $body = $body -replace "`r`n", "`n"
 
