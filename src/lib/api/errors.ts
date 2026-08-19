@@ -13,21 +13,40 @@ type PgError = {
   detail?: string;
 };
 
+function unwrapPgError(err: unknown): PgError {
+  // Drizzle wraps the real Postgres error in an outer "Failed query: ..."
+  // Error, with the actual error (code/constraint/message) attached as
+  // `.cause`. Without unwrapping this, `e.code`/`e.constraint` are always
+  // undefined and every DB constraint violation (CNP/CUI dupes, any
+  // unique/check/FK violation) silently falls through to the generic 500
+  // instead of its specific message.
+  const top = err as PgError & { cause?: unknown };
+  const cause = top?.cause as PgError | undefined;
+  return cause ?? top;
+}
+
+/**
+ * The SQLSTATE of a Postgres error, through the same unwrapping
+ * `dbErrorToResponse` does, or `undefined` for anything that is not one.
+ *
+ * Exported for the one caller that needs to answer a specific violation with
+ * something richer than this file can build: the value-lists DELETE route
+ * turns a 23503 into the same "what depends on this row" body its own
+ * pre-check produces (Slice #29.05). Without it that route would have to
+ * re-implement the `.cause` unwrap, and the two would drift.
+ */
+export function pgErrorCode(err: unknown): string | undefined {
+  return unwrapPgError(err)?.code;
+}
+
 /**
  * Translate a Postgres / Drizzle error into a JSON Response, or return
  * `null` if the error doesn't match any known DB pattern (caller should
  * then fall through to a generic 500).
  */
 export function dbErrorToResponse(err: unknown): Response | null {
-  // Drizzle wraps the real Postgres error in an outer "Failed query: ..."
-  // Error, with the actual error (code/constraint/message) attached as
-  // `.cause`. Without unwrapping this, `e.code`/`e.constraint` below are
-  // always undefined and every DB constraint violation (CNP/CUI dupes,
-  // any unique/check/FK violation) silently falls through to the generic
-  // 500 instead of its specific message.
   const top = err as PgError & { cause?: unknown };
-  const cause = top?.cause as PgError | undefined;
-  const e: PgError = cause ?? top;
+  const e: PgError = unwrapPgError(err);
   const message = e?.message ?? top?.message ?? String(err);
 
   // RAISE EXCEPTION from our `natural_person_lock_cnp` trigger (SQLSTATE P0001).

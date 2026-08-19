@@ -1662,11 +1662,48 @@
       "confirmDiscard": "Renunță"
     },
     "confirm": {
-      "deleteBody": "Ștergeți această înregistrare? Acțiunea nu poate fi anulată.",
-      "deletePropertyTypeUsed": "Tipul este utilizat de {count} {count, plural, one {proprietate} other {proprietăți}}. La ștergere, tipul acestora va fi eliminat. Continuați?",
+      "title": "Ștergeți „{name}”?",
+      "checking": "Se verifică ce depinde de această înregistrare…",
+      "checkFailed": "Nu s-a putut verifica ce depinde de această înregistrare. Închideți fereastra și încercați din nou.",
+      "deleteBody": "Nimic nu depinde de această înregistrare. La ștergere dispare definitiv — acțiunea nu poate fi anulată.",
+      "inUse": "{count, plural, one {# obiect depinde} few {# obiecte depind} other {# de obiecte depind}} de această înregistrare, așa că ștergerea nu este posibilă acum:",
+      "moveTo": "Mutați-le pe:",
+      "selectTarget": "Alegeți o valoare…",
+      "move": "Mută",
+      "moving": "Se mută…",
+      "moved": "{count, plural, =0 {Nu s-a mutat nicio înregistrare.} one {# înregistrare a fost mutată.} few {# înregistrări au fost mutate.} other {# de înregistrări au fost mutate.}}",
+      "removedWithRow": "La ștergere se elimină și:",
+      "errors": {
+        "sameValue": "Valoarea aleasă este aceeași cu cea pe care o ștergeți. Alegeți alta.",
+        "ambiguousValue": "Există încă o înregistrare cu aceeași denumire în această listă, așa că nu se poate stabili care obiecte îi aparțin acesteia. Ștergeți sau redenumiți duplicatul întâi.",
+        "validation": "Datele introduse nu sunt complete sau nu sunt valide. Verificați câmpurile obligatorii.",
+        "notFound": "Înregistrarea nu mai există — lista s-a schimbat între timp. Închideți fereastra și deschideți-o din nou.",
+        "generic": "Operația nu a reușit. Închideți fereastra, reîmprospătați pagina și încercați din nou."
+      },
+      "roleWhitelistNote": "Bifele rolului șters nu se mută odată cu asocierile. Dacă rolul ales nu este deja bifat în „Roluri pe Proprietate”, „Roluri pe Document” sau „Persoană → Persoană” acolo unde era bifat cel șters, bifați-l acolo după mutare — altfel asocierile mutate vor arăta un rol care nu mai poate fi ales din listă.",
+      "noTarget": "Nu există altă valoare în această listă pe care să le mutați. Adăugați una întâi, apoi reveniți aici.",
       "delete": "Șterge",
       "deleting": "Se șterge…",
       "cancel": "Anulează"
+    },
+    "dependents": {
+      "classes": {
+        "documents": "{count, plural, one {# document} few {# documente} other {# de documente}}",
+        "properties": "{count, plural, one {# proprietate} few {# proprietăți} other {# de proprietăți}}",
+        "naturalPersons": "{count, plural, one {# persoană fizică} few {# persoane fizice} other {# de persoane fizice}}",
+        "judicialPersons": "{count, plural, one {# persoană juridică} few {# persoane juridice} other {# de persoane juridice}}",
+        "propertyPersons": "{count, plural, one {# asociere Proprietate–Persoană} few {# asocieri Proprietate–Persoană} other {# de asocieri Proprietate–Persoană}}",
+        "personDocuments": "{count, plural, one {# asociere Persoană–Document} few {# asocieri Persoană–Document} other {# de asocieri Persoană–Document}}",
+        "personPersons": "{count, plural, one {# asociere Persoană–Persoană} few {# asocieri Persoană–Persoană} other {# de asocieri Persoană–Persoană}}",
+        "propertyPersonRoleWhitelist": "{count, plural, one {# intrare în „Roluri pe Proprietate”} few {# intrări în „Roluri pe Proprietate”} other {# de intrări în „Roluri pe Proprietate”}}",
+        "docTypePersonRoleWhitelist": "{count, plural, one {# intrare în „Roluri pe Document”} few {# intrări în „Roluri pe Document”} other {# de intrări în „Roluri pe Document”}}",
+        "personPersonRoleWhitelist": "{count, plural, one {# intrare în „Persoană → Persoană”} few {# intrări în „Persoană → Persoană”} other {# de intrări în „Persoană → Persoană”}}"
+      },
+      "notes": {
+        "duplicateValue": "Încă o înregistrare din această listă are aceeași denumire, așa că proprietățile care o folosesc nu pierd nimic dacă ștergeți această înregistrare.",
+        "versionSnapshots": "Istoricul versiunilor nu este numărat mai sus. Fiecare versiune salvată păstrează valoarea așa cum era atunci și rămâne neschimbată — nici ștergerea, nici mutarea nu o ating, iar mutarea nu creează o versiune nouă.",
+        "tarlaFreeText": "Proprietățile nu păstrează o legătură către indicativul de tarla, ci textul lui. Numărul de mai sus le găsește după acest text, iar mutarea îl rescrie în proprietăți."
+      }
     },
     "documentPersons": {
       "title": "Roluri pe Document",

@@ -237,7 +237,7 @@ describe("a deleted document takes its page files with it", () => {
 });
 
 describe("deleting a lookup value really removes the row", () => {
-  it("every branch of deleteValue is a db.delete", () => {
+  it("deleteValue is one real delete, and it still refuses nothing silently", () => {
     // This is the half of the create → delete → create round trip that
     // hard-delete-key-reuse.test.ts cannot assert: that Set it deletes from
     // only models the table if the delete really empties it. Without this,
@@ -245,13 +245,18 @@ describe("deleting a lookup value really removes the row", () => {
     // both files green — which is exactly what an adversarial round found,
     // because the sibling's header CLAIMED this assertion existed and it did
     // not.
+    //
+    // ⚠️ **It used to count nine `case` branches and nine `db.delete(` calls.**
+    // Slice #29.05 replaced that switch with ONE delete against
+    // `LIST_DEPENDENCIES[key].table` — the same entry the dependent count and
+    // the re-point read, so no list can be counted under one rule and deleted
+    // under another. The "one branch per list" half of this assertion moved
+    // with it, to value-list-dependents.test.ts → "has one entry per list and
+    // no others", which is what now fails when a tenth list is added. What is
+    // still asserted HERE is the thing this file exists for: the delete is a
+    // DELETE.
     const body = functionBody(read("lib", "admin", "value-lists", "queries.ts"), "deleteValue");
-    // `code()` empties string BODIES, so the nine ListKey labels read as
-    // `case "":` here. Counting them is still the point — one branch per list,
-    // and one delete per branch, so a tenth list added without a delete fails.
-    const branches = body.match(/case\s+""\s*:/g) ?? [];
-    expect(branches.length).toBe(9);
-    expect((body.match(/db\.delete\(/g) ?? []).length).toBe(9);
+    expect((body.match(/\.delete\(/g) ?? []).length).toBe(1);
     expect(body).not.toMatch(/\.update\s*\(/);
     expect(body).not.toMatch(/\.set\s*\(/);
   });

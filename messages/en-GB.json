@@ -1662,11 +1662,48 @@
       "confirmDiscard": "Discard"
     },
     "confirm": {
-      "deleteBody": "Delete this entry? This cannot be undone.",
-      "deletePropertyTypeUsed": "Tipul este utilizat de {count} {count, plural, one {proprietate} other {proprietăți}}. La ștergere, tipul acestora va fi eliminat. Continuați?",
+      "title": "Delete “{name}”?",
+      "checking": "Checking what depends on this entry…",
+      "checkFailed": "Could not check what depends on this entry. Close the dialog and try again.",
+      "deleteBody": "Nothing depends on this entry. Deleting it removes it permanently — this cannot be undone.",
+      "inUse": "{count, plural, one {# object depends} other {# objects depend}} on this entry, so it cannot be deleted yet:",
+      "moveTo": "Move them to:",
+      "selectTarget": "Choose a value…",
+      "move": "Move",
+      "moving": "Moving…",
+      "moved": "{count, plural, =0 {Nothing was moved.} one {# record was moved.} other {# records were moved.}}",
+      "removedWithRow": "Deleting it also removes:",
+      "errors": {
+        "sameValue": "The value you picked is the one you are deleting. Choose another.",
+        "ambiguousValue": "Another entry in this list has the same name, so which objects belong to this one cannot be established. Delete or rename the duplicate first.",
+        "validation": "The data entered is incomplete or invalid. Check the required fields.",
+        "notFound": "The entry no longer exists — the list changed meanwhile. Close the dialog and open it again.",
+        "generic": "The operation failed. Close the dialog, refresh the page and try again."
+      },
+      "roleWhitelistNote": "The deleted role's ticks do not move with the associations. If the role you pick is not already ticked in “Property Persons”, “Document Persons” or “Person → Person” where the deleted one was, tick it there after the move — otherwise the moved associations show a role that can no longer be picked from the list.",
+      "noTarget": "There is no other value in this list to move them to. Add one first, then come back here.",
       "delete": "Delete",
       "deleting": "Deleting…",
       "cancel": "Cancel"
+    },
+    "dependents": {
+      "classes": {
+        "documents": "{count, plural, one {# document} other {# documents}}",
+        "properties": "{count, plural, one {# property} other {# properties}}",
+        "naturalPersons": "{count, plural, one {# natural person} other {# natural persons}}",
+        "judicialPersons": "{count, plural, one {# judicial person} other {# judicial persons}}",
+        "propertyPersons": "{count, plural, one {# Property–Person association} other {# Property–Person associations}}",
+        "personDocuments": "{count, plural, one {# Person–Document association} other {# Person–Document associations}}",
+        "personPersons": "{count, plural, one {# Person–Person association} other {# Person–Person associations}}",
+        "propertyPersonRoleWhitelist": "{count, plural, one {# entry in “Property Persons”} other {# entries in “Property Persons”}}",
+        "docTypePersonRoleWhitelist": "{count, plural, one {# entry in “Document Persons”} other {# entries in “Document Persons”}}",
+        "personPersonRoleWhitelist": "{count, plural, one {# entry in “Person → Person”} other {# entries in “Person → Person”}}"
+      },
+      "notes": {
+        "duplicateValue": "Another entry in this list has the same name, so the properties using it lose nothing if you delete this entry.",
+        "versionSnapshots": "Version history is not counted above. Each saved version keeps the value as it was at the time and stays unchanged — neither deleting nor moving touches it, and moving does not create a new version.",
+        "tarlaFreeText": "Properties do not hold a link to the tarla code, they hold its text. The count above finds them by that text, and moving rewrites it on the properties."
+      }
     },
     "documentPersons": {
       "title": "Document Persons",

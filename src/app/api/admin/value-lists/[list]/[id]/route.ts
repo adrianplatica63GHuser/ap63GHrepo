@@ -2,25 +2,30 @@
  * /api/admin/value-lists/[list]/[id]
  *
  * PUT    — full-replace update of a single row
- * DELETE — hard delete (lookup rows have no soft-delete). True again as of
- *          Slice #29.04: #19.30 had made deleteValue set deleted_at while
- *          this line went on claiming otherwise. The row goes and its key is
- *          free for immediate reuse.
+ * DELETE — hard delete (lookup rows have no soft-delete). The row goes and its
+ *          key is free for immediate reuse (Slice #29.04).
  *
- *          UNGUARDED until Slice #29.05, and the failure modes differ by
- *          list. document-types is refused by Postgres (document.
- *          document_type_id is NOT NULL with no onDelete); every other list
- *          either blanks the referencing column or cascades rows away.
+ *          GUARDED as of Slice #29.05, and guarded in APPLICATION code for all
+ *          nine lists rather than left to the schema: of the fourteen foreign
+ *          keys that reach these tables exactly one refuses a delete
+ *          (document.document_type_id), nine blank the referencing column and
+ *          four cascade rows away. A delete that anything depends on is
+ *          answered with 409 and a body naming what depends on it and how
+ *          many; the client turns that into a sentence and an offer to move
+ *          those objects onto another value of the same list (POST ./reassign).
  */
 
 import type { NextRequest } from "next/server";
 import {
   dbErrorToResponse,
+  pgErrorCode,
   unexpectedError,
   zodErrorToResponse,
 } from "@/lib/api/errors";
 import { isValidListKey } from "@/lib/admin/value-lists/config";
+import { isUuid } from "@/lib/admin/value-lists/responses";
 import { updateValue, deleteValue } from "@/lib/admin/value-lists/queries";
+import { inUseResponse } from "@/lib/admin/value-lists/responses";
 import { LIST_UPDATE_SCHEMAS } from "@/lib/admin/value-lists/validation";
 
 type Ctx = { params: Promise<{ list: string; id: string }> };
@@ -33,6 +38,12 @@ export async function PUT(
 
   if (!isValidListKey(list)) {
     return Response.json({ error: "Unknown list" }, { status: 404 });
+  }
+  // A path segment that is not a uuid reaches Postgres as one and comes back
+  // as 22P02 — which `dbErrorToResponse` does not know, so it surfaced as a
+  // 500. "No such row" is what it means.
+  if (!isUuid(id)) {
+    return Response.json({ error: "Not found" }, { status: 404 });
   }
 
   let body: unknown;
@@ -68,31 +79,59 @@ export async function DELETE(_req: NextRequest, ctx: Ctx): Promise<Response> {
   if (!isValidListKey(list)) {
     return Response.json({ error: "Unknown list" }, { status: 404 });
   }
+  // A path segment that is not a uuid reaches Postgres as one and comes back
+  // as 22P02 — which `dbErrorToResponse` does not know, so it surfaced as a
+  // 500. "No such row" is what it means.
+  if (!isUuid(id)) {
+    return Response.json({ error: "Not found" }, { status: 404 });
+  }
 
   try {
-    const ok = await deleteValue(list, id);
-    if (!ok) {
+    const outcome = await deleteValue(list, id);
+    if (outcome.ok) return new Response(null, { status: 204 });
+    if (outcome.reason === "not-found") {
       return Response.json({ error: "Not found" }, { status: 404 });
     }
-    return new Response(null, { status: 204 });
+    // 409, not 400: the request is perfectly well formed and the row is
+    // perfectly deletable — just not yet. `code` is what the client branches
+    // on; `dependents` is what it turns into a Romanian sentence.
+    return inUseResponse(outcome.report);
   } catch (err) {
-    // Fixed in passing (Slice #29.04): this route never called
-    // dbErrorToResponse, so a genuine foreign-key refusal — which only
-    // becomes possible now that the delete is real — surfaced as a bare 500.
-    // It is now a 400 carrying the constraint name.
-    //
-    // BE CLEAR ABOUT WHAT THAT IS AND IS NOT. It is a correct status code and
-    // a machine-readable body. It is NOT a message for a human, and the
-    // dialog does not show it: value-list-modal.tsx throws on any non-204,
-    // discards the body, and its delete mutation has no onError — so from the
-    // user's side the confirm dialog still just sits there. This line moves
-    // the failure from "500 with nothing in it" to "400 with something in
-    // it", and nothing more.
-    //
-    // Telling the user WHICH documents hold the type, in Romanian, and giving
-    // them something to do about it, is Slice #29.05 by name — including the
-    // client-side half. Do not read this line as that conversation having
-    // happened.
+    // The race the pre-check cannot win on its own, and the only list where
+    // the database itself has an opinion: a document created for this type
+    // between the count and the DELETE. `deleteValue` takes a FOR UPDATE on
+    // the lookup row precisely to make this unreachable — an insert that
+    // references it needs a conflicting FOR KEY SHARE — so landing here means
+    // the guarantee failed, and the answer must still be the refusal rather
+    // than a 500 with a constraint name in it.
+    if (pgErrorCode(err) === "23503") {
+      // ⚠️ **Retry once rather than guess.** An earlier version recounted and
+      // answered from the count, which had two wrong endings an adversarial
+      // round found: a racer that had rolled back gave a 409 saying "0 objects
+      // depend on this" — an error path ending in an enabled delete button —
+      // and a count of zero fell through to `dbErrorToResponse`, whose 400
+      // carries an English constraint name.
+      //
+      // Re-running the delete has no such gap: it takes the row lock again and
+      // decides from what is true afterwards. Racer committed → its own count
+      // sees the new row and returns the refusal. Racer rolled back → the
+      // delete simply succeeds. Row gone → 404. One retry, never a loop.
+      const retry = await deleteValue(list, id).catch((retryErr) => {
+        // Logged rather than swallowed: without this the only trace of a
+        // genuinely broken retry — a dropped connection, a lock timeout — is a
+        // 400 that looks exactly like an ordinary foreign-key refusal.
+        console.error(
+          `[DELETE /api/admin/value-lists/${list}/${id}] retry after 23503 failed:`,
+          retryErr,
+        );
+        return null;
+      });
+      if (retry?.ok) return new Response(null, { status: 204 });
+      if (retry && retry.reason === "not-found") {
+        return Response.json({ error: "Not found" }, { status: 404 });
+      }
+      if (retry) return inUseResponse(retry.report);
+    }
     const mapped = dbErrorToResponse(err);
     if (mapped) return mapped;
     return unexpectedError(err, `DELETE /api/admin/value-lists/${list}/${id}`);

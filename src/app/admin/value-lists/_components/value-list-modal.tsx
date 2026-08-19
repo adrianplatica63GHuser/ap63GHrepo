@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   useQuery,
@@ -8,6 +8,10 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { LIST_META, type ListKey } from "@/lib/admin/value-lists/config";
+import {
+  isInUseBody,
+  type InUseBody,
+} from "@/lib/admin/value-lists/responses";
 import { buttonClass } from "@/lib/ui/button-styles";
 import {
   documentTypeAwaitsForm,
@@ -64,18 +68,149 @@ async function saveRow(
     body: JSON.stringify(body),
   });
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error((err as { error?: string }).error ?? `Error ${res.status}`);
+    const failed: unknown = await res.json().catch(() => null);
+    // A 400 here is this form's own rejection — it arrives as
+    // `{ error: "Validation failed", details }`, English, with Zod field paths
+    // in the details, so neither half is showable. What the user can act on is
+    // "a required field is missing or wrong". Read here rather than in
+    // `failureFromResponse`, because a 400 from the DELETE or the move is not
+    // a form at all.
+    throw new RequestFailedError(
+      res.status === 400 || res.status === 422
+        ? "validation"
+        : failureFromResponse(res.status, failed),
+    );
   }
   return res.json();
+}
+
+/**
+ * A delete the server refused because something still depends on the row.
+ *                                                              (Slice #29.05)
+ *
+ * ⚠️ **An error SUBCLASS carrying the parsed body, not a message string.** The
+ * body is `{ labelKey, count }` pairs — deliberately, so the sentence is built
+ * in Romanian on this side (see responses.ts) — which means the refusal cannot
+ * survive as `err.message`. Before this slice `removeRow` threw
+ * `Delete failed (${res.status})` and discarded the body, and the delete
+ * mutation had no `onError` at all: a refused delete left the confirmation
+ * dialog sitting there with its button re-enabled and nothing said anywhere.
+ */
+class DeleteRefusedError extends Error {
+  constructor(readonly body: InUseBody) {
+    super("Reference data value is in use");
+    this.name = "DeleteRefusedError";
+  }
+}
+
+/**
+ * A failure this dialog can say in Romanian.                    (Slice #29.05)
+ *
+ * ⚠️ **The server's `error` string is never rendered, and an adversarial round
+ * is why.** Those strings are English by construction — "Same value", "Not
+ * found", "Internal server error", "Foreign key violation" — and this screen
+ * is one a Romanian user reaches; CLAUDE.md's first rule for this app is that
+ * they must never see English. So the transport carries a CODE and the
+ * sentence is chosen from `valueList.confirm.errors` on this side. Anything
+ * unrecognised becomes the generic Romanian sentence rather than leaking.
+ */
+type FailureCode =
+  | "sameValue"
+  | "ambiguousValue"
+  | "notFound"
+  | "validation"
+  | "generic";
+
+class RequestFailedError extends Error {
+  constructor(readonly code: FailureCode) {
+    super(code);
+    this.name = "RequestFailedError";
+  }
+}
+
+function failureFromResponse(status: number, body: unknown): FailureCode {
+  if (status === 404) return "notFound";
+  const code = (body as { code?: string } | null)?.code;
+  if (code === "SAME_VALUE") return "sameValue";
+  if (code === "AMBIGUOUS_VALUE") return "ambiguousValue";
+  return "generic";
 }
 
 async function removeRow(listKey: ListKey, id: string): Promise<void> {
   const res = await fetch(`/api/admin/value-lists/${listKey}/${id}`, {
     method: "DELETE",
   });
-  if (!res.ok && res.status !== 204) {
-    throw new Error(`Delete failed (${res.status})`);
+  if (res.ok || res.status === 204) return;
+  const body: unknown = await res.json().catch(() => null);
+  if (res.status === 409 && isInUseBody(body)) throw new DeleteRefusedError(body);
+  throw new RequestFailedError(failureFromResponse(res.status, body));
+}
+
+/** What depends on one row, counted at the moment the dialog opens. */
+type DependentsReportWire = {
+  total: number;
+  dependents: { labelKey: string; count: number }[];
+  /** Configuration that goes with the row when it is deleted. Never blocks. */
+  removedWithRow: { labelKey: string; count: number }[];
+  notes: string[];
+};
+
+async function fetchDependents(
+  listKey: ListKey,
+  id: string,
+): Promise<DependentsReportWire> {
+  const res = await fetch(`/api/admin/value-lists/${listKey}/${id}/dependents`);
+  if (!res.ok) throw new Error(`Failed to load (${res.status})`);
+  return res.json();
+}
+
+async function reassignRows(
+  listKey: ListKey,
+  id: string,
+  targetId: string,
+): Promise<{ moved: { labelKey: string; count: number }[]; total: number }> {
+  const res = await fetch(
+    `/api/admin/value-lists/${listKey}/${id}/reassign`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ targetId }),
+    },
+  );
+  if (!res.ok) {
+    const failed: unknown = await res.json().catch(() => null);
+    throw new RequestFailedError(failureFromResponse(res.status, failed));
+  }
+  return res.json();
+}
+
+/**
+ * The caches that go stale when a row of `listKey` is added or renamed.
+ *
+ * ⚠️ **The narrow invalidation, and the only one of the three that stays
+ * narrow.** A save changes one row of one list; a DELETE cascades whitelist
+ * rows into three other panels, and a MOVE rewrites documents, properties and
+ * associations across the app — so both of those call `qc.invalidateQueries()`
+ * with no key at all, and say why where they do it.
+ *
+ * The rule these keys encode is not obvious: "document-types" and
+ * "property-types" are also fetched under a BARE key by consumers outside this
+ * screen — the Document form's type dropdown, the sidebar's dynamic Documents
+ * section, the Admin Import classify panels, the Property form's type dropdown
+ * — whose cached results would otherwise miss the change until staleTime
+ * lapsed or the page was reloaded. Two copies drifting is how one of those
+ * screens ends up offering a type that no longer exists.
+ */
+function invalidateListCaches(
+  qc: ReturnType<typeof useQueryClient>,
+  listKey: ListKey,
+): void {
+  qc.invalidateQueries({ queryKey: ["value-list", listKey] });
+  if (listKey === "document-types") {
+    qc.invalidateQueries({ queryKey: ["document-types"] });
+  }
+  if (listKey === "property-types") {
+    qc.invalidateQueries({ queryKey: ["property-types"] });
   }
 }
 
@@ -102,7 +237,10 @@ function EditForm({
   const t = useTranslations("valueList");
   const meta = LIST_META[listKey];
   const [values, setValues] = useState<Record<string, unknown>>(state.values);
-  const [error, setError] = useState<string | null>(null);
+  // A CODE, not the server's message: those are English ("Validation failed",
+  // "Internal server error") and this form is on a Romanian-only screen. Fixed
+  // in passing with the delete dialog, which had the same leak.
+  const [error, setError] = useState<FailureCode | null>(null);
   const firstInputRef = useRef<HTMLInputElement>(null);
 
   const qc = useQueryClient();
@@ -110,23 +248,11 @@ function EditForm({
   const mutation = useMutation({
     mutationFn: () => saveRow(listKey, state.id, values),
     onSuccess: (row) => {
-      qc.invalidateQueries({ queryKey: ["value-list", listKey] });
-      // "document-types" is also fetched directly (bare key, no "value-list"
-      // prefix) by several consumers elsewhere — the Document form's type
-      // dropdown, the sidebar's dynamic Documents nav section, and the
-      // Admin Import classify panels. Their cached results would otherwise
-      // miss a just-added/edited/removed type until staleTime lapses or a
-      // hard reload happens. Invalidate that key too so they refresh in step.
-      if (listKey === "document-types") {
-        qc.invalidateQueries({ queryKey: ["document-types"] });
-      }
-      // "property-types" is also fetched by the Property form's type dropdown.
-      if (listKey === "property-types") {
-        qc.invalidateQueries({ queryKey: ["property-types"] });
-      }
+      invalidateListCaches(qc, listKey);
       onSaved(row);
     },
-    onError: (err: Error) => setError(err.message),
+    onError: (err: Error) =>
+      setError(err instanceof RequestFailedError ? err.code : "generic"),
   });
 
   useEffect(() => {
@@ -134,7 +260,12 @@ function EditForm({
   }, []);
 
   function handleKey(e: React.KeyboardEvent) {
-    if (e.key === "Enter") mutation.mutate();
+    // ⚠️ **`isPending` here as well as on the button.** The form stays open
+    // until `onSuccess`, so nothing on screen changes between the first Enter
+    // and the second — and two POSTs to `tarla` produce two rows with the same
+    // indicativ, which is exactly the twin state that makes a value-matched
+    // row unmovable (see `siblingsSharingValue` in the value-lists queries).
+    if (e.key === "Enter" && !mutation.isPending) mutation.mutate();
     if (e.key === "Escape") onClose();
   }
 
@@ -207,7 +338,9 @@ function EditForm({
       </div>
 
       {error && (
-        <p className="mt-2 text-xs text-red-600 dark:text-red-400">{error}</p>
+        <p className="mt-2 text-xs text-red-600 dark:text-red-400">
+          {t(`confirm.errors.${error}` as Parameters<typeof t>[0])}
+        </p>
       )}
 
       <div className="mt-3 flex gap-2">
@@ -240,7 +373,11 @@ export function ValueListModal({
 }) {
   const t = useTranslations("valueList");
   const meta = LIST_META[listKey];
-  const qc = useQueryClient();
+  // Names the panel for assistive technology — and it has to, now that focus
+  // can LAND here (after a delete, when the button that opened the dialog has
+  // gone with the row): an `aria-modal` container with no accessible name
+  // announces itself as "dialog" and nothing else.
+  const listTitleId = useId();
 
   const [form, setForm] = useState<FormState | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
@@ -253,25 +390,26 @@ export function ValueListModal({
   // ancestor — so by effect time `document.activeElement` is already `body`.
   // (The lesson is written up in `cancel-import-dialog.tsx`.)
   const formEditorOpenerRef = useRef<HTMLElement | null>(null);
+  // Same trick for the delete confirmation (Slice #29.05): captured in the
+  // click handler, because the same commit marks this panel `inert` and the
+  // HTML focus-fixup rule has already blurred the button by effect time.
+  const deleteOpenerRef = useRef<HTMLElement | null>(null);
+  /** The list panel, so focus has somewhere to land when a row is deleted. */
+  const listPanelRef = useRef<HTMLDivElement>(null);
+  /**
+   * Set by `onDeleted`, read once by the restore effect.
+   *
+   * Without it that effect also fires on the modal's own first render — where
+   * `confirmDeleteRow` is null and the opener ref is empty — and would move
+   * focus into the panel every time a list is opened. Harmless, arguably nice,
+   * and NOT what the effect is for: an effect that quietly does something its
+   * comment does not describe is the next reader's trap.
+   */
+  const deletedRef = useRef(false);
 
   const query = useQuery<Row[]>({
     queryKey: ["value-list", listKey],
     queryFn: () => fetchRows(listKey),
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => removeRow(listKey, id),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["value-list", listKey] });
-      // See matching comment in EditForm's mutation above.
-      if (listKey === "document-types") {
-        qc.invalidateQueries({ queryKey: ["document-types"] });
-      }
-      if (listKey === "property-types") {
-        qc.invalidateQueries({ queryKey: ["property-types"] });
-      }
-      setConfirmDeleteId(null);
-    },
   });
 
   // Slice #27.03: the row whose form editor is open. Read out of the live query
@@ -280,8 +418,8 @@ export function ValueListModal({
   // about which row this is — and a row that has since been deleted simply
   // stops rendering the editor instead of editing a ghost.
   //
-  // ⚠️ **Declared HERE, above the Escape handler that reads it, and not beside
-  // `confirmDeleteRow` further down.** The handler must guard on what is
+  // ⚠️ **Declared HERE, above the Escape handler that reads it** — as is
+  // `confirmDeleteRow` below, for the same reason. The handler must guard on what is
   // actually RENDERED, not on the id: if the row leaves `query.data` while the
   // editor is open, the editor unmounts but `formEditorId` stays set, and a
   // guard on the id would leave Escape a permanent no-op for the modal
@@ -291,6 +429,29 @@ export function ValueListModal({
   const formEditorRow = formEditorId
     ? query.data?.find((r) => r.id === formEditorId)
     : null;
+
+  // The row the delete confirmation is about — same derivation, same reason,
+  // and DECLARED HERE for the same one: the Escape handler below reads it, and
+  // a `const` declared after the effect is a TDZ ReferenceError at render.
+  //
+  // Slice #29.05 removed the `deleteUsageCount` that used to sit further down —
+  // a property-types-only number, read off the LIST query, that decided which
+  // of two sentences the dialog showed. What depends on a row is now counted
+  // live for every list, by the dialog itself.
+  const confirmDeleteRow = confirmDeleteId
+    ? query.data?.find((r) => r.id === confirmDeleteId)
+    : null;
+
+  // A row that leaves the list while its confirmation is open leaves
+  // `confirmDeleteId` behind as a ghost. NOT cleared in an effect: an effect
+  // that calls setState synchronously is a cascading render and `npm run lint`
+  // refuses it (react-hooks/set-state-in-effect), correctly — nothing here
+  // needs a second render pass. Everything that reads this state already reads
+  // the ROW instead: the dialog renders on `confirmDeleteRow`, so it is gone
+  // from screen, and the Escape handler below guards on it, so the key still
+  // reaches the modal underneath on the first press. What is left is a stale
+  // id that only matters if the same row reappears in a later refetch, and
+  // then reopening its confirmation is at worst one Escape.
 
   /**
    * Hand focus back to the button that opened the form editor.
@@ -312,6 +473,24 @@ export function ValueListModal({
     if (opener?.isConnected) opener.focus();
   }, [formEditorRow]);
 
+  /**
+   * The same restore for the delete confirmation — with one difference.
+   *
+   * After a DELETE the opener is gone (see `onDeleted` below, which clears the
+   * ref), so focus goes to the list panel itself rather than to `<body>`. The
+   * panel is `tabIndex={-1}` for exactly this, and it is what keeps the next
+   * Tab inside the modal.
+   */
+  useEffect(() => {
+    if (confirmDeleteRow) return;
+    const opener = deleteOpenerRef.current;
+    deleteOpenerRef.current = null;
+    const deleted = deletedRef.current;
+    deletedRef.current = false;
+    if (opener?.isConnected) opener.focus();
+    else if (deleted) listPanelRef.current?.focus();
+  }, [confirmDeleteRow]);
+
   // Close on Escape
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -322,14 +501,19 @@ export function ValueListModal({
         // list modal underneath closes too, so Escape out of the editor lands
         // the administrator back on Reference Data instead of on the list.
         if (formEditorRow) return;
-        if (confirmDeleteId) { setConfirmDeleteId(null); return; }
+        // The delete dialog handles its own Escape — it has to, because it
+        // must ignore the key while a move is in flight, and this handler
+        // cannot see that. Guarded on what is RENDERED (`confirmDeleteRow`),
+        // for the reason spelled out above it: an id whose row has left the
+        // list would otherwise swallow one keypress with nothing on screen.
+        if (confirmDeleteRow) return;
         if (form) { setForm(null); return; }
         onClose();
       }
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [confirmDeleteId, form, formEditorRow, onClose]);
+  }, [confirmDeleteRow, form, formEditorRow, onClose]);
 
   function startAdd() {
     const blank: Record<string, unknown> = {};
@@ -351,17 +535,6 @@ export function ValueListModal({
     }
     setForm({ id: row.id, values: vals });
   }
-
-  // Slice #19.02: for property-types, surface a richer delete warning when
-  // the type is referenced by existing properties. The list query already
-  // includes a `usageCount` for property-types rows via a correlated subquery.
-  const confirmDeleteRow = confirmDeleteId
-    ? query.data?.find((r) => r.id === confirmDeleteId)
-    : null;
-  const deleteUsageCount =
-    listKey === "property-types" && typeof confirmDeleteRow?.usageCount === "number"
-      ? (confirmDeleteRow.usageCount as number)
-      : 0;
 
   // Column headers — text fields only; checkbox fields appear inline in the
   // edit form but are shown as a ✓/– symbol in the row display.
@@ -535,14 +708,28 @@ export function ValueListModal({
           from behind the overlay is this list's Delete button, whose z-60
           confirmation would then render UNDER the editor's z-70 backdrop. */}
       <div
+        ref={listPanelRef}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
-        inert={!!formEditorRow}
-        className="fixed inset-x-4 top-[10%] z-50 mx-auto max-w-2xl rounded-xl border border-card-rim bg-card shadow-2xl dark:border-zinc-800 dark:bg-zinc-900"
+        aria-labelledby={listTitleId}
+        // Slice #29.05: the delete dialog counts here too, and an adversarial
+        // round showed what it costs when it does not. Its backdrop hides the
+        // list but does not disable it, so Tab reached the Delete button of a
+        // DIFFERENT row behind the overlay; pressing it re-keyed the dialog
+        // onto that row, with only the name in the title changing. (The same
+        // path reached "Formular", which mounts the z-70 editor over the z-60
+        // confirmation — the exact stack `document-type-form-editor.tsx`
+        // documents as unreachable by Escape.)
+        inert={!!formEditorRow || !!confirmDeleteRow}
+        className="fixed inset-x-4 top-[10%] z-50 mx-auto max-w-2xl rounded-xl border border-card-rim bg-card shadow-2xl focus-visible:outline-none dark:border-zinc-800 dark:bg-zinc-900"
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-card-rim px-5 py-4 dark:border-zinc-800">
-          <h2 className="text-base font-semibold text-ink dark:text-zinc-100">
+          <h2
+            id={listTitleId}
+            className="text-base font-semibold text-ink dark:text-zinc-100"
+          >
             {t(`lists.${meta.titleKey}`)}
           </h2>
           <button
@@ -810,7 +997,10 @@ export function ValueListModal({
                             </button>
                           )}
                           <button
-                            onClick={() => setConfirmDeleteId(row.id)}
+                            onClick={(e) => {
+                              deleteOpenerRef.current = e.currentTarget;
+                              setConfirmDeleteId(row.id);
+                            }}
                             className={buttonClass({ variant: "danger", size: "xs" })}
                           >
                             {t("table.delete")}
@@ -839,40 +1029,419 @@ export function ValueListModal({
         />
       )}
 
-      {/* Delete confirm dialog */}
-      {confirmDeleteId && (
-        <>
-          <div className="fixed inset-0 z-60 bg-black/50" aria-hidden />
-          <div
-            role="alertdialog"
-            className="fixed inset-x-4 top-1/3 z-60 mx-auto max-w-sm rounded-xl border border-card-rim bg-card p-6 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900"
-          >
-            <p className="mb-4 text-sm text-ink dark:text-zinc-300">
-              {/* Slice #19.02: richer warning when the property type is in use */}
-              {deleteUsageCount > 0
-                ? t("confirm.deletePropertyTypeUsed", { count: deleteUsageCount })
-                : t("confirm.deleteBody")}
-            </p>
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => deleteMutation.mutate(confirmDeleteId)}
-                disabled={deleteMutation.isPending}
-                className={buttonClass({ variant: "danger", size: "sm" })}
-              >
-                {deleteMutation.isPending
-                  ? t("confirm.deleting")
-                  : t("confirm.delete")}
-              </button>
-              <button
-                onClick={() => setConfirmDeleteId(null)}
-                className={buttonClass({ variant: "secondary", size: "sm" })}
-              >
-                {t("confirm.cancel")}
-              </button>
-            </div>
-          </div>
-        </>
+      {/* Slice #29.05: deleting a value that is in use is a conversation.
+          Keyed on the row so reopening a different one starts from a fresh
+          count rather than from the previous row's answer. */}
+      {confirmDeleteRow && (
+        <DeleteDialog
+          key={confirmDeleteRow.id}
+          listKey={listKey}
+          row={confirmDeleteRow}
+          rows={query.data ?? []}
+          labelField={meta.fields[0].key}
+          onClose={() => setConfirmDeleteId(null)}
+          onDeleted={() => {
+            // The opener is that row's Șterge button, which the refetch is
+            // about to remove — so drop it and let the restore effect focus
+            // the list panel instead.
+            deleteOpenerRef.current = null;
+            deletedRef.current = true;
+            setConfirmDeleteId(null);
+          }}
+        />
       )}
+    </>
+  );
+}
+
+// ── Delete: the conversation ─────────────────────────────────────────────────
+
+/**
+ * The delete confirmation — refuse, name, offer.                (Slice #29.05)
+ *
+ * Adrian's instruction is the whole specification and it is short: if we want
+ * to delete a value-list element that other documents depend on, the system
+ * should say so and should suggest changing the association on the objects
+ * that depend on it. So: the count is fetched when this dialog opens, and what
+ * the dialog offers follows from it.
+ *
+ *   nothing depends on the row → the delete, stated as permanent.
+ *   something does            → what it is and how many, a list to move it
+ *                               onto, and NO delete button at all.
+ *
+ * ⚠️ **The delete button is not rendered while anything depends on the row,
+ * rather than rendered disabled.** A disabled danger button reads as "this
+ * will work once you tick something on this screen"; there is nothing to tick.
+ * The move is the action here, and it is the only one offered.
+ *
+ * ⚠️ **The move and the delete are two presses, not one.** A single "move and
+ * delete" button would put a bulk rewrite and a permanent delete behind one
+ * click, and the delete is permanent — #29.04 removed the tombstone that used
+ * to make it recoverable.
+ *
+ * ⚠️ **The count is fetched here rather than read off the list query.** It is
+ * being used to decide whether a permanent delete is offered, so it has to be
+ * true at the moment it is read, not at the moment the list was loaded. The
+ * same reasoning is why the 409 the server may still return is folded back
+ * into this query instead of shown as a stray message — see the delete
+ * mutation's `onError`.
+ */
+function DeleteDialog({
+  listKey,
+  row,
+  rows,
+  labelField,
+  onClose,
+  onDeleted,
+}: {
+  listKey: ListKey;
+  row: Row;
+  /** Every row of this list — the candidates to move onto are these minus `row`. */
+  rows: Row[];
+  /** The field that names a row to a human: `name` on eight lists, `indicativ` on tarla. */
+  labelField: string;
+  onClose: () => void;
+  /**
+   * Closed because the row was deleted, as opposed to cancelled.
+   *
+   * The two differ only in where focus goes, and the difference is real: the
+   * button that opened this dialog is that row's own Șterge, which is still
+   * mounted at the moment the restore effect runs and gone a refetch later —
+   * so restoring to it drops focus onto `<body>`, outside a modal with no Tab
+   * trap. An adversarial round walked out of the modal that way.
+   */
+  onDeleted: () => void;
+}) {
+  const t = useTranslations("valueList");
+  const qc = useQueryClient();
+  const titleId = useId();
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  const [targetId, setTargetId] = useState("");
+  const [failure, setFailure] = useState<FailureCode | null>(null);
+  const [movedTotal, setMovedTotal] = useState<number | null>(null);
+
+  const dependentsKey = ["value-list-dependents", listKey, row.id];
+
+  const dependents = useQuery<DependentsReportWire>({
+    queryKey: dependentsKey,
+    queryFn: () => fetchDependents(listKey, row.id),
+    // Never served from cache: this number gates a permanent delete.
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: "always",
+  });
+
+  const reassignMutation = useMutation({
+    mutationFn: () => reassignRows(listKey, row.id, targetId),
+    onSuccess: (res) => {
+      setFailure(null);
+      setMovedTotal(res.total);
+      // ⚠️ **Everything, not just this list.** A re-point rewrote rows in
+      // `document`, `property`, `natural_person` or the association tables —
+      // whichever this list feeds — so every cached list and detail screen
+      // showing one of those objects is now displaying the old value. This is
+      // an administrator action taken a handful of times in the life of an
+      // archive; a broad invalidation costs a few refetches and is the only
+      // version of this that cannot leave a stale label on screen.
+      qc.invalidateQueries();
+      dependents.refetch();
+    },
+    onError: (err: Error) =>
+      setFailure(err instanceof RequestFailedError ? err.code : "generic"),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => removeRow(listKey, row.id),
+    onSuccess: () => {
+      // ⚠️ **Everything, not just this list — the same reason the move does
+      // it.** The delete cascades the whitelist rows the dialog has just
+      // listed under "La ștergere se elimină și:", and those are displayed by
+      // three other panels under their own query keys
+      // (`property-person-roles`, `doc-type-person-roles`,
+      // `person-person-roles`). With the global 30 s staleTime, opening one of
+      // them straight afterwards showed a cascaded row still on screen, with a
+      // Șterge button that 404s. An adversarial round found it.
+      qc.invalidateQueries();
+      onDeleted();
+    },
+    onError: (err: Error) => {
+      // The race: something started depending on this row between the count
+      // and the press. The server refused and said what with — so the dialog
+      // becomes the refusal it would have shown had the count been that number
+      // in the first place, rather than showing an error beside a stale zero.
+      //
+      // `movedTotal` is deliberately LEFT standing: "5 records were moved" is
+      // still true, and it is the fact the user needs in order to make sense
+      // of what just happened.
+      if (err instanceof DeleteRefusedError) {
+        setFailure(null);
+        qc.setQueryData<DependentsReportWire>(dependentsKey, {
+          total:          err.body.total,
+          dependents:     err.body.dependents,
+          removedWithRow: err.body.removedWithRow,
+          notes:          err.body.notes,
+        });
+        return;
+      }
+      setFailure(err instanceof RequestFailedError ? err.code : "generic");
+    },
+  });
+
+  const report  = dependents.data;
+  const blocked = report !== undefined && report.total > 0;
+  const free    = report !== undefined && report.total === 0;
+  const targets = rows.filter((r) => r.id !== row.id);
+  const busy    = reassignMutation.isPending || deleteMutation.isPending;
+  // The recount after a move is in flight: the report on screen is the OLD one,
+  // so the Move button would still be enabled and would move nothing — and its
+  // "nothing was moved" answer would overwrite the message saying five things
+  // moved a moment ago.
+  const settling = dependents.isFetching;
+
+  /**
+   * Focus into the dialog on open.
+   *
+   * ⚠️ **`aria-modal="true"` without this is worse than neither.** It tells
+   * assistive technology that everything outside is inert while the user's
+   * focus is still on the button they pressed, behind the backdrop — an
+   * adversarial round walked from there to another row's Delete button and
+   * re-keyed this dialog onto a different row, with only the title changing.
+   * The panel is now focused (so an `alertdialog` announces itself) and the
+   * list behind it is `inert`, which is what actually stops the Tab.
+   */
+  useEffect(() => {
+    panelRef.current?.focus();
+  }, []);
+
+  /**
+   * Escape closes the dialog — but not mid-move.
+   *
+   * Owned here rather than by the parent because the parent cannot see
+   * `busy`, and an Escape during a re-point unmounts the only place the result
+   * is ever reported: the mutation completes regardless (TanStack keeps
+   * `onSuccess` on the mutation, not the observer), so a bulk rewrite would
+   * land with nothing said anywhere and the user believing they cancelled it.
+   */
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== "Escape") return;
+      if (busy) return;
+      // ⚠️ **`stopImmediatePropagation`, not `stopPropagation`.** Both
+      // handlers are registered on `document`, and propagation-stopping only
+      // affects OTHER nodes — the parent's listener is on the same target and
+      // would still run. It happens to be harmless today, because the parent
+      // guards on `confirmDeleteRow` and its closure is still truthy during
+      // this dispatch, but relying on that is relying on a stale closure.
+      e.stopImmediatePropagation();
+      onClose();
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [busy, onClose]);
+
+  return (
+    <>
+      <div className="fixed inset-0 z-60 bg-black/50" aria-hidden />
+      <div
+        ref={panelRef}
+        tabIndex={-1}
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className="fixed inset-x-4 top-1/4 z-60 mx-auto max-w-md rounded-xl border border-card-rim bg-card p-6 shadow-2xl focus:outline-none dark:border-zinc-800 dark:bg-zinc-900"
+      >
+        <h3
+          id={titleId}
+          className="mb-3 text-sm font-semibold text-ink dark:text-zinc-100"
+        >
+          {t("confirm.title", { name: String(row[labelField] ?? "") })}
+        </h3>
+
+        {/* The answer arrives after the dialog does, and a screen-reader user
+            is not looking at it — so the region is here before its content is,
+            the same rule the backlog banner above follows. */}
+        <div aria-live="polite">
+          {dependents.isPending && (
+            <p className="text-sm text-fade dark:text-zinc-400">
+              {t("confirm.checking")}
+            </p>
+          )}
+
+          {dependents.isError && (
+            <p className="text-sm text-red-600 dark:text-red-400">
+              {t("confirm.checkFailed")}
+            </p>
+          )}
+
+          {blocked && report && (
+            <>
+              <p className="mb-2 text-sm text-ink dark:text-zinc-300">
+                {t("confirm.inUse", { count: report.total })}
+              </p>
+              <ul className="mb-3 list-disc pl-5 text-sm text-ink dark:text-zinc-300">
+                {report.dependents.map((d) => (
+                  <li key={d.labelKey}>
+                    {t(
+                      `dependents.classes.${d.labelKey}` as Parameters<typeof t>[0],
+                      { count: d.count },
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+
+          {free && (
+            <p className="mb-3 text-sm text-ink dark:text-zinc-300">
+              {t("confirm.deleteBody")}
+            </p>
+          )}
+
+          {/* What the count does NOT cover, said in words. Shown in both
+              states: it is as true of a row nothing depends on as of one in
+              use, and it is the honest half of "the count never claims more
+              than it knows". */}
+          {report?.notes.map((n) => (
+            <p key={n} className="mb-2 text-xs text-fade dark:text-zinc-400">
+              {t(`dependents.notes.${n}` as Parameters<typeof t>[0])}
+            </p>
+          ))}
+        </div>
+
+        {blocked && (
+          <div className="mb-3">
+            {targets.length === 0 ? (
+              <p className="text-sm text-ink dark:text-zinc-300">
+                {t("confirm.noTarget")}
+              </p>
+            ) : (
+              <>
+              <label className="flex flex-col gap-1">
+                <span className="text-xs font-medium text-ink dark:text-zinc-400">
+                  {t("confirm.moveTo")}
+                </span>
+                <select
+                  value={targetId}
+                  onChange={(e) => {
+                    setTargetId(e.target.value);
+                    // "That value is the one you are deleting" stops being
+                    // true the moment a different one is picked.
+                    setFailure(null);
+                  }}
+                  disabled={busy}
+                  className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
+                >
+                  <option value="">{t("confirm.selectTarget")}</option>
+                  {targets.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {String(r[labelField] ?? "")}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {/* ⚠️ **Person roles only, and it is a disclosure rather than a
+                  guard.** Moving associations onto another role does NOT move
+                  the whitelist ticks — deliberately, see `configuration` in
+                  dependents.ts — so the target role can end up carrying
+                  associations in a panel it is not ticked in. The association
+                  screens build their dropdown from the whitelist while the
+                  display path joins the role table directly, so such a row
+                  READS correctly and cannot be re-selected. An adversarial
+                  round found it; making the offer itself whitelist-aware is a
+                  slice of its own and is in the handover. Until then the
+                  screen says so rather than letting the user find out. */}
+              {listKey === "person-roles" && (
+                <p className="mt-2 text-xs text-fade dark:text-zinc-400">
+                  {t("confirm.roleWhitelistNote")}
+                </p>
+              )}
+              </>
+            )}
+          </div>
+        )}
+
+        {/* ⚠️ **Below the move control, not above it.** Read in the other
+            order, the nearest antecedent of "Mutați-le pe:" was this list —
+            the whitelist ticks, which are the one thing the move never
+            touches. An adversarial round read the screen out loud and caught
+            it. `aria-live` because it arrives with the count, after the
+            dialog. */}
+        <div aria-live="polite">
+          {/* Configuration that goes WITH the row — whitelist ticks in the
+              Roluri panels, which the database cascades away. Never a reason to
+              refuse, and never something to move onto another value (that would
+              hand a different role an eligibility nobody asked for), but always
+              said out loud: it disappears without anyone requesting it. */}
+          {report && report.removedWithRow.length > 0 && (
+            <>
+              <p className="mb-1 text-xs font-medium text-ink dark:text-zinc-400">
+                {t("confirm.removedWithRow")}
+              </p>
+              <ul className="mb-3 list-disc pl-5 text-xs text-fade dark:text-zinc-400">
+                {report.removedWithRow.map((d) => (
+                  <li key={d.labelKey}>
+                    {t(
+                      `dependents.classes.${d.labelKey}` as Parameters<typeof t>[0],
+                      { count: d.count },
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </div>
+
+        {/* Rendered unconditionally so the region exists before the sentence
+            does — a `role="status"` mounted together with its text is not
+            reliably announced. */}
+        <p
+          role="status"
+          className="mb-2 text-xs font-medium text-emerald-700 empty:mb-0 dark:text-emerald-400"
+        >
+          {movedTotal !== null ? t("confirm.moved", { count: movedTotal }) : ""}
+        </p>
+
+        {/* Chosen on this side from a code, never echoed from the server: the
+            server's own `error` strings are English. */}
+        {failure && (
+          <p className="mb-2 text-xs text-red-600 dark:text-red-400">
+            {t(`confirm.errors.${failure}` as Parameters<typeof t>[0])}
+          </p>
+        )}
+
+        <div className="flex justify-end gap-2">
+          {blocked && targets.length > 0 && (
+            <button
+              onClick={() => reassignMutation.mutate()}
+              disabled={busy || settling || targetId === ""}
+              className={buttonClass({ variant: "primary", size: "sm" })}
+            >
+              {reassignMutation.isPending
+                ? t("confirm.moving")
+                : t("confirm.move")}
+            </button>
+          )}
+          {free && (
+            <button
+              onClick={() => deleteMutation.mutate()}
+              disabled={busy || settling}
+              className={buttonClass({ variant: "danger", size: "sm" })}
+            >
+              {deleteMutation.isPending
+                ? t("confirm.deleting")
+                : t("confirm.delete")}
+            </button>
+          )}
+          <button
+            onClick={onClose}
+            disabled={busy}
+            className={buttonClass({ variant: "secondary", size: "sm" })}
+          >
+            {t("confirm.cancel")}
+          </button>
+        </div>
+      </div>
     </>
   );
 }
