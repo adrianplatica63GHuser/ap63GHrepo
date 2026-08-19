@@ -1,0 +1,71 @@
+# The rebuild path, run before it is needed rather than after.  (Slice #31.01)
+#
+# Slice #29.04 was the first thing in months that needed the Supabase rebuild
+# path and found six consecutive defects in it. Every one of those files was
+# correct as read and wrong as run, and nothing in the repository ran them:
+# ci.yml covers the application, and Apply-Migration.ps1 / Verify-Schema.ps1
+# check the local Docker database, which is migrated incrementally and so is
+# never rebuilt from supabase_schema_full.sql at all.
+#
+# This is deliberately a separate workflow from ci.yml rather than a job in it:
+# it is the only thing here that needs a database, it takes about a minute, and
+# a red run means something quite different from a red build.
+#
+# It never touches Supabase. verify-rebuild.ts reads no connection string from
+# the environment, refuses a non-loopback host, and refuses any server that
+# already holds a database it did not create.
+name: DB rebuild
+
+on: [push, pull_request]
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+
+    services:
+      # The image the project already runs locally. Real PostGIS: the one schema
+      # object that depends on it -- property_corner_geom_idx -- is exactly the
+      # kind of thing that would rot unnoticed, and verify-rebuild.ts refuses
+      # --stub-postgis when CI is set, so this cannot quietly become a run that
+      # skipped the hard part.
+      postgres:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_PASSWORD: rebuild-check
+        # GitHub publishes a service container's port on all interfaces; there
+        # is no per-interface form here, unlike the `docker run -p 127.0.0.1:...`
+        # in scripts/Verify-Rebuild.ps1. The runner is single-tenant and torn
+        # down after the job, and the check's own guards still apply, so this is
+        # named rather than fixed.
+        ports:
+          - 5433:5432
+        # -h 127.0.0.1 makes this a TCP probe. Without it pg_isready goes over
+        # the container's Unix socket and answers yes during the entrypoint's
+        # socket-only initdb phase -- while the postgis image is still loading
+        # its extensions and nothing is listening on TCP -- so the job would
+        # start the check against a server that is not there yet.
+        options: >-
+          --health-cmd "pg_isready -h 127.0.0.1 -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - run: npm ci
+
+      # psql and pg_dump must be major-16 to match the server; the runner ships
+      # them under /usr/lib/postgresql/16/bin. verify-rebuild.ts asserts the
+      # major versions match and fails with a clear message if this is ever
+      # wrong, rather than producing a dump comparison that means nothing.
+      - name: Put the PostgreSQL 16 client on PATH
+        run: echo "/usr/lib/postgresql/16/bin" >> "$GITHUB_PATH"
+
+      - name: Rebuild and verify
+        run: node node_modules/tsx/dist/cli.mjs scripts/verify-rebuild.ts --host 127.0.0.1 --port 5433 --user postgres --password rebuild-check

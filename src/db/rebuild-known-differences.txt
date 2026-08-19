@@ -1,0 +1,173 @@
+# ga40prj - accepted differences between a database built by replaying every
+# migration and one built from supabase_schema_full.sql.  (Slice #31.01)
+#
+# GENERATED. Rewrite with:
+#   npm run db:verify-rebuild -- --update-baseline
+# which never reports a pass, so a re-baseline is always a deliberate act with
+# a diff to read. Every line added here is a difference somebody decided not
+# to care about.
+#
+# Format:  <TYPE> <schema>.<name> :: <-|+> <line>
+#   `-` = only in the migration-chain database, `+` = only in the file's.
+# Each entry is tied to the object it occurs in, so a difference appearing in
+# a DIFFERENT object is a new difference even when the text is identical.
+#
+# THREE CLASSES, and there should never be a fourth.
+#
+# 1. Constraint NAMES. The chain produces drizzle's explicit names
+#    (person_code_unique); the dumped file carries Postgres's defaults
+#    (person_code_key). ACCEPTED: it changes nothing the application can do.
+# 2. Column ORDER on person, property, document, person_document and
+#    property_person. ACCEPTED, same reason.
+#
+#    1 and 2 have one cause: the dev database was built by `drizzle-kit push`,
+#    not by replaying these files, and supabase_schema_full.sql is generated
+#    from the dev database. Both would disappear if dev were rebuilt from the
+#    chain and the schema file regenerated. That is a slice of its own.
+#
+# 3. REFDATA lines. NOT ACCEPTED - RECORDED. These are places where
+#    src/db/sync-reference-data.sql seeds different rows from the ones the
+#    migrations seed, so a rebuilt cloud project and a migrated dev database
+#    hold different reference data. Measured at Slice #31.01:
+#      * lookup_document_type    - 24 rows here vs 27 from the migrations. The
+#        file re-introduces `Autorizare`, which migration_043 deleted, keeps
+#        `Unclassified` where migration_043 renamed it to `NECLASIFICAT`, omits
+#        AUTORIZATIE_CONSTRUIRE / DOCUMENTATIE_CADASTRALA /
+#        HOTARARE_ADMINISTRATIVA / CERTIFICAT_DE_MACANENTUR, and 21 of the 22
+#        shared keys have a different sort_order, so the dropdown orders
+#        differently in a rebuilt project.
+#      * lookup_doc_type_person_role - follows from the above (74 vs 67 pairs).
+#      * lookup_property_person_role - 4 rows here, 0 from the migrations, which
+#        never seed the Property<->Person role whitelist at all.
+#    Reconciling them is document-type work and belongs with Slice #29.07, which
+#    owns the canonical document-type keys. They are listed here so the check
+#    can be green on everything else while making it impossible for the list to
+#    grow without somebody re-baselining and being asked why.
+CONSTRAINT public.document paperwork_code_key :: absent from migrations
+CONSTRAINT public.document paperwork_code_unique :: absent from full-schema
+CONSTRAINT public.document paperwork_principal_object_id_key :: absent from migrations
+CONSTRAINT public.document paperwork_principal_object_id_unique :: absent from full-schema
+CONSTRAINT public.lookup_property_person_role lookup_property_person_role_person_role_id_key :: absent from migrations
+CONSTRAINT public.lookup_property_person_role lookup_property_person_role_unique :: absent from full-schema
+CONSTRAINT public.person person_code_key :: absent from migrations
+CONSTRAINT public.person person_code_unique :: absent from full-schema
+CONSTRAINT public.person person_principal_object_id_key :: absent from migrations
+CONSTRAINT public.person person_principal_object_id_unique :: absent from full-schema
+CONSTRAINT public.property property_code_key :: absent from migrations
+CONSTRAINT public.property property_code_unique :: absent from full-schema
+CONSTRAINT public.property property_principal_object_id_key :: absent from migrations
+CONSTRAINT public.property property_principal_object_id_unique :: absent from full-schema
+FK CONSTRAINT public.address address_person_id_fkey :: absent from migrations
+FK CONSTRAINT public.address address_person_id_person_id_fk :: absent from full-schema
+FK CONSTRAINT public.document_document paperwork_paperwork_a_fk :: absent from full-schema
+FK CONSTRAINT public.document_document paperwork_paperwork_b_fk :: absent from full-schema
+FK CONSTRAINT public.document_document paperwork_paperwork_paperwork_id_a_fkey :: absent from migrations
+FK CONSTRAINT public.document_document paperwork_paperwork_paperwork_id_b_fkey :: absent from migrations
+FK CONSTRAINT public.judicial_person judicial_person_person_id_fkey :: absent from migrations
+FK CONSTRAINT public.judicial_person judicial_person_person_id_person_id_fk :: absent from full-schema
+FK CONSTRAINT public.natural_person natural_person_person_id_fkey :: absent from migrations
+FK CONSTRAINT public.natural_person natural_person_person_id_person_id_fk :: absent from full-schema
+FK CONSTRAINT public.person_document person_paperwork_paperwork_id_fk :: absent from full-schema
+FK CONSTRAINT public.person_document person_paperwork_paperwork_id_fkey :: absent from migrations
+FK CONSTRAINT public.person_document person_paperwork_person_id_fk :: absent from full-schema
+FK CONSTRAINT public.person_document person_paperwork_person_id_fkey :: absent from migrations
+FK CONSTRAINT public.person_person person_person_a_fk :: absent from full-schema
+FK CONSTRAINT public.person_person person_person_b_fk :: absent from full-schema
+FK CONSTRAINT public.person_person person_person_person_id_a_fkey :: absent from migrations
+FK CONSTRAINT public.person_person person_person_person_id_b_fkey :: absent from migrations
+FK CONSTRAINT public.property_address property_address_property_id_fkey :: absent from migrations
+FK CONSTRAINT public.property_address property_address_property_id_property_id_fk :: absent from full-schema
+FK CONSTRAINT public.property_corner property_corner_property_id_fkey :: absent from migrations
+FK CONSTRAINT public.property_corner property_corner_property_id_property_id_fk :: absent from full-schema
+FK CONSTRAINT public.property_document property_paperwork_paperwork_id_fk :: absent from full-schema
+FK CONSTRAINT public.property_document property_paperwork_paperwork_id_fkey :: absent from migrations
+FK CONSTRAINT public.property_document property_paperwork_property_id_fk :: absent from full-schema
+FK CONSTRAINT public.property_document property_paperwork_property_id_fkey :: absent from migrations
+FK CONSTRAINT public.property_person property_person_person_id_fkey :: absent from migrations
+FK CONSTRAINT public.property_person property_person_person_id_person_id_fk :: absent from full-schema
+FK CONSTRAINT public.property_person property_person_property_id_fkey :: absent from migrations
+FK CONSTRAINT public.property_person property_person_property_id_property_id_fk :: absent from full-schema
+FK CONSTRAINT public.property_property property_property_a_fk :: absent from full-schema
+FK CONSTRAINT public.property_property property_property_b_fk :: absent from full-schema
+FK CONSTRAINT public.property_property property_property_property_id_a_fkey :: absent from migrations
+FK CONSTRAINT public.property_property property_property_property_id_b_fkey :: absent from migrations
+REFDATA lookup_doc_type_person_role :: + [Autorizare | Beneficiar / Solicitant]
+REFDATA lookup_doc_type_person_role :: + [Autorizare | Constructor / Antreprenor]
+REFDATA lookup_doc_type_person_role :: + [Autorizare | Proiectant / Arhitect]
+REFDATA lookup_doc_type_person_role :: + [Autorizare | Proprietar / Titular]
+REFDATA lookup_doc_type_person_role :: + [Autorizare | Reprezentant legal]
+REFDATA lookup_doc_type_person_role :: + [Certificat de Moștenitor | Coproprietar / Co-moștenitor]
+REFDATA lookup_doc_type_person_role :: + [Certificat de Moștenitor | Moștenitor]
+REFDATA lookup_doc_type_person_role :: + [Certificat de Moștenitor | Notar public]
+REFDATA lookup_doc_type_person_role :: + [Certificat de Moștenitor | Reprezentant legal / Mandatar]
+REFDATA lookup_doc_type_person_role :: + [Certificat de Moștenitor | Solicitant]
+REFDATA lookup_doc_type_person_role :: + [Certificat de Moștenitor | Succesor universal]
+REFDATA lookup_doc_type_person_role :: + [Certificat de Moștenitor | Titular al succesiunii / Defunct]
+REFDATA lookup_doc_type_person_role :: - [Autorizație | Beneficiar / Solicitant]
+REFDATA lookup_doc_type_person_role :: - [Autorizație | Constructor / Antreprenor]
+REFDATA lookup_doc_type_person_role :: - [Autorizație | Proiectant / Arhitect]
+REFDATA lookup_doc_type_person_role :: - [Autorizație | Proprietar / Titular]
+REFDATA lookup_doc_type_person_role :: - [Autorizație | Reprezentant legal]
+REFDATA lookup_document_type :: + [Act de Donație | 3 | ACT_DONATIE | <null> | MANUAL]
+REFDATA lookup_document_type :: + [Autorizare | 4 | AUTORIZATIE | <null> | MANUAL]
+REFDATA lookup_document_type :: + [Autorizație | 22 | AUTORIZATIE_ALT | <null> | MANUAL]
+REFDATA lookup_document_type :: + [Aviz de Instituție | 5 | AVIZ_INSTITUTIE | <null> | MANUAL]
+REFDATA lookup_document_type :: + [Carte de Identitate | 6 | CARTE_IDENTITATE | <null> | MANUAL]
+REFDATA lookup_document_type :: + [Certificat Fiscal | 7 | CERTIFICAT_FISCAL | <null> | MANUAL]
+REFDATA lookup_document_type :: + [Certificat de Bunuri | 9 | CERTIFICAT_SARCINI | <null> | MANUAL]
+REFDATA lookup_document_type :: + [Certificat de Moștenitor | 8 | CERTIFICAT_MOSTENITOR | <null> | MANUAL]
+REFDATA lookup_document_type :: + [Certificat de Sarcini | 23 | CERTIFICAT_SARCINI_ALT | <null> | MANUAL]
+REFDATA lookup_document_type :: + [Certificat de Urbanism | 10 | CERTIFICAT_URBANISM | <null> | MANUAL]
+REFDATA lookup_document_type :: + [Contract de Arendă | 11 | CONTRACT_ARENDA | <null> | MANUAL]
+REFDATA lookup_document_type :: + [Contract de Partaj | 13 | CONTRACT_PARTAJ | <null> | MANUAL]
+REFDATA lookup_document_type :: + [Contract de Prestări Servicii | 14 | CONTRACT_PRESTARI_SERVICII | <null> | MANUAL]
+REFDATA lookup_document_type :: + [Contract de Vânzare | 15 | CONTRACT_VANZARE | <null> | MANUAL]
+REFDATA lookup_document_type :: + [Contract de Închiriere | 12 | CONTRACT_INCHIRIERE | <null> | MANUAL]
+REFDATA lookup_document_type :: + [Extras de Carte Funciară | 24 | EXTRAS_CARTE_FUNCIARA_ALT | <null> | MANUAL]
+REFDATA lookup_document_type :: + [Extras din Carte Funciară | 16 | EXTRAS_CARTE_FUNCIARA | <null> | MANUAL]
+REFDATA lookup_document_type :: + [Extras din PUG | 17 | EXTRAS_PUG | <null> | MANUAL]
+REFDATA lookup_document_type :: + [Hotărâre Judecătorească | 18 | HOTARARE_JUDECATOREASCA | <null> | MANUAL]
+REFDATA lookup_document_type :: + [Testament | 19 | TESTAMENT | <null> | MANUAL]
+REFDATA lookup_document_type :: + [Titlu de Proprietate | 20 | TITLU_PROPRIETATE | <null> | MANUAL]
+REFDATA lookup_document_type :: + [Unclassified | 21 | UNCLASSIFIED | <null> | MANUAL]
+REFDATA lookup_document_type :: - [Act de Donație | 1003 | ACT_DONATIE | <null> | MANUAL]
+REFDATA lookup_document_type :: - [Autorizație De Construire | 130 | AUTORIZATIE_CONSTRUIRE | <null> | MANUAL]
+REFDATA lookup_document_type :: - [Autorizație | 1020 | AUTORIZATIE_ALT | <null> | MANUAL]
+REFDATA lookup_document_type :: - [Aviz de Instituție | 4 | AVIZ_INSTITUTIE | <null> | MANUAL]
+REFDATA lookup_document_type :: - [Carte de Identitate | 1006 | CARTE_IDENTITATE | <null> | MANUAL]
+REFDATA lookup_document_type :: - [Certificat Fiscal | 5 | CERTIFICAT_FISCAL | <null> | MANUAL]
+REFDATA lookup_document_type :: - [Certificat de Bunuri | 7 | CERTIFICAT_SARCINI | <null> | MANUAL]
+REFDATA lookup_document_type :: - [Certificat de Macanentur | 6 | CERTIFICAT_DE_MACANENTUR | <null> | MANUAL]
+REFDATA lookup_document_type :: - [Certificat de Moștenitor | 1008 | CERTIFICAT_MOSTENITOR | <null> | MANUAL]
+REFDATA lookup_document_type :: - [Certificat de Sarcini | 1021 | CERTIFICAT_SARCINI_ALT | <null> | MANUAL]
+REFDATA lookup_document_type :: - [Certificat de Urbanism | 8 | CERTIFICAT_URBANISM | <null> | MANUAL]
+REFDATA lookup_document_type :: - [Contract de Arendă | 9 | CONTRACT_ARENDA | <null> | MANUAL]
+REFDATA lookup_document_type :: - [Contract de Partaj | 11 | CONTRACT_PARTAJ | <null> | MANUAL]
+REFDATA lookup_document_type :: - [Contract de Prestări Servicii | 12 | CONTRACT_PRESTARI_SERVICII | <null> | MANUAL]
+REFDATA lookup_document_type :: - [Contract de Vânzare | 13 | CONTRACT_VANZARE | <null> | MANUAL]
+REFDATA lookup_document_type :: - [Contract de Închiriere | 10 | CONTRACT_INCHIRIERE | <null> | MANUAL]
+REFDATA lookup_document_type :: - [Documentație Cadastrală | 120 | DOCUMENTATIE_CADASTRALA | <null> | MANUAL]
+REFDATA lookup_document_type :: - [Extras de Carte Funciară | 1022 | EXTRAS_CARTE_FUNCIARA_ALT | <null> | MANUAL]
+REFDATA lookup_document_type :: - [Extras din Carte Funciară | 14 | EXTRAS_CARTE_FUNCIARA | <null> | MANUAL]
+REFDATA lookup_document_type :: - [Extras din PUG | 15 | EXTRAS_PUG | <null> | MANUAL]
+REFDATA lookup_document_type :: - [Hotărâre Administrativă | 110 | HOTARARE_ADMINISTRATIVA | <null> | MANUAL]
+REFDATA lookup_document_type :: - [Hotărâre Judecătorească | 16 | HOTARARE_JUDECATOREASCA | <null> | MANUAL]
+REFDATA lookup_document_type :: - [NECLASIFICAT | 18 | UNCLASSIFIED | <null> | MANUAL]
+REFDATA lookup_document_type :: - [Testament | 1019 | TESTAMENT | <null> | MANUAL]
+REFDATA lookup_document_type :: - [Titlu de Proprietate | 17 | TITLU_PROPRIETATE | <null> | MANUAL]
+REFDATA lookup_property_person_role :: + [Coproprietari / Coindivizari]
+REFDATA lookup_property_person_role :: + [Cumpărător]
+REFDATA lookup_property_person_role :: + [Proprietar / Titular de drept real]
+REFDATA lookup_property_person_role :: + [Titular de drept]
+TABLE public.document :: + principal_object_id uuid NOT NULL,
+TABLE public.document :: - principal_object_id uuid NOT NULL,
+TABLE public.person :: + principal_object_id uuid NOT NULL,
+TABLE public.person :: - principal_object_id uuid NOT NULL,
+TABLE public.person_document :: + created_at timestamp with time zone DEFAULT now() NOT NULL,
+TABLE public.person_document :: - created_at timestamp with time zone DEFAULT now() NOT NULL,
+TABLE public.property :: + principal_object_id uuid NOT NULL,
+TABLE public.property :: - principal_object_id uuid NOT NULL,
+TABLE public.property_person :: + created_at timestamp with time zone DEFAULT now() NOT NULL
+TABLE public.property_person :: + person_role_id uuid,
+TABLE public.property_person :: - created_at timestamp with time zone DEFAULT now() NOT NULL,
+TABLE public.property_person :: - person_role_id uuid

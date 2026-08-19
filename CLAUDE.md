@@ -36,6 +36,24 @@ applies to all of Adrian's projects. This file holds only what is true of *this*
 
 `npm run e2e` → `npm run lint` → `npx tsc --noEmit` → `npx jest`, in that order, every time.
 
+- **None of those four touch the database delivery path, and they never did.** They cover the
+  application. The files that rebuild a database from scratch — `supabase_reset.sql`,
+  `supabase_schema_full.sql`, `supabase_repair_missing_tables.sql`, `sync-reference-data.sql`,
+  `supabase-sync.ts` and every migration — are covered by **`.\scripts\Verify-Rebuild.ps1`**
+  instead, which starts a throwaway `postgis/postgis:16-3.4` container, replays the whole
+  migration chain onto an empty database, builds a second from `supabase_schema_full.sql`, and
+  compares the two object by object under `pg_dump -s` against a committed list of accepted
+  differences (`src/db/rebuild-known-differences.txt`). About a minute; needs Docker running.
+  It cannot reach `ga40prj-postgres` or Supabase: it takes no connection string from the
+  environment, refuses a non-loopback host, and refuses any server whose `postgres` database is
+  not empty — which the dev container and a Supabase project both fail. **Run it when a slice
+  touches a migration, any of those files, or `scripts/Export-SupabaseSchema.ps1` — not on every
+  slice.** It also runs on every push, as the `DB rebuild` workflow, which is the point: Slice
+  #29.04 found six consecutive defects in that path because nothing had run it in months.
+  `npm run db:verify-rebuild -- --port <p> --password <pw>` is the same check against a server you
+  started yourself. **Exit codes are not all pass/fail:** 0 pass, 1 fail, 2 partial (PostGIS was
+  faked — never in CI), 3 the baseline was rewritten. Slice #31.01.
+
 - **Every slice gets an adversarial review before handover — not optional.** Once the code
   is written and type-clean, spawn a subagent whose brief is to *prove the change wrong*:
   find the input, state transition or call site that breaks it, and do not summarise
