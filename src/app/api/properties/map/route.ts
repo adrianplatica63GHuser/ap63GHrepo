@@ -11,7 +11,7 @@
  *   }
  */
 
-import { and, eq, isNull } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { property, propertyCorner } from "@/db/schema";
 import { unexpectedError } from "@/lib/api/errors";
@@ -31,7 +31,6 @@ export async function GET(): Promise<Response> {
           nickname: property.nickname,
         })
         .from(property)
-        .where(isNull(property.deletedAt))
         .orderBy(property.code),
 
       db
@@ -42,10 +41,7 @@ export async function GET(): Promise<Response> {
           lon:        propertyCorner.lon,
         })
         .from(propertyCorner)
-        .innerJoin(property, and(
-          eq(propertyCorner.propertyId, property.id),
-          isNull(property.deletedAt),
-        ))
+        .innerJoin(property, eq(propertyCorner.propertyId, property.id))
         .orderBy(propertyCorner.propertyId, propertyCorner.sequenceNo),
 
       // (propertyId, group code) pairs — only PROPERTY-target groups.

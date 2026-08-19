@@ -25,7 +25,7 @@ jest.mock("@/lib/properties/queries", () => ({
   createProperty:      jest.fn(),
   getPropertyById:     jest.fn(),
   updateProperty:      jest.fn(),
-  softDeleteProperty:  jest.fn(),
+  deleteProperty:  jest.fn(),
 }));
 
 import type { NextRequest } from "next/server";
@@ -45,7 +45,7 @@ const mocks = queries as unknown as {
   createProperty:     jest.Mock;
   getPropertyById:    jest.Mock;
   updateProperty:     jest.Mock;
-  softDeleteProperty: jest.Mock;
+  deleteProperty: jest.Mock;
 };
 
 beforeEach(() => jest.clearAllMocks());
@@ -69,7 +69,7 @@ const stubFull = {
     nickname: "Lot 1", tarlaSola: "T7", parcela: "P145",
     cadastralNumber: "12345", carteFunciara: "CF001",
     surfaceAreaMp: "450.00",
-    notes: null, createdAt: new Date(), updatedAt: new Date(), deletedAt: null,
+    notes: null, createdAt: new Date(), updatedAt: new Date(),
   },
   address: null,
   corners: [
@@ -251,8 +251,8 @@ describe("PATCH /api/properties/[id]", () => {
 // ---------------------------------------------------------------------------
 
 describe("DELETE /api/properties/[id]", () => {
-  it("returns 404 when nothing to soft-delete", async () => {
-    mocks.softDeleteProperty.mockResolvedValueOnce(false);
+  it("returns 404 when there is nothing to delete", async () => {
+    mocks.deleteProperty.mockResolvedValueOnce(false);
     const res = await oneDelete(
       req("http://localhost/api/properties/x", { method: "DELETE" }),
       ctx("x"),
@@ -261,7 +261,7 @@ describe("DELETE /api/properties/[id]", () => {
   });
 
   it("returns 204 with no body on success", async () => {
-    mocks.softDeleteProperty.mockResolvedValueOnce(true);
+    mocks.deleteProperty.mockResolvedValueOnce(true);
     const res = await oneDelete(
       req("http://localhost/api/properties/prop-1", { method: "DELETE" }),
       ctx("prop-1"),

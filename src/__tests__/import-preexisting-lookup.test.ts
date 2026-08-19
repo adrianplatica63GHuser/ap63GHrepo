@@ -15,10 +15,14 @@
  * three of them decide whether a file the user believes they imported ends up
  * in the archive at all.
  *
- * What is NOT tested here is the SQL: the size pre-filter and the soft-delete
- * join. Both are one line, neither can be run without a database, and the
- * soft-delete one is asserted where it belongs — in the WHERE clause, beside a
- * comment saying why. Recorded rather than quietly skipped.
+ * What is NOT tested here is the SQL: the size pre-filter. It is one line and
+ * cannot be run without a database. Recorded rather than quietly skipped.
+ *
+ * There used to be a second untested line beside it — the `deleted_at IS NULL`
+ * join that kept a deleted document from counting as present. Slice #29.04
+ * removed it: a deleted document has no row and no pages, so it cannot be a
+ * candidate at all. The behaviour is unchanged and there is now nothing there
+ * to get wrong.
  */
 
 import {

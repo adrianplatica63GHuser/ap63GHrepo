@@ -1,4 +1,4 @@
-import { eq, isNull, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { lookupDocumentDocumentRole } from "@/db/schema";
 
@@ -22,7 +22,6 @@ export async function listDocumentDocumentRoles(): Promise<DocumentDocumentRoleR
       sortOrder:   lookupDocumentDocumentRole.sortOrder,
     })
     .from(lookupDocumentDocumentRole)
-    .where(isNull(lookupDocumentDocumentRole.deletedAt))
     .orderBy(lookupDocumentDocumentRole.sortOrder, lookupDocumentDocumentRole.name);
 }
 
@@ -53,10 +52,12 @@ export async function updateDocumentDocumentRole(
     .where(eq(lookupDocumentDocumentRole.id, id));
 }
 
-// Slice #19.30: soft-delete
+// Slice #29.04: a real delete, matching its person-person and
+// property-person siblings. The junction FKs are ON DELETE SET NULL, so an
+// existing association keeps its row and loses its role label rather than
+// disappearing — which is exactly the conversation Slice #29.05 adds.
 export async function deleteDocumentDocumentRole(id: string): Promise<void> {
   await db
-    .update(lookupDocumentDocumentRole)
-    .set({ deletedAt: sql`NOW()` })
+    .delete(lookupDocumentDocumentRole)
     .where(eq(lookupDocumentDocumentRole.id, id));
 }

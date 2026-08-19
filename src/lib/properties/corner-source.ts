@@ -94,14 +94,19 @@ export async function claimCornerSource(
  * The Property this document's coordinate file produced, or null if it has not
  * been used as a corner source.
  *
- * Deliberately does NOT filter out soft-deleted Properties. The row's
- * existence is the single source of truth for "is this document claimed?", and
- * `softDeleteProperty` releases the row as part of deleting (see
- * releaseCornerSourceForProperty below), so the two can never disagree in
- * normal operation. If some future delete path forgets to release, the visible
- * symptom is a Process panel linking to a deleted Property — obvious and
- * diagnosable — rather than a silent duplicate Property, which is the failure
- * this whole slice exists to prevent. Fail in the loud direction.
+ * The row's existence is the single source of truth for "is this document
+ * claimed?", and since Slice #29.04 nothing can make it disagree: deleting a
+ * Property deletes it, and this table's ON DELETE CASCADE takes the link with
+ * it. The INNER JOIN below is what turns that into an answer — a link whose
+ * Property is gone cannot be returned, because the Property row it joins to
+ * does not exist.
+ *
+ * That used to need help. While Properties soft-deleted, the cascade never
+ * fired on the normal delete path, so `softDeleteProperty` deleted the link
+ * itself via a `releaseCornerSourceForProperty` helper — a second source of
+ * truth that any new delete path had to remember to call, and that the batch
+ * delete route did in fact forget. The helper is gone; the constraint does
+ * the work, in the one place a future caller cannot skip.
  */
 export async function getCornerSourceForDocument(
   documentId: string,
@@ -134,49 +139,26 @@ export async function isCornerSourceClaimed(documentId: string): Promise<boolean
 // Release
 // ---------------------------------------------------------------------------
 
-/**
- * Hard-delete every link row pointing at `propertyId`, freeing its source
- * document(s) for a correct re-run.
+/*
+ * REMOVED IN SLICE #29.04: releaseCornerSourceForProperty(propertyId).
  *
- * WHY A HARD DELETE, AND WHY HERE
+ * It hard-deleted every link row pointing at a Property, and it existed for
+ * exactly one reason: Properties soft-deleted, so `property_corner_source`'s
+ * ON DELETE CASCADE never fired on the normal delete path and a link would
+ * outlive its Property and lock its source document forever.
  *
- * Properties SOFT-delete — `softDeleteProperty` sets `deleted_at` and the row
- * stays — so the table's `ON DELETE CASCADE` never fires on the normal delete
- * path. Without this call a link would survive its Property forever and block
- * its source document permanently: the Process panel would point at a deleted
- * Property and refuse to run again, with no way back short of SQL.
+ * Properties are now deleted for real, so the cascade fires and does the same
+ * job from inside the database. Keeping the call as well would have left two
+ * places that free a claim and one of them optional — and the old comment
+ * here said as much: "If a second soft-delete path for Properties ever
+ * appears, it must call this too." One had already appeared and did not
+ * (POST /api/properties/batch-delete wrote `deleted_at` inline), which is the
+ * argument for the constraint rather than the helper.
  *
- * This is the same shape as the CNP-uniqueness problem recorded in CLAUDE.md
- * (a partial unique index cannot see the PARENT row's `deleted_at`, so it keeps
- * enforcing uniqueness against logically-deleted data). That one is solved with
- * a trigger. This one is solved by cleaning up on delete instead, deliberately:
- *
- *   - The link carries no history worth preserving. It answers exactly one
- *     question — "is this document already spent?" — and once its Property is
- *     gone the honest answer is "no". There is nothing to keep.
- *   - A trigger would have to live in SQL, invisible to the query layer and to
- *     anyone reading corner-source.ts, and CLAUDE.md already records how
- *     expensive invisible database behaviour is to rediscover.
- *   - The cleanup has exactly one caller. A trigger's whole advantage is
- *     catching callers you forgot about; with one delete path that advantage
- *     is zero, and the cost — a second, hidden source of truth — is not.
- *
- * If a second soft-delete path for Properties ever appears, it must call this
- * too. That is the one thing the trigger would have bought us; note it here
- * rather than paying for it up front.
- *
- * Returns the number of links released (normally 0 or 1).
+ * `releaseCornerSourceLink` below is NOT the same thing and stays: it is the
+ * Process route's compensating rollback for a pair it created itself, on a
+ * path where no Property is being deleted at all.
  */
-export async function releaseCornerSourceForProperty(
-  propertyId: string,
-): Promise<number> {
-  const rows = await db
-    .delete(propertyCornerSource)
-    .where(eq(propertyCornerSource.propertyId, propertyId))
-    .returning({ id: propertyCornerSource.id });
-
-  return rows.length;
-}
 
 /**
  * Release the link for one specific (document, property) pair.

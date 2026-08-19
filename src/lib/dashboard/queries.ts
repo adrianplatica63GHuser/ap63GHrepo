@@ -6,7 +6,7 @@
  * run them in parallel.
  */
 
-import { and, desc, eq, gte, isNotNull, isNull, lte, sql } from "drizzle-orm";
+import { and, desc, eq, gte, isNotNull, lte, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
   document,
@@ -64,17 +64,17 @@ export async function getDashboardRecentCounts(recentDays = 7): Promise<RecentCo
     db
       .select({ count: sql<number>`cast(count(*) as int)` })
       .from(person)
-      .where(and(isNull(person.deletedAt), gte(person.createdAt, cutoff))),
+      .where(gte(person.createdAt, cutoff)),
 
     db
       .select({ count: sql<number>`cast(count(*) as int)` })
       .from(property)
-      .where(and(isNull(property.deletedAt), gte(property.createdAt, cutoff))),
+      .where(gte(property.createdAt, cutoff)),
 
     db
       .select({ count: sql<number>`cast(count(*) as int)` })
       .from(document)
-      .where(and(isNull(document.deletedAt), gte(document.createdAt, cutoff))),
+      .where(gte(document.createdAt, cutoff)),
   ]);
 
   return {
@@ -105,7 +105,6 @@ export async function getDashboardExpiringDocuments(expiringDays = 60): Promise<
     .leftJoin(lookupDocumentType, eq(document.documentTypeId, lookupDocumentType.id))
     .where(
       and(
-        isNull(document.deletedAt),
         isNotNull(document.dateValidUntil),
         lte(document.dateValidUntil, horizonStr),
       ),
@@ -181,7 +180,6 @@ export async function getDashboardRecentActivity(): Promise<RecentActivityItem[]
         updatedAt:   person.updatedAt,
       })
       .from(person)
-      .where(isNull(person.deletedAt))
       .orderBy(desc(person.updatedAt))
       .limit(10),
 
@@ -193,7 +191,6 @@ export async function getDashboardRecentActivity(): Promise<RecentActivityItem[]
         updatedAt:   property.updatedAt,
       })
       .from(property)
-      .where(isNull(property.deletedAt))
       .orderBy(desc(property.updatedAt))
       .limit(10),
 
@@ -205,7 +202,6 @@ export async function getDashboardRecentActivity(): Promise<RecentActivityItem[]
         updatedAt:   document.updatedAt,
       })
       .from(document)
-      .where(isNull(document.deletedAt))
       .orderBy(desc(document.updatedAt))
       .limit(10),
   ]);

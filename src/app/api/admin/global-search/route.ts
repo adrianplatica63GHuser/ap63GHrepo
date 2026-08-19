@@ -58,7 +58,7 @@
  *       separately so the UI can apply its display priority.
  *
  * Slice #21.01 fixes (preserved):
- *   (1) Soft-deleted entities excluded from every type query.
+ *   (1) [retired by Slice #29.04 — deleted entities have no row to exclude]
  *   (2) tagExists correlated subquery uses the literal "principal_object.id".
  *   (3) Property text search covers carte_funciara, tarla_sola, cadastral_number.
  *   (4) Document text search covers nr_document and subject.
@@ -66,9 +66,7 @@
  */
 
 import { NextResponse } from "next/server";
-import {
-  and, or, eq, ilike, isNull, isNotNull, gte, lte, sql, type SQL,
-} from "drizzle-orm";
+import { and, or, eq, ilike, isNull, isNotNull, gte, lte, sql, type SQL } from "drizzle-orm";
 import { db } from "@/db";
 import {
   principalObject,
@@ -248,7 +246,6 @@ export async function GET(req: Request) {
       .leftJoin(entityMetadata, eq(entityMetadata.principalObjectId, principalObject.id))
       .where(and(
         eq(principalObject.objectType, "PERSON"),
-        isNull(person.deletedAt),          // exclude soft-deleted
         eq(person.type, subtype),
         ...commonConditions,
         ...(searchCond ? [searchCond] : []),
@@ -321,7 +318,6 @@ export async function GET(req: Request) {
       .leftJoin(entityMetadata, eq(entityMetadata.principalObjectId, principalObject.id))
       .where(and(
         eq(principalObject.objectType, "PROPERTY"),
-        isNull(property.deletedAt),        // exclude soft-deleted
         ...commonConditions,
         ...(searchCond ? [searchCond] : []),
       ))
@@ -385,7 +381,6 @@ export async function GET(req: Request) {
       .leftJoin(entityMetadata, eq(entityMetadata.principalObjectId, principalObject.id))
       .where(and(
         eq(principalObject.objectType, "DOCUMENT"),
-        isNull(document.deletedAt),        // exclude soft-deleted
         ...commonConditions,
         ...(searchCond ? [searchCond] : []),
       ))

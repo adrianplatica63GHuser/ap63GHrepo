@@ -135,7 +135,7 @@ export async function PUT(request: NextRequest, ctx: Ctx): Promise<Response> {
 
     const saved = await setDocumentTypeTemplateFields(id, merged);
     if (!saved) {
-      // Between the read and the write the type was soft-deleted. Reporting
+      // Between the read and the write the type was deleted. Reporting
       // success here would leave the user believing a form exists on a type
       // that no longer appears in any dropdown.
       return Response.json({ error: "Document type not found" }, { status: 404 });

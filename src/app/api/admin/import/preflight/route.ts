@@ -45,7 +45,7 @@ export const dynamic = "force-dynamic";   // a cached precondition is a lie
 import { NextResponse } from "next/server";
 import * as fs from "fs/promises";
 import * as path from "path";
-import { eq, isNull, sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { appUsers, lookupDocumentType } from "@/db/schema";
 import { getCurrentUser, isUatNoAuth } from "@/lib/auth/current-user";
@@ -89,8 +89,7 @@ async function probeDocumentTypes(): Promise<boolean> {
   try {
     const [row] = await db
       .select({ count: sql<number>`cast(count(*) as int)` })
-      .from(lookupDocumentType)
-      .where(isNull(lookupDocumentType.deletedAt));
+      .from(lookupDocumentType);
     return (row?.count ?? 0) > 0;
   } catch {
     return false;

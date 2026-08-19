@@ -3,7 +3,8 @@
  *
  * GET    — fetch person + judicial subtype + addresses
  * PATCH  — partial update; addresses use merge-by-kind semantics
- * DELETE — soft delete (sets deleted_at on the parent person row)
+ * DELETE — deletes the parent `person` row (Slice #29.04); the judicial
+ *          subtype row cascades. Unguarded until Slice #29.05.
  */
 
 import type { NextRequest } from "next/server";
@@ -17,9 +18,9 @@ import {
   updateJudicialPerson,
 } from "@/lib/judicial-persons/queries";
 import { judicialPersonUpdateSchema } from "@/lib/judicial-persons/validation";
-// softDeletePerson is type-agnostic — it lives in the natural-person module
+// deletePerson is type-agnostic — it lives in the natural-person module
 // only because that was the first subtype shipped.
-import { softDeletePerson } from "@/lib/persons/queries";
+import { deletePerson } from "@/lib/persons/queries";
 import { getCurrentUserEmail } from "@/lib/auth/current-user";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -71,7 +72,7 @@ export async function PATCH(
 export async function DELETE(_req: NextRequest, ctx: Ctx): Promise<Response> {
   const { id } = await ctx.params;
   try {
-    const ok = await softDeletePerson(id);
+    const ok = await deletePerson(id);
     if (!ok) {
       return Response.json({ error: "Not found" }, { status: 404 });
     }

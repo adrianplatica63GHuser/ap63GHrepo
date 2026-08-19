@@ -7,6 +7,27 @@
 -- Generated : 2026-08-12 09:30
 -- Source    : local Docker database (ga40db @ ga40prj-postgres)
 --
+-- !! HAND-EDITED SINCE, BY SLICE #29.04 (migration_070). REGENERATE. !!
+--   The edit removed deleted_at from sixteen tables, removed the two
+--   natural_person_check_cnp_unique / judicial_person_check_cui_unique
+--   functions and their triggers, and added back the two partial unique
+--   indexes those had replaced.
+--
+--   It was edited rather than left stale because this file is the from-scratch
+--   rebuild for a Supabase project: leaving it as it was meant that any
+--   database rebuilt from it would be born with the column and with two
+--   trigger functions whose bodies read a column that no longer exists, i.e.
+--   born unable to insert a person. A stale rebuild script is worse than an
+--   out-of-order diff.
+--
+--   VERIFIED, not assumed: a database built from this file was compared with
+--   `pg_dump -s` against one built by applying migration_070 to the previous
+--   schema. Identical. The only cosmetic difference from a real regeneration
+--   is that the two restored indexes were appended rather than placed in
+--   pg_dump's alphabetical order, so the next Export-SupabaseSchema.ps1 run
+--   will show them moving. Run it and commit the result; the timestamp above
+--   is a week stale until you do.
+--
 -- Applies the complete schema from scratch after running
 -- supabase_reset.sql. Run in the Supabase SQL Editor.
 -- PostGIS must already be enabled in the project.
@@ -138,30 +159,6 @@ CREATE TYPE public.user_request_status AS ENUM (
 
 
 --
--- Name: judicial_person_check_cui_unique(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.judicial_person_check_cui_unique() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$
-BEGIN
-  IF NEW.cui_number IS NOT NULL AND EXISTS (
-    SELECT 1
-    FROM judicial_person jp
-    JOIN person p ON p.id = jp.person_id
-    WHERE jp.cui_number = NEW.cui_number
-      AND jp.person_id IS DISTINCT FROM NEW.person_id
-      AND p.deleted_at IS NULL
-  ) THEN
-    RAISE EXCEPTION 'A judicial person with this CUI already exists'
-      USING ERRCODE = '23505';
-  END IF;
-  RETURN NEW;
-END;
-$$;
-
-
---
 -- Name: judicial_person_lock_cui(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -171,30 +168,6 @@ CREATE FUNCTION public.judicial_person_lock_cui() RETURNS trigger
 BEGIN
   IF OLD.cui_number IS NOT NULL AND NEW.cui_number IS DISTINCT FROM OLD.cui_number THEN
     RAISE EXCEPTION 'CUI cannot be changed once set; delete and recreate the judicial person instead';
-  END IF;
-  RETURN NEW;
-END;
-$$;
-
-
---
--- Name: natural_person_check_cnp_unique(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.natural_person_check_cnp_unique() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$
-BEGIN
-  IF NEW.cnp IS NOT NULL AND EXISTS (
-    SELECT 1
-    FROM natural_person np
-    JOIN person p ON p.id = np.person_id
-    WHERE np.cnp = NEW.cnp
-      AND np.person_id IS DISTINCT FROM NEW.person_id
-      AND p.deleted_at IS NULL
-  ) THEN
-    RAISE EXCEPTION 'A person with this CNP already exists'
-      USING ERRCODE = '23505';
   END IF;
   RETURN NEW;
 END;
@@ -335,7 +308,6 @@ CREATE TABLE public.document (
     notes text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
     document_type_id uuid NOT NULL,
     institution_id uuid,
     subject text,
@@ -504,8 +476,7 @@ CREATE TABLE public.groups (
     description text NOT NULL,
     last_position integer DEFAULT 0 NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 
@@ -566,8 +537,7 @@ CREATE TABLE public.lookup_citizenship (
     name text NOT NULL,
     sort_order integer DEFAULT 0 NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 
@@ -593,8 +563,7 @@ CREATE TABLE public.lookup_document_document_role (
     description text,
     sort_order integer DEFAULT 0 NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 
@@ -609,7 +578,6 @@ CREATE TABLE public.lookup_document_type (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     key text NOT NULL,
-    deleted_at timestamp with time zone,
     template_fields jsonb,
     origin text DEFAULT 'MANUAL'::text NOT NULL,
     CONSTRAINT chk_ldt_origin CHECK ((origin = ANY (ARRAY['MANUAL'::text, 'IMPORT'::text])))
@@ -633,8 +601,7 @@ CREATE TABLE public.lookup_institution (
     institution_type text,
     sort_order integer DEFAULT 0 NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 
@@ -647,8 +614,7 @@ CREATE TABLE public.lookup_judicial_person_type (
     name text NOT NULL,
     sort_order integer DEFAULT 0 NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 
@@ -673,8 +639,7 @@ CREATE TABLE public.lookup_person_role (
     description text,
     sort_order integer DEFAULT 0 NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 
@@ -687,8 +652,7 @@ CREATE TABLE public.lookup_person_type (
     name text NOT NULL,
     sort_order integer DEFAULT 0 NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 
@@ -713,8 +677,7 @@ CREATE TABLE public.lookup_property_property_role (
     description text,
     sort_order integer DEFAULT 0 NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 
@@ -731,8 +694,7 @@ CREATE TABLE public.lookup_property_type (
     key text,
     show_tarla_parcela boolean DEFAULT false NOT NULL,
     show_address boolean DEFAULT false NOT NULL,
-    show_street_view boolean DEFAULT false NOT NULL,
-    deleted_at timestamp with time zone
+    show_street_view boolean DEFAULT false NOT NULL
 );
 
 
@@ -746,8 +708,7 @@ CREATE TABLE public.lookup_tarla (
     descriere text,
     sort_order integer DEFAULT 0 NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 
@@ -760,8 +721,7 @@ CREATE TABLE public.lookup_use_category (
     name text NOT NULL,
     sort_order integer DEFAULT 0 NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 
@@ -811,7 +771,6 @@ CREATE TABLE public.person (
     notes text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
     updated_by text
 );
 
@@ -900,7 +859,6 @@ CREATE TABLE public.property (
     notes text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
     property_type_id uuid,
     use_category_id uuid,
     calculated_area_mp numeric(12,2),
@@ -1055,8 +1013,7 @@ CREATE TABLE public.stamps (
     short_description text NOT NULL,
     notes text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 
@@ -1701,6 +1658,20 @@ ALTER TABLE ONLY public.user_requests
 
 
 --
+-- Name: judicial_person_cui_unique; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX judicial_person_cui_unique ON public.judicial_person USING btree (cui_number) WHERE (cui_number IS NOT NULL);
+
+
+--
+-- Name: natural_person_cnp_unique; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX natural_person_cnp_unique ON public.natural_person USING btree (cnp) WHERE (cnp IS NOT NULL);
+
+
+--
 -- Name: address_person_kind_unique; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2002,13 +1973,6 @@ CREATE TRIGGER groups_touch_updated_at BEFORE UPDATE ON public.groups FOR EACH R
 
 
 --
--- Name: judicial_person judicial_person_check_cui_unique; Type: TRIGGER; Schema: public; Owner: -
---
-
-CREATE TRIGGER judicial_person_check_cui_unique BEFORE INSERT OR UPDATE ON public.judicial_person FOR EACH ROW EXECUTE FUNCTION public.judicial_person_check_cui_unique();
-
-
---
 -- Name: judicial_person judicial_person_lock_cui; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -2062,13 +2026,6 @@ CREATE TRIGGER lookup_tarla_touch_updated_at BEFORE UPDATE ON public.lookup_tarl
 --
 
 CREATE TRIGGER lookup_use_category_touch_updated_at BEFORE UPDATE ON public.lookup_use_category FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
-
-
---
--- Name: natural_person natural_person_check_cnp_unique; Type: TRIGGER; Schema: public; Owner: -
---
-
-CREATE TRIGGER natural_person_check_cnp_unique BEFORE INSERT OR UPDATE ON public.natural_person FOR EACH ROW EXECUTE FUNCTION public.natural_person_check_cnp_unique();
 
 
 --

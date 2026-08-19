@@ -309,9 +309,17 @@ describe("the branch that uses it", () => {
     // dangerous — it gave the id a chance to be a Property the archive already
     // had — so with adoption gone the original is correct, and it is pinned
     // here as PRESENT rather than removed.
-    expect(route).toContain(
-      ".delete(dbProperty) .where(eq(dbProperty.id, propertyId))",
-    );
+    //
+    // Slice #29.04 changed the MECHANISM, not the intent, and this assertion
+    // moved with it: the delete used to be a bare `db.delete(dbProperty)`,
+    // which removed the property row and left its `principal_object` behind —
+    // the FK carries no ON DELETE clause — so the loser's PROP code stayed
+    // taken for ever, along with the entity_tag and entity_metadata rows this
+    // route hangs off that id. It now goes through `deleteProperties`, which
+    // deletes both in one transaction. Pinned as the FUNCTION rather than as
+    // a `db.delete`, because reverting to the bare delete is the regression.
+    expect(route).toContain("await deleteProperties([propertyId])");
+    expect(route).not.toContain(".delete(dbProperty)");
     // What makes that safe is that the id reaching the claim is always a row
     // THIS request created: both branches assign it straight from a create,
     // and the match branch returns instead of assigning. An edit that ever set
@@ -331,7 +339,7 @@ describe("the branch that uses it", () => {
     // permanent orphan Property holding the parcel's identity, which under
     // this slice's refuse-only design then 409s that document for ever.
     expect(route).toContain(
-      "if (createdPropertyId) { await db .delete(dbProperty) .where(eq(dbProperty.id, createdPropertyId))",
+      "if (createdPropertyId) { await deleteProperties([createdPropertyId])",
     );
     expect(route).toContain(
       "if (createdPropertyId && claimedCornerSource) { await releaseCornerSourceLink(documentId, createdPropertyId)",

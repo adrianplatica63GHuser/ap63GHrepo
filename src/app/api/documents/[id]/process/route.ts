@@ -73,9 +73,9 @@ export const runtime = "nodejs";
 
 import type { NextRequest } from "next/server";
 import { NextResponse }     from "next/server";
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { db }               from "@/db";
-import { document, property as dbProperty, propertyDocument, propertyPerson } from "@/db/schema";
+import { document, propertyDocument, propertyPerson } from "@/db/schema";
 import { listDocumentPages }            from "@/lib/documents/pages-queries";
 import { readFileContent }              from "@/lib/storage";
 import { stereo70ToWgs84 }             from "@/lib/geo/transdatRO";
@@ -91,6 +91,7 @@ import {
 import { inferProvenance } from "@/lib/metadata/provenance-rules";
 import {
   createProperty,
+  deleteProperties,
   associateDocumentsToProperty,
   associatePersonsToProperty,
 } from "@/lib/properties/queries";
@@ -130,7 +131,7 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
     const rows = await db
       .select()
       .from(document)
-      .where(and(eq(document.id, documentId), isNull(document.deletedAt)))
+      .where(eq(document.id, documentId))
       .limit(1);
 
     if (rows.length === 0) {
@@ -501,12 +502,15 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
       if (!claimedCornerSource) {
         // Lost the race. Delete the Property we just made and report the
         // winner, so the caller can link to the Property that does exist.
-        await db
-          .delete(dbProperty)
-          .where(eq(dbProperty.id, propertyId))
-          .catch(() => {
-            // Best-effort cleanup — the 409 is the important part.
-          });
+        //
+        // Slice #29.04: through deleteProperties, not a bare db.delete. The
+        // principal_object row does NOT cascade from property (the FK carries
+        // no ON DELETE clause), so a bare delete left the loser's PROP code
+        // taken forever, along with any entity_tag / entity_metadata rows this
+        // route had already hung off it. See src/lib/entities/delete.ts.
+        await deleteProperties([propertyId]).catch(() => {
+          // Best-effort cleanup — the 409 is the important part.
+        });
         createdPropertyId = undefined;
 
         const winner = await getCornerSourceForDocument(documentId);
@@ -665,8 +669,14 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
       //
       // If property creation SUCCEEDED but a later step (associations or
       // patchEntityMetadata) failed, delete the orphaned property so the DB
-      // stays consistent.  The principal_object and related rows (corners,
-      // address) are removed via ON DELETE CASCADE.
+      // stays consistent. Corners and address are removed via ON DELETE
+      // CASCADE; the principal_object row is NOT — it has no ON DELETE clause
+      // — so this goes through deleteProperties, which removes it explicitly
+      // (Slice #29.04, src/lib/entities/delete.ts). This route writes
+      // entity_tag rows and entity_metadata THROUGH that principal_object id
+      // at steps 7.80 and 7.90, and both cascade from it, so a bare
+      // db.delete(property) here left the tag cloud counting tags belonging to
+      // a Property that no longer existed.
       //
       // If property creation itself FAILED, createdPropertyId is undefined and
       // the delete is skipped.
@@ -684,12 +694,9 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
         });
       }
       if (createdPropertyId) {
-        await db
-          .delete(dbProperty)
-          .where(eq(dbProperty.id, createdPropertyId))
-          .catch(() => {
-            // Best-effort cleanup — do not mask the original error.
-          });
+        await deleteProperties([createdPropertyId]).catch(() => {
+          // Best-effort cleanup — do not mask the original error.
+        });
       }
       throw err;
     }

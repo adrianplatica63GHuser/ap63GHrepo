@@ -3,7 +3,10 @@
  *
  * GET    — fetch full document record
  * PATCH  — partial update
- * DELETE — soft delete (sets deleted_at)
+ * DELETE — deletes the row AND its stored page files (Slice #29.04). Pages,
+ *          versions, junctions and the document's principal_object row all go
+ *          with it; the code it held is retired, never reused. Unguarded
+ *          until Slice #29.05.
  */
 
 import type { NextRequest } from "next/server";
@@ -14,7 +17,7 @@ import {
 } from "@/lib/api/errors";
 import {
   getDocumentById,
-  softDeleteDocument,
+  deleteDocument,
   updateDocument,
 } from "@/lib/documents/queries";
 import { documentUpdateSchema } from "@/lib/documents/validation";
@@ -69,7 +72,7 @@ export async function PATCH(
 export async function DELETE(_req: NextRequest, ctx: Ctx): Promise<Response> {
   const { id } = await ctx.params;
   try {
-    const ok = await softDeleteDocument(id);
+    const ok = await deleteDocument(id);
     if (!ok) {
       return Response.json({ error: "Not found" }, { status: 404 });
     }

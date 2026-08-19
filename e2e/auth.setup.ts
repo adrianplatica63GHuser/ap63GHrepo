@@ -89,7 +89,7 @@ setup("autentificare si pregatire fixture E2E", async ({ page }) => {
       ) as { propertyId: string };
       propertyId = cached.propertyId;
 
-      // Verify the property still exists (not soft-deleted or DB-reset)
+      // Verify the property still exists (not deleted or DB-reset)
       const check = await page.request.get(`/api/properties/${propertyId}`);
       if (!check.ok()) {
         console.log("[E2E setup] Cached property not found — will create a new one.");

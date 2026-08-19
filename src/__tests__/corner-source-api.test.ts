@@ -13,8 +13,10 @@
  *   • a SECOND claim on the same document yields 409 — this is the whole slice
  *   • the 409 carries the WINNING property, so the caller can say which one
  *     owns the file instead of just "already used"
- *   • a soft-deleted property cannot be claimed (that would lock a document to
- *     something the user can never open)
+ *   • a property that is not there cannot be claimed (that would lock a
+ *     document to something the user can never open). Before Slice #29.04
+ *     "not there" included soft-deleted, which is why the route checks
+ *     existence at all; now it just means gone.
  *
  * Mirrors the mocking style of properties-api.test.ts.
  */
@@ -119,7 +121,7 @@ describe("GET /api/documents/[id]/corner-source", () => {
     expect(body.link.propertyId).toBe(PROP_A);
   });
 
-  it("404s for a missing or soft-deleted document", async () => {
+  it("404s for a document that is not there", async () => {
     queueRows([]);
     const res = await GET(getReq(), ctx(DOC));
     expect(res.status).toBe(404);
@@ -178,9 +180,9 @@ describe("POST /api/documents/[id]/corner-source", () => {
     expect(body.link.propertyId).toBe(PROP_A);
   });
 
-  it("404s when the property is missing or soft-deleted, without claiming", async () => {
-    // A soft-deleted property must never be claimable: the document would be
-    // locked to something the user cannot open, and only SQL would free it.
+  it("404s when the property is not there, without claiming", async () => {
+    // Claiming a property that does not exist would lock the document to
+    // something the user cannot open, and only SQL would free it.
     queueRows([{ id: DOC }], []);
 
     const res = await POST(postReq({ propertyId: PROP_A }), ctx(DOC));

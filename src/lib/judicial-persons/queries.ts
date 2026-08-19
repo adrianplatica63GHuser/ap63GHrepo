@@ -5,8 +5,9 @@
  * touch the `judicial_person` satellite plus the parent `person` row and
  * the shared `address` table.
  *
- * Soft delete reuses `softDeletePerson` from the natural-person module — it
- * is type-agnostic (just sets `person.deleted_at`).
+ * Delete reuses `deletePerson` from the natural-person module — it is
+ * type-agnostic (it deletes the parent `person` row, and the judicial
+ * subtype cascades).
  *
  * Address PATCH semantics (merge by kind): when `addresses` is included in
  * the update payload, we delete all existing addresses for the person and
@@ -19,7 +20,7 @@
  */
 
 import { alias } from "drizzle-orm/pg-core";
-import { and, count, desc, eq, ilike, isNull, or, sql } from "drizzle-orm";
+import { and, count, desc, eq, ilike, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
   address,
@@ -94,7 +95,6 @@ export async function listJudicialPersons(opts: JudicialListQuery): Promise<{
 
   const where = and(
     eq(person.type, "JUDICIAL"),
-    isNull(person.deletedAt),
     groupFilter,
     searchPattern
       ? or(
@@ -139,7 +139,7 @@ export async function listJudicialPersons(opts: JudicialListQuery): Promise<{
 // ---------------------------------------------------------------------------
 //
 // Mirrors findNaturalPersonByCnp in src/lib/persons/queries.ts. CUI is
-// unique among non-soft-deleted persons (DB trigger — see
+// unique (the partial unique index judicial_person_cui_unique — see the
 // judicial_person.cui_number comment in schema/index.ts), so at most one
 // match is possible.
 
@@ -166,7 +166,7 @@ export async function findJudicialPersonByCui(cui: string): Promise<JudicialPers
     })
     .from(judicialPerson)
     .innerJoin(person, eq(person.id, judicialPerson.personId))
-    .where(and(eq(judicialPerson.cuiNumber, trimmed), isNull(person.deletedAt)))
+    .where(eq(judicialPerson.cuiNumber, trimmed))
     .limit(1);
 
   return row ? { ...row, type: "JUDICIAL" as const } : null;
@@ -198,7 +198,6 @@ export async function getJudicialPersonById(
       and(
         eq(person.id, id),
         eq(person.type, "JUDICIAL"),
-        isNull(person.deletedAt),
       ),
     )
     .limit(1);
@@ -481,7 +480,6 @@ export async function updateJudicialPerson(
         and(
           eq(person.id, id),
           eq(person.type, "JUDICIAL"),
-          isNull(person.deletedAt),
         ),
       )
       .limit(1);

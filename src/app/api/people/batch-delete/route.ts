@@ -1,21 +1,27 @@
 /**
  * POST /api/people/batch-delete
  *
- * Soft-deletes a list of people (sets deleted_at = now()). Covers both
- * Natural and Judicial persons — both list views share the `person` table.
- * Only affects rows that are not already deleted.
+ * Deletes a list of people outright (Slice #29.04).
+ * Covers both Natural and Judicial persons — both list views share the
+ * `person` table.
+ * Everything hanging off each row cascades — including its version history —
+ * and its `principal_object` row goes with it, so the code it held is retired
+ * rather than reused. Ids that match nothing are simply not counted.
+ *
+ * Delegates to `deletePersons` so this route and DELETE /api/people/[id]
+ * are literally the same delete.
+ * Two implementations of one delete is how the Property pair drifted apart
+ * before this slice; there is now one.
  *
  * Body:   { ids: string[] }   — array of person UUIDs, 1–1 000 items
- * 200:    { deleted: number } — count of rows actually updated
+ * 200:    { deleted: number } — count of rows actually deleted
  * 400:    validation error
  * 500:    unexpected server error
  */
 
 import type { NextRequest } from "next/server";
 import { z } from "zod/v4";
-import { and, inArray, isNull } from "drizzle-orm";
-import { db } from "@/db";
-import { person } from "@/db/schema";
+import { deletePersons } from "@/lib/persons/queries";
 import { unexpectedError, zodErrorToResponse } from "@/lib/api/errors";
 
 const batchDeleteSchema = z.object({
@@ -41,13 +47,8 @@ export async function POST(request: NextRequest): Promise<Response> {
   const { ids } = parsed.data;
 
   try {
-    const result = await db
-      .update(person)
-      .set({ deletedAt: new Date() })
-      .where(and(inArray(person.id, ids), isNull(person.deletedAt)))
-      .returning({ id: person.id });
-
-    return Response.json({ deleted: result.length });
+    const deleted = await deletePersons(ids);
+    return Response.json({ deleted });
   } catch (err) {
     return unexpectedError(err, "POST /api/people/batch-delete");
   }

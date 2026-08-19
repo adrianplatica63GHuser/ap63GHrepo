@@ -14,7 +14,7 @@
  * JUDICIAL_PERSON (since principal_object.object_type only has PERSON).
  */
 
-import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
   document,
@@ -95,7 +95,6 @@ export async function listStamps(): Promise<StampListItem[]> {
     SELECT count(*)::int FROM stamp_member sm WHERE sm.stamp_id = stamps.id
   )`;
 
-  // Slice #19.30: exclude soft-deleted stamps.
   const rows = await db
     .select({
       id:               stamps.id,
@@ -106,7 +105,6 @@ export async function listStamps(): Promise<StampListItem[]> {
       createdAt:        stamps.createdAt,
     })
     .from(stamps)
-    .where(isNull(stamps.deletedAt))
     .orderBy(desc(stamps.createdAt));
 
   return rows as StampListItem[];
@@ -152,11 +150,10 @@ export async function getStampDetail(
   id: string,
   targetType: StampTargetType,
 ): Promise<StampDetail | null> {
-  // Slice #19.30: treat soft-deleted stamps as not found.
   const [s] = await db
     .select()
     .from(stamps)
-    .where(and(eq(stamps.id, id), isNull(stamps.deletedAt)))
+    .where(eq(stamps.id, id))
     .limit(1);
   if (!s) return null;
 
@@ -174,10 +171,7 @@ export async function getStampDetail(
       .from(stampMember)
       .innerJoin(
         property,
-        and(
-          eq(property.principalObjectId, stampMember.principalObjectId),
-          isNull(property.deletedAt),
-        ),
+        eq(property.principalObjectId, stampMember.principalObjectId),
       )
       .where(
         and(eq(stampMember.stampId, id), eq(stampMember.targetType, "PROPERTY")),
@@ -202,7 +196,6 @@ export async function getStampDetail(
         person,
         and(
           eq(person.principalObjectId, stampMember.principalObjectId),
-          isNull(person.deletedAt),
           eq(person.type, personType),
         ),
       )
@@ -226,10 +219,7 @@ export async function getStampDetail(
       .from(stampMember)
       .innerJoin(
         document,
-        and(
-          eq(document.principalObjectId, stampMember.principalObjectId),
-          isNull(document.deletedAt),
-        ),
+        eq(document.principalObjectId, stampMember.principalObjectId),
       )
       .where(
         and(eq(stampMember.stampId, id), eq(stampMember.targetType, "DOCUMENT")),
@@ -254,14 +244,11 @@ export async function getStampDetail(
       .select({ id: property.id, code: property.code, nickname: property.nickname })
       .from(property)
       .where(
-        and(
-          isNull(property.deletedAt),
-          sql`NOT EXISTS (
+        sql`NOT EXISTS (
             SELECT 1 FROM stamp_member sm2
             WHERE sm2.stamp_id = ${id}
               AND sm2.principal_object_id = property.principal_object_id
           )`,
-        ),
       )
       .orderBy(desc(sql`greatest(${property.updatedAt}, ${property.createdAt})`));
 
@@ -277,7 +264,6 @@ export async function getStampDetail(
       .from(person)
       .where(
         and(
-          isNull(person.deletedAt),
           eq(person.type, personType),
           sql`NOT EXISTS (
             SELECT 1 FROM stamp_member sm2
@@ -298,14 +284,11 @@ export async function getStampDetail(
       .select({ id: document.id, title: document.title, code: document.code })
       .from(document)
       .where(
-        and(
-          isNull(document.deletedAt),
-          sql`NOT EXISTS (
+        sql`NOT EXISTS (
             SELECT 1 FROM stamp_member sm2
             WHERE sm2.stamp_id = ${id}
               AND sm2.principal_object_id = document.principal_object_id
           )`,
-        ),
       )
       .orderBy(desc(sql`greatest(${document.updatedAt}, ${document.createdAt})`));
 
@@ -334,11 +317,10 @@ export async function updateStamp(
   id: string,
   input: StampUpdate,
 ): Promise<boolean> {
-  // Slice #19.30: treat soft-deleted stamps as not found.
   const [s] = await db
     .select({ id: stamps.id })
     .from(stamps)
-    .where(and(eq(stamps.id, id), isNull(stamps.deletedAt)))
+    .where(eq(stamps.id, id))
     .limit(1);
   if (!s) return false;
 
@@ -432,15 +414,14 @@ async function applyMemberChange(
 }
 
 // ---------------------------------------------------------------------------
-// Delete (soft) — Slice #19.30: sets deleted_at instead of hard-deleting.
-// stamp_member rows are kept; the stamp disappears from all lists.
+// Delete — Slice #29.04: a real delete. stamp_member cascades, so the stamp
+// and its membership go together (same reasoning as deleteGroup).
 // ---------------------------------------------------------------------------
 
 export async function deleteStamp(id: string): Promise<boolean> {
   const r = await db
-    .update(stamps)
-    .set({ deletedAt: sql`NOW()` })
-    .where(and(eq(stamps.id, id), isNull(stamps.deletedAt)))
+    .delete(stamps)
+    .where(eq(stamps.id, id))
     .returning({ id: stamps.id });
   return r.length > 0;
 }
@@ -456,7 +437,6 @@ export type StampEntityTag = { id: string; code: string; shortDescription: strin
 export async function listEntityStampTags(
   principalObjectId: string,
 ): Promise<StampEntityTag[]> {
-  // Slice #19.30: exclude soft-deleted stamps from the References tab.
   const rows = await db
     .select({
       id:               stamps.id,
@@ -465,7 +445,7 @@ export async function listEntityStampTags(
     })
     .from(stampMember)
     .innerJoin(stamps, eq(stamps.id, stampMember.stampId))
-    .where(and(eq(stampMember.principalObjectId, principalObjectId), isNull(stamps.deletedAt)))
+    .where(eq(stampMember.principalObjectId, principalObjectId))
     .orderBy(asc(stamps.code));
 
   return rows;
@@ -474,12 +454,11 @@ export async function listEntityStampTags(
 export async function listEntityStampCodes(
   principalObjectId: string,
 ): Promise<string[]> {
-  // Slice #19.30: exclude soft-deleted stamps.
   const rows = await db
     .select({ code: stamps.code })
     .from(stampMember)
     .innerJoin(stamps, eq(stamps.id, stampMember.stampId))
-    .where(and(eq(stampMember.principalObjectId, principalObjectId), isNull(stamps.deletedAt)))
+    .where(eq(stampMember.principalObjectId, principalObjectId))
     .orderBy(asc(stamps.code));
 
   return rows.map((r) => r.code);
@@ -495,8 +474,7 @@ export async function listEntityStampCodes(
  *
  * See the matching note on listGroupTagsForEntities in src/lib/groups/queries.ts:
  * global search renders a Stamps column on up to 200 rows, and the single-id
- * helper would cost one round trip per row. Soft-deleted stamps are excluded,
- * same as the single-id version.
+ * helper would cost one round trip per row.
  */
 export async function listStampCodesForEntities(
   principalObjectIds: readonly string[],
@@ -512,10 +490,7 @@ export async function listStampCodesForEntities(
     .from(stampMember)
     .innerJoin(stamps, eq(stamps.id, stampMember.stampId))
     .where(
-      and(
-        inArray(stampMember.principalObjectId, [...principalObjectIds]),
-        isNull(stamps.deletedAt),
-      ),
+      inArray(stampMember.principalObjectId, [...principalObjectIds]),
     )
     .orderBy(asc(stamps.code));
 

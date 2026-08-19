@@ -18,7 +18,7 @@
  * version is NOT appended if the new snapshot equals the latest stored one.
  */
 
-import { eq, desc, asc, sql, count, and, inArray, isNull } from "drizzle-orm";
+import { eq, desc, asc, sql, count, inArray } from "drizzle-orm";
 import { parseFolderName } from "@/lib/import/folder-utils";
 import { db } from "@/db";
 import {
@@ -704,7 +704,7 @@ export async function findEntitiesByTag(tag: string): Promise<EntitiesByTag> {
         code:              document.code,
       })
       .from(document)
-      .where(and(inArray(document.principalObjectId, poids), isNull(document.deletedAt))),
+      .where(inArray(document.principalObjectId, poids)),
     db
       .select({
         id:                person.id,
@@ -712,7 +712,7 @@ export async function findEntitiesByTag(tag: string): Promise<EntitiesByTag> {
         code:              person.code,
       })
       .from(person)
-      .where(and(inArray(person.principalObjectId, poids), isNull(person.deletedAt))),
+      .where(inArray(person.principalObjectId, poids)),
   ]);
 
   return { documents: docs, persons: people };

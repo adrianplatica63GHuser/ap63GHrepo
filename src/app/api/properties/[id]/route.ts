@@ -3,7 +3,10 @@
  *
  * GET    — fetch property + address + corners
  * PATCH  — partial update; corners and address use replace-all semantics
- * DELETE — soft delete (sets deleted_at)
+ * DELETE — deletes the row (Slice #29.04). Address, corners, versions,
+ *          junctions and the property's principal_object row all go with it,
+ *          and the corner-source claim is released by the cascade so the
+ *          source document can be re-run. Unguarded until Slice #29.05.
  */
 
 import type { NextRequest } from "next/server";
@@ -14,7 +17,7 @@ import {
 } from "@/lib/api/errors";
 import {
   getPropertyById,
-  softDeleteProperty,
+  deleteProperty,
   updateProperty,
 } from "@/lib/properties/queries";
 import { propertyUpdateSchema } from "@/lib/properties/validation";
@@ -69,7 +72,7 @@ export async function PATCH(
 export async function DELETE(_req: NextRequest, ctx: Ctx): Promise<Response> {
   const { id } = await ctx.params;
   try {
-    const ok = await softDeleteProperty(id);
+    const ok = await deleteProperty(id);
     if (!ok) {
       return Response.json({ error: "Not found" }, { status: 404 });
     }

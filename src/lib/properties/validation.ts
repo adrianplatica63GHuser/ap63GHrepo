@@ -48,7 +48,6 @@ const propertyBase = createInsertSchema(property)
     principalObjectId: true,   // server-managed; set by createProperty
     createdAt:         true,
     updatedAt:         true,
-    deletedAt:         true,
   })
   .extend({
     // Override: drizzle-zod emits z.string() for numeric; we accept number from JSON.

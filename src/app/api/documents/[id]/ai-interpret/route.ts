@@ -93,7 +93,7 @@
 
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { and, eq, isNull } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { lookupDocumentType } from "@/db/schema";
 import { unexpectedError } from "@/lib/api/errors";
@@ -692,7 +692,7 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
       const [byKey] = await db
         .select({ id: lookupDocumentType.id })
         .from(lookupDocumentType)
-        .where(and(eq(lookupDocumentType.key, suggestedTypeKey), isNull(lookupDocumentType.deletedAt)));
+        .where(eq(lookupDocumentType.key, suggestedTypeKey));
       if (byKey) documentTypeId = byKey.id;
     }
 
@@ -700,7 +700,7 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
       const [byName] = await db
         .select({ id: lookupDocumentType.id })
         .from(lookupDocumentType)
-        .where(and(eq(lookupDocumentType.name, classifiedLabel), isNull(lookupDocumentType.deletedAt)));
+        .where(eq(lookupDocumentType.name, classifiedLabel));
       if (byName) {
         documentTypeId = byName.id;
       } else {

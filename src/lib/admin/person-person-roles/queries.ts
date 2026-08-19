@@ -1,4 +1,4 @@
-import { eq, isNull } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { lookupPersonPersonRole, lookupPersonRole } from "@/db/schema";
 
@@ -14,7 +14,6 @@ export type PersonPersonRoleRow = {
 // ── Queries ───────────────────────────────────────────────────────────────────
 
 export async function listPersonPersonRoles(): Promise<PersonPersonRoleRow[]> {
-  // Slice #19.30: exclude whitelist entries whose parent role was soft-deleted.
   const rows = await db
     .select({
       id:                    lookupPersonPersonRole.id,
@@ -24,7 +23,6 @@ export async function listPersonPersonRoles(): Promise<PersonPersonRoleRow[]> {
     })
     .from(lookupPersonPersonRole)
     .innerJoin(lookupPersonRole, eq(lookupPersonPersonRole.personRoleId, lookupPersonRole.id))
-    .where(isNull(lookupPersonRole.deletedAt))
     .orderBy(lookupPersonRole.name);
   return rows;
 }

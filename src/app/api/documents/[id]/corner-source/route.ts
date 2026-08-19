@@ -30,7 +30,7 @@
  *                 createdBy } }   — this document is already a corner source
  *   200 { link: null }            — not yet; the panel may offer to process
  *   401 unauthenticated
- *   404 document not found (or soft-deleted)
+ *   404 document not found
  *   500 unexpected
  *
  *
@@ -58,7 +58,7 @@
  *                                                    names the winner
  *   400 malformed body / not a uuid
  *   401 unauthenticated
- *   404 document or property not found (or soft-deleted)
+ *   404 document or property not found
  *   500 unexpected
  */
 
@@ -66,7 +66,7 @@ export const runtime = "nodejs";
 
 import type { NextRequest } from "next/server";
 import { NextResponse }     from "next/server";
-import { and, eq, isNull }  from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { db }               from "@/db";
 import { document, property } from "@/db/schema";
 import { z }               from "zod/v4";
@@ -102,7 +102,7 @@ export async function GET(_req: NextRequest, ctx: Ctx): Promise<Response> {
     const rows = await db
       .select({ id: document.id })
       .from(document)
-      .where(and(eq(document.id, documentId), isNull(document.deletedAt)))
+      .where(eq(document.id, documentId))
       .limit(1);
 
     if (rows.length === 0) {
@@ -144,20 +144,22 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
     }
     const { propertyId } = parsed.data;
 
-    // Both ends must exist and be live. Without this a typo'd propertyId would
-    // surface as a raw FK violation 500 instead of a 404, and — worse — a
-    // soft-deleted Property would be claimable, immediately locking the
-    // document to something the user can never open.
+    // Both ends must still exist. Without this a typo'd propertyId would
+    // surface as a raw FK violation 500 instead of a 404. Slice #29.04
+    // removed the second half of the reason — a deleted Property used to keep
+    // its row and so was claimable, locking the document to something the
+    // user could never open — but the existence check itself still earns its
+    // place: it is what turns a stale id into a 404.
     const [docRows, propRows] = await Promise.all([
       db
         .select({ id: document.id })
         .from(document)
-        .where(and(eq(document.id, documentId), isNull(document.deletedAt)))
+        .where(eq(document.id, documentId))
         .limit(1),
       db
         .select({ id: property.id })
         .from(property)
-        .where(and(eq(property.id, propertyId), isNull(property.deletedAt)))
+        .where(eq(property.id, propertyId))
         .limit(1),
     ]);
 

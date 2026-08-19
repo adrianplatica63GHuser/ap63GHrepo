@@ -22,8 +22,9 @@
  *      retry-safe; get it backwards and one failed PATCH spends a coordinate
  *      file forever.
  *   2. The route: a second claim yields 409, and the 409 names the winner.
- *   3. Source-level invariants — that soft-deleting a Property still releases
- *      its claim, and that nothing anywhere has gone back to reading
+ *   3. Source-level invariants — that deleting a Property still frees its
+ *      claim (since Slice #29.04 by the ON DELETE CASCADE rather than by an
+ *      explicit release), and that nothing anywhere has gone back to reading
  *      provenance as an already-processed flag. These are the ones that would
  *      catch the bug RETURNING, which is what actually happened here: the
  *      mechanism was reintroduced by a slice that had no idea it was load-
@@ -223,12 +224,53 @@ describe("provenance is not a lock any more", () => {
   });
 });
 
-describe("a soft-deleted Property frees its source document", () => {
-  it("softDeleteProperty releases the corner-source claim", () => {
-    // Properties soft-delete, so property_corner_source's ON DELETE CASCADE
-    // never fires on the normal path. Without an explicit release the link
-    // outlives its Property and locks the document out permanently — the
-    // Process panel would point at a deleted Property and refuse to re-run.
+describe("a deleted Property frees its source document", () => {
+  it("the cascade is what frees the claim now, and nothing else does", () => {
+    // Slice #29.04 reversed this test's premise, so it is rewritten rather
+    // than deleted — the property it guards is more fragile than before, not
+    // less.
+    //
+    // WAS: Properties soft-deleted, so property_corner_source's ON DELETE
+    // CASCADE never fired on the normal path, and softDeleteProperty had to
+    // call releaseCornerSourceForProperty explicitly. This test asserted that
+    // call existed.
+    //
+    // NOW: Properties are deleted for real, the cascade fires, and the
+    // explicit release is gone. Which means the FK is no longer belt-and-
+    // braces — it is the whole belt.
+    //
+    // Be precise about what would break, because the READ path already hides
+    // a stale link: getCornerSourceForDocument INNER JOINs `property`, so a
+    // link whose Property is gone returns null and the Process panel reads as
+    // ready. What a surviving link would then hit is the real lock,
+    // property_corner_source_document_unique + onConflictDoNothing — the
+    // claim would 409 after the panel said go. Weaken this FK to "set null"
+    // or drop it in a future schema edit and that is what happens, with no
+    // other test in the repo failing.
+    //
+    // The old comment already predicted the failure this replaces: "If a
+    // second soft-delete path for Properties ever appears, it must call this
+    // too." One had — POST /api/properties/batch-delete wrote deleted_at
+    // inline and never released a claim. A constraint cannot be forgotten by
+    // a new caller; a helper can.
+    const schema = fs.readFileSync(
+      path.join(SRC, "db", "schema", "index.ts"),
+      "utf8",
+    );
+    const start = schema.indexOf("export const propertyCornerSource");
+    expect(start).toBeGreaterThan(-1);
+    const block = schema.slice(start, start + 2000);
+    expect(block).toMatch(
+      /propertyId[\s\S]*?references\(\(\) => property\.id, \{ onDelete: "cascade" \}\)/,
+    );
+  });
+
+  it("deleting a Property is a DELETE, not an update", () => {
+    // The cascade only fires on a real DELETE. A future slice that
+    // reintroduced any form of soft delete here would silently switch the
+    // mechanism off again — the link would outlive its Property exactly as it
+    // did before #29.04, and this file's other guard would still pass because
+    // the FK would still say "cascade".
     //
     // Asserted at source level rather than by mocking: importing
     // properties/queries.ts pulls in transdatRO, which reads Stereo 70 grid
@@ -239,26 +281,13 @@ describe("a soft-deleted Property frees its source document", () => {
       "utf8",
     );
 
-    const start = queries.indexOf("export async function softDeleteProperty");
+    const start = queries.indexOf("export async function deleteProperties");
     expect(start).toBeGreaterThan(-1);
-    // The next top-level export bounds the function body.
-    const rest  = queries.slice(start + 1);
-    const end   = rest.indexOf("\nexport ");
-    const body  = end === -1 ? rest : rest.slice(0, end);
+    const rest = queries.slice(start + 1);
+    const end  = rest.indexOf("\nexport ");
+    const body = end === -1 ? rest : rest.slice(0, end);
 
-    expect(body).toContain("releaseCornerSourceForProperty");
-  });
-
-  it("the release is a hard delete — a soft-deleted link would still hold the lock", () => {
-    const cornerSource = fs.readFileSync(
-      path.join(SRC, "lib", "properties", "corner-source.ts"),
-      "utf8",
-    );
-    expect(cornerSource).toContain("export async function releaseCornerSourceForProperty");
-    // db.delete, not db.update({ deletedAt }) — the table has no deleted_at and
-    // must not grow one: a unique index cannot see a soft-deleted row's flag,
-    // which is the exact CNP-uniqueness trap CLAUDE.md records.
-    expect(cornerSource).toMatch(/releaseCornerSourceForProperty[\s\S]*?db\s*\n?\s*\.delete\(/);
-    expect(cornerSource).not.toContain("deletedAt");
+    expect(body).toMatch(/\.delete\(property\)/);
+    expect(body).not.toMatch(/\.set\(\{/);
   });
 });

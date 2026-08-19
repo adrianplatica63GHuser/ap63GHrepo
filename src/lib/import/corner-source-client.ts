@@ -23,7 +23,7 @@
  * corner write fails the user can simply try again — the second attempt finds
  * its own claim, recognises it, and carries on. Without it, one failed PATCH
  * would spend the document permanently and the only way back would be to
- * soft-delete the Property.
+ * delete the Property.
  *
  * A claim that loses to a link pointing at a DIFFERENT Property is a real
  * conflict and must stop the caller. That is the duplicate this slice exists

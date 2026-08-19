@@ -3,7 +3,9 @@
  *
  * GET    — group detail: fields + ordered members + (PROPERTY) candidate items
  * PATCH  — update description and/or the complete member set
- * DELETE — hard delete (cascades to members)
+ * DELETE — deletes the group; group_member cascades (Slice #29.04 made this
+ *          comment true again — #19.30 had quietly turned it into a soft
+ *          delete underneath it).
  */
 
 import type { NextRequest } from "next/server";

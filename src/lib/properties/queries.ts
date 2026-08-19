@@ -1,7 +1,10 @@
 /**
  * DB query helpers for the Property API.
  *
- * Soft delete: list + getById filter out deleted rows.
+ * Delete: the API path deletes the row (Slice #29.04). Address, corners,
+ * versions, junctions and the `property_corner_source` claim all cascade, and
+ * the property's `principal_object` row goes with it — see
+ * `src/lib/entities/delete.ts`.
  *
  * Corner / address update semantics (replace-all):
  *   When `corners` or `address` is included in the update payload the existing
@@ -9,14 +12,14 @@
  *   those rows untouched. Passing address: null deletes the address row.
  */
 
-import { and, count, desc, eq, ilike, inArray, isNotNull, isNull, or, sql } from "drizzle-orm";
+import { and, count, desc, eq, ilike, inArray, isNotNull, or, sql } from "drizzle-orm";
 import { db, type DbTransaction } from "@/db";
+import { deletePrincipalObjects } from "@/lib/entities/delete";
 import { cadastralKey } from "./cadastral-identity";
 import type { CadastralMatch } from "./import-property-plan";
 import { entityMetadata, groupMember, groups, lookupPersonRole, lookupTarla, person, principalObject, property, propertyAddress, propertyCorner, propertyPerson, propertyVersion } from "@/db/schema";
 import { wgs84ToStereo70 } from "@/lib/geo/transdatRO";
 import { shoelaceAreaM2 } from "./area";
-import { releaseCornerSourceForProperty } from "./corner-source";
 import type {
   PropertyCreate,
   PropertyListQuery,
@@ -242,7 +245,6 @@ export async function listProperties(opts: PropertyListQuery): Promise<{
   }
 
   const where = and(
-    isNull(property.deletedAt),
     pat
       ? or(
           ilike(property.code,            pat),
@@ -318,7 +320,7 @@ export async function getPropertyById(
   const propRows = await db
     .select()
     .from(property)
-    .where(and(eq(property.id, id), isNull(property.deletedAt)))
+    .where(eq(property.id, id))
     .limit(1);
 
   if (propRows.length === 0) return null;
@@ -399,7 +401,6 @@ export async function findPropertiesByCadastralIdentity(
     .from(property)
     .where(
       and(
-        isNull(property.deletedAt),
         isNotNull(property.tarlaSola),
         isNotNull(property.parcela),
       ),
@@ -536,7 +537,7 @@ export async function createPropertyIn(
 
     // Auto-seed lookup_tarla: if the imported tarla value (e.g. "47/2") is not
     // already in the reference table, add it so it appears in the form dropdown.
-    // Idempotent — skipped when the indicativ already exists (active or soft-deleted).
+    // Idempotent — skipped when the indicativ already exists.
     if (propFields.tarlaSola) {
       const existing = await tx
         .select({ id: lookupTarla.id })
@@ -597,7 +598,7 @@ export async function updatePropertyIn(
     const existing = await tx
       .select()
       .from(property)
-      .where(and(eq(property.id, id), isNull(property.deletedAt)))
+      .where(eq(property.id, id))
       .limit(1);
     if (existing.length === 0) return null;
 
@@ -754,10 +755,7 @@ export async function listPropertyPersons(
     .innerJoin(person, eq(person.id, propertyPerson.personId))
     .leftJoin(lookupPersonRole, eq(lookupPersonRole.id, propertyPerson.personRoleId))
     .where(
-      and(
-        eq(propertyPerson.propertyId, propertyId),
-        isNull(person.deletedAt),
-      ),
+      eq(propertyPerson.propertyId, propertyId),
     )
     .orderBy(person.code);
 
@@ -804,49 +802,39 @@ export async function dissociatePersonFromProperty(
 }
 
 // ---------------------------------------------------------------------------
-// Soft delete
+// Delete
 // ---------------------------------------------------------------------------
+//
+// Slice #29.04: a real delete, and both the single and the batch route go
+// through `deleteProperties` — the batch route used to write `deleted_at`
+// inline and so never released the corner-source claim that the single delete
+// released explicitly. That whole class of drift is gone with the second
+// delete path.
+//
+// The explicit `releaseCornerSourceForProperty` call this function used to
+// make is gone too, and NOT because it stopped mattering. It was there only
+// because a soft delete left the row in place, so `property_corner_source`'s
+// ON DELETE CASCADE never fired and the link outlived its Property, locking
+// its source document forever. A real delete makes the cascade fire, which
+// does the same job in the database where it cannot be forgotten.
 
-export async function softDeleteProperty(id: string): Promise<boolean> {
-  const result = await db
-    .update(property)
-    .set({ deletedAt: new Date() })
-    .where(and(eq(property.id, id), isNull(property.deletedAt)))
-    .returning({ id: property.id });
+export async function deleteProperties(ids: string[]): Promise<number> {
+  if (ids.length === 0) return 0;
 
-  const deleted = result.length > 0;
+  return await db.transaction(async (tx) => {
+    const rows = await tx
+      .delete(property)
+      .where(inArray(property.id, ids))
+      .returning({ principalObjectId: property.principalObjectId });
 
-  // ── Release the coordinate-source claim  (Slice #23.06.Import) ───────────
-  //
-  // `property_corner_source` records which document's coordinate file built
-  // which Property, and its UNIQUE(document_id) is what stops one file
-  // producing two Properties. The FK is ON DELETE CASCADE — but this is a SOFT
-  // delete, so the row survives and the cascade never fires. Without this call
-  // the link would outlive its Property and lock its source document forever:
-  // the Process panel would point at a deleted Property and refuse to run
-  // again, with no way back short of hand-written SQL.
-  //
-  // This is the same shape as the CNP-uniqueness problem in CLAUDE.md — a
-  // partial unique index cannot see the PARENT row's `deleted_at`, so it keeps
-  // enforcing uniqueness against logically-deleted data. That one is solved
-  // with a trigger. This one is solved by cleaning up on delete instead, on
-  // purpose: the link carries no history worth keeping (it answers exactly one
-  // question, "is this document already spent?", and once its Property is gone
-  // the honest answer is "no"), a trigger would put a second source of truth
-  // in SQL where nobody reading the query layer would find it, and with a
-  // single delete path the thing a trigger buys you — catching callers you
-  // forgot — is worth nothing here.
-  //
-  // It also makes the re-point story work: soft-delete the wrong Property,
-  // which frees the document, then re-run the correct path.
-  //
-  // Only on a real transition. Re-deleting an already-deleted Property returns
-  // false and must not release a claim it did not just orphan.
-  if (deleted) {
-    await releaseCornerSourceForProperty(id);
-  }
+    await deletePrincipalObjects(tx, rows.map((r) => r.principalObjectId));
+    return rows.length;
+  });
+}
 
-  return deleted;
+/** Single-property delete. Returns false when the id matched nothing (→ 404). */
+export async function deleteProperty(id: string): Promise<boolean> {
+  return (await deleteProperties([id])) > 0;
 }
 
 // ---------------------------------------------------------------------------
@@ -875,7 +863,7 @@ export async function listPropertyDocuments(propertyId: string): Promise<Propert
       associatedAt:   propertyDocument.createdAt,
     })
     .from(propertyDocument)
-    .innerJoin(document, and(eq(propertyDocument.documentId, document.id), isNull(document.deletedAt)))
+    .innerJoin(document, eq(propertyDocument.documentId, document.id))
     .leftJoin(lookupDocumentType, eq(document.documentTypeId, lookupDocumentType.id))
     .where(eq(propertyDocument.propertyId, propertyId))
     .orderBy(document.code);
@@ -925,13 +913,10 @@ export async function listPropertyReferences(propertyId: string): Promise<Proper
     .from(propertyProperty)
     .innerJoin(
       property,
-      and(
-        or(
+      or(
           and(eq(propertyProperty.propertyIdA, propertyId), eq(property.id, propertyProperty.propertyIdB)),
           and(eq(propertyProperty.propertyIdB, propertyId), eq(property.id, propertyProperty.propertyIdA)),
         ),
-        isNull(property.deletedAt),
-      ),
     )
     .leftJoin(
       lookupPropertyPropertyRole,

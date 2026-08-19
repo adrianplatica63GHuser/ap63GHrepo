@@ -4,7 +4,9 @@
  * GET    — stamp detail + members + candidates for a given ?targetType=
  *          (defaults to PHYSICAL_PERSON if omitted or invalid)
  * PATCH  — update shortDescription / notes and/or apply member changes
- * DELETE — hard delete (cascades to stamp_member)
+ * DELETE — deletes the stamp; stamp_member cascades (Slice #29.04 made this
+ *          comment true again — #19.30 had quietly turned it into a soft
+ *          delete underneath it).
  */
 
 import type { NextRequest } from "next/server";

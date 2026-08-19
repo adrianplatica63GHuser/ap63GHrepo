@@ -32,7 +32,7 @@ jest.mock("@/lib/persons/queries", () => ({
   createNaturalPerson: jest.fn(),
   getPersonById: jest.fn(),
   updateNaturalPerson: jest.fn(),
-  softDeletePerson: jest.fn(),
+  deletePerson: jest.fn(),
 }));
 
 import type { NextRequest } from "next/server";
@@ -52,7 +52,7 @@ const mocks = queries as unknown as {
   createNaturalPerson: jest.Mock;
   getPersonById: jest.Mock;
   updateNaturalPerson: jest.Mock;
-  softDeletePerson: jest.Mock;
+  deletePerson: jest.Mock;
 };
 
 beforeEach(() => {
@@ -223,7 +223,7 @@ describe("POST /api/people", () => {
 // ---------------------------------------------------------------------------
 
 describe("GET /api/people/[id]", () => {
-  it("returns 404 when the person isn't found (or is soft-deleted)", async () => {
+  it("returns 404 when the person isn't found", async () => {
     mocks.getPersonById.mockResolvedValueOnce(null);
     const res = await oneGet(
       req("http://localhost/api/people/abc"),
@@ -304,8 +304,8 @@ describe("PATCH /api/people/[id]", () => {
 // ---------------------------------------------------------------------------
 
 describe("DELETE /api/people/[id]", () => {
-  it("returns 404 when there's nothing to soft-delete", async () => {
-    mocks.softDeletePerson.mockResolvedValueOnce(false);
+  it("returns 404 when there is nothing to delete", async () => {
+    mocks.deletePerson.mockResolvedValueOnce(false);
     const res = await oneDelete(
       req("http://localhost/api/people/abc", { method: "DELETE" }),
       ctx("abc"),
@@ -314,7 +314,7 @@ describe("DELETE /api/people/[id]", () => {
   });
 
   it("returns 204 with no body on success", async () => {
-    mocks.softDeletePerson.mockResolvedValueOnce(true);
+    mocks.deletePerson.mockResolvedValueOnce(true);
     const res = await oneDelete(
       req("http://localhost/api/people/abc", { method: "DELETE" }),
       ctx("abc"),

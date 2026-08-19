@@ -204,7 +204,7 @@ export async function ensurePropertyForFolder(
        * through the top of the branch for five adversarial rounds. What it
        * cost: a user ticks "Confirm legarea celor 12 documente … de
        * proprietatea PROP-00042" and deliberately leaves the corner tick OFF
-       * because the export is stale; PROP-00042 is soft-deleted before they
+       * because the export is stale; PROP-00042 is deleted before they
        * press Continuă — plausibly by the user themselves, since the
        * `ambiguousBlocks` message sends them to the properties list to do
        * exactly that — and this branch created a NEW Property, nicknamed after
@@ -302,9 +302,9 @@ export async function ensurePropertyForFolder(
       if (freshCorners.length !== 0) return { kind: "stale", matches };
 
       const updated = await updatePropertyIn(tx, chosen.id, { corners }, updatedBy);
-      // ⚠️ `null` means the Property is gone — soft-deleted between the SELECT
+      // ⚠️ `null` means the Property is gone — deleted between the SELECT
       // above and this write, which nothing serialises against us because
-      // `softDeleteProperty` takes no advisory lock. An earlier version wrote
+      // `deleteProperties` takes no advisory lock. An earlier version wrote
       // `updated?.corners.length ?? 0` and returned `linked` with a corner count
       // of zero: a success, whose id the caller then linked every document in
       // the subfolder to, and whose code the wizard advertised in a chip for the

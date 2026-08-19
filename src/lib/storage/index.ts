@@ -61,19 +61,109 @@ export async function uploadFile(
 }
 
 /**
- * Delete a file from storage. Silently succeeds if the file is already gone.
- * @param filePath Storage key used when the file was uploaded.
+ * Delete many files in one go. Returns the keys it could NOT delete.
+ *
+ * A file that was already gone counts as deleted — this is called on paths
+ * read from `document_page`, and a retry after a half-finished delete must
+ * not report failure for the half that succeeded.
+ *
+ * NEVER THROWS, and that is the point. Its callers (Slice #29.04) run it
+ * AFTER the database rows are gone, so there is no longer anything to roll
+ * back: turning a storage hiccup into a 500 would tell the user the delete
+ * failed when in fact the entity is already gone, and their retry would 404.
+ * The caller logs the returned keys instead, which is the only artefact a
+ * later sweep could use — nothing else in the database records them.
+ *
+ * Supabase `remove()` takes an array, so a whole document (or a batch of
+ * them) is one round trip per BATCH_SIZE keys rather than one per file.
  */
-export async function deleteFile(filePath: string): Promise<void> {
+const REMOVE_BATCH = 100;
+
+export async function deleteFiles(filePaths: string[]): Promise<string[]> {
+  if (filePaths.length === 0) return [];
+  const failed: string[] = [];
+
   if (isProduction) {
     const supabase = createAdminClient();
-    await supabase.storage.from(SUPABASE_BUCKET).remove([filePath]);
+    for (let i = 0; i < filePaths.length; i += REMOVE_BATCH) {
+      const batch = filePaths.slice(i, i + REMOVE_BATCH);
+      try {
+        const { data, error } = await supabase.storage
+          .from(SUPABASE_BUCKET)
+          .remove(batch);
+
+        // `remove()` reports per OBJECT, not per batch: it returns the list it
+        // actually removed and can partially succeed. The first version of
+        // this loop pushed the whole batch on any error and never looked at
+        // `data`, so the log — which this function's callers treat as the only
+        // record of what leaked — was wrong in both directions: it named 100
+        // keys when 1 had failed, and named none when Supabase had quietly
+        // skipped some. Diff the two lists instead.
+        //
+        // A key Supabase does not list is not necessarily a failure: an object
+        // that was already gone is reported as removed by some versions and
+        // omitted by others, and "already gone" is success for this function
+        // (its callers run it on paths read from document_page, so a retry
+        // after a half-finished delete must not report the finished half).
+        // Erring towards NAMING a key is the cheap direction — a sweep that
+        // looks for a file that is not there costs nothing.
+        if (error) {
+          failed.push(...batch);
+        } else if (Array.isArray(data)) {
+          const removed = new Set(
+            data.map((o: { name?: string } | null) => o?.name).filter(Boolean),
+          );
+          for (const key of batch) {
+            // Supabase returns the key as passed in; fall back to the basename
+            // for the client versions that return only the object name.
+            const base = key.slice(key.lastIndexOf("/") + 1);
+            if (!removed.has(key) && !removed.has(base)) failed.push(key);
+          }
+        }
+      } catch {
+        failed.push(...batch);
+      }
+    }
   } else {
-    const fullPath = path.join(LOCAL_UPLOADS_DIR, filePath);
-    await fs.unlink(fullPath).catch(() => {
-      // already gone — ignore
-    });
+    for (const filePath of filePaths) {
+      const fullPath = path.join(LOCAL_UPLOADS_DIR, filePath);
+      try {
+        await fs.unlink(fullPath);
+      } catch (err) {
+        // ENOENT means somebody already removed it — that is success.
+        if ((err as NodeJS.ErrnoException)?.code !== "ENOENT") {
+          failed.push(filePath);
+        }
+      }
+    }
   }
+
+  return failed;
+}
+
+/**
+ * Delete one file. Returns true if it is gone (including "was already gone"),
+ * false if storage refused.
+ *
+ * DOES NOT THROW, and an adversarial round is why. An intermediate version of
+ * Slice #29.04 made it throw — the single-page DELETE route's comment says it
+ * wants the error surfaced — and that turned a 204 into a permanent 500 on
+ * every errno the old `.catch(() => {})` had been swallowing: EACCES on an
+ * uploads directory the app user does not own, EPERM/EBUSY on the Windows and
+ * UAT stacks when a viewer or AV holds the file, and any transient Supabase
+ * 5xx. Because that route deleted the FILE before the ROW, the row survived,
+ * the retry hit the same branch, and the page became undeletable from the UI
+ * forever.
+ *
+ * It also left the two delete paths for the same bytes with opposite policies
+ * — this one aborting the delete, `deleteDocuments` completing it and logging
+ * — which is the "two implementations of one delete drift apart" failure this
+ * slice exists to remove, reintroduced inside the slice.
+ *
+ * @param filePath Storage key used when the file was uploaded.
+ */
+export async function deleteFile(filePath: string): Promise<boolean> {
+  return (await deleteFiles([filePath])).length === 0;
 }
 
 /**

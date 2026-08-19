@@ -5,7 +5,7 @@
 import { z } from "zod/v4";
 import type { NextRequest } from "next/server";
 import { unexpectedError, zodErrorToResponse } from "@/lib/api/errors";
-import { and, count, ilike, isNull, or } from "drizzle-orm";
+import { count, ilike, or } from "drizzle-orm";
 import { db } from "@/db";
 import { property } from "@/db/schema";
 
@@ -27,10 +27,7 @@ export async function GET(request: NextRequest): Promise<Response> {
   const { q, limit, offset } = parsed.data;
   const pat = q?.trim() ? `%${q.trim()}%` : null;
 
-  const where = and(
-    isNull(property.deletedAt),
-    pat ? or(ilike(property.code, pat), ilike(property.nickname, pat)) : undefined,
-  );
+  const where = pat ? or(ilike(property.code, pat), ilike(property.nickname, pat)) : undefined;
 
   try {
     const [{ value: total }] = await db.select({ value: count() }).from(property).where(where);

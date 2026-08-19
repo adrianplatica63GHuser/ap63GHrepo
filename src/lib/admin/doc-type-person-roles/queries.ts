@@ -5,7 +5,7 @@
  * List queries join both sides so the caller receives display names directly.
  */
 
-import { asc, and, eq, isNull } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import {
   lookupDocTypePersonRole,
@@ -26,7 +26,6 @@ export type DocTypePersonRoleRow = {
 // ── List ──────────────────────────────────────────────────────────────────────
 
 export async function listDocTypePersonRoles(): Promise<DocTypePersonRoleRow[]> {
-  // Slice #19.30: exclude rows where either joined lookup was soft-deleted.
   const rows = await db
     .select({
       id:               lookupDocTypePersonRole.id,
@@ -43,12 +42,6 @@ export async function listDocTypePersonRoles(): Promise<DocTypePersonRoleRow[]> 
     .innerJoin(
       lookupPersonRole,
       eq(lookupDocTypePersonRole.personRoleId, lookupPersonRole.id),
-    )
-    .where(
-      and(
-        isNull(lookupDocumentType.deletedAt),
-        isNull(lookupPersonRole.deletedAt),
-      ),
     )
     .orderBy(asc(lookupDocumentType.name), asc(lookupPersonRole.name));
 
@@ -98,7 +91,6 @@ export async function createDocTypePersonRole(data: {
 export type DistinctDocPersonRole = { id: string; name: string };
 
 export async function listDistinctDocPersonRoles(): Promise<DistinctDocPersonRole[]> {
-  // Slice #19.30: exclude soft-deleted person roles.
   const rows = await db
     .selectDistinct({
       id:   lookupPersonRole.id,
@@ -109,7 +101,6 @@ export async function listDistinctDocPersonRoles(): Promise<DistinctDocPersonRol
       lookupPersonRole,
       eq(lookupDocTypePersonRole.personRoleId, lookupPersonRole.id),
     )
-    .where(isNull(lookupPersonRole.deletedAt))
     .orderBy(asc(lookupPersonRole.name));
 
   return rows;

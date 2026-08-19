@@ -61,6 +61,7 @@ DECLARE
   ];
   t       text;
   missing text[] := '{}';
+  stale   integer;
 BEGIN
   FOREACH t IN ARRAY expected LOOP
     IF NOT EXISTS (
@@ -76,6 +77,35 @@ BEGIN
   ELSE
     RAISE NOTICE 'PRE-FLIGHT: % table(s) missing and about to be created: %',
       array_length(missing, 1), array_to_string(missing, ', ');
+  END IF;
+
+  -- ── Slice #29.04: is this database on the right side of migration_070? ──
+  --
+  -- This file repairs a database towards the shape in src/db/schema/index.ts,
+  -- and that shape no longer has deleted_at. Creating the thirteen tables in
+  -- their CURRENT shape on a database whose person / groups / lookups still
+  -- carry the column produces something that matches neither the old schema
+  -- nor the new one, and nothing afterwards would say so.
+  --
+  -- Scoped to the sixteen tables migration_070 owns, on purpose. An earlier
+  -- version counted every deleted_at column in `public` and so refused to run
+  -- on a correctly-migrated database that happened to have an unrelated audit
+  -- table — asserting, in the error text, something plainly false.
+  SELECT count(*)::int INTO stale
+    FROM information_schema.columns
+   WHERE table_schema = 'public'
+     AND column_name  = 'deleted_at'
+     AND table_name IN (
+       'person', 'property', 'document',
+       'lookup_property_type', 'lookup_tarla', 'lookup_use_category',
+       'lookup_person_type', 'lookup_person_role',
+       'lookup_judicial_person_type', 'lookup_citizenship',
+       'lookup_document_type', 'lookup_institution',
+       'lookup_property_property_role', 'lookup_document_document_role',
+       'groups', 'stamps');
+
+  IF stale > 0 THEN
+    RAISE EXCEPTION 'PRE-FLIGHT: % of this app''s tables still carry deleted_at, so this database predates migration_070 (Slice #29.04). Apply the migrations first - this file brings a database up to the CURRENT schema and will not drop columns behind your back. Nothing has been changed.', stale;
   END IF;
 END $$;
 
@@ -129,9 +159,9 @@ CREATE OR REPLACE TRIGGER touch_updated_at_help_hint
 --
 -- IMPORTANT: this is the FINAL shape, not migration_044's original shape.
 -- migration_051 replaced the nullable (person_id, property_id, document_id)
--- triple with a single principal_object_id FK, and migration_057 added
--- deleted_at. Creating the historical shape here would produce a table that
--- no longer matches schema/index.ts.
+-- triple with a single principal_object_id FK; migration_057 added deleted_at
+-- and migration_070 (Slice #29.04) removed it again. Creating any historical
+-- shape here would produce a table that no longer matches schema/index.ts.
 --
 -- target_type is kept alongside principal_object_id because it distinguishes
 -- PHYSICAL_PERSON from JUDICIAL_PERSON -- information principal_object.
@@ -155,12 +185,12 @@ CREATE TABLE IF NOT EXISTS stamps (
   short_description text        NOT NULL,
   notes             text,
   created_at        timestamptz NOT NULL DEFAULT now(),
-  updated_at        timestamptz NOT NULL DEFAULT now(),
-  deleted_at        timestamptz
+  updated_at        timestamptz NOT NULL DEFAULT now()
 );
 
--- Covers the case where stamps pre-dates migration_057.
-ALTER TABLE stamps ADD COLUMN IF NOT EXISTS deleted_at timestamptz;
+-- (migration_057 added stamps.deleted_at; Slice #29.04's migration_070
+-- removed it again, so this file no longer creates it. The check at the
+-- bottom of section 9 refuses to run against a database that still has it.)
 
 DO $$ BEGIN
   IF NOT EXISTS (
@@ -554,20 +584,21 @@ END $$;
 -- of the output, is told everything is fine 150 lines after being told it is
 -- not. (Slice #26.12 review round 3.)
 
--- migration_057 -- soft-delete on the 13 lookup / reference tables
-ALTER TABLE lookup_property_type          ADD COLUMN IF NOT EXISTS deleted_at timestamptz;
-ALTER TABLE lookup_tarla                  ADD COLUMN IF NOT EXISTS deleted_at timestamptz;
-ALTER TABLE lookup_use_category           ADD COLUMN IF NOT EXISTS deleted_at timestamptz;
-ALTER TABLE lookup_person_type            ADD COLUMN IF NOT EXISTS deleted_at timestamptz;
-ALTER TABLE lookup_person_role            ADD COLUMN IF NOT EXISTS deleted_at timestamptz;
-ALTER TABLE lookup_judicial_person_type   ADD COLUMN IF NOT EXISTS deleted_at timestamptz;
-ALTER TABLE lookup_citizenship            ADD COLUMN IF NOT EXISTS deleted_at timestamptz;
-ALTER TABLE lookup_document_type          ADD COLUMN IF NOT EXISTS deleted_at timestamptz;
-ALTER TABLE lookup_institution            ADD COLUMN IF NOT EXISTS deleted_at timestamptz;
-ALTER TABLE lookup_property_property_role ADD COLUMN IF NOT EXISTS deleted_at timestamptz;
-ALTER TABLE lookup_document_document_role ADD COLUMN IF NOT EXISTS deleted_at timestamptz;
-ALTER TABLE groups                        ADD COLUMN IF NOT EXISTS deleted_at timestamptz;
--- stamps.deleted_at handled in section 2 above.
+-- migration_057 / migration_070 -- soft-delete came and went.
+--
+-- This block used to ADD deleted_at to the 13 lookup / reference tables.
+-- Slice #29.04's migration_070 removed the column again, so there is nothing
+-- to add. There is deliberately no DROP here either: this file's contract,
+-- stated in its own header, is that nothing it does is destructive, and
+-- dropping a column from a database that still has rows in it is exactly what
+-- that promise excludes. Removing the column is migration_070's job, it runs
+-- through the migration runner, and the runner records it.
+--
+-- The check that a database is on the right side of that migration lives in
+-- section 0, before anything has been created. It used to live HERE, which
+-- was 500 lines too late — this file is run through `psql -f` with no
+-- --single-transaction, so by the time it raised, all thirteen tables had
+-- already been created and committed. (Found by an adversarial round.)
 
 -- migration_039 / 041 -- property type slug + panel-visibility flags
 ALTER TABLE lookup_property_type

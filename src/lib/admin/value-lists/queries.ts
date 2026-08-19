@@ -1,10 +1,15 @@
 /**
  * DB query helpers for the admin value-list tables.
  *
- * Slice #19.30: all deletes are now soft-deletes (deleted_at = NOW()).
- * All list queries filter WHERE deleted_at IS NULL so retired entries are
- * invisible to the UI.  M:M junction ON DELETE SET NULL FKs are never
- * triggered, so historical associations keep their role tag name.
+ * Slice #29.04: all deletes are real deletes. The row goes, its key is free
+ * for immediate reuse, and nothing is left for a list query to filter.
+ *
+ * What that costs, stated rather than hidden: the M:M junction FKs are
+ * ON DELETE SET NULL, so an association that carried a deleted role keeps its
+ * row and loses the label. document-types is the one list the database itself
+ * protects — `document.document_type_id` is NOT NULL with no onDelete clause,
+ * so Postgres refuses the delete outright. Deciding what the user is TOLD in
+ * either case is Slice #29.05; until then a refusal is only an error code.
  *
  * Each function dispatches on the ListKey string via a switch statement —
  * verbose but fully type-safe within each case.
@@ -13,7 +18,8 @@
  * feature in Slice #18.07 — see src/lib/groups/.)
  */
 
-import { asc, eq, isNull, sql } from "drizzle-orm";
+import { asc, eq, like, sql } from "drizzle-orm";
+import { nextFreeKey, slugifyLookupKey } from "./keys";
 import { db } from "@/db";
 import {
   lookupPropertyType,
@@ -39,65 +45,42 @@ import {
 // Row types — inferred from the Drizzle table definitions.
 export type LookupRow = Record<string, unknown> & { id: string };
 
-// ── property-types / document-types: server-generated `key` slug ──────────
-//
-// Migration 020 (Slice #15.05) added `lookup_document_type.key` as an
-// immutable, NOT NULL, UNIQUE slug that application code (getTypeConfig)
-// switches on. The Value Lists admin form only ever exposed `name` — adding
-// a new Document Type via Reference Data left `key` unset, violating the
-// NOT NULL constraint. Per the standing rule ("new document types are added
-// only by Adrian via Administration -> Reference Data ... never auto-seeded
-// or hardcoded again"), `key` for an admin-added type doesn't need to match
-// anything `type-config.ts` recognizes — unmapped keys already fall back to
-// the GENERIC config. So the key is derived from `name` automatically here,
-// using the same diacritics-folding approach as migration_020's fallback-slug
-// step, with a numeric suffix on collision. The form itself never changes.
-const ROMANIAN_DIACRITICS_MAP: Record<string, string> = {
-  ă: "a", â: "a", î: "i", ș: "s", ş: "s", ț: "t", ţ: "t",
-  Ă: "A", Â: "A", Î: "I", Ț: "T", Ţ: "T", Ș: "S", Ş: "S",
-};
-
-function foldRomanianDiacritics(input: string): string {
-  return input.replace(/[ăâîșşțţĂÂÎȚŢȘŞ]/g, (ch) => ROMANIAN_DIACRITICS_MAP[ch] ?? ch);
-}
-
-function slugifyDocumentTypeKey(name: string): string {
-  const slug = foldRomanianDiacritics(name)
-    .toUpperCase()
-    .replace(/[^A-Z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "");
-  return slug || "DOCTYPE";
+/**
+ * `nextFreeKey` against the live table, in ONE round trip.
+ *
+ * Reads every key that could possibly collide — anything starting with the
+ * base — and lets `nextFreeKey` (src/lib/admin/value-lists/keys.ts) decide. One query rather than one
+ * per candidate, and, more to the point, ONE implementation of the rule: a
+ * loop here as well would be a second place that decides what a free key is,
+ * and the two would eventually disagree.
+ *
+ * `_` is a single-character wildcard to LIKE and the slug is full of them, so
+ * this pattern over-matches (`ZZZ_PROBA%` also finds `ZZZAPROBA`). That is
+ * harmless by construction: the set holds real keys and `has()` is exact, so
+ * an extra row can only be a key that was never a candidate. Over-fetching a
+ * handful of lookup rows is the cheap direction; UNDER-fetching would hand
+ * back a taken key and fail on INSERT with 23505.
+ */
+async function generateUniqueKey(
+  table: typeof lookupDocumentType | typeof lookupPropertyType,
+  name: string,
+): Promise<string> {
+  const base = slugifyLookupKey(name);
+  const rows = await db
+    .select({ key: table.key })
+    .from(table)
+    .where(like(table.key, `${base}%`));
+  const taken = new Set(rows.map((r) => r.key));
+  return nextFreeKey(base, (k) => taken.has(k));
 }
 
 async function generateUniqueDocumentTypeKey(name: string): Promise<string> {
-  const base = slugifyDocumentTypeKey(name);
-  let candidate = base;
-  let suffix = 2;
-  for (;;) {
-    const existing = await db
-      .select({ id: lookupDocumentType.id })
-      .from(lookupDocumentType)
-      .where(eq(lookupDocumentType.key, candidate));
-    if (existing.length === 0) return candidate;
-    candidate = `${base}_${suffix}`;
-    suffix += 1;
-  }
+  return generateUniqueKey(lookupDocumentType, name);
 }
 
 // Same slug logic for property types (Slice #19.02).
 async function generateUniquePropertyTypeKey(name: string): Promise<string> {
-  const base = slugifyDocumentTypeKey(name); // reuse the same diacritics-fold + slug helper
-  let candidate = base;
-  let suffix = 2;
-  for (;;) {
-    const existing = await db
-      .select({ id: lookupPropertyType.id })
-      .from(lookupPropertyType)
-      .where(eq(lookupPropertyType.key, candidate));
-    if (existing.length === 0) return candidate;
-    candidate = `${base}_${suffix}`;
-    suffix += 1;
-  }
+  return generateUniqueKey(lookupPropertyType, name);
 }
 
 // ── List ─────────────────────────────────────────────────────────────────────
@@ -121,43 +104,34 @@ export async function listValues(key: ListKey): Promise<LookupRow[]> {
         updatedAt:        lookupPropertyType.updatedAt,
         usageCount: sql<number>`(SELECT COUNT(*) FROM property WHERE property_type_id = lookup_property_type.id)`,
       }).from(lookupPropertyType)
-        .where(isNull(lookupPropertyType.deletedAt))
         .orderBy(asc(lookupPropertyType.sortOrder)) as Promise<LookupRow[]>;
     case "tarla":
       return db.select().from(lookupTarla)
-        .where(isNull(lookupTarla.deletedAt))
         .orderBy(asc(lookupTarla.sortOrder)) as Promise<LookupRow[]>;
     case "use-categories":
       return db.select().from(lookupUseCategory)
-        .where(isNull(lookupUseCategory.deletedAt))
         .orderBy(asc(lookupUseCategory.sortOrder)) as Promise<LookupRow[]>;
     case "person-types":
       return db.select().from(lookupPersonType)
-        .where(isNull(lookupPersonType.deletedAt))
         .orderBy(asc(lookupPersonType.sortOrder)) as Promise<LookupRow[]>;
     case "person-roles":
       return db.select().from(lookupPersonRole)
-        .where(isNull(lookupPersonRole.deletedAt))
         .orderBy(asc(lookupPersonRole.name)) as Promise<LookupRow[]>;
     case "citizenships":
       return db.select().from(lookupCitizenship)
-        .where(isNull(lookupCitizenship.deletedAt))
         .orderBy(asc(lookupCitizenship.sortOrder)) as Promise<LookupRow[]>;
     case "judicial-person-types":
       return db.select().from(lookupJudicialPersonType)
-        .where(isNull(lookupJudicialPersonType.deletedAt))
         .orderBy(asc(lookupJudicialPersonType.sortOrder)) as Promise<LookupRow[]>;
     case "document-types":
       // UNCLASSIFIED (NECLASIFICAT) pinned first; rest alphabetical.
       return db.select().from(lookupDocumentType)
-        .where(isNull(lookupDocumentType.deletedAt))
         .orderBy(
           sql`CASE WHEN key = 'UNCLASSIFIED' THEN 0 ELSE 1 END`,
           asc(lookupDocumentType.name),
         ) as Promise<LookupRow[]>;
     case "institutions":
       return db.select().from(lookupInstitution)
-        .where(isNull(lookupInstitution.deletedAt))
         .orderBy(asc(lookupInstitution.sortOrder)) as Promise<LookupRow[]>;
   }
 }
@@ -288,50 +262,56 @@ export async function updateValue(
   }
 }
 
-// ── Delete (soft) ─────────────────────────────────────────────────────────────
+// ── Delete ────────────────────────────────────────────────────────────────────
 //
-// Slice #19.30: all deletes are soft-deletes — sets deleted_at = NOW().
-// The row is kept in the DB so historical associations that reference it still
-// resolve to a name; it is simply excluded from all list/dropdown queries.
-
-const NOW = sql`NOW()`;
+// Slice #29.04: the row is deleted. This is also what the route's own header
+// comment has claimed since it was written — "hard delete (lookup rows have
+// no soft-delete)" — so this makes the documentation true rather than
+// rewriting it.
+//
+// Freeing the key is the point. `lookup_document_type.key` carries a real
+// UNIQUE constraint, and a tombstoned row went on occupying it forever: that
+// is why deleting "ZZZ Proba" and creating it again produced
+// ZZZ_PROBA_SLICE_2901_2. See generateUniqueDocumentTypeKey above, which
+// deliberately does NOT filter and is correct precisely because of that
+// constraint.
 
 export async function deleteValue(key: ListKey, id: string): Promise<boolean> {
   switch (key) {
     case "property-types": {
-      const r = await db.update(lookupPropertyType).set({ deletedAt: NOW }).where(eq(lookupPropertyType.id, id)).returning({ id: lookupPropertyType.id });
+      const r = await db.delete(lookupPropertyType).where(eq(lookupPropertyType.id, id)).returning({ id: lookupPropertyType.id });
       return r.length > 0;
     }
     case "tarla": {
-      const r = await db.update(lookupTarla).set({ deletedAt: NOW }).where(eq(lookupTarla.id, id)).returning({ id: lookupTarla.id });
+      const r = await db.delete(lookupTarla).where(eq(lookupTarla.id, id)).returning({ id: lookupTarla.id });
       return r.length > 0;
     }
     case "use-categories": {
-      const r = await db.update(lookupUseCategory).set({ deletedAt: NOW }).where(eq(lookupUseCategory.id, id)).returning({ id: lookupUseCategory.id });
+      const r = await db.delete(lookupUseCategory).where(eq(lookupUseCategory.id, id)).returning({ id: lookupUseCategory.id });
       return r.length > 0;
     }
     case "person-types": {
-      const r = await db.update(lookupPersonType).set({ deletedAt: NOW }).where(eq(lookupPersonType.id, id)).returning({ id: lookupPersonType.id });
+      const r = await db.delete(lookupPersonType).where(eq(lookupPersonType.id, id)).returning({ id: lookupPersonType.id });
       return r.length > 0;
     }
     case "person-roles": {
-      const r = await db.update(lookupPersonRole).set({ deletedAt: NOW }).where(eq(lookupPersonRole.id, id)).returning({ id: lookupPersonRole.id });
+      const r = await db.delete(lookupPersonRole).where(eq(lookupPersonRole.id, id)).returning({ id: lookupPersonRole.id });
       return r.length > 0;
     }
     case "citizenships": {
-      const r = await db.update(lookupCitizenship).set({ deletedAt: NOW }).where(eq(lookupCitizenship.id, id)).returning({ id: lookupCitizenship.id });
+      const r = await db.delete(lookupCitizenship).where(eq(lookupCitizenship.id, id)).returning({ id: lookupCitizenship.id });
       return r.length > 0;
     }
     case "judicial-person-types": {
-      const r = await db.update(lookupJudicialPersonType).set({ deletedAt: NOW }).where(eq(lookupJudicialPersonType.id, id)).returning({ id: lookupJudicialPersonType.id });
+      const r = await db.delete(lookupJudicialPersonType).where(eq(lookupJudicialPersonType.id, id)).returning({ id: lookupJudicialPersonType.id });
       return r.length > 0;
     }
     case "document-types": {
-      const r = await db.update(lookupDocumentType).set({ deletedAt: NOW }).where(eq(lookupDocumentType.id, id)).returning({ id: lookupDocumentType.id });
+      const r = await db.delete(lookupDocumentType).where(eq(lookupDocumentType.id, id)).returning({ id: lookupDocumentType.id });
       return r.length > 0;
     }
     case "institutions": {
-      const r = await db.update(lookupInstitution).set({ deletedAt: NOW }).where(eq(lookupInstitution.id, id)).returning({ id: lookupInstitution.id });
+      const r = await db.delete(lookupInstitution).where(eq(lookupInstitution.id, id)).returning({ id: lookupInstitution.id });
       return r.length > 0;
     }
   }

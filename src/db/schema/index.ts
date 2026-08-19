@@ -120,7 +120,6 @@ export const person = pgTable("person", {
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
-  deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });
 
 // ---------------------------------------------------------------------------
@@ -128,8 +127,9 @@ export const person = pgTable("person", {
 // ---------------------------------------------------------------------------
 //
 // 1:1 with `person`. PK is also FK to person.id with ON DELETE CASCADE so
-// hard-deleting a person also removes the satellite row. Soft delete (the
-// API path) just sets person.deleted_at and leaves this row untouched.
+// deleting a person also removes the satellite row. Since Slice #29.04 that
+// is the only kind of delete there is — the API path deletes the `person` row
+// and this one goes with it.
 
 export const naturalPerson = pgTable(
   "natural_person",
@@ -143,12 +143,10 @@ export const naturalPerson = pgTable(
     nickname: text("nickname"),
 
     // CNP — Romanian Personal Numeric Code. Optional (foreign nationals
-    // may not have one). UNIQUE when present, but only among non-soft-deleted
-    // persons — enforced by a trigger (migration_025), not a plain unique
-    // index, since the partial index has no way to see person.deleted_at
-    // (soft-delete lives on the parent `person` row). Once set, cannot be
-    // changed — enforced by a separate trigger (NULL -> value is allowed;
-    // value -> anything-different is not).
+    // may not have one). UNIQUE when present, enforced by the partial unique
+    // index `natural_person_cnp_unique` — see the note at the foot of this
+    // table. Once set, cannot be changed — enforced by a separate trigger
+    // (NULL -> value is allowed; value -> anything-different is not).
     cnp: text("cnp"),
 
     idDocumentType: idDocumentTypeEnum("id_document_type"),
@@ -198,13 +196,21 @@ export const naturalPerson = pgTable(
       "natural_person_has_name",
       sql`${t.firstName} IS NOT NULL OR ${t.lastName} IS NOT NULL`,
     ),
-    // NOTE: CNP uniqueness is NOT enforced here as a plain unique index.
-    // A plain partial unique index can't see person.deleted_at (soft-delete
-    // lives on the parent `person` row, not this table), so it would
-    // permanently block reusing a CNP after its person was soft-deleted.
-    // Enforced instead by a BEFORE INSERT OR UPDATE trigger
-    // (natural_person_check_cnp_unique, migration_025) that only counts
-    // collisions against non-soft-deleted persons.
+    // NOTE: CNP uniqueness lives in SQL, not here. It is the partial unique
+    // index `natural_person_cnp_unique` ON natural_person (cnp) WHERE cnp IS
+    // NOT NULL — created by drizzle/0000_initial_schema.sql, dropped by
+    // migration_025, and restored by migration_070.
+    //
+    // The round trip is worth knowing about. migration_025 replaced the index
+    // with a BEFORE INSERT OR UPDATE trigger for one reason: a partial index
+    // on THIS table cannot see person.deleted_at, so a soft-deleted person's
+    // CNP stayed taken forever. Slice #29.04 removed deleted_at entirely — a
+    // deleted person is gone — so the index is correct again and the trigger,
+    // whose body read p.deleted_at, would now raise on every insert. Both
+    // triggers are dropped in the same migration.
+    //
+    // The 409 is unaffected: dbErrorToResponse matches on the constraint name
+    // containing "cnp", which this index satisfies.
   ],
 );
 
@@ -213,8 +219,9 @@ export const naturalPerson = pgTable(
 // ---------------------------------------------------------------------------
 //
 // 1:1 with `person`. PK is also FK to person.id with ON DELETE CASCADE so
-// hard-deleting a person also removes the satellite row. Soft delete (the
-// API path) just sets person.deleted_at and leaves this row untouched.
+// deleting a person also removes the satellite row. Since Slice #29.04 that
+// is the only kind of delete there is — the API path deletes the `person` row
+// and this one goes with it.
 //
 // `notes` lives on the parent `person` row (same as natural_person).
 // HEADQUARTERS + CORRESPONDENCE addresses are stored in the existing
@@ -241,11 +248,11 @@ export const judicialPerson = pgTable(
       .references(() => lookupJudicialPersonType.id, { onDelete: "set null" }),
 
     // CUI — Cod Unic de Inregistrare (Romanian fiscal registration code).
-    // Optional. UNIQUE when present, but only among non-soft-deleted persons
-    // — enforced by a trigger (migration_025), not a plain unique index (see
-    // the matching note on natural_person.cnp above for why). Once set,
-    // cannot be changed — enforced by a separate trigger (NULL -> value is
-    // allowed; value -> anything-different is not).
+    // Optional. UNIQUE when present, enforced by the partial unique index
+    // `judicial_person_cui_unique` (see the matching note on
+    // natural_person.cnp above). Once set, cannot be changed — enforced by a
+    // separate trigger (NULL -> value is allowed; value -> anything-different
+    // is not).
     cuiNumber: text("cui_number"),
 
     // Trade Register number — "Nr. ORC" (e.g. "J22/123/2020").
@@ -276,9 +283,9 @@ export const judicialPerson = pgTable(
 // address — owned by a person, one row per (person, kind)
 // ---------------------------------------------------------------------------
 //
-// FK cascades on hard-delete of person. When a user clears an address block
-// in the form, we hard-delete the row directly (no deleted_at on address —
-// addresses are part of the person's aggregate, not separately archived).
+// FK cascades on delete of person. When a user clears an address block in the
+// form, the row is deleted directly — addresses are part of the person's
+// aggregate, never separately archived.
 
 export const address = pgTable(
   "address",
@@ -377,7 +384,8 @@ export const personVersion = pgTable(
 // property — root entity
 // ---------------------------------------------------------------------------
 //
-// Soft-delete via deleted_at (same pattern as person).
+// Deleting a property deletes the row (Slice #29.04) — everything hanging off
+// it cascades, including its version history and its principal_object row.
 // Code is auto-generated from a Postgres sequence: PROP00001, PROP00002, ...
 // The sequence is created in the migration (not expressible in Drizzle).
 
@@ -436,16 +444,15 @@ export const property = pgTable("property", {
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
-  deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });
 
 // ---------------------------------------------------------------------------
 // property_address — single address block per property
 // ---------------------------------------------------------------------------
 //
-// FK cascades on hard-delete of property. No `kind` column — a property has
-// exactly one address. No deleted_at — clearing the address hard-deletes the
-// row (same pattern as Person address).
+// FK cascades on delete of property. No `kind` column — a property has
+// exactly one address. Clearing the address deletes the row (same pattern as
+// Person address).
 
 export const propertyAddress = pgTable(
   "property_address",
@@ -602,8 +609,6 @@ export const lookupPropertyType = pgTable("lookup_property_type", {
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-  // Slice #19.30: soft-delete — set by API DELETE instead of hard-deleting.
-  deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });
 
 export const lookupTarla = pgTable("lookup_tarla", {
@@ -613,7 +618,6 @@ export const lookupTarla = pgTable("lookup_tarla", {
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-  deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });
 
 export const lookupUseCategory = pgTable("lookup_use_category", {
@@ -622,7 +626,6 @@ export const lookupUseCategory = pgTable("lookup_use_category", {
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-  deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });
 
 // ── Persoană group ──────────────────────────────────────────────────────────
@@ -633,7 +636,6 @@ export const lookupPersonType = pgTable("lookup_person_type", {
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-  deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });
 
 export const lookupPersonRole = pgTable("lookup_person_role", {
@@ -643,7 +645,6 @@ export const lookupPersonRole = pgTable("lookup_person_role", {
   sortOrder:   integer("sort_order").notNull().default(0),
   createdAt:   timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt:   timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-  deletedAt:   timestamp("deleted_at", { withTimezone: true }),
 });
 
 // Judicial-person legal/organisational form (SRL/SA/PFA/etc.). Replaces the
@@ -655,7 +656,6 @@ export const lookupJudicialPersonType = pgTable("lookup_judicial_person_type", {
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-  deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });
 
 export const lookupCitizenship = pgTable("lookup_citizenship", {
@@ -664,7 +664,6 @@ export const lookupCitizenship = pgTable("lookup_citizenship", {
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-  deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });
 
 // ── Document group ──────────────────────────────────────────────────────────
@@ -682,7 +681,6 @@ export const lookupDocumentType = pgTable("lookup_document_type", {
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-  deletedAt: timestamp("deleted_at", { withTimezone: true }),
   // Slice #21.03.Import: optional type-specific field definitions — an array
   // of { key, labelRo, labelEn, type, order, aiHint } (see
   // src/lib/documents/template-fields.ts). NULL/empty = no template yet, so
@@ -720,7 +718,6 @@ export const lookupInstitution = pgTable("lookup_institution", {
   sortOrder:       integer("sort_order").notNull().default(0),
   createdAt:       timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt:       timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-  deletedAt:       timestamp("deleted_at", { withTimezone: true }),
 });
 
 // ── Property ↔ Person Role whitelist ────────────────────────────────────────
@@ -778,7 +775,6 @@ export const lookupPropertyPropertyRole = pgTable("lookup_property_property_role
   sortOrder:   integer("sort_order").notNull().default(0),
   createdAt:   timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt:   timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-  deletedAt:   timestamp("deleted_at", { withTimezone: true }),
 });
 
 // Document <-> Document relationship types (e.g. Înlocuiește, Modifică, …)
@@ -789,7 +785,6 @@ export const lookupDocumentDocumentRole = pgTable("lookup_document_document_role
   sortOrder:   integer("sort_order").notNull().default(0),
   createdAt:   timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt:   timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-  deletedAt:   timestamp("deleted_at", { withTimezone: true }),
 });
 
 // Person <-> Person role whitelist — each row marks a lookup_person_role entry
@@ -837,7 +832,10 @@ export const lookupPersonPersonRole = pgTable(
 // be replaced by junction table relationships to Person in Slice 5.
 //
 // Code is auto-generated: DOC00001, DOC00002, …
-// Soft-delete via deleted_at (same pattern as person / property).
+// Deleting a document deletes the row (Slice #29.04) — pages, versions and
+// junction rows cascade, its stored page files are removed by the API layer,
+// and its principal_object row goes with it. Codes are never reissued: they
+// come from a sequence, and nextval() does not roll back.
 
 export const document = pgTable("document", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -935,7 +933,6 @@ export const document = pgTable("document", {
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
-  deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });
 
 // ---------------------------------------------------------------------------
@@ -990,7 +987,7 @@ export const documentVersion = pgTable(
 // property_person — M:M junction between Property and Person  (Slice #5.1)
 // ---------------------------------------------------------------------------
 //
-// No deleted_at — associations are hard-deleted (same pattern as address rows).
+// Associations are deleted outright (same pattern as address rows).
 // ON DELETE CASCADE on both sides keeps this table clean automatically.
 // Duplicate associations are blocked by the unique index.
 
@@ -1189,8 +1186,6 @@ export const groups = pgTable("groups", {
   lastPosition: integer("last_position").notNull().default(0),
   createdAt:   timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt:   timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-  // Slice #19.30: soft-delete — set by API DELETE instead of hard-deleting.
-  deletedAt:   timestamp("deleted_at", { withTimezone: true }),
 });
 
 export const groupMember = pgTable(
@@ -1238,8 +1233,6 @@ export const stamps = pgTable("stamps", {
   notes:            text("notes"),
   createdAt:        timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt:        timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-  // Slice #19.30: soft-delete — set by API DELETE instead of hard-deleting.
-  deletedAt:        timestamp("deleted_at", { withTimezone: true }),
 });
 
 export const stampMember = pgTable(
@@ -1616,9 +1609,10 @@ export const timeFrameSetting = pgTable("time_frame_setting", {
 // No backfill: nothing in the DB recorded which document produced which
 // existing Property. Pre-migration documents stay unlocked (accepted).
 //
-// Soft-delete: `property.deleted_at` means the ON DELETE CASCADE below never
-// fires on the normal delete path, so `softDeleteProperty` hard-deletes the
-// link row explicitly (see src/lib/properties/corner-source.ts).
+// Slice #29.04: properties are hard-deleted, so the ON DELETE CASCADE below
+// now fires on the normal delete path and frees the source document by
+// itself. The explicit release that `softDeleteProperty` used to perform is
+// gone with it (see src/lib/properties/corner-source.ts).
 
 export const propertyCornerSource = pgTable(
   "property_corner_source",

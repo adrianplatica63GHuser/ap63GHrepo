@@ -36,14 +36,18 @@
  * see the header of `preexisting-check.ts`: under-claiming costs a duplicate,
  * over-claiming loses a file.
  *
- * ⚠️ **SOFT-DELETED DOCUMENTS DO NOT COUNT AS PRESENT.** `document.deleted_at`
- * is the archive's tombstone, and a user who deleted a document and is now
- * re-importing the file is asking for it back. Telling them it is already here
- * — and then linking a deleted row to their new Property — is the one outcome
- * that would make this stage worse than not having it.
+ * ⚠️ **A DELETED DOCUMENT DOES NOT COUNT AS PRESENT**, and since Slice #29.04
+ * that is free rather than filtered. A user who deleted a document and is now
+ * re-importing the file is asking for it back; telling them it is already
+ * here — and then linking a dead row to their new Property — is the one
+ * outcome that would make this stage worse than not having it. Under soft
+ * delete that took an explicit `deleted_at IS NULL` on the join, which is now
+ * removed: a deleted document has no `document` row and no `document_page`
+ * rows, so it cannot be a candidate. The property is the same; the mechanism
+ * is the schema rather than a predicate a future edit could drop.
  */
 
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 
 import { db } from "@/db";
 import { document, documentPage } from "@/db/schema";
@@ -126,7 +130,7 @@ export async function findExistingDocuments(
       })
       .from(documentPage)
       .innerJoin(document, eq(document.id, documentPage.documentId))
-      .where(and(inArray(documentPage.documentId, batch), isNull(document.deletedAt)));
+      .where(inArray(documentPage.documentId, batch));
     rows.push(...page);
   }
 

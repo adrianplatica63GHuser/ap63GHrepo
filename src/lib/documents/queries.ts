@@ -1,7 +1,10 @@
 /**
  * DB query helpers for the Document API.
  *
- * Soft delete: list + getById filter out deleted rows.
+ * Delete: the API path deletes the row (Slice #29.04). Pages, versions and
+ * junctions cascade, the document's `principal_object` row goes with it (see
+ * `src/lib/entities/delete.ts`), and the stored page FILES are removed too —
+ * which nothing in this application had ever done before.
  *
  * NOTE (Slice #15.05): document types are no longer a hardcoded enum — they
  * are rows in `lookup_document_type`, managed via Administration → Reference
@@ -10,9 +13,12 @@
  * explicitly directed) — never auto-seeded by application code.
  */
 
-import { asc, and, count, desc, eq, ilike, inArray, isNotNull, isNull, lte, or, sql } from "drizzle-orm";
+import { asc, and, count, desc, eq, ilike, inArray, isNotNull, lte, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { document, documentVersion, entityMetadata, groupMember, groups, lookupDocumentType, person, principalObject } from "@/db/schema";
+import { deletePrincipalObjects } from "@/lib/entities/delete";
+import { listDocumentPageFilePaths } from "./pages-queries";
+import { deleteFiles } from "@/lib/storage";
 import type {
   DocumentCreate,
   DocumentListQuery,
@@ -98,7 +104,6 @@ export async function listDocument(
   }
 
   const where = and(
-    isNull(document.deletedAt),
     opts.documentTypeIds && opts.documentTypeIds.length > 0
       ? inArray(document.documentTypeId, opts.documentTypeIds)
       : undefined,
@@ -174,7 +179,7 @@ export async function getDocumentById(
   const rows = await db
     .select()
     .from(document)
-    .where(and(eq(document.id, id), isNull(document.deletedAt)))
+    .where(eq(document.id, id))
     .limit(1);
 
   return rows[0] ?? null;
@@ -248,7 +253,7 @@ export async function getDocumentWithSurveyor(
   const rows = await db
     .select()
     .from(document)
-    .where(and(eq(document.id, id), isNull(document.deletedAt)))
+    .where(eq(document.id, id))
     .limit(1);
 
   const doc = rows[0] ?? null;
@@ -261,7 +266,7 @@ export async function getDocumentWithSurveyor(
     const pRows = await db
       .select({ displayName: person.displayName, type: person.type })
       .from(person)
-      .where(and(eq(person.id, doc.surveyorId), isNull(person.deletedAt)))
+      .where(eq(person.id, doc.surveyorId))
       .limit(1);
     if (pRows[0]) {
       surveyorDisplayName = pRows[0].displayName;
@@ -366,7 +371,7 @@ export async function updateDocument(
     const existing = await tx
       .select({ id: document.id })
       .from(document)
-      .where(and(eq(document.id, id), isNull(document.deletedAt)))
+      .where(eq(document.id, id))
       .limit(1);
 
     if (existing.length === 0) return null;
@@ -456,16 +461,69 @@ export async function updateDocument(
 }
 
 // ---------------------------------------------------------------------------
-// Soft delete
+// Delete
 // ---------------------------------------------------------------------------
+//
+// Slice #29.04. Adrian's sentence is "whatever I see on the screen it is what
+// is in reality in database and in the files", and until this function the
+// second half had never been implemented at all: `deleteFile` existed and had
+// exactly one caller in the whole application (the route that removes a
+// single page), so every scan of every document ever deleted was still
+// sitting in the bucket.
+//
+// ORDER: read the file keys and delete the rows in one transaction, then
+// delete the bytes. Three reasons it is that way round and not files-first.
+//
+//   1. The database half is atomic and the storage half cannot be. Putting
+//      the non-atomic step last means the all-or-nothing decision is taken
+//      once, and a storage failure arrives after it rather than during it.
+//   2. If storage fails afterwards what is left is bytes nothing references —
+//      invisible, harmless, and sweepable. If storage went FIRST and the
+//      transaction then rolled back, the document would still be listed,
+//      still open, and every page would 404. That is the visible lie this
+//      slice exists to remove, and it is strictly worse.
+//   3. `document_page.file_path` is the only record of where the bytes are,
+//      and the rows cascade — so the keys have to be read BEFORE the delete
+//      whichever order the two halves run in.
+//
+// A storage failure is therefore logged, not raised: the caller has already
+// succeeded, and answering 500 would send the user back to retry a delete
+// that would now 404. The log line is the only artefact a later sweep has.
 
-export async function softDeleteDocument(id: string): Promise<boolean> {
-  const result = await db
-    .update(document)
-    .set({ deletedAt: new Date() })
-    .where(and(eq(document.id, id), isNull(document.deletedAt)))
-    .returning({ id: document.id });
-  return result.length > 0;
+export async function deleteDocuments(ids: string[]): Promise<number> {
+  if (ids.length === 0) return 0;
+
+  const { deleted, filePaths } = await db.transaction(async (tx) => {
+    // Inside the transaction, and before the delete: document_page cascades,
+    // so after the DELETE nothing knows where the bytes are, and outside the
+    // transaction a page uploaded in the gap would be orphaned with its key
+    // recorded nowhere at all.
+    const paths = await listDocumentPageFilePaths(ids, tx);
+
+    const rows = await tx
+      .delete(document)
+      .where(inArray(document.id, ids))
+      .returning({ principalObjectId: document.principalObjectId });
+
+    await deletePrincipalObjects(tx, rows.map((r) => r.principalObjectId));
+    return { deleted: rows.length, filePaths: paths };
+  });
+
+  if (deleted > 0 && filePaths.length > 0) {
+    const failed = await deleteFiles(filePaths);
+    if (failed.length > 0) {
+      console.error(
+        `[deleteDocuments] ${failed.length} page file(s) could not be removed from storage and are now orphaned: ${failed.join(", ")}`,
+      );
+    }
+  }
+
+  return deleted;
+}
+
+/** Single-document delete. Returns false when the id matched nothing (→ 404). */
+export async function deleteDocument(id: string): Promise<boolean> {
+  return (await deleteDocuments([id])) > 0;
 }
 
 // ---------------------------------------------------------------------------
@@ -474,7 +532,7 @@ export async function softDeleteDocument(id: string): Promise<boolean> {
 
 function inputToValues(
   input: DocumentCreate,
-): Omit<typeof document.$inferInsert, "id" | "code" | "principalObjectId" | "createdAt" | "updatedAt" | "deletedAt"> {
+): Omit<typeof document.$inferInsert, "id" | "code" | "principalObjectId" | "createdAt" | "updatedAt"> {
   return {
     documentTypeId: input.documentTypeId,
     title:          input.title        ?? null,
@@ -546,10 +604,11 @@ export async function getDocumentTypeTemplate(
  * The same row, plus the id and the raw template — for the save path.
  *
  * Separate from getDocumentTypeTemplate above because the two want different
- * things. That one is a read for a prompt or a form and does not care whether
- * the type has since been retired; this one backs a WRITE, so it excludes
- * soft-deleted rows (a form must not be attached to a type that no longer
- * appears in any dropdown) and returns the id the caller echoes back.
+ * things. That one is a read for a prompt or a form; this one backs a WRITE
+ * and returns the id the caller echoes back. Since Slice #29.04 a deleted
+ * type simply has no row, so the guard both queries used to need is the
+ * `eq(id)` itself — a write against a type that was deleted between the read
+ * and the write matches nothing and the route answers 404.
  */
 export async function getDocumentTypeForTemplateEdit(
   documentTypeId: string,
@@ -562,7 +621,7 @@ export async function getDocumentTypeForTemplateEdit(
       templateFields: lookupDocumentType.templateFields,
     })
     .from(lookupDocumentType)
-    .where(and(eq(lookupDocumentType.id, documentTypeId), isNull(lookupDocumentType.deletedAt)))
+    .where(eq(lookupDocumentType.id, documentTypeId))
     .limit(1);
 
   if (!row) return null;
@@ -594,7 +653,7 @@ export async function setDocumentTypeTemplateFields(
   const [row] = await db
     .update(lookupDocumentType)
     .set({ templateFields: fields, updatedAt: new Date() })
-    .where(and(eq(lookupDocumentType.id, documentTypeId), isNull(lookupDocumentType.deletedAt)))
+    .where(eq(lookupDocumentType.id, documentTypeId))
     .returning({
       id:             lookupDocumentType.id,
       key:            lookupDocumentType.key,
@@ -640,12 +699,9 @@ export async function searchDocumentAll(opts: {
 }): Promise<{ items: DocumentSearchItem[]; total: number }> {
   const pat = opts.q?.trim() ? `%${opts.q.trim()}%` : null;
 
-  const where = and(
-    isNull(document.deletedAt),
-    pat
+  const where = pat
       ? or(ilike(document.code, pat), ilike(document.title, pat))
-      : undefined,
-  );
+      : undefined;
 
   const [{ value: total }] = await db.select({ value: count() }).from(document).where(where);
 
@@ -687,7 +743,7 @@ export async function listDocumentProperties(documentId: string): Promise<Docume
       associatedAt: propertyDocument.createdAt,
     })
     .from(propertyDocument)
-    .innerJoin(property, and(eq(propertyDocument.propertyId, property.id), isNull(property.deletedAt)))
+    .innerJoin(property, eq(propertyDocument.propertyId, property.id))
     .where(eq(propertyDocument.documentId, documentId))
     .orderBy(property.code);
 
@@ -735,7 +791,7 @@ export async function listDocumentPersons(documentId: string): Promise<DocumentP
       associatedAt: personDocument.createdAt,
     })
     .from(personDocument)
-    .innerJoin(person, and(eq(personDocument.personId, person.id), isNull(person.deletedAt)))
+    .innerJoin(person, eq(personDocument.personId, person.id))
     .leftJoin(lookupPersonRole, eq(personDocument.personRoleId, lookupPersonRole.id))
     .where(eq(personDocument.documentId, documentId))
     .orderBy(person.displayName);
@@ -865,13 +921,10 @@ export async function listDocumentReferences(documentId: string): Promise<Docume
     .from(documentDocument)
     .innerJoin(
       document,
-      and(
-        or(
+      or(
           and(eq(documentDocument.documentIdA, documentId), eq(document.id, documentDocument.documentIdB)),
           and(eq(documentDocument.documentIdB, documentId), eq(document.id, documentDocument.documentIdA)),
         ),
-        isNull(document.deletedAt),
-      ),
     )
     .leftJoin(lookupDocumentType, eq(document.documentTypeId, lookupDocumentType.id))
     .leftJoin(lookupDocumentDocumentRole, eq(documentDocument.relationshipRoleId, lookupDocumentDocumentRole.id))

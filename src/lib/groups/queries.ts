@@ -17,7 +17,7 @@
  * target type.
  */
 
-import { and, asc, desc, eq, inArray, isNull, ne, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, ne, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
   document,
@@ -104,7 +104,7 @@ function propLabel(code: string, nickname: string | null): string {
 }
 
 // ---------------------------------------------------------------------------
-// List — most-recent first, with the live (non-deleted) member count.
+// List — most-recent first, with the member count.
 // Optionally filtered by targetType.
 // ---------------------------------------------------------------------------
 
@@ -116,27 +116,17 @@ export async function listGroups(
   // exposes an "id" column. Always reference outer columns as literal qualified
   // names inside sql`` templates used as correlated subqueries.
   //
-  // After migration_051, group_member.principal_object_id links to
-  // principal_object. We join to the entity table to check deleted_at.
+  // Slice #29.04: this used to JOIN principal_object and then test each
+  // entity table for `deleted_at IS NULL`, because a member whose entity had
+  // been soft-deleted still had a group_member row and would otherwise have
+  // been counted. Deleting an entity now deletes its principal_object row,
+  // and group_member cascades from THAT, so a departed member has no row left
+  // to count and the plain count is the live count.
   const memberCount = sql<number>`(
     SELECT count(*)::int
     FROM group_member gm
-    JOIN principal_object po ON po.id = gm.principal_object_id
     WHERE gm.group_id = groups.id
-      AND (
-        (po.object_type = 'PROPERTY' AND EXISTS (
-          SELECT 1 FROM property p WHERE p.principal_object_id = po.id AND p.deleted_at IS NULL
-        ))
-        OR (po.object_type = 'PERSON' AND EXISTS (
-          SELECT 1 FROM person pe WHERE pe.principal_object_id = po.id AND pe.deleted_at IS NULL
-        ))
-        OR (po.object_type = 'DOCUMENT' AND EXISTS (
-          SELECT 1 FROM document d WHERE d.principal_object_id = po.id AND d.deleted_at IS NULL
-        ))
-      )
   )`;
-
-  const baseWhere = isNull(groups.deletedAt);
 
   const query = db
     .select({
@@ -151,8 +141,8 @@ export async function listGroups(
     .orderBy(desc(groups.createdAt));
 
   const rows = targetType
-    ? await query.where(and(baseWhere, eq(groups.targetType, targetType)))
-    : await query.where(baseWhere);
+    ? await query.where(eq(groups.targetType, targetType))
+    : await query;
 
   return rows as GroupListItem[];
 }
@@ -192,8 +182,7 @@ export async function createGroup(input: GroupCreate): Promise<GroupListItem> {
 // ---------------------------------------------------------------------------
 
 export async function getGroupDetail(id: string): Promise<GroupDetail | null> {
-  // Slice #19.30: treat soft-deleted groups as not found.
-  const [g] = await db.select().from(groups).where(and(eq(groups.id, id), isNull(groups.deletedAt))).limit(1);
+  const [g] = await db.select().from(groups).where(eq(groups.id, id)).limit(1);
   if (!g) return null;
 
   const targetType = g.targetType as GroupTargetType;
@@ -214,10 +203,7 @@ export async function getGroupDetail(id: string): Promise<GroupDetail | null> {
       .from(groupMember)
       .innerJoin(
         property,
-        and(
-          eq(property.principalObjectId, groupMember.principalObjectId),
-          isNull(property.deletedAt),
-        ),
+        eq(property.principalObjectId, groupMember.principalObjectId),
       )
       .where(eq(groupMember.groupId, id))
       .orderBy(asc(groupMember.position));
@@ -242,7 +228,6 @@ export async function getGroupDetail(id: string): Promise<GroupDetail | null> {
         person,
         and(
           eq(person.principalObjectId, groupMember.principalObjectId),
-          isNull(person.deletedAt),
           eq(person.type, personType),
         ),
       )
@@ -266,10 +251,7 @@ export async function getGroupDetail(id: string): Promise<GroupDetail | null> {
       .from(groupMember)
       .innerJoin(
         document,
-        and(
-          eq(document.principalObjectId, groupMember.principalObjectId),
-          isNull(document.deletedAt),
-        ),
+        eq(document.principalObjectId, groupMember.principalObjectId),
       )
       .where(eq(groupMember.groupId, id))
       .orderBy(asc(groupMember.position));
@@ -305,14 +287,11 @@ export async function getGroupDetail(id: string): Promise<GroupDetail | null> {
       })
       .from(property)
       .where(
-        and(
-          isNull(property.deletedAt),
-          sql`NOT EXISTS (
+        sql`NOT EXISTS (
             SELECT 1 FROM group_member gm2
             WHERE gm2.group_id = ${id}
               AND gm2.principal_object_id = property.principal_object_id
           )`,
-        ),
       )
       .orderBy(desc(sql`greatest(${property.updatedAt}, ${property.createdAt})`));
 
@@ -349,7 +328,6 @@ export async function getGroupDetail(id: string): Promise<GroupDetail | null> {
       .from(person)
       .where(
         and(
-          isNull(person.deletedAt),
           eq(person.type, personType),
           sql`NOT EXISTS (
             SELECT 1 FROM group_member gm2
@@ -385,14 +363,11 @@ export async function getGroupDetail(id: string): Promise<GroupDetail | null> {
       })
       .from(document)
       .where(
-        and(
-          isNull(document.deletedAt),
-          sql`NOT EXISTS (
+        sql`NOT EXISTS (
             SELECT 1 FROM group_member gm2
             WHERE gm2.group_id = ${id}
               AND gm2.principal_object_id = document.principal_object_id
           )`,
-        ),
       )
       .orderBy(desc(sql`greatest(${document.updatedAt}, ${document.createdAt})`));
 
@@ -424,8 +399,7 @@ export async function updateGroup(
   input: GroupUpdate,
 ): Promise<GroupDetail | null> {
   await db.transaction(async (tx) => {
-    // Slice #19.30: treat soft-deleted groups as not found.
-    const [g] = await tx.select().from(groups).where(and(eq(groups.id, id), isNull(groups.deletedAt))).limit(1);
+    const [g] = await tx.select().from(groups).where(eq(groups.id, id)).limit(1);
     if (!g) return;
 
     if (input.description !== undefined) {
@@ -609,15 +583,18 @@ export async function updateGroup(
 }
 
 // ---------------------------------------------------------------------------
-// Delete (soft) — Slice #19.30: sets deleted_at instead of hard-deleting.
-// group_member rows are kept; the group simply disappears from all lists.
+// Delete — Slice #29.04: a real delete. group_member cascades, so the group
+// and its membership go together. #19.30 had kept the member rows so a
+// soft-deleted group could in principle be restored; nothing in this
+// application has ever restored one (there is no code path anywhere that
+// clears a tombstone), so they were membership rows of a group the user had
+// deleted and nothing else.
 // ---------------------------------------------------------------------------
 
 export async function deleteGroup(id: string): Promise<boolean> {
   const r = await db
-    .update(groups)
-    .set({ deletedAt: sql`NOW()` })
-    .where(and(eq(groups.id, id), isNull(groups.deletedAt)))
+    .delete(groups)
+    .where(eq(groups.id, id))
     .returning({ id: groups.id });
   return r.length > 0;
 }
@@ -628,12 +605,11 @@ export async function deleteGroup(id: string): Promise<boolean> {
 // ---------------------------------------------------------------------------
 
 export async function listPropertyGroupTags(principalObjectId: string): Promise<GroupTag[]> {
-  // Slice #19.30: exclude soft-deleted groups from tag badges.
   const rows = await db
     .select({ code: groups.code, position: groupMember.position })
     .from(groupMember)
     .innerJoin(groups, eq(groups.id, groupMember.groupId))
-    .where(and(eq(groupMember.principalObjectId, principalObjectId), isNull(groups.deletedAt)))
+    .where(eq(groupMember.principalObjectId, principalObjectId))
     .orderBy(asc(groups.code));
   return rows as GroupTag[];
 }
@@ -647,7 +623,6 @@ export async function listPropertyGroupTags(principalObjectId: string): Promise<
 export type GroupEntityTag = { id: string; code: string; position: number; description: string };
 
 export async function listEntityGroupTags(principalObjectId: string): Promise<GroupEntityTag[]> {
-  // Slice #19.30: exclude soft-deleted groups from the References tab.
   const rows = await db
     .select({
       id:          groups.id,
@@ -657,7 +632,7 @@ export async function listEntityGroupTags(principalObjectId: string): Promise<Gr
     })
     .from(groupMember)
     .innerJoin(groups, eq(groups.id, groupMember.groupId))
-    .where(and(eq(groupMember.principalObjectId, principalObjectId), isNull(groups.deletedAt)))
+    .where(eq(groupMember.principalObjectId, principalObjectId))
     .orderBy(asc(groups.code));
   return rows as GroupEntityTag[];
 }
@@ -671,7 +646,7 @@ export async function listPropertyGroupCodes(): Promise<string[]> {
   const rows = await db
     .select({ code: groups.code })
     .from(groups)
-    .where(and(eq(groups.targetType, "PROPERTY"), isNull(groups.deletedAt)))
+    .where(eq(groups.targetType, "PROPERTY"))
     .orderBy(asc(groups.code));
   return rows.map((r) => r.code);
 }
@@ -685,10 +660,7 @@ export async function listPersonGroupCodes(): Promise<string[]> {
     .select({ code: groups.code })
     .from(groups)
     .where(
-      and(
-        sql`${groups.targetType} IN ('PHYSICAL_PERSON', 'JUDICIAL_PERSON')`,
-        isNull(groups.deletedAt),
-      ),
+      sql`${groups.targetType} IN ('PHYSICAL_PERSON', 'JUDICIAL_PERSON')`,
     )
     .orderBy(asc(groups.code));
   return rows.map((r) => r.code);
@@ -699,7 +671,7 @@ export async function listDocumentGroupCodes(): Promise<string[]> {
   const rows = await db
     .select({ code: groups.code })
     .from(groups)
-    .where(and(eq(groups.targetType, "DOCUMENT"), isNull(groups.deletedAt)))
+    .where(eq(groups.targetType, "DOCUMENT"))
     .orderBy(asc(groups.code));
   return rows.map((r) => r.code);
 }
@@ -719,12 +691,9 @@ export async function listPropertyGroupMemberships(): Promise<
     .innerJoin(groups, eq(groups.id, groupMember.groupId))
     .innerJoin(
       property,
-      and(
-        eq(property.principalObjectId, groupMember.principalObjectId),
-        isNull(property.deletedAt),
-      ),
+      eq(property.principalObjectId, groupMember.principalObjectId),
     )
-    .where(and(eq(groups.targetType, "PROPERTY"), isNull(groups.deletedAt)));
+    .where(eq(groups.targetType, "PROPERTY"));
   return rows;
 }
 
@@ -741,10 +710,7 @@ export async function listPersonGroupMemberships(): Promise<
     .innerJoin(groups, eq(groups.id, groupMember.groupId))
     .innerJoin(
       person,
-      and(
-        eq(person.principalObjectId, groupMember.principalObjectId),
-        isNull(person.deletedAt),
-      ),
+      eq(person.principalObjectId, groupMember.principalObjectId),
     )
     .where(
       sql`${groups.targetType} IN ('PHYSICAL_PERSON', 'JUDICIAL_PERSON')`,
@@ -763,10 +729,7 @@ export async function listDocumentGroupMemberships(): Promise<
     .innerJoin(groups, eq(groups.id, groupMember.groupId))
     .innerJoin(
       document,
-      and(
-        eq(document.principalObjectId, groupMember.principalObjectId),
-        isNull(document.deletedAt),
-      ),
+      eq(document.principalObjectId, groupMember.principalObjectId),
     )
     .where(eq(groups.targetType, "DOCUMENT"));
   return rows;
@@ -786,9 +749,8 @@ export type GroupTagRow = { principalObjectId: string; code: string; position: n
  * `listEntityGroupTags` for a whole page of results, in ONE query.
  *
  * Global search returns up to 200 rows and shows a Grup column on each, so the
- * single-id helper would mean 200 round trips for one screen. Same filter
- * (soft-deleted groups excluded) and same ordering, keyed by
- * principal_object_id.
+ * single-id helper would mean 200 round trips for one screen. Same ordering
+ * as the single-id version, keyed by principal_object_id.
  *
  * An empty id list short-circuits: `inArray(col, [])` is not a query worth
  * sending, and some drivers render it as invalid SQL rather than "no rows".
@@ -808,10 +770,7 @@ export async function listGroupTagsForEntities(
     .from(groupMember)
     .innerJoin(groups, eq(groups.id, groupMember.groupId))
     .where(
-      and(
-        inArray(groupMember.principalObjectId, [...principalObjectIds]),
-        isNull(groups.deletedAt),
-      ),
+      inArray(groupMember.principalObjectId, [...principalObjectIds]),
     )
     .orderBy(asc(groups.code));
 

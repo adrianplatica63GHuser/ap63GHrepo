@@ -1,4 +1,16 @@
 -- fix_property_migration.sql
+--
+-- ⚠️ HISTORICAL. DO NOT RUN. Kept for the record only.
+--
+-- Written to repair a partially-applied 0001 migration in 2025. It creates
+-- `property` with a `deleted_at` column, which Slice #29.04 (migration_070)
+-- removed from the schema — so running this now produces a table that
+-- Verify-Schema.ps1 would pass and the application would then be wrong about.
+-- Recovering a broken `property` table today means a full reset
+-- (src/db/supabase_reset.sql + supabase_schema_full.sql), per CLAUDE.md.
+--
+-- Original header follows.
+--
 -- Run once in pgAdmin query tool to repair the partially-applied 0001 migration.
 -- Safe to run when property table is missing but property_address / property_corner exist.
 

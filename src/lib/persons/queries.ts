@@ -4,8 +4,10 @@
  * Manual joins/queries (no Drizzle "with" relations) — keeps the schema
  * file small and the data flow explicit.
  *
- * Soft delete: the API path always sets `person.deleted_at`. The list view
- * filters out deleted rows; getPersonById also returns null for deleted.
+ * Delete: the API path deletes the row (Slice #29.04). `natural_person` /
+ * `judicial_person`, addresses, versions and every junction cascade, and the
+ * person's `principal_object` row goes with it — see
+ * `src/lib/entities/delete.ts` for what that takes with it and why.
  *
  * Address PATCH semantics (merge by kind): when `addresses` is included in
  * the update payload, we delete all existing addresses for the person and
@@ -13,8 +15,9 @@
  * untouched.
  */
 
-import { and, count, desc, eq, ilike, inArray, isNull, or, sql } from "drizzle-orm";
+import { and, count, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
 import { db } from "@/db";
+import { deletePrincipalObjects } from "@/lib/entities/delete";
 import {
   address,
   entityMetadata,
@@ -110,7 +113,6 @@ export async function listPersons(opts: ListQuery): Promise<{
   const where = and(
     // Only natural persons on this list page.
     eq(person.type, "NATURAL"),
-    isNull(person.deletedAt),
     groupFilter,
     // Slice #20.06: metadata filters.
     opts.importance ? eq(entityMetadata.importance, opts.importance) : undefined,
@@ -238,7 +240,6 @@ export async function listAllPersons(opts: AllPersonsListQuery): Promise<{
   }
 
   const where = and(
-    isNull(person.deletedAt),
     groupFilter,
     opts.types ? inArray(person.type, opts.types) : undefined,
     searchPattern
@@ -300,7 +301,7 @@ export async function getPersonById(id: string): Promise<PersonFull | null> {
   const personRows = await db
     .select()
     .from(person)
-    .where(and(eq(person.id, id), isNull(person.deletedAt)))
+    .where(eq(person.id, id))
     .limit(1);
 
   if (personRows.length === 0) return null;
@@ -588,7 +589,7 @@ export async function updateNaturalPerson(
     const personRows = await tx
       .select()
       .from(person)
-      .where(and(eq(person.id, id), isNull(person.deletedAt)))
+      .where(eq(person.id, id))
       .limit(1);
     if (personRows.length === 0) return null;
 
@@ -701,16 +702,35 @@ export async function updateNaturalPerson(
 }
 
 // ---------------------------------------------------------------------------
-// Soft delete
+// Delete
 // ---------------------------------------------------------------------------
+//
+// Slice #29.04: a real delete. Both the single and the batch route go through
+// `deletePersons` so there is exactly one delete path for a person and the
+// two can never drift — the batch route used to write `deleted_at` inline,
+// which is how the Property batch delete came to skip a cleanup step the
+// single delete performed.
+//
+// Covers Natural and Judicial persons alike: both are rows in `person`, and
+// the subtype row cascades.
 
-export async function softDeletePerson(id: string): Promise<boolean> {
-  const result = await db
-    .update(person)
-    .set({ deletedAt: new Date() })
-    .where(and(eq(person.id, id), isNull(person.deletedAt)))
-    .returning({ id: person.id });
-  return result.length > 0;
+export async function deletePersons(ids: string[]): Promise<number> {
+  if (ids.length === 0) return 0;
+
+  return await db.transaction(async (tx) => {
+    const rows = await tx
+      .delete(person)
+      .where(inArray(person.id, ids))
+      .returning({ principalObjectId: person.principalObjectId });
+
+    await deletePrincipalObjects(tx, rows.map((r) => r.principalObjectId));
+    return rows.length;
+  });
+}
+
+/** Single-person delete. Returns false when the id matched nothing (→ 404). */
+export async function deletePerson(id: string): Promise<boolean> {
+  return (await deletePersons([id])) > 0;
 }
 
 // ---------------------------------------------------------------------------
@@ -740,7 +760,6 @@ export async function searchPersonsAll(opts: {
   const codePat = opts.code?.trim() ? `%${opts.code.trim()}%` : null;
 
   const where = and(
-    isNull(person.deletedAt),
     opts.type ? eq(person.type, opts.type) : undefined,
     namePat ? ilike(person.displayName, namePat) : undefined,
     codePat ? ilike(person.code,        codePat) : undefined,
@@ -775,9 +794,9 @@ export async function searchPersonsAll(opts: {
 // Unlike searchPersonsAll (fuzzy ILIKE on name/code), this is a precise
 // exact-match lookup used to check "does a natural person with this CNP
 // already exist" when the AI-interpret route extracts a party's CNP off a
-// scanned document. CNP is unique among non-soft-deleted persons (enforced
-// by a DB trigger — see natural_person.cnp comment in schema/index.ts), so
-// at most one match is possible.
+// scanned document. CNP is unique (the partial unique index
+// natural_person_cnp_unique — see the natural_person.cnp comment in
+// schema/index.ts), so at most one match is possible.
 
 export type NaturalPersonMatchCandidate = {
   id:                 string;
@@ -804,7 +823,7 @@ export async function findNaturalPersonByCnp(cnp: string): Promise<NaturalPerson
     })
     .from(naturalPerson)
     .innerJoin(person, eq(person.id, naturalPerson.personId))
-    .where(and(eq(naturalPerson.cnp, trimmed), isNull(person.deletedAt)))
+    .where(eq(naturalPerson.cnp, trimmed))
     .limit(1);
 
   return row ? { ...row, type: "NATURAL" as const } : null;
@@ -842,7 +861,7 @@ export async function listPersonProperties(personId: string): Promise<PersonProp
       associatedAt: propertyPerson.createdAt,
     })
     .from(propertyPerson)
-    .innerJoin(property, and(eq(propertyPerson.propertyId, property.id), isNull(property.deletedAt)))
+    .innerJoin(property, eq(propertyPerson.propertyId, property.id))
     .leftJoin(lookupPersonRole, eq(lookupPersonRole.id, propertyPerson.personRoleId))
     .where(eq(propertyPerson.personId, personId))
     .orderBy(property.code);
@@ -903,7 +922,7 @@ export async function listPersonDocuments(personId: string): Promise<PersonDocum
       associatedAt:   personDocument.createdAt,
     })
     .from(personDocument)
-    .innerJoin(document, and(eq(personDocument.documentId, document.id), isNull(document.deletedAt)))
+    .innerJoin(document, eq(personDocument.documentId, document.id))
     .leftJoin(lookupDocumentType, eq(document.documentTypeId, lookupDocumentType.id))
     .leftJoin(lookupPersonRole, eq(personDocument.personRoleId, lookupPersonRole.id))
     .where(eq(personDocument.personId, personId))
@@ -924,7 +943,7 @@ export async function getPersonIdCardLink(
   const rows = await db
     .select({ id: document.id, code: document.code })
     .from(personDocument)
-    .innerJoin(document, and(eq(personDocument.documentId, document.id), isNull(document.deletedAt)))
+    .innerJoin(document, eq(personDocument.documentId, document.id))
     .innerJoin(lookupDocumentType, eq(document.documentTypeId, lookupDocumentType.id))
     .where(and(eq(personDocument.personId, personId), eq(lookupDocumentType.key, "CARTE_IDENTITATE")))
     .orderBy(desc(personDocument.createdAt))
@@ -981,13 +1000,10 @@ export async function listPersonReferences(personId: string): Promise<PersonRefI
     .from(personPerson)
     .innerJoin(
       person,
-      and(
-        or(
+      or(
           and(eq(personPerson.personIdA, personId), eq(person.id, personPerson.personIdB)),
           and(eq(personPerson.personIdB, personId), eq(person.id, personPerson.personIdA)),
         ),
-        isNull(person.deletedAt),
-      ),
     )
     .leftJoin(lookupPersonRole, eq(personPerson.relationshipRoleId, lookupPersonRole.id))
     .where(or(eq(personPerson.personIdA, personId), eq(personPerson.personIdB, personId)))

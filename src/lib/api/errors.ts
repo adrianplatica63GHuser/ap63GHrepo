@@ -40,11 +40,16 @@ export function dbErrorToResponse(err: unknown): Response | null {
     return Response.json({ error: message }, { status: 400 });
   }
 
-  // Unique violation. CNP/CUI collisions can come either from a plain
-  // index-backed constraint (carries `e.constraint`) or from the
-  // natural_person_check_cnp_unique / judicial_person_check_cui_unique
-  // triggers (migration_025), which RAISE EXCEPTION with ERRCODE 23505 but
-  // no `constraint` property — so also match on the raised message text.
+  // Unique violation. Since Slice #29.04 CNP/CUI collisions come from the
+  // plain partial unique indexes natural_person_cnp_unique /
+  // judicial_person_cui_unique (restored by migration_070), which carry
+  // `e.constraint` — the `.includes("cnp")` / `.includes("cui")` tests below
+  // are what make that work, and renaming either index would break the 409.
+  //
+  // The message-text fallback is kept deliberately. It cost nothing, and it
+  // is what let this function keep answering 409 across the swap from the
+  // migration_025 triggers (which raised 23505 with no `constraint` property)
+  // back to the indexes.
   if (e.code === "23505") {
     if (e.constraint?.includes("cnp") || message.includes("CNP")) {
       return Response.json(
@@ -72,9 +77,17 @@ export function dbErrorToResponse(err: unknown): Response | null {
     );
   }
 
-  // Foreign key violation
+  // Foreign key violation. Carries `constraint` for the same reason the 23505
+  // and 23514 branches do: without it the body says only that SOMETHING
+  // referenced the row, which is not enough for a caller to say what. Since
+  // Slice #29.04 made reference-data deletes real, this is now a reachable
+  // response rather than a theoretical one — deleting a document type any
+  // document uses lands here.
   if (e.code === "23503") {
-    return Response.json({ error: "Foreign key violation" }, { status: 400 });
+    return Response.json(
+      { error: "Foreign key violation", constraint: e.constraint },
+      { status: 400 },
+    );
   }
 
   return null;

@@ -27,11 +27,11 @@ jest.mock("@/lib/judicial-persons/queries", () => ({
   updateJudicialPerson: jest.fn(),
 }));
 
-// softDeletePerson lives in the natural-person module and is reused by the
+// deletePerson lives in the natural-person module and is reused by the
 // judicial DELETE handler — mock it there too.
 jest.mock("@/lib/persons/queries", () => ({
   __esModule: true,
-  softDeletePerson: jest.fn(),
+  deletePerson: jest.fn(),
   listPersons: jest.fn(),
   createNaturalPerson: jest.fn(),
   getPersonById: jest.fn(),
@@ -59,7 +59,7 @@ const jMocks = judicialQueries as unknown as {
 };
 
 const pMocks = personQueries as unknown as {
-  softDeletePerson: jest.Mock;
+  deletePerson: jest.Mock;
 };
 
 beforeEach(() => {
@@ -290,8 +290,8 @@ describe("PATCH /api/judicial-persons/[id]", () => {
 // ---------------------------------------------------------------------------
 
 describe("DELETE /api/judicial-persons/[id]", () => {
-  it("returns 404 when there is nothing to soft-delete", async () => {
-    pMocks.softDeletePerson.mockResolvedValueOnce(false);
+  it("returns 404 when there is nothing to delete", async () => {
+    pMocks.deletePerson.mockResolvedValueOnce(false);
     const res = await oneDelete(
       req("http://localhost/api/judicial-persons/abc", { method: "DELETE" }),
       ctx("abc"),
@@ -300,7 +300,7 @@ describe("DELETE /api/judicial-persons/[id]", () => {
   });
 
   it("returns 204 with no body on success", async () => {
-    pMocks.softDeletePerson.mockResolvedValueOnce(true);
+    pMocks.deletePerson.mockResolvedValueOnce(true);
     const res = await oneDelete(
       req("http://localhost/api/judicial-persons/abc", { method: "DELETE" }),
       ctx("abc"),

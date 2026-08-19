@@ -3,7 +3,10 @@
  *
  * GET    — fetch person + subtype + addresses
  * PATCH  — partial update; addresses use merge-by-kind semantics
- * DELETE — soft delete (sets deleted_at)
+ * DELETE — deletes the row (Slice #29.04). The subtype row, addresses,
+ *          versions, junctions and the person's principal_object row all go
+ *          with it; the code it held is retired, never reused. Unguarded
+ *          until Slice #29.05.
  */
 
 import type { NextRequest } from "next/server";
@@ -14,7 +17,7 @@ import {
 } from "@/lib/api/errors";
 import {
   getPersonById,
-  softDeletePerson,
+  deletePerson,
   updateNaturalPerson,
 } from "@/lib/persons/queries";
 import { naturalPersonUpdateSchema } from "@/lib/persons/validation";
@@ -69,7 +72,7 @@ export async function PATCH(
 export async function DELETE(_req: NextRequest, ctx: Ctx): Promise<Response> {
   const { id } = await ctx.params;
   try {
-    const ok = await softDeletePerson(id);
+    const ok = await deletePerson(id);
     if (!ok) {
       return Response.json({ error: "Not found" }, { status: 404 });
     }

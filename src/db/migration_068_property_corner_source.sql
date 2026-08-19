@@ -59,13 +59,19 @@
 --   using it will still create a duplicate Property. Only documents imported
 --   or processed from this migration onward are protected.
 --
--- SOFT-DELETE
---   Properties soft-delete (softDeleteProperty in src/lib/properties/queries.ts
+-- SOFT-DELETE  [SUPERSEDED BY SLICE #29.04 - migration_070]
+--   This paragraph used to read: "Properties soft-delete (softDeleteProperty
 --   sets deleted_at; the row stays). The ON DELETE CASCADE below therefore
---   never fires for the normal delete path, so a stale link would block its
---   source document forever. src/lib/properties/corner-source.ts hard-deletes
---   the link row inside softDeleteProperty instead - see the comment there for
---   why cleanup-on-delete beats a trigger.
+--   never fires for the normal delete path", and the cleanup was done in the
+--   application by releaseCornerSourceForProperty.
+--
+--   None of that is true any more. Properties are deleted for real, the
+--   CASCADE below FIRES on the normal delete path, and that helper is gone.
+--   The consequence for anyone editing this table: the ON DELETE CASCADE is
+--   now the ONLY thing that frees a source document when its Property goes.
+--   Weaken it and a coordinate file is spent forever. It is asserted in
+--   src/__tests__/hard-delete-single-source.test.ts against this schema, not
+--   only against the Drizzle declaration.
 --
 -- Idempotent: IF NOT EXISTS throughout; safe to re-run.
 
@@ -77,8 +83,9 @@ CREATE TABLE IF NOT EXISTS property_corner_source (
   id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
 
   -- The document whose coordinate file supplied the corners.
-  -- ON DELETE CASCADE: a hard-deleted document releases its claim. (Documents
-  -- soft-delete in the normal flow, so this fires only on a real DELETE.)
+  -- ON DELETE CASCADE: deleting a document releases its claim. Since Slice
+  -- #29.04 that is the only kind of document delete there is, so this fires on
+  -- the normal path.
   document_id uuid NOT NULL
               REFERENCES document(id) ON DELETE CASCADE,
 
