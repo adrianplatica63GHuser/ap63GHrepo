@@ -65,6 +65,11 @@
  *     Direct : npm run db:verify-rebuild -- --port 5433 --password <pw>
  *
  * FLAGS
+ *   --container <name>  run psql/pg_dump INSIDE this docker container, using its
+ *                       own client binaries. Use this on Windows, where there is
+ *                       no psql on PATH; --host and --port are then ignored,
+ *                       because inside the container the server is on its own
+ *                       127.0.0.1:5432.
  *   --host <h>          default 127.0.0.1 (loopback only, enforced)
  *   --port <p>          default 5433
  *   --user <u>          default postgres
@@ -93,9 +98,8 @@
  *   when CI=true, so the one thing that runs on every push can never take it.
  */
 
-import { execFileSync, spawnSync } from "child_process";
+import { spawnSync } from "child_process";
 import fs from "fs";
-import os from "os";
 import path from "path";
 
 // ---------------------------------------------------------------------------
@@ -176,6 +180,7 @@ const HOST = arg("host", "127.0.0.1");
 const PORT = arg("port", "5433");
 const USER = arg("user", "postgres");
 const PASSWORD = arg("password", "rebuild-check");
+const CONTAINER = arg("container", "");
 const STUB_POSTGIS = flag("stub-postgis");
 const UPDATE_BASELINE = flag("update-baseline");
 const KEEP = flag("keep");
@@ -237,12 +242,27 @@ function note(msg: string) {
 // ---------------------------------------------------------------------------
 // Child-process plumbing
 //
-// Every psql/pg_dump child gets a scrubbed environment. DATABASE_URL and
-// SUPABASE_SYNC_URL are deleted rather than merely unused, and so is every PG*
-// variable: psql reads none of the first two, but PGHOST, PGDATABASE,
-// PGSERVICE and PGSERVICEFILE would silently redirect everything below.
-// (diff and grep are spawned with the ambient environment; they connect to
-// nothing.)
+// TWO TRANSPORTS, because there is no psql on a Windows dev machine.
+//   --container <name>  runs `docker exec <name> psql ...` -- the container's
+//                       OWN client binaries, which is how every other script in
+//                       this repo talks to Postgres (Apply-Migration.ps1,
+//                       Verify-Schema.ps1, Export-SupabaseSchema.ps1). It is
+//                       what scripts\Verify-Rebuild.ps1 uses. The first version
+//                       of this file assumed psql on PATH and died on Adrian's
+//                       machine with `spawnSync psql ENOENT` before it had
+//                       reached step 2.
+//   no --container      runs psql/pg_dump from PATH, which is what the CI job
+//                       does: the ubuntu runner ships the 16 client and the
+//                       server is a service container it cannot docker exec by
+//                       a name it knows.
+// The SQL and the assertions are identical either way; only the argv prefix
+// differs. A happy side effect of the container form is that client and server
+// versions cannot disagree, because they are the same install.
+//
+// Every child gets a scrubbed environment. DATABASE_URL and SUPABASE_SYNC_URL
+// are deleted rather than merely unused, and so is every PG* variable: psql
+// reads none of the first two, but PGHOST, PGDATABASE, PGSERVICE and
+// PGSERVICEFILE would silently redirect everything below.
 // ---------------------------------------------------------------------------
 function childEnv(): NodeJS.ProcessEnv {
   const env = { ...process.env };
@@ -256,31 +276,48 @@ function childEnv(): NodeJS.ProcessEnv {
   return env;
 }
 
+/** Inside the container the server is on its own loopback:5432, not the published port. */
 function conn(db: string): string[] {
-  return ["-h", HOST, "-p", PORT, "-U", USER, "-d", db];
+  return CONTAINER
+    ? ["-h", "127.0.0.1", "-p", "5432", "-U", USER, "-d", db]
+    : ["-h", HOST, "-p", PORT, "-U", USER, "-d", db];
 }
 
-function psql(db: string, args: string[], input?: string): string {
-  const r = spawnSync("psql", [...conn(db), "-v", "ON_ERROR_STOP=1", "--no-psqlrc", ...args], {
+/** The command and argv for one of the two Postgres client binaries. */
+function pgCommand(bin: "psql" | "pg_dump", args: string[]): [string, string[]] {
+  if (!CONTAINER) return [bin, args];
+  // -i so `-f -` can be fed on stdin; -e so PGPASSWORD crosses into the
+  // container, since childEnv() only reaches the docker client itself.
+  return ["docker", ["exec", "-i", "-e", `PGPASSWORD=${PASSWORD}`, CONTAINER, bin, ...args]];
+}
+
+function runPg(
+  bin: "psql" | "pg_dump",
+  args: string[],
+  input?: string,
+): { status: number; out: string; err: string; error?: Error } {
+  const [cmd, argv] = pgCommand(bin, args);
+  const r = spawnSync(cmd, argv, {
     env: childEnv(),
     input,
     encoding: "utf-8",
     maxBuffer: 256 * 1024 * 1024,
   });
+  return { status: r.status ?? -1, out: r.stdout ?? "", err: r.stderr ?? "", error: r.error };
+}
+
+function psql(db: string, args: string[], input?: string): string {
+  const r = runPg("psql", [...conn(db), "-v", "ON_ERROR_STOP=1", "--no-psqlrc", ...args], input);
   if (r.error) throw r.error;
   if (r.status !== 0) {
-    throw new Error(`psql exited ${r.status}\n${(r.stderr || "").trim()}\n${(r.stdout || "").trim()}`);
+    throw new Error(`psql exited ${r.status}\n${r.err.trim()}\n${r.out.trim()}`);
   }
-  return r.stdout;
+  return r.out;
 }
 
 function psqlTry(db: string, args: string[]): { status: number; out: string; err: string } {
-  const r = spawnSync("psql", [...conn(db), "-v", "ON_ERROR_STOP=1", "--no-psqlrc", ...args], {
-    env: childEnv(),
-    encoding: "utf-8",
-    maxBuffer: 256 * 1024 * 1024,
-  });
-  return { status: r.status ?? -1, out: r.stdout ?? "", err: r.stderr ?? "" };
+  const r = runPg("psql", [...conn(db), "-v", "ON_ERROR_STOP=1", "--no-psqlrc", ...args]);
+  return { status: r.status, out: r.out, err: r.err };
 }
 
 function query(db: string, sql: string): string {
@@ -294,12 +331,28 @@ function rows(db: string, sql: string): string[] {
     .filter((s) => s !== "");
 }
 
+/**
+ * Files are fed on STDIN, never by path. `psql -f <hostpath>` cannot work over
+ * docker exec -- the container has no view of the repo -- and `-f -` behaves
+ * identically for these files, which use no \i. It also keeps both transports
+ * on one code path.
+ */
 function applyFile(db: string, relPath: string): void {
-  psql(db, ["-f", path.join(REPO, relPath)]);
+  psql(db, ["-f", "-"], fs.readFileSync(path.join(REPO, relPath), "utf-8"));
 }
 
 function applyText(db: string, sql: string): void {
   psql(db, ["-f", "-"], sql);
+}
+
+/** applyFile, but returning the exit status instead of throwing. */
+function applyFileTry(db: string, relPath: string): { status: number; out: string; err: string } {
+  const r = runPg(
+    "psql",
+    [...conn(db), "-v", "ON_ERROR_STOP=1", "--no-psqlrc", "-f", "-"],
+    fs.readFileSync(path.join(REPO, relPath), "utf-8"),
+  );
+  return { status: r.status, out: r.out, err: r.err };
 }
 
 // ---------------------------------------------------------------------------
@@ -320,11 +373,16 @@ function applyText(db: string, sql: string): void {
 // it occurs in, and stable when unrelated objects are added or removed.
 // ---------------------------------------------------------------------------
 function dump(db: string): string {
-  return execFileSync(
-    "pg_dump",
-    [...conn(db), "--schema-only", "--no-owner", "--no-privileges", "--schema=public"],
-    { env: childEnv(), encoding: "utf-8", maxBuffer: 256 * 1024 * 1024 },
-  );
+  const r = runPg("pg_dump", [
+    ...conn(db),
+    "--schema-only",
+    "--no-owner",
+    "--no-privileges",
+    "--schema=public",
+  ]);
+  if (r.error) throw r.error;
+  if (r.status !== 0) throw new Error(`pg_dump exited ${r.status}\n${r.err.trim()}`);
+  return r.out;
 }
 
 /**
@@ -377,23 +435,46 @@ function parseObjects(text: string): Map<string, string> {
   return out;
 }
 
-/** A real line diff of two short texts, via diff(1). */
+/**
+ * A real line diff of two short texts, in JavaScript.
+ *
+ * This shelled out to diff(1) until Adrian's first run: there is no diff on
+ * Windows either, and it would have been the next ENOENT after psql. Object
+ * bodies are tens of lines, so a plain longest-common-subsequence table is
+ * quick enough and has no dependency to be missing.
+ */
 function lineDiff(a: string, b: string): string[] {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ga40-obj-"));
-  try {
-    const fa = path.join(dir, "a");
-    const fb = path.join(dir, "b");
-    fs.writeFileSync(fa, a + "\n");
-    fs.writeFileSync(fb, b + "\n");
-    const r = spawnSync("diff", ["-u", fa, fb], { encoding: "utf-8", maxBuffer: 16 * 1024 * 1024 });
-    return (r.stdout || "")
-      .split("\n")
-      .filter((l) => /^[+-]/.test(l) && !/^(---|\+\+\+)/.test(l))
-      .map((l) => `${l[0]} ${l.slice(1).trim()}`)
-      .filter((l) => l.trim().length > 1);
-  } finally {
-    fs.rmSync(dir, { recursive: true, force: true });
+  const A = a.split("\n");
+  const B = b.split("\n");
+  const n = A.length;
+  const m = B.length;
+
+  // lcs[i][j] = length of the longest common subsequence of A[i..] and B[j..]
+  const lcs: number[][] = Array.from({ length: n + 1 }, () => new Array<number>(m + 1).fill(0));
+  for (let i = n - 1; i >= 0; i -= 1) {
+    for (let j = m - 1; j >= 0; j -= 1) {
+      lcs[i][j] = A[i] === B[j] ? lcs[i + 1][j + 1] + 1 : Math.max(lcs[i + 1][j], lcs[i][j + 1]);
+    }
   }
+
+  const out: string[] = [];
+  let i = 0;
+  let j = 0;
+  while (i < n && j < m) {
+    if (A[i] === B[j]) {
+      i += 1;
+      j += 1;
+    } else if (lcs[i + 1][j] >= lcs[i][j + 1]) {
+      out.push(`- ${A[i].trim()}`);
+      i += 1;
+    } else {
+      out.push(`+ ${B[j].trim()}`);
+      j += 1;
+    }
+  }
+  for (; i < n; i += 1) out.push(`- ${A[i].trim()}`);
+  for (; j < m; j += 1) out.push(`+ ${B[j].trim()}`);
+  return out.filter((l) => l.trim().length > 1);
 }
 
 /**
@@ -637,7 +718,16 @@ function main(): void {
       "SELECT datname FROM pg_database WHERE NOT datistemplate ORDER BY datname",
     );
   } catch (e) {
-    bad(`cannot reach a Postgres server at ${HOST}:${PORT} as ${USER}: ${(e as Error).message.split("\n")[0]}`);
+    const how = CONTAINER
+      ? `docker exec ${CONTAINER} psql (the container's own client)`
+      : "psql from PATH";
+    bad(
+      `cannot reach a Postgres server as ${USER} via ${how}: ${(e as Error).message.split("\n")[0]}. ` +
+        (CONTAINER
+          ? `Is the container running? (docker ps)`
+          : `If there is no psql on this machine -- there is none on a Windows box with only Docker ` +
+            `Desktop -- pass --container <name> and it will use the container's own binaries instead.`),
+    );
     finish();
     return;
   }
@@ -696,7 +786,7 @@ function main(): void {
   ok("server holds nothing this check did not create, and `postgres` is empty");
 
   const serverVersion = query("postgres", "SHOW server_version");
-  const dumpVersion = execFileSync("pg_dump", ["--version"], { env: childEnv(), encoding: "utf-8" }).trim();
+  const dumpVersion = runPg("pg_dump", ["--version"]).out.trim();
   const serverMajor = serverVersion.split(".")[0];
   const dumpMajor = (dumpVersion.match(/(\d+)\./) || [])[1];
   if (serverMajor !== dumpMajor) {
@@ -811,7 +901,7 @@ function main(): void {
   // nothing said so. Row counts alone are a weak test, so the `key` slugs the
   // application switches on are checked too.
   step("src/db/sync-reference-data.sql loads into a freshly rebuilt database");
-  const refRun = psqlTry(DB_FULL, ["-f", path.join(REPO, "src/db/sync-reference-data.sql")]);
+  const refRun = applyFileTry(DB_FULL, "src/db/sync-reference-data.sql");
   if (refRun.status !== 0) {
     bad(`src/db/sync-reference-data.sql exited ${refRun.status}:\n${indent(refRun.err)}`);
   } else {
@@ -862,7 +952,7 @@ function main(): void {
 
   // ── Step 7: reset, and then the sequence the reset exists for ───────────
   step("supabase_reset.sql empties the database, and the full schema applies again on top");
-  const resetRun = psqlTry(DB_FULL, ["-f", path.join(REPO, "src/db/supabase_reset.sql")]);
+  const resetRun = applyFileTry(DB_FULL, "src/db/supabase_reset.sql");
   if (resetRun.status !== 0) {
     bad(`supabase_reset.sql exited ${resetRun.status}:\n${indent(resetRun.err)}`);
   } else {
@@ -935,7 +1025,7 @@ function main(): void {
     `SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_name IN (${REPAIRED.map((t) => `'${t}'`).join(",")})`,
   );
   if (stillThere.length > 0) bad(`could not drop ${stillThere.join(", ")} - the test below proves nothing`);
-  const repairRun = psqlTry(DB_REPAIR, ["-f", path.join(REPO, "src/db/supabase_repair_missing_tables.sql")]);
+  const repairRun = applyFileTry(DB_REPAIR, "src/db/supabase_repair_missing_tables.sql");
   if (repairRun.status !== 0) {
     bad(
       `supabase_repair_missing_tables.sql exited ${repairRun.status} on a database missing its 13 tables:\n${indent(repairRun.err)}`,
@@ -959,7 +1049,7 @@ function main(): void {
   } else {
     for (const f of pre070) applyFile(DB_PRE070, f);
     const before = new Set(tablesIn(DB_PRE070));
-    const refusal = psqlTry(DB_PRE070, ["-f", path.join(REPO, "src/db/supabase_repair_missing_tables.sql")]);
+    const refusal = applyFileTry(DB_PRE070, "src/db/supabase_repair_missing_tables.sql");
     if (refusal.status === 0) {
       bad("the repair ran to completion on a database that still carries deleted_at. Its pre-flight did not fire.");
     } else if (!/predates migration_070/.test(refusal.err)) {

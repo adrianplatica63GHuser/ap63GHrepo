@@ -141,9 +141,16 @@ try {
 
     # NOT $args. It is an automatic variable that every function and script
     # block redefines, so a value assigned to it here is invisible one scope in.
+    # --container, not bare --host/--port: there is no psql or pg_dump on a
+    # Windows machine that has only Docker Desktop, and the first version of
+    # this script died on Adrian's box with `spawnSync psql ENOENT` before it
+    # reached step 2. The check runs both binaries inside the container instead,
+    # which is what every other script in this repo does -- and which also makes
+    # a client/server version mismatch impossible.
     $nodeArgs = @(
         (Join-Path $repoRoot 'node_modules\tsx\dist\cli.mjs'),
         (Join-Path $repoRoot 'scripts\verify-rebuild.ts'),
+        '--container', $container,
         '--host', '127.0.0.1',
         '--port', "$Port",
         '--user', 'postgres',
