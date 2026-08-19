@@ -4,29 +4,8 @@
 -- GENERATED FILE -- DO NOT EDIT BY HAND.
 -- Regenerate with:  .\scripts\Export-SupabaseSchema.ps1
 --
--- Generated : 2026-08-12 09:30
+-- Generated : 2026-08-19 10:10
 -- Source    : local Docker database (ga40db @ ga40prj-postgres)
---
--- !! HAND-EDITED SINCE, BY SLICE #29.04 (migration_070). REGENERATE. !!
---   The edit removed deleted_at from sixteen tables, removed the two
---   natural_person_check_cnp_unique / judicial_person_check_cui_unique
---   functions and their triggers, and added back the two partial unique
---   indexes those had replaced.
---
---   It was edited rather than left stale because this file is the from-scratch
---   rebuild for a Supabase project: leaving it as it was meant that any
---   database rebuilt from it would be born with the column and with two
---   trigger functions whose bodies read a column that no longer exists, i.e.
---   born unable to insert a person. A stale rebuild script is worse than an
---   out-of-order diff.
---
---   VERIFIED, not assumed: a database built from this file was compared with
---   `pg_dump -s` against one built by applying migration_070 to the previous
---   schema. Identical. The only cosmetic difference from a real regeneration
---   is that the two restored indexes were appended rather than placed in
---   pg_dump's alphabetical order, so the next Export-SupabaseSchema.ps1 run
---   will show them moving. Run it and commit the result; the timestamp above
---   is a week stale until you do.
 --
 -- Applies the complete schema from scratch after running
 -- supabase_reset.sql. Run in the Supabase SQL Editor.
@@ -1658,20 +1637,6 @@ ALTER TABLE ONLY public.user_requests
 
 
 --
--- Name: judicial_person_cui_unique; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX judicial_person_cui_unique ON public.judicial_person USING btree (cui_number) WHERE (cui_number IS NOT NULL);
-
-
---
--- Name: natural_person_cnp_unique; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX natural_person_cnp_unique ON public.natural_person USING btree (cnp) WHERE (cnp IS NOT NULL);
-
-
---
 -- Name: address_person_kind_unique; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1844,6 +1809,20 @@ CREATE INDEX idx_property_nickname_trgm ON public.property USING gin (nickname p
 --
 
 CREATE INDEX idx_property_tarla_sola_trgm ON public.property USING gin (tarla_sola public.gin_trgm_ops) WHERE (tarla_sola IS NOT NULL);
+
+
+--
+-- Name: judicial_person_cui_unique; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX judicial_person_cui_unique ON public.judicial_person USING btree (cui_number) WHERE (cui_number IS NOT NULL);
+
+
+--
+-- Name: natural_person_cnp_unique; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX natural_person_cnp_unique ON public.natural_person USING btree (cnp) WHERE (cnp IS NOT NULL);
 
 
 --
