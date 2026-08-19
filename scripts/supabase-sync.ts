@@ -95,22 +95,6 @@ async function syncSimple(
   ok(`${table}  (${rowCount ?? 0} rows)`);
 }
 
-/** lookup_others — needs category column plus optional description. */
-async function syncLookupOthers(): Promise<void> {
-  const { rows, rowCount } = await localPool.query(
-    `SELECT name, description, category, sort_order
-     FROM lookup_others
-     ORDER BY category, sort_order`,
-  );
-  for (const row of rows) {
-    await supaPool.query(
-      `INSERT INTO lookup_others (name, description, category, sort_order)
-       VALUES ($1, $2, $3, $4)`,
-      [row.name, row.description, row.category, row.sort_order],
-    );
-  }
-  ok(`lookup_others  (${rowCount ?? 0} rows)`);
-}
 
 /**
  * lookup_doc_type_person_role — M:M junction.
@@ -207,8 +191,7 @@ async function main() {
       lookup_person_type,
       lookup_citizenship,
       lookup_document_type,
-      lookup_institution,
-      lookup_others
+      lookup_institution
     CASCADE
   `);
 
@@ -223,7 +206,6 @@ async function main() {
   await syncSimple("lookup_document_type", ["key", "name", "sort_order"], "sort_order");
   await syncSimple("lookup_institution",   ["name", "institution_type", "sort_order"], "sort_order");
   await syncSimple("lookup_person_role",   ["name", "description", "sort_order"], "sort_order");
-  await syncLookupOthers();
 
   // Junction tables (depend on base tables already inserted above)
   await syncDocTypePersonRoles();

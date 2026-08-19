@@ -155,25 +155,28 @@ $body = [System.IO.File]::ReadAllText($rawFile)
 # 'schema "topology" already exists' under ON_ERROR_STOP.
 $body = $body -replace 'CREATE SCHEMA topology;', 'CREATE SCHEMA IF NOT EXISTS topology;'
 
-# ...and the same is true of `public`, which the line above never covered.
-# pg_dump emits CREATE SCHEMA public because it is dumping a schema object;
-# but `public` exists in every Postgres database ever created, and Supabase is
-# no exception, so replaying this file aborted on its 44th line with
-# 'schema "public" already exists' under ON_ERROR_STOP. That is the first
-# statement after the SETs, so `npm run supabase:sync` could never get past
-# it -- measured on Slice #29.04, and true of every generated version of this
-# file since #21.09.help.error made it generated. supabase_reset.sql does not
-# drop the schema (it drops the objects INSIDE it, deliberately, so Supabase's
-# own grants on `public` survive), so IF NOT EXISTS is the whole fix.
-$body = $body -replace 'CREATE SCHEMA public;', 'CREATE SCHEMA IF NOT EXISTS public;'
+# pg_dump opens with  set_config('search_path', '', false)  -- an EMPTY search
+# path, for the whole SESSION, because everything it then emits is schema-
+# qualified and it does not want to depend on the caller's path. Correct for
+# the dump; a trap for whatever runs it. scripts/supabase-sync.ts applies this
+# file through its `supaPool` and then issues unqualified TRUNCATEs on the same
+# connection, which failed with `relation "lookup_property_person_role" does
+# not exist` about a table that had just been created two thousand lines above.
+# Reproduced exactly: apply the file and TRUNCATE in one psql session and the
+# same error appears; do it in two sessions and it does not.
+#
+# So put the path back. `false` (session-wide, not transaction-local) mirrors
+# what pg_dump did, and undoes it for the rest of the connection's life.
+$body = $body + @"
 
-# The comment on `public` goes entirely. COMMENT ON SCHEMA requires ownership,
-# and on a Supabase project `public` is owned by pg_database_owner rather than
-# by the role the sync connects as -- so this is the next statement that could
-# stop the rebuild, one line after the one that did. It restates the default
-# Postgres comment and is worth nothing.
-$body = $body -replace "(?m)^--\r?\n-- Name: SCHEMA public; Type: COMMENT.*\r?\n--\r?\n\r?\n", ''
-$body = $body -replace "(?m)^COMMENT ON SCHEMA public IS 'standard public schema';\r?\n\r?\n\r?\n", ''
+--
+-- Restore a usable search_path for the session that applied this file.
+-- pg_dump emptied it at the top; every consumer that issues an unqualified
+-- statement afterwards on the same connection needs it back. (Slice #29.04)
+--
+
+SELECT pg_catalog.set_config('search_path', 'public', false);
+"@
 
 # Normalise CRLF -> LF (.gitattributes enforces LF everywhere in this repo).
 $body = $body -replace "`r`n", "`n"

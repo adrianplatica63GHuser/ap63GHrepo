@@ -2573,3 +2573,10 @@ ALTER TABLE ONLY public.stamp_member
 -- PostgreSQL database dump complete
 --
 
+--
+-- Restore a usable search_path for the session that applied this file.
+-- pg_dump emptied it at the top; every consumer that issues an unqualified
+-- statement afterwards on the same connection needs it back. (Slice #29.04)
+--
+
+SELECT pg_catalog.set_config('search_path', 'public', false);
