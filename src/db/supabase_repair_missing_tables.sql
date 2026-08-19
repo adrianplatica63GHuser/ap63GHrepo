@@ -207,9 +207,11 @@ CREATE TABLE IF NOT EXISTS stamp_member (
   id                  uuid              PRIMARY KEY DEFAULT gen_random_uuid(),
   stamp_id            uuid              NOT NULL REFERENCES stamps(id) ON DELETE CASCADE,
   target_type         group_target_type NOT NULL,
+  -- created_at before principal_object_id: migration_044 created the table,
+  -- migration_051 appended the FK. See the note on entity_metadata above.
+  created_at          timestamptz       NOT NULL DEFAULT now(),
   principal_object_id uuid              NOT NULL
-                                          REFERENCES principal_object(id) ON DELETE CASCADE,
-  created_at          timestamptz       NOT NULL DEFAULT now()
+                                          REFERENCES principal_object(id) ON DELETE CASCADE
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS stamp_member_stamp_principal_object_unique
@@ -235,12 +237,19 @@ CREATE TABLE IF NOT EXISTS entity_metadata (
   importance            text,
   relevance             text,
   provenance            text,
+  -- COLUMN ORDER IS PART OF THE CONTRACT HERE, not a matter of taste.
+  -- migration_045 created this table ending at updated_at; 046 and 050 then
+  -- appended importance_updated_at .. updated_by. A migrated database
+  -- therefore has created_at/updated_at BEFORE them, and a repaired one used
+  -- to have them after -- so `pg_dump -s` of the two disagreed and any
+  -- positional INSERT would have gone to different columns. Same reason for
+  -- stamp_member below. (Found by scripts/verify-rebuild.ts, Slice #31.01.)
+  created_at            timestamptz NOT NULL DEFAULT now(),
+  updated_at            timestamptz NOT NULL DEFAULT now(),
   importance_updated_at timestamptz,
   relevance_updated_at  timestamptz,
   provenance_updated_at timestamptz,
-  updated_by            text,
-  created_at            timestamptz NOT NULL DEFAULT now(),
-  updated_at            timestamptz NOT NULL DEFAULT now()
+  updated_by            text
 );
 
 -- Covers a pre-046 / pre-050 entity_metadata that already existed.
@@ -341,7 +350,10 @@ CREATE TABLE IF NOT EXISTS entity_metadata_version (
   version_number     int         NOT NULL,
   snapshot           jsonb       NOT NULL,
   created_at         timestamptz NOT NULL DEFAULT now(),
-  CONSTRAINT entity_metadata_version_meta_num_unique
+  -- Postgres's own generated name, truncated to 63 characters, because that is
+  -- what migration_045's unnamed inline UNIQUE produces. Do not tidy it.
+  -- (Slice #31.01.)
+  CONSTRAINT entity_metadata_version_entity_metadata_id_version_number_key
     UNIQUE (entity_metadata_id, version_number)
 );
 
@@ -417,7 +429,9 @@ CREATE TABLE IF NOT EXISTS calculation_run_output (
                                     REFERENCES principal_object(id) ON DELETE CASCADE,
   output_role         text        NOT NULL DEFAULT 'OWNER_PARCEL',
   created_at          timestamptz NOT NULL DEFAULT now(),
-  CONSTRAINT calc_run_output_run_po_unique
+  -- Postgres's own generated name, as produced by migration_062's unnamed
+  -- inline UNIQUE. See the note on entity_metadata_version above. (Slice #31.01.)
+  CONSTRAINT calculation_run_output_calculation_run_id_principal_object__key
     UNIQUE (calculation_run_id, principal_object_id)
 );
 
@@ -613,10 +627,29 @@ DO $$
 DECLARE
   dupes integer;
 BEGIN
+  -- ANY unique on (key), not just this file's own name for one. migration_039
+  -- writes `ADD COLUMN IF NOT EXISTS key text UNIQUE`, which Postgres names
+  -- lookup_property_type_key_key -- so a name-only test found nothing on a
+  -- migrated database and this block added a SECOND unique constraint and a
+  -- second index over the same column. `pg_dump -s` of a repaired database and
+  -- a migrated one disagreed by exactly that one constraint.
+  -- (Found by scripts/verify-rebuild.ts, Slice #31.01.)
+  -- indnkeyatts, not indnatts: the latter counts INCLUDE columns, so a
+  -- UNIQUE (key) INCLUDE (name) would not have matched and this block would
+  -- have added a second constraint anyway. indisvalid excludes a failed
+  -- CREATE INDEX CONCURRENTLY, which enforces nothing; indpred IS NULL
+  -- excludes a partial index, which enforces uniqueness only over part of the
+  -- table. (Slice #31.01 review, round two.)
   IF EXISTS (
-    SELECT 1 FROM pg_constraint
-    WHERE conname = 'lookup_property_type_key_unique'
-      AND conrelid = 'lookup_property_type'::regclass
+    SELECT 1
+      FROM pg_index i
+      JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = i.indkey[0]
+     WHERE i.indrelid = 'lookup_property_type'::regclass
+       AND i.indisunique
+       AND i.indisvalid
+       AND i.indpred IS NULL
+       AND i.indnkeyatts = 1
+       AND a.attname = 'key'
   ) THEN
     RETURN;
   END IF;

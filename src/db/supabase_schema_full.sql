@@ -18,7 +18,10 @@
 -- it assumes an empty schema), use supabase_repair_missing_tables.sql.
 -- ============================================================
 
+-- Every extension the schema below depends on. pg_trgm was missing until
+-- Slice #31.01; without it this file dies on the first gin_trgm_ops index.
 CREATE EXTENSION IF NOT EXISTS postgis;
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
 --
 -- PostgreSQL database dump
 --

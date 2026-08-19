@@ -1,7 +1,23 @@
+-- HAND-MAINTAINED, despite the line below. `npm run export:reference-data`
+-- points at scripts/export-reference-data.ts, and that file is not in the
+-- repository -- so the script exits 1 and this file has been edited by hand
+-- for some time. Noticed while wiring scripts/verify-rebuild.ts (Slice #31.01);
+-- either write the generator or drop the npm script, but do not trust the next
+-- line until one of those happens.
+--
 -- Auto-generated from src/db/supabase_schema_full.sql (authoritative seed source)
 -- Regenerate via: npm run export:reference-data
 --
--- Apply to any Postgres instance to seed all reference/lookup data:
+-- THIS FILE IS DESTRUCTIVE. It is a seed for a FRESHLY REBUILT database, not
+-- a top-up for a live one. Its two TRUNCATE ... CASCADE statements below reach
+-- nineteen domain tables through the lookup foreign keys -- document, person,
+-- natural_person, judicial_person, property, property_corner, property_address,
+-- every junction and every *_version table -- so running it against a database
+-- with real records in it deletes them. Measured at Slice #31.01 by counting
+-- the `truncate cascades to table` notices. Do not run it against ga40db
+-- unless ga40db is disposable.
+--
+-- Apply to a freshly rebuilt Postgres instance to seed all reference/lookup data:
 --   docker cp src/db/sync-reference-data.sql <container>:/tmp/ref.sql
 --   docker exec <container> psql -U postgres -d ga40db -f /tmp/ref.sql
 
@@ -10,20 +26,51 @@ SET client_encoding = 'UTF8';
 -- ──────────────────────────────────────────────────────────────────────────────
 -- Truncate (junction tables first so FK constraints are not violated)
 -- ──────────────────────────────────────────────────────────────────────────────
-TRUNCATE lookup_property_person_role, lookup_doc_type_person_role CASCADE;
+-- lookup_others was dropped by migration_052, so naming it here made this whole
+-- file fail on its second statement against any current database. The three
+-- relationship-role lookups from migration_055 were missing instead.
+-- (Slice #31.01; scripts/verify-rebuild.ts now fails on both shapes.)
+TRUNCATE lookup_property_person_role, lookup_person_person_role,
+         lookup_doc_type_person_role CASCADE;
 TRUNCATE lookup_person_role, lookup_property_type, lookup_tarla,
          lookup_use_category, lookup_person_type, lookup_citizenship,
-         lookup_document_type, lookup_institution, lookup_others,
-         lookup_judicial_person_type CASCADE;
+         lookup_document_type, lookup_institution,
+         lookup_judicial_person_type,
+         lookup_property_property_role, lookup_document_document_role CASCADE;
 
 -- ── lookup_property_type ──────────────────────────────────────────────────────
-INSERT INTO lookup_property_type (name, sort_order) VALUES
-  ('Teren Arabil',    1),
-  ('Teren Construit', 2),
-  ('Liniară',         3),
-  ('Pășune',          4),
-  ('Apartament',      5),
-  ('Casă',            6);
+--
+-- `key` and the three panel flags are NOT optional here. This block used to
+-- insert (name, sort_order) only, and it had gone stale in two ways at once:
+-- it wrote six of the fourteen types, and it left `key` NULL on all six.
+-- `key` is the immutable slug src/lib/properties/type-config.ts switches on,
+-- and the flags are the per-type form-panel visibility migration_041 sets --
+-- DEFAULT FALSE means every panel hidden. A project seeded from the old block
+-- had eight property types missing and six with no slug and every panel
+-- hidden, and nothing in the repository would have said so.
+-- Values are migration_039 + migration_040 (rows and slugs) and migration_041
+-- (flags). scripts/verify-rebuild.ts now fails when any row here has key NULL.
+-- (Slice #31.01)
+INSERT INTO lookup_property_type
+  (name, key, sort_order, show_tarla_parcela, show_address, show_street_view) VALUES
+  -- Generic / Linear: everything visible
+  ('Liniară',             'LINIARA',               3, TRUE,  TRUE,  TRUE),
+  -- Urban / Built: no Tarla/Parcela, show Address + Street View
+  ('Teren Construit',     'TEREN_CONSTRUIT',       2, FALSE, TRUE,  TRUE),
+  ('Apartament',          'APARTAMENT',            5, FALSE, TRUE,  TRUE),
+  ('Casă',                'CASA',                  6, FALSE, TRUE,  TRUE),
+  ('Garaj',               'GARAJ',                 7, FALSE, TRUE,  TRUE),
+  ('Spațiu Comercial',    'SPATIU_COMERCIAL',      8, FALSE, TRUE,  TRUE),
+  ('Birou',               'BIROU',                 9, FALSE, TRUE,  TRUE),
+  -- Agricultural / Rural: show Tarla/Parcela only
+  ('Teren Arabil',        'TEREN_ARABIL',          1, TRUE,  FALSE, FALSE),
+  ('Pășune',              'PASUNE',                4, TRUE,  FALSE, FALSE),
+  ('Vie',                 'VIE',                  10, TRUE,  FALSE, FALSE),
+  ('Livadă',              'LIVADA',               11, TRUE,  FALSE, FALSE),
+  ('Fâneață',             'FANATA',               12, TRUE,  FALSE, FALSE),
+  -- Forest / Vegetation: show Tarla/Parcela only
+  ('Pădure',              'PADURE',               13, TRUE,  FALSE, FALSE),
+  ('Vegetație Forestieră','VEGETATIE_FORESTIERA',  14, TRUE,  FALSE, FALSE);
 
 -- ── lookup_tarla ──────────────────────────────────────────────────────────────
 INSERT INTO lookup_tarla (indicativ, descriere, sort_order) VALUES
@@ -97,16 +144,9 @@ INSERT INTO lookup_institution (name, institution_type, sort_order) VALUES
   ('Judecătorie',           'Juridic',                 6),
   ('Tribunal',              'Juridic',                 7);
 
--- ── lookup_others (categories: Serviciu, Interes, Grup, Stampila) ────────────
-INSERT INTO lookup_others (name, category, sort_order) VALUES
-  ('Consultanță Juridică', 'Serviciu', 1),
-  ('Evaluare Imobiliară',  'Serviciu', 2),
-  ('Mediere',              'Serviciu', 3),
-  ('Topografie',           'Serviciu', 4),
-  ('Cumpărare',            'Interes',  5),
-  ('Vânzare',              'Interes',  6),
-  ('Închiriere',           'Interes',  7),
-  ('Arendare',             'Interes',  8);
+-- lookup_others: the table was dropped by migration_052 (its three categories
+-- moved to lookup_service / lookup_interest / stamps), so the INSERT that stood
+-- here has been removed along with the TRUNCATE at the top. (Slice #31.01)
 
 -- ── lookup_person_role ────────────────────────────────────────────────────────
 INSERT INTO lookup_person_role (id, name, description, sort_order, created_at, updated_at) VALUES
@@ -264,3 +304,34 @@ INSERT INTO lookup_property_person_role (id, person_role_id, created_at)
   SELECT gen_random_uuid(), id, now() FROM lookup_person_role WHERE name = 'Proprietar / Titular de drept real' ON CONFLICT (person_role_id) DO NOTHING;
 INSERT INTO lookup_property_person_role (id, person_role_id, created_at)
   SELECT gen_random_uuid(), id, now() FROM lookup_person_role WHERE name = 'Titular de drept' ON CONFLICT (person_role_id) DO NOTHING;
+
+-- ── lookup_property_property_role (migration_055) ─────────────────────────────
+-- Roles for Property ↔ Property. Values copied from migration_055, which is the
+-- only place they were ever written; a Supabase project rebuilt from
+-- supabase_schema_full.sql has the table and none of the rows.
+INSERT INTO lookup_property_property_role (name, description, sort_order) VALUES
+  ('Adiacent',        'Proprietăți cu latură comună',                     1),
+  ('Inclus în',       'O proprietate este parte dintr-o alta',            2),
+  ('Contiguu',        'Proprietăți vecine fără latură comună directă',    3),
+  ('Subdiviziune a',  'Parcelă rezultată din dezmembrarea alteia',        4),
+  ('Suprapus cu',     'Zone cu suprapunere parțială',                     5),
+  ('Acces prin',      'Acces la drum sau utilități prin altă proprietate', 6),
+  ('Alipit de',       'Proprietăți unite sau alipite cadastral',          7);
+
+-- ── lookup_document_document_role (migration_055) ─────────────────────────────
+-- Roles for Document ↔ Document.
+INSERT INTO lookup_document_document_role (name, description, sort_order) VALUES
+  ('Înlocuiește',           'Document care supersedează un altul',           1),
+  ('Modifică',              'Document cu modificări parțiale față de altul', 2),
+  ('Prelungește',           'Document care extinde valabilitatea altuia',    3),
+  ('Anulează',              'Document care desființează un altul',           4),
+  ('Consolidat cu',         'Documente corelate legal',                      5),
+  ('Versiune anterioară a', 'Formă anterioară a unui document în vigoare',   6),
+  ('Anexă la',              'Document atașat ca anexă unui document principal', 7),
+  ('Corecție a',            'Document care rectifică erori dintr-un altul',  8);
+
+-- ── lookup_person_person_role ─────────────────────────────────────────────────
+-- Deliberately no rows. It is a whitelist over lookup_person_role that Adrian
+-- fills from the Admin UI, and migration_055 seeds nothing into it either, so
+-- an empty table here is the same state a migrated database is in. It is
+-- truncated above so a rebuild does not inherit a previous run's whitelist.

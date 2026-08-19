@@ -95,7 +95,7 @@ BEGIN
     EXECUTE $idx$
       CREATE INDEX "property_corner_geom_idx"
         ON "property_corner"
-        USING GIST (ST_SetSRID(ST_MakePoint(lon, lat), 4326)::geography)
+        USING GIST ((ST_SetSRID(ST_MakePoint(lon, lat), 4326)::geography))
     $idx$;
     RAISE NOTICE 'PostGIS spatial index created.';
   ELSE

@@ -149,11 +149,18 @@ Write-Host "Post-processing..."
 
 $body = [System.IO.File]::ReadAllText($rawFile)
 
-# A schema-only dump captures  CREATE SCHEMA topology;  because PostGIS
-# topology is installed. When this file is replayed alongside an init script
-# that already created postgis_topology, psql aborts with
-# 'schema "topology" already exists' under ON_ERROR_STOP.
-$body = $body -replace 'CREATE SCHEMA topology;', 'CREATE SCHEMA IF NOT EXISTS topology;'
+# The dump emits CREATE SCHEMA for the schema it covers, and replayed onto a
+# database that already has it -- and `public` ALWAYS already exists -- psql
+# aborts under ON_ERROR_STOP with 'schema "public" already exists'.
+#
+# This was a single -replace for `topology`, which under `--schema=public`
+# pg_dump never emits at all, so it could not have fired; `public` was fixed by
+# hand in the generated file instead, in Slice #29.04, which meant the very next
+# run of this script would have put the failure straight back. The pattern below
+# covers any unquoted schema name -- in practice only `public` can appear here,
+# and a name pg_dump has to quote ("user", "Mixed") would not match, which is
+# noted rather than handled because this filter cannot produce one. (Slice #31.01)
+$body = $body -replace '(?m)^CREATE SCHEMA ([A-Za-z_][A-Za-z0-9_]*);', 'CREATE SCHEMA IF NOT EXISTS $1;'
 
 # pg_dump opens with  set_config('search_path', '', false)  -- an EMPTY search
 # path, for the whole SESSION, because everything it then emits is schema-
@@ -203,7 +210,14 @@ $header = @"
 -- it assumes an empty schema), use supabase_repair_missing_tables.sql.
 -- ============================================================
 
+-- Every extension the schema below depends on. pg_dump does not emit these
+-- (it dumps objects, not the extensions their operator classes come from), so
+-- they are prepended here. pg_trgm was missing until Slice #31.01, which meant
+-- this file died 1748 lines in with `operator class "public.gin_trgm_ops" does
+-- not exist for access method "gin"` -- on a file whose whole job is to build a
+-- database from scratch. Nothing had ever applied it to an empty database.
 CREATE EXTENSION IF NOT EXISTS postgis;
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
 "@
 
