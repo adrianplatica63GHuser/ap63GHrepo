@@ -377,35 +377,65 @@ describe("has-a-form is decided once, and the dropdown asks that one function", 
 
   /**
    * The same invariant, at the fetcher that is NOT in the react-query cache.
-   *                                                             (Slice #27.05)
+   *                                    (Slice #27.05, widened in Slice #29.08)
    *
    * ⚠️ **The loop above is keyed on `queryKey: ["document-types"]`, and this
-   * fetcher has none** — the import dialog reads the list with a bare `fetch`
-   * because it runs inside an effect, not a component subscription. So it was
-   * invisible to the guard while depending on the guard's invariant harder than
-   * either file above: it asks `documentTypeHasForm(item.templateFields)` of
-   * every row to decide which types get a billed model read and which rows tell
-   * the user their type has no form. Project the rows to `{ id, key, name }` —
-   * an obvious tidy, since three of the four fields are all `ensureDocType`
-   * wants — and every type reads as formless: one discovery read per distinct
-   * type in the folder, and a header that says the whole archive is unfinished.
+   * fetcher has none** — the import reads the list with a bare `fetch` because
+   * it runs inside an effect, not a component subscription. So it was invisible
+   * to the guard while depending on the guard's invariant harder than either
+   * file above: it asks `documentTypeHasForm(item.templateFields)` of every row
+   * to decide which types get a billed model read and which rows tell the user
+   * their type has no form. Project the rows to `{ id, key, name }` — an
+   * obvious tidy, since three of the four fields are all `ensureDocType` wants
+   * — and every type reads as formless.
+   *
+   * ⚠️ **IT MOVED IN #29.08 AND THIS GUARD HAD TO MOVE WITH IT — which is how
+   * the move was caught at all.** `DocTypeRow` and `fetchDocTypeRows` were
+   * local to `bulk-import-dialog.tsx` until the type gate needed the same list
+   * one screen earlier; they are `lib/import/document-type-catalogue.ts` now,
+   * and there are TWO callers. The invariant is worth more with two than it was
+   * with one, and the second caller is the more expensive: a projection there
+   * makes `documentTypeHasForm` false for every row, so `checkTypeForms` reads
+   * the whole archive as waiting for a form and STOPS the import, naming every
+   * type in it — after the classification has been paid for.
    */
-  it("keeps the import dialog's own document-types fetcher unprojected", () => {
-    const src = fs.readFileSync(
-      path.join(SRC, "app/admin/import/_components/bulk-import-dialog.tsx"),
+  it("keeps the import's document-types fetcher unprojected, at the fetcher and at both callers", () => {
+    const fetcher = fs.readFileSync(
+      path.join(SRC, "lib/import/document-type-catalogue.ts"),
       "utf8",
     );
-    expect(src).toContain("documentTypeHasForm(");
-    expect(src).toMatch(/return body\.items \?\? \[\];/);
-    // ⚠️ **And the CALLER too, which is where a projection would actually be
-    // written** — an adversarial round pointed out that the fetcher above is
-    // the tidy nobody makes. `templateFields` is OPTIONAL on `DocTypeRow`, so
-    // `(await fetchDocTypeRows()).map(({ id, key, name }) => …)` type-checks,
-    // lints, and makes `documentTypeHasForm(undefined)` false for every type:
-    // one billed discovery read per distinct type in the folder, and a header
-    // telling the user the whole archive is unfinished.
-    expect(src).toMatch(/const items = await fetchDocTypeRows\(\);/);
-    expect(src).not.toMatch(/fetchDocTypeRows\(\)[\s)]*\.map\(/);
+    expect(fetcher).toMatch(/return body\.items \?\? \[\];/);
+    // The optional field is the whole hazard: without it on the row type, a
+    // projection would not even be a type error at the call sites below.
+    expect(fetcher).toMatch(/templateFields\?: unknown;/);
+
+    // ⚠️ **The CALLERS are where a projection would actually be written** — an
+    // adversarial round pointed out that the fetcher itself is the tidy nobody
+    // makes. `templateFields` is OPTIONAL, so
+    // `(await fetchDocumentTypeCatalogue()).map(({ id, key, name }) => …)`
+    // type-checks and lints at either site.
+    const CALLERS = {
+      "app/admin/import/_components/bulk-import-dialog.tsx":
+        /const items = await fetchDocumentTypeCatalogue\(\);/,
+      "app/admin/import/_components/import-wizard.tsx":
+        /const catalogue = await fetchDocumentTypeCatalogue\(\);/,
+    } as const;
+    for (const [file, call] of Object.entries(CALLERS)) {
+      const src = fs.readFileSync(path.join(SRC, file), "utf8");
+      expect({ file, calls: call.test(src) }).toEqual({ file, calls: true });
+      expect({
+        file,
+        projected: /fetchDocumentTypeCatalogue\(\)[\s)]*\.map\(/.test(src),
+      }).toEqual({ file, projected: false });
+    }
+
+    // …and the two things that actually ask the question, each in its own file.
+    expect(
+      fs.readFileSync(path.join(SRC, "app/admin/import/_components/bulk-import-dialog.tsx"), "utf8"),
+    ).toContain("documentTypeHasForm(");
+    expect(fs.readFileSync(path.join(SRC, "lib/import/type-form-gate.ts"), "utf8")).toContain(
+      "documentTypeHasForm(",
+    );
   });
 
   it("has one marking surface, and it is that dropdown", () => {

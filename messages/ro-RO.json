@@ -2151,21 +2151,21 @@
       },
       "forecast": {
         "title": "Ce va face acest import",
-        "intro": "Folderul „{folder}” a fost citit. Nu s-a trimis și nu s-a salvat nimic încă.",
+        "intro": "Folderul „{folder}” a fost citit și documentele lui au fost clasificate. Nu s-a salvat nimic în arhivă.",
+        "introNothingSent": "Folderul „{folder}” a fost citit. Niciun fișier din el nu a avut nevoie de clasificare automată — fie se aflau deja în sistem, fie nu se pot citi ca imagine. Nu s-a salvat nimic în arhivă.",
         "documents": "Documente care vor fi create",
         "pageGroups": "…dintre care cu mai multe pagini",
-        "classificationCalls": "Imagini trimise spre clasificare automată",
+        "classificationCalls": "Imagini pentru clasificare automată",
         "coordinateFile": "Fișier de coordonate",
         "noCoordinateFile": "niciunul găsit",
         "severalCoordinateFiles": "{count, plural, one {un fișier găsit} few {# fișiere găsite} other {# de fișiere găsite}}",
-        "nothingSpentYet": "Nu s-a trimis nimic încă spre clasificare. Acest lucru începe când apăsați Continuă și este primul pas care costă.",
-        "continueButton": "Continuă — trimite {count, plural, one {o imagine} few {# imagini} other {# de imagini}} spre clasificare",
-        "changeFolder": "Alegeți alt folder",
+        "continueButton": "Continuă spre import",
+        "changeFolder": "Alegeți alt folder (clasificarea de până acum se pierde)",
         "nothingToImport": "Niciun fișier din acest folder nu va fi importat. Unele fișiere sunt ignorate automat — de exemplu arhive, desene și fișiere temporare.",
         "ignoredFiles": "Fișiere care vor fi ignorate",
         "uploadSize": "De încărcat",
         "megabytes": "{mb} MB",
-        "recheckFolder": "Verifică din nou folderul",
+        "recheckFolder": "Verifică din nou folderul (clasificarea de până acum se pierde)",
         "alreadyInSystem": "Documente aflate deja în sistem (se leagă, nu se creează)"
       },
       "report": {
@@ -2200,6 +2200,7 @@
         "documentFilePrefix": "verificare-import"
       },
       "readingMetadata": "Se citesc fișierele… {done} din {total}",
+      "readingDocumentTypes": "Se citește lista tipurilor de documente…",
       "walkFailed": "Acest folder nu a putut fi citit. Este posibil să fi fost mutat, redenumit sau deconectat.",
       "recheckFailed": "Acest folder nu a putut fi citit din nou. Este posibil să fi fost mutat sau redenumit în timp ce lucrați la el — lista de mai jos este rezultatul anterior. Alegeți din nou folderul pentru a reîncepe.",
       "statusPreexisting": "Deja în sistem",
@@ -2498,7 +2499,7 @@
         }
       },
       "title": "Documente aflate deja în sistem",
-      "intro": "Structura, fișierele și duplicatele sunt în regulă. Aceasta este prima verificare care se uită în arhivă, nu în folderul ales: sistemul vă spune care dintre documente se află deja în sistem și ce se va întâmpla cu fiecare, înainte ca ele să fie trimise spre clasificare. Aici nu aveți nimic de îndreptat: citiți ce urmează să se întâmple, bifați și mergeți mai departe.",
+      "intro": "Structura, fișierele și duplicatele sunt în regulă. Aceasta este prima verificare care se uită în arhivă, nu în folderul ales: sistemul vă spune care dintre documente se află deja în sistem și ce se va întâmpla cu fiecare, înainte ca ele să fie trimise spre clasificare. În lista de mai jos nu aveți nimic de îndreptat: citiți ce urmează să se întâmple, bifați și mergeți mai departe.",
       "clean": "Niciun document din folderul ales nu se află deja în sistem.",
       "notesTitle": "Ce înseamnă „se află deja în sistem”",
       "showNotes": "Arată din nou explicațiile",
@@ -2511,6 +2512,9 @@
       "continueWithout": "Continuă fără această verificare",
       "chooseAnotherFolder": "Alege alt folder…",
       "reportTitle": "{count, plural, one {Un document se află deja în sistem} few {# documente se află deja în sistem} other {# de documente se află deja în sistem}}",
+      "spendAgain": "{count, plural, one {Clasificarea de până acum s-a pierdut la ultima verificare. Când apăsați „Continuă” se trimite din nou o imagine spre clasificare automată, iar acest lucru se plătește a doua oară.} few {Clasificarea de până acum s-a pierdut la ultima verificare. Când apăsați „Continuă” se trimit din nou # imagini spre clasificare automată, iar acest lucru se plătește a doua oară.} other {Clasificarea de până acum s-a pierdut la ultima verificare. Când apăsați „Continuă” se trimit din nou # de imagini spre clasificare automată, iar acest lucru se plătește a doua oară.}}",
+      "readReportFirst": "Citiți raportul folderului de la finalul acestei pagini înainte de a apăsa „Continuă”: acolo sunt scrise fișierele care vor fi ignorate și observațiile despre folder, iar unele dintre ele spun să nu porniți importul.",
+      "nothingSpentYet": "{count, plural, one {Nu s-a trimis nimic încă spre clasificare. Când apăsați „Continuă” se trimite o imagine spre clasificare automată, iar acesta este primul pas care costă.} few {Nu s-a trimis nimic încă spre clasificare. Când apăsați „Continuă” se trimit # imagini spre clasificare automată, iar acesta este primul pas care costă.} other {Nu s-a trimis nimic încă spre clasificare. Când apăsați „Continuă” se trimit # de imagini spre clasificare automată, iar acesta este primul pas care costă.}}",
       "nothingToFix": "Nu aveți nimic de îndreptat în File Explorer pentru cele de mai sus. Citiți totuși lista: dacă un document din arhivă nu este cel la care vă gândeați, redenumiți fișierul din folder și sistemul îl va importa ca document nou. Când sunteți mulțumit, bifați mai jos și apăsați „Continuă”.",
       "morePaths": "încă {count, number}…",
       "row": {
@@ -2579,7 +2583,6 @@
         "structure": "Regulile de aranjare a folderelor au fost verificate toate și niciuna nu a fost încălcată. Nu aveți nimic de îndreptat în File Explorer.",
         "constraints": "Fiecare fișier a fost măsurat și niciunul nu a fost respins. Nu aveți nimic de îndreptat în File Explorer.",
         "duplication": "Fișierele au fost comparate între ele și niciunul nu apare de mai multe ori. Nu aveți nimic de îndreptat în File Explorer.",
-        "preexisting": "Arhiva a fost întrebată despre fiecare document și nu a recunoscut niciunul. Nu aveți nimic de hotărât înainte de a merge mai departe.",
         "scanning": "Scanarea s-a încheiat și fiecare rând din tabelul de mai jos are un răspuns. Nimic nu a intrat încă în arhivă."
       }
     },
@@ -2589,6 +2592,31 @@
       "whatItReads": "Se trimite doar prima pagină a fiecărui document — atât cât să i se recunoască tipul. Fișierele care nu pot fi citite ca imagine și cele care se aflau deja în sistem nu se trimit deloc.",
       "whatItWrites": "Ce se recunoaște apare în tabelul de mai jos, pe măsură ce sosește.",
       "waitHint": "Așteptați până se termină. Dacă vă răzgândiți, folosiți „Renunță la import” din bara de sus."
+    },
+    "typesBlocked": {
+      "title": "Importul s-a oprit: unele tipuri de documente nu au încă formular",
+      "folderLine": "Folderul „{folder}” a fost citit și documentele lui au fost clasificate.",
+      "intro": "{count, plural, one {Un tip de document din acest folder nu are încă un formular în care să fie puse informațiile citite de pe documente, așa că importul se oprește aici.} few {# tipuri de documente din acest folder nu au încă un formular în care să fie puse informațiile citite de pe documente, așa că importul se oprește aici.} other {# de tipuri de documente din acest folder nu au încă un formular în care să fie puse informațiile citite de pe documente, așa că importul se oprește aici.}}",
+      "listTitle": "Tipurile care au nevoie de formular",
+      "row": {
+        "existing": "{count, plural, one {Există deja în sistem, dar fără formular. Un document din acest folder este de acest tip.} few {Există deja în sistem, dar fără formular. # documente din acest folder sunt de acest tip.} other {Există deja în sistem, dar fără formular. # de documente din acest folder sunt de acest tip.}}",
+        "new": "{count, plural, one {Nu există încă în sistem. Importul l-ar fi creat acum, fără formular, pentru un document din acest folder.} few {Nu există încă în sistem. Importul l-ar fi creat acum, fără formular, pentru # documente din acest folder.} other {Nu există încă în sistem. Importul l-ar fi creat acum, fără formular, pentru # de documente din acest folder.}}"
+      },
+      "unclassified": "{count, plural, one {Un fișier nu a primit un tip — fie nu a putut fi citit ca imagine și nu a fost trimis deloc, fie a fost trimis și nu s-a primit un răspuns, fie sistemul nu l-a recunoscut. Ar ajunge la tipul „neclasificat”, care nu are nevoie de formular și nu este motivul opririi.} few {# fișiere nu au primit un tip — fie nu au putut fi citite ca imagine și nu au fost trimise deloc, fie au fost trimise și nu s-a primit un răspuns, fie sistemul nu le-a recunoscut. Ar ajunge la tipul „neclasificat”, care nu are nevoie de formular și nu este motivul opririi.} other {# de fișiere nu au primit un tip — fie nu au putut fi citite ca imagine și nu au fost trimise deloc, fie au fost trimise și nu s-a primit un răspuns, fie sistemul nu le-a recunoscut. Ar ajunge la tipul „neclasificat”, care nu are nevoie de formular și nu este motivul opririi.}}",
+      "whatNextTitle": "Ce urmează",
+      "whatNext": "Fiecare tip de mai sus are nevoie de un formular înainte ca documentele lui să poată fi importate, iar acesta se face cu DocTypeEngine. După ce fiecare tip are formular, reluați importul de la început: toate verificările de dinaintea clasificării nu costă nimic.",
+      "nothingWritten": "Nu s-a creat niciun document și nu s-a scris nimic în arhivă. Clasificarea de mai sus s-a plătit deja și se va plăti din nou la reluarea importului.",
+      "failed": {
+        "title": "Importul s-a oprit: nu s-a putut verifica dacă tipurile au formular",
+        "unreadableIntro": "Clasificarea s-a încheiat, dar lista tipurilor de documente nu a putut fi citită. Importul se oprește: niciun document nu se creează înainte să fie sigur că tipul lui are formular. Încercați din nou — dacă nici a doua oară nu merge, opriți importul și reluați mai târziu.",
+        "sessionIntro": "Clasificarea s-a încheiat, dar sesiunea dumneavoastră a expirat, așa că lista tipurilor de documente nu a putut fi citită. Importul se oprește aici. Autentificați-vă din nou într-o filă nouă, apoi reveniți și apăsați „Încearcă din nou” — așa nu se plătește încă o dată clasificarea de mai sus.",
+        "unusableIntro": "Clasificarea s-a încheiat, dar lista tipurilor de documente nu poate fi folosită: din ea lipsește tipul implicit (cheia UNCLASSIFIED, de obicei „NECLASIFICAT”), pe care importul îl folosește pentru documentele care nu pot fi recunoscute. A încerca din nou nu ajută — lista va răspunde la fel. Pentru a o reface: în Date de Referință → Tipuri de documente adăugați un tip numit „Unclassified” (cheia se generează din nume, deci va primi cheia UNCLASSIFIED), apoi redenumiți-l „NECLASIFICAT”. Pe urmă reluați importul."
+      },
+      "retry": "Încearcă din nou",
+      "leave": "Oprește importul",
+      "leaveHint": "„Oprește importul” repornește totul de la început, exact ca la prima pornire — inclusiv bifele și setările din bara de sus. Nu se șterge nimic din arhivă, pentru că nu s-a creat nimic.",
+      "attempt": "Aceasta a fost încercarea a {n}-a.",
+      "chooseAnotherFolder": "Alege alt folder…"
     },
     "importRun": {
       "title": "Import",

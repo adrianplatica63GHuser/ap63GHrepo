@@ -2151,21 +2151,21 @@
       },
       "forecast": {
         "title": "What this import will do",
-        "intro": "Folder “{folder}” has been read. Nothing has been sent or saved yet.",
+        "intro": "Folder “{folder}” has been read and its documents have been classified. Nothing has been saved to the archive.",
+        "introNothingSent": "Folder “{folder}” has been read. None of its files needed automatic classification — either they are already in the system, or they cannot be read as images. Nothing has been saved to the archive.",
         "documents": "Documents that will be created",
         "pageGroups": "…of which multi-page",
-        "classificationCalls": "Images sent for automatic classification",
+        "classificationCalls": "Images for automatic classification",
         "coordinateFile": "Coordinate file",
         "noCoordinateFile": "none found",
         "severalCoordinateFiles": "{count} files found",
-        "nothingSpentYet": "Nothing has been sent for classification yet. That starts when you press Continue, and it is the first step that costs anything.",
-        "continueButton": "Continue — send {count} images for classification",
-        "changeFolder": "Choose another folder",
+        "continueButton": "Continue to the import step",
+        "changeFolder": "Choose another folder (the classification so far is lost)",
         "nothingToImport": "No file in this folder will be imported. Some files are skipped automatically — archives, drawings and temporary files, for example.",
         "ignoredFiles": "Files that will be skipped",
         "uploadSize": "To upload",
         "megabytes": "{mb} MB",
-        "recheckFolder": "Check this folder again",
+        "recheckFolder": "Check this folder again (the classification so far is lost)",
         "alreadyInSystem": "Documents already in the system (linked, not created)"
       },
       "report": {
@@ -2200,6 +2200,7 @@
         "documentFilePrefix": "pre-import-check"
       },
       "readingMetadata": "Reading files… {done} of {total}",
+      "readingDocumentTypes": "Reading the list of document types…",
       "walkFailed": "This folder could not be read. It may have been moved, renamed, or disconnected.",
       "recheckFailed": "This folder could not be read again. It may have been moved or renamed while you were working on it — the list below is the previous result. Choose the folder again to start over.",
       "statusPreexisting": "Already here",
@@ -2498,7 +2499,7 @@
         }
       },
       "title": "Documents already in the system",
-      "intro": "The structure, the files and the copies are all in order. This is the first check that looks in the archive rather than in the chosen folder: the system tells you which of the documents are already in it and what will happen to each of them, before any of them is sent for classification. There is nothing to put right here: read what is about to happen, tick below, and carry on.",
+      "intro": "The structure, the files and the copies are all in order. This is the first check that looks in the archive rather than in the chosen folder: the system tells you which of the documents are already in it and what will happen to each of them, before any of them is sent for classification. There is nothing to put right in the list below: read what is about to happen, tick below, and carry on.",
       "clean": "No document in the chosen folder is already in the system.",
       "notesTitle": "What “already in the system” means",
       "showNotes": "Show the explanations again",
@@ -2511,6 +2512,9 @@
       "continueWithout": "Continue without this check",
       "chooseAnotherFolder": "Choose another folder…",
       "reportTitle": "{count, plural, one {One document is already in the system} other {# documents are already in the system}}",
+      "spendAgain": "{count, plural, one {The classification done so far was discarded by the last check. Pressing “Continue” sends one image for automatic classification again, and that is paid for a second time.} other {The classification done so far was discarded by the last check. Pressing “Continue” sends # images for automatic classification again, and that is paid for a second time.}}",
+      "readReportFirst": "Do read the folder report at the foot of this page before pressing “Continue”: it lists the files that will be skipped and the observations about the folder, and some of them say not to start the import.",
+      "nothingSpentYet": "{count, plural, one {Nothing has been sent for classification yet. Pressing “Continue” sends one image for automatic classification, and that is the first step that costs anything.} other {Nothing has been sent for classification yet. Pressing “Continue” sends # images for automatic classification, and that is the first step that costs anything.}}",
       "nothingToFix": "There is nothing for you to put right in File Explorer about any of the above. Do read the list, though: if an archived document is not the one you had in mind, rename the file in your folder and the system will import it as a new document. When you are happy, tick below and press “Continue”.",
       "morePaths": "{count, number} more…",
       "row": {
@@ -2579,7 +2583,6 @@
         "structure": "Every rule about how the folders are arranged was checked, and none was broken. There is nothing for you to put right in File Explorer.",
         "constraints": "Every file was measured and none was refused. There is nothing for you to put right in File Explorer.",
         "duplication": "The files were compared against each other and none appears more than once. There is nothing for you to put right in File Explorer.",
-        "preexisting": "The archive was asked about every document and recognised none of them. There is nothing for you to decide before moving on.",
         "scanning": "The scan has finished and every row in the table below has an answer. Nothing has entered the archive yet."
       }
     },
@@ -2589,6 +2592,31 @@
       "whatItReads": "Only the first page of each document is sent — just enough to recognise its type. Files that cannot be read as an image, and files already in the system, are not sent at all.",
       "whatItWrites": "What is recognised appears in the table below as it arrives.",
       "waitHint": "Wait for it to finish. If you change your mind, use “Cancel import” in the bar above."
+    },
+    "typesBlocked": {
+      "title": "The import has stopped: some document types have no form yet",
+      "folderLine": "Folder “{folder}” has been read and its documents have been classified.",
+      "intro": "{count, plural, one {One document type in this folder has no form yet to put the information read off the documents into, so the import stops here.} other {# document types in this folder have no form yet to put the information read off the documents into, so the import stops here.}}",
+      "listTitle": "The types that need a form",
+      "row": {
+        "existing": "{count, plural, one {Already in the system, but with no form. One document in this folder is of this type.} other {Already in the system, but with no form. # documents in this folder are of this type.}}",
+        "new": "{count, plural, one {Not in the system yet. The import would have created it now, with no form, for one document in this folder.} other {Not in the system yet. The import would have created it now, with no form, for # documents in this folder.}}"
+      },
+      "unclassified": "{count, plural, one {One file got no type — either it could not be read as an image and was never sent, or it was sent and no answer came back, or the system did not recognise it. It would go to the “unclassified” type, which needs no form and is not why the import stopped.} other {# files got no type — either they could not be read as images and were never sent, or they were sent and no answer came back, or the system did not recognise them. They would go to the “unclassified” type, which needs no form and is not why the import stopped.}}",
+      "whatNextTitle": "What happens next",
+      "whatNext": "Each type above needs a form before its documents can be imported, and that is what DocTypeEngine is for. Once every type has a form, start the import again from the beginning: every check before the classification costs nothing.",
+      "nothingWritten": "No document was created and nothing was written to the archive. The classification above has already been paid for, and will be paid for again when the import is started afresh.",
+      "failed": {
+        "title": "The import has stopped: the types could not be checked for forms",
+        "unreadableIntro": "The classification finished, but the list of document types could not be read. The import stops: no document is created before it is certain that its type has a form. Try again — if the second attempt fails too, stop the import and come back later.",
+        "sessionIntro": "The classification finished, but your session has expired, so the list of document types could not be read. The import stops here. Sign in again in a new tab, then come back and press “Try again” — that way the classification above is not paid for a second time.",
+        "unusableIntro": "The classification finished, but the list of document types cannot be used: the default type is missing from it (the key UNCLASSIFIED, usually shown as “NECLASIFICAT”), which the import uses for documents it cannot recognise. Trying again will not help — the list will answer the same way. To restore it: in Reference Data → Document types add a type named “Unclassified” (the key is generated from the name, so it gets the key UNCLASSIFIED), then rename it “NECLASIFICAT”. Then start the import again."
+      },
+      "retry": "Try again",
+      "leave": "Stop the import",
+      "leaveHint": "“Stop the import” restarts everything from the beginning, exactly as it does the first time — including the tick boxes and the settings in the bar above. Nothing is deleted from the archive, because nothing was created.",
+      "attempt": "That was attempt {n}.",
+      "chooseAnotherFolder": "Choose another folder…"
     },
     "importRun": {
       "title": "Import",

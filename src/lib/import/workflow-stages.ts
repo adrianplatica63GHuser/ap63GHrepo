@@ -101,8 +101,19 @@ export const WORKFLOW_STAGES: readonly WorkflowStage[] = [
   // looking only inside the chosen folder. The panel's own intro says which
   // it is, in the first sentence, for exactly this reason.
   { id: "preexisting", line: "classification" },
-  { id: "evaluation", line: "classification" },
+  // ⚠️ **Slice #29.08 PUT SCANNING IN FRONT OF EVALUATION, and swapping these
+  // two rows is the whole of the reorder.** Nothing else in the codebase
+  // encodes the workflow order — the header above says so, and this is the
+  // first slice to cash that promise in for a MOVE rather than for a stage
+  // gaining its screen.
+  //
+  // The reason is the gate. An import may not create a document whose type has
+  // no form to put its information into, and the only thing that knows which
+  // document types a folder holds is the classifier. So the classification runs
+  // first and the Evaluation screen reports what it found, instead of
+  // forecasting what it is about to send.
   { id: "scanning", line: "classification" },
+  { id: "evaluation", line: "classification" },
   { id: "import", line: "classification" },
   { id: "result", line: "classification" },
 ];
@@ -137,10 +148,18 @@ export function stagesOnLine(line: WorkflowLineId): WorkflowStage[] {
  *  preexisting-checking → the re-walk, the metadata pass and the archive lookup
  *  preexisting-report   → the archive already holds some of these; what will
  *                     happen to each. Read and acknowledged, never fixed
- *  folder-report    → structure, constraints, duplication and pre-existing all
- *                     settled, nothing spent; the forecast awaits Continuă
- *  scanning         → concurrent Haiku AI scans running in background
- *  ready            → scan complete; scan-table rendered + "Import" CTA visible
+ *  scanning         → concurrent Haiku AI scans running in background. Since
+ *                     #29.08 this is the run's FIRST billed step, and it is
+ *                     entered from the Pre-existing screen's Continuă
+ *  types-blocked    → the classification named a document type with no form to
+ *                     put a document's information into (or the list of types
+ *                     could not be read at all), so the import stops here and
+ *                     sends the user to DocTypeEngine            (Slice #29.08)
+ *  folder-report    → every check settled AND every type this folder holds has
+ *                     a form; the Evaluation screen reports what the
+ *                     classification found and awaits Continuă
+ *  ready            → the Import stage's own screen: what the run will write,
+ *                     and the "Importă" CTA
  *  property         → PropertyStepDialog is open (resolve the run's Property)
  *  tag-dialog       → TagDialog is open (animated tag-prep step)
  *  importing        → BulkImportDialog is running
@@ -169,8 +188,9 @@ export const IMPORT_PHASES = [
   "preexisting",
   "preexisting-checking",
   "preexisting-report",
-  "folder-report",
   "scanning",
+  "types-blocked",
+  "folder-report",
   "ready",
   "property",
   "tag-dialog",
@@ -270,8 +290,14 @@ const STAGE_BY_PHASE: Record<ImportPhase, WorkflowStageId> = {
   preexisting: "preexisting",
   "preexisting-checking": "preexisting",
   "preexisting-report": "preexisting",
-  "folder-report": "evaluation",
   scanning: "scanning",
+  // Slice #29.08 - the stop screen reports SCANNING, not a stage of its own.
+  // The classification is what ran and what produced the answer; Evaluation
+  // never happened. An eleventh pill would put a permanent step in the
+  // indicator for a screen most runs never see, and every run would then have
+  // to walk past a grey stage it is not going to visit.
+  "types-blocked": "scanning",
+  "folder-report": "evaluation",
   ready: "import",
   property: "import",
   "tag-dialog": "import",
@@ -378,15 +404,28 @@ export type WalkTarget = "structure" | "constraints" | "duplication" | "preexist
  *  - **Duplication clean, target was `duplication`** -> `preexisting`, the
  *    explanations, nothing asked. The same stopping point one stage later, and
  *    it is the ONE case #26.08 changed: this used to be `folder-report`.
- *  - **Duplication clean, target was `preexisting`** -> `folder-report` when
- *    the archive holds none of them and nothing was left unchecked, and
- *    `preexisting-report` otherwise.
+ *  - **Duplication clean, target was `preexisting`** -> `preexisting-report`,
+ *    whatever the archive answered. That is the ONE cell #29.08 changed, and it
+ *    is the second time this function has had exactly one cell rewritten: the
+ *    line above it is #26.08's.
  *
- * ⚠️ **A CLEAN PRE-EXISTING CHECK SHOWS NO SCREEN, exactly as a clean
- * duplication check shows none.** There is nothing to tell the user, and a
- * screen reading "the archive holds none of these, press Continuă" is a click
- * spent on a non-event. The stage still goes green behind them, which is true:
- * the comparison ran.
+ * ⚠️ **A CLEAN PRE-EXISTING CHECK NOW SHOWS ITS SCREEN, AND UNTIL #29.08 IT
+ * DELIBERATELY DID NOT.** The note that stood here said there was nothing to
+ * tell the user, and that a screen reading "the archive holds none of these,
+ * press Continuă" was a click spent on a non-event. That was true for as long
+ * as the next billed step stood behind the EVALUATION screen's Continuă.
+ * #29.08 moved the classification in front of Evaluation, so this screen's
+ * Continuă is now the first thing in the whole flow that costs money — and the
+ * click is not spent on a non-event, it IS the press that authorises the spend.
+ * The warning that used to live on the Evaluation screen came here with it; see
+ * `folder-forecast.tsx`, which no longer carries it.
+ *
+ * ⚠️ **`preexistingClean` DID NOT BECOME DEAD, and only half of it collapsed.**
+ * `null` still means the archive was never asked at all, and still under-claims
+ * to `preexisting` — the explanations, with the button left to press. It is the
+ * `true` / `false` split that no longer chooses a phase, because both answers
+ * now have something to say on the same screen: what the archive found, and
+ * what pressing Continuă is about to cost.
  *
  * `target: "structure"` never reaches here - `runWalk` returns at the structure
  * verdict - which is why it is not a case below. It is accepted as an input
@@ -437,11 +476,59 @@ export function phaseAfterFileChecks(input: {
     // lands them on the explanations with the check still to press.
     return { phase: "preexisting", duplicationRan: true, preexistingRan: false };
   }
-  return {
-    phase: preexistingClean ? "folder-report" : "preexisting-report",
-    duplicationRan: true,
-    preexistingRan: true,
-  };
+  // Slice #29.08 - `preexistingClean` is deliberately not read on this line any
+  // more. It is still destructured above and still decides the branch before
+  // this one; what it no longer does is pick between two screens, because there
+  // is only one screen left for a lookup that answered at all.
+  return { phase: "preexisting-report", duplicationRan: true, preexistingRan: true };
+}
+
+// ---------------------------------------------------------------------------
+// Where a classification ends up   (Slice #29.08)
+// ---------------------------------------------------------------------------
+
+/**
+ * The fork at the END of the classification pass - whether this import may go
+ * on to Evaluation at all, or stops because a document type it found has no
+ * form to put a document's information into.
+ *
+ * WHY IT IS A SIBLING OF `phaseAfterFileChecks` AND NOT A BRANCH INSIDE IT
+ * -----------------------------------------------------------------------
+ * WHEN each one runs is the whole difference. That function decides from the
+ * FILE checks and has finished answering before a single image has been sent;
+ * this one cannot be asked until every scan has settled and the archive's list
+ * of document types has been read. Folding them together would mean handing
+ * `phaseAfterFileChecks` an argument that is `null` on every call it actually
+ * receives, which is how a table grows a column nothing can reach.
+ *
+ * It lives in this module for the reason stated in capitals on its neighbour:
+ * **the rule belongs here and not in the wizard.** Inside `startScan` it sits
+ * behind a queue of billed network requests and a fetch, with no way to reach
+ * it from a test. `import-wizard.tsx` calls this and holds no copy of it.
+ *
+ * ⚠️ **IT IS ONE LINE ON PURPOSE, AND THAT IS NOT AN EMBARRASSMENT.** The
+ * decision is small; the VERDICT behind `typesClean` is not, and it lives in
+ * `checkTypeForms` (src/lib/import/type-form-gate.ts), where it is tested
+ * against the very matcher the import run resolves its types with. Keeping the
+ * two apart is what lets each stay a table: this module knows which phase a
+ * verdict leads to and nothing about document types; that one knows about
+ * document types and nothing about phases.
+ *
+ * ⚠️ **`false` INCLUDES "WE COULD NOT FIND OUT".** A run whose catalogue read
+ * failed has not PROVED that every type has a form, and the whole promise of
+ * the gate is that no document is imported before its type has one. So an
+ * unknown answer stops the import exactly as a known-bad one does - the
+ * under-claiming direction this file takes everywhere else - and the stop
+ * screen is what says which of the two happened. See `TypeFormLookup`.
+ */
+export function phaseAfterClassification(input: {
+  /**
+   * Does every document type this classification established already have a
+   * form? `false` when one does not, and `false` when nobody could tell.
+   */
+  typesClean: boolean;
+}): { phase: ImportPhase } {
+  return { phase: input.typesClean ? "folder-report" : "types-blocked" };
 }
 
 // ---------------------------------------------------------------------------
@@ -461,9 +548,15 @@ export function phaseAfterFileChecks(input: {
  * a substitute: it reports the next stage, not the one that just passed.
  *
  * So the Information page carries a control, unchecked by default, and with it
- * checked each of these six transitions comes to rest on the stage it has just
+ * checked each of these transitions comes to rest on the stage it has just
  * FINISHED, holding that stage's own screen with its own all-clear on it, and
  * waits for a button.
+ *
+ * ⚠️ **There were six of them until #29.08 and there are five now, and the
+ * table is the one place that says so.** That slice put the classification in
+ * front of Evaluation, which retired one transition and re-pointed another; the
+ * count is not restated in prose here, because a number in a comment beside a
+ * list is a number that goes stale while the list stays right.
  *
  * ⚠️ **`rest` IS THE STAGE THAT PASSED, NOT THE ONE COMING NEXT, and that is
  * the whole design.** Landing early on the next stage's screen is what the
@@ -484,14 +577,22 @@ export function phaseAfterFileChecks(input: {
  *    archive and came back with nothing, so there is no stage to green — and
  *    resting at `duplication` because the duplication half was clean would put
  *    a note about copies in front of a user who pressed the archive's button.
- *  - `folder-report → scanning`, `ready → property` and everything after them.
- *    Those are already buttons the user presses.
+ *  - `preexisting-report → scanning`, `folder-report → ready`, `ready →
+ *    property` and everything after them. Those are already buttons the user
+ *    presses. ⚠️ **The first two of those three are #29.08's, and they are the
+ *    same two presses under new names**: the press that starts the billed
+ *    classification moved from the Evaluation screen to the Pre-existing one,
+ *    and Evaluation's own Continuă now leads to the Import stage.
+ *  - `scanning → types-blocked`. The classification found a document type with
+ *    no form, so the import STOPS; see the table's last entry.
  *
  * ⚠️ **KEYED ON `from` AS WELL AS `to`, and one pair is why.** `to` alone
- * looks sufficient — the six destinations are distinct — but `preexisting` is
- * reachable from two different places with two different meanings (the clean
- * duplication check above, and the under-claim in the bullet before it), and
- * only `from` tells them apart. A one-column table would have gated both.
+ * looks sufficient — every destination in the table is distinct — but
+ * `preexisting` is reachable from two different places with two different
+ * meanings (the clean duplication check above, and the under-claim in the
+ * bullet before it), and only `from` tells them apart. A one-column table would
+ * have gated both — and it still would after #29.08, which removed the other
+ * `preexisting-checking` row but not the ungated one this pair is about.
  */
 export const SELF_ADVANCING_TRANSITIONS: readonly {
   /** The phase the wizard is in when it decides. */
@@ -511,14 +612,27 @@ export const SELF_ADVANCING_TRANSITIONS: readonly {
   { from: "walking", to: "constraints", rest: "structure" },
   { from: "constraints-checking", to: "duplication", rest: "constraints" },
   { from: "duplication-checking", to: "preexisting", rest: "duplication" },
-  // `phaseAfterFileChecks`'s own header states it: a clean pre-existing check
-  // shows no screen. This is the transition that makes that false on request.
-  { from: "preexisting-checking", to: "folder-report", rest: "preexisting" },
+  // ⚠️ **`preexisting-checking → folder-report` STOOD HERE UNTIL #29.08 AND ITS
+  // ABSENCE IS NOT AN OVERSIGHT.** It gated the one transition a clean archive
+  // lookup used to make on its own. That transition no longer exists:
+  // `phaseAfterFileChecks` now lands every settled lookup on
+  // `preexisting-report`, which is a screen with a button on it, so the first
+  // bullet above applies — a stage that already stops is never gated. The
+  // `cleared.preexisting` sentence went with it, because a message for a pause
+  // that cannot happen is exactly what the copy tests below refuse.
+  //
   // The scan ends when the last request settles. Its results DO stay on screen
   // afterwards — `ScanTable` is rendered for both phases — but the stage still
   // hands over without a pause, and the panel says "wait until it finishes"
   // over a scan that has finished.
-  { from: "scanning", to: "ready", rest: "scanning" },
+  //
+  // ⚠️ **Its destination is `folder-report` since #29.08, not `ready`** — the
+  // Evaluation screen stands AFTER the classification now rather than before
+  // it. And that is the only destination listed: the scan's other exit,
+  // `types-blocked`, is a stop, and a pause in front of a screen the user
+  // cannot leave by pressing on is a second button for a halt they are already
+  // standing in.
+  { from: "scanning", to: "folder-report", rest: "scanning" },
 ];
 
 /**

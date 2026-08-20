@@ -69,6 +69,19 @@ const REQUIRED_KEYS = [
   "continueWithout",
   "chooseAnotherFolder",
   "reportTitle",
+  // ⚠️ Slice #29.08 — the only warning in the whole flow that the NEXT click is
+  // the one that costs money. It stood on the Evaluation screen until the
+  // classification moved in front of it; this panel's Continuă is the press
+  // that spends now, so the sentence lives beside that button.
+  // The pointer to the folder report, which #29.08 moved under this panel —
+  // it is the last screen before the classification is billed, so the loud
+  // findings that end "Nu porniți importul" have to be readable from here.
+  "readReportFirst",
+  "nothingSpentYet",
+  // …and the same sentence for a run that is about to pay for classification a
+  // SECOND time, which is what a re-check pressed on the Evaluation screen
+  // produces now that the classification happens before it.
+  "spendAgain",
   "nothingToFix",
   "morePaths",
   "row.existing",
@@ -111,7 +124,19 @@ describe("the Pre-existing stage's copy", () => {
     // third form for 2-19 — and #26.02 already shipped this exact bug once.
     for (const file of LOCALES) {
       const copy = loadCopy(file);
-      for (const key of ["reportTitle", "morePaths", "unchecked.intro", "row.folders"] as const) {
+      // ⚠️ `nothingSpentYet` and `spendAgain` joined the list in #29.08, and
+      // they are the two most money-sensitive counted strings in the whole
+      // flow: they name how many images the next press sends. A reword that
+      // dropped `few` would ship "se trimit 5 de imagini" — the bug #26.02
+      // shipped once — with every other test here green.
+      for (const key of [
+        "reportTitle",
+        "morePaths",
+        "unchecked.intro",
+        "row.folders",
+        "nothingSpentYet",
+        "spendAgain",
+      ] as const) {
         expect(String(at(copy, key))).toContain("{count");
       }
       // ⚠️ `row.folders` interpolates the folder NAMES as well as counting
@@ -122,7 +147,13 @@ describe("the Pre-existing stage's copy", () => {
         "count",
         "folders",
       ]);
-      for (const key of ["reportTitle", "unchecked.intro", "row.folders"] as const) {
+      for (const key of [
+        "reportTitle",
+        "unchecked.intro",
+        "row.folders",
+        "nothingSpentYet",
+        "spendAgain",
+      ] as const) {
         const [block] = scanIcu(String(at(copy, key))).plurals;
         expect({ key, arg: block?.arg }).toEqual({ key, arg: "count" });
         const wanted = file === "ro-RO.json" ? ["one", "few", "other"] : ["one", "other"];
@@ -137,7 +168,12 @@ describe("the Pre-existing stage's copy", () => {
     // is where #26.05's bug actually was.
     for (const file of LOCALES) {
       const copy = loadCopy(file);
-      for (const key of ["reportTitle", "unchecked.intro"] as const) {
+      for (const key of [
+        "reportTitle",
+        "unchecked.intro",
+        "nothingSpentYet",
+        "spendAgain",
+      ] as const) {
         const text = String(at(copy, key));
         const before = text.slice(0, text.indexOf("{"));
         const after = text.slice(text.lastIndexOf("}") + 1);

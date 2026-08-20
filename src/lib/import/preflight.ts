@@ -211,8 +211,17 @@ function serverStatus(
  * What this import is about to do, computed from the walk alone.
  *
  * No file contents, no server call, no AI. Every number here is derived from
- * names and structure, which is the whole reason the screen can be shown
- * before a single call is spent.
+ * names and structure.
+ *
+ * ⚠️ **THAT USED TO BE "…which is the whole reason the screen can be shown
+ * before a single call is spent", AND SLICE #29.08 MADE THE CLAUSE FALSE.** The
+ * classification now runs BEFORE the Evaluation screen, so the screen this
+ * forecast feeds is no longer shown ahead of the first spend — it reports one
+ * that has already happened. The PROPERTY is unchanged and still worth stating:
+ * these numbers cost nothing to compute, which is why the same forecast can be
+ * shown on a screen that comes before any call and on one that comes after.
+ * What is gone is the inference from the property to the ordering, and leaving
+ * it here would have left a module documenting a rule it no longer has.
  */
 export type ImportForecast = {
   /** Documents that will be created — one per walked entry. */
@@ -220,11 +229,13 @@ export type ImportForecast = {
   /** How many of those are multi-page (a page group rather than a file). */
   pageGroups: number;
   /**
-   * Images and PDFs that will be sent for automatic classification when the
-   * user presses Continuă — one Claude call each.
+   * Images and PDFs sent for automatic classification — one Claude call each.
    *
-   * This is the number the button exists for. Before #24.02a these calls were
-   * spent by the act of picking a folder; now they are spent by a decision.
+   * Before #24.02a these calls were spent by the act of picking a folder; since
+   * then they are spent by a decision, and since #29.08 that decision is the
+   * Pre-existing screen's Continuă rather than the Evaluation screen's. This is
+   * the number that press quotes, and afterwards the number the Evaluation
+   * screen reports as spent — one value read from two sides of the same click.
    */
   classificationCalls: number;
   /** Every file that could hold a coordinate export, in walk order. */

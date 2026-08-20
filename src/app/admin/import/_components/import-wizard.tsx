@@ -160,6 +160,7 @@ import {
 } from "@/lib/import/preexisting-check";
 import { lookupPreexisting } from "@/lib/import/preexisting-client";
 import {
+  phaseAfterClassification,
   phaseAfterFileChecks,
   stageForPhase,
   stepThroughRest,
@@ -167,6 +168,16 @@ import {
   type WalkTarget,
   type WorkflowStageId,
 } from "@/lib/import/workflow-stages";
+import {
+  catalogueIsUsable,
+  checkTypeForms,
+  noClassificationHappened,
+  typesAreClean,
+  type ClassifiedEntry,
+  type TypeFormLookup,
+} from "@/lib/import/type-form-gate";
+import { fetchDocumentTypeCatalogue } from "@/lib/import/document-type-catalogue";
+import { ImportTypesBlockedStage } from "./import-types-blocked-stage";
 import type { CancelFacts } from "@/lib/import/cancel-consequences";
 
 // ---------------------------------------------------------------------------
@@ -184,6 +195,49 @@ let _dirHandle: FSDirectoryHandle | null = null;
 // asked of the file-kind registry in src/lib/files/file-kinds.ts — the same
 // module the folder walk, the coordinate shortlist and the provenance rules
 // now read from, so "scannable here" and "an image there" can no longer drift.
+
+/**
+ * What the classifier said about each entry, as the type gate needs it.
+ *                                                            (Slice #29.08)
+ *
+ * ⚠️ **ONLY A `done` ROW IS AN ANSWER, and the run agrees with that by
+ * ACCIDENT rather than by testing it.** `startScan` seeds `scanResults` with a
+ * bare status for EVERY walked entry, so presence in the map proves nothing.
+ * `bulk-import-dialog.tsx` passes `{ typeKey: sr?.typeKey, label:
+ * sr?.description }` to `ensureDocType` with no status test at all — it reads
+ * `status === "done"` only afterwards, to decide whether the ROW reports how
+ * the type was resolved. The two agree today because `startScan` replaces the
+ * whole `ScanResult` object on every transition, so a non-`done` row carries
+ * neither field. That is a property of one function rather than a shared rule,
+ * and it is recorded here because the day it stops holding the wizard would
+ * filter where the run does not: two writers, one folder, different types.
+ *
+ * `pending`, `skip`, `preexisting` and `error` all come through here as `null`,
+ * which `checkTypeForms` counts as heading for the catch-all and does not block
+ * on.
+ *
+ * One function for both callers — the end of the scan, and the stop screen's
+ * "try again" — so the two cannot come to disagree about what an answer is.
+ */
+function classifiedEntriesOf(
+  entries: readonly FSEntry[],
+  results: ReadonlyMap<string, ScanResult>,
+): ClassifiedEntry[] {
+  return entries.map((entry) => {
+    const result = results.get(entry.path);
+    return {
+      path: entry.path,
+      answer:
+        result?.status === "done"
+          ? { typeKey: result.typeKey, label: result.description }
+          : null,
+      // The weaker of the two identity-card signals, and the gate uses it only
+      // for a type the archive does not hold — see `ClassifiedEntry`. The same
+      // call `interpretUpperBound` already makes one screen later.
+      isIdCard: isIdCardEntry(result),
+    };
+  });
+}
 
 /** Check if any file in the entry is worth sending to the scan route. */
 function entryScannable(entry: FSEntry): boolean {
@@ -338,6 +392,8 @@ export function ImportWizard() {
   const tStage = useTranslations("adminImport.workflow");
   /** Slice #29.02 — for the always-mounted live region; the card has its own. */
   const tStepGate = useTranslations("adminImport.stepGate");
+  /** Slice #29.08 — the same region announces the stop; see its comment. */
+  const tTypesBlocked = useTranslations("adminImport.typesBlocked");
 
   const [phase, setPhase] = useState<ImportPhase>("information");
   const [rootFolderName, setRootFolderName] = useState<string>("");
@@ -610,6 +666,60 @@ export function ImportWizard() {
   const [preexistingNotesOpen, setPreexistingNotesOpen] = useState(false);
 
   /**
+   * Does every document type this folder holds have a form?     (Slice #29.08)
+   *
+   * The ANSWER, not a flag, and stored for exactly the reason `preexisting` is:
+   * it comes from the server, so it cannot be re-derived during a render. The
+   * three states are the same three, and they mean the same three things:
+   *
+   *   - `null`            - the classification has not run in this run.
+   *   - `{ ok: false }`   - it ran, and the list of types could not be read.
+   *   - `{ ok: true, … }` - it ran, and here is what it found.
+   *
+   * ⚠️ **The middle case is why this is not a `TypeFormVerdict | null`, and it
+   * is the identical argument `PreexistingResult` carries.** "Every type has a
+   * form" and "we could not find out" must never produce the same screen — the
+   * first lets an import proceed and the second stops it — and collapsing them
+   * would let a failed read look like an all-clear.
+   *
+   * ⚠️ **It is NOT cleared when a new walk starts, it is cleared when the SCAN
+   * results are.** The two are the same commit today (`runWalk` clears
+   * `scanResults` on every walk), and they are written together at the end of
+   * `startScan`, because a verdict about the types beside a different walk's
+   * classification is a report about files the user has since changed — the
+   * discipline #26.05's second adversarial round established for every other
+   * value on this component.
+   */
+  const [typeLookup, setTypeLookup] = useState<TypeFormLookup | null>(null);
+  /**
+   * Is the type gate reading the archive's list right now?
+   *
+   * Only ever true on the stop screen's "try again": at the end of the scan the
+   * whole wizard is already in the `scanning` phase and that panel has its own
+   * cue. A boolean rather than a phase, for the reason `preflightPassed` is one
+   * — a fetch in flight is not a place the user is standing.
+   */
+  const [typeGateBusy, setTypeGateBusy] = useState(false);
+  /**
+   * How many times the type gate has answered for this classification.
+   *                                                            (Slice #29.08)
+   *
+   * ⚠️ **IT EXISTS TO MAKE A REPEATED FAILURE AUDIBLE, and a fourth
+   * adversarial round is why.** The stop screen's "Încearcă din nou" can come
+   * back with the same reason it went out with — a fault that has not cleared
+   * is the commonest retry outcome, not a corner — and when it does, every
+   * sentence on the screen is byte-identical to the one before it. The wizard's
+   * live region then has no text CHANGE to announce, so a screen-reader user
+   * presses the one button on the screen, waits up to thirty seconds, and hears
+   * nothing: indistinguishable from a dead button.
+   *
+   * The count is drawn on the screen as well as spoken, because "that was
+   * attempt 3" is worth knowing to a sighted user staring at an unchanged red
+   * block for the same reason.
+   */
+  const [typeGateAttempts, setTypeGateAttempts] = useState(0);
+
+  /**
    * Slice #26.03 — the Cancel's two pieces of memory.
    *
    * `documentsCreated` is the only fact the cancel dialog needs that nothing
@@ -660,6 +770,34 @@ export function ImportWizard() {
    * Cleared where the folder changes: a new pick, and the Cancel's full reset.
    */
   const [runCompleted, setRunCompleted] = useState(false);
+
+  /**
+   * Has this run already paid for classification?      (#26.03, rebuilt #29.08)
+   *
+   * ⚠️ **A FACT ABOUT THE RUN, LIKE `documentsCreated`, AND IT USED TO BE A
+   * `useMemo` OVER `scanResults`.** That memo counted a settled request —
+   * `done` or `error`, because a settled request is a spent one and only
+   * `pending`, `skip` and `preexisting` are evidence of not having sent. The
+   * reasoning was right and the SOURCE stopped being: `runWalk` clears
+   * `scanResults` on its way into every walk, and #29.08 put the Evaluation
+   * screen AFTER the classification — so "Verifică din nou folderul", pressed
+   * there, wiped the evidence and then spent thirty seconds in the metadata
+   * pass with the Cancel dialog telling the user, in as many words, that
+   * nothing had been sent and nothing consumed. That dialog exists to stop the
+   * flow lying about what a cancel costs, so a stale flag in it is worse here
+   * than anywhere else in the wizard. Found by the adversarial round.
+   *
+   * ⚠️ **SET WHEN THE REQUEST IS ISSUED, not when it settles**, which is a
+   * shade more honest than the memo it replaces: a scan half way through its
+   * queue had every in-flight row on `scanning` or `converting`, neither of
+   * which the memo counted, so a Cancel pressed mid-pass reported nothing
+   * spent over hundreds of billed calls already sent.
+   *
+   * Cleared where the folder changes — a new pick, and the Cancel's full reset
+   * — exactly as `documentsCreated` is, and for the same reason: the previous
+   * folder's spend is not something cancelling THIS run abandons.
+   */
+  const [classificationSpent, setClassificationSpent] = useState(false);
   /**
    * The finished run's statistics, or null.   (Slice #26.10)
    *
@@ -995,6 +1133,13 @@ export function ImportWizard() {
       setRootFolderName(handle.name);
       setScanResults(new Map());
       setScanProgress({ done: 0, total: 0 });
+      // Slice #29.08 - the type gate's answer is about a classification, and a
+      // walk is what invalidates one. Cleared HERE, beside the scan results it
+      // was computed from, rather than at any of the three exits below: a
+      // verdict about the types beside a different walk's classification is a
+      // report about files the user has since been told to go and change.
+      setTypeLookup(null);
+      setTypeGateAttempts(0);
 
       /**
        * ⚠️ **`entries`, `observations` and `metadata` are published TOGETHER, at
@@ -1272,6 +1417,16 @@ export function ImportWizard() {
     // AFTER the walk: a pick whose walk throws never reaches that block, and
     // would have left this true against a folder the user has just changed.
     setRunCompleted(false);
+    // ⚠️ **Slice #29.08, and it belongs on THIS line for exactly the reason
+    // above — a third adversarial round found it one block too late.** It sat
+    // inside `runWalk`'s `mode === "pick"` branch, so a pick whose walk threw
+    // left it true against a folder that has never been classified: the
+    // Pre-existing screen then told the user their classification "s-a pierdut
+    // la ultima verificare" and that continuing would pay "a doua oară", on a
+    // folder whose first image had not been sent. Deliberately NOT cleared on a
+    // re-check: a re-walk of the SAME folder is the same run, and the calls it
+    // has already paid for are still paid.
+    setClassificationSpent(false);
     // Always `"structure"`: a folder that has just been picked has passed
     // nothing, whichever screen the picker was pressed from.
     await runWalk(handle, "pick", "structure", "structure");
@@ -1282,13 +1437,136 @@ export function ImportWizard() {
   // -------------------------------------------------------------------
 
   /**
+   * Read the archive's list of document types and decide whether this import
+   * may go on.                                                 (Slice #29.08)
+   *
+   * ⚠️ **ONE CALLBACK FOR BOTH CALLERS, and the second caller is the whole
+   * reason it is one.** The end of the scan asks this, and so does the stop
+   * screen's "try again" when the list could not be read. Two copies would be
+   * two chances for the retry to decide by a different rule from the one that
+   * stopped the run — and the retry is pressed by a user who is being told the
+   * import cannot continue, which is the worst place for the two to disagree.
+   *
+   * ⚠️ **A FAILED READ IS `{ ok: false }`, NEVER A THROW AND NEVER `null`.**
+   * `null` is returned for exactly one thing, and it is not a failure: the run
+   * was cancelled while the request was in flight, so there is nobody left to
+   * tell. Every other outcome is an answer the stop screen renders. The catch
+   * is deliberately bare: `fetchDocumentTypeCatalogue` throws the
+   * `session-expired` sentinel as well as ordinary network and HTTP failures,
+   * and all of them mean the same thing here — the gate has no answer, so the
+   * import stops. Distinguishing them would need a screen per cause, and the
+   * one action that helps is the same for all of them.
+   *
+   * `token` is an ARGUMENT rather than a read of the ref, for the reason
+   * `startScan` takes the run's token rather than minting one: the gate belongs
+   * to the classification that produced its input, and a cancelled run must not
+   * come back and put a verdict on screen a second later.
+   */
+  const runTypeGate = useCallback(
+    async (
+      toImport: readonly FSEntry[],
+      results: ReadonlyMap<string, ScanResult>,
+      token: { cancelled: boolean },
+    ): Promise<TypeFormLookup | null> => {
+      // ⚠️ **SET HERE RATHER THAN BY EACH CALLER, and the adversarial round is
+      // why.** The read takes up to 30 seconds and BOTH callers sit on a screen
+      // that has something to say about it: the scan panel's cue would
+      // otherwise go on counting a scan that finished, and the Cancel dialog
+      // would promise to stop a classification "aflată chiar acum în lucru"
+      // over a queue that has entirely settled — the exact sentence #29.02
+      // added `activeGate` to that expression to stop it saying. One flag, set
+      // by the thing that is actually busy.
+      const classified = classifiedEntriesOf(toImport, results);
+
+      // ⚠️ **A RUN THAT CLASSIFIED NOTHING IS ANSWERED WITHOUT ASKING ANYBODY,
+      // and an adversarial round found what asking costs.** A folder the
+      // archive already holds in its entirety — re-offered to attach it to a
+      // new Property, which is the case #26.08 exists for — and a folder
+      // holding nothing a model can read both send zero images. Every document
+      // in them lands on the catch-all, so no type the classifier named can be
+      // waiting for a form; a catalogue read there can only produce a reason to
+      // stop a run that cannot create the thing this gate prevents. It also
+      // keeps the scanning panel from announcing that it is reading a list
+      // nobody needs. `checkTypeForms` is still what answers, over the same
+      // entries, so the verdict is the module's rather than this file's.
+      if (noClassificationHappened(classified)) {
+        const lookup: TypeFormLookup = {
+          ok: true,
+          verdict: checkTypeForms({ entries: classified, catalogue: [] }),
+        };
+        setTypeLookup(lookup);
+        setTypeGateAttempts((n) => n + 1);
+        return lookup;
+      }
+
+      setTypeGateBusy(true);
+      let lookup: TypeFormLookup;
+      try {
+        const catalogue = await fetchDocumentTypeCatalogue();
+        if (token.cancelled) {
+          setTypeGateBusy(false);
+          return null;
+        }
+        lookup = catalogueIsUsable(catalogue)
+          ? { ok: true, verdict: checkTypeForms({ entries: classified, catalogue }) }
+          : // ⚠️ **A 200 IS NOT AN ANSWER IF THE LIST IS UNUSABLE.** An empty
+            // catalogue, or one with no catch-all row, makes every real label
+            // look like a type the run would invent — so a naive read would
+            // stop the import and name types that exist and have forms.
+            // `catalogueIsUsable` carries `fetchDocTypes`' own two refusals.
+            // It is `unusable` rather than `unreadable` because the two need
+            // different screens: this one will answer the same way for ever, so
+            // "try again" is not the offer — the sentence that says what to put
+            // back in Reference Data is.
+            { ok: false, reason: "unusable" };
+      } catch (error) {
+        if (token.cancelled) {
+          setTypeGateBusy(false);
+          return null;
+        }
+        // ⚠️ **THE SENTINEL IS READ, NOT SWALLOWED, and a third adversarial
+        // round is why.** `fetchDocumentTypeCatalogue` throws exactly
+        // `session-expired` for a 401 and for a rewritten 200 carrying a
+        // sign-in page, and every other reader of that sentinel in this run
+        // maps it to a banner with a sign-in link. Folded into "we could not
+        // read the list" it produced a screen telling the user to try again
+        // and then come back later — over a classification they have already
+        // paid for, which starting again pays for twice. Signing in and
+        // pressing the same button costs nothing.
+        const expired =
+          error instanceof Error && error.message === "session-expired";
+        lookup = { ok: false, reason: expired ? "session" : "unreadable" };
+      }
+      setTypeGateBusy(false);
+      setTypeLookup(lookup);
+      setTypeGateAttempts((n) => n + 1);
+      return lookup;
+    },
+    [],
+  );
+
+  /**
    * Send every scannable entry for automatic classification, 3 at a time.
    *
    * Lifted verbatim out of `handlePickFolder` in Slice #24.02a; the only
    * change is that it takes the walked entries as an argument instead of
-   * closing over a local. It has exactly one caller — the Continuă button —
-   * and `scanEntry` is called from nowhere else, which together are what make
-   * "no classification without a press" a property rather than an intention.
+   * closing over a local. It has exactly one caller and `scanEntry` is called
+   * from nowhere else, which together are what make "no classification without
+   * a press" a property rather than an intention.
+   *
+   * ⚠️ **#29.08 MOVED THE PRESS AND DID NOT REMOVE IT.** That caller used to be
+   * the Evaluation screen's Continuă; it is the PRE-EXISTING screen's Continuă
+   * now, because the import has to know which document types a folder holds
+   * before it can promise that each of them has a form. Still one caller, still
+   * a button that says what it is about to spend — the warning moved with it,
+   * to `ImportPreexistingStage`.
+   *
+   * ⚠️ **AND IT NO LONGER HANDS OVER TO `ready`.** When the last request
+   * settles the gate runs — the archive's list of document types, read once,
+   * against what the classifier said — and `phaseAfterClassification` decides
+   * between the Evaluation screen and the stop screen. That is the whole of
+   * this slice on this side of the file; the rule itself is in
+   * `workflow-stages.ts` and this function holds no copy of it.
    */
   const startScan = useCallback(async (
     walked: FSEntry[],
@@ -1336,6 +1614,23 @@ export function ImportWizard() {
       return m;
     });
 
+    /**
+     * The classifier's answers, as they arrive.                (Slice #29.08)
+     *
+     * ⚠️ **A LOCAL MAP BESIDE THE STATE ONE, for the reason every verdict in
+     * `runWalk` is computed from a local.** The gate below decides a PHASE, and
+     * a phase decision cannot wait for a render: reading `scanResults` here
+     * would read the map this callback captured when it was created, which is
+     * the one from before a single answer arrived — every entry would look
+     * unclassified, every folder would pass the gate, and the slice would be a
+     * no-op that looked like it worked.
+     *
+     * It holds the same objects `setScanResults` writes, so `classifiedEntriesOf`
+     * can be asked of either — which is what keeps the end of the scan and the
+     * stop screen's "try again" reading one rule rather than two.
+     */
+    const settled = new Map<string, ScanResult>();
+
     const CONCURRENCY = 3;
     let nextIdx = 0;
     let running = 0;
@@ -1347,6 +1642,9 @@ export function ImportWizard() {
           if (token.cancelled) { resolve(); return; }
           const entry = scannable[nextIdx++];
           running++;
+          // Slice #29.08 - the moment of the spend. See `classificationSpent`:
+          // this is issued, therefore billed, whatever comes back.
+          setClassificationSpent(true);
 
           // Mark as scanning/converting
           const isImg = isFileKind(
@@ -1362,15 +1660,20 @@ export function ImportWizard() {
           scanEntry(entry)
             .then((cl) => {
               if (token.cancelled) return;
+              const result: ScanResult = {
+                status: "done",
+                description: cl.classifiedLabel,
+                typeKey: cl.suggestedTypeKey,
+                confidence: cl.confidence,
+                extractable: cl.extractable,
+              };
+              // ONE object, written to both — so the gate below and the table
+              // on screen are looking at the same answer rather than at two
+              // constructions of it.
+              settled.set(entry.path, result);
               setScanResults((prev) => {
                 const next = new Map(prev);
-                next.set(entry.path, {
-                  status: "done",
-                  description: cl.classifiedLabel,
-                  typeKey: cl.suggestedTypeKey,
-                  confidence: cl.confidence,
-                  extractable: cl.extractable,
-                });
+                next.set(entry.path, result);
                 return next;
               });
             })
@@ -1399,13 +1702,39 @@ export function ImportWizard() {
       launch();
     });
 
-    if (!token.cancelled) {
-      // Slice #29.02 - the scan hands over the moment the last request
-      // settles. Gated, it rests on `scanning`, and the panel is told the scan
-      // is over so that it stops telling the user to wait for it.
-      settle("scanning", "ready");
-    }
-  }, [settle]);
+    if (token.cancelled) return;
+
+    /**
+     * The gate.                                                (Slice #29.08)
+     *
+     * ⚠️ **OVER THE ENTRIES THE RUN WILL CREATE A DOCUMENT FOR, not over every
+     * file in the folder.** A `link` or `skip` row from the Pre-existing stage
+     * creates nothing, so its type cannot be a type this import files a
+     * document on — and blocking a run because a document the archive ALREADY
+     * HOLDS is of a formless type would refuse an import over something that
+     * happened months ago and that this run cannot change. It is the same list
+     * `entriesToImport` derives one level up, computed from the arguments this
+     * function was given rather than from state, for the reason the whole
+     * function takes them as arguments.
+     */
+    const toImport = walked.filter((entry) => !skip.has(entry.path));
+    const lookup = await runTypeGate(toImport, settled, token);
+    // `null` means the run was cancelled under the request. Nobody to tell.
+    if (lookup === null) return;
+
+    // Slice #29.02, re-pointed by #29.08 - the scan hands over the moment the
+    // last request settles AND the gate has answered. Gated, it rests on
+    // `scanning`, and the panel is told the scan is over so that it stops
+    // telling the user to wait for it. Where it hands over TO is
+    // `phaseAfterClassification`'s to say; this file holds no copy of that rule,
+    // and the stop screen is deliberately not a gated destination — see
+    // `SELF_ADVANCING_TRANSITIONS`.
+    settle(
+      "scanning",
+      phaseAfterClassification({ typesClean: typesAreClean(lookup) }).phase,
+    );
+  }, [settle, runTypeGate]);
+
 
   /**
    * "I have fixed the files — check again." Re-walks the folder already
@@ -1556,11 +1885,19 @@ export function ImportWizard() {
     setMetaProgress({ done: 0, total: 0 });
     setScanResults(new Map());
     setScanProgress({ done: 0, total: 0 });
+    // Slice #29.08 - and the type gate's answer, for the reason every other
+    // line here exists: this function's contract is that every trace of the run
+    // is dropped, and a verdict about a folder the wizard no longer holds is as
+    // much a trace as a tick.
+    setTypeLookup(null);
+    setTypeGateBusy(false);
+    setTypeGateAttempts(0);
     setResolvedRun(null);
     setPropertiesTouched(false);
     setTouchedProperties([]);
     setCornersWritten(new Set());
     setDocumentsCreated(false);
+    setClassificationSpent(false);
     setRunCompleted(false);
     // Slice #26.10 — a renounced run has no conclusion to report. Left set, the
     // message would open over the Information page of the NEXT import, quoting
@@ -1777,6 +2114,43 @@ export function ImportWizard() {
     [entries, preexistingDecisions],
   );
 
+  /**
+   * "The list could not be read — try again."                   (Slice #29.08)
+   *
+   * The ONE thing the stop screen offers to repeat, and it repeats nothing that
+   * costs money: the classification is already in `scanResults`, so this reads
+   * the archive's list of document types again and decides again. It is not a
+   * resume — there is no partial run to pick up, and nothing was persisted —
+   * which is why it exists on the failed-read branch and nowhere else. A type
+   * that has no form does not acquire one because a button was pressed here;
+   * that is what DocTypeEngine is for, and the way back from it is a fresh
+   * import, as the stop screen says.
+   *
+   * ⚠️ **It reads `entriesToImport` and `scanResults`, the STATE, and that is
+   * correct here where it would be wrong inside `startScan`.** Nothing is in
+   * flight at this point: the scan settled before the phase moved, and both
+   * values were published in commits that have long since rendered. The reason
+   * the scan itself uses a local is that its awaits sit between the writes and
+   * the read; there is no such gap here.
+   */
+  const handleTypeGateRetry = useCallback(async () => {
+    if (typeGateBusy) return;
+    const token = runTokenRef.current;
+    // ⚠️ **THE BUSY FLAG IS `runTypeGate`'S, INCLUDING ON THE CANCELLED PATH,
+    // and an adversarial round found what the other arrangement cost.** With
+    // the clear here and after an early `return` on cancellation, a run
+    // cancelled under the fetch left the flag set and the guard above then
+    // refused every later press for the rest of the session. Nothing reached
+    // that sequence — the stop screen disables all three of its buttons while
+    // this runs — but the invariant was being held up by another component's
+    // `disabled` props, which is not where one belongs.
+    const lookup = await runTypeGate(entriesToImport, scanResults, token);
+    if (token.cancelled || lookup === null) return;
+    // Straight to `setPhase`, not through `settle`: this is a button the user
+    // pressed, and the table in `workflow-stages.ts` never gates one.
+    if (typesAreClean(lookup)) setPhase("folder-report");
+  }, [runTypeGate, typeGateBusy, entriesToImport, scanResults]);
+
   // Derived at render time rather than copied into state when the walk ends:
   // one copy cannot drift from the list the user is looking at. Cheap — it is
   // a single pass over names, no file contents and no I/O.
@@ -1932,38 +2306,18 @@ export function ImportWizard() {
     [duplicationChecked, entries, metadata],
   );
 
-  /**
-   * Has this run already paid for classification?   (Slice #26.03)
-   *
-   * Read off the scan RESULTS, not off `scanProgress.done`, and counting BOTH
-   * `done` and `error`. Two wrong answers were tried first, and each is a lie
-   * in the dialog that exists to stop lies:
-   *
-   *  - `scanProgress.done > 0` counts every settled request including the ones
-   *    that never reached the model, so a run that fell over locally would be
-   *    reported as paid for.
-   *  - `some(status === "done")` counts only answers, so with the scan route
-   *    down every entry errors, nothing is `done`, and the dialog tells a user
-   *    staring at a table of red rows that nothing was sent — after every file
-   *    was sent and billed.
-   *
-   * A settled request is a spent one. `error` is evidence of sending; only
-   * `pending`, `skip` and `preexisting` are evidence of not having sent.
-   *
-   * A boolean rather than the `Map` itself, so that `openCancelDialog` depends
-   * on the FACT rather than on the container: `scanResults` is a fresh `Map` on
-   * every classification, so a dep on it gives the callback a new identity ~760
-   * times on Adrian's archive, where the answer changed at most once. (That is
-   * a tidiness argument, not a performance one — `ImportStageBar` is not
-   * memoised, so it re-renders on every scan result either way.)
+  /*
+   * ⚠️ **`classificationSpent` USED TO BE DERIVED HERE, and #29.08 moved it up
+   * beside `runCompleted` as a fact about the RUN.** The `useMemo` that stood
+   * on this line read the scan RESULTS — counting `done` and `error`, because a
+   * settled request is a spent one — and its forty-line note argued that at
+   * length. The argument was right and its SOURCE stopped being: `runWalk`
+   * clears `scanResults` on the way into every walk, and this slice put the
+   * Evaluation screen after the classification, so a re-check pressed there
+   * erased the evidence. The whole note moved with the state rather than being
+   * left here, where the next declaration is `report` and a reader would have
+   * taken it for that one's contract.
    */
-  const classificationSpent = useMemo(
-    () =>
-      [...scanResults.values()].some(
-        (r) => r.status === "done" || r.status === "error",
-      ),
-    [scanResults],
-  );
 
   // Pure, and derived at render time for the same reason as the forecast: a
   // copy in state is a copy that can disagree with the list on screen.
@@ -2045,8 +2399,14 @@ export function ImportWizard() {
         // out to buy nothing: `activeGate` returns the SAME object as `gate`
         // rather than a fresh one, so its identity changes only when `gate` or
         // `phase` changes - and `phase` is already in this list.
+        // ⚠️ Slice #29.08 adds the third term, and it is the same fault #29.02
+        // added the second one for. `phase === "scanning"` now spans the type
+        // gate's catalogue read as well as the queue: every request has settled
+        // by then and nothing is being billed, so without `!typeGateBusy` the
+        // dialog promises to stop classification "aflată chiar acum în lucru"
+        // for up to the 30 s that read is allowed to take.
         classificationRunning:
-          phase === "scanning" && activeGate?.rest !== "scanning",
+          phase === "scanning" && activeGate?.rest !== "scanning" && !typeGateBusy,
         // ⚠️ `propertiesTouched` ALONE, not `resolvedRun !== null ||` it. An
         // adversarial round enumerated the three states: a step that finished
         // with properties has already set this, a step that failed partway has
@@ -2064,6 +2424,7 @@ export function ImportWizard() {
     classificationSpent,
     phase,
     activeGate,
+    typeGateBusy,
     propertiesTouched,
     documentsCreated,
     savedSession,
@@ -2120,10 +2481,41 @@ export function ImportWizard() {
           preconditions rest, the scan panel at the scanning rest), and those
           are precisely the two where nothing else would tell a screen-reader
           user that the flow has stopped. */}
+      {/* ⚠️ **Slice #29.08 gave it a second sentence, and the reason is the
+          one the paragraph above states.** The import stopping on its own is
+          the only transition in the whole flow that arrives without a press,
+          and it was the one nothing announced: the stop screen's own
+          `role="status"` is inserted together with its text, which is exactly
+          what does not work; and the shell's `StageIndicator` announcement does
+          not change either, because `types-blocked` reports the SCANNING stage
+          so that no eleventh pill has to exist. This region is already
+          permanent, and its text already changes — so it is the one place the
+          announcement can be made reliably. Found by the adversarial round. */}
       <p role="status" className="sr-only">
-        {activeGate !== null
-          ? tStepGate(`cleared.${stageForPhase(activeGate.rest)}`)
-          : ""}
+        {phase === "types-blocked"
+          ? // ⚠️ **THE REASON-SPECIFIC SENTENCE, NOT A SHARED TITLE, and a
+            // third round found why that matters.** A retry that turns "we
+            // could not read the list" into "the list has no default type"
+            // replaces the whole red block and removes the button the user was
+            // standing on — and with one title for both, the region's text does
+            // not change, so nothing is announced at all. The intros differ in
+            // every state, so this is the text that is guaranteed to move.
+            [
+              tTypesBlocked(
+                typeLookup?.ok === false ? `failed.${typeLookup.reason}Intro` : "title",
+              ),
+              // ⚠️ **THE ATTEMPT NUMBER IS WHAT MAKES A REPEATED FAILURE
+              // AUDIBLE.** A retry that comes back with the same reason renders
+              // the same sentence, and a live region with no text change
+              // announces nothing — so the button reads as dead. See
+              // `typeGateAttempts`.
+              typeGateAttempts > 1 ? tTypesBlocked("attempt", { n: typeGateAttempts }) : "",
+            ]
+              .filter(Boolean)
+              .join(" ")
+          : activeGate !== null
+            ? tStepGate(`cleared.${stageForPhase(activeGate.rest)}`)
+            : ""}
       </p>
 
       <ImportStageBar
@@ -2348,23 +2740,71 @@ export function ImportWizard() {
           acknowledged={preexistingAcknowledged}
           onAcknowledgedChange={setPreexistingAcknowledged}
           onCheck={() => void handleRecheck()}
-          // The acknowledgement the source document asks for, and the ONLY
-          // route from this stage to Evaluation. It changes the phase and
-          // nothing else: the report itself stays in state, because the import
-          // loop reads it three screens later.
-          onContinue={() => setPhase("folder-report")}
-          // Slice #29.02 — at a pause this panel's own Continuă would be a
-          // second button to the same place, unticked and therefore disabled,
-          // sitting above the live one. The gate card carries the action; the
-          // panel keeps "Verifică din nou", which still means something.
-          gated={activeGate?.rest === "preexisting"}
+          // The acknowledgement the source document asks for — and, since
+          // #29.08, the press that starts the billed classification. It used to
+          // change the phase and nothing else; `startScan`'s single caller
+          // moved here from the Evaluation screen, because the import cannot
+          // promise that every document type has a form until it knows which
+          // types this folder holds.
+          //
+          // ⚠️ **`entries` and `preexistingDecisions`, exactly as the Evaluation
+          // screen passed them.** The whole list goes in and the decisions are
+          // the skip set: an entry the archive already holds gets a row and a
+          // status but is never sent, which is the spend #26.08 stopped and
+          // this slice must not quietly restart.
+          onContinue={() => void startScan(entries, preexistingDecisions)}
+          // …and the number that press will spend, for the sentence above it.
+          classificationCalls={forecast.classificationCalls}
+          // …and whether it would be spending it for the SECOND time. A
+          // re-check pressed on the Evaluation screen lands back here with a
+          // paid-for classification already thrown away, and "nothing has been
+          // sent yet" would be false in the one place this flow is least
+          // allowed to be wrong about money. Found by the adversarial round.
+          classificationSpent={classificationSpent}
           onChooseFolder={handlePickFolder}
           notesOpen={preexistingNotesOpen}
           onNotesOpenChange={setPreexistingNotesOpen}
         />
       )}
 
-      {/* The walk is done and nothing has been spent yet. */}
+      {/* ── The folder's own report   (Slice #24.02b, re-homed in #29.08) ───
+
+          ⚠️ **IT MOVED HERE FROM THE EVALUATION SCREEN, AND THE ADVERSARIAL
+          ROUND IS WHY.** This is the advisory report about the FOLDER — what
+          the walk dropped, what looks odd, and the loud findings that end
+          "Nu porniți importul". One of them, `walkLoopedOnShortcut`, says in as
+          many words that the AI costs in the forecast are inflated and that the
+          user should delete a shortcut and check again. On the Evaluation
+          screen that sentence now arrives AFTER the classification has been
+          billed — the report's own remedy, a trip to File Explorer, is the one
+          thing that stops being worth anything once the money is spent.
+
+          So it stands under the Pre-existing panel, which is the screen that
+          carries the press that spends. `FolderForecast` stays where it is: it
+          reports what the run will do, which is an Evaluation question.
+
+          ⚠️ **Gated on `preexisting !== null`, not on the phase.** The report
+          is a to-do list the user works through in Explorer, and blanking it
+          for the thirty seconds of a re-check is exactly what the sibling
+          panels refuse to do. Before the archive has been asked there is
+          nothing to stand under; after it, the previous round's report stays up
+          while the next one runs. */}
+      {inPreexisting && preexisting !== null && (
+        <ReportSections
+          report={report}
+          forecast={forecast}
+          uploadBytes={uploadBytesToImport}
+          alreadyInSystem={alreadyInSystem.total}
+          folderName={rootFolderName}
+          showQuiet={showQuiet}
+          onShowQuietChange={setShowQuiet}
+          showSkipped={showSkipped}
+          onShowSkippedChange={setShowSkipped}
+        />
+      )}
+
+      {/* The classification has run, every type it found has a form, and
+          nothing has been written. */}
       {phase === "folder-report" && (
         <>
           <FolderForecast
@@ -2377,23 +2817,17 @@ export function ImportWizard() {
             // holds in its entirety is not reported as an empty one.
             alreadyInSystem={alreadyInSystem}
             droppedCount={report.droppedCount}
-            // …and only the entries it will import go for classification. The
-            // rest are already in the archive and the loop will not create a
-            // Document for them, so a Haiku call on one buys nothing.
-            onContinue={() => void startScan(entries, preexistingDecisions)}
+            // Slice #29.08 — Continuă goes to the Import stage now. The
+            // classification it used to start has already run, one screen back,
+            // and the gate between the two is what let this screen be reached
+            // at all: every document type in the folder has a form.
+            //
+            // Straight to `setPhase`, like the Pre-existing panel's own
+            // hand-over before it: `folder-report → ready` is a button the user
+            // presses, and `SELF_ADVANCING_TRANSITIONS` never gates one.
+            onContinue={() => setPhase("ready")}
             onChangeFolder={handlePickFolder}
             onRecheck={() => void handleRecheck()}
-          />
-          <ReportSections
-            report={report}
-            forecast={forecast}
-            uploadBytes={uploadBytesToImport}
-            alreadyInSystem={alreadyInSystem.total}
-            folderName={rootFolderName}
-            showQuiet={showQuiet}
-            onShowQuietChange={setShowQuiet}
-            showSkipped={showSkipped}
-            onShowSkippedChange={setShowSkipped}
           />
         </>
       )}
@@ -2407,13 +2841,63 @@ export function ImportWizard() {
           // Handed in already translated, exactly as the four stage panels
           // before it take their busy label — so `scanningProgress` stays the
           // one place that sentence lives.
-          progressLabel={t("scanningProgress", {
-            done: scanProgress.done,
-            total: scanProgress.total,
-          })}
+          // ⚠️ Slice #29.08 — two sentences, and which one is true says what
+          // the wizard is actually doing. The queue settles and then the type
+          // gate reads the archive's list of document types, which can take up
+          // to 30 s; leaving the running count on screen through that would be
+          // a progress line frozen at N of N under a live cue.
+          progressLabel={
+            typeGateBusy
+              ? t("readingDocumentTypes")
+              : t("scanningProgress", {
+                  done: scanProgress.done,
+                  total: scanProgress.total,
+                })
+          }
           // Slice #29.02 — at a pause the scan has finished, so the panel must
           // stop spinning a cue and stop telling the user to wait for it.
           done={activeGate?.rest === "scanning"}
+        />
+      )}
+
+      {/* Slice #29.08 — where an import stops. The classification found a
+          document type with no form to put a document's information into, or
+          the archive's list of types could not be read at all, so nothing goes
+          any further.
+
+          ⚠️ **`typeLookup !== null` is a render guard, not a state test.** The
+          phase and the verdict are written in one commit — `runTypeGate` sets
+          the lookup and `startScan` settles the phase immediately after — so
+          the pair is always consistent by the time anything renders. The guard
+          is what keeps a blank panel off the screen if a future caller ever
+          moves the phase without the answer, which is the under-claiming
+          direction this file takes everywhere: at worst the stop screen is
+          missing, never a stop screen with nothing on it. */}
+      {phase === "types-blocked" && typeLookup !== null && (
+        <ImportTypesBlockedStage
+          folderName={rootFolderName}
+          lookup={typeLookup}
+          busy={typeGateBusy}
+          busyLabel={t("readingDocumentTypes")}
+          attempt={typeGateAttempts}
+          onRetry={() => void handleTypeGateRetry()}
+          // ⚠️ **A RESET, NOT THE CANCEL CONFIRMATION, and an adversarial round
+          // took the confirmation back out.** Reusing it looked right — that
+          // dialog is the one thing in the wizard that accounts for what a run
+          // leaves behind — but its question is "Renunțați la import?" and its
+          // safe answer is "Nu, continui importul", offered over a screen whose
+          // heading says the import has stopped and whose four paragraphs
+          // explain that it cannot continue. A confirmation for a decision the
+          // system has already taken is a button that leads back to a dead end.
+          //
+          // Nothing needs accounting for: this phase is reachable only from
+          // `scanning`, which is reachable only from the Pre-existing screen's
+          // Continuă, and every write in the run happens after `ready` — so no
+          // document and no Property can exist. The one thing that HAS been
+          // spent is the classification, and `nothingWritten` on the panel says
+          // so directly above this button.
+          onLeave={handleCancelConfirmed}
+          onChooseFolder={handlePickFolder}
         />
       )}
 
@@ -2508,6 +2992,19 @@ export function ImportWizard() {
           wrong by a phase nobody thought to add to it. */}
       {entries.length > 0 &&
         (phase === "scanning" ||
+          // Slice #29.08 — the stop screen AND the Evaluation screen keep the
+          // table, and that is the point of putting it in a positive list. This
+          // block's own rule is "the phases where the table has anything to say
+          // are exactly the ones from the classification pass onwards", and the
+          // reorder moved Evaluation inside that set: it now reports a
+          // classification that has happened, so hiding the row-by-row answers
+          // under a panel that says "documentele lui au fost clasificate" and
+          // quotes the call count would read as a rendering fault. On the stop
+          // screen the table is the evidence for the sentence above it — a user
+          // told "Contract de arendă has no form" can see which of their files
+          // were read as one. Found by the adversarial round.
+          phase === "types-blocked" ||
+          phase === "folder-report" ||
           phase === "ready" ||
           phase === "property" ||
           phase === "tag-dialog" ||

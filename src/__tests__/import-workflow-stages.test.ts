@@ -33,6 +33,7 @@ import path from "node:path";
 import {
   IMPORT_PHASES,
   SELF_ADVANCING_TRANSITIONS,
+  phaseAfterClassification,
   phaseAfterFileChecks,
   stepThroughRest,
   WORKFLOW_LINE_IDS,
@@ -399,8 +400,13 @@ describe("stageForPhase", () => {
       ["preexisting", "preexisting"],
       ["preexisting-checking", "preexisting"],
       ["preexisting-report", "preexisting"],
-      ["folder-report", "evaluation"],
       ["scanning", "scanning"],
+      // Slice #29.08 — the stop screen reports the stage that RAN. The
+      // classification is what found the answer; Evaluation never happened, and
+      // an eleventh pill would put a permanent step in the indicator for a
+      // screen most runs never see.
+      ["types-blocked", "scanning"],
+      ["folder-report", "evaluation"],
       ["ready", "import"],
       ["property", "import"],
       ["tag-dialog", "import"],
@@ -411,6 +417,23 @@ describe("stageForPhase", () => {
       // for exactly this slice.
       ["result", "result"],
       ["resumed", "result"],
+    ]);
+  });
+
+  it("⚠️ runs the classification BEFORE the evaluation", () => {
+    // Slice #29.08's whole reorder, as one assertion. `WORKFLOW_STAGES` is the
+    // only thing in the codebase that encodes the order, so swapping two rows
+    // in it is the change — and a later slice "tidying" them back would break
+    // the gate silently, because every other test in this suite derives its
+    // expectation from the same array.
+    const order = WORKFLOW_STAGES.map((s) => s.id);
+    expect(order.indexOf("scanning")).toBeLessThan(order.indexOf("evaluation"));
+    expect(order.slice(order.indexOf("preexisting"))).toEqual([
+      "preexisting",
+      "scanning",
+      "evaluation",
+      "import",
+      "result",
     ]);
   });
 
@@ -592,8 +615,14 @@ describe("stageStatuses", () => {
     expect(statuses.constraints).toBe("done");
     expect(statuses.duplication).toBe("done");
     expect(statuses.preexisting).toBe("done");
+    // ⚠️ **`scanning` was `pending` on this vector until #29.08 and is `done`
+    // now, and that one line is the reorder.** The Evaluation screen is
+    // reachable only through a finished classification whose every document
+    // type has a form, so the Scanning pill behind it is green rather than
+    // grey — a claim the screen itself is standing on, because the numbers it
+    // reports come out of that scan.
+    expect(statuses.scanning).toBe("done");
     expect(statuses.evaluation).toBe("current");
-    expect(statuses.scanning).toBe("pending");
   });
 
   it("greens the first line and pulses pre-existing", () => {
@@ -1041,11 +1070,14 @@ describe("phaseAfterFileChecks", () => {
     ).toEqual(at("duplication-report", true));
   });
 
-  it("sends a clean pre-existing check straight on to the folder report", () => {
-    // No screen for a clean answer, exactly as a clean duplication check shows
-    // none: there is nothing to tell the user, and a screen reading "the
-    // archive holds none of these, press Continuă" is a click spent on a
-    // non-event. The stage still goes green behind them — the comparison ran.
+  it("⚠️ stops a clean pre-existing check on its own screen too", () => {
+    // THE one cell #29.08 changed, and it is the inverse of the sentence that
+    // used to be here: "no screen for a clean answer, because a screen reading
+    // 'the archive holds none of these, press Continuă' is a click spent on a
+    // non-event." That was true while the next billed step stood behind the
+    // EVALUATION screen's Continuă. The classification runs before Evaluation
+    // now, so this screen carries the press that pays for it — and the click is
+    // not spent on a non-event, it IS the authorisation.
     expect(
       phaseAfterFileChecks({
         target: "preexisting",
@@ -1053,7 +1085,27 @@ describe("phaseAfterFileChecks", () => {
         duplicationClean: true,
         preexistingClean: true,
       }),
-    ).toEqual(at("folder-report", true, true));
+    ).toEqual(at("preexisting-report", true, true));
+  });
+
+  it("⚠️ answers the same screen whether the archive was happy or not", () => {
+    // Written out as a pair rather than left to the two cases above, because
+    // the COLLAPSE is the thing worth pinning: `preexistingClean` no longer
+    // chooses between two phases, and a later slice re-splitting it would put
+    // the cost warning on a screen half of all runs never see.
+    const clean = phaseAfterFileChecks({
+      target: "preexisting",
+      constraintsClean: true,
+      duplicationClean: true,
+      preexistingClean: true,
+    });
+    const notClean = phaseAfterFileChecks({
+      target: "preexisting",
+      constraintsClean: true,
+      duplicationClean: true,
+      preexistingClean: false,
+    });
+    expect(clean).toEqual(notClean);
   });
 
   it("⚠️ shows the report when the archive answered with anything at all — including a failure", () => {
@@ -1191,6 +1243,63 @@ describe("phaseAfterFileChecks", () => {
 });
 
 // ---------------------------------------------------------------------------
+// The fork at the end of the classification   (Slice #29.08)
+// ---------------------------------------------------------------------------
+
+describe("phaseAfterClassification", () => {
+  it("goes on to Evaluation when every type this folder holds has a form", () => {
+    expect(phaseAfterClassification({ typesClean: true })).toEqual({
+      phase: "folder-report",
+    });
+  });
+
+  it("⚠️ stops the import when one does not — and when nobody could tell", () => {
+    // ONE input for both, which is the decision the slice took and the one a
+    // later reader is most likely to want to split. A run whose catalogue read
+    // failed has not PROVED that every type has a form, and the promise the
+    // gate makes is that no document is imported before its type has one. The
+    // stop screen says which of the two happened; the PHASE is the same,
+    // because what the user has to do next is the same.
+    expect(phaseAfterClassification({ typesClean: false })).toEqual({
+      phase: "types-blocked",
+    });
+  });
+
+  it("only ever names a phase the machine actually has", () => {
+    for (const typesClean of [true, false]) {
+      expect(IMPORT_PHASES).toContain(phaseAfterClassification({ typesClean }).phase);
+    }
+  });
+
+  it("⚠️ never sends the run backwards, whichever way it answers", () => {
+    // Both destinations must be at or after Scanning in the catalogue: the
+    // classification has run and been paid for, and an indicator that retreated
+    // to a stage the user has finished would say the money bought nothing.
+    const order = WORKFLOW_STAGES.map((s) => s.id);
+    const scanning = order.indexOf("scanning");
+    for (const typesClean of [true, false]) {
+      const stage = stageForPhase(phaseAfterClassification({ typesClean }).phase);
+      expect({ typesClean, forward: order.indexOf(stage) >= scanning }).toEqual({
+        typesClean,
+        forward: true,
+      });
+    }
+  });
+
+  it("⚠️ agrees with the step-through table about which of its exits is gated", () => {
+    // The clean exit is the scan's self-advancing transition and IS gated; the
+    // stop is not, and must not be. Derived from both sources rather than
+    // written out, because the failure this catches is the two disagreeing.
+    expect(
+      stepThroughRest("scanning", phaseAfterClassification({ typesClean: true }).phase),
+    ).toBe("scanning");
+    expect(
+      stepThroughRest("scanning", phaseAfterClassification({ typesClean: false }).phase),
+    ).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Step-through   (Slice #29.02)
 // ---------------------------------------------------------------------------
 
@@ -1233,7 +1342,7 @@ describe("SELF_ADVANCING_TRANSITIONS", () => {
     expect(new Set(keys).size).toBe(keys.length);
   });
 
-  it("⚠️ covers exactly the six transitions the wizard makes on its own", () => {
+  it("⚠️ covers exactly the transitions the wizard makes on its own", () => {
     // Written out rather than derived, for the reason the phase->stage table is
     // written out: this list is a claim about `import-wizard.tsx`, and a test
     // that recomputed it from the same array would agree with anything.
@@ -1242,8 +1351,15 @@ describe("SELF_ADVANCING_TRANSITIONS", () => {
       ["walking", "constraints", "structure"],
       ["constraints-checking", "duplication", "constraints"],
       ["duplication-checking", "preexisting", "duplication"],
-      ["preexisting-checking", "folder-report", "preexisting"],
-      ["scanning", "ready", "scanning"],
+      // ⚠️ **`preexisting-checking → folder-report` WAS THE FIFTH ROW UNTIL
+      // #29.08.** It gated the one transition a clean archive lookup made on
+      // its own; that transition no longer exists, because every settled lookup
+      // now lands on `preexisting-report`, which stops on a button.
+      //
+      // ⚠️ **And the last row's destination moved from `ready` to
+      // `folder-report`**, which is the reorder seen from the step-through
+      // side: the Evaluation screen comes after the classification now.
+      ["scanning", "folder-report", "scanning"],
     ]);
   });
 });
@@ -1339,7 +1455,10 @@ describe("stepThroughRest", () => {
       "preexisting-checking->constraints-report=null",
       "preexisting-checking->duplication-report=null",
       "preexisting-checking->duplication=null",
-      "preexisting-checking->folder-report=preexisting",
+      // ⚠️ `preexisting-checking->folder-report=preexisting` stood here until
+      // #29.08. Both archive answers land on `preexisting-report` now, so the
+      // row below absorbed it — and it is ungated, correctly: that screen stops
+      // on its own button, which is the press that starts the classification.
       "preexisting-checking->preexisting-report=null",
       "preexisting-checking->preexisting=null",
       "walking->constraints=structure",
@@ -1347,7 +1466,15 @@ describe("stepThroughRest", () => {
   });
 
   it("⚠️ does not gate a transition the user already presses a button for", () => {
-    expect(stepThroughRest("folder-report", "scanning")).toBeNull();
+    // Slice #29.08 — the first two are the same two presses under new names:
+    // the one that starts the billed classification moved to the Pre-existing
+    // screen, and Evaluation's own Continuă now leads to the Import stage.
+    expect(stepThroughRest("preexisting-report", "scanning")).toBeNull();
+    expect(stepThroughRest("folder-report", "ready")).toBeNull();
+    // …and the stop screen is not a pause. A gate in front of a screen the user
+    // cannot leave by pressing on would be a second button for a halt they are
+    // already standing in.
+    expect(stepThroughRest("scanning", "types-blocked")).toBeNull();
     expect(stepThroughRest("ready", "property")).toBeNull();
     expect(stepThroughRest("property", "tag-dialog")).toBeNull();
     expect(stepThroughRest("importing", "result")).toBeNull();
@@ -1387,8 +1514,15 @@ describe("the pause's copy", () => {
 
   it.each(LOCALES)("⚠️ does not restate the panel's own all-clear in %s", (file) => {
     // The panel above the card is already showing its emerald `clean` line, so
-    // a card that says the same thing reads as a rendering fault. Four of the
-    // six stages have such a line.
+    // a card that says the same thing reads as a rendering fault.
+    //
+    // ⚠️ **THREE STAGES, NOT FOUR, SINCE #29.08.** `preexisting` was the
+    // fourth; it left both the table and `cleared` when a clean archive lookup
+    // stopped being a transition the wizard makes on its own — it lands on the
+    // Pre-existing report screen now, which stops on the button that starts the
+    // billed classification. The remaining two rest stages, `preconditions` and
+    // `scanning`, have never had a `clean` sibling to be confused with, which
+    // is why this list has always been shorter than the table.
     //
     // ⚠️ **THE FIRST VERSION OF THIS TEST WAS `not.toBe(clean)`, AND THE
     // ADVERSARIAL ROUND SHOWED IT PASSING ON THE EXACT DEFECT IT NAMES.**
@@ -1404,7 +1538,7 @@ describe("the pause's copy", () => {
       fs.readFileSync(path.join(process.cwd(), "messages", file), "utf8"),
     ) as { adminImport: Record<string, { clean?: string }> };
     const g = loadStepGateMessages(file) as { cleared: Record<string, string> };
-    for (const section of ["structure", "constraints", "duplication", "preexisting"]) {
+    for (const section of ["structure", "constraints", "duplication"]) {
       const clean = raw.adminImport[section]?.clean;
       expect(typeof clean).toBe("string");
       // The section name travels with the number so a failure says WHICH
@@ -1494,8 +1628,15 @@ describe("the wizard's side of the table", () => {
       wizard.indexOf('setPhase(fromPhase);'),
     );
     expect(block.length).toBeGreaterThan(0);
-    const walkRests = SELF_ADVANCING_TRANSITIONS.filter((t) => t.from !== "preflight" && t.from !== "scanning");
-    expect(walkRests).toHaveLength(4);
+    const walkRests = SELF_ADVANCING_TRANSITIONS.filter(
+      (t) => t.from !== "preflight" && t.from !== "scanning",
+    );
+    // Three since #29.08, four before it: `preexisting-checking` left the table
+    // when a clean archive lookup stopped being a transition the wizard makes on
+    // its own. The ternary still names all four checking phases — it has to, it
+    // is what `runWalk` sets the phase from — so this test now asserts a subset
+    // of it rather than all of it.
+    expect(walkRests).toHaveLength(3);
     for (const t of walkRests) {
       expect({ from: t.from, inTernary: block.includes(`"${t.from}"`) }).toEqual({
         from: t.from,
@@ -1504,17 +1645,26 @@ describe("the wizard's side of the table", () => {
     }
   });
 
-  it("⚠️ calls settle from exactly the four sites that can reach the six transitions", () => {
-    // Four, not six: the `phaseAfterFileChecks` commit is one call site serving
-    // three of the transitions. A fifth call site means somebody added a
+  it("⚠️ calls settle from exactly the four sites that can reach the table", () => {
+    // Four call sites, five transitions: the `phaseAfterFileChecks` commit is
+    // one site serving three of them. A fifth site means somebody added a
     // transition without adding it to the table, which is the direction that
     // produces a pause with no sentence written for it.
     const calls = wizard.match(/(?<![A-Za-z])settle\(/g) ?? [];
     expect(calls).toHaveLength(4);
     expect(wizard).toContain('settle("preflight", "structure")');
-    expect(wizard).toContain('settle("scanning", "ready")');
     expect(wizard).toContain('settle(fromPhase, "constraints")');
     expect(wizard).toContain("settle(fromPhase, next.phase)");
+    // ⚠️ Slice #29.08 — the scan's hand-over used to read
+    // `settle("scanning", "ready")`. It no longer names its destination at all:
+    // `phaseAfterClassification` decides between Evaluation and the stop
+    // screen, and the wizard holding a literal here would be a second copy of
+    // that rule. What is asserted instead is that the call is still made from
+    // the scanning phase and still asks that function.
+    // Whitespace-tolerant: the call is Prettier-wrapped today and a reformat
+    // that changes nothing must not fail this.
+    expect(wizard).toMatch(/settle\(\s*"scanning",/);
+    expect(wizard).toContain("phaseAfterClassification({ typesClean: typesAreClean(lookup) })");
   });
 
   it("⚠️ drops the pause when the preconditions come back FAILING", () => {

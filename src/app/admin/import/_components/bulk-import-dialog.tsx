@@ -190,6 +190,10 @@ import {
 import { discoverForType, shouldDiscoverType, typeAwaitsForm } from "@/lib/import/discover-run";
 import { documentTypeHasForm } from "@/lib/documents/status";
 import {
+  fetchDocumentTypeCatalogue,
+  type DocumentTypeCatalogueRow,
+} from "@/lib/import/document-type-catalogue";
+import {
   catchAllType,
   resolveAgainstTypes,
   type ClassifierAnswer,
@@ -202,7 +206,10 @@ import { proposeTemplateFields } from "@/lib/documents/discover-to-template";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   canRetryReads,
-  fetchWithTimeout,
+  // ⚠️ `fetchWithTimeout` left this import list in #29.08 with the catalogue
+  // fetch that was its only caller here. It is still exported and still used —
+  // by `src/lib/import/document-type-catalogue.ts`, and by `runAiInterpret`
+  // itself — so this is not a dead helper, only one this file no longer calls.
   inFolderOrder,
   interpretSkipReason,
   isSessionLoss,
@@ -634,7 +641,7 @@ async function enrichDiscoverSteps(byType: Map<string, DiscoverStep>): Promise<E
   // already accepts in writing — and what it buys is the run knowing what the
   // archive currently looks like.
   let sessionLost = false;
-  const fresh = await fetchDocTypeRows().catch((err: unknown) => {
+  const fresh = await fetchDocumentTypeCatalogue().catch((err: unknown) => {
     // The same sentinel `createDocument` and `uploadPage` throw, read here
     // rather than swallowed — see the header.
     sessionLost = err instanceof Error && err.message === "session-expired";
@@ -642,7 +649,7 @@ async function enrichDiscoverSteps(byType: Map<string, DiscoverStep>): Promise<E
   });
   // ⚠️ **An EMPTY list is treated as a failed read, not as "every type was
   // deleted", and an adversarial round found what the other reading costs.**
-  // `fetchDocTypeRows` answers `body.items ?? []`, so any 200 whose JSON has no
+  // `fetchDocumentTypeCatalogue` answers `body.items ?? []`, so any 200 whose JSON has no
   // `items` array — a rewritten response, a proxy, a route that changed shape —
   // arrives here as zero rows, and the loop below would then delete every step
   // in the queue. Those pairs exist in no database: they were read at the cost
@@ -1157,61 +1164,17 @@ function isCoordinateRow(
 // ---------------------------------------------------------------------------
 
 /**
- * One document type as the value-lists route returns it.   (Slice #27.05)
- *
- * `templateFields` is the raw JSONB column and is deliberately `unknown`: the
- * one thing allowed to interpret it is `parseTemplateFields`, and asking
- * "does this type have a form?" goes through `documentTypeHasForm` in
- * `src/lib/documents/status.ts` — which is where #26.12 put that decision so a
- * label, a colour and a queue can never disagree about it.
+ * ⚠️ **`DocTypeRow` AND `fetchDocTypeRows` MOVED OUT IN SLICE #29.08, and the
+ * alias below is what keeps this file's 40-odd references reading as they
+ * did.** They live in `src/lib/import/document-type-catalogue.ts` now, because
+ * the wizard has to read the same list at the end of the classification pass —
+ * `checkTypeForms` decides there whether the run may start at all, and the only
+ * way it can promise that the type it names is the type THIS file will file a
+ * document on is by looking at the same list, fetched the same way. The three
+ * guards on that fetch, and the `session-expired` sentinel it throws, are
+ * documented on it.
  */
-type DocTypeRow = { id: string; key: string; name: string; templateFields?: unknown };
-
-/**
- * The list, unindexed. Split out so the end of the run can re-read it. (#27.05)
- *
- * ⚠️ **TIMED, and an adversarial round is why.** Since #27.05 this call sits in
- * front of `setDone(true)` — the run re-reads the type list once the rows have
- * settled, to name the queued types — so a request that never comes back is the
- * state this file's own timeout comment forbids: no Close, no result table, no
- * report, and the stage bar's Cancel disabled for the whole `importing` phase,
- * so a reload is the only way out and a reload loses the queue. `.catch()` does
- * not cover a hang; only a timer does.
- *
- * ⚠️ **It bounds the HEADERS, not the body** — `fetchWithTimeout` says so about
- * itself and this is not an exception to it. And it is not the only unbounded
- * await on the path to `setDone`: the create, upload, tag and link calls in the
- * loop are all bare `fetch`es of much larger bodies. Those are #26.09's to fix
- * and are named in this slice's handover; what is claimed here is only that
- * #27.05 did not add a sixth.
- *
- * ⚠️ **`no-store`, and a 200 is not proof of a live session.** This is the only
- * GET in the run — the model calls are POSTs, which a browser cache cannot
- * serve — and `handleReviewTypes` reads its success as evidence that a signed-in
- * session is back. A cached 200, or a rewritten 200 carrying a sign-in PAGE,
- * would clear that banner over a dead session; `servesHtml` is the same test
- * `runAiInterpret` applies to its own three calls, exported so there is one
- * copy of it.
- */
-async function fetchDocTypeRows(): Promise<DocTypeRow[]> {
-  const res = await fetchWithTimeout(
-    "/api/admin/value-lists/document-types",
-    30_000,
-    { cache: "no-store" },
-  );
-  // ⚠️ **The SENTINEL, not a sentence, and an adversarial round is why.**
-  // `createDocument` and `uploadPage` signal a lost session by throwing exactly
-  // this string, and the per-task catch maps it to the amber banner with the
-  // sign-in link. A hand-written Romanian sentence thrown from here reached
-  // `run().catch` instead, which only sets `importError` — so an expiry before
-  // the first file drew a red box with bare prose in it and no link to sign in
-  // anywhere, under a banner whose own comment names that exact case. One
-  // protocol, mapped in both places.
-  if (isSessionLoss(res) || (res.ok && servesHtml(res))) throw new Error("session-expired");
-  if (!res.ok) throw new Error("Nu s-au putut încărca tipurile de documente (HTTP " + res.status + ").");
-  const body = (await res.json()) as { items?: DocTypeRow[] };
-  return body.items ?? [];
-}
+type DocTypeRow = DocumentTypeCatalogueRow;
 
 /**
  * Fetch all active document types.
@@ -1235,7 +1198,7 @@ async function fetchDocTypes(): Promise<{
   fallbackId: string;
   items: DocTypeRow[];
 }> {
-  const items = await fetchDocTypeRows();
+  const items = await fetchDocumentTypeCatalogue();
   if (items.length === 0) {
     throw new Error(
       "Nu există niciun tip de document definit în Date de Referință. " +
@@ -1398,7 +1361,7 @@ async function ensureDocType(
     // that note exists for; it must reach it.
     return { id: fallbackId, outcome: "failed" };
   }
-  // ⚠️ **The same two tests `fetchDocTypeRows` makes — which is MORE than the
+  // ⚠️ **The same two tests `fetchDocumentTypeCatalogue` makes — which is MORE than the
   // loop's other calls make, and a fifth review round corrected a comment that
   // said otherwise.** `createDocument`, `uploadPage` and the property link all
   // test `res.redirected` alone; only the type-list GET also checks for a 401

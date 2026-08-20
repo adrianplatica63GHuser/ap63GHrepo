@@ -48,7 +48,7 @@
 import { useTranslations } from "next-intl";
 
 import { buttonClass } from "@/lib/ui/button-styles";
-import { COST_NOTE_CLASS } from "./folder-forecast";
+import { COST_NOTE_CLASS } from "@/lib/ui/cost-note";
 
 /**
  * Where this stage stands.

@@ -66,7 +66,7 @@ import {
   duplicationMessageKeyFor,
 } from "@/lib/import/duplication-rules";
 import { RuleExample } from "./rule-example";
-import { COST_NOTE_CLASS } from "./folder-forecast";
+import { COST_NOTE_CLASS } from "@/lib/ui/cost-note";
 
 /** How many paths one group shows before it stops listing them. */
 const MAX_PATHS_SHOWN = 4;

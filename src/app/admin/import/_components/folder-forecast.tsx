@@ -1,32 +1,57 @@
 "use client";
 
 /**
- * FolderForecast — the screen's promise, kept.   (Slice #24.02a)
+ * FolderForecast — the Evaluation screen.   (Slice #24.02a, re-homed in #29.08)
  *
- * The folder has been walked. Nothing has been sent anywhere, nothing has been
- * written, and no classification call has been spent. This panel says what the
- * import is about to do, and **Continuă** is the first thing in the whole flow
- * that costs money.
+ * The folder has been walked, the archive has been asked, and — since #29.08 —
+ * every document in it has been classified. Nothing has been written. This
+ * panel says what the import is about to do, and **Continuă** goes on to the
+ * Import stage, which is where the run is priced and where the one button that
+ * writes to the archive lives.
  *
- * That ordering is the slice. Before it, `handlePickFolder` walked the folder
- * and started the classification pass in the same uninterrupted async block —
- * 451 Claude calls on Adrian's archive, spent by the act of choosing a folder,
- * before a single precondition had been checked or a single number shown.
+ * ⚠️ **THIS FILE'S HEADER USED TO SAY THE OPPOSITE, AND THE SENTENCE WAS THE
+ * SLICE IT CAME FROM.** It read: "Continuă is the first thing in the whole flow
+ * that costs money. That ordering is the slice." That was #24.02a's achievement
+ * — before it, `handlePickFolder` walked the folder and started the
+ * classification pass in the same uninterrupted async block, 451 Claude calls
+ * on Adrian's archive spent by the act of choosing a folder, before a single
+ * precondition had been checked or a single number shown.
  *
- * The button carries a count on purpose — a number argues better than a
- * warning, and a user who expected 330 has one thing to notice rather than a
- * paragraph to read. It carries the number the CLICK acts on, which is the
- * count of images about to be sent for classification, NOT the document total.
- * Pressing Continuă creates nothing: four more steps stand between here and
- * the first Document row, and a button that promised to create 357 documents
- * while spending 451 classification calls would be lying in both directions.
- * The document total is a line in the panel, where it belongs.
+ * #29.08 did not undo that. The classification is still behind a press that
+ * says what it will spend; the press moved one screen earlier, to the
+ * Pre-existing panel, because the import has to know which document types a
+ * folder holds BEFORE it can promise that each of them has a form to put a
+ * document's information into. So the warning went with the press, and this
+ * screen reports a classification that has happened instead of forecasting one
+ * that has not. Leaving the old sentence here would have left the file's own
+ * documentation describing a rule it no longer has — which is the failure
+ * #29.02 had to fix once already, in `phase-dwell.ts`.
+ *
+ * ⚠️ **AND WHAT THIS PANEL DRAWS IS STILL COMPUTED FROM THE WALK, NOT FROM THE
+ * CLASSIFICATION.** `forecastImport` reads names and structure and nothing
+ * else — `preflight.ts` says so — so every number in the table below means
+ * exactly what it meant before the reorder; what changed is that the images it
+ * counts have now actually been sent. The classification's own answers reach
+ * this screen through `ScanTable` underneath it, row by row, and nowhere else.
+ * Saying "this screen reports the classification" without that qualification
+ * would be the same overclaim the intro line used to make in the other
+ * direction.
+ *
+ * ⚠️ **THE BUTTON NO LONGER CARRIES A COUNT, and losing it is the point rather
+ * than an omission.** It carried the number the CLICK acted on — the images
+ * about to be sent for classification — because a number argues better than a
+ * warning. This click sends nothing and spends nothing, so a count on it could
+ * only be a number about something else. The count moved to the sentence beside
+ * the press that does spend, on the Pre-existing panel. The images that WERE
+ * sent are still a line in the table below, where the rest of the run's
+ * arithmetic lives.
  *
  * Slice #24.02b fills the space below with the blockers, the skipped list and
  * the warnings. This is the frame they land in, and the forecast stays at the
  * top of it — shown even when everything passes.
  */
 
+import { useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { buttonClass } from "@/lib/ui/button-styles";
 import type { ImportForecast } from "@/lib/import/preflight";
@@ -68,21 +93,6 @@ function formatMb(bytes: number): string {
   return mb >= 10 ? String(Math.round(mb)) : mb.toFixed(1);
 }
 
-/**
- * The sentences on this screen that say what has and has not been spent.
- *
- * Deliberately louder than the fine print they used to be. These are the only
- * warning that the NEXT click is the one that costs money, and rendered as
- * muted 12px grey they read as boilerplate — the thing a user's eye is trained
- * to skip. Amber, italic and a size up puts them between body text and a
- * warning, which is what they are.
- *
- * Exported so the report panel's opening line gets the same treatment: three
- * sentences with one job should not be able to drift into three styles.
- */
-export const COST_NOTE_CLASS =
-  "text-sm font-medium italic text-amber-700 dark:text-amber-400";
-
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-baseline justify-between gap-4 border-b border-crease py-1.5 last:border-0 dark:border-zinc-800">
@@ -103,6 +113,30 @@ export function FolderForecast({
   onRecheck,
 }: Props) {
   const t = useTranslations("adminImport.wizard.forecast");
+
+  /**
+   * Give the keyboard somewhere to land when this screen arrives.
+   *                                                            (Slice #29.08)
+   *
+   * ⚠️ **IT NEEDS ONE NOW AND DID NOT BEFORE, and a fourth adversarial round
+   * found both routes.** Until the reorder this panel was only ever reached by
+   * pressing a button on the Pre-existing screen, so focus followed the press.
+   * It is now reached twice without one: when the classification finishes and
+   * the type gate passes, and when the stop screen's "Încearcă din nou"
+   * succeeds — in that second case the wizard changes the phase in the same
+   * commit that clears the busy flag, so the stop screen's own focus effect
+   * never runs. Either way the panel that unmounted left focus on `<body>`, and
+   * a heading that takes it is also what a screen reader reads out.
+   *
+   * The pattern is the four stage panels', copied rather than abstracted, for
+   * the reason they give: RESTORES focus, never seizes it — only when focus is
+   * on nothing at all.
+   */
+  const headingRef = useRef<HTMLHeadingElement | null>(null);
+  useEffect(() => {
+    const active = typeof document === "undefined" ? null : document.activeElement;
+    if (active === null || active === document.body) headingRef.current?.focus();
+  }, []);
 
   const { documents, pageGroups, classificationCalls, coordinateCandidates } = forecast;
 
@@ -128,8 +162,34 @@ export function FolderForecast({
 
   return (
     <section className="rounded-xl border border-card-rim bg-white p-5 dark:border-zinc-700 dark:bg-zinc-900">
-      <h2 className="text-lg font-semibold text-ink dark:text-zinc-100">{t("title")}</h2>
-      <p className={`mt-1.5 ${COST_NOTE_CLASS}`}>{t("intro", { folder: rootFolderName })}</p>
+      {/* `tabIndex={-1}` so the effect above can put the keyboard here on
+          arrival. Not reachable by Tab, and NO `outline-none` — that class
+          removes the ring for exactly the keyboard user this exists for. */}
+      <h2
+        ref={headingRef}
+        tabIndex={-1}
+        className="text-lg font-semibold text-ink dark:text-zinc-100"
+      >
+        {t("title")}
+      </h2>
+      {/* ⚠️ Plain body text since #29.08, not `COST_NOTE_CLASS`. The amber
+          treatment is reserved for a sentence about money, and this one no
+          longer is: the spend happened one screen ago and the next click makes
+          none. Leaving it amber would train the eye to ignore the treatment on
+          the screen where it still means something.
+
+          ⚠️ **TWO SENTENCES, AND THE SECOND IS NOT AN EDGE CASE.** Two ordinary
+          runs reach this screen having sent nothing at all: a folder the
+          archive already holds in its entirety, re-offered to attach it to a
+          new Property, and a folder holding nothing a model can read. A single
+          sentence saying the documents have been classified would then sit two
+          rows above "Imagini pentru clasificare automată: 0". Found by the
+          adversarial round. */}
+      <p className="mt-1.5 text-sm text-ink dark:text-zinc-300">
+        {classificationCalls > 0
+          ? t("intro", { folder: rootFolderName })
+          : t("introNothingSent", { folder: rootFolderName })}
+      </p>
 
       <dl className="mt-4">
         <Row label={t("documents")} value={String(documents)} />
@@ -150,8 +210,6 @@ export function FolderForecast({
         )}
       </dl>
 
-      <p className={`mt-3 ${COST_NOTE_CLASS}`}>{t("nothingSpentYet")}</p>
-
       <div className="mt-4 flex flex-wrap items-center gap-3">
         {/* The ONLY disabled case is an empty folder, where there is literally
             nothing to import. No finding in the report disables this button —
@@ -163,7 +221,7 @@ export function FolderForecast({
           disabled={nothingToDo}
           className={buttonClass({ variant: "primary", size: "lg" })}
         >
-          {t("continueButton", { count: classificationCalls })}
+          {t("continueButton")}
         </button>
         {/* Slice #24.02c. The report is a to-do list acted on in Windows
             Explorer, so the expensive part of this loop was coming BACK: the

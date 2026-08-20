@@ -5,16 +5,24 @@
  *
  * WHAT IT IS
  * ----------
- * Six of the wizard's transitions happen on their own: the preconditions
- * checklist, the three clean file checks, the clean archive lookup and the end
- * of the scan all move the phase the instant their work comes back, so the
- * stage that just passed is replaced before anybody reads it. Adrian's report:
- * those stages "just fly to the next phase without any pause".
+ * Some of the wizard's transitions happen on their own: the preconditions
+ * checklist, the three clean file checks and the end of the scan all move the
+ * phase the instant their work comes back, so the stage that just passed is
+ * replaced before anybody reads it. Adrian's report: those stages "just fly to
+ * the next phase without any pause".
  *
- * With `Oprește-te după fiecare etapă` ticked, each of those six comes to rest
- * on the stage it has finished, and this card is what stands under that stage's
- * own screen: one green sentence saying what passed and that there is nothing
- * for the user to do, and one button naming where it goes next.
+ * With `Oprește-te după fiecare pas` ticked, each of them comes to rest on the
+ * stage it has finished, and this card is what stands under that stage's own
+ * screen: one green sentence saying what passed and that there is nothing for
+ * the user to do, and one button naming where it goes next.
+ *
+ * ⚠️ **THE CLEAN ARCHIVE LOOKUP WAS THE SIXTH UNTIL SLICE #29.08, and this
+ * header said "six" in three places.** That slice moved the classification in
+ * front of the Evaluation screen, so a clean lookup now lands on the
+ * Pre-existing report screen — which stops on the button that starts the billed
+ * classification — and a stage that already stops is never gated.
+ * `SELF_ADVANCING_TRANSITIONS` is the one place the count lives; a number
+ * repeated in prose is a number that goes stale while the table stays right.
  *
  * WHY THE SENTENCE IS PER STAGE
  * -----------------------------
@@ -22,7 +30,7 @@
  * twice over: the preconditions have nothing to do with the folder in File
  * Explorer, and the scan checked nothing at all — it classified. The whole
  * flow's rule is that a screen never claims more than actually ran, and a
- * sentence reused across six unlike stages is exactly how that rule gets broken
+ * sentence reused across unlike stages is exactly how that rule gets broken
  * quietly. So there is one line per stage, and each says that stage's own
  * conclusion in its own words.
  *
@@ -42,9 +50,9 @@
  * panels already use one level down. Adding `role="status"` here as well would
  * be a second announcement of one event, and an unreliable one.
  *
- * ⚠️ **AND FOCUS IS DELIBERATELY NOT MOVED.** Four of the six rests mount a
- * stage panel, which takes focus to its own `<h2 tabIndex={-1}>` — the stage's
- * own result is what the user should be reading first. Pulling focus down here
+ * ⚠️ **AND FOCUS IS DELIBERATELY NOT MOVED.** Most of the rests mount a stage
+ * panel, which takes focus to its own `<h2 tabIndex={-1}>` — the stage's own
+ * result is what the user should be reading first. Pulling focus down here
  * would skip past it to the button. The card is last in document order, so it
  * is the next thing in tab order after the panel it follows.
  */

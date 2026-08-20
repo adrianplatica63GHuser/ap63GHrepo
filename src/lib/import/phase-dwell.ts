@@ -33,19 +33,28 @@
  * IT NEVER WAS. THE NOTE THAT SAID SO IS CORRECTED HERE.** #26.11 wrote "today
  * the only self-advancing transition in the wizard is `preflight → structure`.
  * If a second one ever appears, it takes the same floor." That was wrong on
- * both halves. There are SIX — a clean structure walk, a clean constraints
- * check, a clean duplication check, a clean archive lookup and the end of the
- * scan are the other five, and #29.02 names them in one place,
- * `SELF_ADVANCING_TRANSITIONS` in `workflow-stages.ts`. And a floor is the
- * wrong instrument for the other five anyway: each of them ends work whose
- * duration is set by the folder — a ~760-call metadata pass, an archive
- * request, a whole classification run — so none of them can flash past, and
- * three more seconds on top of a check that already took forty would be a tax,
- * not a courtesy.
+ * both halves. There are several — a clean structure walk, a clean constraints
+ * check, a clean duplication check and the end of the scan are the others — and
+ * #29.02 names them in one place, `SELF_ADVANCING_TRANSITIONS` in
+ * `workflow-stages.ts`. And a floor is the wrong instrument for any of them
+ * anyway: each ends work whose duration is set by the folder — a ~760-call
+ * metadata pass, an archive request, a whole classification run — so none can
+ * flash past, and three more seconds on top of a check that already took forty
+ * would be a tax, not a courtesy.
+ *
+ * ⚠️ **THE COUNT IS DELIBERATELY NOT STATED HERE ANY MORE, AND #29.08 IS WHY.**
+ * This paragraph said "SIX" and listed five others by name. That slice moved
+ * the classification in front of the Evaluation screen, which retired the clean
+ * archive lookup's transition — it lands on a screen with a button now — so the
+ * sentence became false the moment the slice landed. A number in a comment
+ * beside a table is a number that goes stale while the table stays right, and
+ * this file has now had to correct the same sentence twice. The table is the
+ * one place that says how many there are.
  *
  * ⚠️ **WHAT #29.02 GAVE THEM INSTEAD IS A BUTTON, AND IT DOES NOT TOUCH THIS
- * FILE.** With `Oprește-te după fiecare etapă` ticked, all six — this one
- * included — come to rest on the stage they finished and wait to be dismissed.
+ * FILE.** With `Oprește-te după fiecare pas` ticked, every transition in that
+ * table — this one included — comes to rest on the stage it finished and waits
+ * to be dismissed.
  * That changes nothing here: the checklist still spends the floor ticking its
  * eight lines from the top down, still calls `onVerdict` at `verdictAt`, and it
  * is the WIZARD that then decides whether the verdict moves the phase or raises

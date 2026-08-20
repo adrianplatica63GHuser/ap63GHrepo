@@ -30,18 +30,23 @@
  *    re-ask theirs.
  *  - **A failed lookup is a state of its own.** See below.
  *
- * ⚠️ **THE ALL-CLEAR MESSAGE EXISTS SINCE #29.02, AND UNTIL THEN IT COULD NOT.**
- * The note that stood here said there was none, and gave the correct reason: a
- * clean verdict moved the phase straight to Evaluation — `phaseAfterFileChecks`
- * says so and explains why — so the panel was never mounted holding one, and a
+ * ⚠️ **THE ALL-CLEAR MESSAGE IS ON THE ORDINARY PATH SINCE #29.08, AND IT HAS
+ * BEEN REACHABLE BY THREE DIFFERENT ARGUMENTS.** The original note said there
+ * was none, and gave the correct reason: a clean verdict moved the phase
+ * straight to Evaluation, so the panel was never mounted holding one and a
  * green "the archive holds none of these" would have been a branch no route
- * could reach. #29.02 built the route. With step-through ticked, a clean
- * archive lookup now RESTS here instead of moving on, which is the whole point
- * of that slice: the stage says what it found before it hands over. So the
- * branch is live, `preexisting.clean` is a real string, and the rule the old
- * note invoked — a guard that cannot fire is the kind a later reader deletes
- * the real one instead of — is satisfied by the branch firing rather than by
- * its absence.
+ * could reach. #29.02 built a route — with step-through ticked a clean lookup
+ * RESTED here — which made the branch live, but only on request. #29.08 makes
+ * it the normal case: a clean lookup lands here for everybody, because this
+ * screen now carries the press that starts the billed classification, and a
+ * press has to have a screen to be made on. `phaseAfterFileChecks` argues it at
+ * length.
+ *
+ * ⚠️ **SO THIS PANEL IS NOW THE COST SCREEN OF THE WHOLE IMPORT.** Everything
+ * before it is free; everything after the button on it is not. That is why
+ * `nothingSpentYet` is rendered here and no longer on the Evaluation panel, and
+ * why the fourth difference from the three sibling stages is a sentence about
+ * money rather than about the folder.
  *
  * ⚠️ **THE FAILED LOOKUP IS THE ONE THING THIS SCREEN MUST NOT GET WRONG.**
  * "The archive holds none of these" and "we could not ask the archive" produce
@@ -81,7 +86,7 @@ import {
   preexistingSectionKeyFor,
 } from "@/lib/import/preexisting-rules";
 import { RuleExample } from "./rule-example";
-import { COST_NOTE_CLASS } from "./folder-forecast";
+import { COST_NOTE_CLASS } from "@/lib/ui/cost-note";
 
 /** How many files one block shows before it stops listing them. */
 const MAX_PATHS_SHOWN = 4;
@@ -110,22 +115,43 @@ type Props = {
   acknowledged: boolean;
   onAcknowledgedChange: (next: boolean) => void;
   onCheck: () => void;
-  /** Acknowledged — go on to Evaluation. */
+  /**
+   * Acknowledged — send this folder for classification.        (Slice #29.08)
+   *
+   * ⚠️ **THIS IS THE FIRST THING IN THE WHOLE FLOW THAT COSTS MONEY, and until
+   * #29.08 it was not.** It used to move the phase and nothing else, on to the
+   * Evaluation screen, whose own Continuă started the classification. The
+   * classification now has to run BEFORE Evaluation — the import cannot promise
+   * that every document type has a form until it knows which types the folder
+   * holds — so the press that pays for it is this one, and the warning that
+   * said so on that screen came here with it. See `classificationCalls`.
+   */
   onContinue: () => void;
   /**
-   * Is the wizard holding a step-through pause on this stage?   (Slice #29.02)
+   * How many images this press will send for automatic classification.
+   *                                                            (Slice #29.08)
    *
-   * When it is, the pause card below this panel carries the button that goes on
-   * to Evaluation, so this panel must not draw a second one: `onContinue` is
-   * gated on the acknowledgement tick, which the walk that produced the pause
-   * has just cleared, so the duplicate would render disabled directly above a
-   * live button doing the same thing.
-   *
-   * "Verifică din nou" is deliberately still drawn — it is the one action this
-   * screen offers that the pause card does not, and the user standing at a
-   * clean archive report may well want it after a trip to File Explorer.
+   * ⚠️ **ON THE SENTENCE RATHER THAN ON THE BUTTON, and the Evaluation screen
+   * had it the other way round.** There it was a button label, because a number
+   * argues better than a warning. Here the count can legitimately be ZERO — a
+   * folder whose importable files are all already in the archive, or none of
+   * which can be read as an image — and "Continuă — trimite 0 imagini" is a
+   * button promising a non-event. So the number lives in the cost sentence,
+   * which is simply not drawn at zero, and the button keeps the two labels it
+   * already had.
    */
-  gated?: boolean;
+  classificationCalls: number;
+  /**
+   * Has this run already paid for a classification once?        (Slice #29.08)
+   *
+   * ⚠️ **A RE-CHECK PRESSED ON THE EVALUATION SCREEN LANDS BACK HERE, and it
+   * has just thrown a paid-for classification away.** "Nu s-a trimis nimic
+   * încă" would then be false on the one screen in the flow whose whole job is
+   * to be right about money, so the sentence changes rather than disappearing:
+   * the press is still the one that spends, it is simply spending for the
+   * second time. Found by the adversarial round.
+   */
+  classificationSpent: boolean;
   onChooseFolder: () => void;
   /**
    * The explanations disclosure, hoisted into the wizard for the same reason
@@ -146,8 +172,9 @@ export function ImportPreexistingStage({
   onAcknowledgedChange,
   onCheck,
   onContinue,
+  classificationCalls,
+  classificationSpent,
   onChooseFolder,
-  gated = false,
   notesOpen,
   onNotesOpenChange,
 }: Props) {
@@ -420,8 +447,14 @@ export function ImportPreexistingStage({
    * promised away: while the Cancel confirmation is open the wizard marks this
    * subtree `inert`, so a `focus()` here is a no-op and the edge is spent; and
    * a re-check pressed on the Evaluation screen mounts this panel already
-   * `busy`, so if that check comes back clean the panel unmounts in the same
-   * commit and the busy → idle edge never fires.
+   * `busy`, so the arrival edge is spent on a screen that is still checking.
+   *
+   * ⚠️ **The second gap SHRANK in #29.08, which is why this note was
+   * rewritten.** It used to end "if that check comes back clean the panel
+   * unmounts in the same commit and the busy → idle edge never fires". A clean
+   * check no longer unmounts this panel — it lands on it — so that edge does
+   * fire now and the keyboard is handed back. What is left is the arrival edge
+   * alone, and that one was already spent on the way in.
    */
   const checkboxRef = useRef<HTMLInputElement | null>(null);
   const headingRef = useRef<HTMLHeadingElement | null>(null);
@@ -599,6 +632,39 @@ export function ImportPreexistingStage({
           {t("acknowledgeHint")}
         </p>
 
+        {/* ⚠️ **THE ONLY WARNING THAT THE NEXT CLICK IS THE ONE THAT COSTS
+            MONEY, and #29.08 moved it here from the Evaluation screen with the
+            press it describes.** Not drawn before the archive has been asked —
+            the button in that state starts the archive lookup, which spends
+            nothing — and not drawn when the count is zero, where it would
+            promise a spend that is not going to happen. See the
+            `classificationCalls` prop for why the number is in the sentence
+            rather than on the button. */}
+        {/* ⚠️ **DRAWN ONLY ONCE THE ARCHIVE HAS BEEN ASKED, because that is
+            when the folder report below this panel appears.** `ReportSections`
+            is gated on the same fact in the wizard, so before the check there
+            is no report at the foot of the page to send anybody to — an earlier
+            draft put this sentence in `intro`, which renders from the first
+            arrival, and it told the user to read something that was not on the
+            screen and to press a button that was not drawn. Found by the
+            adversarial round. */}
+        {asked && <p className="mt-3 text-sm text-ink dark:text-zinc-200">{t("readReportFirst")}</p>}
+
+        {asked && classificationCalls > 0 && (
+          <p className={`mt-3 ${COST_NOTE_CLASS}`}>
+            {/* Two literal `t()` calls rather than one with a computed key,
+                and the panel's own copy test is why: it reads this source for
+                translator calls made on a string literal and would see neither
+                key that way, so a reword that dropped one
+                would ship a dotted key path into the shipping locale with every
+                test green. The precedent is `continueWithout` / `continue`
+                three elements below. */}
+            {classificationSpent
+              ? t("spendAgain", { count: classificationCalls })
+              : t("nothingSpentYet", { count: classificationCalls })}
+          </p>
+        )}
+
         <div className="mt-3 flex flex-wrap items-center gap-3">
           {/* Before the archive has been asked, the only thing to do is ask it.
               Afterwards the primary action is to go on — the report is read,
@@ -614,33 +680,34 @@ export function ImportPreexistingStage({
             </button>
           ) : (
             <>
-              {/* Slice #29.02 — suppressed at a step-through pause, where the
-                  card under this panel carries the same action, enabled. See
-                  the `gated` prop. The re-check beside it is NOT suppressed:
-                  it is the one thing this screen offers that the card does
-                  not. */}
-              {!gated && (
-                <button
-                  type="button"
-                  onClick={onContinue}
-                  disabled={!acknowledged || busy}
-                  className={buttonClass({ variant: "primary", size: "lg" })}
-                >
-                  {failed ? t("continueWithout") : t("continue")}
-                </button>
-              )}
+              {/* ⚠️ **Slice #29.08 REMOVED THE `gated` SUPPRESSION THAT STOOD
+                  HERE, and it is a deletion rather than a regression.** #29.02
+                  hid this button at a step-through pause, because the pause
+                  card below carried the same action enabled. There is no pause
+                  on this stage any more: `preexisting-checking → folder-report`
+                  was the transition it gated, and that transition no longer
+                  exists — every settled archive lookup now lands on THIS
+                  screen, which stops on this button. A suppression whose
+                  condition can never be true is the kind of guard a later
+                  reader deletes the real one instead of; `SELF_ADVANCING_
+                  TRANSITIONS` records the same removal from the other end. */}
+              <button
+                type="button"
+                onClick={onContinue}
+                disabled={!acknowledged || busy}
+                className={buttonClass({ variant: "primary", size: "lg" })}
+              >
+                {failed ? t("continueWithout") : t("continue")}
+              </button>
               <button
                 type="button"
                 onClick={onCheck}
                 disabled={!acknowledged || busy}
-                // ⚠️ Slice #29.02 — NOT promoted at a pause, and a round of
-                // this slice promoted it before the adversarial review took it
-                // back. The reasoning was "with the primary suppressed this is
-                // the only action in the row"; it is not — "Alege alt folder"
-                // sits in the same row and is NOT gated on the tick, so it is
-                // live while this one is disabled. Promoting the disabled
-                // control would have made the dead button the largest thing in
-                // the row and the live one visually subordinate.
+                // Deliberately secondary although the primary beside it is
+                // often disabled: "Alege alt folder" sits in the same row and
+                // is NOT gated on the tick, so promoting this one would make
+                // the dead button the largest thing in the row and the live one
+                // visually subordinate. (#29.02's adversarial round.)
                 className={buttonClass({ variant: "secondary", size: "md" })}
               >
                 {t("recheck")}
