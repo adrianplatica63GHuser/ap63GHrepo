@@ -318,11 +318,6 @@ function psql(db: string, args: string[], input?: string): string {
   return r.out;
 }
 
-function psqlTry(db: string, args: string[]): { status: number; out: string; err: string } {
-  const r = runPg("psql", [...conn(db), "-v", "ON_ERROR_STOP=1", "--no-psqlrc", ...args]);
-  return { status: r.status, out: r.out, err: r.err };
-}
-
 function query(db: string, sql: string): string {
   return psql(db, ["-t", "-A", "-c", sql]).trim();
 }
