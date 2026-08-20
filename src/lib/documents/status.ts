@@ -31,11 +31,18 @@
  * deliberately not one: it persists nothing and stamps nothing, which is what
  * lets it be re-run.
  *
- * The one fact NOT recoverable from the row is a type's ORIGIN — nothing
- * distinguishes a type Adrian typed into Reference Data from one
- * `ensureDocType` created mid-scan, because both go through the same POST. So
- * that one is stored (`lookup_document_type.origin`,
- * migration_069_document_type_origin.sql) and everything else is computed here.
+ * The one fact NOT recoverable from the row is a type's ORIGIN — nothing in
+ * `lookup_document_type` distinguishes a type Adrian typed into Reference Data
+ * from one a scan invented while classifying a folder. So that one is stored
+ * (`lookup_document_type.origin`, migration_069_document_type_origin.sql) and
+ * everything else is computed here.
+ *
+ * ⚠️ **Since Slice #29.06 the two do NOT go through the same door**, and the
+ * earlier version of this sentence said they did. A person adding a type POSTs
+ * to /api/admin/value-lists/document-types, where an unstated origin defaults
+ * to MANUAL; a classifier's answer goes to `resolveClassifiedDocumentType`,
+ * which writes IMPORT because a machine chose the name. Separate doors, one
+ * column, and the column is still the only place the answer lives.
  *
  * ONE FUNCTION FOR THE LABEL AND THE COLOUR
  * -----------------------------------------

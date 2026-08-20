@@ -688,9 +688,13 @@ export const lookupDocumentType = pgTable("lookup_document_type", {
   // baseline fields only. Left untyped (jsonb) to avoid a circular import;
   // the application layer parses it via parseTemplateFields.
   templateFields: jsonb("template_fields"),
-  // Slice #26.12: how this type came to exist — 'MANUAL' (added by hand in
-  // Reference Data) or 'IMPORT' (created by ensureDocType while an import scan
-  // was classifying a folder). CHECK constraint in
+  // Slice #26.12: how this type came to exist — 'MANUAL' (a PERSON chose the
+  // name: the Reference Data form, or the discovery review dialog) or 'IMPORT'
+  // (a MACHINE chose it: a classifier's answer, through the one writer
+  // `resolveClassifiedDocumentType`, which serves both the import scan and the
+  // whole-document AI read — Slice #29.06 settled that rule and made
+  // `ai-interpret`, which used to land on the MANUAL default, obey it).
+  // CHECK constraint in
   // migration_069_document_type_origin.sql; NOT NULL DEFAULT 'MANUAL', so an
   // insert that says nothing is a hand-added type and only the import path has
   // to speak up.

@@ -75,9 +75,10 @@ export type LookupRow = Record<string, unknown> & { id: string };
 async function generateUniqueKey(
   table: typeof lookupDocumentType | typeof lookupPropertyType,
   name: string,
+  conn: DbTransaction | typeof db = db,
 ): Promise<string> {
   const base = slugifyLookupKey(name);
-  const rows = await db
+  const rows = await conn
     .select({ key: table.key })
     .from(table)
     .where(like(table.key, `${base}%`));
@@ -85,8 +86,11 @@ async function generateUniqueKey(
   return nextFreeKey(base, (k) => taken.has(k));
 }
 
-async function generateUniqueDocumentTypeKey(name: string): Promise<string> {
-  return generateUniqueKey(lookupDocumentType, name);
+async function generateUniqueDocumentTypeKey(
+  name: string,
+  conn: DbTransaction | typeof db = db,
+): Promise<string> {
+  return generateUniqueKey(lookupDocumentType, name, conn);
 }
 
 // Same slug logic for property types (Slice #19.02).
@@ -175,34 +179,94 @@ export async function createValue(
       const [row] = await db.insert(lookupJudicialPersonType).values(data).returning();
       return row as LookupRow;
     }
-    case "document-types": {
-      const key = await generateUniqueDocumentTypeKey(data.name);
-      // Slice #26.12: origin is create-only and defaults to MANUAL here rather
-      // than in the Zod schema, so exactly one place decides what an unstated
-      // origin means. The import path (`ensureDocType` in
-      // bulk-import-dialog.tsx) is the only caller that sends "IMPORT"; a new
-      // writer that forgets is labelled hand-added, which is the conservative
-      // direction — it under-claims instead of crediting the machine with a
-      // type Adrian typed himself.
-      const origin: DocumentTypeOrigin = isDocumentTypeOrigin(data.origin)
-        ? data.origin
-        : "MANUAL";
-      // Slice #27.03: through the same template-field choke point as the
-      // update below. No admin form sends `templateFields` on a POST today —
-      // the create form is built from LIST_META, which lists `name` alone —
-      // but a door that sanitises on the way in and not on the way out is a
-      // door that will eventually be used the other way round.
-      const [row] = await db
-        .insert(lookupDocumentType)
-        .values({ ...sanitizeDocumentTypeTemplateFields(data), key, origin })
-        .returning();
-      return row as LookupRow;
-    }
+    case "document-types":
+      // Slice #29.06: through the one function that knows how a document type
+      // row is built. Everything about the row is decided there — see
+      // `createDocumentTypeRow`, which the classifier's resolver calls INSIDE
+      // its own advisory lock.
+      //
+      // ⚠️ **The transaction is here so there is ONE shape, and it buys NOTHING
+      // ELSE — an eighth review round asked, and the honest answer is worth
+      // writing down.** `createDocumentTypeRow` needs a transaction handle
+      // because the resolver has to run it under a lock; giving it one here is
+      // what lets both doors share the function. Under READ COMMITTED a
+      // `SELECT keys` then `INSERT` inside `BEGIN…COMMIT` guarantees exactly
+      // what the two autocommit statements it replaced did.
+      //
+      // ⚠️ **And a lock here would not close the gap either**, which is why one
+      // is deliberately not taken: this door performs no name check at all. Its
+      // duplicate-name refusal lives in the CLIENT (`sameTypeName` in the
+      // discovery review dialog, against a list react-query may have held for
+      // five minutes), so two rows with one display name are reachable through
+      // it by a stale list rather than by a race — and a lock cannot serialise
+      // against a check that is not being made. The fix is a unique index on
+      // the normalised name, which needs a migration; it is in the handover.
+      return db.transaction((tx) => createDocumentTypeRow(tx, data));
     case "institutions": {
       const [row] = await db.insert(lookupInstitution).values(data).returning();
       return row as LookupRow;
     }
   }
+}
+
+/**
+ * Build one `lookup_document_type` row, on a connection the caller controls.
+ *                                                              (Slice #29.06)
+ *
+ * ⚠️ **THE `conn` PARAMETER IS THE WHOLE POINT, and a seventh adversarial round
+ * is why it exists.** `resolveClassifiedDocumentType` has to take a Postgres
+ * advisory lock on the type's NAME and then read-and-insert inside it, because
+ * without that two concurrent creates of one label BOTH SUCCEED and neither
+ * ever errors: the key generator below re-reads before every insert, so the
+ * loser simply computes `..._2` and commits a second row with the same display
+ * name. That is finding F7 — two types from one document — surviving inside its
+ * own fix, and no retry can catch it, because there is nothing to retry.
+ *
+ * An insert on `db` cannot be inside the caller's transaction, so the caller
+ * cannot hold a lock around `createValue`. Hence this: one implementation of
+ * how the row is built, reachable on either connection.
+ *
+ * ⚠️ **Key generation is INSIDE the same connection**, not outside it. A key
+ * chosen on `db` and inserted on `tx` would be chosen against a snapshot the
+ * lock does not cover, which is the same race one level down.
+ */
+export async function createDocumentTypeRow(
+  conn: DbTransaction,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  data: any,
+): Promise<LookupRow> {
+  const key = await generateUniqueDocumentTypeKey(data.name, conn);
+  // Slice #26.12: origin is create-only and defaults to MANUAL here rather
+  // than in the Zod schema, so exactly one place decides what an unstated
+  // origin means. A new writer that forgets is labelled hand-added, which
+  // is the conservative direction — it under-claims instead of crediting
+  // the machine with a type Adrian typed himself.
+  //
+  // Slice #29.06 settled the rule the default is the other half of:
+  // **origin says WHO CHOSE THE NAME.** A machine chose it → IMPORT; a
+  // person chose or confirmed it → MANUAL. So there is exactly one caller
+  // that sends "IMPORT" — `resolveClassifiedDocumentType` in
+  // src/lib/documents/resolve-document-type.ts, where the value is a
+  // property of the function rather than a parameter a third caller could
+  // forget — and the two callers that reach this default are both a
+  // PERSON: the Reference Data create form, and the discovery review
+  // dialog, whose own header argues at length for MANUAL. Until #29.06,
+  // `ai-interpret` also reached this default, and it was neither: a type
+  // the machine invented read "Adăugat manual" and no screen could repair
+  // it. That was finding F2 of the 29.01 report.
+  const origin: DocumentTypeOrigin = isDocumentTypeOrigin(data.origin)
+    ? data.origin
+    : "MANUAL";
+  // Slice #27.03: through the same template-field choke point as the
+  // update below. No admin form sends `templateFields` on a POST today —
+  // the create form is built from LIST_META, which lists `name` alone —
+  // but a door that sanitises on the way in and not on the way out is a
+  // door that will eventually be used the other way round.
+  const [row] = await conn
+    .insert(lookupDocumentType)
+    .values({ ...sanitizeDocumentTypeTemplateFields(data), key, origin })
+    .returning();
+  return row as LookupRow;
 }
 
 // ── Update ───────────────────────────────────────────────────────────────────

@@ -113,6 +113,9 @@ export const OUTCOME_NOTE_IDS = [
   // How far the automatic read got, where it did not run at all
   "readSkippedIdCard",
   "readSkippedNoPage",
+  // Why this document is sitting on the catch-all type, when it is (#29.06)
+  "typeUnclassified",
+  "typeCreateFailed",
   // Whether this document's TYPE has somewhere to put what was read (#27.05)
   "typeFormPending",
   "typeFormAdded",
@@ -229,6 +232,30 @@ export type OutcomeRow = {
    * wrong, which is a different sentence and #27.04's remedy.
    */
   typeFormMissing?: boolean;
+  /**
+   * This document is on the catch-all type because the model could not say
+   * what it was.                                               (Slice #29.06)
+   *
+   * ⚠️ **The caller decides this from TWO facts and must not shorten it to
+   * one**: the resolution the run recorded, AND the type the document finally
+   * sits on. A document the scan could not classify and the AI read then
+   * re-typed onto something real is not on the catch-all any more, and a screen
+   * still saying so would send a user to fix a document that is already right.
+   */
+  typeUnclassified?: boolean;
+  /**
+   * …and this one is on the catch-all because the type could not be WRITTEN.
+   *                                                            (Slice #29.06)
+   *
+   * ⚠️ **The whole reason the two are separate flags.** They end in the same
+   * place and mean opposite things: one is the model declining to answer, the
+   * other is a perfectly good answer that a failed create — a lost race, a
+   * dropped connection, a 500 — threw away. Before this slice both were the
+   * same silence, so a mis-filed document was indistinguishable from an
+   * unclassifiable one and nobody could know to go and look. That is finding
+   * F1 of the 29.01 report, and this flag is the thing it asked for.
+   */
+  typeCreateFailed?: boolean;
   /**
    * …and the type GAINED one during this run, because the user accepted a
    * discovery review for it.                                   (Slice #27.05)
@@ -458,6 +485,53 @@ export function typeFormNote(row: OutcomeRow): OutcomeNote | null {
 }
 
 /**
+ * Why this document is on the catch-all type, when it is.       (Slice #29.06)
+ *
+ * ⚠️ **Two sentences, never both, and the difference is the point of the
+ * slice.** "The model could not tell what this is" and "the model told us and
+ * the type could not be created" leave the document in the same place and call
+ * for different things from the reader: the first is a document to look at, the
+ * second is a document to look at AND a create to wonder about. Drawn as one
+ * silence — which is what `return fallbackId` out of a bare `catch {}` was —
+ * they were the same row, and finding F1 is the archive that resulted.
+ *
+ * ⚠️ **`typeCreateFailed` is checked FIRST, and today no producer can set both
+ * — which is exactly why the precedence is written down.** The wizard derives
+ * both from one enum value (`ImportResult.typeResolution`), so at most one is
+ * ever true; a second review round checked that and it holds. What the order
+ * buys is the day a producer CAN set both — a document the model classified
+ * (so it is not unclassified) whose create then failed (so it landed on the
+ * catch-all anyway) is a perfectly coherent row, and it must say the
+ * actionable thing rather than the merely-true one. An unwritten precedence is
+ * one a refactor picks at random.
+ *
+ * ⚠️ **Neither is drawn on a pre-existing row**, the carve-out `readSkipNote`
+ * and `typeFormNote` both make: the archive already held the document, so this
+ * run neither classified it nor filed it.
+ */
+export function typeFilingNote(row: OutcomeRow): OutcomeNote | null {
+  if (row.status !== "done") return null;
+  if (row.preexisting !== undefined) return null;
+  // ⚠️ **NOTHING WAS CLASSIFIED, SO NEITHER SENTENCE MAY BE SAID — and a sixth
+  // review round found the row saying both at once.** A file with no page a
+  // model can see is never sent to the classifier, so its type resolves to the
+  // fallback for want of an answer rather than because an answer failed. The
+  // row then drew `readSkippedNoPage` ("nu are nicio pagină pe care AI să o
+  // poată citi") and, immediately after it, a sentence claiming the AI scan had
+  // tried and could not tell — on screen and permanently in the saved report,
+  // on every office file in the folder. `readSkipNote`'s own header states the
+  // rule this breaks: do not claim a read that did not happen.
+  //
+  // The loop also stops RECORDING a resolution for such an entry, which is the
+  // primary fix; this is the second guard, here because it is the one a test
+  // can hold and because a producer is easier to add than to remember.
+  if (row.readSkipped === "no-page") return null;
+  if (row.typeCreateFailed === true) return { id: "typeCreateFailed", values: {} };
+  if (row.typeUnclassified === true) return { id: "typeUnclassified", values: {} };
+  return null;
+}
+
+/**
  * What became of this document once its type had a form.       (Slice #27.06)
  *
  * ⚠️ **Drawn BESIDE `typeFormAdded`, not instead of it, and the two are
@@ -498,6 +572,12 @@ export function outcomeNotes(row: OutcomeRow): OutcomeNote[] {
     coordinateNote(row),
     idCardNote(row),
     readSkipNote(row),
+    // Slice #29.06 — ahead of `typeFormNote`, because it is about which type
+    // the document is ON and that one is about what the type HAS. In practice
+    // they never both draw: a row on the catch-all is excluded from
+    // `typeFormMissing` by `typeAwaitsForm`'s fallback term. The order is what
+    // makes the pair read correctly if that ever stops being true.
+    typeFilingNote(row),
     typeFormNote(row),
     refillNote(row),
   ].filter((note): note is OutcomeNote => note !== null);
@@ -932,6 +1012,12 @@ export const RUN_TYPE_NOTE_IDS = [
   // of it, and a sentence that reads as complete over a partial list is how a
   // user concludes they are finished when they are not — see `runTypeNotes`.
   "typesStillWithoutFormPartial",
+  // ⚠️ **A type this run CREATED that no document ended up on** (Slice #29.06).
+  // Its own sentence rather than an arm of the two above, because it is not
+  // about forms at all: the type exists, nothing is filed under it, and the
+  // remedy is a person deciding whether to delete it. See
+  // `typesCreatedWithNoDocuments`.
+  "typesCreatedEmpty",
 ] as const;
 
 export type RunTypeNoteId = (typeof RUN_TYPE_NOTE_IDS)[number];
@@ -989,6 +1075,15 @@ export type RunTypeNote = {
 export function runTypeNotes(input: {
   gained: readonly string[];
   withoutForm: readonly string[];
+  /**
+   * Types this run created that ended it with no documents on them.
+   *                                                            (Slice #29.06)
+   *
+   * ⚠️ **Already reduced to names by `typesCreatedWithNoDocuments`**, which is
+   * where the rule lives; this only turns them into a sentence. Optional, so
+   * every existing caller and test keeps working and reads as "nothing to say".
+   */
+  createdEmpty?: readonly string[];
   /**
    * `ImportRunSummary.typesWithoutForm` — the count the header prints.
    *
@@ -1056,7 +1151,81 @@ export function runTypeNotes(input: {
       values: { count: total, names: withoutForm.join(", ") },
     });
   }
+  // ⚠️ **LAST, and NOT subtracted from either list above.** An empty type can
+  // legitimately also be a type without a form — it is a type nothing was filed
+  // under, so of course it has no form — and the two sentences say different
+  // things to the reader: one is work to do, the other is a leftover to decide
+  // about. Suppressing either would be the screen choosing which true thing the
+  // user is allowed to know. Deduped and sorted here for the same reason the
+  // other two are; an empty list draws nothing.
+  const createdEmpty = sortedDistinctNames(input.createdEmpty ?? []);
+  if (createdEmpty.length > 0) {
+    notes.push({
+      id: "typesCreatedEmpty",
+      values: { count: createdEmpty.length, names: createdEmpty.join(", ") },
+    });
+  }
   return notes;
+}
+
+/**
+ * The types this run created that no document ended up on.     (Slice #29.06)
+ *
+ * WHY THIS EXISTS
+ * ---------------
+ * A `lookup_document_type` row is created the moment a scan classifies a
+ * document as something the archive does not hold yet — and then two ordinary
+ * things can leave it empty. The document's own creation fails, so the row it
+ * was made for never arrives. Or the AI read of the whole document concludes
+ * something more specific and re-types it, which is *correct behaviour* and is
+ * finding F4's other half: the first type is left behind with no documents, no
+ * form, and nothing on any screen that mentions it. Adrian then meets it weeks
+ * later in a dropdown with no idea where it came from.
+ *
+ * ⚠️ **"NO DOCUMENTS" MEANS "NONE FROM THIS RUN", AND A THIRD REVIEW ROUND
+ * MADE THE SENTENCE SAY SO.** This function cannot see the archive; it sees the
+ * rows this dialog holds. An earlier version of this comment argued that the
+ * scope was equivalent to the archive's — "a type created by THIS run is by
+ * definition new, so a document of it from an earlier run cannot exist" — and
+ * that is false the moment a second writer exists, which the resolver's own
+ * attempt budget was raised because it does: another tab's import, or an
+ * overlapping `ai-interpret`, can file a document on a type this run created
+ * between this run creating it and this screen being drawn. So the Romanian
+ * says "no document FROM THIS IMPORT ended up on it" and asks the user to
+ * check rather than telling them to delete — a claim this evidence supports,
+ * over one it does not.
+ *
+ * ⚠️ **An ADOPTED type is not a created one**, and the caller is what enforces
+ * it: `adopted` means the insert lost a race and the row belongs to whoever
+ * won. Reporting it here would name somebody else's type as this run's litter.
+ *
+ * What it deliberately will not do is claim anything about a type that already
+ * existed: an empty type Adrian made himself last month is not this run's
+ * business, and reporting it would be the screen inventing work.
+ *
+ * ⚠️ **`occupied` must be the LATEST type known for every row that reached the
+ * archive.** On a row that was read, that is the type AFTER the read — the two
+ * differ by exactly the re-classification this function exists to notice, so
+ * reading the earlier value there would report nothing, every time, on the case
+ * that matters most. On a row that was NOT read — an upload or a tag that
+ * failed after the Document was created — the type the loop resolved is the
+ * latest there is, and it is the right answer for the same reason: something is
+ * filed under it. A fifth review round found this docblock still forbidding the
+ * second case, which the caller had by then been corrected to pass.
+ */
+export function typesCreatedWithNoDocuments(
+  created: readonly { id: string; name: string }[],
+  occupied: Iterable<string | undefined>,
+): string[] {
+  const taken = new Set<string>();
+  for (const id of occupied) if (id !== undefined) taken.add(id);
+  // ⚠️ **Deduped by ID before the name filter**, the same guard
+  // `typesThatGainedForm` records: the caller assembles these across a run, and
+  // one type recorded twice would otherwise be named twice in the sentence.
+  const byId = new Map(created.map((type) => [type.id, type]));
+  return sortedDistinctNames(
+    [...byId.values()].filter((type) => !taken.has(type.id)).map((type) => type.name),
+  );
 }
 
 // ---------------------------------------------------------------------------

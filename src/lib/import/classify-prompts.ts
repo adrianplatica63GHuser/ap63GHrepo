@@ -6,9 +6,12 @@
  *
  * Slice #23.01.Import re-synced it after it had drifted. A key in this list
  * that has no seeded row is not harmless: the scan route whitelists the
- * model's suggestedTypeKey against this array, ensureDocType then misses it
- * in typeMap and falls through to auto-creating a type from the free-text
- * label, so the document lands under a generated key nobody matches on.
+ * model's suggestedTypeKey against this array, the type resolver then finds no
+ * stored row with that key and falls through to auto-creating a type from the
+ * free-text label, so the document lands under a generated key nobody matches
+ * on. (Slice #29.06 replaced ensureDocType's `typeMap` index with
+ * `matchDocumentType` over the rows themselves and moved the create into
+ * `resolveClassifiedDocumentType`; the trap is unchanged.)
  * Six entries were removed:
  *
  *   CARTE_IDENTITATE_ALT  - never seeded. migration_021 deliberately defines

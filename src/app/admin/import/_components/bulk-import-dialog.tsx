@@ -190,6 +190,10 @@ import {
 import { discoverForType, shouldDiscoverType, typeAwaitsForm } from "@/lib/import/discover-run";
 import { documentTypeHasForm } from "@/lib/documents/status";
 import {
+  resolveAgainstTypes,
+  type ClassifierAnswer,
+} from "@/lib/documents/document-type-match";
+import {
   parseTemplateFields,
   type DocumentTemplateField,
 } from "@/lib/documents/template-fields";
@@ -213,6 +217,7 @@ import {
   runTypeNotes,
   summariseImportRun,
   summaryLines,
+  typesCreatedWithNoDocuments,
   typesThatGainedForm,
   type ImportRunSummary,
   type OutcomeNote,
@@ -386,15 +391,39 @@ export type ImportResult = {
   /**
    * The document type this row's Document ended up on.   (Slice #27.05)
    *
-   * ⚠️ **The type AFTER the AI read, not the one the loop resolved before
-   * creating the row.** `runAiInterpret` may re-classify the document — and
-   * that path also auto-creates `lookup_document_type` rows — so the two are
-   * different documents' worth of difference on an ordinary run. Everything
-   * #27.05 does is keyed on this: which type gets one discovery read, which
-   * rows stop saying "no form" when a form is accepted, and how many TYPES the
-   * summary reports rather than how many rows.
+   * ⚠️ **The LATEST type known for this row, and its presence means the
+   * Document exists.**   (reworded in Slice #29.06, second review round)
+   * It is written the instant `createDocument` returns, and overwritten by the
+   * type the AI read settles on — `runAiInterpret` may re-classify the
+   * document, which is two documents' worth of difference on an ordinary run.
+   * So on a settled row it is the type AFTER the read, which is what #27.05
+   * keys everything on: which type gets one discovery read, which rows stop
+   * saying "no form" when a form is accepted, and how many TYPES the summary
+   * reports rather than how many rows.
+   *
+   * The earlier wording said "the type AFTER the read, NOT the one the loop
+   * resolved" — true when only settled rows carried it, and false since #29.06
+   * writes it at creation time so that a row whose upload or tag failed still
+   * says which type its Document is on. `typesCreatedWithNoDocuments` is the
+   * reader that needs the earlier write. The readers that must NOT see a
+   * pre-read value gate on `typeFormMissing`, which is only ever written on a
+   * row the run actually read; the rest — `documentTypeName`, the two filing
+   * flags, `forgetTypeFormMissing` — want the latest type known and get it. (A
+   * sixth review round trimmed a version of this sentence that claimed every
+   * reader gated.)
    */
   documentTypeId?: string;
+  /**
+   * How that type was arrived at, when it is worth a sentence. (Slice #29.06)
+   *
+   * ⚠️ **Absent on the ordinary row.** `ensureDocType` returns `matched` for a
+   * document whose type was already in the list, and the loop writes nothing —
+   * see `TypeResolution` for why `failed` and `unclassified` are two answers
+   * and not one, and `outcomeRowOf` for why the row's note is decided from this
+   * TOGETHER WITH the type the document finally sits on rather than from this
+   * alone.
+   */
+  typeResolution?: TypeResolution;
   /**
    * …and that type has no custom form, so what the read found that was
    * type-specific went to Notes.   (Slice #27.05)
@@ -1187,14 +1216,22 @@ async function fetchDocTypeRows(): Promise<DocTypeRow[]> {
  * Fetch all active document types.
  * Returns:
  *   - `fallbackId`: ALTUL → OTHER → first row alphabetically (used when no type can be resolved)
- *   - `typeMap`: key → id (slug match)
- *   - `nameMap`: lowercased name → id (label match, used for auto-create dedup)
- *   - `items`: the rows themselves, so #27.05 can ask which types have a form
+ *   - `items`: the rows themselves — what #27.05 asks which types have a form,
+ *     and, since #29.06, the list `matchDocumentType` matches against
+ *
+ * ⚠️ **THE TWO INDEXES ARE GONE, AND THAT IS THE FIX RATHER THAN A TIDY-UP.**
+ * This used to build `typeMap` (key → id) and `nameMap` (`toLowerCase().trim()`
+ * → id), and that lowercased-name index WAS the app's third opinion about when
+ * two names are the same name: it folded case and space and not diacritics, so
+ * "Contract de arendă" and "Contract de arenda" indexed apart while the server's
+ * key generator folded them together — one key, two names, and a create that
+ * died on the UNIQUE constraint (finding F7). Matching against the rows
+ * themselves, through the one shared rule, is what removes the disagreement;
+ * thirty-odd rows scanned per document is not a cost worth an index that can be
+ * wrong.
  */
 async function fetchDocTypes(): Promise<{
   fallbackId: string;
-  typeMap: Record<string, string>;
-  nameMap: Record<string, string>;
   items: DocTypeRow[];
 }> {
   const items = await fetchDocTypeRows();
@@ -1208,80 +1245,192 @@ async function fetchDocTypes(): Promise<{
     items.find((x) => x.key === "ALTUL") ??
     items.find((x) => x.key === "OTHER") ??
     items[0];
-  const typeMap: Record<string, string> = {};
-  const nameMap: Record<string, string> = {};
-  for (const item of items) {
-    typeMap[item.key] = item.id;
-    nameMap[item.name.toLowerCase().trim()] = item.id;
-  }
-  return { fallbackId: fallback.id, typeMap, nameMap, items };
+  return { fallbackId: fallback.id, items };
 }
 
-// Session-scoped cache for auto-created types so the same label is not
-// created more than once during a single import run.
-const autoCreatedTypeCache = new Map<string, string>();
+/**
+ * How a row's document type was decided, when that is worth saying.
+ *                                                              (Slice #29.06)
+ *
+ * ⚠️ **`failed` and `unclassified` are DIFFERENT ANSWERS and the whole slice is
+ * about not confusing them.** Both end with the document on the catch-all type;
+ * one means the model could not classify the document, the other means it
+ * classified it perfectly well and the type row could not be written. Before
+ * this slice both were `return fallbackId` out of a bare `catch {}`, so the
+ * result screen — and Adrian, reading it — had no way to tell a mis-filed
+ * document from an unclassifiable one. That is finding F1.
+ *
+ * `matched` is deliberately absent from the union: the ordinary ending needs no
+ * sentence, and a row carrying no `typeResolution` at all is one where nothing
+ * happened worth reporting.
+ */
+type TypeResolution = "created" | "adopted" | "unclassified" | "failed";
+
+type EnsuredDocType = {
+  /** Always a usable id — the resolved type, or the caller's fallback. */
+  id: string;
+  outcome: "matched" | TypeResolution;
+  /**
+   * The row this call brought into the run's knowledge — for `created`,
+   * `adopted` and a server-side `matched` alike.
+   *
+   * ⚠️ **It is NOT the test for "this run created it", and a third review round
+   * is why that has to be said here.** `adopted` means a 23505 came back and
+   * the re-read name-matched a row **another writer inserted** — a second tab,
+   * or an overlapping in-process `ai-interpret`; the resolver's own attempt
+   * budget was raised because those are real. Recording an adopted row as this
+   * run's creation is how the summary comes to name somebody else's type as
+   * "created in this import and left empty" and invite Adrian to delete it,
+   * over a delete #29.05 refuses because the other writer's document depends on
+   * it. So the caller gates `rememberCreatedType` on the OUTCOME and uses this
+   * only for what is true of all three: the name is now known to the run.
+   */
+  row?: DocTypeRow;
+};
 
 /**
- * Resolve a document type ID for an entry:
- * 1. Exact key match in typeMap (seeded types)
- * 2. Label name match in nameMap (previously created types)
- * 3. Auto-create via Reference Data API and cache the new ID
- * 4. Fall back to fallbackId if label is empty or API fails
+ * Resolve a document type id for an entry, through the one writer.
+ *                                                    (Slice #21.02, #29.06)
+ *
+ * 1. Match against the types this run has read, using `matchDocumentType` —
+ *    key first, then name, with ONE rule about when two names are one name.
+ * 2. No usable label → the caller's fallback, said out loud as `unclassified`.
+ * 3. Otherwise ask the server to resolve it: `POST /api/document-types/resolve`
+ *    matches again and, if it still finds nothing, creates the row — winning
+ *    the race by adopting whatever a concurrent create committed instead.
+ * 4. Anything else → the fallback, said out loud as `failed`.
+ *
+ * ⚠️ **THE MODULE-LEVEL CACHE IS GONE, AND ITS REMOVAL IS THE FIX FOR ITS OWN
+ * COMMENT.** `autoCreatedTypeCache` described itself as "session-scoped … so
+ * the same label is not created more than once during a single import run" and
+ * was a module `const` that nothing ever cleared: it outlived the dialog
+ * unmounting, outlived the run, and outlived every run for the life of the
+ * page. Since #29.04 made deletes real that stopped being a curiosity — a type
+ * deleted between two runs left a stale id in it that the second run would
+ * happily file documents under, and the FK would refuse them. What gives the
+ * behaviour the scope the comment claimed is not a smaller cache but the list
+ * the run already holds: `items` is read once per run, is appended to here, and
+ * dies with the run. One structure, with the scope the old comment claimed.
+ *
+ * ⚠️ **That is a claim about SCOPE, not about freshness, and a fifth review
+ * round trimmed the sentence that blurred them.** The list is read once at the
+ * start of a run and never re-read, so a type deleted from Reference Data
+ * mid-run still matches locally and `createDocument` then fails on the foreign
+ * key — the same shape the cache used to produce ACROSS runs, narrowed to
+ * within one. Narrowing it is the fix this slice owed; closing it entirely
+ * means re-reading the list per document, which is a round trip per file to
+ * defend against an administrator deleting a type during his own import.
+ *
+ * ⚠️ **`session-expired` propagates rather than being swallowed.** It is the
+ * sentinel `createDocument` and `uploadPage` throw, and the per-task catch turns
+ * it into the amber banner with the sign-in link. The old bare `catch {}` ate
+ * it and filed the document under the catch-all, which is a permanent wrong
+ * answer produced by a transient and recoverable condition.
  */
 async function ensureDocType(
-  typeKey:     string | null | undefined,
-  label:       string | null | undefined,
-  typeMap:     Record<string, string>,
-  nameMap:     Record<string, string>,
-  fallbackId:  string,
-): Promise<string> {
-  // 1. Exact key match (any non-null, non-UNCLASSIFIED typeKey)
-  if (typeKey && typeKey !== "UNCLASSIFIED") {
-    const id = typeMap[typeKey];
-    if (id) return id;
-  }
+  answer:     ClassifierAnswer,
+  items:      DocTypeRow[],
+  fallbackId: string,
+): Promise<EnsuredDocType> {
+  const resolution = resolveAgainstTypes(items, answer);
+  // ⚠️ **ONE call, and a third review round is why it is not two.** This used
+  // to ask `matchDocumentType` and then `classifiedLabelOf`, and then grew a
+  // third test of its own — "a match landing on `fallbackId` is really an
+  // unclassified document" — which was measured DEAD (there is no ALTUL or
+  // OTHER row in any seed, so the fallback IS the catch-all row, which
+  // `matchDocumentType` already refuses) and, in the one archive where it
+  // would have fired at all, would have printed "the AI could not tell" over
+  // every document the AI classified perfectly. A rule that is three calls is
+  // a rule three callers compose differently.
+  if (resolution.kind === "match") return { id: resolution.row.id, outcome: "matched" };
+  if (resolution.kind === "declined") return { id: fallbackId, outcome: "unclassified" };
+  const label = resolution.name;
 
-  // 2. Resolve by label
-  const trimmedLabel = label?.trim();
-  if (!trimmedLabel || trimmedLabel === "Document necunoscut") return fallbackId;
-
-  // 2a. Name match in existing types
-  const nameKey = trimmedLabel.toLowerCase();
-  const existingByName = nameMap[nameKey];
-  if (existingByName) return existingByName;
-
-  // 2b. Session cache (already auto-created this run)
-  const cached = autoCreatedTypeCache.get(nameKey);
-  if (cached) return cached;
-
-  // 3. Auto-create new document type
-  //
-  // Slice #26.12: `origin: "IMPORT"` is the one fact about a document type that
-  // cannot be worked out later — this is the only call site in the app that
-  // sends it, and it is what makes the new type read "AI scanned" and render
-  // blue in Reference Data instead of looking like something Adrian typed. Send
-  // nothing and the column defaults to MANUAL, which is silent and wrong.
-  //
-  // Nothing else about the type's status is sent, because nothing else needs
-  // to be: it gains a form (and turns bold green / "AI completed") only through
-  // #26.11's discovery review, which writes `template_fields`.
+  let res: Response;
   try {
-    const res = await fetch("/api/admin/value-lists/document-types", {
+    res = await fetch("/api/document-types/resolve", {
       method:  "POST",
       headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify({ name: trimmedLabel, origin: "IMPORT" }),
+      body:    JSON.stringify({ typeKey: answer.typeKey ?? null, label: answer.label ?? null }),
     });
-    if (res.ok) {
-      const row = (await res.json()) as { id?: string };
-      if (row.id) {
-        autoCreatedTypeCache.set(nameKey, row.id);
-        nameMap[nameKey] = row.id; // update for subsequent rows
-        return row.id;
-      }
-    }
-  } catch { /* ignore — fall through to fallback */ }
+  } catch {
+    // ⚠️ **The browser's own "Failed to fetch" is a FAILED RESOLUTION, not a
+    // failed row, and a third review round caught the rewrite losing this.**
+    // The code this replaced wrapped its POST in `catch { /* ignore */ }`; the
+    // first draft of the rewrite tested the RESPONSE and left the rejection to
+    // propagate — so a two-second Wi-Fi drop at file 87 of 200 aborted the task
+    // before `createDocument` ran, put no Document in the archive at all, and
+    // printed the English string "Failed to fetch" onto a Romanian screen and
+    // into the permanent report. A dropped connection is named in
+    // `OutcomeRow.typeCreateFailed`'s own docblock as one of the three things
+    // that note exists for; it must reach it.
+    return { id: fallbackId, outcome: "failed" };
+  }
+  // ⚠️ **The same two tests `fetchDocTypeRows` makes — which is MORE than the
+  // loop's other calls make, and a fifth review round corrected a comment that
+  // said otherwise.** `createDocument`, `uploadPage` and the property link all
+  // test `res.redirected` alone; only the type-list GET also checks for a 401
+  // and for a rewritten 200 carrying a sign-in PAGE. This call is a GET's twin
+  // in that respect — it is the one that decides where a document is FILED —
+  // so it gets the stronger pair, and the same `session-expired` sentinel the
+  // per-task catch turns into the amber banner with the sign-in link.
+  if (isSessionLoss(res) || (res.ok && servesHtml(res))) throw new Error("session-expired");
+  if (!res.ok) return { id: fallbackId, outcome: "failed" };
 
-  return fallbackId;
+  const body = (await res.json().catch(() => null)) as
+    | { outcome?: unknown; id?: unknown; key?: unknown; name?: unknown }
+    | null;
+  if (!body || typeof body.id !== "string" || body.id.length === 0) {
+    // ⚠️ **A server `unclassified` is UNCLASSIFIED, not failed, and a fourth
+    // review round caught the row lying about it.** It is the one legitimate
+    // 200 with no id, and it IS reachable even though the local pass ruled it
+    // out: the client reads the type list once per run while the resolver
+    // re-reads on every call, so renaming the catch-all from Reference Data
+    // mid-import puts every later declining document down this path. Reporting
+    // it as `failed` printed "AI a stabilit tipul documentului, dar acel tip nu
+    // a putut fi creat" over a document about which the AI decided nothing.
+    if (body && body.outcome === "unclassified") {
+      return { id: fallbackId, outcome: "unclassified" };
+    }
+    // Anything else here is a 200 this client cannot read — no body, no id, an
+    // outcome it does not know. That is a failure and must say so: it is the
+    // one shape the old code treated as "fall through to the fallback" with
+    // nothing recorded (`if (res.ok)` then `if (row.id)` with no else), which
+    // on screen is indistinguishable from a document nobody could classify.
+    return { id: fallbackId, outcome: "failed" };
+  }
+
+  const row: DocTypeRow = {
+    id:   body.id,
+    key:  typeof body.key  === "string" ? body.key  : "",
+    // ⚠️ **The SERVER's name where it gave one, and OUR label as the floor —
+    // never the empty string.** An adopted row carries whichever spelling the
+    // racer wrote, and everything downstream that prints a type name must print
+    // the one Reference Data holds. But a name of `""` would be worse than
+    // wrong: `sameDocumentTypeName` refuses an empty normalised form, so such a
+    // row would sit in `items` matching nothing, and every later document of
+    // the same label would ask the server again.
+    name: typeof body.name === "string" && body.name.trim() !== "" ? body.name : label,
+  };
+  // Appended so the next entry of the same label matches locally — the job the
+  // deleted cache was doing, done by the list that is already per-run. Guarded
+  // against a double entry, which the `matched-*` endings below can produce:
+  // the server can resolve a type this client's list does not hold, and a
+  // retry of the same label would otherwise add it twice.
+  if (!items.some((item) => item.id === row.id)) items.push(row);
+
+  // ⚠️ **`matched-key` and `matched-name` are NOT `created`, and collapsing
+  // them would make the run claim types it did not make.** The server can match
+  // a type this client has never read — one Adrian added in another tab, or one
+  // a concurrent run created — and reporting that as `created` would put a type
+  // somebody else owns into `createdTypes`, and from there into "created in
+  // this import and left empty" on the result screen. `matched` is the honest
+  // answer: the id is good, the row is now in the list, and this run created
+  // nothing.
+  if (body.outcome === "created" || body.outcome === "adopted") {
+    return { id: row.id, outcome: body.outcome, row };
+  }
+  return { id: row.id, outcome: "matched", row };
 }
 
 async function createDocument(payload: {
@@ -1548,6 +1697,16 @@ export function BulkImportDialog({
    */
   const fallbackTypeIdRef = useRef<string | null>(null);
   /**
+   * The same id, in state, for the one reader that is a RENDER. (Slice #29.06)
+   *
+   * `outcomeRowOf` has to know whether a row is still sitting on the catch-all
+   * before it will say the type create failed, and it runs inside a `useMemo`.
+   * A ref read there is what `react-hooks/refs` forbids and what the two
+   * comments above this one already argue about `typeNames` and `runTypes`.
+   * Written once, in the same breath as the ref, from the same value.
+   */
+  const [fallbackTypeId, setFallbackTypeId] = useState<string | null>(null);
+  /**
    * Every document type name the server holds, for the review dialog's
    * duplicate-name refusal.   (Slice #27.05, feeding #27.04's new-type path.)
    *
@@ -1594,6 +1753,31 @@ export function BulkImportDialog({
     const trimmed = name.trim();
     if (trimmed === "") return;
     setTypeNames((prev) => (prev.includes(trimmed) ? prev : [...prev, trimmed]));
+  }, []);
+  /**
+   * The document types this RUN brought into existence.        (Slice #29.06)
+   *
+   * ⚠️ **Recorded so the screen can report a type that ends the run with no
+   * documents on it**, which is the narrow half of finding F4 this slice can
+   * close. A type is created for a document, the document's own creation then
+   * fails — or the AI read re-classifies it onto something more specific — and
+   * the `lookup_document_type` row is left behind with no documents, no form
+   * and no explanation. Re-typing a document after a fuller read is correct
+   * behaviour; leaving the first type behind in silence is not.
+   *
+   * ⚠️ **STATE rather than a ref, for the reason `typeNames` above records:**
+   * the summary block reads it during a render.
+   *
+   * ⚠️ **This is what the RUN created, not what the archive holds.** A type
+   * that already existed and that this run merely matched is nobody's here —
+   * an empty type Adrian created himself last month is not this screen's
+   * business, and claiming it would be the report inventing work.
+   */
+  const [createdTypes, setCreatedTypes] = useState<{ id: string; name: string }[]>([]);
+  const rememberCreatedType = useCallback((row: { id: string; name: string }) => {
+    setCreatedTypes((prev) =>
+      prev.some((t) => t.id === row.id) ? prev : [...prev, { id: row.id, name: row.name }],
+    );
   }, []);
   /**
    * What this run knows about each document TYPE it has seen: its name, and
@@ -2087,12 +2271,22 @@ export function BulkImportDialog({
     // than staying silent because a discarded run had already spoken.
     let announcedFirstDocument = false;
     let fallbackDocTypeId: string;
-    let docTypeMap: Record<string, string> = {};
-    let docNameMap: Record<string, string> = {};
+    /**
+     * Every document type this run knows about — read once, appended to by
+     * `ensureDocType`, and dead when the run is.               (Slice #29.06)
+     *
+     * ⚠️ **This is where the deleted `autoCreatedTypeCache` went.** That cache
+     * was a module `const` claiming to be session-scoped and cleared by
+     * nothing; this array is a local of the effect, so a second run — or a
+     * StrictMode re-invocation — starts from what the server actually holds
+     * rather than from what a previous run remembered creating. See
+     * `ensureDocType`.
+     */
+    let docTypeItems: DocTypeRow[] = [];
 
     async function run() {
       // fetchDocTypes throws with a Romanian error if no types exist.
-      const { fallbackId, typeMap, nameMap, items } = await fetchDocTypes();
+      const { fallbackId, items } = await fetchDocTypes();
       // ⚠️ **The `mounted` test comes FIRST here**, ahead of every ref write
       // below it — the rule this file states twice about the queue refs, and an
       // adversarial round caught these four outside it. In StrictMode a
@@ -2103,8 +2297,18 @@ export function BulkImportDialog({
       if (!mounted) return;
       fallbackDocTypeId = fallbackId;
       fallbackTypeIdRef.current = fallbackId;
-      docTypeMap = typeMap;
-      docNameMap = nameMap;
+      // Slice #29.06 — STATE as well as the ref, because `outcomeRowOf` reads
+      // it during a render to decide whether a row is still sitting on the
+      // catch-all, and `react-hooks/refs` rightly bans a render depending on a
+      // ref's value. The ref stays for the handlers, which is what it is for.
+      setFallbackTypeId(fallbackId);
+      // ⚠️ **A COPY, because this one gets MUTATED.** `ensureDocType` appends
+      // every type it resolves through the server, and `items` is the array
+      // `fetchDocTypes` built out of the response body. Nothing else reads it
+      // after the block below, so sharing it would be harmless today — and the
+      // day something does read it, the bug is a list that grew under it
+      // mid-run with nothing in the code saying so.
+      docTypeItems = [...items];
       // Slice #27.05 — which types already have a form, decided by the one
       // function #26.12 wrote for it rather than by a `length > 0` here.
       docTypeFormRef.current = new Map(
@@ -2211,14 +2415,58 @@ export function BulkImportDialog({
           //    Slice #21.02.Import: use the scan's typeKey/label to look up or
           //    auto-create the matching document type; falls back to fallbackId
           //    only when no meaningful classification is available.
+          //
+          //    Slice #29.06 — and it now SAYS which of those two happened. The
+          //    call can also throw `session-expired`, which the per-task catch
+          //    below already knows what to do with; every other failure comes
+          //    back as an outcome rather than as silence.
           const sr = scanResults.get(entry.path);
-          const resolvedTypeId = await ensureDocType(
-            sr?.typeKey,
-            sr?.description,
-            docTypeMap,
-            docNameMap,
+          const resolvedType = await ensureDocType(
+            { typeKey: sr?.typeKey, label: sr?.description },
+            docTypeItems,
             fallbackDocTypeId,
           );
+          const resolvedTypeId = resolvedType.id;
+          // ⚠️ **`sr?.status === "done"` — only an entry the SCAN ACTUALLY
+          // ANSWERED FOR gets a resolution recorded, and it took two review
+          // rounds to get this term right.** A file with no page a model can
+          // see is never classified, and neither is one whose scan errored;
+          // recording either as `unclassified` put "scanarea AI nu a putut
+          // stabili ce fel de document este" on the row directly under "nu are
+          // nicio pagină pe care AI să o poată citi" — two sentences that
+          // cannot both be true, permanently, in the saved report.
+          //
+          // ⚠️ **`sr !== undefined` was the sixth round's term and was a
+          // no-op**, which the seventh measured: `startScan` SEEDS the map for
+          // every walked entry before any request goes out (`import-wizard.tsx`
+          // — `m.set(e.path, { status: … "skip" })`), so an unscannable file is
+          // present in it carrying a status and nothing else. The status is the
+          // only thing that distinguishes an answer from a placeholder.
+          if (mounted && sr?.status === "done" && resolvedType.outcome !== "matched") {
+            // ⚠️ **Written HERE and nowhere else.** Three later `updateResult`
+            // calls in this task write `documentTypeId`, and putting the
+            // resolution on each of them would be three chances to forget one —
+            // the failure would then be invisible on exactly the rows that took
+            // the least ordinary path. Patches merge, so one write survives all
+            // three.
+            updateResult(entry.path, { typeResolution: resolvedType.outcome });
+          }
+          // The types this run is answerable for, so the summary can report one
+          // that ends the run with no documents on it. ⚠️ **`created` ONLY** —
+          // an `adopted` row was inserted by another writer and is not this
+          // run's to report on. See `EnsuredDocType.row`.
+          if (mounted && resolvedType.row !== undefined) {
+            if (resolvedType.outcome === "created") rememberCreatedType(resolvedType.row);
+            // ⚠️ **And the NAME, into the list the review dialog refuses
+            // duplicates against.** This is the first version of this call site
+            // that has the row in hand — the old `ensureDocType` returned an id
+            // — and without it a type invented at document 3 is invisible to a
+            // review step opened at document 5, which is the window
+            // `sameTypeName` exists to close. `enrichDiscoverSteps` re-reads the
+            // list before the queue is published, so this only narrows a gap
+            // rather than being the only thing holding it shut.
+            rememberTypeName(resolvedType.row.name);
+          }
 
           // 3. Create the Document record.
           //    Provenance is inferred from the entry's own file extension(s);
@@ -2233,6 +2481,17 @@ export function BulkImportDialog({
             title,
             provenance: entryProvenance,
           });
+          // ⚠️ **The type is written on the row the MOMENT the Document exists,
+          // and an adversarial round is why.** (Slice #29.06) Three later
+          // patches write it on rows that SETTLE, and the per-entry `catch`
+          // writes none — so a row whose page upload, property link or tag
+          // failed carried no `documentTypeId` at all, while its Document sat
+          // in the archive on a type this run had just created. The empty-type
+          // sentence then named that type and told the user to delete it, in
+          // the saved report, over a type #29.05 would refuse to delete.
+          // Overwritten later by the type the AI read settled on, which is what
+          // every reader of this field wants.
+          if (mounted) updateResult(entry.path, { documentTypeId: resolvedTypeId });
 
           // Slice #26.03 — the run has now written something. Announced through
           // a ref so answering it cannot re-run this effect, and guarded by a
@@ -4387,6 +4646,24 @@ export function BulkImportDialog({
         // `SummaryRow.documentTypeName` for why that is counted and not named.
         documentTypeName:
           r.documentTypeId === undefined ? undefined : runTypes[r.documentTypeId]?.name,
+        // Slice #29.06 — decided HERE, from the resolution the loop recorded
+        // AND the type the document is on when the screen is drawn. Two facts,
+        // because one is not enough: a document the scan could not classify, or
+        // whose type create failed, may have been re-typed onto something real
+        // by the AI read seconds later — and a row still saying "it is on the
+        // general type" over a document that is not would be the screen sending
+        // a user to fix something already right. `fallbackTypeId` is null until
+        // the run has read the type list, and a `=== null` comparison against
+        // an absent `documentTypeId` is false, which is the safe direction:
+        // says nothing rather than says it wrongly.
+        typeUnclassified:
+          r.typeResolution === "unclassified" && r.documentTypeId === fallbackTypeId
+            ? true
+            : undefined,
+        typeCreateFailed:
+          r.typeResolution === "failed" && r.documentTypeId === fallbackTypeId
+            ? true
+            : undefined,
         typeFormMissing: r.typeFormMissing,
         typeFormAdded: r.typeFormAdded,
         // Slice #27.06 — straight through, for the same reason the three above
@@ -4396,7 +4673,7 @@ export function BulkImportDialog({
         refill: r.refill,
       };
     },
-    [cornerSourceByPath, propertyById, runTypes, scanResults, soleProperty],
+    [cornerSourceByPath, fallbackTypeId, propertyById, runTypes, scanResults, soleProperty],
   );
 
   /**
@@ -4473,8 +4750,32 @@ export function BulkImportDialog({
       // one-item list that the Romanian reads as exhaustive, on screen and
       // permanently in the report.
       withoutFormTotal: summary.typesWithoutForm,
+      // Slice #29.06 — the types this run CREATED and then left with nothing on
+      // them.
+      //
+      // ⚠️ **EVERY row, with no status filter, and an adversarial round took
+      // the filter out.** `documentTypeId` is written the instant
+      // `createDocument` returns and nowhere earlier, so its presence IS the
+      // test "this row has a Document in the archive" — which is the question
+      // being asked. Filtering on `status === "done"` looked equivalent and was
+      // not: a row whose upload or tag failed ends `error` while its Document,
+      // created before any of that, sits on the type perfectly well. The screen
+      // then named that type as abandoned and told the user to delete it —
+      // permanently, in the saved report, over a delete #29.05 refuses.
+      //
+      // ⚠️ **`r.documentTypeId` is the LATEST type known for the row** — the
+      // one the read settled on where a read happened, and the one the loop
+      // resolved where it did not. Both are the right answer to "is anything
+      // filed under this type": the first because a re-typed document has left
+      // the type it was created on, the second because a row whose upload
+      // failed still has a Document sitting on it. See
+      // `ImportResult.documentTypeId`.
+      createdEmpty: typesCreatedWithNoDocuments(
+        createdTypes,
+        results.map((r) => r.documentTypeId),
+      ),
     });
-  }, [runTypes, summary]);
+  }, [createdTypes, results, runTypes, summary]);
 
   /**
    * The take-away copy of this screen.   (Slice #26.10)
@@ -5342,6 +5643,15 @@ const NOTE_TONE: Record<OutcomeNoteId, string> = {
   // answer is the one it already has.
   typeFormPending: "text-sky-700 dark:text-sky-400",
   typeFormAdded: "text-emerald-600 dark:text-emerald-400",
+  // Slice #29.06 — sky and amber, and the pair is the point. A document the
+  // model could not classify is a state, not a fault: it is in the archive, it
+  // is on the general type, and somebody will choose a better one when they
+  // open it — the same reading `typeFormPending` gets two lines up. A type that
+  // could not be WRITTEN is amber by this table's own working rule: something is
+  // outstanding and a person has to decide. Not red — the document exists and
+  // its pages are uploaded, which is what red would deny.
+  typeUnclassified: "text-sky-700 dark:text-sky-400",
+  typeCreateFailed: "text-amber-700 dark:text-amber-400",
   // Amber, and it is the one refill note that must not be emerald: the read
   // happened, so the instinct is to tick it, and the whole reason the state
   // exists is that the money was spent and the columns are still empty. See
@@ -5384,6 +5694,12 @@ const RUN_TYPE_NOTE_TONE: Record<RunTypeNoteId, string> = {
   // of the backlog the sentence can name, which is not a difference in how
   // worried anybody should be.
   typesStillWithoutFormPartial: "text-sky-700 dark:text-sky-400",
+  // Slice #29.06 — amber, and it is the one run-level type sentence that is not
+  // sky. The two above describe work the wizard is offering to help with; this
+  // one describes a row in Reference Data that nothing points at and that no
+  // screen in this run will offer to remove. A decision is owed, which is what
+  // amber means everywhere else in this file.
+  typesCreatedEmpty: "text-amber-700 dark:text-amber-400",
 };
 
 /** The two notes that are about a Person who now exists and can be opened. */

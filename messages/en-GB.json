@@ -2100,6 +2100,8 @@
           "personUnreadable": "the identity card image could not be prepared, so no person was created",
           "readSkippedIdCard": "the general AI read was skipped, because this is an identity card",
           "readSkippedNoPage": "it has no page the AI can read",
+          "typeUnclassified": "the AI scan could not tell what kind of document this is, so it was filed under the general type — open the document and choose the right one",
+          "typeCreateFailed": "the AI scan decided this document's type, but the type could not be confirmed, so the document was filed under the general type — open the document and choose the right one",
           "personStepUnfinished": "the identity-card step did not finish — try again with the “Confirm people” button",
           "typeFormPending": "this document's type has no form yet, so the type-specific information went to Notes",
           "typeFormAdded": "this document's type gained a form during this import",
@@ -2111,7 +2113,8 @@
         "typeNote": {
           "typesGainedForm": "{count, plural, one {One document type gained a form in this import: {names}.} other {# document types each gained a form in this import: {names}.}}",
           "typesStillWithoutForm": "{count, plural, one {Still without a form: {names}. You will find it in Reference Data → Document Types, ticking “Only those awaiting a form”.} other {Still without a form: {names}. You will find them in Reference Data → Document Types, ticking “Only those awaiting a form”.}}",
-          "typesStillWithoutFormPartial": "{count, plural, one {One document type is still without a form: {names}.} other {# document types are still without a form, of which this import could only name: {names}.}} You will find all of them in Reference Data → Document Types, ticking “Only those awaiting a form”."
+          "typesStillWithoutFormPartial": "{count, plural, one {One document type is still without a form: {names}.} other {# document types are still without a form, of which this import could only name: {names}.}} You will find all of them in Reference Data → Document Types, ticking “Only those awaiting a form”.",
+          "typesCreatedEmpty": "{count, plural, one {One document type was created in this import and no document from this import ended up on it: {names}. Check in Reference Data → Document Types whether you still need it.} other {# document types were created in this import and no document from this import ended up on them: {names}. Check in Reference Data → Document Types whether you still need them.}}"
         }
       },
       "preflight": {

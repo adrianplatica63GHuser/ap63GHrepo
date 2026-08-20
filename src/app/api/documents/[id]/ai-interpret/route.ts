@@ -93,9 +93,6 @@
 
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
-import { db } from "@/db";
-import { lookupDocumentType } from "@/db/schema";
 import { unexpectedError } from "@/lib/api/errors";
 import {
   buildDiscoverSystemPrompt,
@@ -109,7 +106,7 @@ import {
   type DiscoverPayload,
   type SkippedPage,
 } from "@/lib/documents/discover-log";
-import { createValue } from "@/lib/admin/value-lists/queries";
+import { resolveClassifiedDocumentType } from "@/lib/documents/resolve-document-type";
 import {
   getDocumentById,
   getDocumentTypeTemplate,
@@ -679,36 +676,50 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
   }
 
   // ── Resolve documentTypeId ──────────────────────────────────────────────────
-  // 1. Match by known typeKey slug in the DB.
-  // 2. Fall back to match by label name.
-  // 3. Auto-create if the label is meaningful and not already present.
+  //
+  // Slice #29.06: through the ONE writer, `resolveClassifiedDocumentType`. The
+  // three-step rule it applies — key, then name, then create — is the rule
+  // that used to be written out here, with three differences that were all
+  // defects rather than choices:
+  //
+  //   - the name match was `eq(name, classifiedLabel)`, BYTE FOR BYTE, so this
+  //     route was case-sensitive where the import wizard was not and diacritic-
+  //     sensitive where the KEY generator was not. "Contract de arendă" and
+  //     "Contract de arenda" were two types with one key between them, which is
+  //     why the second create died on the UNIQUE constraint (finding F7);
+  //   - the create sent no `origin`, so `createValue` defaulted it to MANUAL
+  //     and a type no human ever typed displayed as "Adăugat manual" — the
+  //     column is write-once and no screen can repair it (finding F2). The
+  //     resolver writes IMPORT, because a machine chose the name;
+  //   - a create that lost a race threw, and the `catch` below turned it into a
+  //     document with no type at all. The resolver adopts the racer's row.
+  //
   // NOTE: if this switches the document to a different type than the one the
   // prompt above was built for, customFieldsOut still reflects the *old*
   // type's template for this run — a follow-up AI Interpret click after the
   // type change picks up the new type's template.
   let documentTypeId: string | null = null;
   try {
-    if (suggestedTypeKey) {
-      const [byKey] = await db
-        .select({ id: lookupDocumentType.id })
-        .from(lookupDocumentType)
-        .where(eq(lookupDocumentType.key, suggestedTypeKey));
-      if (byKey) documentTypeId = byKey.id;
-    }
-
-    if (!documentTypeId && classifiedLabel && classifiedLabel !== "Document necunoscut") {
-      const [byName] = await db
-        .select({ id: lookupDocumentType.id })
-        .from(lookupDocumentType)
-        .where(eq(lookupDocumentType.name, classifiedLabel));
-      if (byName) {
-        documentTypeId = byName.id;
-      } else {
-        // Auto-create a new document type (key auto-generated from name).
-        const newRow = await createValue("document-types", { name: classifiedLabel });
-        documentTypeId = newRow.id as string;
-      }
-    }
+    // ⚠️ **The two values go in exactly as this route already computed them.**
+    // `suggestedTypeKey` is already narrowed to `KNOWN_TYPE_KEYS` minus
+    // UNCLASSIFIED where it is assigned, and `matchDocumentType` skips an
+    // UNCLASSIFIED key for the same reason — so the two agree, and this route's
+    // narrowing is now belt-and-braces rather than the only guard. What DOES
+    // move is the label test: "" and "Document necunoscut" were a string literal
+    // here and a different string literal in the wizard, and are one function
+    // (`classifiedLabelOf`) from this slice on.
+    const resolved = await resolveClassifiedDocumentType({
+      typeKey: suggestedTypeKey,
+      label:   classifiedLabel,
+    });
+    // ⚠️ **`unclassified` leaves the document on the type it already has**, and
+    // that is the ending this route already had rather than a new one:
+    // `document.document_type_id` is NOT NULL, so every document reaching here
+    // already carries a type, and a `null` in the response body means the
+    // caller writes nothing. What has changed is that a create which FAILED no
+    // longer produces the same `null` — that now throws, and the `catch` below
+    // is the only thing that still turns a resolution into silence.
+    documentTypeId = resolved.id;
   } catch (err) {
     // Non-fatal: log and continue — fields are still useful even without a type.
     console.warn("[ai-interpret] documentTypeId resolution failed:", err);

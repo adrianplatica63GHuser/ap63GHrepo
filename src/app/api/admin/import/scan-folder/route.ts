@@ -23,6 +23,7 @@
 import type { NextRequest } from "next/server";
 import { unexpectedError } from "@/lib/api/errors";
 import { CLASSIFY_SYSTEM_PROMPT, KNOWN_TYPE_KEYS } from "@/lib/import/classify-prompts";
+import { UNCLASSIFIED_DOCUMENT_LABEL } from "@/lib/documents/document-type-match";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -148,7 +149,7 @@ export async function POST(request: NextRequest): Promise<Response> {
         ? raw.suggestedTypeKey
         : null;
     parsed = {
-      classifiedLabel: raw.classifiedLabel ?? "Document necunoscut",
+      classifiedLabel: raw.classifiedLabel ?? UNCLASSIFIED_DOCUMENT_LABEL,
       suggestedTypeKey,
       confidence: raw.confidence === "high" || raw.confidence === "medium" || raw.confidence === "low"
         ? raw.confidence

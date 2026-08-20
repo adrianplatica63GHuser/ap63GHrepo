@@ -9,6 +9,8 @@ import type { NextRequest } from "next/server";
 
 export const dynamic = "force-dynamic";
 import {
+  dbErrorToResponse,
+  pgErrorCode,
   unexpectedError,
   zodErrorToResponse,
 } from "@/lib/api/errors";
@@ -56,6 +58,41 @@ export async function POST(request: NextRequest, ctx: Ctx): Promise<Response> {
     const row = await createValue(list, parsed.data);
     return Response.json(row, { status: 201 });
   } catch (err) {
+    // Slice #29.06: through `dbErrorToResponse` before the catch-all, and this
+    // route was the ONE that skipped it. Sixteen routes under documents,
+    // people, properties, judicial-persons, groups, stamps and admin/import
+    // already map their Postgres errors here; the value-lists POST caught with
+    // `unexpectedError` alone, so a duplicate key — the exact ending of two
+    // concurrent creates of one label — came back as a 500 "Internal server
+    // error".
+    //
+    // ⚠️ **What this buys, stated exactly, because a review round caught the
+    // first version of this comment overclaiming.** It makes the API honest: a
+    // 409 is what a duplicate is. It does NOT change what the Reference Data
+    // screen says — `failureFromResponse` in `value-list-modal.tsx` branches on
+    // a `code` field, and `dbErrorToResponse`'s 23505 body carries only `error`
+    // and `constraint`, so a 409 lands on the same generic Romanian sentence
+    // the 500 did. Saying "two administrators created this at once" in Romanian
+    // is a real improvement and is in the handover, not in this slice. And it
+    // is no longer half of finding F1: since this slice the import path does
+    // not come through this door at all — it goes to
+    // POST /api/document-types/resolve, which wins the race rather than
+    // reporting it.
+    //
+    // ⚠️ **23505 ONLY, and an adversarial round narrowed it from every code
+    // `dbErrorToResponse` knows.** That function answers 23514 and 23503 with a
+    // **400**, and `value-list-modal.tsx` reads any 400 from this door as its
+    // own form's rejection — "a required field is missing or wrong" — which
+    // over a database CHECK or FK violation is a sentence that sends an
+    // administrator to fix a field that is perfectly correct. A 500 is vague;
+    // that would be misleading, which is worse. The 409 is safe: the same
+    // client maps a status it does not recognise to its generic Romanian
+    // sentence. (23503 on a value-lists write is the DELETE's business and is
+    // already answered there, in full, by #29.05.)
+    if (pgErrorCode(err) === "23505") {
+      const mapped = dbErrorToResponse(err);
+      if (mapped) return mapped;
+    }
     return unexpectedError(err, `POST /api/admin/value-lists/${list}`);
   }
 }

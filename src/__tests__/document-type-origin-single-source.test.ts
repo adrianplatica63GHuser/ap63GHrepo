@@ -148,20 +148,71 @@ describe("the status colours have one home", () => {
 });
 
 describe("only the import claims an IMPORT origin", () => {
+  /**
+   * ⚠️ **REPOINTED, NOT RELAXED.   (Slice #29.06)**
+   *
+   * The single writer used to be `ensureDocType` in the import wizard, and this
+   * guard named that file. #29.06 moved it: a classifier's answer now becomes a
+   * `lookup_document_type` row in exactly one place, `resolveClassifiedDocument-
+   * Type`, which the wizard reaches over `POST /api/document-types/resolve` and
+   * `ai-interpret` calls in-process. The claim this test makes is unchanged and
+   * is now stronger — before the move, `ai-interpret` created types too and
+   * sent no origin at all, so a type no human typed read "Adăugat manual"
+   * (finding F2 of the 29.01 report).
+   *
+   * Deleting either assertion instead of repointing it would remove the only
+   * thing standing between the archive and a third writer, which is the whole
+   * argument in this file's header: origin cannot be recomputed, so a path that
+   * invents it is unfalsifiable afterwards.
+   */
+  const ORIGIN_WRITER = "lib/documents/resolve-document-type.ts";
+
   // Pattern rather than the exact literal: `origin:"IMPORT"`, single quotes and
   // a quoted key all read identically to a reviewer and slipped past the
   // string version of this guard.
-  it("has exactly one writer, and it is the import's type auto-create", () => {
+  it("has exactly one writer, and it is the classifier's type resolver", () => {
     const writers = productionFilesContaining(/origin['"]?\s*:\s*['"]IMPORT['"]/);
-    expect(writers).toEqual(["app/admin/import/_components/bulk-import-dialog.tsx"]);
+    expect(writers).toEqual([ORIGIN_WRITER]);
   });
 
-  it("sends it on the POST that creates the type", () => {
-    const src = fs.readFileSync(
-      path.join(SRC, "app/admin/import/_components/bulk-import-dialog.tsx"),
-      "utf8",
+  /**
+   * ⚠️ **The value is passed into the row builder, and it is NOT a
+   * parameter.** (`createDocumentTypeRow` since the advisory lock landed —
+   * `createValue` before it, and an eighth review round caught this sentence
+   * still naming the old one.)
+   * That is the rule #29.06 settled: origin says who CHOSE the name — a machine
+   * chose it, so IMPORT — and every answer reaching this function is by
+   * construction a machine's, so a third caller cannot forget it the way
+   * `ai-interpret` did. An assertion that only counted files would stay green
+   * over a refactor that made it an argument again.
+   */
+  it("passes it into the create rather than taking it from the caller", () => {
+    const src = fs.readFileSync(path.join(SRC, ORIGIN_WRITER), "utf8");
+    expect(src).toContain('createDocumentTypeRow(tx, { name: inside.name, origin: "IMPORT" })');
+  });
+
+  /**
+   * …and it cannot become a parameter.   (Slice #29.06, second review round)
+   *
+   * ⚠️ **THE ASSERTION THIS REPLACED COULD NOT FAIL, and the round that found
+   * that is the reason this one is shaped the way it is.** It checked that the
+   * two callers do not contain the IMPORT literal — which the "exactly one
+   * writer" assertion above already guarantees for every production file, so it
+   * could only fail when that one did. Worse, it could not catch what its own
+   * header claimed to be about: a caller passing an origin through a variable,
+   * a spread, or a differently-named key would satisfy it.
+   *
+   * What actually makes "one writer" mean something is that the writer takes NO
+   * origin from anybody. `resolveClassifiedDocumentType` has exactly one
+   * parameter, and it is the classifier's answer — a key and a label. Add a
+   * second and this fails, which is the moment somebody should have to argue
+   * for it.
+   */
+  it("takes the classifier's answer and nothing else", () => {
+    const src = fs.readFileSync(path.join(SRC, ORIGIN_WRITER), "utf8");
+    expect(src).toContain(
+      "export async function resolveClassifiedDocumentType(\n  answer: ClassifierAnswer,\n): Promise<DocumentTypeResolution> {",
     );
-    expect(src).toContain('JSON.stringify({ name: trimmedLabel, origin: "IMPORT" })');
   });
 });
 

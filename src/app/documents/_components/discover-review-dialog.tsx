@@ -76,7 +76,6 @@ import {
   buildFieldHint,
   formValueForField,
   MAX_TEMPLATE_FIELDS,
-  normaliseKeyForComparison,
   proposeTemplateFields,
   type DiscoveredFieldProposal,
 } from "@/lib/documents/discover-to-template";
@@ -85,6 +84,7 @@ import {
   type DocumentTemplateField,
   type DocumentTemplateFieldType,
 } from "@/lib/documents/template-fields";
+import { sameDocumentTypeName } from "@/lib/documents/document-type-match";
 
 const FIELD_TYPES: DocumentTemplateFieldType[] = ["text", "textarea", "date", "number"];
 
@@ -99,27 +99,25 @@ const NO_FIELDS: readonly DocumentTemplateField[] = [];
 
 /**
  * Two type names that a business user would read as the same name.
- *                                                               (Slice #27.04)
+ *                                                (Slice #27.04, #29.06)
+ *
+ * ⚠️ **MOVED, not deleted.** It was `sameTypeName` here, three lines of
+ * `normaliseKeyForComparison`, and it was the only one of the app's three
+ * name-matching rules that was right. Slice #29.06 hoisted it into
+ * `src/lib/documents/document-type-match.ts` so the import wizard and the
+ * server-side resolver use the SAME rule rather than the two weaker ones they
+ * had — `trim()`+`toLowerCase()` with no diacritic fold in one, a byte-for-byte
+ * SQL `eq` in the other. What it does is unchanged, including the empty-string
+ * guard; where it lives is what changed, and the alias is kept so this file's
+ * two call sites still read as they did.
  *
  * Used only to REFUSE creating a duplicate, and deliberately no cleverer than
  * that: merging or de-duplicating near-identical types is a different problem
  * with a different answer (the archive has three deliberate alternate wordings
  * — `AUTORIZATIE` / `AUTORIZATIE_ALT` and two more — that a fuzzy test would
  * wrongly collapse; those differ by WORDING, which survives this).
- *
- * ⚠️ **Diacritics fold, and a review round is why.** Case and space alone let
- * "Contract de arendă" and "Contract de arenda" — the same document read twice,
- * once from a scan that dropped the diacritic — become two types that look
- * identical in the dropdown and each hold half the archive's fields. The server
- * already folds them the same way when it generates the KEY
- * (`generateUniqueDocumentTypeKey`), so refusing here keeps the two ends
- * agreeing about what "the same type" means. `normaliseKeyForComparison` is
- * that fold, already written and already tested.
  */
-function sameTypeName(a: string, b: string): boolean {
-  const left = normaliseKeyForComparison(a);
-  return left.length > 0 && left === normaliseKeyForComparison(b);
-}
+const sameTypeName = sameDocumentTypeName;
 
 /** What the dialog shows and edits — a proposal plus the user's decisions. */
 type Row = DiscoveredFieldProposal & {
@@ -552,10 +550,14 @@ export function DiscoverReviewDialog({
    * comment in src/lib/admin/value-lists/queries.ts). The column is write-once
    * and the value-lists PUT strips it, so this cannot be corrected from any
    * screen — which is why it is the value that makes no new claim rather than
-   * the flattering one. IMPORT means "an import run invented this type with
-   * nobody looking" (`ensureDocType` is its only writer); what happened here is
-   * that a person read a machine's suggestion, edited the name and pressed a
-   * button. It also only shows for a WINDOW: the type gains a form seconds
+   * the flattering one. Slice #29.06 named the rule this is the exception-
+   * proving case of: **origin says who CHOSE the name.** IMPORT means a machine
+   * chose it with nobody looking — `resolveClassifiedDocumentType` is its only
+   * writer, for the scan and for the whole-document read alike — and what
+   * happened HERE is that a person read a machine's suggestion, edited the name
+   * and pressed a button.
+   *
+   * It also only shows for a WINDOW: the type gains a form seconds
    * later and reads "Are formular" from then on, whichever origin it holds. The
    * one moment origin is visible is when the field save failed — and there,
    * "Adăugat manual" on a formless type is the truth.

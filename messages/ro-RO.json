@@ -2100,6 +2100,8 @@
           "personUnreadable": "imaginea cărții de identitate nu a putut fi pregătită, așa că nu s-a creat nicio persoană",
           "readSkippedIdCard": "nu a fost citit cu citirea generală AI, pentru că este o carte de identitate",
           "readSkippedNoPage": "nu are nicio pagină pe care AI să o poată citi",
+          "typeUnclassified": "scanarea AI nu a putut stabili ce fel de document este, așa că a fost pus pe tipul general — deschideți documentul și alegeți tipul potrivit",
+          "typeCreateFailed": "scanarea AI a stabilit tipul documentului, dar tipul nu a putut fi confirmat, așa că documentul a fost pus pe tipul general — deschideți documentul și alegeți tipul potrivit",
           "personStepUnfinished": "pasul pentru cartea de identitate nu s-a încheiat — încercați din nou cu butonul „Confirmă persoanele”",
           "typeFormPending": "tipul acestui document nu are încă formular, așa că informațiile specifice tipului au mers în Note",
           "typeFormAdded": "tipul acestui document a primit un formular în acest import",
@@ -2111,7 +2113,8 @@
         "typeNote": {
           "typesGainedForm": "{count, plural, one {Un tip de document a primit un formular în acest import: {names}.} few {# tipuri de documente au primit câte un formular în acest import: {names}.} other {# de tipuri de documente au primit câte un formular în acest import: {names}.}}",
           "typesStillWithoutForm": "{count, plural, one {A rămas fără formular: {names}. Îl găsiți în Date de referință → Tipuri de Document, bifând „Doar cele care așteaptă un formular”.} few {Au rămas fără formular: {names}. Le găsiți în Date de referință → Tipuri de Document, bifând „Doar cele care așteaptă un formular”.} other {Au rămas fără formular: {names}. Le găsiți în Date de referință → Tipuri de Document, bifând „Doar cele care așteaptă un formular”.}}",
-          "typesStillWithoutFormPartial": "{count, plural, one {Un tip de document a rămas fără formular: {names}.} few {# tipuri de documente au rămas fără formular, dintre care importul a putut numi doar: {names}.} other {# de tipuri de documente au rămas fără formular, dintre care importul a putut numi doar: {names}.}} Pe toate le găsiți în Date de referință → Tipuri de Document, bifând „Doar cele care așteaptă un formular”."
+          "typesStillWithoutFormPartial": "{count, plural, one {Un tip de document a rămas fără formular: {names}.} few {# tipuri de documente au rămas fără formular, dintre care importul a putut numi doar: {names}.} other {# de tipuri de documente au rămas fără formular, dintre care importul a putut numi doar: {names}.}} Pe toate le găsiți în Date de referință → Tipuri de Document, bifând „Doar cele care așteaptă un formular”.",
+          "typesCreatedEmpty": "{count, plural, one {Un tip de document a fost creat în acest import și niciun document din acest import nu a rămas pe el: {names}. Verificați în Date de referință → Tipuri de Document dacă vă mai trebuie.} few {# tipuri de documente au fost create în acest import și niciun document din acest import nu a rămas pe ele: {names}. Verificați în Date de referință → Tipuri de Document dacă vă mai trebuie.} other {# de tipuri de documente au fost create în acest import și niciun document din acest import nu a rămas pe ele: {names}. Verificați în Date de referință → Tipuri de Document dacă vă mai trebuie.}}"
         }
       },
       "preflight": {

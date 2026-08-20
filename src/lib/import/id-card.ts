@@ -41,9 +41,10 @@
  *     contained CARTE_IDENTITATE_ALT since Slice #23.01.Import. The model
  *     cannot emit it any more.
  *   - It cannot arrive from the DB either. An unseeded key never reaches a
- *     lookup_document_type row under its own name: ensureDocType misses
- *     typeMap and auto-creates a type from the free-text label, generating a
- *     DIFFERENT key (see the KNOWN_TYPE_KEYS gotcha in CLAUDE.md).
+ *     lookup_document_type row under its own name: the type resolver finds no
+ *     row with that key and auto-creates a type from the free-text label,
+ *     generating a DIFFERENT key (see the KNOWN_TYPE_KEYS gotcha in CLAUDE.md;
+ *     the resolver is `resolveClassifiedDocumentType` since Slice #29.06).
  *   - Confirmed empirically: `SELECT key FROM lookup_document_type` returns 26
  *     rows and CARTE_IDENTITATE_ALT is not among them.
  *
