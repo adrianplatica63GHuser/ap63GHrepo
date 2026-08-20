@@ -7,7 +7,7 @@ description: Write a slice description (slice header / slice spec) for Adrian. U
 
 ## The one rule
 
-**Read `ga40prj/docs/claude/SLICE-HEADER-TEMPLATE.md` first, every time, and follow it.**
+**Read `docs/claude/SLICE-HEADER-TEMPLATE.md` first, every time, and follow it.**
 Do not write a slice description from memory of a previous one. The template is the format
 and the rules; this file only records the conventions that sit around it.
 
