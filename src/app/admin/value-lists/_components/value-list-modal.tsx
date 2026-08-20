@@ -20,27 +20,8 @@ import {
 } from "@/lib/documents/status";
 import { parseTemplateFields } from "@/lib/documents/template-fields";
 import { ID_CARD_TYPE_KEYS, isIdCardTypeName } from "@/lib/import/id-card";
+import { UNCLASSIFIED_DOCUMENT_TYPE_KEY } from "@/lib/documents/document-type-match";
 import { DocumentTypeFormEditor } from "./document-type-form-editor";
-
-/**
- * The catch-all type's key, in the order `fetchDocTypes` falls through them.
- *                                                              (Slice #27.07)
- *
- * ⚠️ **Resolved to ONE row the way the import resolves it, not matched as a
- * SET, and an adversarial round found the difference.** `typeAwaitsForm`
- * excludes a single id — whatever `fetchDocTypes` settled on — so an archive
- * holding both an ALTUL and an OTHER row has the import naming the OTHER one in
- * its backlog while a set-match here would hide it, which is the "exclusion
- * undone one screen later" failure with the sign flipped.
- *
- * ⚠️ **The import's third clause — `items[0]`, an ordinary alphabetically-first
- * type when neither key exists — is knowingly NOT mirrored.** The two lists
- * come from different routes with different ordering, so "the first row" is not
- * the same row on both screens, and guessing would hide a type the sentence
- * named. Adrian's seeded data has ALTUL, so the case is out of reach; if it ever
- * is not, the honest failure is one extra row in a filter, not a missing one.
- */
-const FALLBACK_TYPE_KEYS: readonly string[] = ["ALTUL", "OTHER"];
 
 // ── API helpers ───────────────────────────────────────────────────────────────
 
@@ -628,17 +609,27 @@ export function ValueListModal({
    * type, taken from the same two tests `enrichDiscoverSteps` uses — the seeded
    * key and `isIdCardTypeName` — rather than restated here.
    *
-   * ⚠️ **The FALLBACK type is excluded too, resolved by ID rather than matched
-   * by key — see `FALLBACK_TYPE_KEYS` — and the first draft of this function
-   * argued it should not be excluded at all.** The argument was that ALTUL is an
-   * ordinary type which could perfectly well be given a form. It is the wrong
-   * way round: a form on the catch-all is not onboarding — a document that
-   * lands on ALTUL is one whose TYPE is wrong, which is #27.04's remedy and not
-   * this list's — and `typeAwaitsForm` excludes it for exactly that reason. Left
-   * in, it also made this screen's own good news unreachable: `backlogEmpty`
-   * below could never be true in any archive that has a fallback type, so the
-   * green sentence and the `role="status"` region built to announce it were
-   * dead code.
+   * ⚠️ **The FALLBACK type is excluded too, and the first draft of this
+   * function argued it should not be.** The argument was that the catch-all is
+   * an ordinary type which could perfectly well be given a form. It is the
+   * wrong way round: a form on the catch-all is not onboarding — a document
+   * that lands there is one whose TYPE is wrong, which is #27.04's remedy and
+   * not this list's — and `typeAwaitsForm` excludes it for exactly that reason.
+   * Left in, it also made this screen's own good news unreachable:
+   * `backlogEmpty` below could never be true in any archive that has a fallback
+   * type, so the green sentence and the `role="status"` region built to
+   * announce it were dead code.
+   *
+   * ⚠️ **AND UNTIL SLICE #29.07 IT WAS LEFT IN, BECAUSE THIS SCREEN LOOKED FOR
+   * THE WRONG KEY.** It resolved the fallback through a local
+   * `FALLBACK_TYPE_KEYS = ["ALTUL", "OTHER"]`, whose own comment asserted
+   * "Adrian's seeded data has ALTUL". It does not — no migration and no seed has
+   * ever written either key into `lookup_document_type` — so `fallbackTypeId`
+   * was `undefined` on every real archive and NECLASIFICAT sat in the backlog
+   * asking to be given a form. `catchAllType`'s key is the one rule now, and it
+   * is asked here as a plain key test rather than by importing that helper,
+   * because these rows are `Record<string, unknown>` off the admin route rather
+   * than the three typed columns the helper takes.
    *
    * ⚠️ **`isIdCardTypeName` is a NAME heuristic and it runs over the whole
    * archive here, not over a handful of queued types.** It is deliberately
@@ -652,9 +643,8 @@ export function ValueListModal({
    * from being visible, and the row itself is never altered or relabelled.
    */
   const fallbackTypeId = isDocumentTypes
-    ? FALLBACK_TYPE_KEYS.reduce<Row | undefined>(
-        (found, key) => found ?? query.data?.find((r) => String(r.key ?? "") === key),
-        undefined,
+    ? query.data?.find(
+        (r) => String(r.key ?? "") === UNCLASSIFIED_DOCUMENT_TYPE_KEY,
       )?.id
     : undefined;
   const awaitsFormRow = (row: Row): boolean =>

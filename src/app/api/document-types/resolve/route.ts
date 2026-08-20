@@ -35,6 +35,7 @@ import type { NextRequest } from "next/server";
 import { z } from "zod/v4";
 import { dbErrorToResponse, unexpectedError, zodErrorToResponse } from "@/lib/api/errors";
 import { resolveClassifiedDocumentType } from "@/lib/documents/resolve-document-type";
+import { PREFERRED_KEY_TAKEN } from "@/lib/admin/value-lists/queries";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -75,6 +76,26 @@ export async function POST(request: NextRequest): Promise<Response> {
     // and the row says so, which is the point.
     const mapped = dbErrorToResponse(err);
     if (mapped) return mapped;
+    // ⚠️ **The second way to exhaust the budget, and it has no Postgres code.**
+    // (Slice #29.07.) `PREFERRED_KEY_TAKEN` is `createDocumentTypeRow` refusing
+    // to substitute a suffixed key for a canonical one — a lost race that
+    // raises no 23505, so `dbErrorToResponse` has nothing to map. Reaching here
+    // means `MAX_ATTEMPTS` rounds of it, which is the same statement a 23505
+    // exhaustion makes and deserves the same 409; the 500 it would otherwise be
+    // says only that something went wrong inside, which is the shape finding F1
+    // is about. Unreachable as far as anyone can show — each occurrence proves
+    // the key is now held, so the next round key-matches — and answered anyway,
+    // because "unreachable" is what the retry budget above was also called.
+    if (err instanceof Error && err.message === PREFERRED_KEY_TAKEN) {
+      // `{ error }` and nothing else — the shape `dbErrorToResponse`'s own
+      // 409s use. A bespoke `code` here would be a field no caller reads
+      // (`ensureDocType` returns `failed` on any `!res.ok` without touching the
+      // body) pretending to be part of a protocol.
+      return Response.json(
+        { error: "Document type key was taken by a concurrent writer" },
+        { status: 409 },
+      );
+    }
     return unexpectedError(err, "POST /api/document-types/resolve");
   }
 }

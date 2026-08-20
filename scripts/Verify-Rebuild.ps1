@@ -27,6 +27,19 @@
     Leave the container and its scratch databases behind, for poking at with
     psql. Remove it with:  docker rm -f ga40prj-rebuild-check
 
+.PARAMETER UpdateBaseline
+    Rewrite src/db/rebuild-known-differences.txt from what this run actually
+    finds, instead of checking against it. NOT a verification: the check exits 3
+    and never reports a pass, so a re-baseline is always deliberate and always
+    leaves a diff to read before it is committed.
+
+    This switch exists because the flag it forwards could not be reached from
+    here. The generated baseline's own header used to say
+    `npm run db:verify-rebuild -- --update-baseline`, which needs a server
+    already running AND psql on PATH -- and there is none on a Windows box with
+    only Docker Desktop, so it dies with `spawnSync psql ENOENT` before step 2.
+    Adrian hit exactly that during Slice #29.07. The header now points here.
+
 .NOTES
     EXIT CODES, passed straight through from verify-rebuild.ts:
       0  PASS
@@ -57,10 +70,14 @@
 
 .EXAMPLE
     .\scripts\Verify-Rebuild.ps1 -Keep
+
+.EXAMPLE
+    .\scripts\Verify-Rebuild.ps1 -UpdateBaseline
 #>
 param(
     [int]$Port = 5433,
-    [switch]$Keep
+    [switch]$Keep,
+    [switch]$UpdateBaseline
 )
 
 Set-StrictMode -Version Latest
@@ -160,7 +177,15 @@ try {
         '--user', 'postgres',
         '--password', $password
     )
-    if ($Keep) { $nodeArgs += '--keep' }
+    if ($Keep)           { $nodeArgs += '--keep' }
+    if ($UpdateBaseline) { $nodeArgs += '--update-baseline' }
+
+    if ($UpdateBaseline) {
+        Write-Host "-UpdateBaseline: rewriting src\db\rebuild-known-differences.txt."
+        Write-Host "This is NOT a verification run - it exits 3 and reports no pass."
+        Write-Host "Read the diff before committing the file."
+        Write-Host ""
+    }
 
     # Toggled in place rather than inside a `& { }` block: a script block is a
     # child scope, and getting a value back out of one is exactly the kind of

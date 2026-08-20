@@ -36,7 +36,8 @@
  * --------------------------
  * Everything above assumes the document already sits on the type that should
  * gain the form. Often it does not: `ensureDocType` puts a document whose scan
- * produced no usable label on the fallback type (UNCLASSIFIED / ALTUL), and
+ * produced no usable label on the fallback type (the UNCLASSIFIED row —
+ * `catchAllType`), and
  * saving this review onto THAT type writes one document's fields onto the
  * catch-all that every unclassified document in the archive shares. Since
  * #27.03 an administrator can remove a field again from Reference Data, so that

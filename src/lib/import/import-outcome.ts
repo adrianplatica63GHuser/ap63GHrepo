@@ -227,7 +227,8 @@ export type OutcomeRow = {
    * a correct and permanent state into a to-do the user cannot close.
    *
    * ⚠️ **The fallback type is excluded too** — see `shouldDiscoverType` in
-   * `src/lib/import/discover-run.ts` for the argument. A document on ALTUL is
+   * `src/lib/import/discover-run.ts` for the argument. A document on the
+   * catch-all is
    * not a document whose type lacks a form; it is a document whose type is
    * wrong, which is a different sentence and #27.04's remedy.
    */

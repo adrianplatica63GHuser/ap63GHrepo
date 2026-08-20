@@ -125,8 +125,10 @@ export type DiscoverRunResult =
  *
  *   - `fallbackTypeId` — ⚠️ **THE FALLBACK TYPE IS EXCLUDED, and it is the one
  *     term here that is a judgement rather than an economy.** `ensureDocType`
- *     puts every document whose scan produced no usable label on ALTUL /
- *     OTHER / whatever row sorts first. That type is not a type whose form is
+ *     puts every document whose scan produced no usable label on the
+ *     catch-all — `catchAllType`, key UNCLASSIFIED, since Slice #29.07; before
+ *     that, an `ALTUL` ?? `OTHER` ?? `items[0]` fall-through that always
+ *     reached the same row by accident. That type is not a type whose form is
  *     missing; it is the type that means "we do not know what this is", and
  *     every unclassified document in the archive shares it. Reading one of them
  *     describes that one document, not the class — so the fields offered for
@@ -172,7 +174,7 @@ export type DiscoverRunResult =
  */
 export function shouldDiscoverType(input: {
   typeId: string;
-  /** ALTUL / OTHER / the first row — see above. Null when it is not known. */
+  /** The catch-all row (`catchAllType`) — see above. Null when it is not known. */
   fallbackTypeId: string | null;
   typeHasForm: boolean;
   /** The document that would be read is an identity card — see above. */

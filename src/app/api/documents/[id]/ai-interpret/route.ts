@@ -98,7 +98,7 @@ import {
   buildDiscoverSystemPrompt,
   buildExtractSystemPrompt,
   GENERIC_EXTRACT_FIELD_DESCRIPTIONS,
-  KNOWN_TYPE_KEYS,
+  canonicalTypeKey,
 } from "@/lib/import/classify-prompts";
 import {
   formatDiscoverLog,
@@ -551,12 +551,10 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
       else if (templateKeys.has(k)) customFieldsOut[k] = v;
     }
 
-    suggestedTypeKey =
-      raw.suggestedTypeKey &&
-      (KNOWN_TYPE_KEYS as readonly string[]).includes(raw.suggestedTypeKey) &&
-      raw.suggestedTypeKey !== "UNCLASSIFIED"
-        ? raw.suggestedTypeKey
-        : null;
+    // Slice #29.07: the same three tests this expression spelled out — a
+    // string, on the whitelist, not UNCLASSIFIED — now live in one function
+    // that the scan route and the resolver ask too.
+    suggestedTypeKey = canonicalTypeKey(raw.suggestedTypeKey);
     classifiedLabel = raw.classifiedLabel?.trim() || null;
     lowConfidenceFields = Array.isArray(raw.lowConfidenceFields) ? raw.lowConfidenceFields : [];
     unmappedRaw = raw.unmappedRaw && typeof raw.unmappedRaw === "object" ? raw.unmappedRaw : {};
@@ -701,13 +699,14 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
   let documentTypeId: string | null = null;
   try {
     // ⚠️ **The two values go in exactly as this route already computed them.**
-    // `suggestedTypeKey` is already narrowed to `KNOWN_TYPE_KEYS` minus
-    // UNCLASSIFIED where it is assigned, and `matchDocumentType` skips an
-    // UNCLASSIFIED key for the same reason — so the two agree, and this route's
-    // narrowing is now belt-and-braces rather than the only guard. What DOES
-    // move is the label test: "" and "Document necunoscut" were a string literal
-    // here and a different string literal in the wizard, and are one function
-    // (`classifiedLabelOf`) from this slice on.
+    // `suggestedTypeKey` came from `canonicalTypeKey`, and since Slice #29.07
+    // the resolver asks the same function again before it uses the key to
+    // CREATE a row — not because this route is untrusted, but because the
+    // resolver's other door is an HTTP POST from the browser. `matchDocumentType`
+    // skips an UNCLASSIFIED key for the same reason, so all three agree. What
+    // moved in #29.06 is the label test: "" and "Document necunoscut" were a
+    // string literal here and a different string literal in the wizard, and are
+    // one function (`classifiedLabelOf`) from that slice on.
     const resolved = await resolveClassifiedDocumentType({
       typeKey: suggestedTypeKey,
       label:   classifiedLabel,

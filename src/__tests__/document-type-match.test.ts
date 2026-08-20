@@ -349,21 +349,25 @@ describe("declinesAgainst", () => {
     // ⚠️ **`true`, and a fourth review round changed this line from `false`.**
     // The third round had deleted the "Neclasificat"/"Unclassified" literals on
     // the theory that only the row's own name matters, and this assertion
-    // PINNED that theory as correct. On a rebuilt cloud project the row is
-    // named `Unclassified` (measured at Slice #31.01, recorded in
-    // src/db/rebuild-known-differences.txt) while the model, asked for a
-    // Romanian name, writes "Neclasificat" — so the literals are what stands
+    // PINNED that theory as correct. On a cloud project rebuilt before Slice
+    // #29.07 the row is named `Unclassified` (measured at Slice #31.01; #29.07
+    // changed the SEED to `NECLASIFICAT`, which renames nothing already
+    // seeded) while the model, asked for a Romanian name, writes
+    // "Neclasificat" — so the literals are what stands
     // between that archive and a junk type named after the absence of an
     // answer. See `UNCLASSIFIED_LABELS`.
     expect(declinesAgainst(noCatchAll, { label: "Neclasificat" })).toBe(true);
   });
 
   /**
-   * ⚠️ **BOTH DATABASES THIS PROJECT HAS, side by side.** A migrated dev
-   * database calls the catch-all NECLASIFICAT; a cloud project rebuilt from
-   * `sync-reference-data.sql` calls it Unclassified. The model is asked for a
-   * Romanian name whichever it is talking to. Neither archive may end up with a
-   * second row meaning "no answer".
+   * ⚠️ **BOTH NAMES THE CATCH-ALL HAS EVER HAD, side by side.** A migrated dev
+   * database calls it NECLASIFICAT; a cloud project rebuilt BEFORE Slice #29.07
+   * calls it Unclassified, because the seed said so until that slice changed it.
+   * Every project seeded before then still holds the English name — renaming
+   * the seed renames nothing that already exists — so both rows are live and
+   * both cases stay here. The model is asked for a Romanian name whichever it
+   * is talking to. Neither archive may end up with a second row meaning "no
+   * answer".
    */
   it.each([
     ["migrated dev", "NECLASIFICAT"],

@@ -76,8 +76,13 @@ async function generateUniqueKey(
   table: typeof lookupDocumentType | typeof lookupPropertyType,
   name: string,
   conn: DbTransaction | typeof db = db,
+  preferredBase?: string | null,
 ): Promise<string> {
-  const base = slugifyLookupKey(name);
+  // Slice #29.07: `preferredBase` is a key the CODEBASE already defines — see
+  // `createDocumentTypeRow`. It replaces the slug as the base and nothing else
+  // about the rule changes, so a preferred key that is somehow taken still gets
+  // the `_2` treatment rather than colliding on INSERT.
+  const base = preferredBase?.trim() || slugifyLookupKey(name);
   const rows = await conn
     .select({ key: table.key })
     .from(table)
@@ -89,8 +94,9 @@ async function generateUniqueKey(
 async function generateUniqueDocumentTypeKey(
   name: string,
   conn: DbTransaction | typeof db = db,
+  preferredBase?: string | null,
 ): Promise<string> {
-  return generateUniqueKey(lookupDocumentType, name, conn);
+  return generateUniqueKey(lookupDocumentType, name, conn, preferredBase);
 }
 
 // Same slug logic for property types (Slice #19.02).
@@ -230,12 +236,65 @@ export async function createValue(
  * chosen on `db` and inserted on `tx` would be chosen against a snapshot the
  * lock does not cover, which is the same race one level down.
  */
+/**
+ * `createDocumentTypeRow` refused to substitute a suffixed key for the
+ * canonical one it was asked for.                              (Slice #29.07)
+ *
+ * A sentinel message rather than an error subclass, so the one caller that
+ * cares can test it without importing a class through three modules, and every
+ * other caller sees an ordinary Error it did not ask to handle.
+ */
+export const PREFERRED_KEY_TAKEN = "preferred-document-type-key-taken";
+
 export async function createDocumentTypeRow(
   conn: DbTransaction,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any,
+  preferredKey?: string | null,
 ): Promise<LookupRow> {
-  const key = await generateUniqueDocumentTypeKey(data.name, conn);
+  // Slice #29.07: the canonical key, when the classifier offered one this
+  // codebase defines.
+  //
+  // ⚠️ **A PARAMETER OF ITS OWN, NEVER A FIELD ON `data`, AND THE DISTINCTION
+  // IS THE WHOLE SAFETY ARGUMENT.** `key` is immutable and UNIQUE, and a client
+  // that chose one would eventually choose a collision — so the two doors that
+  // are a PERSON (the Reference Data form and the discovery review dialog) call
+  // this with two arguments and cannot express a key at all, whatever their
+  // request body happens to contain. Exactly one caller passes a third:
+  // `resolveClassifiedDocumentType`, which gets it from `canonicalTypeKey` —
+  // i.e. from `KNOWN_DOCUMENT_TYPES`, not from the wire. Same shape as `origin`
+  // above, and for the same reason.
+  //
+  // ⚠️ **What it fixes is finding F6.** Without it every created type was
+  // slugged from the free-text LABEL, so a document the model classified
+  // CARTE_IDENTITATE — a key on the whitelist — landed under
+  // `CARTE_DE_IDENTITATE`, and `ID_CARD_TYPE_KEYS`, `type-config.ts` and
+  // `getPersonIdCardLink` were all matching a key that would never appear in
+  // that database again.
+  //
+  // ⚠️ **It cannot steal a key from an existing row.** A preferred key only
+  // reaches here from the create branch of the resolver, which is only entered
+  // when no stored row carries that key — and it is re-decided INSIDE the
+  // advisory lock, so a racer that committed the row first is adopted rather
+  // than created against. `nextFreeKey` is still the backstop if both of those
+  // are somehow wrong.
+  const key = await generateUniqueDocumentTypeKey(data.name, conn, preferredKey);
+  // ⚠️ **A PREFERRED KEY IS TAKEN OR NOT — IT IS NEVER SUFFIXED, and an
+  // adversarial round is why this is five lines rather than none.**
+  // `nextFreeKey` answers `CARTE_IDENTITATE_2` when `CARTE_IDENTITATE` is
+  // held, which is the right answer for a name slug and the WRONG one for a
+  // canonical key: a `_2` row is a row every carve-out matching the literal key
+  // will miss, which is finding F6 rebuilt with the canonical key in place of
+  // the label slug. It is reachable — the resolver's advisory lock is keyed on
+  // the label, so two answers carrying ONE canonical key and TWO different
+  // labels do not serialise against each other, and the loser's re-read inside
+  // its own lock can still miss a row the winner commits a moment later. There
+  // is nothing to invent at that point: the row the loser wanted now exists, so
+  // the honest move is to fail and let `resolveClassifiedDocumentType` go round
+  // again, see it, and ADOPT it. That is the same shape as the 23505 retry
+  // beside it, and it is caught in the same place.
+  const wanted = preferredKey?.trim();
+  if (wanted && key !== wanted) throw new Error(PREFERRED_KEY_TAKEN);
   // Slice #26.12: origin is create-only and defaults to MANUAL here rather
   // than in the Zod schema, so exactly one place decides what an unstated
   // origin means. A new writer that forgets is labelled hand-added, which

@@ -190,6 +190,7 @@ import {
 import { discoverForType, shouldDiscoverType, typeAwaitsForm } from "@/lib/import/discover-run";
 import { documentTypeHasForm } from "@/lib/documents/status";
 import {
+  catchAllType,
   resolveAgainstTypes,
   type ClassifierAnswer,
 } from "@/lib/documents/document-type-match";
@@ -1215,7 +1216,7 @@ async function fetchDocTypeRows(): Promise<DocTypeRow[]> {
 /**
  * Fetch all active document types.
  * Returns:
- *   - `fallbackId`: ALTUL → OTHER → first row alphabetically (used when no type can be resolved)
+ *   - `fallbackId`: the catch-all row's id (used when no type can be resolved)
  *   - `items`: the rows themselves — what #27.05 asks which types have a form,
  *     and, since #29.06, the list `matchDocumentType` matches against
  *
@@ -1241,10 +1242,38 @@ async function fetchDocTypes(): Promise<{
       "Adăugați cel puțin un tip înainte de a importa fișiere.",
     );
   }
-  const fallback =
-    items.find((x) => x.key === "ALTUL") ??
-    items.find((x) => x.key === "OTHER") ??
-    items[0];
+  // ⚠️ **THE FALLBACK IS STATED NOW, WHERE IT USED TO BE STUMBLED INTO.**
+  // (Slice #29.07.) This was `ALTUL` ?? `OTHER` ?? `items[0]`, and **neither key
+  // has ever been seeded as a document type** — the only `OTHER` in any SQL in
+  // this repository is a `lookup_judicial_person_type`. So the answer was always
+  // `items[0]`, and `items[0]` is not "first alphabetically" either: it is
+  // NECLASIFICAT, because `listValues` pins UNCLASSIFIED first with an explicit
+  // CASE in its ORDER BY (src/lib/admin/value-lists/queries.ts). The right row,
+  // for a reason nobody chose — and if that row were ever deleted the fallback
+  // would silently become whichever type sorts first alphabetically, and every
+  // unclassifiable document in the archive would be filed under it with nothing
+  // said.
+  const fallback = catchAllType(items);
+  if (fallback === null) {
+    // ⚠️ **A refusal rather than a substitute, and the sentence names the ONE
+    // way back — which is not the obvious one.** This test is on the KEY, so
+    // that it survives the rename migration_043 makes; and Reference Data only
+    // takes a NAME, from which `slugifyLookupKey` derives the key. So typing
+    // "NECLASIFICAT" there produces the key `NECLASIFICAT` and does NOT restore
+    // the catch-all. Typing "Unclassified" does: measured against the real
+    // `slugifyLookupKey`, it slugs to exactly `UNCLASSIFIED`, and the row can
+    // then be renamed (a rename cannot touch the key). An earlier draft of this
+    // message said the type could not be added from that screen at all and told
+    // the user to contact the administrator — who, in this project, is the
+    // person reading the message.
+    throw new Error(
+      "Tipul de document implicit (cheia UNCLASSIFIED, de obicei „NECLASIFICAT”) lipsește din Date de " +
+      "Referință. Importul îl folosește pentru documentele pe care AI nu le poate clasifica. " +
+      "Pentru a-l reface: în Date de Referință → Tipuri de documente adăugați un tip numit " +
+      "„Unclassified” — cheia se generează din nume, deci va primi cheia UNCLASSIFIED — apoi " +
+      "redenumiți-l „NECLASIFICAT” și ștergeți orice alt tip creat între timp cu acest nume.",
+    );
+  }
   return { fallbackId: fallback.id, items };
 }
 
@@ -1275,11 +1304,13 @@ type EnsuredDocType = {
    * `adopted` and a server-side `matched` alike.
    *
    * ⚠️ **It is NOT the test for "this run created it", and a third review round
-   * is why that has to be said here.** `adopted` means a 23505 came back and
-   * the re-read name-matched a row **another writer inserted** — a second tab,
-   * or an overlapping in-process `ai-interpret`; the resolver's own attempt
-   * budget was raised because those are real. Recording an adopted row as this
-   * run's creation is how the summary comes to name somebody else's type as
+   * is why that has to be said here.** `adopted` means the resolver lost a race
+   * and its next round found the row somebody else had committed — a second
+   * tab, an overlapping in-process `ai-interpret`, or (since Slice #29.07) two
+   * files OF THIS RUN whose answers carry one canonical key and two different
+   * labels, which the resolver's advisory lock does not serialise because it is
+   * keyed on the label. Recording an adopted row as this run's creation is how
+   * the summary comes to name somebody else's type as
    * "created in this import and left empty" and invite Adrian to delete it,
    * over a delete #29.05 refuses because the other writer's document depends on
    * it. So the caller gates `rememberCreatedType` on the OUTCOME and uses this
@@ -1336,9 +1367,10 @@ async function ensureDocType(
   // ⚠️ **ONE call, and a third review round is why it is not two.** This used
   // to ask `matchDocumentType` and then `classifiedLabelOf`, and then grew a
   // third test of its own — "a match landing on `fallbackId` is really an
-  // unclassified document" — which was measured DEAD (there is no ALTUL or
-  // OTHER row in any seed, so the fallback IS the catch-all row, which
-  // `matchDocumentType` already refuses) and, in the one archive where it
+  // unclassified document" — which was measured DEAD (the fallback IS the
+  // catch-all row, which `matchDocumentType` already refuses; since #29.07 that
+  // holds by construction rather than by there being no ALTUL row) and, in the
+  // one archive where it
   // would have fired at all, would have printed "the AI could not tell" over
   // every document the AI classified perfectly. A rule that is three calls is
   // a rule three callers compose differently.
@@ -1685,8 +1717,8 @@ export function BulkImportDialog({
    */
   const docTypeIdCardRef = useRef<Map<string, boolean>>(new Map());
   /**
-   * The fallback document type's id — ALTUL / OTHER / the first row.
-   * (Slice #27.05)
+   * The fallback document type's id — the catch-all row (`catchAllType`).
+   * (Slice #27.05; the rule moved to one place in #29.07)
    *
    * In a ref because the loop's own copy is a local of the effect, and
    * `handleRetryInterpret` — which since #27.05 has to ask the same question
@@ -2453,8 +2485,12 @@ export function BulkImportDialog({
           }
           // The types this run is answerable for, so the summary can report one
           // that ends the run with no documents on it. ⚠️ **`created` ONLY** —
-          // an `adopted` row was inserted by another writer and is not this
-          // run's to report on. See `EnsuredDocType.row`.
+          // an `adopted` row is one somebody else's WRITE inserted, so it is not
+          // this call's to report on. Since Slice #29.07 that somebody can be a
+          // sibling task of this same run; the sibling that WON reports
+          // `created` and registers the row here, so nothing is lost by the
+          // loser staying quiet — and double-registering it is what would put
+          // one type in the summary twice. See `EnsuredDocType.row`.
           if (mounted && resolvedType.row !== undefined) {
             if (resolvedType.outcome === "created") rememberCreatedType(resolvedType.row);
             // ⚠️ **And the NAME, into the list the review dialog refuses
@@ -2924,7 +2960,8 @@ export function BulkImportDialog({
         return;
       }
       // ⚠️ **Never the raw message unless we wrote it.** `fetchDocTypes` throws
-      // two Romanian sentences of its own and they are worth showing; the other
+      // two Romanian messages of its own — no document types at all, and no
+      // catch-all type — and both are worth showing; the other
       // things that land here are a `DOMException` from this slice's own 30 s
       // timer ("signal is aborted without reason") and a `TypeError: Failed to
       // fetch` — English, on a Romanian screen, which is the leak every other

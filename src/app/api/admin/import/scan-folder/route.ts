@@ -22,7 +22,7 @@
 
 import type { NextRequest } from "next/server";
 import { unexpectedError } from "@/lib/api/errors";
-import { CLASSIFY_SYSTEM_PROMPT, KNOWN_TYPE_KEYS } from "@/lib/import/classify-prompts";
+import { CLASSIFY_SYSTEM_PROMPT, canonicalTypeKey } from "@/lib/import/classify-prompts";
 import { UNCLASSIFIED_DOCUMENT_LABEL } from "@/lib/documents/document-type-match";
 
 export const runtime = "nodejs";
@@ -144,10 +144,15 @@ export async function POST(request: NextRequest): Promise<Response> {
   try {
     const raw = extractJson(textBlock) as Partial<ClassifyResult>;
     // Validate and sanitize
-    const suggestedTypeKey =
-      raw.suggestedTypeKey && (KNOWN_TYPE_KEYS as readonly string[]).includes(raw.suggestedTypeKey)
-        ? raw.suggestedTypeKey
-        : null;
+    // ⚠️ **`canonicalTypeKey` rather than an inline whitelist test, and it
+    // STRIPS UNCLASSIFIED where this route used to pass it on.** (Slice
+    // #29.07.) Three pieces of code held three positions on an UNCLASSIFIED
+    // key — this route let it through, `ai-interpret` stripped it, the matching
+    // rule skipped it — and the rule is one function now. Nothing downstream
+    // can tell the difference: `isIdCardEntry` treats a missing key and
+    // UNCLASSIFIED identically (both fall through to its label heuristic), and
+    // `ensureDocType` hands the key to a resolver that refuses it anyway.
+    const suggestedTypeKey = canonicalTypeKey(raw.suggestedTypeKey);
     parsed = {
       classifiedLabel: raw.classifiedLabel ?? UNCLASSIFIED_DOCUMENT_LABEL,
       suggestedTypeKey,

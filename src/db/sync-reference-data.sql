@@ -101,22 +101,67 @@ INSERT INTO lookup_judicial_person_type (name, sort_order) VALUES
   ('II',  5), ('IF', 6), ('ONG',   7), ('Altele', 8);
 
 -- ── lookup_document_type ──────────────────────────────────────────────────────
--- NOTE: Row 8 is 'Certificat de Moștenitor' (the correct value).
--- The original migration 0002 had a typo ('Certificat de Macanentur') fixed here.
 -- `key` (added by migration 020, Slice #15.05) is the immutable slug app code
--- switches on — never `name` (translatable/editable). This list was out of
--- sync with the live schema until Slice #15.06 (missing the key column and
--- 4 rows added by migrations 019/020); now matches supabase_schema_full.sql
--- exactly, including the 3 alternate-wording rows from migration 021.
+-- switches on — never `name` (translatable/editable).
+--
+-- ⚠️ **THIS BLOCK AND `KNOWN_DOCUMENT_TYPES` ARE ONE LIST WRITTEN TWICE, AND A
+-- TEST HOLDS THEM TOGETHER.** src/lib/import/classify-prompts.ts whitelists the
+-- classifier's `suggestedTypeKey` against that constant and
+-- `resolveClassifiedDocumentType` then looks the key up in THIS catalogue; a key
+-- on one side with no row on the other is finding F6 of the 29.01 report — the
+-- document lands under a slug of its display label and every carve-out matching
+-- the canonical key stops working. src/__tests__/
+-- document-type-catalogue-single-source.test.ts parses the (key, name) pairs
+-- below and asserts they are exactly the constant's, in both directions.
+-- (Slice #29.07.)
+--
+-- ⚠️ **EDITING THIS BLOCK INVALIDATES src/db/rebuild-known-differences.txt.**
+-- That file is GENERATED: it records the rows on which a migrated database and
+-- a database rebuilt from these files disagree, and `scripts/verify-rebuild.ts`
+-- fails when the real difference set no longer matches it — including when it
+-- SHRINKS, which is what #29.07 does. Regenerate it with
+-- `npm run db:verify-rebuild -- --update-baseline` (needs Docker; the run
+-- itself never reports a pass, so a re-baseline is always deliberate) and
+-- commit the result, or the `DB rebuild` workflow is red on the next push.
+--
+-- Three corrections Slice #29.07 made, each of them the file catching up with a
+-- migration it had never been told about:
+--   * ('AUTORIZATIE', 'Autorizare') is GONE. migration_043_doctype_cleanup.sql
+--     deletes that row after reassigning its documents, version snapshots and
+--     person-role pairs to AUTORIZATIE_ALT ('Autorizație'). Seeding it back gave
+--     a rebuilt project a duplicate type the migrated one had removed.
+--   * UNCLASSIFIED is named 'NECLASIFICAT', which is what migration_043 renames
+--     it to. Until now a rebuilt project called it 'Unclassified' — an ENGLISH
+--     name in the one list a Romanian user reads, and a divergence
+--     `document-type-match.ts` had to carry a literal for.
+--   * HOTARARE_ADMINISTRATIVA / DOCUMENTATIE_CADASTRALA / AUTORIZATIE_CONSTRUIRE
+--     are added, with the names and sort_orders
+--     migration_035_seed_doc_types.sql gives them. All three are in
+--     `type-config.ts`, so a rebuilt project had three configured document types
+--     that could not exist.
+--
+-- ⚠️ **`sort_order` IS NOT WHAT ORDERS THIS LIST ON SCREEN.** `listValues`
+-- (src/lib/admin/value-lists/queries.ts) orders document-types by
+-- `CASE WHEN key = 'UNCLASSIFIED' THEN 0 ELSE 1 END`, then by NAME — the column
+-- is read for seven of the other eight lookup lists and not for this one
+-- (`person-roles` orders by name too). So the numbers
+-- below are a stable identity for the row and nothing more, existing values are
+-- left where they are (4 is a deliberate gap where 'Autorizare' was), and
+-- rebuild-known-differences.txt's claim that they make "the dropdown order
+-- differently in a rebuilt project" was wrong when it was written.
 INSERT INTO lookup_document_type (key, name, sort_order) VALUES
   ('ACT_ADJUDECARE',             'Act de Adjudecare',              1),
   ('ACT_CADASTRU',               'Act Cadastru',                   2),
   ('ACT_DONATIE',                'Act de Donație',                 3),
-  ('AUTORIZATIE',                'Autorizare',                     4),
   ('AVIZ_INSTITUTIE',            'Aviz de Instituție',             5),
   ('CARTE_IDENTITATE',           'Carte de Identitate',            6),
   ('CERTIFICAT_FISCAL',          'Certificat Fiscal',              7),
   ('CERTIFICAT_MOSTENITOR',      'Certificat de Moștenitor',       8),
+  -- CERTIFICAT_SARCINI carries 'Certificat de Bunuri' and the _ALT row carries
+  -- 'Certificat de Sarcini'. That reads backwards and is deliberate: it is a
+  -- naming decision inherited from migration_020's name-matching backfill, not
+  -- a swap. The full history is in classify-prompts.ts's header. Do not "fix"
+  -- it here, because `key` is immutable and app code matches on it.
   ('CERTIFICAT_SARCINI',         'Certificat de Bunuri',           9),
   ('CERTIFICAT_URBANISM',        'Certificat de Urbanism',        10),
   ('CONTRACT_ARENDA',            'Contract de Arendă',            11),
@@ -129,10 +174,14 @@ INSERT INTO lookup_document_type (key, name, sort_order) VALUES
   ('HOTARARE_JUDECATOREASCA',    'Hotărâre Judecătorească',       18),
   ('TESTAMENT',                  'Testament',                     19),
   ('TITLU_PROPRIETATE',          'Titlu de Proprietate',          20),
-  ('UNCLASSIFIED',               'Unclassified',                  21),
+  ('UNCLASSIFIED',               'NECLASIFICAT',                  21),
   ('AUTORIZATIE_ALT',            'Autorizație',                   22),
   ('CERTIFICAT_SARCINI_ALT',     'Certificat de Sarcini',         23),
-  ('EXTRAS_CARTE_FUNCIARA_ALT',  'Extras de Carte Funciară',      24);
+  ('EXTRAS_CARTE_FUNCIARA_ALT',  'Extras de Carte Funciară',      24),
+  -- migration_035_seed_doc_types.sql, values byte-for-byte from that file.
+  ('HOTARARE_ADMINISTRATIVA',    'Hotărâre Administrativă',      110),
+  ('DOCUMENTATIE_CADASTRALA',    'Documentație Cadastrală',      120),
+  ('AUTORIZATIE_CONSTRUIRE',     'Autorizație De Construire',    130);
 
 -- ── lookup_institution ────────────────────────────────────────────────────────
 INSERT INTO lookup_institution (name, institution_type, sort_order) VALUES
@@ -225,11 +274,16 @@ FROM (VALUES
   ('Act Cadastru',                  'Coproprietar'),
   ('Act Cadastru',                  'Reprezentant legal / Mandatar'),
   ('Act Cadastru',                  'Topograf / Expert cadastral'),
-  ('Autorizare',                    'Beneficiar / Solicitant'),
-  ('Autorizare',                    'Proprietar / Titular'),
-  ('Autorizare',                    'Constructor / Antreprenor'),
-  ('Autorizare',                    'Proiectant / Arhitect'),
-  ('Autorizare',                    'Reprezentant legal'),
+  -- 'Autorizare' until Slice #29.07: migration_043 deletes that type and moves
+  -- its role pairs to 'Autorizație' (AUTORIZATIE_ALT). These rows JOIN on the
+  -- document type's NAME, so under the old spelling all five silently matched
+  -- nothing once the row above was removed — a JOIN that finds no row drops the
+  -- pair without a word.
+  ('Autorizație',                   'Beneficiar / Solicitant'),
+  ('Autorizație',                   'Proprietar / Titular'),
+  ('Autorizație',                   'Constructor / Antreprenor'),
+  ('Autorizație',                   'Proiectant / Arhitect'),
+  ('Autorizație',                   'Reprezentant legal'),
   ('Aviz de Instituție',            'Solicitant / Beneficiar'),
   ('Aviz de Instituție',            'Titular al imobilului'),
   ('Aviz de Instituție',            'Reprezentant al instituției emitente'),

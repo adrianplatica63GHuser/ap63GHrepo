@@ -40,16 +40,25 @@
  *     route whitelists that answer against KNOWN_TYPE_KEYS — which has not
  *     contained CARTE_IDENTITATE_ALT since Slice #23.01.Import. The model
  *     cannot emit it any more.
- *   - It cannot arrive from the DB either. An unseeded key never reaches a
- *     lookup_document_type row under its own name: the type resolver finds no
- *     row with that key and auto-creates a type from the free-text label,
- *     generating a DIFFERENT key (see the KNOWN_TYPE_KEYS gotcha in CLAUDE.md;
- *     the resolver is `resolveClassifiedDocumentType` since Slice #29.06).
+ *   - It cannot arrive from the DB either — but ⚠️ **the reason changed in
+ *     Slice #29.07 and the old one is now false.** It used to be that an
+ *     unseeded key never reached a row under its own name, because the resolver
+ *     slugged a key from the free-text label and so produced a DIFFERENT one.
+ *     Since #29.07 the resolver offers the canonical key itself
+ *     (`canonicalTypeKey` → `createDocumentTypeRow`'s `preferredKey`), so a
+ *     whitelisted key DOES land on a row under that key. What still rules
+ *     CARTE_IDENTITATE_ALT out is the first bullet: it is not in
+ *     KNOWN_DOCUMENT_TYPES, so `canonicalTypeKey` refuses it and no model
+ *     answer can carry it. The guard is now the whitelist alone, and the
+ *     catalogue/seed bind that keeps the whitelist honest
+ *     (`document-type-catalogue-single-source.test.ts`).
  *   - Confirmed empirically: `SELECT key FROM lookup_document_type` returns 26
  *     rows and CARTE_IDENTITATE_ALT is not among them.
  *
  * The three real alternate wordings seeded by migration_021 are
- * AUTORIZATIE_ALT, CERTIFICAT_SARCINI_ALT and EXTRAS_CARTE_FUNCIARA_ALT.
+ * AUTORIZATIE_ALT, CERTIFICAT_SARCINI_ALT and EXTRAS_CARTE_FUNCIARA_ALT (whose
+ * base row AUTORIZATIE was later deleted by migration_043, leaving the _ALT on
+ * its own).
  * CARTE_IDENTITATE_ALT looked like a fourth member of that family and never
  * was one — that resemblance is exactly why it survived this long, so if you
  * are about to re-add it, check the seed list first.
@@ -58,6 +67,11 @@
  * wording for an identity card is a one-line addition here, and every consumer
  * already treats it as a set.
  */
+// Still a pure module: `document-type-match` is pure too — no React, no DB,
+// no next/*. The one thing imported from it is the catch-all KEY, so this
+// file follows that rule rather than restating it. (Slice #29.07.)
+import { UNCLASSIFIED_DOCUMENT_TYPE_KEY } from "@/lib/documents/document-type-match";
+
 export const ID_CARD_TYPE_KEYS = ["CARTE_IDENTITATE"] as const;
 
 /**
@@ -174,7 +188,21 @@ export type IdCardScanSignal = {
  * A confident non-ID `typeKey` VETOES the label: if the model already decided
  * the document is a Contract de Vânzare, a stray "buletin" in its prose label
  * must not override that. Only a missing key, or the explicitly-uncertain
- * UNCLASSIFIED, falls through to the label heuristic.
+ * catch-all key, falls through to the label heuristic.
+ *
+ * ⚠️ **THE CATCH-ALL ARM IS UNREACHABLE FROM THE SCAN ROUTE SINCE SLICE #29.07,
+ * AND IT STAYS.** `scan-folder` runs the model's answer through
+ * `canonicalTypeKey`, which maps UNCLASSIFIED to `null` — so what used to
+ * arrive here as that key now arrives as no key and takes the FIRST arm out,
+ * which is the same branch. (Measured before the change was made: the two
+ * inputs are indistinguishable to this function, which is what made stripping
+ * it at the boundary behaviour-preserving.) The arm is kept because this
+ * function takes a STRUCTURAL signal, not the route's output — `id-card.test.ts`
+ * calls it with a bare `{ typeKey: "UNCLASSIFIED" }`, and so could a future
+ * caller — and because a guard that is currently unreachable is cheaper than
+ * the round that rediscovers why it was there. It asks
+ * `UNCLASSIFIED_DOCUMENT_TYPE_KEY` rather than spelling the literal, so it is
+ * one of the places that follow the rule rather than a fourth opinion about it.
  */
 export function isIdCardEntry(scan: IdCardScanSignal | null | undefined): boolean {
   if (!scan) return false;
@@ -182,7 +210,7 @@ export function isIdCardEntry(scan: IdCardScanSignal | null | undefined): boolea
   const key = scan.typeKey?.trim();
   if (key) {
     if ((ID_CARD_TYPE_KEYS as readonly string[]).includes(key)) return true;
-    if (key !== "UNCLASSIFIED") return false;
+    if (key !== UNCLASSIFIED_DOCUMENT_TYPE_KEY) return false;
   }
 
   return isIdCardLabel(scan.description);

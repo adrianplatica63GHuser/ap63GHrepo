@@ -45,9 +45,11 @@
  * "Titlu de proprietate" and "Titlu-de-proprietate" are one name, and so are
  * "Proces verbal" and "Proces-verbal" — which is what a business user reading
  * the dropdown would say too. It is deliberately no cleverer than that: the
- * archive holds three deliberate alternate WORDINGS (`AUTORIZATIE` /
- * `AUTORIZATIE_ALT` and two more) that a fuzzy test would wrongly collapse, and
- * they differ by wording, which survives this.
+ * archive holds deliberate alternate WORDINGS (`CERTIFICAT_SARCINI` /
+ * `CERTIFICAT_SARCINI_ALT` and `EXTRAS_CARTE_FUNCIARA` / `..._ALT`) that a
+ * fuzzy test would wrongly collapse, and they differ by wording, which survives
+ * this. (There were three pairs until Slice #29.07: migration_043 deletes
+ * `AUTORIZATIE`, leaving `AUTORIZATIE_ALT` on its own.)
  *
  * PURE ON PURPOSE. No React, no DB, no next/*. It is imported from a route
  * (server), from the import wizard and from the review dialog (client), which
@@ -70,14 +72,21 @@ export const UNCLASSIFIED_DOCUMENT_LABEL = "Document necunoscut";
 /**
  * …and the key that says the same thing.
  *
- * `lookup_document_type` really does hold a row with this key — displayed as
- * `NECLASIFICAT` on a migrated database and as `Unclassified` on a rebuilt
- * cloud project, a divergence `src/db/rebuild-known-differences.txt` records as
- * open and assigns to Slice #29.07 — pinned first in the admin list. Which is
- * why it cannot simply be looked up like any other key: a classifier answer of UNCLASSIFIED means "I could not
- * tell", and filing a document under the catch-all on the strength of it would
- * make "the model had no idea" indistinguishable from "the model said
- * NECLASIFICAT" — the very confusion finding F1 is about.
+ * `lookup_document_type` really does hold a row with this key, pinned first in
+ * the admin list, and **since Slice #29.07 both databases display it as
+ * `NECLASIFICAT`** — `sync-reference-data.sql` seeds that name now rather than
+ * the English `Unclassified` a rebuilt cloud project used to get, which is the
+ * divergence `src/db/rebuild-known-differences.txt` had recorded as open and
+ * assigned here. Which is why the key cannot simply be looked up like any other
+ * one: a classifier answer of UNCLASSIFIED means "I could not tell", and filing
+ * a document under the catch-all on the strength of it would make "the model
+ * had no idea" indistinguishable from "the model said NECLASIFICAT" — the very
+ * confusion finding F1 is about.
+ *
+ * ⚠️ **It is also THE CATCH-ALL, and `catchAllType` below is the only thing
+ * that may resolve it to a row.** Before #29.07 two places fell through
+ * `ALTUL` → `OTHER` → something-else to find one, and neither key has ever
+ * been seeded as a document type.
  */
 export const UNCLASSIFIED_DOCUMENT_TYPE_KEY = "UNCLASSIFIED";
 
@@ -92,11 +101,14 @@ export const UNCLASSIFIED_DOCUMENT_TYPE_KEY = "UNCLASSIFIED";
  *
  *   - a migrated dev database calls it `NECLASIFICAT`
  *     (`migration_043_doctype_cleanup.sql`);
- *   - a **rebuilt cloud project calls it `Unclassified`**, because
- *     `src/db/sync-reference-data.sql:132` seeds that name and migration_043
- *     never runs against it. That is not speculation: Slice #31.01 measured it
- *     and `src/db/rebuild-known-differences.txt` records it under
- *     "NOT ACCEPTED - RECORDED", with reconciling it assigned to Slice #29.07.
+ *   - a cloud project rebuilt BEFORE Slice #29.07 calls it `Unclassified`,
+ *     because `src/db/sync-reference-data.sql` seeded that name and
+ *     migration_043 never runs against it. Slice #31.01 measured it; #29.07
+ *     changed the seed to `NECLASIFICAT`, so a project rebuilt from here on
+ *     gets the Romanian name. ⚠️ **The literal stays anyway** — the seed is for
+ *     a FRESH database and changing it renames nothing that already exists, so
+ *     every project seeded before #29.07 still holds the English name until
+ *     somebody edits it in Reference Data.
  *
  * ⚠️ **THIS LIST AND `declinesAgainst`'S ROW READ ARE NOT ALTERNATIVES, AND A
  * ROUND SPENT BELIEVING THEY WERE.** The third review round deleted these two
@@ -188,6 +200,34 @@ export function sameDocumentTypeName(a: string, b: string): boolean {
   return left.length > 0 && left === normaliseDocumentTypeName(b);
 }
 
+/**
+ * The catch-all row — the type a caller files a document on when nothing else
+ * resolved.                                                    (Slice #29.07)
+ *
+ * ⚠️ **ONE PLACE DECIDES WHAT THE CATCH-ALL IS, AND IT USED TO BE
+ * NOWHERE.** Two copies of an `ALTUL` → `OTHER` → give-up list existed —
+ * `fetchDocTypes` in the import wizard and `FALLBACK_TYPE_KEYS` in the
+ * Reference Data modal, whose comment asserted "Adrian's seeded data has
+ * ALTUL". It does not: no migration and no seed has ever written either key
+ * into `lookup_document_type` (the only `OTHER` in any SQL is a
+ * `lookup_judicial_person_type`). So both lists always fell to their third
+ * clause, and in the wizard that clause was `items[0]` — which landed on
+ * NECLASIFICAT only because `listValues` pins UNCLASSIFIED first with an
+ * explicit CASE in its ORDER BY. The right answer by accident, off a sort
+ * clause, with nothing to say so if the row ever went missing and the fallback
+ * quietly became whichever type sorts first alphabetically.
+ *
+ * ⚠️ **Keyed on `key`, so it survives a rename** — migration_043 renamed
+ * the row and said in as many words that the key is what code holds on to — and
+ * returning `null` rather than a substitute is the whole point: a caller that
+ * cannot find the catch-all must SAY so, not pick a neighbour.
+ */
+export function catchAllType<T extends DocumentTypeCandidate>(
+  rows: readonly T[],
+): T | null {
+  return rows.find((row) => row.key === UNCLASSIFIED_DOCUMENT_TYPE_KEY) ?? null;
+}
+
 /** What a classifier hands over: a key it recognised, a label it read, or neither. */
 export type ClassifierAnswer = {
   /** `lookup_document_type.key`, when the model produced one it was taught. */
@@ -260,8 +300,10 @@ export type DocumentTypeMatch<T extends DocumentTypeCandidate> = {
  * holds a NECLASIFICAT row, so a naive lookup would succeed and file the
  * document under the catch-all on the strength of an answer that says nothing.
  * `ensureDocType` skipped the key explicitly; `ai-interpret` never let one
- * through, because it narrows `suggestedTypeKey` to `KNOWN_TYPE_KEYS` minus
- * UNCLASSIFIED where it reads the model's output. Hoisting the test here is
+ * through, because it narrowed `suggestedTypeKey` to the whitelist minus
+ * UNCLASSIFIED where it read the model's output — which since Slice #29.07 is
+ * `canonicalTypeKey`, asked by that route, by `scan-folder` and by the resolver
+ * before it uses a key to CREATE. Hoisting the test here is
  * what makes it a property of the rule rather than of two call sites, and it
  * means the LABEL is still tried — where that is absent too, the caller keeps
  * whatever it had.

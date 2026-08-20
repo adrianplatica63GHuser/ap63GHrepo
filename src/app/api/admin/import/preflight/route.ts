@@ -52,6 +52,7 @@ import { getCurrentUser, isUatNoAuth } from "@/lib/auth/current-user";
 import { unexpectedError } from "@/lib/api/errors";
 import { createAdminClient } from "@/lib/supabase/server";
 import type { PreflightServerReport } from "@/lib/import/preflight";
+import { UNCLASSIFIED_DOCUMENT_TYPE_KEY } from "@/lib/documents/document-type-match";
 
 const SUPABASE_BUCKET = "document-pages";
 
@@ -81,16 +82,31 @@ const REQUIRED_TABLES = [
 // ---------------------------------------------------------------------------
 
 /**
- * At least one document type must exist, or the run throws in Romanian before
- * the first file is touched (`bulk-import-dialog` resolves every entry's type
- * through the DB-built map).
+ * At least one document type must exist, AND one of them must be the catch-all
+ * — or the run throws in Romanian before the first file is touched.
+ *
+ * ⚠️ **THE SECOND HALF IS SLICE #29.07's, AND WITHOUT IT THIS PROBE WOULD LIE.**
+ * `fetchDocTypes` used to fall through `ALTUL` ?? `OTHER` ?? `items[0]` and so
+ * could not fail while any type at all existed; since #29.07 it resolves the
+ * fallback through `catchAllType` and THROWS when no row carries the key
+ * `UNCLASSIFIED`. That row is deletable — nothing in the value-lists DELETE
+ * route guards it, and on a fresh archive nothing depends on it — so a probe
+ * that only counted rows would report the whole checklist green and let every
+ * import die on its first line. A probe exists to catch exactly the conditions
+ * the run refuses to start under; a new refusal needs a new term here.
+ *
+ * One boolean rather than two checks, because the administrator's action is the
+ * same screen either way and the failure sentence covers both.
  */
 async function probeDocumentTypes(): Promise<boolean> {
   try {
     const [row] = await db
-      .select({ count: sql<number>`cast(count(*) as int)` })
+      .select({
+        count: sql<number>`cast(count(*) as int)`,
+        catchAll: sql<number>`cast(count(*) filter (where key = ${UNCLASSIFIED_DOCUMENT_TYPE_KEY}) as int)`,
+      })
       .from(lookupDocumentType);
-    return (row?.count ?? 0) > 0;
+    return (row?.count ?? 0) > 0 && (row?.catchAll ?? 0) > 0;
   } catch {
     return false;
   }

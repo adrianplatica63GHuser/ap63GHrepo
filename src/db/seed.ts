@@ -735,11 +735,21 @@ const PROPERTIES: SeedPropertyRow[] = [
 //
 // `typeKey` below is a `lookup_document_type.key` slug, resolved to the
 // actual uuid FK at insert time (see the seed loop). These keys must already
-// exist in lookup_document_type (seeded by migration_020_rename_to_document.sql).
+// exist in lookup_document_type -- most of them from
+// migration_020_rename_to_document.sql, and AUTORIZATIE_ALT from
+// migration_021_keep_alternate_wordings.sql.
+//
+// Slice #29.07: the five AUTORIZATIE rows are AUTORIZATIE_ALT now — the same
+// reassignment `migration_043_doctype_cleanup.sql` makes to real documents. The
+// seed loop THROWS on a key it cannot resolve and that migration DELETES
+// AUTORIZATIE (name 'Autorizare'), so `npm run seed` had not been able to run
+// against a migrated database since #043 landed, and the message it failed with
+// named migration_020 — which does not create AUTORIZATIE_ALT either. Both are
+// fixed here.
 // ---------------------------------------------------------------------------
 
 type DocumentTypeKey =
-  | "ACT_ADJUDECARE" | "ACT_CADASTRU" | "ACT_DONATIE" | "AUTORIZATIE"
+  | "ACT_ADJUDECARE" | "ACT_CADASTRU" | "ACT_DONATIE" | "AUTORIZATIE_ALT"
   | "AVIZ_INSTITUTIE" | "CERTIFICAT_FISCAL" | "CERTIFICAT_MOSTENITOR"
   | "CERTIFICAT_SARCINI" | "CERTIFICAT_URBANISM" | "CONTRACT_ARENDA"
   | "CONTRACT_INCHIRIERE" | "CONTRACT_PARTAJ" | "CONTRACT_PRESTARI_SERVICII"
@@ -784,12 +794,12 @@ const DOCUMENTS: SeedDocumentRow[] = [
   { typeKey: "ACT_DONATIE", title: "Donație Lot Cernica",     nrDocument: "448/2020", dateDocument: "2020-07-14" },
   { typeKey: "ACT_DONATIE", title: "Donație Teren Brănești",  nrDocument: "732/2021", dateDocument: "2021-09-08" },
   { typeKey: "ACT_DONATIE", title: "Donație Parcelă Tunari",  nrDocument: "919/2022", dateDocument: "2022-03-30",          notes: "Donație intre soți" },
-  // ── AUTORIZATIE ─────────────────────────────────────────────────────────
-  { typeKey: "AUTORIZATIE", title: "Autorizație Construire Vila Voluntari",  nrDocument: "AC-045/2018", dateDocument: "2018-04-20",  notes: "Construcție P+1E, 220 mp" },
-  { typeKey: "AUTORIZATIE", title: "Autorizație Demolare Anexă Snagov",     nrDocument: "AD-012/2019", dateDocument: "2019-08-11",     notes: "Anexă gospodărească 45 mp" },
-  { typeKey: "AUTORIZATIE", title: "Autorizație Construire Gard Afumați",   nrDocument: "AC-103/2020", dateDocument: "2020-02-27",    notes: "Gard pe latura nordică" },
-  { typeKey: "AUTORIZATIE", title: "Autorizație Extindere Locuință Gruiu",  nrDocument: "AC-067/2021", dateDocument: "2021-06-15",      notes: "Extindere 35 mp la parter" },
-  { typeKey: "AUTORIZATIE", title: "Autorizație Construire Magazie Tunari", nrDocument: "AC-089/2023", dateDocument: "2023-03-04",     notes: "Construcție auxiliară 60 mp" },
+  // ── AUTORIZATIE_ALT ─────────────────────────────────────────────────────────
+  { typeKey: "AUTORIZATIE_ALT", title: "Autorizație Construire Vila Voluntari",  nrDocument: "AC-045/2018", dateDocument: "2018-04-20",  notes: "Construcție P+1E, 220 mp" },
+  { typeKey: "AUTORIZATIE_ALT", title: "Autorizație Demolare Anexă Snagov",     nrDocument: "AD-012/2019", dateDocument: "2019-08-11",     notes: "Anexă gospodărească 45 mp" },
+  { typeKey: "AUTORIZATIE_ALT", title: "Autorizație Construire Gard Afumați",   nrDocument: "AC-103/2020", dateDocument: "2020-02-27",    notes: "Gard pe latura nordică" },
+  { typeKey: "AUTORIZATIE_ALT", title: "Autorizație Extindere Locuință Gruiu",  nrDocument: "AC-067/2021", dateDocument: "2021-06-15",      notes: "Extindere 35 mp la parter" },
+  { typeKey: "AUTORIZATIE_ALT", title: "Autorizație Construire Magazie Tunari", nrDocument: "AC-089/2023", dateDocument: "2023-03-04",     notes: "Construcție auxiliară 60 mp" },
   // ── AVIZ_INSTITUTIE ─────────────────────────────────────────────────────
   { typeKey: "AVIZ_INSTITUTIE", title: "Aviz OCPI Ilfov — Dezmembrare",       nrDocument: "AV-234/2019", dateDocument: "2019-05-06",                   notes: "Dezmembrare în 3 loturi" },
   { typeKey: "AVIZ_INSTITUTIE", title: "Aviz Primărie — PUZ Voluntari",       nrDocument: "AV-011/2020", dateDocument: "2020-09-14",           notes: "Zonă rezidențială extinsă" },
@@ -1380,9 +1390,10 @@ async function seed() {
     );
   } else {
     // Resolve every lookup_document_type.key -> id once, up front. These
-    // rows are expected to already exist (seeded by
-    // migration_020_rename_to_document.sql) — per standing instruction, the
-    // seed script must never auto-create new document-type rows itself.
+    // rows are expected to already exist — most from
+    // migration_020_rename_to_document.sql, AUTORIZATIE_ALT from
+    // migration_021 — per standing instruction, the seed script must never
+    // auto-create new document-type rows itself.
     const typeRows = await db
       .select({ id: lookupDocumentType.id, key: lookupDocumentType.key })
       .from(lookupDocumentType);
@@ -1394,7 +1405,9 @@ async function seed() {
     if (missingKeys.length > 0) {
       throw new Error(
         `Cannot seed documents — lookup_document_type is missing key(s): ${missingKeys.join(", ")}. ` +
-          `Apply migration_020_rename_to_document.sql first.`,
+          `Apply the migration chain first — migration_020_rename_to_document.sql ` +
+          `onwards, with AUTORIZATIE_ALT coming from migration_021 and ` +
+          `AUTORIZATIE removed again by migration_043.`,
       );
     }
 

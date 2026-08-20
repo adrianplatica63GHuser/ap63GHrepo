@@ -188,7 +188,27 @@ describe("only the import claims an IMPORT origin", () => {
    */
   it("passes it into the create rather than taking it from the caller", () => {
     const src = fs.readFileSync(path.join(SRC, ORIGIN_WRITER), "utf8");
-    expect(src).toContain('createDocumentTypeRow(tx, { name: inside.name, origin: "IMPORT" })');
+    // ⚠️ **ONE substring, with ALL whitespace REMOVED, and two review rounds
+    // are why it is shaped exactly like this.** (Slice #29.07.)
+    //
+    //   - The literal one-line form this started as broke when the call grew a
+    //     third argument (`preferredKey`) and wrapped onto four lines — a
+    //     green-to-red that said nothing about origin.
+    //   - Rewriting it as two independent `toContain`s was strictly weaker:
+    //     two substrings anywhere in the file need not be in one expression,
+    //     and a round proved it by moving `origin: "IMPORT"` into an unused
+    //     constant, dropping it from the call, and watching this test and its
+    //     regex sibling both stay green while every auto-created type fell back
+    //     to the MANUAL default — finding F2 verbatim.
+    //   - Collapsing runs of whitespace to ONE SPACE then pinned the argument
+    //     LAYOUT: hoisting the third argument onto the same line as the second
+    //     turns `( tx,` into `(tx,` and the test red for a behaviour-neutral
+    //     edit. A third round found that one.
+    //
+    // Removing whitespace entirely is what leaves only the thing being
+    // asserted: this call, these two properties, in this order.
+    const flat = src.replace(/\s+/g, "");
+    expect(flat).toContain('createDocumentTypeRow(tx,{name:inside.name,origin:"IMPORT"}');
   });
 
   /**
@@ -265,6 +285,26 @@ describe("a rename cannot re-originate a document type", () => {
     // with either of them unwrapped is not guarding the write.
     expect(queries).toContain(
       ".set(sanitizeDocumentTypeTemplateFields(stripDocumentTypeOrigin(data)))",
+    );
+  });
+
+  /**
+   * …and the create HONOURS what it was passed.       (Slice #29.07, round 3)
+   *
+   * ⚠️ **"One writer sends IMPORT" says nothing if the builder ignores it, and
+   * nothing was pinning the builder.** Every assertion above is about the
+   * SENDER: exactly one file spells `origin: "IMPORT"`, and it passes it into
+   * the row builder. Change `createDocumentTypeRow`'s line to a flat
+   * `const origin = "MANUAL"` and all of them stay green while every
+   * machine-created type reads "Adăugat manual" and no screen can repair it —
+   * finding F2, reached one module to the left of where this file was looking.
+   * The conditional is the whole guarantee, so it is pinned as an expression.
+   */
+  it("keeps the caller's origin when the caller sent a valid one", () => {
+    const queries = fs.readFileSync(
+      path.join(SRC, "lib/admin/value-lists/queries.ts"), "utf8");
+    expect(queries.replace(/\s+/g, "")).toContain(
+      'constorigin:DocumentTypeOrigin=isDocumentTypeOrigin(data.origin)?data.origin:"MANUAL"',
     );
   });
 

@@ -95,9 +95,14 @@
 import { asc, sql } from "drizzle-orm";
 import { lookupDocumentType } from "@/db/schema";
 import { db, type DbTransaction } from "@/db";
-import { createDocumentTypeRow, type LookupRow } from "@/lib/admin/value-lists/queries";
+import {
+  createDocumentTypeRow,
+  PREFERRED_KEY_TAKEN,
+  type LookupRow,
+} from "@/lib/admin/value-lists/queries";
 import { pgErrorCode } from "@/lib/api/errors";
 import { advisoryLockKeys } from "@/lib/properties/import-property-plan";
+import { canonicalTypeKey } from "@/lib/import/classify-prompts";
 import {
   normaliseDocumentTypeName,
   resolveAgainstTypes,
@@ -110,8 +115,9 @@ import {
  *
  * ⚠️ **`unclassified` carries `id: null` rather than the catch-all's id**, and
  * that is finding F1's fix at its root. Which row a caller falls back to is the
- * CALLER's question — the import wizard has an ALTUL → OTHER → first-row rule
- * of its own and `ai-interpret` leaves the document on the type it already had
+ * CALLER's question — the import wizard files it on the catch-all row
+ * (`catchAllType`, key UNCLASSIFIED) and `ai-interpret` leaves the document on
+ * the type it already had
  * — and a resolver that answered with the catch-all would make "the model had
  * no idea" and "we picked the catch-all for you" one indistinguishable answer
  * again, which is the whole defect.
@@ -188,12 +194,21 @@ export async function resolveClassifiedDocumentType(
     const resolution = resolveAgainstTypes(rows, answer);
     if (resolution.kind === "match") {
       return {
-        outcome:
-          raced && resolution.how === "name"
-            ? "adopted"
-            : resolution.how === "key"
-              ? "matched-key"
-              : "matched-name",
+        // ⚠️ **`raced` alone decides, and it used to be `raced && by name`.**
+        // (Slice #29.07.) The old test was written when a lost race could only
+        // ever be re-found by NAME — two writers of one label, whose keys came
+        // from the same slug. Since a canonical key can now be contended
+        // directly, the second round's match is by KEY, and reporting that as
+        // `matched-key` would tell the result screen the type already existed
+        // when this run's own sibling had just made it. A match after a race is
+        // an adoption however it was found: nothing matched when this call
+        // started, and a row that existed before it started would have been
+        // returned on attempt 1 without ever reaching the create.
+        outcome: raced
+          ? "adopted"
+          : resolution.how === "key"
+            ? "matched-key"
+            : "matched-name",
         id:   resolution.row.id,
         key:  resolution.row.key,
         name: resolution.row.name,
@@ -252,7 +267,47 @@ export async function resolveClassifiedDocumentType(
         if (inside.kind === "declined") return { kind: "declined" };
         return {
           kind: "created",
-          row: await createDocumentTypeRow(tx, { name: inside.name, origin: "IMPORT" }),
+          // ⚠️ **THE CANONICAL KEY IS OFFERED WHERE THERE IS ONE, AND THAT IS
+          // FINDING F6.** (Slice #29.07.) Until now the key was slugged from
+          // `inside.name` — the model's free-text LABEL — even when the model
+          // had ALSO handed back a key this codebase defines and whitelists.
+          // Measured in the 29.01 report: the classifier answered
+          // CARTE_IDENTITATE for both identity cards, no catalogue row carried
+          // that key because the seed was missing rows, and the documents
+          // landed under `CARTE_DE_IDENTITATE` — so `ID_CARD_TYPE_KEYS`,
+          // `type-config.ts` and `getPersonIdCardLink`, all of which match the
+          // literal canonical key, were looking at a key that would never
+          // appear in that database again.
+          //
+          // ⚠️ **`canonicalTypeKey` re-derives it HERE rather than trusting
+          // `answer.typeKey`.** This function is reached over HTTP from the
+          // import wizard (`POST /api/document-types/resolve`), so the key on
+          // the wire is whatever a client sent; only the catalogue decides
+          // whether it is one of ours, and UNCLASSIFIED is refused there for
+          // the reason `matchDocumentType` refuses it.
+          //
+          // ⚠️ **The NAME is still the model's label, and writing the
+          // catalogue's stored name instead was tried and rejected — it
+          // recreates finding F7 on the archive this slice was written for.**
+          // Adrian's archive already holds the rows F6 produced: `Carte de
+          // Identitate` keyed CARTE_DE_IDENTITATE. An answer of
+          // `{ key: CARTE_IDENTITATE, label: "Buletin" }` name-matches nothing
+          // there, so it creates — and creating it as `Carte de Identitate`
+          // would put a SECOND row of that display name in every document's
+          // dropdown, which the label ("Buletin") does not. The key is the part
+          // the codebase has an opinion about; the name is what the model read.
+          // What that costs is stated rather than hidden: a misread label
+          // lands a badly-named row on a canonical key, and since carve-outs
+          // match the key, that row becomes the archive's identity-card (or
+          // sale-contract, …) type under a wrong name. Adrian renames it from
+          // Reference Data, where a rename cannot touch the key — which is the
+          // cheap half of the trade, and the other way round is not repairable
+          // at all.
+          row: await createDocumentTypeRow(
+            tx,
+            { name: inside.name, origin: "IMPORT" },
+            canonicalTypeKey(answer.typeKey),
+          ),
         };
       });
 
@@ -272,7 +327,18 @@ export async function resolveClassifiedDocumentType(
         name: textOf(created.row.name, label),
       };
     } catch (err) {
-      if (pgErrorCode(err) !== "23505" || attempt >= MAX_ATTEMPTS) throw err;
+      // ⚠️ **TWO WAYS TO LOSE THIS RACE, AND THEY GET THE SAME ANSWER.**
+      // (Slice #29.07 added the second.) A 23505 means another writer took the
+      // key this round computed. `PREFERRED_KEY_TAKEN` means another writer
+      // took the CANONICAL key this round was asked for — no Postgres error is
+      // raised there, because `nextFreeKey` would happily have answered
+      // `..._2`; `createDocumentTypeRow` refuses to, precisely so this loop
+      // gets a chance to see the row and adopt it. Both are "go round again",
+      // and both advance: the next `readTypes()` sees the committed row.
+      const lostARace =
+        pgErrorCode(err) === "23505" ||
+        (err instanceof Error && err.message === PREFERRED_KEY_TAKEN);
+      if (!lostARace || attempt >= MAX_ATTEMPTS) throw err;
       raced = true;
     }
   }
