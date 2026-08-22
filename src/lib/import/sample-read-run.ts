@@ -92,10 +92,11 @@ export type SampleRunResult = {
    * same window rather than fired straight into a bucket the reads just spent.
    *
    * ⚠️ **Returned because an adversarial round proved the clustering call was
-   * guaranteed to be refused.** It is request twenty-one against ten per
-   * minute, it was neither paced nor retried, and a 429 discarded the entire
-   * harvest — twenty billed readings and two minutes of the user's wait — with
-   * no way back but reading everything again. The cost sentence on the screen
+   * guaranteed to be refused.** It is the request one past the allowance —
+   * twenty-one against a superuser's twenty since Slice #29.09a — it was
+   * neither paced nor retried, and a 429 discarded the entire harvest: every
+   * billed reading and every minute of the user's wait, with no way back but
+   * reading everything again. The cost sentence on the screen
    * already counted this request (`minimumRunMs(samples.length + 1)`); the
    * pacing did not.
    */
@@ -274,11 +275,25 @@ export async function readSamples(input: {
         break;
       }
 
-      if (res.status === 429) {
+      // ⚠️ **429 AND 503 ARE THE SAME ANSWER: "NOBODY REFUSED YOU ON THE
+      // MERITS — WAIT AND ASK AGAIN."** 503 is `code: "role_unavailable"`, sent
+      // when the route could not read the caller's role because the database
+      // did not answer (Slice #29.09a). An adversarial round found it arriving
+      // here and falling straight through to `reason: "failed"`, exactly like
+      // the 403 it had just been introduced to replace — so the whole 503, and
+      // its `Retry-After`, changed nothing a run could observe. It does now.
+      //
+      // The failure reason on exhaustion is `rateLimited` for both. That is not
+      // quite what happened in the 503 case, and it is the closest reason this
+      // module has that is TRUE of it — "picked, not read, try again shortly" —
+      // rather than inventing a sixth reason and a copy string for a case that
+      // needs a database outage to reach.
+      if (res.status === 429 || res.status === 503) {
         // ⚠️ A refused request is not a spent slot: `checkOcrRateLimit` records
-        // nothing when it says no. Leaving the timestamp in made the client's
-        // model of the window drift further out with every retry, so a
-        // throttled run got progressively slower for no reason.
+        // nothing when it says no, and the 503 is returned BEFORE the limiter is
+        // consulted at all. Leaving the timestamp in made the client's model of
+        // the window drift further out with every retry, so a throttled run got
+        // progressively slower for no reason.
         const phantom = starts.lastIndexOf(slotAt);
         if (phantom !== -1) starts.splice(phantom, 1);
         attempt += 1;
@@ -293,7 +308,16 @@ export async function readSamples(input: {
           break;
         }
         const waitMs = retryAfterMs(res.headers.get("Retry-After"));
-        report(waitMs, sample.fileName);
+        // ⚠️ **THE PACING SENTENCE IS SHOWN FOR 429 ONLY, AND THAT IS A COPY
+        // DECISION, NOT AN OVERSIGHT.** `report(waitMs, …)` renders „Se aşteaptă
+        // N secunde: se trimit cel mult 20 de citiri pe minut" — a specific
+        // claim about WHY the run is waiting, which is true of the limiter and
+        // false of a 503, where the route could not read the caller's role at
+        // all. A round caught the 503 borrowing it. The wait still happens; the
+        // screen keeps saying „Se citeşte <fişier>", which is also true, rather
+        // than explaining it with the wrong reason. A sentence of its own for
+        // this case is in the handover.
+        report(res.status === 429 ? waitMs : 0, sample.fileName);
         await sleep(waitMs, input.signal);
         continue; // re-offer the same sample
       }
@@ -310,6 +334,16 @@ export async function readSamples(input: {
       }
 
       if (!res.ok) {
+        // ⚠️ A 403 never reached the limiter either — the route's superuser
+        // check sits above it — so the slot recorded for this request is a
+        // phantom like the 429's. It is terminal rather than retried (the
+        // answer will not change), but the run continues with the other
+        // samples, and twenty phantom slots would make the twenty-first wait a
+        // full minute for capacity the server never spent.
+        if (res.status === 403) {
+          const phantom = starts.lastIndexOf(slotAt);
+          if (phantom !== -1) starts.splice(phantom, 1);
+        }
         reads.push({
           sampleId: sample.sampleId,
           fileName: sample.fileName,
@@ -467,12 +501,16 @@ export async function clusterHarvest(input: {
 
     if (isSessionLoss(res) || (res.ok && servesHtml(res))) return { ok: false, reason: "session" };
 
-    if (res.status === 429) {
+    // 429 and 503 together, for the reason the read loop above states in full:
+    // both mean "ask again shortly", and neither spent a slot.
+    if (res.status === 429 || res.status === 503) {
       const phantom = starts.lastIndexOf(slotAt);
       if (phantom !== -1) starts.splice(phantom, 1);
       if (attempt === MAX_RATE_LIMIT_RETRIES) return { ok: false, reason: "rateLimited" };
       const waitMs = retryAfterMs(res.headers.get("Retry-After"));
-      input.onWait?.(waitMs);
+      // The pacing sentence is a 429 claim; see the read loop for why a 503
+      // must not borrow it. Round 4 fixed the read loop and left this one.
+      input.onWait?.(res.status === 429 ? waitMs : 0);
       await sleep(waitMs);
       continue;
     }

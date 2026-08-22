@@ -3123,7 +3123,7 @@
       "starting": "Starting…",
       "progress": "{done} of {total} samples finished.",
       "current": "Reading: {file}",
-      "waiting": "Waiting {seconds} seconds: at most {perMinute} reads are sent per minute. No sample is lost because of this.",
+      "waiting": "Waiting {seconds, plural, one {one second} other {# seconds}}: at most {perMinute} reads are sent per minute. No sample is lost because of this.",
       "nothingRead": "No sample could be read, so no form can be proposed. Try again in a few minutes.",
       "sessionLost": "Your session expired while the samples were being read. The ones read before that are below; the rest were never sent. Sign in again in a new tab, then start over.",
       "noPairs": "The samples were read, but no label–value pair was found in them, so there is nothing to compare.",

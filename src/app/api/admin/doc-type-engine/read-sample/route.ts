@@ -30,8 +30,9 @@
  * model, and no pdf.js code is written for this slice at all.
  *
  * ⚠️ **ONE SAMPLE PER CALL, NEVER A BATCH.** Twenty samples is twenty calls
- * against `checkOcrRateLimit`, which allows ten per minute per user — so the
- * eleventh WILL be refused. Keeping one sample per request is what lets the
+ * against `checkOcrRateLimit`, plus one for the clustering that follows — and a
+ * superuser's allowance is twenty a minute (Slice #29.09a), so the twenty-first
+ * WILL be refused. Keeping one sample per request is what lets the
  * PACING live on the client, where the user can watch it, and what lets a
  * refused or timed-out sample be counted as unread rather than taking the other
  * nineteen with it. A batch route would have had to invent its own partial-
@@ -46,17 +47,20 @@
  * citite") instead of quietly out of the arithmetic. A silently lost sample is
  * the worst bug this slice could ship.
  *
- * Auth: middleware requires a session for everything outside /api/auth, and the
- * rate limiter caps this at the same ten per minute as every other
- * Anthropic-backed route. That is the same posture `ai-interpret` and
- * `extract-id-card` take, and this route makes no additional claim.
+ * Auth: middleware requires a session for everything outside /api/auth; the
+ * handler then refuses anyone who is not a superuser (Slice #29.09a — a page
+ * layout does not guard a Route Handler), and the rate limiter caps what is
+ * left at the per-role allowance. `extract-id-card` and `cluster` take the same
+ * posture; `ai-interpret` is rate-limited but NOT superuser-only, because it is
+ * a document action a normal user performs.
  */
 
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 import { unexpectedError } from "@/lib/api/errors";
-import { getCurrentUserId } from "@/lib/auth/current-user";
+import { ANONYMOUS_USER_ID } from "@/lib/auth/current-user";
+import { getCurrentUserIdAndRole } from "@/lib/auth/current-role";
 import { checkOcrRateLimit } from "@/lib/rate-limit/ocr";
 import { buildDiscoverSystemPrompt } from "@/lib/import/classify-prompts";
 import { parseDiscoverPayload, type SkippedPage } from "@/lib/documents/discover-log";
@@ -103,13 +107,19 @@ type ContentBlock =
   | { type: "text"; text: string };
 
 /**
- * ⚠️ A fourth copy of a function that should have been extracted three copies
- * ago — `ai-interpret`, `extract-id-card` and `scan-folder` each carry it
- * verbatim. Copied rather than extracted DELIBERATELY, and the reason is the
- * slice boundary: pulling it into `lib/` means editing three shipped routes on
- * a slice whose subject is a new screen, and a shared helper that changes how
- * three billed routes parse a model answer is not a change to make in passing.
- * Named here so the next reader sees four and not three. Listed in the handover.
+ * ⚠️ A FIFTH copy of a function that should have been extracted four copies
+ * ago — `ai-interpret`, `extract-id-card`, `scan-folder` and this screen's own
+ * `cluster` route each carry it verbatim. Copied rather than extracted
+ * DELIBERATELY, and the reason is the slice boundary: pulling it into `lib/`
+ * means editing four shipped routes on a slice whose subject is a new screen,
+ * and a shared helper that changes how four billed routes parse a model answer
+ * is not a change to make in passing.
+ *
+ * This comment said "a fourth copy … so the next reader sees four and not
+ * three" and named three siblings — written by #29.09, in the same slice that
+ * added the `cluster` route it forgot to count. #29.09a corrected it, which is
+ * the whole point of a sentence whose job is to make a reader see the real
+ * number. Still listed in the handover.
  */
 function extractJson(text: string): unknown {
   const cleaned = text.trim().replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/, "");
@@ -128,11 +138,71 @@ function skipReason(name: string, mime: string): string {
 
 export async function POST(request: NextRequest): Promise<Response> {
   // ── Rate limiting ─────────────────────────────────────────────────────────
-  // The same bucket as ai-interpret, scan-image, parse-text and extract-id-card
-  // — ten per minute per user, shared. The client paces itself against these
-  // same two numbers (`sample-read-pacing.ts`) so this branch is the backstop
+  // The same bucket as ai-interpret, scan-image, parse-text, extract-id-card
+  // and this route's own clustering call
+  // — shared, per user, and sized by the caller's role (Slice #29.09a): twenty
+  // a minute for a superuser, five for everyone else. This screen is inside
+  // /admin, which `admin/layout.tsx` makes superuser-only server-side, so a run
+  // here is always paced against the twenty. The client paces itself against
+  // those same numbers (`sample-read-pacing.ts`) so this branch is the backstop
   // rather than the mechanism, and `Retry-After` is what it retries on.
-  const rl = checkOcrRateLimit(await getCurrentUserId());
+  const { userId, role, degraded } = await getCurrentUserIdAndRole();
+
+  // ⚠️ **503, NOT 403, WHEN NOBODY COULD READ THE CALLER.** `degraded` means
+  // the role below is a fallback, not an answer — the lookup's database read
+  // threw. Answering 403 there would tell a superuser they are not one, and a
+  // 403 is not retried by anything: `sample-read-run.ts` files it as `reason:
+  // "failed"` and moves on, so one pooler hiccup would fail an entire twenty
+  // sample run in seconds. A round found that in the fix for the missing guard.
+  //
+  // ⚠️ **AND THE ANONYMOUS CASE BELONGS IN THE SAME BRANCH, WHICH TOOK TWO
+  // ROUNDS TO GET RIGHT.** `getCurrentUser()` swallows a failed Supabase Auth
+  // round trip into `null`, so `userId` falls back to "anonymous". The first fix
+  // answered 401 there, reasoning that "nobody is asking" is not "you may not".
+  // The next round measured what actually reaches this line: `middleware.ts`
+  // already redirects a request with no session, AND fails closed the same way
+  // when the auth call throws — so an unauthenticated caller never gets here at
+  // all, and the only thing that can is the auth API blipping between the
+  // middleware's call and this route's. That is a transient exactly like
+  // `degraded`, and answering 401 made it far worse than the 403 it replaced:
+  // `isSessionLoss` reads 401 as a lost session, so the run STOPS and files
+  // every remaining sample as unread, telling a signed-in user to sign in
+  // again. Both transients now get the answer a transient deserves — 503 with a
+  // `Retry-After`, which both client loops retry.
+  if (degraded || userId === ANONYMOUS_USER_ID) {
+    return NextResponse.json(
+      { error: "Nu am putut verifica drepturile contului. Încercați din nou în curând.", code: "role_unavailable" },
+      { status: 503, headers: { "Retry-After": "5" } },
+    );
+  }
+
+  // ⚠️ **SUPERUSER-ONLY, HERE, IN THE ROUTE — NOT BY BEING UNDER /admin.**
+  // `src/app/admin/layout.tsx` is a PAGE layout: it never runs for a Route
+  // Handler, so before Slice #29.09a any authenticated user could POST straight
+  // to this URL and spend Anthropic-billed calls the screen would never have
+  // let them start. Two adversarial rounds found the same hole, and the second
+  // pointed out that this slice had resolved the role two lines up and used it
+  // only to WIDEN the allowance. It is also what makes the client's pacing
+  // honest: `sample-read-pacing.ts` paces against the superuser number because
+  // the only caller that gets past this line is a superuser.
+  //
+  // ⚠️ **THIS IS NOT THE WHOLE CLASS, AND SAYING SO PRECISELY IS THE POINT.**
+  // Seven handlers under `/api/admin/*` check the role: these three, plus
+  // `import/preflight` and `user-requests/{route,approve,reject}`. The rest
+  // have only the middleware's session check, and one of THOSE also spends
+  // Anthropic calls — `POST /api/admin/import/scan-folder`, which additionally
+  // has no rate limit at all. They are named in the slice handover under
+  // "Noticed, not fixed"; they are a sweep of their own, not lines to add here
+  // quietly. (An earlier draft of this comment said every other handler was
+  // unguarded, which was wrong in both directions.)
+  if (role !== "superuser") {
+    return NextResponse.json(
+      { error: "Nu aveți dreptul să folosiți această funcție.", code: "forbidden" },
+      { status: 403 },
+    );
+  }
+
+  const rl = checkOcrRateLimit(userId, role);
   if (!rl.allowed) {
     return NextResponse.json(
       { error: "Prea multe cereri. Încercați din nou în curând.", code: "rate_limited_local" },

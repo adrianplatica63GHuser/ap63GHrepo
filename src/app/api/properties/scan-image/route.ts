@@ -27,7 +27,7 @@ import { NextResponse }         from "next/server";
 import { createWorker }         from "tesseract.js";
 import { stereo70ToWgs84 }      from "@/lib/geo/transdatRO";
 import { checkOcrRateLimit }    from "@/lib/rate-limit/ocr";
-import { getCurrentUserId } from "@/lib/auth/current-user";
+import { getCurrentUserIdAndRole } from "@/lib/auth/current-role";
 
 // When Next.js/Turbopack bundles server code, __dirname resolves to a virtual
 // path (e.g. "C:\ROOT\...") instead of the real node_modules location.
@@ -532,8 +532,9 @@ function parseOcrText(rawText: string): ScanResult {
 // ---------------------------------------------------------------------------
 
 export async function POST(request: NextRequest): Promise<Response> {
-  // ── Rate limiting (10 OCR requests / minute per user) ─────────────────────
-  const rl = checkOcrRateLimit(await getCurrentUserId());
+  // ── Rate limiting (per user, per role: see @/lib/rate-limit/ocr) ──────────
+  const { userId, role } = await getCurrentUserIdAndRole();
+  const rl = checkOcrRateLimit(userId, role);
   if (!rl.allowed) {
     return NextResponse.json(
       { error: "Prea multe cereri OCR. Încercați din nou în curând." },

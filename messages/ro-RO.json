@@ -3116,14 +3116,14 @@
     },
     "cost": {
       "note": "{count, plural, =0 {Nu s-a ales niciun folder, deci nu se citeşte nimic.} one {Citirea AI se plăteşte: o mostră va fi citită în întregime, plus un apel de comparare la final.} few {Citirea AI se plăteşte: # mostre vor fi citite în întregime, plus un apel de comparare la final.} other {Citirea AI se plăteşte: # de mostre vor fi citite în întregime, plus un apel de comparare la final.}}",
-      "pace": "{minutes, plural, one {Se trimite cel mult {perMinute} citiri pe minut, deci durează cel puţin un minut.} few {Se trimit cel mult {perMinute} citiri pe minut, deci durează cel puţin # minute.} other {Se trimit cel mult {perMinute} citiri pe minut, deci durează cel puţin # de minute.}}"
+      "pace": "{minutes, plural, one {{perMinute, plural, one {Se trimite cel mult o citire} few {Se trimit cel mult {perMinute} citiri} other {Se trimit cel mult {perMinute} de citiri}} pe minut, deci durează cel puţin un minut.} few {{perMinute, plural, one {Se trimite cel mult o citire} few {Se trimit cel mult {perMinute} citiri} other {Se trimit cel mult {perMinute} de citiri}} pe minut, deci durează cel puţin # minute.} other {{perMinute, plural, one {Se trimite cel mult o citire} few {Se trimit cel mult {perMinute} citiri} other {Se trimit cel mult {perMinute} de citiri}} pe minut, deci durează cel puţin # de minute.}}"
     },
     "run": {
       "start": "Începe citirea",
       "starting": "Se începe…",
       "progress": "S-au încheiat {done} din {total} mostre.",
       "current": "Se citeşte: {file}",
-      "waiting": "Se aşteaptă {seconds} secunde: se trimit cel mult {perMinute} citiri pe minut. Nicio mostră nu se pierde din această cauză.",
+      "waiting": "{seconds, plural, one {Se aşteaptă o secundă} few {Se aşteaptă # secunde} other {Se aşteaptă # de secunde}}: {perMinute, plural, one {se trimite cel mult o citire} few {se trimit cel mult {perMinute} citiri} other {se trimit cel mult {perMinute} de citiri}} pe minut. Nicio mostră nu se pierde din această cauză.",
       "nothingRead": "Nicio mostră nu a putut fi citită, deci nu se poate propune niciun formular. Încercaţi din nou peste câteva minute.",
       "sessionLost": "Sesiunea dumneavoastră a expirat în timpul citirii. Mostrele citite până atunci sunt mai jos; restul nu au fost trimise. Autentificaţi-vă din nou într-o filă nouă, apoi reluaţi.",
       "noPairs": "Mostrele au fost citite, dar nu s-a găsit în ele nicio pereche etichetă–valoare, deci nu există ce compara.",

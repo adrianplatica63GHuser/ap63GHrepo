@@ -88,7 +88,8 @@
  * already has a form, to see what is still unrecognised — so nothing here may
  * ever be gated on `ai_interpreted_at`.
  *
- * Rate-limited (same 10/min per user as the import-wizard routes).
+ * Rate-limited (the same per-user, per-role allowance as the import-wizard
+ * routes — @/lib/rate-limit/ocr).
  */
 
 import type { NextRequest } from "next/server";
@@ -114,7 +115,7 @@ import {
 } from "@/lib/documents/queries";
 import { listDocumentPages } from "@/lib/documents/pages-queries";
 import { readFileContent } from "@/lib/storage";
-import { getCurrentUserId } from "@/lib/auth/current-user";
+import { getCurrentUserIdAndRole } from "@/lib/auth/current-role";
 import { checkOcrRateLimit } from "@/lib/rate-limit/ocr";
 import {
   findNaturalPersonByCnp,
@@ -171,11 +172,12 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
   //
   // What still protects it is unchanged and is the right shape for a business
   // action rather than a diagnostic: the middleware requires a session, and the
-  // rate limiter below caps it at the same 10/min per user as every other
-  // Anthropic-backed route.
+  // rate limiter below caps it at the same per-user, per-role allowance as
+  // every other Anthropic-backed route (@/lib/rate-limit/ocr).
 
   // ── Rate limiting ──────────────────────────────────────────────────────────
-  const rl = checkOcrRateLimit(await getCurrentUserId());
+  const { userId, role } = await getCurrentUserIdAndRole();
+  const rl = checkOcrRateLimit(userId, role);
   if (!rl.allowed) {
     return NextResponse.json(
       { error: "Prea multe cereri. Încercați din nou în curând.", code: "rate_limited_local" },

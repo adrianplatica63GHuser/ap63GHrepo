@@ -50,7 +50,7 @@ import {
   minimumRunMs,
   msUntilNextSlot,
   retryAfterMs,
-  OCR_MAX_REQUESTS,
+  OCR_MAX_REQUESTS_ADMIN,
   OCR_WINDOW_MS,
 } from "@/lib/import/sample-read-pacing";
 
@@ -955,12 +955,12 @@ describe("pacing a run against the limiter", () => {
   const T = 1_000_000;
 
   it("does not wait while there is capacity", () => {
-    const starts = Array.from({ length: OCR_MAX_REQUESTS - 1 }, (_, i) => T + i);
+    const starts = Array.from({ length: OCR_MAX_REQUESTS_ADMIN - 1 }, (_, i) => T + i);
     expect(msUntilNextSlot(starts, T + 100)).toBe(0);
   });
 
   it("waits for the oldest request in the window to expire", () => {
-    const starts = Array.from({ length: OCR_MAX_REQUESTS }, (_, i) => T + i * 100);
+    const starts = Array.from({ length: OCR_MAX_REQUESTS_ADMIN }, (_, i) => T + i * 100);
     // The oldest started at T; its slot frees at T + window, plus three seconds
     // of clock safety — measured from now, which is T + 1000.
     expect(msUntilNextSlot(starts, T + 1_000)).toBe(OCR_WINDOW_MS + 2_000);
@@ -969,11 +969,12 @@ describe("pacing a run against the limiter", () => {
   it("⚠️ picks the slot that frees next, not the oldest start", () => {
     // ⚠️ A mutation round replaced `inWindow[length - MAX]` with `inWindow[0]`
     // and every test still passed, because the one fixture used exactly
-    // OCR_MAX_REQUESTS starts, where the two indices coincide. With MORE starts
+    // OCR_MAX_REQUESTS_ADMIN starts, where the two indices coincide. With MORE starts
     // in the window than the limit — which is what a retried run produces — the
     // difference is the whole wait.
-    const starts = Array.from({ length: OCR_MAX_REQUESTS + 5 }, (_, i) => T + i * 1_000);
-    // The window holds 15; the 6th (index 5) is the one whose expiry frees a slot.
+    const starts = Array.from({ length: OCR_MAX_REQUESTS_ADMIN + 5 }, (_, i) => T + i * 1_000);
+    // Five more starts than the allowance, so the 6th (index 5) is the one
+    // whose expiry frees a slot.
     expect(msUntilNextSlot(starts, T + 20_000)).toBe(T + 5_000 + OCR_WINDOW_MS + 3_000 - (T + 20_000));
   });
 
@@ -982,22 +983,29 @@ describe("pacing a run against the limiter", () => {
     // sits in the future, and an adversarial round produced an eleven-minute
     // „waiting for a slot" from a ten-minute jump — uncapped, while
     // `retryAfterMs` beside it was capped.
-    const future = Array.from({ length: OCR_MAX_REQUESTS }, (_, i) => T + 600_000 + i);
+    const future = Array.from({ length: OCR_MAX_REQUESTS_ADMIN }, (_, i) => T + 600_000 + i);
     expect(msUntilNextSlot(future, T)).toBe(OCR_WINDOW_MS + 3_000);
   });
 
   it("⚠️ ignores starts that have already left the window", () => {
     // ⚠️ The old fixture (all stale) passed with the window filter DELETED,
     // because `Math.max(0, …)` clamps the negative result either way. This one
-    // mixes stale with fresh: without the filter there are twenty starts and
-    // the oldest is used, which produces a wait; with it there are nine and the
-    // answer is 0.
-    const stale = Array.from({ length: OCR_MAX_REQUESTS }, (_, i) => T + i);
+    // mixes stale with fresh: without the filter there are more starts than the
+    // allowance and the oldest is used, which produces a wait; with it there is
+    // one short of the allowance and the answer is 0.
+    const stale = Array.from({ length: OCR_MAX_REQUESTS_ADMIN }, (_, i) => T + i);
     const fresh = Array.from(
-      { length: OCR_MAX_REQUESTS - 1 },
+      { length: OCR_MAX_REQUESTS_ADMIN - 1 },
       (_, i) => T + OCR_WINDOW_MS + 2_000 + i,
     );
-    expect(msUntilNextSlot([...stale, ...fresh], T + OCR_WINDOW_MS + 5_000)).toBe(0);
+    // ⚠️ `now` sits just past the last FRESH start, not five seconds past it.
+    // An adversarial round measured the looser fixture: with the filter deleted
+    // it still answered 0, because the start the index then lands on is so old
+    // that `Math.max(0, …)` clamps the wait away — the same non-discrimination
+    // the fixture above it was written to fix, one step further along. Here the
+    // filterless answer is a positive wait, so deleting the filter fails.
+    const now = T + OCR_WINDOW_MS + 2_000 + OCR_MAX_REQUESTS_ADMIN;
+    expect(msUntilNextSlot([...stale, ...fresh], now)).toBe(0);
     expect(msUntilNextSlot(stale, T + 1_000)).toBeGreaterThan(0);
   });
 
@@ -1020,9 +1028,14 @@ describe("pacing a run against the limiter", () => {
   });
 
   it("states a floor for how long the run will take, before it is paid for", () => {
-    expect(minimumRunMs(10)).toBe(0);
-    expect(minimumRunMs(11)).toBe(OCR_WINDOW_MS);
-    expect(minimumRunMs(20)).toBe(OCR_WINDOW_MS);
-    expect(minimumRunMs(21)).toBe(2 * OCR_WINDOW_MS);
+    // ⚠️ Written against the allowance rather than against 10 and 20: Slice
+    // #29.09a made the number depend on the caller's role, and a fixture with
+    // the old literals in it asserted a floor for a limiter that no longer
+    // exists — it passed on nothing and failed on the truth.
+    const max = OCR_MAX_REQUESTS_ADMIN;
+    expect(minimumRunMs(max)).toBe(0);
+    expect(minimumRunMs(max + 1)).toBe(OCR_WINDOW_MS);
+    expect(minimumRunMs(2 * max)).toBe(OCR_WINDOW_MS);
+    expect(minimumRunMs(2 * max + 1)).toBe(2 * OCR_WINDOW_MS);
   });
 });

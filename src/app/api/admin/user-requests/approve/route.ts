@@ -21,7 +21,7 @@ import { appUsers, userRequests } from "@/db/schema";
 import { createAdminClient } from "@/lib/supabase/server";
 import { buildApprovalEmail, sendEmail } from "@/lib/email/send-email";
 import { eq } from "drizzle-orm";
-import { getCurrentUser } from "@/lib/auth/current-user";
+import { canManageAccounts, getCurrentAppUser } from "@/lib/auth/current-role";
 
 function generatePassword(length = 12): string {
   const chars =
@@ -36,17 +36,16 @@ function generatePassword(length = 12): string {
 }
 
 export async function POST(request: Request) {
-  // Auth check — must be logged in (superuser check relies on app_users role)
-  const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  // Auth check — must be logged in
+  const caller = await getCurrentAppUser();
+  if (!caller) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  // Verify the caller is a superuser
-  const [callerRow] = await db
-    .select({ role: appUsers.role, username: appUsers.username })
-    .from(appUsers)
-    .where(eq(appUsers.supabaseUid, user.id))
-    .limit(1);
-  if (!callerRow || callerRow.role !== "superuser") {
+  // Verify the caller may administer accounts (superuser, and not the UAT box —
+  // this route calls the Supabase Admin API, which does not exist there).
+  // Slice #29.09a: the role query this route used to run itself now lives in
+  // @/lib/auth/current-role, so UAT and a missing app_users row are decided in
+  // one place rather than six.
+  if (!canManageAccounts(caller)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -99,7 +98,7 @@ export async function POST(request: Request) {
     email: req.email,
     username: req.username,
     role: "user",
-    approvedBy: callerRow.username,
+    approvedBy: caller.username,
   });
 
   // In development, always log the temp password so it's visible in the
@@ -130,7 +129,7 @@ export async function POST(request: Request) {
     .set({
       status: "approved",
       processedAt: new Date(),
-      processedBy: callerRow.username,
+      processedBy: caller.username,
       emailSent,
     })
     .where(eq(userRequests.id, requestId));

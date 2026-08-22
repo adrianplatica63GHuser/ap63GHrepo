@@ -14,10 +14,15 @@
  * values — and that is only visible once every sample has been read. So it is a
  * separate pass over the harvest.
  *
- * ⚠️ **ONE CALL FOR THE WHOLE RUN, WHICH IS WHY IT COSTS NOTHING AGAINST THE
- * LIMITER.** Twenty reads plus one clustering call is twenty-one requests, not
- * forty; the run's pacing (`sample-read-pacing.ts`) accounts for this one the
- * same way it accounts for a read, and it is the last request the run makes.
+ * ⚠️ **ONE CALL FOR THE WHOLE RUN — AND IT IS THE ONE THE LIMITER REFUSES.**
+ * Twenty reads plus one clustering call is twenty-one requests, not forty; but
+ * a superuser's allowance is exactly twenty (Slice #29.09a), so this is the
+ * request that lands one past it. That is why `SampleRunResult` carries
+ * `slotStarts` at all: the run's pacing (`sample-read-pacing.ts`) accounts for
+ * this call the same way it accounts for a read, and it is the last request the
+ * run makes. Unpaced, it was refused and discarded the entire harvest. The
+ * header this replaced said the call "costs nothing against the limiter",
+ * which was written when the allowance was ten and every reading was paced.
  *
  * ⚠️ **THE MODEL IS SENT TEXT AND ANSWERS WITH IDS.** Every pair carries a
  * stable id, and the answer is a grouping of those ids — so no caption and no
@@ -44,7 +49,8 @@ import { NextResponse } from "next/server";
 import { z } from "zod/v4";
 
 import { unexpectedError, zodErrorToResponse } from "@/lib/api/errors";
-import { getCurrentUserId } from "@/lib/auth/current-user";
+import { ANONYMOUS_USER_ID } from "@/lib/auth/current-user";
+import { getCurrentUserIdAndRole } from "@/lib/auth/current-role";
 import { checkOcrRateLimit } from "@/lib/rate-limit/ocr";
 import { buildClusterSystemPrompt, type ClusterInputPair } from "@/lib/import/classify-prompts";
 import type { FieldCluster } from "@/lib/documents/field-distillation";
@@ -152,7 +158,30 @@ function rebuildClusters(
 }
 
 export async function POST(request: NextRequest): Promise<Response> {
-  const rl = checkOcrRateLimit(await getCurrentUserId());
+  const { userId, role, degraded } = await getCurrentUserIdAndRole();
+
+  // 503, not 403, when nobody could read the caller — a role lookup that threw
+  // (`degraded`) or an auth round trip that did, which leaves `userId` as
+  // "anonymous". Both are transients, and both are retried by the client. See
+  // the read-sample route for the full note (Slice #29.09a).
+  if (degraded || userId === ANONYMOUS_USER_ID) {
+    return NextResponse.json(
+      { error: "Nu am putut verifica drepturile contului. Încercați din nou în curând.", code: "role_unavailable" },
+      { status: 503, headers: { "Retry-After": "5" } },
+    );
+  }
+
+  // Superuser-only, checked HERE rather than inherited from /admin: a page
+  // layout does not run for a Route Handler. See the read-sample route for the
+  // full note (Slice #29.09a).
+  if (role !== "superuser") {
+    return NextResponse.json(
+      { error: "Nu aveți dreptul să folosiți această funcție.", code: "forbidden" },
+      { status: 403 },
+    );
+  }
+
+  const rl = checkOcrRateLimit(userId, role);
   if (!rl.allowed) {
     return NextResponse.json(
       { error: "Prea multe cereri. Încercați din nou în curând.", code: "rate_limited_local" },

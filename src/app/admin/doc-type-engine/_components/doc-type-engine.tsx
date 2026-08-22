@@ -74,7 +74,7 @@ import {
   type RunProgress,
   type SampleSource,
 } from "@/lib/import/sample-read-run";
-import { minimumRunMs, OCR_MAX_REQUESTS } from "@/lib/import/sample-read-pacing";
+import { minimumRunMs, OCR_MAX_REQUESTS_ADMIN } from "@/lib/import/sample-read-pacing";
 import {
   DEFAULT_MATCHING_PERCENT,
   distilFields,
@@ -378,10 +378,9 @@ export function DocTypeEngine() {
     const clustered = await clusterHarvest({
       pairs: harvestPairs(result.reads),
       sampleCount: readCount,
-      // ⚠️ The clustering call is request twenty-one against a limiter that
-      // allows ten a minute, so it is paced against the slots the reads took —
-      // otherwise it is refused, and refusing it discards every one of those
-      // paid-for readings.
+      // ⚠️ The clustering call is the request one past the allowance, so it is
+      // paced against the slots the reads took — otherwise it is refused, and
+      // refusing it discards every one of those paid-for readings.
       slotStarts: result.slotStarts,
       onWait: (ms) =>
         setProgress((prev) =>
@@ -696,7 +695,7 @@ export function DocTypeEngine() {
         ? progress.waitingMs > 0
           ? t("run.waiting", {
               seconds: Math.ceil(progress.waitingMs / 1000),
-              perMinute: OCR_MAX_REQUESTS,
+              perMinute: OCR_MAX_REQUESTS_ADMIN,
             })
           : t("run.progress", { done: progress.settled, total: progress.total })
         : t("run.starting")
@@ -860,19 +859,21 @@ export function DocTypeEngine() {
           </div>
 
           {/* The cost sentence, in the treatment every billed press in this
-              product uses — and it states BOTH numbers, because a run of twenty
-              at ten calls a minute has a floor the user should not discover. */}
+              product uses — and it states BOTH numbers, because a run of more
+              samples than one window allows has a floor the user should not
+              discover. */}
           <p className={`mt-6 ${COST_NOTE_CLASS}`}>
             {t("cost.note", { count: samples.length })}
             {/* ⚠️ A separate sentence rather than a clause inside the plural,
-                because `minimumRunMs` is 0 for anything up to ten samples and
-                the first draft printed „so it takes at least 0 minutes". */}
+                because `minimumRunMs` is 0 for anything that fits in one
+                window and the first draft printed „so it takes at least 0
+                minutes". */}
             {minimumRunMs(samples.length + 1) > 0 && (
               <>
                 {" "}
                 {t("cost.pace", {
                   minutes: Math.ceil(minimumRunMs(samples.length + 1) / 60_000),
-                  perMinute: OCR_MAX_REQUESTS,
+                  perMinute: OCR_MAX_REQUESTS_ADMIN,
                 })}
               </>
             )}
@@ -908,7 +909,7 @@ export function DocTypeEngine() {
             <p className={`mt-2 ${COST_NOTE_CLASS}`}>
               {t("run.waiting", {
                 seconds: Math.ceil(progress.waitingMs / 1000),
-                perMinute: OCR_MAX_REQUESTS,
+                perMinute: OCR_MAX_REQUESTS_ADMIN,
               })}
             </p>
           )}

@@ -14,23 +14,19 @@
  */
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { appUsers, userRequests } from "@/db/schema";
-import { getCurrentUser } from "@/lib/auth/current-user";
+import { userRequests } from "@/db/schema";
+import { canManageAccounts, getCurrentAppUser } from "@/lib/auth/current-role";
 import { buildRejectionEmail, sendEmail } from "@/lib/email/send-email";
 import { eq } from "drizzle-orm";
 
 export async function POST(request: Request) {
   // Auth check
-  const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const caller = await getCurrentAppUser();
+  if (!caller) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  // Verify superuser role
-  const [callerRow] = await db
-    .select({ role: appUsers.role, username: appUsers.username })
-    .from(appUsers)
-    .where(eq(appUsers.supabaseUid, user.id))
-    .limit(1);
-  if (!callerRow || callerRow.role !== "superuser") {
+  // Verify the caller may administer accounts (superuser, and not the UAT box).
+  // Slice #29.09a: the role query lives in @/lib/auth/current-role now.
+  if (!canManageAccounts(caller)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -71,7 +67,7 @@ export async function POST(request: Request) {
     .set({
       status: "rejected",
       processedAt: new Date(),
-      processedBy: callerRow.username,
+      processedBy: caller.username,
       emailSent,
     })
     .where(eq(userRequests.id, requestId));

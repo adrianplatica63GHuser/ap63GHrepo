@@ -42,7 +42,16 @@ export type CurrentUser = {
   isUat: boolean;
 };
 
-/** True when the app is running without a Supabase project (Ciprian's UAT box). */
+/**
+ * True when the app is running without a Supabase project (Ciprian's UAT box).
+ *
+ * ⚠️ As of Slice #29.09a nothing outside this module calls it: `admin/layout`,
+ * `api/auth/me` and `import/preflight` all went through `getCurrentAppUser()`,
+ * which decides what UAT means once. It stays exported because
+ * `auth-single-source.test.ts` requires every other module that needs the
+ * question to import it rather than read the env var — the guard is the reason
+ * for the export, not a caller.
+ */
 export function isUatNoAuth(): boolean {
   return process.env.UAT_NO_AUTH === "true";
 }
@@ -85,12 +94,34 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
 }
 
 /**
+ * The bucket key for a caller with no session.
+ *
+ * Exported because `getCurrentUserIdAndRole()` in `current-role.ts` has to fall
+ * back to exactly the same string: two spellings of "anonymous" would be two
+ * different rate-limit buckets, which is the opposite of what sharing one is
+ * for. Middleware turns these requests away before they reach a route; the
+ * fallback is defence in depth, not a supported path.
+ */
+export const ANONYMOUS_USER_ID = "anonymous";
+
+/**
  * Convenience for the many routes that only need an id for rate limiting and
  * are happy to proceed anonymously.
+ *
+ * ⚠️ **No production caller is left as of Slice #29.09a**, and saying so is
+ * better than a comment implying otherwise: every route that rate-limits now
+ * needs the ROLE as well, because the allowance depends on it, and calls
+ * `getCurrentUserIdAndRole()` from `@/lib/auth/current-role`. This stays
+ * because the next route that needs only an id should use it rather than pay
+ * the role lookup's database round trip — `getCurrentUserIdAndRole()` costs a
+ * `SELECT`, this costs nothing. (`auth-single-source.test.ts` mentions it in a
+ * failure message, which is prose, not enforcement: that suite scans for
+ * `supabase.auth.getUser()` and would pass just as happily if this function
+ * were deleted.)
  */
 export async function getCurrentUserId(): Promise<string> {
   const user = await getCurrentUser();
-  return user?.id ?? "anonymous";
+  return user?.id ?? ANONYMOUS_USER_ID;
 }
 
 /**

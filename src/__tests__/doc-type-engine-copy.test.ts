@@ -220,19 +220,51 @@ describe("DocTypeEngine's copy", () => {
     // The one convention #29.08 MOVED rather than deleted: a sentence that says
     // what is about to be spent sits beside the button that spends it. This
     // screen is the most expensive single action in the product, and its run
-    // also has a floor — ten reads a minute — that a user should be told rather
-    // than discover while watching a progress bar.
+    // also has a floor — the allowance, in reads a minute — that a user should
+    // be told rather than discover while watching a progress bar.
     for (const file of LOCALES) {
       // ⚠️ The pacing floor is a SEPARATE sentence, drawn only when there is a
       // floor to state. As one clause inside the plural it printed „so it takes
-      // at least 0 minutes" for every folder of ten or fewer.
+      // at least 0 minutes" for every folder that fits in one window.
       const pace = String(at(loadCopy(file), "cost.pace"));
-      expect(pace).toContain("{perMinute}");
+      // `{perMinute` rather than `{perMinute}`: in ro-RO it is now a plural
+      // block of its own (see the test below), not a bare placeholder.
+      expect(pace).toContain("{perMinute");
       expect(pace).toContain("{minutes, plural");
       expect(String(at(loadCopy(file), "cost.note"))).not.toContain("minutes");
     }
     expect(String(at(loadCopy("ro-RO.json"), "cost.note"))).toMatch(/plăteşte|plătește/i);
     expect(String(at(loadCopy("en-GB.json"), "cost.note"))).toMatch(/costs money/i);
+  });
+
+  it("⚠️ counts the allowance itself, because Romanian changes form at 20", () => {
+    // ⚠️ **SLICE #29.09a MOVED THIS NUMBER ACROSS A GRAMMATICAL BOUNDARY.** The
+    // superuser allowance went from 10 to 20, and Romanian takes „de" from 20
+    // upwards: „10 citiri pe minut" is right and „20 citiri pe minut" is not —
+    // it is „20 DE citiri pe minut". The number is interpolated, so the noun
+    // beside it cannot be fixed text in the sentence; `perMinute` needs a plural
+    // block of its own, with `few` (2–19) and `other` (20+) saying different
+    // things. It is not in COUNTED because en-GB deliberately has no plural on
+    // it — English reads correctly at every value this can take.
+    for (const key of ["cost.pace", "run.waiting"]) {
+      const text = String(at(loadCopy("ro-RO.json"), key));
+      const block = scanIcu(text).plurals.find((p) => p.arg === "perMinute");
+      expect({ key, found: block !== undefined }).toEqual({ key, found: true });
+      expect(block!.categories).toEqual(expect.arrayContaining(["one", "few", "other"]));
+      expect({ key, de: text.includes("{perMinute} de citiri") }).toEqual({ key, de: true });
+    }
+
+    // ⚠️ **`seconds` SITS THREE WORDS FROM `perMinute` AND HAD THE SAME BUG.**
+    // A round pointed at it while the ink on the fix above was wet: the pacing
+    // wait is `OCR_WINDOW_MS + SAFETY_MS`, so this sentence renders „Se aşteaptă
+    // 63 …" almost every time it is shown, and „63 secunde" is wrong for exactly
+    // the reason „20 citiri" was. Fixing one number in a sentence and leaving
+    // the other is the kind of half-pass this suite exists to fail.
+    const waiting = String(at(loadCopy("ro-RO.json"), "run.waiting"));
+    const seconds = scanIcu(waiting).plurals.find((p) => p.arg === "seconds");
+    expect(seconds !== undefined).toBe(true);
+    expect(seconds!.categories).toEqual(expect.arrayContaining(["one", "few", "other"]));
+    expect(waiting).toContain("# de secunde");
   });
 
   it("⚠️ names where a below-the-line candidate will actually land", () => {

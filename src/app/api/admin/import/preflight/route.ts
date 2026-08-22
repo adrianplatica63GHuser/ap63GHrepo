@@ -45,10 +45,10 @@ export const dynamic = "force-dynamic";   // a cached precondition is a lie
 import { NextResponse } from "next/server";
 import * as fs from "fs/promises";
 import * as path from "path";
-import { eq, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { db } from "@/db";
-import { appUsers, lookupDocumentType } from "@/db/schema";
-import { getCurrentUser, isUatNoAuth } from "@/lib/auth/current-user";
+import { lookupDocumentType } from "@/db/schema";
+import { getCurrentAppUser } from "@/lib/auth/current-role";
 import { unexpectedError } from "@/lib/api/errors";
 import { createAdminClient } from "@/lib/supabase/server";
 import type { PreflightServerReport } from "@/lib/import/preflight";
@@ -205,26 +205,20 @@ async function probeDatabase(): Promise<boolean> {
 // ---------------------------------------------------------------------------
 
 export async function GET(): Promise<Response> {
-  const user = await getCurrentUser();
-  if (!user) {
+  const caller = await getCurrentAppUser();
+  if (!caller) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // UAT_NO_AUTH produces a synthetic identity with no `app_users` row, so the
-  // role query below would 403 Ciprian's box out of its own import screen.
-  // `admin/layout.tsx` and `api/auth/me` both treat UAT as a superuser for
-  // exactly this reason; `admin/users/page.tsx` deliberately does not, because
-  // account administration is not something a UAT box should reach. The import
-  // screen has to work there, so this follows the first pair.
-  if (!isUatNoAuth()) {
-    const [caller] = await db
-      .select({ role: appUsers.role })
-      .from(appUsers)
-      .where(eq(appUsers.supabaseUid, user.id))
-      .limit(1);
-    if (!caller || caller.role !== "superuser") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+  // Superuser-only, like every other import-screen route. The UAT special case
+  // this block used to spell out — a synthetic identity with no `app_users` row
+  // would have been 403'd out of Ciprian's own import screen — is now decided
+  // inside `getCurrentAppUser()`, which reports UAT as a superuser exactly as
+  // `admin/layout.tsx` and `api/auth/me` always have. Account administration is
+  // the one thing UAT still may not reach, and that lives in
+  // `canManageAccounts()` beside it (Slice #29.09a).
+  if (caller.role !== "superuser") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   try {

@@ -39,7 +39,8 @@ import { db }                 from "@/db";
 
 import { lookupCitizenship }  from "@/db/schema";
 import { unexpectedError }    from "@/lib/api/errors";
-import { getCurrentUserId } from "@/lib/auth/current-user";
+import { ANONYMOUS_USER_ID } from "@/lib/auth/current-user";
+import { getCurrentUserIdAndRole } from "@/lib/auth/current-role";
 import { checkOcrRateLimit }  from "@/lib/rate-limit/ocr";
 
 export const runtime = "nodejs";
@@ -245,8 +246,31 @@ function matchCitizenship(
 }
 
 export async function POST(request: NextRequest): Promise<Response> {
-  // ── Rate limiting (10 OCR/AI requests / minute per user) ──────────────────
-  const rl = checkOcrRateLimit(await getCurrentUserId());
+  // ── Rate limiting (per user, per role: see @/lib/rate-limit/ocr) ──────────
+  const { userId, role, degraded } = await getCurrentUserIdAndRole();
+
+  // 503, not 403, when nobody could read the caller — a role lookup that threw
+  // (`degraded`) or an auth round trip that did, which leaves `userId` as
+  // "anonymous". Both are transients, and both are retried by the client. See
+  // the read-sample route for the full note (Slice #29.09a).
+  if (degraded || userId === ANONYMOUS_USER_ID) {
+    return NextResponse.json(
+      { error: "Nu am putut verifica drepturile contului. Încercați din nou în curând.", code: "role_unavailable" },
+      { status: 503, headers: { "Retry-After": "5" } },
+    );
+  }
+
+  // Superuser-only, checked HERE rather than inherited from /admin: a page
+  // layout does not run for a Route Handler. See the read-sample route for the
+  // full note (Slice #29.09a).
+  if (role !== "superuser") {
+    return NextResponse.json(
+      { error: "Nu aveți dreptul să folosiți această funcție.", code: "forbidden" },
+      { status: 403 },
+    );
+  }
+
+  const rl = checkOcrRateLimit(userId, role);
   if (!rl.allowed) {
     return NextResponse.json(
       { error: "Prea multe cereri. Încercați din nou în curând.", code: "rate_limited_local" },

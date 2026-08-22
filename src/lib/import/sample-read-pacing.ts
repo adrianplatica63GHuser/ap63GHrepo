@@ -4,13 +4,14 @@
  *
  * WHY THIS EXISTS AT ALL
  * ----------------------
- * `checkOcrRateLimit` allows `OCR_MAX_REQUESTS` per `OCR_WINDOW_MS` per user
- * and `POST /api/admin/doc-type-engine/read-sample` asks it on every call, so a
- * folder of twenty samples meets a 429 on the eleventh — guaranteed, not
- * occasionally. A run that raced the limiter would lose those samples, and a
- * lost sample is the worst bug this slice could ship, because the denominator
- * IS the answer: „14 din 20 de mostre citite" is an honest screen and a bare
- * 70% over an unknown N is not.
+ * `checkOcrRateLimit` allows `OCR_MAX_REQUESTS_ADMIN` per `OCR_WINDOW_MS` for
+ * this screen's users and `POST /api/admin/doc-type-engine/read-sample` asks it
+ * on every call, so a folder of twenty samples plus the clustering call that
+ * follows meets a 429 on the twenty-first — guaranteed, not occasionally. A run
+ * that raced the limiter would lose those samples, and a lost sample is the
+ * worst bug this slice could ship, because the denominator IS the answer:
+ * „14 din 20 de mostre citite" is an honest screen and a bare 70% over an
+ * unknown N is not.
  *
  * ⚠️ **THE POLICY IS PURE AND THE LOOP IS NOT, DELIBERATELY.** Everything here
  * is arithmetic over timestamps that the caller supplies, so the pacing can be
@@ -19,23 +20,49 @@
  *
  * ⚠️ **THE TWO NUMBERS ARE IMPORTED, NOT RETYPED.** A client that believed the
  * window was 60 s while the server had moved to 30 would pace into a wall and
- * report a run of failures as a run of readings. `OCR_WINDOW_MS` and
- * `OCR_MAX_REQUESTS` are exported from the limiter itself for this one reason;
- * importing them pulls no behaviour into the client bundle, only two numbers.
+ * report a run of failures as a run of readings. `OCR_WINDOW_MS` and the
+ * per-role allowance table are exported from the limiter itself for this one
+ * reason; importing them pulls no behaviour into the client bundle, only
+ * numbers.
+ *
+ * ⚠️ **WHY THE SUPERUSER ALLOWANCE, AND WHY THAT IS A FACT RATHER THAN A HOPE
+ * (Slice #29.09a).** The allowance now depends on the caller's role — twenty a
+ * minute for a superuser, five for everyone else — and this module has no
+ * session to ask. It does not need one: every screen that runs this pacing
+ * lives under `/admin`, and `src/app/admin/layout.tsx` redirects a
+ * non-superuser away from `/admin/*` server-side before any of this loads. So
+ * the only user who can reach the DocTypeEngine run IS a superuser, and the
+ * superuser number is the one the server will apply to their requests. If that
+ * ever stops being true — a non-admin screen reusing this pacing, or /admin
+ * opening up to another role — this constant becomes a lie and the run starts
+ * paying a 429 on every sixth sample. The `Retry-After` path below still
+ * recovers each of them, which is the safety net; the pacing is what keeps it
+ * from being needed.
  *
  * ⚠️ **PACING IS A COURTESY, `Retry-After` IS THE FACT.** The limiter is
  * in-memory per Node process and its bucket is shared with `ai-interpret`,
  * `scan-image`, `parse-text` and `extract-id-card` — so the user's own import in
- * another tab spends from the same ten, and on more than one server instance
- * this client's model of the window is a guess. The run therefore does BOTH:
- * it self-paces so a 429 is rare, and it honours `Retry-After` and retries
- * when one happens anyway. A run that only did the first would still lose
- * samples; a run that only did the second would pay a stall on every eleventh.
+ * another tab spends from the same allowance, and on more than one server
+ * instance this client's model of the window is a guess. The run therefore does
+ * BOTH: it self-paces so a 429 is rare, and it honours `Retry-After` and
+ * retries when one happens anyway. A run that only did the first would still
+ * lose samples; a run that only did the second would pay a stall on every
+ * request past the allowance.
  */
 
-import { OCR_MAX_REQUESTS, OCR_WINDOW_MS } from "@/lib/rate-limit/ocr";
+import { OCR_MAX_REQUESTS_BY_ROLE, OCR_WINDOW_MS } from "@/lib/rate-limit/ocr";
 
-export { OCR_MAX_REQUESTS, OCR_WINDOW_MS };
+/**
+ * The allowance this screen's user actually has — see the header for why the
+ * superuser row is the right one to read and what enforces it.
+ */
+// ⚠️ The table, not `ocrMaxRequests("superuser")`. That function takes
+// `unknown` so it can absorb a role the database invented, which means a typo
+// here would have compiled and silently paced a twenty-request run at five.
+// `OCR_MAX_REQUESTS_BY_ROLE.superuser` is checked by the compiler.
+export const OCR_MAX_REQUESTS_ADMIN = OCR_MAX_REQUESTS_BY_ROLE.superuser;
+
+export { OCR_WINDOW_MS };
 
 /**
  * A little under the true window.
@@ -50,8 +77,8 @@ export { OCR_MAX_REQUESTS, OCR_WINDOW_MS };
  * when the request ARRIVED. Uniform flight time cancels out, but the first
  * sample of a run does not: a fourteen-page scan against a cold function took
  * eight seconds to arrive, which shifted the server's window eight seconds
- * later than the client's model of it and produced a 429 on the eleventh
- * sample. The retry recovers the sample either way — this only decides whether
+ * later than the client's model of it and produced a 429 on the first sample
+ * past the allowance. The retry recovers the sample either way — this only decides whether
  * the common case pays a stall — but the claim in the header below had to
  * become "rare" rather than "never", and the number had to move with it.
  */
@@ -68,10 +95,16 @@ const SAFETY_MS = 3_000;
 export function msUntilNextSlot(recentStartsMs: readonly number[], nowMs: number): number {
   const windowStart = nowMs - OCR_WINDOW_MS;
   const inWindow = recentStartsMs.filter((t) => t > windowStart).sort((a, b) => a - b);
-  if (inWindow.length < OCR_MAX_REQUESTS) return 0;
-  // The oldest request still inside the window is the one whose expiry frees a
-  // slot — the same arithmetic `checkOcrRateLimit` uses to compute Retry-After.
-  const oldest = inWindow[inWindow.length - OCR_MAX_REQUESTS];
+  if (inWindow.length < OCR_MAX_REQUESTS_ADMIN) return 0;
+  // ⚠️ **THE `maxRequests`-th FROM THE END, NOT THE OLDEST IN THE WINDOW.**
+  // Those are the same entry only when the window holds exactly the allowance;
+  // a retried run holds more, and then the oldest is several requests away from
+  // freeing anything. The test that pins this is „picks the slot that frees
+  // next, not the oldest start". This comment said „the oldest request still
+  // inside the window" until a round noticed the sentence and the index
+  // disagreeing — in the file `ocr.ts` cites as the one that always had it
+  // right. `checkOcrRateLimit` now uses the identical arithmetic.
+  const oldest = inWindow[inWindow.length - OCR_MAX_REQUESTS_ADMIN];
   // ⚠️ **CLAMPED AT BOTH ENDS, and the upper clamp is not theoretical.**
   // `Date.now()` is not monotonic — an NTP step, a laptop resuming, a user
   // changing the clock — and a start recorded before a backward step sits in
@@ -126,14 +159,14 @@ export const MAX_RATE_LIMIT_RETRIES = 2;
  * What the screen must be able to say before the reads are paid for.
  *
  * The whole point is that it is computable in advance: `count` reads at
- * `OCR_MAX_REQUESTS` per window take at least this long, so a user picking
- * twenty samples is told it will take about two minutes rather than discovering
- * it. Deliberately a floor and not an estimate — the model call itself takes
+ * `OCR_MAX_REQUESTS_ADMIN` per window take at least this long, so a user
+ * picking more samples than one window holds is told how long it will take
+ * rather than discovering it. Deliberately a floor and not an estimate — the model call itself takes
  * seconds per sample on top, and a number that claimed to include that would be
  * the confident-output-never-measured failure this codebase keeps recording.
  */
 export function minimumRunMs(count: number): number {
-  if (!Number.isFinite(count) || count <= OCR_MAX_REQUESTS) return 0;
-  const fullWindows = Math.floor((count - 1) / OCR_MAX_REQUESTS);
+  if (!Number.isFinite(count) || count <= OCR_MAX_REQUESTS_ADMIN) return 0;
+  const fullWindows = Math.floor((count - 1) / OCR_MAX_REQUESTS_ADMIN);
   return fullWindows * OCR_WINDOW_MS;
 }

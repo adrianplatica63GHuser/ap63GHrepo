@@ -26,7 +26,7 @@ import {
   type SampleSource,
 } from "@/lib/import/sample-read-run";
 import {
-  OCR_MAX_REQUESTS,
+  OCR_MAX_REQUESTS_ADMIN,
   OCR_WINDOW_MS,
 } from "@/lib/import/sample-read-pacing";
 
@@ -266,14 +266,15 @@ describe("the 429 path", () => {
     const h = harness(replies);
     try {
       const out = await readSamples({
-        samples: samples(OCR_MAX_REQUESTS),
+        samples: samples(OCR_MAX_REQUESTS_ADMIN),
         now: h.now,
         sleep: h.sleep,
       });
-      expect(out.reads.filter((r) => r.read)).toHaveLength(OCR_MAX_REQUESTS);
-      // One refusal + ten readings = eleven requests, and none of them had to
-      // wait a whole window, because the refusal took no slot.
-      expect(h.calls).toHaveLength(OCR_MAX_REQUESTS + 1);
+      expect(out.reads.filter((r) => r.read)).toHaveLength(OCR_MAX_REQUESTS_ADMIN);
+      // One refusal + a full allowance of readings = one request more than the
+      // allowance, and none of them had to wait a whole window, because the
+      // refusal took no slot.
+      expect(h.calls).toHaveLength(OCR_MAX_REQUESTS_ADMIN + 1);
       const span = h.calls[h.calls.length - 1].at - h.calls[0].at;
       expect(span < OCR_WINDOW_MS).toBe(true);
     } finally {
@@ -295,24 +296,31 @@ describe("the 429 path", () => {
   });
 });
 
-describe("⚠️ pacing twenty samples past a ten-a-minute limiter", () => {
+describe("⚠️ pacing a run one sample past the limiter", () => {
   it("pays exactly one window, and never races into a refusal", async () => {
+    // ⚠️ Sized off the allowance, not off the literal twenty this fixture used
+    // before Slice #29.09a. The allowance is now twenty for the superuser who
+    // runs this screen, so a fixture of exactly twenty samples never waits at
+    // all — it would have asserted „pays exactly one window" about a run that
+    // paid none, and passed only because the assertion was `>=` on a number
+    // that had quietly become 0.
+    const count = OCR_MAX_REQUESTS_ADMIN + 1;
     const h = harness([{ body: ONE_PAIR }]);
     try {
-      const out = await readSamples({ samples: samples(20), now: h.now, sleep: h.sleep });
-      expect(out.reads.filter((r) => r.read)).toHaveLength(20);
-      expect(h.calls).toHaveLength(20);
+      const out = await readSamples({ samples: samples(count), now: h.now, sleep: h.sleep });
+      expect(out.reads.filter((r) => r.read)).toHaveLength(count);
+      expect(h.calls).toHaveLength(count);
 
       // The client's own model of the server's window, applied to what it did.
       let refused = 0;
       for (let i = 0; i < h.calls.length; i += 1) {
         const windowStart = h.calls[i].at - OCR_WINDOW_MS;
         const inWindow = h.calls.slice(0, i).filter((c) => c.at > windowStart).length;
-        if (inWindow >= OCR_MAX_REQUESTS) refused += 1;
+        if (inWindow >= OCR_MAX_REQUESTS_ADMIN) refused += 1;
       }
       expect(refused).toBe(0);
 
-      const total = h.calls[19].at - h.calls[0].at;
+      const total = h.calls[count - 1].at - h.calls[0].at;
       expect(total >= OCR_WINDOW_MS).toBe(true);
       expect(total < 2 * OCR_WINDOW_MS).toBe(true);
     } finally {
@@ -332,8 +340,9 @@ describe("⚠️ cancelling", () => {
     // RESOLVES on abort rather than throwing, so without a re-check afterwards
     // a Cancel pressed during a sixty-second wait still fired the model call
     // the wait was for — billed, and recorded as read, on a run the user had
-    // stopped. It is reachable only from sample eleven onwards, because that is
-    // the first one that waits at all, and the earlier fixture used five.
+    // stopped. It is reachable only from the first sample PAST the allowance,
+    // because that is the first one that waits at all, and the earlier fixture
+    // used five.
     const h = harness([{ body: ONE_PAIR }]);
     const controller = new AbortController();
     try {
@@ -343,16 +352,16 @@ describe("⚠️ cancelling", () => {
         controller.abort();
       };
       const out = await readSamples({
-        samples: samples(OCR_MAX_REQUESTS + 3),
+        samples: samples(OCR_MAX_REQUESTS_ADMIN + 3),
         now: h.now,
         sleep,
         signal: controller.signal,
       });
-      expect(out.reads).toHaveLength(OCR_MAX_REQUESTS + 3);
-      // The first ten needed no wait and were read; nothing after the wait was
-      // sent, including the sample the wait was for.
-      expect(h.calls).toHaveLength(OCR_MAX_REQUESTS);
-      expect(out.reads.filter((r) => r.read)).toHaveLength(OCR_MAX_REQUESTS);
+      expect(out.reads).toHaveLength(OCR_MAX_REQUESTS_ADMIN + 3);
+      // A full allowance needed no wait and was read; nothing after the wait
+      // was sent, including the sample the wait was for.
+      expect(h.calls).toHaveLength(OCR_MAX_REQUESTS_ADMIN);
+      expect(out.reads.filter((r) => r.read)).toHaveLength(OCR_MAX_REQUESTS_ADMIN);
       expect(
         out.reads.filter((r) => !r.read && r.reason === "cancelled"),
       ).toHaveLength(3);
@@ -428,14 +437,14 @@ describe("⚠️ the clustering call", () => {
   });
 
   it("⚠️ paces itself against the slots the reads took", async () => {
-    // ⚠️ **IT IS REQUEST TWENTY-ONE AGAINST TEN A MINUTE.** Unpaced it was
-    // guaranteed to be refused, and refusing it discarded twenty billed
-    // readings — the whole harvest — with no way back but reading everything
-    // again.
+    // ⚠️ **IT IS THE REQUEST AFTER A RUN THAT SPENT THE WHOLE ALLOWANCE.**
+    // Unpaced it was guaranteed to be refused, and refusing it discarded every
+    // billed reading — the whole harvest — with no way back but reading
+    // everything again.
     const h = harness([{ body: { clusters: [], droppedPairIds: [], truncated: false } }]);
     try {
       const startedAt = h.now();
-      const slotStarts = Array.from({ length: OCR_MAX_REQUESTS }, (_, i) => startedAt + i * 100);
+      const slotStarts = Array.from({ length: OCR_MAX_REQUESTS_ADMIN }, (_, i) => startedAt + i * 100);
       const out = await clusterHarvest({
         pairs: [{ id: "s1#0", sampleId: "s1", label: "A", value: "1" }],
         sampleCount: 1,
@@ -478,7 +487,7 @@ describe("⚠️ the clustering call", () => {
     try {
       const startedAt = h.now();
       const slotStarts = Array.from(
-        { length: OCR_MAX_REQUESTS - 1 },
+        { length: OCR_MAX_REQUESTS_ADMIN - 1 },
         (_, i) => startedAt + i,
       );
       const out = await clusterHarvest({
