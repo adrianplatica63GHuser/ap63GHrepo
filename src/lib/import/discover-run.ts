@@ -205,13 +205,48 @@ export function typeAwaitsForm(input: {
   typeHasForm: boolean;
   typeIsIdCard: boolean;
 }): boolean {
+  return typeMayHoldAForm(input) && !input.typeHasForm;
+}
+
+/**
+ * May this type have a form AT ALL — whether or not it already has one?
+ *                                                              (Slice #29.09)
+ *
+ * ⚠️ **THIS IS THE SAME RULE WITH ONE TERM REMOVED, AND `typeAwaitsForm` IS NOW
+ * DEFINED IN TERMS OF IT — the direction that file's own header insists on.**
+ * DocTypeEngine asks a question #27.05 never had to: not "is this type waiting
+ * for a form", but "may I point twenty documents and twenty billed reads at
+ * this type". The two answers differ for exactly one input — a type that
+ * ALREADY has a form — because a discovery run against such a type is a normal
+ * thing to do (it is how you find what is still unrecognised) and the save is
+ * additive. They must not differ for any other, and writing the refusal by hand
+ * in the new screen is precisely how they would: `type-form-gate.ts`'s header
+ * says a validator that disagrees with the executor is worse than no validator,
+ * because it is believed, and #29.06 was deleted for being that shape.
+ *
+ * So the two permanent refusals live here, once:
+ *
+ *  - **CARTE_IDENTITATE.** It has no form and must never be given one — its
+ *    data comes from the import's own identity-card step, and a second editable
+ *    copy of a CNP on every document is what `id-card.ts` refuses. Without this
+ *    a user would discover the refusal by spending twenty reads first.
+ *  - **The catch-all.** NECLASIFICAT holds documents whose type is WRONG, not
+ *    documents whose type is unfinished. A form distilled from whatever
+ *    happened to be unclassifiable would be written onto the row every
+ *    unrecognised document in the archive shares.
+ */
+export function typeMayHoldAForm(input: {
+  typeId: string;
+  fallbackTypeId: string | null;
+  typeIsIdCard: boolean;
+}): boolean {
   if (input.typeId === "") return false;
   // ⚠️ Ahead of every other term, because it is the one that is about the
   // DOCUMENT and it makes the row's sentence wrong as well as the read: a card
   // must not print "this type has no form yet" either. See above.
   if (input.typeIsIdCard) return false;
   if (input.fallbackTypeId !== null && input.typeId === input.fallbackTypeId) return false;
-  return !input.typeHasForm;
+  return true;
 }
 
 /**

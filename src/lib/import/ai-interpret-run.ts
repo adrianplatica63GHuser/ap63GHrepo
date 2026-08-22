@@ -393,10 +393,24 @@ export async function fetchWithTimeout(
 ): Promise<Response> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), ms);
+  // ⚠️ **A CALLER'S OWN `signal` USED TO BE SILENTLY DROPPED** — `{ ...init,
+  // signal: controller.signal }` overwrites it, and no caller had ever passed
+  // one, so nothing noticed until #29.09 needed a Cancel on a two-minute run
+  // and got a button that aborted nothing. The two are linked instead: either
+  // the timeout or the caller aborts the request, and the listener is removed
+  // in the `finally` so a long-lived caller signal does not accumulate one
+  // listener per request.
+  const caller = init?.signal ?? undefined;
+  const relay = () => controller.abort();
+  if (caller) {
+    if (caller.aborted) controller.abort();
+    else caller.addEventListener("abort", relay, { once: true });
+  }
   try {
     return await fetch(url, { ...init, signal: controller.signal });
   } finally {
     clearTimeout(timer);
+    caller?.removeEventListener("abort", relay);
   }
 }
 

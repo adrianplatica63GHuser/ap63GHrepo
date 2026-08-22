@@ -387,3 +387,79 @@ Rules:
 - Report what is printed, not what you infer it means. Never invent a label that is not on the page.
 - Output strictly valid JSON — no comments, no trailing commas, no markdown code fences.`;
 }
+
+// ---------------------------------------------------------------------------
+// Slice #29.09 — the SECOND call: meaning across samples, not wording
+// ---------------------------------------------------------------------------
+//
+// ⚠️ **THIS IS A SECOND CALL, NOT A CLEVERER FIRST ONE, AND THE PROMPT ABOVE
+// MUST NOT CHANGE.** `buildDiscoverSystemPrompt` asks for „the label EXACTLY as
+// printed" and „the value EXACTLY as printed", and that is the evidence.
+// Normalising a caption at read time would throw away the thing this call needs.
+//
+// What many samples give that one never did is the same meaning appearing many
+// times in many wordings against many different values. Folding those into one
+// field is ONE call over the harvested pairs — one for the whole run, not one
+// per sample, so it costs nothing against the ten-per-minute limiter that paces
+// the reads themselves.
+//
+// ⚠️ **IT IS GIVEN THE VALUES AS WELL AS THE LABELS, and that is the point
+// rather than a convenience.** The values are what prove two differently-worded
+// captions are the same thing: „Preţul vânzării este de" against 100.000 RON
+// and „Preț" against 250.000 RON are one field, and no amount of string
+// similarity says so. Adrian's reasoning is the brief and is quoted into the
+// prompt itself, because it is the fact that makes the task tractable: these
+// documents perform the same financial transaction and are required by law to
+// carry the same information in order to be certified, so the wording is
+// secondary and the meaning is the fact.
+//
+// ⚠️ **THE MODEL RETURNS IDS, NEVER TEXT.** Every pair is sent with a stable id
+// and the answer is a grouping of those ids. So the model cannot invent,
+// translate or tidy a caption on the way through: every label and every value
+// the user is later shown came off a document verbatim, and the label the form
+// offers is chosen by counting (`distilledLabel`) rather than by the model. A
+// prompt that asked for a "canonical name" would put a machine-written caption
+// on a type every future document is read against — which is the schema-fitting
+// discover mode exists to avoid, reintroduced one step later.
+
+/** One harvested pair, as the clustering call is shown it. */
+export type ClusterInputPair = {
+  /** Stable across the request and the response — e.g. "s3#12". */
+  id: string;
+  /** Which sample it came off. Two pairs from ONE document are not agreement. */
+  sampleId: string;
+  label: string;
+  value: string;
+};
+
+export function buildClusterSystemPrompt(sampleCount: number): string {
+  return `You are given every label -> value pair read off ${sampleCount} different Romanian documents that are all of the SAME TYPE.
+
+Your job is to group the pairs BY MEANING, not by wording.
+
+Why this is possible: these documents all perform the same act, and Romanian law requires each of them to carry the same information in order to be certified. So the same fact appears in every one of them, under whatever wording that notary or that office happened to print. The wording is secondary. The meaning is the fact.
+
+Use the VALUES as well as the labels. Two captions worded differently that hold values of the same kind — a sum of money, a cadastral number, a surface area, a person acting in the same capacity — are the same field. Two captions worded almost identically that hold values of different kinds are not.
+
+Respond with ONLY a single JSON object, no prose, no markdown fences.
+
+Shape:
+{
+  "clusters": [
+    {
+      "meaning": string,      // a SHORT Romanian description of the fact, for your own bookkeeping only
+      "memberIds": [string]   // ids of every pair that carries that fact
+    }
+  ]
+}
+
+Rules:
+- Use ONLY the ids you were given. Never invent an id. Never repeat an id in two clusters.
+- Every id must appear in exactly one cluster. A pair that matches nothing else is its own cluster of one — do not drop it, and do not force it into a cluster it does not belong to. A field present in one document and not the others is decided by counting afterwards, not by you.
+- Do NOT merge two facts because they sit next to each other on the page. A seller's name and a seller's address are two fields.
+- Do NOT merge two DIFFERENT parties or two DIFFERENT parcels into one cluster. If a document names a seller and a buyer, those are two clusters, however similarly the two captions are worded.
+- DO merge across wording, spelling, diacritics, abbreviation, case, and punctuation: "Nr. cadastral", "NUMAR CADASTRAL", "Număr cadastral:" and "Nr. cad." are one cluster.
+- DO merge a caption that appears with a value stuck to it in one document and without it in another.
+- "meaning" is never shown to a user and is never stored. Do not spend effort making it pretty.
+- Output strictly valid JSON — no comments, no trailing commas, no markdown code fences.`;
+}
