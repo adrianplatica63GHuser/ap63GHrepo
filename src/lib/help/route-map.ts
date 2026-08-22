@@ -103,6 +103,7 @@ export function resolveHelpScreenKey(pathname: string): HelpScreenKey | null {
     switch (second) {
       case "value-lists":   return "admin-value-lists";
       case "import":        return "admin-import";
+      case "doc-type-engine": return "admin-doc-type-engine";   // Slice #29.09
       case "tags":          return "admin-tags";
       case "settings":      return "admin-settings";
       case "users":         return "admin-users";

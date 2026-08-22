@@ -15,6 +15,7 @@ import {
   HelpCircle,
   Calculator,
   Search,
+  Lightbulb,
 } from "lucide-react";
 
 export type NavItem = {
@@ -110,7 +111,21 @@ export const NAV_SECTIONS: NavSection[] = [
       // visit beside the import; it IS the import's first phase, and a second
       // nav entry would have been a second door to a picker that must have
       // exactly one.
+      //
+      // ⚠️ **Slice #29.09 adds a SECOND folder picker to this section, and it
+      // does not break the rule above — but only because that rule is about the
+      // IMPORT.** „Distilare Tipizate" picks a folder of sample documents,
+      // reads them, and writes `template_fields` onto one document type. It
+      // imports nothing: no `document` row is created, no page is uploaded,
+      // nothing reaches the archive, and there is no path from it into the
+      // import. The thing #24.02a forbade was a second DOOR TO THE IMPORT'S OWN
+      // PICKER — a user who could start the same run from two places. This is a
+      // different run with a different output, and the import's stop screen
+      // (#29.08's `typesBlocked.whatNext`) is what sends people to it. Said
+      // here because the comment above, left alone, reads as forbidding this
+      // entry.
       { key: "import", href: "/admin/import", icon: Upload },
+      { key: "docTypeEngine", href: "/admin/doc-type-engine", icon: Lightbulb },
       { key: "postImportReport", icon: ClipboardList },
       { key: "calculation", href: "/admin/calculation", icon: Calculator },
     ],

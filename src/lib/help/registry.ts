@@ -64,6 +64,10 @@ export const HELP_SCREENS = [
   // ── Administration ──────────────────────────────────────────────────────
   { key: "admin-value-lists", label: "Administration — Reference Data" },
   { key: "admin-import", label: "Administration — Import" },
+  // Slice #29.09. Registered rather than opted out: a screen that spends money
+  // on twenty model reads and then writes a form every future document of a
+  // type is read against is the opposite of self-evident.
+  { key: "admin-doc-type-engine", label: "Administration — DocTypeEngine" },
   { key: "admin-calculation", label: "Administration — Calculation" },
   { key: "admin-calculation-history", label: "Administration — Calculation History" },
   { key: "admin-calculation-run", label: "Administration — Calculation Run Detail" },

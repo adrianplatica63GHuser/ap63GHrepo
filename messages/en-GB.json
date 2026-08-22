@@ -1020,6 +1020,7 @@
       "users": "Users & Access",
       "referenceData": "Reference Data",
       "import": "Import to the System",
+      "docTypeEngine": "DocTypeEngine",
       "postImportReport": "Post-Import Report",
       "calculation": "Calculation of a Side Road",
       "globalSearch": "Global Search",
@@ -3082,6 +3083,113 @@
     "recentlyViewed": {
       "title": "Recently viewed",
       "empty": "No recently viewed items"
+    }
+  },
+  "docTypeEngine": {
+    "pageTitle": "DocTypeEngine",
+    "pick": {
+      "title": "Choose the type, the sample folder and the threshold",
+      "intro": "Point this at a folder of several documents of the same kind — usually ten to twenty. Each one is read in full, they are then compared with each other, and the form carrying what they have in common is proposed. Nothing is imported: no document is created and nothing is written to the archive."
+    },
+    "types": {
+      "label": "The document type that gets the form",
+      "placeholder": "Choose a type…",
+      "refusedIdCard": "cannot have a form",
+      "refusedFallback": "cannot have a form",
+      "alreadyHasForm": "already has a form",
+      "additiveNote": "{count, plural, one {This type already has one field. New fields are added to it; none of the existing ones is changed or removed.} other {This type already has # fields. New fields are added to them; none of the existing ones is changed or removed.}}",
+      "loadFailed": "The list of document types could not be read. Reload the page and try again.",
+      "sessionLost": "Your session has expired, so the list of document types could not be read. Sign in again in a new tab, then reload this page."
+    },
+    "folder": {
+      "pick": "Choose the sample folder…",
+      "picked": "{count, plural, =0 {Folder “{folder}” holds no document that can be read.} one {Folder “{folder}”: one sample.} other {Folder “{folder}”: # samples.}}",
+      "noSamples": "A sample folder must hold images or PDFs. Text files and other formats cannot be read.",
+      "unsupported": "Your browser doesn't support local folder access. Please use Chrome, Edge, or another Chromium-based browser.",
+      "walkFailed": "The folder could not be read. Check that you granted read permission and try again.",
+      "overflow": "{count, plural, one {The folder holds one more document beyond the {max}-sample limit for one run. It will not be read. Split the folder if you want to use them all.} other {The folder holds # more documents beyond the {max}-sample limit for one run. They will not be read. Split the folder if you want to use them all.}}"
+    },
+    "matching": {
+      "label": "Matching %",
+      "hint": "A piece of information becomes a field on the form if it appears in at least this share of the samples that were actually read. The rest is not lost: on every future import it goes to “Enhanced Notes”, as it does today.",
+      "freeToChange": "Change it here — nothing is re-read and nothing is charged."
+    },
+    "cost": {
+      "note": "{count, plural, =0 {No folder has been chosen, so nothing will be read.} one {AI reading costs money: one sample will be read in full, plus one comparison call at the end.} other {AI reading costs money: # samples will be read in full, plus one comparison call at the end.}}",
+      "pace": "{minutes, plural, one {At most {perMinute} reads are sent per minute, so it takes at least one minute.} other {At most {perMinute} reads are sent per minute, so it takes at least # minutes.}}"
+    },
+    "run": {
+      "start": "Start reading",
+      "starting": "Starting…",
+      "progress": "{done} of {total} samples finished.",
+      "current": "Reading: {file}",
+      "waiting": "Waiting {seconds} seconds: at most {perMinute} reads are sent per minute. No sample is lost because of this.",
+      "nothingRead": "No sample could be read, so no form can be proposed. Try again in a few minutes.",
+      "sessionLost": "Your session expired while the samples were being read. The ones read before that are below; the rest were never sent. Sign in again in a new tab, then start over.",
+      "noPairs": "The samples were read, but no label–value pair was found in them, so there is nothing to compare.",
+      "clusterFailed": "The samples were read, but comparing them failed. Those readings have already been paid for; starting over pays for them again.",
+      "cancel": "Stop reading",
+      "cancelling": "Stopping…",
+      "cancelNote": "This stops the waiting and any sample not yet sent. A read already under way finishes — it has been paid for either way.",
+      "clusterRateLimited": "Comparing the samples was refused by the rate limit, even after waiting. The readings have already been paid for. Wait a few minutes and start over.",
+      "cancelled": "Reading was stopped. The samples read before that are below; the rest were never sent and were not paid for.",
+      "cancelledNothing": "Reading was stopped before any sample had been read, so no form can be proposed.",
+      "comparing": "Comparing the samples that were read. This is the last call and it is paid for once.",
+      "comparingAfterCancel": "Reading has stopped. The samples read so far are still being compared — otherwise the readings already paid for would be good for nothing. This is the last call and it may take a minute."
+    },
+    "review": {
+      "title": "The proposed form",
+      "denominator": "{picked, plural, one {{read} of one chosen sample was read.} other {{read} of # chosen samples were read.}}",
+      "unread": "{count, plural, one {One sample could not be read. Every percentage below is computed over the samples read, not the samples chosen.} other {# samples could not be read. Every percentage below is computed over the samples read, not the samples chosen.}}",
+      "overCapacity": "A document type may hold at most {max} fields, and this one would reach {would}. Raise the Matching % or take some fields out.",
+      "aboveTitle": "{count, plural, =0 {No field above the line} one {One field on the form} other {# fields on the form}}",
+      "aboveEmpty": "Nothing appears in enough samples for the threshold you chose. Lower the Matching % to see what sits just below it.",
+      "includeAria": "Keep the field “{label}” on the form",
+      "label": "Label",
+      "type": "Kind",
+      "typeText": "Text",
+      "typeTextarea": "Long text",
+      "typeDate": "Date",
+      "typeNumber": "Number",
+      "foundIn": "{count, plural, one {found in one sample of {read} ({percent}%)} other {found in # samples of {read} ({percent}%)}}",
+      "hint": "AI hint",
+      "hintNote": "This keeps the wording as it is printed on the documents. Rename the label above however you like — the system still reads the field the same way, because the hint carries the wording from the page.",
+      "evidence": "{count, plural, one {See the value read out of one sample} other {See the values read out of # samples}}",
+      "belowTitle": "{count, plural, one {One piece of information below the line} other {# pieces of information below the line}}",
+      "belowNote": "These do not become fields. On every future import they will go to “Enhanced Notes”, as they do today — nothing is lost, but they get no box of their own on the form.",
+      "skippedPages": "{count, plural, one {One page was not sent to be read (too many pages, too large a file, or a format that cannot be read), so one document was read only in part.} other {# pages were not sent to be read (too many pages, files too large, or formats that cannot be read), so some documents were read only in part.}}",
+      "truncatedReads": "{count, plural, one {One reading stopped at the answer limit, so only the beginning of that document was taken.} other {# readings stopped at the answer limit, so only the beginning of those documents was taken.}}",
+      "partialComparison": "{count, plural, =0 {The comparison was partial: the answer stopped at its size limit, so some information may not have been grouped.} one {One piece of information was left out of the comparison, so it appears on its own, as though it had been found in a single document.} other {# pieces of information were left out of the comparison, so they appear on their own, as though each had been found in a single document.}}",
+      "alreadyTitle": "{count, plural, one {One piece of information the type already has} other {# pieces of information the type already has}}",
+      "alreadyNote": "These are above the line, but the type already has a field for each of them, so they are not offered again. The existing fields are left untouched.",
+      "forType": "A form for the type “{type}”.",
+      "startOver": "Start over",
+      "nothingFound": "Nothing in common was found across these documents. Check that they really are all of the same kind.",
+      "keyPending": "(not saved)",
+      "variants": "Printed on the documents as: {wordings}",
+      "exampleValue": "for example “{value}”",
+      "labelAria": "Label of the field “{label}”",
+      "typeAria": "Kind of the field “{label}”",
+      "hintAria": "AI hint for the field “{label}”",
+      "labelRequired": "Every ticked field needs a label. Fill them in, or untick the empty rows.",
+      "labelDuplicate": "A row has been renamed to the name of a field the type already has. Choose another name or untick the row — otherwise there would be two columns for one thing.",
+      "keyNow": "Here the field is being added now, so the key is decided from the label you approve and is shown beneath it as you type."
+    },
+    "save": {
+      "button": "{count, plural, one {Approve the form (one field)} other {Approve the form (# fields)}}",
+      "saving": "Saving…",
+      "note": "Only the ticked fields are written. Nothing else in the archive changes.",
+      "conflict": "This type's form changed elsewhere while you were looking at it here. Reload the page and start over, so that what arrived in between is not lost.",
+      "tooMany": "A document type may hold at most {max} fields. Take some out and try again.",
+      "failed": "The form could not be saved. Try again.",
+      "sessionLost": "Your session has expired, so the form was NOT saved. Sign in again in a new tab, then press “Approve the form” again — the samples that were read are not lost.",
+      "typeGone": "The document type no longer exists. It was deleted elsewhere, so there is nowhere to save the form."
+    },
+    "saved": {
+      "title": "The form has been saved",
+      "body": "{count, plural, one {Type “{type}” now has one more field.} other {Type “{type}” now has # more fields.}}",
+      "whatNext": "From now on every document of this type fills these fields in by itself, during the import, without stopping to ask. An import that stopped for this type can be started again from the beginning.",
+      "toImport": "Go to Import to the System"
     }
   }
 }

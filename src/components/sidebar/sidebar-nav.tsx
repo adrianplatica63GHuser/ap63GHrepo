@@ -367,6 +367,10 @@ export function SidebarNav() {
     users:                     t("items.users"),
     referenceData:             t("items.referenceData"),
     import:                    t("items.import"),
+    // Slice #29.09. ⚠️ This map is not derived from NAV_SECTIONS and nothing
+    // tests that the two agree — an item added to nav-config without a line
+    // here renders its raw key in the sidebar, silently.
+    docTypeEngine:             t("items.docTypeEngine"),
     postImportReport:          t("items.postImportReport"),
     calculation:               t("items.calculation"),
     globalSearch:              t("items.globalSearch"),
