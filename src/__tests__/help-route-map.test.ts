@@ -80,6 +80,7 @@ describe("resolveHelpScreenKey", () => {
     it.each([
       ["/admin/value-lists", "admin-value-lists"],
       ["/admin/import", "admin-import"],
+      ["/admin/doc-type-engine", "admin-doc-type-engine"],
       ["/admin/tags", "admin-tags"],
       ["/admin/settings", "admin-settings"],
       ["/admin/users", "admin-users"],
@@ -136,6 +137,7 @@ describe("resolveHelpScreenKey", () => {
       "/documents/[id]/associate-party",
       "/admin/value-lists",
       "/admin/import",
+      "/admin/doc-type-engine",
       "/admin/calculation",
       "/admin/calculation/history",
       "/admin/calculation/history/[id]",
