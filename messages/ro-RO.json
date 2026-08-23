@@ -1947,12 +1947,19 @@
         "bodyLow": "Scanarea AI a recunoscut acest fișier cu încredere scăzută. Este posibil ca tipul documentului să fie greșit, iar câmpurile extrase să nu corespundă documentului real. Verificați cu atenție fiecare valoare înainte de a salva."
       },
       "resumeButton": "Reia ultimul import ({folder})",
+      "resumeCheckFailed": "Nu s-a putut verifica dacă documentele din ultimul raport mai există în arhivă.",
+      "resumeStale": "{count, plural, one {Un document din ultimul raport (din {total}) nu mai există în arhivă.} few {# documente din ultimul raport (din {total}) nu mai există în arhivă.} other {# de documente din ultimul raport (din {total}) nu mai există în arhivă.}}",
       "resumedTitle": "Ultimul import — {folder}",
       "resumedAge": "acum {minutes} min",
       "resumedDone": "importate",
       "resumedErrors": "erori",
       "resumedNewImport": "Import nou",
       "resumedHint": "Fișierele nu mai sunt disponibile după închiderea filei browserului, așa că aici rămân doar legăturile. Deschideți documentele individual pentru a le vedea.",
+      "resumedChecking": "Se verifică dacă documentele din acest raport mai există în arhivă…",
+      "resumedCheckFailed": "Nu s-a putut verifica dacă documentele de mai jos mai există în arhivă. Este posibil ca raportul să nu mai corespundă arhivei, iar unele legături să nu ducă nicăieri.",
+      "resumedGone": "{count, plural, one {Un document din acest raport (din {total}) nu mai există în arhivă, așa că raportul nu mai corespunde în întregime arhivei.} few {# documente din acest raport (din {total}) nu mai există în arhivă, așa că raportul nu mai corespunde în întregime arhivei.} other {# de documente din acest raport (din {total}) nu mai există în arhivă, așa că raportul nu mai corespunde în întregime arhivei.}}",
+      "resumedStillThere": "Toate documentele din acest raport se află încă în arhivă.",
+      "resumedRowGone": "nu mai există în arhivă",
       "tagDialog": {
         "title": "Creare etichete din dosare",
         "message": "Vor fi create etichete pentru {count} dosare din structura selectată. Fiecare document importat va fi etichetat automat cu dosarele sale.",
@@ -2160,6 +2167,9 @@
         "title": "Ce va face acest import",
         "intro": "Folderul „{folder}” a fost citit și documentele lui au fost clasificate. Nu s-a salvat nimic în arhivă.",
         "introNothingSent": "Folderul „{folder}” a fost citit. Niciun fișier din el nu a avut nevoie de clasificare automată — fie se aflau deja în sistem, fie nu se pot citi ca imagine. Nu s-a salvat nimic în arhivă.",
+        "arithmetic": "{files, plural, one {Un fișier de importat din folder devine} few {# fișiere de importat din folder devin} other {# de fișiere de importat din folder devin}} {documents, plural, one {un singur document} few {# documente} other {# de documente}}. {pageGroups, plural, =0 {Fiecare fișier este un document în sine.} one {Un folder de pagini scanate devine un singur document, iar fiecare celălalt fișier este un document în sine.} few {# foldere de pagini scanate devin câte un singur document, iar fiecare celălalt fișier este un document în sine.} other {# de foldere de pagini scanate devin câte un singur document, iar fiecare celălalt fișier este un document în sine.}}",
+        "arithmeticCalls": "{count, plural, one {Un fișier a fost trimis spre clasificare automată} few {# fișiere au fost trimise spre clasificare automată} other {# de fișiere au fost trimise spre clasificare automată}}: numai imaginile și PDF-urile pot fi citite de model{pageGroups, plural, =0 {} other {, iar dintr-un folder de pagini se trimite doar prima pagină}}.",
+        "coordinateNote": "{count, plural, one {Fișierul din rândul „Fișier de coordonate” este numărat și printre documentele care vor fi create: se importă ca document în sine, la fel ca celelalte. Dacă el este într-adevăr fișierul de coordonate al proprietății, se importă chiar dacă se află deja în sistem — orice colț trebuie să arate din ce document a fost citit.} few {Fișierele din rândul „Fișier de coordonate” sunt numărate și printre documentele care vor fi create: fiecare se importă ca document în sine, la fel ca celelalte. Cele care sunt într-adevăr fișiere de coordonate ale proprietăților se importă chiar dacă se află deja în sistem — orice colț trebuie să arate din ce document a fost citit.} other {Fișierele din rândul „Fișier de coordonate” sunt numărate și printre documentele care vor fi create: fiecare se importă ca document în sine, la fel ca celelalte. Cele care sunt într-adevăr fișiere de coordonate ale proprietăților se importă chiar dacă se află deja în sistem — orice colț trebuie să arate din ce document a fost citit.}} Regula este explicată la pasul „Documente aflate deja în sistem”, la PEX-04.",
         "documents": "Documente care vor fi create",
         "pageGroups": "…dintre care cu mai multe pagini",
         "classificationCalls": "Imagini pentru clasificare automată",
@@ -2379,7 +2389,7 @@
         }
       },
       "title": "Restricții privind fișierele",
-      "intro": "Structura folderului este în regulă. Urmează o verificare: fiecare fișier trebuie să poată fi preluat de sistem. Citiți mai jos ce se poate importa și ce nu, bifați că ați luat la cunoștință, apoi apăsați „Verifică fișierele” — se verifică același folder, nu trebuie să îl alegeți din nou.",
+      "intro": "Urmează o verificare: fiecare fișier trebuie să poată fi preluat de sistem. Citiți mai jos ce se poate importa și ce nu, bifați că ați luat la cunoștință, apoi apăsați „Verifică fișierele” — se verifică același folder, nu trebuie să îl alegeți din nou.",
       "rulesTitle": "Restricțiile pe care trebuie să le respecte fișierele",
       "showRules": "Arată din nou restricțiile",
       "hideRules": "Ascunde restricțiile",
@@ -2431,7 +2441,7 @@
         }
       },
       "title": "Duplicate în folderul ales",
-      "intro": "Structura și fișierele sunt în regulă. Urmează o verificare, tot pe același folder: același lucru nu trebuie să se afle în el de două ori, altfel ajunge de două ori și în arhivă. Se compară doar fișierele din folderul ales, între ele — ce se află deja în sistem se verifică la pasul următor.",
+      "intro": "Urmează o verificare, tot pe același folder: același lucru nu trebuie să se afle în el de două ori, altfel ajunge de două ori și în arhivă. Se compară doar fișierele din folderul ales, între ele — ce se află deja în sistem se verifică la pasul următor.",
       "rulesTitle": "Ce se consideră duplicat",
       "showRules": "Arată din nou explicațiile",
       "hideRules": "Ascunde explicațiile",
@@ -2466,6 +2476,41 @@
         "notCheckedYet": "Folderul nu a fost verificat încă — pagina conține doar explicațiile.",
         "warningsTitle": "Fișiere care nu au putut fi măsurate",
         "rulesOnlyName": "duplicate"
+      }
+    },
+    "checkResult": {
+      "title": "Rezultatul pasului „{stage}”",
+      "structure": {
+        "rules": "Reguli de structură verificate",
+        "violations": "Reguli încălcate",
+        "directories": "Foldere citite",
+        "propertyFolders": "Foldere de proprietate găsite",
+        "sharedFolders": "Foldere comune sau flotante",
+        "noSharedFolders": "niciunul",
+        "files": "Fișiere păstrate",
+        "documents": "Documente găsite în folder",
+        "pageGroups": "…dintre care foldere de pagini scanate",
+        "ignored": "Fișiere ignorate automat",
+        "readingsTitle": "Cum a fost citit numele fiecărui folder de proprietate",
+        "readingsRule": "Numele se împarte la primele două liniuțe: înainte de prima este tarlaua sau sola, între prima și a doua este parcela, iar tot ce urmează după a doua este text liber — nu este citit ca tarla sau parcelă și nu face parte din identitatea proprietății. „per” între două cifre se citește ca bară de fracție. Dacă ceva de mai jos nu este cum vă așteptați, redenumiți folderul în File Explorer și porniți din nou verificarea de pe acest ecran — numele se citește din nou la fiecare verificare, iar din el se face și eticheta pusă pe documentele din folder.",
+        "tarla": "Tarla/sola:",
+        "parcela": "Parcela:",
+        "description": "Restul numelui (text liber):",
+        "noDescription": "nimic după a doua liniuță",
+        "moreFolders": "{count, plural, one {încă un folder, neafișat aici} few {încă # foldere, neafișate aici} other {încă # de foldere, neafișate aici}}"
+      },
+      "constraints": {
+        "rules": "Restricții verificate",
+        "violations": "Restricții încălcate",
+        "files": "Fișiere măsurate",
+        "documents": "Documente din care fac parte",
+        "unreadable": "Fișiere care nu au putut fi citite"
+      },
+      "duplication": {
+        "rules": "Reguli de duplicat verificate",
+        "found": "Copii găsite",
+        "files": "Fișiere comparate între ele",
+        "documents": "Documente comparate între ele"
       }
     },
     "preexisting": {
@@ -2506,7 +2551,7 @@
         }
       },
       "title": "Documente aflate deja în sistem",
-      "intro": "Structura, fișierele și duplicatele sunt în regulă. Aceasta este prima verificare care se uită în arhivă, nu în folderul ales: sistemul vă spune care dintre documente se află deja în sistem și ce se va întâmpla cu fiecare, înainte ca ele să fie trimise spre clasificare. În lista de mai jos nu aveți nimic de îndreptat: citiți ce urmează să se întâmple, bifați și mergeți mai departe.",
+      "intro": "Aceasta este prima verificare care se uită în arhivă, nu în folderul ales: sistemul vă spune care dintre documente se află deja în sistem și ce se va întâmpla cu fiecare, înainte ca ele să fie trimise spre clasificare. În lista de mai jos nu aveți nimic de îndreptat: citiți ce urmează să se întâmple, bifați și mergeți mai departe.",
       "clean": "Niciun document din folderul ales nu se află deja în sistem.",
       "notesTitle": "Ce înseamnă „se află deja în sistem”",
       "showNotes": "Arată din nou explicațiile",

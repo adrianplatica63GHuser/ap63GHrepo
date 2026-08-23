@@ -460,6 +460,44 @@ export async function updateDocument(
   });
 }
 
+/**
+ * Which of these document ids still exist?   (Slice #29.11)
+ *
+ * ⚠️ **THE POSITIVE ANSWER, NOT THE NEGATIVE ONE, AND THAT IS DELIBERATE.** The
+ * caller wants to know which rows of a saved import report have gone; deriving
+ * that from what came back means an empty result is read as "all of them are
+ * gone", which is true. Returning the MISSING ids from here instead would put
+ * that subtraction on the server, where a query that matched nothing because it
+ * was malformed and a query that matched nothing because the rows are gone
+ * would produce the same confident list of casualties.
+ *
+ * ⚠️ **EVERY ID MUST BE UUID-SHAPED, and an adversarial round made this say
+ * so.** The comment here used to read "ids are not required to be real:
+ * anything that matches nothing is simply absent from the result" — true of a
+ * well-formed uuid that has since been deleted, and false of a string that is
+ * not one. `document.id` is a `uuid` column, so `inArray` binds the values into
+ * a comparison Postgres resolves at type `uuid`, and a value like `"DOC00123"`
+ * raises `22P02 invalid input syntax for type uuid`: the WHOLE call rejects, and
+ * every good id in the batch is lost with it. That is the all-or-nothing
+ * failure `POST /api/documents/exists` filters ahead of this call to prevent,
+ * and a caller who believed the old sentence would walk straight into it.
+ *
+ * A well-formed uuid that matches nothing IS simply absent, exactly as
+ * `deleteDocuments` treats a stale id.
+ *
+ * Read-only. No transaction, no join, one index lookup.
+ */
+export async function existingDocumentIds(ids: string[]): Promise<string[]> {
+  if (ids.length === 0) return [];
+
+  const rows = await db
+    .select({ id: document.id })
+    .from(document)
+    .where(inArray(document.id, ids));
+
+  return rows.map((r) => r.id);
+}
+
 // ---------------------------------------------------------------------------
 // Delete
 // ---------------------------------------------------------------------------

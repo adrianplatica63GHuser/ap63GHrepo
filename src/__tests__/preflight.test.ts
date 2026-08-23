@@ -22,6 +22,7 @@ import {
   type PreflightServerReport,
 } from "@/lib/import/preflight";
 import type { FSEntry, FSFileEntry, FSPageGroupEntry } from "@/lib/import/folder-utils";
+import { uploadKeysOf } from "@/lib/import/checks";
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -243,6 +244,62 @@ describe("forecastImport", () => {
       pageGroups: 0,
       classificationCalls: 0,
       coordinateCandidates: [],
+      filesToImport: 0,
+    });
+  });
+
+  /**
+   * `filesToImport` — Slice #29.11.
+   *
+   * ⚠️ The whole reason the field exists is that it is NOT `documents`. The
+   * Evaluation screen prints both, one row under the other, and #29.01's F10 is
+   * that nothing said how one becomes the other. A page group is many files and
+   * one document, and a test that used only single-file entries would pass on an
+   * implementation that returned `entries.length` and left the sentence a lie.
+   */
+  it("counts every page of a page group as a file, and the group as one document", () => {
+    const entries: FSEntry[] = [
+      fileEntry("contract.pdf"),
+      fileEntry("Acte/nota.docx"),
+      pageGroupEntry("Acte/CVC_2021", ["001.jpg", "002.jpg", "003.jpg"]),
+    ];
+    const f = forecastImport(entries);
+    expect(f.filesToImport).toBe(5);   // 2 loose files + 3 pages
+    expect(f.documents).toBe(3);       // the group is ONE document
+  });
+
+  it("agrees with uploadKeysOf, which is the definition of what is uploaded", () => {
+    // The field is counted in `forecastImport`'s own loop rather than by calling
+    // `uploadKeysOf`, to keep an import edge out of the module graph for one
+    // integer. This is the test that pays for that decision: if the two ever
+    // disagree, `uploadKeysOf` is right and the forecast is the bug — the
+    // module says so in as many words.
+    const entries: FSEntry[] = [
+      fileEntry("a.jpg"),
+      pageGroupEntry("Grup", ["1.jpg", "2.jpg"]),
+      fileEntry("Sub/b.txt"),
+      pageGroupEntry("Sub/Alt", ["1.jpg"]),
+    ];
+    expect(forecastImport(entries).filesToImport).toBe(uploadKeysOf(entries).length);
+  });
+
+  it("counts an empty page group as no files at all", () => {
+    // ⚠️ **UNREACHABLE THROUGH `walkFolder`, and saying so is the point.** An
+    // adversarial round checked: the drop filter runs BEFORE page-group
+    // detection, the branch is guarded on `childFiles.length > 0`
+    // (`folder-utils.ts`), and `isPageGroup([])` is false — so a folder whose
+    // files were all dropped becomes an ordinary directory with no entry at
+    // all, and `folder-utils.ts` is the only producer of `kind: "page-group"`
+    // in `src/`. This pins `forecastImport`'s own defensiveness, and it is
+    // recorded as unreachable because it is the ONLY state in which
+    // `documents > filesToImport` — the state the Evaluation screen's
+    // `filesToImport > 0` guard would be insufficient for. A later reader who
+    // took this for a live case would re-argue that guard from a false premise.
+    const entries: FSEntry[] = [pageGroupEntry("Gol", [])];
+    const f = forecastImport(entries);
+    expect({ files: f.filesToImport, documents: f.documents }).toEqual({
+      files: 0,
+      documents: 1,
     });
   });
 });

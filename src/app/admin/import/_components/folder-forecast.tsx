@@ -138,7 +138,8 @@ export function FolderForecast({
     if (active === null || active === document.body) headingRef.current?.focus();
   }, []);
 
-  const { documents, pageGroups, classificationCalls, coordinateCandidates } = forecast;
+  const { documents, pageGroups, classificationCalls, coordinateCandidates, filesToImport } =
+    forecast;
 
   /**
    * Is there anything for Continuă to do?   (Slice #26.08)
@@ -209,6 +210,98 @@ export function FolderForecast({
           <Row label={t("uploadSize")} value={t("megabytes", { mb: formatMb(uploadBytes) })} />
         )}
       </dl>
+
+      {/* ── The arithmetic the table is showing   (Slice #29.11) ───────────
+
+          ⚠️ **THREE NUMBERS OVER ONE FOLDER, AND NOTHING SAID HOW ONE BECOMES
+          THE NEXT.** Five files became four documents and three classification
+          calls, printed one under the other with no sentence between them —
+          #29.01's F10. The rows are right; what was missing is that a folder of
+          scanned pages is many files and one document, and that only an image
+          or a PDF can be sent to a model at all.
+
+          ⚠️ **PAST TENSE, AND THAT IS #29.08's DOING RATHER THAN A STYLE
+          CHOICE.** The classification now runs BEFORE this screen, so the call
+          count is a fact about money already spent, not a forecast. The header
+          of this file says the same thing about the intro line above; a sentence
+          here promising what "will be sent" would put the screen back into the
+          tense the reorder took it out of.
+
+          Outside the `<dl>` rather than under the row each half explains: a
+          `<p>` between a `<dt>`/`<dd>` pair is not a description list any more,
+          and the two sentences are about the table as a whole. */}
+      {/* ⚠️ **NOT DRAWN OVER AN EMPTY RUN, and an adversarial round added the
+          guard.** Two ordinary runs reach this screen with nothing to import —
+          the header two blocks up names both — and the paragraph then rendered
+          "0 fișiere de importat din folder devin 0 documente. Fiecare fișier
+          este un document în sine." Two sentences about an empty set, under a
+          screen whose own `nothingToImport` line already says the one true
+          thing there is to say.
+
+          ⚠️ **ONE TEST, NOT TWO.** A later round added `&& documents > 0`
+          alongside it, for the empty page group — no files, one document. That
+          case has `filesToImport === 0`, so this test already excludes it, and
+          the second one could not fire on any input: `documents` is
+          `entries.length` and `filesToImport` is summed over those same
+          entries. A guard that cannot fire is the kind a later reader deletes
+          the real one instead of.
+
+          ⚠️ **AND THE SECOND SENTENCE IS ITS OWN CONDITION.** With nothing
+          classified the intro above has already said so, in more detail; the
+          `=0` branch that used to live in `arithmeticCalls` printed the same
+          assertion a second time, two paragraphs down. */}
+      {filesToImport > 0 && (
+        <p className="mt-3 text-sm text-fade dark:text-zinc-400">
+          {t("arithmetic", { files: filesToImport, documents, pageGroups })}
+          {classificationCalls > 0 && (
+            <>
+              {" "}
+              {/* `pageGroups` as well as `count`: the sentence ends with a rule
+                  about how a folder of pages is sent, and a folder that holds
+                  none should not be told it. `arithmetic` above already guards
+                  its own page-folder clause the same way. */}
+              {t("arithmeticCalls", { count: classificationCalls, pageGroups })}
+            </>
+          )}
+        </p>
+      )}
+
+      {/* ⚠️ **THE COORDINATE ROW NAMES A DOCUMENT AND NEVER SAID IT WAS ONE.**
+          The `coordinateFile` row reports which file will be read for the
+          property's corners; what it did not say is that the same file is ALSO
+          imported as a document in its own right, and is therefore already
+          counted in "Documente care vor fi create" at the top of the table. The
+          reasoning sits two stages back, in PEX-04 — corners must show which
+          document they were read from — and a user who has passed that screen
+          has no way to connect the two.
+
+          ⚠️ **THE STRING NAMES THE ROW RATHER THAN POINTING AT IT**, and an
+          adversarial round is why. It opened "Fișierul din rândul de mai sus",
+          and the row above this paragraph is not the coordinate row: two more
+          rows and the whole arithmetic sentence stand between them, so the
+          deixis landed on the ignored-file count. Naming the row also survives
+          the next row anybody adds.
+
+          Only when there is one. A run with no coordinate file should not have
+          to read an explanation of a row that says "niciunul găsit".
+
+          ⚠️ **PLURAL, AND HEDGED, BECAUSE THE ROW ABOVE IS.** An adversarial
+          round found the first draft saying "THE coordinate file" over a row
+          that can read "3 fișiere găsite": `coordinateCandidates` is built by
+          `isCoordinateFileName`, a plain extension test, and NOT by
+          `isDeclaredCoordinateFile`, the `coord….txt` rule STR-08 enforces and
+          the property step actually reads. So a folder whose only `.txt` is
+          `notite.txt` gets a row, and a note asserting that a property's
+          corners were read from it would be a reason invented for a file
+          nothing will ever open. The sentence now says what is certainly true
+          of all of them — every file in the folder becomes a document — and
+          hedges the corner argument onto whichever of them really is the
+          coordinate file. */}
+      {coordinateCandidates.length > 0 && (
+        <p className="mt-2 text-sm text-fade dark:text-zinc-400">
+          {t("coordinateNote", { count: coordinateCandidates.length })}
+        </p>
+      )}
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
         {/* The ONLY disabled case is an empty folder, where there is literally

@@ -125,9 +125,15 @@ import {
   type ResolvedRun,
 } from "./property-step-dialog";
 import { ResumedSessionView } from "./resumed-session-view";
+import { ImportCheckResult, PropertyNameReadings } from "./import-check-result";
 import { PreflightChecklist } from "./preflight-checklist";
 import { FolderForecast } from "./folder-forecast";
 import { forecastImport } from "@/lib/import/preflight";
+import {
+  summariseConstraints,
+  summariseDuplication,
+  summariseStructure,
+} from "@/lib/import/check-summary";
 import { ReportSections } from "./report-sections";
 import { checkFolder, uploadKeysOf, type FileMeta } from "@/lib/import/checks";
 import { readFileMetadata } from "@/lib/import/metadata-pass";
@@ -142,12 +148,14 @@ import { shouldInterpretEntry } from "@/lib/import/ai-interpret-run";
 import { isIdCardEntry } from "@/lib/import/id-card";
 import { ImportScanningStage } from "./import-scanning-stage";
 import { ImportStepGate } from "./import-step-gate";
+import { auditSavedSession, type SavedSessionAudit } from "@/lib/import/session-client";
 import { ImportRunStage } from "./import-run-stage";
 import { CancelImportDialog } from "./cancel-import-dialog";
 import { checkStructureStage } from "@/lib/import/structure-check";
-import type {
-  PropertyConfirmation,
-  PropertyConfirmations,
+import {
+  SHARED_FOLDER_DISPLAY_NAMES,
+  type PropertyConfirmation,
+  type PropertyConfirmations,
 } from "@/lib/import/structure-rules";
 import { checkConstraintsStage } from "@/lib/import/constraint-check";
 import { checkDuplicationStage } from "@/lib/import/duplication-check";
@@ -185,6 +193,20 @@ import type { CancelFacts } from "@/lib/import/cancel-consequences";
 // ---------------------------------------------------------------------------
 
 let _dirHandle: FSDirectoryHandle | null = null;
+
+/**
+ * How many property-folder name readings the Structure result lists.
+ *                                                            (Slice #29.11)
+ *
+ * STR-02 caps a run at five property folders and a clean verdict is the only
+ * state this card is drawn in, so this ceiling is not reachable today. It is
+ * here because the cap is a rule that can be raised in a slice that never looks
+ * at this file, and an unbounded list of folder-name readings would then be the
+ * whole screen. A count of what is not shown goes under the list rather than
+ * the list silently ending — "no silent caps" is the same rule the folder
+ * report's `MAX_PATHS_SHOWN` follows.
+ */
+const MAX_NAME_READINGS_SHOWN = 5;
 
 // ---------------------------------------------------------------------------
 // Scan helpers
@@ -394,6 +416,21 @@ export function ImportWizard() {
   const tStepGate = useTranslations("adminImport.stepGate");
   /** Slice #29.08 — the same region announces the stop; see its comment. */
   const tTypesBlocked = useTranslations("adminImport.typesBlocked");
+  /** Slice #29.11 — the account a clean check gives of what it looked at. */
+  const tCheck = useTranslations("adminImport.checkResult");
+  /**
+   * Each stage's own all-clear sentence.   (Slice #29.11)
+   *
+   * ⚠️ **THE STAGE'S OWN STRING, NOT A SECOND SET WRITTEN FOR THIS CARD.**
+   * `adminImport.structure.clean` and its two siblings have said what a passing
+   * check concluded since #26.04; what was missing was any screen that showed
+   * them on the common path. Writing a new "Structura este în regulă" here
+   * would have been a second place the same conclusion is worded, which is the
+   * drift #29.02's step-gate header refuses for exactly these strings.
+   */
+  const tStructure = useTranslations("adminImport.structure");
+  const tConstraints = useTranslations("adminImport.constraints");
+  const tDuplication = useTranslations("adminImport.duplication");
 
   const [phase, setPhase] = useState<ImportPhase>("information");
   const [rootFolderName, setRootFolderName] = useState<string>("");
@@ -469,6 +506,83 @@ export function ImportWizard() {
   const [savedSession, setSavedSession] = useState<SavedImportSession | null>(
     () => loadSavedSession(),
   );
+
+  /**
+   * The archive's answer, and the report it is an answer ABOUT.
+   *                                                            (Slice #29.11)
+   *
+   * ⚠️ **THE SESSION IS HELD BESIDE THE ANSWER, AND `react-hooks/set-state-in-effect`
+   * IS WHY.** The first version stored the answer alone and cleared it to `null`
+   * synchronously inside the effect, on the way in, so that a new report showed
+   * "se verifică…" instead of the previous one's verdict. ESLint refuses that —
+   * a `setState` in an effect body is a cascading render — and the rule is right
+   * about the shape even though the intent was sound: "which report is this an
+   * answer to" is a fact about the answer, not a second piece of state to keep
+   * in step with it.
+   *
+   * Carried as the session OBJECT rather than a name or a timestamp, because
+   * object identity is exactly the question being asked: `setSavedSession` is
+   * only ever handed a fresh `loadSavedSession()` parse, so a report replaced by
+   * a finished run is a different object even when its folder name is the same.
+   *
+   * ⚠️ **THE WIZARD OFFERED A RESUME IT HAD NEVER CHECKED, and #29.04 turned
+   * that from a rarity into the weekly state of things.** `SavedImportEntry`
+   * holds a `docId` and no more, and nothing compared those ids to the archive:
+   * the observed run offered "Reia ultimul import (A)" and listed PROP01429 and
+   * three DOC codes against a database that had been emptied. The resumed view
+   * is read-only by design — File System Access handles cannot be serialised —
+   * so validating the ids is the only lever there is.
+   */
+  const [auditedReport, setAuditedReport] = useState<{
+    session: SavedImportSession;
+    result: SavedSessionAudit;
+  } | null>(null);
+
+  /**
+   * Does the saved report still match the archive?
+   *
+   * `null` while the question is in flight, before it has been asked at all, or
+   * when the answer in hand belongs to a report that has since been replaced.
+   * The answer's own `ok: false` covers "we could not ask", which is a
+   * different thing again — see `SavedSessionAudit`.
+   *
+   * ⚠️ **DERIVED, NOT STORED, and that is what makes the stale case impossible
+   * rather than merely handled.** A copy in state has to be cleared by
+   * something; this one cannot be wrong, because it stops matching the moment
+   * `savedSession` becomes a different object. Same argument the three verdicts
+   * further down make for deriving rather than storing, and it is why there is
+   * no longer any `setState` on the way into the effect below.
+   */
+  const savedSessionAudit: SavedSessionAudit | null =
+    auditedReport !== null && auditedReport.session === savedSession
+      ? auditedReport.result
+      : null;
+
+  /**
+   * Ask once per saved report, and re-ask when a run replaces it.
+   *
+   * ⚠️ **`cancelled` STILL EARNS ITS KEEP, although the derived value above
+   * already refuses a stale answer.** Two reports can be in flight across one
+   * `setSavedSession` — a finished run replaces the report while the previous
+   * one's lookup is still out — and without this the older promise would land
+   * LAST, overwriting the new report's entry with an answer about the old one.
+   * The derived read would then correctly show `null` for ever, because the
+   * stored session no longer matches. This is the ordinary effect-cleanup shape
+   * rather than the run token the walk uses, because there is nothing to abort:
+   * the request is a single read that costs one index lookup.
+   *
+   * The effect body writes no state at all — see `auditedReport`.
+   */
+  useEffect(() => {
+    if (savedSession === null) return;
+    let cancelled = false;
+    void auditSavedSession(savedSession).then((result) => {
+      if (!cancelled) setAuditedReport({ session: savedSession, result });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [savedSession]);
 
   /**
    * The current run's cancellation token.   (Slice #26.03)
@@ -2031,6 +2145,75 @@ export function ImportWizard() {
     phase === "preexisting-report";
 
   /**
+   * Is a clean-check account honest RIGHT NOW?   (Slice #29.11)
+   *
+   * ⚠️ **BOTH MOUNT POINTS READ THIS, and an adversarial round is why it is not
+   * just the trail.** The inline card is handed to a stage panel as
+   * `resultDetail`, and the panel's own `!busy && verdict.clean` guard cannot
+   * see a walk that FAILED — so gating only the trail left the whole account on
+   * screen at a Structure rest whose re-check had just been unable to open the
+   * folder. One expression, read at all four render sites.
+   *
+   * Three conditions, and each is load-bearing:
+   *
+   *  - **Inside the four check stages.** Past Pre-existing the classification
+   *    has run and the Evaluation screen is the account of the folder; a stack
+   *    of green cards beside it would compete with the conclusion the user is
+   *    there to read. Written as the four `in*` flags rather than as a list of
+   *    phases, so a phase added to any stage is covered without touching this.
+   *  - **Nothing running.** Every card is derived from `entries`,
+   *    `observations` and `metadata`, all three of which a re-check
+   *    repopulates — so during a check the cards describe the PREVIOUS round's
+   *    folder, over a check that may be about to refuse this one. That is the
+   *    lie each panel's own `!busy && verdict.clean` guard was written for,
+   *    across three adversarial rounds.
+   *  - **And no walk error standing.** ⚠️ The worse half, and the one the panel
+   *    guard misses. A re-check pressed after the user has renamed, moved or
+   *    unplugged the chosen folder in File Explorer — which is exactly what
+   *    these stages send them away to do — fails in `runWalk`, sets `walkError`
+   *    and puts the phase back on the stage it came from, WITHOUT clearing
+   *    `entries` or `observations`. The busy test is false by then, so the
+   *    cards would come back: nine rows and a list of folder names to go and
+   *    rename, describing a folder the wizard has just failed to open, with the
+   *    red "the check did not run" alert several screens below them. Before
+   *    this slice the equivalent stale claim was the single clause in
+   *    `constraints.intro`, which this slice removed — so the card must not
+   *    reintroduce it at nine times the size.
+   *
+   * The busy phases are listed positively rather than tested as "not one of the
+   * settled ones": a phase nobody thought of then hides the cards, which is the
+   * under-claiming direction.
+   */
+  const checkAccountsSettled =
+    (inStructure || inConstraints || inDuplication || inPreexisting) &&
+    phase !== "walking" &&
+    phase !== "constraints-checking" &&
+    phase !== "duplication-checking" &&
+    phase !== "preexisting-checking" &&
+    walkError === null;
+
+  /**
+   * May the ATTRIBUTED cards — the earlier stages' accounts — be drawn?
+   *                                                            (Slice #29.11)
+   *
+   * ⚠️ **NOT AT A STEP-THROUGH PAUSE, and an adversarial round added that.** At
+   * a pause the emerald card below the panel carries the screen's one primary
+   * action, and `import-step-gate.tsx`'s own header depends on it landing
+   * "directly under the stage it is talking about". The trail is deliberately
+   * NOT exclusive on phase — it draws every stage the user is not standing on —
+   * so at a Duplication rest it inserted two retrospective cards between the
+   * panel and the button that leaves it, and a keyboard user reading forward
+   * from the panel's focused heading walked through both to reach it.
+   *
+   * Nothing is lost by dropping them there: with step-through ticked every
+   * clean check rests on its own stage and shows its account INLINE, which is
+   * the whole point of the toggle. It is also what makes this slice's claim
+   * about the ticked path true — that a user who has it on sees exactly what
+   * they saw before, plus the detail under each stage's own all-clear.
+   */
+  const checkTrailVisible = checkAccountsSettled && activeGate === null;
+
+  /**
    * The four phases the Import panel stands behind.   (Slice #26.09)
    *
    * `ready` is the panel's own screen; the three after it are its modal steps,
@@ -2305,6 +2488,161 @@ export function ImportWizard() {
         : checkDuplicationStage({ entries, metadata }),
     [duplicationChecked, entries, metadata],
   );
+
+  /**
+   * What each clean check looked at, ready to render.   (Slice #29.11)
+   *
+   * ⚠️ **BUILT FROM THE SAME VERDICT THE PHASE DECISION USED, and that is the
+   * requirement rather than a convenience.** Each memo starts by asking its own
+   * stage's verdict whether it is clean and returns `null` otherwise, so a card
+   * cannot exist for a check that did not run or did not pass. `duplicationVerdict`
+   * is already `null` unless `duplicationChecked` — the flag that says the match
+   * actually ran — so the Duplication card is impossible on a run that skipped
+   * it, without this file expressing that rule a second time. Same argument
+   * `phaseAfterFileChecks` makes for returning `duplicationRan`/`preexistingRan`
+   * instead of letting the caller re-derive them.
+   *
+   * ⚠️ **TWO NODES PER STAGE, AND THEY ARE NEVER BOTH MOUNTED.** `inline` goes
+   * inside the stage's own panel, under its emerald all-clear, which has already
+   * named the stage and said that it passed. `attributed` goes above a LATER
+   * stage's panel and has to name the stage itself. The render below picks by
+   * whether that stage's panel is on screen; building both here keeps the facts
+   * and their labels in one place instead of two.
+   *
+   * ⚠️ **THE FACTS ARE THE VERDICT'S OWN ZEROES, not literals.** "Reguli
+   * încălcate: 0" reads `verdict.violations.length`. A hard-coded zero would go
+   * on printing itself if the guard above ever stopped holding, which is the one
+   * failure mode a screen like this must not have.
+   */
+  const structureResult = useMemo(() => {
+    if (structureVerdict === null || !structureVerdict.clean) return null;
+
+    const summary = summariseStructure({ entries, observations });
+    const shown = summary.readings.slice(0, MAX_NAME_READINGS_SHOWN);
+    const hidden = summary.readings.length - shown.length;
+
+    const facts = [
+      { label: tCheck("structure.rules"), value: String(summary.rulesChecked) },
+      {
+        label: tCheck("structure.violations"),
+        value: String(structureVerdict.violations.length),
+      },
+      {
+        label: tCheck("structure.directories"),
+        value: String(summary.directoriesWalked),
+      },
+      {
+        label: tCheck("structure.propertyFolders"),
+        value: String(summary.propertyFolders),
+      },
+      {
+        label: tCheck("structure.sharedFolders"),
+        // The folder names themselves, never translated: they are strings on a
+        // disk, which is why `SHARED_FOLDER_DISPLAY_NAMES` is the same in both
+        // locales. See its note.
+        value:
+          summary.sharedFolders.length === 0
+            ? tCheck("structure.noSharedFolders")
+            : summary.sharedFolders
+                .map((id) => SHARED_FOLDER_DISPLAY_NAMES[id])
+                .join(", "),
+      },
+      { label: tCheck("structure.files"), value: String(summary.filesKept) },
+      { label: tCheck("structure.documents"), value: String(summary.documents) },
+      { label: tCheck("structure.pageGroups"), value: String(summary.pageGroups) },
+      { label: tCheck("structure.ignored"), value: String(summary.filesIgnored) },
+    ];
+
+    const readings = (
+      <PropertyNameReadings
+        readings={shown}
+        strings={{
+          title: tCheck("structure.readingsTitle"),
+          rule: tCheck("structure.readingsRule"),
+          tarla: tCheck("structure.tarla"),
+          parcela: tCheck("structure.parcela"),
+          description: tCheck("structure.description"),
+          noDescription: tCheck("structure.noDescription"),
+          more: hidden > 0 ? tCheck("structure.moreFolders", { count: hidden }) : null,
+        }}
+      />
+    );
+
+    return {
+      inline: <ImportCheckResult facts={facts}>{readings}</ImportCheckResult>,
+      attributed: (
+        <ImportCheckResult
+          attribution={{
+            title: tCheck("title", { stage: tStage("stage.structure") }),
+            headline: tStructure("clean"),
+          }}
+          facts={facts}
+        >
+          {readings}
+        </ImportCheckResult>
+      ),
+    };
+  }, [structureVerdict, entries, observations, tCheck, tStage, tStructure]);
+
+  const constraintsResult = useMemo(() => {
+    if (constraintVerdict === null || !constraintVerdict.clean) return null;
+
+    const summary = summariseConstraints(entries);
+    const facts = [
+      { label: tCheck("constraints.rules"), value: String(summary.rulesChecked) },
+      {
+        label: tCheck("constraints.violations"),
+        value: String(constraintVerdict.violations.length),
+      },
+      { label: tCheck("constraints.files"), value: String(summary.filesMeasured) },
+      { label: tCheck("constraints.documents"), value: String(summary.documents) },
+      {
+        label: tCheck("constraints.unreadable"),
+        value: String(constraintVerdict.unreadable.length),
+      },
+    ];
+
+    return {
+      inline: <ImportCheckResult facts={facts} />,
+      attributed: (
+        <ImportCheckResult
+          attribution={{
+            title: tCheck("title", { stage: tStage("stage.constraints") }),
+            headline: tConstraints("clean"),
+          }}
+          facts={facts}
+        />
+      ),
+    };
+  }, [constraintVerdict, entries, tCheck, tStage, tConstraints]);
+
+  const duplicationResult = useMemo(() => {
+    if (duplicationVerdict === null || !duplicationVerdict.clean) return null;
+
+    const summary = summariseDuplication(entries);
+    const facts = [
+      { label: tCheck("duplication.rules"), value: String(summary.rulesChecked) },
+      {
+        label: tCheck("duplication.found"),
+        value: String(duplicationVerdict.violations.length),
+      },
+      { label: tCheck("duplication.files"), value: String(summary.filesCompared) },
+      { label: tCheck("duplication.documents"), value: String(summary.documents) },
+    ];
+
+    return {
+      inline: <ImportCheckResult facts={facts} />,
+      attributed: (
+        <ImportCheckResult
+          attribution={{
+            title: tCheck("title", { stage: tStage("stage.duplication") }),
+            headline: tDuplication("clean"),
+          }}
+          facts={facts}
+        />
+      ),
+    };
+  }, [duplicationVerdict, entries, tCheck, tStage, tDuplication]);
 
   /*
    * ⚠️ **`classificationSpent` USED TO BE DERIVED HERE, and #29.08 moved it up
@@ -2586,6 +2924,35 @@ export function ImportWizard() {
           </button>
         )}
 
+        {/* ⚠️ **THE REPORT IS NOT OFFERED AS THOUGH IT STILL MATCHED THE
+            ARCHIVE.**   (Slice #29.11)
+
+            The button above is left live in every state, deliberately: it is
+            also the only route to "Import nou", which is what CLEARS a stale
+            report. Taking it away would strand the user with a saved session
+            they cannot get rid of. What changes is that the button no longer
+            stands alone — a report whose documents are gone says so before it
+            is opened, and a lookup that could not be made says THAT rather than
+            nothing, because silence beside a live button reads as an all-clear.
+
+            Nothing is said while the answer is in flight, and nothing when the
+            report checks out: the user pressing Resume already assumes it is
+            fine, and confirming an assumption on a toolbar is noise. */}
+        {phase === "structure" && savedSession && savedSessionAudit !== null && (
+          !savedSessionAudit.ok ? (
+            <span className="text-xs text-amber-700 dark:text-amber-400">
+              {t("resumeCheckFailed")}
+            </span>
+          ) : savedSessionAudit.missing.size > 0 ? (
+            <span className="text-xs text-amber-700 dark:text-amber-400">
+              {t("resumeStale", {
+                count: savedSessionAudit.missing.size,
+                total: savedSessionAudit.linked,
+              })}
+            </span>
+          ) : null
+        )}
+
         {rootFolderName && (
           <span className="font-mono text-sm text-ink dark:text-zinc-200">
             📁 {rootFolderName}
@@ -2661,6 +3028,10 @@ export function ImportWizard() {
           onRulesOpenChange={setStructureRulesOpen}
           propertyAnswers={propertyAnswers}
           onPropertyAnswer={setPropertyAnswer}
+          // Slice #29.11 — the inline half of the account. `checkAccountsSettled`
+          // rather than the panel's own guard alone: see that flag's note for
+          // the failed-re-check case the panel cannot see.
+          resultDetail={checkAccountsSettled ? structureResult?.inline : undefined}
         />
       )}
 
@@ -2687,6 +3058,7 @@ export function ImportWizard() {
           gated={activeGate?.rest === "constraints"}
           rulesOpen={constraintsRulesOpen}
           onRulesOpenChange={setConstraintsRulesOpen}
+          resultDetail={checkAccountsSettled ? constraintsResult?.inline : undefined}
         />
       )}
 
@@ -2715,6 +3087,7 @@ export function ImportWizard() {
           gated={activeGate?.rest === "duplication"}
           rulesOpen={duplicationRulesOpen}
           onRulesOpenChange={setDuplicationRulesOpen}
+          resultDetail={checkAccountsSettled ? duplicationResult?.inline : undefined}
         />
       )}
 
@@ -2801,6 +3174,65 @@ export function ImportWizard() {
           showSkipped={showSkipped}
           onShowSkippedChange={setShowSkipped}
         />
+      )}
+
+      {/* ── What the checks behind us found   (Slice #29.11) ──────────────
+
+          ⚠️ **THIS IS THE UNTICKED PATH, WHICH IS THE DEFAULT AND THEREFORE THE
+          COMMON ONE.** With step-through on, a clean check rests on its own
+          stage and the panel shows its account inline. With it off — the way
+          almost every run goes — the panel is replaced in the same commit that
+          moves the phase on, so the only trace a stage left was a four-word
+          clause at the top of the NEXT stage's intro: "Structura folderului
+          este în regulă." Fourteen rules, a whole walk and a folder-name parse,
+          in four words, one screen too late. #29.01's F9.
+
+          ⚠️ **IT REPORTS; IT DOES NOT DECIDE.** No phase moves because of
+          anything here, no stage was added, and the gate #29.02 built is
+          untouched — a run with step-through ticked sees exactly what it saw
+          before, because a stage whose panel is on screen is skipped here and
+          renders its own account inside that panel instead. That exclusion is
+          also what stops a card appearing twice.
+
+          ⚠️ **BELOW THE STAGE PANELS, NOT ABOVE THEM, AND AN ADVERSARIAL ROUND
+          MOVED IT.** Every stage panel focuses its own `<h2>` when it mounts —
+          `focus()` scrolls — and on this path the panel mounts in the same
+          commit that inserts these cards. Drawn above, a Structure card
+          carrying nine rows and a folder-name reading per property pushed the
+          heading below the fold, so arriving at the next stage scrolled the
+          account that had just appeared off the top of the screen. Worse for a
+          screen-reader user, and unconditionally: focus lands on the panel
+          heading, and reading FORWARD from there never reaches anything above
+          it. Below, the cards are where reading forward arrives — which is also
+          where a retrospective account belongs, under the screen that is
+          actually asking the user for something.
+
+          ⚠️ **HIDDEN WHILE A CHECK IS RUNNING, AND AFTER ONE THAT FAILED.**
+          Every card is derived from `entries`/`observations`/`metadata`, and a
+          re-check repopulates those; see `checkAccountsSettled` for all three
+          halves, and `checkTrailVisible` for why a step-through pause draws
+          none of this.
+
+          ⚠️ **AND BELOW THE FOLDER REPORT TOO, WHICH IS WHY IT SITS HERE
+          RATHER THAN UNDER THE PANELS.** At Pre-existing the screen also
+          carries `ReportSections` — the folder's own advisory findings, some of
+          which end "Nu porniți importul", on the one screen whose button
+          spends money. Three emerald "everything was fine" cards between the
+          panel and those findings is the same competition this block avoids at
+          Evaluation by stopping. Found by an adversarial round.
+
+          ⚠️ **AND IT STOPS AT THE CHECK STAGES.** Past Pre-existing the run has
+          been classified and the Evaluation screen is the account of it; a
+          growing stack of green cards above that screen would be three
+          conclusions competing with the one the user is there to read. The
+          folder-name reading is still reachable later — the property step shows
+          it, which is where it used to appear for the first time. */}
+      {checkTrailVisible && (
+        <>
+          {!inStructure && structureResult?.attributed}
+          {!inConstraints && constraintsResult?.attributed}
+          {!inDuplication && duplicationResult?.attributed}
+        </>
       )}
 
       {/* The classification has run, every type it found has a form, and
@@ -3054,6 +3486,9 @@ export function ImportWizard() {
       {phase === "resumed" && savedSession && (
         <ResumedSessionView
           session={savedSession}
+          // Slice #29.11 — what the archive said about this report's documents.
+          // `null` while the question is in flight; see the state's own note.
+          audit={savedSessionAudit}
           onClear={() => {
             clearSavedSession();
             setSavedSession(null);

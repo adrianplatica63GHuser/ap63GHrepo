@@ -1947,12 +1947,19 @@
         "bodyLow": "The AI scan recognised this file with low confidence. The document type may be wrong, and the extracted fields may not match the real document. Check every value carefully before saving."
       },
       "resumeButton": "Resume last import ({folder})",
+      "resumeCheckFailed": "It could not be checked whether the documents in the last report are still in the archive.",
+      "resumeStale": "{count, plural, one {One document from the last report (of {total}) is no longer in the archive.} other {# documents from the last report (of {total}) are no longer in the archive.}}",
       "resumedTitle": "Last import — {folder}",
       "resumedAge": "{minutes} min ago",
       "resumedDone": "imported",
       "resumedErrors": "errors",
       "resumedNewImport": "New import",
       "resumedHint": "File handles are unavailable after closing the browser tab, so only the links remain here. Open each document directly to see it.",
+      "resumedChecking": "Checking whether the documents in this report are still in the archive…",
+      "resumedCheckFailed": "It could not be checked whether the documents below are still in the archive. This report may no longer match the archive, and some links may lead nowhere.",
+      "resumedGone": "{count, plural, one {One document from this report (of {total}) is no longer in the archive, so the report no longer matches the archive in full.} other {# documents from this report (of {total}) are no longer in the archive, so the report no longer matches the archive in full.}}",
+      "resumedStillThere": "Every document in this report is still in the archive.",
+      "resumedRowGone": "no longer in the archive",
       "tagDialog": {
         "title": "Create tags from folders",
         "message": "Tags will be created for {count} folders in the selected structure. Each imported document will be automatically tagged with its folders.",
@@ -2160,6 +2167,9 @@
         "title": "What this import will do",
         "intro": "Folder “{folder}” has been read and its documents have been classified. Nothing has been saved to the archive.",
         "introNothingSent": "Folder “{folder}” has been read. None of its files needed automatic classification — either they are already in the system, or they cannot be read as images. Nothing has been saved to the archive.",
+        "arithmetic": "{files, plural, one {One file to import from the folder becomes} other {# files to import from the folder become}} {documents, plural, one {a single document} other {# documents}}. {pageGroups, plural, =0 {Each file is a document in its own right.} one {One folder of scanned pages becomes a single document, and every other file is a document in its own right.} other {# folders of scanned pages each become a single document, and every other file is a document in its own right.}}",
+        "arithmeticCalls": "{count, plural, one {One file was sent for automatic classification} other {# files were sent for automatic classification}}: only images and PDFs can be read by the model{pageGroups, plural, =0 {} other {, and a folder of pages is sent by its first page alone}}.",
+        "coordinateNote": "{count, plural, one {The file in the “Coordinate file” row is also counted among the documents that will be created: it is imported as a document in its own right, like the others. If it really is the property's coordinate file, it is imported even when it is already in the system — a corner must show which document it was read from.} other {The files in the “Coordinate file” row are also counted among the documents that will be created: each is imported as a document in its own right, like the others. The ones that really are properties' coordinate files are imported even when they are already in the system — a corner must show which document it was read from.}} The reasoning is at the “Already in the system” step, under PEX-04.",
         "documents": "Documents that will be created",
         "pageGroups": "…of which multi-page",
         "classificationCalls": "Images for automatic classification",
@@ -2379,7 +2389,7 @@
         }
       },
       "title": "File constraints",
-      "intro": "The folder's structure is correct. A check follows: every file in it has to be something the system can take in. Read what can and cannot be imported below, tick that you have taken note, then press “Check the files” — the same folder is checked, you do not have to choose it again.",
+      "intro": "A check follows: every file in the chosen folder has to be something the system can take in. Read what can and cannot be imported below, tick that you have taken note, then press “Check the files” — the same folder is checked, you do not have to choose it again.",
       "rulesTitle": "What the files have to satisfy",
       "showRules": "Show the constraints again",
       "hideRules": "Hide the constraints",
@@ -2431,7 +2441,7 @@
         }
       },
       "title": "Copies inside the chosen folder",
-      "intro": "The structure and the files are in order. A check follows, on the same folder: nothing must sit in it twice, or it reaches the archive twice as well. Only the files in the chosen folder are compared, against each other — what is already in the system is checked at the next step.",
+      "intro": "A check follows, on the same folder: nothing must sit in it twice, or it reaches the archive twice as well. Only the files in the chosen folder are compared, against each other — what is already in the system is checked at the next step.",
       "rulesTitle": "What counts as a copy",
       "showRules": "Show the explanations again",
       "hideRules": "Hide the explanations",
@@ -2466,6 +2476,41 @@
         "notCheckedYet": "The folder has not been checked yet — this page holds the explanations only.",
         "warningsTitle": "Files that could not be measured",
         "rulesOnlyName": "copies"
+      }
+    },
+    "checkResult": {
+      "title": "What the “{stage}” step found",
+      "structure": {
+        "rules": "Structure rules checked",
+        "violations": "Rules broken",
+        "directories": "Folders read",
+        "propertyFolders": "Property folders found",
+        "sharedFolders": "Shared folders (comune / flotante)",
+        "noSharedFolders": "none",
+        "files": "Files kept",
+        "documents": "Documents found in the folder",
+        "pageGroups": "…of which folders of scanned pages",
+        "ignored": "Files ignored automatically",
+        "readingsTitle": "How each property folder's name was read",
+        "readingsRule": "The name is split at the first two hyphens: everything before the first is the tarla or sola, everything between the first and the second is the parcela, and everything after the second is free text — it is not read as a tarla or a parcela and it is not part of the property's identity. “per” between two digits is read as a fraction bar. If anything below is not what you expected, rename the folder in File Explorer and run this screen's check again — the name is read afresh at every check, and the tag put on the folder's documents is made from it too.",
+        "tarla": "Tarla/sola:",
+        "parcela": "Parcela:",
+        "description": "Rest of the name (free text):",
+        "noDescription": "nothing after the second hyphen",
+        "moreFolders": "{count, plural, one {one more folder, not listed here} other {# more folders, not listed here}}"
+      },
+      "constraints": {
+        "rules": "Constraints checked",
+        "violations": "Constraints broken",
+        "files": "Files measured",
+        "documents": "Documents they belong to",
+        "unreadable": "Files that could not be read"
+      },
+      "duplication": {
+        "rules": "Duplicate rules checked",
+        "found": "Copies found",
+        "files": "Files compared against each other",
+        "documents": "Documents compared against each other"
       }
     },
     "preexisting": {
@@ -2506,7 +2551,7 @@
         }
       },
       "title": "Documents already in the system",
-      "intro": "The structure, the files and the copies are all in order. This is the first check that looks in the archive rather than in the chosen folder: the system tells you which of the documents are already in it and what will happen to each of them, before any of them is sent for classification. There is nothing to put right in the list below: read what is about to happen, tick below, and carry on.",
+      "intro": "This is the first check that looks in the archive rather than in the chosen folder: the system tells you which of the documents are already in it and what will happen to each of them, before any of them is sent for classification. There is nothing to put right in the list below: read what is about to happen, tick below, and carry on.",
       "clean": "No document in the chosen folder is already in the system.",
       "notesTitle": "What “already in the system” means",
       "showNotes": "Show the explanations again",

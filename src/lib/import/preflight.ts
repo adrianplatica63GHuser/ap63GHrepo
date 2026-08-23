@@ -240,6 +240,35 @@ export type ImportForecast = {
   classificationCalls: number;
   /** Every file that could hold a coordinate export, in walk order. */
   coordinateCandidates: string[];
+  /**
+   * Files these entries will upload, page-group pages counted one by one.
+   *                                                            (Slice #29.11)
+   *
+   * ⚠️ **NOT `documents`, and the gap between the two is the whole point of the
+   * row it feeds.** A folder of scanned pages is many files and one document, so
+   * five files can become four documents and three classification calls — three
+   * different numbers over one folder, printed one under the other on the
+   * Evaluation screen with nothing saying how one becomes the next. #29.01's
+   * F10 is that silence. This is the first of the three, and it is the only one
+   * the forecast did not already carry.
+   *
+   * ⚠️ **"TO IMPORT", NOT "KEPT BY THE WALK", AND AN ADVERSARIAL ROUND RENAMED
+   * IT.** Every field here is over the entries it was HANDED, and the wizard
+   * hands this function `entriesToImport` — the walk's entries minus everything
+   * the archive already holds. The first draft named this after the walk and
+   * the Evaluation sentence said "fișiere păstrate", which is the same phrase
+   * the Structure card uses for `uploadKeysOf(entries)` over the WHOLE walk. Two
+   * different numbers under one word, two screens apart, is precisely the F10
+   * complaint this sentence was written to answer.
+   *
+   * Counted in the loop below rather than by calling `checks.ts`'
+   * `uploadKeysOf`, which produces exactly the same number for the same input:
+   * the loop already visits every entry, and this module is imported by the
+   * checker's own neighbours — adding an edge to that graph for one integer is
+   * not worth it. If the two ever disagree, `uploadKeysOf` is the definition
+   * and this is the bug.
+   */
+  filesToImport: number;
 };
 
 /**
@@ -255,11 +284,16 @@ export type ImportForecast = {
 export function forecastImport(entries: readonly FSEntry[]): ImportForecast {
   let pageGroups = 0;
   let classificationCalls = 0;
+  let filesToImport = 0;
   const coordinateCandidates: string[] = [];
 
   for (const entry of entries) {
     if (entry.kind === "page-group") {
       pageGroups++;
+      // Every page is a file the import will upload, even though the group is
+      // one document and is scanned by its first page alone. That is the
+      // arithmetic `filesToImport` exists to let the screen explain.
+      filesToImport += entry.handles.length;
       // The wizard scans a group by its first page only.
       if (entry.handles.length > 0 && isImageOrPdf(entry.handles[0].name)) {
         classificationCalls++;
@@ -267,6 +301,7 @@ export function forecastImport(entries: readonly FSEntry[]): ImportForecast {
       continue;
     }
     const file = entry as FSFileEntry;
+    filesToImport++;
     if (isImageOrPdf(file.name)) classificationCalls++;
     if (isCoordinateFileName(file.name)) coordinateCandidates.push(file.path);
   }
@@ -276,5 +311,6 @@ export function forecastImport(entries: readonly FSEntry[]): ImportForecast {
     pageGroups,
     classificationCalls,
     coordinateCandidates,
+    filesToImport,
   };
 }

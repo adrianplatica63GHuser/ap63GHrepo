@@ -48,6 +48,7 @@
  */
 
 import { useCallback, useEffect, useId, useMemo, useRef } from "react";
+import type { ReactNode } from "react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { ActivityCue } from "@/components/activity-cue";
@@ -117,6 +118,24 @@ type Props = {
   gated?: boolean;
   rulesOpen: boolean;
   onRulesOpenChange: (open: boolean) => void;
+  /**
+   * The account of what this check looked at.   (Slice #29.11)
+   *
+   * An `ImportCheckResult` card, built by the wizard and handed over already
+   * rendered, so the numbers and the strings that describe them have ONE
+   * construction site whether the card is drawn here or above a later stage's
+   * panel. See that component's header for which case is which.
+   *
+   * ⚠️ **INSIDE THE `!busy && verdict.clean` GUARD BELOW, and that is the whole
+   * safety story.** The wizard decides WHETHER to pass one; this panel decides
+   * whether the moment is honest. A re-check can turn a clean verdict dirty, and
+   * a detailed account of the previous round's folder drawn over a check that is
+   * running is the same lie the emerald line above it already guards against.
+   *
+   * Optional, so every caller that does not pass one — and the tests that render
+   * this panel on its own — keeps exactly today's screen.
+   */
+  resultDetail?: ReactNode;
 };
 
 export function ImportConstraintsStage({
@@ -131,6 +150,7 @@ export function ImportConstraintsStage({
   gated = false,
   rulesOpen,
   onRulesOpenChange,
+  resultDetail,
 }: Props) {
   const t = useTranslations("adminImport.constraints");
   // Unnamespaced, so `constraintMessageKeyFor` and `constraintScopeKeyFor` can
@@ -510,9 +530,14 @@ export function ImportConstraintsStage({
         by the route it did not have.
       */}
       {!busy && verdict !== null && verdict.clean && (
-        <p className="mt-4 text-sm font-medium text-emerald-700 dark:text-emerald-400">
-          {t("clean")}
-        </p>
+        <>
+          <p className="mt-4 text-sm font-medium text-emerald-700 dark:text-emerald-400">
+            {t("clean")}
+          </p>
+          {/* Slice #29.11 — the one line above, and then what it is an answer
+              to. See the `resultDetail` prop. */}
+          {resultDetail}
+        </>
       )}
 
       </div>
