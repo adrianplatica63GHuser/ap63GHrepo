@@ -194,6 +194,16 @@ const DIACRITIC_FORMS: Record<string, string> = {
 };
 
 /**
+ * Every accented letter above, mapped back to its ASCII base — the inverse of
+ * `DIACRITIC_FORMS`, built once so the two can never disagree.   (#29.12)
+ */
+const DIACRITIC_BASE: Record<string, string> = Object.fromEntries(
+  Object.entries(DIACRITIC_FORMS).flatMap(([base, forms]) =>
+    [...forms].map((form) => [form, base] as const),
+  ),
+);
+
+/**
  * Build a diacritic-insensitive regex source for one abbreviation key.
  *
  * Each ASCII letter becomes a character class of its accented forms, regex
@@ -209,11 +219,30 @@ function abbrPattern(key: string): string {
     .split(/\s+/)
     .map((word) =>
       word
+        // ⚠️ **Folded to the ASCII base FIRST.**   (Slice #29.12)
+        // Every ABBR *key* is ASCII, so this was a no-op while only keys were
+        // passed here. `folderNameTitleEvidence` now also matches the
+        // EXPANSIONS — "Contract de Vânzare-Cumpărare" — and there the "â" is
+        // not in `[a-zA-Z]`, so it survived into the pattern as a literal and
+        // a folder named "Contract de Vanzare-Cumparare Hascu 2005" (the way a
+        // Windows user without a Romanian keyboard writes it) matched nothing.
+        // Folding first puts every letter through the same diacritic class,
+        // which is what the rest of this function already meant.
+        .replace(/\p{L}/gu, (ch) => DIACRITIC_BASE[ch.toLowerCase()] ?? ch)
         .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
         .replace(/[a-zA-Z]/g, (ch) => {
           const forms = DIACRITIC_FORMS[ch.toLowerCase()];
           return forms ? `[${forms}]` : ch;
-        }),
+        })
+        // ⚠️ **A hyphen may be spaced.**   (Slice #29.12)
+        // The words of a key are joined with `\s+`, but a hyphen sits INSIDE
+        // one word — "Vânzare-Cumpărare" — so it stayed a literal and a folder
+        // named "Contract de Vanzare - Cumparare Hascu 2005", the way the deed
+        // prints it, matched nothing. That is exactly the user the expansion
+        // matching was added for. No ABBR key contains a hyphen, so this only
+        // ever loosens the EXPANSION patterns and `folderNameToTitleHint` is
+        // untouched.
+        .replace(/-/g, "\\s*-\\s*"),
     )
     .join("\\s+");
 }
@@ -241,18 +270,132 @@ function abbrPattern(key: string): string {
  * worked.
  */
 export function folderNameToTitleHint(name: string): string {
-  let s = name.replace(/_/g, " ");
-  for (const [k, v] of Object.entries(ABBR)) {
-    // "giu" — global, case-insensitive, Unicode (required by \p{...}).
-    // The replacement is passed as a function so a "$" in a future expansion
-    // value is never re-read as a capture-group reference.
-    const re = new RegExp(
-      `(?<![\\p{L}\\p{N}])${abbrPattern(k)}(?![\\p{L}\\p{N}])`,
-      "giu",
-    );
-    s = s.replace(re, () => v);
+  return folderNameTitleEvidence(name).title;
+}
+
+/**
+ * What a folder name actually TOLD us, alongside the title it produces.
+ *   (Slice #29.12)
+ *
+ * `folderNameToTitleHint` answers "what should this be called?". This answers
+ * the two questions the title RULE needs and the string alone cannot carry:
+ *
+ *   - `namesTheKind` — did the name say which KIND of document this is? Either
+ *     by abbreviating it ("CVC Hascu 2005") or by spelling it out ("Contract de
+ *     Vânzare-Cumpărare Hascu 2005"). "Hascu 2005" does not.
+ *   - `distinguishes` — what survives once every such phrase is removed? That is
+ *     the folder saying **which one** of them this is: "Hascu 2005". A folder
+ *     called only "CVC" leaves nothing, and thirty such folders would all be
+ *     called the same thing whatever we did.
+ *
+ * ⚠️ **ONE traversal, not two, and that is the whole reason this exists as a
+ * function rather than as a second loop in `document-title.ts`.** The rule that
+ * reads it has to agree with the hint about which abbreviations matched; a
+ * second copy of `ABBR` and `abbrPattern` would agree on the day it was written
+ * and drift on the day a key is added — the argument `#26.02` already recorded
+ * about a validator that disagrees with the executor.
+ *
+ * ⚠️ **`namesTheKind` is `.test()`, NOT "the string changed", and an
+ * adversarial round is exactly why.** Written as `title !== before` it was
+ * false for `"Plan Parcelar"` — whose ABBR entry expands to itself, so the
+ * regex matches and the replacement changes nothing — while the same folder
+ * name in any other casing ("Plan parcelar") came out true. Two folders
+ * differing by one letter's case got opposite treatment, and the one that lost
+ * its distinguishing part was the canonical spelling sitting in the table.
+ *
+ * ⚠️ **The EXPANSION is matched as well as the abbreviation.** A user who names
+ * a folder "Contract de Vânzare-Cumpărare Hascu 2005" in full has said which
+ * kind of document it is at least as plainly as one who wrote "CVC", and the
+ * whole point of the rule that reads this is to keep "Hascu 2005". Only the
+ * abbreviation is *replaced* — expanding a phrase into itself is a no-op — so
+ * `title` is byte-for-byte what it always was.
+ *
+ * ⚠️ **`distinguishes` is built from the ORIGINAL name, not from the expanded
+ * one.** Removing matches from `title` as it grows would delete text the
+ * expansion itself inserted — "Cert urbanism" expands to "Certificat urbanism",
+ * and a remainder computed off that would be reporting our own words back as
+ * the user's.
+ *
+ * ⚠️ **A match is removed as `\0`, not as a space, and that too came from an
+ * adversarial round.** Replacing with a space lets the remainder CLOSE over the
+ * hole: "Inch CVC Intab" lost "CVC" to a space, the two halves became "Inch
+ * Intab" — a key in the table — and the second pass ate them both, reporting a
+ * name that plainly distinguishes as distinguishing nothing. `\0` cannot appear
+ * in a Windows path component and is not `\s`, so nothing bridges across it; it
+ * becomes a space only at the end, once no pattern will run again.
+ *
+ * ⚠️ **A remainder must contain a letter or a digit to count.** "CVC -" leaves
+ * "-", which distinguishes nothing; the caller asks `distinguishes` for content,
+ * so the punctuation-only case has to be trimmed to empty here rather than
+ * tested for at each call site.
+ */
+export type FolderTitleEvidence = {
+  /** Exactly what `folderNameToTitleHint` returns. */
+  title: string;
+  /** The name says which KIND of document this is — abbreviated or spelled out. */
+  namesTheKind: boolean;
+  /** What is left of the name once every such phrase is removed; "" when nothing is. */
+  distinguishes: string;
+};
+
+/**
+ * The two compiled forms of one abbreviation's pattern, built once.
+ *
+ * ⚠️ **Memoised because this is on the WALK's synchronous path.** Every page
+ * group calls it, and building 28 patterns per call — each one a `\p{L}` fold, a
+ * metacharacter escape and a per-letter class substitution — measured 10× the
+ * original hint: 0.16 s to 1.7 s of blocked UI thread at `MAX_WALK_DIRECTORIES`.
+ * `ABBR` is a module constant, so the cache can never go stale. This file
+ * already carries the same finding for `DISPLAY_COLLATOR`.
+ *
+ * ⚠️ **TWO objects, and the split is the point.** `lastIndex` on a `g` regex is
+ * per-object state that `.test()` ADVANCES, so a single shared instance would
+ * make every other `test` of the same pattern answer false — the bug that
+ * "a fresh RegExp per use" was avoiding before there was a cache. The `test`
+ * form carries no `g` and therefore no state; the `replace` form does, and
+ * `String.prototype.replace` sets `lastIndex` to 0 itself for a global regex,
+ * so reusing that one is safe. Neither may be handed to the other's caller.
+ *
+ * "iu" / "giu" — case-insensitive and Unicode (required by `\p{...}`).
+ */
+const ABBR_REGEXES = new Map<string, { test: RegExp; replace: RegExp }>();
+
+function abbrRegexes(form: string): { test: RegExp; replace: RegExp } {
+  let hit = ABBR_REGEXES.get(form);
+  if (hit === undefined) {
+    const source = `(?<![\\p{L}\\p{N}])${abbrPattern(form)}(?![\\p{L}\\p{N}])`;
+    hit = { test: new RegExp(source, "iu"), replace: new RegExp(source, "giu") };
+    ABBR_REGEXES.set(form, hit);
   }
-  return s.replace(/\s+/g, " ").trim();
+  return hit;
+}
+
+export function folderNameTitleEvidence(name: string): FolderTitleEvidence {
+  const base = name.replace(/_/g, " ");
+  let title = base;
+  let rest = base;
+  let namesTheKind = false;
+
+  for (const [k, v] of Object.entries(ABBR)) {
+    for (const form of v === k ? [k] : [k, v]) {
+      const rx = abbrRegexes(form);
+      // Asked of `base`, so an expansion this loop inserted can never answer
+      // for the name the user actually wrote.
+      if (rx.test.test(base)) namesTheKind = true;
+      // Only the abbreviation is replaced — see the header. The replacement is
+      // passed as a function so a "$" in a future expansion value is never
+      // re-read as a capture-group reference.
+      if (form === k) title = title.replace(rx.replace, () => v);
+      rest = rest.replace(rx.replace, () => "\u0000");
+    }
+  }
+
+  const cleaned = rest.replace(/\u0000/g, " ").replace(/\s+/g, " ").trim();
+  return {
+    title: title.replace(/\s+/g, " ").trim(),
+    namesTheKind,
+    distinguishes: /[\p{L}\p{N}]/u.test(cleaned) ? cleaned : "",
+  };
 }
 
 // ---------------------------------------------------------------------------

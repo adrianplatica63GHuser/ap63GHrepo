@@ -70,6 +70,11 @@
 // bundled with: the party shape is declared beside the dialog that consumes it,
 // and re-declaring it here would be a second copy of a wire format.
 import type { AiExtractedParty } from "@/app/documents/_components/ai-party-linker-dialog";
+import {
+  hasPrintedHeadingLine,
+  notesWithPrintedHeading,
+  resolveImportedTitle,
+} from "@/lib/import/document-title";
 import { hasReadablePage, type FSEntry } from "@/lib/import/folder-utils";
 
 // ---------------------------------------------------------------------------
@@ -141,6 +146,59 @@ export type AiInterpretRunResult =
        * re-type was skipped — which `partialWrite` beside it already reports.
        */
       documentTypeId: string | null;
+      /**
+       * What this call did to the title.                       (Slice #29.12)
+       *
+       *   - `true`  — the entry's own name had already named this document, so
+       *               its title was KEPT and the model's reading did not win.
+       *   - `false` — the model returned a title and it was written.
+       *   - `null`  — this call made no decision about the title: the model
+       *               returned none, or the document's current state could not
+       *               be read.
+       *
+       * ⚠️ **The caller needs this because `fieldCount` deliberately does not
+       * say it.** A kept title is not a field written, so the count is right at
+       * zero — and a row whose only signal is `✓ niciun câmp completat` over a
+       * document that was read correctly, re-typed correctly and whose title
+       * was protected on purpose is the "message that contradicts the code"
+       * failure this project has shipped before.
+       *
+       * ⚠️ **`null` is a third state and not a tidier `false`, and an
+       * adversarial round is why.** The refill walk re-reads a document the
+       * first read protected. When that second read returns no title — a poorer
+       * scan, a page that would not send — a two-state flag reported `false`,
+       * the row cleared its own "title kept" sentence, and a protected document
+       * went back to reading `✓ niciun câmp completat`: the exact failure the
+       * flag was added to prevent, arrived at through the retry that was meant
+       * to help. `null` means "ask the previous answer", and the caller leaves
+       * the row's flag alone.
+       */
+      titleKept: boolean | null;
+      /**
+       * …and whether this document's Notes carry that reading. (#29.12)
+       *
+       * ⚠️ **NARROWER than `titleKept === true`, and it is only ever true
+       * alongside it.** The reading is not recorded when it IS the title we
+       * kept (nothing to say), nor when a line with the marker is already there
+       * (write-once — see `notesWithPrintedHeading`). In both of those the
+       * title was still kept, so a row keyed on `titleKept` alone told the user
+       * "the printed one is in Enhanced Notes" and sent them to a field that
+       * either had nothing in it or had a different reading.
+       *
+       * ⚠️ **…and it is gated on the DECISION, which a fourth round is why.**
+       * Computed from the notes column alone it was true on the run that
+       * OVERWROTE a user's title: an earlier read had left a marker line, the
+       * user then corrected the title by hand, the refill walk replaced their
+       * correction with the printed heading — and the row said "the printed
+       * title is in Enhanced Notes" about a heading that had just been written
+       * into `title`, over their work. The sentence is only ever allowed on a
+       * run that kept the title.
+       *
+       * Within that, it is "there is one there now", not "this call wrote one":
+       * a record put there by an earlier read is still a record the user can go
+       * and see.
+       */
+      printedHeadingNoted: boolean;
     }
   | {
       ok: false;
@@ -286,6 +344,24 @@ export function inFolderOrder<T>(
 /** The four generic baseline keys the route returns alongside documentTypeId. */
 const BASELINE_KEYS = ["title", "nrDocument", "dateDocument", "subject"] as const;
 
+/**
+ * The three that go straight in.   (Slice #29.12)
+ *
+ * ⚠️ **`title` left this loop and did not leave the route's contract**, which
+ * is why `BASELINE_KEYS` above still names it: the route returns four, and a
+ * reader checking what comes back should find four. What changed is that title
+ * is the one baseline field with a SECOND producer — the folder name — so
+ * writing it is a decision rather than a copy. That decision lives in
+ * `resolveImportedTitle` and is made once, below.
+ *
+ * The other three have no second producer. Nothing else in the system reads a
+ * document number, an issue date or a subject off a folder, so for them "the
+ * model returned something" is still the whole rule.
+ */
+const UNCONDITIONAL_BASELINE_KEYS = BASELINE_KEYS.filter(
+  (k): k is Exclude<(typeof BASELINE_KEYS)[number], "title"> => k !== "title",
+);
+
 const filled = (v: string | null | undefined): v is string =>
   typeof v === "string" && v.trim() !== "";
 
@@ -430,10 +506,23 @@ export async function fetchWithTimeout(
  *        a `new Date()` inside, so a test can pin the patch exactly. The caller
  *        evaluates it when the read STARTS, which is the honest reading of a
  *        stamp on a call that takes tens of seconds.
+ * @param entry the folder entry this document was imported from.   (#29.12)
+ *
+ * ⚠️ **`entry` is what makes the TITLE rule decidable, and every call site has
+ * one.** The model reads the printed heading; the folder name may already have
+ * said which document this is ("CVC Hascu 2005"), and only the entry carries
+ * that. It defaults to `null` — the pre-29.12 behaviour, model wins — so a
+ * caller reaching this function from outside the import walk is unchanged
+ * rather than broken, and so are the tests that predate the parameter. It is
+ * NOT optional in practice: all three call sites in `bulk-import-dialog.tsx`
+ * hold the row's entry, and the refill walk in particular re-reads a document
+ * whose folder title the FIRST read protected — omit it there and the second
+ * read undoes the first.
  */
 export async function runAiInterpret(
   documentId: string,
   stamp: string,
+  entry: FSEntry | null = null,
 ): Promise<AiInterpretRunResult> {
   try {
     // Inside the try, not above it: `encodeURIComponent` throws `URIError` on a
@@ -490,6 +579,7 @@ export async function runAiInterpret(
     //    not prove what is there. Every write that depends on knowing it is
     //    then SKIPPED rather than made from an assumption, and `partialWrite`
     //    says so out loud.
+    let existingTitle: string | null = null;
     let existingNotes: string | null = null;
     let existingTypeId: string | null = null;
     let existingCustom: Record<string, string | null> = {};
@@ -498,11 +588,18 @@ export async function runAiInterpret(
     if (isSessionLoss(cur) || (cur.ok && servesHtml(cur))) return sessionFailure();
     if (cur.ok) {
       const row = (await cur.json().catch(() => null)) as {
+        title?: string | null;
         notes?: string | null;
         documentTypeId?: string | null;
         customFields?: Record<string, string | null> | null;
       } | null;
       if (row !== null) {
+        // ⚠️ **`title` is read here since #29.12 and was not before**, which is
+        // the whole of the F11 defect in one line: the run overwrote a column
+        // it had never looked at. It is read for the same reason `notes` and
+        // `customFields` are — so a value already on the document is not
+        // destroyed by one that knows nothing about it.
+        existingTitle = row.title ?? null;
         existingNotes = row.notes ?? null;
         existingTypeId = row.documentTypeId ?? null;
         // ⚠️ Checked rather than trusted, in the one hunk whose whole purpose
@@ -523,11 +620,43 @@ export async function runAiInterpret(
     const patch: Record<string, unknown> = { aiInterpretedAt: stamp };
 
     let fieldCount = 0;
-    for (const key of BASELINE_KEYS) {
+    for (const key of UNCONDITIONAL_BASELINE_KEYS) {
       if (filled(fields[key])) {
         patch[key] = fields[key];
         fieldCount++;
       }
+    }
+
+    /**
+     * The TITLE, which has two producers and therefore a rule.   (Slice #29.12)
+     *
+     * ⚠️ **The decision is `resolveImportedTitle`'s and nothing here second-
+     * guesses it.** This block only applies the answer: write it, or leave the
+     * column out of the patch and keep the reading in the notes instead. The
+     * whole argument — why the folder wins when it named the document, why the
+     * comparison must stay diacritic-SENSITIVE, why the reading is kept rather
+     * than combined or offered — is in `document-title.ts`, said once.
+     *
+     * ⚠️ **`fieldCount` counts what was WRITTEN.** A run that kept the folder's
+     * title does not count a title: the number this file's caller puts on the
+     * row and in the report is "fields filled in", and counting a column the
+     * patch does not contain is the same inflation the `retyped` comparison a
+     * few lines down was added to stop.
+     *
+     * ⚠️ Nothing in this block reads or writes `documentTypeId`. See the same
+     * warning in `document-title.ts`: the expansion of a folder abbreviation is
+     * also the NAME of a document type, so a title rule that reached for the
+     * type would re-type documents from their folder names.
+     */
+    const titleDecision = resolveImportedTitle({
+      entry,
+      storedTitle: existingTitle,
+      storedTitleKnown: currentReadable,
+      aiTitle: fields.title,
+    });
+    if (titleDecision.write !== null) {
+      patch.title = titleDecision.write;
+      fieldCount++;
     }
 
     /**
@@ -611,12 +740,38 @@ export async function runAiInterpret(
     // needs its current TYPE, which is the stricter of the two.
     const partialWrite =
       (!currentReadable && (filled(data.notes) || extracted.length > 0)) ||
-      (wantsRetype && !typeKnown);
-    if (filled(data.notes) && currentReadable) {
-      patch.notes = filled(existingNotes)
-        ? `${existingNotes}\n\n${data.notes}`
-        : data.notes;
+      (wantsRetype && !typeKnown) ||
+      // ⚠️ #29.12: the title was left alone because the GET could not prove
+      // what it held, on a document whose folder name had named it. The model
+      // returned a title and it was not written — which is exactly what this
+      // flag means, and the row's own retry is exactly the right remedy.
+      titleDecision.unresolved;
+
+    /**
+     * `notes` — the model's Enhanced Notes, then the printed heading the title
+     * did not take.   (#29.12 adds the second half.)
+     *
+     * ⚠️ **Composed into ONE value and put in the patch at most once.** This
+     * module's own header rule is one patch per action on a versioned entity,
+     * and `updateDocument` writes the column whole; two appends written
+     * separately would be two `document_version` rows, or — worse — the second
+     * computed from `existingNotes` and silently dropping the first.
+     *
+     * ⚠️ **`null` from `notesWithPrintedHeading` means "already there", not
+     * "empty".** The refill walk re-reads a document by design, so without the
+     * line-exact de-duplication inside it the same sentence would be appended
+     * on every pass, growing the notes of the documents this rule protects.
+     */
+    let notesOut: string | null = null;
+    if (currentReadable) {
+      const withModel = filled(data.notes)
+        ? (filled(existingNotes) ? `${existingNotes}\n\n${data.notes}` : data.notes)
+        : existingNotes;
+      const withHeading = notesWithPrintedHeading(withModel, titleDecision.keepReading);
+      if (withHeading !== null) notesOut = withHeading;
+      else if (withModel !== existingNotes) notesOut = withModel;
     }
+    if (notesOut !== null) patch.notes = notesOut;
 
     const patchRes = await fetchWithTimeout(`/api/documents/${id}`, RECORD_TIMEOUT_MS, {
       method: "PATCH",
@@ -652,6 +807,19 @@ export async function runAiInterpret(
       // expression the PATCH itself is built from, and `filled()` has already
       // proved the value is a non-empty string by the time it is true.
       documentTypeId: retyped ? (fields.documentTypeId as string) : null,
+      // Both read off the decision and off the value actually sent, for the
+      // same reason `documentTypeId` is: neither can claim something this call
+      // did not do.
+      titleKept:
+        titleDecision.reason === "folder-names-this-document"
+          ? true
+          : titleDecision.reason === "no-reading" || titleDecision.reason === "current-unknown"
+            ? null
+            : false,
+      printedHeadingNoted:
+        titleDecision.reason === "folder-names-this-document" &&
+        currentReadable &&
+        hasPrintedHeadingLine(notesOut ?? existingNotes),
     };
   } catch (err) {
     // ⚠️ An abort is OUR timer, not the user, and `DOMException`'s message says

@@ -262,6 +262,31 @@ export type ImportResult = {
   /** Slice #23.02.Import: how many document fields that run filled in. */
   aiFieldCount?: number;
   /**
+   * Slice #29.12: the entry's own name had already named this document, so its
+   * title was KEPT and the model's reading of the printed heading went to
+   * Enhanced Notes.
+   *
+   * ⚠️ **It is a separate flag because `aiFieldCount` cannot say it.** A kept
+   * title is not a field written, so the count is honestly zero — and a row
+   * reading `✓ niciun câmp completat` over a document that was read correctly
+   * and whose title was protected on purpose says the opposite of what
+   * happened. `undefined` rather than `false` when it did not, which is this
+   * file's convention for a flag only ever interesting when true — a `false` on
+   * every other row is a fact nobody asked for. (`SavedImportEntry` carries
+   * neither this nor `aiFieldCount`, so a resumed session loses the sentence
+   * along with the count; that is the saved session's existing shape, not
+   * something this flag changes.)
+   */
+  aiTitleKept?: boolean;
+  /**
+   * Slice #29.12: …and whether that reading is actually in the document's
+   * Enhanced Notes, which is a different question — the reading is not recorded
+   * when it IS the title we kept, nor when a line carrying the marker is
+   * already there. A row keyed on `aiTitleKept` alone told the user to go and
+   * look at a field that had nothing in it.
+   */
+  aiPrintedHeadingNoted?: boolean;
+  /**
    * Slice #23.02.Import: party stepper tally, null when the type has no roles.
    *
    * ⚠️ Since #26.09 this is `undefined` until the stepper for THIS document has
@@ -2671,7 +2696,13 @@ export function BulkImportDialog({
             updateResult(entry.path, { docId, principalObjectId, aiStatus: "running" });
           }
 
-          const interpreted = await runAiInterpret(docId, new Date().toISOString());
+          // ⚠️ **`entry` is the third argument since #29.12 and all three call
+          // sites pass it.** It is what lets the read know the folder had
+          // already named this document — "CVC Hascu 2005" — so the model's
+          // reading of the printed heading does not replace a title that told
+          // the user which of thirty contracts this is. Omitted, the call is
+          // correct and the title is lost; see `resolveImportedTitle`.
+          const interpreted = await runAiInterpret(docId, new Date().toISOString(), entry);
           if (!mounted) return;
 
           if (interpreted.ok) {
@@ -2794,6 +2825,18 @@ export function BulkImportDialog({
               aiStatus: "done",
               aiProcessed: true,
               aiFieldCount: interpreted.fieldCount,
+              // First read of this row, so there is no previous answer to
+              // preserve and the three-state flag collapses to two. Both are
+              // written from the SAME test: `printedHeadingNoted` is only ever
+              // true alongside `titleKept`, and a row that drew the second
+              // sentence without the first claimed a #29.12 outcome on a call
+              // that had not made one.
+              ...(interpreted.titleKept === true
+                ? {
+                    aiTitleKept: true,
+                    aiPrintedHeadingNoted: interpreted.printedHeadingNoted || undefined,
+                  }
+                : {}),
               aiPartiesPending: interpreted.parties.length,
               aiPartialWrite: interpreted.partialWrite,
               documentTypeId: finalTypeId,
@@ -3699,7 +3742,10 @@ export function BulkImportDialog({
         // for the whole of it. Left alone, the row goes on saying the first read
         // was partial, which it was, until the second read replaces the verdict.
         updateResult(path, { refill: "running" });
-        const interpreted = await runAiInterpret(docId, new Date().toISOString());
+        // Third argument since #29.12 — and this walk is the call site where
+        // omitting it would be worst: it re-reads a document whose folder title
+        // the first read protected, so a bare call here would undo that.
+        const interpreted = await runAiInterpret(docId, new Date().toISOString(), row.entry);
         // The same liveness test the retry needs and for the same reason: this
         // is outside the run effect, so there is no per-invocation `mounted`
         // boolean in scope, and a walk that outlives the dialog would write into
@@ -3852,6 +3898,31 @@ export function BulkImportDialog({
           ...(movedTo === null
             ? { aiProcessed: true, aiFieldCount: interpreted.fieldCount }
             : {}),
+          // ⚠️ **OUTSIDE the `movedTo` ternary, and a fifth round is why.**
+          // That ternary's argument is about a COUNT built from a read keyed by
+          // the old type's form — a type-dependent value. The title decision is
+          // type-independent by construction: `document-title.ts` is a pure
+          // function over three strings and cannot reach the type, and this
+          // suite asserts it. Placed inside, the flags were swallowed on
+          // exactly the row where they matter most — a first read whose GET
+          // failed (so it decided nothing), a type that gained a form during
+          // the run, and a second read that both re-typed AND kept the title.
+          // That document showed `✓ niciun câmp completat` and nothing else,
+          // on screen and in the saved report, with its printed heading sitting
+          // in Enhanced Notes. `handleRetryInterpret` already writes them
+          // outside its own re-type spread; the two paths must not give
+          // different copy for identical results.
+          //
+          // ⚠️ **`null` leaves the row's flag ALONE.** A re-read that returned
+          // no title made no decision about it, and writing `undefined` over a
+          // protected row cleared the one sentence saying so — `updateResult`
+          // spreads the patch, so an explicit `undefined` overwrites.
+          ...(interpreted.titleKept === null
+            ? {}
+            : {
+                aiTitleKept: interpreted.titleKept || undefined,
+                aiPrintedHeadingNoted: interpreted.printedHeadingNoted || undefined,
+              }),
           // ⚠️ **A partial second read must not be drawn as a plain tick** —
           // #27.06's constraint, in as many words. Setting this puts the row
           // back in the amber block with its retry button and back into
@@ -3955,7 +4026,9 @@ export function BulkImportDialog({
         aiErrorDetail: undefined,
         aiPartialWrite: undefined,
       });
-      const interpreted = await runAiInterpret(docId, new Date().toISOString());
+      // Third argument since #29.12 — same reason as the run loop and the
+      // refill walk: a retry must reach the same title decision they did.
+      const interpreted = await runAiInterpret(docId, new Date().toISOString(), result.entry);
       // ⚠️ The one `runAiInterpret` call site outside the effect, so it needs
       // its own liveness test — the effect's per-invocation `mounted` boolean
       // is not in scope here. Without it a retry that outlives the dialog
@@ -4276,6 +4349,14 @@ export function BulkImportDialog({
           aiStatus: "done",
           aiProcessed: true,
           aiFieldCount: interpreted.fieldCount,
+          // `null` leaves the previous answer alone — see the refill walk's
+          // copy of this for the row it was clearing.
+          ...(interpreted.titleKept === null
+            ? {}
+            : {
+                aiTitleKept: interpreted.titleKept || undefined,
+                aiPrintedHeadingNoted: interpreted.printedHeadingNoted || undefined,
+              }),
           aiPartialWrite: interpreted.partialWrite,
           aiErrorDetail: undefined,
           ...(finalTypeId !== null ? { documentTypeId: finalTypeId } : {}),
@@ -4838,6 +4919,11 @@ export function BulkImportDialog({
           ? [t("refillFailedDetail", { reason: r.refillErrorDetail })]
           : []),
         ...(r.aiProcessed === true ? [t("interpretDone", { count: r.aiFieldCount ?? 0 })] : []),
+        // #29.12 — said in the saved report as well as on the row, because a
+        // report whose only number for this document is "no fields filled" is
+        // the same lie in a file the user keeps.
+        ...(r.aiTitleKept === true ? [t("interpretTitleKept")] : []),
+        ...(r.aiPrintedHeadingNoted === true ? [t("interpretPrintedHeadingNoted")] : []),
         ...(r.aiParties
           ? [t("interpretParties", { count: r.aiParties.linked + r.aiParties.created })]
           : (r.aiPartiesPending ?? 0) > 0
@@ -5747,6 +5833,8 @@ function ResultRow({
     idCardDocFieldsFailed,
     aiProcessed,
     aiFieldCount,
+    aiTitleKept,
+    aiPrintedHeadingNoted,
     aiParties,
     aiStatus,
     aiErrorDetail,
@@ -5947,6 +6035,18 @@ function ResultRow({
           {aiProcessed && (
             <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
               ✓ {t("interpretDone", { count: aiFieldCount ?? 0 })}
+              {/* #29.12 — the one decision this slice makes, said out loud.
+                  Without it the row's only sentence about a protected document
+                  is "niciun câmp completat", which is true of the columns and
+                  false about what happened. */}
+              {aiTitleKept === true ? ` · ${t("interpretTitleKept")}` : ""}
+              {/* A separate fact, drawn only when true: the reading is not
+                  recorded when it IS the title we kept, nor when one is already
+                  there. Keyed on the first flag, this sentence sent the user to
+                  an empty field. */}
+              {aiPrintedHeadingNoted === true
+                ? ` · ${t("interpretPrintedHeadingNoted")}`
+                : ""}
               {/* Three states, not two: the read found nobody, the read found
                   people and they are still queued, or their stepper has been
                   through. `aiParties` is set exactly when the third is true and

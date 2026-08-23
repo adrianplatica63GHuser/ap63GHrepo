@@ -28,6 +28,7 @@ import {
   shouldInterpretEntry,
 } from "@/lib/import/ai-interpret-run";
 import type { FSEntry } from "@/lib/import/folder-utils";
+import { resolveImportedTitle } from "@/lib/import/document-title";
 
 // ---------------------------------------------------------------------------
 // A fetch that answers from a script
@@ -185,6 +186,8 @@ describe("runAiInterpret", () => {
       documentTypeId: null,
       parties: [{ roleName: "Vânzător" }],
       partialWrite: false,
+      titleKept: false,
+      printedHeadingNoted: false,
     });
   });
 
@@ -215,6 +218,8 @@ describe("runAiInterpret", () => {
       documentTypeId: "type-uuid",
       parties: [],
       partialWrite: false,
+      titleKept: null,
+      printedHeadingNoted: false,
     });
   });
 
@@ -243,6 +248,8 @@ describe("runAiInterpret", () => {
       documentTypeId: null,
       parties: [{ roleName: "Vânzător" }],
       partialWrite: true,
+      titleKept: false,
+      printedHeadingNoted: false,
     });
   });
 
@@ -263,6 +270,8 @@ describe("runAiInterpret", () => {
       documentTypeId: null,
       parties: [],
       partialWrite: true,
+      titleKept: null,
+      printedHeadingNoted: false,
     });
   });
 
@@ -374,6 +383,8 @@ describe("runAiInterpret", () => {
       documentTypeId: null,
       parties: [],
       partialWrite: true,
+      titleKept: false,
+      printedHeadingNoted: false,
     });
   });
 
@@ -660,6 +671,8 @@ describe("runAiInterpret", () => {
       documentTypeId: null,
       parties: [],
       partialWrite: false,
+      titleKept: null,
+      printedHeadingNoted: false,
     });
   });
 });
@@ -793,5 +806,393 @@ describe("inFolderOrder", () => {
     // A queue keyed on a path no longer in `entries` cannot be shown to the
     // user against anything, so it is dropped rather than appended blind.
     expect(inFolderOrder([{ path: "a" }], new Map([["gone", "x"]]))).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The title a document keeps   (Slice #29.12)
+// ---------------------------------------------------------------------------
+
+/**
+ * The rule itself is `resolveImportedTitle` and is exercised exhaustively in
+ * `import-document-title.test.ts`. What is pinned HERE is the wiring — that the
+ * run reads the stored title at all, that the decision reaches the PATCH body,
+ * that the kept reading reaches `notes` in the SAME patch, and that the TYPE
+ * comes out of every one of those paths untouched.
+ */
+const HASCU_ENTRY = {
+  kind: "page-group" as const,
+  name: "CVC Hascu 2005",
+  path: "Acte/CVC Hascu 2005",
+  pathParts: ["Acte", "CVC Hascu 2005"],
+  handles: [],
+  titleHint: "Contract de Vânzare-Cumpărare Hascu 2005",
+} as unknown as FSEntry;
+
+const HASCU_TITLE = "Contract de Vânzare-Cumpărare Hascu 2005";
+const PRINTED = "CONTRACT DE VANZARE - CUMPARARE (CU DEZMEMBRARE)";
+
+/** The route reading that heading, and nothing else that could confuse the assertion. */
+const HEADING_EXTRACT = {
+  ok: true,
+  body: { fields: { title: PRINTED }, customFields: {}, notes: null },
+};
+
+/** The document as the import created it, from the folder name. */
+const AS_IMPORTED = {
+  ok: true,
+  body: { title: HASCU_TITLE, notes: null, documentTypeId: "type-uuid", customFields: {} },
+};
+
+describe("runAiInterpret — the title a document keeps (#29.12)", () => {
+  it("⚠️ does not overwrite 'Hascu 2005' with the printed heading", async () => {
+    const calls = install([HEADING_EXTRACT, AS_IMPORTED, { ok: true }]);
+
+    const result = await runAiInterpret("doc-1", STAMP, HASCU_ENTRY);
+
+    // The whole patch. `title` absent is the fix; anything else appearing here
+    // is a write nobody asked for on a versioned entity.
+    expect(calls[2].body).toEqual({
+      aiInterpretedAt: STAMP,
+      notes: `Titlul tipărit pe document: ${PRINTED}`,
+    });
+    // ⚠️ Not counted. `fieldCount` is fields WRITTEN, and the report and the
+    // row both read it.
+    expect(result).toEqual({
+      ok: true,
+      fieldCount: 0,
+      documentTypeId: null,
+      parties: [],
+      partialWrite: false,
+      titleKept: true,
+      printedHeadingNoted: true,
+    });
+  });
+
+  it("⚠️ keeps the reading in the SAME patch as the model's notes", async () => {
+    // One patch per action is this module's own rule — two would be two
+    // `document_version` rows, or a second append computed from a stale read.
+    const calls = install([
+      { ok: true, body: { fields: { title: PRINTED }, notes: "Text de la model" } },
+      { ok: true, body: { title: HASCU_TITLE, notes: "Notă scrisă de om", documentTypeId: "t" } },
+      { ok: true },
+    ]);
+
+    await runAiInterpret("doc-1", STAMP, HASCU_ENTRY);
+
+    expect((calls[2].body as { notes?: string }).notes).toBe(
+      `Notă scrisă de om\n\nText de la model\n\nTitlul tipărit pe document: ${PRINTED}`,
+    );
+  });
+
+  it("⚠️ a second read does not append the heading again", async () => {
+    // The refill walk and the row's retry both re-read a document the first
+    // read protected. Without the line-exact de-duplication the notes of every
+    // protected document grow by one sentence per pass.
+    const already = `Titlul tipărit pe document: ${PRINTED}`;
+    const calls = install([
+      HEADING_EXTRACT,
+      { ok: true, body: { title: HASCU_TITLE, notes: already, documentTypeId: "t" } },
+      { ok: true },
+    ]);
+
+    await runAiInterpret("doc-1", STAMP, HASCU_ENTRY);
+
+    expect(calls[2].body).toEqual({ aiInterpretedAt: STAMP });
+  });
+
+  it("⚠️ writes nothing and reports a partial write when the document could not be read", async () => {
+    // "I could not read it" is not "there was nothing there" — and this is the
+    // one branch where a wrong reading destroys the value the slice protects.
+    const calls = install([HEADING_EXTRACT, { ok: false, status: 500 }, { ok: true }]);
+
+    const result = await runAiInterpret("doc-1", STAMP, HASCU_ENTRY);
+
+    expect(calls[2].body).toEqual({ aiInterpretedAt: STAMP });
+    expect(result).toEqual({
+      ok: true,
+      fieldCount: 0,
+      documentTypeId: null,
+      parties: [],
+      partialWrite: true,
+      titleKept: null,
+      printedHeadingNoted: false,
+    });
+  });
+
+  it("still writes the heading for an entry the folder never named", async () => {
+    const calls = install([
+      HEADING_EXTRACT,
+      { ok: true, body: { title: "scan001.pdf", notes: null, documentTypeId: "t" } },
+      { ok: true },
+    ]);
+
+    await runAiInterpret(
+      "doc-1",
+      STAMP,
+      { kind: "file", name: "scan001.pdf", path: "Acte/scan001.pdf", pathParts: ["Acte"] } as unknown as FSEntry,
+    );
+
+    expect((calls[2].body as { title?: string }).title).toBe(PRINTED);
+  });
+
+  it("⚠️ the other three baseline fields are unchanged by the title rule", async () => {
+    // The rule is about ONE field. A `nrDocument` or a `dateDocument` that
+    // stopped being written because the title stopped being written would be a
+    // regression this slice's own assertions above would not see.
+    const calls = install([
+      {
+        ok: true,
+        body: {
+          fields: {
+            title: PRINTED,
+            nrDocument: "1234",
+            dateDocument: "2019-04-02",
+            subject: "Vânzare teren",
+          },
+        },
+      },
+      AS_IMPORTED,
+      { ok: true },
+    ]);
+
+    const result = await runAiInterpret("doc-1", STAMP, HASCU_ENTRY);
+
+    expect(calls[2].body).toEqual({
+      aiInterpretedAt: STAMP,
+      nrDocument: "1234",
+      dateDocument: "2019-04-02",
+      subject: "Vânzare teren",
+      notes: `Titlul tipărit pe document: ${PRINTED}`,
+    });
+    expect(result.ok && result.fieldCount).toBe(3);
+  });
+});
+
+describe("⚠️ #29.12 changed no type resolution", () => {
+  /**
+   * The slice's own out-of-scope clause, asserted rather than asserted-to.
+   * The reason it needs an assertion at all is concrete: the expansion of a
+   * folder abbreviation ("CVC" → "Contract de Vânzare-Cumpărare") is ALSO the
+   * name of a `lookup_document_type` row, so a title rule that reached for the
+   * type would re-type documents from their folder names — silently, and on
+   * the entities the archive is built out of.
+   */
+  it("re-types exactly as before when the folder named the document", async () => {
+    const calls = install([
+      { ok: true, body: { fields: { title: PRINTED, documentTypeId: "contract-vanzare" } } },
+      { ok: true, body: { title: HASCU_TITLE, notes: null, documentTypeId: "adeverinta", customFields: {} } },
+      { ok: true },
+    ]);
+
+    const result = await runAiInterpret("doc-1", STAMP, HASCU_ENTRY);
+
+    // The type still changes — the title staying put does not hold it back —
+    // and it is still counted.
+    expect((calls[2].body as { documentTypeId?: string }).documentTypeId).toBe("contract-vanzare");
+    expect(result).toEqual({
+      ok: true,
+      fieldCount: 1,
+      documentTypeId: "contract-vanzare",
+      parties: [],
+      partialWrite: false,
+      titleKept: true,
+      printedHeadingNoted: true,
+    });
+  });
+
+  it("does not send a type the document already has, folder-named or not", async () => {
+    const calls = install([
+      { ok: true, body: { fields: { title: PRINTED, documentTypeId: "type-uuid" } } },
+      AS_IMPORTED,
+      { ok: true },
+    ]);
+
+    const result = await runAiInterpret("doc-1", STAMP, HASCU_ENTRY);
+
+    expect(calls[2].body).not.toHaveProperty("documentTypeId");
+    expect(result.ok && result.documentTypeId).toBeNull();
+  });
+
+  it("still refuses to re-type a document whose current type it could not read", async () => {
+    const calls = install([
+      { ok: true, body: { fields: { title: PRINTED, documentTypeId: "contract-vanzare" } } },
+      { ok: false, status: 500 },
+      { ok: true },
+    ]);
+
+    const result = await runAiInterpret("doc-1", STAMP, HASCU_ENTRY);
+
+    expect(calls[2].body).toEqual({ aiInterpretedAt: STAMP });
+    expect(result).toEqual({
+      ok: true,
+      fieldCount: 0,
+      documentTypeId: null,
+      parties: [],
+      partialWrite: true,
+      titleKept: null,
+      printedHeadingNoted: false,
+    });
+  });
+
+  it("⚠️ the title module cannot reach the type at all — it takes three strings", async () => {
+    // A structural guard, not a behavioural one: `resolveImportedTitle`'s input
+    // is an entry, two titles and a boolean, and its output is a title, a
+    // reading and two flags. There is no `documentTypeId` on either side, so a
+    // future edit that wanted to re-type from a folder name would have to widen
+    // the signature — which is a diff a reviewer sees.
+    const decision = resolveImportedTitle({
+      entry: HASCU_ENTRY,
+      storedTitle: HASCU_TITLE,
+      storedTitleKnown: true,
+      aiTitle: PRINTED,
+    });
+    expect(Object.keys(decision).sort()).toEqual([
+      "keepReading",
+      "reason",
+      "unresolved",
+      "write",
+    ]);
+  });
+});
+
+describe("runAiInterpret — the row is told only what is true (#29.12)", () => {
+  it("⚠️ `printedHeadingNoted` is false when the reading WAS the title we kept", async () => {
+    // The commonest case for a well-named folder. Keyed on `titleKept` alone,
+    // the row said "the printed one is in Enhanced Notes" and sent the user to
+    // a field with nothing in it.
+    const calls = install([
+      { ok: true, body: { fields: { title: HASCU_TITLE } } },
+      AS_IMPORTED,
+      { ok: true },
+    ]);
+
+    const result = await runAiInterpret("doc-1", STAMP, HASCU_ENTRY);
+
+    expect(calls[2].body).toEqual({ aiInterpretedAt: STAMP });
+    expect(result).toEqual({
+      ok: true,
+      fieldCount: 0,
+      documentTypeId: null,
+      parties: [],
+      partialWrite: false,
+      titleKept: true,
+      printedHeadingNoted: false,
+    });
+  });
+
+  it("⚠️ `printedHeadingNoted` is TRUE when a record is already there from an earlier read", async () => {
+    // "There is one there now", not "this call wrote one". A record put there
+    // by the first read is still a record the user can go and see, and a row
+    // that stopped mentioning it on the retry would be hiding it.
+    const already = `Titlul tipărit pe document: ${PRINTED}`;
+    const calls = install([
+      HEADING_EXTRACT,
+      { ok: true, body: { title: HASCU_TITLE, notes: already, documentTypeId: "t" } },
+      { ok: true },
+    ]);
+
+    const result = await runAiInterpret("doc-1", STAMP, HASCU_ENTRY);
+
+    expect(calls[2].body).toEqual({ aiInterpretedAt: STAMP });
+    expect(result.ok && result.printedHeadingNoted).toBe(true);
+  });
+
+  it("⚠️ a re-read that returns no title makes NO decision — `titleKept` is null", async () => {
+    // The refill walk re-reads a document the first read protected. A poorer
+    // scan returns no title; a two-state flag reported `false`, the row cleared
+    // its own "title kept" sentence, and a protected document went back to
+    // reading "niciun câmp completat" — the failure the flag exists to prevent,
+    // arrived at through the retry meant to help.
+    install([
+      { ok: true, body: { fields: { nrDocument: "1234" } } },
+      AS_IMPORTED,
+      { ok: true },
+    ]);
+
+    const result = await runAiInterpret("doc-1", STAMP, HASCU_ENTRY);
+
+    expect(result.ok && result.titleKept).toBeNull();
+  });
+
+  it("a read whose title the model wrote reports `titleKept: false`", async () => {
+    // The third state has to stay distinguishable from the second: here the
+    // model DID return a title and it won, so the row's sentence must go.
+    const calls = install([
+      HEADING_EXTRACT,
+      { ok: true, body: { title: "scan001.pdf", notes: null, documentTypeId: "t" } },
+      { ok: true },
+    ]);
+
+    const result = await runAiInterpret(
+      "doc-1",
+      STAMP,
+      { kind: "file", name: "scan001.pdf", path: "Acte/scan001.pdf", pathParts: ["Acte"] } as unknown as FSEntry,
+    );
+
+    expect((calls[2].body as { title?: string }).title).toBe(PRINTED);
+    expect(result.ok && result.titleKept).toBe(false);
+  });
+});
+
+describe("⚠️ #29.12 — the printed-heading sentence is only ever drawn on a run that KEPT the title", () => {
+  it("is false on the run that overwrote a user's corrected title", async () => {
+    // The fourth round's finding, in one test. An earlier read left a marker
+    // line; the user then corrected the title by hand; the refill walk replaced
+    // their correction with the printed heading — and the row said "the printed
+    // title is in Enhanced Notes" about a heading that had just been written
+    // into `title`, over their work.
+    const already = `Titlul tipărit pe document: o citire mai veche`;
+    const calls = install([
+      HEADING_EXTRACT,
+      {
+        ok: true,
+        body: {
+          title: "Contract Hascu — casa din Clinceni (corectat de Adrian)",
+          notes: already,
+          documentTypeId: "t",
+        },
+      },
+      { ok: true },
+    ]);
+
+    const result = await runAiInterpret("doc-1", STAMP, HASCU_ENTRY);
+
+    // The overwrite itself is unchanged behaviour and out of this slice's
+    // scope — see `document-title.ts`. What must not happen is the row
+    // claiming a #29.12 outcome over it.
+    expect((calls[2].body as { title?: string }).title).toBe(PRINTED);
+    expect(result).toEqual({
+      ok: true,
+      fieldCount: 1,
+      documentTypeId: null,
+      parties: [],
+      partialWrite: false,
+      titleKept: false,
+      printedHeadingNoted: false,
+    });
+  });
+
+  it("is false when this call made no decision at all", async () => {
+    // A marker line from an earlier read, and a model that returns no title.
+    // Computed from the notes column alone this was true, and the row asserted
+    // an outcome on a call that had decided nothing.
+    install([
+      { ok: true, body: { fields: { nrDocument: "9" } } },
+      {
+        ok: true,
+        body: {
+          title: HASCU_TITLE,
+          notes: `Titlul tipărit pe document: ${PRINTED}`,
+          documentTypeId: "t",
+        },
+      },
+      { ok: true },
+    ]);
+
+    const result = await runAiInterpret("doc-1", STAMP, HASCU_ENTRY);
+
+    expect(result.ok && result.titleKept).toBeNull();
+    expect(result.ok && result.printedHeadingNoted).toBe(false);
   });
 });

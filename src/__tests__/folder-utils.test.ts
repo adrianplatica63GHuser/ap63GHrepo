@@ -18,6 +18,7 @@ import {
   isIgnoredFileName,
   isPageGroup,
   parseFolderName,
+  folderNameTitleEvidence,
   folderNameToTitleHint,
   tagsForEntry,
   perToSlash,
@@ -668,5 +669,149 @@ describe("walkFolder termination guards (#26.00)", () => {
     const entries = await walkFolder(wideTree(118), [], (o) => seen.push(o));
     expect(seen.some((o) => o.truncated !== undefined)).toBe(false);
     expect(entries).toHaveLength(118);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// folderNameTitleEvidence   (Slice #29.12)
+// ---------------------------------------------------------------------------
+
+/**
+ * `folderNameToTitleHint` answers "what should this be called?". This answers
+ * the two questions the #29.12 title rule needs and the string alone cannot
+ * carry: did the folder name say which KIND of document this is, and did it say
+ * which ONE of them.
+ */
+describe("folderNameTitleEvidence", () => {
+  it("⚠️ returns exactly what folderNameToTitleHint returns", () => {
+    // The reason this function exists rather than a second loop next to the
+    // rule that reads it. A remainder computed from its own copy of `ABBR`
+    // would agree on the day it was written and drift on the day a key is
+    // added — a validator that disagrees with the executor.
+    for (const name of [
+      "CVC_2021-04-12",
+      "CVC Hascu 2005",
+      "Înch_Intab_2019",
+      "Cert_urbanism_2024",
+      "scan_folder_01",
+      "",
+      "CVC",
+    ]) {
+      expect(folderNameTitleEvidence(name).title).toBe(folderNameToTitleHint(name));
+    }
+  });
+
+  it("names the kind AND the one — the observed F11 case", () => {
+    expect(folderNameTitleEvidence("CVC Hascu 2005")).toEqual({
+      title: "Contract de Vânzare-Cumpărare Hascu 2005",
+      namesTheKind: true,
+      distinguishes: "Hascu 2005",
+    });
+  });
+
+  it("names the kind and nothing else", () => {
+    expect(folderNameTitleEvidence("CVC")).toEqual({
+      title: "Contract de Vânzare-Cumpărare",
+      namesTheKind: true,
+      distinguishes: "",
+    });
+  });
+
+  it("⚠️ the kind spelled out IN FULL names it too, with or without diacritics", () => {
+    // A user who writes the folder name properly instead of abbreviating it has
+    // said which kind of document it is at least as plainly. The no-diacritics
+    // spelling is the one a Windows keyboard produces and was the case that
+    // broke first: "â" is not in `[a-zA-Z]`, so it survived into the pattern as
+    // a literal until `abbrPattern` learned to fold to the ASCII base.
+    for (const name of [
+      "Contract de Vânzare-Cumpărare Hascu 2005",
+      "Contract de Vanzare-Cumparare Hascu 2005",
+      "CONTRACT DE VANZARE-CUMPARARE Hascu 2005",
+    ]) {
+      expect(folderNameTitleEvidence(name)).toEqual({
+        // ⚠️ The title is the name UNCHANGED — only the abbreviation is ever
+        // replaced, so nothing here rewrites what the user typed.
+        title: name,
+        namesTheKind: true,
+        distinguishes: "Hascu 2005",
+      });
+    }
+  });
+
+  it("⚠️ the hyphen in an expansion may be spaced, as the deed prints it", () => {
+    // The words of a key are joined with `\s+`, but a hyphen sits INSIDE one
+    // word — "Vânzare-Cumpărare" — so it stayed a literal, and a folder named
+    // the way the document itself prints the heading matched nothing. That is
+    // exactly the user the expansion matching was added for.
+    for (const name of [
+      "Contract de Vanzare - Cumparare Hascu 2005",
+      "Contract de Vânzare - Cumpărare Hascu 2005",
+      "Contract de Vanzare-Cumparare Hascu 2005",
+    ]) {
+      expect(folderNameTitleEvidence(name).namesTheKind).toBe(true);
+      expect(folderNameTitleEvidence(name).distinguishes).toBe("Hascu 2005");
+      // …and the title is still the name UNCHANGED: only abbreviations are
+      // replaced, so no ABBR key gained a hyphen and no hint moved.
+      expect(folderNameToTitleHint(name)).toBe(name);
+    }
+  });
+
+  it("⚠️ an identity expansion still names the kind, in either casing", () => {
+    // `"Plan Parcelar": "Plan Parcelar"` expands to itself, so a `namesTheKind`
+    // computed from "did the string change?" was FALSE for the canonical
+    // spelling and TRUE for every other casing — two folders differing by one
+    // letter's case got opposite treatment, and the one that lost its
+    // distinguishing part was the spelling sitting in the table.
+    for (const name of ["Plan Parcelar Hascu 2005", "Plan parcelar Hascu 2005", "PLAN PARCELAR Hascu 2005"]) {
+      expect(folderNameTitleEvidence(name).namesTheKind).toBe(true);
+      expect(folderNameTitleEvidence(name).distinguishes).toBe("Hascu 2005");
+    }
+  });
+
+  it("⚠️ a removed match does not let the remainder close over the hole", () => {
+    // Replaced with a space, "Inch CVC Intab" became "Inch Intab" — itself a
+    // key — and the next pass ate both halves, reporting a name that plainly
+    // distinguishes as distinguishing nothing.
+    expect(folderNameTitleEvidence("Inch CVC Intab").distinguishes).toBe("Inch Intab");
+    expect(folderNameTitleEvidence("Plan CVC Parcelar").distinguishes).toBe("Plan Parcelar");
+  });
+
+  it("names no kind at all", () => {
+    expect(folderNameTitleEvidence("Hascu 2005")).toEqual({
+      title: "Hascu 2005",
+      namesTheKind: false,
+      distinguishes: "Hascu 2005",
+    });
+  });
+
+  it("⚠️ the remainder is built from the ORIGINAL name, not from the expansion", () => {
+    // "Cert urbanism" expands to "Certificat urbanism". A remainder computed
+    // off the expanded string would be reporting our own inserted words back as
+    // the user's distinguishing part.
+    expect(folderNameTitleEvidence("Cert_urbanism_2024")).toEqual({
+      title: "Certificat urbanism 2024",
+      namesTheKind: true,
+      distinguishes: "2024",
+    });
+  });
+
+  it("multi-word and diacritic keys are removed from the remainder too", () => {
+    expect(folderNameTitleEvidence("Înch_Intab_2019").distinguishes).toBe("2019");
+    expect(folderNameTitleEvidence("PAD_47-225").distinguishes).toBe("47-225");
+  });
+
+  it("⚠️ a remainder of punctuation alone distinguishes nothing", () => {
+    // "CVC -" would otherwise read as a folder that named this document, and
+    // the rule would protect a title identical to twenty-nine others.
+    expect(folderNameTitleEvidence("CVC -").distinguishes).toBe("");
+    expect(folderNameTitleEvidence("CVC_").distinguishes).toBe("");
+  });
+
+  it("an empty name is empty on every field", () => {
+    expect(folderNameTitleEvidence("")).toEqual({
+      title: "",
+      namesTheKind: false,
+      distinguishes: "",
+    });
   });
 });

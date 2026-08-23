@@ -108,6 +108,11 @@ const ROW_KEYS = [
   "interpretRetryFailedUnknown",
   "interpretPartiesPending",
   "interpretDone",
+  // #29.12 — the sentence the row draws when the folder's title was kept. In
+  // this list for the reason the list exists: it is the newest key the row
+  // asks for, so it is the one likeliest to reach ro-RO and never en-GB.
+  "interpretTitleKept",
+  "interpretPrintedHeadingNoted",
   "interpretParties",
   "doneUnread",
   "doneUnreadLocked",
