@@ -75,10 +75,19 @@ import { buttonClass } from "@/lib/ui/button-styles";
 import type { DiscoverConfidence } from "@/lib/documents/discover-log";
 import {
   buildFieldHint,
+  capturedFieldNames,
   formValueForField,
+  keysForReviewRows,
+  looksLikeSentenceFragment,
+  MAX_KEY_LENGTH,
   MAX_TEMPLATE_FIELDS,
+  nameTooLongForKey,
   proposeTemplateFields,
-  type DiscoveredFieldProposal,
+  reviewRowIssue,
+  reviewRowIssues,
+  rowName,
+  seedReviewRows,
+  type DiscoveredFieldRow,
 } from "@/lib/documents/discover-to-template";
 import {
   parseTemplateFields,
@@ -93,8 +102,8 @@ const FIELD_TYPES: DocumentTemplateFieldType[] = ["text", "textarea", "date", "n
  * The template a BRAND-NEW type has.                            (Slice #27.04)
  *
  * A module constant rather than a `[]` literal at each use site: it is read by
- * `useMemo`/`seedRows` inputs, and a fresh array identity on every render is
- * the thing those memos exist to avoid.
+ * `useMemo`/`seedReviewRows` inputs, and a fresh array identity on every render
+ * is the thing those memos exist to avoid.
  */
 const NO_FIELDS: readonly DocumentTemplateField[] = [];
 
@@ -120,20 +129,18 @@ const NO_FIELDS: readonly DocumentTemplateField[] = [];
  */
 const sameTypeName = sameDocumentTypeName;
 
-/** What the dialog shows and edits — a proposal plus the user's decisions. */
-type Row = DiscoveredFieldProposal & {
-  /**
-   * Identity for React and for `patchRow`, NOT the field key.
-   *
-   * Two discovered labels can legitimately resolve to one already-captured
-   * field ("Nr." and "Număr" both mean the document's number; a curated field
-   * is reachable both by its key and by the slug of its caption), so `key` is
-   * unique among the rows that can be SAVED but not among all rows.
-   */
-  rowId:   string;
-  include: boolean;
-  label:   string;
-};
+/**
+ * What the dialog shows and edits — a proposal plus the user's decisions.
+ *
+ * The shape and its seeding rule live in `discover-to-template.ts` (#29.10) so
+ * the starting position of this screen is a pure function a test can run,
+ * rather than a closure inside a client component. `rowId` is the row's index
+ * and NOT the field key: two discovered labels can legitimately resolve to one
+ * already-captured field ("Nr." and "Număr" both mean the document's number),
+ * and since #29.10 the key of a new row is not fixed at all — it follows the
+ * name as the user types it (see `keysByRowId`).
+ */
+type Row = DiscoveredFieldRow;
 
 export type DiscoverReviewPair = {
   name:       string;
@@ -250,9 +257,21 @@ export function DiscoverReviewDialog({
   // recompute into `rows` while the user is editing: `rows` seeds from it, and
   // a reseed would throw away every tick and rename made so far. (The one
   // deliberate reseed is the 409 path in handleSave.)
+  /**
+   * ⚠️ **The type's person roles, FROZEN at mount — same reason as `baseline`
+   * below, and a review round found this one live.** The prop comes from the
+   * same react-query cache with `refetchOnWindowFocus`: a role added while the
+   * dialog is open left `alreadyInForm` frozen at what was proposed, while
+   * `capturedFieldNames` gained the new role and silently re-minted an
+   * untouched row's key from `notar` to `notar_2`. Inside the
+   * `fieldsUnresolved` window that changes the retry's payload, which is
+   * exactly what that freeze exists to prevent.
+   */
+  const [roles] = useState<readonly string[]>(partyRoleNames);
+
   const proposals = useMemo(
-    () => proposeTemplateFields(pairs, existing, partyRoleNames),
-    [pairs, existing, partyRoleNames],
+    () => proposeTemplateFields(pairs, existing, roles),
+    [pairs, existing, roles],
   );
 
   /**
@@ -275,28 +294,7 @@ export function DiscoverReviewDialog({
    */
   const [baseline, setBaseline] = useState<readonly DocumentTemplateField[]>(existing);
 
-  /**
-   * Seed the editable rows from a proposal list.
-   *
-   * Pre-ticking is deliberate in all three of its rules. A row already
-   * captured is never ticked (it cannot be saved). A row the model was unsure
-   * about starts unticked, so a guess needs a click to become a permanent
-   * field on the type. And ticking STOPS at the ceiling: a dense notarial
-   * contract legitimately yields more pairs than a type may hold, and pre-
-   * ticking all of them would open the dialog on a disabled Save and a red
-   * "untick some", which is a puzzle rather than a screen.
-   */
-  const seedRows = (list: readonly DiscoveredFieldProposal[], baseCount: number): Row[] => {
-    let ticked = baseCount;
-    return list.map((p, i) => {
-      const include =
-        !p.alreadyInForm && p.confidence === "high" && ticked < MAX_TEMPLATE_FIELDS;
-      if (include) ticked += 1;
-      return { ...p, rowId: String(i), include, label: p.labelRo };
-    });
-  };
-
-  const [rows, setRows] = useState<Row[]>(() => seedRows(proposals, existing.length));
+  const [rows, setRows] = useState<Row[]>(() => seedReviewRows(proposals));
   const [saving,  setSaving]  = useState(false);
   const [error,   setError]   = useState<string | null>(null);
 
@@ -341,6 +339,25 @@ export function DiscoverReviewDialog({
    * repeats the warning on the page.
    */
   const [unresolved, setUnresolved] = useState(false);
+  /**
+   * A field write whose outcome could not be established.            (#29.10)
+   *
+   * ⚠️ **This LOCKS THE ROWS, and it has to, because the key now follows the
+   * name.** `errorFieldsUnknown` tells the user to press Save again, and the
+   * recovery depends on the retry sending the same keys: the 409 branch below
+   * finishes the save when every key it asked for is already stored. Since
+   * #29.10 a rename between the two presses changes the key — and the banner is
+   * on screen precisely when the fragment warning has just told the user to
+   * rename something. The retry would then ask for `suprafata` where the server
+   * stored `suprafata_de`, the `every` test would fail, the rows would reseed
+   * as already-captured, `onSaved` would never fire, and the discovered values
+   * would be unrecoverable. Freezing the rows makes the retry idempotent, which
+   * is what the whole recovery was written against.
+   *
+   * Unlike `unresolved` this does NOT disable Save — pressing it again IS the
+   * remedy. It only stops the rows moving underneath it.
+   */
+  const [fieldsUnresolved, setFieldsUnresolved] = useState(false);
   /**
    * The template of the type being written to when that type is NEW: empty,
    * because it was just created. Separate from `baseline` so toggling the box
@@ -423,8 +440,8 @@ export function DiscoverReviewDialog({
     setCreateNew(checked);
     setError(null);
     const base = checked ? newTypeBaseline : baseline;
-    const reproposed = proposeTemplateFields(pairs, base, partyRoleNames);
-    setRows(applyDecisions(seedRows(reproposed, base.length)));
+    const reproposed = proposeTemplateFields(pairs, base, roles);
+    setRows(applyDecisions(seedReviewRows(reproposed)));
   };
 
   const closeRef = useRef<HTMLButtonElement | null>(null);
@@ -520,13 +537,82 @@ export function DiscoverReviewDialog({
   // Save, and the only one the user can fix by typing. Answered in the footer
   // like the other three rather than left as a dead button.
   const newTypeReady = !createNew || (trimmedNewName.length > 0 && !duplicateName);
+  /**
+   * Two labels can resolve to one captured field, so count — and LIST — the
+   * FIELDS.
+   *
+   * ⚠️ The de-duplication is not tidiness: a final review round found the count
+   * taken over distinct keys while the chips below were rendered one per ROW,
+   * so a document printing „Nr." twice showed „Un câmp este deja preluat"
+   * above three chips, two of them the identical word. Since #29.10 that is the
+   * normal case, not a corner: a repeat of a generic column or a person role
+   * stays already-captured on every occurrence, because those mechanisms have
+   * exactly one slot each.
+   */
+  const presentFields = presentRows.filter(
+    (r, i) => presentRows.findIndex((o) => o.key === r.key) === i,
+  );
+  const presentCount = presentFields.length;
+
+  /**
+   * The key each ticked row would be stored under, and the two ways a ticked
+   * row can be un-saveable.                                          (#29.10)
+   *
+   * All three are pure functions in `discover-to-template.ts` —
+   * `capturedFieldNames`, `keysForReviewRows`, `reviewRowIssue` — so a rename,
+   * a rename onto a stored field, and a document that prints one caption twice
+   * are sequences a test can run without rendering React. Read their comments
+   * for the rules and for the three review rounds that shaped them.
+   */
+  /**
+   * Everything already spoken for on the type being written to.
+   *
+   * ⚠️ **From `capturedFieldNames`, the SAME index `proposeTemplateFields`
+   * builds** — the stored fields by key and by label slug, the four generic
+   * columns and their Romanian aliases, and the type's person roles. A review
+   * round found this hand-assembled here from the stored keys plus whatever
+   * discovery happened to surface as captured, which is a different and smaller
+   * set: renaming a row to „Notar" or „Data" went straight through it.
+   */
+  const captured = useMemo(
+    () => capturedFieldNames(activeBaseline, roles),
+    [activeBaseline, roles],
+  );
+
+  const keysByRowId = useMemo(() => keysForReviewRows(rows, captured), [rows, captured]);
+
+  /**
+   * The key to print under a row — only where there IS one.
+   *
+   * ⚠️ Blank for an unticked row, and a review round is why. Falling back to
+   * the bare slug there showed a key belonging to a DIFFERENT field: on a type
+   * already holding `suprafata`, a second „Suprafață" row displayed
+   * `suprafata` until it was ticked, and `suprafata_2` afterwards. The key
+   * becomes real when the row is accepted, and that is when it is shown.
+   */
+  const keyForRow = (row: Row): string =>
+    row.alreadyInForm ? row.key : (keysByRowId.get(row.rowId) ?? "");
+
+  const { unnamed: unnamedRow, duplicateOfCaptured: duplicateRow } = reviewRowIssues(
+    rows,
+    captured,
+  );
+
+  // Slice #29.10: the row controls freeze while a write is in flight AND once
+  // a field write's outcome is unknown — see `fieldsUnresolved`.
+  const rowsLocked = saving || fieldsUnresolved;
   // ⚠️ `!unresolved` sits OUTSIDE `newTypeReady`, not inside it. Inside, it was
   // reachable only through `createNew` — and unticking that box cleared the way
   // back to a Save that would write the fields onto the shared catch-all type.
   const canSave =
-    selected.length > 0 && !saving && !overLimit && !typeFull && newTypeReady && !unresolved;
-  // Two labels can resolve to one captured field, so count the FIELDS.
-  const presentCount = new Set(presentRows.map((r) => r.key)).size;
+    selected.length > 0 &&
+    !saving &&
+    !overLimit &&
+    !typeFull &&
+    newTypeReady &&
+    !unresolved &&
+    !unnamedRow &&
+    !duplicateRow;
 
   const patchRow = (rowId: string, patch: Partial<Row>) => {
     setRows((prev) => prev.map((r) => (r.rowId === rowId ? { ...r, ...patch } : r)));
@@ -787,6 +873,19 @@ export function DiscoverReviewDialog({
   const handleSave = async () => {
     setSaving(true);
     setError(null);
+    /**
+     * ⚠️ **Cleared HERE, at the top of every attempt, and a review round is
+     * why.** `fieldsUnresolved` freezes the rows so the retry the banner asks
+     * for sends the same keys — and it was never cleared, so every outcome that
+     * PROVES the write did not land (a 409 that reseeds the list and says
+     * "check it and press Save again", a 404, `errorTooMany`'s "untick a few and
+     * try again") left the user reading an instruction beside a table with every
+     * control dead. Clearing it here keeps the freeze over exactly the window it
+     * is for: from an unknown outcome until the next press. The payload below is
+     * built synchronously from the rows as they were frozen, and `saving` holds
+     * the controls for the rest of the write.
+     */
+    setFieldsUnresolved(false);
     try {
       // ── Slice #27.04: writes 1 and 2, when the user asked for a new type ──
       // Each is skipped if a previous press already completed it, so a retry
@@ -837,16 +936,28 @@ export function DiscoverReviewDialog({
       // renumbers the merged list from scratch (mergeAcceptedFields), so this
       // only has to carry the user's ordering, not a global one.
       const fields: DocumentTemplateField[] = selected.map((r, index) => {
-        const label = r.label.trim() || r.labelRo;
+        // ⚠️ `rowName`, with no fallback to `labelRo` — see its comment. A
+        // ticked row with no name cannot reach here: `unnamedRow` disables Save.
+        const label = rowName(r);
         return {
-          key:     r.key,
+          // ⚠️ Slice #29.10: the key the SCREEN was showing under this row, not
+          // the one the proposal minted before the user renamed it. Same
+          // `taken` walk, same order, so what is stored is what was displayed.
+          // `|| r.key` is unreachable — `keysForReviewRows` keys exactly the
+          // ticked, not-already-captured rows, which is what `selected` is —
+          // and it is here so a future refactor cannot make a field silently
+          // vanish: `mergeAcceptedFields` drops a row with an empty key.
+          key:     keyForRow(r) || r.key,
           labelRo: label,
           labelEn: label,
           type:    r.type,
           order:   index,
-          // Built from the row's final type, which the user may have changed
-          // in the select beside it — the hint and the format instruction on
-          // the same prompt line have to agree about what kind of value this is.
+          // ⚠️ Slice #29.10: always null on this path, and deliberately still a
+          // call rather than a literal. `buildFieldHint` is where the rule and
+          // the six values that broke the previous one are written down; a
+          // `null` here would leave the next reader to rediscover why. A form
+          // proposed from ONE document carries no extraction hint — the
+          // document-type engine, reading several, is what produces one.
           aiHint:  buildFieldHint({ sampleValue: r.sampleValue, type: r.type }),
           groupRo: null,
           groupEn: null,
@@ -878,11 +989,16 @@ export function DiscoverReviewDialog({
         // a number input only a dot-decimal, and a value they cannot hold is
         // stored invisibly rather than shown. See that function's own comment.
         const values: Record<string, string> = {};
-        for (const r of selected) {
-          if (!savedKeys.has(r.key)) continue;
+        // Indexed against `fields`, not against `r.key`: since #29.10 the key
+        // follows the name the user typed, and `r.key` is the proposal's
+        // opening guess. Reading the stale one here filled nothing, because
+        // `savedKeys` holds what was actually stored.
+        selected.forEach((r, index) => {
+          const key = fields[index].key;
+          if (!savedKeys.has(key)) return;
           const value = formValueForField(r.sampleValue, r.type);
-          if (value !== null) values[r.key] = value;
-        }
+          if (value !== null) values[key] = value;
+        });
         onSaved(Math.max(0, added), values);
       };
 
@@ -916,6 +1032,9 @@ export function DiscoverReviewDialog({
            * one.
            */
           setError(t("errorFieldsUnknown", { type: targetTypeName }));
+          // Slice #29.10: freeze the rows so the retry the message asks for
+          // sends the same keys. See `fieldsUnresolved`.
+          setFieldsUnresolved(true);
           // If it did land, the type list is now stale and the form behind this
           // dialog would not render the new fields. Not awaited.
           onTypesChanged();
@@ -979,8 +1098,8 @@ export function DiscoverReviewDialog({
           // Slice #27.04: whichever baseline is live — the stored type's, or
           // the one belonging to a type this dialog just created.
           setActiveBaseline(fresh);
-          const reproposed = proposeTemplateFields(pairs, fresh, partyRoleNames);
-          setRows(applyDecisions(seedRows(reproposed, fresh.length)));
+          const reproposed = proposeTemplateFields(pairs, fresh, roles);
+          setRows(applyDecisions(seedReviewRows(reproposed)));
           setError(t("errorChanged"));
           // The form behind this dialog renders from the caller's cache, so it
           // is now out of date too. Not awaited, and nothing here depends on it.
@@ -1040,6 +1159,16 @@ export function DiscoverReviewDialog({
           {createNew ? t("introNewType") : t("intro")}
         </p>
 
+        {/* ⚠️ Slice #29.10: said on the screen because the screen is where the
+            decision is made. A form proposed from ONE document is saved with no
+            extraction hints at all — see `buildFieldHint` for the six values
+            that came off one deed and were sitting on a shared type. The
+            sentence also points at the thing that DOES produce hints, so the
+            absence reads as a boundary rather than as a missing feature. */}
+        {!nothingToAdd && (
+          <p className="mt-2 text-sm text-fade dark:text-zinc-400">{t("noHintNote")}</p>
+        )}
+
         {/* ── Slice #27.04: "this is a new document type" ─────────────────
             Above the table, because it changes what every row below it means:
             with the box ticked the fields land on a type that does not exist
@@ -1055,7 +1184,7 @@ export function DiscoverReviewDialog({
               // the old type while the document sits on the new one — and
               // locked once a write is unresolved, where unticking cleared the
               // warning and re-armed exactly that.
-              disabled={saving || createdType !== null || unresolved}
+              disabled={saving || createdType !== null || unresolved || fieldsUnresolved}
               onChange={(e) => toggleCreateNew(e.target.checked)}
               className="mt-0.5 h-4 w-4 shrink-0 rounded border-wire accent-cta"
             />
@@ -1075,7 +1204,7 @@ export function DiscoverReviewDialog({
                 value={createdType?.name ?? newTypeName}
                 // Same lock, same reason: the row exists, and this box cannot
                 // rename it. Reference Data can.
-                disabled={saving || createdType !== null || unresolved}
+                disabled={saving || createdType !== null || unresolved || fieldsUnresolved}
                 onChange={(e) => setNewTypeName(e.target.value)}
                 placeholder={t("newTypeNamePlaceholder")}
                 // Both, and in this order: a screen reader that only heard the
@@ -1172,7 +1301,11 @@ export function DiscoverReviewDialog({
                   </tr>
                 </thead>
                 <tbody>
-                  {newRows.map((row) => (
+                  {newRows.map((row) => {
+                    // Computed once per row: it is both the red mark on the row
+                    // and half of what the footer says.
+                    const issue = reviewRowIssue(row, captured);
+                    return (
                     <tr
                       key={row.rowId}
                       className="border-b border-crease/60 align-top dark:border-zinc-800"
@@ -1181,9 +1314,18 @@ export function DiscoverReviewDialog({
                         <input
                           type="checkbox"
                           checked={row.include}
-                          disabled={saving}
+                          disabled={rowsLocked}
                           onChange={(e) => patchRow(row.rowId, { include: e.target.checked })}
-                          aria-label={t("includeAria", { label: row.label || row.key })}
+                          // ⚠️ Slice #29.10: named by the row's NAME, not by
+                          // `row.key` — which is the proposal's opening guess
+                          // and stops being the stored key the moment the user
+                          // renames the row.
+                          // `|| labelRo` is a DISPLAY fallback and nothing
+                          // else — `rowName` has none, deliberately, so a
+                          // cleared box cannot be saved under the caption it
+                          // deleted. An empty accessible name would leave two
+                          // emptied rows announcing identically.
+                          aria-label={t("includeAria", { label: rowName(row) || row.labelRo })}
                           className="mt-2 h-4 w-4 shrink-0 rounded border-wire accent-cta"
                         />
                       </td>
@@ -1191,30 +1333,74 @@ export function DiscoverReviewDialog({
                         <input
                           type="text"
                           value={row.label}
-                          disabled={saving}
+                          disabled={rowsLocked}
                           onChange={(e) => patchRow(row.rowId, { label: e.target.value })}
                           aria-label={t("labelAria", { label: row.labelRo })}
                           className="w-full rounded-md border border-wire bg-transparent px-2 py-1.5 text-ink dark:border-zinc-700 dark:text-zinc-100"
                         />
                         <span className="mt-1 block font-mono text-xs text-fade dark:text-zinc-500">
-                          {row.key}
+                          {/* Slice #29.10: recomputed from the name as typed,
+                              so renaming a field actually renames it. */}
+                          {keyForRow(row)}
                           {row.confidence !== "high" && (
-                            <span className="ml-2 rounded bg-amber-100 px-1 py-0.5 text-amber-900 dark:bg-amber-950/50 dark:text-amber-200">
+                            <span className="ml-2 rounded bg-amber-100 px-1 py-0.5 font-sans text-amber-900 dark:bg-amber-950/50 dark:text-amber-200">
                               {t("lowConfidence")}
                             </span>
                           )}
                         </span>
+                        {/* ⚠️ Slice #29.10: ADVISORY, never a filter. The model
+                            reads one document with no schema and hands back
+                            names cut out of the prose around them — „suprafața
+                            de", „prețul vânzării este de". Deleting those
+                            silently is the mistake field-distillation.ts spent
+                            three rounds measuring; saying so beside a box the
+                            user can type in is not. The row stays saveable. */}
+                        {/* ⚠️ Slice #29.10: through `rowName`, the same helper
+                            the key and the save use. A round found this reading
+                            a different expression from the key and the save, so
+                            typing one space into the box made the warning
+                            vanish while the fragment was still stored. */}
+                        {looksLikeSentenceFragment(rowName(row)) && (
+                          <span className="mt-1 block text-xs text-amber-800 dark:text-amber-300">
+                            {t("fragmentName")}
+                          </span>
+                        )}
+                        {/* ⚠️ Slice #29.10: a SECOND complaint with its own
+                            sentence, and a review round is why. Folded into the
+                            one above, the length test told the author of
+                            „Certificat de atestare fiscală pentru persoane
+                            fizice" that their caption read like a piece of a
+                            sentence, which is untrue — while the thing that is
+                            true, that its key is about to be cut mid-word, went
+                            unsaid. F5 reported that truncation by name. */}
+                        {nameTooLongForKey(rowName(row)) && (
+                          <span className="mt-1 block text-xs text-amber-800 dark:text-amber-300">
+                            {t("longName", { max: MAX_KEY_LENGTH })}
+                          </span>
+                        )}
+                        {/* ⚠️ Slice #29.10: the two BLOCKING problems marked on
+                            the row as well as summarised in the footer, and a
+                            review round is why. They were footer-only, saying
+                            "a ticked field has no name" on a screen showing
+                            thirty-six rows — while the two advisory warnings
+                            above sat on the row itself. The one you must act on
+                            was the harder of the two to find. */}
+                        {issue !== null && (
+                          <span className="mt-1 block text-xs text-red-700 dark:text-red-400">
+                            {issue === "unnamed" ? t("rowNameRequired") : t("rowNameDuplicate")}
+                          </span>
+                        )}
                       </td>
                       <td className="py-2 pr-3">
                         <select
                           value={row.type}
-                          disabled={saving}
+                          disabled={rowsLocked}
                           onChange={(e) =>
                             patchRow(row.rowId, {
                               type: e.target.value as DocumentTemplateFieldType,
                             })
                           }
-                          aria-label={t("typeAria", { label: row.label || row.key })}
+                          aria-label={t("typeAria", { label: rowName(row) || row.labelRo })}
                           className="rounded-md border border-wire bg-transparent px-2 py-1.5 text-ink dark:border-zinc-700 dark:text-zinc-100"
                         >
                           {FIELD_TYPES.map((ft) => (
@@ -1230,7 +1416,8 @@ export function DiscoverReviewDialog({
                         </span>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -1244,9 +1431,9 @@ export function DiscoverReviewDialog({
               </p>
               <p className="mt-1 text-fade dark:text-zinc-400">{t("alreadyBody")}</p>
               <ul className="mt-2 flex flex-wrap gap-2">
-                {presentRows.map((row) => (
+                {presentFields.map((row) => (
                   <li
-                    key={row.rowId}
+                    key={row.key}
                     className="rounded bg-card px-2 py-1 font-mono text-xs text-fade dark:bg-zinc-900 dark:text-zinc-400"
                   >
                     {row.labelRo}
@@ -1271,10 +1458,10 @@ export function DiscoverReviewDialog({
           <p className="text-sm text-fade dark:text-zinc-400">
             {/* A disabled primary button with nothing beside it reads as a
                 broken screen. Every way of reaching one is answered here:
-                nothing new to add, the type already full, and nothing ticked —
-                the last is easy to land in, because a row the model was unsure
-                about starts unticked and an unsure run leaves every box
-                empty. */}
+                nothing new to add, the type already full, and nothing ticked.
+                ⚠️ Slice #29.10 made the last one the OPENING state of every
+                run — nothing is pre-ticked any more — so this sentence is no
+                longer an edge case, it is the first thing the user reads. */}
             {nothingToAdd ? (
               t("nothingToAddFooter")
             ) : (
@@ -1298,6 +1485,21 @@ export function DiscoverReviewDialog({
             {createNew && trimmedNewName.length === 0 && !nothingToAdd && (
               <span className="mt-1 block text-red-700 dark:text-red-400">
                 {t("newTypeNameRequired")}
+              </span>
+            )}
+            {/* ⚠️ Slice #29.10: two more ways to a disabled Save, both opened
+                by the key following the label. The footer POINTS and the rows
+                SAY — a review round found it the other way round, with "a
+                ticked field has no name" down here and nothing on the row, on a
+                screen that routinely shows thirty-six of them. */}
+            {/* ⚠️ Inside `!nothingToAdd`, and a fourth round found why: a 409
+                that reseeds onto a type at the ceiling replaces the table with
+                the `typeFull` paragraph while `applyDecisions` restores the
+                ticks, so a pure pointer said "marked in red above" with nothing
+                above it. */}
+            {!nothingToAdd && (unnamedRow || duplicateRow) && (
+              <span className="mt-1 block text-red-700 dark:text-red-400">
+                {t("rowIssuesFooter")}
               </span>
             )}
           </p>

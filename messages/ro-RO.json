@@ -1509,9 +1509,9 @@
         "number": "Număr"
       },
       "errorNotFound": "Acest tip de document nu mai există în sistem.",
-      "errorTooMany": "Un tip de document poate avea cel mult {max} câmpuri. Debifați câteva și încercați din nou.",
+      "errorTooMany": "Un tip de document poate avea cel mult {max, plural, one {un câmp} few {# câmpuri} other {# de câmpuri}}. Debifați câteva și încercați din nou.",
       "overLimit": "Prea multe câmpuri: ar rezulta {total}, iar maximul este {max}. Debifați câteva.",
-      "needSelection": "Bifați cel puțin un câmp ca să puteți salva. Rândurile marcate „nesigur” nu sunt bifate din start — verificați valoarea din dreapta și bifați-le dacă sunt corecte.",
+      "needSelection": "Bifați cel puțin un câmp ca să puteți salva. Niciun rând nu este bifat din start: fiecare câmp bifat se adaugă tipului de document și rămâne acolo. Verificați valoarea din dreapta fiecărui rând și bifați rândurile pe care le doriți.",
       "nothingToAddFooter": "Nu este nimic de adăugat în formular.",
       "close": "Închide",
       "typeFull": "Formularul acestui tip de document are deja numărul maxim de câmpuri ({max}), deci nu se mai poate adăuga niciunul. Un administrator poate elimina câmpuri care nu mai sunt folosite.",
@@ -1530,7 +1530,13 @@
       "errorRetypeUnknown": "Tipul „{type}” a fost creat, dar nu s-a putut afla dacă documentul a fost mutat pe el sau nu, deci formularul nu a fost salvat. Închideți fereastra, reîncărcați pagina documentului și verificați ce tip are: dacă are tipul nou, apăsați din nou Descoperire AI; dacă are tipul vechi, alegeți tipul nou din listă, salvați, apoi reluați descoperirea. Nu apăsați din nou Salvează de aici.",
       "newTypeCreatedNotMoved": "Tipul „{type}” a fost creat, dar documentul nu a fost încă mutat pe el.",
       "newTypeNothingToAdd": "Nu s-a citit niciun câmp care să poată intra într-un formular, deci nu se poate crea un tip nou de aici.",
-      "errorFieldsUnknown": "Nu se știe dacă formularul tipului „{type}” a fost salvat sau nu. Apăsați din nou „Salvează formularul”: dacă fusese deja salvat, salvarea se încheie normal și fereastra se închide. Alternativ, închideți fereastra și verificați în Date de Referință → Tipuri de documente."
+      "errorFieldsUnknown": "Nu se știe dacă formularul tipului „{type}” a fost salvat sau nu. Apăsați din nou „Salvează formularul”: dacă fusese deja salvat, salvarea se încheie normal și fereastra se închide. Alternativ, închideți fereastra și verificați în Date de Referință → Tipuri de documente.",
+      "noHintNote": "Câmpurile se adaugă fără niciun indiciu pentru citirea automată, pentru că un singur document nu poate arăta care parte dintr-o valoare este forma ei și care este conținutul acelui document. Indiciile se obțin din „Distilare Tipizate”, care citește mai multe documente de același fel.",
+      "fragmentName": "Denumirea pare o bucată de frază, nu o denumire de câmp. Rescrieți-o scurt înainte de a bifa rândul.",
+      "rowNameRequired": "Scrieți o denumire pentru acest câmp sau debifați rândul.",
+      "rowNameDuplicate": "Această denumire este deja folosită de un câmp preluat, deci s-ar salva a doua oară, separat. Schimbați-o sau debifați rândul.",
+      "longName": "Denumirea este prea lungă: denumirea de sistem se taie la {max} de caractere. Scurtați-o.",
+      "rowIssuesFooter": "Unul sau mai multe rânduri bifate au o problemă la denumire — sunt marcate cu roșu mai sus."
     },
     "aiDiscoverErrorBusy": "Prea multe citiri într-un timp scurt. Așteptați un minut și încercați din nou.",
     "aiDiscoverErrorNoPages": "Documentul nu are pagini încărcate, deci nu are ce să fie citit.",

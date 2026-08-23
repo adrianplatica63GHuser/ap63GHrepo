@@ -1511,7 +1511,7 @@
       "errorNotFound": "This document type no longer exists.",
       "errorTooMany": "A document type may hold at most {max} fields. Untick a few and try again.",
       "overLimit": "Too many fields: this would make {total}, and the maximum is {max}. Untick a few.",
-      "needSelection": "Tick at least one field to save. Rows marked “uncertain” are not ticked for you — check the value on the right and tick them if they are right.",
+      "needSelection": "Tick at least one field to save. Nothing is ticked to begin with: every ticked field is added to the document type and stays there. Check the value beside each row and tick the ones you want.",
       "nothingToAddFooter": "There is nothing to add to the form.",
       "close": "Close",
       "typeFull": "This document type's form already holds the maximum number of fields ({max}), so none can be added. An administrator can remove fields that are no longer used.",
@@ -1530,7 +1530,13 @@
       "errorRetypeUnknown": "Type “{type}” was created, but it could not be established whether the document was moved onto it, so the form was not saved. Close this window, reload the document page and check which type it has: if it has the new type, press AI Discovery again; if it has the old one, pick the new type from the list, save, then run discovery again. Do not press Save again here.",
       "newTypeCreatedNotMoved": "Type “{type}” was created, but the document has not been moved onto it yet.",
       "newTypeNothingToAdd": "Nothing was read that could go into a form, so a new type cannot be created from here.",
-      "errorFieldsUnknown": "It is not known whether the form for type “{type}” was saved. Press “Save the form” again: if it had already been saved the save simply completes and this window closes. Or close it and check in Reference Data → Document Types."
+      "errorFieldsUnknown": "It is not known whether the form for type “{type}” was saved. Press “Save the form” again: if it had already been saved the save simply completes and this window closes. Or close it and check in Reference Data → Document Types.",
+      "noHintNote": "The fields are added with no extraction hint, because one document cannot show which part of a value is its shape and which part belongs to that document alone. Hints come from “DocTypeEngine”, which reads several documents of the same kind.",
+      "fragmentName": "This name reads like a piece of a sentence rather than a field name. Rewrite it short before ticking the row.",
+      "rowNameRequired": "Type a name for this field, or untick the row.",
+      "rowNameDuplicate": "This name is already used by a field that is captured, so it would be saved a second time, separately. Change it or untick the row.",
+      "longName": "This name is too long: the system name is cut at {max} characters. Shorten it.",
+      "rowIssuesFooter": "One or more ticked rows have a problem with their name — they are marked in red above."
     },
     "aiDiscoverErrorBusy": "Too many reads in a short time. Wait a minute and try again.",
     "aiDiscoverErrorNoPages": "This document has no pages uploaded, so there is nothing to read.",

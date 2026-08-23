@@ -483,6 +483,20 @@ export function DocTypeEngine() {
             labelEn: f.labelEn,
             type: f.type,
             aiHint: f.aiHint ?? "",
+            /**
+             * ⚠️ **Ticked by default, and #29.10 left it that way on purpose
+             * while removing the same default from the discovery review
+             * dialog.** The two screens are not asking the same question. A
+             * field is in this list because it cleared the Matching % line —
+             * it was found in at least that share of the documents actually
+             * read, and the screen prints the count it was computed over
+             * beside it. A row on the one-document dialog was seen once, in
+             * one document, by a model given no schema; there the pre-tick
+             * fired on 97% of rows and was an accept-all with a checkbox
+             * column drawn over it. Same control, different evidence, so the
+             * same answer would be a reflex rather than a decision. See
+             * `seedReviewRows` in src/lib/documents/discover-to-template.ts.
+             */
             include: true,
           },
       ),
