@@ -1,4 +1,24 @@
-import { eq } from "drizzle-orm";
+/**
+ * `lookup_property_property_role` — READ ONLY.                  (Slice #29.13)
+ *
+ * ⚠️ **The create, the rename and the delete that used to live here are gone,
+ * and the delete is the reason.** It was a bare `db.delete` with no count, and
+ * `property_property.relationship_role_id` is ON DELETE SET NULL — so deleting
+ * a role that forty associations carried blanked forty relationship tags and
+ * answered 204.
+ * That is exactly the failure Slice #29.05 exists to prevent, one modal over.
+ *
+ * The list joined `VALID_LIST_KEYS` instead of gaining a guard of its own (see
+ * src/lib/admin/value-lists/config.ts for why), so all three writes are now
+ * `createValue` / `updateValue` / `deleteValue` in
+ * src/lib/admin/value-lists/queries.ts, and the delete there is refused while
+ * anything depends on the row.
+ *
+ * What is left is this one reader, and it is left because it has a consumer
+ * the generic list route does not serve: the association screen's role
+ * dropdown, via GET /api/admin/property-property-roles.
+ */
+
 import { db } from "@/db";
 import { lookupPropertyPropertyRole } from "@/db/schema";
 
@@ -23,49 +43,4 @@ export async function listPropertyPropertyRoles(): Promise<PropertyPropertyRoleR
     })
     .from(lookupPropertyPropertyRole)
     .orderBy(lookupPropertyPropertyRole.sortOrder, lookupPropertyPropertyRole.name);
-}
-
-export async function createPropertyPropertyRole(
-  name: string,
-  description: string | null,
-): Promise<PropertyPropertyRoleRow> {
-  const maxRow = await db
-    .select({ sortOrder: lookupPropertyPropertyRole.sortOrder })
-    .from(lookupPropertyPropertyRole)
-    .orderBy(lookupPropertyPropertyRole.sortOrder)
-    .limit(1);
-  // Place new entry at the end
-  const nextSort = maxRow.length === 0 ? 1 : (maxRow[0].sortOrder ?? 0) + 10;
-
-  const [row] = await db
-    .insert(lookupPropertyPropertyRole)
-    .values({ name, description: description || null, sortOrder: nextSort })
-    .returning({
-      id:          lookupPropertyPropertyRole.id,
-      name:        lookupPropertyPropertyRole.name,
-      description: lookupPropertyPropertyRole.description,
-      sortOrder:   lookupPropertyPropertyRole.sortOrder,
-    });
-  return row;
-}
-
-export async function updatePropertyPropertyRole(
-  id: string,
-  name: string,
-  description: string | null,
-): Promise<void> {
-  await db
-    .update(lookupPropertyPropertyRole)
-    .set({ name, description: description || null })
-    .where(eq(lookupPropertyPropertyRole.id, id));
-}
-
-// Slice #29.04: a real delete, matching its person-person and
-// property-person siblings. The junction FKs are ON DELETE SET NULL, so an
-// existing association keeps its row and loses its role label rather than
-// disappearing — which is exactly the conversation Slice #29.05 adds.
-export async function deletePropertyPropertyRole(id: string): Promise<void> {
-  await db
-    .delete(lookupPropertyPropertyRole)
-    .where(eq(lookupPropertyPropertyRole.id, id));
 }

@@ -1,14 +1,19 @@
-import { NextResponse } from "next/server";
-import { z } from "zod/v4";
-import {
-  listDocumentDocumentRoles,
-  createDocumentDocumentRole,
-} from "@/lib/admin/document-document-roles/queries";
+/**
+ * /api/admin/document-document-roles
+ *
+ * GET — the Document → Document relationship roles, for the association
+ *       screen's dropdown (`src/app/documents/[id]/associate-reference/`).
+ *
+ * ⚠️ **READ-ONLY as of Slice #29.13** — same reasoning, word for word, as its
+ * property-property twin: the list is an ordinary value list now, so every
+ * write goes through /api/admin/value-lists/document-document-roles and its
+ * guarded delete. See that file's header, and
+ * src/lib/admin/value-lists/config.ts for why the two lists joined the others
+ * rather than gaining a second guard.
+ */
 
-const createSchema = z.object({
-  name:        z.string().min(1).max(200),
-  description: z.string().max(500).optional().nullable(),
-});
+import { NextResponse } from "next/server";
+import { listDocumentDocumentRoles } from "@/lib/admin/document-document-roles/queries";
 
 export async function GET() {
   try {
@@ -17,23 +22,5 @@ export async function GET() {
   } catch (err) {
     console.error("GET /api/admin/document-document-roles", err);
     return NextResponse.json({ error: "Failed to load" }, { status: 500 });
-  }
-}
-
-export async function POST(req: Request) {
-  try {
-    const body = await req.json();
-    const parsed = createSchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid input" }, { status: 400 });
-    }
-    const row = await createDocumentDocumentRole(
-      parsed.data.name,
-      parsed.data.description ?? null,
-    );
-    return NextResponse.json(row, { status: 201 });
-  } catch (err) {
-    console.error("POST /api/admin/document-document-roles", err);
-    return NextResponse.json({ error: "Failed to create" }, { status: 500 });
   }
 }

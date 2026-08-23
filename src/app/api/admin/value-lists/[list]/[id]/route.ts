@@ -5,11 +5,13 @@
  * DELETE — hard delete (lookup rows have no soft-delete). The row goes and its
  *          key is free for immediate reuse (Slice #29.04).
  *
- *          GUARDED as of Slice #29.05, and guarded in APPLICATION code for all
- *          nine lists rather than left to the schema: of the fourteen foreign
+ *          GUARDED as of Slice #29.05, and guarded in APPLICATION code for
+ *          every list rather than left to the schema: of the sixteen foreign
  *          keys that reach these tables exactly one refuses a delete
- *          (document.document_type_id), nine blank the referencing column and
- *          four cascade rows away. A delete that anything depends on is
+ *          (document.document_type_id), ELEVEN blank the referencing column
+ *          and four cascade rows away. (Nine and fourteen until Slice #29.13
+ *          brought the two relationship-role lists in; the inventory lives in
+ *          src/lib/admin/value-lists/dependents.ts.) A delete that anything depends on is
  *          answered with 409 and a body naming what depends on it and how
  *          many; the client turns that into a sentence and an offer to move
  *          those objects onto another value of the same list (POST ./reassign).
@@ -78,7 +80,7 @@ export async function PUT(
     // reaches (`createDocumentTypeRow`, from the value-lists POST and from the
     // classifier's resolver), and `updateValue`'s document-types branch never
     // touches `key`;
-    // across all nine lists the only UNIQUE constraints are on `key`, and
+    // across all eleven lists the only UNIQUE constraints are on `key`, and
     // `origin` — the one CHECK a lookup row carries — is stripped from the PUT
     // schema. So the branch would have been unreachable code justified by a
     // sentence that is not true, and this codebase's own rule is that a claim

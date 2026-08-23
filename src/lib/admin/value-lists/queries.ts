@@ -9,6 +9,12 @@
  * of the fourteen that reach them. Of the rest, nine are ON DELETE SET NULL
  * (the association keeps its row and loses the label) and four cascade
  * whitelist rows away.
+ *
+ * Slice #29.13: nine became eleven. The two relationship-role lists joined
+ * `VALID_LIST_KEYS` rather than gaining a second guard of their own (see
+ * ./config.ts), so all this file owes them is a `case` in the three switches
+ * below — the count, the move and the delete were already generic over
+ * LIST_DEPENDENCIES and reached them the moment the map did.
  * What the user is told, and the offer to move the dependents onto another
  * value first, are in `./dependents.ts`, `buildReport` and the dialog.
  *
@@ -33,6 +39,8 @@ import {
   lookupJudicialPersonType,
   lookupDocumentType,
   lookupInstitution,
+  lookupPropertyPropertyRole,
+  lookupDocumentDocumentRole,
 } from "@/db/schema";
 import type { ListKey } from "./config";
 import {
@@ -145,6 +153,21 @@ export async function listValues(key: ListKey): Promise<LookupRow[]> {
     case "institutions":
       return db.select().from(lookupInstitution)
         .orderBy(asc(lookupInstitution.sortOrder)) as Promise<LookupRow[]>;
+    // Slice #29.13: sort order then name — the ordering their own
+    // `listPropertyPropertyRoles` / `listDocumentDocumentRoles` used, kept so
+    // the rows do not rearrange themselves the day the modal changes.
+    case "property-property-roles":
+      return db.select().from(lookupPropertyPropertyRole)
+        .orderBy(
+          asc(lookupPropertyPropertyRole.sortOrder),
+          asc(lookupPropertyPropertyRole.name),
+        ) as Promise<LookupRow[]>;
+    case "document-document-roles":
+      return db.select().from(lookupDocumentDocumentRole)
+        .orderBy(
+          asc(lookupDocumentDocumentRole.sortOrder),
+          asc(lookupDocumentDocumentRole.name),
+        ) as Promise<LookupRow[]>;
   }
 }
 
@@ -210,6 +233,14 @@ export async function createValue(
       return db.transaction((tx) => createDocumentTypeRow(tx, data));
     case "institutions": {
       const [row] = await db.insert(lookupInstitution).values(data).returning();
+      return row as LookupRow;
+    }
+    case "property-property-roles": {
+      const [row] = await db.insert(lookupPropertyPropertyRole).values(data).returning();
+      return row as LookupRow;
+    }
+    case "document-document-roles": {
+      const [row] = await db.insert(lookupDocumentDocumentRole).values(data).returning();
       return row as LookupRow;
     }
   }
@@ -384,6 +415,14 @@ export async function updateValue(
       const [row] = await db.update(lookupInstitution).set(data).where(eq(lookupInstitution.id, id)).returning();
       return (row as LookupRow) ?? null;
     }
+    case "property-property-roles": {
+      const [row] = await db.update(lookupPropertyPropertyRole).set(data).where(eq(lookupPropertyPropertyRole.id, id)).returning();
+      return (row as LookupRow) ?? null;
+    }
+    case "document-document-roles": {
+      const [row] = await db.update(lookupDocumentDocumentRole).set(data).where(eq(lookupDocumentDocumentRole.id, id)).returning();
+      return (row as LookupRow) ?? null;
+    }
   }
 }
 
@@ -396,8 +435,10 @@ export async function updateValue(
 //
 // WHERE THE RULES LIVE: `./dependents.ts` — one entry per list, listing the
 // tables and columns that carry the row's value. Everything below is generic
-// over that table, which is the point: the refusal is the same sentence for all
-// nine lists, and a tenth list is an entry there rather than a branch here.
+// over that table, which is the point: the refusal is the same sentence for
+// every list, and a NEW list is an entry there rather than a branch here.
+// Slice #29.13 is the evidence: it added the tenth and the eleventh and this
+// section did not change at all.
 
 /**
  * Everything below runs inside a transaction, and the counting path opens one
@@ -446,7 +487,7 @@ async function sourceValue(
   const rows = lock ? await q.for("update") : await q;
   const value = rows.length > 0 ? rows[0].v : undefined;
   // ⚠️ **NULL is treated as "no row", not as a value to match on.** Today
-  // unreachable — `lookup_tarla.indicativ` is NOT NULL and the other eight
+  // unreachable — `lookup_tarla.indicativ` is NOT NULL and the other ten
   // sources are primary keys — but the day a value-matched list points
   // `source` at a nullable column, `eq(column, null)` is `column = NULL`,
   // which is never true, so every count would come back zero and the delete
@@ -588,10 +629,34 @@ async function moveRef(
 }
 
 export type ReassignOutcome =
-  | { ok: true; moved: DependentCount[]; total: number }
+  | {
+      ok: true;
+      moved: DependentCount[];
+      total: number;
+      /**
+       * Whitelist ticks the TARGET gained so the moved rows stay selectable.
+       * Empty on every list but `person-roles`, and empty there too when the
+       * target was already ticked wherever the moved rows needed it.
+       *                                                        (Slice #29.13)
+       */
+      granted: DependentCount[];
+      /**
+       * i18n keys under `valueList.confirm` — repairs the grant could NOT
+       * make. Today one: `roleWhitelistPending`, when the target role ends up
+       * ticked for no document type at all and nothing safe can change that.
+       * See ./role-whitelists.ts.
+       */
+      warnings: string[];
+    }
   | { ok: false; reason: "not-found" | "same-value" | "ambiguous-value" };
 
 /**
+ * Slice #29.13 made it whitelist-aware: a `person-roles` move now grants the
+ * target the ticks the moved associations need in order to stay selectable —
+ * only where rows really moved, never for a bare tick. See
+ * ./role-whitelists.ts, and `valueList.confirm.roleWhitelistNote`, which was
+ * the sentence that stood in for this and is deleted in the same commit.
+ *
  * ⚠️ **NOTICED, NOT FIXED — the move writes no version row.** `property` and
  * `document` are versioned by full snapshot, and their snapshots carry
  * `propertyTypeId` / `tarlaSola` / `documentTypeId` — the very columns this
@@ -641,6 +706,24 @@ export async function reassignDependents(
       return { ok: false, reason: "ambiguous-value" } as const;
     }
 
+    // ⚠️ **BEFORE the move, and that is not an implementation detail.**
+    // `grantWhitelists` decides what to grant by asking whether any rows still
+    // carry the SOURCE value; after the UPDATE they carry the target's, mixed
+    // in with rows that were already there, and the question stops being
+    // answerable. It runs on this transaction, so a move that rolls back takes
+    // its grants with it.                                       (Slice #29.13)
+    //
+    // The `typeof` guard is what keeps this honest on a value-matched list: on
+    // `tarla` the values are text, not ids, and no whitelist exists — the
+    // clause below is simply not entered, because `tarla` declares no
+    // `grantWhitelists`. It is written as a narrowing rather than a cast so a
+    // future value-matched list that DOES declare one cannot silently pass a
+    // non-uuid into an insert.
+    const whitelists =
+      def.grantWhitelists && typeof from === "string" && typeof to === "string"
+        ? await def.grantWhitelists(tx, from, to)
+        : { granted: [], warnings: [] };
+
     const moved: DependentCount[] = [];
     for (const ref of def.refs) {
       // Configuration goes with the row when it is deleted; it is not moved.
@@ -651,6 +734,8 @@ export async function reassignDependents(
       ok: true,
       moved,
       total: moved.reduce((sum, d) => sum + d.count, 0),
+      granted:  whitelists.granted,
+      warnings: whitelists.warnings,
     } as const;
   });
 }
@@ -669,9 +754,10 @@ export async function reassignDependents(
 // deliberately does NOT filter and is correct precisely because of that
 // constraint.
 //
-// Slice #29.05: and it is refused while anything depends on it — for all nine
-// lists, in application code, because the database only refuses on one of the
-// fourteen edges that reach them. The nine-way switch this function was is
+// Slice #29.05: and it is refused while anything depends on it — for all
+// eleven lists (nine when #29.05 shipped; #29.13 brought the two
+// relationship-role lists in), in application code, because the database only
+// refuses on one of the sixteen edges that reach them. The nine-way switch this function was is
 // gone: the table to
 // delete from is `LIST_DEPENDENCIES[key].table`, which is the same entry the
 // count and the re-point read, so a list cannot be counted under one rule and

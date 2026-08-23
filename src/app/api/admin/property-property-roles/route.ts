@@ -1,14 +1,26 @@
-import { NextResponse } from "next/server";
-import { z } from "zod/v4";
-import {
-  listPropertyPropertyRoles,
-  createPropertyPropertyRole,
-} from "@/lib/admin/property-property-roles/queries";
+/**
+ * /api/admin/property-property-roles
+ *
+ * GET — the Proprietate → Proprietate relationship roles, for the association
+ *       screen's dropdown (`src/app/properties/[id]/associate-reference/`).
+ *
+ * ⚠️ **READ-ONLY as of Slice #29.13, and the POST that was here is gone rather
+ * than deprecated.** This list is now an ordinary value list — see
+ * `VALID_LIST_KEYS` in src/lib/admin/value-lists/config.ts — so it is created,
+ * renamed and deleted through /api/admin/value-lists/property-property-roles,
+ * where the delete is refused while associations still carry the row. A second
+ * create door with its own zod schema and no guard is exactly the drift this
+ * slice removed; a second DELETE door would have been the bug itself, still
+ * reachable.
+ *
+ * What keeps this route alive is the CONSUMER: the associate-reference view
+ * fetches `/api/admin/property-property-roles` under the query key
+ * `["property-property-roles"]`. Pointing it at the generic list route would
+ * be a rename of a working thing for no gain.
+ */
 
-const createSchema = z.object({
-  name:        z.string().min(1).max(200),
-  description: z.string().max(500).optional().nullable(),
-});
+import { NextResponse } from "next/server";
+import { listPropertyPropertyRoles } from "@/lib/admin/property-property-roles/queries";
 
 export async function GET() {
   try {
@@ -17,23 +29,5 @@ export async function GET() {
   } catch (err) {
     console.error("GET /api/admin/property-property-roles", err);
     return NextResponse.json({ error: "Failed to load" }, { status: 500 });
-  }
-}
-
-export async function POST(req: Request) {
-  try {
-    const body = await req.json();
-    const parsed = createSchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid input" }, { status: 400 });
-    }
-    const row = await createPropertyPropertyRole(
-      parsed.data.name,
-      parsed.data.description ?? null,
-    );
-    return NextResponse.json(row, { status: 201 });
-  } catch (err) {
-    console.error("POST /api/admin/property-property-roles", err);
-    return NextResponse.json({ error: "Failed to create" }, { status: 500 });
   }
 }

@@ -6,8 +6,6 @@ import type { ListKey } from "@/lib/admin/value-lists/config";
 import { ValueListModal } from "./value-list-modal";
 import { DocumentPersonsModal } from "./document-persons-modal";
 import { PropertyPersonsModal } from "./property-persons-modal";
-import { PropertyPropertyModal } from "./property-property-modal";
-import { DocumentDocumentModal } from "./document-document-modal";
 import { PersonPersonModal } from "./person-person-modal";
 
 // ── Section wrapper ───────────────────────────────────────────────────────────
@@ -95,8 +93,6 @@ export function ValueListHub() {
   const [openList,              setOpenList]              = useState<ListKey | null>(null);
   const [showDocPersons,        setShowDocPersons]        = useState(false);
   const [showPropertyPersons,   setShowPropertyPersons]   = useState(false);
-  const [showPropertyProperty,  setShowPropertyProperty]  = useState(false);
-  const [showDocumentDocument,  setShowDocumentDocument]  = useState(false);
   const [showPersonPerson,      setShowPersonPerson]      = useState(false);
   const [showDocToProperty,     setShowDocToProperty]     = useState(false);
 
@@ -137,10 +133,17 @@ export function ValueListHub() {
           <ListBtn label={t("lists.personToDocument")} onClick={() => setShowDocPersons(true)} />
           <ListBtn label={t("lists.personToPerson")}   onClick={() => setShowPersonPerson(true)} />
 
-          {/* Object-to-object sub-row */}
+          {/* Object-to-object sub-row.
+
+              Slice #29.13: these two are ordinary value lists now — the same
+              generic modal the nine others open, with the refusal, the live
+              count and the offer to move the associations that #29.05 built.
+              They had their own modal and their own bare `db.delete` until
+              this slice, so deleting a role forty associations carried blanked
+              forty relationship tags and answered 204. */}
           <SubLabel label={t("sections.rolesObject")} />
-          <ListBtn label={t("lists.propertyToProperty")} onClick={() => setShowPropertyProperty(true)} />
-          <ListBtn label={t("lists.documentToDocument")} onClick={() => setShowDocumentDocument(true)} />
+          <ListBtn label={t("lists.propertyToProperty")} onClick={() => open("property-property-roles")} />
+          <ListBtn label={t("lists.documentToDocument")} onClick={() => open("document-document-roles")} />
           <ListBtn label={t("lists.documentToProperty")} onClick={() => setShowDocToProperty(true)} />
         </Section>
 
@@ -149,8 +152,6 @@ export function ValueListHub() {
       {openList            && <ValueListModal listKey={openList} onClose={close} />}
       {showDocPersons      && <DocumentPersonsModal   onClose={() => setShowDocPersons(false)} />}
       {showPropertyPersons && <PropertyPersonsModal   onClose={() => setShowPropertyPersons(false)} />}
-      {showPropertyProperty && <PropertyPropertyModal onClose={() => setShowPropertyProperty(false)} />}
-      {showDocumentDocument && <DocumentDocumentModal onClose={() => setShowDocumentDocument(false)} />}
       {showPersonPerson    && <PersonPersonModal      onClose={() => setShowPersonPerson(false)} />}
       {showDocToProperty   && <DocToPropertyModal     onClose={() => setShowDocToProperty(false)} />}
     </>

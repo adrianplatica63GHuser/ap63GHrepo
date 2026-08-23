@@ -36,18 +36,33 @@
  *
  *   The half it cannot reach — that a refusal really happens against live rows
  *   — is Adrian's, through the UI, and is named in the handover.
+ *
+ * SLICE #29.13 ADDED THREE MORE SECTIONS, AND THEY ARE ABOUT THE SAME FAILURE
+ * ONE MODAL OVER.
+ *   • The two relationship-role lists (§8) had their own screen, their own
+ *     routes and a bare `db.delete` with no count, so deleting a role that
+ *     forty associations carried blanked forty relationship tags and answered
+ *     204. They are ordinary members of `VALID_LIST_KEYS` now, which is why
+ *     most of what guards them is the loops above rather than §8 itself —
+ *     what §8 pins is that the second write door is really gone.
+ *   • The move is whitelist-aware (§9), so the sentence that used to ask the
+ *     administrator to repair three other panels by hand is deleted. The
+ *     order — grant, THEN move — is the whole guarantee, and it is pinned.
+ *   • The sibling panels (§10) say their failures in Romanian and no longer
+ *     have a delete with no `onError` at all.
  */
 
 import fs from "fs";
 import path from "path";
 import { getTableName } from "drizzle-orm";
 import type { PgColumn } from "drizzle-orm/pg-core";
-import { VALID_LIST_KEYS, type ListKey } from "@/lib/admin/value-lists/config";
+import { LIST_META, VALID_LIST_KEYS, type ListKey } from "@/lib/admin/value-lists/config";
 import {
   LIST_DEPENDENCIES,
   dependentNotes,
 } from "@/lib/admin/value-lists/dependents";
 import { isInUseBody, type InUseBody } from "@/lib/admin/value-lists/responses";
+import { FAILURE_CODES } from "@/lib/admin/value-lists/failures";
 
 const SRC = path.join(process.cwd(), "src");
 
@@ -80,6 +95,23 @@ function ownerTable(column: PgColumn): string {
 }
 
 /**
+ * A file with comments and string bodies blanked.
+ *
+ * Hoisted out of `functionBody` by Slice #29.13, which needed it whole: the
+ * sibling-panel guards below ask whether a component still renders
+ * `err.message`, and that question has to be asked of the CODE — this file's
+ * own comments say the phrase repeatedly, and a guard tripped by the sentence
+ * explaining the fix is a guard that pushes the reasoning out of the codebase.
+ */
+function code(source: string): string {
+  return source
+    .replace(/\/\*[\s\S]*?\*\//g, " ")
+    .replace(/\/\/[^\n]*/g, " ")
+    .replace(/"(?:[^"\\\n]|\\.)*"/g, '""')
+    .replace(/'(?:[^'\\\n]|\\.)*'/g, "''");
+}
+
+/**
  * One exported function's body, comments and string bodies blanked.
  *
  * Same shape as `hard-delete-single-source.test.ts`'s helper and for the same
@@ -90,11 +122,7 @@ function ownerTable(column: PgColumn): string {
  * to no transaction at all.
  */
 function functionBody(source: string, name: string): string {
-  const stripped = source
-    .replace(/\/\*[\s\S]*?\*\//g, " ")
-    .replace(/\/\/[^\n]*/g, " ")
-    .replace(/"(?:[^"\\\n]|\\.)*"/g, '""')
-    .replace(/'(?:[^'\\\n]|\\.)*'/g, "''");
+  const stripped = code(source);
   const re = new RegExp(`^export async function ${name}\\(`, "m");
   const m = re.exec(stripped);
   if (!m) throw new Error(`${name} not found as a top-level export`);
@@ -363,18 +391,23 @@ describe("the confirmation has words for everything it can say", () => {
     "moved",
     "noTarget",
     "removedWithRow",
-    "roleWhitelistNote",
-    "errors.sameValue",
-    "errors.validation",
-    "errors.ambiguousValue",
-    "errors.notFound",
-    "errors.generic",
+    "roleWhitelistGranted",
     "delete",
     "deleting",
     "cancel",
   ])("confirm.%s", (key) => {
     expect(typeof at(ro, `valueList.confirm.${key}`)).toBe("string");
     expect(typeof at(en, `valueList.confirm.${key}`)).toBe("string");
+  });
+
+  it.each(FAILURE_CODES)("confirm.errors.%s", (codeKey) => {
+    // ⚠️ **Iterated from the exported ARRAY, not from a hand-written copy.**
+    // A seventh `FailureCode` added without a message ships the raw key path
+    // to `tErr(...)` on a Romanian-only screen — the exact failure the four
+    // screens that read `failures.ts` exist to prevent. A list written out
+    // here would not have contained it.                         (Slice #29.13)
+    expect(typeof at(ro, `valueList.confirm.errors.${codeKey}`)).toBe("string");
+    expect(typeof at(en, `valueList.confirm.errors.${codeKey}`)).toBe("string");
   });
 
   it("has words for the note only the query can add", () => {
@@ -480,5 +513,467 @@ describe("the delete path", () => {
     ]) {
       expect(read(...parts)).toContain("isUuid(id)");
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 8. The two lists #29.05 could not reach                       (Slice #29.13)
+// ---------------------------------------------------------------------------
+
+describe("the relationship-role lists", () => {
+  /** list key, schema const, table name, dependent-class label, lookup const. */
+  const RELATIONSHIP_LISTS: Array<[ListKey, string, string, string, string]> = [
+    ["property-property-roles", "propertyProperty", "property_property",
+     "propertyProperties", "lookupPropertyPropertyRole"],
+    ["document-document-roles", "documentDocument", "document_document",
+     "documentDocuments", "lookupDocumentDocumentRole"],
+  ];
+
+  it("are ordinary members of the list, not a second mechanism", () => {
+    // The whole point of the decision this slice records: they inherit the
+    // refusal, the count and the offer by BEING in `VALID_LIST_KEYS`, so a
+    // guard written for the nine cannot be true of nine and false of these.
+    for (const [list] of RELATIONSHIP_LISTS) {
+      expect([list, LISTS.includes(list)]).toEqual([list, true]);
+      expect([list, list in LIST_DEPENDENCIES]).toEqual([list, true]);
+    }
+  });
+
+  it.each(RELATIONSHIP_LISTS)(
+    "%s — counts the associations that carry the role",
+    (list, _const, tableName, labelKey) => {
+      const def = LIST_DEPENDENCIES[list];
+      expect(def.refs).toHaveLength(1);
+      const ref = def.refs[0];
+      expect(getTableName(ref.table)).toBe(tableName);
+      expect(ref.column.name).toBe("relationship_role_id");
+      expect(ref.labelKey).toBe(labelKey);
+      // SET NULL: the association keeps its row and loses its label. Nothing
+      // in the database refuses, which is why the refusal is written in code.
+      expect(ref.enforcement).toBe("clears");
+      // These are associations between real objects, not the row's own
+      // configuration: they block, and the move is offered for them.
+      expect(ref.configuration).toBeUndefined();
+      expect(ref.uniqueWith).toBeUndefined();
+    },
+  );
+
+  it.each(RELATIONSHIP_LISTS)(
+    "%s — and the schema really still clears rather than cascades",
+    (_list, constName, _tableName, _labelKey, lookupConst) => {
+      // An `onDelete: "cascade"` here would DELETE the associations instead of
+      // blanking their tag — a worse failure than the one this slice fixes,
+      // and one line away.
+      const block = schemaBlock(constName);
+      expect(block).toMatch(
+        new RegExp(
+          `references\\(\\(\\)\\s*=>\\s*${lookupConst}\\.id,\\s*\\{\\s*onDelete:\\s*"set null"`,
+        ),
+      );
+    },
+  );
+
+  it("have no version-history note, because no snapshot carries a relationship", () => {
+    // A relationship role lives on the JUNCTION row, exactly as a person role
+    // does; the property and document snapshots hold own fields and addresses.
+    // Claiming an uncounted class would be as wrong as omitting a real one.
+    for (const [list] of RELATIONSHIP_LISTS) {
+      expect([list, LIST_DEPENDENCIES[list].snapshot]).toEqual([list, undefined]);
+      expect([list, dependentNotes(list)]).toEqual([list, []]);
+    }
+  });
+
+  it("have exactly one write door, and it is the guarded one", () => {
+    // ⚠️ **The bug this slice fixes was a SECOND door, not a missing guard.**
+    // Their own modal deleted through /api/admin/<list>/[id], which never
+    // counted anything — so the refusal built in #29.05 sat one modal away
+    // from a route that would blank forty relationship tags and answer 204.
+    // Both `[id]` routes are gone; what is left is read-only.
+    for (const dir of ["property-property-roles", "document-document-roles"]) {
+      expect(fs.existsSync(path.join(SRC, "app", "api", "admin", dir, "[id]"))).toBe(false);
+      const route = read("app", "api", "admin", dir, "route.ts");
+      // Every write verb, not just the two that were on the collection: what
+      // was actually deleted was a PATCH and a DELETE, and re-adding either to
+      // the collection route would be the second door back.
+      for (const method of ["POST", "PUT", "PATCH", "DELETE"]) {
+        expect([`${dir}:${method}`, new RegExp(`export async function ${method}\\b`).test(route)])
+          .toEqual([`${dir}:${method}`, false]);
+      }
+      // …and the reader stays, because the association screen's dropdown is
+      // its consumer.
+      expect([dir, /export async function GET/.test(route)]).toEqual([dir, true]);
+    }
+  });
+
+  it("open the generic modal from the hub, and their own modals are gone", () => {
+    const hub = read("app", "admin", "value-lists", "_components", "value-list-hub.tsx");
+    expect(hub).toContain('open("property-property-roles")');
+    expect(hub).toContain('open("document-document-roles")');
+    for (const f of ["property-property-modal.tsx", "document-document-modal.tsx"]) {
+      expect([f, fs.existsSync(path.join(SRC, "app", "admin", "value-lists", "_components", f))])
+        .toEqual([f, false]);
+    }
+    // The dead namespaces went with them: a key that names a screen nobody can
+    // open is the same class of lie as a note that outlived its fact.
+    for (const m of [messages("ro-RO"), messages("en-GB")]) {
+      expect(at(m, "valueList.propertyPropertyRoles")).toBeUndefined();
+      expect(at(m, "valueList.documentDocumentRoles")).toBeUndefined();
+    }
+  });
+
+  it("and the modal has words for their titles and their dependents", () => {
+    // `LIST_META[...].titleKey` is rendered as `lists.<titleKey>`; a missing
+    // one prints the raw key path as the dialog heading in the shipping
+    // locale.
+    for (const [list, , , labelKey] of RELATIONSHIP_LISTS) {
+      const meta = LIST_META[list];
+      for (const [locale, m] of [["ro-RO", messages("ro-RO")], ["en-GB", messages("en-GB")]] as const) {
+        expect(`${locale}:${typeof at(m, `valueList.lists.${meta.titleKey}`)}`).toBe(`${locale}:string`);
+        expect(`${locale}:${typeof at(m, `valueList.dependents.classes.${labelKey}`)}`).toBe(`${locale}:string`);
+      }
+      // Every editable field the generic form will render needs a label —
+      // asserted, not asserted-in-a-comment: the form prints
+      // `t(\`fields.${labelKey}\`)` for each one.
+      expect(meta.fields.map((f) => f.key)).toEqual(["name", "description"]);
+      for (const f of meta.fields) {
+        for (const [locale, m] of [["ro-RO", messages("ro-RO")], ["en-GB", messages("en-GB")]] as const) {
+          expect(`${locale}:${f.key}:${typeof at(m, `valueList.fields.${f.labelKey}`)}`)
+            .toBe(`${locale}:${f.key}:string`);
+        }
+      }
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 9. The move is whitelist-aware, and the note that stood in for it is gone
+// ---------------------------------------------------------------------------
+
+describe("moving person-role associations", () => {
+  it("is the only list that grants anything, and it declares it", () => {
+    // Declared on the entry rather than branched on inside the mover: a second
+    // whitelisted list would be a field here, not a second `if (list === …)`.
+    const granting = LISTS.filter((l) => LIST_DEPENDENCIES[l].grantWhitelists !== undefined);
+    expect(granting).toEqual(["person-roles"]);
+  });
+
+  it("grants BEFORE the rows move, or it cannot tell which rows moved", () => {
+    // `grantPersonRoleWhitelists` decides what to grant by asking whether any
+    // rows still carry the SOURCE value. After `moveRef` they carry the
+    // target's, mixed in with rows that were already there, and the question
+    // stops being answerable — so the order is the guarantee, exactly as it is
+    // for reading page file paths before deleting a document.
+    const body = functionBody(
+      read("lib", "admin", "value-lists", "queries.ts"),
+      "reassignDependents",
+    );
+    const grantAt = body.indexOf("grantWhitelists(tx");
+    const moveAt  = body.indexOf("moveRef(tx");
+    expect(grantAt).toBeGreaterThan(-1);
+    expect(moveAt).toBeGreaterThan(-1);
+    expect(grantAt).toBeLessThan(moveAt);
+  });
+
+  it("never grants a tick for a bare tick — only where real rows carry the role", () => {
+    // ⚠️ **The distinction #29.05's `configuration` flag exists to hold.** An
+    // adversarial round killed the version of this that MOVED whitelist rows,
+    // because a role ticked in one panel and used by no association at all
+    // would have handed the target an eligibility nobody asked for. This
+    // module answers a different question: are real ASSOCIATIONS about to land
+    // on the target? So the gate is always an association table…
+    const grant = code(read("lib", "admin", "value-lists", "role-whitelists.ts"));
+    // ⚠️ **The COMPARISON, not the identifier.** An adversarial round pointed
+    // out that `grant.includes("propertyPerson")` is satisfied by the import
+    // block: every gate could be deleted and the guard would stay green.
+    for (const gate of [
+      "propertyPerson.personRoleId",
+      "personPerson.relationshipRoleId",
+      "personDocument.personRoleId",
+    ]) {
+      expect([gate, new RegExp(`eq\\(\\s*${gate.replace(".", "\\.")},\\s*fromRoleId`).test(grant)])
+        .toEqual([gate, true]);
+    }
+    // …and the SOURCE role's own ticks are never read. This is the assertion
+    // that fails if someone "improves" the module into mirroring the ticks the
+    // deleted role happened to have.
+    for (const wl of [
+      "lookupPropertyPersonRole",
+      "lookupPersonPersonRole",
+      "lookupDocTypePersonRole",
+    ]) {
+      expect([wl, new RegExp(`${wl}\\.personRoleId,\\s*fromRoleId`).test(grant)])
+        .toEqual([wl, false]);
+    }
+    // Idempotent: the target may already be ticked, and a 23505 there would
+    // roll back a move the user asked for.
+    expect((grant.match(/onConflictDoNothing\(\)/g) ?? [])).toHaveLength(3);
+  });
+
+  it("tops up a whitelist that exists and never creates one", () => {
+    // ⚠️ **AN ADVERSARIAL ROUND FOUND THE FIRST VERSION TAKING ELIGIBILITY
+    // AWAY, WHICH IS THE OPPOSITE OF WHAT IT WAS FOR.**
+    // `listPersonRolesForDocument` falls back to every role ticked for SOME
+    // type when the document's own type has NO rows in
+    // `lookup_doc_type_person_role`. Insert one row for such a type and the
+    // fallback stops running: the picker collapses from that whole set to the
+    // single role the move granted.
+    const grant = code(read("lib", "admin", "value-lists", "role-whitelists.ts"));
+    expect(grant).toContain("inArray(");
+    expect(grant).toMatch(
+      /selectDistinct\(\{\s*documentTypeId:\s*lookupDocTypePersonRole\.documentTypeId/,
+    );
+    // ⚠️ **The FILTER is the line that does the work**, and an adversarial
+    // round removed it and watched the three assertions above stay green.
+    expect(grant).toMatch(/\.filter\(\(t\) => needed\.has\(t\.documentTypeId\)\)/);
+    // `.values([])` is a syntax error rather than an empty write, and the
+    // filter above can empty the array.
+    expect(grant).toMatch(/values\.length > 0/);
+  });
+
+  it("and the fallback that makes the top-up rule necessary really still exists", () => {
+    // Derived rather than asserted, in the direction that can rot: the day
+    // `listPersonRolesForDocument` stops falling back, the rule above becomes
+    // unnecessary caution instead of a fix — and this test is where that gets
+    // noticed, rather than in a picker that quietly shows one role.
+    const body = functionBody(read("lib", "documents", "queries.ts"), "listPersonRolesForDocument");
+    expect(body).toMatch(/if \(rows\.length > 0\) return rows;/);
+    expect(body).toContain("selectDistinct");
+  });
+
+  it("scopes the Document Persons tick to the types that actually moved", () => {
+    // `lookup_doc_type_person_role` is unique over (document_type_id,
+    // person_role_id) and the document-side dropdown filters by the DOCUMENT'S
+    // type. A tick for one arbitrary type would satisfy the person-side
+    // distinct-roles list and still leave the role unselectable on the
+    // document itself.
+    const grant = code(read("lib", "admin", "value-lists", "role-whitelists.ts"));
+    expect(grant).toContain("selectDistinct");
+    expect(grant).toMatch(/innerJoin\(\s*document,/);
+    // ⚠️ **One row per moved type.** The two assertions above are satisfied by
+    // an implementation that runs the same query and then inserts a single row
+    // for `types[0]` — which is the "one arbitrary type" the comment rejects.
+    expect(grant).toMatch(
+      /\.map\(\(t\) => \(\{\s*documentTypeId: t\.documentTypeId,\s*personRoleId: toRoleId\s*\}\)\)/,
+    );
+  });
+
+  it("reports what it granted, all the way to the screen", () => {
+    // Configuration the user did not ask for by name. #29.05's rule for the
+    // cascade — "always said out loud, because it disappears without anyone
+    // requesting it" — is the same rule in the other direction.
+    expect(read("app", "api", "admin", "value-lists", "[list]", "[id]", "reassign", "route.ts"))
+      .toContain("granted:  outcome.granted");
+    const modal = read("app", "admin", "value-lists", "_components", "value-list-modal.tsx");
+    expect(modal).toContain("confirm.roleWhitelistGranted");
+    expect(modal).toContain("setGranted(res.granted ?? [])");
+  });
+
+  it("says so when it CANNOT grant the tick, instead of leaving it unsaid", () => {
+    // ⚠️ **The one case the top-up rule cannot repair, and an adversarial
+    // round is why it is reported rather than assumed away.** The fallback in
+    // `listPersonRolesForDocument` is not "every role" — it is every role
+    // ticked for SOME type — so when every moved type is unconfigured AND the
+    // target is ticked nowhere, the target is in neither picker and neither
+    // available action is safe. Silence there would have been the old
+    // `roleWhitelistNote`'s failure with the note deleted.
+    const grantRaw = read("lib", "admin", "value-lists", "role-whitelists.ts");
+    const grant    = code(grantRaw);
+    // The key itself has to be read from the RAW source — `code` blanks string
+    // bodies — so the pattern is the whole call, which no comment contains.
+    expect(grantRaw).toContain('warnings.push("roleWhitelistPending")');
+    // Asked AFTER the insert, or a top-up that did land would be ignored. The
+    // ORDER is read from the stripped source, where a comment cannot supply it.
+    const insertAt = grant.indexOf("onConflictDoNothing");
+    const askAt    = grant.indexOf("warnings.push(");
+    expect(insertAt).toBeGreaterThan(-1);
+    expect(askAt).toBeGreaterThan(insertAt);
+
+    // …and it reaches the screen, through the same door `granted` uses.
+    expect(read("app", "api", "admin", "value-lists", "[list]", "[id]", "reassign", "route.ts"))
+      .toContain("warnings: outcome.warnings");
+    const modal = read("app", "admin", "value-lists", "_components", "value-list-modal.tsx");
+    expect(modal).toContain("setWarnings(res.warnings ?? [])");
+    // ⚠️ **And BOTH are cleared when the target changes.** Both sentences are
+    // written about "rolul ales" — the role in the dropdown — so a `granted`
+    // list left over from a move onto B tells the administrator, after they
+    // pick C, that C was ticked automatically. A third adversarial round found
+    // it. (`movedTotal` survives on purpose: it names no role.)
+    expect(modal).toMatch(/setGranted\(\[\]\);\s*setWarnings\(\[\]\);/);
+    expect(modal).toMatch(/t\(`confirm\.\$\{w\}`/);
+  });
+
+  it("no longer asks the user to go and tick it themselves", () => {
+    // `confirm.roleWhitelistNote` was a sentence standing in for a filter: it
+    // told the administrator the ticks do not travel, and asked them to repair
+    // up to three other panels by hand afterwards. The repair is automatic
+    // now, so the sentence is not merely redundant — it is false.
+    for (const m of [messages("ro-RO"), messages("en-GB")]) {
+      expect(at(m, "valueList.confirm.roleWhitelistNote")).toBeUndefined();
+    }
+    expect(read("app", "admin", "value-lists", "_components", "value-list-modal.tsx"))
+      .not.toContain('t("confirm.roleWhitelistNote")');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 10. Nothing on this screen fails silently or in English    (Slice #29.13)
+// ---------------------------------------------------------------------------
+
+describe("the sibling panels say their failures in Romanian", () => {
+  const PANELS = [
+    "document-persons-modal.tsx",
+    "property-persons-modal.tsx",
+    "person-person-modal.tsx",
+  ] as const;
+
+  it.each(PANELS)("%s — has an onError on its delete, and never renders err.message", (file) => {
+    const source = read("app", "admin", "value-lists", "_components", file);
+    const body = code(source);
+    // The state #29.05's own comment describes as fixed, one modal over: a
+    // failed delete left the dialog open with its button re-enabled and
+    // nothing said anywhere.
+    // ⚠️ **`setDeleteError(tErr(` — the onError, not merely the state.** An
+    // adversarial round deleted the whole `onError` and watched a
+    // `/setDeleteError\(/` guard stay green on the three CLEARING calls that
+    // remain (open, cancel, success). Only the failure handler translates.
+    expect([file, /setDeleteError\(tErr\(/.test(body)]).toEqual([file, true]);
+    // ⚠️ **`err.message` is the SERVER'S ENGLISH** — "Delete failed (404)",
+    // "Invalid input", "This role is already in the list" — on a screen
+    // CLAUDE.md's first rule says must never show any.
+    expect([file, /err\.message/.test(body)]).toEqual([file, false]);
+    // One sentence, translated once: the shared namespace rather than a fourth
+    // copy of the same keys under this panel's own.
+    expect([file, source.includes('useTranslations("valueList.confirm.errors")')])
+      .toEqual([file, true]);
+  });
+
+  it("and the generic modal's SAVE path invalidates the two new bare keys", () => {
+    // ⚠️ **The delete and the move invalidate everything; the SAVE does not**,
+    // and `invalidateListCaches` says why in its own header: a handful of
+    // lists are also fetched under a BARE key by screens outside Reference
+    // Data, and those caches have to be named. Both lists this slice added are
+    // exactly that case — `associate-reference-view.tsx` on the property side
+    // and on the document side — and their own modals invalidated those keys
+    // on every save until this slice deleted them. An adversarial round found
+    // the gap: a renamed role went on being offered under its old name for the
+    // length of the 30 s staleTime.
+    // Scoped to `invalidateListCaches`, which is the function the SAVE calls:
+    // asserted against the whole file this would pass on the delete's own
+    // broad invalidation, which is not the path in question. Sliced rather
+    // than taken from `functionBody` — that helper anchors on
+    // `export async function`, and this one is neither exported nor async.
+    const modal = read("app", "admin", "value-lists", "_components", "value-list-modal.tsx");
+    const from  = modal.indexOf("function invalidateListCaches(");
+    expect(from).toBeGreaterThan(-1);
+    const caches = modal.slice(from, modal.indexOf("\n}", from));
+    for (const key of ["property-property-roles", "document-document-roles"]) {
+      expect([key, caches.includes(`queryKey: ["${key}"]`)]).toEqual([key, true]);
+    }
+    // …and the consumers really do use that bare key.
+    expect(read("app", "properties", "[id]", "associate-reference", "associate-reference-view.tsx"))
+      .toContain('queryKey: ["property-property-roles"]');
+    expect(read("app", "documents", "[id]", "associate-reference", "associate-reference-view.tsx"))
+      .toContain('queryKey: ["document-document-roles"]');
+  });
+
+  it.each(PANELS)("%s — invalidates the caches the association screens use", (file) => {
+    // These rows ARE the role dropdowns on the associate screens, and those
+    // cache them under keys of their own (`property-person-roles-whitelist`,
+    // `document-valid-roles`, `doc-distinct-roles`). With the global 30 s
+    // staleTime a narrow invalidation left an un-ticked role still on offer.
+    // Both of them — the add form's and the delete's. Asserted as a COUNT
+    // because a file-wide `includes` stays green when either one is narrowed
+    // back to a keyed invalidation.
+    const body = code(read("app", "admin", "value-lists", "_components", file));
+    expect([file, (body.match(/qc\.invalidateQueries\(\)/g) ?? []).length]).toEqual([file, 2]);
+  });
+
+  it.each(PANELS)("%s — its confirmation cannot be re-targeted through the backdrop", (file) => {
+    // ⚠️ **The finding value-list-modal.tsx records for the list beside these
+    // three, still live here until #29.13.** The backdrop hid the list and did
+    // not disable it, and `confirmDelete` names no row — so Tab reached
+    // ANOTHER row's Șterge, Enter re-keyed the dialog onto it with nothing on
+    // screen changing, and the next press deleted a row nobody chose.
+    const source = read("app", "admin", "value-lists", "_components", file);
+    const body = code(source);
+    expect([file, /inert=\{!!confirmDeleteId\}/.test(body)]).toEqual([file, true]);
+    // An `alertdialog` nobody focuses announces nothing, and `aria-modal` on a
+    // panel the user's focus is not inside is a lie told to assistive tech.
+    expect([file, /confirmPanelRef\.current\?\.focus\(\)/.test(body)]).toEqual([file, true]);
+    expect([file, source.includes("aria-labelledby={confirmTitleId}")]).toEqual([file, true]);
+  });
+
+  it.each(PANELS)("%s — cannot be closed out from under an in-flight delete", (file) => {
+    // ⚠️ **The mutation completes regardless — TanStack keeps `onError` on the
+    // mutation, not on the observer — so closing mid-delete unmounts the only
+    // place the refusal is ever reported, and a delete that FAILED reads as
+    // one the user cancelled. That is "fails silently" reached through the
+    // Cancel button.** value-list-modal.tsx:1240 guards its Escape for exactly
+    // this; these three did not, until an adversarial round asked.
+    const body = code(read("app", "admin", "value-lists", "_components", file));
+    expect([file, /if \(deleteMutation\.isPending\) return;/.test(body)]).toEqual([file, true]);
+    expect([file, /onClick=\{closeConfirm\}[\s\S]{0,400}?disabled=\{deleteMutation\.isPending\}/.test(body)])
+      .toEqual([file, true]);
+  });
+
+  it.each(PANELS)("%s — restores focus in an EFFECT, not inside the handler", (file) => {
+    // ⚠️ **`focus()` on an element inside an `inert` subtree is a
+    // spec-mandated no-op.** The first version of the a11y fix called
+    // `opener.focus()` synchronously after `setConfirmDeleteId(null)`, so the
+    // list panel was still inert and focus landed on `<body>` — the state the
+    // whole rework exists to prevent, with a comment claiming the opposite.
+    // Effects run after React has removed the attribute, on every lane.
+    const body = code(read("app", "admin", "value-lists", "_components", file));
+    const effect = /useEffect\(\(\) => \{([\s\S]*?)\}, \[confirmDeleteId\]\);/.exec(body);
+    expect([file, effect !== null]).toEqual([file, true]);
+    expect([file, /wasOpenRef\.current = false;/.test(effect?.[1] ?? "")]).toEqual([file, true]);
+    expect([file, /opener\?\.isConnected/.test(effect?.[1] ?? "")]).toEqual([file, true]);
+    // ⚠️ **The `else` is unconditional.** A restore keyed on "was it a delete"
+    // fires neither branch when the row simply left the list under an open
+    // confirmation, and focus is left on `<body>`. Whatever made the opener
+    // unreachable, the list panel is where focus belongs — and it can only be
+    // announced there because it now has a name, asserted below.
+    expect([file, /else listPanelRef\.current\?\.focus\(\);/.test(effect?.[1] ?? "")])
+      .toEqual([file, true]);
+    expect([file, read("app", "admin", "value-lists", "_components", file)
+      .includes("aria-labelledby={listTitleId}")]).toEqual([file, true]);
+    // …and the close handler must NOT do it itself any more.
+    const close = /const closeConfirm = useCallback\(\(\) => \{([\s\S]*?)\}, \[\]\);/.exec(body);
+    expect([file, close !== null]).toEqual([file, true]);
+    expect([file, /focus\(\)/.test(close?.[1] ?? "")]).toEqual([file, false]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 11. The duplicate a panel can now name is one the server really produces
+// ---------------------------------------------------------------------------
+
+describe("the 409 the whitelist panels can say in Romanian", () => {
+  it.each([
+    "doc-type-person-roles",
+    "property-person-roles",
+    "person-person-roles",
+  ])("%s answers a duplicate with a code, decided by SQLSTATE", (dir) => {
+    // ⚠️ **Two halves, and both were broken before this slice made them
+    // load-bearing.** The panels choose their sentence from a CODE — a bare
+    // 409 is also what the value-lists DELETE answers with when a row is in
+    // use — so the body has to carry one. And the branch that produces it used
+    // to test for a constraint NAME:
+    // `lookup_person_person_role_person_role_id_unique` is a name Postgres
+    // never generates (migration_055 declares the column UNIQUE inline, which
+    // Postgres names `..._key`), so that branch had never once fired and the
+    // user got `errors.generic` for a duplicate this slice wrote a sentence
+    // for. 23505 is the same fact with nothing to spell wrong.
+    const route = read("app", "api", "admin", dir, "route.ts");
+    expect([dir, route.includes('code: "DUPLICATE"')]).toEqual([dir, true]);
+    expect([dir, route.includes('pgErrorCode(err) === "23505"')]).toEqual([dir, true]);
+    // The constraint-name test is gone, not merely bypassed.
+    expect([dir, /message\.includes\("lookup_/.test(route)]).toEqual([dir, false]);
+  });
+
+  it("and the client turns that code into the Romanian sentence", () => {
+    const failures = read("lib", "admin", "value-lists", "failures.ts");
+    expect(failures).toContain('if (code === "DUPLICATE") return "duplicate";');
+    expect(FAILURE_CODES).toContain("duplicate");
   });
 });

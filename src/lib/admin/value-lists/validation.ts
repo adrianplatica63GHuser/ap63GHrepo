@@ -35,7 +35,7 @@ const sortOrder = z.coerce.number().int().min(0).default(0);
  * `mapUpdateSet` drops undefined entries before building the SQL — so the
  * column is not named in the UPDATE at all and keeps whatever it had. Every
  * list schema still has one required field that always parses to a value
- * (`name` on eight of them, `indicativ` on `tarla`), so the set can never be
+ * (`name` on ten of them, `indicativ` on `tarla`), so the set can never be
  * empty — Drizzle throws "No values to set" on an empty one.
  *
  * ⚠️ **The `null` preprocess is not defensive noise — `z.coerce` makes `null`
@@ -93,6 +93,26 @@ export const personTypeSchema = z.object({
 });
 
 export const personRoleSchema = z.object({
+  name:        z.string().min(1, "required"),
+  description: z.string().nullish(),
+  sortOrder,
+});
+
+/**
+ * Both relationship-role lists.                                (Slice #29.13)
+ *
+ * The same three fields as `personRoleSchema` — because
+ * `lookup_property_property_role` and `lookup_document_document_role` are the
+ * same table as `lookup_person_role`, column for column. ONE schema shared by
+ * the two rather than two identical copies: they are edited by one generic
+ * form and there is no field either could grow that the other would not.
+ *
+ * It replaces the two hand-written zod objects that lived in the deleted
+ * `[id]` routes, which had `.max(200)` on the name and `.max(500)` on the
+ * description where the nine have neither — a ceiling nothing on the screen
+ * announced and nothing else in Reference Data enforces.
+ */
+export const relationshipRoleSchema = z.object({
   name:        z.string().min(1, "required"),
   description: z.string().nullish(),
   sortOrder,
@@ -203,6 +223,8 @@ export const LIST_SCHEMAS: Record<ListKey, z.ZodType<any>> = {
   "judicial-person-types": judicialPersonTypeSchema,
   "document-types":  documentTypeSchema,
   "institutions":    institutionSchema,
+  "property-property-roles": relationshipRoleSchema,
+  "document-document-roles": relationshipRoleSchema,
 };
 
 /**
@@ -314,4 +336,6 @@ export const LIST_UPDATE_SCHEMAS: Record<ListKey, z.ZodType<any>> = {
   // exported schema itself, so the two cannot fall out of step.
   "document-types":        documentTypeUpdateSchema,
   "institutions":          institutionSchema.extend({ sortOrder: sortOrderOnUpdate }),
+  "property-property-roles": relationshipRoleSchema.extend({ sortOrder: sortOrderOnUpdate }),
+  "document-document-roles": relationshipRoleSchema.extend({ sortOrder: sortOrderOnUpdate }),
 };

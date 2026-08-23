@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { pgErrorCode } from "@/lib/api/errors";
 import { z } from "zod/v4";
 import {
   listPersonPersonRoles,
@@ -29,12 +30,16 @@ export async function POST(req: Request) {
     const row = await createPersonPersonRole(parsed.data.personRoleId);
     return NextResponse.json(row, { status: 201 });
   } catch (err: unknown) {
-    if (
-      err instanceof Error &&
-      err.message.includes("lookup_person_person_role_person_role_id_unique")
-    ) {
+    // Unique-constraint violation → duplicate.
+    // Slice #29.13: SQLSTATE rather than the constraint name. The name matched
+    // here — `lookup_person_person_role_person_role_id_unique` — is one
+    // Postgres never generates: migration_055 declares the column UNIQUE
+    // inline, which it names `..._key`. So this branch had never once fired.
+    if (pgErrorCode(err) === "23505") {
+      // Slice #29.13: `code` so the panel can say this in Romanian. See the
+      // doc-type-person-roles route for why a bare 409 was not enough.
       return NextResponse.json(
-        { error: "This role is already in the list" },
+        { error: "This role is already in the list", code: "DUPLICATE" },
         { status: 409 },
       );
     }

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { pgErrorCode } from "@/lib/api/errors";
 import { z } from "zod/v4";
 import {
   listPropertyPersonRoles,
@@ -30,13 +31,15 @@ export async function POST(req: Request) {
     const row = await createPropertyPersonRole(parsed.data.personRoleId);
     return NextResponse.json(row, { status: 201 });
   } catch (err: unknown) {
-    // Unique-constraint violation → duplicate
-    if (
-      err instanceof Error &&
-      err.message.includes("lookup_property_person_role_unique")
-    ) {
+    // Unique-constraint violation → duplicate.
+    // Slice #29.13: SQLSTATE rather than the constraint name — see the
+    // doc-type-person-roles route for the name that does not exist in every
+    // environment, and why this branch is now load-bearing.
+    if (pgErrorCode(err) === "23505") {
+      // Slice #29.13: `code` so the panel can say this in Romanian. See the
+      // doc-type-person-roles route for why a bare 409 was not enough.
       return NextResponse.json(
-        { error: "This role is already in the list" },
+        { error: "This role is already in the list", code: "DUPLICATE" },
         { status: 409 },
       );
     }

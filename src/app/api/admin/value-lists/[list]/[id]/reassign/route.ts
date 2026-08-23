@@ -4,22 +4,34 @@
  * POST — move everything that depends on this row onto another value of the
  *        same list, so the row can then be deleted.            (Slice #29.05)
  *
- * WHY THIS EXISTS AS ONE ENDPOINT FOR ALL NINE LISTS
+ * WHY THIS EXISTS AS ONE ENDPOINT FOR EVERY LIST
  *   Nothing in the application could re-point rows in bulk before this. What
  *   existed was a bulk DELETE of documents, a per-row PATCH loop inside the
  *   import wizard, and a single-document type change on the document form —
  *   none of which takes an old lookup id and a new one. Deciding it once, here,
  *   is what keeps "refuse, name, offer" the same conversation on every list
- *   instead of nine slightly different screens.
+ *   instead of nine slightly different screens. Slice #29.13 is what that
+ *   bought: two more lists reached it by joining `VALID_LIST_KEYS`, and this
+ *   file did not change except to report what the move granted.
  *
  *   The offer is deliberately NOT a filtered view of the dependent objects:
  *   for `person-roles` the dependents span six tables, three of them whitelist
  *   rows with no screen of their own, so "go and edit them yourself" would be a
  *   dead end on the very list that needs it most.
  *
- * Answers 200 with `{ moved: [{ labelKey, count }], total }`. The delete is a
- * separate call the user makes afterwards, on purpose: a move and a permanent
- * delete behind one button would be one click away from being irreversible.
+ * Answers 200 with `{ moved: [{ labelKey, count }], total, granted }`. The
+ * delete is a separate call the user makes afterwards, on purpose: a move and
+ * a permanent delete behind one button would be one click away from being
+ * irreversible.
+ *
+ * `warnings` (Slice #29.13) carries i18n keys for repairs the grant could not
+ * make — today only `roleWhitelistPending`. `granted` is the whitelist ticks
+ * the TARGET gained so the moved rows stay selectable — same `{ labelKey, count }` shape as `moved`,
+ * same `valueList.dependents.classes.*` vocabulary, and empty on every list
+ * but `person-roles`. It is reported rather than done quietly because it is a
+ * configuration change the user did not ask for by name; see
+ * src/lib/admin/value-lists/role-whitelists.ts for why it is nevertheless the
+ * honest thing to do.
  */
 
 import type { NextRequest } from "next/server";
@@ -66,7 +78,14 @@ export async function POST(request: NextRequest, ctx: Ctx): Promise<Response> {
   try {
     const outcome = await reassignDependents(list, id, parsed.data.targetId);
     if (outcome.ok) {
-      return Response.json({ moved: outcome.moved, total: outcome.total });
+      return Response.json({
+        moved:    outcome.moved,
+        total:    outcome.total,
+        granted:  outcome.granted,
+        // What the grant could not repair. Keys, not sentences — the server
+        // has no locale.
+        warnings: outcome.warnings,
+      });
     }
     if (outcome.reason === "not-found") {
       return Response.json({ error: "Not found" }, { status: 404 });

@@ -261,17 +261,74 @@ describe("deleting a lookup value really removes the row", () => {
     expect(body).not.toMatch(/\.set\s*\(/);
   });
 
-  it("so does every other reference-data delete", () => {
-    // Scoped to the delete function, not the file: both modules also have a
-    // rename, and a rename is an `update().set()` that must stay.
-    for (const [file, fn] of [
-      [["lib", "admin", "document-document-roles", "queries.ts"], "deleteDocumentDocumentRole"],
-      [["lib", "admin", "property-property-roles", "queries.ts"], "deletePropertyPropertyRole"],
-    ] as const) {
-      const body = functionBody(read(...file), fn);
-      expect(body).toMatch(/\.delete\(/);
-      expect(body).not.toMatch(/\.set\s*\(/);
+  it("so does every other reference-data delete — and the set is swept, not typed", () => {
+    // ⚠️ **THIS USED TO NAME TWO FUNCTIONS AND SLICE #29.13 DELETED BOTH.**
+    // `deletePropertyPropertyRole` and `deleteDocumentDocumentRole` are gone
+    // because their lists joined `VALID_LIST_KEYS`: the delete they had was a
+    // bare `db.delete` with no count, and the one they have now is the guarded
+    // `deleteValue` above. Edited down to match, a hand-written list would
+    // have been left guarding nothing at all — while still reading like a
+    // guard, which is the worse half.
+    //
+    // So the CHECK is discovered: every `delete*` exported from anywhere under
+    // `src/lib/admin/` has to be a real DELETE, in any file and in either
+    // declaration form, whether or not anyone remembered to add it here. (An
+    // adversarial round narrowed this from a `queries.ts`-only glob matching
+    // `export async function` alone, which is how a delete moved into a
+    // sibling module — this slice added one such module — would have been
+    // invisible to it.) The LIST at the bottom is a second, deliberate guard:
+    // adding a delete has to be a decision someone writes down here.
+    //
+    // Scoped to the export, not the file: these modules also have renames, and
+    // a rename is an `update().set()` that must stay.
+    const adminFiles: string[] = [];
+    (function walk(dir: string) {
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        const p = path.join(dir, entry.name);
+        if (entry.isDirectory()) walk(p);
+        else if (p.endsWith(".ts")) adminFiles.push(p);
+      }
+    })(path.join(SRC, "lib", "admin"));
+    // The walk finding nothing would satisfy every assertion below it.
+    expect(adminFiles.length).toBeGreaterThanOrEqual(6);
+
+    const swept: string[] = [];
+    for (const file of adminFiles) {
+      // `path.relative` yields backslashes on Windows, which is where this
+      // suite actually runs; the expected list below uses forward slashes.
+      const rel = path.relative(SRC, file).split(path.sep).join("/");
+      // One block per top-level export: its header and everything up to the
+      // next one. Comments and string bodies are already blanked, so a guard
+      // cannot be satisfied by prose.
+      for (const block of code(fs.readFileSync(file, "utf8")).split(/^export /m).slice(1)) {
+        const name = /^(?:async function|function|const)\s+(\w+)/.exec(block)?.[1];
+        if (!name || !name.startsWith("delete")) continue;
+        swept.push(`${rel}:${name}`);
+        expect([name, /\.delete\(/.test(block)]).toEqual([name, true]);
+        expect([name, /\.set\s*\(/.test(block)]).toEqual([name, false]);
+      }
     }
+    expect(swept.sort()).toEqual([
+      "lib/admin/doc-type-person-roles/queries.ts:deleteDocTypePersonRole",
+      "lib/admin/person-person-roles/queries.ts:deletePersonPersonRole",
+      "lib/admin/property-person-roles/queries.ts:deletePropertyPersonRole",
+      "lib/admin/value-lists/queries.ts:deleteValue",
+    ].sort());
+  });
+
+  it("and no reference-data row is deleted from anywhere else in the repository", () => {
+    // The half the sweep above cannot reach, and the half the slice's brief
+    // actually claims: a `db.delete(lookupX)` written straight into a route
+    // handler, a script or a component would be a second delete door with no
+    // count in front of it — which is precisely the shape #29.13 removed from
+    // the two relationship-role lists. `src/lib/admin/**` is where these
+    // belong, and it is swept function by function above.
+    const offenders = allSourceFiles().filter((p) => {
+      const rel = path.relative(SRC, p).split(path.sep).join("/");
+      if (rel.startsWith("lib/admin/")) return false;
+      return /\.delete\(\s*lookup/i.test(code(fs.readFileSync(p, "utf8")));
+    });
+    expect(offenders.map((p) => path.relative(SRC, p).split(path.sep).join("/"))).toEqual([]);
   });
 });
 

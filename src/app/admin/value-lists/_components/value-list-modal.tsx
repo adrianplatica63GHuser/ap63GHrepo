@@ -12,6 +12,12 @@ import {
   isInUseBody,
   type InUseBody,
 } from "@/lib/admin/value-lists/responses";
+import {
+  failureFromResponse,
+  throwRequestFailed,
+  RequestFailedError,
+  type FailureCode,
+} from "@/lib/admin/value-lists/failures";
 import { buttonClass } from "@/lib/ui/button-styles";
 import {
   documentTypeAwaitsForm,
@@ -48,20 +54,13 @@ async function saveRow(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
-  if (!res.ok) {
-    const failed: unknown = await res.json().catch(() => null);
-    // A 400 here is this form's own rejection — it arrives as
-    // `{ error: "Validation failed", details }`, English, with Zod field paths
-    // in the details, so neither half is showable. What the user can act on is
-    // "a required field is missing or wrong". Read here rather than in
-    // `failureFromResponse`, because a 400 from the DELETE or the move is not
-    // a form at all.
-    throw new RequestFailedError(
-      res.status === 400 || res.status === 422
-        ? "validation"
-        : failureFromResponse(res.status, failed),
-    );
-  }
+  // A 400 here is this form's own rejection — it arrives as
+  // `{ error: "Validation failed", details }`, English, with Zod field paths in
+  // the details, so neither half is showable. What the user can act on is "a
+  // required field is missing or wrong". That is what the `true` says, and it
+  // is per-DOOR rather than global because a 400 from the DELETE or the move is
+  // not a form at all.
+  if (!res.ok) await throwRequestFailed(res, true);
   return res.json();
 }
 
@@ -85,37 +84,17 @@ class DeleteRefusedError extends Error {
 }
 
 /**
- * A failure this dialog can say in Romanian.                    (Slice #29.05)
+ * ⚠️ **`FailureCode`, `RequestFailedError` and `failureFromResponse` MOVED —
+ * they now live in `@/lib/admin/value-lists/failures`.**        (Slice #29.13)
  *
- * ⚠️ **The server's `error` string is never rendered, and an adversarial round
- * is why.** Those strings are English by construction — "Same value", "Not
- * found", "Internal server error", "Foreign key violation" — and this screen
- * is one a Romanian user reaches; CLAUDE.md's first rule for this app is that
- * they must never see English. So the transport carries a CODE and the
- * sentence is chosen from `valueList.confirm.errors` on this side. Anything
- * unrecognised becomes the generic Romanian sentence rather than leaking.
+ * They were written here, for this dialog, and they fixed this screen and no
+ * other: the three whitelist panels beside it were still rendering the
+ * server's English `err.message` on every save and had no `onError` at all on
+ * their deletes. Three more copies of a pattern is how one sentence comes to
+ * be translated three ways, so the pattern is one module and this file is one
+ * of its four readers. Everything it argues for — a code on the wire, the
+ * sentence chosen in Romanian on this side — is argued there.
  */
-type FailureCode =
-  | "sameValue"
-  | "ambiguousValue"
-  | "notFound"
-  | "validation"
-  | "generic";
-
-class RequestFailedError extends Error {
-  constructor(readonly code: FailureCode) {
-    super(code);
-    this.name = "RequestFailedError";
-  }
-}
-
-function failureFromResponse(status: number, body: unknown): FailureCode {
-  if (status === 404) return "notFound";
-  const code = (body as { code?: string } | null)?.code;
-  if (code === "SAME_VALUE") return "sameValue";
-  if (code === "AMBIGUOUS_VALUE") return "ambiguousValue";
-  return "generic";
-}
 
 async function removeRow(listKey: ListKey, id: string): Promise<void> {
   const res = await fetch(`/api/admin/value-lists/${listKey}/${id}`, {
@@ -145,11 +124,34 @@ async function fetchDependents(
   return res.json();
 }
 
+/** The 200 body of POST .../reassign. `granted` arrived with Slice #29.13. */
+type ReassignResult = {
+  moved: { labelKey: string; count: number }[];
+  total: number;
+  /**
+   * Whitelist ticks the target gained so the moved rows stay selectable.
+   *
+   * ⚠️ **Optional on the WIRE type even though the server always sends it.**
+   * A browser holding the previous bundle against the new server is not the
+   * case that matters; the case that matters is the reverse — this dialog is
+   * inside a modal a user may have had open across a deploy — and
+   * `granted.map` on an undefined is a blank screen where a move has just
+   * succeeded.
+   */
+  granted?: { labelKey: string; count: number }[];
+  /**
+   * i18n keys under `valueList.confirm` for repairs the grant could NOT make.
+   * Optional for the same reason `granted` is — a dialog left open across a
+   * deploy must not blank the screen on a move that succeeded.
+   */
+  warnings?: string[];
+};
+
 async function reassignRows(
   listKey: ListKey,
   id: string,
   targetId: string,
-): Promise<{ moved: { labelKey: string; count: number }[]; total: number }> {
+): Promise<ReassignResult> {
   const res = await fetch(
     `/api/admin/value-lists/${listKey}/${id}/reassign`,
     {
@@ -158,10 +160,7 @@ async function reassignRows(
       body: JSON.stringify({ targetId }),
     },
   );
-  if (!res.ok) {
-    const failed: unknown = await res.json().catch(() => null);
-    throw new RequestFailedError(failureFromResponse(res.status, failed));
-  }
+  if (!res.ok) await throwRequestFailed(res);
   return res.json();
 }
 
@@ -192,6 +191,17 @@ function invalidateListCaches(
   }
   if (listKey === "property-types") {
     qc.invalidateQueries({ queryKey: ["property-types"] });
+  }
+  // Slice #29.13: the two lists that arrived with this slice are the same case
+  // — the Associate-reference screens on both sides fetch them under the bare
+  // key, and their own modals invalidated it on every save until this slice
+  // deleted them. Missing it left a renamed role still on offer under its old
+  // name for the length of the 30 s staleTime. An adversarial round found it.
+  if (listKey === "property-property-roles") {
+    qc.invalidateQueries({ queryKey: ["property-property-roles"] });
+  }
+  if (listKey === "document-document-roles") {
+    qc.invalidateQueries({ queryKey: ["document-document-roles"] });
   }
 }
 
@@ -911,10 +921,17 @@ export function ValueListModal({
                           ].filter(Boolean).join(" ")}
                           title={f.multiline ? String(row[f.key] ?? "") : undefined}
                         >
-                          {/* Slice #19.02: render checkboxes as ✓ / – symbols */}
+                          {/* Slice #19.02: render checkboxes as ✓ / – symbols.
+                              Slice #29.13: a dash for an empty text cell.
+                              A blank cell is indistinguishable from a render
+                              that failed or a value that was truncated away —
+                              the two bespoke modals this slice deleted printed
+                              a dash and were right to. It is the EN dash the
+                              checkbox column beside it already prints, so one
+                              table does not carry two different ones. */}
                           {f.type === "checkbox"
                             ? (row[f.key] ? "✓" : "–")
-                            : String(row[f.key] ?? "")}
+                            : (String(row[f.key] ?? "").trim() || "–")}
                         </td>
                       ))}
                       {isDocumentTypes && (
@@ -1088,7 +1105,7 @@ function DeleteDialog({
   row: Row;
   /** Every row of this list — the candidates to move onto are these minus `row`. */
   rows: Row[];
-  /** The field that names a row to a human: `name` on eight lists, `indicativ` on tarla. */
+  /** The field that names a row to a human: `name` on ten lists, `indicativ` on tarla. */
   labelField: string;
   onClose: () => void;
   /**
@@ -1110,6 +1127,20 @@ function DeleteDialog({
   const [targetId, setTargetId] = useState("");
   const [failure, setFailure] = useState<FailureCode | null>(null);
   const [movedTotal, setMovedTotal] = useState<number | null>(null);
+  /**
+   * Whitelist ticks the move granted the target.               (Slice #29.13)
+   *
+   * ⚠️ **Unlike `movedTotal`, this is CLEARED when the target changes** — see
+   * the `<select>`'s `onChange`. Both whitelist sentences are written about
+   * "rolul ales", the role in that dropdown, so one left standing from a move
+   * onto B tells the administrator, after they pick C, that C was ticked
+   * automatically. `movedTotal` survives because "5 înregistrări au fost
+   * mutate" names no role and is still a fact. An adversarial round found the
+   * version of this comment that claimed the two behaved alike.
+   */
+  const [granted, setGranted] = useState<{ labelKey: string; count: number }[]>([]);
+  /** i18n keys under `confirm` — what the move could not repair by itself. */
+  const [warnings, setWarnings] = useState<string[]>([]);
 
   const dependentsKey = ["value-list-dependents", listKey, row.id];
 
@@ -1127,6 +1158,8 @@ function DeleteDialog({
     onSuccess: (res) => {
       setFailure(null);
       setMovedTotal(res.total);
+      setGranted(res.granted ?? []);
+      setWarnings(res.warnings ?? []);
       // ⚠️ **Everything, not just this list.** A re-point rewrote rows in
       // `document`, `property`, `natural_person` or the association tables —
       // whichever this list feeds — so every cached list and detail screen
@@ -1318,6 +1351,19 @@ function DeleteDialog({
                     // "That value is the one you are deleting" stops being
                     // true the moment a different one is picked.
                     setFailure(null);
+                    // ⚠️ **And so do both whitelist sentences.**  (#29.13)
+                    // They are written about "rolul ales" — the role in this
+                    // dropdown — so a `granted` list or a `roleWhitelistPending`
+                    // left over from a move onto B would, after picking C, tell
+                    // the administrator that C was ticked automatically, or send
+                    // them to Roluri pe Document to tick C. Neither is true. A
+                    // third adversarial round found it.
+                    //
+                    // `movedTotal` deliberately survives, as it has since
+                    // #29.05: "5 înregistrări au fost mutate" names no role and
+                    // is still a fact.
+                    setGranted([]);
+                    setWarnings([]);
                   }}
                   disabled={busy}
                   className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
@@ -1330,22 +1376,18 @@ function DeleteDialog({
                   ))}
                 </select>
               </label>
-              {/* ⚠️ **Person roles only, and it is a disclosure rather than a
-                  guard.** Moving associations onto another role does NOT move
-                  the whitelist ticks — deliberately, see `configuration` in
-                  dependents.ts — so the target role can end up carrying
-                  associations in a panel it is not ticked in. The association
-                  screens build their dropdown from the whitelist while the
-                  display path joins the role table directly, so such a row
-                  READS correctly and cannot be re-selected. An adversarial
-                  round found it; making the offer itself whitelist-aware is a
-                  slice of its own and is in the handover. Until then the
-                  screen says so rather than letting the user find out. */}
-              {listKey === "person-roles" && (
-                <p className="mt-2 text-xs text-fade dark:text-zinc-400">
-                  {t("confirm.roleWhitelistNote")}
-                </p>
-              )}
+              {/* ⚠️ **The warning that used to live here is GONE, and its
+                  absence is the slice.**                       (#29.13)
+
+                  `confirm.roleWhitelistNote` told the administrator that the
+                  ticks do not travel with the associations, and asked them to
+                  go and re-tick the target in up to three other panels
+                  afterwards — a sentence standing in for a filter. The move
+                  now grants the target the ticks the moved rows actually need
+                  (src/lib/admin/value-lists/role-whitelists.ts), so there is
+                  nothing left to warn about and what IS said is said AFTER the
+                  move, in `granted` below, because by then it is a fact rather
+                  than a caution. */}
               </>
             )}
           </div>
@@ -1391,6 +1433,62 @@ function DeleteDialog({
         >
           {movedTotal !== null ? t("confirm.moved", { count: movedTotal }) : ""}
         </p>
+
+        {/* What the move changed BESIDES re-pointing the rows.   (#29.13)
+
+            ⚠️ **Said out loud rather than done quietly, and it is the same
+            rule "La ștergere se elimină și:" above follows.** A tick in Roluri
+            pe Proprietate / Roluri pe Document / Persoană → Persoană is
+            configuration the user did not ask for by name; granting it
+            silently would be a change to a panel they were not looking at.
+            Shown only when something was actually created — a target that was
+            already ticked everywhere the moved rows needed produces an empty
+            array and no sentence, which is the honest answer.
+
+            The class labels are the EXISTING `dependents.classes.*` plurals,
+            not a second vocabulary.
+
+            ⚠️ **Its own `aria-live` wrapper, rendered unconditionally.** The
+            `role="status"` paragraph above cannot hold a list, and a live
+            region that mounts together with its content is not reliably
+            announced — the same rule the dependents region at the top of this
+            dialog follows. So the region exists from the first render and only
+            the sentence arrives late. */}
+        <div aria-live="polite">
+          {granted.length > 0 && (
+            <>
+              <p className="mb-1 text-xs font-medium text-ink dark:text-zinc-400">
+                {t("confirm.roleWhitelistGranted")}
+              </p>
+              <ul className="mb-2 list-disc pl-5 text-xs text-fade dark:text-zinc-400">
+                {granted.map((g) => (
+                  <li key={g.labelKey}>
+                    {t(
+                      `dependents.classes.${g.labelKey}` as Parameters<typeof t>[0],
+                      { count: g.count },
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+
+          {/* ⚠️ **What the move could NOT repair.** The grant is deliberately a
+              top-up of a whitelist that already exists — see
+              src/lib/admin/value-lists/role-whitelists.ts — and there is one
+              state where that leaves the target role in neither document
+              picker and nothing safe can change it. Saying so here is the
+              narrowed descendant of `confirm.roleWhitelistNote`, which said it
+              to every user of the move whether or not it was true. */}
+          {warnings.map((w) => (
+            <p
+              key={w}
+              className="mb-2 text-xs text-amber-700 dark:text-amber-400"
+            >
+              {t(`confirm.${w}` as Parameters<typeof t>[0])}
+            </p>
+          ))}
+        </div>
 
         {/* Chosen on this side from a code, never echoed from the server: the
             server's own `error` strings are English. */}

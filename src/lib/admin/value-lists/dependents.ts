@@ -3,20 +3,25 @@
  *                                                              (Slice #29.05)
  *
  * WHY THIS EXISTS AT ALL
- *   FOURTEEN foreign keys reach the nine lookup tables behind Reference Data
- *   (counted: sixteen point into `lookup_*` tables, and two of those belong to
- *   `lookup_property_property_role` / `lookup_document_document_role`, which
- *   are managed by their own modals and are NOT among the nine — they are
- *   still unguarded, and that is in this slice's handover). Of the fourteen,
- *   exactly ONE refuses a delete: `document.document_type_id` is NOT NULL with
+ *   SIXTEEN foreign keys reach the ELEVEN lookup tables behind Reference Data.
+ *   Exactly ONE refuses a delete: `document.document_type_id` is NOT NULL with
  *   no `onDelete` clause, so Postgres' default "no action" blocks it
  *   (src/db/schema/index.ts → `document`). Every other edge does the damage
- *   quietly — NINE are ON DELETE SET NULL, which blanks the tag on the rows
+ *   quietly — ELEVEN are ON DELETE SET NULL, which blanks the tag on the rows
  *   that carried it, and FOUR are CASCADE, deleting whitelist rows outright
  *   (the three on `lookup_person_role` plus `lookup_doc_type_person_role`'s
- *   document-type edge). So for eight lists of nine, the refusal has to be
+ *   document-type edge). So for ten lists of eleven, the refusal has to be
  *   written here, in application code, because the database will happily let
  *   the delete through.
+ *
+ *   Slice #29.13 is what made it eleven. The last two edges —
+ *   `property_property.relationship_role_id` and
+ *   `document_document.relationship_role_id`, both SET NULL — belonged to two
+ *   lists that #29.05 could not reach because they had modals and routes of
+ *   their own; deleting a role forty associations carried blanked forty
+ *   relationship tags and exited 204. They are now ordinary members of
+ *   `VALID_LIST_KEYS` (see ./config.ts for why joining beat guarding twice),
+ *   which is why they need nothing here beyond the two entries at the bottom.
  *
  *   The `enforcement` field on each ref records which of the three the database
  *   would do. Nothing branches on it — the refusal is the same either way — but
@@ -59,15 +64,27 @@
  *   room: `DependentRef` is a discriminated union on `kind`, and today's only
  *   member is `"column"`. A jsonb-shaped dependent arrives as a second member
  *   plus one branch in `countRef` / `moveRef` (queries.ts) — not as a rewrite
- *   of the nine-way table below.
+ *   of the eleven-way table below.
  */
 
 import type { PgColumn, PgTable } from "drizzle-orm/pg-core";
+// ⚠️ **`import type`, and it has to stay one.** `@/db` builds a `pg.Pool` at
+// module load; this module is imported by value-list-dependents.test.ts, which
+// has no database. A type-only import is erased at compile time, so the handle
+// crosses and the pool does not — the same rule responses.ts follows one file
+// over, for the same reason.
+import type { DbTransaction } from "@/db";
+import {
+  grantPersonRoleWhitelists,
+  type WhitelistGrantOutcome,
+} from "./role-whitelists";
 import {
   document,
+  documentDocument,
   judicialPerson,
   lookupCitizenship,
   lookupDocTypePersonRole,
+  lookupDocumentDocumentRole,
   lookupDocumentType,
   lookupInstitution,
   lookupJudicialPersonType,
@@ -75,6 +92,7 @@ import {
   lookupPersonRole,
   lookupPersonType,
   lookupPropertyPersonRole,
+  lookupPropertyPropertyRole,
   lookupPropertyType,
   lookupTarla,
   lookupUseCategory,
@@ -83,6 +101,7 @@ import {
   personPerson,
   property,
   propertyPerson,
+  propertyProperty,
 } from "@/db/schema";
 import {
   DOCUMENT_SNAPSHOT_KEYS,
@@ -155,7 +174,7 @@ export type ListDependencies = {
   /**
    * The column whose VALUE the dependents carry.
    *
-   * `idColumn` for eight lists. For `tarla` it is `indicativ`, because
+   * `idColumn` for ten lists. For `tarla` it is `indicativ`, because
    * `property.tarla_sola` holds the text and not a foreign key — see the
    * header. Everything downstream (count, re-point) reads this one value and
    * so needs no per-list special case.
@@ -170,6 +189,22 @@ export type ListDependencies = {
   snapshot?: { keys: readonly string[]; field: string };
   /** Extra i18n note keys, beyond the derived snapshot one. */
   notes?: readonly string[];
+  /**
+   * Ticks the TARGET must gain when real rows move onto it.  (Slice #29.13)
+   *
+   * Declared here rather than branched on inside `reassignDependents` so the
+   * mover stays generic: `person-roles` is the only list whose values are
+   * gated by a whitelist today, and a second one would be a field on its entry
+   * rather than a second `if (list === …)`. Runs inside the move's own
+   * transaction, just BEFORE the rows are re-pointed, and returns what it
+   * actually created — see ./role-whitelists.ts, which argues at length for
+   * why granting a tick here is not the thing #29.05 refused to do.
+   */
+  grantWhitelists?: (
+    tx: DbTransaction,
+    from: string,
+    to: string,
+  ) => Promise<WhitelistGrantOutcome>;
 };
 
 export const LIST_DEPENDENCIES: Record<ListKey, ListDependencies> = {
@@ -309,6 +344,10 @@ export const LIST_DEPENDENCIES: Record<ListKey, ListDependencies> = {
     // No snapshot carries a role id: roles live on junction rows, and the
     // person/property/document snapshots hold own fields and addresses only.
     // Checked in value-list-dependents.test.ts rather than assumed here.
+    //
+    // The one list whose values are gated by a whitelist, so the one list whose
+    // move has to leave the moved rows selectable.
+    grantWhitelists: grantPersonRoleWhitelists,
   },
 
   citizenships: {
@@ -389,6 +428,49 @@ export const LIST_DEPENDENCIES: Record<ListKey, ListDependencies> = {
       },
     ],
     snapshot: { keys: DOCUMENT_SNAPSHOT_KEYS, field: "institutionId" },
+  },
+
+  // ── The two lists #29.05 did not reach ────────────────────────────────────
+  //
+  // One SET NULL edge each, and nothing else: no whitelist gates a
+  // relationship role (the association screens read the lookup table directly
+  // — see `associate-reference-view.tsx` on both sides), so there is no
+  // `configuration` ref here and nothing the move has to grant.
+  //
+  // ⚠️ **No `snapshot`, and it is a fact rather than an omission.** A
+  // relationship role lives on the JUNCTION row, exactly as a person role
+  // does, and `PROPERTY_SNAPSHOT_PROPERTY_KEYS` / `DOCUMENT_SNAPSHOT_KEYS`
+  // carry own fields and addresses — not associations. Pinned in
+  // value-list-dependents.test.ts rather than assumed here, the same way
+  // `person-roles` is.
+  "property-property-roles": {
+    table: lookupPropertyPropertyRole,
+    idColumn: lookupPropertyPropertyRole.id,
+    source: lookupPropertyPropertyRole.id,
+    refs: [
+      {
+        kind: "column",
+        labelKey: "propertyProperties",
+        table: propertyProperty,
+        column: propertyProperty.relationshipRoleId,
+        enforcement: "clears",
+      },
+    ],
+  },
+
+  "document-document-roles": {
+    table: lookupDocumentDocumentRole,
+    idColumn: lookupDocumentDocumentRole.id,
+    source: lookupDocumentDocumentRole.id,
+    refs: [
+      {
+        kind: "column",
+        labelKey: "documentDocuments",
+        table: documentDocument,
+        column: documentDocument.relationshipRoleId,
+        enforcement: "clears",
+      },
+    ],
   },
 };
 
