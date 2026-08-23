@@ -57,8 +57,14 @@ import type {
 // Limits
 // ---------------------------------------------------------------------------
 
-/** Keys this module INVENTS are clipped to this. Existing keys are untouched. */
-const MAX_KEY_LENGTH = 40;
+/**
+ * Keys this module INVENTS are clipped to this. Existing keys are untouched.
+ *
+ * Exported since #29.10 so the review screen can say the number in the sentence
+ * that warns a user their name is about to be cut — a warning that named no
+ * limit would be a complaint without a remedy.
+ */
+export const MAX_KEY_LENGTH = 40;
 /** A label is a form caption. Anything longer is a sentence that got mislabelled. */
 const MAX_LABEL_LENGTH = 120;
 /** At or above this length a value is prose, not a caption's worth of data. */
@@ -101,38 +107,67 @@ export function collapseWhitespace(value: string): string {
 }
 
 /**
- * Turn a Romanian label printed on a document into a stable field key.
+ * The ASCII fold every key and every token comparison in this module starts
+ * from.
  *
  * NFD + combining-mark strip is what handles the diacritics: ă â î ș ț all
  * decompose to an ASCII letter plus a combining mark, and so do the legacy
  * cedilla forms (ş U+015F, ţ U+0163) that older scans and older fonts produce.
  * Those two pairs are visually near-identical and routinely mixed within one
  * document, so folding both to the same ASCII letter is also what stops
- * "Preţ" and "Preț" becoming two fields.
+ * "Preț" and "Preţ" becoming two fields.
+ *
+ * Hoisted out of `slugifyFieldKey` in #29.10 because `looksLikeSentenceFragment`
+ * needs the SAME fold: a rule that reads „în" while the key reads „in" is two
+ * spellings of one decision, which is the shape #29.06 spent a slice deleting.
+ */
+function foldToAscii(value: string): string {
+  return (
+    value
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      // ș/ț sometimes arrive as precomposed characters that NFD leaves alone in
+      // some engines; map the survivors explicitly rather than trusting the table.
+      .replace(/[șş]/gi, "s")
+      .replace(/[țţ]/gi, "t")
+  );
+}
+
+/**
+ * Turn a Romanian label printed on a document into a stable field key.
+ *
+ * Diacritics are handled by `foldToAscii` above — read its comment for why
+ * both the comma-below and the cedilla spellings have to land on one letter.
  *
  * Deliberately NOT using `\b` anywhere in this module: it is ASCII-only, so on
  * Romanian text it fires in the middle of words. (Recorded in CLAUDE.md as a
  * lesson that cost a slice.)
  */
 export function slugifyFieldKey(label: string): string {
-  const ascii = label
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    // ș/ț sometimes arrive as precomposed characters that NFD leaves alone in
-    // some engines; map the survivors explicitly rather than trusting the table.
-    .replace(/[șş]/gi, "s")
-    .replace(/[țţ]/gi, "t");
-
-  const slug = ascii
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/_+/g, "_")
-    .replace(/^_+|_+$/g, "");
-
+  const slug = rawFieldSlug(label);
   if (!slug) return FALLBACK_KEY;
   // Trim to the limit, then re-trim a trailing "_" the cut may have exposed.
   const clipped = slug.slice(0, MAX_KEY_LENGTH).replace(/_+$/g, "");
   return clipped || FALLBACK_KEY;
+}
+
+/**
+ * The slug BEFORE `MAX_KEY_LENGTH` is applied.
+ *
+ * Split out in #29.10 for `nameTooLongForKey`: F5's complaint was two keys
+ * "truncated mid-word", and the only way to warn a user about that is to know
+ * the length the slug wanted to be, which `slugifyFieldKey` has already thrown
+ * away. It gained two more readers as the review rounds went on —
+ * `rememberCaption` and `reviewRowIssue` — for a related reason: the clip
+ * decides what a key is CALLED and has no business inside the relation that
+ * decides what a field IS.
+ */
+function rawFieldSlug(label: string): string {
+  return foldToAscii(label)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_+|_+$/g, "");
 }
 
 /**
@@ -290,81 +325,288 @@ export function inferFieldType(value: string): DocumentTemplateFieldType {
 // AI hint
 // ---------------------------------------------------------------------------
 
-/** Runs of 4+ digits — CNP, CUI, IBAN blocks, account, cadastral and CF numbers. */
-const LONG_DIGIT_RUN = /\d{4,}/g;
-
 /**
- * Two capitalised words in a row — "POPESCU ION", "Ion Popescu", "Cluj Napoca".
+ * The hint stored on the type for a field proposed from ONE document: none.
  *
- * Masking digits is not enough on its own: the value most worth NOT copying
- * onto a document type is a person's name, and it carries no digits at all.
+ * ⚠️ **THIS IS THE SENTENCE THE OTHER HINT PRODUCER POINTS AT.** Two functions
+ * in this codebase write `template_fields.aiHint`, they land on the same line
+ * of the same extraction prompt, and they obey OPPOSITE rules on purpose:
  *
- * Applied to the sample VALUE only. It cannot be used on a label, because
- * Romanian documents print their captions in Title Case and ALL CAPS as a
- * matter of course — "Nr. Cadastral", "CARTE FUNCIARĂ", "COTĂ PARTE" all match
- * this, and none of them is a name.
+ *   - `distilledHint` (src/lib/documents/field-distillation.ts) reads MANY
+ *     documents and emits the CAPTIONS a field was actually printed under,
+ *     refusing outright below three samples;
+ *   - this one reads ONE document and emits NOTHING.
+ *
+ * That is not an inconsistency waiting to be tidied. It is one rule — *nothing
+ * belonging to a single deed may be copied onto the type every deed of that
+ * kind will share* — answered with the evidence each path actually has. A
+ * wording printed in three of twenty documents is a property of the DOCUMENT
+ * TYPE. Anything read once is a property of ONE DOCUMENT, and no test on the
+ * string can tell the two apart.
+ *
+ * ⚠️ **IF THE TWO ARE EVER MERGED, THE SURVIVING RULE IS THE CAPTION RULE,
+ * with the single-sample case refusing to emit — never this one
+ * extended to the engine.** Unifying downwards would put a parcel's real
+ * measurements back into a hint that twenty samples had just finished keeping
+ * out.
+ *
+ * WHAT THIS REPLACED, AND WHY THE GUARDS WERE NOT THE PROBLEM      (#29.10)
+ * ------------------------------------------------------------------------
+ * Until this slice the function emitted a masked example VALUE for `text` and
+ * `textarea`: runs of four or more digits replaced with "…", anything matching
+ * two capitalised words in a row refused as a person, anything over forty
+ * characters refused as a quotation. Each guard did exactly what it said. A
+ * real run on a sale-purchase contract with a dezmembrare then wrote all of
+ * this onto a type shared by every future deed of that kind:
+ *
+ *     parcela                  e.g. '225/3/24'
+ *     tarla                    e.g. '47/2'
+ *     suprafata_de             e.g. '2.000 mp'
+ *     din_totalul_de           e.g. '4.716 mp (din masuratori 4.716,22 mp)'
+ *     pretul_vanzarii_este_de  e.g. '2.000,00 RON (douamii RON)'
+ *     eliberat_de_2            e.g. 'O.C.P.I. — Ilfov'
+ *
+ * Not one of those has a four-digit run, is two capitalised words, or is over
+ * forty characters. The cadastral identity of one parcel and the price one
+ * property sold for were sitting on the type, sent to the model for every later
+ * document of that type — and offered to it as the answer wherever it could not
+ * read the field. In the same run the two CNPs produced no hint at all. The
+ * guards are right about what they guard and blind to this, because what
+ * separates a SHAPE ("120 mp", "parter") from a piece of CONTENT ("2.000 mp")
+ * is not in the string at all: it is in how many documents printed it, and one
+ * document cannot answer that.
+ *
+ * The three other candidate answers are worse, and the reason each fails is
+ * short:
+ *
+ *  - **Mask every digit rather than runs of four.** 'O.C.P.I. — Ilfov' and
+ *    '… (douamii RON)' survive it untouched. The leak is not a digit leak.
+ *  - **Derive the hint from the field's TYPE.** `templateFieldFormatHint`
+ *    already says that, on the same prompt line — this would buy a second
+ *    sentence whose only new power is to contradict the first.
+ *  - **Derive it from the printed LABEL.** That is the caption rule, and both
+ *    this module's history and `captionVariants`' own header record it as
+ *    undecidable from one sample: the case it must exclude is a caption with a
+ *    person glued onto it („Notar Public MARIA IONESCU"), and every textual
+ *    test for that also matches ordinary Romanian captions, which are routinely
+ *    Title Case or ALL CAPS.
+ *
+ * So a form proposed from one document carries labels and types and no hints —
+ * which is what such a form carried before #26.11 gave it one, and is never
+ * worse than a wrong one. The review screen says so, and says where a hint does
+ * come from: the document-type engine, over several documents.
+ *
+ * The signature is kept, exported and called from the dialog rather than
+ * inlined as `aiHint: null`, so the six leaked values above stay fixtures a
+ * test pushes through the real code path instead of a list in a comment.
  */
-const LOOKS_LIKE_A_NAME = /\p{Lu}[\p{L}.'-]*\s+\p{Lu}[\p{L}.'-]*/u;
-
-/** Beyond this an example stops describing a shape and starts quoting content. */
-const MAX_EXAMPLE_LENGTH = 40;
-
-/**
- * Build the hint appended to this field's line in the extraction prompt.
- *
- * `.claude/skills/onboard-document-type/SKILL.md` calls aiHint "the single
- * highest-leverage field for extraction accuracy" and says a concrete example
- * beats an abstract description. That is what this produces, and nothing else.
- *
- * **It deliberately does NOT record the label as printed.** An earlier version
- * added "printed on the document as '…'" whenever the user renamed a row, on
- * the reasoning that the model has to match the wording on the page. Two
- * things killed it. The wording is nearly free anyway — the prompt already
- * carries the stored `labelRo`, and a model reading a scan is not troubled by
- * case or a shortened caption. And it could not be filtered safely: the case
- * it had to exclude is a caption with a person glued onto it ("Notar Public
- * MARIA IONESCU", renamed to "Notar"), and every test for that also matches
- * ordinary Romanian captions, which are routinely Title Case or ALL CAPS —
- * "Nr. Cadastral", "CARTE FUNCIARĂ", "COTĂ PARTE". A guard that fires on most
- * of the cases the feature exists for is not a guard, it is the feature
- * switched off with extra steps.
- *
- * The example itself is given ONLY for `text` and `textarea`. For `date` and
- * `number`, `templateFieldFormatHint` has already told the model to answer in
- * ISO / bare-decimal form, and a Romanian example ("17.03.2024", "1.234,56")
- * contradicts that instruction on the same line. A model that follows the
- * example writes a value the route stores verbatim and `<input type="date">`
- * then renders as BLANK — stored, invisible and uneditable, on every future
- * document of the type.
- *
- * Three tests on the sample, all of them the same idea: an example may show
- * the SHAPE of a value ("120 mp", "parter", "RON") and must never carry a real
- * one. The hint is stored on the document TYPE and sent to the model for every
- * future document of that type, so a CNP, an IBAN or a person read out of the
- * one discovered document would otherwise describe a stranger in every prompt
- * from then on — and would be offered to the model as the answer on any later
- * document where it cannot read that field.
- *
- * Returns null when the sample earns nothing — an empty hint is better than a
- * line of noise in a prompt that is charged for by the token.
- */
-export function buildFieldHint(input: {
+export function buildFieldHint(_input: {
   sampleValue: string;
   type: DocumentTemplateFieldType;
 }): string | null {
-  if (input.type !== "text" && input.type !== "textarea") return null;
+  return null;
+}
 
-  const sample = collapseWhitespace(input.sampleValue).replace(LONG_DIGIT_RUN, "…");
-  const usable =
-    sample.length > 0 &&
-    sample.length <= MAX_EXAMPLE_LENGTH &&
-    /[a-zA-Z0-9]/.test(sample) &&
-    !LOOKS_LIKE_A_NAME.test(sample);
-  if (!usable) return null;
+// ---------------------------------------------------------------------------
+// Names that are sentence fragments
+// ---------------------------------------------------------------------------
 
-  // Single quotes rather than double: this lands inside a `//` comment in a
-  // JSON-shaped prompt, and unbalanced double quotes there read as structure.
-  return `e.g. '${sample.replace(/"/g, "'")}'`;
+/**
+ * Romanian function words that a FIELD NAME cannot legitimately end on.
+ *
+ * Prepositions, conjunctions, relative pronouns, auxiliaries and articles — a
+ * genuinely closed class, which is what makes this a list rather than a guess.
+ * A caption ends on a content word („Nr. cadastral", „Data autentificării",
+ * „Suprafață construită desfășurată"); a sentence cut off mid-flow ends on one
+ * of these („suprafața **de**", „prețul vânzării este **de**").
+ *
+ * ⚠️ **`de` IS IN THIS LIST AND IT IS THE NOISY ENTRY. IT STAYS, AND THE PRICE
+ * IS NAMED RATHER THAN HIDDEN.** Romanian prints a whole family of legitimate
+ * captions in the shape `<participiu> de` — „Eliberat de", „Emis de",
+ * „Semnat de", „Autentificat de", „Întocmit de", „Verificat de" — and this
+ * flags every one of them. Nothing structural separates „Eliberat de" from
+ * „Suprafața de": both are one word plus a preposition, and telling a participle
+ * from a noun means reading morphology, which is precisely the move
+ * `field-distillation.ts` measured at 47% misses / 39% wrong deletions and
+ * removed. Dropping `de` instead would lose „Suprafața de" and „Din totalul de",
+ * two of the four names F5 actually reported. So the entry stays, the family is
+ * pinned as its own corpus in the tests, and the flag is ADVISORY — for
+ * „Semnat de" the advice („rewrite it short") is not even wrong.
+ *
+ * ⚠️ **FIVE ENTRIES WERE REMOVED ACROSS THREE REVIEW ROUNDS, ALL FOR THE SAME
+ * REASON: a short Romanian function word is also a Romanian ABBREVIATION.**
+ * `cui` is the relative pronoun and also CUI, the company registration number.
+ * A bare trailing `a` is the block/stair letter in „Scara A", „Bloc A",
+ * „Corp A". `ce` is the relative pronoun and also the CE conformity mark
+ * („Marcaj CE"). `ca` is the conjunction and also CA, Consiliul de
+ * Administrație („Membru CA", „Decizie CA"). `se` at the END is the clitic and
+ * also the cadastral orientation („Latura SE" — while „Latura NE" was not
+ * flagged, which put the arbitrariness on one page). Each fired on real
+ * captions; measured, none of them fired on a single pinned fragment, so all
+ * five cost nothing to remove. `se` stays in the LEADING and MIDDLE sets, where
+ * it does real work.
+ *
+ * Written folded and lower-cased — compared against `captionTokens`, never
+ * against the raw label, so „în" and „in" are one entry and no `\b` is
+ * involved. (CLAUDE.md: `\b` is ASCII-only and fires mid-word on Romanian.)
+ */
+const TRAILING_FUNCTION_WORDS = new Set([
+  "de", "din", "in", "la", "pe", "cu", "prin", "pentru", "catre", "sub", "spre",
+  "dintre", "intre", "dupa", "pana", "fara", "asupra", "despre", "conform",
+  "potrivit", "care", "cat", "cum", "este", "sunt", "era", "erau",
+  "fost", "fiind", "avand", "iar", "si", "sau", "ori", "dar", "precum",
+  "respectiv", "adica", "anume", "al", "ai", "ale", "lui", "ei", "lor", "isi",
+]);
+
+/**
+ * The same class again, restricted to the words a field name cannot legitimately
+ * BEGIN on — a continuation of a sentence that started somewhere above it
+ * („**din** totalul de", „**în** suprafață de", „**care** se învecinează cu").
+ *
+ * Shorter than the trailing set on purpose: the articles and clitics are out,
+ * because a genitive caption can open on one and a false flag on the FIRST word
+ * of a name is the more visible of the two errors.
+ */
+const LEADING_FUNCTION_WORDS = new Set([
+  "de", "din", "in", "la", "pe", "cu", "prin", "pentru", "catre", "sub", "spre",
+  "dintre", "intre", "dupa", "pana", "fara", "asupra", "despre", "conform",
+  "potrivit", "care", "ce", "este", "sunt", "era", "erau", "fost", "fiind",
+  "avand", "iar", "si", "sau", "ori", "dar", "precum", "respectiv", "adica",
+  "anume", "declaram", "urmeaza",
+  // ⚠️ Added after a second review round. The middle-verb test cannot see a
+  // TWO-token clause — `tokens.slice(1, -1)` is empty — so „se aplică",
+  // „am primit", „va cuprinde", „au semnat" all read as captions. No Romanian
+  // caption opens on a clitic or a bare auxiliary, so these are safe at the
+  // front where the articles were not.
+  "se", "isi", "au", "am", "ati", "va", "vor", "fi", "ne", "le",
+]);
+
+/**
+ * A finite verb in the MIDDLE of a name — the third and last test.
+ *
+ * A caption is a noun phrase and has no conjugated verb in it. „Prețul vânzării
+ * **este** de", „**a fost** achitat integral" and „urmează **a se** plăti" are
+ * clauses, and their edges alone do not always give them away. Kept to
+ * copulas and auxiliaries, which is the same closed class as the two sets
+ * above — no attempt is made to recognise a verb in general.
+ */
+const MIDDLE_VERB_WORDS = new Set([
+  "este", "sunt", "era", "erau", "fost", "va", "vor", "se", "au", "am", "ati",
+  "fi",
+]);
+
+/** The label's words, folded and lower-cased. Punctuation is a separator. */
+function captionTokens(label: string): string[] {
+  return foldToAscii(label)
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter(Boolean);
+}
+
+/**
+ * Does this name read as a piece of a sentence rather than as a field name?
+ *
+ * ⚠️ **ADVISORY ONLY. IT MUST NEVER FILTER, RENAME OR BLOCK, AND THAT IS THE
+ * DECISION AND NOT AN OVERSIGHT.** F5 reported field names cut out of the prose
+ * around them — `suprafata_de`, `din_totalul_de`, `pretul_vanzarii_este_de`,
+ * `eliberat_de_2`. Three answers were available: stop the discover prompt
+ * offering fragments, filter them out of the proposal, or SHOW the user that a
+ * name is one. This is the third, and the other two were rejected for reasons
+ * this codebase has already paid for:
+ *
+ *  - A prompt change cannot be verified without a model call, so nothing here
+ *    could pin it and every later edit to the prompt would silently retest it.
+ *  - A filter deletes SILENTLY. `field-distillation.ts` records at length what
+ *    happened the last time a rule in this family was asked to decide rather
+ *    than to point: measured over realistic Romanian captions it missed 47% of
+ *    what it hunted and deleted 39% of what it did not, and a wording it
+ *    deleted appeared nowhere on the screen. A rule that is wrong two ways in
+ *    five may inform a user; it may not act for one.
+ *
+ * ⚠️ **The many-sample path does not need this at all, and naming why is the
+ * point.** `distilledLabel` picks the SHORTEST settled caption across the
+ * samples, on the reasoning that a caption with a value or a person glued onto
+ * it is longer than the bare caption — arithmetic that needs several readings
+ * and is simply unavailable here. One document has one wording of one name, so
+ * the only thing left to do with it is put it in front of the person who is
+ * looking at the document.
+ *
+ * TWO TESTS, AND WHAT EACH IS FOR
+ * -------------------------------
+ *  1. Its first or last word is a function word — the fragment proper.
+ *  2. It contains a conjugated verb — a clause whose edges happen to be nouns.
+ *
+ * ⚠️ **LENGTH IS NOT ONE OF THEM, AND A SECOND REVIEW ROUND IS WHY.** A version
+ * of this also returned true for a name whose slug would be cut at
+ * `MAX_KEY_LENGTH`, which is a real problem and a DIFFERENT one: „Certificat de
+ * atestare fiscală pentru persoane fizice" is a perfectly good caption whose key
+ * gets truncated mid-word, and telling its author it "reads like a piece of a
+ * sentence" is simply false. That test now lives in `nameTooLongForKey`, with
+ * its own message. Two complaints, two sentences, each true.
+ *
+ * MEASURED, not asserted (CLAUDE.md: run it over the shape that would embarrass
+ * it). Against the three corpora pinned in `discover-to-template.test.ts`, and
+ * **re-measure whenever the word lists change**:
+ *
+ *   - 95 real Romanian document captions → **0 flagged.** That includes the
+ *     abbreviations three review rounds caught successive word lists getting
+ *     wrong — „CUI", „Scara A", „Bloc A", „Corp A", „Marcaj CE", „Membru CA",
+ *     „Latura SE" — and six long captions that a length test inside this
+ *     function used to flag with a sentence that was untrue of all six.
+ *   - 22 sentence fragments of the kind F5 reported → **22 flagged.**
+ *   - 16 captions of the known-noisy `<participiu> de` family → **16 flagged,
+ *     on purpose**, for the reason written against `de` above.
+ *
+ * ⚠️ **THE RESIDUAL, NAMED — seven, pinned as `KNOWN_MISSES`.** What it cannot
+ * see is a fragment whose first and last words are both content words and which
+ * carries no conjugated verb. Measured, four of that kind: „imobil situat administrativ", „vândut liber de
+ * sarcini", „proprietatea exclusivă a subsemnatului", „denumit în continuare
+ * vânzătorul" — plus the article-initial class („al cărui", „ai căror", „ale
+ * căror"), which is missed because the leading set deliberately excludes bare
+ * articles: „Al doilea proprietar" is a caption. Those are pinned as known
+ * misses in the tests rather than chased with a third rule, because a rule that
+ * READS is where the measured disaster above began. What makes them survivable is the same thing
+ * that makes the whole approach defensible: the name is a text box the user is
+ * looking at, the key is printed under it, and nothing is written until they
+ * press a button.
+ */
+export function looksLikeSentenceFragment(label: string): boolean {
+  const caption = collapseWhitespace(label);
+  if (!caption) return false;
+
+  const tokens = captionTokens(caption);
+  if (tokens.length === 0) return false;
+  if (LEADING_FUNCTION_WORDS.has(tokens[0])) return true;
+  if (TRAILING_FUNCTION_WORDS.has(tokens[tokens.length - 1])) return true;
+  return tokens.slice(1, -1).some((tok) => MIDDLE_VERB_WORDS.has(tok));
+}
+
+/**
+ * Is this name too long to survive as a key?                          (#29.10)
+ *
+ * F5's other complaint about the names was two keys "truncated mid-word", and
+ * this is the whole of it: `slugifyFieldKey` clips at `MAX_KEY_LENGTH`, so a
+ * caption of more than about forty characters is stored under a key cut wherever
+ * it happens to fall. The user is the only one who can shorten it, and until
+ * #29.10 nothing told them.
+ *
+ * ⚠️ **SEPARATE FROM `looksLikeSentenceFragment`, AND A REVIEW ROUND IS WHY.**
+ * Folded into that function, this flagged „Certificat de atestare fiscală pentru
+ * persoane fizice", „Număr de înregistrare în registrul comerțului" and four
+ * more ordinary captions — with a message saying they read like a piece of a
+ * sentence, which is untrue of every one of them. Same evidence, different
+ * complaint, different sentence on the screen.
+ *
+ * ⚠️ **ONE TEST, AND A THIRD ROUND TOOK THE SECOND ONE OUT.** There used to be
+ * a caption-length limit beside it, on the reasoning that a very long name is a
+ * sentence. It fired on strings whose KEY was short — a caption padded with
+ * dotted leaders („Suprafața ........ mp") slugs to `suprafata_mp`, twelve
+ * characters — while the message beside it said the key was being cut at forty
+ * in the middle of a word. Two conditions behind one sentence is how a screen
+ * comes to say something false; the message here is now true whenever it shows.
+ */
+export function nameTooLongForKey(label: string): boolean {
+  return rawFieldSlug(collapseWhitespace(label)).length > MAX_KEY_LENGTH;
 }
 
 /**
@@ -432,9 +674,13 @@ export type DiscoveredFieldProposal = {
   labelEn: string;
   type: DocumentTemplateFieldType;
   /**
-   * What discover read for this label — verbatim and NOT truncated. It is the
-   * evidence the review step shows beside the row; the clipped, masked copy
-   * that buildFieldHint produces is the only one that is ever stored.
+   * What discover read for this label — verbatim and NOT truncated.
+   *
+   * It is the evidence the review step shows beside the row, and since #29.10
+   * that is ALL it is: `buildFieldHint` no longer derives a masked example from
+   * it, so nothing from this string reaches the document type. Read that
+   * function's header for the six values that used to, and why no test on one
+   * reading could keep them out.
    */
   sampleValue: string;
   confidence: DiscoverConfidence;
@@ -446,6 +692,146 @@ export type DiscoveredFieldProposal = {
    */
   alreadyInForm: boolean;
 };
+
+/**
+ * Every name that is ALREADY SPOKEN FOR on this type, as normalised name ->
+ * the real key behind it.
+ *
+ * Hoisted out of `proposeTemplateFields` in #29.10 and exported, because the
+ * review screen needs the same set for two more decisions — what a new row's
+ * key may not collide with, and what a user may not RENAME a row onto — and a
+ * second copy of this list would be a second answer to "is this the same
+ * field?". ⚠️ **A review round found the dialog carrying such a copy:** it had
+ * the stored keys and the captured rows' keys, and neither the generic
+ * columns, nor the label aliases, nor the type's person roles. Renaming a row
+ * to „Notar" or „Data" sailed through it and minted `notar` / `data` beside the
+ * Person link and the `dateDocument` column.
+ *
+ * Three sources, and the comments inside say why each is there:
+ *
+ *  (a) the type's own fields, by key AND by the slug of each label;
+ *  (b) the four generic columns every document has, plus the plain Romanian
+ *      words for them;
+ *  (c) whatever the caller says is captured by some other mechanism — in
+ *      practice the type's person roles.
+ */
+export type CapturedName = {
+  /** The real key behind this name — a stored field's, a column's, or a slug. */
+  key: string;
+  /**
+   * ⚠️ **True only for the TYPE'S OWN template fields, and the distinction
+   * decides whether a repeated caption may become a second field.**
+   *
+   * A type holding `cnp` and a deed printing „CNP" twice is two real fields:
+   * the seller's and the buyer's. A document printing „Nr." twice is still ONE
+   * document number, and a document printing „Notar" twice is still one Person
+   * link — those are captured by a mechanism that has exactly one slot, so a
+   * second copy is the permanent double storage that (b) and (c) below exist to
+   * prevent. A round found the second „Notar" arriving as an offerable
+   * `notar_2` because the repeat rule did not know the difference.
+   */
+  ownField: boolean;
+};
+
+export function capturedFieldNames(
+  existing: readonly DocumentTemplateField[],
+  capturedElsewhere: readonly string[] = [],
+): Map<string, CapturedName> {
+  // Normalised key -> the REAL key this row would be, so a match can hand back
+  // the key the data is actually under rather than the slug that matched it.
+  const existingByNorm = new Map<string, CapturedName>();
+  const remember = (source: string, realKey: string, ownField: boolean) => {
+    const norm = normaliseKeyForComparison(source);
+    if (norm && !existingByNorm.has(norm)) existingByNorm.set(norm, { key: realKey, ownField });
+  };
+  /**
+   * A caption is indexed BOTH clipped and unclipped — clipped first.
+   *
+   * ⚠️ **THE CLIP MUST NOT LIVE INSIDE "IS THIS THE SAME FIELD?", AND A FIFTH
+   * REVIEW ROUND IS WHERE THAT FINALLY LANDED.** `slugifyFieldKey` cuts at
+   * `MAX_KEY_LENGTH`, so two genuinely different long captions — „Certificat de
+   * atestare fiscală pentru persoane fizice" and „…pentru persoane juridice" —
+   * share their first forty slug characters and collapse to one comparison key.
+   * Asking the question on the clipped form told a user renaming a row to the
+   * second one that the name was already taken, which is false. Asking it on
+   * the RAW name instead (the attempt before that) went wrong the other way:
+   * the raw name is not the form this map is keyed on, so retyping a stored
+   * field's 53-character caption matched nothing and saved a duplicate.
+   *
+   * Both forms in the map settles it. The clipped entry is what
+   * `proposeTemplateFields` looks up — it slugs first, and it has to, because
+   * the key it would mint is the clipped one. The unclipped entry is what
+   * `reviewRowIssue` looks up. Clipping stays where it belongs: in
+   * `uniqueFieldKey`, deciding what a key is CALLED, not what a field IS.
+   *
+   * ⚠️ **EVERY CLIPPED ENTRY IS WRITTEN BEFORE ANY UNCLIPPED ONE, and a sixth
+   * round showed why the obvious interleaving was not safe.** This map is keyed
+   * on `normaliseKeyForComparison`, which deletes the underscores — so an
+   * unclipped form is NOT distinguished from a clipped one by length, and a
+   * caption with more word breaks in the same letters can produce an unclipped
+   * norm equal to a LATER field's clipped norm. `remember` is first-wins, so
+   * interleaved that collision handed a matched row the wrong field's key.
+   * Deferring the unclipped pass makes the clipped answer — the one
+   * `proposeTemplateFields` needs — always win, and leaves the unclipped
+   * entries reachable only where nothing clipped claimed the name.
+   */
+  const deferredUnclipped: Array<[string, string, boolean]> = [];
+  const rememberCaption = (label: string, realKey: string, ownField: boolean) => {
+    remember(slugifyFieldKey(label), realKey, ownField);
+    deferredUnclipped.push([rawFieldSlug(label), realKey, ownField]);
+  };
+
+  // (a) The type's own fields — by key, and by the SLUG OF THEIR LABEL. A
+  //     curated field is often keyed as an abbreviation of its caption
+  //     (`nrAct` for "Nr. act autentic"); without the label side, a discovery
+  //     that reads that very caption offers it as new and the form ends up
+  //     with two inputs carrying the same words.
+  for (const f of existing) remember(f.key, f.key, true);
+  for (const f of existing) {
+    rememberCaption(f.labelRo, f.key, true);
+    rememberCaption(f.labelEn, f.key, true);
+  }
+
+  // (b) The four generic fields every document already has as COLUMNS —
+  //     title, nrDocument, dateDocument, subject. They are not template
+  //     fields, so nothing above sees them, and discover's own prompt uses
+  //     "Nr. 1234" and "Data: 12.04.2021" as its worked examples of what to
+  //     report. Left unguarded, the first real run proposes `nr` and `data`
+  //     as new custom fields with full confidence, and accepting them makes
+  //     every later import write the same printed value twice — once to the
+  //     column, once to `custom_fields` — after which the two copies diverge
+  //     the first time anyone edits one.
+  //
+  //     The alias list is deliberately short and covers only the plain
+  //     Romanian words for a closed set of four. It will miss an unusual
+  //     wording, and that is the cheaper error: a miss costs one field the
+  //     user can still add from Reference Data, where a false accept costs
+  //     permanent double storage on every document of the type.
+  for (const key of Object.keys(GENERIC_EXTRACT_FIELD_DESCRIPTIONS)) remember(key, key, false);
+  const GENERIC_LABEL_ALIASES: Record<string, string> = {
+    titlu:      "title",
+    denumire:   "title",
+    nr:         "nrDocument",
+    numar:      "nrDocument",
+    data:       "dateDocument",
+    subiect:    "subject",
+    obiect:     "subject",
+  };
+  for (const [alias, key] of Object.entries(GENERIC_LABEL_ALIASES)) remember(alias, key, false);
+
+  // (c) Anything the caller says is already captured elsewhere — see the
+  //     parameter's own comment. Keyed to itself: these rows are never saved,
+  //     so the key only has to be stable enough to render.
+  for (const label of capturedElsewhere) {
+    rememberCaption(label, slugifyFieldKey(label), false);
+  }
+
+  for (const [source, realKey, ownField] of deferredUnclipped) {
+    remember(source, realKey, ownField);
+  }
+
+  return existingByNorm;
+}
 
 /**
  * Turn discover's label -> value pairs into reviewable field proposals.
@@ -475,59 +861,7 @@ export function proposeTemplateFields(
    */
   capturedElsewhere: readonly string[] = [],
 ): DiscoveredFieldProposal[] {
-  // Normalised key -> the REAL key this row would be, so a match can hand back
-  // the key the data is actually under rather than the slug that matched it.
-  const existingByNorm = new Map<string, string>();
-  const remember = (source: string, realKey: string) => {
-    const norm = normaliseKeyForComparison(source);
-    if (norm && !existingByNorm.has(norm)) existingByNorm.set(norm, realKey);
-  };
-
-  // (a) The type's own fields — by key, and by the SLUG OF THEIR LABEL. A
-  //     curated field is often keyed as an abbreviation of its caption
-  //     (`nrAct` for "Nr. act autentic"); without the label side, a discovery
-  //     that reads that very caption offers it as new and the form ends up
-  //     with two inputs carrying the same words.
-  for (const f of existing) remember(f.key, f.key);
-  for (const f of existing) {
-    remember(slugifyFieldKey(f.labelRo), f.key);
-    remember(slugifyFieldKey(f.labelEn), f.key);
-  }
-
-  // (b) The four generic fields every document already has as COLUMNS —
-  //     title, nrDocument, dateDocument, subject. They are not template
-  //     fields, so nothing above sees them, and discover's own prompt uses
-  //     "Nr. 1234" and "Data: 12.04.2021" as its worked examples of what to
-  //     report. Left unguarded, the first real run proposes `nr` and `data`
-  //     as new custom fields with full confidence, and accepting them makes
-  //     every later import write the same printed value twice — once to the
-  //     column, once to `custom_fields` — after which the two copies diverge
-  //     the first time anyone edits one.
-  //
-  //     The alias list is deliberately short and covers only the plain
-  //     Romanian words for a closed set of four. It will miss an unusual
-  //     wording, and that is the cheaper error: a miss costs one field the
-  //     user can still add from Reference Data, where a false accept costs
-  //     permanent double storage on every document of the type.
-  for (const key of Object.keys(GENERIC_EXTRACT_FIELD_DESCRIPTIONS)) remember(key, key);
-  const GENERIC_LABEL_ALIASES: Record<string, string> = {
-    titlu:      "title",
-    denumire:   "title",
-    nr:         "nrDocument",
-    numar:      "nrDocument",
-    data:       "dateDocument",
-    subiect:    "subject",
-    obiect:     "subject",
-  };
-  for (const [alias, key] of Object.entries(GENERIC_LABEL_ALIASES)) remember(alias, key);
-
-  // (c) Anything the caller says is already captured elsewhere — see the
-  //     parameter's own comment. Keyed to itself: these rows are never saved,
-  //     so the key only has to be stable enough to render.
-  for (const label of capturedElsewhere) {
-    const slug = slugifyFieldKey(label);
-    remember(slug, slug);
-  }
+  const existingByNorm = capturedFieldNames(existing, capturedElsewhere);
 
   // Seeded with the existing keys so a NEW proposal can never collide with a
   // field already on the type — it would overwrite it on save.
@@ -546,15 +880,28 @@ export function proposeTemplateFields(
 
     const base = slugifyFieldKey(label);
     const norm = normaliseKeyForComparison(base);
-    const existingKey = existingByNorm.get(norm);
-    const alreadyInForm = existingKey !== undefined && !matchedExisting.has(norm);
-    if (alreadyInForm) matchedExisting.add(norm);
+    const match = existingByNorm.get(norm);
+    /**
+     * ⚠️ **THE "SECOND OCCURRENCE IS A NEW FIELD" RULE APPLIES TO THE TYPE'S
+     * OWN FIELDS AND TO NOTHING ELSE — a review round found it applying to all
+     * three sources.** A type holding `cnp` and a deed printing „CNP" twice is
+     * two real fields, the seller's and the buyer's, and the second must be
+     * offered. A document printing „Nr." twice is still ONE document number and
+     * a document printing „Notar" twice is still one Person link: those are
+     * captured by mechanisms with exactly one slot, and the second occurrence
+     * was arriving as an offerable `nr_2` / `notar_2` — the permanent double
+     * storage that (b) and (c) above exist to prevent, reached by the one door
+     * they do not watch.
+     */
+    const alreadyInForm =
+      match !== undefined && (!match.ownField || !matchedExisting.has(norm));
+    if (alreadyInForm && match?.ownField) matchedExisting.add(norm);
 
     out.push({
       // An already-present row keeps the EXISTING key — it is the same field,
       // and that key is what every document of this type already stores its
       // value under. Only a genuinely new one is uniquified.
-      key: alreadyInForm ? (existingKey as string) : uniqueFieldKey(base, taken),
+      key: alreadyInForm ? (match as CapturedName).key : uniqueFieldKey(base, taken),
       labelRo: label,
       // No translator lives in a pure module, and a Romanian document yields
       // Romanian labels. Both sides carry the same text so the form reads
@@ -569,6 +916,235 @@ export function proposeTemplateFields(
   }
 
   return out;
+}
+
+// ---------------------------------------------------------------------------
+// The review step's starting position
+// ---------------------------------------------------------------------------
+
+/** A proposal plus the three things the review screen lets the user decide. */
+export type DiscoveredFieldRow<T extends DiscoveredFieldProposal = DiscoveredFieldProposal> =
+  T & {
+    /**
+     * Identity for React and for the dialog's `patchRow`, NOT the field key.
+     * Two discovered labels can legitimately resolve to one already-captured
+     * field, and a document that prints the same caption twice yields two rows
+     * whose labels are identical on purpose — so the row index is the only
+     * identity that both survives a reseed and tells those two apart.
+     */
+    rowId: string;
+    include: boolean;
+    label: string;
+  };
+
+/**
+ * Seed the review screen's rows from a proposal list — with NOTHING TICKED.
+ *
+ * ⚠️ **THAT IS THE #29.10 CHANGE, AND IT IS THE OPPOSITE OF WHAT THIS DID.**
+ * Until this slice a row was pre-ticked when it was not already captured, the
+ * model called it high-confidence, and the type still had room. All three rules
+ * were deliberate and the screen still failed: in the observed run THIRTY-FIVE
+ * of thirty-six rows arrived ticked, and the one that did not was the
+ * confidence guard working correctly. A default that fires on 97% of rows is
+ * not a default, it is an accept-all with a checkbox column drawn over it —
+ * and what it accepts is permanent in the one way that matters. A field can be
+ * removed from the form again since #27.03; its KEY cannot be removed from the
+ * `custom_fields` of every document captured under it in the meantime.
+ *
+ * ⚠️ **`DocTypeEngine`'s own default is deliberately NOT changed to match, and
+ * the difference is the evidence behind the tick.** A field above that screen's
+ * Matching % line was found in at least that share of the documents actually
+ * read, and the screen prints the count it was computed over. A field proposed
+ * here was seen once, in one document, by a model given no schema. Same
+ * checkbox, different question — so the same answer would be a reflex rather
+ * than a decision.
+ *
+ * There is deliberately no „tick everything" control to put the old behaviour
+ * back one click away. One click that accepts thirty-five unread rows is the
+ * same default wearing a hat, and the whole point of the change is that
+ * acceptance costs a look.
+ *
+ * `MAX_TEMPLATE_FIELDS` no longer appears here for the reason it used to:
+ * ticking stopped at the ceiling so the dialog could not open on a disabled
+ * Save. Nothing is ticked now, so nothing can open over the ceiling; the
+ * dialog still counts against it as the user ticks.
+ */
+export function seedReviewRows<T extends DiscoveredFieldProposal>(
+  list: readonly T[],
+): Array<DiscoveredFieldRow<T>> {
+  return list.map((p, i) => ({ ...p, rowId: String(i), include: false, label: p.labelRo }));
+}
+
+/**
+ * The key each ticked row would be stored under, derived from the name AS IT
+ * STANDS.                                                            (#29.10)
+ *
+ * ⚠️ **Before this slice the review dialog froze a row's key at proposal time,
+ * which made renaming a field cosmetic.** F5 reported names cut out of the
+ * prose around them — `pretul_vanzarii_este_de`, `din_totalul_de`. The screen
+ * already invited the user to fix those (the name is a text box) and already
+ * printed the key under it — and `patchRow` changed only the label, so the
+ * fragment was still what got written, permanently, under a caption that no
+ * longer mentioned it. Showing a name a user can correct and then storing the
+ * one they corrected away is worse than not offering the correction.
+ *
+ * ⚠️ **This does NOT make a stored key editable.** These rows are fields that
+ * do not exist yet; a key is minted once, on Save, from whatever the field
+ * ended up being called. A row matching a field the type ALREADY has is skipped
+ * entirely — it keeps that field's stored key and is not saveable anyway.
+ *
+ * ⚠️ **ONLY TICKED ROWS ARE KEYED, AND A ROUND FOUND WHY THE ALTERNATIVE WAS
+ * WORSE.** An unticked row is not being added and must not reserve a name — a
+ * later row's key would move when an earlier one was unticked. The first
+ * version keyed the ticked rows and let the screen fall back to the bare slug
+ * for the rest, which was worse still: on a type already holding `suprafata`, a
+ * second „Suprafață" row displayed `suprafata` — a key belonging to a different
+ * field — until it was ticked. The screen now shows a key only where there is
+ * one, which is also the honest reading of the tick.
+ *
+ * `DocTypeEngine`'s `acceptedKeys` is the precedent, down to the discipline: one
+ * shared `taken` set walked left to right and seeded with the keys already in
+ * use, so a key minted for an earlier row is unavailable to a later one.
+ *
+ * Pure and exported rather than a `useMemo` in the component, so the sequences
+ * that matter — a rename, a rename onto a stored field, a document that prints
+ * one caption twice — are things a test can actually run.
+ */
+export function keysForReviewRows(
+  rows: readonly DiscoveredFieldRow[],
+  /**
+   * From `capturedFieldNames` — the SAME index `proposeTemplateFields` seeds
+   * its own `taken` set from. ⚠️ A review round found this seeded from the
+   * stored keys alone, so a second „Nr." row minted `nr` where the proposal had
+   * minted `nr_2`, and the screen and the save disagreed with the module that
+   * had just decided the row was new.
+   */
+  captured: ReadonlyMap<string, CapturedName>,
+): Map<string, string> {
+  const taken = new Set<string>(captured.keys());
+  const out = new Map<string, string>();
+  for (const row of rows) {
+    if (row.alreadyInForm || !row.include) continue;
+    // A row with no usable name gets no key. `slugifyFieldKey("")` is `camp`,
+    // and printing `camp` under a row while the footer says the name is missing
+    // is a screen arguing with itself. `reviewRowIssues` blocks the save.
+    if (!normaliseKeyForComparison(rowName(row))) continue;
+    out.set(row.rowId, uniqueFieldKey(slugifyFieldKey(rowName(row)), taken));
+  }
+  return out;
+}
+
+/**
+ * The name a row would be saved under — the ONE expression every reader uses.
+ *
+ * ⚠️ **NO FALLBACK TO `labelRo`, AND A REVIEW ROUND IS WHY.** The obvious
+ * `label.trim() || labelRo` reads as defensive and is not: it means a user who
+ * CLEARS the name box gets the field saved under the caption they just deleted,
+ * silently, with the empty-name guard unable to fire because the row is
+ * "named". Emptying the box is a decision, and the honest answer to it is the
+ * message beside the Save button, not a value the screen puts back.
+ *
+ * ⚠️ **Four call sites read this and a round found them reading three different
+ * expressions** — the key and the save had `.trim()`, the fragment warning had
+ * `row.label || row.labelRo`, the ARIA labels had `row.label || row.key`. So a
+ * single typed space made the warning disappear while the fragment was still
+ * what got stored, and a renamed row was announced to a screen reader by the
+ * proposal's opening guess.
+ */
+export function rowName(row: DiscoveredFieldRow): string {
+  return row.label.trim();
+}
+
+/**
+ * The two ways a ticked row can be un-saveable, both opened by the key
+ * following the name.                                                (#29.10)
+ *
+ * `unnamed` — ⚠️ **A ROW WHOSE NAME CARRIES NO LETTER OR DIGIT.** Two of them
+ * save as `camp` and `camp_2`, with „camp" as the visible caption, permanently.
+ * Tested on `normaliseKeyForComparison` rather than on `trim()`, and a review
+ * round is why: the first version asked whether the label was blank, which
+ * `proposeTemplateFields` guarantees it never is — so the guard could not fire
+ * at all, while a name of „§ —" sailed through it into `camp`. This covers both
+ * a box the user emptied and a name that is only punctuation.
+ *
+ * `duplicateOfCaptured` — ⚠️ **A ROW THE USER RENAMED ONTO A FIELD THAT IS
+ * ALREADY CAPTURED.** `proposeTemplateFields` marks such a row already-in-form
+ * before it reaches the screen; a user can type that name in afterwards, and
+ * `uniqueFieldKey` politely mints `pret_total_2`. Two columns, identical
+ * captions, one meaning. The set compared against is `capturedFieldNames` —
+ * wider than the stored template, because a free-text second copy of the
+ * document number or of the seller's name is exactly what
+ * `proposeTemplateFields` refuses to offer in the first place.
+ *
+ * ⚠️ **RENAMED, not merely matching** — see the comment at the test itself.
+ *
+ * ⚠️ **THERE IS DELIBERATELY NO ROW-AGAINST-ROW TEST, AND A REVIEW ROUND PUT IT
+ * HERE AND THEN TOOK IT OUT.** `DocTypeEngine` has one, correctly: two of its
+ * rows are two distinct clusters, so the same name on both is a mistake. Here
+ * two rows with the same name are the SAME CAPTION PRINTED TWICE on one
+ * document — a deed naming two parties prints „CNP" twice, a dezmembrare prints
+ * „Parcela" once per parcel — and `proposeTemplateFields` mints `cnp` /
+ * `cnp_2` for exactly that case, on purpose, with its own comment saying so.
+ * The row-against-row version disabled Save on every two-party contract in the
+ * archive and printed „two fields would have the same name" beside two rows
+ * showing two different keys. Same control, different document, opposite
+ * answer.
+ */
+export function reviewRowIssue(
+  row: DiscoveredFieldRow,
+  /** From `capturedFieldNames` — see `keysForReviewRows` for why it is that. */
+  captured: ReadonlyMap<string, CapturedName>,
+): ReviewRowIssue {
+  if (row.alreadyInForm || !row.include) return null;
+  const name = rowName(row);
+  // The empty test is on the RAW name: `slugifyFieldKey("")` is `camp`, which
+  // is a perfectly good-looking key for a field with no name.
+  if (!normaliseKeyForComparison(name)) return "unnamed";
+  /**
+   * ⚠️ **THROUGH THE UNCLIPPED SLUG — the form `capturedFieldNames` indexes
+   * captions under for exactly this reader, and two rounds each broke on one of
+   * the other two candidates.** Comparing the RAW name missed a rename onto a
+   * stored field whose caption is longer than a key, because the map is keyed
+   * on slugs; comparing the CLIPPED slug refused two different long captions
+   * that share their first forty characters. `rawFieldSlug` is the slug before
+   * the clip: the same question `proposeTemplateFields` asks, with the length
+   * limit left out of it.
+   */
+  const norm = normaliseKeyForComparison(rawFieldSlug(name));
+  // ⚠️ **ONLY A NAME THE USER TYPED IS MEASURED, AND THE SECOND REVIEW ROUND IS
+  // WHY.** A row still carrying the caption discovery read has ALREADY been
+  // adjudicated by `proposeTemplateFields`: the first occurrence of a repeated
+  // caption is the captured field, the second is a genuinely new one and was
+  // given a suffixed key on purpose. Measuring the untouched name against the
+  // captured set re-decides that and refuses it — on a type already holding
+  // `cnp`, a two-party deed's second „CNP" row disabled Save for the whole
+  // screen while displaying the perfectly good key `cnp_2`.
+  //
+  // ⚠️ **Compared NORMALISED, not byte-for-byte, and a THIRD round is why.**
+  // Byte equality made „CNP" retyped as „cnp" — or „Preţ" respelled „Preț" — a
+  // rename onto a captured field, so a cosmetic correction disabled Save while
+  // the untouched spelling of the same name saved happily. A name that
+  // normalises onto the one discovery read has not been pointed at a different
+  // field, which is the only thing this guard is about.
+  if (norm === normaliseKeyForComparison(rawFieldSlug(row.labelRo))) return null;
+  return captured.has(norm) ? "duplicate" : null;
+}
+
+/** Per-row so the screen can mark the row, folded so the footer can say it. */
+export type ReviewRowIssue = "unnamed" | "duplicate" | null;
+
+export function reviewRowIssues(
+  rows: readonly DiscoveredFieldRow[],
+  captured: ReadonlyMap<string, CapturedName>,
+): { unnamed: boolean; duplicateOfCaptured: boolean } {
+  let unnamed = false;
+  let duplicateOfCaptured = false;
+  for (const row of rows) {
+    const issue = reviewRowIssue(row, captured);
+    if (issue === "unnamed") unnamed = true;
+    if (issue === "duplicate") duplicateOfCaptured = true;
+  }
+  return { unnamed, duplicateOfCaptured };
 }
 
 // ---------------------------------------------------------------------------

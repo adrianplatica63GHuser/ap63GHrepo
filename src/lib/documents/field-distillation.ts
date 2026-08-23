@@ -467,13 +467,22 @@ function settledCaptions(cluster: FieldCluster): string[] {
 /**
  * The hint the extraction prompt will carry for this field.
  *
- * ⚠️ **It is given for every one of the four types, where `buildFieldHint`
- * refuses `date` and `number` — and the difference is not an oversight.** That
- * function emits an EXAMPLE VALUE, and a Romanian example ("17.03.2024") on a
- * line that has already said "ISO yyyy-mm-dd" contradicts the instruction
- * beside it. This emits a CAPTION, which contradicts nothing: telling the model
- * the date it wants is printed after „Data autentificării" does not tell it
- * what format to answer in.
+ * ⚠️ **This emits a hint and `buildFieldHint` — the other writer of
+ * `template_fields.aiHint` — emits none at all, and the difference is
+ * deliberate.** The reasoning is written down once, in that function's header
+ * (src/lib/documents/discover-to-template.ts): a wording printed in three of
+ * twenty documents is a property of the document TYPE, while anything read out
+ * of one document is a property of that document, and no test on the string
+ * tells the two apart. This path has the samples to count; that one has one
+ * reading and refuses. **If the two are ever merged, this is the rule that
+ * survives — with the single-sample case refusing to emit — never that one
+ * extended to the engine.**
+ *
+ * Note what this DOES emit that the value-example version could not: a hint for
+ * all four types. A Romanian example value ("17.03.2024") on a line that has
+ * already said "ISO yyyy-mm-dd" contradicts the instruction beside it. A
+ * CAPTION contradicts nothing — telling the model the date it wants is printed
+ * after „Data autentificării" does not tell it what format to answer in.
  *
  * Returns null rather than an empty string, because `sanitizeTemplateField`
  * stores `aiHint: hint || null` and a stored `""` would render a trailing
