@@ -20,8 +20,9 @@
  */
 
 import { alias } from "drizzle-orm/pg-core";
-import { and, count, desc, eq, ilike, or, sql } from "drizzle-orm";
-import { db } from "@/db";
+import { and, count, eq, ilike, inArray, or, sql } from "drizzle-orm";
+import { db, type DbTransaction } from "@/db";
+import { appendVersionsIfChanged } from "@/lib/versioning/append";
 import {
   address,
   groupMember,
@@ -39,6 +40,7 @@ import type {
   JudicialPersonUpdate,
 } from "./validation";
 import type { PersonAddressSnapshot } from "@/lib/persons/validation";
+import { latestPersonVersionsIn } from "@/lib/persons/queries";
 
 // ---------------------------------------------------------------------------
 // List
@@ -348,6 +350,15 @@ function judicialSnapshotsEqual(
   a: JudicialPersonSnapshot,
   b: JudicialPersonSnapshot,
 ): boolean {
+  // ⚠️ **Shape check first, and it is not defensive padding.** (Slice #29.14)
+  // `person_version` is ONE table shared by both subtypes and its `snapshot`
+  // column is untyped `jsonb`, so the read path casts — nothing in the schema
+  // ties `person.type` to which satellite row exists, and a natural snapshot
+  // reaching here would read `a.judicial[k]` on an absent object and throw a
+  // TypeError. Inside a bulk re-point that aborts the whole move. Degrading to
+  // "these differ, write a version" costs one redundant version row and keeps
+  // the transaction alive.
+  if (!a.judicial || !b.judicial) return false;
   if (a.notes !== b.notes) return false;
   for (const k of JUD_STRING_KEYS) {
     if (a.judicial[k] !== b.judicial[k]) return false;
@@ -356,6 +367,132 @@ function judicialSnapshotsEqual(
   if (!jAddrEqual(a.addresses.HEADQUARTERS, b.addresses.HEADQUARTERS)) return false;
   if (!jAddrEqual(a.addresses.CORRESPONDENCE, b.addresses.CORRESPONDENCE)) return false;
   return true;
+}
+
+/**
+ * The judicial persons as they stand inside `tx`, for snapshots.
+ *                                                              (Slice #29.14)
+ *
+ * ⚠️ **THREE QUERIES FOR THE WHOLE SET, NOT THREE PER PERSON.** An adversarial
+ * round costed the per-object version of the bulk re-point at five statements
+ * per person — these three reads, plus the latest-version read and the insert
+ * below — so 25 000 sequential round trips for a 5 000-person move, inside one
+ * transaction holding two lookup rows locked.
+ *
+ * ⚠️ **Reads through `tx`, not through `getJudicialPersonById`,** which goes
+ * to the global `db` handle and would not see the caller transaction's
+ * uncommitted writes — the trap Slice #18.05 documented right here.
+ * `JudicialFull` rather than `JudicialPersonFull`: the snapshot needs the three
+ * rows, not the resolved contact-person and type NAMES, which are display
+ * fields and are not versioned.
+ */
+async function judicialFullsIn(
+  tx: DbTransaction,
+  ids: readonly string[],
+): Promise<Map<string, JudicialFull>> {
+  const idList = [...ids];
+  if (idList.length === 0) return new Map();
+
+  const people = await tx
+    .select()
+    .from(person)
+    .where(inArray(person.id, idList));
+
+  const judicials = await tx
+    .select()
+    .from(judicialPerson)
+    .where(inArray(judicialPerson.personId, idList));
+
+  const addresses = await tx
+    .select()
+    .from(address)
+    .where(inArray(address.personId, idList))
+    .orderBy(address.personId, address.kind);
+
+  const judicialById = new Map(judicials.map((j) => [j.personId, j]));
+  const addressesById = new Map<string, (typeof address.$inferSelect)[]>();
+  for (const a of addresses) {
+    const list = addressesById.get(a.personId);
+    if (list) list.push(a);
+    else addressesById.set(a.personId, [a]);
+  }
+
+  return new Map(
+    people.map((p) => [
+      p.id,
+      {
+        person: p,
+        judicial: judicialById.get(p.id) ?? null,
+        addresses: addressesById.get(p.id) ?? [],
+      },
+    ]),
+  );
+}
+
+/**
+ * Append versions for these judicial persons, where the snapshot really
+ * changed.                                                     (Slice #29.14)
+ *
+ * The comparison `updateJudicialPerson` makes, callable by anything else that
+ * rewrites judicial persons inside a transaction — today the bulk re-point on
+ * the Reference Data screen, which moves `judicial_person_type_id`, a field
+ * inside the snapshot. Before #29.14 that move wrote no version at all, so the
+ * change surfaced in the NEXT ordinary edit's diff, under whoever made it.
+ *
+ * ⚠️ **The ids are PERSON ids, not the satellite rows'.** `person_version`
+ * keys on `person.id`, and `judicial_person.person_id` IS that id. The
+ * latest-version query is `latestPersonVersionsIn` from the natural-person
+ * module, because the two subtypes share ONE version table and a second copy
+ * of that query is a second thing to get the `DISTINCT ON` ordering wrong in.
+ *
+ * `prebuilt` is for the caller that has already built its snapshots.
+ * Returns how many version rows were written.
+ */
+export async function recordJudicialPersonVersionsIfChanged(
+  tx: DbTransaction,
+  ids: readonly string[],
+  updatedBy: string | null,
+  prebuilt?: ReadonlyMap<string, JudicialPersonSnapshot>,
+): Promise<number> {
+  return appendVersionsIfChanged<JudicialPersonSnapshot>(
+    {
+      buildSnapshots: async (batch) => {
+        // Scoped to the batch rather than returned whole, and an adversarial
+        // round is why: `appendVersionsIfChanged` cuts its own ids into
+        // batches, and a caller that hands over a whole-set `prebuilt` with a
+        // chunked `ids` would otherwise have every batch after the first
+        // quietly write the FIRST batch's snapshots. Today's four callers pass
+        // exactly one id, so this changes nothing for them and everything for
+        // the next one.
+        if (prebuilt) {
+          return new Map(
+            batch
+              .filter((id) => prebuilt.has(id))
+              .map((id) => [id, prebuilt.get(id)!] as const),
+          );
+        }
+        const fulls = await judicialFullsIn(tx, batch);
+        return new Map(
+          [...fulls].map(([id, full]) => [id, judicialSnapshotFromFull(full)]),
+        );
+      },
+      latestVersions: async (batch) =>
+        latestPersonVersionsIn<JudicialPersonSnapshot>(tx, batch),
+      equal: judicialSnapshotsEqual,
+      insertVersions: async (rows, by) => {
+        await tx.insert(personVersion).values(
+          rows.map((r) => ({
+            personId:      r.id,
+            versionNumber: r.versionNumber,
+            snapshot:      r.snapshot,
+            updatedBy:     by,
+          })),
+        );
+      },
+    },
+    ids,
+    updatedBy,
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -539,53 +676,14 @@ export async function updateJudicialPerson(
     }
 
     // Slice #18.05: append a new version snapshot — but skip if this save
-    // produced no actual change vs the latest stored version. Build the
-    // snapshot from a tx-consistent refetch (getJudicialPersonById below reads
-    // via the global db connection, which would not see this tx's uncommitted
-    // writes).
-    const [snapPerson] = await tx
-      .select()
-      .from(person)
-      .where(eq(person.id, id))
-      .limit(1);
-    const [snapJudicial] = await tx
-      .select()
-      .from(judicialPerson)
-      .where(eq(judicialPerson.personId, id))
-      .limit(1);
-    const snapAddresses = await tx
-      .select()
-      .from(address)
-      .where(eq(address.personId, id))
-      .orderBy(address.kind);
-
-    const newSnapshot = judicialSnapshotFromFull({
-      person:    snapPerson,
-      judicial:  snapJudicial ?? null,
-      addresses: snapAddresses,
-    });
-    const [latestVer] = await tx
-      .select({
-        versionNumber: personVersion.versionNumber,
-        snapshot:      personVersion.snapshot,
-      })
-      .from(personVersion)
-      .where(eq(personVersion.personId, id))
-      .orderBy(desc(personVersion.versionNumber))
-      .limit(1);
-
-    const latestSnapshot = latestVer
-      ? (latestVer.snapshot as JudicialPersonSnapshot)
-      : null;
-
-    if (!latestSnapshot || !judicialSnapshotsEqual(latestSnapshot, newSnapshot)) {
-      await tx.insert(personVersion).values({
-        personId:      id,
-        versionNumber: (latestVer?.versionNumber ?? -1) + 1,
-        snapshot:      newSnapshot,
-        updatedBy,
-      });
-    }
+    // produced no actual change vs the latest stored version. The
+    // tx-consistent refetch this used to inline is now inside
+    // `recordJudicialPersonVersionsIfChanged`, which keeps the warning that
+    // made it necessary (getJudicialPersonById below reads via the global db
+    // connection and would not see this tx's uncommitted writes) and lets the
+    // bulk re-point make the same comparison rather than a second copy of it.
+    //                                                          (Slice #29.14)
+    await recordJudicialPersonVersionsIfChanged(tx, [id], updatedBy);
 
     // Re-fetch full record (includes contact person name resolution).
     return getJudicialPersonById(id);

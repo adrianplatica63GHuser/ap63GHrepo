@@ -56,6 +56,40 @@
  *      direction (that it IS carried today) is in
  *      value-list-dependents.test.ts.
  *
+ * WHAT A MOVE OWES THE OBJECTS IT REWRITES                    (Slice #29.14)
+ *   Re-pointing is a write like any other, so `versioned` on a ref says which
+ *   entity's version table records that table's history and which column
+ *   carries the id it keys on. `reassignDependents` reads it and, for every
+ *   row it rewrote, appends a version and stamps `updated_by` — inside the
+ *   move's own transaction. EIGHT refs carry it, over four versioned tables
+ *   (`property` three times, `document` and `natural_person` twice each,
+ *   `judicial_person` once), and the snapshot really does carry the moved
+ *   column in each case, which is the whole reason this is owed: see
+ *   `snapshot` below, whose registry array is the same fact seen from the
+ *   version's side.
+ *
+ *   FIVE ARE NOT VERSIONED AT ALL, AND THAT IS A FACT, NOT AN OMISSION.
+ *   `property_person`, `person_document`, `person_person`, `property_property`
+ *   and `document_document` carry no snapshot, no version table and — check
+ *   the schema — no `updated_by` and no `updated_at` either: `created_at` is
+ *   the only timestamp an association row has ever had. So a move that
+ *   re-points a role tag on one of them has nothing to write beyond the tag,
+ *   and `versioned` is absent on all five deliberately. Pinned in
+ *   value-list-move-history.test.ts so a future `updated_by` on one of them
+ *   fails a test rather than being quietly left unstamped.
+ *
+ *   The four `configuration` refs are never RE-POINTED — `reassignDependents`
+ *   skips them — so no version is owed for a move of theirs. They are not
+ *   untouched by a move, though, and an adversarial round was right to say the
+ *   first draft of this paragraph implied otherwise: a `person-roles` move
+ *   INSERTS into `lookup_property_person_role`, `lookup_person_person_role`
+ *   and `lookup_doc_type_person_role` through `grantWhitelists` below, on the
+ *   move's own transaction. Those three are configuration as well — a tick
+ *   saying "this role is allowed here" — so the inserted row IS the record,
+ *   and there is nothing further owed. `UNVERSIONED_MOVE_TABLES` covers the
+ *   tables a move RE-POINTS, which is a different list from the tables a move
+ *   writes.
+ *
  * ADDING A CLASS OF DEPENDENT LATER
  *   Slice #29.09 may bind a document type's template field to an entry in one
  *   of these lists, which would make template fields — and the values under
@@ -120,6 +154,22 @@ export type DbEnforcement =
   /** ON DELETE CASCADE — the row is deleted with the lookup row. */
   | "cascades";
 
+/**
+ * The entities whose history a re-point has to write.           (Slice #29.14)
+ *
+ * A plain string union rather than a function reference, and that is
+ * load-bearing: this module is imported by value-list-dependents.test.ts,
+ * which has no database, and the writers live in modules that build a
+ * `pg.Pool` at load. The string is resolved to the actual writer in
+ * ./move-history.ts, which only `queries.ts` imports — the same reason the
+ * `DbTransaction` import above is type-only.
+ */
+export type VersionedEntityKey =
+  | "property"
+  | "document"
+  | "natural-person"
+  | "judicial-person";
+
 export type DependentRef = {
   kind: "column";
   /** i18n key under `valueList.dependents.classes` — what these objects are. */
@@ -153,6 +203,26 @@ export type DependentRef = {
    * value-list-dependents.test.ts.
    */
   configuration?: true;
+  /**
+   * How rows in `table` record their own history.               (Slice #29.14)
+   *
+   * Present on the eight refs whose table is versioned by full snapshot (four
+   * distinct tables), absent
+   * on the five association tables that are not versioned and carry no
+   * `updated_by` either — see the header. `idColumn` is the column on `table`
+   * that holds the versioned object's id, which is `property.id` /
+   * `document.id` for the two root entities and `person_id` for both person
+   * satellites, because `person_version` keys on `person.id` and the satellite
+   * row's FK IS that id.
+   *
+   * Never set on a `configuration` ref: those are the row's own settings, the
+   * mover skips them, and a version of a whitelist tick would be a record of
+   * something that never happened.
+   */
+  versioned?: {
+    entity: VersionedEntityKey;
+    idColumn: PgColumn;
+  };
   /**
    * The OTHER columns of a UNIQUE constraint that also covers `column`.
    *
@@ -219,6 +289,7 @@ export const LIST_DEPENDENCIES: Record<ListKey, ListDependencies> = {
         table: property,
         column: property.propertyTypeId,
         enforcement: "clears",
+        versioned: { entity: "property", idColumn: property.id },
       },
     ],
     snapshot: { keys: PROPERTY_SNAPSHOT_PROPERTY_KEYS, field: "propertyTypeId" },
@@ -240,6 +311,11 @@ export const LIST_DEPENDENCIES: Record<ListKey, ListDependencies> = {
         // "clears" would be a lie; this is the honest reading of "nothing
         // happens to them, which is the problem".
         enforcement: "clears",
+        // Versioned all the same: the rows this rewrites ARE properties, and
+        // `tarlaSola` is inside the property snapshot. The text match decides
+        // WHICH properties move; it changes nothing about what they owe their
+        // own history afterwards.                              (Slice #29.14)
+        versioned: { entity: "property", idColumn: property.id },
       },
     ],
     snapshot: { keys: PROPERTY_SNAPSHOT_PROPERTY_KEYS, field: "tarlaSola" },
@@ -257,6 +333,7 @@ export const LIST_DEPENDENCIES: Record<ListKey, ListDependencies> = {
         table: property,
         column: property.useCategoryId,
         enforcement: "clears",
+        versioned: { entity: "property", idColumn: property.id },
       },
     ],
     snapshot: { keys: PROPERTY_SNAPSHOT_PROPERTY_KEYS, field: "useCategoryId" },
@@ -273,6 +350,7 @@ export const LIST_DEPENDENCIES: Record<ListKey, ListDependencies> = {
         table: naturalPerson,
         column: naturalPerson.physicalPersonTypeId,
         enforcement: "clears",
+        versioned: { entity: "natural-person", idColumn: naturalPerson.personId },
       },
     ],
     snapshot: {
@@ -361,6 +439,7 @@ export const LIST_DEPENDENCIES: Record<ListKey, ListDependencies> = {
         table: naturalPerson,
         column: naturalPerson.citizenshipId,
         enforcement: "clears",
+        versioned: { entity: "natural-person", idColumn: naturalPerson.personId },
       },
     ],
     snapshot: { keys: NATURAL_PERSON_SNAPSHOT_FIELDS_KEYS, field: "citizenshipId" },
@@ -377,6 +456,7 @@ export const LIST_DEPENDENCIES: Record<ListKey, ListDependencies> = {
         table: judicialPerson,
         column: judicialPerson.judicialPersonTypeId,
         enforcement: "clears",
+        versioned: { entity: "judicial-person", idColumn: judicialPerson.personId },
       },
     ],
     snapshot: {
@@ -400,6 +480,7 @@ export const LIST_DEPENDENCIES: Record<ListKey, ListDependencies> = {
         table: document,
         column: document.documentTypeId,
         enforcement: "blocks",
+        versioned: { entity: "document", idColumn: document.id },
       },
       {
         kind: "column",
@@ -425,6 +506,7 @@ export const LIST_DEPENDENCIES: Record<ListKey, ListDependencies> = {
         table: document,
         column: document.institutionId,
         enforcement: "clears",
+        versioned: { entity: "document", idColumn: document.id },
       },
     ],
     snapshot: { keys: DOCUMENT_SNAPSHOT_KEYS, field: "institutionId" },
@@ -473,6 +555,35 @@ export const LIST_DEPENDENCIES: Record<ListKey, ListDependencies> = {
     ],
   },
 };
+
+/**
+ * The tables a move RE-POINTS that record nothing of their own.
+ *                                                              (Slice #29.14)
+ *
+ * "Re-points", not "writes": a `person-roles` move also INSERTS whitelist ticks
+ * through `grantWhitelists`, and those three tables are configuration whose
+ * inserted row is its own record. See the header.
+ *
+ * Written down rather than left to be re-derived, because "no `versioned` on
+ * this ref" is indistinguishable from "someone forgot" until somebody says
+ * which it is. All five are association rows, and they carry no snapshot, no
+ * version table, and — check the schema — no `updated_by` and no `updated_at`
+ * either: `created_at` is the only timestamp an association row has ever had.
+ * So a move that re-points a role tag on one of them owes nothing beyond the
+ * tag itself.
+ *
+ * value-list-move-history.test.ts asserts this list against BOTH the map and
+ * the schema, in both directions — so a sixth unversioned ref, or an
+ * `updated_by` added to one of these five, fails a test rather than being
+ * quietly left unstamped.
+ */
+export const UNVERSIONED_MOVE_TABLES = [
+  "property_person",
+  "person_document",
+  "person_person",
+  "property_property",
+  "document_document",
+] as const;
 
 /** One class of dependent and how many of them there are. */
 export type DependentCount = {

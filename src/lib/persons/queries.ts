@@ -16,7 +16,8 @@
  */
 
 import { and, count, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
-import { db } from "@/db";
+import { db, type DbTransaction } from "@/db";
+import { appendVersionsIfChanged } from "@/lib/versioning/append";
 import { deletePrincipalObjects } from "@/lib/entities/delete";
 import {
   address,
@@ -441,6 +442,15 @@ function naturalSnapshotsEqual(
   a: NaturalPersonSnapshot,
   b: NaturalPersonSnapshot,
 ): boolean {
+  // ⚠️ **Shape check first, and it is not defensive padding.** (Slice #29.14)
+  // `person_version` is ONE table shared by both subtypes and its `snapshot`
+  // column is untyped `jsonb`, so the read path casts — nothing in the schema
+  // ties `person.type` to which satellite row exists, and a judicial snapshot
+  // reaching here would read `a.natural[k]` on an absent object and throw a
+  // TypeError. Inside a bulk re-point that aborts the whole move. Degrading to
+  // "these differ, write a version" costs one redundant version row and keeps
+  // the transaction alive.
+  if (!a.natural || !b.natural) return false;
   if (a.notes !== b.notes) return false;
   for (const k of NAT_FIELD_KEYS) {
     if (a.natural[k] !== b.natural[k]) return false;
@@ -448,6 +458,167 @@ function naturalSnapshotsEqual(
   if (!addressSnapshotsEqual(a.addresses.HOME, b.addresses.HOME)) return false;
   if (!addressSnapshotsEqual(a.addresses.CORRESPONDENCE, b.addresses.CORRESPONDENCE)) return false;
   return true;
+}
+
+/**
+ * The natural persons as they stand inside `tx`, for snapshots.
+ *                                                              (Slice #29.14)
+ *
+ * ⚠️ **THREE QUERIES FOR THE WHOLE SET, NOT THREE PER PERSON.** An adversarial
+ * round costed the per-object version of the bulk re-point at five statements
+ * per person — these three reads, plus the latest-version read and the insert
+ * below — so 25 000 sequential round trips for a 5 000-person move, inside one
+ * transaction holding two lookup rows locked.
+ *
+ * ⚠️ **Reads through `tx`, not through `getPersonById`,** which goes to the
+ * global `db` handle and would not see the caller transaction's uncommitted
+ * writes — the trap Slice #18.05 documented for the judicial half.
+ */
+async function personFullsIn(
+  tx: DbTransaction,
+  ids: readonly string[],
+): Promise<Map<string, PersonFull>> {
+  const idList = [...ids];
+  if (idList.length === 0) return new Map();
+
+  const people = await tx
+    .select()
+    .from(person)
+    .where(inArray(person.id, idList));
+
+  const naturals = await tx
+    .select()
+    .from(naturalPerson)
+    .where(inArray(naturalPerson.personId, idList));
+
+  const addresses = await tx
+    .select()
+    .from(address)
+    .where(inArray(address.personId, idList))
+    .orderBy(address.personId, address.kind);
+
+  const naturalById = new Map(naturals.map((n) => [n.personId, n]));
+  const addressesById = new Map<string, (typeof address.$inferSelect)[]>();
+  for (const a of addresses) {
+    const list = addressesById.get(a.personId);
+    if (list) list.push(a);
+    else addressesById.set(a.personId, [a]);
+  }
+
+  return new Map(
+    people.map((p) => [
+      p.id,
+      {
+        person: p,
+        natural: naturalById.get(p.id) ?? null,
+        addresses: addressesById.get(p.id) ?? [],
+      },
+    ]),
+  );
+}
+
+/**
+ * Append versions for these natural persons, where the snapshot really
+ * changed.                                                     (Slice #29.14)
+ *
+ * The comparison `updateNaturalPerson` makes, callable by anything else that
+ * rewrites natural persons inside a transaction — today the bulk re-point on
+ * the Reference Data screen, which moves `citizenship_id` and
+ * `physical_person_type_id`, both of them inside the snapshot. Before #29.14
+ * that move wrote no version at all, so the change surfaced in the NEXT
+ * ordinary edit's diff, under whoever made that edit.
+ *
+ * ⚠️ **The ids are PERSON ids, not the satellite rows'.** `person_version`
+ * keys on `person.id`, and `natural_person.person_id` IS that id — which is
+ * why the mover can hand this the value it just read back from the rewritten
+ * `natural_person` row.
+ *
+ * `prebuilt` is for the caller that has already built its snapshots.
+ * Returns how many version rows were written.
+ */
+export async function recordNaturalPersonVersionsIfChanged(
+  tx: DbTransaction,
+  ids: readonly string[],
+  updatedBy: string | null,
+  prebuilt?: ReadonlyMap<string, NaturalPersonSnapshot>,
+): Promise<number> {
+  return appendVersionsIfChanged<NaturalPersonSnapshot>(
+    {
+      buildSnapshots: async (batch) => {
+        // Scoped to the batch rather than returned whole, and an adversarial
+        // round is why: `appendVersionsIfChanged` cuts its own ids into
+        // batches, and a caller that hands over a whole-set `prebuilt` with a
+        // chunked `ids` would otherwise have every batch after the first
+        // quietly write the FIRST batch's snapshots. Today's four callers pass
+        // exactly one id, so this changes nothing for them and everything for
+        // the next one.
+        if (prebuilt) {
+          return new Map(
+            batch
+              .filter((id) => prebuilt.has(id))
+              .map((id) => [id, prebuilt.get(id)!] as const),
+          );
+        }
+        const fulls = await personFullsIn(tx, batch);
+        return new Map(
+          [...fulls].map(([id, full]) => [id, naturalSnapshotFromFull(full)]),
+        );
+      },
+      latestVersions: async (batch) => latestPersonVersionsIn<NaturalPersonSnapshot>(tx, batch),
+      equal: naturalSnapshotsEqual,
+      insertVersions: async (rows, by) => {
+        await tx.insert(personVersion).values(
+          rows.map((r) => ({
+            personId:      r.id,
+            versionNumber: r.versionNumber,
+            snapshot:      r.snapshot,
+            updatedBy:     by,
+          })),
+        );
+      },
+    },
+    ids,
+    updatedBy,
+  );
+}
+
+/**
+ * The newest stored version per person, in one query.           (Slice #29.14)
+ *
+ * Exported because `person_version` is the ONE version table shared by two
+ * subtypes, and the judicial half needs exactly this query with a different
+ * snapshot type — the same reason `listPersonVersions` lives here and is
+ * type-agnostic. `S` is the caller's subtype snapshot; the column is untyped
+ * `jsonb` and the query cannot check it, which is why the read path has always
+ * cast.
+ *
+ * ⚠️ **DISTINCT ON keeps the FIRST row of each group**, so the
+ * `desc(versionNumber)` in the ORDER BY is load-bearing: without it this would
+ * silently compare every person against their version 0 forever.
+ */
+export async function latestPersonVersionsIn<S>(
+  tx: DbTransaction,
+  ids: readonly string[],
+): Promise<Map<string, { versionNumber: number; snapshot: S }>> {
+  const idList = [...ids];
+  if (idList.length === 0) return new Map();
+
+  const rows = await tx
+    .selectDistinctOn([personVersion.personId], {
+      personId:      personVersion.personId,
+      versionNumber: personVersion.versionNumber,
+      snapshot:      personVersion.snapshot,
+    })
+    .from(personVersion)
+    .where(inArray(personVersion.personId, idList))
+    .orderBy(personVersion.personId, desc(personVersion.versionNumber));
+
+  return new Map(
+    rows.map((r) => [
+      r.personId,
+      { versionNumber: r.versionNumber, snapshot: r.snapshot as S },
+    ]),
+  );
 }
 
 /** All versions of a person, oldest (version 0) first. */
@@ -673,29 +844,17 @@ export async function updateNaturalPerson(
 
     // Slice #18.05: append a new version snapshot — but skip if this save
     // produced no actual change vs the latest stored version (no-op backstop).
-    const newSnapshot = naturalSnapshotFromFull(full);
-    const [latestVer] = await tx
-      .select({
-        versionNumber: personVersion.versionNumber,
-        snapshot:      personVersion.snapshot,
-      })
-      .from(personVersion)
-      .where(eq(personVersion.personId, id))
-      .orderBy(desc(personVersion.versionNumber))
-      .limit(1);
-
-    const latestSnapshot = latestVer
-      ? (latestVer.snapshot as NaturalPersonSnapshot)
-      : null;
-
-    if (!latestSnapshot || !naturalSnapshotsEqual(latestSnapshot, newSnapshot)) {
-      await tx.insert(personVersion).values({
-        personId:      id,
-        versionNumber: (latestVer?.versionNumber ?? -1) + 1,
-        snapshot:      newSnapshot,
-        updatedBy,
-      });
-    }
+    // Slice #29.14 moved the comparison itself into
+    // `recordNaturalPersonVersionsIfChanged` so the bulk re-point makes the
+    // same one rather than a second copy of it. The snapshot is handed over
+    // rather than rebuilt, because this path has already paid for the re-fetch
+    // above.
+    await recordNaturalPersonVersionsIfChanged(
+      tx,
+      [id],
+      updatedBy,
+      new Map([[id, naturalSnapshotFromFull(full)]]),
+    );
 
     return full;
   });

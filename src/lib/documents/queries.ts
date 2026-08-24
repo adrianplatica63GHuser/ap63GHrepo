@@ -14,7 +14,8 @@
  */
 
 import { asc, and, count, desc, eq, ilike, inArray, isNotNull, lte, or, sql } from "drizzle-orm";
-import { db } from "@/db";
+import { db, type DbTransaction } from "@/db";
+import { appendVersionsIfChanged } from "@/lib/versioning/append";
 import { document, documentVersion, entityMetadata, groupMember, groups, lookupDocumentType, person, principalObject } from "@/db/schema";
 import { deletePrincipalObjects } from "@/lib/entities/delete";
 import { listDocumentPageFilePaths } from "./pages-queries";
@@ -296,6 +297,102 @@ function snapshotsEqual(a: DocumentSnapshot, b: DocumentSnapshot): boolean {
   return true;
 }
 
+/**
+ * Append versions for these documents, where the snapshot really changed.
+ *                                                              (Slice #29.14)
+ *
+ * The comparison `updateDocument` makes, callable by anything else that
+ * rewrites documents inside a transaction — today the bulk re-point on the
+ * Reference Data screen, which moves `document_type_id` and `institution_id`,
+ * both of them inside the snapshot. Before #29.14 that move wrote no version
+ * at all, so the type change surfaced in the NEXT ordinary edit's diff, under
+ * whoever made that edit.
+ *
+ * ⚠️ **Set-shaped, and reading through `tx`.** Three statements for the whole
+ * batch — the document read, the latest-version read, the insert — rather than
+ * three per document; an adversarial round costed the per-object version at
+ * 15 000 sequential round trips for a 5 000-document move, inside one
+ * transaction holding two lookup rows locked. And through the global `db`
+ * handle these reads would not see the caller transaction's uncommitted
+ * writes, which is the Slice #18.05 trap.
+ *
+ * `prebuilt` is for the caller that has already built its snapshots.
+ * Returns how many version rows were written.
+ */
+export async function recordDocumentVersionsIfChanged(
+  tx: DbTransaction,
+  ids: readonly string[],
+  updatedBy: string | null,
+  prebuilt?: ReadonlyMap<string, DocumentSnapshot>,
+): Promise<number> {
+  return appendVersionsIfChanged<DocumentSnapshot>(
+    {
+      buildSnapshots: async (batch) => {
+        // Scoped to the batch rather than returned whole, and an adversarial
+        // round is why: `appendVersionsIfChanged` cuts its own ids into
+        // batches, and a caller that hands over a whole-set `prebuilt` with a
+        // chunked `ids` would otherwise have every batch after the first
+        // quietly write the FIRST batch's snapshots. Today's four callers pass
+        // exactly one id, so this changes nothing for them and everything for
+        // the next one.
+        if (prebuilt) {
+          return new Map(
+            batch
+              .filter((id) => prebuilt.has(id))
+              .map((id) => [id, prebuilt.get(id)!] as const),
+          );
+        }
+        const idList = [...batch];
+        if (idList.length === 0) return new Map();
+        const rows = await tx
+          .select()
+          .from(document)
+          .where(inArray(document.id, idList));
+        return new Map(rows.map((r) => [r.id, snapshotFromFull(r)]));
+      },
+      latestVersions: async (batch) => {
+        const idList = [...batch];
+        if (idList.length === 0) return new Map();
+        // DISTINCT ON + the matching ORDER BY is "the newest row per document"
+        // in one query. The ORDER BY is not cosmetic: DISTINCT ON keeps the
+        // FIRST row of each group, so dropping `desc(versionNumber)` would
+        // silently compare against version 0 forever.
+        const rows = await tx
+          .selectDistinctOn([documentVersion.documentId], {
+            documentId:    documentVersion.documentId,
+            versionNumber: documentVersion.versionNumber,
+            snapshot:      documentVersion.snapshot,
+          })
+          .from(documentVersion)
+          .where(inArray(documentVersion.documentId, idList))
+          .orderBy(documentVersion.documentId, desc(documentVersion.versionNumber));
+        return new Map(
+          rows.map((r) => [
+            r.documentId,
+            {
+              versionNumber: r.versionNumber,
+              snapshot: r.snapshot as DocumentSnapshot,
+            },
+          ]),
+        );
+      },
+      equal: snapshotsEqual,
+      insertVersions: async (rows, by) => {
+        await tx.insert(documentVersion).values(
+          rows.map((r) => ({
+            documentId:    r.id,
+            versionNumber: r.versionNumber,
+            snapshot:      r.snapshot,
+            updatedBy:     by,
+          })),
+        );
+      },
+    },
+    ids,
+    updatedBy,
+  );
+}
+
 /** All versions of a document, oldest (version 0) first. */
 export async function listDocumentVersions(
   documentId: string,
@@ -432,29 +529,16 @@ export async function updateDocument(
 
     // Slice #18.06: append a new version snapshot — but skip if this save
     // produced no actual change vs the latest stored version (no-op backstop).
-    const newSnapshot = snapshotFromFull(updated);
-    const [latestVer] = await tx
-      .select({
-        versionNumber: documentVersion.versionNumber,
-        snapshot:      documentVersion.snapshot,
-      })
-      .from(documentVersion)
-      .where(eq(documentVersion.documentId, id))
-      .orderBy(desc(documentVersion.versionNumber))
-      .limit(1);
-
-    const latestSnapshot = latestVer
-      ? (latestVer.snapshot as DocumentSnapshot)
-      : null;
-
-    if (!latestSnapshot || !snapshotsEqual(latestSnapshot, newSnapshot)) {
-      await tx.insert(documentVersion).values({
-        documentId:    id,
-        versionNumber: (latestVer?.versionNumber ?? -1) + 1,
-        snapshot:      newSnapshot,
-        updatedBy,
-      });
-    }
+    // Slice #29.14 moved the comparison itself into
+    // `recordDocumentVersionsIfChanged` so the bulk re-point makes the same one
+    // rather than a second copy of it. The snapshot is handed over rather than
+    // rebuilt, because this path has already paid for the re-fetch above.
+    await recordDocumentVersionsIfChanged(
+      tx,
+      [id],
+      updatedBy,
+      new Map([[id, snapshotFromFull(updated)]]),
+    );
 
     return updated;
   });

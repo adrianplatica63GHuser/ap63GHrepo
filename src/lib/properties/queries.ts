@@ -19,6 +19,7 @@ import { cadastralKey } from "./cadastral-identity";
 import type { CadastralMatch } from "./import-property-plan";
 import { entityMetadata, groupMember, groups, lookupPersonRole, lookupTarla, person, principalObject, property, propertyAddress, propertyCorner, propertyPerson, propertyVersion } from "@/db/schema";
 import { wgs84ToStereo70 } from "@/lib/geo/transdatRO";
+import { appendVersionsIfChanged } from "@/lib/versioning/append";
 import { shoelaceAreaM2 } from "./area";
 import type {
   PropertyCreate,
@@ -169,6 +170,157 @@ function snapshotsEqual(a: PropertySnapshot, b: PropertySnapshot): boolean {
     }
   }
   return true;
+}
+
+/**
+ * The properties as they stand inside `tx`, for snapshots.      (Slice #29.14)
+ *
+ * ⚠️ **THREE QUERIES FOR THE WHOLE SET, NOT THREE PER PROPERTY, AND AN
+ * ADVERSARIAL ROUND IS WHY.** The first draft of the bulk re-point rebuilt one
+ * snapshot at a time — these three reads per property, plus the latest-version
+ * read and the insert in `recordPropertyVersionsIfChanged` below, so five
+ * statements each and 25 000 sequential round trips for a 5 000-property move,
+ * inside one transaction holding two lookup rows locked. That is minutes
+ * against a remote Postgres and past any serverless timeout, on a screen whose
+ * previous behaviour was a single UPDATE. Set-shaped reads are what make the
+ * history affordable.
+ *
+ * ⚠️ **Reads through `tx`, and it has to.** Through the global `db` handle it
+ * would not see the caller transaction's uncommitted writes and would record
+ * the state BEFORE the change as the version FOR it — the trap Slice #18.05
+ * documented for the judicial half.
+ */
+async function propertyFullsIn(
+  tx: DbTransaction,
+  ids: readonly string[],
+): Promise<Map<string, PropertyFull>> {
+  const idList = [...ids];
+  if (idList.length === 0) return new Map();
+
+  const props = await tx
+    .select()
+    .from(property)
+    .where(inArray(property.id, idList));
+
+  const addrs = await tx
+    .select()
+    .from(propertyAddress)
+    .where(inArray(propertyAddress.propertyId, idList));
+
+  // Ordered by property first so the per-property runs are contiguous, then by
+  // `sequenceNo` — the corner order IS data (the polygon), not a display
+  // preference, and `snapshotFromFull` stores it as given.
+  const corners = await tx
+    .select()
+    .from(propertyCorner)
+    .where(inArray(propertyCorner.propertyId, idList))
+    .orderBy(propertyCorner.propertyId, propertyCorner.sequenceNo);
+
+  const addrById = new Map(addrs.map((a) => [a.propertyId, a]));
+  const cornersById = new Map<string, (typeof propertyCorner.$inferSelect)[]>();
+  for (const c of corners) {
+    const list = cornersById.get(c.propertyId);
+    if (list) list.push(c);
+    else cornersById.set(c.propertyId, [c]);
+  }
+
+  return new Map(
+    props.map((p) => [
+      p.id,
+      {
+        property: p,
+        address: addrById.get(p.id) ?? null,
+        corners: cornersById.get(p.id) ?? [],
+      },
+    ]),
+  );
+}
+
+/**
+ * Append versions for these properties, where the snapshot really changed.
+ *                                                              (Slice #29.14)
+ *
+ * The comparison `updateProperty` makes, callable by anything else that
+ * rewrites properties inside a transaction — today the bulk re-point on the
+ * Reference Data screen, which moves `property_type_id`, `use_category_id` and
+ * `tarla_sola`, all three of them inside the snapshot. Before #29.14 that move
+ * wrote no version at all, so the type change surfaced in the NEXT ordinary
+ * edit's diff, under whoever made that edit.
+ *
+ * `prebuilt` is for the caller that has already built its snapshots —
+ * `updatePropertyIn` re-fetches the whole record anyway, and paying for a
+ * second identical read would be the only cost of sharing this rule with it.
+ * Returns how many version rows were written.
+ */
+export async function recordPropertyVersionsIfChanged(
+  tx: DbTransaction,
+  ids: readonly string[],
+  updatedBy: string | null,
+  prebuilt?: ReadonlyMap<string, PropertySnapshot>,
+): Promise<number> {
+  return appendVersionsIfChanged<PropertySnapshot>(
+    {
+      buildSnapshots: async (batch) => {
+        // Scoped to the batch rather than returned whole, and an adversarial
+        // round is why: `appendVersionsIfChanged` cuts its own ids into
+        // batches, and a caller that hands over a whole-set `prebuilt` with a
+        // chunked `ids` would otherwise have every batch after the first
+        // quietly write the FIRST batch's snapshots. Today's four callers pass
+        // exactly one id, so this changes nothing for them and everything for
+        // the next one.
+        if (prebuilt) {
+          return new Map(
+            batch
+              .filter((id) => prebuilt.has(id))
+              .map((id) => [id, prebuilt.get(id)!] as const),
+          );
+        }
+        const fulls = await propertyFullsIn(tx, batch);
+        return new Map(
+          [...fulls].map(([id, full]) => [id, snapshotFromFull(full)]),
+        );
+      },
+      latestVersions: async (batch) => {
+        const idList = [...batch];
+        if (idList.length === 0) return new Map();
+        // DISTINCT ON + the matching ORDER BY is "the newest row per property"
+        // in one query. The ORDER BY is not cosmetic: DISTINCT ON keeps the
+        // FIRST row of each group, so dropping `desc(versionNumber)` would
+        // silently compare against version 0 forever.
+        const rows = await tx
+          .selectDistinctOn([propertyVersion.propertyId], {
+            propertyId:    propertyVersion.propertyId,
+            versionNumber: propertyVersion.versionNumber,
+            snapshot:      propertyVersion.snapshot,
+          })
+          .from(propertyVersion)
+          .where(inArray(propertyVersion.propertyId, idList))
+          .orderBy(propertyVersion.propertyId, desc(propertyVersion.versionNumber));
+        return new Map(
+          rows.map((r) => [
+            r.propertyId,
+            {
+              versionNumber: r.versionNumber,
+              snapshot: r.snapshot as PropertySnapshot,
+            },
+          ]),
+        );
+      },
+      equal: snapshotsEqual,
+      insertVersions: async (rows, by) => {
+        await tx.insert(propertyVersion).values(
+          rows.map((r) => ({
+            propertyId:    r.id,
+            versionNumber: r.versionNumber,
+            snapshot:      r.snapshot,
+            updatedBy:     by,
+          })),
+        );
+      },
+    },
+    ids,
+    updatedBy,
+  );
 }
 
 /** All versions of a property, oldest (version 0) first. */
@@ -697,29 +849,16 @@ export async function updatePropertyIn(
 
     // Slice #18.02: append a new version snapshot — but skip if this save
     // produced no actual change vs the latest stored version (no-op backstop).
-    const newSnapshot = snapshotFromFull(full);
-    const [latestVer] = await tx
-      .select({
-        versionNumber: propertyVersion.versionNumber,
-        snapshot:      propertyVersion.snapshot,
-      })
-      .from(propertyVersion)
-      .where(eq(propertyVersion.propertyId, id))
-      .orderBy(desc(propertyVersion.versionNumber))
-      .limit(1);
-
-    const latestSnapshot = latestVer
-      ? (latestVer.snapshot as PropertySnapshot)
-      : null;
-
-    if (!latestSnapshot || !snapshotsEqual(latestSnapshot, newSnapshot)) {
-      await tx.insert(propertyVersion).values({
-        propertyId:    id,
-        versionNumber: (latestVer?.versionNumber ?? -1) + 1,
-        snapshot:      newSnapshot,
-        updatedBy,
-      });
-    }
+    // Slice #29.14 moved the comparison itself into
+    // `recordPropertyVersionsIfChanged` so the bulk re-point makes the same one
+    // rather than a second copy of it. The snapshot is handed over rather than
+    // rebuilt, because this path has already paid for the re-fetch above.
+    await recordPropertyVersionsIfChanged(
+      tx,
+      [id],
+      updatedBy,
+      new Map([[id, snapshotFromFull(full)]]),
+    );
 
     return full;
   }

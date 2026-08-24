@@ -18,6 +18,12 @@
  * What the user is told, and the offer to move the dependents onto another
  * value first, are in `./dependents.ts`, `buildReport` and the dialog.
  *
+ * Slice #29.14: the move records itself. Every object it rewrites gets its
+ * `updated_by` stamped from the acting session and, where the snapshot really
+ * changed, a version row — written inside the move's own transaction by the
+ * entity's own comparison. See ./move-history.ts and the header above
+ * `reassignDependents`.
+ *
  * Create and update still dispatch on the ListKey string via a switch —
  * verbose but fully type-safe within each case. The delete no longer does:
  * it reads its table from the same map the count and the move read.
@@ -43,6 +49,8 @@ import {
   lookupDocumentDocumentRole,
 } from "@/db/schema";
 import type { ListKey } from "./config";
+import { getCurrentUser } from "@/lib/auth/current-user";
+import { recordMoveHistory } from "./move-history";
 import {
   LIST_DEPENDENCIES,
   dependentNotes,
@@ -596,8 +604,24 @@ export async function countDependents(
   });
 }
 
+export type MovedRows = {
+  /** How many rows the UPDATE rewrote. */
+  count: number;
+  /**
+   * The versioned objects behind those rows.                    (Slice #29.14)
+   *
+   * Empty when the ref declares no `versioned` — the five association tables,
+   * which carry no snapshot, no version table and no `updated_by`, so there is
+   * nothing for the move to write about them. Otherwise one id per rewritten
+   * row, which for all eight versioned refs today — eight refs over four
+   * tables — is one per object.
+   */
+  ids: string[];
+};
+
 /**
- * Move the rows one ref covers from one value to another. Returns how many.
+ * Move the rows one ref covers from one value to another — how many, and which
+ * objects they belong to.
  *
  * ⚠️ **Configuration refs never reach this function** — see `configuration` in
  * ./dependents.ts. An adversarial round found what the first draft did with
@@ -612,9 +636,10 @@ async function moveRef(
   ref: DependentRef,
   from: unknown,
   to: unknown,
-): Promise<number> {
+): Promise<MovedRows> {
   const table  = sql.identifier(getTableName(ref.table));
   const column = sql.identifier(ref.column.name);
+  const versioned = ref.versioned;
 
   // Raw SQL rather than the query builder because `ref.table` is a generic
   // `PgTable` here: `.set()` on one has no column types to check against, so
@@ -622,10 +647,24 @@ async function moveRef(
   // name comes from the schema object either way — there is no string literal
   // to mistype. `${column}` is deliberately UNQUALIFIED: a `SET "t"."c" = …`
   // is a syntax error in Postgres.
+  //
+  // Slice #29.14: `RETURNING` names the versioned object's id column rather
+  // than the constant `1` it used to, because the rows this rewrote are the
+  // rows whose history the move now has to write, and the UPDATE is the only
+  // place that knows which they were — a second SELECT afterwards would look
+  // for the SOURCE value that no longer exists.
+  const returning = versioned ? sql.identifier(versioned.idColumn.name) : sql`1`;
   const moved = await tx.execute(
-    sql`UPDATE ${table} SET ${column} = ${to} WHERE ${column} = ${from} RETURNING 1`,
+    sql`UPDATE ${table} SET ${column} = ${to} WHERE ${column} = ${from} RETURNING ${returning}`,
   );
-  return moved.rows.length;
+
+  const rows = moved.rows as Array<Record<string, unknown>>;
+  return {
+    count: rows.length,
+    ids: versioned
+      ? rows.map((r) => String(r[versioned.idColumn.name]))
+      : [],
+  };
 }
 
 export type ReassignOutcome =
@@ -647,6 +686,23 @@ export type ReassignOutcome =
        * See ./role-whitelists.ts.
        */
       warnings: string[];
+      /**
+       * Version rows the move wrote.                            (Slice #29.14)
+       *
+       * At most `total`, and legitimately fewer: an object whose snapshot did
+       * not change gets no version, and the five unversioned association
+       * tables (see `UNVERSIONED_MOVE_TABLES` in ./dependents.ts) never get
+       * one at all — so a `person-roles` move that re-points nine hundred role
+       * tags reports `total: 900, versions: 0`, which is the honest answer and
+       * not a failure.
+       *
+       * Reported here rather than only counted, because "900 moved" and "900
+       * recorded" are different facts and the screen currently says only the
+       * first. Putting the second in front of the user is a follow-up on the
+       * dialog, named in the handover; the number is carried from here so that
+       * change never has to touch this file.
+       */
+      versions: number;
     }
   | { ok: false; reason: "not-found" | "same-value" | "ambiguous-value" };
 
@@ -657,24 +713,71 @@ export type ReassignOutcome =
  * ./role-whitelists.ts, and `valueList.confirm.roleWhitelistNote`, which was
  * the sentence that stood in for this and is deleted in the same commit.
  *
- * ⚠️ **NOTICED, NOT FIXED — the move writes no version row.** `property` and
- * `document` are versioned by full snapshot, and their snapshots carry
- * `propertyTypeId` / `tarlaSola` / `documentTypeId` — the very columns this
- * rewrites. `updateProperty` and `updateDocument` write a version when the
- * snapshot changes; this bulk UPDATE does not, and it does not touch
- * `updated_by` either. The visible consequence is attribution: the NEXT
- * ordinary edit to one of these objects writes a version whose diff includes
- * the type change, under whoever made that edit. Doing it properly means
- * building each entity's snapshot from inside a generic mover, which is a
- * slice of its own; it is in the handover with that shape.
+ * Slice #29.14 made it record itself. Every rewritten object gets its
+ * `updated_by` stamped from the acting session and, where a fresh snapshot
+ * really differs from the latest stored one, a version row — written by the
+ * entity's OWN comparison, not a copy of it (see ./move-history.ts, and
+ * `recordPropertyVersionIfChanged` and its three siblings). Before that, the
+ * move wrote neither, so the type change surfaced in the NEXT ordinary edit's
+ * diff under whoever made that edit, while the row's `updated_by` kept the
+ * previous writer and the `touch_updated_at` trigger moved `updated_at` — a
+ * row reading "changed just now, by someone who did not change it".
+ *
+ * ⚠️ **THE HISTORY IS WRITTEN INSIDE THIS TRANSACTION, and that is not
+ * incidental.** Both lookup rows are locked here and the UPDATEs are here; a
+ * version written after the commit would be a history that a rollback leaves
+ * disagreeing with its own rows, and a crash between the two would leave it
+ * missing altogether.
+ *
+ * ⚠️ **THE ACTING USER IS RESOLVED, AND A MISSING ONE REFUSES THE MOVE.** An
+ * adversarial round showed why the first version — `getCurrentUserEmail()`,
+ * whose null means "UAT, or the Auth API just failed, and there is no telling
+ * which" — was not good enough. `getCurrentUser()` catches everything and
+ * returns null on any Supabase fault, so a blip between the route's own auth
+ * check and this line would have stamped `updated_by = NULL` across every row
+ * the move touched: "changed just now, by nobody", which is the same defect
+ * this slice exists to close, differently spelled, and unrecoverable because
+ * the previous author is gone. So the IDENTITY is resolved, not the address,
+ * and a null identity throws rather than writes. A null EMAIL still passes,
+ * because it means the synthetic UAT user — the one box where an ordinary edit
+ * writes null too.
+ *
+ * `actor` exists for callers that already know who is acting: tests, and the
+ * route, which holds a `CurrentUser` already and should hand it down rather
+ * than pay a second round trip for it (see `getCurrentUserIdAndRole` in
+ * @/lib/auth/current-role for the round that made resolving-once a rule). That
+ * is a follow-up on the route, named in the handover; until then this resolves
+ * it, and refuses rather than guesses.
  */
 export async function reassignDependents(
   list: ListKey,
   fromId: string,
   toId: string,
+  actor?: string | null,
 ): Promise<ReassignOutcome> {
   if (fromId === toId) return { ok: false, reason: "same-value" };
   const def = LIST_DEPENDENCIES[list];
+
+  // Resolved BEFORE the transaction opens. `getCurrentUser()` reads the
+  // request's cookies and, outside UAT mode, asks Supabase — network work that
+  // has no business happening while two lookup rows are locked.
+  let updatedBy: string | null;
+  if (actor === undefined) {
+    const acting = await getCurrentUser();
+    // Not a guard against an unauthenticated caller — middleware and the route
+    // do that. It is the difference between "UAT, whose email is null by
+    // design" and "the Auth API failed", which `getCurrentUserEmail()` reports
+    // identically. Throwing rolls the move back whole; writing null would
+    // rewrite every moved row's author to nobody.
+    if (acting === null) {
+      throw new Error(
+        "reassignDependents: no acting user — refusing to re-point rows with no author",
+      );
+    }
+    updatedBy = acting.email;
+  } else {
+    updatedBy = actor;
+  }
 
   return db.transaction(async (tx) => {
     // Both rows locked, in id order. The order is what keeps two
@@ -725,10 +828,19 @@ export async function reassignDependents(
         : { granted: [], warnings: [] };
 
     const moved: DependentCount[] = [];
+    let versions = 0;
     for (const ref of def.refs) {
-      // Configuration goes with the row when it is deleted; it is not moved.
+      // Configuration goes with the row when it is deleted; it is not moved —
+      // so it never reaches `recordMoveHistory` either, which is correct: a
+      // version of a whitelist tick would record something that never
+      // happened.
       if (ref.configuration) continue;
-      addCount(moved, ref.labelKey, await moveRef(tx, ref, from, to));
+      const rewritten = await moveRef(tx, ref, from, to);
+      addCount(moved, ref.labelKey, rewritten.count);
+      // Slice #29.14: the same transaction, deliberately. `rewritten.ids` is
+      // empty for the five unversioned association tables, and this is a no-op
+      // for them.
+      versions += await recordMoveHistory(tx, ref, rewritten.ids, updatedBy);
     }
     return {
       ok: true,
@@ -736,6 +848,7 @@ export async function reassignDependents(
       total: moved.reduce((sum, d) => sum + d.count, 0),
       granted:  whitelists.granted,
       warnings: whitelists.warnings,
+      versions,
     } as const;
   });
 }
