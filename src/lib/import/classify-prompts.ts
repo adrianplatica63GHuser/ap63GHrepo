@@ -5,9 +5,9 @@
  * `KNOWN_DOCUMENT_TYPES` is this codebase's copy of `lookup_document_type`:
  * every (key, name) pair a seeded database holds.
  * `src/__tests__/document-type-catalogue-single-source.test.ts` binds it to
- * `src/db/sync-reference-data.sql` in BOTH directions, and to the two
- * migrations that changed the row set after that file was written, so the list
- * and the catalogue cannot drift apart again without a test going red.
+ * `src/db/sync-reference-data.sql` in BOTH directions, and to the migrations
+ * that changed the row set after that file was written, so the list and the
+ * catalogue cannot drift apart again without a test going red.
  *
  * WHY THE INVARIANT IS NOT DECORATION
  * -----------------------------------
@@ -31,49 +31,90 @@
  * feeds `resolveClassifiedDocumentType`, so when a type does have to be created
  * the key the codebase already defines is the key the row gets.
  *
- * ⚠️ **AUTORIZATIE IS GONE FROM THIS LIST AND THAT IS NOT AN OVERSIGHT.**
- * `migration_043_doctype_cleanup.sql` DELETES that row (key `AUTORIZATIE`, name
- * `Autorizare`) after reassigning its documents, its version snapshots and its
- * person-role pairs to AUTORIZATIE_ALT (`Autorizație`) — so on a migrated
- * database the key resolves to nothing, which is the same invariant broken in
- * the other direction. `sync-reference-data.sql` was still seeding the row and
- * no longer does.
+ * ⚠️ **AUTORIZATIE IS BACK ON THIS LIST, UNDER A DIFFERENT NAME FROM THE ONE
+ * THAT WAS DELETED, AND THE DISTINCTION IS THE WHOLE POINT.** The key was once
+ * paired with `Autorizare` — a wording `migration_043_doctype_cleanup.sql`
+ * DELETES, after reassigning that row's documents, version snapshots and
+ * person-role pairs to AUTORIZATIE_ALT (`Autorizație`). What is on the list now
+ * is the SURVIVING type: the same `Autorizație` row, carrying the key without
+ * the `_ALT` suffix it only ever wore because the key it wanted was occupied by
+ * the row 043 removed. Nothing named `Autorizare` is offered, and nothing
+ * re-creates it.
  *
- * ⚠️ **CERTIFICAT_SARCINI READS AS THE WRONG NAME, AND IT IS A NAMING DECISION
- * RATHER THAN A SWAP.** The key is paired with `Certificat de Bunuri` while
- * CERTIFICAT_SARCINI_ALT carries `Certificat de Sarcini`, which is the wrong
- * way round to anyone reading the Romanian — so it was worth establishing which
- * it is, and this is where the answer is finally written down. The history, in
- * three files: `migration_009_fix_diacritics.sql:53` named the row at
- * sort_order 7 `Certificat de Bunuri`;
+ * ⚠️ **NO KEY IN THIS LIST ENDS IN `_ALT` ANY MORE, AND CODE THAT MATCHED ON
+ * THE SUFFIX IS WRONG.** `migration_021_keep_alternate_wordings.sql` added
+ * three `_ALT` rows as second Romanian wordings, and the shared suffix became a
+ * shorthand several comments reasoned with. Two of those rows have taken the
+ * bare key (`AUTORIZATIE`, `CERTIFICAT_SARCINI`) and the third
+ * (`EXTRAS_CARTE_FUNCIARA_ALT`, `Extras de Carte Funciară`) is gone, folded
+ * into `EXTRAS_CARTE_FUNCIARA`. The suffix names nothing now: match against
+ * this list, never against a pattern.
+ *
+ * ⚠️ **CERTIFICAT_SARCINI NOW READS AS THE NAME BESIDE IT, AND UNPICKING THAT
+ * COST A KEY REUSE THAT HAS TO BE DONE IN ORDER.** The key used to be paired
+ * with `Certificat de Bunuri` while CERTIFICAT_SARCINI_ALT carried `Certificat
+ * de Sarcini` — the wrong way round to anyone reading the Romanian. The history
+ * of how it got that way, in three files: `migration_009_fix_diacritics.sql:53`
+ * named the row at sort_order 7 `Certificat de Bunuri`;
  * `migration_020_rename_to_document.sql:64` backfilled `key` by matching that
  * display NAME against the old `paperwork_type` enum and so chose
  * CERTIFICAT_SARCINI; `migration_021_keep_alternate_wordings.sql:15-16` then
  * recorded the pair as settled and added the second wording as its own type.
- * Nothing ever named CERTIFICAT_SARCINI `Certificat de Sarcini`, so there is no
- * swap to undo — the key is simply older than the name beside it, and `key` is
- * immutable by design (migration_020), so renaming the key is not on the table.
- * What the mismatch costs is a model told only `CERTIFICAT_SARCINI` filing an
- * encumbrance certificate under a row the user sees as "Certificat de Bunuri".
- * The remedy is below and it is why this list carries names at all: the classify
- * prompt shows the stored NAME beside every key, so the model chooses between
- * two visible Romanian names instead of between two keys that look
- * interchangeable. Renaming the display value would be a data change needing a
- * migration, and it is not this slice's.
+ * The key was simply older than the name beside it.
+ *
+ * It is untangled now: `CERTIFICAT_BUNURI` carries `Certificat de Bunuri` and
+ * `CERTIFICAT_SARCINI` carries `Certificat de Sarcini`, so a model told only a
+ * key can no longer file an encumbrance certificate under a row the user reads
+ * as something else.
+ *
+ * ⚠️ **`CERTIFICAT_SARCINI` IS A REUSED KEY WITH A CHANGED MEANING, WHICH IS
+ * THE ONE THING A KEY IS NOT SUPPOSED TO DO** — `key` is immutable by design
+ * (migration_020) precisely so that a stored row cannot change what it means
+ * underneath the documents filed against it. It is safe here only because the
+ * rename happens as a rename: `migration_071_doctype_rekey.sql` moves
+ * CERTIFICAT_SARCINI to CERTIFICAT_BUNURI FIRST and only then frees the name
+ * for CERTIFICAT_SARCINI_ALT, so no row ever changes meaning in place and no
+ * document changes type. Run out of order — or re-seeded over a database still
+ * holding the old rows — and every `Certificat de Bunuri` silently becomes a
+ * `Certificat de Sarcini`. That is why the migration exists at all on an
+ * archive whose document-type rows were cleared by hand.
+ *
+ * The names in this list are still what the prompt shows beside each key, for
+ * the reason the next block gives: two keys that look interchangeable are
+ * chosen between by their visible Romanian names.
+ *
+ * ⚠️ **FIFTEEN TYPES WERE ADDED AT ONCE (Slice #29.15) AND THE REASON IS THE
+ * #29.08 GATE, NOT COMPLETENESS FOR ITS OWN SAKE.** An import stops dead when
+ * it meets a type the archive does not hold, and restarting costs the
+ * classification again — so the catalogue is now deliberately WIDER than the
+ * set of types anyone has documents for. A type here with a seeded row and no
+ * form stops the run at "give me a form", which DocTypeEngine answers; a type
+ * that is missing entirely stops it at "go and create this in Reference Data
+ * first", which nothing on that screen can answer. The first is a step, the
+ * second is a dead end, and fifteen cheap rows buy the difference.
+ *
+ * ⚠️ **THREE OF THEM SIT BESIDE A TYPE THEY COULD BE CONFUSED WITH**, which is
+ * the shape that produced the CERTIFICAT tangle above: ACT_PARTAJ beside
+ * CONTRACT_PARTAJ, ANTECONTRACT beside CONTRACT_VANZARE, and the two PLAN_*
+ * types beside DOCUMENTATIE_CADASTRALA. Each pair is separated by a rule in
+ * CLASSIFY_SYSTEM_PROMPT below rather than by hoping the names are
+ * self-evident. Renaming any of those rows without editing the matching rule
+ * puts the pair back where it started.
  *
  * Six entries were removed by Slice #23.01.Import and stay removed:
  *
- *   CARTE_IDENTITATE_ALT  - never seeded. migration_021 deliberately defines
- *                           the only three alternate Romanian wordings
- *                           (the AUTORIZATIE, CERTIFICAT_SARCINI and
- *                           EXTRAS_CARTE_FUNCIARA families -- of which
- *                           AUTORIZATIE's base row was later deleted by
- *                           migration_043, leaving AUTORIZATIE_ALT alone);
- *                           "Carte de Identitate"
- *                           has one wording. Offering the key made an ID
- *                           card land under an auto-created type, so
- *                           getPersonIdCardLink (which matches the literal
- *                           key CARTE_IDENTITATE) never found it.
+ *   CARTE_IDENTITATE_ALT  - never seeded. migration_021 defined three
+ *                           alternate Romanian wordings (the AUTORIZATIE,
+ *                           CERTIFICAT_SARCINI and EXTRAS_CARTE_FUNCIARA
+ *                           families) and "Carte de Identitate" was never
+ *                           among them -- it has one wording. None of those
+ *                           three survives as a separate type: two took the
+ *                           bare key once migration_043 and migration_071 had
+ *                           cleared it, and the Extras one was folded away.
+ *                           Offering the key made an ID card land under an
+ *                           auto-created type, so getPersonIdCardLink (which
+ *                           matches the literal key CARTE_IDENTITATE) never
+ *                           found it.
  *   CASA, LINIARA, PASUNE, TEREN_ARABIL, TEREN_CONSTRUIT
  *                         - these are lookup_PROPERTY_type keys
  *                           (migration_039), not document types. Listing
@@ -101,32 +142,46 @@ import { UNCLASSIFIED_DOCUMENT_TYPE_KEY } from "@/lib/documents/document-type-ma
  * was `src/db/rebuild-known-differences.txt`'s and is closed.
  */
 export const KNOWN_DOCUMENT_TYPES = [
-  { key: "ACT_ADJUDECARE",             name: "Act de Adjudecare" },
-  { key: "ACT_CADASTRU",               name: "Act Cadastru" },
-  { key: "ACT_DONATIE",                name: "Act de Donație" },
-  { key: "AUTORIZATIE_ALT",            name: "Autorizație" },
-  { key: "AUTORIZATIE_CONSTRUIRE",     name: "Autorizație De Construire" },
-  { key: "AVIZ_INSTITUTIE",            name: "Aviz de Instituție" },
-  { key: "CARTE_IDENTITATE",           name: "Carte de Identitate" },
-  { key: "CERTIFICAT_FISCAL",          name: "Certificat Fiscal" },
-  { key: "CERTIFICAT_MOSTENITOR",      name: "Certificat de Moștenitor" },
-  { key: "CERTIFICAT_SARCINI",         name: "Certificat de Bunuri" },
-  { key: "CERTIFICAT_SARCINI_ALT",     name: "Certificat de Sarcini" },
-  { key: "CERTIFICAT_URBANISM",        name: "Certificat de Urbanism" },
-  { key: "CONTRACT_ARENDA",            name: "Contract de Arendă" },
-  { key: "CONTRACT_INCHIRIERE",        name: "Contract de Închiriere" },
-  { key: "CONTRACT_PARTAJ",            name: "Contract de Partaj" },
-  { key: "CONTRACT_PRESTARI_SERVICII", name: "Contract de Prestări Servicii" },
-  { key: "CONTRACT_VANZARE",           name: "Contract de Vânzare" },
-  { key: "DOCUMENTATIE_CADASTRALA",    name: "Documentație Cadastrală" },
-  { key: "EXTRAS_CARTE_FUNCIARA",      name: "Extras din Carte Funciară" },
-  { key: "EXTRAS_CARTE_FUNCIARA_ALT",  name: "Extras de Carte Funciară" },
-  { key: "EXTRAS_PUG",                 name: "Extras din PUG" },
-  { key: "HOTARARE_ADMINISTRATIVA",    name: "Hotărâre Administrativă" },
-  { key: "HOTARARE_JUDECATOREASCA",    name: "Hotărâre Judecătorească" },
-  { key: "TESTAMENT",                  name: "Testament" },
-  { key: "TITLU_PROPRIETATE",          name: "Titlu de Proprietate" },
-  { key: "UNCLASSIFIED",               name: "NECLASIFICAT" },
+  { key: "ACT_ADJUDECARE",              name: "Act de Adjudecare" },
+  { key: "ACT_CADASTRU",                name: "Act Cadastru" },
+  { key: "ACT_DONATIE",                 name: "Act de Donație" },
+  { key: "ACT_LOTIZARE",                name: "Act de Lotizare" },
+  { key: "ACT_PARTAJ",                  name: "Act de Partaj" },
+  { key: "ADEVERINTA",                  name: "Adeverință" },
+  { key: "ADRESA_OFICIALA",             name: "Adresă Oficială" },
+  { key: "ANTECONTRACT",                name: "Antecontract" },
+  { key: "AUTORIZATIE",                 name: "Autorizație" },
+  { key: "AUTORIZATIE_CONSTRUIRE",      name: "Autorizație De Construire" },
+  { key: "AVIZ_INSTITUTIE",             name: "Aviz de Instituție" },
+  { key: "CARTE_IDENTITATE",            name: "Carte de Identitate" },
+  { key: "CERERE_DESPAGUBIRE",          name: "Cerere de Despăgubire" },
+  { key: "CERTIFICAT_BUNURI",           name: "Certificat de Bunuri" },
+  { key: "CERTIFICAT_FISCAL",           name: "Certificat Fiscal" },
+  { key: "CERTIFICAT_MOSTENITOR",       name: "Certificat de Moștenitor" },
+  { key: "CERTIFICAT_SARCINI",          name: "Certificat de Sarcini" },
+  { key: "CERTIFICAT_URBANISM",         name: "Certificat de Urbanism" },
+  { key: "CHITANTA",                    name: "Chitanță" },
+  { key: "COMUNICARE_OFICIALA",         name: "Comunicare Oficială" },
+  { key: "CONTRACT_ARENDA",             name: "Contract de Arendă" },
+  { key: "CONTRACT_INCHIRIERE",         name: "Contract de Închiriere" },
+  { key: "CONTRACT_PARTAJ",             name: "Contract de Partaj" },
+  { key: "CONTRACT_PRESTARI_SERVICII",  name: "Contract de Prestări Servicii" },
+  { key: "CONTRACT_VANZARE",            name: "Contract de Vânzare" },
+  { key: "DOCUMENTATIE_CADASTRALA",     name: "Documentație Cadastrală" },
+  { key: "DOVADA_EXPROPRIERE",          name: "Dovadă de Expropriere" },
+  { key: "EXTRAS_CARTE_FUNCIARA",       name: "Extras din Carte Funciară" },
+  { key: "EXTRAS_CONT",                 name: "Extras de Cont" },
+  { key: "EXTRAS_PUG",                  name: "Extras din PUG" },
+  { key: "FISA_CORPULUI_PROPRIETATE",   name: "Fișa Corpului de Proprietate" },
+  { key: "HOTARARE_ADMINISTRATIVA",     name: "Hotărâre Administrativă" },
+  { key: "HOTARARE_JUDECATOREASCA",     name: "Hotărâre Judecătorească" },
+  { key: "INCHEIERE_INTABULARE",        name: "Încheiere de Intabulare" },
+  { key: "PLAN_AMPLASAMENT_DELIMITARE", name: "Plan de Amplasament și Delimitare" },
+  { key: "PLAN_PARCELAR",               name: "Plan Parcelar" },
+  { key: "PROCURA",                     name: "Procură" },
+  { key: "TESTAMENT",                   name: "Testament" },
+  { key: "TITLU_PROPRIETATE",           name: "Titlu de Proprietate" },
+  { key: "UNCLASSIFIED",                name: "NECLASIFICAT" },
 ] as const;
 
 export type KnownDocumentType = (typeof KNOWN_DOCUMENT_TYPES)[number];
@@ -182,7 +237,7 @@ export function canonicalTypeKey(raw: unknown): KnownTypeKey | null {
  * catch-all.
  *
  * The names are here because the keys alone are not enough to choose between
- * CERTIFICAT_SARCINI and CERTIFICAT_SARCINI_ALT — see the module header. Both
+ * CERTIFICAT_BUNURI and CERTIFICAT_SARCINI — see the module header. Both
  * prompts render the same list, so the extract prompt's "same list as classify"
  * is now true by construction rather than by two `join`s agreeing.
  */
@@ -215,7 +270,10 @@ Shape:
 
 Rules:
 - CARTE_IDENTITATE only when the document is clearly a Romanian national ID card (CI) or a similar personal identity card.
-- Choose between two keys by the NAME beside them, never by the key alone. CERTIFICAT_SARCINI is stored as "Certificat de Bunuri" and CERTIFICAT_SARCINI_ALT as "Certificat de Sarcini"; AUTORIZATIE_ALT is the general "Autorizație" and AUTORIZATIE_CONSTRUIRE is a building permit.
+- Choose between two keys by the NAME beside them, never by the key alone. CERTIFICAT_BUNURI is stored as "Certificat de Bunuri" and CERTIFICAT_SARCINI as "Certificat de Sarcini"; AUTORIZATIE is the general "Autorizație" and AUTORIZATIE_CONSTRUIRE is a building permit.
+- ACT_PARTAJ and CONTRACT_PARTAJ both divide co-owned property and are NOT interchangeable. ACT_PARTAJ is the notarial deed that performs the division ("act de partaj", "act de partaj voluntar"); CONTRACT_PARTAJ is the contract the parties agree it under ("contract de partaj"). Read the document's own heading and use that; if the heading says only "partaj" with no other word, choose CONTRACT_PARTAJ.
+- ANTECONTRACT is a promise to sell later ("antecontract", "promisiune de vânzare"), never CONTRACT_VANZARE, which transfers ownership now.
+- PLAN_AMPLASAMENT_DELIMITARE and PLAN_PARCELAR are single drawings; DOCUMENTATIE_CADASTRALA is the whole surveyor's file that may contain one. Prefer the specific plan when the document IS the drawing.
 - If the image is blank, rotated beyond reading, or is a photograph of furniture/people (not a document), set extractable=false and suggestedTypeKey=null.
 - If the document title is in the top-right corner (ANCPI template code), that is a strong signal — use it.
 - Output strictly valid JSON — no comments, no trailing commas, no markdown code fences.`;

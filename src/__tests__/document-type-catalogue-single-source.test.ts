@@ -146,14 +146,61 @@ describe("the catalogue and the migration chain are one list", () => {
     ]);
   });
 
-  it("does not offer a key migration_043 deletes", () => {
+  /**
+   * ⚠️ **THIS USED TO ASSERT THE OPPOSITE, AND THE INVARIANT IT GUARDED IS THE
+   * ONE THAT CHANGED.** migration_043 deletes the key `AUTORIZATIE` — the row
+   * NAMED `Autorizare` — and while that key was free the catalogue was required
+   * not to offer it, because offering a key nothing seeds is finding F6. The
+   * re-key gave that free key to the SURVIVING `Autorizație` row (it was
+   * AUTORIZATIE_ALT), so the key is seeded again and the old assertion would
+   * now be asserting that a seeded key is absent.
+   *
+   * What is tested instead is the thing that was always the point: whatever
+   * migration_043 deletes must not be left dangling — either the catalogue
+   * does not offer the key at all, or `sync-reference-data.sql` seeds a row for
+   * it. A key on the list with no row anywhere is the failure; a key that was
+   * deleted and later re-seeded under a different name is not.
+   */
+  it("leaves no key migration_043 deletes without a seeded row", () => {
     const sql = sqlWithoutComments(read("src/db/migration_043_doctype_cleanup.sql"));
     const deleted = [...sql.matchAll(/DELETE FROM lookup_document_type\s+WHERE\s+key\s*=\s*'([A-Z0-9_]+)'/g)]
       .map((m) => m[1]);
     expect(deleted).toEqual(["AUTORIZATIE"]);
+    const seededKeys = new Set(seededDocumentTypes().map((r) => r.key));
     for (const key of deleted) {
-      expect(KNOWN_TYPE_KEYS as readonly string[]).not.toContain(key);
+      const offered = (KNOWN_TYPE_KEYS as readonly string[]).includes(key);
+      expect(offered).toBe(seededKeys.has(key));
     }
+  });
+
+  /**
+   * The re-key itself, asserted against the migration that performs it rather
+   * than restated as four literals: migration_071 is the only thing standing
+   * between a database seeded before it and one seeded after, so a catalogue
+   * that moved without it is the drift this file exists to catch.
+   */
+  it("offers the keys migration_071 renames rows to, and none it renames away", () => {
+    const sql = sqlWithoutComments(read("src/db/migration_071_doctype_rekey.sql"));
+    const renames = [...sql.matchAll(
+      /SET\s+key = '([A-Z0-9_]+)', updated_at = now\(\)\s+WHERE\s+key = '([A-Z0-9_]+)'/g,
+    )].map((m) => ({ to: m[1], from: m[2] }));
+    expect(renames).toEqual([
+      { from: "AUTORIZATIE_ALT",        to: "AUTORIZATIE" },
+      { from: "CERTIFICAT_SARCINI",     to: "CERTIFICAT_BUNURI" },
+      { from: "CERTIFICAT_SARCINI_ALT", to: "CERTIFICAT_SARCINI" },
+    ]);
+    const keys = KNOWN_TYPE_KEYS as readonly string[];
+    for (const { to } of renames) expect(keys).toContain(to);
+    // A `from` may legitimately still be offered when another rename hands the
+    // key on — CERTIFICAT_SARCINI is vacated by 2a and re-taken by 2b. What may
+    // never survive is a source key nothing renames TO.
+    const targets = new Set(renames.map((r) => r.to));
+    for (const { from } of renames) {
+      if (!targets.has(from)) expect(keys).not.toContain(from);
+    }
+    // The folded row is deleted outright and must be offered by nothing.
+    expect(sql).toContain("DELETE FROM lookup_document_type\nWHERE  key = 'EXTRAS_CARTE_FUNCIARA_ALT';");
+    expect(keys).not.toContain("EXTRAS_CARTE_FUNCIARA_ALT");
   });
 
   it("calls the catch-all what migration_043 renames it to", () => {
@@ -206,7 +253,11 @@ describe("canonicalTypeKey is the one position on a classifier's key", () => {
   it("refuses a key nothing defines, and anything that is not a string", () => {
     // The exact shape finding F6 produced: a key slugged from a display label.
     expect(canonicalTypeKey("CARTE_DE_IDENTITATE")).toBeNull();
-    expect(canonicalTypeKey("AUTORIZATIE")).toBeNull();   // deleted by migration_043
+    // `AUTORIZATIE` used to belong here — migration_043 deleted the row that
+    // held it. migration_071 gave the freed key to the surviving `Autorizație`
+    // row, so it is a real answer now and is asserted as one above.
+    expect(canonicalTypeKey("AUTORIZATIE_ALT")).toBeNull();       // retired by migration_071
+    expect(canonicalTypeKey("CERTIFICAT_SARCINI_ALT")).toBeNull(); // retired by migration_071
     expect(canonicalTypeKey("")).toBeNull();
     expect(canonicalTypeKey("   ")).toBeNull();
     expect(canonicalTypeKey(null)).toBeNull();

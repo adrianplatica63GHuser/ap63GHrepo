@@ -94,8 +94,10 @@ describe("sameDocumentTypeName", () => {
   });
 
   it("is false where the WORDING differs, which is what the archive relies on", () => {
-    // The archive holds deliberate alternate wordings — AUTORIZATIE and
-    // AUTORIZATIE_ALT among them — and a fuzzy test would collapse them.
+    // The archive holds deliberate alternate wordings — 'Certificat de Bunuri'
+    // and 'Certificat de Sarcini' among them, two types since migration_021 and
+    // two keys of their own since migration_071 — and a fuzzy test would
+    // collapse them.
     expect(sameDocumentTypeName("Autorizație de construire", "Autorizație de demolare")).toBe(false);
     expect(sameDocumentTypeName("Contract de vânzare", "Contract de arendă")).toBe(false);
   });

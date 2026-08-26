@@ -45,11 +45,15 @@
  * "Titlu de proprietate" and "Titlu-de-proprietate" are one name, and so are
  * "Proces verbal" and "Proces-verbal" — which is what a business user reading
  * the dropdown would say too. It is deliberately no cleverer than that: the
- * archive holds deliberate alternate WORDINGS (`CERTIFICAT_SARCINI` /
- * `CERTIFICAT_SARCINI_ALT` and `EXTRAS_CARTE_FUNCIARA` / `..._ALT`) that a
- * fuzzy test would wrongly collapse, and they differ by wording, which survives
- * this. (There were three pairs until Slice #29.07: migration_043 deletes
- * `AUTORIZATIE`, leaving `AUTORIZATIE_ALT` on its own.)
+ * archive holds deliberate alternate WORDINGS that a fuzzy test would wrongly
+ * collapse, and they differ by wording, which survives this. There is one such
+ * pair left: `CERTIFICAT_BUNURI` (`Certificat de Bunuri`) and
+ * `CERTIFICAT_SARCINI` (`Certificat de Sarcini`). migration_021 seeded three;
+ * migration_043 deleted the `Autorizare` half of one, and migration_071 folded
+ * `Extras de Carte Funciară` into `Extras din Carte Funciară` and gave the two
+ * survivors the bare keys their `_ALT` suffixes had been standing in for. ⚠️ The
+ * suffix is therefore NOT a way to find these rows any more — no key carries
+ * it.
  *
  * PURE ON PURPOSE. No React, no DB, no next/*. It is imported from a route
  * (server), from the import wizard and from the review dialog (client), which

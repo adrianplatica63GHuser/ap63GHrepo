@@ -405,7 +405,7 @@ describe("checkTypeForms — Branch B, the run that stops", () => {
     // Since #29.07 the resolver CREATES a row under exactly that key, so the
     // gate must read this as a create rather than as a match.
     const verdict = checkTypeForms({
-      entries: [entry("a.pdf", { typeKey: "CERTIFICAT_SARCINI_ALT", label: "Certificat de sarcini" })],
+      entries: [entry("a.pdf", { typeKey: "CERTIFICAT_BUNURI", label: "Certificat de bunuri" })],
       catalogue: CATALOGUE,
     });
     expect(verdict.clean).toBe(false);

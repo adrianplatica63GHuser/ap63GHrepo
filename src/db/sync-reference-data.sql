@@ -128,8 +128,10 @@ INSERT INTO lookup_judicial_person_type (name, sort_order) VALUES
 -- migration it had never been told about:
 --   * ('AUTORIZATIE', 'Autorizare') is GONE. migration_043_doctype_cleanup.sql
 --     deletes that row after reassigning its documents, version snapshots and
---     person-role pairs to AUTORIZATIE_ALT ('Autorizație'). Seeding it back gave
---     a rebuilt project a duplicate type the migrated one had removed.
+--     person-role pairs to the 'Autorizație' row. Seeding it back gave a
+--     rebuilt project a duplicate type the migrated one had removed. The KEY is
+--     seeded again below, but for the surviving 'Autorizație' row rather than
+--     for 'Autorizare' — see the re-key note under the sort_order paragraph.
 --   * UNCLASSIFIED is named 'NECLASIFICAT', which is what migration_043 renames
 --     it to. Until now a rebuilt project called it 'Unclassified' — an ENGLISH
 --     name in the one list a Romanian user reads, and a divergence
@@ -146,9 +148,31 @@ INSERT INTO lookup_judicial_person_type (name, sort_order) VALUES
 -- is read for seven of the other eight lookup lists and not for this one
 -- (`person-roles` orders by name too). So the numbers
 -- below are a stable identity for the row and nothing more, existing values are
--- left where they are (4 is a deliberate gap where 'Autorizare' was), and
+-- left where they are (4 is a deliberate gap where 'Autorizare' was, and 24
+-- another where 'Extras de Carte Funciară' was), and
 -- rebuild-known-differences.txt's claim that they make "the dropdown order
 -- differently in a rebuilt project" was wrong when it was written.
+--
+-- ⚠️ **THE RE-KEY, AND WHY THREE ROWS BELOW CARRY KEYS THEY DID NOT HAVE.**
+-- migration_021_keep_alternate_wordings.sql added three second Romanian
+-- wordings under `_ALT` keys, each suffixed only because the bare key was
+-- already occupied. Two of those occupants are gone — 'Autorizare' by
+-- migration_043, and 'Certificat de Bunuri' by moving to its own
+-- CERTIFICAT_BUNURI — so the surviving rows take the bare keys:
+--   ('AUTORIZATIE',        'Autorizație')          was AUTORIZATIE_ALT
+--   ('CERTIFICAT_BUNURI',  'Certificat de Bunuri') was CERTIFICAT_SARCINI
+--   ('CERTIFICAT_SARCINI', 'Certificat de Sarcini') was CERTIFICAT_SARCINI_ALT
+-- and ('EXTRAS_CARTE_FUNCIARA_ALT', 'Extras de Carte Funciară') is dropped
+-- altogether, folded into EXTRAS_CARTE_FUNCIARA.
+--
+-- ⚠️ **CERTIFICAT_SARCINI MEANS SOMETHING DIFFERENT FROM WHAT IT MEANT, WHICH
+-- IS THE ONE THING AN IMMUTABLE KEY IS NOT SUPPOSED TO DO.** This file
+-- TRUNCATEs before it inserts, so on the rebuild path there is no old row to
+-- change meaning underneath. On a database that already holds the old rows,
+-- running this seed is NOT how the change lands — migration_071_doctype_rekey.sql
+-- is, and it renames CERTIFICAT_SARCINI to CERTIFICAT_BUNURI before freeing the
+-- name. Re-seeding over live rows instead would turn every 'Certificat de
+-- Bunuri' document into a 'Certificat de Sarcini' one without a word.
 INSERT INTO lookup_document_type (key, name, sort_order) VALUES
   ('ACT_ADJUDECARE',             'Act de Adjudecare',              1),
   ('ACT_CADASTRU',               'Act Cadastru',                   2),
@@ -157,12 +181,12 @@ INSERT INTO lookup_document_type (key, name, sort_order) VALUES
   ('CARTE_IDENTITATE',           'Carte de Identitate',            6),
   ('CERTIFICAT_FISCAL',          'Certificat Fiscal',              7),
   ('CERTIFICAT_MOSTENITOR',      'Certificat de Moștenitor',       8),
-  -- CERTIFICAT_SARCINI carries 'Certificat de Bunuri' and the _ALT row carries
-  -- 'Certificat de Sarcini'. That reads backwards and is deliberate: it is a
-  -- naming decision inherited from migration_020's name-matching backfill, not
-  -- a swap. The full history is in classify-prompts.ts's header. Do not "fix"
-  -- it here, because `key` is immutable and app code matches on it.
-  ('CERTIFICAT_SARCINI',         'Certificat de Bunuri',           9),
+  -- Was CERTIFICAT_SARCINI, which carried 'Certificat de Bunuri' while the
+  -- _ALT row carried 'Certificat de Sarcini' — a naming decision inherited from
+  -- migration_020's name-matching backfill that read backwards to anyone
+  -- reading the Romanian. The history is in classify-prompts.ts's header; the
+  -- untangling is migration_071's.
+  ('CERTIFICAT_BUNURI',          'Certificat de Bunuri',           9),
   ('CERTIFICAT_URBANISM',        'Certificat de Urbanism',        10),
   ('CONTRACT_ARENDA',            'Contract de Arendă',            11),
   ('CONTRACT_INCHIRIERE',        'Contract de Închiriere',        12),
@@ -175,13 +199,39 @@ INSERT INTO lookup_document_type (key, name, sort_order) VALUES
   ('TESTAMENT',                  'Testament',                     19),
   ('TITLU_PROPRIETATE',          'Titlu de Proprietate',          20),
   ('UNCLASSIFIED',               'NECLASIFICAT',                  21),
-  ('AUTORIZATIE_ALT',            'Autorizație',                   22),
-  ('CERTIFICAT_SARCINI_ALT',     'Certificat de Sarcini',         23),
-  ('EXTRAS_CARTE_FUNCIARA_ALT',  'Extras de Carte Funciară',      24),
+  ('AUTORIZATIE',                'Autorizație',                   22),
+  ('CERTIFICAT_SARCINI',         'Certificat de Sarcini',         23),
   -- migration_035_seed_doc_types.sql, values byte-for-byte from that file.
   ('HOTARARE_ADMINISTRATIVA',    'Hotărâre Administrativă',      110),
   ('DOCUMENTATIE_CADASTRALA',    'Documentație Cadastrală',      120),
-  ('AUTORIZATIE_CONSTRUIRE',     'Autorizație De Construire',    130);
+  ('AUTORIZATIE_CONSTRUIRE',     'Autorizație De Construire',    130),
+  -- Slice #29.15: fifteen types added so an import stops at the #29.08 gate
+  -- for a MISSING FORM rather than for a type the archive has never heard of.
+  -- Names carry Romanian diacritics like every row above them; `slugifyLookupKey`
+  -- folds them, so the keys are unaffected either way and are written here in
+  -- the catalogue's own style: connector words dropped (EXTRAS_CONT, not
+  -- EXTRAS_DE_CONT), matching EXTRAS_CARTE_FUNCIARA and ACT_ADJUDECARE.
+  --
+  -- ⚠️ ACT_PARTAJ sits beside the older CONTRACT_PARTAJ and they are NOT the
+  -- same instrument. Two visibly similar Romanian names is the shape that
+  -- produced the CERTIFICAT_BUNURI / CERTIFICAT_SARCINI tangle, so the classify
+  -- prompt carries a rule telling the model how to choose. Renaming either row
+  -- without updating that rule puts the pair back where it started.
+  ('ACT_LOTIZARE',                  'Act de Lotizare',                   25),
+  ('ACT_PARTAJ',                    'Act de Partaj',                     26),
+  ('ADEVERINTA',                    'Adeverință',                        27),
+  ('ADRESA_OFICIALA',               'Adresă Oficială',                   28),
+  ('ANTECONTRACT',                  'Antecontract',                      29),
+  ('CERERE_DESPAGUBIRE',            'Cerere de Despăgubire',             30),
+  ('CHITANTA',                      'Chitanță',                          31),
+  ('COMUNICARE_OFICIALA',           'Comunicare Oficială',               32),
+  ('DOVADA_EXPROPRIERE',            'Dovadă de Expropriere',             33),
+  ('EXTRAS_CONT',                   'Extras de Cont',                    34),
+  ('FISA_CORPULUI_PROPRIETATE',     'Fișa Corpului de Proprietate',      35),
+  ('INCHEIERE_INTABULARE',          'Încheiere de Intabulare',           36),
+  ('PLAN_AMPLASAMENT_DELIMITARE',   'Plan de Amplasament și Delimitare',  37),
+  ('PLAN_PARCELAR',                 'Plan Parcelar',                     38),
+  ('PROCURA',                       'Procură',                           39);
 
 -- ── lookup_institution ────────────────────────────────────────────────────────
 INSERT INTO lookup_institution (name, institution_type, sort_order) VALUES
@@ -275,7 +325,8 @@ FROM (VALUES
   ('Act Cadastru',                  'Reprezentant legal / Mandatar'),
   ('Act Cadastru',                  'Topograf / Expert cadastral'),
   -- 'Autorizare' until Slice #29.07: migration_043 deletes that type and moves
-  -- its role pairs to 'Autorizație' (AUTORIZATIE_ALT). These rows JOIN on the
+  -- its role pairs to 'Autorizație' (keyed AUTORIZATIE since the re-key; it was
+  -- AUTORIZATIE_ALT when this note was written). These rows JOIN on the
   -- document type's NAME, so under the old spelling all five silently matched
   -- nothing once the row above was removed — a JOIN that finds no row drops the
   -- pair without a word.

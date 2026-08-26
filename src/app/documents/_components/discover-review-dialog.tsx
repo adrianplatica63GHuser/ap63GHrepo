@@ -123,9 +123,10 @@ const NO_FIELDS: readonly DocumentTemplateField[] = [];
  *
  * Used only to REFUSE creating a duplicate, and deliberately no cleverer than
  * that: merging or de-duplicating near-identical types is a different problem
- * with a different answer (the archive has three deliberate alternate wordings
- * — `AUTORIZATIE` / `AUTORIZATIE_ALT` and two more — that a fuzzy test would
- * wrongly collapse; those differ by WORDING, which survives this).
+ * with a different answer (the archive keeps deliberate alternate wordings —
+ * `Certificat de Bunuri` and `Certificat de Sarcini`, two types under two keys
+ * since migration_071 — that a fuzzy test would wrongly collapse; those differ
+ * by WORDING, which survives this).
  */
 const sameTypeName = sameDocumentTypeName;
 

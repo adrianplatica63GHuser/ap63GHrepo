@@ -52,16 +52,24 @@
  *     answer can carry it. The guard is now the whitelist alone, and the
  *     catalogue/seed bind that keeps the whitelist honest
  *     (`document-type-catalogue-single-source.test.ts`).
- *   - Confirmed empirically: `SELECT key FROM lookup_document_type` returns 26
- *     rows and CARTE_IDENTITATE_ALT is not among them.
+ *   - Confirmed empirically: `SELECT key FROM lookup_document_type` returns
+ *     every row the seed writes (26 at the time of measuring, 25 since
+ *     migration_071 folded one away) and CARTE_IDENTITATE_ALT is not among
+ *     them.
  *
- * The three real alternate wordings seeded by migration_021 are
- * AUTORIZATIE_ALT, CERTIFICAT_SARCINI_ALT and EXTRAS_CARTE_FUNCIARA_ALT (whose
- * base row AUTORIZATIE was later deleted by migration_043, leaving the _ALT on
- * its own).
- * CARTE_IDENTITATE_ALT looked like a fourth member of that family and never
- * was one — that resemblance is exactly why it survived this long, so if you
+ * migration_021 seeded three real alternate wordings — the AUTORIZATIE,
+ * CERTIFICAT_SARCINI and EXTRAS_CARTE_FUNCIARA families —
+ * and CARTE_IDENTITATE_ALT looked like a fourth member of that family and never
+ * was one. That resemblance is exactly why it survived this long, so if you
  * are about to re-add it, check the seed list first.
+ *
+ * ⚠️ **AND CHECK THE SEED LIST RATHER THAN THE SUFFIX, WHICH NOW NAMES
+ * NOTHING.** None of those three is still called `_ALT`: migration_043 deleted
+ * the `Autorizare` row and migration_071 gave the freed key to `Autorizație`,
+ * split `Certificat de Bunuri` off as CERTIFICAT_BUNURI so `Certificat de
+ * Sarcini` could take CERTIFICAT_SARCINI, and folded `Extras de Carte
+ * Funciară` into EXTRAS_CARTE_FUNCIARA. A future reader looking for the family
+ * by its suffix will find an empty set and conclude the wrong thing.
  *
  * Kept as an array rather than collapsed to a constant: a genuine alternate
  * wording for an identity card is a one-line addition here, and every consumer
