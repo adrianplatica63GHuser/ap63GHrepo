@@ -55,6 +55,11 @@ function at(node: Record<string, unknown>, keyPath: string): unknown {
 const REQUIRED_KEYS = [
   "title",
   "intro",
+  // ⚠️ Slice #32.01. The sentence that REPLACES `intro` once the check has come
+  // back clean, on a screen that by then has no rules listing, no tick and no
+  // buttons for `intro` to be talking about. A missing key prints the dotted
+  // path where the screen's only explanatory line should be.
+  "introDone",
   "rulesTitle",
   "showRules",
   "hideRules",
@@ -171,6 +176,12 @@ describe("the Constraints stage's copy", () => {
   const MUST_DIFFER = [
     "title",
     "intro",
+    // ⚠️ Slice #32.01, and it belongs here for the same reason `intro` does:
+    // `introDone` names what THIS stage looked at — the files, one by one —
+    // where Structure's names the folder and its rules. A Constraints screen
+    // that came back clean saying "the folder has been read and checked against
+    // every structure rule" would credit this stage with a check it never ran.
+    "introDone",
     "rulesTitle",
     "showRules",
     "hideRules",

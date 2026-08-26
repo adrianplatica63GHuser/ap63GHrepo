@@ -55,6 +55,11 @@ function at(node: Record<string, unknown>, keyPath: string): unknown {
 const REQUIRED_KEYS = [
   "title",
   "intro",
+  // ⚠️ Slice #32.01. The sentence that REPLACES `intro` once the check has come
+  // back clean, on a screen that by then has no rules listing, no tick and no
+  // buttons for `intro` to be talking about. A missing key prints the dotted
+  // path where the screen's only explanatory line should be.
+  "introDone",
   "rulesTitle",
   // ⚠️ Slice #26.11. Four strings, asked for by BOTH the panel and the saved
   // page, and rendered UNCONDITIONALLY above the rules on the first screen of

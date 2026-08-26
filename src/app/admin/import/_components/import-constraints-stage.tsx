@@ -13,7 +13,10 @@
  *
  * DELIBERATELY THE SAME SHAPE AS `ImportStructureStage`
  * ─────────────────────────────────────────────────────
- * Rules, a tick, a check, a fix list, a re-check, and a page you can save. The
+ * Rules, a tick, a check, a fix list, a re-check, and a page you can save —
+ * on every round that has something to put right, which since #32.01 is not
+ * every round: a clean check held at a step-through pause keeps the outcome and
+ * the step-gate card's Continue and drops the rest (see `resultOnly` below). The
  * source document asks for "the same loop" in as many words, and the value of
  * that is not code reuse — it is that the second loop costs the user nothing to
  * learn. So the two components are siblings rather than one abstraction: they
@@ -104,12 +107,23 @@ type Props = {
    *
    * At a pause the emerald card below this panel carries the screen's ONE
    * primary action — the button that goes on to the next stage — so this
-   * panel's own primary drops to a secondary. It is not suppressed: a
-   * re-check is still a real thing to want here, and it is the only route
-   * back to File Explorer for this stage. But `runWalk` clears the
-   * acknowledgement tick on its way in, so at a pause this button is
-   * DISABLED, and a disabled `primary/lg` sitting above a live one is the
-   * "which of these am I supposed to press" screen the pause exists to avoid.
+   * panel's own primary drops to a secondary.
+   *
+   * ⚠️ **THE PARAGRAPH THAT STOOD HERE IS NO LONGER TRUE, AND SAYING SO IS THE
+   * POINT.**   (Slice #32.01.) It read: "It is not suppressed: a re-check is
+   * still a real thing to want here, and it is the only route back to File
+   * Explorer for this stage." Since #32.01 it IS suppressed — a pause is by
+   * definition a clean verdict with an account on the page, which is exactly
+   * `resultOnly`, and the whole button row goes with the tick. Nothing at this
+   * stage has entered the archive and no classification has been paid for, and
+   * the stage bar keeps a Cancel control for the whole run, so a user who
+   * realises the folder is wrong loses a walk and this stage's metadata pass,
+   * not work.
+   *
+   * What this prop still does, therefore, is decide whether the work blocks are
+   * drawn at all — see `resultOnly` below. The demotion it was
+   * added for survives only as the styling on a button that a pause no longer
+   * renders; see the note at that button.
    *
    * Defaulted, so every caller that does not know about step-through — and
    * the tests that render this panel on its own — keeps exactly today's
@@ -199,7 +213,59 @@ export function ImportConstraintsStage({
    */
   const nothingToShow =
     violationCount === 0 && (verdict?.unreadable.length ?? 0) === 0;
-  const showRules = !checked || rulesOpen || (busy && nothingToShow);
+
+  /**
+   * The verdict the emerald line below is drawn from — nothing more.
+   *                                                            (Slice #32.01)
+   *
+   * Lifted out of the JSX rather than restated, because from this slice on four
+   * other blocks branch on it and a second spelling of it is a screen that can
+   * disagree with the sentence the user is reading. `clean` is itself
+   * `violations.length === 0 && unreadable.length === 0`, so files the metadata
+   * pass could not open keep every control below — which is the wanted answer:
+   * that check could not look, and there is very much something left to do.
+   */
+  const cleanVerdict = !busy && verdict !== null && verdict.clean;
+
+  /**
+   * ⚠️ **Is this screen an OUTCOME, with nothing left for the user to do?**
+   *                                                            (Slice #32.01)
+   *
+   * The Structure panel's twin, and its note carries the full argument — read
+   * it there. In short: the four blocks that exist only to help a user do work
+   * — the constraints disclosure and its listing, the acknowledgement tick and
+   * its hint, the button row, and the take-away — are hidden here and nowhere
+   * else, never deleted, and a screen that still carries violations renders
+   * every one of them exactly as it did before this slice.
+   *
+   * ⚠️ **`gated` IS THE LOAD-BEARING HALF, and an adversarial round is why.**
+   * It is `activeGate?.rest === "constraints"` — i.e. *the step-gate card,
+   * carrying this screen's Continue button, is rendered directly beneath this
+   * panel*. Without it the four blocks come down on any clean verdict, and a
+   * clean verdict with no gate below it is a screen with no way forward at all.
+   * The Structure panel is where that actually bites (STR-15 turns a verdict
+   * clean with no re-walk and therefore no gate); the same guard is written here
+   * because the two panels are siblings and the next route into this state
+   * should not have to rediscover it.
+   *
+   * ⚠️ **`resultDetail` stays in the test as a belt on that brace.** It is the
+   * counters — the content that REPLACES what is being hidden — and the wizard
+   * withholds it whenever a clean account would be dishonest
+   * (`checkAccountsSettled`: a re-check that could not open the folder leaves
+   * last round's clean verdict standing with `walkError` set). Today `gated`
+   * already excludes that case, because a re-check clears the gate on its way
+   * in. It is kept so that a future route producing a pause without an account
+   * leaves the controls up rather than a heading, one green sentence and white
+   * space.
+   *
+   * It is also what keeps the promise `gated`'s and `resultDetail`'s own notes
+   * make: a caller that passes neither — the panel rendered on its own in a test
+   * — keeps exactly today's screen.
+   */
+  const resultOnly = cleanVerdict && gated && resultDetail != null;
+
+  const showRules =
+    !resultOnly && (!checked || rulesOpen || (busy && nothingToShow));
 
   /**
    * The constraints, grouped and translated once — used by the screen and by
@@ -418,8 +484,22 @@ export function ImportConstraintsStage({
     // a defensible place to land after dismissing a dialog, and closing it
     // properly would mean threading the dialog's state into this panel; left
     // alone deliberately, and recorded rather than promised away.
-    if (stranded) (justMounted ? headingRef : checkboxRef).current?.focus();
-  }, [busy]);
+    //
+    // ⚠️ A THIRD CASE SINCE #32.01, and it would otherwise strand a keyboard
+    // user in silence. On the busy → idle edge of a check that came back CLEAN
+    // and RESTS here there is no tick any more: the element this effect aims at
+    // is not rendered, `ref.current` is null, and `?.focus()` does nothing at
+    // all, leaving the keyboard on `<body>` at the top of the document. That
+    // edge is live and it is the ONLY one that reaches this case — with
+    // step-through ticked a clean check rests on this stage, so the panel is
+    // still mounted when `busy` clears; without it the panel has unmounted. The
+    // heading is the right target there for the same reason it is on arrival.
+    if (stranded) (justMounted || resultOnly ? headingRef : checkboxRef).current?.focus();
+    // `resultOnly` is a dependency because it is read above; it cannot make the
+    // effect fire spuriously, since a run on which `busy` did not change finds
+    // `finished` false and `justMounted` already spent, and returns at the
+    // guard.
+  }, [busy, resultOnly]);
 
   return (
     <section className="rounded-xl border border-card-rim bg-white p-5 dark:border-zinc-700 dark:bg-zinc-900">
@@ -445,7 +525,18 @@ export function ImportConstraintsStage({
       >
         {t("title")}
       </h2>
-      <p className="mt-1.5 text-sm text-ink dark:text-zinc-300">{t("intro")}</p>
+      {/* ⚠️ **The intro is part of the same defect.**   (Slice #32.01)
+
+          `intro` instructs: "read what can and cannot be imported below, tick
+          that you have taken note, then press «Check the files»" — every noun in
+          it is a block this screen no longer draws. Left standing above an
+          outcome it would be worse than the blocks it describes, because it
+          sends the user looking for controls that are not there. `introDone`
+          states what the screen is instead, and swaps on the same condition as
+          everything else. */}
+      <p className="mt-1.5 text-sm text-ink dark:text-zinc-300">
+        {resultOnly ? t("introDone") : t("intro")}
+      </p>
 
       {/*
         `aria-busy` says "what you are reading is being recomputed" for the
@@ -520,16 +611,24 @@ export function ImportConstraintsStage({
         instead of moving to Duplication, and this is the line the user is held
         here to read.
 
-        The guard stays exactly as it was, and now earns its keep on the live
-        path rather than on the hypothetical one: the pause rests on `phase ===
-        "constraints"`, so `busy` is false at the pause, and a "Verifică din
-        nou" pressed FROM the pause enters `constraints-checking` with the
-        previous round's clean metadata still in state. Without `!busy`, the
-        emerald line would sit over a check that is running at that moment and
-        may refuse the folder — the very lie the old note predicted, arriving
-        by the route it did not have.
+        ⚠️ **AND SINCE #32.01 THAT ROUTE IS GONE AGAIN — `!busy` STAYS ANYWAY,
+        AND SO DOES ITS TWIN.** The paragraph that stood here said the guard now
+        earned its keep on a live path: a "Verifică din nou" pressed FROM the
+        pause, entering `constraints-checking` with the previous round's clean
+        metadata still in state. #32.01 removed that button from the paused
+        screen — a pause IS `resultOnly` here, because the gate and the clean
+        metadata are written in one commit — so the press cannot happen and the
+        line is back to being unreachable-but-honest.
+
+        **Do not read that as a licence to drop the guard**, and above all not
+        as a licence to drop the Structure panel's identical-looking one, which
+        IS still live: STR-15 turns a verdict clean at `structure-report`, where
+        the re-check button remains, and pressing it enters `walking` with a
+        clean `structureVerdict` still derived from the old observations. Two
+        guards that look the same, one hypothetical and one load-bearing; this
+        note exists so the next reader does not delete both after checking one.
       */}
-      {!busy && verdict !== null && verdict.clean && (
+      {cleanVerdict && (
         <>
           <p className="mt-4 text-sm font-medium text-emerald-700 dark:text-emerald-400">
             {t("clean")}
@@ -549,7 +648,11 @@ export function ImportConstraintsStage({
           `aria-expanded="false"` over an expanded region, offered to show what
           was already shown, and pressing it only relabelled itself. A control
           whose state contradicts what is on screen is worse than no control. */}
-      {checked && !(busy && nothingToShow) && (
+      {/* Slice #32.01 — and the toggle goes with the listing it opens. Offering
+          to re-show a set of constraints that every file satisfied is offering
+          to reopen work that is finished, and a disclosure whose region is
+          unconditionally absent is a control that cannot do anything. */}
+      {checked && !resultOnly && !(busy && nothingToShow) && (
         <div className="mt-5">
           <button
             type="button"
@@ -601,6 +704,27 @@ export function ImportConstraintsStage({
       )}
 
       {/* ── The gate ─────────────────────────────────────────────────────── */}
+      {/* ⚠️ Slice #32.01 — the tick, its hint and BOTH buttons, together.
+
+          The tick asks the user to confirm they have read the constraints and
+          then re-confirm after each correction made in File Explorer. With
+          nothing refused there is no correction to have made, and re-asking
+          makes the screen say there is work outstanding when the line above it
+          has just said there is not.
+
+          "Alege alt folder…" goes with it, and that is safe HERE and would not
+          be elsewhere: nothing at this stage has entered the archive and no
+          classification has been paid for, so a user who realises the folder is
+          wrong loses a walk and this stage's metadata pass, not work. The
+          step-gate card below is what this screen now ends on, and the way back
+          to File Explorer is the next stage's own check, which re-walks this
+          folder and bounces back here if anything has changed.
+
+          ⚠️ `hintId` is declared on the tick and pointed at by its own
+          `aria-describedby`, and both are inside this block — so there is no
+          window in which something still describes a hint that is not
+          rendered. */}
+      {!resultOnly && (
       <div className="mt-5 border-t border-crease pt-4 dark:border-zinc-800">
         <div className="flex items-start gap-2">
           <input
@@ -629,6 +753,11 @@ export function ImportConstraintsStage({
             onClick={onCheck}
             disabled={!acknowledged || busy}
             // Slice #29.02 — demoted at a pause; see the `gated` prop.
+            // ⚠️ Slice #32.01 — and the `gated` branch can no longer be taken,
+            // for the reason given at the Structure panel's twin of this button:
+            // a pause is `resultOnly`, and this whole row is inside
+            // `!resultOnly`. Kept rather than simplified, and flagged rather
+            // than left to read as live.
             className={buttonClass({
               variant: gated ? "secondary" : "primary",
               size: gated ? "md" : "lg",
@@ -660,8 +789,15 @@ export function ImportConstraintsStage({
           {busy && <ActivityCue>{busyLabel}</ActivityCue>}
         </div>
       </div>
+      )}
 
       {/* ── The take-away copy ───────────────────────────────────────────── */}
+      {/* ⚠️ Slice #32.01 — hidden here, and NOT removed from the file. The page
+          is what a user prints and carries to File Explorer while they work, so
+          a user who still has work to do still needs it, and `handleSave` and
+          everything it reaches stay in use on that path. What has no reader is a
+          printed copy of constraints every file already satisfied. */}
+      {!resultOnly && (
       <div className="mt-5 border-t border-crease pt-4 dark:border-zinc-800">
         {/* Fixed in passing (#26.06): `disabled={busy}`. `settled` is
             `checked && !busy`, so a Save pressed during a check wrote "the
@@ -680,6 +816,7 @@ export function ImportConstraintsStage({
         </button>
         <p className="mt-1.5 text-xs text-fade dark:text-zinc-400">{t("save.hint")}</p>
       </div>
+      )}
     </section>
   );
 }

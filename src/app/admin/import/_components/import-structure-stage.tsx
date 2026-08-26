@@ -19,6 +19,15 @@
  * nou". The wizard clears it at the start of each walk, so this component never
  * has to remember to.
  *
+ * ⚠️ **ON EVERY ROUND THAT HAS SOMETHING TO PUT RIGHT, which since #32.01 is
+ * not every round.** When the check comes back clean AND the wizard is holding a
+ * step-through pause on this stage, the tick, BOTH buttons beside it — the
+ * re-check and "Alege alt folder…" — the rules listing, the take-away and the
+ * block of STR-15 answers are all gone: the
+ * screen is the outcome and the step-gate card's Continue, and there is nothing
+ * for a tick to gate. See `resultOnly` below. Everything in this header
+ * describes the other case, which is unchanged.
+ *
  * That is not ceremony. The loop's failure mode is a user who presses the
  * button, sees the same list, presses it again and concludes the system is
  * broken — without having gone to File Explorer at all. Re-ticking is the one
@@ -133,12 +142,22 @@ type Props = {
    *
    * At a pause the emerald card below this panel carries the screen's ONE
    * primary action — the button that goes on to the next stage — so this
-   * panel's own primary drops to a secondary. It is not suppressed: a
-   * re-check is still a real thing to want here, and it is the only route
-   * back to File Explorer for this stage. But `runWalk` clears the
-   * acknowledgement tick on its way in, so at a pause this button is
-   * DISABLED, and a disabled `primary/lg` sitting above a live one is the
-   * "which of these am I supposed to press" screen the pause exists to avoid.
+   * panel's own primary drops to a secondary.
+   *
+   * ⚠️ **THE PARAGRAPH THAT STOOD HERE IS NO LONGER TRUE, AND SAYING SO IS THE
+   * POINT.**   (Slice #32.01.) It read: "It is not suppressed: a re-check is
+   * still a real thing to want here, and it is the only route back to File
+   * Explorer for this stage." Since #32.01 it IS suppressed — a pause is by
+   * definition a clean verdict with an account on the page, which is exactly
+   * `resultOnly`, and the whole button row goes with the tick. Nothing at this
+   * stage has entered the archive, and the stage bar keeps a Cancel control for
+   * the whole run, so a user who realises the folder is wrong loses a walk, not
+   * work.
+   *
+   * What this prop still does, therefore, is decide whether the work blocks are
+   * drawn at all — see `resultOnly` below. The demotion it was
+   * added for survives only as the styling on a button that a pause no longer
+   * renders; see the note at that button.
    *
    * Defaulted, so every caller that does not know about step-through — and
    * the tests that render this panel on its own — keeps exactly today's
@@ -205,7 +224,70 @@ export function ImportStructureStage({
   const hintId = useId();
 
   const checked = verdict !== null;
-  const showRules = !checked || rulesOpen;
+
+  /**
+   * The verdict the emerald line below is drawn from — nothing more.
+   *                                                            (Slice #32.01)
+   *
+   * Lifted out of the JSX rather than restated, because from this slice on FOUR
+   * other blocks branch on it and a second spelling of it is a screen that can
+   * disagree with the sentence the user is reading. `clean` is itself
+   * `violations.length === 0 && truncations.length === 0`, so a truncated walk
+   * is not clean and keeps every control below — which is the wanted answer:
+   * that walk gave up part-way and there is very much something left to do.
+   */
+  const cleanVerdict = !busy && verdict !== null && verdict.clean;
+
+  /**
+   * ⚠️ **Is this screen an OUTCOME, with nothing left for the user to do?**
+   *                                                            (Slice #32.01)
+   *
+   * The blocks that exist only to help a user do work — the rules disclosure
+   * and its listing, the acknowledgement tick and its hint, the button row, the
+   * take-away, and the block of STR-15 answers with its undo buttons — are
+   * hidden here and nowhere else. They are not deleted: a screen that still
+   * carries violations renders every one of them exactly as it did before this
+   * slice. The slice named the first four; the fifth is a second adversarial
+   * round's, and the note above that block says what leaving it up did.
+   *
+   * ⚠️ **`gated` IS THE LOAD-BEARING HALF, and an adversarial round is why.**
+   * It is `activeGate?.rest === "structure"` — i.e. *the step-gate card,
+   * carrying this screen's Continue button, is rendered directly beneath this
+   * panel* (`import-wizard.tsx`, the single gate render site: every stage branch
+   * is exclusive on `phase`, so the card always lands under the stage it is
+   * talking about). Without it the first draft of this slice made the Structure
+   * stage UNPASSABLE by the route that reaches a clean verdict with no gate:
+   * STR-15 is answered without re-walking, so the last "Da" turns the verdict
+   * clean while the phase is still `structure-report` and no gate was ever set.
+   * (It is not the only such route, which is why the guard is written as "is
+   * there a gate" rather than as "is the phase `structure-report`". The stage
+   * bar's Resume button — rendered on `phase === "structure" && savedSession`,
+   * so it is on screen at a pause too — clears the gate and moves to `resumed`,
+   * and clearing that session returns to `structure` with `observations`
+   * untouched: a clean verdict, no gate, and again no Continue below the
+   * panel.)
+   * The panel's own "Verifică din nou" is the forward path on that route — a
+   * clean re-walk is what moves the phase on — and hiding the button row there
+   * left a screen with the green line, no controls at all and no Continue, whose
+   * only exit was to cancel the run.
+   *
+   * ⚠️ **`resultDetail` stays in the test as a belt on that brace.** It is the
+   * counters and the name-readings card — the content that REPLACES what is
+   * being hidden — and the wizard withholds it whenever a clean account would be
+   * dishonest (`checkAccountsSettled`: a re-check that could not open the folder
+   * leaves last round's clean verdict standing with `walkError` set). Today
+   * `gated` already excludes that case, because a re-check clears the gate on
+   * its way in. It is kept so that a future route producing a pause without an
+   * account leaves the controls up rather than a heading, one green sentence and
+   * white space.
+   *
+   * It is also what keeps the promise `gated`'s and `resultDetail`'s own notes
+   * make: a caller that passes neither — the panel rendered on its own in a test
+   * — keeps exactly today's screen.
+   */
+  const resultOnly = cleanVerdict && gated && resultDetail != null;
+
+  const showRules = !resultOnly && (!checked || rulesOpen);
 
   /**
    * How many rules the last check found broken. Counted here because three
@@ -512,6 +594,17 @@ export function ImportStructureStage({
    * an unrelated re-render — and when the check PASSES this component unmounts
    * instead, so it never fires on the way to the next stage.
    *
+   * ⚠️ **THE TWO PARAGRAPHS ABOVE ARE THE ORIGINAL #26.04 STATEMENT AND BOTH
+   * HAVE SINCE STOPPED BEING WHOLLY TRUE — the corrections are in the effect
+   * body below, and they are the ones to trust.** #26.05 added a second target
+   * (the heading, on arrival) and #32.01 a third (the heading again, on a clean
+   * rest), so "the checkbox is the right target" is now one case of three. And
+   * a clean check stopped unmounting this panel at #29.02: with step-through
+   * ticked it RESTS here, which is precisely the edge the third target exists
+   * for. Left standing rather than rewritten because the reasoning in them is
+   * why the effect exists at all — but do not read either as a statement about
+   * what the effect currently does.
+   *
    * ⚠️ **RESTORES focus; it does not seize it.** A check takes seconds on a
    * large archive, and the sensible thing to do while waiting is to open the
    * rules and read them, or press Save. Focus is only put back when it is on
@@ -655,6 +748,15 @@ export function ImportStructureStage({
     // pressed was destroyed with the panel that held it, leaving focus on
     // `<body>`. Same guard as `ImportConstraintsStage`'s, for the same swap
     // seen from the other side.
+    // ⚠️ THREE CASES SINCE #32.01, and the third is the one that would
+    // otherwise strand a keyboard user silently. On the busy → idle edge of a
+    // walk that came back CLEAN and RESTS here — a step-through pause, which is
+    // the only way this panel is still mounted when that edge arrives — there is
+    // no tick any more: the element this effect aims at is not rendered,
+    // `ref.current` is null, and `?.focus()` does nothing at all, leaving the
+    // keyboard on `<body>` at the top of the document. The heading is the right target there for the same reason it is
+    // on arrival: it is the top of what the user now has to read, and it already
+    // carries `tabIndex={-1}` for exactly this.
     // ⚠️ TWO TARGETS. On the busy → idle edge the tick is the next thing to do.
     // On ARRIVAL it is the wrong place: the tick sits below the whole rules
     // listing and `focus()` scrolls, so focusing it would scroll the rules off
@@ -668,8 +770,12 @@ export function ImportStructureStage({
     if (busy || (!finished && !justMounted)) return;
     const active = typeof document === "undefined" ? null : document.activeElement;
     const stranded = active === null || active === document.body;
-    if (stranded) (justMounted ? headingRef : checkboxRef).current?.focus();
-  }, [busy]);
+    if (stranded) (justMounted || resultOnly ? headingRef : checkboxRef).current?.focus();
+    // `resultOnly` is a dependency because the rule says so and because it is
+    // read above; it cannot make the effect fire spuriously, since a run on
+    // which `busy` did not change finds `finished` false and `justMounted`
+    // already spent, and returns at the guard.
+  }, [busy, resultOnly]);
 
   return (
     <section className="rounded-xl border border-card-rim bg-white p-5 dark:border-zinc-700 dark:bg-zinc-900">
@@ -707,7 +813,17 @@ export function ImportStructureStage({
       >
         {t("title")}
       </h2>
-      <p className="mt-1.5 text-sm text-ink dark:text-zinc-300">{t("intro")}</p>
+      {/* ⚠️ **The intro is part of the same defect.**   (Slice #32.01)
+
+          `intro` instructs: "read the rules below, tick that you follow them,
+          then choose the folder" — every noun in it is a block this screen no
+          longer draws. Left standing above an outcome it would be worse than
+          the blocks it describes, because it sends the user looking for
+          controls that are not there. `introDone` states what the screen is
+          instead, and swaps on the same condition as everything else. */}
+      <p className="mt-1.5 text-sm text-ink dark:text-zinc-300">
+        {resultOnly ? t("introDone") : t("intro")}
+      </p>
 
       {/*
         `aria-busy` says "what you are reading is being recomputed" for the
@@ -803,7 +919,33 @@ export function ImportStructureStage({
       )}
 
       {/* ── The questions already answered "yes" ─────────────────────────── */}
-      {confirmedProperties.length > 0 && (
+      {/* ⚠️ **THE FIFTH BLOCK, AND A SECOND ADVERSARIAL ROUND IS WHY IT IS HERE.**
+          (Slice #32.01.) The slice named four; this is the one it did not, and
+          leaving it up was not neutral. At a rest it is the ONLY control left on
+          a screen whose intro has just been reworded to say it is a report — and
+          pressing "Schimbă răspunsul" puts STR-15 back, so `structureVerdict`
+          goes dirty IN PLACE. Nothing moves the phase, so the gate does not
+          clear: the step-gate card goes on saying "niciuna nu a fost încălcată"
+          with a live Continue, over a panel now showing an unfixed violation and
+          a re-check button disabled because the tick was cleared.
+
+          ⚠️ **The record it exists for is not lost — but the guarantee is
+          borrowed, so read this before raising a limit.** #28.02 added this
+          block so that a "Da" — the one answer in the catalogue that decides
+          whether a Property row is written — cannot become invisible. On the
+          clean screen the folder is named in the "How each property folder's
+          name was read" card, built from `groupByPropertyFolder` over the same
+          top-level listing. That card is capped at `MAX_NAME_READINGS_SHOWN`
+          (`import-wizard.tsx`), and it covers every confirmed folder today only
+          because that cap happens to equal STR-02's `MAX_PROPERTY_FOLDERS`: two
+          unrelated constants in two files, with nothing asserting the
+          relationship. Raise one without the other and a confirmed "Da" is
+          invisible again on this screen.
+
+          What goes here is the undo, and it goes only from the screen that has
+          nothing else to do: every screen where the answer is actually given
+          still carries this block, its hint and its buttons, unchanged. */}
+      {!resultOnly && confirmedProperties.length > 0 && (
         <div className="mt-5 rounded-md border border-card-rim bg-card px-3 py-2 dark:border-zinc-700 dark:bg-zinc-800/60">
           <p className="text-sm font-semibold text-ink dark:text-zinc-100">
             {t("confirmProperty.confirmedTitle", { count: confirmedProperties.length })}
@@ -858,7 +1000,7 @@ export function ImportStructureStage({
           correct as far as this stage can tell, and the loop still ends the way
           every other round of it ends. The `!busy` guard is what stops the same
           line appearing over a check that is still running. */}
-      {!busy && verdict !== null && verdict.clean && (
+      {cleanVerdict && (
         <>
           <p className="mt-4 text-sm font-medium text-emerald-700 dark:text-emerald-400">
             {t("clean")}
@@ -872,7 +1014,11 @@ export function ImportStructureStage({
       </div>
 
       {/* ── The rules ────────────────────────────────────────────────────── */}
-      {checked && (
+      {/* Slice #32.01 — the toggle goes with the listing it opens. Offering to
+          re-show a set of rules that were all satisfied is offering to reopen
+          work that is finished, and a disclosure whose region is unconditionally
+          absent is a control that cannot do anything. */}
+      {checked && !resultOnly && (
         <div className="mt-5">
           <button
             type="button"
@@ -961,6 +1107,36 @@ export function ImportStructureStage({
       )}
 
       {/* ── The gate ─────────────────────────────────────────────────────── */}
+      {/* ⚠️ Slice #32.01 — the tick, its hint and BOTH buttons, together.
+
+          The tick's whole argument is the one in this file's header: it is the
+          only signal available that the user has been to File Explorer and
+          changed something between two presses of the same button. With nothing
+          to put right there is no such gap to bridge, and re-asking for it makes
+          the screen say there is work outstanding when the line above it has
+          just said there is not.
+
+          "Alege alt folder…" goes with it, and that is safe HERE and would not
+          be elsewhere: nothing at this stage has entered the archive and no
+          classification has been paid for, so a user who realises the folder is
+          wrong loses a walk, not work. The step-gate card below is what this
+          screen now ends on.
+
+          ⚠️ **What the ways back actually cost, since a comment here once
+          promised a cheap one that is not.** Continue, then the NEXT stage's own
+          check, re-walks this folder and bounces back here if anything has
+          changed — that is the cheap route, and it keeps the STR-15 answers,
+          because `runWalk` in `recheck` mode does. The next stage's "Alege alt
+          folder…" is NOT the same thing: `handlePickFolder` clears
+          `propertyAnswers`, as a different folder must. And the stage bar's
+          Cancel is blunter still — it returns the run to Information and puts
+          the eight preconditions back.
+
+          ⚠️ `hintId` is declared on the tick and pointed at by its own
+          `aria-describedby`, and both are inside this block — so there is no
+          window in which something still describes a hint that is not
+          rendered. */}
+      {!resultOnly && (
       <div className="mt-5 border-t border-crease pt-4 dark:border-zinc-800">
         <div className="flex items-start gap-2">
           <input
@@ -989,6 +1165,14 @@ export function ImportStructureStage({
             onClick={checked ? onRecheck : onChooseFolder}
             disabled={!acknowledged || busy}
             // Slice #29.02 — demoted at a pause; see the `gated` prop.
+            // ⚠️ Slice #32.01 — and the `gated` branch can no longer be taken.
+            // A pause is a clean verdict with its account on the page, which is
+            // `resultOnly`, and this whole row is inside `!resultOnly`. Left as
+            // it is rather than simplified to a bare `primary/lg`: the pair is
+            // one prop's worth of behaviour, and a route that brings a pause
+            // back to a screen with work on it would want it again. What must
+            // not stay is a comment claiming the branch is live — this is that
+            // comment.
             className={buttonClass({
               variant: gated ? "secondary" : "primary",
               size: gated ? "md" : "lg",
@@ -1013,8 +1197,15 @@ export function ImportStructureStage({
           {busy && <ActivityCue>{busyLabel}</ActivityCue>}
         </div>
       </div>
+      )}
 
       {/* ── The take-away copy ───────────────────────────────────────────── */}
+      {/* ⚠️ Slice #32.01 — hidden here, and NOT removed from the file. The page
+          is what a user prints and carries to File Explorer while they work, so
+          a user who still has work to do still needs it, and `handleSave` and
+          everything it reaches stay in use on that path. What has no reader is
+          a printed copy of rules that were all satisfied. */}
+      {!resultOnly && (
       <div className="mt-5 border-t border-crease pt-4 dark:border-zinc-800">
         {/* Fixed in passing (#26.06): `disabled={busy}`, for the reason its two
             siblings now carry the same attribute — a Save pressed during a
@@ -1030,6 +1221,7 @@ export function ImportStructureStage({
         </button>
         <p className="mt-1.5 text-xs text-fade dark:text-zinc-400">{t("save.hint")}</p>
       </div>
+      )}
     </section>
   );
 }

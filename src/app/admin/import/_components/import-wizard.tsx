@@ -1888,6 +1888,16 @@ export function ImportWizard() {
       // verdict, so `checked` is true, the button IS the re-check, and pressing
       // it on a folder that has since been moved lands here.
       //
+      // ⚠️ **#32.01 REMOVED THAT BUTTON FROM THE PAUSED SCREEN, AND THE ARM
+      // STAYS.** `ImportStructureStage` hides its whole button row once the
+      // verdict is clean and a gate is holding this stage, so the press the
+      // paragraph above describes can no longer be made there. The arm is still
+      // reachable — `phase === "structure"` is also where clearing a resumed
+      // session lands, with the panel's controls back — and it is the honest
+      // destination for a failed re-walk holding a clean verdict either way.
+      // What must not stay is a paragraph naming a press that cannot happen;
+      // this is that correction, not a deletion.
+      //
       // It returns to `structure`, not to `structure-report`: the verdict in
       // hand is clean, and `structure-report` is the violation list. Without
       // this arm the fall-through put the user on a fix list with nothing on
@@ -2207,9 +2217,16 @@ export function ImportWizard() {
    *
    * Nothing is lost by dropping them there: with step-through ticked every
    * clean check rests on its own stage and shows its account INLINE, which is
-   * the whole point of the toggle. It is also what makes this slice's claim
-   * about the ticked path true — that a user who has it on sees exactly what
-   * they saw before, plus the detail under each stage's own all-clear.
+   * the whole point of the toggle.
+   *
+   * ⚠️ **THE SENTENCE THAT FOLLOWED THIS IS NO LONGER TRUE.** It said a ticked
+   * run "sees exactly what they saw before, plus the detail under each stage's
+   * own all-clear" — and #32.01 made a ticked run see strictly LESS at a
+   * Structure or Constraints rest: no rules disclosure, no tick, no button row,
+   * no take-away, and on Structure no block of STR-15 answers. What is
+   * load-bearing here is unchanged and is the half above: the trail is safe to
+   * drop at a pause because the account renders inline. Do not read the removed
+   * clause as an invariant and restore one of those blocks to satisfy it.
    */
   const checkTrailVisible = checkAccountsSettled && activeGate === null;
 
@@ -3021,8 +3038,13 @@ export function ImportWizard() {
           onChooseFolder={handlePickFolder}
           onRecheck={() => void handleRecheck()}
           // Slice #29.02 — see the prop. At a pause the emerald card below
-          // carries the screen's one primary action, so this panel's own drops
-          // to a secondary.
+          // carries the screen's one primary action, so this panel's own used to
+          // drop to a secondary. ⚠️ Since #32.01 it is not rendered at all: a
+          // pause is a clean verdict with its account on the page, and the panel
+          // hides its whole button row there. What this prop now decides is
+          // whether the panel draws its work blocks; the demotion survives only
+          // as a ternary that cannot be reached. Read the prop's own note before
+          // treating `variant: gated ? …` as live behaviour.
           gated={activeGate?.rest === "structure"}
           rulesOpen={structureRulesOpen}
           onRulesOpenChange={setStructureRulesOpen}
@@ -3189,10 +3211,15 @@ export function ImportWizard() {
 
           ⚠️ **IT REPORTS; IT DOES NOT DECIDE.** No phase moves because of
           anything here, no stage was added, and the gate #29.02 built is
-          untouched — a run with step-through ticked sees exactly what it saw
-          before, because a stage whose panel is on screen is skipped here and
-          renders its own account inside that panel instead. That exclusion is
-          also what stops a card appearing twice.
+          untouched — a stage whose panel is on screen is skipped here and
+          renders its own account inside that panel instead, which is also what
+          stops a card appearing twice.
+
+          ⚠️ The clause that used to end that sentence — "a run with
+          step-through ticked sees exactly what it saw before" — was true of
+          #29.11 and is not true since #32.01, which strips the work blocks off a
+          clean paused panel. Nothing about THIS block changed; the claim about
+          the rest of the screen did.
 
           ⚠️ **BELOW THE STAGE PANELS, NOT ABOVE THEM, AND AN ADVERSARIAL ROUND
           MOVED IT.** Every stage panel focuses its own `<h2>` when it mounts —
