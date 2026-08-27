@@ -66,3 +66,8 @@ public/pdf.worker.min.js
 # otherwise type-check a parked file and fail the whole project on code that is
 # on its way out.
 /_to_delete/
+
+# Intermediate reference-data dump written by build-ciprian-image.ps1 (Step 5).
+# Removed on the happy path; any abort between the docker cp and that removal
+# leaves it in the repo root.
+/ga40prj-refdata-dump.sql
