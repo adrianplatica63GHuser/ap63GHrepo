@@ -2621,11 +2621,34 @@
       "listTitle": "Tipurile care au nevoie de formular",
       "row": {
         "existing": "{count, plural, one {Există deja în sistem, dar fără formular. Un document din acest folder este de acest tip.} few {Există deja în sistem, dar fără formular. # documente din acest folder sunt de acest tip.} other {Există deja în sistem, dar fără formular. # de documente din acest folder sunt de acest tip.}}",
-        "new": "{count, plural, one {Nu există încă în sistem. Importul l-ar fi creat acum, fără formular, pentru un document din acest folder.} few {Nu există încă în sistem. Importul l-ar fi creat acum, fără formular, pentru # documente din acest folder.} other {Nu există încă în sistem. Importul l-ar fi creat acum, fără formular, pentru # de documente din acest folder.}}"
+        "new": "{count, plural, one {Nu există încă în sistem. Importul l-ar fi creat acum, fără formular, pentru un document din acest folder. Nu a fost creat: importul s-a oprit înainte să scrie ceva, așa că nu îl veți găsi în Date de Referință.} few {Nu există încă în sistem. Importul l-ar fi creat acum, fără formular, pentru # documente din acest folder. Nu a fost creat: importul s-a oprit înainte să scrie ceva, așa că nu îl veți găsi în Date de Referință.} other {Nu există încă în sistem. Importul l-ar fi creat acum, fără formular, pentru # de documente din acest folder. Nu a fost creat: importul s-a oprit înainte să scrie ceva, așa că nu îl veți găsi în Date de Referință.}}"
+      },
+      "files": {
+        "show": "Arată fișierele pentru „{type}”",
+        "hide": "Ascunde fișierele pentru „{type}”"
+      },
+      "why": {
+        "key": "Clasificatorul a răspuns cu cheia «{said}», care este cheia acestui tip.",
+        "name": "Clasificatorul a citit „{said}”, care se potrivește cu numele acestui tip.",
+        "none": "Clasificatorul a citit „{said}”, iar niciun tip din arhivă nu poartă acest nume."
+      },
+      "confidence": {
+        "high": "Încredere: mare.",
+        "medium": "Încredere: medie.",
+        "low": "Încredere: mică."
       },
       "unclassified": "{count, plural, one {Un fișier nu a primit un tip — fie nu a putut fi citit ca imagine și nu a fost trimis deloc, fie a fost trimis și nu s-a primit un răspuns, fie sistemul nu l-a recunoscut. Ar ajunge la tipul „neclasificat”, care nu are nevoie de formular și nu este motivul opririi.} few {# fișiere nu au primit un tip — fie nu au putut fi citite ca imagine și nu au fost trimise deloc, fie au fost trimise și nu s-a primit un răspuns, fie sistemul nu le-a recunoscut. Ar ajunge la tipul „neclasificat”, care nu are nevoie de formular și nu este motivul opririi.} other {# de fișiere nu au primit un tip — fie nu au putut fi citite ca imagine și nu au fost trimise deloc, fie au fost trimise și nu s-a primit un răspuns, fie sistemul nu le-a recunoscut. Ar ajunge la tipul „neclasificat”, care nu are nevoie de formular și nu este motivul opririi.}}",
       "whatNextTitle": "Ce urmează",
       "whatNext": "Fiecare tip de mai sus are nevoie de un formular înainte ca documentele lui să poată fi importate, iar acesta se face din „Distilare Tipizate”. După ce fiecare tip are formular, reluați importul de la început: toate verificările de dinaintea clasificării nu costă nimic.",
+      "save": {
+        "button": "Salvează lista ca pagină",
+        "hint": "Se descarcă o pagină pe care o puteți deschide sau tipări cât timp lucrați. Conține toate tipurile, toate fișierele lor și motivul pentru fiecare fișier — complet, oricât ar fi de lungă lista și indiferent ce este deschis pe ecran.",
+        "filePrefix": "tipuri-fara-formular",
+        "documentTitle": "Tipuri de documente fără formular",
+        "generatedAt": "Generat",
+        "folderLabel": "Folderul",
+        "violationsTitle": "Tipurile fără formular și fișierele lor"
+      },
       "nothingWritten": "Nu s-a creat niciun document și nu s-a scris nimic în arhivă. Clasificarea de mai sus s-a plătit deja și se va plăti din nou la reluarea importului.",
       "failed": {
         "title": "Importul s-a oprit: nu s-a putut verifica dacă tipurile au formular",

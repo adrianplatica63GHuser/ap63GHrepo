@@ -257,6 +257,15 @@ function classifiedEntriesOf(
       // for a type the archive does not hold — see `ClassifiedEntry`. The same
       // call `interpretUpperBound` already makes one screen later.
       isIdCard: isIdCardEntry(result),
+      // ⚠️ **CARRIED, NOT FETCHED.**                            (Slice #32.02)
+      // `confidence` is already on the `ScanResult` this line is reading — the
+      // scan route returns it and the row above stores it — so the stop
+      // screen's per-file justification costs no request, no prompt change and
+      // not one extra token. Gated on `done` for the same reason `answer` is:
+      // a `pending`, `skip`, `preexisting` or `error` row has no answer to be
+      // confident about, and a value surviving from a previous transition would
+      // be a claim about a scan that did not happen.
+      confidence: result?.status === "done" ? result.confidence : undefined,
     };
   });
 }

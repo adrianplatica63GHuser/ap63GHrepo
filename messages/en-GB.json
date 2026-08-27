@@ -2621,11 +2621,34 @@
       "listTitle": "The types that need a form",
       "row": {
         "existing": "{count, plural, one {Already in the system, but with no form. One document in this folder is of this type.} other {Already in the system, but with no form. # documents in this folder are of this type.}}",
-        "new": "{count, plural, one {Not in the system yet. The import would have created it now, with no form, for one document in this folder.} other {Not in the system yet. The import would have created it now, with no form, for # documents in this folder.}}"
+        "new": "{count, plural, one {Not in the system yet. The import would have created it now, with no form, for one document in this folder. It was not created: the import stopped before anything was written, so you will not find it in Reference Data.} other {Not in the system yet. The import would have created it now, with no form, for # documents in this folder. It was not created: the import stopped before anything was written, so you will not find it in Reference Data.}}"
+      },
+      "files": {
+        "show": "Show the files for “{type}”",
+        "hide": "Hide the files for “{type}”"
+      },
+      "why": {
+        "key": "The classifier answered with the key «{said}», which is this type’s key.",
+        "name": "The classifier read “{said}”, which matches this type’s name.",
+        "none": "The classifier read “{said}”, and no type in the archive carries that name."
+      },
+      "confidence": {
+        "high": "Confidence: high.",
+        "medium": "Confidence: medium.",
+        "low": "Confidence: low."
       },
       "unclassified": "{count, plural, one {One file got no type — either it could not be read as an image and was never sent, or it was sent and no answer came back, or the system did not recognise it. It would go to the “unclassified” type, which needs no form and is not why the import stopped.} other {# files got no type — either they could not be read as images and were never sent, or they were sent and no answer came back, or the system did not recognise them. They would go to the “unclassified” type, which needs no form and is not why the import stopped.}}",
       "whatNextTitle": "What happens next",
       "whatNext": "Each type above needs a form before its documents can be imported, and that is what DocTypeEngine is for. Once every type has a form, start the import again from the beginning: every check before the classification costs nothing.",
+      "save": {
+        "button": "Save the list as a page",
+        "hint": "Downloads a page you can open or print while you work. It holds every type, every one of their files and the reason for each file — complete however long the list is, and whatever is open on screen.",
+        "filePrefix": "types-without-form",
+        "documentTitle": "Document types with no form",
+        "generatedAt": "Generated",
+        "folderLabel": "Folder",
+        "violationsTitle": "The types with no form, and their files"
+      },
       "nothingWritten": "No document was created and nothing was written to the archive. The classification above has already been paid for, and will be paid for again when the import is started afresh.",
       "failed": {
         "title": "The import has stopped: the types could not be checked for forms",

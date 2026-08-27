@@ -171,7 +171,11 @@ describe("reportFileName", () => {
  * page from "checked and clean", and printing the all-clear for the first is
  * the confident-output failure this repo keeps a rule about.
  */
-const STRUCTURE_STRINGS: RulesPageStrings = {
+// ⚠️ `satisfies` rather than an annotation, since #32.02 made five of these
+// fields optional: an annotation widens `rulesTitle` to `string | undefined`,
+// and the ordering assertion below reads it as a needle for `indexOf` — where
+// an `?? ""` fallback would find index 0 and pass over any page at all.
+const STRUCTURE_STRINGS = {
   documentTitle: "Structura",
   generatedAt: "Generat",
   folderLabel: "Folder",
@@ -181,7 +185,7 @@ const STRUCTURE_STRINGS: RulesPageStrings = {
   blocked: "Nicio regulă încălcată, dar folderul este refuzat",
   notCheckedYet: "Niciun folder verificat",
   warningsTitle: "Nu a putut fi citit tot",
-};
+} satisfies RulesPageStrings;
 
 function structure(over: Partial<RulesPageInput> = {}): string {
   return buildRulesPageHtml({
@@ -203,6 +207,124 @@ function structure(over: Partial<RulesPageInput> = {}): string {
 }
 
 describe("buildRulesPageHtml", () => {
+  it("⚠️ leaves the rules heading out when it was handed no sections", () => {
+    // Slice #32.02. The stop screen has no rules to print, and this `<h2>` was
+    // emitted unconditionally — so its page carried a "The file constraints"-
+    // shaped heading with nothing whatsoever beneath it. The alternative, a
+    // faked rules section to fill the heading, would put made-up rule IDs on
+    // the one artefact whose whole value is that every line of it is checkable.
+    //
+    // ⚠️ **NO EXISTING PAGE CHANGES BY A BYTE.** All four callers pass a frozen,
+    // non-empty scope list (`RULE_SCOPES`, `CONSTRAINT_SCOPES`) or a one-element
+    // literal, so none of them can reach this branch — the test below is the
+    // other half of that claim.
+    const html = structure({
+      sections: [],
+      strings: { ...STRUCTURE_STRINGS, rulesTitle: undefined },
+    });
+    expect(html).not.toContain("Regulile");
+    // …and the rest of the page is untouched.
+    expect(html).toContain("De îndreptat");
+  });
+
+  it("⚠️ still prints the rules heading for a caller that has sections", () => {
+    expect(structure()).toContain("<h2>Regulile</h2>");
+  });
+
+  it("⚠️ drops the rules heading on the SECTIONS alone, with the title still passed", () => {
+    // ⚠️ **THE HALF THE FIRST DRAFT LEFT UNCOVERED, and an adversarial round
+    // found it.** The guard is `sections.length === 0 || rulesTitle is blank`,
+    // and the test above varies BOTH at once — so rewriting the first term to
+    // `false` left every assertion green. This varies the sections alone, which
+    // is the term #32.02 actually added, and the term that protects the four
+    // existing callers by being unreachable for them.
+    expect(structure({ sections: [] })).not.toContain("Regulile");
+    // …and the mirror: a caller WITH sections and no title loses only the
+    // heading, never the listing.
+    const headless = structure({ strings: { ...STRUCTURE_STRINGS, rulesTitle: undefined } });
+    expect(headless).not.toContain("<h2>Regulile</h2>");
+    expect(headless).toContain("STR-01");
+  });
+
+  it("⚠️ omits a branch whose sentence the caller did not pass, rather than an empty line", () => {
+    // The same lesson `noteBlockOf` records: a block that cannot be filled is
+    // left out, not printed hollow. A caller whose violation list is non-empty
+    // by construction cannot reach the all-clear, the blocked line or the
+    // not-checked line, and making them optional is what stops it shipping
+    // three sentences of Romanian no user can ever see.
+    const bare: RulesPageStrings = {
+      documentTitle: "Tipuri",
+      generatedAt: "Generat",
+      folderLabel: "Folderul",
+      violationsTitle: "Tipurile fără formular",
+    };
+    const html = buildRulesPageHtml({
+      folderName: "Teren",
+      generatedAt: "05.08.2026, 14:30",
+      locale: "ro-RO",
+      sections: [],
+      violations: groupedViolationBlocks([
+        {
+          culprit: "Plan Parcelar",
+          sentence: "5 documente din acest folder sunt de acest tip.",
+          groups: [{ heading: "Clasificatorul a citit „Plan Parcelar”.", paths: ["Teren/1.pdf"] }],
+        },
+      ]),
+      clean: false,
+      warnings: [],
+      strings: bare,
+    });
+    // The type's own name, in the culprit slot, above its sentence — and no
+    // rule chip, because a document type has no rule to quote.
+    expect(html).toContain("<strong>Plan Parcelar</strong>");
+    expect(html).not.toContain('class="rule"');
+    expect(html).toContain("Teren/1.pdf");
+    // ⚠️ **AND THE HOLLOW-PARAGRAPH ASSERTIONS REACH THE BRANCHES THEY NAME,
+    // which a mutation round is why.** The first draft asserted "no
+    // `<p class="clear"></p>` anywhere" against THIS page — whose violation
+    // list is non-empty and whose warnings are none, so not one of the four
+    // guarded branches executes and all four assertions were vacuous. An
+    // exporter rewritten to print `esc(text ?? "")` emitted exactly the strings
+    // they forbid, with the suite green. Each page below reaches one branch.
+    //
+    // ⚠️ **THE BODY, NOT THE DOCUMENT.** The shared stylesheet is inlined into
+    // every page and its own comments quote markup — one of them contains the
+    // literal `<p class="msg">` — so a `not.toContain` over the whole document
+    // fails on a page that is entirely correct.
+    const page = (over: Partial<RulesPageInput>): string => {
+      const full = buildRulesPageHtml({
+        folderName: "Teren",
+        generatedAt: "05.08.2026, 14:30",
+        locale: "ro-RO",
+        sections: [],
+        violations: [],
+        clean: true,
+        warnings: [],
+        strings: bare,
+        ...over,
+      });
+      return full.slice(full.indexOf("<body>"));
+    };
+    // Checked and clean, with no all-clear sentence to print.
+    expect(page({ violations: [], clean: true })).not.toContain('<p class="clear">');
+    // Checked, nothing broken, refused anyway — and no `blocked` sentence.
+    expect(page({ violations: [], clean: false })).not.toContain('<p class="msg">');
+    // Not checked at all, and no `notCheckedYet` sentence. Counted rather than
+    // absent: the folder line and the generated-at line are `.meta` too, so
+    // "no `.meta` at all" would be a claim about the wrong two paragraphs.
+    const metas = (html2: string): number => html2.split('<p class="meta">').length - 1;
+    expect(metas(page({ violations: null }))).toBe(2);
+    expect(
+      metas(page({ violations: null, strings: { ...bare, notCheckedYet: "Neverificat" } })),
+    ).toBe(3);
+    // Warnings with no heading to put over them: the `<h2>` goes, the paths
+    // stay — a list of paths with no heading is degraded, an empty heading is a
+    // rendering fault, and the second is the worse of the two.
+    const warned = page({ warnings: [{ paths: ["Teren/x.pdf"] }] });
+    expect(warned).not.toContain("<h2></h2>");
+    expect(warned).toContain("Teren/x.pdf");
+  });
+
   it("⚠️ lays a multi-set rule out as one sentence and N subordinate sets", () => {
     // The shape itself, pinned where a test can reach it - the panel that used
     // to hold this `flatMap` is a client component nothing in this suite

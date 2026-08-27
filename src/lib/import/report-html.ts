@@ -310,19 +310,46 @@ export type RulesPageStrings = {
   documentTitle: string;
   generatedAt: string;
   folderLabel: string;
-  rulesTitle: string;
+  /**
+   * The heading over the rules listing.
+   *
+   * ⚠️ **OPTIONAL SINCE #32.02, TOGETHER WITH THE SECTIONS IT HEADS, and the
+   * fifth time this module has recorded the same lesson** — `RulesPageSection
+   * .heading`, `RulesPageViolation.ruleId`, `RulesPageWarning.heading` and
+   * `.sentence` are the other four. A stage with rules to print needs it; the
+   * stop screen (#32.02) has no rules at all, and the exporter used to emit
+   * this `<h2>` unconditionally — so that page would have carried an "The file
+   * constraints"-shaped heading with nothing whatsoever beneath it. Inventing a
+   * rules section to fill it would have put made-up rule IDs on the one page
+   * whose whole value is that every line on it is checkable.
+   *
+   * Printed only when `sections` is non-empty AND this carries text, so neither
+   * an empty heading nor an unheaded listing is reachable.
+   */
+  rulesTitle?: string;
   violationsTitle: string;
-  /** Printed instead of a violation list when the folder was checked and PASSED. */
-  allClear: string;
+  /**
+   * Printed instead of a violation list when the folder was checked and PASSED.
+   *
+   * ⚠️ Optional since #32.02: a caller whose list is non-empty by construction
+   * cannot reach this branch, and four sentences of shipping Romanian no user
+   * can ever see are worse than none. Absent here means the branch prints
+   * nothing rather than an empty paragraph.
+   */
+  allClear?: string;
   /**
    * Printed when the folder was checked, broke no rule, and is refused anyway
    * — a walk that gave up part-way. See `clean` for why this is a third state
-   * and not the absence of the other two.
+   * and not the absence of the other two. Optional for the reason `allClear` is.
    */
-  blocked: string;
-  /** Printed instead of a violation list when no folder has been checked. */
-  notCheckedYet: string;
-  warningsTitle: string;
+  blocked?: string;
+  /**
+   * Printed instead of a violation list when no folder has been checked.
+   * Optional for the reason `allClear` is.
+   */
+  notCheckedYet?: string;
+  /** The heading over the warnings. Omitted with them, and with itself. */
+  warningsTitle?: string;
 };
 
 /**
@@ -418,13 +445,32 @@ export type RulesPageInput = {
  */
 export function groupedViolationBlocks(
   rules: readonly {
-    ruleId: string;
+    /**
+     * The catalogue ID, printed as a chip.
+     *
+     * ⚠️ **OPTIONAL SINCE #32.02, and `culprit` beside it is why.** The stop
+     * screen's groups are document TYPES, which have no rule to quote — and a
+     * type name printed in the ID chip would read as a rule reference that does
+     * not exist. The Duplication page still passes one, so its page is
+     * unchanged.
+     */
+    ruleId?: string;
+    /**
+     * What this group is ABOUT, printed in bold above the sentence — the same
+     * slot `RulesPageViolation.culprit` describes.       (Slice #32.02)
+     *
+     * The stop screen needs it because its counted sentence ("Already in the
+     * system, but with no form. 5 documents…") does not name the type it is
+     * about; the screen puts the name on its own line above it, and a page that
+     * dropped it would list five sentences with nothing to attach them to.
+     */
+    culprit?: string;
     sentence: string;
     groups: readonly { heading: string; paths: readonly string[] }[];
   }[],
 ): RulesPageViolation[] {
   return rules.flatMap((rule) => [
-    { ruleId: rule.ruleId, sentence: rule.sentence, related: [] },
+    { ruleId: rule.ruleId, culprit: rule.culprit, sentence: rule.sentence, related: [] },
     ...rule.groups.map((group) => ({ sentence: group.heading, related: group.paths })),
   ]);
 }
@@ -492,15 +538,28 @@ export function buildRulesPageHtml(input: RulesPageInput): string {
     )
     .join("");
 
+  /**
+   * A one-line block, or nothing at all when the caller has no sentence for it.
+   *                                                            (Slice #32.02)
+   *
+   * ⚠️ **AN ABSENT SENTENCE PRINTS NOTHING, NOT AN EMPTY PARAGRAPH** — the same
+   * lesson `noteBlockOf` records one screen up. The three branches below are
+   * unreachable for a caller whose violation list is non-empty by construction,
+   * and making their strings optional is what stops that caller shipping three
+   * sentences of Romanian no user can ever see.
+   */
+  const lineOf = (cls: string, text: string | undefined): string =>
+    text === undefined || text.trim() === "" ? "" : `<p class="${cls}">${esc(text)}</p>`;
+
   const violationBlocks =
     violations === null
-      ? `<p class="meta">${esc(strings.notCheckedYet)}</p>`
+      ? lineOf("meta", strings.notCheckedYet)
       : violations.length === 0
         ? clean
-          ? `<p class="clear">${esc(strings.allClear)}</p>`
+          ? lineOf("clear", strings.allClear)
           : // Not `.clear`, which is green: the folder is refused. Plain body
             // text, with the red section below carrying the reason.
-            `<p class="msg">${esc(strings.blocked)}</p>`
+            lineOf("msg", strings.blocked)
         : violations
             .map((v) =>
               [
@@ -522,7 +581,12 @@ export function buildRulesPageHtml(input: RulesPageInput): string {
   const warningBlocks =
     warnings.length === 0
       ? ""
-      : `<h2>${esc(strings.warningsTitle)}</h2>` +
+      : // The heading only when there is one to print — the warnings themselves
+        // still are, because a list of paths with no heading is a degraded
+        // block and an `<h2>` with nothing in it is a rendering fault.
+        (strings.warningsTitle === undefined || strings.warningsTitle.trim() === ""
+          ? ""
+          : `<h2>${esc(strings.warningsTitle)}</h2>`) +
         warnings
           .map(
             (w) =>
@@ -558,7 +622,19 @@ export function buildRulesPageHtml(input: RulesPageInput): string {
       // are the whole content; the page is printed and carried to File
       // Explorer, where the fix list is what the user works through and the
       // rules are the reference behind it.
-      `<h2>${esc(strings.rulesTitle)}</h2>`,
+      //
+      // ⚠️ **AND IT IS NOT PRINTED WHEN THERE ARE NO SECTIONS.** (Slice #32.02.)
+      // Every stage that lists rules passes a frozen, non-empty scope list, so
+      // no existing page changes by a byte; the stop screen has no rules at all,
+      // and this `<h2>` emitted unconditionally gave it a heading with nothing
+      // whatsoever beneath it. The alternative — inventing a rules section to
+      // fill the heading — would put made-up rule IDs on the one artefact whose
+      // whole value is that every line of it is checkable.
+      sections.length === 0 ||
+      strings.rulesTitle === undefined ||
+      strings.rulesTitle.trim() === ""
+        ? ""
+        : `<h2>${esc(strings.rulesTitle)}</h2>`,
       // Above the sections, for the reason the screen puts it there: what the
       // two shared folders MEAN has to be read before the rules about spelling
       // them can be acted on.

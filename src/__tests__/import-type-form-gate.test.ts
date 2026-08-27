@@ -76,8 +76,9 @@ function entry(
   path: string,
   answer: ClassifiedEntry["answer"],
   isIdCard = false,
+  confidence?: ClassifiedEntry["confidence"],
 ): ClassifiedEntry {
-  return { path, answer, isIdCard };
+  return { path, answer, isIdCard, confidence };
 }
 
 const WITH_FORM = type("id-arenda", "CONTRACT_ARENDA", "Contract de arendă", FORM);
@@ -153,6 +154,12 @@ describe("checkTypeForms — Branch A, the run that carries on", () => {
         hasForm: true,
         awaitsForm: false,
         documentCount: 2,
+        // Slice #32.02 — the whole-object shape, so a field added to
+        // `ClassifiedType` cannot slip past this suite unasserted.
+        files: [
+          { path: "a.pdf", how: "key", said: "CONTRACT_ARENDA", confidence: undefined },
+          { path: "b.pdf", how: "key", said: "CONTRACT_ARENDA", confidence: undefined },
+        ],
       },
     ]);
   });
@@ -242,6 +249,9 @@ describe("checkTypeForms — the identity card", () => {
         hasForm: false,
         awaitsForm: false,
         documentCount: 1,
+        files: [
+          { path: "buletin.jpg", how: "key", said: "CARTE_IDENTITATE", confidence: undefined },
+        ],
       },
     ]);
   });
@@ -372,6 +382,9 @@ describe("checkTypeForms — Branch B, the run that stops", () => {
         hasForm: false,
         awaitsForm: true,
         documentCount: 1,
+        files: [
+          { path: "b.pdf", how: "key", said: "CONTRACT_VANZARE", confidence: undefined },
+        ],
       },
     ]);
   });
@@ -395,6 +408,16 @@ describe("checkTypeForms — Branch B, the run that stops", () => {
         hasForm: false,
         awaitsForm: true,
         documentCount: 1,
+        // No key on the answer and no row carrying that name — so the file's
+        // justification is the third sentence, over the label it read.
+        files: [
+          {
+            path: "a.pdf",
+            how: "none",
+            said: "Proces-verbal de recepție",
+            confidence: undefined,
+          },
+        ],
       },
     ]);
   });
@@ -628,6 +651,159 @@ describe("checkTypeForms — counting and order", () => {
     });
     expect(verdict.types.map((t) => t.id)).toEqual(["id-1", "id-2"]);
     expect(verdict.missingForm.map((t) => t.id)).toEqual(["id-2"]);
+  });
+});
+
+describe("checkTypeForms — the files behind each type   (Slice #32.02)", () => {
+  /**
+   * ⚠️ **THE INVARIANT THE WHOLE FEATURE RESTS ON.** `documentCount` is kept
+   * rather than derived from `files.length` — the copy test pins `row.existing`
+   * and `row.new` as plural sentences over that number, and a length computed
+   * at the render site would be a second place deciding how many documents a
+   * type has. Keeping both is only safe while they agree, so every verdict this
+   * describe block builds is checked, and the day they diverge is a red test
+   * rather than a stop screen showing "5 documents" over four bullets.
+   */
+  function pinCountsMatchFiles(verdict: ReturnType<typeof checkTypeForms>): void {
+    expect(
+      verdict.types.map((t) => ({ name: t.name, count: t.documentCount, files: t.files.length })),
+    ).toEqual(verdict.types.map((t) => ({ name: t.name, count: t.documentCount, files: t.documentCount })));
+  }
+
+  it("⚠️ carries the walk's paths under a type, in the walk's own order", () => {
+    // The property that makes the new bullets worth reading at all: a list a
+    // user can check line by line against File Explorer. Not alphabetical, not
+    // by confidence, and not with the low-confidence ones pulled to the top.
+    const verdict = checkTypeForms({
+      entries: [
+        entry("z/9.pdf", { typeKey: "CONTRACT_VANZARE", label: "Contract de vânzare" }),
+        entry("a/1.pdf", { typeKey: "CONTRACT_VANZARE", label: "Contract de vânzare" }),
+        entry("m/5.pdf", { typeKey: "CONTRACT_VANZARE", label: "Contract de vânzare" }),
+      ],
+      catalogue: CATALOGUE,
+    });
+    expect(verdict.missingForm).toHaveLength(1);
+    expect(verdict.missingForm[0].files.map((f) => f.path)).toEqual([
+      "z/9.pdf",
+      "a/1.pdf",
+      "m/5.pdf",
+    ]);
+    pinCountsMatchFiles(verdict);
+  });
+
+  it("⚠️ keeps walk order ACROSS the fold, not just within one answer shape", () => {
+    // The fold is the run's own loop: the second entry of an invented type is
+    // an ordinary match against the row the loop pushed. Both entries are files
+    // of one type, and the one the walk met first has to be listed first.
+    const verdict = checkTypeForms({
+      entries: [
+        entry("1.pdf", { typeKey: "CONTRACT_COMODAT", label: "Contract de comodat" }),
+        entry("2.pdf", { typeKey: null, label: "Contract de comodat" }),
+        entry("3.pdf", { typeKey: "CONTRACT_COMODAT", label: "Comodat" }),
+      ],
+      catalogue: CATALOGUE,
+    });
+    expect(verdict.missingForm).toHaveLength(1);
+    expect(verdict.missingForm[0].documentCount).toBe(3);
+    // ⚠️ **THE WHOLE SHAPE, NOT JUST THE PATHS, and a mutation round is why.**
+    // This is the only fixture in the suite that reaches the `match` branch
+    // against a row THIS RUN invented, and a path-only assertion left `how` and
+    // `said` free: a mutant reporting `how: "none"` for the second and third
+    // documents changed two of the three italic sentences on the screen and
+    // stopped the third printing the key that actually did the matching, with
+    // every test in all three suites still green. It is exactly the property
+    // `ClassifiedFile.how` spends a paragraph documenting.
+    expect(verdict.missingForm[0].files).toEqual([
+      { path: "1.pdf", how: "none", said: "Contract de comodat", confidence: undefined },
+      { path: "2.pdf", how: "name", said: "Contract de comodat", confidence: undefined },
+      { path: "3.pdf", how: "key", said: "CONTRACT_COMODAT", confidence: undefined },
+    ]);
+    pinCountsMatchFiles(verdict);
+  });
+
+  it("⚠️ says HOW each file resolved, and carries that file's own key or label", () => {
+    // Three answers, three sentences on the screen — and each has to name what
+    // THIS file's answer was rather than the type's name, or five documents of
+    // one type print one byte-identical italic line five times.
+    const verdict = checkTypeForms({
+      entries: [
+        // Matched by key: the key is what did the matching, so the key is what
+        // is carried.
+        entry("byKey.pdf", { typeKey: "CONTRACT_VANZARE", label: "Ceva cu totul altfel" }),
+        // Matched by name: no key at all, and the label's own spelling — which
+        // `sameDocumentTypeName` folded onto the row, and which is not the row's
+        // spelling of it.
+        entry("byName.pdf", { typeKey: null, label: "contract de vanzare" }),
+        // Matched nothing: a real label naming a type the archive does not hold.
+        entry("none.pdf", { typeKey: "ACT_ADITIONAL", label: "Act adițional" }),
+      ],
+      catalogue: CATALOGUE,
+    });
+    const stored = verdict.types.find((t) => t.id === "id-vanzare");
+    expect(stored?.files.map((f) => ({ how: f.how, said: f.said }))).toEqual([
+      { how: "key", said: "CONTRACT_VANZARE" },
+      { how: "name", said: "contract de vanzare" },
+    ]);
+    const created = verdict.types.find((t) => t.kind === "new");
+    expect(created?.files.map((f) => ({ how: f.how, said: f.said }))).toEqual([
+      { how: "none", said: "Act adițional" },
+    ]);
+    pinCountsMatchFiles(verdict);
+  });
+
+  it("⚠️ carries the scan's confidence, and carries its absence as absence", () => {
+    // The whole cost of the justification: a field the wizard already holds.
+    // An entry that arrived without one renders a sentence with no confidence
+    // clause — never the word "undefined" on a screen.
+    const verdict = checkTypeForms({
+      entries: [
+        entry("sure.pdf", { typeKey: "CONTRACT_VANZARE", label: "x" }, false, "high"),
+        entry("unsure.pdf", { typeKey: "CONTRACT_VANZARE", label: "x" }, false, "low"),
+        entry("silent.pdf", { typeKey: "CONTRACT_VANZARE", label: "x" }),
+      ],
+      catalogue: CATALOGUE,
+    });
+    expect(verdict.missingForm[0].files.map((f) => f.confidence)).toEqual([
+      "high",
+      "low",
+      undefined,
+    ]);
+    pinCountsMatchFiles(verdict);
+  });
+
+  it("⚠️ never counts an unclassified entry as a file of any type", () => {
+    // The catch-all is reported and never counted against, and the same has to
+    // be true of the list: a path that will land on NECLASIFICAT under a type
+    // that needs a form would send the user to look for a document that is not
+    // there.
+    const verdict = checkTypeForms({
+      entries: [
+        entry("a.pdf", { typeKey: "CONTRACT_VANZARE", label: "Contract de vânzare" }),
+        entry("b.tif", null),
+        entry("c.pdf", { typeKey: null, label: "Document necunoscut" }),
+      ],
+      catalogue: CATALOGUE,
+    });
+    expect(verdict.unclassifiedCount).toBe(2);
+    expect(verdict.types.flatMap((t) => t.files.map((f) => f.path))).toEqual(["a.pdf"]);
+    pinCountsMatchFiles(verdict);
+  });
+
+  it("⚠️ keeps two catalogue rows that share a normalised name apart, files and all", () => {
+    // Keying the fold on the ROW ID is what stops one row absorbing the other's
+    // count; the files have to follow the same key, or the screen would list a
+    // path under a type the run will not file it on.
+    const a = type("id-1", "K1", "Contract de arendă", FORM);
+    const b = type("id-2", "K2", "Contract de arenda");
+    const verdict = checkTypeForms({
+      entries: [
+        entry("1.pdf", { typeKey: "K1", label: "x" }),
+        entry("2.pdf", { typeKey: "K2", label: "x" }),
+      ],
+      catalogue: [CATCH_ALL, a, b],
+    });
+    expect(verdict.types.map((t) => t.files.map((f) => f.path))).toEqual([["1.pdf"], ["2.pdf"]]);
+    pinCountsMatchFiles(verdict);
   });
 });
 

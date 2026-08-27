@@ -14,6 +14,16 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Third-party minified assets in public/ (e.g. pdf.worker.min.js).
     "public/**",
+    // ⚠️ The bridge's quarantine folder.                       (Slice #32.02)
+    //
+    // The device bridge cannot unlink, so a removal Claude is authorised to
+    // make becomes a move into `_to_delete/` under the repo root, and Adrian
+    // deletes that one folder afterwards. It is gitignored and excluded from
+    // `tsconfig.json`; without this line ESLint was the one tool still reading
+    // it, and it failed the whole run on rules broken by a file that is on its
+    // way to the bin — which is a lint error nobody can act on except by doing
+    // the deletion the run is blocking.
+    "_to_delete/**",
   ]),
   {
     rules: {

@@ -127,6 +127,7 @@
 
 import {
   catchAllType,
+  classifiedLabelOf,
   resolveAgainstTypes,
   UNCLASSIFIED_DOCUMENT_TYPE_KEY,
   type ClassifierAnswer,
@@ -180,6 +181,76 @@ export type ClassifiedEntry = {
    * module stays free of `ScanResult`.
    */
   isIdCard?: boolean;
+  /**
+   * How sure the classifier said it was — `ScanResult.confidence`, carried
+   * across unchanged.                                          (Slice #32.02)
+   *
+   * ⚠️ **NOTHING NEW IS ASKED OF THE MODEL FOR THIS.** The scan route already
+   * returns it and the wizard already stores it on the `ScanResult` it hands
+   * the table; this field only stops it being dropped on the way here, so the
+   * stop screen can say how sure the answer behind a file was. Not one extra
+   * token is billed for it.
+   *
+   * Optional, and an absent value is a sentence without a confidence clause —
+   * never the word "undefined" on a screen.
+   */
+  confidence?: ClassifierConfidence;
+};
+
+/**
+ * How sure the classifier said it was.                          (Slice #32.02)
+ *
+ * ⚠️ **DECLARED HERE RATHER THAN IMPORTED FROM `scan-table.tsx`.** That is a
+ * `"use client"` component, and this module is pure and client-safe by
+ * contract — the wizard is what carries a `ScanResult`'s value across, and the
+ * two agree structurally. The same reason `ClassifiedEntry.isIdCard` is a
+ * boolean here rather than a `ScanResult`.
+ */
+export type ClassifierConfidence = "high" | "medium" | "low";
+
+/**
+ * One file behind a type's count, and why it was read as that type.
+ *                                                              (Slice #32.02)
+ *
+ * ⚠️ **EVERY FIELD IS SOMETHING THE APP ALREADY HELD.** `resolveAgainstTypes`
+ * returns `how` on a match; the answer carries the key and the label; the scan
+ * carries the confidence. Nothing here costs a request, and nothing here is a
+ * second opinion about the type — the file is pushed by the same `addOrMerge`
+ * that increments `documentCount`, in the same pass over the same list, so the
+ * two cannot come to disagree about how many documents a type has.
+ */
+export type ClassifiedFile = {
+  /** The walk's path for the entry, exactly as it arrived. */
+  path: string;
+  /**
+   * Which of the three answers THIS file's own resolution was.
+   *
+   *  - `"key"` — the classifier's key is this type's key.
+   *  - `"name"` — the label it read reads as this type's name.
+   *  - `"none"` — nothing the archive holds carried that name, so the run
+   *    would have created the type from the label.
+   *
+   * ⚠️ **`"key"` and `"name"` do NOT promise the type is STORED.** The second
+   * document of a type this run would invent resolves against the row the loop
+   * pushed a moment ago, exactly as the run's own loop does — so it is an
+   * ordinary key or name match against a type that is not in the archive. The
+   * sentence chosen for each says "this type" rather than "the archive", and
+   * the row above it is what says whether the archive holds it. Wording that
+   * claimed otherwise would be true of the first document of an invented type
+   * and false of every one after it.
+   */
+  how: "key" | "name" | "none";
+  /**
+   * What the classifier itself gave — its KEY when `how` is `"key"`, and the
+   * LABEL it read otherwise.
+   *
+   * The file's own answer, never the type's name: five documents folded into
+   * one type print five justifications, and a sentence built from the type's
+   * name would print the same line five times and teach the reader nothing.
+   */
+  said: string;
+  /** How sure it said it was, when it said. */
+  confidence?: ClassifierConfidence;
 };
 
 /** One document type this classification established, and what it costs. */
@@ -208,6 +279,21 @@ export type ClassifiedType = {
   awaitsForm: boolean;
   /** How many of this run's entries would land on it. */
   documentCount: number;
+  /**
+   * The entries themselves, in walk order.                     (Slice #32.02)
+   *
+   * ⚠️ **`documentCount` IS NOT DERIVED FROM THIS, AND THAT IS DELIBERATE.**
+   * The obvious tidy-up — dropping the number and rendering `files.length` —
+   * would put a second place in charge of how many documents a type has, which
+   * is the exact shape this module's header refuses. Both are written by one
+   * `addOrMerge` in one pass, and `import-type-form-gate.test.ts` pins
+   * `documentCount === files.length` so the day they diverge is a red test
+   * rather than a screen.
+   *
+   * Walk order, for the reason the type list is in walk order: it is what makes
+   * the list checkable line by line against File Explorer.
+   */
+  files: ClassifiedFile[];
 };
 
 /** What the classification established about this folder's document types. */
@@ -400,10 +486,11 @@ export function checkTypeForms(input: {
       // would CREATE — one row, several documents — so it keeps its `new`
       // shape rather than being reported as something the archive holds.
       const row = resolution.row;
+      const file = fileOf(entry, resolution.how);
       addOrMerge(found, "id:" + row.id, () =>
         createdIds.has(row.id)
-          ? newTypeOf(row.name, entry, row.id, fallbackTypeId)
-          : existingTypeOf(row, entry, fallbackTypeId),
+          ? newTypeOf(row.name, entry, row.id, fallbackTypeId, file)
+          : existingTypeOf(row, entry, fallbackTypeId, file),
       );
       continue;
     }
@@ -419,7 +506,7 @@ export function checkTypeForms(input: {
     items.push(row);
     createdIds.add(row.id);
     addOrMerge(found, "id:" + row.id, () =>
-      newTypeOf(row.name, entry, row.id, fallbackTypeId),
+      newTypeOf(row.name, entry, row.id, fallbackTypeId, fileOf(entry, "none")),
     );
   }
 
@@ -473,7 +560,41 @@ function addOrMerge(
     return;
   }
   already.documentCount++;
+  // ⚠️ **THE COUNT AND THE LIST MOVE TOGETHER, in one statement pair, for the
+  // reason `ClassifiedType.files` gives: they are one fact about a type and a
+  // screen that could show "5 documents" over four bullets is a screen nobody
+  // can check against File Explorer. `next` is built per entry and therefore
+  // carries exactly one file, so this appends exactly one.  (Slice #32.02)
+  already.files.push(...next.files);
   already.awaitsForm = already.awaitsForm || next.awaitsForm;
+}
+
+/**
+ * One entry, as the file behind a type's count.                (Slice #32.02)
+ *
+ * Everything here has already been paid for: `how` is `resolveAgainstTypes`'
+ * own answer, the key and the label are the classifier's own, and the
+ * confidence came back with the scan. Nothing is asked of the model.
+ *
+ * ⚠️ **THE `answer === null` BRANCH IS UNREACHABLE AND IS WRITTEN ANYWAY.** An
+ * entry with no answer is counted as unclassified and `continue`s before this
+ * is ever called. "Should be unreachable" is how the last three defects in the
+ * wizard got in, so the fallbacks are real rather than a `!`.
+ */
+function fileOf(entry: ClassifiedEntry, how: ClassifiedFile["how"]): ClassifiedFile {
+  const answer = entry.answer;
+  // The key the CLASSIFIER gave, trimmed exactly as `matchDocumentType` trims
+  // it before comparing — so a key match prints the string that did the
+  // matching, not the row's spelling of it (they are equal, and printing the
+  // answer's is what makes this the file's own justification).
+  const typeKey = answer?.typeKey?.trim() ?? "";
+  const label = answer === null ? null : classifiedLabelOf(answer);
+  return {
+    path: entry.path,
+    how,
+    said: how === "key" ? typeKey : (label ?? ""),
+    confidence: entry.confidence,
+  };
 }
 
 /** A type the archive already holds. */
@@ -481,6 +602,7 @@ function existingTypeOf(
   row: DocumentTypeForGate,
   entry: ClassifiedEntry,
   fallbackTypeId: string | null,
+  file: ClassifiedFile,
 ): ClassifiedType {
   const hasForm = documentTypeHasForm(row.templateFields);
   return {
@@ -509,6 +631,7 @@ function existingTypeOf(
         entry.isIdCard === true,
     }),
     documentCount: 1,
+    files: [file],
   };
 }
 
@@ -518,6 +641,7 @@ function newTypeOf(
   entry: ClassifiedEntry,
   syntheticId: string,
   fallbackTypeId: string | null,
+  file: ClassifiedFile,
 ): ClassifiedType {
   return {
     // Not "we have not checked": there is no row to check. A type the run
@@ -546,5 +670,6 @@ function newTypeOf(
       typeIsIdCard: entry.isIdCard === true,
     }),
     documentCount: 1,
+    files: [file],
   };
 }
