@@ -30,3 +30,19 @@ e2e
 playwright.config.ts
 playwright-report
 test-results
+
+# Scratch export of Help content -- see the matching .gitignore entry. Untracked
+# files under public/ are still in the build context, and the runner copies
+# /app/public wholesale, so without this it would be served by the UAT image.
+public/_help-entries-tmp.json
+
+# ⚠️ EXCLUDED SO THAT THE BUILDER'S OWN `RUN node scripts/copy-pdfjs-worker.mjs`
+# IS THE ONLY WAY THIS FILE ENTERS THE IMAGE. It is gitignored but present in
+# Adrian's working tree, so `COPY . .` was carrying a copy dated whenever he
+# last ran npm install -- which silently defeats the `test -s` guard beside
+# that RUN: the day pdfjs-dist v4 renames the source to `.mjs`, the script
+# skips, the guard passes on the INHERITED file, and the image ships a v3
+# worker against a v4 bundle ("API version does not match the Worker
+# version"). Excluding it makes the guard mean what it says, and takes ~1 MB
+# out of the build context.
+public/pdf.worker.min.js

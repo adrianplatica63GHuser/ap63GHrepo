@@ -71,3 +71,9 @@ public/pdf.worker.min.js
 # Removed on the happy path; any abort between the docker cp and that removal
 # leaves it in the repo root.
 /ga40prj-refdata-dump.sql
+
+# Scratch export of Help content, written into public/ by the admin tooling.
+# In BOTH ignore files on purpose: public/ is copied wholesale into the Docker
+# builder and republished by the runner, so an untracked scratch file here is
+# served at /_help-entries-tmp.json in Ciprian.
+/public/_help-entries-tmp.json
