@@ -28,6 +28,9 @@ import {
   type CancelConsequenceId,
   type CancelFacts,
 } from "@/lib/import/cancel-consequences";
+// Slice #32.04 — for the walk-error sentence at the foot of this file, which
+// interpolates this dialog's button label rather than copying it.
+import { scanIcu } from "@/test-support/icu";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -260,3 +263,83 @@ describe("the cancel dialog's copy", () => {
     }
   });
 });
+
+// ---------------------------------------------------------------------------
+// The sentence that sends a stuck user here
+// ---------------------------------------------------------------------------
+
+describe("the walk-error that names this dialog's button", () => {
+  /**
+   * ⚠️ **THE RED ALERT A USER READS AT THE MOMENT THEY ARE STUCK.**
+   *                                                            (Slice #32.04)
+   *
+   * `adminImport.wizard.recheckFailed` says the folder could not be read again
+   * and then tells the user what to do about it. It used to end "Alegeți din
+   * nou folderul pentru a reîncepe" — and #32.04 removed "Alege alt folder…"
+   * from every screen that sentence can render on, so it named a control that
+   * is not there. The Structure screen is the sharpest case: `runWalk`'s catch
+   * deliberately KEEPS `observations`, so `checked` stays true and that panel's
+   * primary is pinned to "Verifică din nou" — pressing it again cannot help if
+   * the folder has genuinely moved, which is exactly what the sentence says has
+   * happened.
+   *
+   * The route that does exist is this dialog, and the sentence names its button
+   * by interpolation rather than by a second copy of the label — the rule the
+   * rest of #32.04 applied at four other sites. Pinned here, beside the key it
+   * borrows, because a relabelling of `cancel.button` is what would otherwise
+   * make the sentence wrong again silently.
+   */
+  function wizardCopy(file: string): Record<string, string> {
+    const raw = JSON.parse(
+      fs.readFileSync(path.join(process.cwd(), "messages", file), "utf8"),
+    ) as { adminImport: { wizard: Record<string, string> } };
+    return raw.adminImport.wizard;
+  }
+
+  it.each(LOCALES)("%s points at a control that exists", (file) => {
+    const text = String(wizardCopy(file).recheckFailed);
+    expect(scanIcu(text).args).toEqual(new Set(["button"]));
+    // ⚠️ And NOT by a literal. "Renunță la import" copied into the sentence
+    // would read identically today and rot the day the button is relabelled —
+    // which is the whole failure this replaced.
+    expect(text).not.toContain("Renunță la import");
+    expect(text).not.toContain("Cancel import");
+  });
+
+  it("⚠️ no longer sends the user to the folder picker", () => {
+    // The clause that was there. Both locales, because the Romanian is what
+    // ships and the English is what a reader of this test will check first.
+    expect(String(wizardCopy("ro-RO.json").recheckFailed)).not.toMatch(
+      /Alege(ți)? (din nou |alt )folder/i,
+    );
+    expect(String(wizardCopy("en-GB.json").recheckFailed)).not.toMatch(
+      /choose (the |another )?folder/i,
+    );
+  });
+
+  it("⚠️ leaves the failed-PICK message alone, which needs no route", () => {
+    // `walkFailed` follows a pick that has already cleared `observations`, so
+    // the Structure panel's primary is back to "Alege folderul…" and the user
+    // is standing on the control they need. A `{button}` there would be a
+    // placeholder with nothing to say.
+    for (const file of LOCALES) {
+      expect(scanIcu(String(wizardCopy(file).walkFailed)).args).toEqual(new Set());
+    }
+  });
+
+  it("⚠️ the wizard actually supplies the value, at both call sites", () => {
+    // A required placeholder with no argument renders the raw token in the
+    // shipping locale, inside a `role="alert"`. Two `setWalkError` calls reach
+    // this message: `runWalk`'s catch (through a ternary key) and
+    // `handleRecheck`'s missing-handle guard.
+    const wizard = fs.readFileSync(
+      path.join(process.cwd(), "src/app/admin/import/_components/import-wizard.tsx"),
+      "utf8",
+    );
+    expect(wizard).toContain('useTranslations("adminImport.cancel")');
+    expect(wizard).toContain('t("recheckFailed", { button: tCancel("button") })');
+    expect(wizard).toContain('t(mode === "recheck" ? "recheckFailed" : "walkFailed", {');
+    expect(wizard).toContain('button: tCancel("button"),');
+  });
+});
+

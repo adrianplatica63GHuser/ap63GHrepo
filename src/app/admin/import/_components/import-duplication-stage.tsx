@@ -227,8 +227,9 @@ export function ImportDuplicationStage({
    * which asks the user to do something about a folder that has nothing left to
    * do — and keeps the title, the emerald sentence and the numbers. The
    * step-gate card below carries the screen's one action. ("Alege alt folder…"
-   * was in this list until #32.04, which removed the button from the panel
-   * outright rather than only at a pause.)
+   * was in this list until #32.04, which removed the button from this panel —
+   * and from all six that carried the key — outright rather than only at a
+   * pause.)
    *
    * ⚠️ **KEYED ON THE VERDICT, NOT ON THE TICK, and that is the whole safety of
    * it.** The request described the screen after the tick, because that is the

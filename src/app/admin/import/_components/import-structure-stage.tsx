@@ -21,12 +21,21 @@
  *
  * ⚠️ **ON EVERY ROUND THAT HAS SOMETHING TO PUT RIGHT, which since #32.01 is
  * not every round.** When the check comes back clean AND the wizard is holding a
- * step-through pause on this stage, the tick, BOTH buttons beside it — the
- * re-check and "Alege alt folder…" — the rules listing, the take-away and the
- * block of STR-15 answers are all gone: the
+ * step-through pause on this stage, the tick, the re-check beside it, the rules
+ * listing, the take-away and the block of STR-15 answers are all gone: the
  * screen is the outcome and the step-gate card's Continue, and there is nothing
  * for a tick to gate. See `resultOnly` below. Everything in this header
  * describes the other case, which is unchanged.
+ *
+ * ⚠️ **"Alege alt folder…" WAS THE SECOND BUTTON IN THAT ROW UNTIL #32.04, and
+ * it is now gone from every round rather than from the clean one.** (Adrian:)
+ * a folder change in the middle of a run is neither a cancel nor a restart
+ * while reading like both, and the wizard already has the two controls that say
+ * what they do. This stage was the last to keep one — the argument being that
+ * its work IS choosing a folder — and that argument is served by the primary
+ * button, which reads "Alege folderul…" until a folder has been checked. Once
+ * one has, changing it is starting again, and the stage bar's Cancel, with its
+ * consequence list, is what says so.
  *
  * That is not ceremony. The loop's failure mode is a user who presses the
  * button, sees the same list, presses it again and concludes the system is
@@ -1117,19 +1126,19 @@ export function ImportStructureStage({
           the screen say there is work outstanding when the line above it has
           just said there is not.
 
-          "Alege alt folder…" goes with it, and that is safe HERE and would not
-          be elsewhere: nothing at this stage has entered the archive and no
-          classification has been paid for, so a user who realises the folder is
-          wrong loses a walk, not work. The step-gate card below is what this
-          screen now ends on.
+          ("Alege alt folder…" was the row's second button and went with it in
+          #32.01; #32.04 removed it from this panel outright — see the header.)
+          The step-gate card below is what this screen now ends on.
 
           ⚠️ **What the ways back actually cost, since a comment here once
           promised a cheap one that is not.** Continue, then the NEXT stage's own
           check, re-walks this folder and bounces back here if anything has
           changed — that is the cheap route, and it keeps the STR-15 answers,
-          because `runWalk` in `recheck` mode does. The next stage's "Alege alt
-          folder…" is NOT the same thing: `handlePickFolder` clears
-          `propertyAnswers`, as a different folder must. And the stage bar's
+          because `runWalk` in `recheck` mode does. Changing the FOLDER is not
+          that, and since #32.04 no screen in the middle of a run offers it:
+          `handlePickFolder` clears `propertyAnswers`, as a different folder
+          must, and it is now reached only from this panel's own primary before
+          a folder has been checked, and from a finished run. The stage bar's
           Cancel is blunter still — it returns the run to Information and puts
           the eight preconditions back.
 
@@ -1180,19 +1189,15 @@ export function ImportStructureStage({
             {checked ? t("recheck") : t("chooseFolder")}
           </button>
 
-          {/* The folder may simply be the wrong one. Gated on the same tick,
-              because it starts the same check. */}
-          {checked && (
-            <button
-              type="button"
-              onClick={onChooseFolder}
-              disabled={!acknowledged || busy}
-              className={buttonClass({ variant: "secondary", size: "md" })}
-            >
-              {t("chooseAnotherFolder")}
-            </button>
-          )}
-
+          {/* ⚠️ **"Alege alt folder…" STOOD HERE UNTIL #32.04, and this panel
+              was the last of the six to keep it.** The case for it here was that
+              this stage's work IS choosing a folder — but that work is what the
+              primary button does before a folder has been checked ("Alege
+              folderul…"), and this one only ever appeared AFTER one had. At that
+              point changing folder is starting again, which is what the stage
+              bar's Cancel says out loud, with its consequence list. `runWalk`
+              still reaches `handlePickFolder` through the primary above; only
+              the second, quieter copy of that journey is gone. */}
           {busy && <ActivityCue>{busyLabel}</ActivityCue>}
         </div>
       </div>

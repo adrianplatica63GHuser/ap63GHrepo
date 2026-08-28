@@ -291,9 +291,13 @@ describe("the Scanning and Import stages' copy", () => {
       // ── Slice #32.04 ──────────────────────────────────────────────────────
       // "Alege alt folder…" on every screen that stands in the middle of a run:
       // mid-flow a folder change is either a cancel or a restart, and the
-      // wizard has both. The Structure panel keeps its own — that stage's work
-      // IS choosing a folder — so `adminImport.structure.chooseAnotherFolder`
-      // is deliberately NOT in this list.
+      // wizard has both. ⚠️ **ALL SIX, INCLUDING STRUCTURE'S.** That panel kept
+      // its own for one round, on the argument that its stage's work IS
+      // choosing a folder; Adrian's answer to the Ask first was that it goes
+      // there too, and the argument is served by the primary button, which
+      // reads "Alege folderul…" until a folder has been checked. So there is no
+      // `chooseAnotherFolder` key left anywhere, in either locale.
+      "adminImport.structure.chooseAnotherFolder",
       "adminImport.constraints.chooseAnotherFolder",
       "adminImport.duplication.chooseAnotherFolder",
       "adminImport.preexisting.chooseAnotherFolder",

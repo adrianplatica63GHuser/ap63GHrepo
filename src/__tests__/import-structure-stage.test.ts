@@ -75,7 +75,6 @@ const REQUIRED_KEYS = [
   "acknowledge",
   "acknowledgeHint",
   "chooseFolder",
-  "chooseAnotherFolder",
   "recheck",
   "clean",
   "violationsTitle",

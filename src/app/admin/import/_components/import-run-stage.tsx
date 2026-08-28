@@ -96,12 +96,13 @@ type Props = {
    *
    * ⚠️ **THE HANDLER IS THE WIZARD'S FOLDER PICKER AND THE NAME SAYS SO; THE
    * BUTTON'S LABEL NO LONGER DOES.** #32.04 took "Alege alt folder…" off every
-   * screen that stands in the middle of a run — mid-flow, changing folder is
-   * either a cancel or a restart, and the wizard has both — and this screen is
-   * the one place it must not simply vanish: after a finished run it is the
-   * only way out of the page. What was wrong here was the label, not the
-   * control, because at that point in the flow it is not what the button
-   * means.
+   * other screen in the flow — mid-run, changing folder is either a cancel or a
+   * restart, and the wizard has both; even the Structure stage, whose own work
+   * is choosing a folder, keeps only its first-press "Alege folderul…". This
+   * screen is the one place the control must not simply vanish: after a
+   * finished run it is the only way out of the page. What was wrong here was
+   * the label, not the control, because at that point in the flow it is not
+   * what the button means.
    */
   onChooseFolder: () => void;
 };

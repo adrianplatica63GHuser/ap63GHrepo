@@ -2184,7 +2184,7 @@
       "readingMetadata": "Reading files… {done} of {total}",
       "readingDocumentTypes": "Reading the list of document types…",
       "walkFailed": "This folder could not be read. It may have been moved, renamed, or disconnected.",
-      "recheckFailed": "This folder could not be read again. It may have been moved or renamed while you were working on it — the list below is the previous result. Choose the folder again to start over.",
+      "recheckFailed": "This folder could not be read again. It may have been moved or renamed while you were working on it — the list below is the previous result. If the folder is no longer where it was, stop the import with “{button}” and start it again.",
       "statusPreexisting": "Already here",
       "resumedPreexisting": "{count, plural, one {one was already in the system} other {# were already in the system}}"
     },
@@ -2292,7 +2292,6 @@
       "acknowledge": "I follow the structure rules",
       "acknowledgeHint": "Tick once you have read the rules, and again after each correction you make in File Explorer. The tick is asked for on every check.",
       "chooseFolder": "Choose folder…",
-      "chooseAnotherFolder": "Choose another folder…",
       "recheck": "Check again",
       "clean": "The folder structure is correct.",
       "violationsTitle": "{count, plural, one {One thing to put right} other {# things to put right}}",

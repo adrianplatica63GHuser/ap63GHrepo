@@ -427,6 +427,17 @@ export function ImportWizard() {
   const tTypesBlocked = useTranslations("adminImport.typesBlocked");
   /** Slice #29.11 — the account a clean check gives of what it looked at. */
   const tCheck = useTranslations("adminImport.checkResult");
+  /**
+   * The Cancel dialog's own namespace — for its BUTTON's label, not its copy.
+   *                                                            (Slice #32.04)
+   *
+   * `recheckFailed` ends by telling the user what to do about a folder that has
+   * moved, and it named a control that no longer exists on any screen it can
+   * appear on. The route that does exist is the stage bar's Cancel, and the
+   * sentence names it by interpolation rather than by a second copy of its
+   * label — the rule this slice applied at four other sites.
+   */
+  const tCancel = useTranslations("adminImport.cancel");
   const [phase, setPhase] = useState<ImportPhase>("information");
   const [rootFolderName, setRootFolderName] = useState<string>("");
   const [entries, setEntries] = useState<FSEntry[]>([]);
@@ -1224,7 +1235,19 @@ export function ImportWizard() {
         // file or directory could not be found"), which has no place in a
         // Romanian UI — and the folder may legitimately have moved, because
         // acting on this very report is what the user was told to do.
-        setWalkError(t(mode === "recheck" ? "recheckFailed" : "walkFailed"));
+        // `button` is read by `recheckFailed` only: `walkFailed` follows a
+        // failed PICK, which has already cleared `observations`, so the
+        // Structure panel's primary is back to "Alege folderul…" and that
+        // message needs no route of its own. Supplying it on both arms keeps
+        // the ternary a choice of sentence rather than of call shape; the extra
+        // value costs `walkFailed` its no-compile fast path and nothing else —
+        // it holds no brace, apostrophe or `<`, so the formatted output is
+        // byte-identical, and this line runs at most once per failed pick.
+        setWalkError(
+          t(mode === "recheck" ? "recheckFailed" : "walkFailed", {
+            button: tCancel("button"),
+          }),
+        );
         // Crucially, nothing above this point cleared the existing findings, so
         // a failed re-check returns the user to the list they were working
         // from rather than destroying it. Which list that is comes from the
@@ -1485,7 +1508,7 @@ export function ImportWizard() {
       // hybrid render the comment above forbids.
       settle(fromPhase, next.phase);
     },
-    [t, beginRun, settle],
+    [t, tCancel, beginRun, settle],
   );
 
   const handlePickFolder = useCallback(async () => {
@@ -1967,11 +1990,11 @@ export function ImportWizard() {
       // that set `_dirHandle`, so it stays a guard against a future route
       // rather than a fix for a reported bug — but it is now a guard on a
       // button the user presses first, not last.
-      setWalkError(t("recheckFailed"));
+      setWalkError(t("recheckFailed", { button: tCancel("button") }));
       return;
     }
     await runWalk(_dirHandle, "recheck", target, returnTo);
-  }, [runWalk, t, phase]);
+  }, [runWalk, t, tCancel, phase]);
 
   /**
    * Slice #26.03 — renounce the run and go back to the beginning.

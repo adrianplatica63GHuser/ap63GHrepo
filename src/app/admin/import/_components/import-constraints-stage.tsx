@@ -714,7 +714,8 @@ export function ImportConstraintsStage({
           has just said there is not.
 
           ("Alege alt folder…" went with it in #32.01 and is gone from this
-          panel outright since #32.04 — see the module header.) The step-gate
+          panel — and, since Adrian answered the Ask first, from all six that
+          carried the key — outright since #32.04. See the module header.) The step-gate
           card below is what this screen now ends on, and the way back to File
           Explorer is the next stage's own check, which re-walks this folder and
           bounces back here if anything has changed.
@@ -770,7 +771,10 @@ export function ImportConstraintsStage({
               wizard already has the two controls that say what they do. The
               stage bar's Cancel, with its consequence list, is the route out;
               the one screen that keeps this button is the finished run, where
-              it is the only way to start another and is labelled as that. */}
+              it is the only way to start another and is labelled as that. Not
+              even Structure kept one: the Ask first was answered "remove it
+              there too", and that stage's own primary reads "Alege folderul…"
+              until a folder has been checked. */}
           {busy && <ActivityCue>{busyLabel}</ActivityCue>}
         </div>
       </div>

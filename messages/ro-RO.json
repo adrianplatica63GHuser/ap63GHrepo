@@ -2184,7 +2184,7 @@
       "readingMetadata": "Se citesc fișierele… {done} din {total}",
       "readingDocumentTypes": "Se citește lista tipurilor de documente…",
       "walkFailed": "Acest folder nu a putut fi citit. Este posibil să fi fost mutat, redenumit sau deconectat.",
-      "recheckFailed": "Acest folder nu a putut fi citit din nou. Este posibil să fi fost mutat sau redenumit în timp ce lucrați la el — lista de mai jos este rezultatul anterior. Alegeți din nou folderul pentru a reîncepe.",
+      "recheckFailed": "Acest folder nu a putut fi citit din nou. Este posibil să fi fost mutat sau redenumit în timp ce lucrați la el — lista de mai jos este rezultatul anterior. Dacă folderul nu mai este la locul lui, opriți importul apăsând „{button}” și porniți-l din nou.",
       "statusPreexisting": "Deja în sistem",
       "resumedPreexisting": "{count, plural, one {unul se afla deja în sistem} few {# se aflau deja în sistem} other {# se aflau deja în sistem}}"
     },
@@ -2292,7 +2292,6 @@
       "acknowledge": "Respect regulile de structură",
       "acknowledgeHint": "Bifați după ce ați citit regulile și apoi din nou după fiecare îndreptare făcută în File Explorer. Bifa se cere la fiecare verificare.",
       "chooseFolder": "Alege folderul…",
-      "chooseAnotherFolder": "Alege alt folder…",
       "recheck": "Verifică din nou",
       "clean": "Structura folderului este în regulă.",
       "violationsTitle": "{count, plural, one {Un lucru de îndreptat} few {# lucruri de îndreptat} other {# de lucruri de îndreptat}}",

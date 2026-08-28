@@ -198,7 +198,8 @@ describe("the Duplication stage's copy, against its siblings", () => {
    * ⚠️ An explicit list, not "everything except a few". The three panels are
    * siblings by design and several of their strings are deliberately identical
    * - "Verifică din nou", the count of things to put right ("Alege alt
-   * folder…" was among them until #32.04 took the button off this panel)
+   * folder…" was among them until #32.04 took the button off all six panels
+   * that carried the key)
    * - because the whole value of the third loop is that it costs the user
    * nothing to learn. Asserting difference by default would fail on the copy
    * that is RIGHT.
@@ -280,10 +281,15 @@ describe("the Duplication stage's copy, against its siblings", () => {
         };
       };
       // ⚠️ `chooseAnotherFolder` LEFT THIS LIST IN #32.04, with the button —
-      // see the Constraints suite for why an identity test against a key the
-      // Structure panel still has would have gone on passing.
+      // see the Constraints suite for why an identity test on a key that no
+      // longer exists on either side would have gone on passing.
       for (const key of ["recheck", "violationsTitle"] as const) {
-        expect(at(json.adminImport.duplication, key)).toBe(at(json.adminImport.structure, key));
+        // The `typeof` first — see the Constraints suite: two `undefined`s
+        // compare equal, so without it a key deleted from both sides leaves
+        // this loop green for ever. (#32.04.)
+        const theirs = at(json.adminImport.structure, key);
+        expect({ key, theirs: typeof theirs }).toEqual({ key, theirs: "string" });
+        expect(at(json.adminImport.duplication, key)).toBe(theirs);
       }
     }
   });

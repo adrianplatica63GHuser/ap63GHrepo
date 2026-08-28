@@ -164,7 +164,7 @@ describe("the Constraints stage's copy", () => {
    * siblings by design and several of their strings are deliberately identical
    * — "Verifică din nou", the count of things to put right, the instruction to
    * go to File Explorer ("Alege alt folder…" was among them until #32.04 took
-   * the button off this panel) — because the whole value of
+   * the button off both panels) — because the whole value of
    * the second loop is that it costs the user nothing to learn. Asserting
    * difference by default would therefore fail on the copy that is RIGHT, and
    * the natural fix would be to reword a button for no reason.
@@ -231,13 +231,18 @@ describe("the Constraints stage's copy", () => {
       const json = JSON.parse(
         fs.readFileSync(path.join(process.cwd(), "messages", file), "utf8"),
       ) as { adminImport: { structure: Record<string, unknown>; constraints: Record<string, unknown> } };
-      // ⚠️ `chooseAnotherFolder` LEFT THIS LIST IN #32.04, with the button. It
-      // is gone from this panel and from every other screen that stands in the
-      // middle of a run; the Structure panel still has one, so the key is still
-      // there to compare against and an identity test would keep passing over a
-      // key nothing renders.
+      // ⚠️ `chooseAnotherFolder` LEFT THIS LIST IN #32.04, with the button, and
+      // the key no longer exists on either side of the comparison: it is gone
+      // from all six panels and from both locales. An identity test left here
+      // would compare two `undefined`s and pass for ever.
       for (const key of ["recheck", "violationsTitle"] as const) {
-        expect(at(json.adminImport.constraints, key)).toBe(at(json.adminImport.structure, key));
+        // ⚠️ The `typeof` first, and #32.04 is why it is here: `expect(undefined)
+        // .toBe(undefined)` PASSES, so a key deleted from both panels leaves
+        // this loop green over a comparison of two absences. That is exactly
+        // what happened to `chooseAnotherFolder`, and it was caught by hand.
+        const theirs = at(json.adminImport.structure, key);
+        expect({ key, theirs: typeof theirs }).toEqual({ key, theirs: "string" });
+        expect(at(json.adminImport.constraints, key)).toBe(theirs);
       }
     }
   });

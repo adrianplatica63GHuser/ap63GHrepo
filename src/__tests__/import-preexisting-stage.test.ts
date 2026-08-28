@@ -444,7 +444,8 @@ describe("the Pre-existing stage's copy, against its siblings", () => {
    * — "Verifică din nou" — because the whole value of the fourth loop is that
    * it costs the user nothing to learn. Asserting difference by default would
    * fail on the copy that is RIGHT. ("Alege alt folder…" was the second example
-   * here until #32.04 removed the button from three of the four panels.)
+   * here until #32.04 removed the button from all six panels that carried the
+   * key.)
    *
    * What is listed below is the copy that names the stage. A Pre-existing
    * screen saying "Am citit ce se consideră duplicat" over its tick is one
@@ -530,14 +531,18 @@ describe("the Pre-existing stage's copy, against its siblings", () => {
           preexisting: Record<string, unknown>;
         };
       };
-      // ⚠️ `chooseAnotherFolder` LEFT THIS LIST IN #32.04, with the button. It
-      // is gone from this panel — mid-run, a folder change is either a cancel
-      // or a restart, and the wizard has both — while the Structure panel keeps
-      // its own, because that stage's work IS choosing a folder. So the key
-      // still exists to compare against, and an identity test left here would
-      // go on passing over a control nothing renders.
+      // ⚠️ `chooseAnotherFolder` LEFT THIS LIST IN #32.04, with the button —
+      // mid-run, a folder change is either a cancel or a restart, and the
+      // wizard has both. Structure's went too, so the key exists on neither
+      // side now and an identity test left here would compare two `undefined`s
+      // and pass for ever.
       for (const key of ["recheck"] as const) {
-        expect(at(json.adminImport.preexisting, key)).toBe(at(json.adminImport.structure, key));
+        // The `typeof` first — see the Constraints suite: two `undefined`s
+        // compare equal, so without it a key deleted from both sides leaves
+        // this loop green for ever. (#32.04.)
+        const theirs = at(json.adminImport.structure, key);
+        expect({ key, theirs: typeof theirs }).toEqual({ key, theirs: "string" });
+        expect(at(json.adminImport.preexisting, key)).toBe(theirs);
       }
     }
   });
