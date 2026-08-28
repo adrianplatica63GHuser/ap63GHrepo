@@ -2103,7 +2103,7 @@
         "intro": "Every line must be green. Until then the import cannot start, so a folder that could not be imported costs nothing.",
         "recheck": "Check again",
         "checking": "Checking…",
-        "allGreen": "Everything is ready — choose a folder.",
+        "allGreen": "Everything is ready.",
         "notReady": "The import cannot start yet. Fix the items above, then check again.",
         "statusPass": "in order",
         "statusFail": "problem",
@@ -2411,6 +2411,7 @@
       },
       "title": "Copies inside the chosen folder",
       "intro": "A check follows, on the same folder: nothing must sit in it twice, or it reaches the archive twice as well. Only the files in the chosen folder are compared, against each other — what is already in the system is checked at the next step.",
+      "introDone": "Below is what comparing the files in the chosen folder against each other showed. What is already in the system is checked at the next step.",
       "rulesTitle": "What counts as a copy",
       "showRules": "Show the explanations again",
       "hideRules": "Hide the explanations",
@@ -2448,7 +2449,6 @@
       }
     },
     "checkResult": {
-      "title": "What the “{stage}” step found",
       "structure": {
         "rules": "Structure rules checked",
         "violations": "Rules broken",
@@ -2596,9 +2596,12 @@
     },
     "stepGate": {
       "toggle": "Stop after every step",
-      "toggleHint": "Normally the import moves on by itself past the steps that have nothing to put right. Tick this if you want to see what each step found and press the button yourself.",
-      "why": "The import stopped here because “Stop after every step” is ticked. Nothing is being spent while you read.",
+      "toggleHint": "Ticked: the import stops after every step that has nothing to put right and moves on when you press the button yourself. Unticked: it goes past those steps by itself.",
+      "why": "The import stopped here because “Stop after every step” was ticked. Nothing is being spent while you read.",
       "advance": "Continue to the “{stage}” step",
+      "nextAction": {
+        "preconditions": "The folder to import is chosen at the next step — first read the rules about how the folders are arranged and tick that you follow them, and then the button for choosing the folder becomes active. The button that goes there: {button}."
+      },
       "cleared": {
         "preconditions": "All eight preconditions were checked one by one and every one is met. There is nothing for you to prepare before moving on.",
         "structure": "Every rule about how the folders are arranged was checked, and none was broken. There is nothing for you to put right in File Explorer.",

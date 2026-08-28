@@ -54,6 +54,11 @@ function at(node: Record<string, unknown>, keyPath: string): unknown {
 const REQUIRED_KEYS = [
   "title",
   "intro",
+  // ⚠️ Slice #32.03. The sentence that REPLACES `intro` once the check has come
+  // back clean, on a screen that by then has no explanations, no tick and no
+  // buttons for `intro` to be talking about. A missing key prints the dotted
+  // path where the screen's only explanatory line should be.
+  "introDone",
   "rulesTitle",
   "showRules",
   "hideRules",
@@ -205,6 +210,13 @@ describe("the Duplication stage's copy, against its siblings", () => {
   const MUST_DIFFER = [
     "title",
     "intro",
+    // ⚠️ Slice #32.03, and it belongs here for the same reason `intro` does:
+    // `introDone` names what THIS stage looked at — the files, against each
+    // other — where Structure's names the folder and Constraints' the
+    // measurements. A Duplication screen that came back clean saying "below are
+    // the numbers from this check" would credit this stage with the check its
+    // sibling ran.
+    "introDone",
     "rulesTitle",
     "showRules",
     "hideRules",
@@ -354,6 +366,69 @@ describe("the Duplication stage's copy, against its siblings", () => {
     expect(undeclared).toEqual([]);
     const unused = REQUIRED_KEYS.filter((k) => !asked.has(k));
     expect(unused).toEqual([]);
+  });
+
+  it("⚠️ drops the work blocks on a clean verdict, and keys that on the VERDICT", () => {
+    // Slice #32.03, and this is the only guard the behavioural half of it has.
+    // Nothing in `src/__tests__/` renders React, so a source scan is the
+    // instrument available - the same trade `import-workflow-stages.test.ts`
+    // makes for the wizard, and for the same reason: without it, reverting the
+    // intro swap and all four `!resultOnly` wrappers leaves every suite in the
+    // repo green while a clean paused screen goes back to offering "Verifica
+    // din nou", "Alege alt folder..." and a take-away page listing no copies -
+    // which is the screen this slice exists to remove.
+    const source = fs.readFileSync(
+      path.join(
+        process.cwd(),
+        "src/app/admin/import/_components/import-duplication-stage.tsx",
+      ),
+      "utf8",
+    );
+
+    // ⚠️ **THE VERDICT, NOT THE TICK, AND THAT IS THE SAFETY OF THE WHOLE
+    // THING.** Keyed on `acknowledged` this would take "Verifica din nou" away
+    // at the exact moment it is the only way out of a folder that DOES have
+    // copies in it - #26.02's unfixable-message defect verbatim. The three
+    // terms are asserted by NAME, so a rename or a Prettier wrap is an innocent
+    // edit; `acknowledged` appearing in the expression is not.
+    const start = source.indexOf("const resultOnly =");
+    expect(start).toBeGreaterThan(0);
+    const expr = source.slice(start, source.indexOf(";", start));
+    for (const term of ["cleanVerdict", "gated", "resultDetail != null"]) {
+      expect({ term, present: expr.includes(term) }).toEqual({ term, present: true });
+    }
+    expect({ expr, keyedOnTheTick: expr.includes("acknowledged") }).toEqual({
+      expr,
+      keyedOnTheTick: false,
+    });
+
+    // ⚠️ **AND `cleanVerdict` ITSELF, BECAUSE #32.03 IS WHAT MADE IT A NAME.**
+    // The three terms were written inline at the emerald block's render site
+    // until this slice lifted them into a const, and a test that pins only the
+    // NAME leaves the definition free: drop `!busy` from it and every assertion
+    // in this suite still passes while the panel reproduces the defect its own
+    // comment says is reachable - a re-check pressed from the Evaluation screen
+    // mounts this panel holding the PREVIOUS round's clean verdict with `busy`
+    // true, so "Nu se afla nimic de doua ori in folderul ales" and the whole
+    // account are shown over a check that may be about to refuse the folder.
+    const cvStart = source.indexOf("const cleanVerdict =");
+    expect(cvStart).toBeGreaterThan(0);
+    const cvExpr = source.slice(cvStart, source.indexOf(";", cvStart));
+    for (const term of ["!busy", "verdict !== null", "verdict.clean"]) {
+      expect({ term, present: cvExpr.includes(term) }).toEqual({ term, present: true });
+    }
+
+    // The four blocks it governs. Two are wrappers; the rules listing and its
+    // disclosure read it inline, exactly as the Constraints panel does.
+    expect(source.split("{!resultOnly && (").length - 1).toBe(2);
+    expect(source).toContain('{resultOnly ? t("introDone") : t("intro")}');
+    expect(source).toContain("!resultOnly && (!checked || rulesOpen");
+    expect(source).toContain("checked && !resultOnly && !(busy && nothingToShow)");
+
+    // And the focus target follows, because on that screen `checkboxRef` is
+    // null - the block holding the tick is not rendered - so an edge that
+    // landed there would focus nothing and leave the keyboard on `<body>`.
+    expect(source).toContain("justMounted || resultOnly ? headingRef : checkboxRef");
   });
 
   it("says something different in Romanian than in English", () => {

@@ -6,39 +6,60 @@
  *
  * WHAT IT IS
  * ----------
- * A stage that finds nothing wrong has, until now, said so in one emerald line
- * of four words — and on the common path (step-through unticked) not even that,
+ * A stage that finds nothing wrong said so, until #29.11, in one emerald line
+ * of four words — and on the path the run took by itself, not even that,
  * because the panel is replaced in the same commit that moves the phase on. All
  * the user was left with was a clause at the top of the NEXT stage's intro.
  * This card is the account: which rules ran, what the walk found, and — at
  * Structure — how the property folder's name was read.
  *
- * ⚠️ **TWO MOUNT POINTS, AND THEY ARE MUTUALLY EXCLUSIVE BY CONSTRUCTION.**
+ * ⚠️ **AND IT NO LONGER COVERS THE PATH IT WAS WRITTEN FOR, WHICH IS #32.03'S
+ * DECISION AND NOT AN OVERSIGHT.** #29.11 reached the self-advancing user
+ * through the ATTRIBUTED trail; #32.03 made step-through the DEFAULT — so a
+ * clean check now rests on its own stage and is read here — and removed the
+ * trail, which had become three green memos stacked above the screen the user
+ * was actually there to read. A user who unticks the control therefore gets no
+ * account at Constraints or Duplication, exactly as before #29.11 — those two
+ * checks self-advance and their panels are replaced in the commit that moves
+ * the phase on. Do not read the paragraph above as a promise this component
+ * still keeps for them: `import-wizard.tsx`'s memo note states the decision in
+ * full, and a slice that wants to serve that user should put the account where
+ * they are standing rather than restore a trail.
  *
- *  - INLINE, inside the stage's own panel, under its emerald all-clear. That is
- *    the case where the user is standing on the stage — a step-through pause, or
- *    a Structure verdict turned clean by answering STR-15 — and the panel's own
- *    `<h2>` and `clean` line have already said which stage this is and that it
- *    passed. Rendered with no `attribution`, so it adds only the detail.
- *  - ATTRIBUTED, under the panel of a LATER stage, for a check the user flew
- *    past. There the card has to name the stage itself, because the heading
- *    above it belongs to a different one. `attribution` carries both halves.
- *    Under rather than over: the panel focuses its own heading when it mounts
- *    and `focus()` scrolls, so a card drawn above it was pushed off the top of
- *    the screen by the very commit that created it — and reading forward from
- *    that heading never reached it. `import-wizard.tsx` records the round that
- *    found this.
+ * ⚠️ **STRUCTURE IS THE EXCEPTION, AND IT HAS NOTHING TO DO WITH THE TOGGLE.**
+ * A walk that finds only STR-15 violations rests on `structure-report`, and
+ * answering the last one turns `structureVerdict` clean with no re-walk and no
+ * phase change — see `import-structure-stage.tsx`'s `cleanVerdict` block, which
+ * records that #28.02 made that state reachable on purpose. `gated` is false
+ * there, so `resultOnly` is false and the panel keeps its work blocks; this
+ * card renders under the all-clear all the same. That route is why
+ * `checkAccountsSettled` is a BELT on the panel's own guard rather than a
+ * duplicate of it: it is also the route on which a re-check can fail without
+ * clearing `entries`, and the panel cannot see that. Do not delete the belt on
+ * the argument that only a gated rest can mount this card.
  *
- * `import-wizard.tsx` decides which, from whether that stage's panel is mounted.
- * A card can therefore never appear twice on one screen, and the decision lives
- * in one place rather than in each panel.
+ * ⚠️ **ONE MOUNT POINT, INSIDE THE PANEL OF THE CHECK THAT JUST RAN.** The card
+ * sits under that panel's emerald all-clear, whose `<h2>` and `clean` line have
+ * already said which stage this is and that it passed — so the card carries no
+ * heading of its own and adds only the detail.
  *
- * ⚠️ **IT IS NEVER RENDERED OVER A CHECK THAT IS RUNNING.** Both call sites are
- * behind `!busy`: the wizard hides the whole trail while any check is in
- * flight, and each panel's own `!busy && verdict.clean` guard — the one three
- * adversarial rounds put there — contains the inline case. A re-check can turn
- * a clean verdict dirty, and a card describing the previous round's folder is
- * exactly the confident-but-stale output those guards exist for.
+ * ⚠️ **IT HAD A SECOND, ATTRIBUTED MODE UNTIL #32.03, AND THAT MODE IS NOT
+ * COMING BACK BY ACCIDENT.** An `attribution` prop drew this card under a LATER
+ * stage's panel, naming the stage it belonged to, for a check the user had flown
+ * past — the retrospective trail. #32.03 made step-through the default, so every
+ * clean check now rests on its own stage and gives its account here; the trail
+ * became three green "everything was fine" memos stacked above the screen that
+ * was actually asking for something, and it went. The prop went with it rather
+ * than being kept "in case", because a component with one live mode and one
+ * dormant one is a component the next reader has to work out.
+ *
+ * ⚠️ **IT IS NEVER RENDERED OVER A CHECK THAT IS RUNNING.** All three call
+ * sites — one per file check, and `import-check-result-copy.test.ts` pins the
+ * count — are behind `!busy` twice over: `checkAccountsSettled` in the wizard, which also
+ * sees a walk that FAILED, and the panel's own `!busy && verdict.clean` guard —
+ * the one three adversarial rounds put there. A re-check can turn a clean
+ * verdict dirty, and a card describing the previous round's folder is exactly
+ * the confident-but-stale output those guards exist for.
  *
  * ⚠️ **NO `role="status"`.** The stage panels and the step-gate card already own
  * permanently-mounted live regions for their own sentences, and this card
@@ -59,47 +80,20 @@ export type CheckFact = {
 };
 
 type Props = {
-  /**
-   * Set only when the card is drawn away from its own stage's panel.
-   *
-   * `title` names the stage the result belongs to and `headline` is that
-   * stage's own all-clear sentence — `adminImport.<stage>.clean`, the string it
-   * has owned since #26.04, rather than a second set written for this card.
-   */
-  attribution?: { title: string; headline: string };
   facts: readonly CheckFact[];
   /** The folder-name readings at Structure; nothing at the other two stages. */
   children?: ReactNode;
 };
 
-export function ImportCheckResult({ attribution, facts, children }: Props) {
+export function ImportCheckResult({ facts, children }: Props) {
   return (
     <section
       className={[
-        "rounded-xl border border-emerald-300 bg-emerald-50/60 p-4",
+        "mt-3 rounded-xl border border-emerald-300 bg-emerald-50/60 p-4",
         "dark:border-emerald-800 dark:bg-emerald-950/20",
-        // Inline it sits under the panel's own all-clear, which already has a
-        // top margin of its own; attributed it is a card in its own right.
-        attribution === undefined ? "mt-3" : "",
       ].join(" ")}
     >
-      {attribution !== undefined && (
-        <>
-          {/* ⚠️ `<h2>`, not `<h3>`, and an adversarial round corrected it. The
-              attributed card is a SIBLING of the stage panels, each of which is
-              an `<h2>`-headed `<section>`; the wizard contributes no heading of
-              its own, so an `<h3>` here made the document read h1 → h3 → h2 —
-              a skip and a reversal, three times over when three cards stack. */}
-          <h2 className="text-sm font-semibold text-emerald-900 dark:text-emerald-200">
-            {attribution.title}
-          </h2>
-          <p className="mt-1 text-sm font-medium text-emerald-800 dark:text-emerald-300">
-            {attribution.headline}
-          </p>
-        </>
-      )}
-
-      <dl className={attribution === undefined ? "" : "mt-3"}>
+      <dl>
         {facts.map((fact) => (
           <div
             key={fact.label}
@@ -164,12 +158,13 @@ export function PropertyNameReadings({
 
   return (
     <div className="mt-4">
-      {/* ⚠️ `<h3>` at BOTH mount points, which is what makes one level right
-          for both. Attributed, it sits under this card's own `<h2>`; inline, it
-          sits under the stage panel's `<h2>`, alongside that panel's other
-          `<h3>`s (the rules listing, the fix list). An `<h4>` — the first
-          draft — skipped a level inline and then came out ABOVE the panel's
-          own `<h3>` in document order. */}
+      {/* ⚠️ `<h3>`, not `<h4>`. This card carries no heading of its own, so
+          these readings sit directly under the stage panel's `<h2>`, alongside
+          that panel's other `<h3>`s (the rules listing, the fix list). An
+          `<h4>` — the first draft — skipped a level and then came out ABOVE the
+          panel's own `<h3>` in document order. (It was `<h3>` at the attributed
+          mount point too, under that card's own `<h2>`; #32.03 removed that
+          mount point and the level is unchanged.) */}
       <h3 className="text-xs font-semibold uppercase tracking-wide text-emerald-800 dark:text-emerald-300">
         {strings.title}
       </h3>

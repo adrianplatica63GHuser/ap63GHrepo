@@ -121,9 +121,9 @@ type Props = {
    * not work.
    *
    * What this prop still does, therefore, is decide whether the work blocks are
-   * drawn at all — see `resultOnly` below. The demotion it was
-   * added for survives only as the styling on a button that a pause no longer
-   * renders; see the note at that button.
+   * drawn at all — see `resultOnly` below. The demotion it was added for is
+   * gone rather than dormant: #32.03 removed the unreachable ternary from the
+   * button #32.01 had left it styling, and the note at that button records it.
    *
    * Defaulted, so every caller that does not know about step-through — and
    * the tests that render this panel on its own — keeps exactly today's
@@ -752,16 +752,14 @@ export function ImportConstraintsStage({
             type="button"
             onClick={onCheck}
             disabled={!acknowledged || busy}
-            // Slice #29.02 — demoted at a pause; see the `gated` prop.
-            // ⚠️ Slice #32.01 — and the `gated` branch can no longer be taken,
-            // for the reason given at the Structure panel's twin of this button:
-            // a pause is `resultOnly`, and this whole row is inside
-            // `!resultOnly`. Kept rather than simplified, and flagged rather
-            // than left to read as live.
-            className={buttonClass({
-              variant: gated ? "secondary" : "primary",
-              size: gated ? "md" : "lg",
-            })}
+            // ⚠️ Fixed in passing (#32.03) — this read `variant: gated ?
+            // "secondary" : "primary"`, #29.02's demotion at a step-through
+            // pause. #32.01 made that arm unreachable — a pause is `resultOnly`
+            // and this whole row is inside `!resultOnly` — and flagged it
+            // rather than removing it. A branch that cannot run, kept only by a
+            // comment saying so, is a claim the next reader has to re-derive.
+            // The `gated` prop's own note above records what the demotion was.
+            className={buttonClass({ variant: "primary", size: "lg" })}
           >
             {checked ? t("recheck") : t("check")}
           </button>

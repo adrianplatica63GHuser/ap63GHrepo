@@ -547,10 +547,20 @@ export function phaseAfterClassification(input: {
  * OTHER stage in the flow ends on a button, and the next screen's button is not
  * a substitute: it reports the next stage, not the one that just passed.
  *
- * So the Information page carries a control, unchecked by default, and with it
- * checked each of these transitions comes to rest on the stage it has just
- * FINISHED, holding that stage's own screen with its own all-clear on it, and
- * waits for a button.
+ * So the stage bar carries a control, and while it is ticked each of these
+ * transitions comes to rest on the stage it has just FINISHED, holding that
+ * stage's own screen with its own all-clear on it, and waits for a button.
+ * (The stage bar since #29.02 built it, not the Information page: the sentence
+ * that stood here said otherwise and was wrong on the day it was written.)
+ *
+ * ⚠️ **AND IT ARRIVES TICKED, WHICH IT DID NOT UNTIL #32.03.** #29.02 shipped
+ * it unticked, on the promise that nothing about the flow changed until
+ * somebody asked; #32.01 and #32.03 then spent two slices making a clean paused
+ * screen worth stopping on, and #32.03 turned the promise round. Said here
+ * because this file is where a reader comes to understand the mechanism and
+ * the flow it describes is now the one every run takes; the default itself is
+ * a literal in `import-wizard.tsx`, pinned by `import-workflow-stages.test.ts`,
+ * and that is the only place to CHANGE it.
  *
  * ⚠️ **There were six of them until #29.08 and there are five now, and the
  * table is the one place that says so.** That slice put the classification in

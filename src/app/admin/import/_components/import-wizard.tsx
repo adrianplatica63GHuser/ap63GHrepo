@@ -147,7 +147,7 @@ import { ImportPreexistingStage } from "./import-preexisting-stage";
 import { shouldInterpretEntry } from "@/lib/import/ai-interpret-run";
 import { isIdCardEntry } from "@/lib/import/id-card";
 import { ImportScanningStage } from "./import-scanning-stage";
-import { ImportStepGate } from "./import-step-gate";
+import { ImportStepGate, STAGES_WITH_NEXT_ACTION } from "./import-step-gate";
 import { auditSavedSession, type SavedSessionAudit } from "@/lib/import/session-client";
 import { ImportRunStage } from "./import-run-stage";
 import { CancelImportDialog } from "./cancel-import-dialog";
@@ -427,20 +427,6 @@ export function ImportWizard() {
   const tTypesBlocked = useTranslations("adminImport.typesBlocked");
   /** Slice #29.11 — the account a clean check gives of what it looked at. */
   const tCheck = useTranslations("adminImport.checkResult");
-  /**
-   * Each stage's own all-clear sentence.   (Slice #29.11)
-   *
-   * ⚠️ **THE STAGE'S OWN STRING, NOT A SECOND SET WRITTEN FOR THIS CARD.**
-   * `adminImport.structure.clean` and its two siblings have said what a passing
-   * check concluded since #26.04; what was missing was any screen that showed
-   * them on the common path. Writing a new "Structura este în regulă" here
-   * would have been a second place the same conclusion is worded, which is the
-   * drift #29.02's step-gate header refuses for exactly these strings.
-   */
-  const tStructure = useTranslations("adminImport.structure");
-  const tConstraints = useTranslations("adminImport.constraints");
-  const tDuplication = useTranslations("adminImport.duplication");
-
   const [phase, setPhase] = useState<ImportPhase>("information");
   const [rootFolderName, setRootFolderName] = useState<string>("");
   const [entries, setEntries] = useState<FSEntry[]>([]);
@@ -943,8 +929,15 @@ export function ImportWizard() {
    * Step-through: does the run stop after every stage that passes?
    *                                                        (Slice #29.02)
    *
-   * Unchecked by default, which is the whole promise of the slice — with it
-   * unchecked nothing about the flow changes, not one extra click anywhere.
+   * ⚠️ **TICKED BY DEFAULT SINCE #32.03, AND THE FLOW NOW DEPENDS ON IT.** It
+   * shipped unticked, because #29.02's whole promise was that with it unticked
+   * nothing about the flow changed, not one extra click anywhere. Real use
+   * answered the question that promise was protecting: a clean step that flies
+   * past is a step nobody read, and #32.01 and #32.03 spent two slices making a
+   * clean paused screen worth stopping on — the account of what the check
+   * looked at, and nothing else. That screen is only ever reached with this
+   * ticked, so the default is now load-bearing rather than a convenience, and
+   * `import-workflow-stages.test.ts` pins it.
    *
    * ⚠️ **STATE *AND* A REF, and the ref is not an optimisation.** The decision
    * is taken inside `runWalk` and `startScan`, both of which are deliberately
@@ -963,11 +956,12 @@ export function ImportWizard() {
    *
    * ⚠️ **NOT PERSISTED.** `IMPORT_SESSION_KEY` in `localStorage` holds a
    * FINISHED RUN'S REPORT so it can be reopened; a viewing preference is not
-   * part of a report and does not belong in it. A new import starts unticked —
+   * part of a report and does not belong in it. `SavedImportSession` has no
+   * field for one. A new import starts ticked, exactly as a first one does —
    * see `handleCancelConfirmed`.
    */
-  const [stepThrough, setStepThrough] = useState(false);
-  const stepThroughRef = useRef(false);
+  const [stepThrough, setStepThrough] = useState(true);
+  const stepThroughRef = useRef(true);
 
   /**
    * The pause currently on screen, or `null`.   (Slice #29.02)
@@ -2069,13 +2063,14 @@ export function ImportWizard() {
     setPropertyAnswers(new Map());
     propertyAnswersRef.current = new Map();
     // Slice #29.02 - the pause, and the setting that produced it. The setting
-    // goes back to unticked with everything else, because this function's
-    // contract is that the next import starts exactly as a first one does, and
-    // a control still ticked from a run the user walked away from is a state
-    // the Information page does not explain.
+    // goes back to its DEFAULT with everything else, because this function's
+    // contract is that the next import starts exactly as a first one does - and
+    // since #32.03 that default is ticked. Read this as "reset", not as "off":
+    // the literal here and the initialiser above are one value in two places,
+    // and `import-workflow-stages.test.ts` pins both.
     setGate(null);
-    stepThroughRef.current = false;
-    setStepThrough(false);
+    stepThroughRef.current = true;
+    setStepThrough(true);
   }, [endRun]);
 
   // Mint a token for this mount, and retire whatever token is live on unmount —
@@ -2166,12 +2161,13 @@ export function ImportWizard() {
   /**
    * Is a clean-check account honest RIGHT NOW?   (Slice #29.11)
    *
-   * ⚠️ **BOTH MOUNT POINTS READ THIS, and an adversarial round is why it is not
-   * just the trail.** The inline card is handed to a stage panel as
+   * ⚠️ **THE PANEL'S OWN GUARD IS NOT ENOUGH, and an adversarial round is why
+   * this flag exists at all.** The card is handed to a stage panel as
    * `resultDetail`, and the panel's own `!busy && verdict.clean` guard cannot
-   * see a walk that FAILED — so gating only the trail left the whole account on
-   * screen at a Structure rest whose re-check had just been unable to open the
-   * folder. One expression, read at all four render sites.
+   * see a walk that FAILED — so the whole account stayed on screen at a
+   * Structure rest whose re-check had just been unable to open the folder. One
+   * expression, read at all three render sites. (It read four until #32.03,
+   * when the attributed trail that was the fourth came out.)
    *
    * Three conditions, and each is load-bearing:
    *
@@ -2210,34 +2206,6 @@ export function ImportWizard() {
     phase !== "duplication-checking" &&
     phase !== "preexisting-checking" &&
     walkError === null;
-
-  /**
-   * May the ATTRIBUTED cards — the earlier stages' accounts — be drawn?
-   *                                                            (Slice #29.11)
-   *
-   * ⚠️ **NOT AT A STEP-THROUGH PAUSE, and an adversarial round added that.** At
-   * a pause the emerald card below the panel carries the screen's one primary
-   * action, and `import-step-gate.tsx`'s own header depends on it landing
-   * "directly under the stage it is talking about". The trail is deliberately
-   * NOT exclusive on phase — it draws every stage the user is not standing on —
-   * so at a Duplication rest it inserted two retrospective cards between the
-   * panel and the button that leaves it, and a keyboard user reading forward
-   * from the panel's focused heading walked through both to reach it.
-   *
-   * Nothing is lost by dropping them there: with step-through ticked every
-   * clean check rests on its own stage and shows its account INLINE, which is
-   * the whole point of the toggle.
-   *
-   * ⚠️ **THE SENTENCE THAT FOLLOWED THIS IS NO LONGER TRUE.** It said a ticked
-   * run "sees exactly what they saw before, plus the detail under each stage's
-   * own all-clear" — and #32.01 made a ticked run see strictly LESS at a
-   * Structure or Constraints rest: no rules disclosure, no tick, no button row,
-   * no take-away, and on Structure no block of STR-15 answers. What is
-   * load-bearing here is unchanged and is the half above: the trail is safe to
-   * drop at a pause because the account renders inline. Do not read the removed
-   * clause as an invariant and restore one of those blocks to satisfy it.
-   */
-  const checkTrailVisible = checkAccountsSettled && activeGate === null;
 
   /**
    * The four phases the Import panel stands behind.   (Slice #26.09)
@@ -2528,12 +2496,29 @@ export function ImportWizard() {
    * `phaseAfterFileChecks` makes for returning `duplicationRan`/`preexistingRan`
    * instead of letting the caller re-derive them.
    *
-   * ⚠️ **TWO NODES PER STAGE, AND THEY ARE NEVER BOTH MOUNTED.** `inline` goes
-   * inside the stage's own panel, under its emerald all-clear, which has already
-   * named the stage and said that it passed. `attributed` goes above a LATER
-   * stage's panel and has to name the stage itself. The render below picks by
-   * whether that stage's panel is on screen; building both here keeps the facts
-   * and their labels in one place instead of two.
+   * ⚠️ **ONE NODE PER STAGE SINCE #32.03, AND IT MOUNTS INSIDE ITS OWN STAGE'S
+   * PANEL.** Each memo used to return a second, ATTRIBUTED node that was drawn
+   * above a LATER stage's panel for a check the user had flown past, and that
+   * retrospective trail is gone: with step-through ticked by default every
+   * clean check now rests on its own stage, so the account is read where it was
+   * produced instead of stacking up as green memos on the screens after it. The
+   * node here is handed to the panel as `resultDetail`; there is no second
+   * mount point left for it to be confused with.
+   *
+   * ⚠️ **WHICH MEANS AN UNTICKED RUN SEES ALMOST NO ACCOUNT, and that is the
+   * decision rather than an oversight.** Untick the toggle and the three file
+   * checks self-advance exactly as they did before #29.11: the panel is replaced
+   * in the same commit that moves the phase on, and the only trace a clean check
+   * leaves is the clause at the top of the next stage's intro — #29.01's F9,
+   * back for that path. (Almost, not entirely: a walk that finds only STR-15
+   * violations rests on `structure-report` whatever the toggle says, and the
+   * last answer turns the verdict clean there without a re-walk — so the
+   * Structure card renders on that route too, gated or not.) The trail was what covered it, and the trail is what
+   * made a Duplication or Pre-existing screen carry two or three retrospective
+   * green memos above the findings the user was actually there to read. What
+   * unticking now means is "do not show me the clean steps", which is what the
+   * control says. Do not restore the trail to close this; a slice that wants the
+   * account on the unticked path should put it where the user is standing.
    *
    * ⚠️ **THE FACTS ARE THE VERDICT'S OWN ZEROES, not literals.** "Reguli
    * încălcate: 0" reads `verdict.violations.length`. A hard-coded zero would go
@@ -2594,21 +2579,8 @@ export function ImportWizard() {
       />
     );
 
-    return {
-      inline: <ImportCheckResult facts={facts}>{readings}</ImportCheckResult>,
-      attributed: (
-        <ImportCheckResult
-          attribution={{
-            title: tCheck("title", { stage: tStage("stage.structure") }),
-            headline: tStructure("clean"),
-          }}
-          facts={facts}
-        >
-          {readings}
-        </ImportCheckResult>
-      ),
-    };
-  }, [structureVerdict, entries, observations, tCheck, tStage, tStructure]);
+    return <ImportCheckResult facts={facts}>{readings}</ImportCheckResult>;
+  }, [structureVerdict, entries, observations, tCheck]);
 
   const constraintsResult = useMemo(() => {
     if (constraintVerdict === null || !constraintVerdict.clean) return null;
@@ -2628,19 +2600,8 @@ export function ImportWizard() {
       },
     ];
 
-    return {
-      inline: <ImportCheckResult facts={facts} />,
-      attributed: (
-        <ImportCheckResult
-          attribution={{
-            title: tCheck("title", { stage: tStage("stage.constraints") }),
-            headline: tConstraints("clean"),
-          }}
-          facts={facts}
-        />
-      ),
-    };
-  }, [constraintVerdict, entries, tCheck, tStage, tConstraints]);
+    return <ImportCheckResult facts={facts} />;
+  }, [constraintVerdict, entries, tCheck]);
 
   const duplicationResult = useMemo(() => {
     if (duplicationVerdict === null || !duplicationVerdict.clean) return null;
@@ -2656,19 +2617,8 @@ export function ImportWizard() {
       { label: tCheck("duplication.documents"), value: String(summary.documents) },
     ];
 
-    return {
-      inline: <ImportCheckResult facts={facts} />,
-      attributed: (
-        <ImportCheckResult
-          attribution={{
-            title: tCheck("title", { stage: tStage("stage.duplication") }),
-            headline: tDuplication("clean"),
-          }}
-          facts={facts}
-        />
-      ),
-    };
-  }, [duplicationVerdict, entries, tCheck, tStage, tDuplication]);
+    return <ImportCheckResult facts={facts} />;
+  }, [duplicationVerdict, entries, tCheck]);
 
   /*
    * ⚠️ **`classificationSpent` USED TO BE DERIVED HERE, and #29.08 moved it up
@@ -2878,7 +2828,43 @@ export function ImportWizard() {
               .filter(Boolean)
               .join(" ")
           : activeGate !== null
-            ? tStepGate(`cleared.${stageForPhase(activeGate.rest)}`)
+            ? [
+                tStepGate(`cleared.${stageForPhase(activeGate.rest)}`),
+                // ⚠️ **Slice #32.03 added the second sentence, and it has to be
+                // HERE rather than only on the card.** The card's own paragraph
+                // is inserted into the DOM together with its text, which is the
+                // shape this region exists to replace — and at the preconditions
+                // rest the sentence in question is the pointer to the folder
+                // picker that `preflight.allGreen` used to carry and that this
+                // slice took out of it. Announced nowhere, it would be a
+                // pointer a screen-reader user simply stopped getting.
+                //
+                // The membership test and the interpolation are the CARD'S, not
+                // a second copy: `STAGES_WITH_NEXT_ACTION` is imported, and the
+                // button's label is built from `advance` exactly as the button
+                // builds it. What must never appear on either side is the label
+                // written out as a literal.
+                STAGES_WITH_NEXT_ACTION.includes(stageForPhase(activeGate.rest))
+                  ? tStepGate(`nextAction.${stageForPhase(activeGate.rest)}`, {
+                      button: tStepGate("advance", {
+                        stage: tStage(`stage.${stageForPhase(activeGate.to)}`),
+                      }),
+                    })
+                  : "",
+                // ⚠️ **AND `why`, WHICH IS THE SENTENCE THAT SAYS THE RUN HAS
+                // STOPPED.** #32.03 removed the `role="status"` the card had
+                // left on its own `cleared` paragraph — it was this region's
+                // sentence announced a second time — and that only holds as an
+                // improvement if the region carries what the card carries. It
+                // did not carry `why`, so a screen-reader user heard which check
+                // passed and nothing about the flow having gone quiet. The three
+                // sentences here are the card's three paragraphs, in order; the
+                // button's label is left out because a button is announced when
+                // it is reached.
+                tStepGate("why"),
+              ]
+                .filter(Boolean)
+                .join(" ")
             : ""}
       </p>
 
@@ -3059,10 +3045,11 @@ export function ImportWizard() {
           onRulesOpenChange={setStructureRulesOpen}
           propertyAnswers={propertyAnswers}
           onPropertyAnswer={setPropertyAnswer}
-          // Slice #29.11 — the inline half of the account. `checkAccountsSettled`
-          // rather than the panel's own guard alone: see that flag's note for
-          // the failed-re-check case the panel cannot see.
-          resultDetail={checkAccountsSettled ? structureResult?.inline : undefined}
+          // Slice #29.11 — the account of this check, inside this check's own
+          // panel. `checkAccountsSettled` rather than the panel's own guard
+          // alone: see that flag's note for the failed-re-check case the panel
+          // cannot see.
+          resultDetail={checkAccountsSettled ? structureResult : undefined}
         />
       )}
 
@@ -3089,7 +3076,7 @@ export function ImportWizard() {
           gated={activeGate?.rest === "constraints"}
           rulesOpen={constraintsRulesOpen}
           onRulesOpenChange={setConstraintsRulesOpen}
-          resultDetail={checkAccountsSettled ? constraintsResult?.inline : undefined}
+          resultDetail={checkAccountsSettled ? constraintsResult : undefined}
         />
       )}
 
@@ -3118,7 +3105,7 @@ export function ImportWizard() {
           gated={activeGate?.rest === "duplication"}
           rulesOpen={duplicationRulesOpen}
           onRulesOpenChange={setDuplicationRulesOpen}
-          resultDetail={checkAccountsSettled ? duplicationResult?.inline : undefined}
+          resultDetail={checkAccountsSettled ? duplicationResult : undefined}
         />
       )}
 
@@ -3205,70 +3192,6 @@ export function ImportWizard() {
           showSkipped={showSkipped}
           onShowSkippedChange={setShowSkipped}
         />
-      )}
-
-      {/* ── What the checks behind us found   (Slice #29.11) ──────────────
-
-          ⚠️ **THIS IS THE UNTICKED PATH, WHICH IS THE DEFAULT AND THEREFORE THE
-          COMMON ONE.** With step-through on, a clean check rests on its own
-          stage and the panel shows its account inline. With it off — the way
-          almost every run goes — the panel is replaced in the same commit that
-          moves the phase on, so the only trace a stage left was a four-word
-          clause at the top of the NEXT stage's intro: "Structura folderului
-          este în regulă." Fourteen rules, a whole walk and a folder-name parse,
-          in four words, one screen too late. #29.01's F9.
-
-          ⚠️ **IT REPORTS; IT DOES NOT DECIDE.** No phase moves because of
-          anything here, no stage was added, and the gate #29.02 built is
-          untouched — a stage whose panel is on screen is skipped here and
-          renders its own account inside that panel instead, which is also what
-          stops a card appearing twice.
-
-          ⚠️ The clause that used to end that sentence — "a run with
-          step-through ticked sees exactly what it saw before" — was true of
-          #29.11 and is not true since #32.01, which strips the work blocks off a
-          clean paused panel. Nothing about THIS block changed; the claim about
-          the rest of the screen did.
-
-          ⚠️ **BELOW THE STAGE PANELS, NOT ABOVE THEM, AND AN ADVERSARIAL ROUND
-          MOVED IT.** Every stage panel focuses its own `<h2>` when it mounts —
-          `focus()` scrolls — and on this path the panel mounts in the same
-          commit that inserts these cards. Drawn above, a Structure card
-          carrying nine rows and a folder-name reading per property pushed the
-          heading below the fold, so arriving at the next stage scrolled the
-          account that had just appeared off the top of the screen. Worse for a
-          screen-reader user, and unconditionally: focus lands on the panel
-          heading, and reading FORWARD from there never reaches anything above
-          it. Below, the cards are where reading forward arrives — which is also
-          where a retrospective account belongs, under the screen that is
-          actually asking the user for something.
-
-          ⚠️ **HIDDEN WHILE A CHECK IS RUNNING, AND AFTER ONE THAT FAILED.**
-          Every card is derived from `entries`/`observations`/`metadata`, and a
-          re-check repopulates those; see `checkAccountsSettled` for all three
-          halves, and `checkTrailVisible` for why a step-through pause draws
-          none of this.
-
-          ⚠️ **AND BELOW THE FOLDER REPORT TOO, WHICH IS WHY IT SITS HERE
-          RATHER THAN UNDER THE PANELS.** At Pre-existing the screen also
-          carries `ReportSections` — the folder's own advisory findings, some of
-          which end "Nu porniți importul", on the one screen whose button
-          spends money. Three emerald "everything was fine" cards between the
-          panel and those findings is the same competition this block avoids at
-          Evaluation by stopping. Found by an adversarial round.
-
-          ⚠️ **AND IT STOPS AT THE CHECK STAGES.** Past Pre-existing the run has
-          been classified and the Evaluation screen is the account of it; a
-          growing stack of green cards above that screen would be three
-          conclusions competing with the one the user is there to read. The
-          folder-name reading is still reachable later — the property step shows
-          it, which is where it used to appear for the first time. */}
-      {checkTrailVisible && (
-        <>
-          {!inStructure && structureResult?.attributed}
-          {!inConstraints && constraintsResult?.attributed}
-          {!inDuplication && duplicationResult?.attributed}
-        </>
       )}
 
       {/* The classification has run, every type it found has a form, and
@@ -3489,8 +3412,14 @@ export function ImportWizard() {
 
       {/* ── The step-through pause   (Slice #29.02) ─────────────────
 
-          ⚠️ **ONE RENDER SITE FOR ALL SIX GATES, and the branches above are
-          what make that legal.** Every panel branch is exclusive on `phase`, so
+          ⚠️ **ONE RENDER SITE FOR EVERY GATE THE TABLE CAN RAISE, and the
+          branches above are what make that legal.** (Fixed in passing, #32.03:
+          this read "ALL SIX GATES". There were six until #29.08 and there are
+          five now, and `SELF_ADVANCING_TRANSITIONS` is the one place that says
+          so — a count repeated in prose is a count that goes stale while the
+          table stays right. So this sentence no longer carries one.)
+
+          Every panel branch is exclusive on `phase`, so
           whichever one is on screen is the last thing rendered before this
           point — the card always lands directly under the stage it is talking
           about. It sits after `ScanTable` rather than before it for the one

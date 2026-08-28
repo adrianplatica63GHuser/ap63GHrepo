@@ -1571,6 +1571,82 @@ describe("the pause's copy", () => {
     }
   });
 
+  it.each(LOCALES)("⚠️ tells the preconditions rest where the folder picker is, in %s", (file) => {
+    // Slice #32.03. The preconditions screen has no folder picker — `allGreen`
+    // stopped promising one in the same slice — so the pause below it is where
+    // the user is told that the picker is behind the Continue button.
+    //
+    // ⚠️ **KEYED PER STAGE, AND ONLY THIS ONE HAS A VALUE.** The card is drawn
+    // at every rest `SELF_ADVANCING_TRANSITIONS` names, and a generic "press
+    // Continue" at the others would be telling the reader what is already two
+    // centimetres below them, so a second key here is a copy defect, not a gap.
+    // (No number in that sentence, deliberately: the table is the one place the
+    // count lives, and this suite is what pins the table.)
+    const g = loadStepGateMessages(file) as {
+      nextAction: Record<string, string>;
+      cleared: Record<string, string>;
+    };
+    expect(Object.keys(g.nextAction)).toEqual(["preconditions"]);
+    expect(typeof g.nextAction.preconditions).toBe("string");
+    // ⚠️ **AND THE CODE'S OWN LIST HAS TO SAY THE SAME THING.**
+    // `STAGES_WITH_NEXT_ACTION` in `import-step-gate.tsx` decides which rests
+    // RENDER the paragraph, and its note calls itself the one place that rule
+    // lives — but nothing joined it to the keys until this assertion. Change it
+    // to `["structure"]` and the preconditions rest silently loses the
+    // folder-picker pointer while the structure rest renders
+    // `t("nextAction.structure")` against a key that does not exist, which in
+    // the shipping Romanian is a dotted path on screen. Every other test in the
+    // repo stays green through that.
+    const card = fs.readFileSync(
+      path.join(
+        process.cwd(),
+        "src", "app", "admin", "import", "_components", "import-step-gate.tsx",
+      ),
+      "utf8",
+    );
+    // Matched loosely on purpose: `[^=]*` past the type annotation so adding
+    // `as const` or changing the annotation is an innocent edit, and `[^\]]*`
+    // spans newlines so a Prettier-wrapped array still matches. SORTED, so a
+    // second stage added in a different order in the two files fails by naming
+    // the stage rather than by an ordering diff.
+    const literal = card.match(/STAGES_WITH_NEXT_ACTION[^=]*=\s*\[([^\]]*)\]/);
+    expect(literal).not.toBeNull();
+    const rendered = [...literal![1].matchAll(/"([^"]+)"/g)].map((m) => m[1]);
+    expect(rendered.slice().sort()).toEqual(Object.keys(g.nextAction).sort());
+
+    // ⚠️ **AND THAT BOTH CONSUMERS ACTUALLY READ IT.** The list agreeing with
+    // the keys proves nothing if nothing renders the sentence: delete the
+    // paragraph from the card and every assertion above still passes while a
+    // SIGHTED user silently loses the only on-screen pointer to the folder
+    // picker — the pointer this slice took out of `preflight.allGreen`. And the
+    // wizard's sr-only region has to reach the list through the IMPORT, not
+    // through a second `=== "preconditions"`, which is the "one rule in two
+    // places" the constant's own note forbids.
+    expect(card).toContain("STAGES_WITH_NEXT_ACTION.includes(stage)");
+    expect(card).toContain("t(`nextAction.${stage}`");
+    // Read here rather than reusing the `wizard` const, which belongs to the
+    // wizard-source describe further down and is not in scope in this one.
+    const wizardSource = fs.readFileSync(
+      path.join(
+        process.cwd(),
+        "src", "app", "admin", "import", "_components", "import-wizard.tsx",
+      ),
+      "utf8",
+    );
+    expect(wizardSource).toContain("STAGES_WITH_NEXT_ACTION.includes(");
+    expect(wizardSource).toContain("tStepGate(`nextAction.");
+
+    // ⚠️ **IT NAMES THE BUTTON BY INTERPOLATION, NEVER BY A SECOND COPY OF ITS
+    // LABEL.** `{button}` is filled with the very string `advance` renders. A
+    // literal "Continuă la pasul …" written out here would be two strings with
+    // one meaning, and the day `advance` or the stage vocabulary is relabelled
+    // this sentence would start naming a button that no longer exists.
+    expect(g.nextAction.preconditions).toContain("{button}");
+    const advanceStem = (g as unknown as { advance: string }).advance.split("{")[0].trim();
+    expect(advanceStem.length).toBeGreaterThan(4);
+    expect(g.nextAction.preconditions).not.toContain(advanceStem);
+  });
+
   it.each(LOCALES)("carries the pause's own strings in %s", (file) => {
     const g = loadStepGateMessages(file) as Record<string, unknown>;
     for (const key of ["toggle", "toggleHint", "why", "advance"]) {
@@ -1609,6 +1685,51 @@ describe("the wizard's side of the table", () => {
     // The guard that stops every test below passing vacuously on a bad path.
     expect(wizard.length).toBeGreaterThan(50_000);
     expect(wizard).toContain("stepThroughRest");
+  });
+
+  it("⚠️ starts the run with the step-through toggle TICKED", () => {
+    // Slice #32.03, and it is the one line three of that slice's four changes
+    // are invisible without: `stepThroughRest` only produces a rest when the
+    // toggle is on, so with it off the screens #32.01 and #32.03 trimmed are
+    // screens the phase self-advances past. Nothing else in this repo pins the
+    // initial value — no suite renders `ImportStageBar` — and every test in this
+    // file would stay green with the default flipped back.
+    //
+    // Both halves, because they are one value written twice: the STATE is what
+    // the checkbox renders from and the REF is what the transitions read, and a
+    // slice that changed only the state would ship a ticked box over an
+    // unticked run.
+    expect(wizard).toContain("const [stepThrough, setStepThrough] = useState(true);");
+    expect(wizard).toContain("const stepThroughRef = useRef(true);");
+  });
+
+  it("⚠️ puts the toggle back to that same default when a run is cancelled", () => {
+    // `handleCancelConfirmed`'s contract is that the next import starts exactly
+    // as a first one does. It reset the pair to `false` — correct while `false`
+    // was the default, and a silent regression the moment it stopped being one:
+    // the box would arrive unticked after a cancel and the whole flow would
+    // change under a user who had changed nothing.
+    const start = wizard.indexOf("const handleCancelConfirmed = useCallback(() => {");
+    expect(start).toBeGreaterThan(0);
+    // ⚠️ **THE END MARKER IS ASSERTED, NOT ASSUMED.** `indexOf` returns -1 the
+    // moment the dependency list gains an entry or the closing brace is
+    // re-indented, and `slice(start, -1)` then hands back the whole rest of the
+    // component — 86k characters. The positive assertions below would find the
+    // two writes ANYWHERE in the wizard, and the negative ones would still pass
+    // because no `= false` write exists in the file at all, so a refactor that
+    // moved the reset out of this callback would go green. `body.length > 0`
+    // cannot catch that: `start` is already non-zero, so the slice is never
+    // empty either way.
+    const end = wizard.indexOf("\n  }, [endRun]);", start);
+    expect(end).toBeGreaterThan(start);
+    const body = wizard.slice(start, end);
+    for (const written of ["stepThroughRef.current = true;", "setStepThrough(true);"]) {
+      expect({ written, present: body.includes(written) }).toEqual({ written, present: true });
+    }
+    // And nothing writing the old value beside them.
+    for (const stale of ["stepThroughRef.current = false;", "setStepThrough(false);"]) {
+      expect({ stale, present: body.includes(stale) }).toEqual({ stale, present: false });
+    }
   });
 
   it("⚠️ still names every `from` in the table", () => {

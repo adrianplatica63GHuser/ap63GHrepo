@@ -155,9 +155,10 @@ type Props = {
    * work.
    *
    * What this prop still does, therefore, is decide whether the work blocks are
-   * drawn at all — see `resultOnly` below. The demotion it was
-   * added for survives only as the styling on a button that a pause no longer
-   * renders; see the note at that button.
+   * drawn at all — see `resultOnly` below. The demotion it was added for is
+   * gone rather than dormant: #32.03 removed the unreachable ternary from the
+   * button #32.01 had left it styling, at all three sibling panels together,
+   * and the note at that button records it.
    *
    * Defaulted, so every caller that does not know about step-through — and
    * the tests that render this panel on its own — keeps exactly today's
@@ -1164,19 +1165,17 @@ export function ImportStructureStage({
             type="button"
             onClick={checked ? onRecheck : onChooseFolder}
             disabled={!acknowledged || busy}
-            // Slice #29.02 — demoted at a pause; see the `gated` prop.
-            // ⚠️ Slice #32.01 — and the `gated` branch can no longer be taken.
-            // A pause is a clean verdict with its account on the page, which is
-            // `resultOnly`, and this whole row is inside `!resultOnly`. Left as
-            // it is rather than simplified to a bare `primary/lg`: the pair is
-            // one prop's worth of behaviour, and a route that brings a pause
-            // back to a screen with work on it would want it again. What must
-            // not stay is a comment claiming the branch is live — this is that
-            // comment.
-            className={buttonClass({
-              variant: gated ? "secondary" : "primary",
-              size: gated ? "md" : "lg",
-            })}
+            // ⚠️ Fixed in passing (#32.03) — this read `variant: gated ?
+            // "secondary" : "primary"`, #29.02's demotion at a step-through
+            // pause. #32.01 made that arm unreachable — a pause is `resultOnly`
+            // and this whole row is inside `!resultOnly` — and kept it anyway,
+            // on the argument that a route bringing a pause back to a screen
+            // with work on it would want it again. #32.03 removed the identical
+            // branch from both sibling panels, and a dead branch surviving in
+            // one of three is worse than the demotion is worth: the next reader
+            // has to work out which ruling is current. The `gated` prop's own
+            // note above records what the demotion was for.
+            className={buttonClass({ variant: "primary", size: "lg" })}
           >
             {checked ? t("recheck") : t("chooseFolder")}
           </button>

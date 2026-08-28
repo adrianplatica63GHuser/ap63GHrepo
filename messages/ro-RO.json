@@ -2103,7 +2103,7 @@
         "intro": "Toate rândurile trebuie să fie verzi. Până atunci importul nu poate începe — un folder care nu ar putea fi importat nu costă astfel nimic.",
         "recheck": "Verifică din nou",
         "checking": "Se verifică…",
-        "allGreen": "Totul este pregătit — alegeți un folder.",
+        "allGreen": "Totul este pregătit.",
         "notReady": "Importul nu poate începe încă. Rezolvați punctele de mai sus, apoi verificați din nou.",
         "statusPass": "în regulă",
         "statusFail": "problemă",
@@ -2411,6 +2411,7 @@
       },
       "title": "Duplicate în folderul ales",
       "intro": "Urmează o verificare, tot pe același folder: același lucru nu trebuie să se afle în el de două ori, altfel ajunge de două ori și în arhivă. Se compară doar fișierele din folderul ales, între ele — ce se află deja în sistem se verifică la pasul următor.",
+      "introDone": "Mai jos vedeți ce a arătat compararea fișierelor din folderul ales, între ele. Ce se află deja în sistem se verifică la pasul următor.",
       "rulesTitle": "Ce se consideră duplicat",
       "showRules": "Arată din nou explicațiile",
       "hideRules": "Ascunde explicațiile",
@@ -2448,7 +2449,6 @@
       }
     },
     "checkResult": {
-      "title": "Rezultatul pasului „{stage}”",
       "structure": {
         "rules": "Reguli de structură verificate",
         "violations": "Reguli încălcate",
@@ -2596,9 +2596,12 @@
     },
     "stepGate": {
       "toggle": "Oprește-te după fiecare pas",
-      "toggleHint": "În mod normal importul trece singur mai departe peste pașii care nu au nimic de îndreptat. Bifați dacă vreți să vedeți ce a găsit fiecare pas și să apăsați dumneavoastră pentru a merge mai departe.",
-      "why": "Importul s-a oprit aici pentru că este bifat „Oprește-te după fiecare pas”. Nu se consumă nimic cât timp citiți.",
+      "toggleHint": "Bifat: importul se oprește după fiecare pas care nu are nimic de îndreptat și merge mai departe când apăsați dumneavoastră. Nebifat: trece singur peste ei.",
+      "why": "Importul s-a oprit aici pentru că era bifat „Oprește-te după fiecare pas”. Nu se consumă nimic cât timp citiți.",
       "advance": "Continuă la pasul „{stage}”",
+      "nextAction": {
+        "preconditions": "Folderul de importat se alege la pasul următor — întâi citiți regulile de aranjare a folderelor și bifați că le respectați, iar apoi devine activ butonul de alegere a folderului. Butonul care duce acolo: {button}."
+      },
       "cleared": {
         "preconditions": "Cele opt precondiții au fost verificate una câte una și toate sunt îndeplinite. Nu aveți nimic de pregătit înainte de a merge mai departe.",
         "structure": "Regulile de aranjare a folderelor au fost verificate toate și niciuna nu a fost încălcată. Nu aveți nimic de îndreptat în File Explorer.",

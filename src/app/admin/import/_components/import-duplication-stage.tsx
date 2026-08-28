@@ -12,7 +12,10 @@
  *
  * THE THIRD SIBLING OF `ImportStructureStage` AND `ImportConstraintsStage`
  * -----------------------------------------------------------------------
- * Rules, a tick, a check, a fix list, a re-check, and a page you can save. The
+ * Rules, a tick, a check, a fix list, a re-check, and a page you can save - on
+ * every round that has something to put right, which since #32.03 is not every
+ * round: a clean check held at a step-through pause keeps the outcome and the
+ * step-gate card's Continue and drops the rest (see `resultOnly` below). The
  * source document asks for "the same loop" in as many words, and the value of
  * that is not code reuse - it is that the third loop costs the user nothing to
  * learn. So the three components are siblings rather than one abstraction: they
@@ -104,14 +107,22 @@ type Props = {
   /**
    * Is the wizard holding a step-through pause on this stage?   (Slice #29.02)
    *
-   * At a pause the emerald card below this panel carries the screen's ONE
-   * primary action — the button that goes on to the next stage — so this
-   * panel's own primary drops to a secondary. It is not suppressed: a
-   * re-check is still a real thing to want here, and it is the only route
-   * back to File Explorer for this stage. But `runWalk` clears the
-   * acknowledgement tick on its way in, so at a pause this button is
-   * DISABLED, and a disabled `primary/lg` sitting above a live one is the
-   * "which of these am I supposed to press" screen the pause exists to avoid.
+   * ⚠️ **THE PARAGRAPH THAT STOOD HERE IS NO LONGER TRUE, AND SAYING SO IS THE
+   * POINT.**   (Slice #32.03, copying #32.01's wording at the two sibling
+   * panels.) It read: "It is not suppressed: a re-check is still a real thing
+   * to want here, and it is the only route back to File Explorer for this
+   * stage." It is now suppressed — a pause is by definition a clean verdict
+   * with an account on the page, which is exactly `resultOnly`, and the whole
+   * button row goes with the tick. Nothing at this stage has entered the
+   * archive and no classification has been paid for, and the stage bar keeps a
+   * Cancel control for the whole run, so a user who realises the folder is
+   * wrong loses a walk and this stage's metadata pass, not work.
+   *
+   * What this prop does, therefore, is decide whether the work blocks are drawn
+   * at all — see `resultOnly` below. The demotion it was added for is gone
+   * rather than dormant: the button it styled is not rendered at a pause, so
+   * the ternary came out with the block, and a comment explaining why a branch
+   * can never run is not worth a third copy.
    *
    * Defaulted, so every caller that does not know about step-through — and
    * the tests that render this panel on its own — keeps exactly today's
@@ -198,7 +209,57 @@ export function ImportDuplicationStage({
    * are the honest content for that window.
    */
   const nothingToShow = decisionCount === 0 && (verdict?.unsized.length ?? 0) === 0;
-  const showRules = !checked || rulesOpen || (busy && nothingToShow);
+
+  /**
+   * The check has run, it is not running now, and it found nothing.
+   *
+   * Lifted out of the emerald block below, which spelled the same three terms
+   * inline, so `resultOnly` and the all-clear cannot drift apart. See that
+   * block for why `!busy` is load-bearing HERE in a way it is not at the
+   * Constraints panel.
+   */
+  const cleanVerdict = !busy && verdict !== null && verdict.clean;
+
+  /**
+   * Is this screen a REPORT rather than a piece of work?      (Slice #32.03)
+   *
+   * #32.01's expression, verbatim from `import-constraints-stage.tsx`, one
+   * stage later. When it holds, the panel drops the rules disclosure, the tick
+   * and its hint, "Verifică din nou", "Alege alt folder…" and the take-away
+   * page — every one of which asks the user to do something about a folder that
+   * has nothing left to do — and keeps the title, the emerald sentence and the
+   * numbers. The step-gate card below carries the screen's one action.
+   *
+   * ⚠️ **KEYED ON THE VERDICT, NOT ON THE TICK, and that is the whole safety of
+   * it.** The request described the screen after the tick, because that is the
+   * screen that was in front of it. Keyed on `acknowledged`, this would take
+   * "Verifică din nou" away at the exact moment it is the only way out of a
+   * folder that DOES have copies in it — the tick is the sole thing that
+   * enables that button — so a user who ticked, went to File Explorer and came
+   * back would have no button to press. That is #26.02's unfixable-message
+   * defect verbatim. `resultOnly` is false whenever the verdict is not clean,
+   * so the fix-and-re-check loop cannot be closed off.
+   *
+   * ⚠️ **AND A CLEAN VERDICT CANNOT HIDE AN UNSIZED FILE.**
+   * `duplication-check.ts` computes `clean` as
+   * `violations.length === 0 && unsized.length === 0`, so the red "could not be
+   * measured" block and `cleanVerdict` are mutually exclusive by construction.
+   * `resultOnly` therefore needs no `unsized` term: there is no state in which
+   * this hides a take-away page that a red block is asking for.
+   *
+   * ⚠️ **`resultDetail` STAYS IN THE EXPRESSION as a belt on that brace**, for
+   * the reason the Constraints panel gives: it is the content that REPLACES
+   * what is hidden, and the wizard withholds it whenever a clean account would
+   * be dishonest (`checkAccountsSettled`). A future route producing a pause
+   * without an account leaves the controls up rather than a heading, one green
+   * sentence and white space. It is also what keeps the promise `gated`'s and
+   * `resultDetail`'s own notes make: a caller that passes neither — the panel
+   * rendered on its own in a test — keeps exactly today's screen.
+   */
+  const resultOnly = cleanVerdict && gated && resultDetail != null;
+
+  const showRules =
+    !resultOnly && (!checked || rulesOpen || (busy && nothingToShow));
 
   /**
    * The explanations, translated once - used by the screen and by the saved
@@ -341,10 +402,15 @@ export function ImportDuplicationStage({
    * that cannot proceed. The visible list is correctly hidden at zero, so the
    * lie would have been audible only, which is exactly how it would survive.
    *
-   * AND A CLEAN VERDICT SAYS NOTHING HERE, on purpose: a passing check unmounts
-   * this whole panel in the same commit that moves the phase on, so any string
-   * put here would be removed before an assistive technology read it. What
-   * announces success is the stage indicator's own live region moving on.
+   * AND A CLEAN VERDICT SAYS NOTHING HERE, on purpose - but the reason changed
+   * with #32.03 and the old one is worth not believing. It was: a passing check
+   * unmounts this whole panel in the same commit that moves the phase on, so any
+   * string put here would be removed before an assistive technology read it.
+   * With step-through ticked by default a clean check now RESTS here and the
+   * panel stays. Silence is still right, and now for the opposite reason: the
+   * wizard's permanently-mounted region announces `stepGate.cleared.duplication`
+   * on that same commit, and a second sentence from here would be one event
+   * announced twice. On the unticked path the old reason still holds.
    */
   const liveSummary =
     busy || verdict === null || verdict.clean
@@ -383,6 +449,13 @@ export function ImportDuplicationStage({
    * with focus on `<body>`. Closing it means the wizard restoring focus across
    * a panel swap, which is a change to the parent rather than to this effect -
    * so it is recorded here rather than half-fixed.
+   *
+   * ⚠️ **AND `resultOnly` JOINS `justMounted` IN CHOOSING THE TARGET.**
+   * (Slice #32.03, matching what #32.01 did at both sibling panels.) On a
+   * `resultOnly` screen `checkboxRef.current` is `null` — the whole block
+   * holding the tick is not rendered — so a busy → idle edge that landed there
+   * would `focus()` nothing and leave a keyboard user on `<body>`. The heading
+   * is the right target anyway: it is what the screen now consists of.
    */
   const checkboxRef = useRef<HTMLInputElement | null>(null);
   const headingRef = useRef<HTMLHeadingElement | null>(null);
@@ -396,8 +469,11 @@ export function ImportDuplicationStage({
     if (busy || (!finished && !justMounted)) return;
     const active = typeof document === "undefined" ? null : document.activeElement;
     const stranded = active === null || active === document.body;
-    if (stranded) (justMounted ? headingRef : checkboxRef).current?.focus();
-  }, [busy]);
+    if (stranded) (justMounted || resultOnly ? headingRef : checkboxRef).current?.focus();
+    // `resultOnly` is a dependency because it is read above; it cannot make the
+    // effect fire on its own, because every edge this effect acts on is a `busy`
+    // edge and it returns early on anything else.
+  }, [busy, resultOnly]);
 
   return (
     <section className="rounded-xl border border-card-rim bg-white p-5 dark:border-zinc-700 dark:bg-zinc-900">
@@ -416,7 +492,18 @@ export function ImportDuplicationStage({
       >
         {t("title")}
       </h2>
-      <p className="mt-1.5 text-sm text-ink dark:text-zinc-300">{t("intro")}</p>
+      {/* ⚠️ **The intro is part of the same defect.**   (Slice #32.03)
+
+          `intro` instructs — read what counts as a copy below, tick that you
+          have taken note, then press "Verifică fișierele" — and every noun in
+          it is a block this screen no longer draws. Left standing above an
+          outcome it would be worse than the blocks it describes, because it
+          sends the user looking for controls that are not there. `introDone`
+          states what the screen is instead, and swaps on the same condition as
+          everything else. */}
+      <p className="mt-1.5 text-sm text-ink dark:text-zinc-300">
+        {resultOnly ? t("introDone") : t("intro")}
+      </p>
 
       {/* `aria-busy` says "what you are reading is being recomputed" for the
           moment a check is in flight, during which the previous round's list is
@@ -491,7 +578,7 @@ export function ImportDuplicationStage({
           user would read "Nu se află nimic de două ori în folderul ales" in
           emerald while the check that may refuse the folder is still running.
           This is the frame the guard exists for, and it is reachable. */}
-      {!busy && verdict !== null && verdict.clean && (
+      {cleanVerdict && (
         <>
           <p className="mt-4 text-sm font-medium text-emerald-700 dark:text-emerald-400">
             {t("clean")}
@@ -509,7 +596,12 @@ export function ImportDuplicationStage({
           the disclosure reads `rulesOpen` and the region reads `showRules`, and
           during that window they disagree - a control whose state contradicts
           what is on screen is worse than no control. */}
-      {checked && !(busy && nothingToShow) && (
+      {/* Slice #32.03 — and the toggle goes with the listing it opens, exactly
+          as at both sibling panels. Offering to re-show a set of explanations
+          about copies when nothing in the folder is a copy is offering to
+          reopen work that is finished, and a disclosure whose region is
+          unconditionally absent is a control that cannot do anything. */}
+      {checked && !resultOnly && !(busy && nothingToShow) && (
         <div className="mt-5">
           <button
             type="button"
@@ -553,6 +645,22 @@ export function ImportDuplicationStage({
       )}
 
       {/* -- The gate ----------------------------------------------------- */}
+      {/* ⚠️ Slice #32.03 — the whole block, tick included. `acknowledgeHint`
+          says the tick is asked for "at every check", and on a `resultOnly`
+          screen there is no next check to ask for: the verdict is clean and the
+          only way on is the step-gate card's Continue. "Verifică din nou" goes
+          with it, and that is safe HERE and would not be elsewhere: nothing at
+          this stage has entered the archive and no classification has been paid
+          for, so a user who realises the folder is wrong loses a walk and this
+          stage's metadata pass, not work. "Alege alt folder…" goes too, and the
+          way back to File Explorer is the next stage's own check, which
+          re-walks this folder and bounces back here if anything has changed.
+
+          ⚠️ `hintId` is declared on the tick and pointed at by its own
+          `aria-describedby`, and both are inside this block — so there is no
+          window in which something still describes a hint that is not
+          rendered. */}
+      {!resultOnly && (
       <div className="mt-5 border-t border-crease pt-4 dark:border-zinc-800">
         <div className="flex items-start gap-2">
           <input
@@ -580,11 +688,12 @@ export function ImportDuplicationStage({
             type="button"
             onClick={onCheck}
             disabled={!acknowledged || busy}
-            // Slice #29.02 — demoted at a pause; see the `gated` prop.
-            className={buttonClass({
-              variant: gated ? "secondary" : "primary",
-              size: gated ? "md" : "lg",
-            })}
+            // ⚠️ Slice #32.03 — this used to read `variant: gated ? "secondary"
+            // : "primary"`, #29.02's demotion at a step-through pause. A pause
+            // IS `resultOnly` and this whole row is inside `!resultOnly`, so the
+            // `gated` arm had become unreachable. Removed rather than kept and
+            // flagged: the prop's own note above records what it was for.
+            className={buttonClass({ variant: "primary", size: "lg" })}
           >
             {checked ? t("recheck") : t("check")}
           </button>
@@ -608,8 +717,15 @@ export function ImportDuplicationStage({
           {busy && <ActivityCue>{busyLabel}</ActivityCue>}
         </div>
       </div>
+      )}
 
       {/* -- The take-away copy ------------------------------------------- */}
+      {/* ⚠️ Slice #32.03 — hidden here, and NOT removed from the file. The page
+          is what a user prints and carries to File Explorer while they work, so
+          a user who still has copies to deal with still needs it, and
+          `handleSave` and everything it reaches stay in use on that path. What
+          has no reader is a printed list of copies that came back empty. */}
+      {!resultOnly && (
       <div className="mt-5 border-t border-crease pt-4 dark:border-zinc-800">
         {/* ⚠️ `disabled={busy}`, and it is not tidiness. `settled` is
             `checked && !busy`, so a Save pressed DURING a check writes "the
@@ -630,6 +746,7 @@ export function ImportDuplicationStage({
         </button>
         <p className="mt-1.5 text-xs text-fade dark:text-zinc-400">{t("save.hint")}</p>
       </div>
+      )}
     </section>
   );
 }

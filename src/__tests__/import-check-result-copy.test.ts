@@ -61,7 +61,11 @@ function checkResultCopy(file: string): unknown {
  * last test reads the wizard to prove the two agree.
  */
 const REQUIRED_KEYS = [
-  "title",
+  // ⚠️ `title` — "Ce a găsit pasul «{stage}»" — is NOT here, and its absence is
+  // #32.03's. It named the stage for the ATTRIBUTED card, drawn under a later
+  // stage's panel for a check the user had flown past. That mount point is
+  // gone, the prop with it, and the key with both; the last test in this suite
+  // reads the wizard and would fail if it came back unused.
   "structure.rules",
   "structure.violations",
   "structure.directories",
@@ -98,16 +102,6 @@ describe("the clean-check account's copy", () => {
       return typeof value !== "string" || value.trim().length === 0;
     });
     expect(missing).toEqual([]);
-  });
-
-  it("names the stage the account belongs to", () => {
-    // The card is drawn above a DIFFERENT stage's panel on the common path, so
-    // a title that did not name its own stage would attribute the Structure
-    // walk's numbers to whichever screen the user happens to be standing on.
-    for (const file of LOCALES) {
-      const title = String(at(checkResultCopy(file), "title"));
-      expect(scanIcu(title).args.has("stage")).toBe(true);
-    }
   });
 
   it("counts folders with a plural, `few` included in Romanian", () => {
@@ -186,10 +180,13 @@ describe("the clean-check account's copy", () => {
   });
 
   it("⚠️ keeps each stage's all-clear as the stage's own string", () => {
-    // #29.02 wrote one clean sentence per stage and this slice must not write a
-    // second set. The card's headline IS `adminImport.<stage>.clean`, so the
-    // three must exist and must differ from each other — a card that reused one
-    // of them for another stage would claim a check that did not run.
+    // #29.02 wrote one clean sentence per stage and #29.11 must not write a
+    // second set. Each PANEL renders its own `adminImport.<stage>.clean` above
+    // this card, so the three must exist and must differ from each other — a
+    // panel that reused one of them would claim a check that did not run.
+    // (Until #32.03 this said "the card's headline IS" that string, which was
+    // true of the attributed mount point. That mount point and its `attribution`
+    // prop are gone; do not go looking for a headline in the component.)
     for (const file of LOCALES) {
       const m = messages(file);
       const sentences = ["structure", "constraints", "duplication"].map((stage) =>
@@ -215,28 +212,6 @@ describe("the clean-check account's copy", () => {
     expect(unused).toEqual([]);
   });
 
-  it("⚠️ draws the account below the stage panels and below the folder report", () => {
-    // Behaviour, not copy, and it is here because it cannot be seen in a
-    // rendered test either: every stage panel focuses its own heading when it
-    // mounts, and `focus()` scrolls. Drawn above, the account that had just
-    // appeared was scrolled off the top of the screen by the panel arriving
-    // under it — and a screen-reader user reading forward from that heading
-    // never reached it at all. Found by an adversarial round.
-    const source = fs.readFileSync(path.join(process.cwd(), WIZARD), "utf8");
-    const trail = source.indexOf("{checkTrailVisible && (");
-    expect(trail > 0).toBe(true);
-    for (const after of [
-      "<ImportStructureStage",
-      "<ImportPreexistingStage",
-      // The folder's own advisory findings, some of which end "Nu porniți
-      // importul", on the one screen whose button spends money. Three emerald
-      // all-clear cards must not sit between the panel and those.
-      "<ReportSections",
-    ]) {
-      expect({ after, below: trail > source.indexOf(after) }).toEqual({ after, below: true });
-    }
-  });
-
   it("⚠️ hides the account while a check runs and after one that failed", () => {
     // The `walkError` half was found by an adversarial round: a re-check pressed
     // after the user renamed or unplugged the folder — which these stages send
@@ -257,11 +232,14 @@ describe("the clean-check account's copy", () => {
     }
   });
 
-  it("⚠️ gates BOTH mount points on the same expression", () => {
-    // A second adversarial round: the first fix gated only the trail, and the
-    // inline card — handed to the panel as `resultDetail`, behind a `!busy`
-    // guard that cannot see a failed walk — stayed on screen at a Structure
-    // rest whose re-check had just been unable to open the folder.
+  it("⚠️ gates all three panels' accounts on the same expression", () => {
+    // A second adversarial round in #29.11: the first fix gated only the
+    // attributed trail, and the card handed to the panel as `resultDetail` —
+    // behind a `!busy` guard that cannot see a failed walk — stayed on screen at
+    // a Structure rest whose re-check had just been unable to open the folder.
+    // ⚠️ #32.03 removed the trail; this suite's assertions are unchanged,
+    // because what they pin is the guarantee that survived it: every site that
+    // mounts an account reads `checkAccountsSettled`, and there are three.
     const source = fs.readFileSync(path.join(process.cwd(), WIZARD), "utf8");
     const gated = [...source.matchAll(/resultDetail=\{([^}]*)\}/g)].map((m) => m[1]);
     expect(gated.length).toBe(3);
@@ -274,33 +252,5 @@ describe("the clean-check account's copy", () => {
         gated: true,
       });
     }
-  });
-
-  it("⚠️ draws no attributed card while a step-through pause is on screen", () => {
-    // The pause's emerald card carries the screen's one primary action, and
-    // `import-step-gate.tsx` depends on it landing directly under the stage it
-    // is talking about. Nothing is lost: with step-through on, every clean check
-    // rests on its own stage and shows its account inline.
-    // Matched loosely, for the reason the test above gives: the assertion is
-    // that the trail's own flag is `checkAccountsSettled` narrowed by
-    // `activeGate`, not that the two sit on one line.
-    const source = fs.readFileSync(path.join(process.cwd(), WIZARD), "utf8");
-    const start = source.indexOf("const checkTrailVisible =");
-    expect(start > 0).toBe(true);
-    const expr = source.slice(start, source.indexOf(";", start));
-    expect({ expr, settled: expr.includes("checkAccountsSettled") }).toEqual({
-      expr,
-      settled: true,
-    });
-    expect({ expr, gate: expr.includes("activeGate === null") }).toEqual({
-      expr,
-      gate: true,
-    });
-    // The OPERATOR too, loosely: `settled || activeGate === null` would satisfy
-    // both tests above and would draw the trail over every pause.
-    expect({ expr, conjunction: expr.includes("&&") }).toEqual({
-      expr,
-      conjunction: true,
-    });
   });
 });
