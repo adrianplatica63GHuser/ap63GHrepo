@@ -2143,8 +2143,6 @@
         "coordinateFile": "Fișier de coordonate",
         "noCoordinateFile": "niciunul găsit",
         "severalCoordinateFiles": "{count, plural, one {un fișier găsit} few {# fișiere găsite} other {# de fișiere găsite}}",
-        "continueButton": "Continuă spre import",
-        "changeFolder": "Alegeți alt folder (clasificarea de până acum se pierde)",
         "nothingToImport": "Niciun fișier din acest folder nu va fi importat. Unele fișiere sunt ignorate automat — de exemplu arhive, desene și fișiere temporare.",
         "ignoredFiles": "Fișiere care vor fi ignorate",
         "uploadSize": "De încărcat",
@@ -2371,7 +2369,6 @@
       "acknowledgeHint": "Bifați după ce ați citit restricțiile și apoi din nou după fiecare îndreptare făcută în File Explorer. Bifa se cere la fiecare verificare.",
       "check": "Verifică fișierele",
       "recheck": "Verifică din nou",
-      "chooseAnotherFolder": "Alege alt folder…",
       "clean": "Toate fișierele din folder pot fi importate.",
       "violationsTitle": "{count, plural, one {Un lucru de îndreptat} few {# lucruri de îndreptat} other {# de lucruri de îndreptat}}",
       "fixInstructions": "Faceți îndreptările de mai sus — pe cele care țin de mutat, redenumit sau șters le puteți face direct în File Explorer, iar sistemul nu vă atinge fișierele. Dacă fișierul scos era o pagină dintr-un document scanat, renumerotați paginile rămase astfel încât să meargă tot una după alta, fără sărituri. Când ați terminat, reveniți aici, bifați din nou și apăsați „Verifică din nou”.",
@@ -2419,7 +2416,6 @@
       "acknowledgeHint": "Bifați după ce ați citit explicațiile și apoi din nou după fiecare îndreptare făcută în File Explorer. Bifa se cere la fiecare verificare.",
       "check": "Caută duplicate",
       "recheck": "Verifică din nou",
-      "chooseAnotherFolder": "Alege alt folder…",
       "clean": "Nu se află nimic de două ori în folderul ales.",
       "violationsTitle": "{count, plural, one {Un lucru de îndreptat} few {# lucruri de îndreptat} other {# de lucruri de îndreptat}}",
       "fixInstructions": "Deschideți folderul în File Explorer și scoateți copiile din el — sistemul nu vă atinge fișierele și nu șterge nimic singur. Nu ștergeți nimic până nu v-ați uitat la fișiere: sistemul spune că două fișiere par la fel, nu că sunt. Când ați terminat, bifați mai jos și apăsați „Verifică din nou”.",
@@ -2521,6 +2517,7 @@
       },
       "title": "Documente aflate deja în sistem",
       "intro": "Aceasta este prima verificare care se uită în arhivă, nu în folderul ales: sistemul vă spune care dintre documente se află deja în sistem și ce se va întâmpla cu fiecare, înainte ca ele să fie trimise spre clasificare. În lista de mai jos nu aveți nimic de îndreptat: citiți ce urmează să se întâmple, bifați și mergeți mai departe.",
+      "introDone": "Mai jos este ce a răspuns arhiva despre folderul ales.",
       "clean": "Niciun document din folderul ales nu se află deja în sistem.",
       "notesTitle": "Ce înseamnă „se află deja în sistem”",
       "showNotes": "Arată din nou explicațiile",
@@ -2531,11 +2528,10 @@
       "recheck": "Verifică din nou",
       "continue": "Continuă",
       "continueWithout": "Continuă fără această verificare",
-      "chooseAnotherFolder": "Alege alt folder…",
       "reportTitle": "{count, plural, one {Un document se află deja în sistem} few {# documente se află deja în sistem} other {# de documente se află deja în sistem}}",
-      "spendAgain": "{count, plural, one {Clasificarea de până acum s-a pierdut la ultima verificare. Când apăsați „Continuă” se trimite din nou o imagine spre clasificare automată, iar acest lucru se plătește a doua oară.} few {Clasificarea de până acum s-a pierdut la ultima verificare. Când apăsați „Continuă” se trimit din nou # imagini spre clasificare automată, iar acest lucru se plătește a doua oară.} other {Clasificarea de până acum s-a pierdut la ultima verificare. Când apăsați „Continuă” se trimit din nou # de imagini spre clasificare automată, iar acest lucru se plătește a doua oară.}}",
-      "readReportFirst": "Citiți raportul folderului de la finalul acestei pagini înainte de a apăsa „Continuă”: acolo sunt scrise fișierele care vor fi ignorate și observațiile despre folder, iar unele dintre ele spun să nu porniți importul.",
-      "nothingSpentYet": "{count, plural, one {Nu s-a trimis nimic încă spre clasificare. Când apăsați „Continuă” se trimite o imagine spre clasificare automată, iar acesta este primul pas care costă.} few {Nu s-a trimis nimic încă spre clasificare. Când apăsați „Continuă” se trimit # imagini spre clasificare automată, iar acesta este primul pas care costă.} other {Nu s-a trimis nimic încă spre clasificare. Când apăsați „Continuă” se trimit # de imagini spre clasificare automată, iar acesta este primul pas care costă.}}",
+      "spendAgain": "{count, plural, one {Clasificarea de până acum s-a pierdut la ultima verificare. Când apăsați butonul {button} se trimite din nou o imagine spre clasificare automată, iar acest lucru se plătește a doua oară.} few {Clasificarea de până acum s-a pierdut la ultima verificare. Când apăsați butonul {button} se trimit din nou # imagini spre clasificare automată, iar acest lucru se plătește a doua oară.} other {Clasificarea de până acum s-a pierdut la ultima verificare. Când apăsați butonul {button} se trimit din nou # de imagini spre clasificare automată, iar acest lucru se plătește a doua oară.}}",
+      "readReportFirst": "Citiți raportul folderului de la finalul acestei pagini înainte de a apăsa butonul {button}: acolo sunt scrise fișierele care vor fi ignorate și observațiile despre folder, iar unele dintre ele spun să nu porniți importul.",
+      "nothingSpentYet": "{count, plural, one {Nu s-a trimis nimic încă spre clasificare. Când apăsați butonul {button} se trimite o imagine spre clasificare automată, iar acesta este primul pas care costă.} few {Nu s-a trimis nimic încă spre clasificare. Când apăsați butonul {button} se trimit # imagini spre clasificare automată, iar acesta este primul pas care costă.} other {Nu s-a trimis nimic încă spre clasificare. Când apăsați butonul {button} se trimit # de imagini spre clasificare automată, iar acesta este primul pas care costă.}}",
       "nothingToFix": "Nu aveți nimic de îndreptat în File Explorer pentru cele de mai sus. Citiți totuși lista: dacă un document din arhivă nu este cel la care vă gândeați, redenumiți fișierul din folder și sistemul îl va importa ca document nou. Când sunteți mulțumit, bifați mai jos și apăsați „Continuă”.",
       "morePaths": "încă {count, number}…",
       "row": {
@@ -2662,8 +2658,7 @@
       "retry": "Încearcă din nou",
       "leave": "Oprește importul",
       "leaveHint": "„Oprește importul” repornește totul de la început, exact ca la prima pornire — inclusiv bifele și setările din bara de sus. Nu se șterge nimic din arhivă, pentru că nu s-a creat nimic.",
-      "attempt": "Aceasta a fost încercarea a {n}-a.",
-      "chooseAnotherFolder": "Alege alt folder…"
+      "attempt": "Aceasta a fost încercarea a {n}-a."
     },
     "importRun": {
       "title": "Import",
@@ -2680,7 +2675,7 @@
       "costNote": "Citirea AI se plătește: {count, plural, =0 {niciun document nu va fi citit} one {cel mult un document va fi citit} few {cel mult # documente vor fi citite} other {cel mult # de documente vor fi citite}}.",
       "writesNote": "Documentele care se aflau deja în sistem au fost stabilite la pasul „Deja în sistem” și nu se importă a doua oară.",
       "importButton": "Importă",
-      "chooseAnotherFolder": "Alege alt folder…",
+      "startAnotherImport": "Începe alt import",
       "nothingToImport": "Nu există fișiere de importat din acest folder."
     },
     "information": {

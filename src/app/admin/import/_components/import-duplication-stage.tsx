@@ -97,7 +97,6 @@ type Props = {
   acknowledged: boolean;
   onAcknowledgedChange: (next: boolean) => void;
   onCheck: () => void;
-  onChooseFolder: () => void;
   /**
    * The explanations disclosure, hoisted into the wizard for the same reason
    * the other panels' are: this subtree re-renders on every turn of the loop,
@@ -159,7 +158,6 @@ export function ImportDuplicationStage({
   acknowledged,
   onAcknowledgedChange,
   onCheck,
-  onChooseFolder,
   gated = false,
   rulesOpen,
   onRulesOpenChange,
@@ -225,10 +223,12 @@ export function ImportDuplicationStage({
    *
    * #32.01's expression, verbatim from `import-constraints-stage.tsx`, one
    * stage later. When it holds, the panel drops the rules disclosure, the tick
-   * and its hint, "Verifică din nou", "Alege alt folder…" and the take-away
-   * page — every one of which asks the user to do something about a folder that
-   * has nothing left to do — and keeps the title, the emerald sentence and the
-   * numbers. The step-gate card below carries the screen's one action.
+   * and its hint, "Verifică din nou" and the take-away page — every one of
+   * which asks the user to do something about a folder that has nothing left to
+   * do — and keeps the title, the emerald sentence and the numbers. The
+   * step-gate card below carries the screen's one action. ("Alege alt folder…"
+   * was in this list until #32.04, which removed the button from the panel
+   * outright rather than only at a pause.)
    *
    * ⚠️ **KEYED ON THE VERDICT, NOT ON THE TICK, and that is the whole safety of
    * it.** The request described the screen after the tick, because that is the
@@ -652,9 +652,10 @@ export function ImportDuplicationStage({
           with it, and that is safe HERE and would not be elsewhere: nothing at
           this stage has entered the archive and no classification has been paid
           for, so a user who realises the folder is wrong loses a walk and this
-          stage's metadata pass, not work. "Alege alt folder…" goes too, and the
-          way back to File Explorer is the next stage's own check, which
-          re-walks this folder and bounces back here if anything has changed.
+          stage's metadata pass, not work. ("Alege alt folder…" went with it in
+          #32.03 and is gone from this panel outright since #32.04; the way back
+          to File Explorer is the next stage's own check, which re-walks this
+          folder and bounces back here if anything has changed.)
 
           ⚠️ `hintId` is declared on the tick and pointed at by its own
           `aria-describedby`, and both are inside this block — so there is no
@@ -698,22 +699,11 @@ export function ImportDuplicationStage({
             {checked ? t("recheck") : t("check")}
           </button>
 
-          {/* The folder may simply be the wrong one, and it re-enters at
-              Structure, because a different folder has passed nothing.
-
-              NOT gated on the tick, for the reason the Constraints panel gives:
-              the tick says "I have read what counts as a duplicate", choosing a
-              different folder is not a verification of this one, and the check
-              it actually starts is the STRUCTURE check. */}
-          <button
-            type="button"
-            onClick={onChooseFolder}
-            disabled={busy}
-            className={buttonClass({ variant: "secondary", size: "md" })}
-          >
-            {t("chooseAnotherFolder")}
-          </button>
-
+          {/* ⚠️ **"Alege alt folder…" STOOD HERE UNTIL #32.04**, and the panel
+              header's own note above already said the way back to File Explorer
+              is the next stage's check. See the Constraints panel for the
+              argument: mid-run, a folder change is either a cancel or a
+              restart, and the wizard has both. */}
           {busy && <ActivityCue>{busyLabel}</ActivityCue>}
         </div>
       </div>

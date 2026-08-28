@@ -1802,3 +1802,119 @@ describe("the wizard's side of the table", () => {
     expect(handler).toContain("setGate(null)");
   });
 });
+
+// ---------------------------------------------------------------------------
+// The screens that name their next step through the pause's own sentence
+// ---------------------------------------------------------------------------
+
+describe("the continue buttons that name the stage they lead to", () => {
+  /**
+   * ⚠️ **ONE SENTENCE PATTERN FOR "CONTINUE TO THE NAMED STEP", NOT THREE.**
+   *                                                            (Slice #32.04)
+   *
+   * `ImportStepGate` builds its button as `t("advance", { stage:
+   * tStage(`stage.${nextStage}`) })`, and #32.04 gave the same construction to
+   * the two buttons outside it that lead from one stage to the next: the
+   * Pre-existing panel's Continue on a pruned screen, and the Evaluation
+   * screen's, which until then read the literal `forecast.continueButton` —
+   * "Continuă spre import", with a lower-case stage name in the middle of it.
+   *
+   * The guard is here rather than in either panel's own suite because the rule
+   * spans both: a literal reintroduced at one site is a second name for a
+   * button the other still derives, and the day `advance` or the stage
+   * vocabulary is relabelled, one of the two screens starts telling a business
+   * user to press something that no longer exists under that name. There is no
+   * behavioural test either way — nothing in `src/__tests__/` renders React —
+   * so a source scan is the instrument available, the same trade the wizard
+   * tests above make.
+   */
+  const SITES = [
+    {
+      file: "src/app/admin/import/_components/import-preexisting-stage.tsx",
+      // `onContinue` here is `startScan`: the press sends the images, so the
+      // screen the user arrives at is the Scanning one. Naming Evaluation would
+      // be a caption promising a screen one press further on.
+      phase: "scanning",
+      // No literal to be gone: this button's label was "Continuă", which the
+      // panel still renders on every screen that is not pruned. The negative
+      // half of this rule is asserted at the other site, where a literal really
+      // did exist.
+      gone: null,
+    },
+    {
+      // `onContinue` here is `setPhase("ready")`, and `ready` is the Import
+      // stage — which is what capitalises "Import" in en-GB, out of the
+      // mechanism rather than out of a second typing of the word.
+      file: "src/app/admin/import/_components/folder-forecast.tsx",
+      phase: "ready",
+      gone: "continueButton",
+    },
+  ] as const;
+
+  /**
+   * A component with its comments stripped — see the second test for why.
+   *
+   * Named apart from the module-level `code()` above, which strips block
+   * comments only: that one reads CSS, which has no `//`, and a shadowing
+   * helper with a different meaning under the same name is how the wrong one
+   * gets called.
+   */
+  function withoutComments(source: string): string {
+    return source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "");
+  }
+
+  it.each(SITES)("$file builds its label from the pause's own key", (site) => {
+    const source = fs.readFileSync(path.join(process.cwd(), site.file), "utf8");
+    expect(source).toContain('useTranslations("adminImport.stepGate")');
+    expect(source).toContain('tGate("advance"');
+    // ⚠️ Through `stageForPhase`, not as a stage id spelled out. Phase ids and
+    // stage ids are different vocabularies — `walking` is the Structure stage —
+    // so a hand-written stage id is a second copy of `STAGE_BY_PHASE` that
+    // nothing would notice going stale.
+    expect(source).toContain(`stageForPhase("${site.phase}")`);
+    expect(source).toContain("stage: tStage(`stage.${");
+    // …and the literal it replaced is not quietly back beside it.
+    if (site.gone !== null) {
+      expect(withoutComments(source)).not.toContain(`t("${site.gone}")`);
+    }
+  });
+
+  it("⚠️ leaves no hand-written stage name in either caption", () => {
+    // The failure this is really for: a future edit that "simplifies" the
+    // interpolation back into a literal. Romanian is the shipping locale, so
+    // the tell is a stage name in Romanian sitting in a component — and the two
+    // stage names these buttons could plausibly be given are the two below.
+    for (const site of SITES) {
+      // ⚠️ **COMMENTS STRIPPED FIRST, and `import-run-stage.test.ts` records
+      // why the hard way: its first draft read a prop's prose — a sentence
+      // ABOUT a call the caller makes — as code, and failed a component that
+      // was entirely correct. Both of these files discuss Scanare and Evaluare
+      // by name in their comments, and should; slicing from `return (` does not
+      // exclude that (`folder-forecast.tsx`'s first `return (` is the `Row`
+      // helper's, near the top), so the strip is what makes the slice mean what
+      // it says.
+      const jsx = withoutComments(
+        fs.readFileSync(path.join(process.cwd(), site.file), "utf8"),
+      );
+      for (const label of ["Scanare", "Evaluare", "„Import”"]) {
+        expect({ file: site.file, label, present: jsx.includes(label) }).toEqual({
+          file: site.file,
+          label,
+          present: false,
+        });
+      }
+    }
+  });
+
+  it("⚠️ names a phase the catalogue actually knows", () => {
+    // The source scan above proves the SHAPE. This proves the argument: a
+    // phase that is not in the machine returns `undefined` from
+    // `STAGE_BY_PHASE`, and the caption then renders the raw key path
+    // `adminImport.workflow.stage.undefined` on the button — in the shipping
+    // locale, on the one control the screen has left.
+    for (const site of SITES) {
+      expect(IMPORT_PHASES).toContain(site.phase as ImportPhase);
+      expect(IDS).toContain(stageForPhase(site.phase as ImportPhase));
+    }
+  });
+});

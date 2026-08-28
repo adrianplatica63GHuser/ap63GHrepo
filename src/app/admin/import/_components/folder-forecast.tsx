@@ -54,6 +54,7 @@
 import { useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { buttonClass } from "@/lib/ui/button-styles";
+import { stageForPhase } from "@/lib/import/workflow-stages";
 import type { ImportForecast } from "@/lib/import/preflight";
 
 type Props = {
@@ -83,7 +84,6 @@ type Props = {
   alreadyInSystem: { total: number; linked: number };
   droppedCount: number;
   onContinue: () => void;
-  onChangeFolder: () => void;
   /** Re-walk the SAME folder — no picker dialog. See the button's comment. */
   onRecheck: () => void;
 };
@@ -109,10 +109,25 @@ export function FolderForecast({
   alreadyInSystem,
   droppedCount,
   onContinue,
-  onChangeFolder,
   onRecheck,
 }: Props) {
   const t = useTranslations("adminImport.wizard.forecast");
+  /**
+   * The step gate's two namespaces, for the button that leaves. (Slice #32.04)
+   *
+   * The same construction `ImportStepGate` uses for its own button and the
+   * Pre-existing panel now uses for its Continue: one sentence pattern for
+   * "continue to the named step", interpolated with the stage's own name, so a
+   * relabelling of either cannot leave a business user looking for a button
+   * under a name it no longer has. `onContinue` is `setPhase("ready")`, and
+   * `ready` is the Import stage — read through `stageForPhase` because phase
+   * ids and stage ids are different vocabularies.
+   */
+  const tGate = useTranslations("adminImport.stepGate");
+  const tStage = useTranslations("adminImport.workflow");
+  const advanceLabel = tGate("advance", {
+    stage: tStage(`stage.${stageForPhase("ready")}`),
+  });
 
   /**
    * Give the keyboard somewhere to land when this screen arrives.
@@ -308,13 +323,22 @@ export function FolderForecast({
             nothing to import. No finding in the report disables this button —
             see the header of src/lib/import/checks.ts for why the checker is
             advisory throughout. */}
+        {/* ⚠️ **THE LABEL IS DERIVED, NOT WRITTEN.**       (Slice #32.04)
+            It read `continueButton` — "Continuă spre import", a lower-case
+            "import" in the middle of a sentence where every other continue in
+            the wizard names the STAGE, capital and quotes and all. Building it
+            from `stepGate.advance` and the stage vocabulary fixes the capital
+            as a consequence rather than as a second typing of the word, and
+            leaves one sentence pattern for "continue to the named step"
+            instead of a literal beside it. The stage is read through
+            `stageForPhase` from the phase this button actually sets. */}
         <button
           type="button"
           onClick={onContinue}
           disabled={nothingToDo}
           className={buttonClass({ variant: "primary", size: "lg" })}
         >
-          {t("continueButton")}
+          {advanceLabel}
         </button>
         {/* Slice #24.02c. The report is a to-do list acted on in Windows
             Explorer, so the expensive part of this loop was coming BACK: the
@@ -329,13 +353,13 @@ export function FolderForecast({
         >
           {t("recheckFolder")}
         </button>
-        <button
-          type="button"
-          onClick={onChangeFolder}
-          className={buttonClass({ variant: "secondary", size: "md" })}
-        >
-          {t("changeFolder")}
-        </button>
+        {/* ⚠️ **"Alegeți alt folder (clasificarea de până acum se pierde)"
+            STOOD HERE UNTIL #32.04.** Only ONE of the two secondary buttons on
+            this screen was a folder change: `onRecheck` above re-walks the
+            SAME folder, which is the checklist loop #24.02c built and the
+            report is worth nothing without it. This one was the other, and
+            mid-run a folder change is either a cancel or a restart — the stage
+            bar's Cancel is the route, with its consequence list. */}
         {nothingToDo && (
           <p role="status" className="text-sm text-red-700 dark:text-red-400">
             {/* Deliberately does not say "the folder is empty". The walk drops

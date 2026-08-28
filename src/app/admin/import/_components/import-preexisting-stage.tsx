@@ -58,6 +58,15 @@
  * honest: a retry-only screen traps a user whose database is down, and a
  * continue-only screen hides that a retry would probably work.
  *
+ * ⚠️ **AND SINCE #32.04 THE SCREEN PRUNES ITSELF WHEN THERE IS NOTHING LEFT TO
+ * ASK FOR.** See `resultOnly`. Two facts have to hold, not one, and the second
+ * is what keeps this out of #26.02's unfixable-message defect: the archive's
+ * answer is clean AND the folder report drawn under this panel has nothing to
+ * say. Where that report still carries findings the tick and "Verifică din nou"
+ * stay, because this panel's re-check is the only control that re-walks the
+ * folder after the user has acted on them — and the only other live button
+ * spends money on a folder the report may have condemned.
+ *
  * WHAT IS DISPLAYED, AND WHAT IS COMPLETE
  * ---------------------------------------
  * Every file is named by its path from the chosen folder inclusive
@@ -77,6 +86,7 @@ import { buttonClass } from "@/lib/ui/button-styles";
 import { buildRulesPageHtml, reportFileName } from "@/lib/import/report-html";
 import { downloadHtmlFile, fileNameStamp } from "@/lib/ui/download-html";
 import { displayPathOf } from "@/lib/import/folder-utils";
+import { stageForPhase } from "@/lib/import/workflow-stages";
 import type { PreexistingResult, PreexistingRow } from "@/lib/import/preexisting-check";
 import {
   PREEXISTING_NOTES,
@@ -152,7 +162,30 @@ type Props = {
    * second time. Found by the adversarial round.
    */
   classificationSpent: boolean;
-  onChooseFolder: () => void;
+  /**
+   * Nothing is left to ask for: draw the outcome and the press that leaves.
+   *                                                            (Slice #32.04)
+   *
+   * ⚠️ **COMPUTED IN THE WIZARD RATHER THAN HERE, WHICH IS WHERE THE THREE
+   * SIBLING PANELS COMPUTE THEIRS — and the difference is not a style
+   * choice.** The second half of the condition is a fact about the FOLDER
+   * REPORT, which is drawn under this panel by the wizard and is not a prop of
+   * it. The wizard therefore has to know the answer in order to decide whether
+   * to mount that report at all, and computing it in both places is a rule
+   * living twice: the day either copy gains a term, the screen shows a report
+   * that says nothing above a panel that has already said it.
+   *
+   * ⚠️ **AND IT IS NOT `gated`.** The three siblings key theirs on a
+   * step-through pause; there is no pause on this stage and there cannot be
+   * one — #29.08 removed `preexisting-checking → folder-report` from
+   * `SELF_ADVANCING_TRANSITIONS`, because every settled lookup now lands on
+   * this screen and a stage that already stops is never gated. A `gated` term
+   * copied in from a sibling would be a guard that can never fire.
+   *
+   * Optional, and `false` by default: a caller that passes nothing — the panel
+   * rendered on its own in a test — keeps exactly today's screen.
+   */
+  resultOnly?: boolean;
   /**
    * The explanations disclosure, hoisted into the wizard for the same reason
    * the other panels' are: this subtree re-renders on every round, and a user
@@ -174,7 +207,7 @@ export function ImportPreexistingStage({
   onContinue,
   classificationCalls,
   classificationSpent,
-  onChooseFolder,
+  resultOnly = false,
   notesOpen,
   onNotesOpenChange,
 }: Props) {
@@ -182,13 +215,69 @@ export function ImportPreexistingStage({
   // Unnamespaced, so the two key helpers can be used as written — they exist
   // precisely so no message path is spelled out in a component.
   const tk = useTranslations();
+  /**
+   * The step gate's own two namespaces, for the button that leaves.
+   *                                                            (Slice #32.04)
+   *
+   * ⚠️ **THE CAPTION IS BUILT THE WAY `ImportStepGate` BUILDS ITS OWN, and a
+   * second literal beside it is exactly what this avoids.** The wizard has one
+   * sentence pattern for "continue to the named step"; a `continueToScanning`
+   * key here would be a second, and the day either `advance` or the stage
+   * vocabulary is relabelled this panel starts telling a business user to press
+   * a button that no longer exists under that name. #32.03 applied the same
+   * rule to `nextAction`.
+   */
+  const tGate = useTranslations("adminImport.stepGate");
+  const tStage = useTranslations("adminImport.workflow");
   const locale = useLocale();
   const checkboxId = useId();
   const hintId = useId();
 
+  /**
+   * ⚠️ **THE STAGE THIS BUTTON NAMES IS SCANARE, NOT EVALUARE.** `onContinue`
+   * is `startScan`: the press sends the images, so the screen the user arrives
+   * at is the Scanning one, and Evaluation is a press further on — with the
+   * step-through toggle ticked the run comes to rest at `scanning`
+   * (`SELF_ADVANCING_TRANSITIONS`). Read through `stageForPhase` rather than
+   * spelled as a stage id, because phase ids and stage ids are not the same
+   * vocabulary — `walking` is the Structure stage — and this way the caption
+   * follows the catalogue if the mapping ever moves.
+   */
+  const advanceLabel = tGate("advance", {
+    stage: tStage(`stage.${stageForPhase("scanning")}`),
+  });
+
   const asked = result !== null;
   const failed = result !== null && !result.ok;
   const verdict = result !== null && result.ok ? result.verdict : null;
+
+  /**
+   * What the primary button on this screen says — built ONCE and read twice.
+   *                                                            (Slice #32.04)
+   *
+   * ⚠️ **THE MONEY SENTENCE NAMES THIS BUTTON, AND IT MUST NOT NAME IT WITH A
+   * SECOND COPY OF THE LABEL.** `nothingSpentYet` and `spendAgain` used to
+   * quote „Continuă” as a literal, which was correct until this slice gave the
+   * pruned screen a button reading „Continuă la pasul «Scanare»” — the one
+   * sentence in the whole flow whose job is to say which click costs money,
+   * pointing at a name no button on that screen had. Naming it by POSITION
+   * instead ("butonul de mai jos") was worse in the other direction: on every
+   * screen that is not pruned there are two more buttons below that sentence,
+   * one of which is the free re-walk, and a user who reads the cost as covering
+   * "Verifică din nou" stops pressing the only control that re-walks the folder
+   * after they have acted on the report.
+   *
+   * So it is interpolated, the shape `stepGate.nextAction` already uses for
+   * exactly this reason — and the same value the button itself renders, so the
+   * two can never disagree. All three arms are real: the pruned screen's
+   * derived caption, the failed lookup's "Continuă fără această verificare",
+   * and the ordinary "Continuă".
+   */
+  const pressLabel = resultOnly
+    ? advanceLabel
+    : failed
+      ? t("continueWithout")
+      : t("continue");
 
   /**
    * The two numbers this screen quotes, and they are deliberately NOT one
@@ -229,7 +318,14 @@ export function ImportPreexistingStage({
    * that moment. The user was being asked to confirm they had read something
    * the screen had just hidden.
    */
-  const showNotes = !asked || notesOpen || failed || (busy && nothingToShow);
+  /**
+   * ⚠️ `!resultOnly` leads, exactly as `showRules` does at both sibling panels
+   * (#32.01, #32.03). On a pruned screen the explanations describe a question
+   * the archive has already answered, and `notesOpen` may still be true from a
+   * round the user opened them in.
+   */
+  const showNotes =
+    !resultOnly && (!asked || notesOpen || failed || (busy && nothingToShow));
 
   /**
    * The explanations, translated once — used by the screen and by the saved
@@ -421,14 +517,27 @@ export function ImportPreexistingStage({
     ? ""
     : failed
       ? t("failed.title")
-      : verdict === null || verdict.clean
+      : verdict === null
         ? ""
-        : matchedCount > 0
-          ? t("reportTitle", { count: matchedCount })
-          : // Matched nothing and could not measure everything. Without this
-            // branch the announcement is empty over a screen that has an amber
-            // block on it, which is the audible-only lie #26.06 recorded.
-            t("unchecked.title");
+        : verdict.clean
+          ? // ⚠️ **THE CLEAN ROUND ANNOUNCED NOTHING UNTIL #32.04, and that was
+            // right exactly once.** It was written when a clean lookup did not
+            // rest here at all; #29.02 gave it a step-through pause whose card
+            // the wizard's own region announced, and #29.08 removed that pause
+            // — since when the clean outcome has been announced by nobody. This
+            // slice makes the silence acute: on a pruned screen two sections
+            // and every control disappear, the keyboard lands on the heading,
+            // and a screen-reader user hears the title and nothing about what
+            // the archive said. The visible emerald line's own words, so the
+            // region and the screen cannot say different things.
+            t("clean")
+          : matchedCount > 0
+            ? t("reportTitle", { count: matchedCount })
+            : // Matched nothing and could not measure everything. Without this
+              // branch the announcement is empty over a screen that has an
+              // amber block on it, which is the audible-only lie #26.06
+              // recorded.
+              t("unchecked.title");
 
   /**
    * Give the keyboard back when a round ends.
@@ -455,6 +564,13 @@ export function ImportPreexistingStage({
    * check no longer unmounts this panel — it lands on it — so that edge does
    * fire now and the keyboard is handed back. What is left is the arrival edge
    * alone, and that one was already spent on the way in.
+   *
+   * ⚠️ **AND `resultOnly` JOINS `justMounted` IN CHOOSING THE TARGET.**
+   * (Slice #32.04, copying #32.03's fix at the Duplication panel.) On a pruned
+   * screen `checkboxRef.current` is `null` — the block holding the tick is not
+   * rendered — so a busy → idle edge that landed there would `focus()` nothing
+   * and leave a keyboard user on `<body>`. The heading is the right target
+   * anyway: it is what the screen now consists of.
    */
   const checkboxRef = useRef<HTMLInputElement | null>(null);
   const headingRef = useRef<HTMLHeadingElement | null>(null);
@@ -468,8 +584,11 @@ export function ImportPreexistingStage({
     if (busy || (!finished && !justMounted)) return;
     const active = typeof document === "undefined" ? null : document.activeElement;
     const stranded = active === null || active === document.body;
-    if (stranded) (justMounted ? headingRef : checkboxRef).current?.focus();
-  }, [busy]);
+    if (stranded) (justMounted || resultOnly ? headingRef : checkboxRef).current?.focus();
+    // `resultOnly` is a dependency because it is read above; it cannot make the
+    // effect fire on its own, because every edge this effect acts on is a `busy`
+    // edge and it returns early on anything else.
+  }, [busy, resultOnly]);
 
   return (
     <section className="rounded-xl border border-card-rim bg-white p-5 dark:border-zinc-700 dark:bg-zinc-900">
@@ -488,7 +607,16 @@ export function ImportPreexistingStage({
       >
         {t("title")}
       </h2>
-      <p className="mt-1.5 text-sm text-ink dark:text-zinc-300">{t("intro")}</p>
+      {/* ⚠️ **`intro` DESCRIBES WORK THAT IS ABOUT TO HAPPEN**  (Slice #32.04)
+          — it ends "citiți ce urmează să se întâmple, bifați și mergeți mai
+          departe", and on a pruned screen there is no list to read and no tick
+          to give. Left standing it would send the user looking for controls
+          that are not there, which is worse than the blocks it describes.
+          `introDone` says what the screen IS instead, and swaps on the same
+          condition as everything else — the shape both sibling panels use. */}
+      <p className="mt-1.5 text-sm text-ink dark:text-zinc-300">
+        {resultOnly ? t("introDone") : t("intro")}
+      </p>
 
       {/* `aria-busy` says "what you are reading is being recomputed" for the
           moment a check is in flight, during which the previous round's report
@@ -569,7 +697,12 @@ export function ImportPreexistingStage({
           the disclosure reads `notesOpen` and the region reads `showNotes`, and
           during that window they disagree — a control whose state contradicts
           what is on screen is worse than no control. */}
-      {asked && !failed && !(busy && nothingToShow) && (
+      {/* Slice #32.04 — and the toggle goes with the listing it opens, exactly
+          as at both sibling panels. Offering to re-show four explanations about
+          documents the archive does not hold is offering to reopen work that is
+          finished, and a disclosure whose region is unconditionally absent is a
+          control that cannot do anything. */}
+      {asked && !failed && !resultOnly && !(busy && nothingToShow) && (
         <div className="mt-5">
           <button
             type="button"
@@ -610,27 +743,44 @@ export function ImportPreexistingStage({
       )}
 
       {/* -- The gate ------------------------------------------------------ */}
+      {/* ⚠️ **THE BLOCK STAYS MOUNTED ON A PRUNED SCREEN; ITS TICK DOES NOT.**
+          (Slice #32.04.) The three sibling panels drop their whole gate at
+          `resultOnly`, because the step-gate card below them carries the
+          Continue they give up. This panel has no card under it — there is no
+          pause on this stage and there cannot be one, see the `resultOnly`
+          prop — so its own Continue is the only way forward and has to survive.
+          What goes is everything that asks the user for something: the tick,
+          its hint, and the pointer to a folder report that has nothing to say.
+
+          ⚠️ `hintId` is declared on the tick and pointed at by its own
+          `aria-describedby`, and both are inside the same conditional — so
+          there is no window in which something describes a hint that is not
+          rendered. */}
       <div className="mt-5 border-t border-crease pt-4 dark:border-zinc-800">
-        <div className="flex items-start gap-2">
-          <input
-            id={checkboxId}
-            ref={checkboxRef}
-            type="checkbox"
-            checked={acknowledged}
-            onChange={(e) => onAcknowledgedChange(e.target.checked)}
-            aria-describedby={hintId}
-            className="mt-0.5 h-4 w-4 shrink-0 rounded border-wire accent-cta"
-          />
-          <label
-            htmlFor={checkboxId}
-            className="text-sm font-medium text-ink dark:text-zinc-200"
-          >
-            {t("acknowledge")}
-          </label>
-        </div>
-        <p id={hintId} className="mt-1 pl-6 text-xs text-fade dark:text-zinc-400">
-          {t("acknowledgeHint")}
-        </p>
+        {!resultOnly && (
+          <>
+            <div className="flex items-start gap-2">
+              <input
+                id={checkboxId}
+                ref={checkboxRef}
+                type="checkbox"
+                checked={acknowledged}
+                onChange={(e) => onAcknowledgedChange(e.target.checked)}
+                aria-describedby={hintId}
+                className="mt-0.5 h-4 w-4 shrink-0 rounded border-wire accent-cta"
+              />
+              <label
+                htmlFor={checkboxId}
+                className="text-sm font-medium text-ink dark:text-zinc-200"
+              >
+                {t("acknowledge")}
+              </label>
+            </div>
+            <p id={hintId} className="mt-1 pl-6 text-xs text-fade dark:text-zinc-400">
+              {t("acknowledgeHint")}
+            </p>
+          </>
+        )}
 
         {/* ⚠️ **THE ONLY WARNING THAT THE NEXT CLICK IS THE ONE THAT COSTS
             MONEY, and #29.08 moved it here from the Evaluation screen with the
@@ -648,8 +798,34 @@ export function ImportPreexistingStage({
             arrival, and it told the user to read something that was not on the
             screen and to press a button that was not drawn. Found by the
             adversarial round. */}
-        {asked && <p className="mt-3 text-sm text-ink dark:text-zinc-200">{t("readReportFirst")}</p>}
+        {/* ⚠️ **AND `!resultOnly` IS THE OTHER HALF OF THAT SAME RULE.**
+            (Slice #32.04.) A pruned screen is precisely one where the wizard
+            has NOT mounted the report, so this sentence would again send the
+            user to the foot of a page that has nothing at the foot of it. */}
+        {asked && !resultOnly && (
+          <p className="mt-3 text-sm text-ink dark:text-zinc-200">
+            {/* ⚠️ Fixed in passing (#32.04): `{button}`, and it was wrong before
+                this slice. The sentence quoted „Continuă” as a literal, and it
+                renders on the FAILED screen too — where the primary has read
+                "Continuă fără această verificare" since #29.02. So it pointed a
+                user at a button that screen does not have, one paragraph above
+                the cost sentence this slice had just taught to name the same
+                button correctly. `pressLabel` is the button's own value; the
+                `!resultOnly` guard means it can only ever be one of the two
+                short labels here, never the self-quoting `advanceLabel`. */}
+            {t("readReportFirst", { button: pressLabel })}
+          </p>
+        )}
 
+        {/* ⚠️ **BOTH VARIANTS SURVIVE THE PRUNE, and the branch is not
+            decoration.** (Slice #32.04.) On a first run through this is "nu
+            s-a trimis nimic încă"; on a re-entry the honest sentence is the one
+            saying the previous classification was thrown away and is about to
+            be paid for again — this is the one screen in the flow least allowed
+            to be wrong about money. The `classificationCalls > 0` guard stays
+            too: a folder with nothing left to send gets no cost sentence at
+            all, and the pruned page is then the all-clear line and the
+            button. */}
         {asked && classificationCalls > 0 && (
           <p className={`mt-3 ${COST_NOTE_CLASS}`}>
             {/* Two literal `t()` calls rather than one with a computed key,
@@ -657,11 +833,14 @@ export function ImportPreexistingStage({
                 translator calls made on a string literal and would see neither
                 key that way, so a reword that dropped one
                 would ship a dotted key path into the shipping locale with every
-                test green. The precedent is `continueWithout` / `continue`
-                three elements below. */}
+                test green. The precedent is `continueWithout` / `continue`,
+                which `pressLabel` above reaches the same way. */}
+            {/* …and `button` is that same `pressLabel`, so the sentence names
+                the control by the label the control is actually rendering. See
+                its declaration for what a literal cost here twice. */}
             {classificationSpent
-              ? t("spendAgain", { count: classificationCalls })
-              : t("nothingSpentYet", { count: classificationCalls })}
+              ? t("spendAgain", { count: classificationCalls, button: pressLabel })
+              : t("nothingSpentYet", { count: classificationCalls, button: pressLabel })}
           </p>
         )}
 
@@ -691,46 +870,53 @@ export function ImportPreexistingStage({
                   condition can never be true is the kind of guard a later
                   reader deletes the real one instead of; `SELF_ADVANCING_
                   TRANSITIONS` records the same removal from the other end. */}
+              {/* ⚠️ **IT STOPS READING `acknowledged` ON A PRUNED SCREEN, and
+                  that is the whole defect this slice exists to remove.**
+                  (Slice #32.04.) A tick that is not drawn can never be given,
+                  so a button still gated on it would be permanently disabled on
+                  the one screen whose only way forward it is. `busy` stays: a
+                  check in flight still makes the press wrong.
+
+                  The caption changes with it. "Continuă" is the label of a
+                  button standing under a tick that has just been given; with
+                  the tick gone the screen needs the wizard's own "continue to
+                  the named step" sentence, which is what the three quiet
+                  screens before this one leave the user expecting. */}
               <button
                 type="button"
                 onClick={onContinue}
-                disabled={!acknowledged || busy}
+                disabled={resultOnly ? busy : !acknowledged || busy}
                 className={buttonClass({ variant: "primary", size: "lg" })}
               >
-                {failed ? t("continueWithout") : t("continue")}
+                {pressLabel}
               </button>
-              <button
-                type="button"
-                onClick={onCheck}
-                disabled={!acknowledged || busy}
-                // Deliberately secondary although the primary beside it is
-                // often disabled: "Alege alt folder" sits in the same row and
-                // is NOT gated on the tick, so promoting this one would make
-                // the dead button the largest thing in the row and the live one
-                // visually subordinate. (#29.02's adversarial round.)
-                className={buttonClass({ variant: "secondary", size: "md" })}
-              >
-                {t("recheck")}
-              </button>
+              {/* ⚠️ **THE RE-CHECK GOES ONLY WHEN THE REPORT HAS NOTHING TO
+                  SAY, and `resultOnly` is what carries that.** (Slice #32.04.)
+                  This is the only control anywhere that re-walks the folder
+                  after the user has acted on the report below — the check here
+                  is a re-walk, the metadata pass and a fresh request to the
+                  archive. Take it away while that report still carries findings
+                  and the user has been told to go and fix something with no way
+                  to have the fix looked at, and the only live button spends
+                  money on a folder the report has already condemned. That is
+                  #26.02's unfixable message, on the screen where it costs
+                  most. */}
+              {!resultOnly && (
+                <button
+                  type="button"
+                  onClick={onCheck}
+                  disabled={!acknowledged || busy}
+                  // Deliberately secondary although the primary beside it is
+                  // often disabled: promoting this one would make the dead
+                  // button the largest thing in the row and the live one
+                  // visually subordinate. (#29.02's adversarial round.)
+                  className={buttonClass({ variant: "secondary", size: "md" })}
+                >
+                  {t("recheck")}
+                </button>
+              )}
             </>
           )}
-
-          {/* The folder may simply be the wrong one, and it re-enters at
-              Structure, because a different folder has passed nothing.
-
-              NOT gated on the tick, for the reason the sibling panels give: the
-              tick says "I have read what happens to documents already in the
-              system", choosing a different folder is not an acknowledgement
-              about this one, and the check it actually starts is the STRUCTURE
-              check. */}
-          <button
-            type="button"
-            onClick={onChooseFolder}
-            disabled={busy}
-            className={buttonClass({ variant: "secondary", size: "md" })}
-          >
-            {t("chooseAnotherFolder")}
-          </button>
 
           {busy && <ActivityCue>{busyLabel}</ActivityCue>}
         </div>
@@ -746,6 +932,14 @@ export function ImportPreexistingStage({
       </div>
 
       {/* -- The take-away copy -------------------------------------------- */}
+      {/* ⚠️ Slice #32.04 — hidden here, and NOT removed from the file. The page
+          is what a user carries away from a screen that HAS something on it: a
+          list of documents the archive already holds, or a lookup that failed
+          and will be imported over. `handleSave` and everything it reaches stay
+          in use on both of those paths. What has no reader is a dated page
+          printing an empty outcome list under a green all-clear the screen has
+          already given. */}
+      {!resultOnly && (
       <div className="mt-5 border-t border-crease pt-4 dark:border-zinc-800">
         {/* ⚠️ `disabled={busy}` is not tidiness. `settled` is
             `asked && !busy && verdict !== null`, so a Save pressed DURING a
@@ -764,6 +958,7 @@ export function ImportPreexistingStage({
         </button>
         <p className="mt-1.5 text-xs text-fade dark:text-zinc-400">{t("save.hint")}</p>
       </div>
+      )}
     </section>
   );
 }

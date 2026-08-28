@@ -83,7 +83,6 @@ const REQUIRED_KEYS = [
   "retry",
   "leave",
   "leaveHint",
-  "chooseAnotherFolder",
   // Drawn from the second attempt onwards, so a retry that fails the same way
   // still changes the screen and the wizard's live region. See `typeGateAttempts`.
   "attempt",

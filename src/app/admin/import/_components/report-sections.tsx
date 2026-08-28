@@ -60,6 +60,27 @@ type Props = {
 /** How many example paths one finding shows before it stops listing them. */
 const MAX_PATHS_SHOWN = 4;
 
+/**
+ * Has this report anything at all to say about the folder?   (Slice #32.04)
+ *
+ * ⚠️ **EXPORTED BECAUSE THE WIZARD ASKS THE SAME QUESTION, AND THE TWO ANSWERS
+ * MUST BE ONE ANSWER.** Until #32.04 the only reader was the `nothingToSay`
+ * branch below, which swaps this section's own body for a green all-clear.
+ * That slice made the Pre-existing panel above it prune itself on the same
+ * fact — a screen that has nothing left to ask for keeps only the press that
+ * leaves — and the wizard therefore has to decide whether to mount this
+ * section at all.
+ *
+ * Two independently written copies of `findings.length === 0 &&
+ * skipped.length === 0` would agree today and diverge the day either gains a
+ * term: the screen would then show a report that says nothing, under a panel
+ * that has already said it. One exported predicate, two call sites, no rule
+ * living in two places.
+ */
+export function reportHasNothingToSay(report: ImportReport): boolean {
+  return report.findings.length === 0 && report.skipped.length === 0;
+}
+
 function FindingRow({ finding }: { finding: Finding }) {
   const t = useTranslations("adminImport.wizard.report");
   const loud = finding.loudness === "loud";
@@ -246,7 +267,7 @@ export function ReportSections({
 
   const loud = report.findings.filter((f) => f.loudness === "loud");
   const quiet = report.findings.filter((f) => f.loudness === "quiet");
-  const nothingToSay = report.findings.length === 0 && report.skipped.length === 0;
+  const nothingToSay = reportHasNothingToSay(report);
 
   return (
     <section className="rounded-xl border border-card-rim bg-white p-5 dark:border-zinc-700 dark:bg-zinc-900">

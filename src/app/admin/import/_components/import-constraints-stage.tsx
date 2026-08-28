@@ -29,9 +29,12 @@
  *  - **There is no first "choose folder".** The folder was chosen at Structure
  *    and re-checking must not require re-picking it (#26.04's constraint, still
  *    in force). The primary button is the check, from the very first press.
- *    "Alege alt folder…" is still offered, because the folder may simply be the
- *    wrong one — and it re-enters at Structure, which is honest: a new folder
- *    has not passed the structure rules.
+ *    ⚠️ **AND IT IS THE ONLY BUTTON IN THAT ROW, SINCE #32.04.** "Alege alt
+ *    folder…" stood beside it until then, on the argument that the folder may
+ *    simply be the wrong one. Mid-run that is neither a cancel nor a restart
+ *    while reading like both, and the wizard already has the two controls that
+ *    say what they do — the stage bar's Cancel, with its consequence list, is
+ *    the route out.
  *  - **A violation has no culprit line.** A constraint's remedy is uniform
  *    across every file it names, so the sentence is stated once and the
  *    complete list of files sits under it. See `ConstraintViolation`.
@@ -95,7 +98,6 @@ type Props = {
   acknowledged: boolean;
   onAcknowledgedChange: (next: boolean) => void;
   onCheck: () => void;
-  onChooseFolder: () => void;
   /**
    * The rules disclosure, hoisted into the wizard for the same reason the other
    * panels' are: this subtree re-renders on every turn of the loop, and a user
@@ -160,7 +162,6 @@ export function ImportConstraintsStage({
   acknowledged,
   onAcknowledgedChange,
   onCheck,
-  onChooseFolder,
   gated = false,
   rulesOpen,
   onRulesOpenChange,
@@ -712,13 +713,11 @@ export function ImportConstraintsStage({
           makes the screen say there is work outstanding when the line above it
           has just said there is not.
 
-          "Alege alt folder…" goes with it, and that is safe HERE and would not
-          be elsewhere: nothing at this stage has entered the archive and no
-          classification has been paid for, so a user who realises the folder is
-          wrong loses a walk and this stage's metadata pass, not work. The
-          step-gate card below is what this screen now ends on, and the way back
-          to File Explorer is the next stage's own check, which re-walks this
-          folder and bounces back here if anything has changed.
+          ("Alege alt folder…" went with it in #32.01 and is gone from this
+          panel outright since #32.04 — see the module header.) The step-gate
+          card below is what this screen now ends on, and the way back to File
+          Explorer is the next stage's own check, which re-walks this folder and
+          bounces back here if anything has changed.
 
           ⚠️ `hintId` is declared on the tick and pointed at by its own
           `aria-describedby`, and both are inside this block — so there is no
@@ -764,26 +763,14 @@ export function ImportConstraintsStage({
             {checked ? t("recheck") : t("check")}
           </button>
 
-          {/* The folder may simply be the wrong one, and it re-enters at
-              Structure, because a different folder has passed nothing.
-
-              ⚠️ NOT gated on the tick, unlike its twin on the Structure panel,
-              and the asymmetry is the point. There the tick IS the gate on
-              picking a folder. Here the tick says "I have read the file
-              constraints", choosing a different folder is not a verification of
-              this one, and the check it actually starts is the STRUCTURE check,
-              whose own tick `runWalk` clears on the way in regardless. Gating it
-              demanded a confirmation for a check it does not govern — and made
-              the way out of a wrong folder cost a tick. */}
-          <button
-            type="button"
-            onClick={onChooseFolder}
-            disabled={busy}
-            className={buttonClass({ variant: "secondary", size: "md" })}
-          >
-            {t("chooseAnotherFolder")}
-          </button>
-
+          {/* ⚠️ **"Alege alt folder…" STOOD HERE UNTIL #32.04.** (Adrian:) a
+              folder change in the middle of a run is neither a cancel nor a
+              restart while reading like both — it silently re-entered at
+              Structure, because a different folder has passed nothing — and the
+              wizard already has the two controls that say what they do. The
+              stage bar's Cancel, with its consequence list, is the route out;
+              the one screen that keeps this button is the finished run, where
+              it is the only way to start another and is labelled as that. */}
           {busy && <ActivityCue>{busyLabel}</ActivityCue>}
         </div>
       </div>

@@ -54,6 +54,13 @@ function at(node: Record<string, unknown>, keyPath: string): unknown {
 const REQUIRED_KEYS = [
   "title",
   "intro",
+  // ⚠️ Slice #32.04. The sentence that REPLACES `intro` once the archive has
+  // answered clean AND the folder report under this panel has nothing to say —
+  // a screen that by then has no listing, no tick and no re-check for `intro`
+  // to be talking about. A missing key prints the dotted path where the
+  // screen's only explanatory line should be. The two sibling panels each
+  // gained theirs in #32.01 and #32.03; this is the third of the family.
+  "introDone",
   // Slice #29.02 — the all-clear. This panel had none until step-through gave
   // a clean archive lookup somewhere to rest; the module header says why it
   // could not exist before.
@@ -67,7 +74,6 @@ const REQUIRED_KEYS = [
   "recheck",
   "continue",
   "continueWithout",
-  "chooseAnotherFolder",
   "reportTitle",
   // ⚠️ Slice #29.08 — the only warning in the whole flow that the NEXT click is
   // the one that costs money. It stood on the Evaluation screen until the
@@ -160,6 +166,90 @@ describe("the Pre-existing stage's copy", () => {
         expect(block.categories).toEqual(expect.arrayContaining(wanted));
       }
     }
+  });
+
+  it("⚠️ names the button the money sentence is about, by interpolation", () => {
+    // Slice #32.04. `nothingSpentYet` and `spendAgain` quoted „Continuă” as a
+    // literal, and the slice gave the pruned screen a primary reading
+    // „Continuă la pasul «Scanare»” — so the one sentence in the flow whose job
+    // is to say WHICH click costs money named a button that screen does not
+    // have. Naming it by position instead was worse on every screen that is not
+    // pruned, where two free buttons sit below the sentence and one of them is
+    // the only re-walk of the folder there is.
+    //
+    // So it is `{button}`, interpolated with the same value the button renders
+    // — the shape `stepGate.nextAction` uses for the same reason. This pins
+    // both halves: the placeholder in the copy, and the panel passing it.
+    for (const file of LOCALES) {
+      const copy = loadCopy(file);
+      for (const key of ["nothingSpentYet", "spendAgain"] as const) {
+        const text = String(at(copy, key));
+        expect({ file, key, args: [...scanIcu(text).args].sort() }).toEqual({
+          file,
+          key,
+          args: ["button", "count"],
+        });
+        // ⚠️ **INSIDE EVERY PLURAL BRANCH, not once outside the block.**
+        // Romanian cannot agree from outside it, and the wholeness test above
+        // already refuses anything sitting outside — so a `{button}` written
+        // there would take that test red rather than this one. Counted here so
+        // a branch that quietly loses it cannot pass either.
+        const branches = file === "ro-RO.json" ? 3 : 2;
+        expect({ file, key, n: text.split("{button}").length - 1 }).toEqual({
+          file,
+          key,
+          n: branches,
+        });
+        // …and the literal it replaced is not still standing beside it.
+        expect({ file, key, literal: /„Continuă”|“Continue”/.test(text) }).toEqual({
+          file,
+          key,
+          literal: false,
+        });
+        // ⚠️ **AND `{button}` IS NOT WRAPPED IN QUOTES, because the label it
+        // receives already carries its own.** `stepGate.advance` renders
+        // „Continuă la pasul «Scanare»”, so quoting the placeholder as well
+        // prints a quote inside a quote inside the money sentence. The same
+        // reason `stepGate.nextAction.preconditions` ends with a bare
+        // `{button}`.
+        expect({
+          file,
+          key,
+          quoted: /[„“]\s*\{button\}|\{button\}\s*[”"]/.test(text),
+        }).toEqual({ file, key, quoted: false });
+      }
+    }
+
+    const panel = fs.readFileSync(
+      path.join(process.cwd(), "src/app/admin/import/_components/import-preexisting-stage.tsx"),
+      "utf8",
+    );
+    for (const key of ["spendAgain", "nothingSpentYet"] as const) {
+      expect(panel).toContain(
+        `t("${key}", { count: classificationCalls, button: pressLabel })`,
+      );
+    }
+
+    // ⚠️ **AND THE THIRD SENTENCE ON THIS PANEL THAT NAMES THE PRIMARY.**
+    // `readReportFirst` quoted „Continuă” as a literal and renders on the
+    // FAILED screen too, where the button has said "Continuă fără această
+    // verificare" since #29.02 — so it pointed a user at a control that screen
+    // does not have. Fixed in passing by #32.04; no plural, so only the args
+    // and the call site are pinned. (`nothingToFix` is deliberately NOT here:
+    // its guard is `matchedCount > 0`, which implies a settled, non-failed,
+    // non-pruned screen, so „Continuă” is exactly what the button says.)
+    for (const file of LOCALES) {
+      const text = String(at(loadCopy(file), "readReportFirst"));
+      expect({ file, args: [...scanIcu(text).args].sort() }).toEqual({
+        file,
+        args: ["button"],
+      });
+      expect({ file, literal: /„Continuă”|“Continue”/.test(text) }).toEqual({
+        file,
+        literal: false,
+      });
+    }
+    expect(panel).toContain('t("readReportFirst", { button: pressLabel })');
   });
 
   it("⚠️ keeps every counted chrome sentence whole, inside its plural block", () => {
@@ -351,9 +441,10 @@ describe("the Pre-existing stage's copy, against its siblings", () => {
    *
    * ⚠️ An explicit list, not "everything except a few". The four panels are
    * siblings by design and several of their strings are deliberately identical
-   * — "Verifică din nou", "Alege alt folder…" — because the whole value of the
-   * fourth loop is that it costs the user nothing to learn. Asserting
-   * difference by default would fail on the copy that is RIGHT.
+   * — "Verifică din nou" — because the whole value of the fourth loop is that
+   * it costs the user nothing to learn. Asserting difference by default would
+   * fail on the copy that is RIGHT. ("Alege alt folder…" was the second example
+   * here until #32.04 removed the button from three of the four panels.)
    *
    * What is listed below is the copy that names the stage. A Pre-existing
    * screen saying "Am citit ce se consideră duplicat" over its tick is one
@@ -363,6 +454,12 @@ describe("the Pre-existing stage's copy, against its siblings", () => {
   const MUST_DIFFER = [
     "title",
     "intro",
+    // ⚠️ Slice #32.04, and the two sibling suites each added theirs for the
+    // same reason (#32.01, #32.03). `introDone` is the sentence a pruned screen
+    // shows INSTEAD of `intro`, so it is stage-naming copy by construction —
+    // and "Mai jos vedeți ce a arătat compararea fișierelor" over a screen
+    // about the archive is one copy-paste away.
+    "introDone",
     // ⚠️ `notesTitle` against the siblings' `rulesTitle`, because this stage
     // renamed the heading rather than reusing it: the three before it list
     // RULES the folder must satisfy and this one lists NOTES about what the
@@ -433,7 +530,13 @@ describe("the Pre-existing stage's copy, against its siblings", () => {
           preexisting: Record<string, unknown>;
         };
       };
-      for (const key of ["recheck", "chooseAnotherFolder"] as const) {
+      // ⚠️ `chooseAnotherFolder` LEFT THIS LIST IN #32.04, with the button. It
+      // is gone from this panel — mid-run, a folder change is either a cancel
+      // or a restart, and the wizard has both — while the Structure panel keeps
+      // its own, because that stage's work IS choosing a folder. So the key
+      // still exists to compare against, and an identity test left here would
+      // go on passing over a control nothing renders.
+      for (const key of ["recheck"] as const) {
         expect(at(json.adminImport.preexisting, key)).toBe(at(json.adminImport.structure, key));
       }
     }
@@ -522,5 +625,197 @@ describe("the counts this stage changed elsewhere in the wizard", () => {
         [...scanIcu(String(at(wizardCopy(file), "importDialog.doneWithErrors"))).args].sort(),
       ).toEqual(["created", "errors"]);
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The screen with nothing left to ask for   (Slice #32.04)
+// ---------------------------------------------------------------------------
+
+/**
+ * ⚠️ **THE ONLY GUARD THE BEHAVIOURAL HALF OF #32.04 HAS.** Nothing in
+ * `src/__tests__/` renders React, so a source scan is the instrument available
+ * — the same trade `import-duplication-stage.test.ts` makes for #32.03 and
+ * `import-workflow-stages.test.ts` makes for the wizard.
+ *
+ * ⚠️ **AND THE TWO-PART CONDITION IS WHAT MATTERS MOST HERE.** A suite that
+ * only checked "a clean verdict hides the tick" would go green over the defect
+ * this slice is written to avoid: the folder report drawn under this panel is a
+ * to-do list acted on in File Explorer, one of whose findings says every number
+ * on the screen is inflated and ends "Nu porniți importul", and this panel's
+ * "Verifică din nou" is the ONLY control anywhere that re-walks the folder
+ * afterwards. Prune on the archive's answer alone and the user is told to go
+ * and fix something with no way to have the fix looked at, while the one live
+ * button spends money on a folder the report has already condemned. That is
+ * #26.02's unfixable message, on the screen where it costs most.
+ */
+describe("the Pre-existing screen's prune", () => {
+  const PANEL = "src/app/admin/import/_components/import-preexisting-stage.tsx";
+  const WIZARD = "src/app/admin/import/_components/import-wizard.tsx";
+  const SECTIONS = "src/app/admin/import/_components/report-sections.tsx";
+
+  function read(rel: string): string {
+    return fs.readFileSync(path.join(process.cwd(), rel), "utf8");
+  }
+
+  it("⚠️ keys the prune on the archive's answer AND on the folder report", () => {
+    const wizard = read(WIZARD);
+    const start = wizard.indexOf("const preexistingResultOnly =");
+    expect(start).toBeGreaterThan(0);
+    const expr = wizard.slice(start, wizard.indexOf(";", start));
+
+    // The terms are asserted by NAME, so a rename or a Prettier wrap is an
+    // innocent edit. Dropping one of them is not.
+    for (const term of [
+      // A lookup that is settled…
+      'phase !== "preexisting-checking"',
+      "preexisting !== null",
+      // …and came back clean…
+      "preexisting.ok",
+      "preexisting.verdict.clean",
+      // …AND a folder report with nothing to say. This is the term the whole
+      // guard exists for.
+      "reportHasNothingToSay(report)",
+    ]) {
+      expect({ term, present: expr.includes(term) }).toEqual({ term, present: true });
+    }
+
+    // ⚠️ NOT the tick, for the reason #32.03 pinned at the Duplication panel:
+    // keyed on `acknowledged` this would take "Verifică din nou" away at the
+    // moment it is the only way out. And NOT `gated`: there is no pause on this
+    // stage and there cannot be one — #29.08 removed the transition it would
+    // gate — so a `gated` term would be a guard that can never fire.
+    for (const term of ["acknowledged", "gated"]) {
+      expect({ term, keyedOnIt: expr.includes(term) }).toEqual({ term, keyedOnIt: false });
+    }
+  });
+
+  it("⚠️ decides the panel and the report below it with ONE expression", () => {
+    // Two independently written copies of "the report has nothing to say" would
+    // agree today and diverge the day either gains a term — and the screen
+    // would then show a report saying nothing, under a panel that has already
+    // said it. So: one exported predicate, read by the section itself and by
+    // the wizard, and the raw comparison written down exactly once.
+    const sections = read(SECTIONS);
+    expect(sections).toContain("export function reportHasNothingToSay(report: ImportReport): boolean");
+    expect(sections).toContain("const nothingToSay = reportHasNothingToSay(report);");
+    // The raw comparison is written down exactly once in the whole repo's
+    // components, and it is inside that predicate. A second copy anywhere is
+    // the rule living twice, which is the failure this test is about.
+    const RAW = "findings.length === 0 && report.skipped.length === 0";
+    expect(sections.split(RAW).length - 1).toBe(1);
+    // …and nowhere else. Reading only `report-sections.tsx` would pass on the
+    // exact failure this test names: a second copy in the wizard, computed
+    // beside the predicate rather than through it.
+    expect(read(WIZARD)).not.toContain(RAW);
+    const body = sections.slice(
+      sections.indexOf("export function reportHasNothingToSay"),
+    );
+    expect(body.slice(0, body.indexOf("}"))).toContain(RAW);
+
+    const wizard = read(WIZARD);
+    expect(wizard).toContain('from "./report-sections"');
+    expect(wizard).toContain("reportHasNothingToSay");
+    // The mount, gated on the same const the panel is handed.
+    expect(wizard).toContain(
+      "{inPreexisting && preexisting !== null && !preexistingResultOnly && (",
+    );
+    expect(wizard).toContain("resultOnly={preexistingResultOnly}");
+  });
+
+  it("⚠️ takes every block that asks the user for something off the pruned screen", () => {
+    const panel = read(PANEL);
+
+    // The intro is part of the same defect: it ends "citiți ce urmează să se
+    // întâmple, bifați și mergeți mai departe", and on a pruned screen there is
+    // nothing to read and no tick to give.
+    expect(panel).toContain('{resultOnly ? t("introDone") : t("intro")}');
+    // Three wrappers, and they are — in document order — the tick with its
+    // hint, "Verifică din nou", and the take-away page. If a later slice adds a
+    // fourth legitimately, this number is the thing to update; the assertions
+    // below name each of the three so a drop is not mistaken for an addition.
+    expect(panel.split("{!resultOnly && (").length - 1).toBe(3);
+    // The explanations, both the listing and the disclosure that reopens it.
+    expect(panel).toContain("!resultOnly && (!asked || notesOpen || failed");
+    expect(panel).toContain("asked && !failed && !resultOnly && !(busy && nothingToShow)");
+    // The pointer to a report the wizard has not mounted.
+    expect(panel).toContain("{asked && !resultOnly && (");
+    // And "Verifică din nou" — the one that is safe to drop ONLY because the
+    // report has nothing to send the user back for. Located by its own label
+    // rather than by an indentation the formatter owns.
+    const recheckAt = panel.indexOf('{t("recheck")}');
+    expect(recheckAt).toBeGreaterThan(0);
+    const guardAt = panel.slice(0, recheckAt).lastIndexOf("{!resultOnly && (");
+    expect(guardAt).toBeGreaterThan(0);
+    // …and the guard is still OPEN at the label, which is what says the button
+    // is inside it rather than merely after it. Counted rather than matched on
+    // a closing `)}`: `className={buttonClass({ … })}` carries one of those,
+    // and the indentation that would distinguish them belongs to the formatter.
+    const between = panel.slice(guardAt, recheckAt);
+    expect(between.split("(").length - between.split(")").length).toBe(1);
+  });
+
+  it("⚠️ makes the Continue pressable without a tick that is not drawn", () => {
+    // The whole defect this slice exists to remove: a permanently disabled
+    // primary button on the one screen whose only way forward it is. `busy`
+    // stays — a check in flight still makes the press wrong.
+    const panel = read(PANEL);
+    expect(panel).toContain("disabled={resultOnly ? busy : !acknowledged || busy}");
+    // The label is a hoisted const, because the cost sentence beside the button
+    // interpolates the SAME value — see the next test. Asserted by its terms so
+    // a reformat of the ternary is an innocent edit.
+    expect(panel).toContain("{pressLabel}");
+    const declAt = panel.indexOf("const pressLabel =");
+    expect(declAt).toBeGreaterThan(0);
+    const decl = panel.slice(declAt, panel.indexOf(";", declAt));
+    for (const term of ["resultOnly", "advanceLabel", 't("continueWithout")', 't("continue")']) {
+      expect({ term, present: decl.includes(term) }).toEqual({ term, present: true });
+    }
+  });
+
+  it("⚠️ changes nothing on the failed-lookup screen", () => {
+    // `failed` is not a clean verdict, so `preexistingResultOnly` is false
+    // there. The one screen on this stage where the user is being asked to
+    // accept a risk keeps its tick, its red block and both its sentences.
+    const panel = read(PANEL);
+    // The failed arm of `pressLabel`, because the label has never stood alone
+    // in this file — an assertion on `{t("continueWithout")}` would be red on
+    // correct code. Read out of the declaration, which is Prettier-wrapped.
+    const declAt = panel.indexOf("const pressLabel =");
+    const decl = panel.slice(declAt, panel.indexOf(";", declAt));
+    expect(decl).toContain("failed");
+    expect(decl).toContain('t("continueWithout")');
+    expect(panel).toContain('{t("failed.continueHint")}');
+    const wizard = read(WIZARD);
+    const start = wizard.indexOf("const preexistingResultOnly =");
+    const expr = wizard.slice(start, wizard.indexOf(";", start));
+    expect(expr).toContain("preexisting.ok");
+  });
+
+  it("⚠️ hands the keyboard to the heading when the tick is not drawn", () => {
+    // `checkboxRef.current` is null on a pruned screen — the block holding the
+    // tick is not rendered — so a busy → idle edge that landed there would
+    // `focus()` nothing and leave a keyboard user on `<body>`. #32.03's fix at
+    // the Duplication panel, in the same shape.
+    expect(read(PANEL)).toContain("justMounted || resultOnly ? headingRef : checkboxRef");
+  });
+
+  it("⚠️ hides the take-away page rather than deleting it", () => {
+    // What changed is whether the panel OFFERS the Save button on a screen with
+    // nothing left to report, not what the page says when it is asked for — a
+    // diff in `report-html.ts` would be a mistake rather than a bonus. So the
+    // exporter and everything it reaches stay in use on the two paths that
+    // still draw the button, and the button itself is INSIDE a `!resultOnly`
+    // wrapper rather than gone: located by its own label and measured by paren
+    // balance, the way the re-check above is.
+    const panel = read(PANEL);
+    expect(panel).toContain("const handleSave = useCallback(");
+    expect(panel).toContain("buildRulesPageHtml({");
+    const saveAt = panel.indexOf('{t("save.button")}');
+    expect(saveAt).toBeGreaterThan(0);
+    const guardAt = panel.slice(0, saveAt).lastIndexOf("{!resultOnly && (");
+    expect(guardAt).toBeGreaterThan(0);
+    const between = panel.slice(guardAt, saveAt);
+    expect(between.split("(").length - between.split(")").length).toBe(1);
   });
 });

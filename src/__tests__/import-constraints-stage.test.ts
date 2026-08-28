@@ -67,7 +67,6 @@ const REQUIRED_KEYS = [
   "acknowledgeHint",
   "check",
   "recheck",
-  "chooseAnotherFolder",
   "clean",
   "violationsTitle",
   "fixInstructions",
@@ -163,8 +162,9 @@ describe("the Constraints stage's copy", () => {
    *
    * ⚠️ An explicit list, not "everything except a few". The two panels are
    * siblings by design and several of their strings are deliberately identical
-   * — "Verifică din nou", "Alege alt folder…", the count of things to put
-   * right, the instruction to go to File Explorer — because the whole value of
+   * — "Verifică din nou", the count of things to put right, the instruction to
+   * go to File Explorer ("Alege alt folder…" was among them until #32.04 took
+   * the button off this panel) — because the whole value of
    * the second loop is that it costs the user nothing to learn. Asserting
    * difference by default would therefore fail on the copy that is RIGHT, and
    * the natural fix would be to reword a button for no reason.
@@ -231,7 +231,12 @@ describe("the Constraints stage's copy", () => {
       const json = JSON.parse(
         fs.readFileSync(path.join(process.cwd(), "messages", file), "utf8"),
       ) as { adminImport: { structure: Record<string, unknown>; constraints: Record<string, unknown> } };
-      for (const key of ["recheck", "chooseAnotherFolder", "violationsTitle"] as const) {
+      // ⚠️ `chooseAnotherFolder` LEFT THIS LIST IN #32.04, with the button. It
+      // is gone from this panel and from every other screen that stands in the
+      // middle of a run; the Structure panel still has one, so the key is still
+      // there to compare against and an identity test would keep passing over a
+      // key nothing renders.
+      for (const key of ["recheck", "violationsTitle"] as const) {
         expect(at(json.adminImport.constraints, key)).toBe(at(json.adminImport.structure, key));
       }
     }

@@ -90,6 +90,19 @@ type Props = {
   /** False when the walk produced nothing at all; the button has no subject. */
   canImport: boolean;
   onImport: () => void;
+  /**
+   * Start another import, from the beginning, with a folder of the user's
+   * choosing.                                                 (Slice #32.04)
+   *
+   * ⚠️ **THE HANDLER IS THE WIZARD'S FOLDER PICKER AND THE NAME SAYS SO; THE
+   * BUTTON'S LABEL NO LONGER DOES.** #32.04 took "Alege alt folder…" off every
+   * screen that stands in the middle of a run — mid-flow, changing folder is
+   * either a cancel or a restart, and the wizard has both — and this screen is
+   * the one place it must not simply vanish: after a finished run it is the
+   * only way out of the page. What was wrong here was the label, not the
+   * control, because at that point in the flow it is not what the button
+   * means.
+   */
   onChooseFolder: () => void;
 };
 
@@ -177,24 +190,26 @@ export function ImportRunStage({
           </button>
         )}
 
-        {/* The folder may simply be the wrong one — and after a finished run
-            this is the way to start another, which is why it is live in every
-            state but `running`. It re-enters at Structure, because a different
-            folder has passed nothing. The four stage panels before this one
-            each carry the same control for the same reason; it used to be the
-            toolbar's, which put a way round every one of their ticks two rows
-            above them. */}
-        <button
-          type="button"
-          onClick={onChooseFolder}
-          disabled={state === "running"}
-          className={buttonClass({
-            variant: finished ? "primary" : "secondary",
-            size: finished ? "lg" : "md",
-          })}
-        >
-          {t("chooseAnotherFolder")}
-        </button>
+        {/* ⚠️ **ONLY ONCE A RUN HAS FINISHED, SINCE #32.04, AND IT IS THE
+            PRIMARY THERE.** It used to be live in every state but `running`,
+            as the four stage panels before this one each carried the same
+            control. Those four have lost it: mid-run, "choose another folder"
+            is a third route beside Cancel and restart that says which of the
+            two it is, and the source request calls it out by name. Here the
+            press is the only way out of a page whose run is over, so what came
+            off is the LABEL — at this point in the flow the button does not
+            mean "change the folder of this import", it means start another
+            one. The `disabled` went with the other states: `finished` and
+            `running` are exclusive. */}
+        {finished && (
+          <button
+            type="button"
+            onClick={onChooseFolder}
+            className={buttonClass({ variant: "primary", size: "lg" })}
+          >
+            {t("startAnotherImport")}
+          </button>
+        )}
       </div>
 
       {!finished && !canImport && (

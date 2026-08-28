@@ -93,7 +93,12 @@ const RUN_KEYS = [
   "costNote",
   "writesNote",
   "importButton",
-  "chooseAnotherFolder",
+  // ⚠️ Slice #32.04 — this was `chooseAnotherFolder`, and the key was renamed
+  // rather than the control removed. On a finished run this button is the only
+  // way out of the page, so what came off was the label: at that point in the
+  // flow it does not mean "change the folder of this import", it means start
+  // another one. Everywhere else in the run it is gone entirely.
+  "startAnotherImport",
   "nothingToImport",
 ] as const;
 
@@ -283,6 +288,24 @@ describe("the Scanning and Import stages' copy", () => {
       "adminImport.wizard.importButton",
       "adminImport.wizard.chooseFolderButton",
       "adminImport.wizard.changeFolderButton",
+      // ── Slice #32.04 ──────────────────────────────────────────────────────
+      // "Alege alt folder…" on every screen that stands in the middle of a run:
+      // mid-flow a folder change is either a cancel or a restart, and the
+      // wizard has both. The Structure panel keeps its own — that stage's work
+      // IS choosing a folder — so `adminImport.structure.chooseAnotherFolder`
+      // is deliberately NOT in this list.
+      "adminImport.constraints.chooseAnotherFolder",
+      "adminImport.duplication.chooseAnotherFolder",
+      "adminImport.preexisting.chooseAnotherFolder",
+      "adminImport.typesBlocked.chooseAnotherFolder",
+      "adminImport.importRun.chooseAnotherFolder",
+      // The Evaluation screen's own copy of the same button…
+      "adminImport.wizard.forecast.changeFolder",
+      // …and the literal continue label beside it, which is now derived from
+      // `adminImport.stepGate.advance` and the stage vocabulary. Left in the
+      // file it would be a second, lower-case name for a button that no longer
+      // renders it.
+      "adminImport.wizard.forecast.continueButton",
       // The document page's copy for the same button.
       "document.buttons.aiInterpret",
       "document.buttons.aiInterpreted",
@@ -318,6 +341,28 @@ describe("the Scanning and Import stages' copy", () => {
         .filter((line) => !/"(aiInterpreted|AI_INTERPRETED)"\s*:/.test(line));
       expect({ file, lines }).toEqual({ file, lines: [] });
     }
+  });
+
+  it("⚠️ offers the way to another import only once a run has finished", () => {
+    // Slice #32.04. This control was live in every state but `running`, as the
+    // four stage panels before this screen each carried the same one. Those
+    // four have lost it — mid-run, "choose another folder" is a third route
+    // beside Cancel and restart that says which of the two it is — and here it
+    // survives for the opposite reason: after a finished run it is the only way
+    // out of the page. So the guard is that it is drawn on that state and no
+    // other, under the label that says what it actually does.
+    const panel = source("import-run-stage.tsx");
+    const labelAt = panel.indexOf('{t("startAnotherImport")}');
+    expect(labelAt).toBeGreaterThan(0);
+    const guardAt = panel.slice(0, labelAt).lastIndexOf("{finished && (");
+    expect(guardAt).toBeGreaterThan(0);
+    // The guard is still open at the label — counted rather than matched on a
+    // closing `)}`, because `className={buttonClass({ … })}` carries one of
+    // those and the indentation that would tell them apart is the formatter's.
+    const between = panel.slice(guardAt, labelAt);
+    expect(between.split("(").length - between.split(")").length).toBe(1);
+    // …and the old label is not still in the file under another guard.
+    expect(panel).not.toContain("chooseAnotherFolder");
   });
 
   it("⚠️ keeps the two keys AI Discover still needs", () => {

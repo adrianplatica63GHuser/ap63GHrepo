@@ -66,7 +66,6 @@ const REQUIRED_KEYS = [
   "acknowledgeHint",
   "check",
   "recheck",
-  "chooseAnotherFolder",
   "clean",
   "violationsTitle",
   "fixInstructions",
@@ -198,7 +197,8 @@ describe("the Duplication stage's copy, against its siblings", () => {
    *
    * ⚠️ An explicit list, not "everything except a few". The three panels are
    * siblings by design and several of their strings are deliberately identical
-   * - "Verifică din nou", "Alege alt folder…", the count of things to put right
+   * - "Verifică din nou", the count of things to put right ("Alege alt
+   * folder…" was among them until #32.04 took the button off this panel)
    * - because the whole value of the third loop is that it costs the user
    * nothing to learn. Asserting difference by default would fail on the copy
    * that is RIGHT.
@@ -279,7 +279,10 @@ describe("the Duplication stage's copy, against its siblings", () => {
           duplication: Record<string, unknown>;
         };
       };
-      for (const key of ["recheck", "chooseAnotherFolder", "violationsTitle"] as const) {
+      // ⚠️ `chooseAnotherFolder` LEFT THIS LIST IN #32.04, with the button —
+      // see the Constraints suite for why an identity test against a key the
+      // Structure panel still has would have gone on passing.
+      for (const key of ["recheck", "violationsTitle"] as const) {
         expect(at(json.adminImport.duplication, key)).toBe(at(json.adminImport.structure, key));
       }
     }
@@ -375,8 +378,9 @@ describe("the Duplication stage's copy, against its siblings", () => {
     // makes for the wizard, and for the same reason: without it, reverting the
     // intro swap and all four `!resultOnly` wrappers leaves every suite in the
     // repo green while a clean paused screen goes back to offering "Verifica
-    // din nou", "Alege alt folder..." and a take-away page listing no copies -
-    // which is the screen this slice exists to remove.
+    // din nou" and a take-away page listing no copies - which is the screen
+    // that slice exists to remove. (It listed "Alege alt folder..." as a third;
+    // #32.04 removed that button from the panel outright.)
     const source = fs.readFileSync(
       path.join(
         process.cwd(),

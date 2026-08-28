@@ -126,8 +126,6 @@ type Props = {
   attempt: number;
   /** End the run and go back to the beginning. Nothing to undo. */
   onLeave: () => void;
-  /** The folder may simply have been the wrong one; re-enters at Structure. */
-  onChooseFolder: () => void;
 };
 
 /**
@@ -147,7 +145,6 @@ export function ImportTypesBlockedStage({
   busyLabel,
   attempt,
   onLeave,
-  onChooseFolder,
 }: Props) {
   const t = useTranslations("adminImport.typesBlocked");
   const locale = useLocale();
@@ -632,15 +629,12 @@ export function ImportTypesBlockedStage({
           {t("leave")}
         </button>
 
-        <button
-          type="button"
-          onClick={onChooseFolder}
-          disabled={busy}
-          className={buttonClass({ variant: "secondary", size: "md" })}
-        >
-          {t("chooseAnotherFolder")}
-        </button>
-
+        {/* ⚠️ **"Alege alt folder…" STOOD HERE UNTIL #32.04, and nothing is
+            stranded by its going.** It sat beside "Oprește importul" — the
+            primary once a verdict is in — whose own hint two lines below says
+            that button restarts everything from the beginning exactly as the
+            first time. That is the journey this one offered as well, quieter
+            and with none of the explanation. */}
         {busy && <ActivityCue>{busyLabel}</ActivityCue>}
       </div>
 

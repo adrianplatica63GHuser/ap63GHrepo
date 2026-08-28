@@ -134,7 +134,7 @@ import {
   summariseDuplication,
   summariseStructure,
 } from "@/lib/import/check-summary";
-import { ReportSections } from "./report-sections";
+import { ReportSections, reportHasNothingToSay } from "./report-sections";
 import { checkFolder, uploadKeysOf, type FileMeta } from "@/lib/import/checks";
 import { readFileMetadata } from "@/lib/import/metadata-pass";
 import type { DirectoryObservation } from "@/lib/import/folder-utils";
@@ -2646,6 +2646,38 @@ export function ImportWizard() {
   );
 
   /**
+   * Has the Pre-existing screen anything left to ask the user for?
+   *                                                            (Slice #32.04)
+   *
+   * ⚠️ **TWO FACTS, AND THE SECOND IS WHAT KEEPS THIS OUT OF #26.02.** A clean
+   * archive verdict is not enough. `ReportSections` below the panel is the
+   * FOLDER's own report — a to-do list the user works through in File Explorer,
+   * one of whose findings (`walkLoopedOnShortcut`) says every number on the
+   * screen is inflated and ends "Nu porniți importul". The only control that
+   * re-walks the folder after the user has acted on it is that panel's
+   * "Verifică din nou". Prune on the archive's answer alone and a user told to
+   * go and fix something has no way to have the fix looked at, while the one
+   * live button spends money on a folder the report has already condemned.
+   *
+   * ⚠️ **AND IT IS COMPUTED HERE, ONCE, FOR BOTH READERS.** The panel prunes on
+   * it and the report below is not mounted on it, so a second copy of the same
+   * rule — in the panel, say — would agree today and diverge the day either
+   * gains a term: a report saying nothing, drawn under a panel that has already
+   * said it. `reportHasNothingToSay` is `ReportSections`' own test, exported
+   * for exactly this.
+   *
+   * `phase !== "preexisting-checking"` is the panel's `busy`, written from the
+   * same source: a check in flight is not a settled lookup, and the previous
+   * round's clean verdict is still standing while it runs.
+   */
+  const preexistingResultOnly =
+    phase !== "preexisting-checking" &&
+    preexisting !== null &&
+    preexisting.ok &&
+    preexisting.verdict.clean &&
+    reportHasNothingToSay(report);
+
+  /**
    * Freeze the facts at the moment the Cancel is pressed. See `cancelFacts`
    * above for why this is a snapshot and not a live read.
    *
@@ -3072,7 +3104,6 @@ export function ImportWizard() {
           acknowledged={constraintsAcknowledged}
           onAcknowledgedChange={setConstraintsAcknowledged}
           onCheck={() => void handleRecheck()}
-          onChooseFolder={handlePickFolder}
           gated={activeGate?.rest === "constraints"}
           rulesOpen={constraintsRulesOpen}
           onRulesOpenChange={setConstraintsRulesOpen}
@@ -3101,7 +3132,6 @@ export function ImportWizard() {
           acknowledged={duplicationAcknowledged}
           onAcknowledgedChange={setDuplicationAcknowledged}
           onCheck={() => void handleRecheck()}
-          onChooseFolder={handlePickFolder}
           gated={activeGate?.rest === "duplication"}
           rulesOpen={duplicationRulesOpen}
           onRulesOpenChange={setDuplicationRulesOpen}
@@ -3152,7 +3182,10 @@ export function ImportWizard() {
           // sent yet" would be false in the one place this flow is least
           // allowed to be wrong about money. Found by the adversarial round.
           classificationSpent={classificationSpent}
-          onChooseFolder={handlePickFolder}
+          // Slice #32.04 — see the const. Nothing is left to ask for, so the
+          // panel keeps the all-clear, the cost sentence and the press that
+          // leaves, and the report below is not mounted at all.
+          resultOnly={preexistingResultOnly}
           notesOpen={preexistingNotesOpen}
           onNotesOpenChange={setPreexistingNotesOpen}
         />
@@ -3179,8 +3212,25 @@ export function ImportWizard() {
           for the thirty seconds of a re-check is exactly what the sibling
           panels refuse to do. Before the archive has been asked there is
           nothing to stand under; after it, the previous round's report stays up
-          while the next one runs. */}
-      {inPreexisting && preexisting !== null && (
+          while the next one runs.
+
+          ⚠️ **AND NOT MOUNTED AT ALL WHEN IT HAS NOTHING TO SAY, since
+          #32.04.** In that state this section draws its title and one green
+          "Nu s-a găsit nimic neobișnuit în acest folder." — the same green flag
+          the panel above has already given about the archive, one section
+          lower, on a screen the slice pruned down to its conclusion. The whole
+          mount goes rather than its innards, and it goes on the SAME expression
+          that prunes the panel: see `preexistingResultOnly`.
+
+          ⚠️ **AND THE SECTION'S OWN "Descarcă raportul" GOES WITH IT, WHICH IS
+          DELIBERATE.** Its comment there argues it is offered even when nothing
+          was found, because "this folder is clean" is itself worth filing. That
+          argument holds on every screen this section is still drawn on; it does
+          not survive here, where the panel's own take-away has been taken away
+          on exactly the same reasoning. A pruned screen offers no page to save,
+          and the two Save buttons disappear together rather than one of them
+          being left standing under a section with nothing in it. */}
+      {inPreexisting && preexisting !== null && !preexistingResultOnly && (
         <ReportSections
           report={report}
           forecast={forecast}
@@ -3217,7 +3267,6 @@ export function ImportWizard() {
             // hand-over before it: `folder-report → ready` is a button the user
             // presses, and `SELF_ADVANCING_TRANSITIONS` never gates one.
             onContinue={() => setPhase("ready")}
-            onChangeFolder={handlePickFolder}
             onRecheck={() => void handleRecheck()}
           />
         </>
@@ -3288,7 +3337,6 @@ export function ImportWizard() {
           // spent is the classification, and `nothingWritten` on the panel says
           // so directly above this button.
           onLeave={handleCancelConfirmed}
-          onChooseFolder={handlePickFolder}
         />
       )}
 
