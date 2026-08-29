@@ -438,7 +438,7 @@ describe("determinism", () => {
   });
 });
 
-describe("a folder at the walk's own ceiling", () => {
+describe("a folder near the walk's own ceiling", () => {
   /**
    * ⚠️ **A GUARD AGAINST THE ALGORITHM COMING BACK, AND SINCE #32.04 IT
    * MEASURES THE ALGORITHM RATHER THAN THE CLOCK.**
@@ -450,131 +450,108 @@ describe("a folder at the walk's own ceiling", () => {
    * synchronously, on the UI thread, with no progress cue left moving.
    * `checkConstraints`' `add` carries the comment that records the fix.
    *
-   * ⚠️ **IT USED TO BE `expect(elapsed).toBeLessThan(400)`, AND THAT NUMBER
-   * COULD NOT SURVIVE LEAVING THE MACHINE IT WAS MEASURED ON.** Calibrated at
-   * 30–44 ms for the shipped version on one sandbox, against 2477–2731 ms for
-   * the quadratic one — a ruling about a RATIO, written down as a wall-clock
-   * constant. On Adrian's Windows box the same shipped code runs it at 450–530
-   * ms under jest's transformed CommonJS, so it failed two verification runs in
-   * three while the algorithm was entirely correct. A guard that cries wolf is
-   * one a reader learns to re-run rather than read, which is worse than no
-   * guard: the run it is finally right about looks exactly like the four
+   * ⚠️ **IT USED TO BE `expect(elapsed).toBeLessThan(400)` OVER ONE 20,000-FILE
+   * CALL, AND THAT NUMBER COULD NOT SURVIVE LEAVING THE MACHINE IT WAS MEASURED
+   * ON.** Calibrated at 30–44 ms for the shipped version on one sandbox against
+   * 2477–2731 ms for the quadratic one — a ruling about a RATIO, written down
+   * as a wall-clock constant. It then failed two of Adrian's three verification
+   * runs at 453–530 ms with the algorithm entirely correct. A guard that cries
+   * wolf is one a reader learns to re-run rather than read, which is worse than
+   * no guard: the run it is finally right about looks exactly like the four
    * before it.
    *
-   * ⚠️ **AND RAISING THE NUMBER WOULD HAVE BEEN THE SAME MISTAKE AGAIN.** The
+   * ⚠️ **AND THE 453 ms WAS NEVER HIS HARDWARE, WHICH IS THE POINT THE REWRITE
+   * ONLY PROVED AFTERWARDS.** This whole test — eight calls, four of them at
+   * the large size — runs in **120 ms** on that same machine. The old single
+   * call was measuring a cold start and whatever else was running, and a
+   * wall-clock bound cannot tell that from an algorithm. Nothing about the box
+   * was slow; the instrument was wrong.
+   *
+   * ⚠️ **RAISING THE NUMBER WOULD HAVE BEEN THE SAME MISTAKE AGAIN.** The
    * comment this replaces already recorded that trap from the other side — 1500
    * ms left the quadratic version only 1.7× of headroom, so an ordinary desktop
-   * ran the BUG inside the bound and reported the regression as fixed. Any
-   * constant is a bet on the hardware, the Node version and what else is
-   * running; all three changed between the calibration and this rewrite.
+   * ran the BUG inside the bound and reported the regression as fixed.
    *
    * So it measures what it always meant: **how the cost grows with the number
    * of files.** Both measurements happen on the same machine in the same run,
-   * so the hardware cancels out. Measured by rebuilding the #26.05 defect
-   * against the real module and running both:
+   * so the hardware cancels out. Every figure below was measured by compiling
+   * this module with its transitive imports and rebuilding the #26.05 defect
+   * against it — patching the emitted `add` back to the spread — then running
+   * this test's exact logic against both implementations.
    *
-   *     shipped      10k → 11.8 ms   20k → 23.7 ms   ratio 2.01
-   *     quadratic    10k → 140.6 ms  20k → 1937.3 ms ratio 13.78
+   * ⚠️ **WHY 20 000 AND 40 000, AND NOT THE 10 000/20 000 THE FIRST DRAFT
+   * USED.** The two sizes are not chosen for the biggest separation. They are
+   * chosen for the most BALANCED one, because the two ways this test can be
+   * wrong are not symmetric — a false failure wastes a verification run, a
+   * false pass ships the defect — and the pair has to leave room on both sides:
+   *
+   *     sizes          shipped ratio (6 runs)   quadratic   correct / defect
+   *     2 500/5 000    2.03                     4.56          —
+   *     5 000/10 000   2.11                     3.35        the defect at 1.12×
+   *     10 000/20 000  2.11 – 2.52             12.39        1.19× / 4.13×
+   *     20 000/40 000  2.10 – 2.26         5.52 – 5.68        1.33× / 1.84×
+   *
+   * Two effects move in opposite directions as the folder grows, and both are
+   * visible in that table:
+   *
+   *  - **The shipped ratio gets STEADIER.** Its spread narrows from 0.41 to
+   *    0.16 between the last two rows (ten runs each), because the noise that
+   *    inflates it is a fixed cost — one GC pause landing on one rep — and a
+   *    fixed cost is a smaller fraction of a 33 ms measurement than of an 11 ms
+   *    one. This is the side that can fail on correct code, and it is the side
+   *    that improves.
+   *  - **The defect's ratio gets SMALLER, and is not monotone at all.** 4.56,
+   *    3.35, 12.39, 5.68. The quadratic cost amplifies superlinearly through GC
+   *    once the heap is large enough, so 10 000/20 000 straddles that
+   *    transition and reads inflated, while at 20 000/40 000 both sizes are
+   *    already inside it and the ratio falls back toward the model. The 12.39 is
+   *    an artefact of the transition, not margin anybody may spend.
+   *
+   * So 20 000/40 000 is where the weaker side is strongest. It is also the more
+   * honest folder: `MAX_WALK_ENTRIES` is 50 000, so 40 000 is a folder the walk
+   * really admits, where the old test's 20 000 was never the ceiling its name
+   * claimed.
+   *
+   * ⚠️ **DO NOT SHRINK THE PAIR TO SAVE TIME, AND DO NOT ASSUME BIGGER IS
+   * SAFER EITHER.** Halving lands on 10 000/20 000 with 1.19× on the side that
+   * fails honest code; halving again lands on 5 000/10 000, where the DEFECT
+   * clears the bound by 0.35 and the guard is very nearly blind. Neither is
+   * predictable from the other — the table had to be measured, twice, against
+   * both implementations. A future slice that wants different sizes has to redo
+   * it rather than reason about it.
    *
    * ⚠️ **AND THE BOUND OF 3 IS ARGUED FROM THE ALGORITHM, NOT FROM THOSE
-   * MEASUREMENTS — the two sides of it are not equally strong, and the weaker
-   * one is the one that matters.**
+   * MEASUREMENTS.** The shipped side is provable: `checkConstraints` is
+   * `uploadKeysOf` (Θ(n)), a per-file rule loop (Θ(n)) and `sortedForDisplay`
+   * (Θ(n log n)), and the CON-06 pass is O(1) here because `obs()` carries no
+   * `dropped`. So doubling n has a hard ceiling of
+   * `2·log(40000)/log(20000)` = **2.140**, reached only if sorting were 100% of
+   * the cost — a property of the algorithm, not of the hardware, since no
+   * correct implementation can produce more. A machine can still inflate a
+   * MEASUREMENT past it — the worst of ten shipped runs read 2.26 against a
+   * 2.140 ceiling, so ~5% of that reading was noise — which is why the bound is
+   * not set at the ceiling.
    *
-   * The SHIPPED side is provable. `checkConstraints` is `uploadKeysOf` (Θ(n)),
-   * a per-file rule loop (Θ(n)) and `sortedForDisplay` (Θ(n log n)); the CON-06
-   * pass is O(1) here because `obs()` carries no `dropped`. So doubling n has a
-   * hard ceiling of `2·log(20000)/log(10000)` = **2.151**, and that is reached
-   * only if sorting were 100% of the cost. Every row of the table below is
-   * under its own ceiling. A bound of 3 therefore sits **1.40× above what the
-   * algorithm can produce at all** — a property of the algorithm rather than of
-   * the hardware, since no correct implementation can produce more. A machine
-   * can still inflate a MEASUREMENT past it, which is what the flake paragraph
-   * below is about; it would take 46% on the large minimum with the small
-   * minimum clean (39%, if measured against the 2.151 ceiling rather than
-   * against the 2.05 observed), on all three interleaved reps.
-   *
-   * The DEFECT side has no such property, and the comment here used to claim it
-   * did. Model the defect as `L·n·log n + Q·n²` with `q` the quadratic share at
-   * the small size — `L·n·log n` standing for the WHOLE non-quadratic part,
-   * including the two Θ(n) terms named above; treating that part as Θ(n)
-   * instead gives `2 + 2q`, a floor of 3.83 and `q ≥ 0.50`, which changes
-   * nothing. The ratio is `2.15 + 1.85q`, so the guard needs `q ≥ 0.46`.
-   * That is a statement about how expensive array copying is relative to ICU
-   * collation ON A GIVEN MACHINE, not about the sizes alone. At 10k/20k the
-   * measurements above give q ≈ 0.92 and a MODELLED ratio of **3.85**; the
-   * 12–14 actually observed is that plus GC and allocation amplification, which
-   * is heap-, Node- and machine-dependent. So the honest margin against a false
-   * pass is 3.85 against 3 — 1.28× — and the copying would have to become ~13×
-   * cheaper relative to the collator before the guard went blind. (`Q/N` is
-   * 10.92 today against 0.85 at the threshold.)
-   *
-   * ⚠️ **DO NOT SHRINK THE TWO SIZES TO MAKE THIS FASTER — AND NOT BECAUSE
-   * SMALLER IS UNIFORMLY WORSE, WHICH IS THE READING THE NUMBERS REFUSE.**
-   * Measured on the same two implementations, same warm-up, same interleave:
-   *
-   *     sizes          shipped ratio   quadratic ratio
-   *     2 500/5 000        2.03             4.56
-   *     5 000/10 000       2.11             3.35   ← 0.35 above the bound
-   *     10 000/20 000      2.05            12.75
-   *
-   * (The headline pair further up reads 13.78 for the same configuration on a
-   * different run — the defect's ratio moves with GC, which is the point made
-   * above and the reason no margin is claimed from it.)
-   *
-   * ⚠️ **THE DEFECT'S RATIO IS NOT MONOTONE IN SIZE.** The middle row is the
-   * worst of the three, not the smallest one: halving the folders would cut the
-   * runtime by more than half (n log n puts 5k/10k at 0.46 of 10k/20k) and land
-   * on **3.35**, a rounding error above the bound — while quartering them lands
-   * on 4.56, which is safer again. Two effects fight: `q` rises with n, and GC
-   * and allocation amplification switch on above some heap size. The model says
-   * so out loud — the implied `q` for the outer rows is 1.30 and 5.73, both
-   * impossible since `q ≤ 1` — so at both ends the ratio is dominated by
-   * amplification rather than by the quadratic share, and 5k/10k is simply the
-   * one regime where amplification has not started yet.
-   *
-   * So the rule is not "bigger is safer". It is that **you cannot predict which
-   * regime a new pair lands in without measuring both implementations again**,
-   * and 10 000/20 000 is chosen because it is measured, and far from the worst
-   * row. A future slice that wants this faster has to redo the table, not
-   * reason about it.
-   *
-   * ⚠️ **THE WARM-UP IS LOAD-BEARING, AND THE FIRST DRAFT OF THIS REWRITE HAD
-   * IT WRONG.** Timing the small folder first and the large one second
-   * measured the JIT as much as the algorithm: the small run paid for the
-   * compilation and the large run inherited it, giving **ratio 0.8** — the
-   * large folder apparently cheaper than half of itself. That biases toward
-   * PASSING, which is the dangerous direction: the same bias would deflate a
-   * quadratic ratio too. So both sizes are run once untimed before anything is
-   * measured, and the timed runs interleave.
-   *
-   * ⚠️ Costs about 3 s on Adrian's machine — eight calls where the old form
-   * made one — against the 0.45 s the single wall-clock run cost. That is the
-   * price of a guard that means the same thing on every machine, and of the two
-   * sizes the table above says it has to keep. It is paid once per suite.
-   *
-   * ⚠️ **IF IT EVER FLAKES, THE KNOB IS THE REP COUNT, AND THE FLAKE WILL COME
-   * FROM THE FASTEST MACHINE RATHER THAN THE SLOWEST — the opposite of the
-   * bound it replaces.** At 11.8/23.7 ms one major GC pause is ~+11.7 ms, which
-   * is the whole distance to a ratio of 3; it would have to land on all three
-   * large reps with all three small reps clean, which is what interleaving
-   * makes unlikely rather than systematic. On a slower box the same threshold
-   * is +230 ms per rep and the margin is far wider. Five reps instead of three
-   * costs four more calls; do that if a flake actually appears, rather than
-   * moving the bound.
-   *
-   * ⚠️ `performance.now()` under **jsdom**, which is this suite's environment
-   * (`jest.config.ts`; no `@jest-environment` docblock here) and the repo's only
-   * use of it in a test. Checked rather than assumed: jsdom 26.1.0's
-   * `Performance-impl.js` is `now() { return performance.now() -
-   * this._nowAtTimeOrigin; }` — a direct delegation to Node's high-resolution
-   * clock, with no clamping and no rounding. A reader who adds
-   * `@jest-environment node` or upgrades jsdom has no other way to know that
-   * was verified.
+   * The defect side has no such guarantee. Model it as `L·n·log n + Q·n²` with
+   * `q` the quadratic share at the small size — `L·n·log n` standing for the
+   * whole non-quadratic part, including the two Θ(n) terms; treating that part
+   * as Θ(n) instead gives `2 + 2q` and changes nothing that follows. The ratio
+   * is `2.14 + 1.86q`, so the guard needs `q ≥ 0.46`, which is a statement
+   * about how expensive array copying is relative to ICU collation ON A GIVEN
+   * MACHINE. At 20 000 the measured `q` is 0.98 — `Q/N` ≈ 1 078/16 ≈ 67 against
+   * 0.85 at the threshold — so the copying would have to become nearly 80×
+   * cheaper relative to the collator before this went blind.
    */
 
-  /** The smaller folder, and its double. The larger is the walk's own ceiling. */
-  const SMALL = 10_000;
-  const LARGE = 20_000;
+  /**
+   * The pair, and the doubling between them is the whole measurement.
+   *
+   * `MAX_WALK_ENTRIES` is 50 000; `LARGE` is deliberately near it rather than
+   * at it, so the fixture stays a folder the walk admits without sitting on the
+   * boundary condition `checks.ts` reports separately.
+   */
+  const SMALL = 20_000;
+  const LARGE = 40_000;
 
   function inputFor(fileCount: number) {
     const names = Array.from({ length: fileCount }, (_, i) => `Poze/IMG_${i}.heic`);
@@ -642,16 +619,20 @@ describe("a folder at the walk's own ceiling", () => {
     // disarm this one test while every suite stayed green.
     //
     // ⚠️ **`unusablySlow` IS A CATASTROPHE DETECTOR, NOT A PERFORMANCE BOUND,
-    // and it does NOT exist for the quadratic version** — that one's ratio is
-    // 12–14 and `growsQuadratically` fails on it several times over. What it
-    // covers is the case the fraction cannot see: a uniform per-file cost added
-    // inside the loop, which slows both sizes in the same proportion and leaves
-    // the ratio untouched. It is deliberately blunt — on Adrian's box `large`
-    // is ~500 ms, so it only fires on a ≥10× uniform slowdown and a 5× one
-    // passes — because it is a wall-clock constant and therefore the one part
-    // of this test that a slow enough machine could trip on correct code. Blunt
-    // is the safe direction for it; tightening it would rebuild the guard this
-    // slice replaced.
+    // and it is not what catches the quadratic version** — `growsQuadratically`
+    // does that, at 5.52–5.68 against 3. What this covers is the case the fraction
+    // cannot see: a uniform per-file cost added inside the loop, which slows
+    // both sizes in the same proportion and leaves the ratio untouched.
+    //
+    // It is deliberately blunt. `large` measures ~33 ms on the sandbox and this
+    // whole test runs in 120 ms on Adrian's machine, so five seconds is on the
+    // order of a HUNDRED-fold uniform slowdown — it will never fire on anything
+    // subtle. That is the safe direction, because it is the one wall-clock
+    // constant left in this test and therefore the only part a slow enough
+    // machine could trip on correct code. Tightening it toward the measurements
+    // would rebuild, in miniature, the guard this rewrite replaced. (At these
+    // sizes the quadratic version happens to trip it too — ~6 000 ms — but that
+    // is a coincidence of the sizes and not a second line of defence.)
     expect({
       small: Math.round(small),
       large: Math.round(large),
