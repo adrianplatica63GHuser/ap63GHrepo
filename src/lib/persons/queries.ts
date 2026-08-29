@@ -19,6 +19,7 @@ import { and, count, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
 import { db, type DbTransaction } from "@/db";
 import { appendVersionsIfChanged } from "@/lib/versioning/append";
 import { deletePrincipalObjects } from "@/lib/entities/delete";
+import { ID_CARD_TYPE_KEYS } from "@/lib/import/id-card";
 import {
   address,
   entityMetadata,
@@ -1091,8 +1092,8 @@ export async function listPersonDocuments(personId: string): Promise<PersonDocum
 }
 
 /**
- * The person's linked ID card Document (lookup_document_type.key =
- * CARTE_IDENTITATE), if one exists. Used to render the read-only "ID link"
+ * The person's linked ID card Document (a `lookup_document_type.key` on
+ * `ID_CARD_TYPE_KEYS`), if one exists. Used to render the read-only "ID link"
  * row on the Details tab. A person can in principle have more than one such
  * Document linked; this returns the most recently associated one.
  */
@@ -1104,7 +1105,20 @@ export async function getPersonIdCardLink(
     .from(personDocument)
     .innerJoin(document, eq(personDocument.documentId, document.id))
     .innerJoin(lookupDocumentType, eq(document.documentTypeId, lookupDocumentType.id))
-    .where(and(eq(personDocument.personId, personId), eq(lookupDocumentType.key, "CARTE_IDENTITATE")))
+    .where(
+      and(
+        eq(personDocument.personId, personId),
+        // ⚠️ **`ID_CARD_TYPE_KEYS`, not the literal it used to spell.**
+        // (Slice #32.07.) This was the ninth spelling of "is this type an
+        // identity card" and the only one that did not ask the module that
+        // owns the question — so a genuine alternate wording added to that
+        // array, which its own header says is a one-line addition, would have
+        // been picked up by every carve-out in the codebase except this one,
+        // and the ID-link row on the Details tab would have gone quietly blank
+        // for the people filed under it.
+        inArray(lookupDocumentType.key, ID_CARD_TYPE_KEYS as readonly string[] as string[]),
+      ),
+    )
     .orderBy(desc(personDocument.createdAt))
     .limit(1);
 

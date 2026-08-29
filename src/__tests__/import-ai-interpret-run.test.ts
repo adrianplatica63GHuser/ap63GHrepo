@@ -184,6 +184,9 @@ describe("runAiInterpret", () => {
       // `AiInterpretRunResult.documentTypeId`: null means NOT CHANGED, never
       // "unknown", which is why every one of these pins it explicitly.
       documentTypeId: null,
+      // Slice #32.07 — null in every case `documentTypeId` is null: this call
+      // moved nothing, so it has nothing to say about the type.
+      documentTypeIsIdCard: null,
       parties: [{ roleName: "Vânzător" }],
       partialWrite: false,
       titleKept: false,
@@ -216,11 +219,52 @@ describe("runAiInterpret", () => {
       ok: true,
       fieldCount: 1,
       documentTypeId: "type-uuid",
+      // Slice #32.07 — the server said nothing about it (this stub returns no
+      // `documentTypeIsIdCard`), and an absent field reads as `false`, which the
+      // wizard treats as "not known" rather than as a denial.
+      documentTypeIsIdCard: false,
       parties: [],
       partialWrite: false,
       titleKept: null,
       printedHeadingNoted: false,
     });
+  });
+
+  it("⚠️ carries the SERVER's identity-card verdict for the type it moved to", async () => {
+    // Slice #32.07. This is the wizard's ONLY witness for a type this call
+    // invented: `docTypeIdCardRef` is built once from the start-of-run list, so
+    // it has no entry, and the scan's own signal is precisely the one that is
+    // false on a card the scan mislabelled. Without the verdict travelling, the
+    // run buys a billed discovery read on an identity-card type.
+    install([
+      { ok: true, body: { fields: { documentTypeId: "ci-uuid" }, documentTypeIsIdCard: true } },
+      { ok: true, body: { documentTypeId: "old-type" } },
+      { ok: true },
+    ]);
+
+    const result = await runAiInterpret("doc-1", STAMP);
+
+    expect(result).toMatchObject({
+      ok: true,
+      documentTypeId: "ci-uuid",
+      documentTypeIsIdCard: true,
+    });
+  });
+
+  it("⚠️ says NOTHING about an identity card when it did not move the document", async () => {
+    // Gated on `retyped` for the same reason `documentTypeId` is: with no
+    // re-type the caller's `finalTypeId` is its OWN `resolvedTypeId`, about
+    // which it already holds the server's answer — so a verdict here would be a
+    // second opinion about a different type.
+    install([
+      { ok: true, body: { fields: {}, documentTypeIsIdCard: true } },
+      { ok: true, body: { documentTypeId: "old-type" } },
+      { ok: true },
+    ]);
+
+    const result = await runAiInterpret("doc-1", STAMP);
+
+    expect(result).toMatchObject({ ok: true, documentTypeId: null, documentTypeIsIdCard: null });
   });
 
   it("⚠️ writes neither the notes nor the custom fields when it could not read the document", async () => {
@@ -246,6 +290,9 @@ describe("runAiInterpret", () => {
       ok: true,
       fieldCount: 3,
       documentTypeId: null,
+      // Slice #32.07 — null in every case `documentTypeId` is null: this call
+      // moved nothing, so it has nothing to say about the type.
+      documentTypeIsIdCard: null,
       parties: [{ roleName: "Vânzător" }],
       partialWrite: true,
       titleKept: false,
@@ -268,6 +315,9 @@ describe("runAiInterpret", () => {
       ok: true,
       fieldCount: 0,
       documentTypeId: null,
+      // Slice #32.07 — null in every case `documentTypeId` is null: this call
+      // moved nothing, so it has nothing to say about the type.
+      documentTypeIsIdCard: null,
       parties: [],
       partialWrite: true,
       titleKept: null,
@@ -381,6 +431,9 @@ describe("runAiInterpret", () => {
       ok: true,
       fieldCount: 1,
       documentTypeId: null,
+      // Slice #32.07 — null in every case `documentTypeId` is null: this call
+      // moved nothing, so it has nothing to say about the type.
+      documentTypeIsIdCard: null,
       parties: [],
       partialWrite: true,
       titleKept: false,
@@ -669,6 +722,9 @@ describe("runAiInterpret", () => {
       ok: true,
       fieldCount: 0,
       documentTypeId: null,
+      // Slice #32.07 — null in every case `documentTypeId` is null: this call
+      // moved nothing, so it has nothing to say about the type.
+      documentTypeIsIdCard: null,
       parties: [],
       partialWrite: false,
       titleKept: null,
@@ -862,6 +918,9 @@ describe("runAiInterpret — the title a document keeps (#29.12)", () => {
       ok: true,
       fieldCount: 0,
       documentTypeId: null,
+      // Slice #32.07 — null in every case `documentTypeId` is null: this call
+      // moved nothing, so it has nothing to say about the type.
+      documentTypeIsIdCard: null,
       parties: [],
       partialWrite: false,
       titleKept: true,
@@ -913,6 +972,9 @@ describe("runAiInterpret — the title a document keeps (#29.12)", () => {
       ok: true,
       fieldCount: 0,
       documentTypeId: null,
+      // Slice #32.07 — null in every case `documentTypeId` is null: this call
+      // moved nothing, so it has nothing to say about the type.
+      documentTypeIsIdCard: null,
       parties: [],
       partialWrite: true,
       titleKept: null,
@@ -994,6 +1056,10 @@ describe("⚠️ #29.12 changed no type resolution", () => {
       ok: true,
       fieldCount: 1,
       documentTypeId: "contract-vanzare",
+      // Slice #32.07 — the server said nothing about it (this stub returns no
+      // `documentTypeIsIdCard`), and an absent field reads as `false`, which the
+      // wizard treats as "not known" rather than as a denial.
+      documentTypeIsIdCard: false,
       parties: [],
       partialWrite: false,
       titleKept: true,
@@ -1028,6 +1094,9 @@ describe("⚠️ #29.12 changed no type resolution", () => {
       ok: true,
       fieldCount: 0,
       documentTypeId: null,
+      // Slice #32.07 — null in every case `documentTypeId` is null: this call
+      // moved nothing, so it has nothing to say about the type.
+      documentTypeIsIdCard: null,
       parties: [],
       partialWrite: true,
       titleKept: null,
@@ -1074,6 +1143,9 @@ describe("runAiInterpret — the row is told only what is true (#29.12)", () => 
       ok: true,
       fieldCount: 0,
       documentTypeId: null,
+      // Slice #32.07 — null in every case `documentTypeId` is null: this call
+      // moved nothing, so it has nothing to say about the type.
+      documentTypeIsIdCard: null,
       parties: [],
       partialWrite: false,
       titleKept: true,
@@ -1166,6 +1238,9 @@ describe("⚠️ #29.12 — the printed-heading sentence is only ever drawn on a
       ok: true,
       fieldCount: 1,
       documentTypeId: null,
+      // Slice #32.07 — null in every case `documentTypeId` is null: this call
+      // moved nothing, so it has nothing to say about the type.
+      documentTypeIsIdCard: null,
       parties: [],
       partialWrite: false,
       titleKept: false,

@@ -184,6 +184,50 @@ export function isIdCardTypeName(name: string | null | undefined): boolean {
   );
 }
 
+/**
+ * Is this document TYPE an identity card?     ONE ANSWER, ONE DEFINITION.
+ *                                                              (Slice #32.07)
+ *
+ * The canonical TYPE spelling — `key` on `ID_CARD_TYPE_KEYS`, or a `name`
+ * `isIdCardTypeName` accepts — expressed once. Until this slice it was written
+ * out by hand in five places (`doc-type-engine.tsx`, `bulk-import-dialog.tsx`
+ * twice, `value-list-modal.tsx`, `type-form-gate.ts`) and a sixth site compared
+ * a bare `"CARTE_IDENTITATE"` literal (`persons/queries.ts`). All six agreed,
+ * term for term, and nothing kept them in step; a seventh copy is how they
+ * would stop agreeing, and none of them sat on a WRITE path — which is the
+ * state that let a 24-field form, two CNPs among them, be stored on a type
+ * named „Carte de identitate (două exemplare)".
+ *
+ * ⚠️ **THE TWO TERMS ARE OR'd, NOT AND'd, AND THE KEY IS NOT THE STRONGER
+ * SIGNAL HERE.** `ID_CARD_TYPE_KEYS` only ever holds keys this codebase
+ * defines, so a row somebody added by hand, or one an import invented from a
+ * classified label, carries an ordinary slugged key and is recognisable by its
+ * NAME alone. That is precisely the row this slice exists for.
+ *
+ * ⚠️ **IT TAKES THE ROW'S OWN TWO COLUMNS AND NOTHING ELSE.** No scan signal,
+ * no `entry.isIdCard`. The three call sites that add or remove the SCAN's
+ * signal (`type-form-gate.ts` twice, `bulk-import-dialog.tsx`'s discover step)
+ * disagree with this on purpose and keep their own expressions — each
+ * disagreement is argued in a comment beside it and two are pinned by
+ * `import-type-form-gate.test.ts`. Widening this function to take a scan would
+ * make those three unable to differ, which is the opposite of what they are.
+ *
+ * ⚠️ **AND IT IS NOT TO BE WIDENED IN THE OTHER DIRECTION EITHER.** It composes
+ * `isIdCardTypeName`, whose header explains at length why a bare „buletin" and
+ * a standalone „CI" are absent from it: they are what `isIdCardLabel` reads off
+ * a scanned IMAGE, and what would make „Buletin de analiză" and „Copie CI"
+ * false positives in a type list. A false positive here now costs a real type
+ * its form AND refuses the save that would give it one.
+ */
+export function documentTypeIsIdCard(type: {
+  key?: string | null;
+  name?: string | null;
+}): boolean {
+  const key = type.key?.trim() ?? "";
+  if (key && (ID_CARD_TYPE_KEYS as readonly string[]).includes(key)) return true;
+  return isIdCardTypeName(type.name);
+}
+
 /** The shape this module needs off a ScanResult. Structural, not imported. */
 export type IdCardScanSignal = {
   typeKey?: string | null;

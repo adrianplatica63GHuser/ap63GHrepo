@@ -699,6 +699,25 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
   // type's template for this run — a follow-up AI Interpret click after the
   // type change picks up the new type's template.
   let documentTypeId: string | null = null;
+  /**
+   * Is the type this call resolved to an identity-card type?   (Slice #32.07)
+   *
+   * ⚠️ **THIS ROUTE IS THE OTHER CALLER OF `resolveClassifiedDocumentType`,
+   * AND IT IS THE ONE THE WIZARD PREFERS.** `bulk-import-dialog.tsx` computes
+   * `finalTypeId = interpreted.documentTypeId ?? resolvedTypeId` — this
+   * answer first — and this route is also the path that auto-creates
+   * `lookup_document_type` rows, so the type it MINTS is exactly the one
+   * `docTypeIdCardRef` has no entry for. Carrying the verdict only from
+   * `POST /api/document-types/resolve` closed the blind spot on the id the
+   * wizard does not use and left it open on the id it does: a card the scan
+   * mislabelled, filed on an ordinary type at step 2, re-typed here onto a
+   * type this call invented, and then given a billed discovery read because
+   * every witness said "not a card".
+   *
+   * `null` when no re-type happened, matching `documentTypeId` beside it: the
+   * caller already holds the answer for the type it resolved itself.
+   */
+  let documentTypeIsIdCard: boolean | null = null;
   try {
     // ⚠️ **The two values go in exactly as this route already computed them.**
     // `suggestedTypeKey` came from `canonicalTypeKey`, and since Slice #29.07
@@ -721,6 +740,7 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
     // longer produces the same `null` — that now throws, and the `catch` below
     // is the only thing that still turns a resolution into silence.
     documentTypeId = resolved.id;
+    documentTypeIsIdCard = resolved.outcome === "unclassified" ? null : resolved.isIdCard;
   } catch (err) {
     // Non-fatal: log and continue — fields are still useful even without a type.
     console.warn("[ai-interpret] documentTypeId resolution failed:", err);
@@ -738,5 +758,9 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
     // that case rather than a guess against unrelated roles.
     parties,
     partyRolesConfigured: partyRoles.length > 0,
+    // ⚠️ **A SIBLING KEY, NOT A MEMBER OF `fields`.** (Slice #32.07.)
+    // `fields` becomes the PATCH body for the document, so a boolean added
+    // there would be offered to `PATCH /api/documents/[id]` as a column.
+    documentTypeIsIdCard,
   });
 }

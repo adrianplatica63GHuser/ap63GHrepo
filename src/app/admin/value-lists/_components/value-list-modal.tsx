@@ -25,7 +25,7 @@ import {
   documentTypeStatus,
 } from "@/lib/documents/status";
 import { parseTemplateFields } from "@/lib/documents/template-fields";
-import { ID_CARD_TYPE_KEYS, isIdCardTypeName } from "@/lib/import/id-card";
+import { documentTypeIsIdCard } from "@/lib/import/id-card";
 import { UNCLASSIFIED_DOCUMENT_TYPE_KEY } from "@/lib/documents/document-type-match";
 import { DocumentTypeFormEditor } from "./document-type-form-editor";
 
@@ -328,8 +328,18 @@ function EditForm({
         })}
       </div>
 
+      {/* ⚠️ **`role="alert"`, and Slice #32.07 is what made its absence
+          matter.** Every other refusal this codebase renders announces itself —
+          doc-type-engine, the form editor, the review dialog, the document form
+          and the import dialog all carry one. This slot did not, and the
+          sentences it used to carry all pointed at the field the user was
+          standing in ("a required field is missing or wrong"), so silence cost
+          little. `idCardRename` is forty words whose remedy is on a DIFFERENT
+          screen — close this window, press „Formular" on the row — and a
+          screen-reader user renaming a type otherwise gets a refused save and
+          nothing at all. */}
       {error && (
-        <p className="mt-2 text-xs text-red-600 dark:text-red-400">
+        <p role="alert" className="mt-2 text-xs text-red-600 dark:text-red-400">
           {t(`confirm.errors.${error}` as Parameters<typeof t>[0])}
         </p>
       )}
@@ -616,8 +626,9 @@ export function ValueListModal({
    * forbids.** `documentTypeAwaitsForm` is still the only thing deciding
    * whether a type has a form, and every row still paints exactly what
    * `documentTypeStatus` says. What is added is an orthogonal fact about ONE
-   * type, taken from the same two tests `enrichDiscoverSteps` uses — the seeded
-   * key and `isIdCardTypeName` — rather than restated here.
+   * type, taken from the same one function `enrichDiscoverSteps` uses —
+   * `documentTypeIsIdCard`, the seeded key or the NAME test — rather than
+   * restated here.                                    (one answer since #32.07)
    *
    * ⚠️ **The FALLBACK type is excluded too, and the first draft of this
    * function argued it should not be.** The argument was that the catch-all is
@@ -641,8 +652,8 @@ export function ValueListModal({
    * because these rows are `Record<string, unknown>` off the admin route rather
    * than the three typed columns the helper takes.
    *
-   * ⚠️ **`isIdCardTypeName` is a NAME heuristic and it runs over the whole
-   * archive here, not over a handful of queued types.** It is deliberately
+   * ⚠️ **`documentTypeIsIdCard`'s NAME arm is a heuristic and it runs over
+   * the whole archive here, not over a handful of queued types.** It is deliberately
    * narrow and it vetoes before it matches: "Buletin de analiză", "Copie CI"
    * and — an adversarial round corrected an earlier version of this very
    * comment — "Carte de identitate a vehiculului" are all left alone, the last
@@ -660,8 +671,7 @@ export function ValueListModal({
   const awaitsFormRow = (row: Row): boolean =>
     documentTypeAwaitsForm({ origin: row.origin, templateFields: row.templateFields }) &&
     row.id !== fallbackTypeId &&
-    !(ID_CARD_TYPE_KEYS as readonly string[]).includes(String(row.key ?? "")) &&
-    !isIdCardTypeName(String(row.name ?? ""));
+    !documentTypeIsIdCard({ key: String(row.key ?? ""), name: String(row.name ?? "") });
   // ⚠️ **`onlyWithoutForm && isDocumentTypes`, in that order and both terms.**
   // The checkbox is only rendered for document-types, but the state outlives a
   // `listKey` change in a component that is keyed on nothing: without the
@@ -1493,7 +1503,7 @@ function DeleteDialog({
         {/* Chosen on this side from a code, never echoed from the server: the
             server's own `error` strings are English. */}
         {failure && (
-          <p className="mb-2 text-xs text-red-600 dark:text-red-400">
+          <p role="alert" className="mb-2 text-xs text-red-600 dark:text-red-400">
             {t(`confirm.errors.${failure}` as Parameters<typeof t>[0])}
           </p>
         )}

@@ -85,6 +85,10 @@ import {
 import { MAX_TEMPLATE_FIELDS } from "@/lib/documents/discover-to-template";
 import { TEMPLATE_FIELD_GROUPS } from "@/lib/documents/template-groups";
 import {
+  ID_CARD_FORM_CODE,
+  ID_CARD_RENAME_CODE,
+} from "@/lib/documents/id-card-form-guard";
+import {
   GROUP_CUSTOM,
   GROUP_NONE,
   blankEditorRow,
@@ -182,6 +186,22 @@ export function DocumentTypeFormEditor({
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
+        const code = (body as { code?: string }).code;
+        // ⚠️ **The identity-card refusal gets a Romanian sentence; everything
+        // else still renders the server's own string.** (Slice #32.07.) That
+        // fallback is English by construction and this screen has always shown
+        // it — a real wart, and not this slice's to fix wholesale. What this
+        // slice must not do is ADD to it: a new refusal that only a Romanian
+        // administrator can act on, stated in English, is a worse screen than
+        // the one it replaced.
+        //
+        // Only the `form` half is reachable from here — this editor sends the
+        // live stored `typeName` and cannot rename — but both codes map to the
+        // one sentence, because a screen that answers a refusal it did not
+        // expect with a stack-shaped English string is the thing being fixed.
+        if (code === ID_CARD_FORM_CODE || code === ID_CARD_RENAME_CODE) {
+          throw new Error(t("errorIdCardType"));
+        }
         throw new Error((body as { error?: string }).error ?? `Error ${res.status}`);
       }
       return res.json();

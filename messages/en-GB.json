@@ -1537,12 +1537,15 @@
       "rowNameRequired": "Type a name for this field, or untick the row.",
       "rowNameDuplicate": "This name is already used by a field that is captured, so it would be saved a second time, separately. Change it or untick the row.",
       "longName": "This name is too long: the system name is cut at {max} characters. Shorten it.",
-      "rowIssuesFooter": "One or more ticked rows have a problem with their name — they are marked in red above."
+      "rowIssuesFooter": "One or more ticked rows have a problem with their name — they are marked in red above.",
+      "errorIdCardType": "This document type is an identity card, so it cannot have a form. The data on an identity card is captured during import as Person records — a form here would be a second, freely editable copy of somebody’s national identity number on every document of this type. Close this window: there is nothing to save here.",
+      "errorIdCardTypeCreated": "Type “{type}” was created and the document was moved onto it, but the form was NOT saved: this type is an identity card, so it cannot have a form. The data on an identity card is captured during import as Person records. The type stays in the system without a form — which is as it should be. Close this window; do not press Save again."
     },
     "aiDiscoverErrorBusy": "Too many reads in a short time. Wait a minute and try again.",
     "aiDiscoverErrorNoPages": "This document has no pages uploaded, so there is nothing to read.",
     "aiDiscoverErrorUnreadable": "The system cannot read this document's pages. Check the file formats.",
-    "aiDiscoverErrorNotConfigured": "Automatic reading is not configured on this server. Tell the administrator."
+    "aiDiscoverErrorNotConfigured": "Automatic reading is not configured on this server. Tell the administrator.",
+    "aiDiscoverIdCardNoForm": "Document type “{type}” is an identity card, so it cannot have a form — the form was NOT saved and cannot be. The data on an identity card is captured during import as Person records; a form here would be a second, freely editable copy of somebody’s national identity number on every document of this type. The type stays in the system without a form, which is as it should be. Do NOT run AI Discovery again on this document — the answer will be the same, and the read is billed every time."
   },
   "valueList": {
     "pageTitle": "Reference Data",
@@ -1667,7 +1670,8 @@
       "confirmRemove": "Remove",
       "confirmDiscardTitle": "Discard your changes?",
       "confirmDiscardBody": "Nothing on this form has been saved yet. Closing now leaves the document type exactly as it was.",
-      "confirmDiscard": "Discard"
+      "confirmDiscard": "Discard",
+      "errorIdCardType": "This document type is an identity card, so it cannot have a form. The data on an identity card is captured during import as Person records — a form here would be a second, freely editable copy of somebody’s national identity number on every document of this type. If the type already has fields, remove all of them and save — this window is the only place a form can be deleted. Otherwise close it without saving."
     },
     "confirm": {
       "title": "Delete “{name}”?",
@@ -1687,7 +1691,9 @@
         "validation": "The data entered is incomplete or invalid. Check the required fields.",
         "duplicate": "That entry is already in the list.",
         "notFound": "The entry no longer exists — the list changed meanwhile. Close the dialog and open it again.",
-        "generic": "The operation failed. Close the dialog, refresh the page and try again."
+        "generic": "The operation failed. Close the dialog, refresh the page and try again.",
+        "idCardForm": "This document type is an identity card, so it cannot have a form. The data on an identity card is captured during import as Person records, not as fields on a form. If the type already carries a form, open “Form” on its row, delete every field and save.",
+        "idCardRename": "This document type already has a form, so it cannot be given an identity-card name: the data on an identity card is captured during import as Person records, and a form would be a second, freely editable copy of somebody’s national identity number. Remove the form first — close this window, press “Form” on the type’s row, delete every field and save — then come back and rename the type."
       },
       "roleWhitelistGranted": "The role you picked was ticked automatically where the moved associations needed it:",
       "roleWhitelistPending": "The role you picked is not ticked for any document type, and the types of the moved documents have no role list configured yet — so it cannot be ticked automatically without narrowing what can be chosen on those types. Tick it in “Document Persons” for the right type, otherwise the moved Person–Document associations will show a role that can no longer be picked from the list.",
@@ -2102,7 +2108,8 @@
           "typesStillWithoutForm": "{count, plural, one {Still without a form: {names}. You will find it in Reference Data → Document Types, ticking “Only those awaiting a form”.} other {Still without a form: {names}. You will find them in Reference Data → Document Types, ticking “Only those awaiting a form”.}}",
           "typesStillWithoutFormPartial": "{count, plural, one {One document type is still without a form: {names}.} other {# document types are still without a form, of which this import could only name: {names}.}} You will find all of them in Reference Data → Document Types, ticking “Only those awaiting a form”.",
           "typesCreatedEmpty": "{count, plural, one {One document type was created in this import and no document from this import ended up on it: {names}. Check in Reference Data → Document Types whether you still need it.} other {# document types were created in this import and no document from this import ended up on them: {names}. Check in Reference Data → Document Types whether you still need them.}}"
-        }
+        },
+        "typeIdCardNoForm": "Document type “{type}” is an identity card, so it cannot have a form — the form was NOT saved and cannot be. The data on an identity card is captured during import as Person records. The type stays in the system without a form, which is as it should be. Do NOT run AI Discovery again on documents of this type — the answer will be the same, and the read is billed every time."
       },
       "preflight": {
         "title": "Before you choose a folder",
@@ -3237,7 +3244,8 @@
       "tooMany": "A document type may hold at most {max} fields. Take some out and try again.",
       "failed": "The form could not be saved. Try again.",
       "sessionLost": "Your session has expired, so the form was NOT saved. Sign in again in a new tab, then press “Approve the form” again — the samples that were read are not lost.",
-      "typeGone": "The document type no longer exists. It was deleted elsewhere, so there is nowhere to save the form."
+      "typeGone": "The document type no longer exists. It was deleted elsewhere, so there is nowhere to save the form.",
+      "idCardType": "This document type is an identity card, so it cannot have a form. The data on an identity card is captured during import as Person records, not as fields on a form — a form here would be a second, freely editable copy of somebody’s national identity number on every document of this type. The samples that were read are not lost, but this type cannot be given the form."
     },
     "saved": {
       "title": "The form has been saved",

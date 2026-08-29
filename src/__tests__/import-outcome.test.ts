@@ -1295,14 +1295,18 @@ describe("the result screen's copy", () => {
       expect(value.trim()).not.toBe("");
       expect([...scanIcu(value).args]).toEqual([]);
     }
-    // The five endings of #27.04's new-type path, as the IMPORT dialog words
-    // them — each names the type it left on the server, and nothing else.
+    // The endings of #27.04's new-type path, as the IMPORT dialog words them —
+    // each names the type it left on the server, and nothing else. Slice #32.07
+    // added a sixth, `typeIdCardNoForm`, which is reported on the ORDINARY path
+    // too: the fields were refused permanently, so the step leaves the backlog
+    // rather than being offered again.
     for (const key of [
       "typeNewTypeNoFields",
       "typeNewTypeNotMoved",
       "typeNewTypeMoveUnknown",
       "typeNewTypeFieldsUnknown",
       "typeNewTypeUnresolved",
+      "typeIdCardNoForm",
     ]) {
       const value = at(messages, `adminImport.wizard.importDialog.${key}`) as string;
       expect(typeof value).toBe("string");

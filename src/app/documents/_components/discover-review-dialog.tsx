@@ -95,6 +95,10 @@ import {
   type DocumentTemplateFieldType,
 } from "@/lib/documents/template-fields";
 import { sameDocumentTypeName } from "@/lib/documents/document-type-match";
+import {
+  ID_CARD_FORM_CODE,
+  ID_CARD_RENAME_CODE,
+} from "@/lib/documents/id-card-form-guard";
 
 const FIELD_TYPES: DocumentTemplateFieldType[] = ["text", "textarea", "date", "number"];
 
@@ -173,6 +177,45 @@ export type NewTypeProgress =
   | { status: "moved";              type: CreatedDocumentType }
   | { status: "moveUnresolved";     type: CreatedDocumentType }
   | { status: "movedFieldsUnknown"; type: CreatedDocumentType }
+  /**
+   * The form was refused PERMANENTLY: this type is an identity card.
+   *                                                            (Slice #32.07)
+   *
+   * ⚠️ **A STATUS OF ITS OWN, AND AN ADVERSARIAL ROUND IS WHY IT IS NOT
+   * `moved`.** Both consumers render `moved` as "the form was NOT saved and the
+   * fields that were read are lost … press AI Discovery again to retry" — a
+   * sentence that survives this dialog unmounting, and the only one left on
+   * screen. Over a refusal that will answer identically for ever, that is an
+   * instruction to spend another billed read on an impossible save: #26.02's
+   * unfixable message, with a price on each attempt.
+   *
+   * ⚠️ **AND IT IS REPORTED ON THE ORDINARY PATH TOO**, where no type was
+   * created and `type` is simply the one the fields were refused for. That is
+   * what lets `applyPendingNewType` drop the step from the discovery backlog:
+   * without a progress at all it returns before the delete, and the header goes
+   * on offering a review whose Save can never succeed, with no exit but
+   * abandoning the import.
+   */
+  | {
+      status: "idCardTypeRefused";
+      type: CreatedDocumentType;
+      /**
+       * Did this run MOVE the document onto `type`?               (#32.07)
+       *
+       * ⚠️ **True on the create-new path and false on the ordinary one, and the
+       * difference is not cosmetic — an adversarial round found what collapsing
+       * it costs.** `pendingNewTypeRef` is a SINGLE SLOT: on the create-new
+       * path write 2 reports `moved` and write 3's refusal overwrites it, so
+       * this status is the only thing left carrying "the document is on a
+       * different type now". Without it `document-form.tsx` keeps rendering the
+       * OLD type over a document the server has already moved and cleared, and
+       * the next ordinary Save PATCHes the old `documentTypeId` and the old
+       * `custom_fields` straight back — the exact undo this prop's own docblock
+       * warns about. On the ordinary path nothing moved, and writing the form
+       * would clear `customFields` the server still holds.
+       */
+      moved: boolean;
+    }
   | { status: "unresolved";         name: string };
 
 type Props = {
@@ -1064,6 +1107,9 @@ export function DiscoverReviewDialog({
           max?:    number;
           fields?: unknown;
         };
+        // Set by the identity-card branch below and read by the progress call
+        // at the foot of this block, which is shared by every branch.
+        let idCardRefused = false;
         // The route's messages are English — it serves an API, not a screen.
         // Every one of them is mapped to copy from this namespace; none is
         // shown verbatim, because the reader is a Romanian business user.
@@ -1105,6 +1151,25 @@ export function DiscoverReviewDialog({
           // The form behind this dialog renders from the caller's cache, so it
           // is now out of date too. Not awaited, and nothing here depends on it.
           onTypesChanged();
+        } else if (
+          body.code === ID_CARD_FORM_CODE ||
+          body.code === ID_CARD_RENAME_CODE
+        ) {
+          idCardRefused = true;
+          // ⚠️ **THE ONE FLOW WHERE A REFUSAL LANDS MID-SEQUENCE.**
+          // (Slice #32.07.) This dialog's create-type → re-type → save-fields
+          // path is three writes; the type is created by write 1 and the fields
+          // are refused by write 3. That leaves a FORMLESS type carrying the
+          // name the model proposed — which is the correct outcome for an
+          // identity-card type rather than a broken one — but the user has to
+          // be told that rather than shown a generic "saving failed" over a
+          // type this dialog really did create. `errorIdCardTypeCreated` says
+          // both halves; the ordinary path says only the refusal.
+          setError(
+            createNew && target
+              ? t("errorIdCardTypeCreated", { type: target.name })
+              : t("errorIdCardType"),
+          );
         } else if (body.code === "too_many_fields") {
           setError(t("errorTooMany", { max: body.max ?? MAX_TEMPLATE_FIELDS }));
         } else if (res.status === 404) {
@@ -1118,7 +1183,25 @@ export function DiscoverReviewDialog({
         // above would have finished the save — so leaving `movedFieldsUnknown`
         // pending would close the run on "check whether the form was saved"
         // when the honest ending is "it was not, run discovery again".
-        if (createNew && target) onNewTypeProgress({ status: "moved", type: target });
+        //
+        // ⚠️ **…EXCEPT the identity-card refusal, which is not "run discovery
+        // again" and must not be reported as it.** (Slice #32.07.) It is
+        // reported on BOTH paths — see `idCardTypeRefused` — because it is the
+        // one failure here that no retry can clear, so the step has to leave the
+        // backlog rather than be offered again for the life of the run.
+        if (idCardRefused) {
+          onNewTypeProgress(
+            createNew && target
+              ? { status: "idCardTypeRefused", type: target, moved: true }
+              : {
+                  status: "idCardTypeRefused",
+                  type: { id: typeId, key: "", name: typeName },
+                  moved: false,
+                },
+          );
+        } else if (createNew && target) {
+          onNewTypeProgress({ status: "moved", type: target });
+        }
         return;
       }
       const saved = (await res.json().catch(() => ({}))) as { fields?: unknown };

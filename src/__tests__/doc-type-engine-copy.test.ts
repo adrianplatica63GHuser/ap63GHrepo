@@ -141,6 +141,12 @@ const REQUIRED_KEYS = [
   "save.failed",
   "save.sessionLost",
   "save.typeGone",
+  // Slice #32.07 — the identity-card refusal. Reachable even though this
+  // screen's own picker already excludes an identity-card type: that exclusion
+  // is computed from the type list as this page read it, so a type renamed into
+  // one in another tab, while a run of twenty billed reads was in flight,
+  // arrives at Save perfectly selectable.
+  "save.idCardType",
   "saved.title",
   "saved.body",
   "saved.whatNext",

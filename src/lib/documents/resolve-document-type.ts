@@ -103,6 +103,7 @@ import {
 import { pgErrorCode } from "@/lib/api/errors";
 import { advisoryLockKeys } from "@/lib/properties/import-property-plan";
 import { canonicalTypeKey } from "@/lib/import/classify-prompts";
+import { documentTypeIsIdCard } from "@/lib/import/id-card";
 import {
   normaliseDocumentTypeName,
   resolveAgainstTypes,
@@ -128,6 +129,37 @@ export type DocumentTypeResolution =
       id: string;
       key: string;
       name: string;
+      /**
+       * Is the row this resolved to an identity-card type? (Slice #32.07)
+       *
+       * ⚠️ **THE SERVER'S ANSWER TO A QUESTION ONLY THE CLIENT USED TO ASK, AND
+       * IT CLOSES THE ONE BLIND SPOT #27.05 LEFT OPEN.** `idCardTypeIds` is
+       * computed in the BROWSER, inside `enrichDiscoverSteps`, by walking the
+       * type list the run read at its start — so it can only judge a type whose
+       * discovery read has ALREADY been paid for. For a type this function
+       * MINTS mid-run, `docTypeIdCardRef` has no entry (its own docblock says
+       * so), the wizard's test collapses to the scan's signal alone, and the
+       * scan's signal is exactly the one that is false on a card the scan
+       * mislabelled. The permanent write is caught afterwards by
+       * `absorbTypeList`; the billed read is not.
+       *
+       * ⚠️ **AND IT IS A MARK RATHER THAN A REFUSAL, WHICH WAS THE SLICE'S OWN
+       * DECISION TO MAKE.** Refusing to mint a type whose proposed NAME reads
+       * as an identity card would refuse the case the archive most needs: a
+       * card scanned into an archive that has no CARTE_IDENTITATE row yet. That
+       * card would land on the catch-all, `getPersonIdCardLink` — which matches
+       * `ID_CARD_TYPE_KEYS` — would find nothing, and the identity-card flow
+       * would be broken by the guard meant to protect it. A minted card type is
+       * CORRECT; a minted card type with a FORM is what must never happen, and
+       * that is refused at `createDocumentTypeRow` and at the two doors that
+       * can fill one in later.
+       *
+       * Computed from the ROW's stored key and name, which is why it travels
+       * rather than being recomputed by the caller: the wizard's copy of the
+       * name is its own label where the server gave none, and its copy of the
+       * key is `""` where the body carried no string.
+       */
+      isIdCard: boolean;
     }
   | { outcome: "unclassified"; id: null };
 
@@ -209,9 +241,10 @@ export async function resolveClassifiedDocumentType(
           : resolution.how === "key"
             ? "matched-key"
             : "matched-name",
-        id:   resolution.row.id,
-        key:  resolution.row.key,
-        name: resolution.row.name,
+        id:       resolution.row.id,
+        key:      resolution.row.key,
+        name:     resolution.row.name,
+        isIdCard: documentTypeIsIdCard(resolution.row),
       };
     }
     if (resolution.kind === "declined") return { outcome: "unclassified", id: null };
@@ -314,17 +347,25 @@ export async function resolveClassifiedDocumentType(
       if (created.kind === "declined") return { outcome: "unclassified", id: null };
       if (created.kind === "adopted") {
         return {
-          outcome: "adopted",
-          id:   created.row.id,
-          key:  created.row.key,
-          name: created.row.name,
+          outcome:  "adopted",
+          id:       created.row.id,
+          key:      created.row.key,
+          name:     created.row.name,
+          isIdCard: documentTypeIsIdCard(created.row),
         };
       }
+      const createdKey  = textOf(created.row.key, "");
+      const createdName = textOf(created.row.name, label);
       return {
-        outcome: "created",
-        id:   created.row.id,
-        key:  textOf(created.row.key, ""),
-        name: textOf(created.row.name, label),
+        outcome:  "created",
+        id:       created.row.id,
+        key:      createdKey,
+        name:     createdName,
+        // The values that were actually written, not the answer's — a create
+        // whose preferred key was refused carries a slug, and the NAME is the
+        // model's label rather than the catalogue's stored name (see the
+        // create block above for why that trade is the right way round).
+        isIdCard: documentTypeIsIdCard({ key: createdKey, name: createdName }),
       };
     } catch (err) {
       // ⚠️ **TWO WAYS TO LOSE THIS RACE, AND THEY GET THE SAME ANSWER.**

@@ -65,9 +65,14 @@ import {
   stripDocumentTypeOrigin,
 } from "./validation";
 import {
+  documentTypeHasForm,
   isDocumentTypeOrigin,
   type DocumentTypeOrigin,
 } from "@/lib/documents/status";
+import {
+  IdCardFormRefusedError,
+  idCardFormRefusal,
+} from "@/lib/documents/id-card-form-guard";
 
 // Row types — inferred from the Drizzle table definitions.
 export type LookupRow = Record<string, unknown> & { id: string };
@@ -360,9 +365,33 @@ export async function createDocumentTypeRow(
   // the create form is built from LIST_META, which lists `name` alone —
   // but a door that sanitises on the way in and not on the way out is a
   // door that will eventually be used the other way round.
+  const values = sanitizeDocumentTypeTemplateFields(data);
+  // ⚠️ **AN IDENTITY-CARD TYPE MAY NOT BE CREATED WITH A FORM.** (Slice #32.07.)
+  // The second of the two value-lists doors, guarded for exactly the reason the
+  // sanitiser above it is: no admin form sends `templateFields` on a POST
+  // today, and a door that judges on the way in and not on the way out is a
+  // door that will eventually be used the other way round. `key` is the
+  // GENERATED one rather than the preferred one, because that is what the row
+  // will actually carry.
+  //
+  // ⚠️ Unreachable from `resolveClassifiedDocumentType`, which never sends
+  // `templateFields` — so minting an identity-card type mid-import is NOT
+  // refused here, and that is deliberate: the archive needs a CARTE_IDENTITATE
+  // row to file cards under. What the resolver does instead is TELL the caller,
+  // through `DocumentTypeResolution.isIdCard`.
+  const createRefusal = idCardFormRefusal(
+    null,
+    {
+      key,
+      name: typeof data.name === "string" ? data.name : "",
+      hasForm: documentTypeHasForm(values.templateFields),
+    },
+    (values as { templateFields?: unknown }).templateFields !== undefined,
+  );
+  if (createRefusal !== null) throw new IdCardFormRefusedError(createRefusal);
   const [row] = await conn
     .insert(lookupDocumentType)
-    .values({ ...sanitizeDocumentTypeTemplateFields(data), key, origin })
+    .values({ ...values, key, origin })
     .returning();
   return row as LookupRow;
 }
@@ -406,15 +435,82 @@ export async function updateValue(
       return (row as LookupRow) ?? null;
     }
     case "document-types": {
+      // Two guards, composed. `stripDocumentTypeOrigin` keeps a rename from
+      // re-originating an imported type (#26.12); `sanitizeDocumentType-
+      // TemplateFields` keeps a hand-typed label out of the extraction
+      // prompt and renumbers `order` from array position (#27.03). Both
+      // named rather than inlined so each can be asserted on behaviour
+      // without opening a database connection.
+      const values = sanitizeDocumentTypeTemplateFields(stripDocumentTypeOrigin(data));
+      // ── A third guard, and it is the one that reads the ROW. (#32.07) ────
+      //
+      // ⚠️ **THIS IS THE DOOR THE BAD ROW MOST LIKELY CAME THROUGH, AND BOTH
+      // HALVES OF THE REFUSAL LIVE HERE.** The payload carries `name` and
+      // `templateFields` together, so a guard on the fields alone would not
+      // stop a type that already HAS a form being RENAMED into an identity
+      // card — a lock on a door with the window open beside it.
+      //
+      // ⚠️ **The question is asked of the ROW THE WRITE WOULD LEAVE**, which is
+      // why the stored row has to be read: `name` may be absent from the
+      // payload (the form editor sends it, a `templateFields`-only caller may
+      // not), and `templateFields` is absent on every plain rename, in which
+      // case the form that decides is the one already stored.
+      //
+      // ⚠️ **AND `key` IS TAKEN FROM THE PAYLOAD WHERE THERE IS ONE, WHICH AN
+      // ADVERSARIAL ROUND CORRECTED.** An earlier version of this comment said
+      // `key` "is never in a PUT payload at all", which is true of the HTTP
+      // route — `documentTypeUpdateSchema` strips it — and NOT true of this
+      // function, which is `.set(values)` over whatever object it is handed and
+      // `key` is a real column. That is the exact hole the guard was put in the
+      // query layer to close: a direct caller sending
+      // `{ key: "CARTE_IDENTITATE", templateFields: [...] }` would have been
+      // judged against the STORED key, found ordinary, and allowed to write the
+      // archive's identity-card key and a form together. Same class as the one
+      // `stripDocumentTypeOrigin` exists for, on the second write-once column.
+      //
+      // ⚠️ **A read and then a write, not one statement, so it is not atomic.**
+      // Two administrators — one adding a form, one renaming the same type into
+      // an identity card, in the same instant — could still land the pair this
+      // refuses. It is an admin screen on a single-user archive and the row is
+      // repaired by the migration's own predicate; a `WHERE` that encoded
+      // `isIdCardTypeName`'s Romanian folding in SQL would be a second opinion
+      // about the rule, which is the shape this slice exists to remove.
+      const [stored] = await db
+        .select({
+          key:            lookupDocumentType.key,
+          name:           lookupDocumentType.name,
+          templateFields: lookupDocumentType.templateFields,
+        })
+        .from(lookupDocumentType)
+        .where(eq(lookupDocumentType.id, id))
+        .limit(1);
+      // No row is the caller's 404, decided below by the update returning
+      // nothing. Refusing here would answer 400 for a type that does not exist.
+      if (stored) {
+        const nextFields = (values as { templateFields?: unknown }).templateFields;
+        const refusal = idCardFormRefusal(
+          {
+            key:     stored.key,
+            name:    stored.name,
+            hasForm: documentTypeHasForm(stored.templateFields),
+          },
+          {
+            key:  typeof values.key === "string" ? values.key : stored.key,
+            name: typeof values.name === "string" ? values.name : stored.name,
+            hasForm:
+              nextFields === undefined
+                ? documentTypeHasForm(stored.templateFields)
+                : documentTypeHasForm(nextFields),
+          },
+          // ⚠️ **The term that keeps Reference Data's name-only edit form
+          // usable on a row that is already wrong.** See `idCardFormRefusal`.
+          nextFields !== undefined,
+        );
+        if (refusal !== null) throw new IdCardFormRefusedError(refusal);
+      }
       const [row] = await db
         .update(lookupDocumentType)
-        // Two guards, composed. `stripDocumentTypeOrigin` keeps a rename from
-        // re-originating an imported type (#26.12); `sanitizeDocumentType-
-        // TemplateFields` keeps a hand-typed label out of the extraction
-        // prompt and renumbers `order` from array position (#27.03). Both
-        // named rather than inlined so each can be asserted on behaviour
-        // without opening a database connection.
-        .set(sanitizeDocumentTypeTemplateFields(stripDocumentTypeOrigin(data)))
+        .set(values)
         .where(eq(lookupDocumentType.id, id))
         .returning();
       return (row as LookupRow) ?? null;

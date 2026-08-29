@@ -95,6 +95,8 @@ type AiInterpretResponse = {
   notes?: string | null;
   parties?: AiExtractedParty[];
   partyRolesConfigured?: boolean;
+  /** Slice #32.07 — the server's verdict on the type it resolved to. */
+  documentTypeIsIdCard?: boolean | null;
 };
 
 /**
@@ -146,6 +148,22 @@ export type AiInterpretRunResult =
        * re-type was skipped — which `partialWrite` beside it already reports.
        */
       documentTypeId: string | null;
+      /**
+       * Is the type this call MOVED the document to an identity-card type?
+       *                                                        (Slice #32.07)
+       *
+       * ⚠️ **The SERVER's answer, and the caller has no way to get it.** The
+       * type may not have existed when the run read the type list — this route
+       * is the one that auto-creates rows — so `docTypeIdCardRef` has no entry
+       * for it and the caller's only remaining witness is the scan's own
+       * signal, which is precisely the signal that is false on a card the scan
+       * mislabelled. A billed discovery read on an identity-card type is what
+       * that costs, every time.
+       *
+       * `null` in every case `documentTypeId` is null: this call moved nothing,
+       * so it has nothing to say about the type the caller is standing on.
+       */
+      documentTypeIsIdCard: boolean | null;
       /**
        * What this call did to the title.                       (Slice #29.12)
        *
@@ -807,6 +825,14 @@ export async function runAiInterpret(
       // expression the PATCH itself is built from, and `filled()` has already
       // proved the value is a non-empty string by the time it is true.
       documentTypeId: retyped ? (fields.documentTypeId as string) : null,
+      // ⚠️ **Gated on `retyped` for exactly the same reason, and it is not
+      // decoration.** (Slice #32.07.) When this call moved the document, the
+      // caller's `finalTypeId` is the type NAMED here — which may be one this
+      // call invented, and for which `docTypeIdCardRef` has no entry. When it
+      // did not move it, `finalTypeId` is the caller's own `resolvedTypeId`,
+      // about which the caller already has the server's answer, so claiming
+      // anything here would be a second opinion about a different type.
+      documentTypeIsIdCard: retyped ? data.documentTypeIsIdCard === true : null,
       // Both read off the decision and off the value actually sent, for the
       // same reason `documentTypeId` is: neither can claim something this call
       // did not do.

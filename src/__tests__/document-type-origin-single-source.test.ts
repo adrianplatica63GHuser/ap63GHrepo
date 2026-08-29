@@ -283,9 +283,28 @@ describe("a rename cannot re-originate a document type", () => {
     // expression rather than loosened to a bare substring: the two guards are
     // both load-bearing on the same write, and a test that would stay green
     // with either of them unwrapped is not guarding the write.
-    expect(queries).toContain(
-      ".set(sanitizeDocumentTypeTemplateFields(stripDocumentTypeOrigin(data)))",
+    //
+    // ⚠️ **Slice #32.07 HOISTED the composed expression into a local**, because
+    // its own identity-card guard has to read the same value before the write
+    // rather than reconstruct it. So the pin is now two halves — the
+    // composition, and the write that uses it — and BOTH are asserted, because
+    // either one alone would stay green with a third writer setting the column
+    // from something else.
+    //
+    // ⚠️ **AND THE SOURCE IS COMMENT-STRIPPED FIRST, which a round caught this
+    // file never doing.** `.set(values)` also appears inside a COMMENT in
+    // `queries.ts` — one arguing about what `updateValue` can be handed — so the
+    // write half of the pin was satisfiable without the write: delete line
+    // `.set(values)` and replace it with `.set({ ...data })`, dropping BOTH
+    // guards, and this test stayed green because the comment and the `const`
+    // survived. A pin that a comment can satisfy is not a pin.
+    const code = queries
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/(^|[^:])\/\/.*$/gm, "$1");
+    expect(code).toContain(
+      "const values = sanitizeDocumentTypeTemplateFields(stripDocumentTypeOrigin(data));",
     );
+    expect(code).toContain(".set(values)");
   });
 
   /**

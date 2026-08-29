@@ -240,7 +240,17 @@ describe("template fields go through the one sanitiser", () => {
       path.join(process.cwd(), "src/lib/admin/value-lists/queries.ts"),
       "utf8",
     );
-    expect(queries).toContain(".values({ ...sanitizeDocumentTypeTemplateFields(data), key, origin })");
+    // ⚠️ **Slice #32.07 hoisted the sanitiser into a local** so its
+    // identity-card guard could read the sanitised template before the insert.
+    // Both halves are pinned, for the reason the sibling file states: either
+    // one alone would stay green with the column written from something else.
+    // Comment-stripped, for the reason the sibling file records: a literal that
+    // also occurs in a comment is a pin a comment can satisfy.
+    const code = queries
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/(^|[^:])\/\/.*$/gm, "$1");
+    expect(code).toContain("const values = sanitizeDocumentTypeTemplateFields(data);");
+    expect(code).toContain(".values({ ...values, key, origin })");
   });
 });
 

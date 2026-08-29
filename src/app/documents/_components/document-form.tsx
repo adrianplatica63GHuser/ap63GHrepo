@@ -1050,7 +1050,26 @@ export function DocumentForm({
     // next ordinary Save — which is exactly what leaving `movedFieldsUnknown`
     // out of this branch did: the form kept the old type over a document the
     // server had already moved.
-    if (pending.status !== "moved" && pending.status !== "movedFieldsUnknown") return pending;
+    //
+    // ⚠️ **AND `idCardTypeRefused` WHEN IT SAYS THE DOCUMENT MOVED, which an
+    // adversarial round found this branch dropping.**            (Slice #32.07)
+    // `pendingNewTypeRef` is a single slot: on the create-new path write 2
+    // reports `moved` and write 3's refusal OVERWRITES it, so leaving the new
+    // status out of this test left the form rendering the old type over a
+    // document the server had already moved and cleared — and the next ordinary
+    // Save PATCHed the old `documentTypeId` and the old `custom_fields` back
+    // over it. That is the undo this whole branch exists to prevent, reached by
+    // the one ending that had not been added to it. On the ORDINARY path the
+    // refusal carries `moved: false` and nothing is written, because nothing
+    // moved and `customFields` is still the server's.
+    const idCardMoved = pending.status === "idCardTypeRefused" && pending.moved;
+    if (
+      pending.status !== "moved" &&
+      pending.status !== "movedFieldsUnknown" &&
+      !idCardMoved
+    ) {
+      return pending;
+    }
     form.setValue("documentTypeId", type.id, { shouldDirty: false });
     form.setValue("customFields",   {},      { shouldDirty: false });
     setBaseline((prev) => ({
@@ -1712,7 +1731,14 @@ export function DocumentForm({
                   justAcceptedKeysRef.current = null;
                 }
                 setAiExtractErr(
-                  applied.status === "moved"
+                  applied.status === "idCardTypeRefused"
+                    // Slice #32.07 — NOT `aiDiscoverNewTypeNoFields`, whose
+                    // last sentence is "press AI Discovery again to retry".
+                    // This refusal answers identically for ever, so that
+                    // sentence would be an instruction to spend another billed
+                    // read on an impossible save.
+                    ? t("aiDiscoverIdCardNoForm", { type: applied.type.name })
+                    : applied.status === "moved"
                     ? t("aiDiscoverNewTypeNoFields",   { type: applied.type.name })
                     : applied.status === "created"
                       ? t("aiDiscoverNewTypeNotMoved", { type: applied.type.name })

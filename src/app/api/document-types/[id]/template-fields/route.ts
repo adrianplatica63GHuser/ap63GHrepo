@@ -31,6 +31,14 @@
  * rather than silently losing a field. `template_fields` has no version column
  * and needs none: the key list IS the state being replaced.
  *
+ * THE IDENTITY-CARD REFUSAL
+ * -------------------------
+ * Slice #32.07. This is one of the three server doors that can put a row into
+ * `template_fields`, and the only rule about which types may hold one lived in
+ * five client-side copies, none of them on a write path. The refusal is a named
+ * 400 — see `@/lib/documents/id-card-form-guard` for why a refusal and not a
+ * silent filter, and for the rename half the other two doors carry.
+ *
  * Auth: the middleware requires a session for everything outside /api/auth, so
  * an unauthenticated PUT never reaches this handler.
  */
@@ -48,6 +56,7 @@ import {
   mergeAcceptedFields,
 } from "@/lib/documents/discover-to-template";
 import type { DocumentTemplateField } from "@/lib/documents/template-fields";
+import { idCardFormRefusal, idCardRefusalCode } from "@/lib/documents/id-card-form-guard";
 
 export const runtime = "nodejs";
 
@@ -89,6 +98,55 @@ export async function PUT(request: NextRequest, ctx: Ctx): Promise<Response> {
     const current = await getDocumentTypeForTemplateEdit(id);
     if (!current) {
       return Response.json({ error: "Document type not found" }, { status: 404 });
+    }
+
+    // ── An identity card can never hold a form ────────────────────────────
+    // (Slice #32.07.) The row is already in hand and already carries `key` and
+    // `name`; until this slice both were read and neither was used.
+    //
+    // ⚠️ **AHEAD OF THE 409, AND THAT ORDER IS THE WHOLE POINT.** A stale
+    // `knownKeys` on an identity-card type would otherwise be answered with
+    // "the form changed while you were reviewing — check the list and press
+    // Save again", over a Save that can never succeed. That is #26.02's
+    // unfixable-message failure rebuilt: a loop the user cannot leave, because
+    // the remedy the message names does not address the reason for the refusal.
+    // The identity of the type does not depend on how fresh the caller's view
+    // of the fields is, so it is decided first.
+    //
+    // ⚠️ **`current.fields.length > 0` is the second term, and it is not
+    // redundant.** This route is ADDITIVE — it cannot clear a template — so a
+    // PUT of `fields: []` against a card type that already wrongly holds a form
+    // would otherwise write the merge back unchanged and report 200 over a form
+    // that is still there. Refusing says what is true: that type must not carry
+    // this form, and no press of this button will remove it (the data migration
+    // in ga40prj does).
+    //
+    // The name and the key are the STORED ones on both sides of the question,
+    // because this door cannot rename — so `idCardFormRefusal` can only ever
+    // answer `form` here, and the `rename` half it also knows about belongs to
+    // the two value-lists doors.
+    const identity = { key: current.key, name: current.name };
+    const refusal = idCardFormRefusal(
+      { ...identity, hasForm: current.fields.length > 0 },
+      { ...identity, hasForm: parsed.data.fields.length > 0 || current.fields.length > 0 },
+      // ⚠️ **`true`, UNCONDITIONALLY.** This route always writes the column —
+      // that is the whole of what it does — so it is never the "a write that
+      // leaves `template_fields` as it found it" case the guard carves out for
+      // Reference Data's name-only edit form. A card type that already wrongly
+      // holds a form is still refused here, which is what stops this door
+      // reporting 200 over a merge that changed nothing and removed nothing.
+      true,
+    );
+    if (refusal !== null) {
+      return Response.json(
+        {
+          error:
+            "This document type is an identity card. Its data is captured by the import's " +
+            "identity-card step as Person records, so it may not hold a form.",
+          code: idCardRefusalCode(refusal),
+        },
+        { status: 400 },
+      );
     }
 
     // ── Optimistic concurrency ────────────────────────────────────────────

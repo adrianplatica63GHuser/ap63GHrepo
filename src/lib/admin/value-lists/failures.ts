@@ -24,6 +24,11 @@
  *   SECOND `useTranslations("valueList.confirm.errors")` hook for these.
  */
 
+import {
+  ID_CARD_FORM_CODE,
+  ID_CARD_RENAME_CODE,
+} from "@/lib/documents/id-card-form-guard";
+
 /**
  * Everything a Reference Data screen knows how to say about a failure.
  *
@@ -40,6 +45,23 @@ export const FAILURE_CODES = [
   "duplicate",
   "notFound",
   "validation",
+  // Slice #32.07 — the two halves of the identity-card refusal. They are the
+  // first members that arrive on a **400**, which is why `throwRequestFailed`
+  // below had to start reading the body's `code` before it decided that a 400
+  // is the form's own rejection.
+  //
+  // ⚠️ **`idCardForm` IS UNREACHABLE FROM THESE FOUR SCREENS TODAY, and it is
+  // kept anyway.** A round traced it: Reference Data's document-type form is
+  // `LIST_META["document-types"].fields = [{ key: "name" }]`, so every write
+  // that reaches this module carries a `name` and no `templateFields` — and on
+  // such a write `idCardFormRefusal` answers `rename` or nothing at all,
+  // because its `writesTheForm` term is false. `idCardForm` is what a DIRECT
+  // caller of the two value-lists doors gets, and a member of this array with
+  // no message renders as a raw key path, which is the failure this module
+  // exists to stop. So the sentence is written, and `idCardRename`'s — the live
+  // one — is the one that names the screen the remedy lives on.
+  "idCardForm",
+  "idCardRename",
   "generic",
 ] as const;
 
@@ -74,6 +96,13 @@ export function failureFromResponse(status: number, body: unknown): FailureCode 
   if (code === "SAME_VALUE") return "sameValue";
   if (code === "AMBIGUOUS_VALUE") return "ambiguousValue";
   if (code === "DUPLICATE") return "duplicate";
+  // ⚠️ **Slice #32.07 — snake_case, and the constants rather than literals.**
+  // The same refusal reaches `PUT /api/document-types/[id]/template-fields`,
+  // whose own codes are `template_changed` and `too_many_fields`, so one of the
+  // two conventions had to give; spelling one refusal two ways on two wires is
+  // what this slice exists to stop. See `id-card-form-guard.ts`.
+  if (code === ID_CARD_FORM_CODE) return "idCardForm";
+  if (code === ID_CARD_RENAME_CODE) return "idCardRename";
   return "generic";
 }
 
@@ -91,8 +120,23 @@ export async function throwRequestFailed(
   formRejects400 = false,
 ): Promise<never> {
   const body: unknown = await res.json().catch(() => null);
-  if (formRejects400 && (res.status === 400 || res.status === 422)) {
+  const mapped = failureFromResponse(res.status, body);
+  // ⚠️ **THE BODY'S CODE IS READ FIRST, AND ONLY AN UNRECOGNISED 400 IS THE
+  // FORM'S OWN REJECTION.**                                    (Slice #32.07)
+  // Until this slice every 400 on a form door became "a required field is
+  // missing or wrong" before the body was ever looked at — correct while the
+  // only 400 these doors could answer was a zod failure, and wrong the moment
+  // one of them started refusing a write for a reason no field on the form
+  // controls. Sending an administrator to fix a perfectly correct field is the
+  // failure #29.06 argued a 400 must never produce, one door over.
+  //
+  // ⚠️ **Behaviour-preserving for every code that existed before it**: none of
+  // `SAME_VALUE`, `AMBIGUOUS_VALUE` or `DUPLICATE` is ever answered with a 400
+  // (the first two are the reassign route's 409, the third the whitelist
+  // panels'), so `mapped` was `generic` for every 400 this function saw and the
+  // branch below fired exactly as it used to.
+  if (formRejects400 && (res.status === 400 || res.status === 422) && mapped === "generic") {
     throw new RequestFailedError("validation");
   }
-  throw new RequestFailedError(failureFromResponse(res.status, body));
+  throw new RequestFailedError(mapped);
 }

@@ -163,7 +163,7 @@ import type { ScanResult } from "./scan-table";
 import { inferProvenanceForFiles } from "@/lib/metadata/provenance-rules";
 import type { ProvenanceCode } from "@/lib/metadata/provenance";
 import { ProvenanceField } from "./provenance-field";
-import { ID_CARD_TYPE_KEYS, isIdCardEntry, isIdCardTypeName } from "@/lib/import/id-card";
+import { documentTypeIsIdCard, isIdCardEntry } from "@/lib/import/id-card";
 import { isDeclaredCoordinateFile } from "@/lib/import/structure-rules";
 import type { EntryAssignment } from "@/lib/import/property-folders";
 import { titleForEntry, type PreexistingRow } from "@/lib/import/preexisting-check";
@@ -762,7 +762,7 @@ async function enrichDiscoverSteps(byType: Map<string, DiscoverStep>): Promise<E
     // the signal that is false on a mislabelled card. By the time we get here
     // the read has been paid for; the permanent write has not. See
     // `typeIsIdCard` in `discover-run.ts`.
-    if ((ID_CARD_TYPE_KEYS as readonly string[]).includes(row.key) || isIdCardTypeName(row.name)) {
+    if (documentTypeIsIdCard(row)) {
       idCardTypeIds.push(typeId);
       byType.delete(typeId);
       continue;
@@ -1376,6 +1376,24 @@ type EnsuredDocType = {
    * only for what is true of all three: the name is now known to the run.
    */
   row?: DocTypeRow;
+  /**
+   * Did the SERVER say the resolved row is an identity-card type?
+   *                                                            (Slice #32.07)
+   *
+   * ⚠️ **Carried rather than recomputed, and the difference is real.** `row`
+   * above holds this client's own label where the server gave no name and `""`
+   * where it gave no key, so asking `documentTypeIsIdCard(row)` here would be a
+   * second opinion built from a worse copy of the two columns the question is
+   * about. The resolver answers from the stored row.
+   *
+   * ⚠️ **Absent reads as `false`, and the caller writes it into
+   * `docTypeIdCardRef` ONLY when it is `true`.** That map's reader asks
+   * `get(id) === true || isIdCardEntry(sr)`, so a stored `false` is not the
+   * same as no entry — it would erase a `true` the start-of-run list or
+   * `enrichDiscoverSteps` had already put there. A `true` is the answer the map
+   * could not previously have for a type minted mid-run.
+   */
+  isIdCard?: boolean;
 };
 
 /**
@@ -1469,7 +1487,7 @@ async function ensureDocType(
   if (!res.ok) return { id: fallbackId, outcome: "failed" };
 
   const body = (await res.json().catch(() => null)) as
-    | { outcome?: unknown; id?: unknown; key?: unknown; name?: unknown }
+    | { outcome?: unknown; id?: unknown; key?: unknown; name?: unknown; isIdCard?: unknown }
     | null;
   if (!body || typeof body.id !== "string" || body.id.length === 0) {
     // ⚠️ **A server `unclassified` is UNCLASSIFIED, not failed, and a fourth
@@ -1518,10 +1536,11 @@ async function ensureDocType(
   // this import and left empty" on the result screen. `matched` is the honest
   // answer: the id is good, the row is now in the list, and this run created
   // nothing.
+  const isIdCard = body.isIdCard === true;
   if (body.outcome === "created" || body.outcome === "adopted") {
-    return { id: row.id, outcome: body.outcome, row };
+    return { id: row.id, outcome: body.outcome, row, isIdCard };
   }
-  return { id: row.id, outcome: "matched", row };
+  return { id: row.id, outcome: "matched", row, isIdCard };
 }
 
 async function createDocument(payload: {
@@ -1813,11 +1832,11 @@ export function BulkImportDialog({
    *
    * ⚠️ **A fact about the TYPE, which is the axis the rule actually needs** —
    * see `typeIsIdCard` in `discover-run.ts` for the two ways the scan's own
-   * signal comes apart from it. `ID_CARD_TYPE_KEYS` is the seeded key;
-   * `isIdCardTypeName` is the NAME test, and it is deliberately NARROWER than
-   * the scan's own `isIdCardLabel` — see that function's header for the type
-   * names ("Buletin de analiză", "Copie CI") the wider heuristic would have
-   * silently cost a form.
+   * signal comes apart from it. Since #32.07 the question has ONE answer,
+   * `documentTypeIsIdCard`: the seeded key, or the NAME test, which is
+   * deliberately NARROWER than the scan's own `isIdCardLabel` — see that
+   * function's header for the type names ("Buletin de analiză", "Copie CI") the
+   * wider heuristic would have silently cost a form.
    *
    * ⚠️ **An ABSENT id means "not known", not "not a card"**, and it is the hole
    * a fourth adversarial round found: this map is built once, from the
@@ -2482,11 +2501,7 @@ export function BulkImportDialog({
         items.map((item) => [item.id, documentTypeHasForm(item.templateFields)]),
       );
       docTypeIdCardRef.current = new Map(
-        items.map((item) => [
-          item.id,
-          (ID_CARD_TYPE_KEYS as readonly string[]).includes(item.key) ||
-            isIdCardTypeName(item.name),
-        ]),
+        items.map((item) => [item.id, documentTypeIsIdCard(item)]),
       );
       setTypeNames(items.map((item) => item.name));
       // Slice #27.07 — the BEFORE half of "gained a form during this run",
@@ -2637,6 +2652,30 @@ export function BulkImportDialog({
             // list before the queue is published, so this only narrows a gap
             // rather than being the only thing holding it shut.
             rememberTypeName(resolvedType.row.name);
+            // ⚠️ **AND THE ONE FACT THIS MAP COULD NOT PREVIOUSLY HOLD.**
+            // (Slice #32.07.) `docTypeIdCardRef` is built once, from the
+            // start-of-run list, so a type resolved or MINTED during the run
+            // had no entry and every later reader fell back to the scan's own
+            // signal — which is exactly the signal that is false on a card the
+            // scan mislabelled and the server then invented a type for. The
+            // read that blind spot cost was billed before `enrichDiscoverSteps`
+            // could catch the permanent write. The value is the SERVER's
+            // judgement, taken from the stored row, not a second test over this
+            // client's copy of the name.
+            //
+            // ⚠️ **ONLY EVER AN UPGRADE, AND AN ADVERSARIAL ROUND CAUGHT THE
+            // DOWNGRADE.** An unconditional `set(id, false)` is not "no
+            // information" in this map: the id may already hold `true`, put
+            // there at run start from the type list or by `enrichDiscoverSteps`
+            // — and a response body that arrived without the field (a partial
+            // parse, a proxy, a deploy skew across a long run) would then erase
+            // it and send the reader back to the scan's own signal, which is
+            // the signal that is false on a mislabelled card. Either witness is
+            // enough and neither may cancel the other, which is why the reader
+            // is `|| isIdCardEntry(sr)` rather than `??`.
+            if (resolvedType.isIdCard === true) {
+              docTypeIdCardRef.current.set(resolvedType.row.id, true);
+            }
           }
 
           // 3. Create the Document record.
@@ -3037,6 +3076,19 @@ export function BulkImportDialog({
             // and write the fields onto the wrong one. `runAiInterpret` reports
             // the move because nothing here can work it out.
             const finalTypeId = interpreted.documentTypeId ?? resolvedTypeId;
+            // ⚠️ **AND THE SERVER'S VERDICT ON A TYPE THIS CALL MAY HAVE
+            // INVENTED.** (Slice #32.07.) `runAiInterpret` reports
+            // `documentTypeIsIdCard` for exactly the type it names above — the
+            // one path that can mint a `lookup_document_type` row after the
+            // start-of-run list was read, and therefore the one type
+            // `docTypeIdCardRef` cannot know about. Written before the map is
+            // read two lines down, and only ever as an UPGRADE: a `false` here
+            // would erase a `true` the type list or `enrichDiscoverSteps` had
+            // already put there, and the reader's `||` says either witness is
+            // enough.
+            if (interpreted.documentTypeIsIdCard === true) {
+              docTypeIdCardRef.current.set(finalTypeId, true);
+            }
             const typeHasForm = docTypeFormRef.current.get(finalTypeId) === true;
             // ⚠️ **Answered from the TYPE, with the scan only as the fallback
             // for a type this run invented.** Not `skipReason === "id-card"` —
@@ -3789,12 +3841,98 @@ export function BulkImportDialog({
       // The document really did move, so the row's type is the new one — and
       // the rows still on the OLD type are still waiting for a form, which is
       // why only this one is touched.
+      // `idCardTypeRefused` joins the two: on the new-type path the document
+      // really was moved (the refusal lands on write 3, after write 2), and on
+      // the ordinary path the id is the type it is already on, so writing it is
+      // a no-op rather than a guess.                            (Slice #32.07)
       if (progress.status === "moved" || progress.status === "movedFieldsUnknown") {
         updateResult(step.path, { documentTypeId: progress.type.id });
       }
+      // ⚠️ **AND THE IDENTITY-CARD REFUSAL ALSO TAKES THE ROW'S "no form yet"
+      // FLAG DOWN, which an adversarial round found the first version of this
+      // branch leaving up.**                                   (Slice #32.07)
+      //
+      // `typeFormMissing` was set by the loop, before anyone knew this type was
+      // an identity card. `summariseImportRun` counts every row carrying it and
+      // names the type from `runTypes` — which has no entry for a type minted
+      // during the review — so the results screen and the SAVED REPORT printed
+      // "un tip de document a rămas fără formular", unnamed, and sent the user
+      // to Reference Data's „Doar cele care așteaptă un formular" filter. That
+      // filter is the one `awaitsFormRow` excludes an identity card from, by
+      // this very slice: the user ticks the box and the thing they were told to
+      // fix is not there, the count never clears, and it is in the permanent
+      // artefact. It also contradicted the `typeIdCardNoForm` sentence two
+      // lines below, on the same screen, in the same run.
+      //
+      // The row simply now knows something the loop did not, and it is the same
+      // answer `typeAwaitsForm` gives an identity card everywhere else. True on
+      // the ordinary path too, where the server has just PROVED the type is a
+      // card.
+      if (progress.status === "idCardTypeRefused") {
+        // ⚠️ **ACROSS EVERY ROW OF THE TYPE, not just the reviewed one, and a
+        // round found the first version doing only the one.** `updateResult`
+        // matches ONE `entry.path`, but the discover queue is one step per
+        // TYPE — so a type with forty documents has forty rows carrying
+        // `typeFormMissing` and clearing the reviewed row's left thirty-nine.
+        // `summariseImportRun` counts them, so the results screen and the
+        // saved report went on saying "un tip de document a rămas fără
+        // formular" and sending the user to a Reference Data filter that this
+        // slice makes exclude identity-card types — an item that cannot be
+        // cleared, in the permanent artefact, contradicting the sentence
+        // printed beside it. `handleDiscoverSaved` already clears by
+        // `documentTypeId === step.typeId`; this is the same sweep for the
+        // refusal, and the same fact: the type is an identity card and no row
+        // of it is waiting for a form.
+        //
+        // The document id is written only where the document actually MOVED —
+        // the create-new path. On the ordinary path `progress.type.id` is the
+        // type the rows are already on.
+        //
+        // ⚠️ **AND THE TWO PATHS ARE MUTUALLY EXCLUSIVE, which a round found
+        // the first version of this sweep collapsing.** On the CREATE-NEW path
+        // `progress.type.id` is the type this document alone was moved to and
+        // `step.typeId` is the OLD one — an ordinary, formless, non-identity
+        // type the server made no claim about, whose remaining rows are exactly
+        // as formless as they were. Sweeping `step.typeId` there cleared their
+        // flag too, so a type with no form and no route back to one in this run
+        // vanished from the results table AND from the saved report, and the
+        // retry's own re-decision (gated on `typeFormMissing === true`) went
+        // with it. `handleDiscoverSaved` states this rule for the identical
+        // shape and touches only the reviewed row when a move happened; this is
+        // the same rule for the refusal.
+        setResults((prev) =>
+          prev.map((r) => {
+            if (progress.moved) {
+              // The document moved onto the refused type. Only this row is on
+              // it — plus, defensively, any row already there.
+              return r.entry.path === step.path
+                ? { ...r, documentTypeId: progress.type.id, typeFormMissing: undefined }
+                : r.documentTypeId === progress.type.id
+                  ? { ...r, typeFormMissing: undefined }
+                  : r;
+            }
+            // Nothing moved: the refused type IS `step.typeId`, and every row of
+            // it has just been proved to be waiting for a form it must never
+            // have.
+            return r.documentTypeId === step.typeId
+              ? { ...r, typeFormMissing: undefined }
+              : r;
+          }),
+        );
+        // Nothing may queue a second discovery for it either: the answer will
+        // be the same refusal, and the read is billed.
+        docTypeIdCardRef.current.set(progress.type.id, true);
+      }
 
       const sentence =
-        progress.status === "moved"
+        // Slice #32.07 — first, and NOT `typeNewTypeNoFields`, which ends
+        // "open the document and press AI Discover to retry". This refusal
+        // answers identically for ever; that sentence would sit on the results
+        // screen for the rest of the run naming a billed remedy that cannot
+        // work.
+        progress.status === "idCardTypeRefused"
+          ? t("typeIdCardNoForm", { type: progress.type.name })
+          : progress.status === "moved"
           ? t("typeNewTypeNoFields", { type: progress.type.name })
           : progress.status === "created"
             ? t("typeNewTypeNotMoved", { type: progress.type.name })
@@ -4157,8 +4295,20 @@ export function BulkImportDialog({
          * say it: `typeFormAdded` goes, because this row is demonstrably no
          * longer on the type that gained a form, and nothing takes its place.
          * `refillRetyped` is what tells the user to go and look at the type.
+         *
+         * ⚠️ **Slice #32.07 feeds the MAP here without changing that refusal.**
+         * `runAiInterpret` now reports the server's own verdict for the type it
+         * moved the document to, so the sentence above — "a type the route
+         * invented on THIS call is not in it" — stops being true for the
+         * identity-card half. The walk still makes no claim about the new
+         * type's FORM, which is a different question and still unprovable from
+         * here; what it does is stop the NEXT reader of `docTypeIdCardRef`
+         * inheriting the blind spot.
          */
         const movedTo = interpreted.documentTypeId;
+        if (movedTo !== null && interpreted.documentTypeIsIdCard === true) {
+          docTypeIdCardRef.current.set(movedTo, true);
+        }
 
         updateResult(path, {
           /**
@@ -4415,6 +4565,13 @@ export function BulkImportDialog({
          * which is the one artefact the user keeps.
          */
         const finalTypeId = interpreted.documentTypeId ?? result.documentTypeId ?? null;
+        // ⚠️ **The retry has to record the verdict too** — see the same write
+        // on the main path. A rate limit at document twelve is this run's
+        // commonest failure, so the retry is where a mislabelled card most
+        // often gets its type invented for the first time.   (Slice #32.07)
+        if (finalTypeId !== null && interpreted.documentTypeIsIdCard === true) {
+          docTypeIdCardRef.current.set(finalTypeId, true);
+        }
         /**
          * Has a type-list read absolved this type since `awaitsForm` was
          * decided?                                               (Slice #27.07)

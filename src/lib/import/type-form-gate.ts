@@ -147,7 +147,7 @@ import {
 } from "@/lib/documents/document-type-match";
 import { documentTypeHasForm } from "@/lib/documents/status";
 import { typeAwaitsForm } from "@/lib/import/discover-run";
-import { ID_CARD_TYPE_KEYS, isIdCardTypeName } from "@/lib/import/id-card";
+import { documentTypeIsIdCard } from "@/lib/import/id-card";
 
 /**
  * A row of the document-type catalogue, as this gate needs it: the three
@@ -637,10 +637,7 @@ function existingTypeOf(
       // `Buletin de încercare` and `Copie CI` are ordinary formless types that
       // `isIdCardTypeName` deliberately refuses and `isIdCardLabel` accepts.
       // A gate that disagrees with the executor is worse than no gate.
-      typeIsIdCard:
-        (ID_CARD_TYPE_KEYS as readonly string[]).includes(row.key) ||
-        isIdCardTypeName(row.name) ||
-        entry.isIdCard === true,
+      typeIsIdCard: documentTypeIsIdCard(row) || entry.isIdCard === true,
     }),
     documentCount: 1,
     files: [file],

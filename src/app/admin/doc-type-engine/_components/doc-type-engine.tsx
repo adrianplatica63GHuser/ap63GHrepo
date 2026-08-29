@@ -58,7 +58,11 @@ import {
 import { documentTypeHasForm } from "@/lib/documents/status";
 import { parseTemplateFields, type DocumentTemplateFieldType } from "@/lib/documents/template-fields";
 import { typeMayHoldAForm } from "@/lib/import/discover-run";
-import { ID_CARD_TYPE_KEYS, isIdCardTypeName } from "@/lib/import/id-card";
+import { documentTypeIsIdCard } from "@/lib/import/id-card";
+import {
+  ID_CARD_FORM_CODE,
+  ID_CARD_RENAME_CODE,
+} from "@/lib/documents/id-card-form-guard";
 import { UNCLASSIFIED_DOCUMENT_TYPE_KEY } from "@/lib/documents/document-type-match";
 import {
   walkFolder,
@@ -251,8 +255,7 @@ export function DocTypeEngine() {
 
   const refusalFor = useCallback(
     (row: DocumentTypeCatalogueRow): "idCard" | "fallback" | null => {
-      const typeIsIdCard =
-        (ID_CARD_TYPE_KEYS as readonly string[]).includes(row.key) || isIdCardTypeName(row.name);
+      const typeIsIdCard = documentTypeIsIdCard(row);
       if (typeMayHoldAForm({ typeId: row.id, fallbackTypeId, typeIsIdCard })) return null;
       return typeIsIdCard ? "idCard" : "fallback";
     },
@@ -683,10 +686,20 @@ export function DocTypeEngine() {
 
       if (res.status === 400) {
         const body = (await res.json().catch(() => ({}))) as { code?: string; max?: number };
+        // ⚠️ **The identity-card refusal is reachable here and `refusalFor`
+        // does NOT make it unreachable.** (Slice #32.07.) This screen already
+        // refuses to offer an identity-card type in its picker — and that
+        // refusal is computed from the type list as this page read it, so a
+        // type renamed into an identity card in another tab while a run of
+        // twenty billed reads was in flight arrives at Save perfectly
+        // selectable. The server is the thing that decides; this branch is what
+        // says so instead of "the form could not be saved. Try again."
         setSaveError(
-          body.code === "too_many_fields"
-            ? t("save.tooMany", { max: body.max ?? MAX_TEMPLATE_FIELDS })
-            : t("save.failed"),
+          body.code === ID_CARD_FORM_CODE || body.code === ID_CARD_RENAME_CODE
+            ? t("save.idCardType")
+            : body.code === "too_many_fields"
+              ? t("save.tooMany", { max: body.max ?? MAX_TEMPLATE_FIELDS })
+              : t("save.failed"),
         );
         return;
       }
