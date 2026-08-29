@@ -92,6 +92,12 @@ const RUN_KEYS = [
   "stepInterpret",
   "costNote",
   "writesNote",
+  // ⚠️ Slice #32.05 — drawn only when the user pressed "continue without forms"
+  // on the stop screen. It sits beside `writesNote` because it is the same kind
+  // of sentence: what this run will and will not put in the archive. Not a cost
+  // line — the waiver spends LESS, because no discovery read is bought for a
+  // waived type — which is why it does not wear `COST_NOTE_CLASS`.
+  "waivedNote",
   "importButton",
   // ⚠️ Slice #32.04 — this was `chooseAnotherFolder`, and the key was renamed
   // rather than the control removed. On a finished run this button is the only

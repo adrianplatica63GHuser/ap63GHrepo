@@ -11,14 +11,42 @@
  * does not exist yet and that the run would have created without a form. So the
  * import stops here, names them, and sends the user to DocTypeEngine.
  *
- * ⚠️ **AN EXIT, NOT A PAUSE, AND THAT IS A DELIBERATE SIMPLIFICATION RATHER
- * THAN A SHORTCUT.** There is no "carry on anyway", no resume, and nothing
- * about this run is remembered. The whole preparation line — eight
- * preconditions, fifteen structure rules, six file rules, two copy rules and
- * four archive rules — costs nothing, so coming back and starting again once
- * the types have their forms is cheap. What it is NOT free of is the
- * classification, which has already been paid for and will be paid for again;
- * `nothingWritten` says so rather than implying the run cost nothing.
+ * ⚠️ **A FORK, NOT AN EXIT — AND THIS HEADER SAID THE OPPOSITE UNTIL #32.05.**
+ * It read: "AN EXIT, NOT A PAUSE… There is no 'carry on anyway', no resume, and
+ * nothing about this run is remembered." That promise is exactly what this
+ * slice withdraws, and it was made in five places — here, `type-form-gate.ts`,
+ * twice in `workflow-stages.ts`, and once more beside the `onLeave` prop in
+ * `import-wizard.tsx`, which an adversarial round found after the first four
+ * had moved. All five moved together, because a claim corrected in one file and
+ * left standing in the others is a claim nobody can believe again.
+ *
+ * There are now two ways off this screen, and they are two different journeys:
+ *
+ *  - **"Oprește importul"** — still the primary, still a reset, still nothing
+ *    written. The types get their forms in "Distilare Tipizate" and the import
+ *    is started again from the beginning. The whole preparation line — eight
+ *    preconditions, fifteen structure rules, six file rules, two copy rules and
+ *    four archive rules — costs nothing, so coming back is cheap. What it is
+ *    NOT free of is the classification, which has already been paid for and
+ *    will be paid for again; `nothingWritten` says so rather than implying the
+ *    run cost nothing.
+ *  - **"Continuă fără formulare"** — the secondary, and only where there IS a
+ *    verdict. The run carries on to the Evaluation screen with these types
+ *    exactly as they are: the documents are created, their scans uploaded and
+ *    linked, their properties and tags attached, and nothing is asked about a
+ *    form. No discovery read is bought for a waived type and no form-review
+ *    dialog opens for one.
+ *
+ * ⚠️ **AND THE OFFER IS DRAWN ONLY ON THE VERDICT BRANCH.** `verdict === null`
+ * covers three causes — `unreadable`, `session` and `unusable` — and every one
+ * of them means the archive's list of document types was never usably read.
+ * Nothing has been checked and nothing has been named, so there is no set of
+ * types for a user to waive, and a continue there would create documents on
+ * types nobody looked at. The button therefore lives INSIDE the verdict
+ * fragment, where `missing` is non-empty by construction, rather than in the
+ * shared button row at the foot of the panel where it would need a second guard
+ * a later edit could drop — the identical argument the Save control makes about
+ * itself two blocks above it.
  *
  * ⚠️ **THE FAILED READ IS A STATE OF ITS OWN, and it is the same distinction
  * the Pre-existing screen makes one stage earlier.** "This type has no form"
@@ -126,6 +154,20 @@ type Props = {
   attempt: number;
   /** End the run and go back to the beginning. Nothing to undo. */
   onLeave: () => void;
+  /**
+   * Carry the import on with these types exactly as they are. (Slice #32.05)
+   *
+   * The wizard raises the run's waiver and moves to `folder-report` — the
+   * Evaluation screen, which is where a clean verdict lands too. NOT to the
+   * Import screen and emphatically not to the run: continuing means "stop
+   * stopping", not "start writing", and the two screens in between are the
+   * property step (which is what attaches a document to anything at all) and
+   * the place the run's cost is stated before the click.
+   *
+   * Called only from the verdict branch — see the header. The panel does not
+   * guard it a second time, because it is not drawn anywhere else.
+   */
+  onContinueWithoutForms: () => void;
 };
 
 /**
@@ -145,6 +187,7 @@ export function ImportTypesBlockedStage({
   busyLabel,
   attempt,
   onLeave,
+  onContinueWithoutForms,
 }: Props) {
   const t = useTranslations("adminImport.typesBlocked");
   const locale = useLocale();
@@ -373,7 +416,28 @@ export function ImportTypesBlockedStage({
        */
       answersNote: {
         heading: t("whatNextTitle"),
-        lines: [t("whatNext"), t("nothingWritten")],
+        /**
+         * ⚠️ **BOTH ROUTES, SINCE #32.05.** These two lines used to say the
+         * only way on was to build the forms and start again — which is what
+         * the screen said then, and the page a user actually works from in File
+         * Explorer would otherwise be the one artefact that never learned about
+         * the second button. `whatNext` names both journeys; the middle line is
+         * what continuing does to the two kinds of type, which is the fact a
+         * reader holding this page away from the screen most needs. The
+         * BUTTON's own hint is deliberately not here: a page cannot be pressed,
+         * and a sentence about a control the reader is not looking at is how a
+         * take-away starts describing a screen instead of a folder.
+         *
+         * ⚠️ **AND `nothingWritten` CAME OFF THE PAGE, though it stays on the
+         * screen.** On screen it is read at the moment of the choice and is
+         * true; on a page opened in File Explorer three days later it asserts
+         * that this run wrote nothing to the archive, which is exactly false
+         * for the reader who pressed "Continuă fără formulare". Nothing is lost
+         * by dropping it: the sentence's other half — the classification is
+         * paid for again when the import is started afresh — is now inside
+         * `whatNext`, where it belongs to the route it is about.
+         */
+        lines: [t("whatNext"), t("continueWithoutForms.types")],
       },
       strings: {
         documentTitle: t("save.documentTitle"),
@@ -592,6 +656,52 @@ export function ImportTypesBlockedStage({
               {t("save.button")}
             </button>
             <p className="mt-1.5 text-xs text-fade dark:text-zinc-400">{t("save.hint")}</p>
+          </div>
+
+          {/* ⚠️ **THE SECOND WAY OFF THIS SCREEN, AND IT IS INSIDE THE VERDICT
+              FRAGMENT ON PURPOSE.** (Slice #32.05.) `verdict === null` means
+              the archive's list of document types was never usably read —
+              nothing checked, nothing named — so there is no set of types for
+              anybody to waive and a continue there would create documents on
+              types nobody looked at. Drawn here, `missing` is non-empty by
+              construction. Beside the buttons at the foot of the panel it would
+              need a second guard, and the day somebody drops that guard the
+              panel starts offering to import a folder over a catalogue it could
+              not read. The Save control two blocks up is placed for the same
+              reason and says so.
+
+              SECONDARY, and "Oprește importul" below stays the primary: the
+              request asked for the option, not for a new default.
+
+              `disabled={busy}` although `busy` is only ever true on the branch
+              this is not on — the invariant is "no control on this screen
+              starts anything while a fetch this screen does not own is in
+              flight", and an invariant held up by which branch renders what is
+              one refactor from being false. */}
+          <div className="mt-5 border-t border-crease pt-4 dark:border-zinc-800">
+            <button
+              type="button"
+              onClick={onContinueWithoutForms}
+              disabled={busy}
+              className={buttonClass({ variant: "secondary", size: "md" })}
+            >
+              {t("continueWithoutForms.button")}
+            </button>
+            <p className="mt-1.5 text-sm text-ink dark:text-zinc-200">
+              {t("continueWithoutForms.hint")}
+            </p>
+            {/* ⚠️ **THIS SENTENCE USED TO LIVE INSIDE `row.new`, AND MOVING IT
+                IS THE POINT RATHER THAN A TIDY-UP.** The row ended "Nu a fost
+                creat: importul s-a oprit înainte să scrie ceva…" — true while
+                this screen was a dead end and false the instant the button
+                above is pressed, because the run then creates exactly that row,
+                without a form, minutes later. A row is read BEFORE the choice,
+                so it must not describe one of the two outcomes as settled. What
+                continuing does to the two kinds of type belongs here, under the
+                press that does it. */}
+            <p className="mt-1.5 text-sm text-ink dark:text-zinc-200">
+              {t("continueWithoutForms.types")}
+            </p>
           </div>
         </>
       )}

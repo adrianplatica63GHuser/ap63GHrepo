@@ -44,6 +44,25 @@ export type SavedImportEntry = {
    * was contradicting the screen the user had just acknowledged.
    */
   preexisting?:     "linked" | "skipped";
+  /**
+   * How far the scan got, and what became of a Document with none of it.
+   *                                                            (Slice #32.05)
+   *
+   * ⚠️ **THE SAME ARGUMENT `preexisting` MAKES ONE FIELD UP, ABOUT THE OTHER
+   * DIRECTION.** These four facts are written only on rows that ended in an
+   * error, and without them a resumed report shows those rows as a bare
+   * "eroare" — the screen and the saved HTML page both say a page group landed
+   * three of its five pages, or that a scanless Document is sitting in the
+   * archive under this row's name, and the one artefact that survives a reload
+   * says neither. A week later the resumed view is the only one of the three
+   * anybody still has.
+   *
+   * All four optional, so a session saved before this slice still parses.
+   */
+  pagesUploaded?:   number;
+  pagesExpected?:   number;
+  emptyDocument?:   "removed" | "left";
+  cornerClaimLost?: boolean;
 };
 
 export type SavedImportSession = {

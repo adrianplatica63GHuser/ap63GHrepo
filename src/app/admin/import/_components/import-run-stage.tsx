@@ -87,6 +87,20 @@ type Props = {
   documentCount: number;
   /** At most this many documents will be read by the model — see the header. */
   interpretUpperBound: number;
+  /**
+   * The user pressed "continue without forms" on the stop screen, and these are
+   * the two numbers that press committed to.                    (Slice #32.05)
+   *
+   * `null` on every ordinary run. Both come off the gate's verdict, which the
+   * wizard is already holding — `missingForm.length`, and the sum of
+   * `documentCount` across it. This panel counts nothing.
+   *
+   * ⚠️ **It is NOT a cost line, so it does not wear `COST_NOTE_CLASS`.** The
+   * waiver spends LESS: no discovery read is bought for a waived type. What it
+   * is is a statement about what the archive will hold afterwards, which is the
+   * other thing this screen must not be vague about.
+   */
+  waived: { types: number; documents: number } | null;
   /** False when the walk produced nothing at all; the button has no subject. */
   canImport: boolean;
   onImport: () => void;
@@ -114,6 +128,7 @@ export function ImportRunStage({
   scanSummary,
   documentCount,
   interpretUpperBound,
+  waived,
   canImport,
   onImport,
   onChooseFolder,
@@ -169,6 +184,17 @@ export function ImportRunStage({
             </p>
           )}
           <p className="mt-1.5 text-sm text-ink dark:text-zinc-300">{t("writesNote")}</p>
+          {/* Beside `writesNote` because it is the same kind of sentence: what
+              this run will and will not put in the archive. Inside `!finished`
+              with it, too — once a run is over the result screen's own header
+              is what reports the formless types, and a forecast repeated over a
+              finished run is the failure the three intro states above exist to
+              stop. */}
+          {waived !== null && (
+            <p className="mt-1.5 text-sm text-ink dark:text-zinc-300">
+              {t("waivedNote", { types: waived.types, documents: waived.documents })}
+            </p>
+          )}
         </>
       )}
 

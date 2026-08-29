@@ -30,6 +30,9 @@ const ask = (over: Partial<Parameters<typeof shouldDiscoverType>[0]> = {}) =>
     typeHasForm: false,
     typeIsIdCard: false,
     claimedTypeIds: new Set<string>(),
+    // Slice #32.05 — the ordinary run. Every test below that does not say
+    // otherwise is a run nobody waived.
+    formsWaived: false,
     ...over,
   });
 
@@ -50,6 +53,44 @@ describe("whether the run spends a discovery read on a type", () => {
     expect(ask({ claimedTypeIds: claimed })).toBe(true);
     claimed.add("type-arenda");
     expect(ask({ claimedTypeIds: claimed })).toBe(false);
+  });
+
+  it("⚠️ buys nothing at all once the run's forms are waived", () => {
+    // Slice #32.05. The user pressed "continue without forms" on the stop
+    // screen, which is a decision about what the run SPENDS. It holds for every
+    // type the run meets afterwards, including the types the stop screen could
+    // not name — a `new` type has no id there, and `runAiInterpret` can invent
+    // one mid-run — which is exactly why the waiver is one boolean and not a
+    // set of ids.
+    expect(ask({ formsWaived: true })).toBe(false);
+    expect(ask({ formsWaived: true, typeHasForm: true })).toBe(false);
+    expect(ask({ formsWaived: true, typeId: "type-invented-mid-run" })).toBe(false);
+  });
+
+  it("⚠️ the waiver overrides every other input, and only in one direction", () => {
+    // Slice #32.05, and the mirror of the test above it: with the waiver on,
+    // the spending answer is NO over the whole input space, whatever the
+    // reporting answer is. A waiver that let one combination through would be a
+    // billed read the user has just declined to pay for, and the combination it
+    // would let through is the one nobody constructs by hand.
+    for (const typeId of ["type-arenda", FALLBACK, ""]) {
+      for (const typeHasForm of [true, false]) {
+        for (const fallbackTypeId of [FALLBACK, null]) {
+          for (const typeIsIdCard of [true, false]) {
+            expect(
+              shouldDiscoverType({
+                typeId,
+                fallbackTypeId,
+                typeHasForm,
+                typeIsIdCard,
+                claimedTypeIds: new Set<string>(),
+                formsWaived: true,
+              }),
+            ).toBe(false);
+          }
+        }
+      }
+    }
   });
 
   it("⚠️ refuses the fallback type outright", () => {
@@ -135,6 +176,26 @@ describe("whether the ROW says the type is waiting for a form", () => {
     ).toBe(false);
   });
 
+  it("⚠️ still SAYS the type is waiting for a form on a waived run", () => {
+    // The half of the split that must not move, and it belongs in THIS describe
+    // — the reporting one — because that is the question it answers.
+    // `typeAwaitsForm` is what the ROW reports, and a waived type is still a
+    // type with no form: the archive now holds documents on it, which is the
+    // honest thing to say, and the one thing a waiver must never do is silence
+    // it. If this ever goes false, the result screen starts reporting a fully
+    // landed import over documents whose values have nowhere to go. Note the
+    // shape of the guard: `typeAwaitsForm` takes NO `formsWaived`, so this test
+    // is a statement about the signature as much as about the answer.
+    expect(
+      typeAwaitsForm({
+        typeId: "type-arenda",
+        fallbackTypeId: FALLBACK,
+        typeHasForm: false,
+        typeIsIdCard: false,
+      }),
+    ).toBe(true);
+  });
+
   it("agrees with the spending rule everywhere the claim is empty", () => {
     // The invariant that keeps a screen from describing a decision the loop did
     // not make: with nothing claimed, the two answers are the same answer.
@@ -149,6 +210,7 @@ describe("whether the ROW says the type is waiting for a form", () => {
                 typeHasForm,
                 typeIsIdCard,
                 claimedTypeIds: new Set<string>(),
+                formsWaived: false,
               }),
             ).toBe(
               typeAwaitsForm({ typeId, fallbackTypeId, typeHasForm, typeIsIdCard }),

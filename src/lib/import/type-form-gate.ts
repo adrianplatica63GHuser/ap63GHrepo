@@ -16,6 +16,18 @@
  * this question between the two. If every type has a form the import carries on
  * exactly as before; if any does not, the run stops and names them.
  *
+ * ⚠️ **AND SINCE #32.05 THE STOP IS A FORK RATHER THAN AN EXIT.** The screen
+ * this gate raises now carries a second press beside "Oprește importul":
+ * continue with these types exactly as they are. Nothing in THIS file knows
+ * about it and nothing in this file should — `checkTypeForms`, `typesAreClean`,
+ * `catalogueIsUsable`, `noClassificationHappened` and `typeAwaitsForm` decide
+ * exactly what they decided before, because a waiver is a decision about a
+ * verdict and not a different verdict. What changed is who may act on the
+ * answer: `typesAreClean` still says this run has not PROVED every type has a
+ * form, and the user may now say "I know — go on anyway". The offer is drawn
+ * only where there IS a verdict; a failed or unusable catalogue read has named
+ * no types, so there is nothing to waive.
+ *
  * ⚠️ **WHAT THIS GATE DOES NOT PROMISE, SAID FIRST BECAUSE AN EARLIER DRAFT OF
  * THIS HEADER PROMISED IT.** It does NOT make "a document is created whose type
  * has no form" unreachable. It closes the routine cause - the classification's

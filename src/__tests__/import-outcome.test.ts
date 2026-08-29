@@ -1275,6 +1275,12 @@ describe("the result screen's copy", () => {
       "doneTypesNoFormWaiting",
       "doneTypesNoFormLocked",
       "doneTypesNoFormNothing",
+      // ⚠️ Slice #32.05 — the fifth, drawn ahead of the other four when the
+      // user pressed "continue without forms". It is here for the reason this
+      // list exists at all: the five have no id constant to walk, so a Romanian
+      // `few` arm dropped from the newest of them renders the raw key path on
+      // the one screen a business user reads.
+      "doneTypesNoFormWaived",
     ]) {
       const value = at(messages, `adminImport.wizard.importDialog.${key}`) as string;
       expect(typeof value).toBe("string");

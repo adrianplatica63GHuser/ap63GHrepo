@@ -171,6 +171,24 @@ export type DiscoverRunResult =
  * is NOT NULL and the loop resolves one before it creates the row — but the
  * value that reaches here is a string from a JSON response, and an empty one
  * would claim a queue slot no dialog could ever be opened for.
+ *
+ * ⚠️ **`formsWaived` IS THE SECOND TERM, AND IT BELONGS HERE RATHER THAN IN
+ * `typeAwaitsForm`.**                                          (Slice #32.05)
+ * The stop screen now offers a second press: carry on with these types exactly
+ * as they are. That press is a decision about what the run SPENDS, not a
+ * different verdict about the types — so it answers the spending question NO
+ * and leaves the reporting question answering YES. Both answers are honest on a
+ * waived run: no discovery read is bought, and every row still says its type is
+ * waiting for a form, because it is. Putting the waiver in `typeAwaitsForm`
+ * instead would silence the rows as well, and the result screen would report a
+ * fully landed import over documents whose types have nothing to put their
+ * values in — which is the exact overclaim `type-form-gate.ts` was written to
+ * stop.
+ *
+ * ⚠️ **REQUIRED RATHER THAN OPTIONAL.** A defaulted `formsWaived` is a call
+ * site that can forget it and go on buying reads the user has just declined to
+ * pay for, in silence. Both call sites pass the same value; the compiler is
+ * what keeps a third one honest.
  */
 export function shouldDiscoverType(input: {
   typeId: string;
@@ -181,8 +199,23 @@ export function shouldDiscoverType(input: {
   typeIsIdCard: boolean;
   /** The types this run has already claimed a discovery for. */
   claimedTypeIds: ReadonlySet<string>;
+  /**
+   * The user pressed "continue without forms" on the stop screen.
+   *                                                            (Slice #32.05)
+   *
+   * ONE boolean for the whole run, never a set of type ids: half the types the
+   * stop screen lists have no id to key on — `ClassifiedType.id` is null for
+   * every type the run would CREATE — and a third case has no id anywhere on
+   * that screen, the type `runAiInterpret` invents mid-run. One boolean answers
+   * all three.
+   */
+  formsWaived: boolean;
 }): boolean {
-  return typeAwaitsForm(input) && !input.claimedTypeIds.has(input.typeId);
+  return (
+    !input.formsWaived &&
+    typeAwaitsForm(input) &&
+    !input.claimedTypeIds.has(input.typeId)
+  );
 }
 
 /**
@@ -193,11 +226,12 @@ export function shouldDiscoverType(input: {
  * the point** — the same relationship `interpretSkipReason` and
  * `shouldInterpretEntry` already have in `ai-interpret-run.ts`. Two questions
  * are asked of one document: should the run spend a read on its type, and
- * should the row SAY the type has no form. They differ by exactly one term, the
- * per-run claim — the second, third and fortieth document of a new type all
- * report a type that is waiting, while only the first is read. Writing them as
- * two expressions is how a screen comes to describe a decision the loop did not
- * make.
+ * should the row SAY the type has no form. They differ by the per-run claim —
+ * the second, third and fortieth document of a new type all report a type that
+ * is waiting, while only the first is read — and, since #32.05, by the run's
+ * waiver, which stops the spending and changes none of the reporting. Writing
+ * them as two expressions is how a screen comes to describe a decision the loop
+ * did not make.
  */
 export function typeAwaitsForm(input: {
   typeId: string;

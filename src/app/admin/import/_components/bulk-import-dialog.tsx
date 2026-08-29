@@ -254,6 +254,51 @@ export type ImportResult = {
   /** principalObjectId for tagging */
   principalObjectId?: string;
   /**
+   * How many of this entry's pages actually landed, and how many there were.
+   *                                                            (Slice #32.05)
+   *
+   * ⚠️ **WRITTEN ONLY WHEN THEY DISAGREE**, so `pagesUploaded === undefined` is
+   * the ordinary run rather than "we did not count". A row that carries them is
+   * a Document in the archive whose scan is INCOMPLETE — some pages of a page
+   * group uploaded, the rest did not — and that is a state nothing on this
+   * screen could say before: the per-task catch marks the row an error and
+   * nothing says how far it got, so a user looking at the document afterwards
+   * finds three pages of a five-page deed with no record that two are missing.
+   *
+   * ⚠️ **A DOCUMENT WITH ZERO PAGES NEVER CARRIES THEM, because it is not left
+   * behind.** The task that created it deletes it — see the upload block — so
+   * "0 of 5" is not a state a row can be in.
+   */
+  pagesUploaded?: number;
+  /** The pages this entry holds. Written with `pagesUploaded`, never alone. */
+  pagesExpected?: number;
+  /**
+   * What happened to a Document whose first page never landed. (Slice #32.05)
+   *
+   * `"removed"` — the task deleted it, so the archive holds nothing for this
+   * file and the user can simply import the folder again once the error above
+   * is dealt with. `"left"` — the delete itself was refused, which is what a
+   * dead session does to it, and a Document with no scan at all is sitting in
+   * the archive under the title this row names.
+   *
+   * ⚠️ **BOTH ARE SAID OUT LOUD, and reporting only the failure would be the
+   * worse of the two choices.** "The document was removed" is the sentence that
+   * lets a user stop looking for it; without it the fix is invisible and the
+   * archive appears to have swallowed a file.
+   */
+  emptyDocument?: "removed" | "left";
+  /**
+   * The removed Document was this run's coordinate-file source. (Slice #32.05)
+   *
+   * `property_corner_source` hangs off `document.id` with `ON DELETE CASCADE`,
+   * so removing an empty Document releases the claim — while the Property it
+   * pointed at, written by the property step before the run, survives with its
+   * corners and no recorded source. That is the recoverable direction (a second
+   * import re-creates the document and re-claims) and it is not a state the
+   * user can guess at, so the row says it.
+   */
+  cornerClaimLost?: boolean;
+  /**
    * Slice #21.02.Import: true once AI interpretation has succeeded on this
    * entry. Written by the run itself since #26.09 rather than by a button, and
    * still the fact the saved session carries.
@@ -870,6 +915,32 @@ type Props = {
    * does.
    */
   preexistingByPath?: ReadonlyMap<string, PreexistingRow>;
+  /**
+   * The user pressed "continue without forms" on the stop screen.
+   *                                                            (Slice #32.05)
+   *
+   * ⚠️ **IT SUPPRESSES THE DISCOVERY READ AND NOTHING ELSE.** A waived run
+   * still creates the documents, uploads and links their scans, attaches their
+   * properties and tags, and still runs the per-document AI read — the request
+   * was "I just want to see the scan uploaded and linked to the document object
+   * and I don't care about what fields are filled in", which is permission
+   * rather than an instruction to spend less. What it declines is the
+   * per-TYPE work: no `discoverForType` call for a type that is waiting for a
+   * form, and therefore no proposal in the follow-up queue and no form-review
+   * dialog at the end of the run. A user walked through a form-approval dialog
+   * per waived type has not continued without forms; they have done the same
+   * job in a worse place.
+   *
+   * ⚠️ **AND IT DOES NOT SILENCE `typeAwaitsForm`.** Every row whose type is
+   * waiting still says so, and `summary.typesWithoutForm` still counts them —
+   * both true, and both the honest thing to report about an archive that now
+   * holds documents on formless types. Only the result header changes, to a
+   * variant that does not offer to review fields nobody read.
+   *
+   * Required rather than optional, for `shouldDiscoverType`'s own reason: a
+   * default is a call site that can forget.
+   */
+  formsWaived: boolean;
   /**
    * The coordinate files whose corners actually LANDED on a Property, and which
    * one.   (Slice #23.06.Import, per-folder since #26.07.)
@@ -1489,6 +1560,59 @@ async function uploadPage(documentId: string, file: File, pageNumber: number): P
   }
 }
 
+/**
+ * Remove a Document whose first page never landed.              (Slice #32.05)
+ *
+ * ⚠️ **THE DEFECT THIS CLOSES: "Document objects created but without the
+ * scanned image uploaded" (Adrian, from his own UAT).** The Document is created
+ * at step 3 and its pages are uploaded at step 4, and four things in between
+ * can throw — `claimCornerSource` on a conflict, `handle.getFile()` when the
+ * file has moved or the folder permission lapsed, `uploadPage` on any non-OK
+ * response and on the `session-expired` sentinel, and the unmount that breaks
+ * the page loop. The per-task `catch` marks the ROW as an error and nothing
+ * removed the Document, so the archive kept a record nobody can ever see the
+ * scan of, and no screen in the system says it is empty.
+ *
+ * ⚠️ **IT SWALLOWS EVERY THROW AND REPORTS EVERY REFUSAL, and an adversarial
+ * round is why the two are not the same thing.** It is called from a `catch`
+ * that is about to re-throw the real failure, so an error raised here would
+ * replace the reason the import failed with the reason the tidy-up failed —
+ * the less useful of the two every time. But the first draft ignored the
+ * RESPONSE as well, and that hid the commonest case of all: `uploadPage` throws
+ * `session-expired` precisely because the POST redirected to sign-in, and the
+ * DELETE one line later redirects too. `fetch` resolves, nothing throws, the
+ * document stays — and the fix reported success over a run that had left an
+ * orphan behind on every file in the folder. A 403, a 404 and a 500 read the
+ * same way. So the answer comes back as a boolean and the row says which of the
+ * two happened.
+ *
+ * ⚠️ **IT BURNS A DOC CODE, and that is accepted rather than overlooked.**
+ * `DELETE /api/documents/[id]` retires the code the Document held; it is never
+ * reused. A folder whose handles have all gone stale therefore creates and
+ * deletes N documents and spends N codes. The alternative is N records nobody
+ * can see a scan of, which is worse in the direction that matters: a code is a
+ * number, and an invisible document is a lie about the archive.
+ *
+ * ⚠️ **AND IT IS ONLY EVER CALLED FOR A DOCUMENT THIS TASK CREATED SECONDS
+ * AGO, WITH NO PAGES.** That is what makes a DELETE safe here and nowhere else
+ * in this file: `DELETE /api/documents/[id]` takes the pages, the versions, the
+ * junctions and the `principal_object` row with it, and it releases the
+ * `property_corner_source` claim by cascade — which is right, because that
+ * claim points at a document that is about to stop existing, and the next run
+ * must be able to make it again.
+ */
+async function discardEmptyDocument(documentId: string): Promise<boolean> {
+  try {
+    const res = await fetch(`/api/documents/${documentId}`, { method: "DELETE" });
+    // `!res.redirected` as well as `res.ok`: a middleware redirect to /sign-in
+    // answers 200 with an HTML page, which `res.ok` alone reads as success.
+    return res.ok && !res.redirected;
+  } catch {
+    // See the header: the caller has a better error than this one.
+    return false;
+  }
+}
+
 async function addTag(principalObjectId: string, tag: string): Promise<void> {
   await fetch(`/api/metadata/${principalObjectId}/tags`, {
     method: "POST",
@@ -1536,6 +1660,7 @@ export function BulkImportDialog({
   scanResults,
   propertyIdsByPath,
   preexistingByPath,
+  formsWaived,
   cornerSourceByPath,
   properties,
   onFirstDocumentCreated,
@@ -2290,6 +2415,28 @@ export function BulkImportDialog({
     // so a StrictMode re-mount re-announces for its own first document rather
     // than staying silent because a discarded run had already spoken.
     let announcedFirstDocument = false;
+    /**
+     * Tell the wizard this run has put a Document in the archive. (#32.05)
+     *
+     * ⚠️ **ONE FUNCTION, FOUR CALL SITES, AND IT IS IDEMPOTENT BY THE FLAG
+     * ABOVE.** It is called from every place a Document is known to have
+     * survived: after the pages landed; from the catch when a partial page
+     * group is kept; from the catch when the tidy-up DELETE was refused; and
+     * from the unmount path, where the same refusal is possible and there is
+     * nobody left on screen to tell. The thing it feeds is the Cancel
+     * confirmation's account of what this run would leave behind, so a missed
+     * call is a user consenting to something they were not told, and a spurious
+     * call is a warning about records that do not exist. Neither is free; four
+     * explicit calls are how both are avoided, and a third adversarial round is
+     * why the fourth is there.
+     *
+     * ⚠️ Announced through a ref so answering it cannot re-run this effect.
+     */
+    const announceFirstDocument = (): void => {
+      if (announcedFirstDocument) return;
+      announcedFirstDocument = true;
+      firstDocumentRef.current?.();
+    };
     let fallbackDocTypeId: string;
     /**
      * Every document type this run knows about — read once, appended to by
@@ -2517,14 +2664,6 @@ export function BulkImportDialog({
           // every reader of this field wants.
           if (mounted) updateResult(entry.path, { documentTypeId: resolvedTypeId });
 
-          // Slice #26.03 — the run has now written something. Announced through
-          // a ref so answering it cannot re-run this effect, and guarded by a
-          // local flag so it fires exactly once however many documents follow.
-          if (!announcedFirstDocument) {
-            announcedFirstDocument = true;
-            firstDocumentRef.current?.();
-          }
-
           // 3.5 Claim the coordinate-source link  (Slice #23.06.Import)
           //
           // If THIS entry is the coordinate file whose corners the property
@@ -2548,30 +2687,187 @@ export function BulkImportDialog({
           //   a Property whose corners came from a file that belongs somewhere
           //   else, silently. Fail loudly, name the winner, let Adrian decide.
           const cornerOwner = cornerSourceByPath?.get(entry.path);
-          if (cornerOwner !== undefined) {
-            const claim = await claimCornerSource(docId, cornerOwner, "session-expired");
-            if (claim.kind === "conflict") {
-              throw new Error(
-                t("cornerSourceConflict", {
-                  code: claim.link?.propertyCode ?? "?",
-                }),
-              );
+          /**
+           * Did THIS task's claim actually land?                 (Slice #32.05)
+           *
+           * ⚠️ **NOT `cornerOwner !== undefined`, and a second adversarial
+           * round is why.** `cornerOwner` says only that this entry is a
+           * coordinate file the property step read; the claim below can still
+           * throw — on a conflict, on a dead session, on any non-2xx — and a
+           * throw means no row of this run's was ever written. Reporting
+           * "legătura s-a șters odată cu documentul" for a claim that was never
+           * made would send the user to re-import a folder to restore a link
+           * that never existed.
+           */
+          let cornerClaimed = false;
+
+          /**
+           * 4. Upload file(s) as pages
+           *
+           * ⚠️ **THE COUNT IS KEPT NOW, AND THE EMPTY DOCUMENT IS TAKEN BACK.**
+           *                                                    (Slice #32.05)
+           * The loop used to track nothing but `i`, which it spent as the page
+           * number — so both of this step's failure modes were silent. A throw
+           * left the Document in the archive with no scan, or with part of one,
+           * and the per-task `catch` below recorded only "error" and a message.
+           * An unmount broke the loop half way and the task carried on to the
+           * tags and settled the row `done` over a document missing pages.
+           *
+           * ⚠️ **ZERO PAGES IS A DELETE; ONE OR MORE IS A SENTENCE.** The line
+           * between them is not arbitrary. A Document with no page is a record
+           * nobody can ever see the scan of and that no screen in the system
+           * reports as empty — the archive is strictly better off without it,
+           * and the file is still sitting in the user's folder to be imported
+           * again. A Document with SOME of its pages is a different thing: it
+           * holds real scans, it may already carry a corner-source claim and
+           * property links, and deleting it would throw away work over a
+           * failure the user can act on. So it stays, and the row and the saved
+           * report say how far it got.
+           */
+          const pagesExpected =
+            entry.kind === "page-group" ? (entry as FSPageGroupEntry).handles.length : 1;
+          let pagesUploaded = 0;
+          try {
+            // ⚠️ **STEP 3.5 IS INSIDE THIS BLOCK, and a second adversarial
+            // round moved it here.** `claimCornerSource` throws three ways — a
+            // conflict, the `session-expired` sentinel, and any non-2xx — and
+            // every one of them lands on a Document that was created two lines
+            // ago and has no page. Left above the `try`, those three throws went
+            // straight past the tidy-up to the per-task catch, so the commonest
+            // coordinate-file failure produced exactly the orphan this slice
+            // exists to stop, and `discardEmptyDocument`'s own header claimed
+            // otherwise.
+            if (cornerOwner !== undefined) {
+              const claim = await claimCornerSource(docId, cornerOwner, "session-expired");
+              if (claim.kind === "conflict") {
+                throw new Error(
+                  t("cornerSourceConflict", {
+                    code: claim.link?.propertyCode ?? "?",
+                  }),
+                );
+              }
+              cornerClaimed = true;
             }
+
+            if (entry.kind === "page-group") {
+              const pg = entry as FSPageGroupEntry;
+              for (let i = 0; i < pg.handles.length; i++) {
+                if (!mounted) break;
+                const file = await pg.handles[i].getFile();
+                await uploadPage(docId, file, i + 1);
+                pagesUploaded += 1;
+              }
+            } else {
+              const fe = entry as FSFileEntry;
+              const file = await fe.handle.getFile();
+              await uploadPage(docId, file, 1);
+              pagesUploaded += 1;
+            }
+          } catch (err) {
+            /**
+             * ⚠️ **THE COUNT IS RECORDED HERE, IN THE `catch`, AND AN
+             * ADVERSARIAL ROUND IS WHY.** The first draft recorded it after the
+             * `try` — where it could never fire. Every route out of the block
+             * with a short count is either this throw, which used to rethrow
+             * without writing anything, or the `!mounted` break below, and the
+             * first draft's surviving test then guarded dead code. The whole
+             * defect Adrian reported — a page group holding three of its five
+             * pages — arrives down THIS path.
+             *
+             * ⚠️ **AWAITED BEFORE THE RETHROW.** A fire-and-forget delete on a
+             * dialog that is closing is a request nothing keeps alive, and the
+             * orphan it was meant to remove is exactly the orphan this fix
+             * exists for. `discardEmptyDocument` never throws, so this cannot
+             * replace the failure the catch below is about to report.
+             */
+            if (pagesUploaded === 0) {
+              const removed = await discardEmptyDocument(docId);
+              // ⚠️ **A REFUSED DELETE IS A DOCUMENT THIS RUN LEFT BEHIND, and
+              // the wizard has to be told.** A second adversarial round found
+              // the hole the announcement's move opened: both branches of this
+              // catch re-throw, so on the two paths that KEEP a Document —
+              // `"left"`, and a partial page group — `documentsCreated` stayed
+              // false and the Cancel dialog told the user this run had left the
+              // archive exactly as it found it, on the same screen whose row
+              // says "delete the document from the archive".
+              if (!removed) announceFirstDocument();
+              if (mounted) {
+                updateResult(entry.path, {
+                  emptyDocument: removed ? "removed" : "left",
+                  // ⚠️ **THE ID, so the sentence telling the user to delete it
+                  // names something they can open.** Written on an ERROR row,
+                  // which nothing else in this file treats as imported: the
+                  // row's own link is gated on `status === "done"`, the summary
+                  // skips error rows outright, and the two `refill` maps are
+                  // gated on `typeFormMissing`, which an error row never
+                  // carries. The saved report picks it up as this row's
+                  // `documentUrl`, which is the point. The partial-page branch
+                  // below writes it for the same reason and with the same
+                  // safety.
+                  ...(removed ? {} : { docId }),
+                  // Exactly when a real claim went with the delete: the claim
+                  // was made by this task AND the document really was removed.
+                  // See `cornerClaimed` for why `cornerOwner` alone is wrong.
+                  ...(cornerClaimed && removed ? { cornerClaimLost: true } : {}),
+                });
+              }
+            } else {
+              // Some pages landed, so a real Document with real scans is in the
+              // archive whatever happens to this row. Same reason as above.
+              announceFirstDocument();
+              if (mounted) updateResult(entry.path, { pagesUploaded, pagesExpected, docId });
+            }
+            throw err;
+          }
+          if (!mounted) {
+            /**
+             * The `!mounted` break — an unmount between the create and the last
+             * page, and the only way here.
+             *
+             * ⚠️ **IT RETURNS NOW RATHER THAN FALLING THROUGH, and a review
+             * round found what falling through cost.** The task went on to the
+             * property links, the tags and `runAiInterpret` — a BILLED call —
+             * on a dialog that was unmounting, and settled the row `done` over
+             * a document missing pages that nobody would ever see the row for.
+             * Every other await point in this loop returns on `!mounted`; this
+             * one was the exception, and it was the exception by omission.
+             */
+            // ⚠️ **THE BOOLEAN IS HONOURED HERE TOO, and a third adversarial
+            // round found it thrown away.** `discardEmptyDocument` returns
+            // whether the delete actually happened precisely because it can be
+            // refused — a dead session redirects the DELETE exactly as it
+            // redirected the upload — and a refusal here leaves the same
+            // scanless Document the catch branch above reports. Nothing on
+            // screen can say so (the dialog is unmounting), but the WIZARD
+            // outlives it, and its Cancel confirmation is read afterwards: an
+            // unannounced orphan is a user consenting to "this run left the
+            // archive as it found it" over a record it did not.
+            // One expression rather than two branches, so this really is the
+            // fourth CALL and not a fourth-and-fifth: a Document is left behind
+            // either because it kept its pages, or because the tidy-up delete
+            // was refused.
+            const left =
+              pagesUploaded === 0 ? !(await discardEmptyDocument(docId)) : true;
+            if (left) announceFirstDocument();
+            return;
           }
 
-          // 4. Upload file(s) as pages
-          if (entry.kind === "page-group") {
-            const pg = entry as FSPageGroupEntry;
-            for (let i = 0; i < pg.handles.length; i++) {
-              if (!mounted) break;
-              const file = await pg.handles[i].getFile();
-              await uploadPage(docId, file, i + 1);
-            }
-          } else {
-            const fe = entry as FSFileEntry;
-            const file = await fe.handle.getFile();
-            await uploadPage(docId, file, 1);
-          }
+          // Slice #26.03 — the run has now written something.
+          //
+          // ⚠️ **CALLED WHEREVER A DOCUMENT SURVIVES, and #32.05 is why it is a
+          // function rather than four lines under `createDocument`.** It stood
+          // there, which was the safe direction while nothing ever removed a
+          // Document: the Cancel confirmation warned about records that might
+          // not exist yet. It is the wrong direction now — a run whose only
+          // document is discarded because its first page failed left
+          // `documentsCreated` true for ever, so the Cancel dialog warned about
+          // an archive this run had left exactly as it found it and
+          // `setRunCompleted` suppressed the Import button. Moving it below the
+          // upload alone opened the mirror hole, which a second adversarial
+          // round found: the two catch branches that KEEP a Document re-throw,
+          // so they never reached this line either. So it is called from four
+          // places and is idempotent by the flag it closes over.
+          announceFirstDocument();
 
           // 5. Link the document to its folder's Property — or Properties.
           //
@@ -2776,6 +3072,21 @@ export function BulkImportDialog({
                 typeHasForm,
                 typeIsIdCard,
                 claimedTypeIds: discoverClaimedRef.current,
+                // ⚠️ **Slice #32.05 — and it is passed to THIS and not to
+                // `typeAwaitsForm` two dozen lines above.** `awaitsForm` is
+                // what the ROW says, and a waived type is still a type waiting
+                // for a form; this is what the run SPENDS, and a waived type
+                // buys no read. The two questions differ by exactly this term,
+                // which is why `shouldDiscoverType` is defined in terms of the
+                // other rather than beside it.
+                //
+                // ⚠️ **`discoverClaimedRef` is NOT pre-seeded with the waived
+                // types either.** That set means "this run has already bought a
+                // read for this type", and a waived type has not — seeding it
+                // would make the claim a lie and would silently survive into
+                // `handleRetryInterpret`, where the user pressing a button IS
+                // asking for the read.
+                formsWaived,
               })
             ) {
               discoverClaimedRef.current.add(finalTypeId);
@@ -2984,6 +3295,11 @@ export function BulkImportDialog({
     // is a stable useCallback reference; the per-entry provenance is read
     // through provenanceRef so answering the gate does not restart an import
     // that is already running.
+    // `formsWaived` since #32.05, and it belongs on this list for the same
+    // reason: the wizard raises the waiver on the stop screen, three phases
+    // before this dialog is mounted, and cannot change it while a run is on
+    // screen — so the value this effect closes over is the value the whole run
+    // has.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gatePassed]);
 
@@ -3048,6 +3364,14 @@ export function BulkImportDialog({
         scanDescription:  sr?.description,
         confidence:       sr?.confidence,
         aiProcessed:      r.aiProcessed,
+        // Slice #32.05 — carried for the reason `preexisting` above is: the
+        // resumed view is the only artefact of a run that survives a reload,
+        // and without these an errored row loses the four sentences the screen
+        // and the saved page both carry. See `SavedImportEntry`.
+        pagesUploaded:    r.pagesUploaded,
+        pagesExpected:    r.pagesExpected,
+        emptyDocument:    r.emptyDocument,
+        cornerClaimLost:  r.cornerClaimLost,
       };
     });
     const session: SavedImportSession = {
@@ -4257,6 +4581,14 @@ export function BulkImportDialog({
             typeHasForm: docTypeFormRef.current.get(finalTypeId) === true,
             typeIsIdCard,
             claimedTypeIds: discoverClaimedRef.current,
+            // ⚠️ **THE SAME VALUE AT BOTH CALL SITES, and passing `false` here
+            // would undo the waiver one button at a time.** (Slice #32.05.) The
+            // retry is a press, so it is tempting to read it as the user asking
+            // for the read after all — but the press is "read this DOCUMENT
+            // again", not "propose a form for its type", and a waived run that
+            // spent a discovery on the first row somebody retried would have
+            // opened the very dialog the waiver declined.
+            formsWaived,
           })
         ) {
           discoverClaimedRef.current.add(finalTypeId);
@@ -4502,7 +4834,10 @@ export function BulkImportDialog({
     // together with two more follow-ups of the same kind; that one is a
     // `useCallback` over no-dep callbacks and is likewise stable for the
     // dialog's life.
-    [absorbTypeList, raiseSessionExpired, scanResults, t, updateResult],
+    // `formsWaived` since #32.05: a prop, and a stable one for this dialog's
+    // life — the wizard cannot change it while a run is on screen — so listing
+    // it costs no re-renders and keeps the lint honest about the read below.
+    [absorbTypeList, formsWaived, raiseSessionExpired, scanResults, t, updateResult],
   );
 
   // ---------------------------------------------------------------------------
@@ -4902,6 +5237,18 @@ export function BulkImportDialog({
             : []),
         ...(r.aiStatus === "failed" ? [t("interpretFailed")] : []),
         ...(r.aiPartialWrite === true ? [t("interpretPartial")] : []),
+        // Slice #32.05 — in the report as well as on the row, and in the same
+        // position, because the two artefacts must not disagree about what
+        // happened to a file. The saved page is the one a user works from away
+        // from the screen, and "three of five pages" is precisely the fact that
+        // is worth nothing at the moment it happens and everything a week later.
+        ...(r.pagesUploaded !== undefined
+          ? [t("pagesPartial", { uploaded: r.pagesUploaded, total: r.pagesExpected ?? 0 })]
+          : []),
+        ...(r.emptyDocument === undefined
+          ? []
+          : [r.emptyDocument === "removed" ? t("emptyDocumentRemoved") : t("emptyDocumentLeft")]),
+        ...(r.cornerClaimLost === true ? [t("cornerClaimLost")] : []),
         // Slice #27.06 — the REASON a re-read failed, which on the screen lives
         // on the note's tooltip and would otherwise not survive into the one
         // artefact the user keeps. `failureDetail`'s own rule: a returned value
@@ -5131,13 +5478,34 @@ export function BulkImportDialog({
                       open or a retry is in flight, and a sentence that offers
                       what the screen does not is how a user learns to distrust
                       it. */}
-                  {sessionExpired
-                    ? t("doneTypesNoFormLocked", { count: summary.typesWithoutForm })
-                    : discoverBacklog === 0
-                      ? t("doneTypesNoFormNothing", { count: summary.typesWithoutForm })
-                      : canReviewTypes
-                        ? t("doneTypesNoForm", { count: summary.typesWithoutForm })
-                        : t("doneTypesNoFormWaiting", { count: summary.typesWithoutForm })}
+                  {/* ⚠️ **FIVE BRANCHES SINCE #32.05, AND THE NEW ONE GOES
+                      FIRST — AHEAD OF THE SESSION.** On a waived run the other
+                      four are all worded for a discovery that RAN.
+                      `doneTypesNoFormNothing` — "Aici nu sunt câmpuri de
+                      verificat" — is the one that would draw, because
+                      `discoverBacklog` is 0 by construction on a waived run
+                      (neither call site of `shouldDiscoverType` can queue a
+                      step), and it is wrong in a way a user cannot detect: it
+                      reports a read that found nothing over a read nobody
+                      bought.
+
+                      Ahead of `sessionExpired` because that sentence's job is
+                      to explain why the fields that were found cannot be SAVED
+                      now, and on a waived run no fields were found by anybody.
+                      "Sign in again" over a run with nothing to review is an
+                      instruction with no subject; the expired session is
+                      reported by its own banner, which is where it belongs. The
+                      remaining three are unreachable on a waived run — all
+                      three need a backlog — and are untouched. */}
+                  {formsWaived
+                    ? t("doneTypesNoFormWaived", { count: summary.typesWithoutForm })
+                    : sessionExpired
+                      ? t("doneTypesNoFormLocked", { count: summary.typesWithoutForm })
+                      : discoverBacklog === 0
+                        ? t("doneTypesNoFormNothing", { count: summary.typesWithoutForm })
+                        : canReviewTypes
+                          ? t("doneTypesNoForm", { count: summary.typesWithoutForm })
+                          : t("doneTypesNoFormWaiting", { count: summary.typesWithoutForm })}
                 </span>
                 {reviewTypesError !== null && (
                   <span className="text-amber-700 dark:text-amber-400">{reviewTypesError}</span>
@@ -5838,6 +6206,11 @@ function ResultRow({
     aiParties,
     aiStatus,
     aiErrorDetail,
+    // Slice #32.05 — present together, and only when they disagree.
+    pagesUploaded,
+    pagesExpected,
+    emptyDocument,
+    cornerClaimLost,
     aiPartiesPending,
     aiPartialWrite,
     preexisting,
@@ -6031,6 +6404,82 @@ function ResultRow({
                 </button>
               )}
             </>
+          )}
+
+          {/* ⚠️ **THE SCAN IS INCOMPLETE, AND NOTHING SAID SO BEFORE #32.05.**
+              A page group whose fourth page failed to upload leaves a Document
+              in the archive holding three — real scans, a real document, and
+              two pages nobody will ever know are missing unless somebody counts
+              them against the folder. Amber by this file's own vocabulary: the
+              document exists and something is outstanding.
+
+              `pagesUploaded !== undefined` rather than an arithmetic test, so a
+              row that never counted (every row before this slice, and every
+              ordinary row after it) draws nothing. The pair is written
+              together and only when the two numbers disagree, so this is the
+              whole condition. */}
+          {pagesUploaded !== undefined && (
+            <span className="text-xs font-medium text-amber-700 dark:text-amber-400">
+              {t("pagesPartial", { uploaded: pagesUploaded, total: pagesExpected ?? 0 })}
+            </span>
+          )}
+
+          {/* ⚠️ **TWO SENTENCES, AND THE GOOD NEWS IS THE ONE THAT MATTERS
+              MORE.** (Slice #32.05.) "The document was removed" is what lets a
+              user stop looking for a record that is not there; without it the
+              fix is invisible and the archive looks as though it swallowed a
+              file. "It could not be removed" is amber because a decision is
+              owed — that is what amber means everywhere else in this file — and
+              it is the case a dead session produces, where the DELETE is
+              refused exactly as the upload was. */}
+          {emptyDocument !== undefined && (
+            <span
+              className={
+                emptyDocument === "removed"
+                  ? "text-xs font-medium text-fade dark:text-zinc-400"
+                  : "text-xs font-medium text-amber-700 dark:text-amber-400"
+              }
+            >
+              {emptyDocument === "removed"
+                ? t("emptyDocumentRemoved")
+                : t("emptyDocumentLeft")}
+            </span>
+          )}
+          {/* ⚠️ **ITS OWN ANCHOR, NOT THE ROW'S.** The row's link is gated on
+              `status === "done" && docId` and means "this file was imported;
+              here it is". This one means the opposite — "this run left a
+              record here that should not exist; go and delete it" — and the
+              sentence above it is worth nothing without something to open. A
+              second round found the first draft telling a user to delete a
+              document it gave them no way to find, and a third found the same
+              omission on the partial-page row — whose sentence says "verificați
+              documentul", which is no more answerable without a link. Those two
+              branches are the only places an error row carries a `docId`. */}
+          {(emptyDocument === "left" || pagesUploaded !== undefined) &&
+            docId !== undefined && (
+            <a
+              href={`/documents/${docId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs font-medium text-amber-700 underline hover:no-underline dark:text-amber-400"
+            >
+              {/* ⚠️ **THE LABEL FOLLOWS THE BRANCH, and a fourth round found
+                  it not doing so.** "Deschide documentul rămas" is the ORPHAN's
+                  wording; over a page group that landed three of five pages it
+                  names a document that is not an orphan, and the resumed view —
+                  which draws the same two rows from the same two keys — said
+                  "Deschide →" for it. The row and the resumed view, one
+                  pairing. The saved report is deliberately not a third: it
+                  passes ONE `openLabel` for the whole table by contract
+                  (`ResultReportRow` has no per-row label), and changing that
+                  shipped shape for a cosmetic gain is not worth a slice. */}
+              {emptyDocument === "left" ? t("emptyDocumentOpen") : t("viewLink")}
+            </a>
+          )}
+          {cornerClaimLost === true && (
+            <span className="text-xs font-medium text-amber-700 dark:text-amber-400">
+              {t("cornerClaimLost")}
+            </span>
           )}
           {aiProcessed && (
             <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">

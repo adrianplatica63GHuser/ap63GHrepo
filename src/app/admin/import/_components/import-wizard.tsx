@@ -838,6 +838,29 @@ export function ImportWizard() {
    * block for the same reason.
    */
   const [typeGateAttempts, setTypeGateAttempts] = useState(0);
+  /**
+   * Did the user press "continue without forms" on the stop screen?
+   *                                                            (Slice #32.05)
+   *
+   * ⚠️ **ONE BOOLEAN FOR THE RUN, NEVER A SET OF TYPE IDS, and the reason is
+   * that half the blocking types have no id to key on.** `ClassifiedType.id` is
+   * `null` for every `new` type — the run mints that row minutes later, under an
+   * id nothing on the stop screen can know — and a `new` type is the commonest
+   * thing on that list, because it is the case the gate blocks by construction.
+   * A waiver keyed on ids would cover the stored formless types and miss exactly
+   * the ones the user was looking at. It would also miss the third case:
+   * `runAiInterpret` may re-type a document mid-run onto a type it creates on
+   * the spot, which `type-form-gate.ts` records as the gate's own blind spot,
+   * and that type is the same situation the user has just waived. One boolean
+   * answers all three.
+   *
+   * ⚠️ **CLEARED WHEREVER `typeLookup` IS CLEARED, and nowhere else.** A waiver
+   * is an answer about a verdict, so it is exactly as stale as the verdict is: a
+   * new walk drops both, and so does the reset behind "Oprește importul". Both
+   * sites are two lines below the `typeLookup` line they belong to, so a reader
+   * adding a third reset finds all three together.
+   */
+  const [typeFormsWaived, setTypeFormsWaived] = useState(false);
 
   /**
    * Slice #26.03 — the Cancel's two pieces of memory.
@@ -1280,6 +1303,9 @@ export function ImportWizard() {
       // report about files the user has since been told to go and change.
       setTypeLookup(null);
       setTypeGateAttempts(0);
+      // Slice #32.05 — and the answer the user gave to that verdict. A waiver
+      // is a decision about types this walk has not classified yet.
+      setTypeFormsWaived(false);
 
       /**
        * ⚠️ **`entries`, `observations` and `metadata` are published TOGETHER, at
@@ -2042,6 +2068,9 @@ export function ImportWizard() {
     setTypeLookup(null);
     setTypeGateBusy(false);
     setTypeGateAttempts(0);
+    // Slice #32.05 — "Oprește importul" is this function, so the press that
+    // leaves the stop screen is also the press that forgets the waiver.
+    setTypeFormsWaived(false);
     setResolvedRun(null);
     setPropertiesTouched(false);
     setTouchedProperties([]);
@@ -2350,6 +2379,62 @@ export function ImportWizard() {
     // pressed, and the table in `workflow-stages.ts` never gates one.
     if (typesAreClean(lookup)) setPhase("folder-report");
   }, [runTypeGate, typeGateBusy, entriesToImport, scanResults]);
+
+  /**
+   * "Continuă fără formulare."                                 (Slice #32.05)
+   *
+   * The second way off the stop screen, and it is the shortest handler in this
+   * file on purpose: raise the run's waiver, and land on `folder-report`.
+   *
+   * ⚠️ **`setPhase`, NOT `settle`, and `handleTypeGateRetry` above states the
+   * rule this follows: this is a button the user pressed, and the table in
+   * `workflow-stages.ts` never gates one.** `phaseAfterClassification` is not
+   * given a third input either — its only caller is the end of `startScan`, it
+   * answers what the SCAN decided, and the scan still decides `types-blocked`.
+   * `SELF_ADVANCING_TRANSITIONS` gains no row.
+   *
+   * ⚠️ **AND THE DESTINATION IS `folder-report`, NOT `ready` AND CERTAINLY NOT
+   * THE RUN.** The shortest reading of "click a button to continue" is a button
+   * that starts the import; that button would skip the property step, which is
+   * what attaches a document to anything at all, and the Import screen, which
+   * is the one place the run's cost is stated before the click. Continuing here
+   * means "stop stopping", not "start writing" — so it lands exactly where a
+   * clean verdict lands, and every screen after it happens as it always does.
+   *
+   * ⚠️ **THE VERDICT GUARD IS THE WIZARD'S, and it is not a second copy of the
+   * panel's.** The panel draws this control only inside its verdict fragment;
+   * this refuses to raise a waiver over a lookup that carries no verdict at
+   * all. They are the same invariant asserted by the two components that each
+   * own half of it — the screen owns what is drawn, the wizard owns what the
+   * run believes — and the under-claiming direction here is that nothing
+   * happens on a screen that has nothing to waive.
+   */
+  const handleTypeGateContinue = useCallback(() => {
+    if (typeGateBusy) return;
+    if (typeLookup === null || !typeLookup.ok) return;
+    setTypeFormsWaived(true);
+    setPhase("folder-report");
+  }, [typeGateBusy, typeLookup]);
+
+  /**
+   * The two numbers the waiver committed to, or null on an ordinary run.
+   *                                                            (Slice #32.05)
+   *
+   * Counted ONCE, here, off the verdict already in state, and handed to both
+   * screens that repeat it — the Evaluation screen, where the run is described,
+   * and the Import screen, where it is priced. Two panels each counting for
+   * themselves is two places for the arithmetic to drift, and the numbers are
+   * `missingForm.length` and the sum of `documentCount` across it, which the
+   * gate has already worked out.
+   */
+  const waivedForms = useMemo(() => {
+    if (!typeFormsWaived || typeLookup === null || !typeLookup.ok) return null;
+    const types = typeLookup.verdict.missingForm;
+    return {
+      types: types.length,
+      documents: types.reduce((n, type) => n + type.documentCount, 0),
+    };
+  }, [typeFormsWaived, typeLookup]);
 
   // Derived at render time rather than copied into state when the walk ends:
   // one copy cannot drift from the list the user is looking at. Cheap — it is
@@ -2873,6 +2958,24 @@ export function ImportWizard() {
               tTypesBlocked(
                 typeLookup?.ok === false ? `failed.${typeLookup.reason}Intro` : "title",
               ),
+              // ⚠️ **AND, ON A VERDICT, THE SECOND WAY ON.** (Slice #32.05.)
+              // `title` is "Importul s-a oprit: unele tipuri de documente nu au
+              // încă formular", which was the whole truth while this screen was
+              // a dead end. It is now half of it, and this region is the only
+              // channel a non-sighted user gets before Tab reaches the button —
+              // so the announcement names the button rather than leaving the
+              // reader to discover that stopping is not the only option. Only
+              // on the verdict branch, which is the only branch that draws it.
+              //
+              // ⚠️ **A SENTENCE OF ITS OWN, NOT THE BUTTON'S LABEL.** The parts
+              // of this region are joined with a space, so a bare label lands
+              // as "…nu au încă formular Continuă fără formulare" — one run-on
+              // a screen reader gives no pause in. `announce` is the only
+              // string in this group the panel does not draw, and it is here
+              // rather than in the panel for the reason the whole region
+              // exists: a `role="status"` inserted together with its text is
+              // not announced.
+              typeLookup?.ok === true ? tTypesBlocked("continueWithoutForms.announce") : "",
               // ⚠️ **THE ATTEMPT NUMBER IS WHAT MAKES A REPEATED FAILURE
               // AUDIBLE.** A retry that comes back with the same reason renders
               // the same sentence, and a live region with no text change
@@ -3281,6 +3384,9 @@ export function ImportWizard() {
             // holds in its entirety is not reported as an empty one.
             alreadyInSystem={alreadyInSystem}
             droppedCount={report.droppedCount}
+            // Slice #32.05 — null on every run that did not come through the
+            // stop screen, which is almost all of them.
+            waived={waivedForms}
             // Slice #29.08 — Continuă goes to the Import stage now. The
             // classification it used to start has already run, one screen back,
             // and the gate between the two is what let this screen be reached
@@ -3349,17 +3455,23 @@ export function ImportWizard() {
           // dialog is the one thing in the wizard that accounts for what a run
           // leaves behind — but its question is "Renunțați la import?" and its
           // safe answer is "Nu, continui importul", offered over a screen whose
-          // heading says the import has stopped and whose four paragraphs
-          // explain that it cannot continue. A confirmation for a decision the
-          // system has already taken is a button that leads back to a dead end.
+          // heading says the import has stopped. ⚠️ Since #32.05 that screen
+          // offers a real "carry on" of its own, one button along — so a
+          // confirmation here would put a second, differently-worded "continue"
+          // in front of the press that STOPS, and the two would mean different
+          // things.
           //
           // Nothing needs accounting for: this phase is reachable only from
           // `scanning`, which is reachable only from the Pre-existing screen's
           // Continuă, and every write in the run happens after `ready` — so no
           // document and no Property can exist. The one thing that HAS been
-          // spent is the classification, and `nothingWritten` on the panel says
-          // so directly above this button.
+          // spent is the classification, and `leaveHint` on the panel says so —
+          // in the stop route's own sentence since #32.05, because the other
+          // route does not pay for it again.
           onLeave={handleCancelConfirmed}
+          // Slice #32.05 — the second press. It raises the run's waiver and
+          // lands on `folder-report`; see `handleTypeGateContinue`.
+          onContinueWithoutForms={handleTypeGateContinue}
         />
       )}
 
@@ -3407,6 +3519,9 @@ export function ImportWizard() {
           }
           documentCount={entriesToImport.length}
           interpretUpperBound={interpretUpperBound}
+          // Slice #32.05 — the same two numbers the Evaluation screen drew,
+          // counted once in `waivedForms` rather than twice.
+          waived={waivedForms}
           // The same test the toolbar button carried: a walk that produced
           // nothing has no subject for this button. Note it is `entries` and
           // not `entriesToImport` — a folder the archive already holds in its
@@ -3632,6 +3747,13 @@ export function ImportWizard() {
           // `preexistingDecisionsByPath` for why the exceptions are not carried
           // here with a flag.
           preexistingByPath={preexistingDecisions}
+          // Slice #32.05 — the user pressed "continue without forms" on the
+          // stop screen. The run then buys NO discovery read for a type that is
+          // waiting for one, and opens no form-review dialog at the end. It
+          // still reports those types as waiting, on every row and in the
+          // header: the waiver is a decision about spending, not a different
+          // verdict. See `shouldDiscoverType`.
+          formsWaived={typeFormsWaived}
           cornerSourceByPath={
             // Slice #23.06.Import, per-folder since #26.07 — which coordinate
             // file's corners actually landed on which Property, so the loop can

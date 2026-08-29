@@ -83,6 +83,20 @@ const REQUIRED_KEYS = [
   "retry",
   "leave",
   "leaveHint",
+  // ── Slice #32.05 ────────────────────────────────────────────────────────
+  // The second way off this screen. Three literals, for the reason every other
+  // key on this list is a literal: the source scrape below cannot see a
+  // computed key, so a `t(`continueWithoutForms.${part}`)` would report all
+  // three as declared-but-unused and take this suite red over a panel that is
+  // right.
+  //
+  // `types` is the sentence that used to live INSIDE `row.new` — "Nu a fost
+  // creat…" — and had to move the moment the row stopped being the end of the
+  // story. A row is read BEFORE the choice; it must not describe one of the two
+  // outcomes as settled.
+  "continueWithoutForms.button",
+  "continueWithoutForms.hint",
+  "continueWithoutForms.types",
   // Drawn from the second attempt onwards, so a retry that fails the same way
   // still changes the screen and the wizard's live region. See `typeGateAttempts`.
   "attempt",
@@ -182,12 +196,24 @@ describe("the stop screen's copy", () => {
     // costless — and it is not, because #29.08 moved the billed classification
     // in front of this screen. A stop screen that let the user infer otherwise
     // would be the slice's own reorder, unstated.
-    const ro = String(at(loadCopy("ro-RO.json"), "nothingWritten"));
-    expect(ro).toMatch(/plăt/i);
-    expect(ro).toMatch(/din nou/i);
-    const en = String(at(loadCopy("en-GB.json"), "nothingWritten"));
-    expect(en).toMatch(/paid/i);
-    expect(en).toMatch(/again/i);
+    //
+    // ⚠️ **IT LIVES IN `leaveHint` SINCE #32.05, NOT IN `nothingWritten`, and
+    // an adversarial round moved it.** The claim is about ONE of the two routes
+    // now — restarting pays again; continuing does not — and `nothingWritten`
+    // is drawn on both branches of the screen, directly under the button that
+    // takes the other route. `leaveHint` sits under "Oprește importul" and is
+    // that route's own sentence, which is where a price belongs.
+    for (const [file, paid, again] of [
+      ["ro-RO.json", /plăt/i, /din nou/i],
+      ["en-GB.json", /paid/i, /again/i],
+    ] as const) {
+      const hint = String(at(loadCopy(file), "leaveHint"));
+      expect({ file, paid: paid.test(hint) }).toEqual({ file, paid: true });
+      expect({ file, again: again.test(hint) }).toEqual({ file, again: true });
+      // …and `nothingWritten` no longer prices a route it is not about.
+      const written = String(at(loadCopy(file), "nothingWritten"));
+      expect({ file, prices: paid.test(written) }).toEqual({ file, prices: false });
+    }
   });
 
   it("⚠️ does not offer a second attempt for the failure a second attempt cannot fix", () => {
@@ -275,12 +301,20 @@ describe("the stop screen's copy", () => {
     expect(intros).toEqual(reasons.map((r) => `${r}Intro`).sort());
   });
 
-  it("⚠️ says, inside the plural, that the new type was NOT created", () => {
-    // The question this slice answers on the screen itself. "The import would
-    // have created it now, with no form, for one document in this folder" stops
-    // there, and a reader is left wondering whether the type is now sitting in
-    // Reference Data. It is not, and it never will be from this screen — the
-    // run stops at the gate before anything is written.
+  it("⚠️ does not decide, inside the row, what happens to a type that does not exist yet", () => {
+    // ⚠️ **THIS TEST USED TO ASSERT THE OPPOSITE, AND #32.05 IS WHY.** Until
+    // this slice `row.new` ended "Nu a fost creat: importul s-a oprit înainte
+    // să scrie ceva, așa că nu îl veți găsi în Date de Referință." — true while
+    // this screen was a dead end, and false the instant "Continuă fără
+    // formulare" is pressed, because the run then creates exactly that row,
+    // without a form, minutes later. The row is read BEFORE the choice, so it
+    // cannot describe one of the two outcomes as settled; what continuing does
+    // to the two kinds of type is said under the button that does it.
+    //
+    // The clause is pinned ABSENT rather than simply not pinned present: it is
+    // a sentence somebody would reasonably restore, and restoring it would ship
+    // a screen that tells a business user a type was not created on the same
+    // press that creates it.
     //
     // Inside each branch of the plural, not appended after it: Romanian cannot
     // agree from outside the block, and the whole-sentence test above pins that
@@ -309,12 +343,63 @@ describe("the stop screen's copy", () => {
     };
     const ro = String(at(loadCopy("ro-RO.json"), "row.new"));
     for (const branch of branchesOf(ro, ["one {", "few {", "other {"])) {
-      expect(branch).toMatch(/Nu a fost creat/);
+      expect(branch).not.toMatch(/Nu a fost creat/);
     }
     const en = String(at(loadCopy("en-GB.json"), "row.new"));
     for (const branch of branchesOf(en, ["one {", "other {"])) {
-      expect(branch).toMatch(/was not created/i);
+      expect(branch).not.toMatch(/was not created/i);
     }
+    // …and the answer really is somewhere, rather than merely gone: the
+    // sentence under the continue button names both kinds of type and says
+    // where a created one will be found.
+    for (const [file, found] of [
+      ["ro-RO.json", "Date de Referință"],
+      ["en-GB.json", "Reference Data"],
+    ] as const) {
+      expect(String(at(loadCopy(file), "continueWithoutForms.types"))).toContain(found);
+    }
+  });
+
+  it("⚠️ offers the continue only where there is a verdict to waive", () => {
+    // Slice #32.05, and the constraint the whole change hangs on. `verdict ===
+    // null` covers three causes — `unreadable`, `session` and `unusable` — and
+    // every one of them means the archive's list of document types was never
+    // usably read. Nothing was checked and nothing was named, so there is no
+    // set of types for anybody to waive, and a continue there would create
+    // documents on types nobody looked at.
+    //
+    // The instrument is containment in the verdict fragment, exactly as the
+    // take-away test below argues: the fragment closes with `</>`, so the
+    // continue must sit before that close and the two controls drawn on BOTH
+    // branches — "Oprește importul" and `nothingWritten` — must sit after it.
+    // Ordering alone would be satisfied by a block moved four lines down, out
+    // of the fragment and onto the failed-read screen.
+    const src = fs.readFileSync(path.join(process.cwd(), COMPONENT), "utf8");
+    const cont = src.indexOf('{t("continueWithoutForms.button")}');
+    const save = src.indexOf('{t("save.button")}');
+    const nothingWritten = src.indexOf('{t("nothingWritten")}');
+    const leave = src.indexOf('{t("leave")}');
+    // An anchor that is not there is `-1`, and `-1` is smaller than
+    // everything — the trap the take-away test records. Prove all four first.
+    expect(Math.min(cont, save, nothingWritten, leave)).toBeGreaterThan(0);
+    expect(cont).toBeGreaterThan(save);
+    expect(cont).toBeLessThan(nothingWritten);
+    expect(src.slice(save, cont)).not.toContain("</>");
+    expect(src.slice(cont, nothingWritten)).toContain("</>");
+    // …and it is not quietly guarded a second time in the shared button row
+    // instead, which is the arrangement this placement exists to avoid.
+    expect(cont).toBeLessThan(leave);
+  });
+
+  it("⚠️ hands the press to the wizard rather than deciding here", () => {
+    // The panel holds no rule — the split every stage panel in this folder is
+    // built on. It calls `onContinueWithoutForms`; the wizard raises the run's
+    // waiver and moves the phase. A panel that reached for `setPhase` or built
+    // its own waiver would be a second copy of a decision `import-wizard.tsx`
+    // owns.
+    const src = fs.readFileSync(path.join(process.cwd(), COMPONENT), "utf8");
+    expect(src).toContain("onContinueWithoutForms: () => void;");
+    expect(src).toContain("onClick={onContinueWithoutForms}");
   });
 
   it("⚠️ draws the take-away only where there is a list to take away", () => {

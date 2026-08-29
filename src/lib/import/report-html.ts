@@ -680,10 +680,13 @@ export function buildRulesPageHtml(input: RulesPageInput): string {
  * finished URLs and refuses to build any, so there is no second place that can
  * get it wrong.
  *
- * ⚠️ **A row whose URL is null still prints.** A file that errored has no
- * Document to open, and dropping it would make the saved copy the LESS complete
- * artefact — the same failure `buildReportHtml` records about truncation. The
- * row prints its name, its path and what went wrong, without a link.
+ * ⚠️ **A row whose URL is null still prints.** Dropping it would make the
+ * saved copy the LESS complete artefact — the same failure `buildReportHtml`
+ * records about truncation. The row prints its name, its path and what went
+ * wrong, without a link. ⚠️ Since #32.05 an ERRORED row can carry a URL: a
+ * Document whose tidy-up delete was refused, and a page group that landed some
+ * of its pages, are both real records the row is telling the user to go and
+ * look at. "Errored" and "has nothing to open" stopped being the same fact.
  */
 export type ResultReportRow = {
   /** How the Document is titled, or the file's own name where none was made. */

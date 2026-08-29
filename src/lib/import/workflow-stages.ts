@@ -155,6 +155,11 @@ export function stagesOnLine(line: WorkflowLineId): WorkflowStage[] {
  *                     put a document's information into (or the list of types
  *                     could not be read at all), so the import stops here and
  *                     sends the user to DocTypeEngine            (Slice #29.08)
+ *                     ⚠️ Since #32.05 this is a FORK, not only an exit: where
+ *                     the gate produced a verdict, a second press carries the
+ *                     run on to `folder-report` with those types exactly as
+ *                     they are. The three failure causes have no verdict and no
+ *                     second press — see `TypeFormLookup`
  *  folder-report    → every check settled AND every type this folder holds has
  *                     a form; the Evaluation screen reports what the
  *                     classification found and awaits Continuă
@@ -594,7 +599,9 @@ export function phaseAfterClassification(input: {
  *    classification moved from the Evaluation screen to the Pre-existing one,
  *    and Evaluation's own Continuă now leads to the Import stage.
  *  - `scanning → types-blocked`. The classification found a document type with
- *    no form, so the import STOPS; see the table's last entry.
+ *    no form, so the import STOPS; see the table's last entry. ⚠️ Since #32.05
+ *    the user may press on from there to `folder-report` — but that is a press,
+ *    and a press is never gated, so it is not a row here either.
  *
  * ⚠️ **KEYED ON `from` AS WELL AS `to`, and one pair is why.** `to` alone
  * looks sufficient — every destination in the table is distinct — but
@@ -639,9 +646,11 @@ export const SELF_ADVANCING_TRANSITIONS: readonly {
   // ⚠️ **Its destination is `folder-report` since #29.08, not `ready`** — the
   // Evaluation screen stands AFTER the classification now rather than before
   // it. And that is the only destination listed: the scan's other exit,
-  // `types-blocked`, is a stop, and a pause in front of a screen the user
-  // cannot leave by pressing on is a second button for a halt they are already
-  // standing in.
+  // `types-blocked`, is a stop, and a pause in front of a stop is a second
+  // button for a halt the user is already standing in. ⚠️ Since #32.05 that
+  // screen has a press of its own — "continue without forms", which lands on
+  // `folder-report` — but a press is never gated, so it is still not a row
+  // here.
   { from: "scanning", to: "folder-report", rest: "scanning" },
 ];
 

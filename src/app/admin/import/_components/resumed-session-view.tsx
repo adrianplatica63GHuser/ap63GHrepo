@@ -145,11 +145,69 @@ function StatusBadge({
   }
   if (entry.status === "error") {
     return (
-      <span
-        className="text-xs text-red-600 dark:text-red-400"
-        title={entry.errorMsg}
-      >
-        {tD("errorShort")}
+      <span className="inline-flex flex-wrap items-center gap-1.5">
+        <span className="text-xs text-red-600 dark:text-red-400" title={entry.errorMsg}>
+          {tD("errorShort")}
+        </span>
+        {/* ⚠️ **WHAT THE RUN LEFT BEHIND, and this is the artefact that has to
+            carry it.** (Slice #32.05.) The screen and the saved HTML page both
+            say a page group landed three of its five pages, or that a scanless
+            Document is in the archive under this row's name; the resumed view
+            is the only one of the three that survives a reload, and it showed a
+            bare "eroare". Same keys as the live row, so the three cannot word it
+            differently. The `"left"` row carries a `docId` on purpose — it is
+            the one error row that names something worth opening — and it is
+            drawn as its own link rather than through the `done` branch above,
+            which means "this file was imported". */}
+        {entry.pagesUploaded !== undefined && (
+          <span className="text-xs font-medium text-amber-700 dark:text-amber-400">
+            {tD("pagesPartial", {
+              uploaded: entry.pagesUploaded,
+              total: entry.pagesExpected ?? 0,
+            })}
+          </span>
+        )}
+        {entry.emptyDocument !== undefined && (
+          <span
+            className={
+              entry.emptyDocument === "removed"
+                ? "text-xs font-medium text-fade dark:text-zinc-400"
+                : "text-xs font-medium text-amber-700 dark:text-amber-400"
+            }
+          >
+            {entry.emptyDocument === "removed"
+              ? tD("emptyDocumentRemoved")
+              : tD("emptyDocumentLeft")}
+          </span>
+        )}
+        {/* ⚠️ **AND THE `gone` CASE IS ANSWERED RATHER THAN LEFT BLANK, which
+            the `done` branch above already does.** A user who did what
+            `emptyDocumentLeft` told them — delete the scanless document — comes
+            back to a row still instructing them to delete it, and the first
+            draft simply removed the link, leaving an instruction with nothing
+            to act on. `resumedRowGone` is the same sentence the imported rows
+            use for the same fact. */}
+        {(entry.emptyDocument === "left" || entry.pagesUploaded !== undefined) &&
+          entry.docId !== undefined &&
+          (gone ? (
+            <span className="text-xs text-amber-700 dark:text-amber-400">
+              {t("resumedRowGone")}
+            </span>
+          ) : (
+            <a
+              href={`/documents/${entry.docId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs font-medium text-amber-700 underline hover:no-underline dark:text-amber-400"
+            >
+              {entry.emptyDocument === "left" ? tD("emptyDocumentOpen") : tD("viewLink")}
+            </a>
+          ))}
+        {entry.cornerClaimLost === true && (
+          <span className="text-xs font-medium text-amber-700 dark:text-amber-400">
+            {tD("cornerClaimLost")}
+          </span>
+        )}
       </span>
     );
   }

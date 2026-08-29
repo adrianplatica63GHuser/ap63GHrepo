@@ -83,6 +83,20 @@ type Props = {
    */
   alreadyInSystem: { total: number; linked: number };
   droppedCount: number;
+  /**
+   * The user pressed "continue without forms" on the stop screen, and these are
+   * the two numbers that press committed to.                    (Slice #32.05)
+   *
+   * `null` on every ordinary run — which is every run that reached this screen
+   * without passing through `types-blocked`, and the great majority.
+   *
+   * ⚠️ **BOTH NUMBERS COME OFF THE VERDICT THE WIZARD IS ALREADY HOLDING**, not
+   * from a second pass over the entries here: `types` is `missingForm.length`
+   * and `documents` the sum of `documentCount` across it. This panel counts
+   * nothing and decides nothing — the split every stage panel in this folder is
+   * built on.
+   */
+  waived: { types: number; documents: number } | null;
   onContinue: () => void;
   /** Re-walk the SAME folder — no picker dialog. See the button's comment. */
   onRecheck: () => void;
@@ -108,6 +122,7 @@ export function FolderForecast({
   uploadBytes,
   alreadyInSystem,
   droppedCount,
+  waived,
   onContinue,
   onRecheck,
 }: Props) {
@@ -315,6 +330,24 @@ export function FolderForecast({
       {coordinateCandidates.length > 0 && (
         <p className="mt-2 text-sm text-fade dark:text-zinc-400">
           {t("coordinateNote", { count: coordinateCandidates.length })}
+        </p>
+      )}
+
+      {/* ⚠️ **THE WAIVER IS REPEATED WHERE THE MONEY IS STATED AND WHERE THE
+          WRITES ARE STATED.** (Slice #32.05.) A user who pressed "continue
+          without forms" two screens back is now looking at a screen that
+          reports a folder as though nothing had happened, and the one thing
+          that HAS happened is a decision about what the archive will end up
+          holding. It is said here, and again on the Import screen beside
+          `writesNote`, because those are the two places the run is described
+          before the press that writes.
+
+          Not in the cost treatment: this decision SAVES money — no discovery
+          read is bought for a waived type — so a warning-coloured line about
+          spending would be the wrong sentence in the right place. */}
+      {waived !== null && (
+        <p className="mt-2 text-sm text-ink dark:text-zinc-200">
+          {t("waivedNote", { types: waived.types, documents: waived.documents })}
         </p>
       )}
 
