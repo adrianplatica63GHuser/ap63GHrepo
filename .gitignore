@@ -77,3 +77,6 @@ public/pdf.worker.min.js
 # builder and republished by the runner, so an untracked scratch file here is
 # served at /_help-entries-tmp.json in Ciprian.
 /public/_help-entries-tmp.json
+
+# Local diagnostic output — scripts/Check-ImportHealth.ps1
+import-health.txt
