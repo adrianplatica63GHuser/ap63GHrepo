@@ -290,7 +290,8 @@ CREATE TABLE public.document (
     surveyor_id uuid,
     updated_by text,
     ai_interpreted_at timestamp with time zone,
-    custom_fields jsonb
+    custom_fields jsonb,
+    import_title text
 );
 
 
@@ -564,6 +565,7 @@ CREATE TABLE public.lookup_document_type (
 --
 
 COMMENT ON COLUMN public.lookup_document_type.origin IS 'How this type came to exist: MANUAL = added in Reference Data, IMPORT = created by ensureDocType during an import scan. Write-once at creation; the value-lists PUT strips it. Everything else about a type''s status is derived - see src/lib/documents/status.ts.';
+COMMENT ON COLUMN public.document.import_title IS 'The title the import derived from the folder entry (titleForEntry). The Pre-existing stage keys on import_title ?? title, so the AI rewriting document.title can no longer make a re-imported folder look new. Null for anything the import did not create. Slice #32.06.';
 
 
 --

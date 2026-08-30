@@ -863,7 +863,40 @@ export const document = pgTable("document", {
 
   // Short identifying label — the "Porecla" equivalent for a document.
   // e.g. "Vânzare Popescu 2021", "Titlu Teren Nord"
+  //
+  // ⚠️ **THE IMPORT WRITES THIS AND THE AI READ OVERWRITES IT.** After the
+  // pages are uploaded, `resolveImportedTitle` lets the model's reading of the
+  // printed heading win for every document whose own name does not both name
+  // the KIND and distinguish WHICH one — measured at 206 of 304 readable
+  // documents over CLINCENI.3. Anything that needs the title the FOLDER gave
+  // this document wants `importTitle` below, not this.
   title: text("title"),
+
+  // The title the IMPORT derived from the folder entry — `titleForEntry` in
+  // src/lib/import/preexisting-check.ts, and nothing else. Slice #32.06.
+  //
+  // ⚠️ **THIS EXISTS SO THE PRE-EXISTING STAGE CAN KEY ON A VALUE THE AI DOES
+  // NOT REWRITE.** `preexistingKeyOf` folds the title in; the folder side keys
+  // on the file's own name and the archive side used to key on `title`, so a
+  // retitled document made a re-imported folder look new and every file in it
+  // was imported a second time. Measured on the 32.05 UAT of 2026-08-30: three
+  // duplicate pairs out of eight documents, and the rewritten title was not
+  // even stable between the two reads of the same file (DOC01511 "FISA
+  // CORPULUI DE PROPRIETATE" vs DOC01519 "FISA CORPULUI DE PROPRIETATE TARLA
+  // 46, PARCELA 222/13/1"), which is why normalising `title` cannot work.
+  //
+  // ⚠️ **NULLABLE, AND THE READER MUST FALL BACK.** The archive side reads
+  // `importTitle ?? title`. Null means "the import did not create this
+  // document, or could not recover what it called it" — a hand-added row, a
+  // pre-wizard import, a multi-page document whose title came from a folder
+  // name that is stored nowhere. Every one of those keys exactly as it did
+  // before #32.06. Dropping the fallback would make every such document
+  // unmatchable overnight.
+  //
+  // NOT versioned: it describes where the document came from, not its content.
+  // `DocumentSnapshot` in src/lib/documents/queries.ts omits it, as it omits
+  // `aiInterpretedAt`, for the same reason.
+  importTitle: text("import_title"),
 
   // ── Common fields (UI label varies by type) ────────────────────────────
   // "Nr. titlu / nr. certificat / nr. contract / nr. hotărâre / …"
