@@ -5,9 +5,11 @@
 --   1. Adds `document.import_title` - the title the IMPORT derived from the
 --      folder entry, which is `titleForEntry(entry)` in
 --      src/lib/import/preexisting-check.ts and nothing else.
---   2. Backfills it for single-page documents from their page's file name,
---      which is the same value for that shape, and ONLY for that shape.
---   3. Reports what it filled and what it deliberately left null.
+--   2. Reports how much of the archive is keyed on which column.
+--
+--   It does NOT backfill. A draft did, two adversarial reviews broke it, and
+--   the long note below the next section records exactly how - it is the most
+--   useful thing in this file.
 --
 -- WHY A COLUMN AND NOT A CHEAPER FIX
 --   `preexistingKeyOf` folds the TITLE into the key. The folder side keys on
@@ -44,41 +46,134 @@
 -- ⚠️ **NULLABLE, AND THE FALLBACK IS THE WHOLE COMPATIBILITY STORY.** The
 -- archive side reads `import_title ?? title`. Every document this migration
 -- leaves null therefore keys exactly as it does today - a document added by
--- hand, one imported before the wizard, and every multi-page document this
--- backfill declines to touch. Nothing gets worse for any of them; the column
--- only ever ADDS a document that could not be recognised before.
+-- hand, one imported before the wizard, and every multi-page document. On the
+-- day this ships that is the WHOLE archive, because there is no backfill - see
+-- below. Nothing about any of them changes.
 --
--- ⚠️ **THE BACKFILL IS THE ONE PART OF THIS FILE THAT NEEDS A HUMAN'S EYE, and
--- it is deliberately the narrowest thing that is worth doing.** For a document
--- imported from a plain file, `titleForEntry` returns `entry.name` - the file
--- name WITH its extension - and `bulk-import-dialog.tsx` uploads that same
--- string as `document_page.file_name`. So for a document holding exactly one
--- page, the page's file name IS the value this column wants, recoverable
--- exactly. Nothing else is: a page group's title came from
--- `folderNameToTitleHint(folder)` and the folder name is not stored anywhere.
+-- ⚠️ **THERE IS NO BACKFILL, AND THE FIRST DRAFT OF THIS FILE HAD ONE.** It
+-- filled `import_title` from `document_page.file_name` for every single-page
+-- document, on the reasoning that `titleForEntry` returns exactly that for a
+-- plain file, so the value was recoverable for the commonest shape in the
+-- archive. Its header claimed "it cannot make a match WRONG that was
+-- previously right." Two independent adversarial reviews falsified that
+-- sentence by running the real `matchArchiveDocuments`, and they are right:
 --
--- ⚠️ **AND A ONE-PAGE PAGE GROUP IS THE TRAP THE FILTER BELOW EXISTS FOR.**
--- A page group's members are numerically-named images (`isPageGroupMember` in
--- src/lib/files/file-kinds.ts: an image kind AND a purely numeric basename), so
--- a page group that arrived with one page holds `530.jpg` while its title came
--- from the FOLDER's name. Backfilling that one from its file name would write
--- `530.jpg` into the key and the folder side would compute the folder's title
--- hint - a MISS, which is the defect this slice is fixing, reintroduced by its
--- own migration. The WHERE clause below excludes that shape. `isPageGroupMember`
--- is the authority; this is a deliberately WIDER SQL approximation of it, and
--- wider is the safe direction here because every name it wrongly excludes is
--- simply left null and keeps today's behaviour.
+--   THE BACKFILLED KEY CARRIES NO INDEPENDENT ENTROPY. The key is
+--   `[fold(title), [[fold(name), size]]]`. Setting `import_title` to the page's
+--   own file name makes the first half a COPY of the second, so the key
+--   degenerates to (file name, byte size) - which is DUP-02's shape, the one
+--   this migration's own header rejects three paragraphs above. It arrives
+--   there by the back door for the whole single-page population.
 --
--- ⚠️ **WHAT THE BACKFILL CHANGES FOR DOCUMENTS THE WIZARD DID NOT CREATE.** It
--- fills any single-page document, including one added by hand years ago, and
--- that makes some rows matchable that were not. It cannot make a match WRONG
--- that was previously right: the key it produces is the file name plus the page
--- name and byte size, which is exactly what the folder side computes for a file
--- of that name. What it does is widen exposure to the `link` collision
--- `preexisting-check.ts` already documents - two genuinely different scans off
--- one machine sharing a name and a byte count. That collision is not new, it is
--- listed as this stage's known expensive failure, and its escape - rename the
--- file and the system treats it as new - is unchanged and still on the screen.
+--   IT COSTS THE FILE WHEREVER THE STORED TITLE WAS DOING REAL WORK, and that
+--   is a hand-added document, whose title is a human's own discriminator and
+--   was the thing keeping it out of the key's way. The measured case:
+--
+--     archive  DOC00100 'Contract Popescu 2019', one page scan001.pdf 240000 B
+--              DOC00200 'Contract Ionescu 2020', one page scan001.pdf 240000 B
+--     folder   48-50/scan001.pdf, 240000 B  - a third, unrelated scan
+--
+--     before the backfill:  no match, the file is imported.  Correct.
+--     after  the backfill:  'already in the system - DOC00100'. The user's file
+--                           is never imported, DOC00100 is linked to their
+--                           Property instead, and per the header of
+--                           preexisting-check.ts nothing in the archive
+--                           afterwards records that it happened.
+--
+--   The same mechanism re-points a match that was already CORRECT: two
+--   documents keying identically are settled by oldest-`createdAt`, so a 2020
+--   hand-added row wins over the user's own 2024 import of the same file name.
+--
+-- So the column ships empty and only the import fills it, from this release on.
+-- Every existing row keys on `title`, exactly as it does today: this migration
+-- cannot change the answer for a single document already in the archive, which
+-- is the only property worth having on a stage where over-claiming loses a file.
+--
+-- WHAT THIS SLICE COSTS, SAID PLAINLY
+--   Removing the backfill does NOT remove the entropy argument, and the second
+--   adversarial round is what established that. The same collapse arrives
+--   through the WRITE path, prospectively, for every document imported from
+--   this release on: `import_title` is `titleForEntry(entry)`, which for a
+--   plain file is its own name, so the key's title half is a copy of its files
+--   half and the key is effectively (file name, byte size).
+--
+--   ⚠️ **AND THE SPLIT IS BY ENTRY KIND, NOT BY WHAT THE AI DID** - the third
+--   adversarial round corrected this paragraph, which had it on the wrong axis
+--   entirely. `titleForEntry` returns a FILE's own name and a PAGE GROUP's
+--   folder hint, so:
+--
+--     PLAIN FILES collapse. The title half is a copy of the page's file_name.
+--     345 of the 448 documents document-title.ts measured, 77%.
+--
+--     PAGE GROUPS DO NOT, in either direction. Their title half is the folder
+--     hint and their files half is `530.jpg, 531.jpg`; the two are unrelated,
+--     so no collapse in either bucket. 103 of 448, 23%.
+--
+--   ⚠️ **AND THE 48 CVC-NAMED DOCUMENTS ARE THE COUNTER-EXAMPLE, NOT THE
+--   PAYOFF** - an earlier draft of this paragraph cited them as the place the
+--   slice pays, and the fourth adversarial round showed that is backwards. 39
+--   of them are page groups named `CVC Costache S 2008`, `CVC Hascu 2005` and
+--   the like: names that BOTH name the kind and distinguish which one, which is
+--   exactly what #29.12's `namesThisDocument` protects. `resolveImportedTitle`
+--   rejects the model's reading for them, `title` stays the folder hint, and
+--   they keyed on their own distinct hints before this slice and after it.
+--   Nothing changes for them at all.
+--
+--   The page groups that DO gain are the ones whose folder name fails that
+--   test - measured by scripts/testing/measure-title-loss.ts over CLINCENI.3,
+--   30 of the 58 readable page groups, 51.7%. Those lose their title to the
+--   model today and key on their hint after this slice.
+--
+--   For a plain file whose title the AI leaves alone, nothing changes - title
+--   already WAS the file name. For a plain file it rewrites, the stored title
+--   was the printed heading and is now the file name, so:
+--
+--     archive  DOC00100 'CONTRACT DE VANZARE-CUMPARARE', scan001.pdf 240000 B
+--              DOC00200 'ADEVERINTA DE ROL FISCAL',      scan001.pdf 240000 B
+--     folder   48-50/scan001.pdf, 240000 B  - a third, unrelated scan
+--     before:  imported.        after:  linked to DOC00100, never imported.
+--
+--   That is `preexisting-check.ts`'s documented `link` collision. HOW MUCH more
+--   often it fires is NOT known and this file should not pretend otherwise: the
+--   collision needs two documents sharing a file name AND a byte count, and two
+--   such files are usually the same KIND of document, which means the model
+--   very likely returned the same printed heading for both and they collided
+--   before this slice too. The honest statement is that the margin is smaller,
+--   not that it was measured.
+--
+--   ⚠️ **AND THERE IS A THIRD POPULATION, which the first version of this
+--   section missed: documents whose title a HUMAN edited after import.** For
+--   them the slice removes an escape that used to work. Renaming a document in
+--   the archive changed its key and forced a re-import; `import_title` is
+--   write-once, so it no longer does. `preexisting-check.ts`'s module header
+--   records the inversion. The remedy that still works, and the one the copy
+--   names, is renaming the FILE in the folder - the folder side is computed
+--   fresh from the entry every run.
+--
+--   The trade is accepted rather than argued away. The defect being fixed is
+--   happening - three duplicate pairs out of eight documents on a real run -
+--   and under-claiming is this stage's safe direction, so removing an
+--   under-claim is the right direction to spend margin in. What makes it
+--   defensible rather than merely arguable is that the compensating control
+--   ships WITH it: the Pre-existing screen and its saved page now print the
+--   title the matched document is filed under, so a user can see that a `link`
+--   row named a document they do not recognise. Two review rounds asked for
+--   that before it was written down here.
+--
+-- ⚠️ **A BACKFILL IS STILL WORTH HAVING AND IS ITS OWN SLICE.** The version
+-- that is safe is one scoped to documents the IMPORT created, because for those
+-- the file name IS the title they would have had, so the key's entropy is
+-- unchanged rather than reduced.
+--
+-- ⚠️ **AND NOTHING IN THE SCHEMA RECORDS THAT TODAY, which is the actual
+-- obstacle.** An earlier draft of this note said `provenance` does. It does
+-- not: it lives on `entity_metadata`, joined by `principal_object_id`, its
+-- values say how a VALUE was obtained (MANUAL, IMAGE, DOC_FILE,
+-- COORDINATE_FILE, ALGORITHM, AI_INTERPRETED, EXTERNAL_FEED), and the user can
+-- edit it from the References tab. A mutable proxy is the wrong thing to
+-- backfill a write-once key from. So the safe backfill needs either a real
+-- marker or a measurement that earns the proxy - a slice, not a paragraph.
+-- Recorded here rather than left as a gap somebody rediscovers.
 
 BEGIN;
 
@@ -88,68 +183,23 @@ ALTER TABLE public.document
 
 COMMENT ON COLUMN public.document.import_title IS 'The title the import derived from the folder entry (titleForEntry). The Pre-existing stage keys on import_title ?? title, so the AI rewriting document.title can no longer make a re-imported folder look new. Null for anything the import did not create. Slice #32.06.';
 
--- 2. The backfill ------------------------------------------------------------
+-- 2. Say what happened --------------------------------------------------------
 --
--- Exactly-one-page documents only, and not the ones whose single page looks
--- like a page-group member. Written as an UPDATE ... FROM over a CTE rather
--- than a correlated subquery so the "exactly one page" test and the value come
--- from the same scan and cannot disagree.
-WITH one_page AS (
-  SELECT document_id,
-         min(file_name) AS file_name
-    FROM public.document_page
-   GROUP BY document_id
-  HAVING count(*) = 1
-)
-UPDATE public.document d
-   SET import_title = o.file_name
-  FROM one_page o
- WHERE d.id = o.document_id
-   AND d.import_title IS NULL
-   AND o.file_name IS NOT NULL
-   AND btrim(o.file_name) <> ''
-   -- Not a page-group member: see the header. Wider than isPageGroupMember on
-   -- purpose - every extension listed here plus every numeric name is left
-   -- alone, and being left alone is today's behaviour.
-   AND o.file_name !~* '^[0-9]+\.[a-z0-9]{1,4}$';
-
--- 3. Say what happened --------------------------------------------------------
+-- ⚠️ **A RESULT SET AND NOT A `RAISE NOTICE`, and migration_073 is why.** It
+-- measured this one file earlier: the Supabase SQL Editor renders result sets
+-- and not notices, so a NOTICE is invisible on the path the cloud project is
+-- applied through. `Apply-Migration.ps1` uses `psql -f` without `-t` and shows
+-- both. `scripts/verify-rebuild.ts` discards stdout on success and so shows
+-- NEITHER - the SELECT buys one path back, not two, and saying otherwise would
+-- be the same over-claim migration_073 corrected.
 --
--- This file runs on the rebuild chain, on the cloud project and on Ciprian's
--- UAT box (`migrationChain()` in scripts/verify-rebuild.ts globs
--- src/db/migration_*.sql and applies every match in name order), so it reports
--- rather than assumes. None of these counts is an assertion: every one of them
--- is legitimately zero on an empty database.
-DO $$
-DECLARE
-  v_total    bigint;
-  v_filled   bigint;
-  v_multi    bigint;
-  v_pagegrp  bigint;
-  v_nopages  bigint;
-BEGIN
-  SELECT count(*) INTO v_total  FROM public.document;
-  SELECT count(*) INTO v_filled FROM public.document WHERE import_title IS NOT NULL;
-
-  SELECT count(*) INTO v_multi FROM (
-    SELECT document_id FROM public.document_page
-     GROUP BY document_id HAVING count(*) > 1
-  ) m;
-
-  SELECT count(*) INTO v_pagegrp FROM (
-    SELECT document_id, min(file_name) AS file_name
-      FROM public.document_page
-     GROUP BY document_id HAVING count(*) = 1
-  ) s WHERE s.file_name ~* '^[0-9]+\.[a-z0-9]{1,4}$';
-
-  SELECT count(*) INTO v_nopages FROM public.document d
-   WHERE NOT EXISTS (SELECT 1 FROM public.document_page p WHERE p.document_id = d.id);
-
-  RAISE NOTICE '#32.06 import_title: % of % documents filled.', v_filled, v_total;
-  RAISE NOTICE '  left null - multi-page documents (title came from the folder): %', v_multi;
-  RAISE NOTICE '  left null - single page that looks like a page-group member:  %', v_pagegrp;
-  RAISE NOTICE '  left null - documents with no page at all:                    %', v_nopages;
-  RAISE NOTICE '  Every null keys on document.title exactly as it does today.';
-END $$;
+-- Nothing here is an assertion. Every count is legitimately zero on an empty
+-- database, and `keyed_on_title` being the whole archive is the expected and
+-- correct state immediately after this migration.
+SELECT
+  (SELECT count(*) FROM public.document)                                AS documents,
+  (SELECT count(*) FROM public.document WHERE import_title IS NOT NULL) AS keyed_on_import_title,
+  (SELECT count(*) FROM public.document WHERE import_title IS NULL)     AS keyed_on_title,
+  'no backfill by design - see the header'                              AS note;
 
 COMMIT;

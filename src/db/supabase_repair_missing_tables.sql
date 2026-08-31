@@ -544,6 +544,28 @@ ALTER TABLE document
   ADD COLUMN IF NOT EXISTS custom_fields     jsonb,
   ADD COLUMN IF NOT EXISTS ai_interpreted_at timestamptz;
 
+-- migration_074 -- the title the import gave a document (Slice #32.06)
+--
+-- ⚠️ **Without this column every document CREATE fails on Supabase, and it is
+-- the migration_069 defect below repeating one release later.** `inputToValues`
+-- in src/lib/documents/queries.ts writes `importTitle` UNCONDITIONALLY - not
+-- behind an `!== undefined` guard like the PATCH path - so drizzle names
+-- `import_title` in the column list of every INSERT `createDocument` makes. On
+-- a project brought up with this file and without this line, both routes into
+-- `createDocument` die with `column "import_title" of relation "document" does
+-- not exist`: the Add-new Document form (document-form.tsx) and the import
+-- wizard (bulk-import-dialog.tsx). Those are the only two.
+--
+-- ⚠️ **AND Verify-Rebuild CANNOT CATCH IT.** Its step 8 builds a fully migrated
+-- database - so `import_title` is already there from migration_074 - drops only
+-- the tables in REPAIRED, which does not include `document`, then runs this
+-- file and diffs. A column that is never dropped cannot be seen to be missing.
+-- The only guard over this file is structurally blind to this whole class, so
+-- a document column added by a migration has to be added here BY HAND, every
+-- time. Found by the #32.06 adversarial review, which is the only reason this
+-- line exists.
+ALTER TABLE document ADD COLUMN IF NOT EXISTS import_title text;
+
 -- migration_066 -- per-type field templates
 ALTER TABLE lookup_document_type ADD COLUMN IF NOT EXISTS template_fields jsonb;
 
@@ -762,12 +784,36 @@ BEGIN
     RAISE WARNING 'chk_ldt_origin is absent -- a row holds an origin outside (MANUAL, IMPORT). Find it with: SELECT id, name, origin FROM lookup_document_type WHERE origin NOT IN (''MANUAL'', ''IMPORT'');';
   END IF;
 
+  -- document.import_title is the SECOND column whose absence breaks a whole
+  -- create path, for the same mechanical reason as `origin` above:
+  -- `inputToValues` names it in every INSERT `createDocument` makes, so without
+  -- it every POST /api/documents fails. It is checked here because the file's
+  -- own HOW TO APPLY runs `psql -f` with no ON_ERROR_STOP, so a failed ALTER
+  -- does not stop the run and this post-flight is what turns it into an error a
+  -- human sees.
+  --
+  -- ⚠️ It does NOT cover an operator who pastes only SOME sections into the
+  -- Supabase SQL Editor - such a run can skip this block too, and nothing in a
+  -- .sql file can catch that. It is worth having anyway because the other guard
+  -- cannot see this class at all: Verify-Rebuild step 8 builds a FULLY MIGRATED
+  -- database and drops only the tables in REPAIRED, which does not include
+  -- `document`, so a column that is never dropped can never be seen to be
+  -- missing. (Slice #32.06, found by the adversarial review.)
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name   = 'document'
+      AND column_name  = 'import_title'
+  ) THEN
+    faults := array_append(faults, 'document.import_title (column missing)');
+  END IF;
+
   IF array_length(missing, 1) IS NOT NULL THEN
     faults := array_append(faults, 'tables: ' || array_to_string(missing, ', '));
   END IF;
 
   IF array_length(faults, 1) IS NULL THEN
-    RAISE NOTICE 'POST-FLIGHT OK: all 13 tables present, lookup_document_type.origin present.';
+    RAISE NOTICE 'POST-FLIGHT OK: all 13 tables present, lookup_document_type.origin and document.import_title present.';
   ELSE
     RAISE EXCEPTION 'POST-FLIGHT FAILED: %', array_to_string(faults, ' | ');
   END IF;
