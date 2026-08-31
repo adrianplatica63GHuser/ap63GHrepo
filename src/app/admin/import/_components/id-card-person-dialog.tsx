@@ -310,6 +310,31 @@ export function IdCardPersonDialog({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fatalError, setFatalError] = useState<string | null>(null);
+  /**
+   * Was that fatal error a REFUSAL?                             (Slice #32.08)
+   *
+   * ⚠️ **DECLARED BESIDE `fatalError`, AND NOT BESIDE THE EFFECT THAT READS
+   * IT — `react-hooks/immutability` is why, and only Adrian's `npm run lint`
+   * could see it.** The first draft put both of these next to the
+   * `useEffect(…, [fatalError])` two hundred lines below, which is where they
+   * are read; but they are also WRITTEN, from the extraction effect further up
+   * the file, and the rule refuses a setter used above its declaration even
+   * when the use is inside a callback that cannot run until after the render.
+   * It is the right home anyway: this pair qualifies the line above it.
+   *
+   * TWO OF THEM, and the duplication is deliberate. The ref is read by the
+   * effect that announces the failure, which fires on `fatalError` alone —
+   * reading state there would either need it in the dependency list
+   * (re-announcing on a change that is not the error) or be a stale closure.
+   * The heading cannot read a ref, because a ref does not re-render. Both are
+   * set on the same statement pair, from the same expression, at the one place
+   * a fatal error is raised from a response.
+   *
+   * Reset nowhere: this dialog is mounted per card and `fatalError` is a
+   * one-way door — its panel's only control is Dismiss.
+   */
+  const refusedRef = useRef(false);
+  const [refusedFatal, setRefusedFatal] = useState(false);
 
   const [lowConfidence, setLowConfidence] = useState<Set<string>>(new Set());
   const [unmappedRaw, setUnmappedRaw] = useState<Record<string, string>>({});
@@ -457,30 +482,6 @@ export function IdCardPersonDialog({
   useEffect(() => {
     failedRef.current = onFailed;
   }, [onFailed]);
-  /**
-   * Was the fatal error a REFUSAL?                              (Slice #32.08)
-   *
-   * A ref rather than state, and written on the same line that raises the
-   * error, because the effect below fires on `fatalError` alone: a second piece
-   * of state would be a second render for the effect to race, and the answer is
-   * known at the moment the error is raised. Reset nowhere, because this dialog
-   * is mounted per card and `fatalError` is a one-way door — its panel's only
-   * control is Dismiss.
-   */
-  const refusedRef = useRef(false);
-  /**
-   * The same fact as `refusedRef`, as state, because the TITLE renders from it.
-   *                                                            (Slice #32.08)
-   *
-   * ⚠️ **TWO WRITES ONE LINE APART RATHER THAN ONE, and the duplication is
-   * deliberate.** The ref is read by the effect below, which fires on
-   * `fatalError` alone — reading state there would either need it in the
-   * dependency list (re-announcing on a change that is not the error) or be a
-   * stale closure. The title cannot read a ref, because a ref does not
-   * re-render. Both are set on the same statement pair, from the same
-   * expression, at the one place a fatal error is raised from a response.
-   */
-  const [refusedFatal, setRefusedFatal] = useState(false);
   useEffect(() => {
     if (fatalError !== null) failedRef.current?.(refusedRef.current);
   }, [fatalError]);
