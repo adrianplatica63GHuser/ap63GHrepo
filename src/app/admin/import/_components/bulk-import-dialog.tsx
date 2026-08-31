@@ -379,6 +379,39 @@ export type ImportResult = {
    */
   aiPartialWrite?: boolean;
   /**
+   * The AI read was REFUSED rather than having failed.          (Slice #32.08)
+   *
+   * ⚠️ **IT EXISTS TO TAKE THE RETRY BUTTON OFF THIS ROW, and an adversarial
+   * round is why.** The route declines to read a document whose pages hold more
+   * than one person's identity document, so that two people's details never
+   * land on one record. That is deterministic: pressing "Reîncearcă" sends the
+   * same pages to the same model and buys the same 422, at full price, for
+   * ever — the "press me again over an answer that cannot change" failure this
+   * codebase has already recorded once, this time with a bill attached.
+   *
+   * ⚠️ **THE ROW STILL COUNTS AS UNREAD**, in `unreadRefusedCount` and in the
+   * saved report's `aiUnread`. It genuinely was not read, and hiding that would
+   * be the opposite error; what is withdrawn is the OFFER, and the row's own
+   * sentence (`aiMultiIdentity`) says what to do instead.
+   *
+   * ⚠️ **THE RUN'S READ, NOT THE RE-READ.** A refusal met by the refill walk is
+   * `refillRefused`: it is a different event, on a document whose run read may
+   * have succeeded completely, and folding the two made the header claim a
+   * fully-read document had not been read at all.
+   */
+  aiRefused?: boolean;
+  /**
+   * The RE-READ was refused.                                    (Slice #32.08)
+   *
+   * A document whose type gained a form is offered a second read. If that read
+   * is refused — the pages hold more than one person's identity document — the
+   * re-read can never succeed, so the row must come out of `awaitsRefill` AND
+   * its note must stop saying it is waiting for one. Those two are the same
+   * predicate pair `refillNote`'s own header forbids letting drift apart, which
+   * is why this flag is read by both and by nothing else.
+   */
+  refillRefused?: boolean;
+  /**
    * People this document's read found and nobody has confirmed yet.
    * (Slice #26.09)
    *
@@ -433,6 +466,26 @@ export type ImportResult = {
    * file. See `OutcomeRow.personStepUnfinished`.
    */
   personStepUnfinished?: boolean;
+  /**
+   * The identity-card step was REFUSED, not failed.             (Slice #32.08)
+   *
+   * The route read the image and declined to hand back fields, because it holds
+   * more than one person's identity document. Three things follow, and the
+   * second adversarial round found that all three were missing: the row's note
+   * must not say "try again" (`personCardRefused` in `import-outcome.ts`), this
+   * card must come OUT of the pending-people count so the header stops offering
+   * the control that re-opens it, and the offer itself must not be drawn. Every
+   * press of it is a billed model call that comes back refused identically.
+   *
+   * ⚠️ **`idCardQueued` STAYS TRUE.** The card WAS queued, the saved report
+   * says so, and rewriting that would be a lie about what the run did. What
+   * changes is that nothing offers it again: `handleIdCardFailed` deletes it
+   * from `idCardStepsRef`, so the header control cannot rebuild a queue that
+   * contains it, and `pendingPeopleCount` and `cardsUnanswered` both stop
+   * counting it — the three together, because any one alone leaves a control
+   * offering what another says is settled.
+   */
+  personCardRefused?: boolean;
   /**
    * This card is in the follow-up queue.   (Slice #26.10)
    *
@@ -1699,6 +1752,32 @@ export function BulkImportDialog({
   onClose,
 }: Props) {
   const t = useTranslations("adminImport.wizard.importDialog");
+  /**
+   * What a failed AI read tells the user, with ONE reason answered from the
+   * locale instead of from the route.                          (Slice #32.08)
+   *
+   * ⚠️ **A WRAPPER RATHER THAN A CHANGE TO `failureDetail`, because that one is
+   * module-level and has no `t`.** Every other failure this loop meets is a
+   * fault, and the route's own Romanian sentence is the best thing to show for
+   * it — `runAiInterpret`'s header says so and means it. `multi-identity` is
+   * not a fault: the read worked, the document holds more than one person's
+   * identity document, and the route refused to write two people's details onto
+   * one record. Its remedy is a job in File Explorer, its sentence has to say
+   * that, and the route's `error` for it is the developer-facing English every
+   * refusal there carries — which is exactly why `runAiInterpret` returns
+   * `detail: null` for it and leaves the wording to whoever is drawing a screen.
+   *
+   * ⚠️ **THE SKIPPED PAGES ARE DELIBERATELY NOT APPENDED on that branch.** They
+   * are the answer to "why is this document's read incomplete", and this read
+   * is not incomplete — it was declined in full. Hanging a page list off a
+   * refusal answers a question the user has not asked, which is the failure the
+   * retry tooltip two screens down already records about itself.
+   */
+  const aiFailureDetail = useCallback(
+    (result: Extract<AiInterpretRunResult, { ok: false }>): string | undefined =>
+      result.reason === "multi-identity" ? t("aiMultiIdentity") : failureDetail(result),
+    [t],
+  );
   /**
    * The wizard's own namespace, for ONE thing: the scan's confidence.
    * (Slice #26.09)
@@ -3237,7 +3316,25 @@ export function BulkImportDialog({
             docId,
             principalObjectId,
             aiStatus: "failed",
-            aiErrorDetail: failureDetail(interpreted),
+            // Slice #32.08 — a refusal, not a failure. See `aiRefused`.
+            aiRefused: interpreted.reason === "multi-identity" ? true : undefined,
+            // ⚠️ **AND `refillRefused` WITH IT, which is not a duplicate: one
+            // refused read means NO read of this document can succeed, so the
+            // re-read offer must refuse it too.** A seventh adversarial round
+            // found the gap on the retry path — a row read `ok` sets
+            // `typeFormMissing`, its retry is refused, the type later gains a
+            // form, and `handleDiscoverSaved` writes `refill: "pending"` onto
+            // it because `awaitsRefill` was testing only the other flag. One
+            // more billed call, refused identically.
+            refillRefused: interpreted.reason === "multi-identity" ? true : undefined,
+            // ⚠️ Nothing on a refusal, exactly as the retry site does it: the
+            // only reader is the row's tooltip, which is suppressed when
+            // `aiRefused` is true, and the string it held was the whole
+            // refusal paragraph repeated. Two sites, one condition, one answer.
+            aiErrorDetail:
+              interpreted.reason === "multi-identity"
+                ? undefined
+                : aiFailureDetail(interpreted),
             // See the skipped branch above. A failed read is exactly the row a
             // retry lands on, and the retry needs to know this type.
             documentTypeId: resolvedTypeId,
@@ -3364,6 +3461,10 @@ export function BulkImportDialog({
     // before this dialog is mounted, and cannot change it while a run is on
     // screen — so the value this effect closes over is the value the whole run
     // has.
+    // `aiFailureDetail` since #32.08, and it belongs here on the same terms: it
+    // is a `useCallback` over `t` alone, and `t` is a namespace binding that
+    // does not change while a run is on screen — so the closure this effect
+    // captured is the one it would get on any later render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gatePassed]);
 
@@ -3537,10 +3638,35 @@ export function BulkImportDialog({
    * queue — so the sentence, the count and the remedy are all different. See
    * `OutcomeRow.personStepUnfinished`.
    */
-  const handleIdCardFailed = useCallback(() => {
+  const handleIdCardFailed = useCallback((refused?: boolean) => {
     const step = followUps[followUpIndex];
     if (step !== undefined && step.kind === "id-card") {
-      updateResult(step.path, { personStepUnfinished: true });
+      // ⚠️ **TWO OUTCOMES, TWO FLAGS, TWO SENTENCES.**          (Slice #32.08)
+      // Everything the dialog reported before this slice was a fault, and
+      // `personStepUnfinished`'s note ends "try again with the Confirm the
+      // people button". A REFUSAL cannot be retried away — the same image goes
+      // to the same model and comes back with the same 422, billed each time —
+      // so it gets its own flag, its own note, and no offer.
+      if (refused === true) {
+        // ⚠️ **OUT OF THE QUEUE, NOT MERELY OUT OF THE COUNT — and a third
+        // adversarial round is why this line exists.** Removing it from
+        // `pendingPeopleCount` only hides the header control when the refused
+        // card is the ONLY thing outstanding, which is the least likely case:
+        // with anything else pending, "Confirmă persoanele" rebuilds the queue
+        // from this ref verbatim and re-opens the refused card first, which
+        // fires `extract-id-card` on mount and buys the same 422 again. Every
+        // press. `handleIdCardDone` deletes on the success path for the same
+        // reason — a card that can never be answered does not belong in a
+        // backlog whose whole purpose is cards that can.
+        //
+        // ⚠️ **`idCardQueued` STAYS TRUE on the row.** The card WAS queued and
+        // the saved report says so; what changes is that nothing will offer it
+        // again.
+        idCardStepsRef.current.delete(step.path);
+        updateResult(step.path, { personCardRefused: true });
+      } else {
+        updateResult(step.path, { personStepUnfinished: true });
+      }
     }
   }, [followUps, followUpIndex, updateResult]);
 
@@ -3565,7 +3691,12 @@ export function BulkImportDialog({
         prev.map((r) =>
           r.entry.path === step.path &&
           r.personFileUnreadable !== true &&
-          r.personStepUnfinished !== true
+          r.personStepUnfinished !== true &&
+          // Slice #32.08 — and a REFUSED card, for the identical reason: the
+          // close that follows the error panel's Dismiss is not the user
+          // saying no, and a report claiming they declined would be a false
+          // claim in the one place nobody would think to check.
+          r.personCardRefused !== true
             ? { ...r, personDeclined: true }
             : r,
         ),
@@ -3727,7 +3858,7 @@ export function BulkImportDialog({
       // needed here for a case that has no retry button at all: a session lost
       // during the DISCOVERY read leaves every row `aiStatus: "done"` (the
       // Document, its pages and its fields were written before the session
-      // went), so `unreadCount` is zero, no row is retryable, and nothing else
+      // went), so nothing counts as unread, no row is retryable, and nothing else
       // in this dialog can ever clear the flag. Without this, the header went
       // on telling a signed-in user to sign in again, over the control they had
       // just used successfully.
@@ -4215,7 +4346,13 @@ export function BulkImportDialog({
         // this walk hides that button everywhere, because `readRunning` is true
         // for the whole of it. Left alone, the row goes on saying the first read
         // was partial, which it was, until the second read replaces the verdict.
-        updateResult(path, { refill: "running" });
+        // Slice #32.08 — `refillRefused` cleared with the state it qualifies,
+        // for the reason `aiRefused: undefined` is cleared at the retry: it is
+        // defensive rather than reachable (a refused row is out of
+        // `awaitsRefill`, so this walk does not select it), and a flag left
+        // standing over a read that then succeeded would say the information is
+        // still in Notes over columns that had just been filled.
+        updateResult(path, { refill: "running", refillRefused: undefined });
         // Third argument since #29.12 — and this walk is the call site where
         // omitting it would be worst: it re-reads a document whose folder title
         // the first read protected, so a bare call here would undo that.
@@ -4255,7 +4392,27 @@ export function BulkImportDialog({
           }
           updateResult(path, {
             refill: "failed",
-            refillErrorDetail: failureDetail(interpreted),
+            // ⚠️ **NOT SET ON A REFUSAL, and a fourth adversarial round is
+            // why.** (Slice #32.08.) This value exists for ONE reader — the
+            // saved report's `refillFailedDetail` bullet — and on a refused row
+            // the report already carries `note.refillRefused`, which says the
+            // same thing in the right words. Set, the page read "the re-read
+            // FAILED: <the refusal sentence>" one bullet after "the re-read was
+            // REFUSED", and quoted a button that belongs to a different row and
+            // does not exist on paper. Leaving it undefined is what makes the
+            // bullet not draw, which is one guard rather than two that can
+            // drift apart.
+            refillErrorDetail:
+              interpreted.reason === "multi-identity"
+                ? undefined
+                : aiFailureDetail(interpreted),
+            // ⚠️ **`refillRefused`, NOT `aiRefused`, AND A THIRD ROUND SPLIT
+            // THEM.** This walk does not touch `aiStatus`, so a document read
+            // perfectly by the run and refused on its re-read carried a flag
+            // that made the header say it had never been read. Two events, two
+            // flags: this one takes the row out of the re-read offer and out of
+            // the note that promises one.
+            refillRefused: interpreted.reason === "multi-identity" ? true : undefined,
           });
           setRefillProgress({ done: i + 1, total: targets.length });
           continue;
@@ -4412,7 +4569,7 @@ export function BulkImportDialog({
           // ⚠️ **A partial second read must not be drawn as a plain tick** —
           // #27.06's constraint, in as many words. Setting this puts the row
           // back in the amber block with its retry button and back into
-          // `unreadCount`, which is exactly right: the state it describes is
+          // the unread counts, which is exactly right: the state it describes is
           // real again.
           aiPartialWrite: interpreted.partialWrite,
           ...(movedTo !== null
@@ -4441,7 +4598,10 @@ export function BulkImportDialog({
     // `scanResults` went with the identity-card test the re-type branch stopped
     // making — a dependency the body no longer reads is a lint warning that
     // teaches the next reader to ignore the rule.
-  }, [raiseSessionExpired, results, updateResult]);
+    // `aiFailureDetail` since #32.08 — it closes over `t`, so it is a value of
+    // this component rather than a module function, and the walk's own reason
+    // sentence comes out of it.
+  }, [aiFailureDetail, raiseSessionExpired, results, updateResult]);
 
   /**
    * Read this document again, because the first attempt failed.
@@ -4511,6 +4671,16 @@ export function BulkImportDialog({
         aiStatus: "running",
         aiErrorDetail: undefined,
         aiPartialWrite: undefined,
+        // Slice #32.08 — cleared for the same reason, and it is defensive
+        // rather than reachable: a refused row draws no retry button, so
+        // nothing can start a retry from one. Left set, a retry that came back
+        // with an ordinary failure would keep a flag saying "this was refused"
+        // and go on hiding a button that would then have helped.
+        aiRefused: undefined,
+        // Cleared together, because they are set together: a retry that
+        // succeeds makes this document readable again, and a flag left standing
+        // would keep it out of a re-read offer it now belongs in.
+        refillRefused: undefined,
       });
       // Third argument since #29.12 — same reason as the run loop and the
       // refill walk: a retry must reach the same title decision they did.
@@ -4970,18 +5140,44 @@ export function BulkImportDialog({
       // sentence describes the first read's missing half, and hanging the
       // retry's own `HTTP 429` off it unlabelled answered a question the user
       // had not asked, about a different event.
-      const reason = failureDetail(interpreted);
+      const reason = aiFailureDetail(interpreted);
       updateResult(path, {
         aiStatus: wasPartial ? undefined : "failed",
         aiPartialWrite: wasPartial ? true : undefined,
+        // Slice #32.08 — a retry that came back refused takes its own button
+        // away, which is the whole point of the flag: the second press cannot
+        // answer differently from the first.
+        aiRefused: interpreted.reason === "multi-identity" ? true : undefined,
+        // …and the re-read offer with it — see the run loop's own note. This is
+        // the site the seventh round's sequence actually goes through.
+        refillRefused: interpreted.reason === "multi-identity" ? true : undefined,
         // A route that gave no message at all — a timeout, a thrown TypeError —
         // gets its own sentence rather than a colon followed by a dash.
-        aiErrorDetail: reason
-          ? t("interpretRetryFailed", { reason })
-          : t("interpretRetryFailedUnknown"),
+        //
+        // ⚠️ **NOTHING ON A REFUSAL, and a fifth adversarial round is why.**
+        // (Slice #32.08.) The only reader of this value is the row's tooltip,
+        // which is suppressed exactly when `aiRefused` is true — so the string
+        // was dead; and what it held was the whole refusal paragraph wrapped in
+        // "Reîncercarea citirii a eșuat", which is the word this row exists to
+        // stop using. The visible sentence carries the answer instead.
+        aiErrorDetail:
+          interpreted.reason === "multi-identity"
+            ? undefined
+            : reason
+              ? t("interpretRetryFailed", { reason })
+              : t("interpretRetryFailedUnknown"),
         // ⚠️ `refill` is deliberately LEFT as it was. A retry that failed read
-        // nothing, so a row that was owed a re-read is still owed one and stays
-        // in the offer's count — the mirror of the success branch above.
+        // nothing, so a row that was owed a re-read is still owed one — and on
+        // every branch but one it stays in the offer's count, which is the
+        // mirror of the success branch above.
+        //
+        // ⚠️ **THE ONE EXCEPTION IS THE REFUSAL, and a ninth adversarial round
+        // caught this comment still claiming otherwise.** (Slice #32.08.)
+        // `refillRefused` is set two lines up, and `awaitsRefill` reads it — so
+        // a refused retry DOES leave the offer's count, deliberately: the same
+        // pages sent a third time come back with the same 422. Deleting that
+        // line on the strength of the paragraph above would restore a billed
+        // call that cannot succeed.
       });
       } finally {
         // Released whichever way this returned, including the `!mountedRef`
@@ -5006,7 +5202,8 @@ export function BulkImportDialog({
     // `formsWaived` since #32.05: a prop, and a stable one for this dialog's
     // life — the wizard cannot change it while a run is on screen — so listing
     // it costs no re-renders and keeps the lint honest about the read below.
-    [absorbTypeList, formsWaived, raiseSessionExpired, scanResults, t, updateResult],
+    // `aiFailureDetail` since #32.08, for the reason on the refill walk above.
+    [absorbTypeList, aiFailureDetail, formsWaived, raiseSessionExpired, scanResults, t, updateResult],
   );
 
   // ---------------------------------------------------------------------------
@@ -5030,21 +5227,60 @@ export function BulkImportDialog({
   const preexistingCount = results.filter((r) => r.preexisting !== undefined).length;
   const errorCount = results.filter((r) => r.status === "error").length;
   /**
-   * Rows whose AI read did not finish the job.   (Slice #26.09)
+   * Is a further read of this document pointless?               (Slice #32.08)
+   *
+   * ⚠️ **ONE EXPRESSION FOR THE TWO FLAGS, so the two counts below and the
+   * row's retry button cannot come to disagree** — which is what an eighth
+   * adversarial round found them doing: the button was gated on `aiRefused`
+   * alone, so a partially-written row whose RE-READ was refused drew the amber
+   * block with a live retry directly under a note saying the re-read had been
+   * refused. `aiRefused` is the run's read; `refillRefused` is the re-read;
+   * either means the same pages sent again come back with the same 422.
+   */
+  const readRefused = (r: ImportResult): boolean =>
+    r.aiRefused === true || r.refillRefused === true;
+  /**
+   * Rows whose AI read did not finish the job AND that a press can still help.
+   *                                                (Slice #26.09; split #32.08)
    *
    * Said in the header, beside Close, because Close is the end of the retry
    * window: `handleRetryInterpret` lives in this dialog and the wizard cannot
    * re-open it. A user who closes without noticing has no way back short of
    * re-picking the folder, which re-walks and re-scans it at full price.
+   *
+   * ⚠️ **THE HEADER SENTENCE AND THE ROW BUTTONS MUST NEVER DISAGREE ABOUT
+   * WHETHER A RETRY IS POSSIBLE — this file's own note two screens down records
+   * that costing three adversarial rounds, and #32.08's first draft reopened it
+   * from a fourth direction.** The flag took the button off the row and left
+   * the single unread count alone, deliberately (a refused row genuinely was
+   * not read); the header then went on saying "try the read again here" over a
+   * table with no such button anywhere. So the count that drives that sentence
+   * is this one, and the refused rows get a sentence of their own that says
+   * what to do instead.
    */
-  const unreadCount = results.filter(
-    (r) => r.aiStatus === "failed" || r.aiPartialWrite,
+  const unreadRetryableCount = results.filter(
+    (r) => (r.aiStatus === "failed" || r.aiPartialWrite) && !readRefused(r),
+  ).length;
+  /** …and these cannot: the read was refused, and a second press buys the same 422. */
+  const unreadRefusedCount = results.filter(
+    // ⚠️ **THE SAME "IS UNREAD" TEST THE LINE ABOVE CARRIES, and a third round
+    // is why.** Without it a document whose RUN read succeeded and filled
+    // fields, and whose later RE-READ was refused, was counted here — so the
+    // header said "one document was not read by the AI" over a row that had
+    // been read perfectly, with nothing on the row to match it.
+    //
+    // ⚠️ **BOTH FLAGS, since an eighth round.** A re-read refusal means the
+    // same thing to a retry as a read refusal does — the same pages sent again
+    // come back refused — so the two counts partition the unread rows by
+    // `readRefused`, and the row's button is gated on the same pair.
+    (r) => (r.aiStatus === "failed" || r.aiPartialWrite) && readRefused(r),
   ).length;
   /**
    * Documents whose people nobody has been asked about yet.   (Slice #26.09)
    *
-   * ⚠️ **A SEPARATE COUNT FROM `unreadCount`, and folding the two together was
-   * wrong in both directions.** A row here has been read completely and
+   * ⚠️ **A SEPARATE COUNT FROM THE UNREAD ONES** (`unreadRetryableCount` and
+   * `unreadRefusedCount` since #32.08 split them), **and folding the two
+   * together was wrong in both directions.** A row here has been read completely and
    * successfully — it shows a green tick — so counting it under a sentence that
    * begins "n documents were not fully read by the AI" contradicts twelve green
    * ticks on the ordinary successful run; and the retry that sentence offers is
@@ -5071,7 +5307,19 @@ export function BulkImportDialog({
    * construction — they were never queued.
    */
   const pendingPeopleCount = results.filter(
-    (r) => (r.aiPartiesPending ?? 0) > 0 || (r.idCardQueued === true && r.personId === undefined),
+    (r) =>
+      (r.aiPartiesPending ?? 0) > 0 ||
+      // ⚠️ **`!personCardRefused` SINCE #32.08, AND IT IS ABOUT MONEY AND ABOUT
+      // A SENTENCE THAT WAS FALSE.** A refused card can never produce a person:
+      // the route declines it deterministically, because the image holds more
+      // than one person's identity document. Counted here, the header drew
+      // "one document still has a person to confirm" over a control that
+      // re-opens the dialog, which re-buys the same refusal — and the row's own
+      // note now says the opposite. It stays `idCardQueued` in the report,
+      // because it genuinely was queued; what it is not is outstanding.
+      (r.idCardQueued === true &&
+        r.personId === undefined &&
+        r.personCardRefused !== true),
   ).length;
   /**
    * A billed read on a SETTLED row is in flight, so the dialog must not be
@@ -5209,10 +5457,17 @@ export function BulkImportDialog({
         personDeclined: r.personDeclined,
         personFileUnreadable: r.personFileUnreadable,
         personStepUnfinished: r.personStepUnfinished,
+        // Slice #32.08 — so the saved page says "split the scan" rather than
+        // "try again", exactly as the screen does.
+        personCardRefused: r.personCardRefused,
         readSkipped: r.aiSkipReason,
         aiProcessed: r.aiProcessed,
         aiFieldCount: r.aiFieldCount,
         aiUnread: r.aiStatus === "failed" || r.aiPartialWrite === true,
+        // Slice #32.08 — so `awaitsRefill` and `refillNote` can BOTH take a
+        // refused row out of the re-read offer, which is the one thing those
+        // two must never disagree about. See `refillNote`'s own header.
+        refillRefused: r.refillRefused,
         aiPeopleSettled: r.aiParties ? r.aiParties.linked + r.aiParties.created : 0,
         aiPeoplePending: r.aiPartiesPending ?? 0,
         idCardQueued: r.idCardQueued,
@@ -5404,7 +5659,19 @@ export function BulkImportDialog({
           : r.personId !== undefined && (r.idCardDocFields ?? 0) > 0
             ? [t("personDocFields", { count: r.idCardDocFields ?? 0 })]
             : []),
-        ...(r.aiStatus === "failed" ? [t("interpretFailed")] : []),
+        // ⚠️ **THE REFUSAL, NOT `interpretFailed`, AND THE SAME SENTENCE THE
+        // ROW SHOWS.** (Slice #32.08.) A refused read is not a failed one, and
+        // `interpretFailed` says the fields "au rămas necompletate" without
+        // saying why or what to do — the remedy lived only in a hover tooltip,
+        // which on a printed page does not exist. This is the artefact the user
+        // works from in File Explorer, and it is where "split the scan" has to
+        // be. The row draws the same string, by the same test, so the two
+        // cannot disagree about what happened to a file.
+        ...(r.aiRefused === true
+          ? [t("aiMultiIdentity")]
+          : r.aiStatus === "failed"
+            ? [t("interpretFailed")]
+            : []),
         ...(r.aiPartialWrite === true ? [t("interpretPartial")] : []),
         // Slice #32.05 — in the report as well as on the row, and in the same
         // position, because the two artefacts must not disagree about what
@@ -5544,7 +5811,7 @@ export function BulkImportDialog({
                 it permanent. The saved report records that a row finished, not
                 that its read failed, so after this dialog goes there is nothing
                 left that can name these rows. */}
-            {done && unreadCount > 0 && (
+            {done && unreadRetryableCount > 0 && (
               <p className="mt-0.5 text-xs font-medium text-amber-700 dark:text-amber-400">
                 {/* THREE branches, because `canRetry` goes false for two
                     unrelated reasons and the header has to name the right one.
@@ -5555,10 +5822,23 @@ export function BulkImportDialog({
                     `bg-black/40`, not `display:none` — it is dimmed, legible,
                     and read out in full by a screen reader walking the dialog. */}
                 {sessionExpired
-                  ? t("doneUnreadLocked", { count: unreadCount })
+                  ? t("doneUnreadLocked", { count: unreadRetryableCount })
                   : canRetry
-                    ? t("doneUnread", { count: unreadCount })
-                    : t("doneUnreadWaiting", { count: unreadCount })}
+                    ? t("doneUnread", { count: unreadRetryableCount })
+                    : t("doneUnreadWaiting", { count: unreadRetryableCount })}
+              </p>
+            )}
+            {/* ⚠️ **ITS OWN LINE, AND NOT A FOURTH BRANCH OF THE SWITCH ABOVE.**
+                (Slice #32.08.) Those three all end by offering a retry and
+                differ only in when it can be pressed; this one has no retry to
+                offer in any state, because the read was REFUSED — the document
+                holds more than one person's identity document — and the same
+                pages sent again come back refused identically, billed each
+                time. A run can hold both kinds at once, so both lines are
+                drawn, each counting only its own rows. */}
+            {done && unreadRefusedCount > 0 && (
+              <p className="mt-0.5 text-xs font-medium text-amber-700 dark:text-amber-400">
+                {t("doneUnreadRefused", { count: unreadRefusedCount })}
               </p>
             )}
             {/* Its own line and its own control, because it is a different
@@ -6258,6 +6538,11 @@ const NOTE_TONE: Record<OutcomeNoteId, string> = {
   personNoProperty: "text-sky-700 dark:text-sky-400",
   personUnreadable: "text-amber-700 dark:text-amber-400",
   personStepUnfinished: "text-amber-700 dark:text-amber-400",
+  // Slice #32.08 — amber, like `personStepUnfinished` above it and unlike the
+  // sky `readSkippedIdCard` below. A card that was refused is not a thing
+  // deliberately not done: there is a file in the folder that has to be split
+  // before this person can exist at all, so somebody does have to act.
+  personCardRefused: "text-amber-700 dark:text-amber-400",
   readSkippedIdCard: "text-sky-700 dark:text-sky-400",
   readSkippedNoPage: "text-sky-700 dark:text-sky-400",
   // Slice #27.05 — sky, deliberately, and #27.02's constraint is the argument:
@@ -6294,6 +6579,10 @@ const NOTE_TONE: Record<OutcomeNoteId, string> = {
   refillPending: "text-sky-700 dark:text-sky-400",
   refillDone: "text-emerald-600 dark:text-emerald-400",
   refillFailed: "text-amber-700 dark:text-amber-400",
+  // Slice #32.08 — amber like its neighbour: the information is still in Notes
+  // and there is a file in the folder that has to be split, so somebody has to
+  // act. It is not sky, because nothing here was deliberately not done.
+  refillRefused: "text-amber-700 dark:text-amber-400",
 };
 
 /**
@@ -6382,6 +6671,17 @@ function ResultRow({
     cornerClaimLost,
     aiPartiesPending,
     aiPartialWrite,
+    // Slice #32.08 — off the result rather than through a prop, because
+    // `canRetryInterpret` is a fact about the RUN (see its own note at the call
+    // site) and this is a fact about this one document.
+    aiRefused,
+    // ⚠️ **AND THE RE-READ'S REFUSAL TAKES THE RETRY BUTTON TOO, which an
+    // eighth adversarial round found missing.** A partially-written row whose
+    // RE-READ was refused keeps `aiStatus`/`aiPartialWrite` untouched, so the
+    // amber block was drawn with its button live, directly under a note saying
+    // the re-read had been refused. One press, one billed call, the same 422.
+    // The header's two counts partition on the same pair — see `readRefused`.
+    refillRefused,
     preexisting,
     refill,
     refillErrorDetail,
@@ -6551,16 +6851,53 @@ function ResultRow({
             <>
               <span
                 className="text-xs font-medium text-amber-700 dark:text-amber-400"
-                title={aiErrorDetail}
+                // ⚠️ **NO TOOLTIP ON A REFUSED ROW.** (Slice #32.08.) The
+                // tooltip exists because a table cell cannot hold the route's
+                // detail and its list of unsendable pages. On a refusal the
+                // detail IS the sentence now drawn as the visible text — so
+                // hovering repeated the paragraph verbatim — and after a RETRY
+                // it is that sentence wrapped in "Reîncercarea citirii a
+                // eșuat", which is the word this row exists to stop using.
+                title={aiRefused ? undefined : aiErrorDetail}
               >
-                {aiStatus === "failed" ? t("interpretFailed") : t("interpretPartial")}
+                {/* ⚠️ **A REFUSAL GETS ITS OWN VISIBLE SENTENCE.** (Slice
+                    #32.08.) `interpretFailed` reads "Citirea AI nu a reușit —
+                    documentul a fost importat, dar câmpurile lui au rămas
+                    necompletate", which is false about what happened: the read
+                    succeeded and was declined. The remedy — split the scan —
+                    was reachable only by HOVERING the tooltip, so on a touch
+                    screen and on paper it did not exist at all. */}
+                {/* ⚠️ **A REFUSED ROW THAT ALSO WROTE PART OF ITS FIELDS SAYS
+                    BOTH, and a fifth round found the screen dropping the second
+                    half while the saved report kept it.** That happens when a
+                    read wrote the baseline fields, its retry was refused, and
+                    the row is `aiPartialWrite` and `aiRefused` at once: the
+                    refusal is why nothing more will arrive, and the partial
+                    write is what IS already on the document. Two artefacts must
+                    not give two accounts of one file. */}
+                {aiRefused
+                  ? aiPartialWrite
+                    ? `${t("aiMultiIdentity")} ${t("interpretPartial")}`
+                    : t("aiMultiIdentity")
+                  : aiStatus === "failed"
+                    ? t("interpretFailed")
+                    : t("interpretPartial")}
               </span>
               {/* ⚠️ NOT the button #26.09 deleted — see `handleRetryInterpret`.
                   It is offered only on a row that says the automatic read
                   failed, and all it does is that read again; without it the
                   slice removed every exit from a dead end it had just
                   introduced. */}
-              {canRetryInterpret && (
+              {/* ⚠️ **`!aiRefused` SINCE #32.08, AND IT IS ABOUT MONEY.** A
+                  read that was REFUSED — the document's pages hold more than
+                  one person's identity document — cannot answer differently on
+                  a second press: the same pages go to the same model and come
+                  back with the same 422, billed each time. The row's own
+                  sentence says what to do instead, which is to split the scan
+                  and import it again. This is the precedent `typeIdCardNoForm`
+                  set one screen along, applied to a button rather than to a
+                  sentence. */}
+              {canRetryInterpret && !aiRefused && !refillRefused && (
                 <button
                   type="button"
                   onClick={onRetryInterpret}

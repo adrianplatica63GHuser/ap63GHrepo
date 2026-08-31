@@ -66,16 +66,32 @@ describe("the press that continues without forms", () => {
   it("⚠️ leaves the phase machine alone", () => {
     // `phaseAfterClassification` answers what the SCAN decided, and the scan
     // still decides `types-blocked`; the waiver is a later answer to that
-    // screen, not a different verdict from the classification. A third input
-    // there, or a new row in `SELF_ADVANCING_TRANSITIONS`, would be this slice
-    // rewriting a rule it only needed to act after.
+    // screen, not a different verdict from the classification. A new row in
+    // `SELF_ADVANCING_TRANSITIONS` would be this slice rewriting a rule it only
+    // needed to act after.
+    //
+    // ⚠️ **THIS TEST USED TO SAY "A THIRD INPUT THERE" AND #32.08 GAVE IT
+    // ONE — LEGITIMATELY, WHICH IS WHY THE ASSERTION MOVED RATHER THAN THE
+    // CODE.** That slice added `cardsClean`, a second VERDICT from the same
+    // classification, and the order between the two stops is a fact about the
+    // flow that only this module can hold. What #32.05 must not have done, and
+    // still has not, is make the WAIVER an input to the fork: the shape below
+    // is what pins that, and `typesClean` gaining `| null` is #32.08's — the
+    // read is skipped entirely on a run the identity scans have stopped.
     const stages = read(path.join("src", "lib", "import", "workflow-stages.ts"));
     const fn = stages.slice(
       stages.indexOf("export function phaseAfterClassification"),
       stages.indexOf("// ---", stages.indexOf("export function phaseAfterClassification")),
     );
-    expect(fn).toContain("typesClean: boolean;");
-    expect(fn).not.toContain("waiv");
+    expect(fn).toContain("typesClean: boolean | null;");
+    // ⚠️ **COMMENT-STRIPPED SINCE #32.08, and the reason is worth writing
+    // down.** The claim is that the waiver has not leaked into the phase
+    // machine's CODE. That slice's argument for stopping at the identity scans
+    // first is precisely that the other stop carries a waiver — so the prose
+    // now says "waiver" while the code still does not mention it, and a raw
+    // scan cannot tell those two apart. `withoutComments` is already the
+    // instrument this same test uses on the table below.
+    expect(withoutComments(fn)).not.toContain("waiv");
     const table = stages.slice(
       stages.indexOf("export const SELF_ADVANCING_TRANSITIONS"),
       stages.indexOf("];", stages.indexOf("export const SELF_ADVANCING_TRANSITIONS")),

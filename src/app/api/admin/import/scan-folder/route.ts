@@ -16,6 +16,7 @@
  *     suggestedTypeKey: string | null,
  *     confidence: "high" | "medium" | "low",
  *     extractable: boolean,
+ *     identityPersonCount: number | null,
  *     notes: string | null,
  *   }
  */
@@ -23,6 +24,7 @@
 import type { NextRequest } from "next/server";
 import { unexpectedError } from "@/lib/api/errors";
 import { CLASSIFY_SYSTEM_PROMPT, canonicalTypeKey } from "@/lib/import/classify-prompts";
+import { identityPersonCountOf } from "@/lib/import/multi-card-gate";
 import { UNCLASSIFIED_DOCUMENT_LABEL } from "@/lib/documents/document-type-match";
 
 export const runtime = "nodejs";
@@ -36,6 +38,17 @@ type ClassifyResult = {
   suggestedTypeKey: string | null;
   confidence: "high" | "medium" | "low";
   extractable: boolean;
+  /**
+   * How many distinct people's identity documents this image shows, or `null`
+   * when the model did not say.                                (Slice #32.08)
+   *
+   * ⚠️ **`null` IS NOT ZERO AND MUST NOT BECOME ZERO.** Zero is an answer —
+   * "this is not an identity document" — and `null` is the absence of one. The
+   * gate treats them identically today (neither refuses), and the reason to
+   * keep them apart anyway is that the day anything wants to know whether the
+   * question was actually put, a `0` invented here would say it was.
+   */
+  identityPersonCount: number | null;
   notes: string | null;
 };
 
@@ -160,6 +173,13 @@ export async function POST(request: NextRequest): Promise<Response> {
         ? raw.confidence
         : "low",
       extractable: Boolean(raw.extractable),
+      // ⚠️ **SANITISED BY THE GATE'S OWN FUNCTION, so this boundary and the two
+      // later ones cannot come to disagree about what a usable count is.**
+      // (Slice #32.08.) Anything that is not a whole, non-negative number of
+      // people becomes `null`, and `null` never refuses a file — see
+      // `multi-card-gate.ts` on why silence deliberately fails OPEN here where
+      // the type gate fails closed.
+      identityPersonCount: identityPersonCountOf(raw.identityPersonCount),
       notes: raw.notes ?? null,
     };
   } catch (err) {

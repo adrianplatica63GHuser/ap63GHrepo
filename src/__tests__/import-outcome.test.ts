@@ -1609,3 +1609,135 @@ describe("runLandedSomething", () => {
     ).toBe(false);
   });
 });
+
+// ---------------------------------------------------------------------------
+// The two refusals #32.08 added to this module
+// ---------------------------------------------------------------------------
+
+/**
+ * ⚠️ **BOTH OF THESE EXIST BECAUSE AN ADVERSARIAL ROUND FOUND THE FIX TO A
+ * PREVIOUS ADVERSARIAL ROUND HALF-DONE.** A refusal is not a failure: the AI
+ * read and the identity-card step both worked and both DECLINED, because the
+ * file holds more than one person's identity document. Every count and every
+ * sentence that offers to try again has to come off such a row — and the two
+ * predicates in this module that must never disagree are `awaitsRefill` and
+ * `refillNote`, whose own headers say so at length.
+ */
+describe("a refused re-read (Slice #32.08)", () => {
+  const refused = (over: Partial<OutcomeRow> = {}): OutcomeRow =>
+    row({ refillRefused: true, ...over });
+
+  it("⚠️ comes out of `awaitsRefill` AND out of `refillNote`, on the two states that owe a re-read", () => {
+    // The pair, walked together. A term in one and not the other is a row the
+    // artefact counts and no control can reach — the failure `awaitsRefill`'s
+    // header records in those words, and the shape the first version of this
+    // fix shipped.
+    for (const refill of ["pending", "failed"] as const) {
+      const r = refused({ refill });
+      expect({ refill, awaits: awaitsRefill(r) }).toEqual({ refill, awaits: false });
+      const note = refillNote(r);
+      expect({ refill, id: note?.id }).toEqual({ refill, id: "refillRefused" });
+    }
+  });
+
+  it("⚠️ says NOTHING about a re-read on a row that was never owed one", () => {
+    // ⚠️ **AN EIGHTH ADVERSARIAL ROUND, AND THIS TEST PINNED THE DEFECT BEFORE
+    // IT CAUGHT IT.** The flag means "no read of this document can succeed",
+    // and the run loop sets it the FIRST time a read is refused — at which
+    // point `refill` is `undefined`, because no re-read has been queued. Firing
+    // the note there drew "the re-read was refused … its information stays in
+    // Notes" on a row whose first read was refused and which has nothing in
+    // Notes, and counted it in `documentsAwaitingRefill` beside "not read".
+    for (const refill of [undefined, "done", "retyped"] as const) {
+      const r = refused({ refill });
+      expect({ refill, awaits: awaitsRefill(r) }).toEqual({ refill, awaits: false });
+      const id = refillNote(r)?.id;
+      expect({ refill, refused: id === "refillRefused" }).toEqual({ refill, refused: false });
+    }
+    // …and the run-loop shape draws no refill note whatsoever.
+    expect(refillNote(refused({ refill: undefined }))).toBeNull();
+    expect(
+      summariseImportRun([{ ...refused({ refill: undefined }) } as SummaryRow], 0)
+        .documentsAwaitingRefill,
+    ).toBe(0);
+  });
+
+  it("keeps the ordinary refill states exactly as they were", () => {
+    // The term must not be a behaviour change for every other row in the run.
+    for (const [refill, awaits, id] of [
+      ["pending", true, "refillPending"],
+      ["failed", true, "refillFailed"],
+      ["done", false, "refillDone"],
+      ["retyped", false, "refillRetyped"],
+    ] as const) {
+      const r = row({ refill });
+      expect({ refill, awaits: awaitsRefill(r) }).toEqual({ refill, awaits });
+      expect({ refill, id: refillNote(r)?.id }).toEqual({ refill, id });
+    }
+  });
+
+  it("⚠️ IS counted as a document whose information stayed in Notes", () => {
+    // ⚠️ **THE TEST ASSERTED THE OPPOSITE UNTIL THE FOURTH ADVERSARIAL ROUND.**
+    // The reasoning was "a number with no control behind it" — and
+    // `refillRetyped` is on that list and has no control either, because
+    // `awaitsRefill` and `documentsAwaitingRefill` answer two different
+    // questions: may this button spend a call on it, and did this document's
+    // information reach its columns. A refused re-read is the sharpest no to
+    // the second, and excluded it appeared in NOTHING the user still has after
+    // the dialog closes — not the concluding message, not the saved report's
+    // summary.
+    const summary = summariseImportRun(
+      [{ ...refused({ refill: "failed" }), preexisting: undefined } as SummaryRow],
+      0,
+    );
+    expect(summary.documentsAwaitingRefill).toBe(1);
+    // …while the button's own count still refuses it, which is the pair.
+    expect(awaitsRefill(refused({ refill: "failed" }))).toBe(false);
+  });
+});
+
+describe("a refused identity card (Slice #32.08)", () => {
+  const card = (over: Partial<OutcomeRow> = {}): OutcomeRow =>
+    row({ isIdCard: true, canLinkPerson: true, ...over });
+
+  it("⚠️ says split, never 'try again with the Confirm the people button'", () => {
+    expect(idCardNote(card({ personCardRefused: true }))).toEqual({
+      id: "personCardRefused",
+      values: {},
+    });
+  });
+
+  it("⚠️ wins over `personStepUnfinished` when a row carries both", () => {
+    // Both flags can be true — a card that failed once and was refused on a
+    // later attempt — and the two sentences point in opposite directions. The
+    // refusal is the one that is still true, so it is decided first.
+    expect(
+      idCardNote(card({ personCardRefused: true, personStepUnfinished: true })),
+    ).toEqual({ id: "personCardRefused", values: {} });
+  });
+
+  it("still yields to a person who actually exists", () => {
+    // A refusal on one attempt does not overrule a person created on another:
+    // the record exists, and a note saying nobody was created would be false in
+    // the one place nobody would think to check.
+    expect(
+      idCardNote(card({ personCardRefused: true, personId: "p1", personCreated: true })),
+    ).toEqual({ id: "personCreated", values: {} });
+  });
+
+  it("⚠️ is counted apart from the cards nobody has answered yet", () => {
+    // `cardsUnanswered`'s sentence sends the user to a control that no longer
+    // offers this card — the step is deleted from the backlog when it is
+    // refused — so counting it there is two screens giving two numbers for one
+    // question, which is the drift `SummaryRow.idCardQueued` records.
+    const summary = summariseImportRun(
+      [{ ...card({ personCardRefused: true }), idCardQueued: true } as SummaryRow],
+      0,
+    );
+    expect({
+      refused: summary.cardsRefused,
+      unanswered: summary.cardsUnanswered,
+      unreadable: summary.cardsUnreadable,
+    }).toEqual({ refused: 1, unanswered: 0, unreadable: 0 });
+  });
+});

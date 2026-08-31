@@ -50,6 +50,39 @@ export type ScanResult = {
   typeKey?: string | null;
   confidence?: "high" | "medium" | "low";
   extractable?: boolean;
+  /**
+   * How many distinct people's identity documents the classifier read on this
+   * file, or `null`/absent when it did not say.                (Slice #32.08)
+   *
+   * ⚠️ **STORED HERE AND DRAWN NOWHERE IN THIS TABLE, on purpose — and the
+   * first version of this note gave a reason that was false on the day it was
+   * written.** It said a run whose answer is two or more never reaches a screen
+   * this table is on. It does: the wizard renders `ScanTable` under the
+   * `cards-blocked` panel deliberately, so the refused files can be read
+   * against the thirty rows that were fine. The real reason there is no column
+   * is that the panel above the table already names every refused file and says
+   * what to do about it, so a column would be a second, quieter report of the
+   * same finding — and on every other row it would print "1 person" against a
+   * contract, which is noise about a question nobody asked.
+   *
+   * It rides on the `ScanResult` for the same reason `confidence` does: the
+   * scan route already returns it, and the gate that reads it is decided from
+   * a LOCAL map inside `startScan` that holds these very objects.
+   *
+   * ⚠️ **REQUIRED, WHERE EVERY OTHER OPTIONAL FIELD HERE IS OPTIONAL, AND THAT
+   * ASYMMETRY IS THE POINT.** The first draft of #32.08 made it optional; the
+   * construction site then forgot to set it, `tsc` stayed green, the gate read
+   * `undefined` for every entry, every folder answered "clean", and the whole
+   * stop screen was unreachable in production. An adversarial round found it;
+   * a second round found that declaring it on `scanEntry`'s return type — which
+   * is what the fix's own comments claimed — does NOT make the omission an
+   * error, because an optional property may simply be left out. This does.
+   *
+   * `null` is the honest value for every row that has no answer: a `pending`,
+   * `scanning`, `converting`, `skip`, `preexisting` or `error` row was never
+   * classified, and `multiCardEntriesOf` reads `null` from them anyway.
+   */
+  identityPersonCount: number | null;
   errorMsg?: string;
 };
 

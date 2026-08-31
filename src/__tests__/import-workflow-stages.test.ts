@@ -405,6 +405,7 @@ describe("stageForPhase", () => {
       // classification is what found the answer; Evaluation never happened, and
       // an eleventh pill would put a permanent step in the indicator for a
       // screen most runs never see.
+      ["cards-blocked", "scanning"],
       ["types-blocked", "scanning"],
       ["folder-report", "evaluation"],
       ["ready", "import"],
@@ -1248,7 +1249,7 @@ describe("phaseAfterFileChecks", () => {
 
 describe("phaseAfterClassification", () => {
   it("goes on to Evaluation when every type this folder holds has a form", () => {
-    expect(phaseAfterClassification({ typesClean: true })).toEqual({
+    expect(phaseAfterClassification({ cardsClean: true, typesClean: true })).toEqual({
       phase: "folder-report",
     });
   });
@@ -1260,14 +1261,56 @@ describe("phaseAfterClassification", () => {
     // gate makes is that no document is imported before its type has one. The
     // stop screen says which of the two happened; the PHASE is the same,
     // because what the user has to do next is the same.
-    expect(phaseAfterClassification({ typesClean: false })).toEqual({
+    expect(phaseAfterClassification({ cardsClean: true, typesClean: false })).toEqual({
+      phase: "types-blocked",
+    });
+  });
+
+  // ── Slice #32.08 ─────────────────────────────────────────────────────────
+
+  it("⚠️ stops at the identity scans BEFORE the types, when a folder trips both", () => {
+    // The order is the decision, not a detail. Both findings can be true of one
+    // folder and they cannot share a screen: `types-blocked` carries "Continuă
+    // fără formulare" since #32.05, so a two-card scan listed above it would be
+    // a refusal with a waiver beside it — and pressing that waiver is exactly
+    // how one Person record gets built out of two real people.
+    expect(phaseAfterClassification({ cardsClean: false, typesClean: false })).toEqual({
+      phase: "cards-blocked",
+    });
+    // …and it wins over a CLEAN type verdict too, which is the case that would
+    // otherwise let a two-card scan through to Evaluation and into the run.
+    expect(phaseAfterClassification({ cardsClean: false, typesClean: true })).toEqual({
+      phase: "cards-blocked",
+    });
+  });
+
+  it("⚠️ takes `typesClean: null` for the read the cards refusal made moot", () => {
+    // The wizard does not read the archive's list of document types at all on a
+    // run heading for `cards-blocked` — a request and up to thirty seconds for
+    // an answer nobody can act on, over a classification that is paid for again
+    // on the next run anyway. `null` is what it passes, and it must not be
+    // mistaken for "no type has a form".
+    expect(phaseAfterClassification({ cardsClean: false, typesClean: null })).toEqual({
+      phase: "cards-blocked",
+    });
+    // ⚠️ And a `null` that reaches here with CLEAN cards is the under-claiming
+    // direction rather than a pass: nobody proved the types have forms, so the
+    // run stops at the screen that says so. This pair cannot arise from
+    // `startScan` today — the only producer of `null` is the cards refusal —
+    // and it is pinned so that a future caller cannot acquire a silent
+    // free pass by handing over an answer it never obtained.
+    expect(phaseAfterClassification({ cardsClean: true, typesClean: null })).toEqual({
       phase: "types-blocked",
     });
   });
 
   it("only ever names a phase the machine actually has", () => {
-    for (const typesClean of [true, false]) {
-      expect(IMPORT_PHASES).toContain(phaseAfterClassification({ typesClean }).phase);
+    for (const cardsClean of [true, false]) {
+      for (const typesClean of [true, false, null]) {
+        expect(IMPORT_PHASES).toContain(
+          phaseAfterClassification({ cardsClean, typesClean }).phase,
+        );
+      }
     }
   });
 
@@ -1277,12 +1320,17 @@ describe("phaseAfterClassification", () => {
     // to a stage the user has finished would say the money bought nothing.
     const order = WORKFLOW_STAGES.map((s) => s.id);
     const scanning = order.indexOf("scanning");
-    for (const typesClean of [true, false]) {
-      const stage = stageForPhase(phaseAfterClassification({ typesClean }).phase);
-      expect({ typesClean, forward: order.indexOf(stage) >= scanning }).toEqual({
-        typesClean,
-        forward: true,
-      });
+    for (const cardsClean of [true, false]) {
+      for (const typesClean of [true, false, null]) {
+        const stage = stageForPhase(
+          phaseAfterClassification({ cardsClean, typesClean }).phase,
+        );
+        expect({ cardsClean, typesClean, forward: order.indexOf(stage) >= scanning }).toEqual({
+          cardsClean,
+          typesClean,
+          forward: true,
+        });
+      }
     }
   });
 
@@ -1291,10 +1339,25 @@ describe("phaseAfterClassification", () => {
     // stop is not, and must not be. Derived from both sources rather than
     // written out, because the failure this catches is the two disagreeing.
     expect(
-      stepThroughRest("scanning", phaseAfterClassification({ typesClean: true }).phase),
+      stepThroughRest(
+        "scanning",
+        phaseAfterClassification({ cardsClean: true, typesClean: true }).phase,
+      ),
     ).toBe("scanning");
     expect(
-      stepThroughRest("scanning", phaseAfterClassification({ typesClean: false }).phase),
+      stepThroughRest(
+        "scanning",
+        phaseAfterClassification({ cardsClean: true, typesClean: false }).phase,
+      ),
+    ).toBeNull();
+    // Slice #32.08 — and the third exit is a stop as well, so it is not gated
+    // either. Derived from the fork rather than written out, for the same
+    // reason: the failure this catches is the two sources disagreeing.
+    expect(
+      stepThroughRest(
+        "scanning",
+        phaseAfterClassification({ cardsClean: false, typesClean: null }).phase,
+      ),
     ).toBeNull();
   });
 });
@@ -1475,6 +1538,9 @@ describe("stepThroughRest", () => {
     // cannot leave by pressing on would be a second button for a halt they are
     // already standing in.
     expect(stepThroughRest("scanning", "types-blocked")).toBeNull();
+    // Slice #32.08 — and the identity-scan stop, which has no press off it at
+    // all, so nothing about it could ever become a gated transition.
+    expect(stepThroughRest("scanning", "cards-blocked")).toBeNull();
     expect(stepThroughRest("ready", "property")).toBeNull();
     expect(stepThroughRest("property", "tag-dialog")).toBeNull();
     expect(stepThroughRest("importing", "result")).toBeNull();
@@ -1785,7 +1851,15 @@ describe("the wizard's side of the table", () => {
     // Whitespace-tolerant: the call is Prettier-wrapped today and a reformat
     // that changes nothing must not fail this.
     expect(wizard).toMatch(/settle\(\s*"scanning",/);
-    expect(wizard).toContain("phaseAfterClassification({ typesClean: typesAreClean(lookup) })");
+    // ⚠️ Slice #32.08 — the fork takes a second input, and the wizard passes
+    // both from locals rather than naming a phase. Matched loosely, on the
+    // NAMES of the two arguments rather than on their expressions: the point of
+    // this assertion is that the wizard still asks the rule instead of holding
+    // a copy of it, and the shape of `typesClean` in particular is a
+    // conditional that a reformat or a rename of the local would break for no
+    // reason.
+    expect(wizard).toMatch(/phaseAfterClassification\(\{\s*cardsClean,/);
+    expect(wizard).toMatch(/typesClean:[^,)]*typesAreClean\(lookup\)/);
   });
 
   it("⚠️ drops the pause when the preconditions come back FAILING", () => {

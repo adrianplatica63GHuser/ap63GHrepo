@@ -1975,6 +1975,7 @@
           "docFieldSubject": "Subject",
           "error_insufficient_credits": "The Anthropic account is out of credit. Top it up and try again.",
           "error_invalid_api_key": "The Anthropic API key is invalid or missing.",
+          "error_multiple_identities": "This image holds more than one person's identity document. A person cannot be created from a scan like that — the record would be blended out of two. Split the file so that it holds exactly one identity card.",
           "error_overloaded": "The service is overloaded. Try again in a moment.",
           "error_rate_limited": "Too many requests. Wait a moment and try again.",
           "exactMatchBody": "The CNP on the card exactly matches a person in the system. Compare the details before confirming.",
@@ -1983,6 +1984,7 @@
           "extractError": "Reading the ID card failed",
           "extractErrorDismiss": "Got it",
           "extractErrorTitle": "Reading failed",
+          "extractRefusedTitle": "A person cannot be created from this image",
           "extracting": "Reading the ID card…",
           "fCitizenship": "Citizenship",
           "fCnp": "CNP",
@@ -2055,6 +2057,7 @@
         "preexistingSkipped": "✓ already here — not imported again",
         "donePreexisting": "{count, plural, one {One document was already in the system: it was not imported again.} other {# documents were already in the system: they were not imported again.}}",
         "doneUnread": "{count, plural, one {One document was not fully read by the AI. Try the read again here — each attempt is one more read and it costs money, and once you close there is nowhere left to.} other {# documents were not fully read by the AI. Try the read again here — each attempt is one more read and it costs money, and once you close there is nowhere left to.}}",
+        "doneUnreadRefused": "{count, plural, one {One document was not fully read by the AI because it holds more than one person's identity documents. There is nothing to try again here — the answer would be the same, and the read is billed every time. Split the scan and import it again.} other {# documents were not fully read by the AI because they hold more than one person's identity documents. There is nothing to try again here — the answer would be the same, and the read is billed every time. Split the scans and import them again.}}",
         "doneUnreadLocked": "{count, plural, one {One document was not fully read by the AI. Sign in again — the link below opens a new tab — then try the read again on its row.} other {# documents were not fully read by the AI. Sign in again — the link below opens a new tab — then try the read again on their rows.}}",
         "doneUnreadWaiting": "{count, plural, one {One document was not fully read by the AI. Wait for the steps in progress, and you will then be able to try the read again on its row.} other {# documents were not fully read by the AI. Wait for the steps in progress, and you will then be able to try the read again on their rows.}}",
         "donePendingPeople": "{count, plural, one {One document has a person to confirm — found by the AI or on the identity card. Once you close, there is nowhere left.} other {# documents have people to confirm — found by the AI or on the identity cards. Once you close, there is nowhere left.}}",
@@ -2096,11 +2099,13 @@
           "typeUnclassified": "the AI scan could not tell what kind of document this is, so it was filed under the general type — open the document and choose the right one",
           "typeCreateFailed": "the AI scan decided this document's type, but the type could not be confirmed, so the document was filed under the general type — open the document and choose the right one",
           "personStepUnfinished": "the identity-card step did not finish — try again with the “Confirm the people” button",
+          "personCardRefused": "this image holds more than one person's identity document, so no person was created from it — trying again will not help: split the file so that each identity card is in a file of its own, then import it again",
           "typeFormPending": "this document's type has no form yet, so the type-specific information went to Notes",
           "typeFormAdded": "this document's type gained a form during this import",
           "refillPending": "it was not read again, so its type-specific information is still in Notes",
           "refillDone": "it was read again",
           "refillFailed": "the second read did not fill the fields — what the first read filled in is unchanged",
+          "refillRefused": "the re-read was refused: this document holds more than one person's identity documents, so its information stays in Notes — split the scan and import it again",
           "refillRetyped": "it was read again, but the AI moved it onto another document type, so its information still did not reach the fields — open the document and check its type"
         },
         "typeNote": {
@@ -2109,7 +2114,8 @@
           "typesStillWithoutFormPartial": "{count, plural, one {One document type is still without a form: {names}.} other {# document types are still without a form, of which this import could only name: {names}.}} You will find all of them in Reference Data → Document Types, ticking “Only those awaiting a form”.",
           "typesCreatedEmpty": "{count, plural, one {One document type was created in this import and no document from this import ended up on it: {names}. Check in Reference Data → Document Types whether you still need it.} other {# document types were created in this import and no document from this import ended up on them: {names}. Check in Reference Data → Document Types whether you still need them.}}"
         },
-        "typeIdCardNoForm": "Document type “{type}” is an identity card, so it cannot have a form — the form was NOT saved and cannot be. The data on an identity card is captured during import as Person records. The type stays in the system without a form, which is as it should be. Do NOT run AI Discovery again on documents of this type — the answer will be the same, and the read is billed every time."
+        "typeIdCardNoForm": "Document type “{type}” is an identity card, so it cannot have a form — the form was NOT saved and cannot be. The data on an identity card is captured during import as Person records. The type stays in the system without a form, which is as it should be. Do NOT run AI Discovery again on documents of this type — the answer will be the same, and the read is billed every time.",
+        "aiMultiIdentity": "This document holds more than one person's identity documents. The AI read was refused, so that two people's details do not end up on one record. No “Try again” is offered on this row: the answer would be the same, and the read is billed every time. Split the scan and import it again."
       },
       "preflight": {
         "title": "Before you choose a folder",
@@ -2680,6 +2686,29 @@
       "leaveHint": "“Stop the import” restarts everything from the beginning, exactly as it does the first time — including the tick boxes and the settings in the bar above. Nothing is deleted from the archive, because nothing was created. The classification above has already been paid for and will be paid for again when the import is started afresh; the other button carries on without paying for it a second time.",
       "attempt": "That was attempt {n}."
     },
+    "cardsBlocked": {
+      "title": "The import has stopped: one scan holds more than one person's identity document",
+      "announce": "The files are listed below. Each has to be split, in File Explorer, so that one file holds exactly one identity card. Until that is done the import cannot go on, and there is no other way to continue it.",
+      "folderLine": "The folder “{folder}” was read and its documents were classified.",
+      "intro": "{count, plural, one {One file in this folder shows the identity documents of two or more different people. The import stops here: a file like that would become a single document carrying several people's papers — and where the file sits inside a property folder it would also create a single person, blended out of different real people. Nothing afterwards would say so.} other {# files in this folder show the identity documents of two or more different people. The import stops here: files like those would each become a single document carrying several people's papers — and where the file sits inside a property folder it would also create a single blended person, made out of different real people. Nothing afterwards would say so.}}",
+      "listTitle": "The files that have to be split",
+      "row": "{count, plural, one {This scan has to be split. The identity documents of more than one person were read on it.} other {This scan has to be split. The identity documents of # different people were read on it.}}",
+      "whatNextTitle": "What happens next",
+      "whatNext": "Open the folder in File Explorer and split each file above so that there is one file per identity card — one person, one file. Leave them where they are and give them names that say whose card each one is. ⚠ If the file sits inside a page folder — one whose files are numbered 1, 2, 3… — do not split it in there: the files in such a folder are the pages of ONE document, so two identity cards left inside it would still become one document and the second person would never be created at all. Take the page out of the page folder and put each identity card beside that folder as a file of its own. The pages left inside do not need renumbering — it is always the first page that comes out, and the run may start at any number. If the page folder is left empty, delete it: an empty folder stops the next run. Then start the import again: every check before the classification costs nothing.",
+      "noWaiver": "There is no “continue anyway” here, unlike the screen that asks for forms. A document type without a form is a call you are entitled to make; a scan holding two people's identity cards is not. It would put into the archive one document carrying two people's papers, and where the file sits inside a property folder it would also produce a person carrying one person's name and another's CNP — a person who does not exist and whom nothing would ever flag.",
+      "nothingWritten": "Nothing has been created and nothing has been written to the archive up to this point.",
+      "save": {
+        "button": "Save the list as a page",
+        "hint": "Downloads a page you can open or print while you work in File Explorer. It carries every file above, its path, and how many people were read on it.",
+        "filePrefix": "scans-to-split",
+        "documentTitle": "Scans holding more than one person's documents",
+        "generatedAt": "Generated",
+        "folderLabel": "Folder",
+        "violationsTitle": "The files that have to be split"
+      },
+      "leave": "Stop the import",
+      "leaveHint": "“Stop the import” restarts everything from the beginning, exactly as the first time — including the ticks and the settings in the bar above. Nothing is removed from the archive, because nothing was created. The classification above has already been paid for and will be paid for again when the import is restarted, once you have split the files."
+    },
     "importRun": {
       "title": "Import",
       "intro": "The scan has finished. Nothing has been saved from {folder} yet — the button below is the first one that writes to the archive.",
@@ -2747,6 +2776,7 @@
         "peopleUnconfirmed": "People found by the AI and not confirmed",
         "cardsUnanswered": "Identity cards left unanswered",
         "cardsUnreadable": "Identity cards that could not be read",
+        "cardsRefused": "Identity cards refused (more than one person on one image)",
         "typesWithoutForm": "Document types still without a form",
         "documentsAwaitingRefill": "Documents whose information stayed in Notes"
       },

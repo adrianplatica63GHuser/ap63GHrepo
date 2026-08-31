@@ -1975,6 +1975,7 @@
           "docFieldSubject": "Subiect",
           "error_insufficient_credits": "Contul Anthropic nu mai are credit. Reîncărcați-l și încercați din nou.",
           "error_invalid_api_key": "Cheia API Anthropic este invalidă sau lipsește.",
+          "error_multiple_identities": "Această imagine conține actele de identitate ale mai multor persoane. Nu se poate crea o persoană dintr-o astfel de scanare — ar ieși o persoană amestecată din două. Împărțiți fișierul astfel încât să conțină o singură carte de identitate.",
           "error_overloaded": "Serviciul este suprasolicitat. Încercați din nou în câteva momente.",
           "error_rate_limited": "Prea multe cereri. Așteptați câteva momente și încercați din nou.",
           "exactMatchBody": "CNP-ul de pe card se potrivește exact cu o persoană din sistem. Comparați datele înainte de a confirma.",
@@ -1983,6 +1984,7 @@
           "extractError": "Citirea cărții de identitate a eșuat",
           "extractErrorDismiss": "Am înțeles",
           "extractErrorTitle": "Citirea a eșuat",
+          "extractRefusedTitle": "Nu se poate crea o persoană din această imagine",
           "extracting": "Se citește cartea de identitate…",
           "fCitizenship": "Cetățenie",
           "fCnp": "CNP",
@@ -2055,6 +2057,7 @@
         "preexistingSkipped": "✓ exista deja — nu a fost importat din nou",
         "donePreexisting": "{count, plural, one {Un document se afla deja în sistem: nu a fost importat din nou.} few {# documente se aflau deja în sistem: nu au fost importate din nou.} other {# de documente se aflau deja în sistem: nu au fost importate din nou.}}",
         "doneUnread": "{count, plural, one {Un document nu a fost citit complet de AI. Încercați citirea din nou aici — fiecare încercare este o citire care se plătește, iar după ce închideți nu mai există unde.} few {# documente nu au fost citite complet de AI. Încercați citirea din nou aici — fiecare încercare este o citire care se plătește, iar după ce închideți nu mai există unde.} other {# de documente nu au fost citite complet de AI. Încercați citirea din nou aici — fiecare încercare este o citire care se plătește, iar după ce închideți nu mai există unde.}}",
+        "doneUnreadRefused": "{count, plural, one {Un document nu a fost citit complet de AI pentru că are pe el actele de identitate ale mai multor persoane. Aici nu se poate încerca din nou — răspunsul ar fi același, iar citirea se plătește de fiecare dată. Împărțiți scanarea și reluați importul.} few {# documente nu au fost citite complet de AI pentru că au pe ele actele de identitate ale mai multor persoane. Aici nu se poate încerca din nou — răspunsul ar fi același, iar citirea se plătește de fiecare dată. Împărțiți scanările și reluați importul.} other {# de documente nu au fost citite complet de AI pentru că au pe ele actele de identitate ale mai multor persoane. Aici nu se poate încerca din nou — răspunsul ar fi același, iar citirea se plătește de fiecare dată. Împărțiți scanările și reluați importul.}}",
         "doneUnreadLocked": "{count, plural, one {Un document nu a fost citit complet de AI. Autentificați-vă din nou — linkul de mai jos deschide o filă nouă — apoi încercați citirea din nou pe rândul lui.} few {# documente nu au fost citite complet de AI. Autentificați-vă din nou — linkul de mai jos deschide o filă nouă — apoi încercați citirea din nou pe rândurile lor.} other {# de documente nu au fost citite complet de AI. Autentificați-vă din nou — linkul de mai jos deschide o filă nouă — apoi încercați citirea din nou pe rândurile lor.}}",
         "doneUnreadWaiting": "{count, plural, one {Un document nu a fost citit complet de AI. Așteptați pașii aflați în curs, apoi veți putea încerca citirea din nou pe rândul lui.} few {# documente nu au fost citite complet de AI. Așteptați pașii aflați în curs, apoi veți putea încerca citirea din nou pe rândurile lor.} other {# de documente nu au fost citite complet de AI. Așteptați pașii aflați în curs, apoi veți putea încerca citirea din nou pe rândurile lor.}}",
         "donePendingPeople": "{count, plural, one {Un document are o persoană de confirmat — găsită de AI sau de pe cartea de identitate. După ce închideți, nu mai există unde.} few {# documente au persoane de confirmat — găsite de AI sau de pe cărțile de identitate. După ce închideți, nu mai există unde.} other {# de documente au persoane de confirmat — găsite de AI sau de pe cărțile de identitate. După ce închideți, nu mai există unde.}}",
@@ -2096,11 +2099,13 @@
           "typeUnclassified": "scanarea AI nu a putut stabili ce fel de document este, așa că a fost pus pe tipul general — deschideți documentul și alegeți tipul potrivit",
           "typeCreateFailed": "scanarea AI a stabilit tipul documentului, dar tipul nu a putut fi confirmat, așa că documentul a fost pus pe tipul general — deschideți documentul și alegeți tipul potrivit",
           "personStepUnfinished": "pasul pentru cartea de identitate nu s-a încheiat — încercați din nou cu butonul „Confirmă persoanele”",
+          "personCardRefused": "pe această imagine sunt actele de identitate ale mai multor persoane, așa că nu s-a creat nicio persoană din ea — nu are rost să încercați din nou: împărțiți fișierul, ca fiecare carte de identitate să fie într-un fișier al ei, apoi reluați importul",
           "typeFormPending": "tipul acestui document nu are încă formular, așa că informațiile specifice tipului au mers în Note",
           "typeFormAdded": "tipul acestui document a primit un formular în acest import",
           "refillPending": "nu a fost citit din nou, așa că informațiile specifice tipului au rămas în Note",
           "refillDone": "a fost citit din nou",
           "refillFailed": "citirea din nou nu a completat câmpurile — ce completase prima citire a rămas neschimbat",
+          "refillRefused": "citirea din nou a fost refuzată: documentul are pe el actele de identitate ale mai multor persoane, așa că informațiile lui rămân în Note — împărțiți scanarea și reluați importul",
           "refillRetyped": "a fost citit din nou, dar AI l-a mutat pe alt tip de document, așa că informațiile lui tot nu au ajuns în câmpuri — deschideți documentul și verificați ce tip are"
         },
         "typeNote": {
@@ -2109,7 +2114,8 @@
           "typesStillWithoutFormPartial": "{count, plural, one {Un tip de document a rămas fără formular: {names}.} few {# tipuri de documente au rămas fără formular, dintre care importul a putut numi doar: {names}.} other {# de tipuri de documente au rămas fără formular, dintre care importul a putut numi doar: {names}.}} Pe toate le găsiți în Date de referință → Tipuri de Document, bifând „Doar cele care așteaptă un formular”.",
           "typesCreatedEmpty": "{count, plural, one {Un tip de document a fost creat în acest import și niciun document din acest import nu a rămas pe el: {names}. Verificați în Date de referință → Tipuri de Document dacă vă mai trebuie.} few {# tipuri de documente au fost create în acest import și niciun document din acest import nu a rămas pe ele: {names}. Verificați în Date de referință → Tipuri de Document dacă vă mai trebuie.} other {# de tipuri de documente au fost create în acest import și niciun document din acest import nu a rămas pe ele: {names}. Verificați în Date de referință → Tipuri de Document dacă vă mai trebuie.}}"
         },
-        "typeIdCardNoForm": "Tipul de document „{type}” este o carte de identitate, deci nu poate avea formular — formularul NU a fost salvat și nici nu poate fi. Datele de pe o carte de identitate se preiau la import, ca persoane în sistem. Tipul rămâne în sistem fără formular, așa cum trebuie. NU reluați Descoperirea AI pentru documentele de acest tip — răspunsul va fi același, iar citirea se plătește de fiecare dată."
+        "typeIdCardNoForm": "Tipul de document „{type}” este o carte de identitate, deci nu poate avea formular — formularul NU a fost salvat și nici nu poate fi. Datele de pe o carte de identitate se preiau la import, ca persoane în sistem. Tipul rămâne în sistem fără formular, așa cum trebuie. NU reluați Descoperirea AI pentru documentele de acest tip — răspunsul va fi același, iar citirea se plătește de fiecare dată.",
+        "aiMultiIdentity": "Documentul conține actele de identitate ale mai multor persoane. Citirea AI a fost refuzată, ca să nu ajungă datele a două persoane în aceeași fișă. Pentru acest rând nu se oferă „Reîncearcă”: răspunsul ar fi același, iar citirea se plătește de fiecare dată. Împărțiți scanarea și importați-o din nou."
       },
       "preflight": {
         "title": "Înainte de a alege un folder",
@@ -2680,6 +2686,29 @@
       "leaveHint": "„Oprește importul” repornește totul de la început, exact ca la prima pornire — inclusiv bifele și setările din bara de sus. Nu se șterge nimic din arhivă, pentru că nu s-a creat nimic. Clasificarea de mai sus s-a plătit deja și se va plăti din nou la reluarea importului; celălalt buton merge mai departe fără să o plătească a doua oară.",
       "attempt": "Aceasta a fost încercarea a {n}-a."
     },
+    "cardsBlocked": {
+      "title": "Importul s-a oprit: o scanare conține actele de identitate ale mai multor persoane",
+      "announce": "Fișierele în cauză sunt listate mai jos. Fiecare trebuie împărțit, în File Explorer, astfel încât un fișier să conțină o singură carte de identitate. Fără asta importul nu merge mai departe și nu există altă cale de a-l continua.",
+      "folderLine": "Folderul „{folder}” a fost citit și documentele lui au fost clasificate.",
+      "intro": "{count, plural, one {Un fișier din acest folder arată actele de identitate a două sau mai multe persoane diferite. Importul se oprește aici: dintr-un astfel de fișier s-ar face un singur document, cu actele mai multor oameni pe el — iar acolo unde fișierul stă într-un folder de proprietate, din el s-ar crea și o singură persoană, amestecată din persoane reale diferite. Nimic nu ar mai spune ulterior că este așa.} few {# fișiere din acest folder arată actele de identitate a două sau mai multe persoane diferite. Importul se oprește aici: din astfel de fișiere s-ar face câte un singur document, cu actele mai multor oameni pe el — iar acolo unde fișierul stă într-un folder de proprietate, din el s-ar crea și o singură persoană, amestecată din persoane reale diferite. Nimic nu ar mai spune ulterior că este așa.} other {# de fișiere din acest folder arată actele de identitate a două sau mai multe persoane diferite. Importul se oprește aici: din astfel de fișiere s-ar face câte un singur document, cu actele mai multor oameni pe el — iar acolo unde fișierul stă într-un folder de proprietate, din el s-ar crea și o singură persoană, amestecată din persoane reale diferite. Nimic nu ar mai spune ulterior că este așa.}}",
+      "listTitle": "Fișierele care trebuie împărțite",
+      "row": "{count, plural, one {Trebuie împărțită. Pe această scanare s-au citit actele de identitate ale mai multor persoane diferite.} few {Trebuie împărțită. Pe această scanare s-au citit actele de identitate a # persoane diferite.} other {Trebuie împărțită. Pe această scanare s-au citit actele de identitate a # de persoane diferite.}}",
+      "whatNextTitle": "Ce urmează",
+      "whatNext": "Deschideți folderul în File Explorer și împărțiți fiecare fișier de mai sus, astfel încât să rămână câte un fișier pentru fiecare carte de identitate — o persoană, un fișier. Lăsați-le în același loc și dați-le nume care spun a cui este cartea. ⚠ Dacă fișierul se află într-un folder de pagini — adică într-un folder ale cărui fișiere sunt numerotate 1, 2, 3… — nu îl împărțiți acolo: paginile unui astfel de folder sunt paginile UNUI SINGUR document, așa că două cărți de identitate rămase înăuntru ar ajunge tot pe un singur document, iar a doua persoană nu s-ar mai crea niciodată. Scoateți pagina din folderul de pagini și puneți fiecare carte de identitate ca fișier separat lângă folder. Paginile rămase înăuntru nu trebuie renumerotate — se scoate întotdeauna prima pagină, iar șirul poate începe de la orice număr. Dacă folderul de pagini rămâne gol, ștergeți-l: un folder gol oprește rularea următoare. Apoi porniți importul din nou: verificările de dinaintea clasificării nu costă nimic.",
+      "noWaiver": "Aici nu există „continuă oricum”, spre deosebire de ecranul care cere formulare. Un tip de document fără formular este o alegere pe care o puteți face dumneavoastră; o scanare cu cărțile de identitate a două persoane nu este. Din ea ar intra în arhivă un singur document care poartă actele a doi oameni, iar dacă fișierul stă într-un folder de proprietate ar ieși și o persoană cu numele unuia și CNP-ul celuilalt — o persoană care nu există și pe care nimic nu ar semnala-o vreodată.",
+      "nothingWritten": "Până în acest moment nu s-a creat niciun document și nu s-a scris nimic în arhivă.",
+      "save": {
+        "button": "Salvează lista ca pagină",
+        "hint": "Se descarcă o pagină pe care o puteți deschide sau tipări cât timp lucrați în File Explorer. Conține toate fișierele de mai sus, calea fiecăruia și câte persoane s-au citit pe el.",
+        "filePrefix": "scanari-de-impartit",
+        "documentTitle": "Scanări cu actele mai multor persoane",
+        "generatedAt": "Generat",
+        "folderLabel": "Folderul",
+        "violationsTitle": "Fișierele care trebuie împărțite"
+      },
+      "leave": "Oprește importul",
+      "leaveHint": "„Oprește importul” repornește totul de la început, exact ca la prima pornire — inclusiv bifele și setările din bara de sus. Nu se șterge nimic din arhivă, pentru că nu s-a creat nimic. Clasificarea de până aici s-a plătit deja și se va plăti din nou la reluarea importului, după ce împărțiți fișierele."
+    },
     "importRun": {
       "title": "Import",
       "intro": "Scanarea s-a încheiat. Din folderul {folder} nu s-a salvat încă nimic — butonul de mai jos este primul care scrie în arhivă.",
@@ -2747,6 +2776,7 @@
         "peopleUnconfirmed": "Persoane găsite de AI și neconfirmate",
         "cardsUnanswered": "Cărți de identitate fără răspuns",
         "cardsUnreadable": "Cărți de identitate care nu au putut fi citite",
+        "cardsRefused": "Cărți de identitate refuzate (mai multe persoane pe aceeași imagine)",
         "typesWithoutForm": "Tipuri de documente rămase fără formular",
         "documentsAwaitingRefill": "Documente ale căror informații au rămas în Note"
       },

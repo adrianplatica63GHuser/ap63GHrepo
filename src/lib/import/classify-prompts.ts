@@ -250,6 +250,33 @@ const KNOWN_TYPE_LINES = KNOWN_DOCUMENT_TYPES
 // Phase 1 — classification (Haiku 4.5, cheap)
 // ---------------------------------------------------------------------------
 
+/**
+ * ⚠️ **ONE FIELD WAS ADDED TO THIS PROMPT IN #32.08, AND #32.02 REFUSED TO ADD
+ * ONE — SO THE DIFFERENCE HAS TO BE ARGUED RATHER THAN WAVED THROUGH.** That
+ * slice wanted a `reason` on every answer, to explain on the stop screen why a
+ * file had been read as a type, and turned it down on the grounds that a
+ * sentence would be billed on every scanned file in every folder — roughly 451
+ * images on Adrian's own archive — to say something the app already knew from
+ * `resolveAgainstTypes`. `identityPersonCount` is the same objection and a
+ * different answer, on three counts:
+ *
+ *  - It is a SMALL INTEGER, not prose. One or two output tokens per image
+ *    against a sentence's twenty or thirty, and no input tokens beyond the two
+ *    lines of instruction below.
+ *  - The app cannot work it out for itself from anything it already has.
+ *    `#32.02`'s `reason` duplicated a decision this codebase makes; this is a
+ *    fact only something looking at the pixels can report.
+ *  - It is the CHEAPER of the two shapes that were on the table. The
+ *    alternative was a second, narrower call asked only of images the
+ *    classifier had already typed as an identity card — a whole extra request,
+ *    with its own image upload, for the subset. One field on the existing call
+ *    costs less in total AND catches the case the narrow version cannot: a
+ *    two-card scan the classifier typed as something else.
+ *
+ * The measured stake: four of twenty identity scans surveyed by eye in
+ * CLINCENI.3 hold two people's cards. This is not a guard that almost never
+ * fires.
+ */
 export const CLASSIFY_SYSTEM_PROMPT = `You classify Romanian official documents from scanned images or photos.
 Your job is to identify what kind of document it is and whether structured data can be extracted from it.
 
@@ -265,6 +292,7 @@ Shape:
   "suggestedTypeKey": string | null,  // one of the known keys above, or null if none fits
   "confidence": "high" | "medium" | "low",
   "extractable": boolean,          // true if structured fields (title, number, date) can be read
+  "identityPersonCount": number,   // how many DISTINCT PEOPLE's identity documents this image shows — 0 when it shows none
   "notes": string | null           // optional 1-sentence note about unusual features or why it is not extractable
 }
 
@@ -274,6 +302,10 @@ Rules:
 - ACT_PARTAJ and CONTRACT_PARTAJ both divide co-owned property and are NOT interchangeable. ACT_PARTAJ is the notarial deed that performs the division ("act de partaj", "act de partaj voluntar"); CONTRACT_PARTAJ is the contract the parties agree it under ("contract de partaj"). Read the document's own heading and use that; if the heading says only "partaj" with no other word, choose CONTRACT_PARTAJ.
 - ANTECONTRACT is a promise to sell later ("antecontract", "promisiune de vânzare"), never CONTRACT_VANZARE, which transfers ownership now.
 - PLAN_AMPLASAMENT_DELIMITARE and PLAN_PARCELAR are single drawings; DOCUMENTATIE_CADASTRALA is the whole surveyor's file that may contain one. Prefer the specific plan when the document IS the drawing.
+- "identityPersonCount" is about what THIS IMAGE IS, and it counts PEOPLE rather than card-shaped rectangles. Decide in this order.
+- FIRST: is the image itself a personal identity document (carte de identitate / buletin), or a sheet of nothing but such documents? If it is anything else — a contract, a plan, a certificate, a bank statement — answer 0. Answer 0 as well when the image is one of those and merely quotes, annexes or reproduces somebody's identity card alongside it: that is one legitimate document and the card belongs in it.
+- THEN, and only for an image that IS an identity document: answer 1 for a single person's card however many times that card appears — the FRONT AND BACK of one card, one booklet buletin photographed spread by spread, and two photographs of the same holder in one booklet are all ONE person.
+- Count a second person ONLY on positive evidence of a second person: a second, DIFFERENT CNP (the 13-digit Romanian personal code), or a different printed name together with a different document series. If you can read neither two distinct CNPs nor two distinct names, answer 1. Never infer a second person from a second rectangle, a second photograph, or a second page.
 - If the image is blank, rotated beyond reading, or is a photograph of furniture/people (not a document), set extractable=false and suggestedTypeKey=null.
 - If the document title is in the top-right corner (ANCPI template code), that is a strong signal — use it.
 - Output strictly valid JSON — no comments, no trailing commas, no markdown code fences.`;
@@ -369,10 +401,13 @@ Shape:
 ${genericLines}${customLines ? "\n" + customLines : ""}
   },
   "lowConfidenceFields": string[],       // field keys (generic or type-specific) where you are not confident
+  "identityPersonCount": number,         // how many DISTINCT PEOPLE's identity documents these pages show — 0 when they show none
   "unmappedRaw": { [label: string]: string }  // ANY other printed text that does not fit a field above — never drop information${partiesSection}
 }
 
 Rules:
+- "identityPersonCount" is about what THIS DOCUMENT IS, not about what appears anywhere in it. Set it to 0 unless the document itself IS a personal identity document (carte de identitate / buletin) or a set of them. A contract, a power of attorney or a compensation file that ANNEXES or reproduces the parties' identity cards is 0 — those are one legitimate document and the cards belong in it. Set it to 0 for anything that merely quotes a CNP.
+- When the document IS an identity document, count PEOPLE and not card-shaped rectangles. Count 1 for a single person's card however many times that card appears: the FRONT AND BACK of one card, one booklet photographed spread by spread, or two photographs of the same holder are all ONE person. Count a second person ONLY on a second, DIFFERENT CNP, or a different printed name together with a different document series.
 - Dates must be ISO yyyy-mm-dd or null. Convert Romanian format (zi.luna.an) to ISO.
 - Numbers must be numeric strings only (digits + decimal separator), no units.
 - Do not guess. If a field is not visible or not applicable for this document, return null.${partiesRule}

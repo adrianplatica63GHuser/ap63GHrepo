@@ -151,6 +151,18 @@ export function stagesOnLine(line: WorkflowLineId): WorkflowStage[] {
  *  scanning         → concurrent Haiku AI scans running in background. Since
  *                     #29.08 this is the run's FIRST billed step, and it is
  *                     entered from the Pre-existing screen's Continuă
+ *  cards-blocked    → the classification saw a file showing more than ONE
+ *                     person's identity document, so the import stops here and
+ *                     asks for that file to be split — one file, one card
+ *                     (Slice #32.08)
+ *                     ⚠️ NOT a fork. Unlike `types-blocked` since #32.05 there
+ *                     is no second press: a type without a form is a decision a
+ *                     user may reasonably overrule, and a scan of two people's
+ *                     identity cards is not. The only ways off it are the fix
+ *                     and "Oprește importul"
+ *                     ⚠️ It is decided BEFORE `types-blocked`, and the archive's
+ *                     list of document types is not even read on a run that
+ *                     lands here — see `phaseAfterClassification`
  *  types-blocked    → the classification named a document type with no form to
  *                     put a document's information into (or the list of types
  *                     could not be read at all), so the import stops here and
@@ -194,6 +206,7 @@ export const IMPORT_PHASES = [
   "preexisting-checking",
   "preexisting-report",
   "scanning",
+  "cards-blocked",
   "types-blocked",
   "folder-report",
   "ready",
@@ -296,6 +309,11 @@ const STAGE_BY_PHASE: Record<ImportPhase, WorkflowStageId> = {
   "preexisting-checking": "preexisting",
   "preexisting-report": "preexisting",
   scanning: "scanning",
+  // Slice #32.08 - the same argument the line below makes, for the same
+  // reason: the classification is what ran and what produced the finding, and
+  // Evaluation never happened. A pill of its own would put a permanent step in
+  // the indicator for a screen most runs never see.
+  "cards-blocked": "scanning",
   // Slice #29.08 - the stop screen reports SCANNING, not a stage of its own.
   // The classification is what ran and what produced the answer; Evaluation
   // never happened. An eleventh pill would put a permanent step in the
@@ -511,13 +529,20 @@ export function phaseAfterFileChecks(input: {
  * behind a queue of billed network requests and a fetch, with no way to reach
  * it from a test. `import-wizard.tsx` calls this and holds no copy of it.
  *
- * ⚠️ **IT IS ONE LINE ON PURPOSE, AND THAT IS NOT AN EMBARRASSMENT.** The
- * decision is small; the VERDICT behind `typesClean` is not, and it lives in
- * `checkTypeForms` (src/lib/import/type-form-gate.ts), where it is tested
- * against the very matcher the import run resolves its types with. Keeping the
- * two apart is what lets each stay a table: this module knows which phase a
- * verdict leads to and nothing about document types; that one knows about
- * document types and nothing about phases.
+ * ⚠️ **IT WAS ONE LINE AND IS NOW TWO, AND THAT IS STILL NOT AN
+ * EMBARRASSMENT.** The decision is small; the VERDICTS behind `typesClean` and
+ * `cardsClean` are not, and they live in `checkTypeForms`
+ * (src/lib/import/type-form-gate.ts) and `checkMultiCard`
+ * (src/lib/import/multi-card-gate.ts), each tested against the shapes the run
+ * actually produces. Keeping the three apart is what lets each stay a table:
+ * this module knows which phase a verdict leads to and nothing about document
+ * types or identity cards; those two know about their own subject and nothing
+ * about phases.
+ *
+ * ⚠️ **AND THE SECOND LINE IS AN ORDER, WHICH IS THE ONE THING ONLY THIS
+ * MODULE CAN DECIDE.** (Slice #32.08.) Neither gate can know it is being asked
+ * beside another; which stop a folder that trips both lands on is a fact about
+ * the FLOW, so it belongs here, said once, with the argument beside it.
  *
  * ⚠️ **`false` INCLUDES "WE COULD NOT FIND OUT".** A run whose catalogue read
  * failed has not PROVED that every type has a form, and the whole promise of
@@ -528,12 +553,50 @@ export function phaseAfterFileChecks(input: {
  */
 export function phaseAfterClassification(input: {
   /**
+   * Does every file this run would import show at most ONE person's identity
+   * document?                                                  (Slice #32.08)
+   *
+   * ⚠️ **`false` MEANS A POSITIVE FINDING, WHERE `typesClean: false` ALSO
+   * MEANS "WE COULD NOT TELL", AND THE ASYMMETRY IS THE WHOLE DESIGN.** The
+   * type gate refuses on doubt because its promise is that no document is
+   * written on an unproved type. This one refuses only on evidence: a run whose
+   * classification said nothing about identity cards — because the field was
+   * missing, or the answers were malformed, or nothing was sent at all — has
+   * found no two-card scan, and treating that silence as a finding would stop
+   * every import in the product. `cardsAreClean` in `multi-card-gate.ts` is
+   * what says so, and it answers `true` for a verdict that was never taken.
+   */
+  cardsClean: boolean;
+  /**
    * Does every document type this classification established already have a
    * form? `false` when one does not, and `false` when nobody could tell.
+   *
+   * ⚠️ **`null` MEANS THE QUESTION WAS NEVER PUT, and the only run that does
+   * not put it is one the line above has already stopped.** (Slice #32.08.)
+   * Reading the archive's list of document types costs a request and up to
+   * thirty seconds, and a run heading for `cards-blocked` cannot act on the
+   * answer: its user is going to File Explorer to split a scan, and the
+   * classification — with it, every type this gate could name — is paid for
+   * again on the next run whatever the catalogue says today. So the wizard
+   * skips the read and passes `null`, exactly as `phaseAfterFileChecks` takes
+   * `null` for a check that did not run.
+   *
+   * It is accepted rather than made unrepresentable for that function's own
+   * stated reason: the caller passes one variable through, and a union that
+   * excluded `null` would push a cast into the one place this table exists to
+   * keep simple.
    */
-  typesClean: boolean;
+  typesClean: boolean | null;
 }): { phase: ImportPhase } {
-  return { phase: input.typesClean ? "folder-report" : "types-blocked" };
+  // ⚠️ **THE CARDS COME FIRST, AND THE ORDER IS THE DECISION RATHER THAN A
+  // DETAIL.** Both findings can be true of one folder, and they cannot share a
+  // screen: `types-blocked` carries "Continuă fără formulare" since #32.05, and
+  // a two-card scan listed above a press that carries the run on would be a
+  // refusal with a waiver beside it. Two screens in sequence is the honest
+  // shape — the user splits the scan, runs again, and meets the type gate then
+  // — and this is the line that puts the unwaivable one first.
+  if (!input.cardsClean) return { phase: "cards-blocked" };
+  return { phase: input.typesClean === true ? "folder-report" : "types-blocked" };
 }
 
 // ---------------------------------------------------------------------------
@@ -602,6 +665,11 @@ export function phaseAfterClassification(input: {
  *    no form, so the import STOPS; see the table's last entry. ⚠️ Since #32.05
  *    the user may press on from there to `folder-report` — but that is a press,
  *    and a press is never gated, so it is not a row here either.
+ *  - `scanning → cards-blocked`, for the same reason one line up and with one
+ *    less qualification. (Slice #32.08.) The classification found a file
+ *    showing more than one person's identity document, so the import STOPS —
+ *    and this one has no second press at all, so there is nothing about it that
+ *    could ever become a row here.
  *
  * ⚠️ **KEYED ON `from` AS WELL AS `to`, and one pair is why.** `to` alone
  * looks sufficient — every destination in the table is distinct — but
@@ -645,9 +713,10 @@ export const SELF_ADVANCING_TRANSITIONS: readonly {
   //
   // ⚠️ **Its destination is `folder-report` since #29.08, not `ready`** — the
   // Evaluation screen stands AFTER the classification now rather than before
-  // it. And that is the only destination listed: the scan's other exit,
-  // `types-blocked`, is a stop, and a pause in front of a stop is a second
-  // button for a halt the user is already standing in. ⚠️ Since #32.05 that
+  // it. And that is the only destination listed: the scan's other TWO exits,
+  // `types-blocked` and (since #32.08) `cards-blocked`, are stops, and a pause
+  // in front of a stop is a second button for a halt the user is already
+  // standing in. ⚠️ Since #32.05 that
   // screen has a press of its own — "continue without forms", which lands on
   // `folder-report` — but a press is never gated, so it is still not a row
   // here.

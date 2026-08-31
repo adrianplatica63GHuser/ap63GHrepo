@@ -101,6 +101,7 @@ import {
   type IdCardDocumentPatch,
   type IdCardDocumentSource,
 } from "@/lib/import/id-card";
+import { MULTI_IDENTITY_CODE } from "@/lib/import/multi-card-gate";
 import { buttonClass } from "@/lib/ui/button-styles";
 
 // ---------------------------------------------------------------------------
@@ -121,12 +122,30 @@ type ResolveResponse = {
   searchedName: string | null;
 };
 
-/** Codes classifyAnthropicError() can return from the extraction route. */
+/**
+ * Codes the extraction route can return — `classifyAnthropicError()`'s four,
+ * plus the route's own refusal.
+ *
+ * ⚠️ **`multiple_identities` IS NOT AN API FAILURE, and it is on this list
+ * anyway.**                                                    (Slice #32.08.)
+ * The other four say the reading could not happen; this one says the reading
+ * happened, the image holds more than one person's identity document, and the
+ * route refused to hand back fields that would build one Person record out of
+ * two real people. Both end on the same screen — the dialog's one fatal-error
+ * panel, which is its only way out — and both need a sentence a business user
+ * can act on, so both are chosen by CODE rather than by the route's English
+ * `error` string. What makes this one different is the sentence, and the
+ * sentence is in `messages/*.json`.
+ */
 const KNOWN_ERROR_CODES = [
   "insufficient_credits",
   "invalid_api_key",
   "rate_limited",
   "overloaded",
+  // The constant rather than a fifth literal: the string is a contract with the
+  // route that writes it, and `multi-card-gate.ts` is where it is said. Its type
+  // is the literal, so the `as const` below still narrows.
+  MULTI_IDENTITY_CODE,
 ] as const;
 type KnownErrorCode = (typeof KNOWN_ERROR_CODES)[number];
 
@@ -237,8 +256,19 @@ type Props = {
    * screen would otherwise say the user declined to make one. `onClose` still
    * follows, from whichever control the user presses; this only says which kind
    * of close it was. Idempotent — the caller sets a flag.
+   *
+   * ⚠️ **`refused` SEPARATES A FAILURE FROM A REFUSAL, and #32.08's second
+   * adversarial round is why it had to.** Every other route into this callback
+   * is a fault — a rate limit, a 5xx, an expired session, a timeout — and the
+   * row the caller writes says "try again with the Confirm the people button".
+   * A refusal is not a fault: the route read the image perfectly well and
+   * declined to hand back fields, because the image holds more than one
+   * person's identity document. Pressing that button sends the same image to
+   * the same model and buys the same 422, at full price, for ever — and the
+   * note was instructing exactly that. `true` here is what lets the caller take
+   * the offer away and say what to do instead.
    */
-  onFailed?: () => void;
+  onFailed?: (refused?: boolean) => void;
   onClose: () => void;
 };
 
@@ -329,6 +359,11 @@ export function IdCardPersonDialog({
         if (cancelled) return;
 
         if (!res.ok) {
+          // Slice #32.08 — set BEFORE the state that fires the effect above, so
+          // the caller is told which kind of give-up this was in the same tick.
+          const refused = data.code === MULTI_IDENTITY_CODE;
+          refusedRef.current = refused;
+          setRefusedFatal(refused);
           setFatalError(
             isKnownErrorCode(data.code)
               ? t(`error_${data.code}` as "error_rate_limited")
@@ -422,8 +457,32 @@ export function IdCardPersonDialog({
   useEffect(() => {
     failedRef.current = onFailed;
   }, [onFailed]);
+  /**
+   * Was the fatal error a REFUSAL?                              (Slice #32.08)
+   *
+   * A ref rather than state, and written on the same line that raises the
+   * error, because the effect below fires on `fatalError` alone: a second piece
+   * of state would be a second render for the effect to race, and the answer is
+   * known at the moment the error is raised. Reset nowhere, because this dialog
+   * is mounted per card and `fatalError` is a one-way door — its panel's only
+   * control is Dismiss.
+   */
+  const refusedRef = useRef(false);
+  /**
+   * The same fact as `refusedRef`, as state, because the TITLE renders from it.
+   *                                                            (Slice #32.08)
+   *
+   * ⚠️ **TWO WRITES ONE LINE APART RATHER THAN ONE, and the duplication is
+   * deliberate.** The ref is read by the effect below, which fires on
+   * `fatalError` alone — reading state there would either need it in the
+   * dependency list (re-announcing on a change that is not the error) or be a
+   * stale closure. The title cannot read a ref, because a ref does not
+   * re-render. Both are set on the same statement pair, from the same
+   * expression, at the one place a fatal error is raised from a response.
+   */
+  const [refusedFatal, setRefusedFatal] = useState(false);
   useEffect(() => {
-    if (fatalError !== null) failedRef.current?.();
+    if (fatalError !== null) failedRef.current?.(refusedRef.current);
   }, [fatalError]);
 
   // ── Linking ──────────────────────────────────────────────────────────────
@@ -682,7 +741,15 @@ export function IdCardPersonDialog({
       >
         <div className="w-full max-w-sm rounded-xl border border-card-rim bg-white p-5 shadow-xl dark:border-zinc-800 dark:bg-zinc-900">
           <h2 id="id-card-error-title" className="text-sm font-semibold text-ink dark:text-zinc-200">
-            {t("extractErrorTitle")}
+            {/* ⚠️ **A REFUSAL IS NOT A FAILURE, AND THE HEADING HAS TO SAY SO.**
+                (Slice #32.08.) `extractErrorTitle` reads "Citirea a eșuat", over
+                a body that says the read worked and was declined because the
+                image holds more than one person's identity document. That is
+                the exact contradiction this slice removed one screen along —
+                `interpretFailed` gave way to the refusal's own sentence on the
+                row — and leaving it standing here would leave it on the only
+                refusal that guards a `natural_person`. */}
+            {refusedFatal ? t("extractRefusedTitle") : t("extractErrorTitle")}
           </h2>
           <p className="mt-2 text-sm text-fade dark:text-zinc-400">{fatalError}</p>
           <div className="mt-4 flex justify-end">

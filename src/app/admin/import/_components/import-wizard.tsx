@@ -186,6 +186,13 @@ import {
 } from "@/lib/import/type-form-gate";
 import { fetchDocumentTypeCatalogue } from "@/lib/import/document-type-catalogue";
 import { ImportTypesBlockedStage } from "./import-types-blocked-stage";
+import { ImportCardsBlockedStage } from "./import-cards-blocked-stage";
+import {
+  cardsAreClean,
+  checkMultiCard,
+  type MultiCardEntry,
+  type MultiCardVerdict,
+} from "@/lib/import/multi-card-gate";
 import type { CancelFacts } from "@/lib/import/cancel-consequences";
 
 // ---------------------------------------------------------------------------
@@ -270,6 +277,55 @@ function classifiedEntriesOf(
   });
 }
 
+/**
+ * What the classifier said about how many PEOPLE each entry's identity
+ * document shows, as the multi-card gate needs it.             (Slice #32.08)
+ *
+ * ⚠️ **THE SAME `done` RULE `classifiedEntriesOf` STATES ABOVE, and for the
+ * same reason.** `startScan` seeds `scanResults` with a bare status for every
+ * walked entry, so presence in the map proves nothing; a `pending`, `skip`,
+ * `preexisting` or `error` row carries no answer, and a count surviving from a
+ * previous transition would be a claim about a scan that did not happen. The
+ * two functions are deliberately separate rather than one returning both
+ * shapes: the type gate and this gate take different inputs, are asked at
+ * different moments, and folding them would make each one's test drag the
+ * other's fixtures in.
+ *
+ * Not fetched, not asked for twice: the count came back with the classification
+ * that was already paid for, and the row above stores it.
+ */
+function multiCardEntriesOf(
+  entries: readonly FSEntry[],
+  results: ReadonlyMap<string, ScanResult>,
+): MultiCardEntry[] {
+  return entries.map((entry) => {
+    const result = results.get(entry.path);
+    return {
+      /**
+       * ⚠️ **THE PAGE THE CLASSIFICATION ACTUALLY LOOKED AT, NOT THE ENTRY'S
+       * OWN PATH — and for a page group those are different things.**
+       * (Found by an adversarial round.) `FSPageGroupEntry.path` is the
+       * SUBFOLDER, so a verdict keyed on it put a directory on a screen that
+       * says "this scan has to be split", over an instruction to split "the
+       * file" — and the user opening that folder finds twenty numbered scans
+       * and no indication which one. `scanEntry` sends `handles[0]`, so that is
+       * the file the count is about and that is the file to split.
+       *
+       * Nothing downstream needs this to be the entry key: the gate carries the
+       * string, the panel prints it, and React keys the row on it — and it is
+       * still unique per entry, because a page group's first page name is
+       * unique within its own folder.
+       */
+      path:
+        entry.kind === "page-group" && entry.handles.length > 0
+          ? `${entry.path}/${entry.handles[0].name}`
+          : entry.path,
+      identityPersonCount:
+        result?.status === "done" ? (result.identityPersonCount ?? null) : null,
+    };
+  });
+}
+
 /** Check if any file in the entry is worth sending to the scan route. */
 function entryScannable(entry: FSEntry): boolean {
   if (entry.kind === "page-group") {
@@ -315,11 +371,33 @@ async function scanEntry(entry: FSEntry): Promise<{
   suggestedTypeKey: string | null;
   confidence: "high" | "medium" | "low";
   extractable: boolean;
+  /**
+   * How many distinct people's identity documents this page shows.
+   *                                                            (Slice #32.08)
+   *
+   * ⚠️ **DECLARED HERE BECAUSE LEAVING IT OFF MADE THE WHOLE GATE DEAD CODE,
+   * SILENTLY, AND `tsc` STAYED GREEN.** The gate read `undefined` for every
+   * entry, answered `clean` on every folder, and the stop screen became
+   * unreachable in production. Found by an adversarial round.
+   *
+   * ⚠️ **THIS DECLARATION IS NOT WHAT PREVENTS A REPEAT, and a SECOND round
+   * corrected the first fix's claim that it was.** Declaring the field here
+   * only makes READING it type-safe. What makes OMITTING it an error is that
+   * `ScanResult.identityPersonCount` is REQUIRED (see `scan-table.tsx`), which
+   * is why every other construction site in this file now sets it to `null`.
+   */
+  identityPersonCount: number | null;
   notes: string | null;
 }> {
   let file: File;
   if (entry.kind === "page-group") {
-    // Use the first page of the group
+    // ⚠️ **THE FIRST PAGE OF THE GROUP, AND THE MULTI-CARD GATE INHERITS THAT
+    // LIMIT.** (Slice #32.08.) A two-card sheet on page four of a group is not
+    // seen here. Which refusal picks it up depends on what the run reads the
+    // group AS, and the rule is narrower than it looks — the AI read is given
+    // every page and is skipped only for a card that can actually produce a
+    // person. `multi-card-gate.ts`'s header states the division and the
+    // residual gap rather than promising what this line cannot deliver.
     file = await entry.handles[0].getFile();
   } else {
     file = await entry.handle.getFile();
@@ -425,6 +503,8 @@ export function ImportWizard() {
   const tStepGate = useTranslations("adminImport.stepGate");
   /** Slice #29.08 — the same region announces the stop; see its comment. */
   const tTypesBlocked = useTranslations("adminImport.typesBlocked");
+  /** Slice #32.08 — the identity-scan stop screen's own namespace. */
+  const tCardsBlocked = useTranslations("adminImport.cardsBlocked");
   /** Slice #29.11 — the account a clean check gives of what it looked at. */
   const tCheck = useTranslations("adminImport.checkResult");
   /**
@@ -811,6 +891,25 @@ export function ImportWizard() {
    * value on this component.
    */
   const [typeLookup, setTypeLookup] = useState<TypeFormLookup | null>(null);
+  /**
+   * Which files this classification refuses for showing more than ONE person's
+   * identity document, or `null` when the question has not been asked.
+   *                                                            (Slice #32.08)
+   *
+   * ⚠️ **A `MultiCardVerdict | null` WHERE `typeLookup` IS A THREE-STATE
+   * LOOKUP, and the difference is not an inconsistency.** That value has to
+   * separate "every type has a form" from "we could not find out", because the
+   * second stops the import and the first does not. This one has nothing to
+   * separate: the check reads answers the wizard is already holding, makes no
+   * request, and cannot fail. There is no third state to represent, and
+   * inventing one would be a shape a reader has to rule out.
+   *
+   * ⚠️ **CLEARED WHERE `typeLookup` IS CLEARED, and for the identical reason.**
+   * A verdict about the identity scans beside a different walk's classification
+   * is a report about files the user has since been sent to File Explorer to
+   * split.
+   */
+  const [cardVerdict, setCardVerdict] = useState<MultiCardVerdict | null>(null);
   /**
    * Is the type gate reading the archive's list right now?
    *
@@ -1306,6 +1405,9 @@ export function ImportWizard() {
       // Slice #32.05 — and the answer the user gave to that verdict. A waiver
       // is a decision about types this walk has not classified yet.
       setTypeFormsWaived(false);
+      // Slice #32.08 — and the identity-scan verdict, which is a report about
+      // this walk's files and about no other walk's.
+      setCardVerdict(null);
 
       /**
        * ⚠️ **`entries`, `observations` and `metadata` are published TOGETHER, at
@@ -1775,6 +1877,10 @@ export function ImportWizard() {
       for (const e of walked) {
         m.set(e.path, {
           status: skip.has(e.path) ? "preexisting" : entryScannable(e) ? "pending" : "skip",
+          // Slice #32.08 — `null` is the honest value: nothing has been
+          // classified. Required rather than omitted, so that the ONE
+          // construction site that must carry a real answer cannot forget it.
+          identityPersonCount: null,
         });
       }
       return m;
@@ -1819,7 +1925,10 @@ export function ImportWizard() {
           );
           setScanResults((prev) => {
             const next = new Map(prev);
-            next.set(entry.path, { status: isImg ? "scanning" : "converting" });
+            next.set(entry.path, {
+              status: isImg ? "scanning" : "converting",
+              identityPersonCount: null,
+            });
             return next;
           });
 
@@ -1832,6 +1941,14 @@ export function ImportWizard() {
                 typeKey: cl.suggestedTypeKey,
                 confidence: cl.confidence,
                 extractable: cl.extractable,
+                // ⚠️ **THE LINE THE FIRST DRAFT OF #32.08 LEFT OUT, WHICH MADE
+                // THE ENTIRE BLOCK DEAD.** The route returned the count, the
+                // gate read the field, and nothing put the one in the other —
+                // so every folder answered "clean" and the stop screen could
+                // not be reached. What stops that recurring is that the field
+                // is REQUIRED on `ScanResult`; the three sites above set it to
+                // `null` and this is the one that has a real answer.
+                identityPersonCount: cl.identityPersonCount,
               };
               // ONE object, written to both — so the gate below and the table
               // on screen are looking at the same answer rather than at two
@@ -1847,7 +1964,11 @@ export function ImportWizard() {
               if (token.cancelled) return;
               setScanResults((prev) => {
                 const next = new Map(prev);
-                next.set(entry.path, { status: "error", errorMsg: "Scan failed" });
+                next.set(entry.path, {
+                  status: "error",
+                  errorMsg: "Scan failed",
+                  identityPersonCount: null,
+                });
                 return next;
               });
             })
@@ -1884,9 +2005,39 @@ export function ImportWizard() {
      * function takes them as arguments.
      */
     const toImport = walked.filter((entry) => !skip.has(entry.path));
-    const lookup = await runTypeGate(toImport, settled, token);
-    // `null` means the run was cancelled under the request. Nobody to tell.
-    if (lookup === null) return;
+
+    /**
+     * The identity-scan refusal.                               (Slice #32.08)
+     *
+     * ⚠️ **ASKED FIRST, AND OF THE ANSWERS ALREADY IN HAND — no request, no
+     * token, nothing to cancel under.** The count came back with the
+     * classification, so this is arithmetic over `settled` and it cannot fail;
+     * that is why it is a plain verdict rather than the three-state lookup
+     * beside it, and why there is no `busy` flag for it anywhere.
+     *
+     * ⚠️ **AND WHEN IT REFUSES, THE ARCHIVE'S LIST OF DOCUMENT TYPES IS NOT
+     * READ AT ALL.** That read costs a request and up to thirty seconds, and
+     * this run is going to end on a screen that sends the user to File Explorer
+     * to split a scan — so a type verdict computed here could only be shown on
+     * a screen that has no room for it, and would in any case be recomputed on
+     * the next run, after the classification has been paid for again. Which of
+     * the two stops a folder tripping both lands on is
+     * `phaseAfterClassification`'s to say, and this file holds no copy of it;
+     * what this file decides is only whether to SPEND on a question the answer
+     * to that has already made moot.
+     */
+    const cards = checkMultiCard(multiCardEntriesOf(toImport, settled));
+    setCardVerdict(cards);
+    const cardsClean = cardsAreClean(cards);
+
+    const lookup = cardsClean ? await runTypeGate(toImport, settled, token) : null;
+    // ⚠️ **`lookup === null` MEANS TWO DIFFERENT THINGS AND ONLY ONE OF THEM
+    // RETURNS.** From `runTypeGate` it means the run was cancelled under the
+    // request, and there is nobody left to tell. From the line above it means
+    // the gate was never asked because the identity scans already stopped this
+    // run — which is a run that very much still has something to say. The
+    // `cardsClean` term is what tells them apart.
+    if (cardsClean && lookup === null) return;
 
     // Slice #29.02, re-pointed by #29.08 - the scan hands over the moment the
     // last request settles AND the gate has answered. Gated, it rests on
@@ -1897,7 +2048,13 @@ export function ImportWizard() {
     // `SELF_ADVANCING_TRANSITIONS`.
     settle(
       "scanning",
-      phaseAfterClassification({ typesClean: typesAreClean(lookup) }).phase,
+      phaseAfterClassification({
+        cardsClean,
+        // `null` where the gate was never asked — see the comment above, and
+        // `phaseAfterClassification`'s own note on why that argument accepts
+        // one rather than being narrowed to a boolean.
+        typesClean: lookup === null ? null : typesAreClean(lookup),
+      }).phase,
     );
   }, [settle, runTypeGate]);
 
@@ -2071,6 +2228,9 @@ export function ImportWizard() {
     // Slice #32.05 — "Oprește importul" is this function, so the press that
     // leaves the stop screen is also the press that forgets the waiver.
     setTypeFormsWaived(false);
+    // Slice #32.08 — and the identity-scan verdict, for the reason every other
+    // line here exists: this function drops every trace of the run.
+    setCardVerdict(null);
     setResolvedRun(null);
     setPropertiesTouched(false);
     setTouchedProperties([]);
@@ -2946,7 +3106,18 @@ export function ImportWizard() {
           permanent, and its text already changes — so it is the one place the
           announcement can be made reliably. Found by the adversarial round. */}
       <p role="status" className="sr-only">
-        {phase === "types-blocked"
+        {/* ⚠️ **Slice #32.08 gave it a third sentence, for the reason #29.08
+            gave it a second.** `cards-blocked` arrives without a press, its own
+            panel's `role="status"` would be inserted together with its text,
+            and it reports the SCANNING stage — so the indicator's announcement
+            does not change either. This region is the only channel, and it
+            carries two parts: what happened, and what to do about it. The
+            second is a sentence of its own rather than a button label, because
+            the parts are joined with a space and this screen's answer is not a
+            control at all — it is a job in File Explorer. */}
+        {phase === "cards-blocked"
+          ? [tCardsBlocked("title"), tCardsBlocked("announce")].join(" ")
+          : phase === "types-blocked"
           ? // ⚠️ **THE REASON-SPECIFIC SENTENCE, NOT A SHARED TITLE, and a
             // third round found why that matters.** A retry that turns "we
             // could not read the list" into "the list has no default type"
@@ -3475,6 +3646,38 @@ export function ImportWizard() {
         />
       )}
 
+      {/* Slice #32.08 — the OTHER place an import stops, and the import's first
+          refusal that comes from looking inside a file rather than at its name
+          or its byte count. The classification saw a scan holding more than one
+          person's identity document, so nothing goes any further and the user
+          is asked to split it: one file, one card.
+
+          ⚠️ **NO "continue anyway", HERE OR ON THE PANEL.** The screen one
+          block up has carried one since #32.05, and the distinction is the
+          whole reason these are two screens rather than two findings on one: a
+          type without a form is a decision a business user may reasonably
+          overrule, and a scan of two people's identity cards is not — waiving
+          it creates one Person record blended out of two real people, which is
+          the exact harm this slice exists to prevent.
+
+          ⚠️ **`cardVerdict !== null` is a render guard, not a state test**, on
+          the identical argument the block above makes about `typeLookup`: the
+          verdict and the phase are written in one commit at the end of
+          `startScan`, so at worst this stop screen is missing, never a stop
+          screen with nothing on it. */}
+      {phase === "cards-blocked" && cardVerdict !== null && (
+        <ImportCardsBlockedStage
+          folderName={rootFolderName}
+          verdict={cardVerdict}
+          // The same reset the type gate's "Oprește importul" uses, and for the
+          // same reason: this phase is reachable only from `scanning`, every
+          // write in the run happens after `ready`, so there is no document and
+          // no Property to account for. What HAS been spent is the
+          // classification, and `leaveHint` on the panel says so.
+          onLeave={handleCancelConfirmed}
+        />
+      )}
+
       {/* Slice #26.09 — the Import stage: the last screen before anything is
           written, and the first place the automatic AI reads are priced. It
           stays mounted behind its own three modal steps, so the shell does not
@@ -3581,6 +3784,13 @@ export function ImportWizard() {
           // told "Contract de arendă has no form" can see which of their files
           // were read as one. Found by the adversarial round.
           phase === "types-blocked" ||
+          // Slice #32.08 — and the identity-scan stop, by the same argument
+          // one line up: the table is the evidence for the sentence above it.
+          // The refused files are named on the panel; the table is where the
+          // user sees the OTHER thirty rows of the same folder that were read
+          // without trouble, which is what makes "split just this one file"
+          // read as a small job rather than as a rejected folder.
+          phase === "cards-blocked" ||
           phase === "folder-report" ||
           phase === "ready" ||
           phase === "property" ||

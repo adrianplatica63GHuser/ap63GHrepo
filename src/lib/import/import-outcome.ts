@@ -110,6 +110,12 @@ export const OUTCOME_NOTE_IDS = [
   "personNoProperty",
   "personUnreadable",
   "personStepUnfinished",
+  // Slice #32.08 — the card step was REFUSED, not failed: the image holds more
+  // than one person's identity document, so no Person may be built from it.
+  // Kept apart from `personStepUnfinished` because that note ends "try again
+  // with the Confirm the people button" and this one must not: the answer
+  // cannot change, and every press is billed.
+  "personCardRefused",
   // How far the automatic read got, where it did not run at all
   "readSkippedIdCard",
   "readSkippedNoPage",
@@ -124,6 +130,10 @@ export const OUTCOME_NOTE_IDS = [
   "refillPending",
   "refillDone",
   "refillFailed",
+  // Slice #32.08 — the re-read was REFUSED, not failed: the document's pages
+  // hold more than one person's identity document. `refillFailed` reads as
+  // something a second press might fix and this must not, so it is its own id.
+  "refillRefused",
   "refillRetyped",
 ] as const;
 
@@ -211,6 +221,35 @@ export type OutcomeRow = {
    * reach an answer this screen can report.
    */
   personStepUnfinished?: boolean;
+  /**
+   * The identity-card step was REFUSED.                         (Slice #32.08)
+   *
+   * ⚠️ **NOT A FAILURE, AND THE DISTINCTION IS THE WHOLE REASON IT IS A SECOND
+   * FLAG.** The route read the image and declined to return fields, because it
+   * holds more than one person's identity document and one Person built from
+   * two people's cards is the harm the slice exists to prevent. It is
+   * deterministic, so the remedy is not "try again" — it is to split the file
+   * and import it again, and the note says that instead.
+   */
+  personCardRefused?: boolean;
+  /**
+   * The RE-READ was refused rather than having failed.          (Slice #32.08)
+   *
+   * ⚠️ **READ BY `awaitsRefill` AND BY `refillNote`, and by both or neither.**
+   * That pair's own header states the invariant: a term in one and not the
+   * other produces either a row billed with no sentence, or a sentence and a
+   * count with no control anywhere to answer them. A third adversarial round
+   * caught exactly that after the term was added to only one of them.
+   *
+   * The RUN's read having been refused is a different event — the row's own
+   * `aiRefused` in `bulk-import-dialog.tsx` — and it is not here, because it
+   * needs no note of its own: the row and the saved report both draw
+   * `aiMultiIdentity` for it directly, out of `messages/*.json`. (Not "the
+   * sentence the read handed back", which an earlier draft of this line said:
+   * `runAiInterpret` returns `detail: null` for that reason on purpose,
+   * precisely so the wording belongs to whoever is drawing a screen.)
+   */
+  refillRefused?: boolean;
   /** Why the run did not read this document at all, when it did not. */
   readSkipped?: "id-card" | "no-page";
   /**
@@ -363,9 +402,23 @@ export function awaitsRefill(row: {
   refill?: RefillState;
   status: OutcomeRow["status"];
   preexisting?: OutcomeRow["preexisting"];
+  refillRefused?: boolean;
 }): boolean {
   if (row.status !== "done") return false;
   if (row.preexisting !== undefined) return false;
+  // ⚠️ **A REFUSED RE-READ IS NOT AN OUTSTANDING ONE.**         (Slice #32.08)
+  // A `failed` refill is ordinarily worth another press — a rate limit, a 5xx,
+  // a timeout. A REFUSAL is not: the route read the document and declined it,
+  // because its pages hold more than one person's identity document, and the
+  // same pages sent again come back refused identically, billed each time. Left
+  // in, the header goes on pricing and offering a re-read that cannot succeed —
+  // and this is the ONE predicate both that count and `handleRefill` walk, which
+  // is why the term belongs here rather than beside either of them.
+  //
+  // ⚠️ **AND `refillNote` CARRIES THE SAME TERM.** See this function's own
+  // header: a term here and not there is a row counted by the artefact and
+  // reachable by no control, which is the defect that header exists to record.
+  if (row.refillRefused === true) return false;
   return row.refill === "pending" || row.refill === "failed";
 }
 
@@ -419,6 +472,15 @@ export function idCardNote(row: OutcomeRow): OutcomeNote | null {
   if (!row.canLinkPerson) return { id: "personNoProperty", values: {} };
   if (row.personFileUnreadable === true && row.personId === undefined) {
     return { id: "personUnreadable", values: {} };
+  }
+  // ⚠️ **BEFORE `personStepUnfinished`, and the order is load-bearing.** Both
+  // flags can be true — `handleIdCardFailed` writes one of them, but a row that
+  // failed once and was refused on a later attempt carries both — and the two
+  // sentences point in opposite directions: one says press the button again,
+  // the other says the button will not help. The refusal is the one that is
+  // still true.                                                (Slice #32.08)
+  if (row.personCardRefused === true && row.personId === undefined) {
+    return { id: "personCardRefused", values: {} };
   }
   if (row.personStepUnfinished === true && row.personId === undefined) {
     return { id: "personStepUnfinished", values: {} };
@@ -553,6 +615,26 @@ export function refillNote(row: OutcomeRow): OutcomeNote | null {
   // row is a document from an earlier run, which #27.06 puts out of scope in as
   // many words.
   if (row.preexisting !== undefined) return null;
+  // ⚠️ **AHEAD OF THE OTHER BRANCHES, AND GUARDED BY THE SAME TWO STATES
+  // `awaitsRefill` READS.** (Slice #32.08.) `refillFailed` and `refillPending`
+  // both promise a second read that cannot happen on a refused row, so this
+  // comes first — and because the guard is the same pair, the count and the
+  // note stay what this file requires them to be.
+  //
+  // ⚠️ **THE `refill` GUARD IS NOT DECORATION, and an eighth adversarial round
+  // is why it is here.** The flag means "no read of this document can succeed",
+  // and the run loop sets it the first time a read is refused — at which point
+  // no re-read has been queued and `refill` is `undefined`. Written to fire for
+  // any state, this drew "the re-read was refused … its information stays in
+  // Notes" on a row whose FIRST read was refused and which has nothing in
+  // Notes, and put it in `documentsAwaitingRefill` beside "not read". A note
+  // about a re-read belongs only on a row that was owed one.
+  if (
+    row.refillRefused === true &&
+    (row.refill === "pending" || row.refill === "failed")
+  ) {
+    return { id: "refillRefused", values: {} };
+  }
   if (row.refill === "pending") return { id: "refillPending", values: {} };
   // ⚠️ Ahead of `done`, because it IS a done read — and the whole point of the
   // state is that saying only "it was read again" is the reassuring half of a
@@ -762,6 +844,19 @@ export type ImportRunSummary = {
    * the one the user had just closed.
    */
   cardsUnreadable: number;
+  /**
+   * Identity cards the system REFUSED to build a person from. (Slice #32.08)
+   *
+   * ⚠️ **Its own line for the reason `cardsUnreadable` has one**, and the same
+   * adversarial-round argument: a refused card is queued and has no person, so
+   * it used to fall into `cardsUnanswered` — a line whose sentence sends the
+   * user to a control that no longer offers this card and that could only
+   * re-buy the refusal if it did. It is not unanswered. It is a file in the
+   * folder that has to be split before this person can exist at all, and the
+   * concluding message has to say so or the five people behind five two-card
+   * scans are mentioned on no screen the user still has.
+   */
+  cardsRefused: number;
 };
 
 export function summariseImportRun(
@@ -786,6 +881,7 @@ export function summariseImportRun(
     peopleUnconfirmed: 0,
     cardsUnanswered: 0,
     cardsUnreadable: 0,
+    cardsRefused: 0,
     typesWithoutForm: 0,
     typesWithoutFormNames: [],
     documentsAwaitingRefill: 0,
@@ -827,6 +923,15 @@ export function summariseImportRun(
     } else if (row.personFileUnreadable === true) {
       // Never queued, so no control can reach it — its own line, see the field.
       summary.cardsUnreadable += 1;
+    } else if (row.personCardRefused === true) {
+      // ⚠️ **NOT `cardsUnanswered`, and a third adversarial round is why.**
+      // (Slice #32.08.) A refused card is queued and has no person, so it fell
+      // into the branch below — while the import dialog's own header had
+      // stopped counting it and its step had been removed from the backlog. Two
+      // screens, two numbers, for a card no control can reach: exactly what
+      // `SummaryRow.idCardQueued`'s note says must not happen. It is not
+      // unanswered, it is refused, and the row's own note says so.
+      summary.cardsRefused += 1;
     } else if (row.idCardQueued === true) {
       // Includes a read that FAILED: the image is fine and the step is still in
       // the queue, so this card is exactly as outstanding as one nobody has
@@ -889,9 +994,22 @@ export function summariseImportRun(
       // information reach its columns". A re-read that re-typed the document is
       // no to the second and no to the first, and dropping it here would let the
       // run conclude that everything landed.
+      // ⚠️ **`refillRefused` IS HERE, AND THE FIRST DRAFT EXCLUDED IT ON AN
+      // ARGUMENT THIS VERY BLOCK REFUTES.** (Slice #32.08, corrected by its
+      // fourth adversarial round.) That argument was "a number with no control
+      // behind it" — but `refillRetyped` is on this list and has no control
+      // either, for the reason stated in the comment above it: `awaitsRefill`
+      // answers "may this button spend a call on it" and THIS answers "did this
+      // document's information reach its columns". A refused re-read is the
+      // sharpest possible no to the second — its values are in Notes and
+      // nothing in this run will ever move them — and excluded, it appeared in
+      // nothing the user still has once the dialog closes, neither the
+      // concluding message nor the saved report's summary. Which is precisely
+      // why `cardsRefused` was given a line of its own.
       (refill.id === "refillPending" ||
         refill.id === "refillFailed" ||
-        refill.id === "refillRetyped")
+        refill.id === "refillRetyped" ||
+        refill.id === "refillRefused")
     ) {
       summary.documentsAwaitingRefill += 1;
     }
@@ -1256,6 +1374,9 @@ export const SUMMARY_LINE_IDS = [
   "peopleUnconfirmed",
   "cardsUnanswered",
   "cardsUnreadable",
+  // Slice #32.08 — beside the other two, because a reader comparing them is
+  // asking one question: which cards produced no person, and why not.
+  "cardsRefused",
   // Last, with the other things still outstanding.   (Slice #27.05)
   "typesWithoutForm",
   // …and after it, because it is what that one leaves behind.   (Slice #27.06)

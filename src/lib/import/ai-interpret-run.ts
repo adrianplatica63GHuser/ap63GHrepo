@@ -76,6 +76,7 @@ import {
   resolveImportedTitle,
 } from "@/lib/import/document-title";
 import { hasReadablePage, type FSEntry } from "@/lib/import/folder-utils";
+import { MULTI_IDENTITY_CODE } from "@/lib/import/multi-card-gate";
 
 // ---------------------------------------------------------------------------
 // Types — mirror the route's response rather than importing it, so no
@@ -224,9 +225,31 @@ export type AiInterpretRunResult =
        * `session` is the one the caller must not treat as a per-row failure:
        * the sign-in has gone, so every row after this one would fail the same
        * way and the loop aborts. `failed` is this document only.
+       *
+       * ⚠️ **`multi-identity` IS A REFUSAL, NOT A FAILURE, AND THAT IS WHY IT
+       * IS A THIRD MEMBER RATHER THAN A `failed` WITH A PARTICULAR
+       * `detail`.**                                            (Slice #32.08.)
+       * The route read the document perfectly well and declined to hand back
+       * fields, because the pages hold more than one person's identity
+       * document and writing them onto one record would build a person blended
+       * out of two real people. Two things follow that a `failed` cannot
+       * carry: the sentence the row shows is the CALLER's, out of
+       * `messages/*.json`, because this is the one refusal whose remedy is a
+       * job in File Explorer rather than a fault to report; and a second
+       * attempt cannot change the answer, which the sentence says.
+       *
+       * It is NOT treated as a `session` — the loop carries on with the rest of
+       * the folder, because every other document in it is unaffected.
        */
-      reason: "session" | "failed";
-      /** The route's own Romanian sentence, when it gave one. */
+      reason: "session" | "failed" | "multi-identity";
+      /**
+       * The route's own Romanian sentence, when it gave one.
+       *
+       * ⚠️ **`null` on `multi-identity`, deliberately.** That route's `error`
+       * is the developer-facing English fallback every refusal there carries,
+       * and surfacing it would put an English sentence on a Romanian screen.
+       * The caller chooses the sentence from the REASON instead.
+       */
       detail: string | null;
       /** The pages the route could not send, when it said which. */
       skipped: AiInterpretSkippedPage[];
@@ -558,8 +581,25 @@ export async function runAiInterpret(
     if (!res.ok) {
       const body = (await res.json().catch(() => ({}))) as {
         error?: string;
+        code?: string;
         skippedPages?: AiInterpretSkippedPage[];
       };
+      // ⚠️ **THE CODE, NOT THE STATUS AND NOT THE SENTENCE.** (Slice #32.08.)
+      // That route answers 422 for three different things — an unsupported
+      // page format, a document with no pages, and this refusal — so the status
+      // says nothing; and matching on the English `error` text would be a
+      // string comparison against a sentence somebody will reword.
+      if (body.code === MULTI_IDENTITY_CODE) {
+        // `detail: null` on purpose — see the field's own note. The skipped
+        // pages ride along unchanged: a page the route could not send is a fact
+        // about this document whichever way the call ended.
+        return {
+          ok: false,
+          reason: "multi-identity",
+          detail: null,
+          skipped: body.skippedPages ?? [],
+        };
+      }
       return {
         ok: false,
         reason: "failed",

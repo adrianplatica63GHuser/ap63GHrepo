@@ -42,6 +42,11 @@ import { unexpectedError }    from "@/lib/api/errors";
 import { ANONYMOUS_USER_ID } from "@/lib/auth/current-user";
 import { getCurrentUserIdAndRole } from "@/lib/auth/current-role";
 import { checkOcrRateLimit }  from "@/lib/rate-limit/ocr";
+import {
+  identityPersonCountOf,
+  MULTI_IDENTITY_CODE,
+  showsMoreThanOnePerson,
+} from "@/lib/import/multi-card-gate";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -81,6 +86,11 @@ type ExtractionResult = {
   fields: ExtractedFields;
   lowConfidenceFields: string[];
   unmappedRaw: Record<string, string>;
+  /**
+   * How many distinct people's identity documents the model read on this
+   * image, or `null` when it did not say.                      (Slice #32.08)
+   */
+  personCount: number | null;
 };
 
 /**
@@ -177,11 +187,15 @@ Shape:
     "addressCounty": string | null,      // judet (county), e.g. "Ilfov" — for Bucharest sectors, this is usually not printed separately, leave null
     "addressCountry": string | null      // almost always "Romania" for a domestic ID card; null only if you genuinely cannot tell it's Romanian
   },
+  "personCount": number,              // how many DISTINCT PEOPLE's identity documents this image shows — see the rule below
   "lowConfidenceFields": string[],    // keys above where you are not confident in the OCR read (blurry, ambiguous, or guessed) — this includes any addressX field where you had to guess how to split the printed address into parts
   "unmappedRaw": { [label: string]: string }  // any other text visibly printed on the card that does not fit one of the fields above (e.g. a parent's name, a barcode value, etc.) — key is your best label for it, value is the raw text
 }
 
 Rules:
+- "personCount" is about what THIS IMAGE IS: a personal identity document (carte de identitate / buletin), or a sheet of nothing but such documents. Answer 0 when it is neither — the classifier's guess can be wrong, and a marriage certificate, a contract or a compensation file printing two CNPs is not two identity cards. A single sheet holding two people's cards, one above the other, IS a sheet of identity documents and is the case this field exists for: answer 2, not 0.
+- Otherwise "personCount" counts PEOPLE, not card-shaped rectangles. Answer 1 for a single person's card however many times that one card appears on the image — the FRONT AND BACK of one card, one booklet buletin photographed spread by spread, or two photographs of the same holder in one booklet are all ONE person. Answer 2 or more ONLY on positive evidence of a second person: a second, DIFFERENT CNP, or a different printed name together with a different document series. If you cannot read two distinct CNPs or two distinct names, answer 1.
+- If "personCount" is 2 or more, still fill in "fields" for the FIRST person as best you can — the caller refuses the read on the count alone and never uses those values, but a blank object would make a wrong count indistinguishable from an unreadable image.
 - Only include a field in "unmappedRaw" if it genuinely does not fit one of the named fields above. Do not duplicate a named field into unmappedRaw. In particular, the printed domiciliu/address line should always be split across addressStreetLine/addressLocality/addressCounty/addressPostalCode/addressCountry, never placed in unmappedRaw, even if you are unsure exactly how to split it (in that case, do your best and list the relevant addressX keys in lowConfidenceFields instead).
 - If you cannot read a field at all, set it to null and do NOT list it in lowConfidenceFields (null means "not found", not "uncertain"). Only list a field in lowConfidenceFields if you extracted a value but are unsure it is correct.
 - Dates must be ISO yyyy-mm-dd or null. Never invent a date.
@@ -370,12 +384,56 @@ export async function POST(request: NextRequest): Promise<Response> {
       lowConfidenceFields: Array.isArray(raw.lowConfidenceFields) ? raw.lowConfidenceFields : [],
       unmappedRaw:
         raw.unmappedRaw && typeof raw.unmappedRaw === "object" ? raw.unmappedRaw : {},
+      // Sanitised by the gate's own function, so this boundary agrees with the
+      // classification's and the AI read's about what a usable count is.
+      personCount: identityPersonCountOf(raw.personCount),
     };
   } catch (err) {
     console.error("[extract-id-card] failed to parse model output:", textBlock, err);
     return Response.json(
       { error: "Could not parse vision API response", raw: textBlock },
       { status: 502 },
+    );
+  }
+
+  /**
+   * ⚠️ **THE LAST PLACE THE SYSTEM CAN NOTICE, AND THE ONE REFUSAL THAT MUST
+   * NOT BE SKIPPABLE.**                                        (Slice #32.08)
+   *
+   * This route is the most accurate reader of a card in the whole system, and
+   * it is the one whose answer becomes a `natural_person` row. Until this slice
+   * an image holding two different men's identity cards — two names, two CNPs,
+   * two card series — was read here into ONE set of fields and the dialog
+   * created ONE person out of it: a person who is a blend of two real people,
+   * with nothing anywhere recording that it happened. That is the live harm the
+   * slice exists to stop, and stopping it HERE is what makes it unskippable:
+   * the classification's gate can be got past by a scan the classifier read as
+   * something else, and this cannot.
+   *
+   * ⚠️ **A 422 AND NOT A 200 WITH A FLAG.** A flag would leave the decision to
+   * a client, and there are two of them — the review dialog and, one day,
+   * anything else that reaches for this route. A refusal is the response.
+   *
+   * ⚠️ **AND `showsMoreThanOnePerson`, NOT `>= 2` WRITTEN OUT HERE.** The rule
+   * lives once, in `multi-card-gate.ts`, so "more than one person" cannot come
+   * to mean different things at the three places the system can notice it. A
+   * count the model did not give is `null` and does not refuse — the same
+   * fail-open direction the gate argues at length, and the reason this is a
+   * backstop rather than the block.
+   */
+  if (showsMoreThanOnePerson(parsed.personCount)) {
+    console.warn("[extract-id-card] refused: personCount =", parsed.personCount);
+    return Response.json(
+      {
+        // English, like every other developer-facing fallback in this route.
+        // The sentence the user reads is `error_multiple_identities` in
+        // `messages/*.json`, chosen by the dialog from the CODE — which is why
+        // the code is the part that matters here.
+        error: "This image holds more than one person's identity document.",
+        code: MULTI_IDENTITY_CODE,
+        personCount: parsed.personCount,
+      },
+      { status: 422 },
     );
   }
 

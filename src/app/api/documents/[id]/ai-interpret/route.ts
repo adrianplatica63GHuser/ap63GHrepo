@@ -109,6 +109,11 @@ import {
 } from "@/lib/documents/discover-log";
 import { resolveClassifiedDocumentType } from "@/lib/documents/resolve-document-type";
 import {
+  identityPersonCountOf,
+  MULTI_IDENTITY_CODE,
+  showsMoreThanOnePerson,
+} from "@/lib/import/multi-card-gate";
+import {
   getDocumentById,
   getDocumentTypeTemplate,
   listPersonRolesForDocumentType,
@@ -496,6 +501,7 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
     suggestedTypeKey?: string | null;
     classifiedLabel?: string | null;
     lowConfidenceFields?: string[];
+    identityPersonCount?: unknown;
     unmappedRaw?: Record<string, string>;
     parties?: RawParty[];
   };
@@ -541,6 +547,11 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
   let lowConfidenceFields: string[] = [];
   let unmappedRaw: Record<string, string> = {};
   let enhancedNotes: string | null = null;
+  /**
+   * How many distinct people's identity documents these pages show, or `null`
+   * when the model did not say.                                (Slice #32.08)
+   */
+  let identityPersonCount: number | null = null;
   const parties: ExtractedParty[] = [];
 
   try {
@@ -559,6 +570,10 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
     suggestedTypeKey = canonicalTypeKey(raw.suggestedTypeKey);
     classifiedLabel = raw.classifiedLabel?.trim() || null;
     lowConfidenceFields = Array.isArray(raw.lowConfidenceFields) ? raw.lowConfidenceFields : [];
+    // Sanitised by the multi-card gate's own function, so this boundary, the
+    // classification's and the identity-card step's cannot come to disagree
+    // about what a usable count is.                            (Slice #32.08)
+    identityPersonCount = identityPersonCountOf(raw.identityPersonCount);
     unmappedRaw = raw.unmappedRaw && typeof raw.unmappedRaw === "object" ? raw.unmappedRaw : {};
 
     // ── Enhanced Notes (Slice #21.03.Import Phase 2) — fold anything the
@@ -672,6 +687,65 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
     return Response.json(
       { error: "Could not parse extraction response", raw: textBlock },
       { status: 502 },
+    );
+  }
+
+  /**
+   * ⚠️ **THE SECOND OF THE THREE PLACES THE SYSTEM CAN NOTICE, AND THE ONLY ONE
+   * THAT SEES THE WHOLE DOCUMENT.**                            (Slice #32.08)
+   *
+   * The classification's gate is the blocking one: it runs before anything is
+   * written and stops the import at `cards-blocked`. What it is given is the
+   * FIRST PAGE of the entry — full size, not a thumbnail, but one page: page
+   * one of a page group, or a PDF's first page rasterised. This call is given
+   * EVERY page, which is the difference that matters: a two-card sheet on page
+   * four of a group is invisible to the gate and visible here.
+   *
+   * ⚠️ **AND IT DOES NOT RUN FOR AN IDENTITY CARD THAT CAN PRODUCE A PERSON.**
+   * `interpretSkipReason` answers `"id-card"` for `scan.isIdCard &&
+   * scan.canCreatePerson`, deliberately, because the identity-card step
+   * extracts strictly more from one of those. It is the SECOND term that a
+   * reader trips on: a card under `common` or `floating` has no sole Property,
+   * so it is not skipped and this call does read it. So the two backstops
+   * divide up rather than overlap — the identity-card step covers the cards a
+   * person can be built from, and this covers everything else, including the
+   * dangerous case (a two-card sheet the classifier read as a contract) and
+   * every card the person flow is not offered on. Said at this length because
+   * two earlier drafts of this paragraph got it wrong in two different
+   * directions, the second of them while correcting the first.
+   *
+   * ⚠️ **IT IS A REFUSAL, NOT A PREVENTION, AND SAYING SO IS THE POINT.** By
+   * the time this runs the Document exists and its pages are uploaded — the
+   * import loop creates and uploads before it reads. So this cannot keep the
+   * file out; what it can do is refuse to put two people's details onto one
+   * record, and hand the caller a row that says which file has to be dealt
+   * with. `runAiInterpret` returns before it builds a single patch, so nothing
+   * this call read is written anywhere.
+   *
+   * ⚠️ **A 422 WITH A CODE, and the code is what the caller reads.** The
+   * sentence a user sees is `adminImport.wizard.importDialog.aiMultiIdentity`
+   * in `messages/*.json`, chosen by the dialog; this route's `error` is the
+   * developer-facing fallback every other refusal here carries.
+   *
+   * ⚠️ **A count the model did not give is `null` and does not refuse.** The
+   * same fail-open direction `multi-card-gate.ts` argues at length: a rule that
+   * treats silence as a finding stops the product the day a field is dropped
+   * from a prompt.
+   */
+  if (showsMoreThanOnePerson(identityPersonCount)) {
+    console.warn(
+      "[ai-interpret] refused: identityPersonCount =",
+      identityPersonCount,
+      "for document",
+      id,
+    );
+    return Response.json(
+      {
+        error: "This document holds more than one person's identity document.",
+        code: MULTI_IDENTITY_CODE,
+        identityPersonCount,
+      },
+      { status: 422 },
     );
   }
 
