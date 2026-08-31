@@ -817,14 +817,29 @@ describe("the Pre-existing screen's prune", () => {
     // întâmple, bifați și mergeți mai departe", and on a pruned screen there is
     // nothing to read and no tick to give.
     expect(panel).toContain('{resultOnly ? t("introDone") : t("intro")}');
-    // Three wrappers, and they are — in document order — the tick with its
-    // hint, "Verifică din nou", and the take-away page. If a later slice adds a
-    // fourth legitimately, this number is the thing to update; the assertions
-    // below name each of the three so a drop is not mistaken for an addition.
+    // Three wrappers, and they are — in document order — the show/hide-plus-
+    // take-away row, the tick with its hint, and "Verifică din nou". (Before
+    // #32.10 the third was the take-away on its own, last on the panel; that
+    // slice moved it up into the row and the count did not change.) If a later
+    // slice adds a fourth legitimately, this number is the thing to update; the
+    // assertions below name each of the three so a drop is not mistaken for an
+    // addition.
     expect(panel.split("{!resultOnly && (").length - 1).toBe(3);
-    // The explanations, both the listing and the disclosure that reopens it.
-    expect(panel).toContain("!resultOnly && (!asked || notesOpen || failed");
-    expect(panel).toContain("asked && !failed && !resultOnly && !(busy && nothingToShow)");
+    // The explanations. ⚠️ Since #32.10 the listing reads `notesOpen` FIRST
+    // rather than falling open before the archive has been asked — that
+    // starting state is the stage bar's tick to decide — while `|| failed`
+    // stays exactly where the adversarial round put it.
+    expect(panel).toContain(
+      "!resultOnly && (listingOpen || failed || (asked && busy && nothingToShow))",
+    );
+    // ⚠️ **AND THE DISCLOSURE IS NO LONGER A BLOCK OF ITS OWN.** #32.10 moved it
+    // into the row, where `!resultOnly` reaches it through the wrapper counted
+    // above. What has to stay pinned is the rest of its old guard: BOTH windows
+    // in which the explanations are forced open against `notesOpen`, because in
+    // either one a button reporting `aria-expanded="false"` over an expanded
+    // region contradicts what the user can see. `failed` is the one that
+    // matters most — see the next test.
+    expect(panel).toContain("showToggle={!failed && !(asked && busy && nothingToShow)}");
     // The pointer to a report the wizard has not mounted.
     expect(panel).toContain("{asked && !resultOnly && (");
     // And "Verifică din nou" — the one that is safe to drop ONLY because the
@@ -898,7 +913,10 @@ describe("the Pre-existing screen's prune", () => {
     const panel = read(PANEL);
     expect(panel).toContain("const handleSave = useCallback(");
     expect(panel).toContain("buildRulesPageHtml({");
-    const saveAt = panel.indexOf('{t("save.button")}');
+    // ⚠️ Since #32.10 the label is a PROP of the shared row rather than a child
+    // of a button written out here — `import-listing-controls.tsx` holds the
+    // button. The guard it has to sit inside is unchanged.
+    const saveAt = panel.indexOf('saveLabel={t("save.button")}');
     expect(saveAt).toBeGreaterThan(0);
     const guardAt = panel.slice(0, saveAt).lastIndexOf("{!resultOnly && (");
     expect(guardAt).toBeGreaterThan(0);

@@ -428,12 +428,22 @@ describe("the Duplication stage's copy, against its siblings", () => {
       expect({ term, present: cvExpr.includes(term) }).toEqual({ term, present: true });
     }
 
-    // The four blocks it governs. Two are wrappers; the rules listing and its
-    // disclosure read it inline, exactly as the Constraints panel does.
+    // The four blocks it governs. Two are wrappers — since #32.10 they are the
+    // gate and the show/hide-plus-take-away row, where before they were the gate
+    // and the take-away on its own — and the listing reads it inline, exactly as
+    // the Constraints panel does.
     expect(source.split("{!resultOnly && (").length - 1).toBe(2);
     expect(source).toContain('{resultOnly ? t("introDone") : t("intro")}');
-    expect(source).toContain("!resultOnly && (!checked || rulesOpen");
-    expect(source).toContain("checked && !resultOnly && !(busy && nothingToShow)");
+    expect(source).toContain(
+      "!resultOnly && (listingOpen || (checked && busy && nothingToShow))",
+    );
+    // ⚠️ **AND THE DISCLOSURE IS NO LONGER A BLOCK OF ITS OWN.** #32.10 moved it
+    // into the row below the listing, where `!resultOnly` reaches it through the
+    // wrapper counted above. What has to stay pinned is the OTHER half of its
+    // old guard: the window in which the listing is forced open by something
+    // other than `rulesOpen`, where a button reporting `aria-expanded="false"`
+    // over an expanded region contradicts what the user can see.
+    expect(source).toContain("showToggle={!(checked && busy && nothingToShow)}");
 
     // And the focus target follows, because on that screen `checkboxRef` is
     // null - the block holding the tick is not rendered - so an edge that

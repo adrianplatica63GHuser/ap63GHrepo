@@ -43,6 +43,7 @@ import {
   type StageIndicatorLine,
 } from "@/components/stage-indicator";
 import { buttonClass } from "@/lib/ui/button-styles";
+import { HintBubble } from "@/lib/ui/hint-bubble";
 import {
   WORKFLOW_LINE_IDS,
   stageForPhase,
@@ -73,6 +74,16 @@ type Props = {
   /** Slice #29.02 — is the run stopping after every stage that passes? */
   stepThrough: boolean;
   onStepThroughChange: (next: boolean) => void;
+  /**
+   * Slice #32.10 — does a step open with its listing in view?
+   *
+   * A DEFAULT, not a lock: it decides the state each of the four listings is in
+   * when its step is first reached, and a user who opens the rules on one step
+   * has not re-ticked this. See `import-wizard.tsx`, where the tick and the four
+   * per-step booleans are written together.
+   */
+  rulesShown: boolean;
+  onRulesShownChange: (next: boolean) => void;
 };
 
 export function ImportStageBar({
@@ -80,12 +91,16 @@ export function ImportStageBar({
   onCancel,
   stepThrough,
   onStepThroughChange,
+  rulesShown,
+  onRulesShownChange,
 }: Props) {
   const t = useTranslations("adminImport.workflow");
   const tc = useTranslations("adminImport.cancel");
   const tg = useTranslations("adminImport.stepGate");
   const stepId = useId();
   const stepHintId = useId();
+  const rulesId = useId();
+  const rulesHintId = useId();
 
   const current = stageForPhase(phase);
   const statuses = stageStatuses(current);
@@ -177,8 +192,33 @@ export function ImportStageBar({
             carries none: the whole bar is under a 40% scrim and unreachable by
             keyboard, so copy placed here would be copy nobody can read.
           */}
+          {/*
+            ── The two ticks, each explaining itself in a bubble  (#32.10) ──
+
+            Adrian: the paragraph under "Oprește-te după fiecare pas" was "text
+            that shows all the time", and he asked for it on hover instead. Both
+            ticks now carry a `HintBubble`, which opens on hover, on keyboard
+            focus and from its own ⓘ — see that component for why hover alone is
+            not an answer.
+
+            ⚠️ **THE HINT IS STILL THE TICK'S `aria-describedby`, AND THAT IS THE
+            ONE THING THIS CHANGE COULD HAVE QUIETLY BROKEN.** The string has not
+            moved and its key has not changed; what changed is whether it is
+            PAINTED. `HintBubble` keeps the paragraph in the document either way
+            — `sr-only` when closed — so the pointer below never dangles.
+
+            ⚠️ **BOTH ARE DISABLED IN A MODAL PHASE, and the bubbles with them.**
+            The Cancel's argument at the top of this file applies unchanged, and
+            a bubble under a 40% scrim that no keyboard can reach is copy nobody
+            can read. `disabled` on `HintBubble` suppresses every open path.
+          */}
           <div className="mt-3 max-w-56">
-            <div className="flex items-start gap-2">
+            <HintBubble
+              id={stepHintId}
+              text={tg("toggleHint")}
+              triggerLabel={tg("hintTrigger", { control: tg("toggle") })}
+              disabled={inModal}
+            >
               <input
                 id={stepId}
                 type="checkbox"
@@ -194,13 +234,41 @@ export function ImportStageBar({
               >
                 {tg("toggle")}
               </label>
+            </HintBubble>
+
+            {/*
+              ── Show the rules   (Slice #32.10) ──────────────────────────
+
+              Ticked by default, and NOT persisted, for the reason its neighbour
+              is not: `IMPORT_SESSION_KEY` holds a finished run's report, and a
+              viewing preference is not part of a report. It starts ticked at
+              the beginning of every run and `handleCancelConfirmed` resets it
+              with the rest.
+            */}
+            <div className="mt-2">
+              <HintBubble
+                id={rulesHintId}
+                text={tg("rulesToggleHint")}
+                triggerLabel={tg("hintTrigger", { control: tg("rulesToggle") })}
+                disabled={inModal}
+              >
+                <input
+                  id={rulesId}
+                  type="checkbox"
+                  checked={rulesShown}
+                  disabled={inModal}
+                  onChange={(e) => onRulesShownChange(e.target.checked)}
+                  aria-describedby={rulesHintId}
+                  className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded border-wire accent-cta disabled:cursor-not-allowed"
+                />
+                <label
+                  htmlFor={rulesId}
+                  className="cursor-pointer select-none text-xs font-medium text-ink dark:text-zinc-200"
+                >
+                  {tg("rulesToggle")}
+                </label>
+              </HintBubble>
             </div>
-            <p
-              id={stepHintId}
-              className="mt-1 pl-6 text-xs text-fade dark:text-zinc-400"
-            >
-              {tg("toggleHint")}
-            </p>
           </div>
         </div>
       </div>

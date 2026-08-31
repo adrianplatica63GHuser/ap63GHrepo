@@ -787,9 +787,24 @@ export function ImportWizard() {
    * for the reason `showQuiet` and `showSkipped` are: the panel re-renders on
    * every check, and a user reading the rules beside their fix list must not
    * have them shut under them.
+   *
+   * ⚠️ **IT IS TRI-STATE SINCE #32.10, AND `null` IS THE INTERESTING VALUE.** It
+   * used to mean "the user re-opened the listing after a check", because before
+   * one the panel forced the listing open and drew no toggle at all. Now the
+   * panel has a show/hide button on every screen, so what this holds is THE
+   * USER'S OWN ANSWER — and `null` for "they have not given one", where the
+   * panel falls back to the stage bar's own tick before a check and
+   * to closed after one. Both halves matter: without the tick the new control
+   * would do nothing, and without the `after a check → closed` fallback every
+   * user who changed nothing would land on the full listing instead of on their
+   * fix list. See the panel's own `rulesOpen` prop for the derivation.
+   *
+   * `null` is therefore the starting value and the value a cancel restores —
+   * NOT `true`. Writing `true` here would be a second copy of the tick's default
+   * that nothing keeps in step with it.
    */
   const [structureAcknowledged, setStructureAcknowledged] = useState(false);
-  const [structureRulesOpen, setStructureRulesOpen] = useState(false);
+  const [structureRulesOpen, setStructureRulesOpen] = useState<boolean | null>(null);
 
   /**
    * Slice #26.05 — the Constraints stage's two, which are the same two.
@@ -802,14 +817,14 @@ export function ImportWizard() {
    * re-walk bounces back to it.
    */
   const [constraintsAcknowledged, setConstraintsAcknowledged] = useState(false);
-  const [constraintsRulesOpen, setConstraintsRulesOpen] = useState(false);
+  const [constraintsRulesOpen, setConstraintsRulesOpen] = useState<boolean | null>(null);
 
   /**
    * Slice #26.06 - the Duplication stage's two, plus one that the other stages
    * did not need.
    */
   const [duplicationAcknowledged, setDuplicationAcknowledged] = useState(false);
-  const [duplicationRulesOpen, setDuplicationRulesOpen] = useState(false);
+  const [duplicationRulesOpen, setDuplicationRulesOpen] = useState<boolean | null>(null);
   /**
    * Has the duplication match been run against THIS walk?   (Slice #26.06)
    *
@@ -863,7 +878,7 @@ export function ImportWizard() {
    */
   const [preexisting, setPreexisting] = useState<PreexistingResult | null>(null);
   const [preexistingAcknowledged, setPreexistingAcknowledged] = useState(false);
-  const [preexistingNotesOpen, setPreexistingNotesOpen] = useState(false);
+  const [preexistingNotesOpen, setPreexistingNotesOpen] = useState<boolean | null>(null);
 
   /**
    * Does every document type this folder holds have a form?     (Slice #29.08)
@@ -1160,6 +1175,76 @@ export function ImportWizard() {
   const changeStepThrough = useCallback((next: boolean) => {
     stepThroughRef.current = next;
     setStepThrough(next);
+  }, []);
+
+  /**
+   * Does a step open with its listing in view?   (Slice #32.10)
+   *
+   * Adrian asked for a second tick under "Oprește-te după fiecare pas", ticked
+   * by default, deciding whether a step's rules, constraints or explanations are
+   * on screen when that step is first reached.
+   *
+   * ⚠️ **STATE AND NOTHING ELSE — DO NOT GIVE IT A REF BY REFLEX.**
+   * `stepThrough` has one because `runWalk` and `startScan` read it at the
+   * moment of a transition without taking it as a dependency, and adding it to
+   * their dependency lists would remint them on every tick. This value is read
+   * during RENDER, by four panels that already re-render on every turn of the
+   * loop. A ref here would be a second copy of the truth with no reader.
+   *
+   * ⚠️ **A DEFAULT, NOT A LOCK, AND `changeRulesShown` IS WHERE THAT LIVES.**
+   * Ticking or unticking CLEARS the four per-step answers rather than
+   * overwriting them, so this value is what the panels fall back to again —
+   * which is what makes the tick bite on the step the user is standing on when
+   * its check has not run, the screen that before #32.10 forced its listing
+   * open and drew no toggle at all. A panel's own show/hide button writes only
+   * its own value, so opening the rules on one step does not re-tick this and
+   * does not touch the other three. The exact clearing rule, and the two
+   * defects that shaped it, are at `changeRulesShown` itself.
+   *
+   * ⚠️ **NOT PERSISTED**, for the reason its neighbour is not:
+   * `IMPORT_SESSION_KEY` holds a FINISHED RUN'S REPORT, and a viewing preference
+   * is not part of a report. `SavedImportSession` has no field for one, and a
+   * new import starts ticked — see `handleCancelConfirmed`.
+   */
+  const [rulesShown, setRulesShown] = useState(true);
+
+  const changeRulesShown = useCallback((next: boolean) => {
+    setRulesShown(next);
+    /**
+     * ⚠️ **CLEAR THE PER-STEP ANSWERS — EXCEPT ONE THAT ALREADY AGREES WITH THE
+     * NEW DEFAULT. Two adversarial rounds wrote this line, one from each side.**
+     *
+     * Writing `next` into all four made the tick a ONE-WAY LATCH: once it had
+     * been touched none of the four could be `null` again for the rest of the
+     * run, so the `?? (checked ? false : rulesShown)` fallback was dead and
+     * every listing stayed open after its check — the screen the tri-state
+     * exists to prevent, reached by a user who unticked the box to try it and
+     * ticked it back.
+     *
+     * Writing `null` into all four fixed that and broke the other direction: a
+     * user who had pressed a step's own "Arată regulile" and was READING the
+     * listing, then ticked "show them everywhere", had it shut in their face —
+     * `null` on an already-checked step falls back to closed. A control
+     * labelled "show" that hides is worse than one that does nothing.
+     *
+     * So: `null` clears, and a `true` the user set themselves survives a tick
+     * that agrees with it. What remains, and is the contract rather than a
+     * defect, is that TICKING does not force a listing open on a step whose
+     * check has already run: ticked means "as it is the current behavior"
+     * (Adrian's brief), and the current behaviour there is collapsed, with the
+     * step's own button one press away. Unticking bites everywhere, because
+     * `false` is what the fallback then yields on checked and unchecked steps
+     * alike.
+     *
+     * All four in one place. Four call sites spread across the render tree is
+     * how three of them get it and the fourth is forgotten — the exact drift
+     * #32.03's own note records finding in these same panels.
+     */
+    const clear = (prev: boolean | null) => (next && prev === true ? true : null);
+    setStructureRulesOpen(clear);
+    setConstraintsRulesOpen(clear);
+    setDuplicationRulesOpen(clear);
+    setPreexistingNotesOpen(clear);
   }, []);
 
   /**
@@ -2250,22 +2335,27 @@ export function ImportWizard() {
     // renounced run would let the next one pick a folder without ever having
     // read the rules on the way past.
     setStructureAcknowledged(false);
-    setStructureRulesOpen(false);
+    // ⚠️ #32.10 — `null`, not `false`. This is tri-state now: "the user has
+    // given no answer", which is what a first-time visitor has given, and the
+    // panel then falls back to the tick — reset to its own default below. A
+    // literal `true` here would be a second copy of that default with nothing
+    // keeping the two in step.
+    setStructureRulesOpen(null);
     // Slice #26.05 — and the same for Constraints, for the same reason.
     setConstraintsAcknowledged(false);
-    setConstraintsRulesOpen(false);
+    setConstraintsRulesOpen(null);
     // Slice #26.06 — and Duplication, plus the flag that says its match ran.
     // A cancel drops the entries and the metadata, so leaving this true would
     // claim a check against a walk that no longer exists.
     setDuplicationAcknowledged(false);
-    setDuplicationRulesOpen(false);
+    setDuplicationRulesOpen(null);
     setDuplicationChecked(false);
     // Slice #26.08 - and Pre-existing, including the archive's answer. A cancel
     // drops the entries, so leaving the report standing would describe an
     // import of files this wizard no longer holds.
     setPreexisting(null);
     setPreexistingAcknowledged(false);
-    setPreexistingNotesOpen(false);
+    setPreexistingNotesOpen(null);
     // Slice #28.02 - and the STR-15 answers. Not currently reachable any other
     // way (a cancel nulls `_dirHandle`, so the only route back to a walk is
     // `handlePickFolder`, which clears these too) - but this function's contract
@@ -2283,6 +2373,11 @@ export function ImportWizard() {
     setGate(null);
     stepThroughRef.current = true;
     setStepThrough(true);
+    // Slice #32.10 — and the second tick, which is a viewing preference of
+    // exactly the same kind and goes back to its default for the same reason.
+    // The four values it answers for were reset to `null` above — "no per-step
+    // answer given" — so this line is what they then fall back to.
+    setRulesShown(true);
   }, [endRun]);
 
   // Mint a token for this mount, and retire whatever token is live on unmount —
@@ -3202,6 +3297,8 @@ export function ImportWizard() {
         onCancel={openCancelDialog}
         stepThrough={stepThrough}
         onStepThroughChange={changeStepThrough}
+        rulesShown={rulesShown}
+        onRulesShownChange={changeRulesShown}
       />
 
       {/* Step zero — what the import is going to ask of the user. */}
@@ -3371,6 +3468,7 @@ export function ImportWizard() {
           // treating `variant: gated ? …` as live behaviour.
           gated={activeGate?.rest === "structure"}
           rulesOpen={structureRulesOpen}
+          rulesShown={rulesShown}
           onRulesOpenChange={setStructureRulesOpen}
           propertyAnswers={propertyAnswers}
           onPropertyAnswer={setPropertyAnswer}
@@ -3403,6 +3501,7 @@ export function ImportWizard() {
           onCheck={() => void handleRecheck()}
           gated={activeGate?.rest === "constraints"}
           rulesOpen={constraintsRulesOpen}
+          rulesShown={rulesShown}
           onRulesOpenChange={setConstraintsRulesOpen}
           resultDetail={checkAccountsSettled ? constraintsResult : undefined}
         />
@@ -3431,6 +3530,7 @@ export function ImportWizard() {
           onCheck={() => void handleRecheck()}
           gated={activeGate?.rest === "duplication"}
           rulesOpen={duplicationRulesOpen}
+          rulesShown={rulesShown}
           onRulesOpenChange={setDuplicationRulesOpen}
           resultDetail={checkAccountsSettled ? duplicationResult : undefined}
         />
@@ -3484,6 +3584,7 @@ export function ImportWizard() {
           // leaves, and the report below is not mounted at all.
           resultOnly={preexistingResultOnly}
           notesOpen={preexistingNotesOpen}
+          rulesShown={rulesShown}
           onNotesOpenChange={setPreexistingNotesOpen}
         />
       )}

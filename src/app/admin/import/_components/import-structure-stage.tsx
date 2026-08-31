@@ -68,6 +68,8 @@ import { useLocale, useTranslations } from "next-intl";
 
 import { ActivityCue } from "@/components/activity-cue";
 import { buttonClass } from "@/lib/ui/button-styles";
+
+import { ImportListingControls } from "./import-listing-controls";
 import { buildRulesPageHtml, reportFileName } from "@/lib/import/report-html";
 import { downloadHtmlFile, fileNameStamp } from "@/lib/ui/download-html";
 import { displayPathOf } from "@/lib/import/folder-utils";
@@ -174,8 +176,38 @@ type Props = {
    * screen.
    */
   gated?: boolean;
-  rulesOpen: boolean;
+  /**
+   * The listing's state, and where it comes from.   (Slice #32.10)
+   *
+   * ⚠️ **`rulesOpen` IS THE USER'S OWN ANSWER, OR `null` FOR "THEY HAVE NOT GIVEN
+   * ONE".** It was a plain boolean until #32.10 and it could not stay one. Two
+   * facts have to be represented and a single boolean can only hold one of
+   * them: what the user chose with this panel's own show/hide button, and what
+   * the screen should do when they have chosen nothing — which is now two
+   * different things depending on whether a check has run.
+   *
+   * `rulesShown` is the stage bar's own tick: a DEFAULT for a step the user
+   * has just arrived at, not a lock. Pressing this panel's button writes
+   * `rulesOpen` and does not re-tick it, and does not touch the other three steps.
+   *
+   * The derivation is `rulesOpen ?? (checked ? false : rulesShown)`, and the
+   * `checked ? false` arm is the behaviour Adrian asked to keep: "if 'Show the
+   * Rules' is checked … as it is the current behavior". Before this slice the
+   * listing fell open before a check and collapsed after one, so the fix list
+   * led — and a run that shipped the tick without that arm would leave every
+   * user who changed nothing scrolling past the whole listing to reach what
+   * they have to go and put right, on every check, at every step.
+   *
+   * Hoisted into the wizard for the reason it always was: this subtree
+   * re-renders on every turn of the loop, and a user who opened the listing to
+   * read it beside their fix list must not have it shut on the next check.
+   */
+  rulesOpen: boolean | null;
   onRulesOpenChange: (open: boolean) => void;
+  /** The stage bar's tick — see above. Defaulted so a caller that does not know
+   * about it, and the tests that render this panel on its own, keep exactly the
+   * screen a first-time visitor met before #32.10: the listing open. */
+  rulesShown?: boolean;
   /**
    * The user's answers to STR-15 so far, keyed by the folder's path from the
    * chosen folder.   (Slice #28.02)
@@ -220,6 +252,7 @@ export function ImportStructureStage({
   gated = false,
   rulesOpen,
   onRulesOpenChange,
+  rulesShown = true,
   propertyAnswers,
   onPropertyAnswer,
   resultDetail,
@@ -297,7 +330,26 @@ export function ImportStructureStage({
    */
   const resultOnly = cleanVerdict && gated && resultDetail != null;
 
-  const showRules = !resultOnly && (!checked || rulesOpen);
+  /**
+   * Is the listing open? See the `rulesOpen` prop for why this is a derivation and
+   * not the prop itself.
+   */
+  const listingOpen = rulesOpen ?? (checked ? false : rulesShown);
+
+  /**
+   * ⚠️ **THE `!checked` ARM IS GONE, AND THAT IS THE POINT OF #32.10.**
+   *
+   * This read `!resultOnly && (!checked || rulesOpen)`: before a folder had been
+   * walked the listing was open unconditionally and no toggle was on screen at
+   * all. A tick that merely wrote `false` into `rulesOpen` would therefore have
+   * changed nothing the user was looking at when they unticked it — a control
+   * that appears to do nothing. What replaces that arm is `listingOpen` above,
+   * where the tick supplies the answer only while the user has not given one.
+   *
+   * `!resultOnly` still leads: a clean verdict at a step-through pause has no
+   * work left to help with, and #32.01's prune outranks both ticks.
+   */
+  const showRules = !resultOnly && listingOpen;
 
   /**
    * How many rules the last check found broken. Counted here because three
@@ -1024,23 +1076,12 @@ export function ImportStructureStage({
       </div>
 
       {/* ── The rules ────────────────────────────────────────────────────── */}
-      {/* Slice #32.01 — the toggle goes with the listing it opens. Offering to
-          re-show a set of rules that were all satisfied is offering to reopen
-          work that is finished, and a disclosure whose region is unconditionally
-          absent is a control that cannot do anything. */}
-      {checked && !resultOnly && (
-        <div className="mt-5">
-          <button
-            type="button"
-            onClick={() => onRulesOpenChange(!rulesOpen)}
-            aria-expanded={rulesOpen}
-            className="text-sm font-medium text-cta underline-offset-2 hover:underline"
-          >
-            {rulesOpen ? t("hideRules") : t("showRules")}
-          </button>
-        </div>
-      )}
-
+      {/* ⚠️ Slice #32.10 — the toggle that stood HERE, above the listing, as a
+          bare text link drawn only after a check, is now the left-hand button of
+          the row below the listing. #32.01's argument for pairing it with the
+          listing is unchanged and is now carried by the row's own `!resultOnly`
+          wrapper: on a screen with nothing left to put right there is no listing
+          to reopen and no page worth printing. */}
       {showRules && (
         <div className="mt-4">
           <h3 className="text-sm font-semibold text-ink dark:text-zinc-100">
@@ -1069,7 +1110,23 @@ export function ImportStructureStage({
             Unconditional, unlike those two, and deliberately: a user with no
             such folder is precisely the one who has to learn that the folders
             exist and what they would be for.
-          */}
+
+            ⚠️ **"UNCONDITIONAL" AND "RENDERS EXPANDED BEFORE THE FIRST CHECK"
+            BOTH STOPPED BEING TRUE IN #32.10, AND SAYING SO IS THE POINT.** The
+            listing's starting state is now the stage bar's tick, so a user who
+            unticks it meets this step without these two sentences on screen.
+            ⚠️ **What it does NOT cost them is the sentences themselves:**
+            `handleSave` writes all four `sharedFolders` strings into the
+            take-away page (see the `rulesNote` it builds, and the note there
+            saying why), and #32.10 moved the Save button into a row that stays
+            up whether the listing is shown or hidden — so they are one press
+            away, on a page meant to be carried to File Explorer, which is where
+            the decision this block describes is actually made. The other
+            on-screen copy, in the property step, remains gated on
+            `grouping.common.length > 0`, i.e. shown only to someone who has
+            already built the folder. Recorded rather than fixed: moving this
+            block outside the listing would put it on screen for a user who
+            asked for the listing to be gone. */}
           <div className="mt-3 rounded-md border border-card-rim bg-card p-3 dark:border-zinc-700 dark:bg-zinc-800/60">
             <p className="text-xs font-semibold uppercase tracking-wide text-fade dark:text-zinc-400">
               {t("sharedFolders.title")}
@@ -1114,6 +1171,37 @@ export function ImportStructureStage({
             </div>
           ))}
         </div>
+      )}
+
+      {/* ── Show/hide, and the take-away page ────────────────────────────── */}
+      {/* ⚠️ Slice #32.10 — Adrian's order: listing, then this row, THEN the
+          acknowledgement tick. The take-away used to be last on the panel, below
+          a tick asking the user to confirm they had read a listing they may have
+          hidden; now it is what a keyboard reaches first after the listing, so
+          the page can be saved whether or not the rules are on screen.
+
+          ⚠️ **INSIDE THE SAME `!resultOnly` GUARD AS THE BLOCK IT IS MADE FROM.**
+          #32.01 hid the take-away on a clean paused screen because a printed copy
+          of rules that were all satisfied has no reader, and #32.10 does not
+          revisit that: the stage bar's tick, whichever way it is set, must not bring it back.
+
+          The toggle is the row's own control and is present whether or not a
+          check has run — that is the half of this slice the four panels share.
+          `showToggle` is unconditional here because this panel has no window in
+          which the listing is forced open against `rulesOpen`; its three
+          siblings do, and pass `false` for the duration. */}
+      {!resultOnly && (
+        <ImportListingControls
+          open={listingOpen}
+          onOpenChange={onRulesOpenChange}
+          showToggle
+          showLabel={t("showRules")}
+          hideLabel={t("hideRules")}
+          saveLabel={t("save.button")}
+          saveHint={t("save.hint")}
+          onSave={handleSave}
+          busy={busy}
+        />
       )}
 
       {/* ── The gate ─────────────────────────────────────────────────────── */}
@@ -1200,30 +1288,6 @@ export function ImportStructureStage({
               the second, quieter copy of that journey is gone. */}
           {busy && <ActivityCue>{busyLabel}</ActivityCue>}
         </div>
-      </div>
-      )}
-
-      {/* ── The take-away copy ───────────────────────────────────────────── */}
-      {/* ⚠️ Slice #32.01 — hidden here, and NOT removed from the file. The page
-          is what a user prints and carries to File Explorer while they work, so
-          a user who still has work to do still needs it, and `handleSave` and
-          everything it reaches stay in use on that path. What has no reader is
-          a printed copy of rules that were all satisfied. */}
-      {!resultOnly && (
-      <div className="mt-5 border-t border-crease pt-4 dark:border-zinc-800">
-        {/* Fixed in passing (#26.06): `disabled={busy}`, for the reason its two
-            siblings now carry the same attribute — a Save pressed during a
-            check writes "nothing has been checked yet" into a dated page while
-            the screen behind it still shows the previous round's fix list. */}
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={busy}
-          className={buttonClass({ variant: "secondary", size: "md" })}
-        >
-          {t("save.button")}
-        </button>
-        <p className="mt-1.5 text-xs text-fade dark:text-zinc-400">{t("save.hint")}</p>
       </div>
       )}
     </section>

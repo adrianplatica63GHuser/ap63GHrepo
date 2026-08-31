@@ -2285,7 +2285,7 @@
       "intro": "Înainte de import, folderul de pe calculator trebuie să arate într-un anumit fel. Citiți regulile de mai jos, bifați că le respectați, apoi alegeți folderul. Sistemul îl verifică imediat și vă spune exact ce este de îndreptat.",
       "introDone": "Mai jos vedeți ce a găsit verificarea în folder.",
       "rulesTitle": "Regulile de structură",
-      "showRules": "Arată din nou regulile",
+      "showRules": "Arată regulile",
       "hideRules": "Ascunde regulile",
       "scope": {
         "chosenFolder": "Folderul pe care îl alegeți",
@@ -2377,7 +2377,7 @@
       "intro": "Urmează o verificare: fiecare fișier trebuie să poată fi preluat de sistem. Citiți mai jos ce se poate importa și ce nu, bifați că ați luat la cunoștință, apoi apăsați „Verifică fișierele” — se verifică același folder, nu trebuie să îl alegeți din nou.",
       "introDone": "Mai jos vedeți cifrele acestei verificări.",
       "rulesTitle": "Restricțiile pe care trebuie să le respecte fișierele",
-      "showRules": "Arată din nou restricțiile",
+      "showRules": "Arată restricțiile",
       "hideRules": "Ascunde restricțiile",
       "scope": {
         "fileType": "Ce fel de fișiere se pot importa",
@@ -2429,7 +2429,7 @@
       "intro": "Urmează o verificare, tot pe același folder: același lucru nu trebuie să se afle în el de două ori, altfel ajunge de două ori și în arhivă. Se compară doar fișierele din folderul ales, între ele — ce se află deja în sistem se verifică la pasul următor.",
       "introDone": "Mai jos vedeți ce a arătat compararea fișierelor din folderul ales, între ele. Ce se află deja în sistem se verifică la pasul următor.",
       "rulesTitle": "Ce se consideră duplicat",
-      "showRules": "Arată din nou explicațiile",
+      "showRules": "Arată explicațiile",
       "hideRules": "Ascunde explicațiile",
       "acknowledge": "Am citit ce se consideră duplicat",
       "acknowledgeHint": "Bifați după ce ați citit explicațiile și apoi din nou după fiecare îndreptare făcută în File Explorer. Bifa se cere la fiecare verificare.",
@@ -2539,7 +2539,7 @@
       "introDone": "Mai jos este ce a răspuns arhiva despre folderul ales.",
       "clean": "Niciun document din folderul ales nu se află deja în sistem.",
       "notesTitle": "Ce înseamnă „se află deja în sistem”",
-      "showNotes": "Arată din nou explicațiile",
+      "showNotes": "Arată explicațiile",
       "hideNotes": "Ascunde explicațiile",
       "acknowledge": "Am citit ce se întâmplă cu documentele care se află deja în sistem",
       "acknowledgeHint": "Bifați după ce ați citit explicațiile și apoi din nou după fiecare verificare. Bifa se cere de fiecare dată.",
@@ -2613,6 +2613,9 @@
     "stepGate": {
       "toggle": "Oprește-te după fiecare pas",
       "toggleHint": "Bifat: importul se oprește după fiecare pas care nu are nimic de îndreptat și merge mai departe când apăsați dumneavoastră. Nebifat: trece singur peste ei.",
+      "rulesToggle": "Începe fiecare pas cu regulile la vedere",
+      "rulesToggleHint": "Bifat: fiecare pas începe cu regulile, restricțiile sau explicațiile lui la vedere, iar după verificare se strâng, ca să rămână în față ce aveți de îndreptat. Nebifat: pornesc ascunse de la bun început. Butonul de pe fiecare pas le arată sau le ascunde oricând, iar pagina se poate salva în ambele cazuri.",
+      "hintTrigger": "Ce înseamnă „{control}”?",
       "why": "Importul s-a oprit aici pentru că era bifat „Oprește-te după fiecare pas”. Nu se consumă nimic cât timp citiți.",
       "advance": "Continuă la pasul „{stage}”",
       "nextAction": {

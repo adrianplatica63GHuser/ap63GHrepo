@@ -59,6 +59,8 @@ import { useLocale, useTranslations } from "next-intl";
 
 import { ActivityCue } from "@/components/activity-cue";
 import { buttonClass } from "@/lib/ui/button-styles";
+
+import { ImportListingControls } from "./import-listing-controls";
 import { buildRulesPageHtml, reportFileName } from "@/lib/import/report-html";
 import { downloadHtmlFile, fileNameStamp } from "@/lib/ui/download-html";
 import { displayPathOf } from "@/lib/import/folder-utils";
@@ -132,8 +134,38 @@ type Props = {
    * screen.
    */
   gated?: boolean;
-  rulesOpen: boolean;
+  /**
+   * The listing's state, and where it comes from.   (Slice #32.10)
+   *
+   * ⚠️ **`rulesOpen` IS THE USER'S OWN ANSWER, OR `null` FOR "THEY HAVE NOT GIVEN
+   * ONE".** It was a plain boolean until #32.10 and it could not stay one. Two
+   * facts have to be represented and a single boolean can only hold one of
+   * them: what the user chose with this panel's own show/hide button, and what
+   * the screen should do when they have chosen nothing — which is now two
+   * different things depending on whether a check has run.
+   *
+   * `rulesShown` is the stage bar's own tick: a DEFAULT for a step the user
+   * has just arrived at, not a lock. Pressing this panel's button writes
+   * `rulesOpen` and does not re-tick it, and does not touch the other three steps.
+   *
+   * The derivation is `rulesOpen ?? (checked ? false : rulesShown)`, and the
+   * `checked ? false` arm is the behaviour Adrian asked to keep: "if 'Show the
+   * Rules' is checked … as it is the current behavior". Before this slice the
+   * listing fell open before a check and collapsed after one, so the fix list
+   * led — and a run that shipped the tick without that arm would leave every
+   * user who changed nothing scrolling past the whole listing to reach what
+   * they have to go and put right, on every check, at every step.
+   *
+   * Hoisted into the wizard for the reason it always was: this subtree
+   * re-renders on every turn of the loop, and a user who opened the listing to
+   * read it beside their fix list must not have it shut on the next check.
+   */
+  rulesOpen: boolean | null;
   onRulesOpenChange: (open: boolean) => void;
+  /** The stage bar's tick — see above. Defaulted so a caller that does not know
+   * about it, and the tests that render this panel on its own, keep exactly the
+   * screen a first-time visitor met before #32.10: the listing open. */
+  rulesShown?: boolean;
   /**
    * The account of what this check looked at.   (Slice #29.11)
    *
@@ -165,6 +197,7 @@ export function ImportConstraintsStage({
   gated = false,
   rulesOpen,
   onRulesOpenChange,
+  rulesShown = true,
   resultDetail,
 }: Props) {
   const t = useTranslations("adminImport.constraints");
@@ -191,9 +224,11 @@ export function ImportConstraintsStage({
   /**
    * Show the constraints themselves, rather than only the disclosure button.
    *
-   * Before the first check they are the whole content. After one they collapse
-   * behind "Arată din nou restricțiile", because the fix list is what the user
-   * is working through.
+   * Before the first check they were the whole content, and after one they
+   * collapsed behind "Arată restricțiile" because the fix list is what the user
+   * is working through. ⚠️ Since #32.10 the FIRST half of that is the stage
+   * bar's tick to decide, not this panel's: a user who unticked that tick
+   * meets this step with the listing already behind that button.
    *
    * The third case WAS the re-check started from the EVALUATION screen, which
    * mounted this panel with the previous round's CLEAN verdict.
@@ -265,8 +300,28 @@ export function ImportConstraintsStage({
    */
   const resultOnly = cleanVerdict && gated && resultDetail != null;
 
+  /**
+   * Is the listing open? See the `rulesOpen` prop for why this is a derivation and
+   * not the prop itself.
+   */
+  const listingOpen = rulesOpen ?? (checked ? false : rulesShown);
+
+  /**
+   * ⚠️ **THE `!checked` ARM IS GONE, AND THAT IS THE POINT OF #32.10** — see
+   * `listingOpen` above for what replaces it and why a tick without it would be
+   * a control that appears to do nothing.
+   *
+   * ⚠️ **AND THE FORCED-OPEN ARM GAINED `checked`, WHICH IS NOT TIDYING.** Its
+   * own note calls it "a re-check that mounts this panel with nothing to show" —
+   * a PREVIOUS round's clean verdict, which cannot exist before the first check.
+   * Without `checked` the arm is true throughout that first check, because a
+   * null verdict counts zero violations and zero unreadable files: an unticked
+   * user would watch the listing they had just hidden sit open for the whole of
+   * the walk plus the ~760-call metadata pass, with the toggle suppressed. The
+   * `!checked` arm this slice removed was what covered that window before.
+   */
   const showRules =
-    !resultOnly && (!checked || rulesOpen || (busy && nothingToShow));
+    !resultOnly && (listingOpen || (checked && busy && nothingToShow));
 
   /**
    * The constraints, grouped and translated once — used by the screen and by
@@ -643,29 +698,16 @@ export function ImportConstraintsStage({
       </div>
 
       {/* ── The constraints ──────────────────────────────────────────────── */}
-      {/* ⚠️ Not offered while the rules are forced open by `nothingToShow`.
-          The disclosure reads `rulesOpen`, the region reads `showRules`, and
-          during that window they disagree: the button reported
+      {/* ⚠️ Slice #32.10 — the toggle that stood HERE, above the listing, as a
+          bare text link drawn only after a check, is now the left-hand button of
+          the row below the listing. Two rulings travel with it and neither is
+          weakened: #32.01's, that the toggle goes with the listing it opens (the
+          row is inside the same `!resultOnly` wrapper the listing's own guard
+          starts with), and the older one, that it is not offered while the
+          listing is forced open by `nothingToShow` — there the button reported
           `aria-expanded="false"` over an expanded region, offered to show what
-          was already shown, and pressing it only relabelled itself. A control
-          whose state contradicts what is on screen is worse than no control. */}
-      {/* Slice #32.01 — and the toggle goes with the listing it opens. Offering
-          to re-show a set of constraints that every file satisfied is offering
-          to reopen work that is finished, and a disclosure whose region is
-          unconditionally absent is a control that cannot do anything. */}
-      {checked && !resultOnly && !(busy && nothingToShow) && (
-        <div className="mt-5">
-          <button
-            type="button"
-            onClick={() => onRulesOpenChange(!rulesOpen)}
-            aria-expanded={rulesOpen}
-            className="text-sm font-medium text-cta underline-offset-2 hover:underline"
-          >
-            {rulesOpen ? t("hideRules") : t("showRules")}
-          </button>
-        </div>
-      )}
-
+          was already shown, and pressing it only relabelled itself. That window
+          is now `showToggle={false}` on the row. */}
       {showRules && (
         <div className="mt-4">
           <h3 className="text-sm font-semibold text-ink dark:text-zinc-100">
@@ -702,6 +744,38 @@ export function ImportConstraintsStage({
             </div>
           ))}
         </div>
+      )}
+
+      {/* ── Show/hide, and the take-away page ────────────────────────────── */}
+      {/* ⚠️ Slice #32.10 — Adrian's order: listing, then this row, THEN the
+          acknowledgement tick. The take-away used to be last on the panel, below
+          a tick asking the user to confirm they had read a listing they may have
+          hidden; now it is what a keyboard reaches first after the listing, so
+          the page can be saved whether or not the constraints are on screen.
+
+          ⚠️ **INSIDE THE SAME `!resultOnly` GUARD AS THE BLOCK IT IS MADE FROM.**
+          #32.01 hid the take-away on a clean paused screen because a printed
+          copy of constraints nothing broke has no reader, and #32.10 does not revisit
+          that: the stage bar's tick, whichever way it is set, must not bring it back.
+
+          ⚠️ **`showToggle` IS FALSE FOR EXACTLY THE WINDOW THE OLD DISCLOSURE WAS
+          ABSENT FOR** — a re-check with nothing on screen, where the listing is
+          forced open by something other than `rulesOpen` and a button reading
+          `aria-expanded="false"` over an expanded region would contradict what
+          the user can see. The SAVE half stays up through it, which is why the
+          flag is on the button rather than on the row. */}
+      {!resultOnly && (
+        <ImportListingControls
+          open={listingOpen}
+          onOpenChange={onRulesOpenChange}
+          showToggle={!(checked && busy && nothingToShow)}
+          showLabel={t("showRules")}
+          hideLabel={t("hideRules")}
+          saveLabel={t("save.button")}
+          saveHint={t("save.hint")}
+          onSave={handleSave}
+          busy={busy}
+        />
       )}
 
       {/* ── The gate ─────────────────────────────────────────────────────── */}
@@ -777,33 +851,6 @@ export function ImportConstraintsStage({
               until a folder has been checked. */}
           {busy && <ActivityCue>{busyLabel}</ActivityCue>}
         </div>
-      </div>
-      )}
-
-      {/* ── The take-away copy ───────────────────────────────────────────── */}
-      {/* ⚠️ Slice #32.01 — hidden here, and NOT removed from the file. The page
-          is what a user prints and carries to File Explorer while they work, so
-          a user who still has work to do still needs it, and `handleSave` and
-          everything it reaches stay in use on that path. What has no reader is a
-          printed copy of constraints every file already satisfied. */}
-      {!resultOnly && (
-      <div className="mt-5 border-t border-crease pt-4 dark:border-zinc-800">
-        {/* Fixed in passing (#26.06): `disabled={busy}`. `settled` is
-            `checked && !busy`, so a Save pressed during a check wrote "the
-            files have not been checked yet" into a dated page while the screen
-            behind it still showed the previous round's complete fix list — the
-            one thing the user actually carries into File Explorer. The check
-            here is a re-walk plus the ~760-call metadata pass, so the window is
-            seconds long. */}
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={busy}
-          className={buttonClass({ variant: "secondary", size: "md" })}
-        >
-          {t("save.button")}
-        </button>
-        <p className="mt-1.5 text-xs text-fade dark:text-zinc-400">{t("save.hint")}</p>
       </div>
       )}
     </section>

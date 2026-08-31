@@ -1631,7 +1631,18 @@ describe("the pause's copy", () => {
     expect(w.announcement.toLowerCase()).toContain(unit);
     // And no second word for it. "etapă" is the one that crept in.
     if (file.startsWith("ro")) {
-      for (const v of [g.toggle, g.toggleHint, g.why, g.advance]) {
+      // Slice #32.10 adds two more strings to this block and both talk about
+      // steps for a living — "Începe fiecare pas cu regulile la vedere" and a
+      // hint that opens on the same words — so they join the list rather than
+      // being exempted from it.
+      for (const v of [
+        g.toggle,
+        g.toggleHint,
+        g.why,
+        g.advance,
+        g.rulesToggle,
+        g.rulesToggleHint,
+      ]) {
         expect(v.toLowerCase()).not.toContain("etap");
       }
     }
@@ -1715,13 +1726,91 @@ describe("the pause's copy", () => {
 
   it.each(LOCALES)("carries the pause's own strings in %s", (file) => {
     const g = loadStepGateMessages(file) as Record<string, unknown>;
-    for (const key of ["toggle", "toggleHint", "why", "advance"]) {
+    // ⚠️ Slice #32.10 — the second tick's three strings get exactly the same
+    // treatment as the first's, and for the reason this file's header gives:
+    // `DEFAULT_LOCALE` is `ro-RO`, so a missing key does not fall back to
+    // English, it renders the dotted path beside a checkbox in the shipping UI.
+    for (const key of [
+      "toggle",
+      "toggleHint",
+      "why",
+      "advance",
+      "rulesToggle",
+      "rulesToggleHint",
+      "hintTrigger",
+    ]) {
       expect(typeof g[key]).toBe("string");
       expect((g[key] as string).length).toBeGreaterThan(0);
     }
     // The button names where it goes, and the name comes from the indicator's
     // own vocabulary — a user stepping through on purpose is reading the pills.
     expect(g.advance as string).toContain("{stage}");
+    // ⚠️ **AND THE ⓘ NAMES THE TICK IT EXPLAINS BY INTERPOLATION, NEVER BY A
+    // SECOND COPY OF THE LABEL.** Two ticks share this one string, and a screen
+    // reader listing the bar's buttons has to be able to tell them apart. A
+    // literal "Oprește-te după fiecare pas" written into it would be two strings
+    // with one meaning, and would name only one of the two.
+    expect(g.hintTrigger as string).toContain("{control}");
+  });
+
+  it.each(LOCALES)("⚠️ says what unticking \"Arată regulile\" actually does, in %s", (file) => {
+    // Slice #32.10. The bubble is the only place the tick is explained — the
+    // paragraph that used to sit under it permanently is gone — so a hint that
+    // stops short of naming the way back is a hint that leaves a user who
+    // unticked with no idea the rules are still reachable. Both halves have to
+    // be in it: that each step's own button brings the listing back, and that
+    // the page can still be saved either way.
+    const g = loadStepGateMessages(file) as Record<string, string>;
+    const hint = g.rulesToggleHint.toLowerCase();
+    const [ticked, unticked, back, save] = file.startsWith("ro")
+      ? ["bifat", "nebifat", "buton", "salva"]
+      : ["ticked", "unticked", "button", "saved"];
+    for (const word of [ticked, unticked, back, save]) {
+      expect({ file, word, present: hint.includes(word) }).toEqual({
+        file,
+        word,
+        present: true,
+      });
+    }
+    // ⚠️ **AND IT IS NOT THE OTHER TICK'S HINT WITH A WORD CHANGED.** The two
+    // sit one under the other, each in its own bubble; a reader who opens both
+    // and finds the same sentence has learned nothing about the second.
+    expect(g.rulesToggleHint).not.toEqual(g.toggleHint);
+    expect(g.rulesToggle).not.toEqual(g.toggle);
+
+    // ⚠️ **AND IT IS NOT THE SAME STRING AS ANY STEP'S OWN SHOW BUTTON.** The
+    // bar is rendered above every phase, so on the Structure step the tick and
+    // that panel's button are on screen together. Adrian's caption was "Show
+    // the Rules", which is byte-identical to `structure.showRules` — two
+    // controls with one name, one a checkbox and one a button, and a
+    // `getByText` selector written later could not tell them apart. The tick
+    // says what it actually governs instead: every step, not this one.
+    const all = JSON.parse(
+      fs.readFileSync(path.join(process.cwd(), "messages", file), "utf8"),
+    ) as { adminImport: Record<string, { showRules?: string; showNotes?: string }> };
+    for (const section of ["structure", "constraints", "duplication", "preexisting"]) {
+      const label =
+        all.adminImport[section]?.showRules ?? all.adminImport[section]?.showNotes;
+      expect(typeof label).toBe("string");
+      // ⚠️ **NEITHER MAY CONTAIN THE OTHER, not merely differ.** An adversarial
+      // round pointed out that byte-inequality certifies nothing here: the tick
+      // read "Arată regulile la fiecare pas" and the Structure button "Arată
+      // regulile", so `getByText("Arată regulile")` — which matches by
+      // SUBSTRING unless `exact: true` — still resolved to both, which is the
+      // hazard this test names. The tick says when it applies instead.
+      const collides =
+        label === g.rulesToggle ||
+        label!.includes(g.rulesToggle) ||
+        g.rulesToggle.includes(label!);
+      expect({ section, label, collides }).toEqual({ section, label, collides: false });
+      // …and none of them still offers to show something "again", which stopped
+      // being true the moment a listing could be reached having never been shown.
+      const again = file.startsWith("ro") ? "din nou" : "again";
+      expect({ section, again: label!.toLowerCase().includes(again) }).toEqual({
+        section,
+        again: false,
+      });
+    }
   });
 });
 
@@ -1796,6 +1885,135 @@ describe("the wizard's side of the table", () => {
     for (const stale of ["stepThroughRef.current = false;", "setStepThrough(false);"]) {
       expect({ stale, present: body.includes(stale) }).toEqual({ stale, present: false });
     }
+    // ⚠️ Slice #32.10 — and the second tick, plus the four booleans it governs.
+    // Same contract, same trap: these four reset to `false` while `false` was
+    // what "a first-time visitor" meant, and since #32.10 it means the opposite.
+    // A cancel that left them false would hand the next run a ticked box over
+    // four hidden listings.
+    for (const written of [
+      "setRulesShown(true);",
+      "setStructureRulesOpen(null);",
+      "setConstraintsRulesOpen(null);",
+      "setDuplicationRulesOpen(null);",
+      "setPreexistingNotesOpen(null);",
+    ]) {
+      expect({ written, present: body.includes(written) }).toEqual({ written, present: true });
+    }
+    // ⚠️ **`null`, NOT `true`, AND THE DISTINCTION IS THE WHOLE TRI-STATE.**
+    // `true` would be a second copy of the tick's default sitting in a reset
+    // function, so a later slice that changed the default would leave a cancel
+    // restoring the old one. `false` would hand the next run four hidden
+    // listings under a ticked box.
+    for (const stale of [
+      "setRulesShown(false);",
+      "setStructureRulesOpen(false);",
+      "setConstraintsRulesOpen(false);",
+      "setDuplicationRulesOpen(false);",
+      "setPreexistingNotesOpen(false);",
+      "setStructureRulesOpen(true);",
+      "setConstraintsRulesOpen(true);",
+      "setDuplicationRulesOpen(true);",
+      "setPreexistingNotesOpen(true);",
+    ]) {
+      expect({ stale, present: body.includes(stale) }).toEqual({ stale, present: false });
+    }
+  });
+
+  it("⚠️ starts the run with \"Arată regulile\" TICKED, and the four listings with it", () => {
+    // Slice #32.10, and it is the line the whole slice is invisible without: the
+    // tick decides the starting state of four booleans, so a default that
+    // disagreed with them would ship a ticked box over four hidden listings —
+    // exactly the "control that appears to do nothing" this slice exists to
+    // remove, in the other direction. Nothing else in this repo pins either
+    // value; no suite renders `ImportStageBar` or `ImportWizard`.
+    expect(wizard).toContain("const [rulesShown, setRulesShown] = useState(true);");
+    // ⚠️ **AND THE FOUR START `null`, NOT `true`.** They are tri-state since
+    // #32.10 — the user's own answer, or "none given" — and `null` is what makes
+    // the tick the answer before a check and `false` the answer after one. A
+    // literal `true` here would be a second copy of the tick's default that
+    // nothing keeps in step with it, and it would leave the listing open after a
+    // check, which is the screen this slice must not produce.
+    for (const decl of [
+      "const [structureRulesOpen, setStructureRulesOpen] = useState<boolean | null>(null);",
+      "const [constraintsRulesOpen, setConstraintsRulesOpen] = useState<boolean | null>(null);",
+      "const [duplicationRulesOpen, setDuplicationRulesOpen] = useState<boolean | null>(null);",
+      "const [preexistingNotesOpen, setPreexistingNotesOpen] = useState<boolean | null>(null);",
+    ]) {
+      expect({ decl, present: wizard.includes(decl) }).toEqual({ decl, present: true });
+    }
+    // …and every panel is handed the tick itself, because the tick is what
+    // answers for a step the user has not answered for.
+    expect(wizard.split("rulesShown={rulesShown}").length - 1).toBe(5);
+    // ⚠️ **STATE AND NOTHING ELSE — NO REF.** `stepThrough` has one because
+    // `runWalk` and `startScan` read it at the moment of a transition without
+    // taking it as a dependency. This value is read during RENDER, by four
+    // panels that re-render on every turn of the loop, so a ref here would be a
+    // second copy of the truth with no reader — and the copy that goes stale.
+    // (Asserted as "no `useRef` beside the `useState`" rather than as a name a
+    // future slice would simply not choose.)
+    const declAt = wizard.indexOf("const [rulesShown, setRulesShown] = useState(true);");
+    expect(declAt).toBeGreaterThan(0);
+    expect(wizard.slice(declAt, declAt + 400)).not.toContain("useRef");
+  });
+
+  it("⚠️ writes the tick into all FOUR listings, from one place", () => {
+    // The adversarial question this slice was handed: "a change made four times
+    // is a change made three times and forgotten once, so which panel did not
+    // get it". Four call sites spread across the render tree is how that
+    // happens, so there is one writer and this asserts all four writes are in
+    // it. Untick with only three and the fourth step still opens with its rules
+    // in view, which reads as the tick half-working rather than as a bug.
+    const start = wizard.indexOf("const changeRulesShown = useCallback((next: boolean) => {");
+    expect(start).toBeGreaterThan(0);
+    // The end marker is asserted, not assumed — see the cancel test below for
+    // what a `-1` from `indexOf` does to a `slice`.
+    const end = wizard.indexOf("\n  }, []);", start);
+    expect(end).toBeGreaterThan(start);
+    const body = wizard.slice(start, end);
+    // ⚠️ **`null`, NOT `next`, AND AN ADVERSARIAL ROUND IS WHY.** Writing the new
+    // value into the four made the tick a ONE-WAY LATCH: once touched, none of
+    // them could be `null` again for the rest of the run, the `?? (checked ?
+    // false : rulesShown)` fallback was permanently dead, and every listing
+    // stayed open after its check — the screen the tri-state exists to prevent.
+    // `null` is "no per-step answer", which is what changing the default means.
+    for (const written of [
+      "setRulesShown(next);",
+      "setStructureRulesOpen(clear);",
+      "setConstraintsRulesOpen(clear);",
+      "setDuplicationRulesOpen(clear);",
+      "setPreexistingNotesOpen(clear);",
+    ]) {
+      expect({ written, present: body.includes(written) }).toEqual({ written, present: true });
+    }
+    // ⚠️ **AND `clear` IS BOTH HALVES, WRITTEN OUT, BECAUSE EACH HALF IS A
+    // DEFECT AN ADVERSARIAL ROUND FOUND.** `null` alone made ticking close a
+    // listing the user had just opened on a checked step — a control labelled
+    // "show" that hides. `next` alone made the tick a one-way latch: once
+    // touched, none of the four could be `null` again, the `?? (checked ? false
+    // : rulesShown)` fallback was dead, and every listing stayed open after its
+    // check. Either simplification passes a test that only names the setters.
+    expect(body).toContain(
+      "const clear = (prev: boolean | null) => (next && prev === true ? true : null);",
+    );
+    for (const latched of [
+      "setStructureRulesOpen(next);",
+      "setConstraintsRulesOpen(next);",
+      "setDuplicationRulesOpen(next);",
+      "setPreexistingNotesOpen(next);",
+    ]) {
+      expect({ latched, present: body.includes(latched) }).toEqual({ latched, present: false });
+    }
+    // ⚠️ **AND THE PANELS STILL GET THEIR OWN SETTER, NOT THIS ONE.** The tick is
+    // a default, not a lock: a user who opens the rules on one step has not
+    // re-ticked it and has not touched the other three. Handing a panel
+    // `changeRulesShown` would make its show/hide button do all four.
+    expect(wizard).toContain("onRulesOpenChange={setStructureRulesOpen}");
+    expect(wizard).toContain("onRulesOpenChange={setConstraintsRulesOpen}");
+    expect(wizard).toContain("onRulesOpenChange={setDuplicationRulesOpen}");
+    expect(wizard).toContain("onNotesOpenChange={setPreexistingNotesOpen}");
+    // …and the bar gets the writer, with the value beside it.
+    expect(wizard).toContain("rulesShown={rulesShown}");
+    expect(wizard).toContain("onRulesShownChange={changeRulesShown}");
   });
 
   it("⚠️ still names every `from` in the table", () => {

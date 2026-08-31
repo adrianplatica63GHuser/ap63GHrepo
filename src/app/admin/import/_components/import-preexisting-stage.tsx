@@ -83,6 +83,8 @@ import { useLocale, useTranslations } from "next-intl";
 
 import { ActivityCue } from "@/components/activity-cue";
 import { buttonClass } from "@/lib/ui/button-styles";
+
+import { ImportListingControls } from "./import-listing-controls";
 import { buildRulesPageHtml, reportFileName } from "@/lib/import/report-html";
 import { downloadHtmlFile, fileNameStamp } from "@/lib/ui/download-html";
 import { displayPathOf } from "@/lib/import/folder-utils";
@@ -192,8 +194,38 @@ type Props = {
    * who opened the explanations to read them alongside the report must not have
    * them shut on the next check.
    */
-  notesOpen: boolean;
+  /**
+   * The listing's state, and where it comes from.   (Slice #32.10)
+   *
+   * ⚠️ **`notesOpen` IS THE USER'S OWN ANSWER, OR `null` FOR "THEY HAVE NOT GIVEN
+   * ONE".** It was a plain boolean until #32.10 and it could not stay one. Two
+   * facts have to be represented and a single boolean can only hold one of
+   * them: what the user chose with this panel's own show/hide button, and what
+   * the screen should do when they have chosen nothing — which is now two
+   * different things depending on whether a check has run.
+   *
+   * `rulesShown` is the stage bar's own tick: a DEFAULT for a step the user
+   * has just arrived at, not a lock. Pressing this panel's button writes
+   * `notesOpen` and does not re-tick it, and does not touch the other three steps.
+   *
+   * The derivation is `notesOpen ?? (asked ? false : rulesShown)`, and the
+   * `asked ? false` arm is the behaviour Adrian asked to keep: "if 'Show the
+   * Rules' is checked … as it is the current behavior". Before this slice the
+   * listing fell open before a check and collapsed after one, so the fix list
+   * led — and a run that shipped the tick without that arm would leave every
+   * user who changed nothing scrolling past the whole listing to reach what
+   * they have to go and put right, on every check, at every step.
+   *
+   * Hoisted into the wizard for the reason it always was: this subtree
+   * re-renders on every turn of the loop, and a user who opened the listing to
+   * read it beside their fix list must not have it shut on the next check.
+   */
+  notesOpen: boolean | null;
   onNotesOpenChange: (open: boolean) => void;
+  /** The stage bar's tick — see above. Defaulted so a caller that does not know
+   * about it, and the tests that render this panel on its own, keep exactly the
+   * screen a first-time visitor met before #32.10: the listing open. */
+  rulesShown?: boolean;
 };
 
 export function ImportPreexistingStage({
@@ -210,6 +242,7 @@ export function ImportPreexistingStage({
   resultOnly = false,
   notesOpen,
   onNotesOpenChange,
+  rulesShown = true,
 }: Props) {
   const t = useTranslations("adminImport.preexisting");
   // Unnamespaced, so the two key helpers can be used as written — they exist
@@ -301,15 +334,28 @@ export function ImportPreexistingStage({
   /**
    * Show the explanations themselves rather than only the disclosure button.
    *
-   * Before the first check they are the whole content. After one they collapse
-   * behind "Arată din nou explicațiile", because the report is what the user is
-   * reading. The third case is a re-check that mounts this panel with nothing
-   * to show — see the sibling panels, where the same window exists.
+   * Before the first check they were the whole content, and after one they
+   * collapsed behind "Arată explicațiile" because the report is what the user is
+   * reading. ⚠️ Since #32.10 the FIRST half of that is the stage bar's tick to
+   * decide, not this panel's. The remaining case is a re-check that mounts this
+   * panel with nothing to show — see the sibling panels, where the same window
+   * exists, and `showNotes` below for the `asked` term that keeps it out of the
+   * first lookup.
    */
   const nothingToShow = matchedCount === 0 && uncheckedCount === 0 && !failed;
   /**
-   * ⚠️ `|| failed` was added by this slice's adversarial review, and the case
-   * it closes is the one where the tick costs the most.
+   * Is the listing open? See the `notesOpen` prop for why this is a derivation
+   * and not the prop itself.
+   *
+   * ⚠️ Declared HERE, above the two notes below, and an adversarial round is
+   * why: inserted between them and `showNotes` it left the `|| failed` note and
+   * the `!resultOnly` note sitting on a declaration that mentions neither.
+   */
+  const listingOpen = notesOpen ?? (asked ? false : rulesShown);
+
+  /**
+   * ⚠️ `|| failed` was added by an adversarial review, and the case it closes is
+   * the one where the tick costs the most.
    *
    * On a failed lookup the panel asks the user to re-assert "Am citit ce se
    * întâmplă cu documentele care se află deja în sistem" in order to press
@@ -324,8 +370,32 @@ export function ImportPreexistingStage({
    * the archive has already answered, and `notesOpen` may still be true from a
    * round the user opened them in.
    */
+  /**
+   * ⚠️ **THE `!asked` ARM IS GONE, AND THAT IS THE POINT OF #32.10** — see
+   * `listingOpen` above for what replaces it and why a tick without it would be
+   * a control that appears to do nothing.
+   *
+   * ⚠️ **`|| failed` IS UNTOUCHED, AND UNTICKING MUST NOT REACH IT.** The first
+   * of the two notes above records what it closes: on a failed lookup the panel
+   * asks the user to re-assert that they have read the explanations in order to
+   * press "Continuă fără această verificare", and collapsing them at that moment
+   * is the defect an adversarial round found. A user who unticked the stage
+   * bar's tick has said something about the resting screen, not about the one screen that asks them
+   * to accept a risk — so `failed` still forces the explanations open, and the
+   * row still withholds the toggle for the duration.
+   *
+   * ⚠️ **AND THE FORCED-OPEN ARM GAINED `asked`, WHICH IS NOT TIDYING.** It
+   * covers "a re-check that mounts this panel with nothing to show" — a
+   * PREVIOUS round's empty report, which cannot exist before the first lookup.
+   * Without `asked` the arm is true throughout that first check, because a null
+   * verdict counts zero matches and zero unchecked files: an unticked user would
+   * watch the explanations they had just hidden sit open for the whole of the
+   * walk, the metadata pass and the request to the archive, with the toggle
+   * suppressed. The `!asked` arm this slice removed was what covered that window
+   * before.
+   */
   const showNotes =
-    !resultOnly && (!asked || notesOpen || failed || (busy && nothingToShow));
+    !resultOnly && (listingOpen || failed || (asked && busy && nothingToShow));
 
   /**
    * The explanations, translated once — used by the screen and by the saved
@@ -710,28 +780,16 @@ export function ImportPreexistingStage({
       </div>
 
       {/* -- The explanations ---------------------------------------------- */}
-      {/* Not offered while the explanations are forced open by `nothingToShow`:
-          the disclosure reads `notesOpen` and the region reads `showNotes`, and
-          during that window they disagree — a control whose state contradicts
-          what is on screen is worse than no control. */}
-      {/* Slice #32.04 — and the toggle goes with the listing it opens, exactly
-          as at both sibling panels. Offering to re-show four explanations about
-          documents the archive does not hold is offering to reopen work that is
-          finished, and a disclosure whose region is unconditionally absent is a
-          control that cannot do anything. */}
-      {asked && !failed && !resultOnly && !(busy && nothingToShow) && (
-        <div className="mt-5">
-          <button
-            type="button"
-            onClick={() => onNotesOpenChange(!notesOpen)}
-            aria-expanded={notesOpen}
-            className="text-sm font-medium text-cta underline-offset-2 hover:underline"
-          >
-            {notesOpen ? t("hideNotes") : t("showNotes")}
-          </button>
-        </div>
-      )}
-
+      {/* ⚠️ Slice #32.10 — the toggle that stood HERE, above the listing, as a
+          bare text link drawn only after the archive had been asked, is now the
+          left-hand button of the row below the listing. Three rulings travel
+          with it and none is weakened: #32.04's, that the toggle goes with the
+          listing it opens (the row is inside the same `!resultOnly` wrapper);
+          and the two windows in which the explanations are forced open against
+          `notesOpen` — a failed lookup, and a re-check with nothing to show —
+          where a disclosure reporting `aria-expanded="false"` over an expanded
+          region contradicts what the user can see. Both are now
+          `showToggle={false}` on the row. */}
       {showNotes && (
         <div className="mt-4">
           <h3 className="text-sm font-semibold text-ink dark:text-zinc-100">
@@ -757,6 +815,39 @@ export function ImportPreexistingStage({
             ))}
           </ul>
         </div>
+      )}
+
+      {/* ── Show/hide, and the take-away page ────────────────────────────── */}
+      {/* ⚠️ Slice #32.10 — Adrian's order: listing, then this row, THEN the
+          acknowledgement tick. The take-away used to be last on the panel, below
+          a tick asking the user to confirm they had read explanations they may
+          have hidden; now it is what a keyboard reaches first after the listing,
+          so the report can be saved whether or not the explanations are on
+          screen.
+
+          ⚠️ **INSIDE A `!resultOnly` GUARD OF ITS OWN, AS THE TAKE-AWAY WAS.**
+          #32.04 hid it on a pruned screen because a dated page printing an empty
+          outcome list under a green all-clear has no reader, and #32.10 does not
+          revisit that: the stage bar's tick, whichever way it is set, must not bring it back.
+
+          ⚠️ **`showToggle` IS FALSE ON A FAILED LOOKUP TOO**, not only during a
+          re-check with nothing to show — see `showNotes` above for why `failed`
+          forces the explanations open and why an unticked preference must not
+          reach that case. The SAVE half stays up through both windows, which is
+          why the flag is on the button rather than on the row; the failed screen
+          is precisely one a user wants to carry away. */}
+      {!resultOnly && (
+        <ImportListingControls
+          open={listingOpen}
+          onOpenChange={onNotesOpenChange}
+          showToggle={!failed && !(asked && busy && nothingToShow)}
+          showLabel={t("showNotes")}
+          hideLabel={t("hideNotes")}
+          saveLabel={t("save.button")}
+          saveHint={t("save.hint")}
+          onSave={handleSave}
+          busy={busy}
+        />
       )}
 
       {/* -- The gate ------------------------------------------------------ */}
@@ -947,35 +1038,6 @@ export function ImportPreexistingStage({
           </p>
         )}
       </div>
-
-      {/* -- The take-away copy -------------------------------------------- */}
-      {/* ⚠️ Slice #32.04 — hidden here, and NOT removed from the file. The page
-          is what a user carries away from a screen that HAS something on it: a
-          list of documents the archive already holds, or a lookup that failed
-          and will be imported over. `handleSave` and everything it reaches stay
-          in use on both of those paths. What has no reader is a dated page
-          printing an empty outcome list under a green all-clear the screen has
-          already given. */}
-      {!resultOnly && (
-      <div className="mt-5 border-t border-crease pt-4 dark:border-zinc-800">
-        {/* ⚠️ `disabled={busy}` is not tidiness. `settled` is
-            `asked && !busy && verdict !== null`, so a Save pressed DURING a
-            check writes "not asked yet" into a dated page while the screen
-            behind it still shows the previous round's complete report. This
-            stage's check is a re-walk, the ~760-call metadata pass and a
-            request to the archive, so that window is seconds long and is
-            exactly when someone reaches for Save. */}
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={busy}
-          className={buttonClass({ variant: "secondary", size: "md" })}
-        >
-          {t("save.button")}
-        </button>
-        <p className="mt-1.5 text-xs text-fade dark:text-zinc-400">{t("save.hint")}</p>
-      </div>
-      )}
     </section>
   );
 }
