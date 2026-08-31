@@ -71,7 +71,7 @@ drifting apart:
 | Two-track i18n | same, plus `.claude/rules/i18n-and-romanian.md` |
 | e2e locators match `ro-RO.json` | same section |
 | Verification order + dev-server warning | `ga40prj/CLAUDE.md` → Verification order |
-| Sandbox can run `tsc`, not `jest`/`next` | `C:\dev\.claude\rules\sandbox-and-toolchain.md` |
+| Sandbox can run `tsc` and `eslint`, not `jest`/`next` | `C:\dev\.claude\rules\sandbox-and-toolchain.md` |
 | "Never dismiss an error as pre-existing" | `C:\dev\CLAUDE.md` → The working contract |
 | Conventional commits, PowerShell 7, chain with `&&`, Claude commits and Adrian pushes | `C:\dev\CLAUDE.md` → Delivering work / Autonomy; mechanics in `C:\dev\.claude\rules\git-and-commits.md` |
 | "Wait for my approval before writing any code" | `C:\dev\CLAUDE.md` → The working contract |
