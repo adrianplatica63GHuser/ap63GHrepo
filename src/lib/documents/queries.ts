@@ -686,6 +686,11 @@ function inputToValues(
 
     // Slice #21.03.Import
     customFields: input.customFields ?? null,
+
+    // Slice #32.06 — the title the FOLDER gave this document, which the AI
+    // read never touches. `snapshotFromFull` omits it on purpose: it is not a
+    // versioned form field, it is provenance, exactly like `aiInterpretedAt`.
+    importTitle: input.importTitle ?? null,
   };
 }
 

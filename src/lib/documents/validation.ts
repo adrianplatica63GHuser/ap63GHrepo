@@ -60,7 +60,24 @@ const documentBase = z.object({
 // Create schema
 // ---------------------------------------------------------------------------
 
-export const documentCreateSchema = documentBase;
+// Slice #32.06: `importTitle` is an EXTENSION on create, not a member of
+// `documentBase`, and the distinction is the whole point. `documentBase` is the
+// versioned form-field set — everything in it appears in `DocumentSnapshot`, is
+// diffed between versions and is editable on the document page. `importTitle`
+// is none of those: it records what the IMPORT called this document so the
+// Pre-existing stage has a value the AI read does not rewrite, and a user has
+// no business editing it. Same treatment `aiInterpretedAt` gets on the update
+// schema below, for the same reason.
+//
+// ⚠️ **AND IT IS ON CREATE ONLY — `documentUpdateSchema` deliberately does NOT
+// accept it.** It describes where the document came from, which is true once
+// and never changes. An `importTitle` a later PATCH could move would be a key
+// that shifts under the stage reading it, which is the class of defect this
+// slice exists to remove rather than relocate. `lookup_document_type.origin`
+// is write-once for the same reason and says so in its own column comment.
+export const documentCreateSchema = documentBase.extend({
+  importTitle: z.string().nullish(),
+});
 export type DocumentCreate = z.infer<typeof documentCreateSchema>;
 
 // ---------------------------------------------------------------------------

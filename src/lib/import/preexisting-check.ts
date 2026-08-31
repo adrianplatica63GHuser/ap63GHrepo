@@ -61,9 +61,21 @@
  *     one that IS here silently drops a file the user believed was imported.
  *
  * Under-claiming is therefore the safe direction in this module and the
- * dangerous one in that module, so this key is the STRICTER of the two. A user
- * who has since renamed the document in the archive gets it imported again, and
- * that is the outcome to prefer.
+ * dangerous one in that module, so this key is the STRICTER of the two.
+ *
+ * ⚠️ **SLICE #32.06 INVERTED THE EXAMPLE THAT USED TO STAND HERE, and left the
+ * conclusion intact.** It read: "a user who has since renamed the document in
+ * the archive gets it imported again, and that is the outcome to prefer." That
+ * is no longer true for a document the import created. The key now reads
+ * `import_title ?? title` (see `keyTitleOf`), and `import_title` is write-once
+ * - `documentUpdateSchema` refuses it - so renaming a document in the archive
+ * no longer changes what it keys on and no longer forces a re-import.
+ *
+ * The escape the user is actually offered is unchanged and is the one the copy
+ * names: RENAME THE FILE IN THE FOLDER. That still makes the system treat it as
+ * new, because the folder side is computed fresh from the entry every run. If
+ * that sentence is ever reworded, it is the one to keep - it is now the only
+ * one of the two that works.
  *
  * ⚠️ **That asymmetry is about a NEAR miss, and it does not make an outright
  * false positive cheap** — see the note above the title rule. Strictness
@@ -256,8 +268,55 @@ export type ArchivePageRow = {
   fileSize: number | null;
   code: string;
   title: string | null;
+  /**
+   * `document.import_title` — the title the IMPORT gave this document, which
+   * the AI read never rewrites. Null for anything the import did not create.
+   * Slice #32.06; `keyTitleOf` below is the only thing that reads it.
+   */
+  importTitle: string | null;
   createdAt: Date;
 };
+
+/**
+ * The title this archive document is KEYED on.
+ *
+ * ⚠️ **`import_title` first, `title` second, and the fallback is the entire
+ * compatibility story of Slice #32.06.** The folder side keys on
+ * `titleForEntry(entry)` — a file's own name. The archive side used to key on
+ * `document.title`, and `resolveImportedTitle` rewrites that title after the
+ * pages are uploaded for every document whose name does not both name the KIND
+ * and distinguish WHICH one. The two sides then key differently, the stage
+ * reports a folder it has already imported as new, and imports all of it again.
+ *
+ * Measured on the 32.05 UAT, 2026-08-30: `03.types.noform` imported twice
+ * produced three duplicate pairs out of eight documents. And the rewritten
+ * title is not even stable between two reads of the SAME file — DOC01511 came
+ * back "FISA CORPULUI DE PROPRIETATE" and DOC01519 "FISA CORPULUI DE
+ * PROPRIETATE TARLA 46, PARCELA 222/13/1" — which is why no amount of
+ * normalising `title` could have closed this and a stored value had to.
+ *
+ * ⚠️ **DROPPING THE FALLBACK WOULD BE A SILENT MASS REGRESSION.** Every
+ * document predating the column carries null: hand-added rows, pre-wizard
+ * imports, and every multi-page document, whose title came from a folder name
+ * stored nowhere. Keying those as null (or as "") would make them all
+ * unmatchable, or worse, all match each other — the same hole the untitled
+ * guard below was written to close. They key on `title` and behave exactly as
+ * they did before this slice.
+ *
+ * ⚠️ **The value is NOT trimmed or folded here.** `preexistingKeyOf` folds it,
+ * and folding twice in two places is how the two sides come to disagree. The
+ * empty check below is the caller's, for the same reason it always was.
+ */
+function keyTitleOf(doc: { importTitle: string | null; title: string | null }): string | null {
+  // A stored `import_title` that is blank is not a title. It cannot happen
+  // through `titleForEntry`, which falls back to the folder name precisely so
+  // that it never returns one — but this reads a column, and a column can hold
+  // whatever a future writer puts in it. Falling through to `title` is the
+  // behaviour such a row had before the column existed.
+  const imported = doc.importTitle?.trim() ?? "";
+  if (imported !== "") return doc.importTitle;
+  return doc.title;
+}
 
 /**
  * Which candidates the archive already holds, given every page of every
@@ -284,6 +343,7 @@ export function matchArchiveDocuments(
     id: string;
     code: string;
     title: string | null;
+    importTitle: string | null;
     createdAt: Date;
     files: PreexistingFile[];
     /** A page with no recorded size — see below. */
@@ -298,6 +358,7 @@ export function matchArchiveDocuments(
         id: row.documentId,
         code: row.code,
         title: row.title,
+        importTitle: row.importTitle,
         createdAt: row.createdAt,
         files: [],
         unkeyable: false,
@@ -323,7 +384,10 @@ export function matchArchiveDocuments(
     // title came out empty would match an arbitrary untitled document and be
     // linked to the user's property instead of being imported. `titleForEntry`
     // closes the same hole from the folder side.
-    const title = doc.title?.trim() ?? "";
+    // Slice #32.06: the title the document is KEYED on, which is the one the
+    // import gave it and not the one the AI left behind. `keyTitleOf` explains
+    // why the fallback to `title` is load-bearing.
+    const title = keyTitleOf(doc)?.trim() ?? "";
     if (title === "") continue;
     const key = preexistingKeyOf(title, doc.files);
     const held = bestByKey.get(key);
@@ -358,6 +422,23 @@ export function matchArchiveDocuments(
       path: candidate.path,
       documentId: found.id,
       documentCode: found.code,
+      // `title`, deliberately, and NOT the value it was keyed on: this names
+      // the document the user will find when they go and look at it, which is
+      // what `document.title` holds. Since #32.06 the two can differ, because a
+      // document keyed on `import_title` is often displaying a title the AI
+      // rewrote.
+      //
+      // ⚠️ **AND IT IS NOW RENDERED, which it was not before #32.06.** The
+      // field existed and reached no screen — it did not matter, because a
+      // match GUARANTEED the archive's title equalled the folder's, so the path
+      // already named the document. It matters now: the archive side keys on
+      // `import_title` and displays `title`, and those differ for two thirds of
+      // the archive, so "→ DOC01511" alone would tell a user nothing about what
+      // they matched. `import-preexisting-stage.tsx` draws it on the row and
+      // prints it on the saved page. ⚠️ If it is ever dropped from that
+      // component again, the copy's only remedy for a wrong match — "rename
+      // your file" — goes back to asking the user to notice something the
+      // screen does not show.
       documentTitle: found.title,
     });
   }

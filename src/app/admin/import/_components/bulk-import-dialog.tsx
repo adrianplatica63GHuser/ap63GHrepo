@@ -1554,6 +1554,18 @@ async function createDocument(payload: {
     body: JSON.stringify({
       documentTypeId: payload.documentTypeId ?? null,
       title: payload.title ?? null,
+      // Slice #32.06 — the SAME value as `title`, sent to a second column that
+      // the AI read does not rewrite, so the Pre-existing stage keeps something
+      // to key on after `resolveImportedTitle` has had this document.
+      //
+      // ⚠️ **It is `payload.title` and not a second call to `titleForEntry`,
+      // and that is the point of taking it off the same payload field.** #26.08
+      // already had these two expressions diverge once — the archive keyed on a
+      // title the folder side no longer produced, and every affected folder was
+      // silently re-imported for ever. One value, computed once by the caller,
+      // written to both columns; if they can never be computed apart they can
+      // never drift apart.
+      importTitle: payload.title ?? null,
       provenance: payload.provenance,
     }),
   });

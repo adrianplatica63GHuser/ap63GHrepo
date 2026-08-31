@@ -85,6 +85,20 @@ function match(path: string, code = "DOC00001"): PreexistingMatch {
   return { path, documentId: `id-${code}`, documentCode: code, documentTitle: "orice" };
 }
 
+/**
+ * A match whose ARCHIVED TITLE is deliberately different from anything the
+ * folder produces. Slice #32.06 — `documentTitle` is what the screen and the
+ * saved page print beside the code, and since that slice it is routinely NOT
+ * the folder's name, because the AI rewrites `document.title` after import.
+ */
+function matchTitled(
+  path: string,
+  documentTitle: string | null,
+  code = "DOC00001",
+): PreexistingMatch {
+  return { path, documentId: `id-${code}`, documentCode: code, documentTitle };
+}
+
 function verdictFor(
   entries: FSEntry[],
   matched: PreexistingMatch[],
@@ -223,8 +237,21 @@ describe("preexistingCandidatesOf", () => {
   });
 
   it("builds one candidate per entry, with every page", () => {
+    // ⚠️ **THE PAGE GROUP CARRIES A HINT THAT DIFFERS FROM ITS FOLDER NAME, and
+    // a sixth review round is why.** `pages()` defaults `titleHint` to the
+    // folder's own name, so with the default `titleForEntry(entry)` and
+    // `entry.name` return the same string and this test could not tell them
+    // apart — `title: entry.name` passed the whole test suite. That mutant re-imports
+    // every page group for ever, silently, because the candidate would key on a
+    // value the archive never stored. Since #32.06 the same expression is also
+    // what is WRITTEN to `document.import_title`, so the folder side is the
+    // third leg of a binding `import-title-write-binding.test.ts` pins the
+    // other two of.
     const { candidates, unchecked } = preexistingCandidatesOf({
-      entries: [file("48-50/contract.pdf"), pages("48-50/CVC", ["1.jpg", "2.jpg"])],
+      entries: [
+        file("48-50/contract.pdf"),
+        pages("48-50/CVC", ["1.jpg", "2.jpg"], "Contract de Vânzare-Cumpărare"),
+      ],
       metadata: meta({
         "48-50/contract.pdf": 100,
         "48-50/CVC/1.jpg": 10,
@@ -236,7 +263,9 @@ describe("preexistingCandidatesOf", () => {
       { path: "48-50/contract.pdf", title: "contract.pdf", files: [{ name: "contract.pdf", size: 100 }] },
       {
         path: "48-50/CVC",
-        title: "CVC",
+        // The HINT, not "CVC" — `titleForEntry`, which is what the import
+        // stores and what the archive is keyed on.
+        title: "Contract de Vânzare-Cumpărare",
         files: [
           { name: "1.jpg", size: 10 },
           { name: "2.jpg", size: 20 },
@@ -640,5 +669,62 @@ describe("preexistingDecisionsByPath", () => {
       id: "id-DOC00042",
       code: "DOC00042",
     });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Slice #32.06 — the archived title reaches the row
+// ---------------------------------------------------------------------------
+//
+// ⚠️ **THIS IS THE HOP A NINTH REVIEW ROUND FOUND UNGUARDED, and it is the one
+// that produces the value the two downstream guards assume exists.**
+// `import-preexisting-stage.test.ts` pins that the component reads
+// `row.documentTitle` and draws it in both places. Nothing pinned that
+// `documentTitle` is put ON the row, or that it is the ARCHIVE's title rather
+// than the folder's. Two mutants of one line — `documentTitle: null` and
+// `documentTitle: titleForEntry(entry)` — each passed the entire test suite and
+// `tsc`:
+//
+//   - `null` makes the component's `row.title !== null` guard false for every
+//     row, so the title vanishes from the screen AND the saved page, and the
+//     copy's promise that it is "scris pe rândul lui" becomes false for 100% of
+//     rows, inside the note the user is required to tick.
+//   - `titleForEntry(entry)` prints the name of the user's own folder entry —
+//     a string that agrees with their folder by construction, so "check the
+//     matched document is the one you meant" can never fail. Verbatim the
+//     defect class the sixth round pinned one hop downstream, reached at the
+//     hop above it.
+//
+// The whole compensating control #32.06 is sold on runs through this line.
+
+describe("the archived title on the row (#32.06)", () => {
+  const AI_TITLE = "FISA CORPULUI DE PROPRIETATE";
+  const FILE = "Fisa corp proprietate 4432.jpg";
+
+  it("carries the ARCHIVE's title, not the folder's", () => {
+    const verdict = verdictFor(
+      [file(`46-222per13/${FILE}`)],
+      [matchTitled(`46-222per13/${FILE}`, AI_TITLE, "DOC01511")],
+    );
+    const rows = verdict.sections.flatMap((s) => s.rows);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].documentTitle).toBe(AI_TITLE);
+    // The folder's own name for the same entry — what the row must NOT carry,
+    // and what `row.title` is for.
+    expect(rows[0].title).toBe(FILE);
+    expect(rows[0].documentTitle).not.toBe(rows[0].title);
+  });
+
+  it("carries a null archived title through unchanged", () => {
+    // `document.title` is nullable, and `matchArchiveDocuments` deliberately
+    // hands `found.title` over unfolded. The row must say null rather than
+    // inventing a string, because the component prints nothing for null and the
+    // copy promises a title only "when the archived document has one".
+    const verdict = verdictFor(
+      [file(`46-222per13/${FILE}`)],
+      [matchTitled(`46-222per13/${FILE}`, null, "DOC01511")],
+    );
+    const rows = verdict.sections.flatMap((s) => s.rows);
+    expect(rows[0].documentTitle).toBeNull();
   });
 });

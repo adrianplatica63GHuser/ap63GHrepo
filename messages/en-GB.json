@@ -2494,8 +2494,8 @@
     "preexisting": {
       "note": {
         "PEX-01": {
-          "explanation": "A document in the chosen folder counts as already in the system when the archive holds a document with the same name and exactly the same files — the same file names and the same sizes. For a page folder every page is compared, not just the first. If you have since renamed the document in the system, or renumbered the pages in the folder, the system no longer recognises it and will import it again.",
-          "example": "Right: “Contract vanzare.pdf” in the property's folder is 240 KB, and the archive already holds a document “Contract vanzare.pdf” with a single 240 KB file — it is the same document and is not imported a second time. Otherwise: if the archived document has a different name or a different size, it is treated as a new document."
+          "explanation": "A document in the chosen folder counts as already in the system when the archive holds a document with exactly the same files — the same file names and the same sizes — brought into the system under the same name: the file's name or the page folder's name. For a page folder every page is compared, not just the first. If you have since renamed the files or the page folder, or renumbered the pages, the system no longer recognises it and will import it again. Until now, renaming the document in the system also forced a new import: for documents the import brings in from this version onwards it no longer has that effect, and for those that entered the archive before this version the comparison uses the title they carry now — so if the AI read changed it after import, the document will be imported again.",
+          "example": "Right: “Contract vanzare.pdf” in the property's folder is 240 KB, and the archive already holds a document that came from the file “Contract vanzare.pdf” with a single 240 KB file — it is the same document and is not imported a second time. For documents the import brings in from this version onwards, this still holds when the document now has a different title in the archive: for those, the comparison is not made against the archived title but against the name they were brought in under. Where the archived document has a title, it is printed on its row so you can see which document it is. Otherwise: if the file in the folder has a different name or a different size, it is treated as a new document."
         },
         "PEX-02": {
           "explanation": "A document that is already in the system is not imported a second time. If the file sits in a property folder in this import, the archived document is linked to that property instead, so you will find the property with the document attached and no second copy anywhere. If the file belongs to no property in this import, nothing happens to it at all.",
@@ -2545,12 +2545,13 @@
       "spendAgain": "{count, plural, one {The classification done so far was discarded by the last check. Pressing the button below — {button} — sends one image for automatic classification again, and that is paid for a second time.} other {The classification done so far was discarded by the last check. Pressing the button below — {button} — sends # images for automatic classification again, and that is paid for a second time.}}",
       "readReportFirst": "Do read the folder report at the foot of this page before pressing the button below, {button}: it lists the files that will be skipped and the observations about the folder, and some of them say not to start the import.",
       "nothingSpentYet": "{count, plural, one {Nothing has been sent for classification yet. Pressing the button below — {button} — sends one image for automatic classification, and that is the first step that costs anything.} other {Nothing has been sent for classification yet. Pressing the button below — {button} — sends # images for automatic classification, and that is the first step that costs anything.}}",
-      "nothingToFix": "There is nothing for you to put right in File Explorer about any of the above. Do read the list, though: if an archived document is not the one you had in mind, rename the file in your folder and the system will import it as a new document. When you are happy, tick below and press “Continue”.",
+      "nothingToFix": "There is nothing for you to put right in File Explorer about any of the above. Do read the list, though: if an archived document is not the one you had in mind, rename the file in your folder — or the page folder, if that is what the document is — and the system will import it as a new document. When you are happy, tick below and press “Continue”.",
       "morePaths": "{count, number} more…",
       "row": {
         "existing": "→ {code}",
         "folders": "{count, plural, one {(property {folders})} other {(properties {folders})}}",
-        "line": "{path} → {code}"
+        "line": "{path} → {code}",
+        "archivedTitle": "“{title}”"
       },
       "unchecked": {
         "title": "Files that could not be checked",

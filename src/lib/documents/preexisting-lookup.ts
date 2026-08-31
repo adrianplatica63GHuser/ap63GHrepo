@@ -126,6 +126,10 @@ export async function findExistingDocuments(
         fileSize: documentPage.fileSize,
         code: document.code,
         title: document.title,
+        // Slice #32.06. Selected BESIDE `title`, never instead of it: the
+        // fallback in `matchArchiveDocuments` is what keeps every document
+        // predating this column matchable exactly as it was.
+        importTitle: document.importTitle,
         createdAt: document.createdAt,
       })
       .from(documentPage)

@@ -374,6 +374,17 @@ export function ImportPreexistingStage({
           key: row.path,
           path: displayPathOf(folderName, row.path),
           code: row.documentCode,
+          // ⚠️ **THE TITLE THE MATCHED DOCUMENT IS FILED UNDER, and #32.06 is
+          // why it is suddenly worth showing.** Before that slice a match
+          // GUARANTEED the archive's title equalled the folder's, so the path
+          // named the document and this would have been the same string twice.
+          // Now the archive side keys on `import_title` while it DISPLAYS
+          // `title`, and the AI rewrites `title` for two thirds of the archive
+          // — so "→ DOC01511" on its own tells a user nothing about what they
+          // just matched. The one remedy the copy offers on a wrong match is
+          // "rename your file", and it asks them to notice the match is wrong
+          // first. This is the only thing on the screen that lets them.
+          title: row.documentTitle,
           // The property folders a `link` row's document will be attached to,
           // drawn on the row and printed on the saved page. Empty for every
           // other outcome by construction.
@@ -432,9 +443,15 @@ export function ImportPreexistingStage({
               // documentele găsite, fără prescurtări", and a `link` row's
               // properties are the only fact that makes it checkable after the
               // import — which is what the page is carried away to do.
-              const line = t("row.line", { path: row.path, code: row.code });
-              if (row.folders.length === 0) return line;
-              return `${line} ${t("row.folders", {
+              // ⚠️ The archived title goes on the printed line for the same
+              // reason the property folders do, one comment up: the page is
+              // carried away to CHECK the import afterwards, and since #32.06
+              // the code alone does not say which document was matched.
+              const titled = row.title !== null && row.title.trim() !== ""
+                ? `${t("row.line", { path: row.path, code: row.code })} ${t("row.archivedTitle", { title: row.title })}`
+                : t("row.line", { path: row.path, code: row.code });
+              if (row.folders.length === 0) return titled;
+              return `${titled} ${t("row.folders", {
                 folders: row.folders.join(", "),
                 count: row.folders.length,
               })}`;
@@ -972,7 +989,14 @@ export function ImportPreexistingStage({
 function RowList({
   rows,
 }: {
-  rows: readonly { key: string; path: string; code: string; folders: readonly string[] }[];
+  rows: readonly {
+    key: string;
+    path: string;
+    code: string;
+    /** The title the matched document is filed under. Slice #32.06. */
+    title: string | null;
+    folders: readonly string[];
+  }[];
 }) {
   const t = useTranslations("adminImport.preexisting");
   if (rows.length === 0) return null;
@@ -990,6 +1014,18 @@ function RowList({
           <span className="ml-1.5 font-mono text-ink dark:text-zinc-300">
             {t("row.existing", { code: row.code })}
           </span>
+          {/* ⚠️ No `truncate`: on an inline box `overflow-hidden` and
+              `text-overflow` are inert and all the class does is forbid
+              wrapping — which on the longest titles in the archive
+              ("FISA CORPULUI DE PROPRIETATE TARLA 46, PARCELA 222/13/1", 54
+              characters, from this slice's own UAT) pushes the row wider
+              instead of shorter. It wraps, and the tooltip carries the whole
+              string either way. Found by the #32.06 review. */}
+          {row.title !== null && row.title.trim() !== "" && (
+            <span className="ml-1.5 break-words" title={row.title}>
+              {t("row.archivedTitle", { title: row.title })}
+            </span>
+          )}
           {row.folders.length > 0 && (
             <span className="ml-1.5 italic">
               {t("row.folders", {

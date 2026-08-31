@@ -28,9 +28,11 @@
 import {
   matchArchiveDocuments,
   preexistingKeyOf,
+  titleForEntry,
   type ArchivePageRow,
   type PreexistingCandidate,
 } from "@/lib/import/preexisting-check";
+import type { FSEntry } from "@/lib/import/folder-utils";
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -40,12 +42,18 @@ import {
 const OLD = new Date("2024-01-01T00:00:00Z");
 const NEW = new Date("2025-06-01T00:00:00Z");
 
+/**
+ * `importTitle` defaults to null on purpose: that is every document in the
+ * archive before Slice #32.06, and every test below that does not pass one is
+ * asserting the fallback still holds for them.
+ */
 function doc(
   id: string,
   code: string,
   title: string | null,
   files: { name: string; size: number | null }[],
   createdAt: Date = OLD,
+  importTitle: string | null = null,
 ): ArchivePageRow[] {
   return files.map((f) => ({
     documentId: id,
@@ -53,6 +61,7 @@ function doc(
     fileSize: f.size,
     code,
     title,
+    importTitle,
     createdAt,
   }));
 }
@@ -195,8 +204,326 @@ describe("matchArchiveDocuments", () => {
     // sides are computed in different modules and a second spelling of "the
     // same document" would be silent in the safe direction — everything would
     // simply stop matching, for ever, and look like an empty archive.
-    const rows = doc("id-1", "DOC1", "Contract", [{ name: "1.jpg", size: 10 }]);
-    const key = preexistingKeyOf("Contract", [{ name: "1.jpg", size: 10 }]);
-    expect(key).toBe(preexistingKeyOf(rows[0].title!, [{ name: "1.jpg", size: 10 }]));
+    //
+    // ⚠️ Since #32.06 the archive's key title is `import_title ?? title`, so
+    // this asserts over BOTH shapes. Reading `rows[0].title` alone — as it did
+    // before that slice — passed only because the fixture's `importTitle` was
+    // null, and would have gone on passing while the column it now keys on was
+    // ignored entirely.
+    // ⚠️ **THE VALUE COMES FROM `titleForEntry`, THE REAL FOLDER-SIDE
+    // FUNCTION, and the third review round is why.** The version before this
+    // one asserted `preexistingKeyOf(x, F) === preexistingKeyOf(rows[0].title, F)`
+    // where `rows[0].title` WAS `x` — the same function compared to itself with
+    // identical arguments, true for every possible implementation of both
+    // functions. Feeding the folder side's own answer in is what makes the two
+    // sides actually meet here.
+    const files = [{ name: "1.jpg", size: 10 }];
+
+    // A plain file: the folder side's title is the file's own name.
+    const fileEntry = { kind: "file", name: "Contract.pdf" } as unknown as FSEntry;
+    const supplied = titleForEntry(fileEntry);
+    expect(supplied).toBe("Contract.pdf");
+
+    // The import writes that to BOTH columns; the AI then rewrites `title`.
+    // The archive must still key on what the folder produces.
+    //
+    // ⚠️ **AND THE ASSERTION IS THROUGH `matchArchiveDocuments`, not through
+    // `preexistingKeyOf` twice.** A fourth review round caught a third attempt
+    // at this test still comparing `preexistingKeyOf(supplied, F)` to
+    // `preexistingKeyOf(imported[0].importTitle!, F)` — and `doc()` writes
+    // `importTitle` verbatim, so those are the same pure function called with
+    // identical arguments, true for every implementation of everything. Only
+    // going through the matcher makes the two sides meet.
+    const imported = doc("id-2", "DOC2", "PRINTED HEADING", files, OLD, supplied);
+    expect(
+      matchArchiveDocuments(imported, [candidate("f/1.jpg", supplied, files)])
+        .map((m) => m.documentCode),
+    ).toEqual(["DOC2"]);
+
+    // A page group: the folder side's title is the FOLDER's hint, not a file
+    // name, and `titleForEntry` is the only thing that knows that.
+    const group = {
+      kind: "page-group", name: "CVC_Hascu_2005",
+      titleHint: "Contract de Vânzare-Cumpărare Hascu 2005",
+    } as unknown as FSEntry;
+    const groupTitle = titleForEntry(group);
+    expect(groupTitle).toBe("Contract de Vânzare-Cumpărare Hascu 2005");
+    expect(
+      matchArchiveDocuments(
+        doc("id-3", "DOC3", "CONTRACT DE VANZARE - CUMPARARE", files, OLD, groupTitle),
+        [candidate("f/CVC_Hascu_2005", groupTitle, files)],
+      ).map((m) => m.documentCode),
+    ).toEqual(["DOC3"]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Slice #32.06 — the key survives the AI rewriting the title
+// ---------------------------------------------------------------------------
+//
+// Every case below is taken from the 32.05 UAT run of 2026-08-30 rather than
+// invented: `03.types.noform` was imported twice and produced three duplicate
+// pairs out of eight documents. The names, codes and titles are the real ones.
+
+describe("matchArchiveDocuments — a document the AI retitled (#32.06)", () => {
+  // `Fisa corp proprietate 4432.jpg` on its first import. The import stored the
+  // file's own name; `resolveImportedTitle` then let the model's reading of the
+  // printed heading win, so `title` is the heading and `import_title` is not.
+  const FISA_FILE = "Fisa corp proprietate 4432.jpg";
+  const FISA_SIZE = 331_204;
+  const fisaCandidate = candidate(
+    `46-222per13-9001 Tipuri neobisnuite/${FISA_FILE}`,
+    FISA_FILE,
+    [{ name: FISA_FILE, size: FISA_SIZE }],
+  );
+
+  it("recognises it — the miss that imported three documents twice", () => {
+    const matches = matchArchiveDocuments(
+      doc(
+        "id-fisa", "DOC01511",
+        "FISA CORPULUI DE PROPRIETATE",              // what the AI left behind
+        [{ name: FISA_FILE, size: FISA_SIZE }],
+        OLD,
+        FISA_FILE,                                    // what the import stored
+      ),
+      [fisaCandidate],
+    );
+    expect(matches).toHaveLength(1);
+    expect(matches[0]).toMatchObject({ documentId: "id-fisa", documentCode: "DOC01511" });
+  });
+
+  it("names the document by its STORED title, not by the key", () => {
+    // The user is being sent to look at DOC01511, and DOC01511 appears in the
+    // archive as "FISA CORPULUI DE PROPRIETATE". Naming it by the key would
+    // name something they cannot find.
+    const matches = matchArchiveDocuments(
+      doc("id-fisa", "DOC01511", "FISA CORPULUI DE PROPRIETATE",
+          [{ name: FISA_FILE, size: FISA_SIZE }], OLD, FISA_FILE),
+      [fisaCandidate],
+    );
+    expect(matches[0].documentTitle).toBe("FISA CORPULUI DE PROPRIETATE");
+  });
+
+  it("is not fooled by the model reading the SAME file differently twice", () => {
+    // DOC01511 and DOC01519 are one file imported twice, and the model gave the
+    // second copy a longer title. This is the case that rules out ever fixing
+    // #32.06 by normalising `title`: there is no normalisation under which
+    // these two strings are equal, and both must key to the same value.
+    const first  = doc("id-a", "DOC01511", "FISA CORPULUI DE PROPRIETATE",
+                       [{ name: FISA_FILE, size: FISA_SIZE }], OLD, FISA_FILE);
+    const second = doc("id-b", "DOC01519", "FISA CORPULUI DE PROPRIETATE TARLA 46, PARCELA 222/13/1",
+                       [{ name: FISA_FILE, size: FISA_SIZE }], NEW, FISA_FILE);
+    const matches = matchArchiveDocuments([...first, ...second], [fisaCandidate]);
+    expect(matches).toHaveLength(1);
+    // The oldest wins the tie, as it always has.
+    expect(matches[0].documentCode).toBe("DOC01511");
+  });
+
+  it("still recognises a document whose title the AI left alone", () => {
+    // `TP 31316 Toma Veturia.jpg` kept its name on the real run — the #29.12
+    // rule protected it — so title and import_title agree and nothing changes.
+    const name = "TP 31316 Toma Veturia.jpg";
+    const matches = matchArchiveDocuments(
+      doc("id-tp", "DOC01512", name, [{ name, size: 812_004 }], OLD, name),
+      [candidate(`46-222per13-9001 Tipuri neobisnuite/${name}`, name, [{ name, size: 812_004 }])],
+    );
+    expect(matches).toHaveLength(1);
+  });
+});
+
+describe("matchArchiveDocuments — the import_title fallback (#32.06)", () => {
+  // ⚠️ This block is the compatibility guarantee the slice was sold on. Every
+  // document in the archive before #32.06 carries a null `import_title`, and
+  // if any of these break, the column made recognition WORSE for the whole
+  // existing archive rather than better for part of it.
+
+  it("keys a null import_title on the stored title, exactly as before", () => {
+    const matches = matchArchiveDocuments(
+      doc("id-1", "DOC00042", "contract.pdf", [{ name: "contract.pdf", size: 240 }]),
+      [CONTRACT],
+    );
+    expect(matches).toHaveLength(1);
+    expect(matches[0].documentCode).toBe("DOC00042");
+  });
+
+  // ⚠️ **THIS TEST REPLACES ONE THAT WAS TAUTOLOGICAL, and the review that
+  // caught it is worth recording.** The first version gave both documents real
+  // titles and asserted the right one was picked — which passes whether or not
+  // the untitled guard exists, so it tested nothing it claimed to test. The
+  // guard only fires when a key title folds to empty on BOTH sides, so the
+  // candidate has to be blank too. `titleForEntry` cannot produce a blank one,
+  // which is exactly why this is defence in depth and exactly why it needs a
+  // test of its own: nothing in production reaches it, so nothing in production
+  // would notice it being deleted.
+  it("never matches an untitled document to a blank-titled candidate", () => {
+    const a = doc("id-a", "DOC00001", null, [{ name: "alpha.pdf", size: 100 }], OLD, null);
+    const b = doc("id-b", "DOC00002", null, [{ name: "alpha.pdf", size: 100 }], NEW, "   ");
+    for (const blankTitle of ["", "   "]) {
+      const matches = matchArchiveDocuments(
+        [...a, ...b],
+        [candidate("f/alpha.pdf", blankTitle, [{ name: "alpha.pdf", size: 100 }])],
+      );
+      expect(matches).toEqual([]);
+    }
+  });
+
+  it("picks the right document when several carry a null import_title", () => {
+    const a = doc("id-a", "DOC00001", "alpha.pdf", [{ name: "alpha.pdf", size: 100 }]);
+    const b = doc("id-b", "DOC00002", "beta.pdf",  [{ name: "beta.pdf",  size: 200 }]);
+    const matches = matchArchiveDocuments(
+      [...a, ...b],
+      [candidate("f/alpha.pdf", "alpha.pdf", [{ name: "alpha.pdf", size: 100 }])],
+    );
+    expect(matches).toHaveLength(1);
+    expect(matches[0].documentCode).toBe("DOC00001");
+  });
+
+  it("keeps two documents apart when only their import_title differs", () => {
+    // The discriminating half of the key must still discriminate: same title,
+    // same page name, same size, different import_title — the candidate may
+    // match exactly one of them, and it must be the one whose import_title it
+    // shares rather than whichever is older.
+    const a = doc("id-a", "DOC00001", "shared title",
+                  [{ name: "scan.pdf", size: 100 }], OLD, "other.pdf");
+    const b = doc("id-b", "DOC00002", "shared title",
+                  [{ name: "scan.pdf", size: 100 }], NEW, "scan.pdf");
+    const matches = matchArchiveDocuments(
+      [...a, ...b],
+      [candidate("f/scan.pdf", "scan.pdf", [{ name: "scan.pdf", size: 100 }])],
+    );
+    expect(matches).toHaveLength(1);
+    expect(matches[0].documentCode).toBe("DOC00002");
+  });
+
+  it("falls through to the title when import_title is blank", () => {
+    // `titleForEntry` cannot produce a blank — it falls back to the folder name
+    // precisely so it never does — but this reads a column, and a column holds
+    // whatever a future writer puts in it. Blank must behave as absent, not as
+    // a key of its own.
+    for (const blank of ["", "   "]) {
+      const matches = matchArchiveDocuments(
+        doc("id-1", "DOC00042", "contract.pdf",
+            [{ name: "contract.pdf", size: 240 }], OLD, blank),
+        [CONTRACT],
+      );
+      expect(matches).toHaveLength(1);
+      expect(matches[0].documentCode).toBe("DOC00042");
+    }
+  });
+
+  it("never matches a document with neither a title nor an import_title", () => {
+    // ⚠️ The candidate title is BLANK on purpose, and the second review round
+    // is why. Against `CONTRACT` (title "contract.pdf") this assertion passes
+    // whatever the implementation does — the archive row keys as "" or is
+    // skipped, and either way the keys differ — so it tested nothing. Both
+    // sides have to fold to empty before the guard is the thing deciding.
+    for (const blankTitle of ["", "   "]) {
+      const matches = matchArchiveDocuments(
+        doc("id-1", "DOC00042", null, [{ name: "contract.pdf", size: 240 }], OLD, null),
+        [candidate("48-50/contract.pdf", blankTitle, [{ name: "contract.pdf", size: 240 }])],
+      );
+      expect(matches).toEqual([]);
+    }
+  });
+
+  it("keys an EXISTING multi-page document on its title", () => {
+    // ⚠️ **"a page group can never have an import_title" is what the first
+    // draft of this test said, and it is false from #32.06 on** — the third
+    // review round caught it. `titleForEntry` returns the folder's title hint
+    // for a page group and the import writes THAT, so every page group imported
+    // after this release carries a non-null `import_title`. What is true is
+    // narrower and is what this asserts: every page group ALREADY in the
+    // archive has a null one, because the folder name it was titled from is
+    // stored nowhere and there is no backfill. Those must keep matching on
+    // `title` exactly as they always did, over the whole page set. The shape
+    // that ships from now on is the test below this one.
+    const pages = [
+      { name: "530.jpg", size: 101 },
+      { name: "531.jpg", size: 102 },
+      { name: "532.jpg", size: 103 },
+    ];
+    const hit = matchArchiveDocuments(
+      doc("id-cvc", "DOC01505", "Contract de Vânzare-Cumpărare Costache S 2008", pages, OLD, null),
+      [candidate("40-212per40IE55818-Sud/CVC Costache S 2008",
+                 "Contract de Vânzare-Cumpărare Costache S 2008", pages)],
+    );
+    expect(hit.map((r) => r.documentCode)).toEqual(["DOC01505"]);
+
+    // And one page short is a different document, as it always was.
+    const short = matchArchiveDocuments(
+      doc("id-cvc", "DOC01505", "Contract de Vânzare-Cumpărare Costache S 2008",
+          pages.slice(0, 2), OLD, null),
+      [candidate("40-212per40IE55818-Sud/CVC Costache S 2008",
+                 "Contract de Vânzare-Cumpărare Costache S 2008", pages)],
+    );
+    expect(short).toEqual([]);
+  });
+
+  it("keys a NEWLY imported page group on its folder hint, over an AI rewrite", () => {
+    // The shape that ships from #32.06 on.
+    //
+    // ⚠️ **THE FOLDER NAMES HERE ARE DELIBERATELY NOT `CVC …`, and a fourth
+    // review round is why.** An earlier version of this comment claimed the 39
+    // CVC-named page groups in the archive were what this buys, and that is
+    // backwards: `CVC Costache S 2008` both names the kind and distinguishes
+    // which one, so #29.12's `namesThisDocument` PROTECTS it — the model's
+    // reading is rejected and `title` stays the hint. Those are unaffected by
+    // this slice in either direction. The population that gains is the page
+    // groups whose folder name fails that test, measured at 30 of 58 over
+    // CLINCENI.3, and `Anexa 2` / `Acte vechi` below is that shape: a name the
+    // rule does not protect, so the printed heading wins and two different
+    // folders end up sharing one stored title.
+    const pages = [
+      { name: "530.jpg", size: 101 },
+      { name: "531.jpg", size: 102 },
+    ];
+    const hint = "Anexa 2";
+    const other = "Acte vechi";
+    const rows = [
+      ...doc("id-a", "DOC01505", "CONTRACT DE VANZARE - CUMPARARE", pages, OLD, hint),
+      ...doc("id-b", "DOC01600", "CONTRACT DE VANZARE - CUMPARARE", pages, NEW, other),
+    ];
+    // Two documents the AI titled identically are told apart by their hints.
+    expect(
+      matchArchiveDocuments(rows, [candidate("46-222per13/Anexa 2", hint, pages)])
+        .map((m) => m.documentCode),
+    ).toEqual(["DOC01505"]);
+    expect(
+      matchArchiveDocuments(rows, [candidate("47per2-225per3/Acte vechi", other, pages)])
+        .map((m) => m.documentCode),
+    ).toEqual(["DOC01600"]);
+  });
+
+  it("matches on import_title alone when the stored title is null", () => {
+    // Reachable: the AI writes `title` on a document whose own was null, and a
+    // failed write leaves the pair the other way round. The document is still
+    // the one the folder is offering, and it is still keyable.
+    const matches = matchArchiveDocuments(
+      doc("id-1", "DOC00042", null, [{ name: "contract.pdf", size: 240 }], OLD, "contract.pdf"),
+      [CONTRACT],
+    );
+    expect(matches).toHaveLength(1);
+    expect(matches[0].documentCode).toBe("DOC00042");
+  });
+
+  it("prefers import_title over title when they disagree, both ways round", () => {
+    // The direction that matters: a document whose import_title matches the
+    // folder is a match even though its title does not, and one whose TITLE
+    // matches the folder is NOT a match when its import_title says otherwise.
+    // The second half is the one worth having — it is what stops the column
+    // being a widening of the key rather than a correction of it.
+    const hit = matchArchiveDocuments(
+      doc("id-1", "DOC00042", "SOMETHING THE MODEL READ",
+          [{ name: "contract.pdf", size: 240 }], OLD, "contract.pdf"),
+      [CONTRACT],
+    );
+    expect(hit).toHaveLength(1);
+
+    const miss = matchArchiveDocuments(
+      doc("id-2", "DOC00043", "contract.pdf",
+          [{ name: "contract.pdf", size: 240 }], OLD, "a-different-file.pdf"),
+      [CONTRACT],
+    );
+    expect(miss).toEqual([]);
   });
 });

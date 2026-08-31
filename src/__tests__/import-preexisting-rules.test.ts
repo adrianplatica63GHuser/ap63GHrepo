@@ -66,10 +66,16 @@ type Block = Record<string, Record<string, string>>;
 function copyOf(file: string): {
   note: Block;
   section: Block;
+  /** Slice #32.06 — the escape sentence, which this suite now pins. */
+  nothingToFix: string;
 } {
   const json = JSON.parse(
     fs.readFileSync(path.join(process.cwd(), "messages", file), "utf8"),
-  ) as { adminImport: { preexisting: { note: Block; section: Block } } };
+  ) as {
+    adminImport: {
+      preexisting: { note: Block; section: Block; nothingToFix: string };
+    };
+  };
   return json.adminImport.preexisting;
 }
 
@@ -297,6 +303,74 @@ describe("note text", () => {
     expect(en.note["PEX-03"].explanation).toMatch(/after the import/i);
     expect(en.section["id-card"].intro).toMatch(/expired/i);
     expect(en.section["id-card"].intro).toMatch(/check/i);
+  });
+
+  it("⚠️ PEX-01 says renaming in the archive stopped working, and for which documents", () => {
+    // ⚠️ **PEX-01 WAS THE ONLY NOTE IN THE CATALOGUE WITH NO CONTENT PIN, and
+    // the sixth review round is how that was noticed: it reverted this note to
+    // a wording an earlier round had rejected as FALSE, and the whole test
+    // suite stayed green.** Its three siblings each have one — PEX-02 `/legat de
+    // proprietate/`, PEX-03 `/expirat/`, PEX-04 `/colțuri/` — and this is the
+    // note that has now been rewritten in three consecutive rounds.
+    //
+    // What has to survive a reword: since #32.06 the archive is keyed on
+    // `import_title`, which is write-once, so renaming a document in the
+    // archive no longer forces a re-import — BUT there is no backfill, so every
+    // document already in the archive still keys on `title` and renaming those
+    // still does. Saying only the first half is the defect: on the day this
+    // ships it is true of nothing, and the note is the one the user must tick.
+    // ⚠️ **EACH VERSION IS PINNED TO ITS OWN CLAUSE, not merely present.** The
+    // first draft of this test asserted the three phrases existed anywhere in
+    // the string; a seventh review round swapped the two halves so the note
+    // said the exact opposite — new documents still forced a re-import, old
+    // ones no longer did — and all three regexes still matched.
+    const ro = copyOf("ro-RO.json");
+    expect(ro.note["PEX-01"].explanation).toMatch(/redenumirea documentului în sistem/i);
+    expect(ro.note["PEX-01"].explanation).toMatch(
+      /pentru documentele aduse de import începând cu această versiune nu mai are acest efect/i,
+    );
+    expect(ro.note["PEX-01"].explanation).toMatch(/înainte de această versiune comparația se face cu titlul/i);
+
+    const enCopy = copyOf("en-GB.json");
+    expect(enCopy.note["PEX-01"].explanation).toMatch(/renaming the document in the system/i);
+    expect(enCopy.note["PEX-01"].explanation).toMatch(
+      /for documents the import brings in from this version onwards it no longer has that effect/i,
+    );
+    expect(enCopy.note["PEX-01"].explanation).toMatch(/before this version the comparison uses the title/i);
+
+    // ⚠️ **AND THE ONE THE SOURCE CALLS LOAD-BEARING.**
+    // `preexisting-check.ts`'s module header says of the escape: "if that
+    // sentence is ever reworded, it is the one to keep — it is now the only one
+    // of the two that works." Deleting it from both locales was free until
+    // this line. Renaming the FILE still forces a re-import; renaming the
+    // DOCUMENT no longer does.
+    expect(ro.nothingToFix).toMatch(/redenumiți fișierul din folder/i);
+    expect(enCopy.nothingToFix).toMatch(/rename the file in your folder/i);
+    // ⚠️ **AND THE PAGE FOLDER, because for a page group the file is the wrong
+    // thing to rename.** Renaming a page inside the group changes the FILES
+    // half of the key and can disqualify the group entirely — `isPageGroupMember`
+    // needs a numeric basename — so it changes the Structure verdict rather
+    // than producing a clean new document. The folder is what carries the
+    // title. Found by the #32.06 review, which is also what made this sentence
+    // the only escape that still works.
+    expect(ro.nothingToFix).toMatch(/folderul de pagini/i);
+    expect(enCopy.nothingToFix).toMatch(/page folder/i);
+
+    // The copy's half of the compensating control: it promises the archived
+    // title appears on the row, and the panel test pins that it is drawn.
+    expect(ro.note["PEX-01"].example).toMatch(/scris pe rândul lui/i);
+    expect(enCopy.note["PEX-01"].example).toMatch(/printed on its row/i);
+
+    // ⚠️ **AND IT MUST NOT SAY RECOGNITION IGNORES THE TITLE.** An eighth
+    // review round found exactly that sentence shipped — "pentru că
+    // recunoașterea nu folosește titlul" — and it is false: the key is
+    // `preexistingKeyOf(title, files)` on both sides, and #32.06 changed WHICH
+    // title the archive contributes (`import_title ?? title`), not whether one
+    // is used. With no backfill it was false for 100% of the archive on the day
+    // it would have shipped, inside the note the user is required to tick, and
+    // it contradicted this note's own explanation four sentences earlier.
+    expect(ro.note["PEX-01"].example).not.toMatch(/recunoașterea nu folosește titlul/i);
+    expect(enCopy.note["PEX-01"].example).not.toMatch(/recognition does not use the title/i);
   });
 
   it("⚠️ says what happens to a document that belongs to a property", () => {

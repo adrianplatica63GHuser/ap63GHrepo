@@ -93,6 +93,11 @@ const REQUIRED_KEYS = [
   "row.existing",
   "row.folders",
   "row.line",
+  // Slice #32.06 — the archived document's own title, drawn on the row and
+  // printed on the saved page. Since that slice the archive is keyed on
+  // `import_title` and DISPLAYS `title`, so the code alone no longer says which
+  // document was matched.
+  "row.archivedTitle",
   "unchecked.title",
   "unchecked.intro",
   "failed.title",
@@ -285,6 +290,9 @@ describe("the Pre-existing stage's copy", () => {
       const copy = loadCopy(file);
       expect([...scanIcu(String(at(copy, "row.existing"))).args]).toEqual(["code"]);
       expect([...scanIcu(String(at(copy, "row.line"))).args].sort()).toEqual(["code", "path"]);
+      // Slice #32.06: and the archived TITLE, which is what tells the user
+      // whether the code they were just handed is the document they meant.
+      expect([...scanIcu(String(at(copy, "row.archivedTitle"))).args]).toEqual(["title"]);
     }
   });
 
@@ -417,6 +425,80 @@ describe("the Pre-existing stage's copy", () => {
     expect(undeclared).toEqual([]);
     const unused = REQUIRED_KEYS.filter((k) => !asked.has(k));
     expect(unused).toEqual([]);
+  });
+
+  it("⚠️ draws the archived document's title in BOTH places a row is drawn", () => {
+    // ⚠️ **THIS IS THE COMPENSATING CONTROL #32.06 IS SOLD ON, and until the
+    // fifth review round nothing tested it.** Deleting the screen's span, or
+    // collapsing the saved page's `titled` back to `row.line`, left all six
+    // relevant suites green — 160 assertions, 0 failures — because
+    // `REQUIRED_KEYS` above sees the key NAME and not how many places call it.
+    //
+    // Why it matters enough to have its own guard: since this slice the archive
+    // is keyed on `import_title` and DISPLAYS `title`, and the AI rewrites
+    // `title` for two thirds of the archive. So "→ DOC01511" alone no longer
+    // says which document was matched, and the only remedy the copy offers for
+    // a wrong match — rename your file — asks the user to notice the match is
+    // wrong first. These two lines are the only thing that lets them.
+    const panel = fs.readFileSync(
+      path.join(process.cwd(), "src/app/admin/import/_components/import-preexisting-stage.tsx"),
+      "utf8",
+    );
+    expect([...panel.matchAll(/t\("row\.archivedTitle"/g)]).toHaveLength(2);
+
+    // ⚠️ **AND IT IS THE ARCHIVE'S TITLE, NOT THE FOLDER'S.** `PreexistingRow`
+    // carries both: `documentTitle` is `document.title` and `title` is
+    // `titleForEntry(entry)` — the name the USER's own folder gave the entry.
+    // `title: row.title` type-checks, keeps both call sites and both guards,
+    // and prints a string that agrees with the user's folder by construction,
+    // so "check the matched document is the one you meant" can never fail. It passed
+    // the whole test suite until the sixth review round mutated it.
+    expect(panel).toContain("title: row.documentTitle,");
+
+    // The screen's guard, asserted in its JSX form — the plain expression is a
+    // substring of the saved page's line below, so asserting it bare pinned
+    // that line twice and this one not at all. Replacing this guard with
+    // `{true && (` renders `„”` for a document whose title is null, which the
+    // copy now promises will not happen.
+    expect(panel).toContain('{row.title !== null && row.title.trim() !== "" && (');
+
+    // The saved page: the title joins the line the user carries away to check
+    // the import with, beside the property folders.
+    expect(panel).toContain("const titled = row.title !== null && row.title.trim() !== \"\"");
+    // ⚠️ **AND THE TITLE IS ON THE RIGHT SIDE OF THE TERNARY.** A seventh round
+    // pinned `const titled`'s DECLARATION and not its use; an eighth then
+    // swapped the two arms — so a row WITH a title printed no title and a row
+    // WITHOUT one printed `„”` — and every count-based assertion still passed,
+    // because swapping arms changes no name and no call count. Counting is also
+    // brittle in the other direction: hoisting the duplicated `t("row.line")`
+    // into a `const line`, which is what anyone editing this block would do,
+    // broke the counts on a behaviour-identical edit. So the branch bodies are
+    // what is asserted — that survives the refactor and dies on the swap.
+    const ternary = panel.match(/const titled =[^?]*\?([\s\S]*?)\n\s*: ([\s\S]*?);\n/);
+    expect(ternary).not.toBeNull();
+    expect(ternary![1]).toContain("row.archivedTitle");
+    expect(ternary![2]).not.toContain("row.archivedTitle");
+
+    // ⚠️ **AND `titled` IS WHAT BOTH BRANCHES RETURN.** The check above pins
+    // how `titled` is BUILT and says nothing about whether it is used. A ninth
+    // round returned `t("row.line", …)` from the no-folders branch and left the
+    // folders branch alone: `titled` was still constructed, still referenced,
+    // so tsc and the whole suite passed — and the archived title vanished from
+    // the saved page for every `skip` and every `reimport` row, since
+    // `propertyFolders` is empty for every outcome but `link`. Those are the
+    // majority on the run this slice was written from.
+    expect(panel).toContain("if (row.folders.length === 0) return titled;");
+    expect(panel).toContain("return `${titled} ${t(\"row.folders\"");
+
+    // ⚠️ **AND BOTH CALL SITES PASS THE ARCHIVED TITLE, not some other string
+    // that happens to be on the row.** The screen's call was unpinned: passing
+    // `row.path` renders the user's own folder path in quotes, which agrees
+    // with their folder by construction, so "check the matched document is the
+    // one you meant" can never fail. Same defect class as `title: row.title`
+    // one level up, which the sixth round pinned.
+    expect(
+      [...panel.matchAll(/t\("row\.archivedTitle", \{ title: row\.title \}\)/g)],
+    ).toHaveLength(2);
   });
 
   it("says something different in Romanian than in English", () => {
