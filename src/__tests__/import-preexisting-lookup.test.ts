@@ -219,6 +219,15 @@ describe("matchArchiveDocuments", () => {
     // sides actually meet here.
     const files = [{ name: "1.jpg", size: 10 }];
 
+    // ⚠️ **THE PRECONDITION THE UNTITLED-GUARD TESTS BELOW REST ON.** A blank
+    // key title and an empty one produce the SAME key, because `foldRomanian`
+    // trims. That is what lets a blank-titled candidate reach an untitled
+    // archive document at all — and therefore what makes those tests capable of
+    // failing. Asserted here rather than assumed, because if folding ever stops
+    // trimming, the guard becomes unreachable and its tests go quietly green
+    // for the wrong reason.
+    expect(preexistingKeyOf("   ", files)).toBe(preexistingKeyOf("", files));
+
     // A plain file: the folder side's title is the file's own name.
     const fileEntry = { kind: "file", name: "Contract.pdf" } as unknown as FSEntry;
     const supplied = titleForEntry(fileEntry);
