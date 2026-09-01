@@ -94,11 +94,39 @@
  * name and not from the bytes. So it stays here, and it is quiet now rather
  * than loud: a rule that cannot be acted on must not shout.
  *
+ * ⚠️ AND WHAT #26.07 MADE FALSE, RETIRED HERE AT LAST
+ * ───────────────────────────────────────────────────
+ *
+ * One rule, S-01 (`multipleProperties`), and it is worth recording why it
+ * outlived by so long the slice that made it false.
+ *
+ * It fired when the picked folder held two or more property-shaped subfolders,
+ * and it said: the import links ALL documents to a single property, so they
+ * will be merged into one. That was true under #23.00, where the chosen folder
+ * WAS one Property. #26.07 rebuilt the property step around one Property per
+ * property subfolder — `property-step-dialog.tsx` spells the arithmetic out in
+ * its header — and from that commit this sentence was false. The bullet below
+ * said so ("#26.07 creates one per property folder and will retire this") and
+ * then nobody did.
+ *
+ * ⚠️ **It was not merely stale. It was the most alarming sentence in the
+ * stage, in red, and `import-wizard.tsx` draws this report under the
+ * Already-in-the-system panel — the screen whose own Continuă is the first
+ * click in the run that spends money.** A user who believed it had one
+ * reasonable response, which was to stop; and stopping is how they never found
+ * out it was wrong. A false warning costs more than a missing one, and this
+ * one charged it at the worst moment in the wizard.
+ *
+ * ⚠️ **Nothing replaces it, and that is the point rather than an omission.**
+ * The condition it detected — several property folders under one picked
+ * folder — is now the ordinary, intended shape: STR-02 permits up to five of
+ * them, and the property step lists every one, with its own confirmation, two
+ * screens later. A finding here would be a loud advisory about a folder that
+ * is correct, which is exactly what LOUD AND QUIET below exists to prevent.
+ *
  * WHAT SURVIVES, AND WHY EACH ONE IS STILL HERE
  * ─────────────────────────────────────────────
  *
- *  - **S-01** — one picked folder still becomes exactly ONE Property. #26.07
- *    creates one per property folder and will retire this.
  *  - **S-17** — a folder shortcut is possible inside a perfectly compliant
  *    folder. (In today's flow the Structure stage refuses a truncated walk
  *    outright, so this cannot reach the Evaluation screen; it is kept because
@@ -175,7 +203,6 @@ export type Loudness = "loud" | "quiet";
  * here holds display text, so the rules and their wording stay separable.
  */
 export type FindingKind =
-  | "multipleProperties"      // S-01
   | "osDirectories"           // F-03
   | "walkLoopedOnShortcut"    // S-17 — a shortcut makes the folder endless
   | "walkTooManyFolders"      // S-17 — more subfolders than can be read at once
@@ -282,24 +309,6 @@ export function checkFolder(input: {
 
 function structureFindings(observations: readonly DirectoryObservation[]): Finding[] {
   const out: Finding[] = [];
-  const root = observations.find((o) => o.depth === 0);
-
-  // S-01 — one picked folder becomes exactly ONE Property, silently. Several
-  // property-shaped subfolders at the top level means several properties are
-  // about to be merged into whichever one the user names in the next step,
-  // and nothing downstream ever mentions it again.
-  if (root) {
-    const propertyShaped = root.dirNames.filter(looksLikePropertyFolder);
-    if (propertyShaped.length >= 2) {
-      out.push({
-        ruleId: "S-01",
-        kind: "multipleProperties",
-        loudness: "loud",
-        paths: propertyShaped,
-        counts: { folders: propertyShaped.length },
-      });
-    }
-  }
 
   // F-03 — the system-file filter applies to FILES only. An OS directory is
   // walked like any other: its contents import, its name becomes a tag on
@@ -319,11 +328,6 @@ function structureFindings(observations: readonly DirectoryObservation[]): Findi
   }
 
   return out;
-}
-
-/** `^\d` or a `<tarla>-<parcela>` shape — the two ways a property folder is named here. */
-function looksLikePropertyFolder(name: string): boolean {
-  return /^\d/.test(name.trim());
 }
 
 function isOsDirectoryName(name: string | undefined): boolean {

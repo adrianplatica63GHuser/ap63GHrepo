@@ -116,16 +116,20 @@ const find = (r: ReturnType<typeof run>, kind: string) =>
 // Structure
 // ---------------------------------------------------------------------------
 
-describe("multi-property root (S-01)", () => {
-  it("warns when the root holds several property-shaped folders", () => {
-    // The archive's `test.data.5props` — five properties silently merged into
-    // whichever one the user names in the next step.
+describe("multi-property root (S-01, retired)", () => {
+  // S-01 warned that every document in the picked folder would be merged into
+  // one Property. #26.07 made that false — one Property per property
+  // subfolder — and it was finally retired rather than reworded, because the
+  // shape it detected is now the intended one. These two tests are the guard
+  // against it coming back: STR-02 permits five property folders, and five
+  // must be silent here.
+  it("stays silent for a root full of property-shaped folders", () => {
     const r = run({
       observations: [
         obs({ pathParts: [], path: "", depth: 0, dirNames: ["10-38per3", "47per2-225", "58-253per1", "46-222", "48-50"] }),
       ],
     });
-    expect(find(r, "multipleProperties")!.counts).toMatchObject({ folders: 5 });
+    expect(kinds(r)).not.toContain("multipleProperties");
   });
 
   it("stays silent for ordinary named subfolders", () => {

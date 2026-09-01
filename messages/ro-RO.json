@@ -2183,7 +2183,6 @@
           "hidden": "{count, plural, one {un fișier ascuns} few {# fișiere ascunse} other {# de fișiere ascunse}}"
         },
         "finding": {
-          "multipleProperties": "Folderul ales conține {folders, plural, one {un subfolder care pare o proprietate separată} few {# subfoldere care par proprietăți separate} other {# de subfoldere care par proprietăți separate}}. Importul leagă TOATE documentele de o singură proprietate, deci vor fi contopite într-una singură.",
           "osDirectories": "{folders, plural, one {Un folder de sistem Windows va fi importat} few {# foldere de sistem Windows vor fi importate} other {# de foldere de sistem Windows vor fi importate}} ca foldere obișnuite, iar numele lor vor deveni etichete.",
           "officeFiles": "{files, plural, one {Un fișier Word/Excel va fi păstrat} few {# fișiere Word/Excel vor fi păstrate} other {# de fișiere Word/Excel vor fi păstrate}}, dar conținutul lor nu poate fi citit sau căutat.",
           "walkLoopedOnShortcut": "Acest folder conține o scurtătură care trimite înapoi către un folder de deasupra, ceea ce îl face infinit de adânc. Din această cauză aceleași fișiere au fost citite de mai multe ori, deci **toate cifrele din acest raport sunt mai mari decât în realitate** — și numărul de documente, și numărul de pagini, și costurile AI. Nu porniți importul. Ștergeți scurtătura și verificați folderul din nou.",

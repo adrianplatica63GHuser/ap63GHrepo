@@ -2183,7 +2183,6 @@
           "hidden": "{count} hidden files"
         },
         "finding": {
-          "multipleProperties": "The chosen folder holds {folders, plural, one {one subfolder that looks like a separate property} other {# subfolders that look like separate properties}}. The import links ALL documents to a single property, so they will be merged into one.",
           "osDirectories": "{folders} Windows system folders will be imported like ordinary folders, and their names will become tags.",
           "officeFiles": "{files} Word/Excel files will be stored, but their contents cannot be read or searched.",
           "walkLoopedOnShortcut": "This folder contains a shortcut pointing back at a folder above it, which makes it endlessly deep. The same files were therefore read many times over, so **every number in this report is larger than reality** — the documents, the pages and the AI costs are all inflated. Do not start the import. Delete the shortcut, then check the folder again.",
