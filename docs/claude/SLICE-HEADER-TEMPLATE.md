@@ -17,7 +17,7 @@ Slice <number> — <short title>
 Goal: <what should be true when this slice is done>
 Inputs: <01.Slice.Inputs\<folder>  |  none>
 Out of scope: <what not to touch  |  nothing>
-Depth: normal
+Depth: <Claude decides>
 ```
 
 That's it. Four lines plus a title.
