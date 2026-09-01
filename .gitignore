@@ -80,3 +80,16 @@ public/pdf.worker.min.js
 
 # Local diagnostic output — scripts/Check-ImportHealth.ps1
 import-health.txt
+
+# Tesseract language data, downloaded at RUNTIME into the working directory by
+# tesseract.js the first time POST /api/properties/scan-image runs (measured:
+# eng.traineddata 5.2 MB, ron.traineddata 3.1 MB, both landing in the repo root).
+# Nothing in the repo asks for them and nothing cleans them up, so without this
+# they sit untracked in every `git status` and are one `git add -A` away from an
+# 8 MB commit. They are a cache: safe to delete, re-downloaded on the next scan.
+#
+# This surfaced in slice #32.12 because the scan-image route had had no live
+# caller since AddPropertyDialog was orphaned, so it had probably never run on
+# this machine. Slice #32.20 gives that dialog an entry point again, which makes
+# these files a routine consequence rather than a one-off.
+/*.traineddata
