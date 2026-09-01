@@ -8,6 +8,37 @@ import nextJest from "next/jest.js";
 const createJestConfig = nextJest({ dir: "./" });
 
 const config: Config = {
+  // Two workers, and the number is not a performance choice — it is the fix for
+  // a crash, moved to where every invocation reads it.
+  //
+  // Jest's default is `cores-1`. Above a certain worker count on this machine the
+  // failure stops being a Node heap error Jest can catch and becomes Windows
+  // refusing the process's commit charge: `The paging file is too small for this
+  // operation to complete`, thrown while mapping the 136 MB
+  // `@next/swc-win32-x64-msvc` binary that every suite needs to transform. The
+  // casualties are reported as `Test suite failed to run` with three different
+  // messages — `Failed to load bindings`, `UNKNOWN: unknown error, open <path>`,
+  // `Cannot find module 'source-map'` — every one of which names a file that is
+  // present on disk. So it reads as a broken install or a broken test, and the
+  // suites it takes are arbitrary.
+  //
+  // ⚠️ **THE TELL IS THE SUMMARY, NOT THE ERRORS**: `Tests: N passed, N total`
+  // with ZERO failed assertions beside a non-zero `Test Suites: n failed`. A run
+  // whose suites die in the transformer never reached an assertion to fail.
+  //
+  // ⚠️ **WHY HERE AND NOT ONLY IN `package.json`.** The cap was already on the
+  // `test` script as `jest --maxWorkers=2` — and the verification sequence in
+  // `C:\dev\CLAUDE.md` says `npx jest`, which does not read that script. So the
+  // documented fix was unreachable from the documented command, and #32.12 spent
+  // a round trip on three suites that had nothing wrong with them. A CLI flag
+  // still wins over this value, so `npm test` behaves exactly as before and the
+  // flag there is left in place as belt-and-braces.
+  //
+  // The cost is nothing: measured in #32.05, the full 98-suite run takes 9.3 s at
+  // two workers against the 144 s Jest itself estimated from the crashed run.
+  // Stopping `npm run dev` before Jest is still the other half of this — the
+  // e2e step leaves it holding a couple of GB — and is in the sandbox rule file.
+  maxWorkers: 2,
   coverageProvider: "v8",
   testEnvironment: "jsdom",
   setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
