@@ -72,12 +72,6 @@ public/pdf.worker.min.js
 # leaves it in the repo root.
 /ga40prj-refdata-dump.sql
 
-# Scratch export of Help content, written into public/ by the admin tooling.
-# In BOTH ignore files on purpose: public/ is copied wholesale into the Docker
-# builder and republished by the runner, so an untracked scratch file here is
-# served at /_help-entries-tmp.json in Ciprian.
-/public/_help-entries-tmp.json
-
 # Local diagnostic output — scripts/Check-ImportHealth.ps1
 import-health.txt
 

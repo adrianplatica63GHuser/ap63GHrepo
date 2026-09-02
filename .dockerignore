@@ -31,11 +31,6 @@ playwright.config.ts
 playwright-report
 test-results
 
-# Scratch export of Help content -- see the matching .gitignore entry. Untracked
-# files under public/ are still in the build context, and the runner copies
-# /app/public wholesale, so without this it would be served by the UAT image.
-public/_help-entries-tmp.json
-
 # ⚠️ EXCLUDED SO THAT THE BUILDER'S OWN `RUN node scripts/copy-pdfjs-worker.mjs`
 # IS THE ONLY WAY THIS FILE ENTERS THE IMAGE. It is gitignored but present in
 # Adrian's working tree, so `COPY . .` was carrying a copy dated whenever he
