@@ -44,6 +44,27 @@ Always loaded: this governs how every piece of work is verified.
 
     `Get-Process node` is deliberately broad: it matches any Node on the machine, not just this project's, so a second project's server makes it say "still running" and Adrian checks. That is the safe direction — the failure this guards against costs a restart and a confusing panic log, and a false "check your terminals" costs a glance. **So: in a handover, `Remove-Item .next` is never handed over on its own** — it goes with "with the dev server stopped", or it goes as the line above.
 
+- **`Persisting failed: … (os error 1450)` from `next dev` is Windows refusing the write, not a Next bug — and it is the SAME machine limit that caps Jest's workers.** Error 1450 is `ERROR_NO_SYSTEM_RESOURCES`: the OS could not find the resources to complete the IO. Turbopack's persistent cache writes its SST blocks in large chunks, so it is the first thing to fail when the machine is short, and the failure is not clean — the half-written cache is what makes the *next* `npm run dev` panic (previous bullet). Measured in Slice #32.13, twice in one evening:
+
+    ```
+    Persisting failed: Unable to write SST file 00000039.sst
+    Caused by:
+        0: Failed to write value block
+        1: Failed to write block data
+        2: Insufficient system resources exist to complete the requested service. (os error 1450)
+    Compaction failed: Another write batch or compaction is already active
+    ```
+
+    and the dev server exits. **It is the same constraint `jest.config.ts` documents** — `maxWorkers: 2` is there because above it Windows refuses the commit charge with `The paging file is too small for this operation to complete` while mapping the 136 MB SWC binary. Two different tools, two different messages, one machine that runs out of commit charge under load. **So when one of them appears, expect the other**: an e2e run with a dev server, a browser and Playwright's chromium all live is exactly the load that produces it.
+
+    **The escape hatch takes the failing writer out of the picture entirely** — `next dev --webpack` builds no SST database at all, so there is nothing to half-write and nothing to reopen corrupt. Next 16.2.9 still accepts it (`node_modules/next/dist/bin/next` lists `--webpack` beside `--turbopack`). Compilation is slower; `npm run e2e` does not care which bundler served the page.
+
+    ```powershell
+    cd C:\dev\ga40prj && npm run dev -- --webpack
+    ```
+
+    **The durable fix is the machine, not the flag:** let Windows manage the page file (System → About → Advanced system settings → Performance → Advanced → Virtual memory), and close what is holding commit charge before a long run — orphaned `node` processes from a crashed dev server survive it and are the usual culprit. `Get-Process node | Select-Object Id, StartTime, WorkingSet64` before starting, and treat anything older than the current terminal as leftover.
+
 - **`npx jest` while `npm run dev` is still running → workers OOM, and it looks like a test failure.** The verification order (`npm run e2e` → `npm run lint` → `npx tsc --noEmit` → `npx jest`) *requires* a dev server for the e2e suite, so it is still holding a couple of GB when Jest starts a few seconds later in another terminal. Jest forks `cores-1` workers; the ones that lose the race die at spawn with `Out of memory: HashMap::Initialize` or `Zone Allocation failed` at a 40–80 MB heap — a **system** allocation failure, not a heap one — and are reported as `Test suite failed to run — Jest worker ran out of memory`. **The tell:** `Tests: N passed, N total` with **zero failed assertions**, and the casualties are the smallest, cheapest suites (pure-module tests importing one file) rather than the heavy ones — `help-coverage.test.ts`, which reads every `.tsx` in `src/`, passes right alongside them. Nothing about the code under test is implicated. **Fix:** stop the dev server (Ctrl+C) before `npx jest`, or run `npx jest --maxWorkers=2`. Confirm it by re-running just the failed suites — they pass in about a second. Hit in Slice #23.04.Import, where it cost a round trip diagnosing a deletion-only slice for a memory regression it could not have caused (the same full suite then ran in 4.4 s instead of 34 s with the dev server stopped, on identical code).
 
 - **`npm run e2e` against a dev server that was running while Claude rewrote files → failures that look exactly like an application bug, and a `git` bisect that CONFIRMS THE WRONG ANSWER.** Claude writes slice files through the device bridge while `npm run dev` is watching. That can leave `.next` in a state where a route still serves, still returns 200 for its API calls, still renders every field, logs nothing to the browser console and nothing to the dev-server terminal — and silently omits one component. Hit in Slice #29.10: four `property-versioning` specs failed on `getByText(/^v \d+$/)` for the version-nav strip, on a page whose Playwright a11y snapshot showed the heading, all five tabs, the whole form, the Google map and the footer buttons. `GET /api/properties/<id>/versions` answered **200**. Nothing in the slice imported anything on that route.
