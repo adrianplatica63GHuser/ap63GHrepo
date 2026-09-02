@@ -167,7 +167,7 @@ function CornerInputRow({
       const latN = parseFloat(lat);
       const lonN = parseFloat(lon);
       if (isNaN(latN) || isNaN(lonN)) {
-        setConvertErr("Enter valid decimal degree values");
+        setConvertErr(t("invalidDD"));
         return;
       }
       onSave({ lat: latN, lon: lonN });
@@ -178,7 +178,7 @@ function CornerInputRow({
       const dN = parseInt(latDeg), mN = parseInt(latMin), sN = parseFloat(latSec);
       const dE = parseInt(lonDeg), mE = parseInt(lonMin), sE = parseFloat(lonSec);
       if ([dN, mN, sN, dE, mE, sE].some(isNaN)) {
-        setConvertErr("Enter valid degrees, minutes, and seconds");
+        setConvertErr(t("invalidDMS"));
         return;
       }
       const latDD = dmsToDecimal({ deg: dN, min: mN, sec: sN });
@@ -194,7 +194,7 @@ function CornerInputRow({
     const northN = parseFloat(north);
     const eastN  = parseFloat(east);
     if (isNaN(northN) || isNaN(eastN)) {
-      setConvertErr("Enter valid Stereo 70 values (metres)");
+      setConvertErr(t("invalidS70"));
       return;
     }
     setConverting(true);
@@ -477,7 +477,7 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-2">
-        <span className="text-xs text-fade dark:text-zinc-400">Display:</span>
+        <span className="text-xs text-fade dark:text-zinc-400">{t("displayLabel")}</span>
         {(["DD", "DMS", "S70"] as DisplayFormat[]).map((f) => (
           <button
             key={f}
@@ -573,7 +573,7 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
                         type="button"
                         onClick={() => moveUp(idx)}
                         disabled={idx === 0}
-                        title="Move up"
+                        title={t("moveUp")}
                         className={buttonClass({ variant: "secondary", size: "xs" })}
                       >
                         ↑
@@ -582,7 +582,7 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
                         type="button"
                         onClick={() => moveDown(idx)}
                         disabled={idx === corners.length - 1}
-                        title="Move down"
+                        title={t("moveDown")}
                         className={buttonClass({ variant: "secondary", size: "xs" })}
                       >
                         ↓

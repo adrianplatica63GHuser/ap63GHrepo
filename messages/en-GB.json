@@ -177,12 +177,13 @@
       "selectLink": "Select",
       "unselectLink": "Unselect",
       "displayAllSelected": "Display all selected",
-      "deleteAllSelected": "Delete all selected ({count})",
+      "deleteAllSelected": "Delete all selected ({count, number})",
       "confirmDelete": {
-        "body": "This will delete {count} selected property(ies). This action cannot be undone.",
+        "body": "This will delete {count, plural, one {# selected property} other {# selected properties}}. This action cannot be undone.",
         "cancel": "Cancel",
         "confirm": "Delete",
-        "deleting": "Deleting…"
+        "deleting": "Deleting…",
+        "failed": "The selected properties could not be deleted. Try again."
       },
       "groupsButton": "Groups",
       "groupsAll": "All (in groups or not)",
@@ -191,7 +192,24 @@
       "rulerButton": "Ruler",
       "rulerHint": "Ruler — click two points to measure the distance between them",
       "anglesButton": "Angles",
-      "anglesHint": "Angles — click a corner to see its interior angle(s)"
+      "anglesHint": "Angles — click a corner to see its interior angle(s)",
+      "typeStreet": "STR",
+      "typeSatellite": "SAT",
+      "loading": "Loading map data…",
+      "loadError": "Failed to load map data",
+      "openLink": "Open →",
+      "select": "⬚ Select",
+      "cancelSelect": "✕ Cancel select",
+      "selectEnterTitle": "Enter selection mode — drag to select properties for deletion",
+      "selectExitTitle": "Exit selection mode",
+      "miniMap": {
+        "draw": "✏ Draw",
+        "done": "✓ Done",
+        "hintFirst": "Click map to place first corner",
+        "hintMore": "Click map to add corners",
+        "hintClose": "Click map to add corners · click corner 1 to close"
+      },
+      "loadingChunk": "Loading map…"
     },
     "createTitle": "New Property",
     "saveError": "Could not save",
@@ -256,6 +274,7 @@
     "corners": {
       "seq": "#",
       "originalIndex": "Orig. #",
+      "displayLabel": "Display:",
       "lat": "Latitude",
       "lon": "Longitude",
       "stereoN": "North (m)",
@@ -287,7 +306,12 @@
       "showStreetView": "Show Street View",
       "hideStreetView": "Hide Street View",
       "showAngles": "Show Angles",
-      "hideAngles": "Hide Angles"
+      "hideAngles": "Hide Angles",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "invalidDD": "Enter valid decimal degree values",
+      "invalidDMS": "Enter valid degrees, minutes and seconds",
+      "invalidS70": "Enter valid Stereo 70 values (metres)"
     },
     "streetView": {
       "loading": "Loading Street View…",
@@ -1102,7 +1126,63 @@
       "previewTitle": "Preview",
       "noScreenSelected": "Select a screen from the list to edit its help content.",
       "noHintSelected": "Select a hint from the list to edit its text.",
-      "appearsOn": "Appears on {count} screens — saving writes to all of them."
+      "appearsOn": "Appears on {count} screens — saving writes to all of them.",
+      "screens": {
+        "dashboard": "Home — Dashboard",
+        "properties-list": "Properties — List",
+        "property-detail": "Properties — Detail / New",
+        "properties-map": "Properties — Map",
+        "documents-list": "Documents — List",
+        "document-detail": "Documents — Detail / New",
+        "natural-persons-list": "Persons — Natural Person List",
+        "natural-person-detail": "Persons — Natural Person Detail / New",
+        "judicial-persons-list": "Persons — Judicial Person List",
+        "judicial-person-detail": "Persons — Judicial Person Detail / New",
+        "associate-person": "Associate — Person",
+        "associate-document": "Associate — Document",
+        "associate-property": "Associate — Property",
+        "associate-reference": "Associate — Reference (same type)",
+        "associate-party": "Associate — Document party (with role)",
+        "admin-value-lists": "Administration — Reference Data",
+        "admin-import": "Administration — Import",
+        "admin-doc-type-engine": "Administration — DocTypeEngine",
+        "admin-calculation": "Administration — Calculation",
+        "admin-calculation-history": "Administration — Calculation History",
+        "admin-calculation-run": "Administration — Calculation Run Detail",
+        "admin-groups": "Administration — Groups List",
+        "admin-group-editor": "Administration — Group Editor",
+        "admin-stamps": "Administration — Stamps List",
+        "admin-stamp-applicator": "Administration — Stamp Applicator",
+        "admin-tags": "Administration — Tags",
+        "admin-settings": "Administration — Settings",
+        "admin-users": "Administration — Users & Access",
+        "admin-global-search": "Administration — Global Search",
+        "admin-help-content": "Administration — Help Content"
+      },
+      "hints": {
+        "drag-select": "Map — drag a rectangle to select many properties",
+        "ruler-two-clicks": "Map — ruler click sequence and corner snapping",
+        "angles-click-corner": "Map — click a corner to read its angle",
+        "map-double-click-open": "Map — double-click a plot to open it",
+        "map-blinking-duplicates": "Map — blinking pink means duplicate plots",
+        "map-selected-tab": "Map — the 'Display all selected' tab",
+        "corner-reorder": "Corners — the up/down arrows change the plot shape",
+        "map-draw-corners": "Corners — draw by clicking on the map",
+        "map-close-polygon": "Corners — click the first corner to close the shape",
+        "map-drag-corner": "Corners — drag a corner dot to correct it",
+        "calculated-area-auto": "Calculated Area is derived from the corners",
+        "street-view-fetch-address": "Fetch from Street View overwrites the address box",
+        "big-page-zoom": "Expand Pages — wheel to zoom, drag to pan",
+        "ai-party-confirm": "AI-found people must be confirmed one by one",
+        "group-staged-members": "Groups — moves are staged until Save group",
+        "group-pending-position": "Groups — '[new]' means the position is not assigned yet",
+        "stamp-staged-changes": "Stamps — + / - are staged until Save stamps",
+        "stamp-type-switch-keeps-changes": "Stamps — switching type keeps pending changes",
+        "calc-file-format": "Calculation — the five sections the file must contain",
+        "calc-preview-not-saved": "Calculation — nothing is created until you confirm",
+        "calc-group-description-autofill": "Calculation — loading a file overwrites the description",
+        "select-all-page-only": "Lists — the header tick box only selects the current page"
+      }
     }
   },
   "person": {
@@ -1236,6 +1316,30 @@
       "subject": "Subject",
       "dateValidUntil": "Valid Until",
       "surveyor": "Surveyor"
+    },
+    "typeLabels": {
+      "nrGeneric": "Document No.",
+      "nrPropertyTitle": "Property Title No.",
+      "nrInheritanceCertificate": "Certificate of Inheritance No.",
+      "nrAuthenticDeed": "Authentic Deed No.",
+      "nrRentalContract": "Rental Agreement No.",
+      "nrLeaseContract": "Lease Agreement No.",
+      "nrGiftDeed": "Deed of Gift No.",
+      "nrWill": "Will No.",
+      "nrRuling": "Ruling No.",
+      "nrCadastral": "OCPI No.",
+      "nrPermit": "Permit No.",
+      "dateAuthenticated": "Date of Authentication",
+      "dateIssued": "Date of Issue",
+      "dateRuled": "Date of Ruling",
+      "dateEmitted": "Date of Issuance",
+      "dateRegistered": "Date of Registration",
+      "institutionRegistrar": "Registering Institution",
+      "institutionIssuer": "Issuer",
+      "institutionNotary": "Notary Office",
+      "institutionCourt": "Court / Authority",
+      "institutionAuthority": "Issuing Authority",
+      "institutionCadastral": "OCPI / Authority"
     },
     "actions": {
       "addSurveyor": "Select surveyor",
@@ -3152,6 +3256,14 @@
     "recentActivity": {
       "title": "Recent activity",
       "empty": "No recent activity",
+      "relative": {
+        "justNow": "just now",
+        "minutes": "{count, plural, one {a minute ago} other {# minutes ago}}",
+        "hours": "{count, plural, one {an hour ago} other {# hours ago}}",
+        "yesterday": "yesterday",
+        "days": "{count, plural, one {a day ago} other {# days ago}}",
+        "weeks": "{count, plural, one {a week ago} other {# weeks ago}}"
+      },
       "typePerson": "Person",
       "typeProperty": "Property",
       "typeDocument": "Document"
@@ -3203,13 +3315,15 @@
       "settings": "Settings",
       "globalSearch": "Global search",
       "helpContent": "Help information",
+      "docTypeEngine": "DocTypeEngine",
       "associatePerson": "Add person",
       "associateDocument": "Add document",
       "associateProperty": "Add property",
       "associateReference": "Add reference",
       "associateParty": "Add party",
       "new": "New",
-      "entity": "Entity"
+      "entity": "Entity",
+      "ariaLabel": "Breadcrumb"
     },
     "recentlyViewed": {
       "title": "Recently viewed",

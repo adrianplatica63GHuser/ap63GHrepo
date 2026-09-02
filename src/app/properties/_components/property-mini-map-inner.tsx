@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   AdvancedMarker,
   Map,
@@ -148,6 +149,13 @@ type Props = {
 // ---------------------------------------------------------------------------
 
 export default function PropertyMiniMapInner({ corners, onChange, readOnly = false, hoveredCornerIdx, onCornerHover, showAngles = false }: Props) {
+  // Slice #32.16: this file had no translator at all, so every one of its
+  // controls was English on the Romanian interface. The namespace is
+  // `property` rather than `property.map.miniMap` because the STR/SAT toggle
+  // is shared word-for-word with the full map (`property.map.type*`) and a
+  // second `useTranslations` for two keys is not worth the indirection.
+  const t = useTranslations("property");
+
   const [mapType,     setMapType]     = useState<MapTypeId>("roadmap");
   const [drawing,     setDrawing]     = useState(false);
   const [hoverLatLng, setHoverLatLng] = useState<google.maps.LatLngLiteral | null>(null);
@@ -335,22 +343,25 @@ export default function PropertyMiniMapInner({ corners, onChange, readOnly = fal
       </Map>
 
       {/* ------------------------------------------------------------------ */}
-      {/* STR / SAT toggle — top-right                                        */}
+      {/* Map-type toggle — top-right                                        */}
       {/* ------------------------------------------------------------------ */}
       <div className="absolute top-2 right-2 z-10 flex overflow-hidden rounded shadow border border-wire">
-        {(["roadmap", "hybrid"] as MapTypeId[]).map((t) => (
+        {/* The loop variable is `id`, not `t`: `t` is the translator now, and a
+            `t("…")` written in here against the old name would have compiled
+            and called a MapTypeId. */}
+        {(["roadmap", "hybrid"] as MapTypeId[]).map((id) => (
           <button
-            key={t}
+            key={id}
             type="button"
-            onClick={() => setMapType(t)}
+            onClick={() => setMapType(id)}
             className={[
               "px-2 py-1 text-xs font-semibold tracking-wide transition-colors",
-              mapType === t
+              mapType === id
                 ? "bg-cta text-white"
                 : "bg-white text-ink hover:bg-canvas",
             ].join(" ")}
           >
-            {t === "roadmap" ? "STR" : "SAT"}
+            {id === "roadmap" ? t("map.typeStreet") : t("map.typeSatellite")}
           </button>
         ))}
       </div>
@@ -367,7 +378,7 @@ export default function PropertyMiniMapInner({ corners, onChange, readOnly = fal
               onClick={() => setDrawing(true)}
               className="rounded shadow border border-wire bg-white px-2.5 py-1 text-xs font-semibold text-ink hover:bg-canvas transition-colors"
             >
-              ✏ Draw
+              {t("map.miniMap.draw")}
             </button>
             <HelpHint hintKey="map-draw-corners" />
             {corners.length > 0 && <HelpHint hintKey="map-drag-corner" />}
@@ -379,14 +390,14 @@ export default function PropertyMiniMapInner({ corners, onChange, readOnly = fal
               onClick={exitDraw}
               className="rounded shadow border border-blue-500 bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-blue-700 transition-colors"
             >
-              ✓ Done
+              {t("map.miniMap.done")}
             </button>
             <span className="rounded bg-black/50 px-2 py-0.5 text-xs text-white select-none">
               {corners.length === 0
-                ? "Click map to place first corner"
+                ? t("map.miniMap.hintFirst")
                 : corners.length < 3
-                  ? "Click map to add corners"
-                  : "Click map to add corners · click corner 1 to close"}
+                  ? t("map.miniMap.hintMore")
+                  : t("map.miniMap.hintClose")}
             </span>
             {corners.length >= 3 && <HelpHint hintKey="map-close-polygon" />}
           </>

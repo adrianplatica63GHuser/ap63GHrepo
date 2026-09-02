@@ -243,21 +243,26 @@ function MapTypeToggle({
   value:    MapTypeId;
   onChange: (v: MapTypeId) => void;
 }) {
+  // ⚠️ The loop variable used to be called `t`, shadowing nothing at the time
+  // because this component had no translator — which is exactly how a later
+  // `t("map.typeStreet")` in here would have compiled and called a MapTypeId.
+  // It is `id` now, and the translator is the only `t` in scope.
+  const t = useTranslations("property");
   return (
     <div className="flex overflow-hidden rounded shadow border border-wire bg-white">
-      {(["roadmap", "hybrid"] as MapTypeId[]).map((t) => (
+      {(["roadmap", "hybrid"] as MapTypeId[]).map((id) => (
         <button
-          key={t}
+          key={id}
           type="button"
-          onClick={() => onChange(t)}
+          onClick={() => onChange(id)}
           className={[
             "px-3 py-1.5 text-xs font-semibold tracking-wide transition-colors",
-            value === t
+            value === id
               ? "bg-cta text-white"
               : "text-ink hover:bg-canvas",
           ].join(" ")}
         >
-          {t === "roadmap" ? "STR" : "SAT"}
+          {id === "roadmap" ? t("map.typeStreet") : t("map.typeSatellite")}
         </button>
       ))}
     </div>
@@ -1398,9 +1403,21 @@ export default function PropertyMap() {
       setActiveTab("all");
       await queryClient.invalidateQueries({ queryKey: ["properties"] });
     } catch (err) {
-      setDeleteError(
-        err instanceof Error ? err.message : "An unexpected error occurred",
-      );
+      // Slice #32.16: this dialog's body, buttons and now its failure line all
+      // come from the message files. It used to render `err.message` — an
+      // English fetch/HTTP string, „Delete failed (400): …" — inside a dialog
+      // whose every other word had just been translated. #29.13 settled the
+      // same question for the three value-list panels, and
+      // `value-list-dependents.test.ts` guards it there.
+      //
+      // ⚠️ The exception is LOGGED, not swallowed. #29.13's panels keep which
+      // failure it was, through `FAILURE_CODES`; this one does not, so the
+      // console is the only place the status and the server's text survive,
+      // and a user reporting "it just says try again" has nothing else to
+      // stand on. Taking the message off the screen is not a licence to
+      // discard it.
+      console.error("[property-map] batch delete failed", err);
+      setDeleteError(t("map.confirmDelete.failed"));
     } finally {
       setDeleting(false);
     }
@@ -1413,7 +1430,7 @@ export default function PropertyMap() {
   if (isLoading) {
     return (
       <div className="flex h-full items-center justify-center bg-zinc-950 text-zinc-400 text-sm">
-        Loading map data…
+        {t("map.loading")}
       </div>
     );
   }
@@ -1421,10 +1438,29 @@ export default function PropertyMap() {
   if (isError) {
     return (
       <div className="flex h-full items-center justify-center bg-zinc-950 text-red-400 text-sm">
-        Failed to load map data
+        {t("map.loadError")}
       </div>
     );
   }
+
+  // -------------------------------------------------------------------------
+  // Delete-all-selected button — ONE element, rendered on both tabs
+  // -------------------------------------------------------------------------
+  //
+  // Slice #32.16: this was written out twice, identically, in the two tab
+  // branches below. The count in its label and the dialog it opens are the
+  // same on both tabs, so a change made to one copy and not the other is a
+  // difference the user meets and nothing here would report.
+
+  const deleteAllSelectedButton = (
+    <button
+      type="button"
+      onClick={() => { setDeleteError(null); setShowDeleteConfirm(true); }}
+      className={buttonClass({ variant: "danger", size: "lg" })}
+    >
+      {t("map.deleteAllSelected", { count: selectedIds.size })}
+    </button>
+  );
 
   // -------------------------------------------------------------------------
   // Selection rectangle CSS geometry
@@ -1716,7 +1752,7 @@ export default function PropertyMap() {
                         href={`/properties/${item.id}`}
                         className="text-xs text-blue-600 hover:underline"
                       >
-                        Open →
+                        {t("map.openLink")}
                       </Link>
                     )}
                   </div>
@@ -1752,11 +1788,23 @@ export default function PropertyMap() {
         )}
 
         {/* ---------------------------------------------------------------- */}
-        {/* Toolbar — top-right: Select toggle + STR / SAT                   */}
+        {/* Toolbar — top-right: Select toggle + map-type toggle                   */}
         {/* Only shown on the "all properties" tab                           */}
         {/* ---------------------------------------------------------------- */}
+        {/* `flex-wrap` + `max-w` (Slice #32.16): every label in this row is a   */}
+        {/* message now, and Romanian is the DEFAULT locale, so the row is      */}
+        {/* ~90px wider here than the English it was laid out against —         */}
+        {/* „HARTĂ"/„SATELIT" for STR/SAT, and a longer Cancel-select label.    */}
+        {/* The cap is `100% - 6rem` and NOT a percentage: this container is    */}
+        {/* `data-map-ui`, which `isUi()` reads to decide whether a click       */}
+        {/* belongs to the ruler and angles tools, so any max-width WIDER than  */}
+        {/* the content turns the empty gutter beside it into a dead zone for   */}
+        {/* those two tools. 6rem is where the hint cluster at `top-3 left-3`   */}
+        {/* actually ends, so the box only ever clamps at the collision it is   */}
+        {/* here to prevent, and at every ordinary window width it does not     */}
+        {/* clamp at all — English and Romanian both lay out exactly as before. */}
         {activeTab === "all" && (
-          <div data-map-ui className="absolute top-3 right-3 z-20 flex items-start gap-2">
+          <div data-map-ui className="absolute top-3 right-3 z-20 flex flex-wrap justify-end items-start gap-2 max-w-[calc(100%-6rem)]">
             {/* Angles tool — show interior angles at corners (Slice #19.05).   */}
             {/* Sits to the left of Ruler; depressed while active.              */}
             <button
@@ -1878,8 +1926,8 @@ export default function PropertyMap() {
               onClick={toggleSelectMode}
               title={
                 selectMode
-                  ? "Exit selection mode"
-                  : "Enter selection mode — drag to select properties for deletion"
+                  ? t("map.selectExitTitle")
+                  : t("map.selectEnterTitle")
               }
               className={[
                 "flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded shadow border transition-colors",
@@ -1888,7 +1936,7 @@ export default function PropertyMap() {
                   : "bg-white text-ink border-wire hover:bg-canvas",
               ].join(" ")}
             >
-              {selectMode ? "✕ Cancel select" : "⬚ Select"}
+              {selectMode ? t("map.cancelSelect") : t("map.select")}
             </button>
             <HelpHint hintKey="drag-select" />
 
@@ -1906,7 +1954,7 @@ export default function PropertyMap() {
           </div>
         )}
 
-        {/* STR/SAT toggle alone on the "selected" tab (no select-mode button) */}
+        {/* Map-type toggle alone on the "selected" tab (no select-mode button) */}
         {activeTab === "selected" && (
           <div className="absolute top-3 right-3 z-20">
             <MapTypeToggle value={mapType} onChange={setMapType} />
@@ -1918,14 +1966,7 @@ export default function PropertyMap() {
         {/* ---------------------------------------------------------------- */}
         {selectedIds.size > 0 && activeTab === "all" && (
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3">
-            {/* Delete all selected */}
-            <button
-              type="button"
-              onClick={() => { setDeleteError(null); setShowDeleteConfirm(true); }}
-              className={buttonClass({ variant: "danger", size: "lg" })}
-            >
-              {t("map.deleteAllSelected", { count: selectedIds.size })}
-            </button>
+            {deleteAllSelectedButton}
 
             {/* Display all selected — shows / switches to the "selected" tab */}
             <button
@@ -1942,13 +1983,7 @@ export default function PropertyMap() {
         {/* Delete button also shown on the "selected" tab */}
         {selectedIds.size > 0 && activeTab === "selected" && (
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
-            <button
-              type="button"
-              onClick={() => { setDeleteError(null); setShowDeleteConfirm(true); }}
-              className={buttonClass({ variant: "danger", size: "lg" })}
-            >
-              {t("map.deleteAllSelected", { count: selectedIds.size })}
-            </button>
+            {deleteAllSelectedButton}
           </div>
         )}
 

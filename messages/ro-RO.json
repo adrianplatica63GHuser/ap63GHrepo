@@ -177,12 +177,13 @@
       "selectLink": "Selectează",
       "unselectLink": "Deselectează",
       "displayAllSelected": "Afișează selectate",
-      "deleteAllSelected": "Șterge selecția ({count})",
+      "deleteAllSelected": "Șterge selecția ({count, number})",
       "confirmDelete": {
-        "body": "Această acțiune va șterge {count} proprietate(proprietăți) selectată(e). Acțiunea nu poate fi anulată.",
+        "body": "Această acțiune va șterge {count, plural, one {o proprietate selectată} few {# proprietăți selectate} other {# de proprietăți selectate}}. Acțiunea nu poate fi anulată.",
         "cancel": "Anulează",
         "confirm": "Șterge",
-        "deleting": "Se șterge…"
+        "deleting": "Se șterge…",
+        "failed": "Proprietățile selectate nu au putut fi șterse. Încercați din nou."
       },
       "groupsButton": "Grupuri",
       "groupsAll": "Toate (in grup sau nu)",
@@ -191,7 +192,24 @@
       "rulerButton": "Riglă",
       "rulerHint": "Riglă — apasă două puncte pentru a măsura distanța dintre ele",
       "anglesButton": "Unghiuri",
-      "anglesHint": "Unghiuri — apasă un colț pentru a vedea unghiul (unghiurile) sale"
+      "anglesHint": "Unghiuri — apasă un colț pentru a vedea unghiul (unghiurile) sale",
+      "typeStreet": "HARTĂ",
+      "typeSatellite": "SATELIT",
+      "loading": "Se încarcă datele hărții…",
+      "loadError": "Datele hărții nu au putut fi încărcate",
+      "openLink": "Deschide →",
+      "select": "⬚ Selectează",
+      "cancelSelect": "✕ Anulează selecția",
+      "selectEnterTitle": "Intră în modul de selecție — trage un dreptunghi pentru a selecta proprietăți de șters",
+      "selectExitTitle": "Ieși din modul de selecție",
+      "miniMap": {
+        "draw": "✏ Desenează",
+        "done": "✓ Gata",
+        "hintFirst": "Apasă pe hartă pentru a plasa primul punct",
+        "hintMore": "Apasă pe hartă pentru a adăuga puncte",
+        "hintClose": "Apasă pe hartă pentru a adăuga puncte · apasă punctul 1 pentru a închide"
+      },
+      "loadingChunk": "Se încarcă harta…"
     },
     "createTitle": "Proprietate nouă",
     "saveError": "Salvarea a eșuat",
@@ -256,6 +274,7 @@
     "corners": {
       "seq": "Nr.",
       "originalIndex": "Nr. orig.",
+      "displayLabel": "Afișare:",
       "lat": "Latitudine",
       "lon": "Longitudine",
       "stereoN": "Nord (m)",
@@ -287,7 +306,12 @@
       "showStreetView": "Arată Street View",
       "hideStreetView": "Ascunde Street View",
       "showAngles": "Arată Unghiuri",
-      "hideAngles": "Ascunde Unghiuri"
+      "hideAngles": "Ascunde Unghiuri",
+      "moveUp": "Mută mai sus",
+      "moveDown": "Mută mai jos",
+      "invalidDD": "Introduceți valori valide în grade zecimale",
+      "invalidDMS": "Introduceți grade, minute și secunde valide",
+      "invalidS70": "Introduceți valori Stereo 70 valide (metri)"
     },
     "streetView": {
       "loading": "Se încarcă Street View…",
@@ -1102,7 +1126,63 @@
       "previewTitle": "Previzualizare",
       "noScreenSelected": "Selectați un ecran din listă pentru a edita conținutul de ajutor.",
       "noHintSelected": "Selectați un sfat din listă pentru a edita textul.",
-      "appearsOn": "Apare pe {count} ecrane — textul se salvează pe toate."
+      "appearsOn": "Apare pe {count} ecrane — textul se salvează pe toate.",
+      "screens": {
+        "dashboard": "Acasă — Tablou de bord",
+        "properties-list": "Proprietăți — Listă",
+        "property-detail": "Proprietăți — Detaliu / Nou",
+        "properties-map": "Proprietăți — Hartă",
+        "documents-list": "Acte — Listă",
+        "document-detail": "Acte — Detaliu / Nou",
+        "natural-persons-list": "Persoane fizice — Listă",
+        "natural-person-detail": "Persoane fizice — Detaliu / Nou",
+        "judicial-persons-list": "Persoane juridice — Listă",
+        "judicial-person-detail": "Persoane juridice — Detaliu / Nou",
+        "associate-person": "Asociere — Persoană",
+        "associate-document": "Asociere — Act",
+        "associate-property": "Asociere — Proprietate",
+        "associate-reference": "Asociere — Referință (același tip)",
+        "associate-party": "Asociere — Parte a actului (cu calitate)",
+        "admin-value-lists": "Administrare — Date de referință",
+        "admin-import": "Administrare — Import",
+        "admin-doc-type-engine": "Administrare — Distilare Tipizate",
+        "admin-calculation": "Administrare — Calcul",
+        "admin-calculation-history": "Administrare — Istoricul calculelor",
+        "admin-calculation-run": "Administrare — Detalii calcul",
+        "admin-groups": "Administrare — Listă grupuri",
+        "admin-group-editor": "Administrare — Editor grup",
+        "admin-stamps": "Administrare — Listă ștampile",
+        "admin-stamp-applicator": "Administrare — Aplicare ștampile",
+        "admin-tags": "Administrare — Etichete",
+        "admin-settings": "Administrare — Setări",
+        "admin-users": "Administrare — Utilizatori & Acces",
+        "admin-global-search": "Administrare — Căutare globală",
+        "admin-help-content": "Administrare — Informații de ajutor"
+      },
+      "hints": {
+        "drag-select": "Hartă — trage un dreptunghi pentru a selecta mai multe proprietăți",
+        "ruler-two-clicks": "Hartă — ordinea apăsărilor la riglă și fixarea pe colțuri",
+        "angles-click-corner": "Hartă — apasă un colț pentru a-i citi unghiul",
+        "map-double-click-open": "Hartă — apasă de două ori pe o proprietate pentru a o deschide",
+        "map-blinking-duplicates": "Hartă — roz intermitent înseamnă proprietăți duplicate",
+        "map-selected-tab": "Hartă — fila „Afișează selectate”",
+        "corner-reorder": "Puncte — săgețile sus/jos schimbă forma proprietății",
+        "map-draw-corners": "Puncte — desenează apăsând pe hartă",
+        "map-close-polygon": "Puncte — apasă primul punct pentru a închide forma",
+        "map-drag-corner": "Puncte — trage un punct pentru a-l corecta",
+        "calculated-area-auto": "Suprafața calculată este dedusă din colțuri",
+        "street-view-fetch-address": "Preluarea din Street View suprascrie câmpul de adresă",
+        "big-page-zoom": "Pagini extinse — rotița pentru zoom, trage pentru deplasare",
+        "ai-party-confirm": "Persoanele găsite de AI trebuie confirmate una câte una",
+        "group-staged-members": "Grupuri — mutările sunt în așteptare până la Salvează grupul",
+        "group-pending-position": "Grupuri — „[nou]” înseamnă că poziția nu este încă atribuită",
+        "stamp-staged-changes": "Ștampile — + / - sunt în așteptare până la Salvează ștampilele",
+        "stamp-type-switch-keeps-changes": "Ștampile — schimbarea tipului păstrează modificările în așteptare",
+        "calc-file-format": "Calcul — cele cinci secțiuni pe care fișierul trebuie să le conțină",
+        "calc-preview-not-saved": "Calcul — nu se creează nimic până la confirmare",
+        "calc-group-description-autofill": "Calcul — încărcarea unui fișier suprascrie descrierea",
+        "select-all-page-only": "Liste — bifa din antet selectează doar pagina curentă"
+      }
     }
   },
   "person": {
@@ -1236,6 +1316,30 @@
       "subject": "Subiect",
       "dateValidUntil": "Valabil până la",
       "surveyor": "Topograf / Cadastrist"
+    },
+    "typeLabels": {
+      "nrGeneric": "Nr. document",
+      "nrPropertyTitle": "Nr. titlu proprietate",
+      "nrInheritanceCertificate": "Nr. certificat de moștenitor",
+      "nrAuthenticDeed": "Nr. act autentic",
+      "nrRentalContract": "Nr. contract de închiriere",
+      "nrLeaseContract": "Nr. contract de arendă",
+      "nrGiftDeed": "Nr. act autentic donație",
+      "nrWill": "Nr. act autentic testament",
+      "nrRuling": "Nr. hotărâre",
+      "nrCadastral": "Nr. OCPI",
+      "nrPermit": "Nr. autorizație",
+      "dateAuthenticated": "Data autentificării",
+      "dateIssued": "Data eliberării",
+      "dateRuled": "Data hotărârii",
+      "dateEmitted": "Data emiterii",
+      "dateRegistered": "Data înregistrării",
+      "institutionRegistrar": "Instituție înregistrare",
+      "institutionIssuer": "Emitent",
+      "institutionNotary": "Notariat",
+      "institutionCourt": "Instanță / Autoritate",
+      "institutionAuthority": "Autoritate emitentă",
+      "institutionCadastral": "OCPI / Autoritate"
     },
     "actions": {
       "addSurveyor": "Selectați topograful",
@@ -3152,6 +3256,14 @@
     "recentActivity": {
       "title": "Activitate recentă",
       "empty": "Nicio activitate recentă",
+      "relative": {
+        "justNow": "acum",
+        "minutes": "acum {count, plural, one {un minut} few {# minute} other {# de minute}}",
+        "hours": "acum {count, plural, one {o oră} few {# ore} other {# de ore}}",
+        "yesterday": "ieri",
+        "days": "acum {count, plural, one {o zi} few {# zile} other {# de zile}}",
+        "weeks": "acum {count, plural, one {o săptămână} few {# săptămâni} other {# de săptămâni}}"
+      },
       "typePerson": "Persoană",
       "typeProperty": "Proprietate",
       "typeDocument": "Act"
@@ -3203,13 +3315,15 @@
       "settings": "Setări",
       "globalSearch": "Căutare globală",
       "helpContent": "Informații de ajutor",
+      "docTypeEngine": "Distilare Tipizate",
       "associatePerson": "Adaugă persoană",
       "associateDocument": "Adaugă document",
       "associateProperty": "Adaugă proprietate",
       "associateReference": "Adaugă referință",
       "associateParty": "Adaugă parte",
       "new": "Nou",
-      "entity": "Entitate"
+      "entity": "Entitate",
+      "ariaLabel": "Fir de navigare"
     },
     "recentlyViewed": {
       "title": "Recente",

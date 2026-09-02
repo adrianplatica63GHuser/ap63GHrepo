@@ -1214,7 +1214,10 @@ export function DocumentForm({
 
   // ── Taxe și onorarii — always rendered (Slice #21.06.misc): the 3 fields
   // moved out of General (Notariat / Nr. act autentic / Data autentificării
-  // — labels per type via cfg.labels), in the order a business user reads
+  // — labels per type via cfg.labels, which since Slice #32.16 hold message
+  // KEY PATHS under the `document` namespace rather than Romanian strings, so
+  // the three read the interface language like everything else on the form),
+  // in the order a business user reads
   // them (who/what act, then when, then the fees tied to it), followed by
   // any custom fields the active type groups under "Taxe și onorarii" /
   // "Fees". Uses the matched group's own label when one exists (preserves
@@ -1223,7 +1226,7 @@ export function DocumentForm({
   const feesSection = (
     <Section key="fees" title={feesGroup?.label || t("sections.fees")} columns={1}>
       <SelectField
-        label={cfg.labels.institution}
+        label={t(cfg.labels.institution)}
         name="institutionId"
         register={register}
         error={errors.institutionId?.message}
@@ -1231,14 +1234,14 @@ export function DocumentForm({
         highlight={displayHighlights?.institutionId}
       />
       <Field
-        label={cfg.labels.nrDocument}
+        label={t(cfg.labels.nrDocument)}
         name="nrDocument"
         register={register}
         error={errors.nrDocument?.message}
         highlight={displayHighlights?.nrDocument}
       />
       <Field
-        label={cfg.labels.dateDocument}
+        label={t(cfg.labels.dateDocument)}
         name="dateDocument"
         type="date"
         register={register}

@@ -11,6 +11,8 @@ import {
   documentCreateSchema,
   documentUpdateSchema,
 } from "@/lib/documents/validation";
+import { readFileSync } from "fs";
+import { join } from "path";
 import { getTypeConfig } from "@/lib/documents/type-config";
 import { customFieldsEqual, parseTemplateFields } from "@/lib/documents/template-fields";
 
@@ -140,53 +142,122 @@ describe("documentUpdateSchema", () => {
 
 describe("getTypeConfig", () => {
   it("returns the generic labels when key is null/undefined", () => {
-    expect(getTypeConfig(null).labels.nrDocument).toBe("Nr. document");
-    expect(getTypeConfig(undefined).labels.nrDocument).toBe("Nr. document");
+    expect(getTypeConfig(null).labels.nrDocument).toBe("typeLabels.nrGeneric");
+    expect(getTypeConfig(undefined).labels.nrDocument).toBe("typeLabels.nrGeneric");
   });
 
   it("returns generic labels for a type with no override (ACT_ADJUDECARE)", () => {
     const cfg = getTypeConfig("ACT_ADJUDECARE");
-    expect(cfg.labels.nrDocument).toBe("Nr. document");
-    expect(cfg.labels.dateDocument).toBe("Data autentificării");
-    expect(cfg.labels.institution).toBe("Instituție înregistrare");
+    expect(cfg.labels.nrDocument).toBe("typeLabels.nrGeneric");
+    expect(cfg.labels.dateDocument).toBe("typeLabels.dateAuthenticated");
+    expect(cfg.labels.institution).toBe("typeLabels.institutionRegistrar");
   });
 
   it("returns correct label override for TITLU_PROPRIETATE", () => {
     const cfg = getTypeConfig("TITLU_PROPRIETATE");
-    expect(cfg.labels.nrDocument).toBe("Nr. titlu proprietate");
-    expect(cfg.labels.dateDocument).toBe("Data eliberării");
-    expect(cfg.labels.institution).toBe("Emitent");
+    expect(cfg.labels.nrDocument).toBe("typeLabels.nrPropertyTitle");
+    expect(cfg.labels.dateDocument).toBe("typeLabels.dateIssued");
+    expect(cfg.labels.institution).toBe("typeLabels.institutionIssuer");
   });
 
   it("returns correct label override for CERTIFICAT_MOSTENITOR", () => {
     const cfg = getTypeConfig("CERTIFICAT_MOSTENITOR");
-    expect(cfg.labels.nrDocument).toBe("Nr. certificat de moștenitor");
-    expect(cfg.labels.institution).toBe("Notariat");
+    expect(cfg.labels.nrDocument).toBe("typeLabels.nrInheritanceCertificate");
+    expect(cfg.labels.institution).toBe("typeLabels.institutionNotary");
   });
 
   it("returns correct label override for CONTRACT_INCHIRIERE", () => {
     const cfg = getTypeConfig("CONTRACT_INCHIRIERE");
-    expect(cfg.labels.nrDocument).toBe("Nr. contract de închiriere");
+    expect(cfg.labels.nrDocument).toBe("typeLabels.nrRentalContract");
   });
 
   it("returns correct label override for CONTRACT_VANZARE", () => {
     const cfg = getTypeConfig("CONTRACT_VANZARE");
-    expect(cfg.labels.nrDocument).toBe("Nr. act autentic");
+    expect(cfg.labels.nrDocument).toBe("typeLabels.nrAuthenticDeed");
   });
 
   it("returns correct label override for ACT_DONATIE", () => {
     const cfg = getTypeConfig("ACT_DONATIE");
-    expect(cfg.labels.institution).toBe("Notariat");
+    expect(cfg.labels.institution).toBe("typeLabels.institutionNotary");
   });
 
   it("returns correct label override for TESTAMENT", () => {
     const cfg = getTypeConfig("TESTAMENT");
-    expect(cfg.labels.institution).toBe("Notariat");
+    expect(cfg.labels.institution).toBe("typeLabels.institutionNotary");
   });
 
   it("returns correct label override for CONTRACT_ARENDA", () => {
     const cfg = getTypeConfig("CONTRACT_ARENDA");
-    expect(cfg.labels.nrDocument).toBe("Nr. contract de arendă");
+    expect(cfg.labels.nrDocument).toBe("typeLabels.nrLeaseContract");
+  });
+
+  /**
+   * ⚠️ Slice #32.16 turned these values from Romanian display strings into
+   * message key paths, which is a defect class the assertions above cannot
+   * see: every one of them still passes when the key resolves to nothing and
+   * the Fees block renders the literal text "typeLabels.nrGeneric" at the user.
+   *
+   * So the real guard is this one — every key the config can hand to
+   * `t(...)`, in BOTH message files. It reads the config through
+   * `getTypeConfig` rather than through the module's private CONFIG map, so a
+   * type added to that map without a key is only caught when the type key is
+   * also in the catalogue; `document-type-catalogue-single-source.test.ts`
+   * already enforces the other half of that pair.
+   */
+  describe("every label key resolves in both message files", () => {
+    const LOCALES = ["en-GB.json", "ro-RO.json"] as const;
+
+    /** The distinct key paths the config can produce, generic included. */
+    const referenced = (): string[] => {
+      const whole = readFileSync(
+        join(process.cwd(), "src/lib/documents/type-config.ts"),
+        "utf8",
+      );
+      // From `const GENERIC` onwards only: the file's header comment quotes a
+      // key as an example, and a comment must not be able to demand a message.
+      const start = whole.indexOf("const GENERIC:");
+      expect(start).toBeGreaterThan(-1);
+      const src = whole.slice(start);
+      const found = [...src.matchAll(/"(typeLabels\.[A-Za-z0-9]+)"/g)].map((m) => m[1]);
+      return [...new Set(found)].sort();
+    };
+
+    it("finds the keys in the config at all", () => {
+      // Guards against the regex silently matching nothing after a refactor,
+      // which would make every assertion below vacuously true.
+      expect(referenced().length).toBeGreaterThanOrEqual(20);
+      expect(referenced()).toContain("typeLabels.nrGeneric");
+    });
+
+    it.each(LOCALES)("%s carries every one of them, non-empty", (file) => {
+      const messages = JSON.parse(
+        readFileSync(join(process.cwd(), "messages", file), "utf8"),
+      ) as { document: { typeLabels: Record<string, unknown> } };
+      const missing = referenced().filter((path) => {
+        const value = messages.document.typeLabels[path.slice("typeLabels.".length)];
+        return typeof value !== "string" || value.trim().length === 0;
+      });
+      expect(missing).toEqual([]);
+    });
+
+    it.each(LOCALES)("%s carries no typeLabels key the config never asks for", (file) => {
+      const messages = JSON.parse(
+        readFileSync(join(process.cwd(), "messages", file), "utf8"),
+      ) as { document: { typeLabels: Record<string, unknown> } };
+      const asked = new Set(referenced().map((p) => p.slice("typeLabels.".length)));
+      const orphans = Object.keys(messages.document.typeLabels).filter((k) => !asked.has(k));
+      expect(orphans).toEqual([]);
+    });
+
+    it("the two files agree on which keys exist", () => {
+      const keys = (file: string) =>
+        Object.keys(
+          (JSON.parse(readFileSync(join(process.cwd(), "messages", file), "utf8")) as {
+            document: { typeLabels: Record<string, unknown> };
+          }).document.typeLabels,
+        ).sort();
+      expect(keys("en-GB.json")).toEqual(keys("ro-RO.json"));
+    });
   });
 
   it("falls back to generic labels for an unknown key", () => {

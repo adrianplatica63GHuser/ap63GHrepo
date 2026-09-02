@@ -16,9 +16,15 @@
  *
  * HOW A SCREEN GETS HELP
  *   1. Add an entry to HELP_SCREENS below.
- *   2. Map its route in src/lib/help/route-map.ts.
- *   3. That's it — <HelpButton> is auto-mounted in the breadcrumb bar for
+ *   2. Add its name to `help.admin.screens.<key>` in BOTH message files.
+ *   3. Map its route in src/lib/help/route-map.ts.
+ *   4. That's it — <HelpButton> is auto-mounted in the breadcrumb bar for
  *      every resolvable route. There is no per-page wiring.
+ *
+ * Step 2 is not optional and it is not cosmetic: with no message, the admin
+ * list renders the raw key path at the user. `help-coverage.test.ts` fails
+ * when an entry here has no message in either locale, so a forgotten step 2
+ * is a red suite rather than a screen nobody looks at closely.
  *
  * A route that resolves to no screen key AND is not listed in HELP_OPTED_OUT
  * (route-map.ts) fails the coverage test, so a new screen cannot ship without
@@ -33,53 +39,53 @@
 
 export const HELP_SCREENS = [
   // ── Home ────────────────────────────────────────────────────────────────
-  { key: "dashboard", label: "Home — Dashboard" },
+  { key: "dashboard" },
 
   // ── Properties ──────────────────────────────────────────────────────────
-  { key: "properties-list", label: "Properties — List" },
-  { key: "property-detail", label: "Properties — Detail / New" },
-  { key: "properties-map", label: "Properties — Map" },
+  { key: "properties-list" },
+  { key: "property-detail" },
+  { key: "properties-map" },
 
   // ── Documents ───────────────────────────────────────────────────────────
-  { key: "documents-list", label: "Documents — List" },
-  { key: "document-detail", label: "Documents — Detail / New" },
+  { key: "documents-list" },
+  { key: "document-detail" },
 
   // ── Persons ─────────────────────────────────────────────────────────────
-  { key: "natural-persons-list", label: "Persons — Natural Person List" },
-  { key: "natural-person-detail", label: "Persons — Natural Person Detail / New" },
-  { key: "judicial-persons-list", label: "Persons — Judicial Person List" },
-  { key: "judicial-person-detail", label: "Persons — Judicial Person Detail / New" },
+  { key: "natural-persons-list" },
+  { key: "natural-person-detail" },
+  { key: "judicial-persons-list" },
+  { key: "judicial-person-detail" },
 
   // ── Association sub-pages ───────────────────────────────────────────────
   // Deliberately generic: the same five screens are reached from Property,
   // Document and both Person types, and the instructions are identical
   // regardless of which entity you arrived from. One key each, not one per
   // (entity x association) pair.
-  { key: "associate-person", label: "Associate — Person" },
-  { key: "associate-document", label: "Associate — Document" },
-  { key: "associate-property", label: "Associate — Property" },
-  { key: "associate-reference", label: "Associate — Reference (same type)" },
-  { key: "associate-party", label: "Associate — Document party (with role)" },
+  { key: "associate-person" },
+  { key: "associate-document" },
+  { key: "associate-property" },
+  { key: "associate-reference" },
+  { key: "associate-party" },
 
   // ── Administration ──────────────────────────────────────────────────────
-  { key: "admin-value-lists", label: "Administration — Reference Data" },
-  { key: "admin-import", label: "Administration — Import" },
+  { key: "admin-value-lists" },
+  { key: "admin-import" },
   // Slice #29.09. Registered rather than opted out: a screen that spends money
   // on twenty model reads and then writes a form every future document of a
   // type is read against is the opposite of self-evident.
-  { key: "admin-doc-type-engine", label: "Administration — DocTypeEngine" },
-  { key: "admin-calculation", label: "Administration — Calculation" },
-  { key: "admin-calculation-history", label: "Administration — Calculation History" },
-  { key: "admin-calculation-run", label: "Administration — Calculation Run Detail" },
-  { key: "admin-groups", label: "Administration — Groups List" },
-  { key: "admin-group-editor", label: "Administration — Group Editor" },
-  { key: "admin-stamps", label: "Administration — Stamps List" },
-  { key: "admin-stamp-applicator", label: "Administration — Stamp Applicator" },
-  { key: "admin-tags", label: "Administration — Tags" },
-  { key: "admin-settings", label: "Administration — Settings" },
-  { key: "admin-users", label: "Administration — Users & Access" },
-  { key: "admin-global-search", label: "Administration — Global Search" },
-  { key: "admin-help-content", label: "Administration — Help Content" },
+  { key: "admin-doc-type-engine" },
+  { key: "admin-calculation" },
+  { key: "admin-calculation-history" },
+  { key: "admin-calculation-run" },
+  { key: "admin-groups" },
+  { key: "admin-group-editor" },
+  { key: "admin-stamps" },
+  { key: "admin-stamp-applicator" },
+  { key: "admin-tags" },
+  { key: "admin-settings" },
+  { key: "admin-users" },
+  { key: "admin-global-search" },
+  { key: "admin-help-content" },
 ] as const;
 
 export type HelpScreenKey = (typeof HELP_SCREENS)[number]["key"];
@@ -88,21 +94,39 @@ export function isHelpScreenKey(key: string): key is HelpScreenKey {
   return HELP_SCREENS.some((s) => s.key === key);
 }
 
-export function helpScreenLabel(key: string): string {
-  return HELP_SCREENS.find((s) => s.key === key)?.label ?? key;
+/**
+ * The message key path — under the `help.admin` namespace — that carries this
+ * screen's human-readable name.
+ *
+ * Slice #32.16: the names used to live in the array above, in English, and
+ * were rendered as-is, so the Romanian Help Information screen listed thirty
+ * entries reading „Persons — Natural Person List". They are messages now.
+ *
+ * This returns the KEY and not the text: resolving it needs a translator, and
+ * this module is imported by tests, by API routes and by the route map — none
+ * of which are React renders. The one caller that needs the text
+ * (`help-content-hub.tsx`) already has a `useTranslations("help.admin")`.
+ *
+ * ⚠️ `key` itself is untouched by all of this. It is a foreign key into
+ * `help_content.screenKey` / `help_hint.screenKey`, it is matched by
+ * `route-map.ts`, and `help-coverage.test.ts` reads it — only the label moved.
+ */
+export function helpScreenLabelKey(key: string): string {
+  return `screens.${key}`;
 }
 
 // ---------------------------------------------------------------------------
 // Micro-hints — hidden mouse/keyboard behaviour.
 // ---------------------------------------------------------------------------
 //
-// A hint declares the screen(s) it appears on via `screens`. Several hints
-// genuinely belong to more than one screen (the four list views share their
-// selection behaviour; the property form is reached from two routes), and
-// storing one DB row per (screen, hint) would otherwise force the same text
-// to be typed once per screen. The Admin editor shows ONE entry per hintKey
-// and fans the save out to every screen in `screens`, so the text is authored
-// once.
+// A hint declares the screen(s) it appears on via `screens`, and its display
+// name lives at `help.admin.hints.<hintKey>` in both message files (see
+// `helpHintLabelKey`). Several hints genuinely belong to more than one screen
+// (the four list views share their selection behaviour; the property form is
+// reached from two routes), and storing one DB row per (screen, hint) would
+// otherwise force the same text to be typed once per screen. The Admin editor
+// shows ONE entry per hintKey and fans the save out to every screen in
+// `screens`, so the text is authored once.
 //
 // SELECTION CRITERIA — a hint earns its lightbulb only when not knowing costs
 // the user something real:
@@ -118,71 +142,58 @@ export const HELP_HINTS = [
   {
     hintKey: "drag-select",
     screens: ["properties-map"],
-    label: "Map — drag a rectangle to select many properties",
   },
   {
     hintKey: "ruler-two-clicks",
     screens: ["properties-map"],
-    label: "Map — ruler click sequence and corner snapping",
   },
   {
     hintKey: "angles-click-corner",
     screens: ["properties-map"],
-    label: "Map — click a corner to read its angle",
   },
   {
     hintKey: "map-double-click-open",
     screens: ["properties-map"],
-    label: "Map — double-click a plot to open it",
   },
   {
     hintKey: "map-blinking-duplicates",
     screens: ["properties-map"],
-    label: "Map — blinking pink means duplicate plots",
   },
   {
     hintKey: "map-selected-tab",
     screens: ["properties-map"],
-    label: "Map — the 'Display all selected' tab",
   },
 
   // ── Property form (detail + new) ────────────────────────────────────────
   {
     hintKey: "corner-reorder",
     screens: ["property-detail"],
-    label: "Corners — the up/down arrows change the plot shape",
   },
   {
     hintKey: "map-draw-corners",
     screens: ["property-detail"],
-    label: "Corners — draw by clicking on the map",
   },
   {
     hintKey: "map-close-polygon",
     screens: ["property-detail"],
-    label: "Corners — click the first corner to close the shape",
   },
   {
     hintKey: "map-drag-corner",
     screens: ["property-detail"],
-    label: "Corners — drag a corner dot to correct it",
   },
   {
     hintKey: "calculated-area-auto",
     screens: ["property-detail"],
-    label: "Calculated Area is derived from the corners",
   },
   {
     hintKey: "street-view-fetch-address",
     screens: ["property-detail"],
-    label: "Fetch from Street View overwrites the address box",
   },
 
   // ── Document form (detail + new) ────────────────────────────────────────
   {
     hintKey: "big-page-zoom",
     screens: ["document-detail"],
-    label: "Big Page — wheel to zoom, drag to pan",
   },
   // Slice #26.09 removed "ai-interpret-once". Its placement went with the AI
   // Interpret button — all AI interpretation happens automatically during an
@@ -196,48 +207,40 @@ export const HELP_HINTS = [
     // registered against a screen it can never appear on is content an admin
     // can author and nobody can ever read.
     screens: ["admin-import"],
-    label: "AI-found people must be confirmed one by one",
   },
 
   // ── Groups ──────────────────────────────────────────────────────────────
   {
     hintKey: "group-staged-members",
     screens: ["admin-group-editor"],
-    label: "Groups — moves are staged until Save group",
   },
   {
     hintKey: "group-pending-position",
     screens: ["admin-group-editor"],
-    label: "Groups — '[new]' means the position is not assigned yet",
   },
 
   // ── Stamps ──────────────────────────────────────────────────────────────
   {
     hintKey: "stamp-staged-changes",
     screens: ["admin-stamp-applicator"],
-    label: "Stamps — + / - are staged until Save stamps",
   },
   {
     hintKey: "stamp-type-switch-keeps-changes",
     screens: ["admin-stamp-applicator"],
-    label: "Stamps — switching type keeps pending changes",
   },
 
   // ── Calculation ─────────────────────────────────────────────────────────
   {
     hintKey: "calc-file-format",
     screens: ["admin-calculation"],
-    label: "Calculation — the five sections the file must contain",
   },
   {
     hintKey: "calc-preview-not-saved",
     screens: ["admin-calculation"],
-    label: "Calculation — nothing is created until you confirm",
   },
   {
     hintKey: "calc-group-description-autofill",
     screens: ["admin-calculation"],
-    label: "Calculation — loading a file overwrites the description",
   },
 
   // ── List views (all four share this) ────────────────────────────────────
@@ -249,12 +252,10 @@ export const HELP_HINTS = [
       "natural-persons-list",
       "judicial-persons-list",
     ],
-    label: "Lists — the header tick box only selects the current page",
   },
 ] as const satisfies readonly {
   hintKey: string;
   screens: readonly HelpScreenKey[];
-  label: string;
 }[];
 
 export type HelpHintKey = (typeof HELP_HINTS)[number]["hintKey"];
@@ -266,8 +267,9 @@ export function isHelpHint(screenKey: string, hintKey: string): boolean {
   );
 }
 
-export function helpHintLabel(hintKey: string): string {
-  return HELP_HINTS.find((h) => h.hintKey === hintKey)?.label ?? hintKey;
+/** As `helpScreenLabelKey`, for a micro-hint. `hintKey` is likewise an FK. */
+export function helpHintLabelKey(hintKey: string): string {
+  return `hints.${hintKey}`;
 }
 
 /** Every hint registered for a given screen. */

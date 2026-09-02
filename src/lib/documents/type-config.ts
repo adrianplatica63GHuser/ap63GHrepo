@@ -11,9 +11,25 @@
  * are reintroduced dynamically per type via `lookup_document_type.template_fields`
  * (see src/lib/documents/template-fields.ts) — pure data, no code change.
  *
- * Label strings are Romanian — they are domain terms that stay the same
- * regardless of the active locale (same as "Tarla/Sola", "Carte Funciară" in
- * the Property form).
+ * ⚠️ **THE LABELS ARE MESSAGE KEYS, NOT STRINGS — and they used to be strings.**
+ * Until Slice #32.16 this file held the Romanian words themselves, under a
+ * comment claiming they were domain terms that stay the same regardless of
+ * locale (the way "Tarla/Sola" and "Carte Funciară" genuinely do in the
+ * Property form). UAT overturned that: an English-speaking user opening a
+ * document's "Taxe și onorarii" block met „Nr. document", „Data autentificării"
+ * and „Instituție înregistrare" with nothing else on the screen in Romanian,
+ * so they did not read as domain vocabulary — they read as three labels the
+ * application had forgotten to translate. Adrian ruled "Please fix".
+ *
+ * What each value now holds is a key path RELATIVE to the `document`
+ * namespace — `"typeLabels.nrAuthenticDeed"` — resolved by the caller, which
+ * is `document-form.tsx`. This module stays free of `next-intl`: it is
+ * imported by tests and by non-React code, and a `useTranslations` call in
+ * here would tie a pure lookup table to a React render.
+ *
+ * Every key referenced below must exist under `document.typeLabels` in BOTH
+ * message files or the form renders the raw key path. `document.test.ts`
+ * asserts exactly that, key by key, in both locales.
  *
  * NOTE (Slice #15.05): configs are keyed by `lookup_document_type.key`
  * (a plain string slug, e.g. "CONTRACT_VANZARE") instead of the old
@@ -23,7 +39,11 @@
  */
 
 export type TypeConfig = {
-  /** Override labels for common fields (Romanian domain terms) */
+  /**
+   * Override labels for the three common fields, as key paths under the
+   * `document` message namespace — NOT as display strings. Resolve with
+   * `t(cfg.labels.nrDocument)` where `t = useTranslations("document")`.
+   */
   labels: {
     nrDocument:   string;
     dateDocument: string;
@@ -37,9 +57,9 @@ export type TypeConfig = {
 
 const GENERIC: TypeConfig = {
   labels: {
-    nrDocument:   "Nr. document",
-    dateDocument: "Data autentificării",
-    institution:  "Instituție înregistrare",
+    nrDocument:   "typeLabels.nrGeneric",
+    dateDocument: "typeLabels.dateAuthenticated",
+    institution:  "typeLabels.institutionRegistrar",
   },
 };
 
@@ -51,57 +71,57 @@ const CONFIG: Record<string, TypeConfig> = {
 
   TITLU_PROPRIETATE: {
     labels: {
-      nrDocument:   "Nr. titlu proprietate",
-      dateDocument: "Data eliberării",
-      institution:  "Emitent",
+      nrDocument:   "typeLabels.nrPropertyTitle",
+      dateDocument: "typeLabels.dateIssued",
+      institution:  "typeLabels.institutionIssuer",
     },
   },
 
   CERTIFICAT_MOSTENITOR: {
     labels: {
-      nrDocument:   "Nr. certificat de moștenitor",
-      dateDocument: "Data eliberării",
-      institution:  "Notariat",
+      nrDocument:   "typeLabels.nrInheritanceCertificate",
+      dateDocument: "typeLabels.dateIssued",
+      institution:  "typeLabels.institutionNotary",
     },
   },
 
   CONTRACT_VANZARE: {
     labels: {
-      nrDocument:   "Nr. act autentic",
-      dateDocument: "Data autentificării",
-      institution:  "Notariat",
+      nrDocument:   "typeLabels.nrAuthenticDeed",
+      dateDocument: "typeLabels.dateAuthenticated",
+      institution:  "typeLabels.institutionNotary",
     },
   },
 
   CONTRACT_INCHIRIERE: {
     labels: {
-      nrDocument:   "Nr. contract de închiriere",
-      dateDocument: "Data autentificării",
-      institution:  "Instituție înregistrare",
+      nrDocument:   "typeLabels.nrRentalContract",
+      dateDocument: "typeLabels.dateAuthenticated",
+      institution:  "typeLabels.institutionRegistrar",
     },
   },
 
   CONTRACT_ARENDA: {
     labels: {
-      nrDocument:   "Nr. contract de arendă",
-      dateDocument: "Data autentificării",
-      institution:  "Instituție înregistrare",
+      nrDocument:   "typeLabels.nrLeaseContract",
+      dateDocument: "typeLabels.dateAuthenticated",
+      institution:  "typeLabels.institutionRegistrar",
     },
   },
 
   ACT_DONATIE: {
     labels: {
-      nrDocument:   "Nr. act autentic donație",
-      dateDocument: "Data autentificării",
-      institution:  "Notariat",
+      nrDocument:   "typeLabels.nrGiftDeed",
+      dateDocument: "typeLabels.dateAuthenticated",
+      institution:  "typeLabels.institutionNotary",
     },
   },
 
   TESTAMENT: {
     labels: {
-      nrDocument:   "Nr. act autentic testament",
-      dateDocument: "Data autentificării",
-      institution:  "Notariat",
+      nrDocument:   "typeLabels.nrWill",
+      dateDocument: "typeLabels.dateAuthenticated",
+      institution:  "typeLabels.institutionNotary",
     },
   },
 
@@ -109,33 +129,33 @@ const CONFIG: Record<string, TypeConfig> = {
 
   HOTARARE_JUDECATOREASCA: {
     labels: {
-      nrDocument:   "Nr. hotărâre",
-      dateDocument: "Data hotărârii",
-      institution:  "Instanță / Autoritate",
+      nrDocument:   "typeLabels.nrRuling",
+      dateDocument: "typeLabels.dateRuled",
+      institution:  "typeLabels.institutionCourt",
     },
   },
 
   HOTARARE_ADMINISTRATIVA: {
     labels: {
-      nrDocument:   "Nr. hotărâre",
-      dateDocument: "Data emiterii",
-      institution:  "Autoritate emitentă",
+      nrDocument:   "typeLabels.nrRuling",
+      dateDocument: "typeLabels.dateEmitted",
+      institution:  "typeLabels.institutionAuthority",
     },
   },
 
   DOCUMENTATIE_CADASTRALA: {
     labels: {
-      nrDocument:   "Nr. OCPI",
-      dateDocument: "Data înregistrării",
-      institution:  "OCPI / Autoritate",
+      nrDocument:   "typeLabels.nrCadastral",
+      dateDocument: "typeLabels.dateRegistered",
+      institution:  "typeLabels.institutionCadastral",
     },
   },
 
   AUTORIZATIE_CONSTRUIRE: {
     labels: {
-      nrDocument:   "Nr. autorizație",
-      dateDocument: "Data emiterii",
-      institution:  "Autoritate emitentă",
+      nrDocument:   "typeLabels.nrPermit",
+      dateDocument: "typeLabels.dateEmitted",
+      institution:  "typeLabels.institutionAuthority",
     },
   },
 };

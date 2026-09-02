@@ -6,12 +6,20 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   HELP_SCREENS,
   HELP_HINTS,
-  helpScreenLabel,
-  helpHintLabel,
+  helpScreenLabelKey,
+  helpHintLabelKey,
   type HelpScreenKey,
 } from "@/lib/help/registry";
 import { buttonClass } from "@/lib/ui/button-styles";
 
+// Slice #32.16: the screen and hint names on this page come from
+// `help.admin.screens.*` / `help.admin.hints.*` rather than from the registry,
+// which held them in English only — so a Romanian user's Help Information list
+// read „Persons — Natural Person List" thirty times over. `helpScreenLabelKey`
+// / `helpHintLabelKey` build the key path; the `t` in each component below
+// resolves it. The registry's `key` / `hintKey` values did NOT move: they are
+// foreign keys into help_content / help_hint.
+//
 // Slice #21.10.help.rollout: a hint now declares the screen(s) it appears on
 // (`screens`) rather than a single screenKey. Several hints legitimately span
 // screens — the four list views share their selection behaviour, and the
@@ -203,7 +211,7 @@ function ScreenEditor({
   return (
     <div className="rounded-lg border border-card-rim bg-white dark:border-zinc-800 dark:bg-zinc-900 p-4 flex flex-col gap-4">
       <h2 className="text-sm font-semibold text-ink dark:text-zinc-100">
-        {helpScreenLabel(screenKey)}
+        {t(helpScreenLabelKey(screenKey))}
       </h2>
 
       <div className="grid grid-cols-2 gap-4">
@@ -245,10 +253,10 @@ function ScreenEditor({
           {t("previewTitle")}
         </h3>
         <div className="flex flex-col gap-2">
-          {values.backgroundEn && <PreviewBlock heading="Background (EN)" text={values.backgroundEn} />}
-          {values.backgroundRo && <PreviewBlock heading="Background (RO)" text={values.backgroundRo} />}
-          {values.howToEn && <PreviewBlock heading="How To (EN)" text={values.howToEn} />}
-          {values.howToRo && <PreviewBlock heading="How To (RO)" text={values.howToRo} />}
+          {values.backgroundEn && <PreviewBlock heading={t("labelBackgroundEn")} text={values.backgroundEn} />}
+          {values.backgroundRo && <PreviewBlock heading={t("labelBackgroundRo")} text={values.backgroundRo} />}
+          {values.howToEn && <PreviewBlock heading={t("labelHowToEn")} text={values.howToEn} />}
+          {values.howToRo && <PreviewBlock heading={t("labelHowToRo")} text={values.howToRo} />}
           {!values.backgroundEn && !values.backgroundRo && !values.howToEn && !values.howToRo && (
             <p className="text-xs text-fade italic">—</p>
           )}
@@ -311,7 +319,7 @@ function HintEditor({
     <div className="rounded-lg border border-card-rim bg-white dark:border-zinc-800 dark:bg-zinc-900 p-4 flex flex-col gap-4">
       <div className="flex flex-col gap-1">
         <h2 className="text-sm font-semibold text-ink dark:text-zinc-100">
-          {helpHintLabel(hintKey)}
+          {t(helpHintLabelKey(hintKey))}
         </h2>
         {screens.length > 1 && (
           <p className="text-xs text-fade">
@@ -349,8 +357,8 @@ function HintEditor({
           {t("previewTitle")}
         </h3>
         <div className="flex flex-col gap-2">
-          {values.textEn && <PreviewBlock heading="EN" text={values.textEn} />}
-          {values.textRo && <PreviewBlock heading="RO" text={values.textRo} />}
+          {values.textEn && <PreviewBlock heading={t("labelTextEn")} text={values.textEn} />}
+          {values.textRo && <PreviewBlock heading={t("labelTextRo")} text={values.textRo} />}
           {!values.textEn && !values.textRo && <p className="text-xs text-fade italic">—</p>}
         </div>
       </div>
@@ -423,7 +431,7 @@ export function HelpContentHub() {
                       : "text-ink hover:bg-cap dark:text-zinc-200 dark:hover:bg-zinc-800",
                   ].join(" ")}
                 >
-                  <span className="truncate">{s.label}</span>
+                  <span className="truncate">{t(helpScreenLabelKey(s.key))}</span>
                   <StatusBadge
                     complete={complete}
                     completeLabel={t("statusComplete")}
@@ -455,7 +463,7 @@ export function HelpContentHub() {
                       : "text-ink hover:bg-cap dark:text-zinc-200 dark:hover:bg-zinc-800",
                   ].join(" ")}
                 >
-                  <span className="truncate">{h.label}</span>
+                  <span className="truncate">{t(helpHintLabelKey(h.hintKey))}</span>
                   <StatusBadge
                     complete={complete}
                     completeLabel={t("statusComplete")}

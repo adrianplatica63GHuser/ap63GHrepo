@@ -103,6 +103,12 @@ function buildSegments(
     if (part === "settings")       { segments.push({ label: t("settings"),           href: accumulated }); continue; }
     if (part === "global-search")  { segments.push({ label: t("globalSearch"),       href: accumulated }); continue; }
     if (part === "help-content")   { segments.push({ label: t("helpContent"),        href: accumulated }); continue; }
+    // Slice #32.16: /admin/doc-type-engine had no case here, so its segment
+    // fell through to the "unknown/UUID — skip silently" tail at the bottom of
+    // this loop and the screen's breadcrumb read „Acasă › Admin" with nothing
+    // for the screen itself. Nothing is passed by the page — every crumb in
+    // this app is derived from the pathname — so this line IS the fix.
+    if (part === "doc-type-engine") { segments.push({ label: t("docTypeEngine"),      href: accumulated }); continue; }
     if (part === "history" && parts[i - 1] === "calculation") {
       segments.push({ label: t("calculationHistory"), href: accumulated });
       continue;
@@ -174,7 +180,7 @@ function BreadcrumbBarInner() {
 
   return (
     <nav
-      aria-label="Breadcrumb"
+      aria-label={t("ariaLabel")}
       className="flex items-center gap-1 px-6 py-2 text-sm text-zinc-500 dark:text-zinc-400 border-b border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 shrink-0 overflow-x-auto"
     >
       {segments.map((seg, idx) => {

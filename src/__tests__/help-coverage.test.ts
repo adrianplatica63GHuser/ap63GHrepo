@@ -9,11 +9,18 @@
  * screens and 3 hints that could never appear anywhere in the app. Nothing
  * failed; there was simply no check that a registered thing was reachable.
  *
- * Two invariants are enforced here:
+ * Three invariants are enforced here:
  *   1. Every route in src/app resolves to a help screen, or is deliberately
  *      listed in HELP_OPTED_OUT.
  *   2. Every registered micro-hint has a <HelpHint hintKey="..."> placement
  *      somewhere in src.
+ *   3. Every registered screen and hint has a display name in BOTH message
+ *      files. (Slice #32.16 — the names moved out of the registry and into
+ *      `help.admin.screens` / `help.admin.hints`, because in the registry they
+ *      were English only and the Romanian Help Information list read
+ *      „Persons — Natural Person List". A registry entry with no message now
+ *      renders its raw key path at the user, which is the same class of
+ *      silent rot invariants 1 and 2 exist to catch.)
  *
  * Screen help needs no placement check — it is auto-mounted in the breadcrumb
  * bar for every resolvable route, which is exactly what invariant 1 verifies.
@@ -115,6 +122,53 @@ describe("help coverage", () => {
         expect(placed).toBe(true);
       },
     );
+  });
+
+  describe("invariant 3 — every registered entry has a name in both locales", () => {
+    const LOCALES = ["en-GB.json", "ro-RO.json"] as const;
+
+    const names = (file: string, group: "screens" | "hints"): Record<string, unknown> => {
+      const messages = JSON.parse(
+        readFileSync(join(process.cwd(), "messages", file), "utf8"),
+      ) as { help: { admin: Record<string, Record<string, unknown>> } };
+      return messages.help.admin[group] ?? {};
+    };
+
+    const isNonEmptyString = (v: unknown) => typeof v === "string" && v.trim().length > 0;
+
+    it.each(LOCALES)("%s names every screen", (file) => {
+      const have = names(file, "screens");
+      const missing = HELP_SCREENS.map((s) => s.key).filter((k) => !isNonEmptyString(have[k]));
+      expect(missing).toEqual([]);
+    });
+
+    it.each(LOCALES)("%s names every hint", (file) => {
+      const have = names(file, "hints");
+      const missing = HELP_HINTS.map((h) => h.hintKey).filter((k) => !isNonEmptyString(have[k]));
+      expect(missing).toEqual([]);
+    });
+
+    // The other direction: a screen removed from the registry must take its
+    // messages with it, or the admin list quietly stops matching the files.
+    it.each(LOCALES)("%s names nothing the registry does not register", (file) => {
+      const screenKeys = new Set<string>(HELP_SCREENS.map((s) => s.key));
+      const hintKeys = new Set<string>(HELP_HINTS.map((h) => h.hintKey));
+      expect(Object.keys(names(file, "screens")).filter((k) => !screenKeys.has(k))).toEqual([]);
+      expect(Object.keys(names(file, "hints")).filter((k) => !hintKeys.has(k))).toEqual([]);
+    });
+
+    // ⚠️ The whole point was that the Romanian list stopped being English.
+    // Equal strings in both files is what that failure looked like, so the
+    // guard is that they DIFFER — for every entry, not on average.
+    it("the Romanian names are not the English ones", () => {
+      for (const group of ["screens", "hints"] as const) {
+        const en = names("en-GB.json", group);
+        const ro = names("ro-RO.json", group);
+        for (const key of Object.keys(en)) {
+          expect([group, key, en[key] === ro[key]]).toEqual([group, key, false]);
+        }
+      }
+    });
   });
 
   describe("registry integrity", () => {
