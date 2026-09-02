@@ -4,7 +4,7 @@
 -- GENERATED FILE -- DO NOT EDIT BY HAND.
 -- Regenerate with:  .\scripts\Export-SupabaseSchema.ps1
 --
--- Generated : 2026-08-19 10:10
+-- Generated : 2026-09-02 09:09
 -- Source    : local Docker database (ga40db @ ga40prj-postgres)
 --
 -- Applies the complete schema from scratch after running
@@ -18,8 +18,12 @@
 -- it assumes an empty schema), use supabase_repair_missing_tables.sql.
 -- ============================================================
 
--- Every extension the schema below depends on. pg_trgm was missing until
--- Slice #31.01; without it this file dies on the first gin_trgm_ops index.
+-- Every extension the schema below depends on. pg_dump does not emit these
+-- (it dumps objects, not the extensions their operator classes come from), so
+-- they are prepended here. pg_trgm was missing until Slice #31.01, which meant
+-- this file died 1748 lines in with operator class "public.gin_trgm_ops" does
+-- not exist for access method "gin" -- on a file whose whole job is to build a
+-- database from scratch. Nothing had ever applied it to an empty database.
 CREATE EXTENSION IF NOT EXISTS postgis;
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 --
@@ -45,6 +49,13 @@ SET row_security = off;
 --
 
 CREATE SCHEMA IF NOT EXISTS public;
+
+
+--
+-- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON SCHEMA public IS 'standard public schema';
 
 
 --
@@ -293,6 +304,13 @@ CREATE TABLE public.document (
     custom_fields jsonb,
     import_title text
 );
+
+
+--
+-- Name: COLUMN document.import_title; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.document.import_title IS 'The title the import derived from the folder entry (titleForEntry). The Pre-existing stage keys on import_title ?? title, so the AI rewriting document.title can no longer make a re-imported folder look new. Null for anything the import did not create. Slice #32.06.';
 
 
 --
@@ -565,7 +583,6 @@ CREATE TABLE public.lookup_document_type (
 --
 
 COMMENT ON COLUMN public.lookup_document_type.origin IS 'How this type came to exist: MANUAL = added in Reference Data, IMPORT = created by ensureDocType during an import scan. Write-once at creation; the value-lists PUT strips it. Everything else about a type''s status is derived - see src/lib/documents/status.ts.';
-COMMENT ON COLUMN public.document.import_title IS 'The title the import derived from the folder entry (titleForEntry). The Pre-existing stage keys on import_title ?? title, so the AI rewriting document.title can no longer make a re-imported folder look new. Null for anything the import did not create. Slice #32.06.';
 
 
 --
@@ -839,8 +856,16 @@ CREATE TABLE public.property (
     property_type_id uuid,
     use_category_id uuid,
     calculated_area_mp numeric(12,2),
-    updated_by text
+    updated_by text,
+    corner_order_self_intersects boolean DEFAULT false NOT NULL
 );
+
+
+--
+-- Name: COLUMN property.corner_order_self_intersects; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.property.corner_order_self_intersects IS 'True when the stored corner ORDER traces a self-intersecting (bow-tie) ring, which makes calculated_area_mp meaningless. Server-computed, never user-editable: it is written by polygonSelfIntersects (src/lib/properties/area.ts) from the two corner-write choke points in src/lib/properties/queries.ts once the rest of Slice #32.14 lands - as of this migration nothing writes it and every row is false. There is no backfill; see the migration file header. Slice #32.14.';
 
 
 --
@@ -2577,6 +2602,7 @@ ALTER TABLE ONLY public.stamp_member
 --
 -- PostgreSQL database dump complete
 --
+
 
 --
 -- Restore a usable search_path for the session that applied this file.
