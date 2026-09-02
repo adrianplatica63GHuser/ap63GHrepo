@@ -4,8 +4,9 @@
 > The versioned original is `ga40prj\docs\claude\shared\rules\git-and-commits.md`. The copy Claude
 > actually **loads** is `C:\dev\.claude\rules\git-and-commits.md`, deployed above every repo so that
 > every project inherits it — which puts it outside git's reach. **Edit the repo copy and
-> commit it; deploying is Adrian's** (`ga40prj\scripts\Sync-SharedClaude.ps1`), so it goes in
-> the handover next to the push.
+> commit it, then deploy it in the same turn** — `ga40prj\scripts\Sync-SharedClaude.ps1` on
+> Windows, or a plain UTF-8-no-BOM copy over the deployed path from the device bridge. Not a
+> handover line: a rule that is committed and not deployed is a rule that is not in effect.
 >
 > Both halves have gone wrong in real sessions. A commit without a deploy is a rule that is
 > **not in effect** — Slice #32.14 opened with this file 33 lines behind its source, missing

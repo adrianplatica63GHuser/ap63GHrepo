@@ -6,9 +6,14 @@ in that project's own `CLAUDE.md`.
 
 > **This is a deployed copy, not the source.** It lives above every repo, so git cannot see
 > it. The versioned original is `ga40prj\docs\claude\shared\CLAUDE.md`. Claude edits and commits
-> there; **deploying is Adrian's** — `ga40prj\scripts\Sync-SharedClaude.ps1` writes above the repo,
-> so it goes in the handover next to the push. Until he runs it, the edit is committed and not in
-> effect. Never edit this file directly — the next sync overwrites it. Same for everything in
+> there — **and then deploys it, in the same turn.** A commit without a deploy is a rule that is
+> **not in effect**, and a handover line asking Adrian to run the sync is one more thing to forget;
+> #32.14 found this file's own rules 33 lines behind their source for exactly that reason. On
+> Windows the deploy is `ga40prj\scripts\Sync-SharedClaude.ps1`; over the device bridge, where
+> PowerShell cannot run, it is a plain copy of each source file over its deployed path, written
+> UTF-8 **without BOM** — byte-for-byte the write that script makes. Verify either way with
+> `npx jest src/__tests__/shared-claude-deploy.test.ts`, or the same comparison inline.
+> Never edit this file directly — the next deploy overwrites it. Same for everything in
 > `C:\dev\.claude\rules\`, each of which now repeats this warning at its own top — because a
 > session that opens a rules file directly never reads this one, and #32.14 proved it by
 > editing a deployed rules file while this very paragraph sat unread two directories away.
@@ -160,7 +165,12 @@ under it, is the whole list:**
   `git mv` and a cleanly-applying `revert` are exempt — though over the device bridge `revert` cannot
   complete at all, so in practice it goes to Adrian. Full enumeration, with the reason each one is
   on the list, in `C:\dev\.claude\rules\git-and-commits.md`.
-- Deleting or overwriting anything of Adrian's outside the repo.
+- Deleting or overwriting anything of Adrian's outside the repo. **One standing exception, added
+  after #32.14: deploying the shared Claude tier** — writing `C:\dev\CLAUDE.md` and
+  `C:\dev\.claude\rules\*` from `ga40prj\docs\claude\shared\`. Those files are not Adrian's
+  work, they are a generated copy of committed content, every byte of them is recoverable by
+  re-running the deploy, and leaving them to a handover line is what let them go stale in the
+  first place. Nothing else above the repo is covered.
 - Any destructive database operation, and any command against a UAT or production box.
 
 **The one carve-out on that list:** `commit --amend` on the **tip** commit, when Claude made it this

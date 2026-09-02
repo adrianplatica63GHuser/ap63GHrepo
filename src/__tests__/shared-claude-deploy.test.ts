@@ -9,7 +9,10 @@
  * every repo under `C:\dev`, which is exactly why they sit ABOVE this repo and
  * outside git's reach. The versioned originals are in `docs/claude/shared/`,
  * and `scripts/Sync-SharedClaude.ps1` deploys them. Committing the source is
- * therefore only half of a change; deploying it is the other half.
+ * therefore only half of a change; deploying it is the other half — and since
+ * #32.14 that half is Claude's to do in the same turn rather than a handover
+ * line, under a standing exception on the go-ahead list in CLAUDE.md covering
+ * exactly these six files.
  *
  * ⚠️ WHAT THIS TEST EXISTS FOR, MEASURED RATHER THAN IMAGINED. When Slice
  * #32.14 started, the deployed `sandbox-and-toolchain.md` was 33 lines behind
@@ -75,7 +78,10 @@ function readOrNull(file: string): string | null {
  */
 const deploymentPresent = fs.existsSync(path.join(DEPLOY_ROOT, "CLAUDE.md"));
 
-const FIX = "Run  .\\scripts\\Sync-SharedClaude.ps1  from the repo root (add -Check to see the drift without writing).";
+const FIX =
+  "Deploy it: .\\scripts\\Sync-SharedClaude.ps1 from the repo root on Windows " +
+  "(add -Check to see the drift without writing), or a UTF-8-no-BOM copy of each " +
+  "source file over its deployed path from the device bridge.";
 
 describe("the shared Claude tier deployed above the repo matches this repo's copy", () => {
   it("every source file listed in the sync script exists", () => {
