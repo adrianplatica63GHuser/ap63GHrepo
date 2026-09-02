@@ -18,9 +18,10 @@ import { deletePrincipalObjects } from "@/lib/entities/delete";
 import { cadastralKey } from "./cadastral-identity";
 import type { CadastralMatch } from "./import-property-plan";
 import { entityMetadata, groupMember, groups, lookupPersonRole, lookupTarla, person, principalObject, property, propertyAddress, propertyCorner, propertyPerson, propertyVersion } from "@/db/schema";
-import { wgs84ToStereo70 } from "@/lib/geo/transdatRO";
 import { appendVersionsIfChanged } from "@/lib/versioning/append";
-import { shoelaceAreaM2 } from "./area";
+// Slice #32.14: both derived geometry values come from ONE projection of the
+// corners — see that module's header for why they are not two functions.
+import { computeCornerGeometry } from "./corner-geometry";
 import type {
   PropertyCreate,
   PropertyListQuery,
@@ -36,29 +37,6 @@ import type {
 export type { CadastralMatch };
 
 // ---------------------------------------------------------------------------
-// Calculated area (Slice #18.09)
-// ---------------------------------------------------------------------------
-//
-// Project the WGS84 corners back to Stereo 70 (metres) and apply the shoelace
-// formula to get the polygon's interior area in m². Returns a drizzle-numeric
-// string (2 dp) or null when there are fewer than 3 corners. Never throws —
-// any projection failure (e.g. a corner outside the Stereo 70 grid coverage)
-// yields null so a save is never blocked by the area calc.
-
-function computeCalculatedAreaMp(
-  corners: { lat: number; lon: number }[],
-): string | null {
-  if (corners.length < 3) return null;
-  try {
-    const planar = corners.map((c) => wgs84ToStereo70(c.lat, c.lon));
-    const area = shoelaceAreaM2(planar);
-    return area == null ? null : area.toFixed(2);
-  } catch {
-    return null;
-  }
-}
-
-// ---------------------------------------------------------------------------
 // Return types
 // ---------------------------------------------------------------------------
 
@@ -72,6 +50,11 @@ export type PropertyListItem = {
   carteFunciara:    string | null;
   surfaceAreaMp:    string | null;
   calculatedAreaMp: string | null;
+  /**
+   * Slice #32.14: the corner ORDER traces a self-intersecting ring, so
+   * `calculatedAreaMp` beside it is meaningless. Badged on the row.
+   */
+  cornerOrderSelfIntersects: boolean;
   locality:         string | null;
   county:           string | null;
   /** Metadata fields (always fetched via LEFT JOIN; null when no metadata row exists). */
@@ -114,6 +97,16 @@ export function snapshotFromFull(full: PropertyFull): PropertySnapshot {
       surfaceAreaMp:   p.surfaceAreaMp   ?? null,
       // Slice #18.09: derived-but-persisted; included in the snapshot.
       calculatedAreaMp: p.calculatedAreaMp ?? null,
+      // ⚠️ Slice #32.14's `cornerOrderSelfIntersects` is DELIBERATELY NOT HERE,
+      // and the asymmetry with the line above is the interesting part. The
+      // snapshot already carries `corners` IN ORDER, so the flag is recomputable
+      // from any version — storing it too would be a derived duplicate free to
+      // go stale against the very corners it sits beside. It is also the one
+      // read that does not need it: the property form recomputes the marker live
+      // from the corners on screen, exactly as it already does the calculated
+      // area, so the marker works on a historical version for free. Adding it
+      // here would mean touching PropertySnapshotProperty, snapshot-registry's
+      // AssertExactKeys and migration_029's backfill for nothing.
       notes:           p.notes           ?? null,
     },
     address: full.address
@@ -425,6 +418,7 @@ export async function listProperties(opts: PropertyListQuery): Promise<{
         carteFunciara:   property.carteFunciara,
         surfaceAreaMp:   property.surfaceAreaMp,
         calculatedAreaMp: property.calculatedAreaMp,
+        cornerOrderSelfIntersects: property.cornerOrderSelfIntersects,
         locality:        propertyAddress.locality,
         county:          propertyAddress.county,
         importance:      entityMetadata.importance,
@@ -610,6 +604,7 @@ export async function createPropertyIn(
   updatedBy: string | null = null,
 ): Promise<PropertyFull> {
   const { address: addrInput, corners: cornerList, ...propFields } = input;
+  const createGeometry = computeCornerGeometry(cornerList);
 
   {
     // Allocate a code from the shared sequence via the principal_object row.
@@ -636,8 +631,14 @@ export async function createPropertyIn(
         surfaceAreaMp:   propFields.surfaceAreaMp != null
                            ? String(propFields.surfaceAreaMp)
                            : null,
-        // Slice #18.09: computed from the corners supplied at creation.
-        calculatedAreaMp: computeCalculatedAreaMp(cornerList),
+        // Slice #18.09 / #32.14: both computed from the corners supplied at
+        // creation, in one projection. This is one of the two choke points
+        // every corner write passes through — the property form save, POST
+        // /api/properties, the document process route, the import and the
+        // calculation commit all arrive here, and none of them knows the
+        // bow-tie flag exists.
+        calculatedAreaMp:          createGeometry.calculatedAreaMp,
+        cornerOrderSelfIntersects: createGeometry.selfIntersects,
         notes:           propFields.notes           ?? null,
         updatedBy,
       })
@@ -829,16 +830,29 @@ export async function updatePropertyIn(
       .where(eq(propertyCorner.propertyId, id))
       .orderBy(propertyCorner.sequenceNo);
 
-    // Slice #18.09: always recompute the calculated area from the now-settled
-    // corner set (covers added/removed/moved corners; a no-op when corners were
-    // untouched). Persist it and reflect it on the in-memory row used below.
-    const newCalculatedArea = computeCalculatedAreaMp(refreshedCorners);
-    if ((refreshedProp.calculatedAreaMp ?? null) !== newCalculatedArea) {
+    // Slice #18.09 / #32.14: always recompute both derived values from the
+    // now-settled corner set (covers added/removed/moved corners; a no-op when
+    // corners were untouched). Persist them and reflect them on the in-memory
+    // row used below.
+    //
+    // This is the second choke point, and it is what CLEARS the marker: a user
+    // who straightens the order and saves arrives here, the ring is simple, and
+    // the flag goes false by the same path that set it. There is no separate
+    // "unmark" anywhere, deliberately — one measurement, one writer.
+    const geometry = computeCornerGeometry(refreshedCorners);
+    if (
+      (refreshedProp.calculatedAreaMp ?? null) !== geometry.calculatedAreaMp ||
+      refreshedProp.cornerOrderSelfIntersects !== geometry.selfIntersects
+    ) {
       await tx
         .update(property)
-        .set({ calculatedAreaMp: newCalculatedArea })
+        .set({
+          calculatedAreaMp:          geometry.calculatedAreaMp,
+          cornerOrderSelfIntersects: geometry.selfIntersects,
+        })
         .where(eq(property.id, id));
-      refreshedProp.calculatedAreaMp = newCalculatedArea;
+      refreshedProp.calculatedAreaMp          = geometry.calculatedAreaMp;
+      refreshedProp.cornerOrderSelfIntersects = geometry.selfIntersects;
     }
 
     const full: PropertyFull = {

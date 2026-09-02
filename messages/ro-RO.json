@@ -210,6 +210,31 @@
       "notes": "Note",
       "noneOption": "— niciunul —"
     },
+    "bowTie": {
+      "marker": "Ordinea colțurilor se încrucișează",
+      "markerHint": "Colțurile sunt exact cum au fost introduse — ORDINEA lor se încrucișează, iar din acest motiv suprafața calculată de mai sus nu are sens, nu este doar greșită. Îndreptarea schimbă numai ordinea; fiecare colț își păstrează propriul număr.",
+      "straighten": "Îndreaptă ordinea",
+      "dialog": {
+        "title": "Îndreptați ordinea colțurilor?",
+        "intro": "Colțurile rămân exact unde sunt. Se schimbă doar ordinea în care sunt unite — așa că verificați forma, nu doar numărul.",
+        "before": "Acum",
+        "after": "Îndreptat",
+        "areaBefore": "Suprafața calculată acum",
+        "areaAfter": "După îndreptare",
+        "areaDeclared": "Suprafață oficială",
+        "cornerNumbers": "Numerele colțurilor",
+        "keepsNumbers": "Fiecare colț își păstrează numărul; {moved, plural, one {# rând își schimbă locul} few {# rânduri își schimbă locul} other {# de rânduri își schimbă locul}}.",
+        "movedRows": "{moved, plural, one {# rând își schimbă locul} few {# rânduri își schimbă locul} other {# de rânduri își schimbă locul}}. Colțurile în sine nu se mișcă.",
+        "thenSave": "Încă nu s-a salvat nimic — tabelul colțurilor se modifică și salvați ca de obicei.",
+        "confirm": "Îndreaptă",
+        "cancel": "Anulează"
+      },
+      "noFix": {
+        "title": "Reordonarea nu rezolvă acest caz",
+        "body": "Nicio ordine a acestor colțuri nu dă un poligon simplu — este posibil ca două dintre ele să aibă aceeași poziție sau ca unul să se afle exact pe linia dintre alte două. Reordonarea nu ajută aici, deci coordonatele în sine trebuie verificate.",
+        "ok": "OK"
+      }
+    },
     "useCategories": {
       "empty": "—"
     },
@@ -564,6 +589,10 @@
     },
     "recency": {
       "label": "Nou!"
+    },
+    "bowTie": {
+      "label": "Încrucișat",
+      "title": "Ordinea colțurilor se încrucișează, deci suprafața calculată alăturată nu are sens. Deschideți proprietatea pentru a o îndrepta."
     },
     "unsavedChanges": {
       "title": "Modificări nesalvate",

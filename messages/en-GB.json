@@ -210,6 +210,31 @@
       "notes": "Notes",
       "noneOption": "— none —"
     },
+    "bowTie": {
+      "marker": "The corner order crosses itself",
+      "markerHint": "The corners are as they were entered — it is the ORDER that crosses, which makes the calculated area above a meaningless number rather than a wrong one. Straightening changes only the order; every corner keeps its own number.",
+      "straighten": "Straighten the order",
+      "dialog": {
+        "title": "Straighten the corner order?",
+        "intro": "The corners stay exactly where they are. Only the order they are joined in changes — so check the shape, not just the number.",
+        "before": "Now",
+        "after": "Straightened",
+        "areaBefore": "Calculated area now",
+        "areaAfter": "After straightening",
+        "areaDeclared": "Official surface area",
+        "cornerNumbers": "Corner numbers",
+        "keepsNumbers": "Each corner keeps its own number; {moved, plural, one {# row changes place} other {# rows change place}}.",
+        "movedRows": "{moved, plural, one {# row changes place} other {# rows change place}}. The corners themselves do not move.",
+        "thenSave": "Nothing is saved yet — the corner table changes and you save as usual.",
+        "confirm": "Straighten",
+        "cancel": "Cancel"
+      },
+      "noFix": {
+        "title": "Reordering will not fix this",
+        "body": "No order of these corners is a simple polygon — two of them may share a position, or one may sit exactly on the line between two others. Reordering cannot help here, so the coordinates themselves need a look.",
+        "ok": "OK"
+      }
+    },
     "useCategories": {
       "empty": "—"
     },
@@ -564,6 +589,10 @@
     },
     "recency": {
       "label": "New!"
+    },
+    "bowTie": {
+      "label": "Crossed",
+      "title": "The corner order crosses itself, so the calculated area beside it is meaningless. Open the property to straighten it."
     },
     "unsavedChanges": {
       "title": "Unsaved changes",

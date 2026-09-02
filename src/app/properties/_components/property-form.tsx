@@ -14,8 +14,16 @@ import {
 } from "react-hook-form";
 import { useMapsLibrary } from "@vis.gl/react-google-maps";
 import type { PropertySnapshot } from "@/lib/properties/validation";
-import { shoelaceAreaM2 } from "@/lib/properties/area";
-import { cornersToS70Key, wgs84ToStereo70Batch } from "@/lib/geo/convert-client";
+import {
+  polygonSelfIntersects,
+  shoelaceAreaM2,
+  straightenPolygonOrder,
+} from "@/lib/properties/area";
+import {
+  cornersToS70Key,
+  wgs84ToStereo70Batch,
+  type Stereo70Point,
+} from "@/lib/geo/convert-client";
 import { streetLineFromGeocodeResult } from "@/lib/geo/reverse-geocode";
 import { NavArrowIcon } from "@/components/back-arrow";
 import { UnsavedChangesBanner } from "@/components/unsaved-changes-banner";
@@ -41,6 +49,7 @@ import {
   versionLabelColor,
 } from "./form-schema";
 import { CornersManager } from "./corners-manager";
+import { StraightenDialog } from "./straighten-dialog";
 import { PropertyMiniMap } from "./property-mini-map";
 import { StreetViewPanel } from "./street-view-panel";
 import { HelpHint } from "@/components/help/help-hint";
@@ -294,12 +303,114 @@ export function PropertyForm({
           ? "—"
           : calculatedArea.toFixed(2);
 
+  // Slice #32.14: the bow-tie marker, computed LIVE from the same projected
+  // points the area above uses — not read from the property row.
+  //
+  // ⚠️ THAT IS DELIBERATE AND IT IS WHY THE FLAG IS NOT IN THE VERSION
+  // SNAPSHOT. The stored `corner_order_self_intersects` describes the CURRENT
+  // corners; this form also renders historical versions, whose corners are a
+  // different set. A marker wired to the stored flag would say "not a bow-tie"
+  // beside a self-intersecting version-3 polygon and its meaningless area.
+  // Recomputing costs nothing here — the projection is already in the cache,
+  // shared with the corners table's Stereo 70 display mode — and it is right
+  // on every version for free.
+  // ⚠️ THE PROPOSAL CARRIES THE CORNER SET IT WAS COMPUTED FROM, AND EVERY
+  // NUMBER IT WILL SHOW. An earlier version stored the bare permutation and
+  // recomputed the areas from the live query on each render — and the dialog's
+  // backdrop is not `inert`, so the corners table behind it stays tabbable.
+  // Tab to a row's Delete and press Enter with the dialog open and the live
+  // points are one shorter than the permutation indexes: `planarCorners[5]` is
+  // undefined, `shoelaceAreaM2` throws DURING RENDER, and the whole property
+  // page is replaced by the route error boundary with the user's unsaved edits
+  // in it. The quieter half was worse: press a row's ↑ instead — same length,
+  // so no crash — and the stale permutation applies to the swapped corners,
+  // leaving a ring that still self-intersects and a marker still lit after the
+  // press that was supposed to clear it.
+  //
+  // Snapshotting removes the class rather than the instance: nothing about the
+  // dialog is recomputed from live data, and `cornersKey` gates both the render
+  // and the apply, so a proposal can only ever be applied to the corners it was
+  // computed for.
+  type StraightenProposal = {
+    contextKey: string;
+    order: number[];
+    points: Stereo70Point[];
+    numbers: (number | null)[];
+    currentAreaM2: number;
+    proposedAreaM2: number;
+    declaredAreaM2: number | null;
+  };
+  const [straightenProposal, setStraightenProposal] = useState<StraightenProposal | null>(null);
+  const [straightenImpossible, setStraightenImpossible] = useState(false);
+
+  const cornersKey = cornersToS70Key(corners);
+  const planarCorners = areaS70Query.data ?? null;
+  const cornersSelfIntersect =
+    corners.length >= 3 && planarCorners != null
+      ? polygonSelfIntersects(planarCorners)
+      : false;
+
+
   // Slice #18.01: read via form.watch() (subscribes to value changes) so the
   // create gate and the edit-dirty check below recompute on every keystroke.
   // form.watch() is intentionally not memoizable; this is the documented usage.
   // eslint-disable-next-line react-hooks/incompatible-library
   const watchedValues = form.watch();
   const isCreate = mode === "create";
+
+  // Slice #32.14: the declared surface area, used only to break a tie between
+  // two corrected orders that are BOTH already simple. It lives here rather
+  // than beside the marker above because `watchedValues` is declared here.
+  //
+  // ⚠️ `> 0` RATHER THAN A NULL CHECK. `surfaceAreaMp` is a string on the form
+  // and `Number("")` is 0; `straightenPolygonOrder` refuses a zero for exactly
+  // that reason, but a caller that hands one over anyway has said something it
+  // did not mean, so it is filtered on the way out too.
+  const declaredAreaRaw = Number(watchedValues.surfaceAreaMp);
+  const declaredAreaM2 =
+    Number.isFinite(declaredAreaRaw) && declaredAreaRaw > 0 ? declaredAreaRaw : null;
+
+  function handleStraighten() {
+    if (planarCorners == null || calculatedArea == null) return;
+
+    const order = straightenPolygonOrder(planarCorners, declaredAreaM2);
+    if (order == null) {
+      // No order of these corners is a simple polygon, so there is nothing to
+      // offer. Say so rather than leave a button that does nothing.
+      setStraightenImpossible(true);
+      return;
+    }
+
+    const proposedAreaM2 = shoelaceAreaM2(order.map((i) => planarCorners[i]));
+    if (proposedAreaM2 == null) return;
+
+    setStraightenProposal({
+      contextKey: straightenContextKey,
+      order,
+      points: planarCorners,
+      numbers: corners.map((c) => c.originalIndex ?? null),
+      currentAreaM2: calculatedArea,
+      proposedAreaM2,
+      declaredAreaM2,
+    });
+  }
+
+  function applyStraighten() {
+    // The guard, not a formality: it is what makes a proposal computed against
+    // one corner set unable to reach another.
+    if (straightenProposal == null || straightenProposal.contextKey !== straightenContextKey) {
+      setStraightenProposal(null);
+      return;
+    }
+    // ⚠️ THE WHOLE CORNER OBJECT TRAVELS THROUGH THE PERMUTATION, which is what
+    // keeps each corner's `originalIndex` bound to its own lat/lon rather than
+    // renumbered — Adrian's requirement on this slice. This is the same
+    // `setCorners` the up/down arrows reach through, so the change lands in the
+    // form's dirty state and is written by the ordinary Save button. Nothing is
+    // saved here, and nothing is ever reordered without this confirmation.
+    setCorners(straightenProposal.order.map((i) => corners[i]));
+    setStraightenProposal(null);
+  }
 
   // Slice #19.02: panel visibility comes directly from the selected type's DB
   // flags (showTarlaParcela / showAddress / showStreetView). When no type is
@@ -412,6 +523,41 @@ export function PropertyForm({
   const createHasData = isCreate && hasFormData(watchedValues, corners);
 
   // Has the editable latest copy diverged from the loaded baseline?
+  // ⚠️ THE PROPOSAL IS BOUND TO EVERYTHING IT WAS COMPUTED FROM, NOT JUST THE
+  // CORNERS. A first fix keyed on the corner coordinates alone and two holes
+  // survived it, both reached the same way — the dialog's backdrop is not
+  // `inert`, so everything behind it stays tabbable:
+  //
+  //   - Tab to the version-nav and step back one version. Most version bumps
+  //     change a name or a note and leave the corners alone, so the corner key
+  //     is UNCHANGED, the dialog stays on screen over a read-only historical
+  //     version, and confirming reorders corners that `editDirty` then refuses
+  //     to mark dirty because `isOnLatest` is false. Save stays disabled and
+  //     stepping back to the latest discards it: the press appears to work and
+  //     is silently thrown away.
+  //   - Tab to Official Surface Area and correct it. The corner key is again
+  //     unchanged, so the dialog keeps showing — and keeps displaying the OLD
+  //     declared area, next to a proposed order that the old value tie-broke.
+  //     The one number the dialog exists to be compared against is stale.
+  //
+  // So the key spans the corners, the version, the mode and the declared area,
+  // and the effect below CLEARS a diverged proposal rather than merely hiding
+  // it — hiding leaves it able to reappear when the user undoes the change that
+  // hid it, which is a dialog nobody asked for.
+  const straightenContextKey = [
+    cornersKey,
+    effectiveMode,
+    effectiveVersion ?? "latest",
+    declaredAreaM2 ?? "",
+  ].join("|");
+
+  useEffect(() => {
+    setStraightenProposal((current) =>
+      current != null && current.contextKey !== straightenContextKey ? null : current,
+    );
+    setStraightenImpossible(false);
+  }, [straightenContextKey]);
+
   const editDirty =
     !isCreate &&
     isOnLatest &&
@@ -747,6 +893,27 @@ export function PropertyForm({
                   value={calculatedAreaDisplay}
                   hint={<HelpHint hintKey="calculated-area-auto" />}
                 />
+                {/* Slice #32.14: the marker sits under the number it explains,
+                    because the number is the only symptom the user ever saw. */}
+                {cornersSelfIntersect && (
+                  <div className="mt-1 flex flex-wrap items-center gap-2 pl-[6.5rem]">
+                    <span
+                      className="text-xs font-semibold text-amber-600 dark:text-amber-500"
+                      title={t("bowTie.markerHint")}
+                    >
+                      {t("bowTie.marker")}
+                    </span>
+                    {effectiveMode !== "view" && (
+                      <button
+                        type="button"
+                        onClick={handleStraighten}
+                        className={buttonClass({ variant: "secondary", size: "sm" })}
+                      >
+                        {t("bowTie.straighten")}
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
               <div className="row-start-2 col-start-3">
                 <Field
@@ -1132,6 +1299,32 @@ export function PropertyForm({
             {t("buttons.cancel")}
           </button>
         </div>
+      )}
+
+      {/* Slice #32.14 — straighten the corner order. Neither dialog writes
+          anything: the first hands the reordered corners to the form's own
+          state, and the ordinary Save button does the rest. */}
+      {straightenProposal != null && straightenProposal.contextKey === straightenContextKey && (
+        <StraightenDialog
+          points={straightenProposal.points}
+          order={straightenProposal.order}
+          numbers={straightenProposal.numbers}
+          currentAreaM2={straightenProposal.currentAreaM2}
+          proposedAreaM2={straightenProposal.proposedAreaM2}
+          declaredAreaM2={straightenProposal.declaredAreaM2}
+          onConfirm={applyStraighten}
+          onCancel={() => setStraightenProposal(null)}
+        />
+      )}
+
+      {straightenImpossible && (
+        <ConfirmDialog
+          title={t("bowTie.noFix.title")}
+          body={t("bowTie.noFix.body")}
+          yesLabel={t("bowTie.noFix.ok")}
+          onYes={() => setStraightenImpossible(false)}
+          busy={false}
+        />
       )}
 
       {confirmDelete && (

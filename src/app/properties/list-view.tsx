@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { RecencyBadge } from "@/components/recency-badge";
+import { BowTieBadge } from "@/components/bow-tie-badge";
 import { HelpHint } from "@/components/help/help-hint";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { DevOnly } from "@/components/dev-only";
@@ -26,6 +27,9 @@ type PropertyListItem = {
   carteFunciara:    string | null;
   surfaceAreaMp:    string | null;
   calculatedAreaMp: string | null;
+  // Slice #32.14: the corner order self-intersects, so calculatedAreaMp above
+  // is meaningless. Badged beside the checkbox, never a toggleable column.
+  cornerOrderSelfIntersects: boolean;
   locality:         string | null;
   county:           string | null;
   importance:       string | null;
@@ -510,6 +514,7 @@ export function PropertyListView() {
                       className="h-4 w-4 rounded border-wire accent-cta"
                     />
                     <RecencyBadge createdAt={item.createdAt} updatedAt={item.updatedAt} />
+                    <BowTieBadge selfIntersects={item.cornerOrderSelfIntersects} />
                   </span>
                 </td>
                 <td className="px-4 py-2 font-mono text-xs text-fade">

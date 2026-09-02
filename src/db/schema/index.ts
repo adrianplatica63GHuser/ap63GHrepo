@@ -441,10 +441,12 @@ export const property = pgTable("property", {
   // predating migration_075 until its corners are next written — that
   // migration's header says why there is no SQL backfill.
   //
-  // ⚠️ NOTHING WRITES OR READS IT YET. The migration and this declaration are
-  // where a migration slice stops and waits for confirmation; the detector
-  // call, the list column and the straighten action are the rest of #32.14.
-  // Do not infer from this comment that they have landed — grep first.
+  // ⚠️ IT IS NOT IN THE VERSION SNAPSHOT, unlike `calculatedAreaMp` above, and
+  // the asymmetry is deliberate — see the note in `snapshotFromFull`
+  // (src/lib/properties/queries.ts). The short version: the snapshot already
+  // holds the corners in order, so the flag is recomputable from any version,
+  // and the property form recomputes it live rather than reading this column,
+  // which is what makes the marker correct on a historical version too.
   cornerOrderSelfIntersects: boolean("corner_order_self_intersects")
     .notNull()
     .default(false),

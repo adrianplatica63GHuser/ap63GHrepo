@@ -19,6 +19,7 @@
     "db:verify-rebuild": "node node_modules/tsx/dist/cli.mjs scripts/verify-rebuild.ts",
     "storage:migrate-bucket": "node --env-file=.env node_modules/tsx/dist/cli.mjs scripts/storage-migrate-bucket.ts",
     "export:reference-data": "node --env-file=.env node_modules/tsx/dist/cli.mjs scripts/export-reference-data.ts",
+    "properties:mark-bow-ties": "node --env-file=.env node_modules/tsx/dist/cli.mjs scripts/mark-bow-tie-properties.ts",
     "e2e": "playwright test",
     "e2e:ui": "playwright test --ui",
     "postinstall": "node scripts/copy-pdfjs-worker.mjs"
