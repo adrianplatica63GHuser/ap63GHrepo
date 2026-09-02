@@ -103,6 +103,11 @@ export async function listJudicialPersons(opts: JudicialListQuery): Promise<{
           ilike(person.displayName, searchPattern),
           ilike(judicialPerson.nickname, searchPattern),
           ilike(person.code, searchPattern),
+          // Slice #32.15, fixed in passing: the placeholder on this list has
+          // always said "or ID" and the list renders the CUI, but only
+          // listAllPersons actually matched it — so a CUI typed here found
+          // nothing while the same CUI resolved from the sidebar search.
+          ilike(judicialPerson.cuiNumber, searchPattern),
         )
       : undefined,
   );

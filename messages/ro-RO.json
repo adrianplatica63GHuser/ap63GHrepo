@@ -177,6 +177,13 @@
       "selectLink": "Selectează",
       "unselectLink": "Deselectează",
       "displayAllSelected": "Afișează selectate",
+      "deleteAllSelected": "Șterge selecția ({count})",
+      "confirmDelete": {
+        "body": "Această acțiune va șterge {count} proprietate(proprietăți) selectată(e). Acțiunea nu poate fi anulată.",
+        "cancel": "Anulează",
+        "confirm": "Șterge",
+        "deleting": "Se șterge…"
+      },
       "groupsButton": "Grupuri",
       "groupsAll": "Toate (in grup sau nu)",
       "groupsNotInGroup": "Fara grup",
@@ -780,13 +787,14 @@
       "expiringSoon": "Expiră curând"
     },
     "readonlyView": {
-      "backToList": "Înapoi la listă"
+      "backToList": "Înapoi la listă",
+      "modifyNeedsLatest": "Doar versiunea curentă poate fi modificată — folosiți săgețile de versiune pentru a reveni la ea."
     }
   },
   "naturalPerson": {
     "listTitle": "Persoană fizică",
     "createTitle": "Persoană fizică nouă",
-    "searchPlaceholder": "caută după nume, email sau telefon",
+    "searchPlaceholder": "caută după cod, nume, email sau telefon",
     "chooseFields": "Câmpuri afișate",
     "chooseFieldsHint": "Selectați până la {max} coloane opționale",
     "addNew": "Adaugă persoană",
@@ -883,7 +891,7 @@
     },
     "confirmDelete": {
       "title": "Ștergeți persoana?",
-      "body": "Sunteți sigur că doriți să ștergeți această persoană?"
+      "body": "Sunteți sigur că doriți să ștergeți această persoană? Acțiunea nu poate fi anulată."
     },
     "cannotDeleteAssociated": {
       "title": "Nu se poate șterge de aici",
@@ -910,7 +918,7 @@
   "judicialPerson": {
     "listTitle": "Persoană juridică",
     "createTitle": "Persoană juridică nouă",
-    "searchPlaceholder": "caută după nume, poreclă sau ID",
+    "searchPlaceholder": "caută după cod, nume, poreclă sau ID",
     "addNew": "Adaugă persoană juridică",
     "open": "Deschide",
     "loading": "Se încarcă…",
@@ -992,7 +1000,7 @@
     },
     "confirmDelete": {
       "title": "Ștergeți persoana juridică?",
-      "body": "Sunteți sigur că doriți să ștergeți această persoană juridică?"
+      "body": "Sunteți sigur că doriți să ștergeți această persoană juridică? Acțiunea nu poate fi anulată."
     },
     "cannotDeleteAssociated": {
       "title": "Nu se poate șterge de aici",

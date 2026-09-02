@@ -1234,9 +1234,15 @@ export function PropertyForm({
               <NavArrowIcon dir="left" />
               <span>{tShared("readonlyView.backToList")}</span>
             </button>
+            {/* Slice #32.15: on an older version this button used to be drawn,
+                clickable and inert — setAssociatedEditing cannot beat !isOnLatest
+                in the effectiveMode ternary above, so nothing unlocked. It is now
+                disabled, and carries the reason in its title. */}
             <button
               type="button"
               onClick={() => setAssociatedEditing(true)}
+              disabled={!isOnLatest}
+              title={!isOnLatest ? tShared("readonlyView.modifyNeedsLatest") : undefined}
               className={buttonClass({ variant: "secondary", size: "lg" })}
             >
               {t("buttons.modify")}

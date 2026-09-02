@@ -799,6 +799,62 @@ export default function PropertyMap() {
     isPropertyVisibleForGroups(p.groupCodes, uncheckedGroups),
   );
 
+  // Slice #32.15: a tick must correspond to a polygon that is actually drawn.
+  // Nothing connected the Groups panel to the selection, so unticking a group
+  // left "Delete all selected (8)" counting — and handleDeleteConfirm
+  // deleting — properties that were no longer on the map. That is the same
+  // defect three of the four record lists carried in their `pageKey`.
+  //
+  // It PRUNES rather than clears, and the difference is deliberate. #21.10
+  // (see toggleSelectMode below) established that `selectedIds` is not owned
+  // by any one tool, so unticking group G must cost the user only the ticks
+  // that were ON group G's properties, not every tick on the map. Unticking
+  // EVERY group therefore does drop every tick — that is the rule working,
+  // not an exception to it: a selection nothing on screen corresponds to is
+  // precisely what this block exists to prevent.
+  //
+  // Two carve-outs. An id that is not in `withGeometry` at all is left alone,
+  // so a refetch that briefly has no rows cannot be mistaken for a filter
+  // change. And nothing runs while a delete is in flight: `handleDeleteConfirm`
+  // captured its ids at click time, so pruning could not change what that
+  // request deletes — only dismiss the dialog the user is waiting on.
+  if (!deleting && selectedIds.size > 0) {
+    const hiddenIds = new Set(
+      withGeometry
+        .filter(
+          (p) =>
+            selectedIds.has(p.id) &&
+            !isPropertyVisibleForGroups(p.groupCodes, uncheckedGroups),
+        )
+        .map((p) => p.id),
+    );
+    if (hiddenIds.size > 0) {
+      const kept = new Set([...selectedIds].filter((id) => !hiddenIds.has(id)));
+      setSelectedIds(kept);
+      // The Groups checkboxes stay in the tab order behind the confirmation
+      // dialog, so it can be open when this runs. Its body re-reads
+      // `selectedIds` and would silently restate itself with the new count —
+      // which is not a confirmation of anything the user agreed to, so close
+      // it and make them press Delete again.
+      //
+      // Unless it is showing an error. `setDeleteError` and `setDeleting(false)`
+      // land in ONE render on the failure path, and that is the first render
+      // this block is no longer gated out of — so closing unconditionally would
+      // throw the error away before it ever reached the DOM, and a failed
+      // delete would read as a successful one. An error about a selection that
+      // is now empty describes nothing, though, and a dialog offering to delete
+      // zero properties has a live button that does nothing: close that one.
+      if (deleteError === null || kept.size === 0) setShowDeleteConfirm(false);
+      if (kept.size === 0) {
+        // What the other two clear sites do with the tab bar: an empty
+        // "Selected" tab is a blank map with no way back except the other tab.
+        // Select mode is deliberately NOT exited — the user is still selecting.
+        setShowTabs(false);
+        setActiveTab("all");
+      }
+    }
+  }
+
   // Items shown on the current tab — filtered to selected IDs on the "selected"
   // tab; group-filtered on the "all" tab.
   const displayItems =
@@ -1868,7 +1924,7 @@ export default function PropertyMap() {
               onClick={() => { setDeleteError(null); setShowDeleteConfirm(true); }}
               className={buttonClass({ variant: "danger", size: "lg" })}
             >
-              Delete all selected ({selectedIds.size})
+              {t("map.deleteAllSelected", { count: selectedIds.size })}
             </button>
 
             {/* Display all selected — shows / switches to the "selected" tab */}
@@ -1891,7 +1947,7 @@ export default function PropertyMap() {
               onClick={() => { setDeleteError(null); setShowDeleteConfirm(true); }}
               className={buttonClass({ variant: "danger", size: "lg" })}
             >
-              Delete all selected ({selectedIds.size})
+              {t("map.deleteAllSelected", { count: selectedIds.size })}
             </button>
           </div>
         )}
@@ -1903,7 +1959,7 @@ export default function PropertyMap() {
           <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/45">
             <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full mx-4">
               <p className="text-zinc-900 font-medium text-base leading-snug mb-4">
-                This {selectedIds.size} of properties will be erased from the system.
+                {t("map.confirmDelete.body", { count: selectedIds.size })}
               </p>
 
               {deleteError && (
@@ -1919,7 +1975,7 @@ export default function PropertyMap() {
                   onClick={() => { setShowDeleteConfirm(false); setDeleteError(null); }}
                   className={buttonClass({ variant: "secondary", size: "lg" })}
                 >
-                  Cancel
+                  {t("map.confirmDelete.cancel")}
                 </button>
                 <button
                   type="button"
@@ -1927,7 +1983,7 @@ export default function PropertyMap() {
                   onClick={handleDeleteConfirm}
                   className={buttonClass({ variant: "danger", size: "lg" })}
                 >
-                  {deleting ? "Deleting…" : "Approve"}
+                  {deleting ? t("map.confirmDelete.deleting") : t("map.confirmDelete.confirm")}
                 </button>
               </div>
             </div>

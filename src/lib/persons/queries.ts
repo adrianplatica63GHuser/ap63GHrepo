@@ -122,6 +122,10 @@ export async function listPersons(opts: ListQuery): Promise<{
     searchPattern
       ? or(
           ilike(person.displayName, searchPattern),
+          // Slice #32.15: a PPERS code typed into the list search found nothing,
+          // while the sidebar quick search resolved it. listAllPersons and the
+          // three sibling lists all match their code; this one did not.
+          ilike(person.code, searchPattern),
           ilike(naturalPerson.nickname, searchPattern),
           ilike(naturalPerson.personalEmail1, searchPattern),
           ilike(naturalPerson.personalEmail2, searchPattern),

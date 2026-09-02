@@ -177,6 +177,13 @@
       "selectLink": "Select",
       "unselectLink": "Unselect",
       "displayAllSelected": "Display all selected",
+      "deleteAllSelected": "Delete all selected ({count})",
+      "confirmDelete": {
+        "body": "This will delete {count} selected property(ies). This action cannot be undone.",
+        "cancel": "Cancel",
+        "confirm": "Delete",
+        "deleting": "Deleting…"
+      },
       "groupsButton": "Groups",
       "groupsAll": "All (in groups or not)",
       "groupsNotInGroup": "Not in a group",
@@ -755,11 +762,11 @@
       "whatDoesThisMean": "What does this mean?"
     },
     "errorBoundary": {
-      "map": "Harta nu a putut fi afișată.",
-      "streetView": "Street View nu a putut fi afișat.",
-      "pages": "Vizualizatorul de pagini nu a putut fi afișat.",
-      "ocr": "Dialogul de import nu a putut fi afișat.",
-      "default": "A apărut o eroare neașteptată."
+      "map": "The map could not be displayed.",
+      "streetView": "Street View could not be displayed.",
+      "pages": "The page viewer could not be displayed.",
+      "ocr": "The import dialog could not be displayed.",
+      "default": "Something went wrong."
     },
     "importanceValues": {
       "LOW": "Low",
@@ -780,13 +787,14 @@
       "expiringSoon": "Expiring soon"
     },
     "readonlyView": {
-      "backToList": "Back to list"
+      "backToList": "Back to list",
+      "modifyNeedsLatest": "Only the current version can be modified — use the version arrows to go back to it."
     }
   },
   "naturalPerson": {
     "listTitle": "Natural Person",
     "createTitle": "New Natural Person",
-    "searchPlaceholder": "search by name, email, or phone",
+    "searchPlaceholder": "search by code, name, email, or phone",
     "chooseFields": "Choose fields",
     "chooseFieldsHint": "Select up to {max} optional columns",
     "addNew": "Add new Person",
@@ -883,7 +891,7 @@
     },
     "confirmDelete": {
       "title": "Delete person?",
-      "body": "Are you sure you want to delete this person?"
+      "body": "Are you sure you want to delete this person? This cannot be undone."
     },
     "cannotDeleteAssociated": {
       "title": "Can't delete from here",
@@ -910,7 +918,7 @@
   "judicialPerson": {
     "listTitle": "Judicial Person",
     "createTitle": "New Judicial Person",
-    "searchPlaceholder": "search by name, nickname, or ID",
+    "searchPlaceholder": "search by code, name, nickname, or ID",
     "addNew": "Add new Judicial Person",
     "open": "Open",
     "loading": "Loading…",
@@ -992,7 +1000,7 @@
     },
     "confirmDelete": {
       "title": "Delete judicial person?",
-      "body": "Are you sure you want to delete this judicial person?"
+      "body": "Are you sure you want to delete this judicial person? This cannot be undone."
     },
     "cannotDeleteAssociated": {
       "title": "Can't delete from here",

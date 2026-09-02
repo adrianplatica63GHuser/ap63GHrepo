@@ -225,7 +225,10 @@ export function PropertyListView() {
   const paginate   = total > PAGE_SIZE;
   const items      = query.data?.items ?? [];
 
-  const pageKey = `${debouncedSearch}|${currentPage}`;
+  // Slice #32.15: this key must carry every value the query key above carries.
+  // A filter that is missing here leaves ticks set on rows the filter has just
+  // taken off the screen, and the bulk delete then acts on records nobody can see.
+  const pageKey = `${debouncedSearch}|${importance}|${relevance}|${currentPage}`;
   const [prevPageKey, setPrevPageKey] = useState(pageKey);
   if (prevPageKey !== pageKey) {
     setPrevPageKey(pageKey);
