@@ -72,7 +72,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, useWatch, type FieldPath, type UseFormRegister } from "react-hook-form";
+import { useForm, useWatch, type Control, type FieldPath, type UseFormRegister } from "react-hook-form";
+import { AsyncSelect } from "@/components/forms/async-select";
 import {
   emptyFormValues,
   formSchema,
@@ -349,7 +350,7 @@ export function IdCardPersonDialog({
     defaultValues: emptyFormValues,
     mode: "onChange",
   });
-  const { register, formState, setValue, getValues, handleSubmit } = form;
+  const { register, control, formState, setValue, getValues, handleSubmit } = form;
   const errors = formState.errors;
 
   // ── 1 + 2: extract, then resolve ─────────────────────────────────────────
@@ -887,6 +888,7 @@ export function IdCardPersonDialog({
                 label={t("fGender")}
                 name="gender"
                 register={register}
+                control={control}
                 error={errors.gender?.message}
                 warn={lowConfidence.has("gender")}
                 options={[
@@ -907,6 +909,7 @@ export function IdCardPersonDialog({
                 label={t("fCitizenship")}
                 name="citizenshipId"
                 register={register}
+                control={control}
                 error={errors.citizenshipId?.message}
                 warn={lowConfidence.has("citizenshipRaw")}
                 options={[{ value: "", label: "—" }, ...citizenshipOptions]}
@@ -1006,24 +1009,37 @@ function Field({ label, name, type = "text", register, error, warn }: FieldProps
 }
 
 function SelectField({
-  label, name, register, error, warn, options,
-}: FieldProps & { options: { value: string; label: string }[] }) {
+  label, name, register, control, error, warn, options,
+}: FieldProps & {
+  control: Control<FormValues>;
+  options: { value: string; label: string }[];
+}) {
   return (
     <label className="flex items-center gap-2 text-sm">
       <FieldLabel label={label} warn={warn} />
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <select
-          {...register(name)}
+        {/* Slice #32.13: the same defect as the six selects on the entity
+            forms — this one had no remount key either — so <AsyncSelect> is the
+            single idiom here too. What it buys is the ordering where the
+            citizenship list resolves AFTER the review form appears: the extract
+            and resolve calls gate `showForm`, so `setValue` has normally run
+            long before this mounts, and without the key a slow value-list fetch
+            left the field on "—" over a citizenship already in `_formValues`.
+            NOT closed, and out of this slice: `useCitizenshipOptions` above
+            swallows a failed fetch, and an empty list stays empty for the life
+            of the dialog — the field then reads "—" and Confirm still creates
+            the person with the extracted citizenship. */}
+        <AsyncSelect
+          name={name}
+          control={control}
+          register={register}
+          options={options}
           aria-invalid={error ? true : undefined}
           className={[
             "w-full rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none dark:bg-zinc-950",
             error ? "border-red-500 focus:border-red-600" : "border-wire focus:border-focus dark:border-zinc-700",
           ].join(" ")}
-        >
-          {options.map((o) => (
-            <option key={o.value} value={o.value}>{o.label}</option>
-          ))}
-        </select>
+        />
         {error && <span className="text-xs text-red-600 dark:text-red-400">{error}</span>}
       </div>
     </label>

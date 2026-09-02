@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
+  type Control,
   type FieldPath,
   type UseFormRegister,
   useForm,
@@ -45,6 +46,7 @@ import { StreetViewPanel } from "./street-view-panel";
 import { HelpHint } from "@/components/help/help-hint";
 import { ErrorBoundary, PanelError } from "@/components/error-boundary";
 import { VersionNavControls } from "@/components/version-nav-controls";
+import { AsyncSelect } from "@/components/forms/async-select";
 import { FieldPulseContext, usePulseRing } from "@/components/versioning/field-pulse";
 import { highlightRingClass } from "@/lib/versioning/highlight-ring";
 import { safeMutate } from "@/lib/api/safe-mutate";
@@ -627,7 +629,7 @@ export function PropertyForm({
     }
   };
 
-  const { register, formState } = form;
+  const { register, control, formState } = form;
   const errors = formState.errors;
 
   return (
@@ -699,10 +701,16 @@ export function PropertyForm({
                   </div>
                   {/* Slice #18.16.VL: was free-text Field; now a lookup dropdown */}
                   <div className="row-start-1 col-start-3">
+                    {/* Slice #32.13: allowUnlistedValue, because tarla is free
+                        text and not an FK — a property can hold a tarla
+                        `lookup_tarla` has never had, and it must be shown
+                        rather than blanked. */}
                     <SelectField
                       label={t("fields.tarlaSola")}
                       name="tarlaSola"
                       register={register}
+                      control={control}
+                      allowUnlistedValue
                       error={errors.tarlaSola?.message}
                       options={tarlaSolaOptions}
                       highlight={displayHighlights?.property.tarlaSola}
@@ -765,6 +773,7 @@ export function PropertyForm({
                   label={t("fields.useCategory")}
                   name="useCategoryId"
                   register={register}
+                  control={control}
                   error={errors.useCategoryId?.message}
                   options={useCategoryOptions}
                   highlight={displayHighlights?.property.useCategoryId}
@@ -775,6 +784,7 @@ export function PropertyForm({
                   label={t("fields.propertyType")}
                   name="propertyTypeId"
                   register={register}
+                  control={control}
                   error={errors.propertyTypeId?.message}
                   options={propertyTypeOptions}
                   highlight={displayHighlights?.property.propertyTypeId}
@@ -1250,31 +1260,35 @@ function SelectField({
   label,
   name,
   register,
+  control,
   error,
   options,
+  allowUnlistedValue,
   highlight,
-}: FieldProps & { options: { value: string; label: string }[] }) {
+}: FieldProps & {
+  control: Control<FormValues>;
+  options: { value: string; label: string }[];
+  allowUnlistedValue?: boolean;
+}) {
   const ring = usePulseRing(highlight);
   return (
     <label className="flex items-center gap-2 text-sm">
       <span className="w-24 shrink-0 font-medium text-ink dark:text-zinc-300">{label}</span>
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <select
-          // Bug fix: `options` loads asynchronously (useQuery). This <select>
-          // is uncontrolled — react-hook-form's `register` assigns the DOM
-          // element's initial value once, at mount/ref-attach time. If that
-          // happens before `options` has arrived (e.g. a hard/direct
-          // navigation with a cold query cache), no <option> matches the
-          // real value yet, the browser silently drops the selection, and
-          // once the real options are appended afterwards the browser
-          // defaults to the first one — which visually looks like the field
-          // got reset, even though the underlying form value never changed.
-          // Keying on whether options have loaded forces a clean remount
-          // once they arrive, so register's initial-value assignment runs
-          // again against the now-populated list and the select displays the
-          // correct option instead of the first list entry.
-          key={options.length > 0 ? "loaded" : "loading"}
-          {...register(name)}
+        {/* Slice #32.13: the async-options idiom lives in <AsyncSelect> now.
+            The key that used to be here was inert — `noneOption` is prepended
+            unconditionally above, so `options.length` was never 0 and the
+            `loaded`/`loading` ternary was a constant. Nothing ever remounted,
+            so on any visit with a cold query cache every stored value on this
+            form showed as "— niciunul —", and stayed there. (Within the
+            queries' 5-minute staleTime the list is already in cache at mount
+            and the field was right, which is why it looked intermittent.) */}
+        <AsyncSelect
+          name={name}
+          control={control}
+          register={register}
+          options={options}
+          allowUnlistedValue={allowUnlistedValue}
           aria-invalid={error ? true : undefined}
           className={[
             "w-full rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none disabled:bg-canvas disabled:text-fade disabled:cursor-default dark:bg-zinc-950 dark:disabled:bg-zinc-800",
@@ -1283,11 +1297,7 @@ function SelectField({
               : "border-wire focus:border-focus dark:border-zinc-700",
             ring,
           ].join(" ")}
-        >
-          {options.map((o) => (
-            <option key={o.value} value={o.value}>{o.label}</option>
-          ))}
-        </select>
+        />
         {error && (
           <span className="text-xs text-red-600 dark:text-red-400">{error}</span>
         )}

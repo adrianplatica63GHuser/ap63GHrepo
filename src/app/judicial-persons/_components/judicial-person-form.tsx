@@ -8,12 +8,14 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
+  type Control,
   type FieldPath,
   type UseFormRegister,
   useForm,
   useWatch,
   Controller,
 } from "react-hook-form";
+import { AsyncSelect } from "@/components/forms/async-select";
 import { NavArrowIcon } from "@/components/back-arrow";
 import { safeMutate } from "@/lib/api/safe-mutate";
 import { PaginationControls } from "@/components/pagination-controls";
@@ -484,6 +486,7 @@ export function JudicialPersonForm({
               label={t("fields.judicialType")}
               name="judicialPersonTypeId"
               register={register}
+              control={control}
               error={errors.judicialPersonTypeId?.message}
               options={[
                 { value: "", label: "—" },
@@ -1204,10 +1207,14 @@ function SelectField({
   label,
   name,
   register,
+  control,
   error,
   options,
   highlight,
-}: FieldProps & { options: { value: string; label: string }[] }) {
+}: FieldProps & {
+  control: Control<FormValues>;
+  options: { value: string; label: string }[];
+}) {
   const ring = usePulseRing(highlight);
   return (
     <label className="flex items-center gap-2 text-sm">
@@ -1215,8 +1222,16 @@ function SelectField({
         {label}
       </span>
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <select
-          {...register(name)}
+        {/* Slice #32.13: this select had no remount key at all, so a stored
+            Judicial Person Type — the options come from a useQuery that
+            resolves after mount — showed as "—" however long you waited.
+            <AsyncSelect> is the single idiom, shared with the property and
+            natural-person forms. */}
+        <AsyncSelect
+          name={name}
+          control={control}
+          register={register}
+          options={options}
           aria-invalid={error ? true : undefined}
           className={[
             "w-full rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none disabled:bg-canvas disabled:text-fade disabled:cursor-default dark:bg-zinc-950 dark:disabled:bg-zinc-800",
@@ -1225,13 +1240,7 @@ function SelectField({
               : "border-wire focus:border-focus dark:border-zinc-700",
             ring,
           ].join(" ")}
-        >
-          {options.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
+        />
         {error && (
           <span className="text-xs text-red-600 dark:text-red-400">
             {error}
