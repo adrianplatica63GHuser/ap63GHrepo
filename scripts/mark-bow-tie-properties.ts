@@ -61,12 +61,24 @@
  * measurement, so a second run reports 0 changed. Safe to re-run.
  *
  * Usage:
- *   npm run properties:mark-bow-ties            # report only, writes nothing
- *   npm run properties:mark-bow-ties -- --apply # write the changes
+ *   npm run properties:mark-bow-ties         # report only, writes nothing
+ *   npm run properties:mark-bow-ties:apply   # write the changes
  *
  * The default is a DRY RUN on purpose: the first thing anyone wants to know is
  * how many properties in the archive are affected, and that answer should not
  * cost a write.
+ *
+ * ⚠️ THERE IS A SECOND NPM SCRIPT RATHER THAN A DOCUMENTED `--` SEPARATOR, AND
+ * THAT IS THE WHOLE REASON IT EXISTS. `npm run <script> --apply` does NOT pass
+ * the flag on — npm consumes it as one of its own arguments, the script sees
+ * nothing, and it prints a dry run. So does `-apply`. Only
+ * `npm run <script> -- --apply` works, and the bare `--` is invisible in a
+ * handover and easy to lose when a command is retyped. Adrian hit exactly this
+ * on the first real run of this script: three invocations, three dry runs, no
+ * error message anywhere, because from the script's side nothing went wrong.
+ *
+ * `--apply` on the command line still works and is what the `:apply` entry
+ * passes; this is a second door, not a replacement.
  */
 
 import { asc, inArray, sql } from "drizzle-orm";
