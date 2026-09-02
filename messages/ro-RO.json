@@ -186,8 +186,8 @@
         "failed": "Proprietățile selectate nu au putut fi șterse. Încercați din nou."
       },
       "groupsButton": "Grupuri",
-      "groupsAll": "Toate (in grup sau nu)",
-      "groupsNotInGroup": "Fara grup",
+      "groupsAll": "Toate (în grup sau nu)",
+      "groupsNotInGroup": "Fără grup",
       "groupsEmpty": "Niciun grup denumit",
       "rulerButton": "Riglă",
       "rulerHint": "Riglă — apasă două puncte pentru a măsura distanța dintre ele",
@@ -507,8 +507,8 @@
     },
     "groupBadgeTitle": "Grup {code}, poziția {position}",
     "groupsFilterLabel": "Grupuri:",
-    "groupsFilterAll": "Toate (in grup sau nu)",
-    "groupsFilterUngrouped": "Fara grup"
+    "groupsFilterAll": "Toate (în grup sau nu)",
+    "groupsFilterUngrouped": "Fără grup"
   },
   "address": {
     "streetLine": "Stradă, Nr., etaj, ap",
@@ -1206,8 +1206,8 @@
       "type": "Tip"
     },
     "groupsFilterLabel": "Grupuri:",
-    "groupsFilterAll": "Toate (in grup sau nu)",
-    "groupsFilterUngrouped": "Fara grup"
+    "groupsFilterAll": "Toate (în grup sau nu)",
+    "groupsFilterUngrouped": "Fără grup"
   },
   "document": {
     "listTitle": "Acte",
@@ -1581,8 +1581,8 @@
       }
     },
     "groupsFilterLabel": "Grupuri:",
-    "groupsFilterAll": "Toate (in grup sau nu)",
-    "groupsFilterUngrouped": "Fara grup",
+    "groupsFilterAll": "Toate (în grup sau nu)",
+    "groupsFilterUngrouped": "Fără grup",
     "processPanel": {
       "title": "Procesare fișier coordonate",
       "description": "Documentul conține un fișier text cu coordonate cadastrale Stereo 70. Apăsați butonul de mai jos pentru a interpreta colțurile, crea o Proprietate și asocia toate documentele și persoanele care au aceeași etichetă de dosar.",
@@ -3334,61 +3334,61 @@
     "pageTitle": "Distilare Tipizate",
     "pick": {
       "title": "Alegeți tipul, folderul cu mostre și pragul",
-      "intro": "Arătați aici un folder cu mai multe documente de acelaşi fel — de obicei între zece şi douăzeci. Fiecare este citit în întregime, apoi se compară între ele şi se propune formularul cu informaţiile pe care le au în comun. Nu se importă nimic: niciun document nu se creează şi nimic nu se scrie în arhivă."
+      "intro": "Arătați aici un folder cu mai multe documente de același fel — de obicei între zece și douăzeci. Fiecare este citit în întregime, apoi se compară între ele și se propune formularul cu informațiile pe care le au în comun. Nu se importă nimic: niciun document nu se creează și nimic nu se scrie în arhivă."
     },
     "types": {
-      "label": "Tipul de document care primeşte formularul",
-      "placeholder": "Alegeţi un tip…",
+      "label": "Tipul de document care primește formularul",
+      "placeholder": "Alegeți un tip…",
       "refusedIdCard": "nu poate primi formular",
       "refusedFallback": "nu poate primi formular",
       "alreadyHasForm": "are deja formular",
-      "additiveNote": "{count, plural, one {Acest tip are deja un câmp. Câmpurile noi se adaugă la el; niciunul dintre cele existente nu este modificat sau şters.} few {Acest tip are deja # câmpuri. Câmpurile noi se adaugă la ele; niciunul dintre cele existente nu este modificat sau şters.} other {Acest tip are deja # de câmpuri. Câmpurile noi se adaugă la ele; niciunul dintre cele existente nu este modificat sau şters.}}",
-      "loadFailed": "Lista tipurilor de documente nu a putut fi citită. Reîncărcaţi pagina şi încercaţi din nou.",
-      "sessionLost": "Sesiunea dumneavoastră a expirat, aşa că lista tipurilor de documente nu a putut fi citită. Autentificaţi-vă din nou într-o filă nouă, apoi reîncărcaţi această pagină."
+      "additiveNote": "{count, plural, one {Acest tip are deja un câmp. Câmpurile noi se adaugă la el; niciunul dintre cele existente nu este modificat sau șters.} few {Acest tip are deja # câmpuri. Câmpurile noi se adaugă la ele; niciunul dintre cele existente nu este modificat sau șters.} other {Acest tip are deja # de câmpuri. Câmpurile noi se adaugă la ele; niciunul dintre cele existente nu este modificat sau șters.}}",
+      "loadFailed": "Lista tipurilor de documente nu a putut fi citită. Reîncărcați pagina și încercați din nou.",
+      "sessionLost": "Sesiunea dumneavoastră a expirat, așa că lista tipurilor de documente nu a putut fi citită. Autentificați-vă din nou într-o filă nouă, apoi reîncărcați această pagină."
     },
     "folder": {
       "pick": "Alege folderul cu mostre…",
-      "picked": "{count, plural, =0 {Folderul „{folder}” nu conţine niciun document care poate fi citit.} one {Folderul „{folder}”: o mostră.} few {Folderul „{folder}”: # mostre.} other {Folderul „{folder}”: # de mostre.}}",
-      "noSamples": "Un folder de mostre trebuie să conţină imagini sau PDF-uri. Fişierele text şi celelalte formate nu pot fi citite.",
-      "unsupported": "Browserul dvs. nu suportă accesul la foldere locale. Utilizaţi Chrome, Edge sau alt browser bazat pe Chromium.",
-      "walkFailed": "Folderul nu a putut fi citit. Verificaţi că aţi dat permisiunea de citire şi încercaţi din nou.",
-      "overflow": "{count, plural, one {Folderul conţine încă un document peste limita de {max} mostre pentru o rulare. Acesta nu va fi citit. Împărţiţi folderul dacă vreţi să le folosiţi pe toate.} few {Folderul conţine încă # documente peste limita de {max} mostre pentru o rulare. Acestea nu vor fi citite. Împărţiţi folderul dacă vreţi să le folosiţi pe toate.} other {Folderul conţine încă # de documente peste limita de {max} mostre pentru o rulare. Acestea nu vor fi citite. Împărţiţi folderul dacă vreţi să le folosiţi pe toate.}}"
+      "picked": "{count, plural, =0 {Folderul „{folder}” nu conține niciun document care poate fi citit.} one {Folderul „{folder}”: o mostră.} few {Folderul „{folder}”: # mostre.} other {Folderul „{folder}”: # de mostre.}}",
+      "noSamples": "Un folder de mostre trebuie să conțină imagini sau PDF-uri. Fișierele text și celelalte formate nu pot fi citite.",
+      "unsupported": "Browserul dvs. nu suportă accesul la foldere locale. Utilizați Chrome, Edge sau alt browser bazat pe Chromium.",
+      "walkFailed": "Folderul nu a putut fi citit. Verificați că ați dat permisiunea de citire și încercați din nou.",
+      "overflow": "{count, plural, one {Folderul conține încă un document peste limita de {max} mostre pentru o rulare. Acesta nu va fi citit. Împărțiți folderul dacă vreți să le folosiți pe toate.} few {Folderul conține încă # documente peste limita de {max} mostre pentru o rulare. Acestea nu vor fi citite. Împărțiți folderul dacă vreți să le folosiți pe toate.} other {Folderul conține încă # de documente peste limita de {max} mostre pentru o rulare. Acestea nu vor fi citite. Împărțiți folderul dacă vreți să le folosiți pe toate.}}"
     },
     "matching": {
       "label": "Procent de potrivire",
-      "hint": "O informaţie devine câmp pe formular dacă apare în cel puţin acest procent din mostrele care chiar au fost citite. Restul nu se pierde: la fiecare import viitor ajunge în „Note extinse”, ca până acum.",
-      "freeToChange": "Se poate schimba aici — nu se reciteşte nimic şi nu costă nimic."
+      "hint": "O informație devine câmp pe formular dacă apare în cel puțin acest procent din mostrele care chiar au fost citite. Restul nu se pierde: la fiecare import viitor ajunge în „Note extinse”, ca până acum.",
+      "freeToChange": "Se poate schimba aici — nu se recitește nimic și nu costă nimic."
     },
     "cost": {
-      "note": "{count, plural, =0 {Nu s-a ales niciun folder, deci nu se citeşte nimic.} one {Citirea AI se plăteşte: o mostră va fi citită în întregime, plus un apel de comparare la final.} few {Citirea AI se plăteşte: # mostre vor fi citite în întregime, plus un apel de comparare la final.} other {Citirea AI se plăteşte: # de mostre vor fi citite în întregime, plus un apel de comparare la final.}}",
-      "pace": "{minutes, plural, one {{perMinute, plural, one {Se trimite cel mult o citire} few {Se trimit cel mult {perMinute} citiri} other {Se trimit cel mult {perMinute} de citiri}} pe minut, deci durează cel puţin un minut.} few {{perMinute, plural, one {Se trimite cel mult o citire} few {Se trimit cel mult {perMinute} citiri} other {Se trimit cel mult {perMinute} de citiri}} pe minut, deci durează cel puţin # minute.} other {{perMinute, plural, one {Se trimite cel mult o citire} few {Se trimit cel mult {perMinute} citiri} other {Se trimit cel mult {perMinute} de citiri}} pe minut, deci durează cel puţin # de minute.}}"
+      "note": "{count, plural, =0 {Nu s-a ales niciun folder, deci nu se citește nimic.} one {Citirea AI se plătește: o mostră va fi citită în întregime, plus un apel de comparare la final.} few {Citirea AI se plătește: # mostre vor fi citite în întregime, plus un apel de comparare la final.} other {Citirea AI se plătește: # de mostre vor fi citite în întregime, plus un apel de comparare la final.}}",
+      "pace": "{minutes, plural, one {{perMinute, plural, one {Se trimite cel mult o citire} few {Se trimit cel mult {perMinute} citiri} other {Se trimit cel mult {perMinute} de citiri}} pe minut, deci durează cel puțin un minut.} few {{perMinute, plural, one {Se trimite cel mult o citire} few {Se trimit cel mult {perMinute} citiri} other {Se trimit cel mult {perMinute} de citiri}} pe minut, deci durează cel puțin # minute.} other {{perMinute, plural, one {Se trimite cel mult o citire} few {Se trimit cel mult {perMinute} citiri} other {Se trimit cel mult {perMinute} de citiri}} pe minut, deci durează cel puțin # de minute.}}"
     },
     "run": {
       "start": "Începe citirea",
       "starting": "Se începe…",
       "progress": "S-au încheiat {done} din {total} mostre.",
-      "current": "Se citeşte: {file}",
-      "waiting": "{seconds, plural, one {Se aşteaptă o secundă} few {Se aşteaptă # secunde} other {Se aşteaptă # de secunde}}: {perMinute, plural, one {se trimite cel mult o citire} few {se trimit cel mult {perMinute} citiri} other {se trimit cel mult {perMinute} de citiri}} pe minut. Nicio mostră nu se pierde din această cauză.",
-      "nothingRead": "Nicio mostră nu a putut fi citită, deci nu se poate propune niciun formular. Încercaţi din nou peste câteva minute.",
-      "sessionLost": "Sesiunea dumneavoastră a expirat în timpul citirii. Mostrele citite până atunci sunt mai jos; restul nu au fost trimise. Autentificaţi-vă din nou într-o filă nouă, apoi reluaţi.",
+      "current": "Se citește: {file}",
+      "waiting": "{seconds, plural, one {Se așteaptă o secundă} few {Se așteaptă # secunde} other {Se așteaptă # de secunde}}: {perMinute, plural, one {se trimite cel mult o citire} few {se trimit cel mult {perMinute} citiri} other {se trimit cel mult {perMinute} de citiri}} pe minut. Nicio mostră nu se pierde din această cauză.",
+      "nothingRead": "Nicio mostră nu a putut fi citită, deci nu se poate propune niciun formular. Încercați din nou peste câteva minute.",
+      "sessionLost": "Sesiunea dumneavoastră a expirat în timpul citirii. Mostrele citite până atunci sunt mai jos; restul nu au fost trimise. Autentificați-vă din nou într-o filă nouă, apoi reluați.",
       "noPairs": "Mostrele au fost citite, dar nu s-a găsit în ele nicio pereche etichetă–valoare, deci nu există ce compara.",
-      "clusterFailed": "Mostrele au fost citite, dar compararea lor nu a reuşit. Citirile s-au plătit deja; reluarea le plăteşte din nou.",
-      "cancel": "Opreşte citirea",
-      "cancelling": "Se opreşte…",
-      "cancelNote": "Se opresc aşteptarea şi mostrele netrimise încă. O citire deja pornită se termină — este oricum plătită.",
-      "clusterRateLimited": "Compararea mostrelor a fost refuzată de limita de cereri, chiar şi după aşteptare. Citirile s-au plătit deja. Aşteptaţi câteva minute şi reluaţi.",
-      "cancelled": "Citirea a fost oprită. Mostrele citite până atunci sunt mai jos; restul nu au fost trimise şi nu s-au plătit.",
+      "clusterFailed": "Mostrele au fost citite, dar compararea lor nu a reușit. Citirile s-au plătit deja; reluarea le plătește din nou.",
+      "cancel": "Oprește citirea",
+      "cancelling": "Se oprește…",
+      "cancelNote": "Se opresc așteptarea și mostrele netrimise încă. O citire deja pornită se termină — este oricum plătită.",
+      "clusterRateLimited": "Compararea mostrelor a fost refuzată de limita de cereri, chiar și după așteptare. Citirile s-au plătit deja. Așteptați câteva minute și reluați.",
+      "cancelled": "Citirea a fost oprită. Mostrele citite până atunci sunt mai jos; restul nu au fost trimise și nu s-au plătit.",
       "cancelledNothing": "Citirea a fost oprită înainte ca vreo mostră să fie citită, deci nu se poate propune niciun formular.",
-      "comparing": "Se compară mostrele citite. Acesta este ultimul apel şi se plăteşte o singură dată.",
-      "comparingAfterCancel": "Citirea s-a oprit. Se compară totuşi mostrele citite până acum — altfel citirile deja plătite nu ar folosi la nimic. Acesta este ultimul apel şi poate dura un minut."
+      "comparing": "Se compară mostrele citite. Acesta este ultimul apel și se plătește o singură dată.",
+      "comparingAfterCancel": "Citirea s-a oprit. Se compară totuși mostrele citite până acum — altfel citirile deja plătite nu ar folosi la nimic. Acesta este ultimul apel și poate dura un minut."
     },
     "review": {
       "title": "Formularul propus",
       "denominator": "{picked, plural, one {S-a citit {read} din o mostră aleasă.} few {S-au citit {read} din # mostre alese.} other {S-au citit {read} din # de mostre alese.}}",
       "unread": "{count, plural, one {O mostră nu a putut fi citită. Toate procentele de mai jos sunt calculate din mostrele citite, nu din cele alese.} few {# mostre nu au putut fi citite. Toate procentele de mai jos sunt calculate din mostrele citite, nu din cele alese.} other {# de mostre nu au putut fi citite. Toate procentele de mai jos sunt calculate din mostrele citite, nu din cele alese.}}",
-      "overCapacity": "Un tip de document poate avea cel mult {max} câmpuri, iar acesta ar ajunge la {would}. Ridicaţi procentul de potrivire sau scoateţi câteva câmpuri.",
+      "overCapacity": "Un tip de document poate avea cel mult {max} câmpuri, iar acesta ar ajunge la {would}. Ridicați procentul de potrivire sau scoateți câteva câmpuri.",
       "aboveTitle": "{count, plural, =0 {Niciun câmp peste prag} one {Un câmp pe formular} few {# câmpuri pe formular} other {# de câmpuri pe formular}}",
-      "aboveEmpty": "Nicio informaţie nu apare în destule mostre pentru pragul ales. Coborâţi procentul de potrivire ca să vedeţi ce urmează imediat sub el.",
+      "aboveEmpty": "Nicio informație nu apare în destule mostre pentru pragul ales. Coborâți procentul de potrivire ca să vedeți ce urmează imediat sub el.",
       "includeAria": "Păstrează câmpul „{label}” pe formular",
       "label": "Etichetă",
       "type": "Fel",
@@ -3398,37 +3398,37 @@
       "typeNumber": "Număr",
       "foundIn": "{count, plural, one {găsit într-o mostră din {read} ({percent}%)} few {găsit în # mostre din {read} ({percent}%)} other {găsit în # de mostre din {read} ({percent}%)}}",
       "hint": "Indiciu pentru AI",
-      "hintNote": "Aici rămâne scrisul aşa cum apare pe documente. Eticheta de deasupra o schimbaţi cum doriţi — sistemul citeşte în continuare la fel, pentru că indiciul păstrează formularea de pe pagină.",
+      "hintNote": "Aici rămâne scrisul așa cum apare pe documente. Eticheta de deasupra o schimbați cum doriți — sistemul citește în continuare la fel, pentru că indiciul păstrează formularea de pe pagină.",
       "evidence": "{count, plural, one {Vezi valoarea citită dintr-o mostră} few {Vezi valorile citite din # mostre} other {Vezi valorile citite din # de mostre}}",
-      "belowTitle": "{count, plural, one {O informaţie sub prag} few {# informaţii sub prag} other {# de informaţii sub prag}}",
-      "belowNote": "Acestea nu devin câmpuri. La fiecare import viitor ele vor ajunge în „Note extinse”, ca până acum — nu se pierd, dar nu au căsuţa lor pe formular.",
-      "skippedPages": "{count, plural, one {O pagină nu a fost trimisă spre citire (prea multe pagini, fişier prea mare sau format necitibil), deci un document a fost citit doar în parte.} few {# pagini nu au fost trimise spre citire (prea multe pagini, fişiere prea mari sau formate necitibile), deci unele documente au fost citite doar în parte.} other {# de pagini nu au fost trimise spre citire (prea multe pagini, fişiere prea mari sau formate necitibile), deci unele documente au fost citite doar în parte.}}",
+      "belowTitle": "{count, plural, one {O informație sub prag} few {# informații sub prag} other {# de informații sub prag}}",
+      "belowNote": "Acestea nu devin câmpuri. La fiecare import viitor ele vor ajunge în „Note extinse”, ca până acum — nu se pierd, dar nu au căsuța lor pe formular.",
+      "skippedPages": "{count, plural, one {O pagină nu a fost trimisă spre citire (prea multe pagini, fișier prea mare sau format necitibil), deci un document a fost citit doar în parte.} few {# pagini nu au fost trimise spre citire (prea multe pagini, fișiere prea mari sau formate necitibile), deci unele documente au fost citite doar în parte.} other {# de pagini nu au fost trimise spre citire (prea multe pagini, fișiere prea mari sau formate necitibile), deci unele documente au fost citite doar în parte.}}",
       "truncatedReads": "{count, plural, one {O citire s-a oprit la limita de răspuns, deci din acel document s-a preluat doar începutul.} few {# citiri s-au oprit la limita de răspuns, deci din acele documente s-a preluat doar începutul.} other {# de citiri s-au oprit la limita de răspuns, deci din acele documente s-a preluat doar începutul.}}",
-      "partialComparison": "{count, plural, =0 {Compararea a fost parţială: răspunsul s-a oprit la limita de mărime, deci este posibil ca unele informaţii să nu fi fost grupate.} one {O informaţie nu a intrat în comparare, aşa că apare separat, ca şi cum ar fi fost găsită într-un singur document.} few {# informaţii nu au intrat în comparare, aşa că apar separat, ca şi cum ar fi fost găsite fiecare într-un singur document.} other {# de informaţii nu au intrat în comparare, aşa că apar separat, ca şi cum ar fi fost găsite fiecare într-un singur document.}}",
-      "alreadyTitle": "{count, plural, one {O informaţie pe care tipul o are deja} few {# informaţii pe care tipul le are deja} other {# de informaţii pe care tipul le are deja}}",
-      "alreadyNote": "Acestea trec pragul, dar tipul are deja câte un câmp pentru ele, aşa că nu se propun din nou. Câmpurile existente rămân neatinse.",
+      "partialComparison": "{count, plural, =0 {Compararea a fost parțială: răspunsul s-a oprit la limita de mărime, deci este posibil ca unele informații să nu fi fost grupate.} one {O informație nu a intrat în comparare, așa că apare separat, ca și cum ar fi fost găsită într-un singur document.} few {# informații nu au intrat în comparare, așa că apar separat, ca și cum ar fi fost găsite fiecare într-un singur document.} other {# de informații nu au intrat în comparare, așa că apar separat, ca și cum ar fi fost găsite fiecare într-un singur document.}}",
+      "alreadyTitle": "{count, plural, one {O informație pe care tipul o are deja} few {# informații pe care tipul le are deja} other {# de informații pe care tipul le are deja}}",
+      "alreadyNote": "Acestea trec pragul, dar tipul are deja câte un câmp pentru ele, așa că nu se propun din nou. Câmpurile existente rămân neatinse.",
       "forType": "Formular pentru tipul „{type}”.",
       "startOver": "Ia de la capăt",
-      "nothingFound": "Nu s-a găsit nicio informaţie comună în aceste documente. Verificaţi că sunt toate de acelaşi fel.",
+      "nothingFound": "Nu s-a găsit nicio informație comună în aceste documente. Verificați că sunt toate de același fel.",
       "keyPending": "(nu se salvează)",
       "variants": "Scris pe documente ca: {wordings}",
       "exampleValue": "de exemplu „{value}”",
       "labelAria": "Eticheta câmpului „{label}”",
       "typeAria": "Felul câmpului „{label}”",
       "hintAria": "Indiciul pentru AI al câmpului „{label}”",
-      "labelRequired": "Fiecare câmp bifat are nevoie de o etichetă. Completaţi-le sau debifaţi rândurile goale.",
-      "labelDuplicate": "Un rând a fost redenumit cu numele unui câmp pe care tipul îl are deja. Alegeţi alt nume sau debifaţi rândul — altfel ar apărea două coloane pentru acelaşi lucru.",
-      "keyNow": "Aici câmpul se adaugă acum, deci cheia se stabileşte din eticheta pe care o aprobaţi şi se vede sub ea în timp ce scrieţi."
+      "labelRequired": "Fiecare câmp bifat are nevoie de o etichetă. Completați-le sau debifați rândurile goale.",
+      "labelDuplicate": "Un rând a fost redenumit cu numele unui câmp pe care tipul îl are deja. Alegeți alt nume sau debifați rândul — altfel ar apărea două coloane pentru același lucru.",
+      "keyNow": "Aici câmpul se adaugă acum, deci cheia se stabilește din eticheta pe care o aprobați și se vede sub ea în timp ce scrieți."
     },
     "save": {
       "button": "{count, plural, one {Aprobă formularul (un câmp)} few {Aprobă formularul (# câmpuri)} other {Aprobă formularul (# de câmpuri)}}",
       "saving": "Se salvează…",
       "note": "Se scriu doar câmpurile bifate. Nimic altceva din arhivă nu se modifică.",
-      "conflict": "Formularul acestui tip a fost modificat în altă parte în timp ce îl priveaţi aici. Reîncărcaţi pagina şi reluaţi, ca să nu se piardă ce a apărut între timp.",
-      "tooMany": "Un tip de document poate avea cel mult {max} câmpuri. Scoateţi câteva şi încercaţi din nou.",
-      "failed": "Formularul nu a putut fi salvat. Încercaţi din nou.",
-      "sessionLost": "Sesiunea dumneavoastră a expirat, aşa că formularul NU a fost salvat. Autentificaţi-vă din nou într-o filă nouă, apoi apăsaţi din nou „Aprobă formularul” — mostrele citite nu se pierd.",
-      "typeGone": "Tipul de document nu mai există. A fost şters în altă parte, deci nu are unde să fie salvat formularul.",
+      "conflict": "Formularul acestui tip a fost modificat în altă parte în timp ce îl priveați aici. Reîncărcați pagina și reluați, ca să nu se piardă ce a apărut între timp.",
+      "tooMany": "Un tip de document poate avea cel mult {max} câmpuri. Scoateți câteva și încercați din nou.",
+      "failed": "Formularul nu a putut fi salvat. Încercați din nou.",
+      "sessionLost": "Sesiunea dumneavoastră a expirat, așa că formularul NU a fost salvat. Autentificați-vă din nou într-o filă nouă, apoi apăsați din nou „Aprobă formularul” — mostrele citite nu se pierd.",
+      "typeGone": "Tipul de document nu mai există. A fost șters în altă parte, deci nu are unde să fie salvat formularul.",
       "idCardType": "Acest tip de document este o carte de identitate, deci nu poate avea formular. Datele de pe o carte de identitate se preiau la import, ca persoane în sistem, nu ca înregistrări într-un formular — un formular aici ar însemna încă o copie, liber modificabilă, a CNP-ului, pe fiecare document de acest tip. Mostrele citite nu s-au pierdut, dar acest tip nu poate primi formularul."
     },
     "saved": {

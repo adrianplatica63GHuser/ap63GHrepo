@@ -239,7 +239,14 @@ describe("DocTypeEngine's copy", () => {
       expect(pace).toContain("{minutes, plural");
       expect(String(at(loadCopy(file), "cost.note"))).not.toContain("minutes");
     }
-    expect(String(at(loadCopy("ro-RO.json"), "cost.note"))).toMatch(/plăteşte|plătește/i);
+    // ⚠️ COMMA-BELOW `ș` ONLY, SINCE #32.17. This line used to accept either
+    // spelling — `/plăteşte|plătește/` — which is exactly why the cedilla
+    // version survived in `cost.note` for as long as it did: the one test that
+    // read this sentence was written to tolerate it. The whole `docTypeEngine`
+    // namespace is comma-below now, and `romanian-diacritics.test.ts` fails on
+    // any cedilla anywhere in the message files, so an alternation here would
+    // only be a second, quieter opinion on a settled question.
+    expect(String(at(loadCopy("ro-RO.json"), "cost.note"))).toMatch(/plătește/i);
     expect(String(at(loadCopy("en-GB.json"), "cost.note"))).toMatch(/costs money/i);
   });
 
