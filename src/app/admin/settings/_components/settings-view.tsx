@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { TimeFrameRow } from "@/lib/time-frames/config";
-import { TIME_FRAME_KEYS } from "@/lib/time-frames/config";
+import { TIME_FRAME_KEYS, parseTimeFrameDraft } from "@/lib/time-frames/config";
 import { buttonClass } from "@/lib/ui/button-styles";
 
 // ---------------------------------------------------------------------------
@@ -74,8 +74,12 @@ function TimeFramesPanel() {
   async function handleSave() {
     const settings: { key: string; value: number }[] = [];
     for (const [key, raw] of Object.entries(drafts)) {
-      const n = parseInt(raw, 10);
-      if (!Number.isFinite(n) || n < 1 || n > 3650) {
+      // parseTimeFrameDraft, not parseInt: `parseInt("7.9")` is 7, so the
+      // fraction was silently dropped and the save reported success on a value
+      // the user never typed. The rule lives beside TIME_FRAME_KEYS so it can
+      // be read against the route's zod schema, which is what enforces it.
+      const n = parseTimeFrameDraft(raw);
+      if (n === null) {
         setSaveError(t("timeFrames.validationError"));
         return;
       }
@@ -92,9 +96,28 @@ function TimeFramesPanel() {
         body:    JSON.stringify({ settings }),
       });
       if (!res.ok) throw new Error("Save failed");
+      // Fixed in passing (#32.18) — two more caches held the old numbers, and
+      // the order of these five lines is itself part of the fix.
+      //
+      // ["time-frames-list"] is THIS panel's own query, keyed separately from
+      // the ["time-frames"] the shared hook uses (see the note where it is
+      // declared). Without it a save cleared the drafts and every input fell
+      // back to `String(row.value)` off a five-minute-stale array — so the
+      // screen said "Saved successfully." above a field still showing the
+      // number the user had just replaced.
+      //
+      // ["dashboard"] holds counts the SERVER computed from these values. Its
+      // headings now quote the settings, so leaving it stale would put a new
+      // window in the heading over counts still answering the old one.
+      //
+      // And `setDrafts({})` goes AFTER all three: clearing the drafts is what
+      // makes an input fall back to the cache, so clearing first made the
+      // field revert to the old number for the length of the refetch.
+      await queryClient.invalidateQueries({ queryKey: ["time-frames"] });
+      await queryClient.invalidateQueries({ queryKey: ["time-frames-list"] });
+      await queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       setDrafts({});
       setSaved(true);
-      await queryClient.invalidateQueries({ queryKey: ["time-frames"] });
     } catch {
       setSaveError(t("timeFrames.saveError"));
     } finally {

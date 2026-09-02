@@ -204,12 +204,25 @@ function SectionCard({
 // Section 1 — Recent counts
 // ---------------------------------------------------------------------------
 
-function RecentCountsSection({
+// The three sections below are exported for `dashboard-time-frames.test.tsx`
+// alone — nothing in the app imports them. Rendering <DashboardClient> in Jest
+// is not an option: it pulls in `next-intl`, which is ESM-only and is not
+// transformed by `next/jest` (see src/test-support/icu.ts for the long form),
+// so the suite renders the sections directly with its own `t`.
+//
+// Each takes the day-count its sentence quotes as a prop rather than reading
+// `useTimeFrames()` itself, matching how `amberDays` has always been threaded:
+// one call to the hook, in the root, passed down.
+
+export function RecentCountsSection({
   data,
   t,
+  recentDays,
 }: {
   data: RecentCounts | undefined;
   t: ReturnType<typeof useTranslations>;
+  /** `dashboard_recent_days` — the window the counts were computed over. */
+  recentDays: number;
 }) {
   const cards = [
     {
@@ -236,7 +249,7 @@ function RecentCountsSection({
   ] as const;
 
   return (
-    <SectionCard title={t("recentCounts.title")}>
+    <SectionCard title={t("recentCounts.title", { days: recentDays })}>
       <div className="grid grid-cols-3 gap-4">
         {cards.map((c) => (
           <Link
@@ -268,14 +281,17 @@ function RecentCountsSection({
 // Section 2 — Expiring documents
 // ---------------------------------------------------------------------------
 
-function ExpiringDocumentsSection({
+export function ExpiringDocumentsSection({
   data,
   t,
   amberDays,
+  expiringDays,
 }: {
   data: ExpiringDocument[] | undefined;
   t: ReturnType<typeof useTranslations>;
   amberDays: number;
+  /** `dashboard_expiring_docs` — the window the list was computed over. */
+  expiringDays: number;
 }) {
   function rowColor(dateValidUntil: string): string {
     const days = daysFromToday(dateValidUntil);
@@ -302,7 +318,7 @@ function ExpiringDocumentsSection({
         </div>
       ) : data.length === 0 ? (
         <p className="text-sm text-zinc-400 dark:text-zinc-500 text-center py-4">
-          {t("expiringDocuments.empty")}
+          {t("expiringDocuments.empty", { days: expiringDays })}
         </p>
       ) : (
         <div className="overflow-x-auto">
@@ -360,12 +376,15 @@ function ExpiringDocumentsSection({
 // Section 3 — Stale metadata
 // ---------------------------------------------------------------------------
 
-function StaleMetadataSection({
+export function StaleMetadataSection({
   data,
   t,
+  staleDays,
 }: {
   data: StaleMetadataCount | undefined;
   t: ReturnType<typeof useTranslations>;
+  /** `dashboard_stale_metadata` — the age the count was computed against. */
+  staleDays: number;
 }) {
   return (
     <SectionCard title={t("staleMetadata.title")}>
@@ -378,7 +397,7 @@ function StaleMetadataSection({
       ) : (
         <div className="flex flex-col gap-3">
           <p className="text-sm text-zinc-600 dark:text-zinc-300">
-            {t("staleMetadata.description", { total: data.total })}
+            {t("staleMetadata.description", { total: data.total, days: staleDays })}
           </p>
           <div className="flex gap-3 flex-wrap">
             {data.persons > 0 && (
@@ -515,8 +534,16 @@ export function DashboardClient() {
 
       {/* Top row: recent counts + stale metadata side by side */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <RecentCountsSection data={data?.recentCounts} t={t} />
-        <StaleMetadataSection data={data?.staleMetadata} t={t} />
+        <RecentCountsSection
+          data={data?.recentCounts}
+          t={t}
+          recentDays={tfDays(tf, "dashboard_recent_days")}
+        />
+        <StaleMetadataSection
+          data={data?.staleMetadata}
+          t={t}
+          staleDays={tfDays(tf, "dashboard_stale_metadata")}
+        />
       </div>
 
       {/* Expiring documents — full width */}
@@ -524,6 +551,7 @@ export function DashboardClient() {
         data={data?.expiringDocuments}
         t={t}
         amberDays={tfDays(tf, "dashboard_expiring_amber")}
+        expiringDays={tfDays(tf, "dashboard_expiring_docs")}
       />
 
       {/* Recent activity — full width */}

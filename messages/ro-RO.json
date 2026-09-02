@@ -3225,15 +3225,15 @@
     "subtitle": "Ce necesită atenția dumneavoastră azi",
     "loadError": "Eroare la încărcarea tabloului de bord",
     "recentCounts": {
-      "title": "Adăugate în ultimele 7 zile",
-      "subtitle": "Înregistrări noi față de săptămâna trecută",
+      "title": "{days, plural, one {Adăugate în ultima zi} few {Adăugate în ultimele # zile} other {Adăugate în ultimele # de zile}}",
+      "subtitle": "Înregistrări nou adăugate",
       "persons": "Persoane",
       "properties": "Proprietăți",
       "documents": "Acte"
     },
     "expiringDocuments": {
       "title": "Acte cu valabilitate limitată",
-      "empty": "Niciun act nu expiră în următoarele 60 de zile",
+      "empty": "{days, plural, one {Niciun act nu expiră în următoarea zi} few {Niciun act nu expiră în următoarele # zile} other {Niciun act nu expiră în următoarele # de zile}}",
       "colCode": "Cod",
       "colType": "Tip",
       "colTitle": "Titlu",
@@ -3242,12 +3242,12 @@
       "expired": "Expirat",
       "expiresTODAY": "Expiră AZI",
       "expiresTomorrow": "Expiră mâine",
-      "expiresInDays": "Expiră în {days} zile"
+      "expiresInDays": "Expiră în {days, plural, one {o zi} few {# zile} other {# de zile}}"
     },
     "staleMetadata": {
       "title": "Metadate care necesită atenție",
       "allGood": "Toate metadatele sunt actualizate",
-      "description": "{total} înregistrări cu metadate neactualizate de peste 90 de zile",
+      "description": "{total, plural, one {O înregistrare} few {# înregistrări} other {# de înregistrări}} cu metadate neactualizate de peste {days, plural, one {o zi} few {# zile} other {# de zile}}",
       "persons": "persoane",
       "properties": "proprietăți",
       "documents": "acte",
@@ -3284,7 +3284,7 @@
       "cancel": "Anulează",
       "saved": "Salvat cu succes.",
       "saveError": "Salvarea a eșuat. Reîncercați.",
-      "validationError": "Toate valorile trebuie să fie numere între 1 și 3650.",
+      "validationError": "Toate valorile trebuie să fie numere întregi între 1 și 3650.",
       "unit": {
         "days": "zile",
         "hours": "ore",

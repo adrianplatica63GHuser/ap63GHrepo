@@ -81,3 +81,41 @@ export function getMs(map: TimeFrameMap | null, key: TimeFrameKey): number {
   if (!row) return toMs(TIME_FRAME_DEFAULTS[key].value, TIME_FRAME_DEFAULTS[key].unit);
   return toMs(row.value, row.unit);
 }
+
+// ---------------------------------------------------------------------------
+// The client-side rule for a typed value                        (Slice #32.18)
+// ---------------------------------------------------------------------------
+
+/** Smallest and largest value the editor and the API both accept. */
+export const TIME_FRAME_MIN = 1;
+export const TIME_FRAME_MAX = 3650;
+
+/**
+ * Read a value typed into the Settings editor, or `null` if it is not one.
+ *
+ * This exists to agree with `z.number().int().min(1).max(3650)` in
+ * `src/app/api/time-frames/route.ts`, which is the rule that actually holds.
+ * The screen used to check with `parseInt(raw, 10)`, and `parseInt("7.9")` is
+ * `7` — so a fraction was not rejected, it was TRUNCATED, the request carried
+ * the whole number, the server was satisfied, and the user was told the save
+ * had succeeded while the value they typed was gone.
+ *
+ * `Number()` rather than `parseInt` is the whole fix: it reads the string as a
+ * whole or not at all, so `Number.isInteger` can see the fraction that
+ * `parseInt` has already thrown away. Everything else here is guarding
+ * `Number`'s own edges rather than adding rules of its own —
+ * `Number("")` and `Number("   ")` are both `0`, which the range check would
+ * catch, but only by accident and with a message about a range; and
+ * `Number("7.0")` is `7`, an integer, which is correct and is accepted.
+ * `Number("1e3")` is `1000`, likewise an integer and likewise accepted — the
+ * server would accept it too, and this function's job is to agree with the
+ * server, not to be stricter than it.
+ */
+export function parseTimeFrameDraft(raw: string): number | null {
+  const trimmed = raw.trim();
+  if (trimmed === "") return null;
+  const n = Number(trimmed);
+  if (!Number.isInteger(n)) return null;
+  if (n < TIME_FRAME_MIN || n > TIME_FRAME_MAX) return null;
+  return n;
+}

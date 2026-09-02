@@ -3225,15 +3225,15 @@
     "subtitle": "What needs your attention today",
     "loadError": "Failed to load dashboard",
     "recentCounts": {
-      "title": "Added in the last 7 days",
-      "subtitle": "New records since last week",
+      "title": "Added in the last {days, plural, one {day} other {# days}}",
+      "subtitle": "Newly added records",
       "persons": "Persons",
       "properties": "Properties",
       "documents": "Documents"
     },
     "expiringDocuments": {
       "title": "Documents with limited validity",
-      "empty": "No documents expiring in the next 60 days",
+      "empty": "No documents expiring in the next {days, plural, one {day} other {# days}}",
       "colCode": "Code",
       "colType": "Type",
       "colTitle": "Title",
@@ -3247,7 +3247,7 @@
     "staleMetadata": {
       "title": "Metadata needing attention",
       "allGood": "All metadata is up to date",
-      "description": "{total} records with metadata not updated in over 90 days",
+      "description": "{total, plural, one {# record} other {# records}} with metadata not updated in over {days, plural, one {a day} other {# days}}",
       "persons": "persons",
       "properties": "properties",
       "documents": "documents",
@@ -3284,7 +3284,7 @@
       "cancel": "Cancel",
       "saved": "Saved successfully.",
       "saveError": "Save failed. Please try again.",
-      "validationError": "All values must be numbers between 1 and 3650.",
+      "validationError": "All values must be whole numbers between 1 and 3650.",
       "unit": {
         "days": "days",
         "hours": "hours",

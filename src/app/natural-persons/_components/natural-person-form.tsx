@@ -463,6 +463,30 @@ export function NaturalPersonForm({
   const { register, control, formState } = form;
   const errors = formState.errors;
 
+  // Is the CNP already set? Show lock hint wherever the field is editable.
+  //                                                          (Slice #32.18)
+  // `natural_person_lock_cnp` (drizzle/0000_initial_schema.sql) rejects the
+  // UPDATE outright, and src/lib/api/errors.ts turns that into a 400 — so
+  // without this the only signal is a failed save. It copies `cuiIsLocked` in
+  // judicial-person-form.tsx in the thing that matters, DOWN TO NOT DISABLING
+  // THE INPUT: the hint is a caption, the field stays editable, and the
+  // database is still what refuses. Making this one a client-side block would
+  // make the two forms behave differently again, in the other direction.
+  //
+  // ⚠️ IT DIVERGES FROM THAT MODEL IN ONE PLACE, DELIBERATELY: the test is
+  // `effectiveMode`, not the `mode` prop the judicial form uses. `mode` is what
+  // the page passed; `effectiveMode` (:257) is what the <fieldset disabled> at
+  // :511 actually obeys, and the two differ on the path the hint exists for —
+  // a person opened read-only from another record's association tab, where
+  // pressing Modify sets `associatedEditing` and unlocks the CNP input while
+  // `mode` is still "view". Keying off `mode` there would leave exactly the
+  // silent 400 this is meant to pre-empt. It also stops the hint appearing on
+  // a historical version, which is never editable and where `initialValues`
+  // holds the CURRENT row's CNP rather than the one on screen.
+  // judicial-person-form.tsx has the same hole and is not this slice's to edit.
+  const cnpIsLocked =
+    effectiveMode === "edit" && Boolean(initialValues?.cnp?.trim());
+
   return (
     <FieldPulseContext.Provider value={pulsing}>
     <form
@@ -557,6 +581,7 @@ export function NaturalPersonForm({
               name="cnp"
               register={register}
               error={errors.cnp?.message}
+              hint={cnpIsLocked ? t("hints.cnpLocked") : undefined}
               highlight={displayHighlights?.fields.cnp}
             />
             <SelectField
