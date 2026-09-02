@@ -432,6 +432,23 @@ export const property = pgTable("property", {
   // corners (WGS84 → Stereo 70 → shoelace). NULL when fewer than 3 corners.
   calculatedAreaMp: numeric("calculated_area_mp", { precision: 12, scale: 2 }),
 
+  // Slice #32.14: true when the stored corner ORDER traces a self-intersecting
+  // (bow-tie) ring, which is what makes `calculatedAreaMp` above meaningless —
+  // PROP01444 reported 0.21 m² on a 2000 m² parcel and nothing said why. Same
+  // shape as `calculatedAreaMp`: server-computed by `polygonSelfIntersects`
+  // (src/lib/properties/area.ts) at the two corner-write choke points in
+  // src/lib/properties/queries.ts, never user-editable. False for every row
+  // predating migration_075 until its corners are next written — that
+  // migration's header says why there is no SQL backfill.
+  //
+  // ⚠️ NOTHING WRITES OR READS IT YET. The migration and this declaration are
+  // where a migration slice stops and waits for confirmation; the detector
+  // call, the list column and the straighten action are the rest of #32.14.
+  // Do not infer from this comment that they have landed — grep first.
+  cornerOrderSelfIntersects: boolean("corner_order_self_intersects")
+    .notNull()
+    .default(false),
+
   notes: text("notes"),
 
   // Email of the user who last wrote this record (set by the API layer from
