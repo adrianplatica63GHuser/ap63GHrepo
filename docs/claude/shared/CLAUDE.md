@@ -9,7 +9,14 @@ in that project's own `CLAUDE.md`.
 > there; **deploying is Adrian's** — `ga40prj\scripts\Sync-SharedClaude.ps1` writes above the repo,
 > so it goes in the handover next to the push. Until he runs it, the edit is committed and not in
 > effect. Never edit this file directly — the next sync overwrites it. Same for everything in
-> `C:\dev\.claude\rules\`.
+> `C:\dev\.claude\rules\`, each of which now repeats this warning at its own top — because a
+> session that opens a rules file directly never reads this one, and #32.14 proved it by
+> editing a deployed rules file while this very paragraph sat unread two directories away.
+>
+> `src\__tests__\shared-claude-deploy.test.ts` fails when any deployed copy drifts from its
+> source, so `npx jest` catches both halves: the commit that was never deployed, and the edit
+> made to the wrong side. It cannot be a CI check — the deployed copy exists only on Adrian's
+> machine, where jest happens to run and CI does not.
 
 ## Who you're working with
 

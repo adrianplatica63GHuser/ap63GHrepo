@@ -8,6 +8,21 @@ paths:
 
 # One database, several codebases
 
+> **⚠️ THIS FILE EXISTS TWICE, AND THE COPY YOU ARE READING MAY NOT BE THE ONE TO EDIT.**
+> The versioned original is `ga40prj\docs\claude\shared\rules\shared-database.md`. The copy Claude
+> actually **loads** is `C:\dev\.claude\rules\shared-database.md`, deployed above every repo so that
+> every project inherits it — which puts it outside git's reach. **Edit the repo copy and
+> commit it; deploying is Adrian's** (`ga40prj\scripts\Sync-SharedClaude.ps1`), so it goes in
+> the handover next to the push.
+>
+> Both halves have gone wrong in real sessions. A commit without a deploy is a rule that is
+> **not in effect** — Slice #32.14 opened with `sandbox-and-toolchain.md` 33 lines behind its
+> source, missing two bullets about failures that session could have hit. An edit made
+> directly to the deployed copy is **discarded by the next deploy** — the same slice did that
+> too. `src\__tests__\shared-claude-deploy.test.ts` now fails when the two drift, so
+> `npx jest` catches both.
+
+
 More than one app under `C:\dev\` talks to the same PostgreSQL/PostGIS database. That makes
 the schema a **shared contract**, not a private implementation detail of whichever repo you
 happen to be in. Before changing anything under `src/db/`, apply these rules.
