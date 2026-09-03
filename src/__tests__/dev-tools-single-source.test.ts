@@ -1,10 +1,20 @@
 /**
  * Dev-tools single-source guard  (Slice #23.10.dev)
  *
- * Ciprian's UAT image is built with NEXT_PUBLIC_DEV_TOOLS unset, so every
- * developer diagnostic disappears from it: AI Discover, the entity Metadata
- * tab and the list filters/columns fed from it, the Help-content and Settings
- * admin screens, the locale flags.
+ * Ciprian's UAT image is built with NEXT_PUBLIC_DEV_TOOLS unset, so whatever is
+ * gated by this flag disappears from it.
+ *
+ * ⚠️ **Since Slice #32.19 that is two controls — the EN/RO locale toggle and
+ * the developer-notes panel on /admin/settings** — and this guard matters MORE
+ * rather than less for them. The list used to read
+ * "AI Discover, the entity Metadata tab and the list filters/columns fed from
+ * it, the Help-content and Settings admin screens, the locale flags"; #26.11
+ * took the first off, #32.19 revealed the rest at Adrian's request, and the
+ * two stayed for reasons argued in dev-tools.ts: the toggle can put a Romanian
+ * user's whole interface into English from the sign-in page, and the panel is
+ * an English engineering note under a Romanian heading. A second reader of the
+ * env var getting one of those sites wrong ships to Ciprian baked into the
+ * bundle.
  *
  * The shape of this test is copied from auth-single-source.test.ts, and so is
  * its reason for existing. UAT_NO_AUTH was honoured in four places while 25
@@ -13,10 +23,12 @@
  * the first site: the definition of "is this a developer build?" lives in
  * src/lib/features/dev-tools.ts and nowhere else.
  *
- * Note the guard bans reading the ENV VAR, not calling the predicate. Nav
- * items, tab descriptors and column-picker rows are array entries, so <DevOnly>
- * cannot wrap them and they call isDevToolsEnabled() directly — that is the
+ * Note the guard bans reading the ENV VAR, not calling the predicate. An array
+ * entry — a nav item, a tab descriptor, a column-picker row — cannot be wrapped
+ * in <DevOnly>, so such a site calls isDevToolsEnabled() directly; that is the
  * intended second mechanism, not an evasion, because both end at one module.
+ * There is no such site left today, and the mechanism is described here anyway
+ * so the next one is written the intended way rather than reinvented.
  */
 
 import { existsSync, readdirSync, readFileSync, statSync } from "fs";

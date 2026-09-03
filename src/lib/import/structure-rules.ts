@@ -205,14 +205,24 @@ export type StructureRuleId =
   | "STR-01"   // the chosen folder holds no loose files
   | "STR-02"   // at most five property folders
   | "STR-03"   // no two property folders mean the same property
-  | "STR-04"   // every folder in it is a property (<tarla>-<parcela>), `common` or `floating`
-  | "STR-05"   // the shared folders are spelled exactly `common` / `floating`
+  // ⚠️ Three lines below said `common` / `floating` until Slice #32.19 — the
+  // spellings #26.11 replaced, left behind here while every sentence the user
+  // reads said `comune` / `flotante`. Finding S-08 was about exactly this drift,
+  // one layer up. Every rule text here now names what the user types.
+  //
+  // The `common` / `floating` left elsewhere in this file are IDENTITIES, not
+  // spellings, and stay: `SharedFolderName`, `RuleScope`'s "topLevelFolder"
+  // gloss, and the quoted earlier draft in the module header. The split is
+  // argued at SHARED_FOLDER_DISPLAY_NAMES below.
+  | "STR-04"   // every folder in it is a property (<tarla>-<parcela>), `comune` or `flotante`
+  | "STR-05"   // the shared folders are spelled exactly `comune` / `flotante`
+               // (`common` / `floating` still accepted — LEGACY_SHARED_FOLDER_SPELLINGS)
   // STR-06 was "free description is separated by `||`". Retired in #28.02 with
   // the separator itself. THE ID IS A GAP AND IS NEVER REUSED — module header.
   | "STR-15"   // a property folder whose identifiers carry no `per` is confirmed by the user
   | "STR-07"   // a top-level folder's own files are not all numbered scans
   | "STR-08"   // at most one coordinate file per property folder
-  | "STR-09"   // no coordinate file in `common` or `floating`
+  | "STR-09"   // no coordinate file in `comune` or `flotante`
   | "STR-10"   // a page folder holds no further folders
   | "STR-11"   // a page folder is not empty
   | "STR-12"   // every file in a page folder is a numbered scan
@@ -544,11 +554,30 @@ export const SHARED_FOLDER_DISPLAY_NAMES: Readonly<Record<SharedFolderName, stri
  * violations would have handed a business user a rename chore across every
  * folder he owns as the price of a copy change he never asked for.
  *
- * They are accepted SILENTLY: nothing in the UI mentions them, so a user
- * reading the rules learns one spelling, and a user whose folder is already
- * named the old way is never told they are wrong. There is deliberately no
- * "deprecated, please rename" nag — a warning nobody can act on without a
- * morning of work is worse than the inconsistency it reports.
+ * ⚠️ **THEY WERE ACCEPTED SILENTLY UNTIL SLICE #32.19, AND THAT WAS THE BUG —
+ * NOT THE ACCEPTANCE.** Finding S-08: STR-05 taught `comune` and `flotante` and
+ * nothing in the interface said otherwise, so `Comune` was refused where
+ * `common` passed, and a user reasoning from the rule text had no way to
+ * predict either answer. (The asymmetry is real and is by design: acceptance is
+ * case-SENSITIVE — `sharedFolderName`, an exact `includes` — while the near-miss
+ * test folds first, which is why `Comune` reaches STR-05 and `common` never
+ * does.)
+ *
+ * ⚠️ **THE FIX WAS TO SAY IT OUT LOUD, NOT TO WITHDRAW IT, and deleting these
+ * entries would make the message WORSE rather than clearer.** With them gone
+ * `common` stops being an STR-05 near miss too: it falls through
+ * `classifyTopLevel` to STR-04, which tells the user to rename the folder to
+ * `tarla-parcela` or move its files out — a worse instruction than the one they
+ * get today, handed to every archive Ciprian has already prepared. So STR-05's
+ * copy in `messages/*.json` now names the English spellings, says they are
+ * still accepted and says they are being retired. There is still deliberately
+ * no per-run "deprecated, please rename" nag: a warning nobody can act on
+ * without a morning of work is worse than the inconsistency it reports. What
+ * changed is that the rules screen no longer contradicts the checker.
+ *
+ * Actually refusing `common` and `floating` is a different and larger slice: it
+ * carries a rename step for the archives that use them, and it cannot ship
+ * without one.
  *
  * ⚠️ **KNOWN AND ACCEPTED: BOTH SPELLINGS AT ONCE IS LEGAL AND LABELS BADLY.**
  * A chosen folder holding `comune` AND `common` side by side breaks no rule,

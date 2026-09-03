@@ -1307,6 +1307,13 @@ describe("the result screen's copy", () => {
       "typeNewTypeFieldsUnknown",
       "typeNewTypeUnresolved",
       "typeIdCardNoForm",
+      // Slice #32.19 added a seventh. The permanent-refusal ending now carries a
+      // `reason`, because "this type is an identity card" printed over a
+      // catch-all row is false. It is the RESULTS BANNER these six sentences
+      // reach, not the saved report — the report's type notes come from
+      // `summariseImportRun` — so what the second sentence buys is a true
+      // ending on the screen the user is standing in front of.
+      "typeCatchAllNoForm",
     ]) {
       const value = at(messages, `adminImport.wizard.importDialog.${key}`) as string;
       expect(typeof value).toBe("string");

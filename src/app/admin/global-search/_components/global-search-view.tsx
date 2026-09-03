@@ -7,7 +7,6 @@ import Link from "next/link";
 import type { QueryResultItem } from "@/app/api/admin/global-search/route";
 import { PROVENANCE_VALUES } from "@/lib/metadata/provenance";
 import { buttonClass } from "@/lib/ui/button-styles";
-import { DevOnly } from "@/components/dev-only";
 import { PaginationControls } from "@/components/pagination-controls";
 import {
   PER_TYPE_CAP,
@@ -134,23 +133,27 @@ function personTypeBadge(personType: string | null) {
   );
 }
 
-function importanceBadge(v: string | null) {
+// ⚠️ **Slice #32.19 — the LABEL is passed in; the badge no longer prints the
+// database code.** The colour rules stay keyed on the CODE, which is the thing
+// that is stable; `label || v` keeps a code visible if a future map loses an
+// entry rather than rendering an empty badge.
+function importanceBadge(v: string | null, label: string) {
   if (!v) return null;
   const cls =
     v === "HIGH"   ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300" :
     v === "MEDIUM" ? "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300" :
                      "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300";
-  return <span className={`inline-block rounded px-1.5 py-0.5 text-xs font-medium ${cls}`}>{v}</span>;
+  return <span className={`inline-block rounded px-1.5 py-0.5 text-xs font-medium ${cls}`}>{label || v}</span>;
 }
 
-function relevanceBadge(v: string | null) {
+function relevanceBadge(v: string | null, label: string) {
   if (!v) return null;
   const cls =
     v === "CURRENT"    ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300" :
     v === "FUTURE"     ? "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300" :
     v === "HISTORICAL" ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300" :
                          "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400";
-  return <span className={`inline-block rounded px-1.5 py-0.5 text-xs font-medium ${cls}`}>{v}</span>;
+  return <span className={`inline-block rounded px-1.5 py-0.5 text-xs font-medium ${cls}`}>{label || v}</span>;
 }
 
 const EMPTY_CELL = <span className="text-zinc-300 dark:text-zinc-600">—</span>;
@@ -359,75 +362,70 @@ function FilterForm({ filters, onChange, onSearch, onReset, loading }: FilterFor
           />
         </div>
 
-        {/* Slice #23.10.dev: Importance / Relevance / Provenance / Has metadata
-            are all read off entity_metadata, which a business user can neither
-            see nor set now that the Metadata tab is developer-only. Global
-            search itself stays — finding an entity by code, name, tag or date
-            is exactly the kind of thing Ciprian needs. Only the four metadata
-            filters and the five metadata result columns go.
+        {/* Importance / Relevance / Provenance / Has metadata are all read off
+            entity_metadata. Slice #23.10.dev wrapped these four filters — and
+            the five result columns below — in <DevOnly>, because the Metadata
+            tab that writes that table was developer-only. Slice #32.19 removed
+            the gate from the tab, so the filters and the columns come back with
+            it: a value a user can set is a value they can search on. */}
+        {/* Importance */}
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("filters.importance")}</label>
+          <select
+            className="rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
+            value={filters.importance}
+            onChange={set("importance")}
+          >
+            <option value="">{t("filters.any")}</option>
+            {IMPORTANCE_VALUES.map((v) => (
+              <option key={v} value={v}>{t(`importanceValues.${v}`)}</option>
+            ))}
+          </select>
+        </div>
 
-            The filter STATE stays mounted and stays "" (the any-value
-            default), so the query the page issues is unchanged. */}
-        <DevOnly>
-          {/* Importance */}
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("filters.importance")}</label>
-            <select
-              className="rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
-              value={filters.importance}
-              onChange={set("importance")}
-            >
-              <option value="">{t("filters.any")}</option>
-              {IMPORTANCE_VALUES.map((v) => (
-                <option key={v} value={v}>{t(`importanceValues.${v}`)}</option>
-              ))}
-            </select>
-          </div>
+        {/* Relevance */}
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("filters.relevance")}</label>
+          <select
+            className="rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
+            value={filters.relevance}
+            onChange={set("relevance")}
+          >
+            <option value="">{t("filters.any")}</option>
+            {RELEVANCE_VALUES.map((v) => (
+              <option key={v} value={v}>{t(`relevanceValues.${v}`)}</option>
+            ))}
+          </select>
+        </div>
 
-          {/* Relevance */}
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("filters.relevance")}</label>
-            <select
-              className="rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
-              value={filters.relevance}
-              onChange={set("relevance")}
-            >
-              <option value="">{t("filters.any")}</option>
-              {RELEVANCE_VALUES.map((v) => (
-                <option key={v} value={v}>{t(`relevanceValues.${v}`)}</option>
-              ))}
-            </select>
-          </div>
+        {/* Provenance */}
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("filters.provenance")}</label>
+          <select
+            className="rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
+            value={filters.provenance}
+            onChange={set("provenance")}
+          >
+            <option value="">{t("filters.any")}</option>
+            {PROVENANCE_VALUES.map((v) => (
+              <option key={v} value={v}>{t(`provenanceValues.${v}`)}</option>
+            ))}
+          </select>
+        </div>
 
-          {/* Provenance */}
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("filters.provenance")}</label>
-            <select
-              className="rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
-              value={filters.provenance}
-              onChange={set("provenance")}
-            >
-              <option value="">{t("filters.any")}</option>
-              {PROVENANCE_VALUES.map((v) => (
-                <option key={v} value={v}>{t(`provenanceValues.${v}`)}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Has metadata */}
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("filters.hasMetadata")}</label>
-            <select
-              className="rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
-              value={filters.hasMetadata}
-              onChange={set("hasMetadata")}
-            >
-              <option value="">{t("filters.any")}</option>
-              <option value="yes">{t("filters.hasMetadataYes")}</option>
-              <option value="no">{t("filters.hasMetadataNo")}</option>
-            </select>
-          </div>
-        </DevOnly>
+        {/* Has metadata */}
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("filters.hasMetadata")}</label>
+          <select
+            className="rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
+            value={filters.hasMetadata}
+            onChange={set("hasMetadata")}
+          >
+            <option value="">{t("filters.any")}</option>
+            <option value="yes">{t("filters.hasMetadataYes")}</option>
+            <option value="no">{t("filters.hasMetadataNo")}</option>
+          </select>
+        </div>
 
         {/* Tag */}
         <div className="flex flex-col gap-1">
@@ -534,6 +532,29 @@ type ResultsTableProps = {
 
 function ResultsTable({ results, truncatedTypes, searched, page, onPageChange }: ResultsTableProps) {
   const t = useTranslations("globalSearch");
+  const locale = useLocale();
+  // ⚠️ **Slice #32.19 — the same three value maps the FILTERS above already
+  // render, now read for the CELLS too.** These five columns were `<DevOnly>`
+  // until this slice; a developer read `HIGH` and `AI_INTERPRETED` in his own
+  // diagnostics. On by default, beside a dropdown saying „Ridicată" for the
+  // same value, that is one screen disagreeing with itself. No new copy: the
+  // keys are `globalSearch.{importance,relevance,provenance}Values`, which this
+  // file's own `<option>`s use. An unrecognised code comes back as itself
+  // rather than as a raw key path, because a row written by a migration this
+  // build does not know about must still render its cell.
+  const valueLabel = (
+    map: "importanceValues" | "relevanceValues" | "provenanceValues",
+    code: string | null,
+  ): string => {
+    const value = (code ?? "").trim();
+    if (!value) return "";
+    const known =
+      map === "importanceValues" ? (IMPORTANCE_VALUES as readonly string[])
+      : map === "relevanceValues" ? (RELEVANCE_VALUES as readonly string[])
+      : (PROVENANCE_VALUES as readonly string[]);
+    if (!known.includes(value)) return value;
+    return t(`${map}.${value}` as Parameters<typeof t>[0]);
+  };
 
   // A ?page= arriving from a shared link can point past the end of a result
   // set that has since shrunk, so clamp before anything is rendered.
@@ -573,26 +594,28 @@ function ResultsTable({ results, truncatedTypes, searched, page, onPageChange }:
                   corresponding column is a filter you cannot check. */}
               <th className="px-4 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("table.groups")}</th>
               <th className="px-4 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("table.stamps")}</th>
-              {/* Slice #23.10.dev — header and cells are wrapped separately but
-                  by the same predicate, so a row can never disagree with its
-                  header about how many columns there are. <DevOnly> renders a
-                  fragment, which is transparent inside <tr>. */}
-              <DevOnly>
-                <th className="px-4 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("table.importance")}</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("table.relevance")}</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("table.provenance")}</th>
-                {/* These two are metadata columns as well, which is not obvious
-                    from their labels: BOTH are selected off entity_metadata in
-                    /api/admin/global-search — updatedBy is
-                    entity_metadata.updated_by (who last wrote the METADATA, not
-                    the entity; the entity's own audit column of the same name is
-                    never read here) and metadataUpdated is
-                    entity_metadata.updated_at. Left visible they would be two
-                    permanently-empty columns on a build where nobody can write a
-                    metadata row. */}
-                <th className="px-4 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("table.updatedBy")}</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("table.metadataUpdated")}</th>
-              </DevOnly>
+              {/* Slice #23.10.dev wrapped these five headers and their five
+                  cells below in two separate <DevOnly>s driven by one
+                  predicate, so a row could never disagree with its header about
+                  how many columns there are. Slice #32.19 removed both
+                  wrappers together, which keeps that property for the same
+                  reason: neither side is conditional any more. */}
+              <th className="px-4 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("table.importance")}</th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("table.relevance")}</th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("table.provenance")}</th>
+              {/* These two are metadata columns as well, which is not obvious
+                  from their labels: BOTH are selected off entity_metadata in
+                  /api/admin/global-search — updatedBy is
+                  entity_metadata.updated_by (who last wrote the METADATA, not
+                  the entity; the entity's own audit column of the same name is
+                  never read here) and metadataUpdated is
+                  entity_metadata.updated_at. Slice #23.10.dev hid them for that
+                  reason: on a build where nobody could write a metadata row they
+                  would have been two permanently-empty columns. Slice #32.19
+                  leaves no such build — every user reaches the Metadata tab — so
+                  they are shown and they fill in as soon as anybody uses it. */}
+              <th className="px-4 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("table.updatedBy")}</th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("table.metadataUpdated")}</th>
             </tr>
           </thead>
           <tbody>
@@ -627,25 +650,29 @@ function ResultsTable({ results, truncatedTypes, searched, page, onPageChange }:
                 </td>
                 <td className="px-4 py-2">{groupTagCells(row)}</td>
                 <td className="px-4 py-2">{stampTagCells(row)}</td>
-                <DevOnly>
-                  <td className="px-4 py-2">{importanceBadge(row.importance) ?? EMPTY_CELL}</td>
-                  <td className="px-4 py-2">{relevanceBadge(row.relevance) ?? EMPTY_CELL}</td>
-                  <td className="px-4 py-2">
-                    {row.provenance
-                      ? <span className="font-mono text-xs text-zinc-600 dark:text-zinc-400">{row.provenance}</span>
-                      : EMPTY_CELL
-                    }
-                  </td>
-                  <td className="px-4 py-2 text-xs text-zinc-500 dark:text-zinc-400">
-                    {row.updatedBy ?? EMPTY_CELL}
-                  </td>
-                  <td className="px-4 py-2 text-xs text-zinc-500 dark:text-zinc-400">
-                    {row.metadataUpdatedAt
-                      ? new Date(row.metadataUpdatedAt).toLocaleDateString()
-                      : EMPTY_CELL
-                    }
-                  </td>
-                </DevOnly>
+                <td className="px-4 py-2">{importanceBadge(row.importance, valueLabel("importanceValues", row.importance)) ?? EMPTY_CELL}</td>
+                <td className="px-4 py-2">{relevanceBadge(row.relevance, valueLabel("relevanceValues", row.relevance)) ?? EMPTY_CELL}</td>
+                <td className="px-4 py-2">
+                  {row.provenance
+                    ? <span className="text-xs text-zinc-600 dark:text-zinc-400">{valueLabel("provenanceValues", row.provenance)}</span>
+                    : EMPTY_CELL
+                  }
+                </td>
+                <td className="px-4 py-2 text-xs text-zinc-500 dark:text-zinc-400">
+                  {row.updatedBy ?? EMPTY_CELL}
+                </td>
+                <td className="px-4 py-2 text-xs text-zinc-500 dark:text-zinc-400">
+                  {row.metadataUpdatedAt
+                    // Slice #32.19 — pinned to the interface locale rather than
+                    // the browser's. This column is on by default now, and a
+                    // bare toLocaleDateString() reads the BROWSER's locale, so a
+                    // machine set to English prints an American date under a
+                    // Romanian header. calculation-history-list.tsx already pins
+                    // its dates the same way.
+                    ? new Date(row.metadataUpdatedAt).toLocaleDateString(locale)
+                    : EMPTY_CELL
+                  }
+                </td>
               </tr>
             ))}
           </tbody>

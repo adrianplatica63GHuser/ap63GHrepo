@@ -696,7 +696,7 @@
         "saved": "✓ Saved"
       },
       "provenance": {
-        "title": "Provenience",
+        "title": "Provenance",
         "note": "Records how this item entered the system. Each change is logged in the history below with the date it was recorded.",
         "placeholder": "— select —",
         "manual": "Manual (Add new)",
@@ -1085,6 +1085,9 @@
       "postImportReport": "Post-Import Report",
       "calculation": "Calculation of a Side Road",
       "globalSearch": "Global Search",
+      "groups": "Groups",
+      "stamps": "Stamps",
+      "tags": "Tags",
       "helpContent": "Help Information",
       "settings": "Settings"
     },
@@ -1680,12 +1683,15 @@
       "longName": "This name is too long: the system name is cut at {max} characters. Shorten it.",
       "rowIssuesFooter": "One or more ticked rows have a problem with their name — they are marked in red above.",
       "errorIdCardType": "This document type is an identity card, so it cannot have a form. The data on an identity card is captured during import as Person records — a form here would be a second, freely editable copy of somebody’s national identity number on every document of this type. Close this window: there is nothing to save here.",
-      "errorIdCardTypeCreated": "Type “{type}” was created and the document was moved onto it, but the form was NOT saved: this type is an identity card, so it cannot have a form. The data on an identity card is captured during import as Person records. The type stays in the system without a form — which is as it should be. Close this window; do not press Save again."
+      "errorIdCardTypeCreated": "Type “{type}” was created and the document was moved onto it, but the form was NOT saved: this type is an identity card, so it cannot have a form. The data on an identity card is captured during import as Person records. The type stays in the system without a form — which is as it should be. Close this window; do not press Save again.",
+      "errorCatchAllType": "This document type is the catch-all for documents whose type could not be established, so it cannot have a form: a form here would be written onto the one row every unrecognised document in the archive shares. Close this window; do not press Save again.",
+      "errorCatchAllTypeCreated": "Type “{type}” was created and the document was moved onto it, but the form was NOT saved: this type means “unclassified”, so it cannot have a form. The type stays in the system without a form. Close this window; do not press Save again."
     },
     "aiDiscoverErrorBusy": "Too many reads in a short time. Wait a minute and try again.",
     "aiDiscoverErrorNoPages": "This document has no pages uploaded, so there is nothing to read.",
     "aiDiscoverErrorUnreadable": "The system cannot read this document's pages. Check the file formats.",
     "aiDiscoverErrorNotConfigured": "Automatic reading is not configured on this server. Tell the administrator.",
+    "aiDiscoverCatchAllNoForm": "Document type “{type}” means “unclassified”, so it cannot have a form: it collects the documents whose type could not be established. The document stayed on this type, without a form. Do not press AI Discovery for it again — the answer will always be the same; choose a proper type on the form above.",
     "aiDiscoverIdCardNoForm": "Document type “{type}” is an identity card, so it cannot have a form — the form was NOT saved and cannot be. The data on an identity card is captured during import as Person records; a form here would be a second, freely editable copy of somebody’s national identity number on every document of this type. The type stays in the system without a form, which is as it should be. Do NOT run AI Discovery again on this document — the answer will be the same, and the read is billed every time."
   },
   "valueList": {
@@ -1812,7 +1818,8 @@
       "confirmDiscardTitle": "Discard your changes?",
       "confirmDiscardBody": "Nothing on this form has been saved yet. Closing now leaves the document type exactly as it was.",
       "confirmDiscard": "Discard",
-      "errorIdCardType": "This document type is an identity card, so it cannot have a form. The data on an identity card is captured during import as Person records — a form here would be a second, freely editable copy of somebody’s national identity number on every document of this type. If the type already has fields, remove all of them and save — this window is the only place a form can be deleted. Otherwise close it without saving."
+      "errorIdCardType": "This document type is an identity card, so it cannot have a form. The data on an identity card is captured during import as Person records — a form here would be a second, freely editable copy of somebody’s national identity number on every document of this type. If the type already has fields, remove all of them and save — this window is the only place a form can be deleted. Otherwise close it without saving.",
+      "errorCatchAllType": "This is the catch-all document type, so it cannot have a form. It holds the documents whose type could not be established, and a form here would be written onto the one row every unrecognised document in the archive shares. If the type already has fields, remove them and save — this window is the only place a form can be deleted, and removing is allowed where adding is not. Otherwise close it without saving."
     },
     "confirm": {
       "title": "Delete “{name}”?",
@@ -1834,7 +1841,9 @@
         "notFound": "The entry no longer exists — the list changed meanwhile. Close the dialog and open it again.",
         "generic": "The operation failed. Close the dialog, refresh the page and try again.",
         "idCardForm": "This document type is an identity card, so it cannot have a form. The data on an identity card is captured during import as Person records, not as fields on a form. If the type already carries a form, open “Form” on its row, delete every field and save.",
-        "idCardRename": "This document type already has a form, so it cannot be given an identity-card name: the data on an identity card is captured during import as Person records, and a form would be a second, freely editable copy of somebody’s national identity number. Remove the form first — close this window, press “Form” on the type’s row, delete every field and save — then come back and rename the type."
+        "idCardRename": "This document type already has a form, so it cannot be given an identity-card name: the data on an identity card is captured during import as Person records, and a form would be a second, freely editable copy of somebody’s national identity number. Remove the form first — close this window, press “Form” on the type’s row, delete every field and save — then come back and rename the type.",
+        "catchAllForm": "This is the catch-all document type, so it cannot be given a form. It holds the documents whose type could not be established — documents whose type is wrong, not documents whose type is unfinished — so a form here would be written onto the one row every unrecognised document in the archive shares. If the type already carries a form, open “Form” on its row, delete every field and save; removing fields is allowed, adding them is not.",
+        "catchAllRename": "This document type already has a form, so it cannot be renamed into the catch-all: the catch-all holds the documents whose type could not be established, and a form there would be written onto the one row every unrecognised document in the archive shares. Remove the form first — close this window, press “Form” on the type’s row, delete every field and save — then come back and rename the type."
       },
       "roleWhitelistGranted": "The role you picked was ticked automatically where the moved associations needed it:",
       "roleWhitelistPending": "The role you picked is not ticked for any document type, and the types of the moved documents have no role list configured yet — so it cannot be ticked automatically without narrowing what can be chosen on those types. Tick it in “Document Persons” for the right type, otherwise the moved Person–Document associations will show a role that can no longer be picked from the list.",
@@ -2255,6 +2264,7 @@
           "typesStillWithoutFormPartial": "{count, plural, one {One document type is still without a form: {names}.} other {# document types are still without a form, of which this import could only name: {names}.}} You will find all of them in Reference Data → Document Types, ticking “Only those awaiting a form”.",
           "typesCreatedEmpty": "{count, plural, one {One document type was created in this import and no document from this import ended up on it: {names}. Check in Reference Data → Document Types whether you still need it.} other {# document types were created in this import and no document from this import ended up on them: {names}. Check in Reference Data → Document Types whether you still need them.}}"
         },
+        "typeCatchAllNoForm": "Document type “{type}” means “unclassified”, so it cannot have a form: it collects the documents whose type could not be established. The document stayed on this type, without a form. Do not run discovery for it again — the answer will always be the same; give the document a proper type on its own form.",
         "typeIdCardNoForm": "Document type “{type}” is an identity card, so it cannot have a form — the form was NOT saved and cannot be. The data on an identity card is captured during import as Person records. The type stays in the system without a form, which is as it should be. Do NOT run AI Discovery again on documents of this type — the answer will be the same, and the read is billed every time.",
         "aiMultiIdentity": "This document holds more than one person's identity documents. The AI read was refused, so that two people's details do not end up on one record. No “Try again” is offered on this row: the answer would be the same, and the read is billed every time. Split the scan and import it again."
       },
@@ -2371,8 +2381,8 @@
           "violation": "The folder {folder} does not carry a tarla and a parcela separated by a hyphen, so it is neither a property, nor comune, nor flotante. Rename it as tarla-parcela — for example 47per2-225per3per24 — or move the files out of it into comune or flotante and delete the empty folder."
         },
         "STR-05": {
-          "requirement": "The shared folders are named exactly comune and flotante, in lower case.",
-          "example": "Correct: comune, flotante. Wrong: Comune, COMUNE, Flotante.",
+          "requirement": "The shared folders are named comune and flotante, in lower case. The earlier English names common and floating, also in lower case, are still accepted on disk, so an archive prepared before the rename still imports — but they are being retired, and wherever these rules say comune or flotante, a folder named common or floating means the same folder. Renaming is best done before an archive is imported for the first time: the name of a folder is kept as a tag on every document taken from it, so an archive imported under both spellings ends up browsable under two tags for one folder.",
+          "example": "Correct: comune, flotante. Wrong: Comune, COMUNE, Flotante, Common.",
           "violation": "The folder {folder} looks like {expected} but is not spelled the same way. Rename it to exactly {expected}, in lower case."
         },
         "STR-15": {
@@ -3429,7 +3439,8 @@
       "failed": "The form could not be saved. Try again.",
       "sessionLost": "Your session has expired, so the form was NOT saved. Sign in again in a new tab, then press “Approve the form” again — the samples that were read are not lost.",
       "typeGone": "The document type no longer exists. It was deleted elsewhere, so there is nowhere to save the form.",
-      "idCardType": "This document type is an identity card, so it cannot have a form. The data on an identity card is captured during import as Person records, not as fields on a form — a form here would be a second, freely editable copy of somebody’s national identity number on every document of this type. The samples that were read are not lost, but this type cannot be given the form."
+      "idCardType": "This document type is an identity card, so it cannot have a form. The data on an identity card is captured during import as Person records, not as fields on a form — a form here would be a second, freely editable copy of somebody’s national identity number on every document of this type. The samples that were read are not lost, but this type cannot be given the form.",
+      "catchAllType": "This document type is the catch-all for documents whose type could not be established, so it cannot have a form: a form here would be written onto the one row every unrecognised document in the archive shares. The samples that were read are not lost, but this type cannot be given the form."
     },
     "saved": {
       "title": "The form has been saved",

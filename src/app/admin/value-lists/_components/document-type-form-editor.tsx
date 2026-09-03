@@ -89,6 +89,10 @@ import {
   ID_CARD_RENAME_CODE,
 } from "@/lib/documents/id-card-form-guard";
 import {
+  CATCH_ALL_FORM_CODE,
+  CATCH_ALL_RENAME_CODE,
+} from "@/lib/documents/catch-all-form-guard";
+import {
   GROUP_CUSTOM,
   GROUP_NONE,
   blankEditorRow,
@@ -201,6 +205,19 @@ export function DocumentTypeFormEditor({
         // expect with a stack-shaped English string is the thing being fixed.
         if (code === ID_CARD_FORM_CODE || code === ID_CARD_RENAME_CODE) {
           throw new Error(t("errorIdCardType"));
+        }
+        // ⚠️ **Slice #32.19, finding S-02 — and this is the one that actually
+        // fires from this screen.** The list modal no longer draws the Form
+        // button on a catch-all row with no form, so the ordinary way in is
+        // gone; what is left is the row that ALREADY has one, where the button
+        // is kept on purpose so the form can be cleared. Adding a field there
+        // is refused by the server and this is the sentence that says why,
+        // in Romanian, naming the one action that does work: remove fields.
+        // Both codes map to it for the reason the pair above do — a screen that
+        // answers a refusal it did not expect with an English server string is
+        // the thing being fixed.
+        if (code === CATCH_ALL_FORM_CODE || code === CATCH_ALL_RENAME_CODE) {
+          throw new Error(t("errorCatchAllType"));
         }
         throw new Error((body as { error?: string }).error ?? `Error ${res.status}`);
       }

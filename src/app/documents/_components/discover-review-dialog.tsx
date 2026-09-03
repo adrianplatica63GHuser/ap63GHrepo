@@ -99,6 +99,10 @@ import {
   ID_CARD_FORM_CODE,
   ID_CARD_RENAME_CODE,
 } from "@/lib/documents/id-card-form-guard";
+import {
+  CATCH_ALL_FORM_CODE,
+  CATCH_ALL_RENAME_CODE,
+} from "@/lib/documents/catch-all-form-guard";
 
 const FIELD_TYPES: DocumentTemplateFieldType[] = ["text", "textarea", "date", "number"];
 
@@ -198,6 +202,30 @@ export type NewTypeProgress =
    */
   | {
       status: "idCardTypeRefused";
+      /**
+       * WHICH permanent refusal this was.                        (Slice #32.19)
+       *
+       * ⚠️ **ADDED RATHER THAN A SECOND STATUS, and everything this status DOES
+       * is right for both.** The identity-card refusal and the catch-all refusal
+       * end a step in exactly the same way — the write can never succeed, so the
+       * step must leave the backlog, `typeFormMissing` must come off every row
+       * of the type (or Reference Data's filter is sent a row it now excludes),
+       * and no second billed discovery may be queued for it. All of that is
+       * keyed on the status and is shared. What is NOT shared is the SENTENCE:
+       * `typeIdCardNoForm` says "this type is an identity card", which for a
+       * catch-all row is false, on the import dialog's results banner and on the
+       * document form. (NOT in the saved report — a third round checked: the
+       * report's type notes come from `summariseImportRun`, which is fed by the
+       * `typeFormMissing` sweep this status also drives, not by these
+       * sentences.)
+       *
+       * The first draft of #32.19 avoided the false sentence by not setting the
+       * flag at all — which routed the create-new path to `moved` and its
+       * "press AI Discover to retry" ending, a billed remedy that cannot work,
+       * and left the ordinary path reporting nothing, so the step never left the
+       * backlog. An adversarial round found both. One field, two sentences.
+       */
+      reason: "idCard" | "catchAll";
       type: CreatedDocumentType;
       /**
        * Did this run MOVE the document onto `type`?               (#32.07)
@@ -1107,9 +1135,10 @@ export function DiscoverReviewDialog({
           max?:    number;
           fields?: unknown;
         };
-        // Set by the identity-card branch below and read by the progress call
-        // at the foot of this block, which is shared by every branch.
-        let idCardRefused = false;
+        // Set by the two permanent-refusal branches below and read by the
+        // progress call at the foot of this block, which is shared by every
+        // branch. `null` means no permanent refusal happened.
+        let permanentRefusal: "idCard" | "catchAll" | null = null;
         // The route's messages are English — it serves an API, not a screen.
         // Every one of them is mapped to copy from this namespace; none is
         // shown verbatim, because the reader is a Romanian business user.
@@ -1155,7 +1184,7 @@ export function DiscoverReviewDialog({
           body.code === ID_CARD_FORM_CODE ||
           body.code === ID_CARD_RENAME_CODE
         ) {
-          idCardRefused = true;
+          permanentRefusal = "idCard";
           // ⚠️ **THE ONE FLOW WHERE A REFUSAL LANDS MID-SEQUENCE.**
           // (Slice #32.07.) This dialog's create-type → re-type → save-fields
           // path is three writes; the type is created by write 1 and the fields
@@ -1169,6 +1198,33 @@ export function DiscoverReviewDialog({
             createNew && target
               ? t("errorIdCardTypeCreated", { type: target.name })
               : t("errorIdCardType"),
+          );
+        } else if (
+          body.code === CATCH_ALL_FORM_CODE ||
+          body.code === CATCH_ALL_RENAME_CODE
+        ) {
+          // Slice #32.19 — the catch-all refusal, the same mid-sequence shape as
+          // the identity-card one above and told the same way: a type this
+          // dialog created by name is still there, formless, which is the right
+          // outcome for a type meaning "unclassified" rather than a broken one.
+          //
+          // ⚠️ **IT REPORTS THE REFUSAL, and an adversarial round is why.** The
+          // first draft left the flag unset, to keep `typeIdCardNoForm` — "this
+          // type is an identity card" — out of the saved report. What that
+          // actually bought was worse: on the create-new path the step fell
+          // through to `moved` and its "open the document and press AI Discover
+          // to retry" ending — a billed remedy that can never work, on the
+          // results screen for the rest of the run; and on the ordinary path
+          // nothing was
+          // reported at all, so `applyPendingNewType` returned early, the step
+          // never left the discovery backlog and the header went on offering a
+          // review whose Save is refused every time. The `reason` field carries
+          // the true sentence instead.
+          permanentRefusal = "catchAll";
+          setError(
+            createNew && target
+              ? t("errorCatchAllTypeCreated", { type: target.name })
+              : t("errorCatchAllType"),
           );
         } else if (body.code === "too_many_fields") {
           setError(t("errorTooMany", { max: body.max ?? MAX_TEMPLATE_FIELDS }));
@@ -1189,12 +1245,13 @@ export function DiscoverReviewDialog({
         // reported on BOTH paths — see `idCardTypeRefused` — because it is the
         // one failure here that no retry can clear, so the step has to leave the
         // backlog rather than be offered again for the life of the run.
-        if (idCardRefused) {
+        if (permanentRefusal !== null) {
           onNewTypeProgress(
             createNew && target
-              ? { status: "idCardTypeRefused", type: target, moved: true }
+              ? { status: "idCardTypeRefused", reason: permanentRefusal, type: target, moved: true }
               : {
                   status: "idCardTypeRefused",
+                  reason: permanentRefusal,
                   type: { id: typeId, key: "", name: typeName },
                   moved: false,
                 },

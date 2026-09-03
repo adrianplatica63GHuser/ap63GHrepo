@@ -147,6 +147,11 @@ const REQUIRED_KEYS = [
   // one in another tab, while a run of twenty billed reads was in flight,
   // arrives at Save perfectly selectable.
   "save.idCardType",
+  // Slice #32.19 — the catch-all refusal, reachable on this screen for the
+  // same reason `save.idCardType` is: the picker refuses such a row from the
+  // list as this page read it, so a type renamed into the catch-all in another
+  // tab mid-run still arrives at Save selectable.
+  "save.catchAllType",
   "saved.title",
   "saved.body",
   "saved.whatNext",

@@ -800,8 +800,8 @@
     "relevanceValues": {
       "INACTIVE": "Inactiv",
       "HISTORICAL": "Istoric",
-      "CURRENT": "Curent",
-      "FUTURE": "Viitor"
+      "CURRENT": "Actual",
+      "FUTURE": "De perspectivă"
     },
     "listFilters": {
       "importanceLabel": "Importanță:",
@@ -1085,6 +1085,9 @@
       "postImportReport": "Raport post-import",
       "calculation": "Calcul drum lateral",
       "globalSearch": "Căutare globală",
+      "groups": "Grupuri",
+      "stamps": "Ștampile",
+      "tags": "Etichete",
       "helpContent": "Informații de ajutor",
       "settings": "Setări"
     },
@@ -1680,12 +1683,15 @@
       "longName": "Denumirea este prea lungă: denumirea de sistem se taie la {max} de caractere. Scurtați-o.",
       "rowIssuesFooter": "Unul sau mai multe rânduri bifate au o problemă la denumire — sunt marcate cu roșu mai sus.",
       "errorIdCardType": "Acest tip de document este o carte de identitate, deci nu poate avea formular. Datele de pe o carte de identitate se preiau la import, ca persoane în sistem — un formular aici ar însemna încă o copie, liber modificabilă, a CNP-ului, pe fiecare document de acest tip. Închideți fereastra: nu aveți ce salva aici.",
-      "errorIdCardTypeCreated": "Tipul „{type}” a fost creat și documentul a fost mutat pe el, dar formularul NU a fost salvat: acest tip este o carte de identitate, deci nu poate avea formular. Datele de pe o carte de identitate se preiau la import, ca persoane în sistem. Tipul rămâne în sistem, fără formular — așa și trebuie. Închideți fereastra; nu mai apăsați Salvează."
+      "errorIdCardTypeCreated": "Tipul „{type}” a fost creat și documentul a fost mutat pe el, dar formularul NU a fost salvat: acest tip este o carte de identitate, deci nu poate avea formular. Datele de pe o carte de identitate se preiau la import, ca persoane în sistem. Tipul rămâne în sistem, fără formular — așa și trebuie. Închideți fereastra; nu mai apăsați Salvează.",
+      "errorCatchAllType": "Acest tip de document este tipul de rezervă pentru documentele neclasificate, deci nu poate avea formular: el adună documentele al căror tip nu a putut fi stabilit, iar un formular aici s-ar scrie pe singurul rând pe care îl au în comun toate documentele nerecunoscute din arhivă. Închideți fereastra; nu mai apăsați Salvează.",
+      "errorCatchAllTypeCreated": "Tipul „{type}” a fost creat și documentul a fost mutat pe el, dar formularul NU a fost salvat: acest tip înseamnă „neclasificat”, deci nu poate avea formular. Tipul rămâne în sistem, fără formular. Închideți fereastra; nu mai apăsați Salvează."
     },
     "aiDiscoverErrorBusy": "Prea multe citiri într-un timp scurt. Așteptați un minut și încercați din nou.",
     "aiDiscoverErrorNoPages": "Documentul nu are pagini încărcate, deci nu are ce să fie citit.",
     "aiDiscoverErrorUnreadable": "Paginile acestui document nu pot fi citite de sistem. Verificați formatul fișierelor.",
     "aiDiscoverErrorNotConfigured": "Citirea automată nu este configurată pe acest server. Anunțați administratorul.",
+    "aiDiscoverCatchAllNoForm": "Tipul de document „{type}” înseamnă „neclasificat”, deci nu poate avea formular: el adună documentele al căror tip nu a putut fi stabilit. Documentul a rămas pe acest tip, fără formular. Nu apăsați din nou Descoperire AI pentru el — răspunsul va fi mereu același; alegeți un tip potrivit în formularul de mai sus.",
     "aiDiscoverIdCardNoForm": "Tipul de document „{type}” este o carte de identitate, deci nu poate avea formular — formularul NU a fost salvat și nici nu poate fi. Datele de pe o carte de identitate se preiau la import, ca persoane în sistem; un formular aici ar însemna încă o copie, liber modificabilă, a CNP-ului, pe fiecare document de acest tip. Tipul rămâne în sistem fără formular, așa cum trebuie. NU reluați Descoperirea AI pentru acest document — răspunsul va fi același, iar citirea se plătește de fiecare dată."
   },
   "valueList": {
@@ -1812,7 +1818,8 @@
       "confirmDiscardTitle": "Renunțați la modificări?",
       "confirmDiscardBody": "Nimic din acest formular nu a fost salvat încă. Dacă închideți acum, tipul de document rămâne exact cum era.",
       "confirmDiscard": "Renunță",
-      "errorIdCardType": "Acest tip de document este o carte de identitate, deci nu poate avea formular. Datele de pe o carte de identitate se preiau la import, ca persoane în sistem — un formular aici ar însemna încă o copie, liber modificabilă, a CNP-ului, pe fiecare document de acest tip. Dacă tipul are deja câmpuri, eliminați-le pe toate și salvați — aceasta este singura fereastră din care se poate șterge un formular. Altfel închideți fereastra fără să salvați."
+      "errorIdCardType": "Acest tip de document este o carte de identitate, deci nu poate avea formular. Datele de pe o carte de identitate se preiau la import, ca persoane în sistem — un formular aici ar însemna încă o copie, liber modificabilă, a CNP-ului, pe fiecare document de acest tip. Dacă tipul are deja câmpuri, eliminați-le pe toate și salvați — aceasta este singura fereastră din care se poate șterge un formular. Altfel închideți fereastra fără să salvați.",
+      "errorCatchAllType": "Acesta este tipul de rezervă pentru documentele neclasificate, deci nu poate avea formular. El adună documentele al căror tip nu a putut fi stabilit, iar un formular aici s-ar scrie pe singurul rând pe care îl au în comun toate documentele nerecunoscute din arhivă. Dacă tipul are deja câmpuri, eliminați-le și salvați — aceasta este singura fereastră din care se poate șterge un formular, iar eliminarea este permisă acolo unde adăugarea nu este. Altfel închideți fereastra fără să salvați."
     },
     "confirm": {
       "title": "Ștergeți „{name}”?",
@@ -1834,7 +1841,9 @@
         "notFound": "Înregistrarea nu mai există — lista s-a schimbat între timp. Închideți fereastra și deschideți-o din nou.",
         "generic": "Operația nu a reușit. Închideți fereastra, reîmprospătați pagina și încercați din nou.",
         "idCardForm": "Acest tip de document este o carte de identitate, deci nu poate avea formular. Datele de pe o carte de identitate se preiau la import, ca persoane în sistem, nu ca înregistrări într-un formular. Dacă tipul poartă deja un formular, deschideți „Formular” pe rândul lui, ștergeți toate câmpurile și salvați.",
-        "idCardRename": "Acest tip de document are deja un formular, deci nu poate primi o denumire de carte de identitate: datele de pe o carte de identitate se preiau la import, ca persoane în sistem, iar un formular ar însemna încă o copie, liber modificabilă, a CNP-ului. Ștergeți întâi formularul — închideți această fereastră, apăsați „Formular” pe rândul tipului, eliminați toate câmpurile și salvați — apoi reveniți și redenumiți tipul."
+        "idCardRename": "Acest tip de document are deja un formular, deci nu poate primi o denumire de carte de identitate: datele de pe o carte de identitate se preiau la import, ca persoane în sistem, iar un formular ar însemna încă o copie, liber modificabilă, a CNP-ului. Ștergeți întâi formularul — închideți această fereastră, apăsați „Formular” pe rândul tipului, eliminați toate câmpurile și salvați — apoi reveniți și redenumiți tipul.",
+        "catchAllForm": "Acesta este tipul de rezervă pentru documentele neclasificate, deci nu poate primi un formular. El adună documentele al căror tip nu a putut fi stabilit — documente al căror tip este greșit, nu documente al căror tip este neterminat — așa că un formular aici s-ar scrie pe singurul rând pe care îl au în comun toate documentele nerecunoscute din arhivă. Dacă tipul poartă deja un formular, deschideți „Formular” pe rândul lui, ștergeți toate câmpurile și salvați; eliminarea câmpurilor este permisă, adăugarea lor nu.",
+        "catchAllRename": "Acest tip de document are deja un formular, deci nu poate fi redenumit în tipul de rezervă pentru documentele neclasificate: acela adună documentele al căror tip nu a putut fi stabilit, iar un formular acolo s-ar scrie pe singurul rând pe care îl au în comun toate documentele nerecunoscute din arhivă. Ștergeți întâi formularul — închideți această fereastră, apăsați „Formular” pe rândul tipului, eliminați toate câmpurile și salvați — apoi reveniți și redenumiți tipul."
       },
       "roleWhitelistGranted": "Rolul ales a fost bifat automat acolo unde asocierile mutate aveau nevoie:",
       "roleWhitelistPending": "Rolul ales nu este bifat pentru niciun tip de document, iar tipurile documentelor mutate nu au încă o listă de roluri configurată — așa că nu se poate bifa automat fără a restrânge ce se poate alege pe acele tipuri. Bifați-l în „Roluri pe Document” pentru tipul potrivit, altfel asocierile Persoană–Document mutate vor arăta un rol care nu mai poate fi ales din listă.",
@@ -1934,7 +1943,7 @@
   },
   "adminTags": {
     "pageTitle": "Etichete",
-    "pageNote": "Vizualizați toate etichetele din sistem, redenuminți-le sau fuzionați-le pentru a reduce redundanța.",
+    "pageNote": "Vizualizați toate etichetele din sistem, redenumiți-le sau fuzionați-le pentru a reduce redundanța.",
     "loading": "Se încarcă…",
     "error": "Eroare la încărcare",
     "empty": "Nu există etichete în sistem încă.",
@@ -1967,7 +1976,7 @@
       "title": "Fuzionare etichete",
       "note": "Bifați etichetele pe care doriți să le fuzionați, apoi selectați pe care să o păstrați ca etichetă finală.",
       "keepThis": "Păstrează aceasta",
-      "preview": "Etichetele \"{sources}\" vor deveni \"{target}\".",
+      "preview": "Etichetele „{sources}” vor deveni „{target}”.",
       "save": "Fuzionează",
       "saving": "Se fuzionează…",
       "cancel": "Anulează",
@@ -2255,6 +2264,7 @@
           "typesStillWithoutFormPartial": "{count, plural, one {Un tip de document a rămas fără formular: {names}.} few {# tipuri de documente au rămas fără formular, dintre care importul a putut numi doar: {names}.} other {# de tipuri de documente au rămas fără formular, dintre care importul a putut numi doar: {names}.}} Pe toate le găsiți în Date de referință → Tipuri de Document, bifând „Doar cele care așteaptă un formular”.",
           "typesCreatedEmpty": "{count, plural, one {Un tip de document a fost creat în acest import și niciun document din acest import nu a rămas pe el: {names}. Verificați în Date de referință → Tipuri de Document dacă vă mai trebuie.} few {# tipuri de documente au fost create în acest import și niciun document din acest import nu a rămas pe ele: {names}. Verificați în Date de referință → Tipuri de Document dacă vă mai trebuie.} other {# de tipuri de documente au fost create în acest import și niciun document din acest import nu a rămas pe ele: {names}. Verificați în Date de referință → Tipuri de Document dacă vă mai trebuie.}}"
         },
+        "typeCatchAllNoForm": "Tipul de document „{type}” înseamnă „neclasificat”, deci nu poate avea formular: el adună documentele al căror tip nu a putut fi stabilit. Documentul a rămas pe acest tip, fără formular. Nu reluați descoperirea pentru el — răspunsul va fi mereu același; dați documentului un tip potrivit din formularul lui.",
         "typeIdCardNoForm": "Tipul de document „{type}” este o carte de identitate, deci nu poate avea formular — formularul NU a fost salvat și nici nu poate fi. Datele de pe o carte de identitate se preiau la import, ca persoane în sistem. Tipul rămâne în sistem fără formular, așa cum trebuie. NU reluați Descoperirea AI pentru documentele de acest tip — răspunsul va fi același, iar citirea se plătește de fiecare dată.",
         "aiMultiIdentity": "Documentul conține actele de identitate ale mai multor persoane. Citirea AI a fost refuzată, ca să nu ajungă datele a două persoane în aceeași fișă. Pentru acest rând nu se oferă „Reîncearcă”: răspunsul ar fi același, iar citirea se plătește de fiecare dată. Împărțiți scanarea și importați-o din nou."
       },
@@ -2371,8 +2381,8 @@
           "violation": "Folderul „{folder}” nu are o tarla și o parcelă despărțite printr-o liniuță, deci nu este nici proprietate, nici „comune”, nici „flotante”. Redenumiți-l sub forma tarla-parcelă — de exemplu 47per2-225per3per24 — sau mutați fișierele din el în „comune” ori în „flotante” și ștergeți folderul rămas gol."
         },
         "STR-05": {
-          "requirement": "Cele două foldere speciale se numesc exact „comune” și „flotante”, cu litere mici.",
-          "example": "Corect: comune, flotante. Greșit: „Comune”, „COMUNE”, „Flotante”.",
+          "requirement": "Cele două foldere speciale se numesc „comune” și „flotante”, scrise cu litere mici. Denumirile englezești mai vechi, „common” și „floating”, tot cu litere mici, sunt în continuare acceptate pe disc, așa că o arhivă pregătită înainte de redenumire se importă în continuare — dar ele urmează să fie retrase, iar oriunde aceste reguli spun „comune” sau „flotante”, un folder numit „common” ori „floating” înseamnă același lucru. Redenumirea se face cel mai bine înainte ca arhiva să fie importată prima oară: numele folderului se păstrează ca etichetă pe fiecare document luat din el, așa că o arhivă importată sub ambele denumiri ajunge să fie răsfoită sub două etichete pentru un singur folder.",
+          "example": "Corect: comune, flotante. Greșit: „Comune”, „COMUNE”, „Flotante”, „Common”.",
           "violation": "Folderul „{folder}” pare să fie „{expected}”, dar nu este scris la fel. Redenumiți-l exact „{expected}”, cu litere mici."
         },
         "STR-15": {
@@ -3188,8 +3198,8 @@
     "relevanceValues": {
       "INACTIVE": "Inactiv",
       "HISTORICAL": "Istoric",
-      "CURRENT": "Curent",
-      "FUTURE": "Viitor"
+      "CURRENT": "Actual",
+      "FUTURE": "De perspectivă"
     },
     "provenanceValues": {
       "MANUAL": "Manual (Adaugă nou)",
@@ -3429,7 +3439,8 @@
       "failed": "Formularul nu a putut fi salvat. Încercați din nou.",
       "sessionLost": "Sesiunea dumneavoastră a expirat, așa că formularul NU a fost salvat. Autentificați-vă din nou într-o filă nouă, apoi apăsați din nou „Aprobă formularul” — mostrele citite nu se pierd.",
       "typeGone": "Tipul de document nu mai există. A fost șters în altă parte, deci nu are unde să fie salvat formularul.",
-      "idCardType": "Acest tip de document este o carte de identitate, deci nu poate avea formular. Datele de pe o carte de identitate se preiau la import, ca persoane în sistem, nu ca înregistrări într-un formular — un formular aici ar însemna încă o copie, liber modificabilă, a CNP-ului, pe fiecare document de acest tip. Mostrele citite nu s-au pierdut, dar acest tip nu poate primi formularul."
+      "idCardType": "Acest tip de document este o carte de identitate, deci nu poate avea formular. Datele de pe o carte de identitate se preiau la import, ca persoane în sistem, nu ca înregistrări într-un formular — un formular aici ar însemna încă o copie, liber modificabilă, a CNP-ului, pe fiecare document de acest tip. Mostrele citite nu s-au pierdut, dar acest tip nu poate primi formularul.",
+      "catchAllType": "Acest tip de document este tipul de rezervă pentru documentele neclasificate, deci nu poate avea formular: el adună documentele al căror tip nu a putut fi stabilit, iar un formular aici s-ar scrie pe singurul rând pe care îl au în comun toate documentele nerecunoscute din arhivă. Mostrele citite nu s-au pierdut, dar acest tip nu poate primi formularul."
     },
     "saved": {
       "title": "Formularul a fost salvat",

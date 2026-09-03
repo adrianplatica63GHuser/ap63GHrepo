@@ -3,13 +3,47 @@
  * (Slice #23.10.dev)
  *
  * WHY THIS EXISTS
- *   Adrian needs diagnostics that a business user must never see: the entity
- *   Metadata tab and everything set on it, the Help-content and Settings admin
- *   screens, the locale flags. Ciprian's UAT box must ship without them.
+ *   Adrian needed diagnostics that a business user must never see, and Ciprian's
+ *   UAT box had to ship without them.
  *
- *   AI Discover used to be on that list and is NOT any more (Slice #26.11): it
- *   stopped being a diagnostic when it became the way a document type gets its
- *   custom form, so it ships to Ciprian along with the route behind it.
+ * ⚠️ **WHAT IS LEFT OF THAT LIST IS TWO CONTROLS.**           (Slice #32.19)
+ *   Adrian asked for the developer-only screen items to be revealed, and the
+ *   answer was taken site by site rather than by retiring this module:
+ *
+ *     REVEALED — the entity Metadata tab on all four detail screens and the
+ *     Importance / Relevance / Provenance columns and filters fed from it (the
+ *     three record lists and Global Search), and the Help-content and Settings
+ *     admin screens, nav entry and server-side redirect together.
+ *
+ *     STILL GATED, and both were argued site by site rather than kept by
+ *     default:
+ *
+ *       - the EN/RO locale toggle, on the sign-in page, the request-access page
+ *         and the sidebar header. It is not a diagnostic and it was never what
+ *         item 17 was about: every user of this archive is Romanian, and a flag
+ *         that puts the whole interface into English — on the sign-in page,
+ *         before anyone has authenticated and with no way back for someone who
+ *         cannot read what the other flag now says — can only do harm on
+ *         Ciprian's box. Slice #20.10's Settings checkbox was removed for
+ *         exactly this reason and Settings is a business screen again, so there
+ *         is nowhere else it could go.
+ *
+ *       - the developer-notes panel on /admin/settings
+ *         (settings-view.tsx's `DeveloperPanel`), which an adversarial round
+ *         caught: revealing the Settings ROUTE puts it in front of Ciprian, and
+ *         its checkbox reveals a hard-coded ENGLISH note about this
+ *         application's multi-user model not being production-ready, under a
+ *         translated Romanian heading. Time frames, which is what a person
+ *         comes to that screen for, is revealed.
+ *
+ *   AI Discover was taken off the list earlier (Slice #26.11): it stopped being
+ *   a diagnostic when it became the way a document type gets its custom form.
+ *
+ *   The module and its guard test stay for the one surviving site. One site is
+ *   not a reason to inline the predicate: the reason below — that the value is
+ *   baked at BUILD time, so a site that reads the env var itself cannot be
+ *   corrected on the machine the container runs on — is about the first site as
+ *   much as the fifth.
  *
  *   The shape of this module is dictated by the UAT_NO_AUTH failure recorded in
  *   CLAUDE.md. That rule was honoured in four places while 25 files resolved
@@ -23,10 +57,12 @@
  *
  * USAGE
  *   JSX:    <DevOnly>{...}</DevOnly>          (src/components/dev-only.tsx)
- *   Arrays: isDevToolsEnabled() && ...        (nav items, tab lists, columns —
- *                                              a wrapper cannot sit inside an
- *                                              array literal)
- *   Routes: if (!isDevToolsEnabled()) redirect("/") | 404
+ *   Arrays: isDevToolsEnabled() && ...        (a wrapper cannot sit inside an
+ *                                              array literal — no live site
+ *                                              since #32.19, kept because the
+ *                                              next gated array entry will need
+ *                                              it again)
+ *   Routes: if (!isDevToolsEnabled()) redirect("/") | 404   (no live site)
  *
  *   Both mechanisms resolve here. The guard test bans reading the env var, not
  *   calling the predicate.

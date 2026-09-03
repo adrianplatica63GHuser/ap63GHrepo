@@ -4064,6 +4064,16 @@ export function BulkImportDialog({
         );
         // Nothing may queue a second discovery for it either: the answer will
         // be the same refusal, and the read is billed.
+        //
+        // ⚠️ **Slice #32.19 — this map now also memos a CATCH-ALL type, and the
+        // name has not caught up.** Both readers (`shouldDiscoverType`'s
+        // `typeIsIdCard` term and the retry's) feed `typeMayHoldAForm`, which
+        // treats the two refusals identically, so the effect is exactly the
+        // intended one: no second billed read and no `typeFormMissing`. Nothing
+        // identity-card-specific hangs off it — no person extraction, no card
+        // copy. Renaming it would touch `id-card-type-single-source.test.ts`,
+        // which polices writes to this map as identity-card witnesses; it is in
+        // the handover rather than done here.
         docTypeIdCardRef.current.set(progress.type.id, true);
       }
 
@@ -4074,7 +4084,22 @@ export function BulkImportDialog({
         // screen for the rest of the run naming a billed remedy that cannot
         // work.
         progress.status === "idCardTypeRefused"
-          ? t("typeIdCardNoForm", { type: progress.type.name })
+          // Slice #32.19 — the same permanent-refusal ending, two reasons. The
+          // sweep and the memo above are shared because they are right for both;
+          // the SENTENCE is not, and "this type is an identity card" printed
+          // over a catch-all row is simply false.
+          //
+          // ⚠️ **AND WHERE IT IS FALSE IS THE RESULTS BANNER, NOT THE SAVED
+          // REPORT — a third review round corrected the first version of this
+          // comment.** `typeWarnings` is rendered in one place, the red banner
+          // on the results screen, which dies with the dialog. What reaches the
+          // permanent artefact is the `typeFormMissing` sweep above, through
+          // `summariseImportRun` and `typeNote.typesStillWithoutForm`. Both are
+          // worth getting right; only one of them is permanent, and it is not
+          // this one.
+          ? progress.reason === "catchAll"
+            ? t("typeCatchAllNoForm", { type: progress.type.name })
+            : t("typeIdCardNoForm", { type: progress.type.name })
           : progress.status === "moved"
           ? t("typeNewTypeNoFields", { type: progress.type.name })
           : progress.status === "created"

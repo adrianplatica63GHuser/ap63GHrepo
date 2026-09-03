@@ -232,6 +232,63 @@ export function catchAllType<T extends DocumentTypeCandidate>(
   return rows.find((row) => row.key === UNCLASSIFIED_DOCUMENT_TYPE_KEY) ?? null;
 }
 
+/**
+ * The second key the catch-all is known to carry.                (Slice #32.19)
+ *
+ * ⚠️ **NOT a substitute for `UNCLASSIFIED_DOCUMENT_TYPE_KEY` and not a widening
+ * of `catchAllType`.** The row this project seeds is keyed `UNCLASSIFIED` and
+ * named `NECLASIFICAT`, and `catchAllType` deliberately resolves the key alone,
+ * because a caller that cannot find the catch-all must say so rather than pick a
+ * neighbour. But `meansUnclassified`'s own header records that an archive can
+ * ALSO hold a second row literally keyed `NECLASIFICAT`, minted by pre-#29.06
+ * `ai-interpret` from a Romanian label — and it says in as many words that "the
+ * key guard does not cover it".
+ *
+ * A guard about what may hold a FORM is exactly where that gap bites: the row
+ * `catchAllType` cannot see is still a row that means "I could not tell", and a
+ * form distilled onto it is the same mistake on a different id.
+ */
+export const CATCH_ALL_DOCUMENT_TYPE_KEYS: readonly string[] = Object.freeze([
+  UNCLASSIFIED_DOCUMENT_TYPE_KEY,
+  "NECLASIFICAT",
+] as const);
+
+/**
+ * Does this ROW mean "I could not tell" — by its key or by its name?
+ *                                                                (Slice #32.19)
+ *
+ * ⚠️ **Deliberately shaped like `documentTypeIsIdCard`**, the guard beside which
+ * it is asked: the row's own two columns and nothing else, key OR name, so one
+ * function answers both value-lists write doors and neither has to hold an
+ * opinion of its own. The name arm is not decoration — `meansUnclassified` exists
+ * because an archive holds rows named "Neclasificat" and "Unclassified" that no
+ * key test reaches, and #29.06's F1 is what those rows cost.
+ *
+ * ⚠️ **THE COST IS THE SAME ONE `meansUnclassified` ALREADY STATES, AND IT IS
+ * ACCEPTED FOR THE SAME REASON.** A type a person deliberately named
+ * "Neclasificat" cannot be given a form. It can still be created, renamed,
+ * deleted and chosen by hand in the document form's dropdown; what it cannot do
+ * is carry a template. That is the right way round — a type whose name means
+ * "unclassified" is not somewhere a distilled form belongs — and it is the same
+ * trade the classifier already makes about the same rows.
+ *
+ * ⚠️ **`typeMayHoldAForm` (src/lib/import/discover-run.ts) is NOT rewritten to
+ * call this, and that is deliberate.** DocTypeEngine is handed a
+ * `fallbackTypeId` resolved through `catchAllType`, so it compares ids and is
+ * exact; this one compares a row's own columns, because the value-lists doors
+ * have no fallback id in hand. They agree on the seeded catch-all row, which is
+ * the one every archive has. Where they differ, this is the wider of the two,
+ * and widening the import's spend gate is not this slice's business.
+ */
+export function documentTypeIsCatchAll(type: {
+  key?: string | null;
+  name?: string | null;
+}): boolean {
+  const key = type.key?.trim() ?? "";
+  if (key && CATCH_ALL_DOCUMENT_TYPE_KEYS.includes(key)) return true;
+  return meansUnclassified(type.name ?? "");
+}
+
 /** What a classifier hands over: a key it recognised, a label it read, or neither. */
 export type ClassifierAnswer = {
   /** `lookup_document_type.key`, when the model produced one it was taught. */

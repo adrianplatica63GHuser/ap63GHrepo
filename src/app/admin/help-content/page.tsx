@@ -1,19 +1,15 @@
-import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { isDevToolsEnabled } from "@/lib/features/dev-tools";
 import { HelpContentHub } from "./_components/help-content-hub";
 
 export default async function HelpContentPage() {
-  // Slice #23.10.dev — developer surface. The sidebar already omits this item
-  // on a build without developer tools, but that is only UI: this guard is what
-  // stops a hand-typed URL or an old bookmark, exactly the division of labour
-  // Slice #22.01 established between sidebar-nav.tsx and admin/layout.tsx for
-  // the superuser rule.
-  //
-  // redirect("/") rather than notFound(): the route genuinely exists on this
-  // build and the visitor is an authenticated superuser, so sending them home
-  // is honest, whereas a 404 page would invite a bug report.
-  if (!isDevToolsEnabled()) redirect("/");
+  // ⚠️ **Slice #32.19 removed the `if (!isDevToolsEnabled()) redirect("/")`
+  // that stood here, IN THE SAME COMMIT as the nav entry's `devOnly` flag.**
+  // (Help information is an ordinary Admin-Setup screen again, at Adrian's
+  // request.) The two halves are one gate: a sidebar entry whose route still
+  // refuses is a link that goes home without saying why, and a route that
+  // still refuses with the entry gone is a screen nobody can reach. The
+  // superuser rule that remains is src/app/admin/layout.tsx's, which covers
+  // every /admin/* route including this one.
 
   const t = await getTranslations("help.admin");
 

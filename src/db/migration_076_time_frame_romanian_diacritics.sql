@@ -31,17 +31,18 @@
 --   its label on the same line, which is why fixing only the labels would have
 --   been half a fix. Those two fields are read nowhere else in the tree.
 --
---   ⚠️ **AND THAT SCREEN IS `devOnly`, SO CIPRIAN CANNOT REACH IT.** An
---   adversarial round checked what the slice description asserted: the sidebar
---   omits it (nav-config.ts:144, `devOnly: true`, "A business user configures
---   neither") and src/app/admin/settings/page.tsx redirects a hand-typed URL
---   home unless developer tools are on. build-ciprian-image.ps1:439-441 says
---   the same. So the ten labels this file corrects are read on Adrian's dev
---   build and nowhere else today, and the practical cost of the file existing
---   is the build gate in point 2 below. Correct data is still worth having -
---   the rows are wrong on every database that has run 063, the repair script
---   seeds them for anything rebuilt from empty, and the screen is one feature
---   flag away from being visible - but "Ciprian sees this" is not the reason.
+--   ⚠️ **THAT SCREEN WAS `devOnly` WHEN THIS FILE WAS WRITTEN. IT IS NOT ANY
+--   MORE, AND CIPRIAN NOW READS THESE TEN LABELS.** The paragraph that stood
+--   here said the sidebar omitted Settings (`nav-config.ts:144, devOnly: true`)
+--   and that its page.tsx redirected a hand-typed URL home, so "the ten labels
+--   this file corrects are read on Adrian's dev build and nowhere else today,
+--   and correct data is still worth having, but Ciprian sees this is not the
+--   reason". Slice #32.19 removed both gates at Adrian's request: the nav entry
+--   carries no flag, the page redirects nobody, and the line it cited no longer
+--   exists. So the labels are read on the UAT box, which makes this file worth
+--   more than it was, not less - and the "one feature flag away" hedge it ended
+--   on is spent. A migration is history and is not rewritten lightly; a claim
+--   inside one that has become false is corrected, because it is believed.
 --
 -- MATCHED ON `key` ALONE, DELIBERATELY
 --   `label_ro` and `description_ro` are not user-editable: PATCH

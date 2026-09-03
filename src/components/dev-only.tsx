@@ -21,6 +21,14 @@ import { isDevToolsEnabled } from "@/lib/features/dev-tools";
  * Where the gated thing is an ARRAY ENTRY — a nav item, a tab descriptor, a
  * column-picker row — this wrapper cannot help: call isDevToolsEnabled()
  * directly instead. Both routes end at the same predicate.
+ *
+ * ⚠️ **Since Slice #32.19 this wrapper has exactly four call sites and they are
+ * TWO controls**: the EN/RO locale toggle on the sign-in page, on the
+ * request-access page and in the sidebar header; and the developer-notes panel
+ * on /admin/settings. Everything else it used to hide — the Metadata tab, the
+ * curation columns and filters, Help information and the rest of Settings —
+ * was revealed at Adrian's request. The reasoning for the split, and why those
+ * two are the exceptions, is in src/lib/features/dev-tools.ts.
  */
 export function DevOnly({
   children,

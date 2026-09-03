@@ -64,7 +64,9 @@ import {
   MAX_PROPERTY_FOLDERS,
   RULE_MESSAGE_PARTS,
   RULE_SCOPES,
+  LEGACY_SHARED_FOLDER_SPELLINGS,
   SHARED_FOLDER_DISPLAY_NAMES,
+  SHARED_FOLDER_NAMES,
   STRUCTURE_RULES,
   STRUCTURE_RULE_BY_ID,
   STRUCTURE_RULE_IDS,
@@ -778,5 +780,110 @@ describe("the rules listing", () => {
     // requirement and example interpolate none.
     expect(ruleListingValues("STR-01")).toEqual({});
     expect(ruleListingValues("STR-02")).toEqual({ max: MAX_PROPERTY_FOLDERS });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// S-08 — the tolerance the checker grants is the tolerance the copy states
+// ---------------------------------------------------------------------------
+//
+// Slice #32.19. The finding, in its own words: "STR-05 teaches comune and
+// flotante, lower case, and nothing in the interface says otherwise — but
+// LEGACY_SHARED_FOLDER_SPELLINGS still accepts common and floating silently. So
+// Comune is refused where common passes."
+//
+// ⚠️ **THE FIX WAS THE COPY, NOT THE CODE, so this is where the regression guard
+// belongs.** Withdrawing the legacy spellings would make the message worse: with
+// them gone `common` stops being an STR-05 near miss and falls to STR-04, which
+// tells the user to rename the folder to `tarla-parcela` or move its files out —
+// handed to every archive Ciprian has already prepared. The behaviour tests in
+// import-structure-check.test.ts therefore assert exactly what they did before.
+// What changed is that the rules screen no longer contradicts the checker.
+//
+// ⚠️ **DERIVED FROM THE CONSTANTS, NOT FROM A LIST TYPED HERE**, because
+// LEGACY_SHARED_FOLDER_SPELLINGS' own header says it "only ever grows". The next
+// spelling added to it fails this test until STR-05's two sentences name it,
+// which is the whole of what S-08 was about.
+
+describe("STR-05's copy states every spelling the checker accepts", () => {
+  const LOCALES = ["ro-RO.json", "en-GB.json"] as const;
+
+  it.each(LOCALES)("%s names both canonical folders in the requirement", (file) => {
+    const requirement = loadRuleMessages(file)["STR-05"].requirement;
+    for (const id of SHARED_FOLDER_NAMES) {
+      expect([file, id, requirement]).toEqual([
+        file,
+        id,
+        expect.stringContaining(SHARED_FOLDER_DISPLAY_NAMES[id]),
+      ]);
+    }
+  });
+
+  it.each(LOCALES)("%s names every accepted LEGACY spelling in the requirement", (file) => {
+    // The S-08 assertion. A spelling the checker accepts and the rule text does
+    // not mention is a rule a user cannot reason from — which is how `Comune`
+    // came to be refused where `common` passed with nothing said either way.
+    //
+    // ⚠️ **THE REQUIREMENT AND NOT THE EXAMPLE, and an adversarial round moved
+    // it.** A draft put "common, floating" into the example under `correctAlt`
+    // („Bine:"), which `rule-example.tsx` paints in exactly the same emerald as
+    // „Corect:" — so the deprecated half read as approvingly as the taught one,
+    // and it sat one initial capital away from „Common" in the „Greșit:" half of
+    // the same 12px italic line. The tolerance is a paragraph, not a token.
+    //
+    // ⚠️ **AND THIS ASSERTS MENTION, NOT CLAIM.** A future example reading
+    // "Wrong: common" would pass it. Prose cannot be checked by substring; what
+    // this guards is the thing S-08 actually reported, which is SILENCE.
+    const rules = loadRuleMessages(file)["STR-05"];
+    const missing: string[] = [];
+    for (const id of SHARED_FOLDER_NAMES) {
+      for (const spelling of LEGACY_SHARED_FOLDER_SPELLINGS[id]) {
+        if (!rules.requirement.includes(spelling)) {
+          missing.push(`${file} STR-05.requirement omits "${spelling}"`);
+        }
+      }
+    }
+    expect(missing).toEqual([]);
+  });
+
+  it.each(LOCALES)("%s says a legacy folder satisfies the OTHER rules too", (file) => {
+    // STR-04 and STR-09 enumerate the accepted set as "comune / flotante" and
+    // say nothing about `common`. Rather than reword three rules, STR-05 carries
+    // the general statement — "wherever these rules say comune or flotante, a
+    // folder named common or floating means the same folder" — which is where a
+    // reader of the printed listing meets the two spellings in the first place.
+    const requirement = loadRuleMessages(file)["STR-05"].requirement;
+    const general = file === "ro-RO.json" ? "oriunde aceste reguli" : "wherever these rules";
+    expect([file, requirement]).toEqual([file, expect.stringContaining(general)]);
+  });
+
+  // ⚠️ Pins a word stem rather than a sentence, so a REWORD of the retirement
+  // clause fails here and a reader has to decide deliberately whether the claim
+  // is still being made. If the wording changes to a synonym, change this line —
+  // it is the assertion that is out of date, not the copy.
+  it.each(LOCALES)("%s says the legacy spellings are on their way out", (file) => {
+    // Not a nag in the import — there is deliberately none, and a warning nobody
+    // can act on without a morning of renaming would be worse than the
+    // inconsistency it reports. This is the rules LISTING, which the user reads
+    // before picking a folder and which #26.04 exists for them to print and
+    // carry to File Explorer. Saying "still accepted, being retired" there costs
+    // them nothing and is the only place the two facts can sit together.
+    const requirement = loadRuleMessages(file)["STR-05"].requirement;
+    const retiring = file === "ro-RO.json" ? "retrase" : "retired";
+    expect([file, requirement]).toEqual([file, expect.stringContaining(retiring)]);
+  });
+
+  it("⚠️ the canonical spelling is never itself a legacy one", () => {
+    // A guard on the constants rather than on the copy: if a future rename left
+    // the outgoing name in BOTH records, `acceptedSharedFolderSpellings` would
+    // list it twice and the sentences above would read as though the product
+    // taught and deprecated the same word.
+    for (const id of SHARED_FOLDER_NAMES) {
+      expect(LEGACY_SHARED_FOLDER_SPELLINGS[id]).not.toContain(
+        SHARED_FOLDER_DISPLAY_NAMES[id],
+      );
+      const accepted = acceptedSharedFolderSpellings(id);
+      expect(new Set(accepted).size).toBe(accepted.length);
+    }
   });
 });

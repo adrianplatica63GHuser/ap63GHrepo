@@ -9,7 +9,6 @@ import { ChevronLeft, ChevronRight, ChevronDown, LogOut, KeyRound, Search } from
 import { createClient } from "@/lib/supabase/client";
 import { LocaleToggle } from "@/components/locale-toggle";
 import { DevOnly } from "@/components/dev-only";
-import { isDevToolsEnabled } from "@/lib/features/dev-tools";
 import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
 import { RecentlyViewedPanel } from "@/components/recently-viewed-panel";
 import { clearRecentlyViewed } from "@/components/providers/navigation-history-provider";
@@ -243,11 +242,16 @@ export function SidebarNav() {
   // Sign Out / Change Password controls, which would otherwise dead-end at
   // a login screen that can't actually authenticate anyone there.
   const isUatMode = me?.uatMode === true;
-  // Slice #23.10.dev. Read as a value here because the nav filter below works
-  // on an ARRAY of items, where <DevOnly> cannot reach; the locale toggle in
-  // the header is JSX and uses the wrapper instead. Both resolve to the same
-  // predicate in src/lib/features/dev-tools.ts.
-  const devTools = isDevToolsEnabled();
+  // Slice #32.19 removed `const devTools = isDevToolsEnabled()` from here along
+  // with the nav filter that was its only reader. The locale toggle further
+  // down still uses <DevOnly>, which reaches the same predicate through the
+  // wrapper — so this component no longer imports the predicate itself.
+  //
+  // ⚠️ Nothing in the verification sequence would have reported the leftover:
+  // @typescript-eslint/no-unused-vars is "warn" (eslint.config.mjs), `npm run
+  // lint` passes no --max-warnings so it exits 0, tsconfig sets no
+  // noUnusedLocals, and this Next version no longer runs ESLint during `next
+  // build`. The constant and its import went in the same commit as the filter.
 
   function handleLogout() {
     guardedAction(async () => {
@@ -367,13 +371,20 @@ export function SidebarNav() {
     users:                     t("items.users"),
     referenceData:             t("items.referenceData"),
     import:                    t("items.import"),
-    // Slice #29.09. ⚠️ This map is not derived from NAV_SECTIONS and nothing
-    // tests that the two agree — an item added to nav-config without a line
-    // here renders its raw key in the sidebar, silently.
+    // Slice #29.09. ⚠️ This map is not derived from NAV_SECTIONS: an item added
+    // to nav-config without a line here renders its raw key in the sidebar, in
+    // both languages, with no tsc error and no lint error. It used to say
+    // "and nothing tests that the two agree"; since Slice #32.19 something
+    // does — src/__tests__/sidebar-nav-items.test.ts — which is what that
+    // sentence was asking for.
     docTypeEngine:             t("items.docTypeEngine"),
     postImportReport:          t("items.postImportReport"),
     calculation:               t("items.calculation"),
     globalSearch:              t("items.globalSearch"),
+    // Slice #32.19 — the three screens that had no sidebar entry at all.
+    groups:                    t("items.groups"),
+    stamps:                    t("items.stamps"),
+    tags:                      t("items.tags"),
     helpContent:               t("items.helpContent"),
     settings:                  t("items.settings"),
   };
@@ -480,16 +491,6 @@ export function SidebarNav() {
           .map((section) =>
             isUatMode && section.items.some((i) => i.key === "users")
               ? { ...section, items: section.items.filter((i) => i.key !== "users") }
-              : section,
-          )
-          // Slice #23.10.dev: strip items marked devOnly in nav-config.ts
-          // (Help information, Settings) on a build without developer tools.
-          // Unconditional map rather than a guarded one so the common case —
-          // a dev build, where nothing is stripped — still produces the same
-          // section objects and this stays one readable step in the chain.
-          .map((section) =>
-            section.items.some((i) => i.devOnly) && !devTools
-              ? { ...section, items: section.items.filter((i) => !i.devOnly) }
               : section,
           )
           .map((section) => {

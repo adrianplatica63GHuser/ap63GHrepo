@@ -428,17 +428,28 @@ Write-Host "Dumping current reference/lookup data from ga40prj-postgres..." -For
 #
 # `help_content` / `help_hint` are here for the same reason, and the reason
 # they were nearly left out is worth writing down because it is a plausible
-# test that gives the wrong answer: their EDITOR (/admin/help-content) is
-# `devOnly: true` in src/components/sidebar/nav-config.ts and is not in
-# Ciprian's build. The READER is not gated at all -- breadcrumb-bar.tsx mounts
+# test that gives the wrong answer: their EDITOR (/admin/help-content) used to
+# be `devOnly: true` in src/components/sidebar/nav-config.ts and out of
+# Ciprian's build. The READER was not gated at all -- breadcrumb-bar.tsx mounts
 # <ScreenHelpButton /> on every screen, it fetches GET /api/help/[screenKey],
 # and that route calls getHelpContent/listHelpHints directly without ever
 # importing src/lib/features/dev-tools.ts. With the tables empty the button
 # renders nothing, silently, exactly the way the time-frame fallbacks did.
 #
 # ⚠️ **THE TEST IS "DOES CIPRIAN'S BUILD READ THIS TABLE AT RUNTIME", NOT "IS
-# ITS ADMIN SCREEN IN HIS NAV".** /admin/settings is `devOnly` too, and that
+# ITS ADMIN SCREEN IN HIS NAV".** /admin/settings was `devOnly` too, and that
 # test would have excluded time_frame_setting as well.
+#
+# ⚠️ **SLICE #32.19 REMOVED BOTH OF THOSE GATES, AND THE DUMP LIST IS STILL
+# RIGHT WHILE ITS OLD ARGUMENT IS SPENT.** /admin/help-content and
+# /admin/settings are ordinary Admin-Setup screens now, so Ciprian can reach
+# both EDITORS, not just the readers. Nothing above changes -- the runtime test
+# still picks the same three tables -- but a NEW consequence lands here and is
+# recorded rather than discovered: he can now edit help content and time-frame
+# thresholds on the UAT box, and the next run of this script overwrites both
+# from dev, silently, because these tables are dumped whole. If that starts
+# mattering, the fix is a merge or a warning at Step 6, not a change to this
+# list.
 #
 # ⚠️ An EXACT NAME here carries only that one relation. `lookup_*` also matches
 # any sequence named `lookup_*`, so a serial-keyed lookup's setval travels with

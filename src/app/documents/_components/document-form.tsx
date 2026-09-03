@@ -1746,7 +1746,12 @@ export function DocumentForm({
                     // This refusal answers identically for ever, so that
                     // sentence would be an instruction to spend another billed
                     // read on an impossible save.
-                    ? t("aiDiscoverIdCardNoForm", { type: applied.type.name })
+                    //
+                    // Slice #32.19 — two reasons reach this ending now, and
+                    // only one of them is about an identity card.
+                    ? applied.reason === "catchAll"
+                      ? t("aiDiscoverCatchAllNoForm", { type: applied.type.name })
+                      : t("aiDiscoverIdCardNoForm", { type: applied.type.name })
                     : applied.status === "moved"
                     ? t("aiDiscoverNewTypeNoFields",   { type: applied.type.name })
                     : applied.status === "created"

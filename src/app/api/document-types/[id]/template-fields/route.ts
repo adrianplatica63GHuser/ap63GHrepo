@@ -57,6 +57,10 @@ import {
 } from "@/lib/documents/discover-to-template";
 import type { DocumentTemplateField } from "@/lib/documents/template-fields";
 import { idCardFormRefusal, idCardRefusalCode } from "@/lib/documents/id-card-form-guard";
+import {
+  catchAllFormRefusal,
+  catchAllRefusalCode,
+} from "@/lib/documents/catch-all-form-guard";
 
 export const runtime = "nodejs";
 
@@ -144,6 +148,44 @@ export async function PUT(request: NextRequest, ctx: Ctx): Promise<Response> {
             "This document type is an identity card. Its data is captured by the import's " +
             "identity-card step as Person records, so it may not hold a form.",
           code: idCardRefusalCode(refusal),
+        },
+        { status: 400 },
+      );
+    }
+
+    // ── The catch-all can never hold a form either ────────────────────────
+    // (Slice #32.19, finding S-02.) Here for the same reason the identity-card
+    // refusal above is here, and AHEAD OF THE 409 for the same reason too: the
+    // identity of the type does not depend on how fresh the caller's view of the
+    // fields is, and answering "the form changed while you were reviewing" over
+    // a Save that can never succeed is #26.02's unfixable message.
+    //
+    // ⚠️ **AN ADVERSARIAL ROUND PUT THIS DOOR BACK IN.** The slice's first draft
+    // left it out, believing `typeMayHoldAForm` already refused it upstream.
+    // That function is consulted by the discovery RUN and by the DocTypeEngine
+    // screen and never by this route — so Reference Data would have refused a
+    // row that this door accepted, which is finding S-02 rebuilt one door over.
+    //
+    // ⚠️ **The count is `current` + `parsed`, not the merge**, because the merge
+    // has not run yet and must not run first (see the order argument above).
+    // `mergeAcceptedFields` dedupes by key, so this over-counts a re-sent field
+    // — which is the safe direction here: this route is ADDITIVE and cannot
+    // clear a template, so on a catch-all row that already wrongly holds one the
+    // only writes it can express are "no change" and "bigger". The screen that
+    // CAN clear a form is Reference Data's form editor, through `updateValue`,
+    // and that path stays open by the guard's own grandfather clause.
+    const catchAll = catchAllFormRefusal(
+      { ...identity, fieldCount: current.fields.length },
+      { ...identity, fieldCount: current.fields.length + parsed.data.fields.length },
+      true,
+    );
+    if (catchAll !== null) {
+      return Response.json(
+        {
+          error:
+            "This document type is the catch-all for documents whose type could not be " +
+            "established, so it may not hold a form.",
+          code: catchAllRefusalCode(catchAll),
         },
         { status: 400 },
       );

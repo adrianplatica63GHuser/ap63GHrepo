@@ -33,6 +33,10 @@ import {
   asIdCardFormRefusal,
   idCardRefusalCode,
 } from "@/lib/documents/id-card-form-guard";
+import {
+  asCatchAllFormRefusal,
+  catchAllRefusalCode,
+} from "@/lib/documents/catch-all-form-guard";
 
 type Ctx = { params: Promise<{ list: string; id: string }> };
 
@@ -97,6 +101,25 @@ export async function PUT(
             "A document type that is an identity card may not hold a form; its data is " +
             "captured by the import's identity-card step as Person records.",
           code: idCardRefusalCode(idCard),
+        },
+        { status: 400 },
+      );
+    }
+    // ⚠️ **AND THE SAME FOR THE CATCH-ALL.**                   (Slice #32.19.)
+    // Finding S-02: DocTypeEngine refused to give the unclassified catch-all a
+    // form and this door did not, so the Form button on the NECLASIFICAT row
+    // saved one. Same shape as the refusal above, deliberately — same query
+    // layer, same named 400, same `code`-first mapping on the client — because
+    // two refusals arriving as two different kinds of failure is how a screen
+    // ends up handling one of them and rendering the other in English.
+    const catchAll = asCatchAllFormRefusal(err);
+    if (catchAll !== null) {
+      return Response.json(
+        {
+          error:
+            "The catch-all document type may not hold a form; it holds documents whose " +
+            "type is wrong, not documents whose type is unfinished.",
+          code: catchAllRefusalCode(catchAll),
         },
         { status: 400 },
       );

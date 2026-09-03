@@ -63,7 +63,14 @@ import {
   ID_CARD_FORM_CODE,
   ID_CARD_RENAME_CODE,
 } from "@/lib/documents/id-card-form-guard";
-import { UNCLASSIFIED_DOCUMENT_TYPE_KEY } from "@/lib/documents/document-type-match";
+import {
+  CATCH_ALL_FORM_CODE,
+  CATCH_ALL_RENAME_CODE,
+} from "@/lib/documents/catch-all-form-guard";
+import {
+  UNCLASSIFIED_DOCUMENT_TYPE_KEY,
+  documentTypeIsCatchAll,
+} from "@/lib/documents/document-type-match";
 import {
   walkFolder,
   hasReadablePage,
@@ -256,6 +263,21 @@ export function DocTypeEngine() {
   const refusalFor = useCallback(
     (row: DocumentTypeCatalogueRow): "idCard" | "fallback" | null => {
       const typeIsIdCard = documentTypeIsIdCard(row);
+      // ⚠️ **Slice #32.19 — a SECOND catch-all term, and it is not a second
+      // opinion.** The comment above is still right that a key spelled by hand
+      // in this file would be one; this is the shared `documentTypeIsCatchAll`,
+      // the same predicate the write door now uses
+      // (`catchAllFormRefusal`, on PUT .../template-fields). It is WIDER than
+      // `fallbackTypeId`, which resolves the catch-all by the key `UNCLASSIFIED`
+      // alone: an archive can also hold a second row keyed `NECLASIFICAT`, or
+      // one named "Neclasificat" under a slugged key, and #29.06's finding F1 is
+      // what those rows cost.
+      //
+      // Without it this screen would OFFER such a row, spend twenty billed reads
+      // against it, and be refused at the save — the "spend then refuse" shape,
+      // which is worse than either refusing first or accepting. The picker and
+      // the executor now answer the same question.
+      if (documentTypeIsCatchAll(row)) return "fallback";
       if (typeMayHoldAForm({ typeId: row.id, fallbackTypeId, typeIsIdCard })) return null;
       return typeIsIdCard ? "idCard" : "fallback";
     },
@@ -694,12 +716,18 @@ export function DocTypeEngine() {
         // twenty billed reads was in flight arrives at Save perfectly
         // selectable. The server is the thing that decides; this branch is what
         // says so instead of "the form could not be saved. Try again."
+        // Slice #32.19 adds the catch-all pair, reachable here for exactly the
+        // reason above: `refusalFor` now refuses a catch-all row in the picker,
+        // and a row RENAMED into the catch-all in another tab mid-run still
+        // arrives at Save selectable.
         setSaveError(
           body.code === ID_CARD_FORM_CODE || body.code === ID_CARD_RENAME_CODE
             ? t("save.idCardType")
-            : body.code === "too_many_fields"
-              ? t("save.tooMany", { max: body.max ?? MAX_TEMPLATE_FIELDS })
-              : t("save.failed"),
+            : body.code === CATCH_ALL_FORM_CODE || body.code === CATCH_ALL_RENAME_CODE
+              ? t("save.catchAllType")
+              : body.code === "too_many_fields"
+                ? t("save.tooMany", { max: body.max ?? MAX_TEMPLATE_FIELDS })
+                : t("save.failed"),
         );
         return;
       }

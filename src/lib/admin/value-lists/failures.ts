@@ -28,6 +28,10 @@ import {
   ID_CARD_FORM_CODE,
   ID_CARD_RENAME_CODE,
 } from "@/lib/documents/id-card-form-guard";
+import {
+  CATCH_ALL_FORM_CODE,
+  CATCH_ALL_RENAME_CODE,
+} from "@/lib/documents/catch-all-form-guard";
 
 /**
  * Everything a Reference Data screen knows how to say about a failure.
@@ -62,6 +66,26 @@ export const FAILURE_CODES = [
   // one — is the one that names the screen the remedy lives on.
   "idCardForm",
   "idCardRename",
+  // Slice #32.19, finding S-02 — the two halves of the catch-all refusal, on
+  // the same two doors and with the same 400 as the pair above.
+  //
+  // ⚠️ **`catchAllForm` IS UNREACHABLE THROUGH THIS FUNCTION, exactly like
+  // `idCardForm`, and an adversarial round corrected the claim that stood here.**
+  // The first version said the form editor reaches it, "so a user adding a field
+  // on the NECLASIFICAT row gets `catchAllForm`". The editor never reaches this
+  // module: `document-type-form-editor.tsx` reads `body.code` off its own
+  // response and throws its own Romanian sentence, and never builds a
+  // `RequestFailedError`. What reaches `failureFromResponse` on this list is the
+  // MODAL's row form and its delete — and `LIST_META["document-types"].fields`
+  // is `[{ key: "name" }]`, so every such write carries no `templateFields` and
+  // can only produce `catchAllRename` or nothing at all.
+  //
+  // So both are written for the reason `idCardForm` was: a member of this array
+  // with no message renders as a raw key path, which is the failure this module
+  // exists to stop. Saying which one is live matters because the next reader
+  // builds on it — this repo's own rule about a claim nobody can trigger.
+  "catchAllForm",
+  "catchAllRename",
   "generic",
 ] as const;
 
@@ -103,6 +127,9 @@ export function failureFromResponse(status: number, body: unknown): FailureCode 
   // what this slice exists to stop. See `id-card-form-guard.ts`.
   if (code === ID_CARD_FORM_CODE) return "idCardForm";
   if (code === ID_CARD_RENAME_CODE) return "idCardRename";
+  // Slice #32.19 — same wire convention, same reason. See above.
+  if (code === CATCH_ALL_FORM_CODE) return "catchAllForm";
+  if (code === CATCH_ALL_RENAME_CODE) return "catchAllRename";
   return "generic";
 }
 

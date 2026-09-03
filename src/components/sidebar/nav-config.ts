@@ -16,26 +16,22 @@ import {
   Calculator,
   Search,
   Lightbulb,
+  Users,
+  Stamp,
+  Tags,
 } from "lucide-react";
 
 export type NavItem = {
   key: string;
   href?: string;  // undefined = coming soon (rendered disabled)
   icon: LucideIcon;
-  /**
-   * Slice #23.10.dev — hidden unless the build has developer tools enabled.
-   *
-   * Declared here rather than as a key list in sidebar-nav.tsx so the decision
-   * sits beside the item it describes and cannot drift away from it. The
-   * filter that reads it calls isDevToolsEnabled() from
-   * src/lib/features/dev-tools.ts; a nav item is an array entry, so <DevOnly>
-   * cannot wrap it.
-   *
-   * Hiding the item is only half the gate — each of these routes also refuses
-   * server-side in its own page.tsx, the same division of labour Slice #22.01
-   * set up between this filter and src/app/admin/layout.tsx.
-   */
-  devOnly?: boolean;
+  // Slice #32.19 removed the `devOnly` field that used to sit here. Adrian
+  // asked for the developer-only screen items to be revealed, so Help
+  // information and Settings are ordinary Admin-Setup entries now and nothing
+  // in this file is gated by the build flag. Both routes also dropped the
+  // matching server-side redirect in their own page.tsx in the same commit —
+  // a nav entry whose route still refuses is a dead link, which is the shape
+  // Groups/Stamps/Tags were in before this slice.
 };
 
 export type NavSection = {
@@ -136,12 +132,31 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [
       { key: "users", href: "/admin/users", icon: UserCog },
       { key: "referenceData", href: "/admin/value-lists", icon: Database },
-      // Slice #23.10.dev: both are developer surfaces. Help information
-      // authors the Background/How-To copy the "?" buttons show; Settings
-      // holds the time-frame thresholds and the developer options panel.
-      // A business user configures neither.
-      { key: "helpContent", href: "/admin/help-content", icon: HelpCircle, devOnly: true },
-      { key: "settings", href: "/admin/settings", icon: Settings, devOnly: true },
+      // ⚠️ **Slice #32.19: these three pages existed for slices and appeared in
+      // NO nav at all.** Item 17 of the 32.11 report read their absence as a
+      // consequence of Settings being developer-only, and that was wrong twice
+      // over: /admin/groups, /admin/stamps and /admin/tags carry no dev-tools
+      // guard of their own, and they were never listed here, so removing the
+      // `devOnly` flags reveals Help information and Settings and does nothing
+      // whatever for them. Typing the URL was the only way in; Settings' own
+      // "Related screens" links were the only pointer to them.
+      //
+      // They sit in "administrationSetup" rather than Operations because each
+      // one configures a vocabulary the rest of the archive then uses. The
+      // superuser gate they need is the one this section already has —
+      // sidebar-nav.tsx filters every key starting "administration", and
+      // src/app/admin/layout.tsx redirects the same set server-side — so a
+      // non-superuser sees neither these entries nor the routes behind them,
+      // and no per-item role field was added.
+      { key: "groups", href: "/admin/groups", icon: Users },
+      { key: "stamps", href: "/admin/stamps", icon: Stamp },
+      { key: "tags", href: "/admin/tags", icon: Tags },
+      // Slice #23.10.dev made these two developer-only; Slice #32.19 took that
+      // back at Adrian's request. Help information authors the Background/
+      // How-To copy the "?" buttons show; Settings holds the time-frame
+      // thresholds and the developer options panel.
+      { key: "helpContent", href: "/admin/help-content", icon: HelpCircle },
+      { key: "settings", href: "/admin/settings", icon: Settings },
     ],
   },
 ];

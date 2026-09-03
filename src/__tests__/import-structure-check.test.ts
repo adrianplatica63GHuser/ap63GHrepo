@@ -482,6 +482,16 @@ describe("a top-level folder", () => {
     // IS a shared folder: no STR-04, no STR-05, no deprecation nag. A warning
     // nobody can act on without a morning of renaming is worse than the
     // inconsistency it reports.
+    //
+    // ⚠️ **Slice #32.19 (finding S-08) changed the COPY and deliberately left
+    // this assertion exactly as it was.** The finding was that the tolerance was
+    // silent — the rules screen taught `comune` and said nothing about `common`,
+    // so `Comune` was refused where `common` passed and neither answer could be
+    // predicted from the text. STR-05's requirement and example now name the
+    // English spellings and say they are being retired; the RUN still says
+    // nothing, which is this test. Withdrawing the tolerance instead would send
+    // `common` to STR-04 — "rename it to tarla-parcela or move the files out" —
+    // which is a worse instruction, on every archive Ciprian has prepared.
     for (const name of ["common", "floating"]) {
       expect(ids(top(name, { keptNames: ["Procura.pdf"] }))).toEqual([]);
     }

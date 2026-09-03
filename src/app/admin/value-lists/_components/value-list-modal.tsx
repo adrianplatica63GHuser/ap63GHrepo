@@ -26,7 +26,7 @@ import {
 } from "@/lib/documents/status";
 import { parseTemplateFields } from "@/lib/documents/template-fields";
 import { documentTypeIsIdCard } from "@/lib/import/id-card";
-import { UNCLASSIFIED_DOCUMENT_TYPE_KEY } from "@/lib/documents/document-type-match";
+import { documentTypeIsCatchAll } from "@/lib/documents/document-type-match";
 import { DocumentTypeFormEditor } from "./document-type-form-editor";
 
 // ── API helpers ───────────────────────────────────────────────────────────────
@@ -645,12 +645,24 @@ export function ValueListModal({
    * THE WRONG KEY.** It resolved the fallback through a local
    * `FALLBACK_TYPE_KEYS = ["ALTUL", "OTHER"]`, whose own comment asserted
    * "Adrian's seeded data has ALTUL". It does not — no migration and no seed has
-   * ever written either key into `lookup_document_type` — so `fallbackTypeId`
+   * ever written either key into `lookup_document_type` — so the id it resolved
    * was `undefined` on every real archive and NECLASIFICAT sat in the backlog
-   * asking to be given a form. `catchAllType`'s key is the one rule now, and it
-   * is asked here as a plain key test rather than by importing that helper,
-   * because these rows are `Record<string, unknown>` off the admin route rather
-   * than the three typed columns the helper takes.
+   * asking to be given a form. #29.07 replaced that with a plain test for
+   * `catchAllType`'s key, resolved to the row's ID.
+   *
+   * ⚠️ **SLICE #32.19 REPLACED THAT IN TURN, WITH `documentTypeIsCatchAll`, AND
+   * AN ADVERSARIAL ROUND IS WHY.** The id test resolves the catch-all by the key
+   * `UNCLASSIFIED` alone, which is NARROWER than the rule that slice put on the
+   * Form button and on the write itself. Leaving the two different rebuilt the
+   * same failure this comment already records twice: on an archive holding the
+   * second row keyed `NECLASIFICAT` — the row `document-type-match.ts` records
+   * as existing — that row satisfied `awaitsFormRow` and was listed as
+   * unfinished work with no Form button beside it, because the button asks the
+   * wider question; and `backlogEmpty` below could never become true, so the
+   * green sentence and its `role="status"` region were dead code again. One
+   * rule for the filter, the button and the write, and the loop closes. The row
+   * is `Record<string, unknown>` off the admin route, so the two columns are
+   * read off it exactly as `documentTypeIsIdCard`'s are on the line below.
    *
    * ⚠️ **`documentTypeIsIdCard`'s NAME arm is a heuristic and it runs over
    * the whole archive here, not over a handful of queued types.** It is deliberately
@@ -663,14 +675,9 @@ export function ValueListModal({
    * answer the import already gives such a type, one unticked checkbox away
    * from being visible, and the row itself is never altered or relabelled.
    */
-  const fallbackTypeId = isDocumentTypes
-    ? query.data?.find(
-        (r) => String(r.key ?? "") === UNCLASSIFIED_DOCUMENT_TYPE_KEY,
-      )?.id
-    : undefined;
   const awaitsFormRow = (row: Row): boolean =>
     documentTypeAwaitsForm({ origin: row.origin, templateFields: row.templateFields }) &&
-    row.id !== fallbackTypeId &&
+    !documentTypeIsCatchAll({ key: String(row.key ?? ""), name: String(row.name ?? "") }) &&
     !documentTypeIsIdCard({ key: String(row.key ?? ""), name: String(row.name ?? "") });
   // ⚠️ **`onlyWithoutForm && isDocumentTypes`, in that order and both terms.**
   // The checkbox is only rendered for document-types, but the state outlives a
@@ -968,7 +975,46 @@ export function ValueListModal({
                               on the button rather than in a column of its own
                               because the panel is max-w-2xl and #26.12 already
                               spent the one spare column on the status. */}
-                          {isDocumentTypes && (
+                          {/* ⚠️ **Slice #32.19, finding S-02: NOT on the
+                              catch-all row — unless that row already carries a
+                              form.** The server refuses a form on the catch-all
+                              now (`catchAllFormRefusal`), and a button whose
+                              only outcome is a refusal is a button that teaches
+                              the rule by failing. Drawing nothing says the same
+                              thing before the click.
+
+                              The second term is the grandfather clause, and
+                              without it this button would be the thing that
+                              strands the row: this editor is the ONLY screen in
+                              the application that can clear a form, so hiding it
+                              on a NECLASIFICAT row that already has one would
+                              leave the person who saved it no way to take it
+                              off. The server allows exactly that write — a
+                              shrink or a clear — and refuses every other one, so
+                              the button and the guard agree.
+
+                              ⚠️ **An IDENTITY-CARD row still gets this button,
+                              and that asymmetry is older than this slice.** The
+                              same argument applies to it and #32.07 did not make
+                              it; it is in the handover rather than widened here,
+                              because on a card row the button is also the only
+                              way to clear the 24-field form migration_073 exists
+                              to remove.
+
+                              `documentTypeIsCatchAll` is the same predicate the
+                              backlog filter and the server-side guard use. It is
+                              wider than `catchAllType`'s key lookup, which this
+                              screen used until #32.19 and which misses the
+                              second row an archive can hold keyed NECLASIFICAT.
+                              The two columns are read off the row exactly the
+                              way `awaitsFormRow` reads them for
+                              `documentTypeIsIdCard`. */}
+                          {isDocumentTypes &&
+                            (!documentTypeIsCatchAll({
+                              key:  String(row.key ?? ""),
+                              name: String(row.name ?? ""),
+                            }) ||
+                              parseTemplateFields(row.templateFields).length > 0) && (
                             <button
                               onClick={(e) => {
                                 formEditorOpenerRef.current = e.currentTarget;

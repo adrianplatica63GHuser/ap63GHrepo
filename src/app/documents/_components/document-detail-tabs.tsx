@@ -8,7 +8,6 @@ import { DocumentPersonsTab } from "./document-persons-tab";
 import { DocumentPropertiesTab } from "./document-properties-tab";
 import { DocumentReferencesTab } from "./document-references-tab";
 import { EntityMetadataTab } from "@/components/entity-metadata-tab";
-import { isDevToolsEnabled } from "@/lib/features/dev-tools";
 import { ProcessPanel } from "./process-panel";
 import {
   DOCUMENT_STATUS_CLASS,
@@ -53,21 +52,19 @@ export function DocumentDetailTabs({
 }: Props) {
   const t = useTranslations("document");
   useRegisterPage(documentName, documentCode, "DOCUMENT");
-  // Slice #23.10.dev — the Metadata tab is a developer surface: Importance,
-  // Relevance and Provenance are curation values Adrian sets, and a business
-  // user has no use for them. An array entry cannot be wrapped in <DevOnly>,
-  // so the predicate is read once here and used three times below.
-  const devTools = isDevToolsEnabled();
+  // ⚠️ **Slice #23.10.dev made the Metadata tab a developer surface and Slice
+  // #32.19 took that back**, at Adrian's request: Importance, Relevance and
+  // Provenance are curation values, and hiding the one screen that SETS them
+  // while their columns and filters are on show is the disagreement the slice
+  // exists to remove. The predicate this file read four times is gone, and so
+  // is the `?tab=metadata` fallback that existed only because a tab could be
+  // filtered out from under a URL that named it.
 
   // The tab also arrives from the URL (?tab=metadata, resolved into initialTab
-  // by the page). Filtering the tab strip alone would leave a build without
-  // developer tools showing an EMPTY tab body on that link — the panel is
-  // gated too, so nothing would render and no tab would look selected. Fall
-  // back to "details" instead, which is what an unknown ?tab value already
-  // does one level up.
-  const [activeTab, setActiveTab] = useState<Tab>(
-    initialTab && !(initialTab === "metadata" && !devTools) ? initialTab : "details",
-  );
+  // by the page). An unknown ?tab value is already turned into "details" one
+  // level up; nothing here filters the strip any more, so nothing here has to
+  // second-guess the value that arrives.
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab ?? "details");
   // Slice #20.16: no container-width change needed — theater overlay is a
   // fixed-position portal that doesn't depend on the container width.
   // Slice #18.06: the details form portals its version-nav controls into this
@@ -80,7 +77,7 @@ export function DocumentDetailTabs({
     { key: "related",    label: t("tabs.related")    },
     { key: "persons",    label: t("tabs.persons")    },
     { key: "properties", label: t("tabs.properties") },
-    ...(devTools ? [{ key: "metadata" as Tab, label: t("tabs.metadata") }] : []),
+    { key: "metadata",   label: t("tabs.metadata")   },
   ];
 
   return (
@@ -202,7 +199,7 @@ export function DocumentDetailTabs({
           {activeTab === "related" && (
             <DocumentReferencesTab documentId={documentId} />
           )}
-          {devTools && activeTab === "metadata" && (
+          {activeTab === "metadata" && (
             <EntityMetadataTab
               apiPath={`/api/documents/${encodeURIComponent(documentId)}/entity-references`}
               queryKey={`entity-references-document-${documentId}`}

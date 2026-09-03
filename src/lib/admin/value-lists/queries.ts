@@ -73,6 +73,11 @@ import {
   IdCardFormRefusedError,
   idCardFormRefusal,
 } from "@/lib/documents/id-card-form-guard";
+import {
+  CatchAllFormRefusedError,
+  catchAllFormRefusal,
+} from "@/lib/documents/catch-all-form-guard";
+import { parseTemplateFields } from "@/lib/documents/template-fields";
 
 // Row types — inferred from the Drizzle table definitions.
 export type LookupRow = Record<string, unknown> & { id: string };
@@ -389,6 +394,27 @@ export async function createDocumentTypeRow(
     (values as { templateFields?: unknown }).templateFields !== undefined,
   );
   if (createRefusal !== null) throw new IdCardFormRefusedError(createRefusal);
+  // ⚠️ **AND THE CATCH-ALL MAY NOT BE CREATED WITH A FORM EITHER.** (Slice
+  // #32.19, finding S-02.) Here for the same reason the identity-card refusal
+  // is: no admin form sends `templateFields` on a POST today, and a door that
+  // judges on the way in and not on the way out is a door that will eventually
+  // be used the other way round.
+  //
+  // ⚠️ **Reachable from `resolveClassifiedDocumentType` in a way the id-card
+  // guard above is not — and it still does not fire there.** The resolver mints
+  // types mid-import and never sends `templateFields`, so `fieldCount` is 0 and
+  // the guard's first line returns null. What it stops is a caller creating a
+  // row named "Neclasificat" WITH a form, which is the only shape that matters.
+  const createCatchAll = catchAllFormRefusal(
+    null,
+    {
+      key,
+      name: typeof data.name === "string" ? data.name : "",
+      fieldCount: parseTemplateFields(values.templateFields).length,
+    },
+    (values as { templateFields?: unknown }).templateFields !== undefined,
+  );
+  if (createCatchAll !== null) throw new CatchAllFormRefusedError(createCatchAll);
   const [row] = await conn
     .insert(lookupDocumentType)
     .values({ ...values, key, origin })
@@ -507,6 +533,40 @@ export async function updateValue(
           nextFields !== undefined,
         );
         if (refusal !== null) throw new IdCardFormRefusedError(refusal);
+        // ⚠️ **THE CATCH-ALL GUARD, ASKED OF THE SAME `stored` ROW.** (Slice
+        // #32.19, finding S-02.) Same three arguments and the same reasoning
+        // about each of them — the question is about the row the write would
+        // LEAVE, `key` comes from the payload where there is one because
+        // `.set(values)` is over whatever a direct caller hands it, and
+        // `writesTheForm` is what keeps Reference Data's name-only edit form
+        // usable on a row that already carries a form.
+        //
+        // ⚠️ **It counts FIELDS where the identity-card guard asks a yes/no**,
+        // and that is the grandfather clause: a form already saved on the
+        // catch-all stays readable, shrinkable and deletable through the form
+        // editor, and a write that touches the column is allowed only if it
+        // leaves FEWER fields than it found. (Not "only a growing write is
+        // refused" — an adversarial round measured what that lets through: the
+        // editor sends the whole set, so swapping four fields for four different
+        // ones is 4 → 4.) Refusing every touch would strand the row instead —
+        // the editor that could clear the form saves through this very function.
+        const catchAll = catchAllFormRefusal(
+          {
+            key:        stored.key,
+            name:       stored.name,
+            fieldCount: parseTemplateFields(stored.templateFields).length,
+          },
+          {
+            key:  typeof values.key === "string" ? values.key : stored.key,
+            name: typeof values.name === "string" ? values.name : stored.name,
+            fieldCount:
+              nextFields === undefined
+                ? parseTemplateFields(stored.templateFields).length
+                : parseTemplateFields(nextFields).length,
+          },
+          nextFields !== undefined,
+        );
+        if (catchAll !== null) throw new CatchAllFormRefusedError(catchAll);
       }
       const [row] = await db
         .update(lookupDocumentType)

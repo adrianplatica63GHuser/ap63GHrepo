@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { DevOnly } from "@/components/dev-only";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -316,8 +317,26 @@ export function SettingsView() {
       {/* ── Time Frames ── */}
       <TimeFramesPanel />
 
-      {/* ── Developer options ── */}
-      <DeveloperPanel />
+      {/* ── Developer options ──
+          ⚠️ **THE ONE THING ON THIS PAGE SLICE #32.19 DID NOT REVEAL, and an
+          adversarial round is why.** That slice removed the developer gate from
+          the Settings ROUTE and from its sidebar entry, so Ciprian reaches this
+          screen — and `getCurrentAppUser()` reports the UAT box as a superuser,
+          so `admin/layout.tsx` lets him through. The panel's own label and
+          checkbox are translated, so it reads as an ordinary Romanian setting;
+          ticking it renders a hard-coded ENGLISH engineering note about this
+          application's multi-user model not being production-ready. That is a
+          note for Adrian, and Adrian's build has the flag on.
+
+          It is not the item-17 exception the locale toggle is — it is the same
+          exception for the same reason: what Adrian asked to reveal are screen
+          items a business user has a use for, and internal notes about the
+          product's own shortcomings, in a language he does not read, are not
+          one. Time frames above it, which is what a person actually comes to
+          this screen to change, is revealed. */}
+      <DevOnly>
+        <DeveloperPanel />
+      </DevOnly>
     </div>
   );
 }
