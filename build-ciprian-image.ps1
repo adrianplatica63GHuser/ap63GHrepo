@@ -245,6 +245,36 @@ if ($envVars.ContainsKey('NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID')) {
     $mapsMapId = 'DEMO_MAP_ID'
 }
 
+# Slice #32.20 -- a POSITIVE guard, and it has to be positive.
+#
+# The reader above matches '^([A-Za-z0-9_]+)=(.+)$', so three shapes never
+# reach this line at all and the ContainsKey fallback handles them correctly:
+# an absent line, a line with no '=' (which is how .env.example ships this
+# key), and a bare 'KEY='. What the fallback does NOT catch is a line that
+# matches and then yields something unusable:
+#
+#     NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID=            (spaces)  -> Trim() empties it
+#     NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID=""                    -> two literal quotes
+#     NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID=abc # temp            -> comment attached
+#
+# Each of those is passed straight to --build-arg below, where it OVERRIDES
+# the Dockerfile's own ARG default -- and an empty string overrides it just as
+# firmly as a wrong one, because '??' at the read sites in src/ only catches a
+# MISSING value, never an empty one. Because NEXT_PUBLIC_* is substituted into
+# the JS bundle when `npm run build` runs inside the image, whatever is baked
+# here is what Ciprian gets: he cannot correct it with an environment variable
+# or a compose file, only by asking for a new image.
+#
+# So this does not test for emptiness -- that would pass the last two shapes
+# above. It tests that what we have LOOKS LIKE a Map ID, and substitutes the
+# documented fallback loudly when it does not. One test, every malformed shape,
+# and it fails at build time on Adrian's machine rather than silently in
+# Ciprian's browser.
+if ($mapsMapId -notmatch '^[A-Za-z0-9_-]+$') {
+    Write-Host "WARNING: NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID in .env is not a usable Map ID -- got [$mapsMapId]. Using DEMO_MAP_ID instead; the map will draw over a grey void." -ForegroundColor Yellow
+    $mapsMapId = 'DEMO_MAP_ID'
+}
+
 $sbUrl  = $envVars['NEXT_PUBLIC_SUPABASE_URL']
 $sbAnon = $envVars['NEXT_PUBLIC_SUPABASE_ANON_KEY']
 
