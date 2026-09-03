@@ -6,6 +6,12 @@ import { resolveRegisteredHelpScreenKey } from "@/lib/help/route-map";
 
 type Props = {
   className?: string;
+  /**
+   * Forwarded to <HelpButton>. This wrapper exists because neither mount
+   * renders HelpButton directly, and `className` cannot carry it: className
+   * lands on the wrapper <div>, not on the popover panel (Slice #32.20).
+   */
+  align?: "left" | "right";
 };
 
 /**
@@ -24,11 +30,11 @@ type Props = {
  * itself renders nothing when that screen has no content yet, so an
  * unconfigured screen shows no empty affordance.
  */
-export function ScreenHelpButton({ className }: Props) {
+export function ScreenHelpButton({ className, align }: Props) {
   const pathname = usePathname();
   const screenKey = resolveRegisteredHelpScreenKey(pathname ?? "/");
 
   if (!screenKey) return null;
 
-  return <HelpButton screenKey={screenKey} className={className} />;
+  return <HelpButton screenKey={screenKey} className={className} align={align} />;
 }

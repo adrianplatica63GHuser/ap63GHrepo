@@ -179,9 +179,22 @@ function BreadcrumbBarInner() {
   if (segments.length <= 1) return null;
 
   return (
+    /*
+      Slice #32.20 — this <nav> deliberately carries NO `overflow-x-auto`.
+      CSS cannot scroll one axis and leave the other visible: `overflow-x: auto`
+      silently computes `overflow-y: auto` too, which turned this 44px-tall bar
+      into the clipping ancestor of <HelpButton>'s popover — the popover was
+      drawn below the bar's visible strip and cut away entirely, leaving only
+      the bar's own vertical scrollbar (up arrow, thumb, down arrow) beside the
+      "?" on twenty-nine of the thirty registered help screens. Every crumb
+      already truncates on its own (max-w-[200px] / max-w-[240px] below), so
+      what is lost is the ability to scroll the crumbs' *sum* on a narrow
+      window; that spill is now clipped by the app shell's content column,
+      which is untidy and does not hide the help system. Do not put it back.
+    */
     <nav
       aria-label={t("ariaLabel")}
-      className="flex items-center gap-1 px-6 py-2 text-sm text-zinc-500 dark:text-zinc-400 border-b border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 shrink-0 overflow-x-auto"
+      className="flex items-center gap-1 px-6 py-2 text-sm text-zinc-500 dark:text-zinc-400 border-b border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 shrink-0"
     >
       {segments.map((seg, idx) => {
         const isLast = idx === segments.length - 1;

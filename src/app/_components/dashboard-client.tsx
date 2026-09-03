@@ -520,12 +520,18 @@ export function DashboardClient() {
           The dashboard mounts its own help button because <BreadcrumbBar>
           hides itself on the home page, so the app-wide auto-mount does not
           reach here. This is the ONLY screen that needs a manual placement.
+
+          align="left" because this button sits at the LEFT of the page, unlike
+          the breadcrumb bar's, which sits at the far right. With the default
+          right-anchoring the 320px panel hung off the left edge of the app
+          shell's scrolling content column and 97px of it were clipped away
+          below ~1250px of window width (Slice #32.20).
         */}
         <div className="flex items-center gap-2">
           <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
             {t("title")}
           </h1>
-          <ScreenHelpButton />
+          <ScreenHelpButton align="left" />
         </div>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
           {t("subtitle")}

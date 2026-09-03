@@ -10,6 +10,19 @@ import type { HelpScreenKey } from "@/lib/help/registry";
 type Props = {
   screenKey: HelpScreenKey;
   className?: string;
+  /**
+   * Which edge of the button the popover hangs from.
+   *
+   * "right" (the default) anchors the panel's RIGHT edge to the button's, so
+   * its 320px hang to the LEFT — correct for the breadcrumb bar, whose button
+   * sits at the far right of the window. "left" anchors the LEFT edges, so the
+   * panel extends to the RIGHT — which is what the dashboard needs, because
+   * its button sits beside the page title near the left and the default sent
+   * the panel off the left edge of the app shell's scrolling content column,
+   * where 97px of it were clipped away (Slice #32.20). Left overflow is not
+   * scrollable, so there was not even a scrollbar to hint at it.
+   */
+  align?: "left" | "right";
 };
 
 /**
@@ -23,7 +36,7 @@ type Props = {
  * sidebar-nav.tsx) rather than a useEffect + setState, which would trip
  * react-hooks/set-state-in-effect.
  */
-export function HelpButton({ screenKey, className }: Props) {
+export function HelpButton({ screenKey, className, align = "right" }: Props) {
   const t = useTranslations("help");
   const locale = useLocale();
   const pathname = usePathname();
@@ -57,7 +70,13 @@ export function HelpButton({ screenKey, className }: Props) {
       {isOpen && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-          <div className="absolute right-0 top-full mt-2 z-50 w-80 max-h-[70vh] overflow-auto rounded-lg border border-card-rim bg-white dark:bg-zinc-900 shadow-xl p-4">
+          <div
+            className={[
+              "absolute top-full mt-2 z-50 w-80 max-h-[70vh] overflow-auto",
+              "rounded-lg border border-card-rim bg-white dark:bg-zinc-900 shadow-xl p-4",
+              align === "left" ? "left-0" : "right-0",
+            ].join(" ")}
+          >
             <div className="flex items-start justify-between gap-2 mb-2">
               <h2 className="text-sm font-semibold text-ink dark:text-zinc-100">{t("title")}</h2>
               <button
