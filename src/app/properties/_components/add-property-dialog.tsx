@@ -213,7 +213,20 @@ export function AddPropertyDialog({ onClose }: Props) {
   const textInputRef    = useRef<HTMLInputElement>(null);
   const folderInputRef  = useRef<HTMLInputElement>(null);
   // Prevents double-click / concurrent invocations of import handlers.
+  /**
+   * `isImportingRef` is the SYNCHRONOUS re-entry guard and stays a ref — state
+   * would not be updated in time to stop a second click. `importing` is the
+   * same fact made renderable, because #32.20 review round 3 found that keying
+   * "is something in flight" off `step` alone leaves a hole: both import
+   * handlers set the ref, then read every selected file, and only THEN call
+   * setStep("saving"). For a folder off a network share that read is seconds
+   * long, and throughout it `step` is still "upload-folder" — so Escape, the
+   * backdrop, the ✕ and Back were all live over a run that was already
+   * committed to creating properties. Set the two together, always.
+   */
   const isImportingRef  = useRef(false);
+  const [importing, setImporting] = useState(false);
+  const markImporting = (v: boolean) => { isImportingRef.current = v; setImporting(v); };
 
   // ── Navigation helpers ────────────────────────────────────────────────────
 
@@ -239,7 +252,7 @@ export function AddPropertyDialog({ onClose }: Props) {
    * dialog would happily import the same folder a second time and duplicate
    * everything the first run saved.
    */
-  const isBusy = step === "processing" || step === "saving";
+  const isBusy = importing || step === "processing" || step === "saving";
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape" && !isBusy) onClose();
@@ -260,11 +273,14 @@ export function AddPropertyDialog({ onClose }: Props) {
    * `!isBusy`, for the reason above: the panel is `max-w-md`, so most of the
    * screen is backdrop and a misclick during a folder import would abandon it.
    *
-   * And the MOUSEDOWN must have landed on the backdrop too. A `click` is
-   * dispatched at the nearest common ancestor of mousedown and mouseup, so a
-   * text-selection drag that starts inside the panel — over the list of found
-   * filenames, say — and releases past its edge otherwise reports the overlay
-   * as its target and closes the dialog, losing the selection.
+   * And BOTH the mousedown and the mouseup must have landed on the backdrop.
+   * A `click` is dispatched at the nearest common ancestor of the two, so
+   * either direction of a drag across the panel edge otherwise reports the
+   * overlay as its target: a text-selection drag that starts on the list of
+   * found filenames and releases outside (round 2 caught this one), and a drag
+   * that starts on the backdrop and releases inside the panel (round 3 caught
+   * that one, and it is the worse of the two — the gesture ends inside the
+   * dialog and dismisses it anyway).
    */
   const downOnBackdrop = useRef(false);
 
@@ -367,7 +383,7 @@ export function AddPropertyDialog({ onClose }: Props) {
 
   const handleImportText = async () => {
     if (!textFile || isImportingRef.current) return;
-    isImportingRef.current = true;
+    markImporting(true);
     setError(null);
 
     // Read content BEFORE setStep("saving") unmounts the <input> element.
@@ -379,7 +395,7 @@ export function AddPropertyDialog({ onClose }: Props) {
       fileText = await textFile.text();
     } catch {
       setError(t("noCoordinatesFound"));
-      isImportingRef.current = false;
+      markImporting(false);
       return;
     }
 
@@ -395,14 +411,14 @@ export function AddPropertyDialog({ onClose }: Props) {
     } catch (err) {
       setError(err instanceof Error ? err.message : t("noCoordinatesFound"));
       setStep("upload-text");
-      isImportingRef.current = false;
+      markImporting(false);
       return;
     }
 
     if (corners.length === 0) {
       setError(t("noCoordinatesFound"));
       setStep("upload-text");
-      isImportingRef.current = false;
+      markImporting(false);
       return;
     }
 
@@ -414,7 +430,7 @@ export function AddPropertyDialog({ onClose }: Props) {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Save failed");
       setStep("upload-text");
-      isImportingRef.current = false;
+      markImporting(false);
       return;
     }
 
@@ -424,7 +440,7 @@ export function AddPropertyDialog({ onClose }: Props) {
     // Show acknowledgement screen — user closes manually to return to list.
     setSavingLabel(t("textImportDone"));
     setStep("done-text");
-    isImportingRef.current = false;
+    markImporting(false);
   };
 
   // ── Folder handlers ───────────────────────────────────────────────────────
@@ -438,7 +454,7 @@ export function AddPropertyDialog({ onClose }: Props) {
 
   const handleImportFolder = async () => {
     if (folderFiles.length === 0 || isImportingRef.current) return;
-    isImportingRef.current = true;
+    markImporting(true);
     setError(null);
 
     // Read ALL file contents BEFORE setStep("saving") unmounts the <input>.
@@ -491,7 +507,7 @@ export function AddPropertyDialog({ onClose }: Props) {
     if (savedIds.length === 0) {
       setError(t("noCoordinatesFound"));
       setStep("upload-folder");
-      isImportingRef.current = false;
+      markImporting(false);
       return;
     }
 
@@ -503,7 +519,7 @@ export function AddPropertyDialog({ onClose }: Props) {
       t("folderImportDone", { success: savedIds.length, total })
     );
     setStep("done-folder");
-    isImportingRef.current = false;
+    markImporting(false);
   };
 
   // ── Shared reset ──────────────────────────────────────────────────────────
@@ -537,6 +553,7 @@ export function AddPropertyDialog({ onClose }: Props) {
       aria-modal="true"
       aria-label={t("title")}
       onMouseDown={(e) => { downOnBackdrop.current = e.target === e.currentTarget; }}
+      onMouseUp={(e) => { if (e.target !== e.currentTarget) downOnBackdrop.current = false; }}
       onClick={(e) => {
         if (!isBusy && downOnBackdrop.current && e.target === e.currentTarget) onClose();
       }}
@@ -546,9 +563,20 @@ export function AddPropertyDialog({ onClose }: Props) {
         {/* Header */}
         <div className="flex items-center justify-between border-b border-card-rim px-5 py-4 dark:border-zinc-700">
           <h2 className="text-base font-semibold">{t("title")}</h2>
+          {/*
+            `disabled={isBusy}` — #32.20 review round 3. Escape and the backdrop
+            were gated in round 2 and this, the most obvious way out of the
+            dialog and the one visible throughout the "Saving…" spinner, was
+            not. Every consequence the round-2 guards exist to prevent was still
+            reachable through it. discover-review-dialog does the same thing for
+            the same reason. Genuinely disabled rather than a no-op handler:
+            buttonClass paints the inert state, and a control that invites a
+            click it will not honour is the lying button #23.05.UX removed.
+          */}
           <button
             type="button"
             onClick={onClose}
+            disabled={isBusy}
             aria-label={t("cancel")}
             className={buttonClass({ variant: "bare", size: "md" })}
           >
@@ -560,13 +588,24 @@ export function AddPropertyDialog({ onClose }: Props) {
           Body.
 
           ⚠️ **The <ErrorBoundary> wraps THIS, not the overlay** (#32.20 review
-          round 2). It used to wrap the whole `fixed inset-0` overlay, so a
-          render error in any step replaced the backdrop, the panel, the ✕ and
-          the Escape target with a PanelError box rendered inline at the bottom
-          of the Properties list — while `addOpen` in that list stayed true.
-          There was no way out but a page reload. Wrapping the body leaves the
-          header's ✕, the backdrop and the Escape handler alive, so the error is
-          something the user can read and then close.
+          rounds 2 and 3). It used to wrap the whole `fixed inset-0` overlay, so
+          when it did fire it replaced the backdrop, the panel, the ✕ and the
+          Escape target with a PanelError box rendered inline at the bottom of
+          the Properties list — while `addOpen` in that list stayed true, and
+          with no way out but a page reload. Wrapping the body leaves the
+          header's ✕, the backdrop and the Escape handler alive.
+
+          ⚠️ **And be precise about what it can fire ON, because round 2's
+          version of this comment was not.** A boundary catches throws from the
+          render of its DESCENDANT COMPONENTS — Spinner, the icon SVGs,
+          ErrorBanner, BackButton, Link. It does NOT catch a throw from the JSX
+          below, because all of that is evaluated during AddPropertyDialog's own
+          render, before this boundary mounts, and propagates past it to an
+          ancestor: a missing `t(...)` key in a step is not caught here and
+          never was, in either placement. Nor is anything thrown by the async
+          handlers, which no error boundary sees. The `fallback` prop is
+          evaluated outside the boundary too, so a failure to resolve
+          `errorBoundary.ocr` itself cannot produce the fallback.
         */}
         <div className="px-5 py-5">
           <ErrorBoundary fallback={<PanelError>{tShared("errorBoundary.ocr")}</PanelError>}>
@@ -659,7 +698,7 @@ export function AddPropertyDialog({ onClose }: Props) {
               {error && <ErrorBanner message={error} />}
 
               <div className="flex justify-end gap-2">
-                <BackButton onClick={() => { setStep("choice"); setError(null); setSelectedFile(null); }} label={t("back")} />
+                <BackButton onClick={() => { setStep("choice"); setError(null); setSelectedFile(null); }} disabled={isBusy} label={t("back")} />
                 <button
                   type="button"
                   onClick={() => { void handleProcess(); }}
@@ -731,7 +770,7 @@ export function AddPropertyDialog({ onClose }: Props) {
               {error && <ErrorBanner message={error} />}
 
               <div className="flex justify-end gap-2">
-                <BackButton onClick={() => { setStep("upload"); setError(null); }} label={t("back")} />
+                <BackButton onClick={() => { setStep("upload"); setError(null); }} disabled={isBusy} label={t("back")} />
                 <button
                   type="button"
                   onClick={handleConfirmSave}
@@ -776,7 +815,7 @@ export function AddPropertyDialog({ onClose }: Props) {
               {error && <ErrorBanner message={error} />}
 
               <div className="flex justify-end gap-2">
-                <BackButton onClick={() => { resetToChoice(); }} label={t("back")} />
+                <BackButton onClick={() => { resetToChoice(); }} disabled={isBusy} label={t("back")} />
                 <button
                   type="button"
                   onClick={() => { void handleImportText(); }}
@@ -826,7 +865,9 @@ export function AddPropertyDialog({ onClose }: Props) {
               {folderFiles.length > 0 && (
                 <ul className="max-h-32 overflow-y-auto rounded-md border border-wire bg-canvas px-3 py-2 text-xs text-fade dark:border-zinc-700 dark:bg-zinc-800">
                   {folderFiles.map((f) => (
-                    <li key={f.name} className="truncate">{f.name}</li>
+                    // webkitdirectory recurses, so two plan.txt in different
+                    // subfolders collide on name alone (#32.20 review round 3).
+                    <li key={f.webkitRelativePath || f.name} className="truncate">{f.name}</li>
                   ))}
                 </ul>
               )}
@@ -841,7 +882,7 @@ export function AddPropertyDialog({ onClose }: Props) {
               {error && <ErrorBanner message={error} />}
 
               <div className="flex justify-end gap-2">
-                <BackButton onClick={() => { resetToChoice(); }} label={t("back")} />
+                <BackButton onClick={() => { resetToChoice(); }} disabled={isBusy} label={t("back")} />
                 <button
                   type="button"
                   onClick={() => { void handleImportFolder(); }}
@@ -962,11 +1003,14 @@ function ErrorBanner({ message }: { message: string }) {
   );
 }
 
-function BackButton({ onClick, label }: { onClick: () => void; label: string }) {
+function BackButton(
+  { onClick, label, disabled }: { onClick: () => void; label: string; disabled?: boolean },
+) {
   return (
     <button
       type="button"
       onClick={onClick}
+      disabled={disabled}
       className={buttonClass({ variant: "secondary", size: "lg", className: "gap-1.5" })}
     >
       <NavArrowIcon dir="left" />
