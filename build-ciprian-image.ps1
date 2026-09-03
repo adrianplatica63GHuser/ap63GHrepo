@@ -247,6 +247,13 @@ if ($envVars.ContainsKey('NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID')) {
 
 # Slice #32.20 -- a POSITIVE guard, and it has to be positive.
 #
+# Initialised explicitly rather than left to spring into existence inside the
+# `if` below: this script already guards against a $PROFILE carrying
+# `Set-StrictMode -Version 2` (see the note above Invoke-Step), under which
+# reading an undefined $mapIdFellBack after the build would be a terminating
+# error rather than $false.
+$mapIdFellBack = $false
+#
 # The reader above matches '^([A-Za-z0-9_]+)=(.+)$', so three shapes never
 # reach this line at all and the ContainsKey fallback handles them correctly:
 # an absent line, a line with no '=' (which is how .env.example ships this
@@ -267,12 +274,29 @@ if ($envVars.ContainsKey('NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID')) {
 #
 # So this does not test for emptiness -- that would pass the last two shapes
 # above. It tests that what we have LOOKS LIKE a Map ID, and substitutes the
-# documented fallback loudly when it does not. One test, every malformed shape,
-# and it fails at build time on Adrian's machine rather than silently in
-# Ciprian's browser.
-if ($mapsMapId -notmatch '^[A-Za-z0-9_-]+$') {
-    Write-Host "WARNING: NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID in .env is not a usable Map ID -- got [$mapsMapId]. Using DEMO_MAP_ID instead; the map will draw over a grey void." -ForegroundColor Yellow
-    $mapsMapId = 'DEMO_MAP_ID'
+# documented fallback when it does not. One test, every malformed shape, caught
+# at build time on Adrian's machine rather than silently in Ciprian's browser.
+#
+# One shape is stripped rather than rejected. KEY="8e0a97af9386fef" is a legal
+# .env line that Next.js itself honours, so `next dev` on this machine draws the
+# styled map -- rejecting it here would hand Ciprian a DIFFERENT map from the one
+# Adrian just tested, which is the exact failure this guard exists to prevent.
+# A matched surrounding pair of single or double quotes therefore comes off
+# first, and only what is left is validated.
+#
+# \A and \z, not ^ and $: in .NET '$' also matches immediately before a trailing
+# newline, so '^[A-Za-z0-9_-]+$' would accept "abc`n". Get-Content and .Trim()
+# make that unreachable today; the anchors make the guard correct without
+# depending on them.
+if ($mapsMapId -match '^(["''])(.*)\1$') { $mapsMapId = $matches[2].Trim() }
+
+if ($mapsMapId -notmatch '\A[A-Za-z0-9_-]+\z') {
+    # Deliberately does NOT echo the value: this line is read off a console and
+    # pasted into bug reports, and a key pasted onto the wrong .env line would
+    # be a secret in both. CLAUDE.md -- "Secrets stay out of chat."
+    Write-Host "WARNING: NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID in .env is not a bare Map ID (letters, digits, '-' and '_' only); it is $($mapsMapId.Length) character(s) long. Using DEMO_MAP_ID instead -- the map will draw and work, but WITHOUT the cloud styling that Map ID carries." -ForegroundColor Yellow
+    $mapsMapId  = 'DEMO_MAP_ID'
+    $mapIdFellBack = $true
 }
 
 $sbUrl  = $envVars['NEXT_PUBLIC_SUPABASE_URL']
@@ -322,6 +346,20 @@ if ($LASTEXITCODE -ne 0) {
 
 Write-Host ""
 Write-Host "Build successful." -ForegroundColor Green
+
+# The Map ID warning above was printed BEFORE `docker build`, which prints five
+# to ten minutes of layer output over it. A warning nobody can still see is not
+# a warning, so it is restated here, where the eye already is. NEXT_PUBLIC_* is
+# baked into the bundle during the build, so this is the last moment it can be
+# said: the image now holds DEMO_MAP_ID, and no environment variable or compose
+# setting on Ciprian's side can change it.
+if ($mapIdFellBack) {
+    Write-Host ""
+    Write-Host "REMINDER: this image was built with DEMO_MAP_ID because the" -ForegroundColor Yellow
+    Write-Host "          NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID line in .env is not a bare Map ID." -ForegroundColor Yellow
+    Write-Host "          The map will work but will not carry your cloud styling." -ForegroundColor Yellow
+    Write-Host "          Fix the .env line and re-run this script to change it." -ForegroundColor Yellow
+}
 
 # ---- Step 3: export the image ------------------------------------------------
 
