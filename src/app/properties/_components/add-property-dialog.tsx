@@ -79,10 +79,10 @@ type Step =
 // ---------------------------------------------------------------------------
 
 /** Call the OCR scan-image API. */
-async function callScanApi(file: File): Promise<ScanResult> {
+async function callScanApi(file: File, signal?: AbortSignal): Promise<ScanResult> {
   const fd = new FormData();
   fd.append("image", file);
-  const res = await fetch("/api/properties/scan-image", { method: "POST", body: fd });
+  const res = await fetch("/api/properties/scan-image", { method: "POST", body: fd, signal });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error((body as { error?: string }).error ?? `HTTP ${res.status}`);
@@ -254,17 +254,48 @@ export function AddPropertyDialog({ onClose }: Props) {
    * dialog would happily import the same folder a second time and duplicate
    * everything the first run saved.
    */
-  // ⚠️ **"processing" is deliberately NOT in here** (review round 4). isBusy
-  // exists to stop a dismissal abandoning a run already committed to WRITING
-  // properties; the processing step is one fetch to /api/properties/scan-image
-  // that writes nothing, has no AbortController and no timeout that a
-  // self-hosted `next start` enforces. Folding it in meant a wedged OCR request
-  // left the dialog with no ✕, no Escape, no backdrop and no Back, forever,
-  // over a read that costs nothing to abandon. `importing` covers both write
-  // handlers from their first statement, including the file-reading window
-  // before setStep("saving"); handleScanSave calls setStep("saving") as its own
-  // first statement, so it is covered too.
+  /**
+   * ⚠️ **"processing" is deliberately NOT in here, and that is only safe
+   * because of `cancelled` below** (review rounds 4 and 5).
+   *
+   * isBusy exists to stop a dismissal abandoning a run already committed to
+   * WRITING properties. Round 3 folded the processing step in with the writes,
+   * which meant a wedged OCR request — no timeout the container enforces — left
+   * the dialog with no ✕, no Escape, no backdrop and no Back, forever, over a
+   * fetch that writes nothing. Round 4 took it out, and that on its own was
+   * WORSE: `handleProcess` is one async function, so dismissing the dialog
+   * unmounted the component without stopping the continuation, and when the
+   * fetch finally resolved it fell straight through to handleScanSave and
+   * created a property the user had cancelled — then called onClose() (closing
+   * whatever dialog they had since opened) and router.push'd them to it.
+   *
+   * So the lock is replaced by a cancellation the continuation checks, rather
+   * than removed. The controller aborts the fetch on unmount, and `cancelledRef`
+   * is tested at each of the OCR path's await-resumptions before it writes,
+   * navigates or closes — because an abort races the response and is not the
+   * only way a continuation can outlive the dialog.
+   *
+   * The two IMPORT handlers deliberately carry no such check, and do not need
+   * one: `markImporting(true)` is the first statement of each, so isBusy gates
+   * every exit for their whole duration, and neither reaches navigateToSaved,
+   * onClose() or router.push. The only way out from under them is the browser's
+   * own Back, and there the writes the user explicitly asked for finishing —
+   * followed by setState calls that are no-ops — is the outcome to want.
+   */
   const isBusy = importing || step === "saving";
+  const cancelledRef = useRef(false);
+  const scanAbortRef = useRef<AbortController | null>(null);
+  useEffect(() => {
+    // ⚠️ Set to false on EVERY mount, not just initialised at declaration.
+    // React StrictMode runs mount → cleanup → mount in development, so a
+    // cleanup-only version would latch cancelledRef to true before the user
+    // touched anything and every path below would silently do nothing.
+    cancelledRef.current = false;
+    return () => {
+      cancelledRef.current = true;
+      scanAbortRef.current?.abort();
+    };
+  }, []);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape" && !isBusy) onClose();
@@ -298,6 +329,11 @@ export function AddPropertyDialog({ onClose }: Props) {
 
   /** Navigate to all saved property pages in sequence, then close. */
   const navigateToSaved = async (ids: string[]) => {
+    // The last common gate before this component reaches outside itself. A
+    // continuation that outlived the dialog must not call onClose() — which by
+    // then belongs to whatever dialog the user has since opened — nor push a
+    // route out from under them (review round 5).
+    if (cancelledRef.current) return;
     // #32.20 review round 1 — the two text paths each invalidate before they
     // get here; the OCR path did not, and it is the one path with no successor
     // elsewhere in the application. staleTime is 30s (query-provider.tsx), so
@@ -339,14 +375,28 @@ export function AddPropertyDialog({ onClose }: Props) {
     scanSavedIdsRef.current = [];
     setStep("processing");
 
+    const controller = new AbortController();
+    scanAbortRef.current = controller;
+
     let result: ScanResult;
     try {
-      result = await callScanApi(selectedFile);
+      result = await callScanApi(selectedFile, controller.signal);
     } catch (err) {
+      // The dialog was dismissed while the scan was in flight: the abort is
+      // the expected outcome, not something to report to a user who is no
+      // longer looking at this component.
+      if (cancelledRef.current) return;
       setError(err instanceof Error ? err.message : t("ocrError"));
       setStep("upload");
       return;
+    } finally {
+      if (scanAbortRef.current === controller) scanAbortRef.current = null;
     }
+
+    // ⚠️ The scan can RESOLVE after the dialog has gone — an abort races the
+    // response and does not always win. Everything below this line writes,
+    // navigates or closes, so none of it may run for a dismissed dialog.
+    if (cancelledRef.current) return;
 
     setScanResult(result);
 
@@ -388,6 +438,9 @@ export function AddPropertyDialog({ onClose }: Props) {
     const savedIds = scanSavedIdsRef.current;
 
     for (let i = savedIds.length; i < count; i++) {
+      // Re-checked every iteration: a multi-boundary save is several round
+      // trips and the dialog can go between any two of them.
+      if (cancelledRef.current) return;
       setSavingLabel(t("savingProperties", { count }));
       try {
         const id = await createProperty(result.properties[i].corners, notesText, null, "IMAGE_FILE");
