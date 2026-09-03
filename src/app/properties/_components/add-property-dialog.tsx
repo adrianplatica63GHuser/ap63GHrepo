@@ -33,7 +33,7 @@
  * After all properties are saved the component navigates to each detail page.
  */
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQueryClient }   from "@tanstack/react-query";
 import { useTranslations }  from "next-intl";
 import { useRouter }        from "next/navigation";
@@ -153,6 +153,32 @@ function extractTxtFiles(files: FileList): File[] {
 // Dialog component
 // ---------------------------------------------------------------------------
 
+/**
+ * The four entry-point cards on the "choice" step.
+ *
+ * ⚠️ **NOT `buttonClass()`, and that is the fix, not an oversight** (#32.20
+ * review round 1). Three of these four were migrated to
+ * `buttonClass({ variant: "secondary", size: "lg" })` during the button sweep,
+ * while nothing imported this file and so nobody looked at the result. That
+ * helper's BASE is `inline-flex items-center justify-center`: each card holds a
+ * title span and a description span, so the three lost their `flex-col` and
+ * laid the two out side by side, centred, with `secondary`'s
+ * `enabled:hover:**:text-white` turning the fade-grey description the same
+ * colour as the title on hover. One proper card followed by three malformed
+ * rows is what the entry point this slice adds would otherwise have opened
+ * onto. Appending `flex-col items-start` to the helper's output is not a fix
+ * either: Tailwind resolves competing utilities by stylesheet order, not class
+ * order (see the warning in button-styles.ts), and `items-center` /
+ * `justify-center` are exactly such a competition. A card is not a button
+ * variant, so it carries the card's own classes — the ones card 1 has always
+ * had — and all four now match.
+ */
+const CHOICE_CARD =
+  "flex flex-col rounded-lg border-2 border-wire bg-white px-4 py-3 " +
+  "transition-colors hover:border-cta hover:bg-cta-pale " +
+  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus " +
+  "dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-cta";
+
 interface Props {
   onClose: () => void;
 }
@@ -191,8 +217,23 @@ export function AddPropertyDialog({ onClose }: Props) {
 
   // ── Navigation helpers ────────────────────────────────────────────────────
 
+  // #32.20 — see the comment on the overlay div for why this exists. Moving
+  // focus into the dialog on open is what makes its own Escape handler
+  // reachable, and it is what `aria-modal` already promised a screen reader.
+  const overlayRef = useRef<HTMLDivElement>(null);
+  useEffect(() => { overlayRef.current?.focus(); }, []);
+
   /** Navigate to all saved property pages in sequence, then close. */
   const navigateToSaved = async (ids: string[]) => {
+    // #32.20 review round 1 — the two text paths each invalidate before they
+    // get here; the OCR path did not, and it is the one path with no successor
+    // elsewhere in the application. staleTime is 30s (query-provider.tsx), so
+    // without this a user who photographs a coordinate table, lands on the new
+    // property and presses Back inside half a minute is served the cached list
+    // page — without the property they just created on it. Invalidating on the
+    // shared "properties" prefix here covers all three paths; the two that
+    // already do it are harmless repeats.
+    await queryClient.invalidateQueries({ queryKey: ["properties"] });
     onClose();
     for (let i = 0; i < ids.length; i++) {
       if (i === 0) {
@@ -429,12 +470,34 @@ export function AddPropertyDialog({ onClose }: Props) {
 
   return (
     <ErrorBoundary fallback={<PanelError>{tShared("errorBoundary.ocr")}</PanelError>}>
+    {/*
+      #32.20 review round 1 — three things were declared here and none of them
+      worked, and none of it could bite while nothing imported this file.
+
+      ESCAPE. `onKeyDown` sits on this div, but nothing ever put focus inside
+      it: React dispatches a synthetic event along the React tree of the
+      element the key was pressed ON, and until the user tabs in, that element
+      is the Add Property button in the Properties toolbar — a sibling subtree.
+      So the handler never ran. `tabIndex={-1}` plus the autofocus below put
+      focus on the panel as it opens, which is what makes the handler reachable
+      AND what `aria-modal="true"` already promised a screen reader: without
+      it, assistive tech is told to ignore everything outside a dialog the
+      user's focus is still outside of.
+
+      THE BACKDROP. This div IS the dark sheet (`fixed inset-0 bg-black/40`)
+      and had no onClick, so clicking away did nothing. The check on
+      e.target === e.currentTarget is what keeps a click inside the panel from
+      closing the dialog as it bubbles.
+    */}
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      ref={overlayRef}
+      tabIndex={-1}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 outline-none"
       role="dialog"
       aria-modal="true"
       aria-label={t("title")}
-      onKeyDown={(e) => { if (e.key === "Escape") onClose(); }}
+      onKeyDown={(e) => { if (e.key === "Escape") { e.stopPropagation(); onClose(); } }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       {/* Panel */}
       <div className="relative w-full max-w-md rounded-xl border border-card-rim bg-white shadow-xl dark:border-zinc-700 dark:bg-zinc-900">
@@ -461,7 +524,7 @@ export function AddPropertyDialog({ onClose }: Props) {
               <Link
                 href="/properties/new"
                 onClick={onClose}
-                className="flex flex-col rounded-lg border-2 border-wire bg-white px-4 py-3 transition-colors hover:border-cta hover:bg-cta-pale dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-cta"
+                className={CHOICE_CARD}
               >
                 <span className="font-medium">{t("choiceManual")}</span>
                 <span className="mt-0.5 text-xs text-fade">{t("choiceManualDesc")}</span>
@@ -471,7 +534,7 @@ export function AddPropertyDialog({ onClose }: Props) {
               <button
                 type="button"
                 onClick={() => setStep("upload")}
-                className={buttonClass({ variant: "secondary", size: "lg" })}
+                className={`${CHOICE_CARD} text-left`}
               >
                 <span className="font-medium">{t("choiceScan")}</span>
                 <span className="mt-0.5 text-xs text-fade">{t("choiceScanDesc")}</span>
@@ -481,7 +544,7 @@ export function AddPropertyDialog({ onClose }: Props) {
               <button
                 type="button"
                 onClick={() => setStep("upload-text")}
-                className={buttonClass({ variant: "secondary", size: "lg" })}
+                className={`${CHOICE_CARD} text-left`}
               >
                 <span className="font-medium">{t("choiceTextFile")}</span>
                 <span className="mt-0.5 text-xs text-fade">{t("choiceTextFileDesc")}</span>
@@ -491,7 +554,7 @@ export function AddPropertyDialog({ onClose }: Props) {
               <button
                 type="button"
                 onClick={() => setStep("upload-folder")}
-                className={buttonClass({ variant: "secondary", size: "lg" })}
+                className={`${CHOICE_CARD} text-left`}
               >
                 <span className="font-medium">{t("choiceTextFolder")}</span>
                 <span className="mt-0.5 text-xs text-fade">{t("choiceTextFolderDesc")}</span>
