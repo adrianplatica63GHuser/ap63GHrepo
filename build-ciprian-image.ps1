@@ -239,20 +239,29 @@ Get-Content ".env" | ForEach-Object {
 
 $mapsKey = $envVars['NEXT_PUBLIC_GOOGLE_MAPS_API_KEY']
 
+# Slice #32.20 -- $true whenever this build ships DEMO_MAP_ID instead of a
+# configured Map ID, by EITHER route: the key was never read (the else below),
+# or it was read and rejected by the guard further down. Ciprian gets the same
+# unstyled map whichever way it happened, so the reminder at the end of the run
+# keys off both. Declared above the branch it is set in -- both because this
+# script guards against a $PROFILE carrying `Set-StrictMode -Version 2`, under
+# which reading an undefined variable is a terminating error, and because an
+# initialisation placed AFTER the else would silently reset it.
+$mapIdFellBack = $false
+
 if ($envVars.ContainsKey('NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID')) {
     $mapsMapId = $envVars['NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID']
 } else {
-    $mapsMapId = 'DEMO_MAP_ID'
+    # No warning here: this is the documented, expected fallback, and
+    # .env.example ships the key exactly this way. But it IS a fallback, so the
+    # end-of-run reminder must still fire -- otherwise the single most likely
+    # way to hand Ciprian a DEMO_MAP_ID image is also the only one that says
+    # nothing at any point in the run.
+    $mapsMapId     = 'DEMO_MAP_ID'
+    $mapIdFellBack = $true
 }
 
 # Slice #32.20 -- a POSITIVE guard, and it has to be positive.
-#
-# Initialised explicitly rather than left to spring into existence inside the
-# `if` below: this script already guards against a $PROFILE carrying
-# `Set-StrictMode -Version 2` (see the note above Invoke-Step), under which
-# reading an undefined $mapIdFellBack after the build would be a terminating
-# error rather than $false.
-$mapIdFellBack = $false
 #
 # The reader above matches '^([A-Za-z0-9_]+)=(.+)$', so three shapes never
 # reach this line at all and the ContainsKey fallback handles them correctly:
@@ -261,7 +270,7 @@ $mapIdFellBack = $false
 # matches and then yields something unusable:
 #
 #     NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID=            (spaces)  -> Trim() empties it
-#     NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID=""                    -> two literal quotes
+#     NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID=""                    -> empty after stripping
 #     NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID=abc # temp            -> comment attached
 #
 # Each of those is passed straight to --build-arg below, where it OVERRIDES
@@ -288,7 +297,7 @@ $mapIdFellBack = $false
 # newline, so '^[A-Za-z0-9_-]+$' would accept "abc`n". Get-Content and .Trim()
 # make that unreachable today; the anchors make the guard correct without
 # depending on them.
-if ($mapsMapId -match '^(["''])(.*)\1$') { $mapsMapId = $matches[2].Trim() }
+if ($mapsMapId -match '\A(["''])(.*)\1\z') { $mapsMapId = $matches[2].Trim() }
 
 if ($mapsMapId -notmatch '\A[A-Za-z0-9_-]+\z') {
     # Deliberately does NOT echo the value: this line is read off a console and
@@ -346,20 +355,6 @@ if ($LASTEXITCODE -ne 0) {
 
 Write-Host ""
 Write-Host "Build successful." -ForegroundColor Green
-
-# The Map ID warning above was printed BEFORE `docker build`, which prints five
-# to ten minutes of layer output over it. A warning nobody can still see is not
-# a warning, so it is restated here, where the eye already is. NEXT_PUBLIC_* is
-# baked into the bundle during the build, so this is the last moment it can be
-# said: the image now holds DEMO_MAP_ID, and no environment variable or compose
-# setting on Ciprian's side can change it.
-if ($mapIdFellBack) {
-    Write-Host ""
-    Write-Host "REMINDER: this image was built with DEMO_MAP_ID because the" -ForegroundColor Yellow
-    Write-Host "          NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID line in .env is not a bare Map ID." -ForegroundColor Yellow
-    Write-Host "          The map will work but will not carry your cloud styling." -ForegroundColor Yellow
-    Write-Host "          Fix the .env line and re-run this script to change it." -ForegroundColor Yellow
-}
 
 # ---- Step 3: export the image ------------------------------------------------
 
@@ -1220,4 +1215,29 @@ Write-Host "               The init files matter only on a first-time setup or" 
 Write-Host "               a full reset (UC-C8) -- but they have to be THERE" -ForegroundColor Green
 Write-Host "               before the day he needs them." -ForegroundColor Green
 Write-Host "=====================================================" -ForegroundColor Green
+
+# Slice #32.20 -- the Map ID note belongs HERE and nowhere earlier.
+#
+# The warning at the guard prints before `docker build`, which this script
+# itself describes as five to ten minutes of layer output; a first attempt put
+# a reminder straight after "Build successful", and that is still followed by
+# `docker save` ("1-2 minutes ... ~600-800 MB"), pg_dump, the reference-data
+# dump, the verification and the promotion loop. Both scroll away. This box is
+# where the run ends and where Adrian is already reading, because it names the
+# three files he is about to send.
+#
+# It matters here specifically because NEXT_PUBLIC_* was substituted into the
+# bundle during the build: the .tar named above already holds DEMO_MAP_ID, and
+# no environment variable, compose file or setting on Ciprian's side can change
+# it. The only fix is a new image.
+if ($mapIdFellBack) {
+    Write-Host ""
+    Write-Host " NOTE: this image carries DEMO_MAP_ID, not your own Map ID." -ForegroundColor Yellow
+    Write-Host "       NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID in .env was missing or was" -ForegroundColor Yellow
+    Write-Host "       not a bare Map ID, so the documented fallback was used." -ForegroundColor Yellow
+    Write-Host "       The map WILL work; it just carries no cloud styling." -ForegroundColor Yellow
+    Write-Host "       Baked in at build time -- to change it, fix the .env line" -ForegroundColor Yellow
+    Write-Host "       and re-run this script. Ciprian cannot change it his end." -ForegroundColor Yellow
+}
+
 Write-Host ""
