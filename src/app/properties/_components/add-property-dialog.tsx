@@ -226,6 +226,8 @@ export function AddPropertyDialog({ onClose }: Props) {
    */
   const isImportingRef  = useRef(false);
   const [importing, setImporting] = useState(false);
+  // Ids already written by an interrupted handleScanSave — see its docblock.
+  const scanSavedIdsRef = useRef<string[]>([]);
   const markImporting = (v: boolean) => { isImportingRef.current = v; setImporting(v); };
 
   // ── Navigation helpers ────────────────────────────────────────────────────
@@ -252,7 +254,17 @@ export function AddPropertyDialog({ onClose }: Props) {
    * dialog would happily import the same folder a second time and duplicate
    * everything the first run saved.
    */
-  const isBusy = importing || step === "processing" || step === "saving";
+  // ⚠️ **"processing" is deliberately NOT in here** (review round 4). isBusy
+  // exists to stop a dismissal abandoning a run already committed to WRITING
+  // properties; the processing step is one fetch to /api/properties/scan-image
+  // that writes nothing, has no AbortController and no timeout that a
+  // self-hosted `next start` enforces. Folding it in meant a wedged OCR request
+  // left the dialog with no ✕, no Escape, no backdrop and no Back, forever,
+  // over a read that costs nothing to abandon. `importing` covers both write
+  // handlers from their first statement, including the file-reading window
+  // before setStep("saving"); handleScanSave calls setStep("saving") as its own
+  // first statement, so it is covered too.
+  const isBusy = importing || step === "saving";
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape" && !isBusy) onClose();
@@ -322,6 +334,9 @@ export function AddPropertyDialog({ onClose }: Props) {
   const handleProcess = async () => {
     if (!selectedFile) return;
     setError(null);
+    // A new scan is a new set of boundaries — nothing saved from a previous one
+    // may be resumed against it. See handleScanSave's docblock.
+    scanSavedIdsRef.current = [];
     setStep("processing");
 
     let result: ScanResult;
@@ -350,12 +365,29 @@ export function AddPropertyDialog({ onClose }: Props) {
     }
   };
 
+  /**
+   * Save `count` of the boundaries the scan found.
+   *
+   * ⚠️ **Resumes; it does not restart** (review round 4). On a failure this
+   * returns to the "select" step, which carries a live Save button — and the
+   * ids already written were previously held in a local that died with the
+   * call, so pressing Save again re-created everything. Three boundaries, the
+   * second failing on a transient error, one press of Save: four properties in
+   * the archive for three boundaries, one a silent duplicate, with nothing on
+   * screen having said the first was already written.
+   *
+   * The loop returns on its first failure, so what it has saved is always a
+   * PREFIX of properties[] — which is what makes resuming at
+   * scanSavedIdsRef.current.length exactly right rather than approximately so.
+   * The ref is cleared whenever a NEW scan begins (handleProcess) or the dialog
+   * returns to the choice cards, never between attempts at the same one.
+   */
   const handleScanSave = async (result: ScanResult, count: number) => {
     setStep("saving");
     const notesText = result.labels.join("   ") || null;
-    const savedIds: string[] = [];
+    const savedIds = scanSavedIdsRef.current;
 
-    for (let i = 0; i < count; i++) {
+    for (let i = savedIds.length; i < count; i++) {
       setSavingLabel(t("savingProperties", { count }));
       try {
         const id = await createProperty(result.properties[i].corners, notesText, null, "IMAGE_FILE");
@@ -435,7 +467,13 @@ export function AddPropertyDialog({ onClose }: Props) {
     }
 
     // Invalidate the property list so it refreshes when the dialog closes.
-    await queryClient.invalidateQueries({ queryKey: ["properties"] });
+    // NOT awaited — see navigateToSaved for the full reason. It matters more
+    // here than there after review round 3: this runs while step === "saving",
+    // where the ✕, Escape, the backdrop and Back are ALL disabled and the step
+    // renders no other control. Awaiting a refetch that pauses on a dropped
+    // connection therefore left the user in an undismissable spinner, over work
+    // already committed, with a page reload as the only way out.
+    void queryClient.invalidateQueries({ queryKey: ["properties"] });
 
     // Show acknowledgement screen — user closes manually to return to list.
     setSavingLabel(t("textImportDone"));
@@ -512,7 +550,13 @@ export function AddPropertyDialog({ onClose }: Props) {
     }
 
     // Invalidate the property list so it refreshes when the dialog closes.
-    await queryClient.invalidateQueries({ queryKey: ["properties"] });
+    // NOT awaited — see navigateToSaved for the full reason. It matters more
+    // here than there after review round 3: this runs while step === "saving",
+    // where the ✕, Escape, the backdrop and Back are ALL disabled and the step
+    // renders no other control. Awaiting a refetch that pauses on a dropped
+    // connection therefore left the user in an undismissable spinner, over work
+    // already committed, with a page reload as the only way out.
+    void queryClient.invalidateQueries({ queryKey: ["properties"] });
 
     // Show acknowledgement screen — user closes manually to return to list.
     setSavingLabel(
@@ -531,6 +575,12 @@ export function AddPropertyDialog({ onClose }: Props) {
     setScanResult(null);
     setTextFile(null);
     setFolderFiles([]);
+    // Round 4: folderHadFiles survived the reset, so picking a folder with no
+    // .txt in it, pressing Back and re-entering the folder step showed "No .txt
+    // files found in the selected folder." above a picker reading "Select
+    // folder", with no folder selected. Four clicks, deterministic.
+    setFolderHadFiles(false);
+    scanSavedIdsRef.current = [];
   };
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -702,7 +752,7 @@ export function AddPropertyDialog({ onClose }: Props) {
                 <button
                   type="button"
                   onClick={() => { void handleProcess(); }}
-                  disabled={!selectedFile}
+                  disabled={isBusy || !selectedFile}
                   className={buttonClass({ variant: "primary", size: "lg" })}
                 >
                   {t("processButton")}
@@ -819,7 +869,7 @@ export function AddPropertyDialog({ onClose }: Props) {
                 <button
                   type="button"
                   onClick={() => { void handleImportText(); }}
-                  disabled={!textFile}
+                  disabled={isBusy || !textFile}
                   className={buttonClass({ variant: "primary", size: "lg" })}
                 >
                   {t("importButton")}
@@ -886,7 +936,7 @@ export function AddPropertyDialog({ onClose }: Props) {
                 <button
                   type="button"
                   onClick={() => { void handleImportFolder(); }}
-                  disabled={folderFiles.length === 0}
+                  disabled={isBusy || folderFiles.length === 0}
                   className={buttonClass({ variant: "primary", size: "lg" })}
                 >
                   {t("importAllButton")}
