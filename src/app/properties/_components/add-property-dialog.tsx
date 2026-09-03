@@ -174,10 +174,10 @@ function extractTxtFiles(files: FileList): File[] {
  * had — and all four now match.
  */
 const CHOICE_CARD =
-  "flex flex-col rounded-lg border-2 border-wire bg-white px-4 py-3 " +
+  "flex flex-col cursor-pointer rounded-lg border-2 border-wire bg-white px-4 py-3 " +
   "transition-colors hover:border-cta hover:bg-cta-pale " +
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus " +
-  "dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-cta";
+  "dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-cta dark:hover:bg-zinc-700";
 
 interface Props {
   onClose: () => void;
@@ -217,11 +217,56 @@ export function AddPropertyDialog({ onClose }: Props) {
 
   // ── Navigation helpers ────────────────────────────────────────────────────
 
-  // #32.20 — see the comment on the overlay div for why this exists. Moving
-  // focus into the dialog on open is what makes its own Escape handler
-  // reachable, and it is what `aria-modal` already promised a screen reader.
+  /**
+   * Escape closes — but never mid-flight, and never via the element's own
+   * onKeyDown (#32.20 review rounds 1 and 2).
+   *
+   * Round 1 put the handler on the overlay div and focused that div on mount.
+   * That works on the "choice" step and nowhere else: every step transition is
+   * fired by clicking a button which the transition then unmounts, at which
+   * point focus falls back to document.body — outside the React root — and a
+   * synthetic onKeyDown never reaches the overlay again. So Escape died the
+   * moment the user chose one of the four paths, which is exactly when they
+   * might want out. A window listener is focus-independent, and it is what the
+   * five other dialogs in this app already do (discover-review-dialog,
+   * tag-dialog, property-step-dialog, cancel-import-dialog, value-list-modal).
+   *
+   * `!isBusy` matches discover-review-dialog's rule and its reason: during
+   * "processing" and "saving" this dialog is the only thing telling the user a
+   * read or a write is in flight. Dismissing it does not cancel the loop in
+   * handleImportFolder — that keeps creating properties against an unmounted
+   * component — and it leaves isImportingRef behind with it, so a reopened
+   * dialog would happily import the same folder a second time and duplicate
+   * everything the first run saved.
+   */
+  const isBusy = step === "processing" || step === "saving";
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !isBusy) onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose, isBusy]);
+
+  // Focus moves into the dialog on open, which is what `aria-modal="true"`
+  // already promised a screen reader: without it, assistive tech is told to
+  // ignore everything outside a dialog the user's focus is still outside of.
   const overlayRef = useRef<HTMLDivElement>(null);
   useEffect(() => { overlayRef.current?.focus(); }, []);
+
+  /**
+   * The backdrop closes on click — with two guards.
+   *
+   * `!isBusy`, for the reason above: the panel is `max-w-md`, so most of the
+   * screen is backdrop and a misclick during a folder import would abandon it.
+   *
+   * And the MOUSEDOWN must have landed on the backdrop too. A `click` is
+   * dispatched at the nearest common ancestor of mousedown and mouseup, so a
+   * text-selection drag that starts inside the panel — over the list of found
+   * filenames, say — and releases past its edge otherwise reports the overlay
+   * as its target and closes the dialog, losing the selection.
+   */
+  const downOnBackdrop = useRef(false);
 
   /** Navigate to all saved property pages in sequence, then close. */
   const navigateToSaved = async (ids: string[]) => {
@@ -233,7 +278,13 @@ export function AddPropertyDialog({ onClose }: Props) {
     // page — without the property they just created on it. Invalidating on the
     // shared "properties" prefix here covers all three paths; the two that
     // already do it are harmless repeats.
-    await queryClient.invalidateQueries({ queryKey: ["properties"] });
+    // NOT awaited (#32.20 review round 2). The Properties list is mounted
+    // directly behind this dialog, so its query has an active observer and v5's
+    // invalidateQueries awaits the refetch that follows — with the default
+    // three retries and backoff. Awaiting it held the "Saving…" spinner open
+    // for seconds, on a flaky connection, for work already committed. The cache
+    // is marked stale synchronously either way, which is all this needs.
+    void queryClient.invalidateQueries({ queryKey: ["properties"] });
     onClose();
     for (let i = 0; i < ids.length; i++) {
       if (i === 0) {
@@ -469,26 +520,15 @@ export function AddPropertyDialog({ onClose }: Props) {
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <ErrorBoundary fallback={<PanelError>{tShared("errorBoundary.ocr")}</PanelError>}>
-    {/*
-      #32.20 review round 1 — three things were declared here and none of them
-      worked, and none of it could bite while nothing imported this file.
-
-      ESCAPE. `onKeyDown` sits on this div, but nothing ever put focus inside
-      it: React dispatches a synthetic event along the React tree of the
-      element the key was pressed ON, and until the user tabs in, that element
-      is the Add Property button in the Properties toolbar — a sibling subtree.
-      So the handler never ran. `tabIndex={-1}` plus the autofocus below put
-      focus on the panel as it opens, which is what makes the handler reachable
-      AND what `aria-modal="true"` already promised a screen reader: without
-      it, assistive tech is told to ignore everything outside a dialog the
-      user's focus is still outside of.
-
-      THE BACKDROP. This div IS the dark sheet (`fixed inset-0 bg-black/40`)
-      and had no onClick, so clicking away did nothing. The check on
-      e.target === e.currentTarget is what keeps a click inside the panel from
-      closing the dialog as it bubbles.
-    */}
+    /*
+      #32.20 — Escape, the backdrop and focus were all DECLARED here and none of
+      them worked, and none of it could bite while nothing imported this file.
+      Escape and the backdrop guards now live beside the handlers above, where
+      their reasons are written out; this div carries `tabIndex={-1}` only so
+      that it can be focused on open, and `outline-none` because it is a
+      container, not a control — every real control inside it keeps its own
+      focus ring.
+    */
     <div
       ref={overlayRef}
       tabIndex={-1}
@@ -496,8 +536,10 @@ export function AddPropertyDialog({ onClose }: Props) {
       role="dialog"
       aria-modal="true"
       aria-label={t("title")}
-      onKeyDown={(e) => { if (e.key === "Escape") { e.stopPropagation(); onClose(); } }}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      onMouseDown={(e) => { downOnBackdrop.current = e.target === e.currentTarget; }}
+      onClick={(e) => {
+        if (!isBusy && downOnBackdrop.current && e.target === e.currentTarget) onClose();
+      }}
     >
       {/* Panel */}
       <div className="relative w-full max-w-md rounded-xl border border-card-rim bg-white shadow-xl dark:border-zinc-700 dark:bg-zinc-900">
@@ -514,8 +556,20 @@ export function AddPropertyDialog({ onClose }: Props) {
           </button>
         </div>
 
-        {/* Body */}
+        {/*
+          Body.
+
+          ⚠️ **The <ErrorBoundary> wraps THIS, not the overlay** (#32.20 review
+          round 2). It used to wrap the whole `fixed inset-0` overlay, so a
+          render error in any step replaced the backdrop, the panel, the ✕ and
+          the Escape target with a PanelError box rendered inline at the bottom
+          of the Properties list — while `addOpen` in that list stayed true.
+          There was no way out but a page reload. Wrapping the body leaves the
+          header's ✕, the backdrop and the Escape handler alive, so the error is
+          something the user can read and then close.
+        */}
         <div className="px-5 py-5">
+          <ErrorBoundary fallback={<PanelError>{tShared("errorBoundary.ocr")}</PanelError>}>
 
           {/* ── CHOICE ── */}
           {step === "choice" && (
@@ -842,10 +896,10 @@ export function AddPropertyDialog({ onClose }: Props) {
             </div>
           )}
 
+          </ErrorBoundary>
         </div>
       </div>
     </div>
-    </ErrorBoundary>
   );
 }
 
