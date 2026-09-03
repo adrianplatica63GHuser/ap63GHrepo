@@ -1214,7 +1214,6 @@ Write-Host "               ciprian-schema-update.sql per UC-C6." -ForegroundColo
 Write-Host "               The init files matter only on a first-time setup or" -ForegroundColor Green
 Write-Host "               a full reset (UC-C8) -- but they have to be THERE" -ForegroundColor Green
 Write-Host "               before the day he needs them." -ForegroundColor Green
-Write-Host "=====================================================" -ForegroundColor Green
 
 # Slice #32.20 -- the Map ID note belongs HERE and nowhere earlier.
 #
@@ -1230,6 +1229,15 @@ Write-Host "=====================================================" -ForegroundCo
 # bundle during the build: the .tar named above already holds DEMO_MAP_ID, and
 # no environment variable, compose file or setting on Ciprian's side can change
 # it. The only fix is a new image.
+#
+# It prints INSIDE the box, above its closing rule -- printing after that rule
+# leaves a yellow block with box-interior indentation and no frame, which reads
+# as a box that lost its rules.
+#
+# Consequence accepted deliberately: a run that builds and then fails later --
+# at docker save, pg_dump, verification or promotion -- never reaches this and
+# says nothing about the Map ID. Nothing was delivered on such a run, and the
+# next successful one will say it.
 if ($mapIdFellBack) {
     Write-Host ""
     Write-Host " NOTE: this image carries DEMO_MAP_ID, not your own Map ID." -ForegroundColor Yellow
@@ -1239,5 +1247,5 @@ if ($mapIdFellBack) {
     Write-Host "       Baked in at build time -- to change it, fix the .env line" -ForegroundColor Yellow
     Write-Host "       and re-run this script. Ciprian cannot change it his end." -ForegroundColor Yellow
 }
-
+Write-Host "=====================================================" -ForegroundColor Green
 Write-Host ""
