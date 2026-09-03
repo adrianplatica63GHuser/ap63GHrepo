@@ -189,18 +189,26 @@ function BreadcrumbBarInner() {
       "?" on twenty-nine of the thirty registered help screens.
 
       What removing it costs, measured in headless Chromium at 1400 / 1000 /
-      800 px rather than predicted: NOTHING SPILLS. Slice #32.20 expected a
-      four-crumb route to overflow the bar below ~1175px and be clipped by the
-      content column; it does not, at any width. Each wrapper below carries
+      800 px rather than predicted: NOTHING SPILLS at any width tested. Slice
+      #32.20 expected a four-crumb route to overflow the bar below ~1175px and
+      be clipped by the content column; it does not. Each wrapper below carries
       min-w-0 and each label `truncate`, so a flex item with overflow:hidden
       takes an automatic minimum size of 0 and the crumbs SHRINK instead —
-      200/200/200/224px at 1400, 103/103/103/120px at 800. The `<nav>`'s
-      scrollWidth equals its clientWidth throughout.
+      200/200/200/224px at 1400, 103/103/103/120px at 800, with the `<nav>`'s
+      scrollWidth equal to its clientWidth at each. (Below roughly 155px of bar
+      width the non-shrinkable parts — px-6, the shrink-0 chevrons, gap-1, pl-4
+      and the help button — do exceed it, with no scrollbar and no clipping
+      ancestor. Not a width this application is used at; stated so the claim
+      above is not read as unconditional.)
 
       So the real cost is that a deep path ellipsises and, without the bar's
-      scrollbar, can no longer be read by scrolling to it. That is why every
-      crumb below now carries a `title`, which is what makes the full label
-      recoverable on hover. Do not put the class back.
+      scrollbar, can no longer be read by scrolling to it. Every crumb below now
+      carries a `title`, which brings the full label back ON HOVER — and only on
+      hover: a keyboard user generates no tooltip and a touch screen has none,
+      which is the objection import-listing-controls.test.ts makes against
+      tooltips as a primary affordance. It is a partial mitigation, not a
+      replacement for the scrollbar, and it is what a truncated label costs one
+      attribute to get. Do not put the class back.
     */
     <nav
       aria-label={t("ariaLabel")}
