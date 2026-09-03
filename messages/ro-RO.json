@@ -503,7 +503,8 @@
       "cancel": "Anulează",
       "back": "Înapoi",
       "close": "Închide",
-      "textImportDone": "Proprietatea a fost importată cu succes."
+      "textImportDone": "Proprietatea a fost importată cu succes.",
+      "wipNote": "Această funcționalitate este încă în dezvoltare."
     },
     "groupBadgeTitle": "Grup {code}, poziția {position}",
     "groupsFilterLabel": "Grupuri:",

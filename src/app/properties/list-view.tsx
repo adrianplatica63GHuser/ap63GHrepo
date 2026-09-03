@@ -10,6 +10,7 @@ import { RecencyBadge } from "@/components/recency-badge";
 import { BowTieBadge } from "@/components/bow-tie-badge";
 import { HelpHint } from "@/components/help/help-hint";
 import { buttonClass } from "@/lib/ui/button-styles";
+import { AddPropertyDialog } from "./_components/add-property-dialog";
 
 const PAGE_SIZE = 15;
 const LS_KEY    = "ga40-col-property-v2";
@@ -182,6 +183,8 @@ export function PropertyListView() {
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const [confirmOpen,  setConfirmOpen]  = useState(false);
+  // Slice #32.20 — the Add Property dialog's first and only entry point.
+  const [addOpen,      setAddOpen]      = useState(false);
   const [deleting,     setDeleting]     = useState(false);
   const [deleteError,  setDeleteError]  = useState<string | null>(null);
 
@@ -440,12 +443,28 @@ export function PropertyListView() {
             </button>
           )}
           <HelpHint hintKey="select-all-page-only" />
-          <Link
-            href="/properties/new"
-            className="inline-flex items-center rounded-md bg-cta px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cta-d"
+          {/*
+            Slice #32.20 — this was a plain <Link href="/properties/new">, which
+            is the FIRST of the four ways <AddPropertyDialog> offers to add a
+            property. The other three — a photographed coordinate table, a
+            single .txt of index/X/Y rows, and a folder of them — were built,
+            translated and then reachable from no button, menu or link anywhere
+            in the application. The link is REPLACED rather than joined by a
+            second control: the dialog's own "Manual data entry" card navigates
+            to exactly /properties/new, so nothing is lost, and two Add buttons
+            side by side would be a worse screen than one.
+
+            A real <button> rather than a styled <a>, which also lets it take
+            buttonClass() — :enabled / :disabled do not match an anchor, so the
+            hand-rolled class it used to carry had no focus ring.
+          */}
+          <button
+            type="button"
+            onClick={() => setAddOpen(true)}
+            className={buttonClass({ variant: "primary", size: "lg" })}
           >
             {t("addNew")}
-          </Link>
+          </button>
         </div>
       </div>
 
@@ -584,6 +603,8 @@ export function PropertyListView() {
           onNo={() => setConfirmOpen(false)}
         />
       )}
+
+      {addOpen && <AddPropertyDialog onClose={() => setAddOpen(false)} />}
     </div>
   );
 }

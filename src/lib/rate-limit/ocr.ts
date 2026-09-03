@@ -67,16 +67,23 @@ export const OCR_WINDOW_MS = 60_000; // 1 minute
  * id-card extraction — is superuser-only by `src/app/admin/layout.tsx` and, as
  * of #29.09a, by the routes themselves.
  *
- * ⚠️ **Five for everyone else, and a sweep of the callers says which route that
- * actually touches.** Of the six on the list above, `scan-image` has no live
- * caller at all (its only one, `app/properties/_components/add-property-dialog
- * .tsx`, is an orphan nothing imports — see the handover), `parse-text` is
- * reached only from the admin import wizard, and `read-sample`, `cluster` and
- * `extract-id-card` are now superuser-only. So the number a non-superuser meets
- * in practice is the one on `ai-interpret`, from the document form: interpret a
- * document, five times a minute. That is comfortably above the one-document-
- * at-a-time rhythm of that screen, and it leaves an account that starts
- * hammering an Anthropic-billed route a much smaller lever.
+ * ⚠️ **Five for everyone else, and a sweep of the callers says which routes
+ * that actually touches.** Of the six on the list above, `read-sample`,
+ * `cluster` and `extract-id-card` are superuser-only. `scan-image` and
+ * `parse-text` are both reached by `app/properties/_components/add-property-
+ * dialog.tsx`, which **slice #32.20 gave an entry point on the Properties
+ * list** — until then it was an orphan nothing imported, and this paragraph
+ * said so. `parse-text` is additionally reached from the admin import wizard.
+ *
+ * ⚠️ **So an ordinary user now meets this number on two screens, not one, and
+ * they share the bucket.** It is no longer only `ai-interpret` from the
+ * document form: an Add Property run that photographs a coordinate table, or
+ * imports a folder of `.txt` files, spends from the same five a minute — and
+ * the folder path posts one `parse-text` per file, so a folder of six spends
+ * the whole window on its first five and the sixth fails. That is a real limit on a
+ * real screen, and #32.20 was scoped to expose the four paths without
+ * rebuilding any of them, so it is recorded here rather than raised: if the
+ * folder path is taken forward, its allowance is the first thing to revisit.
  *
  * ⚠️ **A `Record<AppRole, …>` on purpose.** When the next role arrives, this
  * fails to compile until it has an allowance, rather than defaulting one in

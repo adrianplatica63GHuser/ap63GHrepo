@@ -3,6 +3,22 @@
 /**
  * AddPropertyDialog
  *
+ * ⚠️ **WORK IN PROGRESS.** Reconnected by slice #32.20 after a period in which
+ * nothing in the application imported this file: /properties/new was reachable
+ * from the Properties list and the other three paths from nowhere at all. All
+ * four are now exposed, and none of them was rebuilt — that was the explicit
+ * boundary of #32.20 ("we shall return to it later", Adrian). In particular the
+ * scan and folder paths do NOT write the tags and associations the Process
+ * panel on a Document writes, and the Administration import wizard remains the
+ * route for importing folders at scale.
+ *
+ * The reasoning, the open questions and what each path costs to bring forward
+ * are in
+ *   01.Slice.Inputs\Slices.32.nn.UAT\32.12\Answers.32.12.docx
+ *   section 4 — "Item 19, the Add Property dialog"
+ * Cite the SECTION, never a page number: section 4 began on page 7 in the copy
+ * Adrian read and moved to page 6 one revision later.
+ *
  * Multi-step modal triggered from the Properties list view.
  *
  * Steps:
@@ -480,6 +496,18 @@ export function AddPropertyDialog({ onClose }: Props) {
                 <span className="font-medium">{t("choiceTextFolder")}</span>
                 <span className="mt-0.5 text-xs text-fade">{t("choiceTextFolderDesc")}</span>
               </button>
+
+              {/*
+                Slice #32.20 — the work-in-progress note Adrian asked for, in
+                the only form that belongs on a shipped screen. Deliberately no
+                file path: Ciprian sees this dialog, and a C:\dev.docs\ path in
+                the interface is noise to him. The pointer proper — to
+                Answers.32.12.docx section 4 — is in this file's header, where a
+                developer looks and where it cannot be shipped to anybody.
+              */}
+              <p className="mt-1 text-xs text-fade" role="note">
+                {t("wipNote")}
+              </p>
             </div>
           )}
 
