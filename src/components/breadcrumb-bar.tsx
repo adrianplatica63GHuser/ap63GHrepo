@@ -186,11 +186,21 @@ function BreadcrumbBarInner() {
       into the clipping ancestor of <HelpButton>'s popover — the popover was
       drawn below the bar's visible strip and cut away entirely, leaving only
       the bar's own vertical scrollbar (up arrow, thumb, down arrow) beside the
-      "?" on twenty-nine of the thirty registered help screens. Every crumb
-      already truncates on its own (max-w-[200px] / max-w-[240px] below), so
-      what is lost is the ability to scroll the crumbs' *sum* on a narrow
-      window; that spill is now clipped by the app shell's content column,
-      which is untidy and does not hide the help system. Do not put it back.
+      "?" on twenty-nine of the thirty registered help screens.
+
+      What removing it costs, measured in headless Chromium at 1400 / 1000 /
+      800 px rather than predicted: NOTHING SPILLS. Slice #32.20 expected a
+      four-crumb route to overflow the bar below ~1175px and be clipped by the
+      content column; it does not, at any width. Each wrapper below carries
+      min-w-0 and each label `truncate`, so a flex item with overflow:hidden
+      takes an automatic minimum size of 0 and the crumbs SHRINK instead —
+      200/200/200/224px at 1400, 103/103/103/120px at 800. The `<nav>`'s
+      scrollWidth equals its clientWidth throughout.
+
+      So the real cost is that a deep path ellipsises and, without the bar's
+      scrollbar, can no longer be read by scrolling to it. That is why every
+      crumb below now carries a `title`, which is what makes the full label
+      recoverable on hover. Do not put the class back.
     */
     <nav
       aria-label={t("ariaLabel")}
@@ -220,6 +230,7 @@ function BreadcrumbBarInner() {
               <span
                 className="truncate max-w-[240px] font-medium text-zinc-700 dark:text-zinc-200"
                 aria-current="page"
+                title={seg.label}
               >
                 {seg.label}
               </span>
@@ -227,6 +238,7 @@ function BreadcrumbBarInner() {
               <Link
                 href={seg.href}
                 className="truncate max-w-[200px] hover:text-zinc-800 hover:underline dark:hover:text-zinc-200 transition-colors"
+                title={seg.label}
               >
                 {seg.label}
               </Link>
