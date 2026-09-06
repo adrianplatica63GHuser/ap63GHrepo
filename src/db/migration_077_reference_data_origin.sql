@@ -25,10 +25,9 @@
 --   Adrian curated himself into a review queue and tells him a machine made it.
 --
 --   Consequence, accepted deliberately and stated in the handover: codes seeded
---   by import runs BEFORE this migration keep reading as MANUAL, and so do the
---   ones seeded between this migration and the code half that starts stamping
---   them. Only rows created after THAT are marked. Nothing repairs either
---   window later - there is no evidence to repair it from.
+--   by import runs BEFORE this migration keep reading as MANUAL. Only rows
+--   created from here on are marked. Nothing repairs that later - there is no
+--   evidence to repair it from.
 --
 -- WHY THE SERVER DECIDES IT AND THE PAYLOAD NEVER DOES
 --   069's column is create-only but its value is read off the request body
@@ -38,19 +37,16 @@
 --   of the WRITE SITE, never a field anything can send:
 --
 --     lookup_tarla     the auto-seed inside `createPropertyIn`
---                      (src/lib/properties/queries.ts) WILL write the literal
---                      'IMPORT'. It will take no parameter and read no payload,
---                      so there is nothing for a sixth caller to forget or a
---                      client to claim.
+--                      (src/lib/properties/queries.ts) writes the literal
+--                      'IMPORT'. It takes no parameter and reads no ORIGIN off
+--                      the payload, so there is nothing for a sixth caller to
+--                      forget or a client to claim. (It does read `indicativ`
+--                      from the request body - the value; never the origin.)
 --
---                      ⚠️ PENDING, NOT DONE. This is a migration slice: it
---                      stops at this file and `schema/index.ts` and waits. The
---                      seed's INSERT is still
---                      `.values({ indicativ })` and therefore still takes the
---                      DEFAULT, so until the code half lands NOTHING writes
---                      'IMPORT' to either table and every row reads MANUAL.
---                      Said in the future tense on purpose, so the second half
---                      cannot read as already done.
+--     lookup_institution
+--                      nothing writes 'IMPORT'. The id-card reader's refusal to
+--                      mint an institution from a model's reading stays, so
+--                      every row on this table takes the DEFAULT.
 --     lookup_institution / lookup_tarla, admin modal
 --                      say nothing, and get 'MANUAL' from this DEFAULT.
 --
@@ -84,8 +80,12 @@
 --
 --   The other three callers of `createProperty` cannot reach it at all: both
 --   calls in src/app/api/calculation/commit/route.ts pass no `tarlaSola`, and
---   POST /api/properties is served by a form whose tarla field is a SELECT over
---   this very table (#18.16.VL), so there is nothing to type into. The case the
+--   POST /api/properties has TWO clients, neither of which can send an unlisted
+--   one - `property-form.tsx`, whose tarla field is a SELECT over this very
+--   table (#18.16.VL) so there is nothing to type into, and
+--   `add-property-dialog.tsx`, which builds its payload key by key and never
+--   sets `tarlaSola` at all. (An adversarial round asked "is there another
+--   client"; there is, and the answer survives it.) The case the
 --   slice worried about, "a property typed by hand also seeds a code", is
 --   unreachable through the UI; what remains is a raw POST carrying an unlisted
 --   string, and a payload is not a person.
@@ -212,7 +212,7 @@ ALTER TABLE lookup_institution
   ADD CONSTRAINT chk_li_origin CHECK (origin IN ('MANUAL', 'IMPORT'));
 
 COMMENT ON COLUMN lookup_tarla.origin IS
-  'How this code came to exist: MANUAL = typed into the Indicative Tarla list by a person, IMPORT = auto-seeded by createPropertyIn from a tarla value an import parsed out of a folder name. Decided at the write site, never read from a request body. NOTHING WRITES IMPORT YET - this is a migration slice and the seed still takes the DEFAULT; see migration_077. Write-once by convention: unlike lookup_document_type, no explicit strip guards the value-lists PUT for this table - Zod drops an unknown origin from the update payload and that is the only guard. See migration_077 for the full note.';
+  'How this code came to exist: MANUAL = typed into the Indicative Tarla list by a person, IMPORT = auto-seeded by createPropertyIn from a tarla value an import parsed out of a folder name. The origin is decided at that write site and is never read from a request body. Write-once by convention: unlike lookup_document_type, no explicit strip guards the value-lists PUT for this table - Zod drops an unknown origin from the update payload and that is the only guard. See migration_077 for the full note.';
 
 COMMENT ON COLUMN lookup_institution.origin IS
   'How this institution came to exist: MANUAL = added in Reference Data (every row today), IMPORT = created by a machine reading. Nothing writes IMPORT yet - src/lib/import/id-card.ts still refuses to mint an institution from a model reading, and #34.02 keeps that refusal - so the column exists to make the status word answerable on both lists in one modal.';

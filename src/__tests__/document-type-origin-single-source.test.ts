@@ -45,6 +45,7 @@ import {
   stripDocumentTypeOrigin,
 } from "@/lib/admin/value-lists/validation";
 import { VALID_LIST_KEYS } from "@/lib/admin/value-lists/config";
+import { propertyCreateSchema } from "@/lib/properties/validation";
 
 const SRC = path.join(process.cwd(), "src");
 const STATUS_MODULE = "lib/documents/status.ts";
@@ -164,15 +165,102 @@ describe("only the import claims an IMPORT origin", () => {
    * thing standing between the archive and a third writer, which is the whole
    * argument in this file's header: origin cannot be recomputed, so a path that
    * invents it is unfalsifiable afterwards.
+   *
+   * ⚠️ **WIDENED TO TWO, NOT RELAXED TO "AT LEAST ONE".   (Slice #34.02)**
+   *
+   * #34.02 gave `lookup_tarla` and `lookup_institution` the same column, and
+   * the tarla auto-seed inside `createPropertyIn` is the second writer of the
+   * literal. Widening a guard to make a build green is exactly the move this
+   * file's header warns about, so the shape of the assertion is unchanged —
+   * still an exact `toEqual` over a CLOSED list, still sorted, so a third
+   * writer fails it the same way a second one did. What changed is that the
+   * list has two entries and each has to be argued for:
+   *
+   *   lib/documents/resolve-document-type.ts  a classifier's answer becomes a
+   *                                           document type. #29.06.
+   *   lib/properties/queries.ts               a folder name becomes a tarla
+   *                                           code. #34.02 — and this one is
+   *                                           STRONGER than the first, because
+   *                                           it takes no origin parameter and
+   *                                           reads no payload, where the
+   *                                           document-type path accepts
+   *                                           `origin` from the request body.
+   *
+   * ⚠️ **`MENTIONS_ALLOWED` is deliberately NOT the list used here.** That map
+   * is about the document-type column and keeps its own two-writer assertion
+   * below (`keeps both writers inside an import`), which requires every writer
+   * to live under `lib/import/` or `app/admin/import/`. The tarla seed lives in
+   * `lib/properties/` and is not a document-type writer at all, so folding it
+   * into that map would break a true statement about a different column to
+   * accommodate this one.
    */
+  /** The document-type writer. Its own two assertions below name it directly. */
   const ORIGIN_WRITER = "lib/documents/resolve-document-type.ts";
+  /** The tarla writer. #34.02. */
+  const TARLA_ORIGIN_WRITER = "lib/properties/queries.ts";
+  const ORIGIN_WRITERS = [ORIGIN_WRITER, TARLA_ORIGIN_WRITER];
 
   // Pattern rather than the exact literal: `origin:"IMPORT"`, single quotes and
   // a quoted key all read identically to a reviewer and slipped past the
   // string version of this guard.
-  it("has exactly one writer, and it is the classifier's type resolver", () => {
+  it("has exactly two writers, and each is argued for above", () => {
     const writers = productionFilesContaining(/origin['"]?\s*:\s*['"]IMPORT['"]/);
-    expect(writers).toEqual([ORIGIN_WRITER]);
+    expect([...writers].sort()).toEqual([...ORIGIN_WRITERS].sort());
+  });
+
+  /**
+   * ⚠️ **The tarla writer must not grow a parameter.   (Slice #34.02)**
+   *
+   * The sibling assertion below makes this point for document types, and it
+   * matters more here: the whole reason `lookup_tarla.origin` is trustworthy
+   * where `lookup_document_type.origin` is not is that `createPropertyIn` has
+   * no way to be TOLD an origin. A refactor that added one — "so the Add
+   * Property form can say MANUAL" is the plausible story — would put the value
+   * back on the wire, and no test that only counts files would notice.
+   *
+   * Whitespace removed, for the reason the document-type assertion states: a
+   * call that wraps onto three lines is the same call.
+   */
+  it("writes the tarla literal into the insert, and takes no origin argument", () => {
+    const src = fs.readFileSync(path.join(SRC, TARLA_ORIGIN_WRITER), "utf8");
+    expect(src.replace(/\s+/g, "")).toContain(
+      '.insert(lookupTarla).values({indicativ:propFields.tarlaSola,origin:"IMPORT"})',
+    );
+
+    // ⚠️ **THE FULL POSITIVE SIGNATURE, NOT A NEGATIVE REGEX, and a review
+    // round wrote three refactors that beat the negative version.** It was
+    // `expect(/function createPropertyIn\([^)]*origin/.test(src)).toBe(false)`,
+    // which a `seedOrigin` parameter walks past (the regex is case-sensitive),
+    // and which an arrow-function rewrite turns into an assertion that CANNOT
+    // FAIL — `export const createPropertyIn = async (tx, input, origin = …)`
+    // has no `function createPropertyIn(` in it at all, so the test goes green
+    // against a parameter literally named `origin`. That is the exact defect
+    // this file records at "THE ASSERTION THIS REPLACED COULD NOT FAIL", one
+    // slice later. Pinning what the signature IS makes every one of those red.
+    expect(src).toContain(
+      "export async function createPropertyIn(\n" +
+        "  tx: DbTransaction,\n" +
+        "  input: PropertyCreate,\n" +
+        "  updatedBy: string | null = null,\n" +
+        "): Promise<PropertyFull> {",
+    );
+  });
+
+  /**
+   * …and the third door the negative regex missed: the PAYLOAD.
+   *                                        (Slice #34.02, review round)
+   *
+   * A parameter is not the only way an origin could reach that insert. `origin`
+   * could be added to `PropertyCreate` — a DIFFERENT file, derived from
+   * `createInsertSchema(property)` — and read off `propFields`, with the pinned
+   * literal kept in an `else`. Nothing above checks the create input's shape,
+   * and the comment beside the write claims it. So it is checked here, at
+   * runtime rather than by reading source: the schema must DROP an `origin` a
+   * client sends, which is the property that actually matters.
+   */
+  it("drops an origin a client puts in the property create payload", () => {
+    const parsed = propertyCreateSchema.parse({ nickname: "X", origin: "MANUAL" });
+    expect(parsed).not.toHaveProperty("origin");
   });
 
   /**
@@ -465,6 +553,136 @@ describe("only an import may stamp ai_interpreted_at", () => {
     for (const file of writers) {
       expect(fs.existsSync(path.join(SRC, file))).toBe(true);
       expect(file.startsWith("lib/import/") || file.startsWith("app/admin/import/")).toBe(true);
+    }
+  });
+});
+
+describe("migration_077's two CHECKs are the same decision as the schema unions", () => {
+  /**
+   * ⚠️ **Three tables now write the same two words, and only one of them was
+   * bound to its SQL.   (Slice #34.02)**
+   *
+   * The document-type bind below exists because "the TS value set and the CHECK
+   * constraint are one decision written in two languages, and only a test can
+   * hold them together". #34.02 wrote that decision in four more places —
+   * migration_077's two CHECKs and `schema/index.ts`'s two inline
+   * `$type<"MANUAL" | "IMPORT">()` unions — plus two more in
+   * `supabase_repair_missing_tables.sql`, which is the copy nothing executes on
+   * a migrated database (its `IF EXISTS (… conname …)` guard short-circuits),
+   * so a repair file with a DIFFERENT value set would diff clean and ship.
+   * All six are bound here.
+   */
+  /**
+   * ⚠️ **THE IMPORTED PRODUCTION CONSTANT, NEVER A LOCAL COPY, and a review
+   * round found this file breaking its own thesis.** The first version declared
+   * `const ORIGIN_VALUES = ["MANUAL", "IMPORT"]` here — a fourth home for the
+   * decision, inside the file whose entire argument is that there must be one.
+   * Add a third origin and the 069 block below would go red (correct) while
+   * these went green against a stale literal.
+   */
+  const ORIGIN_VALUES = [...DOCUMENT_TYPE_ORIGINS];
+
+  /**
+   * ⚠️ **COMMENTS ARE STRIPPED BEFORE EVERY SCAN BELOW.** This file already
+   * wrote the rule down once — "a pin that a comment can satisfy is not a pin"
+   * — and a review round watched the hole reopen here: the first version of the
+   * union check counted `/\$type<…>\(\)/` matches across the whole schema and
+   * got FOUR, the fourth being prose in a comment that quotes the syntax. It
+   * survived only because that one comment happened not to contain the import
+   * word.
+   *
+   * ⚠️ **The stripping is now PROPHYLACTIC, and saying so is the point.** The
+   * counts became per-table slices (below), and no comment in either SQL file
+   * quotes `CHECK (origin IN (…))` or the `ADD COLUMN` line today — measured:
+   * every assertion here returns the same result stripped and unstripped. The
+   * reason to keep it is that all three `origin` columns' comments already
+   * discuss `$type` in prose, and a future one quoting the whole
+   * `origin: text("origin").$type<…>()` line INSIDE a `pgTable` block would
+   * satisfy the slice regex. An earlier draft of this paragraph claimed the SQL
+   * headers already carried the pattern; they do not, and a fabricated premise
+   * in this file of all files is worse than none.
+   */
+  const stripSqlComments = (sql: string): string =>
+    sql.split("\n").filter((l) => !/^\s*--/.test(l)).join("\n");
+  const stripTsComments = (src: string): string =>
+    src.replace(/\/\*[\s\S]*?\*\//g, "").split("\n").filter((l) => !/^\s*\/\//.test(l)).join("\n");
+
+  const read = (rel: string): string => fs.readFileSync(path.join(process.cwd(), rel), "utf8");
+  const valuesOf = (list: string): string[] =>
+    list.split(",").map((v) => v.trim().replace(/^'|'$/g, "")).filter(Boolean);
+
+  /**
+   * ⚠️ **ANCHORED TO ITS TABLE, NOT COUNTED.** `expect(checks.length).toBe(2)`
+   * passes if `chk_li_origin` were attached to `lookup_citizenship` instead of
+   * `lookup_institution` — and it goes red the day a FOURTH lookup table
+   * legitimately gets the column, which is a describe named after
+   * migration_077 failing because migration_081 touched something else. Naming
+   * the table in the pattern removes both.
+   */
+  const checkOn = (sql: string, table: string, constraint: string): string[] | null => {
+    const re = new RegExp(
+      `ALTER TABLE ${table}\\s+ADD CONSTRAINT ${constraint} CHECK \\(origin IN \\(([^)]*)\\)\\)`,
+    );
+    const m = re.exec(sql);
+    return m ? valuesOf(m[1]) : null;
+  };
+
+  it("migration_077 constrains each lookup table by name", () => {
+    const sql = stripSqlComments(read("src/db/migration_077_reference_data_origin.sql"));
+    expect(checkOn(sql, "lookup_tarla", "chk_lt_origin")).toEqual(ORIGIN_VALUES);
+    expect(checkOn(sql, "lookup_institution", "chk_li_origin")).toEqual(ORIGIN_VALUES);
+  });
+
+  it("the Supabase repair file agrees, on the same tables", () => {
+    // ⚠️ **The copy with the weakest guard over it.** Verify-Rebuild step 8
+    // builds a FULLY MIGRATED database, so the `IF EXISTS (… conname …)` guard
+    // short-circuits and these two ADD CONSTRAINTs never execute there — a
+    // repair file with a different value set would diff clean and ship. (The
+    // ALTERs and UPDATEs above them do run, as no-ops.)
+    const sql = stripSqlComments(read("src/db/supabase_repair_missing_tables.sql"));
+    expect(checkOn(sql, "lookup_tarla", "chk_lt_origin")).toEqual(ORIGIN_VALUES);
+    expect(checkOn(sql, "lookup_institution", "chk_li_origin")).toEqual(ORIGIN_VALUES);
+    expect(checkOn(sql, "lookup_document_type", "chk_ldt_origin")).toEqual(ORIGIN_VALUES);
+  });
+
+  it("every column that gains origin defaults to the value an unstated one means", () => {
+    // Both files, and per table — a DEFAULT of 'IMPORT' in the repair file
+    // would otherwise diff clean, which is finding 7 of the same round.
+    //
+    // ⚠️ The subject is carried into the expectation, this file's own
+    // convention: a bare `expect(true).toBe(false)` here would name neither of
+    // the two files nor either of the two tables, and cost a round to place.
+    for (const file of [
+      "src/db/migration_077_reference_data_origin.sql",
+      "src/db/supabase_repair_missing_tables.sql",
+    ]) {
+      const sql = stripSqlComments(read(file));
+      for (const table of ["lookup_tarla", "lookup_institution"]) {
+        const found = new RegExp(
+          `ALTER TABLE ${table}\\s+ADD COLUMN IF NOT EXISTS origin text NOT NULL DEFAULT '${DOCUMENT_TYPE_ORIGINS[0]}'`,
+        ).test(sql);
+        expect([file, table, found]).toEqual([file, table, true]);
+      }
+    }
+  });
+
+  it("the drizzle union on each table spells the same values, in the same order", () => {
+    const schema = stripTsComments(read("src/db/schema/index.ts"));
+    for (const table of ["lookupDocumentType", "lookupTarla", "lookupInstitution"]) {
+      // Slice the table's own pgTable block, so a union on a different table
+      // can neither satisfy nor break this. The subject rides along in every
+      // expectation, so a red names which of the three it was.
+      const start = schema.indexOf(`export const ${table} = pgTable(`);
+      expect([table, start > -1]).toEqual([table, true]);
+      const end = schema.indexOf("\n});", start);
+      expect([table, end > start]).toEqual([table, true]);
+      const block = schema.slice(start, end);
+      const m = /origin: text\("origin"\)\.\$type<([^>]*)>\(\)/.exec(block);
+      expect([table, m !== null]).toEqual([table, true]);
+      expect([
+        table,
+        (m?.[1] ?? "").split("|").map((v) => v.trim().replace(/^"|"$/g, "")),
+      ]).toEqual([table, ORIGIN_VALUES]);
     }
   });
 });

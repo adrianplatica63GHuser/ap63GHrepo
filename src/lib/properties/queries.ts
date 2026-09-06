@@ -691,6 +691,68 @@ export async function createPropertyIn(
     // Auto-seed lookup_tarla: if the imported tarla value (e.g. "47/2") is not
     // already in the reference table, add it so it appears in the form dropdown.
     // Idempotent — skipped when the indicativ already exists.
+    //
+    // ── Slice #34.02: the row says a machine chose the name ──────────────────
+    //
+    // ⚠️ **THE ORIGIN BELOW IS A PROPERTY OF THIS WRITE SITE, NOT A PARAMETER,
+    // AND THAT IS THE WHOLE SAFETY ARGUMENT.**
+    // `lookup_document_type.origin` — the column this one is copied from —
+    // takes its value from the REQUEST BODY (`isDocumentTypeOrigin(data.origin)`
+    // in src/lib/admin/value-lists/queries.ts), so a client that posts an
+    // origin is believed, and a row a machine invented can claim a person typed
+    // it. Here there is nothing to claim: this function takes no origin
+    // argument, reads none off `input`, and its five callers cannot express
+    // one. A sixth caller cannot forget it either.
+    //
+    // ⚠️ **"Reads no payload" would be too strong and this paragraph is the
+    // wrong place to be imprecise:** `indicativ` below IS
+    // `propFields.tarlaSola`, a string straight off the request body. The VALUE
+    // is the client's; the ORIGIN never is. That distinction is the entire
+    // difference between this write site and the one it is copied from.
+    //
+    // ⚠️ **The literal is deliberately not spelled in this comment.**
+    // `document-type-origin-single-source.test.ts` finds writers by scanning
+    // production files for the key-colon-value pattern and does not strip
+    // comments, so a comment quoting that pattern would keep the two-writer
+    // assertion green after somebody deleted the real write. This paragraph
+    // therefore describes it instead of spelling it.
+    //
+    // ⚠️ **AND IT IS UNCONDITIONAL, BECAUSE EVERY PATH THAT REACHES THIS LINE
+    // IS AN IMPORT.** #34.02 checked all five callers of
+    // `createProperty`/`createPropertyIn`:
+    //
+    //   /api/documents/[id]/process   tarla parsed out of a FOLDER NAME
+    //   import-property.ts            the same value, via
+    //                                 `ensurePropertyForFolder`
+    //   /api/calculation/commit ×2    pass no `tarlaSola` at all — they cannot
+    //                                 reach this branch
+    //   POST /api/properties          TWO clients, and neither can send an
+    //                                 unlisted code. `property-form.tsx`'s
+    //                                 tarla field is a SelectField over THIS
+    //                                 TABLE (#18.16.VL), so a person can only
+    //                                 pick a code that is already a row and the
+    //                                 existence check above never falls
+    //                                 through; `add-property-dialog.tsx` builds
+    //                                 its payload key by key and never sets
+    //                                 `tarlaSola` at all. (A review round asked
+    //                                 whether there was a second client. There
+    //                                 is, and the answer survives it.)
+    //
+    // So the case the slice asked about — "a property typed by hand also seeds
+    // a code" — is unreachable through the UI. What is left is a raw POST
+    // carrying an unlisted string, and a payload is not a person. That keeps
+    // #29.06's rule intact one table over: **origin says WHO CHOSE THE NAME.**
+    // A machine parsed "47/2" out of a directory listing, so the machine word;
+    // a person typing it into Indicative Tarla gets MANUAL from the column
+    // DEFAULT.
+    //
+    // ⚠️ **The Add-Property claim is one absent prop deep, not structural.**
+    // That field carries `allowUnlistedValue`, and create mode is safe only
+    // because `new-property-shell.tsx` renders the form with no
+    // `initialValues`; `tarlaSola` is validated against this table nowhere. A
+    // create-mode prefill would make that form a writer of import-origin rows
+    // for values a person chose. Full argument in
+    // src/db/migration_077_reference_data_origin.sql.
     if (propFields.tarlaSola) {
       const existing = await tx
         .select({ id: lookupTarla.id })
@@ -698,7 +760,9 @@ export async function createPropertyIn(
         .where(eq(lookupTarla.indicativ, propFields.tarlaSola))
         .limit(1);
       if (existing.length === 0) {
-        await tx.insert(lookupTarla).values({ indicativ: propFields.tarlaSola });
+        await tx
+          .insert(lookupTarla)
+          .values({ indicativ: propFields.tarlaSola, origin: "IMPORT" });
       }
     }
 
