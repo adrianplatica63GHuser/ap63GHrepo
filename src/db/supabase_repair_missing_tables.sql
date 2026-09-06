@@ -18,17 +18,23 @@
 --   is dropped. Running it against an already-correct database is a no-op that
 --   reports "0 missing". Safe to run on production with live data.
 --
---   TWO STATEMENTS ARE NOT PURELY ADDITIVE, and they are named here rather
---   than left for a reader to discover (Slice #26.12 review):
---     * `UPDATE lookup_document_type SET origin = 'MANUAL' WHERE origin IS NULL`
---       writes data. It touches ONLY rows whose origin is NULL, which the
---       application already reads as MANUAL, so it changes no behaviour - but
---       it is a write, and this file used to promise there were none.
---     * `ALTER TABLE lookup_document_type ALTER COLUMN origin SET NOT NULL`
---       takes ACCESS EXCLUSIVE for the length of a full-table scan. On a
---       lookup table of a few dozen rows that is immeasurable; on a large
+--   SIX STATEMENTS ARE NOT PURELY ADDITIVE, and they are named here rather
+--   than left for a reader to discover (Slice #26.12 review; extended by
+--   #34.02, which added four more and was told so by an adversarial round --
+--   the count in this paragraph is the thing that goes stale):
+--     * `UPDATE <t> SET origin = 'MANUAL' WHERE origin IS NULL`, on
+--       lookup_document_type, lookup_tarla and lookup_institution. It writes
+--       data. It touches ONLY rows whose origin is NULL, which the application
+--       already reads as MANUAL, so it changes no behaviour - but it is a
+--       write, and this file used to promise there were none.
+--     * `ALTER TABLE <t> ALTER COLUMN origin SET NOT NULL`, on the same three.
+--       Each takes ACCESS EXCLUSIVE for the length of a full-table scan. On
+--       lookup tables of a few dozen rows that is immeasurable; on a large
 --       table it would not be.
---   Anything added here later should hold to "additive" unless it says why not.
+--   Anything added here later should hold to "additive" unless it says why not,
+--   AND should update this paragraph -- a count that is wrong is worse than no
+--   count, because this is the paragraph an operator reads before running the
+--   file against production.
 --
 -- HOW TO APPLY
 --   Supabase : paste this whole file into the SQL Editor and run.
@@ -626,6 +632,86 @@ END $$;
 -- of the output, is told everything is fine 150 lines after being told it is
 -- not. (Slice #26.12 review round 3.)
 
+-- migration_077 -- where a reference value came from (Slice #34.02)
+--
+-- The same column on two more lookup tables, and it is here for the reason the
+-- header 60 lines up gives in as many words: a column added by a migration has
+-- to be added to this file BY HAND, every time, because Verify-Rebuild's step 8
+-- is structurally blind to a column on a table it never drops. Missing it costs
+-- more here than it did for document types, because drizzle names every column
+-- from `src/db/schema/index.ts` in every statement it builds -- so on a project
+-- brought up without these two lines, `column "origin" does not exist` fires at
+-- BOTH value-list reads (src/lib/admin/value-lists/queries.ts:216 and :257),
+-- which is the "Indicative Tarla" modal, the "Institutii" modal, the tarla
+-- dropdown on both Property forms and the institution dropdown on the Document
+-- form; at the POST and PUT behind those modals; and at the tarla auto-seed's
+-- own INSERT (src/lib/properties/queries.ts), which aborts the whole
+-- createPropertyIn transaction -- so an import fails on a NEW tarla code and
+-- succeeds on a re-run, which is the least readable failure of the set.
+--
+-- NOT NULL DEFAULT fills existing rows in the same statement; there is no
+-- backfill, by design (see migration_077).
+ALTER TABLE lookup_tarla
+  ADD COLUMN IF NOT EXISTS origin text NOT NULL DEFAULT 'MANUAL';
+
+ALTER TABLE lookup_institution
+  ADD COLUMN IF NOT EXISTS origin text NOT NULL DEFAULT 'MANUAL';
+
+-- ⚠️ ADD COLUMN IF NOT EXISTS is a complete no-op when the column already
+-- exists, INCLUDING as a nullable column with no default -- so the three
+-- properties are asserted separately, exactly as for lookup_document_type
+-- above, or a half-created column never converges and its NULLs then block the
+-- CHECKs below on every future run. All six statements are idempotent.
+UPDATE lookup_tarla       SET origin = 'MANUAL' WHERE origin IS NULL;
+ALTER TABLE lookup_tarla       ALTER COLUMN origin SET DEFAULT 'MANUAL';
+ALTER TABLE lookup_tarla       ALTER COLUMN origin SET NOT NULL;
+UPDATE lookup_institution SET origin = 'MANUAL' WHERE origin IS NULL;
+ALTER TABLE lookup_institution ALTER COLUMN origin SET DEFAULT 'MANUAL';
+ALTER TABLE lookup_institution ALTER COLUMN origin SET NOT NULL;
+
+DO $$
+DECLARE
+  bad integer;
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'chk_lt_origin' AND conrelid = 'lookup_tarla'::regclass
+  ) THEN
+    RAISE NOTICE 'chk_lt_origin already present -- left untouched.';
+  ELSE
+    SELECT count(*) INTO bad
+      FROM lookup_tarla
+     WHERE origin IS NULL OR origin NOT IN ('MANUAL', 'IMPORT');
+    IF bad > 0 THEN
+      RAISE WARNING 'chk_lt_origin NOT added: % row(s) hold a value outside '
+                    '(MANUAL, IMPORT). Fix those rows and re-run.', bad;
+    ELSE
+      ALTER TABLE lookup_tarla
+        ADD CONSTRAINT chk_lt_origin CHECK (origin IN ('MANUAL', 'IMPORT'));
+      RAISE NOTICE 'chk_lt_origin added.';
+    END IF;
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'chk_li_origin' AND conrelid = 'lookup_institution'::regclass
+  ) THEN
+    RAISE NOTICE 'chk_li_origin already present -- left untouched.';
+  ELSE
+    SELECT count(*) INTO bad
+      FROM lookup_institution
+     WHERE origin IS NULL OR origin NOT IN ('MANUAL', 'IMPORT');
+    IF bad > 0 THEN
+      RAISE WARNING 'chk_li_origin NOT added: % row(s) hold a value outside '
+                    '(MANUAL, IMPORT). Fix those rows and re-run.', bad;
+    ELSE
+      ALTER TABLE lookup_institution
+        ADD CONSTRAINT chk_li_origin CHECK (origin IN ('MANUAL', 'IMPORT'));
+      RAISE NOTICE 'chk_li_origin added.';
+    END IF;
+  END IF;
+END $$;
+
 -- migration_057 / migration_070 -- soft-delete came and went.
 --
 -- This block used to ADD deleted_at to the 13 lookup / reference tables.
@@ -814,12 +900,58 @@ BEGIN
     faults := array_append(faults, 'document.import_title (column missing)');
   END IF;
 
+  -- Slice #34.02: the same two questions for the two lookup tables that gained
+  -- `origin` in migration_077, and they are here for the reason the block above
+  -- gives rather than for symmetry. Drizzle names every column from
+  -- `src/db/schema/index.ts` in every statement it builds, so a project missing
+  -- either of these answers 42703 from BOTH value-list reads (the "Indicative
+  -- Tarla" and "Institutii" modals, the tarla dropdown on both Property forms,
+  -- the institution dropdown on the Document form), from the POST and PUT
+  -- behind those modals, and from the tarla auto-seed's own INSERT -- which
+  -- aborts the whole createPropertyIn transaction, so an import fails on a NEW
+  -- tarla code and succeeds on a re-run.
+  --
+  -- ⚠️ **Without these four checks the file reports POST-FLIGHT OK on exactly
+  -- that database.** HOW TO APPLY above runs `psql -f` with no ON_ERROR_STOP,
+  -- so a failed ALTER does not stop the run, and the DO block that adds the two
+  -- CHECKs then dies on `'lookup_tarla'::regclass` and does not stop it either
+  -- -- two errors scrolled past, and the LAST line still says OK, exit 0. An
+  -- adversarial round found the #34.02 block had opted out of the very section
+  -- the #26.12 block's own trailing comment says exists for this.
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name   = 'lookup_tarla'
+      AND column_name  = 'origin'
+  ) THEN
+    faults := array_append(faults, 'lookup_tarla.origin (column missing)');
+  ELSIF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'chk_lt_origin' AND conrelid = 'lookup_tarla'::regclass
+  ) THEN
+    RAISE WARNING 'chk_lt_origin is absent -- a row holds an origin outside (MANUAL, IMPORT). Find it with: SELECT id, indicativ, origin FROM lookup_tarla WHERE origin NOT IN (''MANUAL'', ''IMPORT'');';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name   = 'lookup_institution'
+      AND column_name  = 'origin'
+  ) THEN
+    faults := array_append(faults, 'lookup_institution.origin (column missing)');
+  ELSIF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'chk_li_origin' AND conrelid = 'lookup_institution'::regclass
+  ) THEN
+    RAISE WARNING 'chk_li_origin is absent -- a row holds an origin outside (MANUAL, IMPORT). Find it with: SELECT id, name, origin FROM lookup_institution WHERE origin NOT IN (''MANUAL'', ''IMPORT'');';
+  END IF;
+
   IF array_length(missing, 1) IS NOT NULL THEN
     faults := array_append(faults, 'tables: ' || array_to_string(missing, ', '));
   END IF;
 
   IF array_length(faults, 1) IS NULL THEN
-    RAISE NOTICE 'POST-FLIGHT OK: all 13 tables present, lookup_document_type.origin and document.import_title present.';
+    RAISE NOTICE 'POST-FLIGHT OK: all 13 tables present; lookup_document_type.origin, lookup_tarla.origin, lookup_institution.origin and document.import_title present.';
   ELSE
     RAISE EXCEPTION 'POST-FLIGHT FAILED: %', array_to_string(faults, ' | ');
   END IF;

@@ -637,6 +637,56 @@ export const lookupTarla = pgTable("lookup_tarla", {
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  // Slice #34.02: who chose this code — 'MANUAL' (a PERSON typed it into the
+  // Indicative Tarla list) or 'IMPORT' (a MACHINE parsed it out of a folder
+  // name and the auto-seed in `createPropertyIn` added it so the dropdown would
+  // offer it). CHECK constraint in migration_077_reference_data_origin.sql;
+  // NOT NULL DEFAULT 'MANUAL', so an insert that says nothing is a hand-added
+  // code and only the auto-seed has to speak up.
+  //
+  // ⚠️ **This is the ONE column on this table the server decides and no
+  // payload may state.** `lookup_document_type.origin` reads its value off the
+  // request body, which lets a client claim a row was typed by a person; here
+  // the literal 'IMPORT' will be written INSIDE the auto-seed
+  // (src/lib/properties/queries.ts), as a property of that write site rather
+  // than a parameter its five callers could pass or forget.
+  //
+  // ⚠️ **PENDING, NOT DONE — this is a migration slice, which stops here and
+  // waits.** The seed's INSERT still says `.values({ indicativ })` and
+  // therefore still takes the DEFAULT, so until the code half lands nothing
+  // writes 'IMPORT' to this table and every row reads MANUAL.
+  //
+  // ⚠️ **And when that lands, the create path for this list must still not
+  // start reading `origin` off a body** — that is the weakness in
+  // migration_069 this column is copied from, not a shape to copy.
+  //
+  // ⚠️ **The rename guard is ONE layer here, not two.**
+  // `stripDocumentTypeOrigin` is called from the `document-types` branch of
+  // `updateValue` alone; the `tarla` and `institutions` branches are a bare
+  // `.set(data)`. What holds the property today is Zod — the update schemas for
+  // both lists are plain `z.object`, so an unknown `origin` never reaches the
+  // query layer. Extending the explicit strip belongs with the code half of
+  // #34.02; until then a non-HTTP caller could re-origin a row.
+  //
+  // ⚠️ **Only an import can reach the auto-seed, which is why 'IMPORT' is the
+  // honest word for a folder name.** The Add Property form's tarla field is a
+  // SelectField over this table (#18.16.VL), so there is nothing to type into;
+  // both calculation-commit callers pass no `tarlaSola` at all. What is left is
+  // the scan in /api/documents/[id]/process and `ensurePropertyForFolder` —
+  // both an import reading a directory listing.
+  //
+  // ⚠️ **That is one absent prop deep, not structural.** The field carries
+  // `allowUnlistedValue`; create mode is safe only because
+  // `new-property-shell.tsx` renders the form with no `initialValues`, and
+  // `tarlaSola` is validated against this table nowhere. A create-mode prefill
+  // would turn that form into a writer of IMPORT rows for values a person
+  // chose. Full argument in the migration header.
+  //
+  // `$type` is a plain inline union, not an import, for the reason
+  // `lookupDocumentType.origin` states: no import means no circular-import
+  // risk, and a stray value becomes a compile error at every drizzle write site
+  // rather than a CHECK violation at runtime.
+  origin: text("origin").$type<"MANUAL" | "IMPORT">().notNull().default("MANUAL"),
 });
 
 export const lookupUseCategory = pgTable("lookup_use_category", {
@@ -741,6 +791,26 @@ export const lookupInstitution = pgTable("lookup_institution", {
   sortOrder:       integer("sort_order").notNull().default(0),
   createdAt:       timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt:       timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  // Slice #34.02: the same column as `lookupTarla.origin` above, on the list
+  // beside it in the same modal. CHECK constraint in
+  // migration_077_reference_data_origin.sql.
+  //
+  // ⚠️ **Nothing writes 'IMPORT' here today, and that is the answer rather
+  // than a gap.** This table is written only by the seed and by an
+  // administrator: `src/lib/import/id-card.ts` deliberately does NOT mint an
+  // institution from a model's reading of "Emisă de", and #34.02 keeps that
+  // refusal — what it sets out to replace is the alternative that reading gets
+  // today, which is a free-text `subject` and no row at all. ⚠️ That
+  // replacement is NOT done yet: `id-card.ts` is untouched and still writes the
+  // authority to `subject`. So every row reads MANUAL. The column is here because the status word has to be answerable on
+  // both lists from one component, and a list with no answer reads as one whose
+  // answer was lost.
+  //
+  // Unlike tarla, this is a real foreign key — `document.institutionId`,
+  // ON DELETE SET NULL — and no creation path writes past the dropdown into
+  // it. That asymmetry is the point: tarla is the list an import can extend
+  // without anyone looking.
+  origin: text("origin").$type<"MANUAL" | "IMPORT">().notNull().default("MANUAL"),
 });
 
 // ── Property ↔ Person Role whitelist ────────────────────────────────────────
