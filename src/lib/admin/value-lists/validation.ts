@@ -1,7 +1,8 @@
 /**
  * Zod input schemas for the Value Lists API.
  * One schema per list (create = update shape; all payload fields required
- * or optional as the domain dictates; sortOrder always optional).
+ * or optional as the domain dictates; sortOrder always optional on the ten
+ * lists that have it — `person-roles` has none at all since Slice #34.01).
  */
 
 import { z } from "zod/v4";
@@ -92,20 +93,64 @@ export const personTypeSchema = z.object({
   sortOrder,
 });
 
+/**
+ * ⚠️ **NO `sortOrder`, AND THAT IS THE POINT.**              (Slice #34.01)
+ *
+ * `lookup_person_role.sort_order` was written on every create and read by
+ * nothing a user ever sees. All eight `ORDER BY`s that put person roles on a
+ * screen sort by `name`, `listValues` in ./queries.ts included.
+ *
+ * There is a ninth reader and it does not count: `scripts/supabase-sync.ts`
+ * lists `["lookup_person_role", "sort_order"]` in `SIMPLE_TABLES`, so its
+ * full-reset copy SELECTs in that order. It is the order rows are INSERTed
+ * in, and identity there is not positional — `id` is in `REGENERATED_COLUMNS`,
+ * so the target mints its own, and the three junction syncs resolve by NAME —
+ * so it decides nothing about what Supabase ends up holding, and it would read
+ * the same column whatever this schema wrote. Named here so the next person to
+ * grep `sort_order` does not have to re-derive that.
+ *
+ * Slice #34.01 had to resolve it one way rather than leave it
+ * written-and-unread, and reading it was the worse half. `LIST_META` exposes
+ * no `sortOrder` field, so nothing on the admin form can set one and every
+ * role added since the seed sits at `0` — reading the column would pin all of
+ * them above all 56 seeded rows. That is the defect #34.01 removed from the
+ * other seven lists, reintroduced here.
+ *
+ * ⚠️ **AND THE SEEDED 1..N IS NOT A CURATED DOMAIN ORDER — DO NOT "RESTORE"
+ * IT.** It is a numbering of the seed list in the order it happened to be
+ * written (src/db/sync-reference-data.sql), which is near-alphabetical but not
+ * the order the screen sorts by: measured, 13 of the 56 seeded names land in a
+ * different position under a Romanian collation than under their own
+ * `sort_order`. So reading the column would not leave the seeded rows alone
+ * either — it would reshuffle a seventh of them into an order nobody chose.
+ *
+ * So the write stops. Zod strips unknown keys, so a payload that still carries
+ * `sortOrder` parses without it, `createValue`'s `.values(data)` does not name
+ * the column and it takes its `DEFAULT 0`; `updateValue`'s full-replace
+ * `.set(parsed.data)` does not name it either, so an existing row keeps the
+ * seeded value it has. Nothing on any screen moves.
+ *
+ * The column stays in the schema and in the seed: dropping it is a migration
+ * for no benefit, and the two relationship-role lists — the same table, column
+ * for column — really do read theirs.
+ */
 export const personRoleSchema = z.object({
   name:        z.string().min(1, "required"),
   description: z.string().nullish(),
-  sortOrder,
 });
 
 /**
  * Both relationship-role lists.                                (Slice #29.13)
  *
- * The same three fields as `personRoleSchema` — because
- * `lookup_property_property_role` and `lookup_document_document_role` are the
- * same table as `lookup_person_role`, column for column. ONE schema shared by
- * the two rather than two identical copies: they are edited by one generic
- * form and there is no field either could grow that the other would not.
+ * The same two fields as `personRoleSchema`, PLUS the `sortOrder` its lists
+ * actually read — because `lookup_property_property_role` and
+ * `lookup_document_document_role` are the same table as `lookup_person_role`,
+ * column for column, and the only thing that differs is what reads the
+ * columns: these two order by `sort_order, name`, `person-roles` orders by
+ * name alone (Slice #34.01, which is why its schema lost the field and this
+ * one keeps it). ONE schema shared by the two rather than two identical
+ * copies: they are edited by one generic form and there is no field either
+ * could grow that the other would not.
  *
  * It replaces the two hand-written zod objects that lived in the deleted
  * `[id]` routes, which had `.max(200)` on the name and `.max(500)` on the
@@ -312,12 +357,14 @@ export function sanitizeDocumentTypeTemplateFields<T extends Record<string, unkn
  * PUT bodies. Identical to LIST_SCHEMAS except for the two things a PUT must
  * not say: a column that may be set at creation and never afterwards
  * (`origin`, document-types only), and `sortOrder`, which is optional-without-
- * a-default on EVERY list — see `sortOrderOnUpdate` for the rename it was
- * silently resetting.
+ * a-default on every list THAT HAS ONE — see `sortOrderOnUpdate` for the
+ * rename it was silently resetting. Since Slice #34.01 `person-roles` has
+ * none at all, on either side, so its entry is the bare schema.
  *
  * ⚠️ **Written out per list rather than spread-then-overridden.** The spread
  * was there so a list added to `VALID_LIST_KEYS` got its update schema for
- * free; the `sortOrder` fix means every entry now needs the same `.extend`, and
+ * free; the `sortOrder` fix means nearly every entry needs the same `.extend`
+ * and one deliberately does not (`person-roles`, Slice #34.01), and
  * mapping over `LIST_SCHEMAS` to apply it would need a cast, because that map
  * is typed `z.ZodType<any>` and `.extend` lives on `z.ZodObject`. A new list
  * still fails loudly — `Record<ListKey, …>` will not compile with a key
@@ -329,7 +376,9 @@ export const LIST_UPDATE_SCHEMAS: Record<ListKey, z.ZodType<any>> = {
   "tarla":                 tarlaSchema.extend({ sortOrder: sortOrderOnUpdate }),
   "use-categories":        useCategorySchema.extend({ sortOrder: sortOrderOnUpdate }),
   "person-types":          personTypeSchema.extend({ sortOrder: sortOrderOnUpdate }),
-  "person-roles":          personRoleSchema.extend({ sortOrder: sortOrderOnUpdate }),
+  // No `.extend` — `personRoleSchema` carries no `sortOrder` to override, and
+  // a PUT must not reintroduce one. See the schema's header. (Slice #34.01)
+  "person-roles":          personRoleSchema,
   "citizenships":          citizenshipSchema.extend({ sortOrder: sortOrderOnUpdate }),
   "judicial-person-types": judicialPersonTypeSchema.extend({ sortOrder: sortOrderOnUpdate }),
   // Already carries `sortOrderOnUpdate` — the omit-plus-extend is on the

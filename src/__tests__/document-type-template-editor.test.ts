@@ -68,11 +68,49 @@ function field(over: Partial<DocumentTemplateField> = {}): DocumentTemplateField
   };
 }
 
+/**
+ * ⚠️ **TEN LISTS, NOT ELEVEN — `person-roles` HAS NO `sortOrder` AT ALL SINCE
+ * SLICE #34.01, ON EITHER SIDE.**
+ *
+ * Its column was written on every save and read by no `ORDER BY` that reaches
+ * a screen (see the header above `personRoleSchema` for the one that does not
+ * count), so
+ * #34.01 had to resolve it one way rather than leave it written-and-unread and
+ * stopped the write. The loops that assert a sortOrder COMES OUT are
+ * exhaustive over the lists that have the field — a twelfth list cannot skip
+ * the guard by being forgotten — and the list that does not is pinned by its
+ * own test rather than dropped in silence.
+ *
+ * Two loops deliberately stay over all ELEVEN: "leaves sortOrder out of an
+ * update that does not mention it" and "treats an explicit null sort order as
+ * no sort order". Both assert that NO number comes out, which must hold for
+ * `person-roles` too — it just holds there because zod strips an unknown key
+ * rather than because `sortOrderOnUpdate` ran. Same outcome, different reason,
+ * and the outcome is what Drizzle's `mapUpdateSet` looks at.
+ *
+ * See `personRoleSchema` in @/lib/admin/value-lists/validation.ts.
+ */
+const LISTS_WITH_SORT_ORDER = VALID_LIST_KEYS.filter((k) => k !== "person-roles");
+
 describe("a rename cannot reset a sort order", () => {
-  it("defaults sortOrder to 0 on a create, for every list", () => {
-    for (const key of VALID_LIST_KEYS) {
+  it("defaults sortOrder to 0 on a create, for every list that has one", () => {
+    for (const key of LISTS_WITH_SORT_ORDER) {
       const parsed = LIST_SCHEMAS[key].parse(MINIMAL);
       expect([key, parsed.sortOrder]).toEqual([key, 0]);
+    }
+  });
+
+  /**
+   * The one list #34.01 took the field away from. Asserted from BOTH
+   * directions: nothing comes out, and nothing gets in either — a payload that
+   * still sends a sort order is stripped rather than accepted, so no admin
+   * write can put a number back into a column that nothing reads.
+   */
+  it("person-roles has no sortOrder on either side, sent or not", () => {
+    for (const schema of [LIST_SCHEMAS, LIST_UPDATE_SCHEMAS]) {
+      expect(Object.keys(schema["person-roles"].parse(MINIMAL))).toEqual(["name"]);
+      expect(Object.keys(schema["person-roles"].parse({ ...MINIMAL, sortOrder: 7 })))
+        .toEqual(["name"]);
     }
   });
 
@@ -91,7 +129,7 @@ describe("a rename cannot reset a sort order", () => {
   });
 
   it("still writes a sort order that IS sent", () => {
-    for (const key of VALID_LIST_KEYS) {
+    for (const key of LISTS_WITH_SORT_ORDER) {
       const parsed = LIST_UPDATE_SCHEMAS[key].parse({ ...MINIMAL, sortOrder: 7 });
       expect([key, parsed.sortOrder]).toEqual([key, 7]);
     }
@@ -120,7 +158,7 @@ describe("a rename cannot reset a sort order", () => {
   });
 
   it("still rejects a sort order that is neither absent nor a valid number", () => {
-    for (const key of VALID_LIST_KEYS) {
+    for (const key of LISTS_WITH_SORT_ORDER) {
       expect([key, LIST_UPDATE_SCHEMAS[key].safeParse({ ...MINIMAL, sortOrder: -1 }).success])
         .toEqual([key, false]);
       expect([key, LIST_UPDATE_SCHEMAS[key].safeParse({ ...MINIMAL, sortOrder: "abc" }).success])
@@ -131,7 +169,7 @@ describe("a rename cannot reset a sort order", () => {
   // The coercion the create side has always done is not lost on the update
   // side: a form value arrives as a string and still becomes a number.
   it("still coerces a numeric string", () => {
-    for (const key of VALID_LIST_KEYS) {
+    for (const key of LISTS_WITH_SORT_ORDER) {
       const parsed = LIST_UPDATE_SCHEMAS[key].parse({ ...MINIMAL, sortOrder: "7" });
       expect([key, parsed.sortOrder]).toEqual([key, 7]);
     }

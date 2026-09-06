@@ -24,6 +24,11 @@
  * entity's own comparison. See ./move-history.ts and the header above
  * `reassignDependents`.
  *
+ * Slice #34.01: every branch of `listValues` now ends its `ORDER BY` on the
+ * list's own required field, so a list reads back in the same order every
+ * time — on every list but `document-types`, whose `name` is not unique even
+ * in practice. See the header above `listValues`.
+ *
  * Create and update still dispatch on the ListKey string via a switch —
  * verbose but fully type-safe within each case. The delete no longer does:
  * it reads its table from the same map the count and the move read.
@@ -132,6 +137,67 @@ async function generateUniquePropertyTypeKey(name: string): Promise<string> {
 
 // ── List ─────────────────────────────────────────────────────────────────────
 
+/**
+ * One list, in a STABLE order.                                 (Slice #34.01)
+ *
+ * ⚠️ **`ORDER BY sort_order` alone is not an order — it is a partial one, and
+ * Postgres is free to break the ties differently on every read.** Nothing in
+ * the admin UI can set `sort_order`: `LIST_META` (./config.ts) exposes no such
+ * field, so the add form never sends one and `validation.ts` defaults it to
+ * `0`. Every row created after the seed therefore ties at zero with every
+ * other row created after the seed, and seven of the eleven lists had nothing
+ * after that to separate them. On „Indicative Tarla" — the one list an
+ * object-creation path writes to, from `createPropertyIn` — that is not a
+ * corner case but the normal state: every auto-seeded code lands at zero, so
+ * at fifty codes the list was fifty rows in an order that changed between page
+ * loads.
+ *
+ * The fix is a SECOND SORT KEY, not a new input. Each branch below ends on the
+ * list's own required, user-entered field — `name` on ten lists, `indicativ`
+ * on `tarla` — which makes the key total in practice, leaves `sort_order`
+ * doing exactly what it did for the rows that have one, and needs no
+ * migration, no form field and no data change.
+ *
+ * ⚠️ **"IN PRACTICE" IS DOING WORK: NO LOOKUP TABLE HAS A UNIQUE CONSTRAINT ON
+ * ITS DISPLAY FIELD.** Two rows sharing BOTH keys can still swap. On the four
+ * lists whose name is the only column — `use-categories`, `person-types`,
+ * `citizenships`, `judicial-person-types` — that cannot be seen: the two lines
+ * read the same. On the other seven it can, because the modal renders every
+ * `LIST_META` field as a column (`displayFields = meta.fields`,
+ * value-list-modal.tsx), so tied rows visibly exchange places.
+ *
+ * Two of those seven are worse than cosmetic:
+ *   • `document-types`, where duplicate names are documented and EXPECTED —
+ *     only `key` is UNIQUE, and `matchDocumentType` takes the FIRST name match
+ *     (src/lib/documents/resolve-document-type.ts) — so a tie decides which of
+ *     two same-named types an import ADOPTS, not merely where a row sits.
+ *   • `tarla`, where ties at `sort_order = 0` are the normal state rather than
+ *     an edge case, because `createPropertyIn` auto-seeds every code there.
+ * Neither is changed by this slice — document-types is one of the four
+ * branches it does not touch — and both are in the #34.01 handover. A third
+ * key (`id`) is the one-line fix if either bites.
+ *
+ * ⚠️ **THE OTHER FOUR BRANCHES ALREADY HAD A TIEBREAKER AND ARE UNTOUCHED —
+ * AND TWO OF THEM MUST NEVER BE HARMONISED INTO `sort_order, name`.**
+ *   • `person-roles` orders by `name` ALONE. Its `sort_order` reaches no
+ *     screen at all, and its seeded 1..N is a numbering of the seed list
+ *     rather than a curated order — reading it would pin every role added
+ *     since (all of them at zero) above the 56 seeded ones AND reshuffle a
+ *     seventh of those. Slice #34.01 resolved the column the other way
+ *     instead: `personRoleSchema` no longer writes it. The full argument, and
+ *     the one non-screen reader that does not count, are in ./validation.ts.
+ *   • `document-types` pins UNCLASSIFIED first and then orders by `name`. That
+ *     pin is load-bearing: `matchDocumentType` takes the first name match, and
+ *     src/lib/documents/resolve-document-type.ts restates the same clause
+ *     deliberately rather than importing it.
+ *   • the two relationship-role lists were already `sort_order, name` — they
+ *     are the shape the seven above now copy.
+ *
+ * **A twelfth list must end its `ORDER BY` on a required field too.**
+ * `src/__tests__/value-list-ordering.test.ts` reads this function's source and
+ * fails when a branch's last sort term is `sortOrder`, or when it has no
+ * `orderBy` at all.
+ */
 export async function listValues(key: ListKey): Promise<LookupRow[]> {
   switch (key) {
     case "property-types":
@@ -142,25 +208,44 @@ export async function listValues(key: ListKey): Promise<LookupRow[]> {
       // eight lists. The count is now live and generic: see `countDependents`
       // below, called by GET .../[id]/dependents when the dialog opens.
       return db.select().from(lookupPropertyType)
-        .orderBy(asc(lookupPropertyType.sortOrder)) as Promise<LookupRow[]>;
+        .orderBy(
+          asc(lookupPropertyType.sortOrder),
+          asc(lookupPropertyType.name),
+        ) as Promise<LookupRow[]>;
     case "tarla":
       return db.select().from(lookupTarla)
-        .orderBy(asc(lookupTarla.sortOrder)) as Promise<LookupRow[]>;
+        .orderBy(
+          asc(lookupTarla.sortOrder),
+          // `indicativ` rather than `name` — it is this list's required field.
+          asc(lookupTarla.indicativ),
+        ) as Promise<LookupRow[]>;
     case "use-categories":
       return db.select().from(lookupUseCategory)
-        .orderBy(asc(lookupUseCategory.sortOrder)) as Promise<LookupRow[]>;
+        .orderBy(
+          asc(lookupUseCategory.sortOrder),
+          asc(lookupUseCategory.name),
+        ) as Promise<LookupRow[]>;
     case "person-types":
       return db.select().from(lookupPersonType)
-        .orderBy(asc(lookupPersonType.sortOrder)) as Promise<LookupRow[]>;
+        .orderBy(
+          asc(lookupPersonType.sortOrder),
+          asc(lookupPersonType.name),
+        ) as Promise<LookupRow[]>;
     case "person-roles":
       return db.select().from(lookupPersonRole)
         .orderBy(asc(lookupPersonRole.name)) as Promise<LookupRow[]>;
     case "citizenships":
       return db.select().from(lookupCitizenship)
-        .orderBy(asc(lookupCitizenship.sortOrder)) as Promise<LookupRow[]>;
+        .orderBy(
+          asc(lookupCitizenship.sortOrder),
+          asc(lookupCitizenship.name),
+        ) as Promise<LookupRow[]>;
     case "judicial-person-types":
       return db.select().from(lookupJudicialPersonType)
-        .orderBy(asc(lookupJudicialPersonType.sortOrder)) as Promise<LookupRow[]>;
+        .orderBy(
+          asc(lookupJudicialPersonType.sortOrder),
+          asc(lookupJudicialPersonType.name),
+        ) as Promise<LookupRow[]>;
     case "document-types":
       // UNCLASSIFIED (NECLASIFICAT) pinned first; rest alphabetical.
       return db.select().from(lookupDocumentType)
@@ -170,7 +255,10 @@ export async function listValues(key: ListKey): Promise<LookupRow[]> {
         ) as Promise<LookupRow[]>;
     case "institutions":
       return db.select().from(lookupInstitution)
-        .orderBy(asc(lookupInstitution.sortOrder)) as Promise<LookupRow[]>;
+        .orderBy(
+          asc(lookupInstitution.sortOrder),
+          asc(lookupInstitution.name),
+        ) as Promise<LookupRow[]>;
     // Slice #29.13: sort order then name — the ordering their own
     // `listPropertyPropertyRoles` / `listDocumentDocumentRoles` used, kept so
     // the rows do not rearrange themselves the day the modal changes.

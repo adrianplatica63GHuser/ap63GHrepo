@@ -185,7 +185,8 @@ type LockedCreate =
  * The import wizard matches against the list as `GET /api/admin/value-lists/
  * document-types` served it, which is `listValues`' order; this is that same
  * ORDER BY, restated rather than imported because `listValues` returns whole
- * rows for nine different tables and this needs three columns of one. A plain
+ * rows for eleven different tables (nine when this was written; #29.13 brought
+ * the two relationship-role lists in) and this needs three columns of one. A plain
  * `ORDER BY name` would agree with it on every archive except one where a type
  * is NAMED the same as the catch-all — and "except one" is exactly the shape
  * of thing this codebase keeps learning to measure rather than assume.

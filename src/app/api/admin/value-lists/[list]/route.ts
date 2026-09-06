@@ -1,7 +1,10 @@
 /**
  * /api/admin/value-lists/[list]
  *
- * GET  — return all rows for a given lookup table, ordered by sort_order
+ * GET  — return all rows for a given lookup table, in the order `listValues`
+ *         defines: `sort_order` then the list's own required field, except
+ *         `person-roles` (name alone) and `document-types` (UNCLASSIFIED
+ *         pinned first, then name). See `listValues`.      (Slice #34.01)
  * POST — insert a new row; validates body against the per-list Zod schema
  */
 

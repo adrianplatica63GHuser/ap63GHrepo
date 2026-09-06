@@ -331,10 +331,14 @@ describe("a rename cannot re-originate a document type", () => {
    * ⚠️ **Object identity stopped saying anything in Slice #27.03.** This used
    * to assert `LIST_UPDATE_SCHEMAS[key] === LIST_SCHEMAS[key]` for every list
    * but document-types, which held while the update map was a spread with one
-   * override. #27.03 made `sortOrder` optional-without-a-default on EVERY
-   * update schema — a plain rename was silently resetting the column, because
-   * no admin form sends it — so every entry is now a distinct object and the
-   * old assertion would pass for the wrong reason on nine lists.
+   * override. #27.03 made `sortOrder` optional-without-a-default on every
+   * update schema that HAS one — a plain rename was silently resetting the
+   * column, because no admin form sends it — so those entries are each a
+   * distinct object and the old assertion would pass for the wrong reason on
+   * nine lists. (Slice #34.01 took the field off `person-roles` entirely, so
+   * that one entry IS the bare create schema again — the single list where
+   * object identity still holds, and one more reason the old assertion cannot
+   * simply be restored.)
    *
    * What this file is actually about survives unchanged and is asserted
    * behaviourally: document-types is the only list whose update schema drops a
@@ -353,8 +357,15 @@ describe("a rename cannot re-originate a document type", () => {
       );
       // `sortOrder` is absent from every update parse by design; `origin` is
       // absent from document-types' by design. Nothing else may go missing.
+      //
+      // `person-roles` is the one list with nothing to drop: Slice #34.01 took
+      // `sortOrder` off BOTH its schemas, because the column was written on
+      // every save and read by no `ORDER BY` that reaches a screen. Written
+      // as a per-key
+      // expectation rather than an exemption, so that a list which loses the
+      // field by accident still fails here.
       const dropped = createKeys.filter((k) => !updateKeys.includes(k)).sort();
-      expect([key, dropped]).toEqual([key, ["sortOrder"]]);
+      expect([key, dropped]).toEqual([key, key === "person-roles" ? [] : ["sortOrder"]]);
       expect([key, updateKeys.includes("origin")]).toEqual([key, false]);
     }
   });
