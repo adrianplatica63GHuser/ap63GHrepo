@@ -173,13 +173,56 @@ async function reassignRows(
  * associations across the app — so both of those call `qc.invalidateQueries()`
  * with no key at all, and say why where they do it.
  *
- * The rule these keys encode is not obvious: "document-types" and
- * "property-types" are also fetched under a BARE key by consumers outside this
- * screen — the Document form's type dropdown, the sidebar's dynamic Documents
- * section, the Admin Import classify panels, the Property form's type dropdown
- * — whose cached results would otherwise miss the change until staleTime
- * lapsed or the page was reloaded. Two copies drifting is how one of those
- * screens ends up offering a type that no longer exists.
+ * The rule these keys encode is not obvious: some lists are ALSO fetched under
+ * a BARE key by screens this one does not own — some outside Reference Data,
+ * some the sibling panels beside it — whose cached results would otherwise
+ * miss the change until staleTime lapsed or the page was reloaded. Two copies
+ * drifting is how a screen ends up offering a value that no longer exists. The
+ * consumers, named individually so the next reader can check them against the
+ * tree rather than trust this comment:
+ *
+ *   document-types                   documents/list-view.tsx,
+ *                                    documents/_components/document-form.tsx
+ *   institutions                     documents/_components/document-form.tsx
+ *   property-property-roles          properties/[id]/associate-reference/associate-reference-view.tsx
+ *   document-document-roles          documents/[id]/associate-reference/associate-reference-view.tsx
+ *   property-person-roles-whitelist  the three associate-person / associate-property views
+ *   property-person-roles            _components/property-persons-modal.tsx  (a sibling panel)
+ *   person-person-roles              _components/person-person-modal.tsx     (a sibling panel),
+ *                                    natural-persons/[id]/associate-person
+ *   doc-distinct-roles               the two associate-document views
+ *   doc-type-person-roles            _components/document-persons-modal.tsx  (a sibling panel)
+ *
+ * The last five all render `lookup_person_role.name`, which is why one rename
+ * on the master list has to reach all of them. `doc-type-person-roles` is the
+ * one row in this table with TWO joined names — `listDocTypePersonRoles`
+ * selects `documentTypeName` beside `personRoleName` — so it hangs off the
+ * document-types branch as well, and a rename on EITHER list has to reach it.
+ *
+ * ⚠️ **A branch is only worth having if something really fetches that bare
+ * key — AND every bare-key consumer needs a branch. Both halves have been
+ * wrong here at the same time.** Until Slice #33.05 this function invalidated
+ * `["property-types"]`, and the comment that stood here named the Property
+ * form's type dropdown as the reason. It does not fetch that key:
+ * `property-form.tsx` asks for `["value-list", "property-types"]`, which the
+ * unconditional first line already covers, and nothing anywhere fetched the
+ * bare one — so the branch matched nothing for its whole life while reading as
+ * though it were load-bearing. The other half cost the user something:
+ * `["institutions"]` IS fetched bare, with a five-minute staleTime, and had no
+ * branch, so a renamed institution stayed wrong on the document form for five
+ * minutes; and the five person-role keys had no branch either, so a renamed
+ * role went on being offered under its old name for the length of the 30 s
+ * staleTime — the same defect #29.13 fixed for the two relationship lists,
+ * still live on the master list those two were copied from.
+ *
+ * Both directions are pinned by a table in `value-list-dependents.test.ts`,
+ * which fails when a branch names a key no `useQuery` anywhere fetches, when a
+ * listed key loses its invalidation, when an invalidation moves out of the
+ * `listKey ===` block it belongs to, and — because three review rounds each
+ * caught THIS COMMENT naming a screen that does not fetch the key — when any
+ * file named in the table above stops fetching the key beside it. Add to the
+ * table in the same edit as the branch; the test reads the table, so an
+ * unlisted branch fails it too.
  */
 function invalidateListCaches(
   qc: ReturnType<typeof useQueryClient>,
@@ -188,9 +231,42 @@ function invalidateListCaches(
   qc.invalidateQueries({ queryKey: ["value-list", listKey] });
   if (listKey === "document-types") {
     qc.invalidateQueries({ queryKey: ["document-types"] });
+    // …and the sibling panel that prints the type's name beside a role's:
+    // `listDocTypePersonRoles` joins `lookup_document_type.name` into every
+    // row of `["doc-type-person-roles"]`, so a rename here is visible in
+    // „Persoană → Document”, one button down on the same hub. Found by an
+    // adversarial round on #33.05, which pointed out that the slice fixed this
+    // cache for a role rename and left the other join on the same row stale.
+    qc.invalidateQueries({ queryKey: ["doc-type-person-roles"] });
   }
-  if (listKey === "property-types") {
-    qc.invalidateQueries({ queryKey: ["property-types"] });
+  if (listKey === "institutions") {
+    qc.invalidateQueries({ queryKey: ["institutions"] });
+  }
+  // Slice #33.05: the master role list. Renaming a role changes what five other
+  // caches print — three sibling panels in this same screen and the association
+  // views — and each holds its own bare key, so the narrow invalidation has to
+  // name every one or the rename stays invisible there for the 30 s staleTime.
+  //
+  // ⚠️ **This covers the BARE keys only, and that is a scope, not a
+  // guarantee.** `lookup_person_role.name` also reaches the screen through
+  // six per-object keys — `["document-valid-roles", documentId]`,
+  // `["document-persons", documentId]`, `["person-documents", personId]`,
+  // `["person-properties", personId]`, `["person-references", personId]` and
+  // `["property-persons", propertyId]` — and a document type's name reaches
+  // the Documents list through `["documents", "list", …]`. None of them is
+  // matched here, because `["value-list", listKey]` prefix-matches only its
+  // own namespace. Naming them would mean invalidating every document and
+  // every person on one rename. They are left deliberately: the rename can
+  // only be made on this screen, no screen holding one of those keys is
+  // mounted while it happens, and each refetches on its next mount once the
+  // 30 s staleTime has lapsed. Said here rather than left for the next reader
+  // to discover the list is not complete.
+  if (listKey === "person-roles") {
+    qc.invalidateQueries({ queryKey: ["property-person-roles-whitelist"] });
+    qc.invalidateQueries({ queryKey: ["property-person-roles"] });
+    qc.invalidateQueries({ queryKey: ["person-person-roles"] });
+    qc.invalidateQueries({ queryKey: ["doc-distinct-roles"] });
+    qc.invalidateQueries({ queryKey: ["doc-type-person-roles"] });
   }
   // Slice #29.13: the two lists that arrived with this slice are the same case
   // — the Associate-reference screens on both sides fetch them under the bare

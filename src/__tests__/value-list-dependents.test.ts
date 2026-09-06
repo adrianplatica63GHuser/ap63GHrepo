@@ -847,33 +847,269 @@ describe("the sibling panels say their failures in Romanian", () => {
       .toEqual([file, true]);
   });
 
-  it("and the generic modal's SAVE path invalidates the two new bare keys", () => {
-    // ⚠️ **The delete and the move invalidate everything; the SAVE does not**,
-    // and `invalidateListCaches` says why in its own header: a handful of
-    // lists are also fetched under a BARE key by screens outside Reference
-    // Data, and those caches have to be named. Both lists this slice added are
-    // exactly that case — `associate-reference-view.tsx` on the property side
-    // and on the document side — and their own modals invalidated those keys
-    // on every save until this slice deleted them. An adversarial round found
-    // the gap: a renamed role went on being offered under its old name for the
-    // length of the 30 s staleTime.
-    // Scoped to `invalidateListCaches`, which is the function the SAVE calls:
-    // asserted against the whole file this would pass on the delete's own
-    // broad invalidation, which is not the path in question. Sliced rather
-    // than taken from `functionBody` — that helper anchors on
-    // `export async function`, and this one is neither exported nor async.
-    const modal = read("app", "admin", "value-lists", "_components", "value-list-modal.tsx");
-    const from  = modal.indexOf("function invalidateListCaches(");
+
+  it("the SAVE's bare-key invalidations, their branches and their consumers all agree", () => {
+    // ⚠️ **A branch that names a key nothing fetches is not harmless — it is a
+    // CLAIM ABOUT A CONSUMER, and it was wrong for the whole life of the
+    // branch.** Until Slice #33.05 `invalidateListCaches` invalidated
+    // `["property-types"]` and its header named the Property form's type
+    // dropdown as the reason; that dropdown fetches
+    // `["value-list", "property-types"]`, which the unconditional first line
+    // already covers, so the branch matched nothing for years while reading as
+    // though it were load-bearing. The opposite half was live at the same time
+    // and cost the user something: `["institutions"]`, the five person-role
+    // keys and `["doc-type-person-roles"]` on a document-type rename ARE
+    // fetched bare and had no branch, so a rename stayed invisible for the
+    // length of the staleTime.
+    //
+    // This supersedes the narrower #29.13 guard that stood here. That one
+    // checked two keys with a one-space `includes` and an unguarded
+    // end-of-function slice; its two file-level consumer assertions are kept —
+    // see CONSUMERS — because an adversarial round pointed out that dropping
+    // them was the only real loss in the replacement.
+    //
+    // FOUR assertions, and every one of them exists because a round of review
+    // walked through the previous version:
+    //   (i)   the body invalidates exactly the table's keys, as a multiset;
+    //   (ii)  each key sits inside the braces of ITS list's branch — round two
+    //         deleted every `if` guard and the earlier version still passed;
+    //   (iii) each key is really FETCHED somewhere, judged structurally;
+    //   (iv)  the files the header names really are those consumers, so the
+    //         comment cannot drift — three separate rounds caught it naming a
+    //         screen that does not fetch the key.
+    const BARE_KEYS: Partial<Record<ListKey, string[]>> = {
+      "document-types":          ["document-types", "doc-type-person-roles"],
+      "institutions":            ["institutions"],
+      "property-property-roles": ["property-property-roles"],
+      "document-document-roles": ["document-document-roles"],
+      "person-roles":            ["property-person-roles-whitelist", "property-person-roles",
+                                  "person-person-roles", "doc-distinct-roles",
+                                  "doc-type-person-roles"],
+    };
+
+    // The header's own consumer table, as data. If a line of that comment is
+    // wrong, this fails.
+    const CONSUMERS: Array<[string[], string]> = [
+      [["app", "documents", "list-view.tsx"], "document-types"],
+      [["app", "documents", "_components", "document-form.tsx"], "document-types"],
+      [["app", "documents", "_components", "document-form.tsx"], "institutions"],
+      [["app", "properties", "[id]", "associate-reference", "associate-reference-view.tsx"],
+        "property-property-roles"],
+      [["app", "documents", "[id]", "associate-reference", "associate-reference-view.tsx"],
+        "document-document-roles"],
+      [["app", "properties", "[id]", "associate-person", "associate-person-view.tsx"],
+        "property-person-roles-whitelist"],
+      [["app", "natural-persons", "[id]", "associate-property", "associate-property-view.tsx"],
+        "property-person-roles-whitelist"],
+      [["app", "judicial-persons", "[id]", "associate-property", "associate-property-view.tsx"],
+        "property-person-roles-whitelist"],
+      [["app", "admin", "value-lists", "_components", "property-persons-modal.tsx"],
+        "property-person-roles"],
+      [["app", "admin", "value-lists", "_components", "person-person-modal.tsx"],
+        "person-person-roles"],
+      [["app", "natural-persons", "[id]", "associate-person", "associate-person-view.tsx"],
+        "person-person-roles"],
+      [["app", "natural-persons", "[id]", "associate-document", "associate-document-view.tsx"],
+        "doc-distinct-roles"],
+      [["app", "judicial-persons", "[id]", "associate-document", "associate-document-view.tsx"],
+        "doc-distinct-roles"],
+      [["app", "admin", "value-lists", "_components", "document-persons-modal.tsx"],
+        "doc-type-person-roles"],
+    ];
+
+    /**
+     * Two same-length views of a source file, so indices line up between them:
+     * `text` has comments blanked and string bodies intact (the keys are string
+     * bodies, so `code()` — which blanks both — is the wrong helper here), and
+     * `shape` has the string bodies blanked too, which makes it safe to walk
+     * for brackets.
+     *
+     * ⚠️ **A scanner, not two `replace` calls.** The obvious
+     * `src.replace(/\/\*[\s\S]*?\*\//g, " ")` reads the `/*` inside
+     * `accept="image/*,.pdf,…"` as a comment opener and swallows everything to
+     * the next `*​/`: measured, that is 207 lines of `pages-panel.tsx` made
+     * invisible. Known limit, stated rather than hidden: a regex literal
+     * containing an unpaired quote would desynchronise this, and nothing in
+     * `src/` has one today.
+     */
+    const scan = (src: string): { text: string; shape: string } => {
+      const text: string[] = [];
+      const shape: string[] = [];
+      const push = (ch: string, inString: boolean): void => {
+        text.push(ch);
+        shape.push(inString ? " " : ch);
+      };
+      let i = 0;
+      while (i < src.length) {
+        const ch = src[i];
+        const next = src[i + 1];
+        if (ch === "/" && next === "/") {
+          while (i < src.length && src[i] !== "\n") { text.push(" "); shape.push(" "); i += 1; }
+          continue;
+        }
+        if (ch === "/" && next === "*") {
+          const close = src.indexOf("*/", i + 2);
+          const stop = close === -1 ? src.length : close + 2;
+          for (; i < stop; i += 1) {
+            const blank = src[i] === "\n" ? "\n" : " ";
+            text.push(blank);
+            shape.push(blank);
+          }
+          continue;
+        }
+        if (ch === '"' || ch === "'" || ch === "`") {
+          push(ch, false);
+          i += 1;
+          while (i < src.length) {
+            const c = src[i];
+            if (c === "\\") {
+              push(c, true);
+              if (i + 1 < src.length) push(src[i + 1], true);
+              i += 2;
+              continue;
+            }
+            if (c === ch) { push(c, false); i += 1; break; }
+            push(c, c !== "\n");
+            i += 1;
+          }
+          continue;
+        }
+        push(ch, false);
+        i += 1;
+      }
+      return { text: text.join(""), shape: shape.join("") };
+    };
+
+    /**
+     * The name of the call whose argument list encloses `at` — `useQuery`,
+     * `invalidateQueries`, or "" when the position is not inside a call.
+     *
+     * ⚠️ **Structural, because every distance-based version was defeated.** A
+     * lookbehind of N characters is beaten by an `invalidateQueries` with four
+     * options ahead of its `queryKey`, and by a `predicate` arrow whose body
+     * holds a semicolon — both of which would make an invalidation vouch for a
+     * branch that nothing fetches, which is the original defect wearing the
+     * guard as a disguise. Walking out to the enclosing `(` cannot be fooled
+     * that way. The `;` stop is what keeps a detached
+     * `const opts = { queryKey: … }` from borrowing the call above it.
+     */
+    const enclosingCall = (shape: string, at: number): string => {
+      let depth = 0;
+      for (let i = at - 1; i >= 0; i -= 1) {
+        const c = shape[i];
+        if (c === ")" || c === "]" || c === "}") { depth += 1; continue; }
+        if (c === "(" || c === "[" || c === "{") {
+          if (depth > 0) { depth -= 1; continue; }
+          if (c !== "(") continue;                     // an options object — keep walking out
+          const before = shape.slice(Math.max(0, i - 120), i);
+          // The optional `<…>` is the generic on `useQuery<Row[]>({ … })`,
+          // without which ten of this tree's twenty-five fetches read as "".
+          const name = before.match(/([A-Za-z_$][\w$]*)\s*(?:<[^<>()]*>)?\s*$/);
+          return name ? name[1] : "";
+        }
+        if (c === ";" && depth === 0) return "";
+      }
+      return "";
+    };
+
+    const KEY_SITE = /queryKey:\s*\["([^"\]]+)"\]/g;
+    const keyProbe = (key: string): RegExp =>
+      new RegExp(`queryKey:\\s*\\["${key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"\\]`);
+
+    const modalPath = path.join(
+      SRC, "app", "admin", "value-lists", "_components", "value-list-modal.tsx",
+    );
+    const modal = scan(fs.readFileSync(modalPath, "utf8"));
+    const from  = modal.text.indexOf("function invalidateListCaches(");
     expect(from).toBeGreaterThan(-1);
-    const caches = modal.slice(from, modal.indexOf("\n}", from));
-    for (const key of ["property-property-roles", "document-document-roles"]) {
-      expect([key, caches.includes(`queryKey: ["${key}"]`)]).toEqual([key, true]);
+    const stop = modal.shape.indexOf("\n}", from);
+    // Guarded: `slice(from, -1)` is the whole rest of the file minus one
+    // character, which would silently widen this from one function to
+    // everything after it.
+    expect(stop).toBeGreaterThan(from);
+    const body  = modal.text.slice(from, stop);
+    const frame = modal.shape.slice(from, stop);
+
+    // (i) the body invalidates exactly the table's keys — no more, no fewer.
+    // Single-segment keys only: `["value-list", listKey]` is not one, and must
+    // not be, because that line covers every list and needs no branch.
+    KEY_SITE.lastIndex = 0;
+    const declared = [...body.matchAll(KEY_SITE)].map((m) => m[1]);
+    const expected = Object.values(BARE_KEYS).flat();
+    expect([...declared].sort()).toEqual([...expected].sort());
+
+    // (ii) …and each one sits inside the BRACES of its own list's branch.
+    // ⚠️ Brace-matched, not `indexOf("\n  }")`: a braceless `if` has no closing
+    // brace of its own, so the naive marker ran on into the NEXT branch and the
+    // two blocks overlapped — a key moved to the wrong branch passed. There are
+    // 1400+ braceless `if`s in `src/` and no `curly` lint rule, so this is one
+    // tidy-up away rather than hypothetical. Requiring the brace is deliberate:
+    // a braceless branch here fails loudly instead of silently widening.
+    for (const [listKey, keys] of Object.entries(BARE_KEYS)) {
+      // The guard is found in `body`, not `frame`: `frame` has string bodies
+      // blanked, so `listKey === "institutions"` cannot match there. The two
+      // are the same slice of the same file, so the index is valid in both,
+      // and the brace walk below stays on `frame` where a `{` inside a string
+      // cannot mislead it.
+      const guardAt = body.indexOf(`listKey === "${listKey}"`);
+      expect([listKey, guardAt]).not.toEqual([listKey, -1]);
+      const open = frame.indexOf("{", guardAt);
+      expect([listKey, open]).not.toEqual([listKey, -1]);
+      // Nothing but the guard's own `)` may stand between the condition and the
+      // brace — that is what makes a braceless branch fail here.
+      expect([listKey, frame.slice(guardAt + `listKey === "${listKey}"`.length, open).trim()])
+        .toEqual([listKey, ")"]);
+      let depth = 0;
+      let close = -1;
+      for (let i = open; i < frame.length; i += 1) {
+        if (frame[i] === "{") depth += 1;
+        else if (frame[i] === "}") { depth -= 1; if (depth === 0) { close = i; break; } }
+      }
+      expect([listKey, close]).not.toEqual([listKey, -1]);
+      const block = body.slice(open, close);
+      for (const key of keys) {
+        expect([listKey, key, keyProbe(key).test(block)]).toEqual([listKey, key, true]);
+      }
     }
-    // …and the consumers really do use that bare key.
-    expect(read("app", "properties", "[id]", "associate-reference", "associate-reference-view.tsx"))
-      .toContain('queryKey: ["property-property-roles"]');
-    expect(read("app", "documents", "[id]", "associate-reference", "associate-reference-view.tsx"))
-      .toContain('queryKey: ["document-document-roles"]');
+
+    // (iii) …and something under src/ really FETCHES each of them. Every
+    // .ts/.tsx except this modal and the tests — a key quoted in another test
+    // is not a consumer. Measured on this tree: 25 fetch sites, 53 invalidation
+    // sites, nothing unclassified.
+    const files: string[] = [];
+    (function walk(dir: string): void {
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+          if (entry.name !== "__tests__") walk(full);
+        } else if (/\.tsx?$/.test(entry.name) && full !== modalPath) {
+          files.push(full);
+        }
+      }
+    })(SRC);
+
+    const FETCH_HOOK = /^(useQuery|useQueries|useSuspenseQuery|useInfiniteQuery)$/;
+    const fetched = new Set<string>();
+    for (const file of files) {
+      const seen = scan(fs.readFileSync(file, "utf8"));
+      KEY_SITE.lastIndex = 0;
+      for (const m of seen.text.matchAll(KEY_SITE)) {
+        if (FETCH_HOOK.test(enclosingCall(seen.shape, m.index ?? 0))) fetched.add(m[1]);
+      }
+    }
+    for (const key of expected) {
+      expect([key, fetched.has(key)]).toEqual([key, true]);
+    }
+
+    // (iv) …and the consumer table in the header names the right files.
+    for (const [parts, key] of CONSUMERS) {
+      const seen = scan(read(...parts));
+      KEY_SITE.lastIndex = 0;
+      const here = [...seen.text.matchAll(KEY_SITE)]
+        .filter((m) => FETCH_HOOK.test(enclosingCall(seen.shape, m.index ?? 0)))
+        .map((m) => m[1]);
+      expect([parts.join("/"), key, here.includes(key)]).toEqual([parts.join("/"), key, true]);
+    }
   });
 
   it.each(PANELS)("%s — invalidates the caches the association screens use", (file) => {
