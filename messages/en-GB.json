@@ -1703,12 +1703,10 @@
       "document": "Document",
       "roles": "Roles",
       "rolesPerson": "Person involved",
-      "rolesObject": "Object-to-object",
-      "others": "Others"
+      "rolesObject": "Object-to-object"
     },
     "lists": {
       "propertyTypes": "Property Types",
-      "propertyPersons": "Property Persons",
       "tarla": "Tarla Codes",
       "useCategories": "Use Categories",
       "personTypes": "Physical Person Types",
@@ -1716,11 +1714,7 @@
       "citizenships": "Citizenship",
       "judicialPersonTypes": "Judicial Person Types",
       "documentTypes": "Document Types",
-      "documentPersons": "Document Persons",
       "institutions": "Institutions",
-      "groups": "Groups",
-      "stamps": "Stamps",
-      "tags": "Tags",
       "personToProperty": "Person → Property",
       "personToDocument": "Person → Document",
       "personToPerson": "Person → Person",
@@ -1734,7 +1728,6 @@
       "descriere": "Description",
       "description": "Description",
       "institutionType": "Institution Type",
-      "category": "Category",
       "status": "Status"
     },
     "documentTypeStatus": {

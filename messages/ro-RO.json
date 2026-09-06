@@ -1703,12 +1703,10 @@
       "document": "Document",
       "roles": "Roluri",
       "rolesPerson": "Persoană implicată",
-      "rolesObject": "Relație între obiecte",
-      "others": "Altele"
+      "rolesObject": "Relație între obiecte"
     },
     "lists": {
       "propertyTypes": "Tipuri de Proprietate",
-      "propertyPersons": "Roluri pe Proprietate",
       "tarla": "Indicative Tarla",
       "useCategories": "Categorii Folosință",
       "personTypes": "Tipuri de Persoană Fizică",
@@ -1716,11 +1714,7 @@
       "citizenships": "Cetățenie",
       "judicialPersonTypes": "Tipuri de Persoană Juridică",
       "documentTypes": "Tipuri de Document",
-      "documentPersons": "Roluri pe Document",
       "institutions": "Instituții",
-      "groups": "Grupuri",
-      "stamps": "Ștampile",
-      "tags": "Etichete",
       "personToProperty": "Persoană → Proprietate",
       "personToDocument": "Persoană → Document",
       "personToPerson": "Persoană → Persoană",
@@ -1734,7 +1728,6 @@
       "descriere": "Descriere",
       "description": "Descriere",
       "institutionType": "Tip instituție",
-      "category": "Categorie",
       "status": "Stare"
     },
     "documentTypeStatus": {

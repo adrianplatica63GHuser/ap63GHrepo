@@ -1,12 +1,11 @@
--- HAND-MAINTAINED, despite the line below. `npm run export:reference-data`
--- points at scripts/export-reference-data.ts, and that file is not in the
--- repository -- so the script exits 1 and this file has been edited by hand
--- for some time. Noticed while wiring scripts/verify-rebuild.ts (Slice #31.01);
--- either write the generator or drop the npm script, but do not trust the next
--- line until one of those happens.
+-- HAND-MAINTAINED. There is no generator: `npm run export:reference-data`
+-- pointed at scripts/export-reference-data.ts, which has never been in the
+-- repository, so the script exited 1 and this file has been edited by hand for
+-- some time. Slice #31.01 noticed it and left the choice open -- write the
+-- generator or drop the script. Slice #33.05 dropped the script.
 --
--- Auto-generated from src/db/supabase_schema_full.sql (authoritative seed source)
--- Regenerate via: npm run export:reference-data
+-- Edit this file by hand, and keep it in step with
+-- src/db/supabase_schema_full.sql yourself.
 --
 -- THIS FILE IS DESTRUCTIVE. It is a seed for a FRESHLY REBUILT database, not
 -- a top-up for a live one. Its two TRUNCATE ... CASCADE statements below reach
