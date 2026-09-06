@@ -1863,7 +1863,7 @@
       },
       "notes": {
         "duplicateValue": "Încă o înregistrare din această listă are aceeași denumire, așa că proprietățile care o folosesc nu pierd nimic dacă ștergeți această înregistrare.",
-        "versionSnapshots": "Istoricul versiunilor nu este numărat mai sus. Fiecare versiune salvată păstrează valoarea așa cum era atunci și rămâne neschimbată — nici ștergerea, nici mutarea nu o ating, iar mutarea nu creează o versiune nouă.",
+        "versionSnapshots": "Istoricul versiunilor nu este numărat mai sus. Fiecare versiune salvată păstrează valoarea așa cum era atunci — nici ștergerea, nici mutarea nu modifică versiunile deja salvate. Mutarea adaugă însă câte o versiune nouă fiecărui obiect pe care îl modifică.",
         "tarlaFreeText": "Proprietățile nu păstrează o legătură către indicativul de tarla, ci textul lui. Numărul de mai sus le găsește după acest text, iar mutarea îl rescrie în proprietăți."
       }
     },

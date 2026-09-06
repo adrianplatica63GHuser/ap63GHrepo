@@ -347,6 +347,37 @@ describe("what the count does not cover", () => {
       ["tarlaFreeText", "versionSnapshots"].sort(),
     );
   });
+
+  /**
+   * ⚠️ **THE NOTE ONCE TOLD THE ADMINISTRATOR THE OPPOSITE OF WHAT THE CODE
+   * DOES, IN BOTH LOCALES, FOR FIVE SLICES.**                (Slice #34.01)
+   *
+   * `versionSnapshots` ended "…and moving does not create a new version" /
+   * "…iar mutarea nu creează o versiune nouă". Since Slice #29.14 a move DOES
+   * write one version row per object it changes — `reassignDependents` calls
+   * `recordMoveHistory` inside the move's own transaction, and
+   * ../lib/admin/value-lists/move-history.ts says it in as many words: "ONE
+   * VERSION ROW PER OBJECT … Moving forty properties writes forty version
+   * rows."
+   *
+   * The behaviour is the one #29.14 chose on purpose, so #34.01 corrected the
+   * sentence rather than the code. This guard pins the clause that was false
+   * OUT rather than pinning a new wording in: it survives any later rewrite of
+   * the note, and it fails the day somebody reverts to the old sentence or
+   * writes the same claim afresh.
+   */
+  it.each([
+    ["en-GB", "moving does not create a new version"],
+    ["ro-RO", "mutarea nu creează o versiune nouă"],
+  ] as const)(
+    "%s: the note does not claim a move leaves history alone (Slice #29.14 made that false)",
+    (locale, falseClause) => {
+      const note = String(
+        at(messages(locale), "valueList.dependents.notes.versionSnapshots"),
+      );
+      expect(`${locale}: ${note.includes(falseClause)}`).toBe(`${locale}: false`);
+    },
+  );
 });
 
 // ---------------------------------------------------------------------------
