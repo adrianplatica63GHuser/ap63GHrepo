@@ -17,9 +17,31 @@
  *       idDocumentNumber, idCardNumber, placeOfBirth,
  *       idIssuingAuthority, idValidFrom, idValidUntil, idMrzRaw,
  *       citizenshipId, citizenshipRaw,
+ *       institutionId,                 // Slice #34.02 — `idIssuingAuthority`
+ *                                      // resolved against the LIVE
+ *                                      // lookup_institution rows, or null.
+ *                                      // A null is an instruction to ASK, not
+ *                                      // a licence to create; nothing here
+ *                                      // ever writes a row.
+ *                                      // ⚠️ NO CONSUMER YET. The review
+ *                                      // dialog reads `fields` through its own
+ *                                      // explicit MAPPED_FIELDS list, so this
+ *                                      // key is inert until the dropdown and
+ *                                      // its "adaugă" button land — which is
+ *                                      // the half of #34.02 that waits on the
+ *                                      // migration confirmation, because that
+ *                                      // button writes a lookup row.
  *       addressStreetLine, addressPostalCode, addressLocality,
  *       addressCounty, addressCountry,
  *     },
+ *     lookupUnavailable: boolean,      // Slice #34.02 — a SIBLING of `fields`,
+ *                                      // not a member of it. True when the two
+ *                                      // lookup reads THEMSELVES failed, so a
+ *                                      // null `citizenshipId`/`institutionId`
+ *                                      // means "could not look" rather than
+ *                                      // "no such row". The model's read is
+ *                                      // still returned in full; only the two
+ *                                      // resolutions are missing.
  *     lowConfidenceFields: string[],   // keys the model wasn't sure about —
  *                                      // the review UI should highlight these
  *                                      // for the user to double-check.
@@ -37,7 +59,8 @@ import type { NextRequest }   from "next/server";
 import { NextResponse }       from "next/server";
 import { db }                 from "@/db";
 
-import { lookupCitizenship }  from "@/db/schema";
+import { asc }                from "drizzle-orm";
+import { lookupCitizenship, lookupInstitution } from "@/db/schema";
 import { unexpectedError }    from "@/lib/api/errors";
 import { ANONYMOUS_USER_ID } from "@/lib/auth/current-user";
 import { getCurrentUserIdAndRole } from "@/lib/auth/current-role";
@@ -47,6 +70,10 @@ import {
   MULTI_IDENTITY_CODE,
   showsMoreThanOnePerson,
 } from "@/lib/import/multi-card-gate";
+import {
+  matchCitizenship,
+  matchInstitution,
+} from "@/lib/import/lookup-name-match";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -205,58 +232,6 @@ function extractJson(text: string): unknown {
   // Strip markdown fences if the model added them despite instructions.
   const cleaned = text.trim().replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/, "");
   return JSON.parse(cleaned);
-}
-
-/** Loose match of a free-text citizenship string against lookup_citizenship rows. */
-function matchCitizenship(
-  raw: string | null | undefined,
-  rows: { id: string; name: string }[],
-): string | null {
-  if (!raw) return null;
-  const norm = raw.trim().toLowerCase();
-
-  // Direct / substring match against the stored Romanian adjective name.
-  const direct = rows.find(
-    (r) => r.name.toLowerCase() === norm || norm.includes(r.name.toLowerCase()),
-  );
-  if (direct) return direct.id;
-
-  // Common ISO / English aliases for the seeded list (Slice 9.1 names).
-  const aliases: Record<string, string> = {
-    rou: "Română",
-    ro: "Română",
-    romania: "Română",
-    romanian: "Română",
-    md: "Moldoveană",
-    mda: "Moldoveană",
-    moldova: "Moldoveană",
-    usa: "Americană",
-    us: "Americană",
-    american: "Americană",
-    deu: "Germană",
-    germany: "Germană",
-    german: "Germană",
-    fra: "Franceză",
-    france: "Franceză",
-    french: "Franceză",
-    ita: "Italiană",
-    italy: "Italiană",
-    italian: "Italiană",
-    esp: "Spaniolă",
-    spain: "Spaniolă",
-    spanish: "Spaniolă",
-    gbr: "Engleză",
-    uk: "Engleză",
-    england: "Engleză",
-    english: "Engleză",
-  };
-  const aliasName = aliases[norm];
-  if (aliasName) {
-    const match = rows.find((r) => r.name === aliasName);
-    if (match) return match.id;
-  }
-
-  return null;
 }
 
 export async function POST(request: NextRequest): Promise<Response> {
@@ -437,12 +412,88 @@ export async function POST(request: NextRequest): Promise<Response> {
     );
   }
 
-  // Resolve citizenshipRaw -> citizenshipId against the live lookup table.
-  const citizenshipRows = await db
-    .select({ id: lookupCitizenship.id, name: lookupCitizenship.name })
-    .from(lookupCitizenship);
+  // Resolve the model's two free-text readings against the live lookup tables.
+  //
+  // Slice #34.02: one matcher, two lists. The rule they both run used to live
+  // in this file, for citizenship alone; it is now
+  // `src/lib/import/lookup-name-match.ts`, which is what let the issuing
+  // authority get the same treatment instead of a second implementation.
+  //
+  // ⚠️ **Both reads are of the LIVE rows, every call.** An institution a person
+  // adds through Reference Data is matchable on the next card with no cache to
+  // invalidate and no code change.
+  //
+  // ⚠️ **`orderBy`, on both, because CALLER ORDER IS WHAT THE MATCHER USES to
+  // settle a raw naming two rows** — "Americană/Română" answers `Română`
+  // because the seed gives it `sort_order` 1. Without an `orderBy` that
+  // decision is whatever Postgres returned first on the day, which is a wrong
+  // answer nobody can reproduce. (An earlier draft of this comment justified it
+  // by a longest-name preference; that rule existed for one review round and
+  // was removed for breaking exactly the case above.)
+  //
+  // ⚠️ **A LOOKUP THAT BLIPS MUST NOT THROW AWAY THE READ, and a second review
+  // round is why this is a `catch` that continues rather than one that
+  // returns.** These are the only database calls in the route and they sat
+  // after its last `catch`, so a lookup table being briefly unreachable was a
+  // bare 500 — AFTER the Anthropic call had been made and billed, discarding
+  // every name, CNP, address and date the model had just read. That is the
+  // trade `src/lib/auth/current-role.ts` argues against in as many words:
+  // refusing an OCR request because a lookup blipped turns a database hiccup
+  // into a lost sample. Both ids are nullable and both already have a
+  // "could not resolve" path, so the failure degrades to exactly that.
+  let citizenshipId: string | null = null;
+  let institutionId: string | null = null;
+  /**
+   * ⚠️ **The one bit that separates "no such row" from "could not look".**
+   * (Slice #34.02, third review round.) Citizenship degrades honestly on the
+   * blip path — a null id plus `citizenshipRaw` in `lowConfidenceFields`. The
+   * institution deliberately has no such flag, because a miss is the NORMAL
+   * answer and warning it would tell the user to re-check a string that is
+   * already right. That leaves a blip indistinguishable from a miss, and the
+   * moment the dropdown and its "adaugă" button land, indistinguishable means a
+   * person is invited to create a second row for an institution the archive
+   * already holds — silent duplicates in the one list this module exists to
+   * keep clean. One field now, so the dropdown can suppress the offer rather
+   * than the offer having to be un-invented later. No consumer yet.
+   */
+  let lookupUnavailable = false;
+  try {
+    const [citizenshipRows, institutionRows] = await Promise.all([
+      db
+        .select({ id: lookupCitizenship.id, name: lookupCitizenship.name })
+        .from(lookupCitizenship)
+        .orderBy(asc(lookupCitizenship.sortOrder), asc(lookupCitizenship.name)),
+      db
+        .select({ id: lookupInstitution.id, name: lookupInstitution.name })
+        .from(lookupInstitution)
+        .orderBy(asc(lookupInstitution.sortOrder), asc(lookupInstitution.name)),
+    ]);
 
-  const citizenshipId = matchCitizenship(parsed.fields.citizenshipRaw, citizenshipRows);
+    citizenshipId = matchCitizenship(parsed.fields.citizenshipRaw, citizenshipRows);
+
+    // Slice #34.02 — the issuing authority stops being thrown away.
+    //
+    // ⚠️ **A MISS HERE IS NOT FLAGGED LOW-CONFIDENCE, and that is the
+    // difference from citizenship above.** `lowConfidenceFields` means "the
+    // model was unsure what it read"; a card whose authority the model read
+    // perfectly and this archive simply has no row for is not a doubtful
+    // READING, and warning the field would tell the user to re-check a string
+    // that is already correct.
+    //
+    // ⚠️ **And it is not a licence to create.** `src/lib/import/id-card.ts`
+    // refuses to mint an institution from a model's reading and #34.02 keeps
+    // that refusal; the row only ever comes from a person choosing to make it.
+    institutionId = matchInstitution(parsed.fields.idIssuingAuthority, institutionRows);
+  } catch (err) {
+    // Logged, never swallowed silently — CLAUDE.md's "never dismiss an error".
+    // The read survives; the two fields fall through to the same
+    // "unresolved" handling a genuine miss gets.
+    console.error("[extract-id-card] lookup resolve failed:", err);
+    citizenshipId = null;
+    institutionId = null;
+    lookupUnavailable = true;
+  }
+
   if (!citizenshipId && parsed.fields.citizenshipRaw) {
     // Couldn't confidently resolve to a known lookup row — flag it instead
     // of guessing, per Adrian's standing instruction.
@@ -462,7 +513,8 @@ export async function POST(request: NextRequest): Promise<Response> {
   }
 
   return Response.json({
-    fields: { ...parsed.fields, citizenshipId },
+    fields: { ...parsed.fields, citizenshipId, institutionId },
+    lookupUnavailable,
     lowConfidenceFields: parsed.lowConfidenceFields,
     unmappedRaw: parsed.unmappedRaw,
   });
