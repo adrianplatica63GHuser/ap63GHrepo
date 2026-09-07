@@ -80,12 +80,79 @@ UPDATE lookup_document_type SET key = 'UNCLASSIFIED'                WHERE key IS
 -- generated fallback slug so the NOT NULL/UNIQUE constraint below can be
 -- applied without manual intervention. Romanian diacritics are folded to
 -- their ASCII base letter first (no `unaccent` extension dependency).
+--
+-- ⚠️ ONE CHARACTER OF THE `to` STRING WAS MISSING FROM THE DAY THIS FILE WAS
+-- WRITTEN, AND Slice #34.03 PUT IT BACK.
+--   It read 'aaisstAAITTSS' — THIRTEEN characters against a fourteen-character
+--   `from` string. Postgres `translate` pairs them by position and DELETES any
+--   `from` character with no counterpart, so from the seventh position the
+--   whole map was off by one: ţ→A, Ă→A, Â→I, Î→T, Ț→T, Ţ→S, Ș→S, and Ş was
+--   removed from the name outright. "Hotărâre Judecătorească" folded to
+--   HOTARARE_JUDECATOREASCA correctly - its accents are all in the first six
+--   positions, which is why nobody noticed.
+--
+--   ⚠️ Note WHICH letters were actually wrong, because the obvious guess is
+--   not it. Written out against the fourteen-character `from` string, the old
+--   thirteen-character `to` produced:
+--
+--     ă→a  â→a  î→i  ș→s  ş→s  ț→t      the first six, all correct
+--     ţ→A                               WRONG (lowercase cedilla t)
+--     Ă→A                               right, by accident
+--     Â→I  Î→T                          WRONG
+--     Ț→T                               right, by accident
+--     Ţ→S                               WRONG (cedilla T)
+--     Ș→S                               right, by accident
+--     Ş→(deleted)                       WRONG (cedilla S, removed outright)
+--
+--   So FIVE characters were mis-mapped and three of the shifted ones happened
+--   to land on the letter they wanted. `Î` is the one that would actually turn
+--   up in this data: a name like "Închiriere" reaching this fallback would
+--   slug as TNCHIRIERE - silently, into a UNIQUE column that other code
+--   matches on. (The seeded "Contract de Închiriere" is in the explicit list
+--   above, so it never reached the fallback; a hand-added row would have.)
+--
+--   The bug is exactly one missing `t`: `ț` and `ţ` are two spellings of the
+--   same letter and BOTH map to `t`, but only one `t` was written. The fix is
+--   'aaissttAAITTSS' — the `from` string is untouched, so this is a
+--   one-character change and every pair can be checked by counting.
+--
+--   ⚠️ **FIXED RATHER THAN DELETED, AND THE CHOICE MATTERS.** This statement
+--   is the fallback that lets the NOT NULL + UNIQUE below be applied without
+--   anyone editing rows by hand; deleting it would turn a mis-slugged key into
+--   a FAILED MIGRATION on precisely the pre-#15.05 databases it was written
+--   for. And the fix is a no-op everywhere it has already run: the `WHERE key
+--   IS NULL` means a database that has passed this file once has nothing left
+--   for it to touch, so no existing row anywhere changes. What changes is only
+--   what a REPLAY onto an old database would now produce.
+--
+--   ⚠️ **AND THEREFORE THIS FIX REACHES NO DATABASE THAT HAS ALREADY RUN THIS
+--   FILE, WHICH IS ALL OF THEM.** `scripts/Apply-Migration.ps1` picks pending
+--   files by FILENAME against `schema_migrations` and never re-reads or
+--   re-checks a recorded one, so `migration_020_rename_to_document.sql` is
+--   skipped for ever on ga40db, on Ciprian's box and on Supabase. The
+--   correction therefore changes exactly two things: what a REBUILD produces
+--   (`Verify-Rebuild.ps1`, `supabase_schema_full.sql`), and what a
+--   pre-#15.05 database would get if one were ever migrated from scratch. It
+--   fixes no row anywhere today. A row already slugged by the broken map stays
+--   broken until somebody renames it in Reference Data - there is no evidence
+--   in the database to find those rows from, because the wrong slug is
+--   indistinguishable from a deliberate one.
+--
+--   ⚠️ Side effect worth knowing: the MD5 `Apply-Migration.ps1` recorded in
+--   `schema_migrations.checksum` for this file is now stale, and nothing in
+--   the repo verifies it. That is a pre-existing gap in the runner rather than
+--   something this edit introduces - it is in the #34.03 handover under
+--   "Noticed, not fixed".
+--
+--   ⚠️ Consequence for `Verify-Rebuild.ps1`: if any row in the live database
+--   holds a key the broken map produced, the rebuilt database will now produce
+--   a different one and the comparison will say so. That is the check working.
 UPDATE lookup_document_type
 SET key = regexp_replace(
   upper(
     translate(name,
       'ăâîșşțţĂÂÎȚŢȘŞ',
-      'aaisstAAITTSS'
+      'aaissttAAITTSS'
     )
   ),
   '[^A-Z0-9]+', '_', 'g'
