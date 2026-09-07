@@ -1735,6 +1735,10 @@
       "aiScanned": "Created by an import",
       "aiCompleted": "Has a form"
     },
+    "lookupOriginStatus": {
+      "manual": "Added by hand",
+      "imported": "Created by an import"
+    },
     "modal": {
       "close": "Close"
     },
@@ -1749,7 +1753,8 @@
       "add": "Add",
       "count": "{count, plural, one {# entry} other {# entries}}",
       "onlyWithoutForm": "Only those awaiting a form",
-      "countFiltered": "{count} of {total, plural, one {# entry} other {# entries}}"
+      "countFiltered": "{count} of {total, plural, one {# entry} other {# entries}}",
+      "onlyAwaitingReview": "Only those awaiting review"
     },
     "table": {
       "loading": "Loading…",
@@ -1758,7 +1763,8 @@
       "edit": "Edit",
       "delete": "Delete",
       "editForm": "Form ({count})",
-      "allHaveForm": "No document type is waiting for a form."
+      "allHaveForm": "No document type is waiting for a form.",
+      "allReviewed": "No value is awaiting review."
     },
     "templateFields": {
       "title": "Form for “{type}”",

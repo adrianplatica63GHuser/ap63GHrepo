@@ -1735,6 +1735,10 @@
       "aiScanned": "Creat la import",
       "aiCompleted": "Are formular"
     },
+    "lookupOriginStatus": {
+      "manual": "Adăugat manual",
+      "imported": "Creat la import"
+    },
     "modal": {
       "close": "Închide"
     },
@@ -1749,7 +1753,8 @@
       "add": "Adaugă",
       "count": "{count, plural, one {# înregistrare} few {# înregistrări} other {# de înregistrări}}",
       "onlyWithoutForm": "Doar cele care așteaptă un formular",
-      "countFiltered": "{count} din {total, plural, one {# înregistrare} few {# înregistrări} other {# de înregistrări}}"
+      "countFiltered": "{count} din {total, plural, one {# înregistrare} few {# înregistrări} other {# de înregistrări}}",
+      "onlyAwaitingReview": "Doar cele care așteaptă verificare"
     },
     "table": {
       "loading": "Se încarcă…",
@@ -1758,7 +1763,8 @@
       "edit": "Editează",
       "delete": "Șterge",
       "editForm": "Formular ({count})",
-      "allHaveForm": "Niciun tip de document nu mai așteaptă un formular."
+      "allHaveForm": "Niciun tip de document nu mai așteaptă un formular.",
+      "allReviewed": "Nicio valoare nu așteaptă verificare."
     },
     "templateFields": {
       "title": "Formular pentru „{type}”",

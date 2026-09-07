@@ -24,6 +24,11 @@ import {
   documentTypeNameClass,
   documentTypeStatus,
 } from "@/lib/documents/status";
+import {
+  lookupAwaitsReview,
+  lookupOriginNameClass,
+  lookupOriginStatus,
+} from "@/lib/admin/value-lists/origin-status";
 import { parseTemplateFields } from "@/lib/documents/template-fields";
 import { documentTypeIsIdCard } from "@/lib/import/id-card";
 import { documentTypeIsCatchAll } from "@/lib/documents/document-type-match";
@@ -632,9 +637,13 @@ export function ValueListModal({
   // the same thing in text, from the same function — `documentTypeStatus` and
   // `documentTypeNameClass` cannot disagree, because the second is the first
   // with a lookup on the end.
+  // ⚠️ **What the paragraph above describes now lives in `review` below**
+  // (Slice #34.02): the status word, the colour and the single-source argument
+  // for both moved into the per-list config, because tarla and institutions
+  // needed the same three things. What is left of this const is the ONE gate
+  // that is genuinely about document types and nothing else — the form-editor
+  // button, further down, on the only list that has a form.
   const isDocumentTypes = listKey === "document-types";
-  // One extra column for the status, plus the always-present actions column.
-  const emptyStateColSpan = displayFields.length + (isDocumentTypes ? 2 : 1);
 
   // ── Slice #27.07: narrow the list to the types still without a form ────────
   //
@@ -654,7 +663,7 @@ export function ValueListModal({
   // one visit — a filter that survived the modal closing would have the
   // administrator open Document Types next week, see nine rows where there are
   // twenty-four, and have no way to know why.
-  const [onlyWithoutForm, setOnlyWithoutForm] = useState(false);
+  const [onlyAwaiting, setOnlyAwaiting] = useState(false);
   /**
    * Types whose form editor has been opened during this visit.
    *
@@ -677,6 +686,16 @@ export function ValueListModal({
    * when the filter is unticked and re-ticked would make the row vanish on the
    * second tick, which is the same silent disappearance one interaction later.
    * Closing the modal is what starts a fresh visit.
+   *
+   * ⚠️ **Still DOCUMENT-TYPE retention, though the filter it serves is now
+   * generic.   (Slice #34.02)** The only thing that adds to this set is the
+   * form editor's opener, and no other list has a form editor — so on tarla and
+   * institutions it stays empty and the filter shows exactly the rows its own
+   * rule selects. That is right rather than an omission: the retention exists
+   * because finishing a type makes its row leave the filtered list, and there
+   * is no equivalent action on the other two. When one arrives — a "reviewed"
+   * action on an imported code — it retains through this same set, and this
+   * paragraph is what says so.
    */
   const [touchedTypeIds, setTouchedTypeIds] = useState<ReadonlySet<string>>(new Set());
   /**
@@ -755,17 +774,130 @@ export function ValueListModal({
     documentTypeAwaitsForm({ origin: row.origin, templateFields: row.templateFields }) &&
     !documentTypeIsCatchAll({ key: String(row.key ?? ""), name: String(row.name ?? "") }) &&
     !documentTypeIsIdCard({ key: String(row.key ?? ""), name: String(row.name ?? "") });
-  // ⚠️ **`onlyWithoutForm && isDocumentTypes`, in that order and both terms.**
-  // The checkbox is only rendered for document-types, but the state outlives a
-  // `listKey` change in a component that is keyed on nothing: without the
-  // second term, ticking it here and opening Institutions would filter that
-  // list by a document-type rule, which for a row with no `templateFields` is
-  // "true" for every row — a list that looks unfiltered until the day one of
-  // its rows is not.
+
+  /**
+   * The three lists that carry an `origin` column and therefore a status word,
+   * a colour and a review filter.                                (Slice #34.02)
+   *
+   * ⚠️ **ONE CONFIG DRIVING THE COMPONENT THAT ALREADY EXISTED, NOT A SECOND
+   * COMPONENT.** #27.07 built the checkbox, the shown-of-total count, the
+   * `role="status"` banner and the two-sentence empty state for document types,
+   * and every one of those decisions was argued for at length in the comments
+   * below — a checkbox rather than a sort, a count that says when it is
+   * filtered, a banner rather than an empty row because the table is not empty,
+   * a filter that retains rows the administrator has just worked on so the
+   * confirmation is visible. Building a second one for tarla and institutions
+   * would be re-deciding all of it, badly. So the JSX is untouched in shape and
+   * each `isDocumentTypes` gate became a lookup on this object.
+   *
+   * ⚠️ **`null` for the other eight lists**, which is what makes every gate
+   * below read as "does this list have a status at all" rather than "is this
+   * the document-type list".
+   *
+   * ⚠️ **The two derivations stay in their own modules and are NOT merged.**
+   * `documentTypeAwaitsForm` answers a question about a FORM (and vetoes the
+   * catch-all and the identity-card type, for reasons #27.07 spent two rounds
+   * on); `lookupAwaitsReview` answers a question about an ORIGIN. They mean
+   * different things and only the plumbing is shared.
+   */
+  const review: {
+    labelKey: "onlyWithoutForm" | "onlyAwaitingReview";
+    doneKey: "allHaveForm" | "allReviewed";
+    statusPrefix: "documentTypeStatus" | "lookupOriginStatus";
+    awaits: (row: Row) => boolean;
+    statusOf: (row: Row) => string;
+    nameClass: (row: Row) => string;
+    /** The field whose cell carries the colour. */
+    colouredField: string;
+    /**
+     * Is the checkbox drawn even when nothing is awaiting?
+     *
+     * ⚠️ **`true` for document types and `false` for the other two, and an
+     * adversarial round is why they differ.** #27.07 draws it unconditionally
+     * on purpose: a seeded archive always HAS formless types, so an empty
+     * backlog is a result the administrator worked towards, and its own comment
+     * argues at length for saying that in words rather than leaving it as an
+     * absence. Neither of the origin lists has that guarantee — `Instituții`
+     * can hold no imported row at all today, because the id-card reader's
+     * refusal to mint one stays — so an unconditional checkbox there is a
+     * control that empties the table and then congratulates the user for it,
+     * every single time. Drawn only when there is something to narrow to (or
+     * while it is already ticked, so ticking cannot make the control vanish
+     * under the cursor), it appears the day the first imported code does.
+     */
+    alwaysOffered: boolean;
+  } | null =
+    listKey === "document-types"
+      ? {
+          labelKey: "onlyWithoutForm",
+          doneKey: "allHaveForm",
+          statusPrefix: "documentTypeStatus",
+          awaits: (row) => awaitsFormRow(row),
+          statusOf: (row) =>
+            documentTypeStatus({ origin: row.origin, templateFields: row.templateFields }),
+          nameClass: (row) =>
+            documentTypeNameClass({ origin: row.origin, templateFields: row.templateFields }),
+          colouredField: "name",
+          alwaysOffered: true,
+        }
+      : listKey === "tarla" || listKey === "institutions"
+      ? {
+          labelKey: "onlyAwaitingReview",
+          doneKey: "allReviewed",
+          statusPrefix: "lookupOriginStatus",
+          // ⚠️ The column is read off the row EXPLICITLY, exactly as the
+          // document-type branch above reads its two — `Row` is
+          // `Record<string, unknown>` off the admin route, and handing the
+          // whole row to a weak type would let a future rename of the column
+          // pass the type check and silently answer "manual" for everything.
+          awaits:    (row) => lookupAwaitsReview({ origin: row.origin }),
+          statusOf:  (row) => lookupOriginStatus({ origin: row.origin }),
+          nameClass: (row) => lookupOriginNameClass({ origin: row.origin }),
+          // `tarla`'s required field is `indicativ`, not `name` — the colour has
+          // to land on the value the administrator actually reads.
+          colouredField: listKey === "tarla" ? "indicativ" : "name",
+          alwaysOffered: false,
+        }
+      : null;
+  // One extra column for the status, plus the always-present actions column.
+  const emptyStateColSpan = displayFields.length + (review ? 2 : 1);
+  // ⚠️ **`onlyAwaiting && review`, in that order and both terms — and the
+  // second term is belt-and-braces TODAY, which a review round established and
+  // #27.07's own comment did not.** That comment said the state "outlives a
+  // `listKey` change in a component that is keyed on nothing". It does not:
+  // `value-list-hub.tsx` renders `{openList && <ValueListModal listKey={…}/>}`
+  // and closing sets `openList` to null, so the modal UNMOUNTS between lists
+  // and both `onlyAwaiting` and `touchedTypeIds` start fresh. There is no
+  // in-modal list switcher and the overlay covers the hub's buttons.
+  //
+  // It stays because the guard is what makes that structural fact non-critical:
+  // the moment somebody adds a switcher, or keys the modal differently, a tick
+  // carried from one list to another filters the next one by a rule that is not
+  // its own — and #34.02 made that strictly worse than it was, because `review`
+  // now admits three lists where `isDocumentTypes` admitted one. Deleting it as
+  // dead code is the edit that makes the bug reachable.
   const visibleRows =
-    onlyWithoutForm && isDocumentTypes
-      ? query.data?.filter((row) => awaitsFormRow(row) || touchedTypeIds.has(row.id))
+    onlyAwaiting && review
+      ? query.data?.filter((row) => review.awaits(row) || touchedTypeIds.has(row.id))
       : query.data;
+  /**
+   * Should the checkbox be on screen at all?                     (Slice #34.02)
+   *
+   * See `alwaysOffered` on the config above for why the answer differs by list.
+   *
+   * `|| onlyAwaiting` is the second half and it is not decoration: without it,
+   * DELETING the last imported code while the box is ticked would empty the
+   * predicate and take the ticked checkbox away with it, leaving a list that is
+   * still filtered and a control that is gone. ⚠️ Deleting, specifically — an
+   * earlier draft of this comment said "curating", which
+   * `lib/admin/value-lists/origin-status.ts` forbids in as many words: `origin`
+   * is write-once and there is no reviewed action, so an imported code an
+   * administrator has described and re-ordered still reads "Creat la import"
+   * and still satisfies the rule. Delete is the one event that empties it.
+   */
+  const offerReview =
+    review !== null &&
+    (review.alwaysOffered || onlyAwaiting || (query.data?.some(review.awaits) ?? false));
   /**
    * Is there any of the backlog left?                            (Slice #27.07)
    *
@@ -778,11 +910,11 @@ export function ValueListModal({
    * this whole slice is working towards would have been unreachable.
    */
   const backlogEmpty =
-    onlyWithoutForm &&
-    isDocumentTypes &&
+    onlyAwaiting &&
+    review !== null &&
     query.data !== undefined &&
     query.data.length > 0 &&
-    !query.data.some(awaitsFormRow);
+    !query.data.some(review.awaits);
 
   return (
     <>
@@ -870,15 +1002,17 @@ export function ValueListModal({
                   standing tells the administrator there are twenty-four rows
                   above nine of them; a filter that silently rewrites the total
                   loses the one number that says how much of the list this is. */}
-              {isDocumentTypes && (
+              {review && offerReview && (
                 <label className="flex cursor-pointer select-none items-center gap-2 text-xs text-ink dark:text-zinc-300">
                   <input
                     type="checkbox"
-                    checked={onlyWithoutForm}
-                    onChange={(e) => setOnlyWithoutForm(e.target.checked)}
+                    checked={onlyAwaiting}
+                    onChange={(e) => setOnlyAwaiting(e.target.checked)}
                     className="h-4 w-4 rounded border-wire accent-cta"
                   />
-                  <span className="font-medium">{t("toolbar.onlyWithoutForm")}</span>
+                  <span className="font-medium">
+                    {t(`toolbar.${review.labelKey}` as Parameters<typeof t>[0])}
+                  </span>
                 </label>
               )}
               {query.data && (
@@ -916,12 +1050,14 @@ export function ValueListModal({
                 the table's own empty row carries the same sentence, in the
                 place a reader is already looking. Drawing both would print it
                 twice, six pixels apart. */}
-            {onlyWithoutForm && isDocumentTypes && (
+            {onlyAwaiting && review && (
               <p
                 role="status"
                 className="mb-3 text-xs font-medium text-emerald-700 dark:text-emerald-400"
               >
-                {backlogEmpty && (visibleRows?.length ?? 0) > 0 ? t("table.allHaveForm") : ""}
+                {backlogEmpty && (visibleRows?.length ?? 0) > 0
+                  ? t(`table.${review.doneKey}` as Parameters<typeof t>[0])
+                  : ""}
               </p>
             )}
 
@@ -939,7 +1075,7 @@ export function ValueListModal({
                         where there were two, so without a width the type name
                         loses room and the modal grows a horizontal scrollbar.
                         Matches the w-28 already on the actions column. */}
-                    {isDocumentTypes && (
+                    {review && (
                       <th className="w-32 px-4 py-2">{t("fields.status")}</th>
                     )}
                     <th className="w-28 px-4 py-2" />
@@ -985,7 +1121,13 @@ export function ValueListModal({
                             : "px-4 py-6 text-center text-emerald-700 dark:text-emerald-400"
                         }
                       >
-                        {query.data?.length === 0 ? t("table.empty") : t("table.allHaveForm")}
+                        {query.data?.length === 0
+                          ? t("table.empty")
+                          : t(
+                              `table.${review?.doneKey ?? "allHaveForm"}` as Parameters<
+                                typeof t
+                              >[0],
+                            )}
                       </td>
                     </tr>
                   )}
@@ -1004,11 +1146,8 @@ export function ValueListModal({
                             // colour. `documentTypeNameClass` returns exactly
                             // that body colour for a hand-added type, so an
                             // untouched row looks as it always did.
-                            isDocumentTypes && f.key === "name"
-                              ? documentTypeNameClass({
-                                  origin:         row.origin,
-                                  templateFields: row.templateFields,
-                                })
+                            review && f.key === review.colouredField
+                              ? review.nameClass(row)
                               : "text-ink dark:text-zinc-300",
                             f.multiline ? "max-w-[240px] truncate" : "",
                           ].filter(Boolean).join(" ")}
@@ -1027,13 +1166,12 @@ export function ValueListModal({
                             : (String(row[f.key] ?? "").trim() || "–")}
                         </td>
                       ))}
-                      {isDocumentTypes && (
+                      {review && (
                         <td className="px-4 py-2 text-ink dark:text-zinc-300">
                           {t(
-                            `documentTypeStatus.${documentTypeStatus({
-                              origin:         row.origin,
-                              templateFields: row.templateFields,
-                            })}` as Parameters<typeof t>[0],
+                            `${review.statusPrefix}.${review.statusOf(row)}` as Parameters<
+                              typeof t
+                            >[0],
                           )}
                         </td>
                       )}
@@ -1119,7 +1257,7 @@ export function ValueListModal({
                                 // a second derivation. Retention exists to stop
                                 // a row vanishing out of the FILTERED list;
                                 // with the filter off there is nothing to keep.
-                                if (onlyWithoutForm) {
+                                if (onlyAwaiting) {
                                   setTouchedTypeIds((prev) =>
                                     prev.has(row.id)
                                       ? prev
