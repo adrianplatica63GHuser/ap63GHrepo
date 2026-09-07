@@ -412,8 +412,44 @@ export const property = pgTable("property", {
   // "Porecla / elemente definitorii" — short identifying label.
   nickname: text("nickname"),
 
-  // Romanian cadastral identifiers.
-  tarlaSola:       text("tarla_sola"),       // Nr. tarla / sola
+  // Romanian cadastral identifiers. `tarlaId` is a REFERENCE and the other
+  // three are free text, which is the whole of Slice #34.03.
+  //
+  // Nr. tarla / sola — admin-managed (lookup_tarla, Reference Data ->
+  // Indicative Tarla). Was `tarla_sola text`, holding the indicativ as FREE
+  // TEXT, until Slice #34.03 / migration_078. Nullable; ON DELETE SET NULL —
+  // the same shape as `propertyTypeId` above and `useCategoryId` below, for
+  // the same two reasons: a property may legitimately not know its tarla yet,
+  // and removing a code from Reference Data should clear the tag rather than
+  // block the delete.
+  //
+  // ⚠️ **The text column is the thing this replaced, not a thing it sits
+  // beside.** While the property held the string, a rename in Reference Data
+  // reached no property at all and the dependents count was a match on the
+  // VALUE. Five mechanisms exist only because of that, and #34.03's CODE half
+  // deletes all five — the list is written out here, and identically in
+  // `lookupTarla` below, because a third review round found two different
+  // "four"s in this one file and either would have left a reader one item
+  // short:
+  //
+  //     `siblingsSharingValue`        (src/lib/admin/value-lists/queries.ts)
+  //     `matchesByValue`              (src/lib/admin/value-lists/dependents.ts)
+  //     the `ambiguous-value` refusal (queries.ts `reassignDependents`)
+  //     `optionsWithUnlistedValues`   (src/components/forms/async-select.tsx)
+  //     `allowUnlistedValue`          (the prop that turns it on, and the tarla
+  //                                    field is its ONLY production call site)
+  //
+  // At the commit that introduced this column all five are still in the tree,
+  // because a migration slice stops here by contract.
+  //
+  // ⚠️ **`property_version.snapshot` rows written before that migration still
+  // carry the old `tarlaSola` TEXT, deliberately.** A version records what was
+  // true when it was saved; migration_078 does not rewrite one. So the first
+  // save of each property after #34.03 writes a version whose diff shows this
+  // field changing — bounded, once per property, and honest.
+  tarlaId: uuid("tarla_id")
+    .references(() => lookupTarla.id, { onDelete: "set null" }),
+
   parcela:         text("parcela"),           // Nr. parcela
   cadastralNumber: text("cadastral_number"),  // Nr. cadastru
   carteFunciara:   text("carte_funciara"),    // Nr. carte funciara
@@ -618,7 +654,29 @@ export const propertyVersion = pgTable(
 export const lookupPropertyType = pgTable("lookup_property_type", {
   id:        uuid("id").primaryKey().defaultRandom(),
   name:      text("name").notNull(),
-  // Slice #19.02: stable slug (nullable, auto-generated on insert).
+  // ⚠️ **DEAD SINCE Slice #34.03 (D-23): nothing writes it and nothing reads
+  // it.** migration_039 added it as the slug `src/lib/properties/type-config.ts`
+  // switched on for per-type field visibility; that module no longer exists —
+  // migration_041 replaced it with the three `show*` booleans below — and
+  // #34.03 deleted `generateUniquePropertyTypeKey`, which was still filling the
+  // column in on every insert while no reader had existed for slices. So rows
+  // created before #34.03 hold a slug, rows created after hold NULL, and
+  // NEITHER is read. Do not start reading it without repopulating it.
+  //
+  // ⚠️ **Not the same thing as `lookupDocumentType.key` one table over**, which
+  // is the immutable slug all document matching and seeding run on
+  // (migration_071 rekeyed it deliberately) and which
+  // `scripts/verify-rebuild.ts` still requires to be non-NULL. These two share
+  // a name and nothing else — which is exactly why the generator survived: one
+  // `generateUniqueKey` served both tables.
+  //
+  // Nullable since the day it was added — migration_039 writes
+  // `ADD COLUMN IF NOT EXISTS key text UNIQUE` with no NOT NULL — so stopping
+  // the write needed no migration, only the COMMENT migration_078 leaves on
+  // the column for whoever finds it next. Left in place rather than dropped
+  // because dropping it would reach into four more hand-maintained files for
+  // no gain — `supabase_repair_missing_tables.sql`, `sync-reference-data.sql`,
+  // `supabase_schema_full.sql` and this one; see that migration's header.
   key:       text("key").unique(),
   // Slice #19.02: per-type panel-visibility flags. TRUE = show the panel.
   // Default FALSE = all panels hidden for newly-added types; admin opts in.
@@ -676,12 +734,24 @@ export const lookupTarla = pgTable("lookup_tarla", {
   // is the scan in /api/documents/[id]/process and `ensurePropertyForFolder` —
   // both an import reading a directory listing.
   //
-  // ⚠️ **That is one absent prop deep, not structural.** The field carries
-  // `allowUnlistedValue`; create mode is safe only because
-  // `new-property-shell.tsx` renders the form with no `initialValues`, and
-  // `tarlaSola` is validated against this table nowhere. A create-mode prefill
+  // ⚠️ **That is one absent prop deep, not structural** — the field carries
+  // `allowUnlistedValue`, create mode is safe only because
+  // `new-property-shell.tsx` renders the form with no `initialValues`, and the
+  // value is validated against this table NOWHERE, so a create-mode prefill
   // would turn that form into a writer of import-origin rows for values a
-  // person chose. Full argument in the migration header.
+  // person chose.
+  //
+  // ⚠️ **#34.03's MIGRATION HALF IS WHAT MAKES THAT CLOSEABLE, AND THE CODE
+  // HALF HAS NOT LANDED YET — SO READ THE PARAGRAPH ABOVE AS STILL TRUE.**
+  // `property.tarlaId` is now a foreign key at this table, which turns an
+  // unlisted value into a 23503 rather than a new row; but all FIVE of the
+  // mechanisms listed on `property.tarlaId` above —
+  // `siblingsSharingValue`, `matchesByValue`, the `ambiguous-value` refusal,
+  // `optionsWithUnlistedValues` and `allowUnlistedValue` — are still in the
+  // tree at the moment this comment is being read from the same commit as the
+  // migration. They go with items 2 and 3 of the slice. Until they do, the
+  // form and the query layer still speak the old language and the property
+  // page does not compile.
   //
   // `$type` is a plain inline union, not an import, for the reason
   // `lookupDocumentType.origin` states: no import means no circular-import

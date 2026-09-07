@@ -31,6 +31,19 @@
 --       Each takes ACCESS EXCLUSIVE for the length of a full-table scan. On
 --       lookup tables of a few dozen rows that is immeasurable; on a large
 --       table it would not be.
+--   SEVEN, since #34.03:
+--     * `ALTER TABLE property ADD CONSTRAINT property_tarla_id_fkey FOREIGN
+--       KEY ...`. The ADD COLUMN beside it is additive; the constraint is not
+--       quite - it takes ACCESS EXCLUSIVE on `property` and validates every
+--       existing row, which is the same cost as the SET NOT NULLs above. It
+--       validates trivially today because this file can only ever leave
+--       `tarla_id` NULL (it has no way to resolve text against lookup rows and
+--       must not guess), but on a database where the column is already
+--       populated the scan is real. Listed because the file's own rule is that
+--       this paragraph is what an operator reads before running it against
+--       production. (The pre-existing `ADD CONSTRAINT ... UNIQUE` on
+--       lookup_property_type is arguably an eighth and has never been listed;
+--       that is a gap in this paragraph, not a licence.)
 --   Anything added here later should hold to "additive" unless it says why not,
 --   AND should update this paragraph -- a count that is wrong is worse than no
 --   count, because this is the paragraph an operator reads before running the
@@ -45,6 +58,8 @@
 --   - function touch_updated_at()
 --   - enum group_target_type
 --   - tables principal_object, person, property, document, groups
+--   - table lookup_tarla (Slice #34.03's block in section 8 references it, and
+--     an adversarial round pointed out it was assumed rather than stated)
 --
 -- Read the NOTICE output at the end. It reports anything still missing.
 -- ===========================================================================
@@ -526,7 +541,11 @@ CREATE INDEX IF NOT EXISTS property_corner_source_property_idx
 
 -- ===========================================================================
 -- 8. COLUMN DRIFT -- columns added by migrations after supabase_schema_full.sql
---    was last hand-maintained. All nullable adds, so all safe on live data.
+--    was last hand-maintained. Nullable adds, so safe on live data -- with ONE
+--    exception since Slice #34.03: the FOREIGN KEY beside `property.tarla_id`
+--    takes ACCESS EXCLUSIVE on `property` and validates every row. It is in
+--    the not-purely-additive list at the top of this file, which is the
+--    paragraph an operator reads before running this against production.
 -- ===========================================================================
 
 -- migration_054 -- audit trail (email of last writer)
@@ -536,6 +555,62 @@ ALTER TABLE document         ADD COLUMN IF NOT EXISTS updated_by text;
 ALTER TABLE person_version   ADD COLUMN IF NOT EXISTS updated_by text;
 ALTER TABLE property_version ADD COLUMN IF NOT EXISTS updated_by text;
 ALTER TABLE document_version ADD COLUMN IF NOT EXISTS updated_by text;
+
+-- migration_078 (Slice #34.03) -- Nr. tarla / sola as a REFERENCE
+--
+-- ⚠️ **THIS FILE ADDS THE NEW COLUMN AND NOT THE DROP, AND THAT ASYMMETRY IS
+-- THE SAME ONE migration_070 ALREADY HAS WITH IT.** migration_078 replaces
+-- `property.tarla_sola` (free text) with `property.tarla_id` (a foreign key at
+-- lookup_tarla). Adding the column is additive and belongs here, because a
+-- Supabase project repaired through this file is a project that never ran the
+-- migration chain: without these two statements it would gain every other
+-- column drift below and NOT this one, and then answer 42703 on the property
+-- list, the property page and global search while the post-flight at the end
+-- of this file reported OK. Dropping `tarla_sola` is NOT added, for this
+-- file's own stated reason -- nothing it does is destructive, and dropping a
+-- populated column is exactly what that promise excludes. So a repaired
+-- project ends with BOTH columns, `tarla_sola` unread and unwritten; running
+-- migration_078 through the runner is what removes it, and that is where the
+-- backfill lives too. A project that reaches `tarla_id` through THIS file has
+-- an EMPTY one, which is the honest outcome: this file has no way to resolve
+-- text against lookup rows and must not guess.
+ALTER TABLE property ADD COLUMN IF NOT EXISTS tarla_id uuid;
+
+-- ⚠️ **TESTED BY SHAPE, NOT BY NAME.** The `lookup_property_type.key` block
+-- 240 lines below is the scar this avoids: a name-only test found nothing on a
+-- migrated database, so that block added a SECOND unique constraint over the
+-- same column and `pg_dump -s` of a repaired database disagreed with a
+-- migrated one by exactly that constraint. Same trap here - a database built
+-- by `drizzle-kit push` names this one `property_tarla_id_lookup_tarla_id_fk`,
+-- and migration_078 names it `property_tarla_id_fkey`. `conkey` is compared
+-- rather than just `confrelid`, so a future composite FK to the same table
+-- would not satisfy this test either. (Slice #34.03 review, round two.)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+      FROM pg_constraint c
+     WHERE c.conrelid  = 'property'::regclass
+       AND c.contype   = 'f'
+       AND c.confrelid = 'lookup_tarla'::regclass
+       AND c.conkey    = ARRAY[(
+             SELECT attnum FROM pg_attribute
+              WHERE attrelid = 'property'::regclass
+                AND attname  = 'tarla_id'
+                AND NOT attisdropped
+           )]::smallint[]
+  ) THEN
+    ALTER TABLE property
+      ADD CONSTRAINT property_tarla_id_fkey
+      FOREIGN KEY (tarla_id) REFERENCES lookup_tarla(id) ON DELETE SET NULL;
+  END IF;
+  -- Presence is not the whole question: an FK left at the default NO ACTION
+  -- satisfies the test above and still breaks the one behaviour it exists for.
+  -- Warned rather than repaired, because repairing means DROPPING a
+  -- constraint and this file does not drop. The post-flight block at the end
+  -- repeats the warning so it is not lost in the scroll.
+  --                                    (Slice #34.03 review, round three.)
+END $$;
 
 -- migration_027 -- original cadastral-file index per corner
 ALTER TABLE property_corner ADD COLUMN IF NOT EXISTS original_index integer;
@@ -946,12 +1021,61 @@ BEGIN
     RAISE WARNING 'chk_li_origin is absent -- a row holds an origin outside (MANUAL, IMPORT). Find it with: SELECT id, name, origin FROM lookup_institution WHERE origin NOT IN (''MANUAL'', ''IMPORT'');';
   END IF;
 
+  -- Slice #34.03: the same question for property.tarla_id, and it is here for
+  -- the same reason again -- an adversarial round found the first draft of the
+  -- #34.03 block had opted out of this section exactly as #34.02's had.
+  -- `lookup_tarla` is NOT in the pre-flight `expected` array - that array is
+  -- the thirteen tables this file OWNS - so on a project that lacks it the
+  -- section-8 block dies on `'lookup_tarla'::regclass`, the error scrolls past
+  -- (no ON_ERROR_STOP), and without this check the last line would still say
+  -- OK on a database where every property read answers 42703. #34.03 also adds
+  -- it to the PREREQUISITES paragraph at the top, which is where a reader
+  -- looks; this check is what makes the file NOTICE rather than assume.
+  --
+  -- ⚠️ `to_regclass`, not `::regclass`, in the two branches below. The cast
+  -- RAISES on a missing relation, which on that same lookup_tarla-less project
+  -- would abort this post-flight block outright - so the file's last line
+  -- would be `relation "lookup_tarla" does not exist` instead of the
+  -- POST-FLIGHT FAILED line naming what to fix. `to_regclass` returns NULL,
+  -- `confrelid = NULL` matches nothing, and the operator gets the fault list.
+  --                                    (Slice #34.03 review, round four.)
+  --
+  -- The delete action is checked too, not just presence: an FK left at the
+  -- default NO ACTION would make removing a code from Reference Data fail with
+  -- 23503 instead of clearing the tag, which is the single behaviour
+  -- migration_028's shape exists for. It is a WARNING rather than a fault
+  -- because repairing it means dropping a constraint, and this file does not
+  -- drop.
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name   = 'property'
+      AND column_name  = 'tarla_id'
+  ) THEN
+    faults := array_append(faults, 'property.tarla_id (column missing)');
+  ELSIF NOT EXISTS (
+    SELECT 1 FROM pg_constraint c
+    WHERE c.conrelid  = 'property'::regclass
+      AND c.contype   = 'f'
+      AND c.confrelid = to_regclass('public.lookup_tarla')
+  ) THEN
+    faults := array_append(faults, 'property.tarla_id (foreign key missing)');
+  ELSIF NOT EXISTS (
+    SELECT 1 FROM pg_constraint c
+    WHERE c.conrelid    = 'property'::regclass
+      AND c.contype     = 'f'
+      AND c.confrelid   = to_regclass('public.lookup_tarla')
+      AND c.confdeltype = 'n'
+  ) THEN
+    RAISE WARNING 'property.tarla_id has a foreign key to lookup_tarla whose ON DELETE action is not SET NULL. Deleting a code in Reference Data will fail with 23503 (or, if CASCADE, delete the properties). Inspect with: SELECT conname, confdeltype FROM pg_constraint WHERE conrelid = ''property''::regclass AND contype = ''f'' AND confrelid = ''lookup_tarla''::regclass;';
+  END IF;
+
   IF array_length(missing, 1) IS NOT NULL THEN
     faults := array_append(faults, 'tables: ' || array_to_string(missing, ', '));
   END IF;
 
   IF array_length(faults, 1) IS NULL THEN
-    RAISE NOTICE 'POST-FLIGHT OK: all 13 tables present; lookup_document_type.origin, lookup_tarla.origin, lookup_institution.origin and document.import_title present.';
+    RAISE NOTICE 'POST-FLIGHT OK: all 13 tables present; lookup_document_type.origin, lookup_tarla.origin, lookup_institution.origin, document.import_title and property.tarla_id present.';
   ELSE
     RAISE EXCEPTION 'POST-FLIGHT FAILED: %', array_to_string(faults, ' | ');
   END IF;
