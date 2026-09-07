@@ -50,7 +50,7 @@ paths:
 
 - **Soft-delete does not cascade.** M:M junctions keep their `ON DELETE SET NULL` FKs but those never fire, so a historical association preserves its role tag. Do not "fix" this by nulling role columns on soft-delete.
 
-- **Whitelist junctions and all M:M entity junctions stay HARD-delete:** `lookup_property_person_role`, `lookup_doc_type_person_role`, `lookup_person_person_role`. Do not add `deleted_at` to them.
+- **Whitelist junctions and all M:M entity junctions stay HARD-delete:** `lookup_doc_type_person_role` and the entity junctions. Do not add `deleted_at` to them. (`lookup_property_person_role` and `lookup_person_person_role` were in this list until Slice #34.04 — each held one bit per role, so `migration_079` folded them into `lookup_person_role.valid_for_property` / `.valid_for_person` and dropped both tables.)
 
 - **`natural_person.cnp` is immutable once written — a `migration_025` trigger enforces it.** Correct a misread digit in the review form BEFORE the `POST /api/people`; fixing it afterwards is a data migration, not an edit.
 

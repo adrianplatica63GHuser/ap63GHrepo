@@ -6,23 +6,13 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { PaginationControls } from "@/components/pagination-controls";
 import { buttonClass } from "@/lib/ui/button-styles";
+import { usePersonRoleOptions } from "@/hooks/use-lookup-options";
 
 const PAGE_SIZE = 15;
 
 type PersonSearchItem = { id: string; code: string; type: "NATURAL" | "JUDICIAL"; displayName: string };
 type SearchResponse = { items: PersonSearchItem[]; total: number };
-type RoleItem = { id: string; name: string };
-
 type Props = { personId: string; personName: string; backBase: string };
-
-async function fetchPersonPersonRoles(): Promise<RoleItem[]> {
-  const res = await fetch("/api/admin/person-person-roles");
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data = await res.json();
-  // Each item has id (= lookupPersonPersonRole.id) and name (from joined lookupPersonRole)
-  return (data.items as Array<{ id: string; personRoleId: string; name: string; description: string | null }>)
-    .map((r) => ({ id: r.personRoleId, name: r.name }));
-}
 
 async function searchPersons(name: string, code: string, page: number): Promise<SearchResponse> {
   const params = new URLSearchParams();
@@ -38,6 +28,8 @@ async function searchPersons(name: string, code: string, page: number): Promise<
 
 export function AssociatePersonView({ personId, personName, backBase }: Props) {
   const t           = useTranslations("shared.associatePersonReference");
+  // One sentence shared by all four association screens (Slice #34.04).
+  const tShared     = useTranslations("shared");
   const router      = useRouter();
   const queryClient = useQueryClient();
 
@@ -54,10 +46,19 @@ export function AssociatePersonView({ personId, personName, backBase }: Props) {
     queryFn:  () => searchPersons(nameInput, codeInput, page),
   });
 
-  const { data: roles } = useQuery({
-    queryKey: ["person-person-roles"],
-    queryFn:  fetchPersonPersonRoles,
-  });
+  // ⚠️ **Slice #34.04 fixed a live defect here, and it is worth naming.** This
+  // was a `useQuery` on `["person-person-roles"]` whose `queryFn` re-mapped the
+  // rows to `{ id: r.personRoleId, name: r.name }` — while
+  // `person-person-modal.tsx` cached the SAME endpoint's RAW rows under the
+  // SAME key. React Query serves one entry per key, so whichever mounted first
+  // won for the 30 s staleTime: with the modal first, this screen rendered
+  // blank `<option>` labels and submitted a `lookup_person_person_role.id`
+  // where `person_person.relationship_role_id` expects a
+  // `lookup_person_role.id` — a 23503. The endpoint, the modal and the key are
+  // all gone; the hook reads `["value-list", "person-roles"]` and filters on
+  // `validForPerson`, and the only id left is the right one.
+  const { options: roleOptions, listState: roleListState } =
+    usePersonRoleOptions("person");
 
   const items = useMemo(() => data?.items ?? [], [data?.items]);
   const total = data?.total ?? 0;
@@ -184,8 +185,12 @@ export function AssociatePersonView({ personId, personName, backBase }: Props) {
         onNext={() => setPage((p) => p + 1)}
       />
 
-      {/* Role selector — only shown when admin has whitelisted at least one person-person role */}
-      {roles && roles.length > 0 && (
+      {/* Role selector — only shown when at least one role is ticked
+          „Persoană → Persoană" on the master list. Slice #34.04: gated on the
+          OPTIONS rather than on the query result, so an unreadable list falls
+          through to the sentence below instead of silently rendering as "no
+          roles are ticked" — which is what this condition used to do. */}
+      {roleOptions.length > 0 && (
         <div className="flex items-center gap-3">
           <label className="text-sm font-medium text-ink dark:text-zinc-300">
             {t("labelRole")}
@@ -196,11 +201,20 @@ export function AssociatePersonView({ personId, personName, backBase }: Props) {
             className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
           >
             <option value="">{t("roleNone")}</option>
-            {roles.map((r) => (
-              <option key={r.id} value={r.id}>{r.name}</option>
+            {roleOptions.map((r) => (
+              <option key={r.value} value={r.value}>{r.label}</option>
             ))}
           </select>
         </div>
+      )}
+
+      {/* Slice #34.04. The role is optional on this screen
+          (`relationshipRoleId: selectedRoleId || null`), so the sentence says
+          the association can still be made. */}
+      {roleListState === "failed" && (
+        <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+          {tShared("roleListUnavailable")}
+        </p>
       )}
 
       {submitError && <p className="text-sm text-red-600 dark:text-red-400" role="alert">{submitError}</p>}

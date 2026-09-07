@@ -5,11 +5,12 @@
  *   Moving forty Proprietate–Persoană associations from role A to role B does
  *   not move A's whitelist ticks — deliberately, see `configuration` in
  *   ./dependents.ts — and the association screens build their role dropdown
- *   from the WHITELIST (`/api/admin/property-person-roles`,
- *   `/api/documents/[id]/valid-person-roles`,
- *   `/api/admin/doc-type-person-roles/distinct-roles`,
- *   `/api/admin/person-person-roles`) while the display path joins
- *   `lookup_person_role` DIRECTLY. So a row moved onto a role that is not
+ *   from the WHITELIST (`/api/documents/[id]/valid-person-roles`,
+ *   `/api/admin/doc-type-person-roles/distinct-roles`, and — since Slice
+ *   #34.04, where two of these were tables and are now two booleans on
+ *   `lookup_person_role` — `valid_for_property` / `valid_for_person`
+ *   filtered out of `/api/admin/value-lists/person-roles`) while the display
+ *   path joins `lookup_person_role` DIRECTLY. So a row moved onto a role that is not
  *   ticked in that panel reads correctly on screen and can never be
  *   re-selected: the user sees the role, cannot find it in the list, and there
  *   is nothing on the association screen that explains why.
@@ -88,13 +89,12 @@
  * key (`confirm.roleWhitelistNote`).
  */
 
-import { eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import type { DbTransaction } from "@/db";
 import {
   document,
   lookupDocTypePersonRole,
-  lookupPersonPersonRole,
-  lookupPropertyPersonRole,
+  lookupPersonRole,
   personDocument,
   personPerson,
   propertyPerson,
@@ -127,7 +127,29 @@ export async function grantPersonRoleWhitelists(
   const granted: DependentCount[] = [];
   const warnings: string[] = [];
 
-  // ── Roluri pe Proprietate ──────────────────────────────────────────────────
+  // ── „Persoană → Proprietate" ───────────────────────────────────────────────
+  //
+  // ⚠️ **A CONDITIONAL UPDATE, AND THE CONDITION IS WHAT KEEPS `granted`
+  // HONEST.**                                                  (Slice #34.04)
+  // This was an INSERT into `lookup_property_person_role` with
+  // `.onConflictDoNothing().returning()`, whose whole point was that a target
+  // already ticked returned NO ROW and so contributed nothing to `granted` —
+  // "nothing changed there" said by saying nothing. migration_079 made the
+  // tick a boolean, and the flag test in the WHERE is the same sentence: the
+  // UPDATE matches only a row this call is really about to
+  // change, so `rows.length` is 1 when a tick was created and 0 when it was
+  // already there. A bare `.set({ validForProperty: true })` would return one
+  // row every time and report a grant that did not happen.
+  //
+  // ⚠️ **`IS NOT TRUE`, not `= false`, and an adversarial round is why.** The
+  // column is `NOT NULL` in migration_079 — but `supabase_repair_missing_tables.sql`
+  // says in its own comments that a nullable copy is reachable (a hand-add, or
+  // a partial `drizzle-kit push`, over which `ADD COLUMN IF NOT EXISTS` is a
+  // no-op). Against a NULL, `= false` is UNKNOWN, so the UPDATE would match
+  // nothing, `granted` would stay empty, no warning would fire, and the moved
+  // associations would land on a role that is unselectable on every screen.
+  // `IS NOT TRUE` is true for both FALSE and NULL, which is the question
+  // actually being asked: is this tick missing?
   const propertyRows = await tx
     .select({ id: propertyPerson.id })
     .from(propertyPerson)
@@ -135,16 +157,19 @@ export async function grantPersonRoleWhitelists(
     .limit(1);
   if (propertyRows.length > 0) {
     const rows = await tx
-      .insert(lookupPropertyPersonRole)
-      .values({ personRoleId: toRoleId })
-      .onConflictDoNothing()
-      .returning({ id: lookupPropertyPersonRole.id });
+      .update(lookupPersonRole)
+      .set({ validForProperty: true })
+      .where(and(
+        eq(lookupPersonRole.id, toRoleId),
+        sql`${lookupPersonRole.validForProperty} IS NOT TRUE`,
+      ))
+      .returning({ id: lookupPersonRole.id });
     if (rows.length > 0) {
       granted.push({ labelKey: "propertyPersonRoleWhitelist", count: rows.length });
     }
   }
 
-  // ── Persoană → Persoană ────────────────────────────────────────────────────
+  // ── „Persoană → Persoană" ──────────────────────────────────────────────────
   const personRows = await tx
     .select({ id: personPerson.id })
     .from(personPerson)
@@ -152,10 +177,13 @@ export async function grantPersonRoleWhitelists(
     .limit(1);
   if (personRows.length > 0) {
     const rows = await tx
-      .insert(lookupPersonPersonRole)
-      .values({ personRoleId: toRoleId })
-      .onConflictDoNothing()
-      .returning({ id: lookupPersonPersonRole.id });
+      .update(lookupPersonRole)
+      .set({ validForPerson: true })
+      .where(and(
+        eq(lookupPersonRole.id, toRoleId),
+        sql`${lookupPersonRole.validForPerson} IS NOT TRUE`,
+      ))
+      .returning({ id: lookupPersonRole.id });
     if (rows.length > 0) {
       granted.push({ labelKey: "personPersonRoleWhitelist", count: rows.length });
     }

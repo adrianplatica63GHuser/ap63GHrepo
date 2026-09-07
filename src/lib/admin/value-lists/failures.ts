@@ -17,8 +17,10 @@
  *   describes as fixed, one modal over: a refused delete left the confirmation
  *   dialog open with its button re-enabled and nothing said anywhere.
  *
- *   Two of those five are gone (#29.13 folded the relationship-role lists into
- *   the generic modal — see ./config.ts). The other three read this file. One
+ *   Four of those five are gone: #29.13 folded the relationship-role lists into
+ *   the generic modal and Slice #34.04 folded the two person-role whitelists
+ *   into booleans on `lookup_person_role` (see ./config.ts). „Persoană →
+ *   Document" and the generic modal read this file. One
  *   sentence, translated once, is also the reason this is not five key sets:
  *   each panel keeps its own scoped namespace for its own words and takes a
  *   SECOND `useTranslations("valueList.confirm.errors")` hook for these.
@@ -116,9 +118,11 @@ export class RequestFailedError extends Error {
  * ⚠️ **409 is TWO different answers and only one of them lands here.** The
  * value-lists DELETE answers 409 with an `IN_USE` body, which its caller
  * recognises with `isInUseBody` and turns into the whole refusal dialog before
- * this function is ever reached. What is left is the three whitelist panels'
- * "this row already exists", which now carries `code: "DUPLICATE"` so it is
+ * this function is ever reached. What is left is the „Persoană → Document"
+ * panel's "this row already exists", which carries `code: "DUPLICATE"` so it is
  * recognised by a code rather than by a status a different door also uses.
+ * (Three panels until Slice #34.04; the other two whitelists are booleans on
+ * `lookup_person_role` now, and a checkbox has no duplicate to refuse.)
  */
 export function failureFromResponse(status: number, body: unknown): FailureCode {
   if (status === 404) return "notFound";
@@ -141,8 +145,8 @@ export function failureFromResponse(status: number, body: unknown): FailureCode 
 /**
  * Throw the right `RequestFailedError` for a response that is not ok.
  *
- * `formRejects400` is for the doors where a 400 means the form: the three
- * whitelist panels' POSTs and the value-lists PUT/POST all answer 400 for a
+ * `formRejects400` is for the doors where a 400 means the form: the „Persoană
+ * → Document" panel's POST and the value-lists PUT/POST all answer 400 for a
  * body their zod schema refused, and "Validation failed" plus a zod path is
  * not something to show anybody. A DELETE passes `false` and a 400 there falls
  * through to the generic sentence.
@@ -164,8 +168,8 @@ export async function throwRequestFailed(
   //
   // ⚠️ **Behaviour-preserving for every code that existed before it**: none of
   // `SAME_VALUE`, `AMBIGUOUS_VALUE` or `DUPLICATE` is ever answered with a 400
-  // (the first two are the reassign route's 409, the third the whitelist
-  // panels'), so `mapped` was `generic` for every 400 this function saw and the
+  // (the first two are the reassign route's 409, the third the „Persoană →
+  // Document" panel's), so `mapped` was `generic` for every 400 this function saw and the
   // branch below fired exactly as it used to.
   if (formRejects400 && (res.status === 400 || res.status === 422) && mapped === "generic") {
     throw new RequestFailedError("validation");

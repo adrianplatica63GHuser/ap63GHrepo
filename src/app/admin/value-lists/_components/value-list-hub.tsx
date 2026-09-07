@@ -5,8 +5,6 @@ import { useTranslations } from "next-intl";
 import type { ListKey } from "@/lib/admin/value-lists/config";
 import { ValueListModal } from "./value-list-modal";
 import { DocumentPersonsModal } from "./document-persons-modal";
-import { PropertyPersonsModal } from "./property-persons-modal";
-import { PersonPersonModal } from "./person-person-modal";
 
 // ── Section wrapper ───────────────────────────────────────────────────────────
 
@@ -92,8 +90,6 @@ export function ValueListHub() {
 
   const [openList,              setOpenList]              = useState<ListKey | null>(null);
   const [showDocPersons,        setShowDocPersons]        = useState(false);
-  const [showPropertyPersons,   setShowPropertyPersons]   = useState(false);
-  const [showPersonPerson,      setShowPersonPerson]      = useState(false);
   const [showDocToProperty,     setShowDocToProperty]     = useState(false);
 
   function open(key: ListKey) { setOpenList(key); }
@@ -127,11 +123,25 @@ export function ValueListHub() {
           {/* Master list */}
           <ListBtn label={t("lists.personRoles")} onClick={() => open("person-roles")} />
 
-          {/* Person-involved sub-row */}
+          {/* Person-involved sub-row.
+
+              Slice #34.04: „Persoană → Proprietate" and „Persoană → Persoană"
+              are gone from here, and their words are two CHECKBOXES on the
+              „Roluri Persoană" row above. Each opened a modal over a table
+              holding one bit per role — a UNIQUE NOT NULL foreign key back to
+              the master list and nothing else — so one question about one role
+              cost three windows, and the empty-by-default state of
+              „Persoană → Persoană" was invisible until you opened it.
+              migration_079 made both a boolean column.
+
+              „Persoană → Document" stays a button, and that is not an
+              oversight: `lookup_doc_type_person_role` is unique over the PAIR
+              (document_type_id, person_role_id) — „Vânzător" is a valid party
+              on a sale contract and not on a cadastral plan — so it is a grid
+              and a bit cannot hold it. Slice #34.10 moves it to the
+              document-type screen. */}
           <SubLabel label={t("sections.rolesPerson")} />
-          <ListBtn label={t("lists.personToProperty")} onClick={() => setShowPropertyPersons(true)} />
           <ListBtn label={t("lists.personToDocument")} onClick={() => setShowDocPersons(true)} />
-          <ListBtn label={t("lists.personToPerson")}   onClick={() => setShowPersonPerson(true)} />
 
           {/* Object-to-object sub-row.
 
@@ -151,8 +161,6 @@ export function ValueListHub() {
 
       {openList            && <ValueListModal listKey={openList} onClose={close} />}
       {showDocPersons      && <DocumentPersonsModal   onClose={() => setShowDocPersons(false)} />}
-      {showPropertyPersons && <PropertyPersonsModal   onClose={() => setShowPropertyPersons(false)} />}
-      {showPersonPerson    && <PersonPersonModal      onClose={() => setShowPersonPerson(false)} />}
       {showDocToProperty   && <DocToPropertyModal     onClose={() => setShowDocToProperty(false)} />}
     </>
   );

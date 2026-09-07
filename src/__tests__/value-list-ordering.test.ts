@@ -500,10 +500,21 @@ describe("§5 the same rows, read three times, come back in the same order", () 
 
 describe("§6 person-roles does not write sort_order", () => {
   it("neither schema yields one, whether or not the payload sends it", () => {
+    // ⚠️ **The assertion is `not.toContain("sortOrder")`, not an exact key
+    // list, and Slice #34.04 is why.** The exact list was `["name"]` and this
+    // test went red when that slice added `validForProperty` /
+    // `validForPerson` — the two whitelist tables that became columns
+    // (migration_079). It was right to go red: the key set had genuinely
+    // changed. But what §6 is FOR is the one key that must never come back, and
+    // pinning the whole set makes every future column on this list stop here
+    // for a reason that has nothing to do with `sort_order`. The exact-set
+    // assertion moved to person-role-flags.test.ts §2, where growing it is the
+    // point — an adversarial round caught this comment claiming that while the
+    // assertion was still sitting three lines below it.
     for (const schemas of [LIST_SCHEMAS, LIST_UPDATE_SCHEMAS]) {
       const schema = schemas["person-roles"];
-      expect(Object.keys(schema.parse({ name: "Cumpărător" }))).toEqual(["name"]);
-      expect(Object.keys(schema.parse({ name: "Cumpărător", sortOrder: 7 }))).toEqual(["name"]);
+      expect(Object.keys(schema.parse({ name: "Cumpărător" }))).not.toContain("sortOrder");
+      expect(Object.keys(schema.parse({ name: "Cumpărător", sortOrder: 7 }))).not.toContain("sortOrder");
     }
   });
 

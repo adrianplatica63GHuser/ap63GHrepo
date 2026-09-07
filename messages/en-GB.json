@@ -520,6 +520,7 @@
     "notes": "Notes"
   },
   "shared": {
+    "roleListUnavailable": "The role list could not be read, so no role can be chosen right now. The role is optional in any case.",
     "properties": {
       "empty": "No properties associated",
       "colCode": "Code",
@@ -1717,9 +1718,7 @@
       "judicialPersonTypes": "Judicial Person Types",
       "documentTypes": "Document Types",
       "institutions": "Institutions",
-      "personToProperty": "Person → Property",
       "personToDocument": "Person → Document",
-      "personToPerson": "Person → Person",
       "propertyToProperty": "Property → Property",
       "documentToDocument": "Document → Document",
       "documentToProperty": "Document → Property"
@@ -1730,6 +1729,8 @@
       "descriere": "Description",
       "description": "Description",
       "institutionType": "Institution Type",
+      "validForProperty": "Person → Property",
+      "validForPerson": "Person → Person",
       "status": "Status"
     },
     "documentTypeStatus": {
@@ -1862,9 +1863,9 @@
         "propertyPersons": "{count, plural, one {# Property–Person association} other {# Property–Person associations}}",
         "personDocuments": "{count, plural, one {# Person–Document association} other {# Person–Document associations}}",
         "personPersons": "{count, plural, one {# Person–Person association} other {# Person–Person associations}}",
-        "propertyPersonRoleWhitelist": "{count, plural, one {# entry in “Property Persons”} other {# entries in “Property Persons”}}",
+        "propertyPersonRoleWhitelist": "{count, plural, one {the “Person → Property” tick} other {# “Person → Property” ticks}}",
         "docTypePersonRoleWhitelist": "{count, plural, one {# entry in “Document Persons”} other {# entries in “Document Persons”}}",
-        "personPersonRoleWhitelist": "{count, plural, one {# entry in “Person → Person”} other {# entries in “Person → Person”}}",
+        "personPersonRoleWhitelist": "{count, plural, one {the “Person → Person” tick} other {# “Person → Person” ticks}}",
         "propertyProperties": "{count, plural, one {# Property–Property association} other {# Property–Property associations}}",
         "documentDocuments": "{count, plural, one {# Document–Document association} other {# Document–Document associations}}"
       },
@@ -1893,46 +1894,6 @@
       "error": "Failed to load",
       "empty": "No associations yet",
       "errorBothRequired": "Please select both a document type and a person role."
-    },
-    "propertyPersons": {
-      "title": "Property Persons",
-      "colPersonRole": "Person Role",
-      "colDescription": "Description",
-      "addTitle": "Add Role",
-      "selectPersonRole": "Select person role…",
-      "hintPersonRole": "If a person role is not listed, add it using the Person Roles button in the Person section.",
-      "add": "Add",
-      "save": "Save",
-      "saving": "Saving…",
-      "cancel": "Cancel",
-      "delete": "Delete",
-      "deleting": "Deleting…",
-      "confirmDelete": "Remove this role from the list? This cannot be undone.",
-      "count": "{count} roles",
-      "loading": "Loading…",
-      "error": "Failed to load",
-      "empty": "No roles yet",
-      "errorRequired": "Please select a person role."
-    },
-    "personPersonRoles": {
-      "title": "Allowed Person–Person Roles",
-      "add": "Add role",
-      "colPersonRole": "Person Role",
-      "colDescription": "Description",
-      "addTitle": "Add allowed role",
-      "selectPersonRole": "Select a person role…",
-      "hintPersonRole": "If the desired role is not listed, add it first in Person Roles.",
-      "save": "Save",
-      "saving": "Saving…",
-      "cancel": "Cancel",
-      "delete": "Delete",
-      "deleting": "Deleting…",
-      "confirmDelete": "Remove this role from the allowed list? This cannot be undone.",
-      "count": "{count} roles",
-      "loading": "Loading…",
-      "error": "Failed to load",
-      "empty": "No allowed roles configured",
-      "errorRequired": "Please select a role."
     },
     "docToPropertyInfo": {
       "title": "Document → Property",

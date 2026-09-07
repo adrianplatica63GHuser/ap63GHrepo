@@ -40,9 +40,23 @@ type Row = Record<string, unknown> & { id: string };
 
 async function fetchRows(listKey: ListKey): Promise<Row[]> {
   const res = await fetch(`/api/admin/value-lists/${listKey}`);
-  if (!res.ok) throw new Error(`Failed to load (${res.status})`);
+  // ⚠️ **`res.redirected` as well as `!res.ok`, and an adversarial round
+  // measured why it matters HERE and not only in the fetcher that first had
+  // it.** An expired session answers with a redirect to the login page, whose
+  // HTML parses to `{}`; `data.items ?? []` then reads as "the archive holds
+  // none" and React Query caches a SUCCESSFUL empty array. Since Slice #34.04
+  // this entry is shared — `@/hooks/use-lookup-options` reads the same
+  // `["value-list", …]` keys — so on a shared entry the WEAKEST queryFn defines
+  // the failure semantics for every reader: the guarded hook would find a fresh
+  // empty list, never refetch, and show a silently empty dropdown with no alert
+  // for the 30 s staleTime. That is exactly what the guard exists to prevent,
+  // re-entering through the key.
+  if (res.redirected || !res.ok) throw new Error(`Failed to load (${res.status})`);
   const data = await res.json();
-  return data.items as Row[];
+  // `?? []` rather than a bare cast: this used to survive a bodyless answer only
+  // because React Query rejects `undefined` data with an error of its own, which
+  // is the right outcome reached by accident. Now it is reached on purpose.
+  return (data.items ?? []) as Row[];
 }
 
 async function saveRow(
@@ -189,31 +203,27 @@ async function reassignRows(
  *   document-types                   documents/list-view.tsx,
  *                                    documents/_components/document-form.tsx
  *   institutions                     documents/_components/document-form.tsx
- *   citizenships                     hooks/use-lookup-options.ts
- *   person-types                     hooks/use-lookup-options.ts
  *   property-property-roles          properties/[id]/associate-reference/associate-reference-view.tsx
  *   document-document-roles          documents/[id]/associate-reference/associate-reference-view.tsx
- *   property-person-roles-whitelist  the three associate-person / associate-property views
- *   property-person-roles            _components/property-persons-modal.tsx  (a sibling panel)
- *   person-person-roles              _components/person-person-modal.tsx     (a sibling panel),
- *                                    natural-persons/[id]/associate-person
  *   doc-distinct-roles               the two associate-document views
  *   doc-type-person-roles            _components/document-persons-modal.tsx  (a sibling panel)
  *
- * ⚠️ **`citizenships` and `person-types` arrived in Slice #34.04 and are the
- * only two rows here whose consumer is a HOOK rather than a screen.** Both
- * were read through a bare `useEffect` + `fetch` held in component state — no
- * key, so neither this narrow invalidation nor the unkeyed sweep the delete
- * and move paths call could reach them, and a renamed citizenship stayed wrong
- * on the natural-person form and the ID-card dialog until the page was
- * reloaded. `@/hooks/use-lookup-options` is where they are fetched now; the
- * two forms consume it. (NOT the last two lists read that way —
- * `useInstitutionOptions`, in one of those same two files, still is, for
- * reasons that hook's own comment gives.)
+ * ⚠️ **THIS TABLE LOST FIVE ROWS IN SLICE #34.04, AND THE LESSON IS WHY A
+ * BRANCH EXISTS AT ALL.** `property-person-roles-whitelist`,
+ * `property-person-roles` and `person-person-roles` are gone because their two
+ * endpoints are gone: the whitelists are booleans on `lookup_person_role` now,
+ * so the four association screens read `["value-list", "person-roles"]` through
+ * `@/hooks/use-lookup-options` — the key the unconditional first line of this
+ * function already covers. `citizenships` and `person-types` were added to this
+ * table earlier in the SAME slice and removed again for exactly the same
+ * reason: a namespaced key needs no branch, and a bare one is a second name for
+ * a list that already has one. **A new consumer of a value list belongs on
+ * `["value-list", <listKey>]` unless it can say why not.** The three bare keys
+ * still listed above are older than that rule and are left to their own slices.
  *
- * The five person-role rows all render `lookup_person_role.name`, which is why
- * one rename on the master list has to reach all of them. `doc-type-person-roles` is the
- * one row in this table with TWO joined names — `listDocTypePersonRoles`
+ * The two remaining person-role rows render `lookup_person_role.name`, which is
+ * why one rename on the master list has to reach them. `doc-type-person-roles`
+ * is the one row in this table with TWO joined names — `listDocTypePersonRoles`
  * selects `documentTypeName` beside `personRoleName` — so it hangs off the
  * document-types branch as well, and a rename on EITHER list has to reach it.
  *
@@ -260,22 +270,13 @@ function invalidateListCaches(
   if (listKey === "institutions") {
     qc.invalidateQueries({ queryKey: ["institutions"] });
   }
-  // Slice #34.04: the two lists that used to be fetched into `useState`. Their
-  // one consumer is `@/hooks/use-lookup-options`, behind the Citizenship and
-  // „Tip Profesional" selects on `natural-person-form.tsx` and the Citizenship
-  // select on `id-card-person-dialog.tsx`. Same case as `institutions` above —
-  // a bare key, fetched outside Reference Data, that a rename here has to
-  // reach before the 30 s staleTime lapses.
-  if (listKey === "citizenships") {
-    qc.invalidateQueries({ queryKey: ["citizenships"] });
-  }
-  if (listKey === "person-types") {
-    qc.invalidateQueries({ queryKey: ["person-types"] });
-  }
-  // Slice #33.05: the master role list. Renaming a role changes what five other
-  // caches print — three sibling panels in this same screen and the association
-  // views — and each holds its own bare key, so the narrow invalidation has to
-  // name every one or the rename stays invisible there for the 30 s staleTime.
+  // Slice #33.05: the master role list. Renaming a role changes what other
+  // caches print, and the ones that hold a BARE key have to be named here or
+  // the rename stays invisible in them for the 30 s staleTime. Slice #34.04
+  // cut that from five keys to two: the association views hold no bare key any
+  // more — they read `["value-list", "person-roles"]`, which the first line of
+  // this function already covers — and two of the three sibling panels are
+  // gone with the tables behind them.
   //
   // ⚠️ **This covers the BARE keys only, and that is a scope, not a
   // guarantee.** `lookup_person_role.name` also reaches the screen through
@@ -292,9 +293,14 @@ function invalidateListCaches(
   // 30 s staleTime has lapsed. Said here rather than left for the next reader
   // to discover the list is not complete.
   if (listKey === "person-roles") {
-    qc.invalidateQueries({ queryKey: ["property-person-roles-whitelist"] });
-    qc.invalidateQueries({ queryKey: ["property-person-roles"] });
-    qc.invalidateQueries({ queryKey: ["person-person-roles"] });
+    // Slice #34.04 took three keys off this branch. `property-person-roles-whitelist`,
+    // `property-person-roles` and `person-person-roles` named two endpoints that
+    // no longer exist — the whitelists are booleans on `lookup_person_role`, so
+    // the four association screens read `["value-list", "person-roles"]`, which
+    // the first line of this function already invalidates. The two left are
+    // genuinely other tables: `doc-distinct-roles` and `doc-type-person-roles`
+    // both join `lookup_person_role.name` out of `lookup_doc_type_person_role`,
+    // which does NOT collapse (it is unique over the document-type/role PAIR).
     qc.invalidateQueries({ queryKey: ["doc-distinct-roles"] });
     qc.invalidateQueries({ queryKey: ["doc-type-person-roles"] });
   }
@@ -647,8 +653,10 @@ export function ValueListModal({
     setForm({ id: row.id, values: vals });
   }
 
-  // Column headers — text fields only; checkbox fields appear inline in the
-  // edit form but are shown as a ✓/– symbol in the row display.
+  // Column headers — every `LIST_META` field, text and checkbox alike. Checkbox
+  // fields also appear inline in the edit form, and render as a ✓/– symbol in
+  // the row. (This said "text fields only" from #19.02 until Slice #34.04,
+  // which doubled the number of lists it misdescribed.)
   const displayFields = meta.fields;
 
   // ── Slice #26.12: the Document Types list, and only that one ───────────────
@@ -1479,11 +1487,13 @@ function DeleteDialog({
       // ⚠️ **Everything, not just this list — the same reason the move does
       // it.** The delete cascades the whitelist rows the dialog has just
       // listed under "La ștergere se elimină și:", and those are displayed by
-      // three other panels under their own query keys
-      // (`property-person-roles`, `doc-type-person-roles`,
-      // `person-person-roles`). With the global 30 s staleTime, opening one of
-      // them straight afterwards showed a cascaded row still on screen, with a
-      // Șterge button that 404s. An adversarial round found it.
+      // „Persoană → Document" under its own query key
+      // (`doc-type-person-roles`). With the global 30 s staleTime, opening it
+      // straight afterwards showed a cascaded row still on screen, with a
+      // Șterge button that 404s. An adversarial round found it. (Three panels
+      // and three keys until Slice #34.04, which folded two of the whitelists
+      // into columns on `lookup_person_role` — those two lines are also the
+      // ones the dialog above no longer prints.)
       qc.invalidateQueries();
       onDeleted();
     },

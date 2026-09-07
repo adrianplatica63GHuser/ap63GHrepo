@@ -126,11 +126,35 @@ export const LIST_META: Record<ListKey, ListMeta> = {
     titleKey: "personTypes",
     fields: [{ key: "name", labelKey: "name", required: true }],
   },
+  // ── Slice #34.04: the two whitelists that were tables ──────────────────────
+  //
+  // „Persoană → Proprietate" and „Persoană → Persoană" were two buttons on the
+  // hub, each opening a modal over a table whose only content was a UNIQUE
+  // NOT NULL FK back to this list — one bit per role, wearing a costume.
+  // migration_079 made them `lookup_person_role.valid_for_property` /
+  // `.valid_for_person`, and this entry is the whole of the UI for them: the
+  // generic modal already renders a `type: "checkbox"` field as a checkbox in
+  // the edit form and as ✓ / – in the row, exactly as it has for
+  // `lookup_property_type`'s three `show*` flags since Slice #19.02.
+  //
+  // ⚠️ **`labelKey`, not `labelText`, and the two i18n keys MOVED rather than
+  // being copied.** The words are the ones the deleted hub buttons said, so
+  // they are the same Romanian and there must be one copy of it: they moved
+  // from `valueList.lists.personToProperty` / `.personToPerson` — where they
+  // named a panel that no longer exists — to `valueList.fields`, where they
+  // name a column. `personToDocument` stays in `lists`: „Persoană → Document"
+  // does not collapse (it is unique over the document-type/role PAIR) and its
+  // button is still there until Slice #34.10.
+  //
+  // ⚠️ **There is deliberately no third checkbox.** See the ⚠️ on
+  // `lookupPersonRole` in `src/db/schema/index.ts`.
   "person-roles": {
     titleKey: "personRoles",
     fields: [
       { key: "name",        labelKey: "name",        required: true  },
       { key: "description", labelKey: "description", required: false, multiline: true },
+      { key: "validForProperty", labelKey: "validForProperty", required: false, type: "checkbox" },
+      { key: "validForPerson",   labelKey: "validForPerson",   required: false, type: "checkbox" },
     ],
   },
   citizenships: {

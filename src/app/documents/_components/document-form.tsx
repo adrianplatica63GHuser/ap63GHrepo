@@ -70,9 +70,18 @@ type DocumentTypeOption = {
   templateFields?: unknown;
 };
 
+// ⚠️ **`res.redirected` as well as `!res.ok`.**                 (Slice #34.04)
+// An expired session answers with a redirect to the login page, whose HTML
+// parses to `{}` — and `body.items ?? []` then reads as "the archive holds
+// none", so React Query caches a SUCCESSFUL EMPTY ARRAY and the dropdown is
+// silently empty with no error for the length of its staleTime. Fixed in
+// passing: #34.04 made this class of failure its subject and measured it on the
+// keys it shares, and `person-role-flags.test.ts` now asserts the guard on
+// EVERY read of the value-lists endpoint rather than on the ones it happened
+// to touch.
 async function fetchDocumentTypes(): Promise<DocumentTypeOption[]> {
   const res = await fetch("/api/admin/value-lists/document-types");
-  if (!res.ok) throw new Error(`Failed to load document types (HTTP ${res.status})`);
+  if (res.redirected || !res.ok) throw new Error(`Failed to load document types (HTTP ${res.status})`);
   const body = await res.json();
   return (body.items ?? []) as DocumentTypeOption[];
 }
@@ -86,7 +95,7 @@ type InstitutionOption = { id: string; value: string; label: string };
 
 async function fetchInstitutions(): Promise<InstitutionOption[]> {
   const res = await fetch("/api/admin/value-lists/institutions");
-  if (!res.ok) throw new Error(`Failed to load institutions (HTTP ${res.status})`);
+  if (res.redirected || !res.ok) throw new Error(`Failed to load institutions (HTTP ${res.status})`);
   const body = await res.json();
   // lookup_institution rows: { id, name, institutionType, sortOrder, ... }
   return (body.items ?? []).map((item: { id: string; name: string; institutionType?: string | null }) => ({

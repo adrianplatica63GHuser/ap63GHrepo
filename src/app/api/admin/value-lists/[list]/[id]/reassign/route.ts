@@ -15,9 +15,12 @@
  *   file did not change except to report what the move granted.
  *
  *   The offer is deliberately NOT a filtered view of the dependent objects:
- *   for `person-roles` the dependents span six tables, three of them whitelist
+ *   for `person-roles` the dependents span four tables, one of them whitelist
  *   rows with no screen of their own, so "go and edit them yourself" would be a
- *   dead end on the very list that needs it most.
+ *   dead end on the very list that needs it most. (Six and three until Slice
+ *   #34.04. The two that went are the ones that DID gain a screen of their
+ *   own — they are checkboxes on the „Roluri Persoană" row now — which is why
+ *   they stopped being dependents rather than becoming better-explained ones.)
  *
  * Answers 200 with `{ moved: [{ labelKey, count }], total, granted }`. The
  * delete is a separate call the user makes afterwards, on purpose: a move and

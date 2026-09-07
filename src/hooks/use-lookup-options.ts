@@ -1,59 +1,55 @@
 // src/hooks/use-lookup-options.ts
 //
-// The two Reference Data lists that feed a plain <select> and nothing else:
-// `lookup_citizenship` and `lookup_person_type`.                (Slice #34.04)
+// The Reference Data lists that are read from OUTSIDE Reference Data and feed
+// a plain <select>: `lookup_citizenship`, `lookup_person_type`, and — since
+// Slice #34.04 — `lookup_person_role`, filtered by the two booleans that used
+// to be whitelist tables.
 //
 // WHY THIS FILE EXISTS
-//   These two were read through a bare `useEffect` + `fetch`, and the hook was
-//   written three times: `useCitizenshipOptions` character-for-character in
-//   `natural-person-form.tsx` and `id-card-person-dialog.tsx`, and
-//   `usePersonTypeOptions` the same body with one URL changed. All three
-//   swallowed the failure (`.catch(() => {})`) and held their rows in component
-//   state under no cache key at all.
+//   These lists were read through a bare `useEffect` + `fetch`, or through a
+//   bare React Query key of their own, and the hook was written five times.
+//   `useCitizenshipOptions` was character-for-character identical in
+//   `natural-person-form.tsx` and `id-card-person-dialog.tsx`;
+//   `usePersonTypeOptions` was the same body with one URL changed; and the
+//   four association screens each carried their own `fetchRoles` against a
+//   whitelist endpoint.
 //
-//   ⚠️ **A fetch with no cache key is invisible to the invalidation strategy,
-//   INCLUDING the unkeyed sweep that exists precisely to catch everything.**
-//   The Reference Data delete and move paths call a bare
-//   `qc.invalidateQueries()` — no `queryKey`, so it matches every query in the
-//   cache — and the SAVE path calls `invalidateListCaches`, which names bare
-//   keys one by one (`value-list-modal.tsx`). Neither can reach a `useState`.
-//   So renaming „Română" to „Romana" left both forms offering the old spelling
-//   until the page was reloaded, and deleting a citizenship left it selectable.
-//   Being on a React Query key is what makes those two mechanisms apply, and
-//   the keys are BARE (`["citizenships"]`, `["person-types"]`) to match the
-//   nine other bare keys `invalidateListCaches` already names.
+//   ⚠️ **THE KEY IS `["value-list", <listKey>]`, AND THAT IS THE WHOLE POINT.**
+//   `invalidateListCaches` (`value-list-modal.tsx`) opens with an
+//   unconditional `qc.invalidateQueries({ queryKey: ["value-list", listKey] })`
+//   — so a list read under that key needs NO branch, no entry in the
+//   `BARE_KEYS` table, and no second name for one endpoint. It is the pattern
+//   `property-form.tsx` and `judicial-person-form.tsx` have used since Slice
+//   #15.16, and its comment states the rule: use the same key the admin modal
+//   invalidates on save and delete, and the dropdown stays in sync "without any
+//   extra cross-invalidation".
 //
-//   ⚠️ **NOT "the last two lists read that way" — `useInstitutionOptions` in
-//   `id-card-person-dialog.tsx` is still exactly that shape**, for
-//   `institutions`, which is also a `VALID_LIST_KEYS` member with a bare key
-//   and a branch. It is left alone deliberately: it is not a read-only
-//   dropdown, it gains a row from a button inside the dialog, and its `reload`
-//   and `upsert` are load-bearing (Slice #34.02). An adversarial round caught
-//   the first draft of this paragraph claiming these two were the last.
+//   ⚠️ **Slice #34.04 corrected its own item 7 here.** That item put these two
+//   lists on BARE keys — `["citizenships"]`, `["person-types"]` — and added two
+//   branches to `invalidateListCaches` to reach them. The branches were exactly
+//   the extra cross-invalidation the paragraph above says is unnecessary, and
+//   the same slice then had to delete three MORE bare keys for the same reason.
+//   Both branches and both `BARE_KEYS` rows are gone again; the keys are
+//   namespaced, and the caches are now shared with the Reference Data modal
+//   rather than merely invalidated alongside it.
 //
-// ⚠️ **A FIRST LOAD THAT DOES NOT ARRIVE IS NOW SOMETHING THE USER CAN SEE,
-//   AND THAT IS THE POINT RATHER THAN A SIDE EFFECT.** Failed, refused, or
-//   paused because the browser is offline — see `toState` for why the last of
-//   those had to be folded in rather than left as „loading". The old hooks
+//   ⚠️ **THE CACHE HOLDS THE RAW ROWS. THE MAPPING IS A `select`.** One key
+//   must mean one shape, and `["value-list", "person-roles"]` is already held
+//   by the Reference Data modal as the API's `items` array. `select` transforms
+//   per observer without touching what is cached, so the modal and these hooks
+//   share one entry and each reads what it needs. Doing it in the `queryFn`
+//   instead is precisely the defect this slice was written to remove:
+//   `["person-person-roles"]` was one key over two row shapes, and whichever
+//   component mounted first decided what the other one got.
+//
+// ⚠️ **A FIRST LOAD THAT DOES NOT ARRIVE IS SOMETHING THE USER CAN SEE, AND
+//   THAT IS THE POINT RATHER THAN A SIDE EFFECT.** Failed, refused, or paused
+//   because the browser is offline — see `toState` for why the last of those
+//   had to be folded in rather than left as „loading". The hooks this replaced
 //   answered a failed GET with an empty array, so an unreadable list and an
-//   empty archive rendered identically: a select holding only „—". On the
-//   ID-card dialog that is worse than cosmetic — the citizenship read off the
-//   card is already in the form state, so Confirm goes on writing it while the
-//   field shows „—". Callers get `listState` and are expected to say so on
-//   screen; `useInstitutionOptions` uses the same three words for the same
-//   reason, and this is that argument applied to the two lists it left alone.
-//
-// The rows themselves are the value-lists GET's `items` — `{ id, name }` — and
-// every caller wants `{ value, label }` for a <select>, so the mapping happens
-// here rather than three times at the call sites.
-//
-// ⚠️ **One behaviour genuinely got worse, and it is small: these two lists were
-//   re-read on every mount and are now served from the 30 s staleTime cache**
-//   (`query-provider.tsx`). Every in-app change reaches them — the save path
-//   through the two new branches in `invalidateListCaches`, the delete and move
-//   paths through the unkeyed sweep — so what this can serve stale is a change
-//   made OUTSIDE the app (a direct DB edit, or a second administrator) within
-//   the last 30 seconds. That is the trade the whole file exists to make.
+//   empty archive rendered identically: a select holding only „—", or a role
+//   dropdown with nothing in it and no way to tell "no roles are ticked" from
+//   "the list could not be read".
 
 import { useQuery } from "@tanstack/react-query";
 
@@ -67,6 +63,16 @@ export type LookupOptions = {
   listState: LookupListState;
 };
 
+/** The columns of `lookup_person_role` these hooks read. */
+type PersonRoleRow = {
+  id: string;
+  name: string;
+  validForProperty: boolean;
+  validForPerson: boolean;
+};
+
+type NamedRow = { id: string; name: string };
+
 /**
  * ⚠️ **`res.redirected` as well as `!res.ok`.** An expired session answers
  * with a redirect to the login page, and that HTML parses to `{}` — which
@@ -75,12 +81,15 @@ export type LookupOptions = {
  * Throwing is what puts React Query into an error state, which is what the
  * caller renders.
  */
-async function fetchLookupOptions(list: string): Promise<LookupOption[]> {
+async function fetchValueList<T>(list: string): Promise<T[]> {
   const res = await fetch(`/api/admin/value-lists/${list}`);
   if (res.redirected || !res.ok) throw new Error(`Failed to load ${list} (HTTP ${res.status})`);
-  const data = (await res.json()) as { items?: { id: string; name: string }[] };
-  return (data.items ?? []).map((r) => ({ value: r.id, label: r.name }));
+  const data = (await res.json()) as { items?: T[] };
+  return data.items ?? [];
 }
+
+const toOptions = (rows: NamedRow[]): LookupOption[] =>
+  rows.map((r) => ({ value: r.id, label: r.name }));
 
 /**
  * ⚠️ **`isLoadingError`, NOT `isError`, and an adversarial round is why.**
@@ -96,24 +105,23 @@ async function fetchLookupOptions(list: string): Promise<LookupOption[]> {
  * no list.
  *
  * ⚠️ **The consequence, stated rather than left to be found: a failed REFETCH
- * is now silent, and a stale list can outlive the row it names.** Delete a
- * citizenship in Reference Data, let the unkeyed sweep invalidate, and if that
- * refetch fails the select goes on offering the deleted row with nothing said.
- * That is the lesser of the two wrongs — the alternative is a red line under a
- * working dropdown on every flaky refetch — and it is what `isRefetchError`
- * exists to treat differently if it ever earns its own quieter hint. It is not
- * an oversight.
+ * is silent, and a stale list can outlive the row it names.** Delete a
+ * citizenship in Reference Data, let the invalidation fire, and if that refetch
+ * fails the select goes on offering the deleted row with nothing said. That is
+ * the lesser of the two wrongs — the alternative is a red line under a working
+ * dropdown on every flaky refetch — and it is what `isRefetchError` exists to
+ * treat differently if it ever earns its own quieter hint. It is not an
+ * oversight.
  *
  * ⚠️ **`paused` counts as failed, and offline is why.** React Query's
  * `networkMode` pauses a query it cannot start: `fetchStatus` goes to
  * `"paused"` and `status` stays `"pending"` — so a first load attempted while
  * the browser is offline is `isPending` true, `isLoadingError` false, for as
  * long as the machine stays offline. Read as „loading" that is a silent empty
- * select, which is exactly the pre-slice behaviour this file exists to remove,
- * arrived at from the other side, in the failure a laptop user is most likely
- * to hit. There IS no list and it is not on its way, so it is reported as
- * failed; when the connection returns React Query resumes on its own and the
- * line goes away.
+ * select, which is exactly the behaviour this file exists to remove, arrived at
+ * from the other side, in the failure a laptop user is most likely to hit.
+ * There IS no list and it is not on its way, so it is reported as failed; when
+ * the connection returns React Query resumes on its own and the line goes away.
  */
 function toState(
   isPending: boolean,
@@ -133,33 +141,41 @@ function toState(
  * renders `"loading"`, so those seven seconds are a blank select with no
  * explanation — the state this whole change exists to remove, arrived at from
  * the other side. One retry covers the dropped packet and puts the sentence on
- * screen inside two round trips and a second. These are an eight-row and a
- * seven-row reference list on a LAN, not a flaky third party. (Counted:
- * `drizzle/0002_value_lists.sql` seeds 8 citizenships and 7 person types, and
- * `src/db/sync-reference-data.sql` seeds the same counts for a rebuilt
- * database — the seeded Romanian exists twice and the two copies must agree,
- * which `romanian-diacritics.test.ts` says at more length. An earlier draft
- * said "eleven-row", which is `VALID_LIST_KEYS.length` — the number of LISTS —
- * borrowed one level up into a claim about ROWS.)
+ * screen inside two round trips and a second. These are reference lists on a
+ * LAN — eight citizenships, seven person types and 56 roles in the seed — not
+ * a flaky third party.
+ *
+ * ⚠️ **Not a guarantee on a SHARED key, which an adversarial round pointed
+ * out.** React Query stores options per QUERY, not per observer, so on
+ * `["value-list", "person-roles"]` — also observed by the Reference Data list
+ * modal and by „Persoană → Document", neither of which sets `retry` — the last
+ * observer to mount decides the budget. In practice those two are admin modals
+ * and these hooks are on association pages and entity forms, so they rarely
+ * coexist; where they do, the cost is the client default, which is what every
+ * other dropdown in the app already gets.
  */
 const LOOKUP_QUERY_RETRY = 1;
 
 /**
+ * ⚠️ **Module-level rather than inline, because `select` runs on every render
+ * whose function identity changed.** Two stable references cost nothing and
+ * keep the filter out of the `queryFn`, which is where it would become a
+ * second shape under one key.
+ */
+const PERSON_ROLE_SELECT = {
+  property: (rows: PersonRoleRow[]) => toOptions(rows.filter((r) => r.validForProperty)),
+  person:   (rows: PersonRoleRow[]) => toOptions(rows.filter((r) => r.validForPerson)),
+} as const;
+
+/**
  * `lookup_citizenship`, for the Citizenship select on the natural-person form
  * and on the ID-card review dialog.
- *
- * ⚠️ **The `useQuery` call and its literal key stay in the exported hook
- * rather than moving into a shared helper that takes the key as an argument.**
- * `value-list-dependents.test.ts` proves every bare key `invalidateListCaches`
- * names is really fetched somewhere, by finding the key literal and walking out
- * to the enclosing call — so a key passed in as a variable would read as a key
- * nothing fetches, and the branch that invalidates it would look dead. Two
- * near-identical six-line hooks are the price of that check staying honest.
  */
 export function useCitizenshipOptions(): LookupOptions {
   const { data, isPending, isLoadingError, fetchStatus } = useQuery({
-    queryKey: ["citizenships"],
-    queryFn:  () => fetchLookupOptions("citizenships"),
+    queryKey: ["value-list", "citizenships"],
+    queryFn:  () => fetchValueList<NamedRow>("citizenships"),
+    select:   toOptions,
     retry:    LOOKUP_QUERY_RETRY,
   });
   return { options: data ?? [], listState: toState(isPending, isLoadingError, fetchStatus) };
@@ -168,8 +184,45 @@ export function useCitizenshipOptions(): LookupOptions {
 /** `lookup_person_type` — the „Tip Profesional" select (Slice #18.16.VL). */
 export function usePersonTypeOptions(): LookupOptions {
   const { data, isPending, isLoadingError, fetchStatus } = useQuery({
-    queryKey: ["person-types"],
-    queryFn:  () => fetchLookupOptions("person-types"),
+    queryKey: ["value-list", "person-types"],
+    queryFn:  () => fetchValueList<NamedRow>("person-types"),
+    select:   toOptions,
+    retry:    LOOKUP_QUERY_RETRY,
+  });
+  return { options: data ?? [], listState: toState(isPending, isLoadingError, fetchStatus) };
+}
+
+/**
+ * The person roles a given kind of association may be tagged with.
+ *                                                              (Slice #34.04)
+ *
+ * `validFor: "property"` is the dropdown on the three Proprietate ↔ Persoană
+ * association screens; `"person"` is the one on Persoană ↔ Persoană. Both read
+ * the master role list and filter on the boolean that replaced a whitelist
+ * table — `lookup_person_role.valid_for_property` / `.valid_for_person`,
+ * migration_079.
+ *
+ * ⚠️ **This is where the fixed defect was.** Before the collapse, the two sides
+ * had their own endpoints and their own keys, and the person side's key
+ * (`["person-person-roles"]`) was shared by the „Persoană → Persoană" admin
+ * modal, which cached the SAME endpoint's raw rows under it. React Query serves
+ * one entry per key, so whichever mounted first won for the 30 s staleTime:
+ * mount the modal first and the association screen rendered blank `<option>`
+ * labels and, on selection, submitted a `lookup_person_person_role.id` into
+ * `person_person.relationship_role_id`, where it is a 23503. Both the second
+ * endpoint and the second cache name are gone; the id in the `<option>` is a
+ * `lookup_person_role.id` because there is no other kind of id left.
+ *
+ * ⚠️ **`validFor` is not part of the query key, deliberately.** Both sides read
+ * the same list; only the filter differs, and that filter is a `select`. A key
+ * per side would mean two cache entries over one endpoint — the „two names for
+ * one list" this slice deleted, rebuilt one layer down.
+ */
+export function usePersonRoleOptions(validFor: "property" | "person"): LookupOptions {
+  const { data, isPending, isLoadingError, fetchStatus } = useQuery({
+    queryKey: ["value-list", "person-roles"],
+    queryFn:  () => fetchValueList<PersonRoleRow>("person-roles"),
+    select:   PERSON_ROLE_SELECT[validFor],
     retry:    LOOKUP_QUERY_RETRY,
   });
   return { options: data ?? [], listState: toState(isPending, isLoadingError, fetchStatus) };

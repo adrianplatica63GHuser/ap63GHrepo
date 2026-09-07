@@ -3,14 +3,17 @@
  *                                                              (Slice #29.05)
  *
  * WHY THIS EXISTS AT ALL
- *   SIXTEEN foreign keys reach the ELEVEN lookup tables behind Reference Data.
+ *   FIFTEEN foreign keys reach the ELEVEN lookup tables behind Reference Data.
  *   Exactly ONE refuses a delete: `document.document_type_id` is NOT NULL with
  *   no `onDelete` clause, so Postgres' default "no action" blocks it
  *   (src/db/schema/index.ts → `document`). Every other edge does the damage
- *   quietly — ELEVEN are ON DELETE SET NULL, which blanks the tag on the rows
- *   that carried it, and FOUR are CASCADE, deleting whitelist rows outright
- *   (the three on `lookup_person_role` plus `lookup_doc_type_person_role`'s
- *   document-type edge). So for ten lists of eleven, the refusal has to be
+ *   quietly — TWELVE are ON DELETE SET NULL, which blanks the tag on the rows
+ *   that carried it, and TWO are CASCADE, deleting whitelist rows outright
+ *   (`lookup_doc_type_person_role`'s two halves — its person-role edge and its
+ *   document-type edge). Seventeen and four until Slice #34.04, which folded
+ *   `lookup_property_person_role` and `lookup_person_person_role` into two
+ *   booleans ON `lookup_person_role`; a column on the row being deleted is not
+ *   an inbound edge. So for ten lists of eleven, the refusal has to be
  *   written here, in application code, because the database will happily let
  *   the delete through.
  *
@@ -87,15 +90,19 @@
  *   value-list-move-history.test.ts so a future `updated_by` on one of them
  *   fails a test rather than being quietly left unstamped.
  *
- *   The four `configuration` refs are never RE-POINTED — `reassignDependents`
+ *   The `configuration` refs are never RE-POINTED — `reassignDependents`
  *   skips them — so no version is owed for a move of theirs. They are not
  *   untouched by a move, though, and an adversarial round was right to say the
  *   first draft of this paragraph implied otherwise: a `person-roles` move
- *   INSERTS into `lookup_property_person_role`, `lookup_person_person_role`
- *   and `lookup_doc_type_person_role` through `grantWhitelists` below, on the
- *   move's own transaction. Those three are configuration as well — a tick
- *   saying "this role is allowed here" — so the inserted row IS the record,
- *   and there is nothing further owed. `UNVERSIONED_MOVE_TABLES` covers the
+ *   GRANTS ticks through `grantWhitelists` below, on the move's own
+ *   transaction — an INSERT into `lookup_doc_type_person_role`, and (Slice
+ *   #34.04) an UPDATE of `lookup_person_role.valid_for_property` /
+ *   `.valid_for_person`, which were that table's two sibling whitelists until
+ *   migration_079 folded them into it. Both are configuration — "this role is
+ *   allowed here" — so the write IS the record, and there is nothing further
+ *   owed. Note the second kind does not appear in this map at all: a column on
+ *   the row is not an inbound edge, which is why the four refs this paragraph
+ *   used to count are two. `UNVERSIONED_MOVE_TABLES` covers the
  *   tables a move RE-POINTS, which is a different list from the tables a move
  *   writes.
  *
@@ -131,10 +138,8 @@ import {
   lookupDocumentType,
   lookupInstitution,
   lookupJudicialPersonType,
-  lookupPersonPersonRole,
   lookupPersonRole,
   lookupPersonType,
-  lookupPropertyPersonRole,
   lookupPropertyPropertyRole,
   lookupPropertyType,
   lookupTarla,
@@ -193,13 +198,20 @@ export type DependentRef = {
    * it?                                            (added by review round 1)
    *
    * ⚠️ **The distinction decides whether the delete is refused, and the first
-   * draft got it wrong.** The three person-role whitelists and the
-   * document-type half of `lookup_doc_type_person_role` are rows whose entire
-   * content is "this role is allowed here" — they are the ticks in the Roluri
-   * pe Proprietate / Roluri pe Document panels, not documents or people. The
-   * schema says as much where it cascades them: "ON DELETE CASCADE keeps this
-   * table clean when a role is removed" (src/db/schema/index.ts, above
-   * `lookupPropertyPersonRole`).
+   * draft got it wrong.** A whitelist tick is a row whose entire content is
+   * "this role is allowed here" — the ticks in the „Roluri pe Document" panel,
+   * not documents or people. The schema says as much where it cascades them:
+   * "Both FKs cascade on delete so removing a document type or person role
+   * automatically cleans up associations" (src/db/schema/index.ts, above
+   * `lookupDocTypePersonRole`).
+   *
+   * ⚠️ **There were FOUR such refs until Slice #34.04 and there are two.**
+   * `lookup_property_person_role` and `lookup_person_person_role` held one bit
+   * per role and nothing else, so migration_079 made them columns on
+   * `lookup_person_role`; a column on the row being deleted is not a dependent
+   * and needs no ref. The two left are the document-type junction, which does
+   * NOT collapse — it is unique over the PAIR, so „Vânzător" can be valid on a
+   * sale contract and not on a cadastral plan.
    *
    * Counted as a dependent, they made the common case absurd: a role ticked in
    * one panel and used by no association at all was undeletable, and the only
@@ -208,8 +220,8 @@ export type DependentRef = {
    * at. So a configuration ref is NAMED ("these go with it") and never
    * blocks, and `reassignDependents` does not touch it.
    *
-   * The test that this list is exactly the four whitelist edges is in
-   * value-list-dependents.test.ts.
+   * value-list-dependents.test.ts pins this list exactly — two edges since
+   * Slice #34.04, both halves of `lookup_doc_type_person_role`.
    */
   configuration?: true;
   /**
@@ -372,10 +384,14 @@ export const LIST_DEPENDENCIES: Record<ListKey, ListDependencies> = {
   },
 
   // The worst case in the schema, and the reason the person-roles section of
-  // value-list-dependents.test.ts exists: six inbound edges, THREE of them CASCADE. Deleting a role with nothing
-  // in the way of it removes its rows from all three whitelists and blanks the
-  // role tag on property_person, person_document and person_person — six
-  // tables damaged by one unguarded click.
+  // value-list-dependents.test.ts exists: FOUR inbound edges, one of them
+  // CASCADE. Deleting a role with nothing in the way of it removes its rows
+  // from „Roluri pe Document" and blanks the role tag on property_person,
+  // person_document and person_person — four tables damaged by one unguarded
+  // click. (Six edges and three cascades until Slice #34.04: two of the three
+  // whitelists were one bit per role and are columns on this very table now,
+  // which is why they are visible as checkboxes on the row instead of being
+  // counted in the delete dialog.)
   "person-roles": {
     table: lookupPersonRole,
     idColumn: lookupPersonRole.id,
@@ -401,16 +417,22 @@ export const LIST_DEPENDENCIES: Record<ListKey, ListDependencies> = {
         column: personPerson.relationshipRoleId,
         enforcement: "clears",
       },
-      {
-        kind: "column",
-        labelKey: "propertyPersonRoleWhitelist",
-        table: lookupPropertyPersonRole,
-        column: lookupPropertyPersonRole.personRoleId,
-        enforcement: "cascades",
-        configuration: true,
-        // `.unique()` on the column itself.
-        uniqueWith: [],
-      },
+      // ⚠️ **Slice #34.04 removed TWO refs from this list, and the delete
+      // dialog is one line shorter for each.** `lookup_property_person_role`
+      // and `lookup_person_person_role` were configuration refs here — named
+      // and live-counted under „La ștergere se elimină și:" — and migration_079
+      // turned both into booleans on `lookup_person_role` itself. A boolean has
+      // no rows to count and no table to name, so there is nothing for a ref to
+      // point at: `countDependents` counts ROWS IN OTHER TABLES, and a column
+      // on the row being deleted goes with the row by definition.
+      //
+      // That loss was the thing the slice asked Adrian to confirm before the
+      // migration was written, and he did: an administrator sees the two ticks
+      // as checkboxes on the „Roluri Persoană" row itself, which answers the
+      // same question before the delete dialog is ever opened rather than
+      // inside it. Recorded here rather than only in a handover, because the
+      // next reader will otherwise wonder why the four whitelist edges the
+      // header describes are two.
       {
         kind: "column",
         labelKey: "docTypePersonRoleWhitelist",
@@ -419,15 +441,6 @@ export const LIST_DEPENDENCIES: Record<ListKey, ListDependencies> = {
         enforcement: "cascades",
         configuration: true,
         uniqueWith: [lookupDocTypePersonRole.documentTypeId],
-      },
-      {
-        kind: "column",
-        labelKey: "personPersonRoleWhitelist",
-        table: lookupPersonPersonRole,
-        column: lookupPersonPersonRole.personRoleId,
-        enforcement: "cascades",
-        configuration: true,
-        uniqueWith: [],
       },
     ],
     // No snapshot carries a role id: roles live on junction rows, and the
@@ -565,9 +578,11 @@ export const LIST_DEPENDENCIES: Record<ListKey, ListDependencies> = {
  * The tables a move RE-POINTS that record nothing of their own.
  *                                                              (Slice #29.14)
  *
- * "Re-points", not "writes": a `person-roles` move also INSERTS whitelist ticks
- * through `grantWhitelists`, and those three tables are configuration whose
- * inserted row is its own record. See the header.
+ * "Re-points", not "writes": a `person-roles` move also GRANTS whitelist ticks
+ * through `grantWhitelists` — a row inserted into
+ * `lookup_doc_type_person_role`, or (Slice #34.04) a boolean flipped on
+ * `lookup_person_role` itself — and that write is its own record. See the
+ * header.
  *
  * Written down rather than left to be re-derived, because "no `versioned` on
  * this ref" is indistinguishable from "someone forgot" until somebody says

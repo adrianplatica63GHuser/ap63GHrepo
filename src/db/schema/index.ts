@@ -792,8 +792,9 @@ export const lookupPersonRole = pgTable("lookup_person_role", {
   // `id`, a `person_role_id` marked NOT NULL UNIQUE REFERENCES this table's
   // primary key, and a `created_at` — nothing else, and identical in every
   // column to each other (they differed only in whether the UNIQUE constraint
-  // was named, which is what `rebuild-known-differences.txt` carried two lines
-  // for). A table whose only content is a unique, not-null foreign key to
+  // was named, which is what `rebuild-known-differences.txt` carries two lines
+  // for until it is re-baselined). A table whose only content is a unique,
+  // not-null foreign key to
   // another table's primary key carries one bit per row of that other table,
   // so it is a boolean column on that table wearing a costume. Both are
   // dropped by migration_079 and their ticks are these two columns.
@@ -1201,7 +1202,9 @@ export const propertyPerson = pgTable(
       .notNull()
       .references(() => person.id, { onDelete: "cascade" }),
 
-    // Optional role tag from the Property Persons whitelist.
+    // Optional role from the master lookup_person_role list, further filtered
+    // to the roles carrying `lookupPersonRole.validForProperty` (Slice #34.04;
+    // it was the `lookup_property_person_role` table until migration_079).
     // ON DELETE SET NULL — cleared automatically if the role is removed.
     personRoleId: uuid("person_role_id")
       .references(() => lookupPersonRole.id, { onDelete: "set null" }),

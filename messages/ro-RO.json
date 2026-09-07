@@ -520,6 +520,7 @@
     "notes": "Note"
   },
   "shared": {
+    "roleListUnavailable": "Lista de roluri nu a putut fi citită, așa că nu se poate alege un rol acum. Rolul este oricum opțional.",
     "properties": {
       "empty": "Nicio proprietate asociată",
       "colCode": "Cod",
@@ -1717,9 +1718,7 @@
       "judicialPersonTypes": "Tipuri de Persoană Juridică",
       "documentTypes": "Tipuri de Document",
       "institutions": "Instituții",
-      "personToProperty": "Persoană → Proprietate",
       "personToDocument": "Persoană → Document",
-      "personToPerson": "Persoană → Persoană",
       "propertyToProperty": "Proprietate → Proprietate",
       "documentToDocument": "Document → Document",
       "documentToProperty": "Document → Proprietate"
@@ -1730,6 +1729,8 @@
       "descriere": "Descriere",
       "description": "Descriere",
       "institutionType": "Tip instituție",
+      "validForProperty": "Persoană → Proprietate",
+      "validForPerson": "Persoană → Persoană",
       "status": "Stare"
     },
     "documentTypeStatus": {
@@ -1862,9 +1863,9 @@
         "propertyPersons": "{count, plural, one {# asociere Proprietate–Persoană} few {# asocieri Proprietate–Persoană} other {# de asocieri Proprietate–Persoană}}",
         "personDocuments": "{count, plural, one {# asociere Persoană–Document} few {# asocieri Persoană–Document} other {# de asocieri Persoană–Document}}",
         "personPersons": "{count, plural, one {# asociere Persoană–Persoană} few {# asocieri Persoană–Persoană} other {# de asocieri Persoană–Persoană}}",
-        "propertyPersonRoleWhitelist": "{count, plural, one {# intrare în „Roluri pe Proprietate”} few {# intrări în „Roluri pe Proprietate”} other {# de intrări în „Roluri pe Proprietate”}}",
+        "propertyPersonRoleWhitelist": "{count, plural, one {bifa „Persoană → Proprietate”} few {# bife „Persoană → Proprietate”} other {# de bife „Persoană → Proprietate”}}",
         "docTypePersonRoleWhitelist": "{count, plural, one {# intrare în „Roluri pe Document”} few {# intrări în „Roluri pe Document”} other {# de intrări în „Roluri pe Document”}}",
-        "personPersonRoleWhitelist": "{count, plural, one {# intrare în „Persoană → Persoană”} few {# intrări în „Persoană → Persoană”} other {# de intrări în „Persoană → Persoană”}}",
+        "personPersonRoleWhitelist": "{count, plural, one {bifa „Persoană → Persoană”} few {# bife „Persoană → Persoană”} other {# de bife „Persoană → Persoană”}}",
         "propertyProperties": "{count, plural, one {# asociere Proprietate–Proprietate} few {# asocieri Proprietate–Proprietate} other {# de asocieri Proprietate–Proprietate}}",
         "documentDocuments": "{count, plural, one {# asociere Document–Document} few {# asocieri Document–Document} other {# de asocieri Document–Document}}"
       },
@@ -1893,46 +1894,6 @@
       "error": "Eroare la încărcare",
       "empty": "Nicio asociere",
       "errorBothRequired": "Selectați atât tipul de document cât și rolul persoanei."
-    },
-    "propertyPersons": {
-      "title": "Roluri pe Proprietate",
-      "colPersonRole": "Rol Persoană",
-      "colDescription": "Descriere",
-      "addTitle": "Adaugă Rol",
-      "selectPersonRole": "Selectați rolul persoanei…",
-      "hintPersonRole": "Dacă rolul persoanei nu este listat, adăugați-l folosind butonul Roluri Persoană din secțiunea Persoană.",
-      "add": "Adaugă",
-      "save": "Salvează",
-      "saving": "Se salvează…",
-      "cancel": "Anulează",
-      "delete": "Șterge",
-      "deleting": "Se șterge…",
-      "confirmDelete": "Eliminați acest rol din listă? Acțiunea nu poate fi anulată.",
-      "count": "{count} roluri",
-      "loading": "Se încarcă…",
-      "error": "Eroare la încărcare",
-      "empty": "Niciun rol adăugat",
-      "errorRequired": "Selectați un rol al persoanei."
-    },
-    "personPersonRoles": {
-      "title": "Roluri permise Persoană–Persoană",
-      "add": "Adaugă rol",
-      "colPersonRole": "Rol Persoană",
-      "colDescription": "Descriere",
-      "addTitle": "Adaugă rol permis",
-      "selectPersonRole": "Selectați rolul persoanei…",
-      "hintPersonRole": "Dacă rolul dorit nu apare, adăugați-l mai întâi în lista Roluri Persoană.",
-      "save": "Salvează",
-      "saving": "Se salvează…",
-      "cancel": "Anulează",
-      "delete": "Șterge",
-      "deleting": "Se șterge…",
-      "confirmDelete": "Eliminați acest rol din lista permisă? Acțiunea nu poate fi anulată.",
-      "count": "{count} roluri",
-      "loading": "Se încarcă…",
-      "error": "Eroare la încărcare",
-      "empty": "Niciun rol permis configurat",
-      "errorRequired": "Selectați un rol."
     },
     "docToPropertyInfo": {
       "title": "Document → Proprietate",

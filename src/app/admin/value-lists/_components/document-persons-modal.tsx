@@ -25,6 +25,14 @@ type AssocRow = {
 
 type LookupItem = { id: string; name: string };
 
+/**
+ * A value-list row AS THE API SENDS IT — `id` and `name` plus whatever else
+ * that list carries (`description`, `validForProperty`, … on person-roles).
+ * Named so the cache's shape is legible at the `useQuery` below: what is stored
+ * is the row, and `LookupItem` is only what this panel derives from it.
+ */
+type ValueListRow = LookupItem & Record<string, unknown>;
+
 // ── API helpers ───────────────────────────────────────────────────────────────
 
 async function fetchAssociations(): Promise<AssocRow[]> {
@@ -34,25 +42,51 @@ async function fetchAssociations(): Promise<AssocRow[]> {
   return data.items as AssocRow[];
 }
 
-async function fetchDocumentTypes(): Promise<LookupItem[]> {
-  const res = await fetch("/api/admin/value-lists/document-types");
-  if (!res.ok) throw new Error(`Failed to load document types (${res.status})`);
+/**
+ * ⚠️ **THE CACHE ENTRY KEEPS THE API'S ROWS. THE PROJECTION IS A `select`, AND
+ * AN ADVERSARIAL ROUND PROVED WHY.**                            (Slice #34.04)
+ *
+ * These two fetchers used to `.map()` each row down to `{ id, name }` and cache
+ * THAT under `["value-list", "document-types"]` / `["value-list",
+ * "person-roles"]` — keys the generic Reference Data modal
+ * (`value-list-modal.tsx`) holds as the API's full `items` array, and which
+ * `@/hooks/use-lookup-options` now reads too. React Query serves ONE ENTRY PER
+ * KEY, so whichever component mounted first decided what the others got, and
+ * this panel's projection is the lossy one.
+ *
+ * Measured, against a real `query-core` with the app's 30 s staleTime: open
+ * „Persoană → Document", close it, open „Roluri Persoană" within 30 seconds,
+ * and every role's `description`, `validForProperty` and `validForPerson`
+ * render as „–" — because the cached rows do not have them. `startEdit` then
+ * seeds the edit form from those rows and `updateValue` is a full-replace
+ * `.set(data)`, so **renaming a role in that state unticks both flags and
+ * blanks its description**, and the role drops out of all four association
+ * dropdowns. The two flags are Slice #34.04's; the description half of this had
+ * been reachable since #29.13.
+ *
+ * `select` transforms per observer and leaves the cache alone, which is the
+ * whole point: one key, one shape, every reader deriving what it needs.
+ */
+async function fetchValueListRows(list: string): Promise<ValueListRow[]> {
+  const res = await fetch(`/api/admin/value-lists/${list}`);
+  // ⚠️ **`res.redirected` as well as `!res.ok`, and an adversarial round
+  // measured why it matters HERE and not only in the fetcher that first had
+  // it.** An expired session answers with a redirect to the login page, whose
+  // HTML parses to `{}`; `data.items ?? []` then reads as "the archive holds
+  // none" and React Query caches a SUCCESSFUL empty array. Since Slice #34.04
+  // this entry is shared — `@/hooks/use-lookup-options` reads the same
+  // `["value-list", …]` keys — so on a shared entry the WEAKEST queryFn defines
+  // the failure semantics for every reader: the guarded hook would find a fresh
+  // empty list, never refetch, and show a silently empty dropdown with no alert
+  // for the 30 s staleTime. That is exactly what the guard exists to prevent,
+  // re-entering through the key.
+  if (res.redirected || !res.ok) throw new Error(`Failed to load ${list} (${res.status})`);
   const data = await res.json();
-  return (data.items as Array<{ id: string; name: string }>).map((r) => ({
-    id: r.id,
-    name: r.name,
-  }));
+  return (data.items ?? []) as ValueListRow[];
 }
 
-async function fetchPersonRoles(): Promise<LookupItem[]> {
-  const res = await fetch("/api/admin/value-lists/person-roles");
-  if (!res.ok) throw new Error(`Failed to load person roles (${res.status})`);
-  const data = await res.json();
-  return (data.items as Array<{ id: string; name: string }>).map((r) => ({
-    id: r.id,
-    name: r.name,
-  }));
-}
+const toLookupItems = (rows: ValueListRow[]): LookupItem[] =>
+  rows.map((r) => ({ id: r.id, name: r.name }));
 
 async function createAssociation(data: {
   documentTypeId: string;
@@ -313,14 +347,16 @@ export function DocumentPersonsModal({ onClose }: { onClose: () => void }) {
     queryFn: fetchAssociations,
   });
 
-  const docTypesQuery = useQuery<LookupItem[]>({
+  const docTypesQuery = useQuery({
     queryKey: ["value-list", "document-types"],
-    queryFn: fetchDocumentTypes,
+    queryFn: () => fetchValueListRows("document-types"),
+    select: toLookupItems,
   });
 
-  const rolesQuery = useQuery<LookupItem[]>({
+  const rolesQuery = useQuery({
     queryKey: ["value-list", "person-roles"],
-    queryFn: fetchPersonRoles,
+    queryFn: () => fetchValueListRows("person-roles"),
+    select: toLookupItems,
   });
 
   /**
@@ -338,10 +374,11 @@ export function DocumentPersonsModal({ onClose }: { onClose: () => void }) {
     onSuccess: () => {
       // ⚠️ **Everything, not just this panel's own key.** These rows ARE the
       // role dropdowns on the association screens, and those cache them under
-      // their own keys — `property-person-roles-whitelist`,
-      // `document-valid-roles`, `doc-distinct-roles`. With the global 30 s
-      // staleTime, un-ticking a role here and walking straight to an associate
-      // screen went on offering it. Same reasoning, and same cost, as the
+      // their own keys — `document-valid-roles` and `doc-distinct-roles`
+      // (`property-person-roles-whitelist` was a third until Slice #34.04
+      // deleted the endpoint behind it). With the global 30 s staleTime,
+      // un-ticking a role here and walking straight to an associate screen went
+      // on offering it. Same reasoning, and same cost, as the
       // delete in value-list-modal.tsx: an administrator action taken a
       // handful of times in the life of an archive.
       qc.invalidateQueries();

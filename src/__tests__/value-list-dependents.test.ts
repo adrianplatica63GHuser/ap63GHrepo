@@ -18,11 +18,16 @@
  *     existed before this file, and silently untype every document in the
  *     archive.
  *
- *   • **person-roles** is the worst case. Six inbound edges: three CASCADE
- *     ones that delete whitelist rows outright, and three SET NULL ones that
- *     blank the role tag on property_person, person_document and person_person.
- *     One unguarded click damages six tables, and none of the six is visible
- *     from the screen the click happens on.
+ *   • **person-roles** is the worst case. FOUR inbound edges since Slice
+ *     #34.04 (six until then): one CASCADE that deletes „Roluri pe Document"
+ *     whitelist rows outright, and three SET NULL ones that blank the role tag
+ *     on property_person, person_document and person_person. One unguarded
+ *     click damages four tables, and none of the four is visible from the
+ *     screen the click happens on. The two that went were
+ *     `lookup_property_person_role` and `lookup_person_person_role`, each a
+ *     UNIQUE NOT NULL FK to `lookup_person_role` and nothing else; migration_079
+ *     made them `valid_for_property` / `valid_for_person` ON that row, and a
+ *     column on the row being deleted is not an inbound edge.
  *
  * WHAT THIS FILE CAN AND CANNOT ASSERT
  *   It has no database. So it asserts the two halves that decide whether the
@@ -166,7 +171,27 @@ describe("the dependency map", () => {
     }
   });
 
-  it("marks exactly the four whitelist edges as configuration", () => {
+  /**
+   * ⚠️ **The file header's own arithmetic, as an assertion.** That paragraph
+   * counts the foreign keys reaching the eleven lookup tables and splits them
+   * by enforcement, and it is the first thing a reader checks against the
+   * tree — it has now drifted twice, once when Slice #34.04 removed two refs
+   * and once in the very edit that fixed the first drift. Nothing pinned it.
+   * It does now: change the map and this fails with the numbers to write.
+   */
+  it("has the number of edges its own header claims", () => {
+    const all = LISTS.flatMap((l) => LIST_DEPENDENCIES[l].refs);
+    const by = (e: string) => all.filter((r) => r.enforcement === e).length;
+    expect({
+      total:      all.length,
+      clears:     by("clears"),
+      cascades:   by("cascades"),
+      blocks:     by("blocks"),
+      configured: all.filter((r) => r.configuration).length,
+    }).toEqual({ total: 15, clears: 12, cascades: 2, blocks: 1, configured: 2 });
+  });
+
+  it("marks exactly the two whitelist edges as configuration", () => {
     // A configuration ref does not block a delete and is never moved. Getting
     // this set wrong in either direction is a real failure: too wide and a
     // delete silently blanks real associations, too narrow and a role ticked
@@ -178,10 +203,11 @@ describe("the dependency map", () => {
     ).sort();
     expect(configuration).toEqual(
       [
+        // Slice #34.04: two of the four are gone. The document-type junction
+        // does NOT collapse — it is unique over the PAIR — so both of its
+        // halves stay.
         "document-types:lookup_doc_type_person_role.document_type_id",
         "person-roles:lookup_doc_type_person_role.person_role_id",
-        "person-roles:lookup_person_person_role.person_role_id",
-        "person-roles:lookup_property_person_role.person_role_id",
       ].sort(),
     );
     // Everything with a UNIQUE constraint over the moved column is in that
@@ -271,18 +297,23 @@ describe("document-types", () => {
 });
 
 // ---------------------------------------------------------------------------
-// 3. person-roles — six edges, three of them cascade
+// 3. person-roles — four edges, one of them cascades
 // ---------------------------------------------------------------------------
 
 describe("person-roles", () => {
   const def = LIST_DEPENDENCIES["person-roles"];
 
-  it("lists all six inbound edges", () => {
+  it("lists all four inbound edges", () => {
+    // ⚠️ **Six until Slice #34.04.** `lookup_property_person_role` and
+    // `lookup_person_person_role` were each a UNIQUE NOT NULL FK to
+    // `lookup_person_role` and a `created_at` — one bit per role — and
+    // migration_079 made them booleans ON that row. A column on the row being
+    // deleted is not an inbound edge and cannot be counted, which is the one
+    // fact the collapse cost the delete dialog. See `configuration` in
+    // dependents.ts.
     expect(def.refs.map((r) => getTableName(r.table)).sort()).toEqual(
       [
         "lookup_doc_type_person_role",
-        "lookup_person_person_role",
-        "lookup_property_person_role",
         "person_document",
         "person_person",
         "property_person",
@@ -290,14 +321,12 @@ describe("person-roles", () => {
     );
   });
 
-  it("marks the three that would cascade and the three that would be blanked", () => {
+  it("marks the one that would cascade and the three that would be blanked", () => {
     const byTable = Object.fromEntries(
       def.refs.map((r) => [getTableName(r.table), r]),
     );
     for (const t of [
-      "lookup_property_person_role",
       "lookup_doc_type_person_role",
-      "lookup_person_person_role",
     ]) {
       expect(byTable[t].enforcement).toBe("cascades");
       // ⚠️ **Configuration, so it is disclosed and never blocks.** The first
@@ -317,11 +346,9 @@ describe("person-roles", () => {
     }
   });
 
-  it("and the schema declares exactly those six behaviours", () => {
+  it("and the schema declares exactly those four behaviours", () => {
     const cases: Array<[string, "cascade" | "set null"]> = [
-      ["lookupPropertyPersonRole", "cascade"],
       ["lookupDocTypePersonRole",  "cascade"],
-      ["lookupPersonPersonRole",   "cascade"],
       ["propertyPerson",           "set null"],
       ["personDocument",           "set null"],
       ["personPerson",             "set null"],
@@ -761,18 +788,43 @@ describe("moving person-role associations", () => {
     }
     // …and the SOURCE role's own ticks are never read. This is the assertion
     // that fails if someone "improves" the module into mirroring the ticks the
-    // deleted role happened to have.
-    for (const wl of [
-      "lookupPropertyPersonRole",
-      "lookupPersonPersonRole",
-      "lookupDocTypePersonRole",
-    ]) {
-      expect([wl, new RegExp(`${wl}\\.personRoleId,\\s*fromRoleId`).test(grant)])
-        .toEqual([wl, false]);
-    }
+    // deleted role happened to have. Slice #34.04: two of the three whitelists
+    // are columns on `lookup_person_role` now, so the shape to forbid is any
+    // comparison of one of ITS columns against `fromRoleId`.
+    expect(/lookupDocTypePersonRole\.personRoleId,\s*fromRoleId/.test(grant)).toBe(false);
+    expect(/lookupPersonRole\.\w+,\s*fromRoleId/.test(grant)).toBe(false);
     // Idempotent: the target may already be ticked, and a 23505 there would
-    // roll back a move the user asked for.
-    expect((grant.match(/onConflictDoNothing\(\)/g) ?? [])).toHaveLength(3);
+    // roll back a move the user asked for. One insert left — the two grants
+    // that were inserts are conditional UPDATEs now, asserted below.
+    expect((grant.match(/onConflictDoNothing\(\)/g) ?? [])).toHaveLength(1);
+  });
+
+  it("counts a tick as granted only when it really flipped", () => {
+    // ⚠️ **The flag test in each WHERE is what `onConflictDoNothing()` used to
+    // buy, and `granted` is a lie without it.** (Slice #34.04) The
+    // insert version returned NO ROW when the target was already ticked, so
+    // that panel contributed nothing to the list the dialog prints — "nothing
+    // changed there", said by saying nothing. A bare
+    // `.set({ validForProperty: true })` matches the target row every time and
+    // would report a grant the move did not make.
+    const grant = code(read("lib", "admin", "value-lists", "role-whitelists.ts"));
+    for (const col of ["validForProperty", "validForPerson"]) {
+      expect([col, new RegExp(`\\.set\\(\\{ ${col}: true \\}\\)`).test(grant)])
+        .toEqual([col, true]);
+      // ⚠️ **`IS NOT TRUE`, and `= false` must NOT come back.** An adversarial
+      // round pointed out that a nullable copy of the column is reachable —
+      // `supabase_repair_missing_tables.sql` says so itself — and against NULL
+      // `= false` is UNKNOWN, so the UPDATE matches nothing, `granted` stays
+      // empty, no warning fires, and the moved rows land on a role no screen
+      // will offer. Both halves are asserted: the right predicate present, the
+      // wrong one absent.
+      expect([col, new RegExp(`\\$\\{lookupPersonRole\\.${col}\\} IS NOT TRUE`).test(grant)])
+        .toEqual([col, true]);
+      expect([col, new RegExp(`eq\\(lookupPersonRole\\.${col}, false\\)`).test(grant)])
+        .toEqual([col, false]);
+    }
+    // Both are scoped to the TARGET row, or the move would tick every role.
+    expect((grant.match(/eq\(lookupPersonRole\.id, toRoleId\)/g) ?? [])).toHaveLength(2);
   });
 
   it("tops up a whitelist that exists and never creates one", () => {
@@ -886,10 +938,17 @@ describe("moving person-role associations", () => {
 // ---------------------------------------------------------------------------
 
 describe("the sibling panels say their failures in Romanian", () => {
+  // ⚠️ **One panel since Slice #34.04, and the two that went were one
+  // component written twice.** `property-persons-modal.tsx` and
+  // `person-person-modal.tsx` differed, after normalising the two identifier
+  // families, in whitespace, brace style, the endpoint and the i18n namespace —
+  // same fetchers, same add form, same delete confirmation, same focus-restore
+  // effects, same Escape handler, same 409 handling. They are deleted rather
+  // than merged because the tables behind them are two booleans now.
+  // „Persoană → Document" keeps its panel: `lookup_doc_type_person_role` is
+  // unique over the PAIR and does not collapse.
   const PANELS = [
     "document-persons-modal.tsx",
-    "property-persons-modal.tsx",
-    "person-person-modal.tsx",
   ] as const;
 
   it.each(PANELS)("%s — has an onError on its delete, and never renders err.message", (file) => {
@@ -946,17 +1005,18 @@ describe("the sibling panels say their failures in Romanian", () => {
     const BARE_KEYS: Partial<Record<ListKey, string[]>> = {
       "document-types":          ["document-types", "doc-type-person-roles"],
       "institutions":            ["institutions"],
-      // Slice #34.04: the two lists that were read into `useState` with no key
-      // at all, so neither the narrow invalidation nor the unkeyed sweep could
-      // reach them. Their consumer is a hook rather than a screen — the only
-      // two rows in this table where that is true.
-      "citizenships":            ["citizenships"],
-      "person-types":            ["person-types"],
       "property-property-roles": ["property-property-roles"],
       "document-document-roles": ["document-document-roles"],
-      "person-roles":            ["property-person-roles-whitelist", "property-person-roles",
-                                  "person-person-roles", "doc-distinct-roles",
-                                  "doc-type-person-roles"],
+      // ⚠️ **FIVE keys until Slice #34.04, and both halves of the shrink are
+      // the same lesson.** `property-person-roles-whitelist`,
+      // `property-person-roles` and `person-person-roles` named two endpoints
+      // that are gone — the whitelists are booleans on `lookup_person_role`, so
+      // the four association screens read `["value-list", "person-roles"]`,
+      // which the FIRST, unconditional line of `invalidateListCaches` already
+      // covers and which therefore must never appear in this table (see (i)).
+      // The same slice had added `citizenships` and `person-types` here and
+      // removed them again for exactly that reason.
+      "person-roles":            ["doc-distinct-roles", "doc-type-person-roles"],
     };
 
     // The header's own consumer table, as data. If a line of that comment is
@@ -965,24 +1025,10 @@ describe("the sibling panels say their failures in Romanian", () => {
       [["app", "documents", "list-view.tsx"], "document-types"],
       [["app", "documents", "_components", "document-form.tsx"], "document-types"],
       [["app", "documents", "_components", "document-form.tsx"], "institutions"],
-      [["hooks", "use-lookup-options.ts"], "citizenships"],
-      [["hooks", "use-lookup-options.ts"], "person-types"],
       [["app", "properties", "[id]", "associate-reference", "associate-reference-view.tsx"],
         "property-property-roles"],
       [["app", "documents", "[id]", "associate-reference", "associate-reference-view.tsx"],
         "document-document-roles"],
-      [["app", "properties", "[id]", "associate-person", "associate-person-view.tsx"],
-        "property-person-roles-whitelist"],
-      [["app", "natural-persons", "[id]", "associate-property", "associate-property-view.tsx"],
-        "property-person-roles-whitelist"],
-      [["app", "judicial-persons", "[id]", "associate-property", "associate-property-view.tsx"],
-        "property-person-roles-whitelist"],
-      [["app", "admin", "value-lists", "_components", "property-persons-modal.tsx"],
-        "property-person-roles"],
-      [["app", "admin", "value-lists", "_components", "person-person-modal.tsx"],
-        "person-person-roles"],
-      [["app", "natural-persons", "[id]", "associate-person", "associate-person-view.tsx"],
-        "person-person-roles"],
       [["app", "natural-persons", "[id]", "associate-document", "associate-document-view.tsx"],
         "doc-distinct-roles"],
       [["app", "judicial-persons", "[id]", "associate-document", "associate-document-view.tsx"],
@@ -1148,10 +1194,16 @@ describe("the sibling panels say their failures in Romanian", () => {
 
     // (iii) …and something under src/ really FETCHES each of them. Every
     // .ts/.tsx except this modal and the tests — a key quoted in another test
-    // is not a consumer. Re-measured on this tree in Slice #34.04: 27 fetch
-    // sites, 53 invalidation sites, nothing unclassified. (Fetches went 25 → 27
-    // with `use-lookup-options.ts`; the invalidation count is outside this
-    // modal, so the two branches added beside it do not move it.)
+    // is not a consumer. Re-measured on this tree at the end of Slice #34.04:
+    // 19 fetch sites, 53 invalidation sites, nothing unclassified — against 25
+    // and 53 before it. ⚠️ **The fetch count FELL by six and the invalidation
+    // count did not move, and both are the point.** This scan matches
+    // single-segment keys only, so the eight consumers the slice moved onto
+    // `["value-list", …]` stopped being counted here — which is exactly what
+    // "needs no branch" means. The invalidation total is measured OUTSIDE this
+    // modal, and the five keys the slice deleted were all inside it; the two
+    // deleted panels' own invalidations were unkeyed `qc.invalidateQueries()`,
+    // which carry no `queryKey` and were never in this number.
     const files: string[] = [];
     (function walk(dir: string): void {
       for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -1190,9 +1242,9 @@ describe("the sibling panels say their failures in Romanian", () => {
 
   it.each(PANELS)("%s — invalidates the caches the association screens use", (file) => {
     // These rows ARE the role dropdowns on the associate screens, and those
-    // cache them under keys of their own (`property-person-roles-whitelist`,
-    // `document-valid-roles`, `doc-distinct-roles`). With the global 30 s
-    // staleTime a narrow invalidation left an un-ticked role still on offer.
+    // cache them under keys of their own (`document-valid-roles`,
+    // `doc-distinct-roles`). With the global 30 s staleTime a narrow
+    // invalidation left an un-ticked role still on offer.
     // Both of them — the add form's and the delete's. Asserted as a COUNT
     // because a file-wide `includes` stays green when either one is narrowed
     // back to a keyed invalidation.
@@ -1261,10 +1313,9 @@ describe("the sibling panels say their failures in Romanian", () => {
 // ---------------------------------------------------------------------------
 
 describe("the 409 the whitelist panels can say in Romanian", () => {
+  // Slice #34.04: one route, for the one whitelist that is still a table.
   it.each([
     "doc-type-person-roles",
-    "property-person-roles",
-    "person-person-roles",
   ])("%s answers a duplicate with a code, decided by SQLSTATE", (dir) => {
     // ⚠️ **Two halves, and both were broken before this slice made them
     // load-bearing.** The panels choose their sentence from a CODE — a bare

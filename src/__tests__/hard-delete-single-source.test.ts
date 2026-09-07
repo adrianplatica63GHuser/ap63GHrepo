@@ -308,10 +308,18 @@ describe("deleting a lookup value really removes the row", () => {
         expect([name, /\.set\s*\(/.test(block)]).toEqual([name, false]);
       }
     }
+    // ⚠️ **Two entries went in Slice #34.04, and neither was replaced.**
+    // `lookup_property_person_role` and `lookup_person_person_role` held one
+    // bit per role — a UNIQUE NOT NULL FK to `lookup_person_role` and nothing
+    // else — so migration_079 made them `valid_for_property` /
+    // `valid_for_person` ON that row and dropped both tables. Their two
+    // `delete*` functions, their two route families and their two modals are
+    // gone with them: un-ticking a box is an UPDATE on a row this file's own
+    // `deleteValue` already owns, not a delete of anything.
+    // `lookup_doc_type_person_role` does NOT collapse — it is unique over the
+    // PAIR (document_type_id, person_role_id) — and keeps its function.
     expect(swept.sort()).toEqual([
       "lib/admin/doc-type-person-roles/queries.ts:deleteDocTypePersonRole",
-      "lib/admin/person-person-roles/queries.ts:deletePersonPersonRole",
-      "lib/admin/property-person-roles/queries.ts:deletePropertyPersonRole",
       "lib/admin/value-lists/queries.ts:deleteValue",
     ].sort());
   });

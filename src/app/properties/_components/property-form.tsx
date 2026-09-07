@@ -100,16 +100,30 @@ type PropertyTypeLookupOption = LookupOption & {
   showStreetView:   boolean;
 };
 
+// ⚠️ **`res.redirected` as well as `!res.ok`, and it is about the SHARED cache
+// entry rather than about this form.**                          (Slice #34.04)
+// An expired session answers with a redirect to the login page, whose HTML
+// parses to `{}`, and `body.items ?? []` then reads as "the archive holds
+// none" — so React Query caches a SUCCESSFUL EMPTY ARRAY. Every one of these
+// keys is also read by the Reference Data modal (`value-list-modal.tsx` reads
+// every list under `["value-list", listKey]`), so on a shared entry the WEAKEST
+// fetcher defines the failure semantics for every reader: the modal then finds
+// that empty array fresh, never refetches, and shows an empty list with no
+// error for the 30 s staleTime. ⚠️ **The sharing is older than #34.04** — both
+// forms have read the namespaced key since Slice #15.16, precisely so the admin
+// modal's invalidation reaches them. This is fixed in passing with #34.04
+// because that slice made this class of sharing its subject and measured the
+// failure; it is not a hazard the slice introduced.
 async function fetchValueList(listKey: string): Promise<LookupOption[]> {
   const res = await fetch(`/api/admin/value-lists/${listKey}`);
-  if (!res.ok) throw new Error(`Failed to load ${listKey} (HTTP ${res.status})`);
+  if (res.redirected || !res.ok) throw new Error(`Failed to load ${listKey} (HTTP ${res.status})`);
   const body = await res.json();
   return (body.items ?? []) as LookupOption[];
 }
 
 async function fetchPropertyTypes(): Promise<PropertyTypeLookupOption[]> {
   const res = await fetch("/api/admin/value-lists/property-types");
-  if (!res.ok) throw new Error(`Failed to load property-types (HTTP ${res.status})`);
+  if (res.redirected || !res.ok) throw new Error(`Failed to load property-types (HTTP ${res.status})`);
   const body = await res.json();
   return (body.items ?? []) as PropertyTypeLookupOption[];
 }
@@ -176,7 +190,7 @@ export function PropertyForm({
     queryKey: ["value-list", "tarla"],
     queryFn:  async () => {
       const res = await fetch("/api/admin/value-lists/tarla");
-      if (!res.ok) throw new Error(`Failed to load tarla (HTTP ${res.status})`);
+      if (res.redirected || !res.ok) throw new Error(`Failed to load tarla (HTTP ${res.status})`);
       const body = await res.json();
       return (body.items ?? []) as { id: string; indicativ: string; descriere?: string | null }[];
     },

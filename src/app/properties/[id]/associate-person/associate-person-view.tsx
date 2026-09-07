@@ -6,14 +6,12 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { PaginationControls } from "@/components/pagination-controls";
 import { buttonClass } from "@/lib/ui/button-styles";
+import { usePersonRoleOptions } from "@/hooks/use-lookup-options";
 
 const PAGE_SIZE = 15;
 
 type PersonSearchItem = { id: string; code: string; type: "NATURAL" | "JUDICIAL"; displayName: string };
 type SearchResponse = { items: PersonSearchItem[]; total: number };
-
-type RoleItem = { id: string; personRoleId: string; personRoleName: string };
-type RolesResponse = { items: RoleItem[] };
 
 type Props = { propertyId: string; propertyName: string };
 
@@ -29,15 +27,10 @@ async function searchPersons(name: string, code: string, page: number): Promise<
   return { items: data.items as PersonSearchItem[], total: data.total as number };
 }
 
-async function fetchRoles(): Promise<RoleItem[]> {
-  const res = await fetch("/api/admin/property-person-roles");
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data: RolesResponse = await res.json();
-  return data.items;
-}
-
 export function AssociatePersonView({ propertyId, propertyName }: Props) {
   const t           = useTranslations("property.associatePerson");
+  // One sentence shared by all four association screens (Slice #34.04).
+  const tShared     = useTranslations("shared");
   const router      = useRouter();
   const queryClient = useQueryClient();
 
@@ -54,10 +47,14 @@ export function AssociatePersonView({ propertyId, propertyName }: Props) {
     queryFn:  () => searchPersons(nameInput, codeInput, page),
   });
 
-  const { data: roles } = useQuery({
-    queryKey: ["property-person-roles-whitelist"],
-    queryFn:  fetchRoles,
-  });
+  // Slice #34.04: the roles ticked „Persoană → Proprietate" on the master list.
+  // This was a `useQuery` on `["property-person-roles-whitelist"]` against
+  // `/api/admin/property-person-roles` — an endpoint over a table that no
+  // longer exists, under the second of two cache names for one list. The hook
+  // reads `["value-list", "person-roles"]`, which the Reference Data modal
+  // invalidates unconditionally, and filters on `validForProperty`.
+  const { options: roleOptions, listState: roleListState } =
+    usePersonRoleOptions("property");
 
   const items = data?.items ?? [];
   const total = data?.total ?? 0;
@@ -191,13 +188,24 @@ export function AssociatePersonView({ propertyId, propertyName }: Props) {
           className="w-64 rounded-md border border-wire bg-white px-2 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
         >
           <option value="">{t("rolePlaceholder")}</option>
-          {(roles ?? []).map((r) => (
-            <option key={r.personRoleId} value={r.personRoleId}>
-              {r.personRoleName}
+          {roleOptions.map((r) => (
+            <option key={r.value} value={r.value}>
+              {r.label}
             </option>
           ))}
         </select>
       </div>
+
+      {/* Slice #34.04. An empty role dropdown used to mean two different
+          things — no role is ticked for this kind of association, or the list
+          could not be read — and said neither. The role is optional on this
+          screen (`personRoleId: selectedRoleId || null`), so the sentence says
+          the association can still be made. */}
+      {roleListState === "failed" && (
+        <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+          {tShared("roleListUnavailable")}
+        </p>
+      )}
 
       {submitError && <p className="text-sm text-red-600 dark:text-red-400" role="alert">{submitError}</p>}
 

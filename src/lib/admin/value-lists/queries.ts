@@ -721,8 +721,8 @@ export async function updateValue(
  * ⚠️ **It is NOT a consistent read, and an adversarial round corrected an
  * earlier version of this comment that said it was.** `db.transaction()`
  * issues a bare `BEGIN`, so it runs at Postgres' default READ COMMITTED, where
- * every statement takes its own snapshot — `person-roles`' six counts are six
- * snapshots inside the transaction exactly as they would be outside it.
+ * every statement takes its own snapshot — `person-roles`' four counts are
+ * four snapshots inside the transaction exactly as they would be outside it.
  * Raising the level would buy consistency and a 40001 to handle, and it is not
  * where the guarantee is needed: what gates the DESTRUCTIVE step is the row
  * lock in `lookupRowId`, taken by `deleteValue` alone. The counting path is a
@@ -867,11 +867,14 @@ export type MovedRows = {
  *
  * ⚠️ **Configuration refs never reach this function** — see `configuration` in
  * ./dependents.ts. An adversarial round found what the first draft did with
- * them: `lookup_property_person_role` is UNIQUE on the role, so "moving" a
+ * them: `lookup_property_person_role` was UNIQUE on the role, so "moving" a
  * whitelist tick onto a role that already had one deleted a row and updated
  * nothing, and the dialog then reported "nothing was moved" immediately after
  * destroying a row. They are not objects that can be re-pointed; they are the
- * row's own settings, and they go with it.
+ * row's own settings, and they go with it. (That particular table is gone —
+ * Slice #34.04 made it a boolean on `lookup_person_role`, which is the same
+ * conclusion arrived at from the other end. The argument still holds for
+ * `lookup_doc_type_person_role`, which is unique over the PAIR and stays.)
  */
 async function moveRef(
   tx: DbTransaction,

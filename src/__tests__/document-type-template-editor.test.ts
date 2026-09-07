@@ -107,10 +107,19 @@ describe("a rename cannot reset a sort order", () => {
    * write can put a number back into a column that nothing reads.
    */
   it("person-roles has no sortOrder on either side, sent or not", () => {
+    // ⚠️ **`not.toContain("sortOrder")` rather than an exact key list.** This
+    // read `toEqual(["name"])` and went red in Slice #34.04, which added
+    // `validForProperty` / `validForPerson` — the two whitelist tables that
+    // became columns (migration_079). Red was the correct answer to a changed
+    // key set, but the question this test asks is about ONE key, and pinning
+    // the whole set makes every future column on this list stop here for a
+    // reason unrelated to `sort_order`. person-role-flags.test.ts §2 owns the
+    // exact set — an adversarial round caught this comment naming it before it
+    // did.
     for (const schema of [LIST_SCHEMAS, LIST_UPDATE_SCHEMAS]) {
-      expect(Object.keys(schema["person-roles"].parse(MINIMAL))).toEqual(["name"]);
+      expect(Object.keys(schema["person-roles"].parse(MINIMAL))).not.toContain("sortOrder");
       expect(Object.keys(schema["person-roles"].parse({ ...MINIMAL, sortOrder: 7 })))
-        .toEqual(["name"]);
+        .not.toContain("sortOrder");
     }
   });
 

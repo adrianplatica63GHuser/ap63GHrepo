@@ -81,9 +81,23 @@ type JudicialPersonTypeOption = {
   name: string;
 };
 
+// ⚠️ **`res.redirected` as well as `!res.ok`, and it is about the SHARED cache
+// entry rather than about this form.**                          (Slice #34.04)
+// An expired session answers with a redirect to the login page, whose HTML
+// parses to `{}`, and `body.items ?? []` then reads as "the archive holds
+// none" — so React Query caches a SUCCESSFUL EMPTY ARRAY. Every one of these
+// keys is also read by the Reference Data modal (`value-list-modal.tsx` reads
+// every list under `["value-list", listKey]`), so on a shared entry the WEAKEST
+// fetcher defines the failure semantics for every reader: the modal then finds
+// that empty array fresh, never refetches, and shows an empty list with no
+// error for the 30 s staleTime. ⚠️ **The sharing is older than #34.04** — both
+// forms have read the namespaced key since Slice #15.16, precisely so the admin
+// modal's invalidation reaches them. This is fixed in passing with #34.04
+// because that slice made this class of sharing its subject and measured the
+// failure; it is not a hazard the slice introduced.
 async function fetchJudicialPersonTypes(): Promise<JudicialPersonTypeOption[]> {
   const res = await fetch("/api/admin/value-lists/judicial-person-types");
-  if (!res.ok) throw new Error(`Failed to load judicial person types (HTTP ${res.status})`);
+  if (res.redirected || !res.ok) throw new Error(`Failed to load judicial person types (HTTP ${res.status})`);
   const body = await res.json();
   return (body.items ?? []) as JudicialPersonTypeOption[];
 }

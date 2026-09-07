@@ -137,6 +137,21 @@ export const personTypeSchema = z.object({
 export const personRoleSchema = z.object({
   name:        z.string().min(1, "required"),
   description: z.string().nullish(),
+  // Slice #34.04 — the two whitelists that were tables. `boolField.default(false)`
+  // is `propertyTypeSchema`'s shape one list over, and it is what makes the
+  // create path safe: the add form sends both booleans, and a caller that
+  // sends neither gets a role usable nowhere, which is what a role absent from
+  // both tables already meant.
+  //
+  // ⚠️ **`LIST_UPDATE_SCHEMAS["person-roles"]` is this object unextended, so a
+  // PUT that omits a flag writes FALSE rather than leaving it.** That is the
+  // same contract `property-types` has had since #19.02 and it is correct for a
+  // checkbox: the form always sends both (`startEdit` seeds them from the row,
+  // `value-list-modal.tsx`), and "absent" from a checkbox means unticked. It is
+  // NOT the `sortOrder` case, where absent had to mean "leave it alone" because
+  // no input existed to send it.
+  validForProperty: boolField.default(false),
+  validForPerson:   boolField.default(false),
 });
 
 /**
