@@ -156,11 +156,15 @@ const STUB_OBJECT_NAMES = new Set([
 ]);
 
 // Lookup tables the reference-data path deliberately leaves empty, with why.
-const LOOKUP_EMPTY_EXPECTED: Record<string, string> = {
-  lookup_person_person_role:
-    "a whitelist over lookup_person_role that Adrian fills from the Admin UI; migration_055 " +
-    "seeds nothing into it, so empty is the same state a migrated database is in",
-};
+//
+// ⚠️ **Empty since Slice #34.04, and that is not a mistake.** Its only entry
+// was `lookup_person_person_role`, whose emptiness was expected because it was
+// a whitelist Adrian fills from the Admin UI. migration_079 turned it into
+// `lookup_person_role.valid_for_person`, so there is no table to be empty any
+// more. The map is kept rather than deleted because `lookupTables` is
+// discovered from the rebuilt database (see the walk below), so the NEXT
+// deliberately-empty lookup needs a line here and not a mechanism.
+const LOOKUP_EMPTY_EXPECTED: Record<string, string> = {};
 
 // Lookup tables with a `key` column the application switches on. A reference
 // load that leaves the column NULL breaks the code that reads it, and row

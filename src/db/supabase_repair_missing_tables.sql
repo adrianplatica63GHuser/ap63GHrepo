@@ -42,8 +42,24 @@
 --       populated the scan is real. Listed because the file's own rule is that
 --       this paragraph is what an operator reads before running it against
 --       production. (The pre-existing `ADD CONSTRAINT ... UNIQUE` on
---       lookup_property_type is arguably an eighth and has never been listed;
---       that is a gap in this paragraph, not a licence.)
+--       lookup_property_type is arguably a TWELFTH - it was written as "an
+--       eighth" when the running total was seven, and #34.04 moved the total
+--       to eleven - and has never been listed; that is a gap in this
+--       paragraph, not a licence. Renumber it with the total, or it becomes
+--       the wrong count this paragraph exists to forbid.)
+--   ELEVEN, since #34.04:
+--     * `UPDATE lookup_person_role SET valid_for_property = false WHERE
+--       valid_for_property IS NULL`, and the same for `valid_for_person`. Two
+--       writes, the same category and the same argument as the `origin`
+--       UPDATEs above: they touch only rows holding NULL, which the
+--       application already reads as false.
+--     * `ALTER TABLE lookup_person_role ALTER COLUMN valid_for_* SET NOT
+--       NULL`, two of them. Two more ACCESS EXCLUSIVE full-table scans, on a
+--       table of a few dozen roles, so immeasurable here - listed because the
+--       count is what an operator reads, not because the cost is real.
+--   All four exist because `ADD COLUMN IF NOT EXISTS` is a complete no-op over
+--   a column of the same name that is nullable with no default; the block in
+--   section 8 says so at length.
 --   Anything added here later should hold to "additive" unless it says why not,
 --   AND should update this paragraph -- a count that is wrong is worse than no
 --   count, because this is the paragraph an operator reads before running the
@@ -60,6 +76,8 @@
 --   - tables principal_object, person, property, document, groups
 --   - table lookup_tarla (Slice #34.03's block in section 8 references it, and
 --     an adversarial round pointed out it was assumed rather than stated)
+--   - table lookup_person_role (Slice #34.04's block in section 8 adds two
+--     columns to it; it is created by migration_013 and this file never has)
 --
 -- Read the NOTICE output at the end. It reports anything still missing.
 -- ===========================================================================
@@ -541,11 +559,18 @@ CREATE INDEX IF NOT EXISTS property_corner_source_property_idx
 
 -- ===========================================================================
 -- 8. COLUMN DRIFT -- columns added by migrations after supabase_schema_full.sql
---    was last hand-maintained. Nullable adds, so safe on live data -- with ONE
---    exception since Slice #34.03: the FOREIGN KEY beside `property.tarla_id`
---    takes ACCESS EXCLUSIVE on `property` and validates every row. It is in
---    the not-purely-additive list at the top of this file, which is the
---    paragraph an operator reads before running this against production.
+--    was last hand-maintained. Mostly nullable adds, so safe on live data; the
+--    `NOT NULL DEFAULT` ones (the three `origin` columns, and Slice #34.04's
+--    two booleans on lookup_person_role) fill existing rows in the same
+--    statement, which is a catalogue-only change since Postgres 11 and takes
+--    no rewrite. ⚠️ **The one real exception is the FOREIGN KEY beside
+--    `property.tarla_id` (Slice #34.03)** -- it takes ACCESS EXCLUSIVE on
+--    `property` and validates every row. It is in the not-purely-additive list
+--    at the top of this file, which is the paragraph an operator reads before
+--    running this against production. (This sentence said "nullable adds" flat
+--    until #34.04; it had three counterexamples inside this very section at
+--    the time, and an adversarial round pointed out that adding a fourth was
+--    not the moment to leave it standing.)
 -- ===========================================================================
 
 -- migration_054 -- audit trail (email of last writer)
@@ -575,6 +600,57 @@ ALTER TABLE document_version ADD COLUMN IF NOT EXISTS updated_by text;
 -- an EMPTY one, which is the honest outcome: this file has no way to resolve
 -- text against lookup rows and must not guess.
 ALTER TABLE property ADD COLUMN IF NOT EXISTS tarla_id uuid;
+
+-- migration_079 (Slice #34.04) -- the two role whitelists, as columns
+--
+-- ⚠️ **THE COLUMNS AND NOT THE DROPS, AND IT IS THE migration_078 ASYMMETRY
+-- DIRECTLY ABOVE FOR THE SAME REASON.** migration_079 folds
+-- `lookup_property_person_role` and `lookup_person_person_role` -- two tables
+-- whose only content was a UNIQUE NOT NULL FK to `lookup_person_role(id)` --
+-- into these two booleans, and then drops them. A Supabase project repaired
+-- through this file never ran the migration chain, so without these two lines
+-- it gains every other drift in this section and NOT these: and because
+-- drizzle names every column from `src/db/schema/index.ts` in every statement
+-- it builds, `column "valid_for_property" does not exist` then fires on EVERY
+-- read of `lookup_person_role` -- the „Roluri Persoană" modal, the role
+-- dropdown on all three association screens, the delete-dependents count, and
+-- `grantPersonRoleWhitelists` inside a value-list move -- while the
+-- post-flight at the end of this file reports OK.
+--
+-- The DROPs are NOT added, for this file's own stated reason: dropping a
+-- populated table is exactly what "nothing is dropped" excludes. So a repaired
+-- project ends with BOTH the columns and the two tables, the tables unread by
+-- the new code. Running migration_079 through the runner is what removes them,
+-- and that is where the fold lives; migration_079's backfill only ever sets
+-- TRUE, precisely so it can run afterwards on such a project without undoing
+-- a tick made here through the app.
+--
+-- `NOT NULL DEFAULT false` fills existing rows in the same statement -- a
+-- catalogue-only change since Postgres 11, so the ADD itself takes no rewrite.
+-- The three-step convergence below it is NOT catalogue-only, and it IS listed
+-- at the top of this file, under "ELEVEN, since #34.04". A project that
+-- reaches these columns through THIS file has them all false, which is the
+-- honest outcome: the ticks live in tables this file cannot assume exist.
+--
+-- ⚠️ **The three properties are asserted SEPARATELY, exactly as for the
+-- `origin` columns below, and the single `ADD COLUMN ... NOT NULL DEFAULT` is
+-- not enough on its own.** `ADD COLUMN IF NOT EXISTS` is a complete no-op when
+-- the column already exists -- INCLUDING as a nullable column with no default,
+-- which is what a hand-add or a partial `drizzle-kit push` leaves behind. On
+-- such a project the ADD does nothing, drizzle then inserts NULL, and
+-- migration_079's own backfill (`WHERE NOT r.valid_for_property`) skips those
+-- rows in silence, because NULL is not false. An adversarial round found this
+-- block had opted out of the rule the paragraph 200 lines below states twice.
+ALTER TABLE lookup_person_role
+  ADD COLUMN IF NOT EXISTS valid_for_property boolean NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS valid_for_person   boolean NOT NULL DEFAULT false;
+
+UPDATE lookup_person_role SET valid_for_property = false WHERE valid_for_property IS NULL;
+ALTER TABLE lookup_person_role ALTER COLUMN valid_for_property SET DEFAULT false;
+ALTER TABLE lookup_person_role ALTER COLUMN valid_for_property SET NOT NULL;
+UPDATE lookup_person_role SET valid_for_person   = false WHERE valid_for_person   IS NULL;
+ALTER TABLE lookup_person_role ALTER COLUMN valid_for_person   SET DEFAULT false;
+ALTER TABLE lookup_person_role ALTER COLUMN valid_for_person   SET NOT NULL;
 
 -- ⚠️ **TESTED BY SHAPE, NOT BY NAME.** The `lookup_property_type.key` block
 -- 240 lines below is the scar this avoids: a name-only test found nothing on a
@@ -1070,12 +1146,61 @@ BEGIN
     RAISE WARNING 'property.tarla_id has a foreign key to lookup_tarla whose ON DELETE action is not SET NULL. Deleting a code in Reference Data will fail with 23503 (or, if CASCADE, delete the properties). Inspect with: SELECT conname, confdeltype FROM pg_constraint WHERE conrelid = ''property''::regclass AND contype = ''f'' AND confrelid = ''lookup_tarla''::regclass;';
   END IF;
 
+  -- Slice #34.04: the same question for the two booleans on
+  -- lookup_person_role, and it is here because the section-8 block's own
+  -- comment names the hazard ("while the post-flight at the end of this file
+  -- reports OK") and the first draft of that block then did not close it --
+  -- the third slice running to leave this section out, which an adversarial
+  -- round said out loud. Same shape as the `origin` checks: absence is a
+  -- FAULT, because drizzle names both columns in every statement it builds
+  -- against lookup_person_role, so a project missing either answers 42703 from
+  -- the „Roluri Persoană" modal, the role dropdown on all three association
+  -- screens, the delete-dependents count and a value-list move.
+  --
+  -- Nullability is checked too, not just presence: `ADD COLUMN IF NOT EXISTS`
+  -- no-ops over a nullable column of the same name, and a NULL there is
+  -- invisible to migration_079's backfill. `is_nullable` rather than a
+  -- pg_attribute read, to match the two checks above it.
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name   = 'lookup_person_role'
+      AND column_name  = 'valid_for_property'
+  ) THEN
+    faults := array_append(faults, 'lookup_person_role.valid_for_property (column missing)');
+  ELSIF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name   = 'lookup_person_role'
+      AND column_name  = 'valid_for_property'
+      AND is_nullable  = 'YES'
+  ) THEN
+    faults := array_append(faults, 'lookup_person_role.valid_for_property (present but nullable)');
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name   = 'lookup_person_role'
+      AND column_name  = 'valid_for_person'
+  ) THEN
+    faults := array_append(faults, 'lookup_person_role.valid_for_person (column missing)');
+  ELSIF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name   = 'lookup_person_role'
+      AND column_name  = 'valid_for_person'
+      AND is_nullable  = 'YES'
+  ) THEN
+    faults := array_append(faults, 'lookup_person_role.valid_for_person (present but nullable)');
+  END IF;
+
   IF array_length(missing, 1) IS NOT NULL THEN
     faults := array_append(faults, 'tables: ' || array_to_string(missing, ', '));
   END IF;
 
   IF array_length(faults, 1) IS NULL THEN
-    RAISE NOTICE 'POST-FLIGHT OK: all 13 tables present; lookup_document_type.origin, lookup_tarla.origin, lookup_institution.origin, document.import_title and property.tarla_id present.';
+    RAISE NOTICE 'POST-FLIGHT OK: all 13 tables present; lookup_document_type.origin, lookup_tarla.origin, lookup_institution.origin, document.import_title, property.tarla_id, lookup_person_role.valid_for_property and lookup_person_role.valid_for_person present.';
   ELSE
     RAISE EXCEPTION 'POST-FLIGHT FAILED: %', array_to_string(faults, ' | ');
   END IF;

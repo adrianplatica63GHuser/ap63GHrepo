@@ -29,8 +29,12 @@ SET client_encoding = 'UTF8';
 -- file fail on its second statement against any current database. The three
 -- relationship-role lookups from migration_055 were missing instead.
 -- (Slice #31.01; scripts/verify-rebuild.ts now fails on both shapes.)
-TRUNCATE lookup_property_person_role, lookup_person_person_role,
-         lookup_doc_type_person_role CASCADE;
+-- Slice #34.04 dropped lookup_property_person_role and lookup_person_person_role
+-- (migration_079); both are now boolean columns on lookup_person_role, so they
+-- are cleared by the TRUNCATE of that table below rather than by name here.
+-- lookup_doc_type_person_role does NOT collapse -- it is unique over the PAIR
+-- (document_type_id, person_role_id) -- and stays.
+TRUNCATE lookup_doc_type_person_role CASCADE;
 TRUNCATE lookup_person_role, lookup_property_type, lookup_tarla,
          lookup_use_category, lookup_person_type, lookup_citizenship,
          lookup_document_type, lookup_institution,
@@ -406,16 +410,25 @@ JOIN doc d ON d.name = pairs.doc_name
 JOIN rol r ON r.name = pairs.role_name
 ON CONFLICT DO NOTHING;
 
--- ── lookup_property_person_role ───────────────────────────────────────────────
+-- ── lookup_person_role.valid_for_property ─────────────────────────────────────
 -- Name-resolved. Roles valid for the Property ↔ Person association.
-INSERT INTO lookup_property_person_role (id, person_role_id, created_at)
-  SELECT gen_random_uuid(), id, now() FROM lookup_person_role WHERE name = 'Coproprietari / Coindivizari' ON CONFLICT (person_role_id) DO NOTHING;
-INSERT INTO lookup_property_person_role (id, person_role_id, created_at)
-  SELECT gen_random_uuid(), id, now() FROM lookup_person_role WHERE name = 'Cumpărător' ON CONFLICT (person_role_id) DO NOTHING;
-INSERT INTO lookup_property_person_role (id, person_role_id, created_at)
-  SELECT gen_random_uuid(), id, now() FROM lookup_person_role WHERE name = 'Proprietar / Titular de drept real' ON CONFLICT (person_role_id) DO NOTHING;
-INSERT INTO lookup_property_person_role (id, person_role_id, created_at)
-  SELECT gen_random_uuid(), id, now() FROM lookup_person_role WHERE name = 'Titular de drept' ON CONFLICT (person_role_id) DO NOTHING;
+--
+-- ⚠️ **This was four INSERTs into `lookup_property_person_role` until Slice
+-- #34.04 (migration_079) turned that table into this column, and it is the one
+-- door into a database where those four ticks could have gone missing without
+-- passing through the migration at all.** A cloud project reference-loaded
+-- through this file never runs migration_079's fold; if these four names were
+-- simply deleted here, every role would come up `valid_for_property = false`
+-- and no association screen would offer a role. An adversarial round found it.
+-- One statement rather than four, because a column takes a set.
+UPDATE lookup_person_role
+   SET valid_for_property = true
+ WHERE name IN (
+   'Coproprietari / Coindivizari',
+   'Cumpărător',
+   'Proprietar / Titular de drept real',
+   'Titular de drept'
+ );
 
 -- ── lookup_property_property_role (migration_055) ─────────────────────────────
 -- Roles for Property ↔ Property. Values copied from migration_055, which is the
@@ -442,8 +455,11 @@ INSERT INTO lookup_document_document_role (name, description, sort_order) VALUES
   ('Anexă la',              'Document atașat ca anexă unui document principal', 7),
   ('Corecție a',            'Document care rectifică erori dintr-un altul',  8);
 
--- ── lookup_person_person_role ─────────────────────────────────────────────────
--- Deliberately no rows. It is a whitelist over lookup_person_role that Adrian
--- fills from the Admin UI, and migration_055 seeds nothing into it either, so
--- an empty table here is the same state a migrated database is in. It is
--- truncated above so a rebuild does not inherit a previous run's whitelist.
+-- ── lookup_person_role.valid_for_person ───────────────────────────────────────
+-- Deliberately no ticks. It is a whitelist Adrian fills from the Admin UI, and
+-- migration_055 seeded nothing into the table this column replaced either, so
+-- false everywhere is the same state a migrated database is in. It needs no
+-- statement at all now: the column is `NOT NULL DEFAULT false` and the
+-- lookup_person_role TRUNCATE above re-creates every row from scratch, so a
+-- rebuild cannot inherit a previous run's whitelist. (Slice #34.04,
+-- migration_079 -- it was the table `lookup_person_person_role`.)

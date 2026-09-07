@@ -785,6 +785,33 @@ export const lookupPersonRole = pgTable("lookup_person_role", {
   sortOrder:   integer("sort_order").notNull().default(0),
   createdAt:   timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt:   timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+
+  // Slice #34.04, migration_079: the two whitelists that used to be tables.
+  //
+  // `lookup_property_person_role` and `lookup_person_person_role` each held an
+  // `id`, a `person_role_id` marked NOT NULL UNIQUE REFERENCES this table's
+  // primary key, and a `created_at` — nothing else, and identical in every
+  // column to each other (they differed only in whether the UNIQUE constraint
+  // was named, which is what `rebuild-known-differences.txt` carried two lines
+  // for). A table whose only content is a unique, not-null foreign key to
+  // another table's primary key carries one bit per row of that other table,
+  // so it is a boolean column on that table wearing a costume. Both are
+  // dropped by migration_079 and their ticks are these two columns.
+  //
+  // Shape copied from `lookupPropertyType`'s show_* booleans (migration_041):
+  // `boolean NOT NULL DEFAULT false` on a lookup table, edited from the row's
+  // own screen. False means "usable nowhere", which is what a role absent from
+  // both tables already meant.
+  //
+  // ⚠️ **THERE IS NO `validForDocument`, AND THERE MUST NEVER BE ONE.**
+  // `lookupDocTypePersonRole` below looks like a third member of this family
+  // and is not: its unique index is over the PAIR (documentTypeId,
+  // personRoleId), because „Vânzător" is a valid party on a sale contract and
+  // not on a cadastral plan. Flattening that to a bit on the role destroys the
+  // distinction. It stays a grid; Slice #34.10 moves it to the document-type
+  // screen.
+  validForProperty: boolean("valid_for_property").notNull().default(false),
+  validForPerson:   boolean("valid_for_person").notNull().default(false),
 });
 
 // Judicial-person legal/organisational form (SRL/SA/PFA/etc.). Replaces the
@@ -890,24 +917,6 @@ export const lookupInstitution = pgTable("lookup_institution", {
   origin: text("origin").$type<"MANUAL" | "IMPORT">().notNull().default("MANUAL"),
 });
 
-// ── Property ↔ Person Role whitelist ────────────────────────────────────────
-//
-// Managed via the "Property Persons" admin panel.  Each row marks a role from
-// lookup_person_role as a valid role tag for Property ↔ Person associations.
-// ON DELETE CASCADE keeps this table clean when a role is removed.
-
-export const lookupPropertyPersonRole = pgTable(
-  "lookup_property_person_role",
-  {
-    id:           uuid("id").primaryKey().defaultRandom(),
-    personRoleId: uuid("person_role_id")
-      .notNull()
-      .unique()
-      .references(() => lookupPersonRole.id, { onDelete: "cascade" }),
-    createdAt:    timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  },
-);
-
 // ── Document Type ↔ Person Role junction ────────────────────────────────────
 //
 // Managed via the "Document Persons" admin panel. Both FKs cascade on delete
@@ -956,21 +965,6 @@ export const lookupDocumentDocumentRole = pgTable("lookup_document_document_role
   createdAt:   timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt:   timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
-
-// Person <-> Person role whitelist — each row marks a lookup_person_role entry
-// as valid for Person <-> Person associations. Same pattern as
-// lookup_property_person_role. ON DELETE CASCADE keeps the table clean.
-export const lookupPersonPersonRole = pgTable(
-  "lookup_person_person_role",
-  {
-    id:           uuid("id").primaryKey().defaultRandom(),
-    personRoleId: uuid("person_role_id")
-      .notNull()
-      .unique()
-      .references(() => lookupPersonRole.id, { onDelete: "cascade" }),
-    createdAt:    timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  },
-);
 
 // ── Others (was lookup_service_interest, renamed in migration 011) ──────────
 //
@@ -1293,7 +1287,8 @@ export const personPerson = pgTable(
     personIdA:   uuid("person_id_a").notNull().references(() => person.id, { onDelete: "cascade" }),
     personIdB:   uuid("person_id_b").notNull().references(() => person.id, { onDelete: "cascade" }),
     // Optional role from the master lookup_person_role list, further filtered
-    // by the lookup_person_person_role whitelist in the UI.
+    // to the roles carrying `lookupPersonRole.validForPerson` (Slice #34.04;
+    // it was the `lookup_person_person_role` table until migration_079).
     // ON DELETE SET NULL — cleared automatically if the role is removed.
     relationshipRoleId: uuid("relationship_role_id")
       .references(() => lookupPersonRole.id, { onDelete: "set null" }),

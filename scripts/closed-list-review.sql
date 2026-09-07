@@ -95,16 +95,26 @@ UNION ALL
          0
   FROM lookup_judicial_person_type t
 UNION ALL
-  -- Six inbound edges, and the split matters: three carry real associations
-  -- and refuse the delete, three are whitelist ticks that cascade away with
-  -- the row.
+  -- Four inbound edges and two flags, and the split matters: three edges carry
+  -- real associations and refuse the delete; the fourth edge and the two flags
+  -- are configuration that goes with the row.
+  --
+  -- ⚠️ Two of those three stopped being TABLES in Slice #34.04
+  -- (migration_079): `lookup_property_person_role` and
+  -- `lookup_person_person_role` are now `valid_for_property` and
+  -- `valid_for_person` on this very row, so they are `CASE WHEN`s rather than
+  -- sub-counts. `lookup_doc_type_person_role` is unchanged and stays a
+  -- sub-count -- it is unique over the PAIR (document_type_id, person_role_id),
+  -- so a role can be ticked for several document types and the number means
+  -- something. The `config_ticks` total therefore still counts what it always
+  -- counted: the ticks that disappear when the role is deleted.
   SELECT 'Roluri Persoană', 6, t.name,
          (SELECT count(*) FROM property_person x WHERE x.person_role_id      = t.id)
        + (SELECT count(*) FROM person_document x WHERE x.person_role_id      = t.id)
        + (SELECT count(*) FROM person_person   x WHERE x.relationship_role_id = t.id),
-         (SELECT count(*) FROM lookup_property_person_role x WHERE x.person_role_id = t.id)
+         (CASE WHEN t.valid_for_property THEN 1 ELSE 0 END)
+       + (CASE WHEN t.valid_for_person   THEN 1 ELSE 0 END)
        + (SELECT count(*) FROM lookup_doc_type_person_role x WHERE x.person_role_id = t.id)
-       + (SELECT count(*) FROM lookup_person_person_role  x WHERE x.person_role_id = t.id)
   FROM lookup_person_role t
 UNION ALL
   SELECT 'Proprietate → Proprietate', 7, t.name,

@@ -136,7 +136,7 @@ async function planFor(table: string, orderBy: string): Promise<string[]> {
     throw new Error(
       `${table} has foreign key column(s) ${fkCols.join(", ")}. syncSimple copies values, and a ` +
         `UUID from the local database means nothing on Supabase. Give this table a name-resolving ` +
-        `sync function, the way lookup_property_person_role has one.`,
+        `sync function, the way lookup_doc_type_person_role has one.`,
     );
   }
 
@@ -230,58 +230,20 @@ async function syncDocTypePersonRoles(): Promise<void> {
 }
 
 /**
- * lookup_property_person_role — FK to lookup_person_role.
- * Resolved by role name.
- */
-async function syncPropertyPersonRoles(): Promise<void> {
-  const { rows, rowCount } = await localPool.query(`
-    SELECT lpr.name AS role_name
-    FROM   lookup_property_person_role lppr
-    JOIN   lookup_person_role lpr ON lpr.id = lppr.person_role_id
-    ORDER BY lpr.name
-  `);
-  for (const row of rows) {
-    await supaPool.query(
-      `INSERT INTO lookup_property_person_role
-         (id, person_role_id, created_at)
-       SELECT gen_random_uuid(), id, now()
-       FROM   lookup_person_role
-       WHERE  name = $1`,
-      [row.role_name],
-    );
-  }
-  ok(`lookup_property_person_role  (${rowCount ?? 0} rows)`);
-}
-
-/**
- * lookup_person_person_role — whitelist over lookup_person_role, resolved by
- * role name for the same reason syncPropertyPersonRoles does it: the two
- * databases do not share UUIDs.
+ * ⚠️ **`syncPropertyPersonRoles` and `syncPersonPersonRoles` are GONE, and
+ * nothing replaced them, which is the point.**                (Slice #34.04)
  *
- * Copies zero rows on a database where nothing has been whitelisted yet, and
- * that is the correct outcome — the point is that the table is cleared and
- * refilled from dev like every other lookup, rather than being left to whatever
- * the previous rebuild happened to leave behind. (Slice #31.01)
+ * They existed because `lookup_property_person_role` and
+ * `lookup_person_person_role` held a UUID that means nothing on the other
+ * database, so each had to be re-resolved by role name — the FK guard in
+ * `syncSimple` above names that whole category. migration_079 turned both
+ * tables into `lookup_person_role.valid_for_property` /
+ * `.valid_for_person`, which are booleans on a row `syncSimple` already
+ * copies, and `planFor` resolves its column list from the catalogue rather
+ * than from a hand-written list — so the ticks now cross with the role and
+ * this file needs no code for them at all. `lookup_doc_type_person_role` does
+ * NOT collapse (it is unique over the PAIR) and keeps its function above.
  */
-async function syncPersonPersonRoles(): Promise<void> {
-  const { rows, rowCount } = await localPool.query(`
-    SELECT lpr.name AS role_name
-    FROM   lookup_person_person_role lppr
-    JOIN   lookup_person_role lpr ON lpr.id = lppr.person_role_id
-    ORDER BY lpr.name
-  `);
-  for (const row of rows) {
-    await supaPool.query(
-      `INSERT INTO lookup_person_person_role
-         (id, person_role_id, created_at)
-       SELECT gen_random_uuid(), id, now()
-       FROM   lookup_person_role
-       WHERE  name = $1`,
-      [row.role_name],
-    );
-  }
-  ok(`lookup_person_person_role  (${rowCount ?? 0} rows)`);
-}
 
 // ---------------------------------------------------------------------------
 // Main
@@ -312,18 +274,21 @@ async function main() {
   await planAll(SIMPLE_TABLES);
   log("Truncating defaults seeded by schema SQL...");
 
-  // Truncate junction tables first, then base tables (CASCADE handles the rest).
-  // Junction / whitelist tables first, then base tables (CASCADE handles the
-  // rest). Four names were absent from these lists until Slice #31.01 --
+  // Junction tables first, then base tables (CASCADE handles the rest). Four
+  // names were absent from these lists until Slice #31.01 --
   // lookup_person_person_role, lookup_property_property_role,
   // lookup_document_document_role (added by migration_055) and
   // lookup_judicial_person_type -- so they were neither cleared nor copied and
   // arrived empty on every sync, with nothing saying so. scripts/verify-rebuild.ts
   // now fails when a lookup_* table in a rebuilt database is named nowhere here.
+  //
+  // Slice #34.04 removed two of those names again, for the opposite reason:
+  // migration_079 dropped lookup_property_person_role and
+  // lookup_person_person_role, so a rebuilt database does not have them and
+  // naming them here is what verify-rebuild's `stale` scan fails on. Their
+  // ticks are cleared and refilled with lookup_person_role itself, below.
   await supaPool.query(`
     TRUNCATE
-      lookup_property_person_role,
-      lookup_person_person_role,
       lookup_doc_type_person_role
     CASCADE
   `);
@@ -356,16 +321,15 @@ async function main() {
   await syncSimple("lookup_person_role",   "sort_order");
   await syncSimple("lookup_judicial_person_type", "sort_order");
 
-  // Relationship-role lookups (migration_055). lookup_person_person_role is a
-  // whitelist over lookup_person_role and is copied by role name below, the
-  // same way lookup_property_person_role is.
+  // Relationship-role lookups (migration_055). The two Person whitelists that
+  // used to be copied by role name here are columns on lookup_person_role as
+  // of Slice #34.04, so the `syncSimple("lookup_person_role", ...)` above
+  // carries them — see the block where their two functions used to be.
   await syncSimple("lookup_property_property_role", "sort_order");
   await syncSimple("lookup_document_document_role", "sort_order");
 
   // Junction tables (depend on base tables already inserted above)
   await syncDocTypePersonRoles();
-  await syncPropertyPersonRoles();
-  await syncPersonPersonRoles();
 
   // Step 4: Seed domain data (persons, properties, documents, judicial persons)
   // Run seed.ts as a child process with DATABASE_URL temporarily pointed at Supabase.
