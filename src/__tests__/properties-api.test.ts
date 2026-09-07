@@ -66,7 +66,7 @@ const stubFull = {
   property: {
     id: "prop-1", code: "PROP00001",
     propertyTypeId: null, useCategoryId: null,
-    nickname: "Lot 1", tarlaSola: "T7", parcela: "P145",
+    nickname: "Lot 1", tarlaId: "c0ffee00-0000-4000-8000-000000000001", parcela: "P145",
     cadastralNumber: "12345", carteFunciara: "CF001",
     surfaceAreaMp: "450.00",
     notes: null, createdAt: new Date(), updatedAt: new Date(),

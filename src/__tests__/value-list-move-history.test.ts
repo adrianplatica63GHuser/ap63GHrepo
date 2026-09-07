@@ -9,7 +9,7 @@
  *   `reassignDependents` rewrote its rows with one raw UPDATE per dependent
  *   ref and did nothing else: no version row, no `updated_by`. The columns it
  *   rewrites are INSIDE the version snapshots — `propertyTypeId`,
- *   `useCategoryId`, `tarlaSola`, `documentTypeId`, `institutionId`,
+ *   `useCategoryId`, `tarlaId`, `documentTypeId`, `institutionId`,
  *   `citizenshipId`, `physicalPersonTypeId`, `judicialPersonTypeId` — so the
  *   move changed what a fresh snapshot would say without saying it.
  *
@@ -346,7 +346,11 @@ describe("which refs are versioned", () => {
       [
         "property-types:property.property_type_id→property",
         "use-categories:property.use_category_id→property",
-        "tarla:property.tarla_sola→property",
+        // Slice #34.03: `tarla_sola` -> `tarla_id`. The move re-points a
+        // foreign key now instead of rewriting text, and the version it owes
+        // the properties it touched is unchanged - which is the point of
+        // asserting the pair rather than the column.
+        "tarla:property.tarla_id→property",
         "person-types:natural_person.physical_person_type_id→natural-person",
         "citizenships:natural_person.citizenship_id→natural-person",
         "judicial-person-types:judicial_person.judicial_person_type_id→judicial-person",

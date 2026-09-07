@@ -65,7 +65,9 @@ export const formSchema = z.object({
   // Slice #15.16: FK ids to admin-managed lookup tables. "" = unset.
   propertyTypeId:  z.string(),
   nickname:        z.string(),
-  tarlaSola:       z.string(),
+  // Slice #34.03: "" | <lookup_tarla.id uuid>. Was the CODE as free text; the
+  // field is now the same shape as the two lookup ids around it.
+  tarlaId:         z.string(),
   parcela:         z.string(),
   cadastralNumber: z.string(),
   carteFunciara:   z.string(),
@@ -94,7 +96,7 @@ const emptyAddress: AddressBlock = {
 
 export const emptyFormValues: FormValues = {
   propertyTypeId: "",
-  nickname: "", tarlaSola: "", parcela: "",
+  nickname: "", tarlaId: "", parcela: "",
   cadastralNumber: "", carteFunciara: "",
   useCategoryId: "", surfaceAreaMp: "", notes: "",
   address: { ...emptyAddress },
@@ -107,7 +109,7 @@ export const emptyFormValues: FormValues = {
 type PropertyRow = {
   propertyTypeId:  string | null;
   nickname:        string | null;
-  tarlaSola:       string | null;
+  tarlaId:         string | null;
   parcela:         string | null;
   cadastralNumber: string | null;
   carteFunciara:   string | null;
@@ -135,7 +137,7 @@ export function fromApiPayload(input: {
   return {
     propertyTypeId:  p.propertyTypeId  ?? "",
     nickname:        p.nickname        ?? "",
-    tarlaSola:       p.tarlaSola       ?? "",
+    tarlaId:         p.tarlaId         ?? "",
     parcela:         p.parcela         ?? "",
     cadastralNumber: p.cadastralNumber ?? "",
     carteFunciara:   p.carteFunciara   ?? "",
@@ -177,7 +179,7 @@ function blank(s: string): string | null {
 const TOP_LEVEL_TEXT_FIELDS = [
   "propertyTypeId",
   "nickname",
-  "tarlaSola",
+  "tarlaId",
   "parcela",
   "cadastralNumber",
   "carteFunciara",
@@ -211,7 +213,7 @@ export function toApiPayload(
   return {
     propertyTypeId:  blank(values.propertyTypeId),
     nickname:        blank(values.nickname),
-    tarlaSola:       blank(values.tarlaSola),
+    tarlaId:         blank(values.tarlaId),
     parcela:         blank(values.parcela),
     cadastralNumber: blank(values.cadastralNumber),
     carteFunciara:   blank(values.carteFunciara),
@@ -265,7 +267,7 @@ export type CornerDiffEntry =
   | { type: "removed" };
 
 const PROPERTY_SNAP_KEYS: (keyof PropertySnapshotProperty)[] = [
-  "propertyTypeId", "nickname", "tarlaSola", "parcela", "cadastralNumber",
+  "propertyTypeId", "nickname", "tarlaId", "parcela", "cadastralNumber",
   "carteFunciara", "useCategoryId", "surfaceAreaMp", "notes",
 ];
 

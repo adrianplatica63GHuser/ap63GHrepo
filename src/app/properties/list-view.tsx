@@ -21,7 +21,13 @@ type PropertyListItem = {
   id:               string;
   code:             string;
   nickname:         string | null;
-  tarlaSola:        string | null;
+  /**
+   * Slice #34.03: the tarla CODE, read through `property.tarla_id`. Renamed
+   * from `tarlaSola` because it is no longer a column on `property` — it is
+   * `lookup_tarla.indicativ`, so a rename in Reference Data changes what this
+   * shows on the next load.
+   */
+  tarla:            string | null;
   parcela:          string | null;
   cadastralNumber:  string | null;
   carteFunciara:    string | null;
@@ -304,6 +310,11 @@ export function PropertyListView() {
   const optionalCols = [
     { key: "nickname",         label: t("table.nickname") },
     { key: "parcela",          label: t("table.parcela") },
+    // ⚠️ The column KEY stays "tarlaSola" while the field beside it is now
+    // `tarla`, and that is deliberate rather than an oversight: these keys are
+    // persisted per user in localStorage (`LS_KEY` above), so renaming one
+    // silently drops that column from the saved choices of anyone who had it
+    // on. The key is a UI identifier; the field is the data.  (Slice #34.03)
     { key: "tarlaSola",        label: t("table.tarlaSola") },
     { key: "cadastralNumber",  label: t("table.cadastralNumber") },
     { key: "carteFunciara",    label: t("table.carteFunciara") },
@@ -325,7 +336,7 @@ export function PropertyListView() {
     switch (key) {
       case "nickname":         return item.nickname ?? <span className="text-fade italic">—</span>;
       case "parcela":          return item.parcela ?? "";
-      case "tarlaSola":        return item.tarlaSola ?? "";
+      case "tarlaSola":        return item.tarla ?? "";
       case "cadastralNumber":  return item.cadastralNumber ?? "";
       case "carteFunciara":    return item.carteFunciara ?? "";
       case "surfaceAreaMp":    return formatArea(item.surfaceAreaMp);

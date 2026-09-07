@@ -56,6 +56,9 @@ const propertyBase = createInsertSchema(property)
     // Empty selection -> null. Must be a uuid when present.
     propertyTypeId: z.string().uuid().nullish(),
     useCategoryId:  z.string().uuid().nullish(),
+    // Slice #34.03: `tarla_sola` was free text until migration_078; it is now
+    // an FK to lookup_tarla and belongs with the two above.
+    tarlaId:        z.string().uuid().nullish(),
   });
 
 // ---------------------------------------------------------------------------
@@ -63,6 +66,37 @@ const propertyBase = createInsertSchema(property)
 // ---------------------------------------------------------------------------
 
 export const propertyCreateSchema = propertyBase.extend({
+  /**
+   * A tarla CODE to resolve or create, as opposed to `tarlaId`, which is a row
+   * somebody already picked.                                    (Slice #34.03)
+   *
+   * ⚠️ **TWO FIELDS FOR ONE COLUMN, AND THE SPLIT IS THE POINT.** This create
+   * path has two kinds of client and they arrive with different things in
+   * hand:
+   *
+   *   a PERSON, through `property-form.tsx`, picks from a SELECT over
+   *   `lookup_tarla` and therefore sends `tarlaId`. (`add-property-dialog.tsx`
+   *   is the other client of this schema and has no tarla field at all — it
+   *   builds its payload key by key and sends neither. A review round caught
+   *   this paragraph naming it as a sender.);
+   *
+   *   an IMPORT — `/api/documents/[id]/process` and `ensurePropertyForFolder`
+   *   — has a string a machine parsed out of a FOLDER NAME, which may not be
+   *   a row yet, and therefore sends `tarlaCode`.
+   *
+   * Before #34.03 both went down one free-text field, which is why the
+   * auto-seed had to guess who it was talking to and why migration_077's
+   * header spends four paragraphs arguing that only an import can reach it.
+   * Naming the doors makes that argument structural: `createPropertyIn` writes
+   * the IMPORT origin inside the `tarlaCode` branch and nowhere else, so a
+   * client sending `tarlaId` cannot mint a row at all, and a client sending
+   * `tarlaCode` cannot claim a person chose it.
+   *
+   * `tarlaId` wins if both are sent — an id is a decision, a code is a lookup.
+   * Not accepted on UPDATE: editing goes through the select, and letting an
+   * edit mint a code would put an import-origin row behind a person's click.
+   */
+  tarlaCode: z.string().trim().min(1).nullish(),
   // null / omitted = no address
   address: propertyAddressInputSchema.nullish(),
   // [] = no corners (valid — corners can be added later)
@@ -79,6 +113,8 @@ export type PropertyCreate = z.infer<typeof propertyCreateSchema>;
 //   non-empty → replace all corners (or replace address)
 // ---------------------------------------------------------------------------
 
+// ⚠️ No `tarlaCode` here — see the note on `propertyCreateSchema`. `.partial()`
+// over `propertyBase` gives this `tarlaId`, which is what the form sends.
 export const propertyUpdateSchema = propertyBase.partial().extend({
   address: propertyAddressInputSchema.nullish(),
   corners: z.array(cornerInputSchema).optional(),
@@ -97,7 +133,38 @@ export type PropertyUpdate = z.infer<typeof propertyUpdateSchema>;
 export type PropertySnapshotProperty = {
   propertyTypeId:  string | null;
   nickname:        string | null;
-  tarlaSola:       string | null;
+  /**
+   * Slice #34.03: was `tarlaSola`, the CODE as text. Now the lookup row's id,
+   * which is what `propertyTypeId` and `useCategoryId` beside it have always
+   * been.
+   *
+   * ⚠️ **Snapshots written before migration_078 still carry `tarlaSola`, and
+   * nothing rewrites them.** A version records what was true when it was
+   * saved; re-encoding old ones would be a migration inventing history, and a
+   * snapshot holding an id reads the CURRENT name for ever after — so the
+   * first rename would silently restate every past version.
+   *
+   * ⚠️ **TWO VISIBLE CONSEQUENCES, AND A REVIEW ROUND FOUND THE SECOND ONE
+   * AFTER AN EARLIER VERSION OF THIS NOTE CALLED IT "bounded":**
+   *
+   *   1. A property that HAD a tarla writes one version on its next save whose
+   *      diff shows this field changing. Once per property, and honest — what
+   *      it stores really did change. (A property that never had one writes
+   *      nothing extra: `snapshotsEqual` compares `?? null`, so an absent key
+   *      and an explicit null are the same fact. That was the half this note
+   *      originally described, and it was the half that was wrong.)
+   *
+   *   2. **Every version saved before this slice now renders its tarla box
+   *      EMPTY, permanently.** `fromApiPayload` reads `tarlaId`; the old text
+   *      is still in the jsonb and there is no id to resolve it to. Not fixed
+   *      here, and it is the same shape as the gap `async-select.tsx`'s
+   *      docblock already records — a snapshot holds lookup ids with no FK, so
+   *      a deleted lookup row leaves an old version showing an empty box too.
+   *      Both want the same thing: a version view that can say "valoare
+   *      ștearsă" or print a snapshot's own recorded text. That is a slice of
+   *      its own; it is in the #34.03 handover.
+   */
+  tarlaId:         string | null;
   parcela:         string | null;
   cadastralNumber: string | null;
   carteFunciara:   string | null;

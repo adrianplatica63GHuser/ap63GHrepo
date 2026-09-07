@@ -45,7 +45,7 @@ import {
   stripDocumentTypeOrigin,
 } from "@/lib/admin/value-lists/validation";
 import { VALID_LIST_KEYS } from "@/lib/admin/value-lists/config";
-import { propertyCreateSchema } from "@/lib/properties/validation";
+import { propertyCreateSchema, propertyUpdateSchema } from "@/lib/properties/validation";
 
 const SRC = path.join(process.cwd(), "src");
 const STATUS_MODULE = "lib/documents/status.ts";
@@ -223,8 +223,24 @@ describe("only the import claims an IMPORT origin", () => {
    */
   it("writes the tarla literal into the insert, and takes no origin argument", () => {
     const src = fs.readFileSync(path.join(SRC, TARLA_ORIGIN_WRITER), "utf8");
+    // Slice #34.03: the insert moved OUT of `createPropertyIn` and into
+    // `resolveTarlaForCreate` in the same file, because the property holds the
+    // id now and the row has to exist before the property row is written. Its
+    // value is the resolved `cadastralValue(...)` rather than the raw payload
+    // string — the same argument as before, one step further: the VALUE is the
+    // client's, the ORIGIN never is.
     expect(src.replace(/\s+/g, "")).toContain(
-      '.insert(lookupTarla).values({indicativ:propFields.tarlaSola,origin:"IMPORT"})',
+      '.insert(lookupTarla).values({indicativ:value,origin:"IMPORT"})',
+    );
+
+    // ⚠️ **And the function that holds it takes no origin either.** The
+    // signature is pinned for the same reason `createPropertyIn`'s is below: a
+    // negative regex is beaten by a rename or an arrow-function rewrite.
+    expect(src).toContain(
+      "async function resolveTarlaForCreate(\n" +
+        "  tx: DbTransaction,\n" +
+        "  input: { tarlaId?: string | null; tarlaCode?: string | null },\n" +
+        "): Promise<string | null> {",
     );
 
     // ⚠️ **THE FULL POSITIVE SIGNATURE, NOT A NEGATIVE REGEX, and a review
@@ -261,6 +277,29 @@ describe("only the import claims an IMPORT origin", () => {
   it("drops an origin a client puts in the property create payload", () => {
     const parsed = propertyCreateSchema.parse({ nickname: "X", origin: "MANUAL" });
     expect(parsed).not.toHaveProperty("origin");
+  });
+
+  /**
+   * ⚠️ **Slice #34.03 gave that door a name, and this is the test that it
+   * stays one-way.**
+   *
+   * The create schema now has TWO tarla fields: `tarlaId`, a row somebody
+   * picked, and `tarlaCode`, a string a machine parsed out of a folder name.
+   * Only the second can reach the INSERT, so "only an import can mint a code"
+   * stopped being an argument about five call sites and became a property of
+   * the type. Two halves are worth pinning: an UPDATE cannot carry a code at
+   * all (an edit that minted a row would put an import-origin code behind a
+   * person's click), and an id beats a code when both arrive.
+   */
+  it("keeps the two tarla doors apart", () => {
+    const created = propertyCreateSchema.parse({ tarlaCode: "47/2" });
+    expect(created.tarlaCode).toBe("47/2");
+
+    const updated = propertyUpdateSchema.parse({ tarlaCode: "47/2" });
+    expect(updated).not.toHaveProperty("tarlaCode");
+
+    const src = fs.readFileSync(path.join(SRC, TARLA_ORIGIN_WRITER), "utf8");
+    expect(src.replace(/\s+/g, "")).toContain("if(input.tarlaId)returninput.tarlaId;");
   });
 
   /**

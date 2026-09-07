@@ -477,17 +477,48 @@ JOIN person p ON p.code = v.code;
 -- PROP00031-PROP00040: Mixed (Pășune, Livadă, Teren Arabil) — some with corners
 -- =============================================================================
 
+-- Slice #34.03: the tarla codes these rows name have to EXIST before the rows
+-- can point at them - `property.tarla_sola` held the code as text until
+-- migration_078 and this block simply wrote it.
+--
+-- The six codes below are exactly the distinct non-NULL values in the VALUES
+-- list underneath. `sync-reference-data.sql` already seeds T1-T10, so on an
+-- ordinary dev database this inserts nothing; it is here so that this file does
+-- not silently depend on the reference-data load having run first, which it
+-- never did before. `ON CONFLICT` is not available - `lookup_tarla.indicativ`
+-- has no unique constraint, deliberately (see migration_078's header) - so the
+-- guard is a NOT EXISTS.
+--
+-- ⚠️ `origin` is not named, so these take the DEFAULT 'MANUAL'. The IMPORT
+-- literal belongs to `resolveTarlaForCreate` in src/lib/properties/queries.ts
+-- and to nothing else; a seed claiming a machine chose these names would put a
+-- third writer into the closed list `document-type-origin-single-source.test.ts`
+-- pins, for codes a person typed into this file.
+INSERT INTO lookup_tarla (indicativ, descriere)
+SELECT c.indicativ, c.descriere
+FROM (VALUES
+  ('T1','Tarla 1'), ('T2','Tarla 2'), ('T3','Tarla 3'),
+  ('T4','Tarla 4'), ('T5','Tarla 5'), ('T6','Tarla 6')
+) AS c(indicativ, descriere)
+WHERE NOT EXISTS (
+  SELECT 1 FROM lookup_tarla t WHERE t.indicativ = c.indicativ
+);
+
 INSERT INTO property (
   id, principal_object_id, code,
   property_type_id, use_category_id,
-  nickname, tarla_sola, parcela, cadastral_number, carte_funciara,
+  nickname, tarla_id, parcela, cadastral_number, carte_funciara,
   surface_area_mp, notes,
   created_at, updated_at
 )
 SELECT gen_random_uuid(), po.id, v.code,
   (SELECT id FROM lookup_property_type WHERE name = v.ptype LIMIT 1),
   (SELECT id FROM lookup_use_category  WHERE name = v.usecat LIMIT 1),
-  v.nickname, v.tarla, v.parcela, v.cad_nr, v.cf_nr,
+  -- Slice #34.03: resolved the same way the two lines above already resolve
+  -- their lookups. `LIMIT 1` for the same reason they have one: no lookup
+  -- table has a unique constraint on its display field.
+  v.nickname, (SELECT id FROM lookup_tarla WHERE indicativ = v.tarla LIMIT 1),
+  v.parcela, v.cad_nr, v.cf_nr,
   v.surface_mp::numeric, v.notes,
   v.cat::timestamptz, v.cat::timestamptz
 FROM (VALUES

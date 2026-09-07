@@ -90,15 +90,18 @@ export async function POST(request: NextRequest, ctx: Ctx): Promise<Response> {
     if (outcome.reason === "not-found") {
       return Response.json({ error: "Not found" }, { status: 404 });
     }
-    // Two shapes of no, and the client says them differently in Romanian:
-    // SAME_VALUE  — the target IS this value (the same row, or on `tarla` a
-    //               different row carrying the same indicativ). Moving onto it
-    //               would rewrite nothing and report a move.
-    // AMBIGUOUS   — a twin row carries this value, so "the properties that use
-    //               this one" is not a set the data can identify. Moving would
-    //               take the twin's properties with it.
-    const code = outcome.reason === "ambiguous-value" ? "AMBIGUOUS_VALUE" : "SAME_VALUE";
-    return Response.json({ error: code, code }, { status: 409 });
+    // ONE shape of no since Slice #34.03:
+    // SAME_VALUE — the target IS this row. Moving onto it would rewrite
+    //              nothing and report a move.
+    //
+    // There were two. `AMBIGUOUS_VALUE` said a twin row carried this value, so
+    // "the properties that use this one" was not a set the data could
+    // identify; it existed only for `tarla`, whose properties held the CODE as
+    // text. migration_078 made that a foreign key, so every property names one
+    // row and the question always has an answer. The reason, the code, the
+    // `ambiguousValue` failure member and both locales' sentence for it are
+    // deleted with it.
+    return Response.json({ error: "SAME_VALUE", code: "SAME_VALUE" }, { status: 409 });
   } catch (err) {
     const mapped = dbErrorToResponse(err);
     if (mapped) return mapped;

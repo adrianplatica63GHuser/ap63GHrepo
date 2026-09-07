@@ -54,7 +54,7 @@
 
 import { eq, sql } from "drizzle-orm";
 import { db, type DbTransaction } from "@/db";
-import { property, propertyCorner } from "@/db/schema";
+import { lookupTarla, property, propertyCorner } from "@/db/schema";
 import {
   createPropertyIn,
   findPropertiesByCadastralIdentity,
@@ -222,12 +222,29 @@ export async function ensurePropertyForFolder(
         tx,
         {
           nickname: input.nickname?.trim() || null,
-          tarlaSola,
+          // Slice #34.03: a folder-derived CODE, not an id. See
+          // `resolveTarlaForCreate` in properties/queries.ts.
+          tarlaCode: tarlaSola,
           parcela,
           corners,
         },
         updatedBy,
       );
+      // ⚠️ Slice #34.03: read the code BACK rather than echoing the string we
+      // sent. `createPropertyIn` resolves a code by `cadastralKey`, so a folder
+      // spelled `47PER2` can legitimately land on an existing row spelled
+      // `47/2` — the same parcel, a different string. Echoing the input would
+      // show the wizard a code that is not in the Indicative Tarla list, on the
+      // one screen whose whole job is telling the user what was just written.
+      // One select on a table of a few dozen rows, inside the same transaction.
+      const [tarlaRow] = full.property.tarlaId
+        ? await tx
+            .select({ indicativ: lookupTarla.indicativ })
+            .from(lookupTarla)
+            .where(eq(lookupTarla.id, full.property.tarlaId))
+            .limit(1)
+        : [];
+
       return {
         kind: "created",
         principalObjectId: full.property.principalObjectId,
@@ -237,7 +254,7 @@ export async function ensurePropertyForFolder(
           code: full.property.code,
           nickname: full.property.nickname,
           principalObjectId: full.property.principalObjectId,
-          tarlaSola: full.property.tarlaSola,
+          tarla: tarlaRow?.indicativ ?? null,
           parcela: full.property.parcela,
           cornerCount: full.corners.length,
         },

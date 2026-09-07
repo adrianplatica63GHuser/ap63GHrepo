@@ -14,6 +14,7 @@ import {
   judicialPerson,
   lookupDocumentType,
   lookupJudicialPersonType,
+  lookupTarla,
   naturalPerson,
   person,
   principalObject,
@@ -1340,6 +1341,45 @@ async function seed() {
   } else {
     console.log(`Seeding ${PROPERTIES.length} properties...`);
     await db.transaction(async (tx) => {
+      // ── Slice #34.03: the tarla codes these rows name, as rows ────────────
+      //
+      // `property.tarla_sola` held the code as TEXT until migration_078, so
+      // this seed could write "T12" and be done. It is a foreign key now, so
+      // the codes have to EXIST before the properties can point at them - and
+      // this seed is the only place that knows which ones its own fixtures
+      // use.
+      //
+      // ⚠️ **`origin` is not named, so these take the DEFAULT 'MANUAL'.** The
+      // IMPORT literal belongs to `resolveTarlaForCreate`
+      // (src/lib/properties/queries.ts) and nowhere else; a seed writing it
+      // would put a second writer into the closed two-writer list
+      // `document-type-origin-single-source.test.ts` pins, for rows a person
+      // wrote into a fixture file. Seeded codes read as hand-added, which is
+      // what they are.
+      //
+      // Idempotent within this block: the properties seed only runs on an
+      // empty `property` table, but `lookup_tarla` may already hold codes from
+      // the reference-data load, so each is looked up before it is inserted.
+      const tarlaIdByCode = new Map<string, string>();
+      for (const code of new Set(
+        PROPERTIES.map((r) => r.tarlaSola).filter((c): c is string => !!c),
+      )) {
+        const [existing] = await tx
+          .select({ id: lookupTarla.id })
+          .from(lookupTarla)
+          .where(eq(lookupTarla.indicativ, code))
+          .limit(1);
+        if (existing) {
+          tarlaIdByCode.set(code, existing.id);
+          continue;
+        }
+        const [created] = await tx
+          .insert(lookupTarla)
+          .values({ indicativ: code })
+          .returning({ id: lookupTarla.id });
+        tarlaIdByCode.set(code, created.id);
+      }
+
       for (const row of PROPERTIES) {
         const [poPropRow] = await tx
           .insert(principalObject)
@@ -1355,7 +1395,13 @@ async function seed() {
             principalObjectId: poPropRow.id,
             code: poPropRow.code,
             nickname: row.nickname ?? null,
-            tarlaSola: row.tarlaSola ?? null,
+            // Slice #34.03: the seed's rows carry a tarla CODE ("T12"), and
+            // the column is a foreign key now. `tarlaIdByCode` is built above
+            // from the lookup_tarla rows this same seed inserts; a code with no
+            // row seeds as NULL rather than failing, because the seed's job is
+            // a usable dev archive and a missing tarla is not what it is
+            // testing.
+            tarlaId: row.tarlaSola ? tarlaIdByCode.get(row.tarlaSola) ?? null : null,
             parcela: row.parcela ?? null,
             cadastralNumber: row.cadastralNumber ?? null,
             carteFunciara: row.carteFunciara ?? null,

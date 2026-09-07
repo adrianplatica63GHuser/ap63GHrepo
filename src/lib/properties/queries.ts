@@ -15,7 +15,7 @@
 import { and, count, desc, eq, ilike, inArray, isNotNull, or, sql } from "drizzle-orm";
 import { db, type DbTransaction } from "@/db";
 import { deletePrincipalObjects } from "@/lib/entities/delete";
-import { cadastralKey } from "./cadastral-identity";
+import { cadastralKey, cadastralValue } from "./cadastral-identity";
 import type { CadastralMatch } from "./import-property-plan";
 import { entityMetadata, groupMember, groups, lookupPersonRole, lookupTarla, person, principalObject, property, propertyAddress, propertyCorner, propertyPerson, propertyVersion } from "@/db/schema";
 import { appendVersionsIfChanged } from "@/lib/versioning/append";
@@ -44,7 +44,15 @@ export type PropertyListItem = {
   id:               string;
   code:             string;
   nickname:         string | null;
-  tarlaSola:        string | null;
+  /**
+   * The tarla CODE, read through the FK rather than off the property.
+   *                                                            (Slice #34.03)
+   * Named `tarla`, not `tarlaSola`, because it is no longer a column on this
+   * table: it is `lookup_tarla.indicativ`, reached by LEFT JOIN, and a rename
+   * in Reference Data changes it here on the next read. `null` covers both "no
+   * tarla" and — impossible under the FK, but free — a dangling id.
+   */
+  tarla:            string | null;
   parcela:          string | null;
   cadastralNumber:  string | null;
   carteFunciara:    string | null;
@@ -88,7 +96,10 @@ export function snapshotFromFull(full: PropertyFull): PropertySnapshot {
     property: {
       propertyTypeId:  p.propertyTypeId  ?? null,
       nickname:        p.nickname        ?? null,
-      tarlaSola:       p.tarlaSola       ?? null,
+      // Slice #34.03: the lookup row's ID, like the two ids around it. Old
+      // snapshots keep the `tarlaSola` text they were written with; see
+      // PropertySnapshotProperty for why nothing rewrites them.
+      tarlaId:         p.tarlaId         ?? null,
       parcela:         p.parcela         ?? null,
       cadastralNumber: p.cadastralNumber ?? null,
       carteFunciara:   p.carteFunciara   ?? null,
@@ -130,7 +141,7 @@ export function snapshotFromFull(full: PropertyFull): PropertySnapshot {
 }
 
 const SNAPSHOT_PROPERTY_KEYS: (keyof PropertySnapshot["property"])[] = [
-  "propertyTypeId", "nickname", "tarlaSola", "parcela", "cadastralNumber",
+  "propertyTypeId", "nickname", "tarlaId", "parcela", "cadastralNumber",
   "carteFunciara", "useCategoryId", "surfaceAreaMp", "notes",
 ];
 const SNAPSHOT_ADDRESS_KEYS: (keyof NonNullable<PropertySnapshot["address"]>)[] = [
@@ -146,7 +157,17 @@ const SNAPSHOT_ADDRESS_KEYS: (keyof NonNullable<PropertySnapshot["address"]>)[] 
  */
 function snapshotsEqual(a: PropertySnapshot, b: PropertySnapshot): boolean {
   for (const k of SNAPSHOT_PROPERTY_KEYS) {
-    if (a.property[k] !== b.property[k]) return false;
+    // ⚠️ **`?? null`, so an ABSENT key and an explicit `null` are the same
+    // fact.**                                                (Slice #34.03)
+    // A review round found this: snapshots written before migration_078 carry
+    // `tarlaSola` and no `tarlaId`, so a strict `!==` reads `undefined` vs
+    // `null` as a change and writes a spurious version row for a property that
+    // never had a tarla at all — every one of them, on its first save after
+    // the slice. A property that DID have one gets a version, and that is
+    // honest: what it stores really did change. The corner loop below has read
+    // `?? null` since #18.11 for the same reason, on the same shape of
+    // problem.
+    if ((a.property[k] ?? null) !== (b.property[k] ?? null)) return false;
   }
   if ((a.address === null) !== (b.address === null)) return false;
   if (a.address && b.address) {
@@ -236,7 +257,8 @@ async function propertyFullsIn(
  * The comparison `updateProperty` makes, callable by anything else that
  * rewrites properties inside a transaction — today the bulk re-point on the
  * Reference Data screen, which moves `property_type_id`, `use_category_id` and
- * `tarla_sola`, all three of them inside the snapshot. Before #29.14 that move
+ * `tarla_id` (`tarla_sola` until Slice #34.03), all three of them inside the
+ * snapshot. Before #29.14 that move
  * wrote no version at all, so the type change surfaced in the NEXT ordinary
  * edit's diff, under whoever made that edit.
  *
@@ -396,7 +418,11 @@ export async function listProperties(opts: PropertyListQuery): Promise<{
           ilike(property.nickname,        pat),
           ilike(property.cadastralNumber, pat),
           ilike(property.carteFunciara,   pat),
-          ilike(property.tarlaSola,       pat),
+          // Slice #34.03: the code lives one table over now. The LEFT JOIN
+          // below is what makes this reachable; on a property with no tarla
+          // `indicativ` is NULL and `ilike` is NULL, which `or` treats as
+          // "no match" — the same answer the old NULL `tarla_sola` gave.
+          ilike(lookupTarla.indicativ,    pat),
           ilike(property.parcela,         pat),
         )
       : undefined,
@@ -412,7 +438,7 @@ export async function listProperties(opts: PropertyListQuery): Promise<{
         id:              property.id,
         code:            property.code,
         nickname:        property.nickname,
-        tarlaSola:       property.tarlaSola,
+        tarla:           lookupTarla.indicativ,
         parcela:         property.parcela,
         cadastralNumber: property.cadastralNumber,
         carteFunciara:   property.carteFunciara,
@@ -428,6 +454,9 @@ export async function listProperties(opts: PropertyListQuery): Promise<{
         updatedAt:       property.updatedAt,
       })
       .from(property)
+      // Slice #34.03: LEFT, not inner - three of fourteen properties carry no
+      // tarla and an inner join would drop them from the list entirely.
+      .leftJoin(lookupTarla, eq(lookupTarla.id, property.tarlaId))
       .leftJoin(
         propertyAddress,
         eq(propertyAddress.propertyId, property.id),
@@ -445,6 +474,13 @@ export async function listProperties(opts: PropertyListQuery): Promise<{
     db
       .select({ total: count() })
       .from(property)
+      // ⚠️ Slice #34.03: this join is NOT optional and is not symmetry with the
+      // query above. Both halves share one `where`, and that `where` now names
+      // `lookupTarla.indicativ` for the free-text search - so without the join
+      // here the COUNT is a 42P01 on a table the query never mentioned, and
+      // only when the user types something. The same trap the comment below
+      // records for entityMetadata, one slice later.
+      .leftJoin(lookupTarla, eq(lookupTarla.id, property.tarlaId))
       // Slice #20.06: must join entityMetadata when importance/relevance filter active.
       .leftJoin(
         entityMetadata,
@@ -535,19 +571,38 @@ export async function findPropertiesByCadastralIdentity(
   const wantedTarla = cadastralKey(tarlaSola);
   const wantedParcela = cadastralKey(parcela);
 
+  // ⚠️ Slice #34.03: the tarla half comes through a JOIN now, and the
+  // comparison stays exactly where it was - in JavaScript, over
+  // `cadastralKey`. It would be tempting, with the code in a lookup table, to
+  // resolve the wanted tarla to an id first and compare ids: one indexed
+  // equality instead of a scan. That is the SECOND implementation of "same
+  // parcel" this function's header refuses, and it would disagree with
+  // `cadastralKey` on the day it matters - an id comparison cannot see that
+  // `50 D` and `50D` are one parcel, and the import's whole job is to find the
+  // property again next month whatever a person typed. The join fetches the
+  // code; `cadastralKey` still decides.
+  //
+  // ⚠️ LEFT rather than INNER changes nothing here, and a review round is why
+  // that is said instead of a reason that merely sounded better:
+  // `isNotNull(tarlaId)` plus the foreign key already guarantee the join finds
+  // exactly one row, so the two forms return the same rows. It is LEFT for
+  // consistency with the other two joins on this table, and so that relaxing
+  // the `isNotNull` later cannot silently start dropping properties. What
+  // narrows the scan is the WHERE below.
   const candidates = await tx
     .select({
       id: property.id,
       code: property.code,
       nickname: property.nickname,
       principalObjectId: property.principalObjectId,
-      tarlaSola: property.tarlaSola,
+      tarla: lookupTarla.indicativ,
       parcela: property.parcela,
     })
     .from(property)
+    .leftJoin(lookupTarla, eq(lookupTarla.id, property.tarlaId))
     .where(
       and(
-        isNotNull(property.tarlaSola),
+        isNotNull(property.tarlaId),
         isNotNull(property.parcela),
       ),
     )
@@ -555,7 +610,7 @@ export async function findPropertiesByCadastralIdentity(
 
   const hits = candidates.filter(
     (row) =>
-      cadastralKey(row.tarlaSola ?? "") === wantedTarla &&
+      cadastralKey(row.tarla ?? "") === wantedTarla &&
       cadastralKey(row.parcela ?? "") === wantedParcela,
   );
   if (hits.length === 0) return [];
@@ -579,6 +634,93 @@ export async function createProperty(
   updatedBy: string | null = null,
 ): Promise<PropertyFull> {
   return await db.transaction((tx) => createPropertyIn(tx, input, updatedBy));
+}
+
+/**
+ * The tarla row this create is for: the one a person picked, or the one a
+ * machine's code names — finding it, or making it.            (Slice #34.03)
+ *
+ * ⚠️ **THIS IS THE ONLY PLACE THAT CAN MINT A `lookup_tarla` ROW OUTSIDE THE
+ * ADMIN MODAL, AND THE `IMPORT` LITERAL LIVES INSIDE THE `tarlaCode` BRANCH
+ * FOR THAT REASON.** migration_077 made `origin` a property of the WRITE SITE
+ * rather than a field a payload could claim; #34.03 keeps that and makes it
+ * structural instead of argued. Before this slice the property held free text
+ * and one field served both clients, so the write site had to reason about who
+ * it was talking to — migration_077's header spends four paragraphs proving
+ * that only an import could reach the seed, ending in a warning that a
+ * create-mode prefill on the Property form would silently break the proof.
+ * Two fields close that: `tarlaId` is a row somebody chose and cannot create
+ * anything; `tarlaCode` is a string a machine parsed and is the only door to
+ * the INSERT. A prefill on the form would now be a prefill of an ID.
+ *
+ * ⚠️ **THE MATCH IS `cadastralKey`, IN JAVASCRIPT, OVER EVERY ROW — the same
+ * shape and the same reason as `findPropertiesByCadastralIdentity` above.** It
+ * would be one indexed equality to ask SQL for `indicativ = code`, and that is
+ * what this did before #34.03; it is also how the folded twin gets made. An
+ * import carrying `t3` finds no exact `T3`, inserts a second row, and the list
+ * now holds two codes that mean one tarla with properties pointing at both —
+ * which is the pair problem migration_078 REFUSES to resolve, manufactured by
+ * the application the day after the migration ran. `cadastralKey` is this
+ * codebase's one answer to "are these two cadastral identifiers the same" and
+ * it is the answer here too; `lookup_tarla` holds a few dozen rows, so the
+ * scan costs nothing.
+ *
+ * ⚠️ **It is deliberately LOOSER than migration_078's fold, which is
+ * `foldRomanian` alone.** The migration is stricter because it must REFUSE
+ * rather than choose: it resolves against the exact fold `decision-checks.sql`
+ * measured the database with, so it never places a property on evidence nobody
+ * looked at. This function must CHOOSE, and choosing `47/2` for a code written
+ * `47per2` is right — it is the same parcel to everyone except a string
+ * comparison. Looser here can only ever create FEWER rows than the migration
+ * would, never a twin the migration would have refused.
+ *
+ * `tarlaId` wins over `tarlaCode` when both arrive: an id is a decision.
+ *
+ * ⚠️ **WHAT THE FOLD CLOSES IS THE SPELLING HALF, NOT THE CONCURRENCY HALF**,
+ * and a review round is why that is stated rather than left to be discovered.
+ * Read-all-rows, find, insert is not atomic and nothing locks `lookup_tarla`:
+ * two creates carrying the same NEW code can interleave and both insert,
+ * producing exactly the twin pair migration_078 refuses to resolve. The
+ * import's advisory lock does not cover it — that keys on the cadastral
+ * IDENTITY (`tarla-parcela`), so two folders sharing a tarla take different
+ * locks — and `POST /api/properties` with a `tarlaCode` takes none at all.
+ * Left as it is deliberately: one business user, imports run one at a time,
+ * and both fixes cost more than the race does. A unique index over the folded
+ * `indicativ` would close it and is the follow-up migration_078's header
+ * declines for its own reasons; an advisory lock on the folded code would
+ * close it without a migration, and is the smaller of the two if it ever
+ * bites.
+ */
+async function resolveTarlaForCreate(
+  tx: DbTransaction,
+  input: { tarlaId?: string | null; tarlaCode?: string | null },
+): Promise<string | null> {
+  if (input.tarlaId) return input.tarlaId;
+  const raw = input.tarlaCode?.trim();
+  if (!raw) return null;
+
+  // `cadastralValue` before anything is stored, so a row this creates holds the
+  // decoded `47/2` and not the folder's `47per2` — the rule
+  // cadastral-identity.ts's header states, applied at the one write site that
+  // can put a code into the list without a person seeing it.
+  const value = cadastralValue(raw);
+  const wanted = cadastralKey(value);
+  if (wanted === "") return null;
+
+  const rows = await tx
+    .select({ id: lookupTarla.id, indicativ: lookupTarla.indicativ })
+    .from(lookupTarla)
+    .orderBy(lookupTarla.indicativ);
+  const hit = rows.find((r) => cadastralKey(r.indicativ) === wanted);
+  if (hit) return hit.id;
+
+  // ⚠️ The origin literal is written HERE and takes no parameter, so no caller
+  // can express one and no sixth caller can forget it. See migration_077.
+  const [created] = await tx
+    .insert(lookupTarla)
+    .values({ indicativ: value, origin: "IMPORT" })
+    .returning({ id: lookupTarla.id });
+  return created.id;
 }
 
 /**
@@ -616,6 +758,12 @@ export async function createPropertyIn(
       })
       .returning();
 
+    // Slice #34.03: resolved BEFORE the property row, because the property now
+    // holds the id. The seed used to run after the insert, which was fine when
+    // it only had to make the dropdown offer a string the property already
+    // carried; it cannot be after any more.
+    const tarlaId = await resolveTarlaForCreate(tx, propFields);
+
     const [propRow] = await tx
       .insert(property)
       .values({
@@ -623,7 +771,7 @@ export async function createPropertyIn(
         code:            poRow.code,
         propertyTypeId:  propFields.propertyTypeId  ?? null,
         nickname:        propFields.nickname        ?? null,
-        tarlaSola:       propFields.tarlaSola       ?? null,
+        tarlaId,
         parcela:         propFields.parcela         ?? null,
         cadastralNumber: propFields.cadastralNumber ?? null,
         carteFunciara:   propFields.carteFunciara   ?? null,
@@ -692,79 +840,28 @@ export async function createPropertyIn(
     // already in the reference table, add it so it appears in the form dropdown.
     // Idempotent — skipped when the indicativ already exists.
     //
-    // ── Slice #34.02: the row says a machine chose the name ──────────────────
+    // ── Slice #34.02 / #34.03: where the auto-seed went ─────────────────────
     //
-    // ⚠️ **THE ORIGIN BELOW IS A PROPERTY OF THIS WRITE SITE, NOT A PARAMETER,
-    // AND THAT IS THE WHOLE SAFETY ARGUMENT.**
-    // `lookup_document_type.origin` — the column this one is copied from —
-    // takes its value from the REQUEST BODY (`isDocumentTypeOrigin(data.origin)`
-    // in src/lib/admin/value-lists/queries.ts), so a client that posts an
-    // origin is believed, and a row a machine invented can claim a person typed
-    // it. Here there is nothing to claim: this function takes no origin
-    // argument, reads none off `input`, and its five callers cannot express
-    // one. A sixth caller cannot forget it either.
+    // It used to be HERE, after the property row, because the property carried
+    // the tarla as TEXT and the seed existed only so the dropdown would offer
+    // a string that was already on the property. #34.03 made the property hold
+    // the id, so the seed has to run before the insert and is now
+    // `resolveTarlaForCreate` above. Everything #34.02 argued about it holds
+    // there instead, and one thing got stronger: the `IMPORT` literal sits in
+    // a branch reached only by `tarlaCode`, a field the Property form does not
+    // send, so "only an import can mint a code" stopped being a claim about
+    // five call sites and became a claim about one type.
     //
-    // ⚠️ **"Reads no payload" would be too strong and this paragraph is the
-    // wrong place to be imprecise:** `indicativ` below IS
-    // `propFields.tarlaSola`, a string straight off the request body. The VALUE
-    // is the client's; the ORIGIN never is. That distinction is the entire
-    // difference between this write site and the one it is copied from.
-    //
-    // ⚠️ **The literal is deliberately not spelled in this comment.**
-    // `document-type-origin-single-source.test.ts` finds writers by scanning
-    // production files for the key-colon-value pattern and does not strip
-    // comments, so a comment quoting that pattern would keep the two-writer
-    // assertion green after somebody deleted the real write. This paragraph
-    // therefore describes it instead of spelling it.
-    //
-    // ⚠️ **AND IT IS UNCONDITIONAL, BECAUSE EVERY PATH THAT REACHES THIS LINE
-    // IS AN IMPORT.** #34.02 checked all five callers of
-    // `createProperty`/`createPropertyIn`:
-    //
-    //   /api/documents/[id]/process   tarla parsed out of a FOLDER NAME
-    //   import-property.ts            the same value, via
-    //                                 `ensurePropertyForFolder`
-    //   /api/calculation/commit ×2    pass no `tarlaSola` at all — they cannot
-    //                                 reach this branch
-    //   POST /api/properties          TWO clients, and neither can send an
-    //                                 unlisted code. `property-form.tsx`'s
-    //                                 tarla field is a SelectField over THIS
-    //                                 TABLE (#18.16.VL), so a person can only
-    //                                 pick a code that is already a row and the
-    //                                 existence check above never falls
-    //                                 through; `add-property-dialog.tsx` builds
-    //                                 its payload key by key and never sets
-    //                                 `tarlaSola` at all. (A review round asked
-    //                                 whether there was a second client. There
-    //                                 is, and the answer survives it.)
-    //
-    // So the case the slice asked about — "a property typed by hand also seeds
-    // a code" — is unreachable through the UI. What is left is a raw POST
-    // carrying an unlisted string, and a payload is not a person. That keeps
-    // #29.06's rule intact one table over: **origin says WHO CHOSE THE NAME.**
-    // A machine parsed "47/2" out of a directory listing, so the machine word;
-    // a person typing it into Indicative Tarla gets MANUAL from the column
-    // DEFAULT.
-    //
-    // ⚠️ **The Add-Property claim is one absent prop deep, not structural.**
-    // That field carries `allowUnlistedValue`, and create mode is safe only
-    // because `new-property-shell.tsx` renders the form with no
-    // `initialValues`; `tarlaSola` is validated against this table nowhere. A
-    // create-mode prefill would make that form a writer of import-origin rows
-    // for values a person chose. Full argument in
-    // src/db/migration_077_reference_data_origin.sql.
-    if (propFields.tarlaSola) {
-      const existing = await tx
-        .select({ id: lookupTarla.id })
-        .from(lookupTarla)
-        .where(eq(lookupTarla.indicativ, propFields.tarlaSola))
-        .limit(1);
-      if (existing.length === 0) {
-        await tx
-          .insert(lookupTarla)
-          .values({ indicativ: propFields.tarlaSola, origin: "IMPORT" });
-      }
-    }
+    // ⚠️ **The warning #34.02 left here is DISCHARGED, and this is the note
+    // that says so rather than a note that repeats it.** That warning was:
+    // create mode is safe only because `new-property-shell.tsx` renders the
+    // form with no `initialValues`, and `tarlaSola` is validated against
+    // `lookup_tarla` NOWHERE — so the day somebody added a create-mode prefill,
+    // the form would start minting import-origin rows for values a person
+    // chose. Both halves are gone. `property.tarla_id` is a foreign key, so an
+    // unlisted value is a 23503 rather than a new row, and the form sends
+    // `tarlaId`, which `resolveTarlaForCreate` returns untouched. A prefill
+    // today prefills a row that already exists.
 
     return full;
   }
@@ -824,7 +921,7 @@ export async function updatePropertyIn(
     const propPatch: Partial<typeof property.$inferInsert> = { updatedBy };
     if (propFields.propertyTypeId  !== undefined) propPatch.propertyTypeId  = propFields.propertyTypeId  ?? null;
     if (propFields.nickname        !== undefined) propPatch.nickname        = propFields.nickname        ?? null;
-    if (propFields.tarlaSola       !== undefined) propPatch.tarlaSola       = propFields.tarlaSola       ?? null;
+    if (propFields.tarlaId         !== undefined) propPatch.tarlaId         = propFields.tarlaId         ?? null;
     if (propFields.parcela         !== undefined) propPatch.parcela         = propFields.parcela         ?? null;
     if (propFields.cadastralNumber !== undefined) propPatch.cadastralNumber = propFields.cadastralNumber ?? null;
     if (propFields.carteFunciara   !== undefined) propPatch.carteFunciara   = propFields.carteFunciara   ?? null;

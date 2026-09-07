@@ -36,7 +36,7 @@ const CALL_SITES: { label: string; file: string; selects: string[] }[] = [
   {
     label: "property form",
     file: join("app", "properties", "_components", "property-form.tsx"),
-    selects: ["tarlaSola", "useCategoryId", "propertyTypeId"],
+    selects: ["tarlaId", "useCategoryId", "propertyTypeId"],
   },
   {
     label: "natural-person form",
@@ -154,53 +154,50 @@ describe("the shared component keeps both halves of the idiom", () => {
   );
 
   it("remounts on the loaded option count, not on the rendered one", () => {
-    // Keyed on `options` rather than on the rendered list on purpose: the
-    // entry kept for an unlisted value must not remount the element under a
-    // user who is interacting with it.
+    // Keyed on `options` rather than on the rendered list. Slice #34.03 made
+    // the two identical - `rendered` is now `[...options]` - so this pins the
+    // idiom rather than a difference. Keeping it is the cheap half of the
+    // reason: the day a second reason to derive a rendered list appears, the
+    // key must still be the loaded one.
     expect(code).toMatch(/key=\{options\.length\}/);
     expect(code).not.toMatch(/key=\{rendered\.length\}/);
   });
-
-  it("keeps the value the form opened with as well as the current one", () => {
-    expect(code).toMatch(/optionsWithUnlistedValues\(options, \[openedWith, stored\]\)/);
-  });
 });
 
-describe("only a free-text column may render an unlisted value", () => {
-  it("tarlaSola is the sole call site that opts in", () => {
-    // The other six selects that load asynchronously store uuid FKs, and those
-    // LIVE columns are ON DELETE SET NULL, so they cannot hold an id the list
-    // lacks — opting them in would only put a raw uuid on screen while the list
-    // is in flight or after a failed fetch. (A version snapshot holds ids in
-    // jsonb with no FK and can dangle; see the component's docblock — that
-    // needs a label, not this.) The three static ones — gender twice and
-    // idDocumentType — are pg enums whose option lists enumerate them exactly.
-    const PROPERTY_FORM = join("app", "properties", "_components", "property-form.tsx");
-    const optedIn = walk(SRC)
+/**
+ * ⚠️ **The `describe` that stood here asserted that `tarlaSola` was the SOLE
+ * call site opting into `allowUnlistedValue`. Slice #34.03 deleted the prop,
+ * so it asserts that NOBODY does, which is a stronger and simpler
+ * invariant.**
+ *
+ * Why the file keeps saying something about it rather than dropping the block:
+ * the reason only one column could ever opt in is unchanged and still worth
+ * pinning. The selects that load asynchronously store uuid FKs whose LIVE
+ * columns are `ON DELETE SET NULL`, so they cannot hold an id the list lacks;
+ * opting one in would only put a raw uuid on screen while the list is in
+ * flight or after a failed fetch. `property.tarla_sola` was the exception
+ * because it stored display TEXT, and migration_078 ended that. So the
+ * exception is gone, not merely unused — and a reintroduced
+ * `allowUnlistedValue` is a reintroduced free-text column, which is what this
+ * fails on.
+ *
+ * (The version-snapshot case in the component's docblock is untouched by any
+ * of it: a snapshot holds lookup ids in jsonb with no FK and can dangle, which
+ * needs a label rather than a synthesised option, and now covers `tarlaId`
+ * too.)
+ */
+describe("no column may render an unlisted value any more", () => {
+  it("nothing opts in, and the prop no longer exists to opt into", () => {
+    const mentions = walk(SRC)
       .map((f) => relative(SRC, f))
       .filter((rel) => !rel.startsWith("__tests__"))
-      .filter((rel) => rel !== join("components", "forms", "async-select.tsx"))
       .filter((rel) =>
-        /\ballowUnlistedValue\b/.test(stripComments(readFileSync(join(SRC, rel), "utf8"))),
+        /\ballowUnlistedValue\b|\boptionsWithUnlistedValues\b/.test(
+          stripComments(readFileSync(join(SRC, rel), "utf8")),
+        ),
       )
       .sort();
 
-    expect(optedIn).toEqual([PROPERTY_FORM]);
-
-    // Counted as turn-ONS, so neither spelling nor position can hide a second
-    // one: the shorthand `allowUnlistedValue` (followed by end-of-line or the
-    // tag close) and `allowUnlistedValue={true}` both match, while the prop
-    // declaration, the destructured parameter and the `={allowUnlistedValue}`
-    // that forwards it into <AsyncSelect> do not. A second opt-in anywhere in
-    // the file fails this — including one written straight onto <AsyncSelect>.
-    const property = stripComments(readFileSync(join(SRC, PROPERTY_FORM), "utf8"));
-    const TURNED_ON = /\ballowUnlistedValue\b(?=\s*(?:\/?>|\n)|=\{true\})/g;
-    expect(property.match(TURNED_ON)).toHaveLength(1);
-
-    // ...and the one that exists belongs to the tarla call site.
-    const tarlaAt = property.indexOf('name="tarlaSola"');
-    const turnedOnAt = TURNED_ON.exec(property)?.index ?? -1;
-    expect(turnedOnAt).toBeGreaterThan(tarlaAt);
-    expect(turnedOnAt - tarlaAt).toBeLessThan(400);
+    expect(mentions).toEqual([]);
   });
 });

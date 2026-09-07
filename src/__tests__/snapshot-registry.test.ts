@@ -66,7 +66,7 @@ describe("PROPERTY_SNAPSHOT_PROPERTY_KEYS", () => {
     const dummy: PropertySnapshotProperty = {
       propertyTypeId:   null,
       nickname:         null,
-      tarlaSola:        null,
+      tarlaId:          null,
       parcela:          null,
       cadastralNumber:  null,
       carteFunciara:    null,

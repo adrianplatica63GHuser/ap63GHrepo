@@ -157,7 +157,6 @@ describe("the dependency map", () => {
     // otherwise produce a count of zero — a delete offered as safe on a row
     // that half the archive depends on.
     expect(ownerTable(def.idColumn)).toBe(getTableName(def.table));
-    expect(ownerTable(def.source)).toBe(getTableName(def.table));
     expect(def.refs.length).toBeGreaterThan(0);
     for (const ref of def.refs) {
       expect(ownerTable(ref.column)).toBe(getTableName(ref.table));
@@ -195,16 +194,38 @@ describe("the dependency map", () => {
     }
   });
 
-  it("matches on the id everywhere except tarla, which has no foreign key", () => {
+  /**
+   * ⚠️ **This test used to say the OPPOSITE, and the inversion is the slice.**
+   *                                                            (Slice #34.03)
+   * It read "matches on the id everywhere except tarla, which has no foreign
+   * key", and asserted `def.source.name === "indicativ"` and
+   * `refs[0].column.name === "tarla_sola"` for that one list. migration_078
+   * made `property.tarla_id` a real FK, so `source` is deleted from
+   * `ListDependencies` entirely — a hook whose only possible value had become
+   * `idColumn` — and `matchesByValue`, `siblingsSharingValue` and the
+   * `ambiguous-value` refusal went with it.
+   *
+   * Kept rather than deleted, pointing the other way: this is the test that
+   * fails the day somebody reintroduces a value-matched list, which is what a
+   * second `tarla` would be.
+   */
+  it("matches on the id, on every list, with no exception left", () => {
     for (const list of LISTS) {
-      const def = LIST_DEPENDENCIES[list];
-      if (list === "tarla") {
-        // property.tarla_sola is free text, so the match is on the VALUE.
-        expect(def.source.name).toBe("indicativ");
-        expect(LIST_DEPENDENCIES.tarla.refs[0].column.name).toBe("tarla_sola");
-      } else {
-        expect(def.source.name).toBe("id");
+      for (const ref of LIST_DEPENDENCIES[list].refs) {
+        // Not a proof that the column IS an FK — the schema is where that
+        // lives — but every dependent column in this map is now an id column,
+        // and a text one would stand out here.
+        expect(ref.column.name).toMatch(/_id$/);
       }
+    }
+    expect(LIST_DEPENDENCIES.tarla.refs[0].column.name).toBe("tarla_id");
+  });
+
+  it("has no `source` field left to disagree with `idColumn`", () => {
+    for (const list of LISTS) {
+      expect(
+        (LIST_DEPENDENCIES[list] as Record<string, unknown>).source,
+      ).toBeUndefined();
     }
   });
 });
@@ -342,10 +363,14 @@ describe("what the count does not cover", () => {
     },
   );
 
-  it("tarla says both things: history, and that the match is on text", () => {
-    expect(dependentNotes("tarla").sort()).toEqual(
-      ["tarlaFreeText", "versionSnapshots"].sort(),
-    );
+  it("tarla says what every other list says, and nothing extra", () => {
+    // Slice #34.03: this asserted `["tarlaFreeText", "versionSnapshots"]`.
+    // `tarlaFreeText` told the administrator that "properties do not hold a
+    // link to the tarla code, they hold its text" — true until migration_078
+    // and false after it, so the note and both locales' sentence for it are
+    // deleted. What is left is the derived one, which every list with a
+    // snapshot gets.
+    expect(dependentNotes("tarla")).toEqual(["versionSnapshots"]);
   });
 
   /**
@@ -441,14 +466,21 @@ describe("the confirmation has words for everything it can say", () => {
     expect(typeof at(en, `valueList.confirm.errors.${codeKey}`)).toBe("string");
   });
 
-  it("has words for the note only the query can add", () => {
-    // `duplicateValue` never comes out of `dependentNotes` — `buildReport`
-    // appends it when a second row of the same list carries the same value,
-    // which only the database can know. So the loop above cannot reach it and
-    // it is pinned here instead.
-    expect(typeof at(ro, "valueList.dependents.notes.duplicateValue")).toBe("string");
-    expect(typeof at(en, "valueList.dependents.notes.duplicateValue")).toBe("string");
-    expect(read("lib", "admin", "value-lists", "queries.ts")).toContain('notes.push("duplicateValue")');
+  it("no longer carries the note only the query could add", () => {
+    // ⚠️ **This test is INVERTED, not deleted.**              (Slice #34.03)
+    // It pinned `duplicateValue`, which `buildReport` appended when a second
+    // row of the same list carried the same value — a thing only the database
+    // could know, so the loop above could never reach it. That branch went
+    // with `siblingsSharingValue`, and a sentence in both locales that nothing
+    // can print is exactly the dead i18n this file exists to catch. Asserting
+    // its ABSENCE is what stops it being re-added by a merge.
+    expect(at(ro, "valueList.dependents.notes.duplicateValue")).toBeUndefined();
+    expect(at(en, "valueList.dependents.notes.duplicateValue")).toBeUndefined();
+    expect(at(ro, "valueList.dependents.notes.tarlaFreeText")).toBeUndefined();
+    expect(at(en, "valueList.dependents.notes.tarlaFreeText")).toBeUndefined();
+    const q = read("lib", "admin", "value-lists", "queries.ts");
+    expect(q).not.toContain('notes.push("duplicateValue")');
+    expect(q).not.toContain("siblingsSharingValue(");
   });
 
   it("no longer promises to blank the properties of a deleted type", () => {
@@ -514,9 +546,12 @@ describe("the delete path", () => {
     // Postgres' own referential-integrity check takes before allowing an
     // insert that references the row, which is what stops a document being
     // created for this type between the count and the DELETE.
-    expect(body).toMatch(/sourceValue\(tx, def, id, true\)/);
+    // Slice #34.03 renamed the helper: `sourceValue` returned "the value a
+    // dependent would be carrying", which on `tarla` was the indicativ TEXT.
+    // Every list is keyed on its id now, so it is `lookupRowId`.
+    expect(body).toMatch(/lookupRowId\(tx, def, id, true\)/);
     // …and the lock itself, which lives in that helper. Not scoped, because
-    // `sourceValue` is not exported; nothing else in the file takes one.
+    // `lookupRowId` is not exported; nothing else in the file takes one.
     expect(source).toContain('.for("update")');
   });
 

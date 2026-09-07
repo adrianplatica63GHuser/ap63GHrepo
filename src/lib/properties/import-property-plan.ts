@@ -24,8 +24,15 @@ export type CadastralMatch = {
   code: string;
   nickname: string | null;
   principalObjectId: string;
-  /** As stored — the decoded `47/2`, not the folder's `47per2`. */
-  tarlaSola: string | null;
+  /**
+   * The property's tarla CODE, read through `property.tarla_id` since Slice
+   * #34.03 — `lookup_tarla.indicativ`, not a column on `property`. Still the
+   * decoded `47/2` rather than the folder's `47per2`: the auto-seed applies
+   * `cadastralValue` before it creates a row, so the list holds the decoded
+   * form. `null` when the property carries no tarla, which under the identity
+   * rule means it can never be a match.
+   */
+  tarla: string | null;
   parcela: string | null;
   /** Rows in `property_corner`. There is no geometry column; this is the shape. */
   cornerCount: number;

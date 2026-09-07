@@ -37,7 +37,7 @@
  * feature in Slice #18.07 — see src/lib/groups/.)
  */
 
-import { and, asc, count, eq, getTableName, like, ne, sql } from "drizzle-orm";
+import { asc, count, eq, getTableName, like, sql } from "drizzle-orm";
 import { nextFreeKey, slugifyLookupKey } from "./keys";
 import { db, type DbTransaction } from "@/db";
 import {
@@ -59,7 +59,6 @@ import { recordMoveHistory } from "./move-history";
 import {
   LIST_DEPENDENCIES,
   dependentNotes,
-  matchesByValue,
   type DependentCount,
   type DependentRef,
   type DependentsReport,
@@ -726,7 +725,7 @@ export async function updateValue(
  * snapshots inside the transaction exactly as they would be outside it.
  * Raising the level would buy consistency and a 40001 to handle, and it is not
  * where the guarantee is needed: what gates the DESTRUCTIVE step is the row
- * lock in `sourceValue`, taken by `deleteValue` alone. The counting path is a
+ * lock in `lookupRowId`, taken by `deleteValue` alone. The counting path is a
  * best-effort read, and a number that is one row stale between the dialog
  * opening and the button being pressed is caught by the delete's own recount
  * under that lock.
@@ -734,8 +733,7 @@ export async function updateValue(
 type Conn = DbTransaction;
 
 /**
- * The value a dependent row would be carrying: the lookup row's id, except on
- * `tarla`, where `property.tarla_sola` holds the INDICATIV as text.
+ * The lookup row's id, confirming it exists — and optionally locking it.
  *
  * Returns `undefined` when the row does not exist.
  *
@@ -744,28 +742,29 @@ type Conn = DbTransaction;
  * `FOR KEY SHARE` on the parent row before allowing an insert that references
  * it, and `FOR KEY SHARE` conflicts with `FOR UPDATE`. So a document being
  * created while this transaction counts documents waits for it, and the count
- * cannot go stale between the count and the delete. (On `tarla` there is no
- * foreign key, so the lock buys nothing there — a property saved with the same
- * text mid-transaction is a race this cannot close. Single business user; the
- * honest note is here rather than a claim on screen.)
+ * cannot go stale between the count and the delete.
+ *
+ * ⚠️ **Slice #34.03 made that true of `tarla` as well**, and the caveat that
+ * used to be here — "on `tarla` there is no foreign key, so the lock buys
+ * nothing; a property saved with the same text mid-transaction is a race this
+ * cannot close" — is deleted rather than reworded. It was true of a text
+ * column and is false of `property.tarla_id`: the referential-integrity check
+ * now takes the same `FOR KEY SHARE` on this row that it takes for the other
+ * ten, so the eleventh list gets the same guarantee for the same reason.
+ *
+ * This was `sourceValue` and read `def.source`, which no longer exists — see
+ * ./dependents.ts. It returns the id because that is the only thing a
+ * dependent can carry now.
  */
-async function sourceValue(
+async function lookupRowId(
   conn: Conn,
   def: ListDependencies,
   id: string,
   lock = false,
-): Promise<unknown> {
-  const q = conn.select({ v: def.source }).from(def.table).where(eq(def.idColumn, id));
+): Promise<string | undefined> {
+  const q = conn.select({ v: def.idColumn }).from(def.table).where(eq(def.idColumn, id));
   const rows = lock ? await q.for("update") : await q;
-  const value = rows.length > 0 ? rows[0].v : undefined;
-  // ⚠️ **NULL is treated as "no row", not as a value to match on.** Today
-  // unreachable — `lookup_tarla.indicativ` is NOT NULL and the other ten
-  // sources are primary keys — but the day a value-matched list points
-  // `source` at a nullable column, `eq(column, null)` is `column = NULL`,
-  // which is never true, so every count would come back zero and the delete
-  // would be offered as safe. One line, and it is the exact failure this
-  // slice exists to prevent.
-  return value === null ? undefined : value;
+  return rows.length > 0 ? (rows[0].v as string) : undefined;
 }
 
 async function countRef(conn: Conn, ref: DependentRef, value: unknown): Promise<number> {
@@ -787,29 +786,17 @@ function addCount(into: DependentCount[], labelKey: string, n: number): void {
   else into.push({ labelKey, count: n });
 }
 
-/**
- * How many OTHER rows of this list carry the same value.
- *
- * Only ever non-zero on `tarla`, where nothing makes `indicativ` unique — the
- * admin add form will happily take a second "T1". It matters because the
- * dependents there are matched by TEXT: if another row still supplies "T1",
- * the properties carrying "T1" lose nothing when this row goes, so refusing
- * the delete would strand it forever (an adversarial round found exactly that
- * dead end: the twin cannot be deleted, and cannot be moved either, because
- * moving onto its identical sibling is a no-op).
- */
-async function siblingsSharingValue(
-  conn: Conn,
-  def: ListDependencies,
-  id: string,
-  value: unknown,
-): Promise<number> {
-  const rows = await conn
-    .select({ n: count() })
-    .from(def.table)
-    .where(and(eq(def.source, value), ne(def.idColumn, id)));
-  return Number(rows[0]?.n ?? 0);
-}
+// Slice #34.03: `siblingsSharingValue` was here. It counted the OTHER rows of
+// a list carrying the same value, which was only ever non-zero on `tarla`,
+// where nothing makes `indicativ` unique and the dependents were matched by
+// TEXT: if another row still supplied "T1", the properties carrying "T1" lost
+// nothing when this row went, so refusing the delete would have stranded the
+// twin for ever — it could not be deleted, and could not be moved either,
+// because moving onto an identical sibling rewrote nothing. migration_078
+// makes a property point at a ROW, so a twin strands nothing and the whole
+// dead end is gone. Nothing replaces it, and `lookup_tarla.indicativ` is still
+// not unique — see that migration's header for why a unique index was
+// deliberately not added.
 
 async function buildReport(
   conn: Conn,
@@ -820,29 +807,20 @@ async function buildReport(
   const def = LIST_DEPENDENCIES[list];
   const dependents: DependentCount[] = [];
   const removedWithRow: DependentCount[] = [];
-  let notes = dependentNotes(list);
+  const notes = dependentNotes(list);
 
-  // The shared-value case above. When it holds, nothing DEPENDS on this row
-  // any more — the value survives it — so the objects are not counted at all
-  // and the note says why. Counting them and then allowing the delete anyway
-  // would be a number that means something different from what it says.
-  const shared =
-    matchesByValue(def) && (await siblingsSharingValue(conn, def, id, value)) > 0;
-  if (shared) {
-    // `tarlaFreeText` explains a number ("the count above finds them by that
-    // text") that is deliberately not shown in this case, so leaving both in
-    // prints two sentences that disagree about whether anything was counted.
-    // The twin is the whole story here.
-    notes = notes.filter((n) => n !== "tarlaFreeText");
-    notes.push("duplicateValue");
-  }
+  // Slice #34.03: the `shared` branch that stood here is gone with
+  // `siblingsSharingValue`. It suppressed the counts on `tarla` when another
+  // row carried the same text, because then nothing DEPENDED on this row — the
+  // value survived it. A property points at a row now, so a twin takes nothing
+  // with it and there is no case to special-case.
 
   // Sequential rather than Promise.all: inside a transaction these share one
   // connection, and the ordering of the report is the map's order either way.
   for (const ref of def.refs) {
     const n = await countRef(conn, ref, value);
     if (ref.configuration) addCount(removedWithRow, ref.labelKey, n);
-    else if (!shared) addCount(dependents, ref.labelKey, n);
+    else addCount(dependents, ref.labelKey, n);
   }
 
   return {
@@ -862,7 +840,7 @@ export async function countDependents(
 ): Promise<DependentsReport | null> {
   const def = LIST_DEPENDENCIES[list];
   return db.transaction(async (tx) => {
-    const value = await sourceValue(tx, def, id);
+    const value = await lookupRowId(tx, def, id);
     if (value === undefined) return null;
     return buildReport(tx, list, id, value);
   });
@@ -968,7 +946,7 @@ export type ReassignOutcome =
        */
       versions: number;
     }
-  | { ok: false; reason: "not-found" | "same-value" | "ambiguous-value" };
+  | { ok: false; reason: "not-found" | "same-value" };
 
 /**
  * Slice #29.13 made it whitelist-aware: a `person-roles` move now grants the
@@ -1047,31 +1025,29 @@ export async function reassignDependents(
     // Both rows locked, in id order. The order is what keeps two
     // administrators moving values at each other from deadlocking; the lock
     // itself is what stops a new dependent arriving between the move and the
-    // delete that follows it (see `sourceValue`).
+    // delete that follows it (see `lookupRowId`).
     const [firstId, secondId] = fromId < toId ? [fromId, toId] : [toId, fromId];
-    await sourceValue(tx, def, firstId, true);
-    await sourceValue(tx, def, secondId, true);
+    await lookupRowId(tx, def, firstId, true);
+    await lookupRowId(tx, def, secondId, true);
 
-    const from = await sourceValue(tx, def, fromId);
-    const to   = await sourceValue(tx, def, toId);
+    const from = await lookupRowId(tx, def, fromId);
+    const to   = await lookupRowId(tx, def, toId);
     if (from === undefined || to === undefined) {
       return { ok: false, reason: "not-found" } as const;
     }
-    // Two `tarla` rows can carry the same indicativ — nothing makes it unique
-    // — and then moving one onto the other would rewrite nothing while
-    // reporting a move. Different rows, same value, so: same value.
+    // Both ids exist and are different rows. Since Slice #34.03 this can only
+    // fire when `fromId === toId`, because the values compared ARE the ids; on
+    // a value-matched list it used to catch two `tarla` rows carrying the same
+    // indicativ, where moving one onto the other rewrote nothing while
+    // reporting a move.
     if (from === to) return { ok: false, reason: "same-value" } as const;
 
-    // ⚠️ **A value-matched row with a twin cannot be moved at all**, and this
-    // is the second half of the dead end `siblingsSharingValue` describes. The
-    // properties carrying "T1" belong to BOTH rows equally — nothing in the
-    // data says which — so rewriting them to "T3" would silently take away the
-    // twin's properties too. The screen never offers this (the twin makes the
-    // blocking count zero, so the delete is offered instead of the move); this
-    // guard is for a caller that reaches the endpoint directly.
-    if (matchesByValue(def) && (await siblingsSharingValue(tx, def, fromId, from)) > 0) {
-      return { ok: false, reason: "ambiguous-value" } as const;
-    }
+    // Slice #34.03: the `ambiguous-value` refusal stood here. A row whose twin
+    // carried the same text could not be moved at all — the properties
+    // carrying "T1" belonged to BOTH rows equally, nothing in the data said
+    // which, and rewriting them would silently take the twin's properties too.
+    // A property points at a ROW now, so "which of the two does this belong
+    // to" has an answer and the refusal has nothing to refuse.
 
     // ⚠️ **BEFORE the move, and that is not an implementation detail.**
     // `grantWhitelists` decides what to grant by asking whether any rows still
@@ -1151,7 +1127,7 @@ export async function deleteValue(key: ListKey, id: string): Promise<DeleteOutco
   const def = LIST_DEPENDENCIES[key];
 
   return db.transaction(async (tx) => {
-    const value = await sourceValue(tx, def, id, true);
+    const value = await lookupRowId(tx, def, id, true);
     if (value === undefined) return { ok: false, reason: "not-found" } as const;
 
     const report = await buildReport(tx, key, id, value);

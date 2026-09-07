@@ -25,13 +25,23 @@
 
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { useForm } from "react-hook-form";
-import { AsyncSelect, optionsWithUnlistedValues } from "@/components/forms/async-select";
+import { AsyncSelect } from "@/components/forms/async-select";
 
 type Values = { field: string };
 
 const NONE = { value: "", label: "— niciunul —" };
 
-/** A free-text list: tarla stores the indicativ itself, not an id. */
+/**
+ * A small list whose values happen to READ like labels.
+ *
+ * ⚠️ Until Slice #34.03 this was the tarla list and the comment said "a
+ * free-text list: tarla stores the indicativ itself, not an id" — which was
+ * the whole reason `allowUnlistedValue` existed. migration_078 made
+ * `property.tarla_id` a foreign key, so every select this component serves
+ * stores an id and the synthesised-option path is gone. The constant is kept
+ * because several tests below only need "a list with two entries"; nothing
+ * about it is free text any more.
+ */
 const TARLA = [NONE, { value: "47/2", label: "47/2" }, { value: "40", label: "40" }];
 /** An id list: the four other selects store a uuid whose label is in the row. */
 const UUID_A = "63877b7f-dcd6-4509-a3c7-e0ba7c00dbea";
@@ -42,7 +52,6 @@ function Harness({
   options,
   stored,
   legacy = false,
-  allowUnlistedValue = false,
   onSubmit,
   resetTo,
 }: {
@@ -72,7 +81,6 @@ function Harness({
           control={form.control}
           register={form.register}
           options={options}
-          allowUnlistedValue={allowUnlistedValue}
           className="cls"
           aria-describedby="field-label"
         />
@@ -90,15 +98,14 @@ function Harness({
 type OpenOpts = {
   loaded?: { value: string; label: string }[];
   legacy?: boolean;
-  allowUnlistedValue?: boolean;
   resetTo?: string;
 };
 
 /** Mount with a cold query cache, then let the options query resolve. */
 function openThenLoad(stored: string, opts: OpenOpts = {}) {
-  const { loaded = TARLA, legacy = false, allowUnlistedValue = false, resetTo } = opts;
+  const { loaded = TARLA, legacy = false, resetTo } = opts;
   const onSubmit = jest.fn();
-  const props = { stored, legacy, allowUnlistedValue, onSubmit, resetTo };
+  const props = { stored, legacy, onSubmit, resetTo };
   const view = render(<Harness {...props} options={[NONE]} />);
   const atMount = shown();
   view.rerender(<Harness {...props} options={loaded} />);
@@ -121,31 +128,14 @@ async function save() {
   });
 }
 
-describe("optionsWithUnlistedValues", () => {
-  it("leaves the list alone when every value is already in it", () => {
-    expect(optionsWithUnlistedValues(TARLA, ["47/2"])).toEqual(TARLA);
-  });
-
-  it("never keeps an empty value", () => {
-    // Empty is legal on all of these columns and must stay empty.
-    expect(optionsWithUnlistedValues(TARLA, ["", ""])).toEqual(TARLA);
-  });
-
-  it("appends an unlisted value, after the caller's own entries", () => {
-    expect(optionsWithUnlistedValues(TARLA, ["99/9"])).toEqual([
-      ...TARLA,
-      { value: "99/9", label: "99/9" },
-    ]);
-  });
-
-  it("appends each unlisted value once", () => {
-    expect(optionsWithUnlistedValues(TARLA, ["99/9", "99/9", "98/1"])).toEqual([
-      ...TARLA,
-      { value: "99/9", label: "99/9" },
-      { value: "98/1", label: "98/1" },
-    ]);
-  });
-});
+// ⚠️ **A `describe("optionsWithUnlistedValues")` block stood here with four
+// cases, and Slice #34.03 deleted the function it tested.** It appended an
+// entry for each stored value the option list did not contain, which exactly
+// one column could ever need: `property.tarla_sola`, free text until
+// migration_078. With that column an FK there is nothing to synthesise, and the
+// cases below that depended on it are gone with it - each one named where it
+// was, so this file reads as a record of what the component stopped doing
+// rather than as a file that quietly got shorter.
 
 describe("the defect this component exists to fix", () => {
   it("a plainly registered select still shows blank after the options arrive", () => {
@@ -184,47 +174,41 @@ describe("AsyncSelect", () => {
     expect(screen.queryByText(UUID_B)).toBeNull();
   });
 
-  it("shows a stored free-text value from mount, before the list arrives", async () => {
-    const { atMount, onSubmit } = openThenLoad("47/2", { allowUnlistedValue: true });
-    expect(atMount).toEqual({ value: "47/2", text: "47/2" });
-    expect(shown()).toEqual({ value: "47/2", text: "47/2" });
+  // ⚠️ **THREE CASES WERE DELETED HERE BY Slice #34.03, and they are named
+  // because their absence is the point.** All three drove
+  // `allowUnlistedValue`:
+  //
+  //   "shows a stored free-text value from mount, before the list arrives"
+  //   "shows a free-text value the list never contains, and it survives a save"
+  //   "keeps an unlisted value reachable after the user picks another"
+  //
+  // They pinned the behaviour a free-text column needed: a property could hold
+  // an indicativ `lookup_tarla` had never had, because `updateProperty` did not
+  // seed it, and the value had to be shown rather than blanked and had to stay
+  // reachable after a stray click. `property.tarla_id` is a foreign key now, so
+  // a value outside the list cannot be stored at all and the case they covered
+  // is unreachable rather than untested. The one below is what replaces them.
 
-    await save();
-    expect(onSubmit).toHaveBeenCalledWith({ field: "47/2" }, expect.anything());
-  });
-
-  it("shows a free-text value the list never contains, and it survives a save", async () => {
-    // The tarlaSola round trip: `updateProperty` does not seed lookup_tarla, so
-    // a property can hold an indicativ the list has never had. Displayed rather
-    // than blanked, and a save that did not touch the field leaves it alone.
-    const { atMount, onSubmit } = openThenLoad("99/9", { allowUnlistedValue: true });
-    expect(atMount).toEqual({ value: "99/9", text: "99/9" });
-    expect(shown()).toEqual({ value: "99/9", text: "99/9" });
-    expect(select().options).toHaveLength(TARLA.length + 1);
-
-    await save();
-    expect(onSubmit).toHaveBeenCalledWith({ field: "99/9" }, expect.anything());
-  });
-
-  it("keeps an unlisted value reachable after the user picks another", async () => {
-    // A stray click on a native select must not put the stored value out of
-    // reach: it is not in the list, so nothing else could ever bring it back.
-    openThenLoad("99/9", { allowUnlistedValue: true });
-
-    await act(async () => {
-      fireEvent.change(select(), { target: { value: "40" } });
-    });
-    expect(shown()).toEqual({ value: "40", text: "40" });
-    expect(select().options).toHaveLength(TARLA.length + 1);
-
-    await act(async () => {
-      fireEvent.change(select(), { target: { value: "99/9" } });
-    });
-    expect(shown()).toEqual({ value: "99/9", text: "99/9" });
+  it("renders no option for a stored value the list does not contain", () => {
+    // The successor to the three above, pointing the other way: with the
+    // synthesis gone, an id the list lacks must read as the "none" entry and
+    // must NOT appear as its own label. That is the same guarantee the uuid
+    // test above makes, now stated for every select rather than for the ones
+    // that had opted out of synthesising.
+    openThenLoad("99/9");
+    // ⚠️ `text: undefined`, not the "none" label. When react-hook-form writes a
+    // value no <option> carries, jsdom (and a browser) leave `selectedIndex`
+    // at −1 rather than falling back to the first entry — the fallback only
+    // fires when the option LIST is mutated, which is what the `legacy` case
+    // above is about. So the box reads EMPTY, which is the same thing a user
+    // sees, and is what the two uuid cases above already assert.
+    expect(shown()).toEqual({ value: "", text: undefined });
+    expect(select().options).toHaveLength(TARLA.length);
+    expect(screen.queryByText("99/9")).toBeNull();
   });
 
   it("leaves an empty stored value empty", async () => {
-    const { onSubmit } = openThenLoad("", { allowUnlistedValue: true });
+    const { onSubmit } = openThenLoad("");
     expect(shown()).toEqual({ value: "", text: "— niciunul —" });
     expect(select().options).toHaveLength(TARLA.length);
 
@@ -237,7 +221,7 @@ describe("AsyncSelect", () => {
     // snapshot, with the option list long since loaded. This is the only
     // after-mount write any caller makes, and it is the one the docblock says
     // survives only because RHF's `_reset` empties `_fields`.
-    openThenLoad("47/2", { allowUnlistedValue: true, resetTo: "40" });
+    openThenLoad("47/2", { resetTo: "40" });
     expect(shown()).toEqual({ value: "47/2", text: "47/2" });
 
     await act(async () => {
@@ -246,17 +230,30 @@ describe("AsyncSelect", () => {
     expect(shown()).toEqual({ value: "40", text: "40" });
   });
 
-  it("follows a form.reset() to a value the list does not contain", async () => {
-    openThenLoad("47/2", { allowUnlistedValue: true, resetTo: "98/1" });
+  it("follows a form.reset() to a value the list does not contain, and shows nothing", async () => {
+    // ⚠️ **INVERTED by Slice #34.03, not deleted.** This asserted
+    // `{ value: "98/1", text: "98/1" }` - the synthesised option surviving a
+    // version navigation. With no synthesis the honest answer is the empty
+    // one, and it matters for the case the component's own docblock flags: a
+    // **version snapshot** holds lookup ids in jsonb with no FK, and
+    // `dependents.ts` decides on purpose that snapshots do not count as
+    // dependents - so an admin CAN delete a lookup row that only an old
+    // version still names, and paging back to that version shows an empty box.
+    // Since #34.03 that is true of the tarla field too. Labelling it
+    // ("valoare stearsa") is a slice of its own; this test is what will fail
+    // when somebody does it, which is the right way round.
+    openThenLoad("47/2", { resetTo: "98/1" });
 
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "version" }));
     });
-    expect(shown()).toEqual({ value: "98/1", text: "98/1" });
+    // `text: undefined` for the reason the case above states: the write lands
+    // on an unchanged option list, so `selectedIndex` stays −1.
+    expect(shown()).toEqual({ value: "", text: undefined });
   });
 
   it("passes the caller's presentation props through to the element", () => {
-    openThenLoad("47/2", { allowUnlistedValue: true });
+    openThenLoad("47/2");
     expect(select()).toHaveClass("cls");
     expect(select()).toHaveAttribute("aria-describedby", "field-label");
   });

@@ -25,7 +25,7 @@ function match(code: string, cornerCount = 0): CadastralMatch {
     code,
     nickname: null,
     principalObjectId: `po-${code}`,
-    tarlaSola: "47/2",
+    tarla: "47/2",
     parcela: "225/3",
     cornerCount,
   };

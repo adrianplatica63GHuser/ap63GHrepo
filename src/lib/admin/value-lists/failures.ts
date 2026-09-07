@@ -45,7 +45,13 @@ import {
  */
 export const FAILURE_CODES = [
   "sameValue",
-  "ambiguousValue",
+  // Slice #34.03: `ambiguousValue` was here. It was the refusal a `tarla` row
+  // with a same-named twin produced, and it existed only because a property
+  // held the CODE as text; migration_078 made it a foreign key, so the
+  // question it answered ("which of these two rows do these properties belong
+  // to") always has an answer. Nothing raises it, so the member goes rather
+  // than sitting in a union that this file's own docblock says must be
+  // reachable in both locales.
   "duplicate",
   "notFound",
   "validation",
@@ -118,7 +124,6 @@ export function failureFromResponse(status: number, body: unknown): FailureCode 
   if (status === 404) return "notFound";
   const code = (body as { code?: string } | null)?.code;
   if (code === "SAME_VALUE") return "sameValue";
-  if (code === "AMBIGUOUS_VALUE") return "ambiguousValue";
   if (code === "DUPLICATE") return "duplicate";
   // ⚠️ **Slice #32.07 — snake_case, and the constants rather than literals.**
   // The same refusal reaches `PUT /api/document-types/[id]/template-fields`,

@@ -29,19 +29,28 @@
  *   restatement of the schema: it is the list of edges the schema does NOT
  *   protect, with the one that does marked as such.
  *
- * TWO CLASSES OF DEPENDENT THE DATABASE CANNOT SEE, AND WHAT WAS DECIDED
- *   1. **Tarla is text, not a link.** `property.tarla_sola` is free text
- *      (schema line ~416) and `createProperty` auto-seeds a `lookup_tarla` row
- *      from the imported string. So "what uses this tarla" is a string match.
- *      DECIDED: it counts. `tarla`'s ref below matches on the row's own
- *      `indicativ` VALUE rather than on its id — see `source` — and a re-point
- *      rewrites the text in `property`. Counting it is also what stops the
- *      delete being undone by the next import: with no property carrying the
- *      string, nothing re-seeds it.
+ * ONE CLASS OF DEPENDENT THE DATABASE CANNOT SEE, AND WHAT WAS DECIDED
+ *   1. **Tarla WAS text, not a link, and Slice #34.03 ended that.** Until
+ *      migration_078, `property.tarla_sola` held the indicativ as free text
+ *      and `createProperty` auto-seeded a `lookup_tarla` row from the imported
+ *      string, so "what uses this tarla" was a string match: this map carried
+ *      a `source` field naming the column whose VALUE dependents held,
+ *      `matchesByValue` to ask which list that was, `siblingsSharingValue` to
+ *      find a row's twin, and an `ambiguous-value` refusal for the dead end a
+ *      twin produced. All four are gone with the text column. `tarla` is now
+ *      an ordinary entry keyed on `lookupTarla.id`, exactly like the other
+ *      ten, and the eleven-way table below has no special case left in it.
+ *
+ *      What made that safe rather than merely tidier is that the FK removes
+ *      the AMBIGUITY without needing `indicativ` to be unique: a property
+ *      points at one ROW, so a second row spelled the same strands nothing and
+ *      cannot make a delete unofferable. migration_078 deliberately adds no
+ *      unique index — see its header.
  *   2. **Version snapshots hold lookup ids inside jsonb, with no FK.**
  *      `document_version.snapshot` carries `documentTypeId` and
  *      `institutionId`; `property_version.snapshot` carries `propertyTypeId`,
- *      `useCategoryId` and `tarlaSola`; `person_version.snapshot` carries
+ *      `useCategoryId` and `tarlaId` (`tarlaSola` before Slice #34.03 — old
+ *      rows still hold that key, and nothing rewrites them); `person_version.snapshot` carries
  *      `citizenshipId`, `physicalPersonTypeId`, `judicialPersonTypeId`.
  *      DECIDED: they do NOT count and the screen SAYS SO — see
  *      `dependentNotes` and `valueList.dependents.notes.versionSnapshots`. A
@@ -239,17 +248,17 @@ export type DependentRef = {
 export type ListDependencies = {
   /** The lookup table itself — locked and deleted through this. */
   table: PgTable;
-  /** Its primary key, for the lock and the delete. */
-  idColumn: PgColumn;
   /**
-   * The column whose VALUE the dependents carry.
+   * Its primary key — for the lock, the count, the re-point and the delete.
    *
-   * `idColumn` for ten lists. For `tarla` it is `indicativ`, because
-   * `property.tarla_sola` holds the text and not a foreign key — see the
-   * header. Everything downstream (count, re-point) reads this one value and
-   * so needs no per-list special case.
+   * ⚠️ **There was a `source` field beside this until Slice #34.03**, naming
+   * the column whose VALUE dependents carried. It was `idColumn` on ten lists
+   * and `lookupTarla.indicativ` on the eleventh, because `property.tarla_sola`
+   * held the text. migration_078 made that an FK, so every list is keyed on
+   * its id and the field had one possible value; a generic hook with no user
+   * is a place for a future list to be wrong in. See the header, decision 1.
    */
-  source: PgColumn;
+  idColumn: PgColumn;
   refs: readonly DependentRef[];
   /**
    * The version snapshot that stores this list's value inside jsonb, if any.
@@ -257,7 +266,19 @@ export type ListDependencies = {
    * runtime, so the note can never outlive the fact.
    */
   snapshot?: { keys: readonly string[]; field: string };
-  /** Extra i18n note keys, beyond the derived snapshot one. */
+  /**
+   * Extra i18n note keys, beyond the derived snapshot one.
+   *
+   * ⚠️ **No list declares one since Slice #34.03**, and the field is kept
+   * rather than deleted because it is the only way a list can say something
+   * the derived note cannot — which is a different thing from the `source`
+   * field deleted above, whose one possible value had become `idColumn`. The
+   * one member it ever had was `tarlaFreeText` ("properties hold the tarla's
+   * TEXT, not a link to it"), which stopped being true when migration_078 made
+   * it a link; its sentence is deleted from both locales in the same commit,
+   * along with `duplicateValue`, the note `buildReport` pushed when a twin row
+   * carried the same text.
+   */
   notes?: readonly string[];
   /**
    * Ticks the TARGET must gain when real rows move onto it.  (Slice #29.13)
@@ -281,7 +302,6 @@ export const LIST_DEPENDENCIES: Record<ListKey, ListDependencies> = {
   "property-types": {
     table: lookupPropertyType,
     idColumn: lookupPropertyType.id,
-    source: lookupPropertyType.id,
     refs: [
       {
         kind: "column",
@@ -298,34 +318,27 @@ export const LIST_DEPENDENCIES: Record<ListKey, ListDependencies> = {
   tarla: {
     table: lookupTarla,
     idColumn: lookupTarla.id,
-    // The one list matched by value. See the header, decision 1.
-    source: lookupTarla.indicativ,
     refs: [
       {
         kind: "column",
         labelKey: "properties",
         table: property,
-        column: property.tarlaSola,
-        // No foreign key exists at all, so the database neither blocks nor
-        // clears nor cascades: it does not know these rows are related.
-        // "clears" would be a lie; this is the honest reading of "nothing
-        // happens to them, which is the problem".
+        column: property.tarlaId,
+        // Slice #34.03: `ON DELETE SET NULL`, so this is now the same
+        // "clears" the other ten mean — the database really does blank the
+        // tag. It read "clears" before the FK existed too, as the honest
+        // reading of "nothing happens to them, which is the problem"; the word
+        // did not change, the truth of it did.
         enforcement: "clears",
-        // Versioned all the same: the rows this rewrites ARE properties, and
-        // `tarlaSola` is inside the property snapshot. The text match decides
-        // WHICH properties move; it changes nothing about what they owe their
-        // own history afterwards.                              (Slice #29.14)
         versioned: { entity: "property", idColumn: property.id },
       },
     ],
-    snapshot: { keys: PROPERTY_SNAPSHOT_PROPERTY_KEYS, field: "tarlaSola" },
-    notes: ["tarlaFreeText"],
+    snapshot: { keys: PROPERTY_SNAPSHOT_PROPERTY_KEYS, field: "tarlaId" },
   },
 
   "use-categories": {
     table: lookupUseCategory,
     idColumn: lookupUseCategory.id,
-    source: lookupUseCategory.id,
     refs: [
       {
         kind: "column",
@@ -342,7 +355,6 @@ export const LIST_DEPENDENCIES: Record<ListKey, ListDependencies> = {
   "person-types": {
     table: lookupPersonType,
     idColumn: lookupPersonType.id,
-    source: lookupPersonType.id,
     refs: [
       {
         kind: "column",
@@ -367,7 +379,6 @@ export const LIST_DEPENDENCIES: Record<ListKey, ListDependencies> = {
   "person-roles": {
     table: lookupPersonRole,
     idColumn: lookupPersonRole.id,
-    source: lookupPersonRole.id,
     refs: [
       {
         kind: "column",
@@ -431,7 +442,6 @@ export const LIST_DEPENDENCIES: Record<ListKey, ListDependencies> = {
   citizenships: {
     table: lookupCitizenship,
     idColumn: lookupCitizenship.id,
-    source: lookupCitizenship.id,
     refs: [
       {
         kind: "column",
@@ -448,7 +458,6 @@ export const LIST_DEPENDENCIES: Record<ListKey, ListDependencies> = {
   "judicial-person-types": {
     table: lookupJudicialPersonType,
     idColumn: lookupJudicialPersonType.id,
-    source: lookupJudicialPersonType.id,
     refs: [
       {
         kind: "column",
@@ -472,7 +481,6 @@ export const LIST_DEPENDENCIES: Record<ListKey, ListDependencies> = {
   "document-types": {
     table: lookupDocumentType,
     idColumn: lookupDocumentType.id,
-    source: lookupDocumentType.id,
     refs: [
       {
         kind: "column",
@@ -498,7 +506,6 @@ export const LIST_DEPENDENCIES: Record<ListKey, ListDependencies> = {
   institutions: {
     table: lookupInstitution,
     idColumn: lookupInstitution.id,
-    source: lookupInstitution.id,
     refs: [
       {
         kind: "column",
@@ -528,7 +535,6 @@ export const LIST_DEPENDENCIES: Record<ListKey, ListDependencies> = {
   "property-property-roles": {
     table: lookupPropertyPropertyRole,
     idColumn: lookupPropertyPropertyRole.id,
-    source: lookupPropertyPropertyRole.id,
     refs: [
       {
         kind: "column",
@@ -543,7 +549,6 @@ export const LIST_DEPENDENCIES: Record<ListKey, ListDependencies> = {
   "document-document-roles": {
     table: lookupDocumentDocumentRole,
     idColumn: lookupDocumentDocumentRole.id,
-    source: lookupDocumentDocumentRole.id,
     refs: [
       {
         kind: "column",
@@ -608,15 +613,11 @@ export type DependentsReport = {
   notes: string[];
 };
 
-/**
- * Is this list matched by VALUE rather than by id? True for `tarla` alone.
- *
- * Derived rather than declared, so it cannot disagree with the `source` the
- * counting actually uses.
- */
-export function matchesByValue(def: ListDependencies): boolean {
-  return def.source !== def.idColumn;
-}
+// Slice #34.03: `matchesByValue(def)` was here — `def.source !== def.idColumn`,
+// true for `tarla` alone. It existed to ask whether a list's dependents carried
+// a VALUE rather than an id, which stopped being a question when migration_078
+// made `property.tarla_id` a foreign key. `siblingsSharingValue` in ./queries.ts
+// and the `ambiguous-value` refusal in `reassignDependents` went with it.
 
 /**
  * The notes for a list: what the count above cannot see.

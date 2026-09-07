@@ -472,7 +472,11 @@ export async function POST(_req: NextRequest, ctx: Ctx): Promise<Response> {
         provenanceAlreadyStamped = true;
       } else {
         const created = await createProperty(
-          { nickname, tarlaSola, parcela, corners },
+          // Slice #34.03: `tarlaCode`, not `tarlaId` - this route has a string
+          // a machine parsed out of a folder name, which may not be a row yet.
+          // That field name is what lets `createPropertyIn` write the IMPORT
+          // origin without having to reason about which client it is serving.
+          { nickname, tarlaCode: tarlaSola, parcela, corners },
           updatedBy,
         );
         createdPropertyId      = created.property.id;

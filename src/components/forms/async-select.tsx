@@ -1,7 +1,5 @@
 "use client";
 
-import { useState } from "react";
-import { useWatch } from "react-hook-form";
 import type {
   Control,
   FieldPath,
@@ -12,47 +10,38 @@ import type {
 export type AsyncSelectOption = { value: string; label: string };
 
 /**
- * `options`, plus an entry for each value in `keep` that `options` does not
- * contain — appended, so the caller's own "none" entry stays first, and
- * labelled with the value itself.
+ * ⚠️ **`optionsWithUnlistedValues` was here, and Slice #34.03 deleted it
+ * outright — the whole function and the `allowUnlistedValue` prop that turned
+ * it on.**
  *
- * Only a select whose column stores display text may use this. `tarla_sola`
- * is the one: it stores the *indicativ text* rather than a foreign key (Slice
- * #18.16.VL, deliberately — no FK migration), and only `createProperty` seeds
- * `lookup_tarla`; `updateProperty` does not. So a property can legitimately
- * hold a tarla the list has never heard of, and the right thing is to show it
- * rather than blank it.
+ * It appended an entry for each stored value the option list did not contain,
+ * labelled with the value itself. Exactly one column could ever use it:
+ * `property.tarla_sola`, which stored the *indicativ text* rather than a
+ * foreign key (Slice #18.16.VL, on a four-word comment — "no FK migration") and
+ * was seeded by `createProperty` and not by `updateProperty`, so a property
+ * could legitimately hold a tarla the list had never heard of and the right
+ * thing was to show it rather than blank it. migration_078 made that column an
+ * FK, so an unlisted value is a 23503 rather than a row: there is nothing left
+ * to synthesise, and a function whose only job was inventing the missing entry
+ * a free-text column produces has no second caller to inherit it. Checked
+ * before deleting — it was exported and general, and `allowUnlistedValue`
+ * appeared at exactly one production call site.
  *
- * The other six selects that load asynchronously store a uuid whose label
+ * The rest of that docblock is kept here because it is about the OTHER selects
+ * and is still true: the ones that load asynchronously store a uuid whose label
  * lives in the lookup row, and those *live* columns are `ON DELETE SET NULL`,
- * so they cannot hold an id the list lacks. (The three static ones — `gender`
- * twice and `idDocumentType` — are pg enums whose option lists enumerate them
- * exactly, so the question does not arise for them either.) Synthesising an entry for them would only put a raw uuid on
- * screen while the list is in flight or after a failed fetch, so they do not
- * opt in. One case is outside that guarantee and stays unhandled: a **version
- * snapshot** holds lookup ids in jsonb with no FK, and
+ * so they cannot hold an id the list lacks. (The static ones — `gender` twice
+ * and `idDocumentType` — are pg enums whose option lists enumerate them
+ * exactly.) One case remains outside that guarantee and is still unhandled: a
+ * **version snapshot** holds lookup ids in jsonb with no FK, and
  * `src/lib/admin/value-lists/dependents.ts` decides on purpose that snapshots
  * do not count as dependents — so an admin can delete a lookup row that only a
  * snapshot still names, and paging back to that version shows an empty box.
- * Labelling that case ("valoare ștearsă") needs its own slice; opting the uuid
- * selects in here would fix it by printing the uuid, which is worse.
- *
- * An empty value is never kept: empty is legal on all of these columns and
- * must stay empty.
+ * Labelling that case ("valoare ștearsă") needs its own slice; printing the raw
+ * uuid instead would be worse. **#34.03 puts `tarlaId` into that same
+ * category** — the snapshot now holds the id like the other two — so the day
+ * that slice happens it covers three fields rather than two.
  */
-export function optionsWithUnlistedValues(
-  options: readonly AsyncSelectOption[],
-  keep: readonly string[],
-): AsyncSelectOption[] {
-  const listed = new Set(options.map((o) => o.value));
-  const extra: AsyncSelectOption[] = [];
-  for (const value of keep) {
-    if (value === "" || listed.has(value)) continue;
-    listed.add(value);
-    extra.push({ value, label: value });
-  }
-  return [...options, ...extra];
-}
 
 type AsyncSelectProps<T extends FieldValues> = {
   name: FieldPath<T>;
@@ -60,11 +49,6 @@ type AsyncSelectProps<T extends FieldValues> = {
   register: UseFormRegister<T>;
   options: readonly AsyncSelectOption[];
   className: string;
-  /**
-   * Render a stored value the option list does not contain. Only for a column
-   * that stores display text — see `optionsWithUnlistedValues`.
-   */
-  allowUnlistedValue?: boolean;
   "aria-describedby"?: string;
   "aria-invalid"?: true;
 };
@@ -90,11 +74,11 @@ type AsyncSelectProps<T extends FieldValues> = {
  * `loaded`/`loading` ternary was a constant — and the two person forms and the
  * ID-card dialog carried none at all.
  *
- * `allowUnlistedValue` adds the second half, for the one column that stores
- * display text rather than an id: both the value the form opened with and the
- * value it currently holds stay selectable even when the list has never
- * contained them, so a stored tarla is shown rather than blanked, and a
- * mis-click is one click from being undone.
+ * ⚠️ **`allowUnlistedValue` used to add a second half** — for the one column
+ * that stored display text rather than an id, keeping both the value the form
+ * opened with and the value it currently holds selectable even when the list
+ * had never contained them. Slice #34.03 removed it with
+ * `optionsWithUnlistedValues`; see the note at the top of this file.
  *
  * Values written AFTER mount:
  *
@@ -109,32 +93,34 @@ type AsyncSelectProps<T extends FieldValues> = {
  *     NOT recovered until the list next changes. No caller does that: the uuid
  *     selects cannot (see above), and nothing calls `setValue` on the tarla.
  *
- * `openedWith` is captured once per mount and is not refreshed by a `reset`, so
- * on a historical version the tarla dropdown still offers the indicativ the
- * page opened with. Invisible today — a historical version renders inside a
- * `<fieldset disabled>` — and worth fixing the day one becomes editable.
+ * (There was a third paragraph here about `openedWith`, captured once per
+ * mount and not refreshed by a `reset`, so a historical version's tarla
+ * dropdown still offered the indicativ the page opened with. It went with
+ * `allowUnlistedValue` in Slice #34.03 — there is no captured value any more,
+ * and a historical version's tarla id is an ordinary option or it is nothing.)
  */
 export function AsyncSelect<T extends FieldValues>({
   name,
-  control,
+  // ⚠️ **`control` is accepted and not destructured, since Slice #34.03.** It
+  // fed the `useWatch` that `allowUnlistedValue` needed to know the current
+  // value; with the synthesis gone there is nothing in here that reads the
+  // form. It stays in the prop type on purpose rather than being removed:
+  // `async-select-single-source.test.ts` asserts that every call site hands
+  // its select a `control`, which is the idiom that keeps all seven selects
+  // going through react-hook-form's context instead of each form inventing its
+  // own wiring — the thing this component exists to make singular. Removing it
+  // is a four-form change for no behaviour, and it is in the handover under
+  // "Noticed, not fixed".
   register,
   options,
   className,
-  allowUnlistedValue = false,
   "aria-describedby": describedBy,
   "aria-invalid": invalid,
 }: AsyncSelectProps<T>) {
-  const current: unknown = useWatch({ control, name });
-  const stored = typeof current === "string" ? current : "";
-
-  // The value the form opened with, captured once. Keeping it selectable for
-  // the life of the mount is what stops a stray click on a free-text select
-  // from putting the stored value permanently out of reach.
-  const [openedWith] = useState(() => stored);
-
-  const rendered = allowUnlistedValue
-    ? optionsWithUnlistedValues(options, [openedWith, stored])
-    : [...options];
+  // Slice #34.03: `useWatch` and the once-captured `openedWith` went with
+  // `allowUnlistedValue` - nothing reads the current value any more, because
+  // every option this component renders now comes from the list.
+  const rendered = [...options];
 
   return (
     <select

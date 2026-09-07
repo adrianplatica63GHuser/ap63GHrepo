@@ -1835,7 +1835,6 @@
       "removedWithRow": "La ștergere se elimină și:",
       "errors": {
         "sameValue": "Valoarea aleasă este aceeași cu cea pe care o ștergeți. Alegeți alta.",
-        "ambiguousValue": "Există încă o înregistrare cu aceeași denumire în această listă, așa că nu se poate stabili care obiecte îi aparțin acesteia. Ștergeți sau redenumiți duplicatul întâi.",
         "validation": "Datele introduse nu sunt complete sau nu sunt valide. Verificați câmpurile obligatorii.",
         "duplicate": "Această înregistrare există deja în listă.",
         "notFound": "Înregistrarea nu mai există — lista s-a schimbat între timp. Închideți fereastra și deschideți-o din nou.",
@@ -1868,9 +1867,7 @@
         "documentDocuments": "{count, plural, one {# asociere Document–Document} few {# asocieri Document–Document} other {# de asocieri Document–Document}}"
       },
       "notes": {
-        "duplicateValue": "Încă o înregistrare din această listă are aceeași denumire, așa că proprietățile care o folosesc nu pierd nimic dacă ștergeți această înregistrare.",
-        "versionSnapshots": "Istoricul versiunilor nu este numărat mai sus. Fiecare versiune salvată păstrează valoarea așa cum era atunci — nici ștergerea, nici mutarea nu modifică versiunile deja salvate. Mutarea adaugă însă câte o versiune nouă fiecărui obiect pe care îl modifică.",
-        "tarlaFreeText": "Proprietățile nu păstrează o legătură către indicativul de tarla, ci textul lui. Numărul de mai sus le găsește după acest text, iar mutarea îl rescrie în proprietăți."
+        "versionSnapshots": "Istoricul versiunilor nu este numărat mai sus. Fiecare versiune salvată păstrează valoarea așa cum era atunci — nici ștergerea, nici mutarea nu modifică versiunile deja salvate. Mutarea adaugă însă câte o versiune nouă fiecărui obiect pe care îl modifică."
       }
     },
     "documentPersons": {

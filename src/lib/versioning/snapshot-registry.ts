@@ -81,7 +81,11 @@ type AssertExactKeys<
 export const PROPERTY_SNAPSHOT_PROPERTY_KEYS = [
   "propertyTypeId",
   "nickname",
-  "tarlaSola",
+  // Slice #34.03: the lookup row's id, not the code as text. Snapshots written
+  // before migration_078 still carry "tarlaSola" and are not rewritten - see
+  // PropertySnapshotProperty. This array is the CURRENT shape, which is what
+  // `dependentNotes` checks the tarla list's snapshot field against.
+  "tarlaId",
   "parcela",
   "cadastralNumber",
   "carteFunciara",

@@ -50,7 +50,9 @@ describe("formSchema", () => {
   it("accepts a fully populated form", () => {
     const v = minValid({
       nickname:        "Lot 12",
-      tarlaSola:       "T7",
+      // Slice #34.03: the form field is an id now, so a "fully populated"
+      // form carries a uuid here rather than the code "T7".
+      tarlaId:         "9f1d0f5e-3a2b-4c6d-8e7f-0a1b2c3d4e5f",
       parcela:         "P145",
       cadastralNumber: "12345",
       carteFunciara:   "CF001",
@@ -103,7 +105,7 @@ describe("toApiPayload", () => {
   it("converts empty strings to null on every nullable field", () => {
     const p = toApiPayload(emptyFormValues, []);
     expect(p.nickname).toBeNull();
-    expect(p.tarlaSola).toBeNull();
+    expect(p.tarlaId).toBeNull();
     expect(p.parcela).toBeNull();
     expect(p.cadastralNumber).toBeNull();
     expect(p.carteFunciara).toBeNull();
@@ -173,14 +175,14 @@ describe("fromApiPayload", () => {
   it("maps null property fields to empty strings", () => {
     const result = fromApiPayload({
       property: {
-        nickname: null, tarlaSola: null, parcela: null,
+        nickname: null, tarlaId: null, parcela: null,
         cadastralNumber: null, carteFunciara: null,
         propertyTypeId: null, useCategoryId: null, surfaceAreaMp: null, notes: null,
       },
       address: null,
     });
     expect(result.nickname).toBe("");
-    expect(result.tarlaSola).toBe("");
+    expect(result.tarlaId).toBe("");
     expect(result.surfaceAreaMp).toBe("");
     expect(result.address.country).toBe("");
   });
@@ -188,7 +190,7 @@ describe("fromApiPayload", () => {
   it("maps surfaceAreaMp numeric string to string form value", () => {
     const result = fromApiPayload({
       property: {
-        nickname: null, tarlaSola: null, parcela: null,
+        nickname: null, tarlaId: null, parcela: null,
         cadastralNumber: null, carteFunciara: null,
         propertyTypeId: null, useCategoryId: null, surfaceAreaMp: "450.50", notes: null,
       },
@@ -200,7 +202,7 @@ describe("fromApiPayload", () => {
   it("maps address row fields correctly", () => {
     const result = fromApiPayload({
       property: {
-        nickname: null, tarlaSola: null, parcela: null,
+        nickname: null, tarlaId: null, parcela: null,
         cadastralNumber: null, carteFunciara: null,
         propertyTypeId: null, useCategoryId: null, surfaceAreaMp: null, notes: null,
       },
@@ -224,7 +226,7 @@ describe("fromApiPayload", () => {
   it("returns an empty address block when address is null", () => {
     const result = fromApiPayload({
       property: {
-        nickname: null, tarlaSola: null, parcela: null,
+        nickname: null, tarlaId: null, parcela: null,
         cadastralNumber: null, carteFunciara: null,
         propertyTypeId: null, useCategoryId: null, surfaceAreaMp: null, notes: null,
       },
@@ -248,7 +250,12 @@ describe("propertyCreateSchema", () => {
     expect(
       propertyCreateSchema.safeParse({
         nickname:        "Lot 12",
-        tarlaSola:       "T7",
+        // Slice #34.03: the create schema takes EITHER. `tarlaCode` is the
+        // import's door — a string a machine parsed, which may not be a row
+        // yet; `tarlaId` is a row somebody picked. Both are legal on one
+        // payload and the id wins; see `resolveTarlaForCreate`.
+        tarlaCode:       "T7",
+        tarlaId:         "33333333-3333-4333-a333-333333333333",
         parcela:         "P145",
         cadastralNumber: "12345",
         carteFunciara:   "CF001",

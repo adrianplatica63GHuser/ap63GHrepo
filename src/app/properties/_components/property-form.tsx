@@ -169,7 +169,9 @@ export function PropertyForm({
     staleTime: 5 * 60 * 1000,
   });
 
-  // Slice #18.16.VL — tarla dropdown (value = indicativ text, no FK migration)
+  // Slice #18.16.VL — tarla dropdown. Slice #34.03: the option VALUE is the
+  // row's `id` now, not its `indicativ` text; the four-word comment that used
+  // to end this line, "no FK migration", is what that slice deleted.
   const { data: tarlaItems } = useQuery({
     queryKey: ["value-list", "tarla"],
     queryFn:  async () => {
@@ -190,10 +192,14 @@ export function PropertyForm({
     noneOption,
     ...(useCategories ?? []).map((o) => ({ value: o.id, label: o.name })),
   ];
-  const tarlaSolaOptions = [
+  // Slice #34.03: the VALUE is the row's id, not its text. That one character
+  // is the whole difference between a dropdown whose selection survives a
+  // rename and one whose selection is a string that happens to match a label
+  // today. The label is unchanged.
+  const tarlaOptions = [
     noneOption,
     ...(tarlaItems ?? []).map((o) => ({
-      value: o.indicativ,
+      value: o.id,
       label: o.descriere ? `${o.indicativ} — ${o.descriere}` : o.indicativ,
     })),
   ];
@@ -847,19 +853,22 @@ export function PropertyForm({
                   </div>
                   {/* Slice #18.16.VL: was free-text Field; now a lookup dropdown */}
                   <div className="row-start-1 col-start-3">
-                    {/* Slice #32.13: allowUnlistedValue, because tarla is free
-                        text and not an FK — a property can hold a tarla
-                        `lookup_tarla` has never had, and it must be shown
-                        rather than blanked. */}
+                    {/* Slice #34.03: an ORDINARY id-valued select, like the two
+                        beside it. `allowUnlistedValue` was here from #32.13,
+                        because a property could hold a tarla `lookup_tarla` had
+                        never had and blanking it would have lost the value.
+                        `property.tarla_id` is a foreign key now, so an unlisted
+                        value cannot exist — and `optionsWithUnlistedValues`,
+                        whose only job was inventing the missing entry, is gone
+                        from the codebase with it. */}
                     <SelectField
                       label={t("fields.tarlaSola")}
-                      name="tarlaSola"
+                      name="tarlaId"
                       register={register}
                       control={control}
-                      allowUnlistedValue
-                      error={errors.tarlaSola?.message}
-                      options={tarlaSolaOptions}
-                      highlight={displayHighlights?.property.tarlaSola}
+                      error={errors.tarlaId?.message}
+                      options={tarlaOptions}
+                      highlight={displayHighlights?.property.tarlaId}
                     />
                   </div>
                 </>
@@ -1462,12 +1471,10 @@ function SelectField({
   control,
   error,
   options,
-  allowUnlistedValue,
   highlight,
 }: FieldProps & {
   control: Control<FormValues>;
   options: { value: string; label: string }[];
-  allowUnlistedValue?: boolean;
 }) {
   const ring = usePulseRing(highlight);
   return (
@@ -1487,7 +1494,6 @@ function SelectField({
           control={control}
           register={register}
           options={options}
-          allowUnlistedValue={allowUnlistedValue}
           aria-invalid={error ? true : undefined}
           className={[
             "w-full rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none disabled:bg-canvas disabled:text-fade disabled:cursor-default dark:bg-zinc-950 dark:disabled:bg-zinc-800",

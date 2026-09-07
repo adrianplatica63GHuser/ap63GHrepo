@@ -335,8 +335,12 @@ function EditForm({
     // ⚠️ **`isPending` here as well as on the button.** The form stays open
     // until `onSuccess`, so nothing on screen changes between the first Enter
     // and the second — and two POSTs to `tarla` produce two rows with the same
-    // indicativ, which is exactly the twin state that makes a value-matched
-    // row unmovable (see `siblingsSharingValue` in the value-lists queries).
+    // indicativ. Slice #34.03 took the teeth out of that: `property.tarla_id`
+    // is a foreign key, so a twin strands nothing and is movable and deletable
+    // like any other row — `siblingsSharingValue` and the `ambiguous-value`
+    // refusal that used to make it a dead end are deleted. The guard stays,
+    // because a duplicate row in a list a person reads is still a mess, and
+    // `lookup_tarla.indicativ` is deliberately not unique (migration_078).
     if (e.key === "Enter" && !mutation.isPending) mutation.mutate();
     if (e.key === "Escape") onClose();
   }

@@ -26,7 +26,7 @@ import type { PropertySnapshot } from "@/lib/properties/validation";
 const EMPTY_PROP: PropertySnapshot["property"] = {
   propertyTypeId:  null,
   nickname:        null,
-  tarlaSola:       null,
+  tarlaId:         null,
   parcela:         null,
   cadastralNumber: null,
   carteFunciara:   null,
@@ -114,7 +114,7 @@ describe("computeFieldHighlights", () => {
     const h = computeFieldHighlights(prev, curr);
     expect(h.property.nickname).toBe("green");
     expect(h.property.parcela).toBe("red");
-    expect(h.property.tarlaSola).toBeUndefined();
+    expect(h.property.tarlaId).toBeUndefined();
   });
 
   it("flags a deleted field red", () => {

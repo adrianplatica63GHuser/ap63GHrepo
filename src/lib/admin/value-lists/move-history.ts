@@ -5,7 +5,7 @@
  *   `reassignDependents` rewrote its rows with one raw UPDATE per dependent
  *   ref and did nothing else — no version row, no `updated_by` — and the
  *   columns it rewrites live INSIDE the version snapshots
- *   (`propertyTypeId` / `useCategoryId` / `tarlaSola`, `documentTypeId` /
+ *   (`propertyTypeId` / `useCategoryId` / `tarlaId`, `documentTypeId` /
  *   `institutionId`, `citizenshipId` / `physicalPersonTypeId`,
  *   `judicialPersonTypeId`; see src/lib/versioning/snapshot-registry.ts).
  *   Nothing was lost — but `updateProperty` and `updateDocument` insert a

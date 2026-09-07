@@ -60,7 +60,11 @@
  * Slice #21.01 fixes (preserved):
  *   (1) [retired by Slice #29.04 — deleted entities have no row to exclude]
  *   (2) tagExists correlated subquery uses the literal "principal_object.id".
- *   (3) Property text search covers carte_funciara, tarla_sola, cadastral_number.
+ *   (3) Property text search covers carte_funciara, the tarla code and
+ *       cadastral_number. Slice #34.03: the tarla half is
+ *       `lookup_tarla.indicativ` through `property.tarla_id`, not a column on
+ *       `property` - so a code renamed in Reference Data is searchable under
+ *       its new name on the next query, which it was not before.
  *   (4) Document text search covers nr_document and subject.
  *   (5) personSubtype filter (NATURAL | JUDICIAL).
  */
@@ -75,6 +79,7 @@ import {
   propertyAddress,
   document,
   entityMetadata,
+  lookupTarla,
 } from "@/db/schema";
 import { listGroupTagsForEntities } from "@/lib/groups/queries";
 import { listStampCodesForEntities } from "@/lib/stamps/queries";
@@ -284,7 +289,9 @@ export async function GET(req: Request) {
       ? or(
           ilike(property.nickname,          `%${search}%`),
           ilike(property.carteFunciara,     `%${search}%`),
-          ilike(property.tarlaSola,         `%${search}%`),
+          // Slice #34.03: the code lives in lookup_tarla now, reached by the
+          // LEFT JOIN below.
+          ilike(lookupTarla.indicativ,      `%${search}%`),
           ilike(property.cadastralNumber,   `%${search}%`),
           ilike(principalObject.code,       `%${search}%`),
           ilike(propertyAddress.streetLine, `%${search}%`),
@@ -299,7 +306,7 @@ export async function GET(req: Request) {
         code:              principalObject.code,
         entityId:          property.id,
         // Slice #20.02 (C): individual fields for the priority display
-        tarlaSola:         property.tarlaSola,
+        tarla:             lookupTarla.indicativ,
         parcela:           property.parcela,
         nickname:          property.nickname,
         cadastralNumber:   property.cadastralNumber,
@@ -315,6 +322,10 @@ export async function GET(req: Request) {
       // property_address has a unique index on property_id, so this cannot
       // multiply rows and the cap stays a row cap.
       .leftJoin(propertyAddress, eq(propertyAddress.propertyId, property.id))
+      // Slice #34.03: LEFT, and it cannot multiply rows either - `tarla_id` is
+      // a single-column FK to a primary key, so a property joins at most one
+      // row and the cap stays a row cap.
+      .leftJoin(lookupTarla, eq(lookupTarla.id, property.tarlaId))
       .leftJoin(entityMetadata, eq(entityMetadata.principalObjectId, principalObject.id))
       .where(and(
         eq(principalObject.objectType, "PROPERTY"),
@@ -327,7 +338,7 @@ export async function GET(req: Request) {
     return rows.map((r) => {
       // Summary displayName for plain-text consumers.
       // Priority: tarla+parcela → nickname → cadastralNumber → ""
-      const tarlaParcela = [r.tarlaSola, r.parcela].filter(Boolean).join(" / ");
+      const tarlaParcela = [r.tarla, r.parcela].filter(Boolean).join(" / ");
       return {
         principalObjectId:       r.principalObjectId,
         code:                    r.code,
@@ -341,7 +352,7 @@ export async function GET(req: Request) {
         provenance:              r.provenance,
         updatedBy:               r.updatedBy,
         metadataUpdatedAt:       r.metadataUpdatedAt?.toISOString() ?? null,
-        propertyTarlaSola:       r.tarlaSola,
+        propertyTarlaSola:       r.tarla,
         propertyParcela:         r.parcela,
         propertyNickname:        r.nickname,
         propertyCadastralNumber: r.cadastralNumber,
