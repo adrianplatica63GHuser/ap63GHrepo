@@ -104,7 +104,15 @@ export type LookupRow = Record<string, unknown> & { id: string };
  * back a taken key and fail on INSERT with 23505.
  */
 async function generateUniqueKey(
-  table: typeof lookupDocumentType | typeof lookupPropertyType,
+  // ⚠️ **`lookupDocumentType` alone since Slice #34.03 (D-23), and the
+  // narrowing is the point rather than tidying.** This parameter was a union
+  // with `lookupPropertyType`, and that union was the only reason a key was
+  // still being generated for property types: one generator served two tables,
+  // one of which stopped having a reader when migration_041 replaced
+  // `src/lib/properties/type-config.ts` with the three `show*` booleans. A
+  // union of one is a type error at any future call site that tries to widen
+  // it back without saying why.
+  table: typeof lookupDocumentType,
   name: string,
   conn: DbTransaction | typeof db = db,
   preferredBase?: string | null,
@@ -130,10 +138,20 @@ async function generateUniqueDocumentTypeKey(
   return generateUniqueKey(lookupDocumentType, name, conn, preferredBase);
 }
 
-// Same slug logic for property types (Slice #19.02).
-async function generateUniquePropertyTypeKey(name: string): Promise<string> {
-  return generateUniqueKey(lookupPropertyType, name);
-}
+// Slice #34.03 (D-23): `generateUniquePropertyTypeKey` was here, and it is
+// gone. It generated `lookup_property_type.key` on every insert — a column
+// read by NO application code since migration_041 replaced
+// `src/lib/properties/type-config.ts` with `show_tarla_parcela` /
+// `show_address` / `show_street_view` on the table itself. The only read left
+// in `src/` was this generator's own uniqueness probe: it existed to keep
+// unique a value nothing consulted.
+//
+// The column is left in place, nullable (it always was — migration_039 adds it
+// with no NOT NULL), so rows created before #34.03 keep their slug and rows
+// created after hold NULL. Neither is read. migration_078 leaves a COMMENT on
+// the column saying so, and `scripts/verify-rebuild.ts` no longer asserts a
+// key on this table. `lookup_document_type.key` is untouched and still
+// required: it is the immutable slug all document matching and seeding run on.
 
 // ── List ─────────────────────────────────────────────────────────────────────
 
@@ -286,8 +304,10 @@ export async function createValue(
 ): Promise<LookupRow> {
   switch (key) {
     case "property-types": {
-      const key = await generateUniquePropertyTypeKey(data.name);
-      const [row] = await db.insert(lookupPropertyType).values({ ...data, key }).returning();
+      // Slice #34.03: no generated `key` — see the note above
+      // `generateUniqueKey`. This branch is now the same plain insert as the
+      // nine below it.
+      const [row] = await db.insert(lookupPropertyType).values(data).returning();
       return row as LookupRow;
     }
     case "tarla": {

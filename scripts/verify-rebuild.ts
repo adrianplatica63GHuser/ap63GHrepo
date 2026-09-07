@@ -165,7 +165,28 @@ const LOOKUP_EMPTY_EXPECTED: Record<string, string> = {
 // Lookup tables with a `key` column the application switches on. A reference
 // load that leaves the column NULL breaks the code that reads it, and row
 // counts do not notice.
-const LOOKUP_KEY_REQUIRED = ["lookup_property_type", "lookup_document_type"];
+//
+// ⚠️ **`lookup_property_type` was in this list until Slice #34.03 (D-23), and
+// it was asserting a property nothing depended on.** That column's reader —
+// `src/lib/properties/type-config.ts` — was replaced by the three `show*`
+// booleans on the table itself in migration_041; by #34.03 the only code
+// touching `key` there was the generator that filled it in on every insert, so
+// the check was guarding a value written for its own sake.
+//
+// ⚠️ **It is removed because the property stopped MEANING anything, not
+// because it was about to fail** - a review round struck an earlier version of
+// this comment that claimed the check "would have started failing on any
+// database that had gained a property type". It would not: this step runs
+// against DB_FULL, a throwaway container database whose only reference data
+// comes from `sync-reference-data.sql`, which still INSERTs a key for all
+// fourteen property types and will keep passing for ever. The check simply no
+// longer asserts anything a reader depends on, and a green check that means
+// nothing is the thing this file exists to distrust.
+//
+// `lookup_document_type` stays: its `key` really is the immutable slug
+// `matchDocumentType` and `seed.ts` resolve through, and a NULL there really
+// does make a row invisible to the code that reads it.
+const LOOKUP_KEY_REQUIRED = ["lookup_document_type"];
 
 // ---------------------------------------------------------------------------
 // Arguments

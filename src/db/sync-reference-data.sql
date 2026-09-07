@@ -39,17 +39,25 @@ TRUNCATE lookup_person_role, lookup_property_type, lookup_tarla,
 
 -- ── lookup_property_type ──────────────────────────────────────────────────────
 --
--- `key` and the three panel flags are NOT optional here. This block used to
--- insert (name, sort_order) only, and it had gone stale in two ways at once:
--- it wrote six of the fourteen types, and it left `key` NULL on all six.
--- `key` is the immutable slug src/lib/properties/type-config.ts switches on,
--- and the flags are the per-type form-panel visibility migration_041 sets --
--- DEFAULT FALSE means every panel hidden. A project seeded from the old block
--- had eight property types missing and six with no slug and every panel
--- hidden, and nothing in the repository would have said so.
--- Values are migration_039 + migration_040 (rows and slugs) and migration_041
--- (flags). scripts/verify-rebuild.ts now fails when any row here has key NULL.
--- (Slice #31.01)
+-- The three panel flags are NOT optional here. This block used to insert
+-- (name, sort_order) only, and it had gone stale in two ways at once: it wrote
+-- six of the fourteen types, and it left `key` NULL on all six. The flags are
+-- the per-type form-panel visibility migration_041 sets -- DEFAULT FALSE means
+-- every panel hidden. A project seeded from the old block had eight property
+-- types missing and six with every panel hidden, and nothing in the repository
+-- would have said so. Values are migration_039 + migration_040 (rows and
+-- slugs) and migration_041 (flags). (Slice #31.01)
+--
+-- ⚠️ **`key` IS NOW OPTIONAL, and this block keeps writing it only so that a
+-- freshly-loaded project matches a migrated one column for column.** The
+-- sentence here used to say `key` was "the immutable slug
+-- src/lib/properties/type-config.ts switches on"; that module was replaced by
+-- the three flags below in migration_041, and Slice #34.03 (D-23) deleted the
+-- generator that was still filling the column in on every insert. Nothing
+-- reads it, `scripts/verify-rebuild.ts` no longer requires it on this table,
+-- and rows created through Reference Data from #34.03 on hold NULL.
+-- `lookup_document_type.key` further down is a different column with the same
+-- name and is genuinely load-bearing. (Slice #34.03)
 INSERT INTO lookup_property_type
   (name, key, sort_order, show_tarla_parcela, show_address, show_street_view) VALUES
   -- Generic / Linear: everything visible
