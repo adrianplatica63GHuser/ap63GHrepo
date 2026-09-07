@@ -4,7 +4,7 @@
 -- GENERATED FILE -- DO NOT EDIT BY HAND.
 -- Regenerate with:  .\scripts\Export-SupabaseSchema.ps1
 --
--- Generated : 2026-09-02 09:09
+-- Generated : 2026-09-07 07:03
 -- Source    : local Docker database (ga40db @ ga40prj-postgres)
 --
 -- Applies the complete schema from scratch after running
@@ -595,8 +595,17 @@ CREATE TABLE public.lookup_institution (
     institution_type text,
     sort_order integer DEFAULT 0 NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    origin text DEFAULT 'MANUAL'::text NOT NULL,
+    CONSTRAINT chk_li_origin CHECK ((origin = ANY (ARRAY['MANUAL'::text, 'IMPORT'::text])))
 );
+
+
+--
+-- Name: COLUMN lookup_institution.origin; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.lookup_institution.origin IS 'How this institution came to exist: MANUAL = added in Reference Data (every row today), IMPORT = created by a machine reading. Nothing writes IMPORT yet - src/lib/import/id-card.ts still refuses to mint an institution from a model reading, and #34.02 keeps that refusal - so the column exists to make the status word answerable on both lists in one modal.';
 
 
 --
@@ -702,8 +711,17 @@ CREATE TABLE public.lookup_tarla (
     descriere text,
     sort_order integer DEFAULT 0 NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    origin text DEFAULT 'MANUAL'::text NOT NULL,
+    CONSTRAINT chk_lt_origin CHECK ((origin = ANY (ARRAY['MANUAL'::text, 'IMPORT'::text])))
 );
+
+
+--
+-- Name: COLUMN lookup_tarla.origin; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.lookup_tarla.origin IS 'How this code came to exist: MANUAL = typed into the Indicative Tarla list by a person, IMPORT = auto-seeded by createPropertyIn from a tarla value an import parsed out of a folder name. The origin is decided at that write site and is never read from a request body. Write-once by convention: unlike lookup_document_type, no explicit strip guards the value-lists PUT for this table - Zod drops an unknown origin from the update payload and that is the only guard. See migration_077 for the full note.';
 
 
 --
