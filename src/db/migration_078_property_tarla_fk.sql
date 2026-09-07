@@ -52,6 +52,26 @@
 --   Re-running the check before applying is still worth a minute - the report
 --   in section 5 is what confirms the answer matched.
 --
+--   RE-RUN ON 7 SEPTEMBER 2026, IMMEDIATELY BEFORE THE FIRST APPLY, AND THE
+--   DATABASE HAD MOVED: 13 properties, not 14. Every other number held - 11
+--   carrying a tarla value, 4 distinct values, the SAME single unmatched value
+--   (`99/9-not-in-list` on PROP01612), and query 1c still empty, so there is
+--   no folded twin and section 3 has nothing to refuse. The property that went
+--   was one of the ones carrying NO tarla, so `without_tarla` went 3 -> 2 and
+--   this file's work is unchanged.
+--
+--   That is recorded here rather than corrected in the paragraph above,
+--   because the paragraph above is a statement about a date and stays true.
+--   What the two together say is the point: the numbers moved by one row in a
+--   day, which is exactly why this file resolves whatever it finds instead of
+--   trusting them.
+--
+--   SO THE FIRST RUN SHOULD REPORT: one WARNING naming PROP01612, and a NOTICE
+--   reading "11 propert(y/ies) carried a tarla value - 10 now point at a
+--   lookup_tarla row (0 of those at a code that DISAGREED with the text) and 1
+--   had no matching code and lose it; 2 carried none and stay NULL". Anything
+--   else means the database moved again between the check and the apply.
+--
 -- THE ONE CASE THIS FILE REFUSES: TWO CODES THAT FOLD TO ONE
 --   If two `lookup_tarla` rows fold to the same code and a property carries
 --   it, there is no answer here that is not a guess - and picking one is
