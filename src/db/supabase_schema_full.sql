@@ -4,7 +4,7 @@
 -- GENERATED FILE -- DO NOT EDIT BY HAND.
 -- Regenerate with:  .\scripts\Export-SupabaseSchema.ps1
 --
--- Generated : 2026-09-07 07:03
+-- Generated : 2026-09-07 11:48
 -- Source    : local Docker database (ga40db @ ga40prj-postgres)
 --
 -- Applies the complete schema from scratch after running
@@ -702,6 +702,13 @@ CREATE TABLE public.lookup_property_type (
 
 
 --
+-- Name: COLUMN lookup_property_type.key; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.lookup_property_type.key IS 'DEAD SINCE Slice #34.03 (D-23): nothing writes it and nothing reads it. It was added by migration_039 as the slug src/lib/properties/type-config.ts switched on for per-type field visibility; that module no longer exists - migration_041 replaced it with the show_tarla_parcela / show_address / show_street_view booleans on this table - and #34.03 deleted the generator that was still filling the column in on every insert. So rows created before that slice hold a slug, rows created after hold NULL, and NEITHER is read. Do not start reading it without repopulating it. NOT the same thing as lookup_document_type.key, which is the immutable slug all document matching and seeding run on and which scripts/verify-rebuild.ts still requires. The column is left in place rather than dropped only because dropping it would reach into four more hand-maintained files for no gain; see migration_078''s header.';
+
+
+--
 -- Name: lookup_tarla; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -863,7 +870,6 @@ CREATE TABLE public.property (
     principal_object_id uuid NOT NULL,
     code text NOT NULL,
     nickname text,
-    tarla_sola text,
     parcela text,
     cadastral_number text,
     carte_funciara text,
@@ -875,7 +881,8 @@ CREATE TABLE public.property (
     use_category_id uuid,
     calculated_area_mp numeric(12,2),
     updated_by text,
-    corner_order_self_intersects boolean DEFAULT false NOT NULL
+    corner_order_self_intersects boolean DEFAULT false NOT NULL,
+    tarla_id uuid
 );
 
 
@@ -884,6 +891,13 @@ CREATE TABLE public.property (
 --
 
 COMMENT ON COLUMN public.property.corner_order_self_intersects IS 'True when the stored corner ORDER traces a self-intersecting (bow-tie) ring, which makes calculated_area_mp meaningless. Server-computed, never user-editable: it is written by polygonSelfIntersects (src/lib/properties/area.ts) from the two corner-write choke points in src/lib/properties/queries.ts once the rest of Slice #32.14 lands - as of this migration nothing writes it and every row is false. There is no backfill; see the migration file header. Slice #32.14.';
+
+
+--
+-- Name: COLUMN property.tarla_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.property.tarla_id IS 'Nr. tarla / sola, as a REFERENCE to the Indicative Tarla list rather than as text (Slice #34.03, migration_078). Replaced property.tarla_sola, which held the indicativ as free text: renaming a code in Reference Data reached no property at all, the dependents count was a string match, and the dropdown had to synthesise an option for any value the list did not hold. Nullable and ON DELETE SET NULL, exactly like property_type_id and use_category_id - a property may legitimately not know its tarla yet, and removing a code from Reference Data clears the tag rather than blocking the delete. Note that property_version.snapshot rows written BEFORE this migration still carry the old tarlaSola TEXT, deliberately: a version is a record of what was true when it was saved.';
 
 
 --
@@ -1846,13 +1860,6 @@ CREATE INDEX idx_property_nickname_trgm ON public.property USING gin (nickname p
 
 
 --
--- Name: idx_property_tarla_sola_trgm; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_property_tarla_sola_trgm ON public.property USING gin (tarla_sola public.gin_trgm_ops) WHERE (tarla_sola IS NOT NULL);
-
-
---
 -- Name: judicial_person_cui_unique; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2583,6 +2590,14 @@ ALTER TABLE ONLY public.property_property
 
 ALTER TABLE ONLY public.property
     ADD CONSTRAINT property_property_type_id_fkey FOREIGN KEY (property_type_id) REFERENCES public.lookup_property_type(id) ON DELETE SET NULL;
+
+
+--
+-- Name: property property_tarla_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.property
+    ADD CONSTRAINT property_tarla_id_fkey FOREIGN KEY (tarla_id) REFERENCES public.lookup_tarla(id) ON DELETE SET NULL;
 
 
 --
