@@ -45,6 +45,13 @@ const ALLOWLIST: Record<string, string> = {
   // select has no `buttonClass` equivalent.
   "components/entity-metadata-tab.tsx": "native <select> dropdowns",
 
+  // Slice #34.02: the identity-card review dialog's institution dropdown. A
+  // native <select> for the same reason as the row above — and deliberately not
+  // `AsyncSelect`, which is react-hook-form bound while this is a DOCUMENT
+  // column on a person form. It is disabled while the submit is in flight, so
+  // what is on screen and what is being written cannot diverge.
+  "app/admin/import/_components/id-card-person-dialog.tsx": "native <select> dropdown",
+
   // The helper itself documents the pattern it replaced; its tests assert the
   // helper never emits one.
   "lib/ui/button-styles.ts": "documentation of the retired pattern",

@@ -41,6 +41,99 @@ describe("documentFieldsFromIdCard — the mapping", () => {
     expect(patch.title).toBe(`${ID_CARD_TITLE_PREFIX}Popescu Ion`);
   });
 
+  /**
+   * The issuing authority is a ROW when a person placed it, prose only when
+   * nobody has.                                                (Slice #34.02)
+   *
+   * The two arms are exclusive on purpose. With the FK written, a `subject`
+   * reading "Eliberată de SPCLEP Bragadiru" would be a second, freely-editable
+   * copy of a fact the schema now holds properly — the shape migration_068
+   * exists because of. Both directions are asserted, because a change that
+   * wrote both would look like an improvement in a diff.
+   */
+  describe("the issuing authority", () => {
+    const CHOSEN = "11111111-2222-3333-4444-555555555555";
+
+    it("writes the FK and NOT the subject line when a person chose a row", () => {
+      const patch = documentFieldsFromIdCard({ ...FULL_CARD, institutionId: CHOSEN }, {});
+      expect(patch.institutionId).toBe(CHOSEN);
+      expect(patch.subject).toBeUndefined();
+    });
+
+    it("falls back to the subject line when nobody chose one", () => {
+      for (const institutionId of [null, undefined, "", "   "]) {
+        const patch = documentFieldsFromIdCard({ ...FULL_CARD, institutionId }, {});
+        expect([institutionId, patch.institutionId]).toEqual([institutionId, undefined]);
+        expect([institutionId, patch.subject]).toEqual([
+          institutionId,
+          `${ID_CARD_SUBJECT_PREFIX}SPCLEP Bragadiru`,
+        ]);
+      }
+    });
+
+    it("never overwrites an institution the document already has", () => {
+      // Write-if-empty, exactly like every other field here: a person who set
+      // the institution on the document form outranks a card read afterwards.
+      const patch = documentFieldsFromIdCard(
+        { ...FULL_CARD, institutionId: CHOSEN },
+        { institutionId: "99999999-8888-7777-6666-555555555555" },
+      );
+      expect(patch.institutionId).toBeUndefined();
+    });
+
+    it("writes NOTHING when the document already holds the same institution", () => {
+      // ⚠️ **The second review round's finding, and it is the ordinary second
+      // pass over one document.** Click once: the FK is written. Click again:
+      // the matcher now HITS that row, so `card.institutionId` equals
+      // `current.institutionId`, the FK arm is blocked by write-if-empty — and
+      // the first version of the fallback then wrote "Eliberată de SPCLEP
+      // Bragadiru" into `subject` beside the institution it duplicates, and
+      // reported "1 field written". Blocked because the fact is ALREADY THERE
+      // is not the same as blocked because it went somewhere else.
+      const patch = documentFieldsFromIdCard(
+        { ...FULL_CARD, institutionId: CHOSEN },
+        { institutionId: CHOSEN },
+      );
+      expect(patch.institutionId).toBeUndefined();
+      expect(patch.subject).toBeUndefined();
+      // nrDocument, dateDocument, dateValidUntil, title — and neither an
+      // institution nor a subject, which is one field fewer than any other
+      // outcome for this card.
+      expect(idCardDocumentFieldCount(patch)).toBe(4);
+      expect(idCardDocumentFieldCount(documentFieldsFromIdCard(FULL_CARD, {}))).toBe(5);
+    });
+
+    it("keeps the reading as prose when the FK arm is blocked", () => {
+      // ⚠️ **The information-loss case a review round found in the first
+      // version.** It was a plain `if / else if`, so a document that already
+      // had a DIFFERENT institution took the first arm, wrote nothing, and
+      // never reached the fallback — the authority the card named vanished,
+      // with the dialog's preview having just shown it. Blocked for either
+      // reason, the prose is written.
+      const patch = documentFieldsFromIdCard(
+        { ...FULL_CARD, institutionId: CHOSEN },
+        { institutionId: "99999999-8888-7777-6666-555555555555" },
+      );
+      expect(patch.subject).toBe(`${ID_CARD_SUBJECT_PREFIX}SPCLEP Bragadiru`);
+
+      // …unless the document's own subject already says something, which is
+      // the same write-if-empty rule one field over.
+      const filled = documentFieldsFromIdCard(
+        { ...FULL_CARD, institutionId: CHOSEN },
+        { institutionId: "99999999-8888-7777-6666-555555555555", subject: "Ceva scris de om" },
+      );
+      expect(filled.subject).toBeUndefined();
+      expect(filled.institutionId).toBeUndefined();
+    });
+
+    it("counts as a document field, so the dialog reports it", () => {
+      const patch = documentFieldsFromIdCard({ ...FULL_CARD, institutionId: CHOSEN }, {});
+      expect(idCardDocumentFieldCount(patch)).toBe(
+        idCardDocumentFieldCount(documentFieldsFromIdCard(FULL_CARD, {})),
+      );
+    });
+  });
+
   it("never maps person attributes onto the document", () => {
     // The guard against a second, editable copy of an immutable CNP. If a
     // future change adds one of these to the patch, this fails loudly.
@@ -59,9 +152,22 @@ describe("documentFieldsFromIdCard — the mapping", () => {
     expect(patch.customFields).toBeUndefined();
   });
 
-  it("does not target institutionId (an FK that would mean auto-creating rows)", () => {
+  it("targets institutionId only when somebody handed it one", () => {
+    // ⚠️ **The title of this assertion used to be "does not target
+    // institutionId (an FK that would mean auto-creating rows)", and #34.02
+    // changed what is true underneath it.** The reason has not changed — this
+    // module still never RESOLVES an authority and never creates a row — but
+    // the conclusion has: a person picks the row in the review dialog and the
+    // id arrives on `card`. Left as it was, the assertion would have gone on
+    // passing (FULL_CARD carries no id) while asserting the opposite of the
+    // shipped behaviour, which a review round called out.
     const patch = documentFieldsFromIdCard(FULL_CARD, {}) as Record<string, unknown>;
     expect(patch.institutionId).toBeUndefined();
+    const chosen = documentFieldsFromIdCard(
+      { ...FULL_CARD, institutionId: "11111111-2222-3333-4444-555555555555" },
+      {},
+    ) as Record<string, unknown>;
+    expect(chosen.institutionId).toBe("11111111-2222-3333-4444-555555555555");
   });
 });
 

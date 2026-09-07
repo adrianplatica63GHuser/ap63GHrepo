@@ -17,13 +17,10 @@
  * `src/lib/import/id-card.ts` refuses, deliberately and at length, to mint a
  * `lookup_institution` row from a model's reading — "SPCLEP Bragadiru" read off
  * a card is a string, not a fact about this archive — and #34.02 KEEPS that
- * refusal. What #34.02 sets out to replace is the alternative that refusal
- * chose: put the authority into a free-text `subject` and move on, which throws
- * the reading away. ⚠️ **That replacement is not done yet** —
- * `src/lib/import/id-card.ts` is untouched and still writes the authority to
- * `subject`; this module and the route's `institutionId` are the half that
- * needs no schema, and the dropdown that consumes them waits on the migration
- * confirmation. This module answers "is there already a row that means this?" and
+ * refusal. What #34.02 replaces is the alternative that refusal chose: put the
+ * authority into a free-text `subject` and move on, which throws the reading
+ * away. `src/lib/import/id-card.ts` now writes the FK when a person picked one
+ * and keeps the `subject` line only when nobody did. This module answers "is there already a row that means this?" and
  * nothing else. A miss is a MISS, returned as `null`, so the caller can put the
  * raw string in front of a person beside an empty dropdown and let THEM make
  * the row in one click, with the model's spelling on screen. A person pressing

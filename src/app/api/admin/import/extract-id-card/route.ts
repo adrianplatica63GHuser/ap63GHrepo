@@ -22,15 +22,13 @@
  *                                      // lookup_institution rows, or null.
  *                                      // A null is an instruction to ASK, not
  *                                      // a licence to create; nothing here
- *                                      // ever writes a row.
- *                                      // ⚠️ NO CONSUMER YET. The review
- *                                      // dialog reads `fields` through its own
- *                                      // explicit MAPPED_FIELDS list, so this
- *                                      // key is inert until the dropdown and
- *                                      // its "adaugă" button land — which is
- *                                      // the half of #34.02 that waits on the
- *                                      // migration confirmation, because that
- *                                      // button writes a lookup row.
+ *                                      // ever writes a row. The review dialog
+ *                                      // reads it OUTSIDE its MAPPED_FIELDS
+ *                                      // list — that list maps person columns
+ *                                      // and this is a document one — and
+ *                                      // seeds its institution dropdown from
+ *                                      // it, as a suggestion a person can
+ *                                      // change or clear.
  *       addressStreetLine, addressPostalCode, addressLocality,
  *       addressCounty, addressCountry,
  *     },
@@ -449,12 +447,16 @@ export async function POST(request: NextRequest): Promise<Response> {
    * blip path — a null id plus `citizenshipRaw` in `lowConfidenceFields`. The
    * institution deliberately has no such flag, because a miss is the NORMAL
    * answer and warning it would tell the user to re-check a string that is
-   * already right. That leaves a blip indistinguishable from a miss, and the
-   * moment the dropdown and its "adaugă" button land, indistinguishable means a
-   * person is invited to create a second row for an institution the archive
-   * already holds — silent duplicates in the one list this module exists to
-   * keep clean. One field now, so the dropdown can suppress the offer rather
-   * than the offer having to be un-invented later. No consumer yet.
+   * already right. That would leave a blip indistinguishable from a miss — and
+   * indistinguishable means a person is invited to create a second row for an
+   * institution the archive already holds, which is a silent duplicate in the
+   * one list this module exists to keep clean. So the blip gets its own bit,
+   * and `id-card-person-dialog.tsx` withholds the "adaugă" offer on it.
+   *
+   * ⚠️ **It is not the only way that list can be unusable.** The dialog reads
+   * `lookup_institution` itself, for the dropdown, and that read can fail
+   * independently; it suppresses the offer on either. This flag covers the half
+   * only the server can see.
    */
   let lookupUnavailable = false;
   try {
@@ -482,7 +484,9 @@ export async function POST(request: NextRequest): Promise<Response> {
     //
     // ⚠️ **And it is not a licence to create.** `src/lib/import/id-card.ts`
     // refuses to mint an institution from a model's reading and #34.02 keeps
-    // that refusal; the row only ever comes from a person choosing to make it.
+    // that refusal; the row only ever comes from a person pressing "adaugă" in
+    // the review dialog, which is why `lookup_institution.origin` records the
+    // row as a person's choice.
     institutionId = matchInstitution(parsed.fields.idIssuingAuthority, institutionRows);
   } catch (err) {
     // Logged, never swallowed silently — CLAUDE.md's "never dismiss an error".

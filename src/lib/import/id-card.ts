@@ -291,10 +291,29 @@ export function isIdCardEntry(scan: IdCardScanSignal | null | undefined): boolea
 // for the one field the schema goes out of its way to protect. The Document
 // gets the fields that describe the card AS A DOCUMENT, and nothing else.
 //
-// institutionId is not a target either: it is an FK to lookup_institution, so
-// resolving "SPCLEP Bragadiru" would mean auto-creating lookup rows from an AI
-// reading — the exact trap the KNOWN_TYPE_KEYS gotcha records. The issuing
-// authority goes into the free-text `subject` instead.
+// institutionId WAS not a target, for a reason that still stands and a
+// conclusion that no longer does.   (Slice #34.02)
+//
+// The reason: it is an FK to `lookup_institution`, so resolving "SPCLEP
+// Bragadiru" by CREATING a row would mean minting reference data from an AI
+// reading — the exact trap the KNOWN_TYPE_KEYS gotcha records. Nothing here
+// creates a row and nothing here ever will.
+//
+// The conclusion that changed: "so the issuing authority goes into the
+// free-text `subject` instead" threw the reading away. `subject` is prose —
+// unsearchable as an institution, ungroupable, and invisible to every screen
+// that asks "what came from OCPI". #34.02's answer is the middle path the
+// citizenship field has always taken: the authority is MATCHED against the live
+// rows (`src/lib/import/lookup-name-match.ts`), and where it misses, the review
+// dialog puts the model's spelling in front of a PERSON beside an empty
+// dropdown with an "adaugă" button. The row is created by them, not by a model,
+// and `lookup_institution.origin` records that it was.
+//
+// So this function now accepts an `institutionId` a person has CHOSEN and, when
+// there is one, writes the FK and skips the `subject` line — two homes for one
+// fact is what migration_068 exists because of. With no choice made, the
+// `subject` fallback is untouched: a reading nobody has placed is still better
+// recorded as prose than not at all.
 //
 // No customFields keys are invented. CARTE_IDENTITATE has no template_fields,
 // and a key written without a template is invisible in the document form. If
@@ -312,6 +331,18 @@ export type IdCardDocumentSource = {
   idValidUntil?: string | null;
   firstName?: string | null;
   lastName?: string | null;
+  /**
+   * The `lookup_institution` row a PERSON selected in the review dialog, either
+   * because the matcher found it or because they pressed "adaugă" and made it.
+   *                                                            (Slice #34.02)
+   *
+   * ⚠️ **Never a model's answer taken unreviewed.** The matcher's suggestion
+   * arrives at the dialog as a preselected dropdown value; what reaches here is
+   * whatever the dropdown holds when the person presses the button. An
+   * unresolved authority is `null` and stays `null` — this module does not
+   * resolve, and it certainly does not create.
+   */
+  institutionId?: string | null;
 };
 
 /** The Document's current values, as read back before the patch is built. */
@@ -322,6 +353,8 @@ export type IdCardDocumentCurrent = {
   dateValidUntil?: string | null;
   subject?: string | null;
   notes?: string | null;
+  /** Slice #34.02 — never overwritten, like every other field here. */
+  institutionId?: string | null;
 };
 
 /** Only the keys that should actually change. Empty object = nothing to write. */
@@ -332,6 +365,8 @@ export type IdCardDocumentPatch = {
   dateValidUntil?: string;
   subject?: string;
   notes?: string;
+  /** Slice #34.02 — the FK, when a person chose one. */
+  institutionId?: string;
 };
 
 /**
@@ -414,7 +449,17 @@ export function documentFieldsFromIdCard(
 ): IdCardDocumentPatch {
   const patch: IdCardDocumentPatch = {};
 
-  // Card series+number → "Nr. document". The card's own identifier.
+  // The card's number → "Nr. document".
+  //
+  // ⚠️ **This is `idCardNumber`, which the extraction contract defines as the
+  // SECONDARY number printed when it differs from the series — not
+  // `idDocumentNumber`, which is the series+number and never reaches the
+  // document at all.** An earlier version of this comment said "card
+  // series+number", and #34.02's `CARTE_IDENTITATE` entry in
+  // `src/lib/documents/type-config.ts` was very nearly labelled „Serie și
+  // număr" on the strength of it — which would have been blank on most cards
+  // and wrong on the rest. That label stayed generic; correcting the MAPPING is
+  // a separate change, named in #34.02's handover.
   if (filled(card.idCardNumber) && !filled(current.nrDocument)) {
     patch.nrDocument = card.idCardNumber.trim();
   }
@@ -429,7 +474,54 @@ export function documentFieldsFromIdCard(
     patch.dateValidUntil = card.idValidUntil.trim();
   }
 
-  if (filled(card.idIssuingAuthority) && !filled(current.subject)) {
+  // ── The issuing authority: a real row when a person placed it, prose only
+  //    when nobody has.                                        (Slice #34.02)
+  //
+  // ⚠️ **THE TWO ARMS ARE EXCLUSIVE, and that is the point rather than a
+  // shortcut.** With the FK written, a `subject` reading "Eliberată de SPCLEP
+  // Bragadiru" is a second, freely-editable copy of a fact the schema now holds
+  // properly — the shape migration_068 exists because of, where a display value
+  // had been overloaded as a lock. The document form shows the institution from
+  // the dropdown; `subject` stays free for what it is for.
+  //
+  // ⚠️ **NEITHER ARM OVERWRITES.** `institutionId` is written only when the
+  // document has none, exactly like every other field in this function: a
+  // person who set the institution by hand on the document form outranks a
+  // card read afterwards.
+  //
+  // ⚠️ **AND THE READING IS NEVER DROPPED ON THE FLOOR, which a review round
+  // found the first version doing.** That version was a plain `if / else if`,
+  // so a document that ALREADY had a different institution took the first arm,
+  // wrote nothing (write-if-empty), and never reached the `subject` fallback —
+  // the authority the card named vanished, with the dialog's preview having
+  // just shown it. The comment justifying that said "nothing is lost — the
+  // dropdown showed them what the document holds", and the dropdown does not:
+  // it is seeded from the matcher's answer and the document is not read until
+  // submit. So the fallback is reached whenever the FK is NOT written, for
+  // either reason.
+  const institutionWritten =
+    filled(card.institutionId) && !filled(current.institutionId);
+  // ⚠️ **…AND THE FALLBACK DOES NOT FIRE WHEN THE DOCUMENT ALREADY HOLDS THE
+  // SAME ROW, which a second review round found.** With the FK arm blocked
+  // purely by write-if-empty, "blocked" was being read as "the reading has
+  // nowhere to go" — but a document already filed under the institution the
+  // dialog is offering has the fact, in the right column. Writing the prose
+  // beside it is the duplication the paragraph above forbids, and it is
+  // reachable on the ordinary second pass over one document: the first click
+  // writes the FK, the second click's matcher now HITS that row, and the
+  // fallback fired. That made the flow non-idempotent and reported "1 field
+  // written" for a duplicate.
+  const sameInstitutionAlready =
+    filled(card.institutionId) &&
+    filled(current.institutionId) &&
+    card.institutionId.trim() === current.institutionId.trim();
+  if (institutionWritten) {
+    patch.institutionId = (card.institutionId as string).trim();
+  } else if (
+    !sameInstitutionAlready &&
+    filled(card.idIssuingAuthority) &&
+    !filled(current.subject)
+  ) {
     patch.subject = `${ID_CARD_SUBJECT_PREFIX}${card.idIssuingAuthority.trim()}`;
   }
 

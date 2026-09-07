@@ -153,6 +153,21 @@ describe("getTypeConfig", () => {
     expect(cfg.labels.institution).toBe("typeLabels.institutionRegistrar");
   });
 
+  it("returns correct label override for CARTE_IDENTITATE", () => {
+    // Slice #34.02 — reachable for the first time on a card, because that slice
+    // files the issuing authority under a real `lookup_institution` row instead
+    // of dropping it into the free-text subject. The generic config would print
+    // it as „Instituție înregistrare", a REGISTRAR, on a document nobody
+    // registers.
+    const cfg = getTypeConfig("CARTE_IDENTITATE");
+    // ⚠️ Generic on purpose — see the config's own note: `nrDocument` is filled
+    // from the card's SECONDARY number, not from its series, so a precise label
+    // would be wrong more often than right.
+    expect(cfg.labels.nrDocument).toBe("typeLabels.nrGeneric");
+    expect(cfg.labels.dateDocument).toBe("typeLabels.dateIssued");
+    expect(cfg.labels.institution).toBe("typeLabels.institutionIssuer");
+  });
+
   it("returns correct label override for TITLU_PROPRIETATE", () => {
     const cfg = getTypeConfig("TITLU_PROPRIETATE");
     expect(cfg.labels.nrDocument).toBe("typeLabels.nrPropertyTitle");

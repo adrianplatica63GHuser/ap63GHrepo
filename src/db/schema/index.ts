@@ -800,12 +800,15 @@ export const lookupInstitution = pgTable("lookup_institution", {
   // than a gap.** This table is written only by the seed and by an
   // administrator: `src/lib/import/id-card.ts` deliberately does NOT mint an
   // institution from a model's reading of "Emisă de", and #34.02 keeps that
-  // refusal — what it sets out to replace is the alternative that reading gets
-  // today, which is a free-text `subject` and no row at all. ⚠️ That
-  // replacement is only half-built: `extract-id-card` now RESOLVES the
-  // authority against these rows (`src/lib/import/lookup-name-match.ts`), but
-  // `id-card.ts` is untouched and still writes it to `subject` — the dropdown
-  // and its one-click add are what close it. So every row here reads MANUAL.
+  // refusal — what it replaces is the alternative that reading used to get,
+  // which was a free-text `subject` and no row at all. `extract-id-card`
+  // resolves the authority against these rows
+  // (`src/lib/import/lookup-name-match.ts`), the review dialog offers the
+  // unmatched spelling with a one-click add, and `id-card.ts` files the card
+  // under the row a PERSON chose. So every row here still reads MANUAL — which
+  // is #29.06's rule, not an accident: origin says who chose the NAME, and a
+  // person who reads the model's spelling and presses "adaugă" has confirmed
+  // it.
   // The column is here because the status word has to be answerable on both
   // lists from one component, and a list with no answer reads as one whose
   // answer was lost.

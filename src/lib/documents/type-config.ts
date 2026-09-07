@@ -69,6 +69,39 @@ const GENERIC: TypeConfig = {
 
 const CONFIG: Record<string, TypeConfig> = {
 
+  /**
+   * ⚠️ **Added by #34.02, because that slice made this row REACHABLE on a
+   * card.** Before it, a card's issuing authority went into the free-text
+   * `subject` and `document.institution_id` was never set on an identity card,
+   * so the generic labels below never had to make sense here. Now the review
+   * dialog files the card under a real `lookup_institution` row — and the
+   * generic config would have printed it as „Instituție înregistrare" (a
+   * REGISTRAR) inside the "Taxe și onorarii" block, on a document nobody
+   * registers and pays no fee for. A review round found it.
+   *
+   * ⚠️ **`nrDocument` is deliberately left GENERIC, and a second review round
+   * is why.** The first version labelled it „Serie și număr", which is what a
+   * Romanian CI prints — but `documentFieldsFromIdCard` fills `nrDocument` from
+   * `card.idCardNumber`, and the extraction contract defines that as the
+   * SECONDARY number printed when it differs from the series, with the series
+   * itself in `idDocumentNumber` (which never reaches the document). So the
+   * precise label would have been blank on most cards and wrong on the rest.
+   * „Nr. document" is vague enough to be true; correcting the MAPPING is a
+   * separate change and is named in the handover.
+   *
+   * The two that do change are the ones a CI genuinely prints: „Data
+   * eliberării" and an issuer rather than a registrar. `institutionIssuer`
+   * ("Emitent") is reused rather than a new key added, because that is what
+   * this row means everywhere it appears.
+   */
+  CARTE_IDENTITATE: {
+    labels: {
+      nrDocument:   "typeLabels.nrGeneric",
+      dateDocument: "typeLabels.dateIssued",
+      institution:  "typeLabels.institutionIssuer",
+    },
+  },
+
   TITLU_PROPRIETATE: {
     labels: {
       nrDocument:   "typeLabels.nrPropertyTitle",

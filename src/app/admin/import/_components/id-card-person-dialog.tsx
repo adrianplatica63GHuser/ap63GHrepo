@@ -74,6 +74,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useWatch, type Control, type FieldPath, type UseFormRegister } from "react-hook-form";
 import { AsyncSelect } from "@/components/forms/async-select";
+import { foldLookupName, matchInstitution } from "@/lib/import/lookup-name-match";
 import {
   emptyFormValues,
   formSchema,
@@ -113,6 +114,13 @@ type ExtractResponse = {
   fields?: Partial<Record<string, string | null>>;
   lowConfidenceFields?: string[];
   unmappedRaw?: Record<string, string>;
+  /**
+   * Slice #34.02 — the two lookup reads themselves failed, so a null
+   * `institutionId` means "could not look", not "no such row". The offer to
+   * create one is withheld on that: inviting a new row for an institution the
+   * archive already holds is the duplicate this whole path exists to avoid.
+   */
+  lookupUnavailable?: boolean;
   error?: string;
   code?: string;
 };
@@ -184,6 +192,108 @@ const ADDRESS_FIELD_MAP: Record<string, string> = {
 
 /** The person always comes from the model's reading of the card. */
 const PERSON_PROVENANCE = inferProvenance("AI_EXTRACTION");
+
+/**
+ * ⚠️ **`null` means "could not read", `[]` means "the archive holds none" —
+ * and an adversarial round is why they are different values.** Collapsing a
+ * failed GET to an empty array presents an unreadable list as an EMPTY one, and
+ * the "adaugă" button beside it then invites a new row for an institution the
+ * archive already holds. That duplicate is the thing this whole path exists to
+ * avoid, so the failure has to be representable.
+ */
+async function fetchInstitutions(): Promise<{ id: string; name: string }[] | null> {
+  try {
+    const res = await fetch("/api/admin/value-lists/institutions");
+    // A redirect is the session having expired — every other fetch in this file
+    // checks it, and an HTML login page parses to `{}` and reads as "no rows".
+    if (res.redirected || !res.ok) return null;
+    const data = (await res.json()) as { items?: { id: string; name: string }[] };
+    return data.items ?? [];
+  } catch {
+    return null;
+  }
+}
+
+const toInstitutionOptions = (
+  rows: { id: string; name: string }[],
+): { value: string; label: string }[] => rows.map((r) => ({ value: r.id, label: r.name }));
+
+/**
+ * The live `lookup_institution` rows, a way to re-read them, and a way to add
+ * one locally.                                                 (Slice #34.02)
+ *
+ * ⚠️ **Reloadable where `useCitizenshipOptions` below is not**, because this
+ * list can gain a row while the dialog is open — that is the whole feature. A
+ * fetch-once hook would leave the "adaugă" button creating a row the dropdown
+ * beside it could not then show.
+ */
+function useInstitutionOptions(): {
+  options: { value: string; label: string }[];
+  /** Which of the three states the list is in, for the hint under the select. */
+  listState: "loading" | "loaded" | "failed";
+  reload: () => Promise<void>;
+  /**
+   * ⚠️ **Add one row without a round trip, so a created institution is
+   * selectable even if the re-read fails.** A second review round found that
+   * "keep the previous list on failure" does not cover the case it was written
+   * for: the row just created is by definition absent from the previous list,
+   * so a failed reload left the select holding an id with no `<option>` —
+   * blank on screen, hint and button both suppressed, preview label empty — and
+   * the FK still written at submit. The POST returns the whole row; using it is
+   * free.
+   */
+  upsert: (row: { id: string; name: string }) => void;
+} {
+  const [options, setOptions] = useState<{ value: string; label: string }[]>([]);
+  const [listState, setListState] = useState<"loading" | "loaded" | "failed">("loading");
+  // ⚠️ **The initial read is a `.then` chain with a `cancelled` latch, matching
+  // `useCitizenshipOptions` below rather than an `await` in the effect body.**
+  // `react-hooks/set-state-in-effect` rejects the second shape — it cannot see
+  // that the `setOptions` is behind a `fetch` — and it is an ERROR in this
+  // repo's config, not a warning. Same reason the fetch itself lives outside
+  // the hook: `reload` needs it too, and one definition is what stops the
+  // opening read and the post-add read from drifting apart.
+  useEffect(() => {
+    let cancelled = false;
+    fetchInstitutions()
+      .then((rows) => {
+        if (cancelled) return;
+        if (rows === null) {
+          setListState("failed");
+          return;
+        }
+        setOptions(toInstitutionOptions(rows));
+        setListState("loaded");
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  const reload = useCallback(async (): Promise<void> => {
+    const rows = await fetchInstitutions();
+    // ⚠️ **A failed re-read KEEPS the list it already has.** Overwriting it with
+    // nothing after a successful POST left the select holding an id with no
+    // matching option — blank on screen, the hint and the button both hidden
+    // because they gate on the id being set, and the preview row filtered out
+    // for having an empty label. The FK was still written, with no trace of it
+    // anywhere the user could see.
+    if (rows === null) {
+      setListState("failed");
+      return;
+    }
+    setOptions(toInstitutionOptions(rows));
+    setListState("loaded");
+  }, []);
+  const upsert = useCallback((row: { id: string; name: string }): void => {
+    setOptions((prev) =>
+      prev.some((o) => o.value === row.id)
+        ? prev.map((o) => (o.value === row.id ? { value: row.id, label: row.name } : o))
+        : [...prev, { value: row.id, label: row.name }],
+    );
+  }, []);
+  return { options, listState, reload, upsert };
+}
 
 function useCitizenshipOptions(): { value: string; label: string }[] {
   const [options, setOptions] = useState<{ value: string; label: string }[]>([]);
@@ -306,6 +416,34 @@ export function IdCardPersonDialog({
   const t = useTranslations("adminImport.wizard.importDialog.idCard");
   const queryClient = useQueryClient();
   const citizenshipOptions = useCitizenshipOptions();
+  const {
+    options: institutionOptions,
+    listState: institutionListState,
+    reload: reloadInstitutions,
+    upsert: upsertInstitution,
+  } = useInstitutionOptions();
+  /**
+   * The `lookup_institution` row this card's authority will be filed under.
+   *                                                            (Slice #34.02)
+   *
+   * ⚠️ **Component state, NOT a form field, and the distinction is the
+   * schema's.** `FormValues` is a NATURAL PERSON — the form's resolver, its
+   * dirty checks and its POST all belong to `natural_person`. The institution
+   * is a DOCUMENT column (`document.institution_id`), written by the same click
+   * through `documentFieldsFromIdCard` and by nothing else. Putting it on the
+   * person form would make the person schema carry a field the person table
+   * does not have, which is the shape `id-card.ts` already refuses for `cnp` in
+   * the other direction.
+   *
+   * Seeded from the matcher's answer when the extraction returns; whatever it
+   * holds at submit time is what a PERSON chose to file the card under.
+   */
+  const [institutionId, setInstitutionId] = useState("");
+  /** True when the lookup read failed, so a miss is not evidence of absence. */
+  const [lookupUnavailable, setLookupUnavailable] = useState(false);
+  /** In flight while the "adaugă" button is creating the row. */
+  const [addingInstitution, setAddingInstitution] = useState(false);
+  const [addInstitutionError, setAddInstitutionError] = useState<string | null>(null);
 
   const [phase, setPhase] = useState<Phase>("extracting");
   const [busy, setBusy] = useState(false);
@@ -423,6 +561,10 @@ export function IdCardPersonDialog({
           });
         }
 
+        // Slice #34.02 — the matcher's answer, as a SUGGESTION in a dropdown a
+        // person can change, never as a value written behind their back.
+        if (fields.institutionId) setInstitutionId(fields.institutionId);
+        setLookupUnavailable(data.lookupUnavailable === true);
         setLowConfidence(new Set(data.lowConfidenceFields ?? []));
         setUnmappedRaw(data.unmappedRaw ?? {});
         setPhase("resolving");
@@ -529,6 +671,106 @@ export function IdCardPersonDialog({
   //
   // Never throws. Returns what happened so the caller can report it without
   // losing a person who was already created and linked.
+  /**
+   * Is the review form — and with it the institution picker — on screen?
+   *
+   * ⚠️ **Computed HERE rather than at the render, because the document write
+   * has to ask it too.** (Slice #34.02, review round.) The institution picker
+   * lives inside the create branch's form; on the confirm-match branch nobody
+   * sees it. Writing the matcher's suggestion from that branch would put a
+   * model-derived FK on the document with no human between — the one thing this
+   * whole path refuses — so `writeDocumentFields` sends the id only when the
+   * control that shows it was rendered.
+   */
+  const showForm =
+    phase === "ready" &&
+    isCreateBranch({ matchCandidate, possibleMatches, forceCreate });
+
+  /**
+   * The institution this click will actually file the card under — or null.
+   *                                                            (Slice #34.02)
+   *
+   * One expression, used by the write AND by the preview, because a third
+   * review round found them disagreeing: the preview promised an institution
+   * the confirm-match branch was never going to write.
+   *
+   * Two things have to be true, and both are about a HUMAN having seen it:
+   *
+   *   `showForm`  — the picker lives inside the create branch's form. On the
+   *                 confirm-match branch nobody sees it, so writing the
+   *                 matcher's suggestion from there would put a model-derived
+   *                 FK on the document with nobody between.
+   *   the list is usable — `institutionId` is seeded from the server's match
+   *                 BEFORE this dialog reads the list for its dropdown. If that
+   *                 read fails, the `<select>` has no option to show for the
+   *                 value it holds: it renders blank, and a value nobody can
+   *                 see is a value nobody reviewed. A fourth review round found
+   *                 the FK still being written in exactly that state. The
+   *                 degraded path is the one that already exists — no FK, and
+   *                 the authority recorded as prose in `subject`.
+   */
+  const institutionForWrite =
+    showForm && institutionListState === "loaded" && !lookupUnavailable
+      ? institutionId || null
+      : null;
+
+  /**
+   * Make the institution the card names, in one click.          (Slice #34.02)
+   *
+   * ⚠️ **A PERSON PRESSES THIS. Nothing else may create the row** —
+   * `src/lib/import/id-card.ts` refuses to mint an institution from a model's
+   * reading and this slice keeps that refusal; what changed is that the reading
+   * is no longer thrown away, it is put in front of somebody with the spelling
+   * the card used. `lookup_institution.origin` records `MANUAL` from its column
+   * DEFAULT, which is exactly true: a person chose this name.
+   *
+   * ⚠️ **It sends the FIELD's current value, not the model's original.** The
+   * authority sits in an editable input two lines up; a user who fixes the
+   * OCR's spelling before pressing this expects the fixed one, and the button's
+   * own label shows what will be created.
+   *
+   * ⚠️ **Re-reads the list and selects by ID from the RESPONSE**, rather than
+   * trusting the name it just sent: `createValue` decides the stored row, and
+   * matching the reloaded list by name afterwards would pick the wrong row the
+   * day two institutions differ only by case.
+   */
+  const addInstitution = useCallback(
+    async (name: string): Promise<void> => {
+      const trimmed = name.trim();
+      if (!trimmed) return;
+      setAddingInstitution(true);
+      setAddInstitutionError(null);
+      try {
+        const res = await fetch("/api/admin/value-lists/institutions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: trimmed }),
+        });
+        if (res.redirected) throw new Error(t("sessionExpired"));
+        if (!res.ok) {
+          const body = (await res.json().catch(() => ({}))) as { error?: string };
+          throw new Error(body.error ?? `HTTP ${res.status}`);
+        }
+        const row = (await res.json()) as { id?: string; name?: string };
+        // The created row first, from the POST's own answer — so it is
+        // selectable whatever the re-read does. The re-read then picks up
+        // anything else that changed and puts the list back in order.
+        if (row.id) {
+          upsertInstitution({ id: row.id, name: row.name ?? trimmed });
+          setInstitutionId(row.id);
+        }
+        await reloadInstitutions();
+      } catch (err) {
+        // ⚠️ Reported in place, never silently: the offer is the whole feature,
+        // and an "adaugă" that quietly does nothing is worse than no button.
+        setAddInstitutionError(err instanceof Error ? err.message : t("institutionAddError"));
+      } finally {
+        setAddingInstitution(false);
+      }
+    },
+    [reloadInstitutions, upsertInstitution, t],
+  );
+
   const writeDocumentFields = useCallback(
     async (values: FormValues): Promise<{ written: number; failed: boolean }> => {
       try {
@@ -539,6 +781,11 @@ export function IdCardPersonDialog({
           idValidUntil:       values.idValidUntil,
           firstName:          values.firstName,
           lastName:           values.lastName,
+          // Slice #34.02 — whatever the dropdown holds now, and ONLY when that
+          // dropdown was on screen. Empty means nobody placed this authority,
+          // and `documentFieldsFromIdCard` then falls back to the free-text
+          // `subject` line exactly as it always did.
+          institutionId:      institutionForWrite,
         };
 
         let current: IdCardDocumentCurrent = {};
@@ -569,7 +816,7 @@ export function IdCardPersonDialog({
         return { written: 0, failed: true };
       }
     },
-    [documentId, t],
+    [documentId, institutionForWrite, t],
   );
 
   const finish = useCallback(
@@ -671,9 +918,6 @@ export function IdCardPersonDialog({
     domiciliu: values.addresses?.HOME?.streetLine || null,
   };
 
-  const showForm =
-    phase === "ready" &&
-    isCreateBranch({ matchCandidate, possibleMatches, forceCreate });
 
   // ── Slice #23.08.Import: what this click will also write to the Document ──
   //
@@ -713,6 +957,19 @@ export function IdCardPersonDialog({
       idIssuingAuthority: wIdIssuingAuthority,
       idValidFrom:        wIdValidFrom,
       idValidUntil:       wIdValidUntil,
+      // Slice #34.02 — so the preview shows the same exclusive choice the
+      // write makes: pick an institution and the "Subiect" line disappears,
+      // because that is exactly what will happen.
+      //
+      // ⚠️ **THE SAME `showForm` GUARD AS THE WRITE, and a second review round
+      // found it missing here.** The preview is rendered on the confirm-match
+      // branch too — deliberately, because that is the branch where nobody sees
+      // the review form and an unannounced write would be invisible — and
+      // `institutionId` is seeded from the matcher there as well. Without the
+      // guard the preview promised "Instituție: OCPI" and hid the "Subiect"
+      // row, while the PATCH wrote the subject and no FK. Both rows wrong, on
+      // the one branch the preview exists for.
+      institutionId:      institutionForWrite,
     },
     {},
   );
@@ -723,8 +980,83 @@ export function IdCardPersonDialog({
       [t("docFieldDateDocument"),   docPreview.dateDocument],
       [t("docFieldDateValidUntil"), docPreview.dateValidUntil],
       [t("docFieldSubject"),        docPreview.subject],
+      // The institution is a FK, so the preview names the row rather than the
+      // uuid — a preview printing an id tells a business user nothing.
+      [
+        t("docFieldInstitution"),
+        docPreview.institutionId
+          ? institutionOptions.find((o) => o.value === docPreview.institutionId)?.label ?? ""
+          : undefined,
+      ],
     ] as const
   ).filter((row): row is readonly [string, string] => Boolean(row[1]));
+
+  // ── Slice #34.02: the three questions the institution row has to answer ───
+  //
+  // All computed from what is already in hand — no extra fetch, no extra state.
+  const authorityText = (wIdIssuingAuthority ?? "").trim();
+  /**
+   * Is the list itself unusable right now?
+   *
+   * ⚠️ **TWO INDEPENDENT FAILURES, and a review round found only one of them
+   * handled.** `lookupUnavailable` is the SERVER's read failing inside
+   * `extract-id-card`; `institutionListState` is this dialog's own GET failing.
+   * Either one means an empty box is not evidence that the archive lacks the
+   * row, and offering to create one on that evidence is how the duplicate this
+   * path exists to prevent gets made.
+   */
+  const institutionListUnusable = lookupUnavailable || institutionListState === "failed";
+  /**
+   * A row already listed whose name contains this reading as a whole word.
+   *
+   * ⚠️ **The matcher's containment is ONE-DIRECTIONAL and its own docblock says
+   * so**: a stored "SPCLEP Bragadiru, Județul Ilfov" is not matched by a card
+   * read as "SPCLEP Bragadiru", so without this the offer appears and a
+   * near-duplicate is created — no failure required, every single time, and
+   * nothing downstream catches it because `lookup_institution.name` carries no
+   * unique index. The list is already loaded; asking it costs nothing.
+   */
+  const alreadyListedInstitution = (() => {
+    if (authorityText === "") return null;
+    // ⚠️ **BOTH DIRECTIONS, and the second review round found only one of them
+    // covered.** `matchInstitution` answers "does a listed row's name appear in
+    // this reading" — exact, contained, aliased — which is the direction the
+    // SERVER already ran once, against the model's ORIGINAL string. But the
+    // authority sits in an editable field that `addInstitution` explicitly
+    // invites the user to correct, so the server's answer is stale the moment
+    // they do: typing the listed name exactly, or clearing the select back to
+    // "—", both left the offer standing over a row sitting in the dropdown
+    // beside it. Re-asking here costs nothing — the list is loaded and the
+    // matcher is a pure module.
+    const rows = institutionOptions.map((o) => ({ id: o.value, name: o.label }));
+    const matchedId = matchInstitution(authorityText, rows);
+    if (matchedId) return institutionOptions.find((o) => o.value === matchedId)?.label ?? null;
+
+    // …and the direction the matcher deliberately does not cover: a stored
+    // "SPCLEP Bragadiru, Județul Ilfov" is not found by a card read as "SPCLEP
+    // Bragadiru", because containment there is one-directional by design. That
+    // is precisely the near-duplicate a one-click add would create.
+    const folded = foldLookupName(authorityText);
+    if (folded === "") return null;
+    const contains = institutionOptions.find((o) => {
+      const name = foldLookupName(o.label);
+      return name !== "" && (` ${name} `).includes(` ${folded} `);
+    });
+    return contains?.label ?? null;
+  })();
+  /**
+   * ⚠️ **Offered only when there is something to name, the list is usable, and
+   * nothing already listed says the same thing.** A near-duplicate turns the
+   * offer into a sentence pointing at the row that is already in the dropdown —
+   * the person can choose it, which is the outcome the button was trying to
+   * reach anyway.
+   */
+  const offerInstitutionAdd =
+    !institutionId &&
+    authorityText !== "" &&
+    institutionListState === "loaded" &&
+    !institutionListUnusable &&
+    alreadyListedInstitution === null;
 
   const unmappedEntries = Object.entries(unmappedRaw);
   const addressWarnFields = new Set(
@@ -918,6 +1250,102 @@ export function IdCardPersonDialog({
             <div className="grid grid-cols-2 gap-2">
               <Field label={t("fPlaceOfBirth")} name="placeOfBirth" register={register} error={errors.placeOfBirth?.message} warn={lowConfidence.has("placeOfBirth")} />
               <Field label={t("fIdIssuingAuthority")} name="idIssuingAuthority" register={register} error={errors.idIssuingAuthority?.message} warn={lowConfidence.has("idIssuingAuthority")} />
+            </div>
+
+            {/* ── Slice #34.02: the authority, as a row rather than as prose ──
+
+                ⚠️ **A DROPDOWN PLUS AN OFFER, NOT AN AUTO-CREATE.** The model's
+                reading is matched against the live `lookup_institution` rows
+                (`src/lib/import/lookup-name-match.ts`) and the match arrives
+                preselected. Where it misses — which is EVERY identity card
+                today, because no seeded institution is a card issuer — the box
+                is empty and the button beside it offers to make the row with
+                the spelling on screen. `id-card.ts` still refuses to mint one
+                from a model's reading; what it stops doing is throwing the
+                reading into a free-text `subject` and moving on.
+
+                ⚠️ **The button is withheld when the LOOKUP failed**, because
+                then an empty box means "could not look", and inviting a new row
+                for an institution the archive already holds is the duplicate
+                this whole path exists to prevent. It is also withheld while the
+                authority field is blank — there would be nothing to name. */}
+            <div className="mt-2">
+              <label
+                htmlFor="id-card-institution"
+                className="mb-1 block text-xs font-medium text-ink dark:text-zinc-300"
+              >
+                {t("fInstitution")}
+              </label>
+              <div className="flex items-start gap-2">
+                {/* ⚠️ **A raw `<select>`, not `AsyncSelect`, and the reason is
+                    not laziness.** `AsyncSelect` is react-hook-form bound —
+                    it takes `register`/`control` and a form field name — and
+                    this is deliberately NOT a form field: `FormValues` is a
+                    natural person and the institution is a document column
+                    (see `institutionId`'s own note above). What
+                    `AsyncSelect` also brings, and what is reproduced here, is
+                    the remount-on-options-change behaviour: the list is
+                    rebuilt from `institutionOptions` on every render and the
+                    `value` is controlled, so a row added mid-dialog appears
+                    without a key trick. */}
+                <select
+                  id="id-card-institution"
+                  value={institutionId}
+                  onChange={(e) => setInstitutionId(e.target.value)}
+                  // Frozen once the submit has captured its value, so what is on
+                  // screen and what is being written cannot diverge.
+                  disabled={busy || addingInstitution}
+                  className="w-full rounded-md border border-wire bg-white px-2 py-1.5 text-sm text-ink disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+                >
+                  <option value="">—</option>
+                  {institutionOptions.map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+                {offerInstitutionAdd && (
+                  <button
+                    type="button"
+                    onClick={() => void addInstitution(authorityText)}
+                    disabled={addingInstitution || busy}
+                    className={buttonClass({ variant: "secondary", size: "sm" })}
+                  >
+                    {addingInstitution
+                      ? t("institutionAdding")
+                      : t("institutionAdd", { name: authorityText })}
+                  </button>
+                )}
+              </div>
+              {/* The reading itself, said once, under the control that acts on
+                  it — so a person deciding whether to press the button is
+                  looking at the words the card used, not at a dropdown that
+                  happens to be empty. Which sentence it is depends on WHY the
+                  box is empty, and the three reasons need three answers: the
+                  archive has no such row (make one), the list could not be read
+                  (do not offer to make one), or a row whose name already
+                  contains this reading is sitting in the dropdown (choose it). */}
+              {/* ⚠️ **NOT gated on `!institutionId`, and a review round found
+                  what that cost.** A server-matched id can be held while this
+                  dialog's own read of the list has failed — the select then
+                  renders blank, and gating the sentence on the id being empty
+                  meant the one state that needed an explanation was the one
+                  state with none. The unusable-list sentence fires whatever the
+                  select holds; the other three are about an EMPTY select. */}
+              {authorityText !== "" && (institutionListUnusable || !institutionId) && (
+                <p className="mt-1 text-xs text-fade dark:text-zinc-400">
+                  {institutionListState === "loading"
+                    ? t("institutionLoading")
+                    : institutionListUnusable
+                    ? t("institutionLookupUnavailable")
+                    : alreadyListedInstitution
+                    ? t("institutionNearDuplicate", { name: alreadyListedInstitution })
+                    : t("institutionUnmatched", { name: authorityText })}
+                </p>
+              )}
+              {addInstitutionError && (
+                <p role="alert" className="mt-1 text-xs text-rose-700 dark:text-rose-400">
+                  {addInstitutionError}
+                </p>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-2">
               <Field label={t("fIdValidFrom")}  name="idValidFrom"  type="date" register={register} error={errors.idValidFrom?.message}  warn={lowConfidence.has("idValidFrom")} />
