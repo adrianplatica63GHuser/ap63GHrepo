@@ -70,6 +70,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
+import { useCitizenshipOptions } from "@/hooks/use-lookup-options";
 import { useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useWatch, type Control, type FieldPath, type UseFormRegister } from "react-hook-form";
@@ -222,10 +223,13 @@ const toInstitutionOptions = (
  * The live `lookup_institution` rows, a way to re-read them, and a way to add
  * one locally.                                                 (Slice #34.02)
  *
- * ⚠️ **Reloadable where `useCitizenshipOptions` below is not**, because this
- * list can gain a row while the dialog is open — that is the whole feature. A
+ * ⚠️ **Reloadable where `useCitizenshipOptions` is not**, because this list
+ * can gain a row while the dialog is open — that is the whole feature. A
  * fetch-once hook would leave the "adaugă" button creating a row the dropdown
- * beside it could not then show.
+ * beside it could not then show. (Slice #34.04 moved `useCitizenshipOptions`
+ * out to `@/hooks/use-lookup-options` and onto a React Query key, which gives
+ * it a refetch this dialog does not have to drive — but nothing in here
+ * CREATES a citizenship, so it still needs no `reload` of its own.)
  */
 function useInstitutionOptions(): {
   options: { value: string; label: string }[];
@@ -246,8 +250,8 @@ function useInstitutionOptions(): {
 } {
   const [options, setOptions] = useState<{ value: string; label: string }[]>([]);
   const [listState, setListState] = useState<"loading" | "loaded" | "failed">("loading");
-  // ⚠️ **The initial read is a `.then` chain with a `cancelled` latch, matching
-  // `useCitizenshipOptions` below rather than an `await` in the effect body.**
+  // ⚠️ **The initial read is a `.then` chain with a `cancelled` latch rather
+  // than an `await` in the effect body.**
   // `react-hooks/set-state-in-effect` rejects the second shape — it cannot see
   // that the `setOptions` is behind a `fetch` — and it is an ERROR in this
   // repo's config, not a warning. Same reason the fetch itself lives outside
@@ -293,24 +297,6 @@ function useInstitutionOptions(): {
     );
   }, []);
   return { options, listState, reload, upsert };
-}
-
-function useCitizenshipOptions(): { value: string; label: string }[] {
-  const [options, setOptions] = useState<{ value: string; label: string }[]>([]);
-  useEffect(() => {
-    let cancelled = false;
-    fetch("/api/admin/value-lists/citizenships")
-      .then((r) => (r.ok ? r.json() : { items: [] }))
-      .then((data: { items?: { id: string; name: string }[] }) => {
-        if (cancelled) return;
-        setOptions((data.items ?? []).map((r) => ({ value: r.id, label: r.name })));
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-  return options;
 }
 
 // ---------------------------------------------------------------------------
@@ -415,7 +401,8 @@ export function IdCardPersonDialog({
 }: Props) {
   const t = useTranslations("adminImport.wizard.importDialog.idCard");
   const queryClient = useQueryClient();
-  const citizenshipOptions = useCitizenshipOptions();
+  const { options: citizenshipOptions, listState: citizenshipListState } =
+    useCitizenshipOptions();
   const {
     options: institutionOptions,
     listState: institutionListState,
@@ -1244,6 +1231,7 @@ export function IdCardPersonDialog({
                 control={control}
                 error={errors.citizenshipId?.message}
                 warn={lowConfidence.has("citizenshipRaw")}
+                hint={citizenshipListState === "failed" ? t("citizenshipListFailed") : undefined}
                 options={[{ value: "", label: "—" }, ...citizenshipOptions]}
               />
             </div>
@@ -1404,6 +1392,13 @@ type FieldProps = {
   register: UseFormRegister<FormValues>;
   error?: string;
   warn?: boolean;
+  /**
+   * Slice #34.04 — the one sentence a field can need that an `error` cannot
+   * say: nothing the user typed is wrong, the LIST behind the options could
+   * not be read. `natural-person-form.tsx` carries the same prop on the same
+   * component for the same reason; only `SelectField` renders it here.
+   */
+  hint?: string;
 };
 
 function FieldLabel({ label, warn }: { label: string; warn?: boolean }) {
@@ -1437,7 +1432,7 @@ function Field({ label, name, type = "text", register, error, warn }: FieldProps
 }
 
 function SelectField({
-  label, name, register, control, error, warn, options,
+  label, name, register, control, error, warn, hint, options,
 }: FieldProps & {
   control: Control<FormValues>;
   options: { value: string; label: string }[];
@@ -1453,10 +1448,19 @@ function SelectField({
             and resolve calls gate `showForm`, so `setValue` has normally run
             long before this mounts, and without the key a slow value-list fetch
             left the field on "—" over a citizenship already in `_formValues`.
-            NOT closed, and out of this slice: `useCitizenshipOptions` above
-            swallows a failed fetch, and an empty list stays empty for the life
-            of the dialog — the field then reads "—" and Confirm still creates
-            the person with the extracted citizenship. */}
+            Half-closed by Slice #34.04: `useCitizenshipOptions` no longer
+            swallows the failure — it is a React Query key now, so a failure to
+            load reads as `listState === "failed"` and the sentence under the
+            field says so. ⚠️ **It does NOT recover inside this dialog**: there
+            is no `refetch`, `refetchOnWindowFocus` is off globally, and the
+            three invalidations this file issues are keyed `["people"]`,
+            `["persons"]` and `["documents"]`, none of which prefix-matches
+            `["citizenships"]`. It recovers on the next MOUNT — close and
+            reopen, or reload. ⚠️ **And still open: Confirm goes on creating
+            the person with the citizenship read off the card even while this
+            select shows "—"**, because the id is in `_formValues` and this
+            field never wrote it. That sentence is now the only thing between
+            the user and the write. */}
         <AsyncSelect
           name={name}
           control={control}
@@ -1468,6 +1472,17 @@ function SelectField({
             error ? "border-red-500 focus:border-red-600" : "border-wire focus:border-focus dark:border-zinc-700",
           ].join(" ")}
         />
+        {/* Slice #34.04. `role="alert"` because it appears after the field is
+            on screen and describes something the user has to act on — and here
+            "—" is not harmless, per the paragraph above. Rendered INSIDE the
+            field rather than by wrapping <SelectField> at the call site: the
+            call sites are direct children of a `grid grid-cols-2`, and an
+            extra <div> there stops the field stretching with its row and drops
+            the sibling <Field> out of line the moment this line appears. An
+            adversarial round found that. */}
+        {hint && !error && (
+          <span role="alert" className="text-xs text-red-600 dark:text-red-400">{hint}</span>
+        )}
         {error && <span className="text-xs text-red-600 dark:text-red-400">{error}</span>}
       </div>
     </label>

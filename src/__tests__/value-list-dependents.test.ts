@@ -946,6 +946,12 @@ describe("the sibling panels say their failures in Romanian", () => {
     const BARE_KEYS: Partial<Record<ListKey, string[]>> = {
       "document-types":          ["document-types", "doc-type-person-roles"],
       "institutions":            ["institutions"],
+      // Slice #34.04: the two lists that were read into `useState` with no key
+      // at all, so neither the narrow invalidation nor the unkeyed sweep could
+      // reach them. Their consumer is a hook rather than a screen — the only
+      // two rows in this table where that is true.
+      "citizenships":            ["citizenships"],
+      "person-types":            ["person-types"],
       "property-property-roles": ["property-property-roles"],
       "document-document-roles": ["document-document-roles"],
       "person-roles":            ["property-person-roles-whitelist", "property-person-roles",
@@ -959,6 +965,8 @@ describe("the sibling panels say their failures in Romanian", () => {
       [["app", "documents", "list-view.tsx"], "document-types"],
       [["app", "documents", "_components", "document-form.tsx"], "document-types"],
       [["app", "documents", "_components", "document-form.tsx"], "institutions"],
+      [["hooks", "use-lookup-options.ts"], "citizenships"],
+      [["hooks", "use-lookup-options.ts"], "person-types"],
       [["app", "properties", "[id]", "associate-reference", "associate-reference-view.tsx"],
         "property-property-roles"],
       [["app", "documents", "[id]", "associate-reference", "associate-reference-view.tsx"],
@@ -1140,8 +1148,10 @@ describe("the sibling panels say their failures in Romanian", () => {
 
     // (iii) …and something under src/ really FETCHES each of them. Every
     // .ts/.tsx except this modal and the tests — a key quoted in another test
-    // is not a consumer. Measured on this tree: 25 fetch sites, 53 invalidation
-    // sites, nothing unclassified.
+    // is not a consumer. Re-measured on this tree in Slice #34.04: 27 fetch
+    // sites, 53 invalidation sites, nothing unclassified. (Fetches went 25 → 27
+    // with `use-lookup-options.ts`; the invalidation count is outside this
+    // modal, so the two branches added beside it do not move it.)
     const files: string[] = [];
     (function walk(dir: string): void {
       for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {

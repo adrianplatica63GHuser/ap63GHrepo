@@ -925,6 +925,8 @@
     },
     "hints": {
       "cnpLocked": "CNP cannot be changed once set — delete and recreate to change",
+      "citizenshipListFailed": "The citizenship list could not be read, so “—” does not mean “no citizenship”.",
+      "personTypeListFailed": "The professional-type list could not be read, so “—” does not mean “no type”.",
       "countryRequiredIfAddressFilled": "Required if any other address field is filled",
       "idLinkNone": "No ID card document linked",
       "idExpired": "EXPIRED",
@@ -2144,6 +2146,7 @@
           "fIdIssuingAuthority": "Issued by",
           "fInstitution": "Issuing institution",
           "institutionUnmatched": "“{name}” is not in the institution list yet.",
+          "citizenshipListFailed": "The citizenship list could not be read. “—” does not mean “no citizenship”: the value read off the card is saved along with the person. Check it on the record after creating.",
           "institutionLoading": "Loading the institution list…",
           "institutionLookupUnavailable": "The institution list could not be read just now, so there is no telling whether this institution already exists. Reopen the dialog, or choose the institution on the document itself.",
           "institutionNearDuplicate": "The list already holds “{name}”. Choose it if it is the same institution.",

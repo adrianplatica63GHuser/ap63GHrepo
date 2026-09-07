@@ -925,6 +925,8 @@
     },
     "hints": {
       "cnpLocked": "CNP-ul nu poate fi modificat odată setat — ștergeți și creați din nou pentru a-l schimba",
+      "citizenshipListFailed": "Lista de cetățenii nu a putut fi citită, așa că „—” nu înseamnă „fără cetățenie”.",
+      "personTypeListFailed": "Lista de tipuri profesionale nu a putut fi citită, așa că „—” nu înseamnă „fără tip”.",
       "countryRequiredIfAddressFilled": "Necesar dacă orice alt câmp al adresei este completat",
       "idLinkNone": "Niciun document de carte de identitate asociat",
       "idExpired": "EXPIRAT",
@@ -2144,6 +2146,7 @@
           "fIdIssuingAuthority": "Eliberat de",
           "fInstitution": "Instituție emitentă",
           "institutionUnmatched": "„{name}” nu există încă în lista de instituții.",
+          "citizenshipListFailed": "Lista de cetățenii nu a putut fi citită. „—” nu înseamnă „fără cetățenie”: valoarea citită de pe card se salvează odată cu persoana. Verificați-o pe fișă după creare.",
           "institutionLoading": "Se încarcă lista de instituții…",
           "institutionLookupUnavailable": "Lista de instituții nu a putut fi citită acum, așa că nu se poate spune dacă instituția există deja. Reîncărcați dialogul sau alegeți instituția pe documentul propriu-zis.",
           "institutionNearDuplicate": "Lista conține deja „{name}”. Alegeți-o din listă dacă este aceeași instituție.",

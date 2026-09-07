@@ -189,6 +189,8 @@ async function reassignRows(
  *   document-types                   documents/list-view.tsx,
  *                                    documents/_components/document-form.tsx
  *   institutions                     documents/_components/document-form.tsx
+ *   citizenships                     hooks/use-lookup-options.ts
+ *   person-types                     hooks/use-lookup-options.ts
  *   property-property-roles          properties/[id]/associate-reference/associate-reference-view.tsx
  *   document-document-roles          documents/[id]/associate-reference/associate-reference-view.tsx
  *   property-person-roles-whitelist  the three associate-person / associate-property views
@@ -198,8 +200,19 @@ async function reassignRows(
  *   doc-distinct-roles               the two associate-document views
  *   doc-type-person-roles            _components/document-persons-modal.tsx  (a sibling panel)
  *
- * The last five all render `lookup_person_role.name`, which is why one rename
- * on the master list has to reach all of them. `doc-type-person-roles` is the
+ * ⚠️ **`citizenships` and `person-types` arrived in Slice #34.04 and are the
+ * only two rows here whose consumer is a HOOK rather than a screen.** Both
+ * were read through a bare `useEffect` + `fetch` held in component state — no
+ * key, so neither this narrow invalidation nor the unkeyed sweep the delete
+ * and move paths call could reach them, and a renamed citizenship stayed wrong
+ * on the natural-person form and the ID-card dialog until the page was
+ * reloaded. `@/hooks/use-lookup-options` is where they are fetched now; the
+ * two forms consume it. (NOT the last two lists read that way —
+ * `useInstitutionOptions`, in one of those same two files, still is, for
+ * reasons that hook's own comment gives.)
+ *
+ * The five person-role rows all render `lookup_person_role.name`, which is why
+ * one rename on the master list has to reach all of them. `doc-type-person-roles` is the
  * one row in this table with TWO joined names — `listDocTypePersonRoles`
  * selects `documentTypeName` beside `personRoleName` — so it hangs off the
  * document-types branch as well, and a rename on EITHER list has to reach it.
@@ -246,6 +259,18 @@ function invalidateListCaches(
   }
   if (listKey === "institutions") {
     qc.invalidateQueries({ queryKey: ["institutions"] });
+  }
+  // Slice #34.04: the two lists that used to be fetched into `useState`. Their
+  // one consumer is `@/hooks/use-lookup-options`, behind the Citizenship and
+  // „Tip Profesional" selects on `natural-person-form.tsx` and the Citizenship
+  // select on `id-card-person-dialog.tsx`. Same case as `institutions` above —
+  // a bare key, fetched outside Reference Data, that a rename here has to
+  // reach before the 30 s staleTime lapses.
+  if (listKey === "citizenships") {
+    qc.invalidateQueries({ queryKey: ["citizenships"] });
+  }
+  if (listKey === "person-types") {
+    qc.invalidateQueries({ queryKey: ["person-types"] });
   }
   // Slice #33.05: the master role list. Renaming a role changes what five other
   // caches print — three sibling panels in this same screen and the association

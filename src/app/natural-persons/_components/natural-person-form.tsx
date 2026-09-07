@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useTimeFrames, tfDays } from "@/hooks/use-time-frames";
+import { useCitizenshipOptions, usePersonTypeOptions } from "@/hooks/use-lookup-options";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -89,43 +90,6 @@ async function fetchVersions(personId: string): Promise<VersionItem[]> {
   return (body.items ?? []) as VersionItem[];
 }
 
-function useCitizenshipOptions(): { value: string; label: string }[] {
-  const [options, setOptions] = useState<{ value: string; label: string }[]>([]);
-  useEffect(() => {
-    let cancelled = false;
-    fetch("/api/admin/value-lists/citizenships")
-      .then((r) => (r.ok ? r.json() : { items: [] }))
-      .then((data: { items?: { id: string; name: string }[] }) => {
-        if (cancelled) return;
-        setOptions((data.items ?? []).map((r) => ({ value: r.id, label: r.name })));
-      })
-      .catch(() => {
-        // Leave options empty — the select still renders with just "—".
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-  return options;
-}
-
-// Slice #18.16.VL: Professional Type dropdown (lookup_person_type).
-function usePersonTypeOptions(): { value: string; label: string }[] {
-  const [options, setOptions] = useState<{ value: string; label: string }[]>([]);
-  useEffect(() => {
-    let cancelled = false;
-    fetch("/api/admin/value-lists/person-types")
-      .then((r) => (r.ok ? r.json() : { items: [] }))
-      .then((data: { items?: { id: string; name: string }[] }) => {
-        if (cancelled) return;
-        setOptions((data.items ?? []).map((r) => ({ value: r.id, label: r.name })));
-      })
-      .catch(() => {});
-    return () => { cancelled = true; };
-  }, []);
-  return options;
-}
-
 export function NaturalPersonForm({
   mode,
   personId,
@@ -140,9 +104,15 @@ export function NaturalPersonForm({
   const tShared = useTranslations("shared.readonlyView");
   const router = useRouter();
   const queryClient = useQueryClient();
-  const citizenshipOptions = useCitizenshipOptions();
+  // Slice #34.04: both lists are React Query keys now, so a rename or a delete
+  // in Reference Data reaches these two selects, and a failed read says so on
+  // screen instead of rendering as an empty archive. `useState` + `useEffect`
+  // could be reached by neither.
+  const { options: citizenshipOptions, listState: citizenshipListState } =
+    useCitizenshipOptions();
   // Slice #18.16.VL:
-  const personTypeOptions = usePersonTypeOptions();
+  const { options: personTypeOptions, listState: personTypeListState } =
+    usePersonTypeOptions();
   const { data: tf } = useTimeFrames();
 
   const form = useForm<FormValues>({
@@ -590,6 +560,7 @@ export function NaturalPersonForm({
               register={register}
               control={control}
               error={errors.physicalPersonTypeId?.message}
+              hint={personTypeListState === "failed" ? t("hints.personTypeListFailed") : undefined}
               options={[{ value: "", label: "—" }, ...personTypeOptions]}
               highlight={displayHighlights?.fields.physicalPersonTypeId}
             />
@@ -670,6 +641,7 @@ export function NaturalPersonForm({
               register={register}
               control={control}
               error={errors.citizenshipId?.message}
+              hint={citizenshipListState === "failed" ? t("hints.citizenshipListFailed") : undefined}
               options={[{ value: "", label: "—" }, ...citizenshipOptions]}
               highlight={displayHighlights?.fields.citizenshipId}
             />
@@ -1112,6 +1084,7 @@ function SelectField({
   register,
   control,
   error,
+  hint,
   options,
   highlight,
 }: FieldProps & {
@@ -1142,6 +1115,16 @@ function SelectField({
             ring,
           ].join(" ")}
         />
+        {/* Slice #34.04: `hint` was already on `FieldProps` and rendered by
+            `Field`; this component took the prop's type and dropped it on the
+            floor. It carries the one sentence a select can need that an
+            `error` cannot say — the list behind the options could not be read,
+            so „—" means "unknown", not "none". `role="alert"` because it
+            appears after the field is on screen and describes something the
+            user has to act on. */}
+        {hint && !error && (
+          <span role="alert" className="text-xs text-red-600 dark:text-red-400">{hint}</span>
+        )}
         {error && (
           <span className="text-xs text-red-600 dark:text-red-400">{error}</span>
         )}
