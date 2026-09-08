@@ -286,8 +286,19 @@ export async function patchEntityMetadata(
  * runs, so a failure here must NOT turn a successful create into an error
  * response - that would tell the user their record was not created when in
  * fact it was. A failure leaves provenance null, which is exactly the
- * pre-slice behaviour and is fixable from the References tab. Mirrors how
- * /api/calculation/commit already treats its ALGORITHM write.
+ * pre-slice behaviour and is fixable from the References tab.
+ *
+ * (This used to add "mirrors how /api/calculation/commit already treats its
+ * ALGORITHM write". Slice #34.07 routed that route THROUGH this function, so
+ * the sentence had become self-referential; what it was pointing at is now
+ * simply one of the seven callers.)
+ *
+ * ⚠️ **THE CATCH BELOW SWALLOWS EVERYTHING, AND THE CALLERS DO NOT RELY ON
+ * THAT.** All seven call sites add their own `.catch()` — a guarantee about a
+ * committed row belongs to the caller that committed it, not to this
+ * function's private try block — so narrowing this catch to the 23514 case its
+ * own comment is written about would be safe.
+ * `object-writers-enumerated.test.ts` holds every call site to that.
  *
  * Goes through patchEntityMetadata rather than writing the column directly so
  * the version snapshot (entity_metadata_version) is appended and the audit

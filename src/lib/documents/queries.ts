@@ -16,6 +16,7 @@
 import { asc, and, count, desc, eq, ilike, inArray, isNotNull, lte, or, sql } from "drizzle-orm";
 import { db, type DbTransaction } from "@/db";
 import { appendVersionsIfChanged } from "@/lib/versioning/append";
+import { DOCUMENT_SNAPSHOT_KEYS } from "@/lib/versioning/snapshot-registry";
 import { document, documentVersion, entityMetadata, groupMember, groups, lookupDocumentType, person, principalObject } from "@/db/schema";
 import { deletePrincipalObjects } from "@/lib/entities/delete";
 import { listDocumentPageFilePaths } from "./pages-queries";
@@ -196,17 +197,25 @@ export type DocumentVersionItem = {
   createdAt:     Date;
 };
 
-const SNAPSHOT_KEYS: (keyof DocumentSnapshot)[] = [
-  "documentTypeId", "title", "nrDocument", "dateDocument", "institutionId",
-  "emitent", "bazaLegala", "uatProprietate", "uatProprietar", "suprafata",
-  "nrDosarSuccesoral", "dataDecesului", "ultimulDomiciliu", "nrCertificatDeces",
-  "dateStart", "dateEnd", "notes",
-  // Slice #19.03
-  "subject", "dateValidUntil", "surveyorId",
-  // Slice #21.03.Import — compared specially in snapshotsEqual (nested record,
-  // not a flat string), see the "customFields" branch there.
-  "customFields",
-];
+/**
+ * Driven from the registry, like its three siblings.           (Slice #34.07)
+ *
+ * The slice found `SNAPSHOT_PROPERTY_KEYS` in `src/lib/properties/queries.ts`
+ * holding nine keys where the compile-guarded registry array beside it held
+ * ten — and the hand-written one was the array the comparison actually read,
+ * so `calculatedAreaMp` was written into every snapshot and compared in none.
+ * These four lists were the same shape with the same absence of a guard; they
+ * happened to agree, which is a fact about today and not a property of the
+ * code. Pointing them at the registry makes `AssertExactKeys` load-bearing
+ * here too: a field added to the *Snapshot type now fails to compile until the
+ * registry names it, and naming it there is what puts it here.
+ *
+ * No behaviour changes in this file: the array below is the same keys it was.
+ */
+// `customFields` is in the registry array and therefore in this one; it is
+// compared specially in `snapshotsEqual` below (nested record, not a flat
+// string), which is the branch that reads it.
+const SNAPSHOT_KEYS: ReadonlyArray<keyof DocumentSnapshot> = DOCUMENT_SNAPSHOT_KEYS;
 
 /** Build the canonical document snapshot from a freshly-fetched record. */
 export function snapshotFromFull(full: DocumentFull): DocumentSnapshot {

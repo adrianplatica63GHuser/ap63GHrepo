@@ -436,11 +436,14 @@ describe("which refs are versioned", () => {
     // list whose value lives on a junction row must not.
     //
     // ⚠️ This checks the REGISTRY array, which is what the note is derived
-    // from — NOT the hand-kept key lists the equality functions loop over
-    // (`SNAPSHOT_PROPERTY_KEYS` and its three siblings). Those already differ
-    // from the registry by one field (`calculatedAreaMp`), which changes
-    // nothing for any column a move rewrites and is in the handover as its own
-    // item. Do not read this test as a guard over the comparison.
+    // from. Until Slice #34.07 that was a WEAKER statement than it looked,
+    // because the equality functions looped over hand-kept copies of their own
+    // — and the property one differed from the registry by a field
+    // (`calculatedAreaMp`) that was written into every snapshot and compared in
+    // none. #34.07 pointed all four comparisons at the registry arrays, so this
+    // test and `snapshotsEqual` now read the same list. It is still not a guard
+    // over the comparison itself — `object-writers-enumerated.test.ts` pins
+    // that binding — but it is no longer describing two different things.
     for (const list of LISTS) {
       const def = LIST_DEPENDENCIES[list];
       const hasVersionedRef = def.refs.some((r) => r.versioned);

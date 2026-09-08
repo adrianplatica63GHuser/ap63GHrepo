@@ -4,24 +4,101 @@
  * Run via `npm run db:seed`. Each domain object has its own idempotency
  * check: if the table already has rows it skips that section and moves on.
  * To re-seed from scratch, run: TRUNCATE person, property CASCADE;
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * ⚠️ **IT CALLS THE CREATE FUNCTIONS. IT DOES NOT INSERT.**   (Slice #34.07)
+ *
+ * Until this slice every row below was written by a hand-rolled INSERT in the
+ * runner at the foot of this file — a fifth, sixth, seventh and eighth writer
+ * of the four object families, sitting beside `createPropertyIn`,
+ * `createDocument`, `createNaturalPerson` and `createJudicialPerson` and
+ * agreeing with them only by inspection. Four things they did not do, each of
+ * which made seeded rows quietly different from every other row in the system:
+ *
+ *   - **no version-0 row**, for any family. `createX` records the state at
+ *     creation as version 0 (#18.02/#18.05/#18.06); the seed did not, so a
+ *     seeded object's first edit had nothing to compare against and its
+ *     version history began at the first change rather than at the beginning;
+ *   - **no `updated_by`**, so every seeded row read as changed by nobody;
+ *   - **no `calculated_area_mp` and no `corner_order_self_intersects`**, so a
+ *     seeded property showed an empty area beside four real corners and no
+ *     bow-tie badge however its corners were ordered — see
+ *     `computeCornerGeometry`, which `createPropertyIn` runs and this file
+ *     could not;
+ *   - **`display_name` re-derived inline**, `[first, last].join(" ")` here and
+ *     `computeDisplayName` there, with the judicial branch writing `row.name`
+ *     raw where `createJudicialPerson` writes `name.trim() || "(unnamed)"`.
+ *
+ * `scripts/seed-judicial-persons.ts` had already shown the alternative — it
+ * has always called `createJudicialPerson` — and this file now reads the same
+ * way. **The DATA below is untouched**: only the runner changed.
+ *
+ * ⚠️ **WHAT THIS COSTS: three of the four sections are no longer atomic.**
+ * `createNaturalPerson`, `createDocument` and `createJudicialPerson` each open
+ * their own transaction, so a failure part-way through one of those sections
+ * leaves the rows already written committed — and the `count(*) > 0` gate at
+ * the top of the section then SKIPS it on the next run rather than completing
+ * it. **The recovery is the WHOLE-ARCHIVE one this header has always named —
+ * `TRUNCATE person, property CASCADE;` — and not a per-family truncate**, for
+ * two reasons a review round had to point out: truncating `natural_person`
+ * alone leaves its `person` rows standing (and orphaned), and the sections
+ * are not independent — the judicial section resolves its contact people out
+ * of the natural persons this file seeded, so a short naturals set damages the
+ * judicial rows rather than the natural ones. That second failure is now
+ * refused outright rather than seeded silently; see the guard above
+ * `JUDICIAL_PERSONS`' loop.
+ *
+ * Properties are the exception and stay all-or-nothing, because
+ * `createPropertyIn` takes a caller's transaction (#26.07) and the three
+ * others have no such variant; adding them is a bigger change than this slice,
+ * which is why it is written here rather than done quietly.
+ *
+ * ⚠️ **TWO COSTS THAT ARE NOT ABOUT CORRECTNESS, BOTH NAMED BY A REVIEW ROUND.**
+ *
+ *   - **This file now loads the application's server modules.**
+ *     `@/lib/documents/queries` reaches `@/lib/storage` → `@/lib/supabase/server`
+ *     → `next/headers`. It resolves — tsx compiles this as CommonJS and
+ *     `require("next/headers")` works outside a Next runtime — but it works by
+ *     accident of the module format, and `scripts/supabase-sync.ts` runs the
+ *     seed with NODE_ENV=production, the branch where that module would reach
+ *     for a service-role client. Nothing calls it today. A top-level
+ *     environment assertion added to `supabase/server.ts` would take
+ *     `npm run db:seed` down with it.
+ *   - **Transaction boundaries, not statements.** The old runner was already
+ *     one INSERT per row — it just issued them inside four long transactions.
+ *     What multiplies here is the number of transactions (roughly one per
+ *     object for three of the four families) plus one version-0 insert each.
+ *     Against a local Docker Postgres that is unnoticeable; `supabase-sync.ts`
+ *     runs it against a remote database, where a per-object BEGIN/COMMIT is
+ *     latency-bound. Correctness bought with wall-clock, on a script nobody
+ *     waits on. (An earlier draft of this bullet said "batched inserts", which
+ *     the replaced code never did.)
  */
 
 import { eq, sql } from "drizzle-orm";
 import { db, pool } from "./index";
+import { createDocument } from "@/lib/documents/queries";
+import { createJudicialPerson } from "@/lib/judicial-persons/queries";
+import { createNaturalPerson } from "@/lib/persons/queries";
+import { createPropertyIn } from "@/lib/properties/queries";
+import type { JudicialPersonCreate } from "@/lib/judicial-persons/validation";
 import {
-  address,
-  document,
-  judicialPerson,
   lookupDocumentType,
   lookupJudicialPersonType,
   lookupTarla,
-  naturalPerson,
   person,
-  principalObject,
-  property,
-  propertyAddress,
-  propertyCorner,
 } from "./schema";
+
+/**
+ * What every row this script writes records as its author.
+ *
+ * `updated_by` is free text — `getCurrentUserEmail()` fills it with an address
+ * on a request and with null on the UAT box — so this is not a fake user, it
+ * is a legible answer to "who wrote this?" on a screen that would otherwise
+ * show an empty cell for every row this file makes. It is deliberately not an
+ * email-shaped string: nothing should be able to mistake it for a person.
+ */
+const SEED_UPDATED_BY = "db:seed";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -1256,76 +1333,65 @@ const JUDICIAL_PERSONS: SeedJudicialRow[] = [
 // ---------------------------------------------------------------------------
 
 async function seed() {
+  /**
+   * Did the natural-persons section RUN this time, or was it skipped?
+   *                                                          (Slice #34.07)
+   *
+   * The judicial section resolves its contact people out of `natural_person`,
+   * and a short list there is only ever a problem when this section did not
+   * fill it — see the guard beside `JUDICIAL_PERSONS`' loop, and the review
+   * round in the header that found the first version of that guard aborting a
+   * perfectly ordinary run.
+   */
+  let naturalsSeededThisRun = false;
+
   // ---- Natural persons ----
   const personCount = (
-    await db.execute(sql`select count(*)::int as count from person`)
+    // ⚠️ **`natural_person`, not `person`** — a review round on #34.07 found
+    // why. `person` holds BOTH subtypes, so the judicial section's rows also
+    // satisfy a `person` gate. That was harmless while this section was one
+    // transaction and could only be all or nothing; it is not harmless now
+    // that it commits row by row, because a half-written naturals section
+    // leaves a `person` count above zero and this gate then skips the rest of
+    // it for ever — quietly, and with the judicial section below reading a
+    // short list to resolve its contact people from.
+    await db.execute(sql`select count(*)::int as count from natural_person`)
   ).rows[0] as { count: number };
 
   if (personCount.count > 0) {
     console.log(
-      `person already has ${personCount.count} row(s); skipping persons seed.`,
+      `natural_person already has ${personCount.count} row(s); skipping persons seed.`,
     );
   } else {
     console.log(`Seeding ${PERSONS.length} natural persons (PPERS codes)...`);
-    await db.transaction(async (tx) => {
-      for (const row of PERSONS) {
-        const displayName =
-          [row.firstName, row.lastName].filter(Boolean).join(" ").trim() ||
-          "(unnamed)";
-
-        const [poRow] = await tx
-          .insert(principalObject)
-          .values({
-            objectType: "PERSON",
-            code: sql`'PPERS' || lpad(nextval('principal_object_code_seq')::text, 5, '0')`,
-          })
-          .returning();
-
-        const [{ id }] = await tx
-          .insert(person)
-          .values({
-            principalObjectId: poRow.id,
-            code: poRow.code,
-            type: "NATURAL",
-            displayName,
-            notes: row.notes ?? null,
-          })
-          .returning({ id: person.id });
-
-        await tx.insert(naturalPerson).values({
-          personId: id,
-          firstName: row.firstName ?? null,
-          lastName: row.lastName ?? null,
-          nickname: row.nickname ?? null,
-          cnp: row.cnp ?? null,
-          idDocumentType: row.idDocumentType ?? null,
+    // The code, the person row, the satellite, the addresses and version 0 are
+    // all `createNaturalPerson`'s, including the `display_name` this file used
+    // to derive with its own `join(" ")` — `computeDisplayName` is the one
+    // place that decides it now.
+    for (const row of PERSONS) {
+      await createNaturalPerson(
+        {
+          firstName:        row.firstName        ?? null,
+          lastName:         row.lastName         ?? null,
+          nickname:         row.nickname         ?? null,
+          cnp:              row.cnp              ?? null,
+          idDocumentType:   row.idDocumentType   ?? null,
           idDocumentNumber: row.idDocumentNumber ?? null,
-          gender: row.gender ?? null,
-          dateOfBirth: row.dateOfBirth ?? null,
-          personalPhone1: row.personalPhone1 ?? null,
-          personalPhone2: row.personalPhone2 ?? null,
-          workPhone: row.workPhone ?? null,
-          personalEmail1: row.personalEmail1 ?? null,
-          personalEmail2: row.personalEmail2 ?? null,
-          workEmail: row.workEmail ?? null,
-        });
-
-        if (row.addresses?.length) {
-          for (const a of row.addresses) {
-            await tx.insert(address).values({
-              personId: id,
-              kind: a.kind,
-              streetLine: a.streetLine ?? null,
-              postalCode: a.postalCode ?? null,
-              locality: a.locality ?? null,
-              county: a.county ?? null,
-              country: a.country,
-              notes: a.notes ?? null,
-            });
-          }
-        }
-      }
-    });
+          gender:           row.gender           ?? null,
+          dateOfBirth:      row.dateOfBirth      ?? null,
+          personalPhone1:   row.personalPhone1   ?? null,
+          personalPhone2:   row.personalPhone2   ?? null,
+          workPhone:        row.workPhone        ?? null,
+          personalEmail1:   row.personalEmail1   ?? null,
+          personalEmail2:   row.personalEmail2   ?? null,
+          workEmail:        row.workEmail        ?? null,
+          notes:            row.notes            ?? null,
+          addresses:        row.addresses ?? [],
+        },
+        SEED_UPDATED_BY,
+      );
+    }
+    naturalsSeededThisRun = true;
     console.log(`Seeded ${PERSONS.length} natural persons.`);
   }
 
@@ -1380,20 +1446,37 @@ async function seed() {
         tarlaIdByCode.set(code, created.id);
       }
 
+      // ⚠️ **`createPropertyIn`, not `createProperty`, and that is what keeps
+      // this section atomic.** The other three families call a create function
+      // that opens its own transaction, so they commit row by row; the
+      // property create was split in #26.07 precisely so a caller could supply
+      // the transaction, and here that means the tarla rows seeded above and
+      // the properties that point at them still land or fail together.
+      //
+      // What each property gains over the INSERT this replaces:
+      // `calculated_area_mp` and `corner_order_self_intersects` computed from
+      // the corners in one projection (`computeCornerGeometry`), `updated_by`,
+      // and a version-0 row holding the state at creation.
+      //
+      // ⚠️ **`tarlaId`, never `tarlaCode`.** `resolveTarlaForCreate` writes an
+      // IMPORT origin inside the `tarlaCode` branch and nowhere else, and
+      // migration_077 and #34.03 spent their headers making "only an import
+      // can mint a code" a claim about one field. A seed reaching down that
+      // branch would put a second writer of that literal into a list
+      // `document-type-origin-single-source.test.ts` holds closed, for codes a
+      // person typed into a fixture file. The block above resolves the codes
+      // to ids under the DEFAULT 'MANUAL' origin, exactly as before, and this
+      // loop hands over ids.
+      //
+      // (And the literal is spelled out in prose here rather than quoted,
+      // deliberately: that test reads RAW source, comments included, so a
+      // comment quoting the assignment IS a third writer as far as it is
+      // concerned. A review round caught this paragraph doing exactly what it
+      // warns against.)
       for (const row of PROPERTIES) {
-        const [poPropRow] = await tx
-          .insert(principalObject)
-          .values({
-            objectType: "PROPERTY",
-            code: sql`'PROP' || lpad(nextval('principal_object_code_seq')::text, 5, '0')`,
-          })
-          .returning();
-
-        const [{ id }] = await tx
-          .insert(property)
-          .values({
-            principalObjectId: poPropRow.id,
-            code: poPropRow.code,
+        await createPropertyIn(
+          tx,
+          {
             nickname: row.nickname ?? null,
             // Slice #34.03: the seed's rows carry a tarla CODE ("T12"), and
             // the column is a foreign key now. `tarlaIdByCode` is built above
@@ -1405,31 +1488,17 @@ async function seed() {
             parcela: row.parcela ?? null,
             cadastralNumber: row.cadastralNumber ?? null,
             carteFunciara: row.carteFunciara ?? null,
-            surfaceAreaMp: row.surfaceAreaMp ?? null,
+            // The fixtures hold this as a string ("540.00") because that is
+            // what the numeric column reads back as; `PropertyCreate` takes a
+            // number, and `createPropertyIn` puts it back through `String()`
+            // for the same column. The round trip is exact for these values.
+            surfaceAreaMp: row.surfaceAreaMp != null ? Number(row.surfaceAreaMp) : null,
             notes: row.notes ?? null,
-          })
-          .returning({ id: property.id });
-
-        if (row.address) {
-          await tx.insert(propertyAddress).values({
-            propertyId: id,
-            streetLine: row.address.streetLine ?? null,
-            postalCode: row.address.postalCode ?? null,
-            locality: row.address.locality ?? null,
-            county: row.address.county ?? null,
-            country: row.address.country,
-            notes: row.address.notes ?? null,
-          });
-        }
-
-        for (let i = 0; i < row.corners.length; i++) {
-          await tx.insert(propertyCorner).values({
-            propertyId: id,
-            sequenceNo: i + 1,
-            lat: row.corners[i].lat,
-            lon: row.corners[i].lon,
-          });
-        }
+            address: row.address ?? null,
+            corners: row.corners.map((c) => ({ lat: c.lat, lon: c.lon })),
+          },
+          SEED_UPDATED_BY,
+        );
       }
     });
     console.log(`Seeded ${PROPERTIES.length} properties.`);
@@ -1470,38 +1539,36 @@ async function seed() {
     }
 
     console.log(`Seeding ${DOCUMENTS.length} document records...`);
-    await db.transaction(async (tx) => {
-      for (const row of DOCUMENTS) {
-        const [poDocRow] = await tx
-          .insert(principalObject)
-          .values({
-            objectType: "DOCUMENT",
-            code: sql`'DOC' || lpad(nextval('principal_object_code_seq')::text, 5, '0')`,
-          })
-          .returning();
-
-        await tx.insert(document).values({
-          principalObjectId: poDocRow.id,
-          code: poDocRow.code,
-          documentTypeId: typeIdByKey.get(row.typeKey)!,
-          title: row.title ?? null,
-          nrDocument: row.nrDocument ?? null,
-          dateDocument: row.dateDocument ?? null,
-          emitent: row.emitent ?? null,
-          bazaLegala: row.bazaLegala ?? null,
-          uatProprietate: row.uatProprietate ?? null,
-          uatProprietar: row.uatProprietar ?? null,
-          suprafata: row.suprafata ?? null,
+    // `createDocument` owns the code, the row, `updated_by` and version 0. The
+    // fields this file does not name — `institutionId`, `subject`,
+    // `dateValidUntil`, `surveyorId`, `customFields`, `importTitle` — are
+    // nulled by `inputToValues` exactly as the INSERT here nulled them by
+    // omission, so the rows are the same rows plus what they were missing.
+    for (const row of DOCUMENTS) {
+      await createDocument(
+        {
+          documentTypeId:    typeIdByKey.get(row.typeKey)!,
+          title:             row.title             ?? null,
+          nrDocument:        row.nrDocument        ?? null,
+          dateDocument:      row.dateDocument      ?? null,
+          emitent:           row.emitent           ?? null,
+          bazaLegala:        row.bazaLegala        ?? null,
+          uatProprietate:    row.uatProprietate    ?? null,
+          uatProprietar:     row.uatProprietar     ?? null,
+          // String in the fixtures, number on the schema, string again in the
+          // column — the same round trip the properties block above documents.
+          suprafata:         row.suprafata != null ? Number(row.suprafata) : null,
           nrDosarSuccesoral: row.nrDosarSuccesoral ?? null,
-          dataDecesului: row.dataDecesului ?? null,
-          ultimulDomiciliu: row.ultimulDomiciliu ?? null,
+          dataDecesului:     row.dataDecesului     ?? null,
+          ultimulDomiciliu:  row.ultimulDomiciliu  ?? null,
           nrCertificatDeces: row.nrCertificatDeces ?? null,
-          dateStart: row.dateStart ?? null,
-          dateEnd: row.dateEnd ?? null,
-          notes: row.notes ?? null,
-        });
-      }
-    });
+          dateStart:         row.dateStart         ?? null,
+          dateEnd:           row.dateEnd           ?? null,
+          notes:             row.notes             ?? null,
+        },
+        SEED_UPDATED_BY,
+      );
+    }
     console.log(`Seeded ${DOCUMENTS.length} document records.`);
   }
 
@@ -1556,34 +1623,94 @@ async function seed() {
       .where(eq(person.type, "NATURAL"))
       .orderBy(person.code);
 
-    await db.transaction(async (tx) => {
-      for (const row of JUDICIAL_PERSONS) {
-        const [poRow] = await tx
-          .insert(principalObject)
-          .values({
-            objectType: "PERSON",
-            code: sql`'JPERS' || lpad(nextval('principal_object_code_seq')::text, 5, '0')`,
-          })
-          .returning();
+    // ⚠️ **REFUSE A SHORT LIST RATHER THAN SEEDING NULL CONTACTS.**
+    //                                                          (Slice #34.07)
+    // `naturalPersons[idx]?.id ?? null` below reads a missing index as "no
+    // contact", which is indistinguishable from Group C's deliberate absence.
+    // A review round costed what that hides: a naturals section that failed
+    // part-way (possible now that it commits row by row) leaves, say, nine
+    // people; the 24 judicial fixtures that name a contact then seed with
+    // silently null ones, WITH version-0 rows recording that as the state at
+    // creation, and this section's own gate skips it for ever afterwards. A
+    // dev archive that looks complete and is not is worse than a seed that
+    // stops.
+    //
+    // ⚠️ **The test is the FULL count, not the highest index a fixture
+    // references** — a review round found why. The highest referenced index is
+    // 23 and `PERSONS` has 30, so an index test would wave through a naturals
+    // section that wrote 24 to 29 rows: the contacts would all still resolve
+    // (the failure truncates the tail and this read is ordered by code), and
+    // the missing people would be skipped for ever in silence.
+    //
+    // ⚠️ **AND IT SAYS WHICH STATE IT IS IN RATHER THAN ASSUMING ONE** — a
+    // THIRD review round found the version above this one aborting a run that
+    // was working exactly as the header describes. A short list means the
+    // section did not fill it, and there are two ways for that to be true: a
+    // previous run failed part-way, or the table simply already held rows a
+    // developer made through the application, which this script's per-section
+    // idempotency gate is DESIGNED to leave alone. The first needs the whole
+    // archive emptied; the second must not be answered with a TRUNCATE of the
+    // developer's own data, which is what the previous message prescribed.
+    // Stopping is still right either way — the alternative is 24 companies
+    // whose contact people are silently null, recorded as the state at
+    // creation — but the way out that does not destroy anything is named too.
+    if (naturalPersons.length < PERSONS.length) {
+      const withContacts = JUDICIAL_PERSONS.filter(
+        (r) => r.contactPerson1Idx !== undefined || r.contactPerson2Idx !== undefined,
+      ).length;
+      throw new Error(
+        `Cannot seed judicial persons — natural_person holds ` +
+          `${naturalPersons.length} row(s) where these fixtures expect ` +
+          `${PERSONS.length}. ` +
+          (naturalsSeededThisRun
+            ? `The persons section ran in this same process, so this should be ` +
+              `unreachable — treat it as a bug in this script, not as a state ` +
+              `to recover from. `
+            : `The persons section was SKIPPED because the table was not empty: ` +
+              `either it holds rows made through the application, or a previous ` +
+              `run failed part-way (it commits row by row, so a failure leaves ` +
+              `a partial set and this gate never completes it). `) +
+          `Seeding now would give ${withContacts} of the ` +
+          `${JUDICIAL_PERSONS.length} companies silently null contact people, ` +
+          `recorded as their state at creation. Either empty the archive and ` +
+          `seed it whole — TRUNCATE person, property CASCADE; — or seed the ` +
+          `companies on their own with ` +
+          `npx tsx --env-file=.env scripts/seed-judicial-persons.ts, which ` +
+          `references no contacts.`,
+      );
+    }
 
-        const [pRow] = await tx
-          .insert(person)
-          .values({
-            principalObjectId: poRow.id,
-            code: poRow.code,
-            type: "JUDICIAL",
-            displayName: row.name,
-            notes: row.notes ?? null,
-          })
-          .returning();
+    // The same call `scripts/seed-judicial-persons.ts` has always made. Note
+    // `display_name`: this block wrote `row.name` raw, where
+    // `createJudicialPerson` writes `name.trim() || "(unnamed)"` — the
+    // difference is invisible for these fixtures and was a second rule for one
+    // field.
+    for (const row of JUDICIAL_PERSONS) {
+      // Both address blocks become members of one `addresses` array, which is
+      // where the create function expects them and is also where the
+      // "one row per kind" refinement can see them. The "same as HQ" flag
+      // still suppresses the CORRESPONDENCE row, exactly as before.
+      // ⚠️ **`JudicialPersonCreate["addresses"]` and not the shared
+      // `AddressInput[]`.** `judicialPersonCreateSchema` narrows `kind` to
+      // HEADQUARTERS | CORRESPONDENCE — a judicial person has no HOME address
+      // — so the wide type is not assignable and the compiler says so. Taking
+      // the type from the schema means this line follows the schema wherever
+      // it goes.
+      const addresses: JudicialPersonCreate["addresses"] = [];
+      if (row.hqAddress) {
+        addresses.push({ kind: "HEADQUARTERS", ...row.hqAddress });
+      }
+      if (row.correspondenceAddress && !(row.correspondenceSameAsHq ?? false)) {
+        addresses.push({ kind: "CORRESPONDENCE", ...row.correspondenceAddress });
+      }
 
-        await tx.insert(judicialPerson).values({
-          personId: pRow.id,
-          name: row.name,
+      await createJudicialPerson(
+        {
+          name:     row.name,
           nickname: row.nickname ?? null,
           judicialPersonTypeId:
             judicialTypeIdByName.get(JUDICIAL_TYPE_LABEL_TO_NAME[row.judicialType]) ?? null,
-          cuiNumber: row.cuiNumber ?? null,
+          cuiNumber:           row.cuiNumber           ?? null,
           tradeRegisterNumber: row.tradeRegisterNumber ?? null,
           contactPerson1Id:
             row.contactPerson1Idx !== undefined
@@ -1594,36 +1721,12 @@ async function seed() {
               ? (naturalPersons[row.contactPerson2Idx]?.id ?? null)
               : null,
           correspondenceSameAsHq: row.correspondenceSameAsHq ?? false,
-        });
-
-        if (row.hqAddress) {
-          await tx.insert(address).values({
-            personId: pRow.id,
-            kind: "HEADQUARTERS",
-            streetLine: row.hqAddress.streetLine ?? null,
-            postalCode: row.hqAddress.postalCode ?? null,
-            locality: row.hqAddress.locality ?? null,
-            county: row.hqAddress.county ?? null,
-            country: row.hqAddress.country,
-            notes: row.hqAddress.notes ?? null,
-          });
-        }
-
-        // Only insert correspondence address when the "same as HQ" flag is off.
-        if (row.correspondenceAddress && !(row.correspondenceSameAsHq ?? false)) {
-          await tx.insert(address).values({
-            personId: pRow.id,
-            kind: "CORRESPONDENCE",
-            streetLine: row.correspondenceAddress.streetLine ?? null,
-            postalCode: row.correspondenceAddress.postalCode ?? null,
-            locality: row.correspondenceAddress.locality ?? null,
-            county: row.correspondenceAddress.county ?? null,
-            country: row.correspondenceAddress.country,
-            notes: row.correspondenceAddress.notes ?? null,
-          });
-        }
-      }
-    });
+          notes:                  row.notes ?? null,
+          addresses,
+        },
+        SEED_UPDATED_BY,
+      );
+    }
     console.log(`Seeded ${JUDICIAL_PERSONS.length} judicial persons.`);
   }
 }

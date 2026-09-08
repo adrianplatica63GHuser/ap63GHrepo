@@ -504,6 +504,9 @@
       "back": "Înapoi",
       "close": "Închide",
       "textImportDone": "Proprietatea a fost importată cu succes.",
+      "noCadastralIdentityCard": "Fără tarla și fără parcelă — proprietatea nu va avea identitate cadastrală.",
+      "noCadastralIdentityResult": "Această proprietate nu are nici tarla, nici parcelă, deci nu are identitate cadastrală: nu poate fi găsită după parcelă și nu poate fi verificată dacă este duplicatul unei proprietăți existente. Completați tarlaua și parcela în pagina proprietății.",
+      "noCadastralIdentityResultPlural": "Aceste proprietăți nu au nici tarla, nici parcelă, deci nu au identitate cadastrală: nu pot fi găsite după parcelă și nu pot fi verificate dacă sunt duplicate ale unor proprietăți existente. Completați tarlaua și parcela în pagina fiecărei proprietăți.",
       "wipNote": "Această funcționalitate este încă în dezvoltare."
     },
     "groupBadgeTitle": "Grup {code}, poziția {position}",

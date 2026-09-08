@@ -24,6 +24,7 @@ import type { NextRequest } from "next/server";
 import { z } from "zod/v4";
 import { dbErrorToResponse, unexpectedError, zodErrorToResponse } from "@/lib/api/errors";
 import { getCurrentUserEmail } from "@/lib/auth/current-user";
+import { cadastralKey } from "@/lib/properties/cadastral-identity";
 import { cornerInputSchema } from "@/lib/properties/validation";
 import {
   ImportPropertyInputError,
@@ -37,9 +38,34 @@ const bodySchema = z.object({
    * As written on disk. `perToSlash` is applied server-side, deliberately: a
    * client that decoded it would be a second place the decision "what gets
    * written" is made, and the two would be free to disagree by a slash.
+   *
+   * ⚠️ **THE SAME GATE AS THE PLAN ROUTE'S, AND `.min(1)` WAS NOT IT.**
+   *                                                          (Slice #34.07)
+   * `hasCadastralIdentity` — which `ensurePropertyForFolder` asks one layer
+   * below — folds whitespace away before it decides, so `"  "` is no identity
+   * to it. `.min(1)` counts characters, so `"  "` passed here and was refused
+   * there. `property-plan/route.ts` already carried this exact refinement and
+   * a comment recording the difference, and fixed only itself: the plan route
+   * therefore refused a folder the write route would still accept and then
+   * reject with a different error body, mid-loop, after earlier folders had
+   * been written. Two schemas for one contract is how a promise and a refusal
+   * end up on the same screen — so both routes now state the rule the same way.
+   *
+   * `cadastralKey` and not `hasCadastralIdentity` because the check is
+   * per-field here: Zod names the field that failed, which
+   * `hasCadastralIdentity`'s single boolean over both halves cannot.
+   *
+   * ⚠️ **The RESPONSE SHAPE for whitespace-only input changes, and only for
+   * that input.** It used to be `{ error: "tarlaSola and parcela are both
+   * required" }` with status 400, raised as `ImportPropertyInputError` inside
+   * `ensurePropertyForFolder`; it is now `zodErrorToResponse`'s body, also 400.
+   * A missing or empty field already produced the Zod shape, so nothing that
+   * was already a Zod error moves. The deeper guard stays exactly where it is —
+   * it is the library function's own precondition and this route is not its
+   * only caller.
    */
-  tarlaSola: z.string().min(1),
-  parcela: z.string().min(1),
+  tarlaSola: z.string().refine((v) => cadastralKey(v) !== "", "tarla is required"),
+  parcela: z.string().refine((v) => cadastralKey(v) !== "", "parcela is required"),
   nickname: z.string().nullish(),
   corners: z.array(cornerInputSchema).default([]),
   confirm: z

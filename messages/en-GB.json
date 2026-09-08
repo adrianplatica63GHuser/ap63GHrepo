@@ -504,6 +504,9 @@
       "back": "Back",
       "close": "Close",
       "textImportDone": "Property imported successfully.",
+      "noCadastralIdentityCard": "No tarla and no parcela — the property will carry no cadastral identity.",
+      "noCadastralIdentityResult": "This property has neither a tarla nor a parcela, so it carries no cadastral identity: it cannot be found by parcel, and it cannot be checked against an existing property as a duplicate. Fill in the tarla and the parcela on the property page.",
+      "noCadastralIdentityResultPlural": "These properties have neither a tarla nor a parcela, so they carry no cadastral identity: they cannot be found by parcel, and they cannot be checked against existing properties as duplicates. Fill in the tarla and the parcela on each property page.",
       "wipNote": "This feature is still in development."
     },
     "groupBadgeTitle": "Group {code}, position {position}",

@@ -24,6 +24,10 @@ import { and, count, eq, ilike, inArray, or, sql } from "drizzle-orm";
 import { db, type DbTransaction } from "@/db";
 import { appendVersionsIfChanged } from "@/lib/versioning/append";
 import {
+  JUDICIAL_PERSON_SNAPSHOT_FIELDS_KEYS,
+  PERSON_ADDRESS_SNAPSHOT_KEYS,
+} from "@/lib/versioning/snapshot-registry";
+import {
   address,
   groupMember,
   groups,
@@ -325,13 +329,32 @@ export function judicialSnapshotFromFull(full: JudicialFull): JudicialPersonSnap
   };
 }
 
-const JUD_STRING_KEYS: (keyof JudicialPersonSnapshot["judicial"])[] = [
-  "name", "nickname", "judicialPersonTypeId", "cuiNumber",
-  "tradeRegisterNumber", "contactPerson1Id", "contactPerson2Id",
-];
-const JUD_ADDR_KEYS: (keyof PersonAddressSnapshot)[] = [
-  "streetLine", "postalCode", "locality", "county", "country", "notes",
-];
+/**
+ * Driven from the registry, like its three siblings.           (Slice #34.07)
+ *
+ * The slice found `SNAPSHOT_PROPERTY_KEYS` in `src/lib/properties/queries.ts`
+ * holding nine keys where the compile-guarded registry array beside it held
+ * ten — and the hand-written one was the array the comparison actually read,
+ * so `calculatedAreaMp` was written into every snapshot and compared in none.
+ * These four lists were the same shape with the same absence of a guard; they
+ * happened to agree, which is a fact about today and not a property of the
+ * code. Pointing them at the registry makes `AssertExactKeys` load-bearing
+ * here too: a field added to the *Snapshot type now fails to compile until the
+ * registry names it, and naming it there is what puts it here.
+ *
+ * ⚠️ **This is the one of the four files where the array is NOT the same keys
+ * it was** — see the note below, which is the whole difference. The behaviour
+ * is still unchanged, for the reason given there.
+ */
+// ⚠️ Renamed from `JUD_STRING_KEYS`, because it is no longer a list of strings:
+// the registry array also carries `correspondenceSameAsHq`, a boolean, which
+// `judicialSnapshotsEqual` used to compare on a line of its own directly below
+// the loop. That line is gone — one `!==` inside the loop does the same work,
+// and the eighth key is now impossible to forget because the registry names it.
+const JUD_FIELD_KEYS: ReadonlyArray<keyof JudicialPersonSnapshot["judicial"]> =
+  JUDICIAL_PERSON_SNAPSHOT_FIELDS_KEYS;
+const JUD_ADDR_KEYS: ReadonlyArray<keyof PersonAddressSnapshot> =
+  PERSON_ADDRESS_SNAPSHOT_KEYS;
 
 function jAddrEqual(
   a: PersonAddressSnapshot | null,
@@ -365,10 +388,9 @@ function judicialSnapshotsEqual(
   // the transaction alive.
   if (!a.judicial || !b.judicial) return false;
   if (a.notes !== b.notes) return false;
-  for (const k of JUD_STRING_KEYS) {
+  for (const k of JUD_FIELD_KEYS) {
     if (a.judicial[k] !== b.judicial[k]) return false;
   }
-  if (a.judicial.correspondenceSameAsHq !== b.judicial.correspondenceSameAsHq) return false;
   if (!jAddrEqual(a.addresses.HEADQUARTERS, b.addresses.HEADQUARTERS)) return false;
   if (!jAddrEqual(a.addresses.CORRESPONDENCE, b.addresses.CORRESPONDENCE)) return false;
   return true;

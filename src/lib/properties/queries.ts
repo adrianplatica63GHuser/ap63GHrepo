@@ -19,6 +19,12 @@ import { cadastralKey, cadastralValue } from "./cadastral-identity";
 import type { CadastralMatch } from "./import-property-plan";
 import { entityMetadata, groupMember, groups, lookupPersonRole, lookupTarla, person, principalObject, property, propertyAddress, propertyCorner, propertyPerson, propertyVersion } from "@/db/schema";
 import { appendVersionsIfChanged } from "@/lib/versioning/append";
+// Slice #34.07: the snapshot key sets come from the registry that already
+// compile-guards them — see SNAPSHOT_PROPERTY_KEYS below.
+import {
+  PROPERTY_SNAPSHOT_ADDRESS_KEYS,
+  PROPERTY_SNAPSHOT_PROPERTY_KEYS,
+} from "@/lib/versioning/snapshot-registry";
 // Slice #32.14: both derived geometry values come from ONE projection of the
 // corners — see that module's header for why they are not two functions.
 import { computeCornerGeometry } from "./corner-geometry";
@@ -140,14 +146,91 @@ export function snapshotFromFull(full: PropertyFull): PropertySnapshot {
   };
 }
 
-const SNAPSHOT_PROPERTY_KEYS: (keyof PropertySnapshot["property"])[] = [
-  "propertyTypeId", "nickname", "tarlaId", "parcela", "cadastralNumber",
-  "carteFunciara", "useCategoryId", "surfaceAreaMp", "notes",
-];
-const SNAPSHOT_ADDRESS_KEYS: (keyof NonNullable<PropertySnapshot["address"]>)[] = [
-  "streetLine", "postalCode", "locality", "county", "country", "notes",
-  "streetViewStreetLine",
-];
+/**
+ * The keys `snapshotsEqual` compares — the REGISTRY's arrays, not a second
+ * copy of them.                                                (Slice #34.07)
+ *
+ * ⚠️ **THERE WERE TWO LISTS AND ONLY ONE OF THEM DID ANYTHING.**
+ * `snapshot-registry.ts` has held ten property keys since #18.09, guarded both
+ * ways by `AssertExactKeys` at compile time and again by
+ * `snapshot-registry.test.ts` at run time. This file held nine, hand-written,
+ * guarded by nothing — and this file's copy is the one `snapshotsEqual` reads.
+ * The missing key was `calculatedAreaMp`: `snapshotFromFull` above writes it
+ * into every snapshot, the registry says it belongs there, and the comparison
+ * that decides whether a version row is written skipped it.
+ *
+ * ⚠️ **An earlier draft of this paragraph gave three examples of a save that
+ * would change the area and nothing else, and a review round showed that all
+ * three were impossible** — worth recording, because the exercise is what
+ * establishes how narrow the live effect is (next paragraph but one).
+ * Re-ordering corners and straightening a bow-tie both rewrite
+ * `property_corner.sequence_no`, which the snapshot carries IN ORDER, so those
+ * saves compared unequal already; and `scripts/mark-bow-tie-properties.ts`
+ * writes `corner_order_self_intersects` and nothing else, by its own header's
+ * design — it computes an area only to print it in the dry run. Nothing in the
+ * application changes a property's area while its corners stand still.
+ *
+ * The registry's whole premise is that it is the single source; it could not
+ * be while the comparison kept its own list. Pointing at it costs one import
+ * and makes the compile-time guard load-bearing for this code too: a field
+ * added to `PropertySnapshotProperty` now fails `AssertExactKeys` until the
+ * registry names it, and naming it there is what puts it here.
+ *
+ * ⚠️ **WHAT THIS ACTUALLY CHANGES AT RUN TIME: almost nothing, and this
+ * paragraph has now been wrong twice, so it is written from the mechanism
+ * rather than from intuition.**
+ *
+ * `snapshotsEqual` is only ever consulted when there IS a stored version to
+ * compare against — `nextVersionNumber` (src/lib/versioning/append.ts) returns
+ * a number without calling `equal` at all when an object has no history. So
+ * the stricter comparison cannot reach an object with no version rows, which
+ * rules out `seed_dev_data.sql`'s properties outright: it truncates
+ * `property_version` and writes none. (`src/db/seed.ts`'s rows were in the
+ * same position until this slice and are now in a different one: they have a
+ * version 0, and it carries the key, so they are unaffected for the ordinary
+ * reason rather than the structural one. The first draft of this note named
+ * both seeds as the AFFECTED population, which is backwards twice over.)
+ *
+ * For a property that does have history, the new key decides the outcome only
+ * when every OTHER compared field is equal and `calculatedAreaMp` is not. That
+ * means a stored snapshot written before Slice #18.09 put the field into
+ * `snapshotFromFull` — `migration_029_property_versions.sql`'s backfill, and
+ * every version the application itself wrote between #18.02 and #18.09, which
+ * carry the identical key set. It is narrow, because such a snapshot also
+ * carries `tarlaSola` rather than `tarlaId` and no `streetViewStreetLine` at
+ * all, so a property with a tarla, or with an address row, already compared
+ * unequal on one of those. What is left is a property with THREE OR MORE
+ * corners (below three there is no area on either side, and `?? null` makes
+ * them equal — the same floor migration_033's backfill used), no tarla and no
+ * address, not saved since #18.09: it now records one version on its next save.
+ *
+ * ⚠️ **AND IT DOES NOT CHANGE THE BULK RE-POINT'S COST**, which a second draft
+ * of this note claimed it did. `recordMoveHistory` is handed exactly the ids
+ * `moveRef`'s `UPDATE … RETURNING` returned — objects whose moved column just
+ * changed — and every versioned ref moves a column that is inside the
+ * snapshot. Each of them was already unequal and already got a version row.
+ * Stated in the negative deliberately: it is a cost somebody would otherwise
+ * budget for before running a move on a large archive.
+ *
+ * So the value here is forward-looking rather than corrective. What the change
+ * buys is that the guard exists at all: the next field added to
+ * `PropertySnapshotProperty` cannot be written into every snapshot and
+ * compared in none, because `AssertExactKeys` now fails until the registry
+ * names it, and naming it there is what puts it here.
+ *
+ * The ADDRESS array below is the same registry array and, today, the same
+ * seven keys in the same order — a no-op, taken for the same reason: two lists
+ * of one fact drift, and the property one is proof that they drift silently.
+ *
+ * The corner loop is left comparing its three fields by hand: it also has to
+ * pair rows up by index and read `?? null` on `originalIndex`, so there is no
+ * key array to drive it with. `PROPERTY_SNAPSHOT_CORNER_KEYS` names exactly
+ * those three, which is what makes the hand-written loop checkable by eye.
+ */
+const SNAPSHOT_PROPERTY_KEYS: ReadonlyArray<keyof PropertySnapshot["property"]> =
+  PROPERTY_SNAPSHOT_PROPERTY_KEYS;
+const SNAPSHOT_ADDRESS_KEYS: ReadonlyArray<keyof NonNullable<PropertySnapshot["address"]>> =
+  PROPERTY_SNAPSHOT_ADDRESS_KEYS;
 
 /**
  * Field-by-field equality of two snapshots. Used to skip writing a new version

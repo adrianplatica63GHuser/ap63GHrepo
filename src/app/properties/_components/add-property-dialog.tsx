@@ -179,6 +179,47 @@ const CHOICE_CARD =
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus " +
   "dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-cta dark:hover:bg-zinc-700";
 
+/**
+ * The caution line the three coordinate cards carry, and the box the two
+ * result screens end on.                                   (Slice #34.07, D-18)
+ *
+ * ⚠️ **WHAT IT SAYS IS A FACT ABOUT THE PAYLOAD, NOT A WARNING ABOUT A RISK.**
+ * `createProperty` below builds its body key by key and sends `corners`,
+ * `provenance` and optionally `notes` and `nickname`. There is no tarla and no
+ * parcela in it, and none of these three steps has a field to collect one —
+ * so a property made from a photograph, a `.txt` or a folder of them has NO
+ * cadastral identity at all.
+ *
+ * The consequence is the one worth saying out loud, and it is the opposite of
+ * what a user would assume: the one-property-per-parcel check
+ * (`findPropertiesByCadastralIdentity`, reached through
+ * `ensurePropertyForFolder`) compares a tarla against a tarla and a parcela
+ * against a parcela. With neither present there is nothing to compare, so the
+ * check is never invoked and a second property for a parcel that already has
+ * one is created in silence. That is why Adrian's answer to D-18 was (c) —
+ * SAY it — rather than "add the guard": the guard cannot be switched on until
+ * these paths collect the parcel, which is the rebuild #32.20 deferred and
+ * this slice is explicitly out of scope for. See
+ * `src/lib/properties/cadastral-identity.ts` → `hasCadastralIdentity`, which
+ * records the asymmetry between `POST /api/properties` and the import route as
+ * deliberate.
+ *
+ * ⚠️ **CARD 1 IS NOT IN THIS SET, AND THAT IS THE WHOLE POINT OF PUTTING THE
+ * LINE ON CARDS RATHER THAN ON THE DIALOG.** "Manual entry" opens
+ * /properties/new, which has both fields; a note across the top of the choice
+ * step would have libelled the one path that does collect an identity.
+ *
+ * ⚠️ **THE SCAN PATH HAS NO RESULT SCREEN.** It ends at `navigateToSaved`,
+ * which pushes the user to the property page — where the empty Tarla and
+ * Parcela fields are in front of them — so its copy is on the card and on the
+ * "select" step, the last screen before the write. The two text paths do stop
+ * on a result, and that is where the box goes.
+ */
+const NO_IDENTITY_LINE = "mt-1 text-xs font-medium text-amber-700 dark:text-amber-400";
+const NO_IDENTITY_BOX =
+  "rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 " +
+  "dark:border-amber-900 dark:bg-amber-950 dark:text-amber-300";
+
 interface Props {
   onClose: () => void;
 }
@@ -198,6 +239,25 @@ export function AddPropertyDialog({ onClose }: Props) {
   const [selectedFile,  setSelectedFile]  = useState<File | null>(null);
   const [scanResult,    setScanResult]    = useState<ScanResult | null>(null);
   const [saveCount,     setSaveCount]     = useState(1);
+  /**
+   * A render-safe mirror of `scanSavedIdsRef.current.length`. (Slice #34.07)
+   *
+   * The ref stays the thing `handleScanSave` resumes from: it must survive a
+   * re-render and be readable synchronously mid-loop, which is what a ref is
+   * for. What it cannot do is be read during RENDER — `react-hooks/refs`
+   * refuses that, rightly, because a paragraph reading `ref.current` would not
+   * re-render when the ref changed. And the "select" step's
+   * no-cadastral-identity note has to choose singular or plural from what will
+   * EXIST after this save rather than from `saveCount` alone, because a user
+   * can return to that step after a partial failure and pick a number BELOW
+   * what is already written. So the count is mirrored into state and the two
+   * are set together.
+   *
+   * This does re-render once per saved property, which is fine and is NOT the
+   * reason the ref stays a ref: `step` is `"saving"` throughout that loop, so
+   * nothing on screen depends on it.
+   */
+  const [scanSavedCount, setScanSavedCount] = useState(0);
 
   // Text file flow
   const [textFile,      setTextFile]      = useState<File | null>(null);
@@ -205,6 +265,19 @@ export function AddPropertyDialog({ onClose }: Props) {
   // Folder flow
   const [folderFiles,   setFolderFiles]   = useState<File[]>([]);
   const [folderHadFiles, setFolderHadFiles] = useState(false);
+  /**
+   * How many properties the folder import actually wrote.     (Slice #34.07)
+   *
+   * `savingLabel` already carries "Imported N of M" as text, but the
+   * no-cadastral-identity note beside it has to choose between a singular and
+   * a plural sentence and cannot read a number out of a formatted string. A
+   * folder of six .txt files where five carry no coordinates writes ONE
+   * property — `handleImportFolder` skips the unparseable ones and only the
+   * empty-set case returns early — so the plural is wrong often enough to be
+   * worth a state field. A review round found the screen saying "1 of 6" above
+   * "These properties … on each property page".
+   */
+  const [folderSavedCount, setFolderSavedCount] = useState(0);
 
   // Saving progress (shared across all save paths)
   const [savingLabel,   setSavingLabel]   = useState("");
@@ -373,6 +446,7 @@ export function AddPropertyDialog({ onClose }: Props) {
     // A new scan is a new set of boundaries — nothing saved from a previous one
     // may be resumed against it. See handleScanSave's docblock.
     scanSavedIdsRef.current = [];
+    setScanSavedCount(0);
     setStep("processing");
 
     const controller = new AbortController();
@@ -445,6 +519,7 @@ export function AddPropertyDialog({ onClose }: Props) {
       try {
         const id = await createProperty(result.properties[i].corners, notesText, null, "IMAGE_FILE");
         savedIds.push(id);
+        setScanSavedCount(savedIds.length);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Save failed");
         setStep("select");
@@ -615,6 +690,7 @@ export function AddPropertyDialog({ onClose }: Props) {
     setSavingLabel(
       t("folderImportDone", { success: savedIds.length, total })
     );
+    setFolderSavedCount(savedIds.length);
     setStep("done-folder");
     markImporting(false);
   };
@@ -633,7 +709,9 @@ export function AddPropertyDialog({ onClose }: Props) {
     // files found in the selected folder." above a picker reading "Select
     // folder", with no folder selected. Four clicks, deterministic.
     setFolderHadFiles(false);
+    setFolderSavedCount(0);
     scanSavedIdsRef.current = [];
+    setScanSavedCount(0);
   };
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -734,6 +812,7 @@ export function AddPropertyDialog({ onClose }: Props) {
               >
                 <span className="font-medium">{t("choiceScan")}</span>
                 <span className="mt-0.5 text-xs text-fade">{t("choiceScanDesc")}</span>
+                <span className={NO_IDENTITY_LINE}>{t("noCadastralIdentityCard")}</span>
               </button>
 
               {/* 3. From a text file */}
@@ -744,6 +823,7 @@ export function AddPropertyDialog({ onClose }: Props) {
               >
                 <span className="font-medium">{t("choiceTextFile")}</span>
                 <span className="mt-0.5 text-xs text-fade">{t("choiceTextFileDesc")}</span>
+                <span className={NO_IDENTITY_LINE}>{t("noCadastralIdentityCard")}</span>
               </button>
 
               {/* 4. From a text folder */}
@@ -754,6 +834,7 @@ export function AddPropertyDialog({ onClose }: Props) {
               >
                 <span className="font-medium">{t("choiceTextFolder")}</span>
                 <span className="mt-0.5 text-xs text-fade">{t("choiceTextFolderDesc")}</span>
+                <span className={NO_IDENTITY_LINE}>{t("noCadastralIdentityCard")}</span>
               </button>
 
               {/*
@@ -869,6 +950,28 @@ export function AddPropertyDialog({ onClose }: Props) {
                   {t("labelsNote")}
                 </p>
               )}
+
+              {/*
+                Unconditional, unlike the labels note above it: the scan path
+                ends at `navigateToSaved` and never reaches a result screen, so
+                this is the last place it can be said before the write.
+              */}
+              {/*
+                ⚠️ `Math.max(saveCount, scanSavedCount)`, not `saveCount`, and a
+                review round found why: `handleScanSave` RESUMES rather than
+                restarts, and the radios let the user pick a count BELOW what a
+                previous, partly-failed attempt already wrote. Three boundaries,
+                two saved, the third throws, user comes back and picks 1 — on
+                `saveCount` alone this reads "This property…" while two exist.
+                (`scanSavedCount` and not the ref itself: reading a ref during
+                render is what `react-hooks/refs` refuses, and it is right — the
+                paragraph would not re-render when the ref changed.)
+              */}
+              <p className={NO_IDENTITY_BOX} role="note">
+                {Math.max(saveCount, scanSavedCount) === 1
+                  ? t("noCadastralIdentityResult")
+                  : t("noCadastralIdentityResultPlural")}
+              </p>
 
               {error && <ErrorBanner message={error} />}
 
@@ -1013,6 +1116,9 @@ export function AddPropertyDialog({ onClose }: Props) {
               <p className="text-sm text-center text-ink dark:text-zinc-200">
                 {savingLabel}
               </p>
+              <p className={`max-w-sm text-center ${NO_IDENTITY_BOX}`} role="note">
+                {t("noCadastralIdentityResult")}
+              </p>
               <button
                 type="button"
                 onClick={onClose}
@@ -1029,6 +1135,11 @@ export function AddPropertyDialog({ onClose }: Props) {
               <CheckCircleIcon />
               <p className="text-sm text-center text-ink dark:text-zinc-200">
                 {savingLabel}
+              </p>
+              <p className={`max-w-sm text-center ${NO_IDENTITY_BOX}`} role="note">
+                {folderSavedCount === 1
+                  ? t("noCadastralIdentityResult")
+                  : t("noCadastralIdentityResultPlural")}
               </p>
               <button
                 type="button"

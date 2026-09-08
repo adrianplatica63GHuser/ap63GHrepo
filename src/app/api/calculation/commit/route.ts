@@ -34,7 +34,7 @@ import { DivisionError } from "@/lib/calculation/geometry";
 import { ParseError } from "@/lib/calculation/parse";
 import { createGroup, updateGroup } from "@/lib/groups/queries";
 import { createProperty } from "@/lib/properties/queries";
-import { patchEntityMetadata } from "@/lib/metadata/queries";
+import { setInitialProvenance } from "@/lib/metadata/queries";
 import { getCurrentUserEmail } from "@/lib/auth/current-user";
 import { inferProvenance } from "@/lib/metadata/provenance-rules";
 
@@ -177,15 +177,50 @@ export async function POST(request: NextRequest): Promise<Response> {
     // Slice #21.07.Import: the value now comes from the shared rule table
     // instead of a bare 'ALGORITHM' literal, so this route cannot drift away
     // from the code set the DB CHECK constraint enforces.
+    //
+    // ── Slice #34.07: through `setInitialProvenance`, and guarded ───────────
+    //
+    // This was the seventh writer of an initial provenance and the only one
+    // that called `patchEntityMetadata` directly — the other six all went
+    // through `setInitialProvenance`, which is the set
+    // `object-writers-enumerated.test.ts` now discovers by scanning. Two things followed from that, and
+    // neither was intended:
+    //
+    //   1. **No swallow at all.** `setInitialProvenance`'s docblock says it
+    //      "mirrors how /api/calculation/commit already treats its ALGORITHM
+    //      write" — which stopped being true when this route was rewritten
+    //      around `Promise.all`. Everything above this line is committed by
+    //      now: N properties, a group, its membership and the calculation run.
+    //      A metadata write that rejected here fell into the route's outer
+    //      `catch` and returned 500 for work that had entirely succeeded, with
+    //      no id in the response — so the user could not even find what had
+    //      been made. Going through the shared function makes that sentence
+    //      true rather than aspirational, and brings the 23514 diagnostic (a
+    //      database behind on the provenance migration) with it.
+    //
+    //   2. **And `allSettled` is not the fix, which is worth saying because it
+    //      looks like it.** `.map()` starts every call before the `await`, so
+    //      all N are already in flight and a rejection cancels nothing — the
+    //      writes were never "abandoned". (An earlier draft of this comment
+    //      said they were; a review round corrected it, and the wrong version
+    //      is the kind a reader carries off to another file.) What `Promise.all`
+    //      does on a rejection is throw at the await, which is reason 1. Once
+    //      each call swallows its own, there is nothing left for it to throw.
+    //
+    // The `.catch()` is here for the same reason it is on the four create
+    // routes — the guarantee belongs to the caller that has already committed,
+    // not to the callee's private try block.
     const calculationProvenance = inferProvenance("CALCULATION");
     if (calculationProvenance) {
       await Promise.all(
         runOutputs.map((o) =>
-          patchEntityMetadata(
+          setInitialProvenance(
             o.principalObjectId,
-            { field: "provenance", value: calculationProvenance },
+            calculationProvenance,
             createdBy,
-          ),
+          ).catch(() => {
+            // Best-effort — never at the cost of the 201 above.
+          }),
         ),
       );
     }

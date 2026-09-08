@@ -18,6 +18,10 @@
 import { and, count, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
 import { db, type DbTransaction } from "@/db";
 import { appendVersionsIfChanged } from "@/lib/versioning/append";
+import {
+  NATURAL_PERSON_SNAPSHOT_FIELDS_KEYS,
+  PERSON_ADDRESS_SNAPSHOT_KEYS,
+} from "@/lib/versioning/snapshot-registry";
 import { deletePrincipalObjects } from "@/lib/entities/delete";
 import { ID_CARD_TYPE_KEYS } from "@/lib/import/id-card";
 import {
@@ -409,20 +413,25 @@ export function naturalSnapshotFromFull(full: PersonFull): NaturalPersonSnapshot
   };
 }
 
-const NAT_FIELD_KEYS: (keyof NaturalPersonSnapshot["natural"])[] = [
-  "firstName", "lastName", "nickname", "cnp", "idDocumentType",
-  "idDocumentNumber", "gender", "dateOfBirth", "personalPhone1",
-  "personalPhone2", "workPhone", "personalEmail1", "personalEmail2",
-  "workEmail", "placeOfBirth", "idIssuingAuthority", "idValidFrom",
-  "idValidUntil", "idCardNumber", "idMrzRaw", "citizenshipId",
-  // Slice #18.16.VL:
-  "physicalPersonTypeId",
-  // Slice #19.01:
-  "correspondenceSameAsHome",
-];
-const ADDR_SNAP_KEYS: (keyof PersonAddressSnapshot)[] = [
-  "streetLine", "postalCode", "locality", "county", "country", "notes",
-];
+/**
+ * Driven from the registry, like its three siblings.           (Slice #34.07)
+ *
+ * The slice found `SNAPSHOT_PROPERTY_KEYS` in `src/lib/properties/queries.ts`
+ * holding nine keys where the compile-guarded registry array beside it held
+ * ten — and the hand-written one was the array the comparison actually read,
+ * so `calculatedAreaMp` was written into every snapshot and compared in none.
+ * These four lists were the same shape with the same absence of a guard; they
+ * happened to agree, which is a fact about today and not a property of the
+ * code. Pointing them at the registry makes `AssertExactKeys` load-bearing
+ * here too: a field added to the *Snapshot type now fails to compile until the
+ * registry names it, and naming it there is what puts it here.
+ *
+ * No behaviour changes in this file: the array below is the same keys it was.
+ */
+const NAT_FIELD_KEYS: ReadonlyArray<keyof NaturalPersonSnapshot["natural"]> =
+  NATURAL_PERSON_SNAPSHOT_FIELDS_KEYS;
+const ADDR_SNAP_KEYS: ReadonlyArray<keyof PersonAddressSnapshot> =
+  PERSON_ADDRESS_SNAPSHOT_KEYS;
 
 function addressSnapshotsEqual(
   a: PersonAddressSnapshot | null,

@@ -273,9 +273,31 @@ export const judicialPerson = pgTable(
       .default(false),
   },
   () => [
-    // NOTE: CUI uniqueness is enforced by a trigger
-    // (judicial_person_check_cui_unique, migration_025), not a plain unique
-    // index — see the matching note on natural_person.cnp for why.
+    // NOTE: CUI uniqueness lives in SQL, not here, and it is an INDEX again —
+    // the partial unique index `judicial_person_cui_unique` ON judicial_person
+    // (cui_number) WHERE cui_number IS NOT NULL. Same round trip as
+    // natural_person.cnp above, for the same reason and in the same three
+    // steps: created by drizzle/0004_judicial_person.sql (NOT
+    // 0000_initial_schema.sql, which is where the CNP one comes from —
+    // judicial_person did not exist yet), replaced by
+    // migration_025's BEFORE INSERT OR UPDATE trigger
+    // `judicial_person_check_cui_unique` so a soft-deleted person's CUI would
+    // not stay taken, and restored by migration_070 once Slice #29.04 had
+    // removed `deleted_at` and left that trigger raising on every insert.
+    // migration_070 drops the trigger AND its function.
+    //
+    // ⚠️ This note said the trigger was still there until Slice #34.07, three
+    // paragraphs below one that described the same round trip correctly for
+    // CNP. Nothing failed — it is a comment — but a redesign that trusted it
+    // would go looking for a trigger migration_070 deleted, and would read the
+    // 409 as coming from a RAISE rather than from a 23505 the index throws.
+    //
+    // The 409 is unaffected either way: dbErrorToResponse matches on the
+    // constraint name containing "cui", which this index satisfies.
+    //
+    // The `cui_number` comment above is about a DIFFERENT trigger and is
+    // correct: `judicial_person_lock_cui` (BEFORE UPDATE) is what makes the
+    // value immutable once set, and migration_070 leaves it in place.
   ],
 );
 

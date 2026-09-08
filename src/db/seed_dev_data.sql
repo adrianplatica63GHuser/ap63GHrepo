@@ -9,6 +9,68 @@
 -- Apply locally:
 --   docker cp src/db/seed_dev_data.sql ga40prj-postgres:/tmp/seed.sql
 --   docker exec ga40prj-postgres psql -U postgres -d ga40db -f /tmp/seed.sql
+--
+-- =============================================================================
+-- THIS FILE IS A DIRECT WRITER OF THE FOUR OBJECT TABLES, AND STAYS ONE.
+--                                                             Slice #34.07
+-- =============================================================================
+--
+-- Slice #34.07 routed `src/db/seed.ts` through `createPropertyIn`,
+-- `createDocument`, `createNaturalPerson` and `createJudicialPerson`, so that
+-- the application has one create path per family. It considered doing the same
+-- here — rewriting this file as a TypeScript script that calls those four —
+-- and DECIDED NOT TO. The decision is recorded so nobody re-opens it by
+-- accident:
+--
+--   * Most of what this file writes has no create function to call. Beyond the
+--     30 + 30 + 40 + 70 objects it inserts 12 groups, 7 stamps, memberships,
+--     entity metadata, tags, provenance rows and cross-references — several of
+--     which are written here and nowhere else in the codebase.
+--   * Its value is the WIPE. `TRUNCATE ... CASCADE` plus three
+--     `ALTER SEQUENCE ... RESTART` gives a byte-identical dev archive on every
+--     run, from any starting state. A script calling the create functions
+--     could not restart the code sequences without doing the same TRUNCATE
+--     first, so the SQL would survive the rewrite anyway.
+--   * Codes are LITERAL here (PPERS00001…), and rows reference each other by
+--     those literals. The create functions allocate codes from the shared
+--     sequence, so a rewritten script would have to thread returned ids
+--     through every association — which is the whole file, not its edges.
+--
+-- SO: WHAT A ROW SEEDED BY THIS FILE DOES NOT HAVE, EXPLICITLY.
+--
+--   1. NO VERSION-0 ROW, for any of the four families. `property_version`,
+--      `person_version` and `document_version` are truncated above and this
+--      file writes none of them. Every create path records the state at
+--      creation as version 0 (Slices #18.02 / #18.05 / #18.06). So the version
+--      history of a row from this seed begins at its FIRST EDIT, and the diff
+--      shown for that edit has nothing before it to compare against.
+--
+--   2. NO `updated_by`. The column is left NULL, so these rows read as changed
+--      by nobody. `src/db/seed.ts` writes 'db:seed'; this file does not.
+--
+--   3. NO `calculated_area_mp` AND NO `corner_order_self_intersects` on the 40
+--      properties, which DO get real `property_corner` rows. So a property
+--      from this seed shows an empty area beside four corners, and never shows
+--      the bow-tie badge however its corners are ordered.
+--      `computeCornerGeometry` (src/lib/properties/corner-geometry.ts) is what
+--      fills both, in one projection, and it is TypeScript.
+--
+--      (A review round corrected an earlier version of this note, which
+--      claimed these rows were the population Slice #34.07's stricter snapshot
+--      comparison newly affects. They are the one population it CANNOT affect:
+--      the comparison only runs when there is a stored version to compare
+--      against, and this file writes none — so the first save of one of these
+--      rows opens its history at version 0 unconditionally, before and after.
+--      See `SNAPSHOT_PROPERTY_KEYS` in src/lib/properties/queries.ts.)
+--
+--   4. `display_name` DERIVED HERE, not by `computeDisplayName`. It is written
+--      as a literal in the INSERTs below and must be kept in step by hand.
+--
+-- A row this file writes is therefore a usable dev fixture and NOT a faithful
+-- example of what the application creates. `src/db/seed.ts` is, and is the one
+-- to reach for when the question is "what does a real row look like".
+-- `src/__tests__/object-writers-enumerated.test.ts` holds this file in the
+-- list of writers, so removing it from that list is a deliberate act.
 -- =============================================================================
 
 SET client_encoding = 'UTF8';

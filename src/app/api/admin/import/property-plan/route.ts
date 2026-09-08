@@ -37,8 +37,17 @@ const bodySchema = z.object({
         // screen. `.min(1)` was the first attempt and was not the same gate:
         // the write route asks `hasCadastralIdentity`, which folds whitespace
         // away, so `"  "` passed here and was refused there.
-        tarlaSola: z.string().refine((v) => cadastralKey(v) !== ""),
-        parcela: z.string().refine((v) => cadastralKey(v) !== ""),
+        //
+        // Slice #34.07: and the write route now states it this way too. Until
+        // then this comment described a difference it had fixed on one side
+        // only — `admin/import/property/route.ts` still carried `.min(1)`, so
+        // whitespace-only input passed ITS schema and was refused a layer
+        // deeper with a different error body. The two lines below and the two
+        // there are now one rule written twice, which is the most a Zod schema
+        // per route allows; `object-writers-enumerated.test.ts` holds them
+        // together.
+        tarlaSola: z.string().refine((v) => cadastralKey(v) !== "", "tarla is required"),
+        parcela: z.string().refine((v) => cadastralKey(v) !== "", "parcela is required"),
         offeredCornerCount: z.number().int().min(0),
       }),
     )
