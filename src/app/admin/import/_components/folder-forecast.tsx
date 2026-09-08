@@ -166,8 +166,54 @@ export function FolderForecast({
     if (active === null || active === document.body) headingRef.current?.focus();
   }, []);
 
-  const { documents, pageGroups, classificationCalls, coordinateCandidates, filesToImport } =
-    forecast;
+  const {
+    documents,
+    pageGroups,
+    classificationCalls,
+    coordinateCandidates,
+    coordinateFoldersWithoutDeclared,
+    filesToImport,
+  } = forecast;
+
+  /**
+   * The property subfolders this row is about to mislead somebody over.
+   *                                                            (Slice #34.08)
+   *
+   * ⚠️ **THIS ROW AND THE PROPERTY STEP WERE ANSWERING TWO DIFFERENT
+   * QUESTIONS, AND ONLY ONE OF THEM WAS ON SCREEN.** The row is built from
+   * `isCoordinateFileName`, a plain extension test; what the property step
+   * opens is STR-08's `coord….txt` file. So a folder whose only `.txt` is
+   * `notite.txt` read „Fișier de coordonate: un fișier găsit" here and „Fără
+   * fișier de coordonate în acest subfolder" one screen later, and the Property
+   * it then created without corners was a line on a card nobody had a reason to
+   * read. D-22 is „create and warn", and this is the earlier of the two places
+   * the warning belongs — the one where a rename still costs nothing.
+   *
+   * ⚠️ **PER FOLDER, and the count of files is the wrong number** — the reason
+   * is in `ImportForecast.coordinateFoldersWithoutDeclared`, which an
+   * adversarial round rewrote this from. Not computed here for the reason every
+   * number on this panel is computed elsewhere: this file counts nothing and
+   * decides nothing.
+   */
+  const foldersWithoutCoordinateFile = coordinateFoldersWithoutDeclared.length;
+
+  /**
+   * …and named, because the count alone is not enough.          (Slice #34.08)
+   *
+   * „2 subfoldere" sends a user to compare five folder names against a rule
+   * they have just been told about; the names send them straight to the two.
+   * That is `typesWithoutFormNames`' own argument — a backlog nobody can read
+   * is not a backlog.
+   *
+   * ⚠️ **NOT CAPPED, AND A ROUND ADDED A CAP HERE BEFORE THE NEXT ONE REMOVED
+   * IT.** The cap answered "an archive that uses none of the convention lists
+   * dozens of folders inline"; dozens is five. Every entry is a top-level
+   * property folder and STR-02 caps those at `MAX_PROPERTY_FOLDERS` — see
+   * `ImportForecast.coordinateFoldersWithoutDeclared` — so the branch could
+   * never run, and the „și încă N" sentence it needed was copy no user could
+   * ever have read, pinned by a test that could never fail.
+   */
+  const namedFolders = coordinateFoldersWithoutDeclared.join(", ");
 
   /**
    * Is there anything for Continuă to do?   (Slice #26.08)
@@ -328,6 +374,37 @@ export function FolderForecast({
       {coordinateCandidates.length > 0 && (
         <p className="mt-2 text-sm text-fade dark:text-zinc-400">
           {t("coordinateNote", { count: coordinateCandidates.length })}
+        </p>
+      )}
+
+      {/* ⚠️ **AMBER, AND IT IS THE ONE SENTENCE ON THIS SCREEN THAT IS.**
+          (Slice #34.08, D-22.) The paragraph above hedges — some of these files
+          may not be coordinate exports at all, which is true and is why the row
+          cannot be a blocker. This one is not a hedge: whatever these files
+          hold, the property step will not open them, because it opens the file
+          STR-08 declares and nothing else. Something is outstanding and a person
+          can decide it in File Explorer in ten seconds — which is what amber
+          means everywhere else in this wizard.
+
+          ⚠️ **IT DOES NOT DISABLE Continuă, and must not.** A Property with no
+          corners is sometimes exactly the right outcome — the source document
+          says a subfolder without a coordinate file „will still result in the
+          creation of a property that will not have a Polygon associated" — so
+          this is D-22(b), create and warn, and (a), refusing outright, was the
+          option Adrian did not take. `nothingToDo` remains the only thing that
+          turns the button off.
+
+          Drawn only when there is a gap. On the ordinary run where every folder
+          names its file correctly, this is silent. */}
+      {foldersWithoutCoordinateFile > 0 && (
+        <p
+          role="status"
+          className="mt-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-200"
+        >
+          {t("coordinateNotDeclaredNote", {
+            count: foldersWithoutCoordinateFile,
+            folders: namedFolders,
+          })}
         </p>
       )}
 

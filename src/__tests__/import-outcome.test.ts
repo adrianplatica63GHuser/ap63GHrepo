@@ -40,6 +40,7 @@ import {
   idCardNote,
   inResultOrder,
   outcomeNotes,
+  partyNotes,
   readSkipNote,
   refillNote,
   runLandedSomething,
@@ -331,7 +332,119 @@ describe("readSkipNote", () => {
   });
 });
 
+// ---------------------------------------------------------------------------
+// 2a. The parties   (Slice #34.08)
+// ---------------------------------------------------------------------------
+
+describe("partyNotes", () => {
+  it("⚠️ says a JUDICIAL person was created — the only route by which one is", () => {
+    // The whole reason the family exists. `idCardNote` covers natural persons
+    // read off a carte de identitate; a company reaches the archive only
+    // through the party stepper's create branch, and until this slice the
+    // result screen had no sentence for it at all.
+    expect(partyNotes(row({ partiesCreatedJudicial: 1 }))).toEqual([
+      { id: "partyCreatedJudicial", values: { count: 1 } },
+    ]);
+  });
+
+  it("keeps created apart from linked, and natural apart from judicial", () => {
+    const notes = partyNotes(
+      row({
+        partiesCreatedNatural: 2,
+        partiesCreatedJudicial: 1,
+        partiesLinkedNatural: 3,
+        partiesLinkedJudicial: 4,
+      }),
+    );
+    // Created first — it is the half that put a new row in the archive — and
+    // each judicial line beside its natural counterpart.
+    expect(notes).toEqual([
+      { id: "partyCreatedNatural", values: { count: 2 } },
+      { id: "partyCreatedJudicial", values: { count: 1 } },
+      { id: "partyLinkedNatural", values: { count: 3 } },
+      { id: "partyLinkedJudicial", values: { count: 4 } },
+    ]);
+  });
+
+  it("says nothing about a document whose read found nobody", () => {
+    expect(partyNotes(row())).toEqual([]);
+    expect(partyNotes(row({ partiesCreatedNatural: 0, partiesLinkedJudicial: 0 }))).toEqual([]);
+  });
+
+  it("says nothing on a row that did not settle", () => {
+    expect(partyNotes(row({ status: "error", partiesCreatedJudicial: 1 }))).toEqual([]);
+    expect(partyNotes(row({ status: "importing", partiesCreatedJudicial: 1 }))).toEqual([]);
+    expect(partyNotes(row({ status: "pending", partiesCreatedJudicial: 1 }))).toEqual([]);
+  });
+
+  it("⚠️ DOES speak on a row the archive already held — the carve-out its neighbours make", () => {
+    // Every other note in this module refuses a pre-existing row, and the
+    // reason they give — this run neither created nor read that document —
+    // does not reach these sentences: a party note is about a
+    // `document_person` row THIS run wrote. Guarded, the module sat on both
+    // sides of its own rule, because `summariseImportRun` adds
+    // `aiPeopleSettled` for every settled row regardless: the person would be
+    // counted in the concluding message and explained by no row.
+    for (const preexisting of ["linked", "skipped"] as const) {
+      expect(partyNotes(row({ preexisting, partiesCreatedJudicial: 1 }))).toEqual([
+        { id: "partyCreatedJudicial", values: { count: 1 } },
+      ]);
+    }
+    // …and the count the concluding message prints has a sentence behind it.
+    const summary = summariseImportRun(
+      [{ ...row({ preexisting: "linked" }), aiPeopleSettled: 1 }],
+      0,
+    );
+    expect(summary.peopleFromDocuments).toBe(1);
+  });
+
+  it("⚠️ drops a NaN count without dropping the sentences beside it", () => {
+    // The shape a producer can actually reach, and the one a bare
+    // `Math.max(0, …)` let through: the natural half is a SUBTRACTION the
+    // caller performs, so a summary that omits `createdJudicial` hands this
+    // `NaN` — and `NaN > 0` is false, so the sentence silently disappears while
+    // `summariseImportRun` goes on counting that person. The judicial note
+    // beside it must survive, or one bad field erases the whole row's story.
+    expect(
+      partyNotes(row({ partiesCreatedNatural: Number.NaN, partiesCreatedJudicial: 2 })),
+    ).toEqual([{ id: "partyCreatedJudicial", values: { count: 2 } }]);
+    // …and a negative, which the `> 0` test would have swallowed anyway.
+    expect(
+      partyNotes(row({ partiesCreatedNatural: -1, partiesLinkedNatural: -3 })),
+    ).toEqual([]);
+    // ⚠️ **THE ONE INPUT THAT ONLY `Number.isFinite` CATCHES, and a fifth round
+    // added it.** Everything above passes with that test deleted — `NaN > 0`
+    // and `undefined > 0` are both false, so the trailing clamp alone answers
+    // them. `Infinity` is the input the two guards disagree about: without
+    // `Number.isFinite` this draws „∞ persoane fizice au fost create" on the
+    // one screen a business user reads to find out what happened.
+    expect(
+      partyNotes(row({ partiesCreatedNatural: Number.POSITIVE_INFINITY })),
+    ).toEqual([]);
+  });
+});
+
 describe("outcomeNotes", () => {
+  it("draws the parties beside the identity card, created before linked", () => {
+    // Slice #34.08 — the two families are the module's only sentences about
+    // PEOPLE, and a reader wants them together: one is the property's owner
+    // read off a card, the others are the parties read out of the document.
+    const notes = outcomeNotes(
+      row({
+        isIdCard: true,
+        personId: "p1",
+        personCreated: true,
+        partiesCreatedJudicial: 1,
+        partiesLinkedNatural: 2,
+      }),
+    );
+    expect(notes.map((n) => n.id)).toEqual([
+      "personCreated",
+      "partyCreatedJudicial",
+      "partyLinkedNatural",
+    ]);
+  });
+
   it("draws the corners, the person and the skipped read in that order", () => {
     const notes = outcomeNotes(
       row({
@@ -694,6 +807,34 @@ describe("summariseImportRun", () => {
     expect(summary.alreadySkipped).toBe(1);
     expect(summary.failed).toBe(1);
     expect(summary.properties).toBe(2);
+  });
+
+  /**
+   * D-22's warning half, said where a user still has it.        (Slice #34.08)
+   */
+  describe("propertiesWithoutCorners", () => {
+    it("says so when a run created a property with no corners", () => {
+      const summary = summariseImportRun([srow()], 3, 3, 1);
+      expect(summary.propertiesWithoutCorners).toBe(1);
+      // …and it is DRAWN, where a zero would have been dropped.
+      expect(summaryLines(summary).map((l) => l.id)).toContain("propertiesWithoutCorners");
+    });
+
+    it("says nothing on a run whose every property got a polygon", () => {
+      const summary = summariseImportRun([srow()], 3, 3);
+      expect(summary.propertiesWithoutCorners).toBe(0);
+      expect(summaryLines(summary).map((l) => l.id)).not.toContain(
+        "propertiesWithoutCorners",
+      );
+    });
+
+    it("sits immediately after the corners that WERE applied", () => {
+      // The two answer one question between them: which of this run's
+      // Properties got a polygon, and which did not.
+      expect(SUMMARY_LINE_IDS.indexOf("propertiesWithoutCorners")).toBe(
+        SUMMARY_LINE_IDS.indexOf("coordinateFilesApplied") + 1,
+      );
+    });
   });
 
   it("⚠️ counts nothing else about a row that failed", () => {
@@ -1232,19 +1373,31 @@ describe("the result screen's copy", () => {
 
   it.each(LOCALES)("%s interpolates exactly what the code passes", (locale) => {
     const messages = loadMessages(locale);
-    // `coordinateApplied` is the only note with placeholders, and both of them
-    // come from `coordinateNote`'s `values`. A message asking for an argument
-    // nobody passes renders the raw name; one that ignores an argument silently
-    // drops the number it was written to show.
-    const applied = at(
-      messages,
-      "adminImport.wizard.importDialog.note.coordinateApplied",
-    ) as string;
-    expect([...scanIcu(applied).args].sort()).toEqual(["code", "count"]);
+    // A message asking for an argument nobody passes renders the raw name; one
+    // that ignores an argument silently drops the number it was written to
+    // show. So the catalogue is walked against what the code actually passes.
+    //
+    // ⚠️ **A MAP RATHER THAN ONE NAMED EXCEPTION**, and Slice #34.08 is why:
+    // this was `filter((i) => i !== "coordinateApplied")` while exactly one note
+    // had placeholders, and the four party notes are the second family that
+    // does. An exception list that has to be edited by hand is one a later
+    // slice edits by deleting; every id not named here takes no arguments, and
+    // an id added to `OUTCOME_NOTE_IDS` and not to this map is asserted to take
+    // none, which fails loudly the moment its message interpolates anything.
+    const NOTE_ARGS: Partial<Record<(typeof OUTCOME_NOTE_IDS)[number], string[]>> = {
+      coordinateApplied: ["code", "count"],
+      // Slice #34.08 — one contract can create a company, create a natural
+      // person and link a second, so each of the four is a COUNT rather than a
+      // bare sentence. `partyNotes` passes exactly `count` on all four.
+      partyCreatedNatural: ["count"],
+      partyCreatedJudicial: ["count"],
+      partyLinkedNatural: ["count"],
+      partyLinkedJudicial: ["count"],
+    };
 
-    for (const id of OUTCOME_NOTE_IDS.filter((i) => i !== "coordinateApplied")) {
+    for (const id of OUTCOME_NOTE_IDS) {
       const message = at(messages, `adminImport.wizard.importDialog.note.${id}`) as string;
-      expect([...scanIcu(message).args]).toEqual([]);
+      expect([...scanIcu(message).args].sort()).toEqual(NOTE_ARGS[id] ?? []);
     }
 
     expect([...scanIcu(at(messages, "adminImport.result.intro") as string).args]).toEqual([
@@ -1253,6 +1406,80 @@ describe("the result screen's copy", () => {
     expect([
       ...scanIcu(at(messages, "adminImport.result.reportRowFailed") as string).args,
     ]).toEqual(["reason"]);
+  });
+
+  /**
+   * The four party notes' Romanian plurals.                     (Slice #34.08)
+   *
+   * ⚠️ **THE TWO TESTS ABOVE WALK THE CATALOGUE AND STILL DO NOT COVER THIS.**
+   * One asserts every note id has a non-empty string, the other that its
+   * arguments are the ones the code passes — and a Romanian plural missing its
+   * `few` arm satisfies both while `DEFAULT_LOCALE` renders the raw key path,
+   * or throws, for any count from 2 to 19. That is the whole range a real
+   * document's party list falls in. The same argument #27.05's list records,
+   * applied to the first note family in this catalogue that interpolates a
+   * count.
+   */
+  it.each(LOCALES)("%s carries every plural arm the party notes need", (locale) => {
+    const messages = loadMessages(locale);
+    const needed = locale === "ro-RO.json" ? ["one", "few", "other"] : ["one", "other"];
+    for (const id of [
+      "partyCreatedNatural",
+      "partyCreatedJudicial",
+      "partyLinkedNatural",
+      "partyLinkedJudicial",
+    ]) {
+      const value = at(messages, `adminImport.wizard.importDialog.note.${id}`) as string;
+      for (const form of needed) expect(value).toContain(`${form} {`);
+    }
+  });
+
+  /**
+   * The Evaluation screen's half of D-22, and the sentence D-20 asked for.
+   *                                                              (Slice #34.08)
+   *
+   * ⚠️ **NEITHER HAS AN ID CONSTANT TO WALK, AND NEITHER HAS A SUITE OF ITS
+   * OWN**, which is exactly the hole #27.05's list exists to plug — the
+   * precedent being `import-continue-without-forms.test.ts`, which pins its own
+   * slice's `forecast.waivedNote` from its own suite for the same reason.
+   *
+   * ⚠️ **The property step's three sentences are NOT here**, though this slice
+   * added them in the same breath: `import-property-step-copy.test.ts` owns
+   * that namespace and checks it against the component's source. See the body.
+   */
+  it.each(LOCALES)("%s carries the Evaluation screen's and D-20's sentences", (locale) => {
+    const messages = loadMessages(locale);
+    const needed = locale === "ro-RO.json" ? ["one", "few", "other"] : ["one", "other"];
+
+    // ⚠️ **THE PROPERTY STEP'S OWN SENTENCES ARE NOT HERE.**
+    // `import-property-step-copy.test.ts` owns that namespace and has the
+    // supply-and-demand check against the component's source, so
+    // `coordinateNotDeclared`, `willCreateNoCorners` and `willCreate`'s
+    // now-forbidden `=0` arm are pinned there. Two homes for one key is how a
+    // later slice comes to satisfy one of them and break the other — which is
+    // exactly what happened to `willCreate` in this slice, in the other
+    // direction: that suite asserted the `=0` arm must EXIST.
+    //
+    // What stays here is the pair with no suite of their own: the Evaluation
+    // screen's twin of that sentence, and D-20's.
+    const note = at(
+      messages,
+      "adminImport.wizard.forecast.coordinateNotDeclaredNote",
+    ) as string;
+    expect(typeof note).toBe("string");
+    // It NAMES the folders as well as counting them — a backlog nobody can read
+    // is not a backlog — where the property step's, about the one folder its
+    // card is already headed with, takes a count alone.
+    expect([...scanIcu(note).args].sort()).toEqual(["count", "folders"]);
+    for (const form of needed) expect(note).toContain(`${form} {`);
+
+    // D-20(a) — the calculated owner names are nicknames and nothing more. No
+    // arguments, and it must not grow one: there is no count to give, because
+    // there are no Person rows to count.
+    const owners = at(messages, "calculation.commit.ownersAreNicknames") as string;
+    expect(typeof owners).toBe("string");
+    expect(owners.trim()).not.toBe("");
+    expect([...scanIcu(owners).args]).toEqual([]);
   });
 
   /**
@@ -1599,6 +1826,47 @@ describe("runLandedSomething", () => {
     // away a paid metadata pass and a folder of Haiku scans over a run that
     // wrote nothing at all.
     expect(runLandedSomething(summariseImportRun([srow({ status: "error" })], 3, 0))).toBe(false);
+  });
+
+  it("⚠️ concludes a run whose ONLY effect was a party", () => {
+    // Slice #34.08. ⚠️ **THE PRODUCER CANNOT BUILD THIS SHAPE TODAY**, and the
+    // test is here for the reason the term is: a party sits only on a row the
+    // loop created a Document for, so every real run with a party also has
+    // `documentsCreated > 0` and the first term already answers. That is a fact
+    // about today's producer, not about this predicate — one `preexisting`
+    // check away in the retry patch and the two stop coinciding, in the
+    // direction that refuses to conclude a run which wrote a `judicial_person`
+    // row. So the shape is built by hand, with every OTHER term pinned at zero,
+    // which is the only way to hold the party term to its own job.
+    const settled = summariseImportRun([srow({ preexisting: "skipped", aiPeopleSettled: 1 })], 0);
+    expect(settled.documentsCreated).toBe(0);
+    expect(settled.alreadyLinked).toBe(0);
+    expect(settled.propertiesWritten).toBe(0);
+    expect(settled.peopleCreated).toBe(0);
+    expect(settled.peopleConfirmed).toBe(0);
+    expect(settled.peopleFromDocuments).toBe(1);
+    expect(runLandedSomething(settled)).toBe(true);
+  });
+
+  it("⚠️ still counts nothing from a party on a row that never reached the archive", () => {
+    // The carve-out the loop makes for every other field: an errored row wrote
+    // nothing and read nothing, so it cannot have settled anybody either.
+    const failed = summariseImportRun([srow({ status: "error", aiPeopleSettled: 1 })], 0, 0);
+    expect(failed.peopleFromDocuments).toBe(0);
+    expect(runLandedSomething(failed)).toBe(false);
+  });
+
+  it("⚠️ does NOT conclude on people a read merely FOUND", () => {
+    // `peopleUnconfirmed` is deliberately not a term: nobody answered for them,
+    // so nothing was written and there is nothing to go and look at. Adding it
+    // would rebuild the defect the whole predicate exists to prevent.
+    const found = summariseImportRun(
+      [srow({ status: "error" }), srow({ preexisting: "skipped", aiPeoplePending: 4 })],
+      0,
+      0,
+    );
+    expect(found.peopleUnconfirmed).toBe(4);
+    expect(runLandedSomething(found)).toBe(false);
   });
 
   it("concludes an ordinary run, and one that only linked what was already here", () => {

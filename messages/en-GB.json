@@ -45,7 +45,8 @@
       "title": "Create {count} owner properties and a group",
       "groupDescription": "Group description",
       "includeRoad": "Also create the common road as a property and add it to the group",
-      "roadNickname": "Road nickname"
+      "roadNickname": "Road nickname",
+      "ownersAreNicknames": "The owner names in the file are saved only as each property's nickname, as text. No people are created and nobody is linked to a property — owners are added separately, from each property's own screen."
     },
     "group": {
       "defaultDescription": "Diviz — {file}"
@@ -1975,9 +1976,11 @@
         "documentCount": "{count, plural, =0 {no documents} one {one document} other {# documents}}",
         "cadastral": "Tarla/sola {tarla} · parcela {parcela}",
         "coordinateNone": "No coordinate file in this subfolder.",
+        "coordinateNotDeclared": "{count, plural, one {This subfolder holds a file that could contain coordinates, but its name does not start with “coord”, so it was not opened} other {This subfolder holds # files that could contain coordinates, but none of them is named starting with “coord”, so none was opened}}.",
         "coordinateUnreadable": "The file “{name}” could not be read.",
         "coordinateFound": "Coordinate file “{name}”: {count, plural, =0 {no corners} one {one corner} other {# corners}}.",
-        "willCreate": "A new property will be created, {corners, plural, =0 {with no corners} one {with one corner} other {with # corners}}.",
+        "willCreate": "A new property will be created, {corners, plural, one {with one corner} other {with # corners}}.",
+        "willCreateNoCorners": "A new property will be created with no corners: it will have no outline on the map. Corners can be added at any time later, in the property's “Corners” section.",
         "alreadyExists": "This property already exists in the system: {code} — {nickname}.",
         "confirmLink": "{count, plural, =0 {I confirm that this subfolder, which holds no documents, belongs to property {code}} one {I confirm linking the document in this subfolder to property {code}} other {I confirm linking the # documents in this subfolder to property {code}}}.",
         "confirmCorners": "I confirm adding the corners from the coordinate file to property {code} — {count, plural, one {one corner} other {# corners}}. The property has no corners at the moment.",
@@ -2221,6 +2224,10 @@
           "typeCreateFailed": "the AI scan decided this document's type, but the type could not be confirmed, so the document was filed under the general type — open the document and choose the right one",
           "personStepUnfinished": "the identity-card step did not finish — try again with the “Confirm the people” button",
           "personCardRefused": "this image holds more than one person's identity document, so no person was created from it — trying again will not help: split the file so that each identity card is in a file of its own, then import it again",
+          "partyCreatedNatural": "{count, plural, one {one natural person was created from this document and linked to it} other {# natural people were created from this document and linked to it}}",
+          "partyCreatedJudicial": "{count, plural, one {one judicial person was created from this document and linked to it} other {# judicial persons were created from this document and linked to it}}",
+          "partyLinkedNatural": "{count, plural, one {one natural person was already in the system and was linked to this document} other {# natural people were already in the system and were linked to this document}}",
+          "partyLinkedJudicial": "{count, plural, one {one judicial person was already in the system and was linked to this document} other {# judicial persons were already in the system and were linked to this document}}",
           "typeFormPending": "this document's type has no form yet, so the type-specific information went to Notes",
           "typeFormAdded": "this document's type gained a form during this import",
           "refillPending": "it was not read again, so its type-specific information is still in Notes",
@@ -2284,6 +2291,7 @@
         "classificationCalls": "Images for automatic classification",
         "coordinateFile": "Coordinate file",
         "noCoordinateFile": "none found",
+        "coordinateNotDeclaredNote": "{count, plural, one {One property subfolder holds at least one file that could contain coordinates, but none named starting with “coord”, so nothing there will be opened at the “The properties in this import” step: {folders}.} other {# property subfolders hold files that could contain coordinates, but none named starting with “coord”, so nothing there will be opened at the “The properties in this import” step: {folders}.}} A property created now from such a subfolder will be created with no corners; one that already exists keeps the corners it has. If one of those subfolders really does hold the property's coordinate file, rename it “coord …” — one per property — and press “Check this folder again (the classification so far is lost)”. Otherwise carry on: corners can be added at any time later, in the property's “Corners” section.",
         "severalCoordinateFiles": "{count} files found",
         "nothingToImport": "No file in this folder will be imported. Some files are skipped automatically — archives, drawings and temporary files, for example.",
         "ignoredFiles": "Files that will be skipped",
@@ -2901,6 +2909,7 @@
         "cardsUnanswered": "Identity cards left unanswered",
         "cardsUnreadable": "Identity cards that could not be read",
         "cardsRefused": "Identity cards refused (more than one person on one image)",
+        "propertiesWithoutCorners": "Properties created with no corners",
         "typesWithoutForm": "Document types still without a form",
         "documentsAwaitingRefill": "Documents whose information stayed in Notes"
       },

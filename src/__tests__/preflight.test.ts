@@ -244,8 +244,111 @@ describe("forecastImport", () => {
       pageGroups: 0,
       classificationCalls: 0,
       coordinateCandidates: [],
+      coordinateFoldersWithoutDeclared: [],
       filesToImport: 0,
     });
+  });
+
+  /**
+   * The declared subset — Slice #34.08.
+   *
+   * ⚠️ **THE TWO LISTS ARE DIFFERENT AND THE EVALUATION SCREEN WAS SHOWING ONLY
+   * THE FIRST.** `coordinateCandidates` is the extension test; the property step
+   * reads STR-08's `coord….txt` rule. A folder whose only `.txt` is `notite.txt`
+   * therefore had a row saying a coordinate file was found and then a Property
+   * with no corners that nothing connected back to it.
+   */
+  /**
+   * ⚠️ **EVERY FOLDER NAME IN THESE FIXTURES PARSES UNDER #26.01's GRAMMAR**
+   * (`tarla-parcela`, optionally `-description`), because
+   * `coordinateFoldersWithoutDeclared` only counts a folder
+   * `groupByPropertyFolder` would make a card for. A dashless `47per2` is
+   * `unassigned` — no card, no Property — so a fixture using one would assert
+   * an ordering over folders the wizard never draws.
+   */
+  it("⚠️ says nothing about a folder that HAS its coord file, whatever else is in it", () => {
+    // The whole point of asking per FOLDER. `candidates − declared` is 1 here,
+    // and the first draft printed a warning off that number — over a property
+    // that was getting its polygon from the file right beside the notes file,
+    // with a remedy („rename each one `coord …`") that would have put two
+    // declared files in one folder and tripped STR-08.
+    const entries: FSEntry[] = [
+      fileEntry("47per2-2716/coord 47per2.txt"),
+      fileEntry("47per2-2716/notite.txt"),
+      fileEntry("47per2-2716/contract.pdf"),
+    ];
+    const forecast = forecastImport(entries);
+    expect(forecast.coordinateCandidates).toEqual([
+      "47per2-2716/coord 47per2.txt",
+      "47per2-2716/notite.txt",
+    ]);
+    expect(forecast.coordinateFoldersWithoutDeclared).toEqual([]);
+  });
+
+  it("names the property subfolders that hold a candidate and nothing declared", () => {
+    const entries: FSEntry[] = [
+      fileEntry("47per2-2716/coord 47per2.txt"),
+      fileEntry("47per2-2716/notite.txt"),
+      fileEntry("225per3per24-11/puncte.txt"),      // a candidate, undeclared → reported
+      fileEntry("18per7-90/contract.pdf"),     // no candidate at all → silent
+    ];
+    expect(forecastImport(entries).coordinateFoldersWithoutDeclared).toEqual(["225per3per24-11"]);
+  });
+
+  it("⚠️ says nothing about a shared folder, a root file, or a folder that is not a property", () => {
+    // None of the four produces a Property, so none can produce a Property
+    // without corners. A `.txt` under `comune` is business content linked to
+    // every property in the run — telling a user to rename it „coord …" would
+    // trip STR-09, which forbids a coordinate file there outright. `Acte` has no
+    // dash, so #26.01's grammar refuses it and `groupByPropertyFolder` files it
+    // under `unassigned`: no card, no Property, nothing to warn about.
+    const entries: FSEntry[] = [
+      fileEntry("comune/adrese.txt"),
+      fileEntry("flotante/nota.txt"),
+      // The legacy spellings #26.11 kept accepting, because every archive
+      // Ciprian has prepared so far uses them.
+      fileEntry("common/vechi.txt"),
+      fileEntry("Acte/nota.txt"),
+      fileEntry("citeste-ma.txt"),
+    ];
+    const forecast = forecastImport(entries);
+    expect(forecast.coordinateCandidates).toHaveLength(5);
+    expect(forecast.coordinateFoldersWithoutDeclared).toEqual([]);
+  });
+
+  it("⚠️ reports each folder once, in the order the property CARDS use", () => {
+    // `compareForDisplay`, which is NUMERIC — the same comparator
+    // `groupByPropertyFolder` orders the cards with, and the order File
+    // Explorer shows. A bare `localeCompare` is not numeric and puts `47per2`
+    // before `9per1`, so this sentence and the cards one screen later would
+    // list the same folders in two different orders.
+    const entries: FSEntry[] = [
+      fileEntry("47per2-2716/a.txt"),
+      fileEntry("9per1-50D/b.txt"),
+      fileEntry("225per3per24-11/c.txt"),
+      fileEntry("9per1-50D/d.txt"),
+    ];
+    expect(forecastImport(entries).coordinateFoldersWithoutDeclared).toEqual([
+      "9per1-50D",
+      "47per2-2716",
+      "225per3per24-11",
+    ]);
+  });
+
+  it("⚠️ the NAME only counts on a file the extension test already accepted", () => {
+    // `isDeclaredCoordinateFile` is `coordinateNameConfidence === "strong"`,
+    // which requires `isCoordinateFileName` first — so `coord two.pdf` is
+    // neither a candidate nor a declared file, and cannot absolve its folder.
+    // Getting that backwards would silence the warning for a folder whose
+    // property is about to be created without corners.
+    const entries: FSEntry[] = [
+      fileEntry("47per2-2716/coord two.pdf"),
+      fileEntry("47per2-2716/puncte.txt"),
+      fileEntry("47per2-2716/plan.jpg"),
+    ];
+    const forecast = forecastImport(entries);
+    expect(forecast.coordinateCandidates).toEqual(["47per2-2716/puncte.txt"]);
+    expect(forecast.coordinateFoldersWithoutDeclared).toEqual(["47per2-2716"]);
   });
 
   /**

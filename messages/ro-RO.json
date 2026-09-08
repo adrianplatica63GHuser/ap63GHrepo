@@ -45,7 +45,8 @@
       "title": "Creează {count} proprietăți și un grup",
       "groupDescription": "Descrierea grupului",
       "includeRoad": "Creează și drumul comun ca proprietate și adaugă-l în grup",
-      "roadNickname": "Poreclă drum"
+      "roadNickname": "Poreclă drum",
+      "ownersAreNicknames": "Numele proprietarilor din fișier se salvează doar ca poreclă a fiecărei proprietăți, ca text. Nu se creează persoane și nu se leagă nimeni de proprietăți — proprietarii se adaugă separat, din ecranul fiecărei proprietăți."
     },
     "group": {
       "defaultDescription": "Diviz — {file}"
@@ -1975,9 +1976,11 @@
         "documentCount": "{count, plural, =0 {niciun document} one {un document} few {# documente} other {# de documente}}",
         "cadastral": "Tarla/sola {tarla} · parcela {parcela}",
         "coordinateNone": "Fără fișier de coordonate în acest subfolder.",
+        "coordinateNotDeclared": "{count, plural, one {În acest subfolder există un fișier care ar putea conține coordonate, dar numele lui nu începe cu „coord”, așa că nu a fost deschis} few {În acest subfolder există # fișiere care ar putea conține coordonate, dar niciunul nu are numele început cu „coord”, așa că niciunul nu a fost deschis} other {În acest subfolder există # de fișiere care ar putea conține coordonate, dar niciunul nu are numele început cu „coord”, așa că niciunul nu a fost deschis}}.",
         "coordinateUnreadable": "Fișierul „{name}” nu a putut fi citit.",
         "coordinateFound": "Fișier de coordonate „{name}”: {count, plural, =0 {niciun colț} one {un colț} few {# colțuri} other {# de colțuri}}.",
-        "willCreate": "Se va crea o proprietate nouă, {corners, plural, =0 {fără colțuri} one {cu un colț} few {cu # colțuri} other {cu # de colțuri}}.",
+        "willCreate": "Se va crea o proprietate nouă, {corners, plural, one {cu un colț} few {cu # colțuri} other {cu # de colțuri}}.",
+        "willCreateNoCorners": "Se va crea o proprietate nouă, fără colțuri: nu va avea contur pe hartă. Colțurile pot fi adăugate oricând mai târziu, în secțiunea „Puncte de contur” a proprietății.",
         "alreadyExists": "Această proprietate există deja în sistem: {code} — {nickname}.",
         "confirmLink": "{count, plural, =0 {Confirm că acest subfolder, care nu conține niciun document, este legat de proprietatea {code}} one {Confirm legarea documentului din acest subfolder de proprietatea {code}} few {Confirm legarea celor # documente din acest subfolder de proprietatea {code}} other {Confirm legarea celor # de documente din acest subfolder de proprietatea {code}}}.",
         "confirmCorners": "Confirm adăugarea colțurilor din fișierul de coordonate la proprietatea {code} — {count, plural, one {un colț} few {# colțuri} other {# de colțuri}}. Proprietatea nu are colțuri în acest moment.",
@@ -2221,6 +2224,10 @@
           "typeCreateFailed": "scanarea AI a stabilit tipul documentului, dar tipul nu a putut fi confirmat, așa că documentul a fost pus pe tipul general — deschideți documentul și alegeți tipul potrivit",
           "personStepUnfinished": "pasul pentru cartea de identitate nu s-a încheiat — încercați din nou cu butonul „Confirmă persoanele”",
           "personCardRefused": "pe această imagine sunt actele de identitate ale mai multor persoane, așa că nu s-a creat nicio persoană din ea — nu are rost să încercați din nou: împărțiți fișierul, ca fiecare carte de identitate să fie într-un fișier al ei, apoi reluați importul",
+          "partyCreatedNatural": "{count, plural, one {o persoană fizică a fost creată din acest document și legată de el} few {# persoane fizice au fost create din acest document și legate de el} other {# de persoane fizice au fost create din acest document și legate de el}}",
+          "partyCreatedJudicial": "{count, plural, one {o persoană juridică a fost creată din acest document și legată de el} few {# persoane juridice au fost create din acest document și legate de el} other {# de persoane juridice au fost create din acest document și legate de el}}",
+          "partyLinkedNatural": "{count, plural, one {o persoană fizică exista deja în sistem și a fost legată de acest document} few {# persoane fizice existau deja în sistem și au fost legate de acest document} other {# de persoane fizice existau deja în sistem și au fost legate de acest document}}",
+          "partyLinkedJudicial": "{count, plural, one {o persoană juridică exista deja în sistem și a fost legată de acest document} few {# persoane juridice existau deja în sistem și au fost legate de acest document} other {# de persoane juridice existau deja în sistem și au fost legate de acest document}}",
           "typeFormPending": "tipul acestui document nu are încă formular, așa că informațiile specifice tipului au mers în Note",
           "typeFormAdded": "tipul acestui document a primit un formular în acest import",
           "refillPending": "nu a fost citit din nou, așa că informațiile specifice tipului au rămas în Note",
@@ -2284,6 +2291,7 @@
         "classificationCalls": "Imagini pentru clasificare automată",
         "coordinateFile": "Fișier de coordonate",
         "noCoordinateFile": "niciunul găsit",
+        "coordinateNotDeclaredNote": "{count, plural, one {Un subfolder de proprietate conține cel puțin un fișier care ar putea avea coordonate, dar niciunul cu numele început cu „coord”, așa că, la pasul „Proprietățile acestui import”, nu va fi deschis niciunul acolo: {folders}.} few {# subfoldere de proprietate conțin fișiere care ar putea avea coordonate, dar niciunul cu numele început cu „coord”, așa că, la pasul „Proprietățile acestui import”, nu va fi deschis niciunul acolo: {folders}.} other {# de subfoldere de proprietate conțin fișiere care ar putea avea coordonate, dar niciunul cu numele început cu „coord”, așa că, la pasul „Proprietățile acestui import”, nu va fi deschis niciunul acolo: {folders}.}} Proprietatea care se creează acum dintr-un astfel de subfolder se va crea fără colțuri; una care există deja își păstrează colțurile pe care le are. Dacă într-un astfel de subfolder chiar există fișierul de coordonate al proprietății, redenumiți-l „coord …” — unul singur pentru fiecare proprietate — și apăsați „Verifică din nou folderul (clasificarea de până acum se pierde)”. Altfel continuați: colțurile pot fi adăugate oricând mai târziu, în secțiunea „Puncte de contur” a proprietății.",
         "severalCoordinateFiles": "{count, plural, one {un fișier găsit} few {# fișiere găsite} other {# de fișiere găsite}}",
         "nothingToImport": "Niciun fișier din acest folder nu va fi importat. Unele fișiere sunt ignorate automat — de exemplu arhive, desene și fișiere temporare.",
         "ignoredFiles": "Fișiere care vor fi ignorate",
@@ -2901,6 +2909,7 @@
         "cardsUnanswered": "Cărți de identitate fără răspuns",
         "cardsUnreadable": "Cărți de identitate care nu au putut fi citite",
         "cardsRefused": "Cărți de identitate refuzate (mai multe persoane pe aceeași imagine)",
+        "propertiesWithoutCorners": "Proprietăți create fără colțuri",
         "typesWithoutForm": "Tipuri de documente rămase fără formular",
         "documentsAwaitingRefill": "Documente ale căror informații au rămas în Note"
       },

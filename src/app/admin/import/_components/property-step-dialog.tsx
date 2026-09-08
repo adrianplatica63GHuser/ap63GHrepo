@@ -68,6 +68,7 @@ import type {
   CadastralMatch,
   PropertyFolderPlan,
 } from "@/lib/properties/import-property-plan";
+import { isCoordinateFileName } from "@/lib/import/coordinate-file";
 import { ActivityCue } from "@/components/activity-cue";
 import { buttonClass } from "@/lib/ui/button-styles";
 
@@ -992,6 +993,55 @@ function PropertyPlanCard({
   const documentCount = group?.entries.length ?? 0;
   const existing = plan.matches.length === 1 ? plan.matches[0] : null;
 
+  /**
+   * Files in this folder that COULD have held corners and will not be opened.
+   *                                                            (Slice #34.08)
+   *
+   * ⚠️ **THIS CARD SAID „FĂRĂ FIȘIER DE COORDONATE" OVER A FOLDER THE
+   * EVALUATION SCREEN HAD JUST COUNTED ONE IN.** `group.coordinateFile` is
+   * STR-08's declared `coord….txt` and nothing else — `PropertyFolderGroup`
+   * spends a paragraph on why the extension shortlist would be the wrong thing
+   * to offer here, and it is right. But „no coordinate file" is not what the
+   * user saw two screens back, where the row is built from the extension test,
+   * and two screens contradicting each other about the same folder is what D-22
+   * is about. So the card keeps reading the declared file and gains the
+   * sentence that explains the difference.
+   *
+   * ⚠️ **COUNTED ONLY WHERE THERE IS NO DECLARED FILE.** With one present the
+   * folder's corners are settled, and a note about the other `.txt` in there —
+   * a genuine notes file, the ordinary case — would be an instruction to fix
+   * something that is right. STR-08 already blocks the folder that declares
+   * two.
+   *
+   * ⚠️ **COUNTED ON EVERY CARD, AND IT IS THE TONE THAT VARIES — two
+   * adversarial rounds landed either side of this.** The third round gated the
+   * COUNT on `plan.action === "create"`, because on a `link` card the Property
+   * may already hold corners and „nothing here was opened" reads as a claim
+   * about the outcome. The fourth round found what that gate costs: the
+   * Evaluation screen names this folder by name, and the card then answered
+   * „Fără fișier de coordonate în acest subfolder" — the two screens
+   * contradicting each other about one folder, which is D-22 itself, on the
+   * ordinary re-import.
+   *
+   * The sentence is a fact about the FOLDER and is true on every branch; what
+   * differs is whether anybody need act on it. So it draws everywhere and the
+   * colour carries the difference — amber on a `create`, where the Property is
+   * about to be made without a polygon, and body text on `link`/`ambiguous`,
+   * where `cornersKept`/`cornersToAdd`/`cornersNone` below read the plan and
+   * state the outcome. It carries no remedy on any branch: the control that
+   * would act on it lives one screen back.
+   *
+   * ⚠️ **`kind === "file"`, because a page group's `name` is a FOLDER name and
+   * can end in `.txt`** — TEST.DATA holds exactly such a directory, which is
+   * why `forecastImport` guards the same way.
+   */
+  const undeclaredCandidates =
+    coordinateFile !== null || group === undefined
+      ? 0
+      : group.entries.filter(
+          (entry) => entry.kind === "file" && isCoordinateFileName(entry.name),
+        ).length;
+
   return (
     <section className="space-y-2 rounded-lg border border-card-rim px-4 py-3 dark:border-zinc-700">
       <div className="flex items-baseline justify-between gap-2">
@@ -1022,7 +1072,22 @@ function PropertyPlanCard({
           Property, saying the opposite. The outcome sentence is below and
           reads the plan. */}
       {coordinateFile === null ? (
-        <p className="text-xs text-fade dark:text-zinc-400">{t("coordinateNone")}</p>
+        undeclaredCandidates > 0 ? (
+          /* The two screens, reconciled. Amber only where somebody need act —
+             see `undeclaredCandidates` for why the sentence itself is drawn on
+             every branch and only the colour changes. */
+          <p
+            className={
+              plan.action === "create"
+                ? "text-xs text-amber-700 dark:text-amber-400"
+                : "text-xs text-fade dark:text-zinc-400"
+            }
+          >
+            {t("coordinateNotDeclared", { count: undeclaredCandidates })}
+          </p>
+        ) : (
+          <p className="text-xs text-fade dark:text-zinc-400">{t("coordinateNone")}</p>
+        )
       ) : parsed?.error ? (
         <p className="text-xs text-amber-700 dark:text-amber-400">
           {t("coordinateUnreadable", { name: coordinateFile.name })}
@@ -1058,11 +1123,34 @@ function PropertyPlanCard({
       )}
 
       {/* What will happen */}
-      {plan.action === "create" && (
-        <p className="text-sm text-emerald-700 dark:text-emerald-400">
-          {t("willCreate", { corners: plan.offeredCornerCount })}
-        </p>
-      )}
+      {/* ⚠️ **TWO SENTENCES FOR ONE OUTCOME, AND THE SPLIT IS D-22.**
+          (Slice #34.08.) `willCreate` HAD an `=0 {fără colțuri}` arm — deleted
+          in this slice, and `import-outcome.test.ts` asserts it stays deleted —
+          and it was drawn in emerald like any other create, so a Property about
+          to be made with no polygon read as a success, in the success colour,
+          and the user found out months later when they opened it on the map. „Create
+          and warn" is (b), the answer Adrian gave; (a), refusing outright, was
+          not taken, because a corner-less Property is sometimes exactly right —
+          the source document says a subfolder with no coordinate file „will
+          still result in the creation of a property that will not have a
+          Polygon associated".
+
+          So it is amber rather than red and it blocks nothing: the sentence
+          says what will happen, that it can be undone later from the property
+          screen, and leaves the decision where it was. Both routes to a
+          corner-less Property land here — the file that parsed to nothing, and
+          the file the folder never declared — and the sentence above says which
+          of the two this folder is. */}
+      {plan.action === "create" &&
+        (plan.offeredCornerCount === 0 ? (
+          <p className="text-sm text-amber-700 dark:text-amber-400">
+            {t("willCreateNoCorners")}
+          </p>
+        ) : (
+          <p className="text-sm text-emerald-700 dark:text-emerald-400">
+            {t("willCreate", { corners: plan.offeredCornerCount })}
+          </p>
+        ))}
 
       {plan.action === "ambiguous" && (
         <div className="space-y-1 text-sm text-red-700 dark:text-red-400">

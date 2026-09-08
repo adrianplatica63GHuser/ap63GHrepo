@@ -53,10 +53,18 @@ const REQUIRED_KEYS = [
   "documentCount",
   "cadastral",
   "coordinateNone",
+  // Slice #34.08 — the folder holds something that MIGHT have been its
+  // corners and nothing STR-08 declares, so the step opened nothing. Beside
+  // `coordinateNone`, which is the same row of the card saying the folder held
+  // nothing at all.
+  "coordinateNotDeclared",
   "cornersNone",
   "coordinateUnreadable",
   "coordinateFound",
   "willCreate",
+  // Slice #34.08 — D-22's warning half, and the branch `willCreate` no longer
+  // has. See the `=0` test below.
+  "willCreateNoCorners",
   "alreadyExists",
   "confirmLink",
   "confirmCorners",
@@ -178,6 +186,11 @@ describe("the property step's copy", () => {
       cadastral: ["parcela", "tarla"],
       coordinateUnreadable: ["name"],
       coordinateFound: ["count", "name"],
+      // Slice #34.08 — a count and nothing else. It is drawn on a card already
+      // headed with the folder's name, so naming the folder again would be the
+      // screen repeating itself; the EVALUATION screen's twin carries a
+      // `{folders}` list because it speaks about several folders at once.
+      coordinateNotDeclared: ["count"],
       willCreate: ["corners"],
       alreadyExists: ["code", "nickname"],
       confirmLink: ["code", "count"],
@@ -228,6 +241,9 @@ describe("the property step's copy", () => {
     const pluralised: [string, string][] = [
       ["documentCount", "count"],
       ["coordinateFound", "count"],
+      // Slice #34.08 — 2–19 stray `.txt` files in one property subfolder is
+      // well inside `few`, and this sentence is only ever drawn above 0.
+      ["coordinateNotDeclared", "count"],
       ["willCreate", "corners"],
       ["confirmCorners", "count"],
       ["ambiguous", "count"],
@@ -291,11 +307,33 @@ describe("the property step's copy", () => {
     expect(String(en.coordinateNone)).toContain("No coordinate file");
     expect(String(ro.cornersAlreadyApplied)).toContain("adăugat");
     expect(String(en.cornersAlreadyApplied)).toContain("added");
-    // …and `willCreate` keeps its `=0` branch, or Romanian renders "cu 0
-    // colțuri" on the commonest create card there is.
+    // Slice #34.08 — the corner-less create moved OUT of this sentence.
+    expect(String(ro.willCreateNoCorners)).toContain("fără colțuri");
+    expect(String(en.willCreateNoCorners)).toContain("no corners");
+    expect(String(ro.coordinateNotDeclared)).toContain("„coord”");
+    expect(String(en.coordinateNotDeclared)).toContain("“coord”");
+
+    // ⚠️ **AND `willCreate` MUST NOT HAVE A `=0` BRANCH ANY MORE. THIS
+    // ASSERTION USED TO SAY THE OPPOSITE, IN THESE WORDS: "…keeps its `=0`
+    // branch, or Romanian renders «cu 0 colțuri» on the commonest create card
+    // there is."**   (Slice #34.08.)
+    //
+    // That was right while this sentence answered for every create. It no
+    // longer does: the card sends `offeredCornerCount === 0` to
+    // `willCreateNoCorners` — amber, and saying the property will have no
+    // outline on the map — because the emerald `willCreate` drew a Property
+    // about to be made without a polygon in the success colour, and the user
+    // found out months later when they opened it. Zero is unreachable here, so
+    // the branch is copy nobody can ever check, and it is the branch the next
+    // reader would find when they grep for what this screen says about a
+    // corner-less create. It stays deleted.
+    //
+    // ⚠️ **THE `=0`-REACHABILITY TEST ABOVE IS THE OTHER HALF OF THIS.** Its
+    // list is the keys where zero IS reachable; `willCreate` is deliberately
+    // not on it, and this is what stops a future round putting it back.
     for (const file of LOCALES) {
       const branch = pluralBranch(String(loadCopy(file).willCreate), "=0");
-      expect({ file, branch, empty: branch === "" }).toEqual({ file, branch, empty: false });
+      expect({ file, branch, empty: branch === "" }).toEqual({ file, branch, empty: true });
     }
   });
 
@@ -469,6 +507,11 @@ describe("the property step's copy", () => {
     // after the plural block is the same mistake with the plural moved.
     for (const file of LOCALES) {
       expectVerbInsidePlural(file, "errorPartial");
+      // Slice #34.08 — the same guard on the new counted sentence: its `one`
+      // branch must be written in the singular, and the full stop must be the
+      // only thing after the plural block, or „un fișier … nu au fost deschise"
+      // ships exactly as `errorPartial` once did.
+      expectVerbInsidePlural(file, "coordinateNotDeclared");
     }
   });
 

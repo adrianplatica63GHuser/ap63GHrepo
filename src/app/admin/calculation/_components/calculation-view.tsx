@@ -372,6 +372,35 @@ export function CalculationView() {
               {t("commit.title", { count: computation.owners.length })}
             </h3>
 
+            {/* ⚠️ **THE OWNER NAMES ARE TEXT, AND THIS SCREEN READ AS THOUGH
+                THEY WERE OWNERSHIP.**   (Slice #34.08, D-20a.)
+
+                There is no Person anywhere in the calculation subsystem — grep
+                „person" over `src/lib/calculation/` and `src/app/api/calculation/`
+                and nothing comes back. `ParsedOwner.name` is a cleaned nickname
+                with an „owner N" prefix stripped off it, and the commit route
+                writes it to `nickname` on the property and nowhere else: no
+                `person` row, no `property_person` link, no natural/judicial
+                distinction. Yet the table above this form is headed with those
+                names beside computed areas, and the button below says „create
+                the properties and a group" — so a business user reading the
+                screen concludes the archive now records who owns each parcel.
+                It does not, and the difference matters the first time somebody
+                searches the archive for one of those people and finds nothing.
+
+                ⚠️ **ONE SENTENCE, AND IT IS THE WHOLE OF D-20.** Resolving each
+                label to a real Person during the commit — reusing the import's
+                party queue — is (b), a feature, and a slice of its own. Saying
+                so here costs nothing and stops the screen making a claim it
+                cannot back; leaving it unsaid until (b) ships is the archive
+                being trusted for something it does not hold.
+
+                Plain body text rather than amber: nothing here is a fault or a
+                thing to fix. It is what the calculation is FOR. */}
+            <p className="text-xs text-fade dark:text-zinc-400">
+              {t("commit.ownersAreNicknames")}
+            </p>
+
             <div className="flex flex-col gap-1">
               <label className="flex items-center gap-1 text-xs font-medium text-ink dark:text-zinc-400">
                 {t("commit.groupDescription")}

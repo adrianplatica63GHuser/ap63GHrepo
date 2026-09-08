@@ -41,8 +41,13 @@
  *    Adrian's archive — which is a real cost to design rather than to bolt on.
  */
 
-import type { FSEntry, FSFileEntry } from "./folder-utils";
+import { compareForDisplay, type FSEntry, type FSFileEntry } from "./folder-utils";
 import { isCoordinateFileName } from "./coordinate-file";
+import {
+  isDeclaredCoordinateFile,
+  parsePropertyFolderName,
+  sharedFolderName,
+} from "./structure-rules";
 import { isModelReadable } from "@/lib/files/file-kinds";
 
 // ---------------------------------------------------------------------------
@@ -241,6 +246,55 @@ export type ImportForecast = {
   /** Every file that could hold a coordinate export, in walk order. */
   coordinateCandidates: string[];
   /**
+   * Property subfolders that hold a candidate and no DECLARED coordinate file.
+   *                                                            (Slice #34.08)
+   *
+   * ⚠️ **THE ROW ABOVE AND THE PROPERTY STEP ANSWER TWO DIFFERENT QUESTIONS,
+   * AND ONLY ONE OF THEM WAS ON SCREEN.** `coordinateCandidates` is
+   * `isCoordinateFileName`, a plain extension test; what the property step
+   * opens is `PropertyFolderGroup.coordinateFile`, which is
+   * `isDeclaredCoordinateFile` — STR-08's `coord….txt` rule. So a folder whose
+   * only `.txt` is `notite.txt` produced a row reading „un fișier găsit" beside
+   * „Fișier de coordonate", and then a Property with no corners that nothing on
+   * any screen connected back to it. That is D-22's complaint in as many words:
+   * the two screens disagreed about whether the folder had a coordinate file.
+   *
+   * ⚠️ **FOLDERS, AND THE FIRST DRAFT SUBTRACTED TWO WHOLE-TREE FILE LISTS
+   * INSTEAD.** An adversarial round found what that costs, and it is a false
+   * sentence rather than a missing one: `candidates − declared` counts every
+   * `.txt` in the chosen folder that is not named `coord…` — including
+   * `notite.txt` sitting beside a perfectly good `coord 47per2.txt`, including
+   * one under `comune`, including one at the root. The screen then warned about
+   * a property that was getting its polygon, and its remedy („rename each one
+   * `coord …`") breaks the folder: two `coord….txt` in one property folder is
+   * STR-08, and one in `comune` is STR-09.
+   *
+   * So the question is asked per FOLDER, which is the unit the property step
+   * works in: this folder holds something that might have been its corners, and
+   * nothing the step will open. A folder only counts if `groupByPropertyFolder`
+   * would make a card for it — shared folders, root-level files and a top-level
+   * name that does not parse under #26.01's grammar are all excluded, because
+   * none of them produces a Property at all.
+   *
+   * ⚠️ **Never longer than `MAX_PROPERTY_FOLDERS`**, which is 5: every entry is
+   * a top-level property folder and STR-02 caps those. A caller may print the
+   * whole list inline.
+   *
+   * ⚠️ **THIS DOES NOT MAKE THE NAME A FILTER, and `coordinate-file.ts` spends a
+   * paragraph forbidding that.** Which file defines a Property's corners is
+   * still decided by the parse. What the name decides is which file the property
+   * step OFFERS to the parse — a rule about the folder, enforced by STR-08.
+   *
+   * Folder NAMES rather than paths, because that is what the user sees in File
+   * Explorer and what `PropertyFolderGroup.folderName` is keyed by. Sorted with
+   * `compareForDisplay` — the same comparator `groupByPropertyFolder` orders the
+   * property cards with — so this list and those cards read in one order.
+   * `localeCompare` alone is not that order: it is not numeric, so it puts
+   * `47per2` before `9per1` while every other screen and File Explorer do the
+   * opposite.
+   */
+  coordinateFoldersWithoutDeclared: string[];
+  /**
    * Files these entries will upload, page-group pages counted one by one.
    *                                                            (Slice #29.11)
    *
@@ -286,6 +340,10 @@ export function forecastImport(entries: readonly FSEntry[]): ImportForecast {
   let classificationCalls = 0;
   let filesToImport = 0;
   const coordinateCandidates: string[] = [];
+  // Keyed by folder NAME. A folder lands in the sentence only if it is in the
+  // first set and not in the second — see `coordinateFoldersWithoutDeclared`.
+  const foldersWithCandidate = new Set<string>();
+  const foldersWithDeclared = new Set<string>();
 
   for (const entry of entries) {
     if (entry.kind === "page-group") {
@@ -309,7 +367,32 @@ export function forecastImport(entries: readonly FSEntry[]): ImportForecast {
     const file = entry as FSFileEntry;
     filesToImport++;
     if (isModelReadable(file.name)) classificationCalls++;
-    if (isCoordinateFileName(file.name)) coordinateCandidates.push(file.path);
+    if (isCoordinateFileName(file.name)) {
+      coordinateCandidates.push(file.path);
+      // ⚠️ Nested rather than a second top-level test, so the subset invariant
+      // is structural: a path can only be declared if it was a candidate.
+      // ⚠️ **`pathParts[0]`, and only where that segment is a PROPERTY folder.**
+      // A file lying at the root has no `pathParts[0]`; one under
+      // `comune`/`flotante` is under a shared folder; and one under a top-level
+      // folder whose name does not parse under #26.01's grammar belongs to
+      // `groupByPropertyFolder`'s `unassigned`, which gets no card and no
+      // Property. None of the three can produce a Property without corners, so
+      // this sentence declines to speak about them. ⚠️ **All three tests are
+      // `groupByPropertyFolder`'s own**, deliberately: the moment this asks a
+      // narrower question than the step it is describing, the two screens are
+      // back to disagreeing about a folder, which is what D-22 is.
+      const folder = file.pathParts.length > 0 ? file.pathParts[0] : null;
+      if (
+        folder !== null &&
+        sharedFolderName(folder) === null &&
+        parsePropertyFolderName(folder).ok
+      ) {
+        const set = isDeclaredCoordinateFile(file.name)
+          ? foldersWithDeclared
+          : foldersWithCandidate;
+        set.add(folder);
+      }
+    }
   }
 
   return {
@@ -317,6 +400,11 @@ export function forecastImport(entries: readonly FSEntry[]): ImportForecast {
     pageGroups,
     classificationCalls,
     coordinateCandidates,
+    // The difference of the two SETS, not of two counts — a folder that has its
+    // `coord….txt` says nothing here, however many other `.txt` files it holds.
+    coordinateFoldersWithoutDeclared: [...foldersWithCandidate]
+      .filter((folder) => !foldersWithDeclared.has(folder))
+      .sort(compareForDisplay),
     filesToImport,
   };
 }

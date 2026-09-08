@@ -88,6 +88,27 @@ export type AiPartyLinkerSummary = {
   linked: number;
   created: number;
   skipped: number;
+  /**
+   * …of `linked`, how many were judicial persons.               (Slice #34.08)
+   *
+   * ⚠️ **A SUBSET OF THE TOTAL ABOVE, NOT A FOURTH OUTCOME**, and the shape is
+   * deliberate: `linked` and `created` are read by four call sites in
+   * `bulk-import-dialog.tsx` as „how many people were settled", and splitting
+   * them into `linkedNatural`/`linkedJudicial` would make that number a sum
+   * maintained in two places. So the total stays the one number and this is the
+   * half of it that is a company; the natural half is the subtraction, done
+   * once, where the sentence is built.
+   *
+   * ⚠️ **THIS STEPPER IS THE ONLY PLACE IN THE IMPORT THAT MAKES A JUDICIAL
+   * PERSON.** `createAndLink`'s else branch POSTs `/api/judicial-persons`;
+   * nothing on the identity-card path can, because a carte de identitate is a
+   * natural person's document. Without these two counts the result screen had
+   * no way to say a company had been created — see `partyNotes` in
+   * `src/lib/import/import-outcome.ts`.
+   */
+  linkedJudicial: number;
+  /** …and of `created`. Same argument as `linkedJudicial`. */
+  createdJudicial: number;
 };
 
 type Props = {
@@ -125,7 +146,13 @@ const subjectFromParty = (party: AiExtractedParty): ResolutionSubject => ({
 export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
   const t = useTranslations("document.aiPartyLinker");
   const [index, setIndex] = useState(0);
-  const [counts, setCounts] = useState<AiPartyLinkerSummary>({ linked: 0, created: 0, skipped: 0 });
+  const [counts, setCounts] = useState<AiPartyLinkerSummary>({
+    linked: 0,
+    created: 0,
+    skipped: 0,
+    linkedJudicial: 0,
+    createdJudicial: 0,
+  });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Overrides the exact-match / possible-match branches for the CURRENT party
@@ -135,8 +162,60 @@ export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
   const party = parties[index];
   const total = parties.length;
 
-  const advance = (outcome: Outcome) => {
-    const next = { ...counts, [outcome]: counts[outcome] + 1 };
+  /**
+   * The type of the person the archive actually ends up holding.
+   *                                                            (Slice #34.08)
+   *
+   * ⚠️ **NOT `party.personType` ON THE LINK BRANCH, AND AN ADVERSARIAL ROUND
+   * CAUGHT IT THERE.** `party.personType` is the MODEL's reading of the
+   * document. On the create branch that is authoritative, because it is what
+   * chose between `/api/people` and `/api/judicial-persons` — the row is
+   * whatever the guess said. On the link branch it is a guess about a row that
+   * already exists and whose type is a fact: `AiPartyMatchCandidate` and
+   * `AiPartyPossibleMatch` both carry it, straight from the search. Reading the
+   * guess there would let the result screen report „o persoană juridică a fost
+   * legată" over a `natural_person`, which is exactly the class of false
+   * sentence `import-outcome.ts` exists to keep off that screen.
+   *
+   * The fallback is `party.personType` for a `personId` in neither list. No
+   * call site produces one — both `onConfirmMatch` and `onPickMatch` hand back
+   * an id out of those very lists — so it is a narrowing over an unreachable
+   * branch rather than a claim, in the shape that is least wrong if it ever
+   * becomes reachable.
+   */
+  const linkedPersonType = (personId: string): "NATURAL" | "JUDICIAL" => {
+    if (party.matchCandidate?.id === personId) return party.matchCandidate.type;
+    return party.possibleMatches.find((m) => m.id === personId)?.type ?? party.personType;
+  };
+
+  const advance = (outcome: Outcome, personType: "NATURAL" | "JUDICIAL") => {
+    /**
+     * ⚠️ **WRITTEN OUT IN FULL RATHER THAN `{ ...counts, [outcome]: … }`, and
+     * the five lines buy something.**                          (Slice #34.08)
+     *
+     * The computed-key spread was correct while there were three counters and
+     * exactly one of them moved. There are five now, and two of them move
+     * TOGETHER — a created company is `created + 1` AND `createdJudicial + 1` —
+     * so a computed key would have to be paired with a second, conditional one
+     * whose name is derived from the same variable. Spelling all five out makes
+     * the pairing visible and makes it impossible to increment a total without
+     * deciding what happens to its subset.
+     *
+     * ⚠️ **`skipped` HAS NO JUDICIAL HALF ON PURPOSE.** Nothing was written for
+     * a skipped party, so what it WOULD have been is not a fact about the
+     * archive — which is why `personType` is simply unread on that outcome, and
+     * why the `onSkip` call site passes the model's guess without apology.
+     * `handlePartyStepClosed` refuses to record an all-skipped summary at all,
+     * for the reason its own header gives.
+     */
+    const judicial = personType === "JUDICIAL";
+    const next: AiPartyLinkerSummary = {
+      linked: counts.linked + (outcome === "linked" ? 1 : 0),
+      created: counts.created + (outcome === "created" ? 1 : 0),
+      skipped: counts.skipped + (outcome === "skipped" ? 1 : 0),
+      linkedJudicial: counts.linkedJudicial + (outcome === "linked" && judicial ? 1 : 0),
+      createdJudicial: counts.createdJudicial + (outcome === "created" && judicial ? 1 : 0),
+    };
     setError(null);
     setForceCreate(false);
     setBusy(false);
@@ -161,7 +240,9 @@ export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
         }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      advance(outcome);
+      // The ARCHIVE row's type, not the model's reading of the document — see
+      // `linkedPersonType`.
+      advance(outcome, linkedPersonType(personId));
     } catch {
       setBusy(false);
       setError(outcome === "created" ? t("createError") : t("linkError"));
@@ -238,7 +319,9 @@ export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
       });
       if (!linkRes.ok) throw new Error(`HTTP ${linkRes.status}`);
 
-      advance("created");
+      // Authoritative here: `party.personType` is what chose the endpoint two
+      // branches up, so the row that now exists is of exactly that type.
+      advance("created", party.personType);
     } catch {
       setBusy(false);
       setError(t("createError"));
@@ -268,7 +351,7 @@ export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
       onConfirmMatch={(personId) => linkPerson(personId, "linked")}
       onPickMatch={(personId) => linkPerson(personId, "linked")}
       onCreateNew={createAndLink}
-      onSkip={() => advance("skipped")}
+      onSkip={() => advance("skipped", party.personType)}
       onClose={() => onClose({ ...counts, skipped: counts.skipped + (total - index) })}
     >
       {error && (

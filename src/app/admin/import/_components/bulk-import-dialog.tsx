@@ -337,8 +337,17 @@ export type ImportResult = {
    * ⚠️ Since #26.09 this is `undefined` until the stepper for THIS document has
    * been closed, which happens after every row has settled. `aiPartiesPending`
    * is what the row shows in between — see it.
+   *
+   * ⚠️ **`AiPartyLinkerSummary` ITSELF SINCE #34.08, not a hand copy of its
+   * fields.** The copy was three numbers and stayed correct for four slices;
+   * this slice adds two more and the copy would have silently kept the old
+   * shape, so `outcomeRowOf` would have read `undefined` for both judicial
+   * counts and the result screen would have reported every company as a natural
+   * person. The dialog exports the type and it is client-side already — the
+   * file's own header says the reason it does not import from the ROUTE is
+   * server-only modules, which this is not.
    */
-  aiParties?: { linked: number; created: number; skipped: number } | null;
+  aiParties?: AiPartyLinkerSummary | null;
   /**
    * How this row's automatic AI read went.   (Slice #26.09)
    *
@@ -5511,6 +5520,22 @@ export function BulkImportDialog({
         refillRefused: r.refillRefused,
         aiPeopleSettled: r.aiParties ? r.aiParties.linked + r.aiParties.created : 0,
         aiPeoplePending: r.aiPartiesPending ?? 0,
+        // Slice #34.08 — the tally split the way the sentences need it. The
+        // stepper carries the judicial half as a SUBSET of each total (see
+        // `AiPartyLinkerSummary`), so the subtraction happens once, here, and
+        // `partyNotes` receives four numbers that are already separate. It
+        // clamps at zero on its own side, which is what keeps a producer's
+        // arithmetic mistake from reaching a Romanian sentence as a negative.
+        partiesCreatedNatural:
+          r.aiParties === undefined || r.aiParties === null
+            ? undefined
+            : r.aiParties.created - r.aiParties.createdJudicial,
+        partiesCreatedJudicial: r.aiParties?.createdJudicial,
+        partiesLinkedNatural:
+          r.aiParties === undefined || r.aiParties === null
+            ? undefined
+            : r.aiParties.linked - r.aiParties.linkedJudicial,
+        partiesLinkedJudicial: r.aiParties?.linkedJudicial,
         idCardQueued: r.idCardQueued,
         idCardFieldsWritten: r.idCardDocFieldsFailed === true ? 0 : r.idCardDocFields ?? 0,
         // Slice #27.05 — straight through. The rule that decides them is
@@ -5593,6 +5618,15 @@ export function BulkImportDialog({
         // The ones the property step actually WROTE. See `ResolvedProperty.created`
         // and `runLandedSomething` for why a matched Property is not one of them.
         properties.filter((property) => property.created).length,
+        // Slice #34.08 — …and how many of those have no polygon. ⚠️ **BOTH
+        // TERMS, and `created` is the one that is easy to drop.** `cornerCount`
+        // alone would sweep in every Property this run merely MATCHED that
+        // happens to have no corners — somebody else's gap, from an import
+        // months ago, reported to this user as something their run just did.
+        // `created` is true exactly where the step wrote (a create, or corners
+        // added to an existing Property), and a write that added corners cannot
+        // land here because its `cornerCount` is then above zero.
+        properties.filter((property) => property.created && property.cornerCount === 0).length,
       ),
     [results, outcomeRowOf, properties],
   );
@@ -6584,6 +6618,17 @@ const NOTE_TONE: Record<OutcomeNoteId, string> = {
   // deliberately not done: there is a file in the folder that has to be split
   // before this person can exist at all, so somebody does have to act.
   personCardRefused: "text-amber-700 dark:text-amber-400",
+  // Slice #34.08 — emerald, all four, and the LINKED pair is the one that looks
+  // arguable. This table's working rule is that emerald means a thing was done,
+  // and a link writes a `document_person` row joining a Person the archive
+  // already held to this document: it is a write, it is what the stepper was
+  // opened to do, and nothing about it is outstanding. Sky would read as
+  // „deliberately not done", which is the opposite. It is the same reading
+  // `personConfirmed` gets four lines up, for the same event on the other path.
+  partyCreatedNatural: "text-emerald-600 dark:text-emerald-400",
+  partyCreatedJudicial: "text-emerald-600 dark:text-emerald-400",
+  partyLinkedNatural: "text-emerald-600 dark:text-emerald-400",
+  partyLinkedJudicial: "text-emerald-600 dark:text-emerald-400",
   readSkippedIdCard: "text-sky-700 dark:text-sky-400",
   readSkippedNoPage: "text-sky-700 dark:text-sky-400",
   // Slice #27.05 — sky, deliberately, and #27.02's constraint is the argument:

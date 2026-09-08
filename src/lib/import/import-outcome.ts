@@ -116,6 +116,15 @@ export const OUTCOME_NOTE_IDS = [
   // with the Confirm the people button" and this one must not: the answer
   // cannot change, and every press is billed.
   "personCardRefused",
+  // Slice #34.08 — the PARTY path, which had no vocabulary at all. Four ids
+  // rather than one, because the two axes are independent and a reader wants
+  // both: created is not linked (one of them put a new row in the archive) and
+  // a judicial person is not a natural one (a company is the only judicial
+  // person this import can make, and it is made HERE — see `partyNotes`).
+  "partyCreatedNatural",
+  "partyCreatedJudicial",
+  "partyLinkedNatural",
+  "partyLinkedJudicial",
   // How far the automatic read got, where it did not run at all
   "readSkippedIdCard",
   "readSkippedNoPage",
@@ -250,6 +259,33 @@ export type OutcomeRow = {
    * precisely so the wording belongs to whoever is drawing a screen.)
    */
   refillRefused?: boolean;
+  /**
+   * People this document's read produced, by what happened and by what they
+   * are.                                                       (Slice #34.08)
+   *
+   * ⚠️ **THE ONLY ROUTE BY WHICH THIS IMPORT MAKES A JUDICIAL PERSON, and
+   * until this slice the result screen had no word for it.** The identity-card
+   * path builds a natural person and nothing else — a carte de identitate is
+   * one — so every note above is about a natural person by construction. A
+   * company reaches the archive exactly one way: the party stepper's create
+   * branch, POSTing `/api/judicial-persons`. A run whose only effect was that
+   * reported that it had landed nothing at all.
+   *
+   * ⚠️ **FOUR COUNTS, NOT A TALLY OF TWO.** `AiPartyLinkerSummary` carries
+   * `linked`/`created` as totals and the judicial half as a subset of each,
+   * because those totals are what four other call sites already read; the
+   * caller does the subtraction once, here is where the four numbers arrive
+   * already separated, and `partyNotes` is what turns them into sentences.
+   *
+   * ⚠️ **A LINK IS A WRITE.** `partyLinked*` is not "nothing happened": a
+   * `document_person` row was created joining a Person the archive already
+   * held to this document. That is why both halves are terms in
+   * `runLandedSomething` — through `peopleFromDocuments`, which is their sum.
+   */
+  partiesCreatedNatural?: number;
+  partiesCreatedJudicial?: number;
+  partiesLinkedNatural?: number;
+  partiesLinkedJudicial?: number;
   /** Why the run did not read this document at all, when it did not. */
   readSkipped?: "id-card" | "no-page";
   /**
@@ -496,6 +532,100 @@ export function idCardNote(row: OutcomeRow): OutcomeNote | null {
 }
 
 /**
+ * A party count as a sentence may use it, or zero.             (Slice #34.08)
+ *
+ * ⚠️ **`Number.isFinite` IS THE WHOLE POINT, and `?? 0` is not enough.** The
+ * natural counts are a subtraction the caller performs
+ * (`created - createdJudicial`), so a summary missing its subset field reaches
+ * this as `NaN` rather than as `undefined` — and `NaN` is a number that every
+ * plain comparison answers `false` about, so the sentence would vanish in
+ * silence rather than be wrong out loud.
+ *
+ * ⚠️ **THE TYPE SYSTEM NOW CLOSES THAT ROUTE AND THIS STAYS ANYWAY.**
+ * `ImportResult.aiParties` is typed as `AiPartyLinkerSummary` itself since this
+ * slice, so a producer that omits the field does not compile — which is the
+ * real reason the `NaN` shape is unreachable today, and a reason that lives in
+ * another file and can be undone there.
+ *
+ * ⚠️ **`summariseImportRun` READS ITS OWN COUNTS THROUGH THIS TOO, AND THAT IS
+ * NOT A RECONCILIATION — an adversarial round corrected the claim.** The two
+ * numbers come from DIFFERENT fields: this cannot make a bad
+ * `partiesCreatedNatural` and a good `aiPeopleSettled` agree, and nothing here
+ * could. What it does is narrower and still worth having: whatever reaches
+ * `peopleFromDocuments` and `peopleUnconfirmed` is a finite, non-negative
+ * number, so a bad value in one of THOSE fields cannot put `NaN` or a minus
+ * sign into the concluding message.
+ */
+function settledCount(value: number | undefined): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) return 0;
+  return value > 0 ? value : 0;
+}
+
+/**
+ * What became of the people this document's read found.        (Slice #34.08)
+ *
+ * ⚠️ **A LIST, NOT A NOTE, AND IT IS THE ONLY ONE IN THIS MODULE.** Every other
+ * note function answers a question with exactly one true sentence, because the
+ * thing it describes has one state. A document does not: one contract can
+ * create a company, create a natural person and link a second natural person
+ * who was already in the archive, and those are three different things that all
+ * happened. Folded into one id they would need eight, and folded into a count
+ * they would be `interpretParties`, the chip that already sits on the row
+ * saying „3 persoane" and that is exactly what D-21 says is not enough.
+ *
+ * ⚠️ **THE ORDER IS CREATED BEFORE LINKED, JUDICIAL BESIDE NATURAL.** Created is
+ * first because it is the half that put a new row in the archive, which is the
+ * half a reader checking the run's work has to look at. The two judicial lines
+ * sit next to their natural counterparts rather than at the end, so a reader
+ * comparing „create" with „legate" reads down one column.
+ *
+ * ⚠️ **ONE GUARD, NOT THE TWO ITS NEIGHBOURS USE — `preexisting` IS
+ * DELIBERATELY NOT ONE, AND AN ADVERSARIAL ROUND PUT IT BACK OUT.** Every other
+ * note here refuses a row the archive already held, and the reason they give is
+ * `readSkipNote`'s: this run neither created nor read that document. That
+ * reason does not reach these sentences. A party note is about a
+ * `document_person` row THIS RUN WROTE — see the field's own „a link is a
+ * write" — and where the Document came from has nothing to do with it. Guarded,
+ * it also put this module on both sides of its own rule: `summariseImportRun`
+ * adds `aiPeopleSettled` for every settled row, `preexisting` or not, so a
+ * party on such a row would be counted by `peopleFromDocuments`, printed in the
+ * concluding message, allowed to conclude the run through
+ * `runLandedSomething` — and explained by no row. That is the „count with no
+ * note behind it" this file writes tests about.
+ *
+ * The one guard that does apply is `status`: a row that did not settle has no
+ * story, and an errored row is excluded by the tally in the same breath.
+ *
+ * ⚠️ **EVERY COUNT GOES THROUGH `settledCount`, AND A NEGATIVE IS NOT WHAT IT
+ * IS FOR** — see that function, and `summariseImportRun`, which reads the same
+ * counts through the same guard so the sentences and the number they explain
+ * cannot disagree.
+ */
+export function partyNotes(row: OutcomeRow): OutcomeNote[] {
+  if (row.status !== "done") return [];
+
+  const createdJudicial = settledCount(row.partiesCreatedJudicial);
+  const linkedJudicial = settledCount(row.partiesLinkedJudicial);
+  const createdNatural = settledCount(row.partiesCreatedNatural);
+  const linkedNatural = settledCount(row.partiesLinkedNatural);
+
+  const notes: OutcomeNote[] = [];
+  if (createdNatural > 0) {
+    notes.push({ id: "partyCreatedNatural", values: { count: createdNatural } });
+  }
+  if (createdJudicial > 0) {
+    notes.push({ id: "partyCreatedJudicial", values: { count: createdJudicial } });
+  }
+  if (linkedNatural > 0) {
+    notes.push({ id: "partyLinkedNatural", values: { count: linkedNatural } });
+  }
+  if (linkedJudicial > 0) {
+    notes.push({ id: "partyLinkedJudicial", values: { count: linkedJudicial } });
+  }
+  return notes;
+}
+
+/**
  * Why nothing was read off this document, or null when something was.
  *
  * The brief asks for "a note saying how far processing got" on every document.
@@ -654,6 +784,12 @@ export function outcomeNotes(row: OutcomeRow): OutcomeNote[] {
   return [
     coordinateNote(row),
     idCardNote(row),
+    // Slice #34.08 — beside the identity card, because the two are the module's
+    // only sentences about PEOPLE and a reader wants them together: one is the
+    // property's owner read off a card, the others are the parties read out of
+    // a document. Spread rather than pushed, because this one answers with a
+    // list — see `partyNotes`.
+    ...partyNotes(row),
     readSkipNote(row),
     // Slice #29.06 — ahead of `typeFormNote`, because it is about which type
     // the document is ON and that one is about what the type HAS. In practice
@@ -767,6 +903,31 @@ export type ImportRunSummary = {
   propertiesWritten: number;
   /** Coordinate files whose corners built one of those Properties. */
   coordinateFilesApplied: number;
+  /**
+   * …of the Properties this run WROTE, how many ended up with no corners.
+   *                                                            (Slice #34.08)
+   *
+   * D-22 is „create and warn", so this is the warning half, said where a user
+   * still has it after the wizard closes. A Property with no corners is
+   * sometimes exactly right — the source document says a subfolder without a
+   * coordinate file „will still result in the creation of a property that will
+   * not have a Polygon associated" — which is why it is a line and not an
+   * error, and why a zero prints nothing like every other line but
+   * `documentsCreated`.
+   *
+   * ⚠️ **OVER `propertiesWritten`, NOT `properties`, and the narrowing is the
+   * same one `runLandedSomething` argues for.** A second import of a folder
+   * whose Properties already exist resolves every one of them and writes none;
+   * counting a corner-less Property somebody else made last month would report
+   * this run's work as including a gap it did not create and cannot close.
+   *
+   * ⚠️ **A COUNT, NOT A LIST OF CODES**, and the reason is `typesWithoutForm`'s:
+   * `summaryLines` reads `summary[id]` as a number. The two screens that can
+   * NAME the folder — the property step's card and the Evaluation screen's
+   * coordinate row — say it there, before the write, which is where a rename
+   * still costs nothing.
+   */
+  propertiesWithoutCorners: number;
   /** People created from an identity card in this run. */
   peopleCreated: number;
   /** People already in the system, confirmed from a card and linked. */
@@ -863,6 +1024,15 @@ export function summariseImportRun(
   rows: readonly SummaryRow[],
   properties: number,
   propertiesWritten = 0,
+  /**
+   * …and how many of THOSE have no corners.                    (Slice #34.08)
+   *
+   * A fourth positional argument for the reason the third is one: it is a fact
+   * about the property step, which runs before the first document exists, so no
+   * row can carry it. Defaulted, so every existing caller and every test that
+   * passes two or three arguments still compiles and still means what it meant.
+   */
+  propertiesWithoutCorners = 0,
 ): ImportRunSummary {
   const summary: ImportRunSummary = {
     documentsCreated: 0,
@@ -872,6 +1042,7 @@ export function summariseImportRun(
     properties,
     propertiesWritten,
     coordinateFilesApplied: 0,
+    propertiesWithoutCorners,
     peopleCreated: 0,
     peopleConfirmed: 0,
     documentsRead: 0,
@@ -948,8 +1119,12 @@ export function summariseImportRun(
     if (row.aiProcessed === true || row.personId !== undefined) summary.documentsRead += 1;
     summary.fieldsFilled += (row.aiFieldCount ?? 0) + (row.idCardFieldsWritten ?? 0);
     if (row.aiUnread === true) summary.documentsUnread += 1;
-    summary.peopleFromDocuments += row.aiPeopleSettled ?? 0;
-    summary.peopleUnconfirmed += row.aiPeoplePending ?? 0;
+    // Slice #34.08 — through `settledCount`, the same guard `partyNotes` uses.
+    // The two describe one event: this number is what the concluding message
+    // prints and those are the sentences that explain it, so a value one of
+    // them drops and the other keeps is a number no row accounts for.
+    summary.peopleFromDocuments += settledCount(row.aiPeopleSettled);
+    summary.peopleUnconfirmed += settledCount(row.aiPeoplePending);
 
     // ⚠️ `typeFormAdded` is not merely "not missing": the loop clears
     // `typeFormMissing` on every row of a type the moment its form is accepted,
@@ -1365,6 +1540,10 @@ export const SUMMARY_LINE_IDS = [
   "failed",
   "properties",
   "coordinateFilesApplied",
+  // Slice #34.08 — immediately after the corners that WERE applied, because the
+  // two answer one question between them: which of this run's Properties got a
+  // polygon, and which did not.
+  "propertiesWithoutCorners",
   "peopleCreated",
   "peopleConfirmed",
   "documentsRead",
@@ -1438,6 +1617,31 @@ export function runLandedSomething(summary: ImportRunSummary): boolean {
     // exist would have answered "yes" here on a run that wrote nothing at all.
     summary.propertiesWritten > 0 ||
     summary.peopleCreated > 0 ||
-    summary.peopleConfirmed > 0
+    summary.peopleConfirmed > 0 ||
+    // ⚠️ **THE PARTIES — AND THIS TERM CHANGES NO ANSWER TODAY, WHICH IS
+    // EXACTLY WHY IT IS WRITTEN DOWN RATHER THAN LEFT OUT.** (Slice #34.08.)
+    //
+    // The two terms above are the identity-card path, which builds natural
+    // persons only. The party stepper is the other one, and it is the only route
+    // by which this import makes a judicial person at all. A party can only sit
+    // on a row the loop created a Document for — nothing reads a document that
+    // failed to upload, and a pre-existing one is not read — so every run that
+    // has a party also has `documentsCreated > 0` and would have answered `true`
+    // without this line. **Do not delete it on that reading.** That coincidence
+    // is a property of today's PRODUCER, not of this predicate: the first term
+    // counts DOCUMENTS and this one counts PEOPLE, and the day a party is
+    // answered for a document the archive already held — which is one `preexisting`
+    // check away in `bulk-import-dialog.tsx`'s retry patch — the two stop
+    // coinciding, silently, in the direction that refuses to conclude a run that
+    // wrote a `judicial_person` row. A predicate that means "did anything land"
+    // should say so about each kind of thing that can land.
+    //
+    // ⚠️ **`peopleFromDocuments`, which is LINKED PLUS CREATED, and the linked
+    // half belongs here too.** A link writes a `document_person` row joining a
+    // Person to this document — it is a change to the archive and it is
+    // something to go and look at, which is exactly what this predicate asks.
+    // `peopleUnconfirmed` is deliberately NOT a term: those are people a read
+    // FOUND and nobody answered for, so nothing was written for them at all.
+    summary.peopleFromDocuments > 0
   );
 }
