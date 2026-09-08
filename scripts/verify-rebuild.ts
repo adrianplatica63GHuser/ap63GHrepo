@@ -766,7 +766,7 @@ function renderBaseline(lines: string[]): string {
       "#        `+` for the full-schema value and a `-` for the migrations value.",
       "#        Four REFDATA lines became eight; nothing was gained or lost.",
       "#        STILL OPEN, for its original reason: `sync-reference-data.sql` ticks",
-      "#        Coproprietari / Coindivizari, Cumparator, Proprietar / Titular de",
+      "#        Coproprietari / Coindivizari, Cumpărător, Proprietar / Titular de",
       "#        drept real and Titular de drept by name, and no migration ticks",
       "#        anything. The other 52 roles agree (false on both sides) and do not",
       "#        appear.",

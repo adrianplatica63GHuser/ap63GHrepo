@@ -58,8 +58,23 @@
 #        migrations. STILL OPEN: it is role work rather than key work, and
 #        #29.07 only re-pointed the five `Autorizare` pairs at `Autorizație`
 #        so they still resolve.
-#      * lookup_property_person_role - 4 rows here, 0 from the migrations, which
-#        never seed the Property<->Person role whitelist at all. STILL OPEN.
+#      * lookup_person_role - MOVED, not closed, by Slice #34.04, and the
+#        line count doubling is what that looks like. It was
+#        `lookup_property_person_role`: four rows seeded here, zero from the
+#        migrations, because the migrations never seed the Property<->Person
+#        whitelist at all. migration_079 made that whitelist the boolean
+#        `lookup_person_role.valid_for_property`, so the SAME four facts now
+#        differ on the role row itself - and a differing row prints twice, a
+#        `+` for the full-schema value and a `-` for the migrations value.
+#        Four REFDATA lines became eight; nothing was gained or lost.
+#        STILL OPEN, for its original reason: `sync-reference-data.sql` ticks
+#        Coproprietari / Coindivizari, Cumpărător, Proprietar / Titular de
+#        drept real and Titular de drept by name, and no migration ticks
+#        anything. The other 52 roles agree (false on both sides) and do not
+#        appear.
+#        The two `lookup_property_person_role` CONSTRAINT lines that used to
+#        sit in category 1 above ARE closed, and permanently: they were a
+#        `drizzle-kit push` artefact on a table that no longer exists.
 #    They are listed here so the check can be green on everything else while
 #    making it impossible for the list to grow without somebody re-baselining
 #    and being asked why.
@@ -67,8 +82,6 @@ CONSTRAINT public.document paperwork_code_key :: absent from migrations
 CONSTRAINT public.document paperwork_code_unique :: absent from full-schema
 CONSTRAINT public.document paperwork_principal_object_id_key :: absent from migrations
 CONSTRAINT public.document paperwork_principal_object_id_unique :: absent from full-schema
-CONSTRAINT public.lookup_property_person_role lookup_property_person_role_person_role_id_key :: absent from migrations
-CONSTRAINT public.lookup_property_person_role lookup_property_person_role_unique :: absent from full-schema
 CONSTRAINT public.person person_code_key :: absent from migrations
 CONSTRAINT public.person person_code_unique :: absent from full-schema
 CONSTRAINT public.person person_principal_object_id_key :: absent from migrations
@@ -159,10 +172,14 @@ REFDATA lookup_document_type :: - [Hotărâre Judecătorească | 16 | HOTARARE_J
 REFDATA lookup_document_type :: - [NECLASIFICAT | 18 | UNCLASSIFIED | <null> | MANUAL]
 REFDATA lookup_document_type :: - [Testament | 1019 | TESTAMENT | <null> | MANUAL]
 REFDATA lookup_document_type :: - [Titlu de Proprietate | 17 | TITLU_PROPRIETATE | <null> | MANUAL]
-REFDATA lookup_property_person_role :: + [Coproprietari / Coindivizari]
-REFDATA lookup_property_person_role :: + [Cumpărător]
-REFDATA lookup_property_person_role :: + [Proprietar / Titular de drept real]
-REFDATA lookup_property_person_role :: + [Titular de drept]
+REFDATA lookup_person_role :: + [Coproprietari / Coindivizari | (părți care partajează) | 11 | true | false]
+REFDATA lookup_person_role :: + [Cumpărător | (Dobânditor) | 14 | true | false]
+REFDATA lookup_person_role :: + [Proprietar / Titular de drept real | (principalul interesat) | 37 | true | false]
+REFDATA lookup_person_role :: + [Titular de drept | (cel în favoarea căruia s-a pronunțat) | 53 | true | false]
+REFDATA lookup_person_role :: - [Coproprietari / Coindivizari | (părți care partajează) | 11 | false | false]
+REFDATA lookup_person_role :: - [Cumpărător | (Dobânditor) | 14 | false | false]
+REFDATA lookup_person_role :: - [Proprietar / Titular de drept real | (principalul interesat) | 37 | false | false]
+REFDATA lookup_person_role :: - [Titular de drept | (cel în favoarea căruia s-a pronunțat) | 53 | false | false]
 TABLE public.document :: + principal_object_id uuid NOT NULL,
 TABLE public.document :: - principal_object_id uuid NOT NULL,
 TABLE public.person :: + principal_object_id uuid NOT NULL,
