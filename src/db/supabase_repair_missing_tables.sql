@@ -44,9 +44,9 @@
 --       production. (The pre-existing `ADD CONSTRAINT ... UNIQUE` on
 --       lookup_property_type is arguably a TWELFTH - it was written as "an
 --       eighth" when the running total was seven, and #34.04 moved the total
---       to eleven - and has never been listed; that is a gap in this
---       paragraph, not a licence. Renumber it with the total, or it becomes
---       the wrong count this paragraph exists to forbid.)
+--       to eleven - and had never been listed; #34.09 finally listed it, as
+--       the TWELFTH below. Renumber it with the total, or it becomes the wrong
+--       count this paragraph exists to forbid.)
 --   ELEVEN, since #34.04:
 --     * `UPDATE lookup_person_role SET valid_for_property = false WHERE
 --       valid_for_property IS NULL`, and the same for `valid_for_person`. Two
@@ -60,6 +60,25 @@
 --   All four exist because `ADD COLUMN IF NOT EXISTS` is a complete no-op over
 --   a column of the same name that is nullable with no default; the block in
 --   section 8 says so at length.
+--   THIRTEEN, since #34.09 -- two more, one of which is the debt the paragraph
+--   above admits to:
+--     * the TWELFTH is the pre-existing `ALTER TABLE lookup_property_type ADD
+--       CONSTRAINT lookup_property_type_key_unique UNIQUE (key)` in section 8,
+--       listed here for the first time. It has been in the file since before
+--       #26.12 and takes ACCESS EXCLUSIVE while it builds its index. Its own
+--       block already refuses on duplicate data with a WARNING rather than
+--       failing, which is the shape the thirteenth copies.
+--     * the THIRTEENTH is `CREATE UNIQUE INDEX
+--       lookup_document_type_name_normalised_unique` (migration_080, Slice
+--       #34.09). It is not additive in the way the ADD COLUMNs are: it takes
+--       SHARE on lookup_document_type for the length of the build -- readers
+--       unaffected, writers blocked -- and, with the twelfth, IT CAN FAIL ON
+--       EXISTING DATA. Two types whose names differ only by diacritics, case
+--       or punctuation are one name to the index. The block in section 8
+--       therefore counts first and RAISEs a WARNING naming migration_080
+--       rather than attempting the CREATE, because this file runs under
+--       `psql -f` with no ON_ERROR_STOP and a bare failure would scroll past a
+--       post-flight still reporting OK.
 --   Anything added here later should hold to "additive" unless it says why not,
 --   AND should update this paragraph -- a count that is wrong is worse than no
 --   count, because this is the paragraph an operator reads before running the
@@ -78,6 +97,10 @@
 --     an adversarial round pointed out it was assumed rather than stated)
 --   - table lookup_person_role (Slice #34.04's block in section 8 adds two
 --     columns to it; it is created by migration_013 and this file never has)
+--   - table lookup_document_type (Slice #34.09's block in section 8 puts a
+--     unique index on it; it is created by migration_002 and this file never
+--     has -- and section 8 has been adding its `origin` column since #26.12
+--     without ever saying so here)
 --
 -- Read the NOTICE output at the end. It reports anything still missing.
 -- ===========================================================================
@@ -934,6 +957,102 @@ BEGIN
   END IF;
 END $$;
 
+-- ── migration_080 (Slice #34.09) -- two document types may not share a name ──
+--
+-- ⚠️ **THE ONLY STATEMENT IN THIS FILE THAT CAN FAIL ON EXISTING DATA, WHICH IS
+-- WHY IT IS A GUARDED BLOCK AND NOT A `CREATE UNIQUE INDEX IF NOT EXISTS`.**
+-- This file is fed to `psql -f` with no ON_ERROR_STOP (see the paragraph above
+-- section 10), so a failing bare statement scrolls past and the post-flight
+-- still says OK. Counting first and refusing loudly is the shape the
+-- `lookup_property_type` UNIQUE block above arrived at, and for the same
+-- reason.
+--
+-- ⚠️ **THE PROBE IS BY SHAPE, NOT BY NAME**, which is the lesson that block
+-- records at length: a name-only test finds nothing on a database whose index
+-- Postgres named for it, and this file then adds a SECOND index over the same
+-- expression -- which `pg_dump -s` sees and `scripts/verify-rebuild.ts`
+-- reports. Here the shape is: unique, valid, one key column, PARTIAL
+-- (`indpred IS NOT NULL` -- the inverse of the test one block up, deliberately,
+-- because that one is looking for a TOTAL unique and this one for a partial),
+-- and expression-based rather than over a plain column (`indkey[0] = 0`).
+--
+-- ⚠️ **The expression is `normaliseDocumentTypeName` from
+-- src/lib/documents/document-type-match.ts**, written as the exact inline
+-- expansion of `pg_temp.ga40_norm_name` in `scripts/decision-checks.sql`.
+-- migration_080's header carries the full argument, including why the trailing
+-- whitespace-collapse and `btrim` are kept although they are provable no-ops.
+--
+-- ⚠️ **Guarded on the table existing at all** (`to_regclass`, not
+-- `information_schema` -- see section 10's note on why), because this file
+-- states its prerequisites and does not create lookup tables.
+
+DO $$
+DECLARE
+  dupes integer;
+BEGIN
+  IF to_regclass('public.lookup_document_type') IS NULL THEN
+    RAISE WARNING 'lookup_document_type is missing entirely; the normalised-name unique index was not created. This file does not create lookup tables -- apply the migration chain.';
+    RETURN;
+  END IF;
+
+  IF EXISTS (
+    SELECT 1
+      FROM pg_index i
+     WHERE i.indrelid    = 'lookup_document_type'::regclass
+       AND i.indisunique
+       AND i.indisvalid
+       AND i.indpred IS NOT NULL
+       AND i.indnkeyatts = 1
+       AND i.indkey[0]   = 0
+  ) THEN
+    RETURN;
+  END IF;
+
+  SELECT count(*) INTO dupes FROM (
+    SELECT regexp_replace(
+             btrim(regexp_replace(
+               regexp_replace(
+                 lower(normalize(coalesce(name, ''), NFD)),
+                 '[' || chr(768) || '-' || chr(879) || ']', '', 'g'),
+               '\s+', ' ', 'g')),
+             '[^a-z0-9]', '', 'g') AS normalised
+      FROM lookup_document_type
+     GROUP BY 1
+    HAVING count(*) > 1
+       AND regexp_replace(
+             btrim(regexp_replace(
+               regexp_replace(
+                 lower(normalize(coalesce(name, ''), NFD)),
+                 '[' || chr(768) || '-' || chr(879) || ']', '', 'g'),
+               '\s+', ' ', 'g')),
+             '[^a-z0-9]', '', 'g') <> ''
+  ) x;
+
+  IF dupes > 0 THEN
+    RAISE WARNING 'lookup_document_type_name_normalised_unique not created: % group(s) of document types share one display name under the code normalisation. Apply src/db/migration_080_document_type_name_unique.sql, which names the colliding rows and their document counts, and resolve them first.', dupes;
+  ELSE
+    EXECUTE $q$
+      CREATE UNIQUE INDEX lookup_document_type_name_normalised_unique
+        ON lookup_document_type (
+          (regexp_replace(
+             btrim(regexp_replace(
+               regexp_replace(
+                 lower(normalize(coalesce(name, ''), NFD)),
+                 '[' || chr(768) || '-' || chr(879) || ']', '', 'g'),
+               '\s+', ' ', 'g')),
+             '[^a-z0-9]', '', 'g'))
+        )
+        WHERE regexp_replace(
+                btrim(regexp_replace(
+                  regexp_replace(
+                    lower(normalize(coalesce(name, ''), NFD)),
+                    '[' || chr(768) || '-' || chr(879) || ']', '', 'g'),
+                  '\s+', ' ', 'g')),
+                '[^a-z0-9]', '', 'g') <> ''
+    $q$;
+  END IF;
+END $$;
+
 -- migration_034 -- Street View street line on the property address
 ALTER TABLE property_address
   ADD COLUMN IF NOT EXISTS street_view_street_line text;
@@ -1195,12 +1314,42 @@ BEGIN
     faults := array_append(faults, 'lookup_person_role.valid_for_person (present but nullable)');
   END IF;
 
+  -- Slice #34.09: the first INDEX this section has ever asked about, and it is
+  -- here for the reason #34.04's comment above gives -- three consecutive
+  -- slices left section 10 out and an adversarial round said so out loud.
+  --
+  -- ⚠️ **A WARNING, NOT A FAULT, AND THE ASYMMETRY IS THE POINT.** Every other
+  -- entry in `faults` is something whose ABSENCE breaks a query: drizzle names
+  -- those columns in the statements it builds, so a project missing one answers
+  -- 42703 from a live screen. A missing unique index breaks nothing — the
+  -- application-level refusal in `document-type-name-guard.ts` still fires, and
+  -- what is lost is only the race it cannot close. Raising an EXCEPTION would
+  -- make this file refuse a database that is merely one migration behind and
+  -- otherwise perfectly serviceable, on a repair script whose promise is to be
+  -- safe to run against production.
+  --
+  -- Same shape-based probe as section 8's block; a name-only test would be
+  -- wrong here for the reason stated there.
+  IF to_regclass('public.lookup_document_type') IS NOT NULL
+     AND NOT EXISTS (
+       SELECT 1
+         FROM pg_index i
+        WHERE i.indrelid    = 'lookup_document_type'::regclass
+          AND i.indisunique
+          AND i.indisvalid
+          AND i.indpred IS NOT NULL
+          AND i.indnkeyatts = 1
+          AND i.indkey[0]   = 0
+     ) THEN
+    RAISE WARNING 'lookup_document_type has no partial unique index over the normalised name (migration_080, Slice #34.09). Two document types can still be created with one display name by a racing writer; the application still refuses the ordinary case. Section 8 says why it was not created — a collision, or a missing table.';
+  END IF;
+
   IF array_length(missing, 1) IS NOT NULL THEN
     faults := array_append(faults, 'tables: ' || array_to_string(missing, ', '));
   END IF;
 
   IF array_length(faults, 1) IS NULL THEN
-    RAISE NOTICE 'POST-FLIGHT OK: all 13 tables present; lookup_document_type.origin, lookup_tarla.origin, lookup_institution.origin, document.import_title, property.tarla_id, lookup_person_role.valid_for_property and lookup_person_role.valid_for_person present.';
+    RAISE NOTICE 'POST-FLIGHT OK: all 13 tables present; lookup_document_type.origin, lookup_tarla.origin, lookup_institution.origin, document.import_title, property.tarla_id, lookup_person_role.valid_for_property and lookup_person_role.valid_for_person present. Any WARNING above about lookup_document_type_name_normalised_unique is separate and is not a fault.';
   ELSE
     RAISE EXCEPTION 'POST-FLIGHT FAILED: %', array_to_string(faults, ' | ');
   END IF;

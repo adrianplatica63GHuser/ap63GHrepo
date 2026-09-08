@@ -903,7 +903,50 @@ export const lookupDocumentType = pgTable("lookup_document_type", {
   // stray value a compile error at every drizzle write site rather than a
   // CHECK violation at runtime.
   origin: text("origin").$type<"MANUAL" | "IMPORT">().notNull().default("MANUAL"),
-});
+},
+  // ── Two types may not share one display name ──────────────  (Slice #34.09)
+  //
+  // migration_080_document_type_name_unique.sql is what actually creates this
+  // index — this project applies migrations by hand through
+  // `scripts\Apply-Migration.ps1` and does not generate them from here — so
+  // what follows is the CODE-side record of an index that exists in the
+  // database. Its header carries the full argument; the three things worth
+  // having in front of a reader of this file are:
+  //
+  // ⚠️ **The expression is `normaliseDocumentTypeName`**
+  // (src/lib/documents/document-type-match.ts) restated in SQL: NFD-decompose,
+  // strip the combining marks, lowercase, drop everything outside `[a-z0-9]`.
+  // It is written as the exact inline expansion of `pg_temp.ga40_norm_name` in
+  // `scripts/decision-checks.sql`, the fold the archive was measured under on
+  // 6 September 2026 — including the trailing whitespace-collapse and `btrim`,
+  // which are provable no-ops once every non-alphanumeric character is
+  // dropped, and the `coalesce` over a NOT NULL column. Shortening it would be
+  // a second opinion about the rule.
+  //
+  // ⚠️ **PARTIAL, excluding the empty normalised form, because
+  // `sameDocumentTypeName` refuses to call two empty forms equal.** A name of
+  // „—" or of a single space normalises to nothing; a TOTAL index would give
+  // the first such row the empty slot and refuse every other one, which is the
+  // punctuation-only type absorbing all the rest that that guard exists to
+  // stop.
+  //
+  // ⚠️ **`.where()` and `.on()` must carry the SAME expression.** Postgres
+  // compares the two structurally when it decides whether a query may use a
+  // partial index; two folds that differed would still create, still enforce
+  // uniqueness, and cover a different set of rows than they appear to.
+  //
+  // Shape copied from `user_requests_email_pending_unique` below, the
+  // project's other partial unique index.
+  (t) => [
+    uniqueIndex("lookup_document_type_name_normalised_unique")
+      .on(
+        sql`regexp_replace(btrim(regexp_replace(regexp_replace(lower(normalize(coalesce(${t.name}, ''), NFD)), '[' || chr(768) || '-' || chr(879) || ']', '', 'g'), '\\s+', ' ', 'g')), '[^a-z0-9]', '', 'g')`,
+      )
+      .where(
+        sql`regexp_replace(btrim(regexp_replace(regexp_replace(lower(normalize(coalesce(${t.name}, ''), NFD)), '[' || chr(768) || '-' || chr(879) || ']', '', 'g'), '\\s+', ' ', 'g')), '[^a-z0-9]', '', 'g') <> ''`,
+      ),
+  ],
+);
 
 export const lookupInstitution = pgTable("lookup_institution", {
   id:              uuid("id").primaryKey().defaultRandom(),

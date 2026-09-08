@@ -92,6 +92,22 @@
 --   would change what a code MEANS, which the slice puts out of scope. It is
 --   in the handover under "Noticed, not fixed".
 --
+--   ⚠️ **ONE THIRD OF THAT IS WRONG, AND SLICE #34.09 IS WHAT PROVED IT.**
+--   Comment-only correction to an applied migration; nothing below this line
+--   changed. The permanent-IMMUTABLE-function claim is false: `normalize`,
+--   `lower`, `regexp_replace`, `btrim`, `coalesce` and `chr` are all IMMUTABLE
+--   in PostgreSQL 16, so the fold can be INLINED into the index expression and
+--   no new database object exists to carry into
+--   `supabase_repair_missing_tables.sql`, `supabase_schema_full.sql` or
+--   `sync-reference-data.sql`. `migration_080_document_type_name_unique.sql`
+--   does exactly that on `lookup_document_type`. The other two thirds still
+--   stand and are the real reasons this file adds no UNIQUE: a second "T1"
+--   would become a 23505 needing a friendly error nobody has written, and
+--   uniqueness would change what a tarla code MEANS. The 23505 half is what
+--   #34.09 had to build for document types - a named refusal, a `code` on the
+--   wire and a Romanian sentence in both locales - which is the size of the
+--   thing this file was right to leave out of its own scope.
+--
 -- THE FOLD IS decision-checks.sql's, CHARACTER FOR CHARACTER
 --   `pg_temp.ga40_fold` below is copied from that script, which is itself the
 --   Postgres spelling of `foldRomanian` (src/lib/import/id-card.ts): NFD
