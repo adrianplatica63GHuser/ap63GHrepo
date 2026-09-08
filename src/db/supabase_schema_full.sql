@@ -4,7 +4,7 @@
 -- GENERATED FILE -- DO NOT EDIT BY HAND.
 -- Regenerate with:  .\scripts\Export-SupabaseSchema.ps1
 --
--- Generated : 2026-09-07 11:48
+-- Generated : 2026-09-07 20:02
 -- Source    : local Docker database (ga40db @ ga40prj-postgres)
 --
 -- Applies the complete schema from scratch after running
@@ -622,17 +622,6 @@ CREATE TABLE public.lookup_judicial_person_type (
 
 
 --
--- Name: lookup_person_person_role; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.lookup_person_person_role (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    person_role_id uuid NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
-);
-
-
---
 -- Name: lookup_person_role; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -642,8 +631,24 @@ CREATE TABLE public.lookup_person_role (
     description text,
     sort_order integer DEFAULT 0 NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    valid_for_property boolean DEFAULT false NOT NULL,
+    valid_for_person boolean DEFAULT false NOT NULL
 );
+
+
+--
+-- Name: COLUMN lookup_person_role.valid_for_property; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.lookup_person_role.valid_for_property IS 'TRUE when this role may tag a Proprietate ↔ Persoană association (Slice #34.04, migration_079). Replaces the table lookup_property_person_role, which held one row per ticked role - a UNIQUE NOT NULL FK to this table''s primary key, i.e. exactly this bit, at the cost of an API route family, a modal, two React Query cache-key names for one endpoint, and a synthetic id. Edited from the „Roluri Persoană" row in Reference Data. Defaults to false: a new role is usable nowhere until someone says otherwise, which is what the empty table meant.';
+
+
+--
+-- Name: COLUMN lookup_person_role.valid_for_person; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.lookup_person_role.valid_for_person IS 'TRUE when this role may tag a Persoană ↔ Persoană association (Slice #34.04, migration_079). Replaces the table lookup_person_person_role, which was identical in every column to lookup_property_person_role and is collapsed for the same reason. Note there is deliberately NO valid_for_document column: lookup_doc_type_person_role is unique over (document_type_id, person_role_id), so a role can be valid on one document type and not another, and a boolean on the role would destroy that distinction. See migration_079''s header.';
 
 
 --
@@ -656,17 +661,6 @@ CREATE TABLE public.lookup_person_type (
     sort_order integer DEFAULT 0 NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL
-);
-
-
---
--- Name: lookup_property_person_role; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.lookup_property_person_role (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    person_role_id uuid NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 
@@ -1364,22 +1358,6 @@ ALTER TABLE ONLY public.lookup_judicial_person_type
 
 
 --
--- Name: lookup_person_person_role lookup_person_person_role_person_role_id_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.lookup_person_person_role
-    ADD CONSTRAINT lookup_person_person_role_person_role_id_key UNIQUE (person_role_id);
-
-
---
--- Name: lookup_person_person_role lookup_person_person_role_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.lookup_person_person_role
-    ADD CONSTRAINT lookup_person_person_role_pkey PRIMARY KEY (id);
-
-
---
 -- Name: lookup_person_role lookup_person_role_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1393,22 +1371,6 @@ ALTER TABLE ONLY public.lookup_person_role
 
 ALTER TABLE ONLY public.lookup_person_type
     ADD CONSTRAINT lookup_person_type_pkey PRIMARY KEY (id);
-
-
---
--- Name: lookup_property_person_role lookup_property_person_role_person_role_id_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.lookup_property_person_role
-    ADD CONSTRAINT lookup_property_person_role_person_role_id_key UNIQUE (person_role_id);
-
-
---
--- Name: lookup_property_person_role lookup_property_person_role_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.lookup_property_person_role
-    ADD CONSTRAINT lookup_property_person_role_pkey PRIMARY KEY (id);
 
 
 --
@@ -2342,22 +2304,6 @@ ALTER TABLE ONLY public.lookup_doc_type_person_role
 
 ALTER TABLE ONLY public.lookup_doc_type_person_role
     ADD CONSTRAINT lookup_doc_type_person_role_person_role_id_fkey FOREIGN KEY (person_role_id) REFERENCES public.lookup_person_role(id) ON DELETE CASCADE;
-
-
---
--- Name: lookup_person_person_role lookup_person_person_role_person_role_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.lookup_person_person_role
-    ADD CONSTRAINT lookup_person_person_role_person_role_id_fkey FOREIGN KEY (person_role_id) REFERENCES public.lookup_person_role(id) ON DELETE CASCADE;
-
-
---
--- Name: lookup_property_person_role lookup_property_person_role_person_role_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.lookup_property_person_role
-    ADD CONSTRAINT lookup_property_person_role_person_role_id_fkey FOREIGN KEY (person_role_id) REFERENCES public.lookup_person_role(id) ON DELETE CASCADE;
 
 
 --
