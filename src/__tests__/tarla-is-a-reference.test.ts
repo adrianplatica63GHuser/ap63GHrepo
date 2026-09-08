@@ -278,10 +278,22 @@ describe("lookup_tarla", () => {
   it("still has no unique constraint on its code, deliberately", () => {
     /**
      * migration_078 argues this at length: the FK removes the AMBIGUITY without
-     * needing uniqueness, because a property points at one ROW. A unique index
-     * over the folded `indicativ` would need the fold as a permanent IMMUTABLE
-     * function in three hand-maintained files and would turn the admin form's
-     * second "T1" into a 23505 needing a friendly error — a different slice.
+     * needing uniqueness, because a property points at one ROW.
+     *
+     * ⚠️ **ONE OF ITS TWO SUPPORTING REASONS WAS RETRACTED BY SLICE #34.09,
+     * AND THIS TEST STILL HOLDS.** What stood here was "A unique index over the
+     * folded `indicativ` would need the fold as a permanent IMMUTABLE function
+     * in three hand-maintained files and would turn the admin form's second
+     * 'T1' into a 23505 needing a friendly error — a different slice." The
+     * first half is false: `normalize`, `lower`, `regexp_replace`, `btrim`,
+     * `coalesce` and `chr` are all IMMUTABLE in PostgreSQL 16, so the fold can
+     * be INLINED into the index expression and no database object is created —
+     * `migration_080_document_type_name_unique.sql` does exactly that on
+     * `lookup_document_type`, and migration_078's own header now carries the
+     * retraction. The second half stands, and #34.09 is what shows its size: a
+     * named refusal, a `code` on the wire and a Romanian sentence in both
+     * locales, per outcome. That is the different slice, and it is still
+     * different.
      *
      * Pinned so that adding one is a deliberate act with a test to update,
      * rather than a tidy-up that changes what an administrator can do.

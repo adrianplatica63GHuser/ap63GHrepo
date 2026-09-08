@@ -51,20 +51,30 @@
  *   being TOTAL, which is a property of the key and not of the order it is
  *   read in. §5 models tie-breaking, and only tie-breaking.
  *
- *   ⚠️ **AND `(sort_order, name)` IS NOT TOTAL IN THE DATABASE.** No lookup
- *   table has a UNIQUE constraint on its display field, so two rows sharing
- *   BOTH keys may still swap — the residual §5 measures rather than assumes.
+ *   ⚠️ **AND `(sort_order, name)` IS NOT TOTAL IN THE DATABASE — ON TEN OF THE
+ *   ELEVEN LISTS.** No lookup table has a UNIQUE constraint on its display
+ *   field, so two rows sharing BOTH keys may still swap — the residual §5
+ *   measures rather than assumes. The exception since Slice #34.09 is
+ *   `document-types`: migration_080 puts a partial unique index over the
+ *   normalised name on `lookup_document_type`, so two rows can no longer hold
+ *   one name and that list's key is total in a database that migration has been
+ *   APPLIED to. ⚠️ That qualifier is not pedantry: `supabase_schema_full.sql`
+ *   is generated, and until it is regenerated a cloud project rebuilt from it
+ *   has the code and not the index. #34.09's handover carries the regeneration
+ *   and the re-baseline as its first step for exactly this reason.
  *   On the four lists whose name is the only column (`use-categories`,
  *   `person-types`, `citizenships`, `judicial-person-types`) that cannot be
  *   seen. On the other seven it can: the modal renders every `LIST_META` field
  *   as a column, so tied rows visibly exchange places. Two of the seven are
  *   worse than cosmetic:
- *     • `document-types`, where duplicate names are documented and EXPECTED —
- *       only `key` is UNIQUE and `matchDocumentType` takes the first name
- *       match (src/lib/documents/resolve-document-type.ts), so a tie decides
- *       which of two same-named types an import ADOPTS, not merely where a row
- *       sits. That branch is one of the four this slice does not touch, and
- *       §5 cannot reach it at all (its first term is raw `sql`).
+ *     • `document-types` — RESOLVED by Slice #34.09, and the sentence is kept
+ *       because it is the reason the fix exists. It read: "where duplicate
+ *       names are documented and EXPECTED — only `key` is UNIQUE and
+ *       `matchDocumentType` takes the first name match, so a tie decides which
+ *       of two same-named types an import ADOPTS, not merely where a row
+ *       sits". Two rows can no longer share a name, so there is no tie to
+ *       decide. That branch is still one of the four #34.01 does not touch,
+ *       and §5 still cannot reach it (its first term is raw `sql`).
  *     • `tarla`, where ties at `sort_order = 0` are the normal state rather
  *       than an edge case, because `createPropertyIn` auto-seeds every code.
  *   Both are named in the Slice #34.01 handover; a third key (`id`) is the

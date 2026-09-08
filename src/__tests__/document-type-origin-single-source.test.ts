@@ -711,9 +711,23 @@ describe("migration_077's two CHECKs are the same decision as the schema unions"
       // Slice the table's own pgTable block, so a union on a different table
       // can neither satisfy nor break this. The subject rides along in every
       // expectation, so a red names which of the three it was.
+      //
+      // ⚠️ **THE END MARKER IS "THE NEXT `export const`", NOT `\n});`, AND
+      // SLICE #34.09 IS WHY.** A `pgTable` with a THIRD argument — a table
+      // config callback declaring indexes — does not end `\n});`; it ends
+      // `],\n);`. `lookupDocumentType` gained one (the partial unique index
+      // over the normalised name, migration_080), so the old marker ran past
+      // its terminator and swallowed `lookupInstitution` with it. The
+      // assertion still passed, because the regex takes the FIRST `origin:`
+      // in the slice and that is still the right one — which is the worst
+      // kind of pass: the isolation this comment promises had silently
+      // stopped existing. An adversarial round measured it. Ending on the
+      // next top-level `export const` is terminator-shaped rather than
+      // brace-shaped, so a fourth argument would not break it either.
       const start = schema.indexOf(`export const ${table} = pgTable(`);
       expect([table, start > -1]).toEqual([table, true]);
-      const end = schema.indexOf("\n});", start);
+      const next = schema.indexOf("\nexport const ", start + 1);
+      const end = next === -1 ? schema.length : next;
       expect([table, end > start]).toEqual([table, true]);
       const block = schema.slice(start, end);
       const m = /origin: text\("origin"\)\.\$type<([^>]*)>\(\)/.exec(block);

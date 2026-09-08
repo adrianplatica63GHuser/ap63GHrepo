@@ -324,6 +324,51 @@ describe("both prompts teach the whole catalogue", () => {
  * terminates, or whether the outcome is reported as `adopted`. Those need
  * `npx jest` with a database, and they are named in the handover.
  */
+/**
+ * Source with COMMENTS BLANKED and string bodies intact.     (Slice #34.09)
+ *
+ * A copy of `person-role-flags.test.ts`'s scanner, character for character,
+ * and copied rather than shared for this suite's own reason: these files are
+ * deliberately standalone so that a change to one cannot quietly change what
+ * another asserts. Its header explains why it is a scanner and not two
+ * `replace` calls — `src.replace(/\/\*[\s\S]*?\*\//g, " ")` reads the `/*`
+ * inside `accept="image/*,.pdf"` as a comment opener and swallows everything to
+ * the next `*​/`.
+ */
+function code(src: string): string {
+  const out: string[] = [];
+  let i = 0;
+  while (i < src.length) {
+    const ch = src[i];
+    const next = src[i + 1];
+    if (ch === "/" && next === "/") {
+      while (i < src.length && src[i] !== "\n") { out.push(" "); i += 1; }
+      continue;
+    }
+    if (ch === "/" && next === "*") {
+      const close = src.indexOf("*/", i + 2);
+      const stop = close === -1 ? src.length : close + 2;
+      for (; i < stop; i += 1) out.push(src[i] === "\n" ? "\n" : " ");
+      continue;
+    }
+    if (ch === '"' || ch === "'" || ch === "`") {
+      out.push(ch);
+      i += 1;
+      while (i < src.length) {
+        const c = src[i];
+        if (c === "\\") { out.push(c); if (i + 1 < src.length) out.push(src[i + 1]); i += 2; continue; }
+        out.push(c);
+        i += 1;
+        if (c === ch) break;
+      }
+      continue;
+    }
+    out.push(ch);
+    i += 1;
+  }
+  return out.join("");
+}
+
 describe("the canonical-key create and its retry are one mechanism", () => {
   it("is thrown in one place and understood in exactly two", () => {
     const queries = read("src/lib/admin/value-lists/queries.ts");
@@ -369,12 +414,40 @@ describe("the canonical-key create and its retry are one mechanism", () => {
       .sort();
     expect(spellsTheLiteral).toEqual(["lib/admin/value-lists/queries.ts"]);
 
-    // …and the identifier reaches exactly the two callers that handle it.
-    const mentions = production
-      .filter((f) => fs.readFileSync(f, "utf8").includes("PREFERRED_KEY_TAKEN"))
+    // …and the identifier reaches exactly the callers that handle it.
+    //
+    // ⚠️ **THREE UNTIL SLICE #34.09, FOUR SINCE, AND THE FOURTH IS A PERSON.**
+    // The list this replaces read `["app/api/document-types/resolve/route.ts",
+    // "lib/admin/value-lists/queries.ts", "lib/documents/resolve-document-
+    // type.ts"]`, under the sentence "the identifier reaches exactly the TWO
+    // callers that handle it" — the two being the resolver and its route, both
+    // of which treat the refusal as a lost race and go round to adopt.
+    //
+    // #34.09 gave the Reference Data create form a `key` field (D-03), so
+    // `PREFERRED_KEY_TAKEN` is now also what a PERSON gets for typing a key
+    // some row already holds — and a person cannot be answered by retrying.
+    // `app/api/admin/value-lists/[list]/route.ts` turns it into a named 400
+    // carrying `document_type_key_taken`, which the modal says in Romanian.
+    // That is a third meaning of the same sentinel and it is the RIGHT one:
+    // the refusal has always meant "the key you asked for is not available and
+    // I will not invent a `_2` for you", and what differs is only who is being
+    // told.
+    //
+    // ⚠️ **COMMENT-BLANKED, WHICH IS A TIGHTENING RATHER THAN A CONCESSION.**
+    // The raw-text version of this filter would also catch a file that merely
+    // NAMES the sentinel in prose — `lib/documents/document-type-name-guard.ts`
+    // does, deliberately, because the key refusal and the name refusal are two
+    // halves of what the create form can now be told — and a prose mention
+    // cannot start meaning something different by it, which is the whole worry
+    // this assertion exists for. The scanner is `person-role-flags.test.ts`'s,
+    // for the reason stated there: two `replace` calls read the `/*` inside
+    // `accept="image/*,.pdf"` as a comment opener.
+    const handles = production
+      .filter((f) => code(fs.readFileSync(f, "utf8")).includes("PREFERRED_KEY_TAKEN"))
       .map(rel)
       .sort();
-    expect(mentions).toEqual([
+    expect(handles).toEqual([
+      "app/api/admin/value-lists/[list]/route.ts",
       "app/api/document-types/resolve/route.ts",
       "lib/admin/value-lists/queries.ts",
       "lib/documents/resolve-document-type.ts",

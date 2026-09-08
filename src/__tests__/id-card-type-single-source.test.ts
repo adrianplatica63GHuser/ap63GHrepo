@@ -234,7 +234,7 @@ describe("idCardFormRefusal — what a write would leave behind", () => {
   it("ALLOWS a write that touches neither half of an already-wrong row", () => {
     // ⚠️ The round that produced the third argument. Reference Data's edit form
     // for document-types sends `{ name }` and nothing else
-    // (LIST_META["document-types"].fields is `[{ key: "name" }]`), so refusing
+    // (LIST_META["document-types"].fields is `[{ key: "name" }]` — since Slice #34.09 `[{ key: "name" }, { key: "key", createOnly: true }]`, and `createOnly` means `startEdit` does not seed it, so the EDIT form still sends `{ name }` and the sentence below is unchanged), so refusing
     // here told an administrator to "save it with no fields" on a form whose
     // only input is the name — a remedy that cannot be carried out on the
     // screen showing it. The row is repaired by migration_073 and by the form

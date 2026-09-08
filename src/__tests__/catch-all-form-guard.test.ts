@@ -159,7 +159,7 @@ describe("catchAllFormRefusal — updating", () => {
   });
 
   it("⚠️ allows Reference Data's name-only edit on a grandfathered row", () => {
-    // `LIST_META["document-types"].fields` is `[{ key: "name" }]`, so the list
+    // `LIST_META["document-types"].fields` is `[{ key: "name" }]` — since Slice #34.09 `[{ key: "name" }, { key: "key", createOnly: true }]`, and `createOnly` means `startEdit` does not seed it, so the EDIT form still sends `{ name }` and the sentence below is unchanged — so the list
     // form sends `{ name }` and nothing about the form: `writesTheForm` false,
     // and `fieldCount` on both sides comes from the stored row. Refusing it
     // would answer "save it with no fields" on a form whose only input is the
