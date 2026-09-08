@@ -10,9 +10,19 @@ import { DocumentPersonsModal } from "./document-persons-modal";
 
 function Section({
   label,
+  note,
   children,
 }: {
   label: string;
+  /**
+   * A sentence printed under the heading, before the buttons.
+   *
+   * Slice #34.05: the one caller is „Relație între obiecte", and the sentence
+   * is the entire former content of `DocToPropertyModal` — a modal behind a
+   * blue button that said only that there is nothing behind it. Printed here it
+   * answers the question before it is asked instead of after.
+   */
+  note?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -22,6 +32,11 @@ function Section({
           {label}
         </span>
       </div>
+      {note && (
+        <p className="border-b border-card-rim px-4 py-3 text-sm leading-relaxed text-fade dark:border-zinc-800 dark:text-zinc-400">
+          {note}
+        </p>
+      )}
       <div className="flex flex-wrap gap-3 p-4">{children}</div>
     </div>
   );
@@ -56,41 +71,13 @@ function ListBtn({
   );
 }
 
-// ── Document to Property informational modal ──────────────────────────────────
-
-function DocToPropertyModal({ onClose }: { onClose: () => void }) {
-  const t = useTranslations("valueList.docToPropertyInfo");
-  return (
-    <>
-      <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm" onClick={onClose} aria-hidden />
-      <div
-        role="dialog"
-        aria-modal="true"
-        className="fixed inset-x-4 top-1/3 z-50 mx-auto max-w-md rounded-xl border border-card-rim bg-card p-6 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900"
-      >
-        <h2 className="mb-3 text-base font-semibold text-ink dark:text-zinc-100">{t("title")}</h2>
-        <p className="mb-4 text-sm leading-relaxed text-ink dark:text-zinc-300">{t("body")}</p>
-        <div className="flex justify-end">
-          <button
-            onClick={onClose}
-            className="rounded-md bg-cta px-4 py-2 text-sm font-medium text-white hover:bg-cta-d"
-          >
-            {t("close")}
-          </button>
-        </div>
-      </div>
-    </>
-  );
-}
-
 // ── Hub ───────────────────────────────────────────────────────────────────────
 
 export function ValueListHub() {
   const t = useTranslations("valueList");
 
-  const [openList,              setOpenList]              = useState<ListKey | null>(null);
-  const [showDocPersons,        setShowDocPersons]        = useState(false);
-  const [showDocToProperty,     setShowDocToProperty]     = useState(false);
+  const [openList,       setOpenList]       = useState<ListKey | null>(null);
+  const [showDocPersons, setShowDocPersons] = useState(false);
 
   function open(key: ListKey) { setOpenList(key); }
   function close()             { setOpenList(null); }
@@ -118,7 +105,7 @@ export function ValueListHub() {
           <ListBtn label={t("lists.institutions")}  onClick={() => open("institutions")} />
         </Section>
 
-        {/* ── Roles ── */}
+        {/* ── Roluri ── */}
         <Section label={t("sections.roles")}>
           {/* Master list */}
           <ListBtn label={t("lists.personRoles")} onClick={() => open("person-roles")} />
@@ -142,26 +129,36 @@ export function ValueListHub() {
               document-type screen. */}
           <SubLabel label={t("sections.rolesPerson")} />
           <ListBtn label={t("lists.personToDocument")} onClick={() => setShowDocPersons(true)} />
+        </Section>
 
-          {/* Object-to-object sub-row.
+        {/* ── Relație între obiecte ──
 
-              Slice #29.13: these two are ordinary value lists now — the same
-              generic modal the nine others open, with the refusal, the live
-              count and the offer to move the associations that #29.05 built.
-              They had their own modal and their own bare `db.delete` until
-              this slice, so deleting a role forty associations carried blanked
-              forty relationship tags and answered 204. */}
-          <SubLabel label={t("sections.rolesObject")} />
+            Slice #34.05: A SECTION, NOT A SUB-ROW OF „Roluri", AND THE WORD
+            „rol" IS THE REASON. „Adiacent" and „Înlocuiește" are relationship
+            types between two objects of the SAME kind; they are not roles a
+            person plays, which is what „rol" means everywhere else in this
+            system. They sat under „Roluri" because a sub-row was added to an
+            existing section rather than a section beside it.
+
+            The third button that stood here — „Document → Proprietate" —
+            opened `DocToPropertyModal`, whose entire content was three strings
+            saying there is nothing to configure. The button and the modal are
+            gone and the sentence is the section's `note`: `sections
+            .rolesObjectNote`, which IS the modal's former `body`, re-homed
+            rather than orphaned.
+
+            Slice #29.13 is why the two survivors take `open(...)`: they are
+            ordinary value lists on the generic modal, with the refusal, the
+            live count and the offer to move the associations. */}
+        <Section label={t("sections.rolesObject")} note={t("sections.rolesObjectNote")}>
           <ListBtn label={t("lists.propertyToProperty")} onClick={() => open("property-property-roles")} />
           <ListBtn label={t("lists.documentToDocument")} onClick={() => open("document-document-roles")} />
-          <ListBtn label={t("lists.documentToProperty")} onClick={() => setShowDocToProperty(true)} />
         </Section>
 
       </div>
 
-      {openList            && <ValueListModal listKey={openList} onClose={close} />}
-      {showDocPersons      && <DocumentPersonsModal   onClose={() => setShowDocPersons(false)} />}
-      {showDocToProperty   && <DocToPropertyModal     onClose={() => setShowDocToProperty(false)} />}
+      {openList       && <ValueListModal listKey={openList} onClose={close} />}
+      {showDocPersons && <DocumentPersonsModal onClose={() => setShowDocPersons(false)} />}
     </>
   );
 }

@@ -52,6 +52,12 @@
 //   "the list could not be read".
 
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
+import type { CarriedRoleKind } from "@/lib/admin/value-lists/carried-roles";
+import {
+  withCarriedRoles,
+  type PickerRoleOption,
+} from "@/lib/admin/value-lists/carried-roles-merge";
 
 export type LookupOption = { value: string; label: string };
 
@@ -226,4 +232,117 @@ export function usePersonRoleOptions(validFor: "property" | "person"): LookupOpt
     retry:    LOOKUP_QUERY_RETRY,
   });
   return { options: data ?? [], listState: toState(isPending, isLoadingError, fetchStatus) };
+}
+
+// ── The role a row already carries ───────────────────────────────────────────
+//
+// ⚠️ **`import type`, and it has to stay that way.**
+// `@/lib/admin/value-lists/carried-roles` imports `@/db`, which opens a pg
+// Pool. A type import is erased at compile time and reaches no bundle; turning
+// it into a value import — for `CARRIED_ROLE_KINDS`, say — would pull the
+// database client into every association screen.
+
+/**
+ * ⚠️ **A failed read here is SILENT, on purpose.** The offered list already
+ * has `roleListUnavailable` for "there is no list"; this is a second read that
+ * can only ever ADD entries, so its failure degrades to the picker exactly as
+ * it behaved before Slice #34.05 — the whitelist's roles and nothing more.
+ * A second red line under a working dropdown, for a list the user never asked
+ * for by name, would cost more than it explains.
+ */
+async function fetchCarriedRoles(kind: CarriedRoleKind, entityId: string): Promise<NamedRow[]> {
+  const params = new URLSearchParams({ kind, entityId });
+  const res = await fetch(`/api/person-roles/carried?${params.toString()}`);
+  if (res.redirected || !res.ok) throw new Error(`Failed to load carried roles (HTTP ${res.status})`);
+  const data = (await res.json()) as { items?: NamedRow[] };
+  return data.items ?? [];
+}
+
+/**
+ * The picker's whole option list: what the whitelist OFFERS, plus what this
+ * entity's own association rows already CARRY.               (Slice #34.05)
+ *
+ * `offered` is passed in rather than fetched here because there is no single
+ * answer to "which roles are offered": the Proprietate ↔ Persoană screens read
+ * `validForProperty`, „Persoană ↔ Persoană" reads `validForPerson`, and the
+ * document side reads the document type's whitelist. Only the screen knows;
+ * this hook supplies the second source and the subtraction.
+ *
+ * `entityId` is the entity the screen is about — the property on
+ * „Asociază persoană", the person on „Asociază proprietate", the document on
+ * „Asociază persoană" from a document. See `carried-roles.ts` for why it is
+ * never global.
+ *
+ * ⚠️ **`offered` AND `entityId` MUST BE SCOPED TO THE SAME THING, AND THAT IS
+ * WHAT DECIDES WHERE THIS HOOK CAN BE USED AT ALL.** The mark says "the archive
+ * carries this role and this list no longer offers it" — a true sentence only
+ * when a role missing from `offered` really is withdrawn for the thing
+ * `entityId` names. The two person-side „Asociază document" screens fail that
+ * test and deliberately do not call this: their `offered` is the SELECTED
+ * DOCUMENT TYPE's whitelist while the row a role could be carried on is a
+ * (person, document) pair that does not exist yet, so a person-scoped answer
+ * would mark „Vânzător" unavailable on a cadastral plan — where it is not
+ * withdrawn, merely not a party to that kind of document — and a
+ * document-scoped one would print roles belonging to OTHER people, on a screen
+ * that shows none of their rows. Two adversarial rounds landed on that; the
+ * handover says what it would take.
+ *
+ * `offeredIsKnown` is the caller's answer to "has the offered list arrived" —
+ * `listState === "loaded"` on the four hook screens, `data !== undefined` on
+ * the document side. It gates the union; the paragraph inside says why.
+ */
+export function useRoleOptionsWithCarried(
+  offered: readonly LookupOption[],
+  kind: CarriedRoleKind,
+  entityId: string,
+  offeredIsKnown: boolean,
+): PickerRoleOption[] {
+  const t = useTranslations("shared");
+  const { data } = useQuery({
+    // ⚠️ **UNDER `["value-list", "person-roles"]`, AND THAT IS THE WHOLE
+    // INVALIDATION STORY.** `invalidateListCaches` opens with an unconditional
+    // `invalidateQueries({ queryKey: ["value-list", listKey] })`, and React
+    // Query matches by PREFIX — so a role renamed or deleted in Reference Data
+    // reaches this cache too, with no branch, no `BARE_KEYS` row and no second
+    // name for one list. A bare `["carried-person-roles", …]` would need a
+    // branch, which is the extra cross-invalidation the docblock at the top of
+    // this file says is unnecessary and which #34.04 deleted three of. The
+    // trailing segments make it a different ENTRY, never a second shape under
+    // the same key.
+    queryKey: ["value-list", "person-roles", "carried", kind, entityId],
+    queryFn:  () => fetchCarriedRoles(kind, entityId),
+    select:   toOptions,
+    retry:    LOOKUP_QUERY_RETRY,
+    // ⚠️ **`staleTime: 0`, against the client default of 30 s, and a dissociate
+    // is why.** Nothing invalidates this entry when an ASSOCIATION changes —
+    // the dissociate handlers invalidate `["property-persons", propertyId]` and
+    // its five siblings, not this — so a cached answer can go on naming a role
+    // the last row carrying it has just been removed from. Every observer of
+    // this key is an association screen the user has just navigated to, so
+    // „refetch on mount" is one small GET per screen open, and it is the only
+    // thing that makes the answer as fresh as the rows it describes. Found by
+    // an adversarial round.
+    staleTime: 0,
+  });
+
+  // ⚠️ **AN UNREAD WHITELIST IS NOT AN UNTICKED ROLE, AND SAYING SO WOULD
+  // CONTRADICT THE SENTENCE ON THE SAME SCREEN.** When the offered list failed
+  // or has not arrived, `offered` is empty for a reason that has nothing to do
+  // with ticks — and unioning against an empty list marks EVERY carried role
+  // „nu mai este disponibil" while `roleListUnavailable` prints underneath
+  // saying the list could not be read. Both cannot be true. Found by an
+  // adversarial round; it also removes the flash where the carried read lands
+  // first and un-marks itself a moment later, and it keeps #34.04's gate
+  // meaning what its comment says on the screens that render the select
+  // conditionally.
+  //
+  // ⚠️ **It gates the UNION and not the query.** `enabled: offeredIsKnown`
+  // would serialise the two reads — the carried GET could not start until the
+  // whitelist GET had returned — and on the screens whose select is gated on
+  // the merged length that is a second round trip with no select on screen.
+  // They run in parallel and the result is discarded if the whitelist never
+  // arrives, which costs one GET and no waiting.
+  if (!offeredIsKnown) return offered.map((o) => ({ ...o, unavailable: false }));
+
+  return withCarriedRoles(offered, data ?? [], (role) => t("roleNoLongerOffered", { role }));
 }

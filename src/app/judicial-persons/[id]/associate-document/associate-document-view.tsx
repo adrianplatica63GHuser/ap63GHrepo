@@ -86,6 +86,29 @@ export function AssociateDocumentView({ personId, personName, backBase }: Props)
     ? (singleDocRoles ?? [])
     : (allDocRoles ?? []);
 
+  /*
+   * ⚠️ **NO „(nu mai este disponibil)" MARK ON THIS SCREEN, AND IT IS A
+   * DECISION RATHER THAN AN OVERSIGHT.**                      (Slice #34.05)
+   *
+   * The other five person-role pickers union `roles` with the roles the
+   * screen's own entity already carries, so a role that lost its whitelist tick
+   * is printed marked instead of vanishing (`useRoleOptionsWithCarried`). That
+   * mark asserts "the archive carries this role and this list no longer offers
+   * it", and on THIS screen there is no scope that makes it true. `roles` above
+   * is the SELECTED DOCUMENT TYPE's whitelist, and it changes as documents are
+   * ticked; the row a role could be carried on is a (person, document) pair
+   * that does not exist yet. Scoped to the person, „Vânzător" — held on a sale
+   * contract — would be marked unavailable while a cadastral plan is selected,
+   * where it is not withdrawn at all, merely not a party to that kind of
+   * document. Scoped to the selected document, the picker would print roles
+   * belonging to OTHER people, on a screen that shows none of their rows. Both
+   * were found by adversarial rounds, in that order.
+   *
+   * What would make it answerable is a picker on the ROW — an existing
+   * `person_document` association whose role can be changed — which does not
+   * exist today: associations are create-and-delete only. It is in the
+   * handover.
+   */
   const items = data?.items ?? [];
   const total = data?.total ?? 0;
 

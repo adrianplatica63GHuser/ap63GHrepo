@@ -521,6 +521,7 @@
   },
   "shared": {
     "roleListUnavailable": "The role list could not be read, so no role can be chosen right now. The role is optional in any case.",
+    "roleNoLongerOffered": "{role} (no longer available)",
     "properties": {
       "empty": "No properties associated",
       "colCode": "Code",
@@ -1706,7 +1707,8 @@
       "document": "Document",
       "roles": "Roles",
       "rolesPerson": "Person involved",
-      "rolesObject": "Object-to-object"
+      "rolesObject": "Object-to-object",
+      "rolesObjectNote": "There is no “Document → Property” list: the relationship between a document and a property is defined by the document type (e.g. cadastral plan, land-register extract). No separate relationship type configuration is needed."
     },
     "lists": {
       "propertyTypes": "Property Types",
@@ -1720,8 +1722,7 @@
       "institutions": "Institutions",
       "personToDocument": "Person → Document",
       "propertyToProperty": "Property → Property",
-      "documentToDocument": "Document → Document",
-      "documentToProperty": "Document → Property"
+      "documentToDocument": "Document → Document"
     },
     "fields": {
       "name": "Name",
@@ -1894,11 +1895,6 @@
       "error": "Failed to load",
       "empty": "No associations yet",
       "errorBothRequired": "Please select both a document type and a person role."
-    },
-    "docToPropertyInfo": {
-      "title": "Document → Property",
-      "body": "The relationship between a document and a property is defined by the document type (e.g. cadastral plan, land-register extract). No separate relationship type configuration is needed.",
-      "close": "Close"
     }
   },
   "adminTags": {

@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { PaginationControls } from "@/components/pagination-controls";
 import { buttonClass } from "@/lib/ui/button-styles";
-import { usePersonRoleOptions } from "@/hooks/use-lookup-options";
+import { usePersonRoleOptions, useRoleOptionsWithCarried } from "@/hooks/use-lookup-options";
 
 const PAGE_SIZE = 15;
 
@@ -53,6 +53,21 @@ export function AssociatePropertyView({ personId, personName, backBase }: Props)
   // invalidates unconditionally, and filters on `validForProperty`.
   const { options: roleOptions, listState: roleListState } =
     usePersonRoleOptions("property");
+
+  // Slice #34.05: plus any role this person's own rows already carry that
+  // the list above no longer offers, marked „(nu mai este disponibil)". The display
+  // path joins `lookup_person_role` directly and the picker starts from a
+  // permission table, so a role whose tick was removed read correctly on the
+  // row and was simply absent here, with nothing to explain it.
+  const pickerOptions = useRoleOptionsWithCarried(
+    roleOptions,
+    "person-property",
+    personId,
+    // Only once the whitelist itself is readable: an unread list is not a
+    // list of unticked roles, and marking one would contradict
+    // `roleListUnavailable` on the same screen.
+    roleListState === "loaded",
+  );
 
   const items = data?.items ?? [];
   const total = data?.total ?? 0;
@@ -164,8 +179,11 @@ export function AssociatePropertyView({ personId, personName, backBase }: Props)
           className="w-64 rounded-md border border-wire bg-white px-2 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
         >
           <option value="">{t("rolePlaceholder")}</option>
-          {roleOptions.map((r) => (
-            <option key={r.value} value={r.value}>
+          {pickerOptions.map((r) => (
+            // `disabled` on a carried-but-unoffered role: the picker SAYS the
+            // state, it does not hand back the eligibility an administrator
+            // removed. `carried-roles-merge.ts` argues it.
+            <option key={r.value} value={r.value} disabled={r.unavailable}>
               {r.label}
             </option>
           ))}

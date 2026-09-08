@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { PaginationControls } from "@/components/pagination-controls";
 import { buttonClass } from "@/lib/ui/button-styles";
+import { useRoleOptionsWithCarried } from "@/hooks/use-lookup-options";
 
 const PAGE_SIZE = 15;
 
@@ -59,6 +60,21 @@ export function AssociatePersonView({ documentId, documentName }: Props) {
     queryKey: ["document-valid-roles", documentId],
     queryFn:  () => fetchValidRoles(documentId),
   });
+
+  // Slice #34.05: plus any role this document's own rows already carry
+  // that the list above no longer offers, marked „(nu mai este disponibil)". The display
+  // path joins `lookup_person_role` directly and the picker starts from a
+  // permission table, so a role whose tick was removed read correctly on the
+  // row and was simply absent here, with nothing to explain it.
+  const pickerOptions = useRoleOptionsWithCarried(
+    (roles ?? []).map((r) => ({ value: r.id, label: r.name })),
+    "document-person",
+    documentId,
+    // `undefined` is „not read yet"; `[]` is „read, and it offers nothing".
+    // Until it is read, this screen renders no select at all — as it did
+    // before, when the gate was `roles && roles.length > 0`.
+    roles !== undefined,
+  );
 
   const items = data?.items ?? [];
   const total = data?.total ?? 0;
@@ -179,7 +195,7 @@ export function AssociatePersonView({ documentId, documentName }: Props) {
       />
 
       {/* Role dropdown — only shown when the document type has valid roles defined */}
-      {roles && roles.length > 0 && (
+      {pickerOptions.length > 0 && (
         <label className="flex items-center gap-2 text-sm">
           <span className="w-16 shrink-0 font-medium text-ink dark:text-zinc-300">{t("labelRole")}</span>
           <select
@@ -188,8 +204,11 @@ export function AssociatePersonView({ documentId, documentName }: Props) {
             className="rounded-md border border-wire bg-white px-2 py-1 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950"
           >
             <option value="">{t("rolePlaceholder")}</option>
-            {roles.map((r) => (
-              <option key={r.id} value={r.id}>{r.name}</option>
+            {pickerOptions.map((r) => (
+              // `disabled` on a carried-but-unoffered role — see
+              // `carried-roles-merge.ts`: the picker says the state, it does
+              // not hand back the eligibility an administrator removed.
+              <option key={r.value} value={r.value} disabled={r.unavailable}>{r.label}</option>
             ))}
           </select>
         </label>

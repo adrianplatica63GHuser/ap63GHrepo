@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { PaginationControls } from "@/components/pagination-controls";
 import { buttonClass } from "@/lib/ui/button-styles";
-import { usePersonRoleOptions } from "@/hooks/use-lookup-options";
+import { usePersonRoleOptions, useRoleOptionsWithCarried } from "@/hooks/use-lookup-options";
 
 const PAGE_SIZE = 15;
 
@@ -59,6 +59,21 @@ export function AssociatePersonView({ personId, personName, backBase }: Props) {
   // `validForPerson`, and the only id left is the right one.
   const { options: roleOptions, listState: roleListState } =
     usePersonRoleOptions("person");
+
+  // Slice #34.05: plus any role this person's own reference rows already
+  // carry that the list above no longer offers, marked „(nu mai este disponibil)". The display
+  // path joins `lookup_person_role` directly and the picker starts from a
+  // permission table, so a role whose tick was removed read correctly on the
+  // row and was simply absent here, with nothing to explain it.
+  const pickerOptions = useRoleOptionsWithCarried(
+    roleOptions,
+    "person-person",
+    personId,
+    // Only once the whitelist itself is readable: an unread list is not a
+    // list of unticked roles, and marking one would contradict
+    // `roleListUnavailable` on the same screen.
+    roleListState === "loaded",
+  );
 
   const items = useMemo(() => data?.items ?? [], [data?.items]);
   const total = data?.total ?? 0;
@@ -190,7 +205,7 @@ export function AssociatePersonView({ personId, personName, backBase }: Props) {
           OPTIONS rather than on the query result, so an unreadable list falls
           through to the sentence below instead of silently rendering as "no
           roles are ticked" — which is what this condition used to do. */}
-      {roleOptions.length > 0 && (
+      {pickerOptions.length > 0 && (
         <div className="flex items-center gap-3">
           <label className="text-sm font-medium text-ink dark:text-zinc-300">
             {t("labelRole")}
@@ -201,8 +216,11 @@ export function AssociatePersonView({ personId, personName, backBase }: Props) {
             className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
           >
             <option value="">{t("roleNone")}</option>
-            {roleOptions.map((r) => (
-              <option key={r.value} value={r.value}>{r.label}</option>
+            {pickerOptions.map((r) => (
+              // `disabled` on a carried-but-unoffered role — see
+              // `carried-roles-merge.ts`: the picker says the state, it does
+              // not hand back the eligibility an administrator removed.
+              <option key={r.value} value={r.value} disabled={r.unavailable}>{r.label}</option>
             ))}
           </select>
         </div>

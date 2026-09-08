@@ -521,6 +521,7 @@
   },
   "shared": {
     "roleListUnavailable": "Lista de roluri nu a putut fi citită, așa că nu se poate alege un rol acum. Rolul este oricum opțional.",
+    "roleNoLongerOffered": "{role} (nu mai este disponibil)",
     "properties": {
       "empty": "Nicio proprietate asociată",
       "colCode": "Cod",
@@ -1706,7 +1707,8 @@
       "document": "Document",
       "roles": "Roluri",
       "rolesPerson": "Persoană implicată",
-      "rolesObject": "Relație între obiecte"
+      "rolesObject": "Relație între obiecte",
+      "rolesObjectNote": "Nu există o listă „Document → Proprietate”: relația dintre un document și o proprietate este definită de tipul documentului (de exemplu: plan cadastral, extras de carte funciară). Nu este necesară configurarea separată a unui tip de relație."
     },
     "lists": {
       "propertyTypes": "Tipuri de Proprietate",
@@ -1720,8 +1722,7 @@
       "institutions": "Instituții",
       "personToDocument": "Persoană → Document",
       "propertyToProperty": "Proprietate → Proprietate",
-      "documentToDocument": "Document → Document",
-      "documentToProperty": "Document → Proprietate"
+      "documentToDocument": "Document → Document"
     },
     "fields": {
       "name": "Denumire",
@@ -1894,11 +1895,6 @@
       "error": "Eroare la încărcare",
       "empty": "Nicio asociere",
       "errorBothRequired": "Selectați atât tipul de document cât și rolul persoanei."
-    },
-    "docToPropertyInfo": {
-      "title": "Document → Proprietate",
-      "body": "Relația dintre un document și o proprietate este definită de tipul documentului (de exemplu: plan cadastral, extras de carte funciară). Nu este necesară configurarea separată a unui tip de relație.",
-      "close": "Închide"
     }
   },
   "adminTags": {
