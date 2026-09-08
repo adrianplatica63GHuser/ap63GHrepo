@@ -52,12 +52,16 @@ export type DiscoverPayload = {
 /**
  * A page that could not be sent to the model.
  *
- * Reporting these matters more than it looks. The route dispatches strictly on
- * the page's stored `mime_type`, and a page whose MIME was never recorded at
- * upload (stored as application/octet-stream) is skipped silently. Without this
- * list a document can come back with nothing found and no indication that its
- * pages were never actually read — a model failure and a plumbing failure look
- * identical from the outside.
+ * Reporting these matters more than it looks. Without this list a document can
+ * come back with nothing found and no indication that its pages were never
+ * actually read — a model failure and a plumbing failure look identical from
+ * the outside.
+ *
+ * Until Slice #34.06 the commonest entry was a plumbing failure: the route
+ * dispatched strictly on the page's stored `mime_type`, so a page whose MIME
+ * was never recorded at upload (stored as application/octet-stream) was skipped
+ * silently. The type now comes from the file name, so what remains here is the
+ * honest population — text files, and formats the model genuinely refuses.
  */
 export type SkippedPage = {
   fileName: string;

@@ -48,10 +48,16 @@
  * IT DOES NOT TRANSLATE, EITHER
  * -----------------------------
  * A failure comes back as a REASON plus the route's own message when there was
- * one. The route's messages are already Romanian and specific (the 422 even
- * names the octet-stream case), so they are worth surfacing verbatim — but the
- * choice of a fallback sentence belongs to the screen, not to a module in
- * `lib/`, which has no locale.
+ * one. The choice of a fallback sentence belongs to the screen, not to a module
+ * in `lib/`, which has no locale.
+ *
+ * ⚠️ **"The route's messages are already Romanian" was written here and is only
+ * half true, which Slice #34.06's review caught.** The 422 body's `error` is
+ * Romanian; the PER-PAGE `reason` strings inside it never were, and
+ * `bulk-import-dialog.tsx` concatenates them into a row tooltip beside
+ * Romanian text. #34.06 reworded those reasons but did not translate them —
+ * doing that properly means the route returning a CODE per skipped page and
+ * the screen choosing the sentence, which is a slice of its own.
  *
  * NOTHING WAITS FOR EVER
  * ----------------------

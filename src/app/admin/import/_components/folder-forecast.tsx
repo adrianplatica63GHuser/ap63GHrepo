@@ -52,8 +52,9 @@
  */
 
 import { useEffect, useRef } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { buttonClass } from "@/lib/ui/button-styles";
+import { formatMb } from "@/lib/ui/format-mb";
 import { stageForPhase } from "@/lib/import/workflow-stages";
 import type { ImportForecast } from "@/lib/import/preflight";
 
@@ -102,11 +103,6 @@ type Props = {
   onRecheck: () => void;
 };
 
-function formatMb(bytes: number): string {
-  const mb = bytes / (1024 * 1024);
-  return mb >= 10 ? String(Math.round(mb)) : mb.toFixed(1);
-}
-
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-baseline justify-between gap-4 border-b border-crease py-1.5 last:border-0 dark:border-zinc-800">
@@ -127,6 +123,8 @@ export function FolderForecast({
   onRecheck,
 }: Props) {
   const t = useTranslations("adminImport.wizard.forecast");
+  /** For `formatMb` — Romanian writes „3,4 MB", not "3.4 MB". */
+  const locale = useLocale();
   /**
    * The step gate's two namespaces, for the button that leaves. (Slice #32.04)
    *
@@ -237,7 +235,7 @@ export function FolderForecast({
             every file. */}
         <Row label={t("ignoredFiles")} value={String(droppedCount)} />
         {uploadBytes !== null && (
-          <Row label={t("uploadSize")} value={t("megabytes", { mb: formatMb(uploadBytes) })} />
+          <Row label={t("uploadSize")} value={t("megabytes", { mb: formatMb(uploadBytes, locale) })} />
         )}
       </dl>
 

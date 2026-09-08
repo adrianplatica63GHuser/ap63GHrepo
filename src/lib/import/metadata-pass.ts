@@ -11,8 +11,11 @@
  *   CON-05  a file over 20 MB → HTTP 413, *after* its Document row exists
  *   CON-04  a zero-byte file  → HTTP 400 "file is required", which misleads
  *   CON-06  a real scan named `folder.jpg`, which the walk drops on sight
- *   F-11    an empty `File.type` → automatic extraction disabled for that page
- *           FOREVER, because the MIME is frozen at upload and never re-sniffed
+ *   F-11    an empty `File.type` → nothing, since Slice #34.06. It used to
+ *           disable automatic extraction for that page FOREVER, because the
+ *           MIME was frozen at upload and never re-sniffed; the type is now
+ *           taken from the file name at upload, at serve and at AI-interpret.
+ *           The finding survives its own premise — see `checks.ts`.
  *
  * ⚠️ **It therefore runs for the Constraints stage now, not for the report.**
  * `ImportWizard` calls it once the structure check is clean and the user has

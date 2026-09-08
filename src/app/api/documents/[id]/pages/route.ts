@@ -8,7 +8,41 @@
  *   pageNumber  integer (required, min 1)
  *   pageName    string  (optional)
  *   pageNotes   string  (optional)
- *   file        File    (required, max 20 MB)
+ *   file        File    (required; an uploadable kind, at most MAX_UPLOAD_BYTES)
+ *
+ * WHAT THIS ROUTE ACCEPTS, AND WHY IT ASKS BY NAME   (Slice #34.06)
+ * ────────────────────────────────────────────────────────────────
+ *
+ * It asks `isUploadableFileName`, which is the registry in
+ * src/lib/files/file-kinds.ts — the same answer the picker offers and the
+ * serving MIME map labels. Before #34.06 it asked neither: it held a private
+ * five-entry list of executable MIME types and refused those, so `.csv`
+ * (`"forbidden"`), `.xml` and `.heic` (no kind at all) all uploaded happily
+ * and became pages nothing downstream could classify or draw.
+ *
+ * ⚠️ **AND THE BLOCK LIST COULD NOT WORK ANYWAY.** It tested
+ * `file.type || "application/octet-stream"`, and the File System Access API
+ * leaves `File.type` EMPTY for some files on Windows — the deployment target.
+ * `""` collapses to `application/octet-stream`, which was in no block list, so
+ * the one file most likely to be hostile was the one file the check waved
+ * through. `constraint-rules.ts` records the same fact from the other
+ * direction, as the reason a constraint rule based on `File.type` was
+ * withdrawn. An extension is answerable for every file, which is why the
+ * question moved to the name.
+ *
+ * The empty-`File.type` case is therefore DECIDED rather than left to fall
+ * through: it has no bearing on admission at all, and the type recorded on the
+ * row is derived from the extension first (see `mimeType` below).
+ *
+ * Both refusals carry a `code` alongside the English `error`, because the
+ * `error` reaches the user verbatim in an app whose default locale is `ro-RO`.
+ * The 415 was effectively unreachable before this slice (see above), so nobody
+ * had met it; it now fires for every extension outside the registry, and a code
+ * the client can translate is the difference between that being a fix and a
+ * regression. `pages-panel.tsx` maps both. The other client,
+ * `bulk-import-dialog.tsx`, deliberately does not — it has no translator at
+ * that point and its own constraints gate makes both refusals unreachable; the
+ * reason is written at its `uploadPage`.
  */
 
 import type { NextRequest } from "next/server";
@@ -18,19 +52,10 @@ import {
   createDocumentPage,
   listDocumentPages,
 } from "@/lib/documents/pages-queries";
+import { extensionOf, isUploadableFileName } from "@/lib/files/file-kinds";
+import { OCTET_STREAM, contentTypeOf } from "@/lib/files/file-mime";
+import { MAX_UPLOAD_BYTES, MAX_UPLOAD_MB } from "@/lib/import/constraint-rules";
 import { uploadFile } from "@/lib/storage";
-
-// 20 MB limit
-const MAX_FILE_SIZE = 20 * 1024 * 1024;
-
-// Mime types that must never be served back to a browser.
-const BLOCKED_MIME_TYPES = new Set([
-  "text/javascript",
-  "application/javascript",
-  "application/x-sh",
-  "application/x-msdownload",
-  "application/x-executable",
-]);
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -67,13 +92,38 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
   if (!(file instanceof File) || file.size === 0) {
     return Response.json({ error: "file is required" }, { status: 400 });
   }
-  if (file.size > MAX_FILE_SIZE) {
-    return Response.json({ error: "File exceeds 20 MB limit" }, { status: 413 });
+  // ⚠️ TYPE BEFORE SIZE, and the order is the message rather than the code.
+  // A 30 MB `.heic` is refused for being a `.heic`; telling the user to scan it
+  // again at a lower resolution would be advice that cannot work, which is this
+  // repo's recorded worst failure mode (Slice #26.02's unfixable violation
+  // message). `AddPageDialog` orders its two checks the same way and a test
+  // pins that both do.
+  if (!isUploadableFileName(file.name)) {
+    return Response.json(
+      { error: "File type not allowed", code: "file_type_not_allowed" },
+      { status: 415 },
+    );
   }
-  const mimeType = file.type || "application/octet-stream";
-  if (BLOCKED_MIME_TYPES.has(mimeType)) {
-    return Response.json({ error: "File type not allowed" }, { status: 415 });
+  if (file.size > MAX_UPLOAD_BYTES) {
+    return Response.json(
+      { error: `File exceeds ${MAX_UPLOAD_MB} MB limit`, code: "file_too_large" },
+      { status: 413 },
+    );
   }
+
+  // Extension first, `File.type` only as a fallback. The serving route derives
+  // the Content-Type it sends from the stored PATH, so recording the browser's
+  // answer in preference to the extension's is how a row ends up claiming one
+  // type while the bytes arrive labelled another — and on Windows the
+  // browser's answer is often `""`, which is what used to make a good .jpg
+  // render as a download prompt in the viewer.
+  //
+  // The fallback is belt-and-braces: `isUploadableFileName` has just passed and
+  // a test pins that the MIME table's keys ARE the uploadable set, so the left
+  // operand is never null in practice. `||` rather than `??` on the second one
+  // all the same — an absent `File.type` is the EMPTY STRING, which `??` would
+  // record verbatim as the row's MIME type.
+  const mimeType = contentTypeOf(file.name) ?? (file.type || OCTET_STREAM);
 
   // --- Validate pageNumber ---
   const pageNumberResult = z.coerce.number().int().min(1).safeParse(
@@ -100,8 +150,11 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
     // Build a deterministic storage key using a fresh UUID for each page.
     const pageId = crypto.randomUUID();
     const originalName = file.name;
-    const dotIndex = originalName.lastIndexOf(".");
-    const ext = dotIndex !== -1 ? originalName.slice(dotIndex) : "";
+    // `extensionOf`, not a fifth private extractor. It lowercases, which is
+    // what makes the stored key agree with `contentTypeOf` when the serving
+    // route reads the extension back off the path — `photo.JPG` used to be
+    // stored as `<uuid>.JPG`.
+    const ext = extensionOf(originalName);
     const filePath = `document-pages/${documentId}/${pageId}${ext}`;
 
     const buffer = Buffer.from(await file.arrayBuffer());

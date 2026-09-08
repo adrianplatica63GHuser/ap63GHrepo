@@ -34,12 +34,22 @@
  *
  * WHAT IT DELIBERATELY DOES NOT LOOK FOR
  *
- * MIME-type lists (`"image/jpeg"`, `"application/pdf"`) and `accept` values,
- * whether written as one combined string or split across two inputs. Those
- * answer "what do I label these bytes" and "what do I offer the user", which
- * are different questions with different right answers, and they belong to
- * Slice #24.04. Folding them in here would have made this slice decide
- * #24.04's question by accident.
+ * MIME-type lists (`"image/jpeg"`, `"application/pdf"`). Those answer "what do
+ * I label these bytes", which is a different question with a different right
+ * answer; `src/lib/files/file-mime.ts` is its one home, and
+ * `upload-file-types.test.ts` asserts that home stays in step with this
+ * registry rather than deriving from it.
+ *
+ * ⚠️ `accept` VALUES USED TO BE ON THIS LIST AND ARE NOT ANY MORE (#34.06).
+ * #24.03 blanked them deliberately and said so, because deciding what the
+ * picker offers was #24.04's question — and #24.04 turned out to be the
+ * walk-and-refuse slice and never took it. So for two slices the one file most
+ * likely to grow a duplicate list held one that could not fail CI, and it
+ * did: `ACCEPTED_FILE_TYPES` in pages-panel.tsx offered `.xml` and `.html`
+ * (of no kind at all) and withheld `.rtf` and `.odt` (documents since #24.03).
+ * A multi-extension string is now an offence WHEREVER it is written, `accept`
+ * attribute or not — see `MULTI_EXT_STRING`. A single-extension `accept` is
+ * still fine, and two adjacent one-extension pickers still do not make a pair.
  *
  * It is also blind, by design, to a LONE `.endsWith(".txt")`. Five live
  * modules still ask "is this the coordinate text file?" that way rather than
@@ -57,6 +67,8 @@
 import { readdirSync, readFileSync, statSync } from "fs";
 import { join, relative, sep } from "path";
 
+import { stripComments } from "@/lib/dev/strip-comments";
+
 const SRC = join(process.cwd(), "src");
 
 /**
@@ -68,10 +80,13 @@ const SRC = join(process.cwd(), "src");
 const ALLOWED: Record<string, string> = {
   "lib/files/file-kinds.ts":
     "The registry itself — the one place a file extension's kind is decided.",
-  "app/api/files/[...path]/route.ts":
-    "The local-dev serving MIME map. It answers 'what Content-Type do I label " +
-    "these bytes with', not 'what kind of file is this', and is Slice #24.04's " +
-    "to fold in or leave alone.",
+  "lib/files/file-mime.ts":
+    "The serving MIME table. It answers 'what Content-Type do I label these " +
+    "bytes with', not 'what kind of file is this'. Asserted equal to the " +
+    "registry's uploadable set by upload-file-types.test.ts rather than " +
+    "derived from it, so an entry added here cannot silently widen what the " +
+    "archive accepts. (Slice #34.06 moved it out of the serving route, which " +
+    "held it privately while the upload route needed the same answer.)",
 };
 
 /**
@@ -107,150 +122,6 @@ function walk(dir: string): string[] {
 // ---------------------------------------------------------------------------
 // A small lexer, because a regex-based one is provably wrong here
 // ---------------------------------------------------------------------------
-
-/** Punctuation after which a `/` opens a regex literal rather than divides. */
-const REGEX_PRECEDERS = "(,=:[!&|?{};+-*%^~<>";
-
-/** Keywords after which a `/` opens a regex literal — `return /re/.test(x)`. */
-const REGEX_KEYWORDS =
-  /(?:^|[^\w$])(?:return|typeof|case|in|of|delete|void|instanceof|yield|await|new)\s*$/;
-
-/**
- * Index of the closing quote if this `'` or `"` string ends on its own line,
- * or -1 if it does not.
- *
- * A JavaScript single- or double-quoted string cannot span a line break
- * unescaped. So a quote with no partner before the newline is not a string at
- * all — it is an apostrophe in JSX text (`<p>don't</p>`) or in prose. Treating
- * it as a string opener is how a scanner ends up believing the rest of the
- * FILE is one long string, which un-hides every comment after it and fails CI
- * on a list somebody deliberately commented out.
- */
-function stringEndsOnSameLine(source: string, start: number, quote: string): number {
-  let j = start + 1;
-  while (j < source.length) {
-    const ch = source[j];
-    if (ch === "\\") {
-      j += 2;
-      continue;
-    }
-    if (ch === "\n") return -1;
-    if (ch === quote) return j;
-    j++;
-  }
-  return -1;
-}
-
-/**
- * Strip comments WITHOUT touching strings or regex literals, preserving line
- * numbers.
- *
- * A regex-based stripper cannot do this, and the difference is not academic. A
- * naive block-comment regex treats the slash-star inside
- * `accept="image/*,.pdf,.doc"` (pages-panel.tsx) as the start of a comment and
- * deletes everything up to the next real terminator — 207 lines of a live
- * component silently unscanned, in the one file most likely to grow the next
- * duplicate list. The same trap is set by a regex literal: `/[/*]/` opens a
- * phantom comment, and `p.replace(/https?:\/\//, "")` opens a phantom line
- * comment that eats the rest of its line. This walks the source character by
- * character and knows the difference between a comment, a quote and a regex.
- *
- * Regex literals are emitted VERBATIM rather than dropped, because the third
- * detector below looks for extension alternations inside them.
- *
- * Comment bodies are replaced by their own newlines rather than removed, so a
- * reported line number still points at the real line.
- */
-function stripComments(source: string): string {
-  let out = "";
-  let i = 0;
-  const n = source.length;
-  const newlinesOf = (s: string) => s.replace(/[^\n]/g, "");
-  let prev = "";                                   // last significant character
-
-  while (i < n) {
-    const c = source[i];
-    const d = source[i + 1];
-
-    if (c === "/" && d === "*") {
-      const close = source.indexOf("*/", i + 2);
-      const end = close === -1 ? n : close + 2;
-      out += newlinesOf(source.slice(i, end));
-      i = end;
-      prev = "";
-      continue;
-    }
-    if (c === "/" && d === "/") {
-      let nl = source.indexOf("\n", i);
-      if (nl === -1) nl = n;
-      i = nl;                                      // the newline itself is kept
-      continue;
-    }
-    if (c === "/" && (prev === "" || REGEX_PRECEDERS.includes(prev) || REGEX_KEYWORDS.test(out))) {
-      let j = i + 1;
-      let inClass = false;
-      let closed = false;
-      while (j < n) {
-        const ch = source[j];
-        if (ch === "\\") {
-          j += 2;
-          continue;
-        }
-        if (ch === "\n") break;                    // regexes do not span lines
-        if (ch === "[") inClass = true;
-        else if (ch === "]") inClass = false;
-        else if (ch === "/" && !inClass) {
-          closed = true;
-          j++;
-          break;
-        }
-        j++;
-      }
-      if (closed) {
-        out += source.slice(i, j);
-        i = j;
-        prev = "/";
-        continue;
-      }
-      // not a regex after all — fall through and treat it as division
-    }
-    if (c === '"' || c === "'") {
-      const close = stringEndsOnSameLine(source, i, c);
-      if (close === -1) {
-        out += c;                                  // an apostrophe, not a string
-        i++;
-        prev = c;
-        continue;
-      }
-      out += source.slice(i, close + 1);
-      i = close + 1;
-      prev = '"';
-      continue;
-    }
-    if (c === "`") {
-      out += c;
-      i++;
-      while (i < n) {
-        if (source[i] === "\\") {
-          out += source.slice(i, i + 2);
-          i += 2;
-          continue;
-        }
-        const ch = source[i];
-        out += ch;
-        i++;
-        if (ch === "`") break;
-      }
-      prev = "`";
-      continue;
-    }
-
-    out += c;
-    if (!/\s/.test(c)) prev = c;
-    i++;
-  }
-  return out;
-}
 
 // ---------------------------------------------------------------------------
 // The vocabulary
@@ -309,6 +180,51 @@ const REGEX_ALTERNATION = /\\\.\((?:\?:)?[^)]{2,80}\)/g;
 /** An `accept` attribute value, in JSX or as a plain assignment. */
 const ACCEPT_VALUE = /\baccept\s*=\s*(?:\{\s*)?(["'`])(?:\\.|(?!\1)[^\\])*\1\s*\}?/g;
 
+/**
+ * ONE string literal naming two or more DIFFERENT extensions.   (Slice #34.06)
+ *
+ * `SPLIT_LIST` above catches this shape only when it is followed by
+ * `.split(",")`, which is the shape nobody writes for a file picker. The shape
+ * everybody writes is a comma-joined accept string handed straight to an
+ * `accept` attribute — a list that reached production, disagreed with the
+ * registry in four places, and could not fail this test because #24.03 blanked
+ * `accept` values on purpose.
+ *
+ * Matched on the RAW literal rather than after `ACCEPT_VALUE` blanking, so it
+ * fires whether the string sits in the attribute or in a `const` three hundred
+ * lines above it. A literal naming ONE extension is not a list and is left
+ * alone: `accept=".txt,text/plain"` is a coordinate-file picker offering the
+ * one coordinate extension, and there is nothing for it to drift from. The
+ * SAME extension twice is not a list either, exactly as in detector 1.
+ *
+ * ⚠️ **THE OPENING AND CLOSING QUOTE MUST MATCH — `\1`, not a second class.**
+ * Two independent `["'`]` classes let a match open on an apostrophe and close
+ * on an unrelated double quote, which is not a string literal at all. Measured
+ * on `<p>don't mix .pdf and .docx in "one" folder</p>`: a false CI failure
+ * telling the author to "add the extension to REGISTRY", on JSX prose. The
+ * newline exclusion is load-bearing for the same class of reason — it stops an
+ * unterminated quote swallowing the rest of the file, the property
+ * `stringEndsOnSameLine` gives the stripper.
+ *
+ * ⚠️ Deliberately blind to `image/*` and to MIME types generally — those carry
+ * a slash and no dot-extension, so a wildcard picker is not caught HERE. It is
+ * caught by "the document-page picker derives its accept value" below, which
+ * is the only place a wildcard actually did harm (every OS resolves `image/*`
+ * to include HEIC, which belongs to no kind at all).
+ *
+ * ⚠️ **TWO KNOWN EVASIONS, PINNED AS SUCH IN `EVASIONS`**: a list split across
+ * string CONCATENATION (`".pdf," + ".docx"`), which also slips detector 1
+ * because `".pdf,"` is not exactly an extension; and a template literal broken
+ * over lines, which the newline exclusion cannot see. Both are what a re-typed
+ * accept string turns into the moment it grows past the printer's line width,
+ * so this detector narrows the hole rather than closing it — the derived-picker
+ * assertion below is what actually closes it for the one file that matters.
+ */
+const MULTI_EXT_STRING = new RegExp(
+  '(["\'`])[^"\'`\\n]*\\.(?:' + ANY_EXT + ')[^"\'`\\n]*\\1',
+  "gi",
+);
+
 const IS_VOCAB = new RegExp(`^(?:${ANY_EXT})$`, "i");
 
 /** Two DIFFERENT extension literals closer than this are one list. */
@@ -319,15 +235,21 @@ function normaliseLiteral(literal: string): string {
   return literal.slice(1, -1).replace(/^\./, "").toLowerCase();
 }
 
-type Hit = { line: number; why: "list" | "split" | "regex"; excerpt: string };
+type Hit = {
+  line: number;
+  why: "list" | "split" | "regex" | "string";
+  excerpt: string;
+};
 
 function extensionListsIn(source: string): Hit[] {
-  // `accept` values are Slice #24.04's, whether combined into one string or
-  // split across two inputs. Blanked (keeping newlines) rather than matched
-  // around, so two adjacent single-extension pickers cannot form a "pair".
-  const code = stripComments(source).replace(ACCEPT_VALUE, (m) =>
-    m.replace(/[^\n]/g, " "),
-  );
+  const bare = stripComments(source);
+
+  // `accept` values are blanked (keeping newlines) BEFORE the pair detector,
+  // so two adjacent single-extension pickers cannot form a "pair" — #24.03's
+  // reason, and it still holds. What changed in #34.06 is that the blanking is
+  // no longer an amnesty: detector 4 runs on `bare`, so a multi-extension
+  // accept string is caught even though the pair detector never sees it.
+  const code = bare.replace(ACCEPT_VALUE, (m) => m.replace(/[^\n]/g, " "));
 
   const hits: Hit[] = [];
   const at = (index: number) => code.slice(0, index).split("\n").length;
@@ -363,6 +285,17 @@ function extensionListsIn(source: string): Hit[] {
     const parts = m[0].replace(/^\\\.\((?:\?:)?/, "").replace(/\)$/, "").split("|");
     if (parts.length >= 2 && parts.filter((p) => IS_VOCAB.test(p.trim())).length >= 2) {
       hits.push({ line: at(m.index ?? 0), why: "regex", excerpt: short(m[0]) });
+    }
+  }
+
+  // 4. A list inside ONE string literal, `accept` attribute or not. Runs on
+  //    `bare`, so the accept-blanking above is not an escape hatch.
+  const atBare = (index: number) => bare.slice(0, index).split("\n").length;
+  for (const m of bare.matchAll(MULTI_EXT_STRING)) {
+    const dotted = m[0].match(new RegExp("\\.(?:" + ANY_EXT + ")", "gi")) ?? [];
+    const distinct = new Set(dotted.map((d) => d.slice(1).toLowerCase()));
+    if (distinct.size >= 2) {
+      hits.push({ line: atBare(m.index ?? 0), why: "string", excerpt: short(m[0]) });
     }
   }
 
@@ -429,13 +362,44 @@ describe("file kinds are declared in exactly one place", () => {
     }
   });
 
+  it("the document-page picker DERIVES its accept value from the registry", () => {
+    // ⚠️ A BEHAVIOUR guard, so it reads only code — comments stripped, because
+    // this repo's rule is that a guard about behaviour must not be satisfiable
+    // by a sentence in a comment. Detector 4 above stops a NEW typed list;
+    // this stops the picker quietly going back to a wildcard, which detector 4
+    // cannot see (`image/*` carries no dot-extension) and which is how a HEIC
+    // came to be offerable by a picker whose registry has never heard of one.
+    const panel = readFileSync(
+      join(SRC, "app/documents/_components/pages-panel.tsx"),
+      "utf8",
+    );
+    const code = stripComments(panel);
+
+    // POSITIVE, and both halves. `toContain("UPLOAD_ACCEPT_ATTRIBUTE")` alone
+    // is satisfied by `UPLOAD_ACCEPT_ATTRIBUTE + ",image/*"` and by
+    // `UPLOAD_ACCEPT_ATTRIBUTE.split(",")[0]` — the first puts the HEIC bug
+    // back, the second narrows the picker to one extension, and neither is a
+    // string literal, so no detector above can see either. The constant must
+    // BE the registry's export, unmodified.
+    expect(code).toMatch(/const ACCEPTED_FILE_TYPES = UPLOAD_ACCEPT_ATTRIBUTE;/);
+    expect(code).toContain('from "@/lib/files/file-kinds"');
+
+    // …and it must reach the DOM. Nothing else in this repo binds the constant
+    // to the input, so deleting the attribute left every guard green while the
+    // picker offered everything.
+    expect(code).toMatch(/accept=\{ACCEPTED_FILE_TYPES\}/);
+
+    // No literal accept value at all — derived or nothing.
+    expect(code.match(ACCEPT_VALUE)).toBeNull();
+  });
+
   it("holds the allowlist to exactly the two reasoned exceptions", () => {
     // Growing this list is a decision to be argued for in a slice, not a way
     // to make this test pass. The registry is the answer; a third exemption
     // means the registry failed to answer a question it should have.
     expect(Object.keys(ALLOWED).sort()).toEqual([
-      "app/api/files/[...path]/route.ts",
       "lib/files/file-kinds.ts",
+      "lib/files/file-mime.ts",
     ]);
   });
 });
@@ -477,11 +441,34 @@ const EVASIONS: { name: string; code: string; catches: boolean }[] = [
   { name: "a bare zip field name",  code: 'const addr = { city: "x", zip: "010101" };',                   catches: false },
   { name: "the SAME ext twice",     code: 'const a = n.endsWith(".txt");\nconst b = m.endsWith(".txt");', catches: false },
   { name: "contentKind union",      code: 'const k = a ? "image" : b ? "pdf" : "other";',                catches: false },
+  // Slice #34.06 flipped the next three from `false` to `true`. They are the
+  // shape `ACCEPTED_FILE_TYPES` actually had, and #24.03 exempted them because
+  // deciding what the picker offers was #24.04's question. #24.04 never took
+  // it, so the exemption outlived its reason by two slices and the picker
+  // drifted from the registry in four places underneath it.
+  { name: "typed accept const",     code: 'const A = "image/*,.pdf,.doc,.docx,.xls,.txt,.xml";',        catches: true },
+  { name: "accept string split",    code: 'const A = "image/*,.pdf,.doc".split(",");',                  catches: true },
+  { name: "multi-ext accept attr",  code: '<input accept=".pdf,.docx,.xlsx" />',                        catches: true },
+  { name: "multi-ext in a template", code: 'const A = `.pdf,.docx`;',                                   catches: true },
+
   { name: "MIME allow-list (#24.04)", code: 'const S = ["image/jpeg", "image/png", "image/gif"];',      catches: false },
-  { name: "accept string (#24.04)", code: 'const A = "image/*,.pdf,.doc,.docx,.xls,.txt,.xml";',        catches: false },
-  { name: "accept string split",    code: 'const A = "image/*,.pdf,.doc".split(",");',                  catches: false },
   { name: "two accept attributes",  code: '<input accept=".pdf" />\n<input accept=".docx" />',           catches: false },
   { name: "accept in JSX braces",   code: '<input accept={".pdf"} />\n<input accept={".docx"} />',       catches: false },
+  { name: "one-extension accept",   code: '<input accept=".txt,text/plain" />',                          catches: false },
+
+  // Slice #34.06's review found both of these failing CI on innocent code.
+  { name: "JSX prose, mixed quotes", code: 'const C = <p>don\'t mix .pdf and .docx in "one" folder</p>;',  catches: false },
+  { name: "JSX prose after attr",   code: 'const C = <p className="a">.pdf and .docx aren\'t allowed</p>;', catches: false },
+  { name: "comment after a JSX close", code: 'const C = (\n  </div> // const OLD = [".jpg", ".png"];\n);',  catches: false },
+
+  // …and both of these NOT failing on code that is a re-typed list. Pinned as
+  // known holes rather than left undocumented: detector 4 matches one string
+  // literal on one line, so a list that is concatenated or wrapped escapes it.
+  // The derived-picker assertion above is what closes this for pages-panel.tsx.
+  { name: "list by concatenation",  code: 'const A = ".pdf," + ".docx," + ".xlsx";',                        catches: false },
+  { name: "list in a wrapped template", code: 'const A = `.pdf,\n.docx`;',                                  catches: false },
+  { name: "the SAME ext in one string", code: 'const A = "notes.txt or other.txt";',                     catches: false },
+  { name: "a path with one ext",    code: 'const P = "uploads/document-pages/x.pdf";',                   catches: false },
   { name: "apostrophe in JSX text", code: "const C = <p>don't</p>;\n// const OLD = [\".jpg\", \".png\"];\nconst x = 1;", catches: false },
   { name: "apostrophe in a regex",  code: "const m = /^\\d+'/.test(s);\n// const OLD = [\".jpg\", \".png\"];\nconst x = 1;", catches: false },
   { name: "division operators",     code: "const x = a / b / c; const y = w/h/2;",                       catches: false },

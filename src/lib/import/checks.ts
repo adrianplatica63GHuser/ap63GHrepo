@@ -88,11 +88,13 @@
  * adversarial review, and the reason is the criterion rather than the rule: a
  * constraint blocks, so it may only name a file the import would genuinely lose
  * or mangle. A file with no reported type uploads, is stored and serves
- * correctly; all that is lost is automatic extraction — which is F-17's
+ * correctly; all that was lost was automatic extraction — which is F-17's
  * situation exactly, and F-17 is why the criterion exists. It also had no
  * remedy that could change the answer, since `File.type` is derived from the
  * name and not from the bytes. So it stays here, and it is quiet now rather
  * than loud: a rule that cannot be acted on must not shout.
+ *
+ * ⚠️ **AND SLICE #34.06 CLOSED THE GAP THIS RULE REPORTS.** The upload route now derives the recorded type from the file NAME, the serving route from the stored path, and `ai-interpret` from the name again, so an empty `File.type` costs nothing at all any more. F-11 therefore reports a fact with no consequence, and its own copy was rewritten to stop promising one. Deleting it outright is a decision about a shipped report finding and belongs to its own slice.
  *
  * ⚠️ AND WHAT #26.07 MADE FALSE, RETIRED HERE AT LAST
  * ───────────────────────────────────────────────────
@@ -135,9 +137,10 @@
  *    stage changed.)
  *  - **F-03** — an OS directory is about a FOLDER, not a file, and no
  *    constraint states it.
- *  - **F-11** — see the note above: an unreadable type costs automatic
- *    extraction and nothing else, and there is nothing the user can do about
- *    it, so it informs rather than blocks.
+ *  - **F-11** — see the note above: an unreadable type COST automatic
+ *    extraction and nothing else, and there was nothing the user could do
+ *    about it, so it informs rather than blocks. Since #34.06 it costs
+ *    nothing at all.
  *  - **F-17** — Office files, and this one is a decision rather than an
  *    omission. An Office file imports faithfully: it is stored, it is
  *    downloadable, and the only thing missing is that nothing in this codebase
@@ -433,8 +436,14 @@ function truncationFindings(observations: readonly DirectoryObservation[]): Find
 /**
  * F-11 — Windows reported no type for a file something would otherwise read.
  *
- * The MIME is frozen at upload and never re-sniffed, so an empty one disables
- * automatic extraction for that page permanently — not for this run, for ever.
+ * ⚠️ **THE PREMISE OF THIS RULE IS GONE (Slice #34.06).** It read: the MIME is
+ * frozen at upload and never re-sniffed, so an empty one disables automatic
+ * extraction for that page permanently — not for this run, for ever. Since
+ * #34.06 the type is taken from the file NAME at upload, at serve and at
+ * AI-interpret, so an empty `File.type` costs nothing. The rule still fires and
+ * its copy no longer promises a consequence; removing it is a change to a
+ * shipped report finding and wants its own slice.
+ *
  * Restricted to the files anything WOULD have read, because a missing type on a
  * file nothing was going to open is not worth a sentence.
  *
@@ -475,7 +484,16 @@ function metadataFindings(
   ];
 }
 
-/** Would anything ever try to read this file's pixels or text? */
+/**
+ * Would anything ever try to read this file's pixels or text?
+ *
+ * ⚠️ Still `image || pdf`, which since Slice #34.06 is WIDER than what the
+ * model accepts (`isModelReadable` excludes `.bmp`, `.tif`, `.tiff`). Left wide
+ * deliberately: its only caller is F-11, whose premise #34.06 removed
+ * altogether — narrowing the population of a finding that no longer reports a
+ * consequence would be motion rather than a fix. Deleting F-11 is the real
+ * answer and belongs to its own slice.
+ */
 function isReadableByAi(path: string): boolean {
   const kinds = fileKindsOf(path);
   return kinds.includes("image") || kinds.includes("pdf");

@@ -66,6 +66,7 @@ import {
   type ConstraintRuleId,
 } from "@/lib/import/constraint-rules";
 import type { FileMeta } from "@/lib/import/checks";
+import { stripComments } from "@/lib/dev/strip-comments";
 
 /** A readable file of a given size — the shape `firstBrokenRule` takes. */
 const m = (size: number, type: string): FileMeta => ({ size, type });
@@ -259,25 +260,85 @@ describe("firstBrokenRule", () => {
 // ---------------------------------------------------------------------------
 
 describe("the size limit is the upload route's limit", () => {
-  it("matches the number the API rejects on", () => {
+  it("is the number the API rejects on, because the API imports it", () => {
     // ⚠️ A BEHAVIOUR guard, so it reads only code — comments stripped, because
     // this repo's rule is that a guard about behaviour must not be satisfiable
     // by a sentence in a comment. The route rejects with a 413 AFTER the
-    // Document row exists, so a limit that drifted upwards here would leave
+    // Document row exists, so a limit that drifted upwards there would leave
     // empty documents in the archive.
+    //
+    // Until Slice #34.06 this test parsed a `MAX_FILE_SIZE = 20 * 1024 * 1024`
+    // literal out of the route and compared the two numbers. That was the
+    // right guard for two copies and the wrong one for six: the same figure
+    // was also written out in `pages-panel.tsx` and spelled "20 MB" as prose
+    // in both locales, and nothing watched those at all. The route now IMPORTS
+    // the constant, so there is one number and this test checks that the
+    // import is what the route uses rather than that two literals agree.
     const route = fs.readFileSync(
       path.join(process.cwd(), "src/app/api/documents/[id]/pages/route.ts"),
       "utf8",
     );
-    const code = route.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "");
-    const match = code.match(/MAX_FILE_SIZE\s*=\s*(\d+)\s*\*\s*1024\s*\*\s*1024/);
-    expect(match).not.toBeNull();
-    expect(Number(match![1]) * 1024 * 1024).toBe(MAX_UPLOAD_BYTES);
+    // The SHARED lexer, not a pair of regexes: three of the assertions below
+    // are negative, and a naive stripper that eats too much turns a negative
+    // assertion GREEN. See src/lib/dev/strip-comments.ts.
+    const code = stripComments(route);
+    expect(code).toContain('from "@/lib/import/constraint-rules"');
+    // ⚠️ ANCHORED. `toContain("file.size > MAX_UPLOAD_BYTES")` alone is
+    // satisfied by `file.size > MAX_UPLOAD_BYTES * 2`, which imports the
+    // constant and enforces a different number — the two-numbers-that-happen-
+    // to-agree failure this test exists to remove, rebuilt inside the fix.
+    expect(code).toMatch(/file\.size > MAX_UPLOAD_BYTES\s*\)/);
+    // No second copy of the figure, in any of the shapes it has worn. Written
+    // against ANY number rather than against 20: a guard that forbids the
+    // current value goes quietly dead the day the limit changes, which is the
+    // one day it is needed.
+    expect(code).not.toMatch(/\d+\s*\*\s*1024\s*\*\s*1024/);
+    expect(code).not.toMatch(/1024\s*\*\s*1024\s*\*\s*\d+/);
+    expect(code).not.toMatch(/\b\d+\s*MB\b/);
   });
 
-  it("quotes it in the copy as the number Explorer prints", () => {
-    expect(MAX_UPLOAD_MB).toBe(20);
+  it("is the number the page dialog refuses on, for the same reason", () => {
+    // The dialog used to re-derive `20 * 1024 * 1024` inline and to print
+    // "20 MB" from a locale string that said it in words. A user who met the
+    // dialog's limit and the wizard's CON-05 limit was reading two numbers
+    // that happened to agree.
+    const panel = fs.readFileSync(
+      path.join(process.cwd(), "src/app/documents/_components/pages-panel.tsx"),
+      "utf8",
+    );
+    const code = stripComments(panel);
+    expect(code).toContain('from "@/lib/import/constraint-rules"');
+    expect(code).toMatch(/file\.size > MAX_UPLOAD_BYTES\s/);
+    expect(code).not.toMatch(/\d+\s*\*\s*1024\s*\*\s*1024/);
+    expect(code).not.toMatch(/1024\s*\*\s*1024\s*\*\s*\d+/);
+    expect(code).not.toMatch(/\b\d+\s*MB\b/);
+  });
+
+  it("is interpolated into the copy, in both locales, never spelled out", () => {
+    // CON-05 already interpolated `{limitMb}`; the page dialog's own string
+    // said "20 MB" in prose in both locales, so raising the limit would have
+    // left two sentences quoting the old one.
+    for (const locale of ["en-GB", "ro-RO"]) {
+      const messages = JSON.parse(
+        fs.readFileSync(path.join(process.cwd(), `messages/${locale}.json`), "utf8"),
+      ) as { document: { pages: { dialog: Record<string, string> } } };
+      const tooLarge = messages.document.pages.dialog.fileTooLarge;
+      expect(tooLarge).toContain("{limitMb}");
+      // ANY digit, not the digits 2 and 0: forbidding today's number is a
+      // guard that expires on the day the number changes.
+      expect(tooLarge).not.toMatch(/\d/);
+    }
+  });
+
+  it("is the same limit expressed in whole megabytes", () => {
+    // ⚠️ NOT `toBe(20)` any more. Its neighbour above forbids any digit in the
+    // copy precisely because pinning today's number is a guard that expires on
+    // the day the number changes; hard-pinning 20 here made the two tests
+    // contradict each other, and made a limit change fail CI on a test whose
+    // title ("quotes it in the copy") described something #34.06 removed —
+    // the copy quotes no number at all now, it interpolates `{limitMb}`.
     expect(MAX_UPLOAD_MB * 1024 * 1024).toBe(MAX_UPLOAD_BYTES);
+    expect(Number.isInteger(MAX_UPLOAD_MB)).toBe(true);
   });
 
   it("keeps the thumbnail threshold well below anything worth importing", () => {

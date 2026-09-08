@@ -10,43 +10,23 @@
  * no real Supabase project (e.g. Ciprian's offline UAT stack). Must stay
  * in lockstep with the same flag in src/lib/storage/index.ts. See
  * CLAUDE.md Slice #15.16.
+ *
+ * The extension -> Content-Type table this route used to own privately is now
+ * src/lib/files/file-mime.ts (Slice #34.06). It moved because the UPLOAD route
+ * needs the same answer — `File.type` is empty for some files on Windows, so a
+ * good `.jpg` was recorded as application/octet-stream and the viewer, which
+ * switches on the RECORDED type, drew a download prompt over a picture. It had
+ * also drifted: no `.bmp` entry for a `.bmp` that IS an image kind, and
+ * `.html`/`.xml` entries for extensions that are of no kind at all and are now
+ * refused at upload.
  */
 
 import type { NextRequest } from "next/server";
 import * as path from "path";
 import * as fs from "fs/promises";
+import { OCTET_STREAM, contentTypeOf } from "@/lib/files/file-mime";
 
 const useLocalStorage = process.env.LOCAL_FILE_STORAGE === "true";
-
-// Extension -> Content-Type for the local-storage serve path.
-//
-// This map answers "what Content-Type do I label these bytes with", which is a
-// DIFFERENT question from "what kind of file is this" — the latter has exactly
-// one home in src/lib/files/file-kinds.ts (Slice #24.03) and this map is
-// deliberately not derived from it. What the client offers and what the routes
-// accept is Slice #24.04.
-//
-// #24.03 removed ".heic" from this map: HEIC belongs to no file kind any more,
-// so it is served as application/octet-stream like any other unrecognised type.
-// Known gaps left for #24.04: ".bmp" IS an image kind and still has no entry
-// here, and ".html"/".xml" have entries here but belong to no kind.
-const MIME_MAP: Record<string, string> = {
-  ".pdf":  "application/pdf",
-  ".jpg":  "image/jpeg",
-  ".jpeg": "image/jpeg",
-  ".png":  "image/png",
-  ".gif":  "image/gif",
-  ".webp": "image/webp",
-  ".tiff": "image/tiff",
-  ".tif":  "image/tiff",
-  ".txt":  "text/plain",
-  ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  ".doc":  "application/msword",
-  ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  ".xls":  "application/vnd.ms-excel",
-  ".html": "text/html",
-  ".xml":  "application/xml",
-};
 
 type Ctx = { params: Promise<{ path: string[] }> };
 
@@ -68,8 +48,7 @@ export async function GET(_req: NextRequest, ctx: Ctx): Promise<Response> {
 
   try {
     const buffer = await fs.readFile(filePath);
-    const ext = path.extname(filePath).toLowerCase();
-    const contentType = MIME_MAP[ext] ?? "application/octet-stream";
+    const contentType = contentTypeOf(filePath) ?? OCTET_STREAM;
 
     return new Response(buffer, {
       headers: {
@@ -80,6 +59,12 @@ export async function GET(_req: NextRequest, ctx: Ctx): Promise<Response> {
         "Content-Disposition": `inline; filename="${path.basename(filePath)}"`,
         // Prevent caching of signed/one-time URLs in the viewer.
         "Cache-Control": "no-store",
+        // `inline` above serves from the app's own origin, so the Content-Type
+        // is load-bearing: without this a browser may sniff a stored file as
+        // HTML and run it. Fixed in passing with Slice #34.06, which removed
+        // the `.html` entry that made the sniff unnecessary in the first place
+        // — a defence that only holds for files uploaded AFTER that change.
+        "X-Content-Type-Options": "nosniff",
       },
     });
   } catch (err: unknown) {

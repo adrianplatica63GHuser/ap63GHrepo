@@ -23,6 +23,11 @@
 
 import type { NextRequest } from "next/server";
 import { unexpectedError } from "@/lib/api/errors";
+import {
+  MODEL_IMAGE_MIME_TYPES,
+  contentTypeOf,
+  type ModelImageMimeType,
+} from "@/lib/files/file-mime";
 import { CLASSIFY_SYSTEM_PROMPT, canonicalTypeKey } from "@/lib/import/classify-prompts";
 import { identityPersonCountOf } from "@/lib/import/multi-card-gate";
 import { UNCLASSIFIED_DOCUMENT_LABEL } from "@/lib/documents/document-type-match";
@@ -77,22 +82,34 @@ export async function POST(request: NextRequest): Promise<Response> {
   if (!fileField || !(fileField instanceof File)) {
     return Response.json({ error: "No file provided" }, { status: 400 });
   }
-  if (!fileField.type.startsWith("image/")) {
+  // ⚠️ THE NAME, NOT `File.type`   (Slice #34.06)
+  //
+  // This route is fed by the import wizard, which reads its files through the
+  // File System Access API — the one that leaves `File.type` EMPTY for some
+  // files on Windows, the deployment target. `fileField.type.startsWith("image/")`
+  // therefore refused perfectly good `.jpg` scans with
+  // `File must be an image (received: )`, on the same run whose forecast had
+  // just told the user those files were being sent. Every other route in this
+  // slice moved to the same answer, from the same table.
+  const mediaType = contentTypeOf(fileField.name);
+  if (
+    mediaType === null ||
+    !(MODEL_IMAGE_MIME_TYPES as readonly string[]).includes(mediaType)
+  ) {
     return Response.json(
-      { error: `File must be an image (received: ${fileField.type})` },
+      { error: `File must be a JPEG, PNG, GIF or WebP image (received: ${fileField.name})` },
       { status: 400 },
     );
   }
 
+  // ⚠️ NO NORMALISE-TO-JPEG. This used to relabel anything else — `image/bmp`,
+  // `image/tiff` — as `image/jpeg` so Anthropic would not reject the request,
+  // which sent TIFF bytes under a JPEG label and paid for the call. #34.06 made
+  // `isModelReadable` the predicate the wizard scans by, so a `.tif` never
+  // reaches this route; relabelling it here would have been the last place the
+  // four-way disagreement could still cost money.
   const buffer = Buffer.from(await fileField.arrayBuffer());
   const base64 = buffer.toString("base64");
-  // Anthropic accepts only these four media types; normalise anything else
-  // (e.g. image/bmp, image/tiff) to jpeg so the request isn't rejected.
-  const SUPPORTED = ["image/jpeg", "image/png", "image/gif", "image/webp"] as const;
-  type SupportedMime = (typeof SUPPORTED)[number];
-  const mediaType: SupportedMime = (SUPPORTED as readonly string[]).includes(fileField.type)
-    ? (fileField.type as SupportedMime)
-    : "image/jpeg";
 
   let anthropicRes: globalThis.Response;
   try {
@@ -113,7 +130,11 @@ export async function POST(request: NextRequest): Promise<Response> {
             content: [
               {
                 type: "image",
-                source: { type: "base64", media_type: mediaType, data: base64 },
+                source: {
+                  type: "base64",
+                  media_type: mediaType as ModelImageMimeType,
+                  data: base64,
+                },
               },
               {
                 type: "text",

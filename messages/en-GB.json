@@ -1568,7 +1568,8 @@
         "upload": "Upload",
         "fileRequired": "A file must be uploaded",
         "pageNumberRequired": "Page number is required",
-        "fileTooLarge": "File exceeds the 20 MB limit",
+        "fileTooLarge": "File exceeds the {limitMb} MB limit",
+        "fileTypeNotAllowed": "This kind of file cannot be added as a page. A page may be a photograph or scan, a PDF, or a Word, Excel, OpenOffice or text document.",
         "uploadError": "Upload failed",
         "save": "Save",
         "saving": "Saving…",
@@ -1577,6 +1578,7 @@
       "viewer": {
         "placeholder": "Select a page to preview",
         "downloadPrompt": "This file type cannot be previewed in the browser.",
+        "previewFailed": "This page could not be displayed here. You can download it instead.",
         "download": "Download",
         "loading": "Loading…",
         "error": "Failed to load file"
@@ -2269,9 +2271,9 @@
       "forecast": {
         "title": "What this import will do",
         "intro": "Folder “{folder}” has been read and its documents have been classified. Nothing has been saved to the archive.",
-        "introNothingSent": "Folder “{folder}” has been read. None of its files needed automatic classification — either they are already in the system, or they cannot be read as images. Nothing has been saved to the archive.",
+        "introNothingSent": "Folder “{folder}” has been read. None of its files needed automatic classification — either they are already in the system, or they are not in a format the model can read (JPEG, PNG, GIF or WebP images, or PDFs). Nothing has been saved to the archive.",
         "arithmetic": "{files, plural, one {One file to import from the folder becomes} other {# files to import from the folder become}} {documents, plural, one {a single document} other {# documents}}. {pageGroups, plural, =0 {Each file is a document in its own right.} one {One folder of scanned pages becomes a single document, and every other file is a document in its own right.} other {# folders of scanned pages each become a single document, and every other file is a document in its own right.}}",
-        "arithmeticCalls": "{count, plural, one {One file was sent for automatic classification} other {# files were sent for automatic classification}}: only images and PDFs can be read by the model{pageGroups, plural, =0 {} other {, and a folder of pages is sent by its first page alone}}.",
+        "arithmeticCalls": "{count, plural, one {One file was sent for automatic classification} other {# files were sent for automatic classification}}: only JPEG, PNG, GIF and WebP images and PDFs can be read by the model{pageGroups, plural, =0 {} other {, and a folder of pages is sent by its first page alone}}.",
         "coordinateNote": "{count, plural, one {The file in the “Coordinate file” row is also counted among the documents that will be created: it is imported as a document in its own right, like the others. If it really is the property's coordinate file, it is imported even when it is already in the system — a corner must show which document it was read from.} other {The files in the “Coordinate file” row are also counted among the documents that will be created: each is imported as a document in its own right, like the others. The ones that really are properties' coordinate files are imported even when they are already in the system — a corner must show which document it was read from.}} The reasoning is at the “Already in the system” step, under PEX-04.",
         "waivedNote": "Continuing without forms: {types, plural, one {one document type in this folder has no form} other {# document types in this folder have no form}}, and {documents, plural, one {one document will be created with no form} other {# documents will be created with no form}}.",
         "documents": "Documents that will be created",
@@ -2305,7 +2307,7 @@
           "walkLoopedOnShortcut": "This folder contains a shortcut pointing back at a folder above it, which makes it endlessly deep. The same files were therefore read many times over, so **every number in this report is larger than reality** — the documents, the pages and the AI costs are all inflated. Do not start the import. Delete the shortcut, then check the folder again.",
           "walkTooManyFolders": "This folder holds more than {limit} subfolders, which is more than can be read in one go, so this report is incomplete. Split it into several smaller folders and check again.",
           "walkTooManyFiles": "This folder holds more than {limit} files, which is more than can be read in one go, so this report is incomplete. Split it into several smaller folders and check again.",
-          "unknownMimeFiles": "{files, plural, one {Windows does not say what kind of file one of the files in the folder is. It will be imported and will open, but automatic form-filling will never work on it.} other {Windows does not say what kind of files # of the files in the folder are. They will be imported and will open, but automatic form-filling will never work on them.}}"
+          "unknownMimeFiles": "{files, plural, one {Windows does not say what kind of file one of the files in the folder is. It will be imported, and its format is taken from the file name.} other {Windows does not say what kind of files # of the files in the folder are. They will be imported, and their formats are taken from their file names.}}"
         },
         "downloadButton": "Download this list",
         "downloadHint": "Saves a file you can open in Word. It lists every affected file, not only the examples shown on screen.",
@@ -2469,7 +2471,7 @@
           "violation": "{files, plural, one {One file is a photograph taken on an iPhone, in a format the system cannot open. Copy the photo across from the phone again as an ordinary photograph ending in .jpg and delete the old file, or take it out of the chosen folder.} other {# files are photographs taken on an iPhone, in a format the system cannot open. Copy the photos across from the phone again as ordinary photographs ending in .jpg and delete the old files, or take them out of the chosen folder.}}"
         },
         "CON-03": {
-          "requirement": "A file the system does not recognise stops the whole import: it halts and asks you about each such file in turn before anything is imported. Scanned deeds, photographs, PDFs, Word and Excel documents, and text files are imported.",
+          "requirement": "A file the system does not recognise stops the whole import: it halts and asks you about each such file in turn before anything is imported. Scanned deeds, photographs, PDFs, Word, Excel and OpenOffice documents, and text files are imported.",
           "example": "Right: “sale contract.pdf”, “sketch.jpg”, “notes.txt”. Wrong: “project.xyz”, or a file whose name has no ending at all, such as “scan1”.",
           "violation": "{files, plural, one {The system does not recognise one file in the folder. The import would stop and ask you about it before importing anything else. Save it as a PDF or as a photograph and delete the old file, or take it out of the chosen folder.} other {The system does not recognise # files in the folder. The import would stop and ask you about each of them before importing anything else. Save them as PDFs or as photographs and delete the old files, or take them out of the chosen folder.}}"
         },
@@ -3325,7 +3327,7 @@
     "folder": {
       "pick": "Choose the sample folder…",
       "picked": "{count, plural, =0 {Folder “{folder}” holds no document that can be read.} one {Folder “{folder}”: one sample.} other {Folder “{folder}”: # samples.}}",
-      "noSamples": "A sample folder must hold images or PDFs. Text files and other formats cannot be read.",
+      "noSamples": "A sample folder must hold JPEG, PNG, GIF or WebP images, or PDFs. Other formats — TIFF, BMP, Word and text files among them — cannot be read.",
       "unsupported": "Your browser doesn't support local folder access. Please use Chrome, Edge, or another Chromium-based browser.",
       "walkFailed": "The folder could not be read. Check that you granted read permission and try again.",
       "overflow": "{count, plural, one {The folder holds one more document beyond the {max}-sample limit for one run. It will not be read. Split the folder if you want to use them all.} other {The folder holds # more documents beyond the {max}-sample limit for one run. They will not be read. Split the folder if you want to use them all.}}"

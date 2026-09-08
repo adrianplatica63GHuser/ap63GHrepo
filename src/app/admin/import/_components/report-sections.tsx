@@ -25,6 +25,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { buildReportHtml, reportFileName } from "@/lib/import/report-html";
 import { downloadHtmlFile, fileNameStamp } from "@/lib/ui/download-html";
 import { buttonClass } from "@/lib/ui/button-styles";
+import { formatMb } from "@/lib/ui/format-mb";
 import type { ImportForecast } from "@/lib/import/preflight";
 import type { Finding, ImportReport, SkippedGroup } from "@/lib/import/checks";
 
@@ -241,7 +242,7 @@ export function ReportSections({
             ? []
             : [{
                 label: tf("uploadSize"),
-                value: tf("megabytes", { mb: (uploadBytes / (1024 * 1024)).toFixed(1) }),
+                value: tf("megabytes", { mb: formatMb(uploadBytes, locale) }),
               }]),
         ],
         findingsTitle: t("title"),

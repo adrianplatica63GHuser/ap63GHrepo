@@ -64,6 +64,12 @@ import { getCurrentUserIdAndRole } from "@/lib/auth/current-role";
 import { checkOcrRateLimit } from "@/lib/rate-limit/ocr";
 import { buildDiscoverSystemPrompt } from "@/lib/import/classify-prompts";
 import { parseDiscoverPayload, type SkippedPage } from "@/lib/documents/discover-log";
+import {
+  MODEL_IMAGE_MIME_TYPES,
+  OCTET_STREAM,
+  contentTypeOf,
+  type ModelImageMimeType,
+} from "@/lib/files/file-mime";
 import { MAX_UPLOAD_BYTES, MAX_UPLOAD_MB } from "@/lib/import/constraint-rules";
 
 export const runtime = "nodejs";
@@ -97,9 +103,13 @@ const MAX_SAMPLE_PAGES = 30;
 const MAX_SAMPLE_BYTES = 40 * 1024 * 1024;
 const MAX_SAMPLE_MB = Math.round(MAX_SAMPLE_BYTES / 1024 / 1024);
 
-/** Anthropic accepts these four and no other image type. */
-const SUPPORTED_IMAGES = ["image/jpeg", "image/png", "image/gif", "image/webp"] as const;
-type SupportedImage = (typeof SUPPORTED_IMAGES)[number];
+// The four image types the model accepts are `MODEL_IMAGE_MIME_TYPES` in
+// src/lib/files/file-mime.ts (Slice #34.06). All three routes that talk to the
+// model used to declare the list privately — this one, `ai-interpret` and
+// `scan-folder` — three more copies of "what may be read" alongside the four
+// #34.06 collapsed.
+const SUPPORTED_IMAGES = MODEL_IMAGE_MIME_TYPES;
+type SupportedImage = ModelImageMimeType;
 
 type ContentBlock =
   | { type: "image"; source: { type: "base64"; media_type: SupportedImage; data: string } }
@@ -128,10 +138,12 @@ function extractJson(text: string): unknown {
 
 function skipReason(name: string, mime: string): string {
   if (mime === "text/plain" || name.toLowerCase().endsWith(".txt")) {
-    return "plain-text file (cadastral coordinates or notes) — the model is sent images and PDFs only";
+    return "plain-text file (cadastral coordinates or notes) — the model is sent JPEG, PNG, GIF or WebP images and PDFs only";
   }
-  if (!mime || mime === "application/octet-stream") {
-    return "the browser reported no MIME type for this file, so its format cannot be confirmed";
+  if (!contentTypeOf(name)) {
+    // The same test `ai-interpret`'s skipReason makes, so one file cannot get
+    // two different explanations from two routes (Slice #34.06).
+    return "this system does not recognise the file's format from its name";
   }
   return "unsupported format — only JPEG/PNG/GIF/WebP images and PDF can be sent";
 }
@@ -243,9 +255,13 @@ export async function POST(request: NextRequest): Promise<Response> {
   let bytesSent = 0;
 
   for (const file of files) {
-    // `File.type` is empty for plenty of browser-picked files; the pages route
-    // makes the same substitution.
-    const mime = file.type || "application/octet-stream";
+    // ⚠️ EXTENSION FIRST (Slice #34.06). `File.type` is EMPTY for plenty of
+    // browser-picked files — the File System Access API leaves it empty for
+    // some files on Windows, which is the deployment target — and this route
+    // is fed by exactly that API. Dispatching on it alone skipped folders of
+    // perfectly good `.jpg` scans with "the browser reported no MIME type".
+    // The upload route makes the same substitution, from the same table.
+    const mime = contentTypeOf(file.name) ?? (file.type || OCTET_STREAM);
 
     // ⚠️ **The cap counts pages SENT, not files SEEN, and a round found the
     // difference.** Checking the loop index first meant thirty leading text
@@ -255,7 +271,10 @@ export async function POST(request: NextRequest): Promise<Response> {
     if (fileBlocks.length >= MAX_SAMPLE_PAGES) {
       skippedPages.push({
         fileName: file.name,
-        mimeType: file.type || null,
+        // The DERIVED type, not `file.type` (Slice #34.06): reporting the
+        // browser's answer beside a reason computed from the extension put
+        // "no MIME type" back on the one screen this slice took it off.
+        mimeType: mime,
         reason: `beyond the ${MAX_SAMPLE_PAGES}-page limit for one sample — this page was not sent`,
       });
       continue;
@@ -263,7 +282,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     if (file.size > MAX_UPLOAD_BYTES) {
       skippedPages.push({
         fileName: file.name,
-        mimeType: file.type || null,
+        mimeType: mime,
         reason: `larger than ${MAX_UPLOAD_MB} MB — this page was not sent`,
       });
       continue;
@@ -276,7 +295,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     if (bytesSent + file.size > MAX_SAMPLE_BYTES) {
       skippedPages.push({
         fileName: file.name,
-        mimeType: file.type || null,
+        mimeType: mime,
         reason: `the sample reached its ${MAX_SAMPLE_MB} MB total — this page was not sent`,
       });
       continue;
@@ -300,7 +319,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     } else {
       skippedPages.push({
         fileName: file.name,
-        mimeType: file.type || null,
+        mimeType: mime,
         reason: skipReason(file.name, mime),
       });
     }

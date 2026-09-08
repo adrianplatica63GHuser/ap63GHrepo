@@ -153,7 +153,7 @@ import {
   type FSPageGroupEntry,
   tagsForEntry,
 } from "@/lib/import/folder-utils";
-import { isFileKind } from "@/lib/files/file-kinds";
+import { isFileKind, isModelReadable } from "@/lib/files/file-kinds";
 import {
   IMPORT_SESSION_KEY,
   type SavedImportEntry,
@@ -911,7 +911,8 @@ function discoverStepsInFolderOrder(
  * Everything a failed read can tell the user, in one string.   (Slice #26.09)
  *
  * The route names the pages it could not send — a `.txt` inside a page folder,
- * an octet-stream — and the old dialog listed them, deliberately, "rather than
+ * a format the model refuses — and the old dialog listed them, deliberately,
+ * "rather than
  * flattened into extraction failed". A table cell cannot hold a list, so they
  * ride along on the row's tooltip instead of being dropped: a returned value
  * nobody reads is a capability the product quietly stopped having.
@@ -1128,7 +1129,13 @@ async function withConcurrencyLimit<T>(
 // src/lib/files/file-kinds.ts. These two names survive only because they read
 // better at the call sites below than a kind query does.
 
-const isImageFile = (name: string) => isFileKind(name, "image");
+// ⚠️ `isImageFile` IS NARROWER THAN THE IMAGE KIND, and Slice #34.06 is why.
+// Its one caller hands the file to the extract route, which hands it to the
+// model — and the model refuses `.bmp` and `.tif`, both of which ARE the image
+// kind here. Sending one bought a call that could only fail, on an identity
+// card, in the middle of an import run. `isModelReadable` is the same predicate
+// the wizard scans by and the forecast counts with.
+const isImageFile = (name: string) => isModelReadable(name) && isFileKind(name, "image");
 const isPdfFile   = (name: string) => isFileKind(name, "pdf");
 
 // ---------------------------------------------------------------------------
@@ -1639,6 +1646,15 @@ async function uploadPage(documentId: string, file: File, pageNumber: number): P
   const res = await fetch(`/api/documents/${documentId}/pages`, { method: "POST", body: fd });
   if (res.redirected) throw new Error("session-expired");
   if (!res.ok) {
+    // ⚠️ The route's `error` is ENGLISH, and Slice #34.06 added a `code` beside
+    // it so a client can translate the two refusals it can produce. This client
+    // deliberately does not: it is a module-level function with no translator
+    // (the same reason `idCardImage` throws a sentinel), and neither refusal is
+    // reachable from here — CON-01/02/03 stop every extension outside the
+    // registry and CON-05 every oversize file before the run starts, so a 415
+    // or 413 on this path means a constraint was relaxed and the English is the
+    // least of it. `pages-panel.tsx`, whose dialog a user reaches directly, does
+    // map both codes.
     const body = (await res.json().catch(() => ({}))) as { error?: string };
     throw new Error(body.error ?? `HTTP ${res.status}`);
   }
@@ -6808,8 +6824,8 @@ function ResultRow({
                 key={note.id}
                 className={`text-xs font-medium ${NOTE_TONE[note.id]}`}
                 // Slice #27.06 — the one note in this catalogue with a REASON
-                // behind it. The route names why a read did not happen, down to
-                // the octet-stream case, and #26.09 already decided that belongs
+                // behind it. The route names why a read did not happen, per
+                // page, and #26.09 already decided that belongs
                 // on a tooltip rather than in a cell: a cell cannot hold a
                 // paragraph, and a returned value nobody reads is a capability
                 // the product quietly stopped having. `aiErrorDetail` does this
@@ -6847,7 +6863,7 @@ function ResultRow({
               A failure is amber and not red on purpose. Red in this table means
               the file did not make it into the archive; this file did, and what
               is missing is its fields. The route's own sentence — which names
-              the reason, down to the octet-stream case — is on the title
+              the reason for each page it could not send — is on the title
               attribute rather than in the row, because it is a paragraph and
               this is a cell. */}
           {/* A retry that is running: the status cell says "Se importă…" only

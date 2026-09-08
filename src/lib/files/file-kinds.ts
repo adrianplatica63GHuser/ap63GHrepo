@@ -15,6 +15,7 @@
  *   - `IMAGE_EXTS_SET`    in bulk-import-dialog.tsx                (the same 8, retyped)
  *   - `COORDINATE_FILE_EXTS` in src/lib/import/coordinate-file.ts  (4, dotted)
  *   - `MIME_MAP`          in src/app/api/files/[...path]/route.ts  (16, dotted)
+ *                         (moved to src/lib/files/file-mime.ts in #34.06)
  *
  * — plus `PDF_EXT` declared twice and TWO extension extractors with different
  * contracts (`extOf`, dotted and path-blind; `fileExtension`, dotless and
@@ -25,22 +26,31 @@
  * WHAT THIS MODULE IS, AND WHAT IT IS NOT
  * ───────────────────────────────────────
  *
- * It answers membership questions about an extension, and nothing else. It
- * holds no MIME types, no `accept=` strings and no model-capability list:
+ * It answers membership questions about an extension, and it holds no MIME
+ * types and no model-capability list:
  *
- *   - the local-dev serving route's `MIME_MAP` answers "what Content-Type do I
- *     label these bytes with", which is a different question with a different
- *     right answer (a `.bmp` is an image here and still serves as
- *     `application/octet-stream` there — see "Known gaps" below);
- *   - what the AI routes accept and what the file pickers offer belong to
- *     Slice #24.04, which is why `isImageOrPdf` below is named after what it
- *     tests rather than after "readable" or "scannable". Naming it for a
- *     capability would prejudge that slice's decision from inside this one.
+ *   - `src/lib/files/file-mime.ts` answers "what Content-Type do I label these
+ *     bytes with", which is a different question with a different right
+ *     answer. It is asserted to be in step with this registry rather than
+ *     derived from it — see that module's header for why the distinction is
+ *     load-bearing;
+ *   - what the AI ROUTES accept is narrower again — JPEG, PNG, GIF, WebP and
+ *     PDF, and nothing else — which is why `isImageOrPdf` below is named after
+ *     what it tests rather than after "readable" or "scannable". A `.bmp` or a
+ *     `.tif` is an image here, is archived and is served correctly, and the
+ *     model still cannot be shown one. Naming this function for a capability
+ *     would bury that difference instead of stating it.
+ *
+ * It DOES now hold the `accept=` string for the document-page picker
+ * (`UPLOAD_ACCEPT_ATTRIBUTE`), which #24.03 deferred and #24.04 did not take.
+ * That is not a MIME list or a capability list: it is this registry's own
+ * membership answer, written in the one syntax a file input can read. Deriving
+ * it here is what stops the picker being a fifth list — see Slice #34.06 below.
  *
  * Client-safe: pure, no DB and no server-only imports. Both server routes and
  * client components import it.
  *
- * MEMBERSHIP DECISIONS TAKEN IN THIS SLICE
+ * MEMBERSHIP DECISIONS TAKEN IN SLICE #24.03
  * ────────────────────────────────────────
  *
  *  - **`.heic` / `.heif` are not images.** They were images to
@@ -96,23 +106,49 @@
  * REGISTRY below, and nothing else in the codebase has to change — which is
  * the whole point of the module.
  *
+ * MEMBERSHIP DECISIONS TAKEN IN SLICE #34.06
+ * ──────────────────────────────────────────
+ *
+ * Five extensions had never been decided, and #34.06 is the slice that made
+ * this registry the single answer it had claimed to be since #24.03. The
+ * registry table itself moved by NOTHING: every one of the five was settled by
+ * making the other three lists agree with what was already written here.
+ *
+ *  - **`.rtf` and `.odt` are accepted**, because they were already
+ *    `"document"` here and only the picker disagreed. An `.odt` deed used to
+ *    need "All files" in the file dialog and then uploaded perfectly.
+ *
+ *  - **`.xml` and `.html` are refused.** They belonged to no kind here, so
+ *    `classifyFileSource` answered UNKNOWN for them, while the picker offered
+ *    them and the upload route took them. `/api/files/[...path]` would also
+ *    have served an `.html` page `inline` from the app's own origin, which is
+ *    a stored-XSS shape and reason enough on its own.
+ *
+ *  - **`.heic` is refused, and stays in no kind.** The slice's own brief
+ *    recommended accepting it; the codebase disagreed and won. Making HEIC an
+ *    image would make `classifyFileSource`, `isPageGroupMember`,
+ *    `hasReadablePage` and the pre-import forecast all call it readable while
+ *    the model routes refuse it — the exact gap #34.06 item 6 exists to close,
+ *    for a format no browser but Safari can draw. It would also cost CON-02 in
+ *    `constraint-rules.ts` its stated justification, which is that the absence
+ *    of a kind IS the decision. Refusing it in the picker and at the route
+ *    instead CLOSES the gap #24.03 recorded as the one it created.
+ *
+ * All five remain one-line edits to `REGISTRY`. Nothing else has to change
+ * with them any more — the picker, the upload route and the MIME map now
+ * follow, and tests fail if any of them stops following.
+ *
  * KNOWN GAPS THIS SLICE DELIBERATELY DID NOT CLOSE
  * ────────────────────────────────────────────────
  *
- *  - `.bmp` is an image kind but has no entry in the serving `MIME_MAP`, so a
- *    stored `.bmp` page is served as `application/octet-stream` and the viewer
- *    renders a download prompt instead of the picture. Pre-existing. #24.03
- *    deferred it to "#24.04"; #24.04 turned out to be the walk-and-refuse
- *    slice and did not touch it, so it is still open and unassigned.
- *  - `.html` / `.xml` appear in `MIME_MAP` and in the upload `accept` string
- *    but belong to no kind here. Still open, same as above.
- *  - The only gap this slice CREATED: `.heic` left `MIME_MAP` with the rest of
- *    the HEIC decision, but `ACCEPTED_FILE_TYPES` in pages-panel.tsx is still
- *    `image/*`, which every OS file picker resolves to include HEIC. So a HEIC
- *    page can still be uploaded, and one already stored now serves as
- *    `application/octet-stream` — a download prompt where there used to be a
- *    picture. Small in practice (only Safari renders `image/heic` at all).
- *    Whichever slice takes the `accept` strings owns it; #24.04 did not.
+ *  - The two coordinate-file pickers (`calculation-view.tsx`,
+ *    `add-property-dialog.tsx`) still type `accept=".txt,text/plain"` rather
+ *    than deriving it from the `"coordinate-candidate"` kind, and the property
+ *    photo picker still says `accept="image/*"`. Neither creates a document
+ *    page, which is what #34.06 was scoped to, so both were left alone.
+ *  - A `.bmp` or `.tif` is accepted, stored and served correctly, and the AI
+ *    routes still refuse it. #34.06 chose to say so in the copy rather than to
+ *    widen the routes — see the `noSamples` and `arithmeticCalls` strings.
  */
 
 // ---------------------------------------------------------------------------
@@ -371,23 +407,154 @@ export const KNOWN_EXTENSIONS: readonly string[] = Object.freeze(
 );
 
 // ---------------------------------------------------------------------------
+// What may become a document page  (Slice #34.06)
+// ---------------------------------------------------------------------------
+
+/**
+ * The kinds that make a file archive material.
+ *
+ * `"coordinate-candidate"` is deliberately absent, and its absence costs
+ * nothing: `.txt` is the only extension that holds it and `.txt` is a
+ * `"document"` as well, so the union is unchanged. Listing it would state that
+ * a coordinate export is uploadable BECAUSE it might hold corners, which is
+ * not why — it is uploadable because it is a document, and the day a
+ * coordinate kind arrives that is not also a document, the honest answer is to
+ * decide about it rather than to have decided by accident here.
+ *
+ * `"ignored"` and `"forbidden"` are absent for the obvious reason, and so is
+ * every extension the registry has never heard of — which is what makes the
+ * empty-`File.type` bypass unreachable. See `isUploadableFileName`.
+ */
+const UPLOADABLE_KINDS: readonly FileKind[] = Object.freeze([
+  "image",
+  "pdf",
+  "document",
+] as const);
+
+/**
+ * May `name` become a document page?
+ *
+ * ⚠️ **THIS IS THE ONE ANSWER, AND IT IS ANSWERED BY THE NAME.** The upload
+ * route used to answer it from `file.type` against a five-entry block list,
+ * and that list was unreachable for exactly the files it existed to stop: the
+ * File System Access API leaves `File.type` EMPTY for some files on Windows,
+ * which is the deployment target, and `""` is in no block list. This codebase
+ * records the same fact from the other direction in `constraint-rules.ts`,
+ * where it is the reason a constraint rule based on `File.type` was withdrawn.
+ * An extension is a weaker claim about the bytes than a MIME type would be if
+ * MIME types were reliable here — but it is the claim every other layer in
+ * this app already acts on, and one weak answer everywhere beats a strong one
+ * that is silently skipped.
+ */
+export function isUploadableFileName(name: string): boolean {
+  return fileKindsOf(name).some((k) => UPLOADABLE_KINDS.includes(k));
+}
+
+/**
+ * Every extension that may become a document page, dotted and sorted.
+ *
+ * Frozen, and derived — never typed. This is what closed the four-way
+ * disagreement #34.06 opened on: the picker offered one list, this registry
+ * held another, the upload route enforced a third and the serving MIME map
+ * carried a fourth, and a user met the difference as an `.odt` that needed
+ * "All files", an `.xml` that uploaded and then classified as UNKNOWN, and a
+ * `.bmp` that arrived as a download prompt.
+ */
+export const UPLOADABLE_EXTENSIONS: readonly string[] = Object.freeze(
+  KNOWN_EXTENSIONS.filter((ext) => (REGISTRY[ext] ?? NO_KINDS).some((k) =>
+    UPLOADABLE_KINDS.includes(k),
+  )),
+);
+
+/**
+ * The `accept` attribute for a document-page file input.
+ *
+ * ⚠️ **NOT `image/*`, and that is the point.** The old string opened with
+ * `image/*`, which every OS picker resolves to include HEIC — the gap #24.03
+ * named as the one it created, since HEIC belongs to no kind here and no
+ * browser but Safari draws one. An explicit list is the only `accept` value
+ * that can agree with a registry, because a wildcard is a promise about a
+ * family whose membership the OS decides.
+ *
+ * `accept` is a hint and nothing more — every file dialog offers "All files" —
+ * so it is a convenience, not the enforcement. `AddPageDialog` re-tests with
+ * `isUploadableFileName` when a file is chosen, and the upload route tests
+ * again on arrival.
+ */
+export const UPLOAD_ACCEPT_ATTRIBUTE: string = UPLOADABLE_EXTENSIONS.join(",");
+
+// ---------------------------------------------------------------------------
 // Derived questions the import path actually asks
 // ---------------------------------------------------------------------------
 
 /**
  * Image OR PDF — the two things the client can turn into a bitmap.
  *
- * Named after what it tests, not after a capability. The import wizard uses it
- * to decide which entries are worth AI-scanning and the bulk dialog uses it to
- * decide whether the "Interpret with AI" button appears; both used to compute
- * this union from their own private extension sets. What the AI routes will
- * actually ACCEPT is a separate list on the server and belongs to Slice #24.04
- * — do not rename this to `isReadable`/`isScannable` and quietly make it that
- * list's client-side twin.
+ * Named after what it tests, not after a capability — and #34.06 is the slice
+ * that proved the distinction was load-bearing rather than pedantic.
+ *
+ * ⚠️ **THIS IS NOT THE MODEL'S LIST. `isModelReadable` IS.** A `.bmp` and a
+ * `.tif` are images here, are archived, are served and are drawn by nothing;
+ * the model refuses both. Until #34.06 the import wizard used THIS predicate
+ * to decide what was worth sending, to count the calls it would cost, and to
+ * decide whether a folder held any readable sample — so a folder of TIFF scans
+ * was billed for three calls, told the user three files had been sent, and
+ * came back 422 three times. Every one of those four call sites now asks
+ * `isModelReadable`; this function is kept because "raster or PDF" is still a
+ * true and useful question about the registry, and because renaming it to
+ * `isReadable`/`isScannable` is precisely how the confusion started.
  */
 export function isImageOrPdf(name: string): boolean {
   const kinds = fileKindsOf(name);
   return kinds.includes("image") || kinds.includes("pdf");
+}
+
+/**
+ * Every extension the MODEL can be shown.   (Slice #34.06)
+ *
+ * ⚠️ **THIS IS A VENDOR CAPABILITY, NOT A KIND**, and that is why it is a flat
+ * list rather than an entry in `REGISTRY`. A kind is a statement about what a
+ * file IS and survives a change of supplier; this list is a statement about
+ * what Anthropic's API accepts today and would be wrong the moment that
+ * changed. Making it a kind would put "our current model vendor" inside the
+ * table that decides what may enter a property archive.
+ *
+ * It lives in THIS file all the same, because it is still a list of file
+ * extensions, and this codebase has exactly one place a list of file
+ * extensions may be written — `file-kinds-single-source.test.ts` enforces it,
+ * and the seven-way drift recorded at the top of this file is what that rule
+ * exists to prevent. `upload-file-types.test.ts` pins that every entry here is
+ * an image or the PDF, so this list can never claim something the registry has
+ * never heard of.
+ *
+ * The MIME half of the same fact is `MODEL_IMAGE_MIME_TYPES` in
+ * `file-mime.ts`, which the two AI routes dispatch on; a test asserts the two
+ * halves describe the same set. Before #34.06 that MIME list was written out
+ * THREE times, in `ai-interpret`, `read-sample` and `scan-folder`, and the
+ * extension half did not exist at all — so the screens counted one set and the
+ * routes accepted another, and `scan-folder` quietly relabelled everything it
+ * did not recognise as `image/jpeg` rather than refusing it.
+ */
+export const MODEL_READABLE_EXTENSIONS: readonly string[] = Object.freeze([
+  ".jpg",
+  ".jpeg",
+  ".png",
+  ".gif",
+  ".webp",
+  ".pdf",
+]);
+
+/**
+ * Can the model actually be shown `name`?
+ *
+ * The predicate behind every sentence that says "only JPEG, PNG, GIF and WebP
+ * images and PDFs can be read", and behind the number those sentences explain.
+ * The two must be the same predicate or the screen contradicts itself in one
+ * clause — which is what it did before #34.06, for every folder holding a
+ * TIFF.
+ */
+export function isModelReadable(name: string): boolean {
+  return MODEL_READABLE_EXTENSIONS.includes(extensionOf(name));
 }
 
 /**

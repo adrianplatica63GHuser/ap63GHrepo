@@ -108,7 +108,7 @@ import {
   type FSDirectoryHandle,
   type FSEntry,
 } from "@/lib/import/folder-utils";
-import { isFileKind, isImageOrPdf } from "@/lib/files/file-kinds";
+import { isFileKind, isModelReadable } from "@/lib/files/file-kinds";
 import {
   loadSavedSession,
   clearSavedSession,
@@ -326,12 +326,18 @@ function multiCardEntriesOf(
   });
 }
 
-/** Check if any file in the entry is worth sending to the scan route. */
+/**
+ * Check if any file in the entry is worth sending to the scan route.
+ *
+ * `isModelReadable`, not `isImageOrPdf` (Slice #34.06) — and it MUST be the
+ * same predicate `preflight.ts` counts with, or the forecast promises a number
+ * of calls this function then does not make.
+ */
 function entryScannable(entry: FSEntry): boolean {
   if (entry.kind === "page-group") {
-    return entry.handles.length > 0 && isImageOrPdf(entry.handles[0].name);
+    return entry.handles.length > 0 && isModelReadable(entry.handles[0].name);
   }
-  return isImageOrPdf(entry.name);
+  return isModelReadable(entry.name);
 }
 
 // ---------------------------------------------------------------------------

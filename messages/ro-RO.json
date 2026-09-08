@@ -1568,7 +1568,8 @@
         "upload": "Încarcă",
         "fileRequired": "Este obligatorie încărcarea unui fișier",
         "pageNumberRequired": "Numărul paginii este obligatoriu",
-        "fileTooLarge": "Fișierul depășește limita de 20 MB",
+        "fileTooLarge": "Fișierul depășește limita de {limitMb} MB",
+        "fileTypeNotAllowed": "Acest tip de fișier nu poate fi adăugat ca pagină. O pagină poate fi o fotografie sau o scanare, un PDF ori un document Word, Excel, OpenOffice sau text.",
         "uploadError": "Încărcarea a eșuat",
         "save": "Salvează",
         "saving": "Se salvează…",
@@ -1577,6 +1578,7 @@
       "viewer": {
         "placeholder": "Selectați o pagină pentru previzualizare",
         "downloadPrompt": "Acest tip de fișier nu poate fi previzualizat în browser.",
+        "previewFailed": "Această pagină nu a putut fi afișată aici. O puteți descărca.",
         "download": "Descarcă",
         "loading": "Se încarcă…",
         "error": "Eroare la încărcarea fișierului"
@@ -2269,9 +2271,9 @@
       "forecast": {
         "title": "Ce va face acest import",
         "intro": "Folderul „{folder}” a fost citit și documentele lui au fost clasificate. Nu s-a salvat nimic în arhivă.",
-        "introNothingSent": "Folderul „{folder}” a fost citit. Niciun fișier din el nu a avut nevoie de clasificare automată — fie se aflau deja în sistem, fie nu se pot citi ca imagine. Nu s-a salvat nimic în arhivă.",
+        "introNothingSent": "Folderul „{folder}” a fost citit. Niciun fișier din el nu a avut nevoie de clasificare automată — fie se aflau deja în sistem, fie nu sunt într-un format pe care modelul îl poate citi (imagini JPEG, PNG, GIF sau WebP ori fișiere PDF). Nu s-a salvat nimic în arhivă.",
         "arithmetic": "{files, plural, one {Un fișier de importat din folder devine} few {# fișiere de importat din folder devin} other {# de fișiere de importat din folder devin}} {documents, plural, one {un singur document} few {# documente} other {# de documente}}. {pageGroups, plural, =0 {Fiecare fișier este un document în sine.} one {Un folder de pagini scanate devine un singur document, iar fiecare celălalt fișier este un document în sine.} few {# foldere de pagini scanate devin câte un singur document, iar fiecare celălalt fișier este un document în sine.} other {# de foldere de pagini scanate devin câte un singur document, iar fiecare celălalt fișier este un document în sine.}}",
-        "arithmeticCalls": "{count, plural, one {Un fișier a fost trimis spre clasificare automată} few {# fișiere au fost trimise spre clasificare automată} other {# de fișiere au fost trimise spre clasificare automată}}: numai imaginile și PDF-urile pot fi citite de model{pageGroups, plural, =0 {} other {, iar dintr-un folder de pagini se trimite doar prima pagină}}.",
+        "arithmeticCalls": "{count, plural, one {Un fișier a fost trimis spre clasificare automată} few {# fișiere au fost trimise spre clasificare automată} other {# de fișiere au fost trimise spre clasificare automată}}: numai imaginile JPEG, PNG, GIF și WebP, precum și PDF-urile, pot fi citite de model{pageGroups, plural, =0 {} other {, iar dintr-un folder de pagini se trimite doar prima pagină}}.",
         "coordinateNote": "{count, plural, one {Fișierul din rândul „Fișier de coordonate” este numărat și printre documentele care vor fi create: se importă ca document în sine, la fel ca celelalte. Dacă el este într-adevăr fișierul de coordonate al proprietății, se importă chiar dacă se află deja în sistem — orice colț trebuie să arate din ce document a fost citit.} few {Fișierele din rândul „Fișier de coordonate” sunt numărate și printre documentele care vor fi create: fiecare se importă ca document în sine, la fel ca celelalte. Cele care sunt într-adevăr fișiere de coordonate ale proprietăților se importă chiar dacă se află deja în sistem — orice colț trebuie să arate din ce document a fost citit.} other {Fișierele din rândul „Fișier de coordonate” sunt numărate și printre documentele care vor fi create: fiecare se importă ca document în sine, la fel ca celelalte. Cele care sunt într-adevăr fișiere de coordonate ale proprietăților se importă chiar dacă se află deja în sistem — orice colț trebuie să arate din ce document a fost citit.}} Regula este explicată la pasul „Documente aflate deja în sistem”, la PEX-04.",
         "waivedNote": "Continuați fără formulare: {types, plural, one {un tip de document din acest folder nu are formular} few {# tipuri de documente din acest folder nu au formular} other {# de tipuri de documente din acest folder nu au formular}}, iar {documents, plural, one {un document va fi creat fără formular} few {# documente vor fi create fără formular} other {# de documente vor fi create fără formular}}.",
         "documents": "Documente care vor fi create",
@@ -2305,7 +2307,7 @@
           "walkLoopedOnShortcut": "Acest folder conține o scurtătură care trimite înapoi către un folder de deasupra, ceea ce îl face infinit de adânc. Din această cauză aceleași fișiere au fost citite de mai multe ori, deci **toate cifrele din acest raport sunt mai mari decât în realitate** — și numărul de documente, și numărul de pagini, și costurile AI. Nu porniți importul. Ștergeți scurtătura și verificați folderul din nou.",
           "walkTooManyFolders": "Acest folder conține mai mult de {limit} de subfoldere, mai multe decât pot fi citite dintr-o dată, deci acest raport este incomplet. Împărțiți-l în mai multe foldere mai mici și verificați din nou.",
           "walkTooManyFiles": "Acest folder conține mai mult de {limit} de fișiere, mai multe decât pot fi citite dintr-o dată, deci acest raport este incomplet. Împărțiți-l în mai multe foldere mai mici și verificați din nou.",
-          "unknownMimeFiles": "{files, plural, one {Windows nu spune ce fel de fișier este unul dintre fișierele din folder. Se va importa și se va putea deschide, dar completarea automată a datelor nu va funcționa pentru el.} few {Windows nu spune ce fel de fișiere sunt # fișiere din folder. Se vor importa și se vor putea deschide, dar completarea automată a datelor nu va funcționa pentru ele.} other {Windows nu spune ce fel de fișiere sunt # de fișiere din folder. Se vor importa și se vor putea deschide, dar completarea automată a datelor nu va funcționa pentru ele.}}"
+          "unknownMimeFiles": "{files, plural, one {Windows nu spune ce fel de fișier este unul dintre fișierele din folder. Se va importa, iar formatul îi este preluat din numele fișierului.} few {Windows nu spune ce fel de fișiere sunt # fișiere din folder. Se vor importa, iar formatul le este preluat din numele fișierelor.} other {Windows nu spune ce fel de fișiere sunt # de fișiere din folder. Se vor importa, iar formatul le este preluat din numele fișierelor.}}"
         },
         "downloadButton": "Descarcă această listă",
         "downloadHint": "Salvează un fișier pe care îl puteți deschide în Word. Conține toate fișierele vizate, nu doar exemplele arătate pe ecran.",
@@ -2469,7 +2471,7 @@
           "violation": "{files, plural, one {Un fișier este o fotografie făcută cu un iPhone, într-un format pe care sistemul nu îl poate deschide. Copiați poza din nou de pe telefon ca poză obișnuită, cu terminația .jpg, și ștergeți fișierul vechi, ori scoateți-l din folderul ales.} few {# fișiere sunt fotografii făcute cu un iPhone, într-un format pe care sistemul nu îl poate deschide. Copiați pozele din nou de pe telefon ca poze obișnuite, cu terminația .jpg, și ștergeți fișierele vechi, ori scoateți-le din folderul ales.} other {# de fișiere sunt fotografii făcute cu un iPhone, într-un format pe care sistemul nu îl poate deschide. Copiați pozele din nou de pe telefon ca poze obișnuite, cu terminația .jpg, și ștergeți fișierele vechi, ori scoateți-le din folderul ales.}}"
         },
         "CON-03": {
-          "requirement": "Un fișier pe care sistemul nu îl recunoaște oprește tot importul: sistemul se oprește și vă întreabă despre fiecare astfel de fișier în parte, înainte de a importa ceva. Se importă acte scanate, fotografii, PDF-uri, documente Word și Excel, precum și fișiere text.",
+          "requirement": "Un fișier pe care sistemul nu îl recunoaște oprește tot importul: sistemul se oprește și vă întreabă despre fiecare astfel de fișier în parte, înainte de a importa ceva. Se importă acte scanate, fotografii, PDF-uri, documente Word, Excel și OpenOffice, precum și fișiere text.",
           "example": "Corect: „contract vanzare.pdf”, „schita.jpg”, „note.txt”. Greșit: „proiect.xyz” sau un fișier al cărui nume nu are nicio terminație, precum „scanare1”.",
           "violation": "{files, plural, one {Sistemul nu recunoaște un fișier din folder. Importul s-ar opri și v-ar întreba despre el înainte de a importa orice altceva. Salvați-l ca PDF sau ca fotografie și ștergeți fișierul vechi, ori scoateți-l din folderul ales.} few {Sistemul nu recunoaște # fișiere din folder. Importul s-ar opri și v-ar întreba despre fiecare în parte înainte de a importa orice altceva. Salvați-le ca PDF-uri sau ca fotografii și ștergeți fișierele vechi, ori scoateți-le din folderul ales.} other {Sistemul nu recunoaște # de fișiere din folder. Importul s-ar opri și v-ar întreba despre fiecare în parte înainte de a importa orice altceva. Salvați-le ca PDF-uri sau ca fotografii și ștergeți fișierele vechi, ori scoateți-le din folderul ales.}}"
         },
@@ -3325,7 +3327,7 @@
     "folder": {
       "pick": "Alege folderul cu mostre…",
       "picked": "{count, plural, =0 {Folderul „{folder}” nu conține niciun document care poate fi citit.} one {Folderul „{folder}”: o mostră.} few {Folderul „{folder}”: # mostre.} other {Folderul „{folder}”: # de mostre.}}",
-      "noSamples": "Un folder de mostre trebuie să conțină imagini sau PDF-uri. Fișierele text și celelalte formate nu pot fi citite.",
+      "noSamples": "Un folder de mostre trebuie să conțină imagini JPEG, PNG, GIF sau WebP ori fișiere PDF. Celelalte formate — printre care TIFF, BMP, Word și text — nu pot fi citite.",
       "unsupported": "Browserul dvs. nu suportă accesul la foldere locale. Utilizați Chrome, Edge sau alt browser bazat pe Chromium.",
       "walkFailed": "Folderul nu a putut fi citit. Verificați că ați dat permisiunea de citire și încercați din nou.",
       "overflow": "{count, plural, one {Folderul conține încă un document peste limita de {max} mostre pentru o rulare. Acesta nu va fi citit. Împărțiți folderul dacă vreți să le folosiți pe toate.} few {Folderul conține încă # documente peste limita de {max} mostre pentru o rulare. Acestea nu vor fi citite. Împărțiți folderul dacă vreți să le folosiți pe toate.} other {Folderul conține încă # de documente peste limita de {max} mostre pentru o rulare. Acestea nu vor fi citite. Împărțiți folderul dacă vreți să le folosiți pe toate.}}"

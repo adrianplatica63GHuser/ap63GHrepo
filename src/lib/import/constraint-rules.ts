@@ -46,8 +46,9 @@
  *    registry has no entry for it, and never on the corrupt `.jpg` its draft
  *    example described. The file uploads, is stored, and serves correctly (the
  *    serving route derives its Content-Type from the path, not from the
- *    recorded one); all that is lost is automatic AI extraction. That is
- *    exactly F-17's situation, so it gets F-17's answer. Worse, its remedy
+ *    recorded one); all that was lost is automatic AI extraction — and since
+ *    Slice #34.06, which derives the recorded type from the file name too, not
+ *    even that. That is exactly F-17's situation, so it gets F-17's answer. Worse, its remedy
  *    ("open it and save it again") could not change the outcome, which would
  *    have made it a violation the user could work at for ever — the failure
  *    mode this module is otherwise arranged to prevent.

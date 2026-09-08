@@ -23,7 +23,9 @@
  * was chosen deliberately over missing this data.
  *
  * Supports (per page, mixed within one document is fine):
- *   - image/* pages → sent as Anthropic image block
+ *   - JPEG/PNG/GIF/WebP pages → sent as Anthropic image block (and nothing
+ *     else: a .tif or .bmp page is an image everywhere else in this app and is
+ *     refused here — Slice #34.06)
  *   - application/pdf pages → sent as Anthropic document block (PDF beta)
  *   - unsupported pages (e.g. stray .txt coordinate files) are skipped
  *     individually rather than failing the whole request, as long as at
@@ -122,6 +124,12 @@ import { listDocumentPages } from "@/lib/documents/pages-queries";
 import { readFileContent } from "@/lib/storage";
 import { getCurrentUserIdAndRole } from "@/lib/auth/current-role";
 import { checkOcrRateLimit } from "@/lib/rate-limit/ocr";
+import {
+  MODEL_IMAGE_MIME_TYPES,
+  OCTET_STREAM,
+  contentTypeOf,
+  type ModelImageMimeType,
+} from "@/lib/files/file-mime";
 import {
   findNaturalPersonByCnp,
   searchPersonsAll,
@@ -262,8 +270,11 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
 
   // ── Read all pages from storage, building one Anthropic content block per
   // supported page (Slice #21.03.Import multi-page) ─────────────────────────
-  const SUPPORTED_IMAGES = ["image/jpeg", "image/png", "image/gif", "image/webp"] as const;
-  type SupportedImage = (typeof SUPPORTED_IMAGES)[number];
+  // The four image types the model accepts live in src/lib/files/file-mime.ts
+  // (Slice #34.06). Declared inside this function body until then, which made
+  // it the least findable of the five copies of "what may be read".
+  const SUPPORTED_IMAGES = MODEL_IMAGE_MIME_TYPES;
+  type SupportedImage = ModelImageMimeType;
 
   type ContentBlock =
     | { type: "image";    source: { type: "base64"; media_type: SupportedImage; data: string } }
@@ -283,23 +294,32 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
    * Previously an unsupported page was skipped with only a code comment to
    * explain it, which made two very different failures indistinguishable from
    * the outside: "the model found nothing" and "the model never saw this page".
-   * The application/octet-stream case is the one worth calling out by name —
-   * it means the browser recorded no MIME type at upload (the File System
-   * Access API leaves File.type empty for some files on Windows), so the page
-   * is perfectly readable on disk and skipped purely on a bookkeeping gap.
+   * The unrecognised-extension case is the one worth calling out by name.
+   * Until Slice #34.06 that case was `application/octet-stream` — the browser
+   * had recorded no MIME type at upload (the File System Access API leaves
+   * File.type empty for some files on Windows) and a perfectly readable scan
+   * was skipped on a bookkeeping gap. The type is now taken from the file
+   * name, here and at upload, so what remains is the honest case: a stored
+   * page whose extension this system has never heard of.
    */
   function skipReason(page: { mimeType: string | null; fileName: string }): string {
     if (isTextFile(page)) {
-      return "plain-text file (cadastral coordinates or notes) — the model is sent images and PDFs only";
+      return "plain-text file (cadastral coordinates or notes) — the model is sent JPEG, PNG, GIF or WebP images and PDFs only";
     }
-    if (!page.mimeType || page.mimeType === "application/octet-stream") {
-      return "no MIME type was recorded when this page was uploaded, so its format cannot be confirmed";
+    if (!contentTypeOf(page.fileName)) {
+      return "this system does not recognise the page's format from its name";
     }
     return "unsupported format — only JPEG/PNG/GIF/WebP images and PDF can be sent";
   }
 
   for (const page of pages) {
-    const pageMimeType = page.mimeType ?? "application/octet-stream";
+    // ⚠️ EXTENSION FIRST (Slice #34.06), for the same reason the upload route
+    // now records the extension's type: every page stored before that change
+    // could carry `application/octet-stream` because `File.type` was empty at
+    // upload on Windows, and dispatching on the recorded value alone made a
+    // perfectly readable scan unreadable for ever on a bookkeeping gap.
+    const pageMimeType =
+      contentTypeOf(page.fileName) ?? (page.mimeType || OCTET_STREAM);
 
     if ((SUPPORTED_IMAGES as readonly string[]).includes(pageMimeType)) {
       let buf: Buffer;
@@ -330,7 +350,12 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
       // discover mode can report it instead of leaving a silent gap.
       skippedPages.push({
         fileName: page.fileName,
-        mimeType: page.mimeType,
+        // The DERIVED type, not the recorded one (Slice #34.06) — the same
+        // change `read-sample` makes at its own push sites, and for the same
+        // reason: `skipReason` is computed from the extension, so reporting a
+        // stored `application/octet-stream` beside it puts "no MIME type" back
+        // on the one screen this slice took it off.
+        mimeType: pageMimeType,
         reason: skipReason(page),
       });
     }
@@ -344,11 +369,13 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
     const allText = pages.every(isTextFile);
     const friendlyMsg = allText
       ? "Fișierele text (coordonate cadastrale) nu pot fi interpretate cu AI. Funcția este disponibilă doar pentru imagini și PDF-uri."
-      : "Niciuna dintre paginile acestui document nu este într-un format acceptat pentru interpretare AI (imagine sau PDF).";
+      : "Niciuna dintre paginile acestui document nu este într-un format pe care modelul îl poate citi (imagini JPEG, PNG, GIF sau WebP ori fișiere PDF).";
     // Slice #21.10.Import: carry the per-page reasons in the body. "Nothing
     // could be read" is only actionable if you can see WHICH page was rejected
-    // and why — especially for the octet-stream case, where the file itself is
-    // fine and only its recorded MIME type is missing.
+    // and why — especially for the unrecognised-extension case, which since
+    // Slice #34.06 is the honest one: the octet-stream case it replaced meant
+    // the file was fine and only its recorded MIME type was missing, and the
+    // type is now taken from the file name at upload, at serve and here.
     return Response.json(
       { error: friendlyMsg, code: "unsupported_file_type", skippedPages },
       { status: 422 },

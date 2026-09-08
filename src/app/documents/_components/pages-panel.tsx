@@ -36,6 +36,12 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { NavArrowIcon } from "@/components/back-arrow";
 import { HelpHint } from "@/components/help/help-hint";
+import {
+  UPLOAD_ACCEPT_ATTRIBUTE,
+  isUploadableFileName,
+} from "@/lib/files/file-kinds";
+import { contentTypeOf } from "@/lib/files/file-mime";
+import { MAX_UPLOAD_BYTES, MAX_UPLOAD_MB } from "@/lib/import/constraint-rules";
 import { buttonClass } from "@/lib/ui/button-styles";
 
 // ---------------------------------------------------------------------------
@@ -73,8 +79,23 @@ function isPdf(mimeType: string | null | undefined): boolean {
   return mimeType === "application/pdf";
 }
 
-const ACCEPTED_FILE_TYPES =
-  "image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.xml,.html";
+/**
+ * What the file dialog offers, and what the dialog below re-checks.
+ *
+ * Both come from the registry in `@/lib/files/file-kinds` (Slice #34.06).
+ * There is nothing to type here any more, and that is the point: this constant
+ * used to be a hand-written fourth answer to "what may become a document", and
+ * it disagreed with the other three — it opened with `image/*` (which every OS
+ * picker resolves to include HEIC, a format only Safari draws), offered `.xml`
+ * and `.html` (of no kind at all, so `classifyFileSource` answered UNKNOWN for
+ * them once uploaded) and withheld `.rtf` and `.odt` (which the registry has
+ * called documents all along, so an `.odt` deed needed "All files").
+ *
+ * `accept` is only ever a hint — every file dialog offers "All files" — which
+ * is why `handleFileChange` tests the chosen file rather than trusting it, and
+ * why the upload route tests again on arrival.
+ */
+const ACCEPTED_FILE_TYPES = UPLOAD_ACCEPT_ATTRIBUTE;
 
 // Zoom bounds for the "Show Big Page" viewer (mouse-wheel zoom + drag-to-pan,
 // Slice #15.14). Scale is unitless: 1 = fit-to-box (the original behaviour),
@@ -293,17 +314,39 @@ export function PagesViewerBox({
   // non-interactive behaviour. Zoomable content is restricted to images and
   // PDFs — there's nothing useful to zoom on the loading/error/placeholder
   // states or the generic download-prompt fallback (Word/Excel/text files).
+  // ⚠️ `viewerMimeType`, the same answer `PageViewer` renders from. Reading the
+  // raw recorded type here while the viewer read the derived one made the panel
+  // disagree with itself: a legacy octet-stream scan was drawn as an image and
+  // was simultaneously "other", so wheel-zoom and drag-to-pan were silently
+  // dead in Show Big Page for exactly the rows the derivation rescued.
   const contentKind = viewData
-    ? isImage(viewData.mimeType)
+    ? isImage(viewerMimeType(viewData))
       ? "image"
-      : isPdf(viewData.mimeType)
+      : isPdf(viewerMimeType(viewData))
         ? "pdf"
         : "other"
     : null;
+
+  /**
+   * An image the browser refused to draw — see `ImagePane`.
+   *
+   * ⚠️ **IT LIVES HERE, NOT IN `ImagePane`, BECAUSE `zoomable` HAS TO SEE IT.**
+   * When the picture fails, `PageViewer` renders a download prompt instead —
+   * and a download prompt is not zoomable, so the transparent capture overlay
+   * below must not mount over it. It swallows the click on the download link,
+   * and no `z-index` on that link can escape it: the content wrapper carries an
+   * inline `transform`, which creates a stacking context, so `z-10` inside it
+   * only orders the link WITHIN that wrapper while the overlay is a later
+   * sibling at the same painting level. State that the overlay's own condition
+   * can read is the only fix that works.
+   */
+  const [imageFailed, setImageFailed] = useState(false);
+
   const zoomable =
     fill &&
     !viewLoading &&
     !viewError &&
+    !imageFailed &&
     (contentKind === "image" || contentKind === "pdf");
 
   const [transform, setTransform] = useState(IDENTITY_TRANSFORM);
@@ -317,6 +360,9 @@ export function PagesViewerBox({
   if (pageKey !== resolvedFor) {
     setResolvedFor(pageKey);
     setTransform(IDENTITY_TRANSFORM);
+    // A new page gets a fresh chance to draw. Reset here rather than by
+    // keying the child: the failure now belongs to this component.
+    setImageFailed(false);
   }
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -448,7 +494,22 @@ export function PagesViewerBox({
             transformOrigin: "0 0",
           }}
         >
-          <PageViewer viewData={viewData} fill={fill} />
+          <PageViewer
+            viewData={viewData}
+            fill={fill}
+            imageFailed={imageFailed}
+            onImageError={() => {
+              setImageFailed(true);
+              // ⚠️ AND reset the zoom. `viewLoading` tracks the METADATA fetch,
+              // not the `<img>`, so the capture overlay is live while a picture
+              // is still loading — a wheel-scroll in that window leaves
+              // `scale: 3` on the wrapper, and the download prompt that
+              // replaces the image then renders outside the `overflow-hidden`
+              // box. Same end state as the bug this fallback exists to remove:
+              // a download link the user cannot reach.
+              setTransform(IDENTITY_TRANSFORM);
+            }}
+          />
         </div>
       )}
       {/*
@@ -770,31 +831,127 @@ export function PagesPanel({
 // PageViewer — renders the file inline when possible, download link otherwise
 // ---------------------------------------------------------------------------
 
-function PageViewer({ viewData, fill = false }: { viewData: ViewData; fill?: boolean }) {
-  if (isImage(viewData.mimeType)) {
+/**
+ * The type to VIEW this page as.                                (Slice #34.06)
+ *
+ * The recorded `mime_type` is not trustworthy on its own, and this is where the
+ * user meets that. The File System Access API leaves `File.type` empty for some
+ * files on Windows — the deployment target — so every page imported through the
+ * folder wizard before #34.06 could be stored as `application/octet-stream`,
+ * and this panel then drew a download prompt over a perfectly good scan. The
+ * upload route now derives the recorded type from the extension, but that fixes
+ * NEW rows only; the archive is full of old ones and this slice adds no
+ * migration.
+ *
+ * ⚠️ **IT OVERRIDES ONLY TOWARDS AN IMAGE, AND THE ASYMMETRY IS THE WHOLE
+ * POINT.** `<img>` ignores the Content-Type it is served and sniffs the bytes,
+ * so promoting a legacy octet-stream row to `image/jpeg` makes the picture
+ * appear whatever the server said. An `<iframe>` does not: Chrome refuses to
+ * render a PDF served as `application/octet-stream` and shows an empty frame
+ * with no error and no way out. In production these bytes come from Supabase,
+ * whose object carries the Content-Type recorded AT UPLOAD (`storage/index.ts`
+ * passes `mimeType` to it) — so for exactly the legacy rows this function
+ * exists to rescue, a derived `application/pdf` would replace a working
+ * download link with a blank box. An image gains; a PDF must keep the answer
+ * the bytes will actually arrive with.
+ */
+function viewerMimeType(viewData: ViewData): string | null {
+  const fromName = contentTypeOf(viewData.fileName);
+  return fromName !== null && fromName.startsWith("image/")
+    ? fromName
+    : viewData.mimeType;
+}
+
+/**
+ * An image the browser may or may not be able to draw.
+ *
+ * `.tif` and `.bmp` are images to the registry, are archived, and are served
+ * with an honest `image/tiff` — and no browser but Safari draws a TIFF. Without
+ * the `onError` fallback the panel showed an empty box with alt text and no way
+ * to get the file, which is worse than the download prompt a page of an
+ * unrecognised type gets. It catches every load failure, not only the
+ * undrawable format — an expired signed URL, a 404, a dropped connection — so
+ * the sentence it shows says the page could not be displayed rather than
+ * claiming something about the format.
+ *
+ * ⚠️ **THE FAILURE IS THE PARENT'S STATE, NOT THIS COMPONENT'S.**
+ * `PagesViewerBox` needs it to decide whether to mount the zoom/pan capture
+ * overlay: that overlay sits `absolute inset-0` over everything, so with it
+ * mounted the download link this component falls back to is unclickable — and
+ * no `z-index` can rescue it, because the content wrapper's inline `transform`
+ * puts the link inside its own stacking context. See `imageFailed` there.
+ */
+function ImagePane({
+  viewData,
+  fill,
+  failed,
+  onError,
+}: {
+  viewData: ViewData;
+  fill: boolean;
+  failed: boolean;
+  onError: () => void;
+}) {
+  if (failed) {
     return (
-      <div
-        className={
-          fill
-            ? "flex h-full items-center justify-center p-3"
-            : "flex min-h-[320px] items-center justify-center p-3"
-        }
-      >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={viewData.url}
-          alt={viewData.fileName}
-          className={
-            fill
-              ? "max-h-full max-w-full object-contain"
-              : "max-h-[600px] max-w-full object-contain"
-          }
-        />
-      </div>
+      <DownloadPrompt viewData={viewData} fill={fill} messageKey="viewer.previewFailed" />
     );
   }
 
-  if (isPdf(viewData.mimeType)) {
+  return (
+    <div
+      className={
+        fill
+          ? "flex h-full items-center justify-center p-3"
+          : "flex min-h-[320px] items-center justify-center p-3"
+      }
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={viewData.url}
+        alt={viewData.fileName}
+        onError={onError}
+        className={
+          fill
+            ? "max-h-full max-w-full object-contain"
+            : "max-h-[600px] max-w-full object-contain"
+        }
+      />
+    </div>
+  );
+}
+
+function PageViewer({
+  viewData,
+  fill = false,
+  imageFailed,
+  onImageError,
+}: {
+  viewData: ViewData;
+  fill?: boolean;
+  /**
+   * Owned by `PagesViewerBox` — see `ImagePane`. REQUIRED, both of them: a
+   * default of `false` plus a no-op handler would let a future caller mount an
+   * `<img>` whose failure is swallowed, which is the blank box with alt text
+   * and no download link that this pair exists to prevent.
+   */
+  imageFailed: boolean;
+  onImageError: () => void;
+}) {
+  const mimeType = viewerMimeType(viewData);
+
+  if (isImage(mimeType)) {
+    return (
+      <ImagePane
+        viewData={viewData}
+        fill={fill}
+        failed={imageFailed}
+        onError={onImageError}
+      />
+    );
+  }
+
+  if (isPdf(mimeType)) {
     return (
       <iframe
         src={viewData.url}
@@ -811,7 +968,16 @@ function PageViewer({ viewData, fill = false }: { viewData: ViewData; fill?: boo
   return <DownloadPrompt viewData={viewData} fill={fill} />;
 }
 
-function DownloadPrompt({ viewData, fill = false }: { viewData: ViewData; fill?: boolean }) {
+function DownloadPrompt({
+  viewData,
+  fill = false,
+  messageKey = "viewer.downloadPrompt",
+}: {
+  viewData: ViewData;
+  fill?: boolean;
+  /** Why the file is being offered rather than shown. See `ImagePane`. */
+  messageKey?: string;
+}) {
   const t = useTranslations("document.pages");
   return (
     <div
@@ -821,12 +987,15 @@ function DownloadPrompt({ viewData, fill = false }: { viewData: ViewData; fill?:
           : "flex min-h-[320px] flex-col items-center justify-center gap-4 p-6 text-center"
       }
     >
-      <FileIcon mimeType={viewData.mimeType} />
+      {/* The icon may say more than the stored type does — a legacy row's
+          mime_type is often application/octet-stream. Cosmetic, so it takes
+          the derived answer for every type, not only for images. */}
+      <FileIcon mimeType={contentTypeOf(viewData.fileName) ?? viewData.mimeType} />
       <div>
         <p className="text-sm font-medium text-ink dark:text-zinc-200">
           {viewData.fileName}
         </p>
-        <p className="mt-1 text-xs text-fade">{t("viewer.downloadPrompt")}</p>
+        <p className="mt-1 text-xs text-fade">{t(messageKey)}</p>
       </div>
       <a
         href={viewData.url}
@@ -843,9 +1012,15 @@ function DownloadPrompt({ viewData, fill = false }: { viewData: ViewData; fill?:
 
 /** Generic file icon based on MIME type. */
 function FileIcon({ mimeType }: { mimeType: string | null }) {
+  // `.rtf` and `.odt` join the word-processor group with Slice #34.06, which is
+  // the slice that started offering them in the picker. A newly accepted format
+  // that falls through to the grey generic icon reads as "the system does not
+  // know what this is" about a file it has just agreed to store.
   const color =
     mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
-    mimeType === "application/msword"
+    mimeType === "application/msword" ||
+    mimeType === "application/rtf" ||
+    mimeType === "application/vnd.oasis.opendocument.text"
       ? "text-blue-600"
       : mimeType === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
         mimeType === "application/vnd.ms-excel"
@@ -900,8 +1075,24 @@ function AddPageDialog({
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] ?? null;
-    if (file && file.size > 20 * 1024 * 1024) {
-      setError(t("dialog.fileTooLarge"));
+
+    // Refused HERE, where the user chose the file, rather than accepted and
+    // then found unusable — the whole point of Slice #34.06. `accept` above
+    // only filters what the dialog SHOWS; "All files" is always one click
+    // away, so a wrong format arrives here routinely rather than rarely.
+    // Type before size, because a `.heic` burst at 30 MB is refused for being
+    // a `.heic` and telling the user to rescan it smaller would be a fix that
+    // cannot work.
+    const reason =
+      file === null                     ? null
+      : !isUploadableFileName(file.name) ? t("dialog.fileTypeNotAllowed")
+      : file.size > MAX_UPLOAD_BYTES     ? t("dialog.fileTooLarge", {
+                                             limitMb: MAX_UPLOAD_MB,
+                                           })
+      : null;
+
+    if (reason !== null) {
+      setError(reason);
       setStagedFile(null);
       // Reset so the same file can be re-selected after error.
       e.target.value = "";
@@ -936,10 +1127,24 @@ function AddPageDialog({
         { method: "POST", body: fd },
       );
       if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(
-          (body as { error?: string })?.error ?? t("dialog.uploadError"),
-        );
+        const body = (await res.json().catch(() => ({}))) as {
+          error?: string;
+          code?: string;
+        };
+        // The route's `error` is English, and this app's default locale is
+        // ro-RO. It used to reach the user verbatim, which mattered little
+        // while the 415 was effectively unreachable; Slice #34.06 made it fire
+        // for every extension outside the registry, so the route now sends a
+        // `code` and the two refusals it can actually produce are said here in
+        // the user's own language. Anything else still falls back to the
+        // generic message rather than to English.
+        const localised =
+          body.code === "file_type_not_allowed"
+            ? t("dialog.fileTypeNotAllowed")
+            : body.code === "file_too_large"
+              ? t("dialog.fileTooLarge", { limitMb: MAX_UPLOAD_MB })
+              : null;
+        throw new Error(localised ?? t("dialog.uploadError"));
       }
       onSuccess();
     } catch (err) {

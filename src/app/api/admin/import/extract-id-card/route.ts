@@ -60,6 +60,11 @@ import { db }                 from "@/db";
 import { asc }                from "drizzle-orm";
 import { lookupCitizenship, lookupInstitution } from "@/db/schema";
 import { unexpectedError }    from "@/lib/api/errors";
+import {
+  MODEL_IMAGE_MIME_TYPES,
+  contentTypeOf,
+  type ModelImageMimeType,
+} from "@/lib/files/file-mime";
 import { ANONYMOUS_USER_ID } from "@/lib/auth/current-user";
 import { getCurrentUserIdAndRole } from "@/lib/auth/current-role";
 import { checkOcrRateLimit }  from "@/lib/rate-limit/ocr";
@@ -284,13 +289,28 @@ export async function POST(request: NextRequest): Promise<Response> {
   if (!imageField || !(imageField instanceof File)) {
     return Response.json({ error: "No image provided" }, { status: 400 });
   }
-  if (!imageField.type.startsWith("image/")) {
-    return Response.json({ error: "File is not an image" }, { status: 400 });
+  // ⚠️ THE NAME, NOT `File.type`   (Slice #34.06)
+  //
+  // `bulk-import-dialog.tsx`'s `idCardImage` hands this route the ORIGINAL
+  // File System Access `File` for anything that is not a PDF — the object whose
+  // `.type` is EMPTY for some files on Windows, the deployment target. So
+  // `imageField.type.startsWith("image/")` refused perfectly good `.jpg` ID-card
+  // scans with `File is not an image`, and the value it then sent to Anthropic
+  // as `media_type` was whatever the OS registry happened to say. Every route
+  // that talks to the model now asks the same table.
+  const mediaType = contentTypeOf(imageField.name);
+  if (
+    mediaType === null ||
+    !(MODEL_IMAGE_MIME_TYPES as readonly string[]).includes(mediaType)
+  ) {
+    return Response.json(
+      { error: "File must be a JPEG, PNG, GIF or WebP image" },
+      { status: 400 },
+    );
   }
 
   const buffer = Buffer.from(await imageField.arrayBuffer());
   const base64 = buffer.toString("base64");
-  const mediaType = imageField.type;
 
   const model = process.env.ANTHROPIC_VISION_MODEL || DEFAULT_MODEL;
 
@@ -313,7 +333,11 @@ export async function POST(request: NextRequest): Promise<Response> {
             content: [
               {
                 type: "image",
-                source: { type: "base64", media_type: mediaType, data: base64 },
+                source: {
+                  type: "base64",
+                  media_type: mediaType as ModelImageMimeType,
+                  data: base64,
+                },
               },
               {
                 type: "text",

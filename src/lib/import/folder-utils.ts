@@ -20,7 +20,7 @@
 import {
   baseNameOf,
   isFileKind,
-  isImageOrPdf,
+  isModelReadable,
   isPageGroupMember,
 } from "@/lib/files/file-kinds";
 
@@ -675,9 +675,17 @@ export function entryFileNames(entry: FSEntry): string[] {
  * route can actually send to the model. A text-only document comes back 422
  * with "fișierele text … nu pot fi interpretate cu AI", so reading one would
  * only ever produce that error.
+ *
+ * ⚠️ `isModelReadable`, NOT `isImageOrPdf` (Slice #34.06). They differ by
+ * `.bmp`, `.tif` and `.tiff`, which are images to the registry and are refused
+ * by the model — so this predicate used to answer "readable" for a folder of
+ * TIFF scans, the doc-type engine counted them as samples, the screen said
+ * "3 samples", and all three came back 422. The whole point of the function is
+ * to be the client-side twin of what the route accepts; being a twin of
+ * something else is worse than not existing.
  */
 export function hasReadablePage(entry: FSEntry): boolean {
-  return entryFileNames(entry).some(isImageOrPdf);
+  return entryFileNames(entry).some(isModelReadable);
 }
 
 // ---------------------------------------------------------------------------

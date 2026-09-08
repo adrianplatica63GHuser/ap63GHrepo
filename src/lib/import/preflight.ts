@@ -43,7 +43,7 @@
 
 import type { FSEntry, FSFileEntry } from "./folder-utils";
 import { isCoordinateFileName } from "./coordinate-file";
-import { isImageOrPdf } from "@/lib/files/file-kinds";
+import { isModelReadable } from "@/lib/files/file-kinds";
 
 // ---------------------------------------------------------------------------
 // Preconditions
@@ -295,14 +295,20 @@ export function forecastImport(entries: readonly FSEntry[]): ImportForecast {
       // arithmetic `filesToImport` exists to let the screen explain.
       filesToImport += entry.handles.length;
       // The wizard scans a group by its first page only.
-      if (entry.handles.length > 0 && isImageOrPdf(entry.handles[0].name)) {
+      // `isModelReadable`, not `isImageOrPdf` (Slice #34.06): this number is
+      // the one the screen puts the sentence "only JPEG, PNG, GIF and WebP
+      // images and PDFs can be read by the model" next to, so counting a
+      // format the model refuses makes the sentence contradict the figure it
+      // explains — and bills the user for a call whose bytes `scan-folder` used
+      // to relabel `image/jpeg` before sending them.
+      if (entry.handles.length > 0 && isModelReadable(entry.handles[0].name)) {
         classificationCalls++;
       }
       continue;
     }
     const file = entry as FSFileEntry;
     filesToImport++;
-    if (isImageOrPdf(file.name)) classificationCalls++;
+    if (isModelReadable(file.name)) classificationCalls++;
     if (isCoordinateFileName(file.name)) coordinateCandidates.push(file.path);
   }
 
