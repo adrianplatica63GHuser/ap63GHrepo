@@ -38,7 +38,7 @@
  */
 
 import { asc, count, eq, getTableName, like, sql } from "drizzle-orm";
-import { nextFreeKey, slugifyLookupKey } from "./keys";
+import { nextFreeKey, requestedDocumentTypeKey, slugifyLookupKey } from "./keys";
 import { db, type DbTransaction } from "@/db";
 import {
   lookupPropertyType,
@@ -77,6 +77,13 @@ import {
   IdCardFormRefusedError,
   idCardFormRefusal,
 } from "@/lib/documents/id-card-form-guard";
+import {
+  DocumentTypeKeyRefusedError,
+  DocumentTypeNameTakenError,
+  documentTypeKeyRefusal,
+  documentTypeNameTakenBy,
+} from "@/lib/documents/document-type-name-guard";
+import { normaliseDocumentTypeName } from "@/lib/documents/document-type-match";
 import {
   CatchAllFormRefusedError,
   catchAllFormRefusal,
@@ -176,7 +183,14 @@ async function generateUniqueDocumentTypeKey(
  * migration, no form field and no data change.
  *
  * ⚠️ **"IN PRACTICE" IS DOING WORK: NO LOOKUP TABLE HAS A UNIQUE CONSTRAINT ON
- * ITS DISPLAY FIELD.** Two rows sharing BOTH keys can still swap. On the four
+ * ITS DISPLAY FIELD — EXCEPT `document-types`, SINCE SLICE #34.09.**
+ * migration_080 puts a partial unique index over the NORMALISED name on
+ * `lookup_document_type`, so on that one list a tie is no longer reachable at
+ * all: two rows the ORDER BY could not separate would have to hold the same
+ * name, and the database now refuses the second. The paragraph below is left
+ * standing for the other ten, where it is still exactly true; the
+ * `document-types` bullet inside it is corrected in place.
+ * Two rows sharing BOTH keys can still swap. On the four
  * lists whose name is the only column — `use-categories`, `person-types`,
  * `citizenships`, `judicial-person-types` — that cannot be seen: the two lines
  * read the same. On the other seven it can, because the modal renders every
@@ -184,10 +198,14 @@ async function generateUniqueDocumentTypeKey(
  * value-list-modal.tsx), so tied rows visibly exchange places.
  *
  * Two of those seven are worse than cosmetic:
- *   • `document-types`, where duplicate names are documented and EXPECTED —
- *     only `key` is UNIQUE, and `matchDocumentType` takes the FIRST name match
- *     (src/lib/documents/resolve-document-type.ts) — so a tie decides which of
- *     two same-named types an import ADOPTS, not merely where a row sits.
+ *   • `document-types`, where duplicate names WERE documented and EXPECTED —
+ *     that sentence went on to say "only `key` is UNIQUE, and
+ *     `matchDocumentType` takes the FIRST name match, so a tie decides which of
+ *     two same-named types an import ADOPTS, not merely where a row sits". True
+ *     until Slice #34.09, which made the tie unreachable: two rows can no
+ *     longer hold one name. `matchDocumentType` still takes the first match and
+ *     the restated ORDER BY in resolve-document-type.ts is still load-bearing —
+ *     what is gone is the case where "first" was a coin toss.
  *   • `tarla`, where ties at `sort_order = 0` are the normal state rather than
  *     an edge case, because `createPropertyIn` auto-seeds every code there.
  * Neither is changed by this slice — document-types is one of the four
@@ -347,15 +365,49 @@ export async function createValue(
       // `SELECT keys` then `INSERT` inside `BEGIN…COMMIT` guarantees exactly
       // what the two autocommit statements it replaced did.
       //
-      // ⚠️ **And a lock here would not close the gap either**, which is why one
-      // is deliberately not taken: this door performs no name check at all. Its
-      // duplicate-name refusal lives in the CLIENT (`sameTypeName` in the
-      // discovery review dialog, against a list react-query may have held for
-      // five minutes), so two rows with one display name are reachable through
-      // it by a stale list rather than by a race — and a lock cannot serialise
-      // against a check that is not being made. The fix is a unique index on
-      // the normalised name, which needs a migration; it is in the handover.
-      return db.transaction((tx) => createDocumentTypeRow(tx, data));
+      // ⚠️ **THE PARAGRAPH THAT STOOD HERE SAID THIS DOOR "PERFORMS NO NAME
+      // CHECK AT ALL", AND SLICE #34.09 IS THE HANDOVER LINE IT ENDED ON COMING
+      // BACK.** Quoted rather than deleted, because the reasoning is still the
+      // reason the fix is shaped the way it is: "Its duplicate-name refusal
+      // lives in the CLIENT (`sameTypeName` in the discovery review dialog,
+      // against a list react-query may have held for five minutes), so two rows
+      // with one display name are reachable through it by a stale list rather
+      // than by a race — and a lock cannot serialise against a check that is not
+      // being made. The fix is a unique index on the normalised name, which
+      // needs a migration; it is in the handover."
+      //
+      // Both halves now exist. `createDocumentTypeRow` asks
+      // `documentTypeNameTakenBy` on the connection it is given, and
+      // migration_080's partial unique index closes the race that a read and
+      // then a write cannot. A LOCK is still deliberately not taken here, and
+      // now for a better reason than "it would not help": the index is the
+      // serialisation, and it serialises the classifier's door as well without
+      // either door having to know about the other.
+      //
+      // ⚠️ **`key` IS LIFTED OUT OF THE PAYLOAD AND PASSED AS A PARAMETER, NOT
+      // LEFT ON `data`.** That is not ceremony — see the ⚠️ on
+      // `createDocumentTypeRow`, whose entire safety argument is that a key
+      // never arrives as a field on the object that becomes the row. Slice
+      // #34.09 lets a PERSON express a key (D-03) and does it through the
+      // channel #29.07 already built for the classifier, so what changes is who
+      // may pass the third argument, not how the row is built. The rest of the
+      // payload goes on untouched.
+      //
+      // ⚠️ **AND IT IS JUDGED BEFORE THE TRANSACTION OPENS.**
+      // `documentTypeKeyRefusal` is the whole of what a typed key must satisfy
+      // — it slugs to something, the slug is not longer than the archive
+      // allows, and it is not a key the codebase itself matches on unless the
+      // NAME agrees. That last arm is a hole this slice OPENED: before it, a
+      // key was always the slug of a name, so a row could only be keyed
+      // `NECLASIFICAT` by being named something that slugs to it. See the
+      // function's own ⚠️ for the measured sequence.
+      const keyRefusal = documentTypeKeyRefusal(data.key, data.name);
+      if (keyRefusal !== null) throw new DocumentTypeKeyRefusedError(keyRefusal);
+      return db.transaction((tx) => {
+        const { key: _requested, ...rest } = data as Record<string, unknown>;
+        void _requested;
+        return createDocumentTypeRow(tx, rest, requestedDocumentTypeKey(data.key));
+      });
     case "institutions": {
       const [row] = await db.insert(lookupInstitution).values(data).returning();
       return row as LookupRow;
@@ -408,18 +460,77 @@ export async function createDocumentTypeRow(
   data: any,
   preferredKey?: string | null,
 ): Promise<LookupRow> {
+  // ── The display name, before anything else is decided.      (Slice #34.09)
+  //
+  // ⚠️ **A READ AND THEN A WRITE, WHICH IS NOT ATOMIC — AND THAT IS WHY THERE
+  // IS ALSO AN INDEX.** Two administrators creating „Act adițional" in the same
+  // instant both read a table without it and both insert; migration_080's
+  // partial unique index is what makes the loser fail, and both routes map that
+  // 23505 to this same refusal so the two arrive as one sentence. This check
+  // exists for the case that actually happens — a stale client list — where the
+  // index would otherwise produce a bare Postgres error.
+  //
+  // ⚠️ **ON `conn`, NEVER ON `db`.** `resolveClassifiedDocumentType` runs this
+  // function inside a transaction holding an advisory lock on the normalised
+  // name; a read on `db` would be a read outside that lock, against a snapshot
+  // it does not cover, which is the same race one level down that
+  // `generateUniqueDocumentTypeKey`'s own ⚠️ warns about.
+  //
+  // ⚠️ **IT IS A NO-OP ON THE RESOLVER'S PATH, AND IS STILL ASKED THERE.**   That
+  // caller has already name-matched the rows it read under the lock and ADOPTS
+  // on a match, so it only ever reaches here with a name no row holds. Asking
+  // anyway is what makes the rule a property of how a document-type row is
+  // built rather than of which door built it — this function's whole reason for
+  // existing (#29.06) — and it costs one read of about forty
+  // rows — a sequential scan of a lookup table, not an index lookup, which is
+  // what reading every row for a comparison only TypeScript can make costs.
+  // `resolveClassifiedDocumentType`'s retry loop treats the refusal as a lost
+  // race and goes round to adopt, which is the correct answer if it ever does
+  // fire.
+  //
+  // The whole table is read rather than a `WHERE`: the comparison is
+  // `sameDocumentTypeName`, and there is exactly one definition of it — in
+  // TypeScript. A SQL predicate restating the fold would be a second opinion
+  // about the rule, which is the shape this slice exists to remove.
+  const existing = await conn
+    .select({ id: lookupDocumentType.id, key: lookupDocumentType.key, name: lookupDocumentType.name })
+    .from(lookupDocumentType);
+  const nameTakenBy = documentTypeNameTakenBy(data.name, existing);
+  if (nameTakenBy !== null) throw new DocumentTypeNameTakenError(nameTakenBy.name);
   // Slice #29.07: the canonical key, when the classifier offered one this
   // codebase defines.
   //
   // ⚠️ **A PARAMETER OF ITS OWN, NEVER A FIELD ON `data`, AND THE DISTINCTION
-  // IS THE WHOLE SAFETY ARGUMENT.** `key` is immutable and UNIQUE, and a client
-  // that chose one would eventually choose a collision — so the two doors that
-  // are a PERSON (the Reference Data form and the discovery review dialog) call
-  // this with two arguments and cannot express a key at all, whatever their
-  // request body happens to contain. Exactly one caller passes a third:
-  // `resolveClassifiedDocumentType`, which gets it from `canonicalTypeKey` —
-  // i.e. from `KNOWN_DOCUMENT_TYPES`, not from the wire. Same shape as `origin`
-  // above, and for the same reason.
+  // IS STILL THE WHOLE SAFETY ARGUMENT — BUT WHAT IT PROTECTS AGAINST CHANGED
+  // IN SLICE #34.09, SO THE OLD SENTENCE IS QUOTED RATHER THAN LEFT STANDING.**
+  // It read: "…so the two doors that are a PERSON (the Reference Data form and
+  // the discovery review dialog) call this with two arguments and cannot
+  // express a key at all, whatever their request body happens to contain.
+  // Exactly one caller passes a third: `resolveClassifiedDocumentType`…".
+  //
+  // The Reference Data form now passes a third, because D-03 decided it should:
+  // `key` is an immutable slug that all document matching runs on, the form
+  // asked only for a NAME, and the working method for getting the key you
+  // wanted was therefore to type `CONTRACT_VANZARE` as the name, let it slug,
+  // and rename the row afterwards — a rule you had to remember, written down in
+  // Adrian's own `New.DocTypes.docx`. Two doors pass a third argument now: this
+  // one, from `requestedDocumentTypeKey` (which folds and uppercases but never
+  // invents), and the resolver, from `canonicalTypeKey` — i.e. from
+  // `KNOWN_DOCUMENT_TYPES`, not from the wire. The discovery review dialog
+  // still passes none.
+  //
+  // ⚠️ **WHAT THE PARAMETER IS FOR IS UNCHANGED, AND IT IS WHY A PERSON MAY
+  // NOW USE IT.** The old worry was "a client that chose one would eventually
+  // choose a collision". A collision is precisely what the `PREFERRED_KEY_TAKEN`
+  // refusal below answers, out loud, instead of quietly storing `..._2`. A key
+  // arriving as a FIELD on `data` would have no such treatment: it would be
+  // spread into `.values()` and take whatever `nextFreeKey` had nothing to say
+  // about. So the field/parameter distinction is what makes the form's key safe
+  // rather than what kept it out.
+  //
+  // ⚠️ **AND THE NAME IS CHECKED BEFORE ANY OF IT.** See below: until #34.09
+  // this function's own `createValue` branch said in as many words that this
+  // door "performs no name check at all".
   //
   // ⚠️ **What it fixes is finding F6.** Without it every created type was
   // slugged from the free-text LABEL, so a document the model classified
@@ -474,7 +585,8 @@ export async function createDocumentTypeRow(
     : "MANUAL";
   // Slice #27.03: through the same template-field choke point as the
   // update below. No admin form sends `templateFields` on a POST today —
-  // the create form is built from LIST_META, which lists `name` alone —
+  // the create form is built from LIST_META, which since Slice #34.09 lists
+  // `name` and a `createOnly` `key`, and no `templateFields` on either verb —
   // but a door that sanitises on the way in and not on the way out is a
   // door that will eventually be used the other way round.
   const values = sanitizeDocumentTypeTemplateFields(data);
@@ -674,6 +786,66 @@ export async function updateValue(
           nextFields !== undefined,
         );
         if (catchAll !== null) throw new CatchAllFormRefusedError(catchAll);
+        // ── A fourth guard: two types may not share one display name. ──────
+        //                                                       (Slice #34.09)
+        //
+        // ⚠️ **A GUARD ON THE CREATE DOOR ALONE WOULD BE THE LOCK-ON-A-DOOR-
+        // WITH-THE-WINDOW-OPEN SHAPE THIS BRANCH HAS ALREADY BEEN CAUGHT BY
+        // TWICE.** The identity-card and catch-all refusals above both had to
+        // grow a rename half for exactly this reason. Reference Data's edit
+        // form renames a type, and a rename onto a name another row holds is
+        // the same two rows with the same one name, reached from the other
+        // side.
+        //
+        // ⚠️ **IT ASKS WHETHER THE WRITE *CHANGES* THE NAME, NOT WHETHER THE
+        // NAME COLLIDES — AND AN ADVERSARIAL ROUND IS WHY.** The first version
+        // of this guard ran on any payload carrying a `name`, which read as
+        // safe because "the admin edit form is the only thing that renames".
+        // It is not: `document-type-form-editor.tsx` sends
+        // `{ name: typeName, templateFields }` on EVERY form save — `name`
+        // because the PUT is a full-row replace and its schema requires it —
+        // so on a database that ALREADY holds two types with one name (which
+        // is precisely the database migration_080 refuses to index, i.e. the
+        // one running this code without the index behind it) pressing
+        // „Formular" on either row and saving was refused, in English, by a
+        // guard about a field that screen cannot edit. That strands the only
+        // screen in the application that can CLEAR a form — the exact shape of
+        // the grandfather clause `catch-all-form-guard.ts` exists for, one
+        // door over, rebuilt.
+        //
+        // So the term is `normaliseDocumentTypeName(next) !== normalise(stored)`:
+        // a write that leaves the name as it found it — byte for byte, or with
+        // its diacritics, case or punctuation corrected — is not judged at all,
+        // and a write that MOVES the name onto another row's is. Two names that
+        // both normalise to nothing count as unchanged, which is right: the
+        // partial index does not constrain them either.
+        //
+        // ⚠️ **`typeof values.name === "string"` stays**, so a payload that
+        // does not state a name is not judged: `.set(values)` leaves an unnamed
+        // column alone, so such a write cannot create a collision. Same term,
+        // same reason, as `writesTheForm` above.
+        //
+        // ⚠️ **`id` is still passed as `exceptId`, and it is now belt and
+        // braces rather than the only guard.** Without it a rename to a
+        // different spelling of the row's OWN name would find itself among the
+        // rows searched. The predicate above already excludes that case; the
+        // argument is kept in place because a future edit to one of the two
+        // should not silently remove the other.
+        if (
+          typeof values.name === "string" &&
+          normaliseDocumentTypeName(values.name) !==
+            normaliseDocumentTypeName(stored.name)
+        ) {
+          const others = await db
+            .select({
+              id:   lookupDocumentType.id,
+              key:  lookupDocumentType.key,
+              name: lookupDocumentType.name,
+            })
+            .from(lookupDocumentType);
+          const takenBy = documentTypeNameTakenBy(values.name, others, id);
+          if (takenBy !== null) throw new DocumentTypeNameTakenError(takenBy.name);
+        }
       }
       const [row] = await db
         .update(lookupDocumentType)

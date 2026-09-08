@@ -60,22 +60,33 @@
  * normalisation the matching rule uses, so two spellings of one name take one
  * lock, and a prefix that keeps this lock space clear of the parcel one.
  *
- * ⚠️ **`pg_advisory_xact_lock`, not a row lock and not a unique index.** There
- * is no row to lock — the whole problem is that the row does not exist yet —
- * and a unique index on a normalised-name expression, which would be the
+ * ⚠️ **`pg_advisory_xact_lock`, not a row lock — AND, SINCE SLICE #34.09,
+ * ALONGSIDE A UNIQUE INDEX RATHER THAN INSTEAD OF ONE.** There is no row to
+ * lock: the whole problem is that the row does not exist yet. What stood here
+ * was "…and a unique index on a normalised-name expression, which would be the
  * stronger fix, needs a migration this slice does not carry (it is named in the
- * handover). The lock is released by COMMIT or ROLLBACK with nothing to clean
- * up; and it serialises creates of a single label and nothing else. The
- * ordinary run, where the type already exists, never reaches it — the match
- * happens before the transaction is opened.
+ * handover)". That migration is `migration_080_document_type_name_unique.sql`,
+ * and this is the handover line coming back. The lock is still what this
+ * function needs — it serialises the read-and-then-insert so a racer is ADOPTED
+ * rather than reported, which no index can do — and the index is what makes
+ * the rule true for every other writer. The lock is released by COMMIT or
+ * ROLLBACK with nothing to clean up. The ordinary run, where the type already
+ * exists, never reaches it: the match happens before the transaction is opened.
  *
- * ⚠️ **It does NOT serialise the ADMIN door.** `POST /api/admin/value-lists/
- * document-types` — the Reference Data form and the discovery review dialog —
- * takes no lock and performs no name check at all; its duplicate-name refusal
- * is a CLIENT-side test against a list that may be five minutes old. Two rows
- * with one display name are still reachable that way, and the fix is the same
- * unique index on the normalised name, in the migration this slice does not
- * carry. Named here rather than left implied, and in the handover.
+ * ⚠️ **IT STILL DOES NOT SERIALISE THE ADMIN DOOR, AND THAT DOOR IS NO LONGER
+ * UNGUARDED.** What stood here was: "`POST /api/admin/value-lists/document-
+ * types` — the Reference Data form and the discovery review dialog — takes no
+ * lock and performs no name check at all; its duplicate-name refusal is a
+ * CLIENT-side test against a list that may be five minutes old. Two rows with
+ * one display name are still reachable that way, and the fix is the same unique
+ * index on the normalised name, in the migration this slice does not carry."
+ * Since #34.09 that door asks `documentTypeNameTakenBy` inside
+ * `createDocumentTypeRow` — i.e. inside THIS function's own row builder, which
+ * is why it costs the admin door nothing to have — and migration_080 refuses
+ * the race that the read-then-write cannot. The lock is still not taken there,
+ * and now for a better reason than "it would not help": the index is the
+ * serialisation, and it serialises both doors without either knowing about the
+ * other.
  *
  * ⚠️ **`MAX_ATTEMPTS` IS A BUDGET AND NOT A CORRECTNESS TERM.** Every 23505
  * means another row now holds the key this round computed, so the next round's
@@ -102,6 +113,7 @@ import {
 } from "@/lib/admin/value-lists/queries";
 import { pgErrorCode } from "@/lib/api/errors";
 import { advisoryLockKeys } from "@/lib/properties/import-property-plan";
+import { asDocumentTypeNameTaken } from "@/lib/documents/document-type-name-guard";
 import { canonicalTypeKey } from "@/lib/import/classify-prompts";
 import { documentTypeIsIdCard } from "@/lib/import/id-card";
 import {
@@ -180,8 +192,15 @@ type LockedCreate =
 
 /**
  * ⚠️ **Read in `listValues`' order, byte for byte, and the order is
- * load-bearing.** Two `lookup_document_type` rows can share a display name —
- * only `key` is UNIQUE — and `matchDocumentType` takes the first that matches.
+ * load-bearing.** `matchDocumentType` takes the first row that matches, and
+ * "first" is decided by this ORDER BY. (Until Slice #34.09 the sentence here
+ * read "Two `lookup_document_type` rows can share a display name — only `key`
+ * is UNIQUE — and `matchDocumentType` takes the first that matches";
+ * migration_080's partial unique index over the normalised name means two rows
+ * can no longer hold one name, so the order no longer decides WHICH of two
+ * same-named types is adopted. It still decides which of the CATCH-ALL
+ * candidates is seen first, which is what the UNCLASSIFIED pin below is for,
+ * and it still has to agree with the list the wizard was served.)
  * The import wizard matches against the list as `GET /api/admin/value-lists/
  * document-types` served it, which is `listValues`' order; this is that same
  * ORDER BY, restated rather than imported because `listValues` returns whole
@@ -369,16 +388,32 @@ export async function resolveClassifiedDocumentType(
         isIdCard: documentTypeIsIdCard({ key: createdKey, name: createdName }),
       };
     } catch (err) {
-      // ⚠️ **TWO WAYS TO LOSE THIS RACE, AND THEY GET THE SAME ANSWER.**
-      // (Slice #29.07 added the second.) A 23505 means another writer took the
-      // key this round computed. `PREFERRED_KEY_TAKEN` means another writer
-      // took the CANONICAL key this round was asked for — no Postgres error is
-      // raised there, because `nextFreeKey` would happily have answered
-      // `..._2`; `createDocumentTypeRow` refuses to, precisely so this loop
-      // gets a chance to see the row and adopt it. Both are "go round again",
-      // and both advance: the next `readTypes()` sees the committed row.
+      // ⚠️ **THREE WAYS TO LOSE THIS RACE, AND THEY GET THE SAME ANSWER.**
+      // (Slice #29.07 added the second, #34.09 the third.) A 23505 means
+      // another writer took the key this round computed — and since
+      // migration_080 it can also mean another writer took the NAME, on the new
+      // partial unique index over the normalised display name, which is the
+      // same "go round again and adopt" for the same reason and needs no term
+      // of its own. `PREFERRED_KEY_TAKEN` means another writer took the
+      // CANONICAL key this round was asked for — no Postgres error is raised
+      // there, because `nextFreeKey` would happily have answered `..._2`;
+      // `createDocumentTypeRow` refuses to, precisely so this loop gets a
+      // chance to see the row and adopt it.
+      //
+      // ⚠️ **`DocumentTypeNameTakenError` is the third, and it should be
+      // unreachable from here.** `createDocumentTypeRow` asks
+      // `documentTypeNameTakenBy` on every create since #34.09, and this caller
+      // has already name-matched under an advisory lock keyed on the NORMALISED
+      // name — two labels that normalise the same take one lock — so by the
+      // time it reaches the create branch no row holds the name. It is in this
+      // predicate anyway because the alternative is an import that DIES on a
+      // condition whose honest answer is "somebody else made it; use theirs",
+      // and because "unreachable" is a claim about a lock two modules away.
+      // All three are "go round again", and all three advance: the next
+      // `readTypes()` sees the committed row.
       const lostARace =
         pgErrorCode(err) === "23505" ||
+        asDocumentTypeNameTaken(err) !== null ||
         (err instanceof Error && err.message === PREFERRED_KEY_TAKEN);
       if (!lostARace || attempt >= MAX_ATTEMPTS) throw err;
       raced = true;

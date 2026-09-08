@@ -92,6 +92,7 @@ import {
   CATCH_ALL_FORM_CODE,
   CATCH_ALL_RENAME_CODE,
 } from "@/lib/documents/catch-all-form-guard";
+import { DOCUMENT_TYPE_NAME_TAKEN_CODE } from "@/lib/documents/document-type-name-guard";
 import {
   GROUP_CUSTOM,
   GROUP_NONE,
@@ -218,6 +219,17 @@ export function DocumentTypeFormEditor({
         // the thing being fixed.
         if (code === CATCH_ALL_FORM_CODE || code === CATCH_ALL_RENAME_CODE) {
           throw new Error(t("errorCatchAllType"));
+        }
+        // ⚠️ **Slice #34.09, and an adversarial round put it here.** This
+        // screen sends `name` on every save — it has to, the PUT is a full-row
+        // replace — so it knocks on the door of the duplicate-name guard every
+        // time. That guard only judges a write that CHANGES the name, so this
+        // screen cannot legitimately trip it; the branch is here for the same
+        // reason the two above map both halves of their refusals, and this
+        // file's own comment states it: a screen that answers a refusal it did
+        // not expect with an English server string is the thing being fixed.
+        if (code === DOCUMENT_TYPE_NAME_TAKEN_CODE) {
+          throw new Error(t("errorTypeNameTaken"));
         }
         throw new Error((body as { error?: string }).error ?? `Error ${res.status}`);
       }

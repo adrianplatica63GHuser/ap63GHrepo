@@ -339,6 +339,25 @@ function EditForm({
 }) {
   const t = useTranslations("valueList");
   const meta = LIST_META[listKey];
+  // ── The fields THIS verb renders.                            (Slice #34.09)
+  //
+  // ⚠️ **THE FIRST TIME ADD AND EDIT HAVE DIFFERED BY ANYTHING BUT A HEADING
+  // AND A URL.** One `EditForm` serves both, and until now the only two places
+  // it branched on `state.id` were `form.addTitle` / `form.editTitle` and the
+  // method `saveRow` chooses. A `createOnly` field is the third: a document
+  // type's `key` is an immutable slug that all document matching runs on, so it
+  // is asked once, at creation, and then never offered again.
+  //
+  // ⚠️ **`state.id === null` means adding**, per `FormState`'s own comment.
+  // Written as an explicit null test rather than a truthiness one because a row
+  // id is a uuid and an empty string would be a bug worth failing loudly on.
+  //
+  // ⚠️ **Suppressing the INPUT is not on its own enough — `startEdit` must not
+  // seed the VALUE either**, or the PUT body carries a `key` this form never
+  // showed. It does not; see there.
+  const fields = meta.fields.filter(
+    (f) => state.id === null || f.createOnly !== true,
+  );
   const [values, setValues] = useState<Record<string, unknown>>(state.values);
   // A CODE, not the server's message: those are English ("Validation failed",
   // "Internal server error") and this form is on a Romanian-only screen. Fixed
@@ -383,7 +402,7 @@ function EditForm({
       </h3>
 
       <div className="flex flex-wrap gap-3">
-        {meta.fields.map((f, i) => {
+        {fields.map((f, i) => {
           // Slice #19.02: checkbox field
           if (f.type === "checkbox") {
             return (
@@ -644,6 +663,18 @@ export function ValueListModal({
   function startEdit(row: Row) {
     const vals: Record<string, unknown> = {};
     for (const f of meta.fields) {
+      // ⚠️ **A `createOnly` field is not seeded, and that is a SERVER-side
+      // property rather than a cosmetic one.**                  (Slice #34.09)
+      // The PUT body is this object verbatim. `documentTypeUpdateSchema` omits
+      // `key`, so a stray one would be stripped at the route — but `updateValue`
+      // is `.set(values)` over whatever a DIRECT caller hands it, and both its
+      // identity-card and catch-all guards read `values.key` where there is one
+      // precisely because a payload CAN carry it. Not putting it on the wire is
+      // what keeps those guards judging the STORED key, which is what their
+      // tests say they do. `EditForm` also does not render it; two independent
+      // reasons, which is the shape `stripDocumentTypeOrigin` argues for one
+      // column over.
+      if (f.createOnly === true) continue;
       if (f.type === "checkbox") {
         vals[f.key] = Boolean(row[f.key]);
       } else {
@@ -657,6 +688,18 @@ export function ValueListModal({
   // fields also appear inline in the edit form, and render as a ✓/– symbol in
   // the row. (This said "text fields only" from #19.02 until Slice #34.04,
   // which doubled the number of lists it misdescribed.)
+  //
+  // ⚠️ **`createOnly` fields ARE columns, and that asymmetry is deliberate.**
+  // (Slice #34.09.) `createOnly` governs the FORM: a document type's `key` is
+  // set once and can never be edited, so offering an input for it on a rename
+  // would be offering something that cannot happen. Hiding the VALUE is the
+  // opposite mistake — an immutable key you cannot see is a key you cannot
+  // verify, and not being able to see it is exactly what made the old
+  // workaround necessary (type `CONTRACT_VANZARE` as the NAME, let it slug,
+  // then rename the row, because that was the only way to know what key you
+  // had been given). It costs `document-types` a fourth column against the
+  // budget the header below states for this `max-w-2xl` panel; keys are short
+  // and it is one list.
   const displayFields = meta.fields;
 
   // ── Slice #26.12: the Document Types list, and only that one ───────────────
@@ -1108,10 +1151,12 @@ export function ValueListModal({
                         {f.labelText ?? t(`fields.${f.labelKey}`)}
                       </th>
                     ))}
-                    {/* w-32: the panel is max-w-2xl and this is a third column
-                        where there were two, so without a width the type name
-                        loses room and the modal grows a horizontal scrollbar.
-                        Matches the w-28 already on the actions column. */}
+                    {/* w-32: the panel is max-w-2xl and this was a third
+                        column where there were two — a FOURTH since Slice
+                        #34.09 put the `key` column beside the name — so
+                        without a width the type name loses room and the modal
+                        grows a horizontal scrollbar. Matches the w-28 already
+                        on the actions column. */}
                     {review && (
                       <th className="w-32 px-4 py-2">{t("fields.status")}</th>
                     )}
@@ -1225,7 +1270,10 @@ export function ValueListModal({
                               types only — no other list has one. The count is
                               on the button rather than in a column of its own
                               because the panel is max-w-2xl and #26.12 already
-                              spent the one spare column on the status. */}
+                              spent the one spare column on the status — and
+                              #34.09 spent one more on the `key`, deliberately
+                              and over that budget, because an immutable key
+                              nobody can see is a key nobody can verify. */}
                           {/* ⚠️ **Slice #32.19, finding S-02: NOT on the
                               catch-all row — unless that row already carries a
                               form.** The server refuses a form on the catch-all

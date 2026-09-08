@@ -73,6 +73,38 @@ export type FieldMeta = {
    * Property Type form) without adding extra i18n keys.
    */
   labelText?: string;
+  /**
+   * Rendered in the ADD form and not in the EDIT form.            (Slice #34.09)
+   *
+   * ⚠️ **THE FIRST TIME THIS LAYER HAS HAD THE CONCEPT, AND THE SERVER HAS HAD
+   * IT SINCE #26.12.** `origin` on document types is create-only and is kept so
+   * by two zod schemas plus a strip function — `documentTypeSchema` has it,
+   * `documentTypeUpdateSchema` omits it, `stripDocumentTypeOrigin` removes it a
+   * second time for callers that are not the route. What did not exist was any
+   * way to SAY it on the form, because `value-list-modal.tsx` has one
+   * `EditForm` for both verbs and branches on `state.id === null` in exactly
+   * two places (the heading, and the URL). So a create-only field had nowhere
+   * to live but here.
+   *
+   * ⚠️ **It governs the FORM, not the TABLE.** A `createOnly` field is still a
+   * column in the list — an immutable value you set once and can never see
+   * again is a value you cannot verify, and verifying it is the entire point of
+   * D-03: the whole reason the key field exists is that Adrian was previously
+   * reduced to typing `CONTRACT_VANZARE` as the NAME and renaming the row
+   * afterwards, to find out what key he had been given. That costs
+   * `document-types` a fourth column (name / key / status / actions) against
+   * the budget `value-list-modal.tsx` states for its `max-w-2xl` panel; keys
+   * are short and it is one list.
+   *
+   * ⚠️ **`startEdit` must not seed it either.** The PUT body is the form's
+   * `values` object verbatim, so a `createOnly` field seeded from the row would
+   * put `key` back on the wire — where `documentTypeUpdateSchema` strips it,
+   * but `updateValue` is `.set(values)` over whatever a DIRECT caller hands it
+   * and reads `values.key` in its identity-card and catch-all guards. Not
+   * sending it keeps those guards judging the STORED key, which is what their
+   * tests say they do.
+   */
+  createOnly?: boolean;
 };
 
 export type ListMeta = {
@@ -165,9 +197,34 @@ export const LIST_META: Record<ListKey, ListMeta> = {
     titleKey: "judicialPersonTypes",
     fields: [{ key: "name", labelKey: "name", required: true }],
   },
+  // ── Slice #34.09: the key that is forever, chosen rather than inherited ────
+  //
+  // ⚠️ **THIS LIST AND NO OTHER, AND THAT IS D-03 ANSWERED NARROWLY ON
+  // PURPOSE.** `lookup_document_type.key` is the immutable slug every document
+  // match, every `type-config` carve-out and the whole classifier catalogue run
+  // on. The other ten lists mint a `key` that NOTHING READS — `lookup_property_
+  // type.key` has been dead since #34.03 (D-23) and the remaining nine have no
+  // such column at all — so a key field on them would be a permanent, immutable
+  // value asked of an administrator for no reader. When D-23 lands and says
+  // what those keys are for, this is the entry to copy.
+  //
+  // ⚠️ **`required: false`, and it is not a hedge.** An absent key still gets
+  // the slug of the name, exactly as every type created before this slice did;
+  // the field offers a choice, it does not impose one. It also has to be
+  // `false` for a mechanical reason worth knowing: `value-list-ordering.test.ts`
+  // asserts every list has EXACTLY ONE required field, because that is the
+  // field its `ORDER BY` must end on, and a second required field on this list
+  // would fail that test with a message about sorting.
+  //
+  // ⚠️ **AFTER `name`, not before it.** `EditForm` attaches its autofocus ref to
+  // the field at index 0. Putting the key first would open the add form with
+  // the cursor in the field a user usually leaves alone.
   "document-types": {
     titleKey: "documentTypes",
-    fields: [{ key: "name", labelKey: "name", required: true }],
+    fields: [
+      { key: "name", labelKey: "name", required: true },
+      { key: "key",  labelKey: "key",  required: false, createOnly: true },
+    ],
   },
   institutions: {
     titleKey: "institutions",

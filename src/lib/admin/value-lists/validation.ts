@@ -69,6 +69,54 @@ const boolField = z.preprocess(
   z.boolean(),
 );
 
+/**
+ * The `key` a person may type on the document-types ADD form.  (Slice #34.09)
+ *
+ * ⚠️ **THE EMPTY STRING HAS TO BECOME `undefined` HERE, OR THE FIELD IS A TRAP.**
+ * `startAdd` in `value-list-modal.tsx` seeds every text field to `""` and the
+ * POST body is that object verbatim, so "I did not fill the key in" arrives on
+ * the wire as `key: ""` — not as an absent key. Left to a plain
+ * `z.string().optional()`, that empty string would parse successfully, reach
+ * `createValue` as a stated preference, and slug to nothing. The preprocess
+ * makes the two spellings of "did not ask" behave identically: absent, `null`
+ * and blank all become `undefined`, and `createDocumentTypeRow` then does what
+ * it has always done and slugs the name.
+ *
+ * This is `sortOrderOnUpdate`'s shape one field over, and for the same class of
+ * reason: a coercion that treats "nothing" as "a value" is how a form writes
+ * something nobody typed.
+ *
+ * ⚠️ **ZOD DECIDES NOTHING ABOUT THIS FIELD BEYOND ITS TYPE, AND TWO
+ * ADVERSARIAL ROUNDS ARE WHY.** The first version was
+ * `.regex(/[A-Za-z0-9]/)` on the RAW typed text, which is not the question
+ * being asked: `requestedDocumentTypeKey` FOLDS first, so a key typed „ÂÎȘȚ"
+ * slugs perfectly well to `AIST` and would have been refused for holding no
+ * ASCII alphanumeric. The second version called that function from a
+ * `.refine()`, which got the answer right and still delivered it wrong: a zod
+ * issue carries NO `code`, so `zodErrorToResponse` answers a bare 400 and
+ * `throwRequestFailed(res, true)` renders „a required field is missing or
+ * wrong" — sending an administrator to check `name`, which is filled in
+ * correctly. That is #32.07's lesson exactly, and it is the failure the two
+ * refusals this slice adds were built to avoid.
+ *
+ * So every rule about a key lives in `documentTypeKeyRefusal`
+ * (src/lib/documents/document-type-name-guard.ts) and is thrown from the query
+ * layer as a named error the routes turn into a `code` and the screens say in
+ * Romanian — the shape `idCardFormRefusal` and `catchAllFormRefusal` already
+ * use, one column over. What is left here is the type and the transport.
+ *
+ * ⚠️ **`.max(4096)` IS A TRANSPORT BOUND, NOT THE KEY CEILING.** The real
+ * ceiling is `MAX_DOCUMENT_TYPE_KEY_LENGTH`, measured on the SLUG (uppercasing
+ * can lengthen: „ß" becomes „SS"), and it produces a sentence. This one is
+ * three orders of magnitude above anything a person types and exists so the
+ * field cannot be used to post a megabyte; nobody can reach it by typing, so
+ * nobody can be misinformed by it.
+ */
+const optionalDocumentTypeKey = z.preprocess(
+  (v) => (v == null || (typeof v === "string" && v.trim() === "") ? undefined : v),
+  z.string().max(4096).optional(),
+);
+
 export const propertyTypeSchema = z.object({
   name:             z.string().min(1, "required"),
   showTarlaParcela: boolField.default(false),
@@ -227,6 +275,19 @@ export const documentTypeSchema = z.object({
     .array(documentTemplateFieldSchema)
     .max(MAX_TEMPLATE_FIELDS, `at most ${MAX_TEMPLATE_FIELDS} fields`)
     .nullish(),
+  // Slice #34.09 — the key a person chose, CREATE ONLY, on the same terms as
+  // `origin` below it and for a stronger reason: `origin` is write-once because
+  // a rename must not re-originate a type, and `key` is write-once because
+  // every document match, every `type-config` carve-out and the whole
+  // classifier catalogue hold on to it. `documentTypeUpdateSchema` omits it.
+  //
+  // ⚠️ **A field on the CREATE schema, and still never a field on `data` when
+  // it reaches `createDocumentTypeRow`.** `createValue` lifts it out of the
+  // payload and passes it as that function's third PARAMETER, which is the
+  // channel #29.07 built for exactly this — a key that is taken is refused
+  // outright rather than suffixed. See the ⚠️ on `createDocumentTypeRow`, which
+  // this slice had to rewrite rather than leave standing.
+  key: optionalDocumentTypeKey,
   // Slice #26.12 — how this type came to exist. CREATE ONLY: see
   // documentTypeUpdateSchema below, which omits it, and updateValue, which
   // strips it a second time.
@@ -243,8 +304,10 @@ export const documentTypeSchema = z.object({
  * The same list, minus `origin`.   (Slice #26.12)
  *
  * ⚠️ **Origin is write-once, and a rename is what would have broken it.** The
- * admin edit form sends only the fields in LIST_META — `{ name }` for document
- * types — and PUT is a FULL-REPLACE update: `updateValue` does
+ * admin edit form sends only the fields in LIST_META that the EDIT verb
+ * renders — `{ name }` for document types, since Slice #34.09 added a
+ * `createOnly` `key` beside it that `startEdit` does not seed — and PUT is a
+ * FULL-REPLACE update: `updateValue` does
  * `.set(parsed.data)`. Had `origin` carried a `.default("MANUAL")` on the
  * shared schema, every rename of an imported type would have parsed to
  * `{ name, sortOrder: 0, origin: "MANUAL" }` and quietly re-originated it —
@@ -255,7 +318,18 @@ export const documentTypeSchema = z.object({
  * out of step on `name`, `sortOrder` or `templateFields`.
  */
 export const documentTypeUpdateSchema = documentTypeSchema
-  .omit({ origin: true })
+  // ⚠️ **`key` joins `origin` here in Slice #34.09, and it is the more
+  // dangerous of the two.** Re-originating a type is a wrong label on a screen;
+  // re-keying one silently detaches it from `KNOWN_DOCUMENT_TYPES`,
+  // `ID_CARD_TYPE_KEYS`, `type-config.ts`, `catchAllType` and `listValues`'
+  // UNCLASSIFIED pin — every one of which matches the literal key — while every
+  // document already filed under it stays put. `key` was safe from a PUT before
+  // this slice only because no schema mentioned it and zod strips unknown keys;
+  // now that a payload can legitimately carry one, the omission is deliberate
+  // rather than incidental. (The form does not send it either: `startEdit`
+  // skips `createOnly` fields. Two independent reasons, which is the shape
+  // `stripDocumentTypeOrigin` argues for one field over.)
+  .omit({ origin: true, key: true })
   .extend({ sortOrder: sortOrderOnUpdate });
 
 export const judicialPersonTypeSchema = z.object({

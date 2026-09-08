@@ -95,6 +95,7 @@ import {
   type DocumentTemplateFieldType,
 } from "@/lib/documents/template-fields";
 import { sameDocumentTypeName } from "@/lib/documents/document-type-match";
+import { DOCUMENT_TYPE_NAME_TAKEN_CODE } from "@/lib/documents/document-type-name-guard";
 import {
   ID_CARD_FORM_CODE,
   ID_CARD_RENAME_CODE,
@@ -815,7 +816,23 @@ export function DiscoverReviewDialog({
       return { status: "failed" };
     }
     if (!res.ok) {
-      setError(t("errorCreateType"));
+      // ⚠️ **THE STALE-LIST DUPLICATE IS THE ONE CASE THIS SCREEN HAS TO NAME,
+      // AND IT WAS THE ONE CASE IT ANSWERED WORST.**              (Slice #34.09)
+      // `sameTypeName` above refuses a duplicate against `existingTypeNames` —
+      // a react-query list that may be five minutes old — so the create that
+      // gets through is precisely the one the SERVER now refuses, with
+      // `document_type_name_taken`. Until this slice that arrived here as
+      // `errorCreateType`: "the type could not be created. Nothing was changed
+      // — try again", which is wrong advice, because trying again does exactly
+      // the same thing. The sentence below says the type is already there and
+      // asks the user to close and reopen, which is what actually fixes a
+      // stale list.
+      const body = (await res.json().catch(() => ({}))) as { code?: string };
+      setError(
+        body.code === DOCUMENT_TYPE_NAME_TAKEN_CODE
+          ? t("errorTypeNameTaken")
+          : t("errorCreateType"),
+      );
       return { status: "failed" };
     }
     const row = (await res.json().catch(() => ({}))) as {

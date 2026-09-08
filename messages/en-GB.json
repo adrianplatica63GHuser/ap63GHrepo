@@ -1680,6 +1680,7 @@
       "newTypeNameRequired": "Enter a name for the new document type.",
       "newTypeNameTaken": "A document type with this name already exists. Close this window and pick it from the type list, or enter a different name.",
       "errorCreateType": "The document type could not be created. Nothing was changed — try again.",
+      "errorTypeNameTaken": "A document type with this name already exists — the list in this window was out of date. Nothing was changed. Close this window and open it again: the type will be in the list and you can pick it.",
       "errorRetype": "The document type was created, but the document could not be moved onto it, so the form was not saved. Try again; if it keeps failing, pick the new type from the type list and run discovery again.",
       "introNewType": "Tick the fields you want to add to the NEW document type's form. Beside each row is the value read from the document, so you can check it. On save the new type is created, this document is moved onto it, and the ticked fields are added to its form — so they appear on every document of that type and stay there until an administrator removes them. Nothing is saved until you press “Save the form”.",
       "errorCreateTypeUnknown": "It could not be established whether type “{type}” was created or not. Close this window and check Reference Data → Document Types: if the type is there, pick it from the document's type list and run discovery again; if it is not, run discovery again and tick “new type” again. Do not press Save again here — it could create a second type with the same name.",
@@ -1736,6 +1737,7 @@
       "descriere": "Description",
       "description": "Description",
       "institutionType": "Institution Type",
+      "key": "Key",
       "validForProperty": "Person → Property",
       "validForPerson": "Person → Person",
       "status": "Status"
@@ -1829,7 +1831,8 @@
       "confirmDiscardBody": "Nothing on this form has been saved yet. Closing now leaves the document type exactly as it was.",
       "confirmDiscard": "Discard",
       "errorIdCardType": "This document type is an identity card, so it cannot have a form. The data on an identity card is captured during import as Person records — a form here would be a second, freely editable copy of somebody’s national identity number on every document of this type. If the type already has fields, remove all of them and save — this window is the only place a form can be deleted. Otherwise close it without saving.",
-      "errorCatchAllType": "This is the catch-all document type, so it cannot have a form. It holds the documents whose type could not be established, and a form here would be written onto the one row every unrecognised document in the archive shares. If the type already has fields, remove them and save — this window is the only place a form can be deleted, and removing is allowed where adding is not. Otherwise close it without saving."
+      "errorCatchAllType": "This is the catch-all document type, so it cannot have a form. It holds the documents whose type could not be established, and a form here would be written onto the one row every unrecognised document in the archive shares. If the type already has fields, remove them and save — this window is the only place a form can be deleted, and removing is allowed where adding is not. Otherwise close it without saving.",
+      "errorTypeNameTaken": "A document type with this name already exists, so the form could not be saved. Names are compared without diacritics, case or punctuation. Close this window, refresh the list, and decide which of the two rows to keep."
     },
     "confirm": {
       "title": "Delete “{name}”?",
@@ -1852,7 +1855,11 @@
         "idCardForm": "This document type is an identity card, so it cannot have a form. The data on an identity card is captured during import as Person records, not as fields on a form. If the type already carries a form, open “Form” on its row, delete every field and save.",
         "idCardRename": "This document type already has a form, so it cannot be given an identity-card name: the data on an identity card is captured during import as Person records, and a form would be a second, freely editable copy of somebody’s national identity number. Remove the form first — close this window, press “Form” on the type’s row, delete every field and save — then come back and rename the type.",
         "catchAllForm": "This is the catch-all document type, so it cannot be given a form. It holds the documents whose type could not be established — documents whose type is wrong, not documents whose type is unfinished — so a form here would be written onto the one row every unrecognised document in the archive shares. If the type already carries a form, open “Form” on its row, delete every field and save; removing fields is allowed, adding them is not.",
-        "catchAllRename": "This document type already has a form, so it cannot be renamed into the catch-all: the catch-all holds the documents whose type could not be established, and a form there would be written onto the one row every unrecognised document in the archive shares. Remove the form first — close this window, press “Form” on the type’s row, delete every field and save — then come back and rename the type."
+        "catchAllRename": "This document type already has a form, so it cannot be renamed into the catch-all: the catch-all holds the documents whose type could not be established, and a form there would be written onto the one row every unrecognised document in the archive shares. Remove the form first — close this window, press “Form” on the type’s row, delete every field and save — then come back and rename the type.",
+        "documentTypeNameTaken": "A document type with this name already exists. Names are compared without diacritics, case or punctuation, so \u201cContract de V\u00e2nzare\u201d and \u201ccontract de vanzare\u201d are the same name. Choose another, or use the type that already exists.",
+        "documentTypeKeyTaken": "This key already belongs to another document type. A key is set once and never changes, so it is not given a numeric suffix \u2014 choose another key, or leave the field empty and one is generated from the name.",
+        "documentTypeKeyInvalid": "This key cannot be used: it contains nothing that can become a key, or it is too long. A key may hold letters and digits; spaces and punctuation become “_”. Leave the field empty if you want one generated from the name.",
+        "documentTypeKeyReserved": "This key is reserved: the system matches on it itself, for the catch-all type or for an identity card. A row may hold it only if its name says the same thing. Choose another key."
       },
       "roleWhitelistGranted": "The role you picked was ticked automatically where the moved associations needed it:",
       "roleWhitelistPending": "The role you picked is not ticked for any document type, and the types of the moved documents have no role list configured yet — so it cannot be ticked automatically without narrowing what can be chosen on those types. Tick it in “Document Persons” for the right type, otherwise the moved Person–Document associations will show a role that can no longer be picked from the list.",

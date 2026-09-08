@@ -36,6 +36,7 @@ import { z } from "zod/v4";
 import { dbErrorToResponse, unexpectedError, zodErrorToResponse } from "@/lib/api/errors";
 import { resolveClassifiedDocumentType } from "@/lib/documents/resolve-document-type";
 import { PREFERRED_KEY_TAKEN } from "@/lib/admin/value-lists/queries";
+import { asDocumentTypeNameTaken } from "@/lib/documents/document-type-name-guard";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -93,6 +94,26 @@ export async function POST(request: NextRequest): Promise<Response> {
       // body) pretending to be part of a protocol.
       return Response.json(
         { error: "Document type key was taken by a concurrent writer" },
+        { status: 409 },
+      );
+    }
+    // ⚠️ **THE THIRD WAY TO EXHAUST THE BUDGET, ADDED WITH THE THIRD TERM IN
+    // `lostARace`.**                                            (Slice #34.09)
+    // `DocumentTypeNameTakenError` is `createDocumentTypeRow` refusing to
+    // create a second type with a display name some row already holds. Like
+    // `PREFERRED_KEY_TAKEN` above it raises no 23505, so `dbErrorToResponse`
+    // has nothing to map; like it, reaching here means MAX_ATTEMPTS rounds of
+    // it, which is the same statement and deserves the same 409. And like it,
+    // it is unreachable as far as anyone can show — `resolveAgainstTypes` runs
+    // under an advisory lock keyed on the NORMALISED name and adopts a row it
+    // finds, so the create branch is only entered when no row holds the name.
+    // Answered anyway, for this block's own stated reason: "unreachable" is
+    // what the retry budget above was also called. Leaving it out would make
+    // the one refusal this slice ADDED the only one of the three that reaches
+    // an import as a 500.
+    if (asDocumentTypeNameTaken(err) !== null) {
+      return Response.json(
+        { error: "Document type name was taken by a concurrent writer" },
         { status: 409 },
       );
     }

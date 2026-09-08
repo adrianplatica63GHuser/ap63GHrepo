@@ -34,6 +34,12 @@ import {
   CATCH_ALL_FORM_CODE,
   CATCH_ALL_RENAME_CODE,
 } from "@/lib/documents/catch-all-form-guard";
+import {
+  DOCUMENT_TYPE_KEY_INVALID_CODE,
+  DOCUMENT_TYPE_KEY_RESERVED_CODE,
+  DOCUMENT_TYPE_KEY_TAKEN_CODE,
+  DOCUMENT_TYPE_NAME_TAKEN_CODE,
+} from "@/lib/documents/document-type-name-guard";
 
 /**
  * Everything a Reference Data screen knows how to say about a failure.
@@ -64,7 +70,7 @@ export const FAILURE_CODES = [
   //
   // ⚠️ **`idCardForm` IS UNREACHABLE FROM THESE FOUR SCREENS TODAY, and it is
   // kept anyway.** A round traced it: Reference Data's document-type form is
-  // `LIST_META["document-types"].fields = [{ key: "name" }]`, so every write
+  // `LIST_META["document-types"].fields = [{ key: "name" }]` — since Slice #34.09 `[{ key: "name" }, { key: "key", createOnly: true }]`, and `createOnly` means `startEdit` does not seed it, so the EDIT form still sends `{ name }` and the sentence below is unchanged — so every write
   // that reaches this module carries a `name` and no `templateFields` — and on
   // such a write `idCardFormRefusal` answers `rename` or nothing at all,
   // because its `writesTheForm` term is false. `idCardForm` is what a DIRECT
@@ -85,7 +91,7 @@ export const FAILURE_CODES = [
   // response and throws its own Romanian sentence, and never builds a
   // `RequestFailedError`. What reaches `failureFromResponse` on this list is the
   // MODAL's row form and its delete — and `LIST_META["document-types"].fields`
-  // is `[{ key: "name" }]`, so every such write carries no `templateFields` and
+  // is `[{ key: "name" }]` (since Slice #34.09 `[{ key: "name" }, { key: "key", createOnly: true }]`, and `createOnly` means `startEdit` does not seed it, so the EDIT form still sends `{ name }` and the sentence below is unchanged), so every such write carries no `templateFields` and
   // can only produce `catchAllRename` or nothing at all.
   //
   // So both are written for the reason `idCardForm` was: a member of this array
@@ -94,6 +100,38 @@ export const FAILURE_CODES = [
   // builds on it — this repo's own rule about a claim nobody can trigger.
   "catchAllForm",
   "catchAllRename",
+  // Slice #34.09 — the two things a person can now type into the document-type
+  // ADD form that the archive may already hold.
+  //
+  // ⚠️ **BOTH ARE LIVE, WHICH MAKES THEM THE FIRST PAIR HERE THAT IS.** The
+  // four members above are written-but-unreachable-through-this-function by
+  // construction, and each says so at length. These two are the opposite: a
+  // duplicate NAME is what a stale client list produces every time
+  // (`createValue`'s own comment described the hole and #34.09 closed it), and
+  // a duplicate KEY is reachable the moment the key field exists, because the
+  // form offers no list of the keys already taken.
+  //
+  // ⚠️ **`duplicate` was NOT reused, and the difference matters on screen.**
+  // That member's Romanian is „Această înregistrare există deja în listă" — a
+  // sentence about the ROW, written for the „Persoană → Document" panel's
+  // 409, where the row IS the pair and there is nothing else to say. Here the
+  // row is fine and exactly one FIELD is wrong, and which one it is decides
+  // what the user does next: change the name, or change the key. One sentence
+  // covering both would send half the people who see it to the wrong field.
+  "documentTypeNameTaken",
+  "documentTypeKeyTaken",
+  // The other two things the key field can be told, added in the same slice
+  // after an adversarial round found the second of them.
+  //
+  // ⚠️ **`documentTypeKeyReserved` IS A HOLE #34.09 OPENED AND CLOSED IN ONE
+  // SLICE.** Before the key field existed a type's key was always the slug of
+  // its name, so a row could only be keyed `NECLASIFICAT` by being NAMED
+  // something that slugs to it — and both halves are recognised by the same
+  // guards. A typed key severs that, and a row keyed `NECLASIFICAT` but named
+  // „Contract de Vânzare" is one every carve-out in the codebase disagrees
+  // with itself about. See `documentTypeKeyRefusal`.
+  "documentTypeKeyInvalid",
+  "documentTypeKeyReserved",
   "generic",
 ] as const;
 
@@ -139,6 +177,16 @@ export function failureFromResponse(status: number, body: unknown): FailureCode 
   // Slice #32.19 — same wire convention, same reason. See above.
   if (code === CATCH_ALL_FORM_CODE) return "catchAllForm";
   if (code === CATCH_ALL_RENAME_CODE) return "catchAllRename";
+  // Slice #34.09 — same wire convention again. These two arrive on a 400 from
+  // both value-lists write doors, so they are read here BEFORE the
+  // `formRejects400` branch below turns an unrecognised 400 into "a required
+  // field is missing or wrong" — which for a name the archive already holds
+  // would send an administrator to check a field that is filled in correctly.
+  // That is #32.07's lesson, and it is why the code is read first.
+  if (code === DOCUMENT_TYPE_NAME_TAKEN_CODE) return "documentTypeNameTaken";
+  if (code === DOCUMENT_TYPE_KEY_TAKEN_CODE) return "documentTypeKeyTaken";
+  if (code === DOCUMENT_TYPE_KEY_INVALID_CODE) return "documentTypeKeyInvalid";
+  if (code === DOCUMENT_TYPE_KEY_RESERVED_CODE) return "documentTypeKeyReserved";
   return "generic";
 }
 

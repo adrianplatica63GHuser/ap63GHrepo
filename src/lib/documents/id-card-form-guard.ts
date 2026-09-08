@@ -115,7 +115,7 @@ export function idCardFormRefusal(
   // the reasoning that `before` being just as wrong as `after` does not make
   // `after` right. Measured against the actual screen, that reasoning ends in
   // #26.02's unfixable message: `LIST_META["document-types"].fields` is
-  // `[{ key: "name" }]` and nothing else, so Reference Data's edit form sends
+  // `[{ key: "name" }]` and nothing else — since Slice #34.09 `[{ key: "name" }, { key: "key", createOnly: true }]`, and `createOnly` means `startEdit` does not seed it, so the EDIT form still sends `{ name }` and the sentence below is unchanged — so Reference Data's edit form sends
   // `{ name }` and NOTHING about the form. On a row that is already a card
   // carrying a form — the state this whole slice exists because the archive is
   // in, and the state of every database migration_073 has not reached yet —

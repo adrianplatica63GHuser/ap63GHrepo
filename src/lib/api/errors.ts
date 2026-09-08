@@ -40,6 +40,28 @@ export function pgErrorCode(err: unknown): string | undefined {
 }
 
 /**
+ * The CONSTRAINT a Postgres error names, through the same unwrapping.
+ *                                                              (Slice #34.09)
+ *
+ * ⚠️ **Added because `dbErrorToResponse` cannot answer this class and should
+ * not be taught to.** Its 23505 branch tests `e.constraint?.includes("cnp")`
+ * and `("cui")` and otherwise answers a 409 whose body carries `error` and
+ * `constraint` and NO `code` — and a body with no `code` is exactly what
+ * `failureFromResponse` maps to the generic Romanian sentence. The value-lists
+ * routes need the opposite: one specific index (`lookup_document_type_name_
+ * normalised_unique`) recognised exactly, so the RACE that beats
+ * `documentTypeNameTakenBy` arrives as the same sentence the stale-list case
+ * does. Exported for the same reason `pgErrorCode` was: without it each route
+ * would re-implement the `.cause` unwrap and the two would drift.
+ *
+ * Exact equality is the caller's business, not this function's — `includes` on
+ * a constraint name is how you match an index you did not mean.
+ */
+export function pgErrorConstraint(err: unknown): string | undefined {
+  return unwrapPgError(err)?.constraint;
+}
+
+/**
  * Translate a Postgres / Drizzle error into a JSON Response, or return
  * `null` if the error doesn't match any known DB pattern (caller should
  * then fall through to a generic 500).

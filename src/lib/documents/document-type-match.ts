@@ -436,9 +436,14 @@ export function matchDocumentType<T extends DocumentTypeCandidate>(
  *     about it today; this half is what follows the rename Adrian makes from
  *     Reference Data tomorrow, which no constant can anticipate. A model that
  *     answers with that name is declining, and a resolver that did not know it
- *     would CREATE a second row of the same display name — two identical
+ *     would try to CREATE a second row of the same display name — two identical
  *     entries in every document's type dropdown, which is exactly the F7 shape
- *     this slice exists to remove.
+ *     this slice exists to remove. (Since Slice #34.09 that create would be
+ *     REFUSED rather than committed — `createDocumentTypeRow` asks
+ *     `documentTypeNameTakenBy`, and migration_080's unique index is behind it
+ *     — so the consequence is now a failed import instead of a duplicated row.
+ *     Better, and still not what should happen: the answer is to recognise the
+ *     decline, which is what this arm does.)
  *
  * ⚠️ **Keyed on `key === "UNCLASSIFIED"`, not on the name matching a literal.**
  * The key is the immutable fact (`migration_043` says so in as many words:
