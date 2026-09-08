@@ -4,7 +4,7 @@
 -- GENERATED FILE -- DO NOT EDIT BY HAND.
 -- Regenerate with:  .\scripts\Export-SupabaseSchema.ps1
 --
--- Generated : 2026-09-07 20:02
+-- Generated : 2026-09-08 19:25
 -- Source    : local Docker database (ga40db @ ga40prj-postgres)
 --
 -- Applies the complete schema from scratch after running
@@ -1826,6 +1826,20 @@ CREATE INDEX idx_property_nickname_trgm ON public.property USING gin (nickname p
 --
 
 CREATE UNIQUE INDEX judicial_person_cui_unique ON public.judicial_person USING btree (cui_number) WHERE (cui_number IS NOT NULL);
+
+
+--
+-- Name: lookup_document_type_name_normalised_unique; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX lookup_document_type_name_normalised_unique ON public.lookup_document_type USING btree (regexp_replace(btrim(regexp_replace(regexp_replace(lower(NORMALIZE(COALESCE(name, ''::text), NFD)), (((('['::text || chr(768)) || '-'::text) || chr(879)) || ']'::text), ''::text, 'g'::text), '\s+'::text, ' '::text, 'g'::text)), '[^a-z0-9]'::text, ''::text, 'g'::text)) WHERE (regexp_replace(btrim(regexp_replace(regexp_replace(lower(NORMALIZE(COALESCE(name, ''::text), NFD)), (((('['::text || chr(768)) || '-'::text) || chr(879)) || ']'::text), ''::text, 'g'::text), '\s+'::text, ' '::text, 'g'::text)), '[^a-z0-9]'::text, ''::text, 'g'::text) <> ''::text);
+
+
+--
+-- Name: INDEX lookup_document_type_name_normalised_unique; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON INDEX public.lookup_document_type_name_normalised_unique IS 'Two document types may not share one display name (Slice #34.09, migration_080). The expression is normaliseDocumentTypeName() from src/lib/documents/document-type-match.ts - NFD-decompose, strip the combining marks, lowercase, drop everything outside [a-z0-9] - written as the exact inline expansion of pg_temp.ga40_norm_name in scripts/decision-checks.sql, which is the fold the archive was measured under. PARTIAL, excluding the empty normalised form, because sameDocumentTypeName() refuses to call two empty forms equal: a name of "-" or of a single space normalises to nothing, and a total index would let the first such row take the empty slot and refuse every other one. The application-level refusal that produces a Romanian sentence instead of a 23505 is documentTypeNameTakenBy() in src/lib/documents/document-type-name-guard.ts; this index is what makes the rule true of a direct caller, a script, psql, and the race that a read-then-write refusal cannot close.';
 
 
 --
