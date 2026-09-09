@@ -139,9 +139,9 @@
 
 import {
   catchAllType,
+  CATCH_ALL_DOCUMENT_TYPE_KEYS,
   classifiedLabelOf,
   resolveAgainstTypes,
-  UNCLASSIFIED_DOCUMENT_TYPE_KEY,
   type ClassifierAnswer,
   type DocumentTypeCandidate,
 } from "@/lib/documents/document-type-match";
@@ -550,10 +550,35 @@ export function checkTypeForms(input: {
  * row carrying it, so a created row keeping it could never be folded into. An
  * absent key is `""`, which that function's key pass skips, leaving the name
  * pass — which is what the run falls back to as well.
+ *
+ * ⚠️ **BOTH CATCH-ALL KEYS SINCE SLICE #34.10, AND THE ASYMMETRY WAS A LATENT
+ * BUG THAT SLICE MADE LOAD-BEARING.** This tested `=== UNCLASSIFIED` while
+ * `documentTypeIsCatchAll` has treated `NECLASIFICAT` as a catch-all key too
+ * since #32.19 — harmless while nothing here read the key, and not harmless the
+ * moment #34.10 routed this value into `typeMayHoldAForm`. An adversarial round
+ * ran it: with a catalogue holding no `NECLASIFICAT` row, a classifier answer
+ * of `{ typeKey: "NECLASIFICAT", label: "Proces verbal" }` produced a genuinely
+ * NEW, form-less type reported as `awaitsForm: false` and a verdict of
+ * `clean: true` — the stop screen skipped entirely, every document of that type
+ * filed against an empty form, and nothing said. The identical answer carrying
+ * `UNCLASSIFIED` stopped the import correctly. Two spellings of one thing,
+ * two opposite outcomes.
+ *
+ * Reading the shared list is what stops that recurring: a third catch-all key
+ * added to `CATCH_ALL_DOCUMENT_TYPE_KEYS` is covered here without anyone
+ * remembering to come back.
+ *
+ * ⚠️ **THE RESIDUAL IS REAL AND IS IN THE HANDOVER.** Blanking makes this gate
+ * report the type as awaiting a form, which is the safe direction — the import
+ * stops and names it. But if the SERVER then mints the row under
+ * `canonicalTypeKey("NECLASIFICAT")`, that row is a catch-all by key, and the
+ * form the user goes off to build for it is refused at the write. The root of
+ * that is the resolver creating a catch-all-keyed row for a real label at all,
+ * which is not this gate's to fix.
  */
 function createdKeyOf(answer: ClassifierAnswer): string {
   const typeKey = answer.typeKey?.trim() ?? "";
-  return typeKey === UNCLASSIFIED_DOCUMENT_TYPE_KEY ? "" : typeKey;
+  return CATCH_ALL_DOCUMENT_TYPE_KEYS.includes(typeKey) ? "" : typeKey;
 }
 
 /**

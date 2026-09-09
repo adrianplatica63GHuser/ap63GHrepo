@@ -311,9 +311,23 @@ export function DocumentPersonsModal({ onClose }: { onClose: () => void }) {
    * leaves focus on `<body>`, outside a modal with no Tab trap. Whatever the
    * reason the opener is unreachable, the list panel is where focus belongs.
    *
-   * It does nothing on mount, deliberately: `wasOpenRef` is false until a
-   * confirmation has really been opened, so the panel does not steal focus
-   * from the page behind it.
+   * ⚠️ **IT USED TO DO NOTHING ON MOUNT, AND SLICE #34.10 MADE THAT WRONG.**
+   * The sentence here read: "`wasOpenRef` is false until a confirmation has
+   * really been opened, so the panel does not steal focus from the page behind
+   * it." That was right while this panel was mounted by `value-list-hub.tsx`,
+   * over a live page. It is now mounted by `value-list-modal.tsx`, which makes
+   * its own panel `inert` while this one is open — and the button that opened
+   * this panel is INSIDE that panel. So in the commit that opens the grid the
+   * focused element becomes inert, the UA runs the unfocusing steps, and focus
+   * goes to `<body>`: "not stealing focus from the page behind" became "focus
+   * lands nowhere". The next Tab then starts at the top of the document and
+   * walks the sidebar and the breadcrumb, which are not inert and now sit under
+   * a z-80 backdrop — focusable, invisible, and unreachable by mouse. Found by
+   * an adversarial round; it is the same visible-but-inert failure that round
+   * fixed on the paint axis, arriving on the focus axis.
+   *
+   * The mount focus below is the same target the delete path already falls back
+   * to, and `listPanelRef` is already `tabIndex={-1}` for exactly this.
    */
   useEffect(() => {
     if (confirmDeleteId) {
@@ -321,7 +335,13 @@ export function DocumentPersonsModal({ onClose }: { onClose: () => void }) {
       confirmPanelRef.current?.focus();
       return;
     }
-    if (!wasOpenRef.current) return;
+    if (!wasOpenRef.current) {
+      // Slice #34.10 — the mount case. See above for why it is no longer a
+      // steal. Runs once: after any confirmation `wasOpenRef` is true and the
+      // opener restore below takes over.
+      listPanelRef.current?.focus();
+      return;
+    }
     wasOpenRef.current = false;
     const opener = deleteOpenerRef.current;
     deleteOpenerRef.current = null;
@@ -406,19 +426,62 @@ export function DocumentPersonsModal({ onClose }: { onClose: () => void }) {
           closeConfirm();
           return;
         }
-        if (showAdd) { setShowAdd(false); return; }
+        // ⚠️ **Guarded on what is RENDERED, not on the flag alone — Slice
+        // #34.10.** `AddForm` draws only once BOTH lookups have landed
+        // (`showAdd && docTypesQuery.data && rolesQuery.data`), so between the
+        // press of „Adaugă" and the second response `showAdd` is true with
+        // nothing on screen, and Escape was swallowed. `value-list-modal.tsx`
+        // records the identical trap for its delete confirmation and guards it
+        // the same way. Pre-existing, and it costs more since this panel moved:
+        // it is two modals deep now, so the key the user is pressing is the one
+        // that gets them out of both.
+        if (showAdd && docTypesQuery.data && rolesQuery.data) { setShowAdd(false); return; }
         onClose();
       }
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [confirmDeleteId, showAdd, onClose, closeConfirm, deleteMutation.isPending]);
+  }, [
+    confirmDeleteId,
+    showAdd,
+    docTypesQuery.data,
+    rolesQuery.data,
+    onClose,
+    closeConfirm,
+    deleteMutation.isPending,
+  ]);
 
   return (
     <>
       {/* Overlay */}
       <div
-        className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
+        // ⚠️ **z-80, RAISED FROM z-40 BY SLICE #34.10 BECAUSE THIS PANEL
+        // MOVED INTO A STACK.** It used to be mounted by `value-list-hub.tsx`,
+        // a plain page with no other dialog on it, so z-40/z-50 competed with
+        // nothing. It is now a SIBLING of the Document Types list panel inside
+        // the same fragment and the same stacking context, and that list is
+        // z-50 — so at z-40 this backdrop painted UNDER it: the lower part of
+        // the list, wherever this shorter panel did not cover it, stayed fully
+        // lit while being `inert`, so it was neither dimmed nor clickable nor a
+        // backdrop-click that closes. The ladder the two siblings already keep
+        // is list overlay 40 / list panel 50 / its delete confirm 60 / form
+        // editor 70 / **the form editor's own delete confirm 80**; this pair
+        // takes 80 and its own confirmation 90.
+        //
+        // ⚠️ **80 IS SHARED WITH THAT LAST ONE, DELIBERATELY, AND THE REASON IS
+        // WHY IT IS SAFE RATHER THAN LUCKY.** The two can never be on screen
+        // together: the form editor opens from a row's "Formular" button and
+        // this grid from the toolbar, and both buttons live inside the list
+        // panel that each of them makes `inert`, so opening either takes the
+        // other's door away. Reaching for 100 instead would have collided with
+        // `unsaved-changes-provider.tsx`'s `z-[100]`, which is correctly
+        // topmost. An adversarial round checked the whole ladder — a first
+        // draft of this comment stopped one rung below the rung it claimed,
+        // which is exactly the omission that produced the bug it documents.
+        //
+        // Found by an adversarial round, which also noted that #34.10's first
+        // draft fixed only the keyboard half of this move.
+        className="fixed inset-0 z-80 bg-black/40 backdrop-blur-sm"
         onClick={onClose}
         aria-hidden
       />
@@ -436,7 +499,7 @@ export function DocumentPersonsModal({ onClose }: { onClose: () => void }) {
         // Slice #29.13: the backdrop hides this panel, it does not disable it —
         // see the comment on `listPanelRef` for the row the Tab reached.
         inert={!!confirmDeleteId}
-        className="fixed inset-x-4 top-[5%] z-50 mx-auto max-w-3xl rounded-xl border border-card-rim bg-card shadow-2xl dark:border-zinc-800 dark:bg-zinc-900"
+        className="fixed inset-x-4 top-[5%] z-80 mx-auto max-w-3xl rounded-xl border border-card-rim bg-card shadow-2xl dark:border-zinc-800 dark:bg-zinc-900"
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-card-rim px-5 py-4 dark:border-zinc-800">
@@ -551,14 +614,16 @@ export function DocumentPersonsModal({ onClose }: { onClose: () => void }) {
       {/* Delete confirm dialog */}
       {confirmDeleteId && (
         <>
-          <div className="fixed inset-0 z-60 bg-black/50" aria-hidden />
+          {/* z-90 — above this panel's own z-80, for the reason the overlay
+              above states. At z-60 it opened UNDERNEATH its own parent. */}
+          <div className="fixed inset-0 z-90 bg-black/50" aria-hidden />
           <div
             ref={confirmPanelRef}
             tabIndex={-1}
             role="alertdialog"
             aria-modal="true"
             aria-labelledby={confirmTitleId}
-            className="fixed inset-x-4 top-1/3 z-60 mx-auto max-w-sm rounded-xl border border-card-rim bg-card p-6 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900"
+            className="fixed inset-x-4 top-1/3 z-90 mx-auto max-w-sm rounded-xl border border-card-rim bg-card p-6 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900"
           >
             <p
               id={confirmTitleId}

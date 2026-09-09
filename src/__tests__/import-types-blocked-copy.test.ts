@@ -21,6 +21,16 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { scanIcu } from "@/test-support/icu";
+// ⚠️ **`@/lib/dev/strip-comments`, NOT a local two-regex copy — and Slice
+// #34.10's first draft wrote the copy, in three files at once.** That module
+// exists because #34.06's own review deleted exactly this shape from
+// `upload-file-types.test.ts`: a regex stripper is provably wrong on `//`
+// inside a string or a regex literal (`accept="image/*"`,
+// `p.replace(/https?:\/\//, "")`), and OVER-stripping turns a NEGATIVE
+// assertion green — a false pass, which is the worst direction for a guard.
+// Measured by an adversarial round on this slice: the regex and the lexer
+// disagree on 105 of 566 files under `src/`, by up to 8,817 characters.
+import { stripComments } from "@/lib/dev/strip-comments";
 
 const LOCALES = ["ro-RO.json", "en-GB.json"] as const;
 
@@ -154,6 +164,17 @@ const REQUIRED_KEYS = [
   // below cannot see `t(`goTo${kind}`)`.
   "goToReferenceData",
   "goToEngine",
+  // ⚠️ **`opensInNewTab` — the `sr-only` half, and it is a separate key from
+  // `linksHint` on purpose.** `linksHint` is the visible sentence, drawn once
+  // under `whatNext`; this one is spoken inside EACH link, because a reader
+  // tabbing twenty links meets that sentence only after the last of them.
+  //
+  // ⚠️ **It was missing from this list and `npx jest` is what said so** — the
+  // "asks for nothing the panel does not ask for" test below failed with
+  // `["opensInNewTab"]` undeclared, which is precisely the job that test was
+  // written to do. The sandbox harness had not been re-run after the `t()` call
+  // was added, and that is the documented way a slice ships a red `npx jest`.
+  "opensInNewTab",
   // ⚠️ Drawn ONCE, under `whatNext`, rather than beside each of twenty rows.
   // It exists because the links open in a new tab, and a link that behaves
   // unusually without saying so reads as the page being broken — and here the
@@ -516,7 +537,7 @@ describe("the stop screen's copy", () => {
     // navigate to Reference Data by hand, then to „Distilare Tipizate" by hand,
     // then start the import again. This is the behaviour half of the two labels
     // declared in `REQUIRED_KEYS` above.
-    const source = fs.readFileSync(path.join(process.cwd(), COMPONENT), "utf8");
+    const source = stripComments(fs.readFileSync(path.join(process.cwd(), COMPONENT), "utf8"));
 
     // It links at all, through `next/link` — the shape `preflight-checklist.tsx`
     // already uses for the one other link in the import wizard.
@@ -529,8 +550,13 @@ describe("the stop screen's copy", () => {
     // one that goes to the screen which can create it.
     expect(source).toContain('type.kind === "existing" && type.id !== null');
 
-    const engine = source.indexOf("goToEngine");
-    const refData = source.indexOf("goToReferenceData");
+    // ⚠️ **Comments stripped — "a BEHAVIOUR guard must read only code".** The
+    // ordering below is a claim about which arm of the ternary comes first, and
+    // a comment naming `goToReferenceData` above the JSX would flip it, taking
+    // this red over a panel that is right.
+    const code = source;
+    const engine = code.indexOf("goToEngine");
+    const refData = code.indexOf("goToReferenceData");
     expect(engine).toBeGreaterThan(0);
     expect(refData).toBeGreaterThan(0);
     // The engine link is the true arm of that ternary, so it comes first.
@@ -562,33 +588,62 @@ describe("the stop screen's copy", () => {
     // `searchParams` returned nothing under either directory — so a link
     // carrying `?type=` would have landed on an untouched picker and a link
     // carrying `?add=` on a hub with nothing open.
-    const engine = fs.readFileSync(
-      path.join(process.cwd(), "src", "app", "admin", "doc-type-engine", "page.tsx"),
-      "utf8",
+    const engine = stripComments(
+      fs.readFileSync(
+        path.join(process.cwd(), "src", "app", "admin", "doc-type-engine", "page.tsx"),
+        "utf8",
+      ),
     );
     expect(engine).toContain("searchParams");
     expect(engine).toContain("initialTypeId={type ?? \"\"}");
 
-    const lists = fs.readFileSync(
-      path.join(process.cwd(), "src", "app", "admin", "value-lists", "page.tsx"),
-      "utf8",
+    const lists = stripComments(
+      fs.readFileSync(
+        path.join(process.cwd(), "src", "app", "admin", "value-lists", "page.tsx"),
+        "utf8",
+      ),
     );
     expect(lists).toContain("searchParams");
     expect(lists).toContain("initialList={list}");
     expect(lists).toContain("initialAddName={add}");
 
-    // ⚠️ **`?list=` is VALIDATED against `LIST_META` at the hub.** It is a
-    // string anybody can type and `ListKey` is a union; a cast would put an
-    // unknown key into `LIST_META[listKey]`, where `meta.fields` is read with
-    // no guard — a blank screen from a typo in a URL.
-    const hub = fs.readFileSync(
-      path.join(
-        process.cwd(), "src", "app", "admin", "value-lists", "_components", "value-list-hub.tsx",
+    // ⚠️ **`?list=` is VALIDATED at the hub, and this assertion is about the
+    // PROPERTY rather than the spelling — the first draft got that wrong in a
+    // way that would have blocked its own fix.** It read:
+    //
+    //     expect(hub).toContain("initialList in LIST_META");
+    //     expect(hub).not.toContain("initialList as ListKey;");
+    //
+    // Both were bad. The first pinned `in`, which walks the prototype chain of
+    // a plain object literal — `?list=constructor`, `toString`, `valueOf`,
+    // `__proto__` and four more all passed the guard, `LIST_META["constructor"]`
+    // is `Object`, and the modal threw on `meta.fields` before painting. So the
+    // test REQUIRED the bug and would have gone red over the correct guard. The
+    // second read as "and it does not cast", but the hub did cast — it passed
+    // only because the next character was `)` and not `;`.
+    //
+    // What matters is that an unrecognised `?list=` reaches no `LIST_META`
+    // lookup. `isValidListKey` is the repo's one answer to that, already
+    // exported and already used by four API routes.
+    // ⚠️ **Comments stripped, and the first version of THIS assertion is why.**
+    // It read the raw file and asserted `not.toContain("in LIST_META")` — which
+    // went red against the hub's own docblock, where that spelling is quoted as
+    // the bug being fixed. A behaviour guard that a comment can fail is a guard
+    // that punishes explaining yourself.
+    const hub = stripComments(
+      fs.readFileSync(
+        path.join(
+          process.cwd(), "src", "app", "admin", "value-lists", "_components", "value-list-hub.tsx",
+        ),
+        "utf8",
       ),
-      "utf8",
     );
-    expect(hub).toContain("initialList in LIST_META");
-    expect(hub).not.toContain("initialList as ListKey;");
+    expect(hub).toContain("isValidListKey(initialList)");
+    // ⚠️ Not a second spelling of the line above: this is the property. `in`
+    // and `Object.hasOwn` are the two ways back to a prototype-reachable key,
+    // and a bare index is the way past the guard altogether.
+    expect(hub).not.toContain("in LIST_META");
+    expect(hub).not.toContain("LIST_META[initialList");
   });
 
   it("says something different in Romanian than in English", () => {

@@ -758,6 +758,17 @@ export function ValueListModal({
         // list modal underneath closes too, so Escape out of the editor lands
         // the administrator back on Reference Data instead of on the list.
         if (formEditorRow) return;
+        // ⚠️ **AND THE SAME FOR „Roluri pe Document" — Slice #34.10, and this
+        // omission was a REGRESSION THE MOVE CREATED.** That grid used to be
+        // rendered by `value-list-hub.tsx`, a plain page with no `keydown`
+        // listener at all, so nothing competed with its own Escape handler.
+        // Mounted here instead, it sits under this one: both listeners are on
+        // `document`, `document-persons-modal.tsx` calls no `stopPropagation`,
+        // so one keypress closed the grid AND unmounted this list — landing the
+        // administrator on the Reference Data hub having lost the Document
+        // Types list. Verbatim the failure the paragraph above records #27.03
+        // fixing for the form editor. Found by an adversarial round.
+        if (showDocPersons) return;
         // The delete dialog handles its own Escape — it has to, because it
         // must ignore the key while a move is in flight, and this handler
         // cannot see that. Guarded on what is RENDERED (`confirmDeleteRow`),
@@ -770,7 +781,7 @@ export function ValueListModal({
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [confirmDeleteRow, form, formEditorRow, onClose]);
+  }, [confirmDeleteRow, form, formEditorRow, showDocPersons, onClose]);
 
   function startAdd() {
     setForm({ id: null, values: blankFormValues(meta) });
@@ -1173,7 +1184,7 @@ export function ValueListModal({
         // path reached "Formular", which mounts the z-70 editor over the z-60
         // confirmation — the exact stack `document-type-form-editor.tsx`
         // documents as unreachable by Escape.)
-        inert={!!formEditorRow || !!confirmDeleteRow}
+        inert={!!formEditorRow || !!confirmDeleteRow || showDocPersons}
         className="fixed inset-x-4 top-[10%] z-50 mx-auto max-w-2xl rounded-xl border border-card-rim bg-card shadow-2xl focus-visible:outline-none dark:border-zinc-800 dark:bg-zinc-900"
       >
         {/* Header */}
@@ -1208,6 +1219,14 @@ export function ValueListModal({
 
             {/* Toolbar */}
             <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+              {/* ⚠️ **The two buttons are wrapped, Slice #34.10, so that
+                  "beside" is what the CSS does.** The toolbar is
+                  `justify-between`, so adding a fourth child distributed it
+                  into the middle of the row rather than putting it next to the
+                  primary — and the comment under it argues about two buttons
+                  sitting side by side. An adversarial round pointed out that
+                  the premise was no longer true of the layout. */}
+              <div className="flex flex-wrap items-center gap-3">
               <button
                 onClick={startAdd}
                 disabled={!!form}
@@ -1241,6 +1260,7 @@ export function ValueListModal({
                   {tDocPersons("title")}
                 </button>
               )}
+              </div>
               {/* Slice #27.07: the onboarding backlog, in one click.
 
                   ⚠️ **A checkbox rather than a third status column or a sort.**

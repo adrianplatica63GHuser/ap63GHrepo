@@ -660,6 +660,7 @@ export function ImportTypesBlockedStage({
                       className="text-sm font-medium text-cta underline underline-offset-2 dark:text-amber-200"
                     >
                       {t("goToEngine")}
+                      <span className="sr-only"> {t("opensInNewTab")}</span>
                     </Link>
                   ) : (
                     <Link
@@ -669,6 +670,7 @@ export function ImportTypesBlockedStage({
                       className="text-sm font-medium text-cta underline underline-offset-2 dark:text-amber-200"
                     >
                       {t("goToReferenceData")}
+                      <span className="sr-only"> {t("opensInNewTab")}</span>
                     </Link>
                   )}
                 </p>
@@ -713,9 +715,14 @@ export function ImportTypesBlockedStage({
               {t("whatNextTitle")}
             </h3>
             <p className="mt-1 text-sm text-ink dark:text-zinc-200">{t("whatNext")}</p>
-            {/* Said once, under the prose that names both journeys, rather than
-                once per row: the rows carry the links, and repeating "opens in
-                a new tab" beside every one of twenty would be noise. */}
+            {/* ⚠️ **Said once VISUALLY, and once per link for a screen reader —
+                and an adversarial round is why those are two different
+                answers.** Repeating "se deschide într-o filă nouă" beside
+                twenty visible links is noise; a reader tabbing those twenty
+                links hears twenty plain links and only meets this sentence
+                after the last one, because it is drawn below the whole list.
+                An `sr-only` span inside each link costs nothing visually and
+                puts the behaviour where the reader actually meets it. */}
             <p className="mt-1.5 text-xs text-fade dark:text-zinc-400">{t("linksHint")}</p>
           </div>
 

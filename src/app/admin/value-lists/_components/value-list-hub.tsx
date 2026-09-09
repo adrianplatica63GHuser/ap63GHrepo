@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { LIST_META, type ListKey } from "@/lib/admin/value-lists/config";
+import { isValidListKey, type ListKey } from "@/lib/admin/value-lists/config";
 import { ValueListModal } from "./value-list-modal";
 
 // ── Section wrapper ───────────────────────────────────────────────────────────
@@ -77,12 +77,26 @@ export function ValueListHub({
   /**
    * A list to open on arrival, and a name to start adding — Slice #34.10.
    *
-   * ⚠️ **VALIDATED HERE, against `LIST_META`, and not trusted from the URL.**
+   * ⚠️ **VALIDATED HERE with `isValidListKey`, and not trusted from the URL.**
    * `ListKey` is a union and `?list=` is a string anybody can type; casting it
    * would put an unknown key into `LIST_META[listKey]` inside the modal, where
    * `meta.fields` is read without a guard — a blank screen from a typo. An
    * unrecognised value opens the hub exactly as a visit with no parameter does,
    * which is the right failure for a deep link.
+   *
+   * ⚠️ **`isValidListKey`, NOT `initialList in LIST_META` — and the first draft
+   * of this slice wrote the second.** `in` walks the prototype chain of a plain
+   * object literal, so `?list=constructor`, `toString`, `valueOf`, `__proto__`,
+   * `hasOwnProperty`, `isPrototypeOf`, `propertyIsEnumerable` and
+   * `toLocaleString` — eight strings, verified — all passed the guard.
+   * `LIST_META["constructor"]` is then `Object`, `meta.fields` is `undefined`,
+   * and the modal throws on `displayFields.length` before it paints: exactly
+   * the blank screen the paragraph above claims to prevent, delivered by the
+   * check meant to prevent it. Found by an adversarial round.
+   *
+   * `isValidListKey` was already exported from `config.ts` and already used by
+   * four API routes; it tests membership of `VALID_LIST_KEYS`, so it reaches no
+   * prototype and there is one definition of what a list key is.
    *
    * ⚠️ **`initialAddName` is passed on and NOT validated**, deliberately: it is
    * a type name a person is about to create, and the only thing that may refuse
@@ -97,13 +111,39 @@ export function ValueListHub({
 } = {}) {
   const t = useTranslations("valueList");
 
-  const openOnArrival: ListKey | null =
-    initialList !== undefined && initialList in LIST_META ? (initialList as ListKey) : null;
+  /**
+   * ⚠️ **LATCHED IN STATE, not recomputed from the prop on every render.**
+   * `openOnArrival` gates `initialAddName` below, and computed fresh it stayed
+   * true for the whole visit: a user who arrived with `?add=Foo`, closed the
+   * modal and reopened the SAME list from the hub got the add form seeded with
+   * "Foo" all over again — which the `initialAddName` prop's own comment says
+   * cannot happen. `useState`'s initialiser runs once, so "on arrival" means
+   * what it says. Found by an adversarial round.
+   *
+   * ⚠️ **The residual, stated rather than left to be rediscovered: this latch
+   * is STALE under a soft navigation between two `?list=` URLs on this route**
+   * — `openOnArrival` would hold list A while `initialAddName` became B's,
+   * which is the same cross-list leak arrived at from the other side. Not
+   * reachable in this build: every in-app link into this route either carries
+   * no params (`preflight-checklist.tsx`) or opens in a new tab
+   * (`import-types-blocked-stage.tsx`), so every arrival is a fresh mount. The
+   * day one of those becomes a same-tab `<Link>`, both halves have to be
+   * latched together — or read from `useSearchParams` rather than from a prop.
+   */
+  const [openOnArrival] = useState<ListKey | null>(() =>
+    initialList !== undefined && isValidListKey(initialList) ? initialList : null,
+  );
+  /** Consumed once: the second visit to the same list is an ordinary one. */
+  const [addNameUsed, setAddNameUsed] = useState(false);
 
   const [openList, setOpenList] = useState<ListKey | null>(openOnArrival);
 
   function open(key: ListKey) { setOpenList(key); }
-  function close()             { setOpenList(null); }
+  function close() {
+    setOpenList(null);
+    // Slice #34.10 — the URL has had its say. See `openOnArrival`.
+    setAddNameUsed(true);
+  }
 
   return (
     <>
@@ -190,7 +230,9 @@ export function ValueListHub({
           // the first close, so without this term a user who arrived with
           // `?add=` and then opened a DIFFERENT list would get its add form
           // opened with a document type's name in it.
-          initialAddName={openList === openOnArrival ? initialAddName : undefined}
+          initialAddName={
+            openList === openOnArrival && !addNameUsed ? initialAddName : undefined
+          }
           onClose={close}
         />
       )}

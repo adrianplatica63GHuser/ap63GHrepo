@@ -442,16 +442,24 @@ export function DocumentListView({
     staleTime: 5 * 60 * 1000,
   });
   /**
-   * ⚠️ **`useMemo`, and it is a CORRECTNESS fix rather than a performance one.
+   * ⚠️ **`useMemo` so `customFieldOptions` below is not rebuilt on every
+   * render — a performance fix, and this comment used to claim more than that.
    *                                                            (Slice #34.10)**
-   * `documentTypes ?? []` built a fresh array on every render. Nothing depended
-   * on its identity until `customFieldOptions` below did, and then it did so in
-   * a way that could not fail quietly: a new array in means a new array out,
-   * which means the render-phase reconciliation under it saw a change on EVERY
-   * render and called `setState` from every render — a loop. ESLint's
-   * `react-hooks/exhaustive-deps` named this exact expression, which is the
-   * warning class the shared rules say a component slice is most likely to trip
-   * and `tsc` can never see.
+   * `documentTypes ?? []` builds a fresh array each render, which ESLint's
+   * `react-hooks/exhaustive-deps` named as making the memo under it useless.
+   * That is the whole of it.
+   *
+   * ⚠️ **The first version of this comment said it was a CORRECTNESS fix —
+   * that an unmemoised array would make the reconciliation below `setState` on
+   * every render, a loop. That was wrong, and an adversarial round caught it.**
+   * The reconciliation compares a STRING signature, and an unmemoised array
+   * produces an identical signature, so no loop was ever possible. The rescue
+   * was already in place two hooks down; this hook is the tidy one.
+   *
+   * Left in, that sentence would have been a rationale the next reader reasons
+   * from — "the memo is load-bearing, do not touch it" — which is exactly the
+   * class of thing this project's rules call out: a comment that describes what
+   * the system does must be derived from the code that does it.
    */
   const typeOptions = useMemo(() => documentTypes ?? [], [documentTypes]);
 
@@ -502,13 +510,14 @@ export function DocumentListView({
    * paint one frame of an empty list first.
    */
   //
-  // ⚠️ **Compared as a STRING, not by array identity, and the memo above is not
-  // what makes that safe — it is belt-and-braces on purpose.** An identity
-  // comparison here is only ever as correct as every input's memoisation, and
-  // the failure when one of them slips is not a slow render: it is `setState`
-  // on every render, which is a loop. A signature cannot fail that way whatever
-  // anybody upstream does. `typeFiltersKey` above already sets this precedent
-  // for exactly the same reconciliation.
+  // ⚠️ **Compared as a STRING, not by array identity, and this is the line that
+  // makes the whole reconciliation safe rather than the `useMemo` above.** An
+  // identity comparison would be only as correct as every input's memoisation,
+  // and the failure when one of them slips is not a slow render: it is
+  // `setState` from every render, which is a loop. A signature cannot fail that
+  // way whatever anybody upstream does — which is why the memo above is a
+  // tidiness fix and this is the guard. `typeFiltersKey` above already sets the
+  // precedent for exactly the same reconciliation.
   const customFieldKeysSignature = customFieldOptions.map((o) => o.key).join("\u0000");
   const [prevKeysSignature, setPrevKeysSignature] = useState(customFieldKeysSignature);
   if (prevKeysSignature !== customFieldKeysSignature) {

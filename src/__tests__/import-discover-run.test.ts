@@ -22,6 +22,16 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
+// ⚠️ **`@/lib/dev/strip-comments`, NOT a local two-regex copy — and Slice
+// #34.10's first draft wrote the copy, in three files at once.** That module
+// exists because #34.06's own review deleted exactly this shape from
+// `upload-file-types.test.ts`: a regex stripper is provably wrong on `//`
+// inside a string or a regex literal (`accept="image/*"`,
+// `p.replace(/https?:\/\//, "")`), and OVER-stripping turns a NEGATIVE
+// assertion green — a false pass, which is the worst direction for a guard.
+// Measured by an adversarial round on this slice: the regex and the lexer
+// disagree on 105 of 566 files under `src/`, by up to 8,817 characters.
+import { stripComments } from "@/lib/dev/strip-comments";
 import { documentTypeIsCatchAll } from "@/lib/documents/document-type-match";
 import {
   shouldDiscoverType,
@@ -405,15 +415,21 @@ describe("⚠️ one rule at every door — Slice #34.10", () => {
       ],
     ];
     for (const [what, file, pattern] of SITES) {
-      const code = readFileSync(join(process.cwd(), file), "utf8");
+      const code = stripComments(readFileSync(join(process.cwd(), file), "utf8"));
       expect([what, pattern.test(code)]).toEqual([what, true]);
     }
 
     // The import dialog's four sites all read the row it looked up, and the
     // `?? null` is the mid-run-invented type the module header argues about.
-    const dialog = readFileSync(
-      join(process.cwd(), "src/app/admin/import/_components/bulk-import-dialog.tsx"),
-      "utf8",
+    // ⚠️ **Comments stripped: this counts CALLS, so it must not see the
+    // eighteen places that file discusses these two functions by name.** None
+    // of them currently spells `({`, so the raw version passed — and would go
+    // red the day somebody wrote one that did, over code that is correct.
+    const dialog = stripComments(
+      readFileSync(
+        join(process.cwd(), "src/app/admin/import/_components/bulk-import-dialog.tsx"),
+        "utf8",
+      ),
     );
     const calls = [
       ...dialog.matchAll(/(?:typeAwaitsForm|shouldDiscoverType)\(\{[\s\S]*?\}\)/g),

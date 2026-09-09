@@ -45,11 +45,22 @@ import {
  *
  * ⚠️ **Bounded because an adversarial round costed the unbounded version.** The
  * clustering route's body schema caps `sampleCount` at 200 and its prompt at
- * 1200 pairs — so a folder of 250 documents read every one of them (250 billed
- * model calls, twenty-five minutes of paced waiting) and THEN failed validation
- * on the last request, discarding the lot. A ceiling that refuses before the
- * first call is the only kind worth having, and this screen's whole subject is
- * ten to twenty samples; fifty is generous for it.
+ * 700 pairs (`MAX_PAIRS`, `api/admin/doc-type-engine/cluster/route.ts`) — so a
+ * folder of 250 documents read every one of them (250 billed model calls,
+ * twenty-five minutes of paced waiting) and THEN failed validation on the last
+ * request, discarding the lot. A ceiling that refuses before the first call is
+ * the only kind worth having, and this screen's whole subject is ten to twenty
+ * samples; fifty is generous for it.
+ *
+ * ⚠️ **THIS SENTENCE SAID "1200 pairs" UNTIL SLICE #34.10, AND THAT NUMBER HAS
+ * NEVER EXISTED.** `MAX_PAIRS` has been 700 since the only commit that has
+ * ever set it (`git log -S"MAX_PAIRS = "` returns exactly one) — and that
+ * commit is LATER than the one this file came from, so the "1200 pairs"
+ * sentence was written before the constant it cites existed at all. Correcting it changes no behaviour — the cap this constant sets
+ * is 50 samples and was never derived from the pair figure — but leaving it
+ * meant the next person sizing a run would reason from a ceiling seventy per
+ * cent higher than the real one. The file name is named here so the two can be
+ * checked against each other rather than remembered.
  */
 export const MAX_SAMPLES_PER_RUN = 50;
 

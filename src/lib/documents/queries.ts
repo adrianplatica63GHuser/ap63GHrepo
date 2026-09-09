@@ -13,7 +13,7 @@
  * explicitly directed) — never auto-seeded by application code.
  */
 
-import { asc, and, count, desc, eq, ilike, inArray, isNotNull, lte, or, sql, type SQL } from "drizzle-orm";
+import { asc, and, count, desc, eq, ilike, inArray, isNotNull, lte, or, sql } from "drizzle-orm";
 import { db, type DbTransaction } from "@/db";
 import { appendVersionsIfChanged } from "@/lib/versioning/append";
 import { DOCUMENT_SNAPSHOT_KEYS } from "@/lib/versioning/snapshot-registry";
@@ -28,6 +28,9 @@ import type {
   DocumentUpdate,
 } from "./validation";
 import { customFieldsEqual, parseTemplateFields, type DocumentTemplateField } from "./template-fields";
+// Slice #34.10 — a pure module, and its own header says why it is not in
+// this file: a suite for it here has to load `pg` to test a string.
+import { customFieldFilter } from "./custom-field-filter";
 
 // ---------------------------------------------------------------------------
 // Return types
@@ -55,63 +58,6 @@ export type DocumentFull = typeof document.$inferSelect;
 // List
 // ---------------------------------------------------------------------------
 
-/**
- * One structured filter that reads `custom_fields`.           (Slice #34.10)
- *
- * ⚠️ **THE HALF OF D-01 THAT NEEDS CODE.** D-01 settled that
- * CONTRACT_VANZARE gets ONE union form plus one hand-written field carrying
- * the flavour, rather than a subtype level — and that answer is only half
- * an answer while nothing anywhere can read `custom_fields`. Until this
- * line the search matched three columns (`code`, `title`, `nrDocument`) and
- * the structured filters were type, importance, relevance and expiry, so a
- * flavour recorded as a form field could be captured and never grouped by.
- *
- * ⚠️ **`->>` RATHER THAN `->`, so the comparison is against `text`.**
- * `custom_fields` is `jsonb` typed `Record<string, string | null>` — flat,
- * one level, string values — so `->>` yields the value directly and there
- * is nothing to traverse. `->` would return a `jsonb` and compare
- * `"Vânzare"` (with the quotes) against a bare string, matching nothing and
- * failing silently.
- *
- * ⚠️ **`${key}::text` IS NOT DECORATION.** `jsonb ->> ?` has two overloads,
- * `text` and `integer`, and an untyped bind parameter leaves Postgres to
- * choose — which it resolves as `integer` for a numeric-looking key,
- * turning a key lookup into an array index against an object and erroring
- * at runtime rather than at review. `snake_case` and `camelCase` keys are
- * both legal here by design (`discover-to-template.ts` says so at length),
- * so a key is whatever a person typed.
- *
- * ⚠️ **BOTH terms or NEITHER — and the empty-value rule is chosen rather
- * than inherited.** `customFieldsEqual` treats `null`, `""`, an absent key
- * and `undefined` as all equivalent, so "the value is empty" is not one
- * state in the data. Rather than pick one and be wrong for the other three,
- * an empty value means NO FILTER at all: this filter answers "which
- * documents hold THIS value", never "which are missing it". The route and
- * the schema say the same thing, so there is one rule.
- *
- * No join, and nothing to add to the count query at the caller: the column is
- * on
- * `document` itself and this predicate goes into the `where` both share.
- *
- * ⚠️ **A NAMED FUNCTION RATHER THAN A TERM INSIDE `listDocument`'s `and(...)`,
- * so that it can be TESTED rather than only grepped.** Every other filter there
- * is a `eq()` or an `inArray()` whose meaning is carried by drizzle; this one is
- * hand-written SQL with two operators and a cast in it, and the ways it can be
- * subtly wrong — `->` for `->>`, a missing cast, one term instead of two — all
- * type-check and all fail at runtime or, worse, silently match nothing.
- * `PgDialect().sqlToQuery` renders it with no database in reach, which is what
- * lets `document-custom-field-filter.test.ts` assert the operator, the cast and
- * the parameter order as facts rather than as source text.
- *
- * Returns `undefined` — which `and()` drops — when the filter is not in play.
- */
-export function customFieldFilter(opts: {
-  customFieldKey?: string;
-  customFieldValue?: string;
-}): SQL | undefined {
-  if (!opts.customFieldKey || !opts.customFieldValue) return undefined;
-  return sql`${document.customFields} ->> ${opts.customFieldKey}::text = ${opts.customFieldValue}`;
-}
 
 export async function listDocument(
   opts: DocumentListQuery,
@@ -274,20 +220,51 @@ export async function listDocumentCustomFieldValues(
   // syntax error rather than an empty result.
   if (opts.documentTypeIds !== undefined && opts.documentTypeIds.length === 0) return [];
 
-  const value = sql<string>`${document.customFields} ->> ${key}::text`;
+  /**
+   * ⚠️ **`GROUP BY 1` / `ORDER BY 2, 1` — SELECT-LIST ORDINALS, AND A DRIZZLE
+   * TRAP IS WHY.** The obvious spelling builds the `->>` expression once as a
+   * `const` and passes that same chunk to `select`, `where`, `groupBy` and
+   * `orderBy`. It reads as one expression reused four times. It is not: drizzle
+   * appends the bind parameter on EVERY emission, so the four renders carry
+   * four different placeholders —
+   *
+   *     select "custom_fields" ->> $1::text, count(*) … group by … ->> $4::text
+   *
+   * — and Postgres compares a select-list expression against a GROUP BY item
+   * with `equal()`, which compares `paramid`. `$1` and `$4` are not equal, the
+   * whole-expression match fails, the walker descends to the bare
+   * `document.custom_fields` and the statement is rejected:
+   * `42803: column "document.custom_fields" must appear in the GROUP BY clause`.
+   * `ORDER BY` fails the same way, independently.
+   *
+   * ⚠️ **And it would have failed SILENTLY on screen.** The route answers 500,
+   * `valuesQuery` errors, `valueOptions` falls back to `[]`, and the value
+   * dropdown renders enabled with one option and no error anywhere — a filter
+   * that looks present and never works. An adversarial round rendered the SQL
+   * and found this; nothing else could have, because `tsc` and ESLint see a
+   * well-typed builder chain and the WHERE-clause suite is green either way.
+   *
+   * Ordinals sidestep the comparison entirely: there is no expression to match,
+   * so the key is bound once in the select and once in the where, where being a
+   * separate parameter costs nothing.
+   */
   const rows = await db
-    .select({ value, count: count() })
+    .select({
+      value: sql<string>`${document.customFields} ->> ${key}::text`,
+      count: count(),
+    })
     .from(document)
     .where(
       and(
         opts.documentTypeIds && opts.documentTypeIds.length > 0
           ? inArray(document.documentTypeId, opts.documentTypeIds)
           : undefined,
-        sql`${value} IS NOT NULL AND ${value} <> ''`,
+        sql`${document.customFields} ->> ${key}::text IS NOT NULL`,
+        sql`${document.customFields} ->> ${key}::text <> ''`,
       ),
     )
-    .groupBy(value)
-    .orderBy(sql`count(*) desc`, sql`${value} asc`)
+    .groupBy(sql`1`)
+    .orderBy(sql`2 desc`, sql`1 asc`)
     .limit(limit);
 
   return rows.map((r) => ({ value: r.value, count: r.count }));
