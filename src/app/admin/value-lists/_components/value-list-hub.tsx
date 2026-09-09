@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import type { ListKey } from "@/lib/admin/value-lists/config";
 import { ValueListModal } from "./value-list-modal";
-import { DocumentPersonsModal } from "./document-persons-modal";
 
 // ── Section wrapper ───────────────────────────────────────────────────────────
 
@@ -43,14 +42,15 @@ function Section({
 }
 
 // ── Sub-row divider label ─────────────────────────────────────────────────────
-
-function SubLabel({ label }: { label: string }) {
-  return (
-    <div className="w-full border-t border-card-rim pt-3 dark:border-zinc-800">
-      <span className="text-xs font-medium text-fade dark:text-zinc-500">{label}</span>
-    </div>
-  );
-}
+//
+// ⚠️ **GONE WITH ITS LAST CALLER, Slice #34.10.** `SubLabel` existed to head
+// one sub-row of the „Roluri" section — „Persoană implicată" — under which
+// three buttons once sat. #34.04 folded two of them into checkboxes on the
+// „Roluri Persoană" row and #34.10 moved the third onto the document-type
+// screen, so the divider was heading a sub-row with nothing in it. Left behind,
+// it would be an unused component in a file a lint run reads, and the next
+// person to want a sub-row would find a helper whose one former caller says
+// nothing about how it was meant to be used.
 
 // ── List button ───────────────────────────────────────────────────────────────
 
@@ -76,8 +76,7 @@ function ListBtn({
 export function ValueListHub() {
   const t = useTranslations("valueList");
 
-  const [openList,       setOpenList]       = useState<ListKey | null>(null);
-  const [showDocPersons, setShowDocPersons] = useState(false);
+  const [openList, setOpenList] = useState<ListKey | null>(null);
 
   function open(key: ListKey) { setOpenList(key); }
   function close()             { setOpenList(null); }
@@ -105,30 +104,33 @@ export function ValueListHub() {
           <ListBtn label={t("lists.institutions")}  onClick={() => open("institutions")} />
         </Section>
 
-        {/* ── Roluri ── */}
+        {/* ── Roluri ──
+
+            Slice #34.04: „Persoană → Proprietate" and „Persoană → Persoană"
+            are gone from here, and their words are two CHECKBOXES on the
+            „Roluri Persoană" row below. Each opened a modal over a table
+            holding one bit per role — a UNIQUE NOT NULL foreign key back to
+            the master list and nothing else — so one question about one role
+            cost three windows, and the empty-by-default state of
+            „Persoană → Persoană" was invisible until you opened it.
+            migration_079 made both a boolean column.
+
+            ⚠️ **Slice #34.10 took the third, „Persoană → Document", to the
+            document-type screen — and it did NOT become a checkbox, because it
+            cannot.** `lookup_doc_type_person_role` is unique over the PAIR
+            (document_type_id, person_role_id) — „Vânzător" is a valid party on
+            a sale contract and not on a cadastral plan — so it is a grid, and a
+            bit cannot hold it. What was wrong with it here was not its shape
+            but its address: „who may appear on this kind of document?" belongs
+            beside „what fields does this kind of document have?", which is the
+            Form editor, two screens away from this one. It now opens from the
+            „Tipuri de document" list's own toolbar, under its real name
+            „Roluri pe Document" — which is also the name two sentences in
+            `value-list-modal.tsx` already used to send people to it.
+
+            So this section is one button again, and it is the master list. */}
         <Section label={t("sections.roles")}>
-          {/* Master list */}
           <ListBtn label={t("lists.personRoles")} onClick={() => open("person-roles")} />
-
-          {/* Person-involved sub-row.
-
-              Slice #34.04: „Persoană → Proprietate" and „Persoană → Persoană"
-              are gone from here, and their words are two CHECKBOXES on the
-              „Roluri Persoană" row above. Each opened a modal over a table
-              holding one bit per role — a UNIQUE NOT NULL foreign key back to
-              the master list and nothing else — so one question about one role
-              cost three windows, and the empty-by-default state of
-              „Persoană → Persoană" was invisible until you opened it.
-              migration_079 made both a boolean column.
-
-              „Persoană → Document" stays a button, and that is not an
-              oversight: `lookup_doc_type_person_role` is unique over the PAIR
-              (document_type_id, person_role_id) — „Vânzător" is a valid party
-              on a sale contract and not on a cadastral plan — so it is a grid
-              and a bit cannot hold it. Slice #34.10 moves it to the
-              document-type screen. */}
-          <SubLabel label={t("sections.rolesPerson")} />
-          <ListBtn label={t("lists.personToDocument")} onClick={() => setShowDocPersons(true)} />
         </Section>
 
         {/* ── Relație între obiecte ──
@@ -157,8 +159,7 @@ export function ValueListHub() {
 
       </div>
 
-      {openList       && <ValueListModal listKey={openList} onClose={close} />}
-      {showDocPersons && <DocumentPersonsModal onClose={() => setShowDocPersons(false)} />}
+      {openList && <ValueListModal listKey={openList} onClose={close} />}
     </>
   );
 }

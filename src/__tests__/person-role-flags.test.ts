@@ -37,7 +37,10 @@
  *      Proprietate" now labels a column instead of a panel, so its Romanian
  *      must exist once — under `valueList.fields` — and be gone from
  *      `valueList.lists`, where it would be a sentence nothing can print.
- *      `personToDocument` must still be there: that panel is still a panel.
+ *      `personToDocument` went the same way in Slice #34.10 — the panel is
+ *      still a panel, but it opens from the Document Types list's toolbar now
+ *      and is labelled from its own `documentPersons.title`, so the `lists`
+ *      key is a sentence nothing can print.
  */
 
 import fs from "fs";
@@ -446,8 +449,31 @@ describe("the two labels are the panel names, in one place", () => {
     for (const key of ["personToProperty", "personToPerson"]) {
       expect([locale, key, at(m, `valueList.lists.${key}`)]).toEqual([locale, key, undefined]);
     }
-    // …but „Persoană → Document" is still a button, so its key must stay.
-    expect([locale, typeof at(m, "valueList.lists.personToDocument")]).toEqual([locale, "string"]);
+    // ⚠️ **INVERTED IN PLACE BY SLICE #34.10, AND THE OLD LINE IS QUOTED
+    // RATHER THAN DELETED.** It read:
+    //
+    //     // …but „Persoană → Document" is still a button, so its key must stay.
+    //     expect([locale, typeof at(m, "valueList.lists.personToDocument")]).toEqual([locale, "string"]);
+    //
+    // and both this file's header and `config.ts`'s comment on the two
+    // checkboxes said the same thing with a date on it — "its button is still
+    // there until Slice #34.10". This is that slice. The button moved onto the
+    // Document Types list's toolbar and is labelled from the panel's OWN name,
+    // `valueList.documentPersons.title` („Roluri pe Document"), so
+    // `lists.personToDocument` is a sentence nothing can print — exactly what
+    // the two lines above delete `personToProperty` and `personToPerson` for.
+    //
+    // ⚠️ **The rule this enforces is unchanged and it is the one that matters:
+    // a moved panel's label is MOVED, never copied.** Leaving the old key would
+    // have given the same panel two names in two locales, and the one nobody
+    // renders is the one that goes stale.
+    for (const key of ["personToDocument"]) {
+      expect([locale, key, at(m, `valueList.lists.${key}`)]).toEqual([locale, key, undefined]);
+    }
+    // The sub-row divider that headed it went too — `SubLabel`'s only caller.
+    expect([locale, at(m, "valueList.sections.rolesPerson")]).toEqual([locale, undefined]);
+    // …and the panel it named is still reachable, under its own namespace,
+    // which the last test in this describe already pins.
   });
 
   it("and the Romanian says the same words the deleted buttons said", () => {

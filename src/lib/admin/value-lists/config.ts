@@ -174,9 +174,13 @@ export const LIST_META: Record<ListKey, ListMeta> = {
   // they are the same Romanian and there must be one copy of it: they moved
   // from `valueList.lists.personToProperty` / `.personToPerson` — where they
   // named a panel that no longer exists — to `valueList.fields`, where they
-  // name a column. `personToDocument` stays in `lists`: „Persoană → Document"
-  // does not collapse (it is unique over the document-type/role PAIR) and its
-  // button is still there until Slice #34.10.
+  // name a column. ⚠️ **`personToDocument` has since gone the same way, in
+  // Slice #34.10, but for the other of the two reasons.** It did not collapse
+  // into a checkbox — it cannot, being unique over the document-type/role PAIR
+  // — it MOVED: the panel now opens from the „Tipuri de document" list's own
+  // toolbar, beside the Form editor, under its real name „Roluri pe Document"
+  // (`valueList.documentPersons.title`). So `valueList.lists.personToDocument`
+  // is gone too, for the same single-copy reason as the two above.
   //
   // ⚠️ **There is deliberately no third checkbox.** See the ⚠️ on
   // `lookupPersonRole` in `src/db/schema/index.ts`.

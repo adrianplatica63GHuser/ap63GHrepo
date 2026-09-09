@@ -1713,7 +1713,6 @@
       "person": "Persoană",
       "document": "Document",
       "roles": "Roluri",
-      "rolesPerson": "Persoană implicată",
       "rolesObject": "Relație între obiecte",
       "rolesObjectNote": "Nu există o listă „Document → Proprietate”: relația dintre un document și o proprietate este definită de tipul documentului (de exemplu: plan cadastral, extras de carte funciară). Nu este necesară configurarea separată a unui tip de relație."
     },
@@ -1727,7 +1726,6 @@
       "judicialPersonTypes": "Tipuri de Persoană Juridică",
       "documentTypes": "Tipuri de Document",
       "institutions": "Instituții",
-      "personToDocument": "Persoană → Document",
       "propertyToProperty": "Proprietate → Proprietate",
       "documentToDocument": "Document → Document"
     },
@@ -1894,7 +1892,7 @@
       "addTitle": "Adaugă Asociere",
       "selectDocType": "Selectați tipul de document…",
       "selectPersonRole": "Selectați rolul persoanei…",
-      "hintDocType": "Dacă tipul de document nu este listat, adăugați-l folosind butonul Tipuri de Document.",
+      "hintDocType": "Dacă tipul de document nu este listat, închideți acest tabel și adăugați-l în lista Tipuri de document de dedesubt.",
       "hintPersonRole": "Dacă rolul persoanei nu este listat, adăugați-l folosind butonul Roluri Persoană.",
       "add": "Adaugă",
       "save": "Salvează",

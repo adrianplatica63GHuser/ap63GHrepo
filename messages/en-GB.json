@@ -1713,7 +1713,6 @@
       "person": "Person",
       "document": "Document",
       "roles": "Roles",
-      "rolesPerson": "Person involved",
       "rolesObject": "Object-to-object",
       "rolesObjectNote": "There is no “Document → Property” list: the relationship between a document and a property is defined by the document type (e.g. cadastral plan, land-register extract). No separate relationship type configuration is needed."
     },
@@ -1727,7 +1726,6 @@
       "judicialPersonTypes": "Judicial Person Types",
       "documentTypes": "Document Types",
       "institutions": "Institutions",
-      "personToDocument": "Person → Document",
       "propertyToProperty": "Property → Property",
       "documentToDocument": "Document → Document"
     },
@@ -1894,7 +1892,7 @@
       "addTitle": "Add Association",
       "selectDocType": "Select document type…",
       "selectPersonRole": "Select person role…",
-      "hintDocType": "If a document type is not listed, add it using the Document Types button.",
+      "hintDocType": "If a document type is not listed, close this table and add it to the Document types list underneath.",
       "hintPersonRole": "If a person role is not listed, add it using the Person Roles button.",
       "add": "Add",
       "save": "Save",
