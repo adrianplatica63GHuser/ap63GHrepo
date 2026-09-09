@@ -717,6 +717,43 @@ type EnrichResult = {
   names: string[] | null;
   sessionLost: boolean;
   /**
+   * The catalogue read did not come back with a list.           (Slice #34.11)
+   *
+   * ⚠️ **`typeRows: null` says THAT there are no rows; this says WHY**, and
+   * one field was carrying both jobs. The null is returned for a read that
+   * threw and for a 200 whose JSON had no `items` array (the argument for
+   * reading the second as a failed read too is written out below, at the test
+   * that makes it) — and one `?.find` later the SAME null shape is what a
+   * reader gets for "the list came back and this id is not in it", which is a
+   * statement about the archive rather than about the network. A caller
+   * holding `finalTypeRow === null` cannot tell those apart; a caller holding
+   * this field can.
+   *
+   * ⚠️ **It is `typeRows === null` today, and naming it is the point.** The
+   * two returns below are the only places an `EnrichResult` is built, so the
+   * flag and the null agree by construction — this is not a second, weaker
+   * test. What it buys is that the fact is stated where it is KNOWN, at the
+   * read, instead of being re-derived from an absence three hundred lines away
+   * by every future reader; and that a third return added later has to answer
+   * it rather than silently inherit whichever meaning its `typeRows` implies.
+   *
+   * ⚠️ **`sessionLost` is the narrower fact and stays beside this one rather
+   * than being folded into it.** Every lost session is a failed read; most
+   * failed reads are not a lost session — a 502, a DNS failure, a body with no
+   * `items`. (A rewritten body is not one of them: a 200 serving the sign-in
+   * page is what `servesHtml` turns into `session-expired`.) The retry handler
+   * had a fresh witness for the first and
+   * none at all for the second, so a 502 between its two reads bought a billed
+   * discovery on the narrow, id-only answer #34.10 exists to stop giving.
+   *
+   * ⚠️ **Additive, and the three readers that answer off `typeRows?.some(…)
+   * === true` are deliberately left alone.** They answer `false` on an unread
+   * list, which is the safe direction — an unread list absolves nothing —
+   * whereas the other shape this could have taken, `typeRows: Row[] |
+   * "unread"`, would have turned each of them into a runtime error instead.
+   */
+  readFailed: boolean;
+  /**
    * Types dropped here because the SERVER's name for them reads as an identity
    * card.   (Slice #27.05)
    *
@@ -799,7 +836,7 @@ async function enrichDiscoverSteps(byType: Map<string, DiscoverStep>): Promise<E
   // same refusal, one step quieter because there is a queue to protect rather
   // than a run to stop.
   if (fresh === null || fresh.length === 0) {
-    return { names: null, sessionLost, idCardTypeIds: [], typeRows: null };
+    return { names: null, sessionLost, readFailed: true, idCardTypeIds: [], typeRows: null };
   }
   const idCardTypeIds: string[] = [];
   const byId = new Map(fresh.map((item) => [item.id, item]));
@@ -860,6 +897,12 @@ async function enrichDiscoverSteps(byType: Map<string, DiscoverStep>): Promise<E
   return {
     names: fresh.map((item) => item.name),
     sessionLost: false,
+    // The list is in hand, so every `null` a reader gets from here on is the
+    // OTHER reason: an id that is not in a list that WAS read — a type deleted
+    // since. Never "newer than this read": every id looked up against these
+    // rows was fixed before the GET went out. See `finalTypeRow`'s own header,
+    // which is where that used to be said backwards. (Slice #34.11)
+    readFailed: false,
     idCardTypeIds,
     // Slice #27.07 — `documentTypeHasForm`, the one function #26.12 wrote for
     // the question, exactly as the start-of-run map is built. A `length > 0` on
@@ -4980,9 +5023,36 @@ export function BulkImportDialog({
          * that is per-id, freshly read, and — since this slice — carries both
          * columns.
          *
-         * `null` here means the same one thing it means in the run loop: a
-         * type `runAiInterpret` invented on THIS call, after the list above was
-         * fetched. The argument for why that is safe is written out there.
+         * ⚠️ **THIS DOCBLOCK USED TO SAY `null` MEANS "A TYPE INVENTED ON
+         * THIS CALL", AND THAT IS THE ONE THING IT CANNOT MEAN HERE.**
+         *                                                    (Slice #34.11)
+         * It is the run loop's sentence, copied one handler over, and the
+         * order of the two awaits is what makes it false: there `docTypeItems`
+         * is the START-OF-RUN list, so a type the re-classify route invented is
+         * genuinely missing from it. Here `runAiInterpret` is awaited a hundred
+         * and sixty lines ABOVE the preflight, and `fetchDocumentTypeCatalogue`
+         * is a `no-store` GET — so a type this very call invented is IN
+         * `preflight.typeRows`. The hoist's own header, a few lines up, says
+         * the same thing from the other side: this read sees the archive as it
+         * currently stands.
+         *
+         * So a `null` here is one of two things, and neither is the sentence
+         * that used to be here:
+         *
+         *   - **the catalogue read failed** — it threw (a 502, a DNS failure,
+         *     an expired session) or answered a 200 with no `items` array, so
+         *     `typeRows` is null and there is no list to find in. This is the
+         *     ordinary one, and `preflight.readFailed` is what names it;
+         *   - **the list was read and this id is not in it** — the type was
+         *     deleted between the interpret call and the GET. A real race and a
+         *     rare one, and #34.11 deliberately did NOT buy it a term: it is a
+         *     statement about the archive, not about the network, and the fix
+         *     for a discovery bought on a deleted type is not a witness here.
+         *
+         * The lookup is left answering `null` for both: every reader of
+         * `finalTypeRow` wants the row or nothing, and folding the reason in
+         * here would put the question in four places instead of one. The guard
+         * below is the reader that has to ask, and it asks `readFailed`.
          */
         const finalTypeRow =
           finalTypeId === null
@@ -5029,6 +5099,51 @@ export function BulkImportDialog({
           // too: reaching this line took a model call and a GET that both went
           // through the session moments ago.
           !preflight.sessionLost &&
+          // ⚠️ **…and `!preflight.readFailed`, the witness the term above did
+          // NOT stand in for.**                                (Slice #34.11)
+          // `sessionLost` catches the 401 and the 200 that carries a sign-in
+          // page — `fetchDocumentTypeCatalogue` throws `session-expired` for
+          // both — and nothing else. On a 502, a DNS failure or a 200 whose
+          // body carried no `items`, `preflight` comes
+          // back with `typeRows: null`, `finalTypeRow` is null with it, and
+          // `shouldDiscoverType` below answers the narrow, id-only way — the
+          // exact answer #34.10 put `key` into `typeRows` to stop it giving. A
+          // billed discovery is then bought for a type whose key may be
+          // precisely the one that can never hold a form, on the evidence of a
+          // list nobody read. Same class of fact as the term above, one step
+          // wider, and until this slice it had no term at all.
+          //
+          // ⚠️ **This guards the SPEND only.** `typeAwaitsForm` was asked forty
+          // lines above, on the same absent witness, and no condition here can
+          // reach back and unask it — what answers for that one is the
+          // `typeFormMissing` write at the foot of this handler, which is
+          // withheld on the same flag and says so.
+          //
+          // ⚠️ **`readFailed` rather than the `preflight.typeRows !== null`
+          // this could have been written as, and NOT because the two differ.**
+          // They cannot: the two returns that build an `EnrichResult` set them
+          // together. What the named field buys is that this line says the
+          // thing it is actually about — a read that did not come back — where
+          // the null test says "there happen to be no rows" and leaves the
+          // reader to rediscover which of the reasons that covers. It also
+          // survives a third return being added, which the null test would
+          // silently absorb.
+          //
+          // ⚠️ **It does NOT refuse the other null, and that is deliberate.**
+          // A type deleted from the catalogue between the interpret call above
+          // and this GET leaves `typeRows` read and `finalTypeRow` null, and
+          // still buys its discovery on the narrow answer. Rare, out of this
+          // slice's scope, and named in `finalTypeRow`'s own header so the next
+          // reader meets it as a known gap rather than as this term's bug.
+          //
+          // ⚠️ **Kept BESIDE `!preflight.sessionLost`, not in place of it.**
+          // Every lost session is a failed read today, so this term does
+          // subsume that one — but that one is the fact the lines just above
+          // act on (`abortRef`, `raiseSessionExpired`), its own header records
+          // two reviewers rejecting `abortRef` as its witness, and a reader who
+          // finds one term where two arguments are written down deletes
+          // whichever of them he read second.
+          !preflight.readFailed &&
           finalTypeId !== null &&
           shouldDiscoverType({
             typeId: finalTypeId,
@@ -5151,7 +5266,41 @@ export function BulkImportDialog({
           ...(finalTypeId !== null ? { documentTypeId: finalTypeId } : {}),
           // `&& !typeAbsolved` since #27.07 — see that flag's own header for the
           // permanent, unfixable sentence it stops.
-          typeFormMissing: (awaitsForm && !typeAbsolved) || undefined,
+          //
+          // ⚠️ **WITHHELD when the preflight's catalogue read failed, and
+          // withheld is not `undefined`.**                     (Slice #34.11)
+          // `updateResult` spreads this patch over the row, so an absent key
+          // leaves the row's previous answer alone while an explicit
+          // `undefined` overwrites it — the same distinction `aiTitleKept`
+          // above is spread for, and the same one the enrichment's `||=` sites
+          // are about. On a failed read both answers are claims made off a
+          // witness nobody has: `awaitsForm` was decided with `typeKey` and
+          // `typeName` null, and `typeAbsolved` could not be raised at all
+          // because `idCardTypeIds` is empty and `typeRows` is null. Writing
+          // `true` draws "tipul acestui document nu are încă formular" over a
+          // type that may well have a form — permanently, in the saved report,
+          // and with the discovery refused one screen up there is no second
+          // enrichment left to take it back.
+          //
+          // ⚠️ **…except on a RE-TYPE, where keeping it is the worse answer of
+          // the two, and an adversarial round found the row.** The patch above
+          // has just written `documentTypeId: finalTypeId`, and every reader
+          // downstream — `summariseImportRun`'s `typesWithoutForm`, the saved
+          // report, `handleDiscoverSaved`'s sweep — reads the flag AGAINST that
+          // column. A row that kept a `true` earned about the type it has just
+          // been moved OFF names the new type, which may be the most complete
+          // type in the archive, as one still waiting for a form. That is not
+          // "keeps what it had": the claim is about a type this row no longer
+          // has. Cleared on the re-type half of the same test `typeFormAdded`
+          // below is cleared on — that one also clears on `awaitsForm`, which
+          // is the very answer this branch exists to distrust, so the two are
+          // deliberately NOT the same condition. Silence is the one answer that
+          // is never a false claim.
+          ...(preflight.readFailed
+            ? interpreted.documentTypeId !== null
+              ? { typeFormMissing: undefined }
+              : {}
+            : { typeFormMissing: (awaitsForm && !typeAbsolved) || undefined }),
           // A type that has since gained a form is no longer waiting for one,
           // and this row has never claimed it gained one — so the flag is
           // cleared rather than left to contradict the sentence beside it.

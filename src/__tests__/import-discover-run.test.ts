@@ -474,3 +474,261 @@ describe("⚠️ one rule at every door — Slice #34.10", () => {
     ).toBe(false);
   });
 });
+
+/**
+ * ⚠️ **What a RETRY may spend, once the catalogue read behind it has failed.**
+ *                                                              (Slice #34.11)
+ *
+ * `enrichDiscoverSteps` said "no rows" in one field for two unrelated reasons:
+ * the catalogue read did not come back (it threw, or it answered a 200 whose
+ * JSON carried no `items` array), or — one `?.find` later, on a list that DID
+ * come back — this id is not in it. The retry handler's docblock asserted the
+ * second, in writing, and answered accordingly: on a 502 between its two reads
+ * it bought a billed discovery on the narrow, id-only answer #34.10 widened
+ * both predicates precisely to stop them giving.
+ *
+ * ⚠️ **And the sentence it asserted was the RUN LOOP's, which is where the
+ * ordering makes it true.** There the list is `docTypeItems`, read at the start
+ * of the run, so a type the re-classify route invents mid-run is genuinely
+ * missing from it. In the retry handler the same GET runs AFTER
+ * `runAiInterpret`, so that type is present — which is why `readFailed` is
+ * asked here and why the two sites are pinned separately below.
+ *
+ * Everything below is source inspection, and the reason is the same one the
+ * `every call site hands the predicate the row's two columns` test gives above:
+ * the handler is 200 lines inside a 7,000-line client component, behind a
+ * billed model call, three refs and a mounted guard. What can be pinned cheaply
+ * is that the terms are there, that they are the terms the argument was made
+ * about, and that the readers this slice deliberately did NOT change are still
+ * shaped the way that makes them safe.
+ */
+describe("⚠️ the retry path's witness for the catalogue read — Slice #34.11", () => {
+  const DIALOG = "src/app/admin/import/_components/bulk-import-dialog.tsx";
+
+  /**
+   * ⚠️ **Comments stripped, and `@/lib/dev/strip-comments` rather than a local
+   * regex** — the argument is written out at this file's own import of it. It
+   * matters more here than anywhere else in the file: this slice's whole
+   * output is comments plus four short terms, and a regex stripper that
+   * over-strips turns the negative assertions below green over broken code.
+   */
+  const dialog = stripComments(readFileSync(join(process.cwd(), DIALOG), "utf8"));
+
+  /**
+   * The retry's own guard: from the `if (` that opens it to the billed call it
+   * gates, claim included.
+   *
+   * ⚠️ **Bounded by `discoverForType` rather than by `shouldDiscoverType`**, so
+   * it holds the whole condition whichever order the terms are written in —
+   * they are all pure reads and reordering them changes nothing — and it holds
+   * the branch's first statement, which is where the claim has to be. It still
+   * starts below the `if (preflight.sessionLost)` block a few lines above,
+   * which mentions `abortRef` and is entitled to.
+   */
+  const guardOf = (code: string) => {
+    // ⚠️ The SECOND anchor is searched from the preflight, because the run
+    // loop sixteen hundred lines above spells `const discovered = await
+    // discoverForType(` too — and taking the first match put the window in the
+    // wrong handler, where it matched nothing and passed every negative
+    // assertion in this block. (The first anchor needs no such guard: it occurs
+    // exactly once in the file.)
+    //
+    // ⚠️ **The opening `if (` is found by looking BACK from the call it gates,
+    // not forward from the preflight.** Taking the last `if (` in the whole
+    // window meant an ordinary `if (!mountedRef.current) return;` added between
+    // the claim and the billed read — this file does one on every await —
+    // moved the window past the condition and turned four assertions red over
+    // a guard nobody had touched.
+    const start = code.indexOf("const preflight = await");
+    const call = code.indexOf("const discovered = await discoverForType(", start);
+    const region = code.slice(start, call);
+    return region.slice(region.lastIndexOf("if (", region.indexOf("shouldDiscoverType({")));
+  };
+
+  it("⚠️ says WHY it has no rows, on every return `enrichDiscoverSteps` has", () => {
+    // The field itself. `boolean` and not `boolean | undefined`: a reader that
+    // can forget to ask is the state this slice is removing, not adding.
+    expect(dialog).toContain("readFailed: boolean;");
+
+    // Both returns, counted rather than named, so a third one added later
+    // cannot ship without an answer. The body is taken to the first
+    // column-zero `}` after the declaration, which is this function's own end.
+    const from = dialog.indexOf("async function enrichDiscoverSteps(");
+    expect(from).toBeGreaterThan(-1);
+    const body = dialog.slice(from, dialog.indexOf("\n}", from));
+    const returns = [...body.matchAll(/return \{/g)].length;
+    expect(returns).toBe(2);
+    expect([...body.matchAll(/readFailed: (?:true|false)/g)]).toHaveLength(returns);
+
+    // ⚠️ **…and an EMPTY list still takes the failed-read return**, which is
+    // half of what three comments in this slice now promise and what the flag
+    // gates a billed call on. Narrowing this to `fresh === null` leaves every
+    // other assertion here green while `readFailed` quietly stops covering the
+    // 200 whose JSON carried no `items` — the case the function's own header
+    // spends a paragraph on.
+    expect(body).toContain("if (fresh === null || fresh.length === 0) {");
+
+    // …and each one carries the answer that belongs to it: the early return is
+    // the failed read, the tail return is the list that arrived. Both written
+    // to survive a reflow — the early return is one 93-character line today and
+    // a fifth field would break it across four.
+    expect(body).toMatch(/names: null,[\s\S]{0,200}readFailed: true,[\s\S]{0,200}typeRows: null/);
+    expect(body).toMatch(/names: fresh\.map\([\s\S]{0,200}readFailed: false,/);
+  });
+
+  it("⚠️ refuses the retry's discovery on a failed read, BESIDE the lost session", () => {
+    // The retry's call is the second of the two in the file; the first is the
+    // run loop's, which decides from `docTypeItems` and is out of this slice's
+    // scope. Structurally proven rather than assumed: `preflight` does not
+    // exist yet where the run loop asks.
+    const calls = [...dialog.matchAll(/shouldDiscoverType\(\{/g)].map((m) => m.index ?? -1);
+    expect(calls).toHaveLength(2);
+    expect(dialog.indexOf("const preflight = await enrichDiscoverSteps(")).toBeGreaterThan(
+      calls[0],
+    );
+
+    // Both terms guard the retry's call, and both are negations of a fact the
+    // preflight reported — never of `abortRef`, the one-way latch two reviewers
+    // rejected for the `sessionLost` term and which would fail the same way
+    // here.
+    //
+    // ⚠️ **Cut at the guard's own `if (` rather than a fixed number of
+    // characters back.** `stripComments` replaces a comment with its own
+    // newlines so line numbers survive, and this slice's argument runs to
+    // thirty lines of them — a window wide enough to hold both terms today
+    // narrows to one the moment somebody adds a sentence. The window ends at
+    // the billed call rather than at `shouldDiscoverType`, so reordering the
+    // terms — which changes nothing, they are all pure reads — does not turn
+    // this red.
+    const guard = guardOf(dialog);
+    // ⚠️ **The two `not`s below read the CONDITION, not the whole window.** The
+    // window runs on to the billed call so the claim can be pinned inside it,
+    // and both of these are statements about the terms: `||` is an ordinary
+    // default in the statements between, and an `if (abortRef.current) return;`
+    // ahead of the spend would be an improvement rather than the witness this
+    // guard rejected twice. A round found each of them red over such a line,
+    // with a message pointing at a condition nobody had touched.
+    const condition = guard.slice(0, guard.indexOf(") {"));
+    expect(guard).toContain("!preflight.sessionLost &&");
+    expect(guard).toContain("!preflight.readFailed &&");
+    expect(guard).toContain("shouldDiscoverType({");
+    expect(condition).not.toContain("abortRef");
+
+    // ⚠️ **AND the terms are ANDed.** `toContain` says a term is present, not
+    // that it can refuse: `… && shouldDiscoverType({…}) || somethingElse` keeps
+    // every assertion above green and puts the billed call back on a failed
+    // read. Anything that genuinely needs an `||` in this condition is a
+    // widening of what the archive spends, and going red here is the correct
+    // way to find that out.
+    expect(condition.replace(/shouldDiscoverType\(\{[\s\S]*?\}\)/, "")).not.toContain("||");
+
+    // ⚠️ …and it asks the NAMED fact, not the null it happens to equal.
+    // `readFailed` and `typeRows === null` are the same boolean — the two
+    // returns set them together — so this pins a spelling, deliberately: the
+    // null test says "there happen to be no rows" where the archive's money is
+    // being decided on "the read did not come back", and the two stop being the
+    // same thing the day a third return is written.
+    expect(dialog).not.toContain("preflight.typeRows !== null");
+    expect(dialog).toMatch(/preflight\.typeRows\?\.find\(\(\w+\) => \w+\.id === finalTypeId\)/);
+  });
+
+  it("⚠️ withholds the `typeFormMissing` write on a failed read — and clears it on a re-type", () => {
+    // `updateResult` spreads the patch over the row, so an absent key keeps the
+    // row's previous answer and an explicit `undefined` erases it. On a failed
+    // read the computed answer is a claim made off a witness nobody has, so it
+    // is not written at all.
+    const at = dialog.indexOf("typeFormMissing: (awaitsForm");
+    expect(at).toBeGreaterThan(-1);
+    // …and there is no second, ungated copy of the same write left behind.
+    expect([...dialog.matchAll(/typeFormMissing: \(awaitsForm/g)]).toHaveLength(1);
+    const spreadAt = dialog.lastIndexOf("...(preflight.readFailed", at);
+    expect(spreadAt).toBeGreaterThan(-1);
+    const spread = dialog.slice(spreadAt, at);
+
+    // ⚠️ **The failed-read side never writes a CLAIM.** Asserted as a property
+    // rather than as the exact punctuation of the ternary, which a later
+    // reader is entitled to reformat: what must not happen is a `true` reaching
+    // the row off a list nobody read.
+    expect(spread).not.toContain("typeFormMissing: true");
+
+    // ⚠️ **…and on a RE-TYPE it clears rather than keeps.** The patch has just
+    // written `documentTypeId: finalTypeId`, and every reader downstream reads
+    // the flag against that column — so a `true` earned about the OLD type
+    // would name the new one, which may be the most complete type in the
+    // archive, as still waiting for a form. The re-type half of the test the
+    // `typeFormAdded` clear beside it uses — not the whole of it, which also
+    // fires on `awaitsForm`, the answer this branch exists to distrust.
+    //
+    // ⚠️ **Matched as ONE expression, through BOTH arms of the outer ternary,
+    // and each half of that is a round's worth of learning.** Two `toContain`s
+    // cannot say which arm the clear is on — swap them and the row keeps a
+    // stale `true` on the re-type and loses a good one where nothing moved,
+    // with both strings still present. And stopping at the inner ternary cannot
+    // say the computed answer is still the ELSE arm: un-nest it to a sibling
+    // key after the spread and it wins on every path, `readFailed` included,
+    // which is the permanent false claim this slice exists to stop. The `\)?`
+    // keeps a later parenthesisation or reflow of the inner ternary green.
+    expect(dialog.slice(spreadAt)).toMatch(
+      /interpreted\.documentTypeId !== null\s*\?\s*\{\s*typeFormMissing: undefined\s*\}\s*:\s*\{\s*\}\s*\)?\s*:\s*\{\s*typeFormMissing: \(awaitsForm/,
+    );
+
+    // ⚠️ **AND NOTHING WRITES THE KEY ANYWHERE ELSE IN THE SAME PATCH — the
+    // WHOLE patch, not just what follows.** A literal property after a spread
+    // wins, TypeScript allows it and so does lint; this file records a fifth
+    // adversarial round losing a whole conditional spread to a plain
+    // `aiFieldCount:` written below it. But the window has to open at the top
+    // of the patch, because the direction that actually defeats THIS spread is
+    // the other one: its failed-read arm is `{}`, and an absent key overrides
+    // nothing — so a `typeFormMissing` written ABOVE it survives on exactly the
+    // path the slice exists to protect. That is the house style two dozen lines
+    // up in this very object (`aiFieldCount:` first, refined by a later
+    // spread), which is what makes it the likely edit rather than the clever
+    // one. Two occurrences, being the ternary's two arms.
+    const patchStart = dialog.lastIndexOf("updateResult(path, {", spreadAt);
+    const patchEnd = dialog.indexOf("});", at);
+    expect(patchStart).toBeGreaterThan(-1);
+    expect(patchEnd).toBeGreaterThan(spreadAt);
+    expect([...dialog.slice(patchStart, patchEnd).matchAll(/typeFormMissing:/g)]).toHaveLength(2);
+  });
+
+  it("⚠️ leaves the three readers of an unread list answering `false`", () => {
+    // `absorbTypeList` walks it, so its safety is the `?? []`: an unread list
+    // refreshes no ref and absolves no type.
+    expect(dialog).toMatch(/for \(const \w+ of \w+\.typeRows \?\? \[\]\)/);
+
+    // The other two named readers ask it a question instead of walking it —
+    // and so does the second enrichment's widening of `typeAbsolved`, which is
+    // why the count below is three and not two. `=== true` is what makes
+    // `undefined` — the answer `?.some` gives on a null — read as "no". A
+    // truthiness test would answer the same today and stop doing so the day
+    // somebody negates it; this is the property, pinned rather than
+    // inherited.
+    const asks = [...dialog.matchAll(/\.typeRows\?\.some\(/g)].map((m) => m.index ?? -1);
+    expect(asks).toHaveLength(3);
+    for (const at of asks) {
+      expect([at, /\)\s*===\s*true/.test(dialog.slice(at, at + 200))]).toEqual([at, true]);
+    }
+    expect(dialog).not.toMatch(/!\s*\w+\.typeRows\?\.some\(/);
+  });
+
+  it("⚠️ consults `discoverClaimedRef` no differently on either path", () => {
+    // The ref keeps a failed DISCOVERY claimed on purpose — one rate limit must
+    // not buy three more attempts inside a run — and this slice does not touch
+    // that. A failed CATALOGUE read is a different thing entirely: no discovery
+    // is made, so there is nothing to claim, and the type stays discoverable by
+    // the next retry once the archive can be read again.
+    expect([...dialog.matchAll(/claimedTypeIds: discoverClaimedRef\.current/g)]).toHaveLength(2);
+    expect([...dialog.matchAll(/discoverClaimedRef\.current\.add\(/g)]).toHaveLength(2);
+
+    // ⚠️ **Inside the branch the guard opens AND ahead of the billed call** —
+    // which is what the window says, since it runs from the guard's own `if (`
+    // to `discoverForType`. Both halves are load-bearing. A round found the
+    // first draft of this test green under the mutation it exists to stop:
+    // hoisting the `add` out of the branch claims the type on a failed
+    // catalogue read, nothing ever lowers that ref, and the type is then
+    // unreachable for the rest of the run — including after the archive becomes
+    // readable again. And a claim made AFTER the `await` lets a second press
+    // land while the first read is still in flight, buying it twice.
+    expect(guardOf(dialog)).toContain("discoverClaimedRef.current.add(finalTypeId);");
+  });
+});
