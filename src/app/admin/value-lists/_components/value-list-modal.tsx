@@ -32,7 +32,7 @@ import {
 import { parseTemplateFields } from "@/lib/documents/template-fields";
 import { documentTypeIsIdCard } from "@/lib/import/id-card";
 import { documentTypeIsCatchAll } from "@/lib/documents/document-type-match";
-import { DocumentTypeFormEditor } from "./document-type-form-editor";
+import { DocumentTypeFormEditor, type FormLock } from "./document-type-form-editor";
 import { DocumentPersonsModal } from "./document-persons-modal";
 
 // ── API helpers ───────────────────────────────────────────────────────────────
@@ -928,6 +928,37 @@ export function ValueListModal({
     !documentTypeIsIdCard({ key: String(row.key ?? ""), name: String(row.name ?? "") });
 
   /**
+   * May this row be GIVEN a form — and if not, which rule says so? D-06.
+   *                                                              (Slice #34.10)
+   *
+   * ⚠️ **THE SAME TWO PREDICATES `awaitsFormRow` ABOVE ASKS, IN THE SAME ORDER,
+   * OFF THE SAME TWO COLUMNS.** That is the whole design: a row excluded from
+   * the "only those awaiting a form" filter and a row whose editor opens
+   * clear-only are the same row, decided once. #32.19's own comment on the Form
+   * button records what the alternative cost — the filter and the button asking
+   * two different questions left an item in the backlog that nothing on the
+   * screen could clear, and made the green "all done" sentence unreachable.
+   *
+   * ⚠️ **The identity-card arm is the one this slice adds, and until now it was
+   * only ever asked on the way OUT.** #32.07 took the card row out of the
+   * filter and left its Form button drawn over a save the server refuses; the
+   * user learned the rule by being told no. Now the editor says it on the way
+   * in — see `formLock` in `document-type-form-editor.tsx` for why the button
+   * stays drawn rather than disappearing.
+   *
+   * ⚠️ **Order matters and it is not arbitrary.** A row can satisfy both — a
+   * type keyed `CARTE_IDENTITATE` that somebody renamed "Neclasificat" — and
+   * the card arm wins, because that is the arm whose sentence is about a CNP.
+   * `typeMayHoldAForm` orders its two the same way and says why beside them.
+   */
+  const formLockOf = (row: Row): FormLock => {
+    const cols = { key: String(row.key ?? ""), name: String(row.name ?? "") };
+    if (documentTypeIsIdCard(cols)) return "idCard";
+    if (documentTypeIsCatchAll(cols)) return "catchAll";
+    return null;
+  };
+
+  /**
    * The three lists that carry an `origin` column and therefore a status word,
    * a colour and a review filter.                                (Slice #34.02)
    *
@@ -1494,6 +1525,10 @@ export function ValueListModal({
           typeId={formEditorRow.id}
           typeName={String(formEditorRow.name ?? "")}
           templateFields={formEditorRow.templateFields}
+          // Slice #34.10 — D-06. Read off the row, by the same two predicates
+          // that draw the button and decide the backlog filter, so the three
+          // cannot contradict one another. See `formLockOf`.
+          formLock={formLockOf(formEditorRow)}
           onClose={() => setFormEditorId(null)}
         />
       )}

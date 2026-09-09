@@ -1804,6 +1804,7 @@
       "count": "{count} of at most {max} fields",
       "atCapacity": "A document type may hold at most {max} fields.",
       "empty": "This type has no form yet. Add a field, or let AI Discovery propose one from a document.",
+      "emptyLocked": "This type has no form and cannot be given one — the reason is explained above. There is nothing to do here; close the window without saving.",
       "remove": "Remove",
       "save": "Save",
       "saving": "Saving…",

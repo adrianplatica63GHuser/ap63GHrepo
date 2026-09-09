@@ -1804,6 +1804,7 @@
       "count": "{count} din maximum {max} de câmpuri",
       "atCapacity": "Un tip de document poate avea cel mult {max} de câmpuri.",
       "empty": "Acest tip nu are încă formular. Adăugați un câmp sau lăsați Descoperirea AI să propună unul pornind de la un document.",
+      "emptyLocked": "Acest tip nu are formular și nu poate primi unul — motivul este explicat mai sus. Nu aveți nimic de făcut aici; închideți fereastra fără să salvați.",
       "remove": "Elimină",
       "save": "Salvează",
       "saving": "Se salvează…",

@@ -120,16 +120,61 @@ type Pending =
   | { kind: "discard" }
   | null;
 
+/**
+ * A type that may not hold a form, and which rule says so.       (Slice #34.10)
+ *
+ * `null` is the ordinary type, and everything below behaves exactly as it did
+ * before this slice. The two named values put this editor into a **clear-only**
+ * state — D-06 (b).
+ */
+export type FormLock = "idCard" | "catchAll" | null;
+
 export function DocumentTypeFormEditor({
   typeId,
   typeName,
   templateFields,
+  formLock = null,
   onClose,
 }: {
   typeId: string;
   typeName: string;
   /** The raw `template_fields` jsonb off the list row. LIVE — see the 409 note. */
   templateFields: unknown;
+  /**
+   * Why this type may not be GIVEN a form — D-06, Slice #34.10.
+   *
+   * ⚠️ **THE BUTTON THAT OPENS THIS EDITOR STAYS DRAWN ON SUCH A ROW, AND THE
+   * REASON IS NOT OBVIOUS.** #32.19 gave the catch-all row both halves of the
+   * treatment — out of the "awaiting a form" filter AND no Form button — but
+   * only where the row has no fields; the identity-card row got the filter half
+   * in #32.07 and never the other, so its button was drawn and its save was
+   * refused. Hiding it is the wrong fix for both: **this editor is the only
+   * screen in the application that can CLEAR a form**, and on a database
+   * migration_073 has not reached, an identity-card row can be carrying the
+   * 24-field form — two CNPs among them — that migration exists to remove. Take
+   * the button away and the person who saved it has no way to take it off.
+   *
+   * So the button stays and the REFUSAL moves forward in time: the editor opens
+   * saying why a save that adds anything will be refused, and offers only the
+   * half that is allowed. The user should not learn the rule from a rejected
+   * save.
+   *
+   * ⚠️ **The sentence shown is `errorIdCardType` / `errorCatchAllType` — the
+   * SAME string the refused save would have produced, not a second one written
+   * for the banner.** Both already end with the remedy in as many words ("this
+   * window is the only place a form can be deleted"), so a warning written
+   * fresh would have been a second copy of a rule this file's own save handler
+   * maps two server codes onto — and the two would drift. One sentence, one
+   * rule, whether it arrives before the press or after it.
+   *
+   * ⚠️ **It is a PROP, not a predicate call in this file.** The row's key and
+   * name live on the list, and `id-card.ts` says at length why a second site
+   * spelling the test is how six copies stopped agreeing. `value-list-modal.tsx`
+   * asks `documentTypeIsIdCard` / `documentTypeIsCatchAll` — the same two
+   * functions that draw the button and decide the backlog filter — so the
+   * banner cannot contradict the button beside it.
+   */
+  formLock?: FormLock;
   onClose: () => void;
 }) {
   const t = useTranslations("valueList.templateFields");
@@ -176,6 +221,8 @@ export function DocumentTypeFormEditor({
    */
   const restoreRef = useRef<HTMLElement | null>(null);
   const titleId = `doc-type-form-editor-${typeId}`;
+  /** The clear-only banner, referenced by the control it disables. */
+  const lockNoteId = `doc-type-form-lock-${typeId}`;
 
   const mutation = useMutation({
     mutationFn: async (fields: ReturnType<typeof fieldsFromEditorRows>) => {
@@ -409,6 +456,13 @@ export function DocumentTypeFormEditor({
 
   function addRow() {
     if (atCapacity) return;
+    // ⚠️ **The behaviour, not just the disabled attribute — Slice #34.10.** A
+    // `disabled` button is a statement to the pointer and the keyboard; this is
+    // the statement to the code. `atCapacity` above already had both halves for
+    // the same reason, and the lock is the stronger of the two rules: capacity
+    // is a limit the user can work under, and this is a refusal the server
+    // makes whatever this screen does.
+    if (formLock !== null) return;
     setError(null);
     setRows((prev) => [...prev, blankEditorRow(`new-${newRowSeq}`)]);
     setNewRowSeq((n) => n + 1);
@@ -536,11 +590,41 @@ export function DocumentTypeFormEditor({
             </button>
           </div>
 
+          {/* ── Clear-only, and why ─────────────────────── (Slice #34.10) ──
+              See the `formLock` prop for why the button that opened this
+              window is still drawn on such a row at all.
+
+              ⚠️ **`role="note"`, not `role="alert"`.** Nothing has failed and
+              nothing the user did produced this — it is a standing property of
+              the row, present the moment the dialog opens. An alert would
+              interrupt to announce a refusal that has not happened.
+
+              ⚠️ **Amber rather than red, for the same reason**, and the same
+              amber the expiring-soon filter uses: this is a constraint, not an
+              error. The red styling in this file belongs to `error`, which is a
+              save that actually came back refused. */}
+          {formLock !== null && (
+            <p
+              id={lockNoteId}
+              role="note"
+              className="mt-4 rounded-md border border-amber-500 bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-900 dark:border-amber-400 dark:bg-amber-900/30 dark:text-amber-100"
+            >
+              {formLock === "idCard" ? t("errorIdCardType") : t("errorCatchAllType")}
+            </p>
+          )}
+
           {/* ── The fields ──────────────────────────────────────────────── */}
           <div className="mt-4 min-h-0 flex-1 overflow-y-auto">
             {rows.length === 0 ? (
               <p className="rounded-md border border-dashed border-wire px-4 py-8 text-center text-sm text-fade dark:border-zinc-700 dark:text-zinc-400">
-                {t("empty")}
+                {/* ⚠️ **`empty` IS A LYING CTA ON A LOCKED ROW, and that is
+                    exactly the class of defect this project's reviews keep
+                    catching.** It reads "Add a field, or let AI Discovery
+                    propose one from a document" — over a type where adding is
+                    refused by the server and where Descoperire AI is refused
+                    upstream by `typeMayHoldAForm`. Every word of it is an
+                    instruction that cannot be carried out. */}
+                {formLock !== null ? t("emptyLocked") : t("empty")}
               </p>
             ) : (
               <div>
@@ -740,10 +824,20 @@ export function DocumentTypeFormEditor({
             )}
 
             <div className="mt-4 flex flex-wrap items-center gap-3">
+              {/* ⚠️ **Disabled rather than hidden on a locked row, Slice
+                  #34.10.** Removing it would leave a window whose only visible
+                  actions are Remove and Save, with nothing on screen saying
+                  that adding is the thing that is missing — and the banner
+                  above would be explaining an absence. Disabled-and-described
+                  says which half of the editor is off and why, and
+                  `aria-describedby` puts the reason on the control itself, so a
+                  screen-reader user meets it at the button rather than having
+                  to go looking above. */}
               <button
                 type="button"
                 onClick={addRow}
-                disabled={saving || atCapacity}
+                disabled={saving || atCapacity || formLock !== null}
+                aria-describedby={formLock !== null ? lockNoteId : undefined}
                 className={buttonClass({ variant: "secondary", size: "sm" })}
               >
                 + {t("add")}
