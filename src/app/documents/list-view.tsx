@@ -5,10 +5,11 @@ import { useTranslations } from "next-intl";
 import { metadataValueLabel } from "@/lib/metadata/value-labels";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { RecencyBadge } from "@/components/recency-badge";
 import { HelpHint } from "@/components/help/help-hint";
 import { buttonClass } from "@/lib/ui/button-styles";
+import { parseTemplateFields } from "@/lib/documents/template-fields";
 
 const PAGE_SIZE   = 15;
 const LS_KEY      = "ga40-col-document-v2";
@@ -23,6 +24,22 @@ type DocumentTypeOption = {
   id:   string;
   key:  string;
   name: string;
+  /**
+   * The raw `template_fields` jsonb.                           (Slice #34.10)
+   *
+   * ⚠️ **DECLARED, NOT ADDED — the rows have always carried it.** The comment
+   * below spells out at length that `fetchDocumentTypes` must keep returning
+   * `body.items` RAW because the document form reads this very column off the
+   * shared cache. This type named three of the columns and the omission was
+   * itself the trap that comment warns about: the obvious tidy-up it forbids
+   * (`.map(({ id, name }) => …)`) is exactly what a reader would conclude was
+   * safe from a type that says the other columns are not there.
+   *
+   * `unknown`, and read only through `parseTemplateFields` — the contract every
+   * other holder of this column keeps, and the reason a template that parses to
+   * no usable field cannot read as a form here.
+   */
+  templateFields?: unknown;
 };
 
 /**
@@ -50,6 +67,35 @@ type DocumentTypeOption = {
 // to touch.
 async function fetchDocumentTypes(): Promise<DocumentTypeOption[]> {
   const res = await fetch("/api/admin/value-lists/document-types");
+  if (res.redirected || !res.ok) throw new Error(`Request failed (${res.status})`);
+  const body = await res.json();
+  return body.items ?? [];
+}
+
+/**
+ * The values one custom field holds, for the types on screen.  (Slice #34.10)
+ *
+ * ⚠️ **`documentTypeIds` is sent as the three-state parameter the documents
+ * endpoint already defines** — omitted for "every type", empty for "nothing
+ * selected". `?? []` would collapse the two and offer values off the whole
+ * archive on a screen showing no rows.
+ *
+ * ⚠️ **`res.redirected` as well as `!res.ok`, for the reason
+ * `fetchDocumentTypes` above states at length**: an expired session answers
+ * with a redirect whose HTML parses to `{}`, and `body.items ?? []` then reads
+ * as "this field holds no values" — a silently empty dropdown, cached, with no
+ * error, for the length of its staleTime.
+ */
+async function fetchCustomFieldValues(
+  key: string,
+  documentTypeIds: string[] | undefined,
+): Promise<{ value: string; count: number }[]> {
+  const url = new URL("/api/documents/custom-field-values", window.location.origin);
+  url.searchParams.set("key", key);
+  if (documentTypeIds !== undefined) {
+    url.searchParams.set("documentTypeIds", documentTypeIds.join(","));
+  }
+  const res = await fetch(url);
   if (res.redirected || !res.ok) throw new Error(`Request failed (${res.status})`);
   const body = await res.json();
   return body.items ?? [];
@@ -197,6 +243,8 @@ async function fetchDocuments(
   importance: string,
   relevance: string,
   expiringSoon: boolean,
+  customFieldKey: string,
+  customFieldValue: string,
 ): Promise<ListResponse> {
   const url = new URL("/api/documents", window.location.origin);
   if (q)                      url.searchParams.set("q",               q);
@@ -204,6 +252,14 @@ async function fetchDocuments(
   if (importance)             url.searchParams.set("importance",      importance);
   if (relevance)              url.searchParams.set("relevance",       relevance);
   if (expiringSoon)           url.searchParams.set("expiringSoon",    "true");
+  // ⚠️ **Both or neither — Slice #34.10.** The same `&&` the schema and
+  // `listDocument` apply, applied here too so a half-chosen filter never even
+  // becomes a request: a key with no value would ask the server a question
+  // ("documents that HAVE this field") that nothing on this screen offers.
+  if (customFieldKey && customFieldValue) {
+    url.searchParams.set("customFieldKey",   customFieldKey);
+    url.searchParams.set("customFieldValue", customFieldValue);
+  }
   url.searchParams.set("limit",  String(PAGE_SIZE));
   url.searchParams.set("offset", String(page * PAGE_SIZE));
   const res = await fetch(url);
@@ -340,6 +396,17 @@ export function DocumentListView({
   const [importance,      setImportance]      = useState("");
   const [relevance,       setRelevance]       = useState("");
   const [expiringSoon,    setExpiringSoon]    = useState(false);
+  // ── Slice #34.10: the custom-field filter, the half of D-01 that needs code.
+  //
+  // ⚠️ **TWO pieces of state and not one `{key, value}` object**, because
+  // `record-list-agreement.test.ts` requires every entry in this list's
+  // `queryKey` to be a bare identifier, and requires each of them to appear in
+  // `pageKey` below. That rule is not bureaucracy: `pageKey` is what clears the
+  // tick boxes when a filter changes, and a filter missing from it leaves rows
+  // selected that the filter has just taken off the screen — with the bulk
+  // delete then acting on records nobody can see.
+  const [customFieldKey,   setCustomFieldKey]   = useState("");
+  const [customFieldValue, setCustomFieldValue] = useState("");
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const [confirmOpen,  setConfirmOpen]  = useState(false);
@@ -374,7 +441,85 @@ export function DocumentListView({
     queryFn:  fetchDocumentTypes,
     staleTime: 5 * 60 * 1000,
   });
-  const typeOptions = documentTypes ?? [];
+  /**
+   * ⚠️ **`useMemo`, and it is a CORRECTNESS fix rather than a performance one.
+   *                                                            (Slice #34.10)**
+   * `documentTypes ?? []` built a fresh array on every render. Nothing depended
+   * on its identity until `customFieldOptions` below did, and then it did so in
+   * a way that could not fail quietly: a new array in means a new array out,
+   * which means the render-phase reconciliation under it saw a change on EVERY
+   * render and called `setState` from every render — a loop. ESLint's
+   * `react-hooks/exhaustive-deps` named this exact expression, which is the
+   * warning class the shared rules say a component slice is most likely to trip
+   * and `tsc` can never see.
+   */
+  const typeOptions = useMemo(() => documentTypes ?? [], [documentTypes]);
+
+  /**
+   * The custom-field keys the types ON SCREEN define.           (Slice #34.10)
+   *
+   * ⚠️ **Off the TEMPLATES, not off the data.** A key that exists in some
+   * document's `custom_fields` but in no template is an orphan — a field that
+   * was removed from the type since — and offering it would be offering a
+   * filter for a column the archive has stopped filling. `parseTemplateFields`
+   * is the one reader of that column, and it already drops entries with a blank
+   * key and sorts by `order`, so the list is in the order the form draws them.
+   *
+   * ⚠️ **Narrowed by the type filter, deduped, and labelled in ROMANIAN.** Two
+   * types can define the same key — that is the whole point of a shared key —
+   * and `labelRo` is the word the person captured the value under. Where two
+   * types label one key differently the first wins, which is the same order the
+   * dropdown above shows the types in; the alternative is printing one key
+   * twice under two names and filtering identically from both.
+   *
+   * ⚠️ **`initialDocumentTypeIds === undefined` MEANS EVERY TYPE, not none.**
+   * That is this file's existing convention (see `typeFiltersKey`), and reading
+   * it the other way would empty this control on the default view — the one
+   * where the whole archive is on screen and grouping is most useful.
+   */
+  const customFieldOptions = useMemo(() => {
+    const wanted = initialDocumentTypeIds;
+    const seen = new Map<string, string>();
+    for (const type of typeOptions) {
+      if (wanted !== undefined && !wanted.includes(type.id)) continue;
+      for (const field of parseTemplateFields(type.templateFields)) {
+        if (!seen.has(field.key)) seen.set(field.key, field.labelRo || field.labelEn || field.key);
+      }
+    }
+    return [...seen].map(([key, label]) => ({ key, label }));
+  }, [typeOptions, initialDocumentTypeIds]);
+
+  /**
+   * ⚠️ **A chosen key that the types on screen no longer define is CLEARED.**
+   * The type filter lives in the URL and this state does not, so navigating
+   * from "Contract de vânzare" to "Plan cadastral" leaves a key behind that the
+   * new selection has no field for — and the list would then show nothing, with
+   * a filter naming a field that is not in its own dropdown. Clearing it is the
+   * honest recovery: the rows come back and the control returns to "Toate".
+   *
+   * Written as a render-phase reconciliation rather than an effect, the same
+   * shape `prevTypeFiltersKey` above uses for the page reset — an effect would
+   * paint one frame of an empty list first.
+   */
+  //
+  // ⚠️ **Compared as a STRING, not by array identity, and the memo above is not
+  // what makes that safe — it is belt-and-braces on purpose.** An identity
+  // comparison here is only ever as correct as every input's memoisation, and
+  // the failure when one of them slips is not a slow render: it is `setState`
+  // on every render, which is a loop. A signature cannot fail that way whatever
+  // anybody upstream does. `typeFiltersKey` above already sets this precedent
+  // for exactly the same reconciliation.
+  const customFieldKeysSignature = customFieldOptions.map((o) => o.key).join("\u0000");
+  const [prevKeysSignature, setPrevKeysSignature] = useState(customFieldKeysSignature);
+  if (prevKeysSignature !== customFieldKeysSignature) {
+    setPrevKeysSignature(customFieldKeysSignature);
+    if (customFieldKey && !customFieldOptions.some((o) => o.key === customFieldKey)) {
+      setCustomFieldKey("");
+      setCustomFieldValue("");
+      setCurrentPage(0);
+    }
+  }
+
 
   useEffect(() => {
     const handle = setTimeout(() => {
@@ -394,12 +539,33 @@ export function DocumentListView({
     setCurrentPage(0);
   }
 
+  /**
+   * The values that key actually holds, with counts.            (Slice #34.10)
+   *
+   * ⚠️ **`enabled` on the key, so nothing is fetched until one is chosen** —
+   * the `GROUP BY` behind this reads a column no index covers, and firing it on
+   * every visit to the Documents list to populate a control nobody has touched
+   * is the shape this codebase's own comments keep calling a billed read nobody
+   * asked for.
+   *
+   * ⚠️ **`typeFiltersKey` is in the query key, and the request carries the same
+   * ids the list does.** Values scoped to a different set of types than the
+   * rows on screen is a dropdown offering options that return nothing.
+   */
+  const valuesQuery = useQuery({
+    queryKey: ["documents", "custom-field-values", customFieldKey, typeFiltersKey],
+    queryFn:  () => fetchCustomFieldValues(customFieldKey, initialDocumentTypeIds),
+    enabled:  customFieldKey !== "",
+    staleTime: 60 * 1000,
+  });
+  const valueOptions = valuesQuery.data ?? [];
+
   // When initialDocumentTypeIds is an empty array, skip the API call and show a message.
   const noTypesSelected = initialDocumentTypeIds !== undefined && initialDocumentTypeIds.length === 0;
 
   const query = useQuery<ListResponse>({
-    queryKey: ["documents", "list", debouncedSearch, typeFiltersKey, importance, relevance, expiringSoon, currentPage],
-    queryFn:  () => fetchDocuments(debouncedSearch, initialDocumentTypeIds ?? [], currentPage, importance, relevance, expiringSoon),
+    queryKey: ["documents", "list", debouncedSearch, typeFiltersKey, importance, relevance, expiringSoon, customFieldKey, customFieldValue, currentPage],
+    queryFn:  () => fetchDocuments(debouncedSearch, initialDocumentTypeIds ?? [], currentPage, importance, relevance, expiringSoon, customFieldKey, customFieldValue),
     enabled:  !noTypesSelected,
   });
 
@@ -411,7 +577,7 @@ export function DocumentListView({
   // Slice #32.15: this key must carry every value the query key above carries.
   // A filter that is missing here leaves ticks set on rows the filter has just
   // taken off the screen, and the bulk delete then acts on records nobody can see.
-  const pageKey = `${debouncedSearch}|${typeFiltersKey}|${importance}|${relevance}|${expiringSoon}|${currentPage}`;
+  const pageKey = `${debouncedSearch}|${typeFiltersKey}|${importance}|${relevance}|${expiringSoon}|${customFieldKey}|${customFieldValue}|${currentPage}`;
   const [prevPageKey, setPrevPageKey] = useState(pageKey);
   if (prevPageKey !== pageKey) {
     setPrevPageKey(pageKey);
@@ -574,6 +740,83 @@ export function DocumentListView({
             <option value="FUTURE">{tMeta("relevanceValues.FUTURE")}</option>
           </select>
         </div>
+
+        {/* ── Custom-field filter ─────────────── (Slice #34.10) ─────────
+            The half of D-01 that needs code. D-01 settled that
+            CONTRACT_VANZARE gets ONE union form plus one hand-written field
+            carrying the flavour — five descriptions, no subtype level — and
+            until this control the answer was on paper only: nothing anywhere
+            read `custom_fields` for search or for filtering, so a flavour could
+            be captured and never grouped by.
+
+            ⚠️ **DRAWN ONLY WHEN THE TYPES ON SCREEN HAVE A CUSTOM FIELD AT
+            ALL.** Most of this archive's types have no template, and a pair of
+            permanently empty dropdowns on the one list every user opens daily
+            would be two controls that never do anything — the shape #34.02
+            argued against for the review checkbox on lists that can never fill
+            it.
+
+            ⚠️ **TWO CONTROLS, THE SECOND APPEARING ONLY AFTER THE FIRST.** A
+            value alone is meaningless (which field?) and a key alone is a
+            different feature ("documents that HAVE this field"), which nothing
+            here offers — so the pair is the filter, and the schema, the fetch
+            and `listDocument` all apply the same `&&`. Revealing the values
+            only once a key is chosen is also what keeps the `GROUP BY` behind
+            them from running on every visit to this page.
+
+            ⚠️ **The value is a SELECT, not a text box, and that is the whole
+            usefulness of it.** "Minimise human effort" applies to a filter too:
+            a text box would be a control you can only use if you already know,
+            diacritic for diacritic, which of Adrian's five descriptions was
+            typed. The archive knows, so it is asked. The count beside each
+            option is not decoration either — a flavour with one document behind
+            it is almost always a typo, invisible in a bare list of strings. */}
+        {customFieldOptions.length > 0 && (
+          <div className="inline-flex items-center gap-1.5 rounded-md border border-wire bg-white px-2 py-1.5 text-sm shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+            <span className="text-fade">{tFilter("customFieldLabel")}</span>
+            <select
+              value={customFieldKey}
+              onChange={(e) => {
+                setCustomFieldKey(e.target.value);
+                // ⚠️ The value belongs to the OLD key. Carrying it over would
+                // filter the new field for a string only the old one held, and
+                // the list would empty out with both controls looking right.
+                setCustomFieldValue("");
+                setCurrentPage(0);
+              }}
+              aria-label={tFilter("customFieldLabel")}
+              className="bg-transparent text-sm font-medium text-ink focus:outline-none dark:text-zinc-100"
+            >
+              <option value="">{tFilter("allCustomFields")}</option>
+              {customFieldOptions.map((o) => (
+                <option key={o.key} value={o.key}>{o.label}</option>
+              ))}
+            </select>
+            {customFieldKey !== "" && (
+              <select
+                value={customFieldValue}
+                onChange={(e) => { setCustomFieldValue(e.target.value); setCurrentPage(0); }}
+                aria-label={tFilter("customFieldValueLabel")}
+                // ⚠️ Disabled while the values are still being read, rather
+                // than absent: a control that appears a beat after the one
+                // beside it moves the toolbar under the cursor.
+                disabled={valuesQuery.isPending}
+                className="bg-transparent text-sm font-medium text-ink focus:outline-none disabled:text-fade dark:text-zinc-100"
+              >
+                <option value="">
+                  {valuesQuery.isPending
+                    ? tFilter("customFieldValuesLoading")
+                    : tFilter("allCustomFieldValues")}
+                </option>
+                {valueOptions.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {tFilter("customFieldValueOption", { value: o.value, count: o.count })}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+        )}
 
         {/* Expiring-soon toggle */}
         <button

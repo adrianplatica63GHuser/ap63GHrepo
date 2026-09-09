@@ -13,7 +13,7 @@
  * explicitly directed) — never auto-seeded by application code.
  */
 
-import { asc, and, count, desc, eq, ilike, inArray, isNotNull, lte, or, sql } from "drizzle-orm";
+import { asc, and, count, desc, eq, ilike, inArray, isNotNull, lte, or, sql, type SQL } from "drizzle-orm";
 import { db, type DbTransaction } from "@/db";
 import { appendVersionsIfChanged } from "@/lib/versioning/append";
 import { DOCUMENT_SNAPSHOT_KEYS } from "@/lib/versioning/snapshot-registry";
@@ -54,6 +54,64 @@ export type DocumentFull = typeof document.$inferSelect;
 // ---------------------------------------------------------------------------
 // List
 // ---------------------------------------------------------------------------
+
+/**
+ * One structured filter that reads `custom_fields`.           (Slice #34.10)
+ *
+ * ⚠️ **THE HALF OF D-01 THAT NEEDS CODE.** D-01 settled that
+ * CONTRACT_VANZARE gets ONE union form plus one hand-written field carrying
+ * the flavour, rather than a subtype level — and that answer is only half
+ * an answer while nothing anywhere can read `custom_fields`. Until this
+ * line the search matched three columns (`code`, `title`, `nrDocument`) and
+ * the structured filters were type, importance, relevance and expiry, so a
+ * flavour recorded as a form field could be captured and never grouped by.
+ *
+ * ⚠️ **`->>` RATHER THAN `->`, so the comparison is against `text`.**
+ * `custom_fields` is `jsonb` typed `Record<string, string | null>` — flat,
+ * one level, string values — so `->>` yields the value directly and there
+ * is nothing to traverse. `->` would return a `jsonb` and compare
+ * `"Vânzare"` (with the quotes) against a bare string, matching nothing and
+ * failing silently.
+ *
+ * ⚠️ **`${key}::text` IS NOT DECORATION.** `jsonb ->> ?` has two overloads,
+ * `text` and `integer`, and an untyped bind parameter leaves Postgres to
+ * choose — which it resolves as `integer` for a numeric-looking key,
+ * turning a key lookup into an array index against an object and erroring
+ * at runtime rather than at review. `snake_case` and `camelCase` keys are
+ * both legal here by design (`discover-to-template.ts` says so at length),
+ * so a key is whatever a person typed.
+ *
+ * ⚠️ **BOTH terms or NEITHER — and the empty-value rule is chosen rather
+ * than inherited.** `customFieldsEqual` treats `null`, `""`, an absent key
+ * and `undefined` as all equivalent, so "the value is empty" is not one
+ * state in the data. Rather than pick one and be wrong for the other three,
+ * an empty value means NO FILTER at all: this filter answers "which
+ * documents hold THIS value", never "which are missing it". The route and
+ * the schema say the same thing, so there is one rule.
+ *
+ * No join, and nothing to add to the count query at the caller: the column is
+ * on
+ * `document` itself and this predicate goes into the `where` both share.
+ *
+ * ⚠️ **A NAMED FUNCTION RATHER THAN A TERM INSIDE `listDocument`'s `and(...)`,
+ * so that it can be TESTED rather than only grepped.** Every other filter there
+ * is a `eq()` or an `inArray()` whose meaning is carried by drizzle; this one is
+ * hand-written SQL with two operators and a cast in it, and the ways it can be
+ * subtly wrong — `->` for `->>`, a missing cast, one term instead of two — all
+ * type-check and all fail at runtime or, worse, silently match nothing.
+ * `PgDialect().sqlToQuery` renders it with no database in reach, which is what
+ * lets `document-custom-field-filter.test.ts` assert the operator, the cast and
+ * the parameter order as facts rather than as source text.
+ *
+ * Returns `undefined` — which `and()` drops — when the filter is not in play.
+ */
+export function customFieldFilter(opts: {
+  customFieldKey?: string;
+  customFieldValue?: string;
+}): SQL | undefined {
+  if (!opts.customFieldKey || !opts.customFieldValue) return undefined;
+  return sql`${document.customFields} ->> ${opts.customFieldKey}::text = ${opts.customFieldValue}`;
+}
 
 export async function listDocument(
   opts: DocumentListQuery,
@@ -133,6 +191,7 @@ export async function listDocument(
           ilike(document.nrDocument, pat),
         )
       : undefined,
+    customFieldFilter(opts),
   );
 
   const [items, totals] = await Promise.all([
@@ -169,6 +228,69 @@ export async function listDocument(
   ]);
 
   return { items: items as DocumentListItem[], total: totals[0]?.total ?? 0 };
+}
+
+/**
+ * Which values does one custom field actually hold, and how often?
+ *                                                              (Slice #34.10)
+ *
+ * ⚠️ **THIS EXISTS BECAUSE "MINIMISE HUMAN EFFORT" APPLIES TO FILTERS TOO.** A
+ * free-text box beside a key would be a filter you can only use if you already
+ * know, byte for byte, which of Adrian's five descriptions was typed onto the
+ * documents — including the diacritics. The archive knows. Asking it turns
+ * "filter, if you can guess" into "here are the flavours, pick one", which is
+ * the grouping half of D-01 rather than a control that technically works.
+ *
+ * ⚠️ **The counts are returned and they are not decoration.** A flavour with
+ * one document behind it is almost always a typo in a value somebody typed by
+ * hand, and it is invisible in a bare list of strings. Beside a count it is the
+ * first thing anyone notices.
+ *
+ * ⚠️ **`ORDER BY count DESC, value ASC` — frequency first, and a tie broken
+ * deterministically.** Alphabetical alone buries the flavour that covers most
+ * of the archive; frequency alone reorders the list on every import, so a user
+ * who learned where an option sits finds it somewhere else next week. The tie
+ * break is what stops rows shuffling between two runs that hold the same data.
+ *
+ * ⚠️ **Empty is not a value.** `NULL` and `''` are the two ways `custom_fields`
+ * records "nothing captured" — the form blanks empty strings to `null` on save
+ * but older rows hold both — and neither is a flavour anyone groups by. They
+ * are excluded here rather than filtered out on the client, so the LIMIT counts
+ * real options.
+ *
+ * ⚠️ **`LIMIT` at all, because this reads a column no index covers.** A key
+ * somebody mistypes matches nothing and the query is a sequential scan either
+ * way; what the cap bounds is the RESPONSE — a free-text field used as a
+ * comment box would otherwise return one option per document.
+ */
+export async function listDocumentCustomFieldValues(
+  opts: { key: string; documentTypeIds?: string[] },
+  limit = 200,
+): Promise<{ value: string; count: number }[]> {
+  const key = opts.key.trim();
+  if (!key) return [];
+  // The same short-circuit `listDocument` makes, and for the same reason: an
+  // explicitly empty type filter means "nothing is selected", and `IN ()` is a
+  // syntax error rather than an empty result.
+  if (opts.documentTypeIds !== undefined && opts.documentTypeIds.length === 0) return [];
+
+  const value = sql<string>`${document.customFields} ->> ${key}::text`;
+  const rows = await db
+    .select({ value, count: count() })
+    .from(document)
+    .where(
+      and(
+        opts.documentTypeIds && opts.documentTypeIds.length > 0
+          ? inArray(document.documentTypeId, opts.documentTypeIds)
+          : undefined,
+        sql`${value} IS NOT NULL AND ${value} <> ''`,
+      ),
+    )
+    .groupBy(value)
+    .orderBy(sql`count(*) desc`, sql`${value} asc`)
+    .limit(limit);
+
+  return rows.map((r) => ({ value: r.value, count: r.count }));
 }
 
 // ---------------------------------------------------------------------------

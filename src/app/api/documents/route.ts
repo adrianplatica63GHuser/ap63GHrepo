@@ -57,6 +57,10 @@ export async function GET(request: NextRequest): Promise<Response> {
     importance:      url.searchParams.get("importance")    ?? undefined,
     relevance:       url.searchParams.get("relevance")     ?? undefined,
     expiringSoon:    url.searchParams.get("expiringSoon")  ?? undefined,
+    // Slice #34.10 — the custom-field filter. Both halves or neither; the
+    // schema and `listDocument` state that rule, this only forwards them.
+    customFieldKey:   url.searchParams.get("customFieldKey")   ?? undefined,
+    customFieldValue: url.searchParams.get("customFieldValue") ?? undefined,
   });
 
   if (!parsed.success) {

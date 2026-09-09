@@ -121,6 +121,24 @@ export const documentListQuerySchema = z.object({
   // Slice #20.06: Expiring-soon shortcut — true → only documents where
   // date_valid_until IS NOT NULL AND date_valid_until <= today + 30 days.
   expiringSoon: z.coerce.boolean().optional(),
+  // ── Slice #34.10: the custom-field filter ────────────────────────────────
+  //
+  // ⚠️ **BOTH OR NEITHER, and `listDocument` enforces the same rule with the
+  // same `&&`.** A key with no value would be "documents that have this field",
+  // and a value with no key would be "any field holding this string" — two
+  // different features, neither of which this is. `customFieldsEqual` treats
+  // `null`, `""`, an absent key and `undefined` as equivalent, so "empty" is
+  // not one state in the data and a filter for it would have to pick one and be
+  // wrong for the other three. An empty half means no filter.
+  //
+  // ⚠️ **`max()` on both, because neither is a uuid or an enum.** The key is a
+  // `template_fields[].key`, capped at `MAX_KEY_LENGTH` (40) where it is
+  // minted; 64 leaves room for a hand-written one without letting the query
+  // string carry a paragraph. The value is a captured form value, which
+  // `document.custom_fields` does not bound — 500 is generous for a flavour
+  // and refuses a body pasted into a URL.
+  customFieldKey:   z.string().trim().min(1).max(64).optional(),
+  customFieldValue: z.string().max(500).optional(),
 });
 export type DocumentListQuery = z.infer<typeof documentListQuerySchema>;
 

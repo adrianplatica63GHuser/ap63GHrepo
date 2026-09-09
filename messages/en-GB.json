@@ -815,7 +815,13 @@
       "allImportances": "All",
       "relevanceLabel": "Relevance:",
       "allRelevances": "All",
-      "expiringSoon": "Expiring soon"
+      "expiringSoon": "Expiring soon",
+      "customFieldLabel": "Own field:",
+      "allCustomFields": "All",
+      "customFieldValueLabel": "Own field value",
+      "allCustomFieldValues": "All values",
+      "customFieldValuesLoading": "Loading…",
+      "customFieldValueOption": "{value} ({count, plural, one {# document} other {# documents}})"
     },
     "readonlyView": {
       "backToList": "Back to list",

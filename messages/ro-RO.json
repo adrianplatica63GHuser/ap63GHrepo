@@ -815,7 +815,13 @@
       "allImportances": "Toate",
       "relevanceLabel": "Relevanță:",
       "allRelevances": "Toate",
-      "expiringSoon": "Expiră curând"
+      "expiringSoon": "Expiră curând",
+      "customFieldLabel": "Câmp propriu:",
+      "allCustomFields": "Toate",
+      "customFieldValueLabel": "Valoarea câmpului propriu",
+      "allCustomFieldValues": "Toate valorile",
+      "customFieldValuesLoading": "Se încarcă…",
+      "customFieldValueOption": "{value} ({count, plural, one {# document} few {# documente} other {# de documente}})"
     },
     "readonlyView": {
       "backToList": "Înapoi la listă",
