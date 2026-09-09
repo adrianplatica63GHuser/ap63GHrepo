@@ -199,13 +199,22 @@ describe("checkTypeForms — Branch A, the run that carries on", () => {
   });
 
   it("⚠️ never reaches the catch-all as a MATCH, whichever way it is named", () => {
-    // Why the `fallbackTypeId` term in the gate's `typeAwaitsForm` call cannot
+    // Why the catch-all terms in the gate's `typeAwaitsForm` call cannot
     // currently fire, pinned rather than assumed. `matchDocumentType` refuses
     // the catch-all by key AND refuses any row whose NAME means "unclassified"
     // — an archive really can hold a second row called "Neclasificat", because
     // the byte-for-byte matching #29.06 replaced created exactly that. Both
     // answers below therefore decline, so the catch-all never becomes a
     // `ClassifiedType` at all and its formlessness is never on the table.
+    //
+    // ⚠️ **Slice #34.10 made that sentence cover TWO terms where it covered
+    // one, and the assertions below are unchanged because the answer is.**
+    // `typeAwaitsForm` now reads the row's own key and name as well as
+    // comparing its id against the fallback, and this gate hands it both. The
+    // impostor row below is exactly what the new term is for — and it still
+    // never reaches the term, because `matchDocumentType` declines one step
+    // earlier. That is the right redundancy: the gate no longer depends on
+    // `matchDocumentType` keeping that behaviour in order to stay correct.
     const impostor = type("id-impostor", "NECLASIFICAT", "Neclasificat");
     const verdict = checkTypeForms({
       entries: [

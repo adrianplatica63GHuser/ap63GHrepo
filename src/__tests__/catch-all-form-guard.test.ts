@@ -369,9 +369,52 @@ describe("every door that writes template_fields refuses the catch-all", () => {
     // The other half of S-02: a button whose only outcome is a refusal teaches
     // the rule by failing, and DocTypeEngine's picker offering a row the route
     // will refuse is worse still — it spends twenty billed reads first.
-    for (const file of [DOC_TYPE_ENGINE, LIST_MODAL]) {
-      const code = stripComments(read(file));
-      expect([file, code.includes("documentTypeIsCatchAll")]).toEqual([file, true]);
+    //
+    // ⚠️ **INVERTED IN PLACE BY SLICE #34.10 FOR DOCTYPEENGINE, AND THE OLD
+    // WORDING IS QUOTED HERE RATHER THAN DELETED.** Until this slice this test
+    // read, for BOTH files:
+    //
+    //     expect([file, code.includes("documentTypeIsCatchAll")]).toEqual([file, true]);
+    //
+    // and it was right for #32.19, when DocTypeEngine had to ask the wide rule
+    // itself because `typeMayHoldAForm` read the catch-all by ID alone. #34.10
+    // moved the wide rule INSIDE `typeMayHoldAForm`, so a second
+    // `documentTypeIsCatchAll(row)` on that screen is now the duplicated
+    // opinion #29.06 was deleted for — this test would have required the very
+    // thing the slice removed. What the test is FOR is unchanged: the picker
+    // must ask the writers' question. It now asks it through one function, so
+    // that is what is checked.
+    //
+    // The list modal keeps the literal: its Form button and its backlog filter
+    // read a `Record<string, unknown>` row with no `typeId` and no fallback in
+    // hand, so `documentTypeIsCatchAll` is the only shape available to it.
+    {
+      const code = stripComments(read(LIST_MODAL));
+      expect([LIST_MODAL, code.includes("documentTypeIsCatchAll")]).toEqual([LIST_MODAL, true]);
+    }
+    {
+      const code = stripComments(read(DOC_TYPE_ENGINE));
+      // It asks the shared predicate…
+      expect([DOC_TYPE_ENGINE, code.includes("typeMayHoldAForm(")]).toEqual([
+        DOC_TYPE_ENGINE,
+        true,
+      ]);
+      // …and hands it the row's own two columns, which is what makes that
+      // predicate answer the wide way. A call that passed only `typeId` and
+      // `fallbackTypeId` would type-check (both are `string | null`) and would
+      // silently be the narrow rule again.
+      const call = /typeMayHoldAForm\(\{[\s\S]*?\}\)/.exec(code)?.[0] ?? "";
+      expect([DOC_TYPE_ENGINE, call.includes("typeKey: row.key")]).toEqual([DOC_TYPE_ENGINE, true]);
+      expect([DOC_TYPE_ENGINE, call.includes("typeName: row.name")]).toEqual([
+        DOC_TYPE_ENGINE,
+        true,
+      ]);
+      // ⚠️ And it does NOT ask the second opinion any more. This is the half
+      // that makes the inversion above meaningful rather than a widening.
+      expect([DOC_TYPE_ENGINE, code.includes("documentTypeIsCatchAll")]).toEqual([
+        DOC_TYPE_ENGINE,
+        false,
+      ]);
     }
   });
 

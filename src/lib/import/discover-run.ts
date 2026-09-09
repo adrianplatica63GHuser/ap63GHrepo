@@ -55,6 +55,10 @@
 // and re-declaring it here would be a second copy of a wire format.
 import type { DiscoverReviewPair } from "@/app/documents/_components/discover-review-dialog";
 import { fetchWithTimeout, isSessionLoss, servesHtml } from "@/lib/import/ai-interpret-run";
+// Still a pure module on both sides: `document-type-match` has no React, no DB
+// and no next/*, which is the same rule `id-card.ts` follows to import the
+// catch-all KEY from it. What is imported here is the ROW test.  (Slice #34.10)
+import { documentTypeIsCatchAll } from "@/lib/documents/document-type-match";
 
 /**
  * How long one schema-free read may take.
@@ -192,6 +196,12 @@ export type DiscoverRunResult =
  */
 export function shouldDiscoverType(input: {
   typeId: string;
+  /**
+   * The row's own two columns, or `null` where the caller genuinely has no row.
+   * `typeMayHoldAForm` states what each of those two cases means. (Slice #34.10)
+   */
+  typeKey: string | null;
+  typeName: string | null;
   /** The catch-all row (`catchAllType`) — see above. Null when it is not known. */
   fallbackTypeId: string | null;
   typeHasForm: boolean;
@@ -235,6 +245,8 @@ export function shouldDiscoverType(input: {
  */
 export function typeAwaitsForm(input: {
   typeId: string;
+  typeKey: string | null;
+  typeName: string | null;
   fallbackTypeId: string | null;
   typeHasForm: boolean;
   typeIsIdCard: boolean;
@@ -268,9 +280,56 @@ export function typeAwaitsForm(input: {
  *    documents whose type is unfinished. A form distilled from whatever
  *    happened to be unclassifiable would be written onto the row every
  *    unrecognised document in the archive shares.
+ *
+ * ⚠️ **THE CATCH-ALL NOW HAS TWO WITNESSES, AND SLICE #34.10 IS THE SLICE
+ * THAT ADDED THE SECOND — CLOSING A DIVERGENCE THAT WAS RECORDED RATHER THAN
+ * FIXED.** `catch-all-form-guard.ts` said it in as many words: this function
+ * "identifies the catch-all by the row's ID, resolved through `catchAllType`
+ * from the key `UNCLASSIFIED`", while `documentTypeIsCatchAll` "reads the row's
+ * own key AND name, so it also covers the second row an archive can hold keyed
+ * `NECLASIFICAT` and any row named 'Neclasificat' or 'Unclassified'". The
+ * engine's picker asked both and agreed with the write door; the IMPORT asked
+ * only the narrow one, so a run over such a row **spent a billed discovery read
+ * and was then refused at the save**. That is the concrete cost, and it is why
+ * the two are one function now rather than two that "deliberately disagree".
+ *
+ * ⚠️ **BOTH TERMS STAY. THE WIDE ONE DOES NOT REPLACE THE NARROW ONE**, and
+ * that is not belt-and-braces — they answer for different callers. The id term
+ * is exact and needs no row, which is the only thing available where a type was
+ * invented mid-run by `runAiInterpret` and never appeared in the start-of-run
+ * list. The key/name term needs a row and reaches rows `catchAllType` cannot
+ * see. Dropping either one narrows the rule for the callers that depend on it.
+ *
+ * ⚠️ **`typeKey`/`typeName` ARE NULLABLE AND ARE NOT OPTIONAL, DELIBERATELY.**
+ * An optional field is one a call site can forget, and forgetting it here is
+ * silent: the predicate answers the OLD, narrower way and nothing type-checks
+ * the omission. Required-and-nullable makes "this caller has no row" a sentence
+ * somebody wrote — `typeKey: null, typeName: null` — rather than an absence.
+ * `import-discover-run.test.ts` reads the call sites and pins that.
+ *
+ * ⚠️ **WHAT THE WIDENING COSTS, STATED RATHER THAN HIDDEN.** A type whose
+ * NAME merely reads as "Neclasificat"/"Unclassified" — rather than carrying the
+ * key — stops being reported as awaiting a form and stops being offered a
+ * discovery read. Adrian confirmed that direction for this slice. It is the
+ * same trade `documentTypeIsCatchAll` and `meansUnclassified` already state and
+ * accept about the same rows, one door over; what would be wrong is for the
+ * import to keep making the opposite trade in silence.
  */
 export function typeMayHoldAForm(input: {
   typeId: string;
+  /**
+   * `lookup_document_type.key` — or `null` where the caller has no row.
+   *
+   * ⚠️ **`null` MEANS "NO ROW", NOT "NO KEY".** `documentTypeIsCatchAll`
+   * treats a blank key as "ask the name instead", which is right, and that is
+   * exactly what `null` reaches here too. What a caller must not do is pass
+   * `""` for a row it holds: `type-form-gate.ts` mints a synthetic row whose
+   * key is deliberately blanked from `UNCLASSIFIED`, and that blank is a
+   * statement about that row, not a missing one.
+   */
+  typeKey: string | null;
+  /** `lookup_document_type.name` — or `null` where the caller has no row. */
+  typeName: string | null;
   fallbackTypeId: string | null;
   typeIsIdCard: boolean;
 }): boolean {
@@ -280,6 +339,9 @@ export function typeMayHoldAForm(input: {
   // must not print "this type has no form yet" either. See above.
   if (input.typeIsIdCard) return false;
   if (input.fallbackTypeId !== null && input.typeId === input.fallbackTypeId) return false;
+  // The wide witness. Reads the row's own two columns, exactly as the write
+  // door and the engine's picker do, so all three now give one answer.
+  if (documentTypeIsCatchAll({ key: input.typeKey, name: input.typeName })) return false;
   return true;
 }
 

@@ -67,10 +67,7 @@ import {
   CATCH_ALL_FORM_CODE,
   CATCH_ALL_RENAME_CODE,
 } from "@/lib/documents/catch-all-form-guard";
-import {
-  UNCLASSIFIED_DOCUMENT_TYPE_KEY,
-  documentTypeIsCatchAll,
-} from "@/lib/documents/document-type-match";
+import { UNCLASSIFIED_DOCUMENT_TYPE_KEY } from "@/lib/documents/document-type-match";
 import {
   walkFolder,
   hasReadablePage,
@@ -263,22 +260,31 @@ export function DocTypeEngine() {
   const refusalFor = useCallback(
     (row: DocumentTypeCatalogueRow): "idCard" | "fallback" | null => {
       const typeIsIdCard = documentTypeIsIdCard(row);
-      // ⚠️ **Slice #32.19 — a SECOND catch-all term, and it is not a second
-      // opinion.** The comment above is still right that a key spelled by hand
-      // in this file would be one; this is the shared `documentTypeIsCatchAll`,
-      // the same predicate the write door now uses
-      // (`catchAllFormRefusal`, on PUT .../template-fields). It is WIDER than
-      // `fallbackTypeId`, which resolves the catch-all by the key `UNCLASSIFIED`
-      // alone: an archive can also hold a second row keyed `NECLASIFICAT`, or
-      // one named "Neclasificat" under a slugged key, and #29.06's finding F1 is
-      // what those rows cost.
+      // ⚠️ **Slice #34.10 — ONE CALL WHERE #32.19 NEEDED TWO, and the second
+      // one is gone rather than kept for safety.** #32.19 asked
+      // `documentTypeIsCatchAll(row)` here, immediately before
+      // `typeMayHoldAForm`, because that function read the catch-all by ID
+      // only and this screen needed the wider rule the write door uses. The
+      // wide rule now lives INSIDE `typeMayHoldAForm`, so asking it again here
+      // would be the second opinion the comment above warns against — the
+      // shape #29.06 was deleted for. The picker, the import's discovery loop
+      // and the PUT are one question now.
       //
-      // Without it this screen would OFFER such a row, spend twenty billed reads
-      // against it, and be refused at the save — the "spend then refuse" shape,
-      // which is worse than either refusing first or accepting. The picker and
-      // the executor now answer the same question.
-      if (documentTypeIsCatchAll(row)) return "fallback";
-      if (typeMayHoldAForm({ typeId: row.id, fallbackTypeId, typeIsIdCard })) return null;
+      // `fallbackTypeId` is still passed and is still meaningful: on a row
+      // whose key is `UNCLASSIFIED` both witnesses fire, and on an archive
+      // where somebody renamed that row to something the name arm does not
+      // recognise, the id is the only one that does.
+      if (
+        typeMayHoldAForm({
+          typeId: row.id,
+          typeKey: row.key,
+          typeName: row.name,
+          fallbackTypeId,
+          typeIsIdCard,
+        })
+      ) {
+        return null;
+      }
       return typeIsIdCard ? "idCard" : "fallback";
     },
     [fallbackTypeId],

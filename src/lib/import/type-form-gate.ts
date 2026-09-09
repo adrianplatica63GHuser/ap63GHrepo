@@ -434,7 +434,13 @@ export function checkTypeForms(input: {
    * than an oversight.** `matchDocumentType` refuses the catch-all by key and
    * refuses any row whose NAME means "unclassified", so no answer ever resolves
    * to it as a `match` and `typeAwaitsForm`'s fallback term is never the one
-   * that excuses anything here — a test pins that. It is still passed honestly,
+   * that excuses anything here — a test pins that. ⚠️ **Since Slice #34.10 the
+   * same is true of the KEY/NAME term this module now also passes** (`typeKey`,
+   * `typeName`, on both `existingTypeOf` and `newTypeOf`), and for the same
+   * reason. Neither is dead weight: the gate stops depending on
+   * `matchDocumentType` continuing to decline in order to be right, which is
+   * the failure this module's header refuses to build in. It is still passed
+   * honestly,
    * because the alternative is handing `null`, which that function reads as
    * "the fallback is not known": narrowing a shared rule's input at one call
    * site is how a caller starts holding a second opinion about it, which is the
@@ -501,7 +507,7 @@ export function checkTypeForms(input: {
       const file = fileOf(entry, resolution.how);
       addOrMerge(found, "id:" + row.id, () =>
         createdIds.has(row.id)
-          ? newTypeOf(row.name, entry, row.id, fallbackTypeId, file)
+          ? newTypeOf(row.name, row.key, entry, row.id, fallbackTypeId, file)
           : existingTypeOf(row, entry, fallbackTypeId, file),
       );
       continue;
@@ -518,7 +524,7 @@ export function checkTypeForms(input: {
     items.push(row);
     createdIds.add(row.id);
     addOrMerge(found, "id:" + row.id, () =>
-      newTypeOf(row.name, entry, row.id, fallbackTypeId, fileOf(entry, "none")),
+      newTypeOf(row.name, row.key, entry, row.id, fallbackTypeId, fileOf(entry, "none")),
     );
   }
 
@@ -624,6 +630,10 @@ function existingTypeOf(
     hasForm,
     awaitsForm: typeAwaitsForm({
       typeId: row.id,
+      // Slice #34.10 — the row's own two columns, which this function has had
+      // in hand all along and used only for the id-card half.
+      typeKey: row.key,
+      typeName: row.name,
       fallbackTypeId,
       typeHasForm: hasForm,
       // ⚠️ **THE SAME `||` THE RUN WRITES, TERM FOR TERM, AND AN ADVERSARIAL
@@ -647,6 +657,22 @@ function existingTypeOf(
 /** A type nothing holds yet, which the run would create without a form. */
 function newTypeOf(
   name: string,
+  /**
+   * The row's key.                                             (Slice #34.10)
+   *
+   * ⚠️ **A SEPARATE PARAMETER RATHER THAN `row`, because the two callers hand
+   * this function two different things.** The `match` branch passes a row the
+   * loop invented on an EARLIER entry and is re-meeting; the `create` branch
+   * passes the row it has just minted. Both have `key`, neither has anything
+   * else `newTypeOf` wants, and taking the whole row would let the `match`
+   * branch quietly start reporting `templateFields` for a type that has none.
+   *
+   * ⚠️ **IT CAN BE `""`, AND THAT IS A STATEMENT.** `createdKeyOf` blanks
+   * `UNCLASSIFIED` on purpose (see its own header), and `documentTypeIsCatchAll`
+   * reads a blank key as "ask the name instead" — which is the right answer
+   * for a row whose key was blanked precisely because it meant the catch-all.
+   */
+  key: string,
   entry: ClassifiedEntry,
   syntheticId: string,
   fallbackTypeId: string | null,
@@ -663,6 +689,18 @@ function newTypeOf(
       // A stand-in, and only two things are ever asked of it: that it is not
       // empty, and that it is not the catch-all's id. The fold key is both.
       typeId: syntheticId,
+      // ⚠️ **Slice #34.10 — AND THIS IS WHERE THE TERM COMES ALIVE.** The
+      // `fallbackTypeId` term below "cannot currently fire" here, and
+      // `checkTypeForms`'s own comment says so with a test pinning it:
+      // `matchDocumentType` refuses the catch-all by key AND by name, so no
+      // answer ever resolves onto it. That argument covers a MATCH; it says
+      // nothing about a type the run would CREATE. A classifier answer whose
+      // label is "Neclasificat" is declined by `declinesAgainst` before it
+      // reaches here, so in practice this is still narrow — but it is now the
+      // ROW being asked rather than an id comparison that could never be true,
+      // which is the whole point of there being one rule.
+      typeKey: key,
+      typeName: name,
       fallbackTypeId,
       typeHasForm: false,
       // ⚠️ **THE SCAN'S SIGNAL ALONE, AND A THIRD ROUND TOOK THE LABEL TEST

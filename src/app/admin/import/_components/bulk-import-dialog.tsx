@@ -751,7 +751,16 @@ type EnrichResult = {
    * row instead is both simpler and complete; `absorbTypeList` is where it is
    * acted on.
    */
-  typeRows: { id: string; name: string; hasForm: boolean }[] | null;
+  /**
+   * ⚠️ **`key` since Slice #34.10, and it is not decoration.** The retry
+   * handler runs outside the run effect, so `docTypeItems` is out of scope and
+   * this is the ONLY per-id carrier it has for a type's own columns. Without
+   * the key, `typeAwaitsForm` there would have to answer the narrow, id-only
+   * way while the run loop answered the wide one — the exact divergence this
+   * slice exists to remove, rebuilt inside one file. `fresh` already holds full
+   * `DocumentTypeCatalogueRow`s, so it costs one line.
+   */
+  typeRows: { id: string; key: string; name: string; hasForm: boolean }[] | null;
 };
 
 async function enrichDiscoverSteps(byType: Map<string, DiscoverStep>): Promise<EnrichResult> {
@@ -858,6 +867,7 @@ async function enrichDiscoverSteps(byType: Map<string, DiscoverStep>): Promise<E
     // field read as finished on the one screen that reports the backlog.
     typeRows: fresh.map((item) => ({
       id: item.id,
+      key: item.key,
       name: item.name,
       hasForm: documentTypeHasForm(item.templateFields),
     })),
@@ -3222,8 +3232,40 @@ export function BulkImportDialog({
             // real type wrongly skipped waits for one press of Descoperire AI.
             const typeIsIdCard =
               docTypeIdCardRef.current.get(finalTypeId) === true || isIdCardEntry(sr);
+            /**
+             * The row behind `finalTypeId`, where this loop has one.
+             *                                                  (Slice #34.10)
+             *
+             * ⚠️ **`docTypeItems`, NOT the start-of-run list, because
+             * `ensureDocType` pushes into it as it goes** — so a type this run
+             * created at step 2 is found here, on the document AFTER the one
+             * that created it and on that document too.
+             *
+             * ⚠️ **AND IT IS `null` FOR EXACTLY ONE INPUT, WHICH IS WORTH
+             * NAMING RATHER THAN PAPERING OVER: a type `runAiInterpret`
+             * INVENTED.** `finalTypeId` is `interpreted.documentTypeId ??
+             * resolvedTypeId`, and the ai-interpret route is the one path that
+             * can mint a `lookup_document_type` row after this list was built.
+             * `AiInterpretRunResult` reports that row's id and its
+             * `documentTypeIsIdCard` and nothing else — no key, no name — so
+             * there is genuinely no row to read here.
+             *
+             * Passing `null` there is honest and it is also harmless, which is
+             * the part that makes this the cheap answer rather than a gap: the
+             * route mints a row from a CLASSIFIER ANSWER, and `declinesAgainst`
+             * refuses every answer whose label means "unclassified" —
+             * "Neclasificat", "Unclassified", "Document necunoscut" — before a
+             * row can be created from it. So the rows the key/name witness
+             * exists to catch are precisely the rows this path cannot produce,
+             * and `fallbackTypeId` still covers the seeded catch-all by id.
+             * Widening the route's response is the honest way to close it for
+             * good, and it is in the handover rather than done here.
+             */
+            const finalTypeRow = docTypeItems.find((i) => i.id === finalTypeId) ?? null;
             const awaitsForm = typeAwaitsForm({
               typeId: finalTypeId,
+              typeKey: finalTypeRow?.key ?? null,
+              typeName: finalTypeRow?.name ?? null,
               fallbackTypeId: fallbackDocTypeId,
               typeHasForm,
               typeIsIdCard,
@@ -3236,6 +3278,8 @@ export function BulkImportDialog({
             if (
               shouldDiscoverType({
                 typeId: finalTypeId,
+                typeKey: finalTypeRow?.key ?? null,
+                typeName: finalTypeRow?.name ?? null,
                 fallbackTypeId: fallbackDocTypeId,
                 typeHasForm,
                 typeIsIdCard,
@@ -4924,10 +4968,32 @@ export function BulkImportDialog({
           finalTypeId !== null &&
           (docTypeIdCardRef.current.get(finalTypeId) === true ||
             isIdCardEntry(scanResults.get(path)));
+        /**
+         * The row behind `finalTypeId`, off the preflight that just ran.
+         *                                                    (Slice #34.10)
+         *
+         * ⚠️ **`preflight`, NOT `runTypes` and NOT `typeNames`.** This handler
+         * is outside the run effect, so `docTypeItems` is gone; `runTypes`
+         * carries a name but no key and is state rather than a ref, so reading
+         * it here would put it on the dependency list; `typeNames` is a flat
+         * list with no id to key on. `preflight.typeRows` is the one carrier
+         * that is per-id, freshly read, and — since this slice — carries both
+         * columns.
+         *
+         * `null` here means the same one thing it means in the run loop: a
+         * type `runAiInterpret` invented on THIS call, after the list above was
+         * fetched. The argument for why that is safe is written out there.
+         */
+        const finalTypeRow =
+          finalTypeId === null
+            ? null
+            : preflight.typeRows?.find((r) => r.id === finalTypeId) ?? null;
         const awaitsForm =
           finalTypeId !== null &&
           typeAwaitsForm({
             typeId: finalTypeId,
+            typeKey: finalTypeRow?.key ?? null,
+            typeName: finalTypeRow?.name ?? null,
             fallbackTypeId: fallbackTypeIdRef.current,
             typeHasForm: docTypeFormRef.current.get(finalTypeId) === true,
             typeIsIdCard,
@@ -4966,6 +5032,8 @@ export function BulkImportDialog({
           finalTypeId !== null &&
           shouldDiscoverType({
             typeId: finalTypeId,
+            typeKey: finalTypeRow?.key ?? null,
+            typeName: finalTypeRow?.name ?? null,
             fallbackTypeId: fallbackTypeIdRef.current,
             typeHasForm: docTypeFormRef.current.get(finalTypeId) === true,
             typeIsIdCard,
