@@ -85,16 +85,52 @@
  * meant abandoning the screen the user had finally arrived at.
  *
  * ⚠️ **F-11 was drafted into that list and taken back out**, by the slice's own
- * adversarial review, and the reason is the criterion rather than the rule: a
- * constraint blocks, so it may only name a file the import would genuinely lose
- * or mangle. A file with no reported type uploads, is stored and serves
- * correctly; all that was lost was automatic extraction — which is F-17's
- * situation exactly, and F-17 is why the criterion exists. It also had no
- * remedy that could change the answer, since `File.type` is derived from the
- * name and not from the bytes. So it stays here, and it is quiet now rather
- * than loud: a rule that cannot be acted on must not shout.
+ * adversarial review, and it then outlived its own premise here. #34.12 deleted
+ * it; the record is the next section, because the reason it was never a
+ * constraint is not the reason it is gone.
  *
- * ⚠️ **AND SLICE #34.06 CLOSED THE GAP THIS RULE REPORTS.** The upload route now derives the recorded type from the file NAME, the serving route from the stored path, and `ai-interpret` from the name again, so an empty `File.type` costs nothing at all any more. F-11 therefore reports a fact with no consequence, and its own copy was rewritten to stop promising one. Deleting it outright is a decision about a shipped report finding and belongs to its own slice.
+ * ⚠️ AND WHAT #34.12 DELETED, ONCE #34.06 HAD REMOVED ITS PREMISE
+ * ──────────────────────────────────────────────────────────────
+ *
+ * One rule, F-11 (`unknownMimeFiles`), and it went nowhere: no catalogue took
+ * it over, because there was nothing left to state.
+ *
+ * It said an empty `File.type` disabled automatic extraction for that page for
+ * ever, the MIME being frozen at upload and never re-sniffed. **#34.06 closed
+ * that gap**: the upload route derives the recorded type from the file NAME,
+ * the serving route from the stored path, and `ai-interpret` from the name
+ * again. From that commit the finding reported a fact with no consequence — a
+ * sentence on the Evaluation screen that named files and asked nothing of the
+ * user, which is the cost this module's own LOUD AND QUIET section is written
+ * to avoid. Its copy was reworded then to stop promising a consequence; the
+ * honest end of that is deletion, and #34.12 is it.
+ *
+ * ⚠️ **AND IT IS ONE SENTENCE FEWER ONLY UNTIL IT IS THE LAST ONE.** For an
+ * archive of registry-less `.tif` scans with nothing dropped and a clean
+ * pre-existing verdict, F-11 was the finding keeping `reportHasNothingToSay`
+ * false. Those folders now take `import-wizard.tsx`'s pruned path
+ * (`preexistingResultOnly`), so the whole „De verificat înainte de a continua"
+ * section stops being mounted on the Pre-existing screen — and its „Descarcă
+ * această listă" goes with it, which is where the saved page and the forecast
+ * inside that page go too. (The forecast PANEL is `FolderForecast`, one screen
+ * later under `phase === "folder-report"`, and is not affected.) That is the
+ * designed behaviour of a predicate this slice did not touch, and it is right —
+ * a report with nothing to say should not draw a panel — but it is a bigger
+ * change on screen than one quiet sentence, and it is the half a user notices.
+ *
+ * ⚠️ **`F-11` IS RETIRED, NOT FREE.** `ruleId` is what Adrian and Ciprian map a
+ * saved report back to the spec with, so a later rule wearing that identifier
+ * would make an old report say something it never said. A report saved to disk
+ * before #34.12 keeps its own copy of the sentence — nothing regenerates it and
+ * nothing should try. Pick the next unused number instead.
+ *
+ * ⚠️ **AND IT DID NOT BECOME A CONSTRAINT ON ITS WAY OUT.** The reasoning that
+ * kept it advisory is still live and is recorded where a candidate constraint
+ * is judged — `constraint-rules.ts`, the admission-test section: `File.type`
+ * comes from the extension by way of the OS registry, not from the bytes, so a
+ * rule on it fires on a perfectly good archival `.tif` and never on the corrupt
+ * `.jpg` its draft example described, and no remedy the user could apply would
+ * change the answer. Deleting a quiet rule is not a licence to re-open it loud.
  *
  * ⚠️ AND WHAT #26.07 MADE FALSE, RETIRED HERE AT LAST
  * ───────────────────────────────────────────────────
@@ -137,10 +173,6 @@
  *    stage changed.)
  *  - **F-03** — an OS directory is about a FOLDER, not a file, and no
  *    constraint states it.
- *  - **F-11** — see the note above: an unreadable type COST automatic
- *    extraction and nothing else, and there was nothing the user could do
- *    about it, so it informs rather than blocks. Since #34.06 it costs
- *    nothing at all.
  *  - **F-17** — Office files, and this one is a decision rather than an
  *    omission. An Office file imports faithfully: it is stored, it is
  *    downloadable, and the only thing missing is that nothing in this codebase
@@ -156,12 +188,11 @@
  * Findings carry a loudness, and it still earns the disclosure in the panel —
  * but it no longer discriminates much, and saying so is the honest version. The
  * measured near-misses that justified the split (48 folders on Adrian's
- * archive, 20 of them loud) were S-03, S-04 and S-05, and they are gone. Two
- * quiet rules remain: F-17, because an Office file imports faithfully and is
- * merely never read, and F-11, for F-17's reason and because the user cannot
- * act on it at all. (#26.05 made that three by adding F-11 and #26.06 took it
- * back to two by deleting F-15.) Everything else here is loud, because
- * everything else here loses or corrupts something.
+ * archive, 20 of them loud) were S-03, S-04 and S-05, and they are gone. **One
+ * quiet rule remains: F-17**, because an Office file imports faithfully and is
+ * merely never read. (#26.05 made it three by adding F-11, #26.06 took it back
+ * to two by deleting F-15, and #34.12 to one by deleting F-11.) Everything else
+ * here is loud, because everything else here loses or corrupts something.
  *
  * ⚠️ That is a claim about the current rule set, not a policy. It was measured
  * once, drifted, and had to be rewritten; if a rule is added, measure it rather
@@ -171,9 +202,11 @@
  * ───────────────────────────
  *
  * Cost tiers T0 (the listing) and T1 (`File` metadata), as before — but #26.05
- * moved four of the five T1 rules to the Constraints stage, so what is left of
- * T1 here is F-11 and the `uploadBytes` total. Deliberately NOT here, each for
- * a reason rather than for lack of time:
+ * moved three of the four T1 rules to the Constraints stage (F-08, F-09, F-02;
+ * the other two it moved, F-05 and F-07, were T0 name rules) and #34.12 deleted
+ * the fourth, so **no rule here reads `File` metadata any more**: all that is
+ * left of T1 is the `uploadBytes` total. Deliberately NOT here, each for a
+ * reason rather than for lack of time:
  *
  *  - **T2 byte-reading** (coordinate-file encodings, PDF headers) — belongs
  *    with the coordinate path that #24.03/#24.04 already own.
@@ -192,7 +225,7 @@ import {
   type FSEntry,
   type IgnoredReason,
 } from "./folder-utils";
-import { isFileKind, fileKindsOf } from "@/lib/files/file-kinds";
+import { isFileKind } from "@/lib/files/file-kinds";
 
 // ---------------------------------------------------------------------------
 // Shape
@@ -204,14 +237,38 @@ export type Loudness = "loud" | "quiet";
  * A stable key per finding type. The user-facing sentence lives in
  * `messages/*.json` under `adminImport.wizard.report.finding.<kind>`; nothing
  * here holds display text, so the rules and their wording stay separable.
+ *
+ * ⚠️ **A LIST AT RUNTIME, NOT ONLY A UNION AT COMPILE TIME**, and #34.12 is
+ * where that changed. `report-sections.tsx` resolves the sentence with
+ * ``t(`finding.${kind}`)`` — a key built at run time — so TypeScript cannot see
+ * the message file at all: a kind added without its copy, or copy deleted
+ * without its kind, is a raw key path rendered at the user under
+ * `DEFAULT_LOCALE` (`ro-RO`, which does not fall back to English). Deleting
+ * F-11 meant deleting one member and two message keys with nothing tying them
+ * together; this array is what lets `import-checks.test.ts` tie them, in both
+ * directions and in both locales.
+ *
+ * ⚠️ **`Object.freeze`, not `as const` alone**, because `as const` is erased at
+ * runtime and an unfrozen module-level array is a shared mutable that one
+ * caller can `sort()` or `push()` on behalf of the whole process. Today the
+ * only runtime reader is `import-checks.test.ts` — the engine below never
+ * touches it — so this is the same defensive convention every other catalogue
+ * in this folder follows (`constraint-rules.ts`, `structure-rules.ts`,
+ * `preflight.ts`), not a fix for a live hazard. **The order below is
+ * documentation, not display order** — what reaches the panel is the order
+ * `checkFolder` pushes findings in, then the loud/quiet sort. The two agree
+ * today within a loudness; if you add a kind here, put it where it reads best
+ * and set its position on screen in `checkFolder`.
  */
-export type FindingKind =
-  | "osDirectories"           // F-03
-  | "walkLoopedOnShortcut"    // S-17 — a shortcut makes the folder endless
-  | "walkTooManyFolders"      // S-17 — more subfolders than can be read at once
-  | "walkTooManyFiles"        // S-17 — more files than can be read at once
-  | "unknownMimeFiles"        // F-11 — T1
-  | "officeFiles";            // F-17
+export const FINDING_KINDS = Object.freeze([
+  "osDirectories",           // F-03
+  "walkLoopedOnShortcut",    // S-17 — a shortcut makes the folder endless
+  "walkTooManyFolders",      // S-17 — more subfolders than can be read at once
+  "walkTooManyFiles",        // S-17 — more files than can be read at once
+  "officeFiles",             // F-17
+] as const);
+
+export type FindingKind = (typeof FINDING_KINDS)[number];
 
 export type Finding = {
   /** The catalogue ID, shown to Adrian and Ciprian so a report maps to the spec. */
@@ -277,9 +334,17 @@ export function checkFolder(input: {
   observations: readonly DirectoryObservation[];
   /**
    * T1. Absent until the metadata pass has run — which, since #26.05, is the
-   * Constraints stage's job rather than this report's. Two things read it now:
-   * F-11, and the `uploadBytes` total. Both are simply absent without it rather
-   * than wrong.
+   * Constraints stage's job rather than this report's. **Exactly one thing
+   * reads it: the `uploadBytes` total**, which is simply absent without it
+   * rather than wrong — and `uploadBytes` is itself the WHOLE-folder sum, which
+   * since #26.08 no panel shows (both draw `import-wizard.tsx`'s
+   * `uploadBytesToImport`, over the entries the run will actually import; the
+   * comment there says why the report's own number is not narrowed to match).
+   * F-11 was the other reader until #34.12 deleted it, so no FINDING depends on
+   * this argument today — but it is still handed in, and an advisory rule that
+   * needs `File` metadata is still welcome to read it. Which side of the line a
+   * new rule falls on is the admission test in `constraint-rules.ts`, not this
+   * parameter: blocks → there, informs → here.
    */
   metadata?: ReadonlyMap<string, FileMeta>;
 }): ImportReport {
@@ -289,12 +354,13 @@ export function checkFolder(input: {
     ...structureFindings(observations),
     ...fileFindings(entries),
     ...truncationFindings(observations),
-    ...(metadata ? metadataFindings(entries, metadata) : []),
   ];
 
-  // Loud first. Within a loudness the catalogue order already encodes
+  // Loud first. Within a loudness the PUSH order above already encodes
   // severity, so a stable sort is enough — findings must not reshuffle
-  // between renders of the same folder.
+  // between renders of the same folder. (Push order, not `FINDING_KINDS`
+  // order: since #34.12 there is a runtime array in this file that also calls
+  // itself the catalogue, and it is documentation. The two agree today.)
   const order: Record<Loudness, number> = { loud: 0, quiet: 1 };
   findings.sort((a, b) => order[a.loudness] - order[b.loudness]);
 
@@ -429,75 +495,20 @@ function truncationFindings(observations: readonly DirectoryObservation[]): Find
   return out;
 }
 
-// ---------------------------------------------------------------------------
-// Metadata (T1) — what is left of it
-// ---------------------------------------------------------------------------
-
-/**
- * F-11 — Windows reported no type for a file something would otherwise read.
- *
- * ⚠️ **THE PREMISE OF THIS RULE IS GONE (Slice #34.06).** It read: the MIME is
- * frozen at upload and never re-sniffed, so an empty one disables automatic
- * extraction for that page permanently — not for this run, for ever. Since
- * #34.06 the type is taken from the file NAME at upload, at serve and at
- * AI-interpret, so an empty `File.type` costs nothing. The rule still fires and
- * its copy no longer promises a consequence; removing it is a change to a
- * shipped report finding and wants its own slice.
- *
- * Restricted to the files anything WOULD have read, because a missing type on a
- * file nothing was going to open is not worth a sentence.
- *
- * ⚠️ **QUIET, and it must stay quiet.** #26.05 drafted this as a blocking
- * constraint and its adversarial review took it back out: `File.type` comes
- * from the extension by way of the OS registry, not from the bytes, so the rule
- * fires on a `.tif` or a `.bmp` on a machine whose registry has no entry for it
- * — a perfectly good archival scan — and never on the corrupt `.jpg` the draft
- * example described. The file uploads, is stored, and serves correctly. There
- * is also no remedy: re-saving the file does not change what the registry says,
- * so a blocking version would have been a violation the user could work at for
- * ever. It informs; it does not shout, and it must never block.
- *
- * ⚠️ Restricted to the UPLOAD set, not the whole metadata map. The map covers
- * dropped files too, because CON-06 needs a dropped `folder.jpg`'s size, and a
- * report that argued about files the walk had already removed would be telling
- * the user about an import that is not going to happen.
- */
-function metadataFindings(
-  entries: readonly FSEntry[],
-  metadata: ReadonlyMap<string, FileMeta>,
-): Finding[] {
-  const unknownMime: string[] = [];
-  for (const path of uploadKeysOf(entries)) {
-    const meta = metadata.get(path);
-    if (meta === undefined) continue;
-    if (meta.type === "" && isReadableByAi(path)) unknownMime.push(path);
-  }
-  if (unknownMime.length === 0) return [];
-  return [
-    {
-      ruleId: "F-11",
-      kind: "unknownMimeFiles",
-      loudness: "quiet",
-      paths: unknownMime,
-      counts: { files: unknownMime.length },
-    },
-  ];
-}
-
-/**
- * Would anything ever try to read this file's pixels or text?
- *
- * ⚠️ Still `image || pdf`, which since Slice #34.06 is WIDER than what the
- * model accepts (`isModelReadable` excludes `.bmp`, `.tif`, `.tiff`). Left wide
- * deliberately: its only caller is F-11, whose premise #34.06 removed
- * altogether — narrowing the population of a finding that no longer reports a
- * consequence would be motion rather than a fix. Deleting F-11 is the real
- * answer and belongs to its own slice.
- */
-function isReadableByAi(path: string): boolean {
-  const kinds = fileKindsOf(path);
-  return kinds.includes("image") || kinds.includes("pdf");
-}
+// ⚠️ A "Metadata (T1)" section stood here until #34.12 — `metadataFindings`
+// and its private helper `isReadableByAi` — and both went with F-11; the
+// header records why. One thing is worth keeping at the site, because it is
+// how this file came to hold a stale predicate for two slices without anyone
+// noticing. `isReadableByAi` was `isImageOrPdf` from `@/lib/files/file-kinds`
+// re-typed body-for-body under another name, and **NO GUARD IN THE REPO COULD
+// HAVE SEEN IT.** `upload-file-types.test.ts` → "is the predicate the wizard
+// and the forecast both ask" reads four hand-written paths, and this file is
+// not one of them — but even widened to a walk of `src/`, its test is
+// `not.toContain("isImageOrPdf")`, and the clone never contained that string.
+// `file-kinds-single-source.test.ts` does walk `src/`, and it looks for
+// extension LITERALS, which the clone did not hold either. So: a copy under a
+// new name is invisible to every guard this repo has, and the only defence is
+// the habit — import the predicate, never re-type its body.
 
 // ---------------------------------------------------------------------------
 // Skipped

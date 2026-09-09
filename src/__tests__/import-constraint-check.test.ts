@@ -190,9 +190,10 @@ describe("the rules", () => {
   });
 
   it("says nothing about a type Windows did not report", () => {
-    // F-11 was drafted here and taken back out — it is a quiet finding in
-    // `checks.ts`. `.tif` is the realistic carrier (Chromium falls through to
-    // the Windows registry for it), and it must pass this stage.
+    // F-11 was drafted here and taken back out; it lived on as a quiet finding
+    // in `checks.ts` until #34.12 deleted that too, so nothing anywhere reports
+    // the type Windows gives. `.tif` is the realistic carrier (Chromium falls
+    // through to the Windows registry for it), and it must pass this stage.
     expect(one("Plan.tif", 400_000, "")).toEqual([]);
     expect(one("1.jpg", JPEG, "")).toEqual([]);
   });

@@ -1,21 +1,37 @@
 /**
- * src/lib/import/metadata-pass.ts — the T1 half of the pre-import report.
- * (Slice #24.02b)
+ * src/lib/import/metadata-pass.ts — the T1 pass, which since #26.05 runs for
+ * the Constraints stage rather than for the report. (Slice #24.02b)
  *
  * Reads `size` and `type` for every file the run will upload, by calling
- * `getFile()` on each handle. That is the only thing separating the four
- * cheapest high-value checks from being uncheckable — three of them moved to
- * the Constraints stage in #26.05, where they BLOCK rather than advise, and the
- * fourth stayed behind as advice:
+ * `getFile()` on each handle. The SIZE is what separates three cheap
+ * high-value checks from being uncheckable — all three moved to the Constraints
+ * stage in #26.05, where they BLOCK rather than advise:
  *
  *   CON-05  a file over 20 MB → HTTP 413, *after* its Document row exists
  *   CON-04  a zero-byte file  → HTTP 400 "file is required", which misleads
  *   CON-06  a real scan named `folder.jpg`, which the walk drops on sight
- *   F-11    an empty `File.type` → nothing, since Slice #34.06. It used to
- *           disable automatic extraction for that page FOREVER, because the
- *           MIME was frozen at upload and never re-sniffed; the type is now
- *           taken from the file name at upload, at serve and at AI-interpret.
- *           The finding survives its own premise — see `checks.ts`.
+ *
+ * ⚠️ **There was a fourth T1 rule, and it is gone rather than moved.** F-11
+ * stayed behind in `checks.ts` as advice about an empty `File.type`, which used
+ * to disable automatic extraction for that page FOREVER because the MIME was
+ * frozen at upload and never re-sniffed. #34.06 took the type from the file
+ * name at upload, at serve and at AI-interpret, leaving a finding with no
+ * consequence, and #34.12 deleted it.
+ *
+ * **So `FileMeta.type` is now written below and read by nothing.** Every rule
+ * that survives answers from the file NAME or from `size`; nothing anywhere
+ * looks at the recorded type. It was left in place rather than swept up in
+ * #34.12, which is a scope decision and not evidence of a consumer: dropping
+ * the field is two source edits (`checks.ts`'s `FileMeta`, and the write below)
+ * plus five test fixtures that spell a type out, and none of the modules that
+ * merely pass the map along would change at all.
+ *
+ * ⚠️ **And it is unguarded, deliberately and knowingly.** Nothing fails if the
+ * next rule author reads `meta.type` and builds on it — they will get the
+ * Windows-registry value #34.06 declared untrustworthy, `""` and all, on
+ * exactly the archival `.tif` that made F-11 worthless. This paragraph is the
+ * whole of the protection. If a second rule ever wants it, delete the field
+ * instead of reading it.
  *
  * ⚠️ **It therefore runs for the Constraints stage now, not for the report.**
  * `ImportWizard` calls it once the structure check is clean and the user has

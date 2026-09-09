@@ -2329,8 +2329,7 @@
           "officeFiles": "{files} Word/Excel files will be stored, but their contents cannot be read or searched.",
           "walkLoopedOnShortcut": "This folder contains a shortcut pointing back at a folder above it, which makes it endlessly deep. The same files were therefore read many times over, so **every number in this report is larger than reality** — the documents, the pages and the AI costs are all inflated. Do not start the import. Delete the shortcut, then check the folder again.",
           "walkTooManyFolders": "This folder holds more than {limit} subfolders, which is more than can be read in one go, so this report is incomplete. Split it into several smaller folders and check again.",
-          "walkTooManyFiles": "This folder holds more than {limit} files, which is more than can be read in one go, so this report is incomplete. Split it into several smaller folders and check again.",
-          "unknownMimeFiles": "{files, plural, one {Windows does not say what kind of file one of the files in the folder is. It will be imported, and its format is taken from the file name.} other {Windows does not say what kind of files # of the files in the folder are. They will be imported, and their formats are taken from their file names.}}"
+          "walkTooManyFiles": "This folder holds more than {limit} files, which is more than can be read in one go, so this report is incomplete. Split it into several smaller folders and check again."
         },
         "downloadButton": "Download this list",
         "downloadHint": "Saves a file you can open in Word. It lists every affected file, not only the examples shown on screen.",

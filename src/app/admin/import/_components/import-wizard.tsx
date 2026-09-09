@@ -42,10 +42,12 @@
  *
  * ⚠️ **The metadata pass moved with it, and that is the whole reason `runWalk`
  * now takes a `target`.** It is ~760 `getFile()` calls on Adrian's archive, and
- * it exists to answer four constraints (a file's size, and the type Windows
- * reports for it). Leaving it on the structure round would mean paying for it
- * on every turn of a loop the user may go round several times before a single
- * constraint has been looked at — so a structure check now STOPS at the
+ * it exists to answer three constraints, all of them from a file's SIZE. (It
+ * records the type Windows reports too; since #34.12 deleted F-11, the last
+ * rule that read it, nothing does — see `metadata-pass.ts`.) Leaving it on the
+ * structure round would mean paying for it on every turn of a loop the user may
+ * go round several times before a single constraint has been looked at — so a
+ * structure check now STOPS at the
  * verdict, and the pass runs when the Constraints button is pressed.
  *
  * THE PRE-EXISTING STAGE  (Slice #26.08)

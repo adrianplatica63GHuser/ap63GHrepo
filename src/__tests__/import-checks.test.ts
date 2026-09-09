@@ -21,14 +21,24 @@
  * now CON-01 … CON-06 in `constraint-rules.ts`, tested in
  * `import-constraint-check.test.ts`.
  *
- * F-11 was in that list and came back, which is the case worth a test rather
- * than a comment: a constraint blocks, and a file whose type Windows does not
- * report is stored, served and merely never auto-extracted — F-17's situation
- * exactly. It is quiet here now, and there is a test below that it did not
- * follow the others.
+ * ⚠️ **And what #34.12 removed, which is the third kind of removal in this
+ * file.** F-11 came back from #26.05's list and was tested below as the one T1
+ * rule that stayed. #34.06 then took the type from the file NAME at upload, at
+ * serve and at AI-interpret, so an empty `File.type` costs nothing — and a
+ * finding that reports a fact with no consequence is worse than no finding,
+ * because the user reads it and can do nothing. So the rule is gone, and the
+ * test that replaces it is the NEGATIVE: the exact input that used to produce
+ * F-11 must now produce no finding at all.
  *
- * That is also why the loud/quiet cases went with them. The split was measured
- * on the three near-miss rules; with them gone only F-11 and F-17 are quiet,
+ * That test also pins the half of the argument that survives, in the same case
+ * rather than in a second one: `metadata` is still read — by `uploadBytes`, and
+ * by nothing else in this module — so the input that used to produce F-11 must
+ * now produce no finding AND still produce a total. Splitting those across two
+ * cases is what would let a later reader delete the "no finding" half as
+ * redundant; together they say what the argument is for.
+ *
+ * That is also why the loud/quiet cases went when #26.02's rules did. The split
+ * was measured on the three near-miss rules; with them gone only F-17 is quiet,
  * so the one surviving loudness test asserts the ORDER (loud before quiet)
  * rather than where the line sits — it had to be rewritten in #26.05, because
  * the loud finding it used to sort against was F-08, and again in #26.06, which
@@ -47,8 +57,12 @@
  * never heard of.
  */
 
-import { checkFolder, type FileMeta } from "@/lib/import/checks";
+import fs from "node:fs";
+import path from "node:path";
+
+import { checkFolder, FINDING_KINDS, type FileMeta } from "@/lib/import/checks";
 import type { DirectoryObservation, DroppedFile, FSEntry } from "@/lib/import/folder-utils";
+import { scanIcu } from "@/test-support/icu";
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -177,6 +191,14 @@ describe("file findings", () => {
     // that moved must STOP answering here, or the user meets the same file
     // twice — once as a blocking constraint at the Constraints stage and once
     // as advice on the Evaluation screen it has already passed.
+    //
+    // ⚠️ `toEqual([])` and not `expect.not.arrayContaining([...])`, which is
+    // what stood here until #34.12. Jest's `not.arrayContaining` fails only
+    // when the whole list is a SUBSET of what came back, so four of those five
+    // rules could have come back and this case would still have been green —
+    // and it named exactly the five it knew about, so a sixth returning rule
+    // was invisible by construction. The fixture below is chosen to produce no
+    // finding at all, so the strict form is available and says more.
     const r = run({
       entries: [file("a.xyz"), file("IMG_1.heic"), file("big.jpg"), file("gol.jpg")],
       metadata: meta([
@@ -187,56 +209,202 @@ describe("file findings", () => {
       ]),
       observations: [obs({ dropped: [dropped("Acte/folder.jpg", "system-file")] })],
     });
-    expect(kinds(r)).toEqual(
-      expect.not.arrayContaining([
-        "gateFiles",
-        "heicFiles",
-        "oversizedFiles",
-        "emptyFiles",
-        "largeFolderJpg",
-      ]),
-    );
+    expect(kinds(r)).toEqual([]);
   });
 });
 
 // ---------------------------------------------------------------------------
-// T1 — what is left of it
+// T1 — the negative, since #34.12 deleted the last rule that read it
 // ---------------------------------------------------------------------------
 
-describe("F-11 — the one T1 rule that stayed", () => {
-  it("reports a file whose type Windows did not give, QUIETLY", () => {
-    // ⚠️ `.tif` and not `.jpg`, and the difference is the whole reason this
-    // rule is not a constraint. `File.type` comes from the extension by way of
-    // the OS registry — Chromium hard-codes `.jpg`, and falls through to the
-    // registry for `.tif`/`.bmp`. A `.jpg` with an empty type is a state the
-    // browser does not produce, so a test built on one proves nothing; a `.tif`
-    // on a machine with no registry entry is the case that actually happens,
-    // and it is a perfectly good archival scan that must NOT block an import.
-    const f = find(run({
+describe("T1 — no rule reads File metadata any more (F-11, deleted by #34.12)", () => {
+  it("⚠️ says NOTHING about a file whose type Windows did not report", () => {
+    // This is F-11's own input, kept as the negative half of its deletion.
+    //
+    // ⚠️ `.tif` and not `.jpg`, and the difference is why the fixture is worth
+    // preserving even though the rule is gone. `File.type` comes from the
+    // extension by way of the OS registry — Chromium hard-codes `.jpg` and
+    // falls through to the registry for `.tif`/`.bmp` — so a `.jpg` with an
+    // empty type is a state the browser does not produce and a test built on
+    // one would prove nothing. A `.tif` on a machine with no registry entry is
+    // the case that actually happens, and it is a perfectly good archival scan.
+    //
+    // Since #34.06 the recorded type is derived from the file NAME at upload,
+    // at serve and at AI-interpret, so this file loses nothing: there is no
+    // consequence left to report, and a sentence naming it would be a sentence
+    // the user can do nothing with. `toEqual([])` and not `not.toContain`,
+    // because the failure worth catching is a REPLACEMENT finding under some
+    // other kind, and a negative assertion would sail straight past it.
+    const r = run({
       entries: [file("Plan.tif")],
       metadata: meta([["Plan.tif", 400_000, ""]]),
-    }), "unknownMimeFiles")!;
-    expect(f.loudness).toBe("quiet");
-    expect(f.counts).toMatchObject({ files: 1 });
-    expect(f.paths).toEqual(["Plan.tif"]);
-  });
-
-  it("ignores an empty type on a file nothing would have read anyway", () => {
-    // It only matters because it disables automatic extraction. A Word file was
-    // never going to be extracted, so reporting it would be noise.
-    const r = run({ entries: [file("nota.docx")], metadata: meta([["nota.docx", 900, ""]]) });
-    expect(kinds(r)).not.toContain("unknownMimeFiles");
-  });
-
-  it("says nothing about a dropped file, which nothing was going to read", () => {
-    // The metadata map covers dropped files because CON-06 needs a
-    // `folder.jpg`'s size. A rule that iterated the map instead of the upload
-    // set would argue about an import that is not going to happen.
-    const r = run({
-      observations: [obs({ dropped: [dropped("Acte/folder.jpg", "system-file")] })],
-      metadata: meta([["Acte/folder.jpg", 400_000, ""]]),
     });
-    expect(kinds(r)).not.toContain("unknownMimeFiles");
+    expect(kinds(r)).toEqual([]);
+    // …and the argument that used to feed F-11 is still read — by `sumBytes`,
+    // which is now the only thing in this module that touches `metadata`.
+    // `describe("uploadBytes")` below owns that contract; the point of asserting
+    // it HERE, on this input, is that the two halves are one statement, on one
+    // folder: no finding, and still a total.
+    //
+    // ⚠️ Not "still read by the forecast", which would be false. Both panels
+    // show `uploadBytesToImport`, which `import-wizard.tsx` computes itself
+    // over the entries it will actually import; `report.uploadBytes` is the
+    // whole-folder sum and its header says deliberately so. As of #34.12 it has
+    // no on-screen consumer at all — see the #34.12 handover.
+    expect(r.uploadBytes).toBe(400_000);
+  });
+
+  // ⚠️ **Two more cases stood here and are gone rather than reworked**, and
+  // both were load-bearing only while F-11 was:
+  //
+  //  - "ignores an empty type on a file nothing would have read anyway"
+  //    (`nota.docx`) pinned the rule's POPULATION — `isReadableByAi`, i.e.
+  //    image-or-pdf. With no rule and no helper there is no population to
+  //    restrict, and a case asserting that a `.docx` produces no finding
+  //    asserts nothing this file does not already say twice.
+  //  - "says nothing about a dropped file" pinned that the rule walked
+  //    `uploadKeysOf(entries)` rather than the metadata map — a real
+  //    distinction, because the map deliberately covers dropped files for
+  //    CON-06. Nothing reads the map for findings now, so the empty type in
+  //    that fixture was inert and only the drop mattered; the drop is still
+  //    pinned, on a different fixture and for the sum rather than the
+  //    findings, by `describe("uploadBytes")`'s "ignores a dropped file".
+  //
+  // One case that can fail beats three that cannot.
+});
+
+// ---------------------------------------------------------------------------
+// The kinds and their copy
+// ---------------------------------------------------------------------------
+
+/**
+ * ⚠️ **NEW IN #34.12, AND IT IS THE ONLY THING GUARDING THE HALF OF THAT SLICE
+ * THAT LIVES IN JSON.** Deleting F-11 meant deleting one `FindingKind` member
+ * and one message key in each of two locales, and until this block nothing
+ * anywhere connected the three. `report-sections.tsx` resolves the sentence
+ * with ``t(`finding.${finding.kind}`)`` — the key is built at run time, so
+ * `tsc` never sees it and no suite counted it.
+ *
+ * What that costs when it goes wrong is not a crash. `DEFAULT_LOCALE` is
+ * `ro-RO`, which does NOT fall back to English, so a kind whose copy is missing
+ * renders the literal text `adminImport.wizard.report.finding.<kind>` into the
+ * Evaluation screen — and the reverse, an orphaned key, is silent for ever.
+ * Both directions, and both locales, for that one question.
+ *
+ * ⚠️ **WHAT IT DELIBERATELY DOES NOT CHECK, AND WHY.** It does not compare each
+ * message's ICU arguments against the `counts` the rule actually supplies, the
+ * way `import-structure-rules.test.ts` does for its catalogue. That check is
+ * the stronger one and it belongs here — but it goes red today on a finding
+ * this slice is not allowed to touch: `truncationFindings` supplies
+ * `{ places, limit }` for all three S-17 kinds and no locale's copy names
+ * `places`. Adding the guard means either changing S-17's copy or dropping a
+ * count from a surviving rule, which is a decision about another finding. It is
+ * in the #34.12 handover as noticed-not-fixed; do not read its absence as a
+ * judgement that argument drift does not matter.
+ *
+ * ⚠️ And it covers ONE key surface. `report-sections.tsx` builds a second one
+ * the same way — ``t(`skippedReason.${reason}`)`` — and nothing ties
+ * `IgnoredReason` to its three keys in either locale. Closing that is smaller
+ * than it was here: `groupSkipped` already holds all three members in display
+ * order, typed `IgnoredReason[]`, so it wants `as const` + a freeze + an
+ * export rather than a new list. Not this slice's to do; do not read "the
+ * finding keys are guarded" as "the component's keys are guarded".
+ */
+const LOCALES = ["ro-RO.json", "en-GB.json"] as const;
+
+function findingCopy(localeFile: string): Record<string, string> {
+  const raw = fs.readFileSync(path.join(process.cwd(), "messages", localeFile), "utf8");
+  const messages = JSON.parse(raw) as Record<string, unknown>;
+  const block = ["adminImport", "wizard", "report", "finding"].reduce<unknown>(
+    (node, part) =>
+      node !== null && typeof node === "object"
+        ? (node as Record<string, unknown>)[part]
+        : undefined,
+    messages,
+  );
+  if (block === null || typeof block !== "object") {
+    throw new Error(`${localeFile} has no adminImport.wizard.report.finding block`);
+  }
+  return block as Record<string, string>;
+}
+
+/**
+ * The copy for one kind, or a failure that says which kind and which file.
+ *
+ * ⚠️ Jest does not stop at the first failing case, so when the parity case
+ * above goes red the three below run anyway — and `scanIcu(undefined)` dies
+ * inside the parser with "Cannot read properties of undefined", naming neither
+ * the kind nor the locale. The one thing worse than a red suite is three reds
+ * that do not say what is missing.
+ */
+function copyFor(localeFile: string, kind: string): string {
+  const message = findingCopy(localeFile)[kind];
+  if (typeof message !== "string") {
+    throw new Error(`${localeFile} has no copy for finding kind "${kind}"`);
+  }
+  return message;
+}
+
+describe("every finding kind has copy, and every copy has a kind", () => {
+  it("keeps the catalogue frozen, because `as const` does not survive to runtime", () => {
+    // ⚠️ Convention, not a live hazard, and `checks.ts` says so too: this suite
+    // is the array's only runtime reader — the engine never touches it — so an
+    // unfrozen one could only be re-ordered under this file's own feet. Frozen
+    // because every other catalogue in `src/lib/import/` is, and because that
+    // stops being true the day the engine does read it.
+    expect(Object.isFrozen(FINDING_KINDS)).toBe(true);
+  });
+
+  it.each(LOCALES)("%s carries exactly the kinds the catalogue declares", (localeFile) => {
+    // Sorted and compared whole rather than membership-tested one way: a
+    // one-way check passes an orphan, and an orphan is what a half-done
+    // deletion leaves behind. F-11's key was removed from BOTH files in
+    // #34.12; putting it back in either one must fail here.
+    expect(Object.keys(findingCopy(localeFile)).sort()).toEqual([...FINDING_KINDS].sort());
+  });
+
+  it("interpolates the same arguments in both locales", () => {
+    // A key present in both files is not the same as a key that says the same
+    // thing. `counts` is built per-kind in `checks.ts` and handed to
+    // `t(\`finding.${kind}\`, counts)`; a locale that names an argument the
+    // other does not is a locale whose sentence has a hole in it.
+    for (const kind of FINDING_KINDS) {
+      expect([...scanIcu(copyFor("ro-RO.json", kind)).args].sort()).toEqual(
+        [...scanIcu(copyFor("en-GB.json", kind)).args].sort(),
+      );
+    }
+  });
+
+  it("declares one, few and other in every Romanian plural", () => {
+    // Romanian declares one (1), few (0, and anything ending 1–19 in its last
+    // hundred except 1 itself — so 101 and 118 are `few`, 120 is not) and other
+    // (everything else). A message written with only one/other renders
+    // "20 fișiere" where it must read "20 de
+    // fișiere" — and `few`, not `other`, is the ZERO case. Under
+    // `DEFAULT_LOCALE = ro-RO` there is no English to fall back to, so a
+    // missing arm is what the user reads.
+    for (const kind of FINDING_KINDS) {
+      for (const block of scanIcu(copyFor("ro-RO.json", kind)).plurals) {
+        expect(block.categories).toEqual(expect.arrayContaining(["one", "few", "other"]));
+      }
+    }
+  });
+
+  it("declares one and other in every English plural", () => {
+    // ⚠️ **This one is EMPTY today and that is worth saying rather than
+    // hiding**, because a case that cannot fail is the shape this file has
+    // twice removed. No en-GB finding message uses `plural` at all — the two
+    // that interpolate a count do it bare, so "{folders} Windows system
+    // folders" reads "1 Windows system folders" for one. en-GB is the
+    // development locale and `ro-RO` is what ships, so that is a copy defect
+    // rather than a bug, and rewording another finding's English is not
+    // #34.12's to do. The case stays because it goes live the moment anyone
+    // fixes it — and its Romanian sibling above is live now, on two kinds.
+    for (const kind of FINDING_KINDS) {
+      for (const block of scanIcu(copyFor("en-GB.json", kind)).plurals) {
+        expect(block.categories).toEqual(expect.arrayContaining(["one", "other"]));
+      }
+    }
   });
 });
 

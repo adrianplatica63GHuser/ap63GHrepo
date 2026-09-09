@@ -53,6 +53,16 @@
  *    have made it a violation the user could work at for ever — the failure
  *    mode this module is otherwise arranged to prevent.
  *
+ *    ⚠️ **F-11 no longer exists anywhere: #34.12 deleted the advisory finding
+ *    too**, once #34.06 had left it reporting a fact with no consequence. This
+ *    bullet stays because the admission test is what it is evidence for, and
+ *    because the reasoning above is the standing answer to the next reader who
+ *    notices an empty `File.type` and reaches for a rule. It is also why
+ *    `import-constraint-rules.test.ts` still asserts, with a live test, that
+ *    this catalogue says nothing about the reported type. (The identifier
+ *    `F-11` is retired rather than free; `checks.ts`, which issues F-numbers,
+ *    is where that is stated and why.)
+ *
  * NOTHING HERE IS NEW (#26.05's brief, in as many words)
  * ─────────────────────────────────────────────────────
  *

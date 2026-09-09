@@ -176,9 +176,13 @@ describe("the predicates delegate rather than restate", () => {
     // the OS registry, never from the bytes — so a blocking rule would fire on
     // a perfectly good `.tif` on a machine with no registry entry for it, and
     // never on the corrupt `.jpg` its example described. Nothing is lost: the
-    // file uploads, is stored, and serves. It is a quiet finding in
-    // `checks.ts`, and this test exists so the next reader finds the decision
-    // rather than the gap.
+    // file uploads, is stored, and serves. It became a quiet finding in
+    // `checks.ts` instead, and #34.12 deleted that as well once #34.06 had left
+    // it reporting a fact with no consequence. So there is no rule about the
+    // reported type ANYWHERE now, and this is the assertion of that for THIS
+    // catalogue — `import-constraint-check.test.ts` makes it for the stage and
+    // `import-checks.test.ts` for the report. It exists so the next reader
+    // finds the decision rather than the gap.
     expect(firstBrokenRule("1.jpg", m(5_000, ""))).toBeNull();
     expect(firstBrokenRule("Plan.tif", m(400_000, ""))).toBeNull();
   });
