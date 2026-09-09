@@ -325,6 +325,26 @@ export function isIdCardEntry(scan: IdCardScanSignal | null | undefined): boolea
 
 /** Card-derived values, as they stand in the review form at submit time. */
 export type IdCardDocumentSource = {
+  /**
+   * The card's SERIES + NUMBER — „RT123456" — which is what a Romanian CI
+   * prints as its document number and what a person reads off it.
+   *                                                            (Slice #34.13)
+   *
+   * ⚠️ **Present on this type for the first time in #34.13, and its absence is
+   * the whole defect that slice fixed.** The extraction contract has returned
+   * it since #23.01 and this module never read it, so every card imported so
+   * far put the SECONDARY number in „Nr. document" instead — a field that is
+   * blank on most cards.
+   */
+  idDocumentNumber?: string | null;
+  /**
+   * The SECONDARY number, printed only when it differs from the series — on
+   * the back, or in a permanent-number field. `null` on most cards.
+   *
+   * Kept as the fallback rather than dropped: where a card carries no
+   * series+number, this is the only number it has, and an empty „Nr. document"
+   * is worse than the number that is actually printed.
+   */
   idCardNumber?: string | null;
   idIssuingAuthority?: string | null;
   idValidFrom?: string | null;
@@ -332,15 +352,25 @@ export type IdCardDocumentSource = {
   firstName?: string | null;
   lastName?: string | null;
   /**
-   * The `lookup_institution` row a PERSON selected in the review dialog, either
-   * because the matcher found it or because they pressed "adaugă" and made it.
-   *                                                            (Slice #34.02)
+   * The `lookup_institution` row THIS CARD's authority is filed under: one the
+   * matcher named, one a person picked, or one they pressed "adaugă" and made.
+   *                                                (Slice #34.02, #34.13)
    *
    * ⚠️ **Never a model's answer taken unreviewed.** The matcher's suggestion
-   * arrives at the dialog as a preselected dropdown value; what reaches here is
-   * whatever the dropdown holds when the person presses the button. An
-   * unresolved authority is `null` and stays `null` — this module does not
-   * resolve, and it certainly does not create.
+   * arrives at the dialog as a preselected dropdown value; an unresolved
+   * authority is `null` and stays `null` — this module does not resolve, and it
+   * certainly does not create.
+   *
+   * ⚠️ **AND IT IS NOT SIMPLY "WHATEVER THE DROPDOWN HOLDS", WHICH IS WHAT
+   * THIS COMMENT USED TO SAY.** Since #34.13 that picker is ALSO seeded from
+   * `document.institution_id`, so on a document somebody already filed it opens
+   * on a row nobody has said anything about the card's authority. Sending that
+   * id here would make `sameInstitutionAlready` true because it was copied from
+   * `current` — suppressing the `subject` fallback while write-if-empty already
+   * blocks the FK, so the authority reaches neither column.
+   * `institutionForCardWrite` in `src/lib/import/id-card-review.ts` is the
+   * filter that keeps this field meaning what the line above says, and a
+   * reading of this docblock is what a future slice would use to delete it.
    */
   institutionId?: string | null;
 };
@@ -449,19 +479,42 @@ export function documentFieldsFromIdCard(
 ): IdCardDocumentPatch {
   const patch: IdCardDocumentPatch = {};
 
-  // The card's number → "Nr. document".
+  // The number a person reads off the card → „Nr. document".   (Slice #34.13)
   //
-  // ⚠️ **This is `idCardNumber`, which the extraction contract defines as the
-  // SECONDARY number printed when it differs from the series — not
-  // `idDocumentNumber`, which is the series+number and never reaches the
-  // document at all.** An earlier version of this comment said "card
-  // series+number", and #34.02's `CARTE_IDENTITATE` entry in
-  // `src/lib/documents/type-config.ts` was very nearly labelled „Serie și
-  // număr" on the strength of it — which would have been blank on most cards
-  // and wrong on the rest. That label stayed generic; correcting the MAPPING is
-  // a separate change, named in #34.02's handover.
-  if (filled(card.idCardNumber) && !filled(current.nrDocument)) {
-    patch.nrDocument = card.idCardNumber.trim();
+  // ⚠️ **THE SERIES+NUMBER FIRST, AND UNTIL #34.13 IT WAS NEVER READ AT
+  // ALL.** The extraction contract returns two numbers, and they are not
+  // interchangeable: `idDocumentNumber` is the series+number a Romanian CI
+  // prints as its document number ("RT123456"), while `idCardNumber` is a
+  // SECONDARY number printed only when it differs from the series — on the
+  // back, or in a permanent-number field — and is `null` on most cards. This
+  // function mapped the secondary one, alone, and said so in as many words;
+  // what the comment did not say is that the result was an empty „Nr. document"
+  // on every ordinary card and the wrong number on the rest.
+  //
+  // ⚠️ **THE FALLBACK IS STATED RATHER THAN IMPLIED.** Where the card
+  // carries no series+number, the secondary number is the only number it has,
+  // and it goes in. What changed is the ORDER, not the set: no card that filled
+  // this field before fills it with something else now unless it printed both.
+  //
+  // ⚠️ **AND THE ORDER IS PERMANENT PER DOCUMENT, which is why it had to be
+  // corrected rather than left.** The write below is write-if-empty like every
+  // other field here, so whichever number lands first is the one the document
+  // keeps for good; a document already carrying the secondary number is NOT
+  // rewritten by this change, and #34.13's handover says how to find those.
+  //
+  // #34.02's `CARTE_IDENTITATE` entry in `src/lib/documents/type-config.ts` was
+  // held at a generic label because of the old mapping. With this one it names
+  // the series and number, and the label and the column agree for the first
+  // time — the two changes belong to one commit and must not drift apart.
+  const cardSeriesNumber = card.idDocumentNumber;
+  const cardSecondaryNumber = card.idCardNumber;
+  const cardNumber = filled(cardSeriesNumber)
+    ? cardSeriesNumber.trim()
+    : filled(cardSecondaryNumber)
+      ? cardSecondaryNumber.trim()
+      : null;
+  if (cardNumber !== null && !filled(current.nrDocument)) {
+    patch.nrDocument = cardNumber;
   }
 
   // Valid-from IS the issue date on a Romanian CI, which is what dateDocument
@@ -495,10 +548,13 @@ export function documentFieldsFromIdCard(
   // wrote nothing (write-if-empty), and never reached the `subject` fallback —
   // the authority the card named vanished, with the dialog's preview having
   // just shown it. The comment justifying that said "nothing is lost — the
-  // dropdown showed them what the document holds", and the dropdown does not:
-  // it is seeded from the matcher's answer and the document is not read until
-  // submit. So the fallback is reached whenever the FK is NOT written, for
-  // either reason.
+  // dropdown showed them what the document holds", and until #34.13 it did
+  // not: it was seeded from the matcher's answer alone, and the document was
+  // not read until submit. #34.13 seeds it from the document too — which is
+  // why the dropdown showing a row is no longer evidence that anybody placed
+  // the CARD's authority there, and why `institutionForCardWrite` decides what
+  // reaches `card.institutionId`. Either way the fallback is reached whenever
+  // the FK is NOT written, for either reason.
   const institutionWritten =
     filled(card.institutionId) && !filled(current.institutionId);
   // ⚠️ **…AND THE FALLBACK DOES NOT FIRE WHEN THE DOCUMENT ALREADY HOLDS THE

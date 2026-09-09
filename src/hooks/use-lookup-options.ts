@@ -51,6 +51,7 @@
 //   dropdown with nothing in it and no way to tell "no roles are ticked" from
 //   "the list could not be read".
 
+import { useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import type { CarriedRoleKind } from "@/lib/admin/value-lists/carried-roles";
@@ -67,6 +68,62 @@ export type LookupListState = "loading" | "loaded" | "failed";
 export type LookupOptions = {
   options: LookupOption[];
   listState: LookupListState;
+  /**
+   * Read the list again, now.                                  (Slice #34.13)
+   *
+   * ⚠️ **A FAILED FIRST LOAD DOES NOT HEAL ON ITS OWN, AND NOTHING SAID SO.**
+   * `refetchOnWindowFocus` is off globally and `retry` is spent inside the
+   * first load, so „failed" lasts until the observer next MOUNTS — close and
+   * reopen, or reload the page. On the ID-card review dialog that is not a
+   * recovery a user can reach: the dialog is opened BY the import run, one
+   * card after another, and closing it is recorded as a decision not to create
+   * the person. So the sentence under the field now comes with a way out of
+   * the state it describes.
+   *
+   * ⚠️ **On every hook rather than only the one that needed it.** One shape,
+   * one meaning: an optional `reload` would make every caller ask whether this
+   * particular list can be re-read, and the answer is always yes — they are all
+   * `useQuery` over the same endpoint family. `useInstitutionOptions` in
+   * `id-card-person-dialog.tsx` has carried a `reload` under that exact name
+   * since #34.02, and this is the same verb for the same act.
+   *
+   * Fire-and-forget: React Query owns the outcome, and it lands in `options`,
+   * `listState` and `isReloading` like any other read. Nothing awaits it.
+   */
+  reload: () => void;
+  /**
+   * Is a read in flight right now?                             (Slice #34.13)
+   *
+   * ⚠️ **`listState` CANNOT ANSWER THIS, AND THAT IS WHY IT EXISTS.** A
+   * `refetch` of a query already in `error` leaves `status` at `"error"` for
+   * the whole round trip, so `listState` stays „failed" from the click until
+   * the answer — and a retry that fails twice moves nothing on screen at all.
+   * A control that gives no sign it was pressed is the „did that do anything?"
+   * state `institutionAdding` exists to avoid one dialog over.
+   *
+   * ⚠️ **A PAUSED read counts as in flight, unless it is the FIRST one.** In
+   * practice that means a retry of a query that already failed — the only
+   * paused read any caller renders a control for — though a paused background
+   * refetch of a successful query reports too, harmlessly and correctly.
+   * React Query pauses a read it cannot start
+   * (`networkMode: "online"`), so a retry pressed after a failure while the
+   * machine is off the network never reaches `"fetching"`: a flag gated on that
+   * alone leaves the label „Reîncearcă" with nothing moving, which is the
+   * silence this member exists to remove. Paused means „taken, and it will
+   * run", and React Query resumes it on its own.
+   *
+   * ⚠️ **`&& !isPending` is what keeps it from lying on a FIRST load, and it
+   * leaves one state uncovered on purpose.** A first read attempted offline is
+   * `isPending` AND `"paused"` — and `toState` reports that pair as „failed",
+   * so the retry control renders. Without the clause it would render already
+   * disabled and already saying „Se reîncearcă…", announcing an action nobody
+   * has taken. The cost is that pressing it there changes nothing on screen:
+   * `refetch()` on a pending-paused query stays pending-paused. That is the
+   * honest reading — React Query never stopped trying the first load, so there
+   * is no new attempt to report — and widening the flag to cover it would
+   * bring the lie back for every offline mount, which is the commoner event.
+   */
+  isReloading: boolean;
 };
 
 /** The columns of `lookup_person_role` these hooks read. */
@@ -96,6 +153,23 @@ async function fetchValueList<T>(list: string): Promise<T[]> {
 
 const toOptions = (rows: NamedRow[]): LookupOption[] =>
   rows.map((r) => ({ value: r.id, label: r.name }));
+
+/**
+ * ⚠️ **One frozen empty array rather than a fresh `[]` per render.**
+ * (Slice #34.13.) `options: data ?? []` handed every caller a new identity on
+ * every render for as long as the list was loading or failed — which puts a
+ * changing value into the dependency array of anything that closes over it, and
+ * quietly defeats the React Compiler memoization these call sites are otherwise
+ * careful to keep. The empty case is exactly the one where nothing can differ.
+ *
+ * ⚠️ **NOT `Object.freeze`d, and a review round is why.** A frozen array handed
+ * out as a mutable `LookupOption[]` is a type that says „you may push to this"
+ * over a value that throws when you do — and it would throw only on the
+ * loading/failed path, which is the one path this whole file exists to make
+ * safe. The type would have to become `readonly` for the freeze to be honest,
+ * and that is a change to every caller for a mutation none of them makes.
+ */
+const NO_OPTIONS: LookupOption[] = [];
 
 /**
  * ⚠️ **`isLoadingError`, NOT `isError`, and an adversarial round is why.**
@@ -178,24 +252,40 @@ const PERSON_ROLE_SELECT = {
  * and on the ID-card review dialog.
  */
 export function useCitizenshipOptions(): LookupOptions {
-  const { data, isPending, isLoadingError, fetchStatus } = useQuery({
+  const { data, isPending, isLoadingError, fetchStatus, refetch } = useQuery({
     queryKey: ["value-list", "citizenships"],
     queryFn:  () => fetchValueList<NamedRow>("citizenships"),
     select:   toOptions,
     retry:    LOOKUP_QUERY_RETRY,
   });
-  return { options: data ?? [], listState: toState(isPending, isLoadingError, fetchStatus) };
+  const reload = useCallback((): void => {
+    void refetch();
+  }, [refetch]);
+  return {
+    options: data ?? NO_OPTIONS,
+    listState: toState(isPending, isLoadingError, fetchStatus),
+    reload,
+    isReloading: fetchStatus === "fetching" || (fetchStatus === "paused" && !isPending),
+  };
 }
 
 /** `lookup_person_type` — the „Tip Profesional" select (Slice #18.16.VL). */
 export function usePersonTypeOptions(): LookupOptions {
-  const { data, isPending, isLoadingError, fetchStatus } = useQuery({
+  const { data, isPending, isLoadingError, fetchStatus, refetch } = useQuery({
     queryKey: ["value-list", "person-types"],
     queryFn:  () => fetchValueList<NamedRow>("person-types"),
     select:   toOptions,
     retry:    LOOKUP_QUERY_RETRY,
   });
-  return { options: data ?? [], listState: toState(isPending, isLoadingError, fetchStatus) };
+  const reload = useCallback((): void => {
+    void refetch();
+  }, [refetch]);
+  return {
+    options: data ?? NO_OPTIONS,
+    listState: toState(isPending, isLoadingError, fetchStatus),
+    reload,
+    isReloading: fetchStatus === "fetching" || (fetchStatus === "paused" && !isPending),
+  };
 }
 
 /**
@@ -225,13 +315,21 @@ export function usePersonTypeOptions(): LookupOptions {
  * one list" this slice deleted, rebuilt one layer down.
  */
 export function usePersonRoleOptions(validFor: "property" | "person"): LookupOptions {
-  const { data, isPending, isLoadingError, fetchStatus } = useQuery({
+  const { data, isPending, isLoadingError, fetchStatus, refetch } = useQuery({
     queryKey: ["value-list", "person-roles"],
     queryFn:  () => fetchValueList<PersonRoleRow>("person-roles"),
     select:   PERSON_ROLE_SELECT[validFor],
     retry:    LOOKUP_QUERY_RETRY,
   });
-  return { options: data ?? [], listState: toState(isPending, isLoadingError, fetchStatus) };
+  const reload = useCallback((): void => {
+    void refetch();
+  }, [refetch]);
+  return {
+    options: data ?? NO_OPTIONS,
+    listState: toState(isPending, isLoadingError, fetchStatus),
+    reload,
+    isReloading: fetchStatus === "fetching" || (fetchStatus === "paused" && !isPending),
+  };
 }
 
 // ── The role a row already carries ───────────────────────────────────────────

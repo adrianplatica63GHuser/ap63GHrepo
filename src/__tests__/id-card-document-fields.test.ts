@@ -20,7 +20,16 @@ import {
   type IdCardDocumentSource,
 } from "@/lib/import/id-card";
 
+/**
+ * ⚠️ **The two numbers DIFFER here, and Slice #34.13 is why that matters.**
+ * Until then this fixture carried only the secondary one, so every assertion
+ * below was blind to which of the two the mapping reads — the question the
+ * whole slice turned on. A card printing both, with different values, is also
+ * the ordinary Romanian CI: the series+number is on the front and a permanent
+ * number can be on the back.
+ */
 const FULL_CARD: IdCardDocumentSource = {
+  idDocumentNumber: "RT123456",
   idCardNumber: "ZZ 123456",
   idIssuingAuthority: "SPCLEP Bragadiru",
   idValidFrom: "2019-04-02",
@@ -33,7 +42,9 @@ describe("documentFieldsFromIdCard — the mapping", () => {
   it("maps every card field onto its document target on a blank document", () => {
     const patch = documentFieldsFromIdCard(FULL_CARD, {});
 
-    expect(patch.nrDocument).toBe("ZZ 123456");
+    // Slice #34.13 — the SERIES+NUMBER, which is what a person reads off the
+    // card, not the secondary number this used to take.
+    expect(patch.nrDocument).toBe("RT123456");
     // Valid-from IS the issue date on a Romanian CI.
     expect(patch.dateDocument).toBe("2019-04-02");
     expect(patch.dateValidUntil).toBe("2029-04-02");
@@ -171,6 +182,66 @@ describe("documentFieldsFromIdCard — the mapping", () => {
   });
 });
 
+/**
+ * Slice #34.13 — WHICH number reaches „Nr. document".
+ *
+ * The extraction contract returns two, and until this slice the mapping read
+ * the wrong one — `idCardNumber`, the SECONDARY number printed only when it
+ * differs from the series, and therefore `null` on most cards. The field is
+ * write-if-empty, so whichever number lands first is the one the document
+ * keeps for good; that is what made the wrong choice permanent and what makes
+ * these assertions worth having in both directions.
+ *
+ * `CARTE_IDENTITATE`'s „Nr. document" label in `type-config.ts` is only true
+ * while the first assertion here holds — `document.test.ts` pins the label,
+ * this suite pins the column, and the two must move together.
+ */
+describe("documentFieldsFromIdCard — which of the card's two numbers", () => {
+  it("takes the series+number when the card prints both, and they differ", () => {
+    const patch = documentFieldsFromIdCard(
+      { idDocumentNumber: "RT123456", idCardNumber: "ZZ 123456" },
+      {},
+    );
+    expect(patch.nrDocument).toBe("RT123456");
+  });
+
+  it("falls back to the secondary number when there is no series+number", () => {
+    // The stated fallback, not an accident of ordering: a card with no
+    // series+number still has a number printed on it, and an empty
+    // „Nr. document" is worse than the one it actually carries.
+    expect(
+      documentFieldsFromIdCard({ idCardNumber: "ZZ 123456" }, {}).nrDocument,
+    ).toBe("ZZ 123456");
+    expect(
+      documentFieldsFromIdCard({ idDocumentNumber: null, idCardNumber: "ZZ 123456" }, {}).nrDocument,
+    ).toBe("ZZ 123456");
+    expect(
+      documentFieldsFromIdCard({ idDocumentNumber: "   ", idCardNumber: "ZZ 123456" }, {}).nrDocument,
+    ).toBe("ZZ 123456");
+  });
+
+  it("writes nothing when the card prints neither", () => {
+    expect(documentFieldsFromIdCard({ lastName: "Popescu" }, {}).nrDocument).toBeUndefined();
+  });
+
+  it("trims whichever one it takes", () => {
+    expect(
+      documentFieldsFromIdCard({ idDocumentNumber: "  RT123456 " }, {}).nrDocument,
+    ).toBe("RT123456");
+    expect(
+      documentFieldsFromIdCard({ idCardNumber: " ZZ 123456  " }, {}).nrDocument,
+    ).toBe("ZZ 123456");
+  });
+
+  it("is still write-if-empty — the preference never overwrites", () => {
+    // The whole reason the choice had to be corrected rather than left: this
+    // guard is what makes the first number permanent, so a document already
+    // carrying the secondary one keeps it and is not rewritten here.
+    const patch = documentFieldsFromIdCard(FULL_CARD, { nrDocument: "ZZ 123456" });
+    expect(patch.nrDocument).toBeUndefined();
+  });
+});
+
 describe("documentFieldsFromIdCard — write-if-empty", () => {
   it("leaves every already-filled target alone", () => {
     const patch = documentFieldsFromIdCard(FULL_CARD, {
@@ -201,11 +272,16 @@ describe("documentFieldsFromIdCard — write-if-empty", () => {
 
   it("treats a whitespace-only current value as empty", () => {
     const patch = documentFieldsFromIdCard(FULL_CARD, { nrDocument: "   " });
-    expect(patch.nrDocument).toBe("ZZ 123456");
+    expect(patch.nrDocument).toBe("RT123456");
   });
 
   it("treats a whitespace-only card value as absent", () => {
-    const patch = documentFieldsFromIdCard({ ...FULL_CARD, idCardNumber: "  " }, {});
+    // BOTH numbers, because either one alone would be enough to fill the field
+    // and a card with one blank is the fallback case, not this one.
+    const patch = documentFieldsFromIdCard(
+      { ...FULL_CARD, idDocumentNumber: "  ", idCardNumber: "  " },
+      {},
+    );
     expect(patch.nrDocument).toBeUndefined();
   });
 
@@ -236,7 +312,7 @@ describe("documentFieldsFromIdCard — the date guard", () => {
     );
 
     expect(patch.dateDocument).toBeUndefined();
-    expect(patch.nrDocument).toBe("ZZ 123456");
+    expect(patch.nrDocument).toBe("RT123456");
     expect(patch.dateValidUntil).toBe("2029-04-02");
   });
 });

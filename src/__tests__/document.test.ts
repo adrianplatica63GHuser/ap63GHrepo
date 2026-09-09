@@ -160,10 +160,13 @@ describe("getTypeConfig", () => {
     // it as „Instituție înregistrare", a REGISTRAR, on a document nobody
     // registers.
     const cfg = getTypeConfig("CARTE_IDENTITATE");
-    // ⚠️ Generic on purpose — see the config's own note: `nrDocument` is filled
-    // from the card's SECONDARY number, not from its series, so a precise label
-    // would be wrong more often than right.
-    expect(cfg.labels.nrDocument).toBe("typeLabels.nrGeneric");
+    // ⚠️ **Specific since Slice #34.13, and it could not be before.** #34.02
+    // left this generic because `documentFieldsFromIdCard` filled `nrDocument`
+    // from the card's SECONDARY number — absent on most cards — so a label
+    // naming the series would have been blank more often than right. #34.13
+    // turned the mapping round; `id-card-document-fields.test.ts` pins the
+    // column, this pins the label, and neither may move without the other.
+    expect(cfg.labels.nrDocument).toBe("typeLabels.nrIdCardSeries");
     expect(cfg.labels.dateDocument).toBe("typeLabels.dateIssued");
     expect(cfg.labels.institution).toBe("typeLabels.institutionIssuer");
   });

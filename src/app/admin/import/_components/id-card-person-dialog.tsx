@@ -68,7 +68,7 @@
  * corrects. The Document keeps whatever provenance the import assigned it.
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { useCitizenshipOptions } from "@/hooks/use-lookup-options";
 import { useQueryClient } from "@tanstack/react-query";
@@ -104,6 +104,15 @@ import {
   type IdCardDocumentPatch,
   type IdCardDocumentSource,
 } from "@/lib/import/id-card";
+// Slice #34.13 — the two decisions this dialog makes about a value it did not
+// read off the card, as one sentence each, testable without rendering a dialog
+// that opens with three fetches.
+import {
+  citizenshipForWrite,
+  citizenshipIsHidden,
+  institutionForCardWrite,
+  institutionSelectSeed,
+} from "@/lib/import/id-card-review";
 import { MULTI_IDENTITY_CODE } from "@/lib/import/multi-card-gate";
 import { buttonClass } from "@/lib/ui/button-styles";
 
@@ -223,13 +232,16 @@ const toInstitutionOptions = (
  * The live `lookup_institution` rows, a way to re-read them, and a way to add
  * one locally.                                                 (Slice #34.02)
  *
- * ⚠️ **Reloadable where `useCitizenshipOptions` is not**, because this list
- * can gain a row while the dialog is open — that is the whole feature. A
+ * ⚠️ **Reloadable because this list can GAIN A ROW while the dialog is open**
+ * — that is the whole feature, and no other list here can. A
  * fetch-once hook would leave the "adaugă" button creating a row the dropdown
  * beside it could not then show. (Slice #34.04 moved `useCitizenshipOptions`
  * out to `@/hooks/use-lookup-options` and onto a React Query key, which gives
- * it a refetch this dialog does not have to drive — but nothing in here
- * CREATES a citizenship, so it still needs no `reload` of its own.)
+ * it a refetch this dialog does not have to drive. Slice #34.13 drives it
+ * anyway, from the „Reîncearcă" button under the citizenship select: nothing in
+ * here CREATES a citizenship, but a failed FIRST load does not heal on its own
+ * either, and this dialog is opened by the run rather than by the user — so
+ * „close and reopen" is not a recovery available to them.)
  */
 function useInstitutionOptions(): {
   options: { value: string; label: string }[];
@@ -242,9 +254,11 @@ function useInstitutionOptions(): {
    * "keep the previous list on failure" does not cover the case it was written
    * for: the row just created is by definition absent from the previous list,
    * so a failed reload left the select holding an id with no `<option>` —
-   * blank on screen, hint and button both suppressed, preview label empty — and
-   * the FK still written at submit. The POST returns the whole row; using it is
-   * free.
+   * blank on screen, hint and button both suppressed, preview label empty. (The
+   * FK was written at submit too, until #34.02's fourth review round gated
+   * `institutionForWrite` on the list being loaded — fixed in passing here so
+   * this paragraph stops describing a write that no longer happens.) The POST
+   * returns the whole row; using it is free.
    */
   upsert: (row: { id: string; name: string }) => void;
 } {
@@ -401,8 +415,16 @@ export function IdCardPersonDialog({
 }: Props) {
   const t = useTranslations("adminImport.wizard.importDialog.idCard");
   const queryClient = useQueryClient();
-  const { options: citizenshipOptions, listState: citizenshipListState } =
-    useCitizenshipOptions();
+  const {
+    options: citizenshipOptions,
+    listState: citizenshipListState,
+    // Slice #34.13 — the way out of „failed". Without it the state the sentence
+    // under the field describes lasts until the next MOUNT, and this dialog is
+    // opened by the run rather than by the user, so closing it to recover is
+    // recorded as a decision not to create the person.
+    reload: reloadCitizenships,
+    isReloading: citizenshipReloading,
+  } = useCitizenshipOptions();
   const {
     options: institutionOptions,
     listState: institutionListState,
@@ -422,10 +444,48 @@ export function IdCardPersonDialog({
    * does not have, which is the shape `id-card.ts` already refuses for `cnp` in
    * the other direction.
    *
-   * Seeded from the matcher's answer when the extraction returns; whatever it
-   * holds at submit time is what a PERSON chose to file the card under.
+   * ⚠️ **THREE PIECES OF STATE SINCE SLICE #34.13, AND ONLY ONE OF THEM IS A
+   * PERSON'S.** The picker's value is DERIVED from them (`institutionId`,
+   * below), because who supplied the value decides whether it may be WRITTEN:
+   * a person's answer and the card's matched authority may; the document's own
+   * institution, echoed back so the user can see what they are about to keep,
+   * may not. `institutionForCardWrite` states that and says what it costs to
+   * get wrong.
    */
-  const [institutionId, setInstitutionId] = useState("");
+  const [chosenInstitutionId, setChosenInstitutionId] = useState<string | null>(null);
+  /**
+   * `document.institution_id`, as the Document holds it.        (Slice #34.13)
+   *
+   * `""` until the read below answers, and `""` for a document that carries
+   * none — the two are the same thing to every consumer here, and a third
+   * value would only invite a branch nobody needs.
+   */
+  const [documentInstitutionId, setDocumentInstitutionId] = useState("");
+  /** What the extraction's matcher named, if anything.          (Slice #34.02) */
+  const [matchedInstitutionId, setMatchedInstitutionId] = useState("");
+  /**
+   * What the picker shows: the person's answer, or the seed.    (Slice #34.13)
+   *
+   * ⚠️ **DERIVED, NOT A FOURTH PIECE OF STATE, AND THAT IS WHAT REMOVES THE
+   * RACE.** The document GET and the extraction land in whichever order the
+   * network gives them. Written as two setters into one `institutionId`, the
+   * opening value would depend on that order — the document's institution when
+   * the GET is slow, the matcher's when it is fast — and „last write wins"
+   * would be the rule nobody stated. Each answer now sets only its OWN state
+   * and `institutionSelectSeed` decides between them on every render, so both
+   * orders end on the same value and there is no moment in between to get
+   * wrong.
+   *
+   * ⚠️ **`chosenInstitutionId` is `null` for „untouched", not `""`.** A person
+   * who clears the picker back to „—" has made a choice, and it is not the same
+   * event as never having touched it: the seed must not reinstate what they
+   * just removed.
+   */
+  const seededInstitutionId = institutionSelectSeed({
+    documentInstitutionId,
+    matchedInstitutionId,
+  });
+  const institutionId = chosenInstitutionId ?? seededInstitutionId;
   /** True when the lookup read failed, so a miss is not evidence of absence. */
   const [lookupUnavailable, setLookupUnavailable] = useState(false);
   /** In flight while the "adaugă" button is creating the row. */
@@ -462,6 +522,17 @@ export function IdCardPersonDialog({
   const refusedRef = useRef(false);
   const [refusedFatal, setRefusedFatal] = useState(false);
 
+  /**
+   * The citizenship AS PRINTED on the card.                     (Slice #34.13)
+   *
+   * ⚠️ **The extraction returns it and nothing has ever rendered it.** The
+   * matcher resolves `citizenshipRaw` to a `lookup_citizenship` id and the form
+   * carries the ID; when the select cannot show that id, „—" is all the user
+   * has, and a sentence telling them to put the row back in Reference Data
+   * would be naming a value the screen never printed. It is one field on a
+   * response already in hand.
+   */
+  const [citizenshipRaw, setCitizenshipRaw] = useState("");
   const [lowConfidence, setLowConfidence] = useState<Set<string>>(new Set());
   const [unmappedRaw, setUnmappedRaw] = useState<Record<string, string>>({});
 
@@ -550,8 +621,15 @@ export function IdCardPersonDialog({
 
         // Slice #34.02 — the matcher's answer, as a SUGGESTION in a dropdown a
         // person can change, never as a value written behind their back.
-        if (fields.institutionId) setInstitutionId(fields.institutionId);
+        //
+        // Slice #34.13 — the matcher's answer is now recorded as the MATCHER's
+        // rather than written straight into the picker. `institutionSelectSeed`
+        // decides what the control opens on and `institutionForCardWrite`
+        // decides whether it may be written, and both need to know which of the
+        // two sources this is.
+        setMatchedInstitutionId(fields.institutionId ?? "");
         setLookupUnavailable(data.lookupUnavailable === true);
+        setCitizenshipRaw(fields.citizenshipRaw ?? "");
         setLowConfidence(new Set(data.lowConfidenceFields ?? []));
         setUnmappedRaw(data.unmappedRaw ?? {});
         setPhase("resolving");
@@ -599,6 +677,47 @@ export function IdCardPersonDialog({
     // `file` is fixed for this dialog's lifetime; t/setValue are stable.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  /**
+   * What the Document itself already says about its institution.
+   *                                                            (Slice #34.13)
+   *
+   * ⚠️ **THE PICKER USED TO OPEN ON A ROW THE DOCUMENT DOES NOT HOLD.** Its
+   * only seed was the matcher's answer, so on a document already filed under an
+   * institution the select showed either nothing or a different row — and the
+   * user could not see what they were about to keep. `documentFieldsFromIdCard`
+   * is write-if-empty, so what the document holds is what it keeps whatever the
+   * picker says; showing anything else is a promise the PATCH will not make.
+   *
+   * ⚠️ **A SECOND GET, AND IT IS NOT THE ONE `writeDocumentFields` MAKES.**
+   * That read happens at submit, against a document that may have changed in
+   * between, and it is the one that decides the write — deliberately, and
+   * unchanged here. This one only decides what a control OPENS on, so a stale
+   * answer costs a re-pick and never a wrong write.
+   *
+   * ⚠️ **Silent on failure, and that is not the same as swallowing it.** An
+   * expired session or a 500 here raises nothing: the extraction effect above
+   * is hitting the same origin at the same moment and owns the fatal panel, and
+   * a second error for one cause would be two screens for one problem. With no
+   * answer the picker falls back to exactly the behaviour it had before this
+   * slice.
+   */
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/documents/${encodeURIComponent(documentId)}`)
+      .then(async (res) => {
+        if (res.redirected || !res.ok) return null;
+        return (await res.json()) as IdCardDocumentCurrent;
+      })
+      .then((doc) => {
+        if (cancelled || doc === null) return;
+        setDocumentInstitutionId(doc.institutionId ?? "");
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [documentId]);
 
   /**
    * Tell the caller this card produced nothing, exactly once.   (Slice #26.10)
@@ -695,10 +814,26 @@ export function IdCardPersonDialog({
    *                 the FK still being written in exactly that state. The
    *                 degraded path is the one that already exists — no FK, and
    *                 the authority recorded as prose in `subject`.
+   *
+   * ⚠️ **A THIRD, ADDED BY #34.13 AND FOUND BY ITS FIRST REVIEW ROUND: the
+   * value must be somebody's ANSWER, not the document's own institution echoed
+   * back.** That slice seeds the picker from `document.institution_id` so the
+   * user can see what the card is about to be filed under; sending that id here
+   * as `card.institutionId` makes `sameInstitutionAlready` true by construction,
+   * which suppresses the `subject` fallback — and the FK arm is already blocked
+   * by write-if-empty. The card's authority would then reach neither column, on
+   * exactly the documents where somebody had already set an institution by
+   * hand. `institutionForCardWrite` is that rule; the two gates above are
+   * unchanged.
    */
+  const institutionPlaced = institutionForCardWrite({
+    selected: institutionId,
+    chosen: chosenInstitutionId !== null,
+    matchedInstitutionId,
+  });
   const institutionForWrite =
     showForm && institutionListState === "loaded" && !lookupUnavailable
-      ? institutionId || null
+      ? institutionPlaced
       : null;
 
   /**
@@ -744,7 +879,9 @@ export function IdCardPersonDialog({
         // anything else that changed and puts the list back in order.
         if (row.id) {
           upsertInstitution({ id: row.id, name: row.name ?? trimmed });
-          setInstitutionId(row.id);
+          // Slice #34.13 — a PERSON pressed this, so the id is theirs: no seed
+          // may replace it, and it is written to the document on their say-so.
+          setChosenInstitutionId(row.id);
         }
         await reloadInstitutions();
       } catch (err) {
@@ -762,6 +899,11 @@ export function IdCardPersonDialog({
     async (values: FormValues): Promise<{ written: number; failed: boolean }> => {
       try {
         const card: IdCardDocumentSource = {
+          // Slice #34.13 — the series+number is what „Nr. document" holds now,
+          // with `idCardNumber` behind it as the fallback. Both travel; the
+          // choice between them is `documentFieldsFromIdCard`'s and is stated
+          // there.
+          idDocumentNumber:   values.idDocumentNumber,
           idCardNumber:       values.idCardNumber,
           idIssuingAuthority: values.idIssuingAuthority,
           idValidFrom:        values.idValidFrom,
@@ -855,10 +997,31 @@ export function IdCardPersonDialog({
       setBusy(true);
       setError(null);
       try {
+        // ── Slice #34.13: never a citizenship the screen showed as „—" ─────
+        //
+        // ⚠️ **THE ONLY THING BETWEEN THE USER AND THIS WRITE USED TO BE A
+        // SENTENCE.** `<AsyncSelect>` is uncontrolled, so a `citizenshipId`
+        // that `setValue` put in `_formValues` with no matching `<option>`
+        // renders as the empty entry — and Confirm went on creating the person
+        // with it. `citizenshipForWrite` asks the OPTIONS rather than a load
+        // state, so it covers a failed list and a row deleted from a list that
+        // loaded perfectly, with one rule the sentence under the field reads
+        // from too.
+        //
+        // ⚠️ **THE FORM IS NOT TOUCHED.** `values.citizenshipId` stays exactly
+        // as the card was read; only the payload gives way. That is what makes
+        // „Reîncearcă" under the field worth pressing — the list comes back,
+        // the option exists, and the same click writes the citizenship after
+        // all. Blanking the field would have thrown a paid model call's answer
+        // away for a failure that heals on a button press.
+        const citizenshipId = citizenshipForWrite(values.citizenshipId, citizenshipOptions);
         const res = await fetch("/api/people", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...toApiPayload(values), provenance: PERSON_PROVENANCE }),
+          body: JSON.stringify({
+            ...toApiPayload({ ...values, citizenshipId }),
+            provenance: PERSON_PROVENANCE,
+          }),
         });
         if (res.redirected) throw new Error(t("sessionExpired"));
         if (!res.ok) {
@@ -886,7 +1049,7 @@ export function IdCardPersonDialog({
         setError(err instanceof Error ? err.message : t("createError"));
       }
     },
-    [linkPerson, writeDocumentFields, finish, t],
+    [linkPerson, writeDocumentFields, finish, citizenshipOptions, t],
   );
 
   // ── Render ───────────────────────────────────────────────────────────────
@@ -919,17 +1082,26 @@ export function IdCardPersonDialog({
   // the four entity forms accept that deliberately because they need ALL values
   // for their edit-dirty checks, and each carries an
   // `eslint-disable-next-line react-hooks/incompatible-library` saying so. This
-  // call needs SIX NAMED fields, which is exactly what `useWatch` is for — it is
+  // call needs EIGHT NAMED fields, which is exactly what `useWatch` is for — it is
   // already used that way in document-form.tsx and judicial-person-form.tsx.
-  // Choosing it here narrows the subscription to those six fields AND lets the
+  // Choosing it here narrows the subscription to those eight fields AND lets the
   // component be memoized, so it is strictly better than a suppression comment.
+  //
+  // (Slice #34.13 added two of the eight: `idDocumentNumber`, because the
+  // preview must track the number the write now prefers, and `citizenshipId`,
+  // because the sentence under that select is decided by the value the form
+  // holds and a `getValues()` snapshot does not re-render when it changes.)
   // (Slice #23.09.UX: this was the one `form.watch(...)` in `src/` with no
   // suppression, and therefore the one React Compiler lint warning in the repo.)
   const [
-    wLastName, wFirstName, wIdCardNumber, wIdIssuingAuthority, wIdValidFrom, wIdValidUntil,
+    wLastName, wFirstName, wIdDocumentNumber, wIdCardNumber, wIdIssuingAuthority,
+    wIdValidFrom, wIdValidUntil, wCitizenshipId,
   ] = useWatch({
     control: form.control,
-    name: ["lastName", "firstName", "idCardNumber", "idIssuingAuthority", "idValidFrom", "idValidUntil"],
+    name: [
+      "lastName", "firstName", "idDocumentNumber", "idCardNumber", "idIssuingAuthority",
+      "idValidFrom", "idValidUntil", "citizenshipId",
+    ],
   });
 
   // Built against an EMPTY current document on purpose: this shows what the
@@ -940,6 +1112,10 @@ export function IdCardPersonDialog({
     {
       lastName:           wLastName,
       firstName:          wFirstName,
+      // Slice #34.13 — the same pair the write sends, so the „Serie și număr"
+      // row previews the number that will actually land. Before it, the preview
+      // and the PATCH agreed only because both read the wrong one.
+      idDocumentNumber:   wIdDocumentNumber,
       idCardNumber:       wIdCardNumber,
       idIssuingAuthority: wIdIssuingAuthority,
       idValidFrom:        wIdValidFrom,
@@ -963,6 +1139,9 @@ export function IdCardPersonDialog({
   const docPreviewRows = (
     [
       [t("docFieldTitle"),          docPreview.title],
+      // Slice #34.13 — „Serie și număr" now, because that is what the column
+      // holds and what `type-config.ts` labels it on the document form. Three
+      // names for one value across two adjacent screens is what this closes.
       [t("docFieldNrDocument"),     docPreview.nrDocument],
       [t("docFieldDateDocument"),   docPreview.dateDocument],
       [t("docFieldDateValidUntil"), docPreview.dateValidUntil],
@@ -1038,12 +1217,72 @@ export function IdCardPersonDialog({
    * the person can choose it, which is the outcome the button was trying to
    * reach anyway.
    */
+  /**
+   * ⚠️ **„HAS ANYBODY PLACED THIS CARD'S AUTHORITY", NOT „IS THE PICKER
+   * EMPTY".** (Slice #34.13, second review round.) The two were the same
+   * question until this slice seeded the picker from the DOCUMENT: on a
+   * document somebody had already filed under an institution, `!institutionId`
+   * became false, and the offer to create the card's own authority — plus the
+   * sentence explaining why it was being offered — silently vanished on exactly
+   * the documents a human had already touched. This is the same expression the
+   * write is gated on, so the offer appears precisely when the PATCH is going
+   * to fall back to the `subject` line.
+   */
+  const cardAuthorityPlaced = institutionPlaced !== null;
   const offerInstitutionAdd =
-    !institutionId &&
+    !cardAuthorityPlaced &&
     authorityText !== "" &&
     institutionListState === "loaded" &&
     !institutionListUnusable &&
     alreadyListedInstitution === null;
+
+  // ── Slice #34.13: the citizenship the select cannot show ─────────────────
+  //
+  // ⚠️ **ONE PREDICATE FOR THE SENTENCE AND FOR THE WRITE.** `doCreate` calls
+  // `citizenshipForWrite` over the same value and the same options, so the
+  // field cannot say one thing while the POST does another — which is exactly
+  // what shipped before this slice.
+  const citizenshipHidden = citizenshipIsHidden(wCitizenshipId, citizenshipOptions);
+  /**
+   * Which sentence goes under the select.
+   *
+   * THREE states, and they need three different words:
+   *
+   *   the list could not be READ and the form holds a citizenship — the value
+   *     is hidden AND unselectable, the write gives way, and a re-read fixes
+   *     both;
+   *   the list could not be READ and the form holds nothing — nothing is
+   *     hidden, but the field is still unusable, and #34.04's sentence for
+   *     exactly this state must not disappear because #34.13 added a narrower
+   *     one. An adversarial round on this slice found it doing so;
+   *   the list read fine and no longer contains that row — a citizenship
+   *     deleted in Reference Data between the model reading the card and this
+   *     click. A re-read returns the same answer, so no retry is offered and
+   *     the sentence points at where the row actually has to come back — and
+   *     NAMES it, with the card's own spelling, because the form holds only a
+   *     uuid and „—" identifies nothing. Where even that is missing (a card
+   *     whose citizenship the model read but did not spell back), the shorter
+   *     sentence is the honest one.
+   *
+   * ⚠️ **The fourth state, „loading", deliberately says nothing while the
+   * write still refuses, and that gap is unreachable rather than unhandled.**
+   * This form does not render until `phase === "ready"`, which waits on the
+   * extraction's vision-model round trip and then on the resolve call, while
+   * the citizenship GET starts at mount — so by the time there is a Confirm
+   * button to press, the list has either arrived or failed. Saying „se
+   * încarcă…" in the red, `role="alert"` line this field renders would put an
+   * alarm on screen for a state a user cannot witness.
+   */
+  const citizenshipHint =
+    citizenshipListState === "failed"
+      ? citizenshipHidden
+        ? t("citizenshipHiddenListFailed")
+        : t("citizenshipListFailed")
+      : citizenshipHidden && citizenshipListState === "loaded"
+      ? citizenshipRaw !== ""
+        ? t("citizenshipHiddenNotListedNamed", { name: citizenshipRaw })
+        : t("citizenshipHiddenNotListed")
+      : undefined;
 
   const unmappedEntries = Object.entries(unmappedRaw);
   const addressWarnFields = new Set(
@@ -1202,7 +1441,14 @@ export function IdCardPersonDialog({
               <Field label={t("fLastName")}  name="lastName"  register={register} error={errors.lastName?.message}  warn={lowConfidence.has("lastName")} />
               <Field label={t("fFirstName")} name="firstName" register={register} error={errors.firstName?.message} warn={lowConfidence.has("firstName")} />
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            {/* `items-start` for the same reason as the citizenship row below,
+                and it is not optional here either: `SelectField`'s root is a
+                <div> wrapper rather than the <label> itself, so it no longer
+                stretches to the row and its `items-center` has nothing to
+                centre against. Without this, „Sex" pins to the top while
+                „Data nașterii" beside it re-centres the moment either cell
+                grows. (Slice #34.13, second review round.) */}
+            <div className="grid grid-cols-2 items-start gap-2">
               <SelectField
                 label={t("fGender")}
                 name="gender"
@@ -1222,7 +1468,22 @@ export function IdCardPersonDialog({
               <Field label={t("fCnp")} name="cnp" register={register} error={errors.cnp?.message} warn={lowConfidence.has("cnp")} />
               <Field label={t("fIdDocumentNumber")} name="idDocumentNumber" register={register} error={errors.idDocumentNumber?.message} warn={lowConfidence.has("idDocumentNumber")} />
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            {/* ⚠️ **`items-start`, and it is #34.04's own one-word fix.**
+                (Slice #34.13.) The sentence under the citizenship select is
+                rendered INSIDE the field — wrapping <SelectField> at the call
+                site would stop it stretching with its row — so the field grows,
+                and with the grid's default `stretch` its short sibling stretches
+                with it and re-centres: „Număr carte" drifts down the row the
+                moment the list fails. #34.04 named this fix and could not render
+                the screen to check it; this slice takes it.
+                ⚠️ **And it is needed on EVERY row holding a <SelectField>,
+                not only on one that grows** — a later round caught that:
+                `SelectField`'s root is a <div> wrapper rather than the <label>
+                itself, so it no longer stretches to its row and its own
+                `items-center` has nothing left to centre against. Inside that
+                component the switch to `items-start` is on `error` alone, since
+                the sentence is rendered BELOW the label and cannot grow it. */}
+            <div className="grid grid-cols-2 items-start gap-2">
               <Field label={t("fIdCardNumber")} name="idCardNumber" register={register} error={errors.idCardNumber?.message} warn={lowConfidence.has("idCardNumber")} />
               <SelectField
                 label={t("fCitizenship")}
@@ -1231,7 +1492,19 @@ export function IdCardPersonDialog({
                 control={control}
                 error={errors.citizenshipId?.message}
                 warn={lowConfidence.has("citizenshipRaw")}
-                hint={citizenshipListState === "failed" ? t("citizenshipListFailed") : undefined}
+                hint={citizenshipHint}
+                hintAction={
+                  citizenshipListState === "failed" ? (
+                    <button
+                      type="button"
+                      onClick={reloadCitizenships}
+                      disabled={busy || citizenshipReloading}
+                      className={buttonClass({ variant: "secondary", size: "sm" })}
+                    >
+                      {citizenshipReloading ? t("citizenshipRetrying") : t("citizenshipRetry")}
+                    </button>
+                  ) : undefined
+                }
                 options={[{ value: "", label: "—" }, ...citizenshipOptions]}
               />
             </div>
@@ -1279,7 +1552,21 @@ export function IdCardPersonDialog({
                 <select
                   id="id-card-institution"
                   value={institutionId}
-                  onChange={(e) => setInstitutionId(e.target.value)}
+                  // ⚠️ **Re-selecting the value the seed already showed is
+                  //    recorded as UNTOUCHED, and an adversarial round is why.**
+                  //    (Slice #34.13.) On a document whose institution the
+                  //    picker opens on, picking another row and then picking
+                  //    that one back would otherwise mark it „a person's
+                  //    answer" — which sends it to `documentFieldsFromIdCard`,
+                  //    makes `sameInstitutionAlready` true, and suppresses the
+                  //    `subject` line the card's authority would otherwise have
+                  //    reached. Nothing on screen changed; nothing behind it
+                  //    should either.
+                  onChange={(e) =>
+                    setChosenInstitutionId(
+                      e.target.value === seededInstitutionId ? null : e.target.value,
+                    )
+                  }
                   // Frozen once the submit has captured its value, so what is on
                   // screen and what is being written cannot diverge.
                   disabled={busy || addingInstitution}
@@ -1311,14 +1598,18 @@ export function IdCardPersonDialog({
                   archive has no such row (make one), the list could not be read
                   (do not offer to make one), or a row whose name already
                   contains this reading is sitting in the dropdown (choose it). */}
-              {/* ⚠️ **NOT gated on `!institutionId`, and a review round found
-                  what that cost.** A server-matched id can be held while this
-                  dialog's own read of the list has failed — the select then
-                  renders blank, and gating the sentence on the id being empty
-                  meant the one state that needed an explanation was the one
-                  state with none. The unusable-list sentence fires whatever the
-                  select holds; the other three are about an EMPTY select. */}
-              {authorityText !== "" && (institutionListUnusable || !institutionId) && (
+              {/* ⚠️ **NOT gated on the picker being empty, and two review
+                  rounds are why.** #34.02: a server-matched id can be held
+                  while this dialog's own read of the list has failed — the
+                  select then renders blank, and gating on the id being empty
+                  left the one state that needed an explanation with none, so
+                  the unusable-list sentence fires whatever the select holds.
+                  #34.13: the remaining three are about the card's authority
+                  being UNPLACED rather than about an empty select, because the
+                  picker can now be showing the document's own institution while
+                  nobody has said anything about the authority the card names.
+                  See `cardAuthorityPlaced`. */}
+              {authorityText !== "" && (institutionListUnusable || !cardAuthorityPlaced) && (
                 <p className="mt-1 text-xs text-fade dark:text-zinc-400">
                   {institutionListState === "loading"
                     ? t("institutionLoading")
@@ -1399,6 +1690,26 @@ type FieldProps = {
    * component for the same reason; only `SelectField` renders it here.
    */
   hint?: string;
+  /**
+   * A control that acts on what `hint` says.                    (Slice #34.13)
+   *
+   * ⚠️ **A PROP RATHER THAN A WRAPPER AT THE CALL SITE, for the reason
+   * #34.04 wrote the hint itself this way.** The call sites are direct
+   * children of a `grid grid-cols-2`, and an extra <div> around <SelectField>
+   * there was what stopped the field stretching with its row. So the control
+   * comes in through the component and is placed by it.
+   *
+   * ⚠️ **RENDERED OUTSIDE THE <label>, and two review rounds are why.** The
+   * first draft put it inside, beside the sentence — where interactive content
+   * other than the labelled control is invalid HTML and the browser folds it
+   * into the select's accessible name. The sentence went out with it, and is
+   * carried to the control by `aria-describedby` instead; see `SelectField`.
+   *
+   * Rendered only when `hint` is, and only when `error` is not: a control
+   * offering to fix the LIST is noise beside a validation message about the
+   * value.
+   */
+  hintAction?: ReactNode;
 };
 
 function FieldLabel({ label, warn }: { label: string; warn?: boolean }) {
@@ -1432,59 +1743,103 @@ function Field({ label, name, type = "text", register, error, warn }: FieldProps
 }
 
 function SelectField({
-  label, name, register, control, error, warn, hint, options,
+  label, name, register, control, error, warn, hint, hintAction, options,
 }: FieldProps & {
   control: Control<FormValues>;
   options: { value: string; label: string }[];
 }) {
+  // ⚠️ **THE SENTENCE AND ITS CONTROL LIVE OUTSIDE THE <label>, AND TWO
+  // REVIEW ROUNDS ON #34.13 PUT THEM THERE.** #34.04 rendered the sentence
+  // inside the field, below the select, because wrapping <SelectField> AT THE
+  // CALL SITE stopped it stretching with its `grid grid-cols-2` row. Both call
+  // sites' rows now carry `items-start`, so a wrapper inside this component
+  // costs nothing — and inside the <label> costs two things it should not: a
+  // <button> there is invalid HTML (interactive content other than the labelled
+  // control), and the browser folds BOTH into the <select>'s accessible name,
+  // which then reads „Cetățenie <the whole red sentence> Reîncearcă" and
+  // changes every time the sentence does.
+  //
+  // `aria-describedby` is what carries the sentence to the control instead —
+  // announced after the name rather than as part of it, which is what a
+  // description is for. `<AsyncSelect>` has accepted the prop since #32.13; it
+  // simply had no caller.
+  const hintId = `${name}-hint`;
+  const showHint = Boolean(hint) && !error;
   return (
-    <label className="flex items-center gap-2 text-sm">
-      <FieldLabel label={label} warn={warn} />
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        {/* Slice #32.13: the same defect as the six selects on the entity
-            forms — this one had no remount key either — so <AsyncSelect> is the
-            single idiom here too. What it buys is the ordering where the
-            citizenship list resolves AFTER the review form appears: the extract
-            and resolve calls gate `showForm`, so `setValue` has normally run
-            long before this mounts, and without the key a slow value-list fetch
-            left the field on "—" over a citizenship already in `_formValues`.
-            Half-closed by Slice #34.04: `useCitizenshipOptions` no longer
-            swallows the failure — it is a React Query key now, so a failure to
-            load reads as `listState === "failed"` and the sentence under the
-            field says so. ⚠️ **It does NOT recover inside this dialog**: there
-            is no `refetch`, `refetchOnWindowFocus` is off globally, and the
-            three invalidations this file issues are keyed `["people"]`,
-            `["persons"]` and `["documents"]`, none of which prefix-matches
-            `["citizenships"]`. It recovers on the next MOUNT — close and
-            reopen, or reload. ⚠️ **And still open: Confirm goes on creating
-            the person with the citizenship read off the card even while this
-            select shows "—"**, because the id is in `_formValues` and this
-            field never wrote it. That sentence is now the only thing between
-            the user and the write. */}
-        <AsyncSelect
-          name={name}
-          control={control}
-          register={register}
-          options={options}
-          aria-invalid={error ? true : undefined}
-          className={[
-            "w-full rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none dark:bg-zinc-950",
-            error ? "border-red-500 focus:border-red-600" : "border-wire focus:border-focus dark:border-zinc-700",
-          ].join(" ")}
-        />
-        {/* Slice #34.04. `role="alert"` because it appears after the field is
-            on screen and describes something the user has to act on — and here
-            "—" is not harmless, per the paragraph above. Rendered INSIDE the
-            field rather than by wrapping <SelectField> at the call site: the
-            call sites are direct children of a `grid grid-cols-2`, and an
-            extra <div> there stops the field stretching with its row and drops
-            the sibling <Field> out of line the moment this line appears. An
-            adversarial round found that. */}
-        {hint && !error && (
-          <span role="alert" className="text-xs text-red-600 dark:text-red-400">{hint}</span>
-        )}
-        {error && <span className="text-xs text-red-600 dark:text-red-400">{error}</span>}
-      </div>
-    </label>
+    <div className="flex flex-col gap-0.5">
+      {/* `items-start` once an error grows the column, so the label does not
+          float halfway down beside a select that is still at the top. The hint
+          no longer grows it — that is now the block below. */}
+      <label className={["flex gap-2 text-sm", error ? "items-start" : "items-center"].join(" ")}>
+        <FieldLabel label={label} warn={warn} />
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          {/* Slice #32.13: the same defect as the six selects on the entity
+              forms — this one had no remount key either — so <AsyncSelect> is
+              the single idiom here too. What it buys is the ordering where the
+              citizenship list resolves AFTER the review form appears: the
+              extract and resolve calls gate `showForm`, so `setValue` has
+              normally run long before this mounts, and without the key a slow
+              value-list fetch left the field on "—" over a citizenship already
+              in `_formValues`.
+
+              Half-closed by Slice #34.04: `useCitizenshipOptions` no longer
+              swallows the failure — it is a React Query key now, so a failure
+              to load reads as `listState === "failed"` and the sentence under
+              the field says so.
+
+              CLOSED BY SLICE #34.13, in both halves it left open:
+
+              ⚠️ **It recovers inside this dialog now.** `useCitizenshipOptions`
+              returns a `reload` — a refetch of its own key — and the sentence
+              under the field comes with a button that fires it. It still does
+              not recover on its own: `refetchOnWindowFocus` is off globally and
+              the three invalidations this file issues are keyed `["people"]`,
+              `["persons"]` and `["documents"]`, none of which prefix-matches
+              `["value-list", "citizenships"]`. What changed is that the user is
+              no longer asked to close a dialog the run opened in order to get
+              the list back — closing it is recorded as a decision not to create
+              the person.
+
+              ⚠️ **And Confirm no longer writes what this select cannot show.**
+              `citizenshipForWrite` drops the id from the POST while no
+              `<option>` matches it, and `citizenshipIsHidden` — the same rule —
+              decides the sentence, so the screen and the write cannot
+              disagree. The form's own value is untouched throughout, which is
+              what makes the retry worth pressing: the list comes back and the
+              same click writes the citizenship after all. */}
+          <AsyncSelect
+            name={name}
+            control={control}
+            register={register}
+            options={options}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={showHint ? hintId : undefined}
+            className={[
+              "w-full rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none dark:bg-zinc-950",
+              error ? "border-red-500 focus:border-red-600" : "border-wire focus:border-focus dark:border-zinc-700",
+            ].join(" ")}
+          />
+          {error && <span className="text-xs text-red-600 dark:text-red-400">{error}</span>}
+        </div>
+      </label>
+      {/* Slice #34.04's sentence, Slice #34.13's control, both below the label
+          and indented to the select's own column by a spacer that mirrors
+          `FieldLabel`'s width. `role="alert"` because the sentence appears
+          after the field is on screen and describes something the user has to
+          act on — and here "—" is not harmless, per the paragraphs above. The
+          button is outside the live region on purpose: a region should announce
+          the sentence, not re-read a button label every time it changes. */}
+      {showHint && (
+        <div className="flex gap-2 text-sm">
+          <span aria-hidden="true" className="w-32 shrink-0" />
+          <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
+            <span id={hintId} role="alert" className="text-xs text-red-600 dark:text-red-400">
+              {hint}
+            </span>
+            {hintAction}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

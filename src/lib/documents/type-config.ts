@@ -79,24 +79,38 @@ const CONFIG: Record<string, TypeConfig> = {
    * REGISTRAR) inside the "Taxe și onorarii" block, on a document nobody
    * registers and pays no fee for. A review round found it.
    *
-   * ⚠️ **`nrDocument` is deliberately left GENERIC, and a second review round
-   * is why.** The first version labelled it „Serie și număr", which is what a
-   * Romanian CI prints — but `documentFieldsFromIdCard` fills `nrDocument` from
-   * `card.idCardNumber`, and the extraction contract defines that as the
-   * SECONDARY number printed when it differs from the series, with the series
-   * itself in `idDocumentNumber` (which never reaches the document). So the
-   * precise label would have been blank on most cards and wrong on the rest.
-   * „Nr. document" is vague enough to be true; correcting the MAPPING is a
-   * separate change and is named in the handover.
+   * ⚠️ **`nrDocument` NAMES THE SERIES AND NUMBER SINCE #34.13, AND IT COULD
+   * NOT BEFORE.** #34.02 left it generic and said why: `documentFieldsFromIdCard`
+   * filled the column from the card's SECONDARY number — printed only when it
+   * differs from the series, and absent on most cards — so a label naming the
+   * series would have been blank on most cards and wrong on the rest. #34.13
+   * turned the mapping round: the column now holds the series+number a person
+   * reads off the card, with the secondary number only as a fallback. The
+   * label and the column agree on every card that prints a series+number,
+   * which is the ordinary Romanian CI.
    *
-   * The two that do change are the ones a CI genuinely prints: „Data
-   * eliberării" and an issuer rather than a registrar. `institutionIssuer`
-   * ("Emitent") is reused rather than a new key added, because that is what
-   * this row means everywhere it appears.
+   * ⚠️ **The fallback is where it is approximate, and that is the trade #34.02
+   * could not make.** A card printing no series+number still fills this column
+   * from `idCardNumber`, and so does every document created before #34.13 —
+   * the field is write-once, so those keep what they were given. „Serie și
+   * număr" over one of those is a slightly wrong word; the OLD label over the
+   * new mapping would have been a vague word over every card. Precise-and-
+   * occasionally-approximate beats vague-and-always.
+   *
+   * ⚠️ **THE TWO HALVES SHIP TOGETHER OR NOT AT ALL.** This label is only true
+   * while `documentFieldsFromIdCard` prefers the series+number; reverting that
+   * mapping without reverting this line puts a precise, wrong word over a
+   * column full of secondary numbers, which is the exact failure #34.02
+   * refused to risk.
+   *
+   * The other two are the ones a CI genuinely prints: „Data eliberării" and an
+   * issuer rather than a registrar. `institutionIssuer` ("Emitent") is reused
+   * rather than a new key added, because that is what this row means everywhere
+   * it appears.
    */
   CARTE_IDENTITATE: {
     labels: {
-      nrDocument:   "typeLabels.nrGeneric",
+      nrDocument:   "typeLabels.nrIdCardSeries",
       dateDocument: "typeLabels.dateIssued",
       institution:  "typeLabels.institutionIssuer",
     },
