@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 /**
  * ImportTypesBlockedStage — where an import stops.              (Slice #29.08)
  *
@@ -178,6 +180,43 @@ type Props = {
  * value of `openTypes` on every render for no reason at all.
  */
 const NO_FOLDS_OPEN: ReadonlySet<string> = Object.freeze(new Set<string>());
+
+/**
+ * The two screens that make a form, and the type each link carries.
+ *                                                              (Slice #34.10)
+ *
+ * ⚠️ **THIS SCREEN KNEW THE ANSWER AND LINKED TO NOTHING.** Until this slice
+ * the file contained no `href`, no `Link`, no `router` and no `push`; every
+ * interactive element was a plain `<button type="button">`, and „Distilare
+ * Tipizate" appeared once — in a code comment. `whatNext` names both journeys
+ * in prose, `nav-config.ts` says in as many words that this screen "is what
+ * sends people to it", and what the user actually did was read the type names,
+ * close the wizard, navigate by hand to Reference Data, then by hand to the
+ * engine, then start the import again from the beginning. The one link that
+ * joined these three screens pointed the other way (catalogue 33.04 item 63).
+ *
+ * ⚠️ **ONE LINK PER ROW, AND WHICH ONE IS DECIDED BY `kind` — because the two
+ * kinds of row need different screens and the difference is the whole reason
+ * `rowSentence` says two different things.** A type the archive already HOLDS
+ * exists and is only missing its form, so it goes straight to „Distilare
+ * Tipizate", pre-selected. A type the run would CREATE does not exist yet, so
+ * the engine has nothing to select and cannot be the first stop: it goes to
+ * Reference Data with its name, where the row is made. Sending both to the same
+ * screen would have made one of the two links a dead end the user discovers
+ * after arriving.
+ *
+ * ⚠️ **A NEW TAB, AND THAT IS THE POINT RATHER THAN A CONVENIENCE.** The wizard
+ * registers no unsaved-changes guard, so an in-place navigation would take the
+ * whole run with it — and what that costs is not nothing: this screen is
+ * reached only after the classification, which `leaveHint` says twice is paid
+ * for and will be paid for again. Worse, it would destroy the list of type
+ * names the user is navigating in order to act on. `save.button` exists to
+ * carry that list out of the wizard for exactly this reason; a new tab does the
+ * same job without a download. `linksHint` says so, because a link that behaves
+ * unusually and does not say it reads as the page being broken.
+ */
+const REFERENCE_DATA_HREF = "/admin/value-lists";
+const DOC_TYPE_ENGINE_HREF = "/admin/doc-type-engine";
 
 export function ImportTypesBlockedStage({
   folderName,
@@ -598,6 +637,42 @@ export function ImportTypesBlockedStage({
                     : t("files.show", { type: type.name })}
                 </button>
 
+                {/* ── The door for this row ─────── (Slice #34.10) ──────
+                    See `REFERENCE_DATA_HREF` above for why the two kinds go to
+                    two different screens, and why both open in a new tab.
+
+                    ⚠️ **`next/link`, matching `preflight-checklist.tsx`** —
+                    the only other import-wizard link, which points at this same
+                    Reference Data route from a failing precondition line. Not
+                    the raw `<a>` that `doc-type-engine.tsx` used for its own
+                    link back here, which this slice also corrects.
+
+                    ⚠️ **The type is carried in the URL, not just named in the
+                    label.** A link that lands on the right screen and leaves
+                    the user to find the row again has moved the hand-navigation
+                    one step further along rather than removing it. */}
+                <p className="mt-1.5">
+                  {type.kind === "existing" && type.id !== null ? (
+                    <Link
+                      href={`${DOC_TYPE_ENGINE_HREF}?type=${encodeURIComponent(type.id)}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-sm font-medium text-cta underline underline-offset-2 dark:text-amber-200"
+                    >
+                      {t("goToEngine")}
+                    </Link>
+                  ) : (
+                    <Link
+                      href={`${REFERENCE_DATA_HREF}?list=document-types&add=${encodeURIComponent(type.name)}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-sm font-medium text-cta underline underline-offset-2 dark:text-amber-200"
+                    >
+                      {t("goToReferenceData")}
+                    </Link>
+                  )}
+                </p>
+
                 {open && (
                   // Walk order, uncapped. The fold is the answer to length; a
                   // cap on top of it would be a second one, and the list stops
@@ -638,6 +713,10 @@ export function ImportTypesBlockedStage({
               {t("whatNextTitle")}
             </h3>
             <p className="mt-1 text-sm text-ink dark:text-zinc-200">{t("whatNext")}</p>
+            {/* Said once, under the prose that names both journeys, rather than
+                once per row: the rows carry the links, and repeating "opens in
+                a new tab" beside every one of twenty would be noise. */}
+            <p className="mt-1.5 text-xs text-fade dark:text-zinc-400">{t("linksHint")}</p>
           </div>
 
           {/* ⚠️ **THE TAKE-AWAY, AND ONLY ON THIS BRANCH.** (Slice #32.02.) The

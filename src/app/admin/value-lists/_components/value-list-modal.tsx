@@ -336,6 +336,25 @@ type FormState = {
   values: Record<string, unknown>;
 };
 
+/**
+ * A blank add-form for one list.
+ *
+ * ⚠️ **Lifted out of `startAdd` by Slice #34.10 so that the TWO ways an add
+ * form can open build the same object.** The second way is `initialAddName` —
+ * the `?add=` deep link, which seeds `useState` before `startAdd` exists — and
+ * a second inline copy of this loop is precisely how the button's blank and the
+ * link's blank would come to differ by a field nobody notices until a create
+ * fails. #19.02's rule is the reason there is a loop at all: a checkbox field
+ * starts `false`, a text field starts `""`, and `undefined` is neither.
+ */
+function blankFormValues(meta: (typeof LIST_META)[ListKey]): Record<string, unknown> {
+  const blank: Record<string, unknown> = {};
+  for (const f of meta.fields) {
+    blank[f.key] = f.type === "checkbox" ? false : "";
+  }
+  return blank;
+}
+
 function EditForm({
   listKey,
   state,
@@ -512,9 +531,31 @@ function EditForm({
 
 export function ValueListModal({
   listKey,
+  initialAddName,
   onClose,
 }: {
   listKey: ListKey;
+  /**
+   * Open with the add form already up, and this name typed in — Slice #34.10.
+   *
+   * The import's stop screen knows the name of a type the run would have
+   * created, and used to send the user here to type it again from memory. It
+   * now carries it in `?add=`.
+   *
+   * ⚠️ **Seeded into `useState`'s INITIAL value rather than written by an
+   * effect, and that decides two things at once.** The form is up on the first
+   * paint — an effect would flash the list first — and, more importantly, it is
+   * genuinely initial: nothing re-applies it. A user who clears the field, or
+   * cancels and presses "+ Adaugă" again, gets a blank form, because the URL
+   * has had its say and the control owns the value from then on.
+   *
+   * ⚠️ **It goes into the `name` field only, and only where the list HAS one.**
+   * Every list this can land on is keyed by `LIST_META`, and `name` is the one
+   * field they share; `tarla`'s required column is `indicativ`. A name pushed
+   * into a list that has no `name` field would be silently dropped by the PUT
+   * body, so it is not written at all rather than written somewhere plausible.
+   */
+  initialAddName?: string;
   onClose: () => void;
 }) {
   const t = useTranslations("valueList");
@@ -540,7 +581,15 @@ export function ValueListModal({
   // announces itself as "dialog" and nothing else.
   const listTitleId = useId();
 
-  const [form, setForm] = useState<FormState | null>(null);
+  const [form, setForm] = useState<FormState | null>(() => {
+    // Slice #34.10 — see `initialAddName`. `blankFormValues` is the same
+    // function `startAdd` uses, so an arrival and a press produce one shape.
+    const name = initialAddName?.trim();
+    if (!name) return null;
+    const values = blankFormValues(LIST_META[listKey]);
+    if (!("name" in values)) return null;
+    return { id: null, values: { ...values, name } };
+  });
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   // Slice #27.03: the id of the document type whose template-fields editor is
   // open, or null. Only ever set for listKey === "document-types".
@@ -724,12 +773,7 @@ export function ValueListModal({
   }, [confirmDeleteRow, form, formEditorRow, onClose]);
 
   function startAdd() {
-    const blank: Record<string, unknown> = {};
-    for (const f of meta.fields) {
-      // Slice #19.02: checkbox fields start unchecked (false); text fields blank.
-      blank[f.key] = f.type === "checkbox" ? false : "";
-    }
-    setForm({ id: null, values: blank });
+    setForm({ id: null, values: blankFormValues(meta) });
   }
 
   function startEdit(row: Row) {

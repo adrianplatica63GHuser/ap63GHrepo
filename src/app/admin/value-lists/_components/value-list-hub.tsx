@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import type { ListKey } from "@/lib/admin/value-lists/config";
+import { LIST_META, type ListKey } from "@/lib/admin/value-lists/config";
 import { ValueListModal } from "./value-list-modal";
 
 // ── Section wrapper ───────────────────────────────────────────────────────────
@@ -73,10 +73,34 @@ function ListBtn({
 
 // ── Hub ───────────────────────────────────────────────────────────────────────
 
-export function ValueListHub() {
+export function ValueListHub({
+  /**
+   * A list to open on arrival, and a name to start adding — Slice #34.10.
+   *
+   * ⚠️ **VALIDATED HERE, against `LIST_META`, and not trusted from the URL.**
+   * `ListKey` is a union and `?list=` is a string anybody can type; casting it
+   * would put an unknown key into `LIST_META[listKey]` inside the modal, where
+   * `meta.fields` is read without a guard — a blank screen from a typo. An
+   * unrecognised value opens the hub exactly as a visit with no parameter does,
+   * which is the right failure for a deep link.
+   *
+   * ⚠️ **`initialAddName` is passed on and NOT validated**, deliberately: it is
+   * a type name a person is about to create, and the only thing that may refuse
+   * one is the create door itself. Trimming or rejecting it here would be a
+   * second opinion about names, one screen away from the one that decides.
+   */
+  initialList,
+  initialAddName,
+}: {
+  initialList?: string;
+  initialAddName?: string;
+} = {}) {
   const t = useTranslations("valueList");
 
-  const [openList, setOpenList] = useState<ListKey | null>(null);
+  const openOnArrival: ListKey | null =
+    initialList !== undefined && initialList in LIST_META ? (initialList as ListKey) : null;
+
+  const [openList, setOpenList] = useState<ListKey | null>(openOnArrival);
 
   function open(key: ListKey) { setOpenList(key); }
   function close()             { setOpenList(null); }
@@ -159,7 +183,17 @@ export function ValueListHub() {
 
       </div>
 
-      {openList && <ValueListModal listKey={openList} onClose={close} />}
+      {openList && (
+        <ValueListModal
+          listKey={openList}
+          // ⚠️ **Only on the list the URL asked for.** The state persists after
+          // the first close, so without this term a user who arrived with
+          // `?add=` and then opened a DIFFERENT list would get its add form
+          // opened with a document type's name in it.
+          initialAddName={openList === openOnArrival ? initialAddName : undefined}
+          onClose={close}
+        />
+      )}
     </>
   );
 }

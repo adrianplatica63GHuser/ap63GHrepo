@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 /**
  * DocTypeEngine — „Distilare Tipizate".                         (Slice #29.09)
  *
@@ -142,7 +144,20 @@ type ProposalRow = {
   include: boolean;
 };
 
-export function DocTypeEngine() {
+export function DocTypeEngine({
+  /**
+   * The type to open on, from `?type=` — Slice #34.10.
+   *
+   * ⚠️ **Defaulted to `""`, which is the picker's own "nothing chosen" value**,
+   * so a visit with no parameter is byte-for-byte the visit this screen has
+   * always had. An id that no longer exists selects nothing and the screen
+   * opens on its picker, which is also that visit — the catalogue is the only
+   * thing that knows which ids are real, and it is fetched after this runs.
+   */
+  initialTypeId = "",
+}: {
+  initialTypeId?: string;
+} = {}) {
   const t = useTranslations("docTypeEngine");
   // ⚠️ Reused, not rewritten. `valueList.templateFields.keyNote` already says in
   // Romanian that the key is the name every document of this type keeps its
@@ -153,7 +168,10 @@ export function DocTypeEngine() {
   const [step, setStep] = useState<Step>("pick");
   const [types, setTypes] = useState<DocumentTypeCatalogueRow[] | null>(null);
   const [typesError, setTypesError] = useState<string | null>(null);
-  const [typeId, setTypeId] = useState("");
+  // Slice #34.10 — seeded from `?type=` when the import's stop screen sent the
+  // user here for a named type. `useState`'s initial value, so it is genuinely
+  // initial: the picker below is the owner from the first render onwards.
+  const [typeId, setTypeId] = useState(initialTypeId);
   const [percent, setPercent] = useState<MatchingPercent>(DEFAULT_MATCHING_PERCENT);
 
   const [folderName, setFolderName] = useState<string | null>(null);
@@ -1347,9 +1365,23 @@ export function DocTypeEngine() {
             {t("saved.body", { type: selectedType?.name ?? "", count: accepted.length })}
           </p>
           <p className="mt-3 text-sm text-ink dark:text-zinc-300">{t("saved.whatNext")}</p>
-          <a href="/admin/import" className={`mt-4 inline-block ${buttonClass({ variant: "secondary", size: "md" })}`}>
+          {/* ⚠️ **`next/link`, not a raw `<a>` — Slice #34.10 corrected the one
+              link that already joined these screens.** It was the only
+              navigation between the import, Reference Data and this screen, it
+              pointed the wrong way (catalogue 33.04 item 63), and it was a full
+              page load where every other cross-screen link in this application
+              — `preflight-checklist.tsx`, `settings-view.tsx`, the sidebar — is
+              a client navigation. The direction is now covered from the other
+              end too: the import's stop screen links here, per row, carrying
+              the type. This link stays because the journey is genuinely a round
+              trip — the form has just been saved and the import is what it was
+              saved for. */}
+          <Link
+            href="/admin/import"
+            className={`mt-4 inline-block ${buttonClass({ variant: "secondary", size: "md" })}`}
+          >
             {t("saved.toImport")}
-          </a>
+          </Link>
         </>
       )}
     </section>

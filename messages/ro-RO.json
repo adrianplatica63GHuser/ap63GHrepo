@@ -2795,6 +2795,9 @@
         "low": "Încredere: mică."
       },
       "unclassified": "{count, plural, one {Un fișier nu a primit un tip — fie nu a putut fi citit ca imagine și nu a fost trimis deloc, fie a fost trimis și nu s-a primit un răspuns, fie sistemul nu l-a recunoscut. Ar ajunge la tipul „neclasificat”, care nu are nevoie de formular și nu este motivul opririi.} few {# fișiere nu au primit un tip — fie nu au putut fi citite ca imagine și nu au fost trimise deloc, fie au fost trimise și nu s-a primit un răspuns, fie sistemul nu le-a recunoscut. Ar ajunge la tipul „neclasificat”, care nu are nevoie de formular și nu este motivul opririi.} other {# de fișiere nu au primit un tip — fie nu au putut fi citite ca imagine și nu au fost trimise deloc, fie au fost trimise și nu s-a primit un răspuns, fie sistemul nu le-a recunoscut. Ar ajunge la tipul „neclasificat”, care nu are nevoie de formular și nu este motivul opririi.}}",
+      "goToReferenceData": "Creează acest tip în Date de referință →",
+      "goToEngine": "Fă formularul în „Distilare Tipizate” →",
+      "linksHint": "Legăturile de mai jos se deschid într-o filă nouă, ca lista de aici să rămână pe ecran cât lucrați.",
       "whatNextTitle": "Ce urmează",
       "whatNext": "Aveți două drumuri, iar ecranul acesta le oferă pe amândouă. Fie opriți importul, faceți formularele lipsă din „Distilare Tipizate” și reluați importul de la început — toate verificările de dinaintea clasificării nu costă nimic, însă clasificarea se plătește a doua oară. Fie continuați acum fără formulare: documentele sunt create, scanările sunt încărcate și legate de ele, iar câmpurile proprii tipului rămân necompletate.",
       "continueWithoutForms": {

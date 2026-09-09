@@ -138,6 +138,29 @@ const REQUIRED_KEYS = [
   "save.generatedAt",
   "save.folderLabel",
   "save.violationsTitle",
+  // ── Slice #34.10 ────────────────────────────────────────────────────────
+  // The two doors, and the sentence that says how they open.
+  //
+  // ⚠️ **TWO LABELS, NOT ONE, AND THAT IS THE FINDING RATHER THAN A STYLE
+  // CHOICE.** A row for a type the archive HOLDS and a row for a type the run
+  // would CREATE need different screens — the second does not exist yet, so
+  // „Distilare Tipizate" has nothing to select and cannot be its first stop.
+  // `row.existing` and `row.new` already say two different things for exactly
+  // this reason; one shared „Deschide ecranul" label over two destinations
+  // would be the same overclaim one line further down, and the way the user
+  // finds out is by arriving somewhere that cannot help.
+  //
+  // Literals, for the reason every key above is a literal: the source scrape
+  // below cannot see `t(`goTo${kind}`)`.
+  "goToReferenceData",
+  "goToEngine",
+  // ⚠️ Drawn ONCE, under `whatNext`, rather than beside each of twenty rows.
+  // It exists because the links open in a new tab, and a link that behaves
+  // unusually without saying so reads as the page being broken — and here the
+  // reason it must is not cosmetic: an in-place navigation would take the run,
+  // the paid-for classification and the very list of type names the user is
+  // navigating in order to act on.
+  "linksHint",
 ] as const;
 
 /** The four sentences that carry a number. */
@@ -485,6 +508,87 @@ describe("the stop screen's copy", () => {
     expect(fold).not.toContain(".slice(");
     expect(fold).not.toContain(".filter(");
     expect(fold).not.toMatch(/\bi\s*[<>]=?\s*\d/);
+  });
+
+  it("⚠️ links each row to the screen that can act on THAT kind of type", () => {
+    // Slice #34.10. Until this slice the file contained no `href`, no `Link`,
+    // no `router` and no `push`: it named the types and left the user to
+    // navigate to Reference Data by hand, then to „Distilare Tipizate" by hand,
+    // then start the import again. This is the behaviour half of the two labels
+    // declared in `REQUIRED_KEYS` above.
+    const source = fs.readFileSync(path.join(process.cwd(), COMPONENT), "utf8");
+
+    // It links at all, through `next/link` — the shape `preflight-checklist.tsx`
+    // already uses for the one other link in the import wizard.
+    expect(source).toContain('import Link from "next/link"');
+
+    // ⚠️ **The BRANCH is the assertion, not the two hrefs.** A panel that sent
+    // both kinds to one screen would still contain both routes somewhere and
+    // would still pass a pair of `toContain`s. What must be true is that the
+    // choice is made on `kind`, and that the "does not exist yet" row is the
+    // one that goes to the screen which can create it.
+    expect(source).toContain('type.kind === "existing" && type.id !== null');
+
+    const engine = source.indexOf("goToEngine");
+    const refData = source.indexOf("goToReferenceData");
+    expect(engine).toBeGreaterThan(0);
+    expect(refData).toBeGreaterThan(0);
+    // The engine link is the true arm of that ternary, so it comes first.
+    expect(engine).toBeLessThan(refData);
+
+    // …and each carries the type it is talking about. A link that lands on the
+    // right screen and leaves the user to find the row again has moved the
+    // hand-navigation one step along rather than removed it.
+    expect(source).toContain("?type=${encodeURIComponent(type.id)}");
+    expect(source).toContain("?list=document-types&add=${encodeURIComponent(type.name)}");
+
+    // ⚠️ **A new tab, on BOTH.** The wizard registers no unsaved-changes guard,
+    // so an in-place navigation takes the run with it — and this screen is
+    // reached only after the classification, which `leaveHint` says twice has
+    // been paid for and will be paid for again. It would also destroy the list
+    // of names the user is navigating in order to act on.
+    const links = [...source.matchAll(/<Link[\s\S]*?>/g)].map((m) => m[0]);
+    expect(links).toHaveLength(2);
+    for (const link of links) {
+      expect(link).toContain('target="_blank"');
+      expect(link).toContain('rel="noreferrer"');
+    }
+  });
+
+  it("⚠️ the two screens it links to can actually read what it sends", () => {
+    // The other half, and the half that is easy to leave out: a deep link is
+    // only a link until the far end reads the parameter. Both target pages read
+    // NO query params before this slice — a full grep of `src/app/admin/` for
+    // `searchParams` returned nothing under either directory — so a link
+    // carrying `?type=` would have landed on an untouched picker and a link
+    // carrying `?add=` on a hub with nothing open.
+    const engine = fs.readFileSync(
+      path.join(process.cwd(), "src", "app", "admin", "doc-type-engine", "page.tsx"),
+      "utf8",
+    );
+    expect(engine).toContain("searchParams");
+    expect(engine).toContain("initialTypeId={type ?? \"\"}");
+
+    const lists = fs.readFileSync(
+      path.join(process.cwd(), "src", "app", "admin", "value-lists", "page.tsx"),
+      "utf8",
+    );
+    expect(lists).toContain("searchParams");
+    expect(lists).toContain("initialList={list}");
+    expect(lists).toContain("initialAddName={add}");
+
+    // ⚠️ **`?list=` is VALIDATED against `LIST_META` at the hub.** It is a
+    // string anybody can type and `ListKey` is a union; a cast would put an
+    // unknown key into `LIST_META[listKey]`, where `meta.fields` is read with
+    // no guard — a blank screen from a typo in a URL.
+    const hub = fs.readFileSync(
+      path.join(
+        process.cwd(), "src", "app", "admin", "value-lists", "_components", "value-list-hub.tsx",
+      ),
+      "utf8",
+    );
+    expect(hub).toContain("initialList in LIST_META");
+    expect(hub).not.toContain("initialList as ListKey;");
   });
 
   it("says something different in Romanian than in English", () => {

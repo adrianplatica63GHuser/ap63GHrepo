@@ -29,8 +29,31 @@ import { DocTypeEngine } from "./_components/doc-type-engine";
  * slice repairs, because it is the slice that gives the screen a Romanian name
  * to point at.
  */
-export default async function DocTypeEnginePage() {
+/**
+ * ⚠️ **`searchParams` since Slice #34.10, and it is read on the SERVER rather
+ * than with `useSearchParams` in the client component.** `useSearchParams`
+ * under a statically-rendered page needs a Suspense boundary to build at all;
+ * awaiting `searchParams` here opts this page into dynamic rendering, which is
+ * what a page that reads a query parameter should be anyway. It is the shape
+ * `admin/groups/[id]/page.tsx` already uses for `?from=`.
+ */
+export default async function DocTypeEnginePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ type?: string }>;
+}) {
   const t = await getTranslations("docTypeEngine");
+  /**
+   * The type the import's stop screen was talking about.
+   *
+   * ⚠️ **Passed as an INITIAL value, never as a controlled one.** It seeds the
+   * picker on mount and the user is free to change it immediately — a param
+   * that kept re-selecting would fight the control it landed on. And it is not
+   * validated here: the catalogue this screen fetches is the only thing that
+   * knows which ids exist, so an id that is not in it simply selects nothing,
+   * which is the same state the screen opens in without the param.
+   */
+  const { type } = await searchParams;
 
   return (
     <div className="flex flex-1 min-h-0 flex-col bg-zinc-50 dark:bg-zinc-950">
@@ -39,7 +62,7 @@ export default async function DocTypeEnginePage() {
           <h1 className="text-2xl font-semibold tracking-tight">{t("pageTitle")}</h1>
         </header>
 
-        <DocTypeEngine />
+        <DocTypeEngine initialTypeId={type ?? ""} />
       </main>
     </div>
   );
