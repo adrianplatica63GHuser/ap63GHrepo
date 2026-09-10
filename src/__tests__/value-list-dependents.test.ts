@@ -830,11 +830,20 @@ describe("moving person-role associations", () => {
   it("tops up a whitelist that exists and never creates one", () => {
     // ⚠️ **AN ADVERSARIAL ROUND FOUND THE FIRST VERSION TAKING ELIGIBILITY
     // AWAY, WHICH IS THE OPPOSITE OF WHAT IT WAS FOR.**
-    // `listPersonRolesForDocument` falls back to every role ticked for SOME
-    // type when the document's own type has NO rows in
+    // `listPersonRolesForDocument` USED TO fall back to every role ticked for
+    // SOME type when the document's own type had NO rows in
     // `lookup_doc_type_person_role`. Insert one row for such a type and the
-    // fallback stops running: the picker collapses from that whole set to the
+    // fallback stopped running: the picker collapsed from that whole set to the
     // single role the move granted.
+    //
+    // ⚠️ **SLICE #34.16 REMOVED THAT FALLBACK (D-16(b)), SO THIS FILTER IS NOW
+    // CAUTION AND NOT A FIX — AND THE ASSERTIONS STAY BECAUSE THE CODE DOES.**
+    // The test below this one is where that is recorded; see it for why the
+    // filter is left in place for a slice rather than ripped out here. What
+    // this one still pins is that the shipped behaviour is the one the module
+    // header describes: a top-up, never a creation. The day the filter goes,
+    // these four assertions go with it in the same commit — they are the
+    // filter's description, not an argument for keeping it.
     const grant = code(read("lib", "admin", "value-lists", "role-whitelists.ts"));
     expect(grant).toContain("inArray(");
     expect(grant).toMatch(
@@ -848,14 +857,31 @@ describe("moving person-role associations", () => {
     expect(grant).toMatch(/values\.length > 0/);
   });
 
-  it("and the fallback that makes the top-up rule necessary really still exists", () => {
-    // Derived rather than asserted, in the direction that can rot: the day
-    // `listPersonRolesForDocument` stops falling back, the rule above becomes
-    // unnecessary caution instead of a fix — and this test is where that gets
-    // noticed, rather than in a picker that quietly shows one role.
+  it("and the fallback that made the top-up rule necessary is gone, on purpose", () => {
+    // ⚠️ **THIS TEST GOT THE ANSWER IT ASKED FOR, AND IT IS WORTH SAYING SO
+    // RATHER THAN JUST FLIPPING IT.** Until Slice #34.16 this asserted that
+    // `listPersonRolesForDocument` really still fell back — "derived rather
+    // than asserted, in the direction that can rot: the day it stops falling
+    // back, the rule above becomes unnecessary caution instead of a fix, and
+    // this test is where that gets noticed". Decision D-16(b) is that day. The
+    // assertion is inverted rather than deleted so the claim keeps living in
+    // ONE place: a suite that asserted the fallback exists and a suite that
+    // asserted it does not would be the #34.08 failure — two suites disagreeing
+    // about one fact, each green on its own.
     const body = functionBody(read("lib", "documents", "queries.ts"), "listPersonRolesForDocument");
-    expect(body).toMatch(/if \(rows\.length > 0\) return rows;/);
-    expect(body).toContain("selectDistinct");
+    expect(body).not.toMatch(/rows\.length/);
+    expect(body).not.toContain("selectDistinct");
+    expect(body).toContain("return listPersonRolesForDocumentType(doc.documentTypeId);");
+
+    // ⚠️ **THE CONSEQUENCE FOR THE MODULE ABOVE IS NOT ASSERTED HERE, AND THAT
+    // IS DELIBERATE.** With one answer everywhere, an unconfigured type offers
+    // nothing, so a row inserted for it can no longer collapse an offer — the
+    // filter is now over-caution that withholds the one repair those rows
+    // need, and `roleWhitelistPending` narrows with it. Both are left standing
+    // for a slice, because removing them reaches `value-list-modal.tsx` and its
+    // copy suites. `role-whitelists.ts` says so in its own header; a
+    // `toContain` on that prose would be a guard that reads comments, which
+    // this file's own `code()` helper exists to prevent.
   });
 
   it("scopes the Document Persons tick to the types that actually moved", () => {
@@ -887,20 +913,42 @@ describe("moving person-role associations", () => {
   });
 
   it("says so when it CANNOT grant the tick, instead of leaving it unsaid", () => {
-    // ⚠️ **The one case the top-up rule cannot repair, and an adversarial
-    // round is why it is reported rather than assumed away.** The fallback in
-    // `listPersonRolesForDocument` is not "every role" — it is every role
-    // ticked for SOME type — so when every moved type is unconfigured AND the
-    // target is ticked nowhere, the target is in neither picker and neither
-    // available action is safe. Silence there would have been the old
+    // ⚠️ **The case the top-up rule cannot repair, and an adversarial round is
+    // why it is reported rather than assumed away.** Every document type the
+    // filter above SKIPS is one on which the moved rows now carry a role no
+    // picker offers. Silence there would have been the old
     // `roleWhitelistNote`'s failure with the note deleted.
+    //
+    // ⚠️ **THE THIRD PLACE THIS CLAIM LIVED, AND SLICE #34.16 ALMOST LEFT IT
+    // BEHIND.** This comment used to open „the fallback in
+    // `listPersonRolesForDocument` is not 'every role' — it is every role
+    // ticked for SOME type — so when every moved type is unconfigured AND the
+    // target is ticked nowhere…". Present tense, about a fallback D-16(b)
+    // deleted, and describing an `anyTick` condition the same slice replaced
+    // with `skipped.length > 0`. The two tests above were rewritten for exactly
+    // the #34.08 reason — one fact, one place — and an adversarial round found
+    // this one thirty lines below them, in the same file.
     const grantRaw = read("lib", "admin", "value-lists", "role-whitelists.ts");
     const grant    = code(grantRaw);
     // The key itself has to be read from the RAW source — `code` blanks string
     // bodies — so the pattern is the whole call, which no comment contains.
     expect(grantRaw).toContain('warnings.push("roleWhitelistPending")');
-    // Asked AFTER the insert, or a top-up that did land would be ignored. The
-    // ORDER is read from the stripped source, where a comment cannot supply it.
+
+    // ⚠️ **IT ASKS „WAS A TYPE LEFT OUT", NOT „IS THE TARGET TICKED
+    // ANYWHERE" — Slice #34.16.** The old test was `anyTick.length === 0`, a
+    // second SELECT. It is gone, and not merely as an optimisation: it could
+    // not fire. Inside this branch `skipped.length === 0` means every moved
+    // type is in `needed`, so the insert runs, so a row exists for each moved
+    // type afterwards. Keeping it as a disjunct would have been a condition
+    // that reads like two cases and has one — which is how the pre-#34.16
+    // version came to report a clean success over stranded rows.
+    expect(grant).toMatch(/const skipped = types\.filter\(\(t\) => !needed\.has\(t\.documentTypeId\)\)/);
+    expect(grant).toMatch(/if \(skipped\.length > 0\) warnings\.push\(/);
+    expect(grant).not.toContain("anyTick");
+
+    // Still decided after the insert has had its chance, so the two halves of
+    // the outcome are read from the same moment. The ORDER is read from the
+    // stripped source, where a comment cannot supply it.
     const insertAt = grant.indexOf("onConflictDoNothing");
     const askAt    = grant.indexOf("warnings.push(");
     expect(insertAt).toBeGreaterThan(-1);

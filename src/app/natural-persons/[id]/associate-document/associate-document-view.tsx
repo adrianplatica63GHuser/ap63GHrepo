@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { PaginationControls } from "@/components/pagination-controls";
 import { buttonClass } from "@/lib/ui/button-styles";
+import { NoRolesForTypeNote } from "@/components/forms/no-roles-for-type-note";
 import { associationFailureMessage } from "@/lib/ui/association-failure";
 // Slice #34.15 — one definition of „the list could not be read", shared with
 // the four screens that read their roles through a hook in that file.
@@ -17,7 +18,18 @@ type DocumentSearchItem = { id: string; code: string; typeName: string | null; t
 type SearchResponse = { items: DocumentSearchItem[]; total: number };
 type RoleItem = { id: string; name: string };
 
-type Props = { personId: string; personName: string; backBase: string };
+type Props = {
+  personId:   string;
+  personName: string;
+  backBase:   string;
+  /**
+   * May THIS reader open „Roluri pe Document" — Slice #34.16.
+   *
+   * Passed straight to `NoRolesForTypeNote`; that component and
+   * `src/lib/auth/can-configure-roles.ts` carry the argument between them.
+   */
+  canConfigureRoles: boolean;
+};
 
 async function searchDocuments(q: string, page: number): Promise<SearchResponse> {
   const params = new URLSearchParams();
@@ -44,7 +56,7 @@ async function fetchDistinctRoles(): Promise<RoleItem[]> {
   return data.items as RoleItem[];
 }
 
-export function AssociateDocumentView({ personId, personName, backBase }: Props) {
+export function AssociateDocumentView({ personId, personName, backBase, canConfigureRoles }: Props) {
   const t           = useTranslations("shared.associateDocument");
   // The sentence itself lives in `shared`, unchanged since Slice #34.04.
   const tShared     = useTranslations("shared");
@@ -282,6 +294,46 @@ export function AssociateDocumentView({ personId, personName, backBase }: Props)
           {tShared("roleListUnavailable")}
         </p>
       )}
+
+      {/*
+        ⚠️ **THIS SCREEN INHERITED THE EMPTY SELECT FROM A DECISION TAKEN ABOUT
+        ANOTHER ONE — Slice #34.16, D-16(b).** When exactly one document is
+        ticked, `singleDocRolesQuery` reads
+        `/api/documents/[id]/valid-person-roles`, the same endpoint the
+        document's own „Asociază persoană" screen reads. That endpoint used to
+        fall back to „every role ticked for SOME document type" when the
+        selected document's type had none of its own; it no longer does. So the
+        select this screen has always gated on `roles.length > 0` can now be
+        empty where it never was, and saying nothing there is precisely the
+        silence the decision exists to remove. The note is the same component
+        and the same `shared` sentence the document screen prints, because it is
+        the same fact about the same type.
+
+        ⚠️ **ONLY ON THE SINGLE-DOCUMENT BRANCH.** With 0 or 2+ ticked, `roles`
+        is `listDistinctDocPersonRoles` — every role ticked for SOME type — and
+        an empty answer there means „this archive has no person-role ticks at
+        all", not „this type has none". It is a different sentence for a
+        different state, it is not what D-16(b) changed, and printing this one
+        would name a document type the user has not chosen. `singleSelectedId`
+        is the same branch `roles` and `roleListState` above already follow.
+
+        ⚠️ **THE CONDITION IS A PROP, NOT A `&&` AROUND THE ELEMENT.** The note
+        owns an `aria-live` region and has to be mounted before its content
+        appears, or a screen reader is not reliably told — the rule
+        `value-list-modal.tsx` already follows for its own async sentences.
+
+        ⚠️ **AND THE LIST IT READS IS ALREADY THE BARE WHITELIST ANSWER.**
+        `carried-roles.ts` and `use-lookup-options.ts` both explain at length
+        why these two screens deliberately do NOT union in a carried role: the
+        row a role could be carried on is a (person, document) pair that does
+        not exist yet, so no scope makes the mark a true sentence. That is what
+        makes `roles.length` the right thing to gate on here, where the document
+        screen has to reach past `pickerOptions` to find the same answer.
+      */}
+      <NoRolesForTypeNote
+        show={singleSelectedId !== null && roleListState === "loaded" && roles.length === 0}
+        canConfigureRoles={canConfigureRoles}
+      />
 
       {submitError && <p className="text-sm text-red-600 dark:text-red-400" role="alert">{submitError}</p>}
 

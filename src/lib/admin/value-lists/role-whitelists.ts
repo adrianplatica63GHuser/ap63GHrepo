@@ -42,39 +42,76 @@
  * role unselectable on the document itself. So the types are read from the
  * documents the moved rows actually point at, and each gets its own row.
  *
- * ⚠️ **…AND A TYPE THAT HAS NO TICKS AT ALL IS SKIPPED, WHICH IS THE OPPOSITE
- * OF WHAT IT LOOKS LIKE. An adversarial round found the first version here
- * TAKING eligibility away.** `listPersonRolesForDocument`
- * (src/lib/documents/queries.ts) is two-stage: the roles ticked for the
- * document's own type, and — when that type has NO rows in
+ * ⚠️ **…AND A TYPE THAT HAS NO TICKS AT ALL IS SKIPPED, WHICH USED TO BE THE
+ * OPPOSITE OF WHAT IT LOOKS LIKE. An adversarial round found the first version
+ * here TAKING eligibility away.** `listPersonRolesForDocument`
+ * (src/lib/documents/queries.ts) was two-stage: the roles ticked for the
+ * document's own type, and — when that type had NO rows in
  * `lookup_doc_type_person_role` at all — a fallback returning every role ticked
- * for SOME type. (Not every role in the archive: a role ticked nowhere is in
- * neither stage, which is the whole of the `roleWhitelistPending` paragraph
- * below.) An unconfigured type is the ordinary case, and on one of those every
- * ticked role is already selectable. Insert a single row for it and stage one
- * starts returning results, the fallback never runs, and the picker collapses
- * from that whole set to "the one role this move just granted" — silently, in
- * a panel the administrator was not looking at, which is exactly the harm the
- * paragraph above swears off. `listPersonRolesForDocumentType` (no fallback,
- * used to decide whether AI party extraction runs at all) would flip the same
- * type from "not configured, skip" to "configured, one role".
+ * for SOME type. An unconfigured type is the ordinary case, and on one of those
+ * every ticked role was already selectable. Insert a single row for it and
+ * stage one started returning results, the fallback never ran, and the picker
+ * collapsed from that whole set to "the one role this move just granted" —
+ * silently, in a panel the administrator was not looking at, which is exactly
+ * the harm the paragraph above swears off.
  *
- * So the grant is a TOP-UP of a whitelist that already exists, never the
- * creation of one.
+ * ⚠️ **SLICE #34.16 REMOVED THAT FALLBACK (D-16(b)), SO THE FILTER BELOW IS NOW
+ * UNNECESSARY CAUTION RATHER THAN A FIX — AND IT IS LEFT IN PLACE ON PURPOSE,
+ * FOR ONE SLICE.** With one answer everywhere, an unconfigured type offers
+ * NOTHING, so inserting the row those moved associations need cannot collapse
+ * anything: it is the only repair available, and skipping it is what now
+ * withholds eligibility the rows really do need. The argument that put the
+ * filter here has therefore inverted. It is not ripped out in the same commit
+ * because doing so also makes `roleWhitelistPending` below unreachable, and
+ * that key is rendered by `value-list-modal.tsx` and pinned by
+ * `value-list-dependents.test.ts` — a second surface with its own copy suites,
+ * which is a slice and not a passing fix. **What the filter costs meanwhile is
+ * bounded and visible:** the moved rows still render their role, marked
+ * „(nu mai este disponibil)" (#34.05), and `roleWhitelistPending` still tells
+ * the administrator to go and tick it in „Roluri pe Document". Over-cautious
+ * and honest, which is the right way round to be while it waits.
  *
- * ⚠️ **THAT LEAVES EXACTLY ONE CASE THIS CANNOT REPAIR, AND IT IS REPORTED
- * RATHER THAN GUESSED AT.** The fallback is not "every role" — it is every
- * role ticked for SOME document type (`listPersonRolesForDocument` stage 2b,
- * and `listDistinctDocPersonRoles` behind the person-side picker, which has no
- * fallback at all). So when EVERY document type the rows moved from is
- * unconfigured AND the target is ticked for no type anywhere, the target is in
- * neither picker and nothing safe can put it there: ticking an unconfigured
- * type collapses that type's offer to one role, and ticking an unrelated
- * configured type grants an eligibility in a panel nobody was looking at.
- * There is no third option, so this returns `roleWhitelistPending` and the
- * dialog asks the administrator to tick it in Roluri pe Document — which is
- * what the deleted `confirm.roleWhitelistNote` said to EVERY user of the move,
- * narrowed to the one case where it is true.
+ * So the grant is, for now, a TOP-UP of a whitelist that already exists, never
+ * the creation of one.
+ *
+ * ⚠️ **WHAT THIS CANNOT REPAIR IS REPORTED RATHER THAN GUESSED AT — AND SLICE
+ * #34.16 CHANGED BOTH HOW MANY SUCH CASES THERE ARE AND HOW THEY ARE
+ * DETECTED.** Every document type the filter above SKIPS is a type on which the
+ * moved rows now carry a role no picker offers, so this returns
+ * `roleWhitelistPending` and the dialog asks the administrator to tick it in
+ * „Roluri pe Document" — which is what the deleted `confirm.roleWhitelistNote`
+ * said to EVERY user of the move, narrowed to the cases where it is true.
+ *
+ * Until #34.16 the test was „is the target ticked NOWHERE at all", and that was
+ * enough: the fallback made a target ticked SOMEWHERE selectable on every
+ * unconfigured type anyway, so one tick anywhere really did repair all of them.
+ * With the fallback gone it repairs only the type it names, and the old test
+ * would have reported a clean success over rows stranded on the others. The
+ * question was always „was a type left out"; it is now asked that way.
+ *
+ * The reasoning behind the case itself moved too. It used to rest on there
+ * being no safe third option: ticking an unconfigured type collapsed that
+ * type's offer to one role, and ticking an unrelated configured type granted an
+ * eligibility in a panel nobody was looking at. The first of those is no longer
+ * true — with the fallback gone, ticking the unconfigured type is safe and is
+ * exactly the repair — so this case survives only for as long as the filter
+ * above does. The slice that removes the filter is the slice that removes this
+ * warning, and both are named in the handover rather than left to be
+ * rediscovered here.
+ *
+ * ⚠️ **`granted` AND `warnings` CAN NOW BOTH CARRY THE DOCUMENT BRANCH, WHICH
+ * THEY COULD NOT BEFORE.** A move whose rows come from a mix of configured and
+ * unconfigured types tops the first lot up (`docTypePersonRoleWhitelist`) and
+ * reports the second lot as pending. The dialog renders both blocks and reads
+ * correctly — „ticked here, still to do there".
+ *
+ * Note what is NOT new, because an adversarial round corrected this paragraph
+ * on exactly that point: `granted` and `warnings` were never mutually
+ * exclusive. `granted` is one array fed by three branches, and the two
+ * `lookup_person_role` ones say nothing about document types — a move that
+ * ticked `valid_for_property` and warned about pending document ticks was
+ * always reachable. What changed is only that the DOCUMENT entry can now sit
+ * beside the warning.
  *
  * ⚠️ **Called BEFORE the move, on purpose.** The rows still carry the SOURCE
  * value at that point, which is what makes "are there any?" answerable without
@@ -214,6 +251,7 @@ export async function grantPersonRoleWhitelists(
         ),
       );
     const needed = new Set(configured.map((c) => c.documentTypeId));
+    const skipped = types.filter((t) => !needed.has(t.documentTypeId));
     const values = types
       .filter((t) => needed.has(t.documentTypeId))
       .map((t) => ({ documentTypeId: t.documentTypeId, personRoleId: toRoleId }));
@@ -229,16 +267,25 @@ export async function grantPersonRoleWhitelists(
       }
     }
 
-    // The case above cannot repair — asked AFTER the insert, so a top-up that
-    // did land counts. One row anywhere is enough: it puts the target into
-    // `listDistinctDocPersonRoles` and into stage 2b's fallback, which is what
-    // makes it selectable on the unconfigured types too.
-    const anyTick = await tx
-      .select({ id: lookupDocTypePersonRole.id })
-      .from(lookupDocTypePersonRole)
-      .where(eq(lookupDocTypePersonRole.personRoleId, toRoleId))
-      .limit(1);
-    if (anyTick.length === 0) warnings.push("roleWhitelistPending");
+    // ⚠️ **THE CASE THIS CANNOT REPAIR — AND SINCE SLICE #34.16 IT IS ASKED AS
+    // „WAS A TYPE LEFT OUT", NOT AS „IS THE TARGET TICKED ANYWHERE".** The old
+    // test was `anyTick.length === 0`, a second SELECT asking whether the
+    // target had a row for any type at all. An adversarial round built the case
+    // it misses: forty rows move onto a target that IS ticked for some
+    // unrelated type, from documents whose own type has no ticks. The filter
+    // above skips that type, the old test found the unrelated row and said
+    // NOTHING — while the fallback that used to make the role selectable there
+    // anyway had just been removed. Success reported, forty rows stranded.
+    //
+    // ⚠️ **AND `anyTick` IS NOT KEPT AS A SECOND DISJUNCT, BECAUSE IT COULD
+    // NEVER FIRE.** Inside this branch `skipped.length === 0` means every moved
+    // type is in `needed`, so `values` is non-empty, so the insert runs and —
+    // `onConflictDoNothing` or not — a row exists for each moved type
+    // afterwards. `anyTick.length === 0` therefore implies `skipped.length > 0`
+    // and the query only cost a round trip. Removing it also removes the
+    // „ask after the insert" ordering it needed: `skipped` is decided by the
+    // filter, not by what the insert did.
+    if (skipped.length > 0) warnings.push("roleWhitelistPending");
   }
 
   return { granted, warnings };

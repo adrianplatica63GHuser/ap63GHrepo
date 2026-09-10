@@ -23,9 +23,10 @@
  * OTHERWISE IS HOW THE DOOR WOULD REFUSE WHAT THE PICKER OFFERS.** The
  * Proprietate ↔ Persoană screens read `lookup_person_role.valid_for_property`,
  * „Persoană ↔ Persoană" reads `valid_for_person`, the document side reads the
- * document type's own whitelist (with a fallback), and „Persoană → Document"
- * reads the distinct roles across all types (with none). `use-lookup-options.ts`
- * states the same thing from the picker's side. So the KIND decides which
+ * document type's own whitelist (with no fallback since Slice #34.16 — decision
+ * D-16(b) removed the „all roles ticked for SOME type" stage), and
+ * „Persoană → Document" reads the distinct roles across all types.
+ * `use-lookup-options.ts` states the same thing from the picker's side. So the KIND decides which
  * source answers, the caller supplies that source's ids, and this module holds
  * the one rule they share. A gate that re-derived the offered set from its own
  * query would be a second copy of a rule that already exists five times — and
@@ -42,11 +43,12 @@
  * DATA RATHER THAN A COURTESY.** `ai-party-linker-dialog.tsx` POSTs to the same
  * document route, and its `party.personRoleId` comes from
  * `listPersonRolesForDocumentType(documentTypeId)` (see the `partyRoles` read
- * in `api/documents/[id]/ai-interpret/route.ts`) — which is exactly STAGE 1 of
- * `listPersonRolesForDocument`, the set this door uses for `document-person`.
- * Stage 1 is what the door offers whenever it is non-empty, and when it is
- * empty party extraction does not run at all (`partyRolesConfigured: false`).
- * So every role the model can propose is already inside the offered set, and
+ * in `api/documents/[id]/ai-interpret/route.ts`) — which since Slice #34.16 is
+ * not merely stage 1 of `listPersonRolesForDocument` but IS it:
+ * `listPersonRolesForDocument` looks the document's type up and delegates
+ * there, so the door and the model read one function. When it is empty party
+ * extraction does not run at all (`partyRolesConfigured: false`).
+ * So every role the model can propose is inside the offered set, and
  * the door refuses it in exactly one case: the tick was removed between the
  * paid read and the admin pressing the dialog's link button. That case is REFUSED rather than
  * exempted, deliberately: the stepper recognises the refusal by its `code` and
@@ -92,12 +94,23 @@ export type RoleAttachmentKind = (typeof ROLE_ATTACHMENT_KINDS)[number];
  * being a second source of truth. What it buys is that the five readers are
  * named in ONE place, so a sixth route added later has to say which list it
  * belongs to before it compiles.
+ *
+ * ⚠️ **THESE STRINGS ARE SHIPPED, NOT PROSE.** `RoleNotOfferedError` puts the
+ * matching one into `message`, which reaches server logs and the 400 body — so
+ * a stale word here is a stale word a user or an on-call reader can see.
+ * Slice #34.16 rewrote TWO of them: `document-person` had said „with the
+ * all-types fallback" for as long as there was one, and `person-document` said
+ * „no fallback" as the contrast to it, which stopped being a contrast when the
+ * other side lost its own. An adversarial round found the first because nothing
+ * asserts these VALUES (`role-attachment-door.test.ts` checks the key set
+ * only). Anything that changes which list answers a kind changes its line here
+ * in the same commit.
  */
 export const ROLE_OFFER_SOURCE: Record<RoleAttachmentKind, string> = {
-  "document-person": "listPersonRolesForDocument(documentId) — the document type's whitelist, with the all-types fallback",
+  "document-person": "listPersonRolesForDocument(documentId) — the document type's whitelist, no fallback",
   "property-person": "lookup_person_role.valid_for_property",
   "person-property": "lookup_person_role.valid_for_property",
-  "person-document": "listDistinctDocPersonRoles() — every role ticked for some document type, no fallback",
+  "person-document": "listDistinctDocPersonRoles() — every role ticked for some document type",
   "person-person":   "lookup_person_role.valid_for_person",
 };
 

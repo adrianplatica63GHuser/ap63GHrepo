@@ -2038,11 +2038,36 @@ function DeleteDialog({
 
           {/* ⚠️ **What the move could NOT repair.** The grant is deliberately a
               top-up of a whitelist that already exists — see
-              src/lib/admin/value-lists/role-whitelists.ts — and there is one
-              state where that leaves the target role in neither document
-              picker and nothing safe can change it. Saying so here is the
+              src/lib/admin/value-lists/role-whitelists.ts — so every document
+              type that had no ticks at all is left alone, and on those the
+              moved rows carry a role no picker offers. Saying so here is the
               narrowed descendant of `confirm.roleWhitelistNote`, which said it
-              to every user of the move whether or not it was true. */}
+              to every user of the move whether or not it was true.
+
+              ⚠️ **IT IS ONE PARAGRAPH HOWEVER MANY TYPES WERE LEFT OUT —
+              Slice #34.16.** `grantPersonRoleWhitelists` pushes
+              `roleWhitelistPending` once, not once per skipped type, and this
+              block is `warnings.map` keyed on the string: a push per type would
+              be N identical paragraphs under duplicate React keys. The sentence
+              is written for „the types that had no list" in the plural for that
+              reason.
+
+              ⚠️ **AND THIS BLOCK CAN NOW SHOW BESIDE A DOCUMENT-PERSONS ENTRY
+              IN `granted`.** This comment used to say „there is ONE state
+              where … nothing safe can change it". While the warning fired only
+              for a target ticked NOWHERE, no document tick had landed either,
+              so `granted` never carried `docTypePersonRoleWhitelist` when this
+              printed. D-16(b) removed the document picker's all-types fallback,
+              so one tick stopped repairing every unconfigured type and the
+              warning now follows the SKIPPED types instead — which a move over
+              a mix of configured and unconfigured types produces alongside a
+              real top-up. „Ticked here, still to do there" reads correctly, and
+              is why neither block is worded as the whole outcome. (The two were
+              never exclusive in general: `granted` is also fed by the two
+              `lookup_person_role` branches, which say nothing about document
+              types.) Both are cleared together by the `setTargetId` handler
+              above, which was already written for „the sentences are about the
+              role in the dropdown". */}
           {warnings.map((w) => (
             <p
               key={w}

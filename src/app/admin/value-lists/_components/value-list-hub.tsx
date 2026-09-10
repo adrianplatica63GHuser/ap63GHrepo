@@ -126,9 +126,14 @@ export function ValueListHub({
    * which is the same cross-list leak arrived at from the other side. Not
    * reachable in this build: every in-app link into this route either carries
    * no params (`preflight-checklist.tsx`) or opens in a new tab
-   * (`import-types-blocked-stage.tsx`), so every arrival is a fresh mount. The
-   * day one of those becomes a same-tab `<Link>`, both halves have to be
-   * latched together — or read from `useSearchParams` rather than from a prop.
+   * (`import-types-blocked-stage.tsx`, and since Slice #34.16
+   * `components/forms/no-roles-for-type-note.tsx`, which carries `?list=` from
+   * three association screens), so every arrival is a fresh mount. **This
+   * enumeration is the whole of the argument, so a link added to this route
+   * that is not in it makes the paragraph false rather than merely incomplete**
+   * — #34.16 added the third and an adversarial round is what noticed the list
+   * had not grown with it. The day one of those becomes a same-tab `<Link>`,
+   * both halves have to be latched together — or read from `useSearchParams` rather than from a prop.
    */
   const [openOnArrival] = useState<ListKey | null>(() =>
     initialList !== undefined && isValidListKey(initialList) ? initialList : null,

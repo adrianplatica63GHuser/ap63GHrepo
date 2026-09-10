@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { PaginationControls } from "@/components/pagination-controls";
+import { NoRolesForTypeNote } from "@/components/forms/no-roles-for-type-note";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { associationFailureMessage } from "@/lib/ui/association-failure";
 import { lookupListState, useRoleOptionsWithCarried } from "@/hooks/use-lookup-options";
@@ -18,6 +19,16 @@ type RoleItem = { id: string; name: string };
 type Props = {
   documentId:   string;
   documentName: string;
+  /**
+   * May THIS reader open „Roluri pe Document" — Slice #34.16.
+   *
+   * Passed straight to `NoRolesForTypeNote`, which decides what to do with it.
+   * Both halves of the argument live where they are acted on:
+   * `src/lib/auth/can-configure-roles.ts` for why it is answered on the server
+   * rather than by a second `queryFn` under the shared `["auth-me"]` key, and
+   * the note component for why the LINK is gated on it and the sentence is not.
+   */
+  canConfigureRoles: boolean;
 };
 
 async function searchPersons(name: string, code: string, page: number): Promise<SearchResponse> {
@@ -39,7 +50,7 @@ async function fetchValidRoles(documentId: string): Promise<RoleItem[]> {
   return data.items as RoleItem[];
 }
 
-export function AssociatePersonView({ documentId, documentName }: Props) {
+export function AssociatePersonView({ documentId, documentName, canConfigureRoles }: Props) {
   const t           = useTranslations("document.associatePerson");
   // One sentence shared by every screen that hands out a role (Slice #34.15).
   const tShared     = useTranslations("shared");
@@ -225,7 +236,12 @@ export function AssociatePersonView({ documentId, documentName }: Props) {
         onNext={() => setPage((p) => p + 1)}
       />
 
-      {/* Role dropdown — only shown when the document type has valid roles defined */}
+      {/* Role dropdown — shown when the MERGED list has anything in it, which
+          since Slice #34.05 is „the type's own ticked roles, plus whatever this
+          document's rows already carry". Fixed in passing (#34.16): this line
+          said „only shown when the document type has valid roles defined",
+          which stopped being the gate when the carried union arrived and is now
+          the condition of the sentence below rather than of this select. */}
       {pickerOptions.length > 0 && (
         <label className="flex items-center gap-2 text-sm">
           <span className="w-16 shrink-0 font-medium text-ink dark:text-zinc-300">{t("labelRole")}</span>
@@ -254,6 +270,42 @@ export function AssociatePersonView({ documentId, documentName }: Props) {
           {tShared("roleListUnavailable")}
         </p>
       )}
+
+      {/*
+        ⚠️ **THE SENTENCE THAT PAYS FOR THE EMPTY SELECT — Slice #34.16, D-16(b).**
+        `listPersonRolesForDocument` used to fall back to „every role ticked for
+        SOME document type" when this document's type had none of its own, so
+        this screen never showed nothing. One answer now, and an empty select
+        with nothing said would be worse than the wide list it replaces.
+        `NoRolesForTypeNote` carries the sentence and its link — the two
+        person-side „Asociază document" screens read the same endpoint and print
+        the same note, which is why it is a component and not three copies.
+
+        ⚠️ **GATED ON `roles`, THE WHITELIST ANSWER — NOT ON `pickerOptions`.**
+        They differ on exactly the case #34.05 is about: an unconfigured type
+        whose rows carry a withdrawn role has a non-empty `pickerOptions` in
+        which every entry is `disabled`. A gate on `pickerOptions.length` would
+        go silent there, which is the one place the user most needs telling why
+        nothing can be chosen. The two read correctly together: the select shows
+        what the row already holds, struck out, and the note says the type has
+        nothing configured.
+
+        ⚠️ **`roleListState === "loaded"`, not `roles !== undefined`.** They
+        agree today; „loaded" is this archive's one definition of „the list is
+        really here" and it is the same function the failure sentence above
+        reads, so the two notes can never both print. A list that could not be
+        read is not a type with no roles.
+
+        ⚠️ **THE CONDITION IS A PROP, NOT A `&&` AROUND THE ELEMENT.** The note
+        owns an `aria-live` region and has to be mounted before its content
+        appears, or a screen reader is not reliably told — the rule
+        `value-list-modal.tsx` already follows for its own async sentences. The
+        component's header carries the argument.
+      */}
+      <NoRolesForTypeNote
+        show={roleListState === "loaded" && roles?.length === 0}
+        canConfigureRoles={canConfigureRoles}
+      />
 
       {submitError && (
         <p className="text-sm text-red-600 dark:text-red-400" role="alert">{submitError}</p>

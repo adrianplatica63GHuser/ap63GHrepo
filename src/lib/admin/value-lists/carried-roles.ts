@@ -40,9 +40,21 @@
  * subtraction, and it is a pure function so it can be tested without a browser.
  *
  * ⚠️ **NOT A WRITE, AND DELIBERATELY NOT A REPAIR.** A role that lost its tick
- * stays unticked here — nothing in this module ticks anything back. Whether the
- * unconfigured-document-type FALLBACK in `listPersonRolesForDocument` should go
- * is decision D-16(b), which is not this slice; see the handover.
+ * stays unticked here — nothing in this module ticks anything back. Restoring
+ * one is a tick in Reference Data, which is the one place that can do it.
+ *
+ * ⚠️ **AND SINCE SLICE #34.16 THIS MODULE IS WHAT MADE THAT DECISION
+ * AFFORDABLE.** Where these lines used to point at D-16(b) as somebody else's
+ * question, the answer is now in: the unconfigured-document-type FALLBACK in
+ * `listPersonRolesForDocument` is gone, so on a type with no ticks the offered
+ * list is empty and the picker's ONLY entries are the ones this module returns,
+ * each marked „(nu mai este disponibil)". That is the whole reason the fallback
+ * could go — the union already covers the row that has a role, so removing it
+ * takes away the CHOICE on a new association and never blanks a row that reads
+ * correctly. Before #34.05 those were the same thing. The empty case is not
+ * left silent: all three screens that read a document type's whitelist render
+ * `components/forms/no-roles-for-type-note.tsx`, which prints
+ * `shared.noRolesForType` beside the picker.
  */
 
 import { asc, eq, or } from "drizzle-orm";

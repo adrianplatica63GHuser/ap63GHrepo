@@ -304,11 +304,31 @@ describe("the person-role pickers", () => {
     expect(read(...file.split("/"))).toContain("disabled={r.unavailable}");
   });
 
-  /** §4's caller side: nobody unions against a list that has not arrived. */
+  /**
+   * §4's caller side: nobody unions against a list that has not arrived.
+   *
+   * ⚠️ **READ OFF THE CALL, NOT OFF THE FILE — SLICE #34.16 MADE THE FILE-WIDE
+   * FORM VACUOUS AND AN ADVERSARIAL ROUND CAUGHT IT.** This used to be
+   * `/roleListState === "loaded"|roles !== undefined/.test(src)` over the whole
+   * source. `document/associate-person` satisfied it only through the fourth
+   * ARGUMENT to the hook — and #34.16 put `roleListState === "loaded"` into that
+   * same file for an unrelated gate, so the argument this guard exists to pin
+   * could have been replaced with a literal `true`, reinstating §4's defect
+   * (every carried role marked „nu mai este disponibil" while
+   * `roleListUnavailable` prints underneath) with this suite green. The helper
+   * docblock at the top of this file says a file-wide `toContain` is satisfied
+   * by any one match anywhere; this is that lesson arriving through a regex.
+   */
   it.each(UNIONED)("%s tells the hook whether the whitelist was read", (file) => {
     const src = read(...file.split("/"));
+    const call = src.slice(src.indexOf("useRoleOptionsWithCarried("));
+    const args = call.slice(0, call.indexOf(");") + 1);
 
-    expect(/roleListState === "loaded"|roles !== undefined/.test(src)).toBe(true);
+    expect(args).toMatch(/roleListState === "loaded"|\w+ !== undefined/);
+    // …and it is really the ARGUMENT, not a constant. Both literals are
+    // spelled out: `true` is the one a refactor reaches for, `false` is the
+    // one that silently turns the union off altogether.
+    expect(args).not.toMatch(/,\s*(true|false),?\s*\)$/);
   });
 
   it.each(NOT_UNIONED)("%s deliberately does not union, and says so", (file) => {
@@ -337,6 +357,239 @@ describe("the carried set is scoped to whatever the offered list is scoped to", 
   ])("%s asks for the %s roles its own %s carries", (file, kind, entity) => {
     // Whitespace-tolerant: a hand-rewrap of the call is not a defect.
     expect(new RegExp(`"${kind}",\\s*${entity},`).test(read(...file.split("/")))).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 3b. The type with nothing configured                (Slice #34.16, D-16(b))
+// ---------------------------------------------------------------------------
+//
+// ⚠️ **THIS SECTION IS THE OTHER HALF OF A DECISION TAKEN ELSEWHERE, AND IT
+// SITS AFTER §3 BECAUSE IT DERIVES FROM `PICKER_FILES`, WHICH §3 BUILDS.**
+// `listPersonRolesForDocument` used to answer „every role ticked for SOME
+// document type" when this document's type had none of its own; #34.16 removed
+// that, so the offered list on such a type is now genuinely empty. §1 covers
+// what a picker still SHOWS there — the roles the entity's own rows
+// already carry, marked — and this covers what it must SAY. The empty select is
+// not the change; the empty select plus the sentence is, which is why a suite
+// that pinned one without the other would be pinning half a decision.
+
+/**
+ * ⚠️ **THREE SCREENS, AND THE OTHER TWO ARE THE ONES A READER MISSES.** The
+ * document's own „Asociază persoană" is the screen D-16(b) was written about.
+ * The two person-side „Asociază document" screens read the SAME endpoint
+ * whenever exactly one document is ticked, so the same removal empties their
+ * select too — an adversarial round is what found them. Searched rather than
+ * listed, for the reason `PICKER_SOURCE` above is searched: a fourth caller of
+ * that endpoint fails this instead of quietly shipping a silent empty select.
+ */
+const DOC_TYPE_ROLE_READERS = PICKER_FILES.filter((f) =>
+  /valid-person-roles/.test(read(...f.split("/"))),
+);
+
+/**
+ * The `show={…}` expression a screen hands `NoRolesForTypeNote`.
+ *
+ * ⚠️ **READ AS ONE EXPRESSION, NEVER AS „the file mentions the condition".**
+ * What these guards are really pinning is that nothing ELSE is `&&`-ed into the
+ * gate — `pickerOptions.length` above all — and a `toContain` over the whole
+ * source cannot see that. Bounded by the balanced brace, so a multi-line gate
+ * is read whole and a second `show=` elsewhere in the file cannot bleed in.
+ */
+function showExpression(src: string): string {
+  const start = src.indexOf("show={", src.indexOf("<NoRolesForTypeNote"));
+  if (start < 0) throw new Error("no show= on <NoRolesForTypeNote>");
+  let depth = 0;
+  for (let i = start + "show=".length; i < src.length; i++) {
+    if (src[i] === "{") depth++;
+    else if (src[i] === "}" && --depth === 0) return src.slice(start, i + 1);
+  }
+  throw new Error("unbalanced show={…}");
+}
+
+describe("a document type with no person roles configured", () => {
+  it("is answered on every screen that reads the document-type whitelist", () => {
+    expect(DOC_TYPE_ROLE_READERS).toEqual([
+      "app/documents/[id]/associate-person/associate-person-view.tsx",
+      "app/judicial-persons/[id]/associate-document/associate-document-view.tsx",
+      "app/natural-persons/[id]/associate-document/associate-document-view.tsx",
+    ]);
+  });
+
+  /**
+   * ⚠️ **ONE COMPONENT, NEVER THREE COPIES.** Three inline copies of one
+   * sentence and one link is the drift `carried-roles-merge.ts` and
+   * `role-offers.ts` each refuse for their own rule.
+   */
+  it.each(DOC_TYPE_ROLE_READERS)("%s renders the shared note, always mounted", (file) => {
+    const src = read(...file.split("/"));
+    expect(src).toContain("canConfigureRoles={canConfigureRoles}");
+    expect(src).toContain('from "@/components/forms/no-roles-for-type-note"');
+    // ⚠️ **MOUNTED UNCONDITIONALLY, WITH THE CONDITION IN `show`.** The note
+    // owns an `aria-live` region, and a live region that appears together with
+    // its content is not reliably announced — the rule `value-list-modal.tsx`
+    // already follows. `{cond && <NoRolesForTypeNote …/>}` is the shape that
+    // breaks it, and it is the shape this slice wrote first.
+    expect(src).not.toMatch(/&&\s*\(\s*<NoRolesForTypeNote/);
+    expect(src).toMatch(/<NoRolesForTypeNote\s+show=\{/);
+  });
+
+  /**
+   * ⚠️ **GATED ON THE WHITELIST ANSWER, NEVER ON THE MERGED PICKER LIST.**
+   * Those differ on exactly the case §1 is about: an unconfigured type whose
+   * rows carry a withdrawn role has a non-empty `pickerOptions` in which every
+   * entry is `disabled`. A gate that also tested `pickerOptions.length` would
+   * go silent there — the one place the user most needs telling why nothing can
+   * be chosen — so the gate is read as a whole expression and `pickerOptions`
+   * must not appear in it. Asserting only that the „loaded && empty" substring
+   * is present would leave `&& pickerOptions.length === 0` appendable with this
+   * green, which is the defect wearing the guard's own clothes.
+   */
+  it.each(DOC_TYPE_ROLE_READERS)("%s gates the note on the whitelist alone", (file) => {
+    const gate = showExpression(read(...file.split("/")));
+
+    expect(gate).toContain('roleListState === "loaded"');
+    expect(gate).toMatch(/roles(\?)?\.length === 0/);
+    expect(gate).not.toContain("pickerOptions");
+  });
+
+  /**
+   * ⚠️ **AND IT CANNOT PRINT BESIDE „the list could not be read".** A list that
+   * failed to load is not a type with no roles, and both sentences on screen at
+   * once would be the contradiction `use-lookup-options.ts` spends a paragraph
+   * refusing for the carried union. `lookupListState` is the one definition of
+   * „loaded", both notes read it, so the states are exclusive by construction.
+   */
+  it.each(DOC_TYPE_ROLE_READERS)("%s reads the one definition of loaded", (file) => {
+    const src = read(...file.split("/"));
+    expect(src).toContain('roleListState === "failed"');
+    expect(src).toContain("lookupListState(");
+  });
+
+  /**
+   * ⚠️ **THE PERSON-SIDE PAIR ONLY ON THEIR SINGLE-DOCUMENT BRANCH.** With 0 or
+   * 2+ ticked they render `listDistinctDocPersonRoles`, where an empty answer
+   * means „this archive has no ticks at all" rather than „this type has none" —
+   * a different fact, not the one D-16(b) changed, and naming a document type
+   * the user has not chosen would be false.
+   */
+  it.each(DOC_TYPE_ROLE_READERS.filter((f) => f.includes("associate-document")))(
+    "%s says it only about the one document that is ticked",
+    (file) => {
+      expect(showExpression(read(...file.split("/")))).toContain("singleSelectedId !== null");
+    },
+  );
+
+  it.each(["ro-RO", "en-GB"] as const)("%s has the sentence and its link", (locale) => {
+    const m = messages(locale);
+    for (const key of ["noRolesForType", "noRolesForTypeLink"]) {
+      expect([locale, key, typeof at(m, `shared.${key}`)]).toEqual([locale, key, "string"]);
+    }
+    // ⚠️ **NO FOURTH KEY FOR „opens in a new tab".** It is inside the link
+    // label, because `adminImport.typesBlocked.opensInNewTab` already says
+    // those words and this screen has exactly one link — the split that file
+    // makes (one visible sentence, a per-link `sr-only` span) exists for a
+    // screen that renders one link per blocked type.
+    expect([locale, at(m, "shared.opensInNewTab")]).toEqual([locale, undefined]);
+    // ⚠️ **`shared`, not a per-screen namespace.** Three screens print it, and
+    // the wording is about the document TYPE rather than about the screen, so a
+    // per-screen key would be three Romanian sentences to keep in step.
+    expect([locale, at(m, "document.associatePerson.noRolesForType")]).toEqual([locale, undefined]);
+  });
+
+  /**
+   * ⚠️ **THE SENTENCE HAS TO SAY THE ASSOCIATION IS STILL POSSIBLE.** The role
+   * is optional on all three screens (`personRoleId: selectedRoleId || null`),
+   * so a sentence that only reported the missing configuration would read as a
+   * block on the whole action — which is what `shared.roleListUnavailable`
+   * learned to say in #34.15 for the neighbouring case.
+   *
+   * ⚠️ **AND IT HAS TO NAME THE PATH IN WORDS, not only in the link.** The link
+   * is gated on `canConfigureRoles`; the reader who does not get it is the one
+   * who most needs to be told where to send an administrator.
+   */
+  it("says it in Romanian, names the grid, and says the association can still be made", () => {
+    const note = at(messages("ro-RO"), "shared.noRolesForType") as string;
+    expect(note).toContain("Roluri pe Document");
+    expect(note).toContain("Tipuri de Document");
+    expect(note).toContain("fără rol");
+  });
+
+  /**
+   * ⚠️ **THE POINTER GOES WHERE SLICE #34.10 PUT THE GRID.** „Persoană →
+   * Document" moved onto the document-type screen and its hub button was
+   * deleted, so „Date de referință → Persoane document" is a route that no
+   * longer exists — and this slice corrected the last two sentences that still
+   * said it, in the AI party linker.
+   */
+  it.each(["ro-RO", "en-GB"] as const)("%s points at the grid where #34.10 put it, in a new tab", (locale) => {
+    const note = read("components", "forms", "no-roles-for-type-note.tsx");
+    expect(note).toContain('"/admin/value-lists?list=document-types"');
+    expect(note).toContain('target="_blank"');
+    // ⚠️ **A link that opens a new tab has to SAY so, and the label is where
+    // it says it.** `import-types-blocked-stage.tsx` makes the same promise in
+    // an `sr-only` span beside each of its many links; with one link the words
+    // belong in the label, where a sighted reader gets them too.
+    const label = at(messages(locale), "shared.noRolesForTypeLink") as string;
+    expect([locale, /filă nouă|new tab/.test(label)]).toEqual([locale, true]);
+  });
+
+  it.each(["ro-RO", "en-GB"] as const)("%s sends the AI party linker to the same place", (locale) => {
+    for (const key of ["roleMissingBody", "roleMissingAfterCreate"]) {
+      const s = at(messages(locale), `document.aiPartyLinker.${key}`) as string;
+      expect([locale, key, /Document Persons|Roluri pe Document/.test(s)]).toEqual([locale, key, true]);
+      // The route #34.10 deleted. `valueList.lists.personToDocument` is gone
+      // from both files and the hub has no such button.
+      expect([locale, key, /Persoane document/.test(s)]).toEqual([locale, key, false]);
+    }
+  });
+
+  /**
+   * ⚠️ **THE LINK IS GATED AND THE SENTENCE IS NOT, WHICH IS THE WHOLE OF THE
+   * ACCESS QUESTION.** `/admin/*` redirects every non-superuser to the home
+   * page (`app/admin/layout.tsx`), so a link offered to one would read as the
+   * page being broken; the FACT is useful to everyone. Decided on the server —
+   * and it must not throw: `getCurrentAppUser` deliberately does not fail
+   * closed, so an unguarded call would 500 three screens over a decoration.
+   */
+  it("offers the link only to a reader who can follow it, and never 500s doing it", () => {
+    const note = read("components", "forms", "no-roles-for-type-note.tsx");
+    expect(note).toContain("canConfigureRoles && (");
+    // The fact is not gated with it.
+    expect(note.indexOf('t("noRolesForType")')).toBeLessThan(note.indexOf("canConfigureRoles && ("));
+
+    const helper = stripComments(read("lib", "auth", "can-configure-roles.ts"));
+    expect(helper).toContain('appUser?.role === "superuser"');
+    expect(helper).toMatch(/catch\s*\{\s*return false;\s*\}/);
+  });
+
+  it.each([
+    ["app", "documents", "[id]", "associate-person", "page.tsx"],
+    ["app", "natural-persons", "[id]", "associate-document", "page.tsx"],
+    ["app", "judicial-persons", "[id]", "associate-document", "page.tsx"],
+  ])("%s/%s/%s/%s/%s asks on the server and passes it down", (...parts: string[]) => {
+    const page = stripComments(read(...parts));
+    expect(page).toContain("canConfigureRoles()");
+    expect(page).toContain("canConfigureRoles={mayConfigureRoles}");
+    // Never a second `queryFn` under the shared `["auth-me"]` key — the trap
+    // `document-persons-modal.tsx` spends a paragraph on.
+    expect(page).not.toContain("auth-me");
+  });
+
+  /**
+   * ⚠️ **AND THE SOURCE THEY REPORT ON REALLY IS EMPTY NOW.** Without this the
+   * whole section is a sentence about a state the archive can no longer reach:
+   * the fallback would still widen the answer and the empty select would never
+   * appear. `role-attachment-door.test.ts` §4 holds the same fact from the
+   * door's side; this is the pickers' side of it, and they must not drift.
+   */
+  it("because the whitelist really can answer nothing now", () => {
+    const listing = read("lib", "documents", "queries.ts");
+    const start = listing.indexOf("export async function listPersonRolesForDocument(");
+    const end = listing.indexOf("\nexport ", start + 1);
+    const body = stripComments(listing.slice(start, end));
+    expect(body).toContain("return listPersonRolesForDocumentType(doc.documentTypeId);");
+    expect(body).not.toContain("selectDistinct");
   });
 });
 

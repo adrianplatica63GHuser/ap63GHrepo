@@ -527,6 +527,8 @@
     "roleListUnavailable": "Lista de roluri nu a putut fi citită, așa că nu se poate alege un rol acum. Rolul este oricum opțional.",
     "roleNotOffered": "Rolul ales nu mai este valid pentru această asociere — probabil a fost dezactivat între timp în Date de referință. Reîncărcați pagina și alegeți din nou; rolul este oricum opțional.",
     "roleNoLongerOffered": "{role} (nu mai este disponibil)",
+    "noRolesForType": "Acest tip de document nu are niciun rol de persoană configurat, așa că nu se poate alege un rol aici. Rolurile se configurează în Date de referință → Tipuri de Document → Roluri pe Document. Asocierea se poate face și fără rol.",
+    "noRolesForTypeLink": "Deschide Tipuri de Document (se deschide într-o filă nouă)",
     "properties": {
       "empty": "Nicio proprietate asociată",
       "colCode": "Cod",
@@ -1475,8 +1477,8 @@
       "linkThis": "Asociază aceasta",
       "noneOfThese": "Niciuna dintre acestea — creează nouă",
       "roleMissingTitle": "Rol neconfigurat",
-      "roleMissingBody": "Rolul „{roleName}” nu este configurat încă pentru acest tip de document. Cereți unui administrator să-l adauge în Date de referință → Persoane document, apoi adăugați persoana din fila Persoane a documentului.",
-      "roleMissingAfterCreate": "Persoana a fost creată, dar nu a putut fi legată de document: rolul „{roleName}” nu mai este configurat pentru acest tip de document. Cereți unui administrator să-l adauge în Date de referință → Persoane document, apoi apăsați din nou — persoana nu va fi creată a doua oară. Dacă omiteți această parte, persoana rămâne în arhivă nelegată de document.",
+      "roleMissingBody": "Rolul „{roleName}” nu este configurat încă pentru acest tip de document. Cereți unui administrator să-l adauge în Date de referință → Tipuri de Document → Roluri pe Document, apoi adăugați persoana din fila Persoane a documentului.",
+      "roleMissingAfterCreate": "Persoana a fost creată, dar nu a putut fi legată de document: rolul „{roleName}” nu mai este configurat pentru acest tip de document. Cereți unui administrator să-l adauge în Date de referință → Tipuri de Document → Roluri pe Document, apoi apăsați din nou — persoana nu va fi creată a doua oară. Dacă omiteți această parte, persoana rămâne în arhivă nelegată de document.",
       "noMatchTitle": "Nicio potrivire găsită",
       "noMatchBody": "Se va crea o persoană nouă cu detaliile extrase.",
       "createAndLink": "Creează și asociază",
@@ -1870,7 +1872,7 @@
         "documentTypeKeyReserved": "Această cheie este rezervată: sistemul o folosește el însuși, pentru tipul de rezervă al documentelor neclasificate sau pentru cartea de identitate. Un rând o poate primi doar dacă și denumirea lui spune același lucru. Alegeți altă cheie."
       },
       "roleWhitelistGranted": "Rolul ales a fost bifat automat acolo unde asocierile mutate aveau nevoie:",
-      "roleWhitelistPending": "Rolul ales nu este bifat pentru niciun tip de document, iar tipurile documentelor mutate nu au încă o listă de roluri configurată — așa că nu se poate bifa automat fără a restrânge ce se poate alege pe acele tipuri. Bifați-l în „Roluri pe Document” pentru tipul potrivit, altfel asocierile Persoană–Document mutate vor arăta un rol care nu mai poate fi ales din listă.",
+      "roleWhitelistPending": "Rolul ales nu a putut fi bifat automat pentru toate tipurile de document ale asocierilor mutate: tipurile fără o listă de roluri configurată sunt lăsate neatinse. Bifați-l în „Roluri pe Document” pentru tipurile potrivite, altfel asocierile Persoană–Document mutate vor arăta un rol care nu mai poate fi ales din listă pe acele tipuri.",
       "noTarget": "Nu există altă valoare în această listă pe care să le mutați. Adăugați una întâi, apoi reveniți aici.",
       "delete": "Șterge",
       "deleting": "Se șterge…",

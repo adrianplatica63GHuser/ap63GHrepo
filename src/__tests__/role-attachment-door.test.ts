@@ -446,19 +446,26 @@ describe("roleNotOfferedToResponse", () => {
 
 describe("the AI party linker needs no exemption", () => {
   /**
-   * ⚠️ **THE NEXT TWO ARE PREMISES, NOT GUARDS ON THE DOOR — SAID PLAINLY
+   * ⚠️ **THE NEXT THREE ARE PREMISES, NOT GUARDS ON THE DOOR — SAID PLAINLY
    * BECAUSE §3'S „EXERCISED, NOT READ" DOES NOT COVER THEM.** They read two
    * files this slice does not change and would stay green with the whole door
    * deleted. They earn their place all the same: the containment argument is
    * what makes the linker safe without an exemption, and a later slice that
-   * gave `listPersonRolesForDocumentType` a fallback of its own, or dropped the
-   * stage-1 early return, would break that argument in silence.
+   * gave either role function a fallback of its own would break that argument
+   * in silence.
    *
-   * The argument itself: the model's role is resolved against
-   * `listPersonRolesForDocumentType`, which is stage 1 of
-   * `listPersonRolesForDocument` — the set the door checks. Stage 1 is what the
-   * door offers whenever it is non-empty, and when it is empty party extraction
-   * does not run at all.
+   * The argument itself, RESTATED BY SLICE #34.16 (decision D-16(b)): the
+   * model's role is resolved against `listPersonRolesForDocumentType`, and
+   * `listPersonRolesForDocument` — the set the door checks — is now that same
+   * function, reached by looking the document's type up first. Not a subset:
+   * the same set. When it is empty, party extraction does not run at all.
+   *
+   * ⚠️ **THIS IS ALSO WHERE D-16(b) GETS RE-OPENED IF IT EVER IS.** Until
+   * #34.16 `listPersonRolesForDocument` widened its answer to „every role
+   * ticked for SOME document type" when the document's own type had none, so
+   * the manual picker and the machine path disagreed about one table. The next
+   * two assertions are what stop that being restored, on either side, without
+   * somebody deciding to.
    */
   it("resolves the model's role against the document type's own whitelist", () => {
     const interpret = stripComments(read("app", "api", "documents", "[id]", "ai-interpret", "route.ts"));
@@ -466,14 +473,36 @@ describe("the AI party linker needs no exemption", () => {
     expect(interpret).toContain("partyRolesConfigured");
   });
 
-  it("and the door's document-person set is that list, plus a fallback", () => {
-    // Stage 1 returns early when it has rows, so the offered set IS stage 1
-    // whenever stage 1 is non-empty — which is the containment the paragraph
-    // above turns on. Bounded to that one function: unbounded, the slice runs
-    // to the end of a 1,200-line file and any later `return rows;` satisfies it.
+  it("and the door's document-person set is that list, exactly", () => {
+    // Bounded to the one function: unbounded, the slice runs to the end of a
+    // 1,200-line file and any later `return` satisfies it.
     const listing = functionBody(read("lib", "documents", "queries.ts"), "listPersonRolesForDocument");
-    expect(listing).toContain("if (rows.length > 0) return rows;");
-    expect(listing).toContain("lookupDocTypePersonRole");
+
+    // It answers by DELEGATING, which is what makes „the same set" true by
+    // construction rather than by two bodies that happen to agree today.
+    expect(listing).toContain("return listPersonRolesForDocumentType(doc.documentTypeId);");
+
+    // ⚠️ **AND IT READS THE JUNCTION TABLE NOWHERE ITSELF.** The delegation
+    // above is satisfied by a body that ALSO queries `lookup_doc_type_person_role`
+    // first and only falls through to the call — which is the old two-stage
+    // shape with the early return spelled differently. Its only query is the
+    // document's own type.
+    expect(listing).not.toContain("lookupDocTypePersonRole");
+    expect(listing).not.toContain("selectDistinct");
+    expect(listing).toContain("document.documentTypeId");
+  });
+
+  it("and the type-scoped list it delegates to has no fallback of its own", () => {
+    // The other direction of the same decision. A `rows.length` test here
+    // would be the fallback coming back one function over, where the door
+    // reads it and the party linker's containment paragraph does not.
+    const byType = functionBody(read("lib", "documents", "queries.ts"), "listPersonRolesForDocumentType");
+    expect(byType).toContain("lookupDocTypePersonRole");
+    expect(byType).toContain("eq(lookupDocTypePersonRole.documentTypeId, documentTypeId)");
+    expect(byType).not.toContain("selectDistinct");
+    expect(byType).not.toMatch(/rows\.length/);
+    // One statement, one return — no branch on how much came back.
+    expect((byType.match(/return /g) ?? [])).toHaveLength(1);
   });
 
   /**

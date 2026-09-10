@@ -31,12 +31,17 @@
  * `listPersonRolesForDocument(documentId)` does not offer, and answers 400.
  * `party.personRoleId` cannot normally be such a role: Slice 1 resolves the
  * model's role NAME against `listPersonRolesForDocumentType(documentTypeId)`
- * (the `partyRoles` read in `api/documents/[id]/ai-interpret/route.ts`), which
- * is exactly STAGE 1 of the list the door checks against — and when that stage
- * is empty, party extraction does not run at all
- * (`partyRolesConfigured: false`). A name that matches nothing arrives here as
+ * (the `partyRoles` read in `api/documents/[id]/ai-interpret/route.ts`) — and
+ * since Slice #34.16 that is not merely stage 1 of the list the door checks
+ * against, it IS that list: `listPersonRolesForDocument` looks the document's
+ * type up and delegates to `listPersonRolesForDocumentType`, so the two cannot
+ * drift by construction rather than by agreement. When it is empty, party
+ * extraction does not run at all (`partyRolesConfigured: false`). A name that matches nothing arrives here as
  * `roleMissing: true` with a null id, which the door always allows. So the set
- * the model can propose from is a subset of the set the door offers.
+ * the model can propose from is the set the door offers — before #34.16 it was
+ * a subset, because the door widened its answer on an unconfigured type and the
+ * model was never given that wider list. D-16(b) closed that gap in the
+ * direction this paragraph already assumed.
  *
  * ⚠️ **The one case that IS refused, named rather than left to be found: the
  * retick race.** An administrator who unticks that role in Reference Data

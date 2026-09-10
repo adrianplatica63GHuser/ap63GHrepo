@@ -1082,8 +1082,84 @@ export async function associatePersonsToDocument(
 
 export type RoleItem = { id: string; name: string };
 
+/**
+ * „Which person roles may appear on this document?" — ONE ANSWER, WHOEVER
+ * ASKS.                                     (Decision D-16(b), Slice #34.16)
+ *
+ * WHAT WAS WRONG, IN ONE SENTENCE
+ *   This function and `listPersonRolesForDocumentType` below answered the same
+ *   question two different ways, forty lines apart. This one read the roles
+ *   ticked for the document's type and, when that returned nothing, fell back
+ *   to „every role ticked for SOME document type"; that one had no fallback and
+ *   answered the empty list. So on an unconfigured type the manual picker
+ *   offered every role in the archive and the machine path refused to extract
+ *   at all — one table, one question, two answers, and the wider of them was
+ *   built out of roles nobody had ever ticked for this kind of document.
+ *
+ * ⚠️ **THE FALLBACK IS GONE, AND THE SENTENCE ON THE SCREEN IS WHAT PAYS FOR
+ * IT.** Removing it empties the picker on every type that has no rows in
+ * `lookup_doc_type_person_role`, and an empty select with nothing said is worse
+ * than a wide one — which is why this could not be done alone.
+ * `components/forms/no-roles-for-type-note.tsx` prints `shared.noRolesForType`
+ * — the type has no roles configured, „Roluri pe Document" is where that is
+ * fixed, and the association can still be made without a role — and points at
+ * the grid where Slice #34.10 put it. The empty select is not the change; the
+ * empty select PLUS the sentence is.
+ *
+ * ⚠️ **ON THREE SCREENS, NOT ONE, AND THE OTHER TWO ARE EASY TO MISS.** The
+ * document's own „Asociază persoană" is the screen the decision was written
+ * about, but both person-side „Asociază document" screens read
+ * `/api/documents/[id]/valid-person-roles` whenever exactly one document is
+ * ticked, so this function empties their select too. An adversarial round found
+ * them; anything that changes what this returns has three screens to check, and
+ * `carried-role-options.test.ts` §3b enumerates them.
+ *
+ * ⚠️ **THE SENTENCE IS GATED ON „THE LIST WAS READ AND IS EMPTY", NEVER ON
+ * „THIS RETURNED NOTHING".** During load and after a failed read the callers
+ * also have nothing, and those are different facts with different sentences —
+ * `shared.roleListUnavailable` owns the failure. `lookupListState` is the one
+ * definition of „loaded" and all three screens gate on it, so the two notes
+ * cannot both print.
+ *
+ * ⚠️ **AND IT ONLY COSTS THE CHOICE ON A NEW ASSOCIATION, WHICH IS WHY THE
+ * DECISION COULD BE TAKEN NOW AND NOT BEFORE.** Since Slice #34.05 the picker
+ * unions this offer with the roles THIS DOCUMENT's own rows already carry,
+ * marked „(nu mai este disponibil)" (`carried-roles.ts`,
+ * `carried-roles-merge.ts`). So a row that already holds a role still renders
+ * it; what an empty answer removes is the ability to pick a role for a row that
+ * does not exist yet. Before #34.05 those were the same thing, and taking this
+ * decision then would have blanked rows that read correctly.
+ *
+ * ⚠️ **DELEGATION RATHER THAN THE SAME QUERY TWICE, AND THAT IS THE WHOLE
+ * POINT.** With the fallback gone the two functions answer identically, and two
+ * bodies that agree today are two bodies that can disagree tomorrow — the
+ * second copy of a whitelist is exactly the divergence #34.05 was written to
+ * remove (`role-offers.ts` refuses to hold a third copy for the same reason).
+ * Written this way the manual picker, the write door
+ * (`associatePersonsToDocument`) and AI party extraction cannot drift: they are
+ * the same function, reached by two names because the callers hold two
+ * different keys — a document id here, a document type id there.
+ *
+ * ⚠️ **A DOCUMENT THAT DOES NOT EXIST RETURNS `[]`, WHICH IS NOT THE SAME
+ * EMPTY.** It is the one answer this function gives that is not about
+ * configuration at all. Left as `[]` rather than a throw because every caller
+ * already treats „no roles" as „offer nothing", and a throw here would turn a
+ * deleted document into a 500 on a route that is meant to answer a list.
+ *
+ * The residual, stated rather than left to be rediscovered: a document deleted
+ * in another session makes a screen print „this type has no roles configured"
+ * about a document that no longer exists. On the document's own „Asociază
+ * persoană" that needs the deletion to land after `page.tsx` has already found
+ * the row, because it 404s at mount. **On the two person-side „Asociază
+ * document" screens there is no such bound** — the route's entity is a PERSON,
+ * and the document id comes from a search result the user ticks, which nothing
+ * revalidates. An adversarial round is what found that the bound covered one
+ * screen out of three. It is left as `[]` all the same: the write that follows
+ * fails on the foreign key, so the wrong sentence is a moment of confusion
+ * rather than a wrong row, and the alternative is a second shape in this return
+ * type plus a 404 branch on a route whose job is to answer a list.
+ */
 export async function listPersonRolesForDocument(documentId: string): Promise<RoleItem[]> {
-  // 1. Get the document's type id.
   const [doc] = await db
     .select({ documentTypeId: document.documentTypeId })
     .from(document)
@@ -1092,40 +1168,37 @@ export async function listPersonRolesForDocument(documentId: string): Promise<Ro
 
   if (!doc) return [];
 
-  // 2a. Fetch roles specific to this document type.
-  const rows = await db
-    .select({
-      id:   lookupPersonRole.id,
-      name: lookupPersonRole.name,
-    })
-    .from(lookupDocTypePersonRole)
-    .innerJoin(lookupPersonRole, eq(lookupDocTypePersonRole.personRoleId, lookupPersonRole.id))
-    .where(eq(lookupDocTypePersonRole.documentTypeId, doc.documentTypeId))
-    .orderBy(asc(lookupPersonRole.name));
-
-  if (rows.length > 0) return rows;
-
-  // 2b. Fallback — this type has no specific mapping (or its mapped list is
-  // empty): return all distinct roles across any document type.
-  return db
-    .selectDistinct({
-      id:   lookupPersonRole.id,
-      name: lookupPersonRole.name,
-    })
-    .from(lookupDocTypePersonRole)
-    .innerJoin(lookupPersonRole, eq(lookupDocTypePersonRole.personRoleId, lookupPersonRole.id))
-    .orderBy(asc(lookupPersonRole.name));
+  return listPersonRolesForDocumentType(doc.documentTypeId);
 }
 
-// Slice #21.04.Import (party extraction) — roles *specifically* configured
-// for a document type, with NO fallback to "all roles everywhere" (unlike
-// listPersonRolesForDocument above, which exists for the manual Associate
-// Person picker where showing every role as a fallback is a reasonable UX).
-// AI-driven party extraction must not guess: if a type has zero specific
-// role mappings, the caller should skip party extraction entirely for that
-// type and tell the admin to configure roles first (Reference Data ->
-// Document Persons), rather than asking the model to match against a
-// meaningless pool of unrelated roles from other document types.
+/**
+ * The roles ticked for one document type — the whole answer, with no fallback.
+ *
+ * Slice #21.04.Import gave this function its no-fallback rule for AI party
+ * extraction: a model must not be asked to match a party against a pool of
+ * roles nobody ticked for this kind of document, so when this returns nothing
+ * the caller skips party extraction entirely and tells the admin to configure
+ * the type first (`partyRolesConfigured: false` in
+ * `api/documents/[id]/ai-interpret/route.ts`).
+ *
+ * ⚠️ **SINCE SLICE #34.16 THAT RULE IS THE ONLY RULE, AND THE TWO FUNCTIONS
+ * ARE DELIBERATELY THE SAME RATHER THAN MERELY DIFFERENT.**
+ * `listPersonRolesForDocument` above now delegates here instead of widening the
+ * answer for the manual picker; its header carries the argument. What used to
+ * be „the machine is strict and the human is not" is now one answer that both
+ * paths read, and the difference between them is what they DO with an empty
+ * one: extraction does not run, the picker shows a sentence saying the type has
+ * no roles configured. Any future slice that gives either function a fallback
+ * of its own is re-opening D-16(b), and `role-attachment-door.test.ts` §4 is
+ * where that gets noticed.
+ *
+ * ⚠️ **„Reference Data → Document Persons" IS NO LONGER WHERE THIS SENDS
+ * PEOPLE, AND THIS HEADER SAID IT UNTIL #34.16.** Slice #34.10 moved the grid
+ * onto the document-type screen and removed its hub button: it is now
+ * „Date de referință → Tipuri de Document → Roluri pe Document", the toolbar
+ * button beside „+ Adaugă" on that list. Every sentence this archive shows a
+ * user about configuring these roles points there.
+ */
 export async function listPersonRolesForDocumentType(documentTypeId: string): Promise<RoleItem[]> {
   return db
     .select({

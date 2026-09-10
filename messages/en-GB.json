@@ -527,6 +527,8 @@
     "roleListUnavailable": "The role list could not be read, so no role can be chosen right now. The role is optional in any case.",
     "roleNotOffered": "The selected role is no longer valid for this association — it has probably been switched off in Reference Data in the meantime. Reload the page and choose again; the role is optional in any case.",
     "roleNoLongerOffered": "{role} (no longer available)",
+    "noRolesForType": "This document type has no person roles configured, so no role can be chosen here. Roles are configured in Reference Data → Document Types → Document Persons. The association can still be made without a role.",
+    "noRolesForTypeLink": "Open Document Types (opens in a new tab)",
     "properties": {
       "empty": "No properties associated",
       "colCode": "Code",
@@ -1475,8 +1477,8 @@
       "linkThis": "Link this one",
       "noneOfThese": "None of these — create new",
       "roleMissingTitle": "Role not configured",
-      "roleMissingBody": "The role \"{roleName}\" is not set up for this document type yet. Ask an administrator to add it in Reference Data → Document Persons, then add the person from the document’s Persons tab.",
-      "roleMissingAfterCreate": "The person was created but could not be linked to the document: the role \"{roleName}\" is no longer set up for this document type. Ask an administrator to add it in Reference Data → Document Persons, then press again — the person will not be created twice. If you skip this party, the person stays in the archive unlinked from the document.",
+      "roleMissingBody": "The role \"{roleName}\" is not set up for this document type yet. Ask an administrator to add it in Reference Data → Document Types → Document Persons, then add the person from the document’s Persons tab.",
+      "roleMissingAfterCreate": "The person was created but could not be linked to the document: the role \"{roleName}\" is no longer set up for this document type. Ask an administrator to add it in Reference Data → Document Types → Document Persons, then press again — the person will not be created twice. If you skip this party, the person stays in the archive unlinked from the document.",
       "noMatchTitle": "No existing match found",
       "noMatchBody": "A new person will be created with the extracted details.",
       "createAndLink": "Create & link",
@@ -1870,7 +1872,7 @@
         "documentTypeKeyReserved": "This key is reserved: the system matches on it itself, for the catch-all type or for an identity card. A row may hold it only if its name says the same thing. Choose another key."
       },
       "roleWhitelistGranted": "The role you picked was ticked automatically where the moved associations needed it:",
-      "roleWhitelistPending": "The role you picked is not ticked for any document type, and the types of the moved documents have no role list configured yet — so it cannot be ticked automatically without narrowing what can be chosen on those types. Tick it in “Document Persons” for the right type, otherwise the moved Person–Document associations will show a role that can no longer be picked from the list.",
+      "roleWhitelistPending": "The role you picked could not be ticked automatically for every document type the moved associations belong to: types with no role list configured are left untouched. Tick it in “Document Persons” for those types, otherwise the moved Person–Document associations will show a role that can no longer be picked from the list on them.",
       "noTarget": "There is no other value in this list to move them to. Add one first, then come back here.",
       "delete": "Delete",
       "deleting": "Deleting…",
