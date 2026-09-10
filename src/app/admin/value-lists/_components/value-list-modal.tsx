@@ -855,8 +855,10 @@ export function ValueListModal({
   // ── Slice #27.07: narrow the list to the types still without a form ────────
   //
   // The backlog an import reports by name is worked through here, and before
-  // this it meant reading twenty-four rows looking for the ones that were not
-  // green. One click instead.
+  // this it meant reading every row in the list looking for the ones that were
+  // not green. One click instead. (The number used to be written here as
+  // twenty-four; the catalogue has grown several times since — forty-four rows
+  // as of Slice #34.19 — which is the argument getting stronger, not weaker.)
   //
   // ⚠️ **`documentTypeAwaitsForm` is the SAME derivation `documentTypeStatus`
   // above paints the row with** — see its header. A predicate written here as
@@ -868,8 +870,8 @@ export function ValueListModal({
   //
   // ⚠️ **State, not a URL parameter or a stored preference.** It is a lens on
   // one visit — a filter that survived the modal closing would have the
-  // administrator open Document Types next week, see nine rows where there are
-  // twenty-four, and have no way to know why.
+  // administrator open Document Types next week, see nine rows where the list
+  // holds dozens, and have no way to know why.
   const [onlyAwaiting, setOnlyAwaiting] = useState(false);
   /**
    * Types whose form editor has been opened during this visit.
@@ -1272,8 +1274,8 @@ export function ValueListModal({
 
                   ⚠️ **The count beside it counts what is SHOWN, and says so
                   when that is not everything.** A filter that leaves the total
-                  standing tells the administrator there are twenty-four rows
-                  above nine of them; a filter that silently rewrites the total
+                  standing tells the administrator how many rows the list
+                  really holds above the nine shown; one that rewrites the total
                   loses the one number that says how much of the list this is. */}
               {review && offerReview && (
                 <label className="flex cursor-pointer select-none items-center gap-2 text-xs text-ink dark:text-zinc-300">

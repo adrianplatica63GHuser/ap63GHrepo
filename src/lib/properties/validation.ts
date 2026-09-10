@@ -167,9 +167,10 @@ export type PropertySnapshotProperty = {
    *
    *      What #34.17 did NOT close, because it cannot be closed without
    *      rewriting snapshots: the DIFF is still blind to `tarlaSola` — it is
-   *      in neither `PROPERTY_SNAPSHOT_PROPERTY_KEYS` nor the nine-key
-   *      `PROPERTY_SNAP_KEYS` that `computeFieldHighlights` actually walks — so
-   *      two pre-078 versions
+   *      in neither `PROPERTY_SNAPSHOT_PROPERTY_KEYS` nor the
+   *      `PROPERTY_SNAP_KEYS` that `computeFieldHighlights` actually walks
+   *      (since Slice #34.19 those are the same ten keys, the second being
+   *      assigned from the first) — so two pre-078 versions
    *      whose tarla text differs now show two different values with no frame
    *      between them, and the boundary pair in point 1 is framed green
    *      ("added") over a predecessor that visibly shows a tarla.
@@ -180,9 +181,17 @@ export type PropertySnapshotProperty = {
   carteFunciara:   string | null;
   useCategoryId:   string | null;
   surfaceAreaMp:   string | null;
-  // Slice #18.09: system-computed area (m²) from the corners. Stored in the
-  // snapshot for completeness; it is NOT a separately-highlighted field (it
-  // only changes when corners change, which are already diffed).
+  // Slice #18.09: system-computed area (m²) from the corners.
+  //
+  // ⚠️ **DIFFED SINCE SLICE #34.19, RENDERED BY NOTHING.** This used to say it
+  // "is NOT a separately-highlighted field", which was true of
+  // `PROPERTY_SNAP_KEYS` and false of the registry beside it — the hand-written
+  // list had simply forgotten the key. `computeFieldHighlights` walks the
+  // registry now, so a frame IS computed for it; no frame is DRAWN, because
+  // property-form.tsx renders the calculated area with `ReadOnlyField`, which
+  // takes no `highlight` prop. The old parenthetical still holds and is why
+  // the version label cannot change: it only differs when the corners differ,
+  // and those are already diffed.
   calculatedAreaMp: string | null;
   notes:           string | null;
 };

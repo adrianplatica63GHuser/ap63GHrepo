@@ -377,8 +377,9 @@ describe("idCardDocumentFieldCount", () => {
 
 describe("ID_CARD_TYPE_KEYS — Slice #23.08.Import removed the phantom _ALT key", () => {
   it("no longer carries CARTE_IDENTITATE_ALT", () => {
-    // Confirmed against the live lookup_document_type: 26 rows, and this key is
-    // not one of them. It also cannot arrive from Haiku (KNOWN_TYPE_KEYS lost
+    // Confirmed against the live lookup_document_type at the time (26 rows),
+    // and this key is not one of them — nor is it in the forty-four the seed
+    // holds today. It also cannot arrive from Haiku (KNOWN_TYPE_KEYS lost
     // it in #23.01) nor from auto-creation — ⚠️ **and the REASON changed in
     // Slice #29.07.** Until then the resolver slugged a key from the label, so
     // it could never produce this one; now it offers the canonical key, but

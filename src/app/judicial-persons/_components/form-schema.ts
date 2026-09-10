@@ -27,6 +27,10 @@ import type {
 } from "@/lib/judicial-persons/validation";
 import type { PersonAddressSnapshot } from "@/lib/persons/validation";
 import {
+  JUDICIAL_PERSON_SNAPSHOT_FIELDS_KEYS,
+  PERSON_ADDRESS_SNAPSHOT_KEYS,
+} from "@/lib/versioning/snapshot-registry";
+import {
   diffFieldMap,
   labelColorFromHighlights,
   normVal,
@@ -271,18 +275,36 @@ export function toApiPayload(
 
 // String form-field names that participate in the diff. The contact-person
 // *Name fields are display-only (they follow the ids) and excluded.
+//
+// ⚠️ **DERIVED FROM THE REGISTRY SINCE SLICE #34.19, AND THIS LIST HAD NO
+// GUARD AT ALL.** The eight literals that stood here carried a bare `as const`
+// — not even the `satisfies readonly (keyof …)[]` its natural-person twin had
+// — so nothing anywhere checked them against
+// `JUDICIAL_PERSON_SNAPSHOT_FIELDS_KEYS`
+// (src/lib/versioning/snapshot-registry.ts), which is the single source for
+// the snapshot's own fields and is guarded by `AssertExactKeys` at compile
+// time and by src/__tests__/snapshot-registry.test.ts at run time.
+//
+// Same union as the natural-person form, for the same two reasons: `notes`
+// sits beside `judicial` on the snapshot rather than inside it and is added
+// back, and `correspondenceSameAsHq` is a boolean that is held out of the
+// string list and rejoined stringified in JUD_DIFF_KEYS below.
 const JUD_STRING_KEYS = [
-  "name", "nickname", "judicialPersonTypeId", "cuiNumber",
-  "tradeRegisterNumber", "contactPerson1Id", "contactPerson2Id", "notes",
-] as const;
+  ...JUDICIAL_PERSON_SNAPSHOT_FIELDS_KEYS.filter(
+    (key): key is Exclude<
+      (typeof JUDICIAL_PERSON_SNAPSHOT_FIELDS_KEYS)[number],
+      "correspondenceSameAsHq"
+    > => key !== "correspondenceSameAsHq",
+  ),
+  "notes",
+] as const satisfies readonly (keyof Omit<FormValues, "addresses" | "correspondenceSameAsHq">)[];
 
 // Full diff key set — the string fields plus the same-as-HQ flag (stringified
 // to "true"/"false" so it diffs uniformly).
-const JUD_DIFF_KEYS = [...JUD_STRING_KEYS, "correspondenceSameAsHq"] as const;
+const JUD_DIFF_KEYS = [...JUD_STRING_KEYS, "correspondenceSameAsHq"] as const satisfies readonly (keyof Omit<FormValues, "addresses">)[];
 
-const ADDR_KEYS = [
-  "streetLine", "postalCode", "locality", "county", "country", "notes",
-] as const satisfies readonly (keyof PersonAddressSnapshot)[];
+// The address block is the registry's outright — same six keys, no delta.
+const ADDR_KEYS: readonly (keyof PersonAddressSnapshot)[] = PERSON_ADDRESS_SNAPSHOT_KEYS;
 
 export type JudicialFieldHighlights = {
   /** Keyed by form field name (incl. notes and correspondenceSameAsHq). */

@@ -17,6 +17,7 @@
 import { z } from "zod/v4";
 import type { DocumentSnapshot } from "@/lib/documents/validation";
 import { customFieldsEqual } from "@/lib/documents/template-fields";
+import { DOCUMENT_SNAPSHOT_KEYS } from "@/lib/versioning/snapshot-registry";
 import {
   diffFieldMap,
   labelColorFromHighlights,
@@ -234,13 +235,32 @@ export function toApiPayload(values: FormValues): Record<string, unknown> {
 // Slice #18.16.VL: "institution" → "institutionId"
 // Slice #19.03: added subject, dateValidUntil, surveyorId
 // Slice #052: removed titularText, defunctText, partiesAText, partiesBText (now 20 keys)
-const DOC_FIELD_KEYS = [
-  "documentTypeId", "title", "nrDocument", "dateDocument", "institutionId",
-  "emitent", "bazaLegala", "uatProprietate", "uatProprietar", "suprafata",
-  "nrDosarSuccesoral", "dataDecesului", "ultimulDomiciliu", "nrCertificatDeces",
-  "dateStart", "dateEnd", "notes",
-  "subject", "dateValidUntil", "surveyorId",
-] as const satisfies readonly (keyof FormValues)[];
+//
+// ⚠️ **DERIVED FROM THE REGISTRY SINCE SLICE #34.19, NOT WRITTEN OUT AGAIN.**
+// `DOCUMENT_SNAPSHOT_KEYS` (src/lib/versioning/snapshot-registry.ts) is the
+// single source for what a DocumentSnapshot holds, guarded against the type
+// itself by `AssertExactKeys` at compile time and by
+// src/__tests__/snapshot-registry.test.ts at run time. The twenty literals
+// that stood here were a third copy with neither guard: they happened to agree
+// with the registry, which — in the words `object-writers-enumerated.test.ts`
+// used about the property list that did NOT agree — is a fact about that day
+// rather than a property of the code.
+//
+// The delta is stated as an expression rather than by retyping the list, so a
+// field added to DocumentSnapshot arrives here on its own: everything the
+// registry holds EXCEPT `customFields`, which is a nested record rather than a
+// flat string and is compared by `customFieldsEqual` instead (see the note on
+// the schema field above). `notes` IS in the registry for this entity — it is
+// a column on `document` — so unlike the person forms there is nothing to add
+// back.
+type DocFieldKey = Exclude<(typeof DOCUMENT_SNAPSHOT_KEYS)[number], "customFields">;
+
+// The `satisfies` is what the old list's `satisfies readonly (keyof FormValues)[]`
+// gave and a bare annotation would drop: it still fails to compile if the
+// snapshot ever grows a key the FORM does not carry under the same name.
+const DOC_FIELD_KEYS: readonly DocFieldKey[] = DOCUMENT_SNAPSHOT_KEYS.filter(
+  (key): key is DocFieldKey => key !== "customFields",
+) satisfies readonly (keyof FormValues)[];
 
 /** Per-field highlight frames, keyed by document field name. */
 export type DocumentFieldHighlights = Partial<

@@ -15,7 +15,7 @@
  * value set and a SQL file are one decision written in two languages, and only
  * a test can hold them together.
  *
- * FOUR BINDS, and each one is a way the list has actually drifted:
+ * FIVE BINDS, and each one is a way the list has actually drifted:
  *
  *   1. **The seed.** `sync-reference-data.sql` is what a rebuilt cloud project
  *      and Ciprian's UAT box are given. Three keys were missing from it
@@ -38,6 +38,12 @@
  *   4. **The prompts.** The model can only answer with a key it was taught, so
  *      a catalogue the prompt does not render is a catalogue half the app
  *      believes in.
+ *
+ *   5. **The hand-run data script.** `scripts/add-document-types.sql` created
+ *      four rows against the live database in Slice #34.09 and deliberately
+ *      added them to neither list. Slice #34.19 added them to both, so the
+ *      script is now a third place the same four (key, name) pairs are
+ *      written and a third place they can drift.
  *
  * ⚠️ **`seed.ts` IS PARSED RATHER THAN IMPORTED.** It opens a database
  * connection at module scope; importing it from a test would try to reach
@@ -75,9 +81,10 @@ function sqlWithoutComments(sql: string): string {
  *
  * ⚠️ **COMMENTS ARE STRIPPED FIRST, AND THEN THE BLOCK IS CUT AT THE FIRST `;`
  * — in that order, because the block's own comments mention one.** Cutting
- * first reads seven rows of twenty-six and reports them as the whole
+ * first reads seven rows of forty-four and reports them as the whole
  * catalogue, which is a green test over a broken invariant. A round hit exactly
- * that.
+ * that. (Seven is still what it reads; the twenty-six the sentence used to name
+ * was the size of the catalogue when it was written.)
  *
  * ⚠️ **EVERY tuple, not the first one per line, and a third review round is
  * why.** A line-anchored `.exec` reads one tuple and drops the rest, and this
@@ -122,6 +129,95 @@ describe("the catalogue and the seed are one list", () => {
 
   it("derives KNOWN_TYPE_KEYS from the catalogue rather than restating it", () => {
     expect([...KNOWN_TYPE_KEYS]).toEqual(KNOWN_DOCUMENT_TYPES.map((type) => type.key));
+  });
+});
+
+/**
+ * The four act types, bound to the script that created them.  (Slice #34.19)
+ *                                                              [bind 5 above]
+ *
+ * `scripts/add-document-types.sql` is DATA, not a migration: it lives outside
+ * `src/db/` on purpose, so `Apply-Migration.ps1` never sees it and
+ * `migrationChain()` never globs it, and it was run by hand against the live
+ * database in Slice #34.09. Its header said, in as many words, that it was NOT
+ * adding these four to `sync-reference-data.sql` and therefore not to
+ * `KNOWN_DOCUMENT_TYPES` either — because the second of those is the
+ * classifier's whitelist, and what a MODEL may answer is a decision, not a
+ * consequence. #34.19 took the decision: all four, both lists.
+ *
+ * ⚠️ **THE NAMES ARE READ OUT OF THE SCRIPT; THE KEYS ARE RESTATED EXACTLY
+ * ONCE, AS THE ANTI-VACUITY GUARD.** A full set of (key, name) literals in
+ * this suite would be a FOURTH copy of a list this file exists to keep at one,
+ * and it would stay green against a script whose NAMES had since been
+ * corrected — the names are where the Romanian diacritics are, and they are
+ * the half never written down here. The four KEYS are listed in the first
+ * assertion for one reason: a regex that matched nothing would otherwise make
+ * every assertion below pass by checking no rows at all, which is the trap
+ * this file already records for the migration_035 bind. So a key corrected in
+ * the script does turn that one assertion red, on purpose, and the three that
+ * follow read the script.
+ *
+ * What this does NOT assert, deliberately: that the migration chain seeds them.
+ * It does not. `migration_072_seed_document_types.sql` is generated from the
+ * seed block but is an APPLIED migration whose MD5 is recorded in
+ * `schema_migrations`, so #34.19 did not regenerate it in place — these four
+ * are seed-only, which is four REFDATA lines in
+ * `src/db/rebuild-known-differences.txt` and a re-baseline. Freezing that gap
+ * as an assertion would make the slice that closes it fail for doing so.
+ */
+describe("the four act types are one list in three files", () => {
+  /** The `(key, name)` pairs `scripts/add-document-types.sql` inserts. */
+  function scriptedActTypes(): { key: string; name: string }[] {
+    const sql = sqlWithoutComments(read("scripts/add-document-types.sql"));
+    return [...sql.matchAll(/ARRAY\['([A-Z0-9_]+)',\s*'([^']*)'\]/g)].map((m) => ({
+      key: m[1],
+      name: m[2],
+    }));
+  }
+
+  it("reads four rows out of the script, and they are the acts", () => {
+    // A regex that matched nothing would make every assertion below pass by
+    // checking no rows at all — the trap this file already records for the
+    // migration_035 bind.
+    const scripted = scriptedActTypes();
+    expect(scripted.map((r) => r.key).sort()).toEqual([
+      "ACT_ADITIONAL",
+      "ACT_ALIPIRE",
+      "ACT_DEZLIPIRE",
+      "ACT_DEZMEMBRARE",
+    ]);
+  });
+
+  it("seeds each of them, under the name the script gives it", () => {
+    const seeded = new Map(seededDocumentTypes().map((r) => [r.key, r.name]));
+    const wrong = scriptedActTypes()
+      .filter((row) => seeded.get(row.key) !== row.name)
+      .map((row) => `${row.key}: script "${row.name}" vs seed "${seeded.get(row.key)}"`);
+    expect(wrong).toEqual([]);
+  });
+
+  it("lets the classifier answer each of them by key", () => {
+    // The reason the decision was a decision: `canonicalTypeKey` resolves
+    // against KNOWN_DOCUMENT_TYPES, so before this slice a model's answer of
+    // `ACT_ADITIONAL` was thrown away and the document reached the row only
+    // through `matchDocumentType` on the display label.
+    for (const { key } of scriptedActTypes()) {
+      expect(canonicalTypeKey(key)).toBe(key);
+      expect(canonicalTypeKey(` ${key}\n`)).toBe(key);
+    }
+  });
+
+  it("teaches each of them to both prompts, beside its stored name", () => {
+    // Rendered from KNOWN_DOCUMENT_TYPES by KNOWN_TYPE_LINES, so this is a
+    // check that the four went in as catalogue rows rather than as a special
+    // case somewhere — the whole-catalogue version of this assertion is
+    // further down and would also cover them.
+    const byKey = new Map(KNOWN_DOCUMENT_TYPES.map((t) => [t.key as string, t.name as string]));
+    for (const { key } of scriptedActTypes()) {
+      for (const text of [CLASSIFY_SYSTEM_PROMPT, buildExtractSystemPrompt([])]) {
+        expect(text).toContain(`${key} — ${byKey.get(key)}`);
+      }
+    }
   });
 });
 

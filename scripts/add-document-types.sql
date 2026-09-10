@@ -76,35 +76,54 @@
 --  words kept, Romanian diacritics exactly as the interface will show them.
 --
 -- ---------------------------------------------------------------------------
---  WHAT THIS FILE DELIBERATELY DOES NOT DO
+--  WHAT THIS FILE DOES NOT DO  (REWRITTEN BY SLICE #34.19)
 -- ---------------------------------------------------------------------------
 --
---  ⚠️ **IT DOES NOT ADD THESE FOUR TO `src/db/sync-reference-data.sql`, AND
---  THEREFORE NOT TO `KNOWN_DOCUMENT_TYPES` EITHER.** Those two are one list
---  written twice and `src/__tests__/document-type-catalogue-single-source.test.ts`
---  holds them together in both directions, so a row added to one has to be
---  added to the other - and the other is the classifier's whitelist, which is
---  a decision about what a MODEL may answer, not about what the archive holds.
---  That is the document-types series that follows this slice, not this one.
+--  ⚠️ **SLICE #34.19 ANSWERED THE QUESTION THIS SECTION USED TO LEAVE OPEN, SO
+--  READ THE PARAGRAPH BELOW AND NOT THE ONE IT REPLACED.** What stood here
+--  said that this file does NOT add the four to `src/db/sync-reference-data.sql`
+--  and therefore not to `KNOWN_DOCUMENT_TYPES` either, because those two are
+--  one list written twice - bound in both directions by
+--  `src/__tests__/document-type-catalogue-single-source.test.ts` - and the
+--  second of them is the classifier's whitelist, which is a decision about what
+--  a MODEL may answer rather than about what the archive holds. That decision
+--  belonged to the document-types series, and #34.19 is where it was taken:
+--  **all four are in both lists now.** The rest of this file is unchanged and
+--  still correct; only the consequences below moved.
 --
---  What it costs, stated rather than discovered:
---    * A database rebuilt from files (`Verify-Rebuild`, the CI `DB rebuild`
---      workflow, a fresh Supabase project loaded through the reference-data
---      seed) will NOT have these four rows. Nothing fails - they are rows, not
---      schema - and `src/db/rebuild-known-differences.txt` is unaffected,
---      because that file compares two databases both built from files and
---      neither of them will have run this script.
+--  What that changes, and what it does not:
+--    * A database rebuilt from `sync-reference-data.sql` (a fresh Supabase
+--      project, the reference-data seed) now HAS these four rows. A database
+--      built by replaying the migration chain still does not: the chain seeds
+--      document types through `migration_072_seed_document_types.sql`, which is
+--      generated from that block but is an APPLIED migration whose MD5 sits in
+--      `schema_migrations`, so #34.19 did not regenerate it in place. The two
+--      rebuild paths therefore differ by these four rows, which is four new
+--      REFDATA `+` lines in `src/db/rebuild-known-differences.txt` and a
+--      re-baseline (`npm run db:verify-rebuild -- --update-baseline`, Docker).
 --    * `build-ciprian-image.ps1` pg_dumps LIVE reference data, so the rows do
 --      travel to Ciprian's box once this has been run against `ga40db` and the
 --      image is rebuilt. `scripts/supabase-sync.ts` copies live rows too. So
 --      the rows reach every place that matters by the routes that carry rows.
---    * The classifier cannot answer one of these four BY KEY, because
---      `canonicalTypeKey` resolves against `KNOWN_DOCUMENT_TYPES`. It can
---      still reach them by NAME: `resolveClassifiedDocumentType` matches a
---      model's label against the stored rows through `matchDocumentType`, so a
---      document the model calls „act adițional" lands on the row below rather
---      than creating a second one. That is the whole reason the rows are worth
---      creating before the form work.
+--    * The classifier can now answer one of these four BY KEY:
+--      `canonicalTypeKey` resolves against `KNOWN_DOCUMENT_TYPES` and all four
+--      are on it. It could already reach them by NAME -
+--      `resolveClassifiedDocumentType` matches a model's label against the
+--      stored rows through `matchDocumentType`, so a document the model calls
+--      „act adițional" landed on the row below rather than creating a second
+--      one - and that is still the fallback. What the key buys is a carve-out:
+--      `type-config` and every other rule that matches a literal canonical key
+--      can now be written for these types at all.
+--
+--  ⚠️ **THIS FILE IS STILL WORTH KEEPING AND STILL WORTH RUNNING.** It is how
+--  the LIVE `ga40db` got these rows and it is idempotent twice over, so a
+--  second run against a database that already has them writes nothing and says
+--  so. One difference is now visible between the two routes: this file writes
+--  no `sort_order`, so the live rows carry the column's DEFAULT 0, while the
+--  seed block gives them 40-43. Nothing reads it - `listValues` orders
+--  document-types by UNCLASSIFIED-first and then by NAME - which is the same
+--  reason the `AND IT WRITES NO sort_order` paragraph below gives for leaving
+--  the column out here in the first place.
 --
 --  ⚠️ **AND IT WRITES NO `sort_order`.** The document-types list is ordered
 --  „UNCLASSIFIED first, then name" (`listValues`), so the column decides

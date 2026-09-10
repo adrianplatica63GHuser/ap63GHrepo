@@ -19,6 +19,10 @@ import type {
   PersonAddressSnapshot,
 } from "@/lib/persons/validation";
 import {
+  NATURAL_PERSON_SNAPSHOT_FIELDS_KEYS,
+  PERSON_ADDRESS_SNAPSHOT_KEYS,
+} from "@/lib/versioning/snapshot-registry";
+import {
   diffFieldMap,
   labelColorFromHighlights,
   normVal,
@@ -346,14 +350,32 @@ export function toApiPayload(
 
 // String-valued form field names (all top-level fields except the boolean
 // correspondenceSameAsHome and the nested addresses).
+//
+// ⚠️ **DERIVED FROM THE REGISTRY SINCE SLICE #34.19, THROUGH A UNION RATHER
+// THAN AN ASSIGNMENT.** `NATURAL_PERSON_SNAPSHOT_FIELDS_KEYS`
+// (src/lib/versioning/snapshot-registry.ts) is the single source for what a
+// natural-person snapshot's own fields are, guarded by `AssertExactKeys` at
+// compile time and by src/__tests__/snapshot-registry.test.ts at run time. The
+// literals that stood here were a second copy with only a `satisfies` on the
+// FORM type behind them — which catches a key the form does not have, and says
+// nothing at all about a snapshot field the list forgot.
+//
+// A straight assignment will not do, and the two differences are the whole
+// reason this is written as a union:
+//   * `notes` is NOT a registry key. It lives beside `natural` on the snapshot
+//     (`snap.notes`, see snapshotFieldMap below), not inside it, so it is
+//     added back here — and it is a real diffed field, not a display extra.
+//   * `correspondenceSameAsHome` IS a registry key but is a boolean rather
+//     than a string, so it is held out of the string list and rejoined in
+//     NAT_DIFF_KEYS below, stringified. Excluding it by TYPE rather than by
+//     hand is what keeps `formValuesEqual`'s `normVal(a[k])` sound.
 const NAT_STRING_KEYS = [
-  "firstName", "lastName", "nickname", "cnp", "idDocumentType",
-  "idDocumentNumber", "gender", "dateOfBirth", "personalPhone1",
-  "personalPhone2", "workPhone", "personalEmail1", "personalEmail2",
-  "workEmail", "placeOfBirth", "idIssuingAuthority", "idValidFrom",
-  "idValidUntil", "idCardNumber", "idMrzRaw", "citizenshipId",
-  // Slice #18.16.VL:
-  "physicalPersonTypeId",
+  ...NATURAL_PERSON_SNAPSHOT_FIELDS_KEYS.filter(
+    (key): key is Exclude<
+      (typeof NATURAL_PERSON_SNAPSHOT_FIELDS_KEYS)[number],
+      "correspondenceSameAsHome"
+    > => key !== "correspondenceSameAsHome",
+  ),
   "notes",
 ] as const satisfies readonly (keyof Omit<FormValues, "addresses" | "correspondenceSameAsHome">)[];
 
@@ -361,9 +383,8 @@ const NAT_STRING_KEYS = [
 // to "true"/"false" so it diffs uniformly). Mirrors JUD_DIFF_KEYS.
 const NAT_DIFF_KEYS = [...NAT_STRING_KEYS, "correspondenceSameAsHome"] as const satisfies readonly (keyof Omit<FormValues, "addresses">)[];
 
-const ADDR_KEYS = [
-  "streetLine", "postalCode", "locality", "county", "country", "notes",
-] as const satisfies readonly (keyof PersonAddressSnapshot)[];
+// The address block is the registry's outright — same six keys, no delta.
+const ADDR_KEYS: readonly (keyof PersonAddressSnapshot)[] = PERSON_ADDRESS_SNAPSHOT_KEYS;
 
 export type NaturalFieldHighlights = {
   /** Keyed by form field name (incl. notes and correspondenceSameAsHome). */

@@ -13,6 +13,10 @@ import {
   type SnapshotLookupOption,
   type SnapshotLookupState,
 } from "@/lib/versioning/snapshot-lookup";
+import {
+  PROPERTY_SNAPSHOT_ADDRESS_KEYS,
+  PROPERTY_SNAPSHOT_PROPERTY_KEYS,
+} from "@/lib/versioning/snapshot-registry";
 import type {
   PropertyCreate,
   PropertySnapshot,
@@ -272,15 +276,40 @@ export type CornerDiffEntry =
   | { type: "changed"; corner: Corner }
   | { type: "removed" };
 
-const PROPERTY_SNAP_KEYS: (keyof PropertySnapshotProperty)[] = [
-  "propertyTypeId", "nickname", "tarlaId", "parcela", "cadastralNumber",
-  "carteFunciara", "useCategoryId", "surfaceAreaMp", "notes",
-];
+// ⚠️ **THE REGISTRY, NOT A COPY OF IT — AND THIS PAIR IS WHY SLICE #34.19 WENT
+// LOOKING.** `PROPERTY_SNAPSHOT_PROPERTY_KEYS` and
+// `PROPERTY_SNAPSHOT_ADDRESS_KEYS` (src/lib/versioning/snapshot-registry.ts)
+// are the single source for a PropertySnapshot's shape, guarded by
+// `AssertExactKeys` at compile time and by
+// src/__tests__/snapshot-registry.test.ts at run time. The nine literals that
+// stood here were annotated `(keyof PropertySnapshotProperty)[]`, which guards
+// one direction only — a FOREIGN key would not compile — and says nothing at
+// all about a key the list forgot. It had forgotten one: the registry holds
+// ten, and the missing one was `calculatedAreaMp`. That is the same absence
+// `object-writers-enumerated.test.ts` records for `snapshotsEqual` — its
+// header calls it "written into every snapshot and compared in none" — found a
+// second time, in a second hand-written list, in the same entity.
+//
+// ⚠️ **WHAT THE USER SEES IS UNCHANGED, AND THAT IS A STATEMENT ABOUT TWO
+// THINGS RATHER THAN A HOPE.**
+//   * The FRAMES. `computeFieldHighlights` now returns a `calculatedAreaMp`
+//     entry, and nothing renders it: property-form.tsx draws the calculated
+//     area with `ReadOnlyField`, which takes no `highlight` prop, while every
+//     framed field on that form passes `displayHighlights?.property.<key>`.
+//     So the set of fields the version view frames is exactly what it was.
+//   * The LABEL COLOUR. `versionLabelColor` below reads this map, so a red on
+//     the new key could in principle turn a green version red. It cannot:
+//     `calculatedAreaMp` is computed from the corners (lib/properties/
+//     corner-geometry.ts), so it differs only when the corners differ, and
+//     `cornersChanged` already forces red in that case. A snapshot written
+//     before migration_033 carries no such key at all, which reads as
+//     null -> value, i.e. green, and green never flips the label.
+// Both halves are asserted in src/__tests__/version-diff-registry-bound.test.ts.
+const PROPERTY_SNAP_KEYS: readonly (keyof PropertySnapshotProperty)[] =
+  PROPERTY_SNAPSHOT_PROPERTY_KEYS;
 
-const ADDRESS_SNAP_KEYS: (keyof PropertySnapshotAddress)[] = [
-  "streetLine", "postalCode", "locality", "county", "country", "notes",
-  "streetViewStreetLine",
-];
+const ADDRESS_SNAP_KEYS: readonly (keyof PropertySnapshotAddress)[] =
+  PROPERTY_SNAPSHOT_ADDRESS_KEYS;
 
 /** Trim, treat "" as unset — same semantics as `blank`. */
 function normVal(v: string | null | undefined): string | null {

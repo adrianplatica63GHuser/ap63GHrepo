@@ -120,8 +120,9 @@ describe("documentTypeOptionLabel — the picker marks the MINORITY", () => {
 
   // ⚠️ Not the same assertion as the one above. A marker that happened to
   // return its argument unchanged would satisfy "byte-for-byte" and still be
-  // wrong — the day the wording gains a suffix, twenty-three of twenty-four
-  // options grow one. This pins that the marker is not REACHED.
+  // wrong — the day the wording gains a suffix, every formless option in the
+  // list grows one, which is nearly all of them. This pins that the marker is
+  // not REACHED.
   it("never calls the marker for a formless type", () => {
     const calls: string[] = [];
     documentTypeOptionLabel("Contract", null, (n) => { calls.push(n); return n; });

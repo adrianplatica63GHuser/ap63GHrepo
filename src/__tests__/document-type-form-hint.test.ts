@@ -27,8 +27,9 @@
  *      a label and a colour could never disagree; a hint is now the third
  *      reader of it.
  *
- *   4. **The marking silently flips.** Twenty-three of the twenty-four seeded
- *      types have no form, so annotating the majority costs nothing at compile
+ *   4. **The marking silently flips.** `src/db/sync-reference-data.sql` writes
+ *      `template_fields` for none of its forty-four types, so annotating the
+ *      majority costs nothing at compile
  *      time and makes the dropdown say nothing. The property is pinned in
  *      `document-status.test.ts`; what is pinned HERE is that the component
  *      goes through the function that has it.

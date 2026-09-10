@@ -101,6 +101,38 @@
  * self-evident. Renaming any of those rows without editing the matching rule
  * puts the pair back where it started.
  *
+ * ⚠️ **FOUR ACT TYPES WERE ADDED BY SLICE #34.19, AND WHAT IS NEW IS THE KEY
+ * RATHER THAN THE ROW.** ACT_ADITIONAL, ACT_ALIPIRE, ACT_DEZLIPIRE and
+ * ACT_DEZMEMBRARE were created against the live database by
+ * `scripts/add-document-types.sql` in Slice #34.09, which deliberately left
+ * them off this list: the rows are what the archive holds, but the list is
+ * what a MODEL may answer, and #34.09 said that was a decision for the
+ * document-types series rather than for a script. The decision was taken —
+ * all four, both lists — so the classifier can now name them BY KEY instead of
+ * only reaching them through `matchDocumentType` on the display name, which is
+ * what makes a `type-config` carve-out on one of them possible at all.
+ *
+ * ⚠️ **THE ALIPIRE / DEZLIPIRE / DEZMEMBRARE TRIO IS A CONFUSABLE SET AND
+ * NOTHING SEPARATES THEM YET.** Alipire MERGES parcels, dezlipire and
+ * dezmembrare SPLIT one — the same shape as ACT_PARTAJ beside CONTRACT_PARTAJ
+ * two paragraphs up, which carries a rule in CLASSIFY_SYSTEM_PROMPT for
+ * exactly this reason. #34.19 put the prompt out of scope, so the trio goes in
+ * with their names alone to tell them apart. On a database seeded from
+ * `sync-reference-data.sql` a wrong answer among the three is a mis-filed
+ * type rather than a created one, because all four rows are there.
+ *
+ * ⚠️ **ON A CHAIN-BUILT DATABASE THERE IS NO ROW FOR ANY OF THE FOUR YET, AND
+ * THAT IS A CONSEQUENCE OF WHITELISTING THEM.** The migration chain seeds
+ * document types through `migration_072_seed_document_types.sql`, which #34.19
+ * could not regenerate (its MD5 is recorded in `schema_migrations`), so a
+ * database built by replaying migrations holds none of these keys. A model
+ * answering `ACT_ALIPIRE` there now passes `canonicalTypeKey` — it did not
+ * before — finds no stored row, and `resolveClassifiedDocumentType` CREATES
+ * one. That is the #29.07 path working as designed rather than finding F6
+ * returning: the created row carries the canonical key, so every carve-out
+ * that matches it still fires. What it is not is a no-op, and the fix is the
+ * additive forward migration that gives the chain the four rows.
+ *
  * Six entries were removed by Slice #23.01.Import and stay removed:
  *
  *   CARTE_IDENTITATE_ALT  - never seeded. migration_021 defined three
@@ -142,8 +174,12 @@ import { UNCLASSIFIED_DOCUMENT_TYPE_KEY } from "@/lib/documents/document-type-ma
  * was `src/db/rebuild-known-differences.txt`'s and is closed.
  */
 export const KNOWN_DOCUMENT_TYPES = [
+  { key: "ACT_ADITIONAL",               name: "Act Adițional" },
   { key: "ACT_ADJUDECARE",              name: "Act de Adjudecare" },
+  { key: "ACT_ALIPIRE",                 name: "Act de Alipire" },
   { key: "ACT_CADASTRU",                name: "Act Cadastru" },
+  { key: "ACT_DEZLIPIRE",               name: "Act de Dezlipire" },
+  { key: "ACT_DEZMEMBRARE",             name: "Act de Dezmembrare" },
   { key: "ACT_DONATIE",                 name: "Act de Donație" },
   { key: "ACT_LOTIZARE",                name: "Act de Lotizare" },
   { key: "ACT_PARTAJ",                  name: "Act de Partaj" },

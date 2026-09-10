@@ -126,8 +126,9 @@ export function documentTypeHasForm(templateFields: unknown): boolean {
  * exactly as it is when it does not.                            (Slice #27.02)
  *
  * ⚠️ **The marking is this way round on purpose, and the seed data is the
- * argument.** Twenty-three of the twenty-four types in
- * `src/db/sync-reference-data.sql` have no custom form, so annotating THOSE
+ * argument.** `src/db/sync-reference-data.sql` seeds forty-four types and
+ * writes `template_fields` for none of them, and only a handful in a live
+ * archive ever grow one — so annotating the formless ones
  * would hang the same parenthesis on almost every option in the list and say
  * nothing. A form is the exception, so the exception is what gets said.
  *
@@ -231,7 +232,7 @@ export function documentTypeNameClass(row: DocumentTypeStatusInput): string {
  * Is this type still waiting for a custom form?                 (Slice #27.07)
  *
  * The Reference Data list can be narrowed to these, so "what is left to
- * onboard" is one click rather than a scan of twenty-four rows.
+ * onboard" is one click rather than a scan of every row in the list.
  *
  * ⚠️ **DERIVED FROM `documentTypeStatus`, NOT FROM `documentTypeHasForm`, and
  * that is the whole reason this function exists rather than a `!` at the call

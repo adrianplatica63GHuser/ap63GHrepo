@@ -242,7 +242,37 @@ INSERT INTO lookup_document_type (key, name, sort_order) VALUES
   ('INCHEIERE_INTABULARE',          'Încheiere de Intabulare',           36),
   ('PLAN_AMPLASAMENT_DELIMITARE',   'Plan de Amplasament și Delimitare',  37),
   ('PLAN_PARCELAR',                 'Plan Parcelar',                     38),
-  ('PROCURA',                       'Procură',                           39);
+  ('PROCURA',                       'Procură',                           39),
+  -- Slice #34.19: the four act types the archive holds and this file did not.
+  -- `scripts/add-document-types.sql` (Slice #34.09, part 4) created them by
+  -- hand against the live database and said in as many words that it was NOT
+  -- adding them here, because doing so also adds them to KNOWN_DOCUMENT_TYPES
+  -- and that is a decision about what a MODEL may answer. Adrian answered it:
+  -- all four, both lists. The evidence for each row is in that script's header
+  -- (Catalogue 33.04, items 74, 77 and 78) and is not repeated here.
+  --
+  -- ⚠️ **THE `sort_order`s ARE NEW NUMBERS AND THE LIVE ROWS CARRY 0.**
+  -- `add-document-types.sql` deliberately writes no `sort_order`, so the rows
+  -- it created took the column's DEFAULT 0, and a database seeded from this
+  -- file gets 40-43 instead. Nothing reads the difference: `listValues`
+  -- (src/lib/admin/value-lists/queries.ts) orders document-types by
+  -- `CASE WHEN key = 'UNCLASSIFIED' THEN 0 ELSE 1 END` and then by NAME, which
+  -- is why the paragraph above calls these numbers a stable identity for the
+  -- row and nothing more.
+  --
+  -- ⚠️ **AND THE MIGRATION CHAIN DOES NOT SEED THEM.**
+  -- `migration_072_seed_document_types.sql` is generated from this block and
+  -- runs in the rebuild chain, which is why the fifteen rows above produced no
+  -- new REFDATA lines. It is an APPLIED migration whose MD5 is recorded in
+  -- `schema_migrations` (Apply-Migration.ps1 compares it), so it is not
+  -- regenerated in place: these four are seed-only until a later migration
+  -- adds them additively, and until then they are four new `+` lines in
+  -- src/db/rebuild-known-differences.txt. Re-baseline as the paragraph above
+  -- says.
+  ('ACT_ADITIONAL',                 'Act Adițional',                     40),
+  ('ACT_ALIPIRE',                   'Act de Alipire',                    41),
+  ('ACT_DEZLIPIRE',                 'Act de Dezlipire',                  42),
+  ('ACT_DEZMEMBRARE',               'Act de Dezmembrare',                43);
 
 -- ── lookup_institution ────────────────────────────────────────────────────────
 INSERT INTO lookup_institution (name, institution_type, sort_order) VALUES
