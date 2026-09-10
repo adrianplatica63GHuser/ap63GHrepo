@@ -18,71 +18,127 @@
 --   is dropped. Running it against an already-correct database is a no-op that
 --   reports "0 missing". Safe to run on production with live data.
 --
---   SIX STATEMENTS ARE NOT PURELY ADDITIVE, and they are named here rather
---   than left for a reader to discover (Slice #26.12 review; extended by
---   #34.02, which added four more and was told so by an adversarial round --
---   the count in this paragraph is the thing that goes stale):
+--   THE STATEMENTS THAT ARE NOT PURELY ADDITIVE ARE LISTED BELOW, EACH BY WHAT
+--   IT IS. **There is deliberately no count, and putting one back is the
+--   mistake this paragraph now exists to forbid** (Slice #34.18). A total is a
+--   second copy of the list, kept by hand, and it is the copy that rots: this
+--   file carried one for four slices and it was wrong in three of them. The
+--   UNIQUE on `lookup_property_type` was written as "an eighth" while the
+--   total said seven; #34.04 moved the total to eleven without ever listing
+--   that statement; #34.09 listed it at last, as the twelfth. Not one of those
+--   corrections changed what the file DOES - they were renumberings of a
+--   number that had no reason to exist. A bullet identified by its own
+--   statement cannot be mis-numbered, because it has no number.
+--
+--   So: to add one, add a bullet. Nothing renumbers and nothing above it
+--   changes. What has not changed either is why the list is here - it is the
+--   paragraph an operator reads before running this file against production -
+--   or the rule that anything added here holds to "additive" unless it says
+--   why not, and says so here.
+--
+--   NOT PURELY ADDITIVE:
+--
 --     * `UPDATE <t> SET origin = 'MANUAL' WHERE origin IS NULL`, on
---       lookup_document_type, lookup_tarla and lookup_institution. It writes
---       data. It touches ONLY rows whose origin is NULL, which the application
---       already reads as MANUAL, so it changes no behaviour - but it is a
---       write, and this file used to promise there were none.
---     * `ALTER TABLE <t> ALTER COLUMN origin SET NOT NULL`, on the same three.
---       Each takes ACCESS EXCLUSIVE for the length of a full-table scan. On
---       lookup tables of a few dozen rows that is immeasurable; on a large
---       table it would not be.
---   SEVEN, since #34.03:
+--       lookup_document_type, lookup_tarla and lookup_institution (#26.12,
+--       extended to the other two by #34.02). It writes data. It touches ONLY
+--       rows whose origin is NULL, which the application already reads as
+--       MANUAL, so it changes no behaviour - but it is a write, and this file
+--       used to promise there were none.
+--
+--     * `ALTER TABLE <t> ALTER COLUMN origin SET NOT NULL`, on the same three
+--       tables (#26.12, #34.02). Each takes ACCESS EXCLUSIVE for the length of
+--       a full-table scan. On lookup tables of a few dozen rows that is
+--       immeasurable; on a large table it would not be.
+--
 --     * `ALTER TABLE property ADD CONSTRAINT property_tarla_id_fkey FOREIGN
---       KEY ...`. The ADD COLUMN beside it is additive; the constraint is not
---       quite - it takes ACCESS EXCLUSIVE on `property` and validates every
---       existing row, which is the same cost as the SET NOT NULLs above. It
---       validates trivially today because this file can only ever leave
---       `tarla_id` NULL (it has no way to resolve text against lookup rows and
---       must not guess), but on a database where the column is already
---       populated the scan is real. Listed because the file's own rule is that
---       this paragraph is what an operator reads before running it against
---       production. (The pre-existing `ADD CONSTRAINT ... UNIQUE` on
---       lookup_property_type is arguably a TWELFTH - it was written as "an
---       eighth" when the running total was seven, and #34.04 moved the total
---       to eleven - and had never been listed; #34.09 finally listed it, as
---       the TWELFTH below. Renumber it with the total, or it becomes the wrong
---       count this paragraph exists to forbid.)
---   ELEVEN, since #34.04:
+--       KEY ...` (#34.03). The ADD COLUMN beside it is additive; the
+--       constraint is not quite - it takes ACCESS EXCLUSIVE on `property` and
+--       validates every existing row, which is the same cost as the SET NOT
+--       NULLs above. It validates trivially today because this file can only
+--       ever leave `tarla_id` NULL (it has no way to resolve text against
+--       lookup rows and must not guess), but on a database where the column is
+--       already populated the scan is real.
+--
 --     * `UPDATE lookup_person_role SET valid_for_property = false WHERE
---       valid_for_property IS NULL`, and the same for `valid_for_person`. Two
---       writes, the same category and the same argument as the `origin`
---       UPDATEs above: they touch only rows holding NULL, which the
---       application already reads as false.
---     * `ALTER TABLE lookup_person_role ALTER COLUMN valid_for_* SET NOT
---       NULL`, two of them. Two more ACCESS EXCLUSIVE full-table scans, on a
---       table of a few dozen roles, so immeasurable here - listed because the
---       count is what an operator reads, not because the cost is real.
---   All four exist because `ADD COLUMN IF NOT EXISTS` is a complete no-op over
---   a column of the same name that is nullable with no default; the block in
---   section 8 says so at length.
---   THIRTEEN, since #34.09 -- two more, one of which is the debt the paragraph
---   above admits to:
---     * the TWELFTH is the pre-existing `ALTER TABLE lookup_property_type ADD
---       CONSTRAINT lookup_property_type_key_unique UNIQUE (key)` in section 8,
---       listed here for the first time. It has been in the file since before
---       #26.12 and takes ACCESS EXCLUSIVE while it builds its index. Its own
---       block already refuses on duplicate data with a WARNING rather than
---       failing, which is the shape the thirteenth copies.
---     * the THIRTEENTH is `CREATE UNIQUE INDEX
---       lookup_document_type_name_normalised_unique` (migration_080, Slice
---       #34.09). It is not additive in the way the ADD COLUMNs are: it takes
---       SHARE on lookup_document_type for the length of the build -- readers
---       unaffected, writers blocked -- and, with the twelfth, IT CAN FAIL ON
---       EXISTING DATA. Two types whose names differ only by diacritics, case
---       or punctuation are one name to the index. The block in section 8
---       therefore counts first and RAISEs a WARNING naming migration_080
---       rather than attempting the CREATE, because this file runs under
---       `psql -f` with no ON_ERROR_STOP and a bare failure would scroll past a
---       post-flight still reporting OK.
---   Anything added here later should hold to "additive" unless it says why not,
---   AND should update this paragraph -- a count that is wrong is worse than no
---   count, because this is the paragraph an operator reads before running the
---   file against production.
+--       valid_for_property IS NULL`, and the same for `valid_for_person`
+--       (#34.04). Writes, of the same category and with the same argument as
+--       the `origin` UPDATEs above: they touch only rows holding NULL, which
+--       the application already reads as false.
+--
+--     * `ALTER TABLE lookup_person_role ALTER COLUMN valid_for_property SET
+--       NOT NULL`, and the same for `valid_for_person` (#34.04). More ACCESS
+--       EXCLUSIVE full-table scans, on a table of a few dozen roles, so
+--       immeasurable here - listed because the list is what an operator reads,
+--       not because the cost is real.
+--
+--       The lookup_person_role statements above exist because `ADD COLUMN IF
+--       NOT EXISTS` is a complete no-op over a column of the same name that is
+--       nullable with no default; the block in section 8 says so at length.
+--
+--     * `ALTER TABLE lookup_property_type ADD CONSTRAINT
+--       lookup_property_type_key_unique UNIQUE (key)`, in section 8. It has
+--       been in this file since before #26.12 and went unlisted until #34.09,
+--       which is the debt the numbering above kept failing to settle. It takes
+--       ACCESS EXCLUSIVE while it builds its index. Its own block already
+--       refuses on duplicate data with a WARNING rather than failing, which is
+--       the shape the bullet below copies.
+--
+--     * `ALTER TABLE entity_metadata ADD CONSTRAINT chk_em_importance CHECK
+--       (importance IN (...))`, and the same shape for `chk_em_relevance` and
+--       `chk_em_provenance`. Each takes ACCESS EXCLUSIVE and validates every
+--       existing row - the same cost, and therefore the same reason to be
+--       here, as the FK and the SET NOT NULLs above. ⚠️ **The importance and
+--       relevance CHECKs have no count-first guard**, unlike provenance and
+--       the three `origin` CHECKs below, so on a database holding a drifted
+--       value they simply fail - and this file runs under `psql -f` with no
+--       ON_ERROR_STOP, so that failure scrolls past a post-flight still
+--       reporting OK. Adding the guard is in #34.18's handover under
+--       "Noticed, not fixed"; the statements are listed here now either way.
+--
+--     * the `chk_ldt_origin`, `chk_lt_origin` and `chk_li_origin` constraints
+--       on lookup_document_type, lookup_tarla and lookup_institution (#26.12,
+--       #34.02) - each one an ADD CONSTRAINT over the origin column. ACCESS
+--       EXCLUSIVE and a full validation each. These DO count first and RAISE a
+--       WARNING rather than failing. (Described rather than quoted, because
+--       document-type-origin-single-source.test.ts records as measured fact
+--       that no comment in either SQL file spells out that constraint's
+--       expression - the suite strips comments before it scans, so it stays
+--       green either way, but the measurement should stay true.)
+--
+--       ⚠️ **These six CHECKs were missing from this list under every version
+--       of the running total**, which is the point the numbering scheme was
+--       never going to reach: the failure was OMISSION, not mis-numbering, and
+--       a bullet list does not fix omission by itself. What it does is remove
+--       the reason not to add one - there is nothing to renumber, so adding
+--       the bullet you noticed costs nothing and disturbs nothing. (#34.18
+--       adversarial review found all six.)
+--
+--     * `CREATE UNIQUE INDEX IF NOT EXISTS` on
+--       stamp_member_stamp_principal_object_unique, entity_tag_entity_tag_unique
+--       and property_corner_source_document_unique. Each follows a
+--       `CREATE TABLE IF NOT EXISTS`, so on a project that already HAS the
+--       table with colliding rows the index build fails on existing data -
+--       exactly the hazard spelled out for the unique index below, and
+--       unguarded here. Adding the count-first guard is in #34.18's handover
+--       under "Noticed, not fixed".
+--
+--     * `ALTER TABLE <t> ALTER COLUMN <c> SET DEFAULT ...`, on
+--       lookup_person_role.valid_for_property and .valid_for_person and on the
+--       three `origin` columns. Catalogue-only, so no scan and no rewrite -
+--       listed because they sit BETWEEN the UPDATE and the SET NOT NULL of
+--       each convergence above, and a list that skipped the middle statement
+--       of a three-step sequence would read as though the sequence were two.
+--
+--     * `CREATE UNIQUE INDEX lookup_document_type_name_normalised_unique`
+--       (migration_080, #34.09). It is not additive in the way the ADD COLUMNs
+--       are: it takes SHARE on lookup_document_type for the length of the
+--       build -- readers unaffected, writers blocked -- and, together with the
+--       bullet above, IT CAN FAIL ON EXISTING DATA. Two types whose names
+--       differ only by diacritics, case or punctuation are one name to the
+--       index. The block in section 8 therefore counts first and RAISEs a
+--       WARNING naming migration_080 rather than attempting the CREATE,
+--       because this file runs under `psql -f` with no ON_ERROR_STOP and a
+--       bare failure would scroll past a post-flight still reporting OK.
 --
 -- HOW TO APPLY
 --   Supabase : paste this whole file into the SQL Editor and run.
@@ -651,9 +707,10 @@ ALTER TABLE property ADD COLUMN IF NOT EXISTS tarla_id uuid;
 -- `NOT NULL DEFAULT false` fills existing rows in the same statement -- a
 -- catalogue-only change since Postgres 11, so the ADD itself takes no rewrite.
 -- The three-step convergence below it is NOT catalogue-only, and it IS listed
--- at the top of this file, under "ELEVEN, since #34.04". A project that
--- reaches these columns through THIS file has them all false, which is the
--- honest outcome: the ticks live in tables this file cannot assume exist.
+-- at the top of this file, in the list of statements that are not purely
+-- additive. A project that reaches these columns through THIS file has them
+-- all false, which is the honest outcome: the ticks live in tables this file
+-- cannot assume exist.
 --
 -- ⚠️ **The three properties are asserted SEPARATELY, exactly as for the
 -- `origin` columns below, and the single `ADD COLUMN ... NOT NULL DEFAULT` is

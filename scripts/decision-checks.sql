@@ -49,39 +49,181 @@ $$ LANGUAGE sql IMMUTABLE;
 --  What the migration would have to cope with. Three answers, in order of
 --  how much they would hurt:
 --    1a  how many properties carry a tarla value at all
---    1b  values on properties that match NO lookup_tarla row  <-- the problem
+--    1b  what migration_078 will do to this database  <-- the problem
 --    1c  duplicate codes inside lookup_tarla itself
 --
---  Decision rule: if 1b comes back empty, the migration is mechanical. If it
---  returns rows, each one needs a home — either a new lookup_tarla row or a
---  correction — before tarla_sola can become NOT NULL-able as a key.
+--  ⚠️ **1b IS THE COMPLETE PREVIEW OF migration_078, AND IT WAS NOT.** The
+--  migration itself used to say so: 1b scoped on
+--  `btrim(coalesce(tarla_sola,'')) <> ''`, knew nothing about `tarla_id`, and
+--  said nothing about the two conditions that make the file ABORT. Slice
+--  #34.18 closed all of it, and an adversarial round is why the list is four
+--  fates rather than two:
+--
+--    fate 1  a `tarla_id` names no lookup_tarla row. Section 2 adds the
+--            foreign key BEFORE anything else happens, so the ADD CONSTRAINT
+--            fails and the file rolls back.
+--    fate 2  the value matches MORE THAN ONE lookup_tarla row. Section 3 of
+--            the migration RAISEs and the whole file rolls back. Same
+--            outcome, different cause, and neither was visible here before.
+--            The two are numbered in the order the migration REACHES them,
+--            not by severity.
+--
+--            ⚠️ Fate 1 predicts the FK's failure, and section 2 only ADDS the
+--            FK when no constraint of that shape is already there. Its guard
+--            tests conrelid, contype, confrelid, conkey and confdeltype but
+--            NOT `convalidated`, so a pre-existing NOT VALID foreign key of
+--            the right shape satisfies it, the ADD is skipped, nothing
+--            validates, and the file runs on to destroy the text that fate 1
+--            said it would not reach. Nothing in this repo creates such a
+--            constraint; the gap is in #34.18's handover under "Noticed, not
+--            fixed". If you have hand-built an FK here, check `convalidated`
+--            before trusting fate 1.
+--    fate 3  no code matches the text: the text is ERASED at COMMIT and this
+--            is the only warning anyone gets.
+--    fate 4  the property already carries a DISAGREEING id: the id wins,
+--            which is right, and the text is discarded anyway.
+--
+--  ⚠️ **FATES 2 AND 3 ARE GROUPED BY THE FOLD, NOT BY THE SPELLING.**
+--  `min(...)` picks one spelling to SHOW. migration_078 section 3 states the
+--  same rule and records the review round that caught the other version: `T9`
+--  and `t9` on two properties are ONE value with one fix, and printing them as
+--  two rows says there are two problems. 1a's `distinct_values_folded` counts
+--  the same way, so those three agree.
+--
+--  Fates 1 and 4 do NOT, and deliberately: fate 1 is one row per property,
+--  because the id is what has to be fixed and every property has its own; fate
+--  4 groups by the fold AND the code its id names, because "this text lost to
+--  THAT code" is the fact. So one folded value can legitimately produce
+--  several rows under those two fates, and `distinct_values_folded` is not a
+--  row count for them. Said here because an earlier draft of this paragraph
+--  claimed 1a and 1b could never disagree, and a review round measured that
+--  they can.
+--
+--  ⚠️ **THE BLANK TEST IS `pg_temp.ga40_fold(tarla_sola) <> ''`**, the SAME
+--  function the match uses — as every guard in migration_078 does. Single-
+--  argument `btrim` strips SPACES ONLY, so the old 1b listed a tab-only value
+--  as a value about to be erased while the migration treated it as blank.
+--
+--  ⚠️ **`tarla_id` IS READ THROUGH `to_jsonb(p)`, DELIBERATELY, AND IT COSTS
+--  SOMETHING.** This script runs BEFORE the migration, on a database that may
+--  never have heard of that column — it exists only where
+--  `supabase_repair_missing_tables.sql` has run, which adds it without
+--  dropping the text. A bare `p.tarla_id` fails with `column does not exist`
+--  on exactly the databases 1b is meant to preview. What it costs, said
+--  plainly rather than discovered: `to_jsonb(p)` needs SELECT on the WHOLE
+--  `property` row (a column-level grant is not enough) and it cannot use an
+--  index, so on a large `property` it is a sequential scan. Both are fine for
+--  the one operator this script has; if either ever bites, the replacement is
+--  `\gset` + `\if` around two spellings of 1b, not a third mechanism.
+--
+--  ⚠️ **`tarla_sola` IS NOT GUARDED THAT WAY, and does not need to be.** 1a
+--  and 1b both name it directly, so both fail on a database that has ALREADY
+--  run migration_078 — which is correct: after the drop there is nothing left
+--  to preview, and this file's whole purpose is the run that has not happened.
+--
+--  Decision rule, in order:
+--    * any fate 1 or fate 2 row  — migration_078 will not apply at all. Fix
+--      those first; nothing below them is reachable.
+--    * any fate 3 row — each folded value needs a home, a new lookup_tarla row
+--      or a correction, BEFORE the migration runs. After COMMIT the text is
+--      gone and recovery is a restore.
+--    * any fate 4 row — only a stale spelling is lost; the id is the answer
+--      and it survives.
+--    * empty — the migration applies and destroys no VALUE. It still drops
+--      the `tarla_sola` column itself, and the trigram index over it; that is
+--      the point of the migration, not a casualty of it.
+--  This is the one chance to intervene: the migration's own WARNING is a
+--  record, not a prompt.
 -- ===========================================================================
-
 \echo ''
 \echo '=== 1a. Properties carrying a tarla value ==='
+\echo '    (folded, so a whitespace-only value counts as blank — as migration_078 reads it)'
 SELECT
-  count(*)                                                        AS properties_total,
-  count(*) FILTER (WHERE btrim(coalesce(tarla_sola, '')) <> '')    AS with_tarla,
-  count(*) FILTER (WHERE btrim(coalesce(tarla_sola, '')) =  '')    AS without_tarla,
-  count(DISTINCT btrim(tarla_sola))
-    FILTER (WHERE btrim(coalesce(tarla_sola, '')) <> '')           AS distinct_values
+  count(*)                                                          AS properties_total,
+  count(*) FILTER (WHERE pg_temp.ga40_fold(tarla_sola) <> '')       AS with_tarla,
+  count(*) FILTER (WHERE pg_temp.ga40_fold(tarla_sola) =  '')       AS without_tarla,
+  count(DISTINCT pg_temp.ga40_fold(tarla_sola))
+    FILTER (WHERE pg_temp.ga40_fold(tarla_sola) <> '')              AS distinct_values_folded
 FROM property;
 
 \echo ''
-\echo '=== 1b. Tarla values on properties that match no lookup_tarla row ==='
-\echo '    (empty result = the migration is mechanical)'
+\echo '=== 1b. What migration_078 will do to this database ==='
+\echo '    (empty result = it applies cleanly and no tarla VALUE is lost)'
+\echo '    (ABORT rows stop the whole file: nothing listed below them happens)'
+-- Section 2 adds `property_tarla_id_fkey` BEFORE anything else happens - before
+-- section 3's refusal, before section 4 resolves and before section 5 says a
+-- word - so a `tarla_id` pointing at no lookup_tarla row fails the ADD
+-- CONSTRAINT and rolls the whole file back. It is fate 1 because it is the
+-- first thing that can stop the file, and it is NOT scoped by `tarla_sola` at
+-- all: the FK validates every row, including the ones carrying no text.
+-- One row per property, deliberately: an aggregate row here would take its
+-- `value` from one property and its example code from another.
 SELECT
-  btrim(p.tarla_sola)        AS orphan_value,
-  count(*)                   AS properties_affected,
-  min(p.code)                AS example_property
+  '1. MIGRATION ABORTS - tarla_id names no lookup_tarla row (the FK fails)'  AS fate,
+  coalesce(nullif(btrim(regexp_replace(p.tarla_sola, '\s+', ' ', 'g')), ''), '(no text)') AS value,
+  '(none - the id is a dangling reference)'                                  AS lookup_tarla_codes,
+  1                                                                          AS properties_affected,
+  coalesce(p.code, '(no code)')                                              AS example_property
 FROM property p
-WHERE btrim(coalesce(p.tarla_sola, '')) <> ''
+WHERE (to_jsonb(p) ->> 'tarla_id') IS NOT NULL
+  AND NOT EXISTS (
+    SELECT 1 FROM lookup_tarla t
+    WHERE t.id::text = (to_jsonb(p) ->> 'tarla_id')
+  )
+
+UNION ALL
+
+SELECT
+  '2. MIGRATION ABORTS - the value matches MORE THAN ONE lookup_tarla row'   AS fate,
+  min(btrim(regexp_replace(p.tarla_sola, '\s+', ' ', 'g')))                  AS value,
+  string_agg(DISTINCT t.indicativ, ' | ' ORDER BY t.indicativ)               AS lookup_tarla_codes,
+  count(DISTINCT p.id)                                                       AS properties_affected,
+  min(coalesce(p.code, '(no code)'))                                         AS example_property
+FROM property p
+JOIN lookup_tarla t
+  ON pg_temp.ga40_fold(t.indicativ) = pg_temp.ga40_fold(p.tarla_sola)
+WHERE pg_temp.ga40_fold(p.tarla_sola) <> ''
+GROUP BY pg_temp.ga40_fold(p.tarla_sola)
+HAVING count(DISTINCT t.id) > 1
+
+UNION ALL
+
+SELECT
+  '3. text ERASED - no lookup_tarla code matches it'                         AS fate,
+  min(btrim(regexp_replace(p.tarla_sola, '\s+', ' ', 'g')))                  AS value,
+  NULL::text                                                                 AS lookup_tarla_codes,
+  count(*)                                                                   AS properties_affected,
+  min(coalesce(p.code, '(no code)'))                                         AS example_property
+FROM property p
+WHERE pg_temp.ga40_fold(p.tarla_sola) <> ''
+  AND (to_jsonb(p) ->> 'tarla_id') IS NULL
   AND NOT EXISTS (
     SELECT 1 FROM lookup_tarla t
     WHERE pg_temp.ga40_fold(t.indicativ) = pg_temp.ga40_fold(p.tarla_sola)
   )
-GROUP BY 1
-ORDER BY properties_affected DESC, orphan_value;
+GROUP BY pg_temp.ga40_fold(p.tarla_sola)
+
+UNION ALL
+
+-- The other way a value goes, and the one 1b could not see at all. Section 5
+-- of migration_078 warns about it separately: the property already had an id,
+-- its text does not agree with the code that id names, the id wins - which is
+-- right - and the text still disappears. Inner join, exactly as section 5's
+-- own listing does, because the id that names nothing is fate 1 above and
+-- never reaches section 5.
+SELECT
+  '4. text DISCARDED - the property already carries a DISAGREEING tarla_id'  AS fate,
+  min(btrim(regexp_replace(p.tarla_sola, '\s+', ' ', 'g')))                  AS value,
+  t.indicativ                                                                AS lookup_tarla_codes,
+  count(*)                                                                   AS properties_affected,
+  min(coalesce(p.code, '(no code)'))                                         AS example_property
+FROM property p
+JOIN lookup_tarla t ON t.id::text = (to_jsonb(p) ->> 'tarla_id')
+WHERE pg_temp.ga40_fold(p.tarla_sola) <> ''
+  AND pg_temp.ga40_fold(t.indicativ) <> pg_temp.ga40_fold(p.tarla_sola)
+GROUP BY pg_temp.ga40_fold(p.tarla_sola), t.indicativ
+
+ORDER BY 1, 4 DESC, 2;
 
 \echo ''
 \echo '=== 1c. Duplicate codes inside lookup_tarla ==='

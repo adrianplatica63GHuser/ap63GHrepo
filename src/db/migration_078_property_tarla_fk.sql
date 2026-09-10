@@ -179,22 +179,37 @@
 --       Get-Content .\scripts\decision-checks.sql |
 --         docker exec -i ga40prj-postgres psql -U postgres -d ga40db
 --
---   Query 1b lists the values with NO matching code - the ones this file
---   erases outright, and the class that matters. That is why that step is in
---   the handover as a real precondition rather than a courtesy.
+--   Query 1b lists everything this file will do to the database it is run
+--   against: the two ways a value is destroyed, AND the two conditions under
+--   which this file destroys nothing because it aborts. That is why that step
+--   is in the handover as a real precondition rather than a courtesy.
 --
---   ⚠️ **It is not a complete preview, and a review round is why that is said
---   here rather than discovered later.** 1b scopes on
---   `btrim(coalesce(tarla_sola,'')) <> ''` and knows nothing about `tarla_id`,
---   so it differs from this file in two directions: it does NOT show a
---   property whose text is dropped because the property already carried a
---   DISAGREEING id (section 5's second warning - a case that only exists on a
---   database repaired through `supabase_repair_missing_tables.sql`, which adds
---   `tarla_id` without dropping the text), and it DOES list a whitespace-only
---   value that this file treats as blank (the btrim/fold split two paragraphs
---   up). Bringing 1b into line is a one-query change and is in the handover
---   under "Noticed, not fixed"; until then, read it as "the values with no
---   code", which is what it is.
+--   ⚠️ **IT IS A COMPLETE PREVIEW SINCE SLICE #34.18, AND IT WAS NOT WHEN
+--   THIS FILE SHIPPED.** The paragraph here used to say so at length, as a
+--   review round's finding: 1b scoped on `btrim(coalesce(tarla_sola,'')) <> ''`
+--   and knew nothing about `tarla_id`, so it differed from this file in two
+--   directions - it did NOT show the DISAGREEING-id case (section 5's second
+--   warning, which only exists on a database repaired through
+--   `supabase_repair_missing_tables.sql`, since that file adds `tarla_id`
+--   without dropping the text), and it DID list a whitespace-only value that
+--   this file treats as blank (the btrim/fold split, two paragraphs BELOW -
+--   the old text said "up", and it was wrong about that too). Both are closed:
+--   1b now asks `pg_temp.ga40_fold(tarla_sola) <> ''`, the same function this
+--   file asks, groups by that fold rather than by the spelling for the reason
+--   section 3 gives, and prints the disagreeing case as a row of its own. It
+--   reads `tarla_id` through `to_jsonb(p) ->> 'tarla_id'` so that it still
+--   runs on a database that has no such column - which is most of them, and is
+--   the state 1b exists to be run in.
+--
+--   ⚠️ **AND IT NOW PREVIEWS THE TWO ABORTS, WHICH NOTHING DID.** #34.18's
+--   adversarial round pointed out that a preview naming only what is destroyed
+--   leaves an operator reading four tidy rows while the apply dies: section 3
+--   RAISEs on a value matching more than one `lookup_tarla` row, and section
+--   2's `ADD CONSTRAINT property_tarla_id_fkey` - which runs BEFORE the
+--   backfill and before section 5 says anything - fails outright on a
+--   `tarla_id` that names no `lookup_tarla` row. Neither destroys a thing;
+--   both mean this file does not apply. 1b lists them first, above the
+--   destructions, because nothing below them is reachable.
 --
 --   ⚠️ **"EVERY UNRESOLVED VALUE" IS SCOPED BY ONE PREDICATE, AND A REVIEW
 --   ROUND CHANGED WHICH ONE.** Sections 3 to 5 originally asked
