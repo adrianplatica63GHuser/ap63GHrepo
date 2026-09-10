@@ -20,10 +20,13 @@
  *      relabelled; and — the half that would be a 23503 rather than a cosmetic
  *      slip — the marking lands in the LABEL and never in the value, so
  *      whatever reads the option back reads a bare `lookup_person_role.id`.
- *   2. Five of the seven person-role pickers go through it, and the other two
- *      decline it on the screen, in writing. „Seven" is asserted by SEARCHING
- *      for the pickers rather than by trusting a hand-written list, because an
- *      eighth screen added later would otherwise be silently uncovered.
+ *   2. Six of the eight person-role pickers go through it, and the other two
+ *      decline it on the screen, in writing. The COUNT is asserted by SEARCHING
+ *      for the pickers rather than by trusting a hand-written list, because a
+ *      screen added later would otherwise be silently uncovered. (It was five
+ *      of seven when this file was written; Slice #34.15 gave
+ *      `judicial-persons/[id]/associate-person` the picker its natural-person
+ *      twin already had, and the assertion below is where that was recorded.)
  *   3. The carried set is scoped to whatever the OFFERED list is scoped to, and
  *      the marked option is DISABLED. These are create screens: re-offering a
  *      role whose tick an administrator removed would grant on a create screen
@@ -256,17 +259,28 @@ const NOT_UNIONED = [
 const UNIONED = PICKER_FILES.filter((f) => !NOT_UNIONED.includes(f));
 
 describe("the person-role pickers", () => {
-  it("are the seven this slice knows about, and no eighth that was missed", () => {
+  /**
+   * ⚠️ **SEVEN UNTIL SLICE #34.15, EIGHT SINCE, AND THE EIGHTH IS THE POINT OF
+   * THAT SLICE RATHER THAN A SCREEN THIS ONE MISSED.**
+   * `judicial-persons/[id]/associate-person` had no role picker at all — no
+   * `usePersonRoleOptions`, no `relationshipRoleId` in its POST — while its
+   * natural-person twin posts to the same route and writes the same
+   * `person_person` row, which the References tab already prints a role from.
+   * #34.15 gave it the twin's picker. This line is the record that the count
+   * moved on purpose; the screen's own header carries the argument.
+   */
+  it("are the eight this archive has, and no ninth that was missed", () => {
     expect(PICKER_FILES).toEqual([
       "app/documents/[id]/associate-person/associate-person-view.tsx",
       "app/judicial-persons/[id]/associate-document/associate-document-view.tsx",
+      "app/judicial-persons/[id]/associate-person/associate-person-view.tsx",
       "app/judicial-persons/[id]/associate-property/associate-property-view.tsx",
       "app/natural-persons/[id]/associate-document/associate-document-view.tsx",
       "app/natural-persons/[id]/associate-person/associate-person-view.tsx",
       "app/natural-persons/[id]/associate-property/associate-property-view.tsx",
       "app/properties/[id]/associate-person/associate-person-view.tsx",
     ]);
-    expect(UNIONED).toHaveLength(5);
+    expect(UNIONED).toHaveLength(6);
   });
 
   it.each(UNIONED)("%s renders the merged list and not the whitelist", (file) => {
@@ -314,6 +328,11 @@ describe("the carried set is scoped to whatever the offered list is scoped to", 
     ["app/natural-persons/[id]/associate-property/associate-property-view.tsx", "person-property", "personId"],
     ["app/judicial-persons/[id]/associate-property/associate-property-view.tsx", "person-property", "personId"],
     ["app/natural-persons/[id]/associate-person/associate-person-view.tsx", "person-person", "personId"],
+    // Slice #34.15. A `person_person` row is stored once per pair and read from
+    // whichever end the person is on, so the judicial screen's carried scope is
+    // the same `personId` its natural twin uses — see `carried-roles.ts`'s
+    // `person-person` branch, which joins both ends for exactly this reason.
+    ["app/judicial-persons/[id]/associate-person/associate-person-view.tsx", "person-person", "personId"],
     ["app/documents/[id]/associate-person/associate-person-view.tsx", "document-person", "documentId"],
   ])("%s asks for the %s roles its own %s carries", (file, kind, entity) => {
     // Whitespace-tolerant: a hand-rewrap of the call is not a defect.

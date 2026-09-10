@@ -3,7 +3,7 @@
  */
 import { z } from "zod/v4";
 import type { NextRequest } from "next/server";
-import { unexpectedError, zodErrorToResponse } from "@/lib/api/errors";
+import { roleNotOfferedToResponse, unexpectedError, zodErrorToResponse } from "@/lib/api/errors";
 import { listPersonProperties, associatePropertiesToPerson } from "@/lib/persons/queries";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -28,5 +28,10 @@ export async function POST(request: NextRequest, ctx: Ctx): Promise<Response> {
   try {
     await associatePropertiesToPerson(id, parsed.data.propertyIds, parsed.data.personRoleId ?? null);
     return new Response(null, { status: 204 });
-  } catch (err) { return unexpectedError(err, "POST /api/people/[id]/properties"); }
+  } catch (err) {
+    // Slice #34.15 — `valid_for_property`, read from the person's end.
+    const refusal = roleNotOfferedToResponse(err);
+    if (refusal) return refusal;
+    return unexpectedError(err, "POST /api/people/[id]/properties");
+  }
 }

@@ -25,13 +25,51 @@
  *   POST /api/judicial-persons        — create a Judicial Person
  * This component never talks to the DB directly.
  *
+ * ⚠️ **SLICE #34.15 PUT A WHITELIST CHECK BEHIND THAT FIRST ROUTE, AND THIS
+ * CALLER NEEDS NO EXEMPTION FROM IT — BY CONSTRUCTION, NOT BY COURTESY.**
+ * `associatePersonsToDocument` now refuses a `personRoleId` that
+ * `listPersonRolesForDocument(documentId)` does not offer, and answers 400.
+ * `party.personRoleId` cannot normally be such a role: Slice 1 resolves the
+ * model's role NAME against `listPersonRolesForDocumentType(documentTypeId)`
+ * (the `partyRoles` read in `api/documents/[id]/ai-interpret/route.ts`), which
+ * is exactly STAGE 1 of the list the door checks against — and when that stage
+ * is empty, party extraction does not run at all
+ * (`partyRolesConfigured: false`). A name that matches nothing arrives here as
+ * `roleMissing: true` with a null id, which the door always allows. So the set
+ * the model can propose from is a subset of the set the door offers.
+ *
+ * ⚠️ **The one case that IS refused, named rather than left to be found: the
+ * retick race.** An administrator who unticks that role in Reference Data
+ * between the paid read and the admin pressing „Asociază aceasta" turns a proposal the
+ * archive accepted a minute ago into one it refuses. Both link paths below
+ * recognise that 400 by its `code` — never by the route's prose, which is
+ * English on purpose — and name the role in the sentence they show, so the paid
+ * read is reported rather than discarded and the party can be skipped or the
+ * tick restored.
+ *
+ * ⚠️ **TWO SENTENCES, BECAUSE THE TWO PATHS LEAVE THE ARCHIVE IN DIFFERENT
+ * STATES.** `linkPerson` shows `roleMissingBody` — the one this dialog ALREADY
+ * had for a role the model names and the type does not have, re-used rather
+ * than re-worded, because it is the same fact arriving a minute later.
+ * `createAndLink` shows `roleMissingAfterCreate`, which says the extra thing
+ * that is only true there: a person HAS been written, pressing again will not
+ * write a second one (`createdPersonRef`), and skipping the party leaves that
+ * person in the archive unlinked. An adversarial round found the shared
+ * sentence silent about all three.
+ *
+ * ⚠️ **AND THAT IS WHY THE EXEMPTION THE SLICE SKETCHED WAS NOT BUILT.** An
+ * exemption has to be something the server can tell from a request, and the
+ * only candidate was a flag on the body — which any hand-made request could
+ * also send. The door would then be shut against callers that had not thought
+ * to knock, which is no door at all.
+ *
  * `domiciliu` (free text from the document) is not decomposed into
  * street/city/county — Slice 1 deliberately left addresses unstructured for AI
  * extraction. It is stored as a single address row's streetLine, with country
  * defaulted to "România" (the schema requires a non-empty country).
  */
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { inferProvenance } from "@/lib/metadata/provenance-rules";
 import { HelpHint } from "@/components/help/help-hint";
@@ -119,6 +157,24 @@ type Props = {
 
 type Outcome = "linked" | "created" | "skipped";
 
+/**
+ * Was this the whitelist door, rather than something that went wrong?
+ *                                                              (Slice #34.15)
+ *
+ * `roleNotOfferedToResponse` answers 400 with `code: "ROLE_NOT_OFFERED"`. The
+ * `code` is what is matched, never the `error` prose — that sentence is English
+ * and is meant for a hand-made request; the user-facing one here is
+ * `roleMissingBody`, in the user's own language, and it already exists.
+ *
+ * ⚠️ **A `Response` body may be read once**, so this consumes it and every
+ * caller therefore asks this BEFORE falling back to the status code.
+ */
+async function isRoleRefusal(res: Response): Promise<boolean> {
+  if (res.status !== 400) return false;
+  const body = await res.json().catch(() => ({}));
+  return (body as { code?: string }).code === "ROLE_NOT_OFFERED";
+}
+
 const orUndef = (v: string | null | undefined): string | undefined =>
   v && v.trim() ? v.trim() : undefined;
 
@@ -158,6 +214,40 @@ export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
   // Overrides the exact-match / possible-match branches for the CURRENT party
   // only — reset every time we advance to the next one.
   const [forceCreate, setForceCreate] = useState(false);
+
+  /**
+   * The person `createAndLink` has already made for the party on screen.
+   *                                                            (Slice #34.15)
+   *
+   * ⚠️ **„Creează și asociază" IS TWO WRITES, AND ONLY THE SECOND ONE IS
+   * RETRYABLE.** When the create succeeds and the link does not, the dialog
+   * shows an error and leaves the button enabled — so the obvious thing to do,
+   * pressing it again, made a SECOND person. A natural person with a CNP is
+   * saved by the unique index (409, and the second attempt fails); a judicial
+   * person whose CUI the model did not find has no unique key at all, so two
+   * identical companies land in the archive and one of them is linked to
+   * nothing. That was already true of every link failure; #34.15 made one of
+   * them reachable without a network fault (the retick race), which is what
+   * turned it from a theoretical into a Tuesday.
+   *
+   * ⚠️ **A `useRef`, not state.** Nothing here renders differently because a
+   * person exists, so a re-render would be waste — but the value must not
+   * survive the party it belongs to, and `advance` clears it for the same
+   * reason it clears `forceCreate`.
+   *
+   * ⚠️ **KEYED ON `party.rawText` AS WELL AS `index`, AND AN ADVERSARIAL ROUND
+   * IS WHY.** `index`, `counts` and `forceCreate` all assume the parent
+   * unmounts this dialog between runs; if it ever re-renders it with a new
+   * `parties` array instead, `index` does not reset either — and this ref is
+   * the only one of them that decides WHICH PERSON GETS WRITTEN, so a stale
+   * entry would link the previous run's person under the new party's role, in
+   * silence. `rawText` is the model's own extract for this party and is on
+   * every one of them, so the pair identifies a party rather than a position.
+   */
+  const createdPersonRef = useRef<{ key: string; personId: string } | null>(null);
+
+  /** What `createdPersonRef` is keyed on — see the paragraph above. */
+  const partyKey = (i: number, p: AiExtractedParty): string => `${i}:${p.rawText}`;
 
   const party = parties[index];
   const total = parties.length;
@@ -219,6 +309,8 @@ export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
     setError(null);
     setForceCreate(false);
     setBusy(false);
+    // This party is settled; whatever it created is no longer a retry to reuse.
+    createdPersonRef.current = null;
     if (index + 1 >= total) {
       onClose(next);
     } else {
@@ -239,7 +331,16 @@ export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
           personRoleId: party.personRoleId,
         }),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) {
+        // The role was ticked for this type when the model read the document
+        // and is not now. Say which role, and where to fix it.
+        if (await isRoleRefusal(res)) {
+          setBusy(false);
+          setError(t("roleMissingBody", { roleName: party.roleName }));
+          return;
+        }
+        throw new Error(`HTTP ${res.status}`);
+      }
       // The ARCHIVE row's type, not the model's reading of the document — see
       // `linkedPersonType`.
       advance(outcome, linkedPersonType(personId));
@@ -260,6 +361,13 @@ export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
 
       let personId: string;
 
+      // ⚠️ **A SECOND PRESS AFTER A FAILED LINK IS A LINK RETRY, NOT A SECOND
+      // CREATE.** See `createdPersonRef`.                        (Slice #34.15)
+      const alreadyCreated =
+        createdPersonRef.current?.key === partyKey(index, party)
+          ? createdPersonRef.current.personId
+          : null;
+
       // Slice #21.07.Import — Adrian's rule: "for the persons created from the
       // AI interpretation of a document the provenience will be AI
       // interpretation". Every field in `party` came out of the model's reading
@@ -267,7 +375,9 @@ export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
       // never asked.
       const provenance = inferProvenance("AI_EXTRACTION");
 
-      if (party.personType === "NATURAL") {
+      if (alreadyCreated !== null) {
+        personId = alreadyCreated;
+      } else if (party.personType === "NATURAL") {
         const hasSplitName = Boolean(party.firstName || party.lastName);
         const payload: Record<string, unknown> = {
           firstName: hasSplitName ? orUndef(party.firstName) : undefined,
@@ -293,6 +403,7 @@ export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
         // which the link call's zod schema rejected with a 400.)
         const body = (await res.json()) as { person: { id: string } };
         personId = body.person.id;
+        createdPersonRef.current = { key: partyKey(index, party), personId };
       } else {
         const payload: Record<string, unknown> = {
           name: orUndef(party.name) ?? `${party.firstName ?? ""} ${party.lastName ?? ""}`.trim(),
@@ -310,6 +421,7 @@ export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
         // under `person`, not top-level. See the comment above.
         const body = (await res.json()) as { person: { id: string } };
         personId = body.person.id;
+        createdPersonRef.current = { key: partyKey(index, party), personId };
       }
 
       const linkRes = await fetch(`/api/documents/${encodeURIComponent(documentId)}/persons`, {
@@ -317,14 +429,66 @@ export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ personIds: [personId], personRoleId: party.personRoleId }),
       });
-      if (!linkRes.ok) throw new Error(`HTTP ${linkRes.status}`);
+      if (!linkRes.ok) {
+        // ⚠️ The person HAS been created by this point; only the link failed.
+        // `createError` would be a false sentence here, and its „try again"
+        // would once have made a second person — `createdPersonRef` above is
+        // what turns that second press into a link retry. The role sentence is
+        // the true one, and it names the fix.
+        if (await isRoleRefusal(linkRes)) {
+          // ⚠️ **ITS OWN SENTENCE, NOT `linkPerson`'s.** An adversarial round
+          // found the shared one silent about the thing that makes this path
+          // different: a person now EXISTS. „Omite" from here counts the
+          // party as skipped and leaves that row in the archive linked to
+          // nothing — which the operator can only weigh if the screen says so.
+          // The counters are left alone on purpose: the party really was not
+          // settled, and a `created` that names no link would be the same
+          // silence one column over.
+          setBusy(false);
+          setError(t("roleMissingAfterCreate", { roleName: party.roleName }));
+          return;
+        }
+        // ⚠️ **AND EVERY OTHER LINK FAILURE IS ALSO NOT A CREATE FAILURE.**
+        // `linkError` is the true half over a person that HAS been created,
+        // and `createdPersonRef` above is what makes its „try again" a link
+        // retry rather than a second person. The shared `catch` below says the
+        // same thing for the path that never produces a Response at all.
+        setBusy(false);
+        setError(t("linkError"));
+        return;
+      }
 
       // Authoritative here: `party.personType` is what chose the endpoint two
       // branches up, so the row that now exists is of exactly that type.
       advance("created", party.personType);
     } catch {
       setBusy(false);
-      setError(t("createError"));
+      /*
+       * ⚠️ **WHICH HALF OF „create and link" FAILED, ANSWERED BY THE ONLY
+       * THING THAT KNOWS.**                                     (Slice #34.15)
+       *
+       * A bare `createError` here — „Crearea a eșuat. Încercați din nou." — is
+       * a false sentence over a person that HAS been created, and the
+       * `!linkRes.ok` branch above is not the only way to get here: the link
+       * `fetch` itself can REJECT (offline, DNS, an aborted navigation), and
+       * that lands in this catch rather than in that branch. An adversarial
+       * round found the first fix covering the status path and not the throw
+       * path.
+       *
+       * The ref answers it, read through `partyKey` exactly as
+       * `alreadyCreated` reads it: an entry for THIS party exists only once a
+       * create has really succeeded for it, so a failed CREATE still reads
+       * `createError`, and everything after it reads `linkError` — which is
+       * also the sentence whose „try again" the ref has made safe. A bare
+       * `createdPersonRef.current` truthiness test would be the same
+       * position-not-party assumption a round already took out of
+       * `alreadyCreated`, put back one branch over.
+       */
+      setError(
+        createdPersonRef.current?.key === partyKey(index, party)
+          ? t("linkError")
+          : t("createError"),
+      );
     }
   };
 

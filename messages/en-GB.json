@@ -525,6 +525,7 @@
   },
   "shared": {
     "roleListUnavailable": "The role list could not be read, so no role can be chosen right now. The role is optional in any case.",
+    "roleNotOffered": "The selected role is no longer valid for this association — it has probably been switched off in Reference Data in the meantime. Reload the page and choose again; the role is optional in any case.",
     "roleNoLongerOffered": "{role} (no longer available)",
     "properties": {
       "empty": "No properties associated",
@@ -1475,6 +1476,7 @@
       "noneOfThese": "None of these — create new",
       "roleMissingTitle": "Role not configured",
       "roleMissingBody": "The role \"{roleName}\" is not set up for this document type yet. Ask an administrator to add it in Reference Data → Document Persons, then add the person from the document’s Persons tab.",
+      "roleMissingAfterCreate": "The person was created but could not be linked to the document: the role \"{roleName}\" is no longer set up for this document type. Ask an administrator to add it in Reference Data → Document Persons, then press again — the person will not be created twice. If you skip this party, the person stays in the archive unlinked from the document.",
       "noMatchTitle": "No existing match found",
       "noMatchBody": "A new person will be created with the extracted details.",
       "createAndLink": "Create & link",

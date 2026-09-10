@@ -28,6 +28,9 @@ import {
 // Slice #32.14: both derived geometry values come from ONE projection of the
 // corners — see that module's header for why they are not two functions.
 import { computeCornerGeometry } from "./corner-geometry";
+// Slice #34.15 — the door on `property_person`, read from the property side.
+import { assertRoleMayBeAttached } from "@/lib/admin/value-lists/role-attachment";
+import { personRoleIdsValidForProperty } from "@/lib/admin/value-lists/role-offers";
 import type {
   PropertyCreate,
   PropertyListQuery,
@@ -1250,6 +1253,12 @@ export async function associatePersonsToProperty(
   personIds:    string[],
   personRoleId: string | null = null,
 ): Promise<void> {
+  // ⚠️ **Before the empty-list early return, and for the reason
+  // `associatePersonsToPerson` states.**                        (Slice #34.15)
+  // A request that asserts a role the whitelist does not offer is refused
+  // whether or not it would have written anything; otherwise the answer to
+  // „may this role be attached" would depend on the length of another field.
+  await assertRoleMayBeAttached("property-person", personRoleId, personRoleIdsValidForProperty);
   if (personIds.length === 0) return;
   await db
     .insert(propertyPerson)

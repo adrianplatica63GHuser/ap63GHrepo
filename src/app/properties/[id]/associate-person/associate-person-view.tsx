@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { PaginationControls } from "@/components/pagination-controls";
 import { buttonClass } from "@/lib/ui/button-styles";
+import { associationFailureMessage } from "@/lib/ui/association-failure";
 import { usePersonRoleOptions, useRoleOptionsWithCarried } from "@/hooks/use-lookup-options";
 
 const PAGE_SIZE = 15;
@@ -97,7 +98,14 @@ export function AssociatePersonView({ propertyId, propertyName }: Props) {
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body?.error ?? `HTTP ${res.status}`);
+        // Slice #34.15. The route now has a 400 a user can reach — a role list
+        // this screen loaded before an administrator unticked the role — and
+        // its `error` is English by design. `associationFailureMessage`
+        // recognises that one case by `code` and answers it in the user's own
+        // language; everything else reads exactly as it did before.
+        throw new Error(
+          associationFailureMessage(body, res.status, tShared("roleNotOffered")),
+        );
       }
       await queryClient.invalidateQueries({ queryKey: ["property-persons", propertyId] });
       router.push(`/properties/${encodeURIComponent(propertyId)}?tab=persons`);

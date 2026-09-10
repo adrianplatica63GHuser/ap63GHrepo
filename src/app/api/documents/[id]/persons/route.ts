@@ -3,7 +3,7 @@
  */
 import { z } from "zod/v4";
 import type { NextRequest } from "next/server";
-import { unexpectedError, zodErrorToResponse } from "@/lib/api/errors";
+import { roleNotOfferedToResponse, unexpectedError, zodErrorToResponse } from "@/lib/api/errors";
 import { listDocumentPersons, associatePersonsToDocument } from "@/lib/documents/queries";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -37,5 +37,15 @@ export async function POST(request: NextRequest, ctx: Ctx): Promise<Response> {
       parsed.data.personRoleId ?? null,
     );
     return new Response(null, { status: 204 });
-  } catch (err) { return unexpectedError(err, "POST /api/documents/[id]/persons"); }
+  } catch (err) {
+    // Slice #34.15: `associatePersonsToDocument` refuses a role the document's
+    // own whitelist does not offer. It is the request that is wrong, not the
+    // server, so it is a 400 — and it reaches this catch rather than a check
+    // above because the rule lives in the query layer, once, for all five
+    // routes. The AI party linker posts here too; `role-attachment.ts` says why
+    // it needs no exemption and what the one refusable case is.
+    const refusal = roleNotOfferedToResponse(err);
+    if (refusal) return refusal;
+    return unexpectedError(err, "POST /api/documents/[id]/persons");
+  }
 }

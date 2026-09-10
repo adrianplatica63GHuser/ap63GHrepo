@@ -525,6 +525,7 @@
   },
   "shared": {
     "roleListUnavailable": "Lista de roluri nu a putut fi citită, așa că nu se poate alege un rol acum. Rolul este oricum opțional.",
+    "roleNotOffered": "Rolul ales nu mai este valid pentru această asociere — probabil a fost dezactivat între timp în Date de referință. Reîncărcați pagina și alegeți din nou; rolul este oricum opțional.",
     "roleNoLongerOffered": "{role} (nu mai este disponibil)",
     "properties": {
       "empty": "Nicio proprietate asociată",
@@ -1475,6 +1476,7 @@
       "noneOfThese": "Niciuna dintre acestea — creează nouă",
       "roleMissingTitle": "Rol neconfigurat",
       "roleMissingBody": "Rolul „{roleName}” nu este configurat încă pentru acest tip de document. Cereți unui administrator să-l adauge în Date de referință → Persoane document, apoi adăugați persoana din fila Persoane a documentului.",
+      "roleMissingAfterCreate": "Persoana a fost creată, dar nu a putut fi legată de document: rolul „{roleName}” nu mai este configurat pentru acest tip de document. Cereți unui administrator să-l adauge în Date de referință → Persoane document, apoi apăsați din nou — persoana nu va fi creată a doua oară. Dacă omiteți această parte, persoana rămâne în arhivă nelegată de document.",
       "noMatchTitle": "Nicio potrivire găsită",
       "noMatchBody": "Se va crea o persoană nouă cu detaliile extrase.",
       "createAndLink": "Creează și asociază",

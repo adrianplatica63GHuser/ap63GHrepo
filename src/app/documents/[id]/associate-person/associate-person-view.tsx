@@ -6,7 +6,8 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { PaginationControls } from "@/components/pagination-controls";
 import { buttonClass } from "@/lib/ui/button-styles";
-import { useRoleOptionsWithCarried } from "@/hooks/use-lookup-options";
+import { associationFailureMessage } from "@/lib/ui/association-failure";
+import { lookupListState, useRoleOptionsWithCarried } from "@/hooks/use-lookup-options";
 
 const PAGE_SIZE = 15;
 
@@ -40,6 +41,8 @@ async function fetchValidRoles(documentId: string): Promise<RoleItem[]> {
 
 export function AssociatePersonView({ documentId, documentName }: Props) {
   const t           = useTranslations("document.associatePerson");
+  // One sentence shared by every screen that hands out a role (Slice #34.15).
+  const tShared     = useTranslations("shared");
   const router      = useRouter();
   const queryClient = useQueryClient();
 
@@ -56,10 +59,31 @@ export function AssociatePersonView({ documentId, documentName }: Props) {
     queryFn:  () => searchPersons(nameInput, codeInput, page),
   });
 
-  const { data: roles } = useQuery({
+  const {
+    data: roles,
+    isPending: rolesPending,
+    isLoadingError: rolesLoadingError,
+    fetchStatus: rolesFetchStatus,
+  } = useQuery({
     queryKey: ["document-valid-roles", documentId],
     queryFn:  () => fetchValidRoles(documentId),
   });
+
+  /*
+   * ⚠️ **THIS SCREEN COULD NOT SAY „the list could not be read" UNTIL SLICE
+   * #34.15, AND ITS SILENCE WAS THE WORST OF THE FIVE.** The two screens that
+   * already printed `shared.roleListUnavailable` gate their select on the
+   * OPTIONS, so a failed read there showed no dropdown and one red line
+   * explaining it. Here the gate is `pickerOptions.length > 0` over a list that
+   * is `[]` while it is loading, `[]` when the type genuinely has no roles, and
+   * `[]` when the GET failed — three states, one appearance, and no sentence.
+   *
+   * ⚠️ **Through the hook file's own function rather than a local
+   * `isError`.** `lookupListState` is where „failed" is defined — see its
+   * header for why `isLoadingError`, and why a query paused because the browser
+   * is offline counts as failed rather than loading.
+   */
+  const roleListState = lookupListState(rolesPending, rolesLoadingError, rolesFetchStatus);
 
   // Slice #34.05: plus any role this document's own rows already carry
   // that the list above no longer offers, marked „(nu mai este disponibil)". The display
@@ -102,7 +126,14 @@ export function AssociatePersonView({ documentId, documentName }: Props) {
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body?.error ?? `HTTP ${res.status}`);
+        // Slice #34.15. The route now has a 400 a user can reach — a role list
+        // this screen loaded before an administrator unticked the role — and
+        // its `error` is English by design. `associationFailureMessage`
+        // recognises that one case by `code` and answers it in the user's own
+        // language; everything else reads exactly as it did before.
+        throw new Error(
+          associationFailureMessage(body, res.status, tShared("roleNotOffered")),
+        );
       }
       await queryClient.invalidateQueries({ queryKey: ["document-persons", documentId] });
       router.push(`/documents/${encodeURIComponent(documentId)}?tab=persons`);
@@ -212,6 +243,16 @@ export function AssociatePersonView({ documentId, documentName }: Props) {
             ))}
           </select>
         </label>
+      )}
+
+      {/* Slice #34.15. The role is optional on this screen
+          (`personRoleId: selectedRoleId || null`), so the sentence — the same
+          one the two person-side screens have printed since #34.04 — says the
+          association can still be made. */}
+      {roleListState === "failed" && (
+        <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+          {tShared("roleListUnavailable")}
+        </p>
       )}
 
       {submitError && (

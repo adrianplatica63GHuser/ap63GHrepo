@@ -31,6 +31,10 @@ import { customFieldsEqual, parseTemplateFields, type DocumentTemplateField } fr
 // Slice #34.10 — a pure module, and its own header says why it is not in
 // this file: a suite for it here has to load `pg` to test a string.
 import { customFieldFilter } from "./custom-field-filter";
+// Slice #34.15 — the one place that answers „may this role be attached here".
+// Pure, so the rule is testable without a connection; the offered set is read
+// by the caller, because only the caller knows which whitelist governs it.
+import { assertRoleMayBeAttached } from "@/lib/admin/value-lists/role-attachment";
 
 // ---------------------------------------------------------------------------
 // Return types
@@ -1034,12 +1038,29 @@ export async function listDocumentPersons(documentId: string): Promise<DocumentP
   return rows as DocumentPersonItem[];
 }
 
+/**
+ * ⚠️ **THE ROLE IS CHECKED HERE RATHER THAN IN THE ROUTE.**    (Slice #34.15)
+ *
+ * Five routes accept a `personRoleId` and this is one of the two functions
+ * behind them that writes `person_document`; putting the check in the routes
+ * would be five copies of one rule guarding four tables, and a sixth route
+ * added later would simply not have it. `assertRoleMayBeAttached` throws
+ * `RoleNotOfferedError`, which every one of those routes turns into a 400 via
+ * `roleNotOfferedToResponse`.
+ *
+ * The offered set is `listPersonRolesForDocument` — the same function
+ * `/api/documents/[id]/valid-person-roles` serves to this document's own
+ * picker, in this same module, so the door and the dropdown cannot drift.
+ */
 export async function associatePersonsToDocument(
   documentId:   string,
   personIds:    string[],
   quality?:     PersonDocumentQuality | null,
   personRoleId: string | null = null,
 ): Promise<void> {
+  await assertRoleMayBeAttached("document-person", personRoleId, async () =>
+    (await listPersonRolesForDocument(documentId)).map((r) => r.id),
+  );
   await db.insert(personDocument)
     .values(personIds.map((pid) => ({
       personId: pid,

@@ -8,6 +8,7 @@
 import { z } from "zod/v4";
 import type { NextRequest } from "next/server";
 import {
+  roleNotOfferedToResponse,
   unexpectedError,
   zodErrorToResponse,
 } from "@/lib/api/errors";
@@ -56,6 +57,10 @@ export async function POST(request: NextRequest, ctx: Ctx): Promise<Response> {
     );
     return new Response(null, { status: 204 });
   } catch (err) {
+    // Slice #34.15 — a role the `valid_for_property` tick does not offer is a
+    // 400, not a 500. See `documents/[id]/persons/route.ts` for the argument.
+    const refusal = roleNotOfferedToResponse(err);
+    if (refusal) return refusal;
     return unexpectedError(err, "POST /api/properties/[id]/persons");
   }
 }

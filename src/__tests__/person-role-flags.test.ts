@@ -294,18 +294,26 @@ describe("the two endpoints, their keys and their panels are gone", () => {
   });
 
   /**
-   * ⚠️ **The four association screens read the MASTER list and filter.** The
+   * ⚠️ **The association screens read the MASTER list and filter.** The
    * shared hook is the single source: a screen that grew its own `useQuery`
    * over the same endpoint would be free to cache a different shape under the
    * same key, which is the defect this slice removed (`["person-person-roles"]`
    * was one key over two row shapes, and whichever component mounted first
    * decided what the other one got).
+   *
+   * ⚠️ **FOUR WHEN THIS WAS WRITTEN, FIVE SINCE SLICE #34.15.**
+   * `judicial-persons/[id]/associate-person` had no role picker at all until
+   * that slice, though it posts to the same `/api/people/[id]/references` route
+   * as its natural-person twin and writes the same `person_person` row. It now
+   * reads `valid_for_person` through the same hook as everything else, which is
+   * the only way this list stays one list.
    */
   it.each([
     ["app", "properties", "[id]", "associate-person", "associate-person-view.tsx", "property"],
     ["app", "natural-persons", "[id]", "associate-property", "associate-property-view.tsx", "property"],
     ["app", "judicial-persons", "[id]", "associate-property", "associate-property-view.tsx", "property"],
     ["app", "natural-persons", "[id]", "associate-person", "associate-person-view.tsx", "person"],
+    ["app", "judicial-persons", "[id]", "associate-person", "associate-person-view.tsx", "person"],
   ])("%s/%s/%s/%s/%s (%s) reads the roles through the shared hook", (...args: string[]) => {
     const validFor = args[args.length - 1];
     const parts = args.slice(0, -1);

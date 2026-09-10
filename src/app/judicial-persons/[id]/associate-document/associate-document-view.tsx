@@ -6,6 +6,10 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { PaginationControls } from "@/components/pagination-controls";
 import { buttonClass } from "@/lib/ui/button-styles";
+import { associationFailureMessage } from "@/lib/ui/association-failure";
+// Slice #34.15 — one definition of „the list could not be read", shared with
+// the four screens that read their roles through a hook in that file.
+import { lookupListState } from "@/hooks/use-lookup-options";
 
 const PAGE_SIZE = 15;
 
@@ -42,6 +46,8 @@ async function fetchDistinctRoles(): Promise<RoleItem[]> {
 
 export function AssociateDocumentView({ personId, personName, backBase }: Props) {
   const t           = useTranslations("shared.associateDocument");
+  // The sentence itself lives in `shared`, unchanged since Slice #34.04.
+  const tShared     = useTranslations("shared");
   const router      = useRouter();
   const queryClient = useQueryClient();
 
@@ -69,22 +75,50 @@ export function AssociateDocumentView({ personId, personName, backBase }: Props)
   });
 
   // When exactly one document is selected, fetch roles specific to its type.
-  const { data: singleDocRoles } = useQuery({
+  const singleDocRolesQuery = useQuery({
     queryKey: ["document-valid-roles", singleSelectedId],
     queryFn:  () => fetchValidRoles(singleSelectedId!),
     enabled:  singleSelectedId !== null,
   });
 
   // Always keep the full curated list ready for the 0-or-many case.
-  const { data: allDocRoles } = useQuery({
+  const allDocRolesQuery = useQuery({
     queryKey: ["doc-distinct-roles"],
     queryFn:  fetchDistinctRoles,
   });
 
   // Active role list: filtered by document type (single) or full list (multi).
   const roles: RoleItem[] = singleSelectedId !== null
-    ? (singleDocRoles ?? [])
-    : (allDocRoles ?? []);
+    ? (singleDocRolesQuery.data ?? [])
+    : (allDocRolesQuery.data ?? []);
+
+  /*
+   * ⚠️ **THE ACTIVE LIST'S STATE, NOT BOTH LISTS'.**            (Slice #34.15)
+   *
+   * This screen is the only one of the five with TWO role lists, and which of
+   * them is on screen depends on how many documents are ticked. Reporting the
+   * OR of the two would print „the list could not be read" over a working
+   * dropdown the moment the other, unrendered list failed — the same false
+   * sentence `use-lookup-options.ts` refuses `isError` for. So the state
+   * follows the same `singleSelectedId` branch the `roles` line above does.
+   *
+   * ⚠️ **A disabled query is „loading", never „failed", and that is what makes
+   * the branch safe.** With `enabled: false` React Query reports `isPending`
+   * true and `fetchStatus` `"idle"`, which `lookupListState` reads as loading —
+   * so even if this were read on the multi-document path it could not
+   * manufacture a failure out of a query that was never asked to run.
+   */
+  const roleListState = singleSelectedId !== null
+    ? lookupListState(
+        singleDocRolesQuery.isPending,
+        singleDocRolesQuery.isLoadingError,
+        singleDocRolesQuery.fetchStatus,
+      )
+    : lookupListState(
+        allDocRolesQuery.isPending,
+        allDocRolesQuery.isLoadingError,
+        allDocRolesQuery.fetchStatus,
+      );
 
   /*
    * ⚠️ **NO „(nu mai este disponibil)" MARK ON THIS SCREEN, AND IT IS A
@@ -135,7 +169,14 @@ export function AssociateDocumentView({ personId, personName, backBase }: Props)
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body?.error ?? `HTTP ${res.status}`);
+        // Slice #34.15. The route now has a 400 a user can reach — a role list
+        // this screen loaded before an administrator unticked the role — and
+        // its `error` is English by design. `associationFailureMessage`
+        // recognises that one case by `code` and answers it in the user's own
+        // language; everything else reads exactly as it did before.
+        throw new Error(
+          associationFailureMessage(body, res.status, tShared("roleNotOffered")),
+        );
       }
       await queryClient.invalidateQueries({ queryKey: ["person-documents", personId] });
       router.push(`${backBase}/${encodeURIComponent(personId)}?tab=document`);
@@ -230,6 +271,16 @@ export function AssociateDocumentView({ personId, personName, backBase }: Props)
             ))}
           </select>
         </label>
+      )}
+
+      {/* Slice #34.15. The role is optional here too
+          (`personRoleId: selectedRoleId || null`), so the sentence promises the
+          association can still be made — and it is the SAME key the two
+          „Asociază persoană" screens print, re-used rather than re-worded. */}
+      {roleListState === "failed" && (
+        <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+          {tShared("roleListUnavailable")}
+        </p>
       )}
 
       {submitError && <p className="text-sm text-red-600 dark:text-red-400" role="alert">{submitError}</p>}

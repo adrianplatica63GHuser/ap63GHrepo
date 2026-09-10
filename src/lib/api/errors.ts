@@ -4,6 +4,7 @@
  */
 
 import type { ZodError } from "zod/v4";
+import { RoleNotOfferedError } from "@/lib/admin/value-lists/role-attachment";
 
 /** Postgres errors come through pg with a numeric SQLSTATE code. */
 type PgError = {
@@ -132,6 +133,49 @@ export function dbErrorToResponse(err: unknown): Response | null {
   }
 
   return null;
+}
+
+/**
+ * The 400 for a role no whitelist offers, or `null` for anything else.
+ *                                                              (Slice #34.15)
+ *
+ * ⚠️ **A separate function rather than a branch inside `dbErrorToResponse`,
+ * because this is not a database error.** Nothing has been written when it
+ * throws: `assertRoleMayBeAttached` runs before the insert, so this is the
+ * request being refused, not a constraint reporting a collision. The five
+ * association routes funnel every throw into `unexpectedError` (500), so
+ * without this they would answer 500 to a request that is simply invalid.
+ *
+ * ⚠️ **THE `error` SENTENCE IS ENGLISH, LIKE EVERY OTHER ONE THESE ROUTES
+ * ANSWER WITH, AND NOTHING A USER READS COMES FROM IT.** `Invalid JSON body`
+ * and „A person with this CNP already exists" are the shipped shape; this one
+ * is written for the caller that can only be a hand-made request, and it names
+ * the kind so that caller can tell which door refused it.
+ *
+ * ⚠️ **`code` IS THE PART WITH CONSUMERS, AND THERE ARE NINE.** The eight
+ * association screens go through `associationFailureMessage`
+ * (`src/lib/ui/association-failure.ts`), which matches `ROLE_NOT_OFFERED` and
+ * prints `shared.roleNotOffered`; the AI party linker matches it too and prints
+ * one of its own two sentences. Matching on the prose instead is how you
+ * recognise something you did not mean — the same point `pgErrorConstraint`'s
+ * header makes about `includes` on a constraint name — so the wording above is
+ * free to change and `code` is not.
+ *
+ * ⚠️ **The reachable case is NOT devtools, which is why those nine exist.**
+ * Nothing invalidates one browser's role list when an administrator unticks a
+ * role in another, so a screen left open goes on offering the role it loaded.
+ * Submitting then is this 400, to an ordinary user, in the ordinary course.
+ */
+export function roleNotOfferedToResponse(err: unknown): Response | null {
+  if (!(err instanceof RoleNotOfferedError)) return null;
+  return Response.json(
+    {
+      error: `That role is not valid for this kind of association (${err.kind}).`,
+      code:  "ROLE_NOT_OFFERED",
+      kind:  err.kind,
+    },
+    { status: 400 },
+  );
 }
 
 /** Standard 400 response from a Zod parse failure. */

@@ -44,10 +44,10 @@
 //
 // ⚠️ **A FIRST LOAD THAT DOES NOT ARRIVE IS SOMETHING THE USER CAN SEE, AND
 //   THAT IS THE POINT RATHER THAN A SIDE EFFECT.** Failed, refused, or paused
-//   because the browser is offline — see `toState` for why the last of those
-//   had to be folded in rather than left as „loading". The hooks this replaced
-//   answered a failed GET with an empty array, so an unreadable list and an
-//   empty archive rendered identically: a select holding only „—", or a role
+//   because the browser is offline — see `lookupListState` for why the last of
+//   those had to be folded in rather than left as „loading". The hooks this
+//   replaced answered a failed GET with an empty array, so an unreadable list
+//   and an empty archive rendered identically: a select holding only „—", or a role
 //   dropdown with nothing in it and no way to tell "no roles are ticked" from
 //   "the list could not be read".
 
@@ -114,10 +114,10 @@ export type LookupOptions = {
    *
    * ⚠️ **`&& !isPending` is what keeps it from lying on a FIRST load, and it
    * leaves one state uncovered on purpose.** A first read attempted offline is
-   * `isPending` AND `"paused"` — and `toState` reports that pair as „failed",
-   * so the retry control renders. Without the clause it would render already
-   * disabled and already saying „Se reîncearcă…", announcing an action nobody
-   * has taken. The cost is that pressing it there changes nothing on screen:
+   * `isPending` AND `"paused"` — and `lookupListState` reports that pair as
+   * „failed", so the retry control renders. Without the clause it would render
+   * already disabled and already saying „Se reîncearcă…", announcing an action
+   * nobody has taken. The cost is that pressing it there changes nothing on screen:
    * `refetch()` on a pending-paused query stays pending-paused. That is the
    * honest reading — React Query never stopped trying the first load, so there
    * is no new attempt to report — and widening the flag to cover it would
@@ -203,7 +203,21 @@ const NO_OPTIONS: LookupOption[] = [];
  * There IS no list and it is not on its way, so it is reported as failed; when
  * the connection returns React Query resumes on its own and the line goes away.
  */
-function toState(
+/*
+ * ⚠️ **EXPORTED BY SLICE #34.15, AND THE EXPORT IS THE POINT RATHER THAN A
+ * CONVENIENCE.** Three role-handling screens do not read their list through a
+ * hook in this file — „Asociază persoană" from a document reads
+ * `/api/documents/[id]/valid-person-roles` directly, and the two „Asociază
+ * document" screens read one of two lists depending on how many documents are
+ * ticked — so before this they had no way to say „the list could not be read"
+ * without deciding for themselves what „could not be read" means. A second
+ * definition would be a second answer: the three paragraphs above are why
+ * `isLoadingError` rather than `isError`, and why `paused` counts as failed,
+ * and a screen that reached for the obvious `isError` would print the sentence
+ * under a full dropdown on every flaky refetch. One function, one meaning,
+ * whether the caller uses the hooks or its own `useQuery`.
+ */
+export function lookupListState(
   isPending: boolean,
   isLoadingError: boolean,
   fetchStatus: "fetching" | "paused" | "idle",
@@ -263,7 +277,7 @@ export function useCitizenshipOptions(): LookupOptions {
   }, [refetch]);
   return {
     options: data ?? NO_OPTIONS,
-    listState: toState(isPending, isLoadingError, fetchStatus),
+    listState: lookupListState(isPending, isLoadingError, fetchStatus),
     reload,
     isReloading: fetchStatus === "fetching" || (fetchStatus === "paused" && !isPending),
   };
@@ -282,7 +296,7 @@ export function usePersonTypeOptions(): LookupOptions {
   }, [refetch]);
   return {
     options: data ?? NO_OPTIONS,
-    listState: toState(isPending, isLoadingError, fetchStatus),
+    listState: lookupListState(isPending, isLoadingError, fetchStatus),
     reload,
     isReloading: fetchStatus === "fetching" || (fetchStatus === "paused" && !isPending),
   };
@@ -326,7 +340,7 @@ export function usePersonRoleOptions(validFor: "property" | "person"): LookupOpt
   }, [refetch]);
   return {
     options: data ?? NO_OPTIONS,
-    listState: toState(isPending, isLoadingError, fetchStatus),
+    listState: lookupListState(isPending, isLoadingError, fetchStatus),
     reload,
     isReloading: fetchStatus === "fetching" || (fetchStatus === "paused" && !isPending),
   };

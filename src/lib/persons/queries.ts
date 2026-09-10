@@ -44,6 +44,15 @@ import type {
   PersonAddressSnapshot,
 } from "./validation";
 import type { JudicialPersonSnapshot } from "@/lib/judicial-persons/validation";
+// Slice #34.15 — the door on the three person-side association writes. The
+// rule is pure (`role-attachment.ts`); the offered sets are the same lists the
+// three pickers filter on (`role-offers.ts`).
+import { assertRoleMayBeAttached } from "@/lib/admin/value-lists/role-attachment";
+import {
+  personRoleIdsAcrossDocumentTypes,
+  personRoleIdsValidForPerson,
+  personRoleIdsValidForProperty,
+} from "@/lib/admin/value-lists/role-offers";
 
 // ---------------------------------------------------------------------------
 // Display name — single source of truth for the cached `person.display_name`.
@@ -1048,11 +1057,20 @@ export async function listPersonProperties(personId: string): Promise<PersonProp
   }));
 }
 
+/**
+ * ⚠️ **The other end of `property_person`, and it reads the same tick.**
+ *                                                              (Slice #34.15)
+ * „Asociază proprietate" filters on `valid_for_property` exactly as
+ * „Asociază persoană" does from the property side, so both doors read
+ * `personRoleIdsValidForProperty`. Two kinds rather than one because the
+ * refusal names the route it refused.
+ */
 export async function associatePropertiesToPerson(
   personId:     string,
   propertyIds:  string[],
   personRoleId: string | null = null,
 ): Promise<void> {
+  await assertRoleMayBeAttached("person-property", personRoleId, personRoleIdsValidForProperty);
   await db.insert(propertyPerson)
     .values(propertyIds.map((pid) => ({
       propertyId:   pid,
@@ -1138,11 +1156,21 @@ export async function getPersonIdCardLink(
   return rows[0] ?? null;
 }
 
+/**
+ * ⚠️ **Checked against the DISTINCT list, not the selected documents' types.**
+ *                                                              (Slice #34.15)
+ * That is what „Asociază document" offers whenever it is not showing exactly
+ * one document, it is a superset of what it offers when it is, and it is the
+ * only question that has an answer for the ordinary write where one role is
+ * attached to documents of several types at once. `role-offers.ts` carries the
+ * argument.
+ */
 export async function associateDocumentsToPerson(
   personId:    string,
   documentIds: string[],
   personRoleId: string | null = null,
 ): Promise<void> {
+  await assertRoleMayBeAttached("person-document", personRoleId, personRoleIdsAcrossDocumentTypes);
   await db.insert(personDocument)
     .values(documentIds.map((did) => ({ personId, documentId: did, personRoleId })))
     .onConflictDoNothing();
@@ -1206,11 +1234,20 @@ export async function listPersonReferences(personId: string): Promise<PersonRefI
   }));
 }
 
+/**
+ * ⚠️ **Checked BEFORE the self-link filter, and before the `length === 0`
+ * early return.**                                              (Slice #34.15)
+ * A POST carrying only the person's own id writes nothing, but it still
+ * ASSERTED a role, and answering 204 to it would make „did the archive accept
+ * this role" depend on which rows happened to survive a filter. The refusal is
+ * about the request.
+ */
 export async function associatePersonsToPerson(
   personId:           string,
   otherIds:           string[],
   relationshipRoleId: string | null = null,
 ): Promise<void> {
+  await assertRoleMayBeAttached("person-person", relationshipRoleId, personRoleIdsValidForPerson);
   const values = otherIds
     .filter((id) => id !== personId)
     .map((otherId) => {
