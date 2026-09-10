@@ -55,24 +55,38 @@
  * silently, in a panel the administrator was not looking at, which is exactly
  * the harm the paragraph above swears off.
  *
- * ⚠️ **SLICE #34.16 REMOVED THAT FALLBACK (D-16(b)), SO THE FILTER BELOW IS NOW
- * UNNECESSARY CAUTION RATHER THAN A FIX — AND IT IS LEFT IN PLACE ON PURPOSE,
- * FOR ONE SLICE.** With one answer everywhere, an unconfigured type offers
- * NOTHING, so inserting the row those moved associations need cannot collapse
- * anything: it is the only repair available, and skipping it is what now
- * withholds eligibility the rows really do need. The argument that put the
- * filter here has therefore inverted. It is not ripped out in the same commit
- * because doing so also makes `roleWhitelistPending` below unreachable, and
- * that key is rendered by `value-list-modal.tsx` and pinned by
- * `value-list-dependents.test.ts` — a second surface with its own copy suites,
- * which is a slice and not a passing fix. **What the filter costs meanwhile is
- * bounded and visible:** the moved rows still render their role, marked
- * „(nu mai este disponibil)" (#34.05), and `roleWhitelistPending` still tells
- * the administrator to go and tick it in „Roluri pe Document". Over-cautious
- * and honest, which is the right way round to be while it waits.
+ * ⚠️ **SLICE #34.16 REMOVED THAT FALLBACK (D-16(b)) AND THE COLLAPSE ARGUMENT
+ * WENT WITH IT — BUT THE FILTER STAYS, FOR A STRONGER REASON THAN THE ONE THAT
+ * PUT IT HERE.** With one answer everywhere an unconfigured type offers
+ * NOTHING, so inserting a row for it can no longer collapse an offer. On that
+ * reading the filter looks like caution that has outlived its argument, and the
+ * first draft of this paragraph said exactly that and pointed a later slice at
+ * removing it.
  *
- * So the grant is, for now, a TOP-UP of a whitelist that already exists, never
- * the creation of one.
+ * ⚠️ **THEN THE NUMBERS ARRIVED, AND THEY SAY THE OPPOSITE.
+ * `lookup_doc_type_person_role` IS EMPTY: 48 document types, 48 of them with no
+ * ticks at all** (measured on the development database the day #34.16 shipped;
+ * #34.10's „23 unconfigured" either counted a smaller catalogue or a different
+ * population). So there is no such thing here as „a whitelist that already
+ * exists" to top up — and a filter
+ * removed on that data would make an administrator RENAMING OR MERGING A ROLE
+ * the thing that first configures a document type. Configuration created as a
+ * side effect of a value-list edit, in a panel nobody was looking at, is
+ * precisely the harm the two paragraphs above swear off, arriving from the
+ * other direction. **Keep the filter.** Deciding which roles belong to
+ * CONTRACT_VANZARE is an afternoon with the business user, not a consequence of
+ * a rename.
+ *
+ * **What the filter costs meanwhile is bounded and visible:** the moved rows
+ * still render their role, marked „(nu mai este disponibil)" (#34.05), and
+ * `roleWhitelistPending` tells the administrator to go and tick it in
+ * „Roluri pe Document". On today's data that warning fires on every role move
+ * that touches a document — which is loud, and correct, and stops being either
+ * the moment the first type is configured.
+ *
+ * So the grant is a TOP-UP of a whitelist that already exists, never the
+ * creation of one — and on an archive with no whitelists yet, that means it
+ * grants nothing and says so.
  *
  * ⚠️ **WHAT THIS CANNOT REPAIR IS REPORTED RATHER THAN GUESSED AT — AND SLICE
  * #34.16 CHANGED BOTH HOW MANY SUCH CASES THERE ARE AND HOW THEY ARE
@@ -93,11 +107,13 @@
  * being no safe third option: ticking an unconfigured type collapsed that
  * type's offer to one role, and ticking an unrelated configured type granted an
  * eligibility in a panel nobody was looking at. The first of those is no longer
- * true — with the fallback gone, ticking the unconfigured type is safe and is
- * exactly the repair — so this case survives only for as long as the filter
- * above does. The slice that removes the filter is the slice that removes this
- * warning, and both are named in the handover rather than left to be
- * rediscovered here.
+ * true — with the fallback gone, ticking an unconfigured type no longer
+ * collapses anything. What still makes it the wrong thing for THIS module to do
+ * is the paragraph above: on an archive whose junction table is empty, a role
+ * move would be writing a document type's first configuration. So the warning
+ * is not a placeholder waiting for a slice to delete it. It is what this module
+ * says instead of configuring the archive on the administrator's behalf, and it
+ * goes away when the types are configured rather than when the code changes.
  *
  * ⚠️ **`granted` AND `warnings` CAN NOW BOTH CARRY THE DOCUMENT BRANCH, WHICH
  * THEY COULD NOT BEFORE.** A move whose rows come from a mix of configured and

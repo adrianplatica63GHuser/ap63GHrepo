@@ -836,14 +836,16 @@ describe("moving person-role associations", () => {
     // fallback stopped running: the picker collapsed from that whole set to the
     // single role the move granted.
     //
-    // ⚠️ **SLICE #34.16 REMOVED THAT FALLBACK (D-16(b)), SO THIS FILTER IS NOW
-    // CAUTION AND NOT A FIX — AND THE ASSERTIONS STAY BECAUSE THE CODE DOES.**
-    // The test below this one is where that is recorded; see it for why the
-    // filter is left in place for a slice rather than ripped out here. What
-    // this one still pins is that the shipped behaviour is the one the module
-    // header describes: a top-up, never a creation. The day the filter goes,
-    // these four assertions go with it in the same commit — they are the
-    // filter's description, not an argument for keeping it.
+    // ⚠️ **SLICE #34.16 REMOVED THAT FALLBACK (D-16(b)), SO THE COLLAPSE
+    // ARGUMENT ABOVE NO LONGER APPLIES — AND THE FILTER IS STILL RIGHT, FOR A
+    // BIGGER REASON.** `lookup_doc_type_person_role` is EMPTY: 48 document
+    // types, 48 with no ticks, measured the day #34.16 shipped. So there is no
+    // whitelist here to top up, and a filter removed on that data would make an
+    // administrator RENAMING a role the thing that first configures a document
+    // type. These assertions are not a description waiting to be deleted; they
+    // pin the module header's promise — a top-up, never a creation — which is
+    // the promise that keeps value-list edits out of the configuration
+    // business.
     const grant = code(read("lib", "admin", "value-lists", "role-whitelists.ts"));
     expect(grant).toContain("inArray(");
     expect(grant).toMatch(
@@ -875,13 +877,13 @@ describe("moving person-role associations", () => {
 
     // ⚠️ **THE CONSEQUENCE FOR THE MODULE ABOVE IS NOT ASSERTED HERE, AND THAT
     // IS DELIBERATE.** With one answer everywhere, an unconfigured type offers
-    // nothing, so a row inserted for it can no longer collapse an offer — the
-    // filter is now over-caution that withholds the one repair those rows
-    // need, and `roleWhitelistPending` narrows with it. Both are left standing
-    // for a slice, because removing them reaches `value-list-modal.tsx` and its
-    // copy suites. `role-whitelists.ts` says so in its own header; a
-    // `toContain` on that prose would be a guard that reads comments, which
-    // this file's own `code()` helper exists to prevent.
+    // nothing, so a row inserted for it can no longer collapse an offer. That
+    // is not a licence to remove the filter: on an archive whose junction table
+    // is empty — which this one is — removing it would let a role rename write
+    // a document type's first configuration. `role-whitelists.ts` argues both
+    // halves in its own header; a `toContain` on that prose would be a guard
+    // that reads comments, which this file's own `code()` helper exists to
+    // prevent.
   });
 
   it("scopes the Document Persons tick to the types that actually moved", () => {
